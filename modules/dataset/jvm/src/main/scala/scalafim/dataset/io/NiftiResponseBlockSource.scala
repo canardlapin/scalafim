@@ -1,7 +1,8 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.*
-import scalafim.image.{PrimitiveBuffers, NeuroSpace}
+import scalafim.image.{PrimitiveBuffers, SomeSampleSpace}
+import scalafim.image.{spatialDims, spatialSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
 
 import java.io.BufferedInputStream
@@ -101,49 +102,55 @@ final class NiftiResponseBlockSource private (
     if valueCount > Int.MaxValue.toLong then
       Left(DatasetError.StorageFailure(s"requested NIfTI block has $valueCount values and exceeds the supported array size"))
     else
-      NiftiReadPlan.make(selection.voxels, bytesPerValue).flatMap { plan =>
-        val values = PrimitiveBuffers.ofSize[Double](valueCount.toInt)
-        val buffer = ByteBuffer.allocateDirect(plan.maxBufferBytes).order(header.byteOrder)
-        val slope = if header.slope == 0.0 then 1.0 else header.slope
+      NiftiReadPlan
+        .fromCanonicalVoxels(
+          selection.voxels,
+          shape.space.spatialDims,
+          bytesPerValue
+        )
+        .flatMap { plan =>
+          val values = PrimitiveBuffers.ofSize[Double](valueCount.toInt)
+          val buffer = ByteBuffer.allocateDirect(plan.maxBufferBytes).order(header.byteOrder)
+          val slope = if header.slope == 0.0 then 1.0 else header.slope
 
-        try
-          Using.resource(FileChannel.open(dataPath, READ)) { open =>
-            var row = 0
-            while row < rows do
-              val timepoint = selection.timepoints(row)
-              val frameElement = Math.multiplyExact(timepoint.toLong, shape.spatialSize.toLong)
-              var windowIndex = 0
-              while windowIndex < plan.windows.length do
-                val window = plan.windows(windowIndex)
-                val firstElement = Math.addExact(frameElement, window.startVoxel.toLong)
-                val byteOffset = Math.multiplyExact(firstElement, bytesPerValue.toLong)
-                val position = Math.addExact(header.voxOffset.toLong, byteOffset)
-                buffer.clear()
-                buffer.limit(window.byteCount)
-                readFully(open, buffer, position)
+          try
+            Using.resource(FileChannel.open(dataPath, READ)) { open =>
+              var row = 0
+              while row < rows do
+                val timepoint = selection.timepoints(row)
+                val frameElement = Math.multiplyExact(timepoint.toLong, shape.spatialSize.toLong)
+                var windowIndex = 0
+                while windowIndex < plan.windows.length do
+                  val window = plan.windows(windowIndex)
+                  val firstElement = Math.addExact(frameElement, window.startVoxel.toLong)
+                  val byteOffset = Math.multiplyExact(firstElement, bytesPerValue.toLong)
+                  val position = Math.addExact(header.voxOffset.toLong, byteOffset)
+                  buffer.clear()
+                  buffer.limit(window.byteCount)
+                  readFully(open, buffer, position)
 
-                var selectedIndex = 0
-                while selectedIndex < window.selectedVoxels do
-                  val scalarOffset = window.voxelOffsets(selectedIndex) * bytesPerValue
-                  val outputColumn = window.outputColumns(selectedIndex)
-                  values(row * columns + outputColumn) =
-                    decodeAt(buffer, header.datatype, scalarOffset) * slope + header.intercept
-                  selectedIndex += 1
-                windowIndex += 1
-              row += 1
+                  var selectedIndex = 0
+                  while selectedIndex < window.selectedVoxels do
+                    val scalarOffset = window.voxelOffsets(selectedIndex) * bytesPerValue
+                    val outputColumn = window.outputColumns(selectedIndex)
+                    values(row * columns + outputColumn) =
+                      decodeAt(buffer, header.datatype, scalarOffset) * slope + header.intercept
+                    selectedIndex += 1
+                  windowIndex += 1
+                row += 1
 
-            FmriSeries.make(
-              data = matrixFromRowMajor(rows, columns, values),
-              voxelIndices = selection.voxelIndexValues,
-              timepoints = selection.timepointIndices,
-              shape = shape,
-              metadata = metadata
-            )
-          }
-        catch
-          case NonFatal(error) =>
-            Left(DatasetError.StorageFailure(s"failed NIfTI block read from '$dataPath': ${error.getMessage}"))
-      }
+              FmriSeries.make(
+                data = matrixFromRowMajor(rows, columns, values),
+                voxelIndices = selection.voxelIndexValues,
+                timepoints = selection.timepointIndices,
+                shape = shape,
+                metadata = metadata
+              )
+            }
+          catch
+            case NonFatal(error) =>
+              Left(DatasetError.StorageFailure(s"failed NIfTI block read from '$dataPath': ${error.getMessage}"))
+        }
 
   private def readFully(channel: FileChannel, buffer: ByteBuffer, position: Long): Unit =
     var offset = 0L
@@ -191,11 +198,15 @@ object NiftiResponseBlockSource:
     }
 
   private def readHeader(path: Path): Either[DatasetError, NiftiHeader] =
-    try Right(Nifti.readHeader(path))
+    try
+      Nifti
+        .readHeader(path)
+        .left
+        .map(error => DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.message}"))
     catch
       case NonFatal(error) => Left(DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.getMessage}"))
 
-  private def validateHeader(header: NiftiHeader): Either[DatasetError, (NeuroSpace, Int)] =
+  private def validateHeader(header: NiftiHeader): Either[DatasetError, (SomeSampleSpace, Int)] =
     val bytesPerValue = header.bitpix / 8
     val supported =
       (header.datatype == 2 && bytesPerValue == 1) ||

@@ -1,7 +1,8 @@
 package scalafim.spatial.io
 
 import scalafim.image.io.Nifti
-import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec}
+import scalafim.image.{SampleSpaces, Axis, DMat, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
 import java.nio.ByteBuffer
@@ -22,7 +23,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
       case Right(value) => value
       case Left(error) => fail(error.message)
 
-  private def volumeDomain(name: String, space: NeuroSpace): Domain =
+  private def volumeDomain(name: String, space: SomeSampleSpace): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
@@ -39,7 +40,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   test("lazy runtime reads one exact NIfTI support block and closes its channel"):
     withNiftiPath { path =>
-      val spatial = NeuroSpace(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val spatial = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
       val domain = volumeDomain("root", spatial)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 3, label = "bold"))
       val field = spatialValue(Field.fromSource(domain, source))
@@ -50,8 +51,10 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
       assertEquals(source.stats, NiftiFieldSourceStats(0L, 0L, 0L, 0L, 0L, 0L))
 
-      val values = PrimitiveBuffers.fromArray(Array(0.0, 1.0, 2.0, 3.0, 10.0, 11.0, 12.0, 13.0, 20.0, 21.0, 22.0, 23.0))
-      Nifti.writeVec(path, NeuroVec.fromLinear(values, spatial.addDim(3, Some(Axis.Time)), "bold"))
+      val values = PrimitiveBuffers.fromArray(Array(0.0, 10.0, 20.0, 1.0, 11.0, 21.0, 2.0, 12.0, 22.0, 3.0, 13.0, 23.0))
+      Nifti
+        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(3, Some(Axis.Time)), "bold"))
+        .fold(error => fail(error.message), _ => ())
       val runtime = LazyFieldRuntime(summon[SpatialGraph])
       given FieldRuntime = runtime
 
@@ -77,7 +80,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
   test("big-endian int16 fixtures preserve byte order, scaling, and request order"):
     withNiftiPath { path =>
       writeBigEndianInt16(path)
-      val spatial = NeuroSpace(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val spatial = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
       val domain = volumeDomain("root", spatial)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 2))
       val request = spatialValue(
@@ -96,7 +99,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   test("terminal validation reports unavailable, stale, and geometry-mismatched NIfTI roots"):
     withNiftiPath { path =>
-      val spatial = NeuroSpace(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val spatial = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
       val domain = volumeDomain("root", spatial)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
       val field = spatialValue(Field.fromSource(domain, source))
@@ -111,7 +114,9 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
       })
 
       val values = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0))
-      Nifti.writeVec(path, NeuroVec.fromLinear(values, spatial.addDim(1, Some(Axis.Time))))
+      Nifti
+        .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, spatial.addDim(1, Some(Axis.Time))))
+        .fold(error => fail(error.message), _ => ())
       assertEquals(apiValue(field.value).toRows, Vector(Vector(1.0), Vector(2.0), Vector(3.0), Vector(4.0)))
       Files.write(path, Array(0.toByte), APPEND)
 
@@ -123,8 +128,8 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
     }
 
     withNiftiPath { path =>
-      val identity = NeuroSpace(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
-      val translated = NeuroSpace(
+      val identity = SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4)))
+      val translated = SampleSpaces(
         Vector(4, 1, 1),
         trans = Some(
           DMat.fromRows(
@@ -137,13 +142,15 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
           )
         )
       )
-      Nifti.writeVec(
-        path,
-        NeuroVec.fromLinear(
-          PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
-          identity.addDim(1, Some(Axis.Time))
+      Nifti
+        .writeSeries(
+          path,
+          SomeScalarSeries.unsafeCopyFromCanonicalArray(
+            PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
+            identity.addDim(1, Some(Axis.Time))
+          )
         )
-      )
+        .fold(error => fail(error.message), _ => ())
       val domain = volumeDomain("translated", translated)
       val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
 

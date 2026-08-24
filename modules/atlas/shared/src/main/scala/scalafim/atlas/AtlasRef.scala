@@ -176,10 +176,14 @@ final case class AtlasRefOf[+R <: AtlasRepresentationKind.AnyRepresentation](
   confidence: Confidence = Confidence.Uncertain,
   notes: Option[String] = None,
   artifacts: Vector[AtlasArtifact] = Vector.empty,
-  history: Vector[AtlasHistoryStep] = Vector.empty
+  history: Vector[AtlasHistoryStep] = Vector.empty,
+  parcelVariant: Option[String] = None
 ):
   require(family.trim.nonEmpty, "atlas family must be non-empty")
   require(model.trim.nonEmpty, "atlas model must be non-empty")
+  parcelVariant.foreach(value =>
+    require(value.trim.nonEmpty, "atlas parcel variant must be non-empty")
+  )
 
   def name: String = s"$family:$model"
 
@@ -201,7 +205,8 @@ object AtlasRef:
     confidence: Confidence = Confidence.Uncertain,
     notes: Option[String] = None,
     artifacts: Vector[AtlasArtifact] = Vector.empty,
-    history: Vector[AtlasHistoryStep] = Vector.empty
+    history: Vector[AtlasHistoryStep] = Vector.empty,
+    parcelVariant: Option[String] = None
   ): AtlasRef =
     AtlasRefOf[AtlasRepresentationKind.AnyRepresentation](
       family = family,
@@ -217,7 +222,8 @@ object AtlasRef:
       confidence = confidence,
       notes = notes,
       artifacts = artifacts,
-      history = history
+      history = history,
+      parcelVariant = parcelVariant
     )
 
   def volume(
@@ -232,7 +238,8 @@ object AtlasRef:
     confidence: Confidence = Confidence.Uncertain,
     notes: Option[String] = None,
     artifacts: Vector[AtlasArtifact] = Vector.empty,
-    history: Vector[AtlasHistoryStep] = Vector.empty
+    history: Vector[AtlasHistoryStep] = Vector.empty,
+    parcelVariant: Option[String] = None
   ): VolumeAtlasRef =
     AtlasRefOf[AtlasRepresentationKind.Volume](
       family = family,
@@ -247,7 +254,8 @@ object AtlasRef:
       confidence = confidence,
       notes = notes,
       artifacts = artifacts,
-      history = history
+      history = history,
+      parcelVariant = parcelVariant
     )
 
   def surface(
@@ -262,7 +270,8 @@ object AtlasRef:
     confidence: Confidence = Confidence.Uncertain,
     notes: Option[String] = None,
     artifacts: Vector[AtlasArtifact] = Vector.empty,
-    history: Vector[AtlasHistoryStep] = Vector.empty
+    history: Vector[AtlasHistoryStep] = Vector.empty,
+    parcelVariant: Option[String] = None
   ): SurfaceAtlasRef =
     AtlasRefOf[AtlasRepresentationKind.Surface](
       family = family,
@@ -277,7 +286,8 @@ object AtlasRef:
       confidence = confidence,
       notes = notes,
       artifacts = artifacts,
-      history = history
+      history = history,
+      parcelVariant = parcelVariant
     )
 
   def derived(
@@ -293,7 +303,8 @@ object AtlasRef:
     confidence: Confidence = Confidence.Uncertain,
     notes: Option[String] = None,
     artifacts: Vector[AtlasArtifact] = Vector.empty,
-    history: Vector[AtlasHistoryStep] = Vector.empty
+    history: Vector[AtlasHistoryStep] = Vector.empty,
+    parcelVariant: Option[String] = None
   ): DerivedAtlasRef =
     AtlasRefOf[AtlasRepresentationKind.Derived](
       family = family,
@@ -309,5 +320,6 @@ object AtlasRef:
       confidence = confidence,
       notes = notes,
       artifacts = artifacts,
-      history = history
+      history = history,
+      parcelVariant = parcelVariant
     )

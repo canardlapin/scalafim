@@ -1,9 +1,11 @@
 package scalafim.fmri.workflow
 
+import scalafim.image.SampleSpaces
+
 import munit.FunSuite
 import bids4s.*
 import scalafim.dataset.{DatasetId, DatasetShape}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 
 class BidsStudyCompilerSuite extends FunSuite:
   test("compiler groups exact fMRIPrep entities into deterministic multi-run units") {
@@ -113,7 +115,7 @@ class BidsStudyCompilerSuite extends FunSuite:
     val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01", "02"))
     val incompatibleHeaders = fixture.headers.headers.map { case (path, descriptor) =>
       if path.value.contains("run-02") && path.value.endsWith("_bold.nii") then
-        path -> ImageHeaderDescriptor(DatasetShape.unsafe(NeuroSpace(Vector(4, 1, 1)), 3))
+        path -> ImageHeaderDescriptor(DatasetShape.unsafe(SampleSpaces(Vector(4, 1, 1)), 3))
       else path -> descriptor
     }
     val incompatible = BidsStudyCompiler
@@ -261,8 +263,8 @@ class BidsStudyCompilerSuite extends FunSuite:
     val files = Vector.newBuilder[String]
     val sidecars = Map.newBuilder[BidsPath, JsonValue.Obj]
     val headers = Map.newBuilder[BidsPath, ImageHeaderDescriptor]
-    val boldShape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 3)
-    val maskShape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 1)
+    val boldShape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 3)
+    val maskShape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 1)
 
     subjects.foreach { subject =>
       if commonMask then
@@ -333,7 +335,7 @@ class BidsStudyCompilerSuite extends FunSuite:
       maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii")),
       confounds = if confoundsRequested then Some(ConfoundSelectionConfig(variables = Vector("motion6"))) else None
     )
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 3)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 3)
     Fixture(project, recipe, ImageHeaderCatalog(Map(BidsPath(bold) -> ImageHeaderDescriptor(shape))))
 
   private def duplicateRunFixture(): Fixture =
@@ -362,7 +364,7 @@ class BidsStudyCompilerSuite extends FunSuite:
       maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii")),
       confounds = None
     )
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 3)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 3)
     val headers = ImageHeaderCatalog(Map(
       BidsPath(preprocessed) -> ImageHeaderDescriptor(shape),
       BidsPath(denoised) -> ImageHeaderDescriptor(shape)
@@ -383,7 +385,7 @@ class BidsStudyCompilerSuite extends FunSuite:
       manifest = BidsManifest.fromRelativePaths(Vector(bold, events, sidecar.value), Vector(derivative)),
       sidecars = Map(sidecar -> metadata(2.0))
     )
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 3)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 3)
     Fixture(
       project,
       datasetRecipe(

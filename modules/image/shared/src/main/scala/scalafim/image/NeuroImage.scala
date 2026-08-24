@@ -11,63 +11,63 @@ sealed trait Series4D extends ImageDim
 trait ImageDimEvidence[D <: ImageDim]:
   def label: String
   def rank: Int
-  def expectedShape(space: NeuroSpace): Either[NeuroImageError, Vector[Int]]
-  def canonicalSpace(space: NeuroSpace): Either[NeuroImageError, NeuroSpace]
+  def expectedShape(space: SomeSampleSpace): Either[NeuroImageError, Vector[Int]]
+  def canonicalSpace(space: SomeSampleSpace): Either[NeuroImageError, SomeSampleSpace]
 
 object ImageDimEvidence:
   given slice2D: ImageDimEvidence[Slice2D] with
     def label: String = "NeuroSlice"
     def rank: Int = 2
 
-    def expectedShape(space: NeuroSpace): Either[NeuroImageError, Vector[Int]] =
+    def expectedShape(space: SomeSampleSpace): Either[NeuroImageError, Vector[Int]] =
       if space.ndim == 2 then Right(space.dims)
-      else Left(NeuroImageError.Space(NeuroSpaceError.ExpectedDimensionality(label, 2, space.ndim)))
+      else Left(NeuroImageError.Space(SampleSpaceError.ExpectedDimensionality(label, 2, space.ndim)))
 
-    def canonicalSpace(space: NeuroSpace): Either[NeuroImageError, NeuroSpace] =
+    def canonicalSpace(space: SomeSampleSpace): Either[NeuroImageError, SomeSampleSpace] =
       expectedShape(space).map(_ => space)
 
   given volume3D: ImageDimEvidence[Volume3D] with
-    def label: String = "NeuroVol"
+    def label: String = "SomeNeuroVolume"
     def rank: Int = 3
 
-    def expectedShape(space: NeuroSpace): Either[NeuroImageError, Vector[Int]] =
+    def expectedShape(space: SomeSampleSpace): Either[NeuroImageError, Vector[Int]] =
       if space.ndim >= 3 then Right(space.spatialDims)
-      else Left(NeuroImageError.Space(NeuroSpaceError.ExpectedDimensionality(label, 3, space.ndim)))
+      else Left(NeuroImageError.Space(SampleSpaceError.ExpectedDimensionality(label, 3, space.ndim)))
 
-    def canonicalSpace(space: NeuroSpace): Either[NeuroImageError, NeuroSpace] =
+    def canonicalSpace(space: SomeSampleSpace): Either[NeuroImageError, SomeSampleSpace] =
       VolumeSpace.fromSpatialPart(space)
-        .map(_.toNeuroSpace)
+        .map(_.toSampleSpace)
         .left.map(NeuroImageError.Space.apply)
 
   given series4D: ImageDimEvidence[Series4D] with
-    def label: String = "NeuroVec"
+    def label: String = "SomeNeuroSeries"
     def rank: Int = 4
 
-    def expectedShape(space: NeuroSpace): Either[NeuroImageError, Vector[Int]] =
+    def expectedShape(space: SomeSampleSpace): Either[NeuroImageError, Vector[Int]] =
       if space.ndim == 4 then Right(space.dims.take(4))
-      else Left(NeuroImageError.Space(NeuroSpaceError.ExpectedDimensionality(label, 4, space.ndim)))
+      else Left(NeuroImageError.Space(SampleSpaceError.ExpectedDimensionality(label, 4, space.ndim)))
 
-    def canonicalSpace(space: NeuroSpace): Either[NeuroImageError, NeuroSpace] =
+    def canonicalSpace(space: SomeSampleSpace): Either[NeuroImageError, SomeSampleSpace] =
       expectedShape(space).map(_ => space)
 
 final case class ImageSpace[D <: ImageDim] private (
-  raw: NeuroSpace
+  raw: SomeSampleSpace
 ):
-  def toNeuroSpace: NeuroSpace =
+  def toSampleSpace: SomeSampleSpace =
     raw
 
 object ImageSpace:
-  def make[D <: ImageDim](space: NeuroSpace)(using dim: ImageDimEvidence[D]): Either[NeuroImageError, ImageSpace[D]] =
+  def make[D <: ImageDim](space: SomeSampleSpace)(using dim: ImageDimEvidence[D]): Either[NeuroImageError, ImageSpace[D]] =
     dim.canonicalSpace(space).map(space => new ImageSpace[D](space))
 
-  private[image] def unsafe[D <: ImageDim](space: NeuroSpace): ImageSpace[D] =
+  private[image] def unsafe[D <: ImageDim](space: SomeSampleSpace): ImageSpace[D] =
     new ImageSpace[D](space)
 
 enum NeuroImageError:
   case InvalidRank(label: String, expected: Int, actual: Int)
   case ShapeMismatch(label: String, expected: Vector[Int], actual: Vector[Int])
   case LinearSizeMismatch(label: String, expected: Int, actual: Int)
-  case Space(error: NeuroSpaceError)
+  case Space(error: SampleSpaceError)
   case Geometry(error: GeometryError)
   case Image(error: ImageError)
 

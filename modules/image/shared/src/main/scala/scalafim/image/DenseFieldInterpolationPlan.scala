@@ -71,12 +71,10 @@ final case class DenseFieldInterpolationPlan private (
           else stencil.outsideWeight * outside.value(point, component)
         var j = 0
         while j < stencil.size do
-          val linear = stencil.indices(j)
-          val x = linear % grid.shape.x
-          val yz = linear / grid.shape.x
-          val y = yz % grid.shape.y
-          val z = yz / grid.shape.y
-          sum += stencil.weights(j) * field(x, y, z, component)
+          val voxel =
+            Indexing.indexToGrid3D(grid.shape, stencil.indices(j))
+          sum += stencil.weights(j) *
+            field(voxel.x, voxel.y, voxel.z, component)
           j += 1
         sampled(component) = sum
         component += 1

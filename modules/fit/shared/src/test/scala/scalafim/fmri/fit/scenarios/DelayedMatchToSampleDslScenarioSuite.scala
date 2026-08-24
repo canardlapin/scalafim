@@ -9,7 +9,7 @@ import scalafim.fmri.fit.fixtures.DmsRFixture
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec, ModelError}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SampleSpaces}
 
 /** The delayed-match-to-sample design as an ordinary ScalaFIM consumer program.
   *
@@ -323,7 +323,7 @@ class DelayedMatchToSampleDslScenarioSuite extends munit.FunSuite:
       backend = InMemoryDatasetBackend(
         DatasetId("dms-multiphase-dsl"),
         ImageDMat.fromRows(DmsRFixture.response.map(value => Vector(value))),
-        NeuroSpace(Vector(1, 1, 1))
+        SampleSpaces(Vector(1, 1, 1))
       ),
       samplingFrame = samplingFrame,
       events = trials

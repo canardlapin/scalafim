@@ -10,7 +10,7 @@ import scalafim.surface.*
   */
 final case class SurfaceProjectionFixtureCase(
   morphism: VolToSurfMorphism,
-  volume: NeuroVol[Double],
+  volume: SomeScalarVolume[Double],
   policy: SurfaceProjectionPolicy
 )
 
@@ -20,8 +20,8 @@ object SurfaceFeatureFixture:
   def projectionCase: SurfaceProjectionFixtureCase =
     val white = geometry(0.0, SurfaceKind.White)
     val pial = geometry(2.0, SurfaceKind.Pial)
-    val space = NeuroSpace(Vector(5, 5, 5))
-    val volume = NeuroVol.fromLinear(
+    val space = SampleSpaces(Vector(5, 5, 5))
+    val volume = SomeNeuroVolume.unsafeCopyFromCanonicalArray[Double, image4s.Continuous](
       PrimitiveBuffers.tabulate[Double](125): index =>
         val grid = space.indexToGrid3D(index)
         grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,

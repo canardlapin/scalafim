@@ -1,11 +1,11 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{NeuroVec, NeuroVol}
+import scalafim.image.*
 
 object MotionEstimator:
   def estimate(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]] = None,
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume] = None,
       plan: MotionPlan = MotionPlan.default
   ): Either[MotionError, MotionEstimate] =
     plan.engine match
@@ -15,8 +15,8 @@ object MotionEstimator:
         estimateSpline(run, mask, plan)
 
   private def estimateRigid(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]],
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume],
       plan: MotionPlan
   ): Either[MotionError, MotionEstimate] =
     for
@@ -34,8 +34,8 @@ object MotionEstimator:
         case Some(refreshed) => fitRun(ctx, refreshed)
 
   private def estimateSpline(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]],
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume],
       plan: MotionPlan
   ): Either[MotionError, MotionEstimate] =
     for
@@ -46,12 +46,12 @@ object MotionEstimator:
       trace = preserveReferenceFrame(spline.trace, rigid.trace, refIndex)
     yield rigid.copy(trace = trace)
 
-  private final case class SamplePoint(i: Int, j: Int, k: Int, linear: Int)
+  private final case class SamplePoint(i: Int, j: Int, k: Int, ordinal: Int)
 
   private final case class PyramidLevel(downsample: Int, maxIterations: Int, samples: Vector[SamplePoint])
 
   private final case class EstimatorContext(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       control: MotionControl,
       referenceIndex: Int,
       levels: Vector[PyramidLevel]
@@ -301,7 +301,7 @@ object MotionEstimator:
               sz,
               zeroPad = false
             )
-          meanResidual += fitted - template(sample.linear)
+          meanResidual += fitted - template(sample.ordinal)
           var p = 0
           while p < 6 do
             val plus = addOne(pose, p, eps(p))
@@ -339,8 +339,8 @@ object MotionEstimator:
             zeroPad = false
           )
         val residual =
-          if centered then fitted - template(sample.linear) - meanResidual
-          else fitted - template(sample.linear)
+          if centered then fitted - template(sample.ordinal) - meanResidual
+          else fitted - template(sample.ordinal)
         val weight = huberWeight(residual, ctx.control.optimizer.huberK)
         var p = 0
         while p < 6 do
@@ -491,7 +491,7 @@ object MotionEstimator:
               sz,
               zeroPad = false
             )
-          meanResidual += fitted - template(sample.linear)
+          meanResidual += fitted - template(sample.ordinal)
           meanCount += 1
         s0 += 1
       if meanCount > 0 then meanResidual /= meanCount.toDouble
@@ -520,8 +520,8 @@ object MotionEstimator:
             zeroPad = false
           )
         val residual =
-          if centered then fitted - template(sample.linear) - meanResidual
-          else fitted - template(sample.linear)
+          if centered then fitted - template(sample.ordinal) - meanResidual
+          else fitted - template(sample.ordinal)
         loss += huberLoss(residual, ctx.control.optimizer.huberK)
         n += 1
       s += 1
@@ -546,7 +546,7 @@ object MotionEstimator:
       zeroPad = false
     )
 
-  private def buildTemplate(run: NeuroVec[Double], reference: ReferenceStrategy, refIndex: Int): Array[Double] =
+  private def buildTemplate(run: SomeScalarSeries[Double], reference: ReferenceStrategy, refIndex: Int): Array[Double] =
     val nxyz = run.space.spatialDims.product
     val out = Array.ofDim[Double](nxyz)
     reference match
@@ -630,9 +630,10 @@ object MotionEstimator:
     val counts = Array.ofDim[Int](ctx.nxyz)
     var lin = 0
     while lin < ctx.nxyz do
-      val i = lin % ctx.nx
-      val j = (lin / ctx.nx) % ctx.ny
-      val k = lin / (ctx.nx * ctx.ny)
+      val k = lin % ctx.nz
+      val xy = lin / ctx.nz
+      val j = xy % ctx.ny
+      val i = xy / ctx.ny
       val sx = MotionSampling.sourceX(map, i, j, k)
       val sy = MotionSampling.sourceY(map, i, j, k)
       val sz = MotionSampling.sourceZ(map, i, j, k)
@@ -695,7 +696,7 @@ object MotionEstimator:
       i += 1
     n
 
-  private def referenceIndex(run: NeuroVec[Double], strategy: ReferenceStrategy): Either[MotionError, Int] =
+  private def referenceIndex(run: SomeScalarSeries[Double], strategy: ReferenceStrategy): Either[MotionError, Int] =
     strategy match
       case ReferenceStrategy.Middle | ReferenceStrategy.RobustMean =>
         Right(run.nVolumes / 2)
@@ -705,8 +706,8 @@ object MotionEstimator:
         else Left(MotionError.FrameIndexOutOfBounds(i, run.nVolumes))
 
   private def buildPyramidLevels(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]],
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume],
       control: MotionControl
   ): Either[MotionError, Vector[PyramidLevel]] =
     buildCandidateSamples(run, mask, control).map { all =>
@@ -733,8 +734,8 @@ object MotionEstimator:
     }
 
   private def buildCandidateSamples(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]],
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume],
       control: MotionControl
   ): Either[MotionError, Vector[SamplePoint]] =
     val dims = run.space.spatialDims
@@ -751,7 +752,7 @@ object MotionEstimator:
       while j < ny do
         var i = 0
         while i < nx do
-          val lin = i + nx * (j + ny * k)
+          val lin = (i * ny + j) * nz + k
           val inMask = mask.forall(_(i, j, k))
           val inInterior =
             i >= edgeX && i < nx - edgeX &&
@@ -767,7 +768,7 @@ object MotionEstimator:
     else Right(applyStencil(run, all, control.stencil))
 
   private def applyStencil(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       samples: Vector[SamplePoint],
       control: StencilControl
   ): Vector[SamplePoint] =
@@ -777,7 +778,7 @@ object MotionEstimator:
         informationContentSamples(run, samples, stencil)
 
   private def informationContentSamples(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       samples: Vector[SamplePoint],
       stencil: InformationContentStencil
   ): Vector[SamplePoint] =
@@ -795,7 +796,7 @@ object MotionEstimator:
       var s = 0
       while s < samples.length do
         val sample = samples(s)
-        val score = informationScore(run, sample, nx, ny, nz, nxyz)
+        val score = informationScore(run, sample, nx, ny, nz)
         val b = stencilBin(sample, nx, ny, nz, stencil.bins)
         builders(b) += ScoredSample(sample, score)
         weights(b) += math.pow(score + 1e-12, stencil.gamma)
@@ -803,7 +804,7 @@ object MotionEstimator:
 
       val bins =
         Vector.tabulate(binCount) { b =>
-          builders(b).result().sortBy(scored => (-scored.score, scored.sample.linear))
+          builders(b).result().sortBy(scored => (-scored.score, scored.sample.ordinal))
         }
       val order =
         bins.indices
@@ -829,18 +830,17 @@ object MotionEstimator:
       out.result()
 
   private def informationScore(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       sample: SamplePoint,
       nx: Int,
       ny: Int,
-      nz: Int,
-      nxyz: Int
+      nz: Int
   ): Double =
-    val center = meanAt(run, sample.linear)
+    val center = meanAt(run, sample.ordinal)
     var sum = 0.0
     var n = 0
     def addNeighbor(i: Int, j: Int, k: Int): Unit =
-      val lin = i + nx * (j + ny * k)
+      val lin = (i * ny + j) * nz + k
       sum += meanAt(run, lin)
       n += 1
 
@@ -853,7 +853,7 @@ object MotionEstimator:
     if n == 0 then 0.0
     else math.abs(center - sum / n.toDouble)
 
-  private def meanAt(run: NeuroVec[Double], linear: Int): Double =
+  private def meanAt(run: SomeScalarSeries[Double], linear: Int): Double =
     val voxel = run.space.indexToVoxel3D(linear)
     var t = 0
     var sum = 0.0
@@ -904,7 +904,7 @@ object MotionEstimator:
         p += 1
       out.result()
 
-  private def validateFiniteRun(run: NeuroVec[Double]): Either[MotionError, Unit] =
+  private def validateFiniteRun(run: SomeScalarSeries[Double]): Either[MotionError, Unit] =
     val dims = run.space.spatialDims
     var linear = 0
     var t = 0

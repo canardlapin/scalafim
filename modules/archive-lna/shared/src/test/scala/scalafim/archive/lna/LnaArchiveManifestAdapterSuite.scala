@@ -7,7 +7,7 @@ import scalafim.archive.{
   RepresentationMetadata,
   RunLabel
 }
-import scalafim.image.NeuroSpace
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class LnaArchiveManifestAdapterSuite extends munit.FunSuite:
   test("LNA manifest adaptation is pure namespaced and canonically readable"):
@@ -83,7 +83,7 @@ class LnaArchiveManifestAdapterSuite extends munit.FunSuite:
       runs = Vector(
         LnaRun(
           RunLabel.indexed(0),
-          LnaShape(NeuroSpace(Vector(1, 1, 1)), 2),
+          LnaShape(SampleSpaces(Vector(1, 1, 1)), 2),
           path
         )
       ),

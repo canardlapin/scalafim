@@ -43,7 +43,7 @@ object SchaeferLoader:
 
   def loadFromPaths(spec: Schaefer2018, volumePath: Path, labelPath: Path): VolumeAtlas =
     val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
-    val presentIds = presentRegionIds(labelVol)
+    val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val allRegions = parseLut(Files.readString(labelPath, StandardCharsets.UTF_8), spec)
     val regions = RegionIndex(allRegions.filter(r => presentIds.contains(r.id)))
     val ref = refFor(spec)
@@ -53,7 +53,7 @@ object SchaeferLoader:
         ArtifactRole.ParcellationVolume -> volumePath,
         ArtifactRole.LabelTable -> labelPath
       )
-    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, spec.id).copy(provenance = provenance)
+    AtlasLabelMaps.buildAtlas(ref, regions, labelVol, provenance)
 
   def refFor(spec: Schaefer2018): VolumeAtlasRef =
     val a = assets(spec)
@@ -117,7 +117,7 @@ object SchaeferLoader:
               if tokens.length >= 2 then tokens.takeRight(2).mkString("_")
               else canonical
             Some(
-              Region(
+              AtlasRegionMetadata(
                 id = RegionId(id),
                 label = label,
                 labelFull = Some(full),
@@ -134,12 +134,3 @@ object SchaeferLoader:
       }
       .toVector
       .sortBy(_.id.value)
-
-  private def presentRegionIds(vol: scalafim.image.NeuroVol[Int]): Set[RegionId] =
-    val out = scala.collection.mutable.Set.empty[RegionId]
-    var i = 0
-    while i < vol.values.size do
-      val id = vol.linear(i)
-      if id > 0 then out += RegionId(id)
-      i += 1
-    out.toSet

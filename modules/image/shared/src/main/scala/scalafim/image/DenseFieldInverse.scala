@@ -50,12 +50,9 @@ object DenseFieldInverse:
             if !solved.converged then converged = false
             val solvedPoint = solved.point.toVector
             val target = targetPoint.toVector
-            val x = i % inverseGrid.shape.x
-            val yz = i / inverseGrid.shape.x
-            val y = yz % inverseGrid.shape.y
-            val z = yz / inverseGrid.shape.y
-            val base =
-              ((x * inverseGrid.shape.y + y) * inverseGrid.shape.z + z) * 3
+            // `query` and the destination both use canonical Ravel order:
+            // z is the fastest spatial axis and direction is fastest overall.
+            val base = i * 3
             var component = 0
             while component < 3 do
               builder.writeLinear(

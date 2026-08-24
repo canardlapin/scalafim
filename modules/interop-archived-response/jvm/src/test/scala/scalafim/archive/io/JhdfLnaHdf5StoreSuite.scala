@@ -1,16 +1,18 @@
 package scalafim.archive.io
 
+import scalafim.image.SampleSpaces
+
 import io.jhdf.HdfFile
 import io.jhdf.api.WritableGroup
 import io.jhdf.`object`.datatype.FixedPoint
 import scalafim.archive.ArchivePath
 import scalafim.archive.lna.{LnaArchive, LnaDType, LnaExplicitLatent, LnaManifestCodec, LnaPipeline, LnaTemporalDct, LnaValidator, Payload, QuantMethod, QuantParams, QuantScaleScope, TemporalDctNorm, TemporalDctParams, TransformKind, TransformParams, TransformReport}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 
 import java.nio.file.Files
 
 class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
-  private val space = NeuroSpace(Vector(2, 2, 1))
+  private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val data =
     DMat.fromRows(
@@ -89,7 +91,10 @@ class JhdfLnaHdf5StoreSuite extends munit.FunSuite:
           .fold(err => fail(err.message), identity)
 
       assertEquals(LnaValidator.validate(loaded), Vector.empty)
-      assertEquals(loaded.manifest.copy(checksum = None), archive.manifest)
+      assertEquals(
+        LnaManifestCodec.render(loaded.manifest.copy(checksum = None)),
+        LnaManifestCodec.render(archive.manifest)
+      )
       assert(loaded.manifest.checksum.exists(_.matches("[A-Fa-f0-9]{64}")))
       assertEquals(loaded.payloads.keySet, archive.payloads.keySet)
 

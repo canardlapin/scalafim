@@ -1,7 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.{DataSelection, DatasetBackend, DatasetError, DatasetId, DatasetMetadata, DatasetShape, FmriSeries, VoxelDomain}
-import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.image.{DMat, Mask, SomeSampleSpace}
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -14,7 +14,7 @@ enum MatrixFileDelimiter:
 final case class MatrixFileDatasetBackend(
     id: DatasetId,
     path: Path,
-    space: NeuroSpace,
+    space: SomeSampleSpace,
     delimiter: MatrixFileDelimiter = MatrixFileDelimiter.Comma,
     hasHeader: Boolean = false,
     metadata: DatasetMetadata = DatasetMetadata.Empty
@@ -54,7 +54,7 @@ object MatrixFileDatasetBackend:
 
   private def load(
       path: Path,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       delimiter: MatrixFileDelimiter,
       hasHeader: Boolean
   ): Either[DatasetError, LoadedMatrix] =

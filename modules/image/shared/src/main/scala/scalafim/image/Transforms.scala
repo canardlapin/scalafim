@@ -1,31 +1,33 @@
 package scalafim.image
 
+import image4s.filter.LinearFilter
+import image4s.geometry.D3
+import image4s.ops.Border
+import image4s.ops.Correlation
+import image4s.ops.FilterExtent
+import image4s.ops.Kernel as ImageKernel
+import image4s.ops.Offset
+import image4s.ops.OpError
+import image4s.ops.Support
 import ravel.DType
+import ravel.DType.given
 import ravel.NDArray as RavelArray
+import ravel.Rank
+import ravel.Shape
 import scala.annotation.targetName
-
-private def copyVolumeIntoLegacy[A](
-    source: NeuroVol[A],
-    destination: Array[A],
-    offset: Int
-): Unit =
-  var index = 0
-  while index < source.values.size do
-    destination(offset + index) = source.linear(index)
-    index += 1
 
 object Downsample:
 
-  def byFactor(vec: NeuroVec[Double], factor: Double): NeuroVec[Double] =
+  def byFactor(vec: SomeScalarSeries[Double], factor: Double): SomeScalarSeries[Double] =
     byFactor(vec, Vector.fill(3)(factor))
 
-  def byFactor(vec: NeuroVec[Double], factors: Vector[Double]): NeuroVec[Double] =
+  def byFactor(vec: SomeScalarSeries[Double], factors: Vector[Double]): SomeScalarSeries[Double] =
     require(factors.length == 3 && factors.forall(f => f > 0 && f <= 1.0), "factors must be length-3 in (0,1]")
     val oldDims = vec.space.dims.take(4)
     val newSpatial = Vector.tabulate(3)(d => math.max(1, math.round(oldDims(d) * factors(d)).toInt))
     toDims(vec, newSpatial)
 
-  def toDims(vec: NeuroVec[Double], newSpatialDims: Vector[Int]): NeuroVec[Double] =
+  def toDims(vec: SomeScalarSeries[Double], newSpatialDims: Vector[Int]): SomeScalarSeries[Double] =
     require(newSpatialDims.length == 3 && newSpatialDims.forall(_ > 0), "newSpatialDims must be length-3 positive")
     val old = vec.space
     val oldSpatial = old.spatialDims
@@ -34,45 +36,35 @@ object Downsample:
     val newDims4 = newSpatialDims :+ tLen
     val scale = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
 
-    val spatialNelsNew = newSpatialDims.product
-    val out = Array.ofDim[Double](spatialNelsNew * tLen)
-
     def blockRange(d: Int, o: Int): (Int, Int) =
       val start = math.floor(o * scale(d)).toInt
       val end = math.min(oldSpatial(d) - 1, math.floor((o + 1) * scale(d) - 1e-9).toInt)
       (start, math.max(start, end))
 
-    var t = 0
-    while t < tLen do
-      var oz = 0
-      while oz < newSpatialDims(2) do
+    val out =
+      RavelArray.tabulate[Double](
+        newSpatialDims(0),
+        newSpatialDims(1),
+        newSpatialDims(2),
+        tLen
+      ): (ox, oy, oz, time) =>
+        val (x0, x1) = blockRange(0, ox)
+        val (y0, y1) = blockRange(1, oy)
         val (z0, z1) = blockRange(2, oz)
-        var oy = 0
-        while oy < newSpatialDims(1) do
-          val (y0, y1) = blockRange(1, oy)
-          var ox = 0
-          while ox < newSpatialDims(0) do
-            val (x0, x1) = blockRange(0, ox)
-            var sum = 0.0
-            var count = 0
-            var z = z0
-            while z <= z1 do
-              var y = y0
-              while y <= y1 do
-                var x = x0
-                while x <= x1 do
-                  sum += vec(x, y, z, t)
-                  count += 1
-                  x += 1
-                y += 1
-              z += 1
-            val avg = if count == 0 then 0.0 else sum / count.toDouble
-            val lin = Indexing.gridToIndex(Vector(newSpatialDims(0), newSpatialDims(1), newSpatialDims(2), tLen), Vector(ox, oy, oz, t))
-            out(lin) = avg
-            ox += 1
-          oy += 1
-        oz += 1
-      t += 1
+        var sum = 0.0
+        var count = 0
+        var z = z0
+        while z <= z1 do
+          var y = y0
+          while y <= y1 do
+            var x = x0
+            while x <= x1 do
+              sum += vec(x, y, z, time)
+              count += 1
+              x += 1
+            y += 1
+          z += 1
+        if count == 0 then 0.0 else sum / count.toDouble
 
     val scaleFactors = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
     val newSpacing = Vector.tabulate(3)(d => old.spacing(d) * scaleFactors(d))
@@ -85,70 +77,62 @@ object Downsample:
       )
     val newOrigin = Vector.tabulate(3)(i => newTrans(i, newTrans.cols - 1))
     val newSpace =
-      NeuroSpace(
+      SampleSpaces(
         dims = newDims4,
         spacing = Some(newSpacing),
         origin = Some(newOrigin),
         axes = Some(old.axes),
         trans = Some(newTrans)
       )
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
-  @scala.annotation.targetName("byFactorNeuroVolScalar")
-  def byFactor(vol: NeuroVol[Double], factor: Double): NeuroVol[Double] =
+  @scala.annotation.targetName("byFactorNeuroVolumeScalar")
+  def byFactor(vol: SomeScalarVolume[Double], factor: Double): SomeScalarVolume[Double] =
     byFactor(vol, Vector.fill(3)(factor))
 
-  @scala.annotation.targetName("byFactorNeuroVolVector")
-  def byFactor(vol: NeuroVol[Double], factors: Vector[Double]): NeuroVol[Double] =
+  @scala.annotation.targetName("byFactorNeuroVolumeVector")
+  def byFactor(vol: SomeScalarVolume[Double], factors: Vector[Double]): SomeScalarVolume[Double] =
     require(factors.length == 3 && factors.forall(f => f > 0 && f <= 1.0), "factors must be length-3 in (0,1]")
     val old = vol.space
     val oldSpatial = old.spatialDims
     val newSpatial = Vector.tabulate(3)(d => math.max(1, math.round(oldSpatial(d) * factors(d)).toInt))
     toDims(vol, newSpatial)
 
-  @scala.annotation.targetName("toDimsNeuroVol")
-  def toDims(vol: NeuroVol[Double], newSpatialDims: Vector[Int]): NeuroVol[Double] =
+  @scala.annotation.targetName("toDimsNeuroVolume")
+  def toDims(vol: SomeScalarVolume[Double], newSpatialDims: Vector[Int]): SomeScalarVolume[Double] =
     require(newSpatialDims.length == 3 && newSpatialDims.forall(_ > 0), "newSpatialDims must be length-3 positive")
     val old = vol.space
     val oldSpatial = old.spatialDims
     val scale = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
-
-    val spatialNelsNew = newSpatialDims.product
-    val out = Array.ofDim[Double](spatialNelsNew)
 
     def blockRange(d: Int, o: Int): (Int, Int) =
       val start = math.floor(o * scale(d)).toInt
       val end = math.min(oldSpatial(d) - 1, math.floor((o + 1) * scale(d) - 1e-9).toInt)
       (start, math.max(start, end))
 
-    var oz = 0
-    while oz < newSpatialDims(2) do
-      val (z0, z1) = blockRange(2, oz)
-      var oy = 0
-      while oy < newSpatialDims(1) do
+    val out =
+      RavelArray.tabulate[Double](
+        newSpatialDims(0),
+        newSpatialDims(1),
+        newSpatialDims(2)
+      ): (ox, oy, oz) =>
+        val (x0, x1) = blockRange(0, ox)
         val (y0, y1) = blockRange(1, oy)
-        var ox = 0
-        while ox < newSpatialDims(0) do
-          val (x0, x1) = blockRange(0, ox)
-          var sum = 0.0
-          var count = 0
-          var z = z0
-          while z <= z1 do
-            var y = y0
-            while y <= y1 do
-              var x = x0
-              while x <= x1 do
-                sum += vol(x, y, z)
-                count += 1
-                x += 1
-              y += 1
-            z += 1
-          val avg = if count == 0 then 0.0 else sum / count.toDouble
-          val lin = Indexing.gridToIndex(newSpatialDims, Vector(ox, oy, oz))
-          out(lin) = avg
-          ox += 1
-        oy += 1
-      oz += 1
+        val (z0, z1) = blockRange(2, oz)
+        var sum = 0.0
+        var count = 0
+        var z = z0
+        while z <= z1 do
+          var y = y0
+          while y <= y1 do
+            var x = x0
+            while x <= x1 do
+              sum += vol(x, y, z)
+              count += 1
+              x += 1
+            y += 1
+          z += 1
+        if count == 0 then 0.0 else sum / count.toDouble
 
     val scaleFactors = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
     val newSpacing = Vector.tabulate(3)(d => old.spacing(d) * scaleFactors(d))
@@ -161,14 +145,14 @@ object Downsample:
       )
     val newOrigin = Vector.tabulate(3)(i => newTrans(i, newTrans.cols - 1))
     val newSpace =
-      NeuroSpace(
+      SampleSpaces(
         dims = newSpatialDims,
         spacing = Some(newSpacing),
         origin = Some(newOrigin),
         axes = Some(old.axes),
         trans = Some(newTrans)
       )
-    NeuroVol.fromLinear(out, newSpace, vol.label)
+    SomeNeuroVolume.unsafeFromRavel(out, newSpace, vol.label)
 
 object Resample:
 
@@ -203,70 +187,37 @@ object Resample:
 
   trait Resampleable[A]:
     type Out
-    def apply(source: A, target: NeuroSpace, method: Method): Out
+    def apply(source: A, target: SomeSampleSpace, method: Method): Out
 
   object Resampleable:
-    given Resampleable[NeuroVol[Double]] with
-      type Out = NeuroVol[Double]
-      def apply(source: NeuroVol[Double], target: NeuroSpace, method: Method): NeuroVol[Double] =
+    given Resampleable[SomeScalarVolume[Double]] with
+      type Out = SomeScalarVolume[Double]
+      def apply(source: SomeScalarVolume[Double], target: SomeSampleSpace, method: Method): SomeScalarVolume[Double] =
         method match
           case Method.Nearest => nearest(source, target)
           case Method.Linear => trilinear(source, target)
           case Method.Cubic => tricubic(source, target)
 
-    given Resampleable[NeuroVec[Double]] with
-      type Out = NeuroVec[Double]
-      def apply(source: NeuroVec[Double], target: NeuroSpace, method: Method): NeuroVec[Double] =
+    given Resampleable[SomeScalarSeries[Double]] with
+      type Out = SomeScalarSeries[Double]
+      def apply(source: SomeScalarSeries[Double], target: SomeSampleSpace, method: Method): SomeScalarSeries[Double] =
         method match
           case Method.Nearest => nearest(source, target)
           case Method.Linear => trilinear(source, target)
           case Method.Cubic => tricubic(source, target)
-
-    given Resampleable[ClusteredNeuroVol] with
-      type Out = ClusteredNeuroVol
-      def apply(source: ClusteredNeuroVol, target: NeuroSpace, method: Method): ClusteredNeuroVol =
-        val labelVol: NeuroVol[Int] = source.toDense
-        val resLabels = nearest(labelVol, target, fill = 0)
-        val resMask = nearest(source.mask, target, fill = false)
-
-        val targ = target.spatialSpace
-        val spatialNels = targ.spatialDims.product
-        val keepFlags = PrimitiveBuffers.fillConst[Boolean](spatialNels, false)
-
-        var lin = 0
-        while lin < spatialNels do
-          if resMask.linear(lin) && resLabels.linear(lin) != 0 then keepFlags(lin) = true
-          lin += 1
-
-        val outMask = NeuroVol.fromLinear[Boolean](keepFlags, targ, source.label)
-        val activeIdx = Mask.indices(outMask)
-        val outClusters =
-          RavelArray.tabulate[Int](activeIdx.size): i =>
-            resLabels.linear(activeIdx(i))
-
-        val idsPresent =
-          Vector.tabulate(outClusters.size)(i => outClusters(i)).distinct.toSet
-        val outLabelMap =
-          if source.labelMap.isEmpty then Map.empty[Int, String]
-          else source.labelMap.filter { case (k, _) => idsPresent.contains(k) }
-
-        ClusteredNeuroVol(outMask, outClusters, outLabelMap, source.label)
 
   trait HasSpace[T]:
-    def spaceOf(target: T): NeuroSpace
+    def spaceOf(target: T): SomeSampleSpace
 
   object HasSpace:
-    given HasSpace[NeuroSpace] with
-      def spaceOf(target: NeuroSpace): NeuroSpace = target
+    given HasSpace[SomeSampleSpace] with
+      def spaceOf(target: SomeSampleSpace): SomeSampleSpace = target
 
-    given [A]: HasSpace[NeuroVol[A]] with
-      def spaceOf(target: NeuroVol[A]): NeuroSpace = target.space
+    given [A, Sem]: HasSpace[SomeNeuroVolume[A, Sem]] with
+      def spaceOf(target: SomeNeuroVolume[A, Sem]): SomeSampleSpace = target.space
 
-    given [A]: HasSpace[NeuroVec[A]] with
-      def spaceOf(target: NeuroVec[A]): NeuroSpace = target.space
-
-    given HasSpace[ClusteredNeuroVol] with
-      def spaceOf(target: ClusteredNeuroVol): NeuroSpace = target.space
+    given [A, Sem]: HasSpace[SomeNeuroSeries[A, Sem]] with
+      def spaceOf(target: SomeNeuroSeries[A, Sem]): SomeSampleSpace = target.space
 
   def resampleTo[A, T](
     source: A,
@@ -309,465 +260,321 @@ object Resample:
   ): Either[ResamplingPlanError, ResamplingPlan] =
     ResamplingPlan.make(source, target, morphism, method)
 
-  @targetName("planFromNeuroSpaces")
+  @targetName("planFromSampleSpaces")
   def plan(
-      source: NeuroSpace,
-      target: NeuroSpace,
+      source: SomeSampleSpace,
+      target: SomeSampleSpace,
       morphism: SpatialMorphism,
       method: Method
   ): Either[ResamplingPlanError, ResamplingPlan] =
     ResamplingPlan.fromSpaces(source, target, morphism, method)
 
   def resampleTo(
-      source: NeuroVol[Double],
+      source: SomeScalarVolume[Double],
       target: GridSpec,
       morphism: SpatialMorphism,
       method: Method,
       outside: Double
-  ): Either[ResamplingPlanError, NeuroVol[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
 
-  @scala.annotation.targetName("resampleToNeuroVec")
+  @scala.annotation.targetName("resampleToNeuroSeries")
   def resampleTo(
-      source: NeuroVec[Double],
+      source: SomeScalarSeries[Double],
       target: GridSpec,
       morphism: SpatialMorphism,
       method: Method,
       outside: Double
-  ): Either[ResamplingPlanError, NeuroVec[Double]] =
+  ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     plan(GridSpec.fromSpace(source.space), target, morphism, method).flatMap(_.apply(source, outside))
 
-  def nearest(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
-    val src = vol.space
-    val targ = target.spatialSpace
-    val targDims = targ.spatialDims
-    val out = Array.ofDim[Double](targDims.product)
+  def nearest(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
+    executeContinuous(vol, target, Method.Nearest)
 
-    var z = 0
-    while z < targDims(2) do
-      var y = 0
-      while y < targDims(1) do
-        var x = 0
-        while x < targDims(0) do
-          val world = targ.indexToCoord(Vector(x.toDouble, y.toDouble, z.toDouble))
-          val sVox = src.coordToIndex(world)
-          val sx = math.round(sVox(0)).toInt
-          val sy = math.round(sVox(1)).toInt
-          val sz = math.round(sVox(2)).toInt
-          val v =
-            if sx >= 0 && sx < src.spatialDims(0) &&
-               sy >= 0 && sy < src.spatialDims(1) &&
-               sz >= 0 && sz < src.spatialDims(2) then
-              vol(sx, sy, sz)
-            else 0.0
-          val lin = Indexing.gridToIndex(targDims, Vector(x, y, z))
-          out(lin) = v
-          x += 1
-        y += 1
-      z += 1
-
-    NeuroVol.fromLinear(out, targ, vol.label)
-
-  def nearest[A](
-      vol: NeuroVol[A],
-      target: NeuroSpace,
+  def nearest[A, Sem](
+      vol: SomeNeuroVolume[A, Sem],
+      target: SomeSampleSpace,
       fill: A
-  )(using scala.reflect.ClassTag[A], DType[A]): NeuroVol[A] =
+  )(using
+      scala.reflect.ClassTag[A],
+      DType[A],
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroVolume[A, Sem] =
     val src = vol.space
     val targ = target.spatialSpace
     val targDims = targ.spatialDims
     val srcDims = src.spatialDims
-    val out = PrimitiveBuffers.fillConst[A](targDims.product, fill)
+    val out =
+      RavelArray.tabulate[A](targDims(0), targDims(1), targDims(2)):
+        (x, y, z) =>
+          val world =
+            targ.indexToCoord(
+              Vector(x.toDouble, y.toDouble, z.toDouble)
+            )
+          val sourceVoxel = src.coordToIndex(world)
+          val sx = math.round(sourceVoxel(0)).toInt
+          val sy = math.round(sourceVoxel(1)).toInt
+          val sz = math.round(sourceVoxel(2)).toInt
+          if sx >= 0 && sx < srcDims(0) &&
+              sy >= 0 && sy < srcDims(1) &&
+              sz >= 0 && sz < srcDims(2)
+          then vol(sx, sy, sz)
+          else fill
 
-    var z = 0
-    while z < targDims(2) do
-      var y = 0
-      while y < targDims(1) do
-        var x = 0
-        while x < targDims(0) do
-          val world = targ.indexToCoord(Vector(x.toDouble, y.toDouble, z.toDouble))
-          val sVox = src.coordToIndex(world)
-          val sx = math.round(sVox(0)).toInt
-          val sy = math.round(sVox(1)).toInt
-          val sz = math.round(sVox(2)).toInt
-          val v =
-            if sx >= 0 && sx < srcDims(0) &&
-               sy >= 0 && sy < srcDims(1) &&
-               sz >= 0 && sz < srcDims(2) then
-              vol(sx, sy, sz)
-            else fill
-          val lin = Indexing.gridToIndex(targDims, Vector(x, y, z))
-          out(lin) = v
-          x += 1
-        y += 1
-      z += 1
+    SomeNeuroVolume.unsafeFromRavel(out, targ, vol.label)
 
-    NeuroVol.fromLinear(out, targ, vol.label)
+  @scala.annotation.targetName("nearestNeuroSeries")
+  def nearest(vec: SomeScalarSeries[Double], target: SomeSampleSpace): SomeScalarSeries[Double] =
+    executeContinuousSeries(vec, target, Method.Nearest)
 
-  @scala.annotation.targetName("nearestNeuroVec")
-  def nearest(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
-    val tLen = vec.nVolumes
-    val targSpatial = target.spatialSpace
-    val targDims = targSpatial.spatialDims
-    val out = Array.ofDim[Double](targDims.product * tLen)
-
-    var t = 0
-    while t < tLen do
-      val volT = vec.volume(t)
-      val resT = nearest(volT, targSpatial)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
-      t += 1
-
-    val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
-
-  @scala.annotation.targetName("nearestGenericNeuroVec")
-  def nearest[A](
-    vec: NeuroVec[A],
-    target: NeuroSpace,
+  @scala.annotation.targetName("nearestGenericNeuroSeries")
+  def nearest[A, Sem](
+    vec: SomeNeuroSeries[A, Sem],
+    target: SomeSampleSpace,
     fill: A
-  )(using scala.reflect.ClassTag[A], DType[A]): NeuroVec[A] =
+  )(using
+      scala.reflect.ClassTag[A],
+      DType[A],
+      image4s.ValueSemantics[A, Sem]
+  ): SomeNeuroSeries[A, Sem] =
+    val src = vec.space
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
     val targDims = targSpatial.spatialDims
-    val out = PrimitiveBuffers.fillConst[A](targDims.product * tLen, fill)
-
-    var t = 0
-    while t < tLen do
-      val volT = vec.volume(t)
-      val resT = nearest(volT, targSpatial, fill)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
-      t += 1
-
-    val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
-
-  def trilinear(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
-    val src = vol.space
-    val targ = target.spatialSpace
-    val targDims = targ.spatialDims
     val srcDims = src.spatialDims
-    val out = Array.ofDim[Double](targDims.product)
-
-    inline def sample(x: Int, y: Int, z: Int): Double =
-      if x >= 0 && x < srcDims(0) &&
-         y >= 0 && y < srcDims(1) &&
-         z >= 0 && z < srcDims(2) then
-        vol(x, y, z)
-      else 0.0
-
-    var zt = 0
-    while zt < targDims(2) do
-      var yt = 0
-      while yt < targDims(1) do
-        var xt = 0
-        while xt < targDims(0) do
-          val world = targ.indexToCoord(Vector(xt.toDouble, yt.toDouble, zt.toDouble))
-          val sVox = src.coordToIndex(world)
-          val sx = sVox(0)
-          val sy = sVox(1)
-          val sz = sVox(2)
-
-          val x0 = math.floor(sx).toInt
-          val y0 = math.floor(sy).toInt
-          val z0 = math.floor(sz).toInt
-          val x1 = x0 + 1
-          val y1 = y0 + 1
-          val z1 = z0 + 1
-
-          val xd = sx - x0
-          val yd = sy - y0
-          val zd = sz - z0
-
-          val c000 = sample(x0, y0, z0)
-          val c100 = sample(x1, y0, z0)
-          val c010 = sample(x0, y1, z0)
-          val c110 = sample(x1, y1, z0)
-          val c001 = sample(x0, y0, z1)
-          val c101 = sample(x1, y0, z1)
-          val c011 = sample(x0, y1, z1)
-          val c111 = sample(x1, y1, z1)
-
-          val c00 = c000 * (1 - xd) + c100 * xd
-          val c10 = c010 * (1 - xd) + c110 * xd
-          val c01 = c001 * (1 - xd) + c101 * xd
-          val c11 = c011 * (1 - xd) + c111 * xd
-
-          val c0 = c00 * (1 - yd) + c10 * yd
-          val c1 = c01 * (1 - yd) + c11 * yd
-
-          val c = c0 * (1 - zd) + c1 * zd
-
-          val lin = Indexing.gridToIndex(targDims, Vector(xt, yt, zt))
-          out(lin) = c
-          xt += 1
-        yt += 1
-      zt += 1
-
-    NeuroVol.fromLinear(out, targ, vol.label)
-
-  @scala.annotation.targetName("trilinearNeuroVec")
-  def trilinear(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
-    val tLen = vec.nVolumes
-    val targSpatial = target.spatialSpace
-    val targDims = targSpatial.spatialDims
-    val out = Array.ofDim[Double](targDims.product * tLen)
-
-    var t = 0
-    while t < tLen do
-      val volT = vec.volume(t)
-      val resT = trilinear(volT, targSpatial)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
-      t += 1
-
+    val out =
+      RavelArray.tabulate[A](
+        targDims(0),
+        targDims(1),
+        targDims(2),
+        tLen
+      ): (x, y, z, time) =>
+        val world =
+          targSpatial.indexToCoord(
+            Vector(x.toDouble, y.toDouble, z.toDouble)
+          )
+        val sourceVoxel = src.coordToIndex(world)
+        val sx = math.round(sourceVoxel(0)).toInt
+        val sy = math.round(sourceVoxel(1)).toInt
+        val sz = math.round(sourceVoxel(2)).toInt
+        if sx >= 0 && sx < srcDims(0) &&
+            sy >= 0 && sy < srcDims(1) &&
+            sz >= 0 && sz < srcDims(2)
+        then vec(sx, sy, sz, time)
+        else fill
     val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
-  def tricubic(vol: NeuroVol[Double], target: NeuroSpace): NeuroVol[Double] =
-    val src = vol.space
-    val targ = target.spatialSpace
-    val targDims = targ.spatialDims
-    val srcDims = src.spatialDims
-    val out = PrimitiveBuffers.ofSize[Double](targDims.product)
+  def trilinear(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
+    executeContinuous(vol, target, Method.Linear)
 
-    inline def sample(x: Int, y: Int, z: Int): Double =
-      if x >= 0 && x < srcDims(0) &&
-         y >= 0 && y < srcDims(1) &&
-         z >= 0 && z < srcDims(2) then
-        vol(x, y, z)
-      else 0.0
+  @scala.annotation.targetName("trilinearNeuroSeries")
+  def trilinear(vec: SomeScalarSeries[Double], target: SomeSampleSpace): SomeScalarSeries[Double] =
+    executeContinuousSeries(vec, target, Method.Linear)
 
-    inline def cubic(p0: Double, p1: Double, p2: Double, p3: Double, t: Double): Double =
-      val t2 = t * t
-      val t3 = t2 * t
-      0.5 * ((2.0 * p1) +
-        (-p0 + p2) * t +
-        (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t2 +
-        (-p0 + 3.0 * p1 - 3.0 * p2 + p3) * t3)
+  def tricubic(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
+    executeContinuous(vol, target, Method.Cubic)
 
-    val tmpY = Array.ofDim[Double](4)
-    val tmpZ = Array.ofDim[Double](4)
+  @scala.annotation.targetName("tricubicNeuroSeries")
+  def tricubic(vec: SomeScalarSeries[Double], target: SomeSampleSpace): SomeScalarSeries[Double] =
+    executeContinuousSeries(vec, target, Method.Cubic)
 
-    var zt = 0
-    while zt < targDims(2) do
-      var yt = 0
-      while yt < targDims(1) do
-        var xt = 0
-        while xt < targDims(0) do
-          val world = targ.indexToCoord(Vector(xt.toDouble, yt.toDouble, zt.toDouble))
-          val sVox = src.coordToIndex(world)
-          val sx = sVox(0)
-          val sy = sVox(1)
-          val sz = sVox(2)
+  private def executeContinuous(
+      volume: SomeScalarVolume[Double],
+      target: SomeSampleSpace,
+      method: Method
+  ): SomeScalarVolume[Double] =
+    val sourceGrid = GridSpec.fromSpace(volume.space)
+    val targetGrid = GridSpec.fromSpace(target.spatialSpace)
+    ResamplingPlan
+      .make(
+        sourceGrid,
+        targetGrid,
+        IdentityMorphism(SpatialDomainId("world-coordinate-resampling")),
+        method
+      )
+      .flatMap(_.apply(volume, outside = 0.0))
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        identity
+      )
 
-          val x1 = math.floor(sx).toInt
-          val y1 = math.floor(sy).toInt
-          val z1 = math.floor(sz).toInt
-          val tx = sx - x1
-          val ty = sy - y1
-          val tz = sz - z1
-
-          var kk = 0
-          while kk < 4 do
-            val z = z1 + (kk - 1)
-            var jj = 0
-            while jj < 4 do
-              val y = y1 + (jj - 1)
-              val p0 = sample(x1 - 1, y, z)
-              val p1 = sample(x1, y, z)
-              val p2 = sample(x1 + 1, y, z)
-              val p3 = sample(x1 + 2, y, z)
-              tmpY(jj) = cubic(p0, p1, p2, p3, tx)
-              jj += 1
-            tmpZ(kk) = cubic(tmpY(0), tmpY(1), tmpY(2), tmpY(3), ty)
-            kk += 1
-
-          val v = cubic(tmpZ(0), tmpZ(1), tmpZ(2), tmpZ(3), tz)
-          val lin = Indexing.gridToIndex(targDims, Vector(xt, yt, zt))
-          out(lin) = v
-          xt += 1
-        yt += 1
-      zt += 1
-
-    NeuroVol.fromLinear(out, targ, vol.label)
-
-  @scala.annotation.targetName("tricubicNeuroVec")
-  def tricubic(vec: NeuroVec[Double], target: NeuroSpace): NeuroVec[Double] =
-    val tLen = vec.nVolumes
-    val targSpatial = target.spatialSpace
-    val targDims = targSpatial.spatialDims
-    val out = PrimitiveBuffers.ofSize[Double](targDims.product * tLen)
-
-    var t = 0
-    while t < tLen do
-      val volT = vec.volume(t)
-      val resT = tricubic(volT, targSpatial)
-      val spatialNels = targDims.product
-      copyVolumeIntoLegacy(resT, out, t * spatialNels)
-      t += 1
-
-    val newSpace = targSpatial.addDim(tLen, Some(Axis.Time))
-    NeuroVec.fromLinear(out, newSpace, vec.label)
+  private def executeContinuousSeries(
+      series: SomeScalarSeries[Double],
+      target: SomeSampleSpace,
+      method: Method
+  ): SomeScalarSeries[Double] =
+    val sourceGrid = GridSpec.fromSpace(series.space)
+    val targetGrid = GridSpec.fromSpace(target.spatialSpace)
+    ResamplingPlan
+      .make(
+        sourceGrid,
+        targetGrid,
+        IdentityMorphism(SpatialDomainId("world-coordinate-resampling")),
+        method
+      )
+      .flatMap(_.apply(series, outside = 0.0))
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        identity
+      )
 
 object SpatialFilters:
 
   def mapf(
-    vol: NeuroVol[Double],
+    vol: SomeScalarVolume[Double],
     kernel: Kernel3D,
-    mask: Option[NeuroVol[Boolean]] = None
-  ): NeuroVol[Double] =
-    val sp = vol.space
-    val dims = sp.spatialDims
-    require(dims.length == 3, "volume must be 3D")
+    mask: Option[SomeMaskVolume] = None
+  ): SomeScalarVolume[Double] =
+    mask match
+      case None =>
+        filterVolumeWithProvider(vol, kernel)
+      case Some(activeMask) =>
+        val sp = vol.space
+        val dims = sp.spatialDims
+        GridCompatibility.requireSpatial(sp, activeMask.space)
+        val nx = dims(0); val ny = dims(1); val nz = dims(2)
+        val out =
+          RavelArray.tabulate[Double](nx, ny, nz): (x, y, z) =>
+            if activeMask(x, y, z) then
+              var sum = 0.0
+              var q = 0
+              while q < kernel.size do
+                val xx = x + kernel.dx(q)
+                val yy = y + kernel.dy(q)
+                val zz = z + kernel.dz(q)
+                if xx >= 0 && xx < nx &&
+                    yy >= 0 && yy < ny &&
+                    zz >= 0 && zz < nz
+                then sum += kernel.w(q) * vol(xx, yy, zz)
+                q += 1
+              sum
+            else 0.0
+        SomeNeuroVolume.unsafeFromRavel(out, sp, vol.label)
 
-    mask.foreach { m =>
-      GridCompatibility.requireSpatial(sp, m.space)
-    }
+  private def filterVolumeWithProvider(
+      volume: SomeScalarVolume[Double],
+      kernel: Kernel3D
+  ): SomeScalarVolume[Double] =
+    val filtered =
+      providerCorrelation(kernel)
+        .flatMap(operation =>
+          LinearFilter.correlate(
+            volume.sampled,
+            operation
+          )
+        )
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
+    SomeNeuroVolume.unsafeFromSampled(filtered)
 
-    val nx = dims(0); val ny = dims(1); val nz = dims(2)
-    val spatialNels = dims.product
-    val out = PrimitiveBuffers.fillConst[Double](spatialNels, 0.0)
+  private def filterSeriesWithProvider(
+      series: SomeScalarSeries[Double],
+      kernel: Kernel3D
+  ): SomeScalarSeries[Double] =
+    val filtered =
+      providerCorrelation(kernel)
+        .flatMap(operation =>
+          LinearFilter.correlate(
+            series.sampled,
+            operation
+          )
+        )
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
+    val native =
+      SomeNeuroSeries
+        .fromSampled(filtered)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    native
 
-    var lin = 0
-    while lin < spatialNels do
-      val keep = mask.forall(_.linear(lin))
-      if keep then
-        val x = lin % nx
-        val yz = lin / nx
-        val y = yz % ny
-        val z = yz / ny
-
-        var sum = 0.0
-        var q = 0
-        while q < kernel.size do
-          val xx = x + kernel.dx(q)
-          val yy = y + kernel.dy(q)
-          val zz = z + kernel.dz(q)
-          if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-            sum += kernel.w(q) * vol(xx, yy, zz)
-          q += 1
-        out(lin) = sum
-      lin += 1
-
-    NeuroVol.fromLinear(out, sp, vol.label)
+  private def providerCorrelation(
+      kernel: Kernel3D
+  ): Either[OpError, Correlation[D3, Double]] =
+    val entries =
+      Vector
+        .tabulate(kernel.size): index =>
+          (
+            Vector(kernel.dx(index), kernel.dy(index), kernel.dz(index)),
+            kernel.w(index)
+          )
+        .sortBy(entry => (entry._1(0), entry._1(1), entry._1(2)))
+    for
+      support <- Support.create[D3](
+        entries.map(entry => Offset.unsafe[D3](entry._1))
+      )
+      dense <- ImageKernel.dense[D3, Double](
+        support,
+        entries.map(_._2)
+      )
+    yield Correlation(
+      dense,
+      FilterExtent.same(Border.Constant(0.0))
+    )
 
   def gaussianBlur(
-    vol: NeuroVol[Double],
+    vol: SomeScalarVolume[Double],
     sigma: Double = 2.0,
     window: Int = 1,
-    mask: Option[NeuroVol[Boolean]] = None
-  ): NeuroVol[Double] =
+    mask: Option[SomeMaskVolume] = None
+  ): SomeScalarVolume[Double] =
     require(window >= 1, "window must be >= 1")
     require(sigma > 0, "sigma must be positive")
 
     val sp = vol.space
-    val dims = sp.spatialDims
-    val nx = dims(0); val ny = dims(1); val nz = dims(2)
     val spacing = sp.spacing
-    val spatialNels = dims.product
 
     mask.foreach { m =>
       GridCompatibility.requireSpatial(sp, m.space)
     }
 
-    val idx: Array[Int] =
-      mask match
-        case None =>
-          Array.tabulate(spatialNels)(identity)
-        case Some(m) =>
-          val active = Mask.indices(m)
-          Array.tabulate(active.size)(i => active(i))
+    mapf(vol, gaussianKernel(spacing, sigma, window), mask)
 
-    val sz = 2 * window + 1
-    val total = sz * sz * sz
-    val dxArr = Array.ofDim[Int](total)
-    val dyArr = Array.ofDim[Int](total)
-    val dzArr = Array.ofDim[Int](total)
-    val kernel = Array.ofDim[Double](total)
+  def gaussianBlur(vec: SomeScalarSeries[Double], sigma: Double, window: Int): SomeScalarSeries[Double] =
+    require(window >= 1, "window must be >= 1")
+    require(sigma > 0, "sigma must be positive")
+    val kernel = gaussianKernel(vec.space.spacing, sigma, window)
+    filterSeriesWithProvider(vec, kernel)
 
-    val denom = 2.0 * sigma * sigma
-    var sumKernel = 0.0
-    var q = 0
-    var dz = -window
-    while dz <= window do
-      var dy = -window
-      while dy <= window do
-        var dx = -window
-        while dx <= window do
-          dxArr(q) = dx
-          dyArr(q) = dy
-          dzArr(q) = dz
-          val rx = dx.toDouble * spacing(0)
-          val ry = dy.toDouble * spacing(1)
-          val rz = dz.toDouble * spacing(2)
-          val dist2 = rx * rx + ry * ry + rz * rz
-          val w = math.exp(-dist2 / denom)
-          kernel(q) = w
-          sumKernel += w
-          q += 1
-          dx += 1
-        dy += 1
-      dz += 1
-
-    if sumKernel != 0.0 then
-      q = 0
-      while q < total do
-        kernel(q) = kernel(q) / sumKernel
-        q += 1
-
-    val out = PrimitiveBuffers.fillConst[Double](spatialNels, 0.0)
-    var p = 0
-    while p < idx.length do
-      val lin = idx(p)
-      val x = lin % nx
-      val yz = lin / nx
-      val y = yz % ny
-      val z = yz / ny
-
-      var sum = 0.0
-      q = 0
-      while q < total do
-        val xx = x + dxArr(q)
-        val yy = y + dyArr(q)
-        val zz = z + dzArr(q)
-        val v =
-          if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-            vol(xx, yy, zz)
-          else 0.0
-        sum += kernel(q) * v
-        q += 1
-      out(lin) = sum
-      p += 1
-
-    NeuroVol.fromLinear(out, sp, vol.label)
-
-  def gaussianBlur(vec: NeuroVec[Double], sigma: Double, window: Int): NeuroVec[Double] =
-    val tLen = vec.nVolumes
-    val spatialNels = vec.space.spatialDims.product
-    val out = Array.ofDim[Double](spatialNels * tLen)
-    var t = 0
-    while t < tLen do
-      val blurred = gaussianBlur(vec.volume(t), sigma = sigma, window = window)
-      copyVolumeIntoLegacy(blurred, out, t * spatialNels)
-      t += 1
-    NeuroVec.fromLinear(out, vec.space, vec.label)
-
-  def gaussianBlur(vec: NeuroVec[Double]): NeuroVec[Double] =
+  def gaussianBlur(vec: SomeScalarSeries[Double]): SomeScalarSeries[Double] =
     gaussianBlur(vec, sigma = 2.0, window = 1)
 
-  def gaussianBlur(vec: NeuroVec[Double], sigma: Double): NeuroVec[Double] =
+  def gaussianBlur(vec: SomeScalarSeries[Double], sigma: Double): SomeScalarSeries[Double] =
     gaussianBlur(vec, sigma = sigma, window = 1)
 
+  private def gaussianKernel(
+      spacing: Vector[Double],
+      sigma: Double,
+      window: Int
+  ): Kernel3D =
+    val size = 2 * window + 1
+    val denominator = 2.0 * sigma * sigma
+    val kernel =
+      Kernel3D(Vector(size, size, size), spacing): distance =>
+        math.exp(-(distance * distance) / denominator)
+    var total = 0.0
+    var index = 0
+    while index < kernel.size do
+      total += kernel.w(index)
+      index += 1
+    if total != 0.0 then
+      index = 0
+      while index < kernel.size do
+        kernel.w(index) = kernel.w(index) / total
+        index += 1
+    kernel
+
   def bilateralFilter(
-    vol: NeuroVol[Double],
-    mask: Option[NeuroVol[Boolean]] = None,
+    vol: SomeScalarVolume[Double],
+    mask: Option[SomeMaskVolume] = None,
     window: Int = 1,
     spatialSigma: Double = 2.0,
     intensitySigma: Double = 1.0
-  ): NeuroVol[Double] =
+  ): SomeScalarVolume[Double] =
     require(window >= 0, "window must be >= 0")
     require(spatialSigma > 0, "spatialSigma must be positive")
     require(intensitySigma > 0, "intensitySigma must be positive")
@@ -782,25 +589,18 @@ object SpatialFilters:
       GridCompatibility.requireSpatial(sp, m.space)
     }
 
-    val idx: Array[Int] =
-      mask match
-        case None =>
-          Array.tabulate(spatialNels)(identity)
-        case Some(m) =>
-          val active = Mask.indices(m)
-          Array.tabulate(active.size)(i => active(i))
-
     var sum = 0.0
     var sumsq = 0.0
     var count = 0
-    var p = 0
-    while p < idx.length do
-      val v = vol.linear(idx(p))
-      if v.isFinite then
-        sum += v
-        sumsq += v * v
-        count += 1
-      p += 1
+    var ordinal = 0
+    while ordinal < spatialNels do
+      if mask.forall(_.valueAtCanonicalOrdinal(ordinal)) then
+        val value = vol.valueAtCanonicalOrdinal(ordinal)
+        if value.isFinite then
+          sum += value
+          sumsq += value * value
+          count += 1
+      ordinal += 1
 
     val intensitySd =
       if count <= 1 then 0.0
@@ -842,91 +642,190 @@ object SpatialFilters:
         dy += 1
       dz += 1
 
-    val out = PrimitiveBuffers.fillConst[Double](spatialNels, 0.0)
+    val out =
+      RavelArray.tabulate[Double](nx, ny, nz): (x, y, z) =>
+        if mask.forall(_(x, y, z)) then
+          val centerValue = vol(x, y, z)
+          if !centerValue.isFinite then centerValue
+          else
+            var valueSum = 0.0
+            var weightSum = 0.0
+            var offset = 0
+            while offset < total do
+              val xx = x + dxArr(offset)
+              val yy = y + dyArr(offset)
+              val zz = z + dzArr(offset)
+              val neighborValue =
+                if xx >= 0 && xx < nx &&
+                    yy >= 0 && yy < ny &&
+                    zz >= 0 && zz < nz
+                then vol(xx, yy, zz)
+                else 0.0
+              if neighborValue.isFinite then
+                val difference = neighborValue - centerValue
+                val weight =
+                  spatialKernel(offset) *
+                    math.exp(
+                      -(difference * difference) / intensityVar
+                    )
+                valueSum += weight * neighborValue
+                weightSum += weight
+              offset += 1
+            if weightSum == 0.0 then centerValue
+            else valueSum / weightSum
+        else 0.0
 
-    p = 0
-    while p < idx.length do
-      val lin = idx(p)
-      val x = lin % nx
-      val yz = lin / nx
-      val y = yz % ny
-      val z = yz / ny
-      val centerVal = vol.linear(lin)
-      if !centerVal.isFinite then
-        out(lin) = centerVal
-      else
-        var valSum = 0.0
-        var wSum = 0.0
-        q = 0
-        while q < total do
-          val xx = x + dxArr(q)
-          val yy = y + dyArr(q)
-          val zz = z + dzArr(q)
-
-          val neighVal =
-            if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-              vol(xx, yy, zz)
-            else 0.0
-
-          if neighVal.isFinite then
-            val diff = neighVal - centerVal
-            val w = spatialKernel(q) * math.exp(-(diff * diff) / intensityVar)
-            valSum += w * neighVal
-            wSum += w
-          q += 1
-
-        out(lin) = if wSum == 0.0 then centerVal else valSum / wSum
-      p += 1
-
-    NeuroVol.fromLinear(out, sp, vol.label)
+    SomeNeuroVolume.unsafeFromRavel(out, sp, vol.label)
 
   private def bilateralFilterVec(
-    vec: NeuroVec[Double],
-    mask: Option[NeuroVol[Boolean]],
+    vec: SomeScalarSeries[Double],
+    mask: Option[SomeMaskVolume],
     window: Int,
     spatialSigma: Double,
     intensitySigma: Double
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
+    require(window >= 0, "window must be >= 0")
+    require(spatialSigma > 0, "spatialSigma must be positive")
+    require(intensitySigma > 0, "intensitySigma must be positive")
+    val space = vec.space
+    val dims = space.spatialDims
+    val nx = dims(0); val ny = dims(1); val nz = dims(2)
     val tLen = vec.nVolumes
-    val spatialNels = vec.space.spatialDims.product
-    val out = PrimitiveBuffers.fillConst[Double](spatialNels * tLen, 0.0)
-    var t = 0
-    while t < tLen do
-      val volT = vec.volume(t)
-      val filtered = bilateralFilter(volT, mask, window, spatialSigma, intensitySigma)
-      var i = 0
-      while i < spatialNels do
-        out(i + t * spatialNels) = filtered.linear(i)
-        i += 1
-      t += 1
-    NeuroVec.fromLinear(out, vec.space, vec.label)
+    val spatialNels = dims.product
+    mask.foreach(value => GridCompatibility.requireSpatial(space, value.space))
 
-  def bilateralFilter(vec: NeuroVec[Double]): NeuroVec[Double] =
+    val width = 2 * window + 1
+    val total = width * width * width
+    val dx = Array.ofDim[Int](total)
+    val dy = Array.ofDim[Int](total)
+    val dz = Array.ofDim[Int](total)
+    val spatialWeights = Array.ofDim[Double](total)
+    val spatialVariance = 2.0 * spatialSigma * spatialSigma
+    val spacing = space.spacing
+    var offset = 0
+    var oz = -window
+    while oz <= window do
+      var oy = -window
+      while oy <= window do
+        var ox = -window
+        while ox <= window do
+          dx(offset) = ox
+          dy(offset) = oy
+          dz(offset) = oz
+          val rx = ox.toDouble * spacing(0)
+          val ry = oy.toDouble * spacing(1)
+          val rz = oz.toDouble * spacing(2)
+          spatialWeights(offset) =
+            math.exp(-(rx * rx + ry * ry + rz * rz) / spatialVariance)
+          offset += 1
+          ox += 1
+        oy += 1
+      oz += 1
+
+    val out =
+      RavelArray.build[Double, Rank[4]](
+        Shape(nx, ny, nz, tLen)
+      ): output =>
+        var time = 0
+        while time < tLen do
+          var sum = 0.0
+          var sumSquares = 0.0
+          var count = 0
+          var ordinal = 0
+          while ordinal < spatialNels do
+            if mask.forall(_.valueAtCanonicalOrdinal(ordinal)) then
+              val value = vec.valueAtVoxelOrdinal(ordinal, time)
+              if value.isFinite then
+                sum += value
+                sumSquares += value * value
+                count += 1
+            ordinal += 1
+          val standardDeviation =
+            if count <= 1 then 0.0
+            else
+              val mean = sum / count.toDouble
+              val variance =
+                (sumSquares - count.toDouble * mean * mean) /
+                  (count.toDouble - 1.0)
+              if variance > 0.0 then math.sqrt(variance) else 0.0
+          val rawIntensityVariance =
+            2.0 * intensitySigma * intensitySigma *
+              standardDeviation * standardDeviation
+          val intensityVariance =
+            if !rawIntensityVariance.isFinite ||
+                rawIntensityVariance < 1e-12
+            then 1e-12
+            else rawIntensityVariance
+
+          ordinal = 0
+          while ordinal < spatialNels do
+            val voxel = space.indexToVoxel3D(ordinal)
+            val x = voxel.x
+            val y = voxel.y
+            val z = voxel.z
+            val value =
+              if mask.forall(_(x, y, z)) then
+                val center = vec(x, y, z, time)
+                if !center.isFinite then center
+                else
+                  var valueSum = 0.0
+                  var weightSum = 0.0
+                  offset = 0
+                  while offset < total do
+                    val xx = x + dx(offset)
+                    val yy = y + dy(offset)
+                    val zz = z + dz(offset)
+                    val neighbor =
+                      if xx >= 0 && xx < nx &&
+                          yy >= 0 && yy < ny &&
+                          zz >= 0 && zz < nz
+                      then vec(xx, yy, zz, time)
+                      else 0.0
+                    if neighbor.isFinite then
+                      val difference = neighbor - center
+                      val weight =
+                        spatialWeights(offset) *
+                          math.exp(
+                            -(difference * difference) /
+                              intensityVariance
+                          )
+                      valueSum += weight * neighbor
+                      weightSum += weight
+                    offset += 1
+                  if weightSum == 0.0 then center
+                  else valueSum / weightSum
+              else 0.0
+            output.writeLinear(ordinal * tLen + time, value)
+            ordinal += 1
+          time += 1
+    SomeNeuroSeries.unsafeFromRavel(out, space, vec.label)
+
+  def bilateralFilter(vec: SomeScalarSeries[Double]): SomeScalarSeries[Double] =
     bilateralFilterVec(vec, mask = None, window = 1, spatialSigma = 2.0, intensitySigma = 1.0)
 
-  def bilateralFilter(vec: NeuroVec[Double], mask: Option[NeuroVol[Boolean]]): NeuroVec[Double] =
+  def bilateralFilter(vec: SomeScalarSeries[Double], mask: Option[SomeMaskVolume]): SomeScalarSeries[Double] =
     bilateralFilterVec(vec, mask, window = 1, spatialSigma = 2.0, intensitySigma = 1.0)
 
-  @scala.annotation.targetName("bilateralFilterNeuroVec")
+  @scala.annotation.targetName("bilateralFilterNeuroSeries")
   def bilateralFilter(
-    vec: NeuroVec[Double],
-    mask: Option[NeuroVol[Boolean]],
+    vec: SomeScalarSeries[Double],
+    mask: Option[SomeMaskVolume],
     window: Int,
     spatialSigma: Double,
     intensitySigma: Double
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     bilateralFilterVec(vec, mask, window, spatialSigma, intensitySigma)
 
   def bilateralFilter4D(
-    vec: NeuroVec[Double],
-    mask: Option[NeuroVol[Boolean]] = None,
+    vec: SomeScalarSeries[Double],
+    mask: Option[SomeMaskVolume] = None,
     spatialWindow: Int = 1,
     temporalWindow: Int = 1,
     spatialSigma: Double = 2.0,
     intensitySigma: Double = 1.0,
     temporalSigma: Double = 1.0,
     temporalSpacing: Double = 1.0
-  ): NeuroVec[Double] =
+  ): SomeScalarSeries[Double] =
     require(spatialWindow >= 0, "spatialWindow must be >= 0")
     require(temporalWindow >= 0, "temporalWindow must be >= 0")
     require(spatialSigma > 0, "spatialSigma must be positive")
@@ -945,35 +844,21 @@ object SpatialFilters:
       GridCompatibility.requireSpatial(sp, m.space)
     }
 
-    val spatialIdx: Array[Int] =
-      mask match
-        case None =>
-          Array.tabulate(spatialNels)(identity)
-        case Some(m) =>
-          val active = Mask.indices(m)
-          Array.tabulate(active.size)(i => active(i))
-
-    val out = PrimitiveBuffers.ofSize[Double](vec.values.size)
-    var i0 = 0
-    while i0 < out.length do
-      out(i0) = vec.linear(i0)
-      i0 += 1
-
     var sum = 0.0
     var sumsq = 0.0
     var count = 0
-    var p = 0
-    while p < spatialIdx.length do
-      val lin = spatialIdx(p)
-      var t = 0
-      while t < tLen do
-        val v = vec.linear(lin + t * spatialNels)
-        if v.isFinite then
-          sum += v
-          sumsq += v * v
-          count += 1
-        t += 1
-      p += 1
+    var ordinal = 0
+    while ordinal < spatialNels do
+      if mask.forall(_.valueAtCanonicalOrdinal(ordinal)) then
+        var time = 0
+        while time < tLen do
+          val value = vec.valueAtVoxelOrdinal(ordinal, time)
+          if value.isFinite then
+            sum += value
+            sumsq += value * value
+            count += 1
+          time += 1
+      ordinal += 1
 
     val intensitySd =
       if count <= 1 then 0.0
@@ -1028,39 +913,36 @@ object SpatialFilters:
         dz += 1
       dt += 1
 
-    p = 0
-    while p < spatialIdx.length do
-      val lin = spatialIdx(p)
-      val x0 = lin % nx
-      val yz = lin / nx
-      val y0 = yz % ny
-      val z0 = yz / ny
+    val out =
+      RavelArray.tabulate[Double](nx, ny, nz, tLen):
+        (x, y, z, time) =>
+          val center = vec(x, y, z, time)
+          if !mask.forall(_(x, y, z)) || !center.isFinite then center
+          else
+            var valueSum = 0.0
+            var weightSum = 0.0
+            var offset = 0
+            while offset < total do
+              val neighborTime = time + dtArr(offset)
+              if neighborTime >= 0 && neighborTime < tLen then
+                val xx = x + dxArr(offset)
+                val yy = y + dyArr(offset)
+                val zz = z + dzArr(offset)
+                if xx >= 0 && xx < nx &&
+                    yy >= 0 && yy < ny &&
+                    zz >= 0 && zz < nz
+                then
+                  val neighbor = vec(xx, yy, zz, neighborTime)
+                  if neighbor.isFinite then
+                    val difference = center - neighbor
+                    val weight =
+                      kernel(offset) *
+                        math.exp(
+                          -(difference * difference) / intensityVar
+                        )
+                    valueSum += weight * neighbor
+                    weightSum += weight
+              offset += 1
+            if weightSum > 0.0 then valueSum / weightSum else center
 
-      var t0 = 0
-      while t0 < tLen do
-        val centerIdx = lin + t0 * spatialNels
-        val centerVal = vec.linear(centerIdx)
-        if centerVal.isFinite then
-          var valSum = 0.0
-          var wSum = 0.0
-          q = 0
-          while q < total do
-            val tt = t0 + dtArr(q)
-            if tt >= 0 && tt < tLen then
-              val xx = x0 + dxArr(q)
-              val yy = y0 + dyArr(q)
-              val zz = z0 + dzArr(q)
-              if xx >= 0 && xx < nx && yy >= 0 && yy < ny && zz >= 0 && zz < nz then
-                val neighLin = xx + yy * nx + zz * nx * ny
-                val neighVal = vec.linear(neighLin + tt * spatialNels)
-                if neighVal.isFinite then
-                  val diff = centerVal - neighVal
-                  val w = kernel(q) * math.exp(-(diff * diff) / intensityVar)
-                  valSum += w * neighVal
-                  wSum += w
-            q += 1
-          if wSum > 0.0 then out(centerIdx) = valSum / wSum else out(centerIdx) = centerVal
-        t0 += 1
-      p += 1
-
-    NeuroVec.fromLinear(out, sp, vec.label)
+    SomeNeuroSeries.unsafeFromRavel(out, sp, vec.label)

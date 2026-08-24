@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace, SpatialAxis, VoxelCoord}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace, SpatialAxis, VoxelCoord}
+import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class DemandSuite extends munit.FunSuite:
@@ -29,7 +30,7 @@ class DemandSuite extends munit.FunSuite:
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
-    val geometry = spatialValue(SamplingGeometry.volume(NeuroSpace(dims, trans = Some(DMat.eye(4)))))
+    val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(dims, trans = Some(DMat.eye(4)))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(name: String): Domain =
@@ -87,9 +88,9 @@ class DemandSuite extends munit.FunSuite:
     val vertices = demandValue(ResolvedDemand.resolve(FieldDemand.vertices(Vector(3, 1)), surface, 4))
     val timed = demandValue(ResolvedDemand.resolve(FieldDemand.time(block), volume, 4))
 
-    assertEquals(voxels.targetRows, Vector(5, 6))
-    assertEquals(slice.targetRows, Vector(6, 7, 8, 9, 10, 11))
-    assertEquals(box.targetRows, Vector(1, 2, 4, 5))
+    assertEquals(voxels.targetRows, Vector(10, 1))
+    assertEquals(slice.targetRows, Vector(1, 3, 5, 7, 9, 11))
+    assertEquals(box.targetRows, Vector(4, 6, 8, 10))
     assertEquals(mask.targetRows, Vector(0, 2, 11))
     assertEquals(vertices.targetRows, Vector(3, 1))
     assertEquals(timed.observationIndices, Vector(1, 2))
@@ -165,13 +166,13 @@ class DemandSuite extends munit.FunSuite:
 
     assertEquals(selected.sampleCount, 6)
     assertEquals(selected.observations, 2)
-    assertEquals(selected.intent.rowSelection, RowSelection.Rows(Vector(6, 7, 8, 9, 10, 11)))
+    assertEquals(selected.intent.rowSelection, RowSelection.Rows(Vector(1, 3, 5, 7, 9, 11)))
     assertEquals(selected.intent.observationSelection, ObservationSelection.Indices(Vector(2, 3)))
     assertEquals(selected.steps.length, 1)
     selected.steps.head match
       case ViewPlanStep.SelectDemand(domain, _, rows, observations) =>
         assertEquals(domain, volume.id)
-        assertEquals(rows, Vector(6, 7, 8, 9, 10, 11))
+        assertEquals(rows, Vector(1, 3, 5, 7, 9, 11))
         assertEquals(observations, Vector(2, 3))
       case other =>
         fail(s"expected a demand plan step, got $other")

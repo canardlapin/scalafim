@@ -1,41 +1,63 @@
 package scalafim.fmri.motion.io
 
+import image4s.nifti.NiftiDatatype
+import image4s.nifti.NiftiTemporalUnit
+import image4s.nifti.NiftiWriteOptions
 import scalafim.fmri.motion.*
 import scalafim.image.io.Nifti
-import scalafim.image.{DMat, NeuroVec}
+import scalafim.image.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
-import java.nio.{ByteBuffer, ByteOrder}
 
 object MotionNifti:
   def read(path: Path): Either[MotionIoError, MotionNiftiRun] =
     if !Files.isRegularFile(path) then Left(MotionIoError.MissingFile(path))
     else
       try
-        val header = Nifti.readHeader(path)
-        val run = Nifti.readVec(path)
-        sidecarMetadata(defaultSidecar(path), header.dims, header.pixdim, header.preferredAffine)
-          .map(metadata => MotionNiftiRun(run, metadata.copy(path = path)))
+        for
+          header <- Nifti
+            .readHeader(path)
+            .left
+            .map(error => MotionIoError.InvalidInput(path, error.message))
+          decoded <- Nifti
+            .readSeries(path)
+            .left
+            .map(error => MotionIoError.InvalidInput(path, error.message))
+          metadata <- sidecarMetadata(
+            defaultSidecar(path),
+            header.dims,
+            header.pixdim.take(3),
+            header.preferredAffine
+          )
+        yield MotionNiftiRun(
+          decoded.image,
+          metadata.copy(path = path)
+        )
       catch
         case e: Exception => Left(MotionIoError.InvalidInput(path, e.getMessage))
 
   def write(
       path: Path,
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       metadata: Option[MotionNiftiMetadata] = None
   ): Either[MotionIoError, Path] =
-    if path.toString.endsWith(".gz") then
-      Left(MotionIoError.WriteFailed(path, "writing compressed NIfTI is not supported by the lightweight adapter"))
-    else
-      try
-        Option(path.getParent).foreach(parent => Files.createDirectories(parent))
-        Files.write(path, niftiBytes(run, metadata))
-        metadata match
+    try
+      Option(path.getParent).foreach(parent => Files.createDirectories(parent))
+      for
+        _ <- validateWriteMetadata(path, run, metadata)
+        native <- nativeRun(path, run)
+        options <- writeOptions(path, metadata)
+        _ <- Nifti
+          .writeSeries(path, native, options)
+          .left
+          .map(error => MotionIoError.WriteFailed(path, error.message))
+        _ <- metadata match
           case None => Right(path)
-          case Some(value) => writeSidecar(defaultSidecar(path), value).map(_ => path)
-      catch
-        case e: Exception => Left(MotionIoError.WriteFailed(path, e.getMessage))
+          case Some(value) => writeSidecar(defaultSidecar(path), value)
+      yield path
+    catch
+      case e: Exception => Left(MotionIoError.WriteFailed(path, e.getMessage))
 
   def writeSidecar(path: Path, metadata: MotionNiftiMetadata): Either[MotionIoError, Path] =
     try
@@ -72,54 +94,82 @@ object MotionNifti:
             SliceTiming.make(values).map(t => Some(AcquisitionTiming.Slice(t))).left.map(err => MotionIoError.InvalidSidecar(path, err.message))
       yield MotionNiftiMetadata(path, dims, voxelSize, affine, tr, timing)
 
-  private def niftiBytes(run: NeuroVec[Double], metadata: Option[MotionNiftiMetadata]): Array[Byte] =
-    val dims = run.space.dims.take(4)
-    require(dims.length == 4, "motion NIfTI writer expects a 4D NeuroVec")
-    val nels = dims.product
-    val bytes = Array.ofDim[Byte](352 + nels * 8)
-    val bb = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-    bb.putInt(0, 348)
-    bb.putShort(40, 4.toShort)
-    var d = 0
-    while d < 4 do
-      bb.putShort(42 + d * 2, dims(d).toShort)
-      d += 1
-    while d < 7 do
-      bb.putShort(42 + d * 2, 1.toShort)
-      d += 1
-    bb.putShort(70, 64.toShort)
-    bb.putShort(72, 64.toShort)
-    bb.putFloat(76, 1.0f)
-    val spacing = metadata.map(_.voxelSize).getOrElse(run.space.spacing).padTo(3, 1.0)
-    var i = 0
-    while i < 3 do
-      bb.putFloat(80 + i * 4, spacing(i).toFloat)
-      i += 1
-    bb.putFloat(92, metadata.flatMap(_.repetitionTime).getOrElse(1.0).toFloat)
-    bb.putFloat(108, 352.0f)
-    bb.putFloat(112, 1.0f)
-    bb.putFloat(116, 0.0f)
-    val affine = metadata.flatMap(_.affine).getOrElse(run.space.trans)
-    bb.putShort(254, 1.toShort)
-    bb.putFloat(268, affine(0, 3).toFloat)
-    bb.putFloat(272, affine(1, 3).toFloat)
-    bb.putFloat(276, affine(2, 3).toFloat)
-    var c = 0
-    while c < 4 do
-      bb.putFloat(280 + c * 4, affine(0, c).toFloat)
-      bb.putFloat(296 + c * 4, affine(1, c).toFloat)
-      bb.putFloat(312 + c * 4, affine(2, c).toFloat)
-      c += 1
-    bb.put(344, 'n'.toByte)
-    bb.put(345, '+'.toByte)
-    bb.put(346, '1'.toByte)
-    bb.put(347, 0.toByte)
-    val legacyValues = run.copyLegacyLinear
-    i = 0
-    while i < nels do
-      bb.putDouble(352 + i * 8, legacyValues(i))
-      i += 1
-    bytes
+  private def nativeRun(
+      path: Path,
+      run: SomeScalarSeries[Double]
+  ): Either[MotionIoError, SomeScalarSeries[Double]] =
+    for
+      sampleSpace <- SampleSpaces
+        .requireD3(run.space)
+        .left
+        .map(error => MotionIoError.WriteFailed(path, error.message))
+      native <- NeuroSeries
+        .continuous(sampleSpace, run.values, run.sampled.metadata)
+        .left
+        .map(error => MotionIoError.WriteFailed(path, error.message))
+    yield SomeNeuroSeries.eraseSpace(native)
+
+  private def writeOptions(
+      path: Path,
+      metadata: Option[MotionNiftiMetadata]
+  ): Either[MotionIoError, NiftiWriteOptions] =
+    NiftiWriteOptions
+      .create(
+        datatype = NiftiDatatype.Float64,
+        slope = 1.0,
+        intercept = 0.0,
+        nonSpatialPixelDimensions =
+          Vector(metadata.flatMap(_.repetitionTime).getOrElse(1.0)),
+        temporalUnit = NiftiTemporalUnit.Second
+      )
+      .left
+      .map(error => MotionIoError.WriteFailed(path, error.message))
+
+  private def validateWriteMetadata(
+      path: Path,
+      run: SomeScalarSeries[Double],
+      metadata: Option[MotionNiftiMetadata]
+  ): Either[MotionIoError, Unit] =
+    metadata match
+      case None => Right(())
+      case Some(value) =>
+        val runDims = run.space.dims.take(4)
+        val runSpacing = run.space.spacing.take(3)
+        val dimensionsMatch = value.dims == runDims
+        val spacingMatches = sameValues(value.voxelSize, runSpacing)
+        val affineMatches = value.affine.forall: affine =>
+          sameValues(affine.data.toVector, run.space.trans.data.toVector)
+        if !dimensionsMatch then
+          Left(
+            MotionIoError.WriteFailed(
+              path,
+              s"metadata dimensions ${value.dims.mkString("x")} do not match run dimensions ${runDims.mkString("x")}"
+            )
+          )
+        else if !spacingMatches then
+          Left(
+            MotionIoError.WriteFailed(
+              path,
+              s"metadata voxel sizes ${value.voxelSize.mkString("x")} do not match run voxel sizes ${runSpacing.mkString("x")}"
+            )
+          )
+        else if !affineMatches then
+          Left(
+            MotionIoError.WriteFailed(
+              path,
+              "metadata affine does not match the run sample space"
+            )
+          )
+        else Right(())
+
+  private def sameValues(
+      left: Vector[Double],
+      right: Vector[Double],
+      tolerance: Double = 1e-9
+  ): Boolean =
+    left.size == right.size &&
+      left.zip(right).forall: (a, b) =>
+        math.abs(a - b) <= tolerance
 
   private def sidecarJson(metadata: MotionNiftiMetadata): String =
     val fields = Vector.newBuilder[String]

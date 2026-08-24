@@ -1,7 +1,8 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel, RunScopedPath}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
+import scalafim.image.spatialDims
 
 object LnaExplicitLatent:
   val MetadataKindKey: String =
@@ -25,7 +26,7 @@ object LnaExplicitLatent:
 
   def archive(
       response: Response,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-archive"
   ): Either[ArchiveError, LnaArchive] =
@@ -181,7 +182,7 @@ object LnaExplicitLatent:
 
   private def validateResponse(
       response: Response,
-      space: Option[NeuroSpace]
+      space: Option[SomeSampleSpace]
   ): Either[ArchiveError, Response] =
     if response.basis.cols != response.loadings.cols then
       Left(ArchiveError.ShapeMismatch(s"temporal basis has ${response.basis.cols} coefficients but loadings have ${response.loadings.cols}"))

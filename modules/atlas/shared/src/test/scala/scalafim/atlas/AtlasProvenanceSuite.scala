@@ -5,8 +5,8 @@ class AtlasProvenanceSuite extends munit.FunSuite:
   private val regions =
     RegionIndex(
       Vector(
-        Region(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
-        Region(RegionId(3), "C", hemisphere = Some(Hemisphere.Right))
+        AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata(RegionId(3), "C", hemisphere = Some(Hemisphere.Right))
       )
     )
 

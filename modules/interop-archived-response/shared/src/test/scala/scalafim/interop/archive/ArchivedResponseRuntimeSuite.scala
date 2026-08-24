@@ -1,5 +1,7 @@
 package scalafim.interop.archive
 
+import scalafim.image.SampleSpaces
+
 import cats.arrow.FunctionK
 import cats.data.EitherT
 import cats.effect.{Deferred, IO, Ref, Resource}
@@ -38,7 +40,7 @@ import scalafim.dataset.{
   RunId
 }
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 import scalafim.response.{
   CalibrationState,
   DomainId,
@@ -589,7 +591,7 @@ class ArchivedResponseRuntimeSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("runtime-dataset"),
         DMat.fromRows(Vector(Vector(42.0))),
-        NeuroSpace(Vector(1, 1, 1))
+        SampleSpaces(Vector(1, 1, 1))
       )
     FmriDataset.unsafe(
       backend,

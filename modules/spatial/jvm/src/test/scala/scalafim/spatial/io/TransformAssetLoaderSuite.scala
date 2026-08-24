@@ -1,6 +1,8 @@
 package scalafim.spatial.io
 
-import scalafim.image.{Axis, DMat, NeuroSpace, NeuroVec}
+import ravel.NDArray as RavelArray
+import scalafim.image.{SampleSpaces, DMat, DenseVectorField, GridSpec, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
 
@@ -17,7 +19,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
   private def linearValue[A](result: Either[LinearMapError, A]): A =
     result.fold(error => fail(error.getMessage), identity)
 
-  private def domain(name: String, space: NeuroSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))): Domain =
+  private def domain(name: String, space: SomeSampleSpace = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
@@ -51,21 +53,20 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
       finally children.close()
       Files.deleteIfExists(directory)
 
-  private def writeDenseField(path: Path, space: NeuroSpace, components: Vector[Vector[Double]]): Unit =
+  private def writeDenseField(path: Path, space: SomeSampleSpace, components: Vector[Vector[Double]]): Unit =
     require(components.length == 3)
     require(components.forall(_.length == space.spatialDims.product))
-    val values = Array.ofDim[Double](components.map(_.length).sum)
-    var component = 0
-    var offset = 0
-    while component < components.length do
-      var i = 0
-      while i < components(component).length do
-        values(offset + i) = components(component)(i)
-        i += 1
-      offset += components(component).length
-      component += 1
-    val vectorSpace = space.addDim(3, Some(Axis("Vector")))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, vectorSpace))
+    val grid = GridSpec.fromSpace(space)
+    val values =
+      RavelArray.tabulate[Double](
+        space.spatialDims(0),
+        space.spatialDims(1),
+        space.spatialDims(2),
+        3
+      ) { (x, y, z, component) =>
+        components(component)(space.gridToIndex3D(x, y, z))
+      }
+    Nifti.writeDenseVectorField(path, DenseVectorField.displacement(grid, values))
 
   test("ANTs, FSL, and AFNI affine adapters normalize native direction and orientation to one RAS pullback"):
     withDirectory { directory =>
@@ -115,7 +116,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
   test("an ANTs LPS displacement fixture becomes an executable absolute RAS pullback"):
     withDirectory { directory =>
-      val space = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
+      val space = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
       val source = domain("source", space)
       val target = domain("target", space)
       val path = directory.resolve("ants-Warp.nii")
@@ -138,7 +139,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
   test("dense inverse claims require an executable inverse asset and retain inverse quality"):
     withDirectory { directory =>
-      val space = NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
+      val space = SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4)))
       val source = domain("source", space)
       val target = domain("target", space)
       val forwardPath = directory.resolve("ants-Warp.nii")
@@ -183,7 +184,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
         case other => fail(s"expected malformed HDF5 error, got $other")
 
       val dense = directory.resolve("ants-Warp.nii")
-      writeDenseField(dense, NeuroSpace(Vector(2, 1, 1), trans = Some(DMat.eye(4))), Vector.fill(3)(Vector(0.0, 0.0)))
+      writeDenseField(dense, SampleSpaces(Vector(2, 1, 1), trans = Some(DMat.eye(4))), Vector.fill(3)(Vector(0.0, 0.0)))
       val forwardDense =
         TransformLoadOptions(
           TransformDirection.ForwardSourceToTarget,

@@ -1,6 +1,7 @@
 package scalafim.spatial
 
 import scalafim.image.{Indexing, SpatialAxis, VoxelCoord}
+import scalafim.image.SampleSpaces.*
 
 enum DemandError:
   case EmptySelection(label: String)
@@ -343,16 +344,16 @@ private def resolveSpatial(
           Left(DemandError.VoxelRegionOutOfBounds(region.maxExclusive, dimensions.toVector))
         else
           val rows = Vector.newBuilder[Int]
-          var z = region.minInclusive.z
-          while z < region.maxExclusive.z do
+          var x = region.minInclusive.x
+          while x < region.maxExclusive.x do
             var y = region.minInclusive.y
             while y < region.maxExclusive.y do
-              var x = region.minInclusive.x
-              while x < region.maxExclusive.x do
+              var z = region.minInclusive.z
+              while z < region.maxExclusive.z do
                 rows += Indexing.gridToIndex3D(dimensions, x, y, z)
-                x += 1
+                z += 1
               y += 1
-            z += 1
+            x += 1
           Right(rows.result())
       }
 

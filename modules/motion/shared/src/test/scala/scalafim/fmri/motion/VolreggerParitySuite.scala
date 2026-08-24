@@ -1,24 +1,24 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
+import scalafim.image.*
 
 class VolreggerParitySuite extends munit.FunSuite:
 
   private val fixture = VolreggerFixtures.coreFixture
 
-  private def run1x1x1(values: Vector[Double]): NeuroVec[Double] =
+  private def run1x1x1(values: Vector[Double]): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    NeuroVec.fromLinear(data, NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "volregger-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "volregger-fixture")
 
-  private def lineRun(values: Vector[Double]): NeuroVec[Double] =
+  private def lineRun(values: Vector[Double]): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    NeuroVec.fromLinear(data, NeuroSpace(Vector(values.length, 1, 1)).addDim(1, Some(Axis.Time)), "volregger-apply-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(values.length, 1, 1)).addDim(1, Some(Axis.Time)), "volregger-apply-fixture")
 
-  private def allMask(space: NeuroSpace): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "all-mask")
+  private def allMask(space: SomeSampleSpace): SomeMaskVolume =
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "all-mask")
 
-  private def identityEstimatorRun(): NeuroVec[Double] =
+  private def identityEstimatorRun(): SomeScalarSeries[Double] =
     val dims = fixture.doubles("estimator_identity_dims").map(_.toInt)
     val nx = dims(0)
     val ny = dims(1)
@@ -26,16 +26,17 @@ class VolreggerParitySuite extends munit.FunSuite:
     val nt = dims(3)
     val nxyz = nx * ny * nz
     val frame = Array.fill(nxyz)(0.0)
-    frame((nx / 2) + nx * ((ny / 2) + ny * (nz / 2))) = 5.0
+    val space = SampleSpaces(Vector(nx, ny, nz))
+    frame(space.gridToIndex3D(nx / 2, ny / 2, nz / 2)) = 5.0
     val data = PrimitiveBuffers.ofSize[Double](nxyz * nt)
-    var t = 0
-    while t < nt do
-      var i = 0
-      while i < nxyz do
-        data(i + t * nxyz) = frame(i)
-        i += 1
-      t += 1
-    NeuroVec.fromLinear(data, NeuroSpace(Vector(nx, ny, nz)).addDim(nt, Some(Axis.Time)), "volregger-estimator-fixture")
+    var i = 0
+    while i < nxyz do
+      var t = 0
+      while t < nt do
+        data(i * nt + t) = frame(i)
+        t += 1
+      i += 1
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(nt, Some(Axis.Time)), "volregger-estimator-fixture")
 
   private def baseValueAt(x: Double, y: Double, z: Double): Double =
     val dx = x - 3.0
@@ -50,37 +51,34 @@ class VolreggerParitySuite extends munit.FunSuite:
       0.08 * dy * dy +
       0.05 * dx * dz
 
-  private def translationEstimatorRun(): NeuroVec[Double] =
+  private def translationEstimatorRun(): SomeScalarSeries[Double] =
     val dims = fixture.doubles("estimator_translation_dims").map(_.toInt)
     val nx = dims(0)
     val ny = dims(1)
     val nz = dims(2)
     val nt = dims(3)
     val nxyz = nx * ny * nz
+    val space = SampleSpaces(Vector(nx, ny, nz))
     val fixed =
       Array.tabulate(nxyz) { lin =>
-        val i = lin % nx
-        val j = (lin / nx) % ny
-        val k = lin / (nx * ny)
-        baseValueAt(i.toDouble, j.toDouble, k.toDouble)
+        val voxel = space.indexToVoxel3D(lin)
+        baseValueAt(voxel.x.toDouble, voxel.y.toDouble, voxel.z.toDouble)
       }
     val moving =
       Array.tabulate(nxyz) { lin =>
-        val i = lin % nx
-        val j = (lin / nx) % ny
-        val k = lin / (nx * ny)
-        val srcI = math.min(nx - 1, i + 1)
-        fixed(srcI + nx * (j + ny * k))
+        val voxel = space.indexToVoxel3D(lin)
+        val srcI = math.min(nx - 1, voxel.x + 1)
+        fixed(space.gridToIndex3D(srcI, voxel.y, voxel.z))
       }
     val data = PrimitiveBuffers.ofSize[Double](nxyz * nt)
     var i = 0
     while i < nxyz do
-      data(i) = fixed(i)
-      data(i + nxyz) = moving(i)
+      data(i * nt) = fixed(i)
+      data(i * nt + 1) = moving(i)
       i += 1
-    NeuroVec.fromLinear(data, NeuroSpace(Vector(nx, ny, nz)).addDim(nt, Some(Axis.Time)), "volregger-translation-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, space.addDim(nt, Some(Axis.Time)), "volregger-translation-fixture")
 
-  private def translationEstimatorMask(space: NeuroSpace): NeuroVol[Boolean] =
+  private def translationEstimatorMask(space: SomeSampleSpace): SomeMaskVolume =
     val dims = space.spatialDims
     val nx = dims(0)
     val ny = dims(1)
@@ -88,14 +86,12 @@ class VolreggerParitySuite extends munit.FunSuite:
     val nxyz = nx * ny * nz
     val data =
       PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
-        val i = lin % nx
-        val j = (lin / nx) % ny
-        val k = lin / (nx * ny)
-        i >= 1 && i < nx - 1 &&
-          j >= 1 && j < ny - 1 &&
-          k >= 1 && k < nz - 1
+        val voxel = space.indexToVoxel3D(lin)
+        voxel.x >= 1 && voxel.x < nx - 1 &&
+          voxel.y >= 1 && voxel.y < ny - 1 &&
+          voxel.z >= 1 && voxel.z < nz - 1
       }
-    NeuroVol.fromLinear(data, space.spatialSpace, "volregger-translation-mask")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(data, space.spatialSpace, "volregger-translation-mask")
 
   private def poseFrom(values: Vector[Double]): RigidPose =
     assertEquals(values.length, 6)
@@ -191,7 +187,7 @@ class VolreggerParitySuite extends munit.FunSuite:
     val radiusFd = MotionMetrics.transformDisplacement(pose)
     assertEqualsDouble(radiusFd, fixture.doubles("radius_fd_pose").head, 1e-12)
 
-    val mask = allMask(NeuroSpace(Vector(3, 3, 3), spacing = Some(Vector(2.0, 2.0, 2.0))))
+    val mask = allMask(SampleSpaces(Vector(3, 3, 3), spacing = Some(Vector(2.0, 2.0, 2.0))))
     val summary =
       MotionMetrics
         .maskedDisplacementSummary(mask, RigidPose.unsafe(1.0, 0.0, 0.0, 0.0, 0.0, 0.0), Some(RigidPose.identity))
@@ -218,8 +214,8 @@ class VolreggerParitySuite extends munit.FunSuite:
     val clamp = MotionApplier.apply(run, trace).fold(err => fail(err.message), identity)
     val zero = MotionApplier.apply(run, trace, zeroControl).fold(err => fail(err.message), identity)
 
-    assertVectorClose(clamp.copyLegacyLinear.toVector, fixture.doubles("apply_edge_plus_x_clamp"), 1e-12)
-    assertVectorClose(zero.copyLegacyLinear.toVector, fixture.doubles("apply_edge_plus_x_zero"), 1e-12)
+    assertVectorClose(clamp.copyToCanonicalArray.toVector, fixture.doubles("apply_edge_plus_x_clamp"), 1e-12)
+    assertVectorClose(zero.copyToCanonicalArray.toVector, fixture.doubles("apply_edge_plus_x_zero"), 1e-12)
   }
 
   test("identity estimator fixture matches generated volregger zero-motion contract") {

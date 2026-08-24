@@ -48,7 +48,7 @@ MVPA searchlight maps, surface/parcel reductions, and simulated fields.
 
 Dependency direction matters. `threshold` can depend on `image` for
 `NeuroVol`, `Mask`, `ClusteredNeuroVol`, `ConnComp`, `Kernel3D`, and
-`NeuroSpace`, and on `linalg` for primitive matrix/vector helpers. It must not
+`SomeSampleSpace`, and on `linalg` for primitive matrix/vector helpers. It must not
 depend on `group`; later `group` code can consume `threshold` results or share
 generic multiple-testing helpers by moving those helpers down, not by creating a
 cycle.

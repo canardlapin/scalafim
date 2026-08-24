@@ -1,16 +1,16 @@
 package scalafim.fmri.threshold
 
 import scalafim.locus.mapping
-import scalafim.image.{Mask, NeuroSpace, NeuroVol}
+import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdLocusSuite extends munit.FunSuite:
 
   private def field(
       active: Int*
   ): MaskedField =
-    val space = NeuroSpace(Vector(4, 1, 1))
+    val space = SampleSpaces(Vector(4, 1, 1))
     val stat =
-      NeuroVol.fromLinear[Double](
+      SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](
         Array(1.0, 2.0, 3.0, 4.0),
         space
       )

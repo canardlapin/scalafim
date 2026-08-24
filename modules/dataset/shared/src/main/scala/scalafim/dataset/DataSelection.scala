@@ -4,10 +4,18 @@ import scalafim.image.{
   GridCompatibility,
   Indexing,
   Mask,
-  NeuroSpace,
-  VoxelCoord,
-  VoxelSelection as ImageVoxelSelection
+  SampleSpaces,
+  SomeSampleSpace,
+  VoxelCoord
 }
+import scalafim.image.GridDomainOps.*
+import scalafim.image.SampleSpaces.*
+import scalafim.image.space
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.locus.GridDomain
+import locus4s.Selection
+import locus4s.SpaceMismatch
 import scalafim.locus.Selection as LocusSelection
 
 opaque type TimepointIndex = Int
@@ -116,17 +124,24 @@ object VoxelSelection:
   def coords(values: VoxelCoord*): VoxelSelection =
     VoxelSelection.Coords(values.toVector)
 
-  def fromImage(
-      selection: ImageVoxelSelection,
+  def fromImage[F <: Frame[D3], S, T](
+      domain: GridDomain[F, D3, S],
+      selection: Selection[T],
       shape: DatasetShape
   ): Either[DatasetError, VoxelSelection] =
-    GridCompatibility
-      .volume(shape.volumeSpace, selection.space)
+    val ownerCheck =
+      if domain.space.sameRuntimeOwnerAs(selection.space) then Right(())
+      else Left(SpaceMismatch.between(domain.space, selection.space))
+    ownerCheck
       .left
       .map(error => DatasetError.ShapeMismatch(error.message))
       .flatMap: _ =>
-        val indices = selection.linearIndices
-        fromInts(Vector.tabulate(indices.size)(i => indices(i))*)
+        GridCompatibility
+          .volume(shape.volumeSpace, domain.volumeSpace)
+          .left
+          .map(error => DatasetError.ShapeMismatch(error.message))
+      .flatMap: _ =>
+        fromInts(selection.ordinals.toVector*)
 
 enum VoxelDomainKind:
   case FullSpatial
@@ -160,7 +175,7 @@ final class VoxelDomain private (
 
   def resolve(
       selection: VoxelSelection,
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[DatasetError, Vector[VoxelIndex]] =
     selection match
       case VoxelSelection.All =>
@@ -198,7 +213,7 @@ final class VoxelDomain private (
 
   private def resolveCoordinates(
       values: Vector[VoxelCoord],
-      space: NeuroSpace
+      space: SomeSampleSpace
   ): Either[DatasetError, Vector[VoxelIndex]] =
     if values.isEmpty then Left(DatasetError.EmptySelection(DatasetAxis.Voxel))
     else
@@ -256,20 +271,36 @@ object VoxelDomain:
     GridCompatibility.spatial(shape.space, mask.space)
       .left
       .map(error => DatasetError.ShapeMismatch(error.message))
-      .flatMap: _ =>
-        val maskIndices = Mask.indices(mask)
-        val voxels = Vector.newBuilder[VoxelIndex]
-        voxels.sizeHint(maskIndices.size)
-        var i = 0
-        var failure = Option.empty[DatasetError]
-        while i < maskIndices.size && failure.isEmpty do
-          VoxelIndex.make(maskIndices(i)) match
-            case Left(error) => failure = Some(error)
-            case Right(voxel) => voxels += voxel
-          i += 1
-        failure match
-          case Some(error) => Left(error)
-          case None => fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
+      .flatMap(_ => fromAlignedMask(mask, shape))
+
+  def fromMask(
+      mask: Mask.MaskVol,
+      shape: DatasetShape,
+      congruence: scalafim.image.CertifiedGridCongruence
+  ): Either[DatasetError, VoxelDomain] =
+    GridCompatibility
+      .acceptCertifiedSpatial(congruence, shape.space, mask.space)
+      .left
+      .map(error => DatasetError.ShapeMismatch(error.message))
+      .flatMap(_ => fromAlignedMask(mask, shape))
+
+  private def fromAlignedMask(
+      mask: Mask.MaskVol,
+      shape: DatasetShape
+  ): Either[DatasetError, VoxelDomain] =
+    val maskIndices = Mask.indices(mask)
+    val voxels = Vector.newBuilder[VoxelIndex]
+    voxels.sizeHint(maskIndices.size)
+    var i = 0
+    var failure = Option.empty[DatasetError]
+    while i < maskIndices.size && failure.isEmpty do
+      VoxelIndex.make(maskIndices(i)) match
+        case Left(error) => failure = Some(error)
+        case Right(voxel) => voxels += voxel
+      i += 1
+    failure match
+      case Some(error) => Left(error)
+      case None => fromVoxels(VoxelDomainKind.ActiveMask, shape.spatialSize, voxels.result())
 
   private def fromVoxels(
       kind: VoxelDomainKind,
@@ -391,7 +422,7 @@ object ResolvedDataSelection:
         validTimepoints <- validateTimepoints(timepoints, timeSize)
         validVoxels <- validateVoxels(voxels, voxelSize)
         shape <- DatasetShape.make(
-          NeuroSpace(Vector(voxelSize, 1, 1)),
+          SampleSpaces(Vector(voxelSize, 1, 1)),
           timeSize
         )
         voxelDomain <- VoxelDomain.full(shape)
@@ -427,8 +458,8 @@ object ResolvedDataSelection:
         val timepoints: LocusSelection[T] = timepoints
         val voxels: LocusSelection[X] = voxels
     new ResolvedDataSelection(
-      timepoints.indices.map(point => TimepointIndex.unsafe(point.value)).toVector,
-      voxels.indices.map(point => VoxelIndex.unsafe(point.value)).toVector,
+      timepoints.indices.map(index => TimepointIndex.unsafe(index.value)).toVector,
+      voxels.indices.map(index => VoxelIndex.unsafe(index.value)).toVector,
       locusSelection
     )
 

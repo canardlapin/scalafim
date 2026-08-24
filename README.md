@@ -105,7 +105,7 @@ explicitly:
 sbt \
   -Dscalafim.graph4s.build=../graph4s \
   -Dscalafim.locus4s.build=../locus4s \
-  compileAll
+  scalafimCompileAll
 ```
 
 The override applies only to that sbt process. Removing the properties restores
@@ -130,8 +130,8 @@ serialization, performance gates, and the cross-platform example.
 ## Common Commands
 
 ```sh
-sbt compileAll
-sbt testAll
+sbt scalafimCompileAll
+sbt scalafimTestAll
 sbt locusDataJVM/test
 sbt locusDataJS/test
 sbt pipelineJVM/test

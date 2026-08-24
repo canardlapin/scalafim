@@ -1,10 +1,10 @@
 package scalafim.fmri.motion
 
-import scalafim.image.{NeuroVec, NeuroVol}
+import scalafim.image.*
 
 final case class MotionCorrectionResult(
     estimate: MotionEstimate,
-    corrected: Option[NeuroVec[Double]],
+    corrected: Option[SomeScalarSeries[Double]],
     qc: Option[MotionQc],
     plan: MotionPlan,
     applyControl: Option[ApplyControl]
@@ -29,10 +29,10 @@ object MotionCorrectionResult:
     )
 
   def fromEstimate(
-      run: NeuroVec[Double],
+      run: SomeScalarSeries[Double],
       estimate: MotionEstimate,
       plan: MotionPlan,
-      mask: Option[NeuroVol[Boolean]] = None,
+      mask: Option[SomeMaskVolume] = None,
       applyControl: ApplyControl = ApplyControl.linear,
       qcPolicy: MotionQcPolicy = MotionQcPolicy.default
   ): Either[MotionError, MotionCorrectionResult] =
@@ -63,8 +63,8 @@ object MotionCorrectionResult:
       )
 
   def estimateAndApply(
-      run: NeuroVec[Double],
-      mask: Option[NeuroVol[Boolean]] = None,
+      run: SomeScalarSeries[Double],
+      mask: Option[SomeMaskVolume] = None,
       plan: MotionPlan = MotionPlan.default,
       applyControl: ApplyControl = ApplyControl.linear,
       qcPolicy: MotionQcPolicy = MotionQcPolicy.default

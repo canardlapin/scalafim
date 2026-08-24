@@ -10,7 +10,7 @@ import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SampleSpaces}
 import gale.linalg.DMat
 
 /** Source-confirmed P2.6 follow-up.
@@ -391,7 +391,7 @@ class RunLocalAxesScenarioSuite extends munit.FunSuite:
       backend = InMemoryDatasetBackend(
         DatasetId(s"scenario-run-local-$label"),
         ImageDMat.fromRows(Vector.fill(samplingFrame.blockLens.sum)(Vector(0.0, 0.0))),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       samplingFrame = samplingFrame,
       events = events
@@ -414,7 +414,7 @@ class RunLocalAxesScenarioSuite extends munit.FunSuite:
       backend = InMemoryDatasetBackend(
         DatasetId(s"scenario-run-local-$label-response"),
         ImageDMat.fromRows(response.toRows),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       samplingFrame = samplingFrame,
       events = events

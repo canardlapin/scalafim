@@ -1,16 +1,12 @@
 package scalafim.surface
 
-import scalafim.image.DMat
-import scalafim.image.NeuroSpace
-import scalafim.image.NeuroVol
-import scalafim.image.PrimitiveBuffers
-import scalafim.image.SpatialDomainId
+import scalafim.image.*
 
 class SurfaceSamplingSuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(3, 3, 3))
+  private val space = SampleSpaces(Vector(3, 3, 3))
   private val volume =
-    NeuroVol.fromLinear(
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(
       PrimitiveBuffers.tabulate[Double](27) { idx =>
         val g = space.indexToGrid3D(idx)
         g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
@@ -48,7 +44,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     assertEqualsDouble(white.values.valueAt(VertexId(0)).get, 0.0, 1e-12)
     assertEqualsDouble(pial.values.valueAt(VertexId(0)).get, 200.0, 1e-12)
 
-  test("surfaceToWorld transforms are applied before NeuroSpace coordinate lookup"):
+  test("surfaceToWorld transforms are applied before SomeSampleSpace coordinate lookup"):
     val flat = flatTriangle(SurfaceKind.White)
     val translated =
       SurfaceGeometry(
@@ -105,7 +101,7 @@ class SurfaceSamplingSuite extends munit.FunSuite:
 
   test("masking can produce explicit empty samples"):
     val mask =
-      NeuroVol.fromLinear(
+      SomeMaskVolume.unsafeCopyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](27, false),
         space,
         "empty-mask"
@@ -214,9 +210,9 @@ class SurfaceSamplingSuite extends munit.FunSuite:
       VolumeSurfaceSamplingPlan(pair, SurfaceSamplingPath.NormalLine(Vector.empty))
 
     val badMask =
-      NeuroVol.fromLinear(
+      SomeMaskVolume.unsafeCopyFromCanonicalArray(
         PrimitiveBuffers.fillConst[Boolean](8, true),
-        NeuroSpace(Vector(2, 2, 2)),
+        SampleSpaces(Vector(2, 2, 2)),
         "bad-mask"
       )
     interceptMessage[IllegalArgumentException]("requirement failed: mask/volume space mismatch"):

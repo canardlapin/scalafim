@@ -19,7 +19,7 @@ import scalafim.fmri.model.{
   ModelError,
   ModelVolumeWeighting
 }
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SampleSpaces}
 import gale.linalg.DMat
 
 /** Acceptance scenarios for the structural design/hypothesis seam.
@@ -944,7 +944,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("structural-first-level"),
         ImageDMat.fromRows(response),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
       events
@@ -968,7 +968,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-3x3"),
         ImageDMat.fromRows(response),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
       DatasetEvents(rows.toVector)
@@ -989,7 +989,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-factor-modulator"),
         ImageDMat.fromRows(response),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
       DatasetEvents.unsafeTyped(rows.toVector)
@@ -1009,7 +1009,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-wls"),
         ImageDMat.fromRows(WlsRFixture.response),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       scalafim.fmri.hrf.design.SamplingFrame(blockLens = Seq(WlsRFixture.response.length), tr = Seq(1.0)),
       events
@@ -1028,7 +1028,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-estimated-volume-weights"),
         ImageDMat.fromRows(WlsRFixture.dvarsResponse),
-        NeuroSpace(Vector(3, 1, 1))
+        SampleSpaces(Vector(3, 1, 1))
       ),
       scalafim.fmri.hrf.design.SamplingFrame(blockLens = Seq(WlsRFixture.dvarsResponse.length), tr = Seq(1.0)),
       events
@@ -1050,7 +1050,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       InMemoryDatasetBackend(
         DatasetId("structural-first-level-heterogeneous-hrf"),
         ImageDMat.fromRows(response),
-        NeuroSpace(Vector(2, 1, 1))
+        SampleSpaces(Vector(2, 1, 1))
       ),
       Sampling,
       events

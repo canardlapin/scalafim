@@ -3,6 +3,7 @@ package scalafim.dataset
 import cats.data.EitherT
 import cats.effect.kernel.Sync
 import cats.syntax.all.*
+import scalafim.image.SampleSpaces.*
 import scalafim.response.*
 
 enum ResponseAdapterError:

@@ -56,9 +56,9 @@ final case class SurfaceProjectionResult(
 object SurfaceVolumeProjection:
   def materialize(
     morphism: VolToSurfMorphism,
-    volume: NeuroVol[Double],
+    volume: SomeScalarVolume[Double],
     policy: SurfaceProjectionPolicy = SurfaceProjectionPolicy(),
-    mask: Option[NeuroVol[Boolean]] = None
+    mask: Option[SomeMaskVolume] = None
   ): SurfaceProjectionResult =
     val started = System.nanoTime()
     val sampled = morphism.sample(volume, mask)

@@ -2,6 +2,7 @@ package scalafim.image
 
 import scala.reflect.ClassTag
 import ravel.DType
+import ravel.NDArray as RavelArray
 import scala.util.Random
 
 class SliceOrientationOracleSuite extends munit.FunSuite:
@@ -107,17 +108,17 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
   private def dot(left: Vector[Double], right: Vector[Double]): Double =
     left(0) * right(0) + left(1) * right(1) + left(2) * right(2)
 
-  private def volume[A: ClassTag: DType](
+  private def volume[A: ClassTag: DType, Sem](
     dims: SpatialDims,
     affine: DMat
-  )(value: (Int, Int, Int) => A): NeuroVol[A] =
-    val values = PrimitiveBuffers.tabulate[A](dims.product) { index =>
-      val x = index % dims.x
-      val y = (index / dims.x) % dims.y
-      val z = index / (dims.x * dims.y)
-      value(x, y, z)
-    }
-    NeuroVol.fromLinear(values, NeuroSpace(dims.toVector, trans = Some(affine)), "orientation-oracle")
+  )(value: (Int, Int, Int) => A)(using image4s.ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
+    val values =
+      RavelArray.tabulate[A](dims.x, dims.y, dims.z)(value)
+    SomeNeuroVolume.unsafeFromRavel[A, Sem](
+      values,
+      SampleSpaces(dims.toVector, trans = Some(affine)),
+      "orientation-oracle"
+    )
 
   private def encoded(storage: Vector[Int]): Int =
     storage(0) + 10 * storage(1) + 100 * storage(2)
@@ -203,7 +204,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
   test("all 48 signed axis permutations reslice every anatomical plane correctly") {
     assertEquals(SignedPermutation.all.length, 48)
     SignedPermutation.all.foreach { orientation =>
-      val source = volume[Int](Dims, orientation.affine(Dims)) { (x, y, z) =>
+      val source = volume[Int, image4s.Categorical](Dims, orientation.affine(Dims)) { (x, y, z) =>
         encoded(Vector(x, y, z))
       }
       val worldDimensions = orientation.worldDimensions(Dims)
@@ -251,7 +252,7 @@ class SliceOrientationOracleSuite extends munit.FunSuite:
     var compared = 0
     (0 until 24).foreach { seed =>
       val fixture = generatedAffine(seed)
-      val source = volume[Double](dims, fixture.matrix) { (x, y, z) =>
+      val source = volume[Double, image4s.Continuous](dims, fixture.matrix) { (x, y, z) =>
         worldField(fixture.voxelToWorld(x.toDouble, y.toDouble, z.toDouble))
       }
       val cursor = fixture.voxelToWorld(2.5, 3.0, 3.5)

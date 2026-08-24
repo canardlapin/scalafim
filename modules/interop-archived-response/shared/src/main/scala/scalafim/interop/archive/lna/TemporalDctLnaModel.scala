@@ -21,7 +21,7 @@ import scalafim.archive.lna.{
   TemporalDctNorm,
   TemporalDctParams
 }
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 import scalafim.interop.archive.RepresentationEnvelope
 import scalafim.latent.{
   DctNorm,
@@ -65,7 +65,7 @@ final class TemporalDctLnaWritePlan private (
 object TemporalDctLnaWritePlan:
   def create(
       value: MaterializedTemporalDct,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-interop-archived-response"
   ): Either[ArchiveError, TemporalDctLnaWritePlan] =
@@ -189,7 +189,7 @@ object TemporalDctLnaLayout:
 private object TemporalDctLnaModel:
   def archive(
       value: MaterializedTemporalDct,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel,
       creator: String
   ): Either[ArchiveError, LnaArchive] =

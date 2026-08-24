@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend}
@@ -18,7 +20,7 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.DMat as ImageDMat
 import gale.linalg.DVec
 
 class PublicFContrastScenarioSuite extends munit.FunSuite:
@@ -44,7 +46,7 @@ class PublicFContrastScenarioSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("scenario-public-f-contrast"),
           ImageDMat.fromRows(fixture.responseRows),
-          NeuroSpace(Vector(2, 1, 1))
+          SampleSpaces(Vector(2, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(fixture.task.length), tr = Seq(1.0)),
         events = DatasetEvents(

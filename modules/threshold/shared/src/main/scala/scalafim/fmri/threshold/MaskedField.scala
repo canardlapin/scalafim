@@ -2,12 +2,18 @@ package scalafim.fmri.threshold
 
 import scalafim.image.{
   GridCompatibility,
+  Indexing,
   Mask,
-  PrimitiveBuffers,
-  NeuroSpace,
-  NeuroVol,
-  VolumeDomain
+  SampleSpaces,
+  SomeMaskVolume,
+  SomeSampleSpace,
+  SomeScalarVolume,
+  GridDomain
 }
+import scalafim.image.SampleSpaces.*
+import scalafim.image.SomeNeuroVolume.*
+import image4s.geometry.D3
+import image4s.geometry.Frame
 import scalafim.locus.{
   DomainFactory,
   FiniteDomain,
@@ -17,10 +23,11 @@ import scalafim.locus.{
   TotalMap,
   mapping
 }
+import locus4s.DomainRegistry
 
 sealed abstract class MaskedField private[threshold] (
-    val space: NeuroSpace,
-    val mask: NeuroVol[Boolean],
+    val space: SomeSampleSpace,
+    val mask: SomeMaskVolume,
     private[threshold] val data: Array[Double],
     private[threshold] val volumeIndex: Array[Int],
     private[threshold] val x: Array[Int],
@@ -33,7 +40,7 @@ sealed abstract class MaskedField private[threshold] (
   type FullVoxel
   type ActiveVoxel
 
-  val fullDomain: VolumeDomain[FullVoxel]
+  val fullDomain: GridDomain[? <: Frame[D3], D3, FullVoxel]
   val activeSpace: FiniteDomain[ActiveVoxel]
   val activeSelection: Selection[FullVoxel]
   val support: Region[FullVoxel]
@@ -65,14 +72,14 @@ sealed abstract class MaskedField private[threshold] (
       i += 1
     Right(out)
 
-  def maskFromMaskSpace(indices: Array[Int], label: String = ""): Either[ThresholdError, NeuroVol[Boolean]] =
+  def maskFromMaskSpace(indices: Array[Int], label: String = ""): Either[ThresholdError, SomeMaskVolume] =
     volumeIndices(indices).map { full =>
-      Mask.fromIndices(space, PrimitiveBuffers.fromArray(full), label)
+      Mask.fromIndices(space, full, label)
     }
 
 object MaskedField:
 
-  def fromVolume(stat: NeuroVol[Double], tail: Tail = Tail.Positive): Either[ThresholdError, MaskedField] =
+  def fromVolume(stat: SomeScalarVolume[Double], tail: Tail = Tail.Positive): Either[ThresholdError, MaskedField] =
     fromStatisticMap(StatisticMap.z(stat), tail.alternative)
 
   def fromStatisticMap(
@@ -80,24 +87,22 @@ object MaskedField:
     alternative: ThresholdAlternative = ThresholdAlternative.Greater
   ): Either[ThresholdError, MaskedField] =
     val stat = statistic.volume
-    val n = stat.space.spatialDims.product
-    val flags = PrimitiveBuffers.fillConst[Boolean](n, false)
-    var i = 0
-    while i < n do
-      flags(i) = stat.linear(i).isFinite
-      i += 1
-    fromStatisticMap(statistic, NeuroVol.fromLinear(flags, stat.space.spatialSpace, stat.label), alternative)
+    fromStatisticMap(
+      statistic,
+      stat.mapValues[Boolean, image4s.Mask](_.isFinite),
+      alternative
+    )
 
   def fromVolume(
-    stat: NeuroVol[Double],
-    mask: NeuroVol[Boolean],
+    stat: SomeScalarVolume[Double],
+    mask: SomeMaskVolume,
     tail: Tail
   ): Either[ThresholdError, MaskedField] =
     fromStatisticMap(StatisticMap.z(stat), mask, tail.alternative)
 
   def fromStatisticMap(
     statistic: StatisticMap,
-    mask: NeuroVol[Boolean],
+    mask: SomeMaskVolume,
     alternative: ThresholdAlternative
   ): Either[ThresholdError, MaskedField] =
     alternative.validate(statistic.orientation) match
@@ -118,9 +123,6 @@ object MaskedField:
         ()
 
     val dims = stat.space.spatialDims
-    val nx = dims(0)
-    val ny = dims(1)
-    val plane = nx * ny
     val n = dims.product
 
     val valueBuilder = Array.newBuilder[Double]
@@ -131,16 +133,17 @@ object MaskedField:
 
     var lin = 0
     while lin < n do
-      if mask.linear(lin) then
-        val raw = stat.linear(lin)
+      if mask.valueAtCanonicalOrdinal(lin) then
+        val raw = stat.valueAtCanonicalOrdinal(lin)
         if !raw.isFinite then return Left(ThresholdError.NonFiniteData("stat volume inside mask"))
         if statistic.orientation == EvidenceOrientation.Unsigned && raw < 0.0 then
           return Left(ThresholdError.NegativeUnsignedEvidence(lin, raw))
+        val coord = Indexing.indexToGrid3D(dims, lin)
         valueBuilder += alternative.applyTo(raw)
         indexBuilder += lin
-        xBuilder += (lin % nx)
-        yBuilder += ((lin / nx) % ny)
-        zBuilder += (lin / plane)
+        xBuilder += coord(0)
+        yBuilder += coord(1)
+        zBuilder += coord(2)
       lin += 1
 
     val values = valueBuilder.result()
@@ -159,18 +162,29 @@ object MaskedField:
       )
 
   private def make(
-      space: NeuroSpace,
-      mask: NeuroVol[Boolean],
+      space: SomeSampleSpace,
+      mask: SomeMaskVolume,
       data: Array[Double],
       volumeIndex: Array[Int],
       x: Array[Int],
       y: Array[Int],
-      z: Array[Int]
+    z: Array[Int]
   ): MaskedField =
+    val spatial =
+      SampleSpaces
+        .requireSpatialD3(space)
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
     val packedFullDomain =
-      VolumeDomain.structuralCompatibility(space.asVolumeSpace.toOption.get)
+      GridDomain
+        .register(
+          spatial.grid,
+          "threshold-full",
+          DomainRegistry.empty
+        )
+        .toOption
+        .get
     type Full = packedFullDomain.S
-    val full: VolumeDomain[Full] = packedFullDomain.value
+    val full = packedFullDomain.value
     // A derived selection-position domain: it means nothing except relative to
     // `full`, and `injection` below is what relates the two. Ephemeral, so no
     // key proportional to the mask has to be built or retained.
@@ -179,7 +193,7 @@ object MaskedField:
     val active: FiniteDomain[Active] = activeDomain.value
     val selected =
       Selection
-        .fromOrdinals(full.finiteSpace, volumeIndex)
+        .fromOrdinals(full.space, volumeIndex)
         .toOption
         .get
     val injection =
@@ -188,7 +202,7 @@ object MaskedField:
           TotalMap
             .fromTargetOrdinals(
               active,
-              full.finiteSpace,
+              full.space,
               volumeIndex
             )
             .toOption
@@ -200,7 +214,7 @@ object MaskedField:
     new MaskedField(space, mask, data, volumeIndex, x, y, z):
       type FullVoxel = Full
       type ActiveVoxel = Active
-      val fullDomain: VolumeDomain[Full] = full
+      val fullDomain = full
       val activeSpace: FiniteDomain[Active] = active
       val activeSelection: Selection[Full] = selected
       val support: Region[Full] = selected.region

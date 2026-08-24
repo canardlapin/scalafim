@@ -2,7 +2,8 @@ package scalafim.spatial
 
 import com.sun.management.ThreadMXBean
 import scalafim.image.io.Nifti
-import scalafim.image.{Axis, DMat, PrimitiveBuffers, NeuroSpace, NeuroVec}
+import scalafim.image.{SampleSpaces, Axis, DMat, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.SampleSpaces.*
 import scalafim.spatial.io.{NiftiFieldSource, NiftiFieldSourceStats}
 
 import java.lang.management.ManagementFactory
@@ -60,7 +61,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
   private def apiValue[A](result: Either[FieldApiError, A]): A =
     result.fold(error => fail(error.message), identity)
 
-  private def volumeDomain(name: String, space: NeuroSpace): Domain =
+  private def volumeDomain(name: String, space: SomeSampleSpace): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-benchmark"))
     val modality = spatialValue(Modality(name))
@@ -133,7 +134,7 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
     assert(receipt.checksum.isFinite)
 
   private def runBenchmark(path: Path): SpatialLazyBenchmarkReceipt =
-    val space = NeuroSpace(Vector(rows, 1, 1), trans = Some(DMat.eye(4)))
+    val space = SampleSpaces(Vector(rows, 1, 1), trans = Some(DMat.eye(4)))
     val root = volumeDomain("native", space)
     val mid = volumeDomain("mid", space)
     val target = volumeDomain("target", space)
@@ -147,11 +148,13 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
     )
     val fileValues =
       PrimitiveBuffers.tabulate[Double](rows * observations) { index =>
-        val frame = index / rows
-        val row = index % rows
+        val frame = index % observations
+        val row = index / observations
         frame.toDouble * 1000.0 + row.toDouble
       }
-    Nifti.writeVec(path, NeuroVec.fromLinear(fileValues, space.addDim(observations, Some(Axis.Time)), "benchmark"))
+    Nifti
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(fileValues, space.addDim(observations, Some(Axis.Time)), "benchmark"))
+      .fold(error => fail(error.message), _ => ())
 
     val bean = allocationBean()
     val chainIterations = 500

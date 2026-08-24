@@ -1,6 +1,7 @@
 package scalafim.atlas
 
 import scalafim.image.Indexing
+import scalafim.image.SampleSpaces.*
 
 final case class QueryHit(
   pointIndex: Int,
@@ -117,8 +118,10 @@ object AtlasQuery:
     if !inBounds(atlas, grid) then None
     else
       val lin = Indexing.gridToIndex3D(atlas.space.spatialDims, grid(0), grid(1), grid(2))
-      val id = atlas.labelVolume.linear(lin)
-      if id == 0 then None else Some(RegionId(id))
+      val realization = atlas.realization
+      val voxel = realization.domain.space.indexAtValidatedOrdinal(lin)
+      realization.parcelAssignment(voxel).map: parcel =>
+        realization.metadata(parcel).id
 
   private def inBounds(atlas: VolumeAtlas, grid: Vector[Int]): Boolean =
     val dims = atlas.space.spatialDims

@@ -8,8 +8,8 @@ import spire.std.int.given
 class StatsMaskCompareSuite extends munit.FunSuite:
 
   test("NeuroStats summarizes dense volumes") {
-    val sp = NeuroSpace(Vector(2, 2, 2))
-    val vol = NeuroVol.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 2))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0), sp)
     val summary = NeuroStats.summarize(vol)
 
     assertEquals(summary.dims, Vector(2, 2, 2), clue = "")
@@ -24,77 +24,137 @@ class StatsMaskCompareSuite extends munit.FunSuite:
     assertEquals(vol.summary, summary, clue = "")
   }
 
-  test("temporalMean for dense NeuroVec matches row means") {
-    val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val vec = NeuroVec.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), sp)
+  test("temporalMean for dense SomeNeuroSeries matches row means") {
+    val sp = SampleSpaces(Vector(2, 1, 1, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
     val mean = NeuroStats.temporalMean(vec)
-    val vals = Vector.tabulate(mean.copyLegacyLinear.length)(i => mean.copyLegacyLinear(i))
+    val vals = Vector.tabulate(mean.copyToCanonicalArray.length)(i => mean.copyToCanonicalArray(i))
 
     assertEquals(mean.space.dims, Vector(2, 1, 1), clue = "")
     assertEquals(vals, Vector(2.0, 3.0), clue = "")
-    assertEquals(vec.temporalMean.space, mean.space, clue = "")
-    assertEquals(Vector.tabulate(vec.temporalMean.copyLegacyLinear.length)(i => vec.temporalMean.copyLegacyLinear(i)), vals, clue = "")
+    assertEquals(
+      GridCompatibility.exact(vec.temporalMean.space, mean.space),
+      Right(()),
+      clue = ""
+    )
+    assertEquals(Vector.tabulate(vec.temporalMean.copyToCanonicalArray.length)(i => vec.temporalMean.copyToCanonicalArray(i)), vals, clue = "")
   }
 
-  test("temporalMean for sparse NeuroVec preserves active indices") {
-    val sp = NeuroSpace(Vector(3, 1, 1, 3))
-    val mask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
+  test("temporalMean for selected series preserves exact support") {
+    val sp = SampleSpaces(Vector(3, 1, 1, 3))
+    val packed =
+      GridDomain
+        .register(
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          "stats selected temporal mean",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
     val data =
-      RavelArray.tabulate[Double](3, 2) { (time, position) =>
+      RavelArray.tabulate[Double](2, 3) { (position, time) =>
         if position == 0 then 1.0 + 2.0 * time
         else 2.0 + 2.0 * time
       }
-    val svec = SparseNeuroVec(data, sp, mask, IndexLookupVol(sp, Array(0, 2)))
+    val selected =
+      SelectedSeries
+        .create(
+          domain,
+          selection,
+          image4s.Axis
+            .ordinal("time", image4s.AxisKind.Time, 3)
+            .toOption
+            .get,
+          data
+        )
+        .toOption
+        .get
+    val mean = selected.temporalMean.toOption.get
+    val summary = selected.summary
 
-    val mean = svec.temporalMean
-    val idx = Vector.tabulate(mean.indices.size)(i => mean.indices(i))
-    val vals = Vector.tabulate(mean.data.size)(i => mean.data(i))
-
-    assertEquals(idx, Vector(0, 2), clue = "")
-    assertEquals(vals, Vector(3.0, 4.0), clue = "")
+    assertEquals(mean.selection.ordinals.toVector, Vector(0, 2), clue = "")
+    assertEquals(mean.data.iterator.toVector, Vector(3.0, 4.0), clue = "")
+    assertEquals(summary.kind, "SelectedSeries", clue = "")
+    assertEquals(summary.timePoints, 3, clue = "")
+    assertEquals(summary.global.count, 6, clue = "")
   }
 
-  test("Mask.of returns full masks for dense objects and stored masks for sparse objects") {
-    val sp = NeuroSpace(Vector(3, 1, 1, 2))
-    val vec = NeuroVec.fromLinear[Double](PrimitiveBuffers.tabulate[Double](6)(_.toDouble), sp)
+  test("mask images and exact selected support convert only through named operations") {
+    val sp = SampleSpaces(Vector(3, 1, 1, 2))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](6)(_.toDouble), sp)
     val denseMask = Mask.of(vec)
-    assertEquals(Vector.tabulate(denseMask.copyLegacyLinear.length)(i => denseMask.copyLegacyLinear(i)), Vector(true, true, true), clue = "")
+    assertEquals(Vector.tabulate(denseMask.copyToCanonicalArray.length)(i => denseMask.copyToCanonicalArray(i)), Vector(true, true, true), clue = "")
+    val packed =
+      GridDomain
+        .register(
+          VolumeSpace(sp.spatialSpace).sampleSpace.grid,
+          "stats mask region",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain = packed.value
+    val support =
+      locus4s.Region.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
+    val semanticMask = Mask.fromRegion(domain, support).toOption.get
+    val recovered = Mask.region(domain, semanticMask).toOption.get
 
-    val sparseMask = Mask.fromIndices(sp.spatialSpace, Array(0, 2))
-    val svec = vec.asSparse(sparseMask)
-    assertEquals(Mask.of(svec), sparseMask, clue = "")
+    assertEquals(recovered.ordinalsInDomainOrder.toVector, Vector(0, 2), clue = "")
   }
 
   test("NeuroCompare builds logical volumes and vectors") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
-    val vol = NeuroVol.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0), sp)
+    val sp = SampleSpaces(Vector(2, 2, 1))
+    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(0.0, 1.0, 2.0, 3.0), sp)
     val gt = vol.gt(1.0)
 
     assertEquals(gt.space, sp, clue = "")
-    assertEquals(Vector.tabulate(gt.copyLegacyLinear.length)(i => gt.copyLegacyLinear(i)), Vector(false, false, true, true), clue = "")
-    assertEquals(Vector.tabulate(vol.eqv(vol).copyLegacyLinear.length)(i => vol.eqv(vol).copyLegacyLinear(i)), Vector.fill(4)(true), clue = "")
+    assertEquals(Vector.tabulate(gt.copyToCanonicalArray.length)(i => gt.copyToCanonicalArray(i)), Vector(false, false, true, true), clue = "")
+    assertEquals(Vector.tabulate(vol.eqv(vol).copyToCanonicalArray.length)(i => vol.eqv(vol).copyToCanonicalArray(i)), Vector.fill(4)(true), clue = "")
 
-    val sp4 = NeuroSpace(Vector(2, 1, 1, 2))
-    val vec = NeuroVec.fromLinear[Double](Array(0.0, 2.0, 4.0, 6.0), sp4)
+    val sp4 = SampleSpaces(Vector(2, 1, 1, 2))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 6.0), sp4)
     val lt = vec.lt(5.0)
-    assertEquals(Vector.tabulate(lt.copyLegacyLinear.length)(i => lt.copyLegacyLinear(i)), Vector(true, true, true, false), clue = "")
+    assertEquals(Vector.tabulate(lt.copyToCanonicalArray.length)(i => lt.copyToCanonicalArray(i)), Vector(true, true, true, false), clue = "")
   }
 
-  test("NeuroCompare supports sparse and clustered volumes") {
-    val sp = NeuroSpace(Vector(3, 1, 1))
-    val sparse = SparseNeuroVol(Array(2.0, 5.0), Array(0, 2), sp)
-    val sgt = sparse.gt(1.0)
-    assertEquals(Vector.tabulate(sgt.copyLegacyLinear.length)(i => sgt.copyLegacyLinear(i)), Vector(true, false, true), clue = "")
+  test("NeuroCompare preserves selected support") {
+    val sp = SampleSpaces(Vector(3, 1, 1))
+    val packed =
+      GridDomain
+        .register(
+          VolumeSpace(sp).sampleSpace.grid,
+          "stats selected comparison",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
+    val selected =
+      SelectedVolume
+        .create(
+          domain,
+          selection,
+          RavelArray.fromSeq(ravel.Shape(2), Vector(2.0, 5.0))
+        )
+        .toOption
+        .get
+    val compared = selected.gt(1.0)
+    val denseCompared = compared.toDense(false).toOption.get
+    assertEquals(denseCompared.data.iterator.toVector, Vector(true, false, true), clue = "")
 
-    val mask = Mask.fromIndices(sp, Array(0, 2))
-    val cvol = ClusteredNeuroVol(mask, Array(1, 2))
-    val cgt = cvol.gt(1)
-    assertEquals(Vector.tabulate(cgt.copyLegacyLinear.length)(i => cgt.copyLegacyLinear(i)), Vector(false, false, true), clue = "")
   }
 
-  test("NeuroStats summarizes NeuroVec temporal ranges") {
-    val sp = NeuroSpace(Vector(2, 1, 1, 3))
-    val vec = NeuroVec.fromLinear[Double](Array(0.0, 1.0, 2.0, 3.0, 4.0, 5.0), sp)
+  test("NeuroStats summarizes SomeNeuroSeries temporal ranges") {
+    val sp = SampleSpaces(Vector(2, 1, 1, 3))
+    val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](Array(0.0, 2.0, 4.0, 1.0, 3.0, 5.0), sp)
     val summary = vec.summary
 
     assertEquals(summary.timePoints, 3, clue = "")

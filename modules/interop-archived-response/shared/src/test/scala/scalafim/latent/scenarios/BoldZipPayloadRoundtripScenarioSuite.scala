@@ -1,7 +1,9 @@
 package scalafim.latent.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.lna.{DatasetRole, TransformParams}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import scalafim.latent.*
 import gale.linalg.{DMat, DVec}
 
@@ -45,7 +47,7 @@ class BoldZipPayloadRoundtripScenarioSuite extends munit.FunSuite:
       )
     val archive =
       BoldZipLatentArchiveCodec
-        .toArchive(source, NeuroSpace(Vector(3, 1, 1)))
+        .toArchive(source, SampleSpaces(Vector(3, 1, 1)))
         .fold(err => fail(err.message), identity)
     val decoded =
       LatentArchiveRegistry.standard

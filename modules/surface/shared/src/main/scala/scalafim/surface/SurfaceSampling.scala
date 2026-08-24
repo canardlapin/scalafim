@@ -1,8 +1,6 @@
 package scalafim.surface
 
-import scalafim.image.Affine
-import scalafim.image.NeuroVol
-import scalafim.image.PrimitiveBuffers
+import scalafim.image.*
 import scala.util.control.NonFatal
 
 final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeometry):
@@ -46,7 +44,7 @@ final case class SurfaceSampleResult(
 
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
-  def sample(volume: NeuroVol[Double], mask: Option[NeuroVol[Boolean]] = None): SurfaceSampleResult =
+  def sample(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume] = None): SurfaceSampleResult =
     mask.foreach(validateMask(volume, _))
 
     val vertexCount = plan.surfaces.white.vertexCount
@@ -91,20 +89,20 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     Affine.applyAffine(surface.surfaceToWorld, Vector(point.x, point.y, point.z))
 
   private def sampleValues(
-    volume: NeuroVol[Double],
-    mask: Option[NeuroVol[Boolean]],
+    volume: SomeScalarVolume[Double],
+    mask: Option[SomeMaskVolume],
     points: Vector[Vector[Double]]
   ): Vector[Double] =
     val out = Vector.newBuilder[Double]
     points.foreach { point =>
       nearestGrid(volume, point).foreach { grid =>
         val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-        if mask.forall(_.linear(lin)) then out += volume.linear(lin)
+        if mask.forall(_.valueAtCanonicalOrdinal(lin)) then out += volume.valueAtCanonicalOrdinal(lin)
       }
     }
     out.result()
 
-  private def nearestGrid(volume: NeuroVol[Double], point: Vector[Double]): Option[Vector[Int]] =
+  private def nearestGrid(volume: SomeScalarVolume[Double], point: Vector[Double]): Option[Vector[Int]] =
     val index = volume.space.coordToIndex(point)
     val grid = index.map(v => math.round(v).toInt)
     val dims = volume.space.spatialDims
@@ -121,7 +119,7 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
         values.foreach(value => counts.update(value, counts.getOrElse(value, 0) + 1))
         counts.toVector.minBy { case (value, count) => (-count, value) }._1
 
-  private def validateMask(volume: NeuroVol[Double], mask: NeuroVol[Boolean]): Unit =
+  private def validateMask(volume: SomeScalarVolume[Double], mask: SomeMaskVolume): Unit =
     require(mask.space.spatialDims == volume.space.spatialDims, "mask/volume space mismatch")
     require(mask.space.trans == volume.space.trans, "mask/volume space mismatch")
 
@@ -140,11 +138,11 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 object VolumeSurfaceSampler:
 
   def sample(
-    volume: NeuroVol[Double],
+    volume: SomeScalarVolume[Double],
     surfaces: SurfaceGeometryPair,
     path: SurfaceSamplingPath = SurfaceSamplingPath.Midpoint,
     aggregation: SurfaceSampleAggregation = SurfaceSampleAggregation.Nearest,
-    mask: Option[NeuroVol[Boolean]] = None
+    mask: Option[SomeMaskVolume] = None
   ): SurfaceSampleResult =
     VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(surfaces, path, aggregation)).sample(volume, mask)
 

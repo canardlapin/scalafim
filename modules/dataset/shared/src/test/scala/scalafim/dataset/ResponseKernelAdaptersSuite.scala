@@ -3,7 +3,7 @@ package scalafim.dataset
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
 import scalafim.response.*
 import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
@@ -197,7 +197,7 @@ class ResponseKernelAdaptersSuite extends munit.FunSuite:
             Vector(20.0, 21.0, 22.0, 23.0)
           )
         ),
-        NeuroSpace(Vector(4, 1, 1))
+        SampleSpaces(Vector(4, 1, 1))
       )
     FmriDataset.unsafe(
       backend,

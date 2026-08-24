@@ -4,6 +4,7 @@ import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.fmri.mvpa.spatial.SpatialFeatureSetPlans
 import scalafim.image.*
+import ravel.DType.given
 
 final case class AtlasMvpaRegionResult(
   regionId: Int,
@@ -24,7 +25,7 @@ object AtlasMvpaWorkflows:
     Vector(1, 1, 2, 2, 3, 3, 4, 4)
 
   def atlas(): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, labelVolume(), label = "workflow-atlas")
+    VolumeAtlas.fromLabelVolume(ref, regions, labelVolume())
 
   def featurePlan(): FeatureSetPlan =
     orThrow(SpatialFeatureSetPlans.fromVolumeAtlas("workflow-atlas-regions", atlas()))
@@ -97,21 +98,21 @@ object AtlasMvpaWorkflows:
   private def regions: RegionIndex =
     RegionIndex(
       Vector(
-        Region(RegionId(1), "Visual", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("Visual"))),
-        Region(RegionId(2), "Somatomotor", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("Somatomotor"))),
-        Region(RegionId(3), "Default", hemisphere = Some(Hemisphere.Bilateral), network = Some(NetworkId("Default")))
+        AtlasRegionMetadata(RegionId(1), "Visual", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("Visual"))),
+        AtlasRegionMetadata(RegionId(2), "Somatomotor", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("Somatomotor"))),
+        AtlasRegionMetadata(RegionId(3), "Default", hemisphere = Some(Hemisphere.Bilateral), network = Some(NetworkId("Default")))
       )
     )
 
-  private def space: NeuroSpace =
-    NeuroSpace(
+  private def space: SomeSampleSpace =
+    SampleSpaces(
       dims = dims,
       spacing = Some(Vector(2.0, 2.0, 2.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))
     )
 
-  private def labelVolume(): NeuroVol[Int] =
-    NeuroVol.fromLinear(labelData(), space, label = "workflow-labels")
+  private def labelVolume(): SomeLabelVolume[Int] =
+    SomeLabelVolume.unsafeCopyFromCanonicalArray(labelData(), space, "workflow-labels")
 
   private def labelData(): Array[Int] =
     val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)

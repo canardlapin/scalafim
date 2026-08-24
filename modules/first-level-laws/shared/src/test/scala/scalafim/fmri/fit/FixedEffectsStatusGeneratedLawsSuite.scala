@@ -10,7 +10,7 @@ import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.laws.GeneratedLawSuite
 import scalafim.fmri.model.{FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SampleSpaces}
 
 class FixedEffectsStatusGeneratedLawsSuite extends GeneratedLawSuite:
 
@@ -113,7 +113,7 @@ class FixedEffectsStatusGeneratedLawsSuite extends GeneratedLawSuite:
       backend = InMemoryDatasetBackend(
         DatasetId("fixed-effects-status-generated-law"),
         ImageDMat.fromRows(response),
-        NeuroSpace(Vector(3, 1, 1))
+        SampleSpaces(Vector(3, 1, 1))
       ),
       samplingFrame = sampling,
       events = events

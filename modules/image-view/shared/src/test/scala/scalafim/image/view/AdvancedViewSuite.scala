@@ -1,5 +1,6 @@
 package scalafim.image.view
 
+import image4s.Continuous
 import intaglio.*
 import ravel.NDArray as RavelArray
 import scalafim.image.*
@@ -9,19 +10,20 @@ class AdvancedViewSuite extends munit.FunSuite:
   private def volume(
     space: VolumeSpace,
     label: String
-  )(value: (Int, Int, Int) => Double): NeuroVol[Double] =
+  )(value: (Int, Int, Int) => Double): SomeScalarVolume[Double] =
     val shape = space.shape
     val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
-      val x = index % shape.x
-      val y = (index / shape.x) % shape.y
-      val z = index / (shape.x * shape.y)
+      val z = index % shape.z
+      val xy = index / shape.z
+      val y = xy % shape.y
+      val x = xy / shape.y
       value(x, y, z)
     }
-    NeuroVol.fromLinear(data, space.toNeuroSpace, label)
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space.toSampleSpace, label)
 
   private def layer(
     id: String,
-    source: NeuroVol[Double],
+    source: SomeScalarVolume[Double],
     mapping: LayerMapping = LayerMapping.WorldAligned
   ): SliceLayer =
     SliceLayer(
@@ -37,7 +39,7 @@ class AdvancedViewSuite extends munit.FunSuite:
     frame.scene.grobs(index).asInstanceOf[Grob.Group].children.collect { case image: Grob.Image => image }
 
   test("lazy frame sources load only requested timepoints and report failures") {
-    val space = VolumeSpace(NeuroSpace(Vector(3, 3, 2)))
+    val space = VolumeSpace(SampleSpaces(Vector(3, 3, 2)))
     val frames = Vector(
       volume(space, "zero")((_, _, _) => 0.0),
       volume(space, "one")((_, _, _) => 1.0)
@@ -70,15 +72,15 @@ class AdvancedViewSuite extends munit.FunSuite:
     assertEquals(reads, Vector(0, 1))
     assertEquals(third.profile.cacheMisses, 3)
     assertEquals(third.profile.sourceReads, 1)
-    assert(VolumeSource.lazyFrames[Double](space, 0)(_ => Left("unused")).isLeft)
+    assert(VolumeSource.lazyFrames[Double, Continuous](space, 0)(_ => Left("unused")).isLeft)
   }
 
   test("temporal models reject implicit one-frame sources but accept explicit invariants") {
-    val space = VolumeSpace(NeuroSpace(Vector(2, 2, 2)))
+    val space = VolumeSpace(SampleSpaces(Vector(2, 2, 2)))
     val frame = volume(space, "frame")((_, _, _) => 1.0)
     val temporal = SliceLayer.series(
       LayerId.unsafe("temporal"),
-      frame.concat(frame),
+      frame.concatenate(frame),
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
     )
@@ -91,7 +93,7 @@ class AdvancedViewSuite extends munit.FunSuite:
     )
     val explicitInvariant = SliceLayer.series(
       LayerId.unsafe("invariant"),
-      frame.toVec,
+      frame.toSeries,
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
     )
@@ -102,7 +104,7 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("cache profiles separate sampling colorization and plane-specific redraw work") {
-    val space = VolumeSpace(NeuroSpace(Vector(4, 3, 2)))
+    val space = VolumeSpace(SampleSpaces(Vector(4, 3, 2)))
     val source = volume(space, "source")((x, y, z) => x + y + z)
     val model = ViewerModel.unsafe(space, Vector(layer("one", source), layer("two", source)))
     val state = ViewerState.centered(space)
@@ -200,7 +202,7 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("nonlinear pullback layers sample reference grids in their own source coordinates") {
-    val space = VolumeSpace(NeuroSpace(Vector(5, 3, 1)))
+    val space = VolumeSpace(SampleSpaces(Vector(5, 3, 1)))
     val source = volume(space, "x")((x, _, _) => x.toDouble)
     val fieldGrid = GridSpec.fromVolumeSpace(space)
     val field =
@@ -239,7 +241,7 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("cache reuse preserves left-right convention and asymmetric raster orientation") {
-    val space = VolumeSpace(NeuroSpace(Vector(5, 3, 2)))
+    val space = VolumeSpace(SampleSpaces(Vector(5, 3, 2)))
     val source = volume(space, "asymmetric-x")((x, _, _) => x.toDouble)
     val model = ViewerModel.unsafe(space, Vector(layer("anatomy", source)))
     val leftState = ViewerState.centered(space, LeftRightConvention.PatientLeftOnLeft)
@@ -262,11 +264,11 @@ class AdvancedViewSuite extends munit.FunSuite:
   }
 
   test("linked view policies synchronize only declared state") {
-    val space = VolumeSpace(NeuroSpace(Vector(3, 3, 3)))
+    val space = VolumeSpace(SampleSpaces(Vector(3, 3, 3)))
     val source = volume(space, "source")((_, _, _) => 1.0)
     val temporal = SliceLayer.series(
       LayerId.unsafe("temporal"),
-      source.concat(source),
+      source.concatenate(source),
       SliceSampling.Linear(),
       ScalarColorizer(DisplayWindow.unsafe(0.0, 2.0))
     )

@@ -50,7 +50,7 @@ error algebra. Adapter failures are attributed to a neutral `OperationId`.
 Two live edges are intentional and visible in `build.sbt` and
 `docs/module-relations.md`:
 
-- `latent -> image + locus-kernel` supplies the established `NeuroSpace` and
+- `latent -> image + locus-kernel` supplies the established `SomeSampleSpace` and
   ordered-mask geometry used by pure HRBF/radial mathematics;
 - `archive-lna -> image` preserves the established owned row-major matrix wire
   values used by the LNA schema and shared-basis artifacts.

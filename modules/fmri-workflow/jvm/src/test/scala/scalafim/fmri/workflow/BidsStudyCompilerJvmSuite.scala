@@ -4,7 +4,9 @@ import munit.FunSuite
 import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.DatasetId
-import scalafim.image.{Axis, PrimitiveBuffers, NeuroSpace, NeuroVec, NeuroVol}
+import scalafim.image.{Axis, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeNeuroSeries, SomeNeuroVolume}
+import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
+import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 
 import java.nio.charset.StandardCharsets
@@ -93,15 +95,19 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
   private def writeHeaderOnlyBold(path: Path): Unit =
     Files.createDirectories(path.getParent)
     val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
-    val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
+    val space = SampleSpaces(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
+    Nifti
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
+      .fold(error => fail(error.message), _ => ())
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def writeHeaderOnlyMask(path: Path): Unit =
     Files.createDirectories(path.getParent)
     val values = PrimitiveBuffers.fromArray(Array(1.0, 1.0, 1.0, 1.0))
-    val space = NeuroSpace(Vector(2, 2, 1))
-    Nifti.writeVol(path, NeuroVol.fromLinear(values, space, "mask"))
+    val space = SampleSpaces(Vector(2, 2, 1))
+    Nifti
+      .writeVolume(path, SomeScalarVolume.unsafeCopyFromCanonicalArray(values, space, "mask"))
+      .fold(error => fail(error.message), _ => ())
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def gzip(source: Path, target: Path): Unit =

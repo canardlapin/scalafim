@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace}
 
 class DatasetTimeAxisSuite extends munit.FunSuite:
 
@@ -100,7 +100,7 @@ class DatasetTimeAxisSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           id = DatasetId("time-axis-demo"),
           data = DMat.fromRows(Vector.tabulate(6)(row => Vector(row.toDouble))),
-          space = NeuroSpace(Vector(1, 1, 1))
+          space = SampleSpaces(Vector(1, 1, 1))
         ),
         samplingFrame = samplingFrame,
         runIds = runIds

@@ -3,6 +3,7 @@ package scalafim.examples.atlas
 import java.nio.file.Path
 import scalafim.atlas.*
 import scalafim.atlas.io.*
+import scalafim.image.SampleSpaces.*
 
 final case class LoadedAtlasSummary(
   name: String,

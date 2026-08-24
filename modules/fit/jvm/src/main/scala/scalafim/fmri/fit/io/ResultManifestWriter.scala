@@ -173,7 +173,9 @@ object ResultManifestWriter:
       Files.createDirectories(target.root)
       val artifacts = Vector.newBuilder[ResultWrittenArtifact]
       niftis.foreach { planned =>
-        Nifti.writeVec(planned.path, planned.maps.dense)
+        Nifti
+          .writeSeries(planned.path, planned.maps.dense)
+          .fold(error => throw new IllegalStateException(error.message), identity)
         artifacts += ResultWrittenArtifact(planned.kind, planned.path, planned.labels)
       }
       manifest.coefficientCovariance.foreach { covariance =>

@@ -2,30 +2,6 @@ package scalafim.image
 
 import scala.annotation.targetName
 
-enum ClusterIdError:
-  case NonPositive(value: Int)
-
-  def message: String =
-    this match
-      case NonPositive(value) =>
-        s"cluster id must be positive; got $value"
-
-opaque type ClusterId = Int
-
-object ClusterId:
-  def make(value: Int): Either[ClusterIdError, ClusterId] =
-    if value > 0 then Right(value)
-    else Left(ClusterIdError.NonPositive(value))
-
-  def apply(value: Int): ClusterId =
-    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  extension (id: ClusterId)
-    inline def value: Int = id
-
-  private[image] inline def unsafe(value: Int): ClusterId =
-    value
-
 enum SpatialCoordinateFrame:
   case Grid
   case World
@@ -46,7 +22,7 @@ enum SearchlightError:
   case InvalidRadius(value: Double)
   case RadiusBelowVoxelSpacing(radius: Double, minimumSpacing: Double)
   case InvalidCenter(error: GeometryError)
-  case InvalidSpace(error: NeuroSpaceError)
+  case InvalidSpace(error: SampleSpaceError)
   case Grid(error: GridMismatch)
   case CenterExcluded(center: VoxelCoord)
   case IncompatiblePolicies(
@@ -109,9 +85,9 @@ object SearchlightCenter:
       .map(SearchlightError.InvalidCenter.apply)
       .map(index => new SearchlightCenter(space, voxel, index))
 
-  @targetName("makeFromNeuroSpace")
+  @targetName("makeFromSampleSpace")
   def make(
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       voxel: VoxelCoord
   ): Either[SearchlightError, SearchlightCenter] =
     VolumeSpace

@@ -2,13 +2,14 @@ package scalafim.examples.atlas
 
 import scalafim.atlas.*
 import scalafim.image.*
+import ravel.DType.given
 
 object AtlasExampleData:
   val dims: Vector[Int] =
     Vector(4, 4, 2)
 
-  val space: NeuroSpace =
-    NeuroSpace(
+  val space: SomeSampleSpace =
+    SampleSpaces(
       dims = dims,
       spacing = Some(Vector(2.0, 2.0, 2.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))
@@ -17,7 +18,7 @@ object AtlasExampleData:
   val regions: RegionIndex =
     RegionIndex(
       Vector(
-        Region(
+        AtlasRegionMetadata(
           RegionId(1),
           "Visual",
           labelFull = Some("left_visual"),
@@ -25,7 +26,7 @@ object AtlasExampleData:
           network = Some(NetworkId("YeoVisual")),
           color = Some(Rgb(220, 80, 80))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(2),
           "Somatomotor",
           labelFull = Some("right_somatomotor"),
@@ -33,7 +34,7 @@ object AtlasExampleData:
           network = Some(NetworkId("YeoSomMot")),
           color = Some(Rgb(80, 160, 220))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(3),
           "Default",
           labelFull = Some("bilateral_default"),
@@ -60,12 +61,12 @@ object AtlasExampleData:
     )
 
   def atlas(): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, labelVolume(), label = "toy-atlas")
+    VolumeAtlas.fromLabelVolume(ref, regions, labelVolume())
 
-  def labelVolume(): NeuroVol[Int] =
-    NeuroVol.fromLinear(labelData(), space, label = "toy-labels")
+  def labelVolume(): SomeLabelVolume[Int] =
+    SomeLabelVolume.unsafeCopyFromCanonicalArray(labelData(), space, "toy-labels")
 
-  def statMap(): NeuroVol[Double] =
+  def statMap(): SomeScalarVolume[Double] =
     val labels = labelData()
     val out = Array.ofDim[Double](labels.length)
     var i = 0
@@ -77,7 +78,7 @@ object AtlasExampleData:
           case 3 => 30.0
           case _ => 0.0
       i += 1
-    NeuroVol.fromLinear(out, space, label = "toy-stat")
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(out, space, "toy-stat")
 
   private def labelData(): Array[Int] =
     val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)

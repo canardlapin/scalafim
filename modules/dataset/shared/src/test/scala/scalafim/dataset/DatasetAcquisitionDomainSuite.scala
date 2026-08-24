@@ -1,10 +1,11 @@
 package scalafim.dataset
 
 import scalafim.locus.mapping
+import image4s.locus.GridDomain
 import scalafim.image.{
   DMat,
-  NeuroSpace,
-  VoxelSelection as ImageVoxelSelection
+  SampleSpaces,
+  SomeSampleSpace,
 }
 
 class DatasetAcquisitionDomainSuite extends munit.FunSuite:
@@ -14,7 +15,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
       timepoints: Int = 3
   ): DatasetShape =
     DatasetShape.unsafe(
-      NeuroSpace(Vector(4, 1, 1), trans = Some(affine)),
+      SampleSpaces(Vector(4, 1, 1), trans = Some(affine)),
       timepoints
     )
 
@@ -141,13 +142,23 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
 
   test("image selection adapter preserves requested order and checks exact volume grid"):
     val requestedShape = shape()
+    val packed =
+      GridDomain
+        .register(
+          requestedShape.volumeSpace.sampleSpace.grid,
+          "dataset image selection adapter",
+          locus4s.DomainRegistry.empty
+        )
+        .fold(error => fail(error.message), identity)
+    type Voxel = packed.S
+    val imageDomain = packed.value
     val selected =
-      ImageVoxelSelection
-        .make(requestedShape.volumeSpace, Array[Int](3, 0))
+      locus4s.Selection
+        .fromOrdinals(imageDomain.space, Vector(3, 0))
         .fold(error => fail(error.message), identity)
     val adapted =
       VoxelSelection
-        .fromImage(selected, requestedShape)
+        .fromImage(imageDomain, selected, requestedShape)
         .fold(error => fail(error.message), identity)
     val resolved =
       domain("run-a", requestedShape, VoxelDomain.fullUnsafe(requestedShape))
@@ -167,7 +178,7 @@ class DatasetAcquisitionDomainSuite extends munit.FunSuite:
           )
         )
       )
-    assert(VoxelSelection.fromImage(selected, shifted).isLeft)
+    assert(VoxelSelection.fromImage(imageDomain, selected, shifted).isLeft)
 
   test("compatibility constructor rejects duplicate resolved order"):
     assert(

@@ -1,6 +1,6 @@
 package scalafim.surface
 
-import scalafim.image.{InverseKind, NeuroVol, SpatialDomainId}
+import scalafim.image.*
 
 enum SurfaceMorphismKind:
   case VolumeToSurface, SurfaceToSurface
@@ -28,7 +28,7 @@ final case class VolToSurfMorphism(
   def inverseKind: InverseKind =
     InverseKind.Adjoint
 
-  def sample(volume: NeuroVol[Double], mask: Option[NeuroVol[Boolean]] = None): SurfaceSampleResult =
+  def sample(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume] = None): SurfaceSampleResult =
     VolumeSurfaceSampler(plan).sample(volume, mask)
 
 final case class SurfaceVertexMapping private (

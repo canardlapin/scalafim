@@ -10,7 +10,8 @@ import scalafim.dataset.{
   TimepointSelection,
   VoxelSelection
 }
-import scalafim.image.{Axis, PrimitiveBuffers, NeuroSpace, NeuroVec}
+import scalafim.image.{Axis, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
+import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 import scalafim.response.*
 
@@ -235,14 +236,29 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         bitpix = 32,
         rawValues = Vector.empty
       )
-      assert(NiftiResponseBlockSource.open(mismatched).left.toOption.exists(_.message.contains("bitpix 32")))
+      assert(
+        NiftiResponseBlockSource
+          .open(mismatched)
+          .left
+          .toOption
+          .exists(_.message.contains("datatype 64 with 32 bits"))
+      )
     }
   }
 
   private def writeSeries(path: Path): Path =
-    val values = PrimitiveBuffers.fromArray(Array.tabulate(12)(_.toDouble))
-    val space = NeuroSpace(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
-    Nifti.writeVec(path, NeuroVec.fromLinear(values, space, "bold"))
+    val values = PrimitiveBuffers.fromArray(
+      Array(
+        0.0, 4.0, 8.0,
+        1.0, 5.0, 9.0,
+        2.0, 6.0, 10.0,
+        3.0, 7.0, 11.0
+      )
+    )
+    val space = SampleSpaces(Vector(2, 2, 1)).addDim(3, Some(Axis.Time))
+    Nifti
+      .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
+      .fold(error => fail(error.message), _ => path)
 
   private def gzip(source: Path, target: Path): Path =
     val input = Files.newInputStream(source)

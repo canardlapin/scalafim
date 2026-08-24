@@ -1,6 +1,9 @@
 package scalafim.image
 
 import image4s.SomeSampleSpace
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.Grid
 import scala.annotation.targetName
 
 enum CoordinateError:
@@ -137,8 +140,8 @@ object SpatialCoordinates:
   def gridCoords(grid: GridSpec): Vector[Vector[Double]] =
     grid.worldCoords
 
-  @targetName("gridCoordsFromNeuroSpace")
-  def gridCoords(space: NeuroSpace): Vector[Vector[Double]] =
+  @targetName("gridCoordsFromSampleSpace")
+  def gridCoords(space: SomeSampleSpace): Vector[Vector[Double]] =
     GridSpec.fromSpace(space).worldCoords
 
   private[image] def validatePoint(point: Vector[Double], label: String): Unit =
@@ -157,11 +160,15 @@ opaque type GridSpec = SomeSampleSpace
 
 object GridSpec:
   extension (gridSpec: GridSpec)
+    /** Exact image4s grid retained by this checked D3 refinement. */
+    private[image] inline def nativeGrid: Grid[Frame[D3], D3] =
+      gridSpec.grid.asInstanceOf[Grid[Frame[D3], D3]]
+
     def shape: SpatialDims =
       SpatialDims.unsafeFromVector(gridSpec.grid.shape, "GridSpec dims")
 
     def affine: DMat =
-      gridSpec.toNeuroSpace.trans
+      gridSpec.toSampleSpace.trans
 
     def affine3D: Either[Affine3DError, Affine3D] =
       Affine3D.make(affine)
@@ -248,19 +255,19 @@ object GridSpec:
       val tx = affine
       val out = Vector.newBuilder[SpatialPoint]
       out.sizeHint(nVoxels)
-      var z = 0
-      while z < gridShape.z do
+      var x = 0
+      while x < gridShape.x do
         var y = 0
         while y < gridShape.y do
-          var x = 0
-          while x < gridShape.x do
+          var z = 0
+          while z < gridShape.z do
             out += SpatialCoordinates.voxelToWorld(
               SpatialPoint(x.toDouble, y.toDouble, z.toDouble),
               tx
             )
-            x += 1
+            z += 1
           y += 1
-        z += 1
+        x += 1
       out.result()
 
     def typedWorldPoints: Either[Affine3DError, Vector[WorldPoint]] =
@@ -268,23 +275,23 @@ object GridSpec:
         val gridShape = shape
         val out = Vector.newBuilder[WorldPoint]
         out.sizeHint(nVoxels)
-        var z = 0
-        while z < gridShape.z do
+        var x = 0
+        while x < gridShape.x do
           var y = 0
           while y < gridShape.y do
-            var x = 0
-            while x < gridShape.x do
+            var z = 0
+            while z < gridShape.z do
               out += tx.voxelToWorld(
                 VoxelPoint(x.toDouble, y.toDouble, z.toDouble)
               )
-              x += 1
+              z += 1
             y += 1
-          z += 1
+          x += 1
         out.result()
       }
 
-    def toNeuroSpace: NeuroSpace =
-      NeuroSpace.fromCanonical(gridSpec)
+    def toSampleSpace: SomeSampleSpace =
+      SampleSpaces.fromCanonical(gridSpec)
 
   def apply(dims: Vector[Int], affine: DMat): GridSpec =
     fromVector(dims, affine)
@@ -293,11 +300,11 @@ object GridSpec:
   def fromVector(dims: Vector[Int], affine: DMat): Either[GeometryError, GridSpec] =
     for
       shape <- SpatialDims.fromVector(dims, "GridSpec dims")
-      space <- NeuroSpace
+      space <- SampleSpaces
         .make(shape.toVector, trans = Some(affine))
         .left
         .map(error => GeometryError.InvalidGridGeometry(error.message))
-    yield NeuroSpace.canonical(space)
+    yield SampleSpaces.canonical(space)
 
   def fromSpatialDims(dims: SpatialDims, affine: DMat): GridSpec =
     fromVector(dims.toVector, affine)
@@ -309,9 +316,9 @@ object GridSpec:
   def identity(dims: SpatialDims): GridSpec =
     fromSpatialDims(dims, DMat.eye(4))
 
-  def fromSpace(space: NeuroSpace): GridSpec =
+  def fromSpace(space: SomeSampleSpace): GridSpec =
     require(space.spatialDims.length == 3, "GridSpec requires 3D geometry")
-    NeuroSpace.canonical(space.spatialSpace)
+    SampleSpaces.canonical(space.spatialSpace)
 
   def fromVolumeSpace(space: VolumeSpace): GridSpec =
-    NeuroSpace.canonical(space.toNeuroSpace)
+    SampleSpaces.canonical(space.toSampleSpace)

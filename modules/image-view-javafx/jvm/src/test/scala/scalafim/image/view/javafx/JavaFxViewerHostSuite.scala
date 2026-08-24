@@ -7,10 +7,10 @@ import scalafim.image.view.*
 
 class JavaFxViewerHostSuite extends munit.FunSuite:
 
-  private val space = VolumeSpace(NeuroSpace(Vector(3, 3, 3)))
-  private val volume = NeuroVol.fromLinear(
+  private val space = VolumeSpace(SampleSpaces(Vector(3, 3, 3)))
+  private val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(
     PrimitiveBuffers.fillConst[Double](space.nVoxels, 1.0),
-    space.toNeuroSpace,
+    space.toSampleSpace,
     "javafx"
   )
   private val layer = SliceLayer(

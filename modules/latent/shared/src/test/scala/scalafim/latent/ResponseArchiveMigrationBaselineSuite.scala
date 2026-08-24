@@ -1,5 +1,7 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+
 import gale.linalg.{DMat, DVec, LinAlgError}
 import scalafim.archive.ArchiveError
 import scalafim.archive.lna.{
@@ -9,7 +11,7 @@ import scalafim.archive.lna.{
   SharedBasisId,
   SharedBasisMask
 }
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 
 enum MigrationComparator:
   case RawBits
@@ -221,7 +223,7 @@ object ResponseArchiveMigrationBaseline:
       Vector(0.0, -3.0, 1.25, 5.0)
     )
 
-  private val canonicalSpace = NeuroSpace(Vector(2, 2, 1))
+  private val canonicalSpace = SampleSpaces(Vector(2, 2, 1))
 
   private def lnaPipelineCases: Vector[MigrationBaselineCase] =
     val data = ImageDMat.fromRows(canonicalRows)
@@ -404,7 +406,7 @@ object ResponseArchiveMigrationBaseline:
       archiveValue(
         SharedBasisLatentArchiveCodec.toArchive(
           data = data,
-          space = NeuroSpace(Vector(3, 1, 1)),
+          space = SampleSpaces(Vector(3, 1, 1)),
           basis = artifact,
           basisId = SharedBasisId.unsafe("phase_0_shared_basis"),
           center = true
@@ -413,7 +415,7 @@ object ResponseArchiveMigrationBaseline:
     val decoded =
       archiveValue(LatentArchiveRegistry.standard.fromArchive(archive)) match
         case LatentArchiveResponse.SharedBasis(response) =>
-          latentValue(response.materialize(artifact, Some(NeuroSpace(Vector(3, 1, 1)))))
+          latentValue(response.materialize(artifact, Some(SampleSpaces(Vector(3, 1, 1)))))
         case other => throw IllegalStateException(s"expected shared-basis response, found $other")
 
     Vector(
@@ -431,7 +433,7 @@ object ResponseArchiveMigrationBaseline:
         WorldCoordinate3D.unsafe(1.0, 0.0, 0.0),
         WorldCoordinate3D.unsafe(2.0, 0.0, 0.0)
       )
-    val radialSpace = NeuroSpace(Vector(3, 1, 1))
+    val radialSpace = SampleSpaces(Vector(3, 1, 1))
     val radial =
       radialValue(
         RadialBasis.fromSpaceIndices(

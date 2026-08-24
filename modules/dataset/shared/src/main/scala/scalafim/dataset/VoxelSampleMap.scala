@@ -2,6 +2,7 @@ package scalafim.dataset
 
 import ravel.Array1
 import scalafim.image.Mask
+import scalafim.image.{asVolumeSpace, space}
 
 final class VoxelSampleMap private (
     val sampleVoxels: Vector[VoxelIndex],

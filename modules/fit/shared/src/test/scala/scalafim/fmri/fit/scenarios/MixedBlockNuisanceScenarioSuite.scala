@@ -9,7 +9,7 @@ import scalafim.fmri.fit.fixtures.RealisticNuisanceRFixture
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, ModelError, NuisanceRegressors, SampledRegressorRun}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SampleSpaces}
 
 /** Public acceptance examples for mixed task timing and scan-aligned nuisance.
   *
@@ -60,7 +60,7 @@ class MixedBlockNuisanceScenarioSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("mixed-block-transient"),
           ImageDMat.fromRows(Vector.fill(200)(Vector(0.0))),
-          NeuroSpace(Vector(1, 1, 1))
+          SampleSpaces(Vector(1, 1, 1))
         ),
         samplingFrame = sampling,
         events = table
@@ -169,7 +169,7 @@ class MixedBlockNuisanceScenarioSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("realistic-nuisance"),
           ImageDMat.fromRows(RealisticNuisanceRFixture.response.map(value => Vector(value))),
-          NeuroSpace(Vector(1, 1, 1))
+          SampleSpaces(Vector(1, 1, 1))
         ),
         samplingFrame = sampling,
         events = table

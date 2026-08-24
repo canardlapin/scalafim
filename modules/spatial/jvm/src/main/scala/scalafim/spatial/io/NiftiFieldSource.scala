@@ -1,5 +1,6 @@
 package scalafim.spatial.io
 
+import scalafim.image.GridCompatibility
 import scalafim.image.io.{Nifti, NiftiHeader}
 import scalafim.spatial.*
 
@@ -109,8 +110,12 @@ final class NiftiFieldSource private (
   private def readAndValidateHeader(stamp: NiftiFileStamp): Either[SpatialError, ValidatedNiftiState] =
     try
       headerReadCount += 1L
-      val header = Nifti.readHeader(path)
-      validateHeader(header).map(_ => ValidatedNiftiState(stamp, header))
+      Nifti
+        .readHeader(path)
+        .left
+        .map(error => SpatialError.FieldSourceReadFailed(descriptor.id, error.message))
+        .flatMap: header =>
+          validateHeader(header).map(_ => ValidatedNiftiState(stamp, header))
     catch
       case NonFatal(error) =>
         Left(SpatialError.FieldSourceReadFailed(descriptor.id, detail(error)))
@@ -138,7 +143,8 @@ final class NiftiFieldSource private (
         Left(SpatialError.FieldObservationMismatch(descriptor.observations, actualObservations))
       else
         descriptor.geometry match
-          case SamplingGeometry.Volume(space, _) if header.space.spatialSpace == space =>
+          case SamplingGeometry.Volume(space, _)
+              if GridCompatibility.spatial(space, header.space).isRight =>
             Right(())
           case SamplingGeometry.Volume(_, _) =>
             Left(SpatialError.FieldSourceGeometryMismatch(descriptor.id))
@@ -161,7 +167,7 @@ final class NiftiFieldSource private (
     else
       try
         val bytesPerValue = header.bitpix / 8
-        val windows = readWindows(request.sourceRows)
+        val windows = readWindows(request.sourceRows, header.dims.take(3))
         val maximumBytes = windows.map(_.byteCount(bytesPerValue)).max
         val buffer = ByteBuffer.allocateDirect(maximumBytes).order(header.byteOrder)
         val values = new Array[Double](valueCount.toInt)
@@ -204,8 +210,22 @@ final class NiftiFieldSource private (
         case NonFatal(error) =>
           Left(SpatialError.FieldSourceReadFailed(descriptor.id, detail(error)))
 
-  private def readWindows(sourceRows: Vector[Int]): Vector[NiftiReadWindow] =
-    val indexed = sourceRows.zipWithIndex.sortBy(_._1)
+  private def readWindows(
+    sourceRows: Vector[Int],
+    spatialDims: Vector[Int]
+  ): Vector[NiftiReadWindow] =
+    val nx = spatialDims(0)
+    val ny = spatialDims(1)
+    val nz = spatialDims(2)
+    val indexed =
+      sourceRows.zipWithIndex.map { case (canonicalOrdinal, outputRow) =>
+        val z = canonicalOrdinal % nz
+        val xy = canonicalOrdinal / nz
+        val y = xy % ny
+        val x = xy / ny
+        val niftiOrdinal = x + nx * (y + ny * z)
+        niftiOrdinal -> outputRow
+      }.sortBy(_._1)
     val windows = Vector.newBuilder[NiftiReadWindow]
     var start = indexed.head._1
     var previous = start

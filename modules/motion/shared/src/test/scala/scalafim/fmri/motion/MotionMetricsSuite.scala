@@ -1,16 +1,16 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
+import scalafim.image.*
 
 class MotionMetricsSuite extends munit.FunSuite:
 
-  private def vec1x1x1(values: Vector[Double]): NeuroVec[Double] =
+  private def vec1x1x1(values: Vector[Double]): SomeScalarSeries[Double] =
     val data = PrimitiveBuffers.tabulate[Double](values.length)(values)
-    NeuroVec.fromLinear(data, NeuroSpace(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "dvars-fixture")
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(data, SampleSpaces(Vector(1, 1, 1)).addDim(values.length, Some(Axis.Time)), "dvars-fixture")
 
-  private def maskAll(space: NeuroSpace): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
+  private def maskAll(space: SomeSampleSpace): SomeMaskVolume =
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, true), space.spatialSpace, "mask")
 
   test("framewise displacement matches volregger convention") {
     val trace = MotionTrace.unsafe(VolreggerFixtures.fdTrace)
@@ -59,7 +59,7 @@ class MotionMetricsSuite extends munit.FunSuite:
   }
 
   test("masked displacement summary uses spatial mask coordinates") {
-    val space = NeuroSpace(Vector(2, 1, 1))
+    val space = SampleSpaces(Vector(2, 1, 1))
     val mask = maskAll(space)
     val pose = RigidPose.unsafe(1.0, 0.0, 0.0, 0.0, 0.0, 0.0)
     val summary = MotionMetrics.maskedDisplacementSummary(mask, pose).fold(err => fail(err.message), identity)
@@ -70,6 +70,6 @@ class MotionMetricsSuite extends munit.FunSuite:
 
   test("mask shape mismatch is a typed error") {
     val run = vec1x1x1(Vector(1.0, 2.0))
-    val badMask = maskAll(NeuroSpace(Vector(2, 1, 1)))
+    val badMask = maskAll(SampleSpaces(Vector(2, 1, 1)))
     assert(MotionMetrics.dvars(run, Some(badMask)).isLeft)
   }

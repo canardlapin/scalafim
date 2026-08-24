@@ -1,6 +1,6 @@
 package scalafim.dataset
 
-import scalafim.image.{DMat, Mask, NeuroSpace, VoxelCoord}
+import scalafim.image.{DMat, Mask, SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DataSelectionSuite extends munit.FunSuite:
 
@@ -14,15 +14,15 @@ class DataSelectionSuite extends munit.FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), timepoints = 3)
-    val maskSpace = NeuroSpace(Vector(2, 2, 1), trans = Some(translatedAffine))
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), timepoints = 3)
+    val maskSpace = SampleSpaces(Vector(2, 2, 1), trans = Some(translatedAffine))
     val mask = Mask.fromIndices(maskSpace, Array[Int](0, 1))
 
     assert(VoxelDomain.fromMask(mask, shape).isLeft)
   }
 
   test("voxel coordinate selections resolve through exact dataset geometry and mask membership") {
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), timepoints = 3)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), timepoints = 3)
     val full = VoxelDomain.full(shape).fold(error => fail(error.message), identity)
     val ordered =
       DataSelection(
@@ -42,7 +42,7 @@ class DataSelectionSuite extends munit.FunSuite:
       .resolveEither(shape, active)
       .left
       .toOption
-      .contains(DatasetError.VoxelOutsideMask(1)))
+      .contains(DatasetError.VoxelOutsideMask(2)))
 
     assert(DataSelection(voxels = VoxelSelection.coords(VoxelCoord(2, 0, 0)))
       .resolveEither(shape, full)
@@ -54,7 +54,7 @@ class DataSelectionSuite extends munit.FunSuite:
   }
 
   test("timepoint windows are checked, ordered, and may overlap") {
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(1, 1, 1)), timepoints = 6)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(1, 1, 1)), timepoints = 6)
     val first =
       DataSelection(time = TimepointSelection.Window(TimepointIndex.unsafe(1), length = 3))
         .resolveEither(shape)
@@ -74,7 +74,7 @@ class DataSelectionSuite extends munit.FunSuite:
   }
 
   test("excluded timepoints are an explicit ordered censor selection") {
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(1, 1, 1)), timepoints = 8)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(1, 1, 1)), timepoints = 8)
     val resolved =
       DataSelection(time = TimepointSelection.excluding(2, 4, 5))
         .resolveEither(shape)

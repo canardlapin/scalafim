@@ -13,7 +13,6 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
   test("parity fixture preserves non-contiguous atlas ids and metadata") {
     val atlas = AtlasParityFixtures.atlas()
     assertEquals(atlas.regions.ids, Vector(RegionId(10), RegionId(50), RegionId(90)))
-    assertEquals(atlas.volume.clusterIds, Vector(10, 50, 90))
 
     AtlasParityFixtures.regionExpectations.foreach { expected =>
       val region = atlas.region(RegionId(expected.id)).get
@@ -21,7 +20,10 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
       assertEquals(region.fullLabel, expected.labelFull)
       assertEquals(region.hemisphere, expected.hemisphere)
       assertEquals(region.network.map(_.value), expected.network)
-      assertEquals(atlas.volume.clusterMap(expected.id).size, expected.voxelCount)
+      assertEquals(
+        atlas.realization.region(RegionId(expected.id)).get.cardinality,
+        expected.voxelCount
+      )
     }
   }
 
@@ -33,37 +35,51 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
     assertEquals(atlas.query(Point3D(2.0, 2.0, 0.0)).head.id, Some(RegionId(90)))
     assertEquals(atlas.query(Point3D(2.0, 2.0, 4.0)).head.region, None)
 
-    val reduced = atlas.reduce(AtlasParityFixtures.dataVolume())
+    val reduced = atlas.reduce(AtlasParityFixtures.dataVolume(atlas))
     AtlasParityFixtures.parcelMeans.foreach { case (id, expected) =>
       assertEquals(reduced.value(RegionId(id)), Some(expected))
     }
   }
 
-  test("reduceVec keeps non-contiguous ids as ordered columns") {
+  test("parcel-series reduction keeps non-contiguous ids in parcel order") {
     val atlas = AtlasParityFixtures.atlas()
-    val cvec = AtlasReduce.reduceVec(atlas, AtlasParityFixtures.dataVec(), Some(AtlasParityFixtures.fullMask()))
-    val matrix = cvec.asMatrix
-    val tLen = cvec.nVolumes
+    val series =
+      AtlasReduce.reduceSeries(
+        atlas,
+        AtlasParityFixtures.dataSeries(atlas),
+        Some(AtlasParityFixtures.fullMask(atlas))
+      )
+    val matrix = series.data
+    val tLen = series.nTime
 
     assertEquals(matrix.shape, Shape(3, 3))
-    atlas.volume.clusterIds.zipWithIndex.foreach { case (id, col) =>
-      val actual = Vector.tabulate(tLen)(t => matrix(t, col))
-      assertEquals(actual, AtlasParityFixtures.vecSeries(id))
+    atlas.regions.ids.zipWithIndex.foreach { case (id, parcel) =>
+      val actual = Vector.tabulate(tLen)(time => matrix(parcel, time))
+      assertEquals(actual, AtlasParityFixtures.vecSeries(id.value))
     }
   }
 
-  test("reduceVec writes NaN for all parcels when the mask misses the atlas") {
+  test("parcel-series reduction writes NaN when the mask misses the atlas") {
     val atlas = AtlasParityFixtures.atlas()
-    val cvec = AtlasReduce.reduceVec(atlas, AtlasParityFixtures.dataVec(), Some(AtlasParityFixtures.emptyMask()))
+    val series =
+      AtlasReduce.reduceSeries(
+        atlas,
+        AtlasParityFixtures.dataSeries(atlas),
+        Some(AtlasParityFixtures.emptyMask(atlas))
+      )
 
-    val matrix = cvec.asMatrix
-    var t = 0
-    while t < cvec.nVolumes do
-      var col = 0
-      while col < atlas.volume.clusterIds.length do
-        assert(matrix(t, col).isNaN, clues(s"t=$t col=$col value=${matrix(t, col)}"))
-        col += 1
-      t += 1
+    var parcel = 0
+    while parcel < atlas.regions.size do
+      var time = 0
+      while time < series.nTime do
+        assert(
+          series.data(parcel, time).isNaN,
+          clues(
+            s"parcel=$parcel time=$time value=${series.data(parcel, time)}"
+          )
+        )
+        time += 1
+      parcel += 1
   }
 
   test("overlap corpus matches Dice and Jaccard golden values") {
@@ -93,19 +109,23 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: atlas region ids must be unique: 10") {
       RegionIndex(
         Vector(
-          Region(RegionId(10), "A"),
-          Region(RegionId(10), "A-duplicate")
+          AtlasRegionMetadata(RegionId(10), "A"),
+          AtlasRegionMetadata(RegionId(10), "A-duplicate")
         )
       )
     }
 
     val badLabels = AtlasParityFixtures.labelData()
     badLabels(0) = 999
-    interceptMessage[IllegalArgumentException]("requirement failed: atlas payload is missing region id 999") {
+    interceptMessage[IllegalArgumentException]("atlas payload is missing region id 999") {
       VolumeAtlas.fromLabelVolume(
         AtlasParityFixtures.ref,
         AtlasParityFixtures.regions,
-        scalafim.image.NeuroVol.fromLinear(badLabels, AtlasParityFixtures.atlas().space)
+        AtlasTestImages.labelVolume(
+          AtlasParityFixtures.atlas().space,
+          badLabels,
+          "bad-labels"
+        )
       )
     }
   }

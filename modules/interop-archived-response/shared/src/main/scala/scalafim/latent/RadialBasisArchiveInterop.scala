@@ -9,7 +9,7 @@ import scalafim.archive.lna.{
   SharedBasisLocator,
   SharedBasisMask
 }
-import scalafim.image.{DMat as ArchiveDMat, NeuroSpace}
+import scalafim.image.{DMat as ArchiveDMat, SomeSampleSpace}
 
 extension (radialBasis: RadialBasis)
   def sharedBasisParams(
@@ -171,7 +171,7 @@ object RadialBasisEncoder:
 object RadialBasisArchiveCodec:
   def toArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       radialBasis: RadialBasis,
       maskDims: Vector[Int],
       basisId: SharedBasisId,

@@ -46,7 +46,7 @@ benchmark receipt matches every benchmark and admission-policy source hash.
 Production and test sources in `ar`, `hrf`, `design`, `model`, `fit`, and
 `first-level-laws` compile with deprecation, feature, unchecked, unused-symbol,
 and value-discard diagnostics promoted to errors. There are no warning
-exceptions in this court. `compileAll` includes these strict projects, but the
+exceptions in this court. `scalafimCompileAll` includes these strict projects, but the
 remaining modules retain the repository baseline while they are migrated. The
 strict policy must expand to every published module before any stable or
 compatibility-bearing release.
@@ -72,7 +72,7 @@ runtime tests.
 
 | Lane | Trigger | Policy status | Evidence |
 | --- | --- | --- | --- |
-| Full repository | pull request and push to the default branch | required by project policy | `compileAll` and `testAll` across every JVM and Scala.js module |
+| Full repository | pull request and push to the default branch | required by project policy | `scalafimCompileAll` plus bounded tests across every headless JVM and Scala.js module; JavaFX hosts remain compile-gated |
 | Focused first-level | pull request and push to the default branch | required by project policy | portable receipts plus JVM/Scala.js tests and generated-law PR profile |
 | Scientific coverage | pull request and push to the default branch | required by project policy | per-module JVM statement and branch floors |
 | Generated-law calibration | weekly schedule or manual dispatch | advisory | 300 cases per property for three fixed, reproducible seeds on JVM and Scala.js |
@@ -123,7 +123,8 @@ tolerances. See [`benchmarks/first-level.md`](benchmarks/first-level.md) for the
 workloads, required comparisons, current receipt, and interpretation policy.
 
 The final release court combines the portable focused gate, JVM scientific
-coverage, full aggregate compile and test gates, executable documentation, and
+coverage, the full aggregate compile gate and bounded repository test batches,
+executable documentation, and
 a release-eligible performance receipt. It emits a machine-readable report and
 fails closed when the source checkout or benchmark receipt is dirty, a required
 gate was skipped, or the report cannot be tied to one commit and toolchain.

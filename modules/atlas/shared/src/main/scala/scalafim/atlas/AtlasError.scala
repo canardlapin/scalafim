@@ -4,6 +4,7 @@ enum AtlasError:
   case EmptyAtlas
   case DuplicateRegionIds(ids: Vector[RegionId])
   case MissingRegionId(id: RegionId)
+  case MissingPayloadRegionIds(ids: Vector[RegionId])
   case UnknownAtlas(name: String, available: Vector[String])
   case UnknownSpace(space: AnySpaceId)
   case SpaceKindMismatch(space: AnySpaceId, expected: SpaceKindTag, actual: SpaceKindTag)
@@ -14,6 +15,8 @@ enum AtlasError:
   case InvalidQuery(detail: String)
   case InvalidCoordinate(detail: String)
   case InvalidRegionMetadata(detail: String)
+  case InvalidAlignment(detail: String)
+  case InvalidReduction(detail: String)
 
   def message: String =
     this match
@@ -23,6 +26,8 @@ enum AtlasError:
         s"atlas region ids must be unique: ${ids.map(_.value).mkString(", ")}"
       case MissingRegionId(id) =>
         s"atlas payload is missing region id ${id.value}"
+      case MissingPayloadRegionIds(ids) =>
+        s"label volume is missing region ids: ${ids.map(_.value).mkString(", ")}"
       case UnknownAtlas(name, available) =>
         s"unknown atlas '$name'; available atlases: ${available.mkString(", ")}"
       case UnknownSpace(space) =>
@@ -42,4 +47,8 @@ enum AtlasError:
       case InvalidCoordinate(detail) =>
         detail
       case InvalidRegionMetadata(detail) =>
+        detail
+      case InvalidAlignment(detail) =>
+        detail
+      case InvalidReduction(detail) =>
         detail

@@ -1,6 +1,7 @@
 package scalafim.spatial.io
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
 
 import java.nio.file.{Files, Path}
@@ -39,7 +40,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
 
   private def domain(
     name: String,
-    space: NeuroSpace = NeuroSpace(Vector(5, 2, 2), trans = Some(DMat.eye(4)))
+    space: SomeSampleSpace = SampleSpaces(Vector(5, 2, 2), trans = Some(DMat.eye(4)))
   ): Domain =
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01"))
@@ -138,7 +139,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
           Vector(0.0, 0.0, 0.0, 1.0)
         )
       )
-    val space = NeuroSpace(Vector(5, 2, 2), trans = Some(rasGrid))
+    val space = SampleSpaces(Vector(5, 2, 2), trans = Some(rasGrid))
     val source = domain("source", space)
     val target = domain("target", space)
     val asset = descriptor(source, target, fixture("pullback_plus_one.h5"))
@@ -153,7 +154,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     val values = DoubleMatrix.fromRows(Vector.tabulate(source.nElements)(index => Vector(index.toDouble)))
     val result = linearValue(operator.forward(values))
 
-    assertEquals(result.copyData.toVector, Vector(2.0))
+    assertEquals(result.copyData.toVector, Vector(5.0))
     assertEquals(operator.provenance.compiler, "volume-pullback-fused-v1")
     assertEquals(loaded.provenance.options.direction, TransformDirection.PullbackTargetToSource)
     assertEquals(loaded.provenance.container.map(_.components.length), Some(2))

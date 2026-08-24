@@ -1,12 +1,15 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+import scalafim.image.{space, timeSeries}
+
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, GridCompatibility}
 
 class ImageMapsSuite extends munit.FunSuite:
 
@@ -29,7 +32,7 @@ class ImageMapsSuite extends munit.FunSuite:
       )
     )
     FmriDataset.unsafe(
-      backend = InMemoryDatasetBackend(DatasetId("image-map-demo"), data, NeuroSpace(Vector(2, 2, 1))),
+      backend = InMemoryDatasetBackend(DatasetId("image-map-demo"), data, SampleSpaces(Vector(2, 2, 1))),
       samplingFrame = samplingFrame
     )
 
@@ -57,13 +60,13 @@ class ImageMapsSuite extends munit.FunSuite:
     val se = result.standardErrorMaps(dataset.shape)
 
     assertEquals(coef.names, Vector("task", "base_constant"))
-    assertEquals(coef.values.map.cardinality, 4)
-    assertVectorClose(coef.dense.series(0).toVector, Vector(2.0, 1.0), 1e-10)
-    assertVectorClose(coef.dense.series(1).toVector, Vector(-1.0, 2.0), 1e-10)
-    assertVectorClose(coef.dense.series(2).toVector, Vector(-1.0, 10.0), 1e-10)
-    assertVectorClose(coef.dense.series(3).toVector, Vector(-1.0, -1.0), 1e-10)
+    assertEquals(coef.values.value.selection.size, 4)
+    assertVectorClose(coef.dense.timeSeries(0).iterator.toVector, Vector(2.0, 1.0), 1e-10)
+    assertVectorClose(coef.dense.timeSeries(1).iterator.toVector, Vector(-1.0, 2.0), 1e-10)
+    assertVectorClose(coef.dense.timeSeries(2).iterator.toVector, Vector(-1.0, 10.0), 1e-10)
+    assertVectorClose(coef.dense.timeSeries(3).iterator.toVector, Vector(-1.0, -1.0), 1e-10)
     assertEquals(se.names, coef.names)
-    assert(se.dense.series(0).toVector.forall(v => math.abs(v) < 1e-10))
+    assert(se.dense.timeSeries(0).iterator.toVector.forall(v => math.abs(v) < 1e-10))
   }
 
   test("image maps place selected voxels into their original image locations") {
@@ -77,11 +80,11 @@ class ImageMapsSuite extends munit.FunSuite:
     val coef = result.coefficientMaps(dataset.shape)
     val dense = coef.dense
 
-    assertEquals(coef.values.map.cardinality, 2)
-    assertVectorClose(dense.series(0).toVector, Vector(0.0, 0.0), 1e-10)
-    assertVectorClose(dense.series(1).toVector, Vector(-1.0, 2.0), 1e-10)
-    assertVectorClose(dense.series(2).toVector, Vector(0.0, 0.0), 1e-10)
-    assertVectorClose(dense.series(3).toVector, Vector(-1.0, -1.0), 1e-10)
+    assertEquals(coef.values.value.selection.size, 2)
+    assertVectorClose(dense.timeSeries(0).iterator.toVector, Vector(0.0, 0.0), 1e-10)
+    assertVectorClose(dense.timeSeries(1).iterator.toVector, Vector(-1.0, 2.0), 1e-10)
+    assertVectorClose(dense.timeSeries(2).iterator.toVector, Vector(0.0, 0.0), 1e-10)
+    assertVectorClose(dense.timeSeries(3).iterator.toVector, Vector(-1.0, -1.0), 1e-10)
   }
 
   test("typed result manifest coefficient maps adapt to existing image maps") {
@@ -99,11 +102,11 @@ class ImageMapsSuite extends munit.FunSuite:
         .get
         .dense
 
-    assertEquals(adapted.space, legacy.space)
-    assertVectorClose(adapted.series(0).toVector, legacy.series(0).toVector, 1e-10)
-    assertVectorClose(adapted.series(1).toVector, legacy.series(1).toVector, 1e-10)
-    assertVectorClose(adapted.series(2).toVector, legacy.series(2).toVector, 1e-10)
-    assertVectorClose(adapted.series(3).toVector, legacy.series(3).toVector, 1e-10)
+    assert(GridCompatibility.exact(adapted.space, legacy.space).isRight)
+    assertVectorClose(adapted.timeSeries(0).iterator.toVector, legacy.timeSeries(0).iterator.toVector, 1e-10)
+    assertVectorClose(adapted.timeSeries(1).iterator.toVector, legacy.timeSeries(1).iterator.toVector, 1e-10)
+    assertVectorClose(adapted.timeSeries(2).iterator.toVector, legacy.timeSeries(2).iterator.toVector, 1e-10)
+    assertVectorClose(adapted.timeSeries(3).iterator.toVector, legacy.timeSeries(3).iterator.toVector, 1e-10)
   }
 
   test("standard-error image maps omit coefficients outside the inference scope") {
@@ -176,11 +179,11 @@ class ImageMapsSuite extends munit.FunSuite:
 
     val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
     val tMap = t.statisticMap(dataset.shape).dense
-    assertEqualsDouble(tMap.series(0)(0), 0.0, 1e-10)
-    assertEqualsDouble(tMap.series(1)(0), t.statistics(0), 1e-10)
+    assertEqualsDouble(tMap.timeSeries(0)(0), 0.0, 1e-10)
+    assertEqualsDouble(tMap.timeSeries(1)(0), t.statistics(0), 1e-10)
 
     val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result).toOption.get
     val fMap = f.statisticMap(dataset.shape).dense
-    assertEqualsDouble(fMap.series(0)(0), 0.0, 1e-10)
-    assertEqualsDouble(fMap.series(1)(0), f.statistics(0), 1e-10)
+    assertEqualsDouble(fMap.timeSeries(0)(0), 0.0, 1e-10)
+    assertEqualsDouble(fMap.timeSeries(1)(0), f.statistics(0), 1e-10)
   }

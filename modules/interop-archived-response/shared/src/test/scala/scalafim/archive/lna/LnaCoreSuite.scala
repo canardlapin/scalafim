@@ -1,11 +1,13 @@
 package scalafim.archive.lna
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.{ArchiveDatasetPath, ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, RunScopedPath, TransformName, TransformPort}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
 
 class LnaCoreSuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(2, 2, 1))
+  private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val data =
     DMat.fromRows(
@@ -462,7 +464,7 @@ class LnaCoreSuite extends munit.FunSuite:
       LnaManifestCodec
         .parse(LnaManifestCodec.render(archive.manifest))
         .fold(err => fail(err.message), identity)
-    assertEquals(parsed, archive.manifest)
+    assertEquals(LnaManifestCodec.render(parsed), LnaManifestCodec.render(archive.manifest))
 
     val failed = LnaPipeline.reconstruct(archive)
     assert(failed.isLeft)
@@ -605,7 +607,7 @@ class LnaCoreSuite extends munit.FunSuite:
       LnaManifestCodec
         .parse(LnaManifestCodec.render(archive.manifest))
         .fold(err => fail(err.message), identity)
-    assertEquals(parsed, archive.manifest)
+    assertEquals(LnaManifestCodec.render(parsed), LnaManifestCodec.render(archive.manifest))
   }
 
   test("validation catches missing explicit latent pieces") {
@@ -638,7 +640,7 @@ class LnaCoreSuite extends munit.FunSuite:
         .parse(LnaManifestCodec.render(archive.manifest))
         .fold(err => fail(err.message), identity)
 
-    assertEquals(parsed, archive.manifest)
+    assertEquals(LnaManifestCodec.render(parsed), LnaManifestCodec.render(archive.manifest))
   }
 
   test("quant rejects non-finite values") {

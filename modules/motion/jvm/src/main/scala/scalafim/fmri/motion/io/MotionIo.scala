@@ -2,7 +2,7 @@ package scalafim.fmri.motion.io
 
 import bids4s.{BidsFile, JsonValue}
 import scalafim.fmri.motion.*
-import scalafim.image.{DMat, NeuroVec}
+import scalafim.image.*
 
 import java.nio.file.Path
 
@@ -54,7 +54,7 @@ final case class MotionNiftiMetadata(
     acquisitionTiming: Option[AcquisitionTiming]
 )
 
-final case class MotionNiftiRun(run: NeuroVec[Double], metadata: MotionNiftiMetadata)
+final case class MotionNiftiRun(run: SomeScalarSeries[Double], metadata: MotionNiftiMetadata)
 
 final case class MotionBidsScan(
     file: BidsFile,

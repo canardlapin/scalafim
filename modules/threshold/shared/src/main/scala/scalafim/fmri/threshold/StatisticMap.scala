@@ -1,9 +1,9 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.NeuroVol
+import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
 
 final case class StatisticMap private (
-    volume: NeuroVol[Double],
+    volume: SomeScalarVolume[Double],
     kind: StatKind
 ):
   def orientation: EvidenceOrientation =
@@ -11,19 +11,19 @@ final case class StatisticMap private (
 
 object StatisticMap:
 
-  def apply(volume: NeuroVol[Double], kind: StatKind): Either[ThresholdError, StatisticMap] =
+  def apply(volume: SomeScalarVolume[Double], kind: StatKind): Either[ThresholdError, StatisticMap] =
     Right(unsafe(volume, kind))
 
-  def z(volume: NeuroVol[Double]): StatisticMap =
+  def z(volume: SomeScalarVolume[Double]): StatisticMap =
     unsafe(volume, StatKind.Z)
 
-  def t(volume: NeuroVol[Double], df: DegreesOfFreedom): StatisticMap =
+  def t(volume: SomeScalarVolume[Double], df: DegreesOfFreedom): StatisticMap =
     unsafe(volume, StatKind.T(df))
 
-  def negLog10P(volume: NeuroVol[Double], pSide: PSide): StatisticMap =
+  def negLog10P(volume: SomeScalarVolume[Double], pSide: PSide): StatisticMap =
     unsafe(volume, StatKind.NegLog10P(pSide))
 
-  private[threshold] def unsafe(volume: NeuroVol[Double], kind: StatKind): StatisticMap =
+  private[threshold] def unsafe(volume: SomeScalarVolume[Double], kind: StatKind): StatisticMap =
     new StatisticMap(volume, kind)
 
 final case class StatisticField private (
@@ -46,7 +46,7 @@ object StatisticField:
 
   def fromMap(
     statistic: StatisticMap,
-    mask: NeuroVol[Boolean],
+    mask: SomeMaskVolume,
     alternative: ThresholdAlternative
   ): Either[ThresholdError, StatisticField] =
     MaskedField.fromStatisticMap(statistic, mask, alternative).map { field =>

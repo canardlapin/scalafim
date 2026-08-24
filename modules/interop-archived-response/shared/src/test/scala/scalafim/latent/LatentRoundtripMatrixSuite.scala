@@ -1,7 +1,9 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.DMat
 
 class LatentRoundtripMatrixSuite extends munit.FunSuite:
@@ -9,7 +11,7 @@ class LatentRoundtripMatrixSuite extends munit.FunSuite:
   test("temporal and shared-spatial archive paths roundtrip separable fixtures") {
     val timepoints = 4
     val components = 2
-    val space = NeuroSpace(Vector(3, 1, 1))
+    val space = SampleSpaces(Vector(3, 1, 1))
     val core =
       LatentNumerics.matrixFromRows(
         Vector(

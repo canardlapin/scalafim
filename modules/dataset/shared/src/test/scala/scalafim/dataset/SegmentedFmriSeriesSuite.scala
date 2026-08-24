@@ -1,7 +1,7 @@
 package scalafim.dataset
 
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.image.{DMat, NeuroSpace, VoxelCoord}
+import scalafim.image.{DMat, SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class SegmentedFmriSeriesSuite extends munit.FunSuite:
 
@@ -101,8 +101,8 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
       )
     val fixtures =
       Vector(
-        runFixture("ses-01", "run-1", 0.0, NeuroSpace(Vector(2, 1, 1))),
-        runFixture("ses-01", "run-2", 100.0, NeuroSpace(Vector(2, 1, 1), trans = Some(translated)))
+        runFixture("ses-01", "run-1", 0.0, SampleSpaces(Vector(2, 1, 1))),
+        runFixture("ses-01", "run-2", 100.0, SampleSpaces(Vector(2, 1, 1), trans = Some(translated)))
       )
     val index =
       DatasetIndex
@@ -160,7 +160,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
       session: String,
       run: String,
       base: Double,
-      space: NeuroSpace = NeuroSpace(Vector(2, 1, 1))
+      space: SomeSampleSpace = SampleSpaces(Vector(2, 1, 1))
   ): (DatasetRun, SynchronousFmriDataset) =
     val key =
       RunKey.unsafe(

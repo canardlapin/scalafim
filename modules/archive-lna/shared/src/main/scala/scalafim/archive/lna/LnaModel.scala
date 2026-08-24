@@ -1,7 +1,8 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, CreatorId, DatasetShape, RunLabel, TransformName, TransformPort}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
+import scalafim.image.spatialDims
 
 enum LnaVersion(val id: String):
   case V2 extends LnaVersion("LNA R v2.0")
@@ -423,7 +424,7 @@ object TransformDescriptor:
       report = report
     )
 
-final case class LnaShape(space: NeuroSpace, timepoints: Int):
+final case class LnaShape(space: SomeSampleSpace, timepoints: Int):
   require(timepoints > 0, "archive timepoints must be positive")
   require(space.spatialDims.length == 3, "archive space must be 3D")
   def spatialSize: Int = space.spatialDims.product

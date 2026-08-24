@@ -1,12 +1,14 @@
 package scalafim.dataset
 
+import scalafim.image.SampleSpaces
+
 import gale.linalg.DMat as GaleDMat
-import scalafim.image.{DMat, Mask, NeuroSpace}
+import scalafim.image.{DMat, Mask, SomeSampleSpace}
 import scalafim.latent.ExplicitLatentResponse
 
 class LatentResponseDatasetBackendSuite extends munit.FunSuite:
 
-  private val space = NeuroSpace(Vector(2, 2, 1))
+  private val space = SampleSpaces(Vector(2, 2, 1))
 
   private val denseData =
     DMat.fromRows(

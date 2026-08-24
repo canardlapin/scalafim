@@ -1,8 +1,10 @@
 package scalafim.dataset.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.RunLabel
 import scalafim.dataset.*
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import scalafim.latent.{
   DctNorm,
   ExplicitLatentArchiveCodec,
@@ -24,7 +26,7 @@ class LatentArchiveRoundtripScenarioSuite extends munit.FunSuite:
         Vector(3.0, 5.0, 8.0, 11.0),
         Vector(5.0, 8.0, 13.0, 17.0)
       )
-    val space = NeuroSpace(Vector(2, 2, 1))
+    val space = SampleSpaces(Vector(2, 2, 1))
     val archive =
       ExplicitLatentArchiveCodec
         .toTemporalDctArchive(

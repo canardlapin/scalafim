@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import scalafim.fmri.fit.GaleTestSyntax.*
 
 import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
@@ -31,7 +33,7 @@ import scalafim.fmri.model.{
   ReducedRankInferencePolicy,
   VolumeWeighting
 }
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.DMat as ImageDMat
 import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.Future
@@ -762,7 +764,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("chunked-rrr-gls-demo"), ImageDMat.fromRows(rows), NeuroSpace(Vector(3, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("chunked-rrr-gls-demo"), ImageDMat.fromRows(rows), SampleSpaces(Vector(3, 1, 1))),
         samplingFrame = sampling
       )
     FmriModel(eventModel, baseline, dataset)
@@ -831,7 +833,11 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId(id), ImageDMat.fromRows(rows), NeuroSpace(Vector(rows.head.length, 1, 1))),
+        backend = InMemoryDatasetBackend(
+          DatasetId(id),
+          ImageDMat.fromRows(rows),
+          SampleSpaces(Vector(rows.head.length, 1, 1))
+        ),
         samplingFrame = sampling
       )
     FmriModel(eventModel, baseline, dataset)
@@ -855,7 +861,7 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
         backend = InMemoryDatasetBackend(
           DatasetId("chunked-lss-demo"),
           ImageDMat.fromRows(rows),
-          NeuroSpace(Vector(3, 1, 1))
+          SampleSpaces(Vector(3, 1, 1))
         ),
         samplingFrame = SamplingFrame(blockLens = Seq(nTime), tr = Seq(1.0)),
         events = events

@@ -73,7 +73,7 @@ Target module: `scalafim-dataset`
 Initial Scala concepts:
 
 - `DatasetId`, `SubjectId`, `SessionId`, `RunId` as opaque identifiers.
-- `DatasetShape` as a spatial `NeuroSpace` plus timepoint count.
+- `DatasetShape` as a spatial `SomeSampleSpace` plus timepoint count.
 - `DataSelection` as explicit temporal and voxel index selections.
 - `DatasetBackend` as the small storage contract replacing S3 generics.
 - `FmriDataset` as the typed container joining a backend with a sampling frame
@@ -130,7 +130,7 @@ projection/resampling in `scalafim-surface`, route-planning integration in
 identity, affine, nonlinear warp, volume-to-surface, and surface-to-surface
 mappings with pullback semantics. In ScalaFIM this should not become a direct
 S4-shaped port or a new dependency-heavy umbrella module. The shared core sits
-where `NeuroSpace`, `DMat`, `NeuroVol`, affine utilities, and interpolation
+where `SomeSampleSpace`, `DMat`, `NeuroVol`, affine utilities, and interpolation
 already live.
 
 Initial Scala concepts:

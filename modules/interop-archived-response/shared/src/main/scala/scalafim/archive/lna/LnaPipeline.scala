@@ -1,12 +1,13 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, ArchivePath, RunLabel}
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{DMat, SomeSampleSpace}
+import scalafim.image.spatialDims
 
 object LnaPipeline:
   def quantArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       params: QuantParams = QuantParams(),
       creator: String = "scalafim-archive"
@@ -57,7 +58,7 @@ object LnaPipeline:
 
   def deltaArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       params: DeltaParams = DeltaParams(),
       creator: String = "scalafim-archive"
@@ -104,7 +105,7 @@ object LnaPipeline:
 
   def deltaQuantArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       deltaParams: DeltaParams = DeltaParams(),
       quantParams: QuantParams = QuantParams(),
@@ -170,7 +171,7 @@ object LnaPipeline:
 
   def basisEmbedArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       basis: DMat,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-archive"
@@ -228,7 +229,7 @@ object LnaPipeline:
 
   def sharedBasisEmbedArchive(
       data: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       basis: SharedBasisArtifact,
       basisId: SharedBasisId,
       locator: Option[SharedBasisLocator] = None,
@@ -257,7 +258,7 @@ object LnaPipeline:
 
   def sharedBasisEmbedArchiveFromCoefficients(
       coefficients: DMat,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       basis: SharedBasisArtifact,
       basisId: SharedBasisId,
       locator: Option[SharedBasisLocator] = None,

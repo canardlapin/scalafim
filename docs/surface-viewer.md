@@ -235,7 +235,7 @@ Java2D, JavaFX, or SVG.
 
 `SurfaceVolumeProjection` is the portable CPU path. It delegates geometry and
 sampling policy to existing `VolToSurfMorphism`, `VolumeSurfaceSamplingPlan`,
-and `NeuroSpace` types, and records requested/accepted samples, mask/quality
+and `SomeSampleSpace` types, and records requested/accepted samples, mask/quality
 decisions, bytes, and elapsed time. The result becomes a scalar surface layer.
 
 The browser backend has an optional WebGL2 float-texture midpoint/nearest

@@ -4,8 +4,7 @@ import scala.collection.mutable
 
 import scalafim.image.Indexing
 import scalafim.image.PrimitiveBuffers
-import scalafim.image.NeuroSpace
-import scalafim.image.NeuroVol
+import scalafim.image.{SampleSpaces, SomeSampleSpace}
 
 class GraphDifferentialSuite extends munit.FunSuite:
   private val dimensions = Vector(3, 3, 2)
@@ -20,15 +19,15 @@ class GraphDifferentialSuite extends munit.FunSuite:
 
   private val regions = RegionIndex(
     Vector(
-      Region(RegionId(1), "A"),
-      Region(RegionId(2), "B"),
-      Region(RegionId(3), "C"),
-      Region(RegionId(4), "D")
+      AtlasRegionMetadata(RegionId(1), "A"),
+      AtlasRegionMetadata(RegionId(2), "B"),
+      AtlasRegionMetadata(RegionId(3), "C"),
+      AtlasRegionMetadata(RegionId(4), "D")
     )
   )
 
   private val atlas =
-    val space = NeuroSpace(dimensions)
+    val space = SampleSpaces(dimensions)
     val ref = AtlasRef.volume(
       family = "graph-differential",
       model = "GraphDifferential",
@@ -39,8 +38,11 @@ class GraphDifferentialSuite extends munit.FunSuite:
     VolumeAtlas.fromLabelVolume(
       ref,
       regions,
-      NeuroVol.fromLinear(PrimitiveBuffers.fromArray(labels.toArray), space),
-      "graph-differential"
+      AtlasTestImages.labelVolume(
+        space,
+        PrimitiveBuffers.fromArray(labels.toArray),
+        "graph-differential"
+      )
     )
 
   test("region contact counts match an independent full-neighborhood oracle"):

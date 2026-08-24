@@ -106,7 +106,7 @@ object SurfaceGiftiAtlasLoader:
     val regions =
       present.toVector.sorted.map { id =>
         val info = table(id)
-        Region(
+        AtlasRegionMetadata(
           id = info.id,
           label = info.name,
           labelFull = Some(info.name),

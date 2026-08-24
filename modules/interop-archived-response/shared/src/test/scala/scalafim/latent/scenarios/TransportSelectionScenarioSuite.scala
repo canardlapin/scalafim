@@ -1,7 +1,9 @@
 package scalafim.latent.scenarios
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.lna.TransformParams
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import scalafim.latent.*
 import gale.linalg.{DMat, DVec, LinAlgError}
 
@@ -60,7 +62,7 @@ class TransportSelectionScenarioSuite extends munit.FunSuite:
       )
     val archive =
       TransportLatentArchiveCodec
-        .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
+        .toArchive(source, SampleSpaces(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
     val decoded =
       LatentArchiveRegistry.standard

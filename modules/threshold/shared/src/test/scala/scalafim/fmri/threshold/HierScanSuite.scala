@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.{PrimitiveBuffers, NeuroSpace, NeuroVol}
+import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAtCanonicalOrdinal}
 
 class HierScanSuite extends munit.FunSuite:
 
@@ -18,8 +18,8 @@ class HierScanSuite extends munit.FunSuite:
     assertEquals(result.significantRegions.head.maskSpaceIndices, Vector(7))
     assertEquals(result.nodeTests.size, 8)
     assertEquals(result.nodeTests.filter(_.rejected).map(_.path), Vector(Vector(7)))
-    assert(result.reject.linear(7))
-    assertEquals((0 until 8).count(result.reject.linear), 1)
+    assert(result.reject.valueAtCanonicalOrdinal(7))
+    assertEquals((0 until 8).count(result.reject.valueAtCanonicalOrdinal), 1)
     assertEqualsDouble(result.threshold, result.significantRegions.head.score, 1e-12)
     assertEqualsDouble(result.cutoff.toLegacyDouble, result.significantRegions.head.score, 1e-12)
   }
@@ -36,8 +36,8 @@ class HierScanSuite extends munit.FunSuite:
     assertEquals(result.significantRegions.head.maskSpaceIndices, Vector(15))
     assert(result.nodeTests.exists(t => t.path == Vector(7) && t.rejected))
     assert(result.nodeTests.exists(t => t.path == Vector(7, 1) && t.rejected))
-    assert(result.reject.linear(15))
-    assertEquals((0 until 16).count(result.reject.linear), 1)
+    assert(result.reject.valueAtCanonicalOrdinal(15))
+    assertEquals((0 until 16).count(result.reject.valueAtCanonicalOrdinal), 1)
   }
 
   test("HierScan keeps the reject mask empty when the null dominates") {
@@ -49,7 +49,7 @@ class HierScanSuite extends munit.FunSuite:
     assertEquals(result.nodeTests.count(_.rejected), 0)
     assert(result.threshold.isPosInfinity)
     assertEquals(result.cutoff, ThresholdCutoff.NoRejections)
-    assertEquals((0 until 8).count(result.reject.linear), 0)
+    assertEquals((0 until 8).count(result.reject.valueAtCanonicalOrdinal), 0)
   }
 
   test("HierScan accepts an unsigned statistic map only with a greater alternative") {
@@ -89,8 +89,8 @@ class HierScanSuite extends munit.FunSuite:
       minPriorMass = 0.0
     )
 
-  private def volume(dims: Vector[Int], data: Array[Double]): NeuroVol[Double] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fromArray(data), NeuroSpace(dims))
+  private def volume(dims: Vector[Int], data: Array[Double]): SomeScalarVolume[Double] =
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(dims))
 
   private final class FixedNullDraw(rows: Vector[Array[Double]]) extends NullDraw:
     override val nPermutations: PermutationCount =

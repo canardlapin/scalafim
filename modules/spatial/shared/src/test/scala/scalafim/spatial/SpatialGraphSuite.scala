@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
 
 class SpatialGraphSuite extends munit.FunSuite:
@@ -14,7 +15,7 @@ class SpatialGraphSuite extends munit.FunSuite:
     val id = value(DomainId(name))
     val subject = value(SubjectId("sub-01"))
     val modality = value(Modality(name))
-    val geometry = value(SamplingGeometry.volume(NeuroSpace(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
+    val geometry = value(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4)))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(name: String): Domain =

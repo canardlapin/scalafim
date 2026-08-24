@@ -211,7 +211,7 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
     ))
     val target = geometry(transform = transform)
     val selection = SurfaceSelection(surfaceId, VertexId(2))
-    val volume = VolumeSpace(NeuroSpace(Vector(64, 64, 64)))
+    val volume = VolumeSpace(SampleSpaces(Vector(64, 64, 64)))
     val linked = SurfaceWorldLink.toVolume(selection, target, volume).toOption.get
     assertEquals(linked.world, WorldPoint(10.0, 21.0, 30.0))
     assertEquals(linked.voxel, VoxelPoint(10.0, 21.0, 30.0))

@@ -1,5 +1,7 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.{ArchiveError, RunLabel}
 import scalafim.archive.lna.{
   DatasetRole,
@@ -13,7 +15,7 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.{DMat as ImageDMat, Mask, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, Mask, SomeSampleSpace}
 import gale.linalg.{DMat, DVec, LinAlgError}
 
 class LatentArchiveRegistrySuite extends munit.FunSuite:
@@ -109,7 +111,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
 
     val archive =
       ExplicitLatentArchiveCodec
-        .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
+        .toArchive(source, SampleSpaces(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
     val plan =
       LatentArchiveRegistry.standard
@@ -158,7 +160,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
       LnaPipeline
         .quantArchive(
           ImageDMat.fromRows(Vector(Vector(0.0, 1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0, 7.0))),
-          NeuroSpace(Vector(2, 2, 1))
+          SampleSpaces(Vector(2, 2, 1))
         )
         .fold(err => fail(err.message), identity)
     val plan =
@@ -184,7 +186,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
       ExplicitLatentArchiveCodec
         .toTemporalDctArchive(
           data = data,
-          space = NeuroSpace(Vector(2, 2, 1)),
+          space = SampleSpaces(Vector(2, 2, 1)),
           components = data.rows,
           norm = DctNorm.Ortho,
           center = true,
@@ -286,7 +288,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
       SharedBasisLatentArchiveCodec
         .toArchive(
           data = data,
-          space = NeuroSpace(Vector(3, 1, 1)),
+          space = SampleSpaces(Vector(3, 1, 1)),
           basis = sharedBasis,
           basisId = basisId,
           center = true
@@ -357,11 +359,11 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
         assertEquals(response.offset.map(_.toVector), encoded.offset.map(_.toVector))
         val materialized =
           response
-            .materialize(sharedBasis, Some(NeuroSpace(Vector(3, 1, 1))))
+            .materialize(sharedBasis, Some(SampleSpaces(Vector(3, 1, 1))))
             .fold(err => fail(err.message), identity)
         val mask =
           response
-            .sampleMask(NeuroSpace(Vector(3, 1, 1)), sharedBasis)
+            .sampleMask(SampleSpaces(Vector(3, 1, 1)), sharedBasis)
             .fold(err => fail(err.message), identity)
         assertRowsEqual(materialized.basis.toRows, encoded.coefficients.toRows, 1e-12)
         assertRowsEqual(materialized.loadings.toRows, sharedLoadings.toRows, 1e-12)
@@ -431,7 +433,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
 
     val archive =
       TransportLatentArchiveCodec
-        .toArchive(source, NeuroSpace(Vector(2, 2, 1)))
+        .toArchive(source, SampleSpaces(Vector(2, 2, 1)))
         .fold(err => fail(err.message), identity)
 
     assert(TransportLatentArchiveCodec.isArchive(archive))
@@ -529,7 +531,7 @@ class LatentArchiveRegistrySuite extends munit.FunSuite:
 
     val archive =
       BoldZipLatentArchiveCodec
-        .toArchive(source, NeuroSpace(Vector(3, 1, 1)))
+        .toArchive(source, SampleSpaces(Vector(3, 1, 1)))
         .fold(err => fail(err.message), identity)
 
     assert(BoldZipLatentArchiveCodec.isArchive(archive))

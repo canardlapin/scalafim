@@ -3,7 +3,8 @@ package scalafim.dataset.zarr
 import scala.util.control.NonFatal
 import scalafim.archive.zarr.OpenedCanonicalBold
 import scalafim.dataset.*
-import scalafim.image.{Affine, DMat, PrimitiveBuffers, NeuroSpace}
+import scalafim.image.{Affine, DMat, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 import zarr4s.*
 
 final class ZarrResponseBlockSource private (
@@ -75,7 +76,7 @@ object ZarrResponseBlockSource:
       if spatialProduct > Int.MaxValue.toLong then
         return Left(DatasetError.ShapeMismatch("canonical spatial size exceeds the dataset Int boundary"))
       val spatial = dimensions.drop(1).reverse.map(_.toInt)
-      val space = NeuroSpace(
+      val space = SampleSpaces(
         spatial,
         spacing = Some(Affine.voxelSizes(affine)),
         origin = Some(Vector(affine(0, 3), affine(1, 3), affine(2, 3))),

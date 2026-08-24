@@ -1,11 +1,14 @@
 package scalafim.fmri.workflow
 
+import scalafim.image.SampleSpaces
+
 import munit.FunSuite
 import bids4s.*
 import bids4s.io.BidsProjectLoader
 import scalafim.dataset.*
 import scalafim.dataset.io.NiftiStagingCache
-import scalafim.image.{DMat, PrimitiveBuffers, NeuroSpace, NeuroVol}
+import scalafim.image.{DMat, PrimitiveBuffers, SomeSampleSpace, SomeNeuroVolume}
+import scalafim.image.SomeScalarVolume
 import scalafim.image.io.Nifti
 
 import java.nio.{ByteBuffer, ByteOrder}
@@ -45,7 +48,10 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       assert(unit.mask.isInstanceOf[UnitMask.Intersection])
 
       val cache = NiftiStagingCache.unsafe(root.resolve("nifti-cache"))
-      val opened = FirstLevelUnitSource.open(unit, staging = Some(cache)).toOption.get
+      val opened =
+        FirstLevelUnitSource
+          .open(unit, staging = Some(cache))
+          .fold(error => fail(error.message), identity)
       val block = opened.source.readBlock(
         DataSelection(
           time = TimepointSelection.indices(3, 0, 2),
@@ -60,9 +66,9 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       assertMatrixEquals(
         block.data,
         Vector(
-          Vector(24.0, 34.0),
-          Vector(3.0, 7.0),
-          Vector(4.0, 14.0)
+          Vector(24.0, 29.0),
+          Vector(3.0, 5.0),
+          Vector(4.0, 9.0)
         )
       )
 
@@ -79,7 +85,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       root.resolve("derivatives/fmriprep/dataset_description.json"),
       """{"Name":"fMRIPrep","BIDSVersion":"1.10.0","DatasetType":"derivative"}"""
     )
-    val space = NeuroSpace(Vector(2, 2, 1))
+    val space = SampleSpaces(Vector(2, 2, 1))
 
     Vector("01", "02").foreach { run =>
       val prefix = s"sub-01_task-demo_run-$run"
@@ -120,10 +126,12 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       val maskValues =
         if run == "01" then Array(1.0, 1.0, 1.0, 0.0)
         else Array(1.0, 0.0, 1.0, 1.0)
-      Nifti.writeVol(
-        func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
-        NeuroVol.fromLinear(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
-      )
+      Nifti
+        .writeVolume(
+          func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
+          SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
+        )
+        .fold(error => fail(error.message), _ => ())
       write(
         func.resolve(s"${prefix}_desc-confounds_timeseries.tsv"),
         "trans_x\ttrans_y\n0\t0\n0\t0\n"

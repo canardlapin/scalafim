@@ -76,8 +76,9 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
   test("nibabel oblique fixture retains its independent spatial metadata") {
     val expected = fixture
     val path = resourcePath("nibabel-oblique.nii")
-    val header = Nifti.readHeader(path)
-    val volume = Nifti.readVol(path)
+    val decoded = Nifti.readVolume(path).toOption.get
+    val header = NiftiHeader.fromNative(decoded.header)
+    val volume = decoded.image
 
     assertEquals(expected.generator, "nibabel-5.2.1")
     assertEquals(expected.axisCodes, Vector("A", "L", "I"))
@@ -86,13 +87,13 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
     assert(header.qform.nonEmpty)
     assert(header.sform.nonEmpty)
     assertEquals(header.preferredAffine, header.sform)
-    assertEquals(volume.space.dims, Vector(4, 5, 6))
-    assertEquals(volume.space, header.space)
+    assertEquals(volume.sampleSpace.logicalShape, Vector(4, 5, 6))
+    assertMatrixEquals(volume.sampleSpace.grid.indexToFrame.rowMajor, header.selectedAffine)
   }
 
   test("file-to-reslice pixels match nibabel in every plane and display convention") {
     val expected = fixture
-    val volume = Nifti.readVol(resourcePath("nibabel-oblique.nii"))
+    val volume = Nifti.readVolume(resourcePath("nibabel-oblique.nii")).toOption.get.image
     val groups = expected.pixels.groupBy(pixel => pixel.plane -> pixel.convention)
 
     assertEquals(groups.size, AnatomicalPlane.values.length * LeftRightConvention.values.length)
@@ -120,3 +121,11 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
     }
     assert(interiorNearest >= 40, clue = s"fixture should contain many independently located landmarks; got $interiorNearest")
   }
+
+  private def assertMatrixEquals(
+      actual: Vector[Double],
+      expected: DMat
+  ): Unit =
+    assertEquals(actual.size, expected.data.size)
+    actual.zip(expected.data).foreach: (observed, target) =>
+      assertEqualsDouble(observed, target, WorldTolerance)

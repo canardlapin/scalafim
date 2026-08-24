@@ -1,38 +1,61 @@
 package scalafim.atlas
 
+import locus4s.DomainRegistry
 import scalafim.image.*
 
 trait Atlas:
   def ref: AtlasRef
   def provenance: AtlasProvenance
   def regions: RegionIndex
-  def quotient: AtlasQuotient
+  def realization: AtlasRealization
 
   def family: String = ref.family
   def model: String = ref.model
   def name: String = ref.name
   def representation: AtlasRepresentation = ref.representation
 
-final case class VolumeAtlas(
-  ref: AtlasRef,
-  regions: RegionIndex,
-  volume: ClusteredNeuroVol,
-  provenance: AtlasProvenance
+/** A volumetric atlas whose sole membership owner is its exact realization.
+  *
+  * Dense categorical labels are explicit derived materializations. The atlas
+  * never retains a parallel mask, cluster vector, or legacy dense label image.
+  */
+final class VolumeAtlas private (
+    val realization: VolumeAtlasRealization
 ) extends Atlas:
-  require(ref.representation == AtlasRepresentation.Volume, "VolumeAtlas requires volume representation")
+  def ref: AtlasRef =
+    realization.ref
 
-  private val regionIdSet = regions.ids.toSet
-  private val payloadIdSet = volume.clusterIds.map(RegionId(_)).toSet
-  require(regionIdSet == payloadIdSet, "region ids must match volume cluster ids")
+  def provenance: AtlasProvenance =
+    realization.provenance
 
-  lazy val quotient: VolumeAtlasQuotient =
-    AtlasQuotient.volume(ref.coordSpace.value, ref.name, regions, volume)
+  lazy val regions: RegionIndex =
+    RegionIndex(
+      realization.displayOrder.indices
+        .map(realization.metadata.apply)
+        .toVector
+    )
 
-  def space: NeuroSpace =
-    volume.space
+  def space: SomeSampleSpace =
+    VolumeSpace.fromGridDomain(realization.domain).toSampleSpace
 
-  lazy val labelVolume: NeuroVol[Int] =
-    volume.toDense
+  /** Materialize categorical labels in canonical Ravel order.
+    *
+    * Each call returns a new dense image; membership remains authoritative in
+    * `realization.parcelAssignment`.
+    */
+  def labelVolume: SomeLabelVolume[Int] =
+    realization.parcellation
+      .renderCategorical(
+        realization.metadata.map(_.id.value),
+        background = 0
+      )
+      .fold(
+        error =>
+          throw new IllegalStateException(
+            s"validated atlas failed to render labels: ${error.message}"
+          ),
+        identity
+      )
 
   def region(id: RegionId): Option[AtlasRegionMetadata] =
     regions.get(id)
@@ -43,57 +66,73 @@ final case class VolumeAtlas(
   def subset(p: AtlasRegionMetadata => Boolean): VolumeAtlas =
     val kept = regions.regions.filter(p)
     require(kept.nonEmpty, "atlas subset must keep at least one region")
-    val keepIds = kept.map(_.id.value).toSet
-    val dense = volume.toDense
-    val flags = scalafim.image.PrimitiveBuffers.fillConst[Boolean](space.spatialDims.product, false)
-    val values = Array.newBuilder[Int]
-    var lin = 0
-    while lin < flags.length do
-      val id = dense.linear(lin)
-      if keepIds.contains(id) then
-        flags(lin) = true
-        values += id
-      lin += 1
-    val mask = NeuroVol.fromLinear[Boolean](flags, space, volume.label)
+    val keepIds = kept.iterator.map(_.id).toSet
+    val rendered =
+      realization.parcellation
+        .renderCategorical(
+          realization.metadata.map: metadata =>
+            if keepIds.contains(metadata.id) then metadata.id.value else 0,
+          background = 0
+        )
+        .fold(
+          error =>
+            throw new IllegalStateException(
+              s"validated atlas subset failed to render labels: ${error.message}"
+            ),
+          identity
+        )
     val outRegions = RegionIndex(kept)
-    val clusters = scalafim.image.PrimitiveBuffers.fromArray(values.result())
-    copy(
-      regions = outRegions,
-      volume = ClusteredNeuroVol(mask, clusters, outRegions.labelMap, volume.label),
-      provenance = provenance.withLabels(LabelSchema.fromRegions(ref, outRegions, provenance.sourceArtifacts))
+    val outProvenance =
+      provenance.withLabels(
+        LabelSchema.fromRegions(ref, outRegions, provenance.sourceArtifacts)
+      )
+    VolumeAtlas.fromLabelVolume(
+      ref,
+      outRegions,
+      rendered,
+      outProvenance
     )
 
 object VolumeAtlas:
-  def apply(ref: AtlasRef, regions: RegionIndex, volume: ClusteredNeuroVol): VolumeAtlas =
-    new VolumeAtlas(ref, regions, volume, AtlasProvenance.fromRef(ref, regions))
+  def fromRealization(realization: VolumeAtlasRealization): VolumeAtlas =
+    new VolumeAtlas(realization)
 
-  def fromLabelVolume(ref: AtlasRef, regions: RegionIndex, labels: NeuroVol[Int], label: String = ""): VolumeAtlas =
-    fromLabelVolume(ref, regions, labels, label, AtlasProvenance.fromRef(ref, regions))
+  def fromLabelVolumeEither(
+      ref: AtlasRef,
+      regions: RegionIndex,
+      labels: SomeLabelVolume[Int],
+      provenance: AtlasProvenance
+  ): Either[AtlasRealizationError, VolumeAtlas] =
+    AtlasRealization
+      .volumeFromLabelsIn(
+        DomainRegistry.empty,
+        ref,
+        regions,
+        labels,
+        provenance
+      )
+      .map(fromRealization)
 
   def fromLabelVolume(
-    ref: AtlasRef,
-    regions: RegionIndex,
-    labels: NeuroVol[Int],
-    label: String,
-    provenance: AtlasProvenance
+      ref: AtlasRef,
+      regions: RegionIndex,
+      labels: SomeLabelVolume[Int]
   ): VolumeAtlas =
-    val ids = regions.ids.map(_.value).toSet
-    val flags = scalafim.image.PrimitiveBuffers.fillConst[Boolean](labels.space.spatialDims.product, false)
-    val values = Array.newBuilder[Int]
-    var lin = 0
-    while lin < flags.length do
-      val id = labels.linear(lin)
-      if id != 0 then
-        require(ids.contains(id), AtlasError.MissingRegionId(RegionId(id)).message)
-        flags(lin) = true
-        values += id
-      lin += 1
+    fromLabelVolume(
+      ref,
+      regions,
+      labels,
+      AtlasProvenance.fromRef(ref, regions)
+    )
 
-    val clusterValues = values.result()
-    val present = clusterValues.toSet
-    val missing = ids.diff(present)
-    require(missing.isEmpty, s"label volume is missing region ids: ${missing.toVector.sorted.mkString(", ")}")
-
-    val mask = NeuroVol.fromLinear[Boolean](flags, labels.space, label)
-    val clusters = scalafim.image.PrimitiveBuffers.fromArray(clusterValues)
-    VolumeAtlas(ref, regions, ClusteredNeuroVol(mask, clusters, regions.labelMap, label), provenance)
+  def fromLabelVolume(
+      ref: AtlasRef,
+      regions: RegionIndex,
+      labels: SomeLabelVolume[Int],
+      provenance: AtlasProvenance
+  ): VolumeAtlas =
+    fromLabelVolumeEither(ref, regions, labels, provenance)
+      .fold(
+        error => throw new IllegalArgumentException(error.message),
+        identity
+      )

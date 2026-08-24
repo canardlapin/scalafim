@@ -16,47 +16,65 @@ object syntax:
     def query(points: Vector[Point3D], radiusMm: Double, fromSpace: AnySpaceId): Vector[QueryHit] =
       AtlasQuery.query(atlas, points, radiusMm, fromSpace)
 
-    def reduceEither(data: NeuroVol[Double]): Either[AtlasError, ParcelValues] =
-      AtlasReduce.reduceVolumeEither(atlas, data, Reducers.mean)
+    def reduceEither(
+        data: SomeScalarVolume[Double]
+    ): Either[AtlasError, ParcelValues] =
+      AtlasReduce.summarizeVolumeEither(atlas, data, Reducers.mean)
 
-    def reduce(data: NeuroVol[Double]): ParcelValues =
-      AtlasReduce.reduceVolume(atlas, data, Reducers.mean)
-
-    def reduceEither(data: NeuroVol[Double], reducer: Array[Double] => Double): Either[AtlasError, ParcelValues] =
-      AtlasReduce.reduceVolumeEither(atlas, data, reducer)
-
-    def reduce(data: NeuroVol[Double], reducer: Array[Double] => Double): ParcelValues =
-      AtlasReduce.reduceVolume(atlas, data, reducer)
-
-    @scala.annotation.targetName("reduceNeuroVecEither")
-    def reduceEither(data: NeuroVec[Double]): Either[AtlasError, ClusteredNeuroVec[Double]] =
-      AtlasReduce.reduceVecEither(atlas, data, reducer = Reducers.mean)
-
-    @scala.annotation.targetName("reduceNeuroVec")
-    def reduce(data: NeuroVec[Double]): ClusteredNeuroVec[Double] =
-      AtlasReduce.reduceVec(atlas, data, reducer = Reducers.mean)
-
-    @scala.annotation.targetName("reduceNeuroVecWithEither")
-    def reduceEither(data: NeuroVec[Double], reducer: Array[Double] => Double): Either[AtlasError, ClusteredNeuroVec[Double]] =
-      AtlasReduce.reduceVecEither(atlas, data, reducer = reducer)
-
-    @scala.annotation.targetName("reduceNeuroVecWith")
-    def reduce(data: NeuroVec[Double], reducer: Array[Double] => Double): ClusteredNeuroVec[Double] =
-      AtlasReduce.reduceVec(atlas, data, reducer = reducer)
+    def reduce(data: SomeScalarVolume[Double]): ParcelValues =
+      AtlasReduce.summarizeVolume(atlas, data, Reducers.mean)
 
     def reduceEither(
-      data: NeuroVec[Double],
-      mask: NeuroVol[Boolean],
-      reducer: Array[Double] => Double
-    ): Either[AtlasError, ClusteredNeuroVec[Double]] =
-      AtlasReduce.reduceVecEither(atlas, data, Some(mask), reducer)
+        data: SomeScalarVolume[Double],
+        reducer: Array[Double] => Double
+    ): Either[AtlasError, ParcelValues] =
+      AtlasReduce.summarizeVolumeEither(atlas, data, reducer)
 
     def reduce(
-      data: NeuroVec[Double],
-      mask: NeuroVol[Boolean],
-      reducer: Array[Double] => Double
-    ): ClusteredNeuroVec[Double] =
-      AtlasReduce.reduceVec(atlas, data, Some(mask), reducer)
+        data: SomeScalarVolume[Double],
+        reducer: Array[Double] => Double
+    ): ParcelValues =
+      AtlasReduce.summarizeVolume(atlas, data, reducer)
+
+    @scala.annotation.targetName("reduceNeuroSeriesEither")
+    def reduceEither(
+        data: SomeScalarSeries[Double]
+    ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
+      AtlasReduce.reduceSeriesEither(atlas, data, reducer = Reducers.mean)
+
+    @scala.annotation.targetName("reduceNeuroSeries")
+    def reduce(
+        data: SomeScalarSeries[Double]
+    ): SomeScalarParcelSeries[Double] =
+      AtlasReduce.reduceSeries(atlas, data, reducer = Reducers.mean)
+
+    @scala.annotation.targetName("reduceNeuroSeriesWithEither")
+    def reduceEither(
+        data: SomeScalarSeries[Double],
+        reducer: Array[Double] => Double
+    ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
+      AtlasReduce.reduceSeriesEither(atlas, data, reducer = reducer)
+
+    @scala.annotation.targetName("reduceNeuroSeriesWith")
+    def reduce(
+        data: SomeScalarSeries[Double],
+        reducer: Array[Double] => Double
+    ): SomeScalarParcelSeries[Double] =
+      AtlasReduce.reduceSeries(atlas, data, reducer = reducer)
+
+    def reduceEither(
+        data: SomeScalarSeries[Double],
+        mask: SomeMaskVolume,
+        reducer: Array[Double] => Double
+    ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
+      AtlasReduce.reduceSeriesEither(atlas, data, Some(mask), reducer)
+
+    def reduce(
+        data: SomeScalarSeries[Double],
+        mask: SomeMaskVolume,
+        reducer: Array[Double] => Double
+    ): SomeScalarParcelSeries[Double] =
+      AtlasReduce.reduceSeries(atlas, data, Some(mask), reducer)
 
     def overlapEither(other: VolumeAtlas): Either[AtlasError, Vector[RegionOverlap]] =
       AtlasOverlap.computeEither(atlas, other)
@@ -67,16 +85,6 @@ object syntax:
     ): Either[AtlasError, Vector[RegionOverlap]] =
       AtlasOverlap.computeEither(atlas, other, alignment)
 
-    @deprecated(
-      "Use overlapEither(other, AtlasAlignment); alignment must be explicit.",
-      "0.2.0"
-    )
-    def overlapEither(
-      other: VolumeAtlas,
-      resample: Boolean
-    ): Either[AtlasError, Vector[RegionOverlap]] =
-      AtlasOverlap.computeEither(atlas, other, resample)
-
     def overlap(other: VolumeAtlas): Vector[RegionOverlap] =
       AtlasOverlap.compute(atlas, other)
 
@@ -85,16 +93,6 @@ object syntax:
       alignment: AtlasAlignment
     ): Vector[RegionOverlap] =
       AtlasOverlap.compute(atlas, other, alignment)
-
-    @deprecated(
-      "Use overlap(other, AtlasAlignment); alignment must be explicit.",
-      "0.2.0"
-    )
-    def overlap(
-      other: VolumeAtlas,
-      resample: Boolean
-    ): Vector[RegionOverlap] =
-      AtlasOverlap.compute(atlas, other, resample)
 
     def adjacency(connectivity: VoxelConnectivity = VoxelConnectivity.Connect6): Vector[RegionEdge] =
       RegionGraph.adjacency(atlas, connectivity)

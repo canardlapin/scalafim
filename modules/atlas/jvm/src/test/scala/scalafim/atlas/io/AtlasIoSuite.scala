@@ -111,41 +111,41 @@ class AtlasIoSuite extends munit.FunSuite:
   }
 
   test("AtlasLabelMaps converts finite integer-valued volumes") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val data = PrimitiveBuffers.fillConst[Double](4, 0.0)
     data(0) = 1.0
     data(1) = 2.0
     data(2) = 0.0
     data(3) = 2.0
-    val labels = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](data, sp), "toy")
+    val labels = AtlasLabelMaps.fromDouble(SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](data, sp), "toy")
 
-    assertEquals(labels.linear(0), 1)
-    assertEquals(labels.linear(1), 2)
-    assertEquals(labels.linear(2), 0)
-    assertEquals(labels.linear(3), 2)
+    assertEquals(AtlasTestImages.labelAtCanonicalOrdinal(labels, 0), 1)
+    assertEquals(AtlasTestImages.labelAtCanonicalOrdinal(labels, 1), 2)
+    assertEquals(AtlasTestImages.labelAtCanonicalOrdinal(labels, 2), 0)
+    assertEquals(AtlasTestImages.labelAtCanonicalOrdinal(labels, 3), 2)
 
     data(0) = 1.25
     interceptMessage[IllegalArgumentException]("label volume contains non-integer value 1.25 at linear index 0") {
-      AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](data, sp))
+      AtlasLabelMaps.fromDouble(SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](data, sp))
     }
   }
 
   test("AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val fallbackData = PrimitiveBuffers.fromArray(Array(1.0, 2.0, 0.0, 2.0))
-    val fallback = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](fallbackData, sp, "source-label"))
-    assertEquals(fallback.label, "source-label")
-    assertEquals(fallback.linear(1), 2)
+    val fallback = AtlasLabelMaps.fromDouble(SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](fallbackData, sp, "source-label"))
+    assertEquals(fallback.metadata.label, "source-label")
+    assertEquals(AtlasTestImages.labelAtCanonicalOrdinal(fallback, 1), 2)
 
-    val explicit = AtlasLabelMaps.fromDouble(NeuroVol.fromLinear[Double](fallbackData, sp, "source-label"), "explicit-label")
-    assertEquals(explicit.label, "explicit-label")
+    val explicit = AtlasLabelMaps.fromDouble(SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](fallbackData, sp, "source-label"), "explicit-label")
+    assertEquals(explicit.metadata.label, "explicit-label")
 
-    val nonFinite = NeuroVol.fromLinear[Double](PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
+    val nonFinite = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains non-finite value at linear index 1") {
       AtlasLabelMaps.fromDouble(nonFinite)
     }
 
-    val negative = NeuroVol.fromLinear[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
+    val negative = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains negative region id -1 at linear index 1") {
       AtlasLabelMaps.fromDouble(negative)
     }
@@ -308,7 +308,7 @@ class AtlasIoSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "A", hemisphere = Some(Hemisphere.Left))
+          AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left))
         )
       )
     val ref =
@@ -335,18 +335,18 @@ class AtlasIoSuite extends munit.FunSuite:
   }
 
   test("AtlasLabelMaps builds VolumeAtlas from label volume and regions") {
-    val sp = NeuroSpace(Vector(2, 2, 1))
+    val sp = SampleSpaces(Vector(2, 2, 1))
     val data = PrimitiveBuffers.fillConst[Int](4, 0)
     data(0) = 1
     data(1) = 2
     data(2) = 1
     data(3) = 2
-    val labelVol = NeuroVol.fromLinear[Int](data, sp, "toy")
+    val labelVol = AtlasTestImages.labelVolume(sp, data, "toy")
     val regions =
       RegionIndex(
         Vector(
-          Region(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
-          Region(RegionId(2), "B", hemisphere = Some(Hemisphere.Right))
+          AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata(RegionId(2), "B", hemisphere = Some(Hemisphere.Right))
         )
       )
     val ref =
@@ -359,7 +359,7 @@ class AtlasIoSuite extends munit.FunSuite:
       )
 
     val atlas = AtlasLabelMaps.buildAtlas(ref, regions, labelVol)
-    assertEquals(atlas.volume.clusterIds, Vector(1, 2))
+    assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.region(RegionId(2)).map(_.label), Some("B"))
   }
 
@@ -384,7 +384,7 @@ class AtlasIoSuite extends munit.FunSuite:
     )
 
     assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
-    assertEquals(atlas.volume.clusterIds, Vector(1, 2))
+    assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.regions.ids, Vector(RegionId(1), RegionId(2)))
     assertEquals(atlas.region(RegionId(1)).map(_.network), Some(Some(NetworkId("Vis"))))
     assertEquals(atlas.region(RegionId(2)).map(_.hemisphere), Some(Some(Hemisphere.Right)))
@@ -411,7 +411,7 @@ class AtlasIoSuite extends munit.FunSuite:
     val atlas = GlasserLoader.loadFromPaths(GlasserHcpMmp1(GlasserSource.Mni2009c), volumePath, labelPath)
 
     assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
-    assertEquals(atlas.volume.clusterIds, Vector(1, 2))
+    assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.regions.labels, Vector("V1", "7Pm"))
     assertEquals(atlas.ref.source, Some("mni2009c"))
     assertEquals(atlas.ref.confidence, Confidence.High)

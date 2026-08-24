@@ -1,8 +1,10 @@
 package scalafim.interop.archive.lna
 
+import scalafim.image.SampleSpaces
+
 import scalafim.archive.{CanonicalValue, RepresentationMetadata, RunLabel}
 import scalafim.archive.lna.{DatasetRole, Payload}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 import scalafim.interop.archive.{PayloadCatalog, RepresentationEnvelope}
 import scalafim.latent.{
   DctNorm,
@@ -253,7 +255,7 @@ private[lna] object TemporalDctLnaFixtures:
       source: ResponseBlock,
       model: TemporalDctRepresentation,
       materialized: MaterializedTemporalDct,
-      space: NeuroSpace
+      space: SomeSampleSpace
   )
 
   def fixture(id: String): Fixture =
@@ -300,7 +302,7 @@ private[lna] object TemporalDctLnaFixtures:
       source,
       model,
       materialized,
-      NeuroSpace(Vector(3, 1, 1))
+      SampleSpaces(Vector(3, 1, 1))
     )
 
   def selection(

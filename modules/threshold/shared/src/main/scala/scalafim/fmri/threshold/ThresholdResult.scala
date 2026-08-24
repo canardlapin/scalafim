@@ -1,6 +1,6 @@
 package scalafim.fmri.threshold
 
-import scalafim.image.NeuroVol
+import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
 
 enum ThresholdMethod:
   case HierScan, Tfce, ClusterFdr, RftPeak, RftCluster, MaxT
@@ -29,10 +29,10 @@ object ThresholdCutoff:
 
 enum ThresholdPValues:
   case NotComputed
-  case Unadjusted(values: NeuroVol[Double])
-  case Adjusted(values: NeuroVol[Double], policy: CorrectionPolicy)
+  case Unadjusted(values: SomeScalarVolume[Double])
+  case Adjusted(values: SomeScalarVolume[Double], policy: CorrectionPolicy)
 
-  def valuesOption: Option[NeuroVol[Double]] =
+  def valuesOption: Option[SomeScalarVolume[Double]] =
     this match
       case NotComputed =>
         None
@@ -42,19 +42,19 @@ enum ThresholdPValues:
         Some(values)
 
 object ThresholdPValues:
-  def fromOption(values: Option[NeuroVol[Double]]): ThresholdPValues =
+  def fromOption(values: Option[SomeScalarVolume[Double]]): ThresholdPValues =
     values match
       case Some(map) => Unadjusted(map)
       case None      => NotComputed
 
 sealed trait ThresholdResult:
   def method: ThresholdMethod
-  def reject: NeuroVol[Boolean]
+  def reject: SomeMaskVolume
   def pValueSemantics: ThresholdPValues
   def cutoff: ThresholdCutoff
   def params: Map[String, String]
 
-  def pValues: Option[NeuroVol[Double]] =
+  def pValues: Option[SomeScalarVolume[Double]] =
     pValueSemantics.valuesOption
 
   def threshold: Double =
@@ -62,7 +62,7 @@ sealed trait ThresholdResult:
 
 final case class MapThresholdResult(
     method: ThresholdMethod,
-    reject: NeuroVol[Boolean],
+    reject: SomeMaskVolume,
     pValueSemantics: ThresholdPValues,
     cutoff: ThresholdCutoff,
     params: Map[String, String] = Map.empty
@@ -71,8 +71,8 @@ final case class MapThresholdResult(
 object MapThresholdResult:
   def fromLegacy(
     method: ThresholdMethod,
-    reject: NeuroVol[Boolean],
-    pValues: Option[NeuroVol[Double]],
+    reject: SomeMaskVolume,
+    pValues: Option[SomeScalarVolume[Double]],
     threshold: Double,
     params: Map[String, String] = Map.empty
   ): Either[ThresholdError, MapThresholdResult] =
@@ -81,7 +81,7 @@ object MapThresholdResult:
     }
 
 final case class HierScanResult(
-    reject: NeuroVol[Boolean],
+    reject: SomeMaskVolume,
     significantRegions: Vector[HierScanRegionHit],
     nodeTests: Vector[HierScanNodeTest],
     cutoff: ThresholdCutoff,

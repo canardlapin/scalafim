@@ -1,12 +1,14 @@
 package scalafim.fmri.fit.io
 
+import scalafim.image.SampleSpaces
+import scalafim.image.{apply, dims, space, valueAtCanonicalOrdinal}
+
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.fit.*
 import scalafim.fmri.design.{DesignSchema, ModelSource}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
-import scalafim.image.NeuroSpace
 import scalafim.image.io.Nifti
 import gale.linalg.DVec
 
@@ -47,17 +49,19 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(written.paths.contains(covariancePath))
     assert(written.paths.contains(sidecarPath))
 
-    val coefficientImage = Nifti.readVec(coefficientPath)
+    val coefficientImage =
+      Nifti.readSeries(coefficientPath).fold(error => fail(error.message), _.image)
     assertEquals(coefficientImage.space.dims.take(4), Vector(2, 1, 1, 2))
-    assertEqualsDouble(coefficientImage.linear(0), 2.0, 1e-12)
-    assertEqualsDouble(coefficientImage.linear(1), -1.0, 1e-12)
-    assertEqualsDouble(coefficientImage.linear(2), 3.0, 1e-12)
-    assertEqualsDouble(coefficientImage.linear(3), 4.0, 1e-12)
+    assertEqualsDouble(coefficientImage(0, 0, 0, 0), 2.0, 1e-12)
+    assertEqualsDouble(coefficientImage(0, 0, 0, 1), 3.0, 1e-12)
+    assertEqualsDouble(coefficientImage(1, 0, 0, 0), -1.0, 1e-12)
+    assertEqualsDouble(coefficientImage(1, 0, 0, 1), 4.0, 1e-12)
 
-    val contrastImage = Nifti.readVec(contrastPath)
+    val contrastImage =
+      Nifti.readSeries(contrastPath).fold(error => fail(error.message), _.image)
     assertEquals(contrastImage.space.dims.take(4), Vector(2, 1, 1, 3))
-    assertEqualsDouble(contrastImage.linear(0), t.estimates(0), 1e-12)
-    assertEqualsDouble(contrastImage.linear(1), t.estimates(1), 1e-12)
+    assertEqualsDouble(contrastImage(0, 0, 0, 0), t.estimates(0), 1e-12)
+    assertEqualsDouble(contrastImage(1, 0, 0, 0), t.estimates(1), 1e-12)
 
     val covariance = Files.readString(covariancePath, StandardCharsets.UTF_8)
     assert(covariance.contains("scope\tparameter_i\tparameter_j\tvalue"))
@@ -112,10 +116,11 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assertEquals(written.paths.filter(_.toString.endsWith(".nii")), expectedNiftis)
     assert(written.artifacts.filter(_.path.toString.endsWith(".nii")).forall(_.labels.length == 1))
 
-    val taskCoefficient = Nifti.readVol(expectedNiftis.head)
+    val taskCoefficient =
+      Nifti.readVolume(expectedNiftis.head).fold(error => fail(error.message), _.image)
     assertEquals(taskCoefficient.space.dims, Vector(2, 1, 1))
-    assertEqualsDouble(taskCoefficient.linear(0), 2.0, 1e-12)
-    assertEqualsDouble(taskCoefficient.linear(1), -1.0, 1e-12)
+    assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(0), 2.0, 1e-12)
+    assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(1), -1.0, 1e-12)
 
     val sidecar = Files.readString(root.resolve("sub-01_task-demo_resultmanifest.json"), StandardCharsets.UTF_8)
     assert(sidecar.contains("\"nifti_map_layout\": \"individual\""))
@@ -236,7 +241,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
   }
 
   private def shape: DatasetShape =
-    DatasetShape.unsafe(NeuroSpace(Vector(2, 1, 1)), timepoints = 4)
+    DatasetShape.unsafe(SampleSpaces(Vector(2, 1, 1)), timepoints = 4)
 
   private def denseResult(): DenseFmriFitResult =
     val covariance =

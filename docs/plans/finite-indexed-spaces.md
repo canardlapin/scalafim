@@ -603,7 +603,7 @@ update it if new overlapping types appear before their phase begins.
 | Existing value | Actual meaning | Disposition |
 | --- | --- | --- |
 | `graph.VertexBasis[K,V]` and `VertexIx` | Ordered keyed vertices plus metadata and graph-local ordinals | Reuse. Add checked locus adapters; do not create another keyed-axis abstraction. Keep graph-local public compatibility. |
-| `image.NeuroSpace` and `VolumeSpace` | Volume shape, affine, axes, and coordinate geometry | Retain. Add an adapter that requires an explicit semantic `SpaceKey`; geometry alone does not mint semantic identity. |
+| `image.SomeSampleSpace` and `VolumeSpace` | Volume shape, affine, axes, and coordinate geometry | Retain. Add an adapter that requires an explicit semantic `SpaceKey`; geometry alone does not mint semantic identity. |
 | `image.VoxelIndexSet` | Validated integer membership or ordering, depending on constructor | Migrate its two meanings to `Region` and `Selection`. Keep a compatibility wrapper while image consumers move. |
 | `image.VoxelRegion` | Unordered set on an exact volume grid | Back with `Region[V]`; preserve checked cross-grid operations through compatibility methods. |
 | `image.VoxelSelection` | Ordered unique voxel extraction | Back with `Selection[V]`; preserve requested order. |
@@ -1238,7 +1238,7 @@ adapters. Ergonomics cannot be “fixed” by erasing `S` to `Any`.
 
 ### R2. Identity migration
 
-Existing `NeuroSpace` values do not carry semantic acquisition identity.
+Existing `SomeSampleSpace` values do not carry semantic acquisition identity.
 Adapters must require a key from a domain, dataset, atlas, or explicit caller.
 A temporary structural-grid key is allowed only in a named compatibility API
 whose return value records that weaker basis.

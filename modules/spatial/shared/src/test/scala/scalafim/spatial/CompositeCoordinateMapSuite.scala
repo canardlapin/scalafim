@@ -1,7 +1,8 @@
 package scalafim.spatial
 
 import ravel.NDArray as RavelArray
-import scalafim.image.{DMat, DenseFieldMorphism, GridSpec, NeuroSpace, Resample, SpatialDomainId}
+import scalafim.image.{SampleSpaces, DMat, DenseFieldMorphism, GridSpec, SomeSampleSpace, Resample, SpatialDomainId}
+import scalafim.image.SampleSpaces.*
 
 class CompositeCoordinateMapSuite extends munit.FunSuite:
 
@@ -16,7 +17,7 @@ class CompositeCoordinateMapSuite extends munit.FunSuite:
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
-      SamplingGeometry.volume(NeuroSpace(Vector(4, 1, 1), trans = Some(DMat.eye(4))))
+      SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), trans = Some(DMat.eye(4))))
     )
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 

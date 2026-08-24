@@ -72,9 +72,9 @@ sealed abstract class RadialMaskOrder private (
   def maskValues(maskSize: Int): Either[RadialBasisError, Vector[Boolean]] =
     locus(maskSize).map { domain =>
       val values = Array.fill(maskSize)(false)
-      val points = domain.activeSelection.indices
-      while points.hasNext do
-        values(points.next().value) = true
+      val indices = domain.activeSelection.indices
+      while indices.hasNext do
+        values(indices.next().value) = true
       values.toVector
     }
 

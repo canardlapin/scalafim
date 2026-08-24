@@ -1,6 +1,8 @@
 package scalafim.spatial
 
-import scalafim.image.{GridCompatibility, NeuroSpace, NeuroVol}
+import scalafim.image.{GridCompatibility, SomeMaskVolume, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
+import scalafim.image.SomeNeuroVolume.*
 import scalafim.locus.{
   DomainFactory,
   FiniteSpace,
@@ -53,7 +55,7 @@ object SpaceRef:
     else Right(SpaceRef.Latent(dim, basis, support))
 
 enum SamplingGeometry:
-  case Volume(space: NeuroSpace, mask: Option[NeuroVol[Boolean]])
+  case Volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume])
   case Surface(geometry: SurfaceGeometry, mask: Option[SurfaceRoi[Boolean]])
   case Hybrid(parts: Vector[DomainPart])
   case Latent(dim: Int)
@@ -93,7 +95,7 @@ enum SamplingGeometry:
         dim
 
 object SamplingGeometry:
-  def volume(space: NeuroSpace, mask: Option[NeuroVol[Boolean]] = None): Either[SpatialError, SamplingGeometry] =
+  def volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume] = None): Either[SpatialError, SamplingGeometry] =
     mask match
       case Some(m) if GridCompatibility.spatial(space, m.space).isLeft =>
         Left(SpatialError.MaskSpaceMismatch("volume"))

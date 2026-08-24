@@ -1,13 +1,13 @@
 package scalafim.archive.lna
 
 import scalafim.archive.{ArchiveError, RunLabel}
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 
 object LnaTemporalDct:
   def archive(
       response: LnaExplicitLatent.Response,
       params: TemporalDctParams,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-archive"
   ): Either[ArchiveError, LnaArchive] =

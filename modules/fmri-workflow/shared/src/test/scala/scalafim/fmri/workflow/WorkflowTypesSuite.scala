@@ -1,9 +1,11 @@
 package scalafim.fmri.workflow
 
+import scalafim.image.SampleSpaces
+
 import munit.FunSuite
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SpaceId, SubjectId, TaskId}
 import scalafim.fmri.group.InterceptPolicy
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
 
 class WorkflowTypesSuite extends FunSuite:
   test("workflow identifiers and artifact locations validate at construction") {
@@ -42,7 +44,7 @@ class WorkflowTypesSuite extends FunSuite:
   }
 
   test("catalog construction rejects invalid run layout and duplicate units") {
-    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 4)
+    val shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 4)
     val run = runInput("run-1", 3)
     val mismatch = FirstLevelUnit.make(
       id = FirstLevelUnitId.unsafe("unit-01"),
@@ -107,7 +109,7 @@ class WorkflowTypesSuite extends FunSuite:
       session = None,
       task = TaskId("demo"),
       space = SpaceId("MNI"),
-      shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 4),
+      shape = DatasetShape.unsafe(SampleSpaces(Vector(2, 2, 1)), 4),
       runs = Vector(runInput("run-1", 4)),
       mask = UnitMask.Single(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii.gz"))
     )

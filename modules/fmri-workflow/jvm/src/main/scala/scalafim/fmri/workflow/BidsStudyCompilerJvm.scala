@@ -2,7 +2,8 @@ package scalafim.fmri.workflow
 
 import bids4s.{BidsFile, BidsPath, BidsProject, BidsValidationReport}
 import scalafim.dataset.DatasetShape
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
+import scalafim.image.spatialSpace
 import scalafim.image.io.Nifti
 
 import java.nio.file.Path
@@ -54,13 +55,13 @@ object BidsStudyCompilerJvm:
 
   private def describe(path: Path): Either[String, ImageHeaderDescriptor] =
     try
-      val header = Nifti.readHeader(path)
-      if header.dims.length < 3 || header.dims.length > 4 then
-        Left(s"expected a 3D or 4D NIfTI header, got ${header.dims.mkString("x")}")
-      else
-        val space = header.space.spatialSpace
-        val timepoints = if header.dims.length == 4 then header.dims(3) else 1
-        DatasetShape.make(space, timepoints).left.map(_.message).map(ImageHeaderDescriptor.apply)
+      Nifti.readHeader(path).left.map(_.message).flatMap: header =>
+        if header.dims.length < 3 || header.dims.length > 4 then
+          Left(s"expected a 3D or 4D NIfTI header, got ${header.dims.mkString("x")}")
+        else
+          val space = header.space.spatialSpace
+          val timepoints = if header.dims.length == 4 then header.dims(3) else 1
+          DatasetShape.make(space, timepoints).left.map(_.message).map(ImageHeaderDescriptor.apply)
     catch
       case NonFatal(error) => Left(error.getMessage)
 

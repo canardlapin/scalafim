@@ -14,7 +14,8 @@ import scalafim.archive.lna.{
   TransformKind,
   TransformParams
 }
-import scalafim.image.NeuroSpace
+import scalafim.image.SomeSampleSpace
+import scalafim.image.spatialDims
 import gale.linalg.DVec
 import scalafim.latent.LatentArchivePayloads.*
 
@@ -28,7 +29,7 @@ object TransportLatentArchiveCodec:
 
   def toArchive(
       response: TransportLatentResponse,
-      space: NeuroSpace,
+      space: SomeSampleSpace,
       runLabel: RunLabel = RunLabel.indexed(0),
       creator: String = "scalafim-latent"
   ): Either[ArchiveError, LnaArchive] =

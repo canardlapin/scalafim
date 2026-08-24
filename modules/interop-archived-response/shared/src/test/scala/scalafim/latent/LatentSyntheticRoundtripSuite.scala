@@ -1,7 +1,10 @@
 package scalafim.latent
 
+import scalafim.image.SampleSpaces
+import scalafim.image.SampleSpaces.spatialDims
+
 import scalafim.archive.lna.{SharedBasisArtifact, SharedBasisId, SharedBasisMask}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.{DMat as ImageDMat, SomeSampleSpace}
 import gale.linalg.{DMat, DVec}
 
 class LatentSyntheticRoundtripSuite extends munit.FunSuite:
@@ -208,7 +211,7 @@ class LatentSyntheticRoundtripSuite extends munit.FunSuite:
       rng: Lcg
   ): SpatialCase =
     val space =
-      NeuroSpace(Vector(5, 1, 1))
+      SampleSpaces(Vector(5, 1, 1))
     val active =
       Vector(4, 0, 3, 1)
     val spec =

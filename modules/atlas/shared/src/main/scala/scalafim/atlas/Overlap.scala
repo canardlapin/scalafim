@@ -33,74 +33,106 @@ object AtlasOverlap:
     atlas2: VolumeAtlas,
     alignment: AtlasAlignment
   ): Either[AtlasError, Vector[RegionOverlap]] =
-    val vol1 = atlas1.labelVolume
-    val vol2Either: Either[AtlasError, NeuroVol[Int]] =
-      alignment match
-        case AtlasAlignment.Exact =>
-          GridCompatibility.spatial(atlas1.space, atlas2.space) match
-            case Right(_) =>
-              Right(atlas2.labelVolume)
-            case Left(_) if atlas1.space.spatialDims != atlas2.space.spatialDims =>
-              Left(
-                AtlasError.SpaceMismatch(
-                  atlas1.space.spatialDims,
-                  atlas2.space.spatialDims
-                )
-              )
-            case Left(_) =>
-              Left(
-                AtlasError.ExactGridRequired(
-                  atlas1.space.spatialSpace.toString,
-                  atlas2.space.spatialSpace.toString
-                )
-              )
-        case AtlasAlignment.NearestNeighborToFirst =>
-          Right(
-            Resample.nearest(
-              atlas2.labelVolume,
-              atlas1.space,
-              fill = 0
-            )
+    alignment match
+      case AtlasAlignment.Exact =>
+        requireExactGrid(atlas1, atlas2)
+          .map(_ => computeFromAssignments(atlas1, atlas2))
+      case AtlasAlignment.NearestNeighborToFirst =>
+        val first = atlas1.labelVolume
+        NativeResampling
+          .nearestLike(atlas2.labelVolume, first, fill = 0)
+          .left
+          .map(error => AtlasError.InvalidAlignment(error.message))
+          .map(second =>
+            computeWithAlignedVolumes(atlas1, atlas2, first, second)
           )
 
-    vol2Either.flatMap(vol2 => computeWithAlignedVolumes(atlas1, atlas2, vol1, vol2))
+  private def requireExactGrid(
+      atlas1: VolumeAtlas,
+      atlas2: VolumeAtlas
+  ): Either[AtlasError, Unit] =
+    GridCompatibility.spatial(atlas1.space, atlas2.space) match
+      case Right(_) =>
+        Right(())
+      case Left(_) if atlas1.space.spatialDims != atlas2.space.spatialDims =>
+        Left(
+          AtlasError.SpaceMismatch(
+            atlas1.space.spatialDims,
+            atlas2.space.spatialDims
+          )
+        )
+      case Left(_) =>
+        Left(
+          AtlasError.ExactGridRequired(
+            atlas1.space.spatialSpace.toString,
+            atlas2.space.spatialSpace.toString
+          )
+        )
 
-  @deprecated(
-    "Use computeEither(atlas1, atlas2, AtlasAlignment); alignment must be explicit.",
-    "0.2.0"
-  )
-  def computeEither(
-    atlas1: VolumeAtlas,
-    atlas2: VolumeAtlas,
-    resample: Boolean
-  ): Either[AtlasError, Vector[RegionOverlap]] =
-    computeEither(
-      atlas1,
-      atlas2,
-      if resample then AtlasAlignment.NearestNeighborToFirst
-      else AtlasAlignment.Exact
-    )
+  private def computeFromAssignments(
+      atlas1: VolumeAtlas,
+      atlas2: VolumeAtlas
+  ): Vector[RegionOverlap] =
+    val first = atlas1.realization
+    val second = atlas2.realization
+    val n1 = scala.collection.mutable.Map.empty[Int, Int].withDefaultValue(0)
+    val n2 = scala.collection.mutable.Map.empty[Int, Int].withDefaultValue(0)
+    val both = scala.collection.mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)
+
+    var ordinal = 0
+    while ordinal < first.domain.space.size do
+      val firstVoxel = first.domain.space.indexAtValidatedOrdinal(ordinal)
+      val secondVoxel = second.domain.space.indexAtValidatedOrdinal(ordinal)
+      val a =
+        first.parcelAssignment(firstVoxel)
+          .fold(0)(parcel => first.metadata(parcel).id.value)
+      val b =
+        second.parcelAssignment(secondVoxel)
+          .fold(0)(parcel => second.metadata(parcel).id.value)
+      accumulate(a, b, n1, n2, both)
+      ordinal += 1
+
+    buildOverlaps(atlas1, atlas2, n1, n2, both)
 
   private def computeWithAlignedVolumes(
     atlas1: VolumeAtlas,
     atlas2: VolumeAtlas,
-    vol1: NeuroVol[Int],
-    vol2: NeuroVol[Int]
-  ): Either[AtlasError, Vector[RegionOverlap]] =
-
+    vol1: SomeLabelVolume[Int],
+    vol2: SomeLabelVolume[Int]
+  ): Vector[RegionOverlap] =
     val n1 = scala.collection.mutable.Map.empty[Int, Int].withDefaultValue(0)
     val n2 = scala.collection.mutable.Map.empty[Int, Int].withDefaultValue(0)
     val both = scala.collection.mutable.Map.empty[(Int, Int), Int].withDefaultValue(0)
 
     var i = 0
     while i < vol1.values.size do
-      val a = vol1.linear(i)
-      val b = vol2.linear(i)
-      if a != 0 then n1.update(a, n1(a) + 1)
-      if b != 0 then n2.update(b, n2(b) + 1)
-      if a != 0 && b != 0 then both.update((a, b), both((a, b)) + 1)
+      val voxel = atlas1.space.indexToVoxel3D(i)
+      val a = vol1(voxel)
+      val b = vol2(voxel)
+      accumulate(a, b, n1, n2, both)
       i += 1
 
+    buildOverlaps(atlas1, atlas2, n1, n2, both)
+
+  private def accumulate(
+      a: Int,
+      b: Int,
+      n1: scala.collection.mutable.Map[Int, Int],
+      n2: scala.collection.mutable.Map[Int, Int],
+      both: scala.collection.mutable.Map[(Int, Int), Int]
+  ): Unit =
+    if a != 0 then n1.update(a, n1(a) + 1)
+    if b != 0 then n2.update(b, n2(b) + 1)
+    if a != 0 && b != 0 then
+      both.update((a, b), both((a, b)) + 1)
+
+  private def buildOverlaps(
+      atlas1: VolumeAtlas,
+      atlas2: VolumeAtlas,
+      n1: scala.collection.mutable.Map[Int, Int],
+      n2: scala.collection.mutable.Map[Int, Int],
+      both: scala.collection.mutable.Map[(Int, Int), Int]
+  ): Vector[RegionOverlap] =
     val overlaps = both.toVector.flatMap { case ((id1, id2), nOverlap) =>
       for
         r1 <- atlas1.region(RegionId(id1))
@@ -118,7 +150,7 @@ object AtlasOverlap:
           nRegion2 = b
         )
     }.sortBy(o => (-o.dice, o.region1.id.value, o.region2.id.value))
-    Right(overlaps)
+    overlaps
 
   def compute(
     atlas1: VolumeAtlas,
@@ -133,19 +165,3 @@ object AtlasOverlap:
   ): Vector[RegionOverlap] =
     computeEither(atlas1, atlas2, alignment)
       .fold(err => throw new IllegalArgumentException(err.message), identity)
-
-  @deprecated(
-    "Use compute(atlas1, atlas2, AtlasAlignment); alignment must be explicit.",
-    "0.2.0"
-  )
-  def compute(
-    atlas1: VolumeAtlas,
-    atlas2: VolumeAtlas,
-    resample: Boolean
-  ): Vector[RegionOverlap] =
-    compute(
-      atlas1,
-      atlas2,
-      if resample then AtlasAlignment.NearestNeighborToFirst
-      else AtlasAlignment.Exact
-    )

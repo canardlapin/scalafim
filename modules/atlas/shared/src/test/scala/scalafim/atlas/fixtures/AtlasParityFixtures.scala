@@ -39,7 +39,7 @@ object AtlasParityFixtures:
   val regions: RegionIndex =
     RegionIndex(
       Vector(
-        Region(
+        AtlasRegionMetadata(
           RegionId(10),
           "RegionA",
           labelFull = Some("left_RegionA"),
@@ -47,7 +47,7 @@ object AtlasParityFixtures:
           network = Some(NetworkId("NetA")),
           color = Some(Rgb(255, 0, 0))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(50),
           "RegionB",
           labelFull = Some("right_RegionB"),
@@ -55,7 +55,7 @@ object AtlasParityFixtures:
           network = Some(NetworkId("NetA")),
           color = Some(Rgb(0, 255, 0))
         ),
-        Region(
+        AtlasRegionMetadata(
           RegionId(90),
           "RegionC",
           labelFull = Some("midline_RegionC"),
@@ -91,34 +91,44 @@ object AtlasParityFixtures:
     )
 
   def atlas(): VolumeAtlas =
-    VolumeAtlas.fromLabelVolume(ref, regions, NeuroVol.fromLinear(labelData(), space), label = "noncontig")
+    VolumeAtlas.fromLabelVolume(
+      ref,
+      regions,
+      AtlasTestImages.labelVolume(space, labelData(), label = "noncontig")
+    )
 
   def comparisonAtlas(): VolumeAtlas =
     val comparisonRegions =
       RegionIndex(
         Vector(
-          Region(RegionId(101), "RegionA-left-half", hemisphere = Some(Hemisphere.Left)),
-          Region(RegionId(202), "RegionB-copy", hemisphere = Some(Hemisphere.Right)),
-          Region(RegionId(303), "RegionC-copy", hemisphere = Some(Hemisphere.Midline))
+          AtlasRegionMetadata(RegionId(101), "RegionA-left-half", hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata(RegionId(202), "RegionB-copy", hemisphere = Some(Hemisphere.Right)),
+          AtlasRegionMetadata(RegionId(303), "RegionC-copy", hemisphere = Some(Hemisphere.Midline))
         )
       )
     VolumeAtlas.fromLabelVolume(
       ref.copy(family = "neuroatlas-parity-comparison", model = "ComparisonFixture"),
       comparisonRegions,
-      NeuroVol.fromLinear(comparisonLabelData(), space),
-      label = "comparison"
+      AtlasTestImages.labelVolume(
+        space,
+        comparisonLabelData(),
+        label = "comparison"
+      )
     )
 
-  def dataVolume(): NeuroVol[Double] =
+  def dataVolume(atlas: VolumeAtlas): SomeScalarVolume[Double] =
     val labels = labelData()
     val out = Array.ofDim[Double](labels.length)
     var i = 0
     while i < labels.length do
       out(i) = parcelMeans.getOrElse(labels(i), 0.0)
       i += 1
-    NeuroVol.fromLinear(out, space, label = "parcel-means")
+    AtlasTestImages.scalarVolume(atlas, out, label = "parcel-means")
 
-  def dataVec(nTime: Int = 3): NeuroVec[Double] =
+  def dataSeries(
+      atlas: VolumeAtlas,
+      nTime: Int = 3
+  ): SomeScalarSeries[Double] =
     val labels = labelData()
     val spatialNels = dims.product
     val out = Array.ofDim[Double](spatialNels * nTime)
@@ -126,16 +136,29 @@ object AtlasParityFixtures:
     while t < nTime do
       var i = 0
       while i < spatialNels do
-        out(i + t * spatialNels) = parcelMeans.getOrElse(labels(i), 0.0) * (t + 1).toDouble
+        out(i * nTime + t) = parcelMeans.getOrElse(labels(i), 0.0) * (t + 1).toDouble
         i += 1
       t += 1
-    NeuroVec.fromLinear(out, space.addDim(nTime, Some(Axis.Time)), label = "parcel-series")
+    AtlasTestImages.scalarSeries(
+      atlas,
+      out,
+      nTime,
+      label = "parcel-series"
+    )
 
-  def fullMask(): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](dims.product, true), space, label = "full")
+  def fullMask(atlas: VolumeAtlas): SomeMaskVolume =
+    AtlasTestImages.maskVolume(
+      atlas,
+      PrimitiveBuffers.fillConst[Boolean](dims.product, true),
+      label = "full"
+    )
 
-  def emptyMask(): NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](dims.product, false), space, label = "empty")
+  def emptyMask(atlas: VolumeAtlas): SomeMaskVolume =
+    AtlasTestImages.maskVolume(
+      atlas,
+      PrimitiveBuffers.fillConst[Boolean](dims.product, false),
+      label = "empty"
+    )
 
   def labelData(): Array[Int] =
     val out = PrimitiveBuffers.fillConst[Int](dims.product, 0)
@@ -151,8 +174,8 @@ object AtlasParityFixtures:
     fillBlock(out, 2 to 2, 2 to 2, 0 to 1, 303)
     out
 
-  private def space: NeuroSpace =
-    NeuroSpace(
+  private lazy val space: SomeSampleSpace =
+    SampleSpaces(
       dims = dims,
       spacing = Some(Vector(1.0, 1.0, 1.0)),
       origin = Some(Vector(0.0, 0.0, 0.0))

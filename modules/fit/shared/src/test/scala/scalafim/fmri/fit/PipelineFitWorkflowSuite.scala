@@ -1,12 +1,14 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.DMat as ImageDMat
 import gale.linalg.DMat
 import scalafim.pipeline.*
 
@@ -55,7 +57,7 @@ class PipelineFitWorkflowSuite extends munit.FunSuite:
       )
     )
     FmriDataset.unsafe(
-      backend = InMemoryDatasetBackend(DatasetId("pipeline-fit-demo"), data, NeuroSpace(Vector(3, 1, 1))),
+      backend = InMemoryDatasetBackend(DatasetId("pipeline-fit-demo"), data, SampleSpaces(Vector(3, 1, 1))),
       samplingFrame = samplingFrame
     )
 

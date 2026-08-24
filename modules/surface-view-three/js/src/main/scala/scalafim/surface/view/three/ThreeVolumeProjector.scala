@@ -26,7 +26,7 @@ object ThreeVolumeProjector:
     three: js.Dynamic,
     canvas: js.Dynamic,
     morphism: VolToSurfMorphism,
-    volume: NeuroVol[Double],
+    volume: SomeScalarVolume[Double],
     policy: SurfaceProjectionPolicy = SurfaceProjectionPolicy()
   ): Either[ThreeSurfaceError, ThreeVolumeProjectionResult] =
     if morphism.plan.path != SurfaceSamplingPath.Midpoint ||
@@ -81,7 +81,7 @@ object ThreeVolumeProjector:
           val volumeData = new Float32Array(volumeValues)
           var valueIndex = 0
           while valueIndex < volumeValues do
-            volumeData(valueIndex) = volume.linear(valueIndex).toFloat
+            volumeData(valueIndex) = volume.valueAtCanonicalOrdinal(valueIndex).toFloat
             valueIndex += 1
 
           val coordinateTexture = js.Dynamic.newInstance(three.selectDynamic("DataTexture"))(

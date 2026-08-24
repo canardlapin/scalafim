@@ -1,13 +1,13 @@
 package scalafim.fmri.motion
 
 import scalafim.fmri.motion.fixtures.VolreggerFixtures
-import scalafim.image.{Axis, NeuroSpace, NeuroVec, NeuroVol, PrimitiveBuffers}
+import scalafim.image.*
 
 class MotionEstimatorSuite extends munit.FunSuite:
 
   private val dims = VolreggerFixtures.estimatorDims
   private val nxyz = dims.product
-  private val space = NeuroSpace(dims)
+  private val space = SampleSpaces(dims)
 
   private def baseValueAt(x: Double, y: Double, z: Double): Double =
     val dx = x - 3.0
@@ -27,27 +27,21 @@ class MotionEstimatorSuite extends munit.FunSuite:
 
   private def baseFrame: Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val i = lin % dims(0)
-      val j = (lin / dims(0)) % dims(1)
-      val k = lin / (dims(0) * dims(1))
-      baseValue(i, j, k)
+      val voxel = space.indexToVoxel3D(lin)
+      baseValue(voxel.x, voxel.y, voxel.z)
     }
 
   private def shiftedMovingFramePlusOneX(fixed: Array[Double]): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val i = lin % dims(0)
-      val j = (lin / dims(0)) % dims(1)
-      val k = lin / (dims(0) * dims(1))
-      val srcI = math.min(dims(0) - 1, i + 1)
-      fixed(srcI + dims(0) * (j + dims(1) * k))
+      val voxel = space.indexToVoxel3D(lin)
+      val srcI = math.min(dims(0) - 1, voxel.x + 1)
+      fixed(space.gridToIndex3D(srcI, voxel.y, voxel.z))
     }
 
   private def shiftedMovingFrameX(offset: Double): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val i = lin % dims(0)
-      val j = (lin / dims(0)) % dims(1)
-      val k = lin / (dims(0) * dims(1))
-      baseValueAt(i.toDouble + offset, j.toDouble, k.toDouble)
+      val voxel = space.indexToVoxel3D(lin)
+      baseValueAt(voxel.x.toDouble + offset, voxel.y.toDouble, voxel.z.toDouble)
     }
 
   private def offsetFrame(fixed: Array[Double], offset: Double): Array[Double] =
@@ -59,49 +53,43 @@ class MotionEstimatorSuite extends munit.FunSuite:
     val cos = math.cos(rotation)
     val sin = math.sin(rotation)
     Array.tabulate(nxyz) { lin =>
-      val i = lin % dims(0)
-      val j = (lin / dims(0)) % dims(1)
-      val k = lin / (dims(0) * dims(1))
-      val dx = i.toDouble - cx
-      val dy = j.toDouble - cy
+      val voxel = space.indexToVoxel3D(lin)
+      val dx = voxel.x.toDouble - cx
+      val dy = voxel.y.toDouble - cy
       val targetX = cx + cos * dx - sin * dy
       val targetY = cy + sin * dx + cos * dy
-      baseValueAt(targetX, targetY, k.toDouble)
+      baseValueAt(targetX, targetY, voxel.z.toDouble)
     }
 
   private def outlierFrame(fixed: Array[Double]): Array[Double] =
     Array.tabulate(nxyz) { lin =>
-      val i = lin % dims(0)
-      val j = (lin / dims(0)) % dims(1)
-      val k = lin / (dims(0) * dims(1))
-      fixed(lin) + 35.0 + 4.0 * i.toDouble - 3.0 * j.toDouble + 2.0 * k.toDouble
+      val voxel = space.indexToVoxel3D(lin)
+      fixed(lin) + 35.0 + 4.0 * voxel.x.toDouble - 3.0 * voxel.y.toDouble + 2.0 * voxel.z.toDouble
     }
 
-  private def runFromFrames(frames: Vector[Array[Double]]): NeuroVec[Double] =
+  private def runFromFrames(frames: Vector[Array[Double]]): SomeScalarSeries[Double] =
     val out = PrimitiveBuffers.ofSize[Double](nxyz * frames.length)
-    var t = 0
-    while t < frames.length do
-      var i = 0
-      while i < nxyz do
-        out(i + t * nxyz) = frames(t)(i)
-        i += 1
-      t += 1
-    NeuroVec.fromLinear(out, space.addDim(frames.length, Some(Axis.Time)), "estimate-fixture")
+    var i = 0
+    while i < nxyz do
+      var t = 0
+      while t < frames.length do
+        out(i * frames.length + t) = frames(t)(i)
+        t += 1
+      i += 1
+    SomeScalarSeries.unsafeCopyFromCanonicalArray(out, space.addDim(frames.length, Some(Axis.Time)), "estimate-fixture")
 
-  private def interiorMask: NeuroVol[Boolean] =
+  private def interiorMask: SomeMaskVolume =
     val data =
       PrimitiveBuffers.tabulate[Boolean](nxyz) { lin =>
-        val i = lin % dims(0)
-        val j = (lin / dims(0)) % dims(1)
-        val k = lin / (dims(0) * dims(1))
-        i >= 1 && i < dims(0) - 1 &&
-          j >= 1 && j < dims(1) - 1 &&
-          k >= 1 && k < dims(2) - 1
+        val voxel = space.indexToVoxel3D(lin)
+        voxel.x >= 1 && voxel.x < dims(0) - 1 &&
+          voxel.y >= 1 && voxel.y < dims(1) - 1 &&
+          voxel.z >= 1 && voxel.z < dims(2) - 1
       }
-    NeuroVol.fromLinear(data, space, "interior")
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(data, space, "interior")
 
-  private def emptyMask: NeuroVol[Boolean] =
-    NeuroVol.fromLinear(PrimitiveBuffers.fillConst[Boolean](nxyz, false), space, "empty")
+  private def emptyMask: SomeMaskVolume =
+    SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](nxyz, false), space, "empty")
 
   private def plan: MotionPlan =
     MotionPlan(

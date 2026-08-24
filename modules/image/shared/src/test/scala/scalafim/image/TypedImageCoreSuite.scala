@@ -65,31 +65,35 @@ class TypedImageCoreSuite extends munit.FunSuite:
   }
 
   test("VolumeSpace and SeriesSpace distinguish exact 3D and 4D spaces") {
-    val volume = VolumeSpace(NeuroSpace(Vector(2, 3, 4), trans = Some(affineMatrix)))
+    val volume = VolumeSpace(SampleSpaces(Vector(2, 3, 4), trans = Some(affineMatrix)))
     val series = volume.addTime(5)
 
     assertEquals(volume.shape, SpatialDims(2, 3, 4), clue = "")
     assertEquals(series.nVolumes, 5, clue = "")
-    assertEquals(series.volumeSpace, volume, clue = "")
-    assert(VolumeSpace.make(series.toNeuroSpace).isLeft, clue = "4D space should not be a VolumeSpace")
-    assert(SeriesSpace.make(volume.toNeuroSpace).isLeft, clue = "3D space should not be a SeriesSpace")
+    assertEquals(
+      GridCompatibility.volume(series.volumeSpace, volume),
+      Right(()),
+      clue = ""
+    )
+    assert(VolumeSpace.make(series.toSampleSpace).isLeft, clue = "4D space should not be a VolumeSpace")
+    assert(SeriesSpace.make(volume.toSampleSpace).isLeft, clue = "3D space should not be a SeriesSpace")
     assert(
-      volume.asInstanceOf[AnyRef] eq volume.toNeuroSpace.asInstanceOf[AnyRef],
+      volume.asInstanceOf[AnyRef] eq volume.toSampleSpace.asInstanceOf[AnyRef],
       clue = "VolumeSpace must be a zero-allocation refinement"
     )
     assert(
-      series.asInstanceOf[AnyRef] eq series.toNeuroSpace.asInstanceOf[AnyRef],
+      series.asInstanceOf[AnyRef] eq series.toSampleSpace.asInstanceOf[AnyRef],
       clue = "SeriesSpace must be a zero-allocation refinement"
     )
   }
 
   test("non-spatial refinements retain the exact image4s grid and frame") {
-    val volume = NeuroSpace(Vector(2, 3, 4), trans = Some(affineMatrix))
-    val volumeCanonical = NeuroSpace.canonical(volume)
+    val volume = SampleSpaces(Vector(2, 3, 4), trans = Some(affineMatrix))
+    val volumeCanonical = SampleSpaces.canonical(volume)
     val series = volume.addDim(5, Some(Axis.Time))
-    val seriesCanonical = NeuroSpace.canonical(series)
+    val seriesCanonical = SampleSpaces.canonical(series)
     val roundTrip = series.dropDim(3)
-    val roundTripCanonical = NeuroSpace.canonical(roundTrip)
+    val roundTripCanonical = SampleSpaces.canonical(roundTrip)
 
     assert(volumeCanonical.grid eq seriesCanonical.grid)
     assert(volumeCanonical.grid.frame eq seriesCanonical.grid.frame)
@@ -97,34 +101,41 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assert(volumeCanonical.grid.frame eq roundTripCanonical.grid.frame)
     assertEquals(seriesCanonical.nonSpatialAxes(0).map(_.kind), Some(image4s.AxisKind.Time))
     assertEquals(
-      volumeCanonical.grid.frame.metadata.convention,
+      volumeCanonical.grid.frame.convention,
       CoordinateConvention.RAS
     )
   }
 
-  test("image4s Sampled backs slice, volume, and series compatibility views") {
-    val volumeSpace = NeuroSpace(Vector(2, 1, 1), trans = Some(affineMatrix))
-    val volume = NeuroVol.fromLinear[Int](Array(10, 20), volumeSpace, "vol")
-    val mapped = volume.map(_ + 1)
-    val series = volume.toVec
-    val slice = volume.slice(SpatialAxis.Z, 0)
+  test("image4s Sampled backs singleton-D3 plane, volume, and series views") {
+    val volumeSpace = SampleSpaces(Vector(2, 1, 1), trans = Some(affineMatrix))
+    val volume = SomeLabelVolume.unsafeCopyFromCanonicalArray[Int](Array(10, 20), volumeSpace, "vol")
+    val mapped = volume.mapValues[Int, image4s.Categorical](_ + 1)
+    val series = volume.toSeries
+    val plane =
+      volume
+        .plane(SpatialAxis.Z, 0)
+        .fold(error => fail(error.message), identity)
 
-    assertEquals(volume.typedSpace.toNeuroSpace, volumeSpace, clue = "")
+    assertEquals(volume.typedSpace.toSampleSpace, volumeSpace, clue = "")
     assertEquals(volume.label, "vol", clue = "")
     assertEquals(volume.sampled.metadata.label, "vol", clue = "")
     assertEquals(volume.ndim, 3, clue = "")
-    assertEquals(mapped.linear(1), 21, clue = "")
-    assertEquals(series.typedSpace.toNeuroSpace.ndim, 4, clue = "")
-    assertEquals(series.volume(0).space, volume.space, clue = "")
+    assertEquals(mapped.valueAtCanonicalOrdinal(1), 21, clue = "")
+    assertEquals(series.typedSpace.toSampleSpace.ndim, 4, clue = "")
+    assertEquals(
+      GridCompatibility.exact(series.volume(0).space, volume.space),
+      Right(()),
+      clue = ""
+    )
     assertEquals(series.sampled.metadata.label, "vol", clue = "")
     assertEquals(series.volume(0).sampled.metadata.label, "vol", clue = "")
-    assertEquals(series.volume(0).linear(1), volume.linear(1), clue = "")
-    assertEquals(slice.typedSpace.toNeuroSpace.ndim, 2, clue = "")
-    assertEquals(slice(1, 0), 20, clue = "")
-
-    intercept[IllegalArgumentException] {
-      NeuroSlice.fromLinear[Int](Array(1, 2), volumeSpace)
-    }
+    assertEquals(
+      series.volume(0).valueAtCanonicalOrdinal(1),
+      volume.valueAtCanonicalOrdinal(1),
+      clue = ""
+    )
+    assertEquals(plane.grid.shape, Vector(2, 1, 1), clue = "")
+    assertEquals(plane(1, 0, 0), 20, clue = "")
   }
 
   test("typed coordinate overloads keep voxel and world points separate") {
@@ -137,28 +148,76 @@ class TypedImageCoreSuite extends munit.FunSuite:
     assertClose(back, voxel, 1e-10)
   }
 
-  test("validated index sets canonicalize masks and reject duplicate sparse positions") {
-    val space = NeuroSpace(Vector(3, 1, 1))
-    val indexSet = VoxelIndexSet(space, Array(2, 0, 2))
-    val mask = Mask.fromIndexSet(indexSet)
+  test("regions canonicalize support while ordered selections reject duplicates") {
+    val space = SampleSpaces(Vector(3, 1, 1))
+    val packed =
+      GridDomain
+        .register(
+          VolumeSpace(space).sampleSpace.grid,
+          "typed region selection",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain = packed.value
+    val region =
+      locus4s.Region
+        .fromOrdinals(domain.space, Vector(2, 0, 2))
+        .toOption
+        .get
+    val mask = Mask.fromRegion(domain, region).toOption.get
 
-    assertEquals(indexSet.toVector, Vector(0, 2), clue = "")
-    assertEquals(toVector(Mask.indices(mask)), Vector(0, 2), clue = "")
-    assert(VoxelIndexSet.makeUnique(space, Array(1, 1)).isLeft, clue = "sparse index sets should reject duplicates")
-
-    intercept[IllegalArgumentException] {
-      SparseNeuroVol(Array(10.0, 20.0), Array(1, 1), space)
-    }
+    assertEquals(region.ordinalsInDomainOrder.toVector, Vector(0, 2), clue = "")
+    assertEquals(
+      Mask.region(domain, mask).toOption.get.ordinalsInDomainOrder.toVector,
+      Vector(0, 2),
+      clue = ""
+    )
+    assert(
+      locus4s.Selection.fromOrdinals(domain.space, Vector(1, 1)).isLeft,
+      clue = "ordered selections should reject duplicates"
+    )
   }
 
-  test("VoxelRoi validates coordinates before ROI extraction") {
-    val space = NeuroSpace(Vector(3, 1, 1), trans = Some(affineMatrix))
-    val roi = VoxelRoi.fromRawUnsafe(space, Vector(Vector(0, 0, 0), Vector(2, 0, 0)))
-    val vol = NeuroVol.fromLinear[Int](Array(10, 20, 30), space)
+  test("exact grid indices validate coordinates before selected extraction") {
+    val space = SampleSpaces(Vector(3, 1, 1), trans = Some(affineMatrix))
+    val packed =
+      GridDomain
+        .register(
+          VolumeSpace(space).sampleSpace.grid,
+          "typed coordinate selection",
+          locus4s.DomainRegistry.empty
+        )
+        .toOption
+        .get
+    type Voxel = packed.S
+    val domain = packed.value
+    val selection =
+      locus4s.Selection.fromOrdinals(domain.space, Vector(0, 2)).toOption.get
+    val sampleSpace =
+      image4s.SampleSpace.create(domain.grid, image4s.NonSpatialAxes.empty)
+    val volume =
+      NeuroVolume
+        .categorical(
+          sampleSpace,
+          ravel.NDArray.fromSeq(ravel.Shape(3, 1, 1), Vector(10, 20, 30))
+        )
+        .toOption
+        .get
+    val values =
+      SelectedVolume.gather(domain, volume, selection).toOption.get
 
-    val values = vol(roi)
-    assertEquals(Vector.tabulate(values.size)(i => values(i)), Vector(10, 30), clue = "")
-    assertEquals(toVector(roi.linearIndices), Vector(0, 2), clue = "")
-    assert(VoxelRoi.fromRaw(space, Vector(Vector(3, 0, 0))).isLeft, clue = "ROI bounds should be checked")
-    assert(VoxelRoi.fromRaw(space, Vector(Vector(1, 0, 0), Vector(1, 0, 0))).isLeft, clue = "ROI duplicates should be rejected")
+    assertEquals(values.data.iterator.toVector, Vector(10, 30), clue = "")
+    assertEquals(values.selection.ordinals.toVector, Vector(0, 2), clue = "")
+    val outOfBounds =
+      image4s.geometry.LatticeIndex
+        .fromVector[image4s.geometry.D3](Vector(3, 0, 0))
+        .toOption
+        .get
+    assert(domain.domainIndexAt(outOfBounds).isLeft, clue = "voxel bounds should be checked")
+    assert(
+      locus4s.Selection.fromOrdinals(domain.space, Vector(1, 1)).isLeft,
+      clue = "selection duplicates should be rejected"
+    )
   }

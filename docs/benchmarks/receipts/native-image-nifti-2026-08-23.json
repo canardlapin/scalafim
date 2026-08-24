@@ -1,0 +1,109 @@
+{
+  "schema": "scalafim-native-nifti-streaming-v1",
+  "capturedOn": "2026-08-23",
+  "environment": {
+    "architecture": "arm64",
+    "operatingSystem": "Darwin 23.3.0",
+    "sbtJvm": "OpenJDK 64-Bit Server VM 25.0.1"
+  },
+  "providers": {
+    "ravel": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "image4s": "6b9016b7aa622df8dec3d887080ee512fa7439c6",
+    "reframe4s": "357426b4fd1e35ddead0068375016f55b082c9e2"
+  },
+  "source": {
+    "baseHead": "8b463acf5dee9025a13753ececef7d0023c29269",
+    "suite": "modules/image/jvm/src/test/scala/scalafim/image/io/NativeNiftiAllocationSuite.scala",
+    "shape": [64, 48, 24, 8],
+    "values": 589824,
+    "decodedDoubleBytes": 4718592,
+    "storedFloat32Bytes": 2359296
+  },
+  "method": {
+    "accounting": "com.sun.management.ThreadMXBean per-thread allocated bytes",
+    "warmupsPerCase": 3,
+    "measurementsPerCase": 7,
+    "summary": "median",
+    "retention": "each callback retains its complete result to prevent dead-code elimination",
+    "timing": "same-process wall-clock median after allocation warmup"
+  },
+  "observations": [
+    {
+      "operation": "read-scaled-double",
+      "format": "nii",
+      "allocatedBytes": 4831736,
+      "limitBytes": 5767168,
+      "elapsedNanos": 7366208,
+      "logicalMegabytesPerSecond": 640.55,
+      "status": "pass"
+    },
+    {
+      "operation": "write-float32",
+      "format": "nii",
+      "allocatedBytes": 84912,
+      "limitBytes": 3407872,
+      "elapsedNanos": 21412459,
+      "logicalMegabytesPerSecond": 110.18,
+      "status": "pass"
+    },
+    {
+      "operation": "read-scaled-double",
+      "format": "nii.gz",
+      "allocatedBytes": 4843464,
+      "limitBytes": 5767168,
+      "elapsedNanos": 9209958,
+      "logicalMegabytesPerSecond": 512.34,
+      "status": "pass"
+    },
+    {
+      "operation": "write-float32",
+      "format": "nii.gz",
+      "allocatedBytes": 85632,
+      "limitBytes": 3407872,
+      "elapsedNanos": 44853167,
+      "logicalMegabytesPerSecond": 52.6,
+      "status": "pass"
+    }
+  ],
+  "correctness": {
+    "command": "sbt -J-Xmx4G -Dsbt.supershell=false 'imageJVM/testOnly scalafim.image.io.NiftiSuite scalafim.image.io.NiftiResliceOracleSuite scalafim.image.io.ImageLibraryParitySuite scalafim.image.io.NativeNiftiAllocationSuite'",
+    "testsPassed": 13,
+    "failed": 0,
+    "status": "pass",
+    "oracles": [
+      "asymmetric 2x3x5x7 coordinate-exact series round trips through nii and nii.gz",
+      "asymmetric 2x3x5 native volume round trip",
+      "UInt8 native Ravel storage with explicit slope and intercept encoding",
+      "typed qform-sform disagreement, unsupported datatype, and payload-limit failures",
+      "independent nibabel oblique affine and slice pixels",
+      "nibabel 5.2.1 and neuroim2 0.19.0 agreement across all 72 coordinates of an asymmetric 2x3x4x3 NIfTI",
+      "coordinate-exact translation from first-axis-fastest NIfTI storage to canonical last-axis-fastest Ravel storage",
+      "raw Float32 writer payload, shape, temporal spacing, and sform agreement with the independent library oracle"
+    ]
+  },
+  "libraryParity": {
+    "nibabelVersion": "5.2.1",
+    "neuroim2Version": "0.19.0",
+    "coordinatesChecked": 72,
+    "regeneratedByteExactly": true,
+    "sha256": {
+      "nibabel-neuroim2-basic-4d.nii": "5393071395379cadc73e96a452489bd33f799903e2d63a4b8fe0e2283e381bd4",
+      "nibabel-basic-4d.tsv": "135722ee359b51bfa8a75df476ed58f492a9e104fe8b49cc09edc806b98bf36b",
+      "neuroim2-basic-4d.tsv": "6821dcfdf37917a2c83389eb25f9c8697753c0f7b426cf34546aed946714b88a"
+    }
+  },
+  "providerEvidence": {
+    "image4sRevision": "6b9016b7aa622df8dec3d887080ee512fa7439c6",
+    "fullJvmAndScalaJsTestsPassed": 586,
+    "storedUInt8Values": 1048576,
+    "storedUInt8AllocatedBytes": 1156224,
+    "uint8ScaledDoubleAllocatedBytes": 8496448,
+    "storedInt16AllocatedBytes": 2204688,
+    "int16ScaledDoubleAllocatedBytes": 8496064
+  },
+  "interpretation": {
+    "admissionReceipt": true,
+    "result": "Both formats retain one decoded Ravel Double destination plus fixed streaming overhead; writes remain far below one full value buffer.",
+    "scope": "Throughput is a same-process regression receipt on this machine, not a cross-machine benchmark claim."
+  }
+}

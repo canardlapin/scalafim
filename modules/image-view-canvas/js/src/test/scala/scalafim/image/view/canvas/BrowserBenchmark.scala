@@ -173,7 +173,7 @@ object BrowserBenchmark:
     document.body.dataset.benchmarkState = "ready"
 
   private def affineWorkload(): Workload =
-    val space = VolumeSpace(NeuroSpace(Vector(160, 192, 128)))
+    val space = VolumeSpace(SampleSpaces(Vector(160, 192, 128)))
     val volume = syntheticVolume(space, "browser-affine")
     var reads = 0
     val source = VolumeSource.lazyFrames(space, 1) { _ =>
@@ -201,7 +201,7 @@ object BrowserBenchmark:
     )
 
   private def nonlinearWorkload(): Workload =
-    val space = VolumeSpace(NeuroSpace(Vector(80, 80, 64)))
+    val space = VolumeSpace(SampleSpaces(Vector(80, 80, 64)))
     val volume = syntheticVolume(space, "browser-nonlinear")
     val grid = GridSpec.fromVolumeSpace(space)
     val field =
@@ -236,7 +236,7 @@ object BrowserBenchmark:
       () => 0
     )
 
-  private def syntheticVolume(space: VolumeSpace, label: String): NeuroVol[Double] =
+  private def syntheticVolume(space: VolumeSpace, label: String): SomeScalarVolume[Double] =
     val shape = space.shape
     val data = PrimitiveBuffers.tabulate[Double](shape.product) { index =>
       val x = index % shape.x
@@ -244,7 +244,7 @@ object BrowserBenchmark:
       val z = index / (shape.x * shape.y)
       x.toDouble * 3.0 + y.toDouble * 2.0 + z.toDouble * 5.0
     }
-    NeuroVol.fromLinear(data, space.toNeuroSpace, label)
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(data, space.toSampleSpace, label)
 
   private def makeRuntime(): CanvasViewerRuntime =
     CanvasViewerHost.runtime(viewerCacheCapacity = 96, rasterCacheCapacity = 48)

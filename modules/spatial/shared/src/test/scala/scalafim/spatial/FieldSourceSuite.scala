@@ -1,6 +1,7 @@
 package scalafim.spatial
 
-import scalafim.image.{DMat, NeuroSpace}
+import scalafim.image.{SampleSpaces, DMat, SomeSampleSpace}
+import scalafim.image.SampleSpaces.*
 
 class FieldSourceSuite extends munit.FunSuite:
 
@@ -19,7 +20,7 @@ class FieldSourceSuite extends munit.FunSuite:
     val subject = spatialValue(SubjectId("sub-01"))
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
-      SamplingGeometry.volume(NeuroSpace(Vector(voxels, 1, 1), trans = Some(DMat.eye(4))))
+      SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), trans = Some(DMat.eye(4))))
     )
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 

@@ -4,6 +4,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
+import scalafim.image.spatialDims
 
 class BrainnetomeLoaderSuite extends munit.FunSuite:
 
@@ -157,7 +158,7 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
     val atlas = BrainnetomeLoader.loadFromPaths(Brainnetome246.default, volumePath, lutPath, Some(networkPath))
 
     assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
-    assertEquals(atlas.volume.clusterIds, Vector(1, 2))
+    assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.regions.ids, Vector(RegionId(1), RegionId(2)))
     assertEquals(atlas.region(RegionId(1)).map(_.label), Some("A8m_L"))
     assertEquals(atlas.region(RegionId(1)).flatMap(_.network), Some(NetworkId("Default A")))

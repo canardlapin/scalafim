@@ -1,5 +1,7 @@
 package scalafim.fmri.fit
 
+import scalafim.image.SampleSpaces
+
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.contrast.ContrastSpec
@@ -9,7 +11,7 @@ import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.{DMat as ImageDMat, NeuroSpace}
+import scalafim.image.DMat as ImageDMat
 import gale.linalg.DVec
 
 class InferenceSuite extends munit.FunSuite:
@@ -21,7 +23,7 @@ class InferenceSuite extends munit.FunSuite:
     val data = ImageDMat.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(2.0), Vector(4.0)))
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("inference-demo"), data, NeuroSpace(Vector(1, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("inference-demo"), data, SampleSpaces(Vector(1, 1, 1))),
         samplingFrame = samplingFrame
       )
     val eventModel =
@@ -90,7 +92,7 @@ class InferenceSuite extends munit.FunSuite:
     }
     val dataset =
       FmriDataset.unsafe(
-        backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), ImageDMat.fromRows(rows), NeuroSpace(Vector(1, 1, 1))),
+        backend = InMemoryDatasetBackend(DatasetId("attached-contrast-demo"), ImageDMat.fromRows(rows), SampleSpaces(Vector(1, 1, 1))),
         samplingFrame = sf
       )
     FmriModel(eventModel, baseline, dataset)

@@ -15,10 +15,10 @@ class SurfaceAtlasSuite extends munit.FunSuite:
   private def regions: RegionIndex =
     RegionIndex(
       Vector(
-        Region(RegionId(1), "L_A", hemisphere = Some(Hemisphere.Left)),
-        Region(RegionId(2), "L_B", hemisphere = Some(Hemisphere.Left)),
-        Region(RegionId(3), "R_A", hemisphere = Some(Hemisphere.Right)),
-        Region(RegionId(4), "R_B", hemisphere = Some(Hemisphere.Right))
+        AtlasRegionMetadata(RegionId(1), "L_A", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata(RegionId(2), "L_B", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata(RegionId(3), "R_A", hemisphere = Some(Hemisphere.Right)),
+        AtlasRegionMetadata(RegionId(4), "R_B", hemisphere = Some(Hemisphere.Right))
       )
     )
 
@@ -82,8 +82,8 @@ class SurfaceAtlasSuite extends munit.FunSuite:
     val a = atlas()
 
     assertEquals(a.representation, AtlasRepresentation.Surface)
-    assertEquals(a.payload.vertexCount(SurfaceHemisphere.Left), 4)
-    assertEquals(a.payload.vertexCount(SurfaceHemisphere.Right), 4)
+    assertEquals(a.vertexCount(SurfaceHemisphere.Left), 4)
+    assertEquals(a.vertexCount(SurfaceHemisphere.Right), 4)
     assertEquals(a.labelIdAt(SurfaceHemisphere.Left, VertexId(0)), Some(RegionId(1)))
     assertEquals(a.regionAt(SurfaceHemisphere.Right, VertexId(3)).map(_.label), Some("R_B"))
     assertEquals(a.region("L_A", Some(Hemisphere.Left)).map(_.id), Vector(RegionId(1)))
@@ -138,7 +138,7 @@ class SurfaceAtlasSuite extends munit.FunSuite:
       intercept[IllegalArgumentException]:
         a.surface(SurfaceHemisphere.Both)
 
-    assert(err.getMessage.contains("surface atlas payload requires left or right hemisphere, got both"), clue = err.getMessage)
+    assert(err.getMessage.contains("surface atlas requires left or right hemisphere, got both"), clue = err.getMessage)
     assertEquals(a.labelInfo(SurfaceHemisphere.Left, RegionId(1)).map(_.name), Some("L_A"))
     assertEquals(a.labelInfo(SurfaceHemisphere.Right, RegionId(1)), None)
 
