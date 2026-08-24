@@ -102,3 +102,40 @@ class GiftiModelSuite extends munit.FunSuite:
 
     interceptMessage[IllegalArgumentException]("requirement failed: GIFTI label keys must be unique"):
       GiftiDocument(Map.empty, Map.empty, Vector(GiftiLabel(1, "A"), GiftiLabel(1, "B")), Vector(pointset))
+
+  test("GIFTI XML parsing rejects entity declarations before expansion"):
+    val xml =
+      """<?xml version="1.0"?>
+        |<!DOCTYPE GIFTI [<!ENTITY payload "expanded">]>
+        |<GIFTI Version="1.0" NumberOfDataArrays="1">
+        |  <DataArray Intent="NIFTI_INTENT_LABEL" DataType="NIFTI_TYPE_INT32"
+        |             ArrayIndexingOrder="RowMajorOrder" Dimensionality="1"
+        |             Dim0="1" Encoding="ASCII" Endian="LittleEndian">
+        |    <Data>&payload;</Data>
+        |  </DataArray>
+        |</GIFTI>
+        |""".stripMargin
+
+    assertEquals(
+      GiftiXmlParser.parseString(xml).left.map(_.message),
+      Left("invalid GIFTI document: GIFTI XML entity declarations are unsupported")
+    )
+
+  test("GIFTI payload sizing rejects dimension products before overflow"):
+    val oversized =
+      GiftiDataArray(
+        intent = GiftiIntent.PointSet,
+        dataType = GiftiDataType.Float32,
+        encoding = GiftiEncoding.Base64Binary,
+        endian = GiftiEndian.Little,
+        arrayOrder = GiftiArrayOrder.RowMajor,
+        dims = Vector(Int.MaxValue, Int.MaxValue),
+        metadata = Map.empty,
+        transforms = Vector.empty,
+        dataText = ""
+      )
+
+    assertEquals(
+      GiftiPayloadDecoder.expectedByteCount(oversized).left.map(_.message),
+      Left("invalid GIFTI DataArray: NIFTI_INTENT_POINTSET dimensions exceed the supported in-memory size")
+    )

@@ -537,6 +537,7 @@ lazy val surface =
     .settings(
       name := "scalafim-surface",
       libraryDependencies ++= Seq(
+        "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
     .jvmConfigure(_.dependsOn(graph4sAlgorithmsJVM))
