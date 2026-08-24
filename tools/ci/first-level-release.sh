@@ -93,9 +93,9 @@ run_gate focused_first_level \
 run_gate scientific_coverage \
   bash tools/ci/first-level-coverage.sh
 run_gate compile_all \
-  sbt "${sbt_args[@]}" compileAll
+  sbt "${sbt_args[@]}" scalafimCompileAll
 run_gate test_all \
-  sbt "${sbt_args[@]}" testAll
+  bash tools/ci/full-repository-tests.sh
 benchmark_receipt=${SCALAFIM_RELEASE_BENCHMARK_RECEIPT:-}
 if [[ -n "$benchmark_receipt" ]]; then
   run_gate performance \

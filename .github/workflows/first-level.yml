@@ -29,12 +29,15 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Set up sbt
+        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
+
       - name: Set up the declared Scala.js Node runtime
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "20"
 
-      - name: Compile and test every JVM and Scala.js module
+      - name: Compile every JVM and Scala.js module
         env:
           COURSIER_CACHE: ${{ runner.temp }}/scalafim-full-repository-sbt/coursier
         run: >-
@@ -43,8 +46,12 @@ jobs:
           -Dsbt.global.base=${{ runner.temp }}/scalafim-full-repository-sbt/global
           -Dsbt.ivy.home=${{ runner.temp }}/scalafim-full-repository-sbt/ivy
           -Dsbt.supershell=false
-          compileAll
-          testAll
+          scalafimCompileAll
+
+      - name: Test every headless JVM and Scala.js module in bounded batches
+        env:
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-full-repository-sbt
+        run: bash tools/ci/full-repository-tests.sh
 
   focused-first-level:
     name: focused first-level JVM/Scala.js gates
@@ -59,6 +66,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Set up sbt
+        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
 
       - name: Set up the declared Scala.js Node runtime
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -83,6 +93,9 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+
+      - name: Set up sbt
+        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
 
       - name: Enforce per-module scientific coverage floors
         env:

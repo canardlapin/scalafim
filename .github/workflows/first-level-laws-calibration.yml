@@ -38,6 +38,9 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Set up sbt
+        uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
+
       - name: Set up the declared Scala.js Node runtime
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:

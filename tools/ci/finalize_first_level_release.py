@@ -22,8 +22,8 @@ GATES = {
   "documentation": "python -S tools/docs/check_first_level_docs.py --check",
   "focused_first_level": "bash tools/ci/first-level-gate.sh",
   "scientific_coverage": "bash tools/ci/first-level-coverage.sh",
-  "compile_all": "sbt compileAll",
-  "test_all": "sbt testAll",
+  "compile_all": "sbt scalafimCompileAll",
+  "test_all": "bash tools/ci/full-repository-tests.sh",
   "performance": "bash tools/ci/first-level-benchmark.sh",
 }
 SOURCE_PATHS = (
@@ -67,6 +67,7 @@ SOURCE_PATHS = (
   "tools/ci/first-level-coverage.sh",
   "tools/ci/first-level-gate.sh",
   "tools/ci/first-level-release.sh",
+  "tools/ci/full-repository-tests.sh",
   "tools/docs/check_first_level_docs.py",
   "tools/mutation/ar_na_pilot.py",
   "tools/r-parity/auxiliary-manifest.json",
