@@ -3,13 +3,13 @@
 `scalafim-surface` is the renderer-free surface-mesh layer for ScalaFIM. It
 ports the useful data-structure and algorithmic ideas from `neurosurf` into a
 Scala 3 shape: typed ids, immutable values, explicit topology views, pure
-algorithms, and JVM-only file readers.
+algorithms, cross-platform GIFTI ingestion, and JVM-only FreeSurfer readers.
 
 ```scala
 import scalafim.surface.*
 ```
 
-JVM file readers live in a platform package:
+Platform readers live in a platform package:
 
 ```scala
 import scalafim.surface.io.*
@@ -34,16 +34,23 @@ The shared module cross-compiles to JVM and Scala.js and contains:
   spherical neighborhoods, parcel representatives, parcel distances, and parcel
   boundary contacts.
 
-The JVM module adds:
+The platform modules add matching GIFTI APIs:
 
-- `FreeSurferSurfaceReader` for FreeSurfer/SUMA ASCII and binary triangle
-  geometry.
 - `GiftiReader` for typed GIFTI documents, metadata, label tables,
   coordinate-system transforms, and ASCII/Base64/GZip-Base64 `DataArray`
   payloads. Decoded payloads expose `GiftiVector` and `GiftiMatrix` views so
   row-major and column-major indexing are explicit.
 - `GiftiSurfaceReader` adapters from GIFTI POINTSET/TRIANGLE geometry and
   LABEL/NODE_INDEX data into `SurfaceGeometry` and `LabeledSurface`.
+- JVM entry points read `Path` values synchronously, including outer
+  `.gii.gz` files. Scala.js entry points read `Uint8Array` values
+  asynchronously, accept raw `.gii` or gzip-wrapped bytes, and work in browser
+  windows and workers through the standard `DecompressionStream` boundary.
+
+The JVM module additionally adds:
+
+- `FreeSurferSurfaceReader` for FreeSurfer/SUMA ASCII and binary triangle
+  geometry.
 
 ## Conventions
 
@@ -128,6 +135,24 @@ val fs = FreeSurferSurfaceReader.read(java.nio.file.Path.of("lh.white"))
 val gii = GiftiSurfaceReader.read(java.nio.file.Path.of("sub-01_hemi-L_pial.surf.gii"))
 ```
 
+Load raw GIFTI bytes in Scala.js without choosing a serialized mesh format:
+
+```scala
+import scala.scalajs.js.typedarray.Uint8Array
+
+def decode(bytes: Uint8Array) =
+  GiftiSurfaceReader.read(
+    bytes,
+    Hemisphere.Left,
+    SurfaceKind.Pial
+  )
+// Future[Either[GiftiError, SurfaceGeometry]]
+```
+
+The asynchronous boundary covers gzip/zlib inflation. The returned
+`SurfaceGeometry` retains the GIFTI coordinate-system transform, so the
+renderer or ingestion worker can choose its own transfer rendition.
+
 Parse GIFTI explicitly when you need provenance-like payload inspection before
 building a surface value:
 
@@ -158,7 +183,8 @@ This is not an S4 or plotting port. The target mapping from `neurosurf` is:
   `SurfaceRoi`, and `LabeledSurface`.
 - cluster, neighborhood, geodesic, and parcel operations -> pure functions over
   the typed model.
-- FreeSurfer and GIFTI geometry/label readers -> JVM-only IO.
+- GIFTI geometry/label readers -> JVM and Scala.js platform IO; FreeSurfer
+  geometry readers -> JVM-only IO.
 
 Non-goals for this module:
 

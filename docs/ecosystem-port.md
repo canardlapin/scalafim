@@ -396,7 +396,8 @@ Initial Scala concepts:
 
 Later ports:
 
-- JVM FreeSurfer and GIFTI readers under `scalafim.surface.io`.
+- Cross-platform GIFTI readers and JVM FreeSurfer readers under
+  `scalafim.surface.io`.
 - Surface-to-volume sampling bridges that reuse `scalafim-image` spaces and
   affine transforms.
 - Renderer-neutral export data only after the computational core is stable.

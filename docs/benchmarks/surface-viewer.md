@@ -261,6 +261,12 @@ handling, FreeSurfer's zlib payload variant, bilateral slot recentering without
 scientific-coordinate mutation, two-sided winding semantics, real surface and
 vertex picking, and camera-only cache retention.
 
+Both gates now decode the raw corpus through ScalaFIM's platform
+`GiftiSurfaceReader`: synchronous `Path` ingestion on the JVM and asynchronous
+`Uint8Array` ingestion on Scala.js. The browser host converts the resulting
+typed surface to its renderer-local rendition, carrying the surface-to-world
+affine into compilation and picking; no portable mesh byte format is introduced.
+
 The corpus remains external because the GIFTI metadata identifies FreeSurfer
 fsaverage5 sources but does not state data-specific redistribution terms. The
 manifest pins both SHA-256 digests and the SurfViewJS source commit; CI vendoring
@@ -317,8 +323,9 @@ The cross-platform example under `examples/surface-view` uses one checked GIFTI
 fixture and one shared model. Its shared JVM/Scala.js test pins the semantic
 receipt, including transformed world-space camera direction, bilateral slot and
 layer order, selection, deterministic raster hash, shaded-pixel count, and first
-pick. JavaFX additionally verifies that its production GIFTI decoder yields the
-exact shared geometry. Run it with:
+pick. JavaFX verifies that its production GIFTI decoder yields the exact shared
+geometry, while the Scala.js surface suite exercises compressed GIFTI ingestion
+at fsaverage5 scale. Run the example tests with:
 
 ```sh
 sbt surfaceViewExamplesJVM/test surfaceViewExamplesJS/test
