@@ -418,6 +418,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     assertEqualsDouble(revealed.mesh.vertex(VertexId(1)).x, 2.0, 1e-12)
     assertEquals(revealed.mesh.faceIndices.toSeq, white.mesh.faceIndices.toSeq)
     assertEquals(revealed.mesh.topologyIdentity, white.mesh.topologyIdentity)
+    assert(revealed.mesh.topology eq white.mesh.topology)
 
     assert(SurfaceLensRadius.make(-1.0).isLeft)
     assert(SurfaceLensRadius.make(Double.NaN).isLeft)
@@ -579,6 +580,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
     assertEquals(opened.mesh.vertex(center), source.mesh.vertex(center))
     assertEquals(opened.mesh.faceIndices.toSeq, source.mesh.faceIndices.toSeq)
     assertEquals(opened.mesh.topologyIdentity, source.mesh.topologyIdentity)
+    assert(opened.mesh.topology eq source.mesh.topology)
     assert(SurfaceLensRelaxationSteps.make(0).isLeft)
     assert(SurfaceLensRelaxationSteps.make(1001).isLeft)
 

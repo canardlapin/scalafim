@@ -188,6 +188,7 @@ class SurfaceDynamicsSuite extends munit.FunSuite:
     val midpoint = SurfaceMorph.interpolate(from, to, SurfaceMorphFraction.unsafe(0.5)).toOption.get
     assertEqualsDouble(midpoint.mesh.vertex(VertexId(0)).x, 1.0, 0.0)
     assert(midpoint.mesh.hasSameTopology(from.mesh))
+    assert(midpoint.mesh.topology eq from.mesh.topology)
     val forward = SurfaceMorph.interpolate(from, to, SurfaceMorphFraction.unsafe(0.25)).toOption.get
     val reverse = SurfaceMorph.interpolate(to, from, SurfaceMorphFraction.unsafe(0.75)).toOption.get
     assertEquals(forward.mesh.coordinates.toVector, reverse.mesh.coordinates.toVector)

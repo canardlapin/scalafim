@@ -130,13 +130,15 @@ object CorticalSurfaceMorphAcceptance:
       projected(offset + 2) = centerZ + z * scale
       offset += 3
 
-    val indices = new Array[Int](source.mesh.faceIndices.length)
-    var index = 0
-    while index < indices.length do
-      indices(index) = source.mesh.faceIndices(index)
-      index += 1
+    val mesh =
+      source.mesh
+        .withCoordinatesEither(projected)
+        .fold(
+          error => throw new IllegalArgumentException(error.message),
+          identity
+        )
     SurfaceGeometry(
-      TriangleMesh.fromArrays(projected, indices),
+      mesh,
       source.hemisphere,
       SurfaceKind.Sphere,
       source.surfaceToWorld

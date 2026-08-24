@@ -31,6 +31,26 @@ class SurfaceCoreSuite extends munit.FunSuite:
     assertEquals(realized.coordinate(1), Some(1.0))
     assertEquals(realized.coordinate(2), Some(0.0))
 
+  test("alternate coordinates share the exact topology and own mutable ingress"):
+    val source = SurfaceTestFixtures.tetraMesh
+    val coordinates = source.coordinates
+    coordinates(0) = 4.0
+    val alternate = source.withCoordinatesEither(coordinates).toOption.get
+
+    assert(alternate.topology eq source.topology)
+    assert(alternate.realization.topology eq source.topology)
+    assertEquals(alternate.topologyIdentity, source.topologyIdentity)
+    assertEquals(alternate.connectivityFingerprint, source.connectivityFingerprint)
+    assertEquals(alternate.faceIndices.toVector, source.faceIndices.toVector)
+    assertEquals(alternate.vertex(VertexId(0)).x, 4.0)
+
+    coordinates(0) = 99.0
+    assertEquals(alternate.vertex(VertexId(0)).x, 4.0)
+    assert(source.withCoordinatesEither(Array.fill(9)(0.0)).isLeft)
+    val nonFinite = source.coordinates
+    nonFinite(0) = Double.PositiveInfinity
+    assert(source.withCoordinatesEither(nonFinite).isLeft)
+
   test("mesh topology identity ignores coordinates but preserves exact face ordering"):
     val mesh = SurfaceTestFixtures.tetraMesh
     val moved =

@@ -47,6 +47,8 @@ final class TriangleMesh private (
   private val packedCoordinates: Array[Double],
   private val packedFaceIndices: Array[Int],
   val topology: MeshTriangleTopology,
+  val topologyIdentity: MeshTopologyIdentity,
+  val connectivityFingerprint: TopologyFingerprint,
   val orientationReceipt: TriangleMeshOrientationReceipt,
   val nativeFrame: Frame[D3]
 )(
@@ -57,13 +59,6 @@ final class TriangleMesh private (
 
   val faceCount: Int =
     topology.faces.size
-
-  val topologyIdentity: MeshTopologyIdentity =
-    MeshTopologyIdentity.from(vertexCount, packedFaceIndices)
-
-  /** Canonical mesh4s structural evidence. It is never runtime-owner proof. */
-  val connectivityFingerprint: TopologyFingerprint =
-    topology.connectivityFingerprint
 
   /** Surface-local coordinates before `SurfaceGeometry.surfaceToWorld` maps
     * them into RAS+. A defensive copy preserves the mesh/realization invariant.
@@ -77,15 +72,40 @@ final class TriangleMesh private (
   def faceIndices: Array[Int] =
     packedFaceIndices.clone()
 
+  /** Attach another coordinate realization to this exact topology owner.
+    * Mutable ingress is copied, while the already-validated connectivity is
+    * shared rather than rebuilt.
+    */
+  def withCoordinatesEither(
+    coordinates: Array[Double]
+  ): Either[TriangleMeshError, TriangleMesh] =
+    TriangleMesh.attachCoordinates(this, coordinates)
+
+  /** Package-local owned-buffer path for numeric kernels that just allocated
+    * their result. The exact topology, face storage, identity, and structural
+    * fingerprint are shared; mesh4s still owns its defensive realization copy.
+    */
+  private[surface] def withOwnedCoordinatesEither(
+    coordinates: Array[Double]
+  ): Either[TriangleMeshError, TriangleMesh] =
+    TriangleMesh.attachOwnedCoordinates(this, coordinates)
+
+  private[surface] inline def coordinateAtOffset(offset: Int): Double =
+    packedCoordinates(offset)
+
+  private[surface] inline def faceIndexAtOffset(offset: Int): Int =
+    packedFaceIndices(offset)
+
   /** Exact ordered-connectivity compatibility for fields and alternate
     * coordinate realizations. The legacy fingerprint is a cheap rejection
     * path; mesh4s performs the full ordered triangle comparison.
     */
   def hasSameTopology(other: TriangleMesh): Boolean =
-    vertexCount == other.vertexCount &&
-      faceCount == other.faceCount &&
-      connectivityFingerprint == other.connectivityFingerprint &&
-      topology.sameConnectivity(other.topology)
+    (topology eq other.topology) ||
+      (vertexCount == other.vertexCount &&
+        faceCount == other.faceCount &&
+        connectivityFingerprint == other.connectivityFingerprint &&
+        topology.sameConnectivity(other.topology))
 
   /** Rebind this coordinate realization onto an already-validated canonical
     * topology. Structural comparison occurs once at this ingestion boundary.
@@ -232,6 +252,25 @@ object TriangleMesh:
   ): Either[TriangleMeshError, TriangleMesh] =
     val ownedCoordinates = PrimitiveBuffers.fromArray(coordinates)
     val ownedFaceIndices = PrimitiveBuffers.fromArray(faceIndices)
+    createOwned(
+      ownedCoordinates,
+      ownedFaceIndices,
+      topology,
+      MeshTopologyIdentity.from(ownedCoordinates.length / 3, ownedFaceIndices),
+      topology.connectivityFingerprint,
+      orientationReceipt,
+      nativeFrame
+    )
+
+  private def createOwned(
+    ownedCoordinates: Array[Double],
+    ownedFaceIndices: Array[Int],
+    topology: MeshTriangleTopology,
+    topologyIdentity: MeshTopologyIdentity,
+    connectivityFingerprint: TopologyFingerprint,
+    orientationReceipt: TriangleMeshOrientationReceipt,
+    nativeFrame: Frame[D3]
+  ): Either[TriangleMeshError, TriangleMesh] =
     SurfaceRealization
       .fromInterleavedDoubles(topology, nativeFrame, ownedCoordinates)
       .left
@@ -241,9 +280,37 @@ object TriangleMesh:
           packedCoordinates = ownedCoordinates,
           packedFaceIndices = ownedFaceIndices,
           topology = topology,
+          topologyIdentity = topologyIdentity,
+          connectivityFingerprint = connectivityFingerprint,
           orientationReceipt = orientationReceipt,
           nativeFrame = nativeFrame
         )(realization)
+
+  private def attachCoordinates(
+    source: TriangleMesh,
+    coordinates: Array[Double]
+  ): Either[TriangleMeshError, TriangleMesh] =
+    validateCoordinates(coordinates, source.vertexCount).flatMap: _ =>
+      attachOwnedCoordinates(source, PrimitiveBuffers.fromArray(coordinates), validated = true)
+
+  private def attachOwnedCoordinates(
+    source: TriangleMesh,
+    coordinates: Array[Double],
+    validated: Boolean = false
+  ): Either[TriangleMeshError, TriangleMesh] =
+    val validation =
+      if validated then Right(())
+      else validateCoordinates(coordinates, source.vertexCount)
+    validation.flatMap: _ =>
+      createOwned(
+        coordinates,
+        source.packedFaceIndices,
+        source.topology,
+        source.topologyIdentity,
+        source.connectivityFingerprint,
+        source.orientationReceipt,
+        source.nativeFrame
+      )
 
   private def freshNativeFrame(): Frame[D3] =
     Frame
@@ -265,15 +332,46 @@ object TriangleMesh:
       Left(TriangleMeshError.InvalidInput("coordinate array length must be a multiple of 3"))
     else if faceIndices.length % 3 != 0 then
       Left(TriangleMeshError.InvalidInput("face index array length must be a multiple of 3"))
-    else if !coordinates.forall(_.isFinite) then
+    else if !allFinite(coordinates) then
       Left(TriangleMeshError.InvalidInput("vertex coordinates must be finite"))
-    else if !faceIndices.forall(_ >= 0) then
+    else if !allNonNegative(faceIndices) then
       Left(TriangleMeshError.InvalidInput("face indices must be non-negative"))
     else
       val vertexCount = coordinates.length / 3
-      if !faceIndices.forall(_ < vertexCount) then
+      if !allBelow(faceIndices, vertexCount) then
         Left(TriangleMeshError.InvalidInput("face indices out of range"))
       else Right(())
+
+  private def validateCoordinates(
+    coordinates: Array[Double],
+    vertexCount: Int
+  ): Either[TriangleMeshError, Unit] =
+    if coordinates.length != vertexCount * 3 then
+      Left:
+        TriangleMeshError.InvalidInput(
+          s"coordinate array must contain exactly $vertexCount three-dimensional vertices"
+        )
+    else if !allFinite(coordinates) then
+      Left(TriangleMeshError.InvalidInput("vertex coordinates must be finite"))
+    else Right(())
+
+  private def allFinite(values: Array[Double]): Boolean =
+    var offset = 0
+    while offset < values.length && values(offset).isFinite do
+      offset += 1
+    offset == values.length
+
+  private def allNonNegative(values: Array[Int]): Boolean =
+    var offset = 0
+    while offset < values.length && values(offset) >= 0 do
+      offset += 1
+    offset == values.length
+
+  private def allBelow(values: Array[Int], upperBound: Int): Boolean =
+    var offset = 0
+    while offset < values.length && values(offset) < upperBound do
+      offset += 1
+    offset == values.length
 
   private def faceRows(faceIndices: Array[Int]): Vector[MeshTriangle[Int]] =
     Vector.tabulate(faceIndices.length / 3): face =>

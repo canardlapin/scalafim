@@ -588,17 +588,20 @@ object SurfaceLensDeformation:
       case SurfaceLensDeformationPolicy.DirectCorrespondence => (0.0, 0.0, 0.0)
       case SurfaceLensDeformationPolicy.PinnedHarmonic(_) =>
         (
-          to.mesh.coordinates(centerOffset) - from.mesh.coordinates(centerOffset),
-          to.mesh.coordinates(centerOffset + 1) - from.mesh.coordinates(centerOffset + 1),
-          to.mesh.coordinates(centerOffset + 2) - from.mesh.coordinates(centerOffset + 2)
+          to.mesh.coordinateAtOffset(centerOffset) - from.mesh.coordinateAtOffset(centerOffset),
+          to.mesh.coordinateAtOffset(centerOffset + 1) - from.mesh.coordinateAtOffset(centerOffset + 1),
+          to.mesh.coordinateAtOffset(centerOffset + 2) - from.mesh.coordinateAtOffset(centerOffset + 2)
         )
     var vertex = 0
     while vertex < from.vertexCount do
       val offset = vertex * 3
       val weight = lens.weightAtUnsafe(vertex)
-      result(offset) = weight * (to.mesh.coordinates(offset) - from.mesh.coordinates(offset) - pinX)
-      result(offset + 1) = weight * (to.mesh.coordinates(offset + 1) - from.mesh.coordinates(offset + 1) - pinY)
-      result(offset + 2) = weight * (to.mesh.coordinates(offset + 2) - from.mesh.coordinates(offset + 2) - pinZ)
+      result(offset) =
+        weight * (to.mesh.coordinateAtOffset(offset) - from.mesh.coordinateAtOffset(offset) - pinX)
+      result(offset + 1) =
+        weight * (to.mesh.coordinateAtOffset(offset + 1) - from.mesh.coordinateAtOffset(offset + 1) - pinY)
+      result(offset + 2) =
+        weight * (to.mesh.coordinateAtOffset(offset + 2) - from.mesh.coordinateAtOffset(offset + 2) - pinZ)
       vertex += 1
     result
 
@@ -624,20 +627,21 @@ object SurfaceLensDeformation:
       var collarIndex = 0
       while collarIndex < collarCount do
         vertex = collar(collarIndex)
-        val neighbors = topology.neighborsOf(VertexId.unsafe(vertex))
+        val owner = topology.mesh.topology
+        val meshVertex = owner.vertices.indexAtValidatedOrdinal(vertex)
         var x = 0.0
         var y = 0.0
         var z = 0.0
-        var neighbor = 0
-        while neighbor < neighbors.length do
-          val offset = neighbors(neighbor).index * 3
+        var degree = 0
+        owner.foreachNeighbor(meshVertex): neighbor =>
+          val offset = neighbor.ordinal * 3
           x += current(offset)
           y += current(offset + 1)
           z += current(offset + 2)
-          neighbor += 1
+          degree += 1
         val offset = vertex * 3
-        if neighbors.nonEmpty then
-          val inverseDegree = 1.0 / neighbors.length.toDouble
+        if degree > 0 then
+          val inverseDegree = 1.0 / degree.toDouble
           next(offset) = x * inverseDegree
           next(offset + 1) = y * inverseDegree
           next(offset + 2) = z * inverseDegree
@@ -667,15 +671,15 @@ object SurfaceLensDeformation:
     var face = 0
     while face < mesh.faceCount do
       val offset = face * 3
-      val a = mesh.faceIndices(offset) * 3
-      val b = mesh.faceIndices(offset + 1) * 3
-      val c = mesh.faceIndices(offset + 2) * 3
-      val sourceAbX = mesh.coordinates(b) - mesh.coordinates(a)
-      val sourceAbY = mesh.coordinates(b + 1) - mesh.coordinates(a + 1)
-      val sourceAbZ = mesh.coordinates(b + 2) - mesh.coordinates(a + 2)
-      val sourceAcX = mesh.coordinates(c) - mesh.coordinates(a)
-      val sourceAcY = mesh.coordinates(c + 1) - mesh.coordinates(a + 1)
-      val sourceAcZ = mesh.coordinates(c + 2) - mesh.coordinates(a + 2)
+      val a = mesh.faceIndexAtOffset(offset) * 3
+      val b = mesh.faceIndexAtOffset(offset + 1) * 3
+      val c = mesh.faceIndexAtOffset(offset + 2) * 3
+      val sourceAbX = mesh.coordinateAtOffset(b) - mesh.coordinateAtOffset(a)
+      val sourceAbY = mesh.coordinateAtOffset(b + 1) - mesh.coordinateAtOffset(a + 1)
+      val sourceAbZ = mesh.coordinateAtOffset(b + 2) - mesh.coordinateAtOffset(a + 2)
+      val sourceAcX = mesh.coordinateAtOffset(c) - mesh.coordinateAtOffset(a)
+      val sourceAcY = mesh.coordinateAtOffset(c + 1) - mesh.coordinateAtOffset(a + 1)
+      val sourceAcZ = mesh.coordinateAtOffset(c + 2) - mesh.coordinateAtOffset(a + 2)
       val displacementAbX = displacement(b) - displacement(a)
       val displacementAbY = displacement(b + 1) - displacement(a + 1)
       val displacementAbZ = displacement(b + 2) - displacement(a + 2)
@@ -726,18 +730,25 @@ object SurfaceLensDeformation:
         if minimumOrientation <= 0.0 then inverted += 1
       face += 1
 
-    val strains = new Array[Double](topology.edgeCount)
+    val realization = mesh.realization
+    val strains = new Array[Double](realization.topology.edges.size)
     var edgeIndex = 0
     var maximumEdgeStrain = 0.0
-    while edgeIndex < topology.edgeCount do
-      val edge = topology.edges(edgeIndex)
-      val a = edge.a.index * 3
-      val b = edge.b.index * 3
-      val dx = mesh.coordinates(b) + displacement(b) - mesh.coordinates(a) - displacement(a)
-      val dy = mesh.coordinates(b + 1) + displacement(b + 1) - mesh.coordinates(a + 1) - displacement(a + 1)
-      val dz = mesh.coordinates(b + 2) + displacement(b + 2) - mesh.coordinates(a + 2) - displacement(a + 2)
+    while edgeIndex < realization.topology.edges.size do
+      val edge =
+        realization.topology.edges.indexAtValidatedOrdinal(edgeIndex)
+      val endpoints = realization.topology.endpointsOf(edge)
+      val a = endpoints.first.ordinal * 3
+      val b = endpoints.second.ordinal * 3
+      val dx = mesh.coordinateAtOffset(b) + displacement(b) - mesh.coordinateAtOffset(a) - displacement(a)
+      val dy =
+        mesh.coordinateAtOffset(b + 1) + displacement(b + 1) -
+          mesh.coordinateAtOffset(a + 1) - displacement(a + 1)
+      val dz =
+        mesh.coordinateAtOffset(b + 2) + displacement(b + 2) -
+          mesh.coordinateAtOffset(a + 2) - displacement(a + 2)
       val deformedLength = math.sqrt(dx * dx + dy * dy + dz * dz)
-      val sourceLength = topology.edgeLengths(edgeIndex)
+      val sourceLength = realization.edgeLength(edge)
       val strain = if sourceLength <= 1e-15 then 0.0 else math.abs(deformedLength / sourceLength - 1.0)
       strains(edgeIndex) = strain
       maximumEdgeStrain = math.max(maximumEdgeStrain, strain)
@@ -789,20 +800,16 @@ object SurfaceMorph:
           val coordinates = new Array[Double](from.vertexCount * 3)
           var index = 0
           while index < coordinates.length do
-            coordinates(index) = from.mesh.coordinates(index) +
-              fraction.value * (to.mesh.coordinates(index) - from.mesh.coordinates(index))
+            coordinates(index) = from.mesh.coordinateAtOffset(index) +
+              fraction.value * (
+                to.mesh.coordinateAtOffset(index) - from.mesh.coordinateAtOffset(index)
+              )
             index += 1
-          val faces = new Array[Int](from.mesh.faceIndices.length)
-          index = 0
-          while index < faces.length do
-            faces(index) = from.mesh.faceIndices(index)
-            index += 1
-          Right(SurfaceGeometry(
-            TriangleMesh.fromArrays(coordinates, faces),
-            from.hemisphere,
-            SurfaceKind.Custom(s"morph:${from.kind.label}->${to.kind.label}"),
-            from.surfaceToWorld
-          ))
+          derivedGeometry(
+            from,
+            coordinates,
+            SurfaceKind.Custom(s"morph:${from.kind.label}->${to.kind.label}")
+          )
 
   def between(
     surfaces: SurfaceSet,
@@ -854,19 +861,15 @@ object SurfaceMorph:
       val coordinates = new Array[Double](from.vertexCount * 3)
       var index = 0
       while index < coordinates.length do
-        coordinates(index) = from.mesh.coordinates(index) + fraction.value * deformation.displacementAtUnsafe(index)
+        coordinates(index) =
+          from.mesh.coordinateAtOffset(index) +
+            fraction.value * deformation.displacementAtUnsafe(index)
         index += 1
-      val faces = new Array[Int](from.mesh.faceIndices.length)
-      index = 0
-      while index < faces.length do
-        faces(index) = from.mesh.faceIndices(index)
-        index += 1
-      Right(SurfaceGeometry(
-        TriangleMesh.fromArrays(coordinates, faces),
-        from.hemisphere,
-        SurfaceKind.Custom(s"lens:${from.kind.label}->${to.kind.label}"),
-        from.surfaceToWorld
-      ))
+      derivedGeometry(
+        from,
+        coordinates,
+        SurfaceKind.Custom(s"lens:${from.kind.label}->${to.kind.label}")
+      )
 
   def reveal(
     from: SurfaceGeometry,
@@ -887,24 +890,39 @@ object SurfaceMorph:
       while vertex < from.vertexCount do
         val offset = vertex * 3
         val amount = fraction.value * lens.weightAtUnsafe(vertex)
-        coordinates(offset) = from.mesh.coordinates(offset) +
-          amount * (to.mesh.coordinates(offset) - from.mesh.coordinates(offset))
-        coordinates(offset + 1) = from.mesh.coordinates(offset + 1) +
-          amount * (to.mesh.coordinates(offset + 1) - from.mesh.coordinates(offset + 1))
-        coordinates(offset + 2) = from.mesh.coordinates(offset + 2) +
-          amount * (to.mesh.coordinates(offset + 2) - from.mesh.coordinates(offset + 2))
+        coordinates(offset) = from.mesh.coordinateAtOffset(offset) +
+          amount * (to.mesh.coordinateAtOffset(offset) - from.mesh.coordinateAtOffset(offset))
+        coordinates(offset + 1) = from.mesh.coordinateAtOffset(offset + 1) +
+          amount * (
+            to.mesh.coordinateAtOffset(offset + 1) - from.mesh.coordinateAtOffset(offset + 1)
+          )
+        coordinates(offset + 2) = from.mesh.coordinateAtOffset(offset + 2) +
+          amount * (
+            to.mesh.coordinateAtOffset(offset + 2) - from.mesh.coordinateAtOffset(offset + 2)
+          )
         vertex += 1
-      val faces = new Array[Int](from.mesh.faceIndices.length)
-      var index = 0
-      while index < faces.length do
-        faces(index) = from.mesh.faceIndices(index)
-        index += 1
-      Right(SurfaceGeometry(
-        TriangleMesh.fromArrays(coordinates, faces),
-        from.hemisphere,
-        SurfaceKind.Custom(s"lens:${from.kind.label}->${to.kind.label}"),
-        from.surfaceToWorld
-      ))
+      derivedGeometry(
+        from,
+        coordinates,
+        SurfaceKind.Custom(s"lens:${from.kind.label}->${to.kind.label}")
+      )
+
+  private def derivedGeometry(
+    source: SurfaceGeometry,
+    coordinates: Array[Double],
+    kind: SurfaceKind
+  ): Either[SurfaceViewError, SurfaceGeometry] =
+    source.mesh
+      .withOwnedCoordinatesEither(coordinates)
+      .left
+      .map(error => SurfaceViewError.IncompatibleMorph(error.message))
+      .map: mesh =>
+        SurfaceGeometry(
+          mesh,
+          source.hemisphere,
+          kind,
+          source.surfaceToWorld
+        )
 
 opaque type SurfaceLinkRadius = Double
 
