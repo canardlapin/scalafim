@@ -48,7 +48,7 @@
       "sha256": "d32a37a265a035a39d8c6b9abf9ff98eff6dc4a664dc8075eb61464ce27e8368",
       "status": "pass"
     },
-    "commit": "https://github.com/canardlapin/scalafim/commit/864f862a50ddae792b053fa42fa23b9a9de9028e",
+    "commit": "https://github.com/canardlapin/scalafim/commit/7b97d69d9d15241fad9cf6d41d85382ebc7bad4c",
     "reference_lock": "tools/r-parity/reference-lock.json",
     "scenario_manifest": "docs/scenarios/manifest.json"
   },
@@ -69,7 +69,7 @@
       "url": null
     }
   },
-  "generated_at": "2026-08-24T18:05:47.950560+00:00",
+  "generated_at": "2026-08-24T18:21:49.564964+00:00",
   "local_gates": {
     "compile_all": {
       "command": "sbt scalafimCompileAll",
@@ -111,15 +111,15 @@
   "release_eligible": false,
   "schema_version": "scalafim-first-level-release-report/v1",
   "source": {
-    "commit": "864f862a50ddae792b053fa42fa23b9a9de9028e",
+    "commit": "7b97d69d9d15241fad9cf6d41d85382ebc7bad4c",
     "dirty": true,
-    "dirty_path_count": 6,
+    "dirty_path_count": 3,
     "files": {
       ".github/workflows/first-level-laws-calibration.yml": "3160cc9e0b002b6f850e48469e5d7d72d9d0de26f01b0b8ac5107d9a735ceefc",
-      ".github/workflows/first-level-mutation-pilot.yml": "24017d764f077a1dc78a15a7534736fceea026fc640d5619e931b93a728fe832",
-      ".github/workflows/first-level-performance.yml": "54e723f45631f42d6cef62df81505a8010dcf4ea98793ef42edbfb19312df205",
+      ".github/workflows/first-level-mutation-pilot.yml": "1d3e32bae7ed522998f004a8e1973b6c38edc813368a90506930c3da817efc22",
+      ".github/workflows/first-level-performance.yml": "baf127bae4b61d5f515081885d0ff30636b79ae01877ccb2045757c4ffe15abc",
       ".github/workflows/first-level.yml": "02af402f57dad40de3c6571a3742933a4b52e5753a54039634d06e7313741207",
-      ".github/workflows/scenario-receipts.yml": "7be644f94a18fe3c74ca9495c77f81b402dc0403187d5697d639f4aa42fd0160",
+      ".github/workflows/scenario-receipts.yml": "a976f14c693142baa57d22bfa4dc7bd5a0b3ebc1aec983d47a2613166b530697",
       "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala": "57446cc7917d3025c6c5044eb4f985c62d786dbc4740501475652046ada6a3a3",
       "build.sbt": "69ea39e69bfcf62b8f21f0d031d78d021fa7a362c49fb508bb32e1270257794f",
       "docs/benchmarks/first-level.md": "ed487c88d6112ddd2213d21a36d54da01a35206d9ef3f5fcb5a865970a37459e",
