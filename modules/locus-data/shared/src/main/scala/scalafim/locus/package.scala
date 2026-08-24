@@ -53,10 +53,6 @@ package object locus:
     def unsafe(value: String): SpaceKey =
       make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  extension [S](point: Point[S])
-    inline def ordinal: Int =
-      point.value
-
   extension [S](space: FiniteDomain[S])
     def sameIdentityAs[T](that: FiniteDomain[T]): Boolean =
       space.sameRuntimeOwnerAs(that)

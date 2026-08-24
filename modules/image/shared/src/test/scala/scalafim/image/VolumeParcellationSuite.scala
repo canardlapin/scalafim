@@ -288,7 +288,17 @@ class VolumeParcellationSuite extends munit.FunSuite:
           SpatialCoordinateFrame.World
         )
       )
-    assertEquals(nearestOne.relation, Relation.identity(parcellation.parcels))
+    assertEquals(
+      nearestOne.relation,
+      Relation
+        .fromOrdinalRows(
+          parcellation.parcels,
+          parcellation.parcels,
+          Iterator.tabulate(parcellation.parcels.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
+    )
 
     val radiusBelow =
       right(
@@ -298,7 +308,17 @@ class VolumeParcellationSuite extends munit.FunSuite:
           SpatialCoordinateFrame.World
         )
       )
-    assertEquals(radiusBelow.relation, Relation.identity(parcellation.parcels))
+    assertEquals(
+      radiusBelow.relation,
+      Relation
+        .fromOrdinalRows(
+          parcellation.parcels,
+          parcellation.parcels,
+          Iterator.tabulate(parcellation.parcels.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
+    )
 
     val radiusBoundary =
       right(

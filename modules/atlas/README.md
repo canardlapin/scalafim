@@ -352,7 +352,7 @@ val edges =
   atlas.adjacency(VoxelConnectivity.Connect6)
 
 val semanticRelation =
-  RegionGraph.relation(atlas, VoxelConnectivity.Connect6)
+  RegionGraph.relation(atlas, VoxelConnectivity.Connect6).toOption.get
 
 val weightedContacts =
   RegionGraph.contactCounts(atlas, VoxelConnectivity.Connect6)
@@ -360,8 +360,9 @@ val weightedContacts =
 
 Overlap rows include Dice, Jaccard, overlap counts, and both source region
 sizes. Exact grid agreement is the default; resampling requires an explicit
-alignment value. Parcel adjacency is an unweighted relation, while boundary
-contact counts are a separate weighted result.
+alignment value. Parcel adjacency is an unweighted relation returned in an
+`Either[RelationError, ParcelAdjacencyRelation]`, while boundary contact counts
+are a separate weighted result.
 
 ## Parity Fixtures
 

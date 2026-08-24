@@ -74,7 +74,7 @@ class GraphDifferentialSuite extends munit.FunSuite:
       VoxelConnectivity.Connect18,
       VoxelConnectivity.Connect26
     ).foreach: connectivity =>
-      val projected = RegionGraph.relation(atlas, connectivity)
+      val projected = RegionGraph.relation(atlas, connectivity).toOption.get
       val relationPairs =
         (for
           source <- projected.relation.from.indices

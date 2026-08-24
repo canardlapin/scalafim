@@ -3,8 +3,7 @@ package scalafim.atlas
 import cats.Hash
 import graph4s.{Graph, Link}
 import graph4s.data.{EdgeField, WeightedGraph}
-import locus4s.FiniteDomain
-import locus4s.Relation
+import locus4s.{FiniteDomain, Relation, RelationError}
 import locus4s.data.Field
 import scalafim.image.Indexing
 
@@ -123,53 +122,37 @@ object RegionGraph:
   def relation(
       atlas: VolumeAtlas,
       connectivity: VoxelConnectivity = VoxelConnectivity.Connect6
-  ): ParcelAdjacencyRelation =
+  ): Either[RelationError, ParcelAdjacencyRelation] =
     val realization = atlas.realization
-    val voxelRelation =
-      ambientRelation(
+    for
+      voxelRelation <- ambientRelation(
         realization.domain.space,
         realization.domain.grid.shape,
         connectivity
       )
-    // Composition is total when the shared boundary type matches, which it
-    // does here by construction: parcel -> voxel -> voxel -> parcel.
-    val assignmentRelation =
-      realization.parcelAssignment.toRelation.fold(
-        error =>
-          throw new IllegalStateException(
-            s"validated parcel assignment could not form a relation: ${error.message}"
-          ),
-        identity
-      )
-    val projected =
-      assignmentRelation.converse
-        .andThen(voxelRelation)
-        .andThen(assignmentRelation)
-    val withoutSelf =
-      val rows =
-        Iterator.tabulate(realization.parcelDomain.size): source =>
-          projected
-            .row(
-              realization.parcelDomain.indexAtValidatedOrdinal(source)
-            )
-            .ordinalsInDomainOrder
-            .filter(_ != source)
-            .iterator
-      Relation
-        .fromOrdinalRows(
+      assignmentRelation <- realization.parcelAssignment.toRelation
+      converse <- realization.parcelAssignment.fibers
+      withoutSelf <-
+        // Composition is total when the shared boundary type matches, which it
+        // does here by construction: parcel -> voxel -> voxel -> parcel.
+        val projected = converse
+          .andThen(voxelRelation)
+          .andThen(assignmentRelation)
+        val rows =
+          Iterator.tabulate(realization.parcelDomain.size): source =>
+            projected
+              .row(
+                realization.parcelDomain.indexAtValidatedOrdinal(source)
+              )
+              .ordinalsInDomainOrder
+              .filter(_ != source)
+              .iterator
+        Relation.fromOrdinalRows(
           realization.parcelDomain,
           realization.parcelDomain,
           rows
         )
-        .fold(
-          error =>
-            throw new IllegalStateException(
-              s"validated parcel adjacency could not form a relation: ${error.message}"
-            ),
-          identity
-        )
-
-    new ParcelAdjacencyRelation:
+    yield new ParcelAdjacencyRelation:
       type P = realization.P
       val relation: Relation[P, P] = withoutSelf
       val regionIds: Field[P, RegionId] = realization.regionIds
@@ -178,7 +161,7 @@ object RegionGraph:
       space: FiniteDomain[X],
       dims: Vector[Int],
       connectivity: VoxelConnectivity
-  ): Relation[X, X] =
+  ): Either[RelationError, Relation[X, X]] =
     val offsets = allOffsets(connectivity)
     val rows =
       Array.tabulate(space.size): source =>
@@ -195,15 +178,7 @@ object RegionGraph:
           then
             targets += Indexing.gridToIndex3D(dims, x, y, z)
         targets.result()
-    Relation
-      .fromOrdinalRows(space, space, rows.iterator.map(_.iterator))
-      .fold(
-        error =>
-          throw new IllegalStateException(
-            s"validated voxel adjacency could not form a relation: ${error.message}"
-          ),
-        identity
-      )
+    Relation.fromOrdinalRows(space, space, rows.iterator.map(_.iterator))
 
   private def regionIdAtOrdinal(
       realization: VolumeAtlasRealization,

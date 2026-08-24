@@ -23,7 +23,14 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
 
     assertEquals(
       searchlight.searchlight.neighborhoods,
-      Relation.identity(domain.finiteSpace)
+      Relation
+        .fromOrdinalRows(
+          domain.finiteSpace,
+          domain.finiteSpace,
+          Iterator.tabulate(domain.finiteSpace.size)(ordinal => Iterator.single(ordinal))
+        )
+        .toOption
+        .get
     )
 
   test("geodesic metric balls are symmetric and monotone in radius"):
@@ -32,10 +39,14 @@ class SurfaceSearchlightSuite extends munit.FunSuite:
     val large =
       SurfaceSearchlight.metricBalls(domain, topology, math.sqrt(2.0)).toOption.get
 
-    assertEquals(
-      small.searchlight.neighborhoods,
-      small.searchlight.neighborhoods.converse
-    )
+    val neighborhoods = small.searchlight.neighborhoods
+    val rows = neighborhoods.ordinalRows
+    rows.zipWithIndex.foreach: (targets, source) =>
+      targets.foreach: target =>
+        assert(
+          rows(target).contains(source),
+          s"expected symmetric edge $target -> $source"
+        )
     assert(
       small.searchlight.neighborhoods
         .subsetOf(large.searchlight.neighborhoods)
