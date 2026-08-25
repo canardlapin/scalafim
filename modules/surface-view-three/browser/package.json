@@ -1,0 +1,12 @@
+{
+  "name": "scalafim-surface-view-three-browser-court",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:smoke": "node smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1",
+    "three": "0.185.1"
+  }
+}

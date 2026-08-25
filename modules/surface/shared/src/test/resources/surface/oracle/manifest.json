@@ -1,0 +1,36 @@
+{
+  "schema": "scalafim.gifti-oracle.v1",
+  "source": {
+    "repository": "https://github.com/DiedrichsenLab/DCBC",
+    "commit": "d8b1851eb77e92e883748f389b9a290e66f570dc",
+    "path": "parcellations/fs_LR_32k_template/fs_LR.32k.L.midthickness.surf.gii",
+    "gitBlob": "63d1e61bdd6369e18860d4dc11c56eb6cc84af4e",
+    "license": "MIT",
+    "bytes": 1108219,
+    "sha256": "15d0621c87193972e6788fbc489b4ecf9d88a49b73789b31c242483e50ad3b7b"
+  },
+  "vendored": {
+    "path": "fs_LR.32k.L.midthickness.surf.gii.gz",
+    "compression": "gzip -n -9",
+    "bytes": 545150,
+    "sha256": "8928304299d5974b1a8112755895b04bfdbda023bb3191a53ecd79256224a590"
+  },
+  "oracle": {
+    "generator": "NiBabel 5.3.2",
+    "arrays": 2,
+    "coordinateShape": [32492, 3],
+    "coordinateDtype": "float32",
+    "faceShape": [64980, 3],
+    "faceDtype": "int32",
+    "coordinateLittleEndianFloat32Sha256": "82753b5d52a9cb1f1e85ef4ca9a929ccd524ba18fa4b7463ac75289b39a2bc1d",
+    "faceLittleEndianInt32Sha256": "deed589d455f57561f56f699dd6c999a06692738bd08f719d1607efab63606df",
+    "dataSpace": 3,
+    "transformedSpace": 3,
+    "affine": [
+      [1.0, 0.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0, 0.0],
+      [0.0, 0.0, 1.0, 0.0],
+      [0.0, 0.0, 0.0, 1.0]
+    ]
+  }
+}

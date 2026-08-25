@@ -20,18 +20,20 @@
         <pre id="receipt"></pre>
       </section>
     </main>
-    <script>window.exports = {};</script>
-    <script src="../js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js"></script>
     <script type="module">
-      import * as THREE from "../../../../../jscode/surfviewjs/node_modules/three/build/three.module.js";
+      import * as THREE from "./node_modules/three/build/three.module.js";
+      import {
+        runScalafimThreeAdmissionMatrix,
+        runScalafimThreeProbe
+      } from "../js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js";
       const status = document.querySelector("#status");
       const receipt = document.querySelector("#receipt");
       try {
         const canvas = document.querySelector("#surface");
         const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
         window.scalafimWebGlCapability = { available: Boolean(gl), lost: gl?.isContextLost() ?? null };
-        const matrix = exports.runScalafimThreeAdmissionMatrix(THREE, canvas, 1);
-        const anatomical = exports.runScalafimThreeProbe(THREE, canvas);
+        const matrix = runScalafimThreeAdmissionMatrix(THREE, canvas, 1);
+        const anatomical = runScalafimThreeProbe(THREE, canvas);
         const violations = matrix.flatMap(entry => entry.observations.flatMap(observation => {
           const reasons = [];
           if (observation.path === "ColdLoad" &&

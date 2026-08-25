@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ScalaFIM Three.js browser smoke</title>
+  </head>
+  <body data-scalafim-three-smoke="running">
+    <canvas id="surface" width="480" height="360"></canvas>
+    <pre id="receipt"></pre>
+    <script type="module">
+      import * as THREE from "./node_modules/three/build/three.module.js";
+      import { runScalafimThreeSmoke } from "../js/target/scala-3.7.4/scalafim-surface-view-three-fastopt/main.js";
+
+      const disposalCounts = { geometries: 0, materials: 0, renderers: 0 };
+      const patches = [
+        [THREE.BufferGeometry.prototype, "dispose", "geometries"],
+        [THREE.Material.prototype, "dispose", "materials"]
+      ].map(([prototype, method, counter]) => {
+        const original = prototype[method];
+        prototype[method] = function (...args) {
+          disposalCounts[counter] += 1;
+          return original.apply(this, args);
+        };
+        return () => { prototype[method] = original; };
+      });
+      class InstrumentedWebGLRenderer extends THREE.WebGLRenderer {
+        constructor(...args) {
+          super(...args);
+          const originalDispose = this.dispose.bind(this);
+          this.dispose = (...disposeArgs) => {
+            disposalCounts.renderers += 1;
+            return originalDispose(...disposeArgs);
+          };
+        }
+      }
+      const instrumentedThree = {
+        ...THREE,
+        WebGLRenderer: InstrumentedWebGLRenderer
+      };
+
+      try {
+        const canvas = document.querySelector("#surface");
+        const smoke = runScalafimThreeSmoke(instrumentedThree, canvas);
+        const passed = smoke.status === "pass" &&
+          smoke.context === "Available" &&
+          smoke.geometryUploads > 0 &&
+          smoke.colorUploads > 0 &&
+          smoke.drawCalls > 0 &&
+          smoke.pickedVertex >= 0 &&
+          smoke.resourcesBeforeDispose > 0 &&
+          smoke.resourcesAfterDispose === 0 &&
+          smoke.postDisposeRejected === true &&
+          disposalCounts.geometries > 0 &&
+          disposalCounts.materials > 0 &&
+          disposalCounts.renderers === 1;
+        window.scalafimThreeSmoke = { ...smoke, disposalCounts };
+        document.body.dataset.scalafimThreeSmoke = passed ? "pass" : "fail";
+        document.querySelector("#receipt").textContent = JSON.stringify(window.scalafimThreeSmoke, null, 2);
+      } catch (error) {
+        window.scalafimThreeSmoke = {
+          status: "fail",
+          disposalCounts,
+          error: error?.stack || String(error)
+        };
+        document.body.dataset.scalafimThreeSmoke = "fail";
+        document.querySelector("#receipt").textContent = JSON.stringify(window.scalafimThreeSmoke, null, 2);
+      } finally {
+        patches.reverse().forEach(restore => restore());
+      }
+    </script>
+  </body>
+</html>

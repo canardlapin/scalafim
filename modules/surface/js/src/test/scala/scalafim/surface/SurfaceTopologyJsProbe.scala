@@ -24,7 +24,9 @@ object SurfaceTopologyJsProbe:
   private final case class Memory(heap: Double, rss: Double, external: Double)
 
   def main(args: Array[String]): Unit =
-    val selected = args.headOption.getOrElse("all")
+    val selected = args.headOption
+      .orElse(environmentCase)
+      .getOrElse("all")
     val cases = selected match
       case "fsaverage5" => Vector(("generated-fsaverage5-scale", 129, 81))
       case "cortical"   => Vector(("generated-cortical-scale", 498, 329))
@@ -100,3 +102,11 @@ object SurfaceTopologyJsProbe:
       usage.selectDynamic("rss").asInstanceOf[Double],
       usage.selectDynamic("external").asInstanceOf[Double]
     )
+
+  private def environmentCase: Option[String] =
+    val process = js.Dynamic.global.selectDynamic("process")
+    if js.isUndefined(process) || process == null then None
+    else
+      val value = process.selectDynamic("env").selectDynamic("SCALAFIM_SURFACE_TOPOLOGY_CASE")
+      if js.isUndefined(value) || value == null then None
+      else Some(value.asInstanceOf[String])

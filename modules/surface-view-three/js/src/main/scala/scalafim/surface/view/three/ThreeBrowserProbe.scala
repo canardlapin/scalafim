@@ -77,7 +77,7 @@ object ThreeBrowserProbe:
     val large = profile(backend, size, 163842, 12)
     val gpuProjection = projectionParity(three)
     val stats = backend.stats
-    js.Dynamic.literal(
+    val result = js.Dynamic.literal(
       status = "pass",
       backend = "scalafim-three",
       context = runtime.contextState.toString,
@@ -90,6 +90,65 @@ object ThreeBrowserProbe:
       totalColorUploads = stats.colorUploads.toDouble,
       totalUploadedBytes = stats.uploadedBytes.toDouble
     )
+    backend.dispose().fold(error => throw new IllegalStateException(error.message), identity)
+    result
+
+  /** Small, assertion-oriented browser court for upload, draw, native pick,
+    * and deterministic disposal. JavaScript wraps the native Three.js dispose
+    * methods so the host can verify that each resource class was released.
+    */
+  @JSExportTopLevel("runScalafimThreeSmoke")
+  def runSmoke(three: js.Dynamic, canvas: js.Dynamic): js.Dynamic =
+    val runtime = ThreeJsRuntime.create(three, canvas)
+      .fold(error => throw new IllegalStateException(error.message), identity)
+    val backend = ThreeSurfaceBackend.create(runtime)
+      .fold(error => throw new IllegalStateException(error.message), identity)
+    val size = ThreeCanvasSize.unsafe(480, 360, 1.0)
+    val plan = SurfaceBenchmarkFixture.plan(32768, 1)
+    var disposed = false
+    try
+      val rendered = backend.render(plan, size, forceDraw = true)
+        .fold(error => throw new IllegalStateException(error.message), identity)
+      val picked = backend.pick(size.width / 2.0, size.height / 2.0)
+        .fold(error => throw new IllegalStateException(error.message), identity)
+      val resourcesBeforeDispose = backend.resourceKeys.size
+      val context = runtime.contextState.toString
+      val snapshotLength = canvas.applyDynamic("toDataURL")("image/png").asInstanceOf[String].length
+      backend.dispose().fold(error => throw new IllegalStateException(error.message), identity)
+      disposed = true
+      val resourcesAfterDispose = backend.resourceKeys.size
+      val postDisposeRejected = backend.render(plan, size) match
+        case Left(ThreeSurfaceError.BackendDisposed) => true
+        case _ => false
+      val passed =
+        context == ThreeContextState.Available.toString &&
+          rendered.geometryUploads > 0 &&
+          rendered.colorUploads > 0 &&
+          rendered.drawCalls > 0 &&
+          picked.nonEmpty &&
+          resourcesBeforeDispose > 0 &&
+          resourcesAfterDispose == 0 &&
+          snapshotLength > 100 &&
+          postDisposeRejected
+      js.Dynamic.literal(
+        status = if passed then "pass" else "fail",
+        backend = "scalafim-three",
+        context = context,
+        vertices = plan.profile.verticesPacked,
+        faces = plan.profile.facesPacked,
+        geometryUploads = rendered.geometryUploads,
+        colorUploads = rendered.colorUploads,
+        drawCalls = rendered.drawCalls,
+        uploadedBytes = rendered.uploadedBytes.toDouble,
+        pickedFace = picked.map(_.face).getOrElse(-1),
+        pickedVertex = picked.map(_.vertex).getOrElse(-1),
+        resourcesBeforeDispose = resourcesBeforeDispose,
+        resourcesAfterDispose = resourcesAfterDispose,
+        snapshotLength = snapshotLength,
+        postDisposeRejected = postDisposeRejected
+      )
+    finally
+      if !disposed then backend.dispose()
 
   private def projectionParity(three: js.Dynamic): js.Dynamic =
     val fixture = SurfaceFeatureFixture.projectionCase
