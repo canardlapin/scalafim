@@ -21,8 +21,7 @@ import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.SomeSampleSpace
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DVec
 
 class PublicFContrastScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)

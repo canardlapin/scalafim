@@ -8,7 +8,7 @@ import scalafim.fmri.design.data.Column
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.hrf.Hrfs
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces
 import gale.linalg.Matrix
 
 class ModelBuilderSuite extends munit.FunSuite:

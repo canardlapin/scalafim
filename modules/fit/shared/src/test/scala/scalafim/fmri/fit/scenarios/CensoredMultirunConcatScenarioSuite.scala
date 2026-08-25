@@ -30,8 +30,7 @@ import scalafim.fmri.fit.{
 }
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SomeSampleSpace
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DMat
 
 class CensoredMultirunConcatScenarioSuite extends munit.FunSuite:
   private val Tol = ScenarioTolerance.mixed(1e-10, 1e-10)

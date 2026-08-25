@@ -57,7 +57,6 @@ import scalafim.fmri.model.{
   RobustConfig,
   VolumeWeighting
 }
-import scalafim.image.SomeSampleSpace
 import scalafim.response.{
   InMemoryResponseSource,
   ResponseSchemaId,

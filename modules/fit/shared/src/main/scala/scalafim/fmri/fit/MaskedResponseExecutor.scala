@@ -82,7 +82,7 @@ private[fit] object MaskedResponsePlanner:
         localRow += 1
       val patternSeries = FmriSeries
         .make(
-          data = Matrix.dense(rowPositions.length, voxelPositions.length, data),
+          data = Matrix.dense(rowPositions.length, voxelPositions.length, data.toIndexedSeq),
           voxelIndices = voxelPositions.map(series.voxelIndexValues),
           timepoints = rowPositions.map(series.timepointIndices),
           shape = series.shape,

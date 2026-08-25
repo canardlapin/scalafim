@@ -23,7 +23,6 @@ import scalafim.fmri.fit.{
 import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec}
-import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 
 class SemanticContrastReorderedColumnsScenarioSuite extends munit.FunSuite:

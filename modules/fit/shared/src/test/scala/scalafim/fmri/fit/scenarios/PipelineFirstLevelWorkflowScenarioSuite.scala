@@ -27,7 +27,6 @@ import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 import scalafim.pipeline.*
 

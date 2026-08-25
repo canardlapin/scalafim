@@ -33,7 +33,6 @@ import scalafim.fmri.model.{
   ReducedRankInferencePolicy,
   VolumeWeighting
 }
-import scalafim.image.SomeSampleSpace
 import gale.linalg.{DMat, DVec}
 
 import scala.concurrent.Future

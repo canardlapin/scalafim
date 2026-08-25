@@ -5,7 +5,7 @@ import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces
 import gale.linalg.Matrix
 
 class ModelSuite extends munit.FunSuite:

@@ -12,7 +12,6 @@ import scalafim.fmri.fit.fixtures.{ArCensorGlsRFixture, FmriArEstimatedGlsFixtur
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
-import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 
 class GlsSuite extends munit.FunSuite:

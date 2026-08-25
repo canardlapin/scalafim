@@ -8,7 +8,6 @@ import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FmriModelBuilder, ModelBuildSpec, NuisanceRegressors}
-import scalafim.image.SomeSampleSpace
 
 class FitPlanBuilderSuite extends munit.FunSuite:
 

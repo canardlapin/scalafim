@@ -11,8 +11,7 @@ import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitEngine, FitPlan, FitSummary, FmriModel}
-import scalafim.image.SomeSampleSpace
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DVec
 
 class InferenceSuite extends munit.FunSuite:
 

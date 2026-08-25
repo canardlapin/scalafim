@@ -19,7 +19,7 @@ import scalafim.fmri.model.{
   ModelError,
   ModelVolumeWeighting
 }
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces
 import gale.linalg.DMat
 
 /** Acceptance scenarios for the structural design/hypothesis seam.

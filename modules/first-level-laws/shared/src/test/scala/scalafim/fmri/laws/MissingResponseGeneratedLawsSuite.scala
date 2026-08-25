@@ -1,6 +1,6 @@
 package scalafim.fmri.laws
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, Matrix}
 import org.scalacheck.Prop
 import org.scalacheck.Prop.forAll
 import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
@@ -18,7 +18,7 @@ import scalafim.fmri.model.{
   MissingDataPolicy,
   ModelBuildSpec
 }
-import scalafim.image.{SampleSpaces, SomeSampleSpace}
+import scalafim.image.SampleSpaces
 
 class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
 
@@ -209,7 +209,7 @@ class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
     val dataset = FmriDataset.unsafe(
       backend = InMemoryDatasetBackend(
         DatasetId(s"missing-response-law-${generated.seed}-${generated.rows}-${generated.voxels}"),
-        scalafim.fmri.fit.GaleTestMatrix.fromRows(responseRows),
+        Matrix.dense(responseRows.length, responseRows.head.length, responseRows.flatten),
         SampleSpaces(Vector(generated.voxels, 1, 1))
       ),
       samplingFrame = sampling,

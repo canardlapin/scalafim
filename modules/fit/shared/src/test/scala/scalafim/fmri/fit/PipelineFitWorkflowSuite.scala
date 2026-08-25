@@ -8,7 +8,6 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitPlan, FmriModel}
-import scalafim.image.SomeSampleSpace
 import gale.linalg.DMat
 import scalafim.pipeline.*
 

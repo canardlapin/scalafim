@@ -30,8 +30,7 @@ import scalafim.fmri.fit.GaleTestMatrix
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{CoefficientScope, FitEngine, FitPlan, FitStrategy, FmriModel}
-import scalafim.image.SomeSampleSpace
-import gale.linalg.{DMat, DVec}
+import gale.linalg.DMat
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
