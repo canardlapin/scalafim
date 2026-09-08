@@ -34,7 +34,7 @@ private[spatial] object GaleSpatialSupport:
       val builder = DMat.newBuilder(rows, cols)
       var index = 0
       while index < values.length do
-        builder.updateRowMajor(index, values(index))
+        builder.writeLinear(index, values(index))
         index += 1
       Right(builder.result())
 

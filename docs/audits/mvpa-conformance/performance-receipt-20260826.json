@@ -1,0 +1,637 @@
+{
+  "checksum_agreements": [
+    {
+      "absolute_difference": 0.0,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "scenario": "observation-correlation",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "scenario": "crossvalidated-identity-rdm",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "scenario": "rsa-pearson-query",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "scenario": "rsa-intercepted-ols-query",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "pymvpa-2.6.5.dev1",
+      "scenario": "observation-correlation",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "pymvpa-2.6.5.dev1",
+      "scenario": "predictive-centroid-loro",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "pymvpa-2.6.5.dev1",
+      "scenario": "predictive-fixed-support-frame",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 1.7763568394002505e-15,
+      "implementation": "rsatoolbox-matlab-via-octave-11.1.0",
+      "scenario": "crossvalidated-identity-rdm",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 5.551115123125783e-17,
+      "implementation": "rsatoolbox-matlab-via-octave-11.1.0",
+      "scenario": "rsa-pearson-query",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 8.326672684688674e-17,
+      "implementation": "rsatoolbox-matlab-via-octave-11.1.0",
+      "scenario": "rsa-intercepted-ols-query",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "scalafim-jvm",
+      "scenario": "observation-correlation",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "scalafim-jvm",
+      "scenario": "predictive-centroid-loro",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "scalafim-jvm",
+      "scenario": "predictive-fixed-support-frame",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "scalafim-jvm",
+      "scenario": "crossvalidated-identity-rdm",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "scalafim-jvm",
+      "scenario": "rsa-intercepted-ols-query",
+      "tolerance": 1e-10
+    },
+    {
+      "absolute_difference": 0.0,
+      "implementation": "scalafim-jvm",
+      "scenario": "rsa-pearson-query",
+      "tolerance": 1e-10
+    }
+  ],
+  "date": "2026-08-26",
+  "harness_sha256": {
+    "benchmarks/mvpa-jvm/src/main/scala/scalafim/fmri/mvpa/benchmark/MvpaConformanceBenchmark.scala": "47b3fd06d2a67ec22a7bb6459bf9252950bd7d0924a98db357229b75593f370a",
+    "tools/reference/mvpa-conformance/benchmark_matlab_reference.m": "ac5cb7ff000f71e5da6e5a4ac7351bfa5ddb301d9566e2e93263e970eba9b3c2",
+    "tools/reference/mvpa-conformance/benchmark_reference.py": "0d4def14e85863e8b4d0afe3aecfc0414f38d532a679fb780a41faf00a7c2699",
+    "tools/reference/mvpa-conformance/summarize_performance.py": "7645f448bc6f804dfc033e90ddc81aeab330a8930d3628a2fe370316d64f7a20"
+  },
+  "host": {
+    "logical_cpus": 14,
+    "machine": "arm64",
+    "platform": "macOS-14.3-arm64-arm-64bit-Mach-O",
+    "processor": "arm"
+  },
+  "limitations": [
+    "host-local diagnostic evidence; not a portable pass/fail threshold",
+    "Python tracemalloc excludes most NumPy and SciPy native allocations and is not comparable with JVM B/op",
+    "Octave timing is not a claim about MATLAB performance",
+    "predictive ScalaFIM timing has numeric parity but retains the known run-generalization receipt gap",
+    "native spatial-neighborhood construction is outside this fixed-support performance court"
+  ],
+  "protocol": {
+    "jmh": "3 x 500 ms warmup; 7 x 500 ms measurements; one fork; one thread; gc profiler",
+    "matlab": "Octave diagnostic with repeated tic/toc; per-call compatibility warnings suppressed",
+    "python": "explicit warmups; 9 repeats; perf_counter_ns; gc before repeats",
+    "setup": "all axes, data, designs, frames, and callable objects prepared outside timing",
+    "time_statistic": "median of per-iteration/repeat mean nanoseconds per call",
+    "timed_stage": "one steady-state public call"
+  },
+  "raw_input_sha256": {
+    "jmh": "70c791af88119a48980f0107a34deb9e6e01027bf88ad061580aad9f6ff2dd2a",
+    "pymvpa": "ea22119275388ca4b629e0f3ebc600d93dabd93a0174281a2e7a9512f4289606",
+    "rsatoolbox_matlab_via_octave": "279f82cfcdcc6155db50dfd77ac8f9eeac5f1d29355621baab81e199aa8b7bfe",
+    "rsatoolbox_python": "a06266df071414368ce6eeb0cea4dbd04e645ca8064a3e6ec24e1ec67c6663f9"
+  },
+  "results": [
+    {
+      "allocation_bytes": 344392,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": 4571.000223431536,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "median_ns_per_call": 190541.7,
+      "p25_ns_per_call": 186837.5,
+      "p75_ns_per_call": 192316.65,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "2.5.2",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 206471168,
+        "processor": "arm",
+        "python": "3.12.10",
+        "scipy": "1.18.1"
+      },
+      "samples_ns_per_call": [
+        191141.65,
+        186837.5,
+        194783.35,
+        190541.7,
+        189156.25,
+        184808.35,
+        179650.0,
+        192316.65,
+        196116.65
+      ],
+      "scenario": "observation-correlation",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 126892,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": 6.874590519956278,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "median_ns_per_call": 2120025.0,
+      "p25_ns_per_call": 2073075.0,
+      "p75_ns_per_call": 2149058.2,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "2.5.2",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 206471168,
+        "processor": "arm",
+        "python": "3.12.10",
+        "scipy": "1.18.1"
+      },
+      "samples_ns_per_call": [
+        2128166.8,
+        2073075.0,
+        2149058.2,
+        2051500.0,
+        2215116.6,
+        2202341.6,
+        2090991.8,
+        2029050.0,
+        2120025.0
+      ],
+      "scenario": "crossvalidated-identity-rdm",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 4212,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": -0.11748100095173242,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "median_ns_per_call": 28948.75,
+      "p25_ns_per_call": 28492.5,
+      "p75_ns_per_call": 30039.17,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "2.5.2",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 206471168,
+        "processor": "arm",
+        "python": "3.12.10",
+        "scipy": "1.18.1"
+      },
+      "samples_ns_per_call": [
+        28492.5,
+        29785.0,
+        28770.0,
+        31418.34,
+        28438.34,
+        30759.58,
+        30039.17,
+        28420.42,
+        28948.75
+      ],
+      "scenario": "rsa-pearson-query",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 9676,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": 0.22064725063086724,
+      "implementation": "rsatoolbox-python-0.3.2",
+      "median_ns_per_call": 11376.25,
+      "p25_ns_per_call": 10980.42,
+      "p75_ns_per_call": 11435.0,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "2.5.2",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 206471168,
+        "processor": "arm",
+        "python": "3.12.10",
+        "scipy": "1.18.1"
+      },
+      "samples_ns_per_call": [
+        10821.25,
+        11547.5,
+        11397.91,
+        11435.0,
+        11376.25,
+        10980.42,
+        11284.58,
+        11847.08,
+        10725.84
+      ],
+      "scenario": "rsa-intercepted-ols-query",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 437333,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": 4571.000223431536,
+      "implementation": "pymvpa-2.6.5.dev1",
+      "median_ns_per_call": 1087810.45,
+      "p25_ns_per_call": 1083831.25,
+      "p75_ns_per_call": 1089662.5,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "1.23.5",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 97714176,
+        "processor": "arm",
+        "python": "3.11.13",
+        "scipy": "1.11.4"
+      },
+      "samples_ns_per_call": [
+        1110391.7,
+        1088266.7,
+        1083502.05,
+        1089662.5,
+        1092804.15,
+        1082341.65,
+        1084700.0,
+        1087810.45,
+        1083831.25
+      ],
+      "scenario": "observation-correlation",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 54622,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": 32.0,
+      "implementation": "pymvpa-2.6.5.dev1",
+      "median_ns_per_call": 2202541.6,
+      "p25_ns_per_call": 2183166.6,
+      "p75_ns_per_call": 2244358.4,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "1.23.5",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 97714176,
+        "processor": "arm",
+        "python": "3.11.13",
+        "scipy": "1.11.4"
+      },
+      "samples_ns_per_call": [
+        2202541.6,
+        2244358.4,
+        2204200.0,
+        2167991.6,
+        2183166.6,
+        2250300.0,
+        2299350.0,
+        2200358.4,
+        2154500.0
+      ],
+      "scenario": "predictive-centroid-loro",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 125868,
+      "allocation_scope": "tracemalloc Python heap only; excludes most native arrays",
+      "checksum": 512.0,
+      "implementation": "pymvpa-2.6.5.dev1",
+      "median_ns_per_call": 33833375.0,
+      "p25_ns_per_call": 33670750.0,
+      "p75_ns_per_call": 33887417.0,
+      "runtime": {
+        "logical_cpus": 14,
+        "machine": "arm64",
+        "numpy": "1.23.5",
+        "platform": "macOS-14.3-arm64-arm-64bit",
+        "process_peak_rss_bytes": 97714176,
+        "processor": "arm",
+        "python": "3.11.13",
+        "scipy": "1.11.4"
+      },
+      "samples_ns_per_call": [
+        33887417.0,
+        33880750.0,
+        34071458.0,
+        35251792.0,
+        33833375.0,
+        33779625.0,
+        33670750.0,
+        33555750.0,
+        33562708.0
+      ],
+      "scenario": "predictive-fixed-support-frame",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": null,
+      "allocation_scope": "unavailable in the Octave court",
+      "checksum": 6.874590519956276,
+      "implementation": "rsatoolbox-matlab-via-octave-11.1.0",
+      "median_ns_per_call": 1119295.7560221355,
+      "p25_ns_per_call": 1097361.2467447917,
+      "p75_ns_per_call": 1136938.7308756511,
+      "runtime": {
+        "computer": "aarch64-apple-darwin23.6.0",
+        "runtime": "11.1.0"
+      },
+      "samples_ns_per_call": [
+        1070340.4744466145,
+        1104354.8583984375,
+        1207272.211710612,
+        1053651.1739095051,
+        1136938.7308756511,
+        1129627.2277832031,
+        1097361.2467447917,
+        1274665.1967366536,
+        1119295.7560221355
+      ],
+      "scenario": "crossvalidated-identity-rdm",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": null,
+      "allocation_scope": "unavailable in the Octave court",
+      "checksum": -0.11748100095173236,
+      "implementation": "rsatoolbox-matlab-via-octave-11.1.0",
+      "median_ns_per_call": 294060.70709228516,
+      "p25_ns_per_call": 291719.4366455078,
+      "p75_ns_per_call": 295639.0380859375,
+      "runtime": {
+        "computer": "aarch64-apple-darwin23.6.0",
+        "runtime": "11.1.0"
+      },
+      "samples_ns_per_call": [
+        357580.18493652344,
+        291719.4366455078,
+        295639.0380859375,
+        294060.70709228516,
+        292518.13888549805,
+        295341.01486206055,
+        287780.76171875,
+        286610.1264953613,
+        300288.20037841797
+      ],
+      "scenario": "rsa-pearson-query",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": null,
+      "allocation_scope": "unavailable in the Octave court",
+      "checksum": 0.22064725063086715,
+      "implementation": "rsatoolbox-matlab-via-octave-11.1.0",
+      "median_ns_per_call": 429816.24603271484,
+      "p25_ns_per_call": 427980.4229736328,
+      "p75_ns_per_call": 433201.78985595703,
+      "runtime": {
+        "computer": "aarch64-apple-darwin23.6.0",
+        "runtime": "11.1.0"
+      },
+      "samples_ns_per_call": [
+        529417.9916381836,
+        433201.78985595703,
+        446157.45544433594,
+        429382.32421875,
+        427742.00439453125,
+        432901.38244628906,
+        427980.4229736328,
+        426898.0026245117,
+        429816.24603271484
+      ],
+      "scenario": "rsa-intercepted-ols-query",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 5155431.352480789,
+      "allocation_scope": "JMH gc.alloc.rate.norm JVM bytes per operation",
+      "checksum": 4571.000223431536,
+      "implementation": "scalafim-jvm",
+      "median_ns_per_call": 3655056.3380281692,
+      "p25_ns_per_call": 3624462.1773049645,
+      "p75_ns_per_call": 3753682.9145152504,
+      "runtime": {
+        "forks": 1,
+        "jdk": "25.0.1",
+        "jmh": "1.37",
+        "measurement_iterations": 7,
+        "threads": 1,
+        "vm": "OpenJDK 64-Bit Server VM",
+        "vm_version": "25.0.1",
+        "warmup_iterations": 3
+      },
+      "samples_ns_per_call": [
+        3774217.0447761193,
+        3655056.3380281692,
+        3618899.8226950355,
+        3759321.080882353,
+        3748044.748148148,
+        3550507.8125,
+        3630024.5319148935
+      ],
+      "scenario": "observation-correlation",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 4992056.033578113,
+      "allocation_scope": "JMH gc.alloc.rate.norm JVM bytes per operation",
+      "checksum": 32.0,
+      "implementation": "scalafim-jvm",
+      "median_ns_per_call": 2431243.057142857,
+      "p25_ns_per_call": 2390685.4363207547,
+      "p75_ns_per_call": 2504292.2103658537,
+      "runtime": {
+        "forks": 1,
+        "jdk": "25.0.1",
+        "jmh": "1.37",
+        "measurement_iterations": 7,
+        "threads": 1,
+        "vm": "OpenJDK 64-Bit Server VM",
+        "vm_version": "25.0.1",
+        "warmup_iterations": 3
+      },
+      "samples_ns_per_call": [
+        2385531.25,
+        2366509.8379629627,
+        2431243.057142857,
+        2451873.1707317075,
+        2556711.25,
+        2661456.161458333,
+        2395839.6226415094
+      ],
+      "scenario": "predictive-centroid-loro",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 62708150.01316527,
+      "allocation_scope": "JMH gc.alloc.rate.norm JVM bytes per operation",
+      "checksum": 512.0,
+      "implementation": "scalafim-jvm",
+      "median_ns_per_call": 31916375.0,
+      "p25_ns_per_call": 31173022.05882353,
+      "p75_ns_per_call": 32613710.9375,
+      "runtime": {
+        "forks": 1,
+        "jdk": "25.0.1",
+        "jmh": "1.37",
+        "measurement_iterations": 7,
+        "threads": 1,
+        "vm": "OpenJDK 64-Bit Server VM",
+        "vm_version": "25.0.1",
+        "warmup_iterations": 3
+      },
+      "samples_ns_per_call": [
+        32873518.249999996,
+        34592513.93333334,
+        31241544.11764706,
+        32353903.625,
+        31916375.0,
+        31104500.0,
+        30597284.294117644
+      ],
+      "scenario": "predictive-fixed-support-frame",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 713004.6688116584,
+      "allocation_scope": "JMH gc.alloc.rate.norm JVM bytes per operation",
+      "checksum": 6.874590519956278,
+      "implementation": "scalafim-jvm",
+      "median_ns_per_call": 354014.83344899374,
+      "p25_ns_per_call": 353084.90082685626,
+      "p75_ns_per_call": 357489.3052713211,
+      "runtime": {
+        "forks": 1,
+        "jdk": "25.0.1",
+        "jmh": "1.37",
+        "measurement_iterations": 7,
+        "threads": 1,
+        "vm": "OpenJDK 64-Bit Server VM",
+        "vm_version": "25.0.1",
+        "warmup_iterations": 3
+      },
+      "samples_ns_per_call": [
+        361231.65647226176,
+        360410.8403954802,
+        354567.7701471619,
+        350339.82498284144,
+        354014.83344899374,
+        353275.06375606376,
+        352894.7378976487
+      ],
+      "scenario": "crossvalidated-identity-rdm",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 59048.40575288051,
+      "allocation_scope": "JMH gc.alloc.rate.norm JVM bytes per operation",
+      "checksum": 0.22064725063086724,
+      "implementation": "scalafim-jvm",
+      "median_ns_per_call": 20992.617788361116,
+      "p25_ns_per_call": 20549.399587942862,
+      "p75_ns_per_call": 21436.73439265656,
+      "runtime": {
+        "forks": 1,
+        "jdk": "25.0.1",
+        "jmh": "1.37",
+        "measurement_iterations": 7,
+        "threads": 1,
+        "vm": "OpenJDK 64-Bit Server VM",
+        "vm_version": "25.0.1",
+        "warmup_iterations": 3
+      },
+      "samples_ns_per_call": [
+        20992.617788361116,
+        23893.128201513227,
+        21248.090802183957,
+        21625.377983129158,
+        20503.23032575391,
+        19690.306363385935,
+        20595.568850131818
+      ],
+      "scenario": "rsa-intercepted-ols-query",
+      "stage": "steady-state-public-call"
+    },
+    {
+      "allocation_bytes": 23328.141518799053,
+      "allocation_scope": "JMH gc.alloc.rate.norm JVM bytes per operation",
+      "checksum": -0.11748100095173242,
+      "implementation": "scalafim-jvm",
+      "median_ns_per_call": 8050.306873635547,
+      "p25_ns_per_call": 7980.219732572175,
+      "p75_ns_per_call": 8219.076654990979,
+      "runtime": {
+        "forks": 1,
+        "jdk": "25.0.1",
+        "jmh": "1.37",
+        "measurement_iterations": 7,
+        "threads": 1,
+        "vm": "OpenJDK 64-Bit Server VM",
+        "vm_version": "25.0.1",
+        "warmup_iterations": 3
+      },
+      "samples_ns_per_call": [
+        8273.279516856312,
+        8367.409770180937,
+        8040.347809346575,
+        8050.306873635547,
+        8164.873793125644,
+        7866.867135165592,
+        7920.091655797776
+      ],
+      "scenario": "rsa-pearson-query",
+      "stage": "steady-state-public-call"
+    }
+  ],
+  "schema": "scalafim-mvpa-performance-receipt/v1",
+  "shapes": {
+    "observation": {
+      "features": 64,
+      "samples": 96
+    },
+    "predictive": {
+      "classes": 4,
+      "features": 32,
+      "runs": 8,
+      "support_width": 8,
+      "supports": 16
+    },
+    "relational": {
+      "effects": 8,
+      "features": 64,
+      "partitions": 8
+    }
+  }
+}

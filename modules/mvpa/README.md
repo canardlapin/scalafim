@@ -1,285 +1,219 @@
 # scalafim-fmri-mvpa
 
-Portable MVPA engine primitives for ScalaFIM.
-
-Package root:
+ScalaFIM MVPA expresses predictive modelling and relational geometry through
+one identified-evidence architecture. Import the public vocabulary with:
 
 ```scala
 import scalafim.fmri.mvpa.*
 ```
 
-This module is the ScalaFIM landing zone for the computational core of
-`rMVPA`: typed sample responses, fold plans, feature-set/ROI execution,
-feature-set plans, dependency-free classifiers, metric vectors,
-representational-distance kernels, and first-class ROI RDM/RSA analyses. It
-deliberately does not port the R S3 model registry or runner surface. Spatial
-modules provide feature index sets, dataset/backends provide sample-by-feature
-matrices, and `mvpa` owns the small analysis contract that runs over those
-matrices.
-
-`PatternOperator` is the linear representation of a sample-by-feature table.
-Its orientation is features to sample scores, it requires both forward and
-transpose products, and it supports checked row/feature restriction and row
-stacking without first producing a dense `PatternMatrix`. `PatternSource[P]`
-and `RoiAnalysis[P]` make the ordinary `MvpaTask`, `MvpaStream`, and
-`MvpaEngine` boundaries representation-polymorphic: dense analyses use the
-`DensePatternSource`/`DenseRoiAnalysis` aliases, while operator-native analyses
-use `OperatorPatternSource`/`OperatorRoiAnalysis`. The representation types must
-agree at compile time. `RoiAnalysis.materializing` is the explicit dense parity
-adapter; it is an execution choice, not a second MVPA hierarchy.
-
-Operator-native ridge classification is the first analysis that consumes this
-boundary directly. It centers patterns and class targets within each training
-fold, solves the augmented ridge system with Gale LSQR, and applies an
-unpenalized intercept. `ClassMembership` represents either hard one-hot targets
-or validated simplex-valued targets. Ridge predictions expose class scores—not
-probabilities—and the payload records per-class convergence, normal residuals,
-regularization, solver limits, operator provenance, and operator-application
-counts.
-
-```scala
-val ridgeConfig =
-  OperatorRidgeConfig(penalty = 0.5, tolerance = 1e-10).toOption.get
-
-val ridge =
-  CrossValidatedOperatorRidgeAnalysis(
-    ridgeConfig,
-    storePredictions = true
-  )
-
-val result =
-  MvpaEngine.runSource(operatorSource, plan, response, ridge, Some(folds))
-```
-
-Soft targets use the same analysis through a typed response:
-
-```scala
-val membership =
-  ClassMembership.simplex(classes, sampleByClassMemberships).toOption.get
-
-val response = Response.Probabilistic(membership)
-```
-
-Regional and searchlight analyses use the same engine:
-
-```scala
-val plan =
-  FeatureSetPlan.fromLabelVector("regions", Vector(0, 1, 1, 2, 2)).toOption.get
-
-val analysis =
-  CrossValidatedClassifierAnalysis(SwiftCentroidClassifier())
-
-val result =
-  MvpaEngine.run(patterns, plan, labels, analysis, folds = Some(folds))
-```
-
-Streaming runners can visit outcomes without collecting every ROI/searchlight:
-
-```scala
-MvpaStream.foreach(source, plan, labels, analysis, Some(folds)) { outcome =>
-  MvpaStreamControl.Continue
-}
-```
-
-Distributed runners should target the lower-level single-ROI boundary instead
-of depending on the local collector:
-
-```scala
-val source = PatternSource.fromMatrix(patterns)
-val outcome =
-  MvpaTask.evaluate(source, plan.featureSets.head, labels, analysis, Some(folds))
-```
-
-A future Spark adapter should provide a JVM `PatternSource[P]` backed by its data
-layout and map `MvpaTask.evaluate` over partitions of `FeatureSetPlan`; a local
-non-collecting runner can use `MvpaStream`.
-
-For high-volume searchlight classification, `SearchlightClassifierScanner`
-keeps the same `RoiOutcome`/`MvpaResult` surface but adds direct SWIFT centroid
-and ridge LDA fast paths:
-
-```scala
-val scanner =
-  SearchlightClassifierScanner(
-    SwiftCentroidClassifier(FeatureScaling.unsafeDiagonalShrinkage(0.2)),
-    storePredictions = true
-  )
-
-val result =
-  scanner.run(patterns, searchlightPlan, labels, folds)
-```
-
-The fast path validates response/folds once, reuses the global feature lookup,
-and computes fold-local scaling, centroids, priors, and probabilities directly
-over the selected columns. It allocates one output probability buffer per
-feature set plus fold-local work arrays. Classifiers without a specialized path
-fall back to `CrossValidatedClassifierAnalysis`.
-
-Cross-domain decoding uses a typed `CrossDomainDataset` over source/target
-pattern sources. Standard feature-set plans are lifted to same-source/target
-`PairedFeatureSet`s, and lower-level runners can pass explicit paired feature
-sets when the source and target domains use different feature ids. The naive
-rMVPA-style baseline is expressed as a classifier analysis rather than a
-special runner: fit source-domain prototypes with `CorrelationCentroidClassifier`,
-predict target-domain patterns, and report accuracy through the usual ROI result
-surface.
-
-```scala
-val design =
-  CrossDecodingDesign.unsafe(
-    sourceLabels = Vector("face", "face", "house", "house"),
-    targetLabels = Vector("face", "house")
-  )
-
-val xdec =
-  CrossDecoding.naive(storePredictions = true)
-
-val result =
-  CrossDomainMvpaEngine.run(sourcePatterns, targetPatterns, plan, design, xdec)
-```
-
-The lower-level `CrossDomainMvpaTask.evaluate` boundary evaluates one
-`PairedFeatureSet` against a `CrossDomainDataset`; distributed runners can map
-that single-ROI task across regional/searchlight feature sets.
-
-For high-volume naive cross-decoding searchlights, `NaiveCrossDecodingScanner`
-keeps the same result surface while computing source prototypes and target
-correlation scores directly over selected feature columns:
-
-```scala
-val fast =
-  NaiveCrossDecodingScanner(storePredictions = false)
-
-val result =
-  fast.run(sourcePatterns, targetPatterns, searchlightPlan, design)
-```
-
-RSA is a `RoiAnalysis` too. Observed RDM rows can be sample rows or categorical
-class means, and model RDMs carry item labels so scoring aligns by label:
-
-```scala
-val model =
-  RdmModel.unsafe("geometry", Vector("face", "house", "tool"), modelRdm)
-
-val rsa =
-  RsaAnalysis(RdmMethod.SquaredEuclidean(), Vector(model), rows = RdmRows.ClassMeans)
-```
-
-RDM scoring is pluggable. Pearson and Spearman are dependency-free, and partial
-Pearson accepts labeled control RDMs so nuisance models are aligned by item
-label before residualization:
-
-```scala
-val partial =
-  RdmScorer.PartialPearson.unsafe(Vector(controlModel))
-
-val rsa =
-  RsaAnalysis(
-    RdmMethod.SquaredEuclidean(),
-    Vector(targetModel),
-    scorer = partial
-  )
-```
-
-Operator-backed data also has an exact crossvalidated RSA path. It accumulates
-the condition Gram fold by fold through adjoint operator products and never
-requests the sample-by-feature table. `OperatorCrossnobisAnalysis` emits the
-ordinary labeled RDM payload; `OperatorCrossnobisRsaAnalysis` feeds that same
-RDM to the existing Pearson, Spearman, or partial-Pearson model scorers:
-
-```scala
-val rsa =
-  OperatorCrossnobisRsaAnalysis(
-    models = Vector(targetModel),
-    scorer = RdmScorer.PartialPearson.unsafe(Vector(controlModel)),
-    storeObservedRdm = true
-  )
-
-val result =
-  MvpaEngine.runSource(operatorSource, plan, labels, rsa, Some(folds))
-```
-
-The computation retains signed crossnobis distances, including negative null
-estimates. Its metrics expose a zero trial-pattern materialization count and a
-fold-independent upper bound on working storage owned by the reduction.
-
-Samplewise RSA is the ScalaFIM equivalent of rMVPA's `vector_rsa_model`. It
-keeps the reference RDM item labels unique, then maps repeated sample rows onto
-those items and block labels. For each sample, it correlates the neural
-distance row against the reference distance row after excluding same-block
-samples, then reports the mean defined score for the ROI/searchlight:
-
-```scala
-val model =
-  RdmModel.unsafe("identity", Vector("face", "house"), referenceRdm)
-
-val design =
-  SamplewiseRsaDesign.unsafe(
-    model,
-    sampleItems = Vector("face", "house", "face", "house"),
-    blocks = Vector("run1", "run1", "run2", "run2")
-  )
-
-val samplewise =
-  SamplewiseRsaAnalysis(
-    design,
-    method = RdmMethod.Euclidean,
-    scorer = RowSimilarity.Pearson,
-    storeScores = true
-  )
-```
-
-The ROI metric is `SamplewiseRsa`; optional `RoiPayload.SamplewiseRsa` stores
-one typed score per sample for trial-level modeling downstream.
-
-Crossvalidated distances use the same ROI engine. `CrossnobisAnalysis` builds
-fold-wise class means internally and keeps feature normalization explicit:
-
-```scala
-val crossnobis =
-  CrossnobisAnalysis(normalizeByFeatures = true, storeRdm = true)
-
-val distances =
-  MvpaEngine.run(patterns, plan, labels, crossnobis, folds = Some(folds))
-```
-
-Feature encoding and decoding use the same ROI contract. This is the core idea
-behind rMVPA's `feature_rsa_model`, but expressed as a bidirectional
-cross-validated prediction model rather than an RSA-named wrapper:
-
-```scala
-val design =
-  FeatureModelDesign.unsafe(items, featureMatrix, Vector("semantic", "visual"))
-
-val encode =
-  FeatureModelAnalysis(
-    design,
-    FeaturePredictionDirection.FeaturesToPatterns,
-    estimator = FeatureRidgeEstimator(lambda = 1e-2)
-  )
-
-val decode =
-  FeatureModelAnalysis(design, FeaturePredictionDirection.PatternsToFeatures)
-```
-
-The first supported estimator is standardized multivariate ridge regression. It
-has no heavy dependencies, works in both directions, and reports pattern, RDM,
-correlation, MSE, and R-squared metrics.
-
-Parity fixtures and lightweight benchmark checks live in the shared test tree:
+The central request has four scientific parts:
 
 ```text
-MvpaParityFixtures
-MvpaParitySuite
+source + evidence design + measurement frame + estimand
 ```
 
-Those fixtures keep squared, unsquared, and feature-normalized estimands
-separate. See `tools/r-parity/mvpa-fixtures.md` before adding an R or Python
-reference comparison.
+`Mvpa.run` validates those identities, binds method-specific capabilities,
+plans execution, visits every measurement, and returns one typed
+`AnalysisResult[A, Rejection, Failure, Rendition]` with an
+`ExecutionReceipt`.
 
-Run it directly with:
+## Data shapes and outputs
+
+The predictive kernel starts from a sample-by-neural `EvidenceTable`, a target
+`Column` on the exact sample axis, and a validation or cross-fit design. Its
+first complete workflow returns exact source-ordered out-of-fold predictions:
+
+```text
+samples x neural coordinates
+  + Column[samples, class]
+  + ValidationDesign
+  -> OutOfFoldClassification[samples]
+```
+
+The relational kernel starts from partitioned effect-by-neural relations and
+an ordered pairing design. Closing the neural boundary yields an identified
+RDM; comparing it with a pair-axis-bound model yields an RSA estimate:
+
+```text
+partitions x (effects x neural coordinates)
+  + PairingDesign
+  -> MeasuredRelationalRdm
+  -> MeasuredRankRsa
+```
+
+Both kernels localize evidence with the same `MeasurementFrame`. A hard
+region, global identity map, weighted region, fixed projection, and spatial
+searchlight are all typed linear `Measurement`s. Spatial centers and labels
+remain rendition metadata used only when rendering results.
+
+## Construct evidence once
+
+Neuroimaging inputs enter the same two source types directly:
+
+- `DatasetEvidence.fromSeries`, `fromReader`, `fromDataset`, and `fromOpened`
+  preserve selected timepoint and voxel order in authoritative sample and
+  neural axes, then return `Observations`.
+- `RunwiseObservations` composes fit-owned `TrialReadout` operators with
+  runwise response blocks and stacks the resulting trial-by-neural evidence on
+  a declared sample axis.
+- `RunwiseRelations.estimateOnly` composes the same readout boundary into
+  partitioned effect-by-neural relations for RDM, RSA, crossnobis, and related
+  estimands.
+
+These constructors do not create another sample table, feature-set hierarchy,
+or analysis result shell. Targets and metadata are ordinary axis-bound
+`Column` values; spatial localization is introduced later by the frame.
+
+## Predictive workflow
+
+Given an identified evidence table, categorical target, exact-once validation
+design, and measurement frame:
+
+```scala
+import scalafim.fmri.mvpa.predictive.*
+import scalafim.fmri.mvpa.predictive.PredictiveAnalysis.given
+
+val result =
+  for
+    source <- CategoricalObservationSource(patterns, target).left.map(_.message)
+    configuration <- ClassificationConfiguration(
+      StandardizedNearestCentroid(
+        StandardizationSpecification.CenterScaleRejectConstant
+      )
+    ).left.map(_.message)
+    analysis = source.classify(configuration)
+    result <- Mvpa
+      .run(source)(validation, frame, analysis, strategy)
+      .left
+      .map(_.message)
+  yield result
+```
+
+Every successful measurement contains an `OutOfFoldClassification` with
+typed predictions, ordered class scores, fold-linked preparation and
+fit receipts, and derived metrics such as accuracy. Standardization and
+learning occur inside Alder's training roles. ScalaFIM reconstructs every
+output against authoritative `SampleId`s before it can enter the result.
+
+## Relational workflow
+
+`PartitionedRelations` binds each `PartitionId` to a relation estimate, exact
+effect and neural axes, estimability receipt, preparation identity, and a
+`RelationCapabilities[N, K]` value tied to that exact neural space. Residual
+methods require `CertifiedResidualMoments[N, K]`; crossnobis additionally
+requires certified noise precision on the same axis. Identity-precision
+distance and noise-whitened crossnobis are distinct typed queries compiled by
+one relational fit path:
+
+```scala
+import scalafim.fmri.mvpa.RelationalAnalysis.given
+
+val result =
+  Mvpa.run(relations)(
+    pairing,
+    frame,
+    RelationalAnalysis.crossnobisRdm(
+      relations,
+      RdmNormalization.Raw
+    ),
+    strategy
+  )
+```
+
+The relation compiler composes each measurement before forming local
+sufficient statistics. `RelationalFit.query` is the sole public fit boundary;
+the frame estimands above delegate to it. A compatible fit can answer
+distance, RDM, and RSA views without reopening source operators. Signed
+crossvalidated distances, including negative null estimates, are retained.
+
+A model is bound to the exact canonical effect-pair axis:
+
+```scala
+val rsa =
+  for
+    pairDomain <- WithinPairDomain(relations.effects).left.map(_.message)
+    modelName <- SecondOrderModelName("theory").left.map(_.message)
+    model <- SecondOrderModel
+      .signal(pairDomain, modelName, modelDistances)
+      .left
+      .map(_.message)
+    result <- Mvpa
+      .run(relations)(
+        pairing,
+        frame,
+        RelationalAnalysis.rankRsa(
+          relations,
+          model,
+          RdmNormalization.Raw
+        ),
+        strategy
+      )
+      .left
+      .map(_.message)
+  yield result
+```
+
+## Inspect before execution
+
+The same inspection API describes either family without erasing its result or
+error types:
+
+```scala
+val inspection: Either[
+  ScientificSpecificationError,
+  ScientificPlanInspection
+] =
+  Mvpa
+    .specify(source)(design, frame, estimand)
+    .map(specification => Mvpa.inspect(specification))
+```
+
+The inspection exposes exact source, design, frame, measurement, estimand,
+normalization, and output-boundary identities. Backend, solver,
+materialization, and scheduling choices belong to the execution plan and
+receipt instead.
+
+## Failure and execution policy
+
+Each frame entry produces exactly one `MeasurementOutcome`: `Success`,
+`Rejected`, or `Failed`. A local numerical or materialization failure does not
+erase successful neighboring regions. Collected and streaming traversal use
+the same measurement values and receipts.
+
+`MvpaRunError.message` names the failing specification, binding, planning, or
+execution stage. Measurement-local failures retain the measurement identity,
+typed method error, and execution receipt; source axes expose their scientific
+role and coordinate provenance, while relational sources expose the exact
+capability identity. A downstream consumer can therefore render this context
+without string dispatch or erased payloads. The portable consumer court's
+`DownstreamFailureRenderer` is a complete example: it takes a typed failure
+renderer plus the exact source, partition, and `MeasurementValue`, obtains the
+capability from that source partition, and derives stage, axis, role,
+capability, provenance, measurement, and execution-target context.
+
+Dense materialization is never implicit. It must be admitted by an
+`ExecutionStrategy` with a positive `MaterializationBudget`, and performed
+work is recorded per measurement and in aggregate. Operator-native and
+sufficient-statistic paths remain available when an estimand supports them.
+
+## Verification
+
+The focused local and CI gate checks oracle freshness, source formatting,
+strict JVM and Scala.js tests, JMH compilation, optimized Scala.js linking, and
+the executable downstream workflow project:
 
 ```sh
-sbt mvpaJVM/test
-sbt mvpaJS/test
+bash tools/ci/mvpa-gate.sh
 ```
+
+For a narrower iteration, `sbt mvpaJVM/test` and `sbt mvpaJS/test` run the
+portable test court directly.
+
+The architectural laws and their executable evidence are indexed in
+[`docs/architecture/mvpa-architecture-acceptance.md`](../../docs/architecture/mvpa-architecture-acceptance.md).
+The atlas and workflow example projects compile complete frame construction,
+predictive classification, and relational RDM consumers from public imports.
+The portable `downstream.mvpa.PublicWorkflowSuite` runs the same two public
+families on both the JVM and Scala.js and checks typed bind, capability, and
+provenance failures from outside the implementation package.

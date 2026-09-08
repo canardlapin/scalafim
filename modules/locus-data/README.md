@@ -10,10 +10,9 @@ The module provides:
 
 - `DomainFactory`, which restores a live, unforgeable domain owner from a
   persistent domain id and size;
-- compatibility aliases for locus4s `IndexedField[S, A]` values and restricted
-  `Section` views;
+- locus4s `Field[S, A]`, `VectorField[S, A]`, and restricted `Section` views;
 - supported `Parcellation[X, P]` quotients with typed parcel points;
-- `Searchlight[S]` center policy over a locus endorelation;
+- compact `locus4s.NeighborhoodSystem[C, S]` values consumed directly;
 - one-pass `foldMapBy` aggregation using
   `cats.kernel.CommutativeMonoid`.
 
@@ -66,9 +65,9 @@ val parcels =
     .toOption.get
 
 val field =
-  IndexedField.fromValues(voxels, Vector(10, 11, 12, 20, 21, 0)).toOption.get
-val section = field.restrict(left).toOption.get
-val orderedValues = section.valuesIn(requestedOrder).toOption.get.toVector
+  VectorField.fromValues(voxels, Vector(10, 11, 12, 20, 21, 0)).toOption.get
+val section = field.restrict(left)
+val orderedValues = section.gather(requestedOrder).toOption.get.toVector
 ```
 
 `orderedValues` is `Vector(12, 10, 11)`: ordering comes from

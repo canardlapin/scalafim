@@ -1,187 +1,279 @@
 package scalafim.fmri.mvpa
 
-import gale.linalg.DMat
+import multivar.core.SemanticSpace
+import multivar.core.ValueId
+import resample4s.core.*
+import resample4s.designs.KFold
+import scalafim.fmri.mvpa.FeatureModel.given
 
-class FeatureModelSuite extends munit.FunSuite:
-  private val itemLabels: Vector[String] =
-    (0 until 6).map(index => s"trial_$index").toVector
+final class FeatureModelSuite extends munit.FunSuite:
+  private given DigestAlgorithm = DigestAlgorithm.fnv1a64
 
-  private val featureRows: Vector[Vector[Double]] =
+  private def right[A](value: Either[?, A]): A =
+    value match
+      case Right(result) => result
+      case Left(error)   => fail(s"expected Right, obtained $error")
+
+  private def bound[
+      A,
+      Cov <: Coverage,
+      S <: SemanticSpace,
+      FoldUnit
+  ](
+      design: Design[A, Cov],
+      samples: AxisRef.Aux[SampleId, S],
+      authority: SeedAuthority
+  )(using
+      binder: ScheduleUnitBinder.Aux[A, SampleId, S, FoldUnit]
+  ): BoundSchedule[A, Cov, SampleId, S, FoldUnit] =
+    val space = right(IndexSpace.of(samples.size))
+    val compiled = right(design.compile(space, authority.seed))
+    right(
+      BoundSchedule(
+        compiled,
+        samples,
+        right(AxisPopulationFingerprint.fromAxis(samples)),
+        right(ScheduleLabels.fromDesign(samples, design)),
+        authority
+      )
+    )
+
+  private val samples = right(
+    AxisRef.create(
+      AxisId.unsafe("feature-model-samples"),
+      AxisPurpose.Samples,
+      Vector.tabulate(6)(position => SampleId.unsafe(s"trial-${position + 1}")),
+      CoordinateBasis.unsafe("declared-trial-order"),
+      None,
+      AxisScale.nominal,
+      CoordinateProvenance.unsafe("feature-model-suite", "v1")
+    )
+  )
+
+  private val neural = right(
+    AxisRef.create(
+      AxisId.unsafe("feature-model-neural"),
+      AxisPurpose.NeuralFeatures,
+      Vector("voxel-left", "voxel-right", "voxel-mid").map(FeatureId.unsafe),
+      CoordinateBasis.unsafe("voxel-order"),
+      Some(AxisUnits.unsafe("activation")),
+      right(AxisScale.named("interval")),
+      CoordinateProvenance.unsafe("feature-model-suite", "v1")
+    )
+  )
+
+  private val features = right(
+    AxisRef.create(
+      AxisId.unsafe("feature-model-covariates"),
+      AxisPurpose.Covariates,
+      Vector(AxisKey.unsafe("semantic"), AxisKey.unsafe("visual")),
+      CoordinateBasis.unsafe("declared-feature-order"),
+      None,
+      right(AxisScale.named("interval")),
+      CoordinateProvenance.unsafe("feature-model-suite", "v1")
+    )
+  )
+
+  private val featureRows = Vector(
+    Vector(0.0, 1.0),
+    Vector(1.0, 0.0),
+    Vector(0.0, 2.0),
+    Vector(2.0, 0.0),
+    Vector(1.0, 3.0),
+    Vector(3.0, 1.0)
+  )
+
+  private val patternRows = featureRows.map: row =>
+    val semantic = row(0)
+    val visual = row(1)
     Vector(
-      Vector(0.0, 1.0),
-      Vector(1.0, 0.0),
-      Vector(0.0, 2.0),
-      Vector(2.0, 0.0),
-      Vector(1.0, 3.0),
-      Vector(3.0, 1.0)
+      1.0 + 2.0 * semantic + 0.5 * visual,
+      -2.0 - semantic + 3.0 * visual,
+      0.5 + semantic - visual
     )
 
-  private val patternRows: Vector[Vector[Double]] =
-    featureRows.map { row =>
-      val f1 = row(0)
-      val f2 = row(1)
-      Vector(
-        1.0 + 2.0 * f1 + 0.5 * f2,
-        -2.0 - f1 + 3.0 * f2,
-        0.5 + f1 - f2
+  private val observations = right(
+    Observations(
+      right(
+        EvidenceTable.dense(
+          samples,
+          neural,
+          GaleTestMatrix.fromRows(patternRows),
+          ValueId.unsafe("feature-model-patterns")
+        )
       )
-    }
+    )
+  )
 
-  private val design: FeatureModelDesign =
-    FeatureModelDesign
-      .unsafe(
-        itemLabels,
+  private val modelFeatures = right(
+    EvidenceTable.dense(
+      samples,
+      features,
+      GaleTestMatrix.fromRows(featureRows),
+      ValueId.unsafe("feature-model-features")
+    )
+  )
+
+  private val source = right(FeatureModelSource(observations, modelFeatures))
+
+  private val schedule = bound(
+    KFold.ordered(3),
+    samples,
+    SeedAuthority.fromLong(SeedDomain.CrossFit, 8201L)
+  )
+  private val validation = right(
+    ValidationDesign(
+      schedule,
+      ScientificAxisName.unsafe("samples"),
+      GeneralizationAxis(ScientificAxisName.unsafe("samples"), samples.identity)
+    )
+  )
+  private val crossFit = right(CrossFitDesign.targetBlind(validation))
+
+  private val measurement = right(
+    Measurement.identity(
+      neural,
+      MeasurementId.unsafe("feature-model-all-neural")
+    )
+  )
+
+  private val frame = right(
+    MeasurementFrame(neural)(Vector(MeasurementEntry(measurement, NoRendition)))
+  )
+
+  private def strategy(materialization: MaterializationPolicy) = right(
+    ExecutionStrategy(
+      BackendId.unsafe("feature-model-portable"),
+      ExecutionRepresentation.Dense,
+      NumericPrecision.Binary64,
+      SolverChoice.Selected(FeatureModel.RidgeSolver),
+      Vector.empty,
+      Scheduling.serial,
+      materialization,
+      FallbackPolicy.forbidden,
+      ResultDelivery.Collected
+    )
+  )
+
+  private type FeatureAnalysis = AnalysisResult[
+    MeasuredFeatureModel[samples.Id],
+    FeatureModelBindRejection,
+    FeatureModelError,
+    NoRendition.type
+  ]
+
+  private def estimate(direction: FeatureModelDirection): FeatureAnalysis =
+    val penalty = FeatureModelPenalty.unsafe(1e-10)
+    val estimand = direction match
+      case FeatureModelDirection.Encoding => source.encode(penalty)
+      case FeatureModelDirection.Decoding => source.decode(penalty)
+    right(
+      Mvpa.run(source)(
+        crossFit,
+        frame,
+        estimand,
+        strategy(
+          MaterializationPolicy.Allow(MaterializationBudget.unsafe(100L))
+        )
+      )
+    )
+
+  private def onlySuccess(result: FeatureAnalysis): MeasuredFeatureModel[samples.Id] =
+    val value = result.values.head.outcome match
+      case MeasurementOutcome.Success(value, _) => value
+      case other                                => fail(s"expected feature-model success, obtained $other")
+    value
+
+  test("encoding carries exact sample and measured-neural target axes"):
+    val analysis = estimate(FeatureModelDirection.Encoding)
+    val result = onlySuccess(analysis)
+
+    assertEquals(result.samples.identity, samples.identity)
+    assert(result.samples.evidence eq samples.evidence)
+    assertEquals(result.target, measurement.local.identity)
+    assertEquals(result.predicted.rows, samples.size)
+    assertEquals(result.predicted.cols, measurement.local.size)
+    assertEquals(result.observed.rows, samples.size)
+    assert(result.metrics.targetCorrelation.exists(_ > 0.999999))
+    assert(result.metrics.rdmCorrelation.exists(_ > 0.999999))
+    assert(result.metrics.meanSquaredError < 1e-8)
+    assert(result.metrics.rSquared.exists(_ > 0.999999))
+    assertEquals(analysis.values.head.measurement, measurement.identity)
+    assertEquals(
+      analysis.plan.estimand.fields.find(_.name == "direction").map(_.value),
+      Some(FeatureModelDirection.Encoding.label)
+    )
+    assertEquals(
+      analysis.plan.design.fields.find(_.name == "preparation-scope").map(_.value),
+      Some(PreparationScope.TargetBlindAnalysis.label)
+    )
+    assertEquals(
+      analysis.plan.design.fields.find(_.name == "fitting-scope").map(_.value),
+      Some(FittingScope.OuterAnalysis.label)
+    )
+    assertEquals(result.computation.folds.length, 3)
+    assertEquals(
+      result.computation.folds.flatMap(_.assessmentSamples.orderedKeys).toSet,
+      samples.identity.orderedKeys.toSet
+    )
+    assertEquals(analysis.values.head.outcome.receipt.materializations.length, 2)
+    assertEquals(analysis.receipt.work.materializedCells, 30L)
+    assertEquals(analysis.receipt.work.operatorApplications, 5L)
+
+  test("decoding carries the declared covariate target axis"):
+    val analysis = estimate(FeatureModelDirection.Decoding)
+    val result = onlySuccess(analysis)
+
+    assertEquals(result.target, features.identity)
+    assertEquals(result.predicted.rows, samples.size)
+    assertEquals(result.predicted.cols, features.size)
+    assertEquals(result.observed.cols, features.size)
+    assert(result.metrics.targetCorrelation.exists(_ > 0.999999))
+    assert(result.metrics.meanSquaredError < 1e-8)
+    assertEquals(
+      analysis.plan.estimand.fields.find(_.name == "direction").map(_.value),
+      Some(FeatureModelDirection.Decoding.label)
+    )
+    assertNotEquals(
+      source.encode(FeatureModelPenalty.unsafe(1e-10)).identity,
+      source.decode(FeatureModelPenalty.unsafe(1e-10)).identity
+    )
+
+  test("feature modelling refuses hidden materialization during planning"):
+    val result = Mvpa.run(source)(
+      crossFit,
+      frame,
+      source.encode(FeatureModelPenalty.unsafe(1e-6)),
+      strategy(MaterializationPolicy.Reject)
+    )
+
+    assert(result.left.exists:
+      case MvpaRunError.Planning(ExecutionPlanError.MaterializationRequired(reason)) =>
+        reason.contains("feature modelling")
+      case _ => false)
+
+  test("feature source requires an explicitly declared covariate axis"):
+    val wrongPurpose = right(
+      AxisRef.create(
+        AxisId.unsafe("feature-model-wrong-purpose"),
+        AxisPurpose.NeuralFeatures,
+        Vector(AxisKey.unsafe("semantic"), AxisKey.unsafe("visual")),
+        CoordinateBasis.unsafe("declared-feature-order"),
+        None,
+        AxisScale.nominal,
+        CoordinateProvenance.unsafe("feature-model-suite", "v1")
+      )
+    )
+    val wrongTable = right(
+      EvidenceTable.dense(
+        samples,
+        wrongPurpose,
         GaleTestMatrix.fromRows(featureRows),
-        Vector("semantic", "visual")
+        ValueId.unsafe("feature-model-wrong-purpose-values")
       )
-
-  private val patterns: PatternMatrix =
-    PatternMatrix.fromRows(patternRows)
-
-  private val response: Response =
-    Response.categorical(Vector("a", "b", "a", "b", "a", "b")).toOption.get
-
-  private val folds: FoldPlan =
-    FoldPlan.unsafe(
-      Vector(
-        Fold.unsafe("one", Seq(2, 3, 4, 5), Seq(0, 1)),
-        Fold.unsafe("two", Seq(0, 1, 4, 5), Seq(2, 3)),
-        Fold.unsafe("three", Seq(0, 1, 2, 3), Seq(4, 5))
-      ),
-      samples = 6
     )
 
-  private val allFeatures: FeatureSetPlan =
-    FeatureSetPlan.regional("roi", Vector(FeatureSet.unsafe(RoiId(1), Vector(0, 1, 2)))).toOption.get
-
-  test("feature model encodes design features into held-out neural patterns") {
-    val analysis = FeatureModelAnalysis(
-      design,
-      FeaturePredictionDirection.FeaturesToPatterns,
-      estimator = FeatureRidgeEstimator(lambda = 1e-6),
-      storePrediction = true
-    )
-    val result = MvpaEngine.run(patterns, allFeatures, response, analysis, Some(folds)).toOption.get
-    val success = result.successes.head
-
-    assertEquals(result.failures.length, 0)
-    assert(success.metrics("TargetCorrelation").exists(_ > 0.999))
-    assert(success.metrics("RdmCorrelation").exists(_ > 0.999))
-    assert(success.metrics("Mse").exists(_ < 1e-6))
-    success.payload match
-      case Some(RoiPayload.FeatureModel(prediction)) =>
-        assertEquals(prediction.direction, FeaturePredictionDirection.FeaturesToPatterns)
-        assertEquals(prediction.items, itemLabels)
-        assertEquals(prediction.targetNames, Vector("pattern_0", "pattern_1", "pattern_2"))
-        assertEquals(prediction.predicted.cols, patterns.features)
-        assertEquals(prediction.observed.rows, patterns.samples)
-      case other =>
-        fail(s"unexpected payload: $other")
-  }
-
-  test("feature model decodes held-out neural patterns into design features") {
-    val analysis = FeatureModelAnalysis(
-      design,
-      FeaturePredictionDirection.PatternsToFeatures,
-      estimator = FeatureRidgeEstimator(lambda = 1e-6),
-      storePrediction = true
-    )
-    val result = MvpaEngine.run(patterns, allFeatures, response, analysis, Some(folds)).toOption.get
-    val success = result.successes.head
-
-    assertEquals(result.failures.length, 0)
-    assert(success.metrics("TargetCorrelation").exists(_ > 0.999))
-    assert(success.metrics("Mse").exists(_ < 1e-6))
-    success.payload match
-      case Some(RoiPayload.FeatureModel(prediction)) =>
-        assertEquals(prediction.direction, FeaturePredictionDirection.PatternsToFeatures)
-        assertEquals(prediction.targetNames, Vector("semantic", "visual"))
-        assertEquals(prediction.predicted.cols, 2)
-        assertEquals(prediction.observed.cols, 2)
-      case other =>
-        fail(s"unexpected payload: $other")
-  }
-
-  test("feature model averages repeated held-out samples with a zero-variance source") {
-    val constantDesign =
-      FeatureModelDesign
-        .unsafe(
-          Vector("item_0", "item_1", "item_2", "item_3", "item_4"),
-          GaleTestMatrix.fromRows(Vector.fill(5)(Vector(0.0))),
-          Vector("constant")
-        )
-    val targetPatterns =
-      PatternMatrix.fromRows(
-        Vector(
-          Vector(0.0),
-          Vector(10.0),
-          Vector(20.0),
-          Vector(30.0),
-          Vector(40.0)
-        )
-      )
-    val overlappingFolds =
-      FoldPlan.unsafe(
-        Vector(
-          Fold.unsafe("one", Seq(0, 2, 3), Seq(1, 4)),
-          Fold.unsafe("two", Seq(0, 3, 4), Seq(1, 2))
-        ),
-        samples = 5
-      )
-    val analysis = FeatureModelAnalysis(
-      constantDesign,
-      FeaturePredictionDirection.FeaturesToPatterns,
-      estimator = FeatureRidgeEstimator(lambda = 1.0),
-      storePrediction = true
-    )
-    val plan = FeatureSetPlan.regional("single-feature", Vector(FeatureSet.unsafe(RoiId(1), Vector(0)))).toOption.get
-    val result =
-      MvpaEngine
-        .run(targetPatterns, plan, Response.categorical(Vector("a", "b", "a", "b", "a")).toOption.get, analysis, Some(overlappingFolds))
-        .toOption
-        .get
-
-    assertEquals(result.failures.length, 0)
-    assertEquals(result.successes.length, 1)
-    assertEqualsDouble(result.successes.head.metrics("Observations").get, 3.0, 1e-12)
-    result.successes.head.payload match
-      case Some(RoiPayload.FeatureModel(prediction)) =>
-        assertEquals(prediction.items, Vector("item_1", "item_2", "item_4"))
-        assertEquals(prediction.targetNames, Vector("pattern_0"))
-        assertEqualsDouble(prediction.predicted(0, 0), 20.0, 1e-12)
-        assertEqualsDouble(prediction.predicted(1, 0), 70.0 / 3.0, 1e-12)
-        assertEqualsDouble(prediction.predicted(2, 0), 50.0 / 3.0, 1e-12)
-        assertEqualsDouble(prediction.observed(0, 0), 10.0, 1e-12)
-        assertEqualsDouble(prediction.observed(1, 0), 20.0, 1e-12)
-        assertEqualsDouble(prediction.observed(2, 0), 40.0, 1e-12)
-      case other =>
-        fail(s"unexpected payload: $other")
-  }
-
-  test("feature model design validates labels, dimensions, and finite values") {
-    val duplicate = FeatureModelDesign(
-      Vector("a", "a"),
-      GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0)))
-    )
-    val nonFinite = FeatureModelDesign(
-      Vector("a", "b"),
-      GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(Double.NaN)))
-    )
-
-    assert(duplicate.swap.toOption.get.message.contains("unique"))
-    assert(nonFinite.swap.toOption.get.message.contains("non-finite"))
-  }
-
-  test("feature model analysis reports typed shape errors through ROI failures") {
-    val badDesign = FeatureModelDesign
-      .unsafe(
-        Vector("a", "b", "c"),
-        GaleTestMatrix.fromRows(Vector(Vector(1.0), Vector(2.0), Vector(3.0)))
-      )
-    val analysis = FeatureModelAnalysis(badDesign, FeaturePredictionDirection.FeaturesToPatterns)
-    val result = MvpaEngine.run(patterns, allFeatures, response, analysis, Some(folds)).toOption.get
-
-    assertEquals(result.successes.length, 0)
-    assertEquals(result.failures.length, 1)
-    assert(result.failures.head.error.message.contains("feature design rows"))
-  }
+    assert(FeatureModelSource(observations, wrongTable).left.exists:
+      case FeatureModelSourceError.InvalidFeaturePurpose(actual) =>
+        actual == AxisPurpose.NeuralFeatures
+      case _ => false)

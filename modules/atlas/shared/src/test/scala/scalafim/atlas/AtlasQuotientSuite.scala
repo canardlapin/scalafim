@@ -46,8 +46,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val parcelOne = quotient.parcelPoint(RegionId(1)).get
 
     assertEquals(quotient.displayOrder.ordinals.toVector, Vector(0, 1))
-    assertEquals(quotient.metadata.at(parcelTwo).label, "Second")
-    assertEquals(quotient.metadata.at(parcelOne).label, "First")
+    assertEquals(quotient.metadata(parcelTwo).label, "Second")
+    assertEquals(quotient.metadata(parcelOne).label, "First")
     assertEquals(
       quotient.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
       Vector(0, 1)
@@ -161,7 +161,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
     assertEquals(
       quotient
         .metadata
-        .at(quotient.parcelPoint(RegionId(2)).get)
+        .apply(quotient.parcelPoint(RegionId(2)).get)
         .hemisphere,
       Some(Hemisphere.Right)
     )

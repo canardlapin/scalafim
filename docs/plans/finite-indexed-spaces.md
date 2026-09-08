@@ -16,7 +16,7 @@ only ScalaFIM-specific adapters and higher-level policies in `locus-data`; see
 [`docs/module-relations.md`](../module-relations.md).
 
 Scope: `locus-kernel`, `locus-data`, `locus-laws`, and migrations across
-`graph`, `image`, `surface`, `atlas`, `spatial`, `dataset`, `mvpa-spatial`,
+`graph`, `image`, `surface`, `atlas`, `spatial`, `dataset`, `mvpa`,
 `connectivity`, `threshold`, `latent`, and narrow multivar adapters
 
 ## 1. Executive Decision
@@ -84,8 +84,8 @@ ideas are represented several times:
   `multivar.IndexSet`, and `latent.RadialVoxelSelection` each carry a different
   mix of ordering, bounds, and domain semantics;
 - atlas `Region` is metadata, not an extensional region;
-- volume searchlights materialize `ROIVolWindow` values, while
-  `mvpa-spatial` defines another center and window-set model;
+- volume searchlights once materialized `ROIVolWindow` values while MVPA also
+  carried a second center/window model, which has since been removed;
 - `SurfaceRoi` bundles membership, geometry, values, and a label;
 - volume and surface label fields encode partitions without a shared quotient
   contract;
@@ -508,7 +508,7 @@ locus-kernel
 |   |   |   +-- atlas     also depends directly on locus-data and graph
 |   |   +-- spatial       also depends on graph, linalg, surface
 |   |   +-- dataset       existing additional dependencies remain
-|   +-- mvpa-spatial      through image, surface, and atlas
+|   +-- mvpa              through image, surface, and atlas
 +-- graph
     +-- connectivity
     +-- surface
@@ -629,8 +629,8 @@ update it if new overlapping types appear before their phase begins.
 | `spatial.Field` | Lazy field root, view plan, execution state, and provenance | Retain unchanged in role. Use `IndexedField` only as a pure view or adapter, never as a replacement runtime. |
 | `dataset.VoxelIndex`, `VoxelSelection`, and `VoxelDomain` | Dataset read policy, requested order, and active/full spatial availability | Retain policy distinctions. Back resolved points/order with locus values once `DatasetShape` owns an explicit finite-space identity. |
 | `dataset.VoxelSampleMap` | Exact injection from active sample rows to full-grid voxels plus partial reverse lookup | Re-express with `Selection` and an injection/lookup adapter; preserve active/full-grid semantics. |
-| `mvpa.FeatureSet` and `FeatureSetPlan` | Algorithm-level feature groups and searchlight execution plans | Retain in `mvpa`. Add constructors from locus regions, selections, parcellations, and searchlights. |
-| `mvpa-spatial.SearchlightCenter`, `SearchlightWindow`, and `SearchlightWindowSet` | A second spatial searchlight representation | Removed in phase 11 after locus-to-MVPA adapters landed and the repository had no remaining consumers. |
+| `mvpa.Measurement` and `MeasurementFrame` | Identified linear measurements and their canonical traversal frame | Build directly from locus regions, selections, parcellations, and searchlights in `mvpa`. |
+| Former MVPA center/window records | A second spatial searchlight representation | Removed after locus-backed measurement frames landed and the repository had no remaining consumers. |
 | `multivar.IndexSet` and `RoiPlan` | Ordered, non-empty feature-coordinate blocks with multivar axis policy | Retain as multivar inputs. Add a narrow adapter from locus `Selection`; do not force multivar core to own spatial identity. |
 | `connectivity.NodeAxis` | Keyed node metadata and scientific provenance | Retain and continue reusing `VertexBasis`. Optionally expose a locus finite-space package for node-indexed operations. |
 | `connectivity.EdgeSpace` and `EdgeMask` | Ordered connectivity edges and Boolean edge selection | Adapt `EdgeSpace` to a locus finite space and `EdgeMask` to a region where useful. Preserve vectorization-order provenance. |
@@ -918,19 +918,18 @@ Exit criteria:
   create a region;
 - spatial and dataset JVM and JS suites pass.
 
-### Phase 9. Remove duplicate MVPA and multivar spatial adapters
+### Phase 9. Remove duplicate MVPA and multivar spatial representations
 
-Add direct conversions from:
+Add direct construction from:
 
-- `Region` or `Selection` to `mvpa.FeatureSet`;
-- `Parcellation` to regional `FeatureSetPlan`;
-- `Searchlight` to searchlight `FeatureSetPlan`;
+- `Region` or `Selection` to an identified hard-selection `Measurement`;
+- `Parcellation` to a regional `MeasurementFrame`;
+- `Searchlight` to a searchlight `MeasurementFrame`;
 - locus selections to multivar feature `IndexSet` and `RoiPlan`.
 
-Deprecate `mvpa-spatial.SearchlightCenter`, `SearchlightWindow`, and
-`SearchlightWindowSet`. Keep `FeatureSet`, `FeatureSetPlan`, `RoiAnalysis`, and
-multivar feature plans because they carry algorithm-level semantics not owned
-by locus.
+Remove the parallel MVPA center/window and feature-group representations.
+Keep multivar feature plans because they carry algorithm-level semantics not
+owned by locus.
 
 Exit criteria:
 
@@ -1164,7 +1163,6 @@ The first locus-backed releases keep:
 - `image.VoxelRegion` and `VoxelSelection`;
 - existing image ROI containers;
 - `VolumeAtlas` and `SurfaceAtlas`;
-- `mvpa.FeatureSet` and `FeatureSetPlan`;
 - `spatial.Field`;
 - graph and connectivity public axes.
 
@@ -1217,15 +1215,14 @@ Do not add:
 | Deprecated `spatial.VoxelRegion` alias/object | Source bridge to the geometric `VoxelBox`; it never denotes extensional membership. | Remove in the next breaking release after downstream source migration. |
 | `spatial.Field`, `SpatialDemand`, and `RowSelection` | Lazy runtime, provenance, and execution-planning values that lower locus regions/selections explicitly. | Retain; removal would discard distinct runtime semantics. |
 | `dataset.VoxelSelection` and availability policies | Dataset read policy around a resolved locus selection; preserves `All` versus `AllSpatial` and requested order. | Retain while dataset query policy remains a public concern. |
-| `mvpa.FeatureSet`, `FeatureSetPlan`, `multivar.IndexSet`, and `RoiPlan` | Algorithm-level plans built through locus adapters. | Retain; these values carry analysis semantics rather than spatial membership identity. |
+| `mvpa.Measurement`, `MeasurementFrame`, `multivar.IndexSet`, and `RoiPlan` | Scientific measurement or algorithm-level plans built from locus values. | Retain; these values carry analysis semantics rather than spatial membership identity. |
 | Graph/connectivity axes and edge order | Scientific keys, metadata, provenance, and vectorization order; locus spaces are checked projections. | Retain; locus deliberately does not replace keyed or scientific axes. |
 | Threshold and latent containers | Scoring, layout, and decode policy around locus membership, selection, and exact maps. | Retain; no generic indexing algebra is duplicated. |
 | Zarr `Geometry.Region` and `CopyRegion` | Physical array chunk/slice rectangles, explicitly outside R6 migration scope. | Retain under the Zarr package; the names are unambiguous at the module boundary. |
 
-The phase-9 `mvpa-spatial.SearchlightCenter`, `SearchlightWindow`, and
-`SearchlightWindowSet` bridge was removed in phase 11 because all repository
-consumers already lower through `locus.Searchlight` and
-`CenteredSearchlight`. No wrapper remains there.
+The phase-9 parallel center/window bridge was removed in phase 11 because all
+repository consumers already lower through locus searchlights and centered
+neighborhoods. No wrapper remains there.
 
 ## 13. Risks and Decision Gates
 

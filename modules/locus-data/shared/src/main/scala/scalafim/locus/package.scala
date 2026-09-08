@@ -5,7 +5,7 @@ package object locus:
   type FiniteDomain[S] = locus4s.FiniteDomain[S]
   type FiniteSpace[S] = locus4s.FiniteSpace[S]
   type SomeFiniteDomain = locus4s.SomeFiniteDomain
-  type Point[S] = locus4s.Point[S]
+  type Point[S] = locus4s.Index[S]
   type Region[S] = locus4s.Region[S]
   type Selection[S] = locus4s.Selection[S]
   type TotalMap[X, Y] = locus4s.TotalMap[X, Y]
@@ -15,14 +15,14 @@ package object locus:
   type Bijection[X, Y] = locus4s.Bijection[X, Y]
   type Relation[X, Y] = locus4s.Relation[X, Y]
   type SpaceMismatch = locus4s.SpaceMismatch
-  type PointError = locus4s.PointError
+  type PointError = locus4s.IndexError
   type RegionError = locus4s.RegionError
   type SelectionError = locus4s.SelectionError
   type TotalMapError = locus4s.TotalMapError
   type RelationError = locus4s.RelationError
   type MapEvidenceError = locus4s.CertifiedMapError
-  type IndexedField[S, +A] = locus4s.data.IndexedField[S, A]
-  type IndexedFieldError = locus4s.data.IndexedFieldError
+  type IndexedField[S, +A] = locus4s.data.VectorField[S, A]
+  type IndexedFieldError = locus4s.data.FieldConstructionError
   type Section[S, +A] = locus4s.data.Section[S, A]
   type SectionLookupError = locus4s.data.SectionLookupError
   type SectionSelectionError = locus4s.data.SectionSelectionError
@@ -33,14 +33,14 @@ package object locus:
   val PartialMap: locus4s.PartialMap.type = locus4s.PartialMap
   val Relation: locus4s.Relation.type = locus4s.Relation
   val SpaceMismatch: locus4s.SpaceMismatch.type = locus4s.SpaceMismatch
-  val PointError: locus4s.PointError.type = locus4s.PointError
+  val PointError: locus4s.IndexError.type = locus4s.IndexError
   val RegionError: locus4s.RegionError.type = locus4s.RegionError
   val SelectionError: locus4s.SelectionError.type = locus4s.SelectionError
   val TotalMapError: locus4s.TotalMapError.type = locus4s.TotalMapError
   val RelationError: locus4s.RelationError.type = locus4s.RelationError
-  val IndexedField: locus4s.data.IndexedField.type = locus4s.data.IndexedField
-  val IndexedFieldError: locus4s.data.IndexedFieldError.type =
-    locus4s.data.IndexedFieldError
+  val IndexedField: locus4s.data.VectorField.type = locus4s.data.VectorField
+  val IndexedFieldError: locus4s.data.FieldConstructionError.type =
+    locus4s.data.FieldConstructionError
   val SectionLookupError: locus4s.data.SectionLookupError.type =
     locus4s.data.SectionLookupError
   val SectionSelectionError: locus4s.data.SectionSelectionError.type =
@@ -62,7 +62,7 @@ package object locus:
       space.sameRuntimeOwnerAs(that)
 
     def requirePoint(ordinal: Int): Either[PointError, Point[S]] =
-      space.point(ordinal)
+      space.index(ordinal)
 
   extension [X, Y](injection: Injection[X, Y])
     def mapping: TotalMap[X, Y] =

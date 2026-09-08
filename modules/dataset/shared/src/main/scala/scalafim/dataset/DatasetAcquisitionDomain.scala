@@ -38,7 +38,7 @@ trait DatasetAcquisitionDomain:
   final def fullPointFor(
       active: Point[A]
   ): Point[X] =
-    activeToFull.mapping.at(active)
+    activeToFull.mapping.apply(active)
 
   final def resolveTimepoints(
       requested: TimepointSelection
@@ -159,12 +159,15 @@ object DatasetAcquisitionDomain:
       val times = timeResolution.space
       val full = fullResolution.space
       val active = activeDomain.value
+      // Materialize once: indices maps the typed vector and must not be rebuilt
+      // for every element of the reverse lookup.
+      val voxelIndices = requestedVoxelDomain.indices.toArray
       val mapping =
         TotalMap
           .fromTargetOrdinals(
             active,
             full,
-            requestedVoxelDomain.indices.toArray
+            voxelIndices
           )
           .toOption
           .get
@@ -172,8 +175,8 @@ object DatasetAcquisitionDomain:
         Injection.validate(mapping).toOption.get
       val reverse = Array.fill(requestedShape.spatialSize)(-1)
       var sample = 0
-      while sample < requestedVoxelDomain.indices.length do
-        reverse(requestedVoxelDomain.indices(sample)) = sample
+      while sample < voxelIndices.length do
+        reverse(voxelIndices(sample)) = sample
         sample += 1
 
       Right:
@@ -196,7 +199,7 @@ object DatasetAcquisitionDomain:
             if activeOrdinal < 0 then
               Left(DatasetError.VoxelOutsideMask(fullPoint.value))
             else
-              Right(active.pointOption(activeOrdinal).get)
+              Right(active.indexOption(activeOrdinal).get)
 
 trait ResolvedLocusSelection:
   type T

@@ -20,7 +20,7 @@ trait AtlasNetworkAssignment[P]:
   val parcelToNetwork: Surjection[P, N]
 
   def networkPoint(id: NetworkId): Option[Point[N]] =
-    networkIds.space.points.find(point => networkIds.at(point) == id)
+    networkIds.space.indices.find(point => networkIds(point) == id)
 
 trait AtlasNetworkParcellation[X]:
   type N
@@ -41,7 +41,7 @@ trait AtlasQuotient:
     parcellation.support
 
   final def parcelPoint(id: RegionId): Option[Point[P]] =
-    regionIds.space.points.find(point => regionIds.at(point) == id)
+    regionIds.space.indices.find(point => regionIds(point) == id)
 
   final def region(id: RegionId): Option[LocusRegion[X]] =
     parcelPoint(id).map(parcellation.fiber)
@@ -60,8 +60,8 @@ trait AtlasQuotient:
 
   final def networkRegion(id: NetworkId): Option[LocusRegion[X]] =
     networkParcellation.flatMap: network =>
-      network.networkIds.space.points
-        .find(point => network.networkIds.at(point) == id)
+      network.networkIds.space.indices
+        .find(point => network.networkIds(point) == id)
         .map(network.parcellation.fiber)
 
 trait VolumeAtlasQuotient extends AtlasQuotient:

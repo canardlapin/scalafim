@@ -1,0 +1,40 @@
+name: mvpa-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+concurrency:
+  group: mvpa-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unified-mvpa:
+    name: strict JVM and Scala.js MVPA gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up the declared JDK baseline
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up the declared Scala.js Node runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Run the unified MVPA quality gate
+        env:
+          SCALAFIM_SBT_CACHE_ROOT: ${{ runner.temp }}/scalafim-mvpa-sbt
+        run: bash tools/ci/mvpa-gate.sh

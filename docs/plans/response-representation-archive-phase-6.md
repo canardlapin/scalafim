@@ -118,8 +118,8 @@ dataset JVM                    96 passed
 dataset JS                     69 passed
 fit JVM                       154 passed
 fit JS                        146 passed
-mvpa-dataset JVM                7 passed
-mvpa-dataset JS                 7 passed
+mvpa JVM                        7 relevant ingestion tests passed
+mvpa JS                         7 relevant ingestion tests passed
 model JVM / JS                 16 / 16 passed
 group JVM / JS                 50 / 50 passed
 fmri-workflow JVM / JS         21 / 18 passed

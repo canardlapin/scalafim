@@ -1,0 +1,30 @@
+scenario_id,reference,capability,scalafim_surface,disposition,convention_or_boundary,evidence
+RDM-OBS-SQ-PYM,PyMVPA 2.6.5.dev1,PDist sqeuclidean,ObservationRdm SquaredEuclidean Raw,exact_parity,Canonical declared sample upper triangle,reference-results-v1.json
+RDM-OBS-EUC-PYM,PyMVPA 2.6.5.dev1,PDist euclidean,ObservationRdm Euclidean,exact_parity,Canonical declared sample upper triangle,reference-results-v1.json
+RDM-OBS-COR-PYM,PyMVPA 2.6.5.dev1,PDist correlation,ObservationRdm Correlation,exact_parity,Per-row Pearson correlation distance,reference-results-v1.json
+RDM-OBS-SQ-RSA,rsatoolbox 0.3.2,calc_rdm euclidean,ObservationRdm SquaredEuclidean DivideByNeuralDimension,convention_equivalent,rsatoolbox euclidean is squared and divides by channel count,reference-results-v1.json
+RDM-OBS-COR-RSA,rsatoolbox 0.3.2,calc_rdm correlation,ObservationRdm Correlation,exact_parity,Per-row Pearson correlation distance,reference-results-v1.json
+RSA-TARGET-PEARSON-PYM,PyMVPA 2.6.5.dev1,PDistTargetSimilarity Pearson,MeasuredObservationRdm plus downstream comparison,reproducible_downstream,ScalaFIM has no first-class observation-RDM comparison estimand,reference-results-v1.json
+RSA-TARGET-SPEARMAN-PYM,PyMVPA 2.6.5.dev1,PDistTargetSimilarity Spearman,MeasuredObservationRdm plus downstream comparison,reproducible_downstream,Average-rank Spearman is derivable but not exposed on observation RDMs,reference-results-v1.json
+RDM-XCV-ID-RSA,rsatoolbox 0.3.2,identity-noise calc_rdm_crossnobis,RelationalFitQuery identityPrecision,exact_parity,Balanced LOO equals uniform ordered independent-run pairing and local 1/P normalization,reference-results-v1.json
+RDM-XCV-K-RSA,rsatoolbox 0.3.2,fixed-noise calc_rdm_crossnobis,RelationalFitQuery crossnobis,exact_parity,Same fixed precision submatrix and local 1/P normalization,reference-results-v1.json
+RDM-XCV-K-MATLAB,RSA Toolbox MATLAB 91ad433,distanceLDC on prewhitened betas,RelationalFitQuery crossnobis,exact_parity,B L has inner product B K B-prime and distanceLDC divides by voxels,reference-results-v1.json
+RDM-XCV-SIGNED,RSA Toolbox MATLAB and rsatoolbox,signed null distance,CrossnobisDistance,exact_parity,Negative estimates are retained rather than clamped,reference-results-v1.json
+RSA-PEARSON-RSA,RSA Toolbox MATLAB and rsatoolbox,Pearson RDM comparison,RelationalRsa pearson,exact_parity,Canonical pair vector with signed distances,reference-results-v1.json
+RSA-SPEARMAN-RSA,RSA Toolbox MATLAB and rsatoolbox,average-rank Spearman RDM comparison,RelationalRsa rank,exact_parity,Ties receive average ranks,reference-results-v1.json
+RSA-OLS-RSA,RSA Toolbox MATLAB and rsatoolbox,intercepted OLS in RDM space,RelationalRsa regression,exact_parity,Unstandardized design with intercept and signed distances,reference-results-v1.json
+RSA-MODEL-WEIGHTED,rsatoolbox 0.3.2,ModelWeighted fit_regress cosine,RelationalRsa regression,intentional_divergence,Cosine pooling and coefficient normalization are different objectives,coverage-ledger
+RSA-KENDALL,rsatoolbox 0.3.2,Kendall tau variants,none,absent_no_claim,Not part of the committed relational comparison kernel,coverage-ledger
+RSA-WHITENED-COMPARE,rsatoolbox 0.3.2,whitened RDM comparison,none,absent_no_claim,Sampling-covariance-weighted RDM comparison is not implemented,coverage-ledger
+RSA-NOISE-ESTIMATION,rsatoolbox 0.3.2,residual covariance or precision estimation,CertifiedNoisePrecision input,intentional_divergence,ScalaFIM consumes exact certified precision and leaves estimator ownership upstream,coverage-ledger
+RSA-INFERENCE,rsatoolbox 0.3.2,bootstrap crossvalidation and noise ceilings,none,absent_no_claim,Inference design is not yet implemented,coverage-ledger
+PRED-FOLDS-PYM,PyMVPA 2.6.5.dev1,NFoldPartitioner,ValidationDesign over bound Resample4s schedule,numeric_parity_receipt_gap,Leave one declared run out exactly but the public source cannot bind run as the generalization axis,PyMvpaPredictiveConformanceSuite
+PRED-CENTROID-PYM,PyMVPA 2.6.5.dev1,formula-matched custom Classifier plus CrossValidation,StandardizedNearestCentroid,numeric_parity_receipt_gap,Fold-local population z-score and predictions agree but the executable plan currently labels generalization as samples,PyMvpaPredictiveConformanceSuite
+PRED-LDA-PYM,PyMVPA 2.6.5.dev1,built-in LDA,RidgeLda,conditional_prediction_parity,Predictions and accuracy only because covariance scaling and ridge conventions differ,reference-results-v1.json
+PRED-LDA-SCORES-PYM,PyMVPA 2.6.5.dev1,built-in LDA decision values,RidgeLda class scores,absent_no_claim,Raw scores have different scale and regularization semantics,coverage-ledger
+PRED-SL-PYM,PyMVPA 2.6.5.dev1,fixed-support local CrossValidation,MeasurementFrame plus StandardizedNearestCentroid,exact_parity,Identical ordered supports and source-keyed OOF labels,reference-results-v1.json
+PRED-NATIVE-SL-PYM,PyMVPA 2.6.5.dev1,sphere_searchlight query engine,spatial frame builders,pending,Neighborhood construction and native dispatch ergonomics still require a matched spatial fixture,coverage-ledger
+PRED-LEAKAGE-PYM,PyMVPA 2.6.5.dev1,training-only mapper lifecycle,Alder-backed predictive compiler,pending,Adversarial held-out shift and target-aware preparation court remains to run,coverage-ledger
+PRED-HYPERALIGN-PYM,PyMVPA 2.6.5.dev1,hyperalignment,none,absent_no_claim,Cross-subject alignment is not an MVPA estimand in the current module,coverage-ledger
+PRED-SENSITIVITY-PYM,PyMVPA 2.6.5.dev1,sensitivity analyzers,none,absent_no_claim,No weight or sensitivity-map estimand is claimed,coverage-ledger
+PRED-PERMUTATION-PYM,PyMVPA 2.6.5.dev1,null distributions and permutations,none,absent_no_claim,Generic randomization design was deliberately pruned until a concrete inference estimand exists,coverage-ledger

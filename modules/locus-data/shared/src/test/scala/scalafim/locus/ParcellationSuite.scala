@@ -19,7 +19,7 @@ class ParcellationSuite extends munit.FunSuite:
     ).toOption.get
 
   test("fibers are disjoint, cover support, and every parcel is inhabited"):
-    val fibers = parcels.points.map(parcellation.fiber).toVector
+    val fibers = parcels.indices.map(parcellation.fiber).toVector
     assertEquals(parcellation.support.ordinalsInDomainOrder.toVector, Vector(0, 1, 3, 4, 5))
     assertEquals(fibers.map(_.ordinalsInDomainOrder.toVector), Vector(
       Vector(0, 1),
@@ -39,8 +39,8 @@ class ParcellationSuite extends munit.FunSuite:
     assertEquals(union, parcellation.support)
 
   test("background remains None and quotient rows contain at most one parcel"):
-    assertEquals(parcellation.parcelAt(ambient.pointOption(2).get), None)
-    assertEquals(parcellation.parcelAt(ambient.pointOption(4).get).map(_.ordinal), Some(2))
+    assertEquals(parcellation.parcelAt(ambient.indexOption(2).get), None)
+    assertEquals(parcellation.parcelAt(ambient.indexOption(4).get).map(_.ordinal), Some(2))
     assertEquals(
       parcellation.quotientRelation.ordinalRows.map(_.toVector).toVector,
       Vector(Vector(0), Vector(0), Vector(), Vector(1), Vector(2), Vector(2))
@@ -117,10 +117,10 @@ class ParcellationSuite extends munit.FunSuite:
     assertEquals(stepwise, direct)
 
     val networkPartition = parcellation.coarsen(parcelToNetwork).toOption.get
-    val firstNetworkFiber = networkPartition.fiber(networks.pointOption(0).get)
+    val firstNetworkFiber = networkPartition.fiber(networks.indexOption(0).get)
     val expected =
-      parcellation.fiber(parcels.pointOption(0).get)
-        .union(parcellation.fiber(parcels.pointOption(1).get))
+      parcellation.fiber(parcels.indexOption(0).get)
+        .union(parcellation.fiber(parcels.indexOption(1).get))
     assertEquals(firstNetworkFiber, expected)
 
   test("identity coarsening preserves the label field"):

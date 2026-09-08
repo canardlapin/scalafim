@@ -1,25 +1,23 @@
 package scalafim.surface
 
-import scalafim.locus.{
-  CenteredSearchlight,
-  CenteredSearchlightError,
-  IndexedField,
-  Point,
-  Region,
+import locus4s.{
+  CenteredNeighborhoodSystem,
+  Index,
+  NeighborhoodSystemError,
   Relation,
-  Searchlight,
-  SearchlightError,
-  Section,
-  SpaceMismatch,
-  mismatch
+  RelationError,
+  Selection,
+  SpaceMismatch
 }
+import locus4s.data.{Field, Section}
+import scalafim.locus.mismatch
 
 enum SurfaceSearchlightError:
   case InvalidRadius(value: Double)
   case TopologyMismatch(expected: String)
   case WrongSpace(error: SpaceMismatch)
-  case InvalidSearchlight(error: SearchlightError)
-  case NotCentered(error: CenteredSearchlightError)
+  case InvalidMembership(error: RelationError)
+  case InvalidNeighborhood(error: NeighborhoodSystemError)
 
   def message: String =
     this match
@@ -28,18 +26,21 @@ enum SurfaceSearchlightError:
       case TopologyMismatch(expected) =>
         s"surface searchlight topology does not match $expected"
       case WrongSpace(error) => error.message
-      case InvalidSearchlight(error) => error.message
-      case NotCentered(error) => error.message
+      case InvalidMembership(error) => error.message
+      case InvalidNeighborhood(error) => error.message
 
 object SurfaceSearchlight:
   def metricBalls[S](
       domain: SurfaceLocusDomain[S],
       topology: MeshTopology,
       radius: Double,
-      centers: Region[S],
+      centers: Selection[S],
       metric: DistanceMetric = DistanceMetric.Geodesic,
       edgeWeights: Option[Seq[Double]] = None
-  ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
+  ): Either[
+    SurfaceSearchlightError,
+    CenteredNeighborhoodSystem[centers.I, S]
+  ] =
     if !radius.isFinite || radius < 0.0 then
       Left(SurfaceSearchlightError.InvalidRadius(radius))
     else if !domain.geometry.mesh.hasSameTopology(topology.mesh) then
@@ -49,80 +50,100 @@ object SurfaceSearchlight:
         SurfaceSearchlightError.WrongSpace:
           mismatch(domain.finiteSpace, centers.space)
     else
-      val rows = Array.fill(domain.finiteSpace.size)(Array.emptyIntArray)
-      val centerOrdinals = centers.ordinalsInDomainOrder
-      if centerOrdinals.nonEmpty then
-        val sourceVertices = centerOrdinals.toVector.map(VertexId.unsafe)
-        val targets = Vector.tabulate(domain.finiteSpace.size)(VertexId.unsafe)
-        val distances =
-          SurfaceGeodesics.distanceMatrix(
-            topology,
-            sourceVertices,
-            targets,
-            metric,
-            edgeWeights
-          )
-        var row = 0
-        while row < distances.rows do
-          val members = Array.newBuilder[Int]
-          var col = 0
-          while col < distances.cols do
-            if distances(row, col) <= radius then
-              members += distances.colVertices(col).index
-            col += 1
-          rows(centerOrdinals(row)) = members.result()
-          row += 1
-
-      val relation =
-        Relation
-          .fromOrdinalRows(
-            domain.finiteSpace,
-            domain.finiteSpace,
-            rows.iterator.map(_.iterator)
-          )
-          .toOption
-          .get
-      Searchlight
-        .make(centers, relation)
+      val rows = metricBallRows(domain, topology, radius, centers.ordinals, metric, edgeWeights)
+      Relation
+        .fromOrdinalRows(
+          centers.positions,
+          domain.finiteSpace,
+          rows.iterator.map(_.iterator)
+        )
         .left
-        .map(SurfaceSearchlightError.InvalidSearchlight.apply)
-        .flatMap: searchlight =>
-          CenteredSearchlight
-            .validate(searchlight)
+        .map(SurfaceSearchlightError.InvalidMembership.apply)
+        .flatMap: membership =>
+          CenteredNeighborhoodSystem
+            .fromSelection(centers, membership)
             .left
-            .map(SurfaceSearchlightError.NotCentered.apply)
+            .map(SurfaceSearchlightError.InvalidNeighborhood.apply)
 
   def metricBalls[S](
       domain: SurfaceLocusDomain[S],
       topology: MeshTopology,
       radius: Double,
       metric: DistanceMetric
-  ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
-    metricBalls(
-      domain,
-      topology,
-      radius,
-      Region.whole(domain.finiteSpace),
-      metric
-    )
+  ): Either[SurfaceSearchlightError, CenteredNeighborhoodSystem[S, S]] =
+    metricBalls(domain, topology, radius, metric, None)
 
   def metricBalls[S](
       domain: SurfaceLocusDomain[S],
       topology: MeshTopology,
       radius: Double
-  ): Either[SurfaceSearchlightError, CenteredSearchlight[S]] =
+  ): Either[SurfaceSearchlightError, CenteredNeighborhoodSystem[S, S]] =
     metricBalls(domain, topology, radius, DistanceMetric.Geodesic)
 
-  /** The field restricted to the searchlight at `center`, if `center` is one.
-    *
-    * No error channel: the searchlight and the field share `S`, which is
-    * already proof that they are indexed by the same domain, so restriction
-    * cannot fail. The only partiality left is whether `center` is an allowed
-    * centre, which is what the `Option` says.
-    */
-  def sectionAt[S, A](
-      searchlight: Searchlight[S],
-      center: Point[S],
-      field: IndexedField[S, A]
-  ): Option[Section[S, A]] =
-    searchlight.regionAt(center).map(field.restrict)
+  /** The field restricted to the neighborhood at a typed center. */
+  def sectionAt[C, S, A](
+      searchlight: CenteredNeighborhoodSystem[C, S],
+      center: Index[C],
+      field: Field[S, A]
+  ): Section[S, A] =
+    field.restrict(searchlight.neighborhood(center))
+
+  private def metricBalls[S](
+      domain: SurfaceLocusDomain[S],
+      topology: MeshTopology,
+      radius: Double,
+      metric: DistanceMetric,
+      edgeWeights: Option[Seq[Double]]
+  ): Either[SurfaceSearchlightError, CenteredNeighborhoodSystem[S, S]] =
+    if !radius.isFinite || radius < 0.0 then
+      Left(SurfaceSearchlightError.InvalidRadius(radius))
+    else if !domain.geometry.mesh.hasSameTopology(topology.mesh) then
+      Left(SurfaceSearchlightError.TopologyMismatch(domain.meshDomain.display))
+    else
+      val centerOrdinals = Array.tabulate(domain.finiteSpace.size)(identity)
+      val rows = metricBallRows(domain, topology, radius, centerOrdinals, metric, edgeWeights)
+      Relation
+        .fromOrdinalRows(
+          domain.finiteSpace,
+          domain.finiteSpace,
+          rows.iterator.map(_.iterator)
+        )
+        .left
+        .map(SurfaceSearchlightError.InvalidMembership.apply)
+        .flatMap: membership =>
+          CenteredNeighborhoodSystem
+            .fromIdentityCenters(membership)
+            .left
+            .map(SurfaceSearchlightError.InvalidNeighborhood.apply)
+
+  private def metricBallRows[S](
+      domain: SurfaceLocusDomain[S],
+      topology: MeshTopology,
+      radius: Double,
+      centerOrdinals: Array[Int],
+      metric: DistanceMetric,
+      edgeWeights: Option[Seq[Double]]
+  ): Array[Array[Int]] =
+    val rows = Array.ofDim[Array[Int]](centerOrdinals.length)
+    if centerOrdinals.nonEmpty then
+      val sourceVertices = centerOrdinals.toVector.map(VertexId.unsafe)
+      val targets = Vector.tabulate(domain.finiteSpace.size)(VertexId.unsafe)
+      val distances =
+        SurfaceGeodesics.distanceMatrix(
+          topology,
+          sourceVertices,
+          targets,
+          metric,
+          edgeWeights
+        )
+      var row = 0
+      while row < distances.rows do
+        val members = Array.newBuilder[Int]
+        var column = 0
+        while column < distances.cols do
+          if distances(row, column) <= radius then
+            members += distances.colVertices(column).index
+          column += 1
+        rows(row) = members.result()
+        row += 1
+    rows

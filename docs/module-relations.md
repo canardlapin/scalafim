@@ -24,7 +24,7 @@ standalone locus4s
 |   +-- atlas         also depends on image, surface, standalone graph4s
 |   +-- spatial       also depends on standalone Gale, image, surface
 |   +-- dataset       also depends on response, image, hrf
-|   +-- mvpa-spatial  also depends on mvpa, image, surface, atlas
+|   +-- mvpa          also depends on fit, dataset, image, surface, atlas
 +-- latent            also depends on response, image
 +-- threshold         also depends on image
 +-- connectivity      also depends on standalone graph4s
@@ -38,8 +38,7 @@ standalone graph4s
 standalone Gale
 +-- ar
 +-- design           also depends on hrf
-+-- mvpa
-|   +-- mvpa-dataset  also depends on dataset
++-- mvpa             also depends on fit, dataset, image, surface, atlas, locus-data
 +-- threshold         also depends on image
 +-- motion            also depends on image
 +-- spatial           also depends on image, surface
@@ -72,11 +71,9 @@ image
 +-- archive-lna      also depends on archive
 +-- latent           also depends on response, locus-data, and standalone Gale
 +-- dataset          also depends on response, hrf, locus-data
-|   +-- mvpa-dataset  also depends on mvpa
 +-- surface
 |   +-- spatial        also depends on standalone Gale, image
 |   +-- atlas          also depends on image
-|   +-- mvpa-spatial   also depends on mvpa, image, atlas
 |   +-- surface-view   also depends on Intaglio core
 +-- threshold         also depends on standalone Gale
 +-- motion            also depends on standalone Gale
@@ -101,11 +98,11 @@ archive
 +-- interop-archived-response
     +-- also depends on response, latent, archive-lna, archive-zarr, and dataset
 
-fit + mvpa
-+-- mvpa-fit          run-local trial-readout and pattern-operator composition
+fit + dataset + image + surface + atlas + locus-data
++-- mvpa              one neuroimaging analysis boundary
 
-standalone multivar
-+-- mvpa-fit          also depends on fit, mvpa
+standalone Gale + multivar + resample4s + Alder
++-- mvpa
 ```
 
 Graphics is developed in standalone
@@ -137,7 +134,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
-| `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, searchlights, and one-pass commutative aggregation. | standalone locus4s core and data | Generic finite-domain algebra or laws, image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
+| `locus-data` | ScalaFIM domain construction, supported parcellations, and one-pass commutative aggregation. | standalone locus4s core and data | Generic finite-domain algebra, neighborhood systems, or laws; image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph4s-delegated deterministic DAG staging, local pure execution, and structured receipts. | standalone graph4s | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, provenance, axis-keyed locality capabilities, and read receipts. | Nothing internal; Cats Core and Cats Effect externally. | General tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
@@ -166,11 +163,8 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `dataset` | Pure fMRI descriptions and run queries, semantic acquisition locus domains, explicit synchronous-reader capabilities, checked `OpenedDataset[F]` attachment, ordered run-local selections, segmented reads, and response evidence propagation. | `response`, `image`, `hrf`, `locus-data`; standalone Gale | Archive or concrete representation imports, format dispatch, hidden readers, effect-parameterized model values, storage-format inheritance, parallel study/selection/error algebras, design formulas, fit kernels, or general BIDS project ownership. |
 | `model` | Inspectable fMRI model and fit plans: dataset plus design plus fitting configuration. | `design`, `dataset`; standalone Gale | OLS/GLS kernels or backend implementations. |
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `model`, `ar`; standalone Gale | Model description, dataset storage, hidden blocking readers, or group inference. |
-| `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | standalone Gale | Spatial object adapters or dataset backend logic. |
-| `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
+| `mvpa` | One identified-evidence architecture for predictive modelling and relational geometry: exact axes and columns, observation and relation evidence, validation/cross-fit and ordered-pairing designs, measurement frames, typed estimands/results, direct fMRI readout and dataset evidence construction, spatial frame builders, and portable kernels. | `fit`, `dataset`, `image`, `surface`, `atlas`, `locus-data`; standalone Gale, multivar, resample4s, and Alder | Generic linear algebra, generic resampling or learner lifecycles, dataset storage backends, atlas loading, platform IO, duplicate axis/feature-set/result algebras, or hidden materialization. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
-| `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
-| `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `fit`; standalone Gale | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
@@ -179,8 +173,8 @@ adjacent checkout is selected automatically during extraction; an explicit
 The single-layer typed operator core, language-neutral IR, mathematical
 contracts, and validation matrix are authoritative in the standalone
 [`canardlapin/multivar`](https://github.com/canardlapin/multivar) repository.
-ScalaFIM consumes a pinned source revision and owns only application adapters
-and neuroimaging-facing integrations.
+ScalaFIM consumes a pinned source revision and owns only the neuroimaging
+evidence, measurement, and execution bindings.
 
 ## Main Vertical Flows
 
@@ -229,15 +223,15 @@ execution to typed interpreters at module boundaries.
 ### Finite Indexed Spaces
 
 ```text
-standalone locus4s -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spatial
+standalone locus4s -> locus-data -> image/surface/atlas/spatial/dataset
                           |
-                          +-----> connectivity/threshold/latent
+                          +-----> connectivity/threshold/latent/mvpa
 ```
 
-Standalone locus4s is the sole owner of generic finite spaces, points, regions,
+Standalone locus4s is the sole owner of generic finite spaces, indices, regions,
 ordered selections, exact maps, relations, indexed fields, sections, and their
-laws. `locus-data` owns ScalaFIM-specific domain construction and compatibility
-adapters plus parcellations, searchlights, and aggregation. Domain modules add
+laws. `locus-data` owns ScalaFIM-specific domain construction, parcellations,
+and aggregation. Domain modules add
 geometry, metadata, storage, provenance, or algorithm policy through checked
 adapters; they do not reproduce the generic algebra. Zarr's package-local
 `Geometry.Region` remains an array chunk/slice rectangle, not a spatial ROI,
@@ -280,16 +274,17 @@ fit -> group -> threshold
 image --------^       ^
 dataset -------------+
 
-dataset -> mvpa-dataset -> mvpa
-image/surface/atlas -> mvpa-spatial -> mvpa
-fit + mvpa -> mvpa-fit
+fit/dataset/image/surface/atlas/locus-data -> mvpa
+Gale/multivar/resample4s/Alder ------------> mvpa
 standalone multivar-inference (external)
 ```
 
 `threshold` consumes statistic maps and masks; it is deliberately not a group
-modeling module. `mvpa` is spatially agnostic; `mvpa-dataset` converts selected
-dataset rows into pattern sources, while `mvpa-spatial` converts spatial objects
-into feature sets.
+modeling module. `mvpa` is the sole neuroimaging multivariate-analysis boundary:
+dataset selections and fMRI readouts become identified evidence there, while
+image, surface, atlas, and locus objects become typed measurement frames there.
+The generic mathematical, resampling, and learner lifecycles remain owned by
+their standalone libraries.
 
 ## Neurotransform And Neurofunctor Boundary
 
@@ -339,9 +334,9 @@ descriptors can materialize executable dense morphisms.
   spectra, embeddings, and graph similarities in standalone graph4s. Its
   optional `graph4s-gale` module owns the numerical boundary. Keep scientific
   connectivity semantics in `connectivity`.
-- Put generic finite semantic domains, points, regions, selections, exact maps,
-  relations, indexed fields, sections, and reusable laws in standalone
-  locus4s. Put only ScalaFIM domain adapters, parcellations, searchlights, and
+- Put generic finite semantic domains, indices, regions, selections, exact maps,
+  relations, fields, sections, neighborhood systems, and reusable laws in standalone
+  locus4s. Put only ScalaFIM domain construction, parcellations, and
   commutative aggregation in `locus-data`. Geometry, storage, metadata, and
   algorithm policy remain in their domain modules.
 - Put primitive matrix/vector/operator math, solver contracts, portable
@@ -395,11 +390,12 @@ descriptors can materialize executable dense morphisms.
   atlas, BIDS, plotting, IO, multivar execution bridges, native optimizer
   backends, phase/HMM/TVGL/SRLC internals, and scheduler-specific execution
   outside this structural core.
-- Put dataset/sample adapters for MVPA in `mvpa-dataset`; put spatial feature
-  adapters for MVPA in `mvpa-spatial`; keep `mvpa` over plain sample-by-feature
-  matrices and linear operators. Put fit-owned time-to-trial readout composition,
-  run stacking, and trial/run metadata in `mvpa-fit` so neither lower module
-  depends back on the other.
+- Put MVPA dataset evidence construction, fMRI time-to-trial readout
+  composition, run stacking, spatial measurement-frame builders, scientific
+  designs, estimands, and typed results in `mvpa`. Keep storage, image/surface
+  geometry, atlas metadata, generic linear algebra, resampling, and learner
+  lifecycles in their existing owners; do not introduce another MVPA adapter
+  module or parallel identity algebra.
 
 If a change wants a new dependency edge, stop and check whether the code belongs
 in a higher adapter module instead. Lower modules should stay reusable and

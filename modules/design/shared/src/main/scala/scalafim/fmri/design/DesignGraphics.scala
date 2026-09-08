@@ -56,14 +56,14 @@ object DesignGraphics:
       .map(DesignGraphicsError.Export(_))
       .flatMap(data => eventScene(data, options).left.map(DesignGraphicsError.Graphics(_)))
 
-  private def regressorDomain(data: EventPlotData): Either[GraphicsError, DiscreteDomain] =
+  private def regressorLevels(data: EventPlotData): Either[GraphicsError, Vector[String]] =
     val declared =
       if data.regressors.nonEmpty then data.regressors
       else data.points.map(_.regressor).distinct
     for
       initial <- DiscreteDomain.ordered(declared)
       domain <- initial.train(data.points.map(_.regressor))
-    yield domain
+    yield domain.levels
 
   private def eventProgram(
       data: EventPlotData,
@@ -73,13 +73,13 @@ object DesignGraphics:
     else if options.colors.isEmpty then Left(GraphicsError.EmptyPalette)
     else
       for
-        domain <- regressorDomain(data)
+        levels <- regressorLevels(data)
         program <- addTraceLayers(
           plot(data.points)
             .aes(_.time, _.response)
             .scaleColorDiscrete(
               _.regressor,
-              levels = domain.levels,
+              levels = levels,
               colors = options.colors,
               name = "regressor"
             )
@@ -94,7 +94,7 @@ object DesignGraphics:
               )
             ),
           data.points,
-          domain.levels
+          levels
         ).build
       yield program
 

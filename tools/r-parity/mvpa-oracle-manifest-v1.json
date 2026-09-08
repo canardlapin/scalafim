@@ -1,0 +1,539 @@
+{
+  "schema_version": "scalafim-mvpa-oracle-manifest/v1",
+  "schema_path": "tools/r-parity/mvpa-oracle-manifest-v1.schema.json",
+  "software": {
+    "r": {
+      "version": "4.5.1",
+      "packages": "base only"
+    },
+    "scala": {
+      "version": "3.7.4"
+    },
+    "sbt": {
+      "version": "1.11.7"
+    },
+    "gale": {
+      "revision": "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+    }
+  },
+  "families": [
+    {
+      "id": "crossvalidated-rdm",
+      "estimand": {
+        "name": "crossvalidated squared Mahalanobis distance",
+        "quantity": "ordered independent-partition contrast inner products",
+        "normalization": "raw and divide-by-neural-dimension",
+        "fold_reduction": "equal mean over all ordered distinct partition pairs",
+        "metadata": {
+          "precision_policy": "fixed identity precision",
+          "pair_order": "canonical upper triangle a-b,a-c,b-c",
+          "signed_null_estimates": true,
+          "naive_bias_comparator": "mean within-partition squared distance"
+        }
+      },
+      "axes": [
+        {
+          "name": "effects",
+          "role": "condition order",
+          "ordered_keys": [
+            "a",
+            "b",
+            "c"
+          ]
+        },
+        {
+          "name": "neural-features",
+          "role": "distance coordinates",
+          "ordered_keys": [
+            "v1",
+            "v2"
+          ]
+        },
+        {
+          "name": "partitions",
+          "role": "independent runs",
+          "ordered_keys": [
+            "run-1",
+            "run-2"
+          ]
+        },
+        {
+          "name": "effect-pairs",
+          "role": "RDM coordinates",
+          "ordered_keys": [
+            "a-b",
+            "a-c",
+            "b-c"
+          ]
+        }
+      ],
+      "source_provenance": {
+        "kind": "base-r",
+        "description": "Direct contrast subtraction and dot products over independent run pairs.",
+        "authoritative_equations": "d_ij = mean_(p!=q) ((b_i^p-b_j^p)' I (b_i^q-b_j^q)); per-feature distance divides by two.",
+        "invocation": [
+          "Rscript",
+          "--vanilla",
+          "tools/r-parity/generate_crossvalidated_rdm_fixtures.R"
+        ]
+      },
+      "generator": {
+        "path": "tools/r-parity/generate_crossvalidated_rdm_fixtures.R",
+        "sha256": "ed9dc43b078aae3b0cfff2955fbf17601be4aa1f493aff42a0a6a5badcc70e25"
+      },
+      "output": {
+        "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/CrossvalidatedRdmReferenceFixtures.scala",
+        "sha256": "0f973c472c676c64d23600417ea55914c1f1727084571283427a995b8dbc8b4f"
+      },
+      "court": {
+        "shared_scala_suite": "scalafim.fmri.mvpa.CrossvalidatedRdmParitySuite",
+        "platforms": [
+          "jvm",
+          "scala-js"
+        ]
+      }
+    },
+    {
+      "id": "cross-domain-classification",
+      "estimand": {
+        "name": "cross-domain correlation-centroid classification",
+        "quantity": "class-ordered Pearson decision scores, predictions, and accuracy",
+        "normalization": "feature-wise Pearson centering and norm scaling per score",
+        "fold_reduction": "source-domain fit with frozen target-domain assessment",
+        "metadata": {
+          "learner": "correlation centroid",
+          "adaptation": "inductive frozen source domain",
+          "tie_policy": "first class in declared order",
+          "probabilities": false
+        }
+      },
+      "axes": [
+        {
+          "name": "source-samples",
+          "role": "training rows",
+          "ordered_keys": [
+            "source-1",
+            "source-2",
+            "source-3",
+            "source-4",
+            "source-5",
+            "source-6"
+          ]
+        },
+        {
+          "name": "target-samples",
+          "role": "assessment rows",
+          "ordered_keys": [
+            "target-1",
+            "target-2",
+            "target-3",
+            "target-4",
+            "target-5",
+            "target-6"
+          ]
+        },
+        {
+          "name": "features",
+          "role": "declared source-target correspondence",
+          "ordered_keys": [
+            "v1",
+            "v2",
+            "v3",
+            "v4",
+            "v5"
+          ]
+        },
+        {
+          "name": "classes",
+          "role": "decision-score columns",
+          "ordered_keys": [
+            "a",
+            "b",
+            "c"
+          ]
+        },
+        {
+          "name": "measurements",
+          "role": "regional then searchlight oracle cases",
+          "ordered_keys": [
+            "101-regional_front",
+            "102-regional_back",
+            "201-sl_left",
+            "202-sl_mid",
+            "203-sl_right"
+          ]
+        }
+      ],
+      "source_provenance": {
+        "kind": "base-r",
+        "description": "Class means are fit only from source rows and target rows are scored by direct base-R Pearson correlation.",
+        "authoritative_equations": "prototype_k = colMeans(X_source[y=k,]); score_ik = cor(X_target[i,], prototype_k).",
+        "invocation": [
+          "Rscript",
+          "--vanilla",
+          "tools/r-parity/generate_cross_domain_classification_fixtures.R"
+        ]
+      },
+      "generator": {
+        "path": "tools/r-parity/generate_cross_domain_classification_fixtures.R",
+        "sha256": "7c17120553f5a29e67773665fa706700de2f2c36b59a70f9b17b0ddb0582d237"
+      },
+      "output": {
+        "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/CrossDomainClassificationReferenceFixtures.scala",
+        "sha256": "d61c8754f49290b928c309cab5c397518d7eacd396caad4b8439a89c475d29e1"
+      },
+      "court": {
+        "shared_scala_suite": "scalafim.fmri.mvpa.predictive.CrossDomainClassificationSuite",
+        "platforms": [
+          "jvm",
+          "scala-js"
+        ]
+      }
+    },
+    {
+      "id": "canonical-effect",
+      "estimand": {
+        "name": "held-out canonical-effect root",
+        "quantity": "training generalized eigenroot and frozen-direction held-out root and correlation",
+        "normalization": "direction has unit regularized residual quadratic form",
+        "fold_reduction": "leave-one-run-out arithmetic mean of held-out roots",
+        "metadata": {
+          "contrast": "task",
+          "ridge_fraction": 0.02,
+          "direction_sign": "largest absolute loading positive",
+          "analytic_reference_dimension": 2
+        }
+      },
+      "axes": [
+        {
+          "name": "runs",
+          "role": "leave-one-run-out partitions",
+          "ordered_keys": [
+            "run-1",
+            "run-2",
+            "run-3"
+          ]
+        },
+        {
+          "name": "samples",
+          "role": "time rows within run",
+          "ordered_keys": [
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6",
+            "t7",
+            "t8"
+          ]
+        },
+        {
+          "name": "design-columns",
+          "role": "base-R design columns",
+          "ordered_keys": [
+            "intercept",
+            "task",
+            "drift"
+          ]
+        },
+        {
+          "name": "neural-features",
+          "role": "canonical direction coordinates",
+          "ordered_keys": [
+            "f1",
+            "f2",
+            "f3"
+          ]
+        }
+      ],
+      "source_provenance": {
+        "kind": "base-r",
+        "description": "Base-R sufficient statistics checked against dense effect and residual projectors before Cholesky whitening and symmetric eigen decomposition.",
+        "authoritative_equations": "H=Z'X(X'X)^-1 C'[C(X'X)^-1C']^-1 C(X'X)^-1X'Z; E=Z'[I-X(X'X)^-1X']Z.",
+        "invocation": [
+          "Rscript",
+          "--vanilla",
+          "tools/r-parity/generate_canonical_effect_fixtures.R"
+        ]
+      },
+      "generator": {
+        "path": "tools/r-parity/generate_canonical_effect_fixtures.R",
+        "sha256": "4b365d17704c839f805debeec3a8fd8feca6c20bf0c827224615d5e4251eb3b8"
+      },
+      "output": {
+        "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/CanonicalEffectReferenceFixtures.scala",
+        "sha256": "49781e2f16ccf5719f70333cdfa990973b5fd477588b078a4aa2d34fff5038f1"
+      },
+      "court": {
+        "shared_scala_suite": "scalafim.fmri.mvpa.CanonicalEffectAcceptanceSuite",
+        "platforms": [
+          "jvm",
+          "scala-js"
+        ]
+      }
+    },
+    {
+      "id": "manova",
+      "estimand": {
+        "name": "held-out MANOVA root spectrum",
+        "quantity": "Roy, Wilks, Pillai, and Hotelling-Lawley statistics from held-out roots",
+        "normalization": "Cholesky-whitened hypothesis by training error plus trace ridge",
+        "fold_reduction": "leave-one-run-out arithmetic mean of each statistic",
+        "metadata": {
+          "hypothesis_rank": 2,
+          "ridge_fraction": 0.05,
+          "statistics": "Roy largest root, Wilks lambda, Pillai trace, Hotelling-Lawley trace"
+        }
+      },
+      "axes": [
+        {
+          "name": "runs",
+          "role": "leave-one-run-out partitions",
+          "ordered_keys": [
+            "run-1",
+            "run-2",
+            "run-3"
+          ]
+        },
+        {
+          "name": "samples",
+          "role": "time rows within run",
+          "ordered_keys": [
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6",
+            "t7",
+            "t8",
+            "t9",
+            "t10"
+          ]
+        },
+        {
+          "name": "design-columns",
+          "role": "base-R design columns",
+          "ordered_keys": [
+            "intercept",
+            "a",
+            "b",
+            "drift"
+          ]
+        },
+        {
+          "name": "hypothesis",
+          "role": "tested design columns",
+          "ordered_keys": [
+            "a",
+            "b"
+          ]
+        },
+        {
+          "name": "neural-features",
+          "role": "MANOVA response coordinates",
+          "ordered_keys": [
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5"
+          ]
+        }
+      ],
+      "source_provenance": {
+        "kind": "base-r",
+        "description": "Dense base-R cross-products, Cholesky whitening, and eigen roots independent of ScalaFIM and Multivar.",
+        "authoritative_equations": "H=(Z'XQ)(Z'XQ)'; E=Z'Z-Z'X(X'X)^-1X'Z; roots=eigen(E_ridge^-1 H).",
+        "invocation": [
+          "Rscript",
+          "--vanilla",
+          "tools/r-parity/generate_manova_fixtures.R"
+        ]
+      },
+      "generator": {
+        "path": "tools/r-parity/generate_manova_fixtures.R",
+        "sha256": "693135c14aa31dfd8cd6404695df442ebf1aeea67ad02cffefa81c8a863ef1e5"
+      },
+      "output": {
+        "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/ManovaReferenceFixtures.scala",
+        "sha256": "e1af7543b98258279fc61a5bc489bef4aff64057ebd98b31929e1183f8167c60"
+      },
+      "court": {
+        "shared_scala_suite": "scalafim.fmri.mvpa.ManovaMvpaSuite",
+        "platforms": [
+          "jvm",
+          "scala-js"
+        ]
+      }
+    },
+    {
+      "id": "nonnegative-canonical",
+      "estimand": {
+        "name": "nonnegative held-out canonical-effect root",
+        "quantity": "maximum canonical root over nonempty nonnegative coordinate faces",
+        "normalization": "nonnegative direction has unit regularized residual quadratic form",
+        "fold_reduction": "leave-one-run-out arithmetic mean of held-out roots",
+        "metadata": {
+          "constraint": "all direction coordinates nonnegative",
+          "face_search": "all nonempty coordinate subsets",
+          "ridge_fraction": 0.02,
+          "root_to_correlation": "sqrt(root/(1+root)) after fold mean"
+        }
+      },
+      "axes": [
+        {
+          "name": "runs",
+          "role": "leave-one-run-out partitions",
+          "ordered_keys": [
+            "run-1",
+            "run-2",
+            "run-3"
+          ]
+        },
+        {
+          "name": "samples",
+          "role": "time rows within run",
+          "ordered_keys": [
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6",
+            "t7",
+            "t8"
+          ]
+        },
+        {
+          "name": "design-columns",
+          "role": "base-R design columns",
+          "ordered_keys": [
+            "intercept",
+            "task",
+            "drift"
+          ]
+        },
+        {
+          "name": "neural-features",
+          "role": "constrained direction coordinates",
+          "ordered_keys": [
+            "f1",
+            "f2",
+            "f3"
+          ]
+        }
+      ],
+      "source_provenance": {
+        "kind": "base-r",
+        "description": "The canonical base-R moments feed an exhaustive active-face solve with an explicit nonnegative feasibility gate.",
+        "authoritative_equations": "max_w w'Hw subject to w'(E+ridge I)w=1 and w>=0, enumerated over all nonempty active coordinate faces.",
+        "invocation": [
+          "Rscript",
+          "--vanilla",
+          "tools/r-parity/generate_constrained_canonical_fixtures.R"
+        ]
+      },
+      "generator": {
+        "path": "tools/r-parity/generate_constrained_canonical_fixtures.R",
+        "sha256": "b5b29b10672bbf4b205af0c48ce8388380cea5b319594a00b9636d2bd9f71768"
+      },
+      "output": {
+        "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/ConstrainedCanonicalReferenceFixtures.scala",
+        "sha256": "5d61bf3cfc1c1f5f2c0d42b2d9334c954b1a652757b275eeb6eef20e36f6a866"
+      },
+      "court": {
+        "shared_scala_suite": "scalafim.fmri.mvpa.ConstrainedCanonicalMvpaSuite",
+        "platforms": [
+          "jvm",
+          "scala-js"
+        ]
+      }
+    },
+    {
+      "id": "signed-cross-run-rayleigh",
+      "estimand": {
+        "name": "signed cross-run Rayleigh statistic",
+        "quantity": "signed training-by-held-out projection product over regularized training residual energy",
+        "normalization": "direction has unit regularized residual quadratic form",
+        "fold_reduction": "leave-one-run-out arithmetic mean retaining sign",
+        "metadata": {
+          "contrast": "task",
+          "ridge_fraction": 0.05,
+          "direction_sign": "largest absolute loading positive",
+          "signed": true
+        }
+      },
+      "axes": [
+        {
+          "name": "runs",
+          "role": "leave-one-run-out partitions",
+          "ordered_keys": [
+            "run-1",
+            "run-2",
+            "run-3"
+          ]
+        },
+        {
+          "name": "samples",
+          "role": "time rows within run",
+          "ordered_keys": [
+            "t1",
+            "t2",
+            "t3",
+            "t4",
+            "t5",
+            "t6",
+            "t7",
+            "t8"
+          ]
+        },
+        {
+          "name": "design-columns",
+          "role": "base-R design columns",
+          "ordered_keys": [
+            "intercept",
+            "task",
+            "drift"
+          ]
+        },
+        {
+          "name": "neural-features",
+          "role": "Rayleigh direction coordinates",
+          "ordered_keys": [
+            "f1",
+            "f2",
+            "f3",
+            "f4"
+          ]
+        }
+      ],
+      "source_provenance": {
+        "kind": "base-r",
+        "description": "Dense base-R contrast moments, regularized generalized eigen direction, and frozen held-out signed projection.",
+        "authoritative_equations": "s_h=[sum_(p!=h) w'u_p](w'u_h)/[c'(X'X)^-1c] divided by w'(sum_(p!=h)E_p+ridge I)w.",
+        "invocation": [
+          "Rscript",
+          "--vanilla",
+          "tools/r-parity/generate_signed_cross_run_rayleigh_fixtures.R"
+        ]
+      },
+      "generator": {
+        "path": "tools/r-parity/generate_signed_cross_run_rayleigh_fixtures.R",
+        "sha256": "5091dcb757f0005ef718374454afe2222d5374cc6d806c39c550aa3376da1b04"
+      },
+      "output": {
+        "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/SignedCrossRunRayleighReferenceFixtures.scala",
+        "sha256": "6be702c6cd1c42c0f85f4469351846105dea7f8be48f7cbc91b7dd495519d4db"
+      },
+      "court": {
+        "shared_scala_suite": "scalafim.fmri.mvpa.SignedCrossRunRayleighMvpaSuite",
+        "platforms": [
+          "jvm",
+          "scala-js"
+        ]
+      }
+    }
+  ]
+}

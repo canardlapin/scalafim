@@ -1,0 +1,39 @@
+{
+  "schema": "scalafim-mvpa-conformance-reference-lock/v1",
+  "generated_on": "2026-08-26",
+  "references": {
+    "pymvpa": {
+      "repository": "https://github.com/PyMVPA/PyMVPA.git",
+      "revision": "f699189b5b7e7a1bcaaf6f0a19aa077d8879b422",
+      "reported_version": "2.6.5.dev1",
+      "python": "3.11.13",
+      "numpy": "1.23.5",
+      "scipy": "1.11.4",
+      "build": "python setup.py build --no-libsvm followed by PYTHONPATH=build/py3k",
+      "compatibility_notes": [
+        "The Python-2-era source is translated by the upstream setup.py build.",
+        "NumPy 1.23.5 retains the np.float alias used by this revision.",
+        "The runner removes the obsolete extradoc keyword before PyMVPA imports its scipy rdist compatibility class."
+      ]
+    },
+    "rsatoolbox_matlab": {
+      "repository": "https://github.com/rsagroup/rsatoolbox_matlab.git",
+      "revision": "91ad43359c8a6355de1dd726e69038b7e798720a",
+      "describe": "v1.0-71-g91ad433",
+      "runtime": "GNU Octave 11.1.0",
+      "compatibility_notes": [
+        "The source is a MATLAB toolbox. Octave lacks MATLAB import, so the wrapper supplies a no-op import function and adds +rsa/+util for unqualified package imports.",
+        "The executable Octave court is limited to distanceLDC, rankTransform_equalsStayEqual, and fitModelOLS; MATLAB-only workflow and GUI code is not claimed."
+      ]
+    },
+    "rsatoolbox_python": {
+      "repository": "https://github.com/rsagroup/rsatoolbox.git",
+      "release": "0.3.2",
+      "release_revision": "903e911",
+      "python": "3.12.10",
+      "numpy": "2.5.2",
+      "scipy": "1.18.1",
+      "requirements": "requirements-rsatoolbox.txt"
+    }
+  }
+}

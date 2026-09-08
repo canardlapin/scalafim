@@ -387,7 +387,7 @@ scenario manifest and receipt rules, even when the owner module is not `fit`.
 | `motion_fd_dvars_censor_hints` | `workflow_parity` | `motion` | volregger fixture | FD/DVARS and censor hints match known rigid-motion traces. |
 | `motion_apply_identity_and_shift` | `numeric_canary` | `motion` + `image` | mathematical | Applying identity and simple rigid shifts over 4D runs preserves expected voxels and padding policy. |
 | `mvpa_roi_classification_recovery` | `workflow_parity` | `mvpa` | rMVPA fixture / mathematical | ROI classifier recovers a known class signal with stable fold semantics. |
-| `mvpa_searchlight_smoke` | `cross_level_workflow` | `mvpa-spatial` + `mvpa` | mathematical | Spatial feature-set adapters feed the same MVPA engine as ROI plans. |
+| `mvpa_searchlight_smoke` | `cross_level_workflow` | `mvpa` | mathematical | Searchlight measurements and ROI measurements compile through the same frame and estimand. |
 | `mvpa_rdm_rsa_alignment` | `workflow_parity` | `mvpa` | rMVPA fixture | RDM and RSA scoring align by labels, not row position. |
 | `latent_boldzip_encode_decode` | `numeric_canary` | `latent` | mathematical | Basis/loadings payloads reconstruct expected response blocks. |
 | `latent_transport_selection` | `workflow_parity` | `latent` + `dataset` | mathematical | Latent selections decode the same response samples as explicit payloads. |
@@ -403,7 +403,7 @@ They are release evidence, not early development scaffolding.
 | `flagship_subjects_to_group` | `flagship_workflow` | `fit` + `group` | mathematical + fmrimod fixture | Multiple subjects with injected effects reach group inference with signal/null separation. |
 | `flagship_bids_ministudy_to_group` | `flagship_workflow` | `bids` + `dataset` + `fit` + `group` | generated mini BIDS fixture | BIDS-style discovery, dataset construction, first-level fitting, and group inference compose end to end. |
 | `flagship_spatial_group_threshold` | `flagship_workflow` | `group` + `image` + `threshold` | mathematical/toy field | Group statistic maps can be gathered into image space and thresholded with geometry intact. |
-| `flagship_atlas_mvpa_report` | `flagship_workflow` | `atlas` + `mvpa-spatial` + `mvpa` | rMVPA/neuroatlas fixtures | Atlas-defined feature sets feed MVPA/RSA and produce inspectable parcel-level outputs. |
+| `flagship_atlas_mvpa_report` | `flagship_workflow` | `atlas` + `mvpa` | rMVPA/neuroatlas fixtures | Atlas-defined measurements feed MVPA/RSA and produce inspectable parcel-level outputs. |
 
 ## Priority Scenario Backlog
 

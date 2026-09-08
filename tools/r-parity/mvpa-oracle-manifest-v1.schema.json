@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scalafim.org/schemas/mvpa-oracle-manifest-v1.schema.json",
+  "title": "ScalaFIM MVPA oracle manifest and freshness receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_path",
+    "software",
+    "families"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "scalafim-mvpa-oracle-manifest/v1"
+    },
+    "schema_path": {
+      "const": "tools/r-parity/mvpa-oracle-manifest-v1.schema.json"
+    },
+    "software": {
+      "$ref": "#/$defs/software"
+    },
+    "families": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/family"
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "axis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "role",
+        "ordered_keys"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ordered_keys": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "estimand": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "quantity",
+        "normalization",
+        "fold_reduction",
+        "metadata"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "quantity": {
+          "type": "string",
+          "minLength": 1
+        },
+        "normalization": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fold_reduction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "metadata": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        }
+      }
+    },
+    "source_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "description",
+        "authoritative_equations",
+        "invocation"
+      ],
+      "properties": {
+        "kind": {
+          "const": "base-r"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authoritative_equations": {
+          "type": "string",
+          "minLength": 1
+        },
+        "invocation": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "court": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shared_scala_suite",
+        "platforms"
+      ],
+      "properties": {
+        "shared_scala_suite": {
+          "type": "string",
+          "minLength": 1
+        },
+        "platforms": {
+          "type": "array",
+          "uniqueItems": true,
+          "minItems": 2,
+          "items": {
+            "enum": [
+              "jvm",
+              "scala-js"
+            ]
+          }
+        }
+      }
+    },
+    "software": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "r",
+        "scala",
+        "sbt",
+        "gale"
+      ],
+      "properties": {
+        "r": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version",
+            "packages"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "packages": {
+              "const": "base only"
+            }
+          }
+        },
+        "scala": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "sbt": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "version"
+          ],
+          "properties": {
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "gale": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "revision"
+          ],
+          "properties": {
+            "revision": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{40}$"
+            }
+          }
+        }
+      }
+    },
+    "family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "estimand",
+        "axes",
+        "source_provenance",
+        "generator",
+        "output",
+        "court"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "estimand": {
+          "$ref": "#/$defs/estimand"
+        },
+        "axes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/axis"
+          }
+        },
+        "source_provenance": {
+          "$ref": "#/$defs/source_provenance"
+        },
+        "generator": {
+          "$ref": "#/$defs/artifact"
+        },
+        "output": {
+          "$ref": "#/$defs/artifact"
+        },
+        "court": {
+          "$ref": "#/$defs/court"
+        }
+      }
+    }
+  }
+}

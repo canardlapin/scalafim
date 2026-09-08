@@ -23,7 +23,7 @@ final class Parcellation[X, P] private (
     if !ambient.contains(point) then None
     else
       val parcel = parcelOrdinalAt(point.ordinal)
-      if parcel < 0 then None else parcels.pointOption(parcel)
+      if parcel < 0 then None else parcels.indexOption(parcel)
 
   def support: Region[X] =
     Region.tabulate(ambient)(point => parcelOrdinalAt(point.ordinal) >= 0)

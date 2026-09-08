@@ -4,6 +4,25 @@
 # This intentionally materializes ordinary dense products and uses base R's
 # eigen/solve path rather than any ScalaFIM or fmrireg.cca implementation.
 
+fmt_num <- function(value) {
+  if (value == 0) return("0.0")
+  sprintf("%.17g", value)
+}
+
+fmt_vec <- function(values) {
+  paste0("Vector(", paste(vapply(values, fmt_num, character(1)), collapse = ", "), ")")
+}
+
+fmt_rows <- function(values, indent) {
+  pad <- paste(rep(" ", indent), collapse = "")
+  rows <- apply(values, 1, fmt_vec)
+  paste0(
+    "Vector(\n",
+    pad, paste(rows, collapse = paste0(",\n", pad)), "\n",
+    paste(rep(" ", indent - 2), collapse = ""), ")"
+  )
+}
+
 X <- rbind(
   c(1, -1, -1), c(1, -1, -0.7), c(1, 1, -0.4), c(1, 1, -0.1),
   c(1, -1, 0.1), c(1, -1, 0.4), c(1, 1, 0.7), c(1, 1, 1)
@@ -67,5 +86,48 @@ fit_fold <- function(held_out, ridge_fraction = 0.05) {
 }
 
 folds <- lapply(seq_along(moments), fit_fold)
-print(do.call(rbind, folds), digits = 17)
-cat("mean =", format(mean(vapply(folds, `[[`, numeric(1), "statistic")), digits = 17), "\n")
+mean_statistic <- mean(vapply(folds, `[[`, numeric(1), "statistic"))
+
+cat("package scalafim.fmri.mvpa\n\n")
+cat("/** Values emitted by `tools/r-parity/generate_signed_cross_run_rayleigh_fixtures.R` using only dense base-R products,\n")
+cat("  * `solve`, and `eigen`.\n")
+cat("  */\n")
+cat("object SignedCrossRunRayleighReferenceFixtures:\n")
+cat("  val design: Vector[Vector[Double]] = ", fmt_rows(X, 4), "\n\n", sep = "")
+cat("  val responses: Vector[Vector[Vector[Double]]] = Vector(\n")
+for (index in seq_along(runs)) {
+  suffix <- if (index < length(runs)) "," else ""
+  cat("    ", fmt_rows(runs[[index]], 6), suffix, "\n", sep = "")
+}
+cat("  )\n\n")
+cat(
+  "  val numerators: Vector[Double] = ",
+  fmt_vec(vapply(folds, `[[`, numeric(1), "numerator")),
+  "\n\n",
+  sep = ""
+)
+cat(
+  "  val denominators: Vector[Double] = ",
+  fmt_vec(vapply(folds, `[[`, numeric(1), "denominator")),
+  "\n\n",
+  sep = ""
+)
+cat(
+  "  val statistics: Vector[Double] = ",
+  fmt_vec(vapply(folds, `[[`, numeric(1), "statistic")),
+  "\n\n",
+  sep = ""
+)
+cat(
+  "  val ridgeAmounts: Vector[Double] = ",
+  fmt_vec(vapply(folds, `[[`, numeric(1), "ridge")),
+  "\n\n",
+  sep = ""
+)
+cat("  val directions: Vector[Vector[Double]] = Vector(\n")
+for (index in seq_along(folds)) {
+  suffix <- if (index < length(folds)) "," else ""
+  cat("    ", fmt_vec(folds[[index]][grep("^direction", names(folds[[index]]))]), suffix, "\n", sep = "")
+}
+cat("  )\n\n")
+cat("  val meanStatistic: Double = ", fmt_num(mean_statistic), "\n", sep = "")

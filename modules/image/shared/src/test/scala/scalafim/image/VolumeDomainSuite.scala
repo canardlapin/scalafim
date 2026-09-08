@@ -38,7 +38,7 @@ class VolumeDomainSuite extends munit.FunSuite:
     val even = domain.supportWhere(field)(_ % 2 == 0).toOption.get
 
     assertEquals(
-      domain.finiteSpace.points.map(point => field.at(point)).toVector,
+      domain.finiteSpace.indices.map(point => field(point)).toVector,
       Vector(10, 11, 12, 13)
     )
     assertEquals(even.ordinalsInDomainOrder.toVector, Vector(0, 2))

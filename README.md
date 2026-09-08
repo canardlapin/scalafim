@@ -9,7 +9,7 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
+- `locus-data`: ScalaFIM domain construction, supported parcellations, and one-pass commutative aggregation over standalone locus4s spaces and fields; neighborhood systems come directly from locus4s.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
@@ -41,12 +41,9 @@ cross-compiled sbt build.
 - `dataset`: pure fMRI descriptions and queries, explicit synchronous readers, checked effectful response attachment, acquisition locus domains, typed study/run indexing, segmented reads, evidence propagation, and series adapters.
 - `model`: fMRI model composition and typed fitting plans/configuration.
 - `fit`: portable fit kernels plus explicit synchronous-reader and effectful opened-dataset execution boundaries.
-- `mvpa`: portable MVPA engine primitives, fold plans, ROI feature sets, and RDM/crossnobis kernels.
-- `mvpa-fit`: shared composition of fit-owned trial readouts with MVPA pattern operators, run metadata, and leave-one-run-out execution.
+- `mvpa`: one identified-evidence architecture for predictive modelling and relational geometry, including typed sample/effect/neural axes, validation and pairing designs, measurement frames for ROI/searchlight/atlas analysis, direct dataset and fMRI-readout evidence construction, typed estimands/results, RDM/RSA/crossnobis, classification, ridge, SoftLDA, MANOVA, and canonical effects.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
-- `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
-- `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.
 - Generic Zarr mechanics and the optional Blosc/Zstandard provider now live in the standalone `zarr4s` repository. ScalaFIM consumes its core through a pinned source build and retains only neuroimaging-specific adapters.
@@ -193,14 +190,8 @@ sbt datasetZarrJVM/test
 sbt datasetZarrJS/test
 sbt mvpaJVM/test
 sbt mvpaJS/test
-sbt mvpaFitJVM/test
-sbt mvpaFitJS/test
 sbt connectivityJVM/test
 sbt connectivityJS/test
-sbt mvpaDatasetJVM/test
-sbt mvpaDatasetJS/test
-sbt mvpaSpatialJVM/test
-sbt mvpaSpatialJS/test
 sbt groupJVM/test
 sbt groupJS/test
 sbt fmriWorkflowJVM/test
