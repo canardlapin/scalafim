@@ -12,6 +12,7 @@ enum SurfaceViewError:
   case UnknownSurface(id: SurfaceId)
   case UnknownLayer(id: SurfaceLayerId)
   case IncompatibleLayerDomain(layer: SurfaceLayerId, surface: SurfaceId)
+  case InvalidScalarMapping(layer: SurfaceLayerId, cause: ScalarMappingError)
   case InvalidFrameCount(value: Int)
   case InvalidDataLength(expected: Int, actual: Int)
   case IncompatibleFrameCounts(counts: Vector[Int])
@@ -37,6 +38,7 @@ enum SurfaceViewError:
   case InvalidProjection(reason: String)
   case InvalidNetwork(reason: String)
   case InvalidZoom(value: Double)
+  case InvalidCameraAspectRatio(value: Double)
   case InvalidFieldOfView(value: Double)
   case InvalidOrthographicScale(value: Double)
   case InvalidClipRange(near: Double, far: Double)
@@ -50,6 +52,7 @@ enum SurfaceViewError:
   case InvalidPublication(reason: String)
   case InvalidLayerPosition(index: Int, count: Int)
   case InvalidSelection(surface: SurfaceId, vertex: Int)
+  case InvalidFaceSelection(surface: SurfaceId, face: Int, vertex: Int)
   case LayerCapabilityUnsupported(layer: SurfaceLayerId, capability: String)
   case DisplayFailure(cause: DisplayError)
 
@@ -64,6 +67,7 @@ enum SurfaceViewError:
       case UnknownLayer(id) => s"surface layer '${id.value}' does not exist"
       case IncompatibleLayerDomain(layer, surface) =>
         s"layer '${layer.value}' does not have the exact mesh domain of surface '${surface.value}'"
+      case InvalidScalarMapping(layer, cause) => s"invalid mapping for layer '${layer.value}': ${cause.message}"
       case InvalidFrameCount(value) => s"surface frame count must be positive; got $value"
       case InvalidDataLength(expected, actual) => s"surface data length must be $expected; got $actual"
       case IncompatibleFrameCounts(counts) =>
@@ -97,6 +101,7 @@ enum SurfaceViewError:
       case InvalidProjection(reason) => s"invalid surface projection: $reason"
       case InvalidNetwork(reason) => s"invalid surface network: $reason"
       case InvalidZoom(value) => s"camera zoom must be finite and positive; got $value"
+      case InvalidCameraAspectRatio(value) => s"camera aspect ratio must be finite and positive: $value"
       case InvalidFieldOfView(value) => s"perspective field of view must be finite and in (0, 180); got $value"
       case InvalidOrthographicScale(value) => s"orthographic scale must be finite and positive; got $value"
       case InvalidClipRange(near, far) => s"clip range must satisfy finite 0 < near < far; got [$near, $far]"
@@ -112,6 +117,7 @@ enum SurfaceViewError:
       case InvalidPublication(reason) => s"invalid surface publication: $reason"
       case InvalidLayerPosition(index, count) => s"layer position $index is outside 0..${count - 1}"
       case InvalidSelection(surface, vertex) => s"vertex $vertex is not valid for surface '${surface.value}'"
+      case InvalidFaceSelection(surface, face, vertex) => s"face $face with vertex $vertex is not valid for surface '${surface.value}'"
       case LayerCapabilityUnsupported(layer, capability) =>
         s"layer '${layer.value}' does not support $capability"
       case DisplayFailure(cause) => cause.message
@@ -154,6 +160,18 @@ object CameraZoom:
 
   extension (zoom: CameraZoom)
     def value: Double = zoom
+
+/** Physical width/height of the reference camera viewport. */
+opaque type CameraAspectRatio = Double
+
+object CameraAspectRatio:
+  def make(value: Double): Either[SurfaceViewError, CameraAspectRatio] =
+    if value.isFinite && value > 0.0 then Right(value) else Left(SurfaceViewError.InvalidCameraAspectRatio(value))
+  def unsafe(value: Double): CameraAspectRatio =
+    make(value).fold(error => throw new IllegalArgumentException(error.message), identity)
+  val Default: CameraAspectRatio = 1.0
+  extension (ratio: CameraAspectRatio)
+    def value: Double = ratio
 
 opaque type FieldOfViewDegrees = Double
 
@@ -312,6 +330,8 @@ enum SurfaceClipping:
   case WorldPlanes(planes: Vector[WorldClipPlane])
 
   this match
+    case NearFar(near, far) => require(near.isFinite && far.isFinite && near > 0.0 && near < far,
+      "clipping requires finite 0 < near < far")
     case WorldPlanes(planes) => require(planes.nonEmpty, "world clipping requires at least one plane")
     case _ => ()
 
@@ -329,7 +349,8 @@ final case class SurfaceCamera private[view] (
   zoom: CameraZoom,
   panX: Double,
   panY: Double,
-  orbit: SurfaceOrbit
+  orbit: SurfaceOrbit,
+  aspectRatio: CameraAspectRatio = CameraAspectRatio.Default
 )
 
 object SurfaceCamera:
@@ -339,9 +360,10 @@ object SurfaceCamera:
     zoom: CameraZoom = CameraZoom.Default,
     panX: Double = 0.0,
     panY: Double = 0.0,
-    orbit: SurfaceOrbit = SurfaceOrbit.Zero
+    orbit: SurfaceOrbit = SurfaceOrbit.Zero,
+    aspectRatio: CameraAspectRatio = CameraAspectRatio.Default
   ): Either[SurfaceViewError, SurfaceCamera] =
-    if panX.isFinite && panY.isFinite then Right(new SurfaceCamera(viewpoint, projection, zoom, panX, panY, orbit))
+    if panX.isFinite && panY.isFinite then Right(new SurfaceCamera(viewpoint, projection, zoom, panX, panY, orbit, aspectRatio))
     else Left(SurfaceViewError.InvalidPan(panX, panY))
 
   def unsafe(
@@ -350,9 +372,10 @@ object SurfaceCamera:
     zoom: CameraZoom = CameraZoom.Default,
     panX: Double = 0.0,
     panY: Double = 0.0,
-    orbit: SurfaceOrbit = SurfaceOrbit.Zero
+    orbit: SurfaceOrbit = SurfaceOrbit.Zero,
+    aspectRatio: CameraAspectRatio = CameraAspectRatio.Default
   ): SurfaceCamera =
-    make(viewpoint, projection, zoom, panX, panY, orbit).fold(error => throw new IllegalArgumentException(error.message), identity)
+    make(viewpoint, projection, zoom, panX, panY, orbit, aspectRatio).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum BilateralOrder:
   case LeftThenRight, RightThenLeft
@@ -361,4 +384,4 @@ enum SurfaceLayout:
   case Single(surface: SurfaceId)
   case Bilateral(left: SurfaceId, right: SurfaceId, order: BilateralOrder = BilateralOrder.LeftThenRight)
 
-final case class SurfaceSelection(surface: SurfaceId, vertex: VertexId)
+final case class SurfaceSelection(surface: SurfaceId, vertex: VertexId, face: Option[FaceId] = None)

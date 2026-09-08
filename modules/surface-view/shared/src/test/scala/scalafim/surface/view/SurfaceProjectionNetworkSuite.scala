@@ -217,6 +217,59 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
     assertNotEquals(attached.plan.receipt.meshKeys, base.receipt.meshKeys)
     assert(attached.plan.profile.primitiveBytes > base.profile.primitiveBytes)
 
+  test("fragment layers retain original samples and exclude attached network faces"):
+    val mapping = ScalarMapping(ScalarScale.sequential(DisplayWindow.unsafe(-1, 1),
+      ScalarRamp.linear(Rgba32.unsafe(30, 90, 150), Rgba32.unsafe(210, 140, 50))),
+      invalid = Rgba32.unsafe(255, 0, 255))
+    val scalar = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("scalar"), surfaceId, white,
+      Array(-1.0, 1.0, 0.0, Double.NaN), mapping).toOption.get
+    val faces = SurfaceLayer.facePackedRgba(SurfaceLayerId.unsafe("faces"), surfaceId,
+      SurfaceFaceField.make(white, Array.fill(white.faceCount)(Rgba32.unsafe(60, 80, 100))).toOption.get)
+    val nearest = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("nearest"), surfaceId, white,
+      Vector.fill(white.vertexCount)(Rgba32.unsafe(60, 80, 100)),
+      interpolation = SurfaceVertexInterpolation.NearestSample).toOption.get
+    val display = SurfaceNetworkDisplay.compile(network,
+      SurfaceNetworkFilter.make(topN = Some(SurfaceNetworkTopN.unsafe(1))).toOption.get,
+      SurfaceNetworkStyle.tube(SurfaceNetworkRadius.unsafe(0.02), sides = 4).toOption.get).toOption.get
+    val lighting = SurfaceLighting.directional(0.4, 0.6, 0, 0, 1).toOption.get
+    val baseColor = Rgba32.unsafe(184, 184, 184)
+    for extra <- Vector(Vector.empty, Vector(faces), Vector(nearest)) do
+      val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surfaceId, white).toOption.get), extra :+ scalar).toOption.get
+      val original = SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get.copy(lighting = lighting)
+      val attached = SurfaceNetworkCompiler.attach(original, surfaceId, SurfaceLayerId.unsafe("network"), display).toOption.get.plan
+      val mesh = attached.meshes.head
+      val count = white.vertexCount + display.receipt.generatedVertices
+      assertEquals(mesh.sampleNormals.getOrElse(mesh.normals).length, count * 3)
+      assertEquals(mesh.samplePositions.getOrElse(mesh.positions).length, count * 3)
+      assertEquals(attached.layers.find(_.layer == scalar.id).get.scalarField.get.samples.length, count)
+      val before = new SurfaceFragmentEvaluator(original.meshes.head, original.layers, lighting, baseColor)
+      val after = new SurfaceFragmentEvaluator(mesh, attached.layers, lighting, baseColor)
+      for renderFace <- 0 until original.meshes.head.indices.length / 3 do
+        val (a, b, c) = mesh.sourceFaceVertices(renderFace)
+        val face = mesh.sourceFace(renderFace)
+        assertEquals(after.color(face, a, b, c, 0.2, 0.3, 0.5), before.color(face, a, b, c, 0.2, 0.3, 0.5))
+      val partition = SurfaceMappingPartition.build(mesh, attached.layers, SurfacePartitionBudget.make(1000, 64).toOption.get).toOption.get
+      assertEquals(partition.count(_.sourceFace >= white.faceCount), display.receipt.generatedTriangles)
+      val noNetwork = new SurfaceFragmentEvaluator(mesh, attached.layers.dropRight(1), SurfaceLighting.Unlit, baseColor)
+      val unlit = new SurfaceFragmentEvaluator(mesh, attached.layers, SurfaceLighting.Unlit, baseColor)
+      for face <- original.meshes.head.indices.length / 3 until mesh.indices.length / 3 do
+        val (a, b, c) = mesh.sourceFaceVertices(face)
+        assert(a >= white.vertexCount && b >= white.vertexCount && c >= white.vertexCount)
+        assertEquals(noNetwork.color(mesh.sourceFace(face), a, b, c, 0.2, 0.3, 0.5), baseColor)
+        assertEquals(unlit.color(mesh.sourceFace(face), a, b, c, 0.2, 0.3, 0.5), display.edges.head.color)
+      val approximate = SurfaceFragmentApproximation.build(mesh, attached.layers, lighting,
+        SurfaceFragmentApproximationConfig.make(32, 100000).toOption.get).fold(e => fail(e.message), identity)
+      approximate.cells.foreach: cell =>
+        val t = cell.triangle
+        val w = t.centroid
+        val (a, b, c) = t.sourceVertices
+        assert(cell.bounds.contains(after.color(t.sourceFace, a, b, c, w.a, w.b, w.c)))
+      val second = SurfaceNetworkCompiler.attach(attached, surfaceId, SurfaceLayerId.unsafe("network-2"), display).toOption.get.plan
+      assertEquals(second.layers(0).coverage, attached.layers(0).coverage)
+      assertEquals(second.layers(second.layers.length - 2).coverage, attached.layers.last.coverage)
+      assertEquals(SurfaceNetworkCompiler.attach(attached, surfaceId, SurfaceLayerId.unsafe("network"), display),
+        Left(SurfaceViewError.DuplicateLayerId(SurfaceLayerId.unsafe("network"))))
+
   test("large signed network compilation reports bounded primitive work and memory"):
     val nodeCount = 256
     val edgeCount = 20000

@@ -1,0 +1,450 @@
+--- a/modules/core/shared/src/main/scala/intaglio/Display.scala
++++ b/modules/core/shared/src/main/scala/intaglio/Display.scala
+@@ -26,7 +26,10 @@
+     upper - lower
+ 
+   def normalize(value: Double): Double =
+-    math.max(0.0, math.min(1.0, (value - lower) / width))
++    if value <= lower then 0.0
++    else if value >= upper then 1.0
++    else if width.isFinite then (value - lower) / width
++    else (value / 2.0 - lower / 2.0) / (upper / 2.0 - lower / 2.0)
+ 
+ object DisplayWindow:
+   def make(lower: Double, upper: Double): Either[DisplayError, DisplayWindow] =
+--- /dev/null
++++ b/modules/core/shared/src/main/scala/intaglio/ScalarMapping.scala
+@@ -0,0 +1,217 @@
++package intaglio
++
++/** Inspectable scalar display policy. Coordinates and ramps describe unlit sRGB bytes. */
++enum ScalarMappingError extends IntaglioError:
++  case InvalidRamp(reason: String)
++  case InvalidInterval(lower: Double, upper: Double)
++  case InvalidScale(reason: String)
++
++  def message: String = this match
++    case InvalidRamp(reason) => s"invalid scalar ramp: $reason"
++    case InvalidInterval(lower, upper) => s"scalar interval requires finite lower < upper; got [$lower, $upper]"
++    case InvalidScale(reason) => s"invalid scalar scale: $reason"
++
++enum ScalarEndpointInclusion:
++  case Neither, Lower, Upper, Both
++
++final class ScalarInterval private (
++  val lower: Double,
++  val upper: Double,
++  val endpoints: ScalarEndpointInclusion
++):
++  def contains(value: Double): Boolean =
++    val includesLower = endpoints == ScalarEndpointInclusion.Lower || endpoints == ScalarEndpointInclusion.Both
++    val includesUpper = endpoints == ScalarEndpointInclusion.Upper || endpoints == ScalarEndpointInclusion.Both
++    (value > lower || (includesLower && value == lower)) &&
++      (value < upper || (includesUpper && value == upper))
++
++object ScalarInterval:
++  def make(lower: Double, upper: Double, endpoints: ScalarEndpointInclusion): Either[ScalarMappingError, ScalarInterval] =
++    if lower.isFinite && upper.isFinite && lower < upper then Right(new ScalarInterval(lower, upper, endpoints))
++    else Left(ScalarMappingError.InvalidInterval(lower, upper))
++
++enum ScalarVisibility:
++  case All
++  case Inside(interval: ScalarInterval)
++  case Outside(interval: ScalarInterval)
++
++  def includes(value: Double): Boolean = this match
++    case All => true
++    case Inside(interval) => interval.contains(value)
++    case Outside(interval) => !interval.contains(value)
++
++object ScalarVisibility:
++  /** The historical transparent band excludes only its open interior. */
++  def fromThreshold(threshold: DisplayThreshold): ScalarVisibility = threshold match
++    case DisplayThreshold.Disabled => ScalarVisibility.All
++    case DisplayThreshold.TransparentBand(band) =>
++      ScalarVisibility.Outside(ScalarInterval.make(band.lower, band.upper, ScalarEndpointInclusion.Neither).toOption.get)
++
++/** Immutable, ordered stops. No arbitrary callback is needed to reconstruct this ramp. */
++final class ScalarRamp private (val stops: Vector[(Double, Rgba32)]):
++  def colorAt(fraction: Double): Rgba32 =
++    require(fraction.isFinite, "ramp fraction must be finite")
++    if fraction <= 0.0 then stops.head._2
++    else if fraction >= 1.0 then stops.last._2
++    else
++      var index = 1
++      while stops(index)._1 < fraction do index += 1
++      val (lo, lowColor) = stops(index - 1)
++      val (hi, highColor) = stops(index)
++      val t = (fraction - lo) / (hi - lo)
++      def channel(a: Int, b: Int): Int = math.round(a + (b - a) * t).toInt
++      Rgba32.packUnsafe(channel(lowColor.red, highColor.red), channel(lowColor.green, highColor.green),
++        channel(lowColor.blue, highColor.blue), channel(lowColor.alpha, highColor.alpha))
++
++object ScalarRamp:
++  def make(stops: Vector[(Double, Rgba32)]): Either[ScalarMappingError, ScalarRamp] =
++    if stops.length < 2 then Left(ScalarMappingError.InvalidRamp("at least two stops are required"))
++    else if stops.head._1 != 0.0 || stops.last._1 != 1.0 then
++      Left(ScalarMappingError.InvalidRamp("first and last positions must be 0 and 1"))
++    else if stops.exists(stop => !stop._1.isFinite || stop._1 < 0.0 || stop._1 > 1.0) ||
++        stops.iterator.map(_._1).sliding(2).exists(pair => pair(0) >= pair(1)) then
++      Left(ScalarMappingError.InvalidRamp("positions must be finite and strictly increasing"))
++    else Right(new ScalarRamp(stops))
++
++  def linear(low: Rgba32, high: Rgba32): ScalarRamp = new ScalarRamp(Vector(0.0 -> low, 1.0 -> high))
++  def fromRamp(ramp: ColorRamp): ScalarRamp = linear(ramp.low, ramp.high)
++
++enum ScalarScaleKind:
++  case Sequential, Diverging, Split
++
++final case class ScalarRampSegment(window: DisplayWindow, ramp: ScalarRamp)
++final case class ScalarRampCoordinate(segment: Int, fraction: Double)
++
++/** Validated scale geometry. Diverging segments meet at the explicit center;
++  * split segments leave an open omitted interval containing that center.
++  */
++final class ScalarScale private (
++  val kind: ScalarScaleKind,
++  val window: DisplayWindow,
++  val center: Option[Double],
++  val segments: Vector[ScalarRampSegment]
++):
++  def omittedInterval: Option[ScalarInterval] =
++    if kind == ScalarScaleKind.Split then
++      Some(ScalarInterval.make(segments.head.window.upper, segments.last.window.lower, ScalarEndpointInclusion.Neither).toOption.get)
++    else None
++
++  def withWindow(next: DisplayWindow): Either[ScalarMappingError, ScalarScale] = kind match
++    case ScalarScaleKind.Sequential => Right(ScalarScale.sequential(next, segments.head.ramp))
++    case ScalarScaleKind.Diverging => ScalarScale.diverging(next, center.get, segments.head.ramp, segments.last.ramp)
++    case ScalarScaleKind.Split => ScalarScale.split(next, center.get, segments.head.window.upper,
++      segments.last.window.lower, segments.head.ramp, segments.last.ramp)
++
++  private[intaglio] def omits(value: Double): Boolean =
++    kind == ScalarScaleKind.Split && value > segments.head.window.upper && value < segments.last.window.lower
++
++  private[intaglio] def segmentAt(value: Double): Int =
++    if segments.length == 1 || value <= segments.head.window.upper then 0 else 1
++
++  private[intaglio] def fractionAt(value: Double, index: Int): Double =
++    segments(index).window.normalize(value)
++
++object ScalarScale:
++  def sequential(window: DisplayWindow, ramp: ScalarRamp): ScalarScale =
++    new ScalarScale(ScalarScaleKind.Sequential, window, None, Vector(ScalarRampSegment(window, ramp)))
++
++  def diverging(window: DisplayWindow, center: Double, lower: ScalarRamp, upper: ScalarRamp): Either[ScalarMappingError, ScalarScale] =
++    if !center.isFinite || center <= window.lower || center >= window.upper then
++      Left(ScalarMappingError.InvalidScale("center must lie strictly inside the window"))
++    else if lower.stops.last._2 != upper.stops.head._2 then
++      Left(ScalarMappingError.InvalidScale("continuous diverging ramps must share their center color"))
++    else Right(new ScalarScale(ScalarScaleKind.Diverging, window, Some(center), Vector(
++      ScalarRampSegment(DisplayWindow.unsafe(window.lower, center), lower),
++      ScalarRampSegment(DisplayWindow.unsafe(center, window.upper), upper))))
++
++  def split(window: DisplayWindow, center: Double, lowerEnd: Double, upperStart: Double,
++    lower: ScalarRamp, upper: ScalarRamp): Either[ScalarMappingError, ScalarScale] =
++    if !center.isFinite || !lowerEnd.isFinite || !upperStart.isFinite ||
++        !(window.lower < lowerEnd && lowerEnd <= center && center <= upperStart && upperStart < window.upper && lowerEnd < upperStart) then
++      Left(ScalarMappingError.InvalidScale("split scale requires lower < lowerEnd <= center <= upperStart < upper and a nonempty gap"))
++    else Right(new ScalarScale(ScalarScaleKind.Split, window, Some(center), Vector(
++      ScalarRampSegment(DisplayWindow.unsafe(window.lower, lowerEnd), lower),
++      ScalarRampSegment(DisplayWindow.unsafe(upperStart, window.upper), upper))))
++
++enum ScalarOutOfRange:
++  case Clamp, Hide
++
++enum ScalarSampleState:
++  case Visible, ClampedLow, ClampedHigh, HiddenVisibility, HiddenOutOfRange, HiddenScaleGap, Invalid
++
++final case class ScalarMappedSample(state: ScalarSampleState, color: Rgba32, coordinate: Option[ScalarRampCoordinate])
++
++/** Classification uses the original value: invalid, visibility, out-of-range,
++  * omitted scale interval, then mapping. Clamping never changes visibility.
++  */
++final case class ScalarMapping(
++  scale: ScalarScale,
++  visibility: ScalarVisibility = ScalarVisibility.All,
++  outOfRange: ScalarOutOfRange = ScalarOutOfRange.Clamp,
++  hidden: Rgba32 = Rgba32.unsafe(0, 0, 0, 0),
++  invalid: Rgba32 = Rgba32.unsafe(0, 0, 0, 0)
++):
++  def classify(value: Double): ScalarSampleState =
++    if !value.isFinite then ScalarSampleState.Invalid
++    else if !visibility.includes(value) then ScalarSampleState.HiddenVisibility
++    else if value < scale.window.lower then
++      if outOfRange == ScalarOutOfRange.Hide then ScalarSampleState.HiddenOutOfRange else ScalarSampleState.ClampedLow
++    else if value > scale.window.upper then
++      if outOfRange == ScalarOutOfRange.Hide then ScalarSampleState.HiddenOutOfRange else ScalarSampleState.ClampedHigh
++    else if scale.omits(value) then ScalarSampleState.HiddenScaleGap
++    else ScalarSampleState.Visible
++
++  /** Allocation-free classification and color lookup for sample loops. */
++  def color(value: Double): Rgba32 = classify(value) match
++    case ScalarSampleState.Invalid => invalid
++    case ScalarSampleState.HiddenVisibility | ScalarSampleState.HiddenOutOfRange | ScalarSampleState.HiddenScaleGap => hidden
++    case _ =>
++      val index = scale.segmentAt(value)
++      scale.segments(index).ramp.colorAt(scale.fractionAt(value, index))
++
++  def evaluate(value: Double): ScalarMappedSample =
++    val state = classify(value)
++    val coordinate = state match
++      case ScalarSampleState.Visible | ScalarSampleState.ClampedLow | ScalarSampleState.ClampedHigh =>
++        val index = scale.segmentAt(value)
++        Some(ScalarRampCoordinate(index, scale.fractionAt(value, index)))
++      case _ => None
++    ScalarMappedSample(state, color(value), coordinate)
++
++  /** Window changes preserve the absolute center and split boundaries; invalid changes fail. */
++  def resolve(window: Option[DisplayWindow] = None, threshold: Option[DisplayThreshold] = None): Either[ScalarMappingError, ScalarMapping] =
++    val resolvedScale = window.fold[Either[ScalarMappingError, ScalarScale]](Right(scale))(scale.withWindow)
++    resolvedScale.map(next => copy(scale = next, visibility = threshold.fold(visibility)(ScalarVisibility.fromThreshold)))
++
++  /** Adapt only color evaluation. Resolve checked overrides first, then create this adapter. */
++  def colorizer: Colorizer[Double] = new ScalarMappingColorizer(this)
++
++  /** Complete, versioned descriptor identity, identical on JVM and JS; not a lossy hash.
++    * Signed zero is canonicalized because it has no distinct display semantics here.
++    */
++  lazy val canonicalKey: String =
++    def number(value: Double): String = java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(if value == 0.0 then 0.0 else value))
++    def pixel(value: Rgba32): String = java.lang.Integer.toHexString(value.toPackedInt)
++    def interval(value: ScalarInterval): String = s"${number(value.lower)},${number(value.upper)},${value.endpoints}"
++    val selection = visibility match
++      case ScalarVisibility.All => "all"
++      case ScalarVisibility.Inside(value) => s"inside:${interval(value)}"
++      case ScalarVisibility.Outside(value) => s"outside:${interval(value)}"
++    val segments = scale.segments.map: segment =>
++      val stops = segment.ramp.stops.map((position, color) => s"${number(position)}=${pixel(color)}").mkString(",")
++      s"${number(segment.window.lower)}:${number(segment.window.upper)}:$stops"
++    s"scalar-mapping-v1|${scale.kind}|${scale.center.fold("none")(number)}|${segments.mkString(";")}|$selection|$outOfRange|${pixel(hidden)}|${pixel(invalid)}"
++
++final class ScalarMappingColorizer private[intaglio] (val mapping: ScalarMapping) extends Colorizer[Double]:
++  def color(value: Double): Rgba32 = mapping.color(value)
++
++object ScalarMapping:
++  def fromLegacy(colorizer: ScalarColorizer): ScalarMapping = ScalarMapping(
++    ScalarScale.sequential(colorizer.window, ScalarRamp.fromRamp(colorizer.ramp)),
++    ScalarVisibility.fromThreshold(colorizer.threshold), invalid = colorizer.invalid)
++
++  /** Opaque callbacks remain opaque: absence is not permission to invent mapping metadata. */
++  def inspect(colorizer: Colorizer[Double]): Option[ScalarMapping] = colorizer match
++    case value: ScalarMappingColorizer => Some(value.mapping)
++    case value: ScalarColorizer => Some(fromLegacy(value))
++    case _ => None
+--- /dev/null
++++ b/modules/core/shared/src/test/scala/intaglio/ScalarMappingSuite.scala
+@@ -0,0 +1,143 @@
++package intaglio
++
++class ScalarMappingSuite extends munit.FunSuite:
++  private val blue = Rgba32.unsafe(0, 0, 200)
++  private val white = Rgba32.unsafe(200, 200, 200)
++  private val red = Rgba32.unsafe(200, 0, 0)
++  private val low = ScalarRamp.linear(blue, white)
++  private val high = ScalarRamp.linear(white, red)
++  private val window = DisplayWindow.unsafe(-4.0, 8.0)
++  private def diverging = ScalarMapping(ScalarScale.diverging(window, 0.0, low, high).toOption.get)
++  private def split = ScalarMapping(ScalarScale.split(window, 0.0, -1.0, 2.0, low, high).toOption.get)
++
++  test("asymmetric continuous and split scales have independent tabulated tail values"):
++    val continuousExpected = Vector(-4.0 -> blue, -2.0 -> Rgba32.unsafe(100, 100, 200),
++      -1.0 -> Rgba32.unsafe(150, 150, 200), 0.0 -> white,
++      2.0 -> Rgba32.unsafe(200, 150, 150), 4.0 -> Rgba32.unsafe(200, 100, 100), 8.0 -> red)
++    continuousExpected.foreach((value, expected) => assertEquals(diverging.color(value), expected))
++    val splitExpected = Vector(-4.0 -> blue, -2.5 -> Rgba32.unsafe(100, 100, 200),
++      -1.0 -> white, 2.0 -> white, 5.0 -> Rgba32.unsafe(200, 100, 100), 8.0 -> red)
++    splitExpected.foreach((value, expected) => assertEquals(split.color(value), expected))
++    assertEquals(split.classify(0.0), ScalarSampleState.HiddenScaleGap)
++    assertEquals(split.evaluate(0.0).coordinate, None)
++    assertEqualsDouble(split.evaluate(-2.5).coordinate.get.fraction, 0.5, 1e-15)
++    assertEquals(split.evaluate(5.0).coordinate.get.segment, 1)
++
++  test("piecewise ramp knots and interpolation are explicit display bytes"):
++    val ramp = ScalarRamp.make(Vector(0.0 -> Rgba32.unsafe(0, 0, 0), 0.25 -> blue, 0.75 -> red, 1.0 -> white)).toOption.get
++    val expected = Vector(0.125 -> Rgba32.unsafe(0, 0, 100), 0.25 -> blue,
++      0.5 -> Rgba32.unsafe(100, 0, 100), 0.75 -> red, 0.875 -> Rgba32.unsafe(200, 100, 100))
++    expected.foreach((position, color) => assertEquals(ramp.colorAt(position), color))
++    assertEquals(ramp.colorAt(-3.0), Rgba32.unsafe(0, 0, 0))
++    assertEquals(ramp.colorAt(3.0), white)
++
++  test("every interval endpoint convention distinguishes edges and immediate neighbors"):
++    for inclusion <- ScalarEndpointInclusion.values do
++      val interval = ScalarInterval.make(-1.0, 2.0, inclusion).toOption.get
++      val includesLower = inclusion == ScalarEndpointInclusion.Lower || inclusion == ScalarEndpointInclusion.Both
++      val includesUpper = inclusion == ScalarEndpointInclusion.Upper || inclusion == ScalarEndpointInclusion.Both
++      val points = Vector(
++        math.nextAfter(-1.0, Double.NegativeInfinity) -> false,
++        -1.0 -> includesLower,
++        math.nextAfter(-1.0, Double.PositiveInfinity) -> true,
++        math.nextAfter(2.0, Double.NegativeInfinity) -> true,
++        2.0 -> includesUpper,
++        math.nextAfter(2.0, Double.PositiveInfinity) -> false)
++      points.foreach: (value, inside) =>
++        assertEquals(ScalarVisibility.Inside(interval).includes(value), inside)
++        assertEquals(ScalarVisibility.Outside(interval).includes(value), !inside)
++
++  test("split-gap boundaries are visible and their inward neighbors are hidden"):
++    val mapping = split
++    assertEquals(mapping.classify(-1.0), ScalarSampleState.Visible)
++    assertEquals(mapping.classify(2.0), ScalarSampleState.Visible)
++    assertEquals(mapping.classify(math.nextAfter(-1.0, 0.0)), ScalarSampleState.HiddenScaleGap)
++    assertEquals(mapping.classify(math.nextAfter(2.0, 0.0)), ScalarSampleState.HiddenScaleGap)
++    assertEquals(mapping.classify(math.nextAfter(-1.0, -2.0)), ScalarSampleState.Visible)
++    assertEquals(mapping.classify(math.nextAfter(2.0, 3.0)), ScalarSampleState.Visible)
++
++  test("invalid, hidden, and saturated states survive deliberately identical colors"):
++    val mapping = diverging.copy(hidden = blue, invalid = blue)
++    assertEquals(mapping.evaluate(-10.0).state, ScalarSampleState.ClampedLow)
++    assertEquals(mapping.evaluate(10.0).state, ScalarSampleState.ClampedHigh)
++    assertEquals(mapping.copy(outOfRange = ScalarOutOfRange.Hide).evaluate(-10.0).state, ScalarSampleState.HiddenOutOfRange)
++    for value <- Vector(Double.NaN, Double.NegativeInfinity, Double.PositiveInfinity) do
++      assertEquals(mapping.classify(value), ScalarSampleState.Invalid)
++      assertEquals(mapping.color(value), blue)
++      assertEquals(mapping.evaluate(value).coordinate, None)
++
++  test("visibility tests the original observation before clamping"):
++    val visible = ScalarInterval.make(-2.0, 5.0, ScalarEndpointInclusion.Both).toOption.get
++    val mapping = diverging.copy(visibility = ScalarVisibility.Inside(visible))
++    assertEquals(mapping.classify(-20.0), ScalarSampleState.HiddenVisibility)
++    assertEquals(mapping.classify(20.0), ScalarSampleState.HiddenVisibility)
++    assertEquals(mapping.classify(-2.0), ScalarSampleState.Visible)
++    assertEquals(mapping.classify(5.0), ScalarSampleState.Visible)
++
++  test("legacy adapter preserves open threshold edges, windows, invalid colors and sRGB rounding"):
++    val legacy = ScalarColorizer(DisplayWindow.unsafe(-2.0, 3.0), ColorRamp(blue, red),
++      invalid = white, threshold = DisplayThreshold.TransparentBand(ThresholdBand.unsafe(-0.5, 1.0)))
++    val mapping = ScalarMapping.fromLegacy(legacy)
++    val values = Vector(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity, -10.0, -2.0,
++      math.nextAfter(-0.5, -1.0), -0.5, math.nextAfter(-0.5, 0.0), 0.0,
++      math.nextAfter(1.0, 0.0), 1.0, math.nextAfter(1.0, 2.0), 3.0, 10.0)
++    values.foreach(value => assertEquals(mapping.color(value), legacy.color(value)))
++    assertEquals(mapping.classify(-0.5), ScalarSampleState.Visible)
++    assertEquals(mapping.classify(1.0), ScalarSampleState.Visible)
++    assertEquals(mapping.classify(0.0), ScalarSampleState.HiddenVisibility)
++    assertEquals(ScalarMapping.inspect(legacy).get.canonicalKey, mapping.canonicalKey)
++    assertEquals(ScalarMapping.inspect(Colorizer.constant[Double](red)), None)
++
++  test("checked overrides retain absolute center, update identity and reject impossible windows"):
++    val mapping = split
++    assert(mapping.resolve(window = Some(DisplayWindow.unsafe(-0.5, 8.0))).isLeft)
++    val threshold = DisplayThreshold.TransparentBand(ThresholdBand.unsafe(-2.0, 4.0))
++    val effective = mapping.resolve(Some(DisplayWindow.unsafe(-8.0, 10.0)), Some(threshold)).toOption.get
++    assertEquals(effective.scale.center, Some(0.0))
++    assertEquals(effective.classify(-1.5), ScalarSampleState.HiddenVisibility)
++    assertEquals(effective.classify(5.0), ScalarSampleState.Visible)
++    assertNotEquals(effective.canonicalKey, mapping.canonicalKey)
++    assertEquals(mapping.resolve().toOption.get.canonicalKey, mapping.canonicalKey)
++    val adapter = effective.colorizer
++    assert(!adapter.supportsWindow && !adapter.supportsThreshold)
++    assertEquals(ScalarMapping.inspect(adapter).get.canonicalKey, effective.canonicalKey)
++
++  test("malformed ramps, centers, intervals and split widths fail at construction"):
++    for stops <- Vector(Vector.empty, Vector(0.0 -> blue), Vector(0.1 -> blue, 1.0 -> red),
++        Vector(0.0 -> blue, 0.0 -> red, 1.0 -> white), Vector(0.0 -> blue, Double.NaN -> red, 1.0 -> white)) do
++      assert(ScalarRamp.make(stops).isLeft)
++    assert(ScalarScale.diverging(window, -4.0, low, high).isLeft)
++    assert(ScalarScale.diverging(window, Double.NaN, low, high).isLeft)
++    assert(ScalarScale.diverging(window, 0.0, high, low).isLeft)
++    for (a, b, center) <- Vector((-4.0, 2.0, 0.0), (-1.0, 8.0, 0.0), (1.0, -1.0, 0.0), (-1.0, 2.0, 3.0)) do
++      assert(ScalarScale.split(window, center, a, b, low, high).isLeft)
++    assert(ScalarInterval.make(0.0, 0.0, ScalarEndpointInclusion.Both).isLeft)
++    assert(ScalarInterval.make(0.0, Double.PositiveInfinity, ScalarEndpointInclusion.Both).isLeft)
++
++  test("finite extreme limits normalize without overflow and agree with the legacy adapter"):
++    val extreme = DisplayWindow.unsafe(-Double.MaxValue, Double.MaxValue)
++    assertEqualsDouble(extreme.normalize(0.0), 0.5, 0.0)
++    assertEqualsDouble(extreme.normalize(-Double.MaxValue / 2), 0.25, 1e-15)
++    assertEqualsDouble(extreme.normalize(Double.MaxValue / 2), 0.75, 1e-15)
++    val legacy = ScalarColorizer(extreme)
++    assertEquals(legacy.color(0.0), Rgba32.unsafe(128, 128, 128))
++    assertEquals(ScalarMapping.fromLegacy(legacy).color(0.0), legacy.color(0.0))
++
++  test("canonical key is platform stable and distinguishes all effective display policies"):
++    val mapping = ScalarMapping.fromLegacy(ScalarColorizer(DisplayWindow.unsafe(-2.0, 2.0)))
++    assertEquals(mapping.canonicalKey,
++      "scalar-mapping-v1|Sequential|none|c000000000000000:4000000000000000:0=ff,3ff0000000000000=ffffffff|all|Clamp|0|0")
++    assertNotEquals(mapping.copy(outOfRange = ScalarOutOfRange.Hide).canonicalKey, mapping.canonicalKey)
++    assertNotEquals(mapping.copy(hidden = white).canonicalKey, mapping.canonicalKey)
++    assertNotEquals(mapping.copy(invalid = white).canonicalKey, mapping.canonicalKey)
++    val positive = ScalarScale.diverging(window, 0.0, low, high).toOption.get
++    val negative = ScalarScale.diverging(window, -0.0, low, high).toOption.get
++    assertEquals(ScalarMapping(positive).canonicalKey, ScalarMapping(negative).canonicalKey)
++
++  test("affine changes of scalar units preserve colors and visibility"):
++    val mapping = split.copy(visibility = ScalarVisibility.Outside(ScalarInterval.make(-2.0, 3.0, ScalarEndpointInclusion.Neither).toOption.get))
++    val transformed = ScalarMapping(ScalarScale.split(DisplayWindow.unsafe(2.0, 26.0), 10.0, 8.0, 14.0, low, high).toOption.get,
++      ScalarVisibility.Outside(ScalarInterval.make(6.0, 16.0, ScalarEndpointInclusion.Neither).toOption.get))
++    for value <- Vector(-10.0, -4.0, -2.5, -2.0, -1.0, 0.0, 2.0, 3.0, 5.0, 8.0, 10.0) do
++      assertEquals(transformed.color(value * 2.0 + 10.0), mapping.color(value))
++      assertEquals(transformed.classify(value * 2.0 + 10.0), mapping.classify(value))
+--- /dev/null
++++ b/docs/scalar-mappings.md
+@@ -0,0 +1,67 @@
++# Inspectable scalar mappings
++
++Use a `ScalarMapping` when a renderer needs the scale, visibility rules, and
++colors as data. An arbitrary `Colorizer[Double]` remains useful for sample
++coloring, but it does not provide enough information to construct a shader or
++a trustworthy legend.
++
++```scala
++import intaglio.*
++
++val blue = Rgba32.unsafe(0, 0, 200)
++val white = Rgba32.unsafe(200, 200, 200)
++val red = Rgba32.unsafe(200, 0, 0)
++val scale = ScalarScale.split(
++  DisplayWindow.unsafe(-4, 8), center = 0, lowerEnd = -1, upperStart = 2,
++  lower = ScalarRamp.linear(blue, white),
++  upper = ScalarRamp.linear(white, red)
++).toOption.get
++val mapping = ScalarMapping(scale)
++
++mapping.evaluate(-2.5) // visible, halfway along the lower ramp
++mapping.evaluate(0)    // HiddenScaleGap
++mapping.evaluate(5)    // visible, halfway along the upper ramp
++```
++
++`ScalarScale.sequential` uses one ramp over the whole window. `diverging` gives
++each side of an explicit center its own ramp; the ramps must share their center
++color. `split` assigns the ramps to two nonempty tails and omits their open gap.
++The center and cutoffs are absolute scalar values, so asymmetric limits are
++supported without assuming symmetry about zero.
++
++Ramps contain ordered stops from 0 to 1 and interpolate stored sRGB bytes,
++including alpha. Visibility selects the inside or outside of a separate
++interval, with lower, upper, both, or neither endpoint included. It never changes
++the scaling intervals. A split scale always omits its gap, even when a separate
++visibility threshold is disabled.
++
++Classification tests the original sample in this order:
++
++1. Nonfinite values use the invalid color.
++2. Values excluded by visibility use the hidden color.
++3. Values outside the color limits clamp or hide according to `outOfRange`.
++4. Values in an omitted split interval use the hidden color.
++5. Remaining values map through their ramp segment.
++
++`evaluate` returns a state and an optional segment coordinate as well as a color.
++Hidden, invalid, and saturated samples stay distinguishable even if their colors
++are identical. `color` avoids allocating that richer result in sample loops.
++
++Resolve presentation changes with `mapping.resolve(window, threshold)`. A window
++change preserves the absolute center and split cutoffs and returns `Left` if the
++new window cannot contain them. Threshold overrides retain the legacy open-band
++contract. Use `effective.colorizer` only after this checked resolution; that
++adapter deliberately does not advertise unchecked window/threshold callbacks.
++
++`ScalarMapping.fromLegacy` describes a `ScalarColorizer`, including its invalid
++color and open transparent band. `inspect` recognizes that colorizer and the new
++mapping adapter; other callbacks return `None`. The window normalizer now handles
++finite limits whose difference overflows, so a symmetric extreme window maps
++zero to its midpoint in both APIs.
++
++`canonicalKey` is a versioned, complete descriptor identity, using IEEE-754 bit
++strings for numbers and normalized signed zero. It is identical on JVM and JS.
++It can guard caches and scene restoration; it is not a cryptographic digest or
++a replacement for a document codec. The exposed scale segments and ramp stops
++provide the data for future fragment evaluation and legends. This change does
++not itself implement shaders, lookup textures, or automatic legend rendering.

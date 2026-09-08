@@ -222,7 +222,7 @@ class SurfaceViewerSuite extends munit.FunSuite:
         view(row * 4 + 3).toDouble
     assertEqualsDouble(transformed(0), 0.0, 1e-6)
     assertEqualsDouble(transformed(1), 0.0, 1e-6)
-    assertEqualsDouble(transformed(2), -4.0, 1e-6)
+    assert(transformed(2) < -math.sqrt(14.0) / 2.0, "Camera must remain outside the transformed bounds")
 
     val untranslated = geometry()
     val untranslatedViewer = SurfaceViewerModel.make(

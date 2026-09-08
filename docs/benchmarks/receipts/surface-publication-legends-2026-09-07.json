@@ -1,0 +1,534 @@
+{
+  "schema": "scalafim-surface-publication-legends-v1",
+  "recordedAtUtc": "2026-09-08T03:50:19.420830+00:00",
+  "status": "publication layout, identity receipts, and native SVG acceptance verified; cortical and final example/native gates remain open",
+  "upstreamRevision": "55658abfbbfed0c9a36ab612b38bd8f0677bc158",
+  "upstreamBranch": "codex/scalar-mapping-descriptors-20260907",
+  "upstreamSourceSha256": {
+    "modules/core/README.md": "c8e59219e7b4286a29314e6d65066788282ca89fa66aef5fbe321a97a005179a",
+    "modules/core/shared/src/main/scala/intaglio/LegendTextLayout.scala": "4797bd83fdbc9ab152b726e825de34bbbca274a0d7c73cce071cbfd693f662a5",
+    "modules/core/shared/src/main/scala/intaglio/SwatchLegendDrawing.scala": "a08feffc3d9333398218173b4f3a3276f84b4282c637019eec0ca0b21f4a66a9",
+    "modules/core/shared/src/main/scala/intaglio/ScalarLegendDrawing.scala": "505424156ed185d460422f7676209f7bb76303cc342e7fe4e6ae046c8ce635df",
+    "modules/core/shared/src/test/scala/intaglio/SwatchLegendDrawingSuite.scala": "292a41ea094ba13d8c94c812c502662d41fb436b391ce42a9c521d79346e136f"
+  },
+  "sourceSha256": {
+    "build.sbt": "cb447a0b7f0090d1a11d603e5fc195a1292ae605b6871137ef0656cb9dbb5772",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLegendPublication.scala": "7102a3d78015f7179b87e91059f92fbb8a560bf6deb2e9d0c5572d620d4f1e98",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLegend.scala": "c12c5c15a23c6d43c3fbd61d61c93601aedc313132077ff21b8b8de329369d59",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceLegendPublicationSuite.scala": "7e80793a20b2072fc97b4d4b7b7859320f1dfe299e488372c8dff7605739bcab",
+    "examples/surface-view/jvm/src/test/scala/scalafim/examples/surfaceview/SurfaceLegendPublicationGallery.scala": "f7928b039c5d5a0e9afe580935e6c827519934ee41d8534baf0518c1ecc1ac08"
+  },
+  "tests": {
+    "intaglioCoreJVM": 243,
+    "intaglioCoreJS": 239,
+    "intaglioSvgJVM": 24,
+    "intaglioSvgJS": 21,
+    "surfaceViewJVM": 126,
+    "surfaceViewJS": 126
+  },
+  "commands": [
+    "sbt coreJVM/test coreJS/test svgJVM/test svgJS/test",
+    "sbt surfaceViewJVM/test surfaceViewJS/test",
+    "sbt surfaceViewExamplesJVM/Test/runMain scalafim.examples.surfaceview.SurfaceLegendPublicationGallery /private/tmp/scalafim-publication-legends"
+  ],
+  "browser": {
+    "browser": "151.0.7922.34",
+    "ownerPid": 4005,
+    "profile": "/private/tmp/scalafim-publication-browser-0MxT1q/profile",
+    "errors": [],
+    "cases": [
+      {
+        "file": "continuous-manuscript.svg",
+        "width": 1200,
+        "height": 1200,
+        "texts": 14,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "continuous-poster.svg",
+        "width": 3200,
+        "height": 2400,
+        "texts": 11,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "asymmetric-manuscript.svg",
+        "width": 1200,
+        "height": 1200,
+        "texts": 15,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "asymmetric-poster.svg",
+        "width": 3200,
+        "height": 2400,
+        "texts": 12,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "split-manuscript.svg",
+        "width": 1200,
+        "height": 1200,
+        "texts": 18,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "split-poster.svg",
+        "width": 3200,
+        "height": 2400,
+        "texts": 15,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "missing-manuscript.svg",
+        "width": 1200,
+        "height": 1200,
+        "texts": 18,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "missing-poster.svg",
+        "width": 3200,
+        "height": 2400,
+        "texts": 15,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "categorical-manuscript.svg",
+        "width": 1200,
+        "height": 1200,
+        "texts": 13,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "categorical-poster.svg",
+        "width": 3200,
+        "height": 2400,
+        "texts": 10,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "manual-manuscript.svg",
+        "width": 1200,
+        "height": 1200,
+        "texts": 9,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      },
+      {
+        "file": "manual-poster.svg",
+        "width": 3200,
+        "height": 2400,
+        "texts": 7,
+        "overflow": [],
+        "overlaps": [],
+        "swatches": []
+      }
+    ]
+  },
+  "nativeOpaqueSwatchPixels": [
+    {
+      "file": "categorical-manuscript.svg",
+      "swatch": "swatch-color-0",
+      "expected": [
+        180,
+        35,
+        35
+      ],
+      "actual": [
+        180,
+        35,
+        35
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "categorical-manuscript.svg",
+      "swatch": "swatch-color-1",
+      "expected": [
+        30,
+        70,
+        170
+      ],
+      "actual": [
+        30,
+        70,
+        170
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "categorical-poster.svg",
+      "swatch": "swatch-color-0",
+      "expected": [
+        180,
+        35,
+        35
+      ],
+      "actual": [
+        180,
+        35,
+        35
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "categorical-poster.svg",
+      "swatch": "swatch-color-1",
+      "expected": [
+        30,
+        70,
+        170
+      ],
+      "actual": [
+        30,
+        70,
+        170
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "manual-manuscript.svg",
+      "swatch": "swatch-color-0",
+      "expected": [
+        180,
+        35,
+        35
+      ],
+      "actual": [
+        180,
+        35,
+        35
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "manual-manuscript.svg",
+      "swatch": "swatch-color-1",
+      "expected": [
+        30,
+        70,
+        170
+      ],
+      "actual": [
+        30,
+        70,
+        170
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "manual-poster.svg",
+      "swatch": "swatch-color-0",
+      "expected": [
+        180,
+        35,
+        35
+      ],
+      "actual": [
+        180,
+        35,
+        35
+      ],
+      "maxChannelError": 0
+    },
+    {
+      "file": "manual-poster.svg",
+      "swatch": "swatch-color-1",
+      "expected": [
+        30,
+        70,
+        170
+      ],
+      "actual": [
+        30,
+        70,
+        170
+      ],
+      "maxChannelError": 0
+    }
+  ],
+  "gallery": [
+    {
+      "file": "continuous-manuscript.svg",
+      "width": 1200,
+      "height": 1200,
+      "surfaceFramePt": [
+        31.500000000000004,
+        72.0,
+        517.5,
+        756.0
+      ],
+      "legendFramePt": [
+        567.1800000000001,
+        72.0,
+        301.32,
+        246.285
+      ]
+    },
+    {
+      "file": "continuous-poster.svg",
+      "width": 3200,
+      "height": 2400,
+      "surfaceFramePt": [
+        36.0,
+        103.5,
+        1459.5,
+        1593.0
+      ],
+      "legendFramePt": [
+        1525.92,
+        103.5,
+        838.0799999999999,
+        337.34999999999997
+      ]
+    },
+    {
+      "file": "asymmetric-manuscript.svg",
+      "width": 1200,
+      "height": 1200,
+      "surfaceFramePt": [
+        31.500000000000004,
+        72.0,
+        517.5,
+        756.0
+      ],
+      "legendFramePt": [
+        567.1800000000001,
+        72.0,
+        301.32,
+        246.285
+      ]
+    },
+    {
+      "file": "asymmetric-poster.svg",
+      "width": 3200,
+      "height": 2400,
+      "surfaceFramePt": [
+        36.0,
+        103.5,
+        1459.5,
+        1593.0
+      ],
+      "legendFramePt": [
+        1525.92,
+        103.5,
+        838.0799999999999,
+        337.34999999999997
+      ]
+    },
+    {
+      "file": "split-manuscript.svg",
+      "width": 1200,
+      "height": 1200,
+      "surfaceFramePt": [
+        31.500000000000004,
+        72.0,
+        517.5,
+        756.0
+      ],
+      "legendFramePt": [
+        567.1800000000001,
+        72.0,
+        301.32,
+        260.91
+      ]
+    },
+    {
+      "file": "split-poster.svg",
+      "width": 3200,
+      "height": 2400,
+      "surfaceFramePt": [
+        36.0,
+        103.5,
+        1459.5,
+        1593.0
+      ],
+      "legendFramePt": [
+        1525.92,
+        103.5,
+        838.0799999999999,
+        361.72499999999997
+      ]
+    },
+    {
+      "file": "missing-manuscript.svg",
+      "width": 1200,
+      "height": 1200,
+      "surfaceFramePt": [
+        31.500000000000004,
+        72.0,
+        517.5,
+        756.0
+      ],
+      "legendFramePt": [
+        567.1800000000001,
+        72.0,
+        301.32,
+        301.8600000000001
+      ]
+    },
+    {
+      "file": "missing-poster.svg",
+      "width": 3200,
+      "height": 2400,
+      "surfaceFramePt": [
+        36.0,
+        103.5,
+        1459.5,
+        1593.0
+      ],
+      "legendFramePt": [
+        1525.92,
+        103.5,
+        838.0799999999999,
+        429.97499999999997
+      ]
+    },
+    {
+      "file": "categorical-manuscript.svg",
+      "width": 1200,
+      "height": 1200,
+      "surfaceFramePt": [
+        31.500000000000004,
+        72.0,
+        517.5,
+        756.0
+      ],
+      "legendFramePt": [
+        567.1800000000001,
+        72.0,
+        301.32,
+        215.86499999999998
+      ]
+    },
+    {
+      "file": "categorical-poster.svg",
+      "width": 3200,
+      "height": 2400,
+      "surfaceFramePt": [
+        36.0,
+        103.5,
+        1459.5,
+        1593.0
+      ],
+      "legendFramePt": [
+        1525.92,
+        103.5,
+        838.0799999999999,
+        286.65
+      ]
+    },
+    {
+      "file": "manual-manuscript.svg",
+      "width": 1200,
+      "height": 1200,
+      "surfaceFramePt": [
+        31.500000000000004,
+        72.0,
+        517.5,
+        756.0
+      ],
+      "legendFramePt": [
+        567.1800000000001,
+        72.0,
+        301.32,
+        141.57
+      ]
+    },
+    {
+      "file": "manual-poster.svg",
+      "width": 3200,
+      "height": 2400,
+      "surfaceFramePt": [
+        36.0,
+        103.5,
+        1459.5,
+        1593.0
+      ],
+      "legendFramePt": [
+        1525.92,
+        103.5,
+        838.0799999999999,
+        194.025
+      ]
+    }
+  ],
+  "browserCleanup": "Owned browser and server closed; process check found zero matching browsers; temporary tooling and profile removed; final policy audit found no automated top-level browsers.",
+  "artifactsSha256": {
+    "docs/benchmarks/receipts/surface-publication-legends-2026-09-07.log.gz": "17c173e265a3e96bba2666a841ad9343a40fba9895dafa37908f15ff3d81b246",
+    "docs/visual-qa/surface-publication-legends/asymmetric-manuscript.png": "76caa35cfc8fa6b511574acaad8dd653c5b6026061565b77cc1394dd8ed063bb",
+    "docs/visual-qa/surface-publication-legends/asymmetric-manuscript.svg": "f84ab582c71b1d5c93283e073177e3329040b10932d7b7aafa95cc3b945f4b7c",
+    "docs/visual-qa/surface-publication-legends/asymmetric-poster.png": "2e78fd01aa58733903d11d9f6ed1a7b35db08adecb111bd993d598ff4295f73d",
+    "docs/visual-qa/surface-publication-legends/asymmetric-poster.svg": "44aa36802f9211f2c79d83941d7b4e4be70607c96398097fbaa03f9492268172",
+    "docs/visual-qa/surface-publication-legends/categorical-manuscript.png": "c73418587809efed004afd0154f58b9be46dbd24f1174b093aa43e7237586ff7",
+    "docs/visual-qa/surface-publication-legends/categorical-manuscript.svg": "a2f92d9ccd04292b78d14fab53a30fd5f3a924d7b2d6ad78f95b754d7a96961f",
+    "docs/visual-qa/surface-publication-legends/categorical-poster.png": "bddee3efd2514eda3a6b95373a796cc8f2a0b7823e083f24b9641670e24585f7",
+    "docs/visual-qa/surface-publication-legends/categorical-poster.svg": "645b09c8877e6a0df1667bd421e08995bb7361b44540bc404241794e5f610186",
+    "docs/visual-qa/surface-publication-legends/continuous-manuscript.png": "7e09d3fecae0e3ec8195157a95445d4501a0dc85759947e9dbe3b6dcc00bff1a",
+    "docs/visual-qa/surface-publication-legends/continuous-manuscript.svg": "758ba4ea1f21f2ddb1e434f9d472ac9c28cf0ad77e1ce37992cd102bcb93f5e7",
+    "docs/visual-qa/surface-publication-legends/continuous-poster.png": "9a5ed136007b4948799dd4be83fc1622223d9839e27fe311e1799f935f758040",
+    "docs/visual-qa/surface-publication-legends/continuous-poster.svg": "a8c227a34d1e66ebe9a5d59357041af67ba36ca86bc5da60207fb6ef52236346",
+    "docs/visual-qa/surface-publication-legends/manual-manuscript.png": "e1bf7f26cfe754eefed0c402f07896f04f9909e0a2a7c74be71bfb440c73d0b3",
+    "docs/visual-qa/surface-publication-legends/manual-manuscript.svg": "6b21bac1b38c431d063ae45374457ee8cfdb6636a140d80d6caa202f152b8776",
+    "docs/visual-qa/surface-publication-legends/manual-poster.png": "d58787ebc47fa8be5e85f289ba568b1264ee05eca85991d2c323f4bcf2dff7a8",
+    "docs/visual-qa/surface-publication-legends/manual-poster.svg": "42aa6422ceb114d1e48ba5618b3baab9021779c72f0b46a28fbe19b83a749be6",
+    "docs/visual-qa/surface-publication-legends/missing-manuscript.png": "34904b982ea7a53ec14e8c98a6d4def51aefa9b5ed3231d67710186e907d5213",
+    "docs/visual-qa/surface-publication-legends/missing-manuscript.svg": "d821ba877f939373aca57ec767484f8138792a2a46a4dbb083180cb498c3859f",
+    "docs/visual-qa/surface-publication-legends/missing-poster.png": "8c44f73b6125db0fb7757f2bce4ed0deb9f38211044acb5901107fcad08cda42",
+    "docs/visual-qa/surface-publication-legends/missing-poster.svg": "4255329a4751d77f050c1dd4c5187eab6ea27a52a6798aaa713ffd33520bbc03",
+    "docs/visual-qa/surface-publication-legends/split-manuscript.png": "29fdf5d49c99b0e95839eab2c3af1f56ef765eb5fa4fb6b4be3f8b60cbf4130d",
+    "docs/visual-qa/surface-publication-legends/split-manuscript.svg": "760e98f056719d7722eaab6ac3597d06be5745241ec890dbe23f6d1487f60765",
+    "docs/visual-qa/surface-publication-legends/split-poster.png": "76d4a98acefc1e735f6b3703ab93f216391b04cc43aa58a9c1caf51edfc597ca",
+    "docs/visual-qa/surface-publication-legends/split-poster.svg": "761fbc80704fb23afe662c33e9a2e3d1b015f6dcdc99af1276070a67abdda727"
+  },
+  "limits": [
+    "Analytic two-triangle surface, not cortical geometry or a native 3D performance proof.",
+    "Scalar bars use 512-sample nearest strips partitioned at mapping boundaries; finite display approximation.",
+    "Default font metrics are estimates; custom metrics can be supplied.",
+    "Renderer callback is responsible for honoring its prepared input; image dimensions are checked.",
+    "Forked gallery prints JDK 25 Scala LazyVals sun.misc.Unsafe deprecation notices; compiler warnings absent."
+  ],
+  "remaining": [
+    "Real cortical plate and native/performance acceptance",
+    "Example checksum discrepancy",
+    "Final admission, visual QA, and integrated gates"
+  ],
+  "conformance": {
+    "command": "sbt surfaceViewConformance",
+    "tests": {
+      "surfaceJVM": 132,
+      "surfaceJS": 105,
+      "surfaceViewJVM": 126,
+      "surfaceViewJS": 126,
+      "surfaceViewRasterJVM": 27,
+      "surfaceViewRasterJS": 27,
+      "surfaceViewJavafxJVM": 22,
+      "surfaceViewThreeJS": 19,
+      "surfaceViewConnectivityJVM": 2,
+      "surfaceViewConnectivityJS": 2
+    },
+    "passingTests": 588
+  }
+}

@@ -94,7 +94,7 @@ final class JavaFxSurfaceController private (
     if event.getButton == MouseButton.PRIMARY then
       pick(event).fold(record, pick =>
         latestPick = Some(pick)
-        dispatch(SurfaceViewerAction.Select(pick.surface, pick.vertex))
+        dispatch(SurfaceViewerAction.SelectFace(pick.surface, pick.face, pick.vertex))
       )
 
   private val moveHandler: EventHandler[MouseEvent] = event =>
@@ -188,24 +188,22 @@ final class JavaFxSurfaceController private (
                 Left(JavaFxInteractionError.InvalidPickedFace(localFace))
               else
                 val face = chunk.faceStart + localFace
-                val packet = currentPlan.meshes.find(_.surface == chunk.surface).get
+                val packet = backend.pickingPlan.getOrElse(currentPlan).meshes.find(_.surface == chunk.surface).get
                 val offset = face * 3
                 val a = packet.indices(offset)
                 val b = packet.indices(offset + 1)
                 val c = packet.indices(offset + 2)
                 val point = result.getIntersectedPoint
                 val weights = barycentric(packet, a, b, c, point.getX, point.getY, point.getZ)
-                val vertex =
-                  if weights._1 >= weights._2 && weights._1 >= weights._3 then a
-                  else if weights._2 >= weights._3 then b
-                  else c
+                val original = packet.sourceBarycentric(face, weights._1, weights._2, weights._3)
+                val vertex = packet.pickedVertex(face, weights._1, weights._2, weights._3)
                 Right(JavaFxSurfacePick(
                   chunk.surface,
-                  FaceId(face),
+                  FaceId(packet.sourceFace(face)),
                   VertexId(vertex),
-                  weights._1,
-                  weights._2,
-                  weights._3
+                  original._1,
+                  original._2,
+                  original._3
                 ))
         case _ => Left(JavaFxInteractionError.UnknownPickNode)
 

@@ -20,11 +20,38 @@ class SurfaceViewerExampleSuite extends munit.FunSuite:
     assertEquals(first.selectedSurface, "gifti-left")
     assertEquals(first.selectedVertex, 2)
     assertEquals(first.cameraDirection, Vector(0.0, 0.0, 1.0))
-    assertEquals(first.imageHash, 895258625)
-    assertEquals(first.shadedPixels, 12720)
+    assertEquals(first.imageHash, -748488703)
+    assertEquals(first.shadedPixels, 11342)
     assert(first.shadedPixels >= 10000, "visual fixture must occupy a meaningful image area")
     assertEquals(first.pickedSurface, "gifti-left")
     assertEquals(first.pickedVertex, 2)
+
+  test("aspect-preserving default matches an analytic mask; explicit Fill retains the old receipt"):
+    val example = SurfaceViewerExample.portable
+    val legacy = example.copy(plan = example.plan.copy(viewportFit = scalafim.surface.view.SurfaceViewportFit.Fill))
+    val old = SurfaceViewerExample.semanticReceipt(legacy)
+    assertEquals(old.imageHash, 895258625)
+    assertEquals(old.shadedPixels, 12720)
+    val white = Rgba32.unsafe(255, 255, 255)
+    for (current, contained) <- Vector(example -> true, legacy -> false) do
+      val image = SurfaceRasterizer.render(current.plan, RasterDimensions.unsafe(320, 180),
+        SurfaceRasterStyle(culling = TriangleCulling.None)).toOption.get.image
+      // Orthographic limits +/-2/3 put each unit triangle in a 160x160
+      // physical viewport, centered vertically in 320x180. Pixel centers
+      // therefore have x=27..132, y=37..142, and y>=x+10 in each half.
+      // Explicit Fill stretches y by 9/8: its diagonal is 8*y>=9*x,
+      // evaluated below at doubled integer pixel-center coordinates.
+      var y = 0
+      while y < 180 do
+        var x = 0
+        while x < 320 do
+          val local = x % 160
+          val expected = if contained then
+            local >= 27 && local <= 132 && y >= 37 && y <= 142 && y >= local + 10
+          else local >= 27 && local <= 132 && y >= 30 && y <= 149 && 8 * (2 * y + 1) >= 9 * (2 * local + 1)
+          assertEquals(image.pixelUnsafe(x, y) != white, expected, s"coverage at ($x,$y), contained=$contained")
+          x += 1
+        y += 1
 
   test("visual QA accepts the exact oracle and rejects flips and color corruption"):
     val dimensions = RasterDimensions.unsafe(320, 180)

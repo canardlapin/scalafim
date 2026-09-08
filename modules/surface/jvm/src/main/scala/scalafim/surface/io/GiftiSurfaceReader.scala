@@ -9,7 +9,13 @@ import scala.util.control.NonFatal
 object GiftiSurfaceReader:
 
   def read(path: Path): SurfaceGeometry =
-    read(path, FreeSurferSurfaceReader.inferHemisphere(path), FreeSurferSurfaceReader.inferKind(path))
+    unsafe {
+      for
+        document <- GiftiReader.read(path)
+        hemisphere <- GiftiSurfaceCodec.inferredHemisphere(document, FreeSurferSurfaceReader.inferHemisphere(path))
+        surface <- geometry(document, hemisphere, FreeSurferSurfaceReader.inferKind(path))
+      yield surface
+    }
 
   def readEither(path: Path): Either[SurfaceError, SurfaceGeometry] =
     catchRead(path)(read(path))

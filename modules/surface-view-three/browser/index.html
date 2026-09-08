@@ -30,8 +30,15 @@
         const canvas = document.querySelector("#surface");
         const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
         window.scalafimWebGlCapability = { available: Boolean(gl), lost: gl?.isContextLost() ?? null };
-        const matrix = exports.runScalafimThreeAdmissionMatrix(THREE, canvas, 1);
-        const anatomical = exports.runScalafimThreeProbe(THREE, canvas);
+        const api = typeof runScalafimThreeProbe === "function"
+          ? { runScalafimThreeAdmissionMatrix, runScalafimThreeProbe, runScalafimThreeFaceProbe,
+              runScalafimThreeNearestProbe, runScalafimThreeFragmentProbe }
+          : exports;
+        const matrix = api.runScalafimThreeAdmissionMatrix(THREE, canvas, 1);
+        const anatomical = api.runScalafimThreeProbe(THREE, canvas);
+        const { image: faceImage, ...facewise } = api.runScalafimThreeFaceProbe(THREE, document.createElement("canvas"));
+        const { image: nearestImage, ...nearest } = api.runScalafimThreeNearestProbe(THREE, document.createElement("canvas"));
+        const { image: fragmentImage, ...fragments } = api.runScalafimThreeFragmentProbe(THREE, document.createElement("canvas"));
         const violations = matrix.flatMap(entry => entry.observations.flatMap(observation => {
           const reasons = [];
           if (observation.path === "ColdLoad" &&
@@ -62,9 +69,9 @@
             })
         );
         window.scalafimThreeAdmissionMatrix = matrix;
-        const passed = anatomical.status === "pass" &&
+        const passed = anatomical.status === "pass" && facewise.status === "pass" && nearest.status === "pass" &&
           anatomical.gpuProjection?.status === "pass" &&
-          matrix.length === 48 && violations.length === 0;
+          matrix.length === 48 && violations.length === 0 && fragments.cases.every(entry => entry.passed);
         document.body.dataset.scalafimThree = passed ? "pass" : "fail";
         status.textContent = passed
           ? "PASS — Three.js rendering, GPU projection parity, and 48-case admission matrix"
@@ -74,6 +81,9 @@
           backend: matrix[0]?.observations[0]?.backend,
           metadata: matrix[0]?.metadata,
           anatomical,
+          nearest,
+          facewise,
+          fragments,
           matrixCases: matrix.length,
           violations,
           paths
@@ -81,7 +91,7 @@
       } catch (error) {
         document.body.dataset.scalafimThree = "fail";
         status.textContent = "FAIL";
-        receipt.textContent = error?.stack || String(error);
+        receipt.textContent = `${String(error)}\n${error?.stack || ""}`;
         console.error(error);
       }
     </script>

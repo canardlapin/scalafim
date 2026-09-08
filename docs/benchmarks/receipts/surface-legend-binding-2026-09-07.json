@@ -1,0 +1,59 @@
+{
+  "schema": "scalafim-surface-legend-binding-v1",
+  "recordedAtUtc": "2026-09-08T03:27:12.416593+00:00",
+  "status": "typed legend binding and scene revision 6 verified; publication layout and final plan acceptance remain open",
+  "upstreamRevision": "1d27871cbdeb16d4c43d5d1d6f42b984b4a8ee61",
+  "upstreamBranch": "codex/scalar-mapping-descriptors-20260907",
+  "upstreamRemote": "https://github.com/canardlapin/intaglio.git",
+  "upstreamEvidence": "Live branch SHA and fresh sbt dependency checkout match; six published source files match the earlier 519-test foundation receipt.",
+  "command": "sbt -Dsbt.supershell=false surfaceViewJVM/test surfaceViewJS/test",
+  "buildOverride": null,
+  "tests": {
+    "surfaceViewJVM": 121,
+    "surfaceViewJS": 121
+  },
+  "passingTests": 242,
+  "newLegendContractsPerPlatform": 15,
+  "sourceSha256": {
+    "build.sbt": "96d8f6111df0a99fdcf95c62f27d01ce84014ce57da0f439b2a43c8688c0e96c",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLegend.scala": "c12c5c15a23c6d43c3fbd61d61c93601aedc313132077ff21b8b8de329369d59",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala": "c268b7f95ef8d0103e0b98df551e17116befdf335df49dc9087404552c907928",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceMappingPartition.scala": "69c003298b4aa370dc5ad383a366378a53540ebb5380247ecbc5c6f72e2406fb",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala": "0b41b6aa1eea9f6d36d7f372daa52dcbdbdd1b64a29d8568d21a41cc53235229",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala": "d4daa6589ec8cdd877161fc9cc49ab283d092c037f6c48f0b86affd2b4329b5a",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneLegendCodec.scala": "5c1e44dede069ed5f5ec78befc5c95264f1889673d6518ed7c75a23ed8d50ff2",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceLegendSuite.scala": "5f87b797a445c444f91eb965c796d310171f61f44674a583daec1f3c7387201d",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneLegendSuite.scala": "80c3fe5622a45701ec085accbe4816df6c5c730c1e4df8e073bd93b4a43a2714",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala": "f6653a9affae5d76e103e5caf60b7fcc4a1ddc704bb0614531596d2475d8c1bd",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarMappingSuite.scala": "4b28e476f562d66cf3d33c052af050ae0b315bccffc01b3acfdfab60c2612efa",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala": "dea6428ae3296998da2a9afff596c2eb194087208b9d2b2cd305e1004c28192e",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarInterpolationSuite.scala": "64f4bd4cfdac7e9b21163bac1b955ececa99d2b4ddedef67a93910745e54a09f"
+  },
+  "artifactsSha256": {
+    "docs/benchmarks/receipts/surface-legend-binding-2026-09-07.log.gz": "1817dc1367281fdf19f62130c6d2b3f961a956b2480908c6b4d6794fd403cb42"
+  },
+  "checks": [
+    "Effective mapping determines continuous and split colors and analytic positions",
+    "Shared legends reject differing effective mappings, including invalid colors and categorical fallback",
+    "Equivalent effective mappings can share despite different base windows",
+    "Categories require complete palette labels and face-constant or nearest-sample colors",
+    "Opaque, hidden, missing, duplicate, and undisplayed layer requests are rejected",
+    "Custom ticks are checked after window updates",
+    "Window and threshold changes invalidate snapshots; camera and opacity preserve calibration identity",
+    "Revision 6 roundtrips all four alternatives and metadata",
+    "Restoration rejects tampered identity, edited threshold, and changed categorical fallback",
+    "Revisions 1 through 5 remain readable with original JSON shape",
+    "Unknown-field policy applies within legend requests; duplicate category IDs fail",
+    "Existing manual publication decoration regression remains passing"
+  ],
+  "limits": [
+    "No new native framebuffer or publication layout acceptance is claimed by this receipt.",
+    "Current source includes earlier uncommitted surface work; this is a focused consumer suite, not the final full-plan gate."
+  ],
+  "remaining": [
+    "Publication layout and legend identity receipts",
+    "Categorical drawing and complete publication visual QA",
+    "Cortical performance and native acceptance",
+    "Example checksum diagnosis and final plan gates"
+  ]
+}

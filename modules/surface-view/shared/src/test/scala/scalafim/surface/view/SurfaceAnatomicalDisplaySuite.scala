@@ -84,3 +84,18 @@ class SurfaceAnatomicalDisplaySuite extends munit.FunSuite:
     )
     val scene = SurfacePublication.compose(image, decorated)
     assertEquals(scene.size, 5)
+
+  test("sulcal sign convention and contrast affect colors without changing scalar values"):
+    val values = Vector(-2.0, 0.0, 2.0)
+    val field = SurfaceField.full(folded, values)
+    for polarity <- SurfaceLayer.SulcalPolarity.values do
+      val layer = SurfaceLayer.curvatureUnderlay(curvatureId, surfaceId, field, inflated,
+        polarity = polarity, window = DisplayWindow.unsafe(-2.0, 2.0),
+        sulcalColor = Rgba32.unsafe(40,40,40), gyralColor = Rgba32.unsafe(220,220,220)).toOption.get
+      val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surfaceId, inflated).toOption.get), Vector(layer)).toOption.get
+      val colors = SurfaceCompiler.compile(model, SurfaceViewerState.initial(model)).toOption.get.layers.head.colors
+      val expected = polarity match
+        case SurfaceLayer.SulcalPolarity.PositiveIsSulcal => Vector(220,130,40)
+        case SurfaceLayer.SulcalPolarity.NegativeIsSulcal => Vector(40,130,220)
+      assertEquals(Vector.tabulate(colors.length)(colors(_)), expected.map(v => Rgba32.unsafe(v,v,v).toPackedInt))
+      assertEquals(field.data.toVector, values)

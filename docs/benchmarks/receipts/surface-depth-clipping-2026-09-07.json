@@ -1,0 +1,305 @@
+{
+  "schema": "scalafim-surface-depth-clipping-v1",
+  "recordedAtUtc": "2026-09-08T02:37:18.814352+00:00",
+  "sourceState": "dirty local worktree; not published",
+  "javafxVersion": "21.0.5",
+  "commands": [
+    "sbt surfaceViewConformance",
+    "sbt surfaceViewJavafxJVM/test",
+    "sbt surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceDepthProbe"
+  ],
+  "nativeCases": [
+    {
+      "mode": "near",
+      "approximate": false,
+      "perspective": false,
+      "width": 128,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 7
+    },
+    {
+      "mode": "near",
+      "approximate": false,
+      "perspective": false,
+      "width": 192,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 7
+    },
+    {
+      "mode": "far",
+      "approximate": false,
+      "perspective": false,
+      "width": 128,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 7
+    },
+    {
+      "mode": "far",
+      "approximate": false,
+      "perspective": false,
+      "width": 192,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 7
+    },
+    {
+      "mode": "restored",
+      "approximate": false,
+      "perspective": false,
+      "width": 128,
+      "height": 128,
+      "kept": 3816,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 7
+    },
+    {
+      "mode": "restored",
+      "approximate": false,
+      "perspective": false,
+      "width": 192,
+      "height": 128,
+      "kept": 3816,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 7
+    },
+    {
+      "mode": "near",
+      "approximate": false,
+      "perspective": true,
+      "width": 128,
+      "height": 128,
+      "kept": 759,
+      "removed": 1001,
+      "maximumError": 0,
+      "maximumReferenceError": 6
+    },
+    {
+      "mode": "near",
+      "approximate": false,
+      "perspective": true,
+      "width": 192,
+      "height": 128,
+      "kept": 759,
+      "removed": 1001,
+      "maximumError": 0,
+      "maximumReferenceError": 6
+    },
+    {
+      "mode": "far",
+      "approximate": false,
+      "perspective": true,
+      "width": 128,
+      "height": 128,
+      "kept": 1001,
+      "removed": 759,
+      "maximumError": 1,
+      "maximumReferenceError": 9
+    },
+    {
+      "mode": "far",
+      "approximate": false,
+      "perspective": true,
+      "width": 192,
+      "height": 128,
+      "kept": 1001,
+      "removed": 759,
+      "maximumError": 1,
+      "maximumReferenceError": 9
+    },
+    {
+      "mode": "restored",
+      "approximate": false,
+      "perspective": true,
+      "width": 128,
+      "height": 128,
+      "kept": 1760,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 9
+    },
+    {
+      "mode": "restored",
+      "approximate": false,
+      "perspective": true,
+      "width": 192,
+      "height": 128,
+      "kept": 1760,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 9
+    },
+    {
+      "mode": "near",
+      "approximate": true,
+      "perspective": false,
+      "width": 128,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "near",
+      "approximate": true,
+      "perspective": false,
+      "width": 192,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "far",
+      "approximate": true,
+      "perspective": false,
+      "width": 128,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "far",
+      "approximate": true,
+      "perspective": false,
+      "width": 192,
+      "height": 128,
+      "kept": 1908,
+      "removed": 1908,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "restored",
+      "approximate": true,
+      "perspective": false,
+      "width": 128,
+      "height": 128,
+      "kept": 3816,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "restored",
+      "approximate": true,
+      "perspective": false,
+      "width": 192,
+      "height": 128,
+      "kept": 3816,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "near",
+      "approximate": true,
+      "perspective": true,
+      "width": 128,
+      "height": 128,
+      "kept": 759,
+      "removed": 1001,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "near",
+      "approximate": true,
+      "perspective": true,
+      "width": 192,
+      "height": 128,
+      "kept": 759,
+      "removed": 1001,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "far",
+      "approximate": true,
+      "perspective": true,
+      "width": 128,
+      "height": 128,
+      "kept": 1001,
+      "removed": 759,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "far",
+      "approximate": true,
+      "perspective": true,
+      "width": 192,
+      "height": 128,
+      "kept": 1001,
+      "removed": 759,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "restored",
+      "approximate": true,
+      "perspective": true,
+      "width": 128,
+      "height": 128,
+      "kept": 1760,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    },
+    {
+      "mode": "restored",
+      "approximate": true,
+      "perspective": true,
+      "width": 192,
+      "height": 128,
+      "kept": 1760,
+      "removed": 0,
+      "maximumError": 0,
+      "maximumReferenceError": 2
+    }
+  ],
+  "passed": 24,
+  "maximumRetainedPixelChange": 1,
+  "maximumBoundedReferenceError": 2,
+  "maximumLegacyReferenceError": 9,
+  "limitations": [
+    "Legacy UV color interpolation differs from the reference by up to 9 channel values in this fixture; this test requires clipping to preserve its pre-clip pixels and records that separate limitation.",
+    "Boundary exclusion: original barycentric minimum above 0.1 and eye-depth distance from the clipping plane above 0.08 world units.",
+    "JavaFX native mouse picking is not exercised by this snapshot probe."
+  ],
+  "implementation": [
+    "Explicit near/far modifies only shared projection depth coefficients and camera receipt identity.",
+    "JavaFX parallel camera depth transform maps that interval into its viewport-sized native rendering volume.",
+    "Parallel camera pick-ray clip fractions match the same viewport volume.",
+    "Default projection and orthographic depth transform remain unchanged without explicit near/far."
+  ],
+  "upstreamSources": [
+    "https://github.com/openjdk/jfx/blob/jfx21/modules/javafx.graphics/src/main/java/javafx/scene/ParallelCamera.java",
+    "https://github.com/openjdk/jfx/blob/jfx21/modules/javafx.graphics/src/main/java/com/sun/javafx/geom/PickRay.java"
+  ],
+  "sourceSha256": {
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala": "6d134945fe8f4c2d12426dca98528534ee7bd955c0ddbadb8aad01f363696810",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala": "c62db24a09ce2c7946ca3e091ab60ed1669904e152d7511ff536b0057d04f177",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceClipRangeSuite.scala": "7721b0955eea2d7a63d7d82f520af5c1b21301737dd76eedc6bb153f1f7017fc",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala": "b7c4e7a01bb9987752eaa9bf432267767d0fef261adc3c0bddcf6165aa5d8fe0",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceDepthProbe.scala": "70651198bacbeb9cf503c10b895fb61b3257c3a062592346f15fa5e9eb5ba94c"
+  },
+  "logSha256": "acf4c00cefaeece9e7b954a9a8344802b34d2595f1a3e3d81afb89b4022aedd1",
+  "threeReceipt": "surface-three-fragments-2026-09-07.json"
+}

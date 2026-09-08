@@ -3,6 +3,7 @@ package scalafim.surface
 import scalafim.image.Affine
 import scalafim.image.NeuroVol
 import scalafim.image.PrimitiveBuffers
+import scalafim.image.{VoxelCoord, WorldPoint}
 import scala.util.control.NonFatal
 
 final case class SurfaceGeometryPair(white: SurfaceGeometry, pial: SurfaceGeometry):
@@ -44,6 +45,44 @@ final case class SurfaceSampleResult(
   sampleCounts: SurfaceField[Int]
 )
 
+/** Outcome of a requested sample. Included values may be nonfinite, matching
+  * ordinary sampling semantics; inclusion describes geometry and mask admission.
+  */
+enum SurfaceSampleOutcome:
+  case OutsideVolume
+  case Masked(voxel: VoxelCoord)
+  case Included(voxel: VoxelCoord, value: Double)
+
+final case class SurfacePointSample(world: WorldPoint, outcome: SurfaceSampleOutcome)
+
+/** Ordered requests and aggregation inputs for one vertex. Duplicate voxel hits
+  * remain distinct requests. Nearest uses the first included request; Average
+  * and Mode use every included request, including duplicates.
+  */
+final case class SurfaceVertexSample private[surface] (
+    vertex: VertexId,
+    path: SurfaceSamplingPath,
+    aggregation: SurfaceSampleAggregation,
+    samples: Vector[SurfacePointSample],
+    value: Double
+):
+  def acceptedSampleIndices: Vector[Int] = samples.indices.filter { index =>
+    samples(index).outcome match
+      case SurfaceSampleOutcome.Included(_, _) => true
+      case _ => false
+  }.toVector
+
+  def contributingSampleIndices: Vector[Int] = aggregation match
+    case SurfaceSampleAggregation.Nearest => acceptedSampleIndices.take(1)
+    case _ => acceptedSampleIndices
+
+  def acceptedCount: Int = acceptedSampleIndices.size
+
+  def hasNonFiniteSamples: Boolean = samples.exists { sample => sample.outcome match
+    case SurfaceSampleOutcome.Included(_, value) => !value.isFinite
+    case _ => false
+  }
+
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   def sample(volume: NeuroVol[Double], mask: Option[NeuroVol[Boolean]] = None): SurfaceSampleResult =
@@ -65,6 +104,21 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
       values = SurfaceField.full(plan.surfaces.white, values.toVector, "surface-sample"),
       sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count")
     )
+
+  /** Inspect just one vertex without allocating receipts for the whole mesh. */
+  def inspectVertex(volume: NeuroVol[Double], vertex: VertexId,
+      mask: Option[NeuroVol[Boolean]] = None): SurfaceVertexSample =
+    require(vertex.index < plan.surfaces.white.vertexCount, "vertex id out of range")
+    mask.foreach(validateMask(volume, _))
+    val points = Vector.newBuilder[SurfacePointSample]
+    val values = sampleValues(volume, mask, samplePoints(vertex), Some(point => { points += point; () }))
+    SurfaceVertexSample(vertex, plan.path, plan.aggregation, points.result(),
+      if values.isEmpty then Double.NaN else aggregate(values))
+
+  def inspectVertexEither(volume: NeuroVol[Double], vertex: VertexId,
+      mask: Option[NeuroVol[Boolean]] = None): Either[SurfaceError, SurfaceVertexSample] =
+    try scala.util.Right(inspectVertex(volume, vertex, mask))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidGeometry(SurfaceError.reason(error)))
 
   private def samplePoints(vertex: VertexId): Vector[Vector[Double]] =
     val white = worldPoint(plan.surfaces.white, vertex)
@@ -93,14 +147,23 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
   private def sampleValues(
     volume: NeuroVol[Double],
     mask: Option[NeuroVol[Boolean]],
-    points: Vector[Vector[Double]]
+    points: Vector[Vector[Double]],
+    observe: Option[SurfacePointSample => Unit] = None
   ): Vector[Double] =
     val out = Vector.newBuilder[Double]
     points.foreach { point =>
-      nearestGrid(volume, point).foreach { grid =>
-        val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-        if mask.forall(_.linear(lin)) then out += volume.linear(lin)
-      }
+      nearestGrid(volume, point) match
+        case None => observe.foreach(callback => callback(SurfacePointSample(
+          WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.OutsideVolume)))
+        case Some(grid) =>
+          val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
+          if mask.forall(_.linear(lin)) then
+            val value = volume.linear(lin)
+            out += value
+            observe.foreach(callback => callback(SurfacePointSample(WorldPoint(point(0), point(1), point(2)),
+              SurfaceSampleOutcome.Included(VoxelCoord(grid(0), grid(1), grid(2)), value))))
+          else observe.foreach(callback => callback(SurfacePointSample(WorldPoint(point(0), point(1), point(2)),
+            SurfaceSampleOutcome.Masked(VoxelCoord(grid(0), grid(1), grid(2))))))
     }
     out.result()
 

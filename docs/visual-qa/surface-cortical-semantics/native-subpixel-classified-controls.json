@@ -1,0 +1,5 @@
+[
+{"classifiedCoverage":false,"shiftY":-0.01,"exactNearCoverage":true,"quantizedNearCoverage":true,"nativeGray":85,"nativeRayFace":1},
+{"classifiedCoverage":true,"shiftY":0.0,"exactNearCoverage":false,"quantizedNearCoverage":true,"nativeGray":85,"nativeRayFace":0},
+{"classifiedCoverage":false,"shiftY":0.01,"exactNearCoverage":false,"quantizedNearCoverage":false,"nativeGray":120,"nativeRayFace":0}
+]

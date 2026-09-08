@@ -1,0 +1,130 @@
+{
+  "schema": "scalafim-surface-legend-foundation-v1",
+  "recordedAtUtc": "2026-09-08T03:03:15.182364+00:00",
+  "status": "upstream implementation locally verified; consumer integration and immutable pin pending",
+  "upstreamBase": "c6b55d066a8f4c27b0acc3c34fc04737bfaba0bd",
+  "upstreamCheckout": "/private/tmp/scalafim-intaglio-scalar",
+  "sourceSha256": {
+    "modules/core/README.md": "871257ac633352b2c9c13401c218ca4b60836ee69825051bc7af95e925da3138",
+    "modules/core/shared/src/main/scala/intaglio/ScalarMapping.scala": "fcf8db3525463ccd111ae5578e2ce76a64fd138830b906c3ae0f7b0c7a6783be",
+    "modules/core/shared/src/main/scala/intaglio/ScalarLegend.scala": "615dff37085e298b1ce9cd5d887dc652139e15450ce22f860d4d7b70f90152f9",
+    "modules/core/shared/src/main/scala/intaglio/ScalarLegendDrawing.scala": "cfa50010328b24c7d3157a4f747357aea438445ed6e73750f88c016adcbcb4ad",
+    "modules/core/shared/src/test/scala/intaglio/ScalarLegendSuite.scala": "30242967d6f17867ad7f02a43faa66aadff9f62d925abda88a307361c3593dee",
+    "modules/svg/jvm/src/test/scala/intaglio/svg/ScalarLegendGallery.scala": "3420e349c55ad6878676422b93b89a376f6793f6db0623a6a07e6f9b56e64f51"
+  },
+  "tests": {
+    "core/jvm": 239,
+    "core/js": 235,
+    "svg/jvm": 24,
+    "svg/js": 21
+  },
+  "passingTests": 519,
+  "commands": [
+    "sbt coreJVM/test coreJS/test svgJVM/test svgJS/test",
+    "sbt svgJVM/Test/runMain intaglio.svg.ScalarLegendGallery /private/tmp/scalafim-legend-gallery",
+    "project Playwright Chromium inspecting eight SVG documents and every text bounding box"
+  ],
+  "browser": {
+    "browser": "151.0.7922.34",
+    "errors": [],
+    "cases": [
+      {
+        "file": "asymmetric-diverging-manuscript.svg",
+        "width": 374,
+        "height": 256,
+        "texts": 11,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "asymmetric-diverging-poster.svg",
+        "width": 587,
+        "height": 389,
+        "texts": 11,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "missing-threshold-manuscript.svg",
+        "width": 374,
+        "height": 319,
+        "texts": 14,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "missing-threshold-poster.svg",
+        "width": 587,
+        "height": 492,
+        "texts": 14,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "sequential-manuscript.svg",
+        "width": 374,
+        "height": 256,
+        "texts": 10,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "sequential-poster.svg",
+        "width": 587,
+        "height": 389,
+        "texts": 10,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "split-manuscript.svg",
+        "width": 374,
+        "height": 272,
+        "texts": 14,
+        "overflow": [],
+        "overlaps": []
+      },
+      {
+        "file": "split-poster.svg",
+        "width": 587,
+        "height": 419,
+        "texts": 14,
+        "overflow": [],
+        "overlaps": []
+      }
+    ]
+  },
+  "artifactsSha256": {
+    "docs/benchmarks/receipts/intaglio-scalar-legends.patch": "d8206ebbf7c4a5bff26487750c4e4987e62fcc0f47c7d9b3904c1ae0ac9b3e2c",
+    "docs/benchmarks/receipts/surface-legend-foundation-2026-09-07.log.gz": "23c96685ce97a375fd6d0f6224db34c0b07bf2110d7972dc96211ef616d50629",
+    "docs/visual-qa/surface-legends/asymmetric-diverging-manuscript.png": "b26c362b54dd8fad5847a73262220ab07f5f9553b506a6e1805241590e87e49f",
+    "docs/visual-qa/surface-legends/asymmetric-diverging-manuscript.svg": "cffc2900478b2f9f6bc4cacb6754d3568b3c5ba07723d2e1a9b71b926bbb5ac2",
+    "docs/visual-qa/surface-legends/asymmetric-diverging-poster.png": "96dfc2e4343931126a5925e79ef5770d4516825359e9062609387f0b22528170",
+    "docs/visual-qa/surface-legends/asymmetric-diverging-poster.svg": "13589c1f6fa9ce8053ef7e84b3119fd34055bb0eb0622ef334e1dca51046714c",
+    "docs/visual-qa/surface-legends/missing-threshold-manuscript.png": "6b629ce657fb7fb26d6b29669343d1303204de8259feaa509bc7d66476dfcee2",
+    "docs/visual-qa/surface-legends/missing-threshold-manuscript.svg": "73be6f02a8519671a50284b93367bc2b7ea807ca5640a44e77bc9b42aef77c7c",
+    "docs/visual-qa/surface-legends/missing-threshold-poster.png": "f4d2d131c858fafd610780dc9b370e506fa8ca8083bb62941d8c6a11ed021895",
+    "docs/visual-qa/surface-legends/missing-threshold-poster.svg": "2f8fdb3bc5ddd8564d5db21486d5cd91f6f2a25661124d88ae6ee402b60ee187",
+    "docs/visual-qa/surface-legends/sequential-manuscript.png": "7ffc6864a781378c81e005e8d0c8f69516d5562ee44f9e89391b5c621492a47e",
+    "docs/visual-qa/surface-legends/sequential-manuscript.svg": "4281b326a30ea32d8785409228975e626b9efc703d3c97d037e72450792314eb",
+    "docs/visual-qa/surface-legends/sequential-poster.png": "dfe5c413dbbbcff0f960a0364866c4167657b2c015248ee459eec8a8e47975df",
+    "docs/visual-qa/surface-legends/sequential-poster.svg": "253389ba8288dbf929b2e4e5270a77a32f09b5bf71e439fe953373fb71e7f864",
+    "docs/visual-qa/surface-legends/split-manuscript.png": "821aa7ee0728cf31b1ca9ad6658f3df5ae5e7a3d2499f69aecb68d1db98eaa32",
+    "docs/visual-qa/surface-legends/split-manuscript.svg": "b482857f3e83b47b666a5a039c3192b244b50efc5b576c7761af66a830d97388",
+    "docs/visual-qa/surface-legends/split-poster.png": "1fd62080ebea857b2af179f63984343af2de9c603731af6296653cdbea00eee4",
+    "docs/visual-qa/surface-legends/split-poster.svg": "76f649c85ebdc39e1f84eb0feae7c1b27d6704cf7fdef2b3ff8c1421a086da0e"
+  },
+  "limits": [
+    "Sampled nearest-neighbor strips approximate the continuous mapping at the selected finite resolution.",
+    "Default TextMetrics are estimates; platform metrics can be supplied.",
+    "CairoSVG does not honor the emitted pixelated image-rendering hint; authoritative screenshots use Chromium.",
+    "No categorical surface binding, automatic publication placement, or scene persistence is implemented by this upstream slice."
+  ],
+  "remaining": [
+    "immutable upstream dependency pin",
+    "surface scalar and categorical bindings with sharing validation",
+    "publication layout and identity receipts",
+    "scene persistence and stale-legend prevention",
+    "full-plan cortical/categorical and final example/native gates"
+  ]
+}

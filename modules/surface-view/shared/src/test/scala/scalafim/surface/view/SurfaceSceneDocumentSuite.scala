@@ -9,6 +9,20 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
   private val activationId = SurfaceLayerId.unsafe("activation")
   private val labelsId = SurfaceLayerId.unsafe("labels")
 
+  test("revision 1 documents retain vertex association and their original JSON shape"):
+    val (model, state, bindings, provenance) = fixture()
+    val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+    val json = SurfaceSceneCodec.encode(current).replace("\"revision\":6", "\"revision\":1").replace(",\"legends\":[]", "")
+      .replace(",\"scalarInterpolation\":false", "")
+      .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")
+      .replace(",\"vertexInterpolation\":\"color\"", "")
+      .replace(",\"association\":\"vertex\"", "").replace(",\"face\":null", "")
+    assert(!json.contains("\"association\""))
+    val decoded = SurfaceSceneCodec.decode(json).toOption.get
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V1)
+    assert(decoded.layers.forall(_.association == SurfaceSampleAssociation.Vertex))
+    assertEquals(SurfaceSceneCodec.encode(decoded), json)
+
   test("canonical document roundtrip reproduces state, camera, and semantic render resources"):
     val (model, state, bindings, provenance) = fixture()
     val document = SurfaceSceneDocument.capture(
@@ -59,10 +73,10 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
 
-    val future = encoded.replace("\"revision\":1", "\"revision\":2")
+    val future = encoded.replace("\"revision\":6", "\"revision\":7")
     assertEquals(
       SurfaceSceneCodec.decode(future).left.toOption,
-      Some(SurfaceSceneError.UnsupportedRevision(2))
+      Some(SurfaceSceneError.UnsupportedRevision(7))
     )
 
   test("external digests and exact mesh identities are checked before state restoration"):

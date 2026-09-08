@@ -1,0 +1,541 @@
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala
+@@ -44,8 +44,15 @@
+ 
+   private[view] def describe(vertex: Int, timepoint: Int): String
+ 
+-  final def supportsWindow: Boolean = kind == SurfaceLayerKind.Scalar
+-  final def supportsThreshold: Boolean = kind == SurfaceLayerKind.Scalar
++  def supportsWindow: Boolean = false
++  def supportsThreshold: Boolean = false
++  def scalarMapping: Option[ScalarMapping] = None
++
++  final def effectiveScalarMapping(presentation: SurfaceLayerPresentation): Either[SurfaceViewError, Option[ScalarMapping]] =
++    scalarMapping match
++      case None => Right(None)
++      case Some(mapping) => mapping.resolve(presentation.window, presentation.threshold)
++        .left.map(error => SurfaceViewError.InvalidScalarMapping(id, error)).map(Some.apply)
+ 
+   final def isCompatibleWith(surface: SurfaceGeometry): Boolean =
+     geometry.hemisphere == surface.hemisphere && geometry.mesh.hasSameTopology(surface.mesh)
+@@ -83,7 +90,8 @@
+     colorizer: Colorizer[Double],
+     opacity: DisplayOpacity = DisplayOpacity.Opaque,
+     blendMode: DisplayBlendMode = DisplayBlendMode.Normal
+-  ): SurfaceLayer = new FaceLayer(id, surfaceId, field, SurfaceLayerKind.Scalar, colorizer, opacity, blendMode)
++  ): SurfaceLayer = new ScalarLayer(id, surfaceId, field.geometry, field.frameCount, opacity, blendMode,
++    ScalarSamples.Face(field), colorizer, SurfaceMapInterpolation.FaceConstant)
+ 
+   def faceLabels(
+     id: SurfaceLayerId,
+@@ -132,6 +140,14 @@
+       Rgba32.unsafe(208, 208, 208)
+     )
+ 
++  private enum ScalarSamples:
++    case Vertex(values: Array[Double])
++    case Face(field: SurfaceFaceField[Double])
++
++    def value(index: Int, frame: Int, count: Int): Double = this match
++      case Vertex(values) => values(frame * count + index)
++      case Face(field) => field.valueAtUnsafe(index, frame)
++
+   private final class ScalarLayer(
+     val id: SurfaceLayerId,
+     val surfaceId: SurfaceId,
+@@ -139,25 +155,33 @@
+     val frameCount: Int,
+     val opacity: DisplayOpacity,
+     val blendMode: DisplayBlendMode,
+-    values: Array[Double],
++    samples: ScalarSamples,
+     colorizer: Colorizer[Double],
+     override val interpolation: SurfaceMapInterpolation
+   ) extends SurfaceLayer:
+     val kind: SurfaceLayerKind = SurfaceLayerKind.Scalar
+-
+-    private[view] def writeColors(timepoint: Int, presentation: SurfaceLayerPresentation, target: Array[Int]): Unit =
+-      val effectiveWindow = presentation.window.flatMap(colorizer.withWindow).getOrElse(colorizer)
+-      val effective = presentation.threshold.flatMap(effectiveWindow.withThreshold).getOrElse(effectiveWindow)
+-      val frame = if frameCount == 1 then 0 else timepoint
+-      val offset = frame * geometry.vertexCount
++    override val association: SurfaceSampleAssociation = samples match
++      case ScalarSamples.Vertex(_) => SurfaceSampleAssociation.Vertex
++      case ScalarSamples.Face(_) => SurfaceSampleAssociation.Face
++    override val scalarMapping: Option[ScalarMapping] = ScalarMapping.inspect(colorizer)
++    override def supportsWindow: Boolean = scalarMapping.nonEmpty || colorizer.supportsWindow
++    override def supportsThreshold: Boolean = scalarMapping.nonEmpty || colorizer.supportsThreshold
++
++    private[view] def writeColors(timepoint: Int, presentation: SurfaceLayerPresentation, target: Array[Int]): Unit =
++      val effective = effectiveScalarMapping(presentation).toOption.get match
++        case Some(mapping) => mapping.colorizer
++        case None =>
++          val windowed = presentation.window.flatMap(colorizer.withWindow).getOrElse(colorizer)
++          presentation.threshold.flatMap(windowed.withThreshold).getOrElse(windowed)
++      val frame = if frameCount == 1 then 0 else timepoint
+       var vertex = 0
+       while vertex < target.length do
+-        target(vertex) = effective.color(values(offset + vertex)).toPackedInt
++        target(vertex) = effective.color(samples.value(vertex, frame, sampleCount)).toPackedInt
+         vertex += 1
+ 
+     private[view] def describe(vertex: Int, timepoint: Int): String =
+       val frame = if frameCount == 1 then 0 else timepoint
+-      values(frame * geometry.vertexCount + vertex).toString
++      samples.value(vertex, frame, sampleCount).toString
+ 
+   private final class LabelLayer(
+     val id: SurfaceLayerId,
+@@ -257,7 +281,7 @@
+     interpolation: SurfaceVertexInterpolation = SurfaceVertexInterpolation.Color
+   ): Either[SurfaceViewError, SurfaceLayer] =
+     validateLength(geometry, frameCount, values.length).map: _ =>
+-      new ScalarLayer(id, surfaceId, geometry, frameCount, opacity, blendMode, values.clone(), colorizer, interpolation.policy)
++      new ScalarLayer(id, surfaceId, geometry, frameCount, opacity, blendMode, ScalarSamples.Vertex(values.clone()), colorizer, interpolation.policy)
+ 
+   def curvatureUnderlay(
+     id: SurfaceLayerId,
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala
+@@ -12,6 +12,7 @@
+   case UnknownSurface(id: SurfaceId)
+   case UnknownLayer(id: SurfaceLayerId)
+   case IncompatibleLayerDomain(layer: SurfaceLayerId, surface: SurfaceId)
++  case InvalidScalarMapping(layer: SurfaceLayerId, cause: ScalarMappingError)
+   case InvalidFrameCount(value: Int)
+   case InvalidDataLength(expected: Int, actual: Int)
+   case IncompatibleFrameCounts(counts: Vector[Int])
+@@ -66,6 +67,7 @@
+       case UnknownLayer(id) => s"surface layer '${id.value}' does not exist"
+       case IncompatibleLayerDomain(layer, surface) =>
+         s"layer '${layer.value}' does not have the exact mesh domain of surface '${surface.value}'"
++      case InvalidScalarMapping(layer, cause) => s"invalid mapping for layer '${layer.value}': ${cause.message}"
+       case InvalidFrameCount(value) => s"surface frame count must be positive; got $value"
+       case InvalidDataLength(expected, actual) => s"surface data length must be $expected; got $actual"
+       case IncompatibleFrameCounts(counts) =>
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala
+@@ -269,11 +269,15 @@
+       case SurfaceViewerAction.SetLayerWindow(id, window) =>
+         updatePresentation(model, state, id): presentation =>
+           requireCapability(model, id, "display windows", _.supportsWindow)
+-            .map(_ => presentation.copy(window = Some(window)))
++            .flatMap: _ =>
++              val next = presentation.copy(window = Some(window))
++              model.layer(id).get.effectiveScalarMapping(next).map(_ => next)
+       case SurfaceViewerAction.SetLayerThreshold(id, threshold) =>
+         updatePresentation(model, state, id): presentation =>
+           requireCapability(model, id, "display thresholds", _.supportsThreshold)
+-            .map(_ => presentation.copy(threshold = Some(threshold)))
++            .flatMap: _ =>
++              val next = presentation.copy(threshold = Some(threshold))
++              model.layer(id).get.effectiveScalarMapping(next).map(_ => next)
+       case SurfaceViewerAction.MoveLayer(id, index) =>
+         if !state.layerOrder.contains(id) then Left(SurfaceViewError.UnknownLayer(id))
+         else if index < 0 || index >= state.layerOrder.length then
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala
+@@ -26,8 +26,21 @@
+         if state.timepoint >= 0 && state.timepoint < model.frameCount then Right(())
+         else Left(SurfaceViewError.TimepointOutOfBounds(state.timepoint, model.frameCount))
+       _ <- validateInterpolation(model)
++      _ <- validateMappings(model, state)
+       frames <- resolveFrames(model, state)
+     yield compileUnsafe(model, state, frames)
++
++  private def validateMappings(model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceViewError, Unit] =
++    var index = 0
++    while index < model.layers.length do
++      val layer = model.layers(index)
++      state.presentations.get(layer.id) match
++        case None => return Left(SurfaceViewError.UnknownLayer(layer.id))
++        case Some(presentation) => layer.effectiveScalarMapping(presentation) match
++          case Left(error) => return Left(error)
++          case Right(_) => ()
++      index += 1
++    Right(())
+ 
+   private def validateInterpolation(model: SurfaceViewerModel): Either[SurfaceViewError, Unit] =
+     val partitioned = model.layers.filter(_.interpolation == SurfaceMapInterpolation.NearestVertex).map(_.surfaceId).toSet
+@@ -87,7 +100,8 @@
+           presentation.opacity,
+           layer.blendMode,
+           layer.association,
+-          layer.interpolation
++          layer.interpolation,
++          layer.effectiveScalarMapping(presentation).toOption.get
+         )
+         val slot = slots.indexWhere(_.surface == layer.surfaceId)
+         val meshKey = meshes(slot).resourceKey
+@@ -513,6 +527,8 @@
+     colors: Array[Int]
+   ): SurfaceResourceKey =
+     var hash = MurmurHash3.stringHash(layer.id.value)
++    layer.effectiveScalarMapping(presentation).toOption.get.foreach: mapping =>
++      hash = MurmurHash3.mix(hash, MurmurHash3.stringHash(mapping.canonicalKey))
+     if layer.association == SurfaceSampleAssociation.Face then hash = MurmurHash3.mix(hash, 0xface)
+     if layer.interpolation == SurfaceMapInterpolation.NearestVertex then hash = MurmurHash3.mix(hash, 0x6ea2)
+     var index = 0
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala
+@@ -78,7 +78,8 @@
+   opacity: DisplayOpacity,
+   blendMode: DisplayBlendMode,
+   association: SurfaceSampleAssociation = SurfaceSampleAssociation.Vertex,
+-  interpolation: SurfaceMapInterpolation = SurfaceMapInterpolation.VertexColor
++  interpolation: SurfaceMapInterpolation = SurfaceMapInterpolation.VertexColor,
++  scalarMapping: Option[ScalarMapping] = None
+ )
+ 
+ final case class SurfaceCameraPacket(
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala
+@@ -7,7 +7,7 @@
+ opaque type SurfacePlanRevision = Int
+ 
+ object SurfacePlanRevision:
+-  val Current: SurfacePlanRevision = 3
++  val Current: SurfacePlanRevision = 4
+ 
+   def make(value: Int): Either[String, SurfacePlanRevision] =
+     if value > 0 then Right(value)
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala
+@@ -57,7 +57,8 @@
+   frameCount: Int,
+   blendMode: DisplayBlendMode,
+   association: SurfaceSampleAssociation = SurfaceSampleAssociation.Vertex,
+-  vertexInterpolation: SurfaceVertexInterpolation = SurfaceVertexInterpolation.Color
++  vertexInterpolation: SurfaceVertexInterpolation = SurfaceVertexInterpolation.Color,
++  scalarMappingKey: Option[String] = None
+ )
+ 
+ final case class SurfaceSceneLayerState(
+@@ -100,13 +101,14 @@
+     else Right(new SurfaceProvenance(normalizedProducer, normalizedVersion, normalizedCreatedAt, normalizedEntries))
+ 
+ enum SurfaceDocumentRevision:
+-  case V1, V2, V3
++  case V1, V2, V3, V4
+ 
+   def value: Int =
+     this match
+       case V1 => 1
+       case V2 => 2
+       case V3 => 3
++      case V4 => 4
+ 
+ enum SurfaceUnknownFieldPolicy:
+   case Reject, Ignore
+@@ -147,7 +149,7 @@
+     yield restored
+ 
+ object SurfaceSceneDocument:
+-  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V3
++  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V4
+ 
+   def capture(
+     model: SurfaceViewerModel,
+@@ -181,7 +183,8 @@
+             layer.frameCount,
+             layer.blendMode,
+             layer.association,
+-            if layer.interpolation == SurfaceMapInterpolation.NearestVertex then SurfaceVertexInterpolation.NearestSample else SurfaceVertexInterpolation.Color
++            if layer.interpolation == SurfaceMapInterpolation.NearestVertex then SurfaceVertexInterpolation.NearestSample else SurfaceVertexInterpolation.Color,
++            layer.scalarMapping.map(_.canonicalKey)
+           ))
+       states <- traverse(state.layerOrder): id =>
+         state.presentations.get(id) match
+@@ -223,8 +226,11 @@
+     requiredFeatures: Set[SurfaceBackendFeature],
+     provenance: SurfaceProvenance
+   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
+-    if layers.exists(layer => layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample &&
+-        (revision != SurfaceDocumentRevision.V3 || layer.association != SurfaceSampleAssociation.Vertex)) then
++    if layers.exists(layer => layer.scalarMappingKey.nonEmpty &&
++        (revision != SurfaceDocumentRevision.V4 || layer.encoding != SurfaceLayerKind.Scalar || layer.scalarMappingKey.exists(_.isEmpty))) then
++      Left(SurfaceSceneError.InvalidDocument("scalar mapping keys require revision 4 and scalar encoding"))
++    else if layers.exists(layer => layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample &&
++        (revision.value < 3 || layer.association != SurfaceSampleAssociation.Vertex)) then
+       Left(SurfaceSceneError.InvalidDocument("nearest vertex interpolation requires revision 3 and vertex association"))
+     else if revision == SurfaceDocumentRevision.V1 &&
+         (layers.exists(_.association != SurfaceSampleAssociation.Vertex) || selection.exists(_.face.nonEmpty)) then
+@@ -349,6 +355,7 @@
+             val exact =
+               actual.surfaceId == expected.surface &&
+                 actual.kind == expected.encoding &&
++                (document.revision != SurfaceDocumentRevision.V4 || actual.scalarMapping.map(_.canonicalKey) == expected.scalarMappingKey) &&
+                 actual.association == expected.association &&
+                 (actual.interpolation == SurfaceMapInterpolation.NearestVertex) ==
+                   (expected.vertexInterpolation == SurfaceVertexInterpolation.NearestSample) &&
+--- a/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala
++++ b/modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala
+@@ -23,6 +23,7 @@
+         if revisionValue == 1 then Right(SurfaceDocumentRevision.V1)
+         else if revisionValue == 2 then Right(SurfaceDocumentRevision.V2)
+         else if revisionValue == 3 then Right(SurfaceDocumentRevision.V3)
++        else if revisionValue == 4 then Right(SurfaceDocumentRevision.V4)
+         else Left(SurfaceSceneError.UnsupportedRevision(revisionValue))
+       assetsJson <- SceneJsonRead.array(root, "assets", "$.assets")
+       assets <- traverseIndexed(assetsJson)(parseAsset(_, _, policy))
+@@ -112,10 +113,11 @@
+       case SurfaceSampleAssociation.Vertex => "vertex"
+       case SurfaceSampleAssociation.Face => "face"
+     SceneJson.Obj(fields ++ Option.when(revision != SurfaceDocumentRevision.V1)(
+-      "association" -> SceneJson.Str(association)) ++ Option.when(revision == SurfaceDocumentRevision.V3)(
++      "association" -> SceneJson.Str(association)) ++ Option.when(revision.value >= 3)(
+       "vertexInterpolation" -> SceneJson.Str(layer.vertexInterpolation match
+         case SurfaceVertexInterpolation.Color => "color"
+-        case SurfaceVertexInterpolation.NearestSample => "nearest-sample")))
++        case SurfaceVertexInterpolation.NearestSample => "nearest-sample")) ++ Option.when(revision == SurfaceDocumentRevision.V4)(
++      "scalarMappingKey" -> layer.scalarMappingKey.fold[SceneJson](SceneJson.Null)(SceneJson.Str.apply)))
+ 
+   private def layoutJson(layout: SurfaceLayout): SceneJson =
+     layout match
+@@ -244,7 +246,8 @@
+     val path = s"$$.layers[$index]"
+     for
+       obj <- SceneJsonRead.obj(value, path, Set("id", "surface", "uri", "sha256", "encoding", "frameCount", "blendMode") ++ Option.when(revision != SurfaceDocumentRevision.V1)("association") ++
+-        Option.when(revision == SurfaceDocumentRevision.V3)("vertexInterpolation"), policy)
++        Option.when(revision.value >= 3)("vertexInterpolation") ++
++        Option.when(revision == SurfaceDocumentRevision.V4)("scalarMappingKey"), policy)
+       idRaw <- SceneJsonRead.string(obj, "id", s"$path.id")
+       id <- SurfaceLayerId.make(idRaw).left.map(SurfaceSceneError.InvalidState.apply)
+       surfaceRaw <- SceneJsonRead.string(obj, "surface", s"$path.surface")
+@@ -263,12 +266,18 @@
+           case "face" => Right(SurfaceSampleAssociation.Face)
+           case other => Left(SurfaceSceneError.InvalidJson(s"$path.association", s"unknown association: $other"))
+       interpolation <-
+-        if revision != SurfaceDocumentRevision.V3 then Right(SurfaceVertexInterpolation.Color)
++        if revision.value < 3 then Right(SurfaceVertexInterpolation.Color)
+         else SceneJsonRead.string(obj, "vertexInterpolation", s"$path.vertexInterpolation").flatMap:
+           case "color" => Right(SurfaceVertexInterpolation.Color)
+           case "nearest-sample" => Right(SurfaceVertexInterpolation.NearestSample)
+           case other => Left(SurfaceSceneError.InvalidJson(s"$path.vertexInterpolation", s"unknown interpolation: $other"))
+-    yield SurfaceSceneLayer(id, surface, reference, encoding, frames, blend, association, interpolation)
++      mappingKey <-
++        if revision != SurfaceDocumentRevision.V4 then Right(None)
++        else obj.fields.toMap.get("scalarMappingKey") match
++          case Some(SceneJson.Null) => Right(None)
++          case Some(SceneJson.Str(value)) if value.nonEmpty => Right(Some(value))
++          case _ => Left(SurfaceSceneError.InvalidJson(s"$path.scalarMappingKey", "expected a nonempty mapping key or null"))
++    yield SurfaceSceneLayer(id, surface, reference, encoding, frames, blend, association, interpolation, mappingKey)
+ 
+   private def parseReference(obj: SceneJson.Obj, path: String): Either[SurfaceSceneError, SurfaceExternalReference] =
+     for
+--- /dev/null
++++ b/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarMappingSuite.scala
+@@ -0,0 +1,86 @@
++package scalafim.surface.view
++
++import intaglio.*
++import scalafim.surface.*
++
++class SurfaceScalarMappingSuite extends munit.FunSuite:
++  private val surface = SurfaceFaceFixture.Surface
++  private val layerId = SurfaceLayerId.unsafe("mapped")
++  private val blue = Rgba32.unsafe(0, 0, 200)
++  private val white = Rgba32.unsafe(200, 200, 200)
++  private val red = Rgba32.unsafe(200, 0, 0)
++  private val mapping = ScalarMapping(ScalarScale.split(DisplayWindow.unsafe(-4.0, 8.0), 0.0, -1.0, 2.0,
++    ScalarRamp.linear(blue, white), ScalarRamp.linear(white, red)).toOption.get)
++  private def model(colorizer: Colorizer[Double] = mapping.colorizer): SurfaceViewerModel =
++    val layer = SurfaceLayer.scalar(layerId, surface, SurfaceFaceFixture.geometry,
++      Array(-2.5, -1.0, 2.0, 5.0), colorizer).toOption.get
++    SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, SurfaceFaceFixture.geometry).toOption.get), Vector(layer)).toOption.get
++
++  test("vertex and face scalar layers expose the effective descriptor and tabulated colors"):
++    val viewer = model()
++    val plan = SurfaceCompiler.compile(viewer, SurfaceFaceFixture.state(viewer)).toOption.get
++    assertEquals(plan.layers.head.scalarMapping.get.canonicalKey, mapping.canonicalKey)
++    val expected = Vector(Rgba32.unsafe(100, 100, 200), white, white, Rgba32.unsafe(200, 100, 100))
++    assertEquals(Vector.tabulate(4)(index => plan.layers.head.colors(index)), expected.map(_.toPackedInt))
++    val field = SurfaceFaceField.make(SurfaceFaceFixture.geometry, Array(-2.5, 5.0)).toOption.get
++    val face = SurfaceLayer.faceScalar(layerId, surface, field, mapping.colorizer)
++    val faceModel = SurfaceViewerModel.make(viewer.surfaces, Vector(face)).toOption.get
++    val facePlan = SurfaceCompiler.compile(faceModel, SurfaceFaceFixture.state(faceModel)).toOption.get
++    assertEquals(facePlan.layers.head.scalarMapping.get.canonicalKey, mapping.canonicalKey)
++    assertEquals(Vector.tabulate(6)(index => facePlan.layers.head.colors(index)),
++      Vector.fill(3)(expected.head.toPackedInt) ++ Vector.fill(3)(expected.last.toPackedInt))
++
++  test("checked window overrides reject centers or tails outside the new domain"):
++    val viewer = model()
++    val state = SurfaceFaceFixture.state(viewer)
++    val invalid = DisplayWindow.unsafe(-0.5, 8.0)
++    assert(SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.SetLayerWindow(layerId, invalid)).isLeft)
++    val corrupted = state.copy(presentations = state.presentations.updated(layerId,
++      state.presentations(layerId).copy(window = Some(invalid), visible = false)))
++    assert(SurfaceCompiler.compile(viewer, corrupted).isLeft)
++    val changed = SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.SetLayerWindow(layerId, DisplayWindow.unsafe(-8.0, 10.0))).toOption.get
++    val plan = SurfaceCompiler.compile(viewer, changed).toOption.get
++    assertEqualsDouble(plan.layers.head.scalarMapping.get.scale.window.lower, -8.0, 0.0)
++
++  test("mapping identity changes even when sampled vertex colors happen to remain equal"):
++    val viewer = model()
++    val state = SurfaceFaceFixture.state(viewer)
++    val initial = SurfaceCompiler.compile(viewer, state).toOption.get
++    val changed = SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.SetLayerThreshold(layerId,
++      DisplayThreshold.TransparentBand(ThresholdBand.unsafe(-0.5, 0.5)))).toOption.get
++    val plan = SurfaceCompiler.compile(viewer, changed).toOption.get
++    assertEquals(Vector.tabulate(4)(plan.layers.head.colors(_)), Vector.tabulate(4)(initial.layers.head.colors(_)))
++    assertNotEquals(plan.receipt.layerKeys, initial.receipt.layerKeys)
++    assertNotEquals(plan.layers.head.scalarMapping.get.canonicalKey, mapping.canonicalKey)
++    assertEquals(plan.receipt.meshKeys, initial.receipt.meshKeys)
++
++  test("camera and opacity leave the effective unlit mapping unchanged"):
++    val viewer = model()
++    val state = SurfaceFaceFixture.state(viewer)
++    for action <- Vector(SurfaceViewerAction.OrbitBy(20.0, 10.0), SurfaceViewerAction.SetLayerOpacity(layerId, DisplayOpacity.unsafe(0.5))) do
++      val updated = SurfaceViewer.reduce(viewer, state, action).toOption.get
++      assertEquals(SurfaceCompiler.compile(viewer, updated).toOption.get.layers.head.scalarMapping.get.canonicalKey, mapping.canonicalKey)
++
++  test("opaque colorizers get no invented metadata or unsupported adjustment capabilities"):
++    val viewer = model(Colorizer.constant[Double](red))
++    val state = SurfaceFaceFixture.state(viewer)
++    assertEquals(SurfaceCompiler.compile(viewer, state).toOption.get.layers.head.scalarMapping, None)
++    assert(SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.SetLayerWindow(layerId, DisplayWindow.unsafe(0.0, 1.0))).isLeft)
++    assert(SurfaceViewer.reduce(viewer, state, SurfaceViewerAction.SetLayerThreshold(layerId, DisplayThreshold.Disabled)).isLeft)
++
++  test("scene revision 4 rejects changed mapping metadata; revision 3 still decodes"):
++    val viewer = model()
++    val ref = SurfaceExternalReference(SurfaceAssetUri.unsafe("fixture:mapped"), SurfaceContentDigest.unsafe("c" * 64))
++    val bindings = SurfaceSceneBindings(Map(surface -> ref), Map(layerId -> ref))
++    val provenance = SurfaceProvenance.make("mapping-test", "1", "2026-09-07").toOption.get
++    val doc = SurfaceSceneDocument.capture(viewer, SurfaceFaceFixture.state(viewer), bindings, provenance).toOption.get
++    val json = SurfaceSceneCodec.encode(doc)
++    val decoded = SurfaceSceneCodec.decode(json).toOption.get
++    assertEquals(decoded.revision, SurfaceDocumentRevision.V4)
++    assertEquals(decoded.layers.head.scalarMappingKey, Some(mapping.canonicalKey))
++    assert(decoded.restore(viewer, bindings).isRight)
++    assert(decoded.restore(model(mapping.copy(invalid = red).colorizer), bindings).isLeft)
++    val old = SurfaceSceneCodec.decode(json.replace("\"revision\":4", "\"revision\":3")
++      .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")).toOption.get
++    assertEquals(old.revision, SurfaceDocumentRevision.V3)
++    assert(old.restore(viewer, bindings).isRight)
+--- a/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala
++++ b/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala
+@@ -12,7 +12,8 @@
+   test("revision 1 documents retain vertex association and their original JSON shape"):
+     val (model, state, bindings, provenance) = fixture()
+     val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+-    val json = SurfaceSceneCodec.encode(current).replace("\"revision\":3", "\"revision\":1")
++    val json = SurfaceSceneCodec.encode(current).replace("\"revision\":4", "\"revision\":1")
++      .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")
+       .replace(",\"vertexInterpolation\":\"color\"", "")
+       .replace(",\"association\":\"vertex\"", "").replace(",\"face\":null", "")
+     assert(!json.contains("\"association\""))
+@@ -71,10 +72,10 @@
+     ).toOption.get
+     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
+ 
+-    val future = encoded.replace("\"revision\":3", "\"revision\":4")
++    val future = encoded.replace("\"revision\":4", "\"revision\":5")
+     assertEquals(
+       SurfaceSceneCodec.decode(future).left.toOption,
+-      Some(SurfaceSceneError.UnsupportedRevision(4))
++      Some(SurfaceSceneError.UnsupportedRevision(5))
+     )
+ 
+   test("external digests and exact mesh identities are checked before state restoration"):
+--- a/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala
++++ b/modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala
+@@ -111,14 +111,15 @@
+     val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+     val decoded = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)).toOption.get
+     val v2 = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)
+-      .replace("\"revision\":3", "\"revision\":2")
++      .replace("\"revision\":4", "\"revision\":2")
++      .replace(",\"scalarMappingKey\":null", "")
+       .replace(",\"vertexInterpolation\":\"color\"", "")).toOption.get
+     assertEquals(v2.revision, SurfaceDocumentRevision.V2)
+     assertEquals(v2.layers.head.association, SurfaceSampleAssociation.Face)
+     assert(v2.restore(model, bindings).isRight)
+     assertEquals(decoded.layers.head.association, SurfaceSampleAssociation.Face)
+     assertEquals(decoded.selection, state.selection)
+-    assertEquals(decoded.revision, SurfaceDocumentRevision.V3)
++    assertEquals(decoded.revision, SurfaceDocumentRevision.V4)
+     val unsupported = SurfaceBackendCapabilities(SurfaceBackendId.unsafe("vertex-only"), SurfacePlanRevision.Current, Set.empty)
+     assert(decoded.admit(unsupported).isLeft)
+     assert(decoded.admit(unsupported.copy(features = Set(SurfaceBackendFeature.FacewiseData))).isRight)
+--- /dev/null
++++ b/modules/surface-view-raster/jvm/src/test/scala/scalafim/surface/view/raster/SurfaceScalarMappingPlate.scala
+@@ -0,0 +1,68 @@
++package scalafim.surface.view.raster
++
++import intaglio.*
++import scalafim.surface.*
++import scalafim.surface.view.*
++
++/** Analytic coordinate-valued ellipsoid; nearest vertex samples, not scalar fragments. */
++object SurfaceScalarMappingPlate:
++  def main(args: Array[String]): Unit =
++    val rings = 30
++    val slices = 60
++    val vertices = Vector(Seq(0.0, -4.0, 0.0)) ++ (for
++      ring <- 1 until rings
++      slice <- 0 until slices
++    yield
++      val latitude = math.Pi * ring / rings
++      val longitude = 2 * math.Pi * slice / slices
++      Seq(2.0 * math.sin(latitude) * math.cos(longitude), 2.0 - 6.0 * math.cos(latitude),
++        math.sin(latitude) * math.sin(longitude))).toVector ++ Vector(Seq(0.0, 8.0, 0.0))
++    val faces = Vector.newBuilder[(Int, Int, Int)]
++    for slice <- 0 until slices do faces += ((0, 1 + slice, 1 + (slice + 1) % slices))
++    for ring <- 0 until rings - 2; slice <- 0 until slices do
++      val a = 1 + ring * slices + slice
++      val b = 1 + ring * slices + (slice + 1) % slices
++      val c = a + slices
++      val d = b + slices
++      faces += ((a, c, b))
++      faces += ((b, c, d))
++    for slice <- 0 until slices do
++      faces += ((vertices.length - 1, 1 + (rings - 2) * slices + (slice + 1) % slices, 1 + (rings - 2) * slices + slice))
++    val geometry = SurfaceGeometry(TriangleMesh.fromRows(vertices, faces.result()), Hemisphere.Left, SurfaceKind.Inflated)
++    val id = SurfaceId.unsafe("ellipsoid")
++    val layerId = SurfaceLayerId.unsafe("y-coordinate")
++    val low = ScalarRamp.linear(Rgba32.unsafe(0, 0, 200), Rgba32.unsafe(240, 240, 240))
++    val high = ScalarRamp.linear(Rgba32.unsafe(240, 240, 240), Rgba32.unsafe(200, 0, 0))
++    val window = DisplayWindow.unsafe(-4.0, 8.0)
++    val continuous = ScalarMapping(ScalarScale.diverging(window, 0.0, low, high).toOption.get)
++    val narrow = DisplayThreshold.TransparentBand(ThresholdBand.unsafe(-1.0, 2.0))
++    val wide = DisplayThreshold.TransparentBand(ThresholdBand.unsafe(-2.0, 4.0))
++    val mappings = Vector(continuous, continuous.resolve(threshold = Some(narrow)).toOption.get,
++      continuous.resolve(threshold = Some(wide)).toOption.get,
++      ScalarMapping(ScalarScale.split(window, 0.0, -1.0, 2.0, low, high).toOption.get))
++    val titles = Vector("Continuous", "Hide (-1, 2)", "Hide (-2, 4)", "Split tails (-1, 2)")
++    val out = new java.awt.image.BufferedImage(1024, 488, java.awt.image.BufferedImage.TYPE_INT_ARGB)
++    val graphics = out.createGraphics()
++    graphics.setColor(java.awt.Color.WHITE)
++    graphics.fillRect(0, 0, out.getWidth, out.getHeight)
++    graphics.setColor(java.awt.Color.DARK_GRAY)
++    graphics.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 15))
++    for (mapping, panel) <- mappings.zipWithIndex do
++      val layer = SurfaceLayer.scalar(layerId, id, geometry, vertices.map(_(1)).toArray, mapping.colorizer,
++        interpolation = SurfaceVertexInterpolation.NearestSample).toOption.get
++      val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(id, geometry).toOption.get), Vector(layer)).toOption.get
++      val state = SurfaceFaceFixture.state(model).copy(camera = SurfaceFaceFixture.state(model).camera.copy(
++        projection = CameraProjection.Orthographic(OrthographicScale.unsafe(7.0))))
++      val plan = SurfaceCompiler.compile(model, state).toOption.get
++      val raster = SurfaceRasterizer.render(plan, RasterDimensions.unsafe(256, 400),
++        SurfaceRasterStyle(culling = TriangleCulling.None)).toOption.get.image
++      for y <- 0 until 400; x <- 0 until 256 do
++        val pixel = raster.pixelUnsafe(x, y)
++        out.setRGB(panel * 256 + x, y + 44,
++          (pixel.alpha << 24) | (pixel.red << 16) | (pixel.green << 8) | pixel.blue)
++      graphics.drawString(titles(panel), panel * 256 + 34, 28)
++    graphics.drawString("Ellipsoid y samples | limits [-4, 8], center 0 | unlit nearest-vertex colors; gray = hidden", 24, 472)
++    graphics.dispose()
++    val target = if args.nonEmpty then args(0) else "/private/tmp/scalafim-scalar-mapping-plate.png"
++    javax.imageio.ImageIO.write(out, "png", new java.io.File(target))
++    println(s"scalar_mapping_plate=$target vertices=${vertices.length} faces=${geometry.faceCount}")
+--- a/build.sbt
++++ b/build.sbt
+@@ -124,7 +124,7 @@
+ // Renderer-neutral graphics and platform backends are developed independently.
+ // Ordinary builds clone the exact public revision; the system property is an
+ // explicit local-development override.
+-lazy val intaglioRevision = "596b398af380079e4b251535230d0bc03cd88c51"
++lazy val intaglioRevision = "c6b55d066a8f4c27b0acc3c34fc04737bfaba0bd"
+ lazy val intaglioBuild =
+   uri(
+     sys.props.getOrElse(

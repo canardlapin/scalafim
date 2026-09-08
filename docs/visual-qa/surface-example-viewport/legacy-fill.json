@@ -1,0 +1,1 @@
+{"schema":"scalafim.surface-view-example.v1","source":"tetra_lh_midthickness.surf.gii","vertices":8,"faces":4,"layerOrder":["activation","parcels"],"slotOrder":["gifti-left","gifti-right"],"cameraDirection":[0.0,0.0,1.0],"selectedSurface":"gifti-left","selectedVertex":2,"imageHash":895258625,"shadedPixels":12720,"pickedSurface":"gifti-left","pickedVertex":2}

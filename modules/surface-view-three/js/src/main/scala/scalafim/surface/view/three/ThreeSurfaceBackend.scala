@@ -8,7 +8,8 @@ final case class ThreePick(
   vertex: Int,
   worldX: Double,
   worldY: Double,
-  worldZ: Double
+  worldZ: Double,
+  barycentric: Option[(Double, Double, Double)] = None
 )
 
 final case class ThreeRuntimeStats(
@@ -23,12 +24,18 @@ final case class ThreeRuntimeStats(
 trait ThreeSurfaceRuntime:
   def contextState: ThreeContextState
   def supportsGpuVolumeProjection: Boolean = false
+  def supportsFragmentLayers: Boolean = false
+  def validateFragments(packets: Vector[ThreeFragmentPacket]): Either[ThreeSurfaceError, Unit] =
+    if packets.isEmpty || supportsFragmentLayers then Right(())
+    else Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
+  def uploadFragments(packets: Vector[ThreeFragmentPacket]): Either[ThreeSurfaceError, Long] =
+    Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
   def uploadGeometry(meshes: Vector[SurfaceMeshPacket]): Either[ThreeSurfaceError, Long]
   def updateGeometry(meshes: Vector[SurfaceMeshPacket]): Either[ThreeSurfaceError, Long]
   def uploadColors(colors: Vector[ThreeSurfaceColors]): Either[ThreeSurfaceError, Long]
   def updateLighting(lighting: SurfaceLighting): Either[ThreeSurfaceError, Unit]
   def updateCamera(camera: SurfaceCameraPacket, clipping: SurfaceClipping): Either[ThreeSurfaceError, Unit]
-  def updateLayout(slots: Vector[SurfaceViewSlot]): Either[ThreeSurfaceError, Unit]
+  def updateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit]
   def resize(size: ThreeCanvasSize): Either[ThreeSurfaceError, Unit]
   def draw(): Either[ThreeSurfaceError, Unit]
   def pick(x: Double, y: Double): Either[ThreeSurfaceError, Option[ThreePick]]
@@ -56,6 +63,8 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
   private val admittedFeatures =
     val base = Set(
       SurfaceBackendFeature.HardwareAcceleration,
+      SurfaceBackendFeature.FacewiseData,
+      SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.DepthBuffer,
       SurfaceBackendFeature.BackFaceCulling,
       SurfaceBackendFeature.Lighting,
@@ -63,7 +72,9 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
       SurfaceBackendFeature.NativePicking,
       SurfaceBackendFeature.HighResolutionSnapshot
     )
-    if runtime.supportsGpuVolumeProjection then base + SurfaceBackendFeature.GpuVolumeProjection else base
+    val fragments = if runtime.supportsFragmentLayers then base ++ Set(SurfaceBackendFeature.ScalarInterpolation,
+      SurfaceBackendFeature.FragmentComposition) else base
+    if runtime.supportsGpuVolumeProjection then fragments + SurfaceBackendFeature.GpuVolumeProjection else fragments
 
   val capabilities: SurfaceBackendCapabilities = SurfaceBackendCapabilities(
     SurfaceBackendId.unsafe("three-webgl"),
@@ -89,9 +100,15 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     forceDraw: Boolean = false
   ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
     if disposed then Left(ThreeSurfaceError.BackendDisposed)
+    else if plan.fragmentSurfaces.nonEmpty && !runtime.supportsFragmentLayers then
+      Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
     else
       requireContext().flatMap: _ =>
         ThreeSurfaceProgram.compile(current, plan, size, forceDraw).flatMap: program =>
+          val packets = program.commands.collect:
+            case ThreeSurfaceCommand.UploadFragments(values) => values
+          runtime.validateFragments(packets.flatten).map(_ => program)
+        .flatMap: program =>
           val started = System.nanoTime()
           var applied = 0
           var draws = 0
@@ -125,9 +142,15 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
                     uploadedBytes += bytes
                     totalColorUploads += colors.length
                     resources ++= colors.flatMap(_.resourceKeys)
+                case ThreeSurfaceCommand.UploadFragments(packets) =>
+                  runtime.uploadFragments(packets).map: bytes =>
+                    colorUploads += packets.length
+                    uploadedBytes += bytes
+                    totalColorUploads += packets.length
+                    resources ++= packets.flatMap(_.resourceKeys)
                 case ThreeSurfaceCommand.UpdateLighting(lighting) => runtime.updateLighting(lighting)
                 case ThreeSurfaceCommand.UpdateCamera(camera, clipping) => runtime.updateCamera(camera, clipping)
-                case ThreeSurfaceCommand.UpdateLayout(slots) => runtime.updateLayout(slots)
+                case ThreeSurfaceCommand.UpdateLayout(slots, fit) => runtime.updateLayout(slots, fit)
                 case ThreeSurfaceCommand.Resize(canvasSize) => runtime.resize(canvasSize)
                 case ThreeSurfaceCommand.Draw =>
                   runtime.draw().map: _ =>
@@ -163,23 +186,27 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     val previous = current
     render(plan, size, forceDraw).map: receipt =>
       val events = Vector.newBuilder[SurfaceResourceEvent]
-      if receipt.geometryUploads > 0 then
+      if receipt.geometryUploads > 0 || receipt.geometryUpdates > 0 then
         plan.meshes.foreach: mesh =>
+          val vertices = if plan.fragmentSurfaces(mesh.surface) then mesh.indices.length else mesh.positions.length / 3
           events += SurfaceResourceEvent.MeshUploaded(
             mesh.resourceKey,
-            mesh.positions.length / 3,
+            vertices,
             mesh.indices.length / 3,
-            (mesh.positions.length.toLong + mesh.normals.length.toLong + mesh.indices.length.toLong) * 4L
+            (vertices.toLong * 6 + (if receipt.geometryUploads > 0 then mesh.indices.length.toLong else 0L)) * 4L
           )
       if receipt.colorUploads > 0 then
         plan.meshes.foreach: mesh =>
           val keys = plan.layers.iterator.filter(_.surface == mesh.surface).map(_.resourceKey.value).mkString("+")
+          val count = if plan.fragmentSurfaces(mesh.surface) then mesh.indices.length else mesh.positions.length / 3
+          val bytes = if plan.fragmentSurfaces(mesh.surface) then count.toLong * 16 * plan.layers.count(_.surface == mesh.surface)
+            else count.toLong * 12
           events += SurfaceResourceEvent.LayerUploaded(
             SurfaceResourceKey(s"three-colors:${mesh.surface.value}:$keys"),
-            mesh.positions.length / 3,
-            mesh.positions.length / 3,
+            count,
+            count,
             1,
-            mesh.positions.length.toLong / 3L * 12L
+            bytes
           )
       if !receipt.dirty.geometry && !receipt.dirty.layerData then
         previous.foreach: (prior, _) =>

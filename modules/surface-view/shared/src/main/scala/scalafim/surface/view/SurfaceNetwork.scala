@@ -277,11 +277,22 @@ object SurfaceNetworkCompiler:
     val meshIndex = plan.meshes.indexWhere(_.surface == targetSurface)
     val slotIndex = plan.slots.indexWhere(_.surface == targetSurface)
     if meshIndex < 0 || slotIndex < 0 then Left(SurfaceViewError.UnknownSurface(targetSurface))
+    else if plan.layers.exists(_.layer == layerId) then Left(SurfaceViewError.DuplicateLayerId(layerId))
     else
       val generated = tubeGeometry(display)
       val base = plan.meshes(meshIndex)
       val baseVertices = base.positions.length / 3
       val addedVertices = generated.positions.length / 3
+      val originalVertices = base.sampleNormals.fold(
+        base.sourceVertices.fold(baseVertices)(source => (0 until source.length).iterator.map(source(_)).maxOption.fold(0)(_ + 1))
+      )(_.length / 3)
+      val originalFaces = (0 until base.indices.length / 3).iterator.map(base.sourceFace).maxOption.fold(0)(_ + 1)
+      val totalFaces = originalFaces + generated.indices.length / 3
+      def appendSamples(source: FloatBufferView, added: FloatBufferView): FloatBufferView =
+        val values = new Array[Float](source.length + added.length)
+        copyFloats(source, values, 0)
+        copyFloats(added, values, source.length)
+        new FloatBufferView(values)
       val positions = new Array[Float](base.positions.length + generated.positions.length)
       val normals = new Array[Float](base.normals.length + generated.normals.length)
       val indices = new Array[Int](base.indices.length + generated.indices.length)
@@ -300,12 +311,33 @@ object SurfaceNetworkCompiler:
 
       val hash = networkHash(display)
       val meshKey = SurfaceResourceKey(s"${base.resourceKey.value}:network:$hash")
+      val sourceVertices = base.sourceVertices.map: source =>
+        val translated = new Array[Int](baseVertices + addedVertices)
+        var vertex = 0
+        while vertex < baseVertices do
+          translated(vertex) = source(vertex)
+          vertex += 1
+        while vertex < translated.length do
+          translated(vertex) = originalVertices + vertex - baseVertices
+          vertex += 1
+        new IntBufferView(translated)
       val mergedMesh = SurfaceMeshPacket(
         targetSurface,
         meshKey,
         new FloatBufferView(positions),
         new FloatBufferView(normals),
-        new IntBufferView(indices)
+        new IntBufferView(indices),
+        sourceVertices = sourceVertices,
+        nearestPartition = base.nearestPartition,
+        sampleNormals = base.sampleNormals.map(appendSamples(_, generated.normals)),
+        samplePositions = base.samplePositions.map(appendSamples(_, generated.positions)),
+        constantPartition = base.constantPartition.map: prior =>
+          prior ++ Vector.tabulate(generated.indices.length / 3): face =>
+            val a = generated.indices(face * 3) + originalVertices
+            val b = generated.indices(face * 3 + 1) + originalVertices
+            val c = generated.indices(face * 3 + 2) + originalVertices
+            SurfaceMappingTriangle(originalFaces + face, (a, b, c),
+              SurfaceFaceWeights(1, 0, 0), SurfaceFaceWeights(0, 1, 0), SurfaceFaceWeights(0, 0, 1))
       )
       val layerKeyChanges = scala.collection.mutable.Map.empty[SurfaceResourceKey, SurfaceResourceKey]
       val extendedLayers = plan.layers.map: layer =>
@@ -321,20 +353,48 @@ object SurfaceNetworkCompiler:
             vertex += 1
           val key = SurfaceResourceKey(s"${layer.resourceKey.value}:network:$hash")
           layerKeyChanges(layer.resourceKey) = key
-          layer.copy(resourceKey = key, colors = new IntBufferView(colors))
+          val samples = layer.sampleColors.map: source =>
+            val count = if layer.interpolation == SurfaceMapInterpolation.FaceConstant then totalFaces else originalVertices + addedVertices
+            val values = new Array[Int](count)
+            var i = 0
+            while i < source.length do
+              values(i) = source(i)
+              i += 1
+            new IntBufferView(values)
+          val scalar = layer.scalarField.map: field =>
+            val values = new Array[Double](originalVertices + addedVertices)
+            var i = 0
+            while i < field.samples.length do
+              values(i) = field.samples(i)
+              i += 1
+            new SurfaceScalarPacket(new DoubleBufferView(values), field.mapping)
+          val coverage = layer.coverage match
+            case SurfaceLayerCoverage.All => SurfaceLayerCoverage.Faces(0, originalFaces)
+            case range => range
+          layer.copy(resourceKey = key, colors = new IntBufferView(colors),
+            sampleColors = samples, scalarField = scalar, coverage = coverage)
       val networkColors = new Array[Int](baseVertices + addedVertices)
       index = 0
       while index < generated.colors.length do
         networkColors(baseVertices + index) = generated.colors(index)
         index += 1
-      val networkKey = SurfaceResourceKey(s"network-layer:${layerId.value}:$hash")
+      val networkKey = SurfaceResourceKey(s"network-layer:${layerId.value}:${base.resourceKey.value}:$originalFaces:$originalVertices:$hash")
+      val networkSamples = Option.when(plan.fragmentSurfaces(targetSurface)):
+        val values = new Array[Int](originalVertices + addedVertices)
+        index = 0
+        while index < generated.colors.length do
+          values(originalVertices + index) = generated.colors(index)
+          index += 1
+        new IntBufferView(values)
       val networkLayer = SurfaceLayerPacket(
         layerId,
         targetSurface,
         networkKey,
         new IntBufferView(networkColors),
         DisplayOpacity.Opaque,
-        DisplayBlendMode.Normal
+        DisplayBlendMode.Normal,
+        sampleColors = networkSamples,
+        coverage = SurfaceLayerCoverage.Faces(originalFaces, totalFaces)
       )
       val meshes = plan.meshes.updated(meshIndex, mergedMesh)
       val layers = extendedLayers :+ networkLayer
@@ -347,8 +407,15 @@ object SurfaceNetworkCompiler:
         verticesPacked = plan.profile.verticesPacked + addedVertices,
         facesPacked = plan.profile.facesPacked + generated.indices.length / 3,
         layersColored = plan.profile.layersColored + 1,
-        colorValuesWritten = plan.profile.colorValuesWritten + baseVertices + addedVertices,
-        primitiveBytes = plan.profile.primitiveBytes + display.receipt.primitiveBytes + baseVertices.toLong * 4L
+        colorValuesWritten = layers.iterator.map(_.colors.length).sum,
+        primitiveBytes = 4L * (
+          meshes.iterator.map(mesh => mesh.positions.length.toLong + mesh.normals.length + mesh.indices.length +
+            mesh.sourceVertices.fold(0L)(_.length.toLong) +
+            mesh.nearestPartition.fold(0L)(_.originalIndices.length.toLong) +
+            mesh.sampleNormals.fold(0L)(_.length.toLong) + mesh.samplePositions.fold(0L)(_.length.toLong)).sum +
+          layers.iterator.map(layer => layer.colors.length.toLong + layer.sampleColors.fold(0L)(_.length.toLong)).sum +
+          plan.camera.viewMatrix.length + plan.camera.projectionMatrix.length
+        ) + layers.iterator.flatMap(_.scalarField).map(_.samples.length.toLong * 8L).sum
       )
       val receipt = plan.receipt.copy(
         meshKeys = meshes.map(_.resourceKey),

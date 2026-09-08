@@ -1,0 +1,97 @@
+{
+  "schema": "scalafim-surface-example-viewport-v1",
+  "recordedAtUtc": "2026-09-08T03:58:29.317205+00:00",
+  "status": "example checksum discrepancy diagnosed and corrected; JVM and Scala.js suites pass",
+  "cause": "Old golden described a 320x180 Fill viewport; earlier compiler aspect preservation centers two 160x160 panels. Only the viewport mode changes in the diagnostic.",
+  "receipts": {
+    "contained": {
+      "schema": "scalafim.surface-view-example.v1",
+      "source": "tetra_lh_midthickness.surf.gii",
+      "vertices": 8,
+      "faces": 4,
+      "layerOrder": [
+        "activation",
+        "parcels"
+      ],
+      "slotOrder": [
+        "gifti-left",
+        "gifti-right"
+      ],
+      "cameraDirection": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "selectedSurface": "gifti-left",
+      "selectedVertex": 2,
+      "imageHash": -748488703,
+      "shadedPixels": 11342,
+      "pickedSurface": "gifti-left",
+      "pickedVertex": 2
+    },
+    "legacy-fill": {
+      "schema": "scalafim.surface-view-example.v1",
+      "source": "tetra_lh_midthickness.surf.gii",
+      "vertices": 8,
+      "faces": 4,
+      "layerOrder": [
+        "activation",
+        "parcels"
+      ],
+      "slotOrder": [
+        "gifti-left",
+        "gifti-right"
+      ],
+      "cameraDirection": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "selectedSurface": "gifti-left",
+      "selectedVertex": 2,
+      "imageHash": 895258625,
+      "shadedPixels": 12720,
+      "pickedSurface": "gifti-left",
+      "pickedVertex": 2
+    }
+  },
+  "independentMaskOracle": {
+    "dimensions": [
+      320,
+      180
+    ],
+    "pixelsCheckedPerPolicy": 57600,
+    "mismatches": 0,
+    "contained": "localX=x%160; 27<=localX<=132 and 37<=y<=142 and y>=localX+10",
+    "legacyFill": "localX=x%160; 27<=localX<=132 and 30<=y<=149 and 8*(2*y+1)>=9*(2*localX+1)"
+  },
+  "tests": {
+    "surfaceViewExamplesJVM": 13,
+    "surfaceViewExamplesJS": 12
+  },
+  "passingTests": 25,
+  "commands": [
+    "surfaceViewExamplesJVM/Test/runMain scalafim.examples.surfaceview.SurfaceExampleViewportProbe /private/tmp/scalafim-example-viewport",
+    "all surfaceViewExamplesJVM/test surfaceViewExamplesJS/test"
+  ],
+  "sourceSha256": {
+    "examples/surface-view/shared/src/test/scala/scalafim/examples/surfaceview/SurfaceViewerExampleSuite.scala": "e43b7740a30ebf4504d83382a28b52345a22407f21a07f70fad067861f59c717",
+    "examples/surface-view/jvm/src/test/scala/scalafim/examples/surfaceview/SurfaceExampleViewportProbe.scala": "e24f384c242ad84ddf6a4503c6b76ad6b3d9f5492cae7b6c325d287ccc28727b",
+    "examples/surface-view/shared/src/main/scala/scalafim/examples/surfaceview/SurfaceViewerExample.scala": "a09476e4d7d7d57de0c2e12efe0a58e08d7dfd126b594fe7efe1a4cd32ecc16f",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewportFit.scala": "53f28bf5c59cbb53b195d1fb5d6b05866125b34678665e2dcd0edcaff2aedc9e"
+  },
+  "artifactsSha256": {
+    "docs/benchmarks/receipts/surface-example-viewport-2026-09-07.log.gz": "8c0ad091ed9492ee5d191f594045baa29af3575102699d278ea865777aabe758",
+    "docs/visual-qa/surface-example-viewport/contained.json": "7251394e5dfc8091a479435cb9eabb1b6079abdb73acd597d743fc81c9e1004c",
+    "docs/visual-qa/surface-example-viewport/contained.png": "fcc8633400bbb90e45ea4f3fcb13d68f871f5b4875b8acc38b63e464b60484ed",
+    "docs/visual-qa/surface-example-viewport/contained.svg": "7a6905047a13e79a6f148bd46c8374f3fabd9e5d3e189876fcf04f1ef3cab827",
+    "docs/visual-qa/surface-example-viewport/legacy-fill.json": "eb1169df970dd123d403d75db8b27235465af882cd83188cb4ccf85b5a49c72c",
+    "docs/visual-qa/surface-example-viewport/legacy-fill.png": "b5358ded464534511bb0a179440ad3c9043ad1818e25458e76bdc7087fe8472a",
+    "docs/visual-qa/surface-example-viewport/legacy-fill.svg": "b1252ce212599082683218f7fad4b3867e7c6946044a0a34fb1a03a1ffe27c8a"
+  },
+  "productionChanges": "None for this fix; only diagnostic and shared regression expectations changed.",
+  "limits": [
+    "Pixel masks are independently checked; exact color checksums serve as deterministic regressions.",
+    "This does not certify new native cortical scalar/label combinations."
+  ]
+}

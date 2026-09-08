@@ -40,7 +40,8 @@ final case class SurfaceRasterReceipt(
   depthRejectedPixels: Int,
   colorValuesComposited: Int,
   setupNanos: Long,
-  renderNanos: Long
+  renderNanos: Long,
+  scalarFragmentsEvaluated: Int = 0
 )
 
 final case class SurfaceRasterObservedResult(
@@ -84,6 +85,11 @@ object SurfaceRasterizer:
     SurfacePlanRevision.Current,
     Set(
       SurfaceBackendFeature.DeterministicPixels,
+      SurfaceBackendFeature.FacewiseData,
+      SurfaceBackendFeature.NearestVertexSampling,
+      SurfaceBackendFeature.ScalarInterpolation,
+      SurfaceBackendFeature.FragmentComposition,
+      SurfaceBackendFeature.Lighting,
       SurfaceBackendFeature.DepthBuffer,
       SurfaceBackendFeature.BackFaceCulling,
       SurfaceBackendFeature.WorldClipping,
@@ -92,7 +98,7 @@ object SurfaceRasterizer:
       SurfaceBackendFeature.HighResolutionSnapshot
     ),
     Vector(
-      "lighting is not applied by the reference raster backend"
+      "fragment surfaces evaluate layer composition and normalized world-space normals per pixel; legacy paths retain vertex lighting"
     )
   )
 
@@ -166,7 +172,20 @@ object SurfaceRasterizer:
       SurfaceRasterObservedResult(result, observation)
 
   private def validatePlan(plan: SurfaceRenderPlan): Either[SurfaceRasterError, Unit] =
-    if plan.slots.length != plan.meshes.length then
+    if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
+      Left(SurfaceRasterError.InvalidPlan("scalar policy and payload disagree"))
+    else if plan.layers.exists(layer => layer.scalarField.nonEmpty && !plan.fragmentSurfaces(layer.surface)) then
+      Left(SurfaceRasterError.InvalidPlan("scalar interpolation requires fragment composition"))
+    else if plan.layers.exists(layer => plan.fragmentSurfaces(layer.surface) &&
+        !plan.meshes.exists(mesh => mesh.surface == layer.surface &&
+          layer.sampleColors.exists(_.length == (if layer.association == SurfaceSampleAssociation.Face then
+            mesh.nearestPartition.fold(mesh.indices.length / 3)(_.originalFaceCount)
+          else mesh.sampleNormals.getOrElse(mesh.normals).length / 3)) &&
+          layer.scalarField.forall(field => layer.association == SurfaceSampleAssociation.Vertex &&
+            layer.scalarMapping.exists(_.canonicalKey == field.mapping.canonicalKey) &&
+            field.samples.length == mesh.sampleNormals.getOrElse(mesh.normals).length / 3))) then
+      Left(SurfaceRasterError.InvalidPlan("fragment sample buffers must match the original vertex or face domain"))
+    else if plan.slots.length != plan.meshes.length then
       Left(SurfaceRasterError.InvalidPlan("slot and mesh counts differ"))
     else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
       Left(SurfaceRasterError.InvalidPlan("camera matrices must be 4x4"))
@@ -192,7 +211,7 @@ object SurfaceRasterizer:
       var layerIndex = 0
       while layerIndex < plan.layers.length do
         val layer = plan.layers(layerIndex)
-        if layer.surface == mesh.surface then
+        if layer.surface == mesh.surface && !plan.fragmentSurfaces(mesh.surface) then
           var vertex = 0
           while vertex < colors.length do
             val under = packed(colors(vertex))
@@ -209,12 +228,16 @@ object SurfaceRasterizer:
     var trianglesCulled = 0
     var shadedPixels = 0
     var depthRejected = 0
+    var scalarFragments = 0
 
+    val fittedSlots = plan.viewportFit.resolve(plan.slots, dimensions.width.toDouble, dimensions.height.toDouble)
     var slot = 0
     while slot < plan.meshes.length do
       val mesh = plan.meshes(slot)
-      val viewport = plan.slots(slot).viewport
+      val viewport = fittedSlots(slot).viewport
       val colors = composedColors(slot)
+      val fragment = Option.when(plan.fragmentSurfaces(mesh.surface))(
+        new SurfaceFragmentEvaluator(mesh, plan.layers.filter(_.surface == mesh.surface), plan.lighting, style.surfaceBase))
       var faceOffset = 0
       while faceOffset < mesh.indices.length do
         trianglesInput += 1
@@ -222,10 +245,14 @@ object SurfaceRasterizer:
         val ia = mesh.indices(faceOffset)
         val ib = mesh.indices(faceOffset + 1)
         val ic = mesh.indices(faceOffset + 2)
+        val ba = mesh.sourceBarycentric(face, 1.0, 0.0, 0.0)
+        val bb = mesh.sourceBarycentric(face, 0.0, 1.0, 0.0)
+        val bc = mesh.sourceBarycentric(face, 0.0, 0.0, 1.0)
+        val (sourceA, sourceB, sourceC) = mesh.sourceFaceVertices(face)
         val triangle = Vector(
-          clipVertex(plan, plan.slots(slot), mesh, colors, ia, 1.0, 0.0, 0.0),
-          clipVertex(plan, plan.slots(slot), mesh, colors, ib, 0.0, 1.0, 0.0),
-          clipVertex(plan, plan.slots(slot), mesh, colors, ic, 0.0, 0.0, 1.0)
+          clipVertex(plan, plan.slots(slot), mesh, colors, ia, ba._1, ba._2, ba._3),
+          clipVertex(plan, plan.slots(slot), mesh, colors, ib, bb._1, bb._2, bb._3),
+          clipVertex(plan, plan.slots(slot), mesh, colors, ic, bc._1, bc._2, bc._3)
         )
         val clipped = clipTriangle(triangle, plan.clipping)
         if clipped.length < 3 then trianglesClippedAway += 1
@@ -244,11 +271,14 @@ object SurfaceRasterizer:
             if culled then trianglesCulled += 1
             else
               val counts = rasterTriangle(
-                a, b, c, area, slot, face, ia, ib, ic,
+                a, b, c, area, slot, mesh.sourceFace(face), sourceA, sourceB, sourceC,
+                mesh.nearestPartition.filter(face < _.renderFaceCount).fold(-1)(_ => mesh.sourceVertex(ia)),
+                fragment,
                 dimensions, pixels, depths, faceAt, slotAt, vertexAt, baryA, baryB, baryC
               )
               shadedPixels += counts._1
               depthRejected += counts._2
+              scalarFragments += counts._3
             fan += 1
         faceOffset += 3
       slot += 1
@@ -262,9 +292,10 @@ object SurfaceRasterizer:
       trianglesCulled,
       shadedPixels,
       depthRejected,
-      plan.layers.iterator.map(_.colors.length).sum,
+      plan.layers.iterator.filterNot(layer => plan.fragmentSurfaces(layer.surface)).map(_.colors.length).sum,
       setupNanos,
-      renderNanos
+      renderNanos,
+      scalarFragments
     )
     new SurfaceRasterResult(
       image, receipt, plan.slots.map(_.surface), faceAt, slotAt, vertexAt,
@@ -410,6 +441,8 @@ object SurfaceRasterizer:
     ia: Int,
     ib: Int,
     ic: Int,
+    sampleOwner: Int,
+    fragment: Option[SurfaceFragmentEvaluator],
     dimensions: RasterDimensions,
     pixels: Array[Int],
     depths: Array[Double],
@@ -419,13 +452,14 @@ object SurfaceRasterizer:
     baryA: Array[Float],
     baryB: Array[Float],
     baryC: Array[Float]
-  ): (Int, Int) =
+  ): (Int, Int, Int) =
     val minX = math.max(0, math.floor(math.min(a.x, math.min(b.x, c.x))).toInt)
     val maxX = math.min(dimensions.width - 1, math.ceil(math.max(a.x, math.max(b.x, c.x))).toInt)
     val minY = math.max(0, math.floor(math.min(a.y, math.min(b.y, c.y))).toInt)
     val maxY = math.min(dimensions.height - 1, math.ceil(math.max(a.y, math.max(b.y, c.y))).toInt)
     var shaded = 0
     var rejected = 0
+    var scalarEvaluated = 0
     var y = minY
     while y <= maxY do
       var x = minX
@@ -441,27 +475,38 @@ object SurfaceRasterizer:
           if depth < depths(pixelIndex) then
             val reciprocal = wa * a.inverseW + wb * b.inverseW + wc * c.inverseW
             val inv = 1.0 / reciprocal
-            val red = clampByte((wa * a.redOverW + wb * b.redOverW + wc * c.redOverW) * inv)
-            val green = clampByte((wa * a.greenOverW + wb * b.greenOverW + wc * c.greenOverW) * inv)
-            val blue = clampByte((wa * a.blueOverW + wb * b.blueOverW + wc * c.blueOverW) * inv)
-            val alpha = clampByte((wa * a.alphaOverW + wb * b.alphaOverW + wc * c.alphaOverW) * inv)
+            val ba = (wa * a.baryAOverW + wb * b.baryAOverW + wc * c.baryAOverW) * inv
+            val bb = (wa * a.baryBOverW + wb * b.baryBOverW + wc * c.baryBOverW) * inv
+            val bc = (wa * a.baryCOverW + wb * b.baryCOverW + wc * c.baryCOverW) * inv
+            val color = fragment match
+              case Some(evaluator) =>
+                scalarEvaluated += evaluator.scalarLayerCount
+                evaluator.color(face, ia, ib, ic, ba, bb, bc)
+              case None => Rgba32.unsafe(
+                clampByte((wa * a.redOverW + wb * b.redOverW + wc * c.redOverW) * inv),
+                clampByte((wa * a.greenOverW + wb * b.greenOverW + wc * c.greenOverW) * inv),
+                clampByte((wa * a.blueOverW + wb * b.blueOverW + wc * c.blueOverW) * inv),
+                clampByte((wa * a.alphaOverW + wb * b.alphaOverW + wc * c.alphaOverW) * inv))
+            val red = color.red
+            val green = color.green
+            val blue = color.blue
+            val alpha = color.alpha
             if alpha > 0 then
-              val ba = (wa * a.baryAOverW + wb * b.baryAOverW + wc * c.baryAOverW) * inv
-              val bb = (wa * a.baryBOverW + wb * b.baryBOverW + wc * c.baryBOverW) * inv
-              val bc = (wa * a.baryCOverW + wb * b.baryCOverW + wc * c.baryCOverW) * inv
-              pixels(pixelIndex) = compositeOverOpaque(pixels(pixelIndex), red, green, blue, alpha)
-              depths(pixelIndex) = depth
-              faceAt(pixelIndex) = face
-              slotAt(pixelIndex) = slot
-              baryA(pixelIndex) = ba.toFloat
-              baryB(pixelIndex) = bb.toFloat
-              baryC(pixelIndex) = bc.toFloat
-              vertexAt(pixelIndex) = if ba >= bb && ba >= bc then ia else if bb >= bc then ib else ic
-              shaded += 1
+              val chosen = SurfaceNearestPartition.nearestVertex(ia, ib, ic, ba, bb, bc)
+              if sampleOwner < 0 || chosen == sampleOwner then
+                pixels(pixelIndex) = compositeOverOpaque(pixels(pixelIndex), red, green, blue, alpha)
+                depths(pixelIndex) = depth
+                faceAt(pixelIndex) = face
+                slotAt(pixelIndex) = slot
+                baryA(pixelIndex) = ba.toFloat
+                baryB(pixelIndex) = bb.toFloat
+                baryC(pixelIndex) = bc.toFloat
+                vertexAt(pixelIndex) = chosen
+                shaded += 1
           else rejected += 1
         x += 1
       y += 1
-    (shaded, rejected)
+    (shaded, rejected, scalarEvaluated)
 
   private inline def edge(ax: Double, ay: Double, bx: Double, by: Double, px: Double, py: Double): Double =
     (px - ax) * (by - ay) - (py - ay) * (bx - ax)

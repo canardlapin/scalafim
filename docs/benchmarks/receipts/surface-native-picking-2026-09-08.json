@@ -1,0 +1,345 @@
+{
+  "schema": "scalafim-surface-native-picking-v1",
+  "recordedAtUtc": "2026-09-08T04:17:15.630099+00:00",
+  "status": "24 native ray-intersection cases, 22 JavaFX tests, and expanded four-probe visual QA alias pass; cortical feature acceptance remains open",
+  "environment": {
+    "javafx": "21.0.5",
+    "jdk": "25.0.1",
+    "os": "macOS",
+    "architecture": "arm64",
+    "loading": "classpath"
+  },
+  "commands": [
+    "surfaceViewJavafxJVM/test",
+    "surfaceViewVisualQaJVM"
+  ],
+  "method": "Test-only reflective SubScene.pickRootSG: native effective-camera ray, root traversal, and mesh intersection; no constructed PickResult; no OS mouse-event claim",
+  "tolerance": {
+    "barycentricAbsolute": 1e-05,
+    "originalIds": "exact",
+    "interiorMinimumWeight": 0.03,
+    "largestWeightSeparation": 0.02,
+    "referenceNeighborhood": "3x3 same-face hits; 3x3 empty misses"
+  },
+  "totals": {
+    "cases": 24,
+    "hits": 25061,
+    "misses": 46668,
+    "clippedMisses": 2886,
+    "maximumBarycentricError": 8.856300026671704e-08
+  },
+  "cases": [
+    {
+      "mode": "face",
+      "perspective": false,
+      "size": 96,
+      "checked": 507,
+      "misses": 285,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 2.9569491744041443e-08
+    },
+    {
+      "mode": "face",
+      "perspective": false,
+      "size": 192,
+      "checked": 2056,
+      "misses": 1265,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 2.974411494882645e-08
+    },
+    {
+      "mode": "face",
+      "perspective": true,
+      "size": 96,
+      "checked": 213,
+      "misses": 654,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 4.244537299413764e-08
+    },
+    {
+      "mode": "face",
+      "perspective": true,
+      "size": 192,
+      "checked": 886,
+      "misses": 2786,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 4.345596327226531e-08
+    },
+    {
+      "mode": "nearest",
+      "perspective": false,
+      "size": 96,
+      "checked": 507,
+      "misses": 285,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 2.9530686673773232e-08
+    },
+    {
+      "mode": "nearest",
+      "perspective": false,
+      "size": 192,
+      "checked": 2056,
+      "misses": 1265,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 2.9782919908072358e-08
+    },
+    {
+      "mode": "nearest",
+      "perspective": true,
+      "size": 96,
+      "checked": 213,
+      "misses": 654,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 4.002620979104421e-08
+    },
+    {
+      "mode": "nearest",
+      "perspective": true,
+      "size": 192,
+      "checked": 886,
+      "misses": 2786,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 1,
+      "maximumBarycentricError": 4.269934739120629e-08
+    },
+    {
+      "mode": "scalar",
+      "perspective": false,
+      "size": 96,
+      "checked": 507,
+      "misses": 285,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 156,
+      "maximumBarycentricError": 3.4555709960137904e-08
+    },
+    {
+      "mode": "scalar",
+      "perspective": false,
+      "size": 192,
+      "checked": 2056,
+      "misses": 1265,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 445,
+      "maximumBarycentricError": 4.7737468089614765e-08
+    },
+    {
+      "mode": "scalar",
+      "perspective": true,
+      "size": 96,
+      "checked": 213,
+      "misses": 654,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 64,
+      "maximumBarycentricError": 4.244537288311534e-08
+    },
+    {
+      "mode": "scalar",
+      "perspective": true,
+      "size": 192,
+      "checked": 886,
+      "misses": 2786,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 231,
+      "maximumBarycentricError": 4.6053042601634786e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "timepoint",
+      "perspective": false,
+      "width": 192,
+      "height": 192,
+      "checked": 1936,
+      "misses": 1440,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 79,
+      "maximumBarycentricError": 8.034982812432645e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "threshold",
+      "perspective": false,
+      "width": 192,
+      "height": 192,
+      "checked": 1936,
+      "misses": 1440,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 71,
+      "maximumBarycentricError": 8.034982812432645e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "morph",
+      "perspective": false,
+      "width": 192,
+      "height": 192,
+      "checked": 1914,
+      "misses": 1483,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 65,
+      "maximumBarycentricError": 8.204361501285007e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "near",
+      "perspective": false,
+      "width": 192,
+      "height": 192,
+      "checked": 728,
+      "misses": 2978,
+      "clippedMisses": 1194,
+      "faces": 1,
+      "chunks": 51,
+      "maximumBarycentricError": 5.471868658180057e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "far",
+      "perspective": false,
+      "width": 192,
+      "height": 192,
+      "checked": 1147,
+      "misses": 2414,
+      "clippedMisses": 766,
+      "faces": 2,
+      "chunks": 25,
+      "maximumBarycentricError": 8.692280328848057e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "restored",
+      "perspective": false,
+      "width": 256,
+      "height": 192,
+      "checked": 1926,
+      "misses": 2833,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 72,
+      "maximumBarycentricError": 8.856300026671704e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "timepoint",
+      "perspective": true,
+      "width": 192,
+      "height": 192,
+      "checked": 886,
+      "misses": 2786,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 66,
+      "maximumBarycentricError": 4.345596327226531e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "threshold",
+      "perspective": true,
+      "width": 192,
+      "height": 192,
+      "checked": 886,
+      "misses": 2786,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 59,
+      "maximumBarycentricError": 4.345596327226531e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "morph",
+      "perspective": true,
+      "width": 192,
+      "height": 192,
+      "checked": 915,
+      "misses": 2763,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 57,
+      "maximumBarycentricError": 4.3751050671225755e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "near",
+      "perspective": true,
+      "width": 192,
+      "height": 192,
+      "checked": 287,
+      "misses": 3560,
+      "clippedMisses": 624,
+      "faces": 1,
+      "chunks": 41,
+      "maximumBarycentricError": 4.081167093161753e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "far",
+      "perspective": true,
+      "width": 192,
+      "height": 192,
+      "checked": 600,
+      "misses": 3134,
+      "clippedMisses": 302,
+      "faces": 2,
+      "chunks": 23,
+      "maximumBarycentricError": 4.3751050671225755e-08
+    },
+    {
+      "mode": "scalar-update",
+      "update": "restored",
+      "perspective": true,
+      "width": 256,
+      "height": 192,
+      "checked": 914,
+      "misses": 4081,
+      "clippedMisses": 0,
+      "faces": 2,
+      "chunks": 57,
+      "maximumBarycentricError": 4.339522685636865e-08
+    }
+  ],
+  "javafxTests": 22,
+  "visualQaProbeMetrics": [
+    "fixture=bilateral-gifti size=960x540 expected_foreground=102720 observed_foreground=102720 expected_halves=51360,51360 observed_halves=51360,51360 expected_bounds=80,110,879,429 observed_bounds=80,110,879,429 mask_iou=1.000000 centroid_distance_px=0.000000 mean_interior_channel_error=0.640709 pick_surface=gifti-left pick_face=0 pick_vertex=0 resources=4",
+    "publication_size=1200x1200 semantic_mask_iou=0.997911 centroid_distance_px=0.279658 mean_interior_channel_error=1.207267 landmark_max_channel_error=0",
+    "pick_face=0 pick_vertex=0 navigation_p50_ms=0.306791 navigation_p95_ms=0.445250 pick_p50_ms=1.035875 pick_p95_ms=1.035875 mesh_uploads=1 atlas_uploads=1"
+  ],
+  "sourceSha256": {
+    "build.sbt": "5dbcf8756f38cbf435be1ea4aba4fdba004fde2b84377ce3ed95116962cb3537",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxNativePick.scala": "d292aa2380c60d24b6863e31dee6b4cd20bb8604e9c21ca3511d27317be0d307",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxNativePickProbe.scala": "2436dba06463ae97a785a2df71f82ac8081c2124aff9d79a40d34be23ba1b7c9",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala": "ae5320e06543f2acfbaac95d10bbdd21c86e9229085a47ba840b328c2ece8f83",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala": "2b6288460d8b1edb1090728a82c2f5de1a90c6520ea4d58d7dd12ff42122a662",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala": "b7c4e7a01bb9987752eaa9bf432267767d0fef261adc3c0bddcf6165aa5d8fe0",
+    "docs/plans/surface-native-picking-review.md": "4373862448c7c6792009e3f0241026d82e8c1210ce17e2036b85bc4694c00a81"
+  },
+  "artifactsSha256": {
+    "docs/benchmarks/receipts/surface-native-picking-2026-09-08.log.gz": "f2aa681c8816408bf0f97e9cc18e163cecc5fe290827f6863ea9ba3be5b9ad46"
+  },
+  "limits": [
+    "Analytic two-face fixtures, not cortical-scale performance evidence.",
+    "Native picking engine is exercised; OS event delivery is not.",
+    "Private test adapter is verified on OpenJFX 21.0.5 classpath only.",
+    "Exact face-edge and nearest-vertex ties are excluded from native comparison and remain shared semantic tests."
+  ]
+}

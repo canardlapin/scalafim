@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>ScalaFIM cortical map WebGL acceptance</title>
+<style>
+body { margin: 24px; font: 15px system-ui; color: #22313f; background: #edf1f5; }
+canvas { max-width: 80vw; height: auto; background: white; }
+pre { white-space: pre-wrap; }
+</style>
+<h1>Cortical map WebGL acceptance</h1>
+<p id="status">Loading the pinned host-local cortical fixture…</p>
+<canvas id="surface" width="768" height="768"></canvas>
+<pre id="receipt"></pre>
+<script src="/main.js"></script>
+<script type="module">
+import * as THREE from '/three/three.module.js';
+try {
+  const fixture = await (await fetch('/fixture.json')).json();
+  window.runCorticalCase = (mode, perspective, lit, diagnosticStage = "") => {
+    document.querySelector('#status').textContent = `${mode} — ${perspective ? 'perspective' : 'orthographic'}, ${lit ? 'lit' : 'unlit'}`;
+    const result = runScalafimThreeCorticalMapProbe(THREE, document.querySelector('#surface'), fixture, mode, perspective, lit, diagnosticStage);
+    document.querySelector('#receipt').textContent = JSON.stringify({...result, images: undefined}, null, 2);
+    return result;
+  };
+  window.corticalSourceHashes = fixture.sourceSha256;
+  window.threeRevision = THREE.REVISION;
+  document.body.dataset.ready = 'true';
+} catch (error) {
+  document.body.dataset.error = String(error.stack || error);
+  document.querySelector('#status').textContent = String(error);
+}
+</script>
+</html>

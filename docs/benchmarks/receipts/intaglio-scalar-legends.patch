@@ -1,0 +1,456 @@
+--- a/modules/core/README.md
++++ b/modules/core/README.md
+@@ -28,6 +28,40 @@
+ Consumers should export plot specifications or scenes into this module;
+ platform renderers should consume `DeviceScene` values at a boundary. The
+ artifact matrix and design commitments are in the [root README](../../README.md).
++
++## Mapping-derived scalar legends
++
++`ScalarLegend` retains an inspectable `ScalarMapping`, quantity label, units,
++ticks, and optional hidden/invalid keys. Its limits and colors come from that
++mapping. Resolve display-window and threshold overrides before constructing the
++legend. `ScalarLegendDrawing.draw` produces an ordinary `Scene`, measured in
++points, with wrapped titles and separate rows for colliding tick labels.
++
++```scala
++val mapping = ScalarMapping(ScalarScale.sequential(
++  DisplayWindow.unsafe(-1, 1),
++  ScalarRamp.linear(Rgba32.unsafe(30, 70, 170), Rgba32.unsafe(180, 35, 35))
++))
++val legend = for
++  title <- LegendTitle.make("Contrast", Some("percent signal change"))
++  spec <- ScalarLegend.make(mapping, title)
++  drawing <- ScalarLegendDrawing.draw(spec)
++yield drawing
++```
++
++The drawing reports its width, height, tick bounds, and semantic legend identity.
++Supply a `TextMetrics` implementation through `ScalarLegendStyle` when exact
++platform font metrics are available. The portable default is an estimate.
++Asymmetric diverging and split scales retain the scalar window's proportions;
++ticks use that same window, while each tail evaluates its own ramp. Sampled
++image strips use nearest-neighbor rendering and split at mapping boundaries,
++preventing antialiasing seams between individual colored rectangles or smoothing
++across hidden intervals. Sampling resolution controls the finite display palette.
++
++The descriptor identity includes mapping, metadata, ticks, and key visibility;
++resizing or changing fonts leaves it unchanged. It describes unlit mapping
++colors, not the result of lighting or layer composition. Existing grammar
++`GuideSpec.Legend` and `GuideSpec.Colorbar` APIs remain available.
+ 
+ ## Plotting DSL
+ 
+--- a/modules/core/shared/src/main/scala/intaglio/ScalarMapping.scala
++++ b/modules/core/shared/src/main/scala/intaglio/ScalarMapping.scala
+@@ -186,6 +186,17 @@
+   /** Adapt only color evaluation. Resolve checked overrides first, then create this adapter. */
+   def colorizer: Colorizer[Double] = new ScalarMappingColorizer(this)
+ 
++  /** Physical ramp knots and visibility endpoints, in ascending scalar order. */
++  lazy val boundaries: Vector[Double] =
++    val knots = scale.segments.flatMap: segment =>
++      segment.ramp.stops.map: (t, _) =>
++        (1.0 - t) * segment.window.lower + t * segment.window.upper
++    val selected = visibility match
++      case ScalarVisibility.All => Vector.empty
++      case ScalarVisibility.Inside(interval) => Vector(interval.lower, interval.upper)
++      case ScalarVisibility.Outside(interval) => Vector(interval.lower, interval.upper)
++    (knots ++ selected).distinct.sorted
++
+   /** Complete, versioned descriptor identity, identical on JVM and JS; not a lossy hash.
+     * Signed zero is canonicalized because it has no distinct display semantics here.
+     */
+--- /dev/null
++++ b/modules/core/shared/src/main/scala/intaglio/ScalarLegend.scala
+@@ -0,0 +1,108 @@
++package intaglio
++
++enum LegendError extends IntaglioError:
++  case InvalidMetadata(reason: String)
++  case InvalidTicks(reason: String)
++  case InvalidLayout(reason: String)
++
++  def message: String = this match
++    case InvalidMetadata(reason) => s"invalid legend metadata: $reason"
++    case InvalidTicks(reason) => s"invalid legend ticks: $reason"
++    case InvalidLayout(reason) => s"invalid legend layout: $reason"
++
++final class LegendTitle private (val quantity: String, val units: Option[String]):
++  def text: String = units.fold(quantity)(unit => s"$quantity ($unit)")
++
++object LegendTitle:
++  def make(quantity: String, units: Option[String] = None): Either[LegendError, LegendTitle] =
++    if quantity.trim.isEmpty || units.exists(_.trim.isEmpty) then
++      Left(LegendError.InvalidMetadata("quantity and supplied units must be nonempty"))
++    else Right(new LegendTitle(quantity.trim, units.map(_.trim)))
++
++final case class ScalarLegendCell private[intaglio] (
++  lowerFraction: Double,
++  upperFraction: Double,
++  sampleValue: Double,
++  color: Rgba32
++)
++
++/** Mapping-owned calibration, independent of camera, compositing, and layout.
++  * Tick positions use the full scalar window; diverging and split segments
++  * therefore retain their actual asymmetric widths. Color evaluation uses each
++  * segment's own normalization, exactly as on the mapped scientific object.
++  */
++final class ScalarLegend private (
++  val mapping: ScalarMapping,
++  val title: LegendTitle,
++  val ticks: Vector[AxisTick],
++  val showHidden: Boolean,
++  val showInvalid: Boolean
++):
++  def position(value: Double): Double =
++    require(value.isFinite && value >= mapping.scale.window.lower && value <= mapping.scale.window.upper,
++      "legend position must be within the scalar window")
++    mapping.scale.window.normalize(value)
++
++  def valueAt(fraction: Double): Double =
++    require(fraction.isFinite && fraction >= 0 && fraction <= 1, "legend fraction must be in [0,1]")
++    (1 - fraction) * mapping.scale.window.lower + fraction * mapping.scale.window.upper
++
++  def colorAt(fraction: Double): Rgba32 = mapping.color(valueAt(fraction))
++
++  /** Piecewise-constant display cells. No cell crosses a mapping discontinuity;
++    * each cell's color is the exact evaluator output at its recorded sample.
++    * Pointwise endpoint inclusion remains available through mapping.color.
++    */
++  def cells(resolution: Int): Vector[ScalarLegendCell] =
++    require(resolution >= 2 && resolution <= 8192, "legend resolution must be between 2 and 8192")
++    val breaks = mapping.boundaries.filter(v => v >= mapping.scale.window.lower && v <= mapping.scale.window.upper).map(position)
++    val edges = ((0 to resolution).map(_.toDouble / resolution) ++ breaks).distinct.sorted
++    edges.sliding(2).map: pair =>
++      val value = valueAt(pair(0) * 0.5 + pair(1) * 0.5)
++      ScalarLegendCell(pair(0), pair(1), value, mapping.color(value))
++    .toVector
++
++  def notes: Vector[String] =
++    def interval(value: ScalarInterval): String =
++      val labels = ScalarLegend.labels(Vector(value.lower, value.upper))
++      val left = if value.endpoints == ScalarEndpointInclusion.Lower || value.endpoints == ScalarEndpointInclusion.Both then "[" else "("
++      val right = if value.endpoints == ScalarEndpointInclusion.Upper || value.endpoints == ScalarEndpointInclusion.Both then "]" else ")"
++      s"$left${labels(0)}, ${labels(1)}$right"
++    val visibility = mapping.visibility match
++      case ScalarVisibility.All => Vector.empty
++      case ScalarVisibility.Inside(value) => Vector(s"Visible interval: ${interval(value)}")
++      case ScalarVisibility.Outside(value) => Vector(s"Hidden interval: ${interval(value)}")
++    val gap = mapping.scale.omittedInterval.map(value => s"Omitted interval: ${interval(value)}").toVector
++    val outside = mapping.outOfRange match
++      case ScalarOutOfRange.Clamp => "Outside range: saturated; visibility still applies"
++      case ScalarOutOfRange.Hide => "Outside range: hidden"
++    visibility ++ gap ++ Vector(outside, "Unlit mapping colors")
++
++  lazy val canonicalKey: String =
++    def text(value: String): String = s"${value.length}:$value"
++    def number(value: Double): String = java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(if value == 0 then 0 else value))
++    val tickKey = ticks.map(t => s"${number(t.value)}:${text(t.label)}").mkString(";")
++    s"scalar-legend-v1|${text(mapping.canonicalKey)}|${text(title.quantity)}|${title.units.fold("none")(text)}|$tickKey|$showHidden|$showInvalid"
++
++object ScalarLegend:
++  private[intaglio] def labels(values: Vector[Double]): Vector[String] =
++    val formatted = Labeler.default(values)
++    if formatted.distinct.length == values.distinct.length then formatted else
++      values.map(value => BigDecimal.decimal(value).bigDecimal.stripTrailingZeros.toPlainString)
++
++  def make(mapping: ScalarMapping, title: LegendTitle, ticks: Vector[AxisTick] = Vector.empty,
++    showHidden: Boolean = true, showInvalid: Boolean = true): Either[LegendError, ScalarLegend] =
++    val window = mapping.scale.window
++    val values = (Vector(window.lower, window.upper) ++ mapping.scale.center ++
++      mapping.scale.omittedInterval.toVector.flatMap(v => Vector(v.lower, v.upper)) ++ (mapping.visibility match
++        case ScalarVisibility.All => Vector.empty
++        case ScalarVisibility.Inside(v) => Vector(v.lower, v.upper)
++        case ScalarVisibility.Outside(v) => Vector(v.lower, v.upper)))
++      .filter(v => v >= window.lower && v <= window.upper).distinct.sorted
++    val defaultLabels = labels(values)
++    val selected = if ticks.isEmpty then values.zip(defaultLabels).map((v, label) => AxisTick.unsafe(v, label)) else ticks.sortBy(_.value)
++    if selected.exists(t => !t.value.isFinite || t.value < window.lower || t.value > window.upper || t.label.trim.isEmpty) then
++      Left(LegendError.InvalidTicks("ticks require finite in-range values and nonempty labels"))
++    else if selected.map(_.value).distinct.length != selected.length then
++      Left(LegendError.InvalidTicks("tick values must be unique"))
++    else Right(new ScalarLegend(mapping, title, selected, showHidden, showInvalid))
+--- /dev/null
++++ b/modules/core/shared/src/main/scala/intaglio/ScalarLegendDrawing.scala
+@@ -0,0 +1,151 @@
++package intaglio
++
++final case class ScalarLegendStyle(
++  widthPt: Double = 280,
++  fontPt: Double = 10,
++  barHeightPt: Double = 16,
++  marginPt: Double = 8,
++  gapPt: Double = 5,
++  resolution: Int = 512,
++  fontFamily: Option[String] = Some("sans-serif"),
++  metrics: TextMetrics = TextMetrics.estimate
++):
++  require(Vector(widthPt, fontPt, barHeightPt, marginPt, gapPt).forall(_.isFinite))
++  require(fontPt > 0 && barHeightPt > 0 && marginPt >= 0 && gapPt >= 0)
++  require(widthPt > marginPt * 2 + fontPt * 4, "legend width must leave room for labels")
++  require(resolution >= 2 && resolution <= 8192)
++  require(fontFamily.forall(_.trim.nonEmpty))
++
++final case class ScalarLegendTickPlacement(
++  value: Double,
++  fraction: Double,
++  label: String,
++  leftPt: Double,
++  topPt: Double,
++  widthPt: Double,
++  heightPt: Double
++)
++
++final case class ScalarLegendDrawing(
++  scene: Scene,
++  widthPt: Double,
++  heightPt: Double,
++  ticks: Vector[ScalarLegendTickPlacement],
++  legendKey: String
++)
++
++/** A measured, renderer-neutral legend in physical points. Text wraps within
++  * the card and colliding tick labels occupy separate rows. Bar cells are
++  * sampled image strips with nearest-neighbor rendering. Mapping boundaries
++  * split the strips, so interpolation cannot smear threshold or gap colors.
++  */
++object ScalarLegendDrawing:
++  def draw(legend: ScalarLegend, style: ScalarLegendStyle = ScalarLegendStyle()): Either[LegendError, ScalarLegendDrawing] =
++    val available = style.widthPt - style.marginPt * 2
++    val textStyle = TextStyle(style.fontFamily, style.fontPt)
++    val lineHeight = style.metrics.heightPt(textStyle)
++    def width(text: String): Double = style.metrics.widthPt(text, textStyle)
++    if !lineHeight.isFinite || lineHeight <= 0 || !width("M").isFinite || width("M") > available then
++      return Left(LegendError.InvalidLayout("text metrics do not fit the available width"))
++    def wrap(text: String, limit: Double): Vector[String] =
++      val lines = Vector.newBuilder[String]
++      var current = ""
++      text.split("\\s+").foreach: word =>
++        var rest = word
++        if current.nonEmpty && width(current + " " + rest) <= limit then
++          current += " " + rest
++          rest = ""
++        else if current.nonEmpty then
++          lines += current
++          current = ""
++        while rest.nonEmpty && width(rest) > limit do
++          var count = 1
++          while count < rest.length && width(rest.take(count + 1)) <= limit do count += 1
++          lines += rest.take(count)
++          rest = rest.drop(count)
++        if rest.nonEmpty then current = rest
++      if current.nonEmpty then lines += current
++      lines.result()
++    val titleLines = wrap(legend.title.text, available)
++    val barTop = style.marginPt + titleLines.length * lineHeight + style.gapPt
++    val barBottom = barTop + style.barHeightPt
++    val labelTop = barBottom + style.gapPt * 2
++    val laneEnds = scala.collection.mutable.ArrayBuffer.empty[Double]
++    val laneHeights = scala.collection.mutable.ArrayBuffer.empty[Double]
++    val labels = legend.ticks.map: tick =>
++      val lines = wrap(tick.label, available)
++      val labelWidth = lines.map(width).max
++      val fraction = legend.position(tick.value)
++      val center = style.marginPt + available * fraction
++      val left = math.max(style.marginPt, math.min(center - labelWidth * 0.5, style.widthPt - style.marginPt - labelWidth))
++      val found = laneEnds.indexWhere(end => left >= end + style.gapPt)
++      val lane = if found >= 0 then found else
++        laneEnds += Double.NegativeInfinity
++        laneHeights += 0
++        laneEnds.length - 1
++      laneEnds(lane) = left + labelWidth
++      laneHeights(lane) = math.max(laneHeights(lane), lines.length * lineHeight)
++      (tick, lines, labelWidth, fraction, left, lane)
++    val laneTops = laneHeights.scanLeft(labelTop)((top, height) => top + height + style.gapPt)
++    val notes = legend.notes.flatMap(text => wrap(text, available))
++    val noteTop = laneTops.last + style.gapPt
++    val keyTop = noteTop + notes.length * lineHeight + style.gapPt
++    val keys = (if legend.showHidden then Vector("Hidden" -> legend.mapping.hidden) else Vector.empty) ++
++      (if legend.showInvalid then Vector("Invalid / missing" -> legend.mapping.invalid) else Vector.empty)
++    val keyWidth = available - style.barHeightPt - style.gapPt
++    if keys.nonEmpty && keyWidth < width("M") then
++      return Left(LegendError.InvalidLayout("key swatches leave no room for labels"))
++    val keyLabels = keys.map(key => wrap(key._1, keyWidth))
++    val keyTops = keyLabels.scanLeft(keyTop)((top, lines) => top + math.max(style.barHeightPt, lines.length * lineHeight) + style.gapPt)
++    val height = keyTops.last + style.marginPt
++    val grobs = Vector.newBuilder[Grob]
++    def point(x: Double, top: Double): Point = Point(LengthExpr(Length.pointsUnsafe(x)), LengthExpr(Length.pointsUnsafe(height - top)))
++    def size(w: Double, h: Double): Size = Size.fromExtents(ExtentExpr.pointsUnsafe(w), ExtentExpr.pointsUnsafe(h))
++    def rgba(color: Rgba32): Rgba = Rgba.unsafe(color.red, color.green, color.blue, color.alpha.toDouble / 255)
++    val textGp = GraphicParams.unsafe(stroke = Some(Rgba.Black), fontSize = Length.pointsUnsafe(style.fontPt), fontFamily = style.fontFamily)
++    def textLine(text: String, x: Double, top: Double, name: String): Unit =
++      grobs += Grob.textUnsafe(text, point(x, top), anchor = Anchor(HJust.Left, VJust.Top), gp = textGp,
++        name = Some(GraphicsName.unsafe(name)))
++    def fill(x: Double, top: Double, w: Double, h: Double, color: Rgba32, name: String): Unit =
++      grobs += Grob.rectUnsafe(point(x, top), size(w, h), anchor = Anchor(HJust.Left, VJust.Top),
++        gp = GraphicParams.unsafe(stroke = None, fill = Some(rgba(color))), name = Some(GraphicsName.unsafe(name)))
++    def checker(x: Double, top: Double, w: Double, h: Double, name: String): Unit =
++      val tile = style.barHeightPt * 0.5
++      val columns = math.ceil(w / tile).toInt
++      val rows = math.ceil(h / tile).toInt
++      for row <- 0 until rows; col <- 0 until columns do
++        val color = if (row + col) % 2 == 0 then Rgba32.unsafe(235, 235, 235) else Rgba32.unsafe(255, 255, 255)
++        fill(x + col * tile, top + row * tile, math.min(tile, w - col * tile), math.min(tile, h - row * tile), color, s"$name-$row-$col")
++    titleLines.zipWithIndex.foreach((line, i) => textLine(line, style.marginPt, style.marginPt + i * lineHeight, s"legend-title-$i"))
++    checker(style.marginPt, barTop, available, style.barHeightPt, "legend-transparency")
++    val boundaries = (Vector(0.0, 1.0) ++ legend.mapping.boundaries
++      .filter(v => v >= legend.mapping.scale.window.lower && v <= legend.mapping.scale.window.upper).map(legend.position)).distinct.sorted
++    boundaries.sliding(2).zipWithIndex.foreach: (pair, i) =>
++      val lo = pair(0)
++      val span = pair(1) - lo
++      val count = math.max(1, math.ceil(style.resolution * span).toInt)
++      val image = RasterImage.tabulate(RasterDimensions.unsafe(count, 1)): (x, _) =>
++        legend.colorAt(lo + span * (x + 0.5) / count)
++      grobs += Grob.imageUnsafe(image, point(style.marginPt + lo * available, barTop),
++        size(span * available, style.barHeightPt), anchor = Anchor(HJust.Left, VJust.Top),
++        interpolation = RasterInterpolation.Nearest, name = Some(GraphicsName.unsafe(s"legend-strip-$i")))
++    grobs += Grob.rectUnsafe(point(style.marginPt, barTop), size(available, style.barHeightPt),
++      anchor = Anchor(HJust.Left, VJust.Top), gp = GraphicParams.unsafe(stroke = Some(Rgba.Black), fill = None),
++      name = Some(GraphicsName.unsafe("legend-outline")))
++    val placed = labels.zipWithIndex.map: (label, i) =>
++      val (tick, lines, labelWidth, fraction, left, lane) = label
++      val top = laneTops(lane)
++      val x = style.marginPt + available * fraction
++      grobs += Grob.segments(Vector(point(x, barBottom) -> point(x, barBottom + style.gapPt)),
++        textGp, name = Some(GraphicsName.unsafe(s"legend-tick-$i"))).orThrow
++      lines.zipWithIndex.foreach((line, n) => textLine(line, left, top + n * lineHeight, s"legend-label-$i-$n"))
++      ScalarLegendTickPlacement(tick.value, fraction, tick.label, left, top, labelWidth, lines.length * lineHeight)
++    notes.zipWithIndex.foreach((line, i) => textLine(line, style.marginPt, noteTop + i * lineHeight, s"legend-note-$i"))
++    keys.zipWithIndex.foreach: (key, i) =>
++      val (_, color) = key
++      val top = keyTops(i)
++      checker(style.marginPt, top, style.barHeightPt, style.barHeightPt, s"legend-key-background-$i")
++      fill(style.marginPt, top, style.barHeightPt, style.barHeightPt, color, s"legend-key-color-$i")
++      keyLabels(i).zipWithIndex.foreach((line, n) =>
++        textLine(line, style.marginPt + style.barHeightPt + style.gapPt, top + n * lineHeight, s"legend-key-label-$i-$n"))
++    Right(ScalarLegendDrawing(Scene(grobs.result()), style.widthPt, height, placed, legend.canonicalKey))
+--- /dev/null
++++ b/modules/core/shared/src/test/scala/intaglio/ScalarLegendSuite.scala
+@@ -0,0 +1,89 @@
++package intaglio
++
++class ScalarLegendSuite extends munit.FunSuite:
++  private val blue = Rgba32.unsafe(0, 0, 200)
++  private val white = Rgba32.unsafe(200, 200, 200)
++  private val red = Rgba32.unsafe(200, 0, 0)
++  private val transparent = Rgba32.unsafe(0, 0, 0, 0)
++  private val title = LegendTitle.make("Contrast", Some("percent signal")).toOption.get
++  private val split = ScalarMapping(ScalarScale.split(DisplayWindow.unsafe(-4, 8), 0, -1, 2,
++    ScalarRamp.linear(blue, white), ScalarRamp.linear(white, red)).toOption.get)
++
++  test("asymmetric split bar positions and colors have an independent piecewise oracle"):
++    val legend = ScalarLegend.make(split, title).toOption.get
++    assertEqualsDouble(legend.position(-1), 0.25, 0)
++    assertEqualsDouble(legend.position(2), 0.5, 0)
++    assertEqualsDouble(legend.position(0), 1.0 / 3, 1e-15)
++    assertEquals(legend.colorAt(0), blue)
++    assertEquals(legend.colorAt(1), red)
++    assertEquals(legend.colorAt(0.375), transparent)
++    for cell <- legend.cells(101) do
++      val x = cell.sampleValue
++      val expected = if x > -1 && x < 2 then transparent
++        else if x <= -1 then
++          val channel = math.round((x + 4) / 3 * 200).toInt
++          Rgba32.unsafe(channel, channel, 200)
++        else
++          val channel = math.round((8 - x) / 6 * 200).toInt
++          Rgba32.unsafe(200, channel, channel)
++      assertEquals(cell.color, expected)
++      assert(!(cell.lowerFraction < 0.25 && cell.upperFraction > 0.25))
++      assert(!(cell.lowerFraction < 0.5 && cell.upperFraction > 0.5))
++
++  test("effective thresholds and hidden versus invalid keys retain exact semantics"):
++    val mapping = split.copy(visibility = ScalarVisibility.Inside(
++      ScalarInterval.make(-2, 5, ScalarEndpointInclusion.Lower).toOption.get), invalid = red)
++    val legend = ScalarLegend.make(mapping, title).toOption.get
++    assert(legend.notes.contains("Visible interval: [-2, 5)"))
++    assert(legend.notes.contains("Omitted interval: (-1, 2)"))
++    assert(legend.notes.contains("Unlit mapping colors"))
++    assertEquals(legend.mapping.color(Double.NaN), red)
++    assertEquals(legend.mapping.color(5), transparent)
++    assertNotEquals(legend.canonicalKey, ScalarLegend.make(split, title).toOption.get.canonicalKey)
++    assertNotEquals(legend.canonicalKey, ScalarLegend.make(mapping, title, showInvalid = false).toOption.get.canonicalKey)
++
++  test("custom ticks and metadata reject ambiguous or unsupported calibration"):
++    assert(LegendTitle.make(" ").isLeft)
++    assert(LegendTitle.make("value", Some(" ")).isLeft)
++    for ticks <- Vector(Vector(AxisTick.unsafe(9, "outside")), Vector(AxisTick.unsafe(0, " ")),
++        Vector(AxisTick.unsafe(0, "a"), AxisTick.unsafe(0, "b"))) do
++      assert(ScalarLegend.make(split, title, ticks).isLeft)
++    intercept[IllegalArgumentException](ScalarLegend.make(split, title).toOption.get.position(9))
++
++  test("narrow high-offset windows get distinct default tick labels"):
++    val mapping = ScalarMapping(ScalarScale.sequential(DisplayWindow.unsafe(1e8 + 0.001, 1e8 + 0.002), ScalarRamp.linear(blue, red)))
++    val legend = ScalarLegend.make(mapping, title).toOption.get
++    assertEquals(legend.ticks.map(_.label), Vector("100000000.001", "100000000.002"))
++
++  test("drawn strips retain exact sampled colors and never interpolate across a split gap"):
++    val legend = ScalarLegend.make(split, title).toOption.get
++    val drawing = ScalarLegendDrawing.draw(legend, ScalarLegendStyle(resolution = 100)).toOption.get
++    val strips = drawing.scene.grobs.collect { case image: Grob.Image => image }
++    assertEquals(strips.length, 3)
++    assertEquals(strips.map(_.image.width), Vector(25, 25, 50))
++    assert(strips.forall(_.interpolation == RasterInterpolation.Nearest))
++    for x <- 0 until 25 do
++      assertEquals(strips(1).image.pixelUnsafe(x, 0), transparent)
++      val c = math.round((x + 0.5) / 25 * 200).toInt
++      assertEquals(strips.head.image.pixelUnsafe(x, 0), Rgba32.unsafe(c, c, 200))
++    for x <- 0 until 50 do
++      val c = math.round((1 - (x + 0.5) / 50) * 200).toInt
++      assertEquals(strips.last.image.pixelUnsafe(x, 0), Rgba32.unsafe(200, c, c))
++
++  test("title wrapping and crowded ticks stay inside measured bounds without overlap"):
++    val longTitle = LegendTitle.make("A long scientific quantity with a deliberately extended description", Some("millimeters per second")).toOption.get
++    val ticks = Vector(-4.0, -3.99, -3.98, 0.0, 7.99, 8.0).map(value => AxisTick.unsafe(value, s"value ${value.toInt}"))
++    val legend = ScalarLegend.make(split, longTitle, ticks).toOption.get
++    val style = ScalarLegendStyle(widthPt = 180, fontPt = 12)
++    val drawing = ScalarLegendDrawing.draw(legend, style).toOption.get
++    assertEquals(drawing.legendKey, legend.canonicalKey)
++    for tick <- drawing.ticks do
++      assert(tick.leftPt >= style.marginPt)
++      assert(tick.leftPt + tick.widthPt <= drawing.widthPt - style.marginPt + 1e-9)
++      assert(tick.topPt > 0 && tick.topPt + tick.heightPt < drawing.heightPt)
++    for (a, i) <- drawing.ticks.zipWithIndex; b <- drawing.ticks.drop(i + 1) do
++      assert(a.leftPt + a.widthPt <= b.leftPt || b.leftPt + b.widthPt <= a.leftPt ||
++        a.topPt + a.heightPt <= b.topPt || b.topPt + b.heightPt <= a.topPt)
++    val larger = ScalarLegendDrawing.draw(legend, style.copy(widthPt = 350)).toOption.get
++    assertEquals(larger.legendKey, drawing.legendKey)
++    assert(larger.heightPt < drawing.heightPt)
+--- /dev/null
++++ b/modules/svg/jvm/src/test/scala/intaglio/svg/ScalarLegendGallery.scala
+@@ -0,0 +1,33 @@
++package intaglio.svg
++
++import intaglio.*
++import java.nio.file.{Files, Paths}
++
++/** Reproducible legend visual checks; no browser or graphics toolkit required. */
++object ScalarLegendGallery:
++  def main(args: Array[String]): Unit =
++    val output = Paths.get(args.headOption.getOrElse("target/scalar-legends"))
++    Files.createDirectories(output)
++    val blue = Rgba32.unsafe(30, 70, 170)
++    val white = Rgba32.unsafe(245, 245, 245)
++    val red = Rgba32.unsafe(180, 35, 35)
++    val lower = ScalarRamp.linear(blue, white)
++    val upper = ScalarRamp.linear(white, red)
++    val window = DisplayWindow.unsafe(-4, 8)
++    val sequential = ScalarMapping(ScalarScale.sequential(window, ScalarRamp.linear(blue, red)))
++    val diverging = ScalarMapping(ScalarScale.diverging(window, 0, lower, upper).toOption.get)
++    val split = ScalarMapping(ScalarScale.split(window, 0, -1, 2, lower, upper).toOption.get)
++    val missing = diverging.copy(visibility = ScalarVisibility.Outside(
++      ScalarInterval.make(-0.25, 0.25, ScalarEndpointInclusion.Neither).toOption.get), invalid = Rgba32.unsafe(190, 60, 175))
++    for
++      (name, mapping) <- Vector("sequential" -> sequential, "asymmetric-diverging" -> diverging, "split" -> split, "missing-threshold" -> missing)
++      (format, style) <- Vector("manuscript" -> ScalarLegendStyle(), "poster" -> ScalarLegendStyle(widthPt = 440, fontPt = 18, barHeightPt = 26))
++    do
++      val title = LegendTitle.make("Estimated task-related response relative to the comparison condition", Some("percent signal change")).toOption.get
++      val legend = ScalarLegend.make(mapping, title).toOption.get
++      val drawing = ScalarLegendDrawing.draw(legend, style).toOption.get
++      val options = SvgOptions.unsafe(math.ceil(drawing.widthPt * 4 / 3).toInt, math.ceil(drawing.heightPt * 4 / 3).toInt, Some(name))
++      val svg = SvgRenderer.render(drawing.scene, options).toOption.get
++      val path = output.resolve(s"$name-$format.svg")
++      Files.writeString(path, svg.value)
++      println(s"legend=$path width=${options.width} height=${options.height}")

@@ -1,0 +1,273 @@
+{
+  "schema": "scalafim.surface-three-depth-admission.v1",
+  "date": "2026-09-08",
+  "sourceSha256": {
+    "examples/surface-view/browser/depth-admission.mjs": "111f49f5e2d98c957961557bd769be85106cadd86ea7ff2c6cd1cdc63a1c36ba",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeDepthAdmission.scala": "9d73f96e827fe1f7cc236aa71b10f269c2f622b1a594a93918b84995a3efa3e0",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeJsRuntime.scala": "0285ac91e51923c6bde221541c16ec6451fe29f9d49568813545e60cb4880994",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceProgram.scala": "93a6cfceaf0c8ee4277cc3cfa7d9907eedd8d3fd7112bc68f4e1ef7f2e7078ee",
+    "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceBackendSuite.scala": "90a7e7f06e9cb486d75bf16f51b47149d28f7fdb8915d8d28a6f2cc0396a8a9c"
+  },
+  "command": "PLAYWRIGHT_BROWSERS_PATH=/private/tmp/scalafim-cortical-playwright node examples/surface-view/browser/depth-admission.mjs /Users/bbuchsbaum/code/jscode/surfviewjs/node_modules OUTPUT.json BACKEND",
+  "independentRuns": [
+    {
+      "schema": "scalafim.independent-webgl-depth.v1",
+      "browser": "151.0.7922.34",
+      "backend": "default",
+      "positions": [
+        0.2984880387875073,
+        0.9149595922332878,
+        -0.47781183593737453,
+        -0.573554461565223,
+        -0.021142485787464693,
+        -0.4766295261365914,
+        0.20505161282218154,
+        -0.32764376184935884,
+        -0.4781022651073559,
+        0.15369809971540604,
+        0.7115875281530464,
+        -0.4630327327636765,
+        0.34888187531136694,
+        1.2537314724282993,
+        -0.4611825913627885,
+        -0.1243654886001444,
+        -0.2099440321898811,
+        -0.4610836589246222
+      ],
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "samples": 4,
+      "rows": [
+        {
+          "constantDepth": false,
+          "reverse": false,
+          "pixel": [
+            192,
+            64,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": false
+        },
+        {
+          "constantDepth": false,
+          "reverse": true,
+          "pixel": [
+            192,
+            64,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": false
+        },
+        {
+          "constantDepth": true,
+          "reverse": false,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": true,
+          "reverse": true,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        }
+      ],
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+    },
+    {
+      "schema": "scalafim.independent-webgl-depth.v1",
+      "browser": "151.0.7922.34",
+      "backend": "metal",
+      "positions": [
+        0.2984880387875073,
+        0.9149595922332878,
+        -0.47781183593737453,
+        -0.573554461565223,
+        -0.021142485787464693,
+        -0.4766295261365914,
+        0.20505161282218154,
+        -0.32764376184935884,
+        -0.4781022651073559,
+        0.15369809971540604,
+        0.7115875281530464,
+        -0.4630327327636765,
+        0.34888187531136694,
+        1.2537314724282993,
+        -0.4611825913627885,
+        -0.1243654886001444,
+        -0.2099440321898811,
+        -0.4610836589246222
+      ],
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "samples": 4,
+      "rows": [
+        {
+          "constantDepth": false,
+          "reverse": false,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": false,
+          "reverse": true,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": true,
+          "reverse": false,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": true,
+          "reverse": true,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        }
+      ],
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3 Max, Unspecified Version)"
+    },
+    {
+      "schema": "scalafim.independent-webgl-depth.v1",
+      "browser": "151.0.7922.34",
+      "backend": "no-antialias",
+      "positions": [
+        0.2984880387875073,
+        0.9149595922332878,
+        -0.47781183593737453,
+        -0.573554461565223,
+        -0.021142485787464693,
+        -0.4766295261365914,
+        0.20505161282218154,
+        -0.32764376184935884,
+        -0.4781022651073559,
+        0.15369809971540604,
+        0.7115875281530464,
+        -0.4630327327636765,
+        0.34888187531136694,
+        1.2537314724282993,
+        -0.4611825913627885,
+        -0.1243654886001444,
+        -0.2099440321898811,
+        -0.4610836589246222
+      ],
+      "expectedPixel": [
+        255,
+        0,
+        0,
+        255
+      ],
+      "samples": 0,
+      "rows": [
+        {
+          "constantDepth": false,
+          "reverse": false,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": false,
+          "reverse": true,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": true,
+          "reverse": false,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        },
+        {
+          "constantDepth": true,
+          "reverse": true,
+          "pixel": [
+            255,
+            0,
+            0,
+            255
+          ],
+          "glError": 0,
+          "passed": true
+        }
+      ],
+      "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+    }
+  ],
+  "productionNegative": {
+    "status": "failed",
+    "failure": "page.evaluate: java.lang.AssertionError: native depth verification failed with 4 samples: expected red foreground, observed RGB(192,64,0); use hardware WebGL, a host canvas created without antialiasing, or the reference raster\n    at $c_Lscalafim_examples_surfaceview_ThreeCorticalMapProbe$.run__sjs_js_Dynamic__sjs_js_Dynamic__sjs_js_Dynamic__T__Z__Z__T__sjs_js_Dynamic (http://127.0.0.1:63825/main.js:17808:40)\n    at runScalafimThreeCorticalMapProbe (http://127.0.0.1:63825/main.js:124082:69)\n    at window.runCorticalCase (http://127.0.0.1:63825/:21:20)\n    at eval (eval at evaluate (:311:30), <anonymous>:1:55)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)\n    at /Users/bbuchsbaum/code/scala/scalafim/examples/surface-view/browser/cortical-maps.mjs:76:31",
+    "linkedSha256": "2014ad9c522736d9b93759404fe2f100f6295021104a240f8c4da449ee84731b",
+    "resourcesClosed": true
+  },
+  "log": "docs/benchmarks/receipts/surface-three-depth-admission-2026-09-08.log.gz",
+  "logSha256": "70fa22246a5b19af012424a3df1ae89093a0fa35a3a85cac64a2a0d4e9287503",
+  "scope": "Observed behavior of Chromium 151.0.7922.34 on this host. The native startup test checks behavior, not a driver name. No rendering support is claimed for rejected contexts.",
+  "laterRuntimeChange": "The legacy lighting shader now preserves interpolated corner normal magnitude; depth admission code is unchanged."
+}

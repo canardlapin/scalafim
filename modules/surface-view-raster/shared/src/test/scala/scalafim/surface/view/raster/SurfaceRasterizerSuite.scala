@@ -44,7 +44,11 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     val initial = SurfaceViewerState.initial(model)
     val viewed = SurfaceViewer.reduce(model, initial, SurfaceViewerAction.SetViewpoint(viewpoint)).toOption.get
     val unlit = SurfaceViewer.reduce(model, viewed, SurfaceViewerAction.SetLighting(SurfaceLighting.Unlit)).toOption.get
-    SurfaceCompiler.compile(model, unlit).toOption.get
+    // Raster pixel/clipping oracles use an explicit projection, independent of
+    // automatic perspective camera fitting in the interactive viewer.
+    val fixed = SurfaceViewer.reduce(model, unlit,
+      SurfaceViewerAction.SetProjection(CameraProjection.Orthographic(OrthographicScale.unsafe(1.25)))).toOption.get
+    SurfaceCompiler.compile(model, fixed).toOption.get
 
   private def triangleGeometry(faces: Seq[(Int, Int, Int)] = Seq((0, 1, 2))): SurfaceGeometry =
     geometry(
@@ -87,8 +91,13 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     val second = SurfaceRasterizer.render(renderPlan, dimensions).toOption.get
     assertEquals(first.image, second.image)
     assertEquals(hash(first.image), hash(second.image))
-    assertEquals(hash(first.image), -243859455)
-    assert(first.receipt.shadedPixels > 1000)
+    // Orthographic scale 1.25 puts the triangle at pixel coordinates
+    // (6.4,55.04), (57.6,55.04), (16.64,8.96). Independent half-plane
+    // enumeration gives 1175 covered centers; barycentrics at (30.5,40.5)
+    // give RGB (71,104,80), within one byte of floating-point quantization.
+    assertEquals(first.receipt.shadedPixels, 1175)
+    val sample = first.image.pixelUnsafe(30, 40)
+    assert(math.abs(sample.red - 71) <= 1 && math.abs(sample.green - 104) <= 1 && math.abs(sample.blue - 80) <= 1)
     assertEquals(first.receipt.trianglesInput, 1)
     assertEquals(first.receipt.trianglesAfterClipping, 1)
     assertEquals(first.receipt.trianglesCulled, 0)
@@ -260,3 +269,20 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assert(result.receipt.renderNanos >= 0L)
     assertEquals(result.receipt.colorValuesComposited, 3)
     assertEquals(result.receipt.trianglesClippedAway, 0)
+
+  test("compact bilateral raster placement and picking share the same physical viewport centers"):
+    val ids = Vector(SurfaceId.unsafe("left"), SurfaceId.unsafe("right"))
+    val assets = ids.zip(Vector(Hemisphere.Left, Hemisphere.Right)).map: (id, hemisphere) =>
+      val quad = geometry(Seq(Seq(-1.0,-1.0,0.0), Seq(1.0,-1.0,0.0), Seq(1.0,1.0,0.0), Seq(-1.0,1.0,0.0)),
+        Seq((0,1,2),(0,2,3)), hemisphere)
+      SurfaceAsset.make(id, quad).toOption.get
+    val model = SurfaceViewerModel.make(assets, Vector.empty).toOption.get
+    val state = Vector(SurfaceViewerAction.SetViewpoint(SurfaceViewpoint.Dorsal),
+      SurfaceViewerAction.SetLayout(SurfaceLayout.Bilateral(ids(0), ids(1)))).foldLeft(SurfaceViewerState.initial(model)):
+      (state, action) => SurfaceViewer.reduce(model, state, action).toOption.get
+    val compiled = SurfaceCompiler.compile(model, state).toOption.get
+    val rendered = SurfaceRasterizer.render(compiled, RasterDimensions.unsafe(600,160)).toOption.get
+    assertEquals(rendered.pick(220,80).toOption.flatten.map(_.surface), Some(ids(0)))
+    assertEquals(rendered.pick(380,80).toOption.flatten.map(_.surface), Some(ids(1)))
+    assertEquals(rendered.pick(150,80).toOption.flatten, None)
+    assertEquals(rendered.pick(450,80).toOption.flatten, None)

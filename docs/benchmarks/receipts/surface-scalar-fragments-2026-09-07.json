@@ -1,0 +1,1306 @@
+{
+  "schema": "scalafim.surface-scalar-fragments.local-evidence.v1",
+  "created_utc": "2026-09-07T23:21:23.562256+00:00",
+  "scope": "Portable single-layer unlit scalar interpolation and native JavaFX lookup feasibility; no production native scalar or automatic legend admission.",
+  "source": {
+    "repository": "canardlapin/scalafim",
+    "head": "fd992a0c85001eb50ba2e78d29c497693ca494dc",
+    "state": "local edits in pre-existing dirty tree; scoped patch relative to pre-phase source snapshot",
+    "intaglio_pin": "c6b55d066a8f4c27b0acc3c34fc04737bfaba0bd",
+    "plan_revision": 5,
+    "scene_revision": 5
+  },
+  "checks": {
+    "conformance": {
+      "command": "sbt surfaceViewConformance",
+      "status": "pass",
+      "passed": 491,
+      "modules": {
+        "surfaceJVM": {
+          "total": 132,
+          "failed": 0,
+          "errors": 0,
+          "passed": 132
+        },
+        "surfaceJS": {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105
+        },
+        "surfaceViewJVM": {
+          "total": 88,
+          "failed": 0,
+          "errors": 0,
+          "passed": 88
+        },
+        "surfaceViewJS": {
+          "total": 88,
+          "failed": 0,
+          "errors": 0,
+          "passed": 88
+        },
+        "surfaceViewRasterJVM": {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21
+        },
+        "surfaceViewRasterJS": {
+          "total": 21,
+          "failed": 0,
+          "errors": 0,
+          "passed": 21
+        },
+        "surfaceViewJavafxJVM": {
+          "total": 17,
+          "failed": 0,
+          "errors": 0,
+          "passed": 17
+        },
+        "surfaceViewThreeJS": {
+          "total": 15,
+          "failed": 0,
+          "errors": 0,
+          "passed": 15
+        },
+        "surfaceViewConnectivityJVM": {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2
+        },
+        "surfaceViewConnectivityJS": {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2
+        }
+      }
+    },
+    "examples": {
+      "command": "sbt \"all surfaceViewExamplesJVM/test surfaceViewExamplesJS/test\"",
+      "status": "known_failure",
+      "JVM": {
+        "passed": 11,
+        "failed": 1
+      },
+      "JS": {
+        "passed": 10,
+        "failed": 1
+      },
+      "failure": "SurfaceViewerExampleSuite imageHash expected 895258625, actual -748488703 on both platforms",
+      "baseline_receipt": "docs/benchmarks/receipts/surface-facewise-2026-09-07.json",
+      "golden_changed": false
+    },
+    "hosted_ci": "not assessed"
+  },
+  "javafx": {
+    "command": "sbt \"surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceScalarProbe\"",
+    "experiment_process": "completed successfully",
+    "runtime": "JavaFX 21.0.5 mac-aarch64, Homebrew Java 25.0.1, sbt 1.11.7",
+    "admission": "experimental only; production adapters reject scalar interpolation",
+    "predeclared_channel_error_budget": 2,
+    "minimum_interior_samples_per_case": 1000,
+    "threshold_exclusion": "two scalar texel intervals on either side of each threshold",
+    "summary": {
+      "affine": {
+        "cases": 24,
+        "interiorPixels": 345498,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "awayBudgetPassed": 24
+      },
+      "piecewise": {
+        "cases": 24,
+        "interiorPixels": 345498,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "awayBudgetPassed": 6
+      },
+      "threshold": {
+        "cases": 24,
+        "interiorPixels": 345498,
+        "maximumError": 108,
+        "awayMaximumError": 98,
+        "awayBudgetPassed": 2
+      }
+    },
+    "matrix": [
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 6,
+        "awayMaximumError": 6,
+        "pixelsOverBudget": 85,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 6,
+        "awayMaximumError": 6,
+        "pixelsOverBudget": 85,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 170,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 8010,
+        "awayChecked": 7755,
+        "maximumError": 65,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 510,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 8010,
+        "awayChecked": 7925,
+        "maximumError": 73,
+        "awayMaximumError": 32,
+        "pixelsOverBudget": 510,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 74,
+        "awayMaximumError": 74,
+        "pixelsOverBudget": 595,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 32220,
+        "awayChecked": 31194,
+        "maximumError": 81,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 684,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 32220,
+        "awayChecked": 31878,
+        "maximumError": 77,
+        "awayMaximumError": 18,
+        "pixelsOverBudget": 684,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": false,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 32220,
+        "awayChecked": 32049,
+        "maximumError": 75,
+        "awayMaximumError": 75,
+        "pixelsOverBudget": 684,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 89,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 106,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 118,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 3468,
+        "awayChecked": 3359,
+        "maximumError": 108,
+        "awayMaximumError": 37,
+        "pixelsOverBudget": 247,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 3468,
+        "awayChecked": 3443,
+        "maximumError": 103,
+        "awayMaximumError": 83,
+        "pixelsOverBudget": 265,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 3468,
+        "awayChecked": 3465,
+        "maximumError": 102,
+        "awayMaximumError": 98,
+        "pixelsOverBudget": 277,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 110,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 136,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 128,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 13885,
+        "awayChecked": 13434,
+        "maximumError": 102,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 434,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 13885,
+        "awayChecked": 13774,
+        "maximumError": 97,
+        "awayMaximumError": 68,
+        "pixelsOverBudget": 462,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": false,
+        "perspective": true,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 13885,
+        "awayChecked": 13859,
+        "maximumError": 99,
+        "awayMaximumError": 92,
+        "pixelsOverBudget": 452,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 6,
+        "awayMaximumError": 6,
+        "pixelsOverBudget": 85,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 6,
+        "awayMaximumError": 6,
+        "pixelsOverBudget": 85,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 170,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 8010,
+        "awayChecked": 7755,
+        "maximumError": 65,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 510,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 8010,
+        "awayChecked": 7925,
+        "maximumError": 73,
+        "awayMaximumError": 32,
+        "pixelsOverBudget": 510,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 8010,
+        "awayChecked": 8010,
+        "maximumError": 74,
+        "awayMaximumError": 74,
+        "pixelsOverBudget": 595,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 32220,
+        "awayChecked": 32220,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 32220,
+        "awayChecked": 31194,
+        "maximumError": 81,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 684,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 32220,
+        "awayChecked": 31878,
+        "maximumError": 77,
+        "awayMaximumError": 18,
+        "pixelsOverBudget": 684,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": false,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 32220,
+        "awayChecked": 32049,
+        "maximumError": 75,
+        "awayMaximumError": 75,
+        "pixelsOverBudget": 684,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 89,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 106,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 3468,
+        "awayChecked": 3468,
+        "maximumError": 13,
+        "awayMaximumError": 13,
+        "pixelsOverBudget": 118,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 3468,
+        "awayChecked": 3359,
+        "maximumError": 108,
+        "awayMaximumError": 37,
+        "pixelsOverBudget": 247,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 3468,
+        "awayChecked": 3443,
+        "maximumError": 103,
+        "awayMaximumError": 83,
+        "pixelsOverBudget": 265,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 128,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 3468,
+        "awayChecked": 3465,
+        "maximumError": 102,
+        "awayMaximumError": 98,
+        "pixelsOverBudget": 277,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 1,
+        "awayMaximumError": 1,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "affine",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 2,
+        "awayMaximumError": 2,
+        "pixelsOverBudget": 0,
+        "awayBudgetPassed": true
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 256,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 110,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 1024,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 136,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "piecewise",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": false,
+        "textureWidth": 4096,
+        "checked": 13885,
+        "awayChecked": 13885,
+        "maximumError": 7,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 128,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 256,
+        "checked": 13885,
+        "awayChecked": 13434,
+        "maximumError": 102,
+        "awayMaximumError": 7,
+        "pixelsOverBudget": 434,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 1024,
+        "checked": 13885,
+        "awayChecked": 13774,
+        "maximumError": 97,
+        "awayMaximumError": 68,
+        "pixelsOverBudget": 462,
+        "awayBudgetPassed": false
+      },
+      {
+        "mappingMode": "threshold",
+        "antialiasing": true,
+        "perspective": true,
+        "size": 256,
+        "threshold": true,
+        "textureWidth": 4096,
+        "checked": 13885,
+        "awayChecked": 13859,
+        "maximumError": 99,
+        "awayMaximumError": 92,
+        "pixelsOverBudget": 452,
+        "awayBudgetPassed": false
+      }
+    ],
+    "first_attempt": "All 24 measurements completed, but exiting inside the startup callback caused native exit 134. Repaired by queuing work after startup. Final run includes 72 cases and exits cleanly.",
+    "antialiasing_diagnostic": "Both DISABLED and BALANCED tested; report per-case metrics rather than assuming settings remove filtering."
+  },
+  "numerical_contracts": [
+    "Interpolate raw original-triangle samples before normalization, thresholding, and piecewise mapping.",
+    "Perspective/world-clipping pixel oracle inverts an explicit projection and does not derive expected colors from raster picks.",
+    "Nonfinite contributing samples invalidate the fragment; exact zero-weight samples are ignored.",
+    "Extreme constants remain exact and direct sums preserve cancellation residuals, with scaled overflow fallback.",
+    "Opacity and blend apply after fragment mapping, over the base surface."
+  ],
+  "sources": [
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala",
+      "base_sha256": "93e96a87349fa4cf08d6ebc5a9b2039371ed67940d9e0515cd5158ac91ecb65f",
+      "sha256": "ad3d3a8183a93b6da122eb3a19297ff64272ecab70de48cbc32a309946d45fdf"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala",
+      "base_sha256": "3ff39fe3c686b10571a78778a1a2804071bba3a5de8c731ece1f1d59bae920d3",
+      "sha256": "16e3f61e0f629a7e030b31b5addd374f01017ae28f1ad631da4f5ed630f26ad0"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala",
+      "base_sha256": "9b6f3504a005c8a44e277fdfb56e776dd34e4680aac21a182c7b0352102f3de9",
+      "sha256": "8d7f13b8e23f8550204c1e3f816636ce93523834f7203665dab68e6e2264f3a7"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala",
+      "base_sha256": "8a716b039003071aa172b0c0e89292e647eb474d5df69348a95df11f662a928a",
+      "sha256": "59b3d75d449e642757224ca3a7d25e64ed67d70fefbf2f90abab0563c743c6b2"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceScalarFixture.scala",
+      "base_sha256": null,
+      "sha256": "3fc233e808b5bcdf1de23a9b7d05ee8f86e246179b0c49fa56c320b72a783eeb"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceScalarInterpolation.scala",
+      "base_sha256": null,
+      "sha256": "55513bdc9a49c2a3d39615d7e2e0e09255bc229aae436a78c5083fccac50c59b"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala",
+      "base_sha256": "24222bcf621ea5b7d3c56a3c0f743b4d26f57780957a76eefddbabb18c3cd19c",
+      "sha256": "be06799b3369c05b8c43001c5e9ff951876c88ffabdba24a48ce4da1a10e98ea"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala",
+      "base_sha256": "9e2d02a32f2d0cfcc17eb1625117113cff6ec7a7b21fe8344517eaa252fcc8ca",
+      "sha256": "15e9a03f1eba8c80577c9d2e067b2d7ea6848e3f9c459558d5ea9134770ceca2"
+    },
+    {
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala",
+      "base_sha256": "804a3b076057e2f961dfd026d42f4a81caf6fc2d5133a420727642830154b6c5",
+      "sha256": "04c5dcbc7c62ac635c73c283018b9d4ed31f043d67272006916fb8c3320591e4"
+    },
+    {
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarInterpolationSuite.scala",
+      "base_sha256": null,
+      "sha256": "5e0ab058a18703940d18d82d783880477ad7af38875f8b7ecd4e56ab615511f5"
+    },
+    {
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarMappingSuite.scala",
+      "base_sha256": "bf87b88ba0595e04689ba5737e56a8cdbe5a55b647da4c2946e7fdefc798e037",
+      "sha256": "f04819da4ba9833792f6eefa74d1b2163871310516b35519eb768d3d7fe3e27d"
+    },
+    {
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala",
+      "base_sha256": "6c20afb23390d15db5ff3b7a724f7597fca7a3be5edd9d1c7230228dfe1bdd75",
+      "sha256": "985249164d5b21628c44b3943099a98c7be5d1943e92d029f6d59d3e8b89deaa"
+    },
+    {
+      "path": "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala",
+      "base_sha256": "8f6db4a25131eed30ba95703fef49e7c3558b86dad48e0f0a578a0a79c5d8d80",
+      "sha256": "1416feb2daea9e73b106a226c80605ca08cb8eefe4e54c8cce00f909fd71a261"
+    },
+    {
+      "path": "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceScalarRasterSuite.scala",
+      "base_sha256": null,
+      "sha256": "f8c98c674993fe3e54b9ffe3a39ffa4772b1eb37bb7207edf4620d95c5458b62"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala",
+      "base_sha256": "4ce27edefa3fc28ab9644cbf11a836787ff51df2d04312856a00d0342fef601f",
+      "sha256": "65e15b39b982c08cc3ce52bd7c6a7f7039e2eadd7c0ed9b94158c0dfe47026e6"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala",
+      "base_sha256": "5250e495625be4a7afc736424339cfb768ab05b54e24ebfa02f1131d9dabd3f0",
+      "sha256": "8cea7ef722625e18ce69908b29731e9371e48c49ae8fc747c9dbe54ae2a071e5"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceScalarProbe.scala",
+      "base_sha256": null,
+      "sha256": "cafb4d9830d7a5229d658fbe84b709551ecab73622e3785c083e0a6afc6fc0e9"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceScalarSuite.scala",
+      "base_sha256": null,
+      "sha256": "6c5db3dddb5d5a954bef299dee4cd78517859ec404e00d2c6bcf37ecd0105354"
+    },
+    {
+      "path": "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceProgram.scala",
+      "base_sha256": "0ec8eb79a2c89ff3561a5e8c28363b0960a66199a82142d927a6255ab1932de8",
+      "sha256": "a51c19cf071c6ae5af3bc5723477992f1bd535efdd0007c2a4a1ff17a3b73617"
+    },
+    {
+      "path": "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceScalarSuite.scala",
+      "base_sha256": null,
+      "sha256": "bd88f7c93b4ac3f19becd872fd7ec116830137c862a0097f62ffaf0fdd5d8d1d"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/patches/scalafim-scalar-fragments.patch",
+      "sha256": "ed9e7c44669071a0af5cb1ad4dae9e5f076154c17d45f9a5b9a7c180e65db2e2"
+    },
+    {
+      "path": "docs/visual-qa/surface-scalar-javafx.png",
+      "sha256": "2c05fecda4aabde627520897a1b6bfad8904d2db054bb0d93ccb3bb1b20d7a55"
+    },
+    {
+      "path": "docs/plans/surface-scalar-fragments-review.md",
+      "sha256": "7757be7bd4cc54fde70e870b1110c0c4a1479b56a878181b82b98f7c7361e25d"
+    },
+    {
+      "path": "docs/surface-viewer.md",
+      "sha256": "20ef48ec7af049a4f7b7710d05d1c9b7fdf8ccc2610ca3fe82e6d9b49d8d993c"
+    },
+    {
+      "path": "docs/plans/surface-map-semantics.md",
+      "sha256": "5f98569655d94c13247c0ebd96cd0832f0b7ff6fef1fa4929887c9945ce9565f"
+    },
+    {
+      "path": "docs/benchmarks/receipts/surface-scalar-fragments-2026-09-07.logs.txt.gz",
+      "sha256": "0c3ed62e0cf18f14d98498a7c8a04e8049ee33f7eea1b08fd9b592d59daacc2a"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/private/tmp/scalar-fragment-compile.log",
+      "sha256": "3dd6c167df8c74694e58ebb9cf6f038bb53545e981c0b4c9d9264a105dee036a"
+    },
+    {
+      "path": "/private/tmp/scalar-fragment-tests.log",
+      "sha256": "4e2f1ff5ecf689ec26edfa90fffda9d65eebf0e9243da9cd4a0fa2499725fc9c"
+    },
+    {
+      "path": "/private/tmp/scalar-fragment-tests2.log",
+      "sha256": "939d6cf453758d871d335737b17f42ab1749207f17e353342db42aca5d610f4e"
+    },
+    {
+      "path": "/private/tmp/scalar-fragment-final.log",
+      "sha256": "02dca9ae9c114f4996e7f78e8379ebde62d96fd66ea0bb4c458c2a37402f86ad"
+    },
+    {
+      "path": "/private/tmp/scalar-fragment-native-final.log",
+      "sha256": "89992872c429f0f321cf16ca946c6e112f2219085fed6979a0296f029384f438"
+    }
+  ],
+  "remaining": [
+    "JavaFX geometric partitions at thresholds/ramp knots and error/resource admission.",
+    "Three.js scalar shader implementation and framebuffer checks.",
+    "General layered composition and scalar lighting.",
+    "Automatic legends.",
+    "Pre-existing example checksum mismatch."
+  ]
+}

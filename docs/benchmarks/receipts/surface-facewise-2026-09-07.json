@@ -1,0 +1,167 @@
+{
+  "schema": "scalafim.surface-facewise-validation.v1",
+  "date": "2026-09-07",
+  "scope": "First facewise display slice; analytic fixtures and local backend verification",
+  "base_commit": "fd992a0c85001eb50ba2e78d29c497693ca494dc",
+  "working_tree_uncommitted": true,
+  "facewise_result": "pass",
+  "remaining_plan_stages": [
+    2,
+    3,
+    4
+  ],
+  "source_manifest_scope": "Changed surface Scala files and relevant build/browser harness; existing unrelated working-tree edits remain present",
+  "source_sha256": {
+    "modules/surface/shared/src/main/scala/scalafim/surface/SurfaceFaceField.scala": "5f8c733be4c3dd1be3bfbd203b8e60f3b3a92d69df3ef031d629bc7b8f0d73e8",
+    "modules/surface/shared/src/test/scala/scalafim/surface/SurfaceFaceFieldSuite.scala": "40c9046fb24a57023af81ce7f2e6535fe164348ada6c82c08e2453c192b944f9",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala": "214994de17fef107b8267cc86788f78706c3830ed9fbf89a362d9f80fff34dd4",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala": "477cfffb9f23a57fc149761f505703201958ef2f3cf743ba79b783a6dc79b19c",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceFaceFixture.scala": "210171b57782b12b113a77990c968c72f7d4ccbe536396d3eb5907c7d5f071d8",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala": "1eb6c73effd2c3ab9c786e96972f3e8c89848df2f35252e7f30e2fbf8b0e5d0b",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNetwork.scala": "be8a6ae18172f7126cd8090615a4002c385934458863ba72f9466cb801659a21",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala": "f655e9978e0f0f7fd506b74a34680aee268ecd5335f077b4251eb7adfbd6cc83",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala": "da3d330f29965e1ffeda24a48110c7a0db9a525d5e215a0d8749b6a52b18cdc2",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala": "4586e9d70a3032160109f696f28d47c8a7d840045087fad21778079f8a08fe52",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala": "4b176d2cf44064e6316ebaa48e7e7a9771ebf3f54ea9a658a0cac9a4c68e47d5",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala": "f0cdb45b7742f5d4bc2dbdf9c3972c98141b62b21dff0efec054c4e6e948b6c0",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBackendConformanceSuite.scala": "a9179ce7579146960955e0fcebc528695b42db8f35082fec7d4e434df19eaf9b",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala": "5d41d1dc47e8eeedab9100ef280dd69e74c4c193b8ca796ef858f2b1d257ae1b",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala": "c2aa0a8ace4d224c6ff02e92737535cd25d764b13473af0bccf987a5e21ea0d3",
+    "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala": "80c1bd5e413367b6285d7dd7a700a87bef663ea143dbfaab3aa2458ab2aa8fe9",
+    "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceFaceRasterSuite.scala": "96a2bbdbae335aa6f71c843375f96dad3f11ed86fe42e26a0a156bb400bf8b7e",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala": "d8f06b8a14a996de422eafc6c27ed4e886675b0865ee28095b39a6fab134f33a",
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala": "8bc94562ba911648026de375a43c214977cf417fb9a19f35d20766a8b6cc88bc",
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceFaceProbe.scala": "ac9d597b6fde007976906c6ad31945e3d3acff4067bb0f4c1b923235f7a39915",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeFaceProbe.scala": "28a76ca3f04c232dbc3615a8a7d6508c7c8a3b8dffc151bde4e27e694ecd9cd3",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeJsRuntime.scala": "cb7c26cd7b414f1a1d69a2cac22065733b9602b5ee0c8aff0bc4e9f7cb689aff",
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala": "41a4c808a773e575835940b33573878cb5ec2f8c3d21157d1c0b3282797afc42",
+    "modules/surface-view-three/js/src/test/scala/scalafim/surface/view/three/ThreeSurfaceFaceSuite.scala": "de1b791a6d7667fe2c0edf277bd3d15dfd460b432d05ba864816af4d8e20237e",
+    "build.sbt": "9122678b2352143f8b6d2f43023ab68f2b95430fc3e7fc5b29d2d0931defa9c2",
+    "modules/surface-view-three/browser/index.html": "5158089967010e195eff23bd916f9c0bad1aebc748fb256f588563a7beebafe5"
+  },
+  "conformance": {
+    "command": "sbt surfaceViewConformance",
+    "passed": 435,
+    "components": {
+      "surfaceJVM": 132,
+      "surfaceJS": 105,
+      "surfaceViewJVM": 68,
+      "surfaceViewJS": 68,
+      "surfaceViewRasterJVM": 14,
+      "surfaceViewRasterJS": 14,
+      "surfaceViewJavafxJVM": 16,
+      "surfaceViewThreeJS": 14,
+      "surfaceViewConnectivityJVM": 2,
+      "surfaceViewConnectivityJS": 2
+    }
+  },
+  "final_accounting_checks": {
+    "suites": [
+      "SurfaceFaceLayerSuite",
+      "SurfaceProjectionNetworkSuite"
+    ],
+    "jvm_passed": 13,
+    "js_passed": 13
+  },
+  "javafx": {
+    "result": "pass",
+    "version": "21.0.5",
+    "checked_interior_pixels": 32220,
+    "maximum_channel_error": 0,
+    "pick_evidence": "Constructed JavaFX PickResult translated to original face 1, vertex 3, with barycentric checks; not a native ray-picking test",
+    "source_vertices": 4,
+    "render_vertices": 6,
+    "geometry_rebuilt_on_timepoint": false
+  },
+  "three": {
+    "playwright_chromium_version": "151.0.7922.34",
+    "rendering": "actual WebGL framebuffer; headless Playwright",
+    "status": "pass",
+    "checked": 196,
+    "maximumChannelError": 0,
+    "firstFace": 0,
+    "firstVertex": 1,
+    "secondFace": 1,
+    "secondVertex": 3,
+    "geometryUploadsOnTimepoint": 0
+  },
+  "images": {
+    "javafx": {
+      "path": "docs/visual-qa/surface-facewise-javafx.png",
+      "sha256": "2b2fdb62424ccc0290420faebbd1460933be93ed883160fb957166181d816db9",
+      "width": 256,
+      "height": 256
+    },
+    "three": {
+      "path": "docs/visual-qa/surface-facewise-three.png",
+      "sha256": "11619107c7e44ce35a6e75be4ecaea8564cd255a07eff5308ddb3804f9bc5c8e",
+      "width": 256,
+      "height": 256
+    }
+  },
+  "preexisting_example_failure": {
+    "suite": "SurfaceViewerExampleSuite",
+    "test": "portable GIFTI-derived example has one exact JVM/Scala.js semantic receipt",
+    "expected_image_hash": 895258625,
+    "actual_image_hash": -748488703,
+    "jvm": {
+      "passed": 11,
+      "failed": 1
+    },
+    "js": {
+      "passed": 10,
+      "failed": 1
+    },
+    "baseline_reproduced_on": "JVM, isolated targets compiling pre-edit surface-view/raster/JavaFX source snapshots",
+    "baseline_actual_image_hash": -748488703,
+    "baseline_snapshot": "/private/tmp/scalafim-surface-map-baseline",
+    "baseline_source_sha256": {
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala": "e7282c99fbd1b33a5efacb5a96659a6950075e6b7a215f22081dda7adb6a0265",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala": "5934570cfbbc47f04ac9760875c355679698c281dbda973dcdfa6e5066c86b58",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala": "a53b90898787c49b7a23c800cd598b44ec022b175ba01d6a8039b15c89340afc",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNetwork.scala": "1ea313ace7296512d891c170ee56d42289795eedc6393ba37e54053e10da8938",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala": "10c8a35f75fb013abd8b0e08ec72051d1b64ea8c83e898bd002d1320f040c274",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala": "d2fd0935981f862d1b8fa7210706cd42c0bd23b9ba82e6dc0e39fad7515db99f",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala": "74de5d8200a0c9a4e2113a49c30a84b12573b407c4819faef76dc66b52ca0a0f",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala": "d2df3b1d9551124a8828df01359ebbe75713aa135b317fbcca2e6865354b340b",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala": "dfa42eea5582b6d4362f1a42ee071fd1ef07cf1e9f50cf99f060ed4b3bedc269",
+      "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceBackendConformanceSuite.scala": "cdbd08c360d2895b63b5653630d7b58b93e137dc2a581c1948f9a85129265d48",
+      "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala": "0586675d015df58b26f2c7295939ad1195069c8dea9888726ed4a5865a7955eb",
+      "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala": "a1ba852a4b27a31941be5ce1213bd53e6654f23b07030d5a220d6c08a6a8bdf9",
+      "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala": "9cdb8fa3c079b7726506942d29b5ec06103519c8fd13a35113153c828f0598eb",
+      "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala": "761f09b35ce24578ab5b671e0cd3aa8e22bf17c1b05568adaa794e51eac64e38",
+      "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeJsRuntime.scala": "72c883334ebdb20678fece386ce206e3b2f60376378f2ccd416343dff96681ae",
+      "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala": "8cf63a4c0860d41d38661db77c367ff269adcd23743a0fa9a163f8724c053e61"
+    },
+    "golden_changed": false
+  },
+  "limits": [
+    "No hosted CI or publication claim",
+    "No new cortical facewise performance admission yet",
+    "Color composition remains at render corners; scalar-fragment interpolation is not implemented",
+    "JavaFX native runtime emits existing Scala Unsafe and unnamed-module/native-access warnings"
+  ],
+  "logs": {
+    "conformance_and_js_example": {
+      "path": "/private/tmp/scalafim-facewise-completion.log",
+      "sha256": "b8f5052e047d6d732b6367374b8ca0fd2623d7bcf16b5cfe715271d8ebdb5432"
+    },
+    "jvm_examples": {
+      "path": "/private/tmp/scalafim-facewise-final-backends.log",
+      "sha256": "7765ce657f3696ac5a6968da6cd3422408072ea985f6601093c5780984d4c56b"
+    },
+    "pre_edit_baseline": {
+      "path": "/private/tmp/scalafim-facewise-baseline.log",
+      "sha256": "86c086ecfc83bf78eff05c70598db6f2316505861357062282d80b85ea7381b0"
+    },
+    "final_accounting": {
+      "path": "/private/tmp/scalafim-facewise-accounting.log",
+      "sha256": "32d81406d506b1891b7599f4b9cf1af2d8968b765af2827cae18d0c91e9175cf"
+    }
+  },
+  "browser_cleanup": {
+    "audit": "No automated top-level browser processes found.",
+    "temporary_browser_installation_removed": true,
+    "task_server_closed": true
+  }
+}

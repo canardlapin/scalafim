@@ -13,6 +13,108 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
   private val layerId = SurfaceLayerId.unsafe("activation")
   private val size = ThreeCanvasSize.unsafe(640, 480, 2.0)
 
+  test("native depth fixture covers its full pixel and strictly separates near and far depth"):
+    val points = ThreeDepthAdmission.Positions.grouped(3).toVector
+    val near = points.take(3).map(p => ((p(0).toFloat.toDouble + 1) * 4, (1 - p(1).toFloat.toDouble) * 4))
+    def area(a: (Double, Double), b: (Double, Double), p: (Double, Double)): Double =
+      (b._1 - a._1) * (p._2 - a._2) - (b._2 - a._2) * (p._1 - a._1)
+    val total = area(near(0), near(1), near(2))
+    for x <- Vector(3.0, 4.0); y <- Vector(3.0, 4.0); edge <- 0 until 3 do
+      assert(area(near(edge), near((edge + 1) % 3), (x, y)) / total > 0.01)
+    assert(points.take(3).map(_(2)).max + 0.01 < points.drop(3).map(_(2)).min)
+    assert(ThreeDepthAdmission.admit(4, 255, 0, 0).isRight)
+    assert(ThreeDepthAdmission.admit(4, 192, 64, 0).isLeft)
+    assert(ThreeDepthAdmission.admit(0, 255, 255, 255).isLeft)
+    assert(ThreeDepthAdmission.admit(4, 0, 255, 0).isLeft)
+
+  test("fractional viewport projection matches logical pixel positions at native device ratios"):
+    val viewport = SurfaceViewport(0.0731, 0.13728036703084256, 0.8317, 0.7254392659383149)
+    for ratio <- Vector(1.0, 1.5, 2.0); dimensions <- Vector((768, 768), (800, 600)); perspective <- Vector(false, true) do
+      val (width, height) = dimensions
+      val size = ThreeCanvasSize.unsafe(width, height, ratio)
+      val native = ThreeJsRuntime.nativeViewport(viewport, size)
+      // Column-major matrices with an explicit nonconstant homogeneous w in
+      // the perspective case. Expected screen positions use the unrounded slot.
+      val original = js.Array[Double](0.7, 0, 0, 0, 0, 1.1, 0, 0,
+        0, 0, -0.2, if perspective then -1 else 0, 0, 0, -0.1, if perspective then 0 else 1)
+      val corrected = ThreeJsRuntime.viewportProjection(original, native)
+      def multiply(matrix: js.Array[Double], point: Vector[Double]): Vector[Double] =
+        Vector.tabulate(4)(row => (0 until 4).map(column => matrix(column * 4 + row) * point(column)).sum)
+      for point <- Vector(Vector(-0.3, 0.2, -2.0, 1.0), Vector(0.4, -0.5, -3.0, 1.0)) do
+        val clip = multiply(original, point)
+        val adjusted = multiply(corrected, point)
+        val expectedX = (viewport.x + (clip(0) / clip(3) + 1) * viewport.width / 2) * width * ratio
+        val expectedY = (1 - viewport.y - viewport.height + (clip(1) / clip(3) + 1) * viewport.height / 2) * height * ratio
+        assertEqualsDouble(native.x + (adjusted(0) / adjusted(3) + 1) * native.width / 2, expectedX, 1e-10)
+        assertEqualsDouble(native.y + (adjusted(1) / adjusted(3) + 1) * native.height / 2, expectedY, 1e-10)
+        assertEqualsDouble(adjusted(2), clip(2), 0.0)
+        assertEqualsDouble(adjusted(3), clip(3), 0.0)
+
+
+  private def depthCamera(perspective: Boolean): js.Array[Double] =
+    val near = 0.01
+    val far = 1000.0
+    js.Array[Double](1, 0, 0, 0, 0, 1, 0, 0,
+      0, 0, if perspective then -(far + near) / (far - near) else -2 / (far - near),
+      if perspective then -1 else 0,
+      0, 0, if perspective then -2 * far * near / (far - near) else -(far + near) / (far - near),
+      if perspective then 0 else 1)
+
+  private val identityMatrix = js.Array[Double](1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+
+  private def projectedDepth(matrix: js.Array[Double], z: Double): Double =
+    (matrix(10) * z + matrix(14)) / (matrix(11) * z + matrix(15))
+
+  test("occupied depth conditioning preserves screen coordinates and separates close perspective surfaces"):
+    val bounds = ThreeJsRuntime.PositionBounds(-2, -3, -200, 2, 3, -100)
+    for perspective <- Vector(false, true) do
+      val original = depthCamera(perspective)
+      val adjusted = ThreeJsRuntime.depthProjection(original, identityMatrix, bounds)
+      for column <- 0 until 4; row <- Vector(0, 1, 3) do
+        assertEqualsDouble(adjusted(column * 4 + row), original(column * 4 + row), 0)
+      val depths = Vector(-100.0, -125.0, -150.0, -175.0, -200.0).map(projectedDepth(adjusted, _))
+      assert(depths.forall(d => d > -1 && d < 1))
+      assert(depths.sliding(2).forall(pair => pair(0) < pair(1)))
+      assert(depths.last - depths.head > 1.0)
+      if perspective then
+        val oldSeparation = projectedDepth(original, -150.001) - projectedDepth(original, -150.0)
+        val newSeparation = projectedDepth(adjusted, -150.001) - projectedDepth(adjusted, -150.0)
+        // A 24-bit depth buffer maps NDC [-1,1] onto 2^24 discrete depths.
+        assert(oldSeparation / 2 * (1 << 24) < 0.01)
+        assert(newSeparation / 2 * (1 << 24) > 10)
+
+  test("occupied depth conditioning retains reached clip planes and rejects uncertain eye crossings"):
+    for perspective <- Vector(false, true) do
+      val original = depthCamera(perspective)
+      for (minZ, maxZ, boundary, outside) <- Vector(
+          (-0.02, -0.005, -0.01, -0.009), (-1100.0, -900.0, -1000.0, -1001.0)) do
+        val adjusted = ThreeJsRuntime.depthProjection(original, identityMatrix,
+          ThreeJsRuntime.PositionBounds(-1, -1, minZ, 1, 1, maxZ))
+        assertEqualsDouble(projectedDepth(adjusted, boundary), if boundary == -0.01 then -1.0 else 1.0, 1e-8)
+        assert(math.abs(projectedDepth(adjusted, outside)) > 1.0)
+      val clipped = ThreeJsRuntime.depthProjection(original, identityMatrix,
+        ThreeJsRuntime.PositionBounds(-1, -1, -2000, 1, 1, -1500))
+      for z <- Vector(-2000.0, -1750.0, -1500.0) do
+        assert(projectedDepth(clipped, z) > 1.0)
+    val perspective = depthCamera(true)
+    for bounds <- Vector(
+        ThreeJsRuntime.PositionBounds(-1, -1, -1, 1, 1, 1),
+        ThreeJsRuntime.PositionBounds(-1, -1, 1, 1, 1, 2),
+        ThreeJsRuntime.PositionBounds(-1, -1, Double.NaN, 1, 1, -1)) do
+      assertEquals(ThreeJsRuntime.depthProjection(perspective, identityMatrix, bounds).toVector, perspective.toVector)
+
+  test("depth conditioning uses a common interval for translated and overlapping draw slots"):
+    val original = depthCamera(true)
+    val shifted = identityMatrix.slice(0, 16)
+    shifted(14) = -100
+    val box = ThreeJsRuntime.PositionBounds(-1, -1, -101, 1, 1, -100)
+    val objects = Vector((identityMatrix, box), (shifted, box))
+    val adjusted = ThreeJsRuntime.depthProjection(original, objects)
+    assertEquals(adjusted.toVector, ThreeJsRuntime.depthProjection(original, objects.reverse).toVector)
+    val depths = Vector(-100.0, -101.0, -200.0, -201.0).map(projectedDepth(adjusted, _))
+    assert(depths.forall(d => d > -1 && d < 1))
+    assert(depths.sliding(2).forall(pair => pair(0) < pair(1)))
+
   test("Three adapter consumes CPU-projected fields and network tubes as ordinary resources"):
     val plan = SurfaceFeatureFixture.plan
     val runtime = new RecordingRuntime()
@@ -74,6 +176,7 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       extends ThreeSurfaceRuntime:
     val calls = ArrayBuffer.empty[String]
     var uploadedColors = Vector.empty[ThreeSurfaceColors]
+    var fitted: SurfaceViewportFit = SurfaceViewportFit.Fill
     var nextPick: Option[ThreePick] = None
 
     def contextState: ThreeContextState = state
@@ -99,7 +202,8 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       calls += "camera"
       Right(())
 
-    def updateLayout(slots: Vector[SurfaceViewSlot]): Either[ThreeSurfaceError, Unit] =
+    def updateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit] =
+      fitted = fit
       calls += s"layout:${slots.length}"
       Right(())
 
@@ -398,3 +502,20 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
 
   private def compile(viewer: SurfaceViewerModel, state: SurfaceViewerState): SurfaceRenderPlan =
     SurfaceCompiler.compile(viewer, state).toOption.get
+
+  test("fitting policy changes reach the runtime without geometry, colors or camera uploads"):
+    val (viewer, state) = fixture()
+    val first = compile(viewer, state)
+    val runtime = new RecordingRuntime()
+    val backend = ThreeSurfaceBackend.create(runtime).toOption.get
+    backend.render(first, size).toOption.get
+    assertEquals(runtime.fitted, first.viewportFit)
+    runtime.calls.clear()
+    val second = first.copy(viewportFit = SurfaceViewportFit.Fill)
+    val receipt = backend.render(second, size).toOption.get
+    assert(receipt.dirty.layout)
+    assertEquals(receipt.geometryUploads, 0)
+    assertEquals(receipt.colorUploads, 0)
+    assertEquals(runtime.calls.toVector, Vector("layout:1", "draw"))
+    assertEquals(runtime.fitted, SurfaceViewportFit.Fill)
+    backend.dispose().toOption.get

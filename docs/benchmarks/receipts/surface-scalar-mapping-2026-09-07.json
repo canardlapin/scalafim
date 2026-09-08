@@ -1,0 +1,320 @@
+{
+  "schema": "scalafim.surface-scalar-mapping.local-evidence.v1",
+  "created_utc": "2026-09-07T21:30:41.765694+00:00",
+  "scope": "Inspectable mapping foundation and sample-color integration; no scalar-fragment/native shader admission or automatic legends.",
+  "provider": {
+    "repository": "https://github.com/canardlapin/intaglio",
+    "base": "596b398af380079e4b251535230d0bc03cd88c51",
+    "commit": "c6b55d066a8f4c27b0acc3c34fc04737bfaba0bd",
+    "branch": "codex/scalar-mapping-descriptors-20260907",
+    "live_ref_verified": true,
+    "merged_to_main": false,
+    "working_tree_clean": true,
+    "checkout": "/private/tmp/scalafim-intaglio-scalar"
+  },
+  "consumer": {
+    "checkout": "/Users/bbuchsbaum/code/scala/scalafim",
+    "head": "fd992a0c85001eb50ba2e78d29c497693ca494dc",
+    "working_tree": "dirty; integration applied locally; unrelated existing changes preserved",
+    "default_provider_pin": "c6b55d066a8f4c27b0acc3c34fc04737bfaba0bd",
+    "pinned_sbt_checkout_head": "c6b55d066a8f4c27b0acc3c34fc04737bfaba0bd",
+    "source_patches_relative_to": "pre-phase working-tree snapshot, not clean HEAD",
+    "local_override_used_for_final_conformance": false
+  },
+  "checks": {
+    "provider": {
+      "command": "sbt coreJVM/test coreJS/test",
+      "coreJVM": 233,
+      "coreJS": 229,
+      "status": "pass"
+    },
+    "isolated_viewer": {
+      "command": "sbt -Dscalafim.intaglio.build=file:/private/tmp/scalafim-intaglio-scalar surfaceViewJVM/test surfaceViewJS/test",
+      "surfaceViewJVM": 81,
+      "surfaceViewJS": 81,
+      "status": "pass"
+    },
+    "isolated_conformance": {
+      "command": "sbt -Dscalafim.intaglio.build=file:/private/tmp/scalafim-intaglio-scalar surfaceViewConformance",
+      "passed": 467,
+      "status": "pass"
+    },
+    "pinned_actual_conformance": {
+      "command": "sbt surfaceViewConformance",
+      "passed": 467,
+      "status": "pass",
+      "modules": {
+        "surfaceJVM": {
+          "total": 132,
+          "failed": 0,
+          "errors": 0,
+          "passed": 132
+        },
+        "surfaceJS": {
+          "total": 105,
+          "failed": 0,
+          "errors": 0,
+          "passed": 105
+        },
+        "surfaceViewJVM": {
+          "total": 81,
+          "failed": 0,
+          "errors": 0,
+          "passed": 81
+        },
+        "surfaceViewJS": {
+          "total": 81,
+          "failed": 0,
+          "errors": 0,
+          "passed": 81
+        },
+        "surfaceViewRasterJVM": {
+          "total": 17,
+          "failed": 0,
+          "errors": 0,
+          "passed": 17
+        },
+        "surfaceViewRasterJS": {
+          "total": 17,
+          "failed": 0,
+          "errors": 0,
+          "passed": 17
+        },
+        "surfaceViewJavafxJVM": {
+          "total": 16,
+          "failed": 0,
+          "errors": 0,
+          "passed": 16
+        },
+        "surfaceViewThreeJS": {
+          "total": 14,
+          "failed": 0,
+          "errors": 0,
+          "passed": 14
+        },
+        "surfaceViewConnectivityJVM": {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2
+        },
+        "surfaceViewConnectivityJS": {
+          "total": 2,
+          "failed": 0,
+          "errors": 0,
+          "passed": 2
+        }
+      }
+    },
+    "examples": {
+      "status": "known_failure",
+      "JVM": {
+        "passed": 11,
+        "failed": 1
+      },
+      "JS": {
+        "passed": 10,
+        "failed": 1
+      },
+      "failure": "SurfaceViewerExampleSuite portable GIFTI-derived image checksum",
+      "expected": 895258625,
+      "actual": -748488703,
+      "baseline_reproduction_receipt": "docs/benchmarks/receipts/surface-facewise-2026-09-07.json",
+      "golden_updated": false,
+      "tested_in": "isolated consumer with exact provider source"
+    },
+    "patches": {
+      "provider_applies_to_existing_main_checkout": true,
+      "consumer_reverse_apply_check": true
+    },
+    "native_scalar_fragment_admission": "not implemented",
+    "hosted_ci": "not assessed"
+  },
+  "plate": {
+    "path": "docs/visual-qa/surface-scalar-mapping.png",
+    "sha256": "08c5199dc688cfa10a967ae6e2b7779c86b93267f18e4013a84eb1231a638ee4",
+    "dimensions": [
+      1024,
+      488
+    ],
+    "vertices": 1742,
+    "faces": 3480,
+    "limits": [
+      -4,
+      8
+    ],
+    "center": 0,
+    "modes": [
+      "continuous",
+      "hide open (-1,2)",
+      "hide open (-2,4)",
+      "split tails (-1,2)"
+    ],
+    "rendering": "portable raster, unlit nearest-vertex samples, gray underlay",
+    "review": "Visually inspected orientation, labels, retained scale for hidden bands, and tail redistribution; no article script or palette parity claim.",
+    "command": "sbt -Dscalafim.intaglio.build=file:/private/tmp/scalafim-intaglio-scalar \"surfaceViewRasterJVM/Test/runMain scalafim.surface.view.raster.SurfaceScalarMappingPlate\""
+  },
+  "sources": [
+    {
+      "owner": "intaglio",
+      "path": "modules/core/shared/src/main/scala/intaglio/Display.scala",
+      "base_sha256": "83dbe8d124ce6a1ff01656ce49092bfce5acd56c94da9e344065b76c1a073eaf",
+      "sha256": "71078f7b28fcf23caa744036c5fc144f5c1686a219e6092c7a481a343997deab"
+    },
+    {
+      "owner": "intaglio",
+      "path": "modules/core/shared/src/main/scala/intaglio/ScalarMapping.scala",
+      "base_sha256": null,
+      "sha256": "49288bb5fca44cb84ac2893e40fd23a22972e1eb834aed42787988b402211525"
+    },
+    {
+      "owner": "intaglio",
+      "path": "modules/core/shared/src/test/scala/intaglio/ScalarMappingSuite.scala",
+      "base_sha256": null,
+      "sha256": "c8ebdd646cd85519d860fdc6a4d36435cc54ed0c224568a13ddfc6eab25faa1f"
+    },
+    {
+      "owner": "intaglio",
+      "path": "docs/scalar-mappings.md",
+      "base_sha256": null,
+      "sha256": "dfad58ed53e03d4d72df41d98c4a452207c6db264b22b082029d917d8df31923"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala",
+      "base_sha256": "60c410bad6fb135b7de08b800758f5d893c1b5319e0917c55fcb3e60c82c9c94",
+      "sha256": "9b6f3504a005c8a44e277fdfb56e776dd34e4680aac21a182c7b0352102f3de9"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala",
+      "base_sha256": "4b176d2cf44064e6316ebaa48e7e7a9771ebf3f54ea9a658a0cac9a4c68e47d5",
+      "sha256": "2cb743b840e2ffa21904b706f782ef6fc8a8519f45cec8f85d5bad0af3425fd8"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala",
+      "base_sha256": "f0cdb45b7742f5d4bc2dbdf9c3972c98141b62b21dff0efec054c4e6e948b6c0",
+      "sha256": "a9a7c4fcb79f97116255e899ac2bc3a45acb64bfbf38bd01d8bae1ef99ebaaab"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala",
+      "base_sha256": "4ac5e226228a071a0083806d82e8ac85c644bdcc348d1523025e7ca712e560d4",
+      "sha256": "3ff39fe3c686b10571a78778a1a2804071bba3a5de8c731ece1f1d59bae920d3"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala",
+      "base_sha256": "d2e3b36fb092d17fbdac37ecfbab2adff4b33f7983ccb6080102cc0863704ad7",
+      "sha256": "8a716b039003071aa172b0c0e89292e647eb474d5df69348a95df11f662a928a"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala",
+      "base_sha256": "20e8432f6d5af483048ec3006a3554895c9639fd56e53237ab3460381f3b5e59",
+      "sha256": "93e96a87349fa4cf08d6ebc5a9b2039371ed67940d9e0515cd5158ac91ecb65f"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala",
+      "base_sha256": "d66bf9c82b467c2426facd0ce196ecc2c7880128515e4c220208dda1fc73d9f3",
+      "sha256": "9e2d02a32f2d0cfcc17eb1625117113cff6ec7a7b21fe8344517eaa252fcc8ca"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala",
+      "base_sha256": "06dccb62479798c009657c54ee2147d585b4b7e758c6a308e66fd82e5c93cbd9",
+      "sha256": "24222bcf621ea5b7d3c56a3c0f743b4d26f57780957a76eefddbabb18c3cd19c"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceScalarMappingSuite.scala",
+      "base_sha256": null,
+      "sha256": "bf87b88ba0595e04689ba5737e56a8cdbe5a55b647da4c2946e7fdefc798e037"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala",
+      "base_sha256": "ba8cc3b06a865cccbe7cd85f343f3f139de5015bd812b583f4f25e876e34c75c",
+      "sha256": "6c20afb23390d15db5ff3b7a724f7597fca7a3be5edd9d1c7230228dfe1bdd75"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala",
+      "base_sha256": "a49df7cf94109444b82f3120f9208423efc1da6c62dfeaeabac6990bff8a9c01",
+      "sha256": "804a3b076057e2f961dfd026d42f4a81caf6fc2d5133a420727642830154b6c5"
+    },
+    {
+      "owner": "scalafim",
+      "path": "modules/surface-view-raster/jvm/src/test/scala/scalafim/surface/view/raster/SurfaceScalarMappingPlate.scala",
+      "base_sha256": null,
+      "sha256": "57bbcbdbf38268003802774cf672ac8f87c4b705c6cad27b5875bb7d0bbab1c3"
+    },
+    {
+      "owner": "scalafim",
+      "path": "build.sbt",
+      "base_sha256": "9122678b2352143f8b6d2f43023ab68f2b95430fc3e7fc5b29d2d0931defa9c2",
+      "sha256": "9b36aa53bbc55cd06c068a16b1736c0de4d945449e95cb4d16b4b63146962751"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "docs/benchmarks/receipts/surface-scalar-mapping-2026-09-07.logs.txt.gz",
+      "sha256": "125d14d2a2b3f238c902d7c6e29ca13b74bd54f8899f2f9474be35fb96c464a5"
+    },
+    {
+      "path": "docs/patches/intaglio-scalar-mapping.patch",
+      "sha256": "5ae40b77c97346ffbc0d12e3e667d22f35cddc6def0f6ac201bdb2b5bb2a5e92"
+    },
+    {
+      "path": "docs/patches/scalafim-scalar-mapping.patch",
+      "sha256": "a46bb9b3b6a2302f93eb253d89b20e5cdac60e57e86923182228187e71412ae9"
+    },
+    {
+      "path": "docs/visual-qa/surface-scalar-mapping.png",
+      "sha256": "08c5199dc688cfa10a967ae6e2b7779c86b93267f18e4013a84eb1231a638ee4"
+    },
+    {
+      "path": "docs/plans/surface-scalar-mapping-review.md",
+      "sha256": "fe767b9350ed7023e46a714c7f168500134ff0beae240b5d12f21029cbe9b70a"
+    },
+    {
+      "path": "docs/plans/surface-map-semantics.md",
+      "sha256": "8338745efceb08f7a09ac0968a9c128263952362f4f36e68f8144441a58cac05"
+    },
+    {
+      "path": "docs/surface-viewer.md",
+      "sha256": "ea633152faa56ef729af016eb388658bd3694bb044aa06a4aca961b3a88d9bc4"
+    }
+  ],
+  "local_logs": [
+    {
+      "path": "/private/tmp/intaglio-scalar-tests.log",
+      "sha256": "63491261729eb7905cda1c2f86e9f05281c5712b0f762bfc2bdcf52e37723a1c"
+    },
+    {
+      "path": "/private/tmp/scalafim-scalar-integration2.log",
+      "sha256": "4c97bfb12121420e20503686e83c46b21322de33d2b568be7da4f675f2824c2e"
+    },
+    {
+      "path": "/private/tmp/scalafim-scalar-conformance.log",
+      "sha256": "182b7a32398543433b5b37b488f5e3899e917cd923376425d72aa50c77758d1b"
+    },
+    {
+      "path": "/private/tmp/scalafim-scalar-examples-js.log",
+      "sha256": "3fb85629af6e75b8914f1d4a44447d4f314b4565be77fb1cb06477541fef41fe"
+    },
+    {
+      "path": "/private/tmp/scalafim-scalar-pinned-conformance.log",
+      "sha256": "710331b68f88ceea3d30d013ca98618cff11076f1f5e22e84ada3402bb9bbc8e"
+    }
+  ],
+  "limitations": [
+    "Example acceptance retains an independently reproduced pre-existing checksum failure.",
+    "Provider branch is published but unmerged; no release or hosted CI claim.",
+    "Scene revision 4 persists mapping identity and validates a supplied model; executable mappings remain external.",
+    "The initial isolated build used task-owned symlinks in /private/tmp for existing Alder sibling dependencies. The final conformance used the actual checkout with no local Intaglio override.",
+    "Existing dependency/module deprecation warnings are outside this slice; no new mapping-source warnings were observed."
+  ]
+}

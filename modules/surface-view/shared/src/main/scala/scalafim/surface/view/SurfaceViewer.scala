@@ -159,6 +159,9 @@ enum SurfaceViewerAction:
   case SetViewpoint(viewpoint: SurfaceViewpoint)
   case SetProjection(projection: CameraProjection)
   case SetZoom(zoom: CameraZoom)
+  case SetAspectRatio(ratio: CameraAspectRatio)
+  /** Fit canonical bounds at the current orientation, leaving five percent margins. */
+  case FitCamera
   case SetPan(x: Double, y: Double)
   case SetOrbit(orbit: SurfaceOrbit)
   case OrbitBy(yawDegrees: Double, pitchDegrees: Double)
@@ -167,6 +170,7 @@ enum SurfaceViewerAction:
   case SetClipping(clipping: SurfaceClipping)
   case SetTimepoint(index: Int)
   case Select(surface: SurfaceId, vertex: VertexId)
+  case SelectFace(surface: SurfaceId, face: FaceId, vertex: VertexId)
   case ClearSelection
   case SetGeometryState(surface: SurfaceId, kind: SurfaceKind)
   case BeginGeometryMorph(surface: SurfaceId, target: SurfaceKind)
@@ -198,9 +202,11 @@ object SurfaceViewer:
         Right(state.copy(camera = state.camera.copy(viewpoint = viewpoint)))
       case SurfaceViewerAction.SetProjection(projection) =>
         Right(state.copy(camera = state.camera.copy(projection = projection)))
+      case SurfaceViewerAction.FitCamera => SurfaceCompiler.fitCamera(model, state).map(camera => state.copy(camera = camera))
+      case SurfaceViewerAction.SetAspectRatio(ratio) => Right(state.copy(camera = state.camera.copy(aspectRatio = ratio)))
       case SurfaceViewerAction.SetZoom(zoom) => Right(state.copy(camera = state.camera.copy(zoom = zoom)))
       case SurfaceViewerAction.SetPan(x, y) =>
-        SurfaceCamera.make(state.camera.viewpoint, state.camera.projection, state.camera.zoom, x, y, state.camera.orbit)
+        SurfaceCamera.make(state.camera.viewpoint, state.camera.projection, state.camera.zoom, x, y, state.camera.orbit, state.camera.aspectRatio)
           .map(camera => state.copy(camera = camera))
       case SurfaceViewerAction.SetOrbit(orbit) => Right(state.copy(camera = state.camera.copy(orbit = orbit)))
       case SurfaceViewerAction.OrbitBy(yawDegrees, pitchDegrees) =>
@@ -209,7 +215,7 @@ object SurfaceViewer:
           (state.camera.orbit.pitchDegrees + pitchDegrees).max(-89.0).min(89.0)
         ).map(orbit => state.copy(camera = state.camera.copy(orbit = orbit)))
       case SurfaceViewerAction.ResetCamera =>
-        Right(state.copy(camera = SurfaceCamera.unsafe(state.camera.viewpoint, state.camera.projection)))
+        Right(state.copy(camera = SurfaceCamera.unsafe(state.camera.viewpoint, state.camera.projection, aspectRatio = state.camera.aspectRatio)))
       case SurfaceViewerAction.SetLighting(lighting) => Right(state.copy(lighting = lighting))
       case SurfaceViewerAction.SetClipping(clipping) => Right(state.copy(clipping = clipping))
       case SurfaceViewerAction.SetTimepoint(index) =>
@@ -221,6 +227,15 @@ object SurfaceViewer:
           case Some(surface) if vertex.index >= surface.geometry.vertexCount =>
             Left(SurfaceViewError.InvalidSelection(surfaceId, vertex.index))
           case Some(_) => Right(state.copy(selection = Some(SurfaceSelection(surfaceId, vertex))))
+      case SurfaceViewerAction.SelectFace(surfaceId, face, vertex) =>
+        model.surface(surfaceId) match
+          case None => Left(SurfaceViewError.UnknownSurface(surfaceId))
+          case Some(surface) =>
+            val geometry = surface.geometry
+            val valid = face.index < geometry.faceCount &&
+              (0 until 3).exists(corner => geometry.mesh.faceIndices(face.index * 3 + corner) == vertex.index)
+            if valid then Right(state.copy(selection = Some(SurfaceSelection(surfaceId, vertex, Some(face)))))
+            else Left(SurfaceViewError.InvalidFaceSelection(surfaceId, face.index, vertex.index))
       case SurfaceViewerAction.ClearSelection => Right(state.copy(selection = None))
       case SurfaceViewerAction.SetGeometryState(surfaceId, kind) =>
         requireGeometry(model, surfaceId, kind).map: _ =>
@@ -254,11 +269,15 @@ object SurfaceViewer:
       case SurfaceViewerAction.SetLayerWindow(id, window) =>
         updatePresentation(model, state, id): presentation =>
           requireCapability(model, id, "display windows", _.supportsWindow)
-            .map(_ => presentation.copy(window = Some(window)))
+            .flatMap: _ =>
+              val next = presentation.copy(window = Some(window))
+              model.layer(id).get.effectiveScalarMapping(next).map(_ => next)
       case SurfaceViewerAction.SetLayerThreshold(id, threshold) =>
         updatePresentation(model, state, id): presentation =>
           requireCapability(model, id, "display thresholds", _.supportsThreshold)
-            .map(_ => presentation.copy(threshold = Some(threshold)))
+            .flatMap: _ =>
+              val next = presentation.copy(threshold = Some(threshold))
+              model.layer(id).get.effectiveScalarMapping(next).map(_ => next)
       case SurfaceViewerAction.MoveLayer(id, index) =>
         if !state.layerOrder.contains(id) then Left(SurfaceViewError.UnknownLayer(id))
         else if index < 0 || index >= state.layerOrder.length then

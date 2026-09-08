@@ -11,6 +11,14 @@ import java.util.Base64
 
 class GiftiSurfaceReaderSuite extends munit.FunSuite:
 
+  test("default reader uses metadata while an explicit caller hemisphere remains authoritative"):
+    val xml = giftiXml(includeTransform = false)
+    val declared = xml.replace("<DataArray", "<MetaData><MD><Name>AnatomicalStructurePrimary</Name><Value>CortexLeft</Value></MD></MetaData><DataArray")
+    withGiftiFile("mesh.surf.gii", declared) { path =>
+      assertEquals(GiftiSurfaceReader.read(path).hemisphere, Hemisphere.Left)
+      assertEquals(GiftiSurfaceReader.read(path, Hemisphere.Right, SurfaceKind.Pial).hemisphere, Hemisphere.Right)
+    }
+
   test("read extracts pointset, triangles, hemisphere, kind, and POINTSET transform"):
     val resource = getClass.getResource("/surface/tetra_lh_midthickness.surf.gii")
     assert(resource != null)

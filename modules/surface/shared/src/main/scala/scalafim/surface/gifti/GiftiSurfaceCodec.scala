@@ -17,6 +17,26 @@ private[surface] object GiftiSurfaceCodec:
     nodeIndices: Option[GiftiDataArray]
   )
 
+  /** Resolve declarations without treating a filename hint as an explicit override.
+    * Unsupported anatomical structures remain Unknown rather than becoming cortex.
+    */
+  def inferredHemisphere(document: GiftiDocument, filenameHint: Hemisphere): Either[GiftiError, Hemisphere] =
+    val key = "AnatomicalStructurePrimary"
+    val declared = (document.metadata.get(key).toVector ++
+      document.pointSet.toVector.flatMap(_.metadata.get(key))).map(_.trim).distinct
+    if declared.length > 1 then
+      Left(GiftiError.InvalidDocument("conflicting AnatomicalStructurePrimary declarations"))
+    else declared.headOption match
+      case None => Right(filenameHint)
+      case Some(value) =>
+        val hemisphere = value match
+          case "CortexLeft" => Hemisphere.Left
+          case "CortexRight" => Hemisphere.Right
+          case _ => Hemisphere.Unknown
+        if hemisphere != Hemisphere.Unknown && filenameHint != Hemisphere.Unknown && filenameHint != hemisphere then
+          Left(GiftiError.InvalidDocument("AnatomicalStructurePrimary conflicts with filename hemisphere"))
+        else Right(hemisphere)
+
   def geometryArrays(document: GiftiDocument): Either[GiftiError, GeometryArrays] =
     for
       pointSet <- document.pointSet.toRight(GiftiError.MissingDataArray(GiftiIntent.PointSet))

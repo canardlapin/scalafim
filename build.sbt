@@ -248,6 +248,10 @@ lazy val pipeline =
 lazy val pipelineJS  = pipeline.js
 lazy val pipelineJVM = pipeline.jvm
 
+// Keep the baseline stable; opt into JavaFX 24 with
+// sbt -Dscalafim.javafx.version=24.0.2 ... (requires JDK 22 or newer).
+lazy val javafxVersion = sys.props.getOrElse("scalafim.javafx.version", "21.0.5")
+
 // OpenJFX publishes platform-specific artifacts by classifier; resolve the one
 // matching the build machine so ScalaFIM's JavaFX hosts compile and test locally.
 lazy val javafxPlatformClassifier: String = {
@@ -500,8 +504,8 @@ lazy val imageViewJavafx =
     .settings(
       name := "scalafim-image-view-javafx",
       libraryDependencies ++= Seq(
-        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
-        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
+        "org.openjfx" % "javafx-base" % javafxVersion % Provided classifier javafxPlatformClassifier,
+        "org.openjfx" % "javafx-graphics" % javafxVersion % Provided classifier javafxPlatformClassifier
       )
     )
 
@@ -599,10 +603,12 @@ lazy val surfaceViewJavafx =
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface-view-javafx",
+      // Native libraries cannot be reloaded by sbt's replacement test classloader.
+      Test / fork := true,
       Test / run / fork := true,
       libraryDependencies ++= Seq(
-        "org.openjfx" % "javafx-base" % "21.0.5" % Provided classifier javafxPlatformClassifier,
-        "org.openjfx" % "javafx-graphics" % "21.0.5" % Provided classifier javafxPlatformClassifier
+        "org.openjfx" % "javafx-base" % javafxVersion % Provided classifier javafxPlatformClassifier,
+        "org.openjfx" % "javafx-graphics" % javafxVersion % Provided classifier javafxPlatformClassifier
       )
     )
 
@@ -639,11 +645,12 @@ lazy val surfaceViewExamples =
 lazy val surfaceViewExamplesJS = surfaceViewExamples.js.dependsOn(surfaceViewThreeJS)
 lazy val surfaceViewExamplesJVM = surfaceViewExamples.jvm
   .dependsOn(surfaceViewJavafxJVM)
+  .dependsOn(intaglioSvgJVM % "test->compile")
   .settings(
     Test / run / fork := true,
     libraryDependencies ++= Seq(
-      "org.openjfx" % "javafx-base" % "21.0.5" classifier javafxPlatformClassifier,
-      "org.openjfx" % "javafx-graphics" % "21.0.5" classifier javafxPlatformClassifier
+      "org.openjfx" % "javafx-base" % javafxVersion classifier javafxPlatformClassifier,
+      "org.openjfx" % "javafx-graphics" % javafxVersion classifier javafxPlatformClassifier
     )
   )
 
@@ -1109,5 +1116,5 @@ addCommandAlias("examplesCompile", ";surfaceExamplesJVM/compile;surfaceViewExamp
 addCommandAlias("examplesTest", ";surfaceExamplesJVM/test;surfaceViewExamplesJVM/test;surfaceViewExamplesJS/test;atlasExamplesJVM/test;workflowExamplesJVM/test")
 addCommandAlias("surfaceViewConformance", ";surfaceJVM/test;surfaceJS/test;surfaceViewJVM/test;surfaceViewJS/test;surfaceViewRasterJVM/test;surfaceViewRasterJS/test;surfaceViewJavafxJVM/test;surfaceViewThreeJS/test;surfaceViewConnectivityJVM/test;surfaceViewConnectivityJS/test")
 addCommandAlias("surfaceViewAdmissionJVM", ";surfaceViewRasterJVM/runMain scalafim.surface.view.raster.SurfaceRasterAdmissionBenchmark;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceAdmissionBenchmark")
-addCommandAlias("surfaceViewVisualQaJVM", ";surfaceViewExamplesJVM/Test/runMain scalafim.surface.view.javafx.JavaFxGiftiParityProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceCorrectnessProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceInteractionProbe")
+addCommandAlias("surfaceViewVisualQaJVM", ";surfaceViewExamplesJVM/Test/runMain scalafim.surface.view.javafx.JavaFxGiftiParityProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceCorrectnessProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceInteractionProbe;surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxNativePickProbe")
 addCommandAlias("atlasCoverage", ";set atlasJVM / coverageEnabled := true;atlasJVM/test;atlasJVM/coverageReport;set atlasJVM / coverageEnabled := false")

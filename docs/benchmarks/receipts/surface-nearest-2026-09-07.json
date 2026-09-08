@@ -1,0 +1,185 @@
+{
+  "schema": "scalafim.surface-nearest-validation.v1",
+  "date": "2026-09-07",
+  "scope": "Stage 2 nearest vertex sample slice; scalar mapping and legends remain pending",
+  "conformance": {
+    "command": "sbt surfaceViewConformance",
+    "passed": 455,
+    "log": "/private/tmp/scalafim-nearest-conformance.log"
+  },
+  "followupShared": {
+    "command": "sbt \"surfaceViewJVM/testOnly *SurfaceNearestSuite\" \"surfaceViewJS/testOnly *SurfaceNearestSuite\"",
+    "jvmPassed": 7,
+    "jsPassed": 7,
+    "log": "/private/tmp/scalafim-nearest-final.log"
+  },
+  "javafx": {
+    "version": "21.0.5",
+    "command": "sbt \"surfaceViewJavafxJVM/Test/runMain scalafim.surface.view.javafx.JavaFxSurfaceNearestProbe\"",
+    "checkedInteriorPixels": 29238,
+    "maximumChannelError": 1,
+    "allowedMaximumChannelError": 1,
+    "timepointGeometryDirty": false,
+    "pickEvidence": "constructed native PickResult translated to original face 1, vertex 3, barycentrics (0.1,0.15,0.75); not a native ray test",
+    "log": "/private/tmp/scalafim-nearest-final.log"
+  },
+  "limitations": [
+    "Nearest plus legacy color interpolation on one surface is rejected before packing, including hidden layers.",
+    "Native boundary antialiasing and quantization are allowed; exact ties are shared reference tests.",
+    "Scalar interpolation, inspectable split mappings, automatic legends and cortical-scale nearest benchmarks remain pending.",
+    "Existing vertex-only GIFTI example checksum failure was reproduced in the previous slice and remains unchanged; examples were not rerun for this slice."
+  ],
+  "nativeWorkaround": {
+    "scientificVertices": 4,
+    "scientificFaces": 2,
+    "renderVertices": 36,
+    "renderFaces": 12,
+    "compiledPrimitiveBytes": 1448,
+    "threeCpuPickIndexBytes": 24,
+    "notes": "Positions and normals are shared by Three rendering and its original-face picking proxy; only the CPU index buffer is additional."
+  },
+  "nativeBugsFound": [
+    "Orthographic picking used PerspectiveCamera ray construction despite an orthographic projection matrix; fixed by unprojecting the compiled clip segment.",
+    "Raycasts could miss exact display subdivision seams; fixed by picking original triangles with shared live positions."
+  ],
+  "gitHead": "fd992a0c85001eb50ba2e78d29c497693ca494dc",
+  "gitState": "Uncommitted slice in a pre-existing dirty checkout; no publication performed.",
+  "three": {
+    "status": "pass",
+    "checked": 179,
+    "maximumChannelError": 0,
+    "firstFace": 0,
+    "firstVertex": 1,
+    "secondFace": 1,
+    "secondVertex": 3,
+    "geometryUploadsOnTimepoint": 0,
+    "geometryUpdatesOnTimepoint": 0,
+    "colorUploadsOnTimepoint": 1,
+    "cameraOnlyResourceUploads": 0,
+    "perspectivePicks": 174,
+    "facewise": {
+      "status": "pass",
+      "checked": 196,
+      "maximumChannelError": 0,
+      "firstFace": 0,
+      "firstVertex": 1,
+      "secondFace": 1,
+      "secondVertex": 3,
+      "geometryUploadsOnTimepoint": 0
+    },
+    "browserVersion": "151.0.7922.34",
+    "command": "sbt surfaceViewThreeJS/fastLinkJS; invoke runScalafimThreeNearestProbe and runScalafimThreeFaceProbe with Three.js in an isolated Playwright browser",
+    "unitTestsAfterNativeFix": {
+      "passed": 14,
+      "command": "sbt surfaceViewThreeJS/test",
+      "log": "/private/tmp/scalafim-nearest-proxy.log"
+    },
+    "pickReprojectionTolerancePixels": 1e-05,
+    "originalBarycentricTolerance": 1e-06
+  },
+  "sourceManifest": {
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceRenderPlan.scala": {
+      "sha256": "d2e3b36fb092d17fbdac37ecfbab2adff4b33f7983ccb6080102cc0863704ad7",
+      "beforeSha256": "f655e9978e0f0f7fd506b74a34680aee268ecd5335f077b4251eb7adfbd6cc83"
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNearestFixture.scala": {
+      "sha256": "825f0114ff852be4cf21b2ed146acbdfc80bf0807767ac25633fdf1fe4927ed9",
+      "beforeSha256": null
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala": {
+      "sha256": "4ac5e226228a071a0083806d82e8ac85c644bdcc348d1523025e7ca712e560d4",
+      "beforeSha256": "477cfffb9f23a57fc149761f505703201958ef2f3cf743ba79b783a6dc79b19c"
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceBackendConformance.scala": {
+      "sha256": "20e8432f6d5af483048ec3006a3554895c9639fd56e53237ab3460381f3b5e59",
+      "beforeSha256": "214994de17fef107b8267cc86788f78706c3830ed9fbf89a362d9f80fff34dd4"
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNearestPartition.scala": {
+      "sha256": "4b5c1a8864834a146cc1bb62e1c8f316743931db1153a8aea441331054a6e7b0",
+      "beforeSha256": null
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala": {
+      "sha256": "06dccb62479798c009657c54ee2147d585b4b7e758c6a308e66fd82e5c93cbd9",
+      "beforeSha256": "da3d330f29965e1ffeda24a48110c7a0db9a525d5e215a0d8749b6a52b18cdc2"
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceNetwork.scala": {
+      "sha256": "1ad31ee33a4d8d667f2c0001654978d68bdd03763d2f29773b977949ee64fca2",
+      "beforeSha256": "be8a6ae18172f7126cd8090615a4002c385934458863ba72f9466cb801659a21"
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceLayer.scala": {
+      "sha256": "60c410bad6fb135b7de08b800758f5d893c1b5319e0917c55fcb3e60c82c9c94",
+      "beforeSha256": "1eb6c73effd2c3ab9c786e96972f3e8c89848df2f35252e7f30e2fbf8b0e5d0b"
+    },
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneDocument.scala": {
+      "sha256": "d66bf9c82b467c2426facd0ce196ecc2c7880128515e4c220208dda1fc73d9f3",
+      "beforeSha256": "4586e9d70a3032160109f696f28d47c8a7d840045087fad21778079f8a08fe52"
+    },
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceFaceLayerSuite.scala": {
+      "sha256": "a49df7cf94109444b82f3120f9208423efc1da6c62dfeaeabac6990bff8a9c01",
+      "beforeSha256": "5d41d1dc47e8eeedab9100ef280dd69e74c4c193b8ca796ef858f2b1d257ae1b"
+    },
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceNearestSuite.scala": {
+      "sha256": "e5efaccf3bcf2639911d9aaf3f5cf6fe0cce19422c5f2e7cd7e942f8691a6999",
+      "beforeSha256": null
+    },
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceSceneDocumentSuite.scala": {
+      "sha256": "ba8cc3b06a865cccbe7cd85f343f3f139de5015bd812b583f4f25e876e34c75c",
+      "beforeSha256": "c2aa0a8ace4d224c6ff02e92737535cd25d764b13473af0bccf987a5e21ea0d3"
+    },
+    "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala": {
+      "sha256": "8f6db4a25131eed30ba95703fef49e7c3558b86dad48e0f0a578a0a79c5d8d80",
+      "beforeSha256": "80c1bd5e413367b6285d7dd7a700a87bef663ea143dbfaab3aa2458ab2aa8fe9"
+    },
+    "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceNearestRasterSuite.scala": {
+      "sha256": "61b0f73568895c3f722d4216b5c4c7a80c3441495db11732c5f091442207407a",
+      "beforeSha256": null
+    },
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala": {
+      "sha256": "fe6abb239ff2253f91894f86f969c990f237f2b59c893fd25a4b79768c53cdc2",
+      "beforeSha256": "d8f06b8a14a996de422eafc6c27ed4e886675b0865ee28095b39a6fab134f33a"
+    },
+    "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala": {
+      "sha256": "5250e495625be4a7afc736424339cfb768ab05b54e24ebfa02f1131d9dabd3f0",
+      "beforeSha256": "8bc94562ba911648026de375a43c214977cf417fb9a19f35d20766a8b6cc88bc"
+    },
+    "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceNearestProbe.scala": {
+      "sha256": "4da95e7f09b0c8b9ca466022786cb6e3a58dd8d097a307b59857adfc40698989",
+      "beforeSha256": null
+    },
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeNearestProbe.scala": {
+      "sha256": "f5c83d8ba3a64667b378bad90a622a774c184fc07bfe866d38deb150cbe1b810",
+      "beforeSha256": null
+    },
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeSurfaceBackend.scala": {
+      "sha256": "4565c851205f87ea9b40f9ffac1e522b3169c7a78c06b98096026718a370edf4",
+      "beforeSha256": "41a4c808a773e575835940b33573878cb5ec2f8c3d21157d1c0b3282797afc42"
+    },
+    "modules/surface-view-three/js/src/main/scala/scalafim/surface/view/three/ThreeJsRuntime.scala": {
+      "sha256": "8b149eb1df8c7152cc362c1d2c532cc29752720dabc4af71f20d8762e35c83db",
+      "beforeSha256": "cb7c26cd7b414f1a1d69a2cac22065733b9602b5ee0c8aff0bc4e9f7cb689aff"
+    },
+    "build.sbt": {
+      "sha256": "9122678b2352143f8b6d2f43023ab68f2b95430fc3e7fc5b29d2d0931defa9c2"
+    },
+    "docs/surface-viewer.md": {
+      "sha256": "f9a7c30213b9462e0e00129e95bb9344e4f71525c624f0cda21fa7a9837f1520"
+    },
+    "docs/plans/surface-map-semantics.md": {
+      "sha256": "867bd0008853802843cf199c93be1bb24f86448c23de8e6572e2f48136ecec88"
+    },
+    "modules/surface-view-three/browser/index.html": {
+      "sha256": "1e956db274e844b59c4b5848b35f25e46094587788c9dea6ca4525e8556765b2"
+    }
+  },
+  "images": {
+    "docs/visual-qa/surface-nearest-javafx.png": "a77c4bf14f3ae952f8b463ee794251fabfdf3657c201f6adfbab3f526c0ac7e2",
+    "docs/visual-qa/surface-nearest-three.png": "bd77de14ced4b02fd629497b1fbbc48110c5bdc5683c41bfdc38c732c8ab7f53"
+  },
+  "browserCleanup": {
+    "browserClosed": true,
+    "pageClosed": true,
+    "loopbackServerClosed": true,
+    "taskLocalToolingRemoved": true,
+    "finalAudit": "No automated top-level browser processes found."
+  }
+}
