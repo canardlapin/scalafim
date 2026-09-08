@@ -1,0 +1,602 @@
+{
+  "agreements": [
+    {
+      "max_abs_diff": 2.220446049250313e-16,
+      "name": "observation-correlation-rsatoolbox-vs-pymvpa",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 8.881784197001252e-16,
+      "name": "observation-squared-euclidean-normalization",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 2.220446049250313e-16,
+      "name": "crossnobis-rsatoolbox-python-vs-matlab",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 2.220446049250313e-16,
+      "name": "crossnobis-loo-vs-uniform-all-pairs",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 4.2327252813834093e-16,
+      "name": "rsa-ols-rsatoolbox-python-vs-matlab",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 6.765421556309548e-17,
+      "name": "rsa-pearson_two_category-rsatoolbox-python-vs-matlab",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 0.0,
+      "name": "rsa-spearman_two_category-rsatoolbox-python-vs-matlab",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 5.551115123125783e-17,
+      "name": "rsa-pearson_graded-rsatoolbox-python-vs-matlab",
+      "tolerance": 1e-10
+    },
+    {
+      "max_abs_diff": 1.1102230246251565e-16,
+      "name": "rsa-spearman_graded-rsatoolbox-python-vs-matlab",
+      "tolerance": 1e-10
+    }
+  ],
+  "fixture_sha256": "807fef98da8c60719c9f86122838266a7cd5811eb4fdd906e5c4706479822e7a",
+  "references": {
+    "pymvpa": {
+      "cross_validation_source_sha256": "3737ff5f04cfaae33b2e1a1c3a239d3564436d7a11a1cc40cd840a2fcf740bed",
+      "lda_source_sha256": "9f9566e6f05125822ddf6d42e0d4602a068257df62307fea6a826ae7c7abec43",
+      "name": "pymvpa",
+      "numpy": "1.23.5",
+      "pdist_source_sha256": "a1780ea727978826a13d753255d79a349008cbaa7187751688c3a02d1f1771be",
+      "python": "3.11.13",
+      "scipy": "1.11.4",
+      "version": "2.6.5.dev1"
+    },
+    "rsatoolbox_matlab": {
+      "name": "rsatoolbox-matlab",
+      "revision": "91ad43359c8a6355de1dd726e69038b7e798720a",
+      "runtime": "11.1.0"
+    },
+    "rsatoolbox_python": {
+      "calc_source_sha256": "eb73308cea8d0633637b9c352789ed626939c6bacfc667766aac8a5859e5f5f1",
+      "compare_source_sha256": "72cb2d7e1564b2e7ccddb9d7725504fd7d17bf98fe89bb7b45316352bb9f4cb8",
+      "name": "rsatoolbox-python",
+      "numpy": "2.5.2",
+      "python": "3.12.10",
+      "scipy": "1.18.1",
+      "version": "0.3.2"
+    }
+  },
+  "scenarios": {
+    "observation": {
+      "correlation": [
+        0.03530753947307086,
+        1.1294079266631438,
+        1.4651188459295668,
+        1.6531457365391469,
+        1.8402299511004443,
+        1.3835410488194086,
+        1.661460715172316,
+        1.436869478043648,
+        1.6747654522895954,
+        0.09714901744450866,
+        1.661549036130423,
+        1.4205107997221604,
+        1.3567867918660492,
+        1.0864751038616607,
+        0.04145983022858746
+      ],
+      "euclidean": [
+        0.6461423991660042,
+        3.1080540535840107,
+        3.2889968075387364,
+        4.3439613257946945,
+        4.830890187118726,
+        3.0639027399707057,
+        3.1535694062442956,
+        3.81673944617654,
+        4.337626078859265,
+        0.733143914930759,
+        3.3,
+        3.350746185553301,
+        3.0540956108150903,
+        3.040559159102154,
+        0.7262919523166975
+      ],
+      "pair_order": [
+        [
+          "observation-1",
+          "observation-2"
+        ],
+        [
+          "observation-1",
+          "observation-3"
+        ],
+        [
+          "observation-1",
+          "observation-4"
+        ],
+        [
+          "observation-1",
+          "observation-5"
+        ],
+        [
+          "observation-1",
+          "observation-6"
+        ],
+        [
+          "observation-2",
+          "observation-3"
+        ],
+        [
+          "observation-2",
+          "observation-4"
+        ],
+        [
+          "observation-2",
+          "observation-5"
+        ],
+        [
+          "observation-2",
+          "observation-6"
+        ],
+        [
+          "observation-3",
+          "observation-4"
+        ],
+        [
+          "observation-3",
+          "observation-5"
+        ],
+        [
+          "observation-3",
+          "observation-6"
+        ],
+        [
+          "observation-4",
+          "observation-5"
+        ],
+        [
+          "observation-4",
+          "observation-6"
+        ],
+        [
+          "observation-5",
+          "observation-6"
+        ]
+      ],
+      "squared_euclidean_per_feature": [
+        0.1043750000000001,
+        2.415,
+        2.704375,
+        4.717499999999999,
+        5.834375,
+        2.3468750000000003,
+        2.48625,
+        3.641875,
+        4.70375,
+        0.13437500000000013,
+        2.7225,
+        2.8068750000000002,
+        2.331875,
+        2.31125,
+        0.1318750000000004
+      ],
+      "squared_euclidean_raw": [
+        0.4175,
+        9.66,
+        10.8175,
+        18.87,
+        23.3375,
+        9.3875,
+        9.945,
+        14.5675,
+        18.815,
+        0.5375,
+        10.889999999999999,
+        11.2275,
+        9.3275,
+        9.245,
+        0.5275000000000001
+      ],
+      "target_similarity_on_squared_euclidean": {
+        "pearson": 0.7742568666151466,
+        "spearman": 0.6943650748294135
+      }
+    },
+    "predictive": {
+      "builtin_lda": {
+        "accuracy": 1.0,
+        "cvfolds": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2,
+          3,
+          3,
+          3
+        ],
+        "predicted": [
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c"
+        ],
+        "sample_ids": [
+          "run-1-class-a",
+          "run-1-class-b",
+          "run-1-class-c",
+          "run-2-class-a",
+          "run-2-class-b",
+          "run-2-class-c",
+          "run-3-class-a",
+          "run-3-class-b",
+          "run-3-class-c",
+          "run-4-class-a",
+          "run-4-class-b",
+          "run-4-class-c"
+        ],
+        "truth": [
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c"
+        ]
+      },
+      "fixed_support_searchlights": [
+        {
+          "accuracy": 1.0,
+          "center": "predictive-feature-1",
+          "ordinals": [
+            0,
+            1
+          ],
+          "predicted": [
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c"
+          ]
+        },
+        {
+          "accuracy": 1.0,
+          "center": "predictive-feature-2",
+          "ordinals": [
+            0,
+            1,
+            2
+          ],
+          "predicted": [
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c"
+          ]
+        },
+        {
+          "accuracy": 1.0,
+          "center": "predictive-feature-3",
+          "ordinals": [
+            1,
+            2,
+            3
+          ],
+          "predicted": [
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c",
+            "class-a",
+            "class-b",
+            "class-c"
+          ]
+        },
+        {
+          "accuracy": 0.3333333333333333,
+          "center": "predictive-feature-4",
+          "ordinals": [
+            3
+          ],
+          "predicted": [
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a",
+            "class-a"
+          ]
+        }
+      ],
+      "folds": [
+        {
+          "analysis": [
+            "run-2-class-a",
+            "run-2-class-b",
+            "run-2-class-c",
+            "run-3-class-a",
+            "run-3-class-b",
+            "run-3-class-c",
+            "run-4-class-a",
+            "run-4-class-b",
+            "run-4-class-c"
+          ],
+          "assessment": [
+            "run-1-class-a",
+            "run-1-class-b",
+            "run-1-class-c"
+          ],
+          "fold": 0
+        },
+        {
+          "analysis": [
+            "run-1-class-a",
+            "run-1-class-b",
+            "run-1-class-c",
+            "run-3-class-a",
+            "run-3-class-b",
+            "run-3-class-c",
+            "run-4-class-a",
+            "run-4-class-b",
+            "run-4-class-c"
+          ],
+          "assessment": [
+            "run-2-class-a",
+            "run-2-class-b",
+            "run-2-class-c"
+          ],
+          "fold": 1
+        },
+        {
+          "analysis": [
+            "run-1-class-a",
+            "run-1-class-b",
+            "run-1-class-c",
+            "run-2-class-a",
+            "run-2-class-b",
+            "run-2-class-c",
+            "run-4-class-a",
+            "run-4-class-b",
+            "run-4-class-c"
+          ],
+          "assessment": [
+            "run-3-class-a",
+            "run-3-class-b",
+            "run-3-class-c"
+          ],
+          "fold": 2
+        },
+        {
+          "analysis": [
+            "run-1-class-a",
+            "run-1-class-b",
+            "run-1-class-c",
+            "run-2-class-a",
+            "run-2-class-b",
+            "run-2-class-c",
+            "run-3-class-a",
+            "run-3-class-b",
+            "run-3-class-c"
+          ],
+          "assessment": [
+            "run-4-class-a",
+            "run-4-class-b",
+            "run-4-class-c"
+          ],
+          "fold": 3
+        }
+      ],
+      "formula_matched_centroid": {
+        "accuracy": 1.0,
+        "cvfolds": [
+          0,
+          0,
+          0,
+          1,
+          1,
+          1,
+          2,
+          2,
+          2,
+          3,
+          3,
+          3
+        ],
+        "predicted": [
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c"
+        ],
+        "sample_ids": [
+          "run-1-class-a",
+          "run-1-class-b",
+          "run-1-class-c",
+          "run-2-class-a",
+          "run-2-class-b",
+          "run-2-class-c",
+          "run-3-class-a",
+          "run-3-class-b",
+          "run-3-class-c",
+          "run-4-class-a",
+          "run-4-class-b",
+          "run-4-class-c"
+        ],
+        "truth": [
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c",
+          "class-a",
+          "class-b",
+          "class-c"
+        ]
+      }
+    },
+    "relational": {
+      "crossnobis_fixed_precision": {
+        "anterior": [
+          -0.05928266666666667,
+          1.0498263986527845,
+          1.1087662863452523,
+          1.0689229011259127,
+          1.1043088550626934,
+          1.8699160044236174
+        ],
+        "posterior": [
+          -0.052431333333333344,
+          0.4472863618639039,
+          0.2575087784972915,
+          0.436646687362087,
+          0.2693072180304109,
+          1.197657594241403
+        ],
+        "whole": [
+          -0.05490144444444444,
+          0.7480140714834225,
+          0.654537360983406,
+          0.752202429642691,
+          0.6575044228535946,
+          1.4843554983084888
+        ]
+      },
+      "crossvalidated_squared_euclidean": {
+        "anterior": [
+          -0.04682222222222224,
+          0.9201699214610338,
+          0.8816036934997988,
+          0.9362508818216482,
+          0.8791488459093568,
+          1.60064298094283
+        ],
+        "posterior": [
+          -0.04013333333333333,
+          0.36347542620204865,
+          0.1983200994191223,
+          0.35504895593873254,
+          0.2072601935153316,
+          0.9405518233756011
+        ],
+        "whole": [
+          -0.04347777777777778,
+          0.6418226738315412,
+          0.5399618964594606,
+          0.6456499188801903,
+          0.5432045197123442,
+          1.2705974021592157
+        ]
+      },
+      "matlab_r_squared": 0.004147249053661151,
+      "pair_order": [
+        [
+          "condition-a",
+          "condition-b"
+        ],
+        [
+          "condition-a",
+          "condition-c"
+        ],
+        [
+          "condition-a",
+          "condition-d"
+        ],
+        [
+          "condition-b",
+          "condition-c"
+        ],
+        [
+          "condition-b",
+          "condition-d"
+        ],
+        [
+          "condition-c",
+          "condition-d"
+        ]
+      ],
+      "rsa": {
+        "ols_coefficients": [
+          0.7635595612616649,
+          0.037170078638398545,
+          -0.04883253432964263
+        ],
+        "ols_residual_sum_squares": 1.1887523390452575,
+        "ols_terms": [
+          "intercept",
+          "two_category",
+          "graded"
+        ],
+        "pearson_graded": -0.056756617679366295,
+        "pearson_two_category": -0.012325690164829426,
+        "spearman_graded": -0.3703280399090205,
+        "spearman_two_category": 0.0
+      }
+    }
+  },
+  "schema": "scalafim-mvpa-external-conformance/v1"
+}

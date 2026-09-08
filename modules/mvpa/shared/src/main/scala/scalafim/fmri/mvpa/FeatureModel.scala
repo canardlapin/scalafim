@@ -1,563 +1,1012 @@
 package scalafim.fmri.mvpa
 
-import gale.linalg.{CholeskyOptions, DMat, Matrix}
+import gale.linalg.CholeskyOptions
+import gale.linalg.DMat
+import gale.linalg.Matrix
+import multivar.core.SemanticSpace
+import resample4s.core.Reindexing
+import resample4s.core.UnitKey
 
-enum FeaturePredictionDirection:
-  case FeaturesToPatterns
-  case PatternsToFeatures
+opaque type FeatureModelPenalty = Double
+
+object FeatureModelPenalty:
+  def apply(value: Double): Either[FeatureModelError, FeatureModelPenalty] =
+    if !value.isFinite || value <= 0.0 then Left(FeatureModelError.InvalidPenalty(value))
+    else Right(value)
+
+  private[mvpa] def unsafe(value: Double): FeatureModelPenalty =
+    value
+
+  extension (penalty: FeatureModelPenalty) inline def value: Double = penalty
+
+enum FeatureModelDirection:
+  case Encoding
+  case Decoding
 
   def label: String =
     this match
-      case FeaturesToPatterns => "features_to_patterns"
-      case PatternsToFeatures => "patterns_to_features"
+      case Encoding => "model-features-to-neural-patterns"
+      case Decoding => "neural-patterns-to-model-features"
 
-final case class FeatureModelDesign private (
-    items: Vector[String],
-    features: DMat,
-    featureNames: Vector[String]
-):
-  require(items.length == features.rows, "feature design item count must match matrix rows")
-  require(featureNames.length == features.cols, "feature name count must match matrix columns")
+enum FeatureModelSourceError:
+  case Identity(error: ScientificIdentityError)
+  case SampleAxisMismatch(expected: AxisFingerprint, actual: AxisFingerprint)
+  case SampleWitnessMismatch
+  case InvalidFeaturePurpose(actual: AxisPurpose)
 
-object FeatureModelDesign:
-  def apply(
-      items: Seq[String],
-      features: DMat,
-      featureNames: Seq[String] = Seq.empty
-  ): Either[MvpaError, FeatureModelDesign] =
-    val itemVector = items.map(_.trim).toVector
-    val names =
-      if featureNames.isEmpty then (0 until features.cols).map(index => s"feature_$index").toVector
-      else featureNames.map(_.trim).toVector
+  def message: String =
+    this match
+      case Identity(error)                      => error.message
+      case SampleAxisMismatch(expected, actual) =>
+        s"feature-model table samples ${actual.value} do not match observations ${expected.value}"
+      case SampleWitnessMismatch =>
+        "feature-model table and observations use different nominal sample witnesses"
+      case InvalidFeaturePurpose(actual) =>
+        s"feature-model coordinates require purpose '${AxisPurpose.Covariates.value}', obtained '${actual.value}'"
 
-    if features.rows < 2 then Left(MvpaError.InvalidFeatureModelInput("feature design requires at least two rows"))
-    else if features.cols < 1 then Left(MvpaError.InvalidFeatureModelInput("feature design requires at least one column"))
-    else if itemVector.length != features.rows then
-      Left(MvpaError.InvalidFeatureModelInput(s"feature design item count ${itemVector.length} != row count ${features.rows}"))
-    else if itemVector.exists(_.isEmpty) then Left(MvpaError.InvalidFeatureModelInput("feature design item labels must be non-empty"))
-    else if itemVector.distinct.length != itemVector.length then Left(MvpaError.InvalidFeatureModelInput("feature design item labels must be unique"))
-    else if names.length != features.cols then
-      Left(MvpaError.InvalidFeatureModelInput(s"feature name count ${names.length} != column count ${features.cols}"))
-    else if names.exists(_.isEmpty) then Left(MvpaError.InvalidFeatureModelInput("feature names must be non-empty"))
-    else if names.distinct.length != names.length then Left(MvpaError.InvalidFeatureModelInput("feature names must be unique"))
+/** Neural observations and a model-feature table sharing one exact sample axis. Direction belongs to the estimand, not
+  * to the source container.
+  */
+final class FeatureModelSource[
+    S <: SemanticSpace,
+    N <: SemanticSpace,
+    F <: SemanticSpace,
+    NK,
+    FK
+] private (
+    val observations: Observations[S, N, NK],
+    val features: EvidenceTable[S, F, SampleId, FK],
+    val featureAxisName: ScientificAxisName,
+    val identity: ScientificSourceIdentity
+) extends ScientificSource:
+  override type Neural = N
+  override type NeuralKey = NK
+
+  def samples: AxisRef.Aux[SampleId, S] = observations.samples
+  def featureAxis: AxisRef.Aux[FK, F] = features.columns
+  def sampleAxisName: ScientificAxisName = observations.sampleAxisName
+  def neuralAxisName: ScientificAxisName = observations.neuralAxisName
+
+  override def neuralAxis: AxisRef.Aux[NK, N] = observations.neuralAxis
+
+  def encode(
+      penalty: FeatureModelPenalty
+  ): FeatureModelEstimand[S, N, F, NK, FK] =
+    FeatureModel.estimand(this, FeatureModelDirection.Encoding, penalty)
+
+  def decode(
+      penalty: FeatureModelPenalty
+  ): FeatureModelEstimand[S, N, F, NK, FK] =
+    FeatureModel.estimand(this, FeatureModelDirection.Decoding, penalty)
+
+object FeatureModelSource:
+  private val Protocol = "scalafim-feature-model-source/v1"
+
+  def apply[
+      S <: SemanticSpace,
+      N <: SemanticSpace,
+      F <: SemanticSpace,
+      NK,
+      FK
+  ](
+      observations: Observations[S, N, NK],
+      features: EvidenceTable[S, F, SampleId, FK],
+      featureAxisName: ScientificAxisName = ScientificAxisName.unsafe("model-features")
+  ): Either[
+    FeatureModelSourceError,
+    FeatureModelSource[S, N, F, NK, FK]
+  ] =
+    if features.rows.identity != observations.samples.identity then
+      Left(
+        FeatureModelSourceError.SampleAxisMismatch(
+          observations.samples.identity.fingerprint,
+          features.rows.identity.fingerprint
+        )
+      )
+    else if !(features.rows.evidence eq observations.samples.evidence) then
+      Left(FeatureModelSourceError.SampleWitnessMismatch)
+    else if features.columns.identity.purpose != AxisPurpose.Covariates then
+      Left(
+        FeatureModelSourceError.InvalidFeaturePurpose(
+          features.columns.identity.purpose
+        )
+      )
     else
-      validateFinite(features, "feature design").map(_ => new FeatureModelDesign(itemVector, features, names))
+      ScientificSourceIdentity(
+        ScientificSourceKind.unsafe("feature-model-observations"),
+        Vector(
+          ScientificSourceAxis(
+            observations.sampleAxisName,
+            observations.samples.identity
+          ),
+          ScientificSourceAxis(
+            observations.neuralAxisName,
+            observations.neuralAxis.identity
+          ),
+          ScientificSourceAxis(featureAxisName, features.columns.identity)
+        ),
+        Vector(
+          "features-value" -> features.table.valueIdentity.stableKey,
+          "observations" -> observations.identity.fingerprint.value,
+          "protocol" -> Protocol
+        )
+      ).left
+        .map(FeatureModelSourceError.Identity.apply)
+        .map: identity =>
+          new FeatureModelSource(
+            observations,
+            features,
+            featureAxisName,
+            identity
+          )
 
-  def unsafe(
-      items: Seq[String],
-      features: DMat,
-      featureNames: Seq[String] = Seq.empty
-  ): FeatureModelDesign =
-    apply(items, features, featureNames).fold(error => throw new IllegalArgumentException(error.message), identity)
+enum FeatureModelBindRejection:
+  case SampleAxisMismatch(expected: AxisFingerprint, actual: AxisFingerprint)
+  case SampleWitnessMismatch
+  case InvalidSchedule(error: BoundScheduleError)
+  case InsufficientAnalysisRows(unit: UnitKey, actual: Int)
+  case EmptyAssessment(unit: UnitKey)
 
-final class FeatureRidgeEstimator private (val penalty: RidgePenalty):
-  def lambda: Double =
-    penalty.value
+  def message: String =
+    this match
+      case SampleAxisMismatch(expected, actual) =>
+        s"feature-model design samples ${actual.value} do not match source samples ${expected.value}"
+      case SampleWitnessMismatch =>
+        "feature-model design and source use different nominal sample witnesses"
+      case InvalidSchedule(error)                 => error.message
+      case InsufficientAnalysisRows(unit, actual) =>
+        s"feature-model unit $unit requires at least two analysis rows, obtained $actual"
+      case EmptyAssessment(unit) =>
+        s"feature-model unit $unit has no assessment rows"
 
-object FeatureRidgeEstimator:
-  def apply(lambda: Double = 1.0): FeatureRidgeEstimator =
-    RidgePenalty(lambda).fold(error => throw new IllegalArgumentException(error.message), value => new FeatureRidgeEstimator(value))
+enum FeatureModelError:
+  case Evidence(error: EvidenceTableError)
+  case Axis(error: AxisRefError)
+  case Design(error: PredictiveDesignError)
+  case Schedule(error: BoundScheduleError)
+  case ExecutionEvidence(error: ExecutionReceiptError)
+  case InvalidPenalty(value: Double)
+  case ShapeMismatch(
+      label: String,
+      expectedRows: Int,
+      expectedColumns: Int,
+      actualRows: Int,
+      actualColumns: Int
+  )
+  case EmptyRows(label: String)
+  case InsufficientTrainingRows(actual: Int)
+  case NonFiniteValue(label: String, row: Int, column: Int, value: Double)
+  case RidgeSolve(detail: String)
+  case MissingPrediction(sample: SampleId)
 
-  def fromPenalty(lambda: RidgePenalty): FeatureRidgeEstimator =
-    new FeatureRidgeEstimator(lambda)
+  def message: String =
+    this match
+      case Evidence(error)          => error.message
+      case Axis(error)              => error.message
+      case Design(error)            => error.message
+      case Schedule(error)          => error.message
+      case ExecutionEvidence(error) => error.message
+      case InvalidPenalty(value)    =>
+        s"feature-model ridge penalty must be positive and finite, obtained $value"
+      case ShapeMismatch(label, expectedRows, expectedColumns, actualRows, actualColumns) =>
+        s"$label expected ${expectedRows}x$expectedColumns, obtained ${actualRows}x$actualColumns"
+      case EmptyRows(label)                 => s"$label contains no rows"
+      case InsufficientTrainingRows(actual) =>
+        s"feature-model ridge requires at least two training rows, obtained $actual"
+      case NonFiniteValue(label, row, column, value) =>
+        s"$label contains non-finite value $value at ($row,$column)"
+      case RidgeSolve(detail)        => s"feature-model ridge solve failed: $detail"
+      case MissingPrediction(sample) =>
+        s"feature-model exact-once design produced no prediction for '${sample.value}'"
 
-final case class FeatureModelPrediction(
-    direction: FeaturePredictionDirection,
-    items: Vector[String],
-    targetNames: Vector[String],
-    predicted: DMat,
-    observed: DMat
-):
-  require(predicted.rows == observed.rows, "predicted and observed rows must match")
-  require(predicted.cols == observed.cols, "predicted and observed columns must match")
-  require(items.length == predicted.rows, "prediction item count must match rows")
-  require(targetNames.length == predicted.cols, "prediction target name count must match columns")
+final class FeatureModelEstimand[
+    S <: SemanticSpace,
+    N <: SemanticSpace,
+    F <: SemanticSpace,
+    NK,
+    FK
+] private[mvpa] (
+    val direction: FeatureModelDirection,
+    val penalty: FeatureModelPenalty,
+    val identity: EstimandIdentity
+) extends Estimand[
+      FeatureModelSource[S, N, F, NK, FK],
+      CrossFitDesign[S, ?]
+    ]:
+  override type Result = MeasuredFeatureModel[S]
+  override type Rejection = FeatureModelBindRejection
+  override type Failure = FeatureModelError
 
-final case class FeatureModelAnalysis(
-    design: FeatureModelDesign,
-    direction: FeaturePredictionDirection,
-    estimator: FeatureRidgeEstimator = FeatureRidgeEstimator(),
-    storePrediction: Boolean = false
-) extends FoldRequiredDenseRoiAnalysis:
-  override def name: String = s"feature_model_${direction.label}_ridge"
-  override val minFeatures: Int = 1
-  override def missingFoldsError: MvpaError =
-    MvpaError.InvalidFeatureModelInput("feature model analysis requires a fold plan")
+  override val defaultBoundaries: RequestedBoundaries = FeatureModel.Boundaries
 
-  override def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult] =
-    for
-      _ <- validateInputs(roi, context.foldPlan)
-      prediction <- FeatureModelAnalysis.crossValidate(roi, design, direction, estimator, context.foldPlan)
-      metrics <- FeatureModelMetrics.compute(prediction).map(_.withEstimator(estimator.lambda))
-    yield
-      val payload =
-        if storePrediction then Some(RoiPayload.FeatureModel(prediction))
-        else None
-      RoiAnalysisResult(metrics, payload)
+  override def rejectionMessage(value: FeatureModelBindRejection): String =
+    value.message
 
-  private def validateInputs(roi: PatternMatrix, folds: FoldPlan): Either[MvpaError, Unit] =
-    if design.features.rows != roi.samples then
-      Left(MvpaError.InvalidFeatureModelInput(s"feature design rows ${design.features.rows} != ROI samples ${roi.samples}"))
-    else if folds.samples != roi.samples then
-      Left(MvpaError.ResponseLengthMismatch(roi.samples, folds.samples))
-    else
-      validateFinite(roi.value, "ROI pattern matrix")
+  override def failureMessage(value: FeatureModelError): String = value.message
 
-object FeatureModelAnalysis:
-  private def crossValidate(
-      roi: PatternMatrix,
-      design: FeatureModelDesign,
-      direction: FeaturePredictionDirection,
-      estimator: FeatureRidgeEstimator,
-      folds: FoldPlan
-  ): Either[MvpaError, FeatureModelPrediction] =
-    val source =
-      direction match
-        case FeaturePredictionDirection.FeaturesToPatterns => design.features
-        case FeaturePredictionDirection.PatternsToFeatures => roi.value
-    val target =
-      direction match
-        case FeaturePredictionDirection.FeaturesToPatterns => roi.value
-        case FeaturePredictionDirection.PatternsToFeatures => design.features
-    val targetNames =
-      direction match
-        case FeaturePredictionDirection.FeaturesToPatterns => roi.featureIndices.map(index => s"pattern_${index.value}")
-        case FeaturePredictionDirection.PatternsToFeatures => design.featureNames
+final case class FeatureModelFoldReceipt(
+    unit: UnitKey,
+    analysisSamples: AxisIdentity,
+    assessmentSamples: AxisIdentity
+)
 
-    val testRows = folds.folds.flatMap(_.test.map(_.value)).distinct.sorted
-    if testRows.isEmpty then Left(MvpaError.InvalidFeatureModelInput("fold plan produced no test samples"))
-    else
-      val rowToOutput = testRows.zipWithIndex.toMap
-      val predicted = Matrix.newBuilder(testRows.length, target.cols)
-      val observed = Matrix.newBuilder(testRows.length, target.cols)
-      val counts = Array.fill(testRows.length)(0)
+final class FeatureModelComputationReceipt private[mvpa] (
+    val folds: Vector[FeatureModelFoldReceipt]
+)
 
-      var foldIndex = 0
-      while foldIndex < folds.folds.length do
-        val fold = folds.folds(foldIndex)
-        val trainRows = fold.train.map(_.value)
-        val test = fold.test.map(_.value)
-        val foldResult =
-          for
-            sourceTrain <- selectRows(source, trainRows)
-            targetTrain <- selectRows(target, trainRows)
-            sourceTest <- selectRows(source, test)
-            fit <- StandardizedRidgeMap.fit(sourceTrain, targetTrain, estimator.lambda)
-            foldPredicted <- fit.predict(sourceTest)
-          yield
-            var localRow = 0
-            while localRow < test.length do
-              val outRow = rowToOutput(test(localRow))
-              var col = 0
-              while col < target.cols do
-                predicted(outRow, col) = predicted(outRow, col) + foldPredicted(localRow, col)
-                observed(outRow, col) = target(test(localRow), col)
-                col += 1
-              counts(outRow) += 1
-              localRow += 1
-        foldResult match
-          case Left(error) => return Left(error)
-          case Right(()) =>
-        foldIndex += 1
+final case class FeatureModelMetrics(
+    patternCorrelation: Option[Double],
+    patternDiscrimination: Option[Double],
+    patternRankPercentile: Option[Double],
+    rdmCorrelation: Option[Double],
+    targetCorrelation: Option[Double],
+    meanSquaredError: Double,
+    rSquared: Option[Double],
+    meanTargetwiseCorrelation: Option[Double]
+)
 
-      val missing = counts.indexWhere(_ == 0)
-      if missing >= 0 then Left(MvpaError.InvalidFeatureModelInput("some test samples were never predicted"))
-      else
-        var row = 0
-        while row < testRows.length do
-          var col = 0
-          while col < target.cols do
-            predicted(row, col) = predicted(row, col) / counts(row)
-            col += 1
-          row += 1
-        Right(
-          FeatureModelPrediction(
-            direction,
-            testRows.map(index => design.items(index)).toVector,
-            targetNames,
-            predicted.result(),
-            observed.result()
+/** Exact-once sample-keyed predictions. Target identity is retained as the measured neural axis for encoding or the
+  * declared model-feature axis for decoding; no generated string labels stand in for coordinates.
+  */
+final class MeasuredFeatureModel[S <: SemanticSpace] private[mvpa] (
+    val samples: AxisRef.Aux[SampleId, S],
+    val target: AxisIdentity,
+    val predicted: DMat,
+    val observed: DMat,
+    val metrics: FeatureModelMetrics,
+    val computation: FeatureModelComputationReceipt
+)
+
+object FeatureModel:
+  private val Kind = EstimandKind.unsafe("cross-fitted-feature-model")
+
+  val RidgeSolver: SolverIdentity =
+    SolverIdentity.trusted(
+      SolverId.unsafe("feature-model-standardized-ridge-cholesky"),
+      Vector(
+        "implementation" -> "scalafim-feature-model",
+        "linear-kernel" -> "gale-cholesky"
+      )
+    )
+
+  private[mvpa] val Boundaries =
+    RequestedBoundaries.trusted(
+      Vector(
+        OutputBoundaryIdentity.trusted(
+          OutputBoundaryId.unsafe("out-of-fold-feature-predictions")
+        ),
+        OutputBoundaryIdentity.trusted(
+          OutputBoundaryId.unsafe("feature-model-summaries")
+        )
+      )
+    )
+
+  private[mvpa] def estimand[
+      S <: SemanticSpace,
+      N <: SemanticSpace,
+      F <: SemanticSpace,
+      NK,
+      FK
+  ](
+      source: FeatureModelSource[S, N, F, NK, FK],
+      direction: FeatureModelDirection,
+      penalty: FeatureModelPenalty
+  ): FeatureModelEstimand[S, N, F, NK, FK] =
+    val identity = EstimandIdentity.trusted(
+      Kind,
+      Vector(
+        "direction" -> direction.label,
+        "fit" -> "fold-local-standardized-multivariate-ridge",
+        "penalty" -> java.lang.Double.toHexString(penalty.value),
+        "source" -> source.identity.fingerprint.value
+      )
+    )
+    new FeatureModelEstimand(direction, penalty, identity)
+
+  given compiler[
+      S <: SemanticSpace,
+      N <: SemanticSpace,
+      F <: SemanticSpace,
+      NK,
+      FK,
+      FoldUnit,
+      R
+  ]: Compile[
+    FeatureModelSource[S, N, F, NK, FK],
+    CrossFitDesign[S, FoldUnit],
+    FeatureModelEstimand[S, N, F, NK, FK],
+    R
+  ] with
+    override type Prepared = Unit
+
+    override def prepare(
+        specification: ScientificSpecification[
+          FeatureModelSource[S, N, F, NK, FK],
+          CrossFitDesign[S, FoldUnit],
+          FeatureModelEstimand[S, N, F, NK, FK],
+          R
+        ]
+    ): Either[specification.Rejection, Unit] =
+      val source = specification.source
+      val design = specification.design
+      if source.samples.identity != design.validation.schedule.axis.identity then
+        Left(
+          FeatureModelBindRejection.SampleAxisMismatch(
+            source.samples.identity.fingerprint,
+            design.validation.schedule.axis.identity.fingerprint
           )
         )
+      else if !(source.samples.evidence eq design.validation.schedule.axis.evidence) then
+        Left(FeatureModelBindRejection.SampleWitnessMismatch)
+      else
+        val iterator = design.validation.schedule.iterator
+        var rejection: Option[FeatureModelBindRejection] = None
+        while iterator.hasNext && rejection.isEmpty do
+          val (key, bound) = iterator.next()
+          bound match
+            case Left(error) =>
+              rejection = Some(FeatureModelBindRejection.InvalidSchedule(error))
+            case Right(unit) =>
+              val analysis = design.validation.roles.analysis(unit)
+              val assessment = design.validation.roles.assessment(unit)
+              if analysis.size < 2 then
+                rejection = Some(
+                  FeatureModelBindRejection.InsufficientAnalysisRows(
+                    key,
+                    analysis.size
+                  )
+                )
+              else if assessment.size == 0 then rejection = Some(FeatureModelBindRejection.EmptyAssessment(key))
+        rejection match
+          case Some(value) => Left(value)
+          case None        => Right(())
 
-  private def selectRows(matrix: DMat, rows: IndexedSeq[Int]): Either[MvpaError, DMat] =
-    if rows.isEmpty then Left(MvpaError.InvalidFeatureModelInput("feature model fold has no rows"))
-    else rows.find(row => row < 0 || row >= matrix.rows) match
-      case Some(row) => Left(MvpaError.FoldIndexOutOfBounds("feature_model", row, matrix.rows))
-      case None =>
-        val out = Matrix.newBuilder(rows.length, matrix.cols)
-        var row = 0
-        while row < rows.length do
-          var col = 0
-          while col < matrix.cols do
-            out(row, col) = matrix(rows(row), col)
-            col += 1
-          row += 1
-        Right(out.result())
+  given task[
+      S <: SemanticSpace,
+      N <: SemanticSpace,
+      F <: SemanticSpace,
+      NK,
+      FK,
+      FoldUnit,
+      R
+  ]: MeasurementTask[
+    FeatureModelSource[S, N, F, NK, FK],
+    CrossFitDesign[S, FoldUnit],
+    FeatureModelEstimand[S, N, F, NK, FK],
+    R,
+    Unit
+  ] with
+    override def validate(
+        strategy: ExecutionStrategy
+    ): Either[ExecutionPlanError, Unit] =
+      if strategy.representation != ExecutionRepresentation.Dense then
+        Left(
+          ExecutionPlanError.UnsupportedRepresentation(
+            strategy.representation,
+            Vector(ExecutionRepresentation.Dense)
+          )
+        )
+      else if strategy.precision != NumericPrecision.Binary64 then
+        Left(
+          ExecutionPlanError.UnsupportedPrecision(
+            strategy.precision,
+            Vector(NumericPrecision.Binary64)
+          )
+        )
+      else if strategy.solver != SolverChoice.Selected(RidgeSolver) then
+        Left(ExecutionPlanError.UnsupportedSolver(strategy.solver))
+      else
+        strategy.materialization match
+          case MaterializationPolicy.Reject =>
+            Left(
+              ExecutionPlanError.MaterializationRequired(
+                "feature modelling consumes explicitly budgeted neural and model-feature tables"
+              )
+            )
+          case MaterializationPolicy.Allow(_) => Right(())
 
-private final case class StandardizedRidgeMap(
+    override def execute(
+        plan: BoundScientificPlan[
+          FeatureModelSource[S, N, F, NK, FK],
+          CrossFitDesign[S, FoldUnit],
+          FeatureModelEstimand[S, N, F, NK, FK],
+          R,
+          Unit
+        ]
+    )(
+        entry: MeasurementEntry[N, NK, ?, R],
+        context: TaskContext
+    ): Either[
+      TaskReportError,
+      TaskReport[plan.Result, plan.Rejection, plan.Failure]
+    ] =
+      evaluate(
+        plan.specification.source,
+        plan.specification.design,
+        plan.specification.estimand,
+        entry.measurement,
+        context.strategy.materialization
+      ) match
+        case Left(error)      => TaskReport.failed(error, context.strategy.target)
+        case Right(execution) =>
+          val scope = ExecutionScope.Measurement(entry.measurement.identity.id)
+          val neural = ExecutionMaterialization(
+            scope,
+            execution.neuralMaterialization,
+            "feature modelling requires the declared local neural table"
+          )
+          val features = ExecutionMaterialization(
+            scope,
+            execution.featureMaterialization,
+            "feature modelling requires the declared model-feature table"
+          )
+          (neural, features) match
+            case (Right(neuralReceipt), Right(featureReceipt)) =>
+              TaskReport.success(
+                execution.result,
+                context.strategy.target,
+                operatorApplications = execution.operatorApplications,
+                materializations = Vector(neuralReceipt, featureReceipt)
+              )
+            case (Left(error), _) =>
+              TaskReport.failed(
+                FeatureModelError.ExecutionEvidence(error),
+                context.strategy.target,
+                operatorApplications = execution.operatorApplications
+              )
+            case (_, Left(error)) =>
+              TaskReport.failed(
+                FeatureModelError.ExecutionEvidence(error),
+                context.strategy.target,
+                operatorApplications = execution.operatorApplications
+              )
+
+  private final case class FeatureModelExecution[S <: SemanticSpace](
+      result: MeasuredFeatureModel[S],
+      neuralMaterialization: MaterializationReceipt,
+      featureMaterialization: MaterializationReceipt,
+      operatorApplications: Long
+  )
+
+  private def evaluate[
+      S <: SemanticSpace,
+      N <: SemanticSpace,
+      F <: SemanticSpace,
+      NK,
+      FK,
+      FoldUnit,
+      L
+  ](
+      source: FeatureModelSource[S, N, F, NK, FK],
+      design: CrossFitDesign[S, FoldUnit],
+      estimand: FeatureModelEstimand[S, N, F, NK, FK],
+      measurement: Measurement[N, NK, L],
+      policy: MaterializationPolicy
+  ): Either[FeatureModelError, FeatureModelExecution[S]] =
+    for
+      measured <- source.observations.evidence
+        .measureColumns(measurement)
+        .left
+        .map(FeatureModelError.Evidence.apply)
+      neural <- measured
+        .materialize(policy)
+        .left
+        .map(FeatureModelError.Evidence.apply)
+      features <- source.features
+        .materialize(policy)
+        .left
+        .map(FeatureModelError.Evidence.apply)
+      _ <- design.outOfFold.left.map(FeatureModelError.Design.apply)
+      prediction <- crossValidate(
+        source,
+        design,
+        estimand,
+        neural.value,
+        features.value,
+        measurement.local.identity
+      )
+      metrics = FeatureModelMetricKernel.compute(
+        prediction.predicted,
+        prediction.observed
+      )
+    yield FeatureModelExecution(
+      new MeasuredFeatureModel(
+        source.samples,
+        prediction.target,
+        prediction.predicted,
+        prediction.observed,
+        metrics,
+        new FeatureModelComputationReceipt(prediction.folds)
+      ),
+      neural.receipt,
+      features.receipt,
+      measurement.local.size.toLong + source.featureAxis.size.toLong
+    )
+
+  private final case class CrossValidatedPrediction(
+      target: AxisIdentity,
+      predicted: DMat,
+      observed: DMat,
+      folds: Vector[FeatureModelFoldReceipt]
+  )
+
+  private def crossValidate[
+      S <: SemanticSpace,
+      N <: SemanticSpace,
+      F <: SemanticSpace,
+      NK,
+      FK,
+      FoldUnit
+  ](
+      source: FeatureModelSource[S, N, F, NK, FK],
+      design: CrossFitDesign[S, FoldUnit],
+      estimand: FeatureModelEstimand[S, N, F, NK, FK],
+      neural: DMat,
+      features: DMat,
+      measuredNeuralAxis: AxisIdentity
+  ): Either[FeatureModelError, CrossValidatedPrediction] =
+    val (input, target, targetIdentity) = estimand.direction match
+      case FeatureModelDirection.Encoding =>
+        (features, neural, measuredNeuralAxis)
+      case FeatureModelDirection.Decoding =>
+        (neural, features, source.featureAxis.identity)
+    val predicted = Matrix.newBuilder(source.samples.size, target.cols)
+    val observed = Matrix.newBuilder(source.samples.size, target.cols)
+    val written = Array.fill(source.samples.size)(false)
+    val foldReceipts = Vector.newBuilder[FeatureModelFoldReceipt]
+    val iterator = design.validation.schedule.iterator
+    while iterator.hasNext do
+      val (key, bound) = iterator.next()
+      val unit = bound.left.map(FeatureModelError.Schedule.apply) match
+        case Left(error)  => return Left(error)
+        case Right(value) => value
+      val analysis = design.validation.roles.analysis(unit)
+      val assessment = design.validation.roles.assessment(unit)
+      val fit = for
+        sourceTrain <- selectRows(input, analysis)
+        targetTrain <- selectRows(target, analysis)
+        sourceTest <- selectRows(input, assessment)
+        fitted <- StandardizedRidgeMap.fit(
+          sourceTrain,
+          targetTrain,
+          estimand.penalty
+        )
+        foldPrediction <- fitted.predict(sourceTest)
+      yield foldPrediction
+      fit match
+        case Left(error)           => return Left(error)
+        case Right(foldPrediction) =>
+          var assessmentPosition = 0
+          while assessmentPosition < assessment.size do
+            val sourcePosition = assessment
+              .sourcePositionAt(assessmentPosition)
+              .left
+              .map(FeatureModelError.Axis.apply) match
+              case Left(error)  => return Left(error)
+              case Right(value) => value
+            var column = 0
+            while column < target.cols do
+              predicted(sourcePosition, column) = foldPrediction(assessmentPosition, column)
+              observed(sourcePosition, column) = target(sourcePosition, column)
+              column += 1
+            written(sourcePosition) = true
+            assessmentPosition += 1
+      foldReceipts += FeatureModelFoldReceipt(
+        key,
+        analysis.child.identity,
+        assessment.child.identity
+      )
+
+    var sourcePosition = 0
+    while sourcePosition < written.length do
+      if !written(sourcePosition) then
+        return Left(
+          FeatureModelError.MissingPrediction(source.samples.keys(sourcePosition))
+        )
+      sourcePosition += 1
+
+    Right(
+      CrossValidatedPrediction(
+        targetIdentity,
+        predicted.result(),
+        observed.result(),
+        foldReceipts.result()
+      )
+    )
+
+  private def selectRows[
+      S <: SemanticSpace,
+      K,
+      C,
+      R <: Reindexing
+  ](
+      matrix: DMat,
+      selection: ReindexingLeg[S, K, C, R]
+  ): Either[FeatureModelError, DMat] =
+    if selection.size == 0 then Left(FeatureModelError.EmptyRows("feature-model selection"))
+    else
+      val output = Matrix.newBuilder(selection.size, matrix.cols)
+      var row = 0
+      while row < selection.size do
+        val sourcePosition = selection
+          .sourcePositionAt(row)
+          .left
+          .map(FeatureModelError.Axis.apply) match
+          case Left(error)  => return Left(error)
+          case Right(value) => value
+        var column = 0
+        while column < matrix.cols do
+          output(row, column) = matrix(sourcePosition, column)
+          column += 1
+        row += 1
+      Right(output.result())
+
+private final class StandardizedRidgeMap(
     sourceMeans: Array[Double],
     sourceScales: Array[Double],
     targetMeans: Array[Double],
     targetScales: Array[Double],
     coefficients: DMat
 ):
-  def predict(source: DMat): Either[MvpaError, DMat] =
+  def predict(source: DMat): Either[FeatureModelError, DMat] =
     if source.cols != sourceMeans.length then
-      Left(MvpaError.InvalidFeatureModelInput(s"prediction source column count ${source.cols} != fitted source column count ${sourceMeans.length}"))
+      Left(
+        FeatureModelError.ShapeMismatch(
+          "feature-model prediction source",
+          source.rows,
+          sourceMeans.length,
+          source.rows,
+          source.cols
+        )
+      )
     else
-      validateFinite(source, "feature model prediction source").map { _ =>
-        val standardized = StandardizedRidgeMap.standardize(source, sourceMeans, sourceScales)
-        val predicted = standardized * coefficients
-        val out = Matrix.newBuilder(predicted.rows, predicted.cols)
+      for
+        _ <- FeatureModelMatrix.validateFinite(source, "feature-model prediction source")
+        standardized = FeatureModelMatrix.standardize(
+          source,
+          sourceMeans,
+          sourceScales
+        )
+        raw = standardized * coefficients
+      yield
+        val output = Matrix.newBuilder(raw.rows, raw.cols)
         var row = 0
-        while row < predicted.rows do
-          var col = 0
-          while col < predicted.cols do
-            out(row, col) = predicted(row, col) * targetScales(col) + targetMeans(col)
-            col += 1
+        while row < raw.rows do
+          var column = 0
+          while column < raw.cols do
+            output(row, column) = raw(row, column) * targetScales(column) + targetMeans(column)
+            column += 1
           row += 1
-        out.result()
-      }
+        output.result()
 
 private object StandardizedRidgeMap:
-  def fit(source: DMat, target: DMat, lambda: Double): Either[MvpaError, StandardizedRidgeMap] =
-    if source.rows != target.rows then Left(MvpaError.InvalidFeatureModelInput(s"source rows ${source.rows} != target rows ${target.rows}"))
-    else if source.rows < 2 then Left(MvpaError.InvalidFeatureModelInput("ridge feature model requires at least two training rows"))
-    else if source.cols < 1 || target.cols < 1 then Left(MvpaError.InvalidFeatureModelInput("ridge feature model requires non-empty source and target columns"))
-    else if !lambda.isFinite || lambda <= 0.0 then Left(MvpaError.InvalidFeatureModelInput("ridge lambda must be positive and finite"))
-    else
-      for
-        _ <- validateFinite(source, "feature model source")
-        _ <- validateFinite(target, "feature model target")
-        sourceStats <- ColumnStats.from(source)
-        targetStats <- ColumnStats.from(target)
-        coefficients <- solve(source, target, sourceStats, targetStats, lambda)
-      yield
-        StandardizedRidgeMap(
-          sourceStats.means,
-          sourceStats.scales,
-          targetStats.means,
-          targetStats.scales,
-          coefficients
-        )
-
-  private def solve(
+  def fit(
       source: DMat,
       target: DMat,
-      sourceStats: ColumnStats,
-      targetStats: ColumnStats,
-      lambda: Double
-  ): Either[MvpaError, DMat] =
-    val x = standardize(source, sourceStats.means, sourceStats.scales)
-    val y = standardize(target, targetStats.means, targetStats.scales)
-    val gram = x.t * x
-    val gramBuilder = Matrix.newBuilder(gram.rows, gram.cols)
-    var row = 0
-    while row < gram.rows do
-      var col = 0
-      while col < gram.cols do
-        gramBuilder(row, col) = gram(row, col) + (if row == col then lambda else 0.0)
-        col += 1
-      row += 1
-    val xty = x.t * y
-    gramBuilder.result().cholesky(CholeskyOptions(1e-12))
-      .left
-      .map(error => MvpaError.InvalidFeatureModelInput(s"ridge solve failed: ${error.getMessage}"))
-      .flatMap(_.solve(xty).left.map(error => MvpaError.InvalidFeatureModelInput(s"ridge solve failed: ${error.getMessage}")))
-
-  def standardize(matrix: DMat, means: Array[Double], scales: Array[Double]): DMat =
-    val out = Matrix.newBuilder(matrix.rows, matrix.cols)
-    var row = 0
-    while row < matrix.rows do
-      var col = 0
-      while col < matrix.cols do
-        out(row, col) = (matrix(row, col) - means(col)) / scales(col)
-        col += 1
-      row += 1
-    out.result()
-
-private final case class ColumnStats(means: Array[Double], scales: Array[Double])
-
-private object ColumnStats:
-  private val Eps = 1e-12
-
-  def from(matrix: DMat): Either[MvpaError, ColumnStats] =
-    val means = new Array[Double](matrix.cols)
-    val scales = new Array[Double](matrix.cols)
-    var col = 0
-    while col < matrix.cols do
-      var sum = 0.0
-      var row = 0
-      while row < matrix.rows do
-        sum += matrix(row, col)
-        row += 1
-      val mean = sum / matrix.rows
-      means(col) = mean
-
-      var ss = 0.0
-      row = 0
-      while row < matrix.rows do
-        val centered = matrix(row, col) - mean
-        ss += centered * centered
-        row += 1
-      val variance =
-        if matrix.rows > 1 then ss / (matrix.rows - 1)
-        else 0.0
-      val scale = math.sqrt(math.max(variance, 0.0))
-      scales(col) =
-        if !scale.isFinite || scale <= Eps then 1.0
-        else scale
-      col += 1
-    Right(ColumnStats(means, scales))
-
-private final case class FeatureModelMetricSet(
-    patternCorrelation: Double,
-    patternDiscrimination: Double,
-    patternRankPercentile: Double,
-    rdmCorrelation: Double,
-    targetCorrelation: Double,
-    mse: Double,
-    rSquared: Double,
-    meanTargetwiseCorrelation: Double,
-    observations: Int,
-    targetColumns: Int
-):
-  def withEstimator(lambda: Double): MetricVector =
-    MetricVector.from(
-      Vector(
-        "PatternCorrelation" -> patternCorrelation,
-        "PatternDiscrimination" -> patternDiscrimination,
-        "PatternRankPercentile" -> patternRankPercentile,
-        "RdmCorrelation" -> rdmCorrelation,
-        "TargetCorrelation" -> targetCorrelation,
-        "Mse" -> mse,
-        "RSquared" -> rSquared,
-        "MeanTargetwiseCorrelation" -> meanTargetwiseCorrelation,
-        "Observations" -> observations.toDouble,
-        "TargetColumns" -> targetColumns.toDouble,
-        "RidgeLambda" -> lambda
+      penalty: FeatureModelPenalty
+  ): Either[FeatureModelError, StandardizedRidgeMap] =
+    if source.rows != target.rows then
+      Left(
+        FeatureModelError.ShapeMismatch(
+          "feature-model source and target row agreement",
+          source.rows,
+          target.cols,
+          target.rows,
+          target.cols
+        )
       )
-    )
-
-private object FeatureModelMetrics:
-  def compute(prediction: FeatureModelPrediction): Either[MvpaError, FeatureModelMetricSet] =
-    val predicted = prediction.predicted
-    val observed = prediction.observed
-    if predicted.rows != observed.rows || predicted.cols != observed.cols then
-      Left(MvpaError.InvalidFeatureModelInput("predicted and observed matrices must have identical shape"))
+    else if source.rows < 2 then Left(FeatureModelError.InsufficientTrainingRows(source.rows))
     else
       for
-        _ <- validateFinite(predicted, "feature model predictions")
-        _ <- validateFinite(observed, "feature model observations")
-      yield
-        val matrixMetrics = patternMetrics(predicted, observed)
-        FeatureModelMetricSet(
-          patternCorrelation = matrixMetrics.patternCorrelation,
-          patternDiscrimination = matrixMetrics.patternDiscrimination,
-          patternRankPercentile = matrixMetrics.patternRankPercentile,
-          rdmCorrelation = rdmCorrelation(predicted, observed),
-          targetCorrelation = globalCorrelation(predicted, observed),
-          mse = mse(predicted, observed),
-          rSquared = rSquared(predicted, observed),
-          meanTargetwiseCorrelation = meanColumnCorrelation(predicted, observed),
-          observations = predicted.rows,
-          targetColumns = predicted.cols
+        _ <- FeatureModelMatrix.validateFinite(source, "feature-model source")
+        _ <- FeatureModelMatrix.validateFinite(target, "feature-model target")
+        sourceStats = FeatureModelMatrix.statistics(source)
+        targetStats = FeatureModelMatrix.statistics(target)
+        x = FeatureModelMatrix.standardize(
+          source,
+          sourceStats.means,
+          sourceStats.scales
         )
+        y = FeatureModelMatrix.standardize(
+          target,
+          targetStats.means,
+          targetStats.scales
+        )
+        gram = x.t * x
+        penalized =
+          val builder = Matrix.newBuilder(gram.rows, gram.cols)
+          var row = 0
+          while row < gram.rows do
+            var column = 0
+            while column < gram.cols do
+              builder(row, column) = gram(row, column) +
+                (if row == column then penalty.value else 0.0)
+              column += 1
+            row += 1
+          builder.result()
+        coefficients <- penalized
+          .cholesky(CholeskyOptions(1e-12))
+          .left
+          .map(error => FeatureModelError.RidgeSolve(error.getMessage))
+          .flatMap(
+            _.solve(x.t * y).left
+              .map(error => FeatureModelError.RidgeSolve(error.getMessage))
+          )
+      yield new StandardizedRidgeMap(
+        sourceStats.means,
+        sourceStats.scales,
+        targetStats.means,
+        targetStats.scales,
+        coefficients
+      )
 
-  private final case class PatternMetrics(
-      patternCorrelation: Double,
-      patternDiscrimination: Double,
-      patternRankPercentile: Double
-  )
+private final case class FeatureModelColumnStats(
+    means: Array[Double],
+    scales: Array[Double]
+)
 
-  private def patternMetrics(predicted: DMat, observed: DMat): PatternMetrics =
-    if predicted.rows < 2 || predicted.cols < 2 then PatternMetrics(Double.NaN, Double.NaN, Double.NaN)
+private object FeatureModelMatrix:
+  private val ScaleTolerance = 1e-12
+
+  def validateFinite(
+      matrix: DMat,
+      label: String
+  ): Either[FeatureModelError, Unit] =
+    var row = 0
+    while row < matrix.rows do
+      var column = 0
+      while column < matrix.cols do
+        val value = matrix(row, column)
+        if !value.isFinite then
+          return Left(
+            FeatureModelError.NonFiniteValue(label, row, column, value)
+          )
+        column += 1
+      row += 1
+    Right(())
+
+  def statistics(matrix: DMat): FeatureModelColumnStats =
+    val means = new Array[Double](matrix.cols)
+    val scales = new Array[Double](matrix.cols)
+    var column = 0
+    while column < matrix.cols do
+      var sum = 0.0
+      var row = 0
+      while row < matrix.rows do
+        sum += matrix(row, column)
+        row += 1
+      means(column) = sum / matrix.rows.toDouble
+      var sumSquares = 0.0
+      row = 0
+      while row < matrix.rows do
+        val centered = matrix(row, column) - means(column)
+        sumSquares += centered * centered
+        row += 1
+      val scale = math.sqrt(sumSquares / (matrix.rows - 1).toDouble)
+      scales(column) =
+        if scale.isFinite && scale > ScaleTolerance then scale else 1.0
+      column += 1
+    FeatureModelColumnStats(means, scales)
+
+  def standardize(
+      matrix: DMat,
+      means: Array[Double],
+      scales: Array[Double]
+  ): DMat =
+    val output = Matrix.newBuilder(matrix.rows, matrix.cols)
+    var row = 0
+    while row < matrix.rows do
+      var column = 0
+      while column < matrix.cols do
+        output(row, column) = (matrix(row, column) - means(column)) / scales(column)
+        column += 1
+      row += 1
+    output.result()
+
+private object FeatureModelMetricKernel:
+  def compute(predicted: DMat, observed: DMat): FeatureModelMetrics =
+    val patterns = patternMetrics(predicted, observed)
+    FeatureModelMetrics(
+      patterns._1,
+      patterns._2,
+      patterns._3,
+      rdmCorrelation(predicted, observed),
+      globalCorrelation(predicted, observed),
+      meanSquaredError(predicted, observed),
+      rSquared(predicted, observed),
+      meanColumnCorrelation(predicted, observed)
+    )
+
+  private def patternMetrics(
+      predicted: DMat,
+      observed: DMat
+  ): (Option[Double], Option[Double], Option[Double]) =
+    if predicted.rows < 2 || predicted.cols < 2 then (None, None, None)
     else
-      val cor = new Array[Double](predicted.rows * predicted.rows)
+      val correlations = new Array[Double](predicted.rows * predicted.rows)
+      val defined = Array.fill(predicted.rows * predicted.rows)(false)
       var row = 0
       while row < predicted.rows do
-        var col = 0
-        while col < predicted.rows do
-          cor(row * predicted.rows + col) = rowCorrelation(predicted, row, observed, col)
-          col += 1
+        var column = 0
+        while column < predicted.rows do
+          val position = row * predicted.rows + column
+          rowCorrelation(predicted, row, observed, column) match
+            case Some(value) =>
+              correlations(position) = value
+              defined(position) = true
+            case None => ()
+          column += 1
         row += 1
+      val diagonals = Vector.tabulate(predicted.rows): position =>
+        val index = position * predicted.rows + position
+        Option.when(defined(index))(correlations(index))
+      val offDiagonal = Vector.newBuilder[Double]
+      var position = 0
+      while position < predicted.rows * predicted.rows do
+        val row = position / predicted.rows
+        val column = position % predicted.rows
+        if row != column && defined(position) then offDiagonal += correlations(position)
+        position += 1
+      val patternCorrelation = mean(diagonals.flatten)
+      val discrimination = for
+        diagonal <- patternCorrelation
+        off <- mean(offDiagonal.result())
+      yield diagonal - off
+      val ranks = Vector.tabulate(predicted.rows): row =>
+        val diagonalPosition = row * predicted.rows + row
+        val rowValues = Vector.tabulate(predicted.rows): column =>
+          val index = row * predicted.rows + column
+          Option.when(defined(index))(correlations(index))
+        val available = rowValues.flatten
+        if !defined(diagonalPosition) || available.length < 2 then None
+        else
+          val diagonal = correlations(diagonalPosition)
+          Some(
+            (available.count(_ <= diagonal) - 1).toDouble /
+              (available.length - 1).toDouble
+          )
+      (patternCorrelation, discrimination, mean(ranks.flatten))
 
-      var diagSum = 0.0
-      var diagN = 0
-      var offSum = 0.0
-      var offN = 0
-      var rankSum = 0.0
-      var rankN = 0
-      row = 0
-      while row < predicted.rows do
-        val diag = cor(row * predicted.rows + row)
-        if diag.isFinite then
-          diagSum += diag
-          diagN += 1
-          var lessOrEqual = 0
-          var finite = 0
-          var col = 0
-          while col < predicted.rows do
-            val value = cor(row * predicted.rows + col)
-            if value.isFinite then
-              finite += 1
-              if value <= diag then lessOrEqual += 1
-            if col != row then
-              if value.isFinite then
-                offSum += value
-                offN += 1
-            col += 1
-          if finite > 1 then
-            rankSum += (lessOrEqual - 1).toDouble / (finite - 1)
-            rankN += 1
-        row += 1
-
-      val patternCorrelation =
-        if diagN == 0 then Double.NaN else diagSum / diagN
-      val offMean =
-        if offN == 0 then Double.NaN else offSum / offN
-      val patternDiscrimination =
-        if patternCorrelation.isFinite && offMean.isFinite then patternCorrelation - offMean else Double.NaN
-      val rank =
-        if rankN == 0 then Double.NaN else rankSum / rankN
-      PatternMetrics(patternCorrelation, patternDiscrimination, rank)
-
-  private def rdmCorrelation(predicted: DMat, observed: DMat): Double =
-    if predicted.rows < 3 || predicted.cols < 2 then Double.NaN
+  private def rdmCorrelation(
+      predicted: DMat,
+      observed: DMat
+  ): Option[Double] =
+    if predicted.rows < 3 || predicted.cols < 2 then None
     else
-      val result =
-        for
-          predictedRdm <- Rdm.correlation(predicted)
-          observedRdm <- Rdm.correlation(observed)
-          score <- RdmScorer.Spearman.score(predictedRdm, observedRdm)
-        yield score
-      result.getOrElse(Double.NaN)
+      val predictedDistances = correlationDistances(predicted)
+      val observedDistances = correlationDistances(observed)
+      for
+        left <- predictedDistances
+        right <- observedDistances
+        correlation <- vectorCorrelation(averageRanks(left), averageRanks(right))
+      yield correlation
 
-  private def globalCorrelation(predicted: DMat, observed: DMat): Double =
-    var predictedMean = 0.0
-    var observedMean = 0.0
-    var i = 0
-    while i < predicted.rows * predicted.cols do
-      predictedMean += predicted(i / predicted.cols, i % predicted.cols)
-      observedMean += observed(i / observed.cols, i % observed.cols)
-      i += 1
-    predictedMean /= (predicted.rows * predicted.cols)
-    observedMean /= (observed.rows * observed.cols)
+  private def correlationDistances(matrix: DMat): Option[Vector[Double]] =
+    val output = Vector.newBuilder[Double]
+    var first = 0
+    while first < matrix.rows - 1 do
+      var second = first + 1
+      while second < matrix.rows do
+        rowCorrelation(matrix, first, matrix, second) match
+          case None        => return None
+          case Some(value) => output += 1.0 - value
+        second += 1
+      first += 1
+    Some(output.result())
 
-    var numerator = 0.0
-    var predictedSs = 0.0
-    var observedSs = 0.0
-    i = 0
-    while i < predicted.rows * predicted.cols do
-      val px = predicted(i / predicted.cols, i % predicted.cols) - predictedMean
-      val oy = observed(i / observed.cols, i % observed.cols) - observedMean
-      numerator += px * oy
-      predictedSs += px * px
-      observedSs += oy * oy
-      i += 1
-    val denom = math.sqrt(predictedSs * observedSs)
-    if denom <= 0.0 then Double.NaN else numerator / denom
+  private def averageRanks(values: Vector[Double]): Vector[Double] =
+    val sorted = values.zipWithIndex.sortBy(_._1)
+    val output = new Array[Double](values.length)
+    var start = 0
+    while start < sorted.length do
+      var end = start + 1
+      while end < sorted.length && sorted(end)._1 == sorted(start)._1 do end += 1
+      val rank = (start + 1 + end).toDouble / 2.0
+      var position = start
+      while position < end do
+        output(sorted(position)._2) = rank
+        position += 1
+      start = end
+    output.toVector
 
-  private def meanColumnCorrelation(predicted: DMat, observed: DMat): Double =
-    if predicted.rows < 2 then Double.NaN
+  private def globalCorrelation(
+      predicted: DMat,
+      observed: DMat
+  ): Option[Double] =
+    val left = Vector.tabulate(predicted.rows * predicted.cols): position =>
+      predicted(position / predicted.cols, position % predicted.cols)
+    val right = Vector.tabulate(observed.rows * observed.cols): position =>
+      observed(position / observed.cols, position % observed.cols)
+    vectorCorrelation(left, right)
+
+  private def meanColumnCorrelation(
+      predicted: DMat,
+      observed: DMat
+  ): Option[Double] =
+    if predicted.rows < 2 then None
     else
-      var sum = 0.0
-      var n = 0
-      var col = 0
-      while col < predicted.cols do
-        val value = columnCorrelation(predicted, observed, col)
-        if value.isFinite then
-          sum += value
-          n += 1
-        col += 1
-      if n == 0 then Double.NaN else sum / n
+      val correlations = Vector.tabulate(predicted.cols): column =>
+        val left = Vector.tabulate(predicted.rows)(row => predicted(row, column))
+        val right = Vector.tabulate(observed.rows)(row => observed(row, column))
+        vectorCorrelation(left, right)
+      mean(correlations.flatten)
 
-  private def mse(predicted: DMat, observed: DMat): Double =
+  private def meanSquaredError(predicted: DMat, observed: DMat): Double =
     var sum = 0.0
-    var i = 0
-    while i < predicted.rows * predicted.cols do
-      val diff = predicted(i / predicted.cols, i % predicted.cols) - observed(i / observed.cols, i % observed.cols)
-      sum += diff * diff
-      i += 1
-    sum / (predicted.rows * predicted.cols)
+    var position = 0
+    while position < predicted.rows * predicted.cols do
+      val difference =
+        predicted(position / predicted.cols, position % predicted.cols) -
+          observed(position / observed.cols, position % observed.cols)
+      sum += difference * difference
+      position += 1
+    sum / (predicted.rows * predicted.cols).toDouble
 
-  private def rSquared(predicted: DMat, observed: DMat): Double =
+  private def rSquared(predicted: DMat, observed: DMat): Option[Double] =
     var mean = 0.0
-    var i = 0
-    while i < observed.rows * observed.cols do
-      mean += observed(i / observed.cols, i % observed.cols)
-      i += 1
-    mean /= (observed.rows * observed.cols)
+    var position = 0
+    while position < observed.rows * observed.cols do
+      mean += observed(position / observed.cols, position % observed.cols)
+      position += 1
+    mean /= (observed.rows * observed.cols).toDouble
+    var residual = 0.0
+    var total = 0.0
+    position = 0
+    while position < observed.rows * observed.cols do
+      val actual = observed(position / observed.cols, position % observed.cols)
+      val fitted = predicted(position / predicted.cols, position % predicted.cols)
+      residual += (actual - fitted) * (actual - fitted)
+      total += (actual - mean) * (actual - mean)
+      position += 1
+    if total == 0.0 then None else Some(1.0 - residual / total)
 
-    var rss = 0.0
-    var tss = 0.0
-    i = 0
-    while i < observed.rows * observed.cols do
-      val residual = observed(i / observed.cols, i % observed.cols) - predicted(i / predicted.cols, i % predicted.cols)
-      val centered = observed(i / observed.cols, i % observed.cols) - mean
-      rss += residual * residual
-      tss += centered * centered
-      i += 1
-    if tss <= 0.0 then Double.NaN else 1.0 - rss / tss
-
-  private def rowCorrelation(left: DMat, leftRow: Int, right: DMat, rightRow: Int): Double =
-    val leftMean = rowMean(left, leftRow)
-    val rightMean = rowMean(right, rightRow)
+  private def rowCorrelation(
+      left: DMat,
+      leftRow: Int,
+      right: DMat,
+      rightRow: Int
+  ): Option[Double] =
+    val leftMean =
+      Vector.tabulate(left.cols)(column => left(leftRow, column)).sum /
+        left.cols.toDouble
+    val rightMean =
+      Vector.tabulate(right.cols)(column => right(rightRow, column)).sum /
+        right.cols.toDouble
     var numerator = 0.0
-    var leftSs = 0.0
-    var rightSs = 0.0
-    var col = 0
-    while col < left.cols do
-      val x = left(leftRow, col) - leftMean
-      val y = right(rightRow, col) - rightMean
+    var leftSumSquares = 0.0
+    var rightSumSquares = 0.0
+    var column = 0
+    while column < left.cols do
+      val x = left(leftRow, column) - leftMean
+      val y = right(rightRow, column) - rightMean
       numerator += x * y
-      leftSs += x * x
-      rightSs += y * y
-      col += 1
-    val denom = math.sqrt(leftSs * rightSs)
-    if denom <= 0.0 then Double.NaN else numerator / denom
+      leftSumSquares += x * x
+      rightSumSquares += y * y
+      column += 1
+    val denominator = math.sqrt(leftSumSquares * rightSumSquares)
+    if denominator == 0.0 then None else Some(numerator / denominator)
 
-  private def columnCorrelation(left: DMat, right: DMat, col: Int): Double =
-    var leftMean = 0.0
-    var rightMean = 0.0
-    var row = 0
-    while row < left.rows do
-      leftMean += left(row, col)
-      rightMean += right(row, col)
-      row += 1
-    leftMean /= left.rows
-    rightMean /= right.rows
+  private def vectorCorrelation(
+      left: Vector[Double],
+      right: Vector[Double]
+  ): Option[Double] =
+    if left.length != right.length || left.length < 2 then None
+    else
+      val leftMean = left.sum / left.length.toDouble
+      val rightMean = right.sum / right.length.toDouble
+      var numerator = 0.0
+      var leftSumSquares = 0.0
+      var rightSumSquares = 0.0
+      var position = 0
+      while position < left.length do
+        val x = left(position) - leftMean
+        val y = right(position) - rightMean
+        numerator += x * y
+        leftSumSquares += x * x
+        rightSumSquares += y * y
+        position += 1
+      val denominator = math.sqrt(leftSumSquares * rightSumSquares)
+      if denominator == 0.0 then None else Some(numerator / denominator)
 
-    var numerator = 0.0
-    var leftSs = 0.0
-    var rightSs = 0.0
-    row = 0
-    while row < left.rows do
-      val x = left(row, col) - leftMean
-      val y = right(row, col) - rightMean
-      numerator += x * y
-      leftSs += x * x
-      rightSs += y * y
-      row += 1
-    val denom = math.sqrt(leftSs * rightSs)
-    if denom <= 0.0 then Double.NaN else numerator / denom
-
-  private def rowMean(matrix: DMat, row: Int): Double =
-    var sum = 0.0
-    var col = 0
-    while col < matrix.cols do
-      sum += matrix(row, col)
-      col += 1
-    sum / matrix.cols
-
-private def validateFinite(matrix: DMat, label: String): Either[MvpaError, Unit] =
-  var row = 0
-  while row < matrix.rows do
-    var col = 0
-    while col < matrix.cols do
-      if !matrix(row, col).isFinite then
-        return Left(MvpaError.InvalidFeatureModelInput(s"$label contains non-finite values"))
-      col += 1
-    row += 1
-  Right(())
+  private def mean(values: Vector[Double]): Option[Double] =
+    if values.isEmpty then None else Some(values.sum / values.length.toDouble)

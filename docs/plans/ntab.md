@@ -205,10 +205,8 @@ lazy val groupNtab =
     .jsSettings(jsSettingsBase)
 ```
 
-Its package is `scalafim.fmri.group.ntab`. This follows the existing
-algorithm-plus-adapter shape of `mvpa-dataset` and `mvpa-spatial`; no dependency
-points from a lower computational module back to an optional relational front
-end.
+Its package is `scalafim.fmri.group.ntab`. No dependency points from a lower
+computational module back to this optional relational front end.
 
 `ntabJVM` owns JVM-only resource resolution and file adapters. Shared query
 plans contain only immutable descriptions, never paths opened as handles,

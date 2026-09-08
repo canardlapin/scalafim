@@ -1,0 +1,5 @@
+duecredit==0.10.2
+nibabel==5.2.1
+numpy==1.23.5
+scipy==1.11.4
+setuptools==69.5.1

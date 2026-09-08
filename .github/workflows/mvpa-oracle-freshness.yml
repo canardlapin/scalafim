@@ -1,0 +1,36 @@
+name: MVPA oracle freshness
+
+on:
+  pull_request:
+    paths:
+      - "tools/r-parity/**"
+      - "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/**"
+      - "build.sbt"
+      - "project/build.properties"
+      - ".github/workflows/mvpa-oracle-freshness.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "tools/r-parity/**"
+      - "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/**"
+      - "build.sbt"
+      - "project/build.properties"
+      - ".github/workflows/mvpa-oracle-freshness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Test hostile receipt cases
+        run: python3 -m unittest tools/r-parity/test_mvpa_oracle_manifest.py
+      - name: Verify committed oracle digests without R
+        run: python3 tools/r-parity/mvpa_oracle_manifest.py

@@ -676,7 +676,7 @@ datasetZarrJVM/test
 datasetZarrJS/test
 modelJVM/test modelJS/test
 fitJVM/test fitJS/test
-mvpaDatasetJVM/test mvpaDatasetJS/test
+mvpaJVM/test mvpaJS/test
 groupJVM/test groupJS/test
 testAll
 ```

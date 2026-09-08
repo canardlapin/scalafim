@@ -1,0 +1,253 @@
+#!/usr/bin/env Rscript
+
+# Independent base-R oracle for the canonical-effect estimand. Training uses
+# sufficient cross-products for the declared task contrast; held-out runs are
+# scored with the frozen training direction. Dense projector identities are
+# checked during generation so the sufficient-statistic path is not its own
+# oracle.
+
+fmt_num <- function(value) {
+  if (value == 0) return("0.0")
+  sprintf("%.17g", value)
+}
+
+fmt_vec <- function(values) {
+  paste0("Vector(", paste(vapply(values, fmt_num, character(1)), collapse = ", "), ")")
+}
+
+fmt_matrix <- function(values, indent = 8) {
+  values <- as.matrix(values)
+  pad <- paste(rep(" ", indent), collapse = "")
+  row_pad <- paste(rep(" ", indent + 2), collapse = "")
+  rows <- apply(values, 1, function(row) paste0(row_pad, fmt_vec(row)))
+  paste0(
+    "matrixFromRows(\n",
+    pad, "Vector(\n",
+    paste(rows, collapse = ",\n"),
+    "\n", pad, ")\n",
+    paste(rep(" ", indent - 2), collapse = ""), ")"
+  )
+}
+
+effect_and_residual <- function(design, response, contrast) {
+  xtx <- crossprod(design)
+  inverse <- solve(xtx)
+  cross <- crossprod(response, design)
+  total <- crossprod(response)
+  contrast_inverse <- solve(contrast %*% inverse %*% t(contrast))
+  effect <- cross %*% inverse %*% t(contrast) %*% contrast_inverse %*%
+    contrast %*% inverse %*% t(cross)
+  residual <- total - cross %*% inverse %*% t(cross)
+
+  effect_projector <- design %*% inverse %*% t(contrast) %*%
+    contrast_inverse %*% contrast %*% inverse %*% t(design)
+  residual_projector <- diag(nrow(design)) - design %*% inverse %*% t(design)
+  effect_dense <- crossprod(response, effect_projector %*% response)
+  residual_dense <- crossprod(response, residual_projector %*% response)
+  stopifnot(max(abs(effect - effect_dense)) < 1e-11)
+  stopifnot(max(abs(residual - residual_dense)) < 1e-11)
+
+  list(
+    xtx = xtx,
+    cross = cross,
+    total = total,
+    effect = effect,
+    residual = residual
+  )
+}
+
+canonical_direction <- function(effect, residual, ridge_fraction) {
+  ridge <- ridge_fraction * mean(diag(residual))
+  regularized <- residual + diag(ridge, nrow(residual))
+  lower <- t(chol(regularized))
+  whitened <- solve(lower, effect) %*% solve(t(lower))
+  solved <- eigen((whitened + t(whitened)) / 2, symmetric = TRUE)
+  direction <- solve(t(lower), solved$vectors[, 1])
+  direction <- direction /
+    sqrt(drop(t(direction) %*% regularized %*% direction))
+  anchor <- which.max(abs(direction))
+  if (direction[anchor] < 0) direction <- -direction
+  root <- drop(t(direction) %*% effect %*% direction)
+  list(direction = direction, root = root, ridge = ridge)
+}
+
+task <- c(-1, -1, 1, 1, -1, -1, 1, 1)
+drift <- seq(-1, 1, length.out = length(task))
+design <- cbind(intercept = 1, task = task, drift = drift)
+contrast <- matrix(c(0, 1, 0), nrow = 1)
+
+noise <- list(
+  cbind(
+    c(0.20, -0.10, 0.10, -0.20, -0.15, 0.25, -0.05, -0.05),
+    c(-0.10, 0.20, -0.15, 0.05, 0.15, -0.05, 0.10, -0.20),
+    c(0.05, 0.15, -0.20, 0.10, -0.10, -0.15, 0.25, -0.10)
+  ),
+  cbind(
+    c(-0.05, 0.15, -0.10, 0.20, 0.10, -0.20, 0.05, -0.15),
+    c(0.15, -0.05, 0.20, -0.10, -0.20, 0.10, -0.15, 0.05),
+    c(-0.20, 0.10, 0.05, -0.15, 0.20, -0.10, -0.05, 0.15)
+  ),
+  cbind(
+    c(0.10, -0.20, 0.15, -0.05, 0.05, -0.10, 0.20, -0.15),
+    c(-0.15, 0.10, -0.05, 0.20, 0.05, -0.20, 0.15, -0.10),
+    c(0.20, -0.10, 0.10, -0.20, -0.05, 0.15, -0.15, 0.05)
+  )
+)
+
+task_loadings <- list(
+  c(0.90, -0.55, 0.35),
+  c(0.75, -0.70, 0.25),
+  c(1.05, -0.45, 0.40)
+)
+drift_loadings <- list(
+  c(0.20, 0.35, -0.15),
+  c(0.15, 0.45, -0.05),
+  c(0.25, 0.30, -0.20)
+)
+
+responses <- lapply(seq_along(noise), function(run) {
+  outer(task, task_loadings[[run]]) +
+    outer(drift, drift_loadings[[run]]) + noise[[run]]
+})
+moments <- lapply(
+  responses,
+  function(response) effect_and_residual(design, response, contrast)
+)
+
+ridge_fraction <- 0.02
+folds <- lapply(seq_along(moments), function(held_out) {
+  training <- setdiff(seq_along(moments), held_out)
+  effect <- Reduce(`+`, lapply(moments[training], `[[`, "effect"))
+  residual <- Reduce(`+`, lapply(moments[training], `[[`, "residual"))
+  fit <- canonical_direction(effect, residual, ridge_fraction)
+  held <- moments[[held_out]]
+  heldout_root <- drop(t(fit$direction) %*% held$effect %*% fit$direction) /
+    drop(t(fit$direction) %*% held$residual %*% fit$direction)
+  list(
+    held_out = held_out - 1L,
+    direction = fit$direction,
+    training_root = fit$root,
+    ridge = fit$ridge,
+    heldout_root = heldout_root,
+    heldout_correlation = sqrt(heldout_root / (1 + heldout_root))
+  )
+})
+
+mean_root <- mean(vapply(folds, `[[`, numeric(1), "heldout_root"))
+mean_correlation <- sqrt(mean_root / (1 + mean_root))
+
+lines <- c(
+  "package scalafim.fmri.mvpa",
+  "",
+  "import gale.linalg.{DMat, DVec, Matrix, Vec}",
+  "",
+  "/** Fixed base-R reference for the canonical-effect estimand. Generated by",
+  "  * tools/r-parity/generate_canonical_effect_fixtures.R. X and Z are time-by-column; C is contrast-by-design.",
+  "  */",
+  "object CanonicalEffectReferenceFixtures:",
+  "  final case class RunReference(",
+  "      response: DMat,",
+  "      cross: DMat,",
+  "      total: DMat,",
+  "      effect: DMat,",
+  "      residual: DMat",
+  "  )",
+  "",
+  "  final case class FoldReference(",
+  "      heldOutRun: Int,",
+  "      direction: DVec,",
+  "      trainingRoot: Double,",
+  "      ridge: Double,",
+  "      heldOutRoot: Double,",
+  "      heldOutCorrelation: Double",
+  "  )",
+  "",
+  paste0(
+    "  val analyticEffect: DMat = ",
+    fmt_matrix(matrix(c(4, 2, 2, 1), 2, byrow = TRUE), 4)
+  ),
+  paste0("  val analyticResidual: DMat = ", fmt_matrix(diag(c(2, 3)), 4)),
+  paste0(
+    "  val analyticDirection: DVec = vectorFromArray(Array(",
+    paste(
+      vapply(c(1, 1 / 3) / sqrt(7 / 3), fmt_num, character(1)),
+      collapse = ", "
+    ),
+    "))"
+  ),
+  paste0("  val analyticRoot: Double = ", fmt_num(7 / 3)),
+  paste0("  val analyticCorrelation: Double = ", fmt_num(sqrt(0.7))),
+  "",
+  paste0("  val contrast: DMat = ", fmt_matrix(contrast, 4)),
+  paste0("  val design: DMat = ", fmt_matrix(design, 4)),
+  paste0("  val expectedXtX: DMat = ", fmt_matrix(moments[[1]]$xtx, 4)),
+  paste0("  val ridgeFraction: Double = ", fmt_num(ridge_fraction)),
+  "",
+  "  val runs: Vector[RunReference] =",
+  "    Vector("
+)
+
+run_lines <- lapply(seq_along(moments), function(index) {
+  moment <- moments[[index]]
+  c(
+    "      RunReference(",
+    paste0("        response = ", fmt_matrix(responses[[index]], 10), ","),
+    paste0("        cross = ", fmt_matrix(moment$cross, 10), ","),
+    paste0("        total = ", fmt_matrix(moment$total, 10), ","),
+    paste0("        effect = ", fmt_matrix(moment$effect, 10), ","),
+    paste0("        residual = ", fmt_matrix(moment$residual, 10)),
+    "      )"
+  )
+})
+lines <- c(
+  lines,
+  paste(vapply(run_lines, paste, collapse = "\n", character(1)), collapse = ",\n"),
+  "    )",
+  "",
+  "  val folds: Vector[FoldReference] =",
+  "    Vector("
+)
+
+fold_lines <- lapply(folds, function(fold) {
+  c(
+    "      FoldReference(",
+    paste0("        heldOutRun = ", fold$held_out, ","),
+    paste0(
+      "        direction = vectorFromArray(Array(",
+      paste(vapply(fold$direction, fmt_num, character(1)), collapse = ", "),
+      ")),"),
+    paste0("        trainingRoot = ", fmt_num(fold$training_root), ","),
+    paste0("        ridge = ", fmt_num(fold$ridge), ","),
+    paste0("        heldOutRoot = ", fmt_num(fold$heldout_root), ","),
+    paste0(
+      "        heldOutCorrelation = ",
+      fmt_num(fold$heldout_correlation)
+    ),
+    "      )"
+  )
+})
+lines <- c(
+  lines,
+  paste(vapply(fold_lines, paste, collapse = "\n", character(1)), collapse = ",\n"),
+  "    )",
+  "",
+  paste0("  val meanHeldOutRoot: Double = ", fmt_num(mean_root)),
+  paste0(
+    "  val rootToCorrelationOfMean: Double = ",
+    fmt_num(mean_correlation)
+  ),
+  "",
+  "  private def matrixFromRows(rows: Vector[Vector[Double]]): DMat =",
+  "    Matrix.tabulate(rows.length, rows.head.length): (row, column) =>",
+  "      rows(row)(column)",
+  "",
+  "  private def vectorFromArray(values: Array[Double]): DVec =",
+  "    val builder = Vec.newBuilder(values.length)",
+  "    var position = 0",
+  "    while position < values.length do",
+  "      builder(position) = values(position)",
+  "      position += 1",
+  "    builder.result()"
+)
+
+writeLines(lines)

@@ -1,64 +1,68 @@
-# MVPA Parity Fixtures
+# MVPA numerical oracle fixtures
 
-The shared MVPA parity fixtures live in:
+ScalaFIM keeps each retained external MVPA oracle beside the typed estimand it
+protects. These are scientific reference values, not snapshots of a Scala
+implementation. Every generator uses dense base-R equations and emits a
+version-neutral Scala source that executes on both the JVM and Scala.js.
 
-```text
-modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaParityFixtures.scala
-modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaRReferenceFixtures.scala
-modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaParitySuite.scala
-modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaPropertySuite.scala
-modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaAdversarialSuite.scala
-```
+The versioned receipt
+[`mvpa-oracle-manifest-v1.json`](mvpa-oracle-manifest-v1.json) is the exhaustive
+inventory. Its schema is
+[`mvpa-oracle-manifest-v1.schema.json`](mvpa-oracle-manifest-v1.schema.json).
+For every family it records:
 
-`MvpaParityFixtures.scala` is intentionally tiny and hand-auditable.
-`MvpaRReferenceFixtures.scala` contains generated external-reference values;
-regenerate its fixture blocks with:
+- the estimand, normalization, fold reduction, and family-specific policy;
+- every declared axis and its exact ordered keys;
+- the base-R equation provenance and claimed regeneration command;
+- R, Scala, sbt, and Gale versions;
+- SHA-256 digests for both generator and generated Scala output; and
+- the shared Scala court that must run independently on JVM and Scala.js.
+
+The retained families and their generators are:
+
+| Estimand family | Generator | Shared JVM/JS court |
+| --- | --- | --- |
+| Crossvalidated RDM, including signed bias and pair order | `generate_crossvalidated_rdm_fixtures.R` | `CrossvalidatedRdmParitySuite` |
+| Cross-domain correlation-centroid classification decision scores | `generate_cross_domain_classification_fixtures.R` | `predictive.CrossDomainClassificationSuite` |
+| Held-out canonical-effect root | `generate_canonical_effect_fixtures.R` | `CanonicalEffectMvpaSuite` |
+| Held-out MANOVA root spectrum | `generate_manova_fixtures.R` | `ManovaMvpaSuite` |
+| Nonnegative canonical-effect root | `generate_constrained_canonical_fixtures.R` | `ConstrainedCanonicalMvpaSuite` |
+| Signed cross-run Rayleigh statistic | `generate_signed_cross_run_rayleigh_fixtures.R` | `SignedCrossRunRayleighMvpaSuite` |
+
+## Freshness check
+
+The local and CI freshness gate needs only Python's standard library. It does
+not install or invoke R:
 
 ```sh
-Rscript tools/r-parity/generate_mvpa_r_parity_fixtures.R
+python3 -m unittest tools/r-parity/test_mvpa_oracle_manifest.py
+python3 tools/r-parity/mvpa_oracle_manifest.py
 ```
 
-Keep both fixture families deterministic across JVM and Scala.js, and prefer
-adding a new explicit fixture over mutating an existing one.
+The first command includes hostile output and generator tampering, missing
+estimand/axis metadata, false source invocation, and embedded runtime-version
+cases. The second checks the committed receipt, build versions,
+retained-family inventory, normalized repository paths, and all artifact
+digests. The focused GitHub Actions gate runs these same commands.
 
-Current fixture contracts:
+## Regeneration
 
-- RDM: squared Euclidean, squared Euclidean normalized by feature count,
-  Euclidean, and correlation distances are separate estimands.
-- Crossnobis: raw and feature-normalized distances are separate estimands.
-- RSA scoring: partial Pearson uses labeled control `RdmModel`s and aligns them
-  before residualization.
-- Classifiers: correlation-centroid, SWIFT-style centroid, and ridge LDA have
-  simple probability oracles.
-- Feature-RSA core: fold-local standardized ridge maps are checked in both
-  feature-to-pattern and pattern-to-feature directions, with regional metrics
-  and a searchlight execution path anchored to R-generated values.
-- Naive cross-decoding: source prototypes, target row correlations, softmax
-  probabilities, predicted classes, and accuracy are checked for regional
-  engine execution and the specialized searchlight scanner.
-- Property and guardrail tests: deterministic generated cross-decoding cases
-  compare the specialized scanner to the reference engine, standardized feature
-  models are checked for affine source-transform invariance, and the scanner has
-  a deterministic benchmark checksum workload.
-- Adversarial tests: ridge feature-model fits are checked on near-collinear
-  high-dynamic-range predictors, non-finite selected features fail locally
-  without poisoning clean ROIs, scanner source-data failures are matched against
-  the reference engine, and degenerate zero-variance cross-decoding prototypes
-  still produce finite normalized probabilities.
-- Benchmarks: `MvpaBenchmarkHarness` records deterministic checksums and accepts
-  an injected clock so tests do not depend on wall-clock timing.
+Regeneration is intentionally separate and requires `Rscript`:
 
-When comparing to R or Python reference code, normalize the estimand before
-checking values or timing kernels. In particular, do not compare unsquared
-Euclidean distances to squared Euclidean distances, and do not compare raw
-crossnobis distances to feature-normalized crossnobis distances.
-
-Fixture generation should produce a short table with:
-
-```text
-name, item_order, estimator, normalize_by_features, expected_values
+```sh
+tools/r-parity/regenerate_mvpa_oracles.sh
 ```
 
-Timing comparisons should report the same estimator table plus the checksum
-used by `MvpaBenchmarkHarness`. The checksum is not a scientific output; it is a
-guard that the timed workload actually ran the intended kernel.
+The driver reads each command from the manifest, requires it to be exactly
+`Rscript --vanilla <recorded-generator>`, invokes that claimed source with a
+deterministic locale and timezone, replaces the corresponding Scala output,
+records the observed R version, refreshes both digests, and reruns the
+R-independent checker. A fixture cannot be refreshed through an unrecorded
+source.
+
+Every numerical comparison must still name its convention. Crossvalidated
+distances retain signed null estimates and the canonical upper-triangle effect
+pair order. Classification compares declared-class decision scores and does not
+invent a probability surface. Canonical and MANOVA courts retain their exact
+run pairing, tested effect or hypothesis, regularization, direction convention,
+and fold reduction.
