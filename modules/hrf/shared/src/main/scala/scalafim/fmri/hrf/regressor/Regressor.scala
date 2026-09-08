@@ -30,12 +30,13 @@ enum RegressorError:
       case MixedBasisCounts =>
         "all per-event HRFs must have the same nbasis"
 
+/** An event time is a signed run-clock reading; only its duration is nonnegative. */
 final case class StimulusEvent private (
-    onset: NonNegativeSeconds,
+    onset: Seconds,
     duration: NonNegativeSeconds,
     amplitude: Double
 ):
-  def onsetSeconds: Seconds = onset.seconds
+  def onsetSeconds: Seconds = onset
   def durationSeconds: Seconds = duration.seconds
 
   def shift(amount: Seconds): Either[RegressorError, StimulusEvent] =
@@ -44,7 +45,7 @@ final case class StimulusEvent private (
 object StimulusEvent:
   def apply(onset: Double, duration: Double = 0.0, amplitude: Double = 1.0): Either[RegressorError, StimulusEvent] =
     for
-      onset0 <- NonNegativeSeconds(onset, "onset").left.map(RegressorError.InvalidOnset(0, _))
+      onset0 <- Seconds.fromDouble(onset, "onset").left.map(RegressorError.InvalidOnset(0, _))
       duration0 <- NonNegativeSeconds(duration, "duration").left.map(RegressorError.InvalidDuration(0, _))
       amp0 <- finiteAmplitude(amplitude, index = 0)
     yield StimulusEvent(onset0, duration0, amp0)
@@ -56,7 +57,7 @@ object StimulusEvent:
       index: Int
   ): Either[RegressorError, StimulusEvent] =
     for
-      onset0 <- NonNegativeSeconds.fromSeconds(onset, "onset").left.map(RegressorError.InvalidOnset(index, _))
+      onset0 <- Seconds.fromDouble(onset.value, "onset").left.map(RegressorError.InvalidOnset(index, _))
       duration0 <- NonNegativeSeconds.fromSeconds(duration, "duration").left.map(RegressorError.InvalidDuration(index, _))
       amp0 <- finiteAmplitude(amplitude, index)
     yield StimulusEvent(onset0, duration0, amp0)

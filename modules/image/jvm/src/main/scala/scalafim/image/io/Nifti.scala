@@ -9,6 +9,30 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.GZIPInputStream
 
+/** Declared meaning of the output affine; this does not perform registration. */
+enum NiftiCoordinateSystem(val code: Short):
+  case Unknown extends NiftiCoordinateSystem(0)
+  case ScannerAnatomical extends NiftiCoordinateSystem(1)
+  case AlignedAnatomical extends NiftiCoordinateSystem(2)
+  case Talairach extends NiftiCoordinateSystem(3)
+  case Mni152 extends NiftiCoordinateSystem(4)
+  case OtherTemplate extends NiftiCoordinateSystem(5)
+
+enum NiftiSpatialUnits(val code: Byte):
+  case Unknown extends NiftiSpatialUnits(0)
+  case Meters extends NiftiSpatialUnits(1)
+  case Millimeters extends NiftiSpatialUnits(2)
+  case Micrometers extends NiftiSpatialUnits(3)
+
+/** Metadata is supplied explicitly because an affine cannot identify its template.
+  * Defaults preserve the lightweight writer's historical header semantics.
+  * Only sform is written; qform remains unset, including for sheared affines.
+  */
+final case class NiftiWriteOptions(
+    coordinateSystem: NiftiCoordinateSystem = NiftiCoordinateSystem.ScannerAnatomical,
+    spatialUnits: NiftiSpatialUnits = NiftiSpatialUnits.Unknown
+)
+
 final case class NiftiHeader(
   dims: Vector[Int],
   pixdim: Vector[Double],
@@ -38,22 +62,30 @@ final case class NiftiHeader(
 object Nifti:
 
   def writeVol(path: Path, volume: NeuroVol[Double]): Path =
+    writeVol(path, volume, NiftiWriteOptions())
+
+  def writeVol(path: Path, volume: NeuroVol[Double], options: NiftiWriteOptions): Path =
     writeBytes(
       path,
       niftiBytes(
         volume.space.dims.take(3),
         volume.space,
-        volume.copyLegacyLinear
+        volume.copyLegacyLinear,
+        options
       )
     )
 
   def writeVec(path: Path, vec: NeuroVec[Double]): Path =
+    writeVec(path, vec, NiftiWriteOptions())
+
+  def writeVec(path: Path, vec: NeuroVec[Double], options: NiftiWriteOptions): Path =
     writeBytes(
       path,
       niftiBytes(
         vec.space.dims.take(4),
         vec.space,
-        vec.copyLegacyLinear
+        vec.copyLegacyLinear,
+        options
       )
     )
 
@@ -198,7 +230,7 @@ object Nifti:
       )
     )
 
-  private def niftiBytes(dims: Vector[Int], space: NeuroSpace, values: Array[Double]): Array[Byte] =
+  private def niftiBytes(dims: Vector[Int], space: NeuroSpace, values: Array[Double], options: NiftiWriteOptions): Array[Byte] =
     require(dims.length == 3 || dims.length == 4, "NIfTI writer expects a 3D volume or 4D vector")
     require(values.length == dims.product, "NIfTI data length must match dimensions")
     val bytes = Array.ofDim[Byte](352 + values.length * 8)
@@ -226,7 +258,8 @@ object Nifti:
     bb.putFloat(116, 0.0f)
 
     val affine = space.trans
-    bb.putShort(254, 1.toShort)
+    bb.putShort(254, options.coordinateSystem.code)
+    bb.put(123, options.spatialUnits.code)
     bb.putFloat(268, affine(0, 3).toFloat)
     bb.putFloat(272, affine(1, 3).toFloat)
     bb.putFloat(276, affine(2, 3).toFloat)

@@ -219,8 +219,8 @@ final case class ResponsePreparationPlan(
     ResponsePreparationProvenance(recordsFor(receipt), receipt)
 
   /** Compile this declared temporal preparation into the response-independent
-    * geometry used by one-shot canonical contrast analysis. Unsupported deferred
-    * transforms are rejected rather than silently omitted.
+    * geometry used by canonical contrast analysis. Unsupported deferred transforms
+    * are rejected rather than silently omitted.
     */
   def prepareContrast(
       design: DesignMatrix,
@@ -247,7 +247,7 @@ final case class ResponsePreparationPlan(
     )
 
   /** Compile a full-rank multi-contrast hypothesis into normalized temporal
-    * geometry for one-shot MANOVA.
+    * geometry for held-out MANOVA.
     */
   def prepareManova(
       design: DesignMatrix,

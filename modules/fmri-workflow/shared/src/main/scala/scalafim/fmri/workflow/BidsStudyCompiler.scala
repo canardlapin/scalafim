@@ -24,6 +24,7 @@ enum CatalogIssueCode:
   case InvalidIdentity
   case MissingHeader
   case MissingRepetitionTime
+  case InvalidTimingMetadata
   case MissingEvents
   case MissingConfounds
   case MissingMask
@@ -92,6 +93,7 @@ private final case class CandidateRun(
     runId: RunId,
     header: ImageHeaderDescriptor,
     repetitionTime: RepetitionTime,
+    timing: RunTimingMetadata,
     events: BidsFile,
     confounds: Option[BidsFile],
     mask: Option[BidsFile]
@@ -150,6 +152,17 @@ object BidsStudyCompiler:
       EntityKey.Space,
       EntityKey.Resolution
     )
+
+  /** Inspect an optional companion without enabling nuisance regressors or compiling image data.
+    * Uses the same pipeline/entity specificity and ambiguity rules as requested confound binding.
+    */
+  def confoundCompanion(project: BidsProject, boldPath: BidsPath): Either[CatalogIssue, Option[BidsFile]] =
+    project.manifest.files.find(_.path == boldPath) match
+      case Some(bold) if isBoldImage(bold) =>
+        selectOptionalCompanion("confounds", bold, project.manifest.files.filter(isConfoundFile),
+          ConfoundMatchKeys, requirePipeline = true)
+      case _ => Left(CatalogIssue(CatalogIssueCode.NoBoldFiles, Some(boldPath),
+        "optional confound lookup requires a BOLD image path in the project manifest"))
 
   def compile(
       project: BidsProject,
@@ -245,6 +258,11 @@ object BidsStudyCompiler:
       issues += CatalogIssue(CatalogIssueCode.MissingRepetitionTime, Some(bold.path), "BOLD metadata has no positive repetition time")
       None
     }
+    val timing = timingMetadataFor(project, bold) match
+      case Right(value) => Some(value)
+      case Left(issue) =>
+        issues += issue
+        None
     val events = selectCompanion("events", bold, eventFiles, EventMatchKeys, requirePipeline = false) match
       case Right(file) => Some(file)
       case Left(issue) =>
@@ -280,6 +298,7 @@ object BidsStudyCompiler:
         typedRun <- runId
         headerValue <- header
         tr <- repetitionTime
+        timingValue <- timing
         eventFile <- events
         _ <-
           if recipe.confounds.isEmpty || confounds.nonEmpty then Some(())
@@ -301,6 +320,7 @@ object BidsStudyCompiler:
         runId = typedRun,
         header = headerValue,
         repetitionTime = tr,
+        timing = timingValue,
         events = eventFile,
         confounds = confounds,
         mask = mask
@@ -367,7 +387,8 @@ object BidsStudyCompiler:
               timepoints = run.header.shape.timepoints,
               bold = artifactRef[BoldImageResource](recipe, run.bold),
               events = artifactRef[EventsTableResource](recipe, run.events),
-              confounds = run.confounds.map(artifactRef[ConfoundsTableResource](recipe, _))
+              confounds = run.confounds.map(artifactRef[ConfoundsTableResource](recipe, _)),
+              timing = run.timing
             )
           }
           FirstLevelUnit.make(
@@ -479,6 +500,17 @@ object BidsStudyCompiler:
       None
     }
 
+  private def timingMetadataFor(project: BidsProject, bold: BidsFile): Either[CatalogIssue, RunTimingMetadata] =
+    project.metadata(bold.path)
+      .left.map(error => CatalogIssue(CatalogIssueCode.InvalidTimingMetadata, Some(bold.path), error.message))
+      .flatMap { metadata =>
+        metadata.fields.get("SliceTimingCorrected") match
+          case None => Right(RunTimingMetadata())
+          case Some(JsonValue.Bool(value)) => Right(RunTimingMetadata(Some(value)))
+          case Some(_) => Left(CatalogIssue(CatalogIssueCode.InvalidTimingMetadata, Some(bold.path),
+            "SliceTimingCorrected must be a boolean when present", field = Some("SliceTimingCorrected")))
+      }
+
   private def repetitionTimeFor(project: BidsProject, bold: BidsFile): Option[Double] =
     val direct = project.metadata(bold.path).toOption.flatMap(metadata => BidsMetadataRecord(bold, metadata).repetitionTime.map(_.value))
     direct.orElse {
@@ -537,7 +569,7 @@ object BidsStudyCompiler:
       requirePipeline: Boolean
   ): Boolean =
     val entitiesMatch = keys.forall { key =>
-      candidate.entities.get(key).forall(value => target.entities.get(key).contains(value))
+      candidate.entities.get(key).forall(value => target.entities.get(key).exists(key.equivalentValue(value, _)))
     }
     val pipelineMatches = !requirePipeline || candidate.pipeline == target.pipeline
     entitiesMatch && pipelineMatches

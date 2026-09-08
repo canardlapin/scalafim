@@ -303,7 +303,7 @@ final case class CoefficientInference private (
           case CoefficientCovarianceScope.Shared =>
             Right(covariance)
           case CoefficientCovarianceScope.Voxelwise =>
-            CoefficientCovariance.voxelwise(positions.map(covariance.matrices))
+            covariance.selectVoxelPositions(positions)
       selectedCovariance.flatMap { selected =>
         val selectedVariance = DVec.fromSeq(positions.map(varianceScale.apply))
         val selectedStandardErrors =

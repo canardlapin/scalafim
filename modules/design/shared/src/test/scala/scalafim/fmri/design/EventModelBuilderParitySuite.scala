@@ -783,7 +783,16 @@ class EventModelBuilderParitySuite extends munit.FunSuite:
     val firstEvent = convolved(first).term.events.collectFirst { case e: ContinuousEvent => e }.get
     assertEquals(firstEvent.value.data.toVector, Vector(-1.0, 1.0))
     assertEquals(first.designMatrix.data.toVector, permuted.designMatrix.data.toVector)
-    assertEquals(first.designSchema.fingerprint, permuted.designSchema.fingerprint)
+    // Numeric/centering invariance does not erase changed source-row identity.
+    assertNotEquals(first.designSchema.fingerprint, permuted.designSchema.fingerprint)
+    def numericalAudit(model: EventModel): String =
+      val audit = model.designSchema.audit
+      audit.copy(sourceEvents = Vector.empty, policyReceipts = audit.policyReceipts.filterNot(_.name == "convolution")).canonical
+    assertEquals(numericalAudit(first), numericalAudit(permuted))
+    assertEquals(first.designSchema.audit.sourceEvents.map(row => (row.sourceRow, row.onset.value)),
+      Vector((0, 1.0), (1, 3.0)))
+    assertEquals(permuted.designSchema.audit.sourceEvents.map(row => (row.sourceRow, row.onset.value)),
+      Vector((0, 3.0), (1, 1.0)))
     assertEquals(first.designSchema.audit.centeringReceipts.head.groups.head.center, Some(2.0))
     assertEquals(permuted.designSchema.audit.centeringReceipts.head.groups.head.center, Some(2.0))
   }

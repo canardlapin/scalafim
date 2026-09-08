@@ -24,7 +24,8 @@ final case class ConvolvedTerm(
     columnCells: Vector[Option[CellKey]] = Vector.empty,
     columnModulators: Vector[Option[ModulatorId]] = Vector.empty,
     columnHrfs: Vector[Hrf] = Vector.empty,
-    columnScales: Vector[HrfColumnScale] = Vector.empty
+    columnScales: Vector[HrfColumnScale] = Vector.empty,
+    convolutionRecipe: Option[ConvolutionRecipe] = None
 ) extends EventModelTerm:
   requireColumnMetadata()
   require(
@@ -51,6 +52,13 @@ final case class ConvolvedTerm(
     columnScales.isEmpty || columnScales.length == data.cols,
     s"columnScales has ${columnScales.length} entries for ${data.cols} data columns"
   )
+
+  def sampledSupport(
+      retainedScans: Vector[scalafim.fmri.design.ScanIndex],
+      unscaledAbsoluteTolerance: Double = 0.0
+  ): Either[ConvolutionSupportError, ConvolvedSupport] =
+    convolutionRecipe.toRight(ConvolutionSupportError.MissingRecipe)
+      .flatMap(_.inspect(this, retainedScans, unscaledAbsoluteTolerance))
 
   def keyHint: Option[String] = term.termTag
   def hrfOpt: Option[Hrf] = Some(hrf)
@@ -86,7 +94,9 @@ final case class EventTerm(
     /** The phase identity when this term was lowered from a multiphase trial. */
     phaseId: Option[PhaseId] = None,
     /** Source-row identity retained alongside the numerical event schedule. */
-    eventProvenance: Vector[EventRowProvenance] = Vector.empty
+    eventProvenance: Vector[EventRowProvenance] = Vector.empty,
+    /** Original input table rows; empty means unknown, never an implicit renumbering. */
+    sourceRows: Vector[Int] = Vector.empty
 ):
 
   val schedule: EventSchedule =
@@ -107,6 +117,17 @@ final case class EventTerm(
     phaseId.forall(id => eventProvenance.isEmpty || eventProvenance.forall(_.phase.contains(id))),
     "term phase id must agree with every event provenance entry"
   )
+
+  require(sourceRows.isEmpty || sourceRows.length == n, "source rows must match the event schedule")
+  require(sourceRows.forall(_ >= 0), "source rows must be non-negative")
+  require(sourceRows.isEmpty || eventProvenance.isEmpty || sourceRows == eventProvenance.map(_.sourceRow),
+    "source rows must agree with phase provenance")
+
+  /** Known source indices for ordinary or phased events. Hand-built terms may
+    * have no source table and therefore return an empty vector.
+    */
+  def sourceRowIndices: Vector[Int] =
+    if sourceRows.nonEmpty then sourceRows else eventProvenance.map(_.sourceRow)
 
   val durations0: Vector[Seconds] =
     schedule.durations
@@ -225,9 +246,13 @@ final case class EventTerm(
     val totalCols = nConds * nb
     val out = new Array[Double](totalRows * totalCols)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+    val channels = Vector.newBuilder[ConvolutionChannel]
+    def recorded(value: ConvolvedTerm): ConvolvedTerm =
+      value.copy(convolutionRecipe = Some(new ConvolutionRecipe(value, samplingFrame, precision, channels.result())))
+
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
-      return ConvolvedTerm(
+      return recorded(ConvolvedTerm(
         this,
         hrf,
         Mat.unsafe(totalRows, totalCols, out),
@@ -237,7 +262,7 @@ final case class EventTerm(
         columnCells = finalCells,
         columnModulators = finalModulators,
         columnScales = emptyScales
-      )
+      ))
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -265,8 +290,10 @@ final case class EventTerm(
       var cond = 0
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
+        val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
+        channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)), eIdx,
+          Vector.tabulate(nb)(basis => basis * nConds + cond), reg)
         if ampB.exists(_ != 0.0) then
-          val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
           val ev = preparedKernel.evaluate(reg, grid)
           // Store basis-major: [b01: all conds] [b02: all conds] ...
           var basis = 0
@@ -283,7 +310,7 @@ final case class EventTerm(
       b += 1
 
     val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
-    ConvolvedTerm(
+    recorded(ConvolvedTerm(
       this,
       hrf,
       Mat.unsafe(totalRows, totalCols, out),
@@ -293,7 +320,7 @@ final case class EventTerm(
       columnCells = finalCells,
       columnModulators = finalModulators,
       columnScales = columnScales
-    )
+    ))
 
   /** Convolve one HRF per realized condition cell.  Unlike
     * [[convolvePerEvent]], this path permits different basis cardinalities:
@@ -338,9 +365,13 @@ final case class EventTerm(
     val finalHrfs = hrfs0.flatMap(conditionHrf => Vector.fill(conditionHrf.nbasis)(conditionHrf))
     val out = new Array[Double](totalRows * totalCols)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+    val channels = Vector.newBuilder[ConvolutionChannel]
+    def recorded(value: ConvolvedTerm): ConvolvedTerm =
+      value.copy(convolutionRecipe = Some(new ConvolutionRecipe(value, samplingFrame, precision, channels.result())))
+
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 then
-      return ConvolvedTerm(
+      return recorded(ConvolvedTerm(
         this,
         representative,
         Mat.unsafe(totalRows, totalCols, out),
@@ -351,7 +382,7 @@ final case class EventTerm(
         columnModulators = finalModulators,
         columnHrfs = finalHrfs,
         columnScales = emptyScales
-      )
+      ))
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -378,6 +409,8 @@ final case class EventTerm(
           amplitude = ampB,
           summate = summate
         )
+        channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)), eIdx,
+          Vector.tabulate(conditionHrf.nbasis)(basis => columnOffset + basis), reg)
         val ev = Regressor.evaluate(reg, grid, precision = precision.value)
         var basis = 0
         while basis < conditionHrf.nbasis do
@@ -394,7 +427,7 @@ final case class EventTerm(
       b += 1
 
     val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
-    ConvolvedTerm(
+    recorded(ConvolvedTerm(
       this,
       representative,
       Mat.unsafe(totalRows, totalCols, out),
@@ -405,7 +438,7 @@ final case class EventTerm(
       columnModulators = finalModulators,
       columnHrfs = finalHrfs,
       columnScales = columnScales
-    )
+    ))
 
   def convolvePerEvent(
       hrfs: Seq[Hrf],
@@ -438,9 +471,13 @@ final case class EventTerm(
     val totalCols = nConds * nb
     val out = new Array[Double](totalRows * totalCols)
     val emptyScales = Vector.fill(totalCols)(HrfColumnScale.applied(scaling, 1.0))
+    val channels = Vector.newBuilder[ConvolutionChannel]
+    def recorded(value: ConvolvedTerm): ConvolvedTerm =
+      value.copy(convolutionRecipe = Some(new ConvolutionRecipe(value, samplingFrame, precision, channels.result())))
+
 
     if nConds == 0 || totalCols == 0 || totalRows == 0 || n == 0 then
-      return ConvolvedTerm(
+      return recorded(ConvolvedTerm(
         this,
         rep,
         Mat.unsafe(totalRows, totalCols, out),
@@ -450,7 +487,7 @@ final case class EventTerm(
         columnCells = finalCells,
         columnModulators = finalModulators,
         columnScales = emptyScales
-      )
+      ))
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
 
@@ -471,6 +508,8 @@ final case class EventTerm(
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
         val reg = perEventRegressor(onsets = onsB, hrfs = hrfB, duration = durB, amplitude = ampB, summate = summate)
+        channels += ConvolutionChannel(b, rowOffset, grid.map(Seconds(_)), eIdx,
+          Vector.tabulate(nb)(basis => basis * nConds + cond), reg)
         val ev = Regressor.evaluate(reg, grid, precision = precision.value)
         var basis = 0
         while basis < nb do
@@ -486,7 +525,7 @@ final case class EventTerm(
       b += 1
 
     val columnScales = scaleColumnsInPlace(out, totalRows, totalCols, scaling)
-    ConvolvedTerm(
+    recorded(ConvolvedTerm(
       this,
       rep,
       Mat.unsafe(totalRows, totalCols, out),
@@ -496,7 +535,7 @@ final case class EventTerm(
       columnCells = finalCells,
       columnModulators = finalModulators,
       columnScales = columnScales
-    )
+    ))
 
   private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =
     if conditionTags.isEmpty || nbasis <= 0 then Vector.empty
@@ -576,11 +615,10 @@ final case class EventTerm(
     val durs = duration.map(Seconds(_)).toVector
     val amps = amplitude.toVector
     validateRegressorParts(ons, durs, amps)
-    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
     Regressor.unsafeFromParts(
-      onsets = valid.map(ons).toVector,
-      durations = valid.map(durs).toVector,
-      amplitudes = valid.map(amps).toVector,
+      onsets = ons,
+      durations = durs,
+      amplitudes = amps,
       hrf = HrfAssignment.Shared(hrf),
       span = hrf.span,
       summate = summate
@@ -599,15 +637,14 @@ final case class EventTerm(
     val hrs = hrfs.toVector
     require(hrs.length == ons.length, "per-event HRF/onset length mismatch")
     validateRegressorParts(ons, durs, amps)
-    val valid = ons.indices.filter(i => ons(i).value >= 0.0)
-    val keep = valid.filter(i => amps(i) != 0.0)
+    val keep = ons.indices.filter(i => amps(i) != 0.0)
     val hrsF = keep.map(hrs).toVector
     val span = hrsF.map(_.span).maxOption.getOrElse(hrs.map(_.span).maxOption.getOrElse(Seconds(0.0)))
     Regressor.unsafeFromParts(
-      onsets = valid.map(ons).toVector,
-      durations = valid.map(durs).toVector,
-      amplitudes = valid.map(amps).toVector,
-      hrf = HrfAssignment.PerEvent(valid.map(hrs).toVector),
+      onsets = ons,
+      durations = durs,
+      amplitudes = amps,
+      hrf = HrfAssignment.PerEvent(hrs),
       span = span,
       summate = summate
     )

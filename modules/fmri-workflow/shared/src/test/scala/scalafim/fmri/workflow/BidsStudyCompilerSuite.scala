@@ -6,6 +6,93 @@ import scalafim.dataset.{DatasetId, DatasetShape}
 import scalafim.image.NeuroSpace
 
 class BidsStudyCompilerSuite extends FunSuite:
+  test("observed slice-timing metadata preserves true, false and unknown separately") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    Vector(None, Some(false), Some(true)).foreach { status =>
+      val sidecars = fixture.project.sidecars.map { (path, metadata) =>
+        val fields = metadata.fields ++ status.map(value => "SliceTimingCorrected" -> JsonValue.Bool(value))
+        path -> (JsonValue.Obj(fields): JsonValue.Obj)
+      }
+      val project = fixture.project.copy(sidecars = sidecars)
+      val unit = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head
+      assertEquals(unit.runs.head.timing.sliceTimingCorrected, status)
+      // Metadata must not silently select a sampling reference.
+      assertEqualsDouble(SamplingReference.VolumeMidpoint.resolve(unit.runs).toOption.get.runs.head.firstSample.value, 1.0, 0.0)
+    }
+  }
+
+  test("present malformed slice-timing correction declarations are refused") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    Vector(JsonValue.Str("false"), JsonValue.Num(0.0), JsonValue.Null).foreach { value =>
+      val project = fixture.project.copy(sidecars = fixture.project.sidecars.map { (path, metadata) =>
+        path -> (JsonValue.Obj(metadata.fields.updated("SliceTimingCorrected", value)): JsonValue.Obj)
+      })
+      val report = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).left.toOption.get
+      assert(report.issues.exists(issue => issue.code == CatalogIssueCode.InvalidTimingMetadata &&
+        issue.field.contains("SliceTimingCorrected") && issue.path.nonEmpty))
+    }
+  }
+
+  test("raw companion metadata does not assert derivative slice-timing correction") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val raw = "sub-01/func/sub-01_task-demo_acq-mb_run-01_echo-1_bold.json"
+    val project = fixture.project.copy(
+      manifest = BidsManifest.fromRelativePaths(fixture.project.manifest.files.map(_.path.value) :+ raw, fixture.project.derivatives),
+      sidecars = fixture.project.sidecars.updated(BidsPath(raw), JsonValue.Obj(Map("SliceTimingCorrected" -> JsonValue.Bool(true)))))
+    val unit = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head
+    assertEquals(unit.runs.head.timing.sliceTimingCorrected, None)
+  }
+
+  test("numeric run companions match across padding without rewriting source paths") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value).map { path =>
+      if path.endsWith("_events.tsv") then path.replace("run-01", "run-1") else path
+    }
+    val project = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(paths, fixture.project.derivatives))
+    val run = BidsStudyCompiler.compile(project, fixture.recipe, fixture.headers).toOption.get.units.head.runs.head
+    assertEquals(run.id.value, "01")
+    assert(run.bold.location.value.contains("run-01"))
+    assert(run.events.location.value.contains("run-1_"))
+  }
+
+  test("numeric-equivalent event companions are ambiguous and subject labels stay distinct") {
+    val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    val events = paths.find(_.endsWith("_events.tsv")).get
+    val duplicate = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths :+ events.replace("run-01", "run-1"), fixture.project.derivatives))
+    val ambiguous = BidsStudyCompiler.compile(duplicate, fixture.recipe, fixture.headers).left.toOption.get
+    assert(ambiguous.issues.exists(_.code == CatalogIssueCode.AmbiguousCompanion))
+    val otherSubject = fixture.project.copy(manifest = BidsManifest.fromRelativePaths(
+      paths.map(p => if p == events then p.replace("sub-01", "sub-1") else p), fixture.project.derivatives))
+    val missing = BidsStudyCompiler.compile(otherSubject, fixture.recipe, fixture.headers).left.toOption.get
+    assert(missing.issues.exists(_.code == CatalogIssueCode.MissingEvents))
+  }
+
+  test("optional confound inspection preserves entity matching and explicit absence") {
+    val fixture = studyFixture(subjects = Vector("01", "02"), runs = Vector("01", "02"))
+    val project = fixture.project
+    val bold = project.manifest.files.find(f => f.fileName.contains("sub-01") && f.fileName.contains("run-02") && f.fileName.endsWith("_bold.nii")).get
+    val selected = BidsStudyCompiler.confoundCompanion(project,bold.path).toOption.get.get
+    assert(selected.fileName.contains("sub-01"))
+    assert(selected.fileName.contains("run-02"))
+    assertEquals(selected.pipeline,bold.pipeline)
+    val without = project.copy(manifest = BidsManifest.fromRelativePaths(
+      project.manifest.files.filterNot(_.path == selected.path).map(_.path.value),project.derivatives))
+    assertEquals(BidsStudyCompiler.confoundCompanion(without,bold.path),Right(None))
+    assert(BidsStudyCompiler.confoundCompanion(project,selected.path).isLeft)
+    assert(BidsStudyCompiler.confoundCompanion(project,BidsPath("missing_bold.nii")).isLeft)
+  }
+
+  test("optional confound inspection refuses ambiguity even when fitting ignores confounds") {
+    val fixture = ambiguousConfoundFixture(confoundsRequested = false)
+    val catalog = BidsStudyCompiler.compile(fixture.project,fixture.recipe,fixture.headers).toOption.get
+    assertEquals(catalog.units.head.runs.head.confounds,None)
+    val bold = fixture.project.manifest.files.find(_.fileName.endsWith("_bold.nii")).get
+    val error = BidsStudyCompiler.confoundCompanion(fixture.project,bold.path).left.toOption.get
+    assertEquals(error.code,CatalogIssueCode.AmbiguousCompanion)
+  }
+
   test("compiler groups exact fMRIPrep entities into deterministic multi-run units") {
     val fixture = studyFixture(subjects = Vector("02", "01"), runs = Vector("02", "01"))
     val catalog = BidsStudyCompiler.compile(fixture.project, fixture.recipe, fixture.headers).toOption.get

@@ -87,6 +87,10 @@ model error, not as something to diagnose from rendered column names later.
 
 ## 3. Fit the inspected plan
 
+For selected betas, FIR coefficients and contrasts without full-fit products,
+use the [selected-estimates guide](selected-estimates.md). It explains bounded
+execution, optional uncertainty and the actual work required by run pooling.
+
 After accepting the plan, call `FitPlanExecutor.fit(plan)`. The strategy in the
 plan determines the engine and coefficient scope. The DMS scenario requires a
 `FixedEffectsFmriFitResult` and checks each run's predictor count and residual

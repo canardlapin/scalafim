@@ -100,3 +100,33 @@ class EventPhaseSuite extends munit.FunSuite:
     )
     assert(result.left.toOption.exists(_.message.contains("parent trial ids must be unique")))
   }
+
+
+  private def repeatedParentsPhase(id: String, blocks: Vector[Int]): EventPhase =
+    EventPhase.fromParts(
+      id = PhaseId.unsafe(id),
+      onsets = Vector(1.0, 1.0).map(Seconds(_)),
+      durations = Vector(0.0, 0.0).map(Seconds(_)),
+      blockIds = blocks,
+      parentTrialIds = Vector.fill(2)(TrialId.unsafe("trial-1")),
+      sourceRows = Vector(0, 1)
+    ).fold(error => fail(error.message), identity)
+
+  test("phase parents may repeat across runs without losing source identity") {
+    val phase = repeatedParentsPhase("sample", Vector(0, 1))
+    assertEquals(phase.provenance.map(p => (p.blockId, p.parent.value, p.sourceRow)),
+      Vector((0, "trial-1", 0), (1, "trial-1", 1)))
+    val factors = Vector(Event.factor(Vector("A", "B"), "condition"))
+    val other = repeatedParentsPhase("probe", Vector(0, 1))
+    val multi = MultiphaseEventTerm.validated(factors, Vector(phase, other))
+      .fold(error => fail(error.message), identity)
+    assertEquals(multi.phaseTerms.map(_.eventProvenance.map(_.blockId)), Vector(Vector(0, 1), Vector(0, 1)))
+  }
+
+  test("repeated parent labels cannot hide mismatched runs across phases") {
+    val phase = repeatedParentsPhase("sample", Vector(0, 1))
+    val other = repeatedParentsPhase("probe", Vector(0, 2))
+    val factors = Vector(Event.factor(Vector("A", "B"), "condition"))
+    val result = MultiphaseEventTerm.validated(factors, Vector(phase, other))
+    assert(result.left.toOption.exists(_.message.contains("same run ordering")))
+  }

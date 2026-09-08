@@ -4,7 +4,7 @@ Portable fitting kernels for fMRI models.
 
 The first engine is full-rank ordinary least squares over timepoints-by-voxels
 response blocks. It is cross-built for the JVM and Scala.js and uses the
-`scalafim-linalg` primitive array-backed matrix layer rather than Breeze.
+Gale's portable matrix and factor APIs.
 
 The low-level `Ols` kernel is matrix-only. During `0.1-development`,
 `FitPlanExecutor` is the canonical fMRI-aware execution facade: it adapts
@@ -19,6 +19,125 @@ coefficient surfaces.
 
 Dense OLS results carry normalized coefficient covariance, coefficient standard
 errors, residual diagnostics, and t-contrast evaluation by design-column name.
+
+## Selected estimates without full fit products
+
+Follow the [selected-estimates guide](../../docs/selected-estimates.md) for
+executable coefficient, contrast, FIR and optional-product examples.
+
+`SelectedEstimates.prepare` is the common entry point for the supported shared
+OLS and runwise inverse-covariance fixed-effects routes. It preserves the
+scientific engine declared by the fit plan and returns a typed refusal for other
+engines. Preparation reads no responses. The resulting `description` reports
+identified outputs, actual selected rows, per-fit axes/rank diagnostics, bounded
+read dimensions, computations and planned product dispositions. For example,
+pooled estimates with uncertainty off still report internal residual variance
+and joint precision. A planned retained product is not evidence that execution
+completed; use the returned execution outcome and native block results.
+
+`PreparedSelectedEstimates.foreachBlock` delivers `SelectedEstimateBlock.Shared`
+or `.Pooled`, retaining each native uncertainty and exclusion interpretation.
+The caller owns the sink and publishes only after successful completion and any
+source-revision checks. Cancelled and failed streams are partial outputs. No
+cross-request cache is implied: a prepared object binds its exact realized design
+and selected axes, while the caller verifies the response content revision.
+Fitted/residual series are explicitly unavailable through this executor; bounded
+inspection is a separate provider capability.
+
+
+`FirstLevelEstimates.prepare` compiles identified coefficients and structural
+contrasts once, then `foreachBlock` reads bounded voxel blocks and delivers only
+the requested output matrices. The default request computes no residual variance,
+standard errors, covariance, or unrequested nuisance coefficient maps. Nuisance
+terms still enter the design and its rank checks. Selecting a nuisance column
+explicitly retains its estimate.
+
+```scala
+import gale.backend.Backend
+import scalafim.dataset.DatasetSeriesReader
+import scalafim.fmri.design.ColumnId
+import scalafim.fmri.fit.*
+import scalafim.fmri.model.FitPlan
+
+def estimateSelected(
+    model: FitPlan,
+    reader: DatasetSeriesReader,
+    columns: Vector[ColumnId],
+    write: FirstLevelEstimateBlock => Either[FitError, Unit]
+)(using Backend): Either[FitError, EstimateExecutionOutcome] =
+  for
+    request <- FirstLevelEstimateRequest.make(columns.map(EstimateOutput.Coefficient.apply))
+    size <- ChunkSize(1024)
+    prepared <- FirstLevelEstimates.prepare(model, request, size)
+    outcome <- prepared.foreachBlock(reader, write)
+  yield outcome
+```
+
+This example compiles in `SelectedEstimatesExample` on JVM and Scala.js. The caller
+owns the reader, backend and sink; the executor retains no delivered blocks.
+`EstimateOutput.Contrast` accepts `StructuralTContrast`, including response
+functionals with declared units. Output order, structural column identity,
+physical FIR bin coordinates, selected scans and voxel identities are preserved.
+Preparation reads no response data. Cancellation is checked before each read and
+delivery; sink failure prevents subsequent reads. Block size bounds each dataset
+request, not memory allocated internally by a reader, backend or accumulating sink.
+
+This compiled route currently admits full-rank shared-design OLS with finite
+selected responses and no temporal weighting or other response transforms.
+Unsupported engines and preparation policies return typed errors before image
+reads. Existing `FitPlanExecutor` routes remain available for other scientific
+models. The request never silently changes whitening, run coefficient scope or
+inverse-covariance pooling.
+
+Use `EstimateUncertaintyRequest.Marginal` or `Joint` to request selected uncertainty
+products. Their computation uses full-model residual degrees of freedom; the
+estimate-only route also admits exactly determined full-rank designs. Low-level
+matrix callers can use `Ols.prepareEstimates` with a `CoefficientReadout`. This compiles
+the dual of a pivoted QR factorization, avoiding a square Q, inverse,
+pseudoinverse or response-sized nuisance projection. Execution forwards the
+caller's Gale backend to the selected matrix product. Measured throughput and
+end-to-end application acceptance are separate from this API's correctness.
+
+### Selected outputs after run pooling
+
+For `FitStrategy.SeparateRunsThenFixedEffects`, use
+`FirstLevelFixedEffectsEstimates.prepare` with the same output request and bounded
+sink pattern. It prepares one run-local QR factor and precision readout per run,
+then combines each voxel's full shared coefficient precision before selecting
+outputs. Run-local nuisance terms enter each fit but produce no coefficient maps.
+Residual variance is required internally even when output uncertainty is absent.
+The executor does not construct runwise full-fit objects or pooled full-fit maps.
+
+```scala
+def estimatePooled(
+    model: FitPlan,
+    reader: DatasetSeriesReader,
+    request: FirstLevelEstimateRequest,
+    write: FirstLevelFixedEffectsEstimateBlock => Either[FitError, Unit]
+)(using Backend): Either[FitError, EstimateExecutionOutcome] =
+  for
+    size <- ChunkSize(1024)
+    prepared <- FirstLevelFixedEffectsEstimates.prepare(model, request, size)
+    outcome <- prepared.foreachBlock(reader, write)
+  yield outcome
+```
+
+This example also compiles on both platforms. `runPreparations` exposes actual
+retained scans, local coefficient axes, rank diagnostics and residual degrees of
+freedom. `selection` preserves requested coefficient/contrast and FIR identities.
+Each block has a `Selected` result with exclusions, or an explicit `Excluded`
+result when none of its voxels qualifies. Completion counts processed input
+voxels; callers must inspect the retained identities before downstream analysis.
+Cancellation, source validation and sink ownership follow the shared OLS route.
+
+For existing runwise fits, `FixedEffectsEstimates.combine` shares the ordinary
+native fitter's projection, availability and exclusion rules while retaining only
+selected pooled maps. `request.compile(schema)` supplies its identified selection.
+`FixedEffectsEstimates.estimate` accepts existing sufficient statistics directly.
+These two adapters preserve input ownership; they do not retroactively remove
+maps already constructed by their caller. Selected covariance is propagated only
+when requested, and scalar contrasts are never pooled in place of the full
+joint coefficient geometry.
 
 ## Numerical and inference behavior
 

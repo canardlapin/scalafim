@@ -57,6 +57,22 @@ final case class EventModel(
       case Some(schema) => schema.validate
       case None         => Right(())
 
+  def validateResponseSupportSelection(scans: Vector[ScanIndex]): Either[DesignError, Unit] =
+    if designSchema.audit.responseSupport.forall(_.request.retainedScans == scans) then Right(())
+    else Left(DesignError.InvalidSchedule("Fit scan selection differs from event support policy; rebuild the model for the intended scans"))
+
+  def withResponseSupportEvidence(receipts: Vector[EventSupportReceipt]): Either[DesignError, EventModel] =
+    val schema = designSchema
+    val exclusions = receipts.flatMap(receipt => receipt.decisions.collect {
+      case row if row.disposition == EventSupportDisposition.Excluded =>
+        EventExclusion(row.sourceRow, "response-support-unobserved", receipt.term.map(TermId.unsafe))
+    })
+    val audit = schema.audit.copy(eventsSeen = schema.audit.eventsSeen + exclusions.length,
+      excludedEvents = schema.audit.excludedEvents ++ exclusions,
+      responseSupport = schema.audit.responseSupport ++ receipts)
+    DesignSchema.validated(schema.matrix, schema.rows, schema.columns, audit)
+      .map(value => copy(compiledSchema = Some(value)))
+
   /** Compatibility wrapper over [[withDiagnosticsEither]]. Compiler paths use
     * the total method so schema-validation failures retain their typed cause.
     */
@@ -312,14 +328,17 @@ object EventModel:
   ): DesignAudit =
     val convolved = terms.collect { case (_, ct: ConvolvedTerm) => ct }
     val seen = convolved.map(_.term.onsets.length).sum
-    val used = convolved.map(_.term.onsets.count(onset => onset.value.isFinite && onset.value >= 0.0)).sum
-    val excluded =
-      convolved.flatMap { ct =>
-        ct.term.onsets.zipWithIndex.collect {
-          case (onset, i) if !onset.value.isFinite || onset.value < 0.0 =>
-            EventExclusion(i, "negative-or-non-finite-onset", ct.term.termTag.map(TermId.unsafe))
+    // Convolved terms retain signed finite onsets. These counts describe
+    // retained schedule rows, not nonzero support or parameter estimability.
+    val used = seen
+    val sources = terms.flatMap {
+      case (key, ct: ConvolvedTerm) =>
+        ct.term.sourceRowIndices.zipWithIndex.map { (source, index) =>
+          SourceEventRow(TermId.unsafe(key), index, source, ct.term.blockIds0(index),
+            ct.term.onsets(index), ct.term.durations0(index))
         }
-      }
+      case _ => Vector.empty
+    }
     val policies = convolved.map { ct =>
       val sources =
         if ct.columnHrfs.isEmpty then Vector(ct.hrf)
@@ -332,9 +351,13 @@ object EventModel:
     DesignAudit(
       eventsSeen = seen,
       eventsUsed = used,
-      excludedEvents = excluded,
+      sourceEvents = sources,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
-      policyReceipts = policies,
+      policyReceipts = policies ++ terms.flatMap {
+        case (key, ct: ConvolvedTerm) => ct.convolutionRecipe.map(recipe =>
+          PolicyReceipt("convolution", s"term=$key;${recipe.canonical}"))
+        case _ => None
+      },
       diagnostics = diagnostics.map(toDesignDiagnostic)
     )
 

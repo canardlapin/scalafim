@@ -4,81 +4,12 @@ import scalafim.dataset.*
 import scalafim.image.{PrimitiveBuffers, NeuroSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
 
-import java.io.BufferedInputStream
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.nio.charset.StandardCharsets
-import java.nio.file.StandardCopyOption.ATOMIC_MOVE
 import java.nio.file.StandardOpenOption.READ
-import java.nio.file.{FileAlreadyExistsException, Files, Path}
-import java.security.MessageDigest
-import java.util.zip.GZIPInputStream
+import java.nio.file.{Files, Path}
 import scala.util.Using
 import scala.util.control.NonFatal
-
-final class NiftiStagingCache private (val root: Path):
-  def stage(path: Path): Either[DatasetError, Path] =
-    val normalized = path.toAbsolutePath.normalize()
-    if !normalized.toString.endsWith(".gz") then Right(normalized)
-    else this.synchronized(stageCompressed(normalized))
-
-  private def stageCompressed(path: Path): Either[DatasetError, Path] =
-    if !Files.isRegularFile(path) then
-      Left(DatasetError.StorageFailure(s"compressed NIfTI does not exist: $path"))
-    else
-      var temporary = Option.empty[Path]
-      try
-        Files.createDirectories(root)
-        val target = root.resolve(s"${metadataKey(path)}.nii")
-        if Files.isRegularFile(target) && Files.size(target) >= 352L then Right(target)
-        else
-          Files.deleteIfExists(target)
-          val tmp = Files.createTempFile(root, ".nifti-stage-", ".partial")
-          temporary = Some(tmp)
-          Using.Manager { use =>
-            val rawInput = use(Files.newInputStream(path))
-            val bufferedInput = use(new BufferedInputStream(rawInput))
-            val input = use(new GZIPInputStream(bufferedInput))
-            val output = use(Files.newOutputStream(tmp))
-            input.transferTo(output)
-          }.fold(error => throw error, _ => ())
-
-          if Files.size(tmp) < 352L then
-            Left(DatasetError.StorageFailure(s"staged NIfTI is smaller than its header: $path"))
-          else
-            try Files.move(tmp, target, ATOMIC_MOVE)
-            catch
-              case _: FileAlreadyExistsException => Files.deleteIfExists(tmp)
-              case _: java.nio.file.AtomicMoveNotSupportedException =>
-                try Files.move(tmp, target)
-                catch case _: FileAlreadyExistsException => Files.deleteIfExists(tmp)
-            temporary = None
-            Right(target)
-      catch
-        case NonFatal(error) =>
-          Left(DatasetError.StorageFailure(s"failed to stage compressed NIfTI '$path': ${error.getMessage}"))
-      finally
-        temporary.foreach(path => Files.deleteIfExists(path))
-
-  private def metadataKey(path: Path): String =
-    val attributes = Files.readAttributes(path, classOf[java.nio.file.attribute.BasicFileAttributes])
-    val value = s"${path.toString}\u0000${attributes.size()}\u0000${attributes.lastModifiedTime().toMillis}"
-    val digest = MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))
-    digest.iterator.map(byte => f"${byte & 0xff}%02x").mkString
-
-object NiftiStagingCache:
-  def make(root: Path): Either[DatasetError, NiftiStagingCache] =
-    val normalized = root.toAbsolutePath.normalize()
-    try
-      Files.createDirectories(normalized)
-      if Files.isDirectory(normalized) then Right(new NiftiStagingCache(normalized))
-      else Left(DatasetError.StorageFailure(s"NIfTI staging root is not a directory: $normalized"))
-    catch
-      case NonFatal(error) =>
-        Left(DatasetError.StorageFailure(s"cannot create NIfTI staging root '$normalized': ${error.getMessage}"))
-
-  def unsafe(root: Path): NiftiStagingCache =
-    make(root).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final class NiftiResponseBlockSource private (
     val sourcePath: Path,

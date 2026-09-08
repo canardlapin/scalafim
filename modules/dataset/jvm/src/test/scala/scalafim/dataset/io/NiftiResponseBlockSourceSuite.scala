@@ -147,7 +147,13 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
       assert(cache.stage(compressed).isLeft)
 
       val files = Files.list(cache.root)
-      try assertEquals(files.iterator().asScala.toVector, Vector.empty)
+      try
+        val retained = files.iterator().asScala.toVector
+        // A stable, empty coordination inode must not be unlinked while another
+        // process may be waiting on its lock. No image, receipt or partial survives.
+        assertEquals(retained.length, 1)
+        assert(retained.head.toString.endsWith(".lock"))
+        assertEquals(Files.size(retained.head), 0L)
       finally files.close()
     }
   }

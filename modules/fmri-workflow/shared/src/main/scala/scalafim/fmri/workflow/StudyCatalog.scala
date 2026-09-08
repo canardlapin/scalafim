@@ -16,13 +16,19 @@ object RepetitionTime:
   extension (time: RepetitionTime)
     inline def seconds: Double = time
 
+/** Observed preprocessing metadata. Absence is unknown, not false.
+  * Neither value declares the effective within-volume model reference.
+  */
+final case class RunTimingMetadata(sliceTimingCorrected: Option[Boolean] = None)
+
 final case class RunInput private (
     id: RunId,
     repetitionTime: RepetitionTime,
     timepoints: Int,
     bold: WorkflowArtifactRef[BoldImageResource],
     events: WorkflowArtifactRef[EventsTableResource],
-    confounds: Option[WorkflowArtifactRef[ConfoundsTableResource]]
+    confounds: Option[WorkflowArtifactRef[ConfoundsTableResource]],
+    timing: RunTimingMetadata
 ):
   require(timepoints > 0, "run timepoints must be positive")
 
@@ -33,10 +39,11 @@ object RunInput:
       timepoints: Int,
       bold: WorkflowArtifactRef[BoldImageResource],
       events: WorkflowArtifactRef[EventsTableResource],
-      confounds: Option[WorkflowArtifactRef[ConfoundsTableResource]] = None
+      confounds: Option[WorkflowArtifactRef[ConfoundsTableResource]] = None,
+      timing: RunTimingMetadata = RunTimingMetadata()
   ): Either[WorkflowError, RunInput] =
     if timepoints <= 0 then Left(WorkflowError.InvalidRun(id.value, s"timepoints must be positive, got $timepoints"))
-    else Right(new RunInput(id, repetitionTime, timepoints, bold, events, confounds))
+    else Right(new RunInput(id, repetitionTime, timepoints, bold, events, confounds, timing))
 
   def unsafe(
       id: RunId,
@@ -44,9 +51,10 @@ object RunInput:
       timepoints: Int,
       bold: WorkflowArtifactRef[BoldImageResource],
       events: WorkflowArtifactRef[EventsTableResource],
-      confounds: Option[WorkflowArtifactRef[ConfoundsTableResource]] = None
+      confounds: Option[WorkflowArtifactRef[ConfoundsTableResource]] = None,
+      timing: RunTimingMetadata = RunTimingMetadata()
   ): RunInput =
-    make(id, repetitionTime, timepoints, bold, events, confounds)
+    make(id, repetitionTime, timepoints, bold, events, confounds, timing)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 sealed trait UnitMask:

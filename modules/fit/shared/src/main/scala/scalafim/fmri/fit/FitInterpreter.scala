@@ -34,11 +34,23 @@ trait FitInterpreter:
       chunks: IndexedSeq[Block]
   ): Either[FitError, Result]
 
+  /** None means preparation needs the selected responses. Implementations may
+    * opt in only when selected timepoints and the plan fully determine Prepared.
+    * In particular, pooled noise or response-weight estimation must not opt in.
+    */
+  private[fit] def prepareFromTimepoints(
+      plan: FitPlan,
+      timepoints: Vector[Int]
+  ): Option[Either[FitError, Prepared]] = None
+
   private[fit] final def prepareContext(
       plan: FitPlan,
-      series: FmriSeries
+      timepoints: Vector[Int],
+      loadResponses: => Either[FitError, FmriSeries]
   ): Either[FitError, PreparedFitContext] =
-    prepare(plan, series).map { prepared =>
+    val preparation = prepareFromTimepoints(plan, timepoints)
+      .getOrElse(loadResponses.flatMap(series => prepare(plan, series)))
+    preparation.map { prepared =>
       new PreparedFitContext(
         engine = engine,
         runChunk = chunkSeries => fitChunk(plan, chunkSeries, prepared),
@@ -246,6 +258,12 @@ object FitInterpreters:
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, Vector[RunPartition]] =
       Right(RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints))
 
+    override private[fit] def prepareFromTimepoints(
+        plan: FitPlan,
+        timepoints: Vector[Int]
+    ): Option[Either[FitError, Vector[RunPartition]]] =
+      Some(Right(RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, timepoints)))
+
     def fitChunk(
         plan: FitPlan,
         series: FmriSeries,
@@ -310,6 +328,12 @@ object FitInterpreters:
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, Vector[RunPartition]] =
       Right(RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints))
+
+    override private[fit] def prepareFromTimepoints(
+        plan: FitPlan,
+        timepoints: Vector[Int]
+    ): Option[Either[FitError, Vector[RunPartition]]] =
+      Some(Right(RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, timepoints)))
 
     def fitChunk(
         plan: FitPlan,
@@ -413,6 +437,12 @@ object FitInterpreters:
 
     def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, LssBlockDesign] =
       FitPlanExecutor.lssExecutionDesign(plan, series.timepoints)
+
+    override private[fit] def prepareFromTimepoints(
+        plan: FitPlan,
+        timepoints: Vector[Int]
+    ): Option[Either[FitError, LssBlockDesign]] =
+      Some(FitPlanExecutor.lssExecutionDesign(plan, timepoints))
 
     def fitChunk(
         plan: FitPlan,

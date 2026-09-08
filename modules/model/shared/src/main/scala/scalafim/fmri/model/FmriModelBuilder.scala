@@ -1,7 +1,7 @@
 package scalafim.fmri.model
 
 import scalafim.dataset.{DatasetEvents, DatasetValue, FmriDataset}
-import scalafim.fmri.design.{ColumnId, DegenerateModulatorPolicy, EmptyCellPolicy, FactorLevelRegistry, FactorSchemaBinding, HrfByCell, HrfByPhase, MissingValuePolicy, ModulatorOrthogonalizationPlan}
+import scalafim.fmri.design.{ColumnId, DegenerateModulatorPolicy, EmptyCellPolicy, FactorLevelRegistry, FactorSchemaBinding, HrfByCell, HrfByPhase, MissingValuePolicy, ModulatorOrthogonalizationPlan, ResponseSupportRequest}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NaAction, NuisanceCheck}
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.data.{Column, DataTable}
@@ -158,7 +158,8 @@ final case class ModelBuildSpec(
     hrfByPhase: Option[HrfByPhase] = None,
     missingValuePolicy: MissingValuePolicy = MissingValuePolicy.ZeroContribution,
     degenerateModulatorPolicy: DegenerateModulatorPolicy = DegenerateModulatorPolicy.RetainAndReport,
-    orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None
+    orthogonalization: ModulatorOrthogonalizationPlan = ModulatorOrthogonalizationPlan.None,
+    responseSupport: Option[ResponseSupportRequest] = None
 ):
   require(formula.trim.nonEmpty, "model formula must be non-empty")
   require(baselineDegree >= 1, "baseline degree must be at least 1")
@@ -211,7 +212,8 @@ object FmriModelBuilder:
           hrfByPhase = spec.hrfByPhase,
           missingValuePolicy = spec.missingValuePolicy,
           degenerateModulatorPolicy = spec.degenerateModulatorPolicy,
-          orthogonalization = spec.orthogonalization
+          orthogonalization = spec.orthogonalization,
+          responseSupport = spec.responseSupport
         ),
         extensions = EventModelBuilder.DesignExtensionEnv(
           contrastSets = spec.contrastSets

@@ -179,3 +179,13 @@ Run it directly with:
 sbt datasetJVM/test
 sbt datasetJS/test
 ```
+
+## Defer response storage until a read
+
+`DeferredResponseBlockSource.make(shape, voxelDomain)(open)` exposes a reviewed
+acquisition without invoking its storage opener. The first bounded read opens
+and validates the exact shape and voxel domain. A successful source is reused
+without caching response arrays or retaining file handles. Failed opens may be
+retried, including after cancellation. Changes in source content are the
+consumer's revision-checking responsibility; this adapter checks geometry and
+selection compatibility.

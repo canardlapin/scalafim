@@ -3,6 +3,7 @@ package scalafim.fmri.design
 enum DesignError:
   case InvalidId(kind: String, value: String, reason: String)
   case InvalidSchedule(detail: String)
+  case ResponseSupportRejected(receipt: EventSupportReceipt)
   case MissingColumn(name: String)
   case UnknownTable(name: String)
   case InvalidColumnType(name: String, expected: String, actual: String)
@@ -39,6 +40,9 @@ enum DesignError:
         s"invalid $kind id '$value': $reason"
       case InvalidSchedule(detail) =>
         detail
+      case ResponseSupportRejected(receipt) =>
+        val rows = receipt.decisions.filter(_.disposition == EventSupportDisposition.Rejected)
+        s"Response-support policy ${receipt.request.policy} rejected source rows ${rows.map(_.sourceRow + 1).mkString(", ")} in ${receipt.term.getOrElse("term")}"
       case MissingColumn(name) =>
         s"Unknown column: '$name'"
       case UnknownTable(name) =>

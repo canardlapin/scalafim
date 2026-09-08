@@ -395,6 +395,25 @@ final case class EventRowProvenance(
   def canonical: String =
     s"parent=${parent.value}|phase=${phase.fold("")(_.value)}|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
 
+/** A retained event's original table row, without assuming a parent trial.
+  * Both indices are zero-based: eventIndex addresses the lowered term schedule;
+  * sourceRow addresses the input event table before formula filtering.
+  */
+final case class SourceEventRow(
+    term: TermId,
+    eventIndex: Int,
+    sourceRow: Int,
+    blockId: Int,
+    onset: Seconds,
+    duration: Seconds
+):
+  require(eventIndex >= 0 && sourceRow >= 0 && blockId >= 0, "event source indices must be non-negative")
+  require(onset.value.isFinite, "source event onset must be finite")
+  require(duration.value.isFinite && duration.value >= 0.0, "source event duration must be finite and non-negative")
+
+  def canonical: String =
+    s"term=${term.value}|event=$eventIndex|source=$sourceRow|block=$blockId|onset=${java.lang.Double.doubleToLongBits(onset.value)}|duration=${java.lang.Double.doubleToLongBits(duration.value)}"
+
 /** Policy for non-finite continuous event/modulator values.
   *
   * This is deliberately separate from fit-time response missingness: it is a
@@ -645,7 +664,9 @@ final case class DesignAudit(
     orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty,
     policyReceipts: Vector[PolicyReceipt] = Vector.empty,
     rankPreview: Option[RankPreview] = None,
-    diagnostics: Vector[DesignDiagnostic] = Vector.empty
+    diagnostics: Vector[DesignDiagnostic] = Vector.empty,
+    sourceEvents: Vector[SourceEventRow] = Vector.empty,
+    responseSupport: Vector[EventSupportReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -685,7 +706,9 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
+    val support = if responseSupport.isEmpty then "" else responseSupport.map(_.canonical).mkString(";response-support=", "|", "")
+    val sources = if sourceEvents.isEmpty then "" else sourceEvents.map(_.canonical).mkString(";source-events=", ",", "")
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization;policies=$policies;rank=$rank;diagnostics=$diags" + sources + support
 
 /** A stable, cross-platform identity for a compiled matrix and its semantics. */
 final case class DesignFingerprint private (value: String, canonicalEncoding: String)
@@ -1091,7 +1114,8 @@ final case class CoefficientAxis private[design] (
           ordinal = column.ordinal.oneBased,
           origin = origin,
           label = column.label,
-          prettyLabel = column.prettyLabel
+          prettyLabel = column.prettyLabel,
+          hrfScale = column.hrfScale
         )
       }
       scopedColumns.foldLeft[Either[DesignError, Vector[StructuralColumn]]](Right(Vector.empty)) {
@@ -1165,6 +1189,8 @@ object DesignSchema:
       factorLevels = (left.factorLevels ++ right.factorLevels).distinct,
       missingValues = left.missingValues ++ right.missingValues,
       eventProvenance = left.eventProvenance ++ right.eventProvenance,
+      sourceEvents = left.sourceEvents ++ right.sourceEvents,
+      responseSupport = left.responseSupport ++ right.responseSupport,
       centeringReceipts = left.centeringReceipts ++ right.centeringReceipts,
       degenerateModulatorReceipts = left.degenerateModulatorReceipts ++ right.degenerateModulatorReceipts,
       orthogonalizationReceipts = left.orthogonalizationReceipts ++ right.orthogonalizationReceipts,

@@ -191,11 +191,18 @@ object StructuralHypothesisDsl:
       description: String,
       expression: SemanticT
   ):
+    /** Materialize the canonical hypothesis without binding a design axis.
+      * This preserves semantic selectors, response units and typed lowering
+      * failures for APIs that accept structural hypotheses directly.
+      */
+    def toStructural: Either[FitError, StructuralTContrast] =
+      expression.lower(id, description)
+
     def compile(
         schema: DesignSchema,
         rankTolerance: OlsRankTolerance = StructuralHypothesis.DefaultRankTolerance
     ): Either[FitError, CompiledTContrast] =
-      expression.lower(id, description).flatMap(_.compile(schema, rankTolerance))
+      toStructural.flatMap(_.compile(schema, rankTolerance))
 
   /** An unnamed structural F expression assembled from semantic basis effects. */
   final case class SemanticF private[fit] (
@@ -243,11 +250,18 @@ object StructuralHypothesisDsl:
       description: String,
       expression: SemanticF
   ):
+    /** Materialize the canonical hypothesis without binding a design axis.
+      * This preserves semantic selectors, response units and typed lowering
+      * failures for APIs that accept structural hypotheses directly.
+      */
+    def toStructural: Either[FitError, StructuralFContrast] =
+      expression.lower(id, description)
+
     def compile(
         schema: DesignSchema,
         rankTolerance: OlsRankTolerance = StructuralHypothesis.DefaultRankTolerance
     ): Either[FitError, CompiledFContrast] =
-      expression.lower(id, description).flatMap(_.compile(schema, rankTolerance))
+      toStructural.flatMap(_.compile(schema, rankTolerance))
 
   private[fit] final case class CoefficientEffect(
       cell: CellRef,

@@ -306,6 +306,25 @@ class DesignSchemaSuite extends munit.FunSuite:
     )
   }
 
+  test("runwise coefficient axes preserve the realized HRF scaling coordinates") {
+    val sampling = SamplingFrame(blockLens = Seq(8, 8), tr = Seq(1.0))
+    val term = EventTerm(
+      events = Vector(Event.variable(Vector(3.0, 3.0), "amplitude")),
+      onsets = Vector(Seconds(0.0), Seconds(0.0)),
+      blockIds = Vector(0, 1), termTag = Some("scaled"))
+    val convolved = term.convolve(Hrfs.fir(nBasis = 1, span = Seconds(2.0)), sampling,
+      precision = Seconds(0.25), scaling = HrfColumnScaling.UnitMaximumAbsolute)
+    val schema = EventModel.build(Vector(convolved), sampling).designSchema
+    val original = schema.columns.map(_.hrfScale)
+    assert(original.exists(_.divisor != 1.0), "fixture must exercise nonidentity coefficient scaling")
+    for number <- Vector(1, 2) do
+      val run = RunIndex.unsafeOneBased(number)
+      val axis = schema.coefficientAxis.forRunwiseCoefficient(run).fold(error => fail(error.message), identity)
+      assertEquals(axis.columns.map(_.hrfScale), original)
+      val slice = schema.runwiseSlice(run).fold(error => fail(error.message), identity)
+      assertEquals(slice.axis.columns.map(_.hrfScale), slice.sourceColumnIndices.map(original))
+  }
+
   test("legacy axes do not claim a runwise structural identity") {
     val sampling = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
     val legacy = EventModel(

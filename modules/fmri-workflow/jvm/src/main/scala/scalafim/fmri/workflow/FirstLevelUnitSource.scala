@@ -20,11 +20,16 @@ final case class OpenedFirstLevelUnit(
   ): Either[DatasetError, ResponseBlockDatasetBackend] =
     ResponseBlockDatasetBackend.make(datasetId, source, mask, metadata)
 
+/** Whether response storage is prepared now or only at an actual read. */
+enum FirstLevelResponseAccess:
+  case Immediate, OnFirstRead
+
 object FirstLevelUnitSource:
   def open(
       unit: FirstLevelUnit,
       staging: Option[NiftiStagingCache] = None,
-      metadata: DatasetMetadata = DatasetMetadata.Empty
+      metadata: DatasetMetadata = DatasetMetadata.Empty,
+      responseAccess: FirstLevelResponseAccess = FirstLevelResponseAccess.Immediate
   ): Either[DatasetError, OpenedFirstLevelUnit] =
     for
       mask <- readMask(unit.mask)
@@ -35,8 +40,16 @@ object FirstLevelUnitSource:
       runSources <- traverse(unit.runs) { run =>
         for
           path <- filePath(run.bold.location)
-          source <- NiftiResponseBlockSource.open(path, staging, Some(voxelDomain), metadata)
-          _ <- validateRunSource(unit, run, source)
+          source <- responseAccess match
+            case FirstLevelResponseAccess.Immediate =>
+              NiftiResponseBlockSource.open(path,staging,Some(voxelDomain),metadata).flatMap { source =>
+                validateRunSource(unit,run,source).map(_ => source)
+              }
+            case FirstLevelResponseAccess.OnFirstRead =>
+              DeferredResponseBlockSource.make(DatasetShape(unit.shape.space,run.timepoints),voxelDomain,metadata)(() =>
+                NiftiResponseBlockSource.open(path,staging,Some(voxelDomain),metadata).flatMap { source =>
+                  validateRunSource(unit,run,source).map(_ => source)
+                })
         yield RunResponseBlockSource(run.id, source)
       }
       composite <- CompositeResponseBlockSource.make(runSources, metadata)

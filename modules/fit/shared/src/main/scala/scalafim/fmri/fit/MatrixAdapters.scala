@@ -20,7 +20,7 @@ object MatrixAdapters:
     val out = Matrix.newBuilder(matrix.rows, matrix.cols)
     var i = 0
     while i < matrix.data.length do
-      out.updateRowMajor(i, matrix.data(i))
+      out.writeLinear(i, matrix.data(i))
       i += 1
     out.result()
 
@@ -87,7 +87,9 @@ object MatrixAdapters:
     out.result()
 
   def designMatrix(model: FmriModel, timepoints: IndexedSeq[Int]): Either[FitError, DesignMatrix] =
-    DesignMatrix.fromMatrix(fromHrfMatrixRows(model.designMatrix, timepoints))
+    model.eventModel.validateResponseSupportSelection(timepoints.map(i => scalafim.fmri.design.ScanIndex.unsafeOneBased(i + 1)).toVector)
+      .left.map(error => FitError.InvalidFitAxis("event response support", error.message))
+      .flatMap(_ => DesignMatrix.fromMatrix(fromHrfMatrixRows(model.designMatrix, timepoints)))
 
   def responseBlock(series: FmriSeries): Either[FitError, ResponseBlock] =
     ResponseBlock.fromMatrix(fromDMat(series.data))

@@ -1,7 +1,8 @@
 package scalafim.fmri.fit
 
-import scalafim.fmri.design.CoefficientAxis
+import scalafim.fmri.design.{CoefficientAxis, RunCoefficientProjection}
 import scalafim.fmri.model.{FitEngine, FitSummary}
+import gale.backend.Backend
 import gale.linalg.{CholeskyOptions, DMat, DVec, Matrix, Vec}
 
 /** Weighting used when independently fitted runs are combined.
@@ -59,7 +60,7 @@ final case class FixedEffectsRunContribution(
     rowCount: Int,
     timepoints: Vector[Int],
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
-    precisionByVoxel: Vector[DMat],
+    precisionByVoxel: IndexedSeq[DMat],
     precisionWeightedCoefficients: DMat,
     sourceColumnIndices: Vector[Int] = Vector.empty
 ):
@@ -68,9 +69,7 @@ final case class FixedEffectsRunContribution(
   require(timepoints.nonEmpty, "fixed-effects run timepoints must be non-empty")
   require(rowCount == timepoints.length, "fixed-effects run row count must match timepoints")
   require(precisionByVoxel.nonEmpty, "fixed-effects run must contain at least one voxel precision")
-  require(precisionByVoxel.forall(matrix => matrix.rows > 0 && matrix.rows == matrix.cols), "fixed-effects precision matrices must be non-empty and square")
-  require(precisionByVoxel.forall(_.rows == precisionByVoxel.head.rows), "fixed-effects precision matrices must share predictor count")
-  require(precisionByVoxel.forall(FixedEffectsRunContribution.allFinite), "fixed-effects precision matrices must be finite")
+  require(CoefficientMatrixStorage.valid(precisionByVoxel, precisionByVoxel.head.rows), "fixed-effects precision matrices must be finite and share a positive square shape")
   require(precisionWeightedCoefficients.rows == precisionByVoxel.head.rows, "fixed-effects weighted coefficients must match precision rows")
   require(precisionWeightedCoefficients.cols == precisionByVoxel.length, "fixed-effects weighted coefficients must match voxel count")
   require(FixedEffectsRunContribution.allFinite(precisionWeightedCoefficients), "fixed-effects weighted coefficients must be finite")
@@ -81,6 +80,7 @@ final case class FixedEffectsRunContribution(
   require(sourceColumnIndices.distinct.length == sourceColumnIndices.length, "fixed-effects source-column mapping must be unique")
   require(sourceColumnIndices.forall(_ >= 0), "fixed-effects source-column mapping must be non-negative")
 
+  def retainedPrecisionDoubleCount: Long = CoefficientMatrixStorage.retained(precisionByVoxel)
   def predictors: Int = precisionByVoxel.head.rows
   def voxels: Int = precisionByVoxel.length
   def sourceColumns: Vector[Int] =
@@ -148,6 +148,16 @@ final case class FixedEffectsSufficientStatistics(
     else
       Right(copy(contributions = (contributions ++ other.contributions).sortBy(_.runIndex)))
 
+/** Shared preparation retains fit provenance while deferring output materialization. */
+private[fit] final case class PreparedFixedEffectsStatistics(
+    statistics: FixedEffectsSufficientStatistics,
+    columnNames: Vector[String],
+    timepoints: Vector[Int],
+    summary: FitSummary,
+    preparationProvenance: Option[ResponsePreparationProvenance],
+    fitExclusions: Vector[VoxelInferenceExclusion]
+)
+
 object FixedEffects:
   val DefaultPolicy: FixedEffectsPolicy = FixedEffectsPolicy()
 
@@ -156,6 +166,15 @@ object FixedEffects:
       result: RunwiseFmriFitResult,
       policy: FixedEffectsPolicy = DefaultPolicy
   ): Either[FitError, FixedEffectsFmriFitResult] =
+    prepareStatistics(result, policy).flatMap { prepared =>
+      combine(prepared.statistics, prepared.columnNames, prepared.timepoints, prepared.summary,
+        prepared.preparationProvenance, prepared.fitExclusions)
+    }
+
+  private[fit] def prepareStatistics(
+      result: RunwiseFmriFitResult,
+      policy: FixedEffectsPolicy
+  )(using Backend): Either[FitError, PreparedFixedEffectsStatistics] =
     for
       axis <- result.coefficientAxis.toRight(FitError.MissingStructuralIdentity("fixed-effects coefficient axis"))
       selection <- selectVoxels(result, policy)
@@ -167,8 +186,8 @@ object FixedEffects:
         predictors = statistics.coefficientAxis.predictors,
         coefficientScope = scalafim.fmri.model.CoefficientScope.SeparateRunsThenFixedEffects
       )
-      combined <- combine(statistics, names, result.timepoints, fixedSummary, result.preparationProvenance, exclusions)
-    yield combined
+    yield PreparedFixedEffectsStatistics(statistics, names, result.timepoints, fixedSummary,
+      result.preparationProvenance, exclusions)
 
   /** Combine two disjoint fixed-effects statistics folds. */
   def combineStatistics(
@@ -264,29 +283,10 @@ object FixedEffects:
       policy: FixedEffectsPolicy,
       voxelPositions: Vector[Int],
       voxelIndices: Vector[Int]
-  ): Either[FitError, FixedEffectsSufficientStatistics] =
-    val projections = result.runs.flatMap(_.projection)
-    if projections.nonEmpty && projections.length != result.runs.length then
-      return Left(FitError.FixedEffectsIncompatible("all runs must carry a coefficient projection or none may carry one"))
-
-    val sharedColumns =
-      if projections.isEmpty then (0 until axis.predictors).toVector
-      else
-        val perRun = projections.map(_.sharedSourceColumnIndices.toSet)
-        val common = perRun.reduce(_.intersect(_)).toVector.sorted
-        val sharedSomewhere = perRun.foldLeft(Set.empty[Int])(_ union _)
-        val missing = sharedSomewhere.diff(common.toSet).toVector.sorted
-        policy.sharedRunPolicy match
-          case FixedEffectsSharedRunPolicy.RequireAllRuns if missing.nonEmpty =>
-            val names = missing.map(index => axis.columns(index).id.value)
-            return Left(FitError.FixedEffectsIncompatible(
-              s"shared estimands are not supported in every run: ${names.mkString(", ")}"
-            ))
-          case FixedEffectsSharedRunPolicy.RequireAllRuns => ()
-        common
-
-    if sharedColumns.isEmpty then
-      return Left(FitError.FixedEffectsIncompatible("no shared estimand columns remain after run-local projection"))
+  )(using Backend): Either[FitError, FixedEffectsSufficientStatistics] =
+    val sharedColumns = sharedSourceColumns(axis, result.runs.map(_.projection), policy) match
+      case Left(error) => return Left(error)
+      case Right(value) => value
 
     val selectedAxis = axis.select(sharedColumns) match
       case Left(error) => return Left(FitError.FixedEffectsIncompatible(error.message))
@@ -306,12 +306,42 @@ object FixedEffects:
       runPosition += 1
     Right(FixedEffectsSufficientStatistics(selectedAxis, voxelIndices, contributions.result(), policy, sharedColumns))
 
+  private[fit] def sharedSourceColumns(
+      axis: CoefficientAxis,
+      runProjections: Vector[Option[RunCoefficientProjection]],
+      policy: FixedEffectsPolicy
+  ): Either[FitError, Vector[Int]] =
+    val projections = runProjections.flatten
+    if projections.nonEmpty && projections.length != runProjections.length then
+      return Left(FitError.FixedEffectsIncompatible("all runs must carry a coefficient projection or none may carry one"))
+
+    val selected =
+      if projections.isEmpty then (0 until axis.predictors).toVector
+      else
+        val perRun = projections.map(_.sharedSourceColumnIndices.toSet)
+        val common = perRun.reduce(_.intersect(_)).toVector.sorted
+        val sharedSomewhere = perRun.foldLeft(Set.empty[Int])(_ union _)
+        val missing = sharedSomewhere.diff(common.toSet).toVector.sorted
+        policy.sharedRunPolicy match
+          case FixedEffectsSharedRunPolicy.RequireAllRuns if missing.nonEmpty =>
+            val names = missing.map(index => axis.columns(index).id.value)
+            return Left(FitError.FixedEffectsIncompatible(
+              s"shared estimands are not supported in every run: ${names.mkString(", ")}"
+            ))
+          case FixedEffectsSharedRunPolicy.RequireAllRuns => ()
+        common
+
+    if selected.isEmpty then
+      return Left(FitError.FixedEffectsIncompatible("no shared estimand columns remain after run-local projection"))
+
+    Right(selected)
+
   private def contribution(
       run: RunwiseFmriRunResult,
       policy: FixedEffectsPolicy,
       sourceColumns: Vector[Int],
       voxelPositions: Vector[Int]
-  ): Either[FitError, FixedEffectsRunContribution] =
+  )(using Backend): Either[FitError, FixedEffectsRunContribution] =
     policy.weighting match
       case FixedEffectsWeighting.InverseCovariance =>
         val localSourceColumns = run.sourceColumns
@@ -330,7 +360,7 @@ object FixedEffects:
             Left(FitError.FixedEffectsContributionFailure(run.runIndex, -1, "normalized covariance shape does not match coefficients"))
           else
             inverse(localCovariance, run.runIndex, -1).flatMap { basePrecision =>
-              val precision = Vector.newBuilder[DMat]
+              val scales = Vector.newBuilder[Double]
               var invalid: Option[FitError] = None
               var voxel = 0
               while voxel < voxelPositions.length && invalid.isEmpty do
@@ -338,7 +368,7 @@ object FixedEffects:
                 val variance = run.residualVariance(sourceVoxel)
                 if !(variance > 0.0 && variance.isFinite) then
                   invalid = Some(FitError.FixedEffectsContributionFailure(run.runIndex, sourceVoxel, s"residual variance must be positive and finite, got $variance"))
-                else precision += scale(basePrecision, 1.0 / variance)
+                else scales += 1.0 / variance
                 voxel += 1
               invalid match
                 case Some(error) => Left(error)
@@ -352,15 +382,15 @@ object FixedEffects:
                       weighted(row, voxel) = baseWeighted(row, voxel) / run.residualVariance(voxelPositions(voxel))
                       voxel += 1
                     row += 1
-                  Right(FixedEffectsRunContribution(
+                  CoefficientMatrixStorage.scaled(basePrecision, scales.result()).map { precision => FixedEffectsRunContribution(
                     runIndex = run.runIndex,
                     rowCount = run.rowIndices.length,
                     timepoints = run.timepoints,
                     residualDegreesOfFreedom = run.residualDegreesOfFreedom,
-                    precisionByVoxel = precision.result(),
+                    precisionByVoxel = precision,
                     precisionWeightedCoefficients = weighted.result(),
                     sourceColumnIndices = sourceColumns
-                  ))
+                  ) }
             }
 
   private def columnNamesFor(
@@ -387,60 +417,45 @@ object FixedEffects:
   ): Either[FitError, (CoefficientBlock, CoefficientInference, ResidualDegreesOfFreedom)] =
     val predictors = statistics.coefficientAxis.predictors
     val voxels = statistics.voxelIndices.length
-    val totalPrecision = Vector.tabulate(voxels)(_ => Matrix.newBuilder(predictors, predictors))
-    val totalWeighted = Matrix.newBuilder(predictors, voxels)
-    var contributionIndex = 0
-    while contributionIndex < statistics.contributions.length do
-      val contribution = statistics.contributions(contributionIndex)
-      var voxel = 0
-      while voxel < voxels do
-        val precision = contribution.precisionByVoxel(voxel)
-        val builder = totalPrecision(voxel)
-        var row = 0
-        while row < predictors do
-          var col = 0
-          while col < predictors do
-            builder(row, col) = builder(row, col) + precision(row, col)
-            col += 1
-          row += 1
-        row = 0
-        while row < predictors do
-          totalWeighted(row, voxel) = totalWeighted(row, voxel) + contribution.precisionWeightedCoefficients(row, voxel)
-          row += 1
-        voxel += 1
-      contributionIndex += 1
-
+    val fields = statistics.contributions.map(_.precisionByVoxel)
+    val covariance = CoefficientCovariance.fromPrecisionSum(fields) match
+      case Left(error) => return Left(error)
+      case Right(value) => value
     val coefficientMatrix = Matrix.newBuilder(predictors, voxels)
-    val covarianceMatrices = Vector.newBuilder[DMat]
+    val standardErrors = Matrix.newBuilder(predictors, voxels)
     var voxel = 0
     while voxel < voxels do
-      val precision = totalPrecision(voxel).result()
+      val precision = CoefficientMatrixStorage.sumAt(fields, voxel)
       val rhs = Matrix.newBuilder(predictors, 1)
-      var row = 0
-      while row < predictors do
-        rhs(row, 0) = totalWeighted(row, voxel)
-        row += 1
-      inverse(precision, statistics.contributions.head.runIndex, voxel) match
+      statistics.contributions.foreach { contribution =>
+        var row = 0
+        while row < predictors do
+          rhs(row, 0) = rhs(row, 0) + contribution.precisionWeightedCoefficients(row, voxel)
+          row += 1
+      }
+      val solved = for
+        factor <- precision.cholesky(CholeskyOptions(tolerance(precision)))
+          .left.map(e => FitError.FixedEffectsContributionFailure(statistics.contributions.head.runIndex, voxel, e.getMessage))
+        beta <- factor.solve(rhs.result()).left.map(e => FitError.FixedEffectsContributionFailure(statistics.contributions.head.runIndex, voxel, e.getMessage))
+        inverse <- factor.solve(Matrix.eye(predictors)).left.map(e => FitError.FixedEffectsContributionFailure(statistics.contributions.head.runIndex, voxel, e.getMessage))
+      yield (beta, inverse)
+      solved match
         case Left(error) => return Left(error)
-        case Right(covariance) =>
-          precision.cholesky(CholeskyOptions(tolerance(precision))) match
-            case Left(error) => return Left(FitError.FixedEffectsContributionFailure(statistics.contributions.head.runIndex, voxel, error.getMessage))
-            case Right(cholesky) =>
-              cholesky.solve(rhs.result()) match
-                case Left(error) => return Left(FitError.FixedEffectsContributionFailure(statistics.contributions.head.runIndex, voxel, error.getMessage))
-                case Right(beta) =>
-                  row = 0
-                  while row < predictors do
-                    coefficientMatrix(row, voxel) = beta(row, 0)
-                    row += 1
-                  covarianceMatrices += covariance
+        case Right((beta, inverse)) =>
+          var row = 0
+          while row < predictors do
+            coefficientMatrix(row, voxel) = beta(row, 0)
+            val variance = inverse(row, row)
+            if variance < -1e-12 || !variance.isFinite then
+              return Left(FitError.FixedEffectsContributionFailure(statistics.contributions.head.runIndex, voxel, "invalid combined variance"))
+            standardErrors(row, voxel) = math.sqrt(math.max(0.0, variance))
+            row += 1
       voxel += 1
-
     for
       df <- statistics.effectiveResidualDegreesOfFreedom
-      covariance <- CoefficientCovariance.voxelwise(covarianceMatrices.result())
-      inference <- CoefficientInference.fromCovariance(
+      inference <- CoefficientInference.fromExisting(
         scope = CoefficientInferenceScope.All,
+        standardErrors = StandardErrorBlock(standardErrors.result()),
         covariance = covariance,
         varianceScale = ones(voxels),
         residualDegreesOfFreedom = df,
@@ -448,22 +463,19 @@ object FixedEffects:
       )
     yield (CoefficientBlock(coefficientMatrix.result()), inference, df)
 
-  private def inverse(matrix: DMat, runIndex: Int, voxelIndex: Int): Either[FitError, DMat] =
+  private[fit] def inverse(matrix: DMat, runIndex: Int, voxelIndex: Int): Either[FitError, DMat] =
     matrix.cholesky(CholeskyOptions(tolerance(matrix)))
       .left
       .map(error => FitError.FixedEffectsContributionFailure(runIndex, voxelIndex, error.getMessage))
       .flatMap(_.solve(Matrix.eye(matrix.rows)).left.map(error => FitError.FixedEffectsContributionFailure(runIndex, voxelIndex, error.getMessage)))
 
-  private def tolerance(matrix: DMat): Double =
+  private[fit] def tolerance(matrix: DMat): Double =
     var maximum = 0.0
     var index = 0
     while index < matrix.rows do
       maximum = math.max(maximum, math.abs(matrix(index, index)))
       index += 1
     math.max(1e-12, maximum * 1e-12)
-
-  private def scale(matrix: DMat, factor: Double): DMat =
-    Matrix.tabulate(matrix.rows, matrix.cols)((row, col) => matrix(row, col) * factor)
 
   private[fit] def ones(length: Int): DVec =
     val out = Vec.newBuilder(length)

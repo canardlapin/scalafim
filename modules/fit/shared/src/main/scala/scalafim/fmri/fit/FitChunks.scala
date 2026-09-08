@@ -211,11 +211,11 @@ private[fit] object PreparedFitContexts:
             s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
           ))
       interpreter <- FitInterpreters.forPlan(plan)
-      series <- reader
-        .seriesEither(chunkPlan.selection)
-        .left
-        .map(FitChunkPlan.mapDatasetError)
-      context <- interpreter.prepareContext(plan, series)
+      context <- interpreter.prepareContext(
+        plan,
+        chunkPlan.timepoints,
+        reader.seriesEither(chunkPlan.selection).left.map(FitChunkPlan.mapDatasetError)
+      )
     yield context
 
 private[fit] type CompletedFitChunk = CompletedChunk[FitBlockResult]

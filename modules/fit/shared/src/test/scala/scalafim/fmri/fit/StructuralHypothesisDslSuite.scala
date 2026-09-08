@@ -156,6 +156,46 @@ class StructuralHypothesisDslSuite extends munit.FunSuite:
       case other => fail(s"expected a typed cell-scoped basis failure, got $other")
   }
 
+  test("named response lowering composes with selected estimates without losing scientific metadata") {
+    val named = (mismatchHigh.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)) -
+      matchHigh.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)))
+      .named("selected-response", "mismatch minus match response at six seconds")
+    val structural = named.toStructural.fold(error => fail(error.message), identity)
+    val direct = named.compile(schema).fold(error => fail(error.message), identity)
+    val request = FirstLevelEstimateRequest.make(Vector(EstimateOutput.Contrast(structural)), EstimateUncertaintyRequest.Joint)
+      .fold(error => fail(error.message), identity)
+    val selected = request.compile(schema).fold(error => fail(error.message), identity)
+    assertEquals(structural.id, named.id)
+    assertEquals(structural.description, named.description)
+    assertEquals(selected.request.uncertainty, EstimateUncertaintyRequest.Joint)
+    selected.outputs.head match
+      case EstimateOutputMetadata.Contrast(metadata) =>
+        assertEquals(metadata.selectedColumnIds, direct.selectedColumnIds)
+        assertEquals(metadata.responseFunctionals, direct.metadata.responseFunctionals)
+        assertEquals(metadata.responseFunctionals.map(_.units), Vector(ResponseUnits.ResponseValue, ResponseUnits.ResponseValue))
+        assertEquals(metadata.designFingerprint, direct.designFingerprint)
+        assertEquals(metadata.weights.valuesRowMajor, direct.weights.valuesRowMajor)
+      case other => fail(s"Lost response-functional output identity: $other")
+  }
+
+  test("named F lowering preserves row order and typed failures before design binding") {
+    val named = (mismatchHigh.omnibus(Hrfs.SPMG2) + matchHigh.omnibus(Hrfs.SPMG2))
+      .named("structural-joint", "joint mismatch and match response coordinates")
+    val structural = named.toStructural.fold(error => fail(error.message), identity)
+    val direct = named.compile(schema).fold(error => fail(error.message), identity)
+    val canonical = structural.compile(schema).fold(error => fail(error.message), identity)
+    assertEquals(canonical.selectedColumnIds, direct.selectedColumnIds)
+    assertEquals(canonical.weights.valuesRowMajor, direct.weights.valuesRowMajor)
+    val empty = mismatchHigh.omnibus(Hrfs.SPMG1, StructuralHypothesisDsl.BasisScope.NonCanonical)
+      .named("no-shape", "no derivative coordinates")
+    assertEquals(empty.toStructural.left.toOption, empty.compile(schema).left.toOption)
+    assert(empty.toStructural.isLeft)
+    val invalid = mismatchHigh.response(Hrfs.SPMG2, ResponseFunctional.At((-1.0).s))
+      .named("invalid-time", "negative response time")
+    assertEquals(invalid.toStructural.left.toOption, invalid.compile(schema).left.toOption)
+    assert(invalid.toStructural.isLeft)
+  }
+
   test("only a named hypothesis exposes compile") {
     val errors = typeCheckErrors("""
       import scalafim.fmri.fit.StructuralHypothesisDsl.*
