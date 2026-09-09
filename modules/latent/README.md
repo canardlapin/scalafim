@@ -24,6 +24,10 @@ This split keeps representation plans executable through memory, LNA, Zarr, or
 another binding without teaching the mathematical model about physical
 storage.
 
+`DctBasis` preserves the latent specification and normalization API while
+delegating explicit DCT-II column construction to Gale. Temporal representation
+and projection policy remain in this module.
+
 The DCT fixture constants in `DctBasisSuite` can be regenerated with
 `tools/r-parity/fmrilatent-dct-fixtures.R`.
 

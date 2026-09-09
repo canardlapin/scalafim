@@ -1,6 +1,6 @@
 package scalafim.latent
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, DctBasis as GaleDctBasis, DctNormalization}
 
 enum DctNorm(val metadataValue: String):
   case Ortho extends DctNorm("ortho")
@@ -103,27 +103,8 @@ object DctBasis:
       components: Int,
       norm: DctNorm
   ): Either[LatentError, DMat] =
-    val scales = new Array[Double](components)
-    var component = 0
-    while component < components do
-      scales(component) =
-        norm match
-          case DctNorm.Ortho =>
-            if component == 0 then 1.0 / math.sqrt(timepoints.toDouble)
-            else math.sqrt(2.0 / timepoints.toDouble)
-          case DctNorm.None =>
-            1.0
-      component += 1
-
-    val out = new Array[Double](timepoints * components)
-    var time = 0
-    while time < timepoints do
-      component = 0
-      while component < components do
-        val angle =
-          math.Pi * (time.toDouble + 0.5) * component.toDouble / timepoints.toDouble
-        out(time * components + component) = math.cos(angle) * scales(component)
-        component += 1
-      time += 1
-
-    Right(LatentNumerics.matrixFromRowMajor(timepoints, components, out))
+    val normalization = norm match
+      case DctNorm.Ortho => DctNormalization.Orthonormal
+      case DctNorm.None => DctNormalization.Unscaled
+    GaleDctBasis.columns(timepoints, first = 0, count = components, normalization = normalization)
+      .left.map(error => LatentError.ProjectionFailed(error.getMessage))
