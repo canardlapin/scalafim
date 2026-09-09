@@ -60,8 +60,18 @@ final case class CanvasScrollBatch(
   */
 final class CanvasViewerRuntime private[canvas] (
   private var viewerCache: ViewerCache,
-  val rasterCache: CanvasRasterCache
+  private var currentRasterCache: CanvasRasterCache
 ):
+  private val rasterCapacity = currentRasterCache.capacity
+  private val trackedSources = scala.collection.mutable.ArrayBuffer.empty[CanvasImageSource]
+  private var disposed = false
+
+  def rasterCache: CanvasRasterCache =
+    currentRasterCache
+
+  def isDisposed: Boolean =
+    disposed
+
   def compile(
     model: ViewerModel,
     session: ViewerSession
@@ -75,11 +85,39 @@ final class CanvasViewerRuntime private[canvas] (
     model: ViewerModel,
     session: ViewerSession,
     context: CanvasRenderingContext2D
-  )(using CanvasRasterFactory): Either[CanvasViewerError, CanvasViewerRender] =
+  )(using factory: CanvasRasterFactory): Either[CanvasViewerError, CanvasViewerRender] =
     compile(model, session).map { compiled =>
-      val canvasProfile = CanvasRenderer.drawCached(compiled.program, context, rasterCache)
+      given CanvasRasterFactory = tracking(factory)
+      val canvasProfile = CanvasRenderer.drawCached(compiled.program, context, currentRasterCache)
       CanvasViewerRender(compiled, canvasProfile)
     }
+
+  /** Release every browser-native raster this runtime created and drop both
+    * caches. Subsequent renders start from empty caches; disposing twice is a
+    * no-op.
+    */
+  def dispose(): Unit =
+    if !disposed then
+      disposed = true
+      viewerCache = ViewerCache.empty(viewerCache.capacity)
+      currentRasterCache = CanvasRasterCache.empty(rasterCapacity)
+      val sources = trackedSources.toVector
+      trackedSources.clear()
+      sources.foreach(CanvasViewerRuntime.release)
+
+  /** Records every raster source the cache creates so `dispose` can close it
+    * explicitly. The record is bounded by the cache capacity: a source the
+    * cache has since evicted is simply left to the collector.
+    */
+  private def tracking(factory: CanvasRasterFactory): CanvasRasterFactory =
+    if rasterCapacity == 0 then factory
+    else
+      new CanvasRasterFactory:
+        def create(image: intaglio.RasterImage, target: CanvasRenderingContext2D): CanvasImageSource =
+          val source = factory.create(image, target)
+          if trackedSources.size >= rasterCapacity then trackedSources.remove(0)
+          trackedSources += source
+          source
 
   def sampledSliceCount: Int =
     viewerCache.sampledSliceCount
@@ -122,6 +160,19 @@ final class CanvasViewerRuntime private[canvas] (
         case None =>
           viewerCache = currentCache
           Right(CanvasPrefetchProfile(offsets.length, aggregate))
+
+object CanvasViewerRuntime:
+  /** Closes a raster source defensively: `ImageBitmap.close()` when present,
+    * otherwise a zero-sized backing store for canvas-element sources.
+    */
+  private[canvas] def release(source: CanvasImageSource): Unit =
+    try
+      val handle = source.asInstanceOf[js.Dynamic]
+      if js.typeOf(handle.selectDynamic("close")) == "function" then handle.applyDynamic("close")()
+      else if js.typeOf(handle.selectDynamic("width")) == "number" then
+        handle.updateDynamic("width")(0)
+        handle.updateDynamic("height")(0)
+    catch case _: Throwable => ()
 
 /** Thin application-facing owner for one model, session, and Canvas runtime.
   * It retains no DOM node or rendering context: applications own listeners and
@@ -201,6 +252,13 @@ final class CanvasViewerController private[canvas] (
 
   def close(): Unit =
     active = false
+
+  /** Close the controller and release the runtime's caches and browser-native
+    * rasters. Idempotent; `close()` alone keeps the runtime's resources.
+    */
+  def dispose(): Unit =
+    close()
+    runtime.dispose()
 
   private def ensureActive: Either[CanvasViewerError, Unit] =
     if active then Right(()) else Left(CanvasViewerError.ControllerClosed)
