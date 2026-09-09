@@ -32,12 +32,16 @@ enum ReprojectionError:
   *     `bhat`; reprojection needs only this right-hand side, so it is the
   *     retained per-voxel panel);
   *   - `responseSquares` — per-voxel squared norm of the partialled response;
-  *   - `residualDf` — residual degrees of freedom of the '''full''' original
-  *     design (task + nuisance), owned by the fit that produced the product.
+  *   - `rows` — the number of (selected) timepoints the fit used;
+  *   - `nonTaskRank` — the rank of the partialled-out design part (nuisance
+  *     columns; zero when the task design stood alone).
   *
   * With these retained, the OLS fit of the response on any task design whose
   * columns lie in the span of the expanded design is available in closed form
-  * without rereading response data.
+  * without rereading response data. The residual degrees of freedom of that
+  * collapsed refit are `rows - nonTaskRank - conditions` ([[residualDf]]): the
+  * reprojected model spends one coefficient per condition, not one per
+  * expanded column, so its standard errors are exactly the refit's.
   */
 final case class BasisExpandedFitProduct private (
     conditions: Int,
@@ -45,9 +49,11 @@ final case class BasisExpandedFitProduct private (
     gram: DMat,
     crossProducts: DMat,
     responseSquares: DVec,
-    residualDf: Double):
+    rows: Int,
+    nonTaskRank: Int):
   def taskColumns: Int = conditions * basisSize
   def voxels: Int = crossProducts.cols
+  def residualDf: Double = (rows - nonTaskRank - conditions).toDouble
 
 object BasisExpandedFitProduct:
 
@@ -57,7 +63,8 @@ object BasisExpandedFitProduct:
       gram: DMat,
       crossProducts: DMat,
       responseSquares: DVec,
-      residualDf: Double
+      rows: Int,
+      nonTaskRank: Int
   ): Either[ReprojectionError, BasisExpandedFitProduct] =
     val taskColumns = conditions * basisSize
     if conditions < 1 then
@@ -82,10 +89,16 @@ object BasisExpandedFitProduct:
           s"responseSquares has ${responseSquares.length} entries for ${crossProducts.cols} voxels."
         )
       )
-    else if !java.lang.Double.isFinite(residualDf) || residualDf <= 0.0 then
-      Left(ReprojectionError.InvalidProduct(s"residualDf must be finite and positive; got $residualDf."))
+    else if nonTaskRank < 0 then
+      Left(ReprojectionError.InvalidProduct(s"nonTaskRank must be non-negative; got $nonTaskRank."))
+    else if rows - nonTaskRank - conditions < 1 then
+      Left(
+        ReprojectionError.InvalidProduct(
+          s"A collapsed refit needs at least one residual degree of freedom; got $rows rows for $nonTaskRank partialled columns and $conditions conditions."
+        )
+      )
     else
-      Right(BasisExpandedFitProduct(conditions, basisSize, gram, crossProducts, responseSquares, residualDf))
+      Right(BasisExpandedFitProduct(conditions, basisSize, gram, crossProducts, responseSquares, rows, nonTaskRank))
 
 /** Per-voxel maps produced by one reprojection request.
   *

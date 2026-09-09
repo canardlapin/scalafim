@@ -9,7 +9,7 @@ class ContrastReprojectionSuite extends munit.FunSuite:
   private val basisSize = 3
   private val voxels = 4
   private val taskColumns = conditions * basisSize
-  private val residualDf = (timepoints - taskColumns).toDouble
+  private val collapsedDf = (timepoints - conditions).toDouble
 
   /** Deterministic, well-conditioned basis-expanded design and responses. */
   private lazy val fixture: (Array[Array[Double]], Array[Array[Double]]) =
@@ -57,7 +57,7 @@ class ContrastReprojectionSuite extends munit.FunSuite:
       sum
     }
     BasisExpandedFitProduct
-      .make(conditions, basisSize, gram, crossProducts, responseSquares, residualDf)
+      .make(conditions, basisSize, gram, crossProducts, responseSquares, rows = timepoints, nonTaskRank = 0)
       .fold(error => fail(error.message), identity)
 
   /** Independent ground truth: explicit OLS refit of each response on the
@@ -111,7 +111,7 @@ class ContrastReprojectionSuite extends munit.FunSuite:
         rss += residual * residual
         t += 1
       val map = contrast(0) * beta0 + contrast(1) * beta1
-      val se = math.sqrt(rss / residualDf * varianceScale)
+      val se = math.sqrt(rss / collapsedDf * varianceScale)
       maps(voxel) = map
       ses(voxel) = se
       ts(voxel) = map / se
@@ -126,7 +126,7 @@ class ContrastReprojectionSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
     val (maps, ses, ts, varianceScale) = directRefit(weights, contrast)
     assertEqualsDouble(result.contrastVarianceScale, varianceScale, 1e-12)
-    assertEqualsDouble(result.residualDf, residualDf, 1e-12)
+    assertEqualsDouble(result.residualDf, collapsedDf, 1e-12)
     var voxel = 0
     while voxel < voxels do
       assertEqualsDouble(result.contrast(voxel), maps(voxel), 1e-9, s"map voxel $voxel")
@@ -153,25 +153,25 @@ class ContrastReprojectionSuite extends munit.FunSuite:
     BasisExpandedFitProduct.make(
       conditions, basisSize,
       DMat.zeros(taskColumns, taskColumns + 1),
-      product.crossProducts, product.responseSquares, residualDf
+      product.crossProducts, product.responseSquares, timepoints, 0
     ) match
       case Left(ReprojectionError.ShapeMismatch(_)) => ()
       case other => fail(s"expected ShapeMismatch, got $other")
     BasisExpandedFitProduct.make(
       conditions, basisSize, product.gram, product.crossProducts,
-      DVec.zeros(voxels + 1), residualDf
+      DVec.zeros(voxels + 1), timepoints, 0
     ) match
       case Left(ReprojectionError.ShapeMismatch(_)) => ()
       case other => fail(s"expected ShapeMismatch, got $other")
     BasisExpandedFitProduct.make(
       conditions, basisSize, product.gram, product.crossProducts,
-      product.responseSquares, 0.0
+      product.responseSquares, rows = 2, nonTaskRank = 1
     ) match
       case Left(ReprojectionError.InvalidProduct(_)) => ()
       case other => fail(s"expected InvalidProduct, got $other")
     BasisExpandedFitProduct.make(
       0, basisSize, product.gram, product.crossProducts,
-      product.responseSquares, residualDf
+      product.responseSquares, timepoints, 0
     ) match
       case Left(ReprojectionError.InvalidProduct(_)) => ()
       case other => fail(s"expected InvalidProduct, got $other")
