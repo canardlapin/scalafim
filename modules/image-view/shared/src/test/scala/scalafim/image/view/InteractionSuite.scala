@@ -257,3 +257,41 @@ class InteractionSuite extends munit.FunSuite:
       ).isLeft
     )
   }
+
+  test("replaceLayerData swaps scalar voxels and leaves presentation untouched") {
+    val windowed = ViewerReducer.reduce(
+      model,
+      initial,
+      ViewerAction.SetWindow(scalarId, DisplayWindow.unsafe(0.0, 10.0))
+    ).toOption.get
+    val faded = ViewerReducer.reduce(
+      model,
+      windowed,
+      ViewerAction.SetOpacity(scalarId, LayerOpacity.unsafe(0.4))
+    ).toOption.get
+    val replacement = constantVolume(8.0, "next")
+    val (swapped, session) = ViewerReducer.replaceLayerData(model, faded, scalarId, replacement).toOption.get
+    assertEquals(session, faded)
+    val before = images(faded.frame(model).toOption.get, AnatomicalPlane.Axial).head
+    val after = images(session.frame(swapped).toOption.get, AnatomicalPlane.Axial).head
+    assertEqualsDouble(after.alpha, 0.4, 0.0)
+    assertNotEquals(before.image.pixelUnsafe(1, 1), after.image.pixelUnsafe(1, 1))
+    assertEquals(session.state.cursor, faded.state.cursor)
+    assertEquals(session.state.layerPresentation, faded.state.layerPresentation)
+    assertEquals(session.state.panelViews, faded.state.panelViews)
+    assertEquals(session.state.showCrosshair, faded.state.showCrosshair)
+  }
+
+  test("replaceLayerData refuses unknown, non-scalar and space-mismatched volumes") {
+    val replacement = constantVolume(8.0, "next")
+    assert(ViewerReducer.replaceLayerData(model, initial, LayerId.unsafe("missing"), replacement).isLeft)
+    assert(ViewerReducer.replaceLayerData(model, initial, maskId, replacement).isLeft)
+    val other = NeuroVol.fromLinear(
+      PrimitiveBuffers.fillConst[Double](8, 1.0),
+      NeuroSpace(Vector(2, 2, 2)),
+      "other"
+    )
+    ViewerReducer.replaceLayerData(model, initial, scalarId, other) match
+      case Left(ImageViewError.IncompatibleLayerVolume(_, _)) => ()
+      case otherResult => fail(s"expected IncompatibleLayerVolume, got $otherResult")
+  }

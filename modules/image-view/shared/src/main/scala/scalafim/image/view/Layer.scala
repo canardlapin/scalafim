@@ -26,6 +26,8 @@ enum ImageViewError:
   case InvalidOrthogonalLayout(margin: Double, gap: Double)
   case SamplingFailed(id: LayerId, cause: SlicePlanError)
   case GraphicsFailure(cause: GraphicsError)
+  case LayerNotScalar(id: LayerId)
+  case IncompatibleLayerVolume(id: LayerId, reason: String)
 
   def message: String =
     this match
@@ -69,6 +71,10 @@ enum ImageViewError:
         s"layer '${id.asString}' could not be sampled: ${cause.message}"
       case GraphicsFailure(cause) =>
         cause.message
+      case LayerNotScalar(id) =>
+        s"viewer layer '${id.asString}' is not a static scalar volume"
+      case IncompatibleLayerVolume(id, reason) =>
+        s"viewer layer '${id.asString}' cannot take the replacement volume: $reason"
 
 opaque type LayerId = String
 
@@ -203,6 +209,10 @@ sealed trait SliceLayer:
   def supportsWindow: Boolean
   def supportsThreshold: Boolean
   private[view] def sourceSpace: VolumeSpace
+  /** Replace a static scalar source. Sampling, colorizer, mapping and
+    * opacity stay on the layer; presentation lives on the session.
+    */
+  def replaceStaticScalar(volume: NeuroVol[Double]): Either[ImageViewError, SliceLayer]
   private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
   private[view] def sample(
     grid: SliceGrid,
@@ -276,6 +286,16 @@ object SliceLayer:
     private[view] def sourceSpace: VolumeSpace =
       source.space
 
+    def replaceStaticScalar(volume: NeuroVol[Double]): Either[ImageViewError, SliceLayer] =
+      if summon[ClassTag[A]].runtimeClass != classOf[Double] then
+        Left(ImageViewError.LayerNotScalar(id))
+      else if !source.timeInvariant then
+        Left(ImageViewError.IncompatibleLayerVolume(id, "temporal sources cannot take a static scalar swap"))
+      else if volume.volumeSpace != source.space then
+        Left(ImageViewError.IncompatibleLayerVolume(id, "replacement volume space differs from the layer source"))
+      else
+        Right(copy(source = VolumeSource.static(volume).asInstanceOf[VolumeSource[A]]))
+
     private[view] def resolve(
       timepoint: Int
     ): Either[ImageViewError, ResolvedLayerFrame] =
@@ -337,6 +357,17 @@ final case class ViewerModel private (
 
   def layer(id: LayerId): Option[SliceLayer] =
     layers.find(_.id == id)
+
+  /** Replace one static scalar layer's volume. Layer identity, sampling,
+    * colorizer and mapping are kept; the caller keeps the existing session.
+    */
+  def replaceLayerVolume(id: LayerId, volume: NeuroVol[Double]): Either[ImageViewError, ViewerModel] =
+    layers.indexWhere(_.id == id) match
+      case -1 => Left(ImageViewError.UnknownLayer(id))
+      case index =>
+        layers(index).replaceStaticScalar(volume).flatMap { replaced =>
+          ViewerModel.make(referenceSpace, layers.updated(index, replaced))
+        }
 
 object ViewerModel:
   def make(

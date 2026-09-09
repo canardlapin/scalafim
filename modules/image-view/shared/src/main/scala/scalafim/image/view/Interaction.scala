@@ -213,6 +213,15 @@ object ViewerReducer:
           session.copy(state = state)
         }
 
+  /** Swap a layer's scalar volume without touching session presentation. */
+  def replaceLayerData(
+      model: ViewerModel,
+      session: ViewerSession,
+      layer: LayerId,
+      volume: NeuroVol[Double]
+  ): Either[ImageViewError, (ViewerModel, ViewerSession)] =
+    model.replaceLayerVolume(layer, volume).map(next => (next, session))
+
 object ViewerEvents:
   def pick(
     frame: ViewerFrame,
