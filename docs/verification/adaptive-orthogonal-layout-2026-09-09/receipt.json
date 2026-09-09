@@ -1,0 +1,35 @@
+{
+  "schema": "scalafim.adaptive-layout-verification.v1",
+  "recorded_utc": "2026-09-09T20:31:09.180519+00:00",
+  "issue": "bd-01M23XCRSS05C30WNWZKCM74DM",
+  "native_head": "ce95fb5649ff1fe51ba627bcfe23bbef6a621f7b",
+  "source_sha256": {
+    "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala": "18abf9fdd0af022fd6f72e62d63efe3235201b0119aa9390fea5fe60161c008f",
+    "modules/image-view/shared/src/main/scala/scalafim/image/view/Interaction.scala": "12a9494febe9eca9e9e0697a38e132bcd1e4a3aee2a003d89d96aa94fb747e98",
+    "modules/image-view/shared/src/test/scala/scalafim/image/view/AdaptiveLayoutSuite.scala": "acf963847e864135645d1a7ec9e5bcae084657cad043101fa65a2db6aa09953c",
+    "docs/image-viewer.md": "2218b162c2bae860d0a0233e023539999c003145b1e75d6211660c17e7323328"
+  },
+  "command": [
+    "sbt",
+    "imageViewJVM/test",
+    "imageViewJS/test",
+    "imageViewJavafxJVM/test",
+    "imageViewJava2dJVM/test",
+    "imageViewCanvasJS/test"
+  ],
+  "exit_code": 0,
+  "tests": {
+    "imageViewJVM": 35,
+    "imageViewJS": 35,
+    "imageViewJavafxJVM": 2,
+    "imageViewJava2dJVM": 2,
+    "imageViewCanvasJS": 5
+  },
+  "test_log_sha256": "67ec0c861f2835e1fcd0e056c6173691943d26c2316181ff648a96d00b3e7288",
+  "limits": [
+    "Optimizes area among L, row and column arrangements; not arbitrary rectangle packing.",
+    "Renderer checks are toolkit-free and do not establish native app visual acceptance.",
+    "Native implementation is uncommitted; consumer adoption and persisted UI behavior require their own evidence.",
+    "Existing linop4s build-definition lint warning is unrelated to this source change."
+  ]
+}
