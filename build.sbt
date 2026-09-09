@@ -21,7 +21,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // Immutable source dependency: sbt clones this exact Gale commit into its
 // staging area, so a clean checkout never depends on publishLocal or a sibling
 // developer checkout.
-lazy val galeRevision = "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+lazy val galeRevision = "4485cc775ae8233789b019d24a920f86391e9523"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -127,7 +127,7 @@ lazy val alderTuneJS         = ProjectRef(alderBuild, "tuneJS")
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
 // explicit local-development override.
-lazy val intaglioRevision = "55658abfbbfed0c9a36ab612b38bd8f0677bc158"
+lazy val intaglioRevision = "2c8fd210376ee05098daeecc5bf675d126233187"
 lazy val intaglioBuild =
   uri(
     sys.props.getOrElse(
