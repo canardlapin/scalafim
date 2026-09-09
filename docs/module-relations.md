@@ -44,7 +44,7 @@ standalone Gale
 +-- spatial           also depends on image, surface
 +-- model             also depends on design, dataset
 +-- fit               also depends on model, ar
-+-- group             also depends on image, dataset, design, fit
++-- group             also depends on image, dataset, design, fit, standalone resample4s
 
 pipeline
 
@@ -77,7 +77,7 @@ image
 |   +-- surface-view   also depends on Intaglio core
 +-- threshold         also depends on standalone Gale
 +-- motion            also depends on standalone Gale
-+-- group             also depends on standalone Gale, dataset, design, fit
++-- group             also depends on standalone Gale and resample4s, dataset, design, fit
 
 standalone bids4s
 +-- motion JVM
@@ -165,7 +165,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `fit` | Numerical fit engines over pure model plans, with explicit synchronous `DatasetSeriesReader` and effectful `OpenedDataset[F]` execution boundaries. | `model`, `ar`; standalone Gale | Model description, dataset storage, hidden blocking readers, or group inference. |
 | `mvpa` | One identified-evidence architecture for predictive modelling and relational geometry: exact axes and columns, observation and relation evidence, validation/cross-fit and ordered-pairing designs, measurement frames, typed estimands/results, direct fMRI readout and dataset evidence construction, spatial frame builders, and portable kernels. | `fit`, `dataset`, `image`, `surface`, `atlas`, `locus-data`; standalone Gale, multivar, resample4s, and Alder | Generic linear algebra, generic resampling or learner lifecycles, dataset storage backends, atlas loading, platform IO, duplicate axis/feature-set/result algebras, or hidden materialization. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
-| `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `fit`; standalone Gale | First-level model fitting or thresholding internals. |
+| `group` | Second-level/group GLM, meta-analysis, group contrasts, bounded one-sample symmetry inference, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `fit`; standalone Gale and resample4s core | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
 | `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |

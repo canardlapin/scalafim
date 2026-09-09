@@ -23,7 +23,10 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // developer checkout.
 lazy val galeRevision = "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
 lazy val galeBuild =
-  uri(s"https://github.com/canardlapin/gale.git#$galeRevision")
+  sys.props
+    .get("scalafim.gale.build")
+    .map(path => file(path).getCanonicalFile.toURI)
+    .getOrElse(uri(s"https://github.com/canardlapin/gale.git#$galeRevision"))
 lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")
 lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
 
@@ -965,8 +968,8 @@ lazy val group =
     .settings(
       name := "scalafim-fmri-group"
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, resample4sCoreJVM))
+    .jsConfigure(_.dependsOn(galeCoreJS, resample4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val groupJS  = group.js
