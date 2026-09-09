@@ -4,6 +4,7 @@ import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.typedarray.{Float32Array, Uint32Array}
 
+import intaglio.*
 import scalafim.surface.view.*
 
 /** Thin interpreter over a host-owned Three.js namespace. The host may pass an
@@ -16,7 +17,8 @@ final class ThreeJsRuntime private (
   renderer: js.Dynamic,
   scene: js.Dynamic,
   camera: js.Dynamic,
-  raycaster: js.Dynamic
+  raycaster: js.Dynamic,
+  options: ThreeJsRuntimeOptions
 ) extends ThreeSurfaceRuntime:
   private final case class Bundle(
     surface: SurfaceId,
@@ -31,9 +33,11 @@ final class ThreeJsRuntime private (
   private val bundles = mutable.LinkedHashMap.empty[SurfaceId, Bundle]
   private var slots = Vector.empty[SurfaceViewSlot]
   private var canvasSize = ThreeCanvasSize.unsafe(1, 1)
+  private var disposed = false
 
   def contextState: ThreeContextState =
-    if missing(canvas) || missing(renderer) then ThreeContextState.Absent
+    if disposed then ThreeContextState.Lost
+    else if missing(canvas) || missing(renderer) then ThreeContextState.Absent
     else
       try
         val context = renderer.applyDynamic("getContext")()
@@ -179,7 +183,7 @@ final class ThreeJsRuntime private (
   def draw(): Either[ThreeSurfaceError, Unit] =
     attempt("draw"):
       renderer.updateDynamic("autoClear")(false)
-      ThreeJsRuntime.clearFrame(renderer)
+      ThreeJsRuntime.clearFrame(renderer, options)
       slots.foreach: slot =>
         bundles.valuesIterator.foreach: bundle =>
           val visible = bundle.surface == slot.surface
@@ -229,9 +233,27 @@ final class ThreeJsRuntime private (
     attempt("backend disposal"):
       bundles.valuesIterator.foreach(disposeBundle)
       bundles.clear()
-      renderer.applyDynamic("dispose")()
       slots = Vector.empty
+      if !disposed then
+        disposed = true
+        renderer.applyDynamic("dispose")()
+        loseContext()
       ()
+
+  /** `renderer.dispose()` releases Three.js state but leaves the WebGL context
+    * alive until the canvas is collected, and browsers evict the oldest live
+    * contexts once a small budget is exceeded. Forcing loss returns this
+    * canvas's slot immediately.
+    */
+  private def loseContext(): Unit =
+    try
+      val webgl2 = canvas.applyDynamic("getContext")("webgl2")
+      val context = if missing(webgl2) then canvas.applyDynamic("getContext")("webgl") else webgl2
+      if !missing(context) && js.typeOf(context.selectDynamic("getExtension")) == "function" then
+        val extension = context.applyDynamic("getExtension")("WEBGL_lose_context")
+        if !missing(extension) && js.typeOf(extension.selectDynamic("loseContext")) == "function" then
+          extension.applyDynamic("loseContext")()
+    catch case _: Throwable => ()
 
   private def decodePick(bundle: Bundle, slot: SurfaceViewSlot, hit: js.Dynamic): Option[ThreePick] =
     val faceIndexValue = hit.selectDynamic("faceIndex")
@@ -356,8 +378,13 @@ object ThreeJsRuntime:
       |}
       |""".stripMargin
 
-  private[three] def clearFrame(renderer: js.Dynamic): Unit =
-    renderer.applyDynamic("setClearColor")(0xffffff, 1.0)
+  private[three] def clearFrame(
+    renderer: js.Dynamic,
+    options: ThreeJsRuntimeOptions = ThreeJsRuntimeOptions.Default
+  ): Unit =
+    val color = options.clearColor
+    val rgb = (color.red << 16) | (color.green << 8) | color.blue
+    renderer.applyDynamic("setClearColor")(rgb, color.alpha.toDouble / 255.0)
     // The previous frame leaves the last bilateral viewport as the active
     // scissor. Clear with scissoring disabled or the first viewport retains
     // old geometry and visibly tears during a morph.
@@ -365,7 +392,11 @@ object ThreeJsRuntime:
     renderer.applyDynamic("clear")(true, true, true)
     renderer.applyDynamic("setScissorTest")(true)
 
-  def create(three: js.Dynamic, canvas: js.Dynamic): Either[ThreeSurfaceError, ThreeJsRuntime] =
+  def create(
+    three: js.Dynamic,
+    canvas: js.Dynamic,
+    options: ThreeJsRuntimeOptions = ThreeJsRuntimeOptions.Default
+  ): Either[ThreeSurfaceError, ThreeJsRuntime] =
     if three == null || js.isUndefined(three) || canvas == null || js.isUndefined(canvas) then
       Left(ThreeSurfaceError.ContextUnavailable)
     else
@@ -373,14 +404,14 @@ object ThreeJsRuntime:
         val renderer = js.Dynamic.newInstance(three.selectDynamic("WebGLRenderer"))(js.Dynamic.literal(
           canvas = canvas,
           antialias = true,
-          alpha = false,
+          alpha = options.clearColor.alpha < 255,
           preserveDrawingBuffer = false
         ))
         val scene = js.Dynamic.newInstance(three.selectDynamic("Scene"))()
         val camera = js.Dynamic.newInstance(three.selectDynamic("PerspectiveCamera"))()
         camera.updateDynamic("matrixAutoUpdate")(false)
         val raycaster = js.Dynamic.newInstance(three.selectDynamic("Raycaster"))()
-        val runtime = new ThreeJsRuntime(three, canvas, renderer, scene, camera, raycaster)
+        val runtime = new ThreeJsRuntime(three, canvas, renderer, scene, camera, raycaster, options)
         runtime.contextState match
           case ThreeContextState.Available => Right(runtime)
           case ThreeContextState.Lost => Left(ThreeSurfaceError.ContextLost)

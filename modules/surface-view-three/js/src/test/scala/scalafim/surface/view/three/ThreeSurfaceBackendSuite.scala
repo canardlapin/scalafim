@@ -70,6 +70,78 @@ class ThreeSurfaceBackendSuite extends munit.FunSuite:
       Vector("color:16777215:1", "scissor:false", "clear:true:true:true", "scissor:true")
     )
 
+  test("typed runtime clear colour survives resize and draw cycles"):
+    val observed = ArrayBuffer.empty[(Int, Double)]
+    val setClearColor: js.Function2[Int, Double, Unit] = (color, alpha) =>
+      observed += color -> alpha
+    val noOpScissor: js.Function1[Boolean, Unit] = _ => ()
+    val noOpClear: js.Function3[Boolean, Boolean, Boolean, Unit] = (_, _, _) => ()
+    val isContextLost: js.Function0[Boolean] = () => false
+    val webgl = js.Dynamic.literal(isContextLost = isContextLost)
+    val renderer = js.Dynamic.literal(
+      setClearColor = setClearColor,
+      setScissorTest = noOpScissor,
+      clear = noOpClear,
+      getContext = (() => webgl): js.Function0[js.Any],
+      setPixelRatio = ((_: Double) => ()): js.Function1[Double, Unit],
+      setSize = ((_: Int, _: Int, _: Boolean) => ()): js.Function3[Int, Int, Boolean, Unit]
+    )
+    val three = js.Dynamic.literal(
+      WebGLRenderer = FakeThree.constructing(renderer),
+      Scene = FakeThree.constructing(js.Dynamic.literal()),
+      PerspectiveCamera = FakeThree.constructing(js.Dynamic.literal()),
+      Raycaster = FakeThree.constructing(js.Dynamic.literal())
+    )
+    val options = ThreeJsRuntimeOptions(Rgba32.unsafe(18, 24, 32, 128))
+    val runtime = ThreeJsRuntime.create(three, js.Dynamic.literal(), options).toOption.get
+
+    assertEquals(runtime.resize(ThreeCanvasSize.unsafe(320, 240)), Right(()))
+    assertEquals(runtime.draw(), Right(()))
+    assertEquals(runtime.resize(ThreeCanvasSize.unsafe(640, 480, 2.0)), Right(()))
+    assertEquals(runtime.draw(), Right(()))
+
+    assertEquals(observed.map(_._1).toVector, Vector(0x121820, 0x121820))
+    observed.foreach((_, alpha) => assertEqualsDouble(alpha, 128.0 / 255.0, 0.0))
+
+  test("disposal forces WebGL context loss exactly once and reports the context as lost"):
+    var loseContextCalls = 0
+    var rendererDisposals = 0
+    val loseContext: js.Function0[Unit] = () => loseContextCalls += 1
+    val extension = js.Dynamic.literal(loseContext = loseContext)
+    val isContextLost: js.Function0[Boolean] = () => false
+    val getExtension: js.Function1[String, js.Any] = name =>
+      if name == "WEBGL_lose_context" then extension else null
+    val webgl = js.Dynamic.literal(isContextLost = isContextLost, getExtension = getExtension)
+    val getContext: js.Function1[String, js.Any] = kind =>
+      if kind == "webgl2" then js.undefined else if kind == "webgl" then webgl else null
+    val canvas = js.Dynamic.literal(getContext = getContext)
+    val renderer = js.Dynamic.literal(
+      getContext = (() => webgl): js.Function0[js.Any],
+      dispose = (() => rendererDisposals += 1): js.Function0[Unit]
+    )
+    val three = js.Dynamic.literal(
+      WebGLRenderer = FakeThree.constructing(renderer),
+      Scene = FakeThree.constructing(js.Dynamic.literal()),
+      PerspectiveCamera = FakeThree.constructing(js.Dynamic.literal()),
+      Raycaster = FakeThree.constructing(js.Dynamic.literal())
+    )
+    val runtime = ThreeJsRuntime.create(three, canvas).toOption.get
+    assertEquals(runtime.contextState, ThreeContextState.Available)
+    assertEquals(runtime.dispose(), Right(()))
+    assertEquals(runtime.dispose(), Right(()))
+    assertEquals(loseContextCalls, 1)
+    assertEquals(rendererDisposals, 1)
+    assertEquals(runtime.contextState, ThreeContextState.Lost)
+
+  private object FakeThree:
+    /** A `new`-able JavaScript constructor whose instances are `instance`. */
+    def constructing(instance: js.Dynamic): js.Dynamic =
+      val factory: js.Function0[js.Any] = () => instance
+      js.Dynamic.newInstance(js.Dynamic.global.Function)(
+        "factory",
+        "return function() { return factory(); };"
+      ).applyDynamic("call")(null, factory)
+
   private final class RecordingRuntime(var state: ThreeContextState = ThreeContextState.Available)
       extends ThreeSurfaceRuntime:
     val calls = ArrayBuffer.empty[String]
