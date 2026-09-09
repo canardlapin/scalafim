@@ -1,0 +1,66 @@
+[
+  {
+    "n": 80,
+    "group": "quarter",
+    "nuisance": "smooth",
+    "variance": "spread",
+    "error": "normal",
+    "tau2": 0.0
+  },
+  {
+    "n": 80,
+    "group": "quarter",
+    "nuisance": "smooth",
+    "variance": "reverse",
+    "error": "skew",
+    "tau2": 0.0
+  },
+  {
+    "n": 8,
+    "group": "balanced",
+    "nuisance": "smooth",
+    "variance": "reverse",
+    "error": "normal",
+    "tau2": 0.2
+  },
+  {
+    "n": 20,
+    "group": "quarter",
+    "nuisance": "smooth",
+    "variance": "reverse",
+    "error": "skew",
+    "tau2": 0.0
+  },
+  {
+    "n": 20,
+    "group": "quarter",
+    "nuisance": "smooth",
+    "variance": "reverse",
+    "error": "normal",
+    "tau2": 0.2
+  },
+  {
+    "n": 20,
+    "group": "quarter",
+    "nuisance": "smooth",
+    "variance": "reverse",
+    "error": "normal",
+    "tau2": 0.0
+  },
+  {
+    "n": 8,
+    "group": "balanced",
+    "nuisance": "smooth",
+    "variance": "reverse",
+    "error": "normal",
+    "tau2": 0.0
+  },
+  {
+    "n": 20,
+    "group": "balanced",
+    "nuisance": "smooth",
+    "variance": "flat",
+    "error": "normal",
+    "tau2": 0.0
+  }
+]

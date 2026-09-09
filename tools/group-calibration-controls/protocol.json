@@ -1,0 +1,350 @@
+{
+  "schema": "group-controlled-calibration/v1",
+  "pilot": [
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "none",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "none",
+      "variance": "flat",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "none",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "none",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "spike",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "spike",
+      "variance": "flat",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "spike",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "spike",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "dominant",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "dominant",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "dominant",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "dominant",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "t3",
+      "tau2": 0.0
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.2
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "t3",
+      "tau2": 0.0
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.2
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "t3",
+      "tau2": 0.0
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.2
+    }
+  ],
+  "pilotStudies": 2000,
+  "pilotDraws": 499,
+  "pilotRoots": [
+    2026091601,
+    2026091602
+  ],
+  "confirmationStudies": 10000,
+  "confirmationDraws": 999,
+  "confirmationRoots": [
+    2026091701,
+    2026091702
+  ],
+  "estimatedStudies": 10000,
+  "estimatedRoots": [
+    2026091801,
+    2026091802
+  ]
+}

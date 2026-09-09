@@ -11,7 +11,7 @@ import scala.collection.immutable.VectorMap
   *   - `Shared` — OLS: one `(XᵀX)⁻¹` for all samples, scaled per sample by the
   *     estimated residual variance.
   *   - `PerSample` — weighted GLM: one `(XᵀWX)⁻¹` per sample, variances treated
-  *     as known (no residual scaling).
+  *     as known for z testing, or multiplied by the selected mKH scale.
   */
 sealed trait GroupCovariance:
   def terms: Int
@@ -30,7 +30,8 @@ object GroupCovariance:
     def contrastVariance(weights: Array[Double], sample: Int): Double =
       quadForm(weights, inverse) * residualVariance(sample)
 
-  /** Per-sample `(XᵀWX)⁻¹`, stored compactly as one row of packed lower-triangle
+  /** Per-sample coefficient covariance (including any inference adjustment),
+    * stored compactly as one row of packed lower-triangle
     * entries per sample in a single `[samples × termCount(termCount+1)/2]`
     * matrix — one backing array rather than one matrix object per sample.
     */
@@ -87,8 +88,12 @@ final case class GroupFit(
     covariance: GroupCovariance,
     statistic: GroupStatistic,
     heterogeneity: Option[Heterogeneity],
-    space: GroupSpace
+    space: GroupSpace,
+    failures: Vector[GroupSampleFailure] = Vector.empty
 ):
+  require(failures.map(_.sample).distinct.length == failures.length, "sample failure indices must be unique")
+  require(failures.forall(f => f.sample >= 0 && f.sample < space.nSamples), "sample failure indices must match space")
+
   require(coefficients.rows == termNames.length, "coefficient rows must match term names")
   require(standardErrors.rows == termNames.length, "standard error rows must match term names")
   require(coefficients.cols == standardErrors.cols, "coefficient and standard error samples must align")
@@ -126,7 +131,8 @@ final case class GroupFit(
           statistics = stats.result(),
           pValues = ps.result(),
           statistic = statistic,
-          space = space
+          space = space,
+          failures = failures
         )
       )
 

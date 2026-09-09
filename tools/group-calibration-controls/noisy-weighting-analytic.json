@@ -1,0 +1,12 @@
+[
+  {
+    "df": 8,
+    "varianceUnderestimateFactor": 1.5,
+    "limitingTypeI": 0.10953118385237509
+  },
+  {
+    "df": 40,
+    "varianceUnderestimateFactor": 1.0555555555555556,
+    "limitingTypeI": 0.056431442700664275
+  }
+]

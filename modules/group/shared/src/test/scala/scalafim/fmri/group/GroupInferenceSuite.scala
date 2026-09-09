@@ -15,15 +15,11 @@ class GroupInferenceSuite extends munit.FunSuite:
   private def column(values: Double*): DMat =
     GroupTestMatrix.fromRows(values.toVector.map(v => Vector(v)))
 
-  test("singular per-sample WLS system propagates NaN, not a bogus finite value") {
-    // Rank-deficient design (two identical columns) makes XᵀWX singular.
-    val design = value(GroupDesign.fromMatrix(GroupTestMatrix.fromRows(Vector(Vector(1.0, 1.0), Vector(1.0, 1.0), Vector(1.0, 1.0))), Vector("a", "b")))
-    val data = value(GroupData.single(subjects(3), GroupSpace.SampleAxis(1), "c", column(1.0, 2.0, 3.0), Some(column(0.1, 0.1, 0.1))))
-    val fit = value(GroupEngine.fit(value(GroupModel.build(data, design, GroupWeighting.InverseVariance)))).fit("c").get
-
-    assert(fit.coefficients(0, 0).isNaN)
-    assert(fit.heterogeneity.get.q(0).isNaN)
-    assert(value(GroupContrast.term("a").evaluate(fit)).statistics(0).isNaN)
+  test("globally rank-deficient weighted designs return a typed failure") {
+    val design = value(GroupDesign.fromMatrix(GroupTestMatrix.fromRows(Vector.fill(3)(Vector(1.0, 1.0))), Vector("a", "b")))
+    val data = value(GroupData.withVariances(subjects(3), GroupSpace.SampleAxis(1), "c", column(1.0, 2.0, 3.0), column(0.1, 0.1, 0.1)))
+    val result = GroupEngine.fit(value(GroupModel.build(data, design, GroupWeighting.InverseVariance)))
+    assert(result.left.toOption.exists { case GroupError.SingularDesign(_) => true; case _ => false })
   }
 
   test("inverse-variance meta-regression recovers a covariate slope") {

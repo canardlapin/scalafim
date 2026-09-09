@@ -1,0 +1,218 @@
+[
+  {
+    "index": 0,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "5a4f7ff619616234ece4dda1a7ca6be86045f49fcb5ee2f86ab902129825a74b",
+    "nativeShiftSha256": "b0c085993d8a372c088cb2b335c84ea055a6bb026df9d5208a06bc142efef52c"
+  },
+  {
+    "index": 1,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "d8e9ac6aa068ac1f9ffe95ecb9cf52ba50aa427337845e3d3bfb14558de1dfea",
+    "nativeShiftSha256": "6d35a30613b39cc1ec1cabcc0b9fc140a6e4b9d2d5c10a79869425fafc1add61"
+  },
+  {
+    "index": 2,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "5c0f977125afe1a629d73c6452f32bb7aeb24915293b2d5562e3717447786229",
+    "nativeShiftSha256": "1134086cb5e8f440a1a5bc2b628c661fed058906823791541f256ae47b4b1525"
+  },
+  {
+    "index": 3,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "be269bab2bee2ec39a9292572e8a5b3096aca6c3d843eb9fca9b4a0e1fef96b4",
+    "nativeShiftSha256": "bc83b17c5727a2308b2845c6034bc3c23d60a63100829cbf931c83e4f00c3b89"
+  },
+  {
+    "index": 4,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "3d826cd1d23f614bc805996d6dd4140dcf8a9e5919ad341148d982f9b0e05d48",
+    "nativeShiftSha256": "c112b80923a541a913aaeeb13a9725cef909bcaa89a7b2ed2fccfe5d8b88c023"
+  },
+  {
+    "index": 5,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "5125229ba1026e278be325420137b5349c225eeb14dc334fefd91d96e8e1aae8",
+    "nativeShiftSha256": "e6cd4317edc705b11c3891cef55dc48fe94a32a7912bfb0bf97356e189db5a67"
+  },
+  {
+    "index": 6,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "bbb9880e1fce69701235bc91c98b8d8c5ea5cf855d762d084ef716c0f3cfbfcd",
+    "nativeShiftSha256": "aa90a3d98f2587dc2d59d876232abdf7d378ff24e2ebce1b9b69d37f3754abca"
+  },
+  {
+    "index": 7,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "7acd30b4ae0da1a96f015cc6055ef5ae7270883b781c81caf4543684bdb74de7",
+    "nativeShiftSha256": "79bb1b723bedd0eb2a131aeee79e114dba2d2162a54eab9725f4af754159ed62"
+  },
+  {
+    "index": 8,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "49eb9c54b7edf1635d74f0dd5b53984ad47ce23e6a233251afd4533390c57168",
+    "nativeShiftSha256": "4d7ec167dd5a59473ade87a06c4e8e94c32eef94aeca7fdb743c1bf8b433324f"
+  },
+  {
+    "index": 9,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "b85fa8b69025774150319386ace78f4294bc33385915d72499371d4127b2b0ce",
+    "nativeShiftSha256": "aacb971ed6592acd349c074f86ae613d07a335d4ce1c56fb46af05864b03e6c6"
+  },
+  {
+    "index": 10,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "b426f586d51c2e52aa39e891697cb97bb297a6ac2d87eb5d4ef4855e392d3ddf",
+    "nativeShiftSha256": "89b6f4477de07aa08ac069caed1975d09bd25253ef609f1a243d704b8cf85506"
+  },
+  {
+    "index": 11,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "16008039032648882e3b7847d301ef92f2ca47b2e5492ebf93b369b0157bfed4",
+    "nativeShiftSha256": "ce3f0d29cdc8514ef68feef3280ab5291dc67b5d9d728a28a85f8ff0dee9a8ef"
+  },
+  {
+    "index": 12,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "839db5dfa5d8cbdcce4a8746ca8afe72342f8fb9a3225706324349494267c1e2",
+    "nativeShiftSha256": "ea5d874cc3aaf18a29629de33a5e6d4243843e0645ccfac1e78d385a879ba4fc"
+  },
+  {
+    "index": 13,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "1d7521fdbe1c172f71ac0ef1fec6187b9c0ad13f5935cb034b5231122605870b",
+    "nativeShiftSha256": "07717c6f9c05c70a53c2b410002842a317ea89840a06cd6f1844cc5242ab3bdf"
+  },
+  {
+    "index": 14,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "47cea9334ae84f89b1173bf6759148891f0e6d48c1604489805ffd35efdb761f",
+    "nativeShiftSha256": "1231498c1d41bed343efa89d3f03d83c7acf4a31537dfc35305d4180e8375078"
+  },
+  {
+    "index": 15,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "61998c9e481d559b03f038e4e2c174c2c8db41b692e8cf73a6adc7c48c69c694",
+    "nativeShiftSha256": "ff000830b422c4ea2bc12d9d2d83fc1e99f3c21b9e081c7953be5cde0c151e95"
+  },
+  {
+    "index": 16,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "c6e68925946979f2da71e99528528a0e4001fb8a30d3b0eeba8a2639473d1c81",
+    "nativeShiftSha256": "b4dce6a912da4e905d6e909e928f398c64c87c6abba1887271ef115ef7ea4877"
+  },
+  {
+    "index": 17,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "5a37ea9bf5fb78cce68d45e1934ec56e4e68debaaf633062de034be2036672e1",
+    "nativeShiftSha256": "9d4b51c4d4369d8cca6e1b01827371d38a28282efba2a36f0fd2f2294763b681"
+  },
+  {
+    "index": 18,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "9c69d36203b12a3d7b6abf6a583846a0156ae06d31d15458f7adbcc797ed9494",
+    "nativeShiftSha256": "82003907159e21d267e8ee974bbb600f7a936a58b6b2cfbe26c1710ed02b3a10"
+  },
+  {
+    "index": 19,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "6d24307cd77840da72e60476f123e87b7e91c7ca5e835e7730c7db6e48f3892a",
+    "nativeShiftSha256": "0b2f2863d74db0e8b7e396265d73aa4be7fd47f034324bdcc369192de06770bb"
+  },
+  {
+    "index": 20,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "21d4507f4142c7f709bc9e87585961efde30118ac63706ab2aea90f003f62697",
+    "nativeShiftSha256": "0a8c819bc667fe211636d6033d539ec4eaa939fce151ad66b7dd982836795feb"
+  },
+  {
+    "index": 21,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "d47f7e6028d57bfe0f38be5649e1e1c2e6e0c734cbf67d8da0d317c1e2e127ae",
+    "nativeShiftSha256": "3386e66e4b27da6ec3b4a484315ab437fa7499dabd1dd8ae2be03185e002431f"
+  },
+  {
+    "index": 22,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "c8b9c236036efc8d0c5e17010596f73a8f92e8b5f23e9e1e844e9158e39c5eee",
+    "nativeShiftSha256": "ae8eed54b5bc754c11e0f3bdb215eb0e5f34ea71af20664019afc5c890861779"
+  },
+  {
+    "index": 23,
+    "inputHashVerified": true,
+    "allNullPowerCoverageFinite": true,
+    "allCountsReproduced": true,
+    "maxNullPDelta": 0.0,
+    "nativeOutputSha256": "0356e4d7209ea7866816152cdbfe78bf3715580405eb239e811962fcdff02a78",
+    "nativeShiftSha256": "160547609f507fad45106634ee4bfba08e4d74a1d910f635c989117cebd44e89"
+  }
+]

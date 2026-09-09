@@ -1,0 +1,32 @@
+[
+  {
+    "subjects": 20,
+    "medianWarmWallMs": 0.66957916,
+    "medianWarmCpuMs": 0.29694,
+    "medianWarmBytes": 18496,
+    "coldRangeMs": [
+      93.78375,
+      242.412833
+    ]
+  },
+  {
+    "subjects": 80,
+    "medianWarmWallMs": 2.15206,
+    "medianWarmCpuMs": 0.7379399999999999,
+    "medianWarmBytes": 58227,
+    "coldRangeMs": [
+      109.650625,
+      176.158291
+    ]
+  },
+  {
+    "subjects": 200,
+    "medianWarmWallMs": 1.98096416,
+    "medianWarmCpuMs": 0.7781999999999999,
+    "medianWarmBytes": 143072,
+    "coldRangeMs": [
+      81.824959,
+      175.956542
+    ]
+  }
+]

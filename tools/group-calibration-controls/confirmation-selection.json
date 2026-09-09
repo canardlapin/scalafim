@@ -1,0 +1,178 @@
+[
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    "reason": "HC3_Satt maximum pilot null rate, normal"
+  },
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    "reason": "HC3_Satt maximum pilot null rate, skew"
+  },
+  {
+    "cell": {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    "reason": "HC3_Satt minimum pilot normal nominal-threshold power"
+  },
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    "reason": "wild_HC2_mammen maximum pilot null rate, normal"
+  },
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    "reason": "wild_HC2_mammen maximum pilot null rate, skew"
+  },
+  {
+    "cell": {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    "reason": "wild_HC2_mammen minimum pilot normal nominal-threshold power"
+  },
+  {
+    "cell": {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    "reason": "wild_HC3_rad maximum pilot null rate, normal"
+  },
+  {
+    "cell": {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    "reason": "wild_HC3_rad maximum pilot null rate, skew"
+  },
+  {
+    "cell": {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    "reason": "wild_HC3_rad minimum pilot normal nominal-threshold power"
+  },
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "spread",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    "reason": "wild_HC3_mammen maximum pilot null rate, normal"
+  },
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    "reason": "wild_HC3_mammen maximum pilot null rate, skew"
+  },
+  {
+    "cell": {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.2
+    },
+    "reason": "wild_HC3_mammen minimum pilot normal nominal-threshold power"
+  },
+  {
+    "cell": {
+      "n": 20,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    "reason": "mandatory control or previous failure"
+  },
+  {
+    "cell": {
+      "n": 8,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    "reason": "mandatory control or previous failure"
+  },
+  {
+    "cell": {
+      "n": 80,
+      "group": "quarter",
+      "nuisance": "smooth",
+      "variance": "reverse",
+      "error": "skew",
+      "tau2": 0.0
+    },
+    "reason": "mandatory control or previous failure"
+  },
+  {
+    "cell": {
+      "n": 20,
+      "group": "balanced",
+      "nuisance": "smooth",
+      "variance": "flat",
+      "error": "normal",
+      "tau2": 0.0
+    },
+    "reason": "mandatory control or previous failure"
+  }
+]

@@ -1,0 +1,512 @@
+{
+  "pilot": {
+    "studies": 216000,
+    "cells": 108,
+    "familyConfidence": 0.999,
+    "failures": {
+      "CR2": [
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.074,
+          "simultaneousLower": 0.0506731088364652
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0745,
+          "simultaneousLower": 0.05108978225217892
+        },
+        {
+          "cell": [
+            8,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0765,
+          "simultaneousLower": 0.05275982901749776
+        },
+        {
+          "cell": [
+            20,
+            "balanced",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.074,
+          "simultaneousLower": 0.0506731088364652
+        },
+        {
+          "cell": [
+            20,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0775,
+          "simultaneousLower": 0.0535968222777159
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.077,
+          "simultaneousLower": 0.053178163930050384
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0925,
+          "simultaneousLower": 0.06629428988490932
+        },
+        {
+          "cell": [
+            80,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0945,
+          "simultaneousLower": 0.06800564558124429
+        },
+        {
+          "cell": [
+            80,
+            "quarter",
+            "reverse",
+            "skew",
+            0.2
+          ],
+          "rate": 0.0775,
+          "simultaneousLower": 0.0535968222777159
+        }
+      ],
+      "WCR2": [
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "normal",
+            0.0
+          ],
+          "rate": 0.09,
+          "simultaneousLower": 0.06416078773887866
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "normal",
+            0.2
+          ],
+          "rate": 0.0805,
+          "simultaneousLower": 0.056115408231323556
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "t3",
+            0.0
+          ],
+          "rate": 0.0775,
+          "simultaneousLower": 0.0535968222777159
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "t3",
+            0.2
+          ],
+          "rate": 0.0805,
+          "simultaneousLower": 0.056115408231323556
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.1165,
+          "simultaneousLower": 0.08706814871552097
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "spread",
+            "skew",
+            0.2
+          ],
+          "rate": 0.094,
+          "simultaneousLower": 0.06757743442231308
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "normal",
+            0.0
+          ],
+          "rate": 0.092,
+          "simultaneousLower": 0.06586707732441967
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "normal",
+            0.2
+          ],
+          "rate": 0.089,
+          "simultaneousLower": 0.06330920606866294
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "t3",
+            0.0
+          ],
+          "rate": 0.0915,
+          "simultaneousLower": 0.06544011895251052
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "t3",
+            0.2
+          ],
+          "rate": 0.08,
+          "simultaneousLower": 0.055694867496045686
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.119,
+          "simultaneousLower": 0.08925901760111489
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "skew",
+            0.2
+          ],
+          "rate": 0.09,
+          "simultaneousLower": 0.06416078773887866
+        },
+        {
+          "cell": [
+            8,
+            "quarter",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0915,
+          "simultaneousLower": 0.06544011895251052
+        },
+        {
+          "cell": [
+            8,
+            "quarter",
+            "reverse",
+            "normal",
+            0.0
+          ],
+          "rate": 0.0895,
+          "simultaneousLower": 0.06373486501993791
+        },
+        {
+          "cell": [
+            8,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0915,
+          "simultaneousLower": 0.06544011895251052
+        },
+        {
+          "cell": [
+            20,
+            "balanced",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.087,
+          "simultaneousLower": 0.06160924826851429
+        },
+        {
+          "cell": [
+            20,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0855,
+          "simultaneousLower": 0.06033715008760391
+        },
+        {
+          "cell": [
+            20,
+            "balanced",
+            "reverse",
+            "skew",
+            0.2
+          ],
+          "rate": 0.0755,
+          "simultaneousLower": 0.051924141109584425
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "spread",
+            "skew",
+            0.0
+          ],
+          "rate": 0.109,
+          "simultaneousLower": 0.08052400538243759
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "spread",
+            "skew",
+            0.2
+          ],
+          "rate": 0.0775,
+          "simultaneousLower": 0.0535968222777159
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "reverse",
+            "normal",
+            0.0
+          ],
+          "rate": 0.0735,
+          "simultaneousLower": 0.05025677692741204
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.115,
+          "simultaneousLower": 0.08575585293519522
+        },
+        {
+          "cell": [
+            20,
+            "quarter",
+            "reverse",
+            "skew",
+            0.2
+          ],
+          "rate": 0.0925,
+          "simultaneousLower": 0.06629428988490932
+        },
+        {
+          "cell": [
+            80,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.076,
+          "simultaneousLower": 0.052341820431320546
+        },
+        {
+          "cell": [
+            80,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.095,
+          "simultaneousLower": 0.0684341019689521
+        },
+        {
+          "cell": [
+            80,
+            "quarter",
+            "reverse",
+            "skew",
+            0.2
+          ],
+          "rate": 0.0835,
+          "simultaneousLower": 0.058644957533856734
+        }
+      ]
+    },
+    "nonFiniteP": 0,
+    "maxShiftPDelta": 1.0325074129013956e-14
+  },
+  "confirmation": {
+    "studies": 160000,
+    "cells": 8,
+    "familyConfidence": 0.999,
+    "failures": {
+      "CR2": [
+        {
+          "cell": [
+            20,
+            "quarter",
+            "reverse",
+            "normal",
+            0.0
+          ],
+          "rate": 0.0599,
+          "simultaneousLower": 0.05366171904986822
+        },
+        {
+          "cell": [
+            80,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.0944,
+          "simultaneousLower": 0.08665070918069573
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.07365,
+          "simultaneousLower": 0.06675676478406295
+        }
+      ],
+      "WCR2": [
+        {
+          "cell": [
+            20,
+            "quarter",
+            "reverse",
+            "normal",
+            0.0
+          ],
+          "rate": 0.06795,
+          "simultaneousLower": 0.06131832968581278
+        },
+        {
+          "cell": [
+            80,
+            "quarter",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.1013,
+          "simultaneousLower": 0.09329392518068125
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "normal",
+            0.0
+          ],
+          "rate": 0.0931,
+          "simultaneousLower": 0.08540049730798244
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "t3",
+            0.0
+          ],
+          "rate": 0.0799,
+          "simultaneousLower": 0.07273413977060206
+        },
+        {
+          "cell": [
+            8,
+            "balanced",
+            "reverse",
+            "skew",
+            0.0
+          ],
+          "rate": 0.1193,
+          "simultaneousLower": 0.1106769893484896
+        }
+      ]
+    },
+    "nonFiniteP": 0,
+    "maxShiftPDelta": 3.885780586188048e-15
+  },
+  "referenceMaxErrors": {
+    "covariance": 1.887379141862766e-15,
+    "df": 1.5631940186722204e-13,
+    "p": 4.440892098500626e-16,
+    "influence": 3.3306690738754696e-16,
+    "leverage": 3.3306690738754696e-16
+  },
+  "bootstrapActions": 256,
+  "bootstrapMaxStatisticDelta": 3.2862601528904634e-14,
+  "nativeRows": 20,
+  "admission": "Neither tested candidate admitted as a general inference default"
+}

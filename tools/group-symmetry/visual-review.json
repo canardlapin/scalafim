@@ -1,0 +1,92 @@
+[
+  {
+    "reviewer": "Codex /root, image-capable implementer review",
+    "reviewedAt": "2026-09-08T17:31:56.066653+00:00",
+    "kind": "static scientific qualification figure; not application UI acceptance",
+    "inputSummarySha256": "f18049084fa47809beba57ce4aae0c3a7cc93c81bfd1a5ac88d515c416cdec16",
+    "recipeSha256": "92bbf9ed95923579aa5a141f873bcb0f79cf1a6cef368c15bbc79cee3ee33353",
+    "runtime": {
+      "python": "3.14.7",
+      "matplotlib": "3.10.8",
+      "font": "/opt/homebrew/lib/python3.14/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf",
+      "fontSha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+    },
+    "scientificContract": {
+      "quantity": "pointwise null rejection and power in percent",
+      "units": "percent; alternative common mean 0.35 in simulated effect units",
+      "independentUnit": "one simulated eight-subject study; 10000 studies per row",
+      "interval": "95% exact Clopper-Pearson interval for simulation proportion",
+      "inputs": "Gaussian errors; variances .04..1; tau2=.2; known or independent chi-square df8 variance estimates",
+      "methodSources": [
+        "GroupSignFlip.scala",
+        "GroupSymmetryCalibration.scala"
+      ],
+      "scope": "selected held-out settings; full 108-configuration grid in receipt"
+    },
+    "interaction": "not applicable to static PNG; no native interaction or responsive-layout pass claimed",
+    "artifact": "review/calibration-v1.png",
+    "sha256": "56a878ee2a955f71c619e24d0a397a173210eeaa61656e3361e00cdb07bc2bc6",
+    "dimensions": [
+      1980,
+      1206
+    ],
+    "pixelScale": 2.5,
+    "disposition": "revise",
+    "scores": {
+      "scientific truth": 3,
+      "explanatory clarity": 4,
+      "composition and beauty": 4,
+      "typography and axes": 2,
+      "color and marks": 4,
+      "density and comparison": 4,
+      "layout and accessibility": 4
+    },
+    "critique": "Right-column title clips at the image boundary. Replace with a shorter title. Replace ambiguous sign test labels with sign flip to distinguish the magnitude-sensitive statistic from a classical count-only sign test.",
+    "supersededBy": "calibration.png"
+  },
+  {
+    "reviewer": "Codex /root, image-capable implementer review",
+    "reviewedAt": "2026-09-08T17:31:56.066653+00:00",
+    "kind": "static scientific qualification figure; not application UI acceptance",
+    "inputSummarySha256": "f18049084fa47809beba57ce4aae0c3a7cc93c81bfd1a5ac88d515c416cdec16",
+    "recipeSha256": "92bbf9ed95923579aa5a141f873bcb0f79cf1a6cef368c15bbc79cee3ee33353",
+    "runtime": {
+      "python": "3.14.7",
+      "matplotlib": "3.10.8",
+      "font": "/opt/homebrew/lib/python3.14/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf",
+      "fontSha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+    },
+    "scientificContract": {
+      "quantity": "pointwise null rejection and power in percent",
+      "units": "percent; alternative common mean 0.35 in simulated effect units",
+      "independentUnit": "one simulated eight-subject study; 10000 studies per row",
+      "interval": "95% exact Clopper-Pearson interval for simulation proportion",
+      "inputs": "Gaussian errors; variances .04..1; tau2=.2; known or independent chi-square df8 variance estimates",
+      "methodSources": [
+        "GroupSignFlip.scala",
+        "GroupSymmetryCalibration.scala"
+      ],
+      "scope": "selected held-out settings; full 108-configuration grid in receipt"
+    },
+    "interaction": "not applicable to static PNG; no native interaction or responsive-layout pass claimed",
+    "artifact": "calibration.png",
+    "sha256": "5142a2891f4c56405f3c49eff5f40c43c23dd7790f7fcd68df45ca236cca4df7",
+    "dimensions": [
+      1980,
+      1206
+    ],
+    "pixelScale": 2.5,
+    "disposition": "pass",
+    "scores": {
+      "scientific truth": 4,
+      "explanatory clarity": 4,
+      "composition and beauty": 4,
+      "typography and axes": 4,
+      "color and marks": 4,
+      "density and comparison": 4,
+      "layout and accessibility": 4
+    },
+    "critique": "Aligned facets and stable method positions make null rejection and power comparable. Percent labels and the nominal reference are readable. Colors also have distinct shapes and direct row labels. No clipping or overlaps at the delivered 1980x1206 export; text is 10-19 pt at 11-inch width. Scope, sample size and interval meaning are explicit. This static review does not cover native keyboard or dock behavior.",
+    "supersededBy": null
+  }
+]

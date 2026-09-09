@@ -1,0 +1,45 @@
+{
+  "scope": "Static scientific qualification figure, not native application UI or an independent UX approval",
+  "reviewer": "implementing agent, visual inspection with view_image",
+  "reviews": [
+    {
+      "file": "review/qualification-v1.png",
+      "disposition": "rejected",
+      "findings": [
+        "Only seven confirmation cells rendered because plotting started before the coverage replay finished. Added an explicit eight-cell precondition.",
+        "Footnote overlapped the horizontal axis title. Increased bottom margin.",
+        "Lower-right panel title approached the canvas edge. Shortened it."
+      ],
+      "sha256": "db9fd4c950faa8968c6a6c6848c0a894bb1db5f358c0f090b2e3ff331cf1d97e",
+      "pixels": [
+        2160,
+        1440
+      ]
+    },
+    {
+      "file": "qualification.png",
+      "disposition": "accepted within static-figure scope",
+      "findings": [
+        "All eight confirmation cells visible with 95% binomial intervals and a 5% reference line.",
+        "Separate marker shapes identify methods; explicit plus/minus labels convey influence sign.",
+        "Native participant indices, working covariance meaning, sample counts and method definitions are readable.",
+        "No observed clipping or overlap after refinement."
+      ],
+      "rubric": {
+        "scientificTruth": 4,
+        "clarity": 4,
+        "composition": 4,
+        "typography": 4,
+        "color": 4,
+        "density": 4,
+        "accessibility": 4,
+        "interaction": "not applicable to static provider figure"
+      },
+      "sha256": "12caee5e368812c2e4a84e253eb61cac14565f9dfd51265d2ec97a7b35305aec",
+      "pixels": [
+        2320,
+        1600
+      ]
+    }
+  ]
+}

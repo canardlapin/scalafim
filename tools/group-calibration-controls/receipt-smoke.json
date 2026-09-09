@@ -1,0 +1,71 @@
+{
+  "destination": "/private/tmp/scalafim-controls-receipt-smoke-i2r3nsl8",
+  "results": [
+    {
+      "command": [
+        "python3",
+        "/private/tmp/scalafim-group-controls-20260908/unpack-receipt.py",
+        "/private/tmp/scalafim-group-controls-20260908/group-controls-2026-09-08.json.gz",
+        "/private/tmp/scalafim-controls-receipt-smoke-i2r3nsl8"
+      ],
+      "exitCode": 0,
+      "stdout": "Verified and extracted 109 files\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "Rscript",
+        "--vanilla",
+        "reference.R",
+        "."
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Registered S3 method overwritten by 'clubSandwich':\n  method    from    \n  bread.mlm sandwich\nWarning message:\npackage 'clubSandwich' was built under R version 4.5.2 \n"
+    },
+    {
+      "command": [
+        "Rscript",
+        "--vanilla",
+        "estimated-reference.R",
+        "."
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Registered S3 method overwritten by 'clubSandwich':\n  method    from    \n  bread.mlm sandwich\nWarning message:\npackage 'clubSandwich' was built under R version 4.5.2 \nLoading required package: Matrix\nLoading required package: metadat\nLoading required package: numDeriv\n\nLoading the 'metafor' package (version 5.0-1). For an\nintroduction to the package please type: help(metafor)\n\nWarning messages:\n1: package 'metafor' was built under R version 4.5.2 \n2: package 'metadat' was built under R version 4.5.2 \n"
+    },
+    {
+      "command": [
+        "Rscript",
+        "--vanilla",
+        "feasible-reference.R",
+        "."
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "Registered S3 method overwritten by 'clubSandwich':\n  method    from    \n  bread.mlm sandwich\nWarning message:\npackage 'clubSandwich' was built under R version 4.5.2 \n"
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "test_controls",
+        "test_estimated"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_Mammen_moments (test_controls.ControlsTests.test_Mammen_moments) ... ok\ntest_equivalent_units_covariate_coding_and_subject_reordering (test_controls.ControlsTests.test_equivalent_units_covariate_coding_and_subject_reordering) ... ok\ntest_flat_variance_oracle_t_matches_ordinary_t (test_controls.ControlsTests.test_flat_variance_oracle_t_matches_ordinary_t) ... ok\ntest_independent_R_all_covariance_targets_and_explicit_bootstrap_actions (test_controls.ControlsTests.test_independent_R_all_covariance_targets_and_explicit_bootstrap_actions) ... ok\ntest_feasible_HC3_matches_independent_R_without_true_tau (test_estimated.EstimatedTests.test_feasible_HC3_matches_independent_R_without_true_tau) ... ok\ntest_inverse_chisquare_moments_by_independent_quadrature (test_estimated.EstimatedTests.test_inverse_chisquare_moments_by_independent_quadrature) ... ok\ntest_native_PM_and_privileged_plugin_match_independent_R (test_estimated.EstimatedTests.test_native_PM_and_privileged_plugin_match_independent_R) ... ok\ntest_weighted_units_reordering_and_nuisance_coding (test_estimated.EstimatedTests.test_weighted_units_reordering_and_nuisance_coding) ... ok\n\n----------------------------------------------------------------------\nRan 8 tests in 0.075s\n\nOK\n"
+    },
+    {
+      "command": [
+        "python3",
+        "verify-evidence.py"
+      ],
+      "exitCode": 0,
+      "stdout": "Inventory, artifact/source hashes, all stage counts and positive controls passed.\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -43,11 +43,12 @@ final case class GroupContrast(name: GroupContrastName, weights: Map[DesignTermN
         statistics = statistics.result(),
         pValues = pValues.result(),
         statistic = fit.statistic,
-        space = fit.space
+        space = fit.space,
+        failures = fit.failures
       )
     }
 
-  private def weightVector(termNames: Vector[String]): Either[GroupError, Array[Double]] =
+  private[group] def weightVector(termNames: Vector[String]): Either[GroupError, Array[Double]] =
     val known = termNames.toSet
     weights.keys.find(term => !known.contains(term.value)) match
       case Some(unknown) => Left(GroupError.UnknownContrastTerm(unknown.value))
@@ -67,6 +68,7 @@ object GroupContrast:
     for
       contrastName <- GroupContrastName(name)
       typedWeights <- parseWeights(weights)
+      _ <- if typedWeights.values.exists(_ != 0.0) then Right(()) else Left(GroupError.EmptyContrast(name))
     yield GroupContrast(contrastName, typedWeights)
 
   def unsafe(name: String, weights: Map[String, Double]): GroupContrast =
@@ -78,13 +80,20 @@ object GroupContrast:
 
   /** A difference of two design terms, e.g. `patients - controls`. */
   def difference(name: String, positive: String, negative: String): GroupContrast =
-    unsafe(name, Map(positive -> 1.0, negative -> -1.0))
+    val pos = DesignTermName.unsafe(positive)
+    val neg = DesignTermName.unsafe(negative)
+    val weights = Map(pos -> 1.0).updated(neg, (if pos == neg then 1.0 else 0.0) - 1.0)
+    GroupContrast(GroupContrastName.unsafe(name), weights)
 
   private def parseWeights(weights: Map[String, Double]): Either[GroupError, Map[DesignTermName, Double]] =
     weights.foldLeft[Either[GroupError, Map[DesignTermName, Double]]](Right(Map.empty)) {
       case (Left(err), _) => Left(err)
       case (Right(acc), (term, weight)) =>
-        DesignTermName(term).map(name => acc.updated(name, weight))
+        if !weight.isFinite then Left(GroupError.NonFiniteData("contrast weights"))
+        else DesignTermName(term).flatMap { name =>
+          if acc.contains(name) then Left(GroupError.DuplicateTerms(Vector(name.value)))
+          else Right(acc.updated(name, weight))
+        }
     }
 
 /** Per-sample group statistics for one contrast: estimate, standard error, test
@@ -98,8 +107,12 @@ final case class GroupContrastResult(
     statistics: DVec,
     pValues: DVec,
     statistic: GroupStatistic,
-    space: GroupSpace
+    space: GroupSpace,
+    failures: Vector[GroupSampleFailure] = Vector.empty
 ):
+  require(failures.map(_.sample).distinct.length == failures.length, "sample failure indices must be unique")
+  require(failures.forall(f => f.sample >= 0 && f.sample < space.nSamples), "sample failure indices must match space")
+
   require(estimates.length == space.nSamples, "estimates must match sample space")
   require(standardErrors.length == space.nSamples, "standard errors must match sample space")
   require(statistics.length == space.nSamples, "statistics must match sample space")

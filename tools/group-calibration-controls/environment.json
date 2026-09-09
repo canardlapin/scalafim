@@ -1,0 +1,273 @@
+{
+  "nativeHead": "72a35a46df661e6e8b0e8dd6bd7dbb59002ec9e4",
+  "sourceStatus": "uncommitted candidate; exact native group sources captured",
+  "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 16.0.0 (clang-1600.0.26.6)]",
+  "platform": "macOS-14.3-arm64-arm-64bit-Mach-O",
+  "packages": {
+    "numpy": "2.4.3",
+    "scipy": "1.17.1",
+    "matplotlib": "3.10.8",
+    "Pillow": "12.1.1"
+  },
+  "rng": "NumPy PCG64 with SeedSequence([roleRoot,cellIndex])",
+  "font": {
+    "path": "/opt/homebrew/lib/python3.14/site-packages/matplotlib/mpl-data/fonts/ttf/DejaVuSans.ttf",
+    "sha256": "3fdf69cabf06049ea70a00b5919340e2ce1e6d02b0cc3c4b44fb6801bd1e0d22"
+  },
+  "java": "openjdk version \"25.0.1\" 2025-10-21\nOpenJDK Runtime Environment Homebrew (build 25.0.1)\nOpenJDK 64-Bit Server VM Homebrew (build 25.0.1, mixed mode, sharing)\n",
+  "runtimeClasspath": [
+    {
+      "path": "/private/tmp/scalafim-group-controls-20260908/classes",
+      "files": 229,
+      "manifestSha256": "6be0503b7217c4cdd4dac5f991ddaa800bd4cf9ddeee3af6a3d04fd0679b0e82",
+      "bytes": 1082842
+    },
+    {
+      "path": "/private/tmp/scalafim-group-nuisance-20260908/classes",
+      "files": 229,
+      "manifestSha256": "2956d7f4920ca6eabd8e369b170b1ab6459f4c417fbaa6ae22f86ea662f48b02",
+      "bytes": 1084058
+    },
+    {
+      "path": "/private/tmp/scalafim-group-symmetry-20260908/classes",
+      "files": 219,
+      "manifestSha256": "46e2d18224e1a25645f1ada533b8a1cf542314d29eb45598714391fd5592b71b",
+      "bytes": 1058787
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/group/jvm/target/scala-3.7.4/test-classes",
+      "files": 90,
+      "manifestSha256": "654ec7b9222406da4bb1044a03767c3647de59bee68f806f4169c3c4b5a8e949",
+      "bytes": 830058
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/group/jvm/target/scala-3.7.4/classes",
+      "files": 226,
+      "manifestSha256": "64ee7a9a9b656a8dbbbb92a318816ad36db6da8083dacdd05eb76b631509e678",
+      "bytes": 1063987
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/image/jvm/target/scala-3.7.4/classes",
+      "files": 817,
+      "manifestSha256": "f3ceb15439358d5afb5524a050ca567d3591d538af69158e8cb433b2ccdda7dc",
+      "bytes": 4483324
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/locus-data/jvm/target/scala-3.7.4/classes",
+      "files": 56,
+      "manifestSha256": "b49af653620bb06a5f7a13890480480a271e33fb055c81a2ecde62f60a10134c",
+      "bytes": 170742
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/locus4s-af063d7fcf2d0d48aed5474c9c9a41376e18531f/modules/locus4s-core/jvm/target/scala-3.7.4/classes",
+      "files": 234,
+      "manifestSha256": "64a0e636048069620bd0e43632715610c325982911019c7de0ce8c8182e0b0be",
+      "bytes": 890899
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/locus4s-af063d7fcf2d0d48aed5474c9c9a41376e18531f/modules/locus4s-data/jvm/target/scala-3.7.4/classes",
+      "files": 38,
+      "manifestSha256": "01ddc073a678864bbd0a0670889c78eb294b9d758cab5cfa19f086cdf21d0dcd",
+      "bytes": 127254
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/image4s-497bfd164ad514ff3d1944699550c78caa57e85d/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+      "files": 110,
+      "manifestSha256": "6d16685a24d32d16bd6fae1d4c955eaacaec68f383e417f8b76cbca424b19ffb",
+      "bytes": 370884
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/image4s-497bfd164ad514ff3d1944699550c78caa57e85d/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+      "files": 137,
+      "manifestSha256": "a61a2cbe22f11011ef85f679086cde2d98eb5411dc0ed1df4ff2cde88f119356",
+      "bytes": 476196
+    },
+    {
+      "path": "/private/tmp/plsneuro-contrast-sbt/staging/25e2fa7418954dc8ed84/gale/core/jvm/target/scala-3.7.4/classes",
+      "files": 681,
+      "manifestSha256": "3d9a4caf2bb7605415ea6815473e0174d4b4764534c7b2c724b3337589914223",
+      "bytes": 3851854
+    },
+    {
+      "path": "/private/tmp/plsneuro-contrast-sbt/staging/1c0c6951f424be151a44/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+      "files": 210,
+      "manifestSha256": "bd87a1ba2bc4a011402bb73730e58bafececa0b2f14ecded882fc6efd4fb8cc8",
+      "bytes": 1696471
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/dataset/jvm/target/scala-3.7.4/classes",
+      "files": 393,
+      "manifestSha256": "629734fc18b243918b9fc53c90b4a65ebe2264ca9e7b24e45cc27d6b3fe3bd48",
+      "bytes": 1951641
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/response/jvm/target/scala-3.7.4/classes",
+      "files": 339,
+      "manifestSha256": "90876b50401e07b5dd375b127714dae6b14d9de9c6102c92fe18a94bcdc9ee83",
+      "bytes": 1110132
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/hrf/jvm/target/scala-3.7.4/classes",
+      "files": 517,
+      "manifestSha256": "57474bbf1c5167fbfc12c1809eac42423594cbb688bc37cf239da6d2dc302dce",
+      "bytes": 2421652
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/design/jvm/target/scala-3.7.4/classes",
+      "files": 1173,
+      "manifestSha256": "35d381a81b0b18a36e84b5b221dd16da9917ee06be5da77c6ebe11b7040706e7",
+      "bytes": 7017746
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/intaglio-38e8c62b5b3fb74d0a32664a168e95e9f708bd49/modules/core/jvm/target/scala-3.3.8/classes",
+      "files": 1754,
+      "manifestSha256": "00c78584eef285aebfd5dcd615bba115012bd87974d155440853770966095d2c",
+      "bytes": 8694488
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/fit/jvm/target/scala-3.7.4/classes",
+      "files": 1115,
+      "manifestSha256": "3f459d5ac9d8050c8d858b1b0ab57a44bec92e977abc127c30ee0757a9c8041c",
+      "bytes": 6485073
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/model/jvm/target/scala-3.7.4/classes",
+      "files": 280,
+      "manifestSha256": "9586e242c5b0ff55f40fb1954c7dc1a7719e61510a13d426139a277596af3267",
+      "bytes": 1276819
+    },
+    {
+      "path": "/private/tmp/scalafim-group-audit-20260908/scalafim-fd992a0c85001eb50ba2e78d29c497693ca494dc/modules/ar/jvm/target/scala-3.7.4/classes",
+      "files": 151,
+      "manifestSha256": "8a6f3c83fee32bfd11a1d22c05401a9899a5c00c928a0576943d5b8650deda1f",
+      "bytes": 719395
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+      "sha256": "73089d33f763b94758170e0a66be978f9397c14b7795e343898aa89b3d7b6639",
+      "bytes": 1277321
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+      "sha256": "19d09014eaf69ca8abd8d9e0c43be4c2e5d7c693bc1c6cf3a1c93697ad8bca50",
+      "bytes": 263577
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/ai/dragonfly/slash_3/0.4.1/slash_3-0.4.1.jar",
+      "sha256": "50a58f1a61f885fd41a6eaa09f9ce54c3bf4f6eee0a91fb01763b9af5c43e5cd",
+      "bytes": 1010732
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.12.0/cats-core_3-2.12.0.jar",
+      "sha256": "db8754981281215078991aa8228562e806d845ebe8441f6c538ef9e85b4560a4",
+      "bytes": 6983105
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+      "sha256": "ac62797add23b03c9185f5742039246712aad2dda4c2b2d19d0564d23dab2c97",
+      "bytes": 759453
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+      "sha256": "755e6bca07ff0ddde6b2cbb984fe1178389a44887d5aaf610a1402e9fcfe99ac",
+      "bytes": 5303867
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+      "sha256": "1ebb2b6f9e4eb4022497c19b1e1e825019c08514f962aaac197145f88ed730f1",
+      "bytes": 5926340
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+      "sha256": "66a48070e1fa9bda5aa7142ff8b6638c4a9555d1d760965241b7f4617ce758b9",
+      "bytes": 49858
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+      "sha256": "10506a15c369f8b66f5347e6fc0ed284f801a07598d9a835b2c8bc6052c3deaf",
+      "bytes": 82505
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+      "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+      "bytes": 384581
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.12.0/cats-kernel_3-2.12.0.jar",
+      "sha256": "5aa57d0c906b4c6e4575e5548f4ea7523a2c4140424b7df92239162a0ca17f77",
+      "bytes": 1594558
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/ai/dragonfly/narr_3/1.0.1/narr_3-1.0.1.jar",
+      "sha256": "da2bbce7bfc48fc7e1db30f7c6836e6b681f359552899638b3a51bb203b41d58",
+      "bytes": 111034
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-js/scalajs-stubs_3/1.1.0/scalajs-stubs_3-1.1.0.jar",
+      "sha256": "0630e259e6ea9161912c77c0e9aed7be31f6f5f8aba3fd0d60c3b2da611943e9",
+      "bytes": 5174
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+      "sha256": "03375636fdd1086417531e0305b4b7fba3e2f62bd7b241587df05b5cb95aa5c7",
+      "bytes": 1283984
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+      "sha256": "748eb2ef8d015c75e96842280c2c648782a5b0fec7cc4a4b3a80a2f26f6a2baa",
+      "bytes": 688710
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+      "sha256": "65f223a3ccba177f96c999f0287527b18557eb14f92b7bda88d162c5d0696db8",
+      "bytes": 25936
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+      "sha256": "8b1dd10891b95e0e2cf2e375972fe0ee0fd231c31b150e352a6940d2bec89652",
+      "bytes": 2289
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+      "sha256": "de87255aa776a57ac105561e24673bde83a3d9980048582ab763be4e682ca42d",
+      "bytes": 19196
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.8.0/algebra_3-2.8.0.jar",
+      "sha256": "0ceb78004499e94dad2d0477dd92ce28319bad6c1af1e7e36b299312b40f60b6",
+      "bytes": 859893
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+      "sha256": "d9dffa3e27793040dccb97b054d95267df46e669c396bf1ca4f3b085069bc2d5",
+      "bytes": 1175798
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+      "sha256": "15f70b38bb95f3002fec9aea54030f19bb4ecfbad64c67424b5e5fea09cd749e",
+      "bytes": 14755
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+      "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
+      "bytes": 45024
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+      "sha256": "dcf9768726b82e8d7b8a928447b08bca7cfe2773d5120a63a41ec224207c1a29",
+      "bytes": 2038489
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+      "sha256": "6dca5ab23e1fdb9190a257c04687a9ea19111c36b6ec9478bce6b2a128ca1aeb",
+      "bytes": 232470
+    },
+    {
+      "path": "/Users/bbuchsbaum/.ivy2/local/io.github.canardlapin/resample4s-core_3/0.1.0-6bc4172a966c/jars/resample4s-core_3.jar",
+      "sha256": "314ea7f6b35ec76b30f0ae06a63b1f1259fc747172cfa3e9063635f316b4fd9c",
+      "bytes": 765305
+    }
+  ],
+  "scratchBytesAtSnapshot": 68137914,
+  "peakRss": "not measured; concurrent-host times are not performance evidence"
+}
