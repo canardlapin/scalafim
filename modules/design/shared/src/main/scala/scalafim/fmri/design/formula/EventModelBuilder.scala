@@ -2366,6 +2366,8 @@ object EventModelBuilder:
   private val basisCalls: Vector[String] =
     Vector(
       "modulators",
+      "categorical",
+      "continuous",
       "scale",
       "standardized",
       "robustscale",
@@ -2387,6 +2389,24 @@ object EventModelBuilder:
       blockIds: Vector[Int]
   ): Either[DesignError, EventExpression] =
     funName.trim.toLowerCase match
+      case "categorical" =>
+        for
+          id <- requireIdentArg(args, pos = 0, ctx = "Categorical")
+          _ <- requireArgumentCount(args, expected = 1, ctx = "Categorical")
+          column <- data.column(id)
+          values <- column match
+            case Column.Strings(values) => Right(values)
+            case Column.Ints(values) => Right(values.map(_.toString))
+            case Column.Doubles(values) if values.forall(_.isFinite) => Right(values.map(canonicalNumericLevel))
+            case Column.Bools(values) => Right(values.map(_.toString))
+            case _ => Left(DesignError.InvalidColumnType(id.value, "categorical labels or finite numeric codes", column.typeName))
+          event <- factorEventOr(id, values, factorLevels)
+        yield EventExpression(event, Vector.empty)
+      case "continuous" =>
+        for
+          (id, values) <- requireNumeric1(data, args, "Continuous")
+          _ <- requireArgumentCount(args, expected = 1, ctx = "Continuous")
+        yield EventExpression(Event.variable(values, id.value), Vector.empty)
       case "modulators" =>
         modulatorFamilyExpression(data, args, termTag, factorLevels, blockIds)
       case "scale" =>

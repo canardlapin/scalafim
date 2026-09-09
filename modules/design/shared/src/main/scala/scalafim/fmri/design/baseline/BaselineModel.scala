@@ -10,6 +10,19 @@ import scala.util.control.NonFatal
 
 enum BaselineBasis:
   case Constant, Poly, Bs, Ns
+  case Dct(cutoff: DctCutoffPeriod)
+
+  /** Stable basis identity, including the physical cutoff when it defines the basis. */
+  def id: String = this match
+    case Constant => "constant"
+    case Poly => "poly"
+    case Bs => "bs"
+    case Ns => "ns"
+    case Dct(cutoff) => s"dct_ii_period_bits_${java.lang.Double.doubleToLongBits(cutoff.seconds)}"
+
+  private[baseline] def label: String = this match
+    case Dct(_) => "dct_ii"
+    case _ => id
 
 object BaselineBasis:
   def parse(s: String): BaselineBasis =
@@ -18,6 +31,7 @@ object BaselineBasis:
       case "poly"     => Poly
       case "bs"       => Bs
       case "ns"       => Ns
+      case "dct"      => throw new IllegalArgumentException("DCT requires an explicit cutoff: BaselineBasis.Dct(DctCutoffPeriod.unsafeSeconds(seconds))")
       case other      => throw new IllegalArgumentException(s"Unknown baseline basis: '$other'")
 
 enum Intercept:
@@ -219,7 +233,10 @@ object BaselineSpec:
   ): BaselineSpec =
     val degree0 =
       if basis == BaselineBasis.Constant then 1 else degree
-    val name0 = name.getOrElse(s"baseline_${basis.toString.toLowerCase}_${degree0}")
+    val name0 = name.getOrElse(basis match
+      case BaselineBasis.Dct(_) => s"baseline_${basis.label}"
+      case _ => s"baseline_${basis.id}_${degree0}"
+    )
     BaselineSpec(degree0, basis, intercept, name0)
 
 final case class BaselineTerm(
@@ -256,13 +273,13 @@ object BaselineTerm:
       BaselineTerm(
         varName = spec.name,
         data = Mat.unsafe(totalRows, 1, out),
-        columnNames = Vector(s"base_${spec.basis.toString.toLowerCase}"),
+        columnNames = Vector(s"base_${spec.basis.label}"),
         colInd = Vector.fill(nb)(Vector(0)),
         rowInd = rowInd
       )
     else
-      val perBlock = bl.map { blockLen =>
-        val x = (1 to blockLen).iterator.map(_.toDouble).toVector
+      val perBlock = bl.zipWithIndex.map { case (blockLen, block) =>
+        lazy val x = (1 to blockLen).iterator.map(_.toDouble).toVector
         spec.basis match
           case BaselineBasis.Constant =>
             Mat.unsafe(blockLen, 1, Array.fill(blockLen)(1.0))
@@ -272,12 +289,14 @@ object BaselineTerm:
             ParametricBasis.BSpline.fit(x, degree = spec.degree, argName = "x").y
           case BaselineBasis.Ns =>
             ParametricBasis.NSpline.fit(x, df = spec.degree, argName = "x").y
+          case BaselineBasis.Dct(cutoff) =>
+            DctDrift.matrix(blockLen, samplingFrame.tr(block), cutoff)
       }
 
-      val colsPerBlock = if perBlock.isEmpty then 0 else perBlock.head.cols
-      require(perBlock.forall(_.cols == colsPerBlock), "baseline per-block basis column mismatch")
-
-      val totalCols = nb * colsPerBlock
+      val totalColsLong = perBlock.iterator.map(_.cols.toLong).sum
+      require(totalColsLong <= Int.MaxValue && totalRows.toLong * totalColsLong <= Int.MaxValue,
+        "baseline matrix exceeds storable elements")
+      val totalCols = totalColsLong.toInt
       val out = new Array[Double](totalRows * totalCols)
 
       val colInd = Vector.newBuilder[Vector[Int]]
@@ -302,7 +321,7 @@ object BaselineTerm:
 
         var j = 0
         while j < colsThis do
-          colNames(colOffset + j) = s"base_${spec.basis.toString.toLowerCase}${j + 1}_block_${b + 1}"
+          colNames(colOffset + j) = s"base_${spec.basis.label}${j + 1}_block_${b + 1}"
           j += 1
 
         rowOffset += blockLen
@@ -630,7 +649,13 @@ object BaselineModel:
             columns = structuralColumns(ts, driftSpec),
             audit = DesignAudit(
               policyReceipts = Vector(
-                PolicyReceipt("baseline", s"basis=${driftSpec.basis};degree=${driftSpec.degree};intercept=${driftSpec.intercept}")
+                PolicyReceipt("baseline", driftSpec.basis match
+                  case BaselineBasis.Dct(_) => s"basis=${driftSpec.basis.id};intercept=${driftSpec.intercept}"
+                  case _ => s"basis=${driftSpec.basis};degree=${driftSpec.degree};intercept=${driftSpec.intercept}"
+                )
+              ) ++ (driftSpec.basis match
+                case BaselineBasis.Dct(cutoff) => DctDrift.receipts(samplingFrame, cutoff)
+                case _ => Vector.empty
               )
             )
           ).fold(error => throw new IllegalArgumentException(error.message), identity)
@@ -670,7 +695,7 @@ object BaselineModel:
           memberships.headOption.map { case (_, pos) =>
             BasisElementRef(
               basisId =
-                if key == "drift" then driftSpec.basis.toString.toLowerCase
+                if key == "drift" then driftSpec.basis.id
                 else if key == "block" then "constant"
                 else key,
               index = BasisIndex.unsafeOneBased(pos + 1),
