@@ -509,10 +509,15 @@ enum BasisTransform:
           else Right(BasisCoefficients.unsafe(order.map(i => coefficients.values(i))))
         }
 
-  /** Transport a quadratic penalty `Q` into the new coordinates.
+  /** Transport a quadratic penalty `Q` on coefficients into the new
+    * coordinates, so that the penalised value is invariant:
+    * `beta' Q beta == beta'' Q' beta'` for every coefficient vector.
     *
-    * For values scaled by `1/s_j`, coefficients scale by `s_j`, so
-    * `Q' = S Q S` with `S = diag(scales)`.
+    * For values scaled by `1/s_j`, coefficients scale by `s_j`
+    * (`beta' = S beta`), hence `Q' = S^-1 Q S^-1` with `S = diag(scales)`.
+    * This is the inverse congruence; covariance transports by the forward
+    * congruence `S Cov S` ([[transportCovariance]]). A zero or non-finite
+    * scale has no inverse and is reported rather than producing infinities.
     */
   def transportPenalty(penalty: Mat): Either[BasisError, Mat] =
     this match
@@ -522,15 +527,20 @@ enum BasisTransform:
         if penalty.rows != n || penalty.cols != n then
           Left(BasisError.DimensionMismatch("penalty", n, penalty.rows))
         else
-          val out = new Array[Double](n * n)
-          var r = 0
-          while r < n do
-            var c = 0
-            while c < n do
-              out(r * n + c) = scales(r) * penalty(r, c) * scales(c)
-              c += 1
-            r += 1
-          Right(Mat.unsafe(n, n, out))
+          inverse.map { inv =>
+            val inverseScales = inv match
+              case Diagonal(values) => values
+              case _                => scales.map(1.0 / _)
+            val out = new Array[Double](n * n)
+            var r = 0
+            while r < n do
+              var c = 0
+              while c < n do
+                out(r * n + c) = inverseScales(r) * penalty(r, c) * inverseScales(c)
+                c += 1
+              r += 1
+            Mat.unsafe(n, n, out)
+          }
       case Permutation(order) =>
         validatePermutation(order).flatMap:
           _ =>
@@ -614,7 +624,7 @@ enum BasisTransform:
     this match
       case Identity(d) => Right(Identity(d))
       case Diagonal(scales) =>
-        scales.zipWithIndex.find { case (s, _) => math.abs(s) <= 1e-12 } match
+        scales.zipWithIndex.find { case (s, _) => !s.isFinite || math.abs(s) <= 1e-12 } match
           case Some((s, i)) => Left(BasisError.NotInvertible(s"scale $s at column ${i + 1}"))
           case None         => Right(Diagonal(scales.map(1.0 / _)))
       case Permutation(order) =>

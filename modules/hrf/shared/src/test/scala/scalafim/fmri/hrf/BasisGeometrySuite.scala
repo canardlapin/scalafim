@@ -110,17 +110,81 @@ class BasisGeometrySuite extends munit.FunSuite:
     val scales = transform match
       case BasisTransform.Diagonal(s) => s
       case other                      => fail(s"expected diagonal, got $other")
-    // Q' = S Q S.
+    // Q' = S^-1 Q S^-1: coefficients scale by S, so the penalty must scale
+    // by the inverse for beta' Q beta to be invariant.
     var r = 0
     while r < 5 do
       var c = 0
       while c < 5 do
-        assertEqualsDouble(transported(r, c), scales(r) * penalty(r, c) * scales(c), 1e-12, s"Q'($r,$c)")
+        assertEqualsDouble(transported(r, c), penalty(r, c) / (scales(r) * scales(c)), 1e-12, s"Q'($r,$c)")
         c += 1
       r += 1
-    // And it is genuinely a different quadratic form, which is the point.
+    // And it is genuinely a different matrix, which is the point.
     val changed = (0 until 5).exists(i => math.abs(transported(i, i) - penalty(i, i)) > 1e-9)
     assert(changed, "rescaling left the penalty untouched; it should not have")
+
+  test("penalty transport keeps the penalised value invariant and round-trips"):
+    // A dense, non-diagonal quadratic form: invariance must hold for the
+    // full congruence, not just the diagonal.
+    val penalty = Mat.fromRows(
+      Seq(
+        Seq(2.0, 0.4, -0.3),
+        Seq(0.4, 1.5, 0.6),
+        Seq(-0.3, 0.6, 0.9)
+      )
+    )
+    val beta = Vector(0.7, -1.1, 0.4)
+    def quadratic(q: Mat, b: Vector[Double]): Double =
+      var acc = 0.0
+      var r = 0
+      while r < b.length do
+        var c = 0
+        while c < b.length do
+          acc += b(r) * q(r, c) * b(c)
+          c += 1
+        r += 1
+      acc
+    val transforms = Vector[BasisTransform](
+      BasisTransform.Diagonal(Vector(2.0, 0.5, 3.0)),
+      BasisTransform.Diagonal(Vector(16.0, 16.0, 16.0)),
+      BasisTransform.Permutation(Vector(2, 0, 1)),
+      BasisTransform.Identity(3)
+    )
+    transforms.foreach { transform =>
+      val betaPrime = transform
+        .transportCoefficients(BasisCoefficients.unsafe[Unit](beta))
+        .fold(error => fail(error.message), identity)
+      val penaltyPrime = transform.transportPenalty(penalty).fold(error => fail(error.message), identity)
+      assertEqualsDouble(quadratic(penaltyPrime, betaPrime.values), quadratic(penalty, beta), 1e-12, transform.toString)
+      // Scalar check: a uniform scale s multiplies the penalty by 1/s^2.
+      transform match
+        case BasisTransform.Diagonal(scales) if scales.distinct.size == 1 =>
+          val s = scales.head
+          assertEqualsDouble(penaltyPrime(0, 0), penalty(0, 0) / (s * s), 1e-12)
+        case _ => ()
+      // Round trip through the inverse transform restores the original.
+      val inverse = transform.inverse.fold(error => fail(error.message), identity)
+      val back = inverse.transportPenalty(penaltyPrime).fold(error => fail(error.message), identity)
+      var r = 0
+      while r < 3 do
+        var c = 0
+        while c < 3 do
+          assertEqualsDouble(back(r, c), penalty(r, c), 1e-12, s"round trip ($r,$c) under $transform")
+          c += 1
+        r += 1
+    }
+    // Covariance still transports forward, so the two contracts differ.
+    val forward = BasisTransform.Diagonal(Vector(2.0, 0.5, 3.0)).transportCovariance(penalty).fold(e => fail(e.message), identity)
+    val backward = BasisTransform.Diagonal(Vector(2.0, 0.5, 3.0)).transportPenalty(penalty).fold(e => fail(e.message), identity)
+    assertEqualsDouble(forward(0, 0), penalty(0, 0) * 4.0, 1e-12)
+    assertEqualsDouble(backward(0, 0), penalty(0, 0) / 4.0, 1e-12)
+
+  test("penalty transport refuses zero and non-finite scales"):
+    val penalty = Mat.fromRows(Seq(Seq(1.0, 0.0), Seq(0.0, 1.0)))
+    assert(BasisTransform.Diagonal(Vector(1.0, 0.0)).transportPenalty(penalty).isLeft)
+    assert(BasisTransform.Diagonal(Vector(1.0, Double.NaN)).transportPenalty(penalty).isLeft)
+    assert(BasisTransform.Diagonal(Vector(Double.PositiveInfinity, 1.0)).transportPenalty(penalty).isLeft)
+    assert(BasisTransform.Diagonal(Vector(1.0, 2.0)).transportPenalty(penalty).isRight)
 
   test("basis transforms transport covariance and adjusted linear hypotheses"):
     val covariance = Mat.fromRows(
