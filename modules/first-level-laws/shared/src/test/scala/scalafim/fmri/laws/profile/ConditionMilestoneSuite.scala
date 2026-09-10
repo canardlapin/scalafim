@@ -351,9 +351,7 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     assert(violations.isEmpty, violations.mkString("; "))
     assert(receipt.acceptedFraction > 0.9)
 
-  private def memoryUsed(): Option[Long] =
-    try
-      val rt = Runtime.getRuntime
-      rt.gc()
-      Some(rt.totalMemory() - rt.freeMemory())
-    catch case _: Throwable => None
+  /** Heap accounting is JVM-only and not linkable on Scala.js; the shared
+    * suite reports it as unavailable and the JMH benchmark reports RSS.
+    */
+  private def memoryUsed(): Option[Long] = None
