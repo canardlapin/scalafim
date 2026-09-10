@@ -1,0 +1,12 @@
+{
+  "original_vs_release_amplitude_relative_error": 8.499049908803264e-16,
+  "positive_small_determinant_identity_absolute_error": 3.552713678800501e-15,
+  "normalization_with_rescaled_lambda_amplitude_relative_error": 4.0555378878788047e-16,
+  "normalization_with_rescaled_lambda_energy_absolute_error": 5.329070518200751e-15,
+  "energy_original": 9.497283364684632,
+  "energy_scaled_kernel_fixed_lambda": 3.8602786317676423,
+  "stimulus_extension_objective_absolute_error": 1.7763568394002505e-15,
+  "stimulus_extension_centering_max_absolute_error": 9.992007221626409e-16,
+  "conditional_cross_voxel_covariance_frobenius_norm": 1.3654417918173594,
+  "noise_only_near_vs_far_squared_distance_ratio_rho_0_8": 0.19999999999999996
+}

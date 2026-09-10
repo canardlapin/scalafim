@@ -1,0 +1,86 @@
+{
+  "runtime": {
+    "python": "3.14.7",
+    "numpy": "2.4.3",
+    "scipy": "1.17.1"
+  },
+  "script_sha256": "55ca9b653e911430d8d8268248e61dac1e8be2ec3ada507f71fd1d9a124d2e28",
+  "alignment": {
+    "scope": "Independent dense algebra checks, not production kernels or empirical timing benchmarks.",
+    "shape": {
+      "timepoints": 84,
+      "trials": 18,
+      "conditions": 3,
+      "nuisance_columns": 3,
+      "voxels": 7
+    },
+    "master_amplitude_vs_original_penalty_max_relative_error": 7.970329085118556e-15,
+    "master_penalized_energy_vs_original_max_relative_error": 2.1617313909443255e-15,
+    "within_condition_trial_deviation_sum_max_absolute": 6.217248937900877e-15,
+    "alpha_zero_condition_only_relative_error": 2.574340666885708e-15,
+    "full_vs_nuisance_determinant_identity_max_abs_error": 8.659739592076221e-15,
+    "small_condition_logdet_correction_max_abs_error": 5.329070518200751e-15,
+    "determinant_counterexample": [
+      {
+        "tau": 3.3,
+        "full_logdet": 15.201208425611053,
+        "nuisance_contrast_logdet": 14.239311203316825,
+        "difference": -0.9618972222942279
+      },
+      {
+        "tau": 4.7,
+        "full_logdet": 15.157892305372727,
+        "nuisance_contrast_logdet": 14.172237593312245,
+        "difference": -0.9856547120604819
+      },
+      {
+        "tau": 6.2,
+        "full_logdet": 15.156195280259793,
+        "nuisance_contrast_logdet": 14.160149423035232,
+        "difference": -0.9960458572245603
+      }
+    ],
+    "determinant_difference_variation_across_shapes": 0.03414863493033238,
+    "normal_energy_jet_gradient_vs_fd_relative_error": 3.224248681582538e-08,
+    "normal_energy_jet_hessian_vs_fd_relative_error": 1.4899169451821435e-07,
+    "small_whitened_energy_jet_gradient_vs_normal_relative_error": 1.1364149858229286e-08,
+    "small_whitened_energy_jet_hessian_vs_normal_relative_error": 1.4473288612685312e-07,
+    "polynomial_pattern_forward_relative_error": 7.027177997270372e-16,
+    "polynomial_pattern_transpose_relative_error": 3.4797219664185626e-16,
+    "conditional_readout_second_order_relative_errors_at_scales_1_half_quarter": [
+      6.367911057149062e-06,
+      7.968946365397315e-07,
+      9.966651801410019e-08
+    ],
+    "convergence_error_ratios": [
+      7.990907160323912,
+      7.995610285361749
+    ],
+    "impulse_schedule_covariance_aggregation_relative_error": 1.1664875467701131e-16,
+    "limitations": [
+      "One small deterministic experiment does not establish HRF recovery under realistic noise.",
+      "Profile derivatives and conditional readouts are checked locally, not global cell routing.",
+      "The whitened backend in this audit is a dense oracle; short-state checks are rerun separately.",
+      "Polynomial operator parity is exact for the Taylor approximation, not for globally adaptive fitting.",
+      "No production Scala code was changed and no hardware throughput claim is made."
+    ]
+  },
+  "additional_contracts": {
+    "feature_release_vs_augmented_lstsq_amplitude_max_abs": 4.073130721593543e-15,
+    "direct_query_vs_augmented_lstsq_max_abs": 2.0539125955565396e-14,
+    "feature_centering_max_abs": 3.469446951953614e-15,
+    "feature_stationarity_max_abs": 3.226585665316861e-15,
+    "feature_residual_projection_norm_not_zero": 0.1258777993527782,
+    "joint_lambda_gamma_scale_energy_abs": 1.7763568394002505e-13,
+    "joint_lambda_gamma_scale_amplitude_max_abs": 6.702971511174383e-15,
+    "lambda_only_scale_energy_discrepancy": 0.010826005954861273,
+    "compact_condition_profile_energy_max_abs": 1.4210854715202004e-14,
+    "compact_condition_nuisance_recovery_max_abs": 3.3306690738754696e-16,
+    "compact_rank": 9,
+    "basis_penalty_scalar_original_forward_inverse": [
+      1.0,
+      16.0,
+      1.0
+    ]
+  }
+}
