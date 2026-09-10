@@ -27,13 +27,31 @@ final class CompactConditionJets(val rHat: Array[Double], val rank: Int, val con
     * (first `activeComponents` components; the rest are set to zero).
     */
   def assemble(z: Array[Double], e: Double, coefficients: Array[Double], activeComponents: Int): Unit =
+    var comp = 0
+    while comp < activeComponents do
+      designFrom(coefficients, comp)
+      comp += 1
+    assembleFromDesign(z, e, activeComponents)
+
+  /** Size of one full design jet, for precomputed node banks. */
+  def designJetSize: Int = components * k * c
+
+  /** Copy the current design jet (all components) into `target(offset ...)`. */
+  def exportDesign(target: Array[Double], offset: Int): Unit =
+    System.arraycopy(design, 0, target, offset, components * k * c)
+
+  /** Assemble from a precomputed design jet stored at `source(offset ...)`. */
+  def assembleLoaded(z: Array[Double], e: Double, source: Array[Double], offset: Int, activeComponents: Int): Unit =
+    System.arraycopy(source, offset, design, 0, activeComponents * k * c)
+    assembleFromDesign(z, e, activeComponents)
+
+  private def assembleFromDesign(z: Array[Double], e: Double, activeComponents: Int): Unit =
     java.util.Arrays.fill(s, 0.0)
     java.util.Arrays.fill(b, 0.0)
     java.util.Arrays.fill(g, 0.0)
     s(JetLayout.Value) = e
     var comp = 0
     while comp < activeComponents do
-      designFrom(coefficients, comp)
       project(comp, z)
       comp += 1
     // G_0
