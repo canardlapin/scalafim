@@ -291,6 +291,9 @@ final class CompactConditionRuntime(
   private val scale = new Array[Double](prep.family.jetComponents)
   private val residualDf = prep.rows - prep.nuisanceRank - prep.conditions - prep.family.dimension
 
+  /** Node energies scanned for the last fitted voxel, for pooling. */
+  def lastNodeEnergies: Array[Double] = decoder.lastNodeEnergies
+
   /** Fit one voxel from its whitened response column starting at `offset`. */
   def fit(whitened: Array[Double], offset: Int, counters: DecoderCounters): CompactConditionFit =
     val e = prep.project(whitened, offset, z, qy)

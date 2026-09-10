@@ -301,6 +301,9 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       i += 1
     true
 
+  /** Node energies from the last scan (`NaN` where unscanned); valid until the next decode. */
+  def lastNodeEnergies: Array[Double] = nodeEnergy
+
   def decode(counters: DecoderCounters): ShapeDecodeResult =
     counters.voxels += 1
     val best = scan(counters)
