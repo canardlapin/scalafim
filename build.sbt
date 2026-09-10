@@ -835,7 +835,7 @@ lazy val atlasExamplesJVM =
 lazy val workflowExamplesJVM =
   project
     .in(file("examples/workflows-jvm"))
-    .dependsOn(atlasJVM, mvpaSpatialJVM)
+    .dependsOn(atlasJVM, mvpaSpatialJVM, fitJVM)
     .settings(commonSettings)
     .settings(
       name := "scalafim-examples-workflows-jvm",
