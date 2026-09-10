@@ -62,7 +62,7 @@ object ManovaReferenceFixtures:
     val out = Matrix.newBuilder(10, 5)
     var index = 0
     while index < values.length do
-      out.updateRowMajor(index, values(index))
+      out.writeLinear(index, values(index))
       index += 1
     out.result()
 

@@ -1,0 +1,46 @@
+[
+  {
+    "name": "scalafim-jvm",
+    "tasks": [
+      "latentJVM/test",
+      "designJVM/test",
+      "imageJVM/test",
+      "spatialJVM/test",
+      "datasetJVM/test",
+      "fitJVM/test",
+      "mvpaJVM/test",
+      "mvpaFitJVM/test",
+      "connectivityJVM/test",
+      "archivedResponseInteropJVM/test"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "scalafim-js1",
+    "tasks": [
+      "latentJS/test",
+      "designJS/test",
+      "imageJS/test"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "scalafim-js2",
+    "tasks": [
+      "spatialJS/test",
+      "datasetJS/test",
+      "fitJS/test"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "scalafim-js3",
+    "tasks": [
+      "mvpaJS/test",
+      "mvpaFitJS/test",
+      "connectivityJS/test",
+      "archivedResponseInteropJS/test"
+    ],
+    "exit_code": 0
+  }
+]

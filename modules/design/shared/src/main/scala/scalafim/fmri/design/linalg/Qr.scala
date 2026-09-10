@@ -94,6 +94,6 @@ object QrDecomposition:
     val builder = Matrix.newBuilder(rows, cols)
     var i = 0
     while i < values.length do
-      builder.updateRowMajor(i, values(i))
+      builder.writeLinear(i, values(i))
       i += 1
     builder.result()

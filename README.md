@@ -130,6 +130,13 @@ serialization, performance gates, and the cross-platform example.
 
 ## Common Commands
 
+On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
+Multivar consumes Gale through a revision-tagged artifact that is not yet on
+Maven Central. This helper checks out the exact pinned Multivar revision and
+runs its Gale bootstrap into the local artifact cache. Repeat after changing
+the Gale/Multivar pins. Ordinary builds then use the committed source pins;
+no temporary image4s checkout or provider override is needed.
+
 ```sh
 sbt scalafimCompileAll
 sbt scalafimTestAll

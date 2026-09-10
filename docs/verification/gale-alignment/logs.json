@@ -1,0 +1,86 @@
+[
+  {
+    "name": "image4s-test",
+    "sha256": "9e0c302cb1ee707454883f2de4953b61e3a6f5f81433d2806ca4ddbad5e4b683",
+    "bytes": 15582,
+    "tests": 354
+  },
+  {
+    "name": "graph4s-test",
+    "sha256": "77ff5ab90bacada4dea3f5de3332647403451a870c3ae3147b0898aecf74a8b1",
+    "bytes": 11502,
+    "tests": 334
+  },
+  {
+    "name": "multivar-test",
+    "sha256": "babc22fa09f1f1b5f01a27c83c51d67799c1fd5b01e7198b2c14191c1494934e",
+    "bytes": 107284,
+    "tests": 1174
+  },
+  {
+    "name": "reframe4s-test-4g",
+    "sha256": "a087fb9f99be369989f3889119856e545d4e11c2d28818b6bac462292780204d",
+    "bytes": 23616,
+    "tests": 437
+  },
+  {
+    "name": "gale-test",
+    "sha256": "9ffbcb926ddca399e655d28a030878b20f9b5d59d8096995f106029f2d1790ac",
+    "bytes": 2535,
+    "tests": 50
+  },
+  {
+    "name": "bootstrap",
+    "sha256": "8d4652f8803ced9b7fecba971d97b3b6daea58f31684d73290a391e6c4743f7c",
+    "bytes": 15315,
+    "tests": 0
+  },
+  {
+    "name": "scalafim-compile",
+    "sha256": "9bf8f2f34a8053ace1a727abef4dabb67fe78a742b2be5dc1064dc97b3c3c343",
+    "bytes": 23624,
+    "tests": 0
+  },
+  {
+    "name": "scalafim-jvm",
+    "sha256": "33c7fda8dc1bc1c0dcf69d00861e781572ea9045a34e8acd6ab2e506a51abf19",
+    "bytes": 122892,
+    "tests": 1382
+  },
+  {
+    "name": "scalafim-js1",
+    "sha256": "1082b51890a3bec9b374ba061d9e8cd3146c80ba0704ac4de8d68700a57ff041",
+    "bytes": 47750,
+    "tests": 555
+  },
+  {
+    "name": "scalafim-js2",
+    "sha256": "f1775db13067f1507ed5aca6dfd7409b995fa34a9228eecec3658d960b5e628f",
+    "bytes": 39092,
+    "tests": 404
+  },
+  {
+    "name": "scalafim-js3",
+    "sha256": "57f04cce38d41ad2602a76e481a5d854c69019cb50c2fe3fa738cccd64f0a689",
+    "bytes": 33789,
+    "tests": 320
+  },
+  {
+    "name": "scalafim-working-compile",
+    "sha256": "7564162819cf2089cdee5b4803fae0aceadc3eaa29900c174ec45226127bcb2a",
+    "bytes": 15498,
+    "tests": 0
+  },
+  {
+    "name": "scalafim-working-jvm",
+    "sha256": "c33e492caaeebf2e4d0d8517e957a9884325e550a1cc269916a6ba0ed7670715",
+    "bytes": 31798,
+    "tests": 325
+  },
+  {
+    "name": "scalafim-working-js",
+    "sha256": "36a1855556579f38805be23866cdece4298c84f4d28458497e0d1f10c8a65317",
+    "bytes": 27909,
+    "tests": 298
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "image4s": {
+    "revision": "ec56b34806c22e26c28ecbd366ef2e323195fc88",
+    "galeRevision": "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+  },
+  "graph4s": {
+    "revision": "c343e0876a29d0cb73f67799e78b4d25ecd3eb4b",
+    "galeRevision": "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+  },
+  "multivar": {
+    "revision": "aeb75a30a846d5f68369302e344a613da9c5c21f",
+    "galeRevision": "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+  },
+  "reframe4s": {
+    "revision": "fa015c38a1b481096646d2c857191c327fc7a9e5",
+    "galeRevision": "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+  },
+  "gale": {
+    "revision": "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+  }
+}

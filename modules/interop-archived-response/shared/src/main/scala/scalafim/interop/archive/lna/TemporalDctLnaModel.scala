@@ -311,7 +311,7 @@ private object TemporalDctLnaModel:
     val builder = DMat.newBuilder(rows, columns)
     var outputIndex = 0
     while outputIndex < owned.length do
-      builder.updateRowMajor(outputIndex, owned(outputIndex))
+      builder.writeLinear(outputIndex, owned(outputIndex))
       outputIndex += 1
     Right(builder.result())
 

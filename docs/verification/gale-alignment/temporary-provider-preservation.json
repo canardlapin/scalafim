@@ -1,0 +1,66 @@
+{
+  "temporary_base": "18ffdce67fd05f5bcd28336650edcae891da6265",
+  "canonical_revision": "ec56b34806c22e26c28ecbd366ef2e323195fc88",
+  "files": [
+    {
+      "path": "modules/image4s-core/shared/src/main/scala/image4s/SampleSpace.scala",
+      "sha256": "19a834c81c7417a3423109f65d4873f42505cf706f1989abf13e3b13819dd570",
+      "bytes": 6948
+    },
+    {
+      "path": "modules/image4s-core/shared/src/test/scala/image4s/SampleSpaceRefinementSuite.scala",
+      "sha256": "13242d83601931ab6a34f1e1f484809bd96c7d4e1a4f1d2d17a1e858be3f3904",
+      "bytes": 2051
+    },
+    {
+      "path": "modules/image4s-nifti/js/src/main/scala/image4s/nifti/NodeNiftiFileSystem.scala",
+      "sha256": "5477a9159232004ac2293f2485a042e221f85b34edbaf798a7d1297b633a4885",
+      "bytes": 10747
+    },
+    {
+      "path": "modules/image4s-nifti/js/src/test/scala/image4s/nifti/NiftiIncrementalNodeSuite.scala",
+      "sha256": "f62249f8237eeb6acf5805c4c46764deec3d8da9c87c4e1b5982a2ac9fb8bcf9",
+      "bytes": 6340
+    },
+    {
+      "path": "modules/image4s-nifti/jvm/src/main/scala/image4s/nifti/JvmNiftiFileSystem.scala",
+      "sha256": "68ff08d6dc2537f1229b671dc3507d6f7eb9a2d6a0a9825c9791e5fca4cddb04",
+      "bytes": 8436
+    },
+    {
+      "path": "modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalHeapProbe.scala",
+      "sha256": "d1bb01eaee92615d3b3759e01ce10926737f26a06e64f124b214ee76dd91f625",
+      "bytes": 3270
+    },
+    {
+      "path": "modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalJvmSuite.scala",
+      "sha256": "619ca2d2900a4f0e7ee5d47efa921ce5bdfe149495e74217ee2bbd8dcb317c41",
+      "bytes": 5265
+    },
+    {
+      "path": "modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala",
+      "sha256": "0a03752c8b89796b16c2af20ce8c4380254a1412afe2c943591b271eda9016bf",
+      "bytes": 76085
+    },
+    {
+      "path": "modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiFileSystem.scala",
+      "sha256": "c1c834a44c6f3c423319bba12caf4a2709ccff104a89749acfcf7618516cdbe7",
+      "bytes": 4861
+    },
+    {
+      "path": "modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala",
+      "sha256": "19caddf548ec8df8ef9edd246c41626fd840b30036c06350234b937796990e2c",
+      "bytes": 24978
+    },
+    {
+      "path": "modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiScalarWriter.scala",
+      "sha256": "5d94283a37a5dcf5d42581f1d5cbfa9e90323835d621a28b40157487ded91562",
+      "bytes": 6686
+    },
+    {
+      "path": "modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala",
+      "sha256": "cb998b46f7027cbd6205641b5f885ce7b8f10fa515f77a6affa6d57b8f93f035",
+      "bytes": 15715
+    }
+  ]
+}

@@ -19,7 +19,7 @@ object MatrixAdapters:
     val out = Matrix.newBuilder(matrix.rows, matrix.cols)
     var i = 0
     while i < matrix.data.length do
-      out.updateRowMajor(i, matrix.data(i))
+      out.writeLinear(i, matrix.data(i))
       i += 1
     out.result()
 

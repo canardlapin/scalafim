@@ -550,7 +550,7 @@ private[fit] def matrix(rows: Int, cols: Int, values: Array[Double]): DMat =
   val out = Matrix.newBuilder(rows, cols)
   var index = 0
   while index < values.length do
-    out.updateRowMajor(index, values(index))
+    out.writeLinear(index, values(index))
     index += 1
   out.result()
 
