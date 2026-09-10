@@ -101,6 +101,18 @@ class SurfacePairedCameraSuite extends munit.FunSuite:
     assertEquals(first.receipt.cameraKey, lit.receipt.cameraKey)
     assertNotEquals(first.receipt.cameraKey, compile(paired(medial)).receipt.cameraKey)
 
+  test("compiled pairing adapts to portrait panes without changing cameras or scientific resources"):
+    val plan = compile(paired())
+    assertEquals(plan.viewportFit, SurfaceViewportFit.Pack(1.0))
+    val wide = plan.viewportFit.resolve(plan.slots, 1200.0, 400.0)
+    val tall = plan.viewportFit.resolve(plan.slots, 400.0, 800.0)
+    assertEqualsDouble(wide.head.viewport.y, wide.last.viewport.y, 1e-12)
+    assertEqualsDouble(tall.head.viewport.x, tall.last.viewport.x, 1e-12)
+    assertEqualsDouble(tall.head.viewport.width * 400.0, 400.0, 1e-9)
+    assertEqualsDouble(tall.head.viewport.height * 800.0, 400.0, 1e-9)
+    assertEquals(tall.map(_.surface), plan.slots.map(_.surface))
+    assertEquals(compile(paired()).receipt, plan.receipt)
+
   test("revision7 persists paired viewpoints and fitted aspect; revision6 remains readable"):
     val state = reduce(paired(), SurfaceViewerAction.FitCamera)
     val reference = SurfaceExternalReference(SurfaceAssetUri.unsafe("fixture:paired"), SurfaceContentDigest.unsafe("a" * 64))

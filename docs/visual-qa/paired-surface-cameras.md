@@ -121,3 +121,26 @@ sources, the linked browser bundle, native/reference images, reference queries,
 runtime receipts, measurements and the incremental patch over candidate 31.
 The implementation files that passed the prior 400 tests are unchanged. Only
 these two inert probes and this QA record are added or updated in this slice.
+
+## Responsive packing increment (10 September 2026)
+
+The recovered paired-camera and retained-atlas candidate is preserved as
+`6a7e17beb42c5d056e2596809be627cca8f026b5` on the local
+`surface/paired-responsive-20260910` branch. This preservation commit does not
+establish upstream landing or a new runtime qualification.
+
+Bilateral compilation now selects `SurfaceViewportFit.Pack`, which maximizes
+common tile size across ordered rows and columns at the camera's physical aspect
+ratio. Portrait panes can stack the hemispheres; wide panes retain a horizontal
+pair. Single views retain the existing `Contain` behavior. `Fill` and explicit
+whole-group `Contain` remain available to callers. Packing changes only viewport
+rectangles: camera fit, anatomical margins, mesh positions, scientific identities
+and per-surface viewpoints are retained. All backends consume the shared resolver
+again on resize.
+
+The independent layout fixtures check exact portrait/wide results, the analytic
+maximum for two tiles, physical aspect, non-overlap, centering, reordered identity,
+partial rows and single-view focus. Camera fixtures retain their projected-corner
+containment and equal-scale checks. New JVM/JS execution, native framebuffer/pick
+checks and real cortical consumer review must qualify this increment separately
+from the archived paired-camera evidence. Those gates are pending at this commit.

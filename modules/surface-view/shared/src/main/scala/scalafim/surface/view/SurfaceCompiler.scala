@@ -156,7 +156,8 @@ object SurfaceCompiler:
       readouts,
       profile,
       receipt,
-      SurfaceViewportFit.Contain(slots.length.toDouble * state.camera.aspectRatio.value),
+      if slots.length > 1 then SurfaceViewportFit.Pack(state.camera.aspectRatio.value)
+      else SurfaceViewportFit.Contain(state.camera.aspectRatio.value),
       fragmentSurfaces,
       surfaceCameras
     )
