@@ -1,6 +1,6 @@
 package scalafim.fmri.hrf.laws
 
-import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule}
+import scalafim.fmri.hrf.family.{GaussianFamily, LwuFamily, NormalizationRule}
 
 class ParametricFamilyLawsSuite extends munit.FunSuite:
 
@@ -25,5 +25,20 @@ class ParametricFamilyLawsSuite extends munit.FunSuite:
       val failures =
         ParametricFamilyLaws.realisationMatchesLibraryKernel(family, point, lags) ++
           ParametricFamilyLaws.causality(family, point)
+      assert(failures.isEmpty, failures.map(_.message).mkString("\n"))
+    }
+
+  private val lwu = LwuFamily.Default
+  private val lwuLags = Array.tabulate(160)(i => i * 0.2)
+  private val lwuPoints = Seq((3.5, math.log(0.9), 0.1), (5.0, math.log(1.5), 0.4), (7.5, math.log(2.8), 0.75))
+    .map { case (t, v, r) => lwu.chart.point(t, v, r).fold(e => fail(e.message), identity) }
+
+  test("LWU family jets, scale jets, realisation and causality laws hold"):
+    lwuPoints.foreach { point =>
+      val failures =
+        ParametricFamilyLaws.jetsMatchFiniteDifferences(lwu, point, lwuLags) ++
+          ParametricFamilyLaws.scaleJetsMatchFiniteDifferences(lwu, NormalizationRule.Unnormalised, point) ++
+          ParametricFamilyLaws.realisationMatchesLibraryKernel(lwu, point, lwuLags) ++
+          ParametricFamilyLaws.causality(lwu, point)
       assert(failures.isEmpty, failures.map(_.message).mkString("\n"))
     }
