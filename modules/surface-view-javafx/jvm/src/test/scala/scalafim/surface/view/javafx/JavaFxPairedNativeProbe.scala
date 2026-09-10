@@ -138,7 +138,7 @@ object JavaFxPairedNativeProbe:
                 if name == "lateral" || name == "medial" then
                   val face = if name == "lateral" then 0 else 1
                   require(sourceFaces.toMap == Map("left" -> Set(face), "right" -> Set(face)), s"$frameName did not expose both intended anatomical faces: $sourceFaces")
-                require((name == "clipped" && hits == 0) || hits > 15, s"$frameName insufficient hits: $hits")
+                require(if name == "clipped" then hits == 0 else hits > 15, s"$frameName insufficient hits: $hits")
                 require(misses > 10, s"$frameName insufficient miss coverage")
                 val json = s"""{"name":"$frameName","stage":"$name","perspective":$perspective,"aa":"$aa","width":$width,"height":$height,"hits":$hits,"misses":$misses,"maxColorError":$maxColor,"maxBarycentricError":$maxBary,"points":${points.result().mkString("[", ",", "]")}}"""
                 Files.writeString(output.resolve(frameName + ".json"), json + "\n")
