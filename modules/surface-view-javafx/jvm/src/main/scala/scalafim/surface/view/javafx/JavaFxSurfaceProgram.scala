@@ -217,9 +217,21 @@ final class JavaFxSurfaceBackend private (
     val plan = prepared.plan
     JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
-      else
+      else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
-        val program = JavaFxSurfaceProgram.compile(currentPrepared.map(_.plan), plan)
+        val incremental = JavaFxSurfaceProgram.compile(currentPrepared.map(_.plan), plan)
+        val changesAtlas = incremental.commands.exists:
+          case JavaFxSurfaceCommand.UpdateAtlases(_) => true
+          case _ => false
+        val rebuild = if changesAtlas then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan)) else Right(false)
+        val program = rebuild match
+          case Left(error) => scala.util.boundary.break(Left(error))
+          case Right(false) => incremental
+          case Right(true) =>
+            // Compile a complete replacement before detaching the old scene.
+            // Colour-driven topology changes must be visible in resource receipts.
+            val full = JavaFxSurfaceProgram.compile(None, plan)
+            full.copy(dirty = full.dirty.copy(removedResources = incremental.dirty.removedResources))
         var atlasUpdates = 0
         var geometryUpdates = 0
         var geometryBytesUpdated = 0L
@@ -287,7 +299,7 @@ final class JavaFxSurfaceBackend private (
           events += SurfaceResourceEvent.MeshUploaded(
             chunk.meshKey,
             chunk.mesh.getPoints.size() / 3,
-            chunk.faceCount,
+            chunk.renderedFaceCount,
             (chunk.mesh.getPoints.size().toLong + chunk.mesh.getNormals.size() +
               chunk.mesh.getTexCoords.size() + chunk.mesh.getFaces.size()) * 4
           )

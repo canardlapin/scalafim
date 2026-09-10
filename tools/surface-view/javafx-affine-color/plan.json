@@ -1,0 +1,16 @@
+{
+ "schema":"plsneuro.javafx-affine-gpu-color-plan.v1",
+ "contract":"Opaque unlit colors are composited at original vertices, then piecewise-affinely interpolated. Internal triangle edges remain in all metrics. No scalar remapping.",
+ "fixtureFamilies":["diagonal","rgb","ramp32","ramp128"],
+ "faceOrders":["original","cyclic","shuffled"],
+ "transforms":["front","oblique"],
+ "antialiasing":["DISABLED","BALANCED"],
+ "logicalSize":[256,256],
+ "positiveEncodings":["AdaptiveAffineOpaque","AffineMidpointOpaque"],
+ "negativeControls":["LegacyTriangle under patched ES2 must fail diagonal-edge color criterion","AdaptiveAffineOpaque under stock ES2 must fail dense ramp criterion"],
+ "oracle":"Clip original colored triangles to each pixel square; bound colors using the affine function at intersection vertices, independent of atlas/native UVs. Gate all fully covered pixel footprints and report interior/edge populations separately. Partial outer silhouettes are excluded because background coverage is not specified. For AA off additionally compare pixel-center barycentric color.",
+ "toleranceChannelLevels":2.0,
+ "toleranceRationale":"Prospective 8-bit integration budget for texel quantization, hardware bilinear interpolation and framebuffer rounding. This is an empirical acceptance threshold, not a theorem about every JavaFX/driver implementation.",
+ "permutationChecks":"Compare pixels for semantic-equivalent cyclic/packing orders, using the same 2-channel-level budget; retain failures separately.",
+ "limitations":["macOS ES2 and exact runtime only","pixel-footprint bounds are conservative, not an exact multisample color oracle","no lighting, actual device scale, nonlinear/scalar lookup semantics, cortical occlusion or interactive ray picks"]
+}
