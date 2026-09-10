@@ -143,4 +143,38 @@ maximum for two tiles, physical aspect, non-overlap, centering, reordered identi
 partial rows and single-view focus. Camera fixtures retain their projected-corner
 containment and equal-scale checks. New JVM/JS execution, native framebuffer/pick
 checks and real cortical consumer review must qualify this increment separately
-from the archived paired-camera evidence. Those gates are pending at this commit.
+from the archived paired-camera evidence. These gates were pending at the
+implementation commit; the following section records the subsequent execution.
+
+
+### Responsive candidate qualification
+
+Fresh detached checkout `618e03cf52ebcb9bd4a4930d406867d040217653` passed
+412 tests: surface-view 140 on each platform, raster 29 on each platform,
+JavaFX 46 and Three.js 28. The explicit Intaglio override remains
+`55658abfbbfed0c9a36ab612b38bd8f0677bc158`; all 106 tracked files in that source
+snapshot were compared with the exact Git blobs before execution. The ordinary
+Intaglio pin is not qualified by this override.
+
+The frozen JavaFX 24.0.1 ES2 compatibility runtime passed all 68 hidden native
+stages: 47,210 ray hits and 251,058 misses, maximum tested interior channel error
+0, and maximum barycentric error 2.960806659846327e-7. These cover the two
+projections and antialiasing modes through paired views, portrait resize,
+reordering, geometry morph, frame/opacity changes, fit/focus/reset, and full
+clip/restore. No Stage or OS input was used. The portrait comparison was visually
+inspected: both ordered triangle fixtures now occupy stacked, substantially
+larger viewports instead of a small centered horizontal row.
+
+Evidence is retained in the PLS Neuro workspace under
+`output/brain-display/paired-cameras-37/evidence.json`, with source hashes,
+test reports, build logs, frozen-runtime input hashes and native images/rays.
+The native-frame archive SHA-256 is
+`72a6d36d3ffad48c72462492854851f8ea8972676983281df7940e0d14b86118`.
+
+This is a synthetic camera/layout/pick gate with constant face colors and
+interior sampling. New WebGL framebuffer execution, curved cortical color and
+lighting review, normal interaction latency, native save/reopen and partial
+clipping remain separate. The consumer backport must retain its admitted color
+semantics: the native branch also contains retained-atlas/face/scalar features
+that are not implicitly admitted by paired-camera adoption. Neither canonical
+ScalaFIM main nor the PLS Neuro provider patch was updated by this increment.
