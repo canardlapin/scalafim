@@ -4,7 +4,8 @@ import scalafim.image.SampleSpaces
 
 import scalafim.fmri.fit.GaleTestSyntax.*
 
-import scalafim.dataset.{DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
+import scalafim.dataset.{DatasetError, DatasetSeriesReader, FmriSeries, SynchronousFmriDataset, DataSelection, DatasetEvents, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
+import scalafim.fmri.design.{CellKey, ColumnRole, DesignSchema, RowLayout, RunScope, StructuralColumn, StructuralColumnOrigin, TermId}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -648,6 +649,78 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       case _                                      => false
     })
   }
+
+  // Matrix-only execution contracts: no anatomical interpretation or image files.
+  private def boundedReader(plan: FitPlan, selectedTimes: Vector[Int]): DatasetSeriesReader =
+    val underlying = SynchronousFmriDataset.readerFor(plan.model.dataset).toOption.get
+    new DatasetSeriesReader:
+      def dataset: FmriDataset = underlying.dataset
+      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
+        selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
+          if resolved.voxels.size > 1 then
+            Left(DatasetError.StorageFailure(s"bounded reader refuses ${resolved.voxels.size} voxels"))
+          else if resolved.timepoints != selectedTimes then
+            Left(DatasetError.StorageFailure("chunk changed selected timepoints"))
+          else underlying.seriesEither(selection)
+        }
+
+  private def boundedPlan(name: String): FitPlan = name match
+    case "runwise" => FitPlan(runwiseModel, engine = FitEngine.RunwiseLeastSquares)
+    case "fixed" =>
+      val model = glsModel
+      val event = model.eventModel
+      val schema = DesignSchema.validated(event.designMatrix,
+        RowLayout.fromSamplingFrame(event.samplingFrame),
+        Vector(StructuralColumn.fromOrigin(1, StructuralColumnOrigin.Event(
+          term = TermId.unsafe("task"), phase = None, cell = CellKey.empty,
+          modulator = None, basis = None, role = ColumnRole.Task, runScope = RunScope.Global),
+          "task").toOption.get)).toOption.get
+      FitPlan(model.copy(eventModel = event.copy(compiledSchema = Some(schema))),
+        FitStrategy.SeparateRunsThenFixedEffects())
+    case "LSS" => lssPlan
+    case other => fail(s"unknown test plan $other")
+
+  private def assertBoundedFit(actual: FmriFitResult, expected: FmriFitResult): Unit =
+    (actual, expected) match
+      case (a: RunwiseFmriFitResult, e: RunwiseFmriFitResult) =>
+        assertRunwiseClose(a, e)
+        // Independent generating slopes, in explicitly permuted voxel order.
+        val slopes = Vector(Vector(0.25, 2.0, -1.0), Vector(0.75, -1.0, 1.5))
+        a.runs.zip(slopes).foreach { (run, values) =>
+          values.zipWithIndex.foreach { (value, col) =>
+            assertEqualsDouble(run.coefficients.value(0, col), value, 1e-10)
+          }
+        }
+      case (a: FixedEffectsFmriFitResult, e: FixedEffectsFmriFitResult) =>
+        assertEquals(a.voxelIndices, e.voxelIndices)
+        assertEquals(a.timepoints, e.timepoints)
+        assertEquals(a.residualDegreesOfFreedom, e.residualDegreesOfFreedom)
+        assertMatrixClose(a.coefficients.value, e.coefficients.value, 1e-10)
+        assertMatrixClose(a.standardErrors.value, e.standardErrors.value, 1e-10)
+      case (a: LssFmriFitResult, e: LssFmriFitResult) => assertLssClose(a, e)
+      case _ => fail("chunking changed fit result type")
+
+  for name <- Vector("runwise", "fixed", "LSS") do
+    test(s"$name preparation preserves bounded response reads and censored axes") {
+      val plan = boundedPlan(name)
+      val times = Vector.tabulate(plan.nTimepoints)(identity).filterNot(_ % 7 == 2)
+      val selection = DataSelection(time = IndexSelection.Indices(times), voxels = IndexSelection.indices(2, 0, 1))
+      val expected = FitPlanExecutor.unsafeFit(plan, selection)
+      val actual = FitPlanExecutor.fitChunked(boundedReader(plan, times), plan, selection, singleVoxelChunking)
+        .fold(error => fail(error.message), identity)
+      assertBoundedFit(actual, expected)
+    }
+
+    test(s"$name future preparation preserves bounded response reads") {
+      val plan = boundedPlan(name)
+      val times = Vector.tabulate(plan.nTimepoints)(identity).filterNot(_ % 7 == 2)
+      val selection = DataSelection(time = IndexSelection.Indices(times), voxels = IndexSelection.indices(2, 0, 1))
+      val expected = FitPlanExecutor.unsafeFit(plan, selection)
+      FitPlanExecutor.fitChunkedFuture(boundedReader(plan, times), plan, selection,
+        singleVoxelChunking, FitParallelism.unsafe(2)).map { result =>
+        assertBoundedFit(result.fold(error => fail(error.message), identity), expected)
+      }
+    }
 
   private def olsModel: FmriModel =
     val sampling = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0))

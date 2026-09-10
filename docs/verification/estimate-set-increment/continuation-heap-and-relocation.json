@@ -1,0 +1,14 @@
+{
+  "source_base": "faeba828723cb89696f96fdfc481499304f4fe36",
+  "reader_classpath_has_fitter": false,
+  "group_classpath_has_fitter": false,
+  "heap_bytes": 67108864,
+  "relocated_root": "/tmp/estimates-continuation-heap-relocated",
+  "write": "WRITE_PASS heap=67108864 payloadBytes=134217728 cells=16777216 seconds=4.347676041\n",
+  "read": "READ_PASS relocated=true fitterPresent=false cells=4\n",
+  "independent_verification": {
+    "cells": 16777216,
+    "checksum": 214459251425280,
+    "all_values_verified": true
+  }
+}

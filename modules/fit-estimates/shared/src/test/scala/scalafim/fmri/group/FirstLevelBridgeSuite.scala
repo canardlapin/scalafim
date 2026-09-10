@@ -1,5 +1,7 @@
 package scalafim.fmri.group
 
+import scalafim.fmri.fit.estimates.FitGroupAdapter
+
 import gale.linalg.DVec
 import scalafim.dataset.SubjectId
 import scalafim.fmri.fit.{ResidualDegreesOfFreedom, TContrastResult}
@@ -28,7 +30,7 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
       (subjects(1), "faces") -> contrastResult(0.5, 0.2),
       (subjects(2), "faces") -> contrastResult(0.6, 0.2)
     )
-    val data = value(FirstLevel.groupData(GroupSpace.SampleAxis(1), subjects, Vector("faces"), results))
+    val data = value(FitGroupAdapter.groupData(GroupSpace.SampleAxis(1), subjects, Vector("faces"), results))
     assert(data.hasVariances)
 
     val fit = value(GroupEngine.fit(value(GroupModel.build(data, GroupDesign.intercept(3), GroupWeighting.InverseVariance)))).fit("faces").get
@@ -42,7 +44,7 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
       (subjects(1), "faces") -> contrastResult(0.5, 0.2)
     )
     assertEquals(
-      FirstLevel.groupData(GroupSpace.SampleAxis(1), subjects, Vector("faces"), results).left.toOption,
+      FitGroupAdapter.groupData(GroupSpace.SampleAxis(1), subjects, Vector("faces"), results).left.toOption,
       Some(GroupError.MissingSubjectContrast("s3", "faces"))
     )
   }
@@ -54,7 +56,7 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
       (subjects(2), "faces") -> contrastResult(0.6, 0.2)
     )
     assertEquals(
-      FirstLevel.groupData(GroupSpace.SampleAxis(2), subjects, Vector("faces"), results).left.toOption,
+      FitGroupAdapter.groupData(GroupSpace.SampleAxis(2), subjects, Vector("faces"), results).left.toOption,
       Some(GroupError.sampleMismatch(2, 1))
     )
   }

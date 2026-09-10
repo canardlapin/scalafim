@@ -1,4 +1,6 @@
-package scalafim.fmri.group
+package scalafim.fmri.fit.estimates
+
+import scalafim.fmri.group.*
 
 import gale.linalg.Matrix
 import scalafim.dataset.SubjectId
@@ -7,9 +9,10 @@ import scalafim.fmri.fit.TContrastResult
 /** Bridge from first-level results to a group cube. Each subject contributes,
   * per first-level contrast, an effect map (the contrast estimate) and a variance
   * map (its squared standard error) — exactly the inputs the meta-analytic
-  * estimators need. This is why the module depends on `scalafim-fmri-fit`.
+  * estimators need. This eager convenience lives outside the group core; durable
+  * inputs use its bounded EstimateGroup reader.
   */
-object FirstLevel:
+object FitGroupAdapter:
 
   /** Assemble a `GroupData` from per-subject, per-contrast t-contrast results.
     *

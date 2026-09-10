@@ -1,0 +1,1745 @@
+diff --git a/modules/image4s-core/shared/src/main/scala/image4s/SampleSpace.scala b/modules/image4s-core/shared/src/main/scala/image4s/SampleSpace.scala
+index d06cfc9..b59b1a5 100644
+--- a/modules/image4s-core/shared/src/main/scala/image4s/SampleSpace.scala
++++ b/modules/image4s-core/shared/src/main/scala/image4s/SampleSpace.scala
+@@ -1,5 +1,7 @@
+ package image4s
+ 
++import image4s.geometry.D2
++import image4s.geometry.D3
+ import image4s.geometry.Dim
+ import image4s.geometry.Dimension
+ import image4s.geometry.Frame
+@@ -37,6 +39,28 @@ sealed trait SomeSampleSpace:
+   final def logicalShape: Vector[Int] =
+     grid.shape ++ nonSpatialAxes.shape
+ 
++  /** Recover a statically D2 sampling space at an existential boundary.
++    *
++    * The original sample space and runtime frame owner are retained; the frame type remains
++    * existential rather than asserting a common owner.
++    */
++  final def requireD2: Either[
++    ImageError,
++    SampleSpace[? <: Frame[D2], D2]
++  ] =
++    SampleSpace.requireD2(this)
++
++  /** Recover a statically D3 sampling space at an existential boundary.
++    *
++    * The original sample space and runtime frame owner are retained; the frame type remains
++    * existential rather than asserting a common owner.
++    */
++  final def requireD3: Either[
++    ImageError,
++    SampleSpace[? <: Frame[D3], D3]
++  ] =
++    SampleSpace.requireD3(this)
++
+ final class SampleSpace[
+     F0 <: Frame[D0],
+     D0 <: Dim
+@@ -180,3 +204,21 @@ object SampleSpace:
+       axes: NonSpatialAxes
+   ): Vector[AxisRecord] =
+     axes.records
++
++  private[image4s] def requireD2(
++      space: SomeSampleSpace
++  ): Either[ImageError, SampleSpace[? <: Frame[D2], D2]] =
++    if space.spatialRank == 2 then
++      // SampleSpace is immutable. The checked dimension and existential frame
++      // refinement preserve the same live Grid and Frame owners without a copy.
++      Right(space.typed.asInstanceOf[SampleSpace[? <: Frame[D2], D2]])
++    else Left(ImageError.SpatialDimensionMismatch(2, space.spatialRank))
++
++  private[image4s] def requireD3(
++      space: SomeSampleSpace
++  ): Either[ImageError, SampleSpace[? <: Frame[D3], D3]] =
++    if space.spatialRank == 3 then
++      // SampleSpace is immutable. The checked dimension and existential frame
++      // refinement preserve the same live Grid and Frame owners without a copy.
++      Right(space.typed.asInstanceOf[SampleSpace[? <: Frame[D3], D3]])
++    else Left(ImageError.SpatialDimensionMismatch(3, space.spatialRank))
+diff --git a/modules/image4s-nifti/js/src/main/scala/image4s/nifti/NodeNiftiFileSystem.scala b/modules/image4s-nifti/js/src/main/scala/image4s/nifti/NodeNiftiFileSystem.scala
+index fef58a9..4784840 100644
+--- a/modules/image4s-nifti/js/src/main/scala/image4s/nifti/NodeNiftiFileSystem.scala
++++ b/modules/image4s-nifti/js/src/main/scala/image4s/nifti/NodeNiftiFileSystem.scala
+@@ -113,6 +113,51 @@ private object NodeNiftiFileSystem extends NiftiFileSystem[String]:
+         finally NodeFs.closeSync(descriptor)
+       }
+ 
++  override def createSeekable(
++      path: String,
++      prefix: Array[Byte],
++      payloadBytes: Long
++  ): Either[NiftiError, NiftiSeekableOutput] =
++    if prefix.length.toLong + payloadBytes > 9007199254740991L then
++      Left(NiftiError.UnsupportedIncrementalOutput(path))
++    else
++      protect(path, NiftiOperation.Write) {
++        NodeFs.mkdirSync(NodePath.dirname(path), js.Dynamic.literal(recursive = true))
++        val opened =
++          try Right(NodeFs.openSync(path, "wx"))
++          catch
++            case error: js.JavaScriptException
++                if error.exception
++                  .asInstanceOf[js.Dynamic]
++                  .code
++                  .asInstanceOf[js.UndefOr[String]]
++                  .contains("EEXIST") =>
++              Left(NiftiError.OutputAlreadyExists(path))
++        opened.flatMap { descriptor =>
++          val handle = new NiftiSeekableOutput:
++            def writeAt(offset: Long, bytes: Array[Byte], length: Int): Either[NiftiError, Unit] =
++              protect(path, NiftiOperation.Write) {
++                writePhysical(descriptor, toUint8Array(bytes, length), offset.toDouble)
++                Right(())
++              }
++            def close(): Either[NiftiError, Unit] =
++              protect(path, NiftiOperation.Write) {
++                NodeFs.closeSync(descriptor)
++                Right(())
++              }
++          val initialized = for
++            _ <- handle.writeAt(prefix.length.toLong + payloadBytes - 1L, Array(0.toByte), 1)
++            _ <- handle.writeAt(0L, prefix, prefix.length)
++          yield handle
++          initialized match
++            case Left(error) =>
++              handle.close() match
++                case Left(closing) => Left(NiftiError.OutputCloseFailure(error, closing))
++                case Right(_) => Left(error)
++            case Right(value) => Right(value)
++        }
++      }
++
+   def writeBytes(
+       path: String,
+       bytes: Array[Byte]
+diff --git a/modules/image4s-nifti/jvm/src/main/scala/image4s/nifti/JvmNiftiFileSystem.scala b/modules/image4s-nifti/jvm/src/main/scala/image4s/nifti/JvmNiftiFileSystem.scala
+index f806950..29f2129 100644
+--- a/modules/image4s-nifti/jvm/src/main/scala/image4s/nifti/JvmNiftiFileSystem.scala
++++ b/modules/image4s-nifti/jvm/src/main/scala/image4s/nifti/JvmNiftiFileSystem.scala
+@@ -4,6 +4,9 @@ import java.io.BufferedInputStream
+ import java.io.BufferedOutputStream
+ import java.io.InputStream
+ import java.io.OutputStream
++import java.nio.ByteBuffer
++import java.nio.channels.FileChannel
++import java.nio.file.{FileAlreadyExistsException, StandardOpenOption}
+ import java.nio.file.Files
+ import java.nio.file.Path
+ import java.util.zip.GZIPInputStream
+@@ -124,6 +127,46 @@ private object JvmNiftiFileSystem extends NiftiFileSystem[Path]:
+       finally input.close()
+     }
+ 
++  override def createSeekable(
++      path: Path,
++      prefix: Array[Byte],
++      payloadBytes: Long
++  ): Either[NiftiError, NiftiSeekableOutput] =
++    protect(path, NiftiOperation.Write) {
++      Option(path.getParent).foreach(Files.createDirectories(_))
++      try
++        val channel =
++          FileChannel.open(path, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
++        val handle = new NiftiSeekableOutput:
++          def writeAt(offset: Long, bytes: Array[Byte], length: Int): Either[NiftiError, Unit] =
++            protect(path, NiftiOperation.Write) {
++              val buffer = ByteBuffer.wrap(bytes, 0, length)
++              var position = offset
++              while buffer.hasRemaining do
++                val count = channel.write(buffer, position)
++                if count <= 0 then
++                  throw new java.io.IOException("FileChannel.write made no progress")
++                position += count.toLong
++              Right(())
++            }
++          def close(): Either[NiftiError, Unit] =
++            protect(path, NiftiOperation.Write) {
++              channel.close()
++              Right(())
++            }
++        val initialized = for
++          _ <- handle.writeAt(prefix.length.toLong + payloadBytes - 1L, Array(0.toByte), 1)
++          _ <- handle.writeAt(0L, prefix, prefix.length)
++        yield handle
++        initialized match
++          case Left(error) =>
++            handle.close() match
++              case Left(closing) => Left(NiftiError.OutputCloseFailure(error, closing))
++              case Right(_) => Left(error)
++          case Right(value) => Right(value)
++      catch case _: FileAlreadyExistsException => Left(NiftiError.OutputAlreadyExists(show(path)))
++    }
++
+   def writeBytes(
+       path: Path,
+       bytes: Array[Byte]
+diff --git a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
+index b14867a..2c012d9 100644
+--- a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
++++ b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
+@@ -330,6 +330,73 @@ private[nifti] final class NiftiApi[P](
+   ): Either[NiftiError, NiftiFiles[P]] =
+     writeValues(path, image, options, extensions, WriteValueSource.double)
+ 
++  /** Create a new staging .nii file with bounded memory, retaining the supplied grid and axes. The
++    * caller owns close and scientific completeness. Unwritten samples have stored code zero.
++    * Non-spatial header sampling follows options, just as for writeScalar; labels and richer axes
++    * belong in caller-supplied extensions or an accompanying manifest. See NiftiScalarWriter.
++    */
++  def openScalarWriter[F <: Frame[D3]](
++      path: P,
++      grid: Grid[F, D3],
++      axes: NonSpatialAxes = NonSpatialAxes.empty,
++      options: NiftiWriteOptions = NiftiWriteOptions.default,
++      extensions: Vector[NiftiExtension] = Vector.empty
++  ): Either[NiftiError, NiftiScalarWriter[F, P]] =
++    if !fileSystem.fileName(path).toLowerCase.endsWith(".nii") then
++      Left(NiftiError.UnsupportedIncrementalOutput(fileSystem.show(path)))
++    else if grid.frame.convention != CoordinateConvention.RAS then
++      Left(NiftiError.FrameConventionMismatch(grid.frame.convention))
++    else
++      for
++        prepared <- prepareWriteHeader(
++          grid.shape ++ axes.shape,
++          grid,
++          NiftiStorage.SingleFile,
++          options,
++          extensions
++        )
++        (header, payloadBytes) = prepared
++        output <- fileSystem.createSeekable(path, header, payloadBytes)
++      yield new NiftiScalarWriter(
++        path,
++        grid,
++        axes,
++        options,
++        header.length.toLong,
++        payloadBytes,
++        output,
++        new NiftiScalarEncoder:
++          def encode(buffer: ByteBuffer, offset: Int, index: Array[Int], value: Double): Unit =
++            writeEncodedValue(buffer, offset, index, value, options)
++      )
++
++  /** Scope the physical resource, including when the callback throws. Partial staging files are
++    * retained for caller cleanup; a successful close does not certify scientific completeness.
++    */
++  def withScalarWriter[F <: Frame[D3], A](
++      path: P,
++      grid: Grid[F, D3],
++      axes: NonSpatialAxes = NonSpatialAxes.empty,
++      options: NiftiWriteOptions = NiftiWriteOptions.default,
++      extensions: Vector[NiftiExtension] = Vector.empty
++  )(use: NiftiScalarWriter[F, P] => Either[NiftiError, A]): Either[NiftiError, A] =
++    openScalarWriter(path, grid, axes, options, extensions).flatMap { writer =>
++      val result =
++        try use(writer)
++        catch
++          case error: Throwable =>
++            writer.close() match
++              case Left(closing) => error.addSuppressed(new java.io.IOException(closing.message))
++              case Right(_) => ()
++            throw error
++      (result, writer.close()) match
++        case (Left(primary), Left(closing)) if primary != closing =>
++          Left(NiftiError.OutputCloseFailure(primary, closing))
++        case (Left(primary), _) => Left(primary)
++        case (_, Left(closing)) => Left(closing)
++        case (Right(value), Right(_)) => Right(value)
++    }
++
+   def writeLabels[
+       F <: Frame[D3],
+       S <: SampleSpace[F, D3],
+@@ -1700,131 +1767,146 @@ private[nifti] final class NiftiApi[P](
+       source: WriteValueSource[A]
+   ): Either[NiftiError, NiftiFiles[P]] =
+     val dimensions = image.logicalShape
+-    if dimensions.length < 3 || dimensions.length > 7 then
+-      Left(NiftiError.UnsupportedWriteRank(dimensions.length))
+-    else if options.nonSpatialPixelDimensions.size >
+-        dimensions.length - 3
+-    then
+-      Left(
++    val limits = options.ioLimits
++    for
++      prepared <- prepareWriteHeader(dimensions, image.grid, files.storage, options, extensions)
++      (header, payloadBytes) = prepared
++      _ <- validateFileOrderedValues(
++        dimensions,
++        image,
++        options,
++        source
++      )
++      workingBytes = alignedWorkingBuffer(
++        limits.workingBufferBytes,
++        options.datatype.bitsPerValue / 8
++      )
++      written <-
++        files.storage match
++          case NiftiStorage.SingleFile =>
++            fileSystem
++              .writeChunks(
++                files.headerPath,
++                header,
++                payloadBytes,
++                workingBytes
++              ) { (payloadOffset, bytes, length) =>
++                writeFileOrderedChunk(
++                  bytes,
++                  length,
++                  payloadOffset,
++                  dimensions,
++                  image,
++                  options,
++                  source
++                )
++              }
++              .map(_ => NiftiFiles.SingleFile(files.headerPath))
++          case NiftiStorage.PairFile =>
++            for
++              _ <- fileSystem.writeChunks(
++                files.payloadPath,
++                Array.emptyByteArray,
++                payloadBytes,
++                workingBytes
++              ) { (payloadOffset, bytes, length) =>
++                writeFileOrderedChunk(
++                  bytes,
++                  length,
++                  payloadOffset,
++                  dimensions,
++                  image,
++                  options,
++                  source
++                )
++              }
++              _ <- fileSystem.writeBytes(files.headerPath, header)
++            yield NiftiFiles.PairFile(
++              files.headerPath,
++              files.payloadPath
++            )
++    yield written
++
++  private def prepareWriteHeader[F <: Frame[D3]](
++      dimensions: Vector[Int],
++      grid: Grid[F, D3],
++      storage: NiftiStorage,
++      options: NiftiWriteOptions,
++      extensions: Vector[NiftiExtension]
++  ): Either[NiftiError, (Array[Byte], Long)] =
++    val limits = options.ioLimits
++    val extensionBytes =
++      ExtensionFlagSize.toLong + extensions.foldLeft(0L)(_ + _.encodedSize.toLong)
++    val headerBytes = HeaderSize.toLong + extensionBytes
++    for
++      _ <- validateIoLimits(limits)
++      _ <- Either.cond(
++        dimensions.length >= 3 && dimensions.length <= 7,
++        (),
++        NiftiError.UnsupportedWriteRank(dimensions.length)
++      )
++      _ <- dimensions.zipWithIndex
++        .collectFirst {
++          case (size, axis) if size <= 0 || size > Short.MaxValue =>
++            NiftiError.InvalidHeader(
++              NiftiHeaderField.Dimension(axis + 1),
++              s"extent $size cannot fit a positive NIfTI-1 dimension"
++            )
++        }
++        .toLeft(())
++      _ <- Either.cond(
++        options.nonSpatialPixelDimensions.size <= dimensions.length - 3,
++        (),
+         NiftiError.NonSpatialPixelDimensionCount(
+           options.nonSpatialPixelDimensions.size,
+           dimensions.length - 3
+         )
+       )
+-    else
+-      val extensionBytes =
+-        ExtensionFlagSize.toLong +
+-          extensions.foldLeft(0L)(_ + _.encodedSize.toLong)
+-      val headerBytes = HeaderSize.toLong + extensionBytes
+-      val payloadBytes =
+-        image.data.size.toLong *
+-          (options.datatype.bitsPerValue / 8).toLong
+-      val limits = options.ioLimits
+-      for
+-        _ <- validateIoLimits(limits)
+-        _ <-
+-          if extensionBytes > limits.maximumExtensionBytes.toLong then
+-            Left(
+-              NiftiError.ExtensionResourceLimitExceeded(
+-                extensionBytes,
+-                limits.maximumExtensionBytes
+-              )
+-            )
+-          else Right(())
+-        _ <-
+-          if payloadBytes > limits.maximumPayloadBytes then
+-            Left(
+-              NiftiError.PayloadResourceLimitExceeded(
+-                NiftiOperation.Write,
+-                payloadBytes,
+-                limits.maximumPayloadBytes
+-              )
+-            )
+-          else Right(())
+-        _ <-
+-          if headerBytes > Int.MaxValue.toLong then Left(NiftiError.OutputTooLarge(headerBytes))
+-          else Right(())
+-        header = new Array[Byte](headerBytes.toInt)
+-        headerBuffer =
+-          ByteBuffer
+-            .wrap(header)
+-            .order(ByteOrder.LITTLE_ENDIAN)
+-        _ = writeHeader(
+-          headerBuffer,
+-          dimensions,
+-          image,
+-          files.storage,
+-          if files.storage == NiftiStorage.SingleFile then headerBytes.toInt
+-          else 0,
+-          options
+-        )
+-        _ = writeExtensions(headerBuffer, extensions)
+-        _ <- validateFileOrderedValues(
+-          dimensions,
+-          image,
+-          options,
+-          source
+-        )
+-        workingBytes = alignedWorkingBuffer(
+-          limits.workingBufferBytes,
+-          options.datatype.bitsPerValue / 8
++      payloadBytes <- dimensions.foldLeft[Either[NiftiError, Long]](
++        Right((options.datatype.bitsPerValue / 8).toLong)
++      ) { (acc, size) =>
++        acc.flatMap { bytes =>
++          if bytes > (Long.MaxValue - headerBytes) / size.toLong then
++            Left(NiftiError.WriteSizeOverflow(dimensions))
++          else Right(bytes * size.toLong)
++        }
++      }
++      _ <- Either.cond(
++        extensionBytes <= limits.maximumExtensionBytes,
++        (),
++        NiftiError.ExtensionResourceLimitExceeded(extensionBytes, limits.maximumExtensionBytes)
++      )
++      _ <- Either.cond(
++        payloadBytes <= limits.maximumPayloadBytes,
++        (),
++        NiftiError.PayloadResourceLimitExceeded(
++          NiftiOperation.Write,
++          payloadBytes,
++          limits.maximumPayloadBytes
+         )
+-        written <-
+-          files.storage match
+-            case NiftiStorage.SingleFile =>
+-              fileSystem
+-                .writeChunks(
+-                  files.headerPath,
+-                  header,
+-                  payloadBytes,
+-                  workingBytes
+-                ) { (payloadOffset, bytes, length) =>
+-                  writeFileOrderedChunk(
+-                    bytes,
+-                    length,
+-                    payloadOffset,
+-                    dimensions,
+-                    image,
+-                    options,
+-                    source
+-                  )
+-                }
+-                .map(_ => NiftiFiles.SingleFile(files.headerPath))
+-            case NiftiStorage.PairFile =>
+-              for
+-                _ <- fileSystem.writeChunks(
+-                  files.payloadPath,
+-                  Array.emptyByteArray,
+-                  payloadBytes,
+-                  workingBytes
+-                ) { (payloadOffset, bytes, length) =>
+-                  writeFileOrderedChunk(
+-                    bytes,
+-                    length,
+-                    payloadOffset,
+-                    dimensions,
+-                    image,
+-                    options,
+-                    source
+-                  )
+-                }
+-                _ <- fileSystem.writeBytes(files.headerPath, header)
+-              yield NiftiFiles.PairFile(
+-                files.headerPath,
+-                files.payloadPath
+-              )
+-      yield written
++      )
++      _ <- Either.cond(
++        headerBytes <= Int.MaxValue && headerBytes.toFloat.toLong == headerBytes,
++        (),
++        NiftiError.OutputTooLarge(headerBytes)
++      )
++      header = new Array[Byte](headerBytes.toInt)
++      buffer = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN)
++      _ = writeHeader(
++        buffer,
++        dimensions,
++        grid,
++        storage,
++        if storage == NiftiStorage.SingleFile then header.length else 0,
++        options
++      )
++      _ = writeExtensions(buffer, extensions)
++    yield (header, payloadBytes)
+ 
+-  private def writeHeader[
+-      F <: Frame[D3],
+-      S <: SampleSpace[F, D3],
+-      A,
+-      Sem,
+-      R <: AnyRank
+-  ](
++  private def writeHeader[F <: Frame[D3]](
+       buffer: ByteBuffer,
+       dimensions: Vector[Int],
+-      image: Sampled[S, A, Sem, R],
++      grid: Grid[F, D3],
+       storage: NiftiStorage,
+       voxelOffset: Int,
+       options: NiftiWriteOptions
+@@ -1841,7 +1923,7 @@ private[nifti] final class NiftiApi[P](
+     buffer.putShort(70, options.datatype.code.toShort)
+     buffer.putShort(72, options.datatype.bitsPerValue.toShort)
+     buffer.putFloat(76, 1.0f)
+-    val affine = image.grid.indexToFrame.matrix
++    val affine = grid.indexToFrame.matrix
+     axis = 0
+     while axis < 3 do
+       var squared = 0.0
+@@ -1866,11 +1948,11 @@ private[nifti] final class NiftiApi[P](
+     buffer.put(
+       123,
+       (
+-        spatialUnitCode(image.frame.unit) |
++        spatialUnitCode(grid.frame.unit) |
+           temporalUnitCode(options.temporalUnit)
+       ).toByte
+     )
+-    buffer.putShort(254, 1.toShort)
++    buffer.putShort(254, options.coordinateSystem.code.toShort)
+     var row = 0
+     while row < 3 do
+       var column = 0
+@@ -1956,7 +2038,7 @@ private[nifti] final class NiftiApi[P](
+         fileIndex += 1
+         byteOffset += bytesPerValue
+       catch
+-        case conversion: WriteConversionFailure =>
++        case conversion: NiftiWriteConversionFailure =>
+           failure = Some(conversion.error)
+     failure.toLeft(())
+ 
+@@ -1993,7 +2075,7 @@ private[nifti] final class NiftiApi[P](
+         )
+         fileIndex += 1
+       catch
+-        case conversion: WriteConversionFailure =>
++        case conversion: NiftiWriteConversionFailure =>
+           failure = Some(conversion.error)
+     failure.toLeft(())
+ 
+@@ -2102,8 +2184,8 @@ private[nifti] final class NiftiApi[P](
+         val _ = buffer.putInt(offset, integer.toInt)
+       case NiftiDatatype.Float32 =>
+         val narrowed = encoded.toFloat
+-        if encoded.isFinite && !narrowed.isFinite then
+-          throw WriteConversionFailure(
++        if value.isFinite && (!encoded.isFinite || !narrowed.isFinite) then
++          throw NiftiWriteConversionFailure(
+             valueError(
+               logicalIndex,
+               value,
+@@ -2116,7 +2198,7 @@ private[nifti] final class NiftiApi[P](
+           val _ = buffer.putFloat(offset, narrowed)
+       case NiftiDatatype.Float64 =>
+         if value.isFinite && !encoded.isFinite then
+-          throw WriteConversionFailure(
++          throw NiftiWriteConversionFailure(
+             valueError(
+               logicalIndex,
+               value,
+@@ -2137,7 +2219,7 @@ private[nifti] final class NiftiApi[P](
+       maximum: Double
+   ): Double =
+     if !encoded.isFinite then
+-      throw WriteConversionFailure(
++      throw NiftiWriteConversionFailure(
+         valueError(
+           logicalIndex,
+           value,
+@@ -2152,7 +2234,7 @@ private[nifti] final class NiftiApi[P](
+           NiftiIntegerConversion.RejectLossy &&
+           encoded != rounded
+       then
+-        throw WriteConversionFailure(
++        throw NiftiWriteConversionFailure(
+           valueError(
+             logicalIndex,
+             value,
+@@ -2162,7 +2244,7 @@ private[nifti] final class NiftiApi[P](
+           )
+         )
+       else if rounded < minimum || rounded > maximum then
+-        throw WriteConversionFailure(
++        throw NiftiWriteConversionFailure(
+           valueError(
+             logicalIndex,
+             value,
+@@ -2299,10 +2381,6 @@ private[nifti] final class NiftiApi[P](
+       error: NiftiError
+   ) extends RuntimeException(error.message)
+ 
+-  private final case class WriteConversionFailure(
+-      error: NiftiError
+-  ) extends RuntimeException(error.message)
+-
+   private def readRawValue(
+       buffer: ByteBuffer,
+       offset: Int,
+diff --git a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiFileSystem.scala b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiFileSystem.scala
+index e42063f..3e14f12 100644
+--- a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiFileSystem.scala
++++ b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiFileSystem.scala
+@@ -77,6 +77,14 @@ private[nifti] trait NiftiFileSystem[P]:
+         failure.toLeft(())
+     }
+ 
++  /** Exclusive creation of a zero-filled seekable staging file. No resident fallback. */
++  def createSeekable(
++      path: P,
++      @scala.annotation.unused prefix: Array[Byte],
++      @scala.annotation.unused payloadBytes: Long
++  ): Either[NiftiError, NiftiSeekableOutput] =
++    Left(NiftiError.UnsupportedIncrementalOutput(show(path)))
++
+   def writeBytes(
+       path: P,
+       bytes: Array[Byte]
+@@ -128,3 +136,8 @@ private[nifti] final case class NiftiBoundedRead(
+ private object NiftiFileSystem:
+   def clampToInt(value: Long): Int =
+     math.max(0L, math.min(value, Int.MaxValue.toLong)).toInt
++
++/** Physical offsets and lengths have already been checked by the shared writer. */
++private[nifti] trait NiftiSeekableOutput:
++  def writeAt(offset: Long, bytes: Array[Byte], length: Int): Either[NiftiError, Unit]
++  def close(): Either[NiftiError, Unit]
+diff --git a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
+index 137e975..5f5e9d0 100644
+--- a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
++++ b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
+@@ -239,6 +239,17 @@ object NiftiWriteOptionsError:
+     val message: String =
+       s"NIfTI write pixel dimension ${axis + 4} must remain finite and positive in its Float32 header field, got $value"
+ 
++/** Explicit NIfTI sform reference; never inferred from an affine or frame name. Unknown disables
++  * the sform, as required by the NIfTI standard.
++  */
++enum NiftiCoordinateSystem(val code: Int) derives CanEqual:
++  case Unknown extends NiftiCoordinateSystem(0)
++  case ScannerAnatomical extends NiftiCoordinateSystem(1)
++  case AlignedAnatomical extends NiftiCoordinateSystem(2)
++  case Talairach extends NiftiCoordinateSystem(3)
++  case Mni152 extends NiftiCoordinateSystem(4)
++  case TemplateOther extends NiftiCoordinateSystem(5)
++
+ final class NiftiWriteOptions private (
+     val datatype: NiftiDatatype,
+     val slope: Double,
+@@ -246,7 +257,8 @@ final class NiftiWriteOptions private (
+     val integerConversion: NiftiIntegerConversion,
+     val nonSpatialPixelDimensions: Vector[Double],
+     val temporalUnit: NiftiTemporalUnit,
+-    val ioLimits: NiftiIoLimits
++    val ioLimits: NiftiIoLimits,
++    val coordinateSystem: NiftiCoordinateSystem
+ ) derives CanEqual:
+   override def equals(other: Any): Boolean =
+     other match
+@@ -257,7 +269,8 @@ final class NiftiWriteOptions private (
+         integerConversion == that.integerConversion &&
+         nonSpatialPixelDimensions == that.nonSpatialPixelDimensions &&
+         temporalUnit == that.temporalUnit &&
+-        ioLimits == that.ioLimits
++        ioLimits == that.ioLimits &&
++        coordinateSystem == that.coordinateSystem
+       case _ =>
+         false
+ 
+@@ -269,11 +282,12 @@ final class NiftiWriteOptions private (
+       integerConversion,
+       nonSpatialPixelDimensions,
+       temporalUnit,
+-      ioLimits
++      ioLimits,
++      coordinateSystem
+     ).hashCode
+ 
+   override def toString: String =
+-    s"NiftiWriteOptions($datatype,$slope,$intercept,$integerConversion,$nonSpatialPixelDimensions,$temporalUnit,$ioLimits)"
++    s"NiftiWriteOptions($datatype,$slope,$intercept,$integerConversion,$nonSpatialPixelDimensions,$temporalUnit,$ioLimits,$coordinateSystem)"
+ 
+   def withNonSpatialSampling(
+       pixelDimensions: Vector[Double],
+@@ -289,7 +303,8 @@ final class NiftiWriteOptions private (
+           integerConversion,
+           stored,
+           unit,
+-          ioLimits
++          ioLimits,
++          coordinateSystem
+         )
+       }
+ 
+@@ -301,7 +316,20 @@ final class NiftiWriteOptions private (
+       integerConversion,
+       nonSpatialPixelDimensions,
+       temporalUnit,
+-      limits
++      limits,
++      coordinateSystem
++    )
++
++  def withCoordinateSystem(system: NiftiCoordinateSystem): NiftiWriteOptions =
++    new NiftiWriteOptions(
++      datatype,
++      slope,
++      intercept,
++      integerConversion,
++      nonSpatialPixelDimensions,
++      temporalUnit,
++      ioLimits,
++      system
+     )
+ 
+ object NiftiWriteOptions:
+@@ -316,7 +344,8 @@ object NiftiWriteOptions:
+       integerConversion = NiftiIntegerConversion.RejectLossy,
+       nonSpatialPixelDimensions = Vector.empty,
+       temporalUnit = NiftiTemporalUnit.Unknown,
+-      ioLimits = NiftiIoLimits.default
++      ioLimits = NiftiIoLimits.default,
++      coordinateSystem = NiftiCoordinateSystem.ScannerAnatomical
+     )
+ 
+   def create(
+@@ -326,7 +355,8 @@ object NiftiWriteOptions:
+       integerConversion: NiftiIntegerConversion = NiftiIntegerConversion.RejectLossy,
+       nonSpatialPixelDimensions: Vector[Double] = Vector.empty,
+       temporalUnit: NiftiTemporalUnit = NiftiTemporalUnit.Unknown,
+-      ioLimits: NiftiIoLimits = NiftiIoLimits.default
++      ioLimits: NiftiIoLimits = NiftiIoLimits.default,
++      coordinateSystem: NiftiCoordinateSystem = NiftiCoordinateSystem.ScannerAnatomical
+   ): Either[NiftiWriteOptionsError, NiftiWriteOptions] =
+     val storedSlope = slope.toFloat
+     val storedIntercept = intercept.toFloat
+@@ -344,7 +374,8 @@ object NiftiWriteOptions:
+           integerConversion,
+           stored,
+           temporalUnit,
+-          ioLimits
++          ioLimits,
++          coordinateSystem
+         )
+       }
+ 
+@@ -552,6 +583,25 @@ sealed trait NiftiError derives CanEqual:
+   def message: String
+ 
+ object NiftiError:
++  final case class UnsupportedIncrementalOutput(path: String) extends NiftiError:
++    val message: String =
++      s"incremental output requires a seekable, uncompressed single .nii file: $path"
++
++  final case class OutputAlreadyExists(path: String) extends NiftiError:
++    val message: String = s"refusing to replace existing incremental output: $path"
++
++  case object OutputClosed extends NiftiError:
++    val message: String = "incremental NIfTI writer is closed"
++
++  final case class InvalidOutputBlock(detail: String) extends NiftiError:
++    val message: String = s"invalid incremental NIfTI block: $detail"
++
++  final case class WriteSizeOverflow(dimensions: Vector[Int]) extends NiftiError:
++    val message: String = s"NIfTI payload byte size overflows Long for $dimensions"
++
++  final case class OutputCloseFailure(primary: NiftiError, closing: NiftiError) extends NiftiError:
++    val message: String = s"${primary.message}; closing output also failed: ${closing.message}"
++
+   final case class IoFailure(
+       path: String,
+       operation: NiftiOperation,
+diff --git a/modules/image4s-core/shared/src/test/scala/image4s/SampleSpaceRefinementSuite.scala b/modules/image4s-core/shared/src/test/scala/image4s/SampleSpaceRefinementSuite.scala
+new file mode 100644
+index 0000000..b43d26c
+--- /dev/null
++++ b/modules/image4s-core/shared/src/test/scala/image4s/SampleSpaceRefinementSuite.scala
+@@ -0,0 +1,42 @@
++package image4s
++
++import image4s.geometry.{Affine, CoordinateConvention, D2, D3, Frame, Grid, LengthUnit}
++
++class SampleSpaceRefinementSuite extends munit.FunSuite:
++  private def right[E, A](result: Either[E, A]): A =
++    result.fold(error => fail(error.toString), identity)
++
++  test("D3 refinement preserves the exact space, owner, physical declaration and sampled axes"):
++    val frame = right(Frame.named[D3]("scanner", LengthUnit.Meter, CoordinateConvention.LPS))
++    val grid = right(Grid.in(frame)(Vector(2, 3, 4), Affine.identity[D3]))
++    val time = right(Axis.regular("time", AxisKind.Time, 5, 1.5, 0.25, AxisUnit.Seconds))
++    val axes = right(NonSpatialAxes.from(Vector(time)))
++    val erased: SomeSampleSpace = SampleSpace.create(grid, axes)
++    val refined = right(erased.requireD3)
++    assert(refined eq erased)
++    assert(refined.grid eq grid)
++    assert(refined.grid.frame eq frame)
++    assert(refined.nonSpatialAxes eq axes)
++    assertEquals(refined.grid.frame.unit, LengthUnit.Meter)
++    assertEquals(refined.grid.frame.convention, CoordinateConvention.LPS)
++    assertEquals(refined.grid.frame.persistentKey, None)
++    assertEquals(erased.requireD2, Left(ImageError.SpatialDimensionMismatch(2, 3)))
++    assert(right(refined.requireD3) eq refined)
++
++  test("D2 refinement rejects D3 and does not merge equal-looking owners"):
++    val first = right(Frame.named[D2]("slice", convention = CoordinateConvention.RAS))
++    val second = right(Frame.named[D2]("slice", convention = CoordinateConvention.RAS))
++    val a: SomeSampleSpace = SampleSpace.create(
++      right(Grid.in(first)(Vector(2, 3), Affine.identity[D2])),
++      NonSpatialAxes.empty
++    )
++    val b: SomeSampleSpace = SampleSpace.create(
++      right(Grid.in(second)(Vector(2, 3), Affine.identity[D2])),
++      NonSpatialAxes.empty
++    )
++    val ra = right(a.requireD2)
++    val rb = right(b.requireD2)
++    assert(ra eq a)
++    assert(rb eq b)
++    assert(!ra.grid.frame.sameRuntimeOwnerAs(rb.grid.frame))
++    assertEquals(a.requireD3, Left(ImageError.SpatialDimensionMismatch(3, 2)))
+diff --git a/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NiftiIncrementalNodeSuite.scala b/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NiftiIncrementalNodeSuite.scala
+new file mode 100644
+index 0000000..c69e650
+--- /dev/null
++++ b/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NiftiIncrementalNodeSuite.scala
+@@ -0,0 +1,150 @@
++package image4s.nifti
++
++import image4s.{Axis, AxisKind, NonSpatialAxes, Sampled}
++import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid}
++import java.nio.{ByteBuffer, ByteOrder}
++import munit.FunSuite
++import ravel.DType.given
++import ravel.NDArray
++import scala.scalajs.js
++import scala.scalajs.js.annotation.JSImport
++import scala.scalajs.js.typedarray.Uint8Array
++
++final class NiftiIncrementalNodeSuite extends FunSuite:
++  private def right[E, A](e: Either[E, A]): A = e.fold(x => fail(x.toString), identity)
++  private val frame = right(
++    Frame.named[D3]("node-incremental", convention = CoordinateConvention.RAS)
++  )
++  private val grid = right(Grid.in(frame)(Vector(3, 2, 2), Affine.identity[D3]))
++  private val axes = right(
++    NonSpatialAxes.from(Vector(right(Axis.ordinal("map", AxisKind.Batch, 2))))
++  )
++  private def bytes(path: String): Vector[Byte] =
++    val b = IncrementalNodeFs.readFileSync(path)
++    Vector.tabulate(b.length)(i => b(i).toByte)
++
++  test("public Node writer matches ordinary file bytes and refuses an existing destination"):
++    val dir =
++      IncrementalNodeFs.mkdtempSync(IncrementalNodeOs.tmpdir() + "/image4s-incremental-node-")
++    val path = dir + "/blocks.nii"
++    val full = dir + "/resident.nii"
++    try
++      val o = NiftiWriteOptions
++        .forDatatype(NiftiDatatype.Float32)
++        .withCoordinateSystem(NiftiCoordinateSystem.Mni152)
++      right(Nifti.withScalarWriter(path, grid, axes, o) { w =>
++        for
++          _ <- w.writeSpatialBlock(Vector(1), Array(11L, 0L, 1L), Array(23.0, 12.0, 13.0))
++          _ <- w.writeSpatialSpan(Vector(0), 0L, Array.tabulate(12)(_.toDouble))
++          _ <- w.writeSpatialSpan(Vector(1), 2L, Array.tabulate(9)(i => (i + 14).toDouble))
++        yield ()
++      })
++      val image = right(
++        Sampled.continuous(
++          grid,
++          axes,
++          NDArray.tabulate[Double](3, 2, 2, 2)((x, y, z, t) => x + 3 * y + 6 * z + 12 * t)
++        )
++      )
++      right(Nifti.writeScalar(full, image, o))
++      assertEquals(bytes(path), bytes(full))
++      val before = bytes(path)
++      assertEquals(
++        Nifti.openScalarWriter(path, grid).left.toOption,
++        Some(NiftiError.OutputAlreadyExists(path))
++      )
++      assertEquals(bytes(path), before)
++      assertEquals(right(Nifti.readHeader(path)).dimensions, Vector(3, 2, 2, 2))
++      val b = ByteBuffer.wrap(bytes(path).toArray).order(ByteOrder.LITTLE_ENDIAN)
++      for i <- 0 until 24 do assertEquals(b.getFloat(352 + 4 * i), i.toFloat)
++    finally IncrementalNodeFs.rmSync(dir, js.Dynamic.literal(recursive = true, force = true))
++
++  test("public Node positional writes preserve exact offsets beyond 32-bit byte addressing"):
++    val dir =
++      IncrementalNodeFs.mkdtempSync(IncrementalNodeOs.tmpdir() + "/image4s-incremental-large-")
++    val path = dir + "/sparse.nii"
++    val large = right(Grid.in(frame)(Vector(32767, 32767, 1), Affine.identity[D3]))
++    val samples = 32767L * 32767L
++    try
++      right(Nifti.withScalarWriter(path, large) { writer =>
++        writer.writeSpatialSpan(Vector.empty, samples - 1L, Array(17.5))
++      })
++      assertEquals(
++        IncrementalNodeFs.statSync(path).size.asInstanceOf[Double],
++        (352L + samples * 8L).toDouble
++      )
++      val fd = IncrementalNodeFs.openSync(path, "r")
++      try
++        for (offset, expected) <- Vector(352L -> 0.0, (352L + (samples - 1L) * 8L) -> 17.5) do
++          val raw = new Uint8Array(8)
++          var count = 0
++          while count < 8 do
++            val n = IncrementalNodeFs.readSync(fd, raw, count, 8 - count, offset.toDouble + count)
++            assert(n > 0)
++            count += n
++          val b = ByteBuffer
++            .wrap(Array.tabulate[Byte](8)(i => raw(i).toByte))
++            .order(ByteOrder.LITTLE_ENDIAN)
++          assertEquals(b.getDouble(0), expected)
++      finally IncrementalNodeFs.closeSync(fd)
++    finally IncrementalNodeFs.rmSync(dir, js.Dynamic.literal(recursive = true, force = true))
++
++  test(
++    "Node scoped resources close after success and producer exceptions; creation failures are typed"
++  ):
++    val dir =
++      IncrementalNodeFs.mkdtempSync(IncrementalNodeOs.tmpdir() + "/image4s-incremental-close-")
++    val path = dir + "/stage.nii"
++    val blocker = dir + "/file-parent"
++    IncrementalNodeFs.writeFileSync(blocker, new Uint8Array(1))
++    try
++      right(Nifti.withScalarWriter(path, grid)(_ => Right(())))
++      IncrementalNodeFs.unlinkSync(path)
++      def descriptors =
++        if IncrementalNodeFs.existsSync("/dev/fd") then
++          Some(IncrementalNodeFs.readdirSync("/dev/fd").length)
++        else None
++      val before = descriptors
++      for i <- 0 until 64 do
++        if i % 2 == 0 then
++          right(
++            Nifti.withScalarWriter(path, grid)(_.writeSpatialSpan(Vector.empty, 0L, Array(1.0)))
++          )
++        else
++          intercept[IllegalArgumentException] {
++            Nifti.withScalarWriter(path, grid)(_ =>
++              throw new IllegalArgumentException("producer failed")
++            )
++          }
++        IncrementalNodeFs.unlinkSync(path)
++      assertEquals(descriptors, before)
++      assert(
++        Nifti
++          .openScalarWriter(blocker + "/bad.nii", grid)
++          .left
++          .toOption
++          .exists(_.isInstanceOf[NiftiError.IoFailure])
++      )
++      assertEquals(bytes(blocker), Vector[Byte](0))
++    finally IncrementalNodeFs.rmSync(dir, js.Dynamic.literal(recursive = true, force = true))
++
++@js.native
++@JSImport("node:fs", JSImport.Namespace)
++private object IncrementalNodeFs extends js.Object:
++  def openSync(path: String, flags: String): Int = js.native
++  def closeSync(fd: Int): Unit = js.native
++  def statSync(path: String): js.Dynamic = js.native
++  def readSync(fd: Int, buffer: Uint8Array, offset: Int, length: Int, position: Double): Int =
++    js.native
++  def readFileSync(path: String): Uint8Array = js.native
++  def writeFileSync(path: String, bytes: Uint8Array): Unit = js.native
++  def existsSync(path: String): Boolean = js.native
++  def readdirSync(path: String): js.Array[String] = js.native
++  def mkdtempSync(prefix: String): String = js.native
++  def rmSync(path: String, options: js.Object): Unit = js.native
++  def unlinkSync(path: String): Unit = js.native
++
++@js.native
++@JSImport("node:os", JSImport.Namespace)
++private object IncrementalNodeOs extends js.Object:
++  def tmpdir(): String = js.native
+diff --git a/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalHeapProbe.scala b/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalHeapProbe.scala
+new file mode 100644
+index 0000000..e00233b
+--- /dev/null
++++ b/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalHeapProbe.scala
+@@ -0,0 +1,71 @@
++package image4s.nifti
++
++import image4s.{Axis, AxisKind, NonSpatialAxes}
++import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid}
++import java.nio.{ByteBuffer, ByteOrder}
++import java.nio.channels.FileChannel
++import java.nio.file.{Files, Path, StandardOpenOption}
++
++/** Run this public-API probe in a separate JVM with -Xmx64m. No whole-image NDArray is created. */
++object NiftiIncrementalHeapProbe:
++  private def checked[E, A](e: Either[E, A]): A =
++    e.fold(x => throw new IllegalStateException(x.toString), identity)
++  def main(args: Array[String]): Unit =
++    require(Runtime.getRuntime.maxMemory() <= 64L * 1024L * 1024L, "run with -Xmx64m")
++    require(args.length == 1, "supply a new output .nii path")
++    val path = Path.of(args(0))
++    val frame = checked(Frame.named[D3]("heap-proof", convention = CoordinateConvention.RAS))
++    val grid = checked(Grid.in(frame)(Vector(200, 200, 100), Affine.identity[D3]))
++    val axes = checked(
++      NonSpatialAxes.from(Vector(checked(Axis.ordinal("map", AxisKind.Batch, 10))))
++    )
++    val options = NiftiWriteOptions.forDatatype(NiftiDatatype.Float32)
++    val values = new Array[Double](8000)
++    val started = System.nanoTime()
++    checked(Nifti.withScalarWriter(path, grid, axes, options) { writer =>
++      var start = 0L
++      var failure: Option[NiftiError] = None
++      while start < writer.spatialSize && failure.isEmpty do
++        var map = 9
++        while map >= 0 && failure.isEmpty do
++          var i = 0
++          while i < values.length do
++            values(i) = map * 100.0 + ((start + i) % 97L).toDouble
++            i += 1
++          writer.writeSpatialSpan(Vector(map), start, values) match
++            case Left(e) => failure = Some(e)
++            case Right(_) => ()
++          map -= 1
++        start += values.length.toLong
++      failure.toLeft(())
++    })
++    require(Files.size(path) == 160000352L)
++    val channel = FileChannel.open(path, StandardOpenOption.READ)
++    var count = 0L
++    var sum = 0.0
++    try
++      val header = ByteBuffer.allocate(352).order(ByteOrder.LITTLE_ENDIAN)
++      while header.hasRemaining do require(channel.read(header) > 0)
++      require(header.getInt(0) == 348 && header.getFloat(108) == 352.0f)
++      require(header.getShort(40) == 4 && header.getShort(48) == 10)
++      val buffer = ByteBuffer.allocate(65536).order(ByteOrder.LITTLE_ENDIAN)
++      var remaining = 160000000L
++      while remaining > 0L do
++        val _ = buffer.clear()
++        val _ = buffer.limit(math.min(buffer.capacity().toLong, remaining).toInt)
++        while buffer.hasRemaining do require(channel.read(buffer) > 0)
++        val _ = buffer.flip()
++        while buffer.hasRemaining do
++          val actual = buffer.getFloat().toDouble
++          val map = count / 4000000L
++          val spatial = count % 4000000L
++          val expected = map * 100.0 + (spatial % 97L).toDouble
++          require(actual == expected, s"wrong value at $count: $actual != $expected")
++          sum += actual
++          count += 1
++        remaining = 160000000L - count * 4L
++    finally channel.close()
++    require(count == 40000000L)
++    println(
++      s"PASS heapBytes=${Runtime.getRuntime.maxMemory()} payloadBytes=160000000 values=$count checksum=$sum seconds=${(System.nanoTime() - started) / 1e9}"
++    )
+diff --git a/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalJvmSuite.scala b/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalJvmSuite.scala
+new file mode 100644
+index 0000000..a27f71e
+--- /dev/null
++++ b/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiIncrementalJvmSuite.scala
+@@ -0,0 +1,127 @@
++package image4s.nifti
++
++import image4s.{Axis, AxisKind, NonSpatialAxes, Sampled}
++import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid}
++import java.nio.{ByteBuffer, ByteOrder}
++import java.nio.file.{Files, StandardOpenOption}
++import java.nio.channels.FileChannel
++import java.lang.management.ManagementFactory
++import com.sun.management.UnixOperatingSystemMXBean
++import munit.FunSuite
++import ravel.DType.given
++import ravel.NDArray
++
++final class NiftiIncrementalJvmSuite extends FunSuite:
++  private def right[E, A](e: Either[E, A]): A = e.fold(x => fail(x.toString), identity)
++  private val frame = right(
++    Frame.named[D3]("jvm-incremental", convention = CoordinateConvention.RAS)
++  )
++  private val grid = right(Grid.in(frame)(Vector(3, 2, 2), Affine.identity[D3]))
++  private val axes = right(
++    NonSpatialAxes.from(Vector(right(Axis.ordinal("map", AxisKind.Batch, 2))))
++  )
++
++  test("public JVM writer matches ordinary file bytes and refuses an existing destination"):
++    val dir = Files.createTempDirectory("image4s-incremental-jvm-")
++    val path = dir.resolve("blocks.nii")
++    val full = dir.resolve("resident.nii")
++    try
++      val o = NiftiWriteOptions
++        .forDatatype(NiftiDatatype.Float32)
++        .withCoordinateSystem(NiftiCoordinateSystem.Mni152)
++      right(Nifti.withScalarWriter(path, grid, axes, o) { w =>
++        for
++          _ <- w.writeSpatialBlock(Vector(1), Array(11L, 0L, 1L), Array(23.0, 12.0, 13.0))
++          _ <- w.writeSpatialSpan(Vector(0), 0L, Array.tabulate(12)(_.toDouble))
++          _ <- w.writeSpatialSpan(Vector(1), 2L, Array.tabulate(9)(i => (i + 14).toDouble))
++        yield ()
++      })
++      val image = right(
++        Sampled.continuous(
++          grid,
++          axes,
++          NDArray.tabulate[Double](3, 2, 2, 2)((x, y, z, t) => x + 3 * y + 6 * z + 12 * t)
++        )
++      )
++      right(Nifti.writeScalar(full, image, o))
++      assertEquals(Files.readAllBytes(path).toVector, Files.readAllBytes(full).toVector)
++      val before = Files.readAllBytes(path).toVector
++      assertEquals(
++        Nifti.openScalarWriter(path, grid).left.toOption,
++        Some(NiftiError.OutputAlreadyExists(path.toString))
++      )
++      assertEquals(Files.readAllBytes(path).toVector, before)
++      assertEquals(right(Nifti.readHeader(path)).dimensions, Vector(3, 2, 2, 2))
++      val bytes = ByteBuffer.wrap(Files.readAllBytes(path)).order(ByteOrder.LITTLE_ENDIAN)
++      for i <- 0 until 24 do assertEquals(bytes.getFloat(352 + 4 * i), i.toFloat)
++    finally
++      val _ = Files.deleteIfExists(path)
++      val _ = Files.deleteIfExists(full)
++      Files.delete(dir)
++
++  test("public JVM positional writes preserve exact offsets beyond 32-bit byte addressing"):
++    val dir = Files.createTempDirectory("image4s-incremental-large-")
++    val path = dir.resolve("sparse.nii")
++    val large = right(Grid.in(frame)(Vector(32767, 32767, 1), Affine.identity[D3]))
++    val samples = 32767L * 32767L
++    try
++      right(Nifti.withScalarWriter(path, large) { writer =>
++        writer.writeSpatialSpan(Vector.empty, samples - 1L, Array(17.5))
++      })
++      assertEquals(Files.size(path), 352L + samples * 8L)
++      val channel = FileChannel.open(path, StandardOpenOption.READ)
++      try
++        for (offset, expected) <- Vector(352L -> 0.0, (352L + (samples - 1L) * 8L) -> 17.5) do
++          val b = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN)
++          var position = offset
++          while b.hasRemaining do
++            val n = channel.read(b, position)
++            assert(n > 0)
++            position += n.toLong
++          assertEquals(b.getDouble(0), expected)
++      finally channel.close()
++    finally
++      val _ = Files.deleteIfExists(path)
++      Files.delete(dir)
++
++  test(
++    "scoped resources close after repeated success and producer exceptions; creation failures are typed"
++  ):
++    val dir = Files.createTempDirectory("image4s-incremental-close-")
++    val path = dir.resolve("stage.nii")
++    val blocker = dir.resolve("file-parent")
++    val _ = Files.write(blocker, Array[Byte](1))
++    try
++      // Warm up the exact path before checking the OS descriptor count.
++      right(Nifti.withScalarWriter(path, grid)(_ => Right(())))
++      Files.delete(path)
++      val bean = ManagementFactory.getOperatingSystemMXBean
++      def descriptors = bean match
++        case unix: UnixOperatingSystemMXBean => Some(unix.getOpenFileDescriptorCount)
++        case _ => None
++      val before = descriptors
++      for i <- 0 until 64 do
++        if i % 2 == 0 then
++          right(
++            Nifti.withScalarWriter(path, grid)(_.writeSpatialSpan(Vector.empty, 0L, Array(1.0)))
++          )
++        else
++          intercept[IllegalArgumentException] {
++            Nifti.withScalarWriter(path, grid)(_ =>
++              throw new IllegalArgumentException("producer failed")
++            )
++          }
++        Files.delete(path)
++      assertEquals(descriptors, before)
++      assert(
++        Nifti
++          .openScalarWriter(blocker.resolve("bad.nii"), grid)
++          .left
++          .toOption
++          .exists(_.isInstanceOf[NiftiError.IoFailure])
++      )
++      assertEquals(Files.readAllBytes(blocker).toVector, Vector[Byte](1))
++    finally
++      val _ = Files.deleteIfExists(path)
++      Files.delete(blocker)
++      Files.delete(dir)
+diff --git a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiScalarWriter.scala b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiScalarWriter.scala
+new file mode 100644
+index 0000000..23024f5
+--- /dev/null
++++ b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiScalarWriter.scala
+@@ -0,0 +1,162 @@
++package image4s.nifti
++
++import image4s.NonSpatialAxes
++import image4s.geometry.{D3, Frame, Grid}
++import java.nio.{ByteBuffer, ByteOrder}
++
++/** One exclusive, synchronous staging-file writer, bound to its supplied geometry and axes.
++  *
++  * Spatial indices are NIfTI first-axis-fastest: x + nx * (y + ny * z). Non-spatial coordinates
++  * follow axes.values, with the first non-spatial axis fastest in the file. These are not Ravel
++  * linear offsets. Calls may arrive in any order; repeated samples are overwritten in call order.
++  * Unwritten samples retain stored code zero (scaled value options.intercept).
++  *
++  * Invalid blocks are refused before any of their bytes are written and may be corrected. Physical
++  * IO failure closes and poisons the writer. close is idempotent, reports prior IO failure, and
++  * releases resources; it does not certify coverage or publish a scientific result. The caller owns
++  * staging-file removal/publication. Use Nifti.withScalarWriter for exception-safe resource scope.
++  * Do not call concurrently or mutate supplied arrays during a call. Input arrays are not retained.
++  */
++final class NiftiScalarWriter[F <: Frame[D3], P] private[nifti] (
++    val path: P,
++    val grid: Grid[F, D3],
++    val axes: NonSpatialAxes,
++    val options: NiftiWriteOptions,
++    val payloadOffset: Long,
++    val payloadBytes: Long,
++    output: NiftiSeekableOutput,
++    encoder: NiftiScalarEncoder
++):
++  val spatialSize: Long = grid.shape.foldLeft(1L)(_ * _.toLong)
++  private val bytesPerValue = options.datatype.bitsPerValue / 8
++  private val bufferBytes =
++    math.max(bytesPerValue, options.ioLimits.workingBufferBytes / bytesPerValue * bytesPerValue)
++  private val bytes = new Array[Byte](math.min(bufferBytes.toLong, payloadBytes).toInt)
++  private val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
++  private val index = new Array[Int](3 + axes.size)
++  private var closed = false
++  private var failure: Option[NiftiError] = None
++
++  /** Write a contiguous spatial span at one non-spatial coordinate, without an index array. */
++  def writeSpatialSpan(
++      nonSpatialIndex: Vector[Int],
++      firstSpatialIndex: Long,
++      values: Array[Double]
++  ): Either[NiftiError, Unit] =
++    if firstSpatialIndex < 0L || firstSpatialIndex > spatialSize ||
++      values.length.toLong > spatialSize - firstSpatialIndex
++    then
++      Left(
++        NiftiError.InvalidOutputBlock(
++          s"span $firstSpatialIndex + ${values.length} exceeds $spatialSize spatial samples"
++        )
++      )
++    else writeBlock(nonSpatialIndex, values, i => firstSpatialIndex + i.toLong)
++
++  /** Write sparse samples; adjacent indices are coalesced into bounded physical writes. */
++  def writeSpatialBlock(
++      nonSpatialIndex: Vector[Int],
++      spatialIndices: Array[Long],
++      values: Array[Double]
++  ): Either[NiftiError, Unit] =
++    if spatialIndices.length != values.length then
++      Left(
++        NiftiError.InvalidOutputBlock(
++          s"${spatialIndices.length} indices for ${values.length} values"
++        )
++      )
++    else writeBlock(nonSpatialIndex, values, i => spatialIndices(i))
++
++  def close(): Either[NiftiError, Unit] =
++    if !closed then
++      closed = true
++      output.close() match
++        case Left(closing) =>
++          failure = Some(
++            failure.fold(closing)(primary => NiftiError.OutputCloseFailure(primary, closing))
++          )
++        case Right(_) => ()
++    failure.toLeft(())
++
++  private def writeBlock(
++      nonSpatialIndex: Vector[Int],
++      values: Array[Double],
++      spatialAt: Int => Long
++  ): Either[NiftiError, Unit] =
++    if failure.nonEmpty then failure.toLeft(())
++    else if closed then Left(NiftiError.OutputClosed)
++    else if nonSpatialIndex.size != axes.size then
++      Left(
++        NiftiError.InvalidOutputBlock(
++          s"${nonSpatialIndex.size} non-spatial indices for ${axes.size} axes"
++        )
++      )
++    else
++      var frameOffset = 0L
++      var frameStride = spatialSize
++      var axis = 0
++      var invalid: Option[NiftiError] = None
++      while axis < axes.size && invalid.isEmpty do
++        val coordinate = nonSpatialIndex(axis)
++        if coordinate < 0 || coordinate >= axes.shape(axis) then
++          invalid = Some(
++            NiftiError.InvalidOutputBlock(
++              s"non-spatial index $coordinate outside axis $axis extent ${axes.shape(axis)}"
++            )
++          )
++        else
++          frameOffset += coordinate.toLong * frameStride
++          frameStride *= axes.shape(axis).toLong
++          index(axis + 3) = coordinate
++        axis += 1
++      // Validate all coordinates and conversions before writing any byte from this block.
++      var valueIndex = 0
++      try
++        while valueIndex < values.length && invalid.isEmpty do
++          val spatial = spatialAt(valueIndex)
++          if spatial < 0L || spatial >= spatialSize then
++            invalid = Some(
++              NiftiError.InvalidOutputBlock(s"spatial index $spatial outside [0,$spatialSize)")
++            )
++          else
++            decodeSpatial(spatial)
++            encoder.encode(buffer, 0, index, values(valueIndex))
++          valueIndex += 1
++      catch case conversion: NiftiWriteConversionFailure => invalid = Some(conversion.error)
++      invalid match
++        case Some(error) => Left(error)
++        case None =>
++          valueIndex = 0
++          while valueIndex < values.length && failure.isEmpty do
++            val firstSpatial = spatialAt(valueIndex)
++            var count = 0
++            while valueIndex + count < values.length && count < bytes.length / bytesPerValue &&
++              spatialAt(valueIndex + count) == firstSpatial + count.toLong
++            do
++              decodeSpatial(firstSpatial + count.toLong)
++              encoder.encode(buffer, count * bytesPerValue, index, values(valueIndex + count))
++              count += 1
++            output.writeAt(
++              payloadOffset + (frameOffset + firstSpatial) * bytesPerValue.toLong,
++              bytes,
++              count * bytesPerValue
++            ) match
++              case Left(error) =>
++                failure = Some(error)
++                val _ = close()
++              case Right(_) => valueIndex += count
++          failure.toLeft(())
++
++  private def decodeSpatial(spatial: Long): Unit =
++    var remaining = spatial
++    var axis = 0
++    while axis < 3 do
++      index(axis) = (remaining % grid.shape(axis).toLong).toInt
++      remaining /= grid.shape(axis).toLong
++      axis += 1
++
++private[nifti] trait NiftiScalarEncoder:
++  def encode(buffer: ByteBuffer, offset: Int, index: Array[Int], value: Double): Unit
++
++private[nifti] final case class NiftiWriteConversionFailure(error: NiftiError)
++    extends RuntimeException(error.message)
+diff --git a/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala b/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala
+new file mode 100644
+index 0000000..5835445
+--- /dev/null
++++ b/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala
+@@ -0,0 +1,364 @@
++package image4s.nifti
++
++import image4s.{Axis, AxisKind, NonSpatialAxes, Sampled}
++import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid, LengthUnit}
++import java.nio.{ByteBuffer, ByteOrder}
++import munit.FunSuite
++import ravel.DType.given
++import ravel.NDArray
++import scala.collection.mutable
++
++final class NiftiIncrementalSuite extends FunSuite:
++  private def right[E, A](value: Either[E, A]): A = value.fold(e => fail(e.toString), identity)
++  private val frame = right(
++    Frame
++      .named[D3]("incremental", unit = LengthUnit.Millimeter, convention = CoordinateConvention.RAS)
++  )
++  private val affine = right(
++    Affine.fromRowMajor[D3](
++      Vector(
++        2.0, 0.25, 0.0, -12.0, 0.0, 3.0, 0.0, 8.0, 0.0, 0.0, 4.0, -5.0, 0.0, 0.0, 0.0, 1.0
++      )
++    )
++  )
++  private def grid(shape: Vector[Int] = Vector(3, 2, 2)) = right(Grid.in(frame)(shape, affine))
++  private def axes(extents: Int*): NonSpatialAxes = right(
++    NonSpatialAxes.from(extents.zipWithIndex.map { (n, i) =>
++      right(Axis.ordinal(s"axis$i", AxisKind.Batch, n))
++    })
++  )
++  private def options(dt: NiftiDatatype) = NiftiWriteOptions
++    .forDatatype(dt)
++    .withIoLimits(NiftiIoLimits.default.copy(workingBufferBytes = 17))
++
++  test(
++    "produced blocks match ordinary codec bytes and independent NIfTI order for every scalar datatype"
++  ):
++    for dt <- NiftiDatatype.values do
++      val fs = new IncrementalTestFileSystem
++      val api = new NiftiApi(fs)
++      val g = grid()
++      val a = axes(3)
++      val data = NDArray.tabulate[Double](3, 2, 2, 3)((x, y, z, t) => x + 3 * y + 6 * z + 12 * t)
++      val image = right(Sampled.continuous(g, a, data))
++      val o = options(dt).withCoordinateSystem(NiftiCoordinateSystem.Mni152)
++      val ext = Vector(right(NiftiExtension.create(6, Vector[Byte](4, 5, 6))))
++      right(api.writeScalar("resident.nii", image, o, ext))
++      val writer = right(api.openScalarWriter("blocks.nii", g, a, o, ext))
++      assert(writer.grid eq g)
++      assert(writer.axes eq a)
++      for t <- Vector(2, 0, 1) do
++        right(
++          writer.writeSpatialSpan(Vector(t), 6L, Array.tabulate(6)(i => (i + 6 + 12 * t).toDouble))
++        )
++        right(writer.writeSpatialSpan(Vector(t), 0L, Array.tabulate(6)(i => (i + 12 * t).toDouble)))
++      right(writer.close())
++      assertEquals(fs.content("blocks.nii").toVector, fs.content("resident.nii").toVector)
++      val bytes = ByteBuffer.wrap(fs.content("blocks.nii")).order(ByteOrder.LITTLE_ENDIAN)
++      assertEquals(bytes.getInt(0), 348)
++      assertEquals(bytes.getShort(40).toInt, 4)
++      assertEquals(bytes.getShort(254).toInt, 4)
++      assertEquals(bytes.getFloat(280), 2.0f)
++      assertEquals(bytes.getFloat(292), -12.0f)
++      assertEquals(bytes.get(123).toInt & 7, 2)
++      for i <- 0 until 36 do
++        val offset = bytes.getFloat(108).toInt + i * dt.bitsPerValue / 8
++        val actual = dt match
++          case NiftiDatatype.UInt8 => (bytes.get(offset) & 255).toDouble
++          case NiftiDatatype.Int16 => bytes.getShort(offset).toDouble
++          case NiftiDatatype.Int32 => bytes.getInt(offset).toDouble
++          case NiftiDatatype.Float32 => bytes.getFloat(offset).toDouble
++          case NiftiDatatype.Float64 => bytes.getDouble(offset)
++        assertEquals(actual, i.toDouble)
++      assert(fs.maximumWrite <= 16)
++
++  test("sparse and repeated samples use explicit first-axis-fastest non-spatial coordinates"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    val o = right(NiftiWriteOptions.create(NiftiDatatype.Int16, 2.0, 10.0))
++    val w = right(api.openScalarWriter("sparse.nii", grid(), axes(2, 3), o))
++    right(w.writeSpatialBlock(Vector(1, 2), Array(11L, 1L, 2L, 1L), Array(30.0, 14.0, 16.0, 18.0)))
++    right(w.close())
++    val b = ByteBuffer.wrap(fs.content("sparse.nii")).order(ByteOrder.LITTLE_ENDIAN)
++    assertEquals(b.getShort(352 + 2 * ((1 + 2 * 2) * 12 + 11)).toInt, 10)
++    assertEquals(b.getShort(352 + 2 * ((1 + 2 * 2) * 12 + 1)).toInt, 4)
++    assertEquals(b.getShort(352).toInt, 0) // stored zero decodes to the declared intercept
++
++  test("block validation is complete before physical writes and refusals are recoverable"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    val w =
++      right(api.openScalarWriter("validate.nii", grid(), axes(2), options(NiftiDatatype.UInt8)))
++    val invalid = Vector(
++      () => w.writeSpatialSpan(Vector(0), 0L, Array(1.0, 2.5)),
++      () => w.writeSpatialSpan(Vector(0), Long.MaxValue, Array(1.0)),
++      () => w.writeSpatialSpan(Vector(0), -1L, Array(1.0)),
++      () => w.writeSpatialSpan(Vector(0), 11L, Array(1.0, 2.0)),
++      () => w.writeSpatialSpan(Vector(2), 0L, Array(1.0)),
++      () => w.writeSpatialSpan(Vector(-1), 0L, Array(1.0)),
++      () => w.writeSpatialSpan(Vector.empty, 0L, Array(1.0)),
++      () => w.writeSpatialBlock(Vector(0), Array(0L, 99L), Array(1.0, 2.0)),
++      () => w.writeSpatialBlock(Vector(0), Array(0L), Array(1.0, 2.0))
++    )
++    invalid.foreach { call =>
++      assert(call().isLeft)
++      assertEquals(fs.writes.size, 0)
++    }
++    w.writeSpatialSpan(Vector(1), 7L, Array(3.5)) match
++      case Left(e: NiftiError.ValueNotRepresentable) =>
++        assertEquals(e.logicalIndex, Vector(1, 0, 1, 1))
++      case other => fail(other.toString)
++    right(w.writeSpatialSpan(Vector(1), 0L, Array(3.0)))
++    right(w.writeSpatialSpan(Vector(1), 12L, Array.emptyDoubleArray))
++    right(w.close())
++    right(w.close())
++    assertEquals(fs.closeCount, 1)
++    assertEquals(w.writeSpatialSpan(Vector(0), 0L, Array(1.0)), Left(NiftiError.OutputClosed))
++
++  test(
++    "all conversion policies retain ordinary-writer behavior including overflow and non-finite values"
++  ):
++    for dt <- NiftiDatatype.values do
++      for value <- Vector(Double.NaN, Double.PositiveInfinity, -1.0, 1.5, 256.0, 1e300) do
++        val fs = new IncrementalTestFileSystem
++        val api = new NiftiApi(fs)
++        val g = grid(Vector(1, 1, 1))
++        val image = right(
++          Sampled.continuous(
++            g,
++            NonSpatialAxes.empty,
++            NDArray.tabulate[Double](1, 1, 1)((_, _, _) => value)
++          )
++        )
++        val o =
++          right(NiftiWriteOptions.create(dt, 2.0, 10.0, NiftiIntegerConversion.RoundToNearestEven))
++        val full = api.writeScalar("full.nii", image, o)
++        val w = right(api.openScalarWriter("incremental.nii", g, options = o))
++        val block = w.writeSpatialSpan(Vector.empty, 0L, Array(value))
++        (block, full) match
++          case (
++                Left(a: NiftiError.ValueNotRepresentable),
++                Left(b: NiftiError.ValueNotRepresentable)
++              ) =>
++            assertEquals(a.logicalIndex, b.logicalIndex)
++            assertEquals(a.datatype, b.datatype)
++            assertEquals(a.problem, b.problem)
++            assert(a.value == b.value || (a.value.isNaN && b.value.isNaN))
++            assert(
++              a.encodedValue == b.encodedValue || (a.encodedValue.isNaN && b.encodedValue.isNaN)
++            )
++          case (Right(_), Right(_)) => ()
++          case other => fail(other.toString)
++        right(w.close())
++        if full.isRight then
++          assertEquals(fs.content("incremental.nii").toVector, fs.content("full.nii").toVector)
++
++  test("finite values whose scaling overflows are rejected by both Float32 writer APIs"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    val g = grid(Vector(1, 1, 1))
++    val o = right(NiftiWriteOptions.create(NiftiDatatype.Float32, 1e-40, 0.0))
++    val value = Double.MaxValue
++    val image = right(
++      Sampled.continuous(
++        g,
++        NonSpatialAxes.empty,
++        NDArray.tabulate[Double](1, 1, 1)((_, _, _) => value)
++      )
++    )
++    val full = api.writeScalar("overflow-full.nii", image, o)
++    val w = right(api.openScalarWriter("overflow-block.nii", g, options = o))
++    val block = w.writeSpatialSpan(Vector.empty, 0L, Array(value))
++    assertEquals(block.left.toOption, full.left.toOption)
++    block match
++      case Left(e: NiftiError.ValueNotRepresentable) =>
++        assertEquals(e.problem, NiftiValueProblem.FloatingOverflow)
++      case other => fail(other.toString)
++    assertEquals(fs.writes.size, 0)
++    right(w.close())
++
++  test("physical failure closes and poisons the output and retains a simultaneous close failure"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    val w =
++      right(api.openScalarWriter("failure.nii", grid(), options = options(NiftiDatatype.Float64)))
++    fs.failAt = Some(2)
++    fs.closeFailure = true
++    val result = w.writeSpatialSpan(Vector.empty, 0L, Array.fill(6)(2.0))
++    assert(result.left.toOption.exists(_.isInstanceOf[NiftiError.OutputCloseFailure]))
++    assertEquals(fs.closeCount, 1)
++    assertEquals(fs.writes.size, 1)
++    assertEquals(w.close(), result)
++    assertEquals(w.writeSpatialSpan(Vector.empty, 0L, Array(2.0)), result)
++
++  test("scoped callbacks close on success, typed error and thrown exception"):
++    for mode <- 0 until 3 do
++      val fs = new IncrementalTestFileSystem
++      val api = new NiftiApi(fs)
++      def run() = api.withScalarWriter("scoped.nii", grid()) { _ =>
++        mode match
++          case 0 => Right(4)
++          case 1 => Left(NiftiError.InvalidOutputBlock("producer failed"))
++          case _ => throw new IllegalStateException("producer threw")
++      }
++      if mode == 2 then intercept[IllegalStateException](run())
++      else assertEquals(run().isRight, mode == 0)
++      assertEquals(fs.closeCount, 1)
++
++  test("dimensions, overflow, limits and unsupported modes refuse creation"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    assert(api.openScalarWriter("rank.nii", grid(), axes(1, 1, 1, 1, 1)).isLeft)
++    assert(api.openScalarWriter("dimension.nii", grid(Vector(32768, 1, 1))).isLeft)
++    assert(
++      api
++        .openScalarWriter(
++          "overflow.nii",
++          grid(Vector(32767, 32767, 32767)),
++          axes(32767, 32767, 32767, 32767)
++        )
++        .left
++        .toOption
++        .exists(_.isInstanceOf[NiftiError.WriteSizeOverflow])
++    )
++    assert(
++      api
++        .openScalarWriter(
++          "limit.nii",
++          grid(),
++          options = NiftiWriteOptions.default
++            .withIoLimits(NiftiIoLimits.default.copy(maximumPayloadBytes = 8))
++        )
++        .isLeft
++    )
++    assert(
++      api
++        .openScalarWriter(
++          "working.nii",
++          grid(),
++          options = NiftiWriteOptions.default
++            .withIoLimits(NiftiIoLimits.default.copy(workingBufferBytes = 0))
++        )
++        .isLeft
++    )
++    for suffix <- Vector(".nii.gz", ".hdr", ".img", ".hdr.gz", ".txt") do
++      assert(
++        api
++          .openScalarWriter("unsupported" + suffix, grid())
++          .left
++          .toOption
++          .exists(_.isInstanceOf[NiftiError.UnsupportedIncrementalOutput])
++      )
++    assertEquals(fs.created, 0)
++
++  test("incremental output requires an explicit RAS frame without changing legacy write behavior"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    val unspecified = right(Frame.named[D3]("unspecified"))
++    val g = right(Grid.in(unspecified)(Vector(1, 1, 1), Affine.identity[D3]))
++    assertEquals(
++      api.openScalarWriter("new.nii", g).left.toOption,
++      Some(NiftiError.FrameConventionMismatch(CoordinateConvention.Unspecified))
++    )
++    assertEquals(fs.created, 0)
++    val image = right(
++      Sampled.continuous(
++        g,
++        NonSpatialAxes.empty,
++        NDArray.tabulate[Double](1, 1, 1)((_, _, _) => 2.0)
++      )
++    )
++    right(api.writeScalar("legacy.nii", image))
++
++  test("payload addressing beyond Int range is checked and uses exact Long arithmetic"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    val g = grid(Vector(32767, 32767, 2))
++    val o = NiftiWriteOptions.default.withIoLimits(
++      NiftiIoLimits.default.copy(maximumPayloadBytes = Long.MaxValue)
++    )
++    val w = right(api.openScalarWriter("large.nii", g, axes(3), o))
++    val spatial = 32767L * 32767L * 2L
++    right(w.writeSpatialSpan(Vector(2), spatial - 1L, Array(7.5)))
++    assertEquals(fs.writes.last._1, 352L + (3L * spatial - 1L) * 8L)
++    assertEquals(fs.writes.last._2, 8)
++    right(w.close())
++
++  test("coordinate declarations survive option builders with historical default preserved"):
++    val fs = new IncrementalTestFileSystem
++    val api = new NiftiApi(fs)
++    assertEquals(
++      NiftiWriteOptions.default.coordinateSystem,
++      NiftiCoordinateSystem.ScannerAnatomical
++    )
++    for system <- NiftiCoordinateSystem.values do
++      val initial = NiftiWriteOptions.default.withCoordinateSystem(system)
++      val sampled = right(initial.withNonSpatialSampling(Vector(0.5), NiftiTemporalUnit.Second))
++      val limited = sampled.withIoLimits(NiftiIoLimits.default)
++      val created = right(
++        NiftiWriteOptions.create(
++          NiftiDatatype.Float64,
++          1,
++          0,
++          nonSpatialPixelDimensions = Vector(0.5),
++          temporalUnit = NiftiTemporalUnit.Second,
++          coordinateSystem = system
++        )
++      )
++      assertEquals(limited, created)
++      assertEquals(limited.hashCode, created.hashCode)
++      val path = s"system-${system.code}.nii"
++      right(right(api.openScalarWriter(path, grid(), axes(2), limited)).close())
++      val bytes = ByteBuffer.wrap(fs.content(path)).order(ByteOrder.LITTLE_ENDIAN)
++      assertEquals(bytes.getShort(254).toInt, system.code)
++      assertEquals(bytes.getFloat(92), 0.5f)
++      assertEquals(bytes.get(123).toInt, 10)
++
++private[nifti] final class IncrementalTestFileSystem extends NiftiFileSystem[String]:
++  val content = mutable.Map.empty[String, Array[Byte]]
++  val writes = mutable.ArrayBuffer.empty[(Long, Int)]
++  var created = 0
++  var closeCount = 0
++  var maximumWrite = 0
++  var failAt: Option[Int] = None
++  var closeFailure = false
++  private var attempts = 0
++  def show(path: String): String = path
++  def fileName(path: String): String = path
++  def sibling(_path: String, name: String): String = name
++  def exists(path: String): Boolean = content.contains(path)
++  def ioStrategy(_path: String): NiftiIoStrategy = NiftiIoStrategy.BoundedStreaming
++  def readBytes(path: String, _operation: NiftiOperation): Either[NiftiError, Array[Byte]] = Right(
++    content(path)
++  )
++  def writeBytes(path: String, bytes: Array[Byte]): Either[NiftiError, Unit] =
++    content(path) = bytes.clone()
++    Right(())
++  override def createSeekable(
++      path: String,
++      prefix: Array[Byte],
++      payloadBytes: Long
++  ): Either[NiftiError, NiftiSeekableOutput] =
++    if exists(path) then Left(NiftiError.OutputAlreadyExists(path))
++    else
++      created += 1
++      val total = prefix.length.toLong + payloadBytes
++      content(path) =
++        if total < 1000000L then new Array[Byte](total.toInt) else new Array[Byte](prefix.length)
++      System.arraycopy(prefix, 0, content(path), 0, prefix.length)
++      Right(new NiftiSeekableOutput:
++        def writeAt(offset: Long, bytes: Array[Byte], length: Int): Either[NiftiError, Unit] =
++          attempts += 1
++          if failAt.contains(attempts) then
++            Left(NiftiError.IoFailure(path, NiftiOperation.Write, "injected write failure"))
++          else
++            writes += ((offset, length))
++            maximumWrite = math.max(maximumWrite, length)
++            if offset + length <= content(path).length then
++              System.arraycopy(bytes, 0, content(path), offset.toInt, length)
++            Right(())
++        def close(): Either[NiftiError, Unit] =
++          closeCount += 1
++          if closeFailure then
++            Left(NiftiError.IoFailure(path, NiftiOperation.Write, "injected close failure"))
++          else Right(()))

@@ -5,6 +5,15 @@ typed group designs, responses, weighting, contrasts, statistics, multiple
 comparison control, and result values. Plotting and concrete renderers remain
 application-boundary concerns.
 
+`EstimateGroup.prepare` compiles pinned estimate inputs into bounded group reads.
+It joins catalog IDs, requires one row per identified participant and an explicit
+`GroupEstimateAdmission` implementation for scientific and spatial admission.
+`readBlock` opens one verified unit at a time, preserves sample order, and refuses
+unavailable requested cells without shrinking the cohort. Its total cell budget
+counts effects and variances; SE is squared exactly once for weighted group input.
+The group runtime does not depend on `fit`. The older eager `TContrastResult`
+convenience is now `scalafim.fmri.fit.estimates.FitGroupAdapter` in `fit-estimates`.
+
 A group result can be projected into the shared renderer-neutral plotting DSL:
 
 ```scala

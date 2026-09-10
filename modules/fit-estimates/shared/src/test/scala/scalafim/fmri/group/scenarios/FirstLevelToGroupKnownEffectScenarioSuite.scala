@@ -1,12 +1,13 @@
 package scalafim.fmri.group.scenarios
 
+import scalafim.fmri.fit.estimates.FitGroupAdapter
+
 import scalafim.image.SampleSpaces
 
 import scalafim.dataset.{DatasetEvents, DatasetId, FmriDataset, InMemoryDatasetBackend, SubjectId}
 import scalafim.fmri.design.baseline.{Intercept, NuisanceCheck}
 import scalafim.fmri.fit.{DenseFmriFitResult, FitError, FitPlanExecutor, TContrast, TContrastResult}
 import scalafim.fmri.group.{
-  FirstLevel,
   GroupDesign,
   GroupEngine,
   GroupError,
@@ -39,7 +40,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
     val results =
       firstLevels.map(firstLevel => (firstLevel.subject -> ContrastName) -> firstLevel.contrast).toMap
     val data = groupValue(
-      FirstLevel.groupData(
+      FitGroupAdapter.groupData(
         space = GroupSpace.SampleAxis(fixture.samples),
         subjects = fixture.subjectIds,
         contrasts = Vector(ContrastName),

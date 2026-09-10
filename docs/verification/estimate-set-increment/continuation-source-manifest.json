@@ -1,0 +1,409 @@
+{
+  "base": "faeba828723cb89696f96fdfc481499304f4fe36",
+  "image4s": "ec56b34806c22e26c28ecbd366ef2e323195fc88",
+  "candidate": "/tmp/scalafim-estimates-continuation",
+  "files": [
+    {
+      "path": "build.sbt",
+      "sha256": "710026acb485364f5157ac547ac777b7cfc0221f994f2d4b30eb605d0832fe18",
+      "bytes": 48981,
+      "deleted": false
+    },
+    {
+      "path": "modules/archive/jvm/src/main/scala/scalafim/archive/io/LocalObjectStore.scala",
+      "sha256": "e30dd946be828bb4bd875c76a2f33ae3f18022bcc18241f0673de3e7619b1654",
+      "bytes": 9101,
+      "deleted": false
+    },
+    {
+      "path": "modules/archive/jvm/src/test/scala/scalafim/archive/io/LocalObjectStoreSuite.scala",
+      "sha256": "231dd54947aa259117a0430ec8b833d4ac0d62818f4fa55a0db57d2ece0d97db",
+      "bytes": 2713,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/LocalEstimateStore.scala",
+      "sha256": "d826747741365c4f28fdd203e95d37e543b440aa2b5a862a65a5ab402b4becfe",
+      "bytes": 6568,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/NiftiEstimateSink.scala",
+      "sha256": "345c027bdddd6243e3aee5e8776af391f7cc8889eb3bd7a283eecdb149732deb",
+      "bytes": 14160,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/NiftiEstimateSource.scala",
+      "sha256": "30e087e3faf28ab2cf0b9d541dfc0cfc5bce850b979faab341d23e6974dbc647",
+      "bytes": 10325,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/EstimateProcessProbe.scala",
+      "sha256": "ed9c47369bd563b17eb92856b048a2efdb3307dfe9a0896bc92f094b1c4b626d",
+      "bytes": 4210,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/LocalEstimateStoreSuite.scala",
+      "sha256": "eef3ebfd6d0cfac76838b0058fcab6cf8262d5d1257638cd1d7f5dc1d0e09874",
+      "bytes": 11623,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/shared/src/main/scala/scalafim/estimates/io/EstimateMetadata.scala",
+      "sha256": "80336cd753fd50bf8414e1cd32220ffe211832bb5ac30b65534639bcb7ee0d38",
+      "bytes": 12334,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/shared/src/main/scala/scalafim/estimates/io/NiftiRepresentation.scala",
+      "sha256": "0aca15581c466231f1aac07cf29084be98b795202c170bbc338afa0b524492ee",
+      "bytes": 1112,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates-io/shared/src/test/scala/scalafim/estimates/io/EstimateMetadataSuite.scala",
+      "sha256": "fd25e8246c371448c8882dd7ed9d87b1cc23b136391c9f12c7cafe5685b58e96",
+      "bytes": 1982,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/CovarianceAccess.scala",
+      "sha256": "76ba7f907e2f6595b1b12b2df8a0a36ef24dc56830bf29b1a55ead6cc2b90329",
+      "bytes": 6570,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala",
+      "sha256": "1cc33484e577000319f88fab930d04e10bf9952d40134ec884df37a5d33c1a4f",
+      "bytes": 1768,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateDomain.scala",
+      "sha256": "b500f788a09fcbea9fd9d0ceef982b4bbc9cdc323fa71f054041484bab39581f",
+      "bytes": 2405,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala",
+      "sha256": "c297e013ed47645e47769826aeca0f78ec2c819f9eda916c019a9e6225c33cc2",
+      "bytes": 4213,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSink.scala",
+      "sha256": "49887fe5433efa38cd236420029aa880bffafc8fbbe2174e27c8d4bb2091cfbe",
+      "bytes": 897,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSource.scala",
+      "sha256": "6fbe17ec7e2a93385c46e3a250da7e9cefcdcd8ab9b7ec66c7fe578b96f0018c",
+      "bytes": 5477,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/Identity.scala",
+      "sha256": "919b73c8b757471fe5e2647e86950b46d81722b118e67730c18bd73b71b78a36",
+      "bytes": 3039,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/Products.scala",
+      "sha256": "0bac1d6aa004d8e823f2ad7df1965b343005578c1fbe3b6f562fef8f6282eb5c",
+      "bytes": 4586,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/main/scala/scalafim/estimates/Provenance.scala",
+      "sha256": "532037c6f6d5792dc9807d04142ee8abb443af6486651ae3232157abca2e0915",
+      "bytes": 1143,
+      "deleted": false
+    },
+    {
+      "path": "modules/estimates/shared/src/test/scala/scalafim/estimates/EstimateContractSuite.scala",
+      "sha256": "e36acde8ad31cde70a6a7715a8c45d6eb292de51f74bfdc0142a848d8ffbdd18",
+      "bytes": 10707,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/jvm/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateReadbackSuite.scala",
+      "sha256": "ead32726236d2768786b6172ffde428215f3c3c68d0c87b52d79050308859fff",
+      "bytes": 5300,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala",
+      "sha256": "b3fb5465f4bba433c267fa8ffaa1d9636486d66da83683c1c3a1f56c7a08b8a2",
+      "bytes": 10789,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala",
+      "sha256": "5c93a5a0ac9acdb2fd6ee622b30cbb67b4742971383095da7c3dd61fc3419d00",
+      "bytes": 3746,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/fit/estimates/FitEstimateProducerSuite.scala",
+      "sha256": "29225defb370ba92bf897e7d7ccb51ab895ad3dd0b1662c916b3403c20b3cca1",
+      "bytes": 5186,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/FirstLevelBridgeSuite.scala",
+      "sha256": "21dabbd7daa19b5dd229fc7800e66c8054733f08e523a9fc36d63d74841ce15f",
+      "bytes": 2446,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+      "sha256": "235b23190a7ab638ebfbdc470634a226288f2ab2c11b5a0569d6e2e31cb8f9f3",
+      "bytes": 11509,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+      "sha256": "eed452046064ec6c070e11f65ca06b15da572e002f48e8ff8fa25cde4fdc9b6b",
+      "bytes": 7579,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/BasisExpandedRetention.scala",
+      "sha256": "c3d2aa14f6f1c91aa6530dbab765792aa2461500a1f9a80e0fe3da52cd8a0a8e",
+      "bytes": 14778,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/CoefficientMatrixStorage.scala",
+      "sha256": "8873341868ab393aa5e2071f78b03dd6fabf1cee62df20529a3f8661c70afe4e",
+      "bytes": 6140,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ContrastReprojection.scala",
+      "sha256": "44d80fa488e23c07c2107cce56d3112f95621801edc570e71ee1e7fbb30cf4ed",
+      "bytes": 10289,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelEstimates.scala",
+      "sha256": "1b29c4ccbe1194eb7f03d45cafffcd029b8a573b02eee7a35fc6fd63e9e2a612",
+      "bytes": 13007,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimates.scala",
+      "sha256": "951483a49d45d038811ff52812564a60cf1c7a4161ebcdb1d93c71d0698a977f",
+      "bytes": 11907,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala",
+      "sha256": "8b4d896eb1f752f3bc50538a129a81e1fb9ab4269a9932fad82bef1ec2887d2a",
+      "bytes": 19175,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitCovariance.scala",
+      "sha256": "06c98438c8368d5cb27d96234bbdca505e10fa2171b88558178fd04e120d98e1",
+      "bytes": 7835,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala",
+      "sha256": "3f234ceea5e6c23c3e668df298778062d0795c7c156fd733abde5c09e7b6e52a",
+      "bytes": 24091,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitTypes.scala",
+      "sha256": "314caa40664834865106a914ea9010e67b3f1d9c4cf747d5bdab90733475ffa9",
+      "bytes": 21693,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala",
+      "sha256": "981bf15c8cdbff2b7ed354877147675f13069b4a14f0603fb582326b159b71a1",
+      "bytes": 24925,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffectsEstimates.scala",
+      "sha256": "95177f1004742019a0a06e9c91de9106d4a604916a67d51994f0a272692bacd3",
+      "bytes": 7832,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Ols.scala",
+      "sha256": "83948b9bec096e3456d9cf522fddc9f298b3f99c3bbfbff3a00e4e1943b0c26d",
+      "bytes": 11809,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/OlsEstimates.scala",
+      "sha256": "a2461897d003086dfb27761f4a7bd58ce516a7db93815e8d4e5ebae54c77949e",
+      "bytes": 8705,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunCoefficientRetention.scala",
+      "sha256": "5e70476d7c07e900f05b6fa38bdb37fdc3a52b2047b37117a43091e3041e31c4",
+      "bytes": 2611,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/SelectedEstimates.scala",
+      "sha256": "236964e8e4f4a9eee8a98096feb80f97ca6a645a5f0c294384f0ef5112444cbf",
+      "bytes": 7751,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypothesisDsl.scala",
+      "sha256": "899d2c16f9b84de79990d62fcc795ed9bf0c9a180bede044be47525e0cc480ce",
+      "bytes": 15761,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/examples/SelectedEstimatesExample.scala",
+      "sha256": "5177aedf1e5ec025f1a66364a9f36696e026847353b3b2cff5bcc6a30f7ad15d",
+      "bytes": 4432,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/examples/SelectedEstimatesExampleSuite.scala",
+      "sha256": "19428df6bbe2ddaaf7dcfadce4cd9f5bfcc6b99f676b852a24f27fea36e7a63b",
+      "bytes": 12085,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/BasisExpandedRetentionSuite.scala",
+      "sha256": "034671f2af4f03c18db4287e9e8e3b479f2c1d9addac3b6c8aa7c3e3da10bce5",
+      "bytes": 11308,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala",
+      "sha256": "848442545c4ff32bfa4d7a9fec3ae5924007296ed7822b434c527924b8639401",
+      "bytes": 42181,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/CompactFixedEffectsSuite.scala",
+      "sha256": "d1b7b30f1a3a60aee86b6c27d1f362a700568f32bac3178982ba255e163709f4",
+      "bytes": 9718,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ContrastReprojectionSuite.scala",
+      "sha256": "13d94ae9361ceefd40eb6795cf518a49da4bc2dd6c83c186325a09846ddf3f96",
+      "bytes": 7760,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FirstLevelEstimatesSuite.scala",
+      "sha256": "e288bd9580e7614eb3e11e6c208da2c774b2795d26717e8ac19c19a7a64a21ae",
+      "bytes": 10544,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimatesSuite.scala",
+      "sha256": "4cc546cfca4b0471c7e741c96eb7305e024868b807aa675663bd42311a57104f",
+      "bytes": 22234,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FixedEffectsEstimatesSuite.scala",
+      "sha256": "a700200ab10981071da460844a3f0dbcc7522d5be5bcd8962a3ab8cf791cabb6",
+      "bytes": 10656,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/OlsEstimatesSuite.scala",
+      "sha256": "682c6277fb246f92588f31ee21cf0fc2de12dcbf867a2691fb554eaf143444ec",
+      "bytes": 9217,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/SelectedEstimatesSuite.scala",
+      "sha256": "9bb563616bcfc25283577e060add25a7fb3be48086efb4e3634012abbd223f18",
+      "bytes": 6925,
+      "deleted": false
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/StructuralHypothesisDslSuite.scala",
+      "sha256": "e5e8e87c885525ca4b4ce78671063842b1ea0a79a52f3a117ca356d57b7912bb",
+      "bytes": 17797,
+      "deleted": false
+    },
+    {
+      "path": "modules/group/jvm/src/test/scala/scalafim/fmri/group/GroupRuntimeBoundarySuite.scala",
+      "sha256": "e785b4413345cd1b7bb638585a93df2d6261344d61c91a08000534e32b30e570",
+      "bytes": 299,
+      "deleted": false
+    },
+    {
+      "path": "modules/group/shared/src/main/scala/scalafim/fmri/group/EstimateGroup.scala",
+      "sha256": "8213dccc57b8ed59c63dee1324b8cc4d74ca53ed0a57bb0f8c26bf51ff599169",
+      "bytes": 9646,
+      "deleted": false
+    },
+    {
+      "path": "modules/group/shared/src/main/scala/scalafim/fmri/group/FirstLevel.scala",
+      "sha256": null,
+      "bytes": 0,
+      "deleted": true
+    },
+    {
+      "path": "modules/group/shared/src/test/scala/scalafim/fmri/group/EstimateGroupSuite.scala",
+      "sha256": "d8fcbf424a82736ea3d6ca16939765552f9922436b81d7b24854a94c72b77e1b",
+      "bytes": 6258,
+      "deleted": false
+    },
+    {
+      "path": "modules/group/shared/src/test/scala/scalafim/fmri/group/FirstLevelBridgeSuite.scala",
+      "sha256": null,
+      "bytes": 0,
+      "deleted": true
+    },
+    {
+      "path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+      "sha256": null,
+      "bytes": 0,
+      "deleted": true
+    },
+    {
+      "path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+      "sha256": null,
+      "bytes": 0,
+      "deleted": true
+    },
+    {
+      "path": "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala",
+      "sha256": "9060083d8c367361ec166e32a64f6e124414e7721ec7fcdfc2b30a4e90021123",
+      "bytes": 14824,
+      "deleted": false
+    },
+    {
+      "path": "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiIncrementalOutputSuite.scala",
+      "sha256": "913355ea4efd7e045a1f43b7f450b887997c0eb00ada74ab5745f6104ddd93b7",
+      "bytes": 5450,
+      "deleted": false
+    },
+    {
+      "path": "modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala",
+      "sha256": "cf31bd30e2b22751a19a9f156b8e61d3d13d3173e6a1b8ba7a250eee738a1e14",
+      "bytes": 21294,
+      "deleted": false
+    },
+    {
+      "path": "modules/image/shared/src/test/scala/scalafim/image/ProviderDimensionRefinementSuite.scala",
+      "sha256": "81c73288063b344a793ad9271a1209363eff0706e0f8cce1a4cc8c73321aed06",
+      "bytes": 2113,
+      "deleted": false
+    }
+  ]
+}

@@ -150,20 +150,7 @@ object Ols:
       Left(FitError.UnsupportedLeastSquaresPolicy(s"OLS currently supports ${OlsRankPolicy.StrictFullRank.label}; got ${policy.rankPolicy.label}"))
     else policy.method match
       case OlsSolveMethod.QrRankRevealing =>
-        val qr = design.value.qr(QROptions(QRPivoting.Column, policy.rankTolerance.qrValue))
-        val appliedTolerance = qr.diagnostics.rankTolerance match
-          case Some(value) => value
-          case None        => 0.0
-        val rankReport = RankDiagnostics.fromPivotedQr(
-          predictorCount = design.predictors,
-          rank = qr.diagnostics.rank.getOrElse(design.predictors),
-          tolerance = appliedTolerance,
-          pivotOrder = qr.columnPermutation.toIndexSeq.toVector,
-          diagonalR = (0 until math.min(qr.r.rows, qr.r.cols)).toVector.map(index => math.abs(qr.r(index, index))),
-          toleranceConvention = policy.rankTolerance.convention
-        )
-        if rankReport.deficient then Left(FitError.RankDeficientDesign(rankReport))
-        else
+        prepareQr(design, policy).flatMap { case (qr, diagnostics) =>
           qr.normalizedCovariance
             .left
             .map(FitError.SingularDesign.apply)
@@ -173,15 +160,10 @@ object Ols:
                 crossproduct = xtx,
                 solver = OlsPreparedSolver.Qr(qr),
                 normalizedCovariance = covariance,
-                diagnostics = OlsDiagnostics(
-                  solveMethod = OlsSolveMethod.QrRankRevealing,
-                  predictors = design.predictors,
-                  rank = rankReport.numericalRank,
-                  policy = policy,
-                  rankReport = rankReport
-                )
+                diagnostics = diagnostics
               )
             }
+        }
       case OlsSolveMethod.CholeskyNormalEquations =>
         for
           cholesky <- xtx
@@ -205,6 +187,39 @@ object Ols:
             rankReport = RankDiagnostics.fullRankNormalEquations(design.predictors, policy.choleskyTolerance)
           )
         )
+
+  /** Prepare only requested linear estimates. The numerical readout is positional;
+    * structural callers bind it to the realized coefficient axis before this boundary.
+    */
+  def prepareEstimates(
+      design: DesignMatrix,
+      request: OlsEstimateRequest,
+      policy: OlsSolvePolicy = OlsSolvePolicy.Default
+  ): Either[FitError, OlsEstimatePlan] =
+    OlsEstimatePlan.prepare(design, request, policy)
+
+  private[fit] def prepareQr(
+      design: DesignMatrix,
+      policy: OlsSolvePolicy
+  ): Either[FitError, (QR, OlsDiagnostics)] =
+    if !policy.rankPolicy.supported then
+      Left(FitError.UnsupportedLeastSquaresPolicy(s"OLS currently supports ${OlsRankPolicy.StrictFullRank.label}; got ${policy.rankPolicy.label}"))
+    else if policy.method != OlsSolveMethod.QrRankRevealing then
+      Left(FitError.UnsupportedLeastSquaresPolicy("compiled estimates require rank-revealing QR"))
+    else
+      val qr = design.value.qr(QROptions(QRPivoting.Column, policy.rankTolerance.qrValue))
+      val rankReport = RankDiagnostics.fromPivotedQr(
+        predictorCount = design.predictors,
+        rank = qr.diagnostics.rank.getOrElse(design.predictors),
+        tolerance = qr.diagnostics.rankTolerance.getOrElse(0.0),
+        pivotOrder = qr.columnPermutation.toIndexSeq.toVector,
+        diagonalR = (0 until math.min(qr.r.rows, qr.r.cols)).toVector.map(index => math.abs(qr.r(index, index))),
+        toleranceConvention = policy.rankTolerance.convention
+      )
+      if rankReport.deficient then Left(FitError.RankDeficientDesign(rankReport))
+      else Right(qr -> OlsDiagnostics(
+        OlsSolveMethod.QrRankRevealing, design.predictors, rankReport.numericalRank, policy, rankReport
+      ))
 
   def unsafePrepare(
       design: DesignMatrix,

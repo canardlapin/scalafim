@@ -13,11 +13,10 @@ enum CoefficientCovarianceScope:
 
 final case class CoefficientCovariance private (
     scope: CoefficientCovarianceScope,
-    private val values: Vector[DMat]
+    private val values: IndexedSeq[DMat]
 ):
   require(values.nonEmpty, "coefficient covariance must contain at least one matrix")
-  require(values.forall(matrix => matrix.rows == predictors && matrix.cols == predictors), "coefficient covariance matrices must share one square predictor shape")
-  require(values.forall(CoefficientCovariance.allFinite), "coefficient covariance matrices must be finite")
+  require(CoefficientMatrixStorage.valid(values, predictors), "coefficient covariance matrices must be finite and share one positive square predictor shape")
   require(scope == CoefficientCovarianceScope.Voxelwise || values.length == 1, "shared coefficient covariance must contain exactly one matrix")
 
   def predictors: Int =
@@ -29,8 +28,23 @@ final case class CoefficientCovariance private (
   def canonicalMatrix: DMat =
     values.head
 
-  def matrices: Vector[DMat] =
-    values
+  /** Legacy full materialization; prefer indexed access or materialize with a limit. */
+  def matrices: Vector[DMat] = values.toVector
+
+  /** Retained numeric doubles, excluding temporary matrices, object overhead and integer axes.
+    * Shared component references may be counted more than once: this is a conservative sum.
+    */
+  def retainedDoubleCount: Long = CoefficientMatrixStorage.retained(values)
+
+  def materialize(maximumMatrices: Int): Either[FitError, Vector[DMat]] =
+    if maximumMatrices < matrixCount then Left(FitError.InvalidFitAxis("coefficient covariance materialization", s"$matrixCount matrices exceed limit $maximumMatrices"))
+    else Right(matrices)
+
+  def selectVoxelPositions(positions: Vector[Int]): Either[FitError, CoefficientCovariance] =
+    if positions.isEmpty || positions.exists(_ < 0) then Left(FitError.InvalidFitAxis("covariance selection", "nonempty non-negative positions required"))
+    else if isShared then Right(this)
+    else if positions.exists(_ >= matrixCount) then Left(FitError.InvalidFitAxis("covariance selection", "position out of bounds"))
+    else Right(CoefficientCovariance(scope, CoefficientMatrixStorage.selected(values, positions)))
 
   def isShared: Boolean =
     scope == CoefficientCovarianceScope.Shared
@@ -60,6 +74,12 @@ final case class CoefficientCovariance private (
     matrixForVoxelPosition(position).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object CoefficientCovariance:
+  /** Exact voxelwise inverses of summed precisions; validates every inverse using
+    * bounded working storage and retains the structured inputs, not all inverses.
+    */
+  private[fit] def fromPrecisionSum(components: Vector[IndexedSeq[DMat]]): Either[FitError, CoefficientCovariance] =
+    CoefficientMatrixStorage.inverseSum(components).map(values => CoefficientCovariance(CoefficientCovarianceScope.Voxelwise, values))
+
   def shared(matrix: DMat): Either[FitError, CoefficientCovariance] =
     validateMatrix(matrix).map(_ => CoefficientCovariance(CoefficientCovarianceScope.Shared, Vector(copyMatrix(matrix))))
 
@@ -96,13 +116,16 @@ object CoefficientCovariance:
       if blocks.forall(block => sameMatrix(block.canonicalMatrix, first.canonicalMatrix)) then Right(first)
       else Left(FitError.IncompatibleFitBlocks("all shared coefficient covariance blocks must be identical"))
     else if blocks.forall(_.isVoxelwise) then
+      val totalMatrices = blocks.foldLeft(0L)((total, block) => total + block.matrixCount.toLong)
+      if totalMatrices > Int.MaxValue then
+        return Left(FitError.IncompatibleFitBlocks(s"combined voxel covariance count $totalMatrices exceeds Int capacity"))
       val predictors = blocks.head.predictors
       var i = 0
       while i < blocks.length do
         if blocks(i).predictors != predictors then
           return Left(FitError.IncompatibleFitBlocks("voxelwise coefficient covariance blocks must share predictor count"))
         i += 1
-      voxelwise(blocks.iterator.flatMap(_.matrices).toVector)
+      Right(CoefficientCovariance(CoefficientCovarianceScope.Voxelwise, CoefficientMatrixStorage.concatenated(blocks.map(_.values).toVector)))
     else Left(FitError.IncompatibleFitBlocks("cannot merge shared and voxelwise coefficient covariance blocks"))
 
   private def validateMatrix(matrix: DMat): Either[FitError, Unit] =

@@ -20,6 +20,7 @@ import image4s.nifti.NiftiFiles
 import image4s.nifti.NiftiIoLimits
 import image4s.nifti.NiftiIoStrategy
 import image4s.nifti.NiftiReadOptions
+import image4s.nifti.NiftiScalarWriter
 import image4s.nifti.NiftiScalarStored
 import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiUnknownTemporalUnitPolicy
@@ -219,6 +220,32 @@ object Nifti:
       options,
       extensions
     )
+
+  /** Open an exclusive .nii staging file for produced scalar blocks.
+    *
+    * The sample space supplies the exact grid and non-spatial axes. Block indices use NIfTI first-axis-fastest spatial
+    * order, not Ravel linear offsets. Header sampling, temporal units and coordinate-system codes come from `options`;
+    * axis labels and scientific identities require extensions or a manifest. The caller owns close, coverage validation
+    * and eventual publication.
+    */
+  def openScalarWriter[F <: Frame[D3]](
+      path: Path,
+      space: SampleSpace[F, D3],
+      options: NiftiWriteOptions = NiftiWriteOptions.default,
+      extensions: Vector[NiftiExtension] = Vector.empty
+  ): Either[NiftiError, NiftiScalarWriter[F, Path]] =
+    ImageNifti.openScalarWriter(path, space.grid, space.nonSpatialAxes, options, extensions)
+
+  /** Scope the physical writer, including callback exceptions. A partial staging file remains caller-owned; successful
+    * close does not certify a complete result.
+    */
+  def withScalarWriter[F <: Frame[D3], A](
+      path: Path,
+      space: SampleSpace[F, D3],
+      options: NiftiWriteOptions = NiftiWriteOptions.default,
+      extensions: Vector[NiftiExtension] = Vector.empty
+  )(use: NiftiScalarWriter[F, Path] => Either[NiftiError, A]): Either[NiftiError, A] =
+    ImageNifti.withScalarWriter(path, space.grid, space.nonSpatialAxes, options, extensions)(use)
 
   def readDisplacementField(
       path: Path,

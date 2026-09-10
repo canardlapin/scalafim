@@ -60,8 +60,8 @@ enum SampleSpaceError:
       case Image(cause) =>
         cause.message
 
-/** Neuroimaging constructors and checked refinements for image4s sampling
-  * geometry. Values remain the exact provider-owned `SomeSampleSpace` object.
+/** Neuroimaging constructors and checked refinements for image4s sampling geometry. Values remain the exact
+  * provider-owned `SomeSampleSpace` object.
   */
 object SampleSpaces:
   private val rasD2FrameId =
@@ -80,31 +80,17 @@ object SampleSpaces:
   private[image] def canonical(space: SomeSampleSpace): SomeSampleSpace =
     space
 
-  /** Recover the checked D3 provider type at a dynamic compatibility boundary.
-    *
-    * `SomeSampleSpace` can contain only the sealed image4s dimensions. The
-    * runtime rank check therefore justifies the erased cast; the retained
-    * object is still the exact original SampleSpace and grid owner.
-    */
+  /** Recover D3 through the provider's checked refinement, retaining its exact owner. */
   private[scalafim] def requireD3(
       space: SomeSampleSpace
   ): Either[
     SampleSpaceError,
     SampleSpace[? <: Frame[D3], D3]
   ] =
-    val canonical = space.typed
-    if canonical.spatialRank == 3 then
-      Right(
-        canonical.asInstanceOf[SampleSpace[Frame[D3], D3]]
-      )
-    else
-      Left(
-        SampleSpaceError.ExpectedDimensionality(
-          "D3 sample space",
-          3,
-          canonical.spatialRank
-        )
-      )
+    space.requireD3.left.map:
+      case ImageError.SpatialDimensionMismatch(expected, actual) =>
+        SampleSpaceError.ExpectedDimensionality("D3 sample space", expected, actual)
+      case error => SampleSpaceError.Image(error)
 
   private[scalafim] def requireSpatialD3(
       space: SomeSampleSpace
@@ -128,10 +114,9 @@ object SampleSpaces:
 
   /** Assign deterministic persistent identity to exact D3 sampling geometry.
     *
-    * External decoders intentionally produce ephemeral frame and grid owners.
-    * ScalaFIM admits those values by retaining their exact geometry and axes
-    * while constructing the persistent frame/grid keys used by GridDomain.
-    * Existing persistent sample spaces pass through unchanged.
+    * External decoders intentionally produce ephemeral frame and grid owners. ScalaFIM admits those values by retaining
+    * their exact geometry and axes while constructing the persistent frame/grid keys used by GridDomain. Existing
+    * persistent sample spaces pass through unchanged.
     */
   private[scalafim] def persistentD3[F <: Frame[D3]](
       space: SampleSpace[F, D3]
@@ -202,9 +187,7 @@ object SampleSpaces:
 
     private[scalafim] def origin: Vector[Double] =
       val matrix = space.grid.indexToFrame.matrix
-      Vector.tabulate(space.spatialRank)(axis =>
-        matrix(axis, space.spatialRank)
-      )
+      Vector.tabulate(space.spatialRank)(axis => matrix(axis, space.spatialRank))
 
     private[scalafim] def orientation: Orientation3D =
       val matrix = space.grid.indexToFrame.matrix
@@ -322,7 +305,8 @@ object SampleSpaces:
         .map(value => WorldPoint.unsafeFromVector(value, "world point"))
 
     private[scalafim] def worldToVoxel(world: WorldPoint): Either[GeometryError, VoxelPoint] =
-      affine.inverse(world.toVector)
+      affine
+        .inverse(world.toVector)
         .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
 
   def fromSpatialDims(
@@ -370,9 +354,8 @@ object SampleSpaces:
         )
         transform <- affine match
           case Some(value) => Right(value)
-          case None =>
-            defaultAffine(sp, org, spatialDimCount)
-              .left
+          case None        =>
+            defaultAffine(sp, org, spatialDimCount).left
               .map(SampleSpaceError.Geometry.apply)
         checkedAxes <- axes match
           case Some(value) =>
@@ -457,8 +440,7 @@ object SampleSpaces:
       shape: Vector[Int],
       affineRowMajor: Vector[Double]
   ): Either[SampleSpaceError, GridId] =
-    parseGridId(rank, None, shape, affineRowMajor)
-      .left
+    parseGridId(rank, None, shape, affineRowMajor).left
       .map(SampleSpaceError.Geometry.apply)
 
   private def admittedGridId(
@@ -494,8 +476,8 @@ object SampleSpaces:
       convention: CoordinateConvention
   ): Either[GeometryError, FrameId] =
     if rank == 3 &&
-        unit == LengthUnit.Millimeter &&
-        convention == CoordinateConvention.RAS
+      unit == LengthUnit.Millimeter &&
+      convention == CoordinateConvention.RAS
     then Right(rasD3FrameId)
     else
       FrameId.parse(
@@ -568,7 +550,7 @@ object SampleSpaces:
           SampleSpaceError.NonPositiveDimension(index, value)
       } match
         case Some(error) => Left(error)
-        case None => Right(dims)
+        case None        => Right(dims)
 
   private def spatialVector(
       label: String,
@@ -600,7 +582,7 @@ object SampleSpaces:
           )
       } match
         case Some(error) => Left(error)
-        case None => Right(values)
+        case None        => Right(values)
 
   private def defaultAffine(
       spacing: Vector[Double],
@@ -630,9 +612,12 @@ object SampleSpaces:
       )
     else
       val mismatch =
-        expectedExtents.zip(axes.values).zipWithIndex.collectFirst:
-          case ((expected, axis), index) if axis.extent != expected =>
-            SampleSpaceError.AxisExtentMismatch(index, expected, axis.extent)
+        expectedExtents
+          .zip(axes.values)
+          .zipWithIndex
+          .collectFirst:
+            case ((expected, axis), index) if axis.extent != expected =>
+              SampleSpaceError.AxisExtentMismatch(index, expected, axis.extent)
       mismatch match
         case Some(error) => Left(error)
         case None        => Right(())

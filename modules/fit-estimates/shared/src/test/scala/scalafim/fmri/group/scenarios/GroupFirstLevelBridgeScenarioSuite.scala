@@ -1,9 +1,10 @@
 package scalafim.fmri.group.scenarios
 
+import scalafim.fmri.fit.estimates.FitGroupAdapter
+
 import scalafim.dataset.SubjectId
 import scalafim.fmri.fit.{ResidualDegreesOfFreedom, TContrastResult}
 import scalafim.fmri.group.{
-  FirstLevel,
   GroupData,
   GroupDesign,
   GroupEngine,
@@ -30,7 +31,7 @@ class GroupFirstLevelBridgeScenarioSuite extends munit.FunSuite:
   private def runScenario(): ScenarioResult =
     val fixture = bridgeFixture
     val data = value(
-      FirstLevel.groupData(
+      FitGroupAdapter.groupData(
         space = GroupSpace.SampleAxis(fixture.samples),
         subjects = fixture.subjects,
         contrasts = Vector("faces", "places"),

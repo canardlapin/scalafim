@@ -1,0 +1,20 @@
+{
+  "cells": 16777216,
+  "checksum": 214459251425280,
+  "values_file_bytes": 134218080,
+  "sha256": "7c1ec8ad81cb65ed4390de0550ea75de922f99cc45dbdd841c1a0484307c189c",
+  "independent_python_seconds": 3.5312536660348997,
+  "relocated_root": "/tmp/estimate-process-proof-relocated",
+  "fitter_on_reader_classpath": false,
+  "heap_bytes": 67108864,
+  "write_log": "WRITE_PASS heap=67108864 payloadBytes=134217728 cells=16777216 seconds=3.1045245\n",
+  "read_log": "READ_PASS relocated=true fitterPresent=false cells=4\n",
+  "final_write_log": "WRITE_PASS heap=67108864 payloadBytes=134217728 cells=16777216 seconds=2.92789775\n",
+  "final_read_log": "READ_PASS relocated=true fitterPresent=false cells=4\n",
+  "final_independent_verification": {
+    "cells": 16777216,
+    "checksum": 214459251425280,
+    "all_values_verified": true
+  },
+  "final_relocated_root": "/tmp/estimate-final-heap-relocated"
+}
