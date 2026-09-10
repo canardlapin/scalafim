@@ -61,6 +61,9 @@ construction points, but the core model should express its invariants in types.
   helper families in domain modules. Domain modules may retain typed scientific policy and
   explicit Gale adapters. JVM-only libraries such as Breeze belong upstream behind Gale
   capabilities and must not appear in ScalaFIM shared APIs.
+- To develop such a capability, point the build at a sibling Gale checkout with
+  `sbt -Dscalafim.gale.build=../gale ...`, land it upstream, then bump
+  `galeRevision` in `build.sbt`. See `README.md` for the full workflow.
 
 ## Testing
 

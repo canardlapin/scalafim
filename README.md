@@ -104,6 +104,7 @@ explicitly:
 
 ```sh
 sbt \
+  -Dscalafim.gale.build=../gale \
   -Dscalafim.graph4s.build=../graph4s \
   -Dscalafim.locus4s.build=../locus4s \
   scalafimCompileAll
@@ -111,6 +112,13 @@ sbt \
 
 The override applies only to that sbt process. Removing the properties restores
 the immutable GitHub source dependencies.
+
+Numerical capability that ScalaFIM lacks (for example banded factorizations)
+is written upstream in Gale, not as a private helper here. The workflow is:
+develop in a sibling Gale checkout, run the affected ScalaFIM suites with
+`-Dscalafim.gale.build`, open the Gale pull request, then bump `galeRevision`
+in `build.sbt` after merge and rerun `sbt scalafimCompileAll` plus the affected
+suites against the pinned revision.
 
 See [docs/release-assurance.md](docs/release-assurance.md) for the enforced
 first-level compiler, formatting, coverage, parity, and CI courts, including
