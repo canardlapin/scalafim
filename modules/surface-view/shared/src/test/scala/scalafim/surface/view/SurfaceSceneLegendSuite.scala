@@ -31,7 +31,7 @@ class SurfaceSceneLegendSuite extends munit.FunSuite:
   private def capture(viewer: SurfaceViewerModel, state: SurfaceViewerState): SurfaceSceneDocument =
     SurfaceSceneDocument.capture(viewer, state, bindings, provenance, legendRequests = requests).toOption.get
 
-  test("revision 6 roundtrips all legend alternatives, metadata, effective identities and interpolation"):
+  test("current revision roundtrips all legend alternatives, metadata, effective identities and interpolation"):
     val viewer = model()
     val initial = SurfaceFaceFixture.state(viewer)
     val state = SurfaceViewer.reduce(viewer, initial, SurfaceViewerAction.SetLayerThreshold(scalarId,
@@ -39,7 +39,7 @@ class SurfaceSceneLegendSuite extends munit.FunSuite:
     val document = capture(viewer, state)
     val json = SurfaceSceneCodec.encode(document)
     val restored = SurfaceSceneCodec.decode(json).toOption.get
-    assertEquals(restored.revision, SurfaceDocumentRevision.V6)
+    assertEquals(restored.revision, SurfaceDocumentRevision.V7)
     assertEquals(SurfaceSceneCodec.encode(restored), json)
     assertEquals(restored.legends.map(_.canonicalKey), document.legends.map(_.canonicalKey))
     assertEquals(restored.restore(viewer, bindings), Right(state))
@@ -80,12 +80,12 @@ class SurfaceSceneLegendSuite extends munit.FunSuite:
     assert(SurfaceSceneCodec.decode(extended).isLeft)
     val decoded = SurfaceSceneCodec.decode(extended, SurfaceSceneReadPolicy(SurfaceUnknownFieldPolicy.Ignore)).toOption.get
     assertEquals(decoded.restore(viewer, bindings), Right(SurfaceFaceFixture.state(viewer)))
-    assert(SurfaceSceneCodec.decode(json.replace("\"revision\":6", "\"revision\":5")).isLeft)
+    assert(SurfaceSceneCodec.decode(json.replace("\"revision\":7", "\"revision\":5").replace(",\"surfaceViewpoints\":[]", "").replaceAll(",\"aspectRatio\":[^,}]+", "")).isLeft)
 
   test("revision 5 documents without legends remain readable and preserve their JSON shape"):
     val viewer = model()
     val document = SurfaceSceneDocument.capture(viewer, SurfaceFaceFixture.state(viewer), bindings, provenance).toOption.get
-    val old = SurfaceSceneCodec.encode(document).replace("\"revision\":6", "\"revision\":5").replace(",\"legends\":[]", "")
+    val old = SurfaceSceneCodec.encode(document).replace("\"revision\":7", "\"revision\":5").replace(",\"surfaceViewpoints\":[]", "").replaceAll(",\"aspectRatio\":[^,}]+", "").replace(",\"legends\":[]", "")
     val decoded = SurfaceSceneCodec.decode(old).toOption.get
     assertEquals(decoded.legends, Vector.empty)
     assertEquals(SurfaceSceneCodec.encode(decoded), old)

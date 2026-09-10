@@ -76,16 +76,16 @@ class SurfaceScalarMappingSuite extends munit.FunSuite:
     val doc = SurfaceSceneDocument.capture(viewer, SurfaceFaceFixture.state(viewer), bindings, provenance).toOption.get
     val json = SurfaceSceneCodec.encode(doc)
     val decoded = SurfaceSceneCodec.decode(json).toOption.get
-    assertEquals(decoded.revision, SurfaceDocumentRevision.V6)
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V7)
     assertEquals(decoded.layers.head.scalarMappingKey, Some(mapping.canonicalKey))
     assert(decoded.restore(viewer, bindings).isRight)
     assert(decoded.restore(model(mapping.copy(invalid = red).colorizer), bindings).isLeft)
-    val old = SurfaceSceneCodec.decode(json.replace(",\"legends\":[]", "").replace("\"revision\":6", "\"revision\":3")
+    val old = SurfaceSceneCodec.decode(json.replace(",\"legends\":[]", "").replace("\"revision\":7", "\"revision\":3").replace(",\"surfaceViewpoints\":[]", "").replaceAll(",\"aspectRatio\":[^,}]+", "")
       .replace(",\"scalarInterpolation\":false", "")
       .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")).toOption.get
     assertEquals(old.revision, SurfaceDocumentRevision.V3)
     assert(old.restore(viewer, bindings).isRight)
-    val v4 = SurfaceSceneCodec.decode(json.replace(",\"legends\":[]", "").replace("\"revision\":6", "\"revision\":4")
+    val v4 = SurfaceSceneCodec.decode(json.replace(",\"legends\":[]", "").replace("\"revision\":7", "\"revision\":4").replace(",\"surfaceViewpoints\":[]", "").replaceAll(",\"aspectRatio\":[^,}]+", "")
       .replace(",\"scalarInterpolation\":false", "")).toOption.get
     assertEquals(v4.revision, SurfaceDocumentRevision.V4)
     assert(v4.restore(viewer, bindings).isRight)

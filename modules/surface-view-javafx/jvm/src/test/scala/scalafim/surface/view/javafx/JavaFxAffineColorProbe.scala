@@ -86,7 +86,7 @@ object JavaFxAffineColorProbe:
     finally out.close()
 
   private def render(f: Fixture, encoding: JavaFxAtlasEncoding, aa: SceneAntialiasing,
-      maxTextureSize: Int, lighting: SurfaceLighting): WritableImage =
+      maxTextureSize: Int, lighting: SurfaceLighting, retainedSeed: Boolean): WritableImage =
     val id = SurfaceId.unsafe("color-oracle")
     val geometry = SurfaceGeometry(TriangleMesh.fromArrays(f.positions.map(_.toDouble),f.faces),Hemisphere.Left,SurfaceKind.Inflated)
     val layer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("original-rgb"),id,geometry,f.colors.toVector.map(Rgba32.fromPackedInt)).toOption.get
@@ -97,7 +97,15 @@ object JavaFxAffineColorProbe:
     require(java.util.Arrays.equals(plan.meshes.head.positions.unsafeArray,f.positions))
     val config = JavaFxAtlasConfig.make(maxTextureSize=maxTextureSize,encoding=encoding).toOption.get
     val mode = if lighting==SurfaceLighting.Unlit then JavaFxMaterialMode.Unlit else JavaFxMaterialMode.Lit
-    val probe = JavaFxSurfaceProbe.compile(plan,mode,config).toOption.get
+    val previous = Option.when(retainedSeed):
+      val primaries = Vector(Rgba32.unsafe(255,0,0),Rgba32.unsafe(0,255,0),Rgba32.unsafe(0,0,255))
+      val seedLayer = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("seed-rgb"),id,geometry,
+        Vector.tabulate(f.colors.length)(i => primaries(i%3))).toOption.get
+      val seedModel = SurfaceViewerModel.make(model.surfaces,Vector(seedLayer)).toOption.get
+      val seedCompiled = SurfaceCompiler.compile(seedModel,SurfaceViewerState.initial(seedModel).copy(lighting=lighting)).toOption.get
+      val seed = seedCompiled.copy(meshes=seedCompiled.meshes.map(_.copy(normals=new FloatBufferView(f.normals))))
+      JavaFxSurfaceProbe.compile(seed,mode,config).toOption.get
+    val probe = JavaFxSurfaceProbe.compileRetaining(plan,mode,config,previous).toOption.get
     println(s"atlases=${probe.chunks.map(c => s"${c.atlas.width}x${c.atlas.height}").mkString(",")} faces=${probe.chunks.map(_.renderedFaceCount).sum}")
     // Isolate the scientific atlas/geometry lowering from application camera fit.
     // ParallelCamera expresses this fixture directly in known pixel coordinates.
@@ -123,6 +131,9 @@ object JavaFxAffineColorProbe:
     val encoding = JavaFxAtlasEncoding.valueOf(args(1))
     val maxTextureSize = args.lift(2).fold(256)(_.toInt)
     val lightingName = args.lift(3).getOrElse("Unlit")
+    val retainedSeed = args.lift(4).contains("seeded")
+    require(args.lift(4).forall(value => value == "fresh" || value == "seeded"))
+    require(!retainedSeed || encoding.retainsLayout, "Seeded refinement requires retained encoding")
     val lighting = lightingName match
       case "Unlit" => SurfaceLighting.Unlit
       case "Default" => SurfaceLighting.Default
@@ -130,7 +141,7 @@ object JavaFxAffineColorProbe:
       case other => throw new IllegalArgumentException(s"unknown fixture lighting: $other")
     require(JavaFxAtlasConfig.make(maxTextureSize=maxTextureSize,encoding=encoding).isRight)
     Files.writeString(output.resolve("fixture-config.json"),
-      s"""{"maxTextureSize":$maxTextureSize,"lighting":"$lightingName","encoding":"$encoding"}
+      s"""{"maxTextureSize":$maxTextureSize,"lighting":"$lightingName","encoding":"$encoding","retainedSeed":$retainedSeed}
 """)
     for name <- Vector("com.sun.prism.es2.ES2PhongMaterial","com.sun.prism.es2.ES2PhongShader") do
       val source = Class.forName(name).getProtectionDomain.getCodeSource.getLocation.toString
@@ -148,7 +159,7 @@ object JavaFxAffineColorProbe:
           val name = s"$family-$order-${if oblique then "oblique" else "front"}-$aa"
           val f = fixture(family,order,oblique)
           saveOriginal(output.resolve(name+".bin"),f,lighting)
-          val image = render(f,encoding,aa,maxTextureSize,lighting)
+          val image = render(f,encoding,aa,maxTextureSize,lighting,retainedSeed)
           val colors = scala.collection.mutable.Set.empty[Int]
           var y = 0
           while y < 256 do

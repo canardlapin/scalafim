@@ -25,6 +25,10 @@ trait ThreeSurfaceRuntime:
   def contextState: ThreeContextState
   def supportsGpuVolumeProjection: Boolean = false
   def supportsFragmentLayers: Boolean = false
+  def supportsSurfaceCameras: Boolean = false
+  def updateSurfaceCameras(cameras: Map[SurfaceId, SurfaceCameraPacket]): Either[ThreeSurfaceError, Unit] =
+    if cameras.isEmpty then Right(())
+    else Left(ThreeSurfaceError.InvalidPlan("runtime does not support per-surface cameras"))
   def validateFragments(packets: Vector[ThreeFragmentPacket]): Either[ThreeSurfaceError, Unit] =
     if packets.isEmpty || supportsFragmentLayers then Right(())
     else Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
@@ -74,7 +78,8 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     )
     val fragments = if runtime.supportsFragmentLayers then base ++ Set(SurfaceBackendFeature.ScalarInterpolation,
       SurfaceBackendFeature.FragmentComposition) else base
-    if runtime.supportsGpuVolumeProjection then fragments + SurfaceBackendFeature.GpuVolumeProjection else fragments
+    val cameras = if runtime.supportsSurfaceCameras then fragments + SurfaceBackendFeature.PerSurfaceCameras else fragments
+    if runtime.supportsGpuVolumeProjection then cameras + SurfaceBackendFeature.GpuVolumeProjection else cameras
 
   val capabilities: SurfaceBackendCapabilities = SurfaceBackendCapabilities(
     SurfaceBackendId.unsafe("three-webgl"),
@@ -100,6 +105,8 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
     forceDraw: Boolean = false
   ): Either[ThreeSurfaceError, ThreeInterpretReceipt] =
     if disposed then Left(ThreeSurfaceError.BackendDisposed)
+    else if plan.surfaceCameras.nonEmpty && !runtime.supportsSurfaceCameras then
+      Left(ThreeSurfaceError.InvalidPlan("runtime does not support per-surface cameras"))
     else if plan.fragmentSurfaces.nonEmpty && !runtime.supportsFragmentLayers then
       Left(ThreeSurfaceError.InvalidPlan("runtime does not support fragment layers"))
     else
@@ -150,6 +157,7 @@ final class ThreeSurfaceBackend private (runtime: ThreeSurfaceRuntime):
                     resources ++= packets.flatMap(_.resourceKeys)
                 case ThreeSurfaceCommand.UpdateLighting(lighting) => runtime.updateLighting(lighting)
                 case ThreeSurfaceCommand.UpdateCamera(camera, clipping) => runtime.updateCamera(camera, clipping)
+                case ThreeSurfaceCommand.UpdateSurfaceCameras(cameras) => runtime.updateSurfaceCameras(cameras)
                 case ThreeSurfaceCommand.UpdateLayout(slots, fit) => runtime.updateLayout(slots, fit)
                 case ThreeSurfaceCommand.Resize(canvasSize) => runtime.resize(canvasSize)
                 case ThreeSurfaceCommand.Draw =>

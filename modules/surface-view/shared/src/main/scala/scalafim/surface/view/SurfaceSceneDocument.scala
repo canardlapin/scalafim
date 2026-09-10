@@ -102,7 +102,7 @@ object SurfaceProvenance:
     else Right(new SurfaceProvenance(normalizedProducer, normalizedVersion, normalizedCreatedAt, normalizedEntries))
 
 enum SurfaceDocumentRevision:
-  case V1, V2, V3, V4, V5, V6
+  case V1, V2, V3, V4, V5, V6, V7
 
   def value: Int =
     this match
@@ -112,6 +112,7 @@ enum SurfaceDocumentRevision:
       case V4 => 4
       case V5 => 5
       case V6 => 6
+      case V7 => 7
 
 enum SurfaceUnknownFieldPolicy:
   case Reject, Ignore
@@ -133,7 +134,8 @@ final case class SurfaceSceneDocument private (
   layerStates: Vector[SurfaceSceneLayerState],
   requiredFeatures: Set[SurfaceBackendFeature],
   provenance: SurfaceProvenance,
-  legends: Vector[SurfaceSceneLegend] = Vector.empty
+  legends: Vector[SurfaceSceneLegend] = Vector.empty,
+  surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty
 ):
   def admit(capabilities: SurfaceBackendCapabilities): Either[SurfaceSceneError, Unit] =
     val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
@@ -143,7 +145,8 @@ final case class SurfaceSceneDocument private (
       group.exists(_.scalarInterpolation) ||
         (group.exists(layer => layer.association == SurfaceSampleAssociation.Vertex && layer.vertexInterpolation == SurfaceVertexInterpolation.Color) &&
           group.exists(layer => layer.association == SurfaceSampleAssociation.Face || layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))))(SurfaceBackendFeature.FragmentComposition)
-    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ fragment).filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
+    val cameras = Option.when(surfaceViewpoints.nonEmpty)(SurfaceBackendFeature.PerSurfaceCameras)
+    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ fragment ++ cameras).filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
     if missing.isEmpty then Right(())
     else Left(SurfaceSceneError.MissingCapabilities(missing))
 
@@ -159,7 +162,7 @@ final case class SurfaceSceneDocument private (
     yield restored
 
 object SurfaceSceneDocument:
-  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V6
+  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V7
 
   def capture(
     model: SurfaceViewerModel,
@@ -224,7 +227,8 @@ object SurfaceSceneDocument:
         states,
         requiredFeatures,
         provenance,
-        legends
+        legends,
+        state.surfaceViewpoints
       )
     yield result
 
@@ -241,9 +245,14 @@ object SurfaceSceneDocument:
     layerStates: Vector[SurfaceSceneLayerState],
     requiredFeatures: Set[SurfaceBackendFeature],
     provenance: SurfaceProvenance,
-    legends: Vector[SurfaceSceneLegend] = Vector.empty
+    legends: Vector[SurfaceSceneLegend] = Vector.empty,
+    surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
-    if legends.nonEmpty && revision.value < 6 then
+    if revision.value < 7 && (surfaceViewpoints.nonEmpty || camera.aspectRatio != CameraAspectRatio.Default) then
+      Left(SurfaceSceneError.InvalidDocument("per-surface viewpoints and non-default camera aspect require revision 7"))
+    else if surfaceViewpoints.keys.exists(id => !assets.exists(_.id == id)) then
+      Left(SurfaceSceneError.InvalidDocument("camera viewpoints must reference declared surfaces"))
+    else if legends.nonEmpty && revision.value < 6 then
       Left(SurfaceSceneError.InvalidDocument("legend requests and identities require revision 6"))
     else if legends.exists(_.canonicalKey.trim.isEmpty) then
       Left(SurfaceSceneError.InvalidDocument("legend identities must be nonempty"))
@@ -306,7 +315,8 @@ object SurfaceSceneDocument:
       layerStates,
       requiredFeatures,
       provenance,
-      legends
+      legends,
+      surfaceViewpoints
       ))
 
   private def validateLegends(legends: Vector[SurfaceSceneLegend], model: SurfaceViewerModel,
@@ -414,6 +424,8 @@ object SurfaceSceneDocument:
     actions += SurfaceViewerAction.SetZoom(document.camera.zoom)
     actions += SurfaceViewerAction.SetPan(document.camera.panX, document.camera.panY)
     actions += SurfaceViewerAction.SetOrbit(document.camera.orbit)
+    actions += SurfaceViewerAction.SetAspectRatio(document.camera.aspectRatio)
+    actions += SurfaceViewerAction.SetSurfaceViewpoints(document.surfaceViewpoints)
     actions += SurfaceViewerAction.SetLighting(document.lighting)
     actions += SurfaceViewerAction.SetClipping(document.clipping)
     actions += SurfaceViewerAction.SetTimepoint(document.timepoint)
@@ -492,6 +504,7 @@ private[view] object SurfaceSceneNames:
       case SurfaceBackendFeature.Lighting => "lighting"
       case SurfaceBackendFeature.WorldClipping => "world-clipping"
       case SurfaceBackendFeature.BilateralViewports => "bilateral-viewports"
+      case SurfaceBackendFeature.PerSurfaceCameras => "per-surface-cameras"
       case SurfaceBackendFeature.NativePicking => "native-picking"
       case SurfaceBackendFeature.HighResolutionSnapshot => "high-resolution-snapshot"
       case SurfaceBackendFeature.GpuVolumeProjection => "gpu-volume-projection"

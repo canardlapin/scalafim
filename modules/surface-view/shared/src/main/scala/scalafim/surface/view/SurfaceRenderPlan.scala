@@ -174,5 +174,16 @@ final case class SurfaceRenderPlan(
   profile: SurfaceProfile,
   receipt: SurfaceRenderReceipt,
   viewportFit: SurfaceViewportFit = SurfaceViewportFit.Fill,
-  fragmentSurfaces: Set[SurfaceId] = Set.empty
-)
+  fragmentSurfaces: Set[SurfaceId] = Set.empty,
+  surfaceCameras: Map[SurfaceId, SurfaceCameraPacket] = Map.empty
+):
+  /** The same effective camera must be used by draw, fit and picking paths. */
+  def cameraFor(surface: SurfaceId): SurfaceCameraPacket = surfaceCameras.getOrElse(surface, camera)
+
+  private[view] def validCameras: Boolean =
+    val packets = camera +: surfaceCameras.values.toVector
+    surfaceCameras.keys.forall(id => slots.exists(_.surface == id)) && packets.forall(packet =>
+      packet.viewMatrix.length == 16 && packet.projectionMatrix.length == 16 &&
+        (0 until 16).forall(index => packet.viewMatrix(index).isFinite && packet.projectionMatrix(index).isFinite)) &&
+      surfaceCameras.values.forall(packet =>
+        (0 until 16).forall(index => packet.projectionMatrix(index) == camera.projectionMatrix(index)))

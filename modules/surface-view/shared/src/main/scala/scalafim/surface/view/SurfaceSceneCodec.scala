@@ -26,6 +26,7 @@ object SurfaceSceneCodec:
         else if revisionValue == 4 then Right(SurfaceDocumentRevision.V4)
         else if revisionValue == 5 then Right(SurfaceDocumentRevision.V5)
         else if revisionValue == 6 then Right(SurfaceDocumentRevision.V6)
+        else if revisionValue == 7 then Right(SurfaceDocumentRevision.V7)
         else Left(SurfaceSceneError.UnsupportedRevision(revisionValue))
       assetsJson <- SceneJsonRead.array(root, "assets", "$.assets")
       assets <- traverseIndexed(assetsJson)(parseAsset(_, _, policy))
@@ -34,7 +35,7 @@ object SurfaceSceneCodec:
       layoutJson <- SceneJsonRead.value(root, "layout", "$.layout")
       layout <- parseLayout(layoutJson, policy)
       cameraJson <- SceneJsonRead.value(root, "camera", "$.camera")
-      camera <- parseCamera(cameraJson, policy)
+      camera <- parseCamera(cameraJson, policy, revision)
       lightingJson <- SceneJsonRead.value(root, "lighting", "$.lighting")
       lighting <- parseLighting(lightingJson, policy)
       clippingJson <- SceneJsonRead.value(root, "clipping", "$.clipping")
@@ -55,6 +56,7 @@ object SurfaceSceneCodec:
         else if root.fields.exists(_._1 == "legends") then
           Left(SurfaceSceneError.InvalidJson("$.legends", "legends require revision 6"))
         else Right(Vector.empty)
+      surfaceViewpoints <- parseSurfaceViewpoints(root, policy, revision)
       document <- SurfaceSceneDocument.make(
         revision,
         assets,
@@ -68,13 +70,14 @@ object SurfaceSceneCodec:
         states,
         requirements.toSet,
         provenance,
-        legends
+        legends,
+        surfaceViewpoints
       )
     yield document
 
   private val RootFields = Set(
     "schema", "revision", "assets", "layers", "layout", "camera", "lighting",
-    "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends"
+    "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends", "surfaceViewpoints"
   )
 
   private def documentJson(document: SurfaceSceneDocument): SceneJson =
@@ -84,7 +87,7 @@ object SurfaceSceneCodec:
       "assets" -> SceneJson.Arr(document.assets.map(assetJson)),
       "layers" -> SceneJson.Arr(document.layers.map(layerJson(_, document.revision))),
       "layout" -> layoutJson(document.layout),
-      "camera" -> cameraJson(document.camera),
+      "camera" -> cameraJson(document.camera, document.revision),
       "lighting" -> lightingJson(document.lighting),
       "clipping" -> clippingJson(document.clipping),
       "timepoint" -> SceneJson.Num(document.timepoint.toString),
@@ -96,7 +99,11 @@ object SurfaceSceneCodec:
       "provenance" -> provenanceJson(document.provenance)
     )
     SceneJson.Obj(fields ++ Option.when(document.revision.value >= 6)(
-      "legends" -> SceneJson.Arr(document.legends.map(SurfaceSceneLegendCodec.encode))))
+      "legends" -> SceneJson.Arr(document.legends.map(SurfaceSceneLegendCodec.encode))) ++
+      Option.when(document.revision.value >= 7)("surfaceViewpoints" -> SceneJson.Arr(
+        document.surfaceViewpoints.toVector.sortBy(_._1.value).map: (surface, viewpoint) =>
+          SceneJson.obj("surface" -> SceneJson.Str(surface.value), "viewpoint" -> SceneJson.Str(viewpointName(viewpoint)))
+      )))
 
   private def assetJson(asset: SurfaceSceneAsset): SceneJson =
     SceneJson.obj(
@@ -144,7 +151,7 @@ object SurfaceSceneCodec:
         "order" -> SceneJson.Str(orderName(order))
       )
 
-  private def cameraJson(camera: SurfaceCamera): SceneJson =
+  private def cameraJson(camera: SurfaceCamera, revision: SurfaceDocumentRevision): SceneJson =
     val projection = camera.projection match
       case CameraProjection.Perspective(fieldOfView) => SceneJson.obj(
         "kind" -> SceneJson.Str("perspective"),
@@ -154,13 +161,13 @@ object SurfaceSceneCodec:
         "kind" -> SceneJson.Str("orthographic"),
         "value" -> number(scale.value)
       )
-    SceneJson.obj(
+    SceneJson.Obj(Vector(
       "viewpoint" -> SceneJson.Str(viewpointName(camera.viewpoint)),
       "projection" -> projection,
       "zoom" -> number(camera.zoom.value),
       "pan" -> SceneJson.Arr(Vector(number(camera.panX), number(camera.panY))),
       "orbit" -> SceneJson.Arr(Vector(number(camera.orbit.yawDegrees), number(camera.orbit.pitchDegrees)))
-    )
+    ) ++ Option.when(revision.value >= 7)("aspectRatio" -> number(camera.aspectRatio.value)))
 
   private def lightingJson(lighting: SurfaceLighting): SceneJson =
     lighting match
@@ -326,10 +333,10 @@ object SurfaceSceneCodec:
         case other => Left(SurfaceSceneError.InvalidJson(s"$path.kind", s"unknown layout '$other'"))
     yield result
 
-  private def parseCamera(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, SurfaceCamera] =
+  private def parseCamera(value: SceneJson, policy: SurfaceSceneReadPolicy, revision: SurfaceDocumentRevision): Either[SurfaceSceneError, SurfaceCamera] =
     val path = "$.camera"
     for
-      obj <- SceneJsonRead.obj(value, path, Set("viewpoint", "projection", "zoom", "pan", "orbit"), policy)
+      obj <- SceneJsonRead.obj(value, path, Set("viewpoint", "projection", "zoom", "pan", "orbit") ++ Option.when(revision.value >= 7)("aspectRatio"), policy)
       viewpointRaw <- SceneJsonRead.string(obj, "viewpoint", s"$path.viewpoint")
       viewpoint <- parseViewpoint(viewpointRaw, s"$path.viewpoint")
       projectionJson <- SceneJsonRead.value(obj, "projection", s"$path.projection")
@@ -341,8 +348,34 @@ object SurfaceSceneCodec:
       orbitJson <- SceneJsonRead.array(obj, "orbit", s"$path.orbit")
       orbitPair <- pair(orbitJson, s"$path.orbit")
       orbit <- SurfaceOrbit.make(orbitPair._1, orbitPair._2).left.map(SurfaceSceneError.InvalidState.apply)
-      camera <- SurfaceCamera.make(viewpoint, projection, zoom, pan._1, pan._2, orbit).left.map(SurfaceSceneError.InvalidState.apply)
+      aspect <- if revision.value >= 7 then SceneJsonRead.double(obj, "aspectRatio", s"$path.aspectRatio")
+        .flatMap(value => CameraAspectRatio.make(value).left.map(SurfaceSceneError.InvalidState.apply))
+        else Right(CameraAspectRatio.Default)
+      camera <- SurfaceCamera.make(viewpoint, projection, zoom, pan._1, pan._2, orbit, aspect).left.map(SurfaceSceneError.InvalidState.apply)
     yield camera
+
+  private def parseSurfaceViewpoints(root: SceneJson.Obj, policy: SurfaceSceneReadPolicy,
+    revision: SurfaceDocumentRevision): Either[SurfaceSceneError, Map[SurfaceId, SurfaceViewpoint]] =
+    val path = "$.surfaceViewpoints"
+    if revision.value < 7 then
+      if root.fields.exists(_._1 == "surfaceViewpoints") then
+        Left(SurfaceSceneError.InvalidJson(path, "surface viewpoints require revision 7"))
+      else Right(Map.empty)
+    else
+      for
+        values <- SceneJsonRead.array(root, "surfaceViewpoints", path)
+        entries <- traverseIndexed(values): (value, index) =>
+          val entryPath = s"$path[$index]"
+          for
+            obj <- SceneJsonRead.obj(value, entryPath, Set("surface", "viewpoint"), policy)
+            idRaw <- SceneJsonRead.string(obj, "surface", s"$entryPath.surface")
+            id <- SurfaceId.make(idRaw).left.map(SurfaceSceneError.InvalidState.apply)
+            viewpointRaw <- SceneJsonRead.string(obj, "viewpoint", s"$entryPath.viewpoint")
+            viewpoint <- parseViewpoint(viewpointRaw, s"$entryPath.viewpoint")
+          yield id -> viewpoint
+        _ <- if entries.map(_._1).distinct.length == entries.length then Right(())
+          else Left(SurfaceSceneError.InvalidJson(path, "surface viewpoints must be unique"))
+      yield entries.toMap
 
   private def parseProjection(value: SceneJson, policy: SurfaceSceneReadPolicy): Either[SurfaceSceneError, CameraProjection] =
     val path = "$.camera.projection"

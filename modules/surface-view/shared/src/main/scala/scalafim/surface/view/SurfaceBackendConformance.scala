@@ -7,7 +7,7 @@ package scalafim.surface.view
 opaque type SurfacePlanRevision = Int
 
 object SurfacePlanRevision:
-  val Current: SurfacePlanRevision = 7
+  val Current: SurfacePlanRevision = 8
 
   def make(value: Int): Either[String, SurfacePlanRevision] =
     if value > 0 then Right(value)
@@ -41,6 +41,7 @@ enum SurfaceBackendFeature:
   case Lighting
   case WorldClipping
   case BilateralViewports
+  case PerSurfaceCameras
   case NativePicking
   case HighResolutionSnapshot
   case GpuVolumeProjection

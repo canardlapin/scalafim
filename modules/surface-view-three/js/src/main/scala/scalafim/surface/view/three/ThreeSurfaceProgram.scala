@@ -62,6 +62,7 @@ enum ThreeSurfaceCommand:
   case UploadFragments(packets: Vector[ThreeFragmentPacket])
   case UpdateLighting(lighting: SurfaceLighting)
   case UpdateCamera(camera: SurfaceCameraPacket, clipping: SurfaceClipping)
+  case UpdateSurfaceCameras(cameras: Map[SurfaceId, SurfaceCameraPacket])
   case UpdateLayout(slots: Vector[SurfaceViewSlot], fit: SurfaceViewportFit = SurfaceViewportFit.Fill)
   case Resize(size: ThreeCanvasSize)
   case Draw
@@ -120,7 +121,8 @@ object ThreeSurfaceProgram:
     layerCommands(next).map: data =>
       val commands = Vector(ThreeSurfaceCommand.UploadGeometry(geometry(next))) ++ data ++ Vector(
       ThreeSurfaceCommand.UpdateLighting(next.lighting),
-      ThreeSurfaceCommand.UpdateCamera(next.camera, next.clipping),
+      ThreeSurfaceCommand.UpdateCamera(next.camera, next.clipping)
+    ) ++ Option.when(next.surfaceCameras.nonEmpty)(ThreeSurfaceCommand.UpdateSurfaceCameras(next.surfaceCameras)) ++ Vector(
       ThreeSurfaceCommand.UpdateLayout(next.slots, next.viewportFit),
       ThreeSurfaceCommand.Resize(size),
       ThreeSurfaceCommand.Draw
@@ -155,7 +157,10 @@ object ThreeSurfaceProgram:
         case Left(error) => return Left(error)
         case Right(data) => commands ++= data
     if topology || material || (layerData && next.fragmentSurfaces.nonEmpty) then commands += ThreeSurfaceCommand.UpdateLighting(next.lighting)
-    if camera || clipping then commands += ThreeSurfaceCommand.UpdateCamera(next.camera, next.clipping)
+    if camera || clipping then
+      commands += ThreeSurfaceCommand.UpdateCamera(next.camera, next.clipping)
+      if before.surfaceCameras.nonEmpty || next.surfaceCameras.nonEmpty then
+        commands += ThreeSurfaceCommand.UpdateSurfaceCameras(next.surfaceCameras)
     if layout then commands += ThreeSurfaceCommand.UpdateLayout(next.slots, next.viewportFit)
     if canvas then commands += ThreeSurfaceCommand.Resize(size)
     val dirty = ThreeDirtySet(geometry, layerData, material, camera, layout, clipping, canvas, removed)
@@ -171,8 +176,8 @@ object ThreeSurfaceProgram:
       Left(ThreeSurfaceError.InvalidPlan(
         "world clipping planes are unsupported by the Three.js backend; use the reference raster backend"
       ))
-    else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
-      Left(ThreeSurfaceError.InvalidPlan("camera matrices must be 4x4"))
+    else if !plan.validCameras then
+      Left(ThreeSurfaceError.InvalidPlan("camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
     else if plan.meshes.exists(mesh => mesh.positions.length % 3 != 0 || mesh.normals.length != mesh.positions.length) then
       Left(ThreeSurfaceError.InvalidPlan("mesh position and normal buffers are inconsistent"))
     else Right(())

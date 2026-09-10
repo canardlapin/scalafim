@@ -28,13 +28,18 @@ enum JavaFxSurfaceError:
 enum JavaFxMaterialMode:
   case Lit, Unlit
 
-/** Encoding policy only: AffineMidpointOpaque requires controlled no-mipmap
+/** Encoding policy only: all affine modes require controlled no-mipmap
   * filtering and centroid UVs for MSAA. Stock JavaFX does not expose that policy.
   */
-enum JavaFxAtlasEncoding(val facesPerSource: Int):
+enum JavaFxAtlasEncoding(val facesPerSource: Int, val adaptive: Boolean = false, val retainsLayout: Boolean = false):
   case LegacyTriangle extends JavaFxAtlasEncoding(1)
   case AffineMidpointOpaque extends JavaFxAtlasEncoding(4)
-  case AdaptiveAffineOpaque extends JavaFxAtlasEncoding(4)
+  case AdaptiveAffineOpaque extends JavaFxAtlasEncoding(4, adaptive = true)
+  /** Keep valid anchors and refinements through compatible scene rebuilds.
+    * This avoids UV uploads during colour changes; retained faces still consume
+    * the configured geometry budget even when a later frame could be coarser.
+    */
+  case RetainedAffineOpaque extends JavaFxAtlasEncoding(4, adaptive = true, retainsLayout = true)
 
 final case class JavaFxAtlasConfig private (tileSize: Int, maxTextureSize: Int,
     encoding: JavaFxAtlasEncoding, maxRenderedFaces: Int):
@@ -113,8 +118,9 @@ final class JavaFxFaceAtlas private[javafx] (
     val tilesPerRow = width / tileSize
     val tileX = (localFace % tilesPerRow) * tileSize
     val tileY = (localFace / tilesPerRow) * tileSize
-    if encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
-      JavaFxAdaptiveAtlas.write(pixels, width, tileX, tileY, a, b, c)
+    if encoding.adaptive then
+      val pivot = if encoding.retainsLayout then adaptiveLayout.get.anchor(localFace) else JavaFxAdaptiveAtlas.anchor(a,b,c)
+      JavaFxAdaptiveAtlas.write(pixels, width, tileX, tileY, a, b, c, pivot)
       return
     if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
       JavaFxAffineAtlas.write(pixels, width, tileX, tileY, a, b, c)
@@ -354,7 +360,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
 
   /** Checked before any native mutation, including geometry/material changes. */
   private[javafx] def requiresAtlasRebuild(next: SurfaceRenderPlan, mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, Boolean] =
-    if config.encoding != JavaFxAtlasEncoding.AdaptiveAffineOpaque then Right(false)
+    if !config.encoding.adaptive then Right(false)
     else atlasLayoutChanged(next, JavaFxSurfaceProbe.compositeColors(next, mode))
 
   private def atlasLayoutChanged(next: SurfaceRenderPlan, colors: Map[SurfaceId, Array[Int]]): Either[JavaFxSurfaceError, Boolean] =
@@ -363,7 +369,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     else Right(chunks.exists: chunk =>
       chunk.atlas.adaptiveLayout.exists: layout =>
         val packet = next.meshes.find(_.surface == chunk.surface).get
-        !JavaFxAdaptiveAtlas.matches(layout, packet.indices, colors(chunk.surface), chunk.faceStart, chunk.faceCount)
+        !JavaFxAdaptiveAtlas.matches(layout, packet.indices, colors(chunk.surface), chunk.faceStart, chunk.faceCount, config.encoding.retainsLayout)
     )
 
   def updateColors(next: SurfaceRenderPlan, commit: Boolean = false,
@@ -385,16 +391,17 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         val chunk = chunks(index)
         val mesh = next.meshes.find(_.surface == chunk.surface).get
         val colors = colorsBySurface(chunk.surface)
-        val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount, chunk.atlas, colors)
-        val previous = chunk.mesh.getTexCoords
-        var changed = false
-        var coordinate = 0
-        while coordinate < coordinates.length && !changed do
-          changed = previous.get(coordinate) != coordinates(coordinate)
-          coordinate += 1
-        if changed then
-          previous.setAll(coordinates, 0, coordinates.length)
-          textureCoordinateBytesUpdated += coordinates.length.toLong * 4
+        if !config.encoding.retainsLayout then
+          val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount, chunk.atlas, colors)
+          val previous = chunk.mesh.getTexCoords
+          var changed = false
+          var coordinate = 0
+          while coordinate < coordinates.length && !changed do
+            changed = previous.get(coordinate) != coordinates(coordinate)
+            coordinate += 1
+          if changed then
+            previous.setAll(coordinates, 0, coordinates.length)
+            textureCoordinateBytesUpdated += coordinates.length.toLong * 4
         val region = chunk.atlas.write(mesh.indices, colors)
         if commit then chunk.atlas.commit(region)
         dirtyPixels += chunk.atlas.width.toLong * chunk.atlas.height.toLong
@@ -461,9 +468,19 @@ object JavaFxSurfaceProbe:
     materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,
     config: JavaFxAtlasConfig = JavaFxAtlasConfig.Default
   ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+    compileRetaining(plan, materialMode, config, None)
+
+  private[javafx] def compileRetaining(
+    plan: SurfaceRenderPlan,
+    materialMode: JavaFxMaterialMode,
+    config: JavaFxAtlasConfig,
+    previous: Option[JavaFxSurfaceProbeResult]
+  ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+    if !plan.validCameras then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
     if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires a dedicated lookup-texture lowering"))
-    val multiplier = if config.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then 1 else config.encoding.facesPerSource
+    val multiplier = if config.encoding.adaptive then 1 else config.encoding.facesPerSource
     val renderedFaces = plan.meshes.iterator.map(_.indices.length.toLong / 3).sum * multiplier
     if renderedFaces > config.maxRenderedFaces then
       return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $renderedFaces exceed budget ${config.maxRenderedFaces}"))
@@ -471,8 +488,20 @@ object JavaFxSurfaceProbe:
     val colorsBySurface = compositeColors(plan, materialMode)
     if config.encoding != JavaFxAtlasEncoding.LegacyTriangle && !JavaFxAffineAtlas.opaque(colorsBySurface) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("affine encoding requires opaque final vertex colours"))
-    if config.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
-      val actual = plan.meshes.iterator.map(packet => JavaFxAdaptiveAtlas.renderedFaces(packet.indices, colorsBySurface(packet.surface))).sum
+    val layouts = if !config.encoding.adaptive then Map.empty[(SurfaceId, Int), JavaFxAdaptiveLayout]
+      else plan.meshes.flatMap: packet =>
+        val faceCount = packet.indices.length / 3
+        (0 until faceCount by config.facesPerAtlas).map: first =>
+          val count = math.min(config.facesPerAtlas, faceCount - first)
+          val retained = if !config.encoding.retainsLayout then None
+            else previous.toVector.flatMap(_.chunks).find(chunk =>
+              chunk.meshKey == packet.resourceKey && chunk.surface == packet.surface &&
+                chunk.faceStart == first && chunk.faceCount == count && chunk.atlas.encoding == config.encoding)
+              .flatMap(_.atlas.adaptiveLayout)
+          (packet.surface, first) -> JavaFxAdaptiveAtlas.layout(packet.indices, colorsBySurface(packet.surface), first, count, retained, config.encoding.retainsLayout)
+      .toMap
+    if config.encoding.adaptive then
+      val actual = layouts.valuesIterator.map(_.renderedFaces.toLong).sum
       if actual > config.maxRenderedFaces then
         return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $actual exceed budget ${config.maxRenderedFaces}"))
     val chunks = Vector.newBuilder[JavaFxSurfaceChunk]
@@ -489,7 +518,7 @@ object JavaFxSurfaceProbe:
       while faceStart < faceCount do
         val count = math.min(config.facesPerAtlas, faceCount - faceStart)
         val atlasStarted = System.nanoTime()
-        val atlas = buildAtlas(faceStart, count, packet.indices, colorsBySurface(packet.surface), config)
+        val atlas = buildAtlas(faceStart, count, packet.indices, colorsBySurface(packet.surface), config, layouts.get((packet.surface, faceStart)))
         atlasNanos += System.nanoTime() - atlasStarted
         atlasPixels += atlas.width.toLong * atlas.height.toLong
         val chunkStarted = System.nanoTime()
@@ -582,7 +611,7 @@ object JavaFxSurfaceProbe:
     fitted.foreach: slot =>
       transforms.get(slot.surface).foreach: transform =>
         val layout = viewLayout(plan, slot.viewport, viewportWidth, viewportHeight)
-        val world = conjugateViewLayout(plan.camera, layout._1, layout._2)
+        val world = conjugateViewLayout(plan.camera, plan.cameraFor(slot.surface), layout._1, layout._2)
         val translated = Array(
           world._2(0) + world._1(0) * slot.worldOffsetX + world._1(1) * slot.worldOffsetY + world._1(2) * slot.worldOffsetZ,
           world._2(1) + world._1(3) * slot.worldOffsetX + world._1(4) * slot.worldOffsetY + world._1(5) * slot.worldOffsetZ,
@@ -641,6 +670,7 @@ object JavaFxSurfaceProbe:
 
   private def conjugateViewLayout(
     packet: SurfaceCameraPacket,
+    surfaceCamera: SurfaceCameraPacket,
     layout: Array[Double],
     offset: Array[Double]
   ): (Array[Double], Array[Double]) =
@@ -651,6 +681,15 @@ object JavaFxSurfaceProbe:
       -view(8).toDouble, -view(9).toDouble, -view(10).toDouble
     )
     val translation = Array(view(3).toDouble, -view(7).toDouble, -view(11).toDouble)
+    val source = surfaceCamera.viewMatrix
+    val sourceRotation = Array(
+      source(0).toDouble, source(1).toDouble, source(2).toDouble,
+      -source(4).toDouble, -source(5).toDouble, -source(6).toDouble,
+      -source(8).toDouble, -source(9).toDouble, -source(10).toDouble)
+    val sourceTranslation = Array(source(3).toDouble, -source(7).toDouble, -source(11).toDouble)
+    // The shared camera transform G precedes each surface group. Its display
+    // transform is G^-1 L S: viewport layout L applied to that surface's camera S.
+    // Scientific positions and world-space lighting normals remain unchanged.
     val product = new Array[Double](9)
     var row = 0
     while row < 3 do
@@ -661,7 +700,7 @@ object JavaFxSurfaceProbe:
         while inner < 3 do
           var second = 0
           while second < 3 do
-            value += rotation(inner * 3 + row) * layout(inner * 3 + second) * rotation(second * 3 + column)
+            value += rotation(inner * 3 + row) * layout(inner * 3 + second) * sourceRotation(second * 3 + column)
             second += 1
           inner += 1
         product(row * 3 + column) = value
@@ -673,7 +712,7 @@ object JavaFxSurfaceProbe:
       var viewOffset = offset(row) - translation(row)
       var column = 0
       while column < 3 do
-        viewOffset += layout(row * 3 + column) * translation(column)
+        viewOffset += layout(row * 3 + column) * sourceTranslation(column)
         column += 1
       column = 0
       while column < 3 do
@@ -721,7 +760,8 @@ object JavaFxSurfaceProbe:
     faceCount: Int,
     indices: IntBufferView,
     colors: Array[Int],
-    config: JavaFxAtlasConfig
+    config: JavaFxAtlasConfig,
+    adaptive: Option[JavaFxAdaptiveLayout]
   ): JavaFxFaceAtlas =
     val columns = math.min(config.tilesPerRow, faceCount)
     val rows = (faceCount + columns - 1) / columns
@@ -731,8 +771,6 @@ object JavaFxSurfaceProbe:
     val pixels = byteBuffer.asIntBuffer()
     val pixelBuffer = new PixelBuffer[IntBuffer](width, height, pixels, PixelFormat.getIntArgbPreInstance())
     val image = new WritableImage(pixelBuffer)
-    val adaptive = Option.when(config.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque)(
-      JavaFxAdaptiveAtlas.layout(indices, colors, faceStart, faceCount))
     val atlas = new JavaFxFaceAtlas(faceStart, faceCount, width, height, config.tileSize, config.encoding, adaptive, pixels, pixelBuffer, image)
     atlas.write(indices, colors)
     atlas
@@ -744,7 +782,7 @@ object JavaFxSurfaceProbe:
     */
   private[javafx] def textureCoordinates(packet: SurfaceMeshPacket, faceStart: Int, faceCount: Int,
       atlas: JavaFxFaceAtlas, colors: Array[Int]): Array[Float] =
-    if atlas.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
+    if atlas.encoding.adaptive then
       return JavaFxAdaptiveAtlas.coordinates(packet, faceStart, faceCount, atlas, colors, atlas.adaptiveLayout.get)
     if atlas.encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
       return JavaFxAffineAtlas.coordinates(packet, faceStart, faceCount, atlas, colors)
@@ -793,7 +831,7 @@ object JavaFxSurfaceProbe:
     mesh.getPoints.setAll(points, 0, points.length)
     mesh.getNormals.setAll(normals, 0, normals.length)
     val texCoords = textureCoordinates(packet, faceStart, faceCount, atlas, colors)
-    if atlas.encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
+    if atlas.encoding.adaptive then
       val faces = JavaFxAdaptiveAtlas.faces(packet, faceStart, faceCount, atlas.adaptiveLayout.get)
       mesh.getTexCoords.setAll(texCoords, 0, texCoords.length)
       mesh.getFaces.setAll(faces, 0, faces.length)
@@ -823,7 +861,7 @@ object JavaFxSurfaceProbe:
   private[javafx] def attributes(packet: SurfaceMeshPacket, source: FloatBufferView,
       first: Int, count: Int, encoding: JavaFxAtlasEncoding,
       adaptive: Option[JavaFxAdaptiveLayout] = None): Array[Float] =
-    if encoding == JavaFxAtlasEncoding.AdaptiveAffineOpaque then
+    if encoding.adaptive then
       JavaFxAdaptiveAtlas.attributes(packet, source, first, count, adaptive.get)
     else if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
       JavaFxAffineAtlas.attributes(source, packet.indices, first, count)

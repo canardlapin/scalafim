@@ -414,7 +414,8 @@ object SurfaceNetworkCompiler:
             mesh.nearestPartition.fold(0L)(_.originalIndices.length.toLong) +
             mesh.sampleNormals.fold(0L)(_.length.toLong) + mesh.samplePositions.fold(0L)(_.length.toLong)).sum +
           layers.iterator.map(layer => layer.colors.length.toLong + layer.sampleColors.fold(0L)(_.length.toLong)).sum +
-          plan.camera.viewMatrix.length + plan.camera.projectionMatrix.length
+          plan.camera.viewMatrix.length + plan.camera.projectionMatrix.length +
+            plan.surfaceCameras.valuesIterator.map(camera => camera.viewMatrix.length + camera.projectionMatrix.length).sum
         ) + layers.iterator.flatMap(_.scalarField).map(_.samples.length.toLong * 8L).sum
       )
       val receipt = plan.receipt.copy(

@@ -34,6 +34,17 @@ final class ThreeJsRuntime private (
 
   private val bundles = mutable.LinkedHashMap.empty[SurfaceId, Bundle]
   private var slots = Vector.empty[SurfaceViewSlot]
+  private var sharedCamera: Option[SurfaceCameraPacket] = None
+  private var surfaceCameras = Map.empty[SurfaceId, SurfaceCameraPacket]
+  override def supportsSurfaceCameras: Boolean = true
+
+  override def updateSurfaceCameras(cameras: Map[SurfaceId, SurfaceCameraPacket]): Either[ThreeSurfaceError, Unit] =
+    surfaceCameras = cameras
+    Right(())
+
+  private def activateCamera(surface: SurfaceId): Unit =
+    surfaceCameras.get(surface).orElse(sharedCamera).foreach(setCamera)
+
   private var viewportFit: SurfaceViewportFit = SurfaceViewportFit.Fill
   private def fittedSlots: Vector[SurfaceViewSlot] = viewportFit.resolve(slots, canvasSize.width.toDouble, canvasSize.height.toDouble)
   private var canvasSize = ThreeCanvasSize.unsafe(1, 1)
@@ -211,14 +222,18 @@ final class ThreeJsRuntime private (
     clipping: SurfaceClipping
   ): Either[ThreeSurfaceError, Unit] =
     attempt("camera update"):
-      camera.selectDynamic("matrixWorldInverse").applyDynamic("fromArray")(columnMajor(packet.viewMatrix))
-      camera.selectDynamic("matrixWorld").applyDynamic("copy")(camera.selectDynamic("matrixWorldInverse"))
-      camera.selectDynamic("matrixWorld").applyDynamic("invert")()
-      camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(columnMajor(packet.projectionMatrix))
-      camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
-      camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
-      camera.updateDynamic("matrixWorldNeedsUpdate")(false)
-      ()
+      setCamera(packet)
+      sharedCamera = Some(packet)
+
+  private def setCamera(packet: SurfaceCameraPacket): Unit =
+    camera.selectDynamic("matrixWorldInverse").applyDynamic("fromArray")(columnMajor(packet.viewMatrix))
+    camera.selectDynamic("matrixWorld").applyDynamic("copy")(camera.selectDynamic("matrixWorldInverse"))
+    camera.selectDynamic("matrixWorld").applyDynamic("invert")()
+    camera.selectDynamic("projectionMatrix").applyDynamic("fromArray")(columnMajor(packet.projectionMatrix))
+    camera.selectDynamic("projectionMatrixInverse").applyDynamic("copy")(camera.selectDynamic("projectionMatrix"))
+    camera.selectDynamic("projectionMatrixInverse").applyDynamic("invert")()
+    camera.updateDynamic("matrixWorldNeedsUpdate")(false)
+    ()
 
   def updateLayout(next: Vector[SurfaceViewSlot], fit: SurfaceViewportFit): Either[ThreeSurfaceError, Unit] =
     attempt("layout update"):
@@ -235,11 +250,13 @@ final class ThreeJsRuntime private (
     attempt("draw"):
       renderer.updateDynamic("autoClear")(false)
       ThreeJsRuntime.clearFrame(renderer)
+      sharedCamera.foreach(setCamera)
       val originalProjection = camera.selectDynamic("projectionMatrix").applyDynamic("clone")()
       val drawSlots = fittedSlots
       val depthInputs = drawSlots.flatMap: slot =>
         bundles.get(slot.surface).map: bundle =>
           position(bundle, slot)
+          activateCamera(slot.surface)
           val modelView = camera.selectDynamic("matrixWorldInverse").applyDynamic("clone")()
             .applyDynamic("multiply")(bundle.mesh.selectDynamic("matrixWorld"))
           (modelView.selectDynamic("elements").asInstanceOf[js.Array[Double]], bundle.depthBounds)
@@ -248,6 +265,7 @@ final class ThreeJsRuntime private (
         originalProjection.selectDynamic("elements").asInstanceOf[js.Array[Double]], depthInputs)
       try
         drawSlots.foreach: slot =>
+          activateCamera(slot.surface)
           bundles.valuesIterator.foreach: bundle =>
             val visible = bundle.surface == slot.surface
             bundle.mesh.updateDynamic("visible")(visible)
@@ -265,7 +283,7 @@ final class ThreeJsRuntime private (
           renderer.applyDynamic("setScissor")(viewport.x / ratio, viewport.y / ratio,
             viewport.width / ratio, viewport.height / ratio)
           renderer.applyDynamic("render")(scene, camera)
-      finally camera.selectDynamic("projectionMatrix").applyDynamic("copy")(originalProjection)
+      finally sharedCamera.foreach(setCamera)
       renderer.applyDynamic("setScissorTest")(false)
       bundles.valuesIterator.foreach(_.mesh.updateDynamic("visible")(true))
       ()
@@ -281,6 +299,7 @@ final class ThreeJsRuntime private (
       slot.flatMap: selected =>
         bundles.get(selected.surface).flatMap: bundle =>
           position(bundle, selected)
+          activateCamera(selected.surface)
           val viewport = selected.viewport
           val localX = (x / canvasSize.width - viewport.x) / viewport.width
           val localY = (y / canvasSize.height - viewport.y) / viewport.height
@@ -315,6 +334,8 @@ final class ThreeJsRuntime private (
       bundles.clear()
       renderer.applyDynamic("dispose")()
       slots = Vector.empty
+      surfaceCameras = Map.empty
+      sharedCamera = None
       ()
 
   private def decodePick(bundle: Bundle, slot: SurfaceViewSlot, hit: js.Dynamic): Option[ThreePick] =

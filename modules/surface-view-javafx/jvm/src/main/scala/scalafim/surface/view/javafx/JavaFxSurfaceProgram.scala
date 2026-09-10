@@ -110,6 +110,7 @@ final case class JavaFxCapabilityReport(
         SurfaceBackendFeature.BackFaceCulling,
         SurfaceBackendFeature.Lighting,
         SurfaceBackendFeature.BilateralViewports,
+        SurfaceBackendFeature.PerSurfaceCameras,
         SurfaceBackendFeature.NativePicking,
         SurfaceBackendFeature.HighResolutionSnapshot
       )
@@ -207,7 +208,7 @@ final class JavaFxSurfaceBackend private (
           case (Some(before), Some(cached)) if signature(before) == signature(plan) &&
               before.meshes.zip(plan.meshes).forall((a, b) => java.util.Arrays.equals(
                 a.sampleNormals.getOrElse(a.normals).unsafeArray, b.sampleNormals.getOrElse(b.normals).unsafeArray)) =>
-            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, clipping = plan.clipping,
+            Right(cached.copy(plan = cached.plan.copy(slots = plan.slots, camera = plan.camera, surfaceCameras = plan.surfaceCameras, clipping = plan.clipping,
               chrome = plan.chrome, readouts = plan.readouts, viewportFit = plan.viewportFit,
               receipt = cached.plan.receipt.copy(cameraKey = plan.receipt.cameraKey, timepoint = plan.receipt.timepoint)),
               approximation = cached.approximation.map(_.copy(preparationNanos = 0L, reused = true))))
@@ -242,7 +243,7 @@ final class JavaFxSurfaceBackend private (
           program.commands(index) match
             case JavaFxSurfaceCommand.DisposeResources(_) => ()
             case JavaFxSurfaceCommand.RebuildGeometry(next) =>
-              JavaFxSurfaceProbe.compile(next, JavaFxSurfaceProgram.materialMode(next), config) match
+              JavaFxSurfaceProbe.compileRetaining(next, JavaFxSurfaceProgram.materialMode(next), config, current) match
                 case Left(error) => failure = Some(error)
                 case Right(probe) =>
                   val mounted = current.toVector.flatMap(_.detachScenes())
@@ -383,7 +384,9 @@ final class JavaFxSurfaceBackend private (
 
 object JavaFxSurfaceBackend:
   private[javafx] def validateCapabilities(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
-    if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
+    if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
+      "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
+    else if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) then
       Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend"))
     else plan.clipping match
       case SurfaceClipping.WorldPlanes(_) =>

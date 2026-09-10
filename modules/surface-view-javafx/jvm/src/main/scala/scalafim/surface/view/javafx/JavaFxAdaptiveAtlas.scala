@@ -7,9 +7,11 @@ import scalafim.surface.view.*
   * Original vertices stay shared; only fallback faces add three edge midpoints.
   */
 private[javafx] final class JavaFxAdaptiveLayout private[javafx] (
-    private val starts: Array[Int], private val splitIndices: Array[Int], val splitCount: Int):
+    private val starts: Array[Int], private val splitIndices: Array[Int],
+    private val anchors: Array[Int], val splitCount: Int):
   def renderedFaces: Int = starts.last
   def start(face: Int): Int = starts(face)
+  def anchor(face: Int): Int = anchors(face)
   def split(face: Int): Boolean = splitIndices(face) >= 0
   def midpointOffset(face: Int): Int = splitIndices(face) * 3
   def sourceFace(rendered: Int): Int =
@@ -33,6 +35,35 @@ private[javafx] object JavaFxAdaptiveAtlas:
   def anchor(a: Int, b: Int, c: Int): Int =
     if fits(a,b,c) then 0 else if fits(b,c,a) then 1 else if fits(c,a,b) then 2 else -1
 
+  /** Prefer the original corner closest to the componentwise RGB median.
+    * For a scalar grey ramp this avoids extrapolation beyond its local range.
+    * Feasibility is still checked in every channel; this is a stability choice,
+    * never permission to clamp the fourth texel.
+    */
+  private def retainedAnchor(a: Int, b: Int, c: Int): Int =
+    var best = -1
+    var distance = Int.MaxValue
+    var pivot = 0
+    while pivot < 3 do
+      val p = if pivot == 0 then a else if pivot == 1 then b else c
+      val q = if pivot == 0 then b else if pivot == 1 then c else a
+      val r = if pivot == 0 then c else if pivot == 1 then a else b
+      if fits(p,q,r) then
+        var score = 0
+        var shift = 8
+        while shift <= 24 do
+          val x = (a >>> shift) & 255
+          val y = (b >>> shift) & 255
+          val z = (c >>> shift) & 255
+          val median = x + y + z - math.min(x,math.min(y,z)) - math.max(x,math.max(y,z))
+          score += math.abs(((p >>> shift) & 255) - median)
+          shift += 8
+        if score < distance then
+          best = pivot
+          distance = score
+      pivot += 1
+    best
+
   private def faceAnchor(indices: IntBufferView, colors: Array[Int], face: Int): Int =
     val i = face * 3
     anchor(colors(indices(i)), colors(indices(i+1)), colors(indices(i+2)))
@@ -45,29 +76,47 @@ private[javafx] object JavaFxAdaptiveAtlas:
       face += 1
     count
 
-  def layout(indices: IntBufferView, colors: Array[Int], first: Int, count: Int): JavaFxAdaptiveLayout =
+  private def accepts(pivot: Int, indices: IntBufferView, colors: Array[Int], face: Int): Boolean =
+    val offset = face * 3
+    fits(colors(indices(offset + pivot)), colors(indices(offset + (pivot + 1) % 3)),
+      colors(indices(offset + (pivot + 2) % 3)))
+
+  def layout(indices: IntBufferView, colors: Array[Int], first: Int, count: Int,
+      previous: Option[JavaFxAdaptiveLayout] = None, preferMedian: Boolean = false): JavaFxAdaptiveLayout =
     val starts = new Array[Int](count + 1)
     val splits = Array.fill(count)(-1)
+    val anchors = new Array[Int](count)
     var splitCount = 0
     var face = 0
     while face < count do
-      val split = faceAnchor(indices, colors, first + face) < 0
+      val pivot = previous match
+        case Some(before) =>
+          val retained = before.anchor(face)
+          if retained >= 0 && accepts(retained, indices, colors, first + face) then retained else -1
+        case None =>
+          val offset = (first + face) * 3
+          if preferMedian then retainedAnchor(colors(indices(offset)), colors(indices(offset+1)), colors(indices(offset+2)))
+          else faceAnchor(indices, colors, first + face)
+      anchors(face) = pivot
+      val split = pivot < 0
       if split then
         splits(face) = splitCount
         splitCount += 1
       starts(face + 1) = starts(face) + (if split then 4 else 1)
       face += 1
-    new JavaFxAdaptiveLayout(starts, splits, splitCount)
+    new JavaFxAdaptiveLayout(starts, splits, anchors, splitCount)
 
-  def matches(layout: JavaFxAdaptiveLayout, indices: IntBufferView, colors: Array[Int], first: Int, count: Int): Boolean =
+  def matches(layout: JavaFxAdaptiveLayout, indices: IntBufferView, colors: Array[Int], first: Int, count: Int,
+      retain: Boolean = false): Boolean =
     var face = 0
     while face < count do
-      if layout.split(face) != (faceAnchor(indices, colors, first + face) < 0) then return false
+      if retain then
+        if !layout.split(face) && !accepts(layout.anchor(face), indices, colors, first + face) then return false
+      else if layout.split(face) != (faceAnchor(indices, colors, first + face) < 0) then return false
       face += 1
     true
 
-  def write(pixels: IntBuffer, width: Int, x: Int, y: Int, a: Int, b: Int, c: Int): Unit =
-    val pivot = anchor(a,b,c)
+  def write(pixels: IntBuffer, width: Int, x: Int, y: Int, a: Int, b: Int, c: Int, pivot: Int): Unit =
     if pivot < 0 then JavaFxAffineAtlas.write(pixels,width,x,y,a,b,c)
     else
       val p = if pivot == 0 then a else if pivot == 1 then b else c
@@ -93,9 +142,9 @@ private[javafx] object JavaFxAdaptiveAtlas:
     val columns = atlas.width / 4
     var face = 0
     while face < count do
-      val pivot = faceAnchor(packet.indices,colors,first+face)
+      val pivot = if atlas.encoding.retainsLayout then layout.anchor(face) else faceAnchor(packet.indices,colors,first+face)
       val offset = (first+face)*3
-      val constant = colors(packet.indices(offset)) == colors(packet.indices(offset+1)) &&
+      val constant = !atlas.encoding.retainsLayout && colors(packet.indices(offset)) == colors(packet.indices(offset+1)) &&
         colors(packet.indices(offset)) == colors(packet.indices(offset+2))
       var child = 0
       val children = if layout.split(face) then 4 else 1

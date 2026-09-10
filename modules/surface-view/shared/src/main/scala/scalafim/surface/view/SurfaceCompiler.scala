@@ -22,6 +22,7 @@ object SurfaceCompiler:
   def compile(model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceViewError, SurfaceRenderPlan] =
     for
       _ <- SurfaceViewer.validateLayout(model, state.layout)
+      _ <- SurfaceViewer.validateViewpoints(model, state.surfaceViewpoints)
       _ <-
         if state.timepoint >= 0 && state.timepoint < model.frameCount then Right(())
         else Left(SurfaceViewError.TimepointOutOfBounds(state.timepoint, model.frameCount))
@@ -115,12 +116,19 @@ object SurfaceCompiler:
     val layers = layerPackets.result()
     val drawPasses = passes.result()
     val camera = cameraPacket(state.camera, frame, state.clipping)
+    val surfaceCameras = slots.flatMap: slot =>
+      state.surfaceViewpoints.get(slot.surface).map: _ =>
+        slot.surface -> cameraPacket(state.cameraFor(slot.surface), frame, state.clipping)
+    .toMap
+    val viewpointsKey = slots.filter(slot => surfaceCameras.contains(slot.surface)).map: slot =>
+      s"${slot.surface.value.length}:${slot.surface.value}:${cameraKey(state.cameraFor(slot.surface), frame)}"
+    .mkString("|", "|", "")
     val readouts = compileReadout(model, state, frames)
     val chrome = compileChrome(readouts)
     val vertices = meshes.iterator.map(_.positions.length / 3).sum
     val faces = meshes.iterator.map(_.indices.length / 3).sum
     val primitiveBytes =
-      vertices.toLong * 3L * 4L * 2L + faces.toLong * 3L * 4L + colorValuesWritten.toLong * 4L + 32L * 4L +
+      vertices.toLong * 3L * 4L * 2L + faces.toLong * 3L * 4L + colorValuesWritten.toLong * 4L + (1L + surfaceCameras.size) * 32L * 4L +
         meshes.iterator.flatMap(_.sourceVertices).map(_.length.toLong * 4L).sum +
         meshes.iterator.flatMap(_.nearestPartition).map(_.originalIndices.length.toLong * 4L).sum +
         layers.iterator.flatMap(_.scalarField).map(_.samples.length.toLong * 8L).sum + sampleColorBytes +
@@ -130,7 +138,7 @@ object SurfaceCompiler:
     val receipt = SurfaceRenderReceipt(
       meshes.map(_.resourceKey),
       layers.map(_.resourceKey),
-      cameraKey(state.camera, frame) + (state.clipping match
+      cameraKey(state.camera, frame) + viewpointsKey + (state.clipping match
         case SurfaceClipping.NearFar(near, far) => s":depth:$near:$far"
         case _ => ""),
       drawPasses.length,
@@ -149,7 +157,8 @@ object SurfaceCompiler:
       profile,
       receipt,
       SurfaceViewportFit.Contain(slots.length.toDouble * state.camera.aspectRatio.value),
-      fragmentSurfaces
+      fragmentSurfaces,
+      surfaceCameras
     )
 
   /** Display-only corner expansion. Original face order and normals survive;
@@ -185,15 +194,17 @@ object SurfaceCompiler:
 
   /** Explicit fitting uses displayed bounds around the canonical anchor; ordinary morph/orbit/zoom never refits. */
   private[view] def fitCamera(model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceViewError, SurfaceCamera] =
-    SurfaceViewer.validateLayout(model, state.layout).flatMap: _ =>
+    SurfaceViewer.validateLayout(model, state.layout)
+      .flatMap(_ => SurfaceViewer.validateViewpoints(model, state.surfaceViewpoints)).flatMap: _ =>
       resolveFrames(model, state).flatMap: frames =>
         val originalSlots = compileSlots(state.layout)
         val assets = originalSlots.map(slot => model.surface(slot.surface).get)
         val frame = layoutFrame(state.layout, assets)
         val slots = centerBilateralSlots(state.layout, originalSlots, assets, frame)
         val centered = state.camera.copy(zoom = CameraZoom.Default, panX = 0.0, panY = 0.0)
-        val view = cameraPacket(centered, frame, SurfaceClipping.Disabled).viewMatrix
         val points = slots.zip(assets).flatMap: (slot, asset) =>
+          val view = cameraPacket(centered.copy(viewpoint = state.cameraFor(slot.surface).viewpoint),
+            frame, SurfaceClipping.Disabled).viewMatrix
           val bounds = displayedBounds(asset, frames(asset.id))
           for
             x <- Vector(bounds.minimumX, bounds.maximumX)

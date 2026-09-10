@@ -12,7 +12,7 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
   test("revision 1 documents retain vertex association and their original JSON shape"):
     val (model, state, bindings, provenance) = fixture()
     val current = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
-    val json = SurfaceSceneCodec.encode(current).replace("\"revision\":6", "\"revision\":1").replace(",\"legends\":[]", "")
+    val json = SurfaceSceneCodec.encode(current).replace("\"revision\":7", "\"revision\":1").replace(",\"surfaceViewpoints\":[]", "").replaceAll(",\"aspectRatio\":[^,}]+", "").replace(",\"legends\":[]", "")
       .replace(",\"scalarInterpolation\":false", "")
       .replaceAll(",\"scalarMappingKey\":(?:null|\"[^\"]*\")", "")
       .replace(",\"vertexInterpolation\":\"color\"", "")
@@ -73,10 +73,10 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
 
-    val future = encoded.replace("\"revision\":6", "\"revision\":7")
+    val future = encoded.replace("\"revision\":7", "\"revision\":8")
     assertEquals(
       SurfaceSceneCodec.decode(future).left.toOption,
-      Some(SurfaceSceneError.UnsupportedRevision(7))
+      Some(SurfaceSceneError.UnsupportedRevision(8))
     )
 
   test("external digests and exact mesh identities are checked before state restoration"):

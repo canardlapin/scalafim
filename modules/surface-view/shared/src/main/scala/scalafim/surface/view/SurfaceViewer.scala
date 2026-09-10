@@ -131,8 +131,14 @@ final case class SurfaceViewerState private[view] (
   selection: Option[SurfaceSelection],
   geometryPresentations: Map[SurfaceId, SurfaceGeometryPresentation],
   layerOrder: Vector[SurfaceLayerId],
-  presentations: Map[SurfaceLayerId, SurfaceLayerPresentation]
-)
+  presentations: Map[SurfaceLayerId, SurfaceLayerPresentation],
+  /** Anatomical viewpoints share the camera's projection, zoom, pan and orbit.
+    * Overrides survive layout/focus changes and ResetCamera. SetViewpoint clears them.
+    */
+  surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty
+):
+  def cameraFor(surface: SurfaceId): SurfaceCamera =
+    surfaceViewpoints.get(surface).fold(camera)(viewpoint => camera.copy(viewpoint = viewpoint))
 
 object SurfaceViewerState:
   def initial(model: SurfaceViewerModel): SurfaceViewerState =
@@ -156,7 +162,10 @@ object SurfaceViewerState:
 
 enum SurfaceViewerAction:
   case SetLayout(layout: SurfaceLayout)
+  /** Set one viewpoint for every surface, clearing per-surface overrides. */
   case SetViewpoint(viewpoint: SurfaceViewpoint)
+  /** Atomically replace anatomical viewpoints; unmentioned surfaces inherit the shared camera. */
+  case SetSurfaceViewpoints(viewpoints: Map[SurfaceId, SurfaceViewpoint])
   case SetProjection(projection: CameraProjection)
   case SetZoom(zoom: CameraZoom)
   case SetAspectRatio(ratio: CameraAspectRatio)
@@ -191,6 +200,12 @@ enum SurfaceViewerAction:
   case MoveLayer(layer: SurfaceLayerId, index: Int)
 
 object SurfaceViewer:
+  private[view] def validateViewpoints(model: SurfaceViewerModel,
+    viewpoints: Map[SurfaceId, SurfaceViewpoint]): Either[SurfaceViewError, Unit] =
+    viewpoints.keys.toVector.sortBy(_.value).find(id => model.surface(id).isEmpty) match
+      case Some(id) => Left(SurfaceViewError.UnknownSurface(id))
+      case None => Right(())
+
   def reduce(
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
@@ -199,7 +214,9 @@ object SurfaceViewer:
     action match
       case SurfaceViewerAction.SetLayout(layout) => validateLayout(model, layout).map(_ => state.copy(layout = layout))
       case SurfaceViewerAction.SetViewpoint(viewpoint) =>
-        Right(state.copy(camera = state.camera.copy(viewpoint = viewpoint)))
+        Right(state.copy(camera = state.camera.copy(viewpoint = viewpoint), surfaceViewpoints = Map.empty))
+      case SurfaceViewerAction.SetSurfaceViewpoints(viewpoints) =>
+        validateViewpoints(model, viewpoints).map(_ => state.copy(surfaceViewpoints = viewpoints))
       case SurfaceViewerAction.SetProjection(projection) =>
         Right(state.copy(camera = state.camera.copy(projection = projection)))
       case SurfaceViewerAction.FitCamera => SurfaceCompiler.fitCamera(model, state).map(camera => state.copy(camera = camera))

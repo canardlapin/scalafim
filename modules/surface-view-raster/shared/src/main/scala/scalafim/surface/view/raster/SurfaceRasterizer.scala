@@ -94,6 +94,7 @@ object SurfaceRasterizer:
       SurfaceBackendFeature.BackFaceCulling,
       SurfaceBackendFeature.WorldClipping,
       SurfaceBackendFeature.BilateralViewports,
+      SurfaceBackendFeature.PerSurfaceCameras,
       SurfaceBackendFeature.NativePicking,
       SurfaceBackendFeature.HighResolutionSnapshot
     ),
@@ -187,8 +188,8 @@ object SurfaceRasterizer:
       Left(SurfaceRasterError.InvalidPlan("fragment sample buffers must match the original vertex or face domain"))
     else if plan.slots.length != plan.meshes.length then
       Left(SurfaceRasterError.InvalidPlan("slot and mesh counts differ"))
-    else if plan.camera.viewMatrix.length != 16 || plan.camera.projectionMatrix.length != 16 then
-      Left(SurfaceRasterError.InvalidPlan("camera matrices must be 4x4"))
+    else if !plan.validCameras then
+      Left(SurfaceRasterError.InvalidPlan("camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
     else Right(())
 
   private def renderUnsafe(
@@ -317,13 +318,13 @@ object SurfaceRasterizer:
     val y = mesh.positions(offset + 1).toDouble
     val z = mesh.positions(offset + 2).toDouble
     val view = multiply(
-      plan.camera.viewMatrix,
+      plan.cameraFor(slot.surface).viewMatrix,
       x + slot.worldOffsetX,
       y + slot.worldOffsetY,
       z + slot.worldOffsetZ,
       1.0
     )
-    val clip = multiply(plan.camera.projectionMatrix, view._1, view._2, view._3, view._4)
+    val clip = multiply(plan.cameraFor(slot.surface).projectionMatrix, view._1, view._2, view._3, view._4)
     val color = packed(colors(vertex))
     val light = lightFactor(plan.lighting, mesh, offset)
     ClipVertex(

@@ -111,7 +111,7 @@ class SurfaceFaceLayerSuite extends munit.FunSuite:
     val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
     val decoded = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)).toOption.get
     val v2 = SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document)
-      .replace(",\"legends\":[]", "").replace("\"revision\":6", "\"revision\":2")
+      .replace(",\"legends\":[]", "").replace("\"revision\":7", "\"revision\":2").replace(",\"surfaceViewpoints\":[]", "").replaceAll(",\"aspectRatio\":[^,}]+", "")
       .replace(",\"scalarInterpolation\":false", "")
       .replace(",\"scalarMappingKey\":null", "")
       .replace(",\"vertexInterpolation\":\"color\"", "")).toOption.get
@@ -120,7 +120,7 @@ class SurfaceFaceLayerSuite extends munit.FunSuite:
     assert(v2.restore(model, bindings).isRight)
     assertEquals(decoded.layers.head.association, SurfaceSampleAssociation.Face)
     assertEquals(decoded.selection, state.selection)
-    assertEquals(decoded.revision, SurfaceDocumentRevision.V6)
+    assertEquals(decoded.revision, SurfaceDocumentRevision.V7)
     val unsupported = SurfaceBackendCapabilities(SurfaceBackendId.unsafe("vertex-only"), SurfacePlanRevision.Current, Set.empty)
     assert(decoded.admit(unsupported).isLeft)
     assert(decoded.admit(unsupported.copy(features = Set(SurfaceBackendFeature.FacewiseData))).isRight)
