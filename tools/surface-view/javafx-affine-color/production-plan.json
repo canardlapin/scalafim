@@ -1,0 +1,45 @@
+{
+  "schema": "plsneuro.javafx-affine-production-color-plan.v1",
+  "extendsPlanSha256": "66cf5d0e708914708c7a287bb87b30a27514897e85581ba7e72b339072b82a37",
+  "encoding": "AdaptiveAffineOpaque",
+  "maxTextureSizes": [
+    4096,
+    4092
+  ],
+  "lighting": [
+    "Unlit",
+    "Default",
+    "Soft"
+  ],
+  "nativeRuntime": "JavaFX 24.0.1 macOS ES2 with exact no-color-mipmap and centroid-UV compatibility jar",
+  "fixtures": "Same 48 geometric/color/order/AA cases per setting as original protocol; 288 positive cases total. Existing unlit 256 run must remain byte-identical.",
+  "normals": "Original vertices receive normalized (0.8*cos(2*pi*x/n), 0.6*sin(2*pi*y/n), 0.35+(x-y)/n), stored as Float. This is an explicit varying shading-normal field on planar geometry, not a geometric-normal reconstruction claim.",
+  "lightingParameters": {
+    "Default": [
+      0.35,
+      0.65,
+      -0.4,
+      -0.5,
+      0.7681145747868608
+    ],
+    "Soft": [
+      0.72,
+      0.28,
+      -0.4,
+      -0.5,
+      0.7681145747868608
+    ]
+  },
+  "oracle": "Binary v24 records original RGB, Float normals and Double lighting parameters. Python independently computes clamped Lambert factor and rounds shaded vertex RGB before applying the existing original-triangle pixel oracle. It does not read atlas colors or UVs.",
+  "toleranceChannelLevels": 2.0,
+  "negativeControls": [
+    "LegacyTriangle 4096/Unlit patched must fail diagonal",
+    "AdaptiveAffineOpaque 4096/Unlit stock must fail dense ramp"
+  ],
+  "limits": [
+    "Covers atlas width and non-power-of-two dimensions, not all maximum texture areas",
+    "No actual device-scale sweep, perspective, cortex occlusion or production packaging",
+    "Lighting is baked at vertices in world coordinates; not a native Phong lighting claim",
+    "Soft lighting is a QA candidate, not a changed application default"
+  ]
+}
