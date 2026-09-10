@@ -3,12 +3,14 @@ package scalafim.fmri.mvpa
 import scalafim.atlas.AtlasRegionMetadata
 import scalafim.atlas.AtlasRef
 import scalafim.atlas.VolumeAtlas
-import scalafim.image.GridMismatch
+import scalafim.locus.SpaceMismatch
 import scalafim.image.NeuroVol
 import scalafim.image.SearchlightRadius
-import scalafim.image.VolumeDomain
-import scalafim.image.VolumeSearchlight
-import scalafim.image.VolumeSearchlightError
+import image4s.geometry.{CoordinateConvention, D3, LengthUnit}
+import image4s.geometry.Frame
+import scalafim.image.GridDomain
+import scalafim.image.ExactVolumeSearchlight
+import scalafim.image.ExactVolumeSearchlightError
 import scalafim.image.VoxelRegion
 import locus4s.CenteredNeighborhoodSystem
 import locus4s.FiniteDomain
@@ -35,8 +37,8 @@ enum SpatialFrameError:
   case EmptySupport(id: MeasurementId)
   case InvalidOrdinalPlan(detail: String)
   case InvalidRegion(detail: String)
-  case Grid(error: GridMismatch)
-  case VolumeSearchlight(error: VolumeSearchlightError)
+  case Grid(error: SpaceMismatch)
+  case VolumeSearchlight(error: ExactVolumeSearchlightError)
   case SurfaceDomain(error: SurfaceLocusError)
   case SurfaceSearchlight(error: SurfaceSearchlightError)
   case InvalidVolumeLabel(label: Int)
@@ -123,27 +125,35 @@ object SpatialAxes:
         .map(SpatialFrameError.Axis.apply)
     yield new IdentifiedLocusAxis(domain, axis)
 
-  def volume[S](
-      domain: VolumeDomain[S],
+  def volume[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
       units: Option[AxisUnits] = None
   ): Either[SpatialFrameError, IdentifiedLocusAxis[S]] =
-    val space = domain.volumeSpace.toNeuroSpace
-    val affine = space.trans
-    val affineValues = Vector.newBuilder[String]
-    var row = 0
-    while row < affine.rows do
-      var column = 0
-      while column < affine.cols do
-        affineValues += java.lang.Double.toHexString(affine(row, column))
-        column += 1
-      row += 1
+    val grid = domain.grid
+    val convention =
+      grid.frame.convention match
+        case CoordinateConvention.RAS => "RAS"
+        case CoordinateConvention.LPS => "LPS"
+    val unit =
+      grid.frame.unit match
+        case LengthUnit.Millimeter => "millimeter"
+        case LengthUnit.Meter      => "meter"
+        case LengthUnit.Micrometer => "micrometer"
+    // Normalize -0.0 to 0.0 so numerically equal affines cannot produce
+    // different identities, matching the canonical publication preimage.
+    val affine =
+      grid.indexToFrame.rowMajor.map(value => if value == 0.0 then 0.0 else value)
     fromDomain(
-      domain.finiteSpace,
+      domain.space,
       "volume-grid",
       Vector(
-        "dimensions" -> space.spatialDims.mkString("x"),
-        "affine-row-major" -> affineValues.result().mkString(","),
-        "ordinal-layout" -> "x-fastest"
+        "dimensions" -> grid.shape.mkString("x"),
+        "coordinate-convention" -> convention,
+        "spatial-unit" -> unit,
+        "affine-row-major" -> affine.map(java.lang.Double.toHexString).mkString(","),
+        // The provider owns the voxel-ordinal convention and versions it as
+        // part of persistent identity; do not assert a competing layout here.
+        "ordinal-layout" -> domain.layout.id
       ),
       units
     )
@@ -356,9 +366,9 @@ object LocusFrames:
     "0" * math.max(0, width - raw.length) + raw
 
 object VolumeFrames:
-  def roi[S](
+  def roi[F <: Frame[D3], S](
       axis: IdentifiedLocusAxis[S],
-      domain: VolumeDomain[S],
+      domain: GridDomain[F, D3, S],
       id: MeasurementId,
       region: VoxelRegion,
       label: Option[String] = None
@@ -367,14 +377,14 @@ object VolumeFrames:
     MeasurementFrame[axis.features.Id, FeatureId, RegionRendition[S]]
   ] =
     for
-      _ <- LocusFrames.checkOwner(axis, domain.finiteSpace)
+      _ <- LocusFrames.checkOwner(axis, domain.space)
       support <- domain.region(region).left.map(SpatialFrameError.Grid.apply)
       frame <- LocusFrames.region(axis, id, support, label)
     yield frame
 
-  def labels[S](
+  def labels[F <: Frame[D3], S](
       axis: IdentifiedLocusAxis[S],
-      domain: VolumeDomain[S],
+      domain: GridDomain[F, D3, S],
       values: NeuroVol[Int],
       background: Set[Int] = Set(0)
   ): Either[
@@ -382,16 +392,16 @@ object VolumeFrames:
     MeasurementFrame[axis.features.Id, FeatureId, RegionRendition[S]]
   ] =
     for
-      _ <- LocusFrames.checkOwner(axis, domain.finiteSpace)
+      _ <- LocusFrames.checkOwner(axis, domain.space)
       _ <- domain.indexedField(values).left.map(SpatialFrameError.Grid.apply)
       grouped <- groupedLabels(values, background)
       regions <- labelRegions(domain, grouped)
       frame <- LocusFrames.regions(axis, regions)
     yield frame
 
-  def atlas[S](
+  def atlas[F <: Frame[D3], S](
       axis: IdentifiedLocusAxis[S],
-      domain: VolumeDomain[S],
+      domain: GridDomain[F, D3, S],
       atlas: VolumeAtlas,
       coverage: AtlasCoveragePolicy = AtlasCoveragePolicy.RequireEveryRegion
   ): Either[
@@ -399,32 +409,32 @@ object VolumeFrames:
     MeasurementFrame[axis.features.Id, FeatureId, AtlasRegionRendition[S]]
   ] =
     for
-      _ <- LocusFrames.checkOwner(axis, domain.finiteSpace)
+      _ <- LocusFrames.checkOwner(axis, domain.space)
       _ <- domain.indexedField(atlas.labelVolume).left.map(SpatialFrameError.Grid.apply)
       grouped <- groupedLabels(atlas.labelVolume, Set(0))
       frame <- atlasFrame(axis, domain, atlas, grouped, coverage)
     yield frame
 
-  def metricSearchlights[S](
+  def metricSearchlights[F <: Frame[D3], S](
       axis: IdentifiedLocusAxis[S],
-      domain: VolumeDomain[S],
+      domain: GridDomain[F, D3, S],
       radius: SearchlightRadius
   ): Either[
     SpatialFrameError,
     MeasurementFrame[axis.features.Id, FeatureId, SearchlightRendition[S, S]]
   ] =
     for
-      _ <- LocusFrames.checkOwner(axis, domain.finiteSpace)
-      neighborhoods <- VolumeSearchlight
+      _ <- LocusFrames.checkOwner(axis, domain.space)
+      neighborhoods <- ExactVolumeSearchlight
         .metricBalls(domain, radius)
         .left
         .map(SpatialFrameError.VolumeSearchlight.apply)
       frame <- LocusFrames.searchlights(axis, neighborhoods)
     yield frame
 
-  def metricSearchlights[S](
+  def metricSearchlights[F <: Frame[D3], S](
       axis: IdentifiedLocusAxis[S],
-      domain: VolumeDomain[S],
+      domain: GridDomain[F, D3, S],
       radius: SearchlightRadius,
       centers: LocusSelection[S]
   ): Either[
@@ -436,8 +446,8 @@ object VolumeFrames:
     ]
   ] =
     for
-      _ <- LocusFrames.checkOwner(axis, domain.finiteSpace)
-      neighborhoods <- VolumeSearchlight
+      _ <- LocusFrames.checkOwner(axis, domain.space)
+      neighborhoods <- ExactVolumeSearchlight
         .metricBalls(domain, radius, centers)
         .left
         .map(SpatialFrameError.VolumeSearchlight.apply)
@@ -458,8 +468,8 @@ object VolumeFrames:
       ordinal += 1
     Right(grouped.toVector.sortBy(_._1).map((label, support) => label -> support.toVector))
 
-  private def labelRegions[S](
-      domain: VolumeDomain[S],
+  private def labelRegions[F <: Frame[D3], S](
+      domain: GridDomain[F, D3, S],
       grouped: Vector[(Int, Vector[Int])]
   ): Either[
     SpatialFrameError,
@@ -469,15 +479,15 @@ object VolumeFrames:
     val iterator = grouped.iterator
     while iterator.hasNext do
       val (label, ordinals) = iterator.next()
-      LocusRegion.fromOrdinals(domain.finiteSpace, ordinals) match
+      LocusRegion.fromOrdinals(domain.space, ordinals) match
         case Left(error)   => return Left(SpatialFrameError.InvalidRegion(error.message))
         case Right(region) =>
           out += ((MeasurementId.unsafe(s"volume-label-$label"), region, Some(label.toString)))
     Right(out.result())
 
-  private def atlasFrame[S](
+  private def atlasFrame[F <: Frame[D3], S](
       axis: IdentifiedLocusAxis[S],
-      domain: VolumeDomain[S],
+      domain: GridDomain[F, D3, S],
       atlas: VolumeAtlas,
       grouped: Vector[(Int, Vector[Int])],
       coverage: AtlasCoveragePolicy
@@ -496,7 +506,7 @@ object VolumeFrames:
         case None =>
           ()
         case Some(ordinals) =>
-          LocusRegion.fromOrdinals(domain.finiteSpace, ordinals) match
+          LocusRegion.fromOrdinals(domain.space, ordinals) match
             case Left(error) =>
               return Left(SpatialFrameError.InvalidRegion(error.message))
             case Right(support) =>
