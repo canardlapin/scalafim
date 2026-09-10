@@ -285,6 +285,26 @@ Owner: plan. Acceptance (reduced from revision 1):
 
 Performance rule: budgets are counters reported in receipts.
 
+Decisions taken from PHRF-25 on 2026-09-10 (assumed defaults; revisit if you disagree):
+
+- D1 Rank cap and tolerance. The kernel-basis tolerance is chosen from the
+  amplitude gate: default value tolerance 1e-3 with a held-out certificate
+  (spike: m = 19, K = 57 at C = 3, p95 amplitude 2.2e-4 at SNR 0.5). K <= 96
+  stays as the C0 capacity cap; C = 8 over the full Gaussian domain gives
+  K = 152 and is refused in v1 rather than admitted by relaxing tolerance.
+  Narrowing the domain is the admitted route to C = 8.
+- D2 Condition budget per voxel. <= 90 node scores from a hierarchical scan of a
+  <= 15x15 bank, <= 2 jets (one node jet from the precomputed bank, one full
+  observed-Hessian jet), <= 2 exact compact evaluations on the nominal path
+  (plus <= 4 in the rare fallback). The "<= 8 references, <= 2 evaluated"
+  rule is retired for the condition backend; trial budgets are unchanged.
+- D3 Admission rule (provisional). Accepted = positive observed curvature at
+  theta_hat, interior of the chart, conditional sd(tau) <= 0.5 s. Calibrated
+  in PHRF-14; 60% admission at SNR 0.25 is the rule working, not a defect,
+  until calibration says otherwise.
+- Default decoder variant: 15x15 hierarchical scan, two full Newton steps
+  (docs/plans/profile-hrf-spike-results.md).
+
 ### PHRF-20: Establish benchmark harness, work counters and ratio targets
 
 Owner: `benchmarks/fit-jvm` and a new JS timer. Acceptance:
