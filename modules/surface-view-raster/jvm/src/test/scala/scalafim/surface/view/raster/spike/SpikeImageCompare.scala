@@ -20,11 +20,28 @@ object SpikeImageCompare:
   private val ForegroundLimit = 250
 
   def main(args: Array[String]): Unit =
-    require(args.length == 3, "usage: <rasterPng> <javafxPng> <outPrefix>")
-    val (width, height, raster) = SpikeImages.readArgb(Path.of(args(0)))
-    val (otherWidth, otherHeight, javafx) = SpikeImages.readArgb(Path.of(args(1)))
-    require(width == otherWidth && height == otherHeight, s"size mismatch ${width}x$height vs ${otherWidth}x$otherHeight")
+    require(args.length == 3 || args.length == 4, "usage: <rasterPng> <javafxPng> <outPrefix> [plan]")
+    val (rasterWidth, rasterHeight, rasterSource) = SpikeImages.readArgb(Path.of(args(0)))
+    val (width, height, javafx) = SpikeImages.readArgb(Path.of(args(1)))
+    require(rasterWidth % width == 0 && rasterHeight % height == 0 && rasterWidth / width == rasterHeight / height,
+      s"raster ${rasterWidth}x$rasterHeight must be the oracle size ${width}x$height or an integer multiple of it")
+    val supersample = rasterWidth / width
+    // A raster rendered at k times the oracle size is box-filtered down: the spike's stand-in for anti-aliasing.
+    val raster = if supersample == 1 then rasterSource else downsample(rasterSource, rasterWidth, rasterHeight, supersample)
     val prefix = args(2)
+    // Deep interior follows the appearance doc: raster picks with minimum barycentric weight above 0.1.
+    val deepMask: Option[Array[Boolean]] = Option.when(args.length == 4 && supersample == 1):
+      val scene = SpikePlanCodec.read(Path.of(args(3)))
+      val result = SurfaceRasterizer.render(scene.planFor(width, height), RasterDimensions.unsafe(width, height))
+        .fold(error => throw new IllegalStateException(error.message), identity)
+      require(SpikeImages.pixelSha256(result.image) == SpikeImages.pixelSha256(SpikeImages.rasterFromArgb(width, height, raster)),
+        "raster PNG does not match a fresh render of the plan")
+      Array.tabulate(width * height): index =>
+        result.pick(index % width, index / width).toOption.flatten.exists: pick =>
+          math.min(pick.barycentricA, math.min(pick.barycentricB, pick.barycentricC)) > 0.1
+    val deepErrors = new Array[Int](256)
+    var deep = 0
+    var deepSum = 0L
     inline def foreground(value: Int): Boolean =
       ((value >>> 16) & 0xff) < ForegroundLimit || ((value >>> 8) & 0xff) < ForegroundLimit || (value & 0xff) < ForegroundLimit
     inline def maxChannelError(a: Int, b: Int): Int =
@@ -66,7 +83,11 @@ object SpikeImageCompare:
             interiorErrors(error) += 1
             interiorSum += error
             interiorSquares += error.toLong * error.toLong
-          else
+          if deepMask.exists(_(index)) then
+            deep += 1
+            deepErrors(error) += 1
+            deepSum += error
+          if !isInterior then
             edge += 1
             edgeErrors(error) += 1
         x += 1
@@ -109,7 +130,34 @@ object SpikeImageCompare:
         s""""meanInteriorChannelError":${visualQa.meanInteriorChannelError},"maxInteriorChannelError":${visualQa.maximumInteriorChannelError},""" +
         s""""expectedForeground":${visualQa.expectedForegroundPixels},"observedForeground":${visualQa.observedForegroundPixels},""" +
         s""""nativeBackendPolicyPass":${violations.isEmpty},"violations":[${violations.map(v => "\"" + v.replace("\"", "'") + "\"").mkString(",")}]},""" +
+        s""""supersample":$supersample,"deepInterior":{"available":${deepMask.nonEmpty},"pixels":$deep,"mean":${if deep == 0 then 0.0 else deepSum.toDouble / deep},""" +
+        s""""median":${quantile(deepErrors, deep, 0.5)},"p95":${quantile(deepErrors, deep, 0.95)},"p99":${quantile(deepErrors, deep, 0.99)},""" +
+        s""""withinTwoLevels":${if deep == 0 then 0.0 else 1.0 - above(deepErrors, 2).toDouble / deep},"above10":${above(deepErrors, 10)},"above40":${above(deepErrors, 40)}},""" +
         s""""diff":"$diffPath"}"""
     Files.writeString(Path.of(prefix + "-compare.json"), json + "\n")
     println(f"compare ${width}x$height interior=$interior mean=$meanInterior%.3f median=${quantile(interiorErrors, interior, 0.5)} p95=${quantile(interiorErrors, interior, 0.95)} p99=${quantile(interiorErrors, interior, 0.99)} " +
-      f"within2=${1.0 - above(interiorErrors, 2).toDouble / math.max(1, interior)}%.4f IoU=${visualQa.maskIntersectionOverUnion}%.4f centroid=${visualQa.centroidDistancePixels}%.2f qaPass=${violations.isEmpty}")
+      f"within2=${1.0 - above(interiorErrors, 2).toDouble / math.max(1, interior)}%.4f IoU=${visualQa.maskIntersectionOverUnion}%.4f centroid=${visualQa.centroidDistancePixels}%.2f qaPass=${violations.isEmpty} " +
+      f"ss=$supersample deep=$deep deepMean=${if deep == 0 then 0.0 else deepSum.toDouble / deep}%.3f deepMedian=${quantile(deepErrors, deep, 0.5)} deepP95=${quantile(deepErrors, deep, 0.95)}")
+
+  private def downsample(source: Array[Int], width: Int, height: Int, factor: Int): Array[Int] =
+    val outWidth = width / factor
+    val outHeight = height / factor
+    val output = new Array[Int](outWidth * outHeight)
+    val samples = factor * factor
+    var y = 0
+    while y < outHeight do
+      var x = 0
+      while x < outWidth do
+        var red = 0; var green = 0; var blue = 0
+        var dy = 0
+        while dy < factor do
+          var dx = 0
+          while dx < factor do
+            val value = source((y * factor + dy) * width + x * factor + dx)
+            red += (value >>> 16) & 0xff; green += (value >>> 8) & 0xff; blue += value & 0xff
+            dx += 1
+          dy += 1
+        output(y * outWidth + x) = 0xff000000 | ((red + samples / 2) / samples << 16) | ((green + samples / 2) / samples << 8) | ((blue + samples / 2) / samples)
+        x += 1
+      y += 1
+    output
