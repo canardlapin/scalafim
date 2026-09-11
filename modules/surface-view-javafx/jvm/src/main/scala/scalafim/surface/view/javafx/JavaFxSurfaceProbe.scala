@@ -32,7 +32,7 @@ enum JavaFxMaterialMode:
   * filtering and centroid UVs for MSAA. Stock JavaFX does not expose that policy.
   */
 enum JavaFxAtlasEncoding(val facesPerSource: Int, val adaptive: Boolean = false, val retainsLayout: Boolean = false,
-    val lookup: Boolean = false):
+    val lookup: Boolean = false, val faceTexels: Int = 0):
   case LegacyTriangle extends JavaFxAtlasEncoding(1)
   case AffineMidpointOpaque extends JavaFxAtlasEncoding(4)
   case AdaptiveAffineOpaque extends JavaFxAtlasEncoding(4, adaptive = true)
@@ -48,6 +48,20 @@ enum JavaFxAtlasEncoding(val facesPerSource: Int, val adaptive: Boolean = false,
     * than per-face colour steps. Requires fragment plans with raw scalar samples.
     */
   case ScalarLutInterpolated extends JavaFxAtlasEncoding(1, lookup = true)
+  /** One flat colour per scientific face ([[SurfaceFaceTexels]]): each face owns a
+    * 2x2 texel block and all three corners address its centre, so texture
+    * coordinates are constant per face. Zero derivatives select the base mip
+    * level under forced mipmaps, multisample extrapolation of a constant is the
+    * constant, and there is no tile padding. Colour, cutoff and map-value changes
+    * rewrite texels only; the native mesh is never modified after its first build.
+    * Requires plans whose render vertices are the scientific vertices.
+    */
+  case FaceTexelFlat extends JavaFxAtlasEncoding(1, faceTexels = 2)
+  /** The same rule with one texel per face, addressed at its exact centre. */
+  case FaceTexelFlatSingle extends JavaFxAtlasEncoding(1, faceTexels = 1)
+
+  /** Encodings that lower raw scalar samples themselves rather than final vertex colours. */
+  def scalarSamples: Boolean = lookup || faceTexels > 0
 
 final case class JavaFxAtlasConfig private (tileSize: Int, maxTextureSize: Int,
     encoding: JavaFxAtlasEncoding, maxRenderedFaces: Int):
@@ -105,6 +119,61 @@ final class JavaFxFaceAtlas private[javafx] (
   private[javafx] var lookup: Option[SurfaceScalarLookupTable] = None
   private[javafx] var lookupCoordinates: Array[Float] = Array.empty
   private[javafx] var lookupFaces: Array[Int] = Array.empty
+  private[javafx] var faceLayout: Option[SurfaceFaceTexelLayout] = None
+  private[javafx] var faceColors: Array[Int] = Array.empty
+  private var texelMirror: Array[Int] = Array.empty
+
+  /** Write the block of every face whose colour changed (all blocks on the first
+    * call) into a heap mirror, in parallel over disjoint face slices, then copy the
+    * dirty row band into the native buffer in one bulk transfer. Returns that band,
+    * or None when nothing changed.
+    */
+  private[javafx] def writeFaceTexels(colors: Array[Int]): Option[Rectangle2D] =
+    val layout = faceLayout.get
+    require(colors.length == layout.faceCount, "one colour per face")
+    if texelMirror.length != width * height then texelMirror = new Array[Int](width * height)
+    val previous = faceColors
+    val full = previous.length != colors.length
+    val mirror = texelMirror
+    val block = layout.texelsPerFace
+    val slices = (colors.length + JavaFxFaceTexelWork.Slice - 1) / JavaFxFaceTexelWork.Slice
+    val firstRows = Array.fill(slices)(Int.MaxValue)
+    val lastRows = Array.fill(slices)(-1)
+    JavaFxFaceTexelWork.parallel(slices): slice =>
+      var face = slice * JavaFxFaceTexelWork.Slice
+      val until = math.min(colors.length, face + JavaFxFaceTexelWork.Slice)
+      var firstRow = Int.MaxValue
+      var lastRow = -1
+      while face < until do
+        val rgba = colors(face)
+        if full || previous(face) != rgba then
+          val alpha = rgba & 255
+          val argb =
+            if alpha == 255 then 0xff000000 | (rgba >>> 8)
+            else
+              def premultiplied(shift: Int): Int = ((((rgba >>> shift) & 255) * alpha + 127) / 255)
+              (alpha << 24) | (premultiplied(24) << 16) | (premultiplied(16) << 8) | premultiplied(8)
+          val x = layout.blockX(face)
+          val y = layout.blockY(face)
+          var dy = 0
+          while dy < block do
+            var dx = 0
+            while dx < block do
+              mirror((y + dy) * width + x + dx) = argb
+              dx += 1
+            dy += 1
+          if y < firstRow then firstRow = y
+          if y + block - 1 > lastRow then lastRow = y + block - 1
+        face += 1
+      firstRows(slice) = firstRow
+      lastRows(slice) = lastRow
+    val firstRow = firstRows.min
+    val lastRow = lastRows.max
+    faceColors = colors
+    Option.when(lastRow >= 0):
+      val offset = firstRow * width
+      pixels.put(offset, mirror, offset, (lastRow - firstRow + 1) * width)
+      new Rectangle2D(0.0, firstRow.toDouble, width.toDouble, (lastRow - firstRow + 1).toDouble)
 
   /** Copy a baked opaque table into the native ARGB buffer. Dimensions are fixed per chunk. */
   private[javafx] def writeLookup(table: SurfaceScalarLookupTable): Rectangle2D =
@@ -123,7 +192,7 @@ final class JavaFxFaceAtlas private[javafx] (
     indices: IntBufferView,
     colors: Array[Int]
   ): Rectangle2D =
-    if encoding.lookup then return new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
+    if encoding.scalarSamples then return new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
     var localFace = 0
     while localFace < faceCount do
       val face = faceStart + localFace
@@ -241,7 +310,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   def materialMode: JavaFxMaterialMode = activeMaterialMode
 
   def setMaterialMode(mode: JavaFxMaterialMode): Unit =
-    if config.encoding.lookup then
+    if config.encoding.scalarSamples then
       // The table never carries lighting; only the scene lights change.
       activeMaterialMode = mode
       JavaFxSurfaceProbe.configureLights(lights, plan.lighting, mode)
@@ -406,6 +475,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
+    else if config.encoding.faceTexels > 0 then updateFaceTexels(next, commit, mode)
     else if config.encoding.lookup then updateLookup(next, commit, mode)
     else
       val started = System.nanoTime()
@@ -493,6 +563,45 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       textureCoordinateBytesUpdated = textureCoordinateBytesUpdated
     ))
 
+  /** Colour, cutoff and map-value changes recompute one colour per face and
+    * rewrite only the texel blocks whose colour changed. Points, normals,
+    * texture coordinates and faces are never touched after the first build.
+    * Every surface's colours are computed before any texel is written, so a
+    * refused plan leaves the scene unchanged.
+    */
+  private def updateFaceTexels(next: SurfaceRenderPlan, commit: Boolean,
+      mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
+    val started = System.nanoTime()
+    val rules = new Array[SurfaceFaceColorRule](chunks.length)
+    var index = 0
+    while index < chunks.length do
+      val chunk = chunks(index)
+      val mesh = next.meshes.find(_.surface == chunk.surface).get
+      SurfaceFaceTexels.lower(next, mesh) match
+        case Left(error) => return Left(JavaFxSurfaceError.IncompatiblePlan(error.message))
+        case Right(rule) => rules(index) = rule
+      index += 1
+    val colors = JavaFxFaceTexelWork.colors(rules.toVector)
+    var dirtyPixels = 0L
+    var atlasesUpdated = 0
+    index = 0
+    while index < chunks.length do
+      val atlas = chunks(index).atlas
+      atlas.writeFaceTexels(colors(index)).foreach: region =>
+        if commit then atlas.commit(region)
+        dirtyPixels += region.getWidth.toLong * region.getHeight.toLong
+        atlasesUpdated += 1
+      index += 1
+    activeMaterialMode = mode
+    JavaFxSurfaceProbe.configureLights(lights, next.lighting, mode)
+    plan = next
+    Right(JavaFxSurfaceUpdateReceipt(
+      geometryRebuilt = false,
+      atlasesUpdated = atlasesUpdated,
+      dirtyPixels = dirtyPixels,
+      updateNanos = System.nanoTime() - started
+    ))
+
   def updateGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("mesh topology resource keys changed"))
@@ -556,15 +665,15 @@ object JavaFxSurfaceProbe:
   ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
     if !plan.validCameras then
       return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
-    if !config.encoding.lookup && (plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty)) then
-      return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires the ScalarLutInterpolated encoding"))
+    if !config.encoding.scalarSamples && (plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty)) then
+      return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires the ScalarLutInterpolated or FaceTexelFlat encoding"))
     val multiplier = if config.encoding.adaptive then 1 else config.encoding.facesPerSource
     val renderedFaces = plan.meshes.iterator.map(_.indices.length.toLong / 3).sum * multiplier
     if renderedFaces > config.maxRenderedFaces then
       return Left(JavaFxSurfaceError.IncompatiblePlan(s"rendered faces $renderedFaces exceed budget ${config.maxRenderedFaces}"))
     val meshStarted = System.nanoTime()
     val colorsBySurface = compositeColors(plan, materialMode)
-    if config.encoding != JavaFxAtlasEncoding.LegacyTriangle && !config.encoding.lookup && !JavaFxAffineAtlas.opaque(colorsBySurface) then
+    if config.encoding != JavaFxAtlasEncoding.LegacyTriangle && !config.encoding.scalarSamples && !JavaFxAffineAtlas.opaque(colorsBySurface) then
       return Left(JavaFxSurfaceError.IncompatiblePlan("affine encoding requires opaque final vertex colours"))
     val layouts = if !config.encoding.adaptive then Map.empty[(SurfaceId, Int), JavaFxAdaptiveLayout]
       else plan.meshes.flatMap: packet =>
@@ -594,18 +703,18 @@ object JavaFxSurfaceProbe:
       val faceCount = packet.indices.length / 3
       var faceStart = 0
       while faceStart < faceCount do
-        val count = if config.encoding.lookup then faceCount else math.min(config.facesPerAtlas, faceCount - faceStart)
+        val count = if config.encoding.scalarSamples then faceCount else math.min(config.facesPerAtlas, faceCount - faceStart)
         val atlasStarted = System.nanoTime()
-        val atlas = if !config.encoding.lookup then
+        val atlas = if !config.encoding.scalarSamples then
           buildAtlas(faceStart, count, packet.indices, colorsBySurface(packet.surface), config, layouts.get((packet.surface, faceStart)))
-        else buildLookupAtlas(plan, packet, config) match
+        else (if config.encoding.lookup then buildLookupAtlas(plan, packet, config) else buildFaceTexelAtlas(plan, packet, config)) match
           case Left(error) => return Left(error)
           case Right(value) => value
         atlasNanos += System.nanoTime() - atlasStarted
         atlasPixels += atlas.width.toLong * atlas.height.toLong
         val chunkStarted = System.nanoTime()
         val triangleMesh = buildMesh(packet, faceStart, count, atlas, colorsBySurface(packet.surface))
-        val material = if config.encoding.lookup then lookupMaterial(atlas.image) else materialFor(atlas.image, materialMode)
+        val material = if config.encoding.scalarSamples then lookupMaterial(atlas.image) else materialFor(atlas.image, materialMode)
         val view = new MeshView(triangleMesh)
         view.setMaterial(material)
         // The v1 render plan has no culling field, so its portable semantics
@@ -639,7 +748,7 @@ object JavaFxSurfaceProbe:
     // Lookup tables carry no lighting: declared world-space lighting becomes
     // scene lights scoped to each surface group, so the shared camera and
     // viewport transforms carry the light direction with the anatomy.
-    val lights = if !config.encoding.lookup then Map.empty[SurfaceId, (AmbientLight, DirectionalLight)]
+    val lights = if !config.encoding.scalarSamples then Map.empty[SurfaceId, (AmbientLight, DirectionalLight)]
       else surfaceGroups.map: (surface, group) =>
         val ambient = new AmbientLight()
         val directional = new DirectionalLight()
@@ -879,6 +988,24 @@ object JavaFxSurfaceProbe:
       atlas.lookupFaces = lowered.faceCoordinates
       atlas
 
+  /** One texel block per face; allocated once, rewritten in place by colour updates. */
+  private def buildFaceTexelAtlas(plan: SurfaceRenderPlan, packet: SurfaceMeshPacket,
+      config: JavaFxAtlasConfig): Either[JavaFxSurfaceError, JavaFxFaceAtlas] =
+    val faceCount = packet.indices.length / 3
+    val lowered = for
+      layout <- SurfaceFaceTexelLayout.make(faceCount, config.encoding.faceTexels, config.maxTextureSize)
+      rule <- SurfaceFaceTexels.lower(plan, packet)
+    yield (layout, JavaFxFaceTexelWork.colors(Vector(rule)).head)
+    lowered.left.map(error => JavaFxSurfaceError.IncompatiblePlan(error.message)).map: (layout, colors) =>
+      val byteBuffer = ByteBuffer.allocateDirect(layout.width * layout.height * 4).order(ByteOrder.nativeOrder())
+      val pixels = byteBuffer.asIntBuffer()
+      val pixelBuffer = new PixelBuffer[IntBuffer](layout.width, layout.height, pixels, PixelFormat.getIntArgbPreInstance())
+      val image = new WritableImage(pixelBuffer)
+      val atlas = new JavaFxFaceAtlas(0, faceCount, layout.width, layout.height, config.tileSize, config.encoding, None, pixels, pixelBuffer, image)
+      atlas.faceLayout = Some(layout)
+      atlas.writeFaceTexels(colors)
+      atlas
+
   /** Native (point, normal, texture) face triples for the lookup encoding. */
   private[javafx] def lookupFaces(indices: IntBufferView, corners: Array[Int]): Array[Int] =
     val faces = new Array[Int](corners.length * 3)
@@ -919,6 +1046,7 @@ object JavaFxSurfaceProbe:
   private[javafx] def textureCoordinates(packet: SurfaceMeshPacket, faceStart: Int, faceCount: Int,
       atlas: JavaFxFaceAtlas, colors: Array[Int]): Array[Float] =
     if atlas.encoding.lookup then return atlas.lookupCoordinates
+    if atlas.encoding.faceTexels > 0 then return atlas.faceLayout.get.coordinates
     if atlas.encoding.adaptive then
       return JavaFxAdaptiveAtlas.coordinates(packet, faceStart, faceCount, atlas, colors, atlas.adaptiveLayout.get)
     if atlas.encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
@@ -975,6 +1103,23 @@ object JavaFxSurfaceProbe:
       mesh.getTexCoords.setAll(texCoords, 0, texCoords.length)
       mesh.getFaces.setAll(faces, 0, faces.length)
       return mesh
+    if atlas.encoding.faceTexels > 0 then
+      // Points and normals stay per scientific vertex. Each face owns one texture
+      // coordinate shared by its three corners; native faces are the plan's faces.
+      val faces = new Array[Int](faceCount * 9)
+      var face = 0
+      while face < faceCount do
+        var corner = 0
+        while corner < 3 do
+          val vertex = packet.indices((faceStart + face) * 3 + corner)
+          faces(face * 9 + corner * 3) = vertex
+          faces(face * 9 + corner * 3 + 1) = vertex
+          faces(face * 9 + corner * 3 + 2) = face
+          corner += 1
+        face += 1
+      mesh.getTexCoords.setAll(texCoords, 0, texCoords.length)
+      mesh.getFaces.setAll(faces, 0, faces.length)
+      return mesh
     if atlas.encoding.adaptive then
       val faces = JavaFxAdaptiveAtlas.faces(packet, faceStart, faceCount, atlas.adaptiveLayout.get)
       mesh.getTexCoords.setAll(texCoords, 0, texCoords.length)
@@ -1005,7 +1150,7 @@ object JavaFxSurfaceProbe:
   private[javafx] def attributes(packet: SurfaceMeshPacket, source: FloatBufferView,
       first: Int, count: Int, encoding: JavaFxAtlasEncoding,
       adaptive: Option[JavaFxAdaptiveLayout] = None): Array[Float] =
-    if encoding.lookup then source.unsafeArray
+    if encoding.scalarSamples then source.unsafeArray
     else if encoding.adaptive then
       JavaFxAdaptiveAtlas.attributes(packet, source, first, count, adaptive.get)
     else if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
@@ -1042,3 +1187,21 @@ object JavaFxSurfaceProbe:
 
   private def unpack(value: Int): Rgba32 =
     Rgba32.fromPackedInt(value)
+
+/** Fork-join evaluation of the face rule and texel blocks over fixed face slices. */
+private[javafx] object JavaFxFaceTexelWork:
+  val Slice: Int = 16384
+
+  def parallel(slices: Int)(body: Int => Unit): Unit =
+    java.util.stream.IntStream.range(0, slices).parallel().forEach(slice => body(slice))
+
+  /** Colours of every face of every rule; slices of all surfaces share one parallel pass. */
+  def colors(rules: Vector[SurfaceFaceColorRule]): Vector[Array[Int]] =
+    val out = rules.map(rule => new Array[Int](rule.faceCount))
+    val tasks = rules.indices.flatMap: surface =>
+      val count = rules(surface).faceCount
+      (0 until (count + Slice - 1) / Slice).map(slice => (surface, slice * Slice, math.min(count, (slice + 1) * Slice)))
+    parallel(tasks.length): task =>
+      val (surface, from, until) = tasks(task)
+      rules(surface).write(out(surface), from, until)
+    out

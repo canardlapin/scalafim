@@ -181,7 +181,7 @@ object JavaFxScalarLutCortexProbe:
     SurfaceGeometry(TriangleMesh.fromArrays(mesh.positions.unsafeArray.map(_.toDouble), mesh.indices.unsafeArray),
       if hemi(mesh.surface) == "lh" then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Inflated)
 
-  private def compileWith(inputs: Inputs, lighting: SurfaceLighting,
+  private[javafx] def compileWith(inputs: Inputs, lighting: SurfaceLighting,
       layersFor: (SurfaceMeshPacket, SurfaceGeometry) => Vector[SurfaceLayer]): SurfaceRenderPlan =
     val geometries = inputs.scene.meshes.map(mesh => mesh -> geometryFor(mesh))
     val assets = geometries.map((mesh, geometry) => SurfaceAsset.make(mesh.surface, geometry).toOption.get)

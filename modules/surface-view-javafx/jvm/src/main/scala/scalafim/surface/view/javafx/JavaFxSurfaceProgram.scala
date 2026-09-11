@@ -98,7 +98,8 @@ final case class JavaFxCapabilityReport(
   antialiasing: Boolean,
   fallback: Option[String],
   approximateFragments: Boolean = false,
-  lookupFragments: Boolean = false
+  lookupFragments: Boolean = false,
+  faceFragments: Boolean = false
 ):
 
   def admissionCapabilities: SurfaceBackendCapabilities =
@@ -117,12 +118,16 @@ final case class JavaFxCapabilityReport(
       )
       else Set.empty[SurfaceBackendFeature]
     SurfaceBackendCapabilities(
-      SurfaceBackendId.unsafe(if approximateFragments then "javafx-scene3d-bounded-v1" else if lookupFragments then "javafx-scene3d-scalar-lut-v1" else "javafx-scene3d"),
+      SurfaceBackendId.unsafe(if approximateFragments then "javafx-scene3d-bounded-v1" else if lookupFragments then "javafx-scene3d-scalar-lut-v1"
+        else if faceFragments then "javafx-scene3d-face-texel-v1" else "javafx-scene3d"),
       SurfacePlanRevision.Current,
-      available ++ (if scene3d && (approximateFragments || lookupFragments) then Set(SurfaceBackendFeature.ScalarInterpolation, SurfaceBackendFeature.FragmentComposition) else Set.empty),
+      available ++ (if scene3d && (approximateFragments || lookupFragments) then Set(SurfaceBackendFeature.ScalarInterpolation, SurfaceBackendFeature.FragmentComposition)
+        // Flat faces compose layers but do not interpolate scalars within a face.
+        else if scene3d && faceFragments then Set(SurfaceBackendFeature.FragmentComposition) else Set.empty),
       fallback.toVector ++ Vector("world clipping planes are not yet supported") ++
         (if approximateFragments then Vector("scalar/layer fragments use opt-in bounded constant-color geometry; boundary coverage and native rounding are separate from the color certificate") else Vector.empty) ++
-        (if lookupFragments then Vector("scalar fragments sample one filtered lookup table per surface; native texture filtering softens threshold edges over the per-pixel scalar footprint") else Vector.empty)
+        (if lookupFragments then Vector("scalar fragments sample one filtered lookup table per surface; native texture filtering softens threshold edges over the per-pixel scalar footprint") else Vector.empty) ++
+        (if faceFragments then Vector("scalar fragments are flattened to one colour per face (the fragment colour at the face centroid); there is no in-face interpolation") else Vector.empty)
     )
 
 object JavaFxCapabilityReport:
@@ -201,7 +206,7 @@ final class JavaFxSurfaceBackend private (
 
   private def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedSurface] =
     approximationConfig match
-      case None => JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding.lookup).map(_ => JavaFxPreparedSurface(plan, None))
+      case None => JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding.scalarSamples).map(_ => JavaFxPreparedSurface(plan, None))
       case Some(settings) =>
         def signature(value: SurfaceRenderPlan): (Vector[SurfaceResourceKey], Vector[SurfaceResourceKey], Vector[(SurfaceResourceKey, Double, DisplayBlendMode, SurfaceLayerCoverage)], SurfaceLighting, Set[SurfaceId]) =
           (value.receipt.meshKeys, value.meshes.map(_.geometryKey),
@@ -218,7 +223,7 @@ final class JavaFxSurfaceBackend private (
 
   private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val plan = prepared.plan
-    JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding.lookup).flatMap(_ => requireFxThread()).flatMap: _ =>
+    JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding.scalarSamples).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
@@ -389,7 +394,7 @@ object JavaFxSurfaceBackend:
     if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
       "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
     else if !lookup && (plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty)) then
-      Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend or the ScalarLutInterpolated encoding"))
+      Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend, the ScalarLutInterpolated or the FaceTexelFlat encoding"))
     else plan.clipping match
       case SurfaceClipping.WorldPlanes(_) =>
         Left(JavaFxSurfaceError.IncompatiblePlan(
@@ -401,7 +406,8 @@ object JavaFxSurfaceBackend:
     if !Platform.isFxApplicationThread then
       Left(JavaFxSurfaceError.IncompatiblePlan("JavaFX backend creation must run on the Application Thread"))
     else
-      Right(new JavaFxSurfaceBackend(new Group(), JavaFxCapabilityReport.current.copy(lookupFragments = config.encoding.lookup), config))
+      Right(new JavaFxSurfaceBackend(new Group(), JavaFxCapabilityReport.current.copy(lookupFragments = config.encoding.lookup,
+        faceFragments = config.encoding.faceTexels > 0), config))
 
 
   /** Opt-in scalar and mixed-layer rendering with a checked geometry error bound.
