@@ -31,12 +31,22 @@ class SurfaceFaceTexelsSuite extends munit.FunSuite:
       faces(cell * 6 + 3) = a; faces(cell * 6 + 4) = a + n + 2; faces(cell * 6 + 5) = a + n + 1
     SurfaceGeometry(TriangleMesh.fromArrays(coordinates, faces), Hemisphere.Left, SurfaceKind.Inflated)
 
-  private def compiled(geometry: SurfaceGeometry, values: Array[Double], sulc: Array[Double]): SurfaceRenderPlan =
-    val under = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("sulc"), surface, geometry, sulc, binary).toOption.get
-    val over = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("map"), surface, geometry, values, onset,
+  private def compiled(geometry: SurfaceGeometry, values: Array[Double], sulc: Array[Double],
+      reduction: SurfaceFaceReduction = SurfaceFaceReduction.Mean): SurfaceRenderPlan =
+    val under = SurfaceLayer.faceFlatScalar(SurfaceLayerId.unsafe("sulc"), surface, geometry, sulc, binary, SurfaceFaceReduction.Mean).toOption.get
+    val over = SurfaceLayer.faceFlatScalar(SurfaceLayerId.unsafe("map"), surface, geometry, values, onset, reduction,
       opacity = opacity).toOption.get
     val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(under, over)).toOption.get
     SurfaceCompiler.compile(model, SurfaceFaceFixture.state(model)).toOption.get
+
+  /** Max-magnitude corner written out from the declared rule. */
+  private def maxCorner(x: Double, y: Double, z: Double): Double =
+    val finite = Vector(x, y, z).filter(_.isFinite)
+    if finite.isEmpty then Double.NaN
+    else
+      val top = finite.map(math.abs).max
+      val tied = finite.filter(v => math.abs(v) == top)
+      tied.max
 
   /** The declared rule written out directly from the recipe, without the fragment evaluator. */
   private def expected(a: Int, b: Int, c: Int, values: Array[Double], sulc: Array[Double]): Rgba32 =
@@ -161,3 +171,82 @@ class SurfaceFaceTexelsSuite extends munit.FunSuite:
     val short = plan.copy(layers = plan.layers.map(layer =>
       layer.copy(scalarField = layer.scalarField.map(field => new SurfaceScalarPacket(new DoubleBufferView(Array(0.5)), field.mapping)))))
     assert(SurfaceFaceTexels.colors(short, mesh).left.toOption.exists(_.isInstanceOf[SurfaceFaceTexelError.SampleDomainMismatch]))
+
+  test("layers declaring vertex interpolation are refused: face texels never stand in for an interpolated field"):
+    val geometry = grid(2)
+    val interpolated = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("map"), surface, geometry, Array.fill(9)(0.5), onset).toOption.get
+    val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(interpolated)).toOption.get
+    val plan = SurfaceCompiler.compile(model, SurfaceFaceFixture.state(model)).toOption.get
+    assertEquals(SurfaceFaceTexels.colors(plan, plan.meshes.head),
+      Left(SurfaceFaceTexelError.InterpolatedLayer(SurfaceLayerId.unsafe("map"), SurfaceMapInterpolation.VertexScalar)))
+    val packed = SurfaceLayer.packedRgba(SurfaceLayerId.unsafe("rgb"), surface, geometry, Vector.fill(9)(sulcal)).toOption.get
+    val colourModel = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(packed)).toOption.get
+    val colourPlan = SurfaceCompiler.compile(colourModel, SurfaceFaceFixture.state(colourModel)).toOption.get
+    assert(SurfaceFaceTexels.colors(colourPlan, colourPlan.meshes.head).left.toOption.exists(_.isInstanceOf[SurfaceFaceTexelError.InterpolatedLayer]))
+
+  test("max-magnitude faces take their largest finite corner, positive on a tie, and ignore missing corners"):
+    val r = SurfaceFaceReduction.MaxMagnitude
+    assertEqualsDouble(r.reduce(0.1, -0.7, 0.5), -0.7, 0.0)
+    assertEqualsDouble(r.reduce(0.3, -0.3, 0.1), 0.3, 0.0)
+    assertEqualsDouble(r.reduce(-0.3, 0.3, 0.1), 0.3, 0.0)
+    assertEqualsDouble(r.reduce(Double.NaN, 0.2, -0.1), 0.2, 0.0)
+    assertEqualsDouble(r.reduce(Double.NaN, Double.PositiveInfinity, -0.4), -0.4, 0.0)
+    assert(r.reduce(Double.NaN, Double.NaN, Double.NaN).isNaN)
+    // Mean keeps the interpolated reference's rule: any missing corner hides the face.
+    assert(SurfaceFaceReduction.Mean.reduce(Double.NaN, 0.2, 0.3).isNaN)
+    assertEqualsDouble(SurfaceFaceReduction.Mean.reduce(0.3, 0.3, 0.3), 0.3, 0.0)
+    val random = new scala.util.Random(3)
+    for _ <- 0 until 2000 do
+      val v = Vector.fill(3)(if random.nextInt(9) == 0 then Double.NaN else math.round((random.nextDouble() * 2 - 1) * 8) / 8.0)
+      val expected = maxCorner(v(0), v(1), v(2))
+      val actual = r.reduce(v(0), v(1), v(2))
+      assert(actual == expected || (actual.isNaN && expected.isNaN), s"$v: $actual vs $expected")
+
+  test("a max-magnitude face is coloured when any finite corner reaches the cutoff; below-cutoff and all-missing show the underlay"):
+    val geometry = grid(1)
+    val underGyral = DisplayBlendMode.Normal.composite(SurfaceFaceTexels.Base, gyral, DisplayOpacity.Opaque)
+    val underSulcal = DisplayBlendMode.Normal.composite(SurfaceFaceTexels.Base, sulcal, DisplayOpacity.Opaque)
+    def faces(values: Array[Double], sulc: Array[Double]): Vector[Rgba32] =
+      val plan = compiled(geometry, values, sulc, SurfaceFaceReduction.MaxMagnitude)
+      SurfaceFaceTexels.colors(plan, plan.meshes.head).toOption.get.toVector.map(Rgba32.fromPackedInt)
+    // Faces (0, 1, 3) and (0, 3, 2); curvature means -0.3 (gyral) and +0.067 (sulcal).
+    val sulc = Array(-0.4, -0.2, 0.9, -0.3)
+    // A single corner above the cutoff colours both faces that touch it (the mean rule hides face (0, 1, 3)).
+    val single = faces(Array(0.05, 0.1, 0.0, 0.3), sulc)
+    assertEquals(single, Vector(DisplayBlendMode.Normal.composite(underGyral, onset.color(0.3), opacity),
+      DisplayBlendMode.Normal.composite(underSulcal, onset.color(0.3), opacity)))
+    // Opposite signs: the larger magnitude sets the hue.
+    val mixed = faces(Array(0.6, -0.8, 0.0, 0.1), sulc)
+    assertEquals(mixed(0), DisplayBlendMode.Normal.composite(underGyral, onset.color(-0.8), opacity))
+    assertEquals(mixed(1), DisplayBlendMode.Normal.composite(underSulcal, onset.color(0.6), opacity))
+    // Missing corners are excluded rather than hiding the face.
+    val missing = faces(Array(Double.NaN, Double.NaN, 0.5, Double.NaN), sulc)
+    assertEquals(missing, Vector(underGyral, DisplayBlendMode.Normal.composite(underSulcal, onset.color(0.5), opacity)))
+    // Every corner below the cutoff: the underlay, never grey.
+    assertEquals(faces(Array(0.2, -0.24, 0.1, 0.0), sulc), Vector(underGyral, underSulcal))
+
+  test("the lowered rule composes every face exactly as the fragment evaluator does for that face"):
+    val n = 9
+    val geometry = grid(n)
+    val random = new scala.util.Random(99)
+    val vertices = (n + 1) * (n + 1)
+    for reduction <- SurfaceFaceReduction.values do
+      val values = Array.tabulate(vertices)(i => if i % 11 == 3 then Double.NaN else random.nextDouble() * 2 - 1)
+      val sulc = Array.tabulate(vertices)(_ => random.nextDouble() * 2 - 1)
+      val plan = compiled(geometry, values, sulc, reduction)
+      assert(plan.fragmentSurfaces(surface))
+      assertEquals(plan.layers.map(_.interpolation), Vector(SurfaceMapInterpolation.FaceScalarMean, reduction.policy))
+      val mesh = plan.meshes.head
+      val colors = SurfaceFaceTexels.colors(plan, mesh).toOption.get
+      val evaluator = new SurfaceFragmentEvaluator(mesh, plan.layers, SurfaceLighting.Unlit, SurfaceFaceTexels.Base)
+      for face <- colors.indices; (wa, wb) <- Vector((1.0 / 3, 1.0 / 3), (0.9, 0.05), (0.0, 0.0)) do
+        val (a, b, c) = (mesh.indices(face * 3), mesh.indices(face * 3 + 1), mesh.indices(face * 3 + 2))
+        // Flat: every point of the face evaluates to the face colour.
+        assertEquals(evaluator.color(face, a, b, c, wa, wb, 1.0 - wa - wb).toPackedInt, colors(face), s"$reduction face $face")
+        if wa == 1.0 / 3 then
+          val expectedValue = if reduction == SurfaceFaceReduction.Mean then
+            (if Vector(values(a), values(b), values(c)).forall(_.isFinite) then (values(a) + values(b) + values(c)) / 3 else Double.NaN)
+          else maxCorner(values(a), values(b), values(c))
+          val direct = DisplayBlendMode.Normal.composite(DisplayBlendMode.Normal.composite(SurfaceFaceTexels.Base,
+            binary.color(Vector(sulc(a), sulc(b), sulc(c)).sum / 3), DisplayOpacity.Opaque), onset.color(expectedValue), opacity)
+          assert(distance(Rgba32.fromPackedInt(colors(face)), direct) <= 1, s"$reduction face $face")

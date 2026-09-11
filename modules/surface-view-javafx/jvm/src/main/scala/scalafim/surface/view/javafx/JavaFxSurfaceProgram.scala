@@ -123,11 +123,11 @@ final case class JavaFxCapabilityReport(
       SurfacePlanRevision.Current,
       available ++ (if scene3d && (approximateFragments || lookupFragments) then Set(SurfaceBackendFeature.ScalarInterpolation, SurfaceBackendFeature.FragmentComposition)
         // Flat faces compose layers but do not interpolate scalars within a face.
-        else if scene3d && faceFragments then Set(SurfaceBackendFeature.FragmentComposition) else Set.empty),
+        else if scene3d && faceFragments then Set(SurfaceBackendFeature.FragmentComposition, SurfaceBackendFeature.FaceFlatScalar) else Set.empty),
       fallback.toVector ++ Vector("world clipping planes are not yet supported") ++
         (if approximateFragments then Vector("scalar/layer fragments use opt-in bounded constant-color geometry; boundary coverage and native rounding are separate from the color certificate") else Vector.empty) ++
         (if lookupFragments then Vector("scalar fragments sample one filtered lookup table per surface; native texture filtering softens threshold edges over the per-pixel scalar footprint") else Vector.empty) ++
-        (if faceFragments then Vector("scalar fragments are flattened to one colour per face (the fragment colour at the face centroid); there is no in-face interpolation") else Vector.empty)
+        (if faceFragments then Vector("face-flat scalar layers show one colour per face from their declared reduction (mean or max-magnitude); vertex-interpolated scalar layers are refused") else Vector.empty)
     )
 
 object JavaFxCapabilityReport:
@@ -173,7 +173,10 @@ final case class JavaFxInterpretReceipt(
   geometryBytesUpdated: Long,
   elapsedNanos: Long,
   approximation: Option[JavaFxApproximationReceipt] = None,
-  textureCoordinateBytesUpdated: Long = 0L
+  textureCoordinateBytesUpdated: Long = 0L,
+  faceReductionNanos: Long = 0L,
+  faceEvaluationNanos: Long = 0L,
+  textureWriteNanos: Long = 0L
 )
 
 final case class JavaFxObservedReceipt(
@@ -206,7 +209,7 @@ final class JavaFxSurfaceBackend private (
 
   private def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedSurface] =
     approximationConfig match
-      case None => JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding.scalarSamples).map(_ => JavaFxPreparedSurface(plan, None))
+      case None => JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding).map(_ => JavaFxPreparedSurface(plan, None))
       case Some(settings) =>
         def signature(value: SurfaceRenderPlan): (Vector[SurfaceResourceKey], Vector[SurfaceResourceKey], Vector[(SurfaceResourceKey, Double, DisplayBlendMode, SurfaceLayerCoverage)], SurfaceLighting, Set[SurfaceId]) =
           (value.receipt.meshKeys, value.meshes.map(_.geometryKey),
@@ -223,7 +226,7 @@ final class JavaFxSurfaceBackend private (
 
   private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val plan = prepared.plan
-    JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding.scalarSamples).flatMap(_ => requireFxThread()).flatMap: _ =>
+    JavaFxSurfaceBackend.validateCapabilities(plan, config.encoding).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
@@ -244,6 +247,9 @@ final class JavaFxSurfaceBackend private (
         var geometryUpdates = 0
         var geometryBytesUpdated = 0L
         var textureCoordinateBytesUpdated = 0L
+        var faceReductionNanos = 0L
+        var faceEvaluationNanos = 0L
+        var textureWriteNanos = 0L
         var index = 0
         var failure: Option[JavaFxSurfaceError] = None
         while index < program.commands.length && failure.isEmpty do
@@ -270,6 +276,9 @@ final class JavaFxSurfaceBackend private (
                 case Right(receipt) =>
                   atlasUpdates += receipt.atlasesUpdated
                   textureCoordinateBytesUpdated += receipt.textureCoordinateBytesUpdated
+                  faceReductionNanos += receipt.reductionNanos
+                  faceEvaluationNanos += receipt.evaluationNanos
+                  textureWriteNanos += receipt.textureWriteNanos
             case JavaFxSurfaceCommand.UpdateMaterial(mode) =>
               current.foreach(_.setMaterialMode(mode))
             case JavaFxSurfaceCommand.UpdateCamera(next) =>
@@ -292,7 +301,10 @@ final class JavaFxSurfaceBackend private (
               geometryBytesUpdated,
               System.nanoTime() - started,
               prepared.approximation,
-              textureCoordinateBytesUpdated
+              textureCoordinateBytesUpdated,
+              faceReductionNanos,
+              faceEvaluationNanos,
+              textureWriteNanos
             ))
 
   def renderObserved(
@@ -390,11 +402,27 @@ final class JavaFxSurfaceBackend private (
     else Left(JavaFxSurfaceError.IncompatiblePlan("JavaFX interpreter must run on the Application Thread"))
 
 object JavaFxSurfaceBackend:
-  private[javafx] def validateCapabilities(plan: SurfaceRenderPlan, lookup: Boolean = false): Either[JavaFxSurfaceError, Unit] =
+  /** Each encoding shows exactly what the plan declares: face texels accept only
+    * face-flat scalar and face-constant layers, the lookup table only interpolated
+    * scalars, and final-colour atlases no scalar fragment layers at all.
+    */
+  private[javafx] def encodingRefusal(plan: SurfaceRenderPlan, encoding: JavaFxAtlasEncoding): Option[JavaFxSurfaceError] =
+    def refuse(reason: String): Option[JavaFxSurfaceError] = Some(JavaFxSurfaceError.IncompatiblePlan(reason))
+    if encoding.faceTexels > 0 then
+      plan.layers.find(layer => !layer.interpolation.faceFlat && layer.interpolation != SurfaceMapInterpolation.FaceConstant)
+        .flatMap(layer => refuse(s"$encoding shows one colour per face; layer '${layer.layer.value}' declares ${layer.interpolation}, not a face-flat policy"))
+    else if encoding.lookup then
+      plan.layers.find(_.interpolation.faceFlat)
+        .flatMap(layer => refuse(s"ScalarLutInterpolated interpolates vertex scalars; layer '${layer.layer.value}' declares ${layer.interpolation}"))
+    else if plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation.scalar || layer.scalarField.nonEmpty) then
+      refuse("scalar fragment interpolation has not been admitted for this JavaFX encoding; use the reference raster backend, ScalarLutInterpolated for interpolated scalars or FaceTexelFlat for face-flat scalars")
+    else None
+
+  private[javafx] def validateCapabilities(plan: SurfaceRenderPlan,
+      encoding: JavaFxAtlasEncoding = JavaFxAtlasEncoding.LegacyTriangle): Either[JavaFxSurfaceError, Unit] =
     if !plan.validCameras then Left(JavaFxSurfaceError.IncompatiblePlan(
       "camera packets must be finite 4x4 matrices, reference visible surfaces and share a projection"))
-    else if !lookup && (plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty)) then
-      Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation has not been admitted for JavaFX; use the reference raster backend, the ScalarLutInterpolated or the FaceTexelFlat encoding"))
+    else if encodingRefusal(plan, encoding).nonEmpty then Left(encodingRefusal(plan, encoding).get)
     else plan.clipping match
       case SurfaceClipping.WorldPlanes(_) =>
         Left(JavaFxSurfaceError.IncompatiblePlan(

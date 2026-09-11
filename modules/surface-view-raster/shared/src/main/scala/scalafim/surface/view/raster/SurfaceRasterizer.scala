@@ -89,6 +89,7 @@ object SurfaceRasterizer:
       SurfaceBackendFeature.NearestVertexSampling,
       SurfaceBackendFeature.ScalarInterpolation,
       SurfaceBackendFeature.FragmentComposition,
+      SurfaceBackendFeature.FaceFlatScalar,
       SurfaceBackendFeature.Lighting,
       SurfaceBackendFeature.DepthBuffer,
       SurfaceBackendFeature.BackFaceCulling,
@@ -173,7 +174,7 @@ object SurfaceRasterizer:
       SurfaceRasterObservedResult(result, observation)
 
   private def validatePlan(plan: SurfaceRenderPlan): Either[SurfaceRasterError, Unit] =
-    if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar) != layer.scalarField.nonEmpty) then
+    if plan.layers.exists(layer => layer.interpolation.scalar != layer.scalarField.nonEmpty) then
       Left(SurfaceRasterError.InvalidPlan("scalar policy and payload disagree"))
     else if plan.layers.exists(layer => layer.scalarField.nonEmpty && !plan.fragmentSurfaces(layer.surface)) then
       Left(SurfaceRasterError.InvalidPlan("scalar interpolation requires fragment composition"))

@@ -84,7 +84,7 @@ object SurfaceFragmentApproximation:
     var layerIndex = 0
     while layerIndex < layers.length do
       val layer = layers(layerIndex)
-      if layer.interpolation == SurfaceMapInterpolation.VertexScalar then
+      if layer.interpolation.scalar then
         if layer.scalarField.isEmpty then return Left(SurfaceApproximationError.MissingScalarField(layer.layer))
       else
         val expected = if layer.interpolation == SurfaceMapInterpolation.FaceConstant then faceCount else vertexCount
@@ -256,6 +256,9 @@ object SurfaceFragmentApproximation:
         corners.map(w => SurfaceFragmentEvaluator.interpolateColor(colors(a), colors(b), colors(c), w.a, w.b, w.c))
       case SurfaceMapInterpolation.NearestVertex =>
         Vector(Rgba32.fromPackedInt(layer.sampleColors.get(SurfaceNearestPartition.nearestVertex(a, b, c, center.a, center.b, center.c))))
+      case SurfaceMapInterpolation.FaceScalarMean | SurfaceMapInterpolation.FaceScalarMaxMagnitude =>
+        val field = layer.scalarField.get
+        Vector(field.mapping.color(layer.interpolation.faceReduction.get.reduce(field.samples(a), field.samples(b), field.samples(c))))
       case SurfaceMapInterpolation.FaceConstant => Vector(Rgba32.fromPackedInt(layer.sampleColors.get(t.sourceFace)))
     SurfaceColorBounds(Rgba32.unsafe(colors.map(_.red).min, colors.map(_.green).min, colors.map(_.blue).min, colors.map(_.alpha).min),
       Rgba32.unsafe(colors.map(_.red).max, colors.map(_.green).max, colors.map(_.blue).max, colors.map(_.alpha).max))

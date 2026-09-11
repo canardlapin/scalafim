@@ -86,7 +86,8 @@ object SurfaceCompiler:
               expanded(corner) = layer.interpolation match
                 case SurfaceMapInterpolation.FaceConstant => samples(mesh.sourceFace(corner / 3))
                 case SurfaceMapInterpolation.NearestVertex => samples(source(corner))
-                case SurfaceMapInterpolation.VertexColor | SurfaceMapInterpolation.VertexScalar => samples(source(corner))
+                case SurfaceMapInterpolation.VertexColor | SurfaceMapInterpolation.VertexScalar |
+                    SurfaceMapInterpolation.FaceScalarMean | SurfaceMapInterpolation.FaceScalarMaxMagnitude => samples(source(corner))
               corner += 1
             expanded
         val scalarSamples = layer.scalarSamples(state.timepoint)
@@ -587,6 +588,7 @@ object SurfaceCompiler:
       hash = MurmurHash3.mix(hash, MurmurHash3.stringHash(mapping.canonicalKey))
     if layer.association == SurfaceSampleAssociation.Face then hash = MurmurHash3.mix(hash, 0xface)
     if layer.interpolation == SurfaceMapInterpolation.NearestVertex then hash = MurmurHash3.mix(hash, 0x6ea2)
+    layer.interpolation.faceReduction.foreach(reduction => hash = MurmurHash3.mix(hash, 0xfa00 + reduction.ordinal + 1))
     scalarSamples.foreach: values =>
       hash = MurmurHash3.mix(hash, 0x5ca1)
       var sample = 0

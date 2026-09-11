@@ -6,6 +6,7 @@ enum SurfaceFaceTexelError:
   case InvalidLayout(faces: Int, texelsPerFace: Int, maxTextureSize: Int)
   case GeneratedCorners(surface: SurfaceId)
   case SampleDomainMismatch(layer: SurfaceLayerId, expected: Int, actual: Int)
+  case InterpolatedLayer(layer: SurfaceLayerId, policy: SurfaceMapInterpolation)
 
   def message: String = this match
     case InvalidLayout(faces, texels, max) =>
@@ -14,6 +15,8 @@ enum SurfaceFaceTexelError:
       s"surface '${surface.value}' renders generated corners or partitions; flat face texels need the scientific faces"
     case SampleDomainMismatch(layer, expected, actual) =>
       s"layer '${layer.value}' has $actual samples for $expected render elements"
+    case InterpolatedLayer(layer, policy) =>
+      s"layer '${layer.value}' declares $policy; flat face texels show one colour per face and accept only face-flat scalar or face-constant layers"
 
 /** Row-major placement of one square block of texels per face in one texture.
   *
@@ -59,53 +62,94 @@ object SurfaceFaceTexelLayout:
 
 /** The flat per-face colour rule.
   *
-  * A face shows the unlit colour the portable fragment evaluator produces at
-  * its centroid. Each vertex-scalar layer therefore applies its mapping to the
-  * mean of the face's three samples; a face with any non-finite sample is
-  * missing for that layer, exactly as in the interpolated reference (so flat
-  * and interpolated coverage agree); vertex-colour layers contribute their
-  * channel mean and face-constant layers their face sample. Layers composite in
-  * plan order over the neutral base. With the application's recipe this gives
-  * saturated colour from the cutoff onward and the curvature underlay, which
-  * follows the sign of the face's mean curvature, wherever the overlay is below
-  * the cutoff or missing; never a flat grey. Lighting is not part of the colour:
-  * the native renderer shades each pixel from the interpolated vertex normals.
+  * Face texels show exactly what the plan declares: face-flat scalar layers
+  * ([[SurfaceMapInterpolation.FaceScalarMean]], [[SurfaceMapInterpolation.FaceScalarMaxMagnitude]])
+  * contribute their mapping of the face's reduced value, face-constant layers
+  * their face sample, and layers composite in plan order over the neutral base,
+  * with coverage, exactly as [[SurfaceFragmentEvaluator]] composes a fragment of
+  * that face (unlit). Layers that declare vertex interpolation are refused, so a
+  * plan never claims an interpolated field while showing face colours. Lighting
+  * is not part of the colour: the native renderer shades each pixel.
   */
-/** One surface's lowered face rule. `write` is pure: disjoint face ranges may be
-  * evaluated concurrently into the same target array.
-  */
-final class SurfaceFaceColorRule private[view] (val faceCount: Int, evaluator: SurfaceFragmentEvaluator, indices: IntBufferView):
-  private val third = 1.0 / 3.0
+final class SurfaceFaceColorRule private[view] (val faceCount: Int, base: Rgba32, layers: Vector[SurfaceFaceTexels.FaceLayer]):
+  private val ops = layers.toArray
+  private val transparent = Rgba32.unsafe(0, 0, 0, 0)
 
+  /** Pure: disjoint face ranges may be evaluated concurrently into one target. */
   def write(target: Array[Int], from: Int, until: Int): Unit =
     require(from >= 0 && until <= faceCount && target.length >= faceCount, "face range outside the rule")
     var face = from
     while face < until do
-      val offset = face * 3
-      target(face) = evaluator.color(face, indices(offset), indices(offset + 1), indices(offset + 2), third, third, third).toPackedInt
+      var composed = base
+      var index = 0
+      while index < ops.length do
+        val op = ops(index)
+        val over = if !op.coverage.contains(face) then transparent else op.color(face)
+        composed = op.blendMode.composite(composed, over, op.opacity)
+        index += 1
+      target(face) = composed.toPackedInt
       face += 1
 
 object SurfaceFaceTexels:
   val Base: Rgba32 = Rgba32.unsafe(184, 184, 184)
 
-  def lower(plan: SurfaceRenderPlan, mesh: SurfaceMeshPacket, base: Rgba32 = Base): Either[SurfaceFaceTexelError, SurfaceFaceColorRule] =
+  private[view] sealed trait FaceLayer:
+    def coverage: SurfaceLayerCoverage
+    def blendMode: DisplayBlendMode
+    def opacity: DisplayOpacity
+    def color(face: Int): Rgba32
+
+  private final class ScalarFaces(values: Array[Double], mapping: ScalarMapping, val coverage: SurfaceLayerCoverage,
+      val blendMode: DisplayBlendMode, val opacity: DisplayOpacity) extends FaceLayer:
+    def color(face: Int): Rgba32 = mapping.color(values(face))
+
+  private final class ConstantFaces(colors: IntBufferView, val coverage: SurfaceLayerCoverage,
+      val blendMode: DisplayBlendMode, val opacity: DisplayOpacity) extends FaceLayer:
+    def color(face: Int): Rgba32 = Rgba32.fromPackedInt(colors(face))
+
+  /** Reduce one layer's samples face by face into `target[from, until)`. Pure. */
+  def reduceInto(reduction: SurfaceFaceReduction, samples: DoubleBufferView, indices: IntBufferView,
+      target: Array[Double], from: Int, until: Int): Unit =
+    var face = from
+    while face < until do
+      val offset = face * 3
+      target(face) = reduction.reduce(samples(indices(offset)), samples(indices(offset + 1)), samples(indices(offset + 2)))
+      face += 1
+
+  def reduce(reduction: SurfaceFaceReduction, samples: DoubleBufferView, indices: IntBufferView): Array[Double] =
+    val out = new Array[Double](indices.length / 3)
+    reduceInto(reduction, samples, indices, out, 0, out.length)
+    out
+
+  /** Validate one surface's layers and lower them to a face rule. `reduced` supplies the
+    * per-face values of a validated face-flat layer (for example from a cache); it is
+    * called only after every layer has been validated.
+    */
+  def lower(plan: SurfaceRenderPlan, mesh: SurfaceMeshPacket, base: Rgba32 = Base,
+      reduced: Option[SurfaceLayerPacket => Array[Double]] = None): Either[SurfaceFaceTexelError, SurfaceFaceColorRule] =
     if mesh.sourceVertices.nonEmpty || mesh.constantPartition.nonEmpty || mesh.nearestPartition.nonEmpty then
-      Left(SurfaceFaceTexelError.GeneratedCorners(mesh.surface))
-    else
-      val vertices = mesh.positions.length / 3
-      val faces = mesh.indices.length / 3
-      // Non-fragment surfaces carry render-vertex colours only; with no generated
-      // corners those are the scientific vertex samples.
-      val layers = plan.layers.filter(_.surface == mesh.surface).map: layer =>
-        if layer.sampleColors.nonEmpty then layer else layer.copy(sampleColors = Some(layer.colors))
-      val mismatch = layers.iterator.map: layer =>
-        val (expected, actual) = layer.interpolation match
-          case SurfaceMapInterpolation.VertexScalar => (vertices, layer.scalarField.fold(-1)(_.samples.length))
-          case SurfaceMapInterpolation.FaceConstant => (faces, layer.sampleColors.get.length)
-          case SurfaceMapInterpolation.VertexColor | SurfaceMapInterpolation.NearestVertex => (vertices, layer.sampleColors.get.length)
-        Option.when(expected != actual)(SurfaceFaceTexelError.SampleDomainMismatch(layer.layer, expected, actual))
-      .collectFirst { case Some(error) => error }
-      mismatch.toLeft(new SurfaceFaceColorRule(faces, new SurfaceFragmentEvaluator(mesh, layers, SurfaceLighting.Unlit, base), mesh.indices))
+      return Left(SurfaceFaceTexelError.GeneratedCorners(mesh.surface))
+    val vertices = mesh.positions.length / 3
+    val faces = mesh.indices.length / 3
+    val layers = plan.layers.filter(_.surface == mesh.surface)
+    val refusal = layers.iterator.map: layer =>
+      layer.interpolation match
+        case policy if policy.faceFlat =>
+          val actual = layer.scalarField.fold(-1)(_.samples.length)
+          Option.when(actual != vertices)(SurfaceFaceTexelError.SampleDomainMismatch(layer.layer, vertices, actual))
+        case SurfaceMapInterpolation.FaceConstant =>
+          val actual = layer.sampleColors.fold(-1)(_.length)
+          Option.when(actual != faces)(SurfaceFaceTexelError.SampleDomainMismatch(layer.layer, faces, actual))
+        case policy => Some(SurfaceFaceTexelError.InterpolatedLayer(layer.layer, policy))
+    .collectFirst { case Some(error) => error }
+    refusal.toLeft:
+      val values = reduced.getOrElse((layer: SurfaceLayerPacket) =>
+        reduce(layer.interpolation.faceReduction.get, layer.scalarField.get.samples, mesh.indices))
+      val ops = layers.map: layer =>
+        if layer.interpolation.faceFlat then
+          new ScalarFaces(values(layer), layer.scalarField.get.mapping, layer.coverage, layer.blendMode, layer.opacity)
+        else new ConstantFaces(layer.sampleColors.get, layer.coverage, layer.blendMode, layer.opacity)
+      new SurfaceFaceColorRule(faces, base, ops)
 
   def colors(plan: SurfaceRenderPlan, mesh: SurfaceMeshPacket, base: Rgba32 = Base): Either[SurfaceFaceTexelError, Array[Int]] =
     lower(plan, mesh, base).map: rule =>

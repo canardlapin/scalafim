@@ -16,7 +16,7 @@ object JavaFxFaceTexelTiming:
     val inputsDir = Path.of(System.getProperty("probe.inputs", "/Users/bbuchsbaum/code/scala/plsneuro-fixtures/spike-lut-1/inputs"))
     val inputs = JavaFxScalarLutCortexProbe.load(inputsDir, scene)
     val over = JavaFxScalarLutCortexProbe.overlayMapping(inputs.range, inputs.cutoff)
-    val plan = JavaFxFaceTexelCortexProbe.scalarPlan(inputs, inputs.values, over, SurfaceLighting.Unlit)
+    val plan = JavaFxFaceTexelCortexProbe.facePlan(inputs, inputs.values, over, SurfaceLighting.Unlit, SurfaceFaceReduction.Mean)
     def median(values: Seq[Double]): Double = values.sorted.apply(values.length / 2)
     def time(body: => Unit): Double =
       val s = System.nanoTime(); body; (System.nanoTime() - s) / 1e6

@@ -136,7 +136,14 @@ object SurfaceSceneCodec:
         case SurfaceVertexInterpolation.Color => "color"
         case SurfaceVertexInterpolation.NearestSample => "nearest-sample")) ++ Option.when(revision.value >= 4)(
       "scalarMappingKey" -> layer.scalarMappingKey.fold[SceneJson](SceneJson.Null)(SceneJson.Str.apply)) ++ Option.when(revision.value >= 5)(
-      "scalarInterpolation" -> SceneJson.Bool(layer.scalarInterpolation)))
+      "scalarInterpolation" -> SceneJson.Bool(layer.scalarInterpolation)) ++
+      // Optional: absent unless declared, so documents without face-flat layers are unchanged
+      // and readers that do not know the key refuse the document instead of misreading it.
+      layer.faceReduction.filter(_ => revision.value >= 7).map(reduction => "faceReduction" -> SceneJson.Str(faceReductionName(reduction))))
+
+  private def faceReductionName(reduction: SurfaceFaceReduction): String = reduction match
+    case SurfaceFaceReduction.Mean => "mean"
+    case SurfaceFaceReduction.MaxMagnitude => "max-magnitude"
 
   private def layoutJson(layout: SurfaceLayout): SceneJson =
     layout match
@@ -266,7 +273,8 @@ object SurfaceSceneCodec:
     for
       obj <- SceneJsonRead.obj(value, path, Set("id", "surface", "uri", "sha256", "encoding", "frameCount", "blendMode") ++ Option.when(revision != SurfaceDocumentRevision.V1)("association") ++
         Option.when(revision.value >= 3)("vertexInterpolation") ++
-        Option.when(revision.value >= 4)("scalarMappingKey") ++ Option.when(revision.value >= 5)("scalarInterpolation"), policy)
+        Option.when(revision.value >= 4)("scalarMappingKey") ++ Option.when(revision.value >= 5)("scalarInterpolation") ++
+        Option.when(revision.value >= 7)("faceReduction"), policy)
       idRaw <- SceneJsonRead.string(obj, "id", s"$path.id")
       id <- SurfaceLayerId.make(idRaw).left.map(SurfaceSceneError.InvalidState.apply)
       surfaceRaw <- SceneJsonRead.string(obj, "surface", s"$path.surface")
@@ -298,7 +306,12 @@ object SurfaceSceneCodec:
           case _ => Left(SurfaceSceneError.InvalidJson(s"$path.scalarMappingKey", "expected a nonempty mapping key or null"))
       scalarInterpolation <- if revision.value < 5 then Right(false)
         else SceneJsonRead.bool(obj, "scalarInterpolation", s"$path.scalarInterpolation")
-    yield SurfaceSceneLayer(id, surface, reference, encoding, frames, blend, association, interpolation, mappingKey, scalarInterpolation)
+      faceReduction <- obj.fields.toMap.get("faceReduction") match
+        case None => Right(None)
+        case Some(SceneJson.Str("mean")) => Right(Some(SurfaceFaceReduction.Mean))
+        case Some(SceneJson.Str("max-magnitude")) => Right(Some(SurfaceFaceReduction.MaxMagnitude))
+        case _ => Left(SurfaceSceneError.InvalidJson(s"$path.faceReduction", "expected mean or max-magnitude"))
+    yield SurfaceSceneLayer(id, surface, reference, encoding, frames, blend, association, interpolation, mappingKey, scalarInterpolation, faceReduction)
 
   private def parseReference(obj: SceneJson.Obj, path: String): Either[SurfaceSceneError, SurfaceExternalReference] =
     for

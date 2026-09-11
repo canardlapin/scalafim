@@ -49,6 +49,8 @@ enum SurfaceBackendFeature:
   case NearestVertexSampling
   case ScalarInterpolation
   case FragmentComposition
+  /** One flat colour per face from a declared reduction of vertex scalar samples. */
+  case FaceFlatScalar
 
 final case class SurfaceBackendCapabilities(
   id: SurfaceBackendId,

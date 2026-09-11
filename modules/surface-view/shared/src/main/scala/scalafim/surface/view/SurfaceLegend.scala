@@ -141,8 +141,9 @@ object SurfaceLegend:
     yield
       val sources = mappings.map((layer, mapping) => SurfaceLegendSource(layer.id, mapping.canonicalKey, layer.interpolation))
       val content = if split then SurfaceLegendContent.Split(legend) else SurfaceLegendContent.Continuous(legend)
-      val interpolationNote = if sources.exists(_.interpolation == SurfaceMapInterpolation.VertexColor) then
-        Vector("Mapped vertex colors interpolate between samples") else Vector.empty
+      val interpolationNote = (if sources.exists(_.interpolation == SurfaceMapInterpolation.VertexColor) then
+        Vector("Mapped vertex colors interpolate between samples") else Vector.empty) ++
+        (if sources.exists(_.interpolation.faceFlat) then Vector("Each face shows one colour from its declared reduction of the samples") else Vector.empty)
       finish(request, content, sources, legend.canonicalKey, legend.notes ++ interpolationNote ++
         Vector("Layer opacity and compositing can change displayed colors"))
 

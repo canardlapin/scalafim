@@ -71,6 +71,10 @@ final class SurfaceFragmentEvaluator(
               case Some(coordinate) =>
                 val segment = field.mapping.scale.segments(coordinate.segment)
                 segment.ramp.colorAt(segment.window.normalize(value))
+        case SurfaceMapInterpolation.FaceScalarMean | SurfaceMapInterpolation.FaceScalarMaxMagnitude =>
+          // Flat per face: the declared reduction ignores the fragment's position.
+          val field = layer.scalarField.get
+          field.mapping.color(layer.interpolation.faceReduction.get.reduce(field.samples(a), field.samples(b), field.samples(c)))
         case SurfaceMapInterpolation.FaceConstant => Rgba32.fromPackedInt(layer.sampleColors.get(face))
         case SurfaceMapInterpolation.NearestVertex =>
           val vertex = regionOwner.getOrElse(SurfaceNearestPartition.nearestVertex(a, b, c, wa, wb, wc))
@@ -94,7 +98,7 @@ final class SurfaceFragmentEvaluator(
 
 object SurfaceFragmentEvaluator:
   def required(policies: Iterable[SurfaceMapInterpolation]): Boolean =
-    policies.exists(_ == SurfaceMapInterpolation.VertexScalar) ||
+    policies.exists(policy => policy == SurfaceMapInterpolation.VertexScalar || policy.faceFlat) ||
       (policies.exists(_ == SurfaceMapInterpolation.VertexColor) && policies.exists(_ != SurfaceMapInterpolation.VertexColor))
 
   def interpolateColor(a: Int, b: Int, c: Int, wa: Double, wb: Double, wc: Double): Rgba32 =

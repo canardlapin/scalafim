@@ -19,6 +19,53 @@ enum SurfaceVertexInterpolation:
 
 enum SurfaceMapInterpolation:
   case VertexColor, FaceConstant, NearestVertex, VertexScalar
+  /** Raw vertex samples reduced to one value per face by a declared
+    * [[SurfaceFaceReduction]], then mapped: one flat colour per face. A plan with
+    * these policies never claims an interpolated scalar field.
+    */
+  case FaceScalarMean, FaceScalarMaxMagnitude
+
+  /** Layers under this policy carry raw scalar samples. */
+  def scalar: Boolean = this == VertexScalar || faceFlat
+  def faceFlat: Boolean = this == FaceScalarMean || this == FaceScalarMaxMagnitude
+  def faceReduction: Option[SurfaceFaceReduction] = this match
+    case FaceScalarMean => Some(SurfaceFaceReduction.Mean)
+    case FaceScalarMaxMagnitude => Some(SurfaceFaceReduction.MaxMagnitude)
+    case _ => None
+
+/** Declared reduction of a face's three vertex samples to its one flat value. */
+enum SurfaceFaceReduction:
+  /** The centroid value, i.e. the mean of the three samples. Any non-finite
+    * sample makes the face missing, exactly as the interpolated reference hides
+    * a face with a missing corner.
+    */
+  case Mean
+  /** The finite sample of largest magnitude about zero, keeping its sign.
+    * Non-finite samples are excluded; the face is missing only when all three
+    * are. On an exact magnitude tie between opposite signs the positive sample
+    * wins. With a transparent band below the cutoff a face is coloured exactly
+    * when one of its finite corners is at or beyond the cutoff.
+    */
+  case MaxMagnitude
+
+  def policy: SurfaceMapInterpolation = this match
+    case Mean => SurfaceMapInterpolation.FaceScalarMean
+    case MaxMagnitude => SurfaceMapInterpolation.FaceScalarMaxMagnitude
+
+  def reduce(a: Double, b: Double, c: Double): Double = this match
+    case Mean => SurfaceScalarInterpolation.value(a, b, c, SurfaceFaceReduction.Third, SurfaceFaceReduction.Third, SurfaceFaceReduction.Third)
+    case MaxMagnitude =>
+      var best = Double.NaN
+      def consider(value: Double): Unit =
+        if value.isFinite then
+          if best.isNaN || math.abs(value) > math.abs(best) || (math.abs(value) == math.abs(best) && value > best) then best = value
+      consider(a)
+      consider(b)
+      consider(c)
+      best
+
+object SurfaceFaceReduction:
+  private val Third = 1.0 / 3.0
 
 sealed trait SurfaceLayer:
   def id: SurfaceLayerId
@@ -175,7 +222,7 @@ object SurfaceLayer:
     override def supportsThreshold: Boolean = scalarMapping.nonEmpty || colorizer.supportsThreshold
 
     override private[view] def scalarSamples(timepoint: Int): Option[Array[Double]] =
-      if interpolation != SurfaceMapInterpolation.VertexScalar then None
+      if !interpolation.scalar then None
       else
         val frame = if frameCount == 1 then 0 else timepoint
         Some(Array.tabulate(sampleCount)(index => samples.value(index, frame, sampleCount)))
@@ -315,6 +362,24 @@ object SurfaceLayer:
     validateLength(geometry, frameCount, values.length).map: _ =>
       new ScalarLayer(id, surfaceId, geometry, frameCount, opacity, blendMode,
         ScalarSamples.Vertex(values.clone()), mapping.colorizer, SurfaceMapInterpolation.VertexScalar)
+
+  /** Reduce raw vertex samples to one value per face, then map: a flat colour per
+    * face under a declared reduction, never an interpolated field.
+    */
+  def faceFlatScalar(
+    id: SurfaceLayerId,
+    surfaceId: SurfaceId,
+    geometry: SurfaceGeometry,
+    values: Array[Double],
+    mapping: ScalarMapping,
+    reduction: SurfaceFaceReduction,
+    frameCount: Int = 1,
+    opacity: DisplayOpacity = DisplayOpacity.Opaque,
+    blendMode: DisplayBlendMode = DisplayBlendMode.Normal
+  ): Either[SurfaceViewError, SurfaceLayer] =
+    validateLength(geometry, frameCount, values.length).map: _ =>
+      new ScalarLayer(id, surfaceId, geometry, frameCount, opacity, blendMode,
+        ScalarSamples.Vertex(values.clone()), mapping.colorizer, reduction.policy)
 
   def curvatureUnderlay(
     id: SurfaceLayerId,

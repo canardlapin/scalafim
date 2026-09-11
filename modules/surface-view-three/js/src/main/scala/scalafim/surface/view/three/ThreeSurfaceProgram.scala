@@ -168,7 +168,9 @@ object ThreeSurfaceProgram:
     Right(ThreeSurfaceProgram(commands.result(), dirty, next.receipt))
 
   private def validate(plan: SurfaceRenderPlan): Either[ThreeSurfaceError, Unit] =
-    if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) && !plan.fragmentSurfaces(layer.surface)) then
+    if plan.layers.exists(_.interpolation.faceFlat) then
+      Left(ThreeSurfaceError.InvalidPlan("face-flat scalar layers are not supported by the three.js backend"))
+    else if plan.layers.exists(layer => (layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty) && !plan.fragmentSurfaces(layer.surface)) then
       Left(ThreeSurfaceError.InvalidPlan("scalar layer requires fragment surface semantics"))
     else if plan.slots.length != plan.meshes.length then
       Left(ThreeSurfaceError.InvalidPlan("slot and mesh counts differ"))

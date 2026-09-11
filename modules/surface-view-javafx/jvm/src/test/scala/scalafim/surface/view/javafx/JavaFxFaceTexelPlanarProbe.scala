@@ -82,7 +82,10 @@ object JavaFxFaceTexelPlanarProbe:
 
   final case class Built(viewer: SurfaceViewerModel, overlay: Array[Double], underlay: Option[Array[Double]], faces: Array[Int])
 
-  private def model(kase: Case): Built =
+  private def reduction: SurfaceFaceReduction =
+    if System.getProperty("probe.faceMode", "mean") == "max" then SurfaceFaceReduction.MaxMagnitude else SurfaceFaceReduction.Mean
+
+  private def model(kase: Case, faceFlat: Boolean = true): Built =
     val n = kase.n
     val vertices = (n + 1) * (n + 1)
     val coordinates = new Array[Double](vertices * 3)
@@ -111,9 +114,16 @@ object JavaFxFaceTexelPlanarProbe:
       faces(cell * 6 + 3) = a; faces(cell * 6 + 4) = a + n + 2; faces(cell * 6 + 5) = a + n + 1
       cell += 1
     val geometry = SurfaceGeometry(TriangleMesh.fromArrays(coordinates, faces), Hemisphere.Left, SurfaceKind.Inflated)
-    val layers = kase.underlay.toVector.map(_ => SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("underlay"), surface, geometry, underlay, kase.underlayMapping).toOption.get) :+
-      SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("overlay"), surface, geometry, overlay, kase.mapping,
-        opacity = DisplayOpacity.unsafe(kase.opacity)).toOption.get
+    val layers =
+      if faceFlat then
+        kase.underlay.toVector.map(_ => SurfaceLayer.faceFlatScalar(SurfaceLayerId.unsafe("underlay"), surface, geometry, underlay,
+          kase.underlayMapping, SurfaceFaceReduction.Mean).toOption.get) :+
+          SurfaceLayer.faceFlatScalar(SurfaceLayerId.unsafe("overlay"), surface, geometry, overlay, kase.mapping, reduction,
+            opacity = DisplayOpacity.unsafe(kase.opacity)).toOption.get
+      else
+        kase.underlay.toVector.map(_ => SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("underlay"), surface, geometry, underlay, kase.underlayMapping).toOption.get) :+
+          SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("overlay"), surface, geometry, overlay, kase.mapping,
+            opacity = DisplayOpacity.unsafe(kase.opacity)).toOption.get
     Built(SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), layers).toOption.get,
       overlay, kase.underlay.map(_ => underlay), faces)
 
@@ -121,11 +131,15 @@ object JavaFxFaceTexelPlanarProbe:
   private def directColors(kase: Case, built: Built): Array[Int] =
     def mean(samples: Array[Double], a: Int, b: Int, c: Int): Double =
       if samples(a).isFinite && samples(b).isFinite && samples(c).isFinite then (samples(a) + samples(b) + samples(c)) / 3 else Double.NaN
+    def maxCorner(samples: Array[Double], a: Int, b: Int, c: Int): Double =
+      val finite = Vector(samples(a), samples(b), samples(c)).filter(_.isFinite)
+      if finite.isEmpty then Double.NaN else finite.filter(x => math.abs(x) == finite.map(math.abs).max).max
     Array.tabulate(built.faces.length / 3): face =>
       val (a, b, c) = (built.faces(face * 3), built.faces(face * 3 + 1), built.faces(face * 3 + 2))
       val under = built.underlay.fold(base)(u =>
         DisplayBlendMode.Normal.composite(base, kase.underlayMapping.color(mean(u, a, b, c)), DisplayOpacity.Opaque))
-      DisplayBlendMode.Normal.composite(under, kase.mapping.color(mean(built.overlay, a, b, c)), DisplayOpacity.unsafe(kase.opacity)).toPackedInt
+      val value = if reduction == SurfaceFaceReduction.Mean then mean(built.overlay, a, b, c) else maxCorner(built.overlay, a, b, c)
+      DisplayBlendMode.Normal.composite(under, kase.mapping.color(value), DisplayOpacity.unsafe(kase.opacity)).toPackedInt
 
   private def channelError(a: Int, b: Int): Int =
     math.max(math.abs(((a >>> 24) & 255) - ((b >>> 24) & 255)),
@@ -263,24 +277,26 @@ object JavaFxFaceTexelPlanarProbe:
           require(ruleErrors.max <= 1, s"${kase.name}: face rule differs from the recipe by ${ruleErrors.max}")
           val colors = Map(surface -> rule)
           val style = SurfaceRasterStyle(culling = TriangleCulling.None)
+          val modeTag = if reduction == SurfaceFaceReduction.Mean then "mean" else "max"
           val one = SurfaceRasterizer.render(plan, RasterDimensions.unsafe(pixels, pixels), style).toOption.get
-          val four = SurfaceRasterizer.render(plan, RasterDimensions.unsafe(pixels * 4, pixels * 4), style).toOption.get
-          val (flatOne, _) = flat(one, pixels, pixels, colors)
-          val (flatFour, coverFour) = flat(four, pixels * 4, pixels * 4, colors)
-          writeRgb(output.resolve(s"${kase.name}-ref-flat.png"), flatOne, pixels, pixels)
-          writeRgb(output.resolve(s"${kase.name}-ref-flat-4x.png"), flatFour, pixels * 4, pixels * 4)
-          writeRgb(output.resolve(s"${kase.name}-cover-4x.png"), coverFour, pixels * 4, pixels * 4)
-          writeRgb(output.resolve(s"${kase.name}-ref-interp.png"), Array.tabulate(pixels * pixels): index =>
-            val c = one.image.pixelUnsafe(index % pixels, index / pixels)
-            0xff000000 | (c.red << 16) | (c.green << 8) | c.blue, pixels, pixels)
-          val (distances, residual) = edgeDistances(one, pixels, pixels, plan.meshes)
-          writeFloats(output.resolve(s"${kase.name}-edge-distance.f32"), distances)
-          println(s"edge_distance_fit ${kase.name} maxResidualPx=$residual")
+          val ids = JavaFxFaceTexelReference.offsets(plan)
+          val rasterFlat = JavaFxFaceTexelReference.rasterArgb(one, pixels, pixels)
+          val byId = JavaFxFaceTexelReference.flat(JavaFxFaceTexelReference.faceIds(one, pixels, pixels, ids), rule)
+          require(rasterFlat.indices.forall(i => rasterFlat(i) == byId(i)), s"${kase.name}: raster flat differs from rule colours by id")
+          writeRgb(output.resolve(s"${kase.name}-$modeTag-ref-flat.png"), rasterFlat, pixels, pixels)
+          JavaFxFaceTexelReference.writeInts(output.resolve(s"${kase.name}-colours-$modeTag.i32"), rule)
+          if !Files.exists(output.resolve(s"${kase.name}-faceid-1x.i32")) then
+            val (r1, r4) = JavaFxFaceTexelReference.exportGeometry(output, kase.name, plan, pixels, pixels)
+            println(s"face_geometry ${kase.name} residual1x=$r1 residual4x=$r4")
+          val interpModel = model(kase, faceFlat = false).viewer
+          val interp = SurfaceCompiler.compile(interpModel, SurfaceFaceFixture.state(interpModel)).toOption.get
+          writeRgb(output.resolve(s"${kase.name}-ref-interp.png"), JavaFxFaceTexelReference.rasterArgb(
+            SurfaceRasterizer.render(interp, RasterDimensions.unsafe(pixels, pixels), style).toOption.get, pixels, pixels), pixels, pixels)
           val referenceOnly = System.getProperty("probe.referenceOnly", "false") == "true"
           for encoding <- encodings if !referenceOnly; aa <- Vector(SceneAntialiasing.DISABLED, SceneAntialiasing.BALANCED) do
             val config = JavaFxAtlasConfig.make(encoding = encoding).toOption.get
             val backend = JavaFxSurfaceBackend.create(config).toOption.get
-            val name = s"${kase.name}-$encoding-$aa"
+            val name = s"${kase.name}-$encoding-$modeTag-$aa"
             try
               val started = System.nanoTime()
               backend.render(plan).fold(e => throw new IllegalArgumentException(e.message), identity)
@@ -296,7 +312,7 @@ object JavaFxFaceTexelPlanarProbe:
               require(actual.distinct.length > 4, s"$name: blank frame")
               writeRgb(output.resolve(s"$name.png"), actual, pixels, pixels)
               val atlas = backend.chunks.head.atlas
-              val row = s"""{"case":"${kase.name}","encoding":"$encoding","antialiasing":"$aa","triangles":${rule.length},"pixels":$pixels,""" +
+              val row = s"""{"case":"${kase.name}","encoding":"$encoding","faceMode":"$modeTag","antialiasing":"$aa","triangles":${rule.length},"pixels":$pixels,""" +
                 s""""ruleMaxDifference":${ruleErrors.max},"ruleOffByOne":${ruleErrors.count(_ == 1)},"texture":"${atlas.width}x${atlas.height}",""" +
                 s""""renderedFaces":${backend.chunks.map(_.renderedFaceCount).sum},"renderMs":$renderMs}"""
               rows += row

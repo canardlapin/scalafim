@@ -19,6 +19,9 @@ final class FloatBufferView private[view] (private val values: Array[Float]):
 final class DoubleBufferView private[view] (private val values: Array[Double]):
   def length: Int = values.length
   inline def apply(index: Int): Double = values(index)
+  /** Same object or element-wise equal samples (NaN equals NaN). */
+  def sameContent(other: DoubleBufferView): Boolean =
+    (values eq other.values) || java.util.Arrays.equals(values, other.values)
 
 final class SurfaceScalarPacket private[view] (
   val samples: DoubleBufferView,

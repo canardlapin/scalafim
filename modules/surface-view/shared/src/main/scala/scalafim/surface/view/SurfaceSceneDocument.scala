@@ -59,7 +59,8 @@ final case class SurfaceSceneLayer(
   association: SurfaceSampleAssociation = SurfaceSampleAssociation.Vertex,
   vertexInterpolation: SurfaceVertexInterpolation = SurfaceVertexInterpolation.Color,
   scalarMappingKey: Option[String] = None,
-  scalarInterpolation: Boolean = false
+  scalarInterpolation: Boolean = false,
+  faceReduction: Option[SurfaceFaceReduction] = None
 )
 
 final case class SurfaceSceneLayerState(
@@ -141,12 +142,13 @@ final case class SurfaceSceneDocument private (
     val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
     val nearest = Option.when(layers.exists(_.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))(SurfaceBackendFeature.NearestVertexSampling)
     val scalar = Option.when(layers.exists(_.scalarInterpolation))(SurfaceBackendFeature.ScalarInterpolation)
+    val faceFlat = Option.when(layers.exists(_.faceReduction.nonEmpty))(SurfaceBackendFeature.FaceFlatScalar)
     val fragment = Option.when(layers.groupBy(_.surface).values.exists(group =>
-      group.exists(_.scalarInterpolation) ||
+      group.exists(layer => layer.scalarInterpolation || layer.faceReduction.nonEmpty) ||
         (group.exists(layer => layer.association == SurfaceSampleAssociation.Vertex && layer.vertexInterpolation == SurfaceVertexInterpolation.Color) &&
           group.exists(layer => layer.association == SurfaceSampleAssociation.Face || layer.vertexInterpolation == SurfaceVertexInterpolation.NearestSample))))(SurfaceBackendFeature.FragmentComposition)
     val cameras = Option.when(surfaceViewpoints.nonEmpty)(SurfaceBackendFeature.PerSurfaceCameras)
-    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ fragment ++ cameras).filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
+    val missing = (requiredFeatures ++ inferred ++ nearest ++ scalar ++ faceFlat ++ fragment ++ cameras).filterNot(capabilities.supports).toVector.sortBy(SurfaceSceneNames.feature)
     if missing.isEmpty then Right(())
     else Left(SurfaceSceneError.MissingCapabilities(missing))
 
@@ -199,7 +201,8 @@ object SurfaceSceneDocument:
             layer.association,
             if layer.interpolation == SurfaceMapInterpolation.NearestVertex then SurfaceVertexInterpolation.NearestSample else SurfaceVertexInterpolation.Color,
             layer.scalarMapping.map(_.canonicalKey),
-            layer.interpolation == SurfaceMapInterpolation.VertexScalar
+            layer.interpolation == SurfaceMapInterpolation.VertexScalar,
+            layer.interpolation.faceReduction
           ))
       states <- traverse(state.layerOrder): id =>
         state.presentations.get(id) match
@@ -258,6 +261,11 @@ object SurfaceSceneDocument:
       Left(SurfaceSceneError.InvalidDocument("legend identities must be nonempty"))
     else if legends.exists(legend => legend.layerIds.exists(id => !layers.exists(_.id == id))) then
       Left(SurfaceSceneError.InvalidDocument("legend layers must reference declared layers"))
+    else if layers.exists(layer => layer.faceReduction.nonEmpty &&
+        (revision.value < 7 || layer.scalarInterpolation || layer.encoding != SurfaceLayerKind.Scalar ||
+          layer.association != SurfaceSampleAssociation.Vertex || layer.vertexInterpolation != SurfaceVertexInterpolation.Color ||
+          layer.scalarMappingKey.isEmpty)) then
+      Left(SurfaceSceneError.InvalidDocument("face reduction requires revision 7, vertex scalar data, an inspectable mapping and no scalar interpolation"))
     else if layers.exists(layer => layer.scalarInterpolation &&
         (revision.value < 5 || layer.encoding != SurfaceLayerKind.Scalar || layer.association != SurfaceSampleAssociation.Vertex ||
           layer.vertexInterpolation != SurfaceVertexInterpolation.Color || layer.scalarMappingKey.isEmpty)) then
@@ -405,6 +413,7 @@ object SurfaceSceneDocument:
                 (document.revision.value < 4 || actual.scalarMapping.map(_.canonicalKey) == expected.scalarMappingKey) &&
                 actual.association == expected.association &&
                 (actual.interpolation == SurfaceMapInterpolation.VertexScalar) == expected.scalarInterpolation &&
+                actual.interpolation.faceReduction == expected.faceReduction &&
                 (actual.interpolation == SurfaceMapInterpolation.NearestVertex) ==
                   (expected.vertexInterpolation == SurfaceVertexInterpolation.NearestSample) &&
                 actual.frameCount == expected.frameCount &&
@@ -512,3 +521,4 @@ private[view] object SurfaceSceneNames:
       case SurfaceBackendFeature.NearestVertexSampling => "nearest-vertex-sampling"
       case SurfaceBackendFeature.ScalarInterpolation => "scalar-interpolation"
       case SurfaceBackendFeature.FragmentComposition => "fragment-composition"
+      case SurfaceBackendFeature.FaceFlatScalar => "face-flat-scalar"

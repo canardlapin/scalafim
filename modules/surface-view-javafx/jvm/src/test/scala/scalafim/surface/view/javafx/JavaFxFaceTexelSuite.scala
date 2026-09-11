@@ -33,9 +33,10 @@ class JavaFxFaceTexelSuite extends munit.FunSuite:
   private val otherValues = Array.tabulate(vertices)(i => if i % 19 == 2 then Double.NaN else random.nextDouble() * 2 - 1)
   private val sulc = Array.tabulate(vertices)(_ => random.nextDouble() * 2 - 1)
 
-  private def plan(values: Array[Double], mapping: ScalarMapping): SurfaceRenderPlan =
-    val under = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("sulc"), surface, geometry, sulc, binary).toOption.get
-    val over = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("map"), surface, geometry, values, mapping).toOption.get
+  private def plan(values: Array[Double], mapping: ScalarMapping,
+      reduction: SurfaceFaceReduction = SurfaceFaceReduction.Mean): SurfaceRenderPlan =
+    val under = SurfaceLayer.faceFlatScalar(SurfaceLayerId.unsafe("sulc"), surface, geometry, sulc, binary, SurfaceFaceReduction.Mean).toOption.get
+    val over = SurfaceLayer.faceFlatScalar(SurfaceLayerId.unsafe("map"), surface, geometry, values, mapping, reduction).toOption.get
     val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(under, over)).toOption.get
     SurfaceCompiler.compile(model, SurfaceFaceFixture.state(model)).toOption.get
 
@@ -147,6 +148,69 @@ class JavaFxFaceTexelSuite extends munit.FunSuite:
         for dy <- 0 until 2; dx <- 0 until 2 do
           assertEquals(reader.getArgb(layout.blockX(face) + dx, layout.blockY(face) + dy), argb(underlay.toPackedInt), s"face $face")
     assert(missing > 20 && below > 50, s"missing $missing below $below")
+
+  test("each encoding refuses layers whose declared policy it would not show"):
+    def interpolatedPlan(values: Array[Double]): SurfaceRenderPlan =
+      val under = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("sulc"), surface, geometry, sulc, binary).toOption.get
+      val over = SurfaceLayer.interpolatedScalar(SurfaceLayerId.unsafe("map"), surface, geometry, values, onset(0.25)).toOption.get
+      val model = SurfaceViewerModel.make(Vector(SurfaceAsset.make(surface, geometry).toOption.get), Vector(under, over)).toOption.get
+      SurfaceCompiler.compile(model, SurfaceFaceFixture.state(model)).toOption.get
+    val interpolated = interpolatedPlan(values)
+    for encoding <- Vector(JavaFxAtlasEncoding.FaceTexelFlat, JavaFxAtlasEncoding.FaceTexelFlatSingle) do
+      val refused = JavaFxSurfaceProbe.compile(interpolated, config = config(encoding))
+      assert(refused.left.toOption.exists(_.message.contains("declares VertexScalar, not a face-flat policy")), refused.toString)
+      assert(JavaFxSurfaceBackend.validateCapabilities(interpolated, encoding).isLeft)
+      assert(JavaFxSurfaceBackend.validateCapabilities(original, encoding).isRight)
+    val lookup = JavaFxSurfaceBackend.validateCapabilities(original, JavaFxAtlasEncoding.ScalarLutInterpolated)
+    assert(lookup.left.toOption.exists(_.message.contains("ScalarLutInterpolated interpolates vertex scalars")), lookup.toString)
+    assert(JavaFxSurfaceBackend.validateCapabilities(interpolated, JavaFxAtlasEncoding.ScalarLutInterpolated).isRight)
+    for encoding <- Vector(JavaFxAtlasEncoding.LegacyTriangle, JavaFxAtlasEncoding.AdaptiveAffineOpaque, JavaFxAtlasEncoding.AffineMidpointOpaque) do
+      assert(JavaFxSurfaceBackend.validateCapabilities(original, encoding).isLeft, encoding.toString)
+      assert(JavaFxSurfaceProbe.compile(original, config = config(encoding)).isLeft, encoding.toString)
+
+  test("the face-texel backend declares face-flat composition and never scalar interpolation"):
+    val report = JavaFxCapabilityReport(scene3d = true, depthBuffer = true, antialiasing = true, fallback = None, faceFragments = true)
+    val features = report.admissionCapabilities.features
+    assert(features(SurfaceBackendFeature.FaceFlatScalar))
+    assert(features(SurfaceBackendFeature.FragmentComposition))
+    assert(!features(SurfaceBackendFeature.ScalarInterpolation))
+    assertEquals(report.admissionCapabilities.id.value, "javafx-scene3d-face-texel-v1")
+    val lookup = report.copy(faceFragments = false, lookupFragments = true).admissionCapabilities.features
+    assert(lookup(SurfaceBackendFeature.ScalarInterpolation) && !lookup(SurfaceBackendFeature.FaceFlatScalar))
+
+  test("max-magnitude texels colour every face with a corner at or beyond the cutoff"):
+    val maxPlan = plan(values, onset(0.25), SurfaceFaceReduction.MaxMagnitude)
+    val result = JavaFxSurfaceProbe.compile(maxPlan, config = config(JavaFxAtlasEncoding.FaceTexelFlat)).toOption.get
+    assertTexels(result.chunks.head, maxPlan)
+    val indices = maxPlan.meshes.head.indices
+    val reader = result.chunks.head.atlas.image.getPixelReader
+    val layout = result.chunks.head.atlas.faceLayout.get
+    var coloured = 0
+    for face <- 0 until result.chunks.head.faceCount do
+      val corners = Vector(indices(face * 3), indices(face * 3 + 1), indices(face * 3 + 2)).map(values(_)).filter(_.isFinite)
+      val underlay = DisplayBlendMode.Normal.composite(SurfaceFaceTexels.Base,
+        if Vector(indices(face * 3), indices(face * 3 + 1), indices(face * 3 + 2)).map(sulc(_)).sum / 3 > 0 then sulcal else gyral, DisplayOpacity.Opaque)
+      val shown = reader.getArgb(layout.blockX(face), layout.blockY(face)) != argb(underlay.toPackedInt)
+      assertEquals(shown, corners.exists(v => math.abs(v) >= 0.25), s"face $face corners $corners")
+      if shown then coloured += 1
+    assert(coloured > 100)
+
+  test("palette and cutoff changes reuse cached face values; a value change reduces again"):
+    val result = JavaFxSurfaceProbe.compile(original, config = config(JavaFxAtlasEncoding.FaceTexelFlat)).toOption.get
+    val atlas = result.chunks.head.atlas
+    val before = atlas.faceValues(SurfaceLayerId.unsafe("map")).values
+    val sulcBefore = atlas.faceValues(SurfaceLayerId.unsafe("sulc")).values
+    val palette = result.updateColors(plan(values, onset(0.25, Rgba32.unsafe(200, 0, 160)))).toOption.get
+    assert(atlas.faceValues(SurfaceLayerId.unsafe("map")).values eq before)
+    assert(palette.reductionNanos >= 0L && palette.evaluationNanos > 0L && palette.textureWriteNanos > 0L)
+    result.updateColors(plan(values, onset(0.6))).toOption.get
+    assert(atlas.faceValues(SurfaceLayerId.unsafe("map")).values eq before)
+    result.updateColors(plan(otherValues, onset(0.6))).toOption.get
+    assert(!(atlas.faceValues(SurfaceLayerId.unsafe("map")).values eq before))
+    assert(atlas.faceValues(SurfaceLayerId.unsafe("sulc")).values eq sulcBefore)
+    val switched = result.updateColors(plan(otherValues, onset(0.6), SurfaceFaceReduction.MaxMagnitude)).toOption.get
+    assert(switched.atlasesUpdated == 1)
+    assertTexels(result.chunks.head, plan(otherValues, onset(0.6), SurfaceFaceReduction.MaxMagnitude))
 
   test("plans whose render vertices are generated corners are refused"):
     val refused = JavaFxSurfaceProbe.compile(SurfaceFaceFixture.plan, config = config(JavaFxAtlasEncoding.FaceTexelFlat))

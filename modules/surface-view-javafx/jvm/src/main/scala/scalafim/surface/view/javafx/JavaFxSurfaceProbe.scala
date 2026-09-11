@@ -100,7 +100,11 @@ final case class JavaFxSurfaceUpdateReceipt(
   updateNanos: Long,
   verticesUpdated: Int = 0,
   bytesUpdated: Long = 0L,
-  textureCoordinateBytesUpdated: Long = 0L
+  textureCoordinateBytesUpdated: Long = 0L,
+  /** Face-texel phases: per-face reduction (or cache reuse), colour evaluation, texel write. */
+  reductionNanos: Long = 0L,
+  evaluationNanos: Long = 0L,
+  textureWriteNanos: Long = 0L
 )
 
 final class JavaFxFaceAtlas private[javafx] (
@@ -122,6 +126,7 @@ final class JavaFxFaceAtlas private[javafx] (
   private[javafx] var faceLayout: Option[SurfaceFaceTexelLayout] = None
   private[javafx] var faceColors: Array[Int] = Array.empty
   private var texelMirror: Array[Int] = Array.empty
+  private[javafx] var faceValues: Map[SurfaceLayerId, JavaFxFaceLayerValues] = Map.empty
 
   /** Write the block of every face whose colour changed (all blocks on the first
     * call) into a heap mirror, in parallel over disjoint face slices, then copy the
@@ -573,25 +578,33 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
     val started = System.nanoTime()
     val rules = new Array[SurfaceFaceColorRule](chunks.length)
+    val values = new Array[Map[SurfaceLayerId, JavaFxFaceLayerValues]](chunks.length)
     var index = 0
     while index < chunks.length do
       val chunk = chunks(index)
       val mesh = next.meshes.find(_.surface == chunk.surface).get
-      SurfaceFaceTexels.lower(next, mesh) match
+      val kept = scala.collection.mutable.Map.empty[SurfaceLayerId, JavaFxFaceLayerValues]
+      SurfaceFaceTexels.lower(next, mesh, reduced = Some(JavaFxFaceTexelWork.cachedReducer(mesh, chunk.atlas.faceValues, kept))) match
         case Left(error) => return Left(JavaFxSurfaceError.IncompatiblePlan(error.message))
-        case Right(rule) => rules(index) = rule
+        case Right(rule) =>
+          rules(index) = rule
+          values(index) = kept.toMap
       index += 1
+    val reducedAt = System.nanoTime()
     val colors = JavaFxFaceTexelWork.colors(rules.toVector)
+    val evaluatedAt = System.nanoTime()
     var dirtyPixels = 0L
     var atlasesUpdated = 0
     index = 0
     while index < chunks.length do
       val atlas = chunks(index).atlas
+      atlas.faceValues = values(index)
       atlas.writeFaceTexels(colors(index)).foreach: region =>
         if commit then atlas.commit(region)
         dirtyPixels += region.getWidth.toLong * region.getHeight.toLong
         atlasesUpdated += 1
       index += 1
+    val writtenAt = System.nanoTime()
     activeMaterialMode = mode
     JavaFxSurfaceProbe.configureLights(lights, next.lighting, mode)
     plan = next
@@ -599,7 +612,10 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       geometryRebuilt = false,
       atlasesUpdated = atlasesUpdated,
       dirtyPixels = dirtyPixels,
-      updateNanos = System.nanoTime() - started
+      updateNanos = System.nanoTime() - started,
+      reductionNanos = reducedAt - started,
+      evaluationNanos = evaluatedAt - reducedAt,
+      textureWriteNanos = writtenAt - evaluatedAt
     ))
 
   def updateGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
@@ -665,8 +681,9 @@ object JavaFxSurfaceProbe:
   ): Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
     if !plan.validCameras then
       return Left(JavaFxSurfaceError.IncompatiblePlan("invalid surface camera packets"))
-    if !config.encoding.scalarSamples && (plan.fragmentSurfaces.nonEmpty || plan.layers.exists(layer => layer.interpolation == SurfaceMapInterpolation.VertexScalar || layer.scalarField.nonEmpty)) then
-      return Left(JavaFxSurfaceError.IncompatiblePlan("scalar fragment interpolation requires the ScalarLutInterpolated or FaceTexelFlat encoding"))
+    JavaFxSurfaceBackend.encodingRefusal(plan, config.encoding) match
+      case Some(error) => return Left(error)
+      case None => ()
     val multiplier = if config.encoding.adaptive then 1 else config.encoding.facesPerSource
     val renderedFaces = plan.meshes.iterator.map(_.indices.length.toLong / 3).sum * multiplier
     if renderedFaces > config.maxRenderedFaces then
@@ -992,9 +1009,10 @@ object JavaFxSurfaceProbe:
   private def buildFaceTexelAtlas(plan: SurfaceRenderPlan, packet: SurfaceMeshPacket,
       config: JavaFxAtlasConfig): Either[JavaFxSurfaceError, JavaFxFaceAtlas] =
     val faceCount = packet.indices.length / 3
+    val kept = scala.collection.mutable.Map.empty[SurfaceLayerId, JavaFxFaceLayerValues]
     val lowered = for
       layout <- SurfaceFaceTexelLayout.make(faceCount, config.encoding.faceTexels, config.maxTextureSize)
-      rule <- SurfaceFaceTexels.lower(plan, packet)
+      rule <- SurfaceFaceTexels.lower(plan, packet, reduced = Some(JavaFxFaceTexelWork.cachedReducer(packet, Map.empty, kept)))
     yield (layout, JavaFxFaceTexelWork.colors(Vector(rule)).head)
     lowered.left.map(error => JavaFxSurfaceError.IncompatiblePlan(error.message)).map: (layout, colors) =>
       val byteBuffer = ByteBuffer.allocateDirect(layout.width * layout.height * 4).order(ByteOrder.nativeOrder())
@@ -1003,6 +1021,7 @@ object JavaFxSurfaceProbe:
       val image = new WritableImage(pixelBuffer)
       val atlas = new JavaFxFaceAtlas(0, faceCount, layout.width, layout.height, config.tileSize, config.encoding, None, pixels, pixelBuffer, image)
       atlas.faceLayout = Some(layout)
+      atlas.faceValues = kept.toMap
       atlas.writeFaceTexels(colors)
       atlas
 
@@ -1188,12 +1207,26 @@ object JavaFxSurfaceProbe:
   private def unpack(value: Int): Rgba32 =
     Rgba32.fromPackedInt(value)
 
-/** Fork-join evaluation of the face rule and texel blocks over fixed face slices. */
+/** Per-face values of one face-flat layer with the samples they were reduced from. */
+final class JavaFxFaceLayerValues(val reduction: SurfaceFaceReduction, val samples: DoubleBufferView, val values: Array[Double])
+
+/** Fork-join evaluation of the face rule and texel blocks over fixed face slices, on a
+  * dedicated pool of `scalafim.faceTexel.threads` workers (default: available processors).
+  */
 private[javafx] object JavaFxFaceTexelWork:
   val Slice: Int = 16384
+  val threads: Int = math.max(1, Integer.getInteger("scalafim.faceTexel.threads", Runtime.getRuntime.availableProcessors).intValue)
+  private lazy val pool = new java.util.concurrent.ForkJoinPool(threads)
 
   def parallel(slices: Int)(body: Int => Unit): Unit =
-    java.util.stream.IntStream.range(0, slices).parallel().forEach(slice => body(slice))
+    if threads == 1 || slices <= 1 then
+      var slice = 0
+      while slice < slices do
+        body(slice)
+        slice += 1
+    else
+      val task: Runnable = () => java.util.stream.IntStream.range(0, slices).parallel().forEach(slice => body(slice))
+      pool.submit(task).get(): Unit
 
   /** Colours of every face of every rule; slices of all surfaces share one parallel pass. */
   def colors(rules: Vector[SurfaceFaceColorRule]): Vector[Array[Int]] =
@@ -1205,3 +1238,24 @@ private[javafx] object JavaFxFaceTexelWork:
       val (surface, from, until) = tasks(task)
       rules(surface).write(out(surface), from, until)
     out
+
+  def reduce(reduction: SurfaceFaceReduction, samples: DoubleBufferView, indices: IntBufferView): Array[Double] =
+    val faces = indices.length / 3
+    val out = new Array[Double](faces)
+    parallel((faces + Slice - 1) / Slice): slice =>
+      SurfaceFaceTexels.reduceInto(reduction, samples, indices, out, slice * Slice, math.min(faces, (slice + 1) * Slice))
+    out
+
+  /** Reuse a layer's previous face values when its reduction and samples are unchanged
+    * (palette, cutoff or opacity changes); otherwise reduce again. Values used are recorded in `kept`.
+    */
+  def cachedReducer(mesh: SurfaceMeshPacket, previous: Map[SurfaceLayerId, JavaFxFaceLayerValues],
+      kept: scala.collection.mutable.Map[SurfaceLayerId, JavaFxFaceLayerValues]): SurfaceLayerPacket => Array[Double] =
+    layer =>
+      val reduction = layer.interpolation.faceReduction.get
+      val samples = layer.scalarField.get.samples
+      val values = previous.get(layer.layer)
+        .filter(cached => cached.reduction == reduction && cached.values.length == mesh.indices.length / 3 && cached.samples.sameContent(samples))
+        .getOrElse(new JavaFxFaceLayerValues(reduction, samples, reduce(reduction, samples, mesh.indices)))
+      kept(layer.layer) = values
+      values.values
