@@ -614,6 +614,19 @@ Owner: `fit/profile`. Acceptance:
 
 Performance rule: B0 ratio targets; sparse/dense bandwidth crossover reported.
 
+Completed 2026-09-12: `TrialBanded` now prepares 55 shared banded Gram blocks
+for the attained Cascade34 rank 10, shares immutable Gale factors and
+response-independent Schur jets across workers, performs one RHS solve per
+voxel jet component, and exposes counted prepared or exact-shape conditional
+readout. Independent dense/whitening laws pass on JVM and Scala.js. On the
+frozen dense N=300, V=100,000 cell, the complete prepared workload took
+30.422 s with 19.063 MiB estimated engine state; exact readout took 48.198 s
+with 21.124 MiB. One-reference and complete ratios were 3.62x and 9.06x. The
+N=1,200, V=10,000 stress cell took 31.136 s at bandwidth 126 and 187.493 MiB.
+See [the evidence](profile-hrf-trial-banded-evidence.md). The primary B0 gates
+pass, so PHRF-10 remains deferred; PHRF-11/14/15/29 retain their stated
+readout, calibration, repeated-performance and integration boundaries.
+
 ### PHRF-29: Add `ProfileHrfPlan` and attach the trial backend to the executor
 
 Owner: `model` and `fit`. Acceptance:
