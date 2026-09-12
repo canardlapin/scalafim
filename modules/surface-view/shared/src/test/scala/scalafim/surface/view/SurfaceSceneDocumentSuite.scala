@@ -73,10 +73,10 @@ class SurfaceSceneDocumentSuite extends munit.FunSuite:
     ).toOption.get
     assertEquals(SurfaceSceneCodec.encode(permissive), encoded)
 
-    val future = encoded.replace("\"revision\":7", "\"revision\":8")
+    val future = encoded.replace("\"revision\":7", "\"revision\":9")
     assertEquals(
       SurfaceSceneCodec.decode(future).left.toOption,
-      Some(SurfaceSceneError.UnsupportedRevision(8))
+      Some(SurfaceSceneError.UnsupportedRevision(9))
     )
 
   test("external digests and exact mesh identities are checked before state restoration"):

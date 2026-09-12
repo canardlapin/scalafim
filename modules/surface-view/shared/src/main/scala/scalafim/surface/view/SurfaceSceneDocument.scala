@@ -36,7 +36,9 @@ final case class SurfaceExternalReference(uri: SurfaceAssetUri, sha256: SurfaceC
 
 final case class SurfaceSceneBindings(
   surfaces: Map[SurfaceId, SurfaceExternalReference],
-  layers: Map[SurfaceLayerId, SurfaceExternalReference]
+  layers: Map[SurfaceLayerId, SurfaceExternalReference],
+  /** Verified references for every variant of a multi-geometry asset. Singletons may use surfaces. */
+  geometries: Map[SurfaceId, Map[SurfaceKind, SurfaceExternalReference]] = Map.empty
 )
 
 final case class SurfaceSceneAsset(
@@ -102,7 +104,7 @@ object SurfaceProvenance:
     else Right(new SurfaceProvenance(normalizedProducer, normalizedVersion, normalizedCreatedAt, normalizedEntries))
 
 enum SurfaceDocumentRevision:
-  case V1, V2, V3, V4, V5, V6, V7
+  case V1, V2, V3, V4, V5, V6, V7, V8
 
   def value: Int =
     this match
@@ -113,6 +115,7 @@ enum SurfaceDocumentRevision:
       case V5 => 5
       case V6 => 6
       case V7 => 7
+      case V8 => 8
 
 enum SurfaceUnknownFieldPolicy:
   case Reject, Ignore
@@ -135,7 +138,8 @@ final case class SurfaceSceneDocument private (
   requiredFeatures: Set[SurfaceBackendFeature],
   provenance: SurfaceProvenance,
   legends: Vector[SurfaceSceneLegend] = Vector.empty,
-  surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty
+  surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty,
+  geometryStates: Vector[SurfaceSceneGeometry] = Vector.empty
 ):
   def admit(capabilities: SurfaceBackendCapabilities): Either[SurfaceSceneError, Unit] =
     val inferred = Option.when(layers.exists(_.association == SurfaceSampleAssociation.Face))(SurfaceBackendFeature.FacewiseData)
@@ -157,12 +161,13 @@ final case class SurfaceSceneDocument private (
     for
       _ <- SurfaceSceneDocument.validateBindings(this, resolved)
       _ <- SurfaceSceneDocument.validateModel(this, model)
+      _ <- SurfaceSceneGeometry.validateResolved(geometryStates, model, resolved)
       restored <- SurfaceSceneDocument.restoreState(this, model)
       _ <- SurfaceSceneDocument.validateLegends(legends, model, restored)
     yield restored
 
 object SurfaceSceneDocument:
-  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V7
+  val CurrentRevision: SurfaceDocumentRevision = SurfaceDocumentRevision.V8
 
   def capture(
     model: SurfaceViewerModel,
@@ -174,6 +179,9 @@ object SurfaceSceneDocument:
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
     for
       _ <- validateBindingKeys(model, bindings)
+      geometries <- SurfaceSceneGeometry.capture(model, state, bindings)
+      // Retain the established V7 shape for singleton fixed geometry. V8 is needed for families.
+      retainedGeometries = if model.surfaces.exists(_.geometries.surfaces.size > 1) then geometries else Vector.empty
       assets <- traverse(model.surfaces): asset =>
         bindings.surfaces.get(asset.id) match
           case None => Left(SurfaceSceneError.MissingSurfaceBinding(asset.id))
@@ -215,7 +223,7 @@ object SurfaceSceneDocument:
         SurfaceLegend.bind(request, model, state).left.map(error => SurfaceSceneError.InvalidDocument(error.message))
           .map(legend => SurfaceSceneLegend(legend.request, legend.canonicalKey))
       result <- make(
-        CurrentRevision,
+        if retainedGeometries.nonEmpty then CurrentRevision else SurfaceDocumentRevision.V7,
         assets,
         layers,
         state.layout,
@@ -228,7 +236,8 @@ object SurfaceSceneDocument:
         requiredFeatures,
         provenance,
         legends,
-        state.surfaceViewpoints
+        state.surfaceViewpoints,
+        retainedGeometries
       )
     yield result
 
@@ -246,9 +255,15 @@ object SurfaceSceneDocument:
     requiredFeatures: Set[SurfaceBackendFeature],
     provenance: SurfaceProvenance,
     legends: Vector[SurfaceSceneLegend] = Vector.empty,
-    surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty
+    surfaceViewpoints: Map[SurfaceId, SurfaceViewpoint] = Map.empty,
+    geometryStates: Vector[SurfaceSceneGeometry] = Vector.empty
   ): Either[SurfaceSceneError, SurfaceSceneDocument] =
-    if revision.value < 7 && (surfaceViewpoints.nonEmpty || camera.aspectRatio != CameraAspectRatio.Default) then
+    if revision.value < 8 && geometryStates.nonEmpty then
+      Left(SurfaceSceneError.InvalidDocument("geometry states require revision 8"))
+    else if revision.value >= 8 && (geometryStates.map(_.surface).distinct.size != geometryStates.size ||
+        geometryStates.map(_.surface).toSet != assets.map(_.id).toSet || geometryStates.exists(!_.valid)) then
+      Left(SurfaceSceneError.InvalidDocument("geometry states must bind every surface and selected variant exactly"))
+    else if revision.value < 7 && (surfaceViewpoints.nonEmpty || camera.aspectRatio != CameraAspectRatio.Default) then
       Left(SurfaceSceneError.InvalidDocument("per-surface viewpoints and non-default camera aspect require revision 7"))
     else if surfaceViewpoints.keys.exists(id => !assets.exists(_.id == id)) then
       Left(SurfaceSceneError.InvalidDocument("camera viewpoints must reference declared surfaces"))
@@ -316,7 +331,8 @@ object SurfaceSceneDocument:
       requiredFeatures,
       provenance,
       legends,
-      surfaceViewpoints
+      surfaceViewpoints,
+      geometryStates
       ))
 
   private def validateLegends(legends: Vector[SurfaceSceneLegend], model: SurfaceViewerModel,
@@ -334,7 +350,7 @@ object SurfaceSceneDocument:
   ): Either[SurfaceSceneError, Unit] =
     val surfaceIds = model.surfaces.map(_.id).toSet
     val layerIds = model.layers.map(_.id).toSet
-    val extraSurfaces = bindings.surfaces.keySet -- surfaceIds
+    val extraSurfaces = (bindings.surfaces.keySet ++ bindings.geometries.keySet) -- surfaceIds
     val extraLayers = bindings.layers.keySet -- layerIds
     if extraSurfaces.nonEmpty then Left(SurfaceSceneError.UnexpectedSurfaceBinding(extraSurfaces.toVector.sortBy(_.value).head))
     else if extraLayers.nonEmpty then Left(SurfaceSceneError.UnexpectedLayerBinding(extraLayers.toVector.sortBy(_.value).head))
@@ -346,7 +362,7 @@ object SurfaceSceneDocument:
   ): Either[SurfaceSceneError, Unit] =
     val expectedSurfaces = document.assets.map(_.id).toSet
     val expectedLayers = document.layers.map(_.id).toSet
-    val extraSurfaces = resolved.surfaces.keySet -- expectedSurfaces
+    val extraSurfaces = (resolved.surfaces.keySet ++ resolved.geometries.keySet) -- expectedSurfaces
     val extraLayers = resolved.layers.keySet -- expectedLayers
     if extraSurfaces.nonEmpty then return Left(SurfaceSceneError.UnexpectedSurfaceBinding(extraSurfaces.toVector.sortBy(_.value).head))
     if extraLayers.nonEmpty then return Left(SurfaceSceneError.UnexpectedLayerBinding(extraLayers.toVector.sortBy(_.value).head))
@@ -418,6 +434,7 @@ object SurfaceSceneDocument:
     model: SurfaceViewerModel
   ): Either[SurfaceSceneError, SurfaceViewerState] =
     val actions = Vector.newBuilder[SurfaceViewerAction]
+    document.geometryStates.foreach(geometry => actions ++= geometry.actions)
     actions += SurfaceViewerAction.SetLayout(document.layout)
     actions += SurfaceViewerAction.SetViewpoint(document.camera.viewpoint)
     actions += SurfaceViewerAction.SetProjection(document.camera.projection)

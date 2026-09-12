@@ -27,6 +27,7 @@ object SurfaceSceneCodec:
         else if revisionValue == 5 then Right(SurfaceDocumentRevision.V5)
         else if revisionValue == 6 then Right(SurfaceDocumentRevision.V6)
         else if revisionValue == 7 then Right(SurfaceDocumentRevision.V7)
+        else if revisionValue == 8 then Right(SurfaceDocumentRevision.V8)
         else Left(SurfaceSceneError.UnsupportedRevision(revisionValue))
       assetsJson <- SceneJsonRead.array(root, "assets", "$.assets")
       assets <- traverseIndexed(assetsJson)(parseAsset(_, _, policy))
@@ -57,6 +58,12 @@ object SurfaceSceneCodec:
           Left(SurfaceSceneError.InvalidJson("$.legends", "legends require revision 6"))
         else Right(Vector.empty)
       surfaceViewpoints <- parseSurfaceViewpoints(root, policy, revision)
+      geometryStates <- if revision.value >= 8 then
+        SceneJsonRead.array(root, "geometryStates", "$.geometryStates").flatMap(values =>
+          traverseIndexed(values)((value, index) => SurfaceSceneGeometryCodec.decode(value, index, policy)))
+        else if root.fields.exists(_._1 == "geometryStates") then
+          Left(SurfaceSceneError.InvalidJson("$.geometryStates", "geometry states require revision 8"))
+        else Right(Vector.empty)
       document <- SurfaceSceneDocument.make(
         revision,
         assets,
@@ -71,13 +78,14 @@ object SurfaceSceneCodec:
         requirements.toSet,
         provenance,
         legends,
-        surfaceViewpoints
+        surfaceViewpoints,
+        geometryStates
       )
     yield document
 
   private val RootFields = Set(
     "schema", "revision", "assets", "layers", "layout", "camera", "lighting",
-    "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends", "surfaceViewpoints"
+    "clipping", "timepoint", "selection", "layerStates", "requiredFeatures", "provenance", "legends", "surfaceViewpoints", "geometryStates"
   )
 
   private def documentJson(document: SurfaceSceneDocument): SceneJson =
@@ -103,7 +111,8 @@ object SurfaceSceneCodec:
       Option.when(document.revision.value >= 7)("surfaceViewpoints" -> SceneJson.Arr(
         document.surfaceViewpoints.toVector.sortBy(_._1.value).map: (surface, viewpoint) =>
           SceneJson.obj("surface" -> SceneJson.Str(surface.value), "viewpoint" -> SceneJson.Str(viewpointName(viewpoint)))
-      )))
+      )) ++ Option.when(document.revision.value >= 8)("geometryStates" -> SceneJson.Arr(
+        document.geometryStates.sortBy(_.surface.value).map(SurfaceSceneGeometryCodec.encode))))
 
   private def assetJson(asset: SurfaceSceneAsset): SceneJson =
     SceneJson.obj(
