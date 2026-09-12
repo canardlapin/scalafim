@@ -6,11 +6,37 @@ import scalafim.surface.view.*
 enum SurfaceRasterError:
   case PixelOutsideBounds(x: Int, y: Int, width: Int, height: Int)
   case InvalidPlan(reason: String)
+  case MemoryBudgetExceeded(required: Long, available: Long)
+  case Cancelled
+  case SinkFailure(reason: String)
+  case RenderFailure(reason: String)
 
   def message: String =
     this match
       case PixelOutsideBounds(x, y, width, height) => s"pixel ($x, $y) is outside ${width}x$height"
       case InvalidPlan(reason) => s"invalid surface render plan: $reason"
+      case MemoryBudgetExceeded(required, available) => s"strip raster requires $required buffer bytes; budget is $available"
+      case Cancelled => "strip raster cancelled; discard previously delivered strips"
+      case SinkFailure(reason) => s"strip raster sink failed: $reason"
+      case RenderFailure(reason) => s"strip raster failed: $reason"
+
+/** The budget covers renderer-owned primitive buffers, not caller-retained plans, output, JVM
+  * overhead or other application state. For a 3GiB application reserve those separately. */
+final case class SurfaceStripConfig(rows: Int = 64, maxBufferBytes: Long = 256L * 1024 * 1024):
+  require(rows > 0 && maxBufferBytes > 0, "strip rows and buffer budget must be positive")
+
+object SurfaceStripConfig:
+  /** The caller accounts for its retained plan, output/upload buffers and other heap use. */
+  def forHeap(heapBytes: Long, reservedBytes: Long, rows: Int = 64): Either[SurfaceRasterError, SurfaceStripConfig] =
+    if heapBytes <= 0 || reservedBytes < 0 || reservedBytes >= heapBytes || rows <= 0 then
+      Left(SurfaceRasterError.InvalidPlan("heap preflight requires positive rows and 0 <= reserved < heap"))
+    else Right(SurfaceStripConfig(rows, heapBytes - reservedBytes))
+
+final case class SurfaceStripPreflight(rows: Int, strips: Int, maxBufferBytes: Long)
+final case class SurfaceRasterStrip(firstRow: Int, fullDimensions: RasterDimensions, image: RasterImage)
+final case class SurfaceStripReceipt(
+  preflight: SurfaceStripPreflight, delivered: Int, elapsedNanos: Long,
+  setupNanos: Long, rasterNanos: Long, sinkNanos: Long, capabilities: SurfaceBackendCapabilities)
 
 enum TriangleCulling:
   case None, Back, Front
@@ -80,6 +106,68 @@ final class SurfaceRasterResult private[raster] (
         )))
 
 object SurfaceRasterizer:
+  private case object CancelStrip extends RuntimeException
+
+  /** Render-only backend: no pick arrays, event handling or implicit interactive fallback. */
+  lazy val stripCapabilities: SurfaceBackendCapabilities = capabilities.copy(
+    id = SurfaceBackendId.unsafe("reference-raster-strips"),
+    features = capabilities.features - SurfaceBackendFeature.NativePicking,
+    caveats = capabilities.caveats :+ "render-only; no native picking or interaction"
+  )
+
+  def preflightStrips(plan: SurfaceRenderPlan, dimensions: RasterDimensions,
+      config: SurfaceStripConfig = SurfaceStripConfig()): Either[SurfaceRasterError, SurfaceStripPreflight] =
+    validatePlan(plan).flatMap: _ =>
+      val rows = math.min(config.rows, dimensions.height)
+      // Two generations of pixel/depth arrays conservatively cover loop-local liveness across
+      // allocation of the next strip, plus composed vertex colors. Pick buffers are absent.
+      val bytes = dimensions.width.toLong * rows * 24L +
+        plan.meshes.iterator.map(_.positions.length.toLong / 3 * 4L).sum
+      if bytes > config.maxBufferBytes then Left(SurfaceRasterError.MemoryBudgetExceeded(bytes, config.maxBufferBytes))
+      else Right(SurfaceStripPreflight(rows, ((dimensions.height.toLong + rows - 1) / rows).toInt, bytes))
+
+  /** Sequential backpressured strips in global pixel coordinates. Camera fitting, clipping,
+    * interpolation and depth order are exactly the full-frame path's. A successful receipt alone
+    * admits the complete image; on any Left the consumer must discard partial output. The sink
+    * must consume/release each image before returning to keep total memory bounded. Its retained
+    * output and the immutable input plan are explicitly outside the primitive-buffer budget.
+    * No full-frame or pick buffers are allocated. Cancellation is checked during geometry,
+    * color composition and raster scanlines, as well as before every sink call.
+    */
+  def renderStrips(plan: SurfaceRenderPlan, dimensions: RasterDimensions,
+      config: SurfaceStripConfig = SurfaceStripConfig(), style: SurfaceRasterStyle = SurfaceRasterStyle(),
+      cancelled: () => Boolean = () => false)(
+      consume: SurfaceRasterStrip => Either[String, Unit]): Either[SurfaceRasterError, SurfaceStripReceipt] =
+    preflightStrips(plan, dimensions, config).flatMap: preflight =>
+      val started = System.nanoTime()
+      var firstRow = 0
+      var delivered = 0
+      var setupNanos = 0L
+      var rasterNanos = 0L
+      var sinkNanos = 0L
+      var failure: Option[SurfaceRasterError] = None
+      try
+        while firstRow < dimensions.height && failure.isEmpty do
+          if cancelled() then throw CancelStrip
+          val rows = math.min(preflight.rows, dimensions.height - firstRow)
+          val result = renderUnsafe(plan, dimensions, style, firstRow, rows, false, cancelled)
+          setupNanos += result.receipt.setupNanos
+          rasterNanos += result.receipt.renderNanos
+          if cancelled() then throw CancelStrip
+          val sinkStarted = System.nanoTime()
+          val outcome = try consume(SurfaceRasterStrip(firstRow, dimensions, result.image))
+            catch case scala.util.control.NonFatal(error) => Left(Option(error.getMessage).getOrElse(error.toString))
+          sinkNanos += System.nanoTime() - sinkStarted
+          outcome match
+            case Left(reason) => failure = Some(SurfaceRasterError.SinkFailure(reason))
+            case Right(_) => delivered += 1
+          firstRow += rows
+        failure.toLeft(SurfaceStripReceipt(preflight, delivered, System.nanoTime() - started,
+          setupNanos, rasterNanos, sinkNanos, stripCapabilities))
+      catch
+        case CancelStrip => Left(SurfaceRasterError.Cancelled)
+        case scala.util.control.NonFatal(error) =>
+          Left(SurfaceRasterError.RenderFailure(Option(error.getMessage).getOrElse(error.toString)))
   val capabilities: SurfaceBackendCapabilities = SurfaceBackendCapabilities(
     SurfaceBackendId.unsafe("reference-raster"),
     SurfacePlanRevision.Current,
@@ -195,18 +283,24 @@ object SurfaceRasterizer:
   private def renderUnsafe(
     plan: SurfaceRenderPlan,
     dimensions: RasterDimensions,
-    style: SurfaceRasterStyle
+    style: SurfaceRasterStyle,
+    firstRow: Int = 0,
+    rowCount: Int = -1,
+    picking: Boolean = true,
+    cancelled: () => Boolean = () => false
   ): SurfaceRasterResult =
     val setupStarted = System.nanoTime()
-    val pixelCount = dimensions.pixelCount
+    val rows = if rowCount < 0 then dimensions.height else rowCount
+    val pixelCount = dimensions.width * rows
+    val pickCount = if picking then pixelCount else 0
     val pixels = Array.fill(pixelCount)(style.background.toPackedInt)
     val depths = Array.fill(pixelCount)(Double.PositiveInfinity)
-    val faceAt = Array.fill(pixelCount)(-1)
-    val slotAt = Array.fill(pixelCount)(-1)
-    val vertexAt = Array.fill(pixelCount)(-1)
-    val baryA = new Array[Float](pixelCount)
-    val baryB = new Array[Float](pixelCount)
-    val baryC = new Array[Float](pixelCount)
+    val faceAt = Array.fill(pickCount)(-1)
+    val slotAt = Array.fill(pickCount)(-1)
+    val vertexAt = Array.fill(pickCount)(-1)
+    val baryA = new Array[Float](pickCount)
+    val baryB = new Array[Float](pickCount)
+    val baryC = new Array[Float](pickCount)
     val composedColors = plan.meshes.map: mesh =>
       val colors = Array.fill(mesh.positions.length / 3)(style.surfaceBase.toPackedInt)
       var layerIndex = 0
@@ -215,6 +309,7 @@ object SurfaceRasterizer:
         if layer.surface == mesh.surface && !plan.fragmentSurfaces(mesh.surface) then
           var vertex = 0
           while vertex < colors.length do
+            if !picking && (vertex & 1023) == 0 && cancelled() then throw CancelStrip
             val under = packed(colors(vertex))
             val over = packed(layer.colors(vertex))
             colors(vertex) = layer.blendMode.composite(under, over, layer.opacity).toPackedInt
@@ -241,6 +336,7 @@ object SurfaceRasterizer:
         new SurfaceFragmentEvaluator(mesh, plan.layers.filter(_.surface == mesh.surface), plan.lighting, style.surfaceBase))
       var faceOffset = 0
       while faceOffset < mesh.indices.length do
+        if !picking && (faceOffset % 768) == 0 && cancelled() then throw CancelStrip
         trianglesInput += 1
         val face = faceOffset / 3
         val ia = mesh.indices(faceOffset)
@@ -275,7 +371,8 @@ object SurfaceRasterizer:
                 a, b, c, area, slot, mesh.sourceFace(face), sourceA, sourceB, sourceC,
                 mesh.nearestPartition.filter(face < _.renderFaceCount).fold(-1)(_ => mesh.sourceVertex(ia)),
                 fragment,
-                dimensions, pixels, depths, faceAt, slotAt, vertexAt, baryA, baryB, baryC
+                dimensions, pixels, depths, faceAt, slotAt, vertexAt, baryA, baryB, baryC,
+                firstRow, rows, picking, cancelled
               )
               shadedPixels += counts._1
               depthRejected += counts._2
@@ -285,7 +382,7 @@ object SurfaceRasterizer:
       slot += 1
 
     val renderNanos = System.nanoTime() - renderStarted
-    val image = RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
+    val image = RasterImage.unsafeFromOwnedPackedArray(RasterDimensions.unsafe(dimensions.width, rows), pixels)
     val receipt = SurfaceRasterReceipt(
       trianglesInput,
       trianglesAfterClipping,
@@ -452,19 +549,25 @@ object SurfaceRasterizer:
     vertexAt: Array[Int],
     baryA: Array[Float],
     baryB: Array[Float],
-    baryC: Array[Float]
+    baryC: Array[Float],
+    firstRow: Int,
+    rows: Int,
+    picking: Boolean,
+    cancelled: () => Boolean
   ): (Int, Int, Int) =
     val minX = math.max(0, math.floor(math.min(a.x, math.min(b.x, c.x))).toInt)
     val maxX = math.min(dimensions.width - 1, math.ceil(math.max(a.x, math.max(b.x, c.x))).toInt)
-    val minY = math.max(0, math.floor(math.min(a.y, math.min(b.y, c.y))).toInt)
-    val maxY = math.min(dimensions.height - 1, math.ceil(math.max(a.y, math.max(b.y, c.y))).toInt)
+    val minY = math.max(firstRow, math.floor(math.min(a.y, math.min(b.y, c.y))).toInt)
+    val maxY = math.min(firstRow + rows - 1, math.ceil(math.max(a.y, math.max(b.y, c.y))).toInt)
     var shaded = 0
     var rejected = 0
     var scalarEvaluated = 0
     var y = minY
     while y <= maxY do
+      if !picking && cancelled() then throw CancelStrip
       var x = minX
       while x <= maxX do
+        if !picking && (x & 255) == 0 && cancelled() then throw CancelStrip
         val px = x + 0.5
         val py = y + 0.5
         val wa = edge(b.x, b.y, c.x, c.y, px, py) / area
@@ -472,7 +575,7 @@ object SurfaceRasterizer:
         val wc = 1.0 - wa - wb
         if wa >= -1e-12 && wb >= -1e-12 && wc >= -1e-12 then
           val depth = wa * a.depth + wb * b.depth + wc * c.depth
-          val pixelIndex = y * dimensions.width + x
+          val pixelIndex = (y - firstRow) * dimensions.width + x
           if depth < depths(pixelIndex) then
             val reciprocal = wa * a.inverseW + wb * b.inverseW + wc * c.inverseW
             val inv = 1.0 / reciprocal
@@ -497,12 +600,13 @@ object SurfaceRasterizer:
               if sampleOwner < 0 || chosen == sampleOwner then
                 pixels(pixelIndex) = compositeOverOpaque(pixels(pixelIndex), red, green, blue, alpha)
                 depths(pixelIndex) = depth
-                faceAt(pixelIndex) = face
-                slotAt(pixelIndex) = slot
-                baryA(pixelIndex) = ba.toFloat
-                baryB(pixelIndex) = bb.toFloat
-                baryC(pixelIndex) = bc.toFloat
-                vertexAt(pixelIndex) = chosen
+                if picking then
+                  faceAt(pixelIndex) = face
+                  slotAt(pixelIndex) = slot
+                  baryA(pixelIndex) = ba.toFloat
+                  baryB(pixelIndex) = bb.toFloat
+                  baryC(pixelIndex) = bc.toFloat
+                  vertexAt(pixelIndex) = chosen
                 shaded += 1
           else rejected += 1
         x += 1

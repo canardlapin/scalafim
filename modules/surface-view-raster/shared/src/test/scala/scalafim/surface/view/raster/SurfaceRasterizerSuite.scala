@@ -6,6 +6,29 @@ import scalafim.surface.*
 import scalafim.surface.view.*
 
 class SurfaceRasterizerSuite extends munit.FunSuite:
+  private def assertStrips(compiled: SurfaceRenderPlan, size: RasterDimensions): Unit =
+    val style = SurfaceRasterStyle(culling = TriangleCulling.None)
+    val full = SurfaceRasterizer.render(compiled, size, style).toOption.get.image
+    for rows <- Vector(1, 7, 64, size.height + 1) do
+      var nextRow = 0
+      val receipt = SurfaceRasterizer.renderStrips(compiled, size, SurfaceStripConfig(rows), style): strip =>
+        assertEquals(strip.firstRow, nextRow)
+        assertEquals(strip.fullDimensions, size)
+        assertEquals(strip.image.width, size.width)
+        assert(strip.image.height <= rows)
+        for y <- 0 until strip.image.height; x <- 0 until size.width do
+          assertEquals(strip.image.pixelUnsafe(x, y), full.pixelUnsafe(x, nextRow + y))
+        nextRow += strip.image.height
+        Right(())
+      assertEquals(nextRow, size.height)
+      assertEquals(receipt.toOption.get.delivered, (size.height + rows - 1) / rows)
+      assert(!receipt.toOption.get.capabilities.supports(SurfaceBackendFeature.NativePicking))
+      assert(receipt.toOption.get.capabilities.supports(SurfaceBackendFeature.Lighting))
+
+  test("render-only strips preserve face data and thresholded scalar fragment meaning"):
+    assertStrips(SurfaceFaceFixture.plan, RasterDimensions.unsafe(67, 71))
+    assertStrips(SurfaceScalarFixture.plan(SurfaceScalarFixture.thresholded), RasterDimensions.unsafe(79, 61))
+
   test("CPU projection and signed network tubes render through the reference backend"):
     val plan = SurfaceFeatureFixture.plan
     val rendered = SurfaceRasterizer.render(plan, RasterDimensions.unsafe(160, 160)).toOption.get
@@ -13,6 +36,7 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assertEquals(plan.layers.length, 2)
     assert(rendered.receipt.trianglesInput > 4)
     assert(rendered.receipt.shadedPixels > 0)
+    assertStrips(plan, RasterDimensions.unsafe(83, 59))
 
   private val dimensions = RasterDimensions.unsafe(64, 64)
   private val surfaceId = SurfaceId.unsafe("asymmetric-left")
@@ -222,6 +246,7 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assert(clipped.receipt.trianglesAfterClipping >= 1)
     assertEquals(clipped.pick(9, 54).toOption.flatten, None)
     assert(clipped.pick(54, 54).toOption.flatten.nonEmpty)
+    assertStrips(unclippedPlan.copy(clipping = clipping), RasterDimensions.unsafe(65, 67))
 
   test("overlays composite in model order with exact packed source-over semantics"):
     val mesh = triangleGeometry()
@@ -230,6 +255,7 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     val result = SurfaceRasterizer.render(plan(mesh, Vector(red, blue)), dimensions).toOption.get
     assertEquals(result.image.pixelUnsafe(30, 40), Rgba32.unsafe(127, 0, 128))
     assertEquals(result.receipt.colorValuesComposited, 6)
+    assertStrips(plan(mesh, Vector(red, blue)), RasterDimensions.unsafe(65, 67))
 
   test("bilateral slots keep left and right surface picks distinct"):
     val leftId = SurfaceId.unsafe("left")
@@ -286,3 +312,46 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assertEquals(rendered.pick(380,80).toOption.flatten.map(_.surface), Some(ids(1)))
     assertEquals(rendered.pick(150,80).toOption.flatten, None)
     assertEquals(rendered.pick(450,80).toOption.flatten, None)
+    assertStrips(compiled, RasterDimensions.unsafe(601, 163))
+
+  test("strip preflight bounds primitive buffers against declared 3GiB heap headroom"):
+    val compiled = plan(triangleGeometry(), Vector.empty)
+    val size = RasterDimensions.unsafe(3600, 2032)
+    val config = SurfaceStripConfig.forHeap(3L * 1024 * 1024 * 1024, 2L * 1024 * 1024 * 1024).toOption.get
+    val preflight = SurfaceRasterizer.preflightStrips(compiled, size, config).toOption.get
+    assertEquals(preflight.maxBufferBytes, 3600L * 64 * 24 + 3L * 4)
+    assertEquals(preflight.strips, 32)
+    assert(SurfaceStripConfig.forHeap(3, 3).isLeft)
+    var calls = 0
+    val refused = SurfaceRasterizer.renderStrips(compiled, size, SurfaceStripConfig(64, 1)): _ =>
+      calls += 1
+      Right(())
+    assert(refused.left.toOption.exists:
+      case SurfaceRasterError.MemoryBudgetExceeded(_, _) => true
+      case _ => false)
+    assertEquals(calls, 0)
+
+  test("strip cancellation and sink failure never admit a partial image"):
+    val compiled = plan(triangleGeometry(), Vector.empty)
+    var delivered = 0
+    var cancel = true
+    def sink(strip: SurfaceRasterStrip): Either[String, Unit] =
+      assertEquals(strip.firstRow, 0)
+      delivered += 1
+      cancel = true
+      Right(())
+    assertEquals(SurfaceRasterizer.renderStrips(compiled, dimensions, cancelled = () => cancel)(sink),
+      Left(SurfaceRasterError.Cancelled))
+    assertEquals(delivered, 0)
+    cancel = false
+    assertEquals(SurfaceRasterizer.renderStrips(compiled, dimensions, SurfaceStripConfig(7), cancelled = () => cancel)(sink),
+      Left(SurfaceRasterError.Cancelled))
+    assertEquals(delivered, 1)
+    var checks = 0
+    val during = SurfaceRasterizer.renderStrips(compiled, dimensions,
+      cancelled = () => { checks += 1; checks >= 3 })(_ => fail("Cancelled strip reached sink"))
+    assertEquals(during, Left(SurfaceRasterError.Cancelled))
+    val refused = SurfaceRasterizer.renderStrips(compiled, dimensions)(_ => Left("output unavailable"))
+    assertEquals(refused, Left(SurfaceRasterError.SinkFailure("output unavailable")))
+    val thrown = SurfaceRasterizer.renderStrips(compiled, dimensions)(_ => throw IllegalStateException("sink closed"))
+    assertEquals(thrown, Left(SurfaceRasterError.SinkFailure("sink closed")))
