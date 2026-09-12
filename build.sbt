@@ -27,7 +27,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
+lazy val galeRevision = "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -35,12 +35,6 @@ lazy val galeBuild =
     .getOrElse(uri(s"https://github.com/canardlapin/gale.git#$galeRevision"))
 lazy val galeCoreJVM = ProjectRef(galeBuild, "coreJVM")
 lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
-
-// Multivar declares this exact Gale artifact. Give the source projects the
-// same coordinates so sbt resolves one provider instead of a SNAPSHOT plus
-// a second revision-tagged jar on the consumer classpath.
-galeCoreJVM / version := s"1.0.0-${galeRevision.take(12)}"
-galeCoreJS / version  := s"1.0.0-${galeRevision.take(12)}"
 
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
@@ -58,7 +52,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "ec56b34806c22e26c28ecbd366ef2e323195fc88"
+lazy val image4sRevision = "26a74ad99b9ee49a9555344e19b82d69a2ba50e4"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -81,7 +75,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision.
-lazy val reframe4sRevision = "fa015c38a1b481096646d2c857191c327fc7a9e5"
+lazy val reframe4sRevision = "e3ddb48b4a084b3f08063cad849c8100207fb19c"
 lazy val reframe4sBuild =
   sys.props
     .get("scalafim.reframe4s.build")
@@ -97,7 +91,7 @@ lazy val reframe4sResampleJS  = ProjectRef(reframe4sBuild, "reframe4s-resampleJS
 // graph4s is an independently owned topology and algorithms library. Ordinary
 // builds clone the exact reviewed revision; the property is an explicit local
 // source override for coordinated development.
-lazy val graph4sRevision = "c343e0876a29d0cb73f67799e78b4d25ecd3eb4b"
+lazy val graph4sRevision = "b585e594eec4567bad78ae23206c1a8f535bcd5e"
 lazy val graph4sBuild =
   sys.props
     .get("scalafim.graph4s.build")
@@ -111,7 +105,7 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
-lazy val multivarRevision = "aeb75a30a846d5f68369302e344a613da9c5c21f"
+lazy val multivarRevision = "c4329fc95688929236c942cca889aa67ad17cbe0"
 lazy val multivarBuild =
   uri(
     sys.props.getOrElse(

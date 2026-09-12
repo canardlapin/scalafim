@@ -582,13 +582,16 @@ Owner: Gale, via PHRF-26. Acceptance:
 Performance rule: `O(N b^2)` factor, `O(N b)` per-RHS solve, measured in
 Gale's benchmarks.
 
-Progress 2026-09-12: the Gale implementation and measured scaling landed
+Completed 2026-09-12: the Gale implementation and measured scaling landed
 upstream at `099832ff`; see
 [provider evidence](profile-hrf-banded-spd-evidence.md) and
 [Gale PR #11](https://github.com/canardlapin/gale/pull/11). The pin probe exposed
-older Gale source/artifact dependencies in four sibling libraries. The normal
-pin is restored and the consumer suite is retained as a patch. PHRF-06 remains
-open for dependency alignment and pinned JVM/JS requalification.
+older Gale source/artifact dependencies in four sibling libraries; those were
+aligned and merged through image4s #12, graph4s #1, multivar #1 and reframe4s
+#1. ScalaFIM pins the resulting immutable merge revisions, its effective
+consumer classpaths contain one Gale provider per platform, `scalafimCompileAll`
+passes warning-clean, and the complete first-level laws pass 51/51 on each of
+JVM and Scala.js. PHRF-06 is closed; PHRF-07 may consume the provider.
 
 ### PHRF-07: Implement the TrialBanded backend on shared Gram blocks
 

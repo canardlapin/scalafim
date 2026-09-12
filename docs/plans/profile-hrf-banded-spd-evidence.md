@@ -20,12 +20,11 @@ explicit. The conditioning diagnostic is an absolute-triangular-comparison
 upper bound, potentially conservative or infinite; it is not a calibrated
 admission criterion. Pivot ratio is labeled separately.
 
-The implementation lives entirely in Gale. The prepared ScalaFIM
-`BandedSpdProviderSuite` is retained as
-[an apply-ready patch](profile-hrf-banded-spd-consumer.patch) while the source
-dependency graph is aligned. The normal build keeps its existing Gale pin.
-No private factorization, trial estimator, or new scientific admission rule
-is introduced here.
+The implementation lives entirely in Gale. ScalaFIM's
+[`BandedSpdProviderSuite`](../../modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/BandedSpdProviderSuite.scala)
+qualifies the provider seam against the pinned source dependency. No private
+factorization, trial estimator, or new scientific admission rule is introduced
+here.
 
 ## Provenance and integration
 
@@ -130,13 +129,93 @@ sbt reported `0.1.0+99-099832ff-SNAPSHOT` for the new source project and
 results are useful regression observations, not proof of a single-provider
 consumer build.
 
-The attempted ScalaFIM pin was restored to
-`83cac90a678d1b8a31c590e0c1b8fc8bf3427161`; the consumer suite remains a patch.
-PHRF-06 is **not closed**. Remaining work is coordinated sibling source-pin
-and artifact-coordinate alignment, verification that the consumer classpath
-contains one Gale implementation, and the immutable pin update followed by
-full compile and affected JVM/JS tests. The dependency conflict was not
-suppressed and no compatibility rule was relaxed.
+After that first attempt, the ScalaFIM pin was restored to
+`83cac90a678d1b8a31c590e0c1b8fc8bf3427161` and the consumer suite was retained
+as a patch.
+
+At that checkpoint PHRF-06 remained open for coordinated sibling source-pin
+and artifact-coordinate alignment, single-provider classpath evidence, and
+immutable-pin requalification. The dependency conflict was not suppressed and
+no compatibility rule was relaxed.
 
 PHRF-07 owns Gram-block preparation and the complete trial backend. Its B0
 runtime checkpoint, followed by PHRF-14 calibration, remains outstanding.
+
+## Coordinated sibling alignment, second pass
+
+The dependency conflict above was repaired and qualified on isolated branches,
+then merged through four pull requests without suppressing eviction checks:
+
+| Provider | Pull request | Qualified head | Merge revision |
+| --- | --- | --- | --- |
+| image4s | [#12](https://github.com/canardlapin/image4s/pull/12) | `334e784319333baffd0aff4c604239f8ffcedda0` | `26a74ad99b9ee49a9555344e19b82d69a2ba50e4` |
+| graph4s | [#1](https://github.com/canardlapin/graph4s/pull/1) | `54faa67618a75b0cb2e029735c37462323b7741d` | `b585e594eec4567bad78ae23206c1a8f535bcd5e` |
+| multivar | [#1](https://github.com/canardlapin/multivar/pull/1) | `716febf26cf4f8b8aa89dbbce7fe38e6d89d0acc` | `c4329fc95688929236c942cca889aa67ad17cbe0` |
+| reframe4s | [#1](https://github.com/canardlapin/reframe4s/pull/1) | `801e00215490f47ac64b459173b5283f4c8f3189` | `e3ddb48b4a084b3f08063cad849c8100207fb19c` |
+
+The source-build coordinate is Gale's full-history dynver,
+`0.1.0+99-099832ff-SNAPSHOT`, not the earlier invented
+`1.0.0-099832ff15c8`. A shallow checkout derives a different commit count, so
+Multivar's publication helper now unshallows the pinned checkout, asks Gale
+for its actual `coreJVM / version`, requires the configured coordinate to
+appear exactly in that output, and only then publishes the JVM and Scala.js
+artifacts. This check is insensitive to sbt's trailing terminal-control output
+in GitHub Actions. ScalaFIM's root-level `galeCore{JVM,JS} / version` overrides
+do not cross sbt build-unit boundaries and were removed from the admitted
+consumer build.
+
+The repaired helper published both Gale artifacts under the exact dynver from
+a fresh full-history checkout. Multivar then passed 540 JVM and 540 Scala.js
+core tests plus 48 JVM and 46 Scala.js IR tests locally. image4s compiled on
+both platforms; graph4s compiled on JVM, Scala.js and Native, with its
+Gale-dependent suites passing 29 tests per JVM/Scala.js platform; and
+reframe4s passed 100 core/lie/field/resample tests on each of JVM and
+Scala.js. A broader graph4s Native-laws run was stopped when its 1 GiB test
+JVM entered sustained GC pressure; this does not qualify that optional Native
+aggregate.
+
+After image4s merged, reframe4s was repinned to its merge revision. The image4s
+merge tree equals the qualified pull-request-head tree. The repinned reframe4s
+full JVM/Scala.js aggregate compiled, while an aggregate test invocation was
+stopped after concurrent JS linking entered sustained 1 GiB GC pressure. Its
+replacement bounded batches passed 42 JVM and 40 Scala.js numerical laws plus
+13 directly affected lie/resample tests on each platform. The reframe4s merge
+tree likewise equals this requalified head tree.
+
+An isolated ScalaFIM checkout at `96db5b7` pinned the four pull-request heads
+above (the tested Multivar source head was `4733302`; `716febf` changes only
+the publication helper), removed the ineffective root version overrides, and
+applied `BandedSpdProviderSuite`. `scalafimCompileAll` passed warning-clean.
+The effective `mvpaFit` compile classpath contained one Gale source-project
+class directory per platform and no second Gale artifact. Full bounded
+`firstLevelLawsJVM/test` and `firstLevelLawsJS/test` runs each passed 51/51
+tests, including the banded solve/energy/log-determinant parity, input-purity,
+profile-reduction, condition-fit and compact-runtime contracts. The existing
+reported-but-not-gated low-SNR milestone results were unchanged.
+
+At merge time, image4s passed its JDK 17, JDK 21, documentation, optimized
+Scala.js, compatibility, allocation and security lanes; Scalafmt failed on the
+same pre-existing files on its main branch. graph4s has no repository CI
+workflow, while its security and approval automation passed. reframe4s
+`verify` retained the pre-existing undeclared build-graph edge
+`scalafim-image -> reframe4s-lie`, also present on main; local bounded
+JVM/Scala.js gates passed. The user explicitly authorized both baseline gate
+exceptions. Multivar's
+[CI run](https://github.com/canardlapin/multivar/actions/runs/34704419760)
+passed the exact-coordinate publication, JVM/Scala.js compile and tests,
+public-surface check, MiMa, documentation and published-artifact consumer
+smoke; its security and approval automation also passed.
+
+All four live default-branch SHAs were verified after merge, and each merge
+tree equals its qualified pull-request-head tree. ScalaFIM now pins the merge
+revisions in the table. `tools/prepare-pinned-dependencies.sh` published both
+Gale artifacts at the verified full-history dynver. `scalafimCompileAll`
+passed warning-clean, and the effective `mvpaFit` compile classpath contains
+exactly one Gale source-project class directory on each platform and no Gale
+artifact jar. Full bounded `firstLevelLawsJVM/test` and
+`firstLevelLawsJS/test` runs passed 51/51 tests per platform against the merged
+pins.
+
+PHRF-06 is complete. PHRF-07 owns the next trial-backend implementation and is
+no longer blocked by provider admission; its other declared dependencies still
+apply.
