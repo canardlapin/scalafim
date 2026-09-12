@@ -54,6 +54,20 @@ Cascade34; N = 1,200 stress case; <= 120 s two-reference profile plus readout
 plus certification; <= 256 MiB; one amplitude correction; trial budgets as
 in revision 1.
 
+PHRF-07 makes the executable performance geometry fully reproducible where the
+earlier line above was underspecified. Cascade34 uses its default chart and
+48-second horizon; the derivative-inclusive kernel basis uses a 0.1-second
+grid, 9 x 9 x 7 shape nodes, tolerance `1e-3`, maximum rank 32, 300 held-out
+points and seed 11 (attained rank 10). The dense schedule draws sorted onsets
+on the 0.1-second grid in `[0, 551)` with seed 20260910 and assigns chronological
+trials cyclically to three conditions. The regular comparison spaces the same
+trial count over `[0, 551]`. Both use `lambda = 1` in unnormalised-kernel units,
+an AR(1) transform with `phi = 0.3`, the six C0 nuisance columns, a 2 x 2 x 2
+prepared node bank, response seed 20260911, eight shared-factor workers and a
+256-voxel input block. Trial output is converted to Float32 and streamed. See
+[the PHRF-07 evidence](profile-hrf-trial-banded-evidence.md) for exact workload
+definitions and receipts.
+
 ## Rank and conditioning tolerances
 
 | Item | Value |

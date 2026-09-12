@@ -219,3 +219,12 @@ pins.
 PHRF-06 is complete. PHRF-07 owns the next trial-backend implementation and is
 no longer blocked by provider admission; its other declared dependencies still
 apply.
+
+## Consumer completion update
+
+PHRF-07 subsequently consumed this provider in the shared `TrialBanded`
+backend. Its dense JVM/Scala.js laws, exact work counters and frozen B0
+checkpoint are recorded in
+[the trial-backend evidence](profile-hrf-trial-banded-evidence.md). The primary
+N=300 dense B0 workload passed its absolute, memory and ratio gates, so the
+finite-state PHRF-10 backend remains deferred.
