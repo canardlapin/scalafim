@@ -22,6 +22,8 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
         Right(())
       assertEquals(nextRow, size.height)
       assertEquals(receipt.toOption.get.delivered, (size.height + rows - 1) / rows)
+      assertEquals(receipt.toOption.get.preflight,
+        SurfaceRasterizer.preflightStrips(compiled, size, SurfaceStripConfig(rows)).toOption.get)
       assert(!receipt.toOption.get.capabilities.supports(SurfaceBackendFeature.NativePicking))
       assert(receipt.toOption.get.capabilities.supports(SurfaceBackendFeature.Lighting))
 
@@ -319,16 +321,15 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     val size = RasterDimensions.unsafe(3600, 2032)
     val config = SurfaceStripConfig.forHeap(3L * 1024 * 1024 * 1024, 2L * 1024 * 1024 * 1024).toOption.get
     val preflight = SurfaceRasterizer.preflightStrips(compiled, size, config).toOption.get
-    assertEquals(preflight.maxBufferBytes, 3600L * 64 * 24 + 3L * 4)
+    assertEquals(preflight.requiredBufferBytes, 3600L * 64 * 24 + 3L * 4)
+    assertEquals(preflight.availableBufferBytes, 1024L * 1024 * 1024)
     assertEquals(preflight.strips, 32)
     assert(SurfaceStripConfig.forHeap(3, 3).isLeft)
     var calls = 0
     val refused = SurfaceRasterizer.renderStrips(compiled, size, SurfaceStripConfig(64, 1)): _ =>
       calls += 1
       Right(())
-    assert(refused.left.toOption.exists:
-      case SurfaceRasterError.MemoryBudgetExceeded(_, _) => true
-      case _ => false)
+    assertEquals(refused, Left(SurfaceRasterError.MemoryBudgetExceeded(preflight.requiredBufferBytes, 1)))
     assertEquals(calls, 0)
 
   test("strip cancellation and sink failure never admit a partial image"):

@@ -32,7 +32,7 @@ object SurfaceStripConfig:
       Left(SurfaceRasterError.InvalidPlan("heap preflight requires positive rows and 0 <= reserved < heap"))
     else Right(SurfaceStripConfig(rows, heapBytes - reservedBytes))
 
-final case class SurfaceStripPreflight(rows: Int, strips: Int, maxBufferBytes: Long)
+final case class SurfaceStripPreflight(rows: Int, strips: Int, requiredBufferBytes: Long, availableBufferBytes: Long)
 final case class SurfaceRasterStrip(firstRow: Int, fullDimensions: RasterDimensions, image: RasterImage)
 final case class SurfaceStripReceipt(
   preflight: SurfaceStripPreflight, delivered: Int, elapsedNanos: Long,
@@ -124,7 +124,8 @@ object SurfaceRasterizer:
       val bytes = dimensions.width.toLong * rows * 24L +
         plan.meshes.iterator.map(_.positions.length.toLong / 3 * 4L).sum
       if bytes > config.maxBufferBytes then Left(SurfaceRasterError.MemoryBudgetExceeded(bytes, config.maxBufferBytes))
-      else Right(SurfaceStripPreflight(rows, ((dimensions.height.toLong + rows - 1) / rows).toInt, bytes))
+      else Right(SurfaceStripPreflight(rows, ((dimensions.height.toLong + rows - 1) / rows).toInt,
+        bytes, config.maxBufferBytes))
 
   /** Sequential backpressured strips in global pixel coordinates. Camera fitting, clipping,
     * interpolation and depth order are exactly the full-frame path's. A successful receipt alone
