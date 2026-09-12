@@ -74,17 +74,20 @@ class SurfaceSceneGeometrySuite extends munit.FunSuite:
   test("revision 8 requires exactly one geometry state per declared surface"):
     val document = SurfaceSceneDocument.capture(model, SurfaceViewerState.initial(model), bindings, provenance).toOption.get
     val entry = document.geometryStates.head
-    Vector(Vector.empty, Vector(entry, entry), Vector(entry.copy(surface = SurfaceId.unsafe("unknown")))).foreach { entries =>
-      assert(SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(document.copy(geometryStates = entries))).isLeft)
-    }
     val json = SurfaceSceneCodec.encode(document)
+    val encodedEntry = SurfaceSceneGeometryCodec.encode(entry).render
+    Vector(Vector.empty, Vector(entry, entry), Vector(entry.copy(surface = SurfaceId.unsafe("unknown")))).foreach { entries =>
+      val replacement = entries.map(SurfaceSceneGeometryCodec.encode(_).render).mkString("[", ",", "]")
+      assert(SurfaceSceneCodec.decode(json.replace(s"\"geometryStates\":[$encodedEntry]", s"\"geometryStates\":$replacement")).isLeft)
+    }
     assert(SurfaceSceneCodec.decode(json.replace("\"geometryStates\":", "\"missingGeometryStates\":")).isLeft)
 
   test("legacy revision 7 restores declared default without inventing a variant"):
     val state = reduce(SurfaceViewerState.initial(model), SurfaceViewerAction.SetGeometryState(id, SurfaceKind.Inflated))
     val captured = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
-    val legacy = captured.copy(revision = SurfaceDocumentRevision.V7, geometryStates = Vector.empty)
-    val json = SurfaceSceneCodec.encode(legacy)
+    val encodedEntry = SurfaceSceneGeometryCodec.encode(captured.geometryStates.head).render
+    val json = SurfaceSceneCodec.encode(captured).replace("\"revision\":8", "\"revision\":7")
+      .replace(s",\"geometryStates\":[$encodedEntry]", "")
     assert(!json.contains("geometryStates"))
     val decoded = SurfaceSceneCodec.decode(json).toOption.get
     assertEquals(SurfaceSceneCodec.encode(decoded), json)
@@ -99,6 +102,6 @@ class SurfaceSceneGeometrySuite extends munit.FunSuite:
     assert(SurfaceSceneCodec.decode(json.replace("\"fraction\":0.25", "\"fraction\":1.25")).isLeft)
     assert(SurfaceSceneCodec.decode(json.replace("\"to\":\"inflated\"", "\"to\":\"white\"")).isLeft)
     assert(SurfaceSceneCodec.decode(json.replace("\"revision\":8", "\"revision\":7")).isLeft)
-    val duplicate = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
-    assert(SurfaceSceneCodec.decode(SurfaceSceneCodec.encode(duplicate.copy(
-      geometryStates = duplicate.geometryStates ++ duplicate.geometryStates))).isLeft)
+    val document = SurfaceSceneDocument.capture(model, state, bindings, provenance).toOption.get
+    val entry = SurfaceSceneGeometryCodec.encode(document.geometryStates.head).render
+    assert(SurfaceSceneCodec.decode(json.replace(s"\"geometryStates\":[$entry]", s"\"geometryStates\":[$entry,$entry]")).isLeft)
