@@ -1,0 +1,77 @@
+{
+  "schema": "scalafim.javafx-metal-capability.v1",
+  "date": "2026-09-12",
+  "status": "capability gate passed; renderer admission pending",
+  "sourceRevision": "c97f7af91b2c21fb99e332e27db1116dcf5cf4a8",
+  "sourceBase": "535977a86270bd3cc5c033eda165a0370870dd22",
+  "providerClosure": {
+    "scalafimBuildOnlyPatchSha256": "bab79f11e8cf21bd7a48ca8da953d6972bba014429e5ea14fa99d5c5706ca033",
+    "intaglioRevision": "8bef37e36e91dc390833c1ee1fb841dad1db4b17",
+    "intaglioPatchSha256": "0c70dce77637ebbb8485b189e2a4480ad27adfe22244323b196bc62037127655"
+  },
+  "machine": {
+    "os": "Mac OS X 14.3",
+    "architecture": "aarch64",
+    "jdkRuntime": "OpenJDK Runtime Environment 25.0.1"
+  },
+  "lanes": [
+    {
+      "mavenVersion": "25.0.4",
+      "runtimeVersion": "25.0.4+2",
+      "requestedPipeline": "mtl",
+      "observedPipelineClass": "com.sun.prism.mtl.MTLPipeline",
+      "noFallback": true,
+      "fallbackUsed": false,
+      "moduleMutationArguments": [],
+      "artifacts": {
+        "javafx-base-25.0.4-mac-aarch64.jar": "bb679b745988aa4658bb2d605c5fa5b213fcd29b441b8f111e93c58b4d870ec2",
+        "javafx-graphics-25.0.4-mac-aarch64.jar": "906fec9ec70c32066e99052b1b82262051a2dc287f9f94d83beec59730e1b0fd"
+      },
+      "log": {
+        "path": "/private/tmp/scalafim-metal-admission-native-c97f7af-20260912.log",
+        "sha256": "93e829777b2306cc2e0a52ef9acbd2f040f0bf1385b17e3a59402d638053ffe8"
+      }
+    },
+    {
+      "mavenVersion": "26.0.2",
+      "runtimeVersion": "26.0.2+3",
+      "requestedPipeline": "mtl",
+      "observedPipelineClass": "com.sun.prism.mtl.MTLPipeline",
+      "noFallback": true,
+      "fallbackUsed": false,
+      "moduleMutationArguments": [],
+      "artifacts": {
+        "javafx-base-26.0.2-mac-aarch64.jar": "5a3ecdaafec0f6539e70137c354b4ca3f8472e023eaf5a5778f6739025d330a2",
+        "javafx-graphics-26.0.2-mac-aarch64.jar": "4529f5aee7adb2ae6b1be185418b48e90912c92cd2bb75b9bf90041e1f747ea6"
+      },
+      "log": {
+        "path": "/private/tmp/scalafim-metal-admission-native-jfx26-c97f7af-20260912.log",
+        "sha256": "b486a800f9446e705e7ad26c7b2829be67334e4de55410d768487330b606dd0b"
+      }
+    }
+  ],
+  "tests": {
+    "JavaFxSurfaceProbeSuite": {
+      "passed": 19,
+      "failed": 0,
+      "errors": 0
+    },
+    "realFailClosedWitnesses": [
+      "requested Metal without an observed initialization line",
+      "Maven version 25.0.4 supplied where exact runtime version 25.0.4+2 was required",
+      "incorrect JavaFX 26 base artifact SHA-256"
+    ]
+  },
+  "boundary": {
+    "proved": "The forked macOS probe observed stock MTLPipeline after toolkit startup with fallback disabled, exact runtime versions, exact base/graphics JAR hashes, and no patch-module, add-exports, or add-opens argument.",
+    "pending": [
+      "clean packaged module-path launch",
+      "real beta and FIR visual matrix",
+      "independent numerical and pick oracle",
+      "20 alternating painted-frame updates",
+      "painted-frame latency, snapshot latency, allocation, peak RSS, retained mesh, atlas, and upload measurements",
+      "Windows D3D and Linux ES2 qualification or typed unsupported outcomes",
+      "PLS Neuro consumer admission"
+    ]
+  }
+}
