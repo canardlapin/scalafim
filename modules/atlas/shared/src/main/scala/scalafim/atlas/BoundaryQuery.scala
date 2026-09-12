@@ -53,12 +53,15 @@ object AtlasBoundaryQuery:
         val center = inverse(axis, 0) * point.x + inverse(axis, 1) * point.y + inverse(axis, 2) * point.z + inverse(axis, 3)
         // A world ball projects to this interval in each voxel axis; +/-0.5 admits
         // every cell intersecting that ball, including sheared parallelepipeds.
-        val extent = radiusMm * math.hypot(math.hypot(inverse(axis, 0), inverse(axis, 1)), inverse(axis, 2)) + 0.5
+        val extent = inclusiveRadius * math.hypot(math.hypot(inverse(axis, 0), inverse(axis, 1)), inverse(axis, 2)) + 0.5
         if !center.isFinite || !extent.isFinite then return invalid("Boundary query affine coordinates overflow")
         // One outward representable step preserves exact-radius contacts at an
         // integer cell bound without introducing a scale-independent tolerance.
-        val lo = math.ceil(java.lang.Math.nextAfter(center - extent, Double.NegativeInfinity))
-        val hi = math.floor(java.lang.Math.nextAfter(center + extent, Double.PositiveInfinity))
+        val outerExtent = java.lang.Math.nextAfter(extent, Double.PositiveInfinity)
+        val lo = math.ceil(java.lang.Math.nextAfter(
+          java.lang.Math.nextAfter(center, Double.NegativeInfinity) - outerExtent, Double.NegativeInfinity))
+        val hi = math.floor(java.lang.Math.nextAfter(
+          java.lang.Math.nextAfter(center, Double.PositiveInfinity) + outerExtent, Double.PositiveInfinity))
         if hi < 0 || lo > dims(axis) - 1 then empty = true
         lower(axis) = math.max(0.0, math.min(dims(axis).toDouble, lo)).toInt
         upper(axis) = math.max(-1.0, math.min(dims(axis) - 1.0, hi)).toInt
