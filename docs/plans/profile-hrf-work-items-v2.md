@@ -582,6 +582,14 @@ Owner: Gale, via PHRF-26. Acceptance:
 Performance rule: `O(N b^2)` factor, `O(N b)` per-RHS solve, measured in
 Gale's benchmarks.
 
+Progress 2026-09-12: the Gale implementation and measured scaling landed
+upstream at `099832ff`; see
+[provider evidence](profile-hrf-banded-spd-evidence.md) and
+[Gale PR #11](https://github.com/canardlapin/gale/pull/11). The pin probe exposed
+older Gale source/artifact dependencies in four sibling libraries. The normal
+pin is restored and the consumer suite is retained as a patch. PHRF-06 remains
+open for dependency alignment and pinned JVM/JS requalification.
+
 ### PHRF-07: Implement the TrialBanded backend on shared Gram blocks
 
 Owner: `fit/profile`. Acceptance:
