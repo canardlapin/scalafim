@@ -6,7 +6,8 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
   private val spaceId = SpaceId("analytic-boundary-mm")
   private def atlas(dims: Vector[Int], labels: Array[Int], rows: Vector[Vector[Double]]): VolumeAtlas =
     val space = NeuroSpace(dims, trans = Some(DMat.fromRows(rows)))
-    val regions = RegionIndex(Vector(AtlasRegionMetadata(RegionId(1), "same"), AtlasRegionMetadata(RegionId(2), "same")))
+    val regions = RegionIndex(labels.iterator.filter(_ != 0).toVector.distinct.sorted.map(id =>
+      AtlasRegionMetadata(RegionId(id), "same")))
     VolumeAtlas.fromLabelVolume(AtlasRef("oracle", "cells", AtlasRepresentation.Volume, spaceId, spaceId),
       regions, NeuroVol.fromLinear(labels, space))
   private val diagonal = Vector(Vector(2.0,0,0,0),Vector(0.0,2,0,0),Vector(0.0,0,2,0),Vector(0.0,0,0,1))
@@ -59,7 +60,8 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
     assertEqualsDouble(outside.nearestPoint.y,0.5,1e-12)
 
   test("no labels, outside radius, huge finite points and invalid requests are explicit"):
-    assert(query(atlas(Vector(1,1,1),Array(0),diagonal),Point3D(0,0,0),2).hits.isEmpty)
+    // The valid atlas contains a distant region; the complete queried neighborhood has no label.
+    assert(query(atlas(Vector(5,1,1),Array(0,0,0,0,1),diagonal),Point3D(0,0,0),1).hits.isEmpty)
     assert(query(cube,Point3D(4294967296.0,0,0),2).hits.isEmpty)
     assert(query(cube,Point3D(100,0,0),2).hits.isEmpty)
     assert(AtlasBoundaryQuery.queryEither(cube,Point3D(0,0,0),SpaceId("other"),2).isLeft)
