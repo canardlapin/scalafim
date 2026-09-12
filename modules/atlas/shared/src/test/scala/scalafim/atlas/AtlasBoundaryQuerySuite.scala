@@ -15,11 +15,11 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
   private def query(a: VolumeAtlas, p: Point3D, radius: Double) =
     AtlasBoundaryQuery.queryEither(a,p,spaceId,radius).fold(e => fail(e.message),identity)
 
-  test("one 2mm cube centre is 1mm from boundary, not zero from labelled centre"):
-    val hit = query(cube,Point3D(0,0,0),2).hits.head
-    assertEqualsDouble(hit.distanceMm,1,1e-12)
-    assertEquals(hit.face,AtlasBoundaryFace(0,0,0,0,-1))
-    assertEquals(hit.nearestPoint,Point3D(-1,0,0))
+  test("one 2mm cube has a unique off-centre boundary witness"):
+    val hit = query(cube,Point3D(0.1,0,0),2).hits.head
+    assertEqualsDouble(hit.distanceMm,0.9,1e-12)
+    assertEquals(hit.face,AtlasBoundaryFace(0,0,0,0,1))
+    assertEquals(hit.nearestPoint,Point3D(1,0,0))
     assert(query(cube,Point3D(0,0,0),0.99).hits.isEmpty)
 
   test("edge and corner distances use closed-form Euclidean box oracle"):
@@ -32,7 +32,7 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
 
   test("adjacent equal labels remove internal faces; distinct labels retain both zero-distance ties"):
     val same = atlas(Vector(2,1,1),Array(1,1),diagonal)
-    assertEqualsDouble(query(same,Point3D(1,0,0),2).hits.head.distanceMm,1,1e-12)
+    assertEqualsDouble(query(same,Point3D(1,0.1,0),2).hits.head.distanceMm,0.9,1e-12)
     val different = atlas(Vector(2,1,1),Array(2,1),diagonal)
     val hits = query(different,Point3D(1,0,0),0).hits
     assertEquals(hits.map(_.region.id.value),Vector(1,2))
@@ -41,18 +41,18 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
 
   test("rotation translation and anisotropic scale retain world-mm metric"):
     val rows = Vector(Vector(0.0,-3,0,10),Vector(2.0,0,0,20),Vector(0.0,0,4,30),Vector(0.0,0,0,1))
-    val hit = query(atlas(Vector(1,1,1),Array(1),rows),Point3D(10,20,30),3).hits.head
-    assertEqualsDouble(hit.distanceMm,1,1e-12)
-    assertEquals(hit.nearestPoint,Point3D(10,19,30))
+    val hit = query(atlas(Vector(1,1,1),Array(1),rows),Point3D(10,20.1,30),3).hits.head
+    assertEqualsDouble(hit.distanceMm,0.9,1e-12)
+    assertEquals(hit.nearestPoint,Point3D(10,21,30))
 
   test("shear uses distance to the oblique plane and complete inverse-affine search bounds"):
     val shear = Vector(Vector(2.0,2,0,0),Vector(0.0,2,0,0),Vector(0.0,0,2,0),Vector(0.0,0,0,1))
     val a = atlas(Vector(1,1,1),Array(1),shear)
-    // Cell face x-y=-1: orthogonal projection of origin is(-1/2,1/2,0).
-    val inside = query(a,Point3D(0,0,0),1).hits.head
-    assertEqualsDouble(inside.distanceMm,1/math.sqrt(2),1e-12)
-    assertEqualsDouble(inside.nearestPoint.x,-0.5,1e-12)
-    assertEqualsDouble(inside.nearestPoint.y,0.5,1e-12)
+    // Cell face x-y=1: projection of(0.1,0,0) is(0.55,-0.45,0).
+    val inside = query(a,Point3D(0.1,0,0),1).hits.head
+    assertEqualsDouble(inside.distanceMm,0.9/math.sqrt(2),1e-12)
+    assertEqualsDouble(inside.nearestPoint.x,0.55,1e-12)
+    assertEqualsDouble(inside.nearestPoint.y,-0.45,1e-12)
     // Outside the voxel centre box, but within0.8mm of face x-y=1.
     val outside = query(a,Point3D(2,0,0),0.8).hits.head
     assertEqualsDouble(outside.distanceMm,1/math.sqrt(2),1e-12)
@@ -127,7 +127,7 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
     assert(query(a,point,hit.distanceMm-2*hit.distanceErrorBoundMm).hits.isEmpty)
 
   test("normal image geometry has negligible envelopes; unrepresentable placement refuses"):
-    val ordinary = query(cube,Point3D(0,0,0),1)
+    val ordinary = query(cube,Point3D(0.1,0,0),1)
     assert(ordinary.distanceErrorBoundMm < 1e-12)
     assert(ordinary.discovery.paddingVoxels < 1e-12)
     val remote = diagonal.updated(0,Vector(2.0,0,0,1e12))
@@ -143,3 +143,23 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
     assert(result.hits.head.distanceMm <= result.hits.head.distanceErrorBoundMm)
     assert(result.discovery.residualInfinityNorm < 1e-10)
     assert(result.discovery.paddingVoxels < 0.01)
+
+  test("rounded corner-edge distance ambiguity refuses a false coordinate guarantee"):
+    val a = atlas(Vector(1,1,1),Array(1),Vector(Vector(1.0,0,0,0),Vector(0.0,1,0,0),
+      Vector(0.0,0,1,0),Vector(0.0,0,0,1)))
+    val point = Point3D(-100,-100,-0.5+1e-6)
+    val ambiguous = AtlasBoundaryQuery.queryEither(a,point,spaceId,141)
+    assert(ambiguous.left.exists(_.message == "Boundary nearest-witness ambiguity exceeds local voxel resolution"))
+    assert(math.abs(-0.5-point.z) > 1e-8, "The old corner witness exceeds the coordinate materiality budget")
+    val separated = Point3D(-100,-100,-0.49)
+    val hit = query(a,separated,141).hits.head
+    // Cartesian box projection: clamp x,y to-0.5 and preserve the interior z.
+    val coordinateError = math.hypot(math.hypot(hit.nearestPoint.x+0.5,hit.nearestPoint.y+0.5),
+      hit.nearestPoint.z-separated.z)
+    assert(coordinateError <= hit.nearestPointErrorBoundMm)
+    assert(hit.nearestPointErrorBoundMm < 1e-8)
+    assertEqualsDouble(hit.nearestPoint.z,separated.z,1e-12)
+
+  test("exact symmetric nearest-face ambiguity is explicitly refused"):
+    val result = AtlasBoundaryQuery.queryEither(cube,Point3D(0,0,0),spaceId,2)
+    assert(result.left.exists(_.message == "Boundary nearest-witness ambiguity exceeds local voxel resolution"))

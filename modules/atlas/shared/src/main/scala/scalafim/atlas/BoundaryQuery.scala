@@ -122,6 +122,10 @@ object AtlasBoundaryQuery:
       if !distanceError.isFinite || distanceError > resolutionBudget then
         return invalid("Boundary distance arithmetic envelope exceeds local voxel resolution")
       val inclusiveRadius = up(radiusMm + distanceError)
+      // A borderline admitted measured minimum may have true distance r+2e.
+      // Search one additional envelope beyond that so every competing true
+      // minimum can contribute to the global witness uncertainty set.
+      val discoveryRadius = up(radiusMm + up(3*distanceError))
       val relativeLower = Array.tabulate(3)(i => down(coordinates(i)-matrix(i,3)))
       val relativeUpper = Array.tabulate(3)(i => up(coordinates(i)-matrix(i,3)))
       val relativeNorm = (0 until 3).map(i => math.max(math.abs(relativeLower(i)),math.abs(relativeUpper(i)))).max
@@ -146,10 +150,10 @@ object AtlasBoundaryQuery:
         // A world ball projects to this interval in each voxel axis; +/-0.5 admits
         // every cell intersecting that ball, including sheared parallelepipeds.
         val normUpper = up(up(math.hypot(up(math.hypot(inverse(axis,0),inverse(axis,1))),inverse(axis,2))) + inverseBound.errorNorm)
-        val extentUpper = up(up(inclusiveRadius * normUpper) + 0.5)
+        val extentUpper = up(up(discoveryRadius * normUpper) + 0.5)
         if !centerLower.isFinite || !centerUpper.isFinite || !extentUpper.isFinite then
           return invalid("Boundary query affine coordinates overflow")
-        discoveryPadding = math.max(discoveryPadding, up(up((centerUpper-centerLower)/2) + up(inclusiveRadius*inverseBound.errorNorm)))
+        discoveryPadding = math.max(discoveryPadding, up(up((centerUpper-centerLower)/2) + up(discoveryRadius*inverseBound.errorNorm)))
         if !discoveryPadding.isFinite || discoveryPadding > 0.01 then
           return invalid("Boundary discovery uncertainty exceeds one hundredth of a voxel")
         val lo = math.ceil(down(centerLower - extentUpper))
@@ -168,7 +172,8 @@ object AtlasBoundaryQuery:
             if x < 0 || y < 0 || z < 0 || x >= dims(0) || y >= dims(1) || z >= dims(2) then 0
             else labels.linear(x + dims(0) * (y + dims(1) * z))
           val best = scala.collection.mutable.Map.empty[Int, AtlasBoundaryHit]
-          val closest = new Array[Double](3)
+          val witnessSets = scala.collection.mutable.Map.empty[Int, WitnessCandidates]
+          val closest = new Array[Double](4)
           var visited = 0
           var z = lower(2)
           while z <= upper(2) do
@@ -193,11 +198,13 @@ object AtlasBoundaryQuery:
                         val ox = matrix(0,0)*gx + matrix(0,1)*gy + matrix(0,2)*gz + matrix(0,3)
                         val oy = matrix(1,0)*gx + matrix(1,1)*gy + matrix(1,2)*gz + matrix(1,3)
                         val oz = matrix(2,0)*gx + matrix(2,1)*gy + matrix(2,2)*gz + matrix(2,3)
-                        val distance = faces(axis).closest(coordinates(0)-ox, coordinates(1)-oy, coordinates(2)-oz, closest)
+                        val distance = faces(axis).closest(coordinates(0)-ox, coordinates(1)-oy, coordinates(2)-oz, closest,distanceError)
                         if !distance.isFinite then return invalid("Boundary query world distance overflow")
-                        if distance <= inclusiveRadius && best.get(id).forall(_.distanceMm > distance) then
+                        val witness = Point3D(ox+closest(0),oy+closest(1),oz+closest(2))
+                        witnessSets.getOrElseUpdate(id,new WitnessCandidates).include(distance,distanceError,witness,closest(3))
+                        if best.get(id).forall(_.distanceMm > distance) then
                           best.update(id, AtlasBoundaryHit(atlas.region(RegionId(id)).get, distance,
-                            Point3D(ox+closest(0), oy+closest(1), oz+closest(2)), AtlasBoundaryFace(x,y,z,axis,side), distanceError,distanceError,
+                            witness, AtlasBoundaryFace(x,y,z,axis,side), distanceError,closest(3),
                             if up(distance+distanceError) <= radiusMm then AtlasBoundaryRadiusAdmission.DefinitelyWithin
                             else AtlasBoundaryRadiusAdmission.NumericallyBorderline))
                       side += 2
@@ -206,8 +213,44 @@ object AtlasBoundaryQuery:
               y += 1
             z += 1
           if cancelled() then invalid("Atlas boundary query cancelled")
-          else Right(AtlasBoundaryResult(point, fromSpace, radiusMm,
-            best.valuesIterator.toVector.sortBy(h => (h.distanceMm, h.region.id.value)), visited,distanceError,discovery))
+          else
+            val hits = best.valuesIterator.filter(_.distanceMm <= inclusiveRadius).toVector
+              .sortBy(h => (h.distanceMm,h.region.id.value)).map { hit =>
+                hit.copy(nearestPointErrorBoundMm = witnessSets(hit.region.id.value).bound(hit.nearestPoint,hit.nearestPointErrorBoundMm))
+              }
+            if hits.exists(h => !h.nearestPointErrorBoundMm.isFinite || h.nearestPointErrorBoundMm > resolutionBudget) then
+              invalid("Boundary nearest-witness ambiguity exceeds local voxel resolution")
+            else Right(AtlasBoundaryResult(point, fromSpace, radiusMm,hits,visited,distanceError,discovery))
+
+  /** Covers every face whose outward distance lower bound can attain the minimum
+    * upper bound. Obsolete candidates may remain, conservatively enlarging the box;
+    * reset only when the new upper bound is below every previous lower bound.
+    */
+  private final class WitnessCandidates:
+    private var minimumLower = Double.PositiveInfinity
+    private var minimumUpper = Double.PositiveInfinity
+    private val lower = Array.fill(3)(Double.PositiveInfinity)
+    private val upper = Array.fill(3)(Double.NegativeInfinity)
+    private var localBound = 0.0
+    def include(distance: Double,error: Double,point: Point3D,witnessError: Double): Unit =
+      val lo = down(distance-error)
+      val hi = up(distance+error)
+      if hi < minimumLower then
+        var i = 0
+        while i < 3 do
+          lower(i)=Double.PositiveInfinity; upper(i)=Double.NegativeInfinity
+          i += 1
+        localBound = 0
+      if lo <= minimumUpper then
+        lower(0)=math.min(lower(0),point.x); upper(0)=math.max(upper(0),point.x)
+        lower(1)=math.min(lower(1),point.y); upper(1)=math.max(upper(1),point.y)
+        lower(2)=math.min(lower(2),point.z); upper(2)=math.max(upper(2),point.z)
+        localBound=math.max(localBound,witnessError)
+      minimumLower=math.min(minimumLower,lo)
+      minimumUpper=math.min(minimumUpper,hi)
+    def bound(selected: Point3D,selectedError: Double): Double =
+      def delta(value: Double,axis: Int): Double = up(math.max(math.abs(value-lower(axis)),math.abs(value-upper(axis))))
+      up(up(math.hypot(up(math.hypot(delta(selected.x,0),delta(selected.y,1))),delta(selected.z,2))) + up(localBound+selectedError))
 
   /** Closest point on a parallelogram: feasible plane projection or one of four
     * segment projections. Unit edge vectors avoid squaring physical scale in the
@@ -223,17 +266,24 @@ object AtlasBoundaryQuery:
     val gramDeterminant: Double = determinant
     val valid: Boolean = ul.isFinite && vl.isFinite && ul > 0 && vl > 0 && determinant > 1e-12
 
-    def closest(qx: Double, qy: Double, qz: Double, out: Array[Double]): Double =
+    def closest(qx: Double, qy: Double, qz: Double, out: Array[Double],error: Double): Double =
       val du = qx*ax + qy*ay + qz*az
       val dv = qx*bx + qy*by + qz*bz
       val a = (du-cosine*dv)/determinant
       val b = (dv-cosine*du)/determinant
+      def clamp(value: Double, length: Double): Double = math.max(0, math.min(length,value))
+      val structurallyOrthogonal = (ux == 0 || vx == 0) && (uy == 0 || vy == 0) && (uz == 0 || vz == 0)
+      if structurallyOrthogonal || (a > error && a < ul-error && b > error && b < vl-error) then
+        val first = if structurallyOrthogonal then clamp(du,ul) else a
+        val second = if structurallyOrthogonal then clamp(dv,vl) else b
+        out(0)=first*ax+second*bx; out(1)=first*ay+second*by; out(2)=first*az+second*bz
+        out(3)=error
+        return math.hypot(math.hypot(qx-out(0),qy-out(1)),qz-out(2))
       var best = Double.PositiveInfinity
       def consider(x: Double, y: Double, z: Double): Unit =
         val distance = math.hypot(math.hypot(qx-x,qy-y),qz-z)
         if distance < best then
           best = distance; out(0)=x; out(1)=y; out(2)=z
-      def clamp(value: Double, length: Double): Double = math.max(0, math.min(length,value))
       if a >= 0 && a <= ul && b >= 0 && b <= vl then consider(a*ax+b*bx,a*ay+b*by,a*az+b*bz)
       val edge0 = clamp(du,ul)
       consider(edge0*ax,edge0*ay,edge0*az)
@@ -243,4 +293,11 @@ object AtlasBoundaryQuery:
       consider(edge2*bx,edge2*by,edge2*bz)
       val edge3 = clamp(dv-ul*cosine,vl)
       consider(ux+edge3*bx,uy+edge3*by,uz+edge3*bz)
+      // If candidate ordering is unresolved, distance accuracy does not imply
+      // coordinate accuracy. For a feasible point z and the convex face projection
+      // p*, ||z-p*||² <= ||q-z||²-d*². Include feasibility/coordinate roundoff e:
+      // ||z-q|| <= d+2e, d* >= max(0,d-e), then add e for the emitted point.
+      val squared = if best >= error then up(up(6*best*error)+up(3*error*error))
+        else up(up(best+2*error)*up(best+2*error))
+      out(3)=up(error+up(math.sqrt(squared)))
       best

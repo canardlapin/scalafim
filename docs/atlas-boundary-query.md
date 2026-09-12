@@ -33,10 +33,25 @@ envelope covers the coordinate and normalized face arithmetic chain and its
 conditioning. Candidate bounds and final radius admission both use radius plus
 this envelope. Each hit retains measured distance, distanceErrorBoundMm and
 nearestPointErrorBoundMm, plus DefinitelyWithin or NumericallyBorderline admission.
-The same envelope covers Euclidean arithmetic error of the emitted anatomical
-nearest point on its selected face, including the final world-coordinate addition.
-It does not promise a unique witness across distinct exactly equidistant faces;
-the recorded face and deterministic face-order rule retain that identity.
+The coordinate guarantee is separate from distance accuracy. Structurally
+orthogonal faces use separable clamping; a certified interior plane projection
+returns directly. Unresolved edge competition uses the convex-projection bound:
+for feasible z and face projection p*, ||z-p*||² <= ||q-z||²-d*². With arithmetic
+error e, ||q-z||<=d+2e and d*>=max(0,d-e), the local coordinate bound is
+e+sqrt((d+2e)²-max(0,d-e)²), including emitted-coordinate roundoff.
+
+Per region, candidate completeness uses outward intervals [d-e,d+e]: every face
+whose lower bound can attain the global minimum upper bound enters a coordinate
+box. Obsolete faces may remain conservatively; the box resets only when a new
+upper bound lies below every prior lower bound. Search extends through r+3e so
+borderline final admission at r+e cannot omit a competing true minimum. The global
+witness bound is worst separation from the deterministic selected point to this
+box, plus both local coordinate bounds. Ordering remains measured distance then
+the declared face order. If this bound exceeds the same materiality budget as
+distance arithmetic, the whole query refuses explicitly. Thus a symmetric cube
+centre can refuse despite a well-determined distance: its widely separated
+nearest witnesses cannot support one precise coordinate guarantee. Zero-radius
+ties across two region labels at the same interface point remain supported.
 Ordering uses measured
 distance. Borderline admission is numerical uncertainty, not a scientifically
 expanded radius. This replaces the disproven final-only one-ulp guarantee.
