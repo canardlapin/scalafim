@@ -18,6 +18,10 @@ No hit means no labelled boundary within the radius; it is not a zero distance.
 
 Inverse-affine row norms bound the candidate voxel cells intersecting the world
 ball. The candidate count must fit the explicit voxel budget before traversal;
+candidate interval endpoints are rounded outward by one representable Double
+step before integer ceil/floor. Radius comparison likewise allows exactly one
+outward Double step. This bounded ulp guard retains exact-radius contacts affected
+by binary roundoff; it is not an absolute or relative scientific tolerance.
 the default is one million. Cancellation is checked before admission, for each
 visited voxel and before returning. No partial result is returned on failure.
 Face distance uses a feasible orthogonal plane projection and four segment

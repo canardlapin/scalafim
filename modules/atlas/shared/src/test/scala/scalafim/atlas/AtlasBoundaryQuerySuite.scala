@@ -81,3 +81,14 @@ class AtlasBoundaryQuerySuite extends munit.FunSuite:
   test("nearly collapsed affine faces are refused rather than inaccurately measured"):
     val rows = Vector(Vector(2.0,2,0,0),Vector(0.0,1e-7,0,0),Vector(0.0,0,2,0),Vector(0.0,0,0,1))
     assert(AtlasBoundaryQuery.queryEither(atlas(Vector(1,1,1),Array(1),rows),Point3D(0,0,0),spaceId,2).isLeft)
+
+  test("inclusive non-binary affine radius uses only a tight outward ulp guard"):
+    // Analytic right face is x=0.3+0.8/2=0.7. From x=1 the exact distance is0.3;
+    // ordinary binary subtraction gives0.30000000000000004, one ulp above radius.
+    val rows = Vector(Vector(0.8,0,0,0.3),Vector(0.0,2,0,0),Vector(0.0,0,2,0),Vector(0.0,0,0,1))
+    val a = atlas(Vector(1,1,1),Array(1),rows)
+    val included = query(a,Point3D(1,0,0),0.3)
+    assertEquals(included.hits.size,1)
+    assertEqualsDouble(included.hits.head.distanceMm,0.3,1e-15)
+    val below = java.lang.Math.nextAfter(java.lang.Math.nextAfter(0.3,Double.NegativeInfinity),Double.NegativeInfinity)
+    assert(query(a,Point3D(1,0,0),below).hits.isEmpty)

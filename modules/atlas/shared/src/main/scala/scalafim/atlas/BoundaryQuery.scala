@@ -46,6 +46,7 @@ object AtlasBoundaryQuery:
       val lower = new Array[Int](3)
       val upper = new Array[Int](3)
       val dims = atlas.space.spatialDims
+      val inclusiveRadius = java.lang.Math.nextAfter(radiusMm, Double.PositiveInfinity)
       var axis = 0
       var empty = false
       while axis < 3 do
@@ -54,8 +55,10 @@ object AtlasBoundaryQuery:
         // every cell intersecting that ball, including sheared parallelepipeds.
         val extent = radiusMm * math.hypot(math.hypot(inverse(axis, 0), inverse(axis, 1)), inverse(axis, 2)) + 0.5
         if !center.isFinite || !extent.isFinite then return invalid("Boundary query affine coordinates overflow")
-        val lo = math.ceil(center - extent)
-        val hi = math.floor(center + extent)
+        // One outward representable step preserves exact-radius contacts at an
+        // integer cell bound without introducing a scale-independent tolerance.
+        val lo = math.ceil(java.lang.Math.nextAfter(center - extent, Double.NegativeInfinity))
+        val hi = math.floor(java.lang.Math.nextAfter(center + extent, Double.PositiveInfinity))
         if hi < 0 || lo > dims(axis) - 1 then empty = true
         lower(axis) = math.max(0.0, math.min(dims(axis).toDouble, lo)).toInt
         upper(axis) = math.max(-1.0, math.min(dims(axis) - 1.0, hi)).toInt
@@ -103,7 +106,7 @@ object AtlasBoundaryQuery:
                         val oz = matrix(2,0)*gx + matrix(2,1)*gy + matrix(2,2)*gz + matrix(2,3)
                         val distance = faces(axis).closest(coordinates(0)-ox, coordinates(1)-oy, coordinates(2)-oz, closest)
                         if !distance.isFinite then return invalid("Boundary query world distance overflow")
-                        if distance <= radiusMm && best.get(id).forall(_.distanceMm > distance) then
+                        if distance <= inclusiveRadius && best.get(id).forall(_.distanceMm > distance) then
                           best.update(id, AtlasBoundaryHit(atlas.region(RegionId(id)).get, distance,
                             Point3D(ox+closest(0), oy+closest(1), oz+closest(2)), AtlasBoundaryFace(x,y,z,axis,side)))
                       side += 2
