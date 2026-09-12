@@ -1,22 +1,71 @@
 package scalafim.atlas
 
-import scalafim.image.Affine3D
+import scalafim.image.{Affine3D, DMat}
 
 /** A face of a labelled voxel cell. Axis is 0/1/2; side is -1/+1. */
 final case class AtlasBoundaryFace(x: Int, y: Int, z: Int, axis: Int, side: Int):
   require(axis >= 0 && axis < 3 && (side == -1 || side == 1))
 
 final case class AtlasBoundaryHit(region: AtlasRegionMetadata, distanceMm: Double,
-    nearestPoint: Point3D, face: AtlasBoundaryFace)
+    nearestPoint: Point3D, face: AtlasBoundaryFace, distanceErrorBoundMm: Double,
+    nearestPointErrorBoundMm: Double, radiusAdmission: AtlasBoundaryRadiusAdmission)
+
+enum AtlasBoundaryRadiusAdmission:
+  case DefinitelyWithin, NumericallyBorderline
+
+final case class AtlasBoundaryDiscovery(residualInfinityNorm: Double,
+    inverseErrorInfinityNorm: Double, paddingVoxels: Double)
+
+private[atlas] final case class AtlasBoundaryInverseBound(residual: Double, errorNorm: Double)
 
 /** Every labelled region with a boundary within the inclusive search radius, sorted by
   * (distance, region ID). Equal-distance regions are retained, never collapsed by name.
   * For one region, equal-distance faces choose (z,y,x,axis,side) order.
   */
 final case class AtlasBoundaryResult(input: Point3D, coordinateSpace: AnySpaceId,
-    radiusMm: Double, hits: Vector[AtlasBoundaryHit], visitedVoxels: Int)
+    radiusMm: Double, hits: Vector[AtlasBoundaryHit], visitedVoxels: Int,
+    distanceErrorBoundMm: Double, discovery: AtlasBoundaryDiscovery)
 
 object AtlasBoundaryQuery:
+  private def down(value: Double): Double = java.lang.Math.nextAfter(value, Double.NegativeInfinity)
+  private def up(value: Double): Double = java.lang.Math.nextAfter(value, Double.PositiveInfinity)
+  private val unitRoundoff = math.ulp(1.0) / 2
+  private val gamma128 = 128 * unitRoundoff / (1 - 128 * unitRoundoff)
+
+  /** A posteriori inverse bound over the stored forward matrix, using outward
+    * intervals for R=I-A B. Neumann's bound gives ||A^-1-B|| <= ||B||rho/(1-rho).
+    */
+  private[atlas] def discoveryInverseBound(a: DMat, b: DMat): Either[AtlasError, AtlasBoundaryInverseBound] =
+    var residual = 0.0
+    var inverseNorm = 0.0
+    var row = 0
+    while row < 3 do
+      var rowResidual = 0.0
+      var rowInverse = 0.0
+      var col = 0
+      while col < 3 do
+        var lower = 0.0
+        var upper = 0.0
+        var k = 0
+        while k < 3 do
+          val product = a(row,k) * b(k,col)
+          lower = down(lower + down(product))
+          upper = up(upper + up(product))
+          k += 1
+        val target = if row == col then 1.0 else 0.0
+        rowResidual = up(rowResidual + math.max(math.abs(down(target-upper)),math.abs(up(target-lower))))
+        rowInverse = up(rowInverse + math.abs(b(row,col)))
+        col += 1
+      residual = math.max(residual,rowResidual)
+      inverseNorm = math.max(inverseNorm,rowInverse)
+      row += 1
+    if !residual.isFinite || !inverseNorm.isFinite || residual >= 0.125 then
+      Left(AtlasError.InvalidQuery("Boundary query cannot bound the computed affine inverse residual"))
+    else
+      val error = up(up(inverseNorm * residual) / down(1-residual))
+      if !error.isFinite then Left(AtlasError.InvalidQuery("Boundary query inverse error bound overflow"))
+      else Right(AtlasBoundaryInverseBound(residual,error))
+
   /** Distance to the union of exposed voxel-cell faces, not labelled voxel centres.
     * Cells extend +/- 0.5 grid units. A face is exposed when its neighbor has a
     * different label or is outside the atlas; shared interfaces belong to both labels.
@@ -46,37 +95,74 @@ object AtlasBoundaryQuery:
       val lower = new Array[Int](3)
       val upper = new Array[Int](3)
       val dims = atlas.space.spatialDims
-      val inclusiveRadius = java.lang.Math.nextAfter(radiusMm, Double.PositiveInfinity)
+      val inverseBound = discoveryInverseBound(matrix,inverse) match
+        case Left(error) => return Left(error)
+        case Right(value) => value
+      val faces = Array.tabulate(3) { a =>
+        val u = (a + 1) % 3
+        val v = (a + 2) % 3
+        new FaceMetric(matrix(0,u), matrix(1,u), matrix(2,u), matrix(0,v), matrix(1,v), matrix(2,v))
+      }
+      if faces.exists(!_.valid) then return invalid("Boundary query refuses numerically degenerate affine faces")
+      val worldBounds = Array.tabulate(3) { r =>
+        var bound = math.abs(matrix(r,3))
+        var c = 0
+        while c < 3 do
+          bound = up(bound + up(math.abs(matrix(r,c)) * (dims(c)-0.5)))
+          c += 1
+        bound
+      }
+      val scale = up(up(math.hypot(up(math.hypot(point.x,point.y)),point.z)) +
+        up(math.hypot(up(math.hypot(worldBounds(0),worldBounds(1))),worldBounds(2))))
+      // gamma128 covers the coordinate/normalized-face arithmetic chain; the
+      // normalized Gram determinant sin²(theta) accounts for face conditioning.
+      val determinantLower = down(faces.map(_.gramDeterminant).min - 32*unitRoundoff)
+      val distanceError = up(up(gamma128 * scale) / determinantLower)
+      val resolutionBudget = math.max(1e-12, atlas.space.spacing.min * 1e-8)
+      if !distanceError.isFinite || distanceError > resolutionBudget then
+        return invalid("Boundary distance arithmetic envelope exceeds local voxel resolution")
+      val inclusiveRadius = up(radiusMm + distanceError)
+      val relativeLower = Array.tabulate(3)(i => down(coordinates(i)-matrix(i,3)))
+      val relativeUpper = Array.tabulate(3)(i => up(coordinates(i)-matrix(i,3)))
+      val relativeNorm = (0 until 3).map(i => math.max(math.abs(relativeLower(i)),math.abs(relativeUpper(i)))).max
+      val inverseCenterError = up(inverseBound.errorNorm * relativeNorm)
+      var discoveryPadding = 0.0
       var axis = 0
       var empty = false
       while axis < 3 do
-        val center = inverse(axis, 0) * point.x + inverse(axis, 1) * point.y + inverse(axis, 2) * point.z + inverse(axis, 3)
+        // Bound each multiplication and addition, not merely the final dot-product
+        // result: large cancelling terms can lose many ulps of the small centre.
+        var centerLower = 0.0
+        var centerUpper = 0.0
+        var term = 0
+        while term < 3 do
+          val first = inverse(axis,term) * relativeLower(term)
+          val second = inverse(axis,term) * relativeUpper(term)
+          centerLower = down(centerLower + down(math.min(first,second)))
+          centerUpper = up(centerUpper + up(math.max(first,second)))
+          term += 1
+        centerLower = down(centerLower-inverseCenterError)
+        centerUpper = up(centerUpper+inverseCenterError)
         // A world ball projects to this interval in each voxel axis; +/-0.5 admits
         // every cell intersecting that ball, including sheared parallelepipeds.
-        val extent = inclusiveRadius * math.hypot(math.hypot(inverse(axis, 0), inverse(axis, 1)), inverse(axis, 2)) + 0.5
-        if !center.isFinite || !extent.isFinite then return invalid("Boundary query affine coordinates overflow")
-        // One outward representable step preserves exact-radius contacts at an
-        // integer cell bound without introducing a scale-independent tolerance.
-        val outerExtent = java.lang.Math.nextAfter(extent, Double.PositiveInfinity)
-        val lo = math.ceil(java.lang.Math.nextAfter(
-          java.lang.Math.nextAfter(center, Double.NegativeInfinity) - outerExtent, Double.NegativeInfinity))
-        val hi = math.floor(java.lang.Math.nextAfter(
-          java.lang.Math.nextAfter(center, Double.PositiveInfinity) + outerExtent, Double.PositiveInfinity))
+        val normUpper = up(up(math.hypot(up(math.hypot(inverse(axis,0),inverse(axis,1))),inverse(axis,2))) + inverseBound.errorNorm)
+        val extentUpper = up(up(inclusiveRadius * normUpper) + 0.5)
+        if !centerLower.isFinite || !centerUpper.isFinite || !extentUpper.isFinite then
+          return invalid("Boundary query affine coordinates overflow")
+        discoveryPadding = math.max(discoveryPadding, up(up((centerUpper-centerLower)/2) + up(inclusiveRadius*inverseBound.errorNorm)))
+        if !discoveryPadding.isFinite || discoveryPadding > 0.01 then
+          return invalid("Boundary discovery uncertainty exceeds one hundredth of a voxel")
+        val lo = math.ceil(down(centerLower - extentUpper))
+        val hi = math.floor(up(centerUpper + extentUpper))
         if hi < 0 || lo > dims(axis) - 1 then empty = true
         lower(axis) = math.max(0.0, math.min(dims(axis).toDouble, lo)).toInt
         upper(axis) = math.max(-1.0, math.min(dims(axis) - 1.0, hi)).toInt
         axis += 1
       val count = (0 until 3).map(a => math.max(0, upper(a) - lower(a) + 1).toDouble).product
-      if empty || count == 0 then Right(AtlasBoundaryResult(point, fromSpace, radiusMm, Vector.empty, 0))
+      val discovery = AtlasBoundaryDiscovery(inverseBound.residual,inverseBound.errorNorm,discoveryPadding)
+      if empty || count == 0 then Right(AtlasBoundaryResult(point, fromSpace, radiusMm, Vector.empty, 0,distanceError,discovery))
       else if count > maxVisitedVoxels then invalid("Boundary query exceeds the declared voxel budget")
       else
-        val faces = Array.tabulate(3) { a =>
-          val u = (a + 1) % 3
-          val v = (a + 2) % 3
-          new FaceMetric(matrix(0,u), matrix(1,u), matrix(2,u), matrix(0,v), matrix(1,v), matrix(2,v))
-        }
-        if faces.exists(!_.valid) then invalid("Boundary query refuses numerically degenerate affine faces")
-        else
           val labels = atlas.labelVolume
           def label(x: Int, y: Int, z: Int): Int =
             if x < 0 || y < 0 || z < 0 || x >= dims(0) || y >= dims(1) || z >= dims(2) then 0
@@ -111,7 +197,9 @@ object AtlasBoundaryQuery:
                         if !distance.isFinite then return invalid("Boundary query world distance overflow")
                         if distance <= inclusiveRadius && best.get(id).forall(_.distanceMm > distance) then
                           best.update(id, AtlasBoundaryHit(atlas.region(RegionId(id)).get, distance,
-                            Point3D(ox+closest(0), oy+closest(1), oz+closest(2)), AtlasBoundaryFace(x,y,z,axis,side)))
+                            Point3D(ox+closest(0), oy+closest(1), oz+closest(2)), AtlasBoundaryFace(x,y,z,axis,side), distanceError,distanceError,
+                            if up(distance+distanceError) <= radiusMm then AtlasBoundaryRadiusAdmission.DefinitelyWithin
+                            else AtlasBoundaryRadiusAdmission.NumericallyBorderline))
                       side += 2
                     axis += 1
                 x += 1
@@ -119,11 +207,11 @@ object AtlasBoundaryQuery:
             z += 1
           if cancelled() then invalid("Atlas boundary query cancelled")
           else Right(AtlasBoundaryResult(point, fromSpace, radiusMm,
-            best.valuesIterator.toVector.sortBy(h => (h.distanceMm, h.region.id.value)), visited))
+            best.valuesIterator.toVector.sortBy(h => (h.distanceMm, h.region.id.value)), visited,distanceError,discovery))
 
   /** Closest point on a parallelogram: feasible plane projection or one of four
     * segment projections. Unit edge vectors avoid squaring physical scale in the
-    * 2D face equations. No mesh construction or per-face scratch allocation.
+    * 2D face equations. No mesh construction; the caller supplies coordinate scratch.
     */
   private final class FaceMetric(ux: Double, uy: Double, uz: Double, vx: Double, vy: Double, vz: Double):
     private val ul = math.hypot(math.hypot(ux,uy),uz)
@@ -132,6 +220,7 @@ object AtlasBoundaryQuery:
     private val bx = vx/vl; private val by = vy/vl; private val bz = vz/vl
     private val cosine = ax*bx + ay*by + az*bz
     private val determinant = 1 - cosine*cosine
+    val gramDeterminant: Double = determinant
     val valid: Boolean = ul.isFinite && vl.isFinite && ul > 0 && vl > 0 && determinant > 1e-12
 
     def closest(qx: Double, qy: Double, qz: Double, out: Array[Double]): Double =
