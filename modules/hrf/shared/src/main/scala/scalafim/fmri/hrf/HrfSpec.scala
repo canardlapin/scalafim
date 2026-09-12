@@ -39,6 +39,7 @@ enum HrfKind(val canonicalName: String, val aliases: Vector[String]):
   case Gamma extends HrfKind("gamma", Vector("gamma", "gam"))
   case Gaussian extends HrfKind("gaussian", Vector("gaussian"))
   case Lwu extends HrfKind("lwu", Vector("lwu"))
+  case Cascade34 extends HrfKind("cascade34", Vector("cascade34"))
   case Mexhat extends HrfKind("mexhat", Vector("mexhat"))
   case InvLogit extends HrfKind("inv_logit", Vector("inv_logit", "invlogit"))
   case HalfCosine extends HrfKind("half_cosine", Vector("half_cosine", "halfcosine"))
@@ -53,8 +54,8 @@ enum HrfKind(val canonicalName: String, val aliases: Vector[String]):
 
   def isScalarByDefault: Boolean =
     this match
-      case Spmg1 | Gamma | Gaussian | Lwu | Mexhat | InvLogit | HalfCosine | Boxcar | Weighted => true
-      case _ => false
+      case Spmg1 | Gamma | Gaussian | Lwu | Cascade34 | Mexhat | InvLogit | HalfCosine | Boxcar | Weighted => true
+      case Spmg2 | Spmg3 | Fir | Bspline | Tent | Fourier | Daguerre | Sine => false
 
 object HrfKind:
   val all: Vector[HrfKind] = HrfKind.values.toVector
@@ -97,6 +98,7 @@ final case class HrfSpec private (
         case HrfKind.Gamma     => Right(Hrfs.gamma(span = span.seconds))
         case HrfKind.Gaussian  => Right(Hrfs.gaussian(span = span.seconds))
         case HrfKind.Lwu       => Right(Hrfs.lwu(span = span.seconds))
+        case HrfKind.Cascade34 => Right(Hrfs.cascade34(span = span.seconds))
         case HrfKind.Mexhat    => Right(Hrfs.mexhat(span = span.seconds))
         case HrfKind.InvLogit  => Right(Hrfs.invLogit(span = span.seconds))
         case HrfKind.HalfCosine => Right(Hrfs.halfCosine())

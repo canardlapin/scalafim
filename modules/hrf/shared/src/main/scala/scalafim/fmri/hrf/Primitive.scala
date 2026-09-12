@@ -37,6 +37,9 @@ enum IntegrationPolicy:
   /** `dnorm(τ; mean, sd)` — normal CDF. */
   case Gaussian(mean: Double, sd: Double)
 
+  /** Difference of unit-area Erlang components of orders three and four. */
+  case Cascade34(params: Cascade34Params)
+
   /** The SPM canonical `e^{-τ}(A₁τ^{P₁} - Cτ^{P₂})`. */
   case Spmg1(params: SpmgParams)
 
@@ -146,8 +149,32 @@ object Primitive:
     hrf.descriptor.integration match
       case IntegrationPolicy.PiecewisePolynomial(breaks, degree) =>
         Some(piecewise(hrf, breaks.map(_.value).toArray, degree, from.value, to.value))
+      case _ => closedIntegral(hrf.descriptor, from, to)
+
+  private def closedIntegral(descriptor: HrfDescriptor, from: Lag, to: Lag): Option[Array[Double]] =
+    descriptor.integration match
+      case IntegrationPolicy.Cascade34(params) =>
+        Some(Array(Cascade34.integral(params, from, to)))
+      case IntegrationPolicy.Stacked =>
+        // Compose definite integrals so a component's stable tail algorithm
+        // survives binding it into a (possibly nested) multi-column basis.
+        val components = descriptor.components
+        if components.isEmpty || components.map(_.nbasis).sum != descriptor.nbasis then None
+        else
+          val parts = components.map(part => closedIntegral(part, from, to))
+          if parts.exists(_.isEmpty) then None
+          else
+            val out = new Array[Double](descriptor.nbasis)
+            var offset = 0
+            var i = 0
+            while i < parts.length do
+              val values = parts(i).get
+              System.arraycopy(values, 0, out, offset, values.length)
+              offset += values.length
+              i += 1
+            Some(out)
       case _ =>
-        closedForm(hrf.descriptor).map { h =>
+        closedForm(descriptor).map { h =>
           val hi = h(to)
           val lo = h(from)
           var i = 0
@@ -165,6 +192,7 @@ object Primitive:
     descriptor.integration match
       case IntegrationPolicy.Quadrature => None
       case IntegrationPolicy.PiecewisePolynomial(_, _) => None
+      case IntegrationPolicy.Cascade34(_) | IntegrationPolicy.Stacked => None
 
       case IntegrationPolicy.Gamma(shape, rate) =>
         Some(x => Array(if x.value <= 0.0 then 0.0 else Special.lowerGammaP(shape, rate * x.value)))
@@ -196,27 +224,6 @@ object Primitive:
           val clamped = if x.value <= 0.0 then 0.0 else if x.value >= w then w else x.value
           Array(amplitude * clamped)
         )
-
-      case IntegrationPolicy.Stacked =>
-        val components = descriptor.components
-        if components.isEmpty then None
-        else
-          val parts = components.map(closedForm)
-          if parts.exists(_.isEmpty) then None
-          else if components.map(_.nbasis).sum != descriptor.nbasis then None
-          else
-            val fns = parts.map(_.get)
-            Some { x =>
-              val out = new Array[Double](descriptor.nbasis)
-              var offset = 0
-              var i = 0
-              while i < fns.length do
-                val v = fns(i)(x)
-                System.arraycopy(v, 0, out, offset, v.length)
-                offset += v.length
-                i += 1
-              out
-            }
 
   /** `∫₀ˣ e^{-τ}(A₁τ^{P₁} - Cτ^{P₂}) dτ = A₁γ(P₁+1, x) - Cγ(P₂+1, x)`. */
   private def spmg1Integral(p: SpmgParams, x: Double): Double =

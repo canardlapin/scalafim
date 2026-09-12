@@ -361,6 +361,8 @@ Performance rule: no dense design construction; derivative cost recorded.
 
 ### PHRF-04: Implement the continuous Cascade34 kernel and its summaries
 
+Completed 2026-09-12: [kernel implementation and numerical evidence](profile-hrf-cascade34-evidence.md).
+
 Owner: `hrf`. Acceptance:
 
 - `h(t) = g_3(t; kp) - rho g_4(t; ku)`, unit-area components, `kp > ku > 0`,

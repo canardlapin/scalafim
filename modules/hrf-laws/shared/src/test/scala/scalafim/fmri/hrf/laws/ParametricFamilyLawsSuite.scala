@@ -1,8 +1,20 @@
 package scalafim.fmri.hrf.laws
 
-import scalafim.fmri.hrf.family.{GaussianFamily, LwuFamily, NormalizationRule}
+import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, LwuFamily, NormalizationRule}
 
 class ParametricFamilyLawsSuite extends munit.FunSuite:
+
+  test("Cascade34 jets, scale jets, realisation and causality laws hold across its chart"):
+    val cascade = Cascade34Family.Default
+    for (p, q, r) <- Seq((0.26, 0.11, 0.05), (0.5, 0.4, 0.3), (0.95, 0.79, 0.75)) do
+      val point = cascade.chart.point(math.log(p), math.log(q / (1.0 - q)), r).fold(e => fail(e.message), identity)
+      val failures =
+        ParametricFamilyLaws.jetsMatchFiniteDifferences(cascade, point, Array.tabulate(500)(i => i * 0.2)) ++
+          ParametricFamilyLaws.realisationMatchesLibraryKernel(cascade, point, Array(0.0, 0.1, 3.0, 20.0, 100.0)) ++
+          ParametricFamilyLaws.causality(cascade, point) ++
+          NormalizationRule.values.filter(cascade.supports).toVector.flatMap: rule =>
+            ParametricFamilyLaws.scaleJetsMatchFiniteDifferences(cascade, rule, point)
+      assert(failures.isEmpty, failures.map(_.message).mkString("\n"))
 
   private val family = GaussianFamily.Default
   private val lags = Array.tabulate(120)(i => i * 0.2)

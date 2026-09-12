@@ -169,6 +169,7 @@ enum HrfParams:
   case InvLogit(mu1: Double, s1: Double, mu2: Double, s2: Double, lag: Seconds)
   case HalfCosine(h1: Seconds, h2: Seconds, h3: Seconds, h4: Seconds, f1: Double, f2: Double)
   case Lwu(params: LwuParams, normalize: HrfFunctions.LwuNormalize)
+  case Cascade34(params: Cascade34Params)
   case Boxcar(width: Seconds, amplitude: Double, normalize: Boolean)
   case Weighted(profile: WeightedProfile, method: Hrfs.WeightedMethod, normalize: Boolean)
   case Empirical(curve: SampledCurve)

@@ -292,6 +292,10 @@ object HrfFunctions:
 
 object Hrfs:
 
+  /** Continuous Cascade34 in its intrinsic positive-component-area convention. */
+  def cascade34(params: Cascade34Params = Cascade34Params.Default, span: Seconds = 32.0.s): Hrf =
+    Cascade34.toHrf(params, span)
+
   enum WeightedMethod:
     case Constant, Linear
 

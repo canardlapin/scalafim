@@ -6,7 +6,7 @@ object Registry:
 
   private val names = Vector(
     "spmg1", "spmg2", "spmg3",
-    "gamma", "gaussian", "lwu", "mexhat", "inv_logit", "half_cosine",
+    "gamma", "gaussian", "lwu", "cascade34", "mexhat", "inv_logit", "half_cosine",
     "fir", "bspline", "tent", "fourier", "daguerre", "sine",
     "boxcar", "weighted"
   )

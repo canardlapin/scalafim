@@ -32,7 +32,7 @@ final class GaussianFamily private (val chart: ShapeChart, val horizon: Positive
   def supports(rule: NormalizationRule): Boolean =
     rule match
       case NormalizationRule.Unnormalised | NormalizationRule.UnitPeak | NormalizationRule.Density => true
-      case NormalizationRule.UnitIntegral => false
+      case NormalizationRule.UnitIntegral | NormalizationRule.PositiveComponentArea => false
 
   def libraryNormalization: NormalizationRule = NormalizationRule.Density
 

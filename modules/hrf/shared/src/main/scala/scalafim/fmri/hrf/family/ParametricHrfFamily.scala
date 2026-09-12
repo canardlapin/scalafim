@@ -14,6 +14,8 @@ enum NormalizationRule(val label: String):
   case UnitIntegral extends NormalizationRule("unit_integral")
   /** The probability-density convention of the existing library kernel. */
   case Density extends NormalizationRule("density")
+  /** Unit integral of the positive component, before subtracting the undershoot. */
+  case PositiveComponentArea extends NormalizationRule("positive_component_area")
 
 /** Whether an exact finite-state realisation of the family exists. */
 enum RealizationSupport:
@@ -69,6 +71,11 @@ trait ParametricHrfFamily:
   def scaleJetInto(rule: NormalizationRule, point: ShapePoint, out: Array[Double]): Unit
 
   def summaries(point: ShapePoint): ShapeSummary
+
+  /** Structurally unidentified chart coordinates at this shape, independently
+    * of any experiment's information or a fitter's conditional uncertainty.
+    */
+  def unidentifiedCoordinates(@annotation.unused point: ShapePoint): Vector[String] = Vector.empty
 
   /** Provenance for the kernel realised at `point`. */
   def descriptor(point: ShapePoint): HrfDescriptor
