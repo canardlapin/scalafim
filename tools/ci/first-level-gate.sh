@@ -46,12 +46,10 @@ python3 -S tools/r-parity/check_receipts.py
 
 echo "[first-level-ci] checking executable documentation and benchmark receipt coherence"
 python3 -S tools/docs/check_first_level_docs.py --check
-python3 -S tools/benchmark/finalize_first_level_receipt.py \
-  --check docs/benchmarks/receipts/first-level-current.json
 
-# The checked-in report is a historical transparent snapshot. An exact
-# candidate report is necessarily generated after checkout and is validated by
-# first-level-release.sh from its external evidence directory.
+# Checked-in benchmark and release reports are historical transparent
+# snapshots. Exact-candidate reports are necessarily generated after checkout
+# and are validated by first-level-release.sh from its evidence directory.
 
 sbt_cache_root=${SCALAFIM_SBT_CACHE_ROOT:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/scalafim-first-level-sbt}
 mkdir -p "$sbt_cache_root"

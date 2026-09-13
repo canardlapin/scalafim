@@ -161,6 +161,10 @@ report is generated and checked from the external evidence directory. Its
 a dirty checkout, local gates were not run, the benchmark receipt is blocked,
 or any external evidence record is less than `verified`.
 
+The checked-in performance receipt is likewise a retained measured baseline.
+Its file and workload hashes remain auditable, while release admission always
+uses a fresh receipt whose source commit equals the exact candidate.
+
 ### External evidence bundles
 
 Set `SCALAFIM_RELEASE_EVIDENCE_BUNDLE` to a
