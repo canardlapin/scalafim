@@ -117,6 +117,10 @@ sensitive, and materially slower than the portable correctness court. Run:
 bash tools/ci/first-level-benchmark.sh
 ```
 
+The correctness workflows retain JDK 17 as the minimum supported runtime. The
+performance workflow and retained release benchmark run on JDK 25 so candidate
+measurements are comparable with the current performance baseline.
+
 The court distinguishes basis response, convolution, integration, AR
 estimation, fit planning, reusable factorization, multiresponse fitting, and
 chunk assembly.
