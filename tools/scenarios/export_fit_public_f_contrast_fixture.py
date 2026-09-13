@@ -27,6 +27,7 @@ COMPARISON_POLICY = {
   "disagreement_triage": "truth_boundary_local",
   "tolerance_scope": "comparison_local_no_global_override",
 }
+REFERENCE_OUTPUT_SIGNIFICANT_DIGITS = 15
 
 TASK = (-1.5, -1.0, -0.25, 0.75, 1.25, -0.5, 0.5, 1.75)
 MOTION = (0.2, -0.4, 0.7, -0.6, 0.1, 0.9, -0.8, 0.3)
@@ -210,6 +211,17 @@ def vector_payload(values: np.ndarray) -> list[float]:
   return [float(x) for x in np.asarray(values, dtype=np.float64).reshape(-1)]
 
 
+def canonicalize_reference_numbers(value: Any) -> Any:
+  """Remove platform-dependent final bits before reference serialization."""
+  if isinstance(value, dict):
+    return {key: canonicalize_reference_numbers(item) for key, item in value.items()}
+  if isinstance(value, list):
+    return [canonicalize_reference_numbers(item) for item in value]
+  if isinstance(value, float):
+    return float(format(value, f".{REFERENCE_OUTPUT_SIGNIFICANT_DIGITS}g"))
+  return value
+
+
 def fixture_payload(fmrimod_root: Path) -> dict[str, Any]:
   import numpy as np
 
@@ -241,6 +253,25 @@ def fixture_payload(fmrimod_root: Path) -> dict[str, Any]:
   t_standard_errors = np.sqrt(t_scale * np.asarray(t_reference["sigma2"], dtype=np.float64))
 
   environment = locked_environment(fmrimod_root)
+  outputs = canonicalize_reference_numbers({
+    "residual_degrees_of_freedom": int(x.shape[0] - np.linalg.matrix_rank(x)),
+    "coefficients": matrix_payload(t_reference["betas"]),
+    "residual_variance": vector_payload(t_reference["sigma2"]),
+    "task_t": {
+      "estimates": vector_payload(t_estimates),
+      "standard_errors": vector_payload(t_standard_errors),
+      "statistics": vector_payload(t_reference["t"]),
+      "p_values_two_sided": vector_payload(t_reference["p"]),
+    },
+    "task_f": {
+      "statistics": vector_payload(task_f_statistics),
+      "p_values": vector_payload(task_f_p_values),
+    },
+    "task_and_motion_f": {
+      "statistics": vector_payload(task_and_motion_f_statistics),
+      "p_values": vector_payload(task_and_motion_f_p_values),
+    },
+  })
   payload = {
     "schema_version": "scalafim-external-fixture/v1",
     "scenario_id": SCENARIO_ID,
@@ -270,25 +301,7 @@ def fixture_payload(fmrimod_root: Path) -> dict[str, Any]:
         "task_and_motion_f": matrix_payload(task_and_motion_f_contrast),
       },
     },
-    "outputs": {
-      "residual_degrees_of_freedom": int(x.shape[0] - np.linalg.matrix_rank(x)),
-      "coefficients": matrix_payload(t_reference["betas"]),
-      "residual_variance": vector_payload(t_reference["sigma2"]),
-      "task_t": {
-        "estimates": vector_payload(t_estimates),
-        "standard_errors": vector_payload(t_standard_errors),
-        "statistics": vector_payload(t_reference["t"]),
-        "p_values_two_sided": vector_payload(t_reference["p"]),
-      },
-      "task_f": {
-        "statistics": vector_payload(task_f_statistics),
-        "p_values": vector_payload(task_f_p_values),
-      },
-      "task_and_motion_f": {
-        "statistics": vector_payload(task_and_motion_f_statistics),
-        "p_values": vector_payload(task_and_motion_f_p_values),
-      },
-    },
+    "outputs": outputs,
     "receipt": {
       "schema_version": "scalafim-external-fixture/v1",
       "producer_command": "bash tools/r-parity/regenerate_receipts.sh --python-only",
@@ -309,6 +322,7 @@ def fixture_payload(fmrimod_root: Path) -> dict[str, Any]:
         "matrix_orientation": "rows=timepoints, columns=regressors or responses",
         "nilearn_glm": "run_glm(noise_model=ols)",
         "p_values": "two-sided t and Nilearn F contrast probabilities",
+        "reference_rounding": f"{REFERENCE_OUTPUT_SIGNIFICANT_DIGITS} significant decimal digits",
       },
       "hashes": {
         "inputs_sha256": sha256_json({
@@ -328,25 +342,7 @@ def fixture_payload(fmrimod_root: Path) -> dict[str, Any]:
         }),
         "outputs_sha256": sha256_json({
           "schema_version": "scalafim-external-fixture/v1",
-          "outputs": {
-            "residual_degrees_of_freedom": int(x.shape[0] - np.linalg.matrix_rank(x)),
-            "coefficients": matrix_payload(t_reference["betas"]),
-            "residual_variance": vector_payload(t_reference["sigma2"]),
-            "task_t": {
-              "estimates": vector_payload(t_estimates),
-              "standard_errors": vector_payload(t_standard_errors),
-              "statistics": vector_payload(t_reference["t"]),
-              "p_values_two_sided": vector_payload(t_reference["p"]),
-            },
-            "task_f": {
-              "statistics": vector_payload(task_f_statistics),
-              "p_values": vector_payload(task_f_p_values),
-            },
-            "task_and_motion_f": {
-              "statistics": vector_payload(task_and_motion_f_statistics),
-              "p_values": vector_payload(task_and_motion_f_p_values),
-            },
-          },
+          "outputs": outputs,
         }),
       },
     },
@@ -472,6 +468,7 @@ def validate_local_fixture(json_path: Path, scala_path: Path) -> list[str]:
     "matrix_orientation",
     "nilearn_glm",
     "p_values",
+    "reference_rounding",
   )
   if not isinstance(receipt, dict) or receipt.get("schema_version") != expected_schema:
     stale.append(f"{json_path}: receipt.schema_version")
