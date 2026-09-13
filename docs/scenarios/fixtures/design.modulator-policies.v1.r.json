@@ -59,24 +59,24 @@
   },
   "outputs": {
     "degenerate_residual": [
-      2.3623684408180685e-15,
-      -1.7017321707436016e-16,
-      -2.552598256115402e-16,
-      -3.4034643414872033e-16,
-      6.336522228197274e-16,
-      -5.105196512230804e-16
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
     ],
     "whole_term_residual": [
-      -0.9999999999999989,
-      0.9999999999999999,
-      -2.682519942227093e-16,
-      0.9999999999999997,
-      -0.9999999999999994,
-      -5.365039884454186e-16
+      -1,
+      1,
+      0,
+      1,
+      -1,
+      0
     ],
     "within_cells_residual": [
-      -2.0000000000000004,
-      1.0000000000000002,
+      -2,
+      1,
       2,
       -1
     ]
@@ -97,19 +97,22 @@
       "grouping": "independent QR residualization within each declared cell",
       "json_encoding": "sorted-key UTF-8 JSON",
       "missing_values": "no R na.action policy is imported into ScalaFIM",
-      "orthogonalization": "ordered residualization without an implicit intercept"
+      "orthogonalization": "ordered residualization without an implicit intercept",
+      "reference_serialization": "13 significant decimal digits; finite absolute values below 1e-14 serialize as zero"
     },
     "environment": {
-      "generator_sha256": "3474fc731dc4ad3628b25d0e86f538bee384764b3e6da9da248517854efed6f4",
+      "generator_sha256": "2f5c85a04c2983e8bbbdcf9f9ad4a84720904b3f753423bd185e758ca42d410d",
       "locale": "C",
       "lock_path": "tools/r-parity/reference-lock.json",
       "lock_sha256": "69cf97010b03e7ad78ce9251665649708853b5cecbbd7cc45b3872a8b6b4118c",
-      "runtime": "R 4.5.1"
+      "runtime": "R 4.5.1",
+      "serializer_path": "tools/r-parity/receipt_serialization.R",
+      "serializer_sha256": "ff0a89a8f0ae88a8106149b62e04e642c625024f3ba7a2327a902fab975aa3a6"
     },
     "hashes": {
-      "generated_scala_sha256": "211940ccbb4ff1d5a8a9d9769b48f31b7c8126f7a71860254f53bbd59cfb0563",
+      "generated_scala_sha256": "8f23fda35ec79091557a388e5d1578b327ddb7ee5c8e036f872a7f95117f3b56",
       "inputs_sha256": "536bed50f0285e72f863b34e701042d7fc75e633598da351cf84d212e293391c",
-      "outputs_sha256": "9408ea4cd8e07cf88eeb0ba1bc6e8bae9e683c1ef8a4ba607e469edf2ce8d0d9"
+      "outputs_sha256": "507d6d0b2b2c058ad64b48e722fb835d2b08dd281d6a3b3144c8980e443fb2ab"
     },
     "producer_command": "bash tools/r-parity/regenerate_receipts.sh --r-only",
     "schema_version": "scalafim-r-policy-fixture/v1",

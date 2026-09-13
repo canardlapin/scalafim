@@ -297,7 +297,11 @@ class ResponsePreparationSuite extends munit.FunSuite:
         FitConfig(volumeWeighting = VolumeWeighting.Estimated(DvarsWeightEstimator(function)))
       ).prepare(input).fold(error => fail(error.message), identity)
       val receipt = prepared.provenance.volumeWeighting.getOrElse(fail("DVARS receipt is required"))
-      assertEquals(receipt.qualityMetric, Some(WlsRFixture.dvars))
+      val qualityMetric = receipt.qualityMetric.getOrElse(fail("DVARS quality metric is required"))
+      assertEquals(qualityMetric.length, WlsRFixture.dvars.length)
+      qualityMetric.zip(WlsRFixture.dvars).foreach { case (actual, reference) =>
+        assertEqualsDouble(actual, reference, 1e-12)
+      }
       receipt.weights.zip(expected).foreach { case (actual, reference) =>
         assertEqualsDouble(actual, reference, 1e-12)
       }
