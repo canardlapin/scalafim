@@ -59,6 +59,13 @@ cross-compiled sbt build.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
+The unified MVPA replacement has an unpublished
+[foundation admission court](modules/mvpa-foundation-spike/README.md) in the
+root build. It pins and exercises the accepted external provider graph and
+typed-axis laws while M1 migrates those laws into production APIs; it is not a
+shipping module or an alternate MVPA engine. See the
+[implementation epic](docs/plans/unified-mvpa-epic.md).
+
 The immutable typed dataframe work formerly incubated here now lives in the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
 
@@ -107,9 +114,12 @@ explicitly:
 
 ```sh
 sbt \
+  -Dscalafim.alder.build=../alder \
   -Dscalafim.gale.build=../gale \
   -Dscalafim.graph4s.build=../graph4s \
+  -Dscalafim.linop4s.build=../linop4s \
   -Dscalafim.locus4s.build=../locus4s \
+  -Dscalafim.resample4s.build=../resample4s \
   scalafimCompileAll
 ```
 
@@ -142,15 +152,18 @@ serialization, performance gates, and the cross-platform example.
 ## Common Commands
 
 On a fresh machine, first run `./tools/prepare-pinned-dependencies.sh`.
-Multivar consumes Gale through a revision-tagged artifact that is not yet on
-Maven Central. This helper checks out the exact pinned Multivar revision and
-runs its Gale bootstrap into the local artifact cache. Repeat after changing
-the Gale/Multivar pins. Ordinary builds then use the committed source pins;
-no temporary image4s checkout or provider override is needed.
+Multivar consumes Gale and Resample4s through revision-tagged artifacts that
+are not yet on Maven Central. This helper checks out the exact pinned Multivar
+revision and runs both provider bootstraps into the local artifact cache.
+Repeat after changing the Gale, Resample4s, or Multivar pins. Ordinary builds
+then use the committed source pins; no sibling checkout or provider override
+is needed.
 
 ```sh
 sbt scalafimCompileAll
 sbt scalafimTestAll
+sbt mvpaFoundationAdmissionJVM/test
+sbt mvpaFoundationAdmissionJS/test
 sbt locusDataJVM/test
 sbt locusDataJS/test
 sbt pipelineJVM/test

@@ -1,0 +1,131 @@
+{
+  "schema": "scalafim.umvpa-foundation-spike.evidence.v3",
+  "recordedAt": "2026-09-13T16:11:12.613Z",
+  "productionAdmission": true,
+  "admissionStatus": "exact-provider-root-build-green",
+  "sourcePublicationStatus": "candidate-not-yet-committed",
+  "resolvedGap": "ScalaFIM's real root build pins and exercises the immutable Alder, Resample4s, Multivar, Gale, linop4s, locus4s, and Ravel provider closure on JVM and Scala.js. Alder binds exact-once designs at the normalized child-stage seed; its strict precompiled route remains the negative control.",
+  "tickets": {
+    "providerAdmission": "bd-01M2BNEA7C953AXD5FJ8YDNW9R",
+    "prototype": "bd-01M2BNEC4NBXSN193PFS0Q5BCR",
+    "alderStageBinding": "bd-01M2BV24P5X23DBZS2XAS2580N",
+    "alderReleaseClosure": "bd-01KYDTPZZHRP1AKP8HSVBXD581",
+    "finalAudit": "bd-01M2BQ3BVVGFX593HK27P34W63"
+  },
+  "productionRoot": {
+    "baseRevision": "528c302e454697055bc9af31c9a6eca684f019e3",
+    "buildSha256": "4b2946d5b808ae195a4d53e6877b28b672a1430501cbc8bbf0741e7da6efa28b",
+    "module": "mvpaFoundationAdmissionJVM/JS",
+    "unpublished": true,
+    "bootstrap": "./tools/prepare-pinned-dependencies.sh",
+    "runs": [
+      {
+        "command": "sbt -J-Xmx4G -Dsbt.task.cpus=2 -Dsbt.supershell=false mvpaFoundationAdmissionJVM/test",
+        "passed": 18,
+        "failed": 0
+      },
+      {
+        "command": "sbt -J-Xmx4G -Dsbt.task.cpus=2 -Dsbt.supershell=false mvpaFoundationAdmissionJS/test",
+        "passed": 18,
+        "failed": 0
+      },
+      {
+        "command": "sbt -J-Xmx6G -Dsbt.task.cpus=2 -Dsbt.supershell=false scalafimCompileAll",
+        "result": "passed",
+        "platforms": ["JVM", "Scala.js"]
+      },
+      {
+        "command": "sbt -J-Xmx4G -Dsbt.task.cpus=2 -Dsbt.supershell=false mvpaJVM/test mvpaFitJVM/test",
+        "mvpaPassed": 114,
+        "mvpaFitPassed": 38,
+        "failed": 0
+      },
+      {
+        "command": "sbt -J-Xmx4G -Dsbt.task.cpus=2 -Dsbt.supershell=false mvpaJS/test mvpaFitJS/test",
+        "mvpaPassed": 114,
+        "mvpaFitPassed": 38,
+        "failed": 0
+      }
+    ]
+  },
+  "providers": {
+    "alder": {
+      "revision": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+      "tree": "2a762332b5e6337d15c5b7eed66b227732205e4e",
+      "sourceManifestSha256": "6f435829488b00bde35ad960b118cfe258ffb9f2c5139da8eaae528f30e5405d"
+    },
+    "resample4s": {
+      "revision": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "tree": "92343546f9666ae7729103ca0ea37b9cd8b4943c",
+      "sourceManifestSha256": "e17095551903292cafbb2c05c0b1726292abb30e1f4017edc940b8b47e50b255"
+    },
+    "multivar": {
+      "revision": "f74d631720d65147c51496dcbdd37c01912de1cb",
+      "tree": "0c9fbcb7ece7f64f45269fb64d092ea077eeae21",
+      "sourceManifestSha256": "6dbdba4b8a1e5beb0c586b4aa2f50ab431522f27bf353f6d57b17659030d90db"
+    },
+    "gale": {
+      "revision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+      "tree": "62011cc7e862ccdc40171ce0e695d9f8fe8f535c",
+      "artifactVersion": "0.1.0+99-099832ff-SNAPSHOT",
+      "sourceManifestSha256": "0dd49a9fa07db1e848d12d22391602f4a1981a4c6e7c69bc2eacd23d26ed29ec"
+    },
+    "linop4s": {
+      "revision": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "tree": "49dd9251935b6c1a08386ee65dc196038b9a02f5",
+      "sourceManifestSha256": "9e9df9525c85584280e6ea091a75f7cb593d72d0e1287cacbb83850d8b508621"
+    },
+    "locus4s": {
+      "revision": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+      "tree": "109d8001a8fc3e5919f86eb3eaf0d8a0e31396be",
+      "sourceManifestSha256": "999159b1e9b58a0c41456d8dde9c6b22475e0bbf230fdf1bafbed10bdfebc87d"
+    },
+    "ravel": {
+      "revision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+      "tree": "74e1095f63b807f3cf58555abcec65038557d4d0",
+      "sourceManifestSha256": "191c61a1a2b8ee99a199eefcf4736bdd131f9ff9582972483fbc306ca5d0248f"
+    }
+  },
+  "isolatedSourceCourt": {
+    "workspace": "/private/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/umvpa-foundation-spike-cLyJot",
+    "fullReceipt": "spike-receipt.json",
+    "fullReceiptSha256": "a7a1ec646a8e543b9b006d2c9be172f6e6d1deeca23ec2ee713404f835e0da12",
+    "runnerSha256": "5dbbd77587d73a295365b632fbc6f72eb512acf911d88ec8748d5085efbc9dbe",
+    "adapterSourceSha256": "e0b255a4b7303dfe92ed798cdc1324a0dc754e3d34e9ccd1142659bb784e9e96",
+    "consumerSourceSha256": "9d31933debe64624e949dff75621511d1c363fe1e67cbd90df9b30115f994c4e",
+    "sourceSnapshotCheck": true,
+    "receiptProductionAdmission": false,
+    "counts": {
+      "jvmConsumer": 18,
+      "jsConsumer": 18,
+      "jvmUpstream": 55,
+      "jsUpstream": 55,
+      "failed": 0
+    },
+    "privateGaleArtifacts": {
+      "jvmSha256": "10df3e81205939ce685ee84bd92beafb8057f9380451cb04f9519e1ebd64400d",
+      "jsSha256": "9838c54d2cf02b9044fe3f08c2101150383e96e5f74e6804f1a04519010551d4"
+    }
+  },
+  "formatting": {
+    "ownedAdmissionSources": "mvpaFoundationAdmissionJVM/Test/scalafmt followed by mvpaFoundationAdmissionJVM/Test/scalafmtCheck passed",
+    "rootBuildDefinition": "scalafmtSbtCheck remains red because remote-base build.sbt is not formatted; whole-file formatting would rewrite 85 pre-existing lines, so it was restored and the admission diff kept local",
+    "repositoryWide": "scalafmtCheckAll remains red on hundreds of pre-existing files and two existing Scala 3 parse errors outside this slice"
+  },
+  "failedAttempts": [
+    {
+      "classification": "temporary-provider-link-missing-commit",
+      "reason": "The first v3 runner attempt stopped before compiling because the selected local Gale checkout did not contain 099832ff. The rerun used sbt's exact pinned staging checkout and passed without a source change."
+    },
+    {
+      "classification": "historical-sandbox-cache-access",
+      "reason": "The earlier v2 court could not create the shared sbt boot lock inside the sandbox; its authorized rerun passed unchanged."
+    }
+  ],
+  "limits": [
+    "The admission module is a test-only root-build court, not a production public API or a second MVPA engine.",
+    "Gale and Resample4s revision-tagged artifacts are locally bootstrapped because they are not yet on Maven Central.",
+    "No classification performance, statistical inference, or whole-brain resource admission is claimed.",
+    "The identity prototype remains limited to 64 coordinates and tiny dense restriction matrices pending M1 replacement."
+  ]
+}

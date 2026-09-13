@@ -1,0 +1,122 @@
+{
+  "schema": "scalafim.umvpa-alder-stage-binding-candidate.v1",
+  "observedAt": "2026-09-13",
+  "status": "published-provider-green-production-admitted",
+  "mote": {
+    "scalafimAdmission": "bd-01M2BNEA7C953AXD5FJ8YDNW9R",
+    "alderProviderChange": "bd-01M2BV24P5X23DBZS2XAS2580N",
+    "alderReleaseClosure": "bd-01KYDTPZZHRP1AKP8HSVBXD581",
+    "alderGaleCandidate": "bd-01KZ9E29TC32BVJSYKXCSES4TZ"
+  },
+  "providerCandidate": {
+    "repository": "/Users/bbuchsbaum/code/scala/alder",
+    "baseRevision": "38c8cc8ef74f578a8ec008db8d09bad0a913a6fc",
+    "revision": "ac06b2d6dceb30458576721299667b161f853ebf",
+    "sourceClosureRevision": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+    "sourceClosureTree": "2a762332b5e6337d15c5b7eed66b227732205e4e",
+    "tree": "a21dbb8ab54b8fefc10859b5f8cc37051c590156",
+    "resample4sRevision": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+    "preformatWorkingDiffSha256": "1957d29061b6f1f81279436a2de3649275ddbcc1d82d0f2a0d9156bfab410658",
+    "formattedWorkingDiffSha256": "5dbe1f2fc03af3a1111ac7378838a7ffde9198926b7ee60f8c7d856feda04f54",
+    "commitDiffSha256": "69a0ea6af2845cff942822bf1727398052f9360938180a11bc660c3b53cb9c2b",
+    "consumerRelevantSourceSha256": {
+      "data/src/main/scala/alder/data/Resample4sResampler.scala": "aec3e1678b13c3d94dc86b53709cf9eb6126d5bfe1669e60902cee7390391081",
+      "data/src/main/scala/alder/data/DataError.scala": "c192332fefdc74a51ba805911b9326979d959c1b9d0936c79a46e6850b80d7ea"
+    },
+    "committed": true,
+    "published": true
+  },
+  "contract": {
+    "newRoute": "Resample4sResampler.fromDesign accepts only Design[Split[Selection], Coverage.ExactOnce] and binds at Alder split-time population and normalized stage seed",
+    "preservedRoute": "complete and fromCompiled remain strict prebound adapters with seed, population-size, and population-fingerprint checks",
+    "retainedTypeBoundary": "incomplete coverage, Draw splits, and Coverage.Exact repeated designs are compile-negative",
+    "forbiddenWorkaroundsAbsent": [
+      "no public child-seed derivation",
+      "no Prepared.rows exposure",
+      "no Use-role weakening",
+      "no local resampling engine"
+    ]
+  },
+  "providerChecks": [
+    {
+      "platform": "JVM",
+      "command": "sbt -Dsbt.supershell=false 'dataJVM/testOnly alder.data.Resample4sResamplerSuite'",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "platform": "Scala.js",
+      "command": "sbt -J-Xmx4G -Dsbt.task.cpus=1 -Dsbt.supershell=false 'dataJS/testOnly alder.data.Resample4sResamplerSuite'",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "platform": "Scala Native",
+      "command": "sbt -J-Xmx4G -Dsbt.task.cpus=1 -Dsbt.supershell=false 'dataNative/testOnly alder.data.Resample4sResamplerSuite'",
+      "passed": 11,
+      "failed": 0,
+      "warning": "existing environment uses deprecated clang 15"
+    },
+    {
+      "platforms": ["JVM", "Scala.js", "Scala Native"],
+      "suite": "alder.application.ExperimentFailureRenderingSuite",
+      "passedPerPlatform": 2,
+      "failedPerPlatform": 0
+    }
+  ],
+  "formatCheck": {
+    "initialResult": "failed-on-Resample4sResamplerSuite-formatting",
+    "repair": "dataJVM/Test/scalafmt",
+    "finalCommand": "sbt -J-Xmx4G -Dsbt.task.cpus=1 -Dsbt.supershell=false fmtCheck",
+    "finalResult": "passed"
+  },
+  "affectedModuleChecks": [
+    {
+      "platform": "JVM",
+      "command": "sbt -J-Xmx4G -Dsbt.task.cpus=1 -Dsbt.supershell=false 'dataJVM/test' 'applicationJVM/test'",
+      "data": {"passed": 64, "failed": 0},
+      "application": {"passed": 39, "failed": 0}
+    },
+    {
+      "platform": "Scala.js",
+      "command": "sbt -J-Xmx4G -Dsbt.task.cpus=1 -Dsbt.supershell=false 'dataJS/test' 'applicationJS/test'",
+      "data": {"passed": 64, "failed": 0},
+      "application": {"passed": 38, "failed": 0}
+    },
+    {
+      "platform": "Scala Native",
+      "command": "sbt -J-Xmx4G -Dsbt.task.cpus=1 -Dsbt.supershell=false 'dataNative/test' 'applicationNative/test'",
+      "data": {"passed": 64, "failed": 0},
+      "application": {"passed": 38, "failed": 0},
+      "warning": "existing environment uses deprecated clang 15"
+    }
+  ],
+  "consumerCourt": {
+    "workspace": "/private/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/umvpa-foundation-spike-cLyJot",
+    "canonicalReceipt": "/private/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/umvpa-foundation-spike-cLyJot/spike-receipt.json",
+    "canonicalReceiptSha256": "a7a1ec646a8e543b9b006d2c9be172f6e6d1deeca23ec2ee713404f835e0da12",
+    "consumerSnapshotSha256": "9d31933debe64624e949dff75621511d1c363fe1e67cbd90df9b30115f994c4e",
+    "method": "canonical runner archived the immutable Alder revision and executed the positive fromDesign composition case plus strict fromCompiled negative control without overlays",
+    "results": [
+      {
+        "platform": "JVM",
+        "suite": "all consumer suites",
+        "passed": 18,
+        "failed": 0
+      },
+      {
+        "platform": "Scala.js",
+        "suite": "all consumer suites",
+        "passed": 18,
+        "failed": 0
+      }
+    ]
+  },
+  "admissionBoundary": [
+    "Alder c56a6b1 is published on canardlapin/alder main and ordinary builds resolve exact Resample4s, Gale, and linop4s source revisions without sibling discovery",
+    "ScalaFIM's root build pins Alder c56a6b1, Resample4s 6bc4172, Gale 099832ff, and Multivar f74d631 and passed its JVM and Scala.js admission suites",
+    "the canonical archive runner independently repeated 18 consumer and 55 focused upstream tests per platform with verified source manifests",
+    "stable Maven Central artifacts remain a broader provider-release concern and are not required for this exact-source M0 admission"
+  ],
+  "productionAdmission": true
+}
