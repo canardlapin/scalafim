@@ -12,7 +12,7 @@
       "fmridesign": {
         "environment_variable": "FMRIDESIGN_R",
         "repository": "bbuchsbaum/fmridesign",
-        "revision": "148658557317987535477166746fae09b2e630b7",
+        "revision": "6907d0b43cb0390c331406ff6e8d6608b541d69d",
         "version": "0.6.0"
       },
       "fmrihrf": {
