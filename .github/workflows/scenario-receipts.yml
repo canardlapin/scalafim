@@ -24,6 +24,13 @@ permissions:
 
 env:
   SCALAFIM_EVIDENCE_LANE: ${{ github.event_name == 'schedule' && 'nightly' || inputs.lane }}
+  BLIS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  PYTHONHASHSEED: "0"
+  VECLIB_MAXIMUM_THREADS: "1"
 
 jobs:
   r-receipts:

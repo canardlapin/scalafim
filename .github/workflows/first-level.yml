@@ -14,6 +14,9 @@ concurrency:
 permissions:
   contents: read
 
+env:
+  COURSIER_REPOSITORIES: https://repo.maven.apache.org/maven2
+
 jobs:
   full-repository:
     name: full repository JVM/Scala.js compile and test
@@ -31,6 +34,8 @@ jobs:
 
       - name: Set up sbt
         uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
+        with:
+          sbt-runner-version: "1.11.7"
 
       - name: Set up the declared Scala.js Node runtime
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -70,6 +75,8 @@ jobs:
 
       - name: Set up sbt
         uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
+        with:
+          sbt-runner-version: "1.11.7"
 
       - name: Set up the declared Scala.js Node runtime
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -98,6 +105,8 @@ jobs:
 
       - name: Set up sbt
         uses: sbt/setup-sbt@0fb5a646ec2dc21653246d4dbc153a8468749b55 # v1.5.8
+        with:
+          sbt-runner-version: "1.11.7"
 
       - name: Enforce per-module scientific coverage floors
         env:
