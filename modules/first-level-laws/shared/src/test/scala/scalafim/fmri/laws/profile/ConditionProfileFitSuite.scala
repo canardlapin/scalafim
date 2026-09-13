@@ -12,8 +12,8 @@ import scalafim.fmri.hrf.family.{GaussianFamily, JetLayout, NormalizationRule, S
 import scalafim.fmri.model.{FitPlan, FmriModel}
 import scalafim.image.SampleSpaces
 
-/** PHRF-12: the condition profile fit composed over a real `FitPlan`, checked
-  * against the compact runtime on the same data and against a direct oracle.
+/** PHRF-12: the condition profile fit composed over a real `FitPlan`, checked against the compact runtime on the same
+  * data and against a direct oracle.
   */
 class ConditionProfileFitSuite extends munit.FunSuite:
 
@@ -27,11 +27,19 @@ class ConditionProfileFitSuite extends munit.FunSuite:
   private val events = 30
   private val onsets = Vector.fill(events)(rng0.nextInt(1800) / 10.0).sorted.map(Seconds(_))
   private val conditions = Vector.tabulate(events)(i => Vector("A", "B", "C")(i % 3))
-  private val term = EventTerm(events = Vector(Event.factor(conditions, "cond")), onsets = onsets, blockIds = Vector.fill(events)(0), termTag = Some("cond"))
-  private lazy val basis = HrfKernelBasis.compile(KernelBasisSpec(family, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40)).fold(e => fail(e.message), identity)
+  private val term = EventTerm(
+    events = Vector(Event.factor(conditions, "cond")),
+    onsets = onsets,
+    blockIds = Vector.fill(events)(0),
+    termTag = Some("cond")
+  )
+  private lazy val basis = HrfKernelBasis
+    .compile(KernelBasisSpec(family, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))
+    .fold(e => fail(e.message), identity)
   private lazy val convolved = term.convolve(basis.kernel, frame, precision = precision)
   private lazy val eventModel = EventModel.build(Vector(convolved), frame)
-  private lazy val baseline = BaselineModel.build(samplingFrame = frame, basis = BaselineBasis.Poly, degree = 2, intercept = Intercept.Global)
+  private lazy val baseline =
+    BaselineModel.build(samplingFrame = frame, basis = BaselineBasis.Poly, degree = 2, intercept = Intercept.Global)
 
   private lazy val truth: (Array[Double], Array[Double], Array[Double]) =
     val rng = new scala.util.Random(99L)
@@ -80,19 +88,43 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     while i < data.length do
       b.writeLinear(i, data(i))
       i += 1
-    FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("phrf12"), b.result(), SampleSpaces(Vector(voxels, 1, 1))), frame)
+    FmriDataset.unsafe(
+      InMemoryDatasetBackend(DatasetId("phrf12"), b.result(), SampleSpaces(Vector(voxels, 1, 1))),
+      frame
+    )
 
   private lazy val plan: FitPlan = FitPlan(FmriModel(eventModel, baseline, dataset))
 
   private def policy(output: OutputRequest): ConditionProfilePolicy =
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
-    ConditionProfilePolicy(basis, structure, Vector(15, 15), DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 2, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0)), None, 1.0, output, blockSize = 8)
+    ConditionProfilePolicy(
+      basis,
+      structure,
+      Vector(15, 15),
+      DecodeBudget(
+        coarseStride = 2,
+        maxNewtonSteps = 2,
+        maxJets = 2,
+        maxExactEvaluations = 6,
+        weakSdLimit = Vector(0.5, 1.0)
+      ),
+      None,
+      1.0,
+      output,
+      blockSize = 8
+    )
 
   private final class CollectingSink extends BlockSink[ConditionProfileBlock, ConditionProfileReceipt]:
     val blocks = Vector.newBuilder[ConditionProfileBlock]
     def accept(block: VoxelBlock, payload: ConditionProfileBlock): Either[String, ConditionProfileReceipt] =
       blocks += payload
-      Right(ConditionProfileReceipt(payload.ordinal, payload.results.length, payload.results.count(_.status == DecodeStatus.Accepted)))
+      Right(
+        ConditionProfileReceipt(
+          payload.ordinal,
+          payload.results.length,
+          payload.results.count(_.status == DecodeStatus.Accepted)
+        )
+      )
 
   test("the structure maps the plan's task columns by condition and basis"):
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
@@ -101,7 +133,9 @@ class ConditionProfileFitSuite extends munit.FunSuite:
 
   test("the Gram route agrees with the compact route and the direct oracle, streaming blocks in order"):
     val queries = Vector(SignedQuery.make("A-B", Vector(1.0, -1.0, 0.0), 1e-6).fold(e => fail(e.message), identity))
-    val prep = ConditionProfileFit.prepare(plan, policy(OutputRequest.ConditionQueries(queries, NormalizationRule.Unnormalised))).fold(e => fail(e.message), identity)
+    val prep = ConditionProfileFit
+      .prepare(plan, policy(OutputRequest.ConditionQueries(queries, NormalizationRule.Unnormalised)))
+      .fold(e => fail(e.message), identity)
     val sink = new CollectingSink
     val (receipts, counters) = prep.run(dataset, sink).fold(e => fail(e.message), identity)
     val blocks = sink.blocks.result()
@@ -118,8 +152,16 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     val taskNames = convolved.columnNames.toSet
     val nuisanceCols = model.columnNames.indices.filterNot(i => taskNames.contains(model.columnNames(i))).toVector
     val nuisance = DMat.tabulate(rows, nuisanceCols.length)((t, j) => model.designMatrix(t, nuisanceCols(j)))
-    val compactPrep = CompactConditionPreparation.prepare(expanded, None, Some(nuisance)).fold(e => fail(e.message), identity)
-    val runtime = new CompactConditionRuntime(compactPrep, NodeGrid(family.chart, Vector(15, 15)), prep.policy.budget, None, 1.0, NormalizationRule.Unnormalised)
+    val compactPrep =
+      CompactConditionPreparation.prepare(expanded, None, Some(nuisance)).fold(e => fail(e.message), identity)
+    val runtime = new CompactConditionRuntime(
+      compactPrep,
+      NodeGrid(family.chart, Vector(15, 15)),
+      prep.policy.budget,
+      None,
+      1.0,
+      NormalizationRule.Unnormalised
+    )
     val column = new Array[Double](rows)
     val (tau, _, _) = truth
     var accepted = 0
@@ -135,12 +177,24 @@ class ConditionProfileFitSuite extends munit.FunSuite:
       assertEqualsDouble(gramRoute.coordinates(1), compact.decode.coordinates(1), 1e-6, s"logSd voxel $v")
       var j = 0
       while j < 3 do
-        assertEqualsDouble(gramRoute.amplitudes(j).value, compact.amplitudes(j), 1e-6 * math.max(1.0, math.abs(compact.amplitudes(j))), s"amplitude $j voxel $v")
+        assertEqualsDouble(
+          gramRoute.amplitudes(j).value,
+          compact.amplitudes(j),
+          1e-6 * math.max(1.0, math.abs(compact.amplitudes(j))),
+          s"amplitude $j voxel $v"
+        )
         j += 1
-      assertEqualsDouble(gramRoute.queries.head.value, gramRoute.amplitudes(0).value - gramRoute.amplitudes(1).value, 1e-12)
+      assertEqualsDouble(
+        gramRoute.queries.head.value,
+        gramRoute.amplitudes(0).value - gramRoute.amplitudes(1).value,
+        1e-12
+      )
       if gramRoute.status == DecodeStatus.Accepted then
         accepted += 1
-        assert(math.abs(gramRoute.coordinates(0) - tau(v)) < 0.6, s"voxel $v latency ${gramRoute.coordinates(0)} vs truth ${tau(v)}")
+        assert(
+          math.abs(gramRoute.coordinates(0) - tau(v)) < 0.6,
+          s"voxel $v latency ${gramRoute.coordinates(0)} vs truth ${tau(v)}"
+        )
       v += 1
     assert(accepted >= 0.8 * voxels, s"accepted $accepted of $voxels")
 
@@ -148,6 +202,14 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     val trial = ConditionProfileFit.prepare(plan, policy(OutputRequest.TrialAmplitudes(NormalizationRule.Density)))
     assert(trial.isLeft)
     val wrongRank = policy(OutputRequest.ConditionAmplitudes(NormalizationRule.Density)).copy(basis = basis)
-    val badStructure = wrongRank.copy(structure = scalafim.fmri.fit.TaskBasisStructure.make(Vector(Vector(plan.structuralColumns.head.id))).fold(e => fail(e.message), identity))
+    val badStructure = wrongRank.copy(structure =
+      scalafim.fmri.fit.TaskBasisStructure
+        .make(Vector(Vector(plan.structuralColumns.head.id)))
+        .fold(e => fail(e.message), identity)
+    )
     assert(ConditionProfileFit.prepare(plan, badStructure).isLeft)
-    assert(ConditionProfileFit.prepare(plan, policy(OutputRequest.ConditionAmplitudes(NormalizationRule.UnitIntegral))).isLeft)
+    assert(
+      ConditionProfileFit
+        .prepare(plan, policy(OutputRequest.ConditionAmplitudes(NormalizationRule.UnitIntegral)))
+        .isLeft
+    )

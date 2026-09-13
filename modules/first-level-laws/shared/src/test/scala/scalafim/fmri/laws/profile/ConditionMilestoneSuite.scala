@@ -7,13 +7,18 @@ import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, Kernel
 import scalafim.fmri.fit.profile.*
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.fmri.hrf.family.{GaussianFamily, JetLayout, LwuFamily, NormalizationRule, ParametricHrfFamily, ShapePoint}
+import scalafim.fmri.hrf.family.{
+  GaussianFamily,
+  JetLayout,
+  LwuFamily,
+  NormalizationRule,
+  ParametricHrfFamily,
+  ShapePoint
+}
 
-/** PHRF-20/21: the frozen C0 cohort (docs/plans/profile-hrf-cohorts.md) on
-  * the compact condition route. Accuracy against a dense time-domain oracle
-  * on the 200-voxel cohorts; throughput on `scalafim.phrf.voxels` voxels
-  * (default 10,000) with warm-up and five measured runs. Every cap is a
-  * counter; wall time is reported, never asserted.
+/** PHRF-20/21: the frozen C0 cohort (docs/plans/profile-hrf-cohorts.md) on the compact condition route. Accuracy
+  * against a dense time-domain oracle on the 200-voxel cohorts; throughput on `scalafim.phrf.voxels` voxels (default
+  * 10,000) with warm-up and five measured runs. Every cap is a counter; wall time is reported, never asserted.
   */
 class ConditionMilestoneSuite extends munit.FunSuite:
 
@@ -32,18 +37,28 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       case 0 => 1.0
       case 1 => x
       case 2 => x * x - 1.0 / 3.0
-      case k => math.cos(math.Pi * (k - 2) * (t + 0.5) / rows))
+      case k => math.cos(math.Pi * (k - 2) * (t + 0.5) / rows)
+  )
   private val events = 300
   private val schedule =
     val rng = new scala.util.Random(20260910L)
     val onsets = Vector.fill(events)(rng.nextInt((rows - 24) * 10) / 10.0).sorted.map(Seconds(_))
     val conditions = Vector.tabulate(events)(i => Vector("A", "B", "C")(i % 3))
-    EventTerm(events = Vector(Event.factor(conditions, "cond")), onsets = onsets, blockIds = Vector.fill(events)(0), termTag = Some("cond"))
+    EventTerm(
+      events = Vector(Event.factor(conditions, "cond")),
+      onsets = onsets,
+      blockIds = Vector.fill(events)(0),
+      termTag = Some("cond")
+    )
 
   private def compile(family: ParametricHrfFamily, nodes: Vector[Int]): (HrfKernelBasis, CompactConditionPreparation) =
-    val basis = HrfKernelBasis.compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48)).fold(e => fail(e.message), identity)
+    val basis = HrfKernelBasis
+      .compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48))
+      .fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(schedule, frame, basis, precision).fold(e => fail(e.message), identity)
-    val prep = CompactConditionPreparation.prepare(expanded, Some(whitening), Some(nuisance)).fold(e => fail(e.message), identity)
+    val prep = CompactConditionPreparation
+      .prepare(expanded, Some(whitening), Some(nuisance))
+      .fold(e => fail(e.message), identity)
     (basis, prep)
 
   private lazy val gaussian = compile(GaussianFamily.Default, Vector(26, 21))
@@ -85,7 +100,11 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     out
 
   /** Whitened, nuisance-projected direct design at a shape (unnormalised kernel). */
-  private def directDesign(family: ParametricHrfFamily, prep: CompactConditionPreparation, coords: Vector[Double]): Array[Double] =
+  private def directDesign(
+      family: ParametricHrfFamily,
+      prep: CompactConditionPreparation,
+      coords: Vector[Double]
+  ): Array[Double] =
     val point = ShapePoint.unsafe(coords)
     val scale = new Array[Double](family.jetComponents)
     family.scaleJetInto(family.libraryNormalization, point, scale)
@@ -118,6 +137,7 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     private val d = chart.dimension
     private val grid = NodeGrid(chart, gridNodes)
     private val designs = Array.tabulate(grid.count)(s => directDesign(family, prep, grid.point(s).coordinates))
+
     /** Exact-kernel residual energy at arbitrary coordinates (the oracle's own metric). */
     def residualAt(coords: Vector[Double], y: Array[Double]): Double =
       leastSquares(directDesign(family, prep, coords), 3, y)._1
@@ -161,7 +181,13 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       (x.toVector, beta)
 
   /** Synthetic time-major cohort at one SNR: family signal + AR(1) noise + nuisance. */
-  private def cohort(family: ParametricHrfFamily, voxels: Int, snr: Double, seed: Long, viaBasis: Option[ExpandedConditionDesign]): (Array[Double], Array[Double], Array[Double]) =
+  private def cohort(
+      family: ParametricHrfFamily,
+      voxels: Int,
+      snr: Double,
+      seed: Long,
+      viaBasis: Option[ExpandedConditionDesign]
+  ): (Array[Double], Array[Double], Array[Double]) =
     val rng = new scala.util.Random(seed)
     val chart = family.chart
     val d = chart.dimension
@@ -187,9 +213,13 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       val design: Array[Double] =
         viaBasis match
           case Some(expanded) => expanded.designAt(point).data
-          case None =>
+          case None           =>
             family.scaleJetInto(family.libraryNormalization, point, scale)
-            schedule.convolve(family.toHrf(point), frame, precision = precision).data.data.map(_ / scale(JetLayout.Value))
+            schedule
+              .convolve(family.toHrf(point), frame, precision = precision)
+              .data
+              .data
+              .map(_ / scale(JetLayout.Value))
       var sum = 0.0
       var sum2 = 0.0
       var t = 0
@@ -220,15 +250,29 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       v += 1
     (data, truth, beta)
 
-  /** Per-family budgets: the Gaussian budget is D2; the LWU chart has three
-    * coordinates and a coarser bank spacing per axis, so it is allowed one
-    * more Newton step and jet, recorded here as the LWU condition budget.
+  /** Per-family budgets: the Gaussian budget is D2; the LWU chart has three coordinates and a coarser bank spacing per
+    * axis, so it is allowed one more Newton step and jet, recorded here as the LWU condition budget.
     */
   private def budgetFor(family: ParametricHrfFamily): DecodeBudget =
-    if family.dimension == 2 then DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 2, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0))
-    else DecodeBudget(coarseStride = 2, maxNewtonSteps = 3, maxJets = 3, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0, 1.0))
+    if family.dimension == 2 then
+      DecodeBudget(
+        coarseStride = 2,
+        maxNewtonSteps = 2,
+        maxJets = 2,
+        maxExactEvaluations = 6,
+        weakSdLimit = Vector(0.5, 1.0)
+      )
+    else
+      DecodeBudget(
+        coarseStride = 2,
+        maxNewtonSteps = 3,
+        maxJets = 3,
+        maxExactEvaluations = 6,
+        weakSdLimit = Vector(0.5, 1.0, 1.0)
+      )
 
-  private def nodesFor(family: ParametricHrfFamily): Vector[Int] = if family.dimension == 2 then Vector(15, 15) else Vector(13, 9, 7)
+  private def nodesFor(family: ParametricHrfFamily): Vector[Int] =
+    if family.dimension == 2 then Vector(15, 15) else Vector(13, 9, 7)
 
   private def percentile(values: Array[Double], p: Double): Double =
     if values.isEmpty then Double.NaN
@@ -236,10 +280,25 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       val sorted = values.sorted
       sorted(math.min(sorted.length - 1, math.ceil(p * sorted.length).toInt - 1).max(0))
 
-  private def accuracy(label: String, family: ParametricHrfFamily, prep: CompactConditionPreparation, voxels: Int, snr: Double, seed: Long, oracleNodes: Vector[Int]): (Double, Double, Double, Double) =
+  private def accuracy(
+      label: String,
+      family: ParametricHrfFamily,
+      prep: CompactConditionPreparation,
+      voxels: Int,
+      snr: Double,
+      seed: Long,
+      oracleNodes: Vector[Int]
+  ): (Double, Double, Double, Double) =
     val (data, _, _) = cohort(family, voxels, snr, seed, None)
     val whitened = prep.whiten(voxels, data).fold(e => fail(e.message), identity)
-    val runtime = new CompactConditionRuntime(prep, NodeGrid(family.chart, nodesFor(family)), budgetFor(family), None, 1.0, NormalizationRule.Unnormalised)
+    val runtime = new CompactConditionRuntime(
+      prep,
+      NodeGrid(family.chart, nodesFor(family)),
+      budgetFor(family),
+      None,
+      1.0,
+      NormalizationRule.Unnormalised
+    )
     val oracle = new Oracle(family, prep, oracleNodes)
     val column = new Array[Double](rows)
     val counters = new DecoderCounters
@@ -280,14 +339,17 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     val p95W = percentile(width.result(), 0.95)
     val p95A = percentile(amplitude.result(), 0.95)
     val fraction = admitted.toDouble / voxels
-    println(f"[milestone] $label SNR $snr%.2f: admitted ${100 * fraction}%.1f%%, p95 |peak-oracle| $p95L%.4f s, p95 |FWHM-oracle| $p95W%.4f s, p95 rel amp $p95A%.2e; per voxel nodes ${counters.perVoxel(counters.nodeScores)}%.1f jets ${counters.perVoxel(counters.jets)}%.2f exact ${counters.perVoxel(counters.exactEvaluations)}%.2f; oracle beaten under the exact kernel in $oracleDeficit/$admitted admitted voxels")
+    println(
+      f"[milestone] $label SNR $snr%.2f: admitted ${100 * fraction}%.1f%%, p95 |peak-oracle| $p95L%.4f s, p95 |FWHM-oracle| $p95W%.4f s, p95 rel amp $p95A%.2e; per voxel nodes ${counters.perVoxel(counters.nodeScores)}%.1f jets ${counters.perVoxel(counters.jets)}%.2f exact ${counters.perVoxel(counters.exactEvaluations)}%.2f; oracle beaten under the exact kernel in $oracleDeficit/$admitted admitted voxels"
+    )
     (fraction, p95L, p95W, p95A)
 
   test("Gaussian: accuracy gates on the frozen C0 cohorts"):
     val (basis, prep) = gaussian
     println(s"[milestone] Gaussian basis rank ${basis.rank}, K = ${prep.rank}, nuisance rank ${prep.nuisanceRank}")
     for (snr, seed) <- Seq((1.0, 101L), (0.5, 102L)) do
-      val (fraction, p95L, p95W, p95A) = accuracy("Gaussian", GaussianFamily.Default, prep, 200, snr, seed, Vector(51, 21))
+      val (fraction, p95L, p95W, p95A) =
+        accuracy("Gaussian", GaussianFamily.Default, prep, 200, snr, seed, Vector(51, 21))
       assert(fraction >= 0.95, s"admitted $fraction at SNR $snr")
       assert(p95L <= 0.02, s"p95 latency $p95L at SNR $snr")
       assert(p95W <= 0.05, s"p95 FWHM $p95W at SNR $snr")
@@ -304,7 +366,10 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       assert(p95L <= 0.02, s"p95 latency $p95L at SNR $snr")
       assert(p95W <= 0.05, s"p95 FWHM $p95W at SNR $snr")
       assert(p95A <= 1e-3, s"p95 amplitude $p95A at SNR $snr")
-      if fraction < 0.95 then println(f"[milestone] LWU admission ${100 * fraction}%.1f%% at SNR $snr%.2f is below 95%%: recorded as unmet for rho-weak voxels")
+      if fraction < 0.95 then
+        println(
+          f"[milestone] LWU admission ${100 * fraction}%.1f%% at SNR $snr%.2f is below 95%%: recorded as unmet for rho-weak voxels"
+        )
 
   test("throughput receipt on the C0 geometry"):
     val voxels = sys.props.get("scalafim.phrf.voxels").flatMap(_.toIntOption).getOrElse(10000)
@@ -345,13 +410,25 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       (counters, accepted, projectNanos / 1e6, solveNanos / 1e6)
     val ((counters, accepted, projectMs, solveMs), runs) = Measure.repeated(warmup = 1, runs = 5)(() => pass())
     val engine = memoryUsed().flatMap(after => runtimeBefore.map(before => after - before))
-    val receipt = WorkReceipt.from("C0 compact route", counters, accepted, clock, engine, Vector(f"project+fit median ${runs.median}%.0f ms p95 ${runs.p95}%.0f ms over 5 runs", f"last run: projection $projectMs%.0f ms, fit incl. projection $solveMs%.0f ms", f"V=$voxels T=$rows K=${prep.rank} m=${basis.rank}", f"extrapolated to V=100000: ${runs.median * 100000.0 / voxels / 1000}%.1f s single-thread"))
+    val receipt = WorkReceipt.from(
+      "C0 compact route",
+      counters,
+      accepted,
+      clock,
+      engine,
+      Vector(
+        f"project+fit median ${runs.median}%.0f ms p95 ${runs.p95}%.0f ms over 5 runs",
+        f"last run: projection $projectMs%.0f ms, fit incl. projection $solveMs%.0f ms",
+        f"V=$voxels T=$rows K=${prep.rank} m=${basis.rank}",
+        f"extrapolated to V=100000: ${runs.median * 100000.0 / voxels / 1000}%.1f s single-thread"
+      )
+    )
     println("[milestone] " + receipt.render)
     val violations = receipt.violations(budget, maxNodeScores = 90)
     assert(violations.isEmpty, violations.mkString("; "))
     assert(receipt.acceptedFraction > 0.9)
 
-  /** Heap accounting is JVM-only and not linkable on Scala.js; the shared
-    * suite reports it as unavailable and the JMH benchmark reports RSS.
+  /** Heap accounting is JVM-only and not linkable on Scala.js; the shared suite reports it as unavailable and the JMH
+    * benchmark reports RSS.
     */
   private def memoryUsed(): Option[Long] = None

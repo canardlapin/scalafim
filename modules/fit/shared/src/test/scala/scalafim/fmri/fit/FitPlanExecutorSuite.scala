@@ -1428,12 +1428,23 @@ class FitPlanExecutorSuite extends munit.FunSuite:
     val globalOrder = eventModel.columnNames.indices.map { col =>
       if col >= start && col < endExcl then start + localOrder(col - start) else col
     }.toVector
+    // Numerical reordering must transport structural columns with the matrix.
+    // Keeping the old compiled schema would falsely bind the permuted LSS fit.
+    val reorderedMatrix = reorderColumns(eventModel.designMatrix, globalOrder)
+    val originalSchema = eventModel.designSchema
+    val reorderedColumns = globalOrder.zipWithIndex.map { case (source, index) =>
+      originalSchema.columns(source).copy(ordinal = scalafim.fmri.design.DesignColumnIndex.unsafeOneBased(index + 1))
+    }
+    val reorderedSchema = scalafim.fmri.design.DesignSchema
+      .validated(reorderedMatrix, originalSchema.rows, reorderedColumns, originalSchema.audit)
+      .toOption.getOrElse(fail("reordered LSS schema must validate"))
     val model =
       plan.model.copy(
         eventModel = eventModel.copy(
           terms = eventModel.terms.updated(termIndex, termKey -> reorderedTerm),
-          designMatrix = reorderColumns(eventModel.designMatrix, globalOrder),
-          columnNames = globalOrder.map(eventModel.columnNames)
+          designMatrix = reorderedMatrix,
+          columnNames = globalOrder.map(eventModel.columnNames),
+          compiledSchema = Some(reorderedSchema)
         )
     )
     plan.copy(model = model)

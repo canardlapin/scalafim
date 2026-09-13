@@ -8,9 +8,8 @@ import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{GaussianFamily, JetLayout}
 
-/** The exact `alpha = 0` law through the real chain: family -> kernel basis ->
-  * expanded design -> rank-revealing QR -> compact jets, against a direct
-  * time-domain least-squares fit of the family design at the same shape.
+/** The exact `alpha = 0` law through the real chain: family -> kernel basis -> expanded design -> rank-revealing QR ->
+  * compact jets, against a direct time-domain least-squares fit of the family design at the same shape.
   */
 class ProfileReductionLawsSuite extends munit.FunSuite:
 
@@ -20,10 +19,18 @@ class ProfileReductionLawsSuite extends munit.FunSuite:
   private val frame = SamplingFrame(blockLens = Seq(80), tr = Seq(1.0))
   private val conditions = Vector("A", "B", "C", "A", "B", "C", "A", "B", "C", "B", "A", "C")
   private val onsets = Vector(1.3, 6.1, 10.6, 17.0, 23.4, 30.7, 36.2, 41.9, 47.5, 53.8, 60.3, 66.1).map(Seconds(_))
-  private val term = EventTerm(events = Vector(Event.factor(conditions, "cond")), onsets = onsets, blockIds = Vector.fill(12)(0), termTag = Some("cond"))
+  private val term = EventTerm(
+    events = Vector(Event.factor(conditions, "cond")),
+    onsets = onsets,
+    blockIds = Vector.fill(12)(0),
+    termTag = Some("cond")
+  )
 
-  private lazy val basis = HrfKernelBasis.compile(KernelBasisSpec(family, step, Vector(26, 21), tolerance = 1e-5, maxRank = 40)).fold(e => fail(e.message), identity)
-  private lazy val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
+  private lazy val basis = HrfKernelBasis
+    .compile(KernelBasisSpec(family, step, Vector(26, 21), tolerance = 1e-5, maxRank = 40))
+    .fold(e => fail(e.message), identity)
+  private lazy val expanded =
+    ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
 
   private def toDMat(rows: Int, cols: Int, rowMajor: Array[Double]): DMat =
     val b = DMat.newBuilder(rows, cols)
@@ -37,7 +44,8 @@ class ProfileReductionLawsSuite extends munit.FunSuite:
   private lazy val (u, rHat, rank) =
     val t = expanded.rows
     val cm = expanded.columns
-    val qr = toDMat(t, cm, expanded.term.data.data).qr(QROptions(pivoting = QRPivoting.Column, rankTolerance = Some(1e-10)))
+    val qr =
+      toDMat(t, cm, expanded.term.data.data).qr(QROptions(pivoting = QRPivoting.Column, rankTolerance = Some(1e-10)))
     val k = qr.diagnostics.rank.getOrElse(fail("no rank"))
     val uArr = new Array[Double](t * k)
     qr.q.slice(0, t, 0, k).copyRowMajorTo(uArr)
@@ -57,7 +65,9 @@ class ProfileReductionLawsSuite extends munit.FunSuite:
   private def directFit(t1: Double, t2: Double, y: Array[Double]): (Double, Array[Double]) =
     val point = family.chart.point(t1, t2).fold(e => fail(e.message), identity)
     val design = expanded.designAt(point)
-    val fit = toDMat(design.rows, design.cols, design.data).leastSquares(gale.linalg.DVec.fromSeq(y.toSeq)).fold(e => throw e, identity)
+    val fit = toDMat(design.rows, design.cols, design.data)
+      .leastSquares(gale.linalg.DVec.fromSeq(y.toSeq))
+      .fold(e => throw e, identity)
     val beta = Array.tabulate(design.cols)(i => fit(i))
     var residual = 0.0
     var r = 0
@@ -107,7 +117,12 @@ class ProfileReductionLawsSuite extends munit.FunSuite:
       assertEqualsDouble(energy, residual, 1e-9 * residual, s"energy at ($t1,$t2)")
       var i = 0
       while i < c do
-        assertEqualsDouble(amplitudes(i), beta(i), 1e-9 * math.max(1.0, math.abs(beta(i))), s"amplitude $i at ($t1,$t2)")
+        assertEqualsDouble(
+          amplitudes(i),
+          beta(i),
+          1e-9 * math.max(1.0, math.abs(beta(i))),
+          s"amplitude $i at ($t1,$t2)"
+        )
         i += 1
       val h = 1e-4
       val g1 = (compact(t1 + h, t2, 1) - compact(t1 - h, t2, 1)) / (2 * h)
