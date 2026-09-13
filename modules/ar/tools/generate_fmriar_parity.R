@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+source(file.path("tools", "r-parity", "receipt_serialization.R"))
+
 # Regenerate constants for FmriArParitySuite.scala from fmriAR 0.3.3 source
 # f563f2df20264ffa7db9be116f11d631551e9132.
 # Normal Scala tests do not call this script.
@@ -25,7 +27,7 @@ scala_out <- Sys.getenv(
 fmriar_pkg <- Sys.getenv("FMRIAR_R", file.path(path.expand("~"), "code", "fmriAR"))
 
 fmt <- function(x) {
-  paste(sprintf("%.17g", as.numeric(x)), collapse = ", ")
+  paste(receipt_format_number(as.numeric(x)), collapse = ", ")
 }
 
 fmt_vec <- function(name, x) {
@@ -228,7 +230,7 @@ payload <- list(
 
 scala_number <- function(value) {
   if (abs(value) < 5e-16) return("0.0")
-  rendered <- sprintf("%.17g", value)
+  rendered <- receipt_format_number(value)
   if (grepl("[.eE]", rendered)) rendered else paste0(rendered, ".0")
 }
 scala_doubles <- function(values) {
@@ -242,8 +244,11 @@ scala_rows <- function(value) {
   )
 }
 
+payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
+payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = 17, pretty = TRUE)
+jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
 message("wrote ", out_file)
 
 dir.create(dirname(scala_out), recursive = TRUE, showWarnings = FALSE)

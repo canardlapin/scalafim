@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+source(file.path("tools", "r-parity", "receipt_serialization.R"))
+
 # Independent mixed-TR runwise and fixed-effects receipt for S13.
 #
 # From the ScalaFIM repository root:
@@ -215,7 +217,7 @@ scala_string <- function(value) {
   paste0("\"", gsub("\\\\", "\\\\\\\\", gsub("\"", "\\\\\"", value)), "\"")
 }
 scala_number <- function(value) {
-  if (abs(value) < 5e-16) "0.0" else sprintf("%.17g", value)
+  if (abs(value) < 5e-16) "0.0" else receipt_format_number(value)
 }
 scala_vector <- function(values, render) {
   if (length(values) == 0) "Vector.empty"
@@ -233,8 +235,11 @@ scala_matrices <- function(values) {
   paste0("Vector(\n    ", paste(rendered, collapse = ",\n    "), "\n  )")
 }
 
+payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
+payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = 17, pretty = TRUE)
+jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
 message("wrote ", out_file)
 
 dir.create(dirname(scala_out), recursive = TRUE, showWarnings = FALSE)

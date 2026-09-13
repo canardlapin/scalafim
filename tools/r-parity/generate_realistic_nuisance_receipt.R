@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+source(file.path("tools", "r-parity", "receipt_serialization.R"))
+
 # Independent sampled-nuisance and direct-QR receipt for P3.3 / S15.
 #
 # R fmrihrf owns event rendering, this script owns deterministic fMRIPrep-like
@@ -279,7 +281,7 @@ receipt <- list(
   producer_command = "LC_ALL=C LANG=C Rscript tools/r-parity/generate_realistic_nuisance_receipt.R && python3 tools/r-parity/finalize_realistic_nuisance_receipt.py",
   conventions = list(
     dtype = "float64",
-    json_encoding = "JSON numbers are finite IEEE-754 binary64 values serialized with 17 significant digits",
+    json_encoding = "JSON numbers are finite IEEE-754 binary64 values serialized with 13 significant digits",
     matrix_orientation = "rows are scans; nuisance columns retain their semantic fMRIPrep-style names",
     task_design = "each run is rendered independently with fmrihrf::regressor_design at 0.05-second precision and then concatenated",
     nuisance = "motion, first derivatives, declared squares, CompCor-like components, spikes, a constant alias, an exact duplicate, and a retained near duplicate",
@@ -305,7 +307,7 @@ scala_string <- function(value) {
 scala_number <- function(value) {
   if (is.na(value)) "Double.NaN"
   else if (abs(value) < 5e-16) "0.0"
-  else sprintf("%.17g", value)
+  else receipt_format_number(value)
 }
 scala_vector <- function(values, render) {
   if (length(values) == 0) "Vector.empty"
@@ -324,8 +326,11 @@ scala_run <- function(value) {
   paste0("RealisticNuisanceRun(Vector(", paste(entries, collapse = ", "), "))")
 }
 
+payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
+payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = 17, pretty = TRUE)
+jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
 message("wrote ", out_file)
 
 dir.create(dirname(scala_out), recursive = TRUE, showWarnings = FALSE)
