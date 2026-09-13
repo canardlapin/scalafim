@@ -46,6 +46,21 @@ matrix_rows <- function(value) {
   lapply(seq_len(nrow(value)), function(index) unname(value[index, ]))
 }
 
+reference_computation_digits <- 12L
+canonicalize_reference_computation <- function(value) {
+  stopifnot(is.double(value))
+  value <- signif(value, digits = reference_computation_digits)
+  value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  value
+}
+reference_computation_convention <- function() {
+  paste0(
+    "externally generated design coordinates are fixed at ",
+    reference_computation_digits,
+    " significant decimal digits before response synthesis and fitting"
+  )
+}
+
 # fmrihrf stores multi-condition HRF values in condition-major order. Reorder
 # each term by its declared structural dimensions before assigning the
 # basis-major semantic names used by the formula compiler.
@@ -193,6 +208,7 @@ run_design <- function(run_id) {
 design <- unname(do.call(rbind, lapply(levels(events$run), run_design)))
 stopifnot(nrow(design) == 360L, ncol(design) == 46L)
 colnames(design) <- semantic_names
+design <- canonicalize_reference_computation(design)
 
 beta <- setNames(rep(0, ncol(design)), colnames(design))
 beta[c("sample_stimulus.face", "sample_stimulus.scene")] <- c(0.8, -0.4)
@@ -482,6 +498,7 @@ scala_f_map <- function(values) {
 
 payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
 payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+payload$receipt$conventions$reference_computation_boundary <- reference_computation_convention()
 
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
 jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)

@@ -43,6 +43,21 @@ matrix_rows <- function(value) {
   lapply(seq_len(nrow(value)), function(index) unname(value[index, ]))
 }
 
+reference_computation_digits <- 12L
+canonicalize_reference_computation <- function(value) {
+  stopifnot(is.double(value))
+  value <- signif(value, digits = reference_computation_digits)
+  value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  value
+}
+reference_computation_convention <- function() {
+  paste0(
+    "externally generated design coordinates are fixed at ",
+    reference_computation_digits,
+    " significant decimal digits before response synthesis and fitting"
+  )
+}
+
 run_length <- 80L
 n_runs <- 2L
 precision <- 0.05
@@ -165,6 +180,8 @@ colnames(drift) <- unlist(lapply(seq_len(n_runs), function(run) paste0("drift_",
 colnames(intercepts) <- paste0("intercept_", seq_len(n_runs))
 colnames(nuisance) <- unlist(lapply(seq_len(n_runs), function(run) paste0(retained_names, "_run_", run)))
 full_design <- cbind(task_design, drift, intercepts, nuisance)
+full_design <- canonicalize_reference_computation(full_design)
+task_design <- full_design[, seq_len(ncol(task_design)), drop = FALSE]
 
 beta <- rep(0, ncol(full_design))
 beta[1:2] <- c(0.75, -0.25)
@@ -328,6 +345,7 @@ scala_run <- function(value) {
 
 payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
 payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+payload$receipt$conventions$reference_computation_boundary <- reference_computation_convention()
 
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
 jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
