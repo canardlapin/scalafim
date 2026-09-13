@@ -19,9 +19,20 @@ modules=(arJVM hrfJVM designJVM modelJVM fitJVM)
 echo "[first-level-coverage] enforcing per-module scientific coverage floors"
 for module in "${modules[@]}"; do
   echo "[first-level-coverage] $module"
-  sbt "${sbt_args[@]}" \
-    "set $module / coverageEnabled := true" \
-    "$module/test" \
-    "$module/coverageReport"
+  if [[ "$module" == "fitJVM" ]]; then
+    # The non-published law project owns the generated tests for fit/profile.
+    # Run it against the same instrumented fit classes so the fit floor covers
+    # the complete first-level scientific test surface.
+    sbt "${sbt_args[@]}" \
+      "set $module / coverageEnabled := true" \
+      "$module/test" \
+      "firstLevelLawsJVM/test" \
+      "$module/coverageReport"
+  else
+    sbt "${sbt_args[@]}" \
+      "set $module / coverageEnabled := true" \
+      "$module/test" \
+      "$module/coverageReport"
+  fi
 done
 echo "[first-level-coverage] all module floors passed"

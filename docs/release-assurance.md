@@ -27,7 +27,9 @@ bash tools/ci/first-level-coverage.sh
 Coverage is assessed per scientific module rather than aggregated with IO,
 viewer, or adapter code. The floors leave a small amount of ordinary source
 movement below the measured 2026-08-12 baseline while still rejecting a
-material loss of exercised decisions.
+material loss of exercised decisions. The `fitJVM` measurement includes the
+generated `firstLevelLawsJVM` tests because that non-published assurance module
+owns the law coverage for the production `fit/profile` package.
 
 The focused court also proves that the public first-level guide still contains
 the exact compiled DMS acceptance construction and that the checked-in
