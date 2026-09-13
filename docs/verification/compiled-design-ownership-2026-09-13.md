@@ -98,10 +98,12 @@ preserve historical evidence, require independent corrected references, and
 forbid weakening tolerances or reverting the corrected basis to obtain a pass.
 The corrected DMS and realistic-nuisance R oracles fix their externally
 generated design coordinates at 12 significant decimal digits before response
-synthesis and fitting. Their evidence still serializes at 13 significant
-digits. This declared computation boundary prevents sub-receipt HRF integration
-drift from being amplified by the deliberately conditioned QR and covariance
-calculations.
+synthesis and fitting. Design and response evidence retains 13 significant
+digits. Derived coefficients, covariance matrices, and hypothesis summaries use
+declared 9-, 7-, and 10-digit grids, respectively; these remain finer than the
+frozen scenario tolerances. The two boundaries prevent sub-receipt HRF
+integration and last-bit BLAS reduction drift from being amplified by the
+deliberately conditioned QR and covariance calculations.
 
 ## Release task map
 

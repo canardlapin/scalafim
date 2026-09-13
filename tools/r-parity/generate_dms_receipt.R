@@ -60,6 +60,25 @@ reference_computation_convention <- function() {
     " significant decimal digits before response synthesis and fitting"
   )
 }
+reference_result_coefficient_digits <- 9L
+reference_result_covariance_digits <- 7L
+reference_result_hypothesis_digits <- 10L
+canonicalize_reference_result <- function(value, digits) {
+  if (is.list(value)) return(lapply(value, canonicalize_reference_result, digits = digits))
+  if (is.double(value)) {
+    value <- signif(value, digits = digits)
+    value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  }
+  value
+}
+reference_result_convention <- function() {
+  paste0(
+    "derived coefficients use ", reference_result_coefficient_digits,
+    ", covariance matrices use ", reference_result_covariance_digits,
+    ", and hypothesis summaries use ", reference_result_hypothesis_digits,
+    " significant decimal digits"
+  )
+}
 
 # fmrihrf stores multi-condition HRF values in condition-major order. Reorder
 # each term by its declared structural dimensions before assigning the
@@ -368,6 +387,32 @@ f_results <- lapply(f_contrasts, function(contrast) {
   list(numerator_df = numerator_df, denominator_df = fixed_df, statistic = statistic)
 })
 
+# The same locked R/BLAS environment can choose different last-bit reduction
+# orders for QR-derived values. Preserve substantially more precision than the
+# scenario accepts, but serialize those derived result classes on declared,
+# scale-aware decimal grids so candidate regeneration is reproducible.
+run_fits <- lapply(run_fits, function(run) {
+  run$coefficients <- canonicalize_reference_result(
+    run$coefficients,
+    reference_result_coefficient_digits
+  )
+  run$covariance <- canonicalize_reference_result(
+    run$covariance,
+    reference_result_covariance_digits
+  )
+  run
+})
+fixed_coefficients <- canonicalize_reference_result(
+  fixed_coefficients,
+  reference_result_coefficient_digits
+)
+fixed_covariance <- canonicalize_reference_result(
+  fixed_covariance,
+  reference_result_covariance_digits
+)
+t_results <- canonicalize_reference_result(t_results, reference_result_hypothesis_digits)
+f_results <- canonicalize_reference_result(f_results, reference_result_hypothesis_digits)
+
 fmridesign_root <- normalizePath(r_pkg, mustWork = FALSE)
 fmrihrf_root <- normalizePath(hrf_pkg, mustWork = FALSE)
 source_md5 <- function(path) {
@@ -499,6 +544,7 @@ scala_f_map <- function(values) {
 payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
 payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
 payload$receipt$conventions$reference_computation_boundary <- reference_computation_convention()
+payload$receipt$conventions$derived_result_serialization <- reference_result_convention()
 
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
 jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
