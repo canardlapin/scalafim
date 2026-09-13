@@ -43,6 +43,16 @@ jobs:
           node-version: "24"
           package-manager-cache: false
 
+      - name: Prepare exact pinned provider artifacts
+        env:
+          COURSIER_CACHE: ${{ runner.temp }}/scalafim-full-repository-sbt/coursier
+          SBT_OPTS: >-
+            -Dsbt.boot.directory=${{ runner.temp }}/scalafim-full-repository-sbt/boot
+            -Dsbt.global.base=${{ runner.temp }}/scalafim-full-repository-sbt/global
+            -Dsbt.ivy.home=${{ runner.temp }}/scalafim-full-repository-sbt/ivy
+            -Dsbt.supershell=false
+        run: bash tools/prepare-pinned-dependencies.sh
+
       - name: Compile every JVM and Scala.js module
         env:
           COURSIER_CACHE: ${{ runner.temp }}/scalafim-full-repository-sbt/coursier
