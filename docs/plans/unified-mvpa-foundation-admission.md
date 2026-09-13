@@ -137,9 +137,11 @@ No classification performance, Haufe identity, rank inference, localization,
 group analysis, whole-brain resource envelope or searchlight superiority is
 qualified by these foundation tests. Those retain their own epic packets.
 
-M0.03's implemented prototype is ready for independent M0.07 review now that
-M0.02 is admitted. M1 owners should migrate these laws into the real API
-and delete the temporary prototype, not maintain another identity layer.
+M0.03's implemented prototype was accepted by the
+[independent M0.07 review](../audits/unified-mvpa-foundation-independent-review.md)
+at published revision `061f3a5e1c8383db3821c6b9e7c30f3191311522`.
+M1 owners should migrate these laws into the real API and delete the temporary
+prototype, not maintain another identity layer.
 
 ## Execution evidence
 
