@@ -15,19 +15,19 @@ scientific target passes because the protocol exists.
 
 ## Source receipt
 
-The ScalaFIM source baseline inspected for this protocol is
-`e071e83b3a23bc6f304b1e72625d6281d9cfc9ba` plus the identified untracked M0
-planning artifacts. That is a provenance statement, not a clean-tree claim.
+The ScalaFIM source baseline inspected for this protocol is published revision
+`528c302e454697055bc9af31c9a6eca684f019e3` plus the identified M0 planning
+artifacts. A zero-diff check established that its relevant MVPA trees equal the
+originally inspected local descendant.
 The baseline contains optimized `SearchlightClassifierScanner` Ridge-LDA and
 the operator-ridge route.
 
-ScalaFIM pins Multivar at
-`c4329fc95688929236c942cca889aa67ad17cbe0`; that revision does **not** contain
-PLS regression. SIMPLS first appears later in reachable local Multivar history
-at `c7cf380644c2c5e239b859549f67cd33ae816ab8`. Neither that later commit nor the
-dirty sibling checkout is a production provider admission. The thresholded-PLS
-comparison remains unavailable until an immutable PLS-containing provider
-revision and its ScalaFIM consumer adapter pass their own admission gate.
+ScalaFIM now pins Multivar at
+`f74d631720d65147c51496dcbdd37c01912de1cb`, an immutable revision containing
+SIMPLS PLS regression. The provider revision is part of the admitted source
+closure, but ScalaFIM still has no thresholded-PLS benchmark adapter or
+method-specific consumer court. The comparison remains unavailable until that
+adapter and its JVM/Scala.js evidence pass their own admission gate.
 
 ## 1. Evidence classes and pass rules
 
@@ -341,11 +341,12 @@ The minimum court contains:
    low-dimensional thresholded-PLS comparison; and
 5. an ablated non-spatial reduced-rank fit with the same rank/covariance family.
 
-Current ScalaFIM contains the searchlight and operator-ridge routes. A later,
-not-yet-admitted Multivar revision contains SIMPLS PLS regression, and ScalaFIM
-has no thresholded-PLS production adapter at this source receipt. M5.05 may add
-a benchmark-only, source-hashed adapter after provider admission; its absence
-is `Unavailable`, not a fabricated baseline result or a reason to omit the row.
+Current ScalaFIM contains the searchlight and operator-ridge routes, and its
+admitted Multivar source pin contains SIMPLS PLS regression. ScalaFIM has no
+thresholded-PLS production adapter or method-specific consumer court at this
+source receipt. M5.05 may add a benchmark-only, source-hashed adapter after
+that qualification; its absence is `Unavailable`, not a fabricated baseline
+result or a reason to omit the row.
 
 ### 8.2 Matched design and tuning
 

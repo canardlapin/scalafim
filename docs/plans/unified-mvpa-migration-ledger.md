@@ -13,14 +13,13 @@ note suggests a compatibility facade, the PRD's rapid replacement policy wins.
 
 ## Source receipt
 
-The tracked MVPA source inventory below is bound to ScalaFIM
-`e071e83b3a23bc6f304b1e72625d6281d9cfc9ba` (2026-09-12). At inventory time,
-`build.sbt`, `modules/mvpa`, `modules/mvpa-fit`, `modules/mvpa-dataset`,
-`modules/mvpa-spatial`, `examples/workflows-jvm`, and the older MVPA plan files
-had no tracked differences from that revision. `origin/main` was
-`528c302e454697055bc9af31c9a6eca684f019e3`; the local revision is therefore
-the adopted source baseline for this ledger, not a claim about the remote
-default branch.
+The tracked MVPA source inventory below is bound to published ScalaFIM revision
+`528c302e454697055bc9af31c9a6eca684f019e3` (2026-09-12). Before admission,
+`git diff --quiet` established that the originally inspected local descendant
+had no changes under `modules/mvpa`, `modules/mvpa-fit`,
+`modules/mvpa-dataset`, `modules/mvpa-spatial`, or `examples/workflows-jvm`.
+The ledger is therefore rebound to the reachable remote revision whose relevant
+trees were actually equivalent, rather than requiring an unpublished commit.
 
 The unified-MVPA plans and foundation spike are identified working-tree
 artifacts. Their presence does not make the spike a production module or admit

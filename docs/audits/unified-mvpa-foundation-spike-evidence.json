@@ -37,13 +37,13 @@
       },
       {
         "command": "sbt -J-Xmx4G -Dsbt.task.cpus=2 -Dsbt.supershell=false mvpaJVM/test mvpaFitJVM/test",
-        "mvpaPassed": 114,
+        "mvpaPassed": 118,
         "mvpaFitPassed": 38,
         "failed": 0
       },
       {
         "command": "sbt -J-Xmx4G -Dsbt.task.cpus=2 -Dsbt.supershell=false mvpaJS/test mvpaFitJS/test",
-        "mvpaPassed": 114,
+        "mvpaPassed": 118,
         "mvpaFitPassed": 38,
         "failed": 0
       }

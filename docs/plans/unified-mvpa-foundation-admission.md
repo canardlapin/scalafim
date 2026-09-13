@@ -155,7 +155,7 @@ court; the standalone runner remains the independent source-manifest court.
 | Root-build gate | JVM | Scala.js |
 | --- | ---: | ---: |
 | `mvpaFoundationAdmission` | 18 passed | 18 passed |
-| Existing `mvpa` regression | 114 passed | 114 passed |
+| Existing `mvpa` regression | 118 passed | 118 passed |
 | Existing `mvpaFit` regression | 38 passed | 38 passed |
 | `scalafimCompileAll` | passed | passed |
 

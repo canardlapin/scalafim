@@ -52,7 +52,13 @@ The canonical fixture is
 with SHA-256
 `07ebd4de37ae675895352c4763643c96b72b929c80c1e6027c8e7aea41645ee0`.
 The generator is
-[`generate_pymvpa_searchlight_reference.py`](../../tools/mvpa/generate_pymvpa_searchlight_reference.py).
+[`generate_pymvpa_searchlight_reference.py`](../../tools/mvpa/generate_pymvpa_searchlight_reference.py),
+SHA-256 `d7cc8132db77435220c27cce91be9bda56b7d83ce6c79368a0f66463622eba13`.
+The portable constants and semantic suite have SHA-256
+`d4f0ac5729991aae119de82a7b1a0c0968d313368d8afa3c50af98b5149d63d6`
+and `f2fd582bf50852ed0be61217c7a6f4c1f0ecc059d907d9a879a4cb388aa1e6a4`;
+the JVM performance suite has SHA-256
+`111f5cf44b2ed2d952be09a46e8ca228961480bd950593fdd2caa5cb63cfbd7d`.
 
 ## Geometry and numerical court
 
@@ -117,11 +123,11 @@ reports the median without imposing a flaky wall-clock assertion.
 Observed receipt on this host:
 
 ```json
-{"fixture":"20x20x12-r3.1","centers":4800,"neighborhood_members":474744,"setup_median_ms":70.263,"kernel_median_ms":2449.374,"checksum":37399.828069647560}
+{"fixture":"20x20x12-r3.1","centers":4800,"neighborhood_members":474744,"setup_median_ms":57.966,"kernel_median_ms":1783.581,"checksum":37399.828069647560}
 ```
 
-The later full affected-module JVM run repeated the same checksum with setup
-median 75.584 ms and kernel median 2295.349 ms.
+The full affected-module JVM run produced this receipt and repeated the frozen
+checksum.
 
 This run used sbt 1.11.7 on the Homebrew Java 25.0.1 runtime reported by the
 sbt launcher, on Darwin arm64. The semantic Scala.js gate used Node 26.7.0.
@@ -152,8 +158,8 @@ Targeted semantic results were 3/3 on JVM and 3/3 on Scala.js. The JVM-only
 measurement receipt was 1/1. The bounded full affected-module gates also
 passed:
 
-- JVM: image 305/305, surface 144/144, mvpa 118/118, mvpa-spatial 16/16.
-- Scala.js: image 284/284, surface 118/118, mvpa 118/118, mvpa-spatial 15/15.
+- JVM: image 305/305, surface 116/116, mvpa 118/118, mvpa-spatial 16/16.
+- Scala.js: image 284/284, surface 90/90, mvpa 118/118, mvpa-spatial 15/15.
 
 ## Claim exclusions
 

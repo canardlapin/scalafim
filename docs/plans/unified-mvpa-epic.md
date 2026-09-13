@@ -14,7 +14,7 @@ M0 inference authority: [frozen inference and known-truth calibration protocol](
 
 M0 resource authority: [frozen resource and comparative benchmark protocol](unified-mvpa-resource-comparative-protocol.md).
 
-Planning source reference: `e071e83b3a23bc6f304b1e72625d6281d9cfc9ba`, plus the identified design documents in the working tree. The checkout contains unrelated concurrent changes; this reference is not a clean-tree claim or provider admission. Each owner refreshes relevant sources and pins when claiming a packet.
+Planning source reference: published revision `528c302e454697055bc9af31c9a6eca684f019e3`, plus the identified design documents transferred from the working tree. The checkout contained unrelated concurrent changes; this reference is not a provider-admission claim. Each owner refreshes relevant sources and pins when claiming a packet.
 
 ## Delivery contract
 

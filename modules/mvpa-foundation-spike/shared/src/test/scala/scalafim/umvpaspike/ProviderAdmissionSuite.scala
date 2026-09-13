@@ -286,6 +286,9 @@ def invalid[S <: Preparation, U <: Use.Fit,A,B](x: Prepared[S,U,A,B]) = x.rows
 import cats.Id
 def invalid(f: FeatureMap[Id,Int,Int,Unit,Double], t: Transform[Id,Double,Double]) = f.andThen(t)
 """)
-    assert(testFit.nonEmpty)
-    assert(preparedRows.nonEmpty)
-    assert(afterOof.nonEmpty)
+    assertEquals(testFit.length, 1)
+    assert(testFit.head.message.contains("Required: alder.kernel.NonEmptyData[alder.kernel.Use.Fit"))
+    assertEquals(preparedRows.length, 1)
+    assert(preparedRows.head.message.contains("private[alder] value rows"))
+    assertEquals(afterOof.length, 1)
+    assert(afterOof.head.message.contains("value andThen is not a member of alder.kernel.FeatureMap"))

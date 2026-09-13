@@ -8,21 +8,21 @@ performance.
 ## Source and oracle receipt
 
 - ScalaFIM source receipt:
-  `e071e83b3a23bc6f304b1e72625d6281d9cfc9ba`. The MVPA production and test
-  roots were clean at the M0.01 audit; unrelated repository work remains
-  outside this packet.
+  `528c302e454697055bc9af31c9a6eca684f019e3`. This is the reachable published
+  revision rebound after a zero-diff check proved its MVPA production and test
+  roots equivalent to the originally inspected local descendant.
 - Independent generator:
   `tools/mvpa/generate_migration_parity.R`, SHA-256
-  `1cc21629f2020bd869a6518c945a3e7b73a28265f8954dbefe50ebd2091e7fc0`.
+  `a370cf036fd61b14378b7ff039b157546d9abdbcdedd513c11b656d0557652d8`.
 - Generated receipt:
   `docs/scenarios/fixtures/mvpa.migration-parity.v1.r.json`, SHA-256
-  `d33dcb04f08acdbe6bf88a2be4b444611cd35eb47d562ebd0672b8f180aca79d`.
+  `053e50710a241e6eacee4e532bf0d398d02a84536bacf5bf5db6ca444144d04d`.
 - Portable Scala constants:
   `MvpaMigrationParityFixtures.scala`, SHA-256
-  `07b43b26101e02c1e4cbf3c14588515fa647a86a00841bf1bdbb47ebadff29cb`.
+  `3b91f9ad45d89417ffa6a3b175d9d0a5c46fd6bcec698433dafe5e7cdced25f7`.
   Its embedded JSON digest binds the checked values to the independent
   receipt. The consuming `MvpaMigrationParitySuite.scala` has SHA-256
-  `7f64430df113eb73f1802266c8a4e84e2114ca6592fe3b260e72b44687c76b28`.
+  `c695957bb6df81b60a5b63f7568a7bb154273d7b15fceb17de1dd1fbb14ac766`.
 
 The generator uses base-R arithmetic and does not load ScalaFIM or translate
 its helpers. It computes sample standard deviations, class means, linear
