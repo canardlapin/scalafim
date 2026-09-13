@@ -112,7 +112,12 @@ class IdentityPrototypeSuite extends munit.FunSuite:
     val wrongOwner = typeCheckErrors("""import scalafim.umvpaspike.IdentityPrototype.*
 def invalid(a: Axis, b: Axis, point: locus4s.Index[b.locus.S]) = a.keyAt(point)
 """)
-    assert(wrongOwner.nonEmpty)
+    assertEquals(wrongOwner.length, 1)
+    assert(
+      wrongOwner.head.message.contains(
+        "Required: locus4s.FiniteDomain.IndexValue[a.locus.S]"
+      )
+    )
 
   test("reindexing kind participates in lineage even for identical ordinal mappings"):
     val parent = axis("trials", "a", "b", "c")

@@ -127,8 +127,18 @@ def invalid[S <: SemanticSpace, N <: SemanticSpace, Other <: SemanticSpace, L <:
 ) = measurement.star.andThen(x)
 """)
     assertEquals(positive, Nil)
-    assert(wrongOrientation.nonEmpty)
-    assert(wrongSpace.nonEmpty)
+    assertEquals(wrongOrientation.length, 1)
+    assert(
+      wrongOrientation.head.message.contains(
+        "Required: multivar.core.Lin[multivar.core.Primal[L], Next]"
+      )
+    )
+    assertEquals(wrongSpace.length, 1)
+    assert(
+      wrongSpace.head.message.contains(
+        "Required: multivar.core.Lin[multivar.core.DualOf[multivar.core.Primal[Other]], Next]"
+      )
+    )
 
   test("runtime decoder checks declared descriptor before accepting the same-shaped kernel"):
     val a = right(SpaceRef.of("axis-a", SpaceRole.Observed, 2))
