@@ -131,59 +131,59 @@
   "outputs": {
     "coefficients": [
       [
-        1.9901073580939,
-        -1.25799607568325
+        1.990107358094,
+        -1.257996075683
       ],
       [
-        1.5010944639103,
-        -1.99994628591451
+        1.50109446391,
+        -1.999946285915
       ],
       [
-        -0.397157673440785,
-        0.843915907498248
+        -0.3971576734408,
+        0.8439159074982
       ]
     ],
     "residual_degrees_of_freedom": 5,
     "residual_variance": [
-      0.00125340546601262,
-      0.00125999222144357
+      0.001253405466013,
+      0.001259992221444
     ],
     "task_and_motion_f": {
       "p_values": [
-        3.78781297216846e-10,
-        2.44688046029573e-09
+        3.787812972168e-10,
+        2.446880460296e-09
       ],
       "statistics": [
-        14672.7192317429,
-        6955.66795595402
+        14672.71923174,
+        6955.667955954
       ]
     },
     "task_f": {
       "p_values": [
-        1.53963998205194e-10,
-        1.54467733231857e-09
+        1.539639982052e-10,
+        1.544677332319e-09
       ],
       "statistics": [
-        27307.7375174375,
+        27307.73751744,
         10854.62943764
       ]
     },
     "task_t": {
       "estimates": [
-        1.9901073580939,
-        -1.25799607568325
+        1.990107358094,
+        -1.257996075683
       ],
       "p_values_two_sided": [
-        1.53963998205194e-10,
-        1.54467727497831e-09
+        1.539639982052e-10,
+        1.544677274978e-09
       ],
       "standard_errors": [
-        0.0120429711389192,
-        0.0120745731092524
+        0.01204297113892,
+        0.01207457310925
       ],
       "statistics": [
-        165.250529552669,
-        -104.18555292189
+        165.2505295527,
+        -104.1855529219
       ]
     }
   },
@@ -201,19 +201,19 @@
       "matrix_orientation": "rows=timepoints, columns=regressors or responses",
       "nilearn_glm": "run_glm(noise_model=ols)",
       "p_values": "two-sided t and Nilearn F contrast probabilities",
-      "reference_rounding": "15 significant decimal digits"
+      "reference_rounding": "13 significant decimal digits"
     },
     "environment": {
-      "generator_sha256": "a7f7f01b901306d88835aff8b4307165caa5012724c83696b10e414a38a548d4",
+      "generator_sha256": "4d2df3068eab1de5e334891eeab3d7593485658a60f7289075ae058270be8b9c",
       "locale": "C",
       "lock_path": "tools/r-parity/reference-lock.json",
       "lock_sha256": "69cf97010b03e7ad78ce9251665649708853b5cecbbd7cc45b3872a8b6b4118c",
       "runtime": "Python 3.11"
     },
     "hashes": {
-      "generated_scala_sha256": "707e496f13c437a9f47b31b0968bc574a2b3b17e396fed62d7b6cc505f68fef8",
+      "generated_scala_sha256": "c277a4f3ff75d36891dda68ff17b43f35267948f946bf2ff2478abc0e6fb14f5",
       "inputs_sha256": "1e33319760787516e03cb253ddcda18f2edd287c7d1c8bb63e176be1cb8747c6",
-      "outputs_sha256": "60b01bd9045567a1886adebd5587245007f91a140bb935c4cbb0b9affdf27987"
+      "outputs_sha256": "7c7d27ce80a3249a42424535e2cf438b0a7024fab0a3cd12f67c2bce387260f9"
     },
     "producer_command": "bash tools/r-parity/regenerate_receipts.sh --python-only",
     "schema_version": "scalafim-external-fixture/v1",

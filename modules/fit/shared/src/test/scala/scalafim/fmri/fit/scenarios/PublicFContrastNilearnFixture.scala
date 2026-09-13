@@ -36,24 +36,24 @@ object PublicFContrastNilearnFixture:
   val coefficients: DMat =
     scalafim.fmri.fit.GaleTestMatrix.fromRows(
       Vector(
-        Vector(1.9901073580938999, -1.25799607568325),
-        Vector(1.5010944639103001, -1.9999462859145101),
-        Vector(-0.39715767344078501, 0.84391590749824796)
+        Vector(1.9901073580940001, -1.257996075683),
+        Vector(1.5010944639099999, -1.9999462859149999),
+        Vector(-0.3971576734408, 0.8439159074982)
       )
     )
   val residualVariance: DVec =
-    DVec.fromSeq(Vector(0.00125340546601262, 0.00125999222144357))
+    DVec.fromSeq(Vector(0.0012534054660130001, 0.001259992221444))
   val taskTEstimates: DVec =
-    DVec.fromSeq(Vector(1.9901073580938999, -1.25799607568325))
+    DVec.fromSeq(Vector(1.9901073580940001, -1.257996075683))
   val taskTStandardErrors: DVec =
-    DVec.fromSeq(Vector(0.0120429711389192, 0.0120745731092524))
+    DVec.fromSeq(Vector(0.01204297113892, 0.01207457310925))
   val taskTStatistics: DVec =
-    DVec.fromSeq(Vector(165.25052955266901, -104.18555292188999))
+    DVec.fromSeq(Vector(165.25052955269999, -104.1855529219))
   val taskTPValues: DVec =
-    DVec.fromSeq(Vector(1.5396399820519399E-10, 1.5446772749783099E-09))
+    DVec.fromSeq(Vector(1.5396399820520001E-10, 1.5446772749779999E-09))
   val taskFStatistics: DVec =
-    DVec.fromSeq(Vector(27307.737517437501, 10854.62943764))
+    DVec.fromSeq(Vector(27307.73751744, 10854.62943764))
   val taskFPValues: DVec =
-    DVec.fromSeq(Vector(1.5396399820519399E-10, 1.5446773323185701E-09))
+    DVec.fromSeq(Vector(1.5396399820520001E-10, 1.544677332319E-09))
   val taskAndMotionFStatistics: DVec =
-    DVec.fromSeq(Vector(14672.7192317429, 6955.6679559540198))
+    DVec.fromSeq(Vector(14672.71923174, 6955.6679559539998))

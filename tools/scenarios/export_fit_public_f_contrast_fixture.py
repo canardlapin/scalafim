@@ -27,7 +27,7 @@ COMPARISON_POLICY = {
   "disagreement_triage": "truth_boundary_local",
   "tolerance_scope": "comparison_local_no_global_override",
 }
-REFERENCE_OUTPUT_SIGNIFICANT_DIGITS = 15
+REFERENCE_OUTPUT_SIGNIFICANT_DIGITS = 13
 
 TASK = (-1.5, -1.0, -0.25, 0.75, 1.25, -0.5, 0.5, 1.75)
 MOTION = (0.2, -0.4, 0.7, -0.6, 0.1, 0.9, -0.8, 0.3)
