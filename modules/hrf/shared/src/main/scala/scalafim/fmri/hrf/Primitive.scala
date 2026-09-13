@@ -205,7 +205,7 @@ object Primitive:
         Some(x => Array(if x.value <= 0.0 then 0.0 else spmg1Integral(p, x.value)))
 
       // ∫₀ˣ h' = h(x) - h(0): the primitive of the temporal derivative is the
-      // canonical kernel, and of the dispersion derivative the temporal one.
+      // canonical kernel.
       case IntegrationPolicy.SpmgTemporalDeriv(p) =>
         val atZero = HrfFunctions.spmg1(Lag.unsafe(0.0), p.p1, p.p2, p.a1)
         Some(x =>
@@ -213,10 +213,14 @@ object Primitive:
         )
 
       case IntegrationPolicy.SpmgDispersionDeriv(p) =>
-        val atZero = HrfFunctions.spmg1Deriv(Lag.unsafe(0.0), p.p1, p.p2, p.a1)
-        Some(x =>
-          Array(if x.value <= 0.0 then 0.0 else HrfFunctions.spmg1Deriv(x, p.p1, p.p2, p.a1) - atZero)
-        )
+        // Integrate the two fixed-mass gamma densities separately.
+        val shape = (p.p1 + 1.0) / 1.01
+        val ratio = math.exp(HrfFunctions.logGamma(p.p1 + 1.0) - HrfFunctions.logGamma(shape))
+        Some(x => Array(
+          if x.value <= 0.0 then 0.0
+          else p.a1 * (Special.lowerGammaIncomplete(p.p1, x.value) -
+            ratio * Special.lowerGammaIncomplete(shape - 1.0, x.value / 1.01)) / 0.01
+        ))
 
       case IntegrationPolicy.Boxcar(width, amplitude) =>
         val w = width.value

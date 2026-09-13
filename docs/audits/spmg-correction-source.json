@@ -1,0 +1,13 @@
+{
+  "description": "Local corrected SPMG reference used to regenerate HRF and design fixtures. Base revision alone does not identify modified source.",
+  "fmrihrf_base_revision": "b7b3a74057d71a3d135084a15ea9adab8bd31ba3",
+  "fmrihrf_source_sha256": {
+    "R/hrf-functions.R": "601af34991286bb04c794c40cde228aa10c5a5364b987bc521d0523196b668bc",
+    "R/hrf.R": "8caece34abf2af4ab498a3c96abe1703aa385c722adcb7d8861955ea6e41e307",
+    "R/deriv-methods.R": "6ebb35f71fa138221ae66101f94b96e31386f65bb572f1b69bf623e73d1fa793",
+    "R/evaluate-helpers.R": "cd1ef0de085eb26a23056f6e5a6fc448533ac1e8ba0205fd3223f0e424a11f78",
+    "R/hrf_decorators.R": "1ebbdbf2682732f03045f4d6b3068fa8b07db2ea5b374b2940ff582b11979aa5"
+  },
+  "fmridesign_revision": "6907d0b43cb0390c331406ff6e8d6608b541d69d",
+  "scipy_oracle_version": "1.17.1"
+}

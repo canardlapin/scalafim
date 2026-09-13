@@ -4,6 +4,20 @@ import gale.linalg.{DMat, Matrix}
 import java.util.concurrent.TimeUnit
 import org.openjdk.jmh.annotations.*
 import scala.compiletime.uninitialized
+import scalafim.fmri.design.{
+  ColumnRole,
+  DesignAudit,
+  DesignSchema,
+  ModulatorId,
+  RowLayout,
+  RunIndex as DesignRunIndex,
+  RunScope,
+  ScanIndex,
+  StructuralColumn,
+  StructuralColumnOrigin
+}
+import scalafim.fmri.hrf.Seconds
+import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, VolumeWeighting}
 
 /** First-level fit costs with planning and response work kept distinct.
@@ -42,11 +56,32 @@ class FirstLevelFitBenchmark:
   private var weightedInput: FitBlockInput = uninitialized
   private var weightedPrepared: OlsPrepared = uninitialized
   private var responseChunks: Vector[(ResponseBlock, Vector[Int])] = uninitialized
+  private var schemaInput: Mat = uninitialized
+  private var schemaRows: RowLayout = uninitialized
+  private var schemaColumns: Vector[StructuralColumn] = uninitialized
 
   @Setup(Level.Trial)
   def setup(): Unit =
     val designValue = designMatrix(timepoints, predictors)
     val responseValue = responseMatrix(designValue, responses)
+    val schemaData = new Array[Double](timepoints * predictors)
+    designValue.copyRowMajorTo(schemaData)
+    schemaInput = Mat.unsafe(timepoints, predictors, schemaData)
+    schemaRows = RowLayout(
+      Vector.tabulate(timepoints)(row => DesignRunIndex.unsafeOneBased(if row < timepoints / 2 then 1 else 2)),
+      Vector.tabulate(timepoints)(row => Seconds(row.toDouble)),
+      Vector.tabulate(timepoints)(row => ScanIndex.unsafeOneBased(row + 1))
+    )
+    schemaColumns = Vector.tabulate(predictors) { column =>
+      val modulator = ModulatorId.unsafe(s"benchmark-$column")
+      StructuralColumn
+        .fromOrigin(
+          column + 1,
+          StructuralColumnOrigin.Sampled(modulator, ColumnRole.Covariate, RunScope.Global),
+          s"benchmark-$column"
+        )
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
+    }
     design = DesignMatrix.unsafe(designValue)
     response = ResponseBlock.unsafe(responseValue)
     singleResponse = ResponseBlock.unsafe(responseValue.slice(0, timepoints, 0, 1))
@@ -83,6 +118,13 @@ class FirstLevelFitBenchmark:
         val until = voxelIndices.last + 1
         ResponseBlock.unsafe(responseValue.slice(0, timepoints, from, until)) -> voxelIndices
       }.toVector
+
+  /** One-time ownership snapshot, structural rank preview, and fingerprint. */
+  @Benchmark
+  def compiledDesignPlanning(): DesignSchema =
+    DesignSchema
+      .validated(schemaInput, schemaRows, schemaColumns, DesignAudit())
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   /** One-time QR planning plus one multiresponse fit. */
   @Benchmark

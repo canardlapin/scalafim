@@ -101,8 +101,8 @@ class DurationQuadratureSuite extends munit.FunSuite:
 
   test("block decorator under Trapezoid matches R gen_hrf(width=)"):
     // R: gen_hrf(HRF_SPMG1, width = 4, precision = p) peaks at
-    // 6.06364 / 6.12922 / 6.15001 for p = 1.0 / 0.5 / 0.1.
-    val expected = Map(1.0 -> 6.06364, 0.5 -> 6.12922, 0.1 -> 6.15001)
+    // 0.60619851614519482 / 0.61279417564101446 / 0.6148857535356671 for p = 1.0 / 0.5 / 0.1.
+    val expected = Map(1.0 -> 0.60619851614519482, 0.5 -> 0.61279417564101446, 0.1 -> 0.6148857535356671)
     expected.foreach { case (p, want) =>
       val h = Hrfs.SPMG1.block(Seconds(4.0), precision = Seconds(p), integration = Integration.Trapezoid)
       assertEqualsDouble(
@@ -120,8 +120,8 @@ class DurationQuadratureSuite extends munit.FunSuite:
     peaks.tail.foreach { v =>
       assertEqualsDouble(v, peaks.head, 0.0, "exact block should not depend on precision")
     }
-    // R's own sequence 6.06364 -> 6.12922 -> 6.15001 is heading here.
-    assertEqualsDouble(peaks.head, 6.15001, 2e-3, "exact block should sit at R's refined value")
+    // R's own sequence 0.60619851614519482 -> 0.61279417564101446 -> 0.6148857535356671 is heading here.
+    assertEqualsDouble(peaks.head, 0.61497269705536062, 2e-8, "exact block should sit at R's refined value")
 
   test("regressor epoch amplitude no longer depends on precision"):
     val g = (0 until 60).map(_ * 2.0)

@@ -87,6 +87,47 @@ class ReceiptToolsSuite(unittest.TestCase):
     with self.assertRaisesRegex(SystemExit, "receipt.hashes.generated_scala_sha256"):
       self.finalize(check=True)
 
+  def test_explicit_lock_and_exact_source_hashes(self) -> None:
+    alternate = self.lock.with_name("corrected-lock.json")
+    lock = json.loads(self.lock.read_text())
+    lock["r"]["packages"] = {"fmrihrf": {"source_md5": {"R/hrf.R": "corrected"}}}
+    alternate.write_text(json.dumps(lock))
+    payload = json.loads(self.fixture.read_text())
+    payload["source"]["fmrihrf_source_md5"] = {"R/hrf.R": "corrected"}
+    self.fixture.write_text(json.dumps(payload))
+    with (
+      patch.object(receipt_tools, "REPO_ROOT", self.root),
+      patch.dict(os.environ, {"LC_ALL": "C", "LANG": "C"}),
+    ):
+      def run(check: bool) -> int:
+        return receipt_tools.finalize_receipt(
+          "fixture.json", "test-receipt/v1", "Fixture.scala", "fit_inference",
+          check=check, lock_path=alternate,
+        )
+      self.assertEqual(run(False), 0)
+      self.assertEqual(run(True), 0)
+      finalized = json.loads(self.fixture.read_text())
+      self.assertEqual(finalized["receipt"]["environment"]["lock_path"],
+                       "tools/r-parity/corrected-lock.json")
+      finalized["source"]["fmrihrf_source_md5"]["R/hrf.R"] = "stale"
+      self.fixture.write_text(json.dumps(finalized))
+      with self.assertRaisesRegex(SystemExit, "source hashes do not match lock"):
+        run(False)
+
+  def test_unused_package_in_a_shared_lock_need_not_be_claimed_as_a_source(self) -> None:
+    lock = json.loads(self.lock.read_text())
+    lock["r"]["packages"] = {
+      "fmrihrf": {"source_md5": {"R/hrf.R": "corrected"}},
+      "fmridesign": {"source_md5": {"R/design.R": "unused"}},
+    }
+    self.lock.write_text(json.dumps(lock))
+    payload = json.loads(self.fixture.read_text())
+    payload["source"]["fmrihrf_source_md5"] = {"R/hrf.R": "corrected"}
+    self.fixture.write_text(json.dumps(payload))
+
+    self.assertEqual(self.finalize(check=False), 0)
+    self.assertEqual(self.finalize(check=True), 0)
+
 
 if __name__ == "__main__":
   unittest.main()

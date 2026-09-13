@@ -27,6 +27,7 @@ another output directory.
 | Regressor convolution | production convolution, FFT, direct loop | Does the selected production path remain preferable at the admitted first-level shape? |
 | Epoch integration | exact, trapezoid | Does analytic integration retain its intended time and allocation advantage? |
 | AR estimation | fixed global, fixed runwise, automatic global | What do multiresponse AR(4) estimation, pooling, and order selection allocate and cost? |
+| Compiled design | ownership snapshot, rank preview, fingerprint | What does the one-time immutable scientific-identity boundary cost? |
 | OLS | plan-and-fit, prepared multiresponse, prepared single response, prepared chunking | How much work is planning, how much is response fitting, and what does chunk assembly cost? |
 | WLS | plan-and-fit, prepared fit | Is factorization reuse visible for weighted fits? |
 | fixed GLS | plan-and-fit, prepared fit | Is covariance preparation separated from repeated response fitting? |
@@ -73,15 +74,17 @@ JMH parameters, toolchain, scores, allocation rates, budgets, and comparison
 ratios. Validation requires no JMH rerun:
 
 ```sh
-python -S tools/benchmark/finalize_first_level_receipt.py \
+python3 -S tools/benchmark/finalize_first_level_receipt.py \
   --check docs/benchmarks/receipts/first-level-current.json
 ```
 
-A benchmark may pass every numerical budget while remaining ineligible for a
-release. In particular, the finalizer records a dirty worktree as a blocking
-caveat. The dedicated CI workflow publishes raw reports and its receipt as an
-artifact; an actual release court must use a clean checkout and retain those
-raw reports alongside the final machine-readable release report.
+The version-two receipt also binds the provider revisions, workload-definition
+hash, and hashes of all five raw JMH reports. A benchmark may pass every
+numerical budget while remaining ineligible for a release. In particular, the
+finalizer records a dirty worktree as a blocking caveat. The dedicated CI
+workflow publishes raw reports and its receipt as an artifact; an actual
+release court must use the exact clean candidate checkout and retain those raw
+reports alongside the final machine-readable release report.
 
 Performance results are machine- and JDK-specific. Compare like environments,
 use the recorded ratios to interpret shared-runner noise, and investigate a
@@ -96,26 +99,32 @@ not release eligible because the source checkout was dirty.
 
 | Work | Time | Allocation |
 | --- | ---: | ---: |
-| typed basis reconstruction | 1.048 us/op | 912 B/op |
-| direct coordinate contraction | 0.763 us/op | 272 B/op |
-| exact basis window functional | 1.844 us/op | 1,000 B/op |
-| trapezoid basis window functional | 119.807 us/op | 44,066 B/op |
-| production convolution | 2,187.188 us/op | 4,684,165 B/op |
-| retained FFT convolution | 13,316.781 us/op | 7,836,349 B/op |
-| retained direct-loop convolution | 6,242.666 us/op | 9,915,756 B/op |
-| exact epoch integration | 490.659 us/op | 113,586 B/op |
-| trapezoid epoch integration | 22,993.686 us/op | 5,864,329 B/op |
-| automatic global AR(4) estimation | 1.060 ms/op | 49,193 B/op |
-| fixed global AR(4) estimation | 1.183 ms/op | 31,967 B/op |
-| fixed runwise AR(4) estimation | 1.261 ms/op | 32,093 B/op |
-| OLS plan and fit | 10.194 ms/op | 664,660 B/op |
-| prepared OLS multiresponse fit | 9.026 ms/op | 444,441 B/op |
-| prepared OLS chunk assembly | 9.484 ms/op | 591,615 B/op |
-| prepared OLS single response | 0.082 ms/op | 12,289 B/op |
-| WLS plan and fit | 12.346 ms/op | 1,275,902 B/op |
-| prepared WLS fit | 9.819 ms/op | 444,449 B/op |
-| fixed-GLS plan and fit | 23.871 ms/op | 1,901,641 B/op |
-| prepared fixed-GLS fit | 11.587 ms/op | 1,135,413 B/op |
+| typed basis reconstruction | 0.575 us/op | 912 B/op |
+| direct coordinate contraction | 0.472 us/op | 272 B/op |
+| exact basis window functional | 1.538 us/op | 992 B/op |
+| trapezoid basis window functional | 73.312 us/op | 44,065 B/op |
+| production convolution | 932.514 us/op | 4,684,136 B/op |
+| retained FFT convolution | 9,357.702 us/op | 7,836,304 B/op |
+| retained direct-loop convolution | 2,683.811 us/op | 9,915,710 B/op |
+| exact epoch integration | 312.320 us/op | 55,883 B/op |
+| trapezoid epoch integration | 14,849.877 us/op | 5,864,230 B/op |
+| automatic global AR(4) estimation | 0.589 ms/op | 46,630 B/op |
+| fixed global AR(4) estimation | 0.726 ms/op | 30,251 B/op |
+| fixed runwise AR(4) estimation | 0.850 ms/op | 30,429 B/op |
+| compiled-design planning | 0.701 ms/op | 1,737,973 B/op |
+| OLS plan and fit | 1.939 ms/op | 664,497 B/op |
+| prepared OLS multiresponse fit | 1.693 ms/op | 444,263 B/op |
+| prepared OLS chunk assembly | 1.807 ms/op | 589,986 B/op |
+| prepared OLS single response | 0.032 ms/op | 12,224 B/op |
+| WLS plan and fit | 2.365 ms/op | 1,275,651 B/op |
+| prepared WLS fit | 1.695 ms/op | 444,264 B/op |
+| fixed-GLS plan and fit | 4.091 ms/op | 1,887,845 B/op |
+| prepared fixed-GLS fit | 2.095 ms/op | 1,133,257 B/op |
 
 These rounded values are for reading; the JSON receipt retains full precision,
 parameters, source hashes, and comparison ratios.
+
+The initial compiled-design measurement allocated 2,869,588 B/op. Building the
+unchanged canonical fingerprint in one pre-sized buffer reduced that to
+1,737,973 B/op, below the original 2,000,000 B/op ceiling without changing the
+budget or identity encoding.

@@ -1,0 +1,1389 @@
+{
+  "criteria": [
+    {
+      "criterion": "Every realized design column has one stable structural origin containing the scientifically relevant term, cell, modulator, basis, role, and run scope.",
+      "evidence": [
+        "E06"
+      ],
+      "id": "G1",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Matrix, row layout, structural column schema, audit, and deterministic design fingerprint remain inseparable through the model boundary.",
+      "evidence": [
+        "E05",
+        "E07"
+      ],
+      "id": "G2",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "A compiled hypothesis is bound to the intended design fingerprint and structural column identities and fails before evaluation on a different design.",
+      "evidence": [
+        "E08"
+      ],
+      "id": "G3",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Coefficient hypotheses, basis omnibus tests, and linear response functionals are explicit and unambiguous.",
+      "evidence": [
+        "E08",
+        "E09"
+      ],
+      "id": "G4",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Factor levels, empty cells, missing modulators, centering, weighting, rank, censoring, and run coefficient scope have inspectable policies and receipts.",
+      "evidence": [
+        "E12",
+        "E13",
+        "E15",
+        "E16",
+        "E17",
+        "E23"
+      ],
+      "id": "G5",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "The public DMS workflow constructs and tests the expected 50 task columns without manual table explosion, column offsets, name parsing, or numeric contrast bookkeeping.",
+      "evidence": [
+        "E20",
+        "E29"
+      ],
+      "id": "G6",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Each accepted capability has JVM and Scala.js tests, suitable algebraic or metamorphic checks, and independent numerical evidence where parity is claimed.",
+      "evidence": [
+        "E02",
+        "E10",
+        "E18",
+        "E20",
+        "E22",
+        "E23",
+        "E25",
+        "E26"
+      ],
+      "id": "G7",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Scenario manifests, fixture receipts, external generators, CI gates, documentation, and performance claims agree with the implemented public surface.",
+      "evidence": [
+        "E03",
+        "E26",
+        "E27",
+        "E29",
+        "E31",
+        "E32"
+      ],
+      "id": "G8",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Full focused module gates and ultimately compileAll/testAll are warning-clean before epic closure.",
+      "evidence": [
+        "E02",
+        "E28",
+        "E30"
+      ],
+      "id": "G9",
+      "scope": "global",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "The external fixture exporter is current, deterministic, and passes its own check mode without changing numerical truth accidentally.",
+      "evidence": [
+        "E01",
+        "E26"
+      ],
+      "id": "P0.1",
+      "scope": "phase0",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Pull requests run hrf, hrf-laws, design, model, and fit on JVM and Scala.js plus manifest and fixture freshness checks.",
+      "evidence": [
+        "E02"
+      ],
+      "id": "P0.2",
+      "scope": "phase0",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Active scenarios have validated IDs, suite paths, platform claims, allowed statuses, reference strategies, and acceptance commands.",
+      "evidence": [
+        "E03"
+      ],
+      "id": "P0.3",
+      "scope": "phase0",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "ScenarioResult remains the single truth value; undeclared caveats cannot pass CI.",
+      "evidence": [
+        "E04"
+      ],
+      "id": "P0.4",
+      "scope": "phase0",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "The shared harness has one authority with module-specific numeric adapters and no production dependency cycle.",
+      "evidence": [
+        "E04"
+      ],
+      "id": "P0.5",
+      "scope": "phase0",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "The phase closes only after its child tasks and the focused public-consumer scenario paths pass.",
+      "evidence": [
+        "E02",
+        "E03"
+      ],
+      "id": "P0.6",
+      "scope": "phase0",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Matrix, row layout, structural column schema, design audit, and fingerprint form one validated compiled-design authority.",
+      "evidence": [
+        "E05"
+      ],
+      "id": "P1.1",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Each event, baseline, drift, intercept, sampled, and nuisance column has a stable structural origin; labels are rendered from that origin.",
+      "evidence": [
+        "E06"
+      ],
+      "id": "P1.2",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Name/suffix parsing is removed from authoritative semantic paths and retained only in explicit compatibility adapters where required.",
+      "evidence": [
+        "E06",
+        "E11"
+      ],
+      "id": "P1.3",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Model and fit values preserve the design schema and fingerprint without duplicating parallel column truth.",
+      "evidence": [
+        "E05",
+        "E07"
+      ],
+      "id": "P1.4",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Compiled T/F hypotheses bind to structural columns and the design fingerprint and carry estimability evidence.",
+      "evidence": [
+        "E08"
+      ],
+      "id": "P1.5",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Basis elements have stable identities and roles, and coefficient tests are distinct from response-level linear functionals.",
+      "evidence": [
+        "E09"
+      ],
+      "id": "P1.6",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "S07, S10, and S16 are active public-path scenarios on JVM and Scala.js.",
+      "evidence": [
+        "E10"
+      ],
+      "id": "P1.7",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Existing formula, design export, fit, LSS, GLS, robust, and result-manifest behavior remains source-compatible where practical.",
+      "evidence": [
+        "E11",
+        "E30",
+        "E32"
+      ],
+      "id": "P1.8",
+      "scope": "phase1",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Declared factor level sets and empty-cell policies are stable across runs and subjects and are recorded in the design audit.",
+      "evidence": [
+        "E12"
+      ],
+      "id": "P2.1",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Missing continuous modulators, centering scope, and any supported orthogonalization are selected explicitly and produce receipts.",
+      "evidence": [
+        "E13"
+      ],
+      "id": "P2.2",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Heterogeneous HRF basis widths can be assigned structurally by cell or phase without manual offsets.",
+      "evidence": [
+        "E14"
+      ],
+      "id": "P2.3",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Fixed and estimated volume weights are either applied with validated WLS semantics or rejected before execution; no supported configuration remains merely deferred.",
+      "evidence": [
+        "E15"
+      ],
+      "id": "P2.4",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Rank diagnostics identify numerical rank, pivoting/alias information, condition evidence, residual degrees of freedom, and hypothesis estimability.",
+      "evidence": [
+        "E16"
+      ],
+      "id": "P2.5",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Shared-across-run, run-specific, and separate-run/fixed-effects coefficient meanings are inspectable model semantics.",
+      "evidence": [
+        "E17"
+      ],
+      "id": "P2.6",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "S06, S08, S09, S13 extension, and S18 pass through public APIs on JVM and Scala.js.",
+      "evidence": [
+        "E18"
+      ],
+      "id": "P2.7",
+      "scope": "phase2",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "One conceptual trial can lower to multiple phases while retaining parent trial identity, phase identity, factors, modulators, run identity, and original-row provenance.",
+      "evidence": [
+        "E19",
+        "E20"
+      ],
+      "id": "P3.1",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "The DMS scenario constructs exactly 50 task columns with the declared structural origins and no manual table explosion, column offsets, or name parsing.",
+      "evidence": [
+        "E20",
+        "E29"
+      ],
+      "id": "P3.2",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "DMS hypotheses cover sample response difference, delay load trend, probe mismatch, interaction, RT slope, basis omnibus, FIR omnibus, and a deliberately non-estimable case.",
+      "evidence": [
+        "E20"
+      ],
+      "id": "P3.3",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "A mixed sustained/transient scenario covers blocks, cues, errors or feedback, variable epochs, and phase-specific HRFs.",
+      "evidence": [
+        "E21"
+      ],
+      "id": "P3.4",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "A realistic nuisance scenario exercises motion-derived terms, CompCor-like components, spikes, constants, and near collinearity.",
+      "evidence": [
+        "E22"
+      ],
+      "id": "P3.5",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "A public AR scenario proves that whitening never crosses runs or censor gaps.",
+      "evidence": [
+        "E23"
+      ],
+      "id": "P3.6",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "All scenarios return one clean ScenarioResult and use only published/public module surfaces on both platforms.",
+      "evidence": [
+        "E02",
+        "E03",
+        "E04",
+        "E20",
+        "E21",
+        "E22",
+        "E23"
+      ],
+      "id": "P3.7",
+      "scope": "phase3",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Deterministic generators and shrinking cover acquisition grids, events, factors, modulators, bases, permutations, censor segments, rank stress, and multiresponse data.",
+      "evidence": [
+        "E24"
+      ],
+      "id": "P4.1",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Metamorphic checks cover event/term/column/basis permutation, amplitude superposition, epoch partition, basis transport, column scaling, WLS/GLS transformations, multiresponse, and chunking.",
+      "evidence": [
+        "E25"
+      ],
+      "id": "P4.2",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "External fixtures have versioned receipts, hashes, producer commands, package revisions, conventions, and documented accepted differences.",
+      "evidence": [
+        "E26"
+      ],
+      "id": "P4.3",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "PR, nightly, and release-candidate lanes are separated; live R/Python regeneration does not make ordinary portable tests environment-dependent.",
+      "evidence": [
+        "E02",
+        "E27"
+      ],
+      "id": "P4.4",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Compiler, formatting, coverage, compatibility, and performance gates are adopted according to the pre-release support promise and documented honestly.",
+      "evidence": [
+        "E28",
+        "E31"
+      ],
+      "id": "P4.5",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "Documentation examples compile and the DMS workflow is executable documentation.",
+      "evidence": [
+        "E20",
+        "E29"
+      ],
+      "id": "P4.6",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    },
+    {
+      "criterion": "compileAll and testAll pass, fixture checks are fresh, benchmark claims have source/runtime receipts, and no unexplained oracle disagreement remains.",
+      "evidence": [
+        "E26",
+        "E30",
+        "E31"
+      ],
+      "id": "P4.7",
+      "scope": "phase4",
+      "source_candidate": null,
+      "status": "not_run"
+    }
+  ],
+  "evidence_catalog": {
+    "E01": {
+      "commands": [
+        "python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json",
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.public-f-contrast.v1.nilearn.json"
+      ],
+      "modules": [
+        "fit"
+      ],
+      "source_paths": [
+        "tools/scenarios/export_fit_public_f_contrast_fixture.py"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/PublicFContrastScenarioSuite.scala",
+          "scenarios": [
+            "fit.public-f-contrast.v1"
+          ]
+        }
+      ],
+      "title": "Public F-contrast exporter and fixture"
+    },
+    "E02": {
+      "commands": [
+        "bash tools/ci/first-level-gate.sh"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "hrf",
+        "hrf-laws",
+        "design",
+        "model",
+        "fit",
+        "scenario-testkit"
+      ],
+      "source_paths": [
+        ".github/workflows/first-level.yml",
+        "tools/ci/first-level-gate.sh"
+      ],
+      "suites": [],
+      "title": "Focused portable CI lane"
+    },
+    "E03": {
+      "commands": [
+        "python3 -S tools/scenarios/test_validate_manifest.py",
+        "python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "scenario-testkit"
+      ],
+      "source_paths": [
+        "docs/scenarios/manifest.json",
+        "tools/scenarios/validate_manifest.py",
+        "tools/scenarios/test_validate_manifest.py"
+      ],
+      "suites": [],
+      "title": "Scenario manifest contract"
+    },
+    "E04": {
+      "commands": [
+        "sbt scenarioTestkitJVM/test",
+        "sbt scenarioTestkitJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "scenario-testkit"
+      ],
+      "source_paths": [
+        "modules/scenario-testkit/shared/src/main/scala/scalafim/scenarios/ScenarioCore.scala",
+        "modules/scenario-testkit/shared/src/test/scala/scalafim/scenarios/ScenarioCoreSuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/scenario-testkit/shared/src/test/scala/scalafim/scenarios/ScenarioCoreSuite.scala",
+          "tests": [
+            "clean results are the only default CI pass",
+            "failed observations and blocking caveats cannot be policy-approved"
+          ]
+        }
+      ],
+      "title": "Single ScenarioResult authority"
+    },
+    "E05": {
+      "commands": [
+        "sbt designJVM/test modelJVM/test fitJVM/test",
+        "sbt designJS/test modelJS/test fitJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "design",
+        "model",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/DesignBlock.scala",
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPlanExecutor.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignSchemaOwnershipSuite.scala",
+          "tests": [
+            "compiled schema owns its input and exported matrix storage",
+            "relabeling and combining schemas cannot reopen matrix ownership",
+            "runwise slices retain the matrix bound to their coefficient axis"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/DesignMatrixOwnershipSuite.scala",
+          "tests": [
+            "a compiled hypothesis and ordinary or chunked fits share an immutable design",
+            "LSS uses the canonical design after event and baseline arrays are mutated",
+            "model construction rejects a matrix changed without rebuilding its schema"
+          ]
+        }
+      ],
+      "title": "Immutable compiled-design authority"
+    },
+    "E06": {
+      "commands": [
+        "sbt designJVM/test",
+        "sbt designJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "design"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignColmap.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignSchemaSuite.scala",
+          "tests": [
+            "built event models retain structural cell and basis provenance",
+            "built baseline models retain run-scoped structural origins",
+            "fingerprints are deterministic and respond to semantic, row, and matrix changes"
+          ]
+        },
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignColmapSuite.scala",
+          "tests": [
+            "designColmap(event) includes HRF basis metadata and covariate modulation",
+            "designColmap(baseline) includes drift/intercept roles and run ids"
+          ]
+        }
+      ],
+      "title": "Structural column origins and deterministic fingerprint"
+    },
+    "E07": {
+      "commands": [
+        "sbt modelJVM/test fitJVM/test",
+        "sbt modelJS/test fitJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "model",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModel.scala",
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FitPlan.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
+          "tests": [
+            "model and fit plan retain the canonical structural coefficient axis",
+            "compatibility label changes do not change structural identity"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitBlockSuite.scala",
+          "tests": [
+            "dense block merge preserves and validates the structural coefficient axis"
+          ]
+        }
+      ],
+      "title": "Model, FitPlan, and fit-result coefficient axis"
+    },
+    "E08": {
+      "commands": [
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypothesisDsl.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/StructuralHypothesisSuite.scala",
+          "tests": [
+            "a compiled hypothesis rejects a result from a different design fingerprint",
+            "rank-deficient designs reject non-estimable T contrasts and reduce F numerator rank"
+          ]
+        }
+      ],
+      "title": "Fingerprint-bound structural T/F hypotheses and estimability"
+    },
+    "E09": {
+      "commands": [
+        "sbt hrfJVM/test fitJVM/test firstLevelLawsJVM/test",
+        "sbt hrfJS/test fitJS/test firstLevelLawsJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "hrf",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Basis.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/StructuralHypothesisSuite.scala",
+          "tests": [
+            "response-level functionals expand over semantic basis elements"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/StaticTypeContractsSuite.scala",
+          "tests": [
+            "basis coefficients remain owned by the basis that constructed them"
+          ]
+        }
+      ],
+      "title": "Basis identities, omnibus tests, and response functionals"
+    },
+    "E10": {
+      "commands": [
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/design.structural-2x2.v1.r.json"
+      ],
+      "modules": [
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+          "scenarios": [
+            "fit.structural-s07-2x2.v1",
+            "fit.structural-s10-response-functional.v1",
+            "fit.structural-s16-rank-deficient.v1"
+          ]
+        }
+      ],
+      "title": "Phase-1 public scenario set"
+    },
+    "E11": {
+      "commands": [
+        "bash tools/ci/first-level-gate.sh"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "design",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MatrixAdapters.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignSchemaOwnershipSuite.scala",
+          "tests": [
+            "compiled schema owns its input and exported matrix storage"
+          ]
+        }
+      ],
+      "title": "Compatibility surfaces retain structural authority"
+    },
+    "E12": {
+      "commands": [
+        "sbt designJVM/test modelJVM/test",
+        "sbt designJS/test modelJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "design",
+        "model"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/FactorLevels.scala",
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelBuilderSuite.scala",
+          "tests": [
+            "buildModel propagates declared factor levels through the public model path"
+          ]
+        }
+      ],
+      "title": "Declared factor levels and empty-cell policy"
+    },
+    "E13": {
+      "commands": [
+        "sbt designJVM/testOnly scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite",
+        "sbt designJS/testOnly scalafim.fmri.design.scenarios.ModulatorPolicyScenarioSuite"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/design.modulator-policies.v1.r.json"
+      ],
+      "modules": [
+        "design"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/ModulatorPolicies.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/ModulatorPolicyScenarioSuite.scala",
+          "scenarios": [
+            "design.modulator-policies.v1"
+          ]
+        }
+      ],
+      "title": "Missing, centering, and ordered orthogonalization receipts"
+    },
+    "E14": {
+      "commands": [
+        "sbt designJVM/test fitJVM/test",
+        "sbt designJS/test fitJS/test"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/design.heterogeneous-hrf.v1.r.json"
+      ],
+      "modules": [
+        "design",
+        "model",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/HrfAssignments.scala",
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FmriModelBuilder.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/HeterogeneousHrfScenarioSuite.scala",
+          "scenarios": [
+            "design.heterogeneous-hrf.v1"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+          "scenarios": [
+            "fit.structural-s09-heterogeneous-hrf.v1"
+          ]
+        }
+      ],
+      "title": "Structurally assigned heterogeneous HRFs"
+    },
+    "E15": {
+      "commands": [
+        "sbt fitJVM/test",
+        "sbt fitJS/test"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.structural-s18-wls.v1.r.json"
+      ],
+      "modules": [
+        "model",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ResponsePreparationSuite.scala",
+          "tests": [
+            "fixed weights equal OLS on square-root weighted design and response",
+            "estimated DVARS weighting is executable and records its source and normalization"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+          "scenarios": [
+            "fit.structural-s18-wls.v1"
+          ]
+        }
+      ],
+      "title": "Validated fixed and estimated WLS preparation"
+    },
+    "E16": {
+      "commands": [
+        "sbt designJVM/test fitJVM/test",
+        "sbt designJS/test fitJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "design",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RankDiagnostics.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/DesignSchemaSuite.scala",
+          "tests": [
+            "validated schemas compute scale-aware structural rank previews"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+          "scenarios": [
+            "fit.structural-s16-rank-deficient.v1"
+          ]
+        }
+      ],
+      "title": "Rank, alias, condition, residual-df, and estimability diagnostics"
+    },
+    "E17": {
+      "commands": [
+        "sbt modelJVM/test fitJVM/test",
+        "sbt modelJS/test fitJS/test"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.mixed-tr-fixed-effects.v1.r.json"
+      ],
+      "modules": [
+        "model",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/CoefficientScope.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimates.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ModelSuite.scala",
+          "tests": [
+            "FitPlan exposes separate-runs-then-fixed-effects as an executable scope"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimatesSuite.scala",
+          "tests": [
+            "preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts",
+            "explicit retained run coefficients match independent R values without changing pooled products"
+          ]
+        }
+      ],
+      "title": "Shared, runwise, and fixed-effects coefficient scope"
+    },
+    "E18": {
+      "commands": [
+        "bash tools/ci/first-level-gate.sh"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.structural-s18-wls.v1.r.json",
+        "docs/scenarios/fixtures/fit.mixed-tr-fixed-effects.v1.r.json"
+      ],
+      "modules": [
+        "design",
+        "fit"
+      ],
+      "source_paths": [
+        "docs/scenarios/manifest.json"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/StructuralFirstLevelScenarioSuite.scala",
+          "scenarios": [
+            "fit.structural-s06-factor-modulator.v1",
+            "fit.structural-s08-3x3-trends.v1",
+            "fit.structural-s09-heterogeneous-hrf.v1",
+            "fit.structural-s18-wls.v1"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedTrFixedEffectsScenarioSuite.scala",
+          "scenarios": [
+            "fit.mixed-tr-fixed-effects.v1"
+          ]
+        }
+      ],
+      "title": "Phase-2 public scenario set"
+    },
+    "E19": {
+      "commands": [
+        "sbt designJVM/test",
+        "sbt designJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "design"
+      ],
+      "source_paths": [
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventPhase.scala",
+        "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/scenarios/MultiphaseProvenanceScenarioSuite.scala",
+          "scenarios": [
+            "design.multiphase-provenance.v1"
+          ]
+        }
+      ],
+      "title": "Multiphase trial provenance"
+    },
+    "E20": {
+      "commands": [
+        "python3 -S tools/docs/check_first_level_docs.py --check",
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.dms-multiphase-dsl.corrected-spmg.v1.r.json"
+      ],
+      "modules": [
+        "design",
+        "model",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala",
+        "docs/first-level-analysis.md"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala",
+          "scenarios": [
+            "fit.dms-multiphase-dsl.v1"
+          ]
+        }
+      ],
+      "title": "Executable 50-column DMS model, fits, and semantic hypotheses"
+    },
+    "E21": {
+      "commands": [
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedBlockNuisanceScenarioSuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedBlockNuisanceScenarioSuite.scala",
+          "scenarios": [
+            "fit.mixed-block-transient.v1"
+          ]
+        }
+      ],
+      "title": "Mixed sustained/transient public workflow"
+    },
+    "E22": {
+      "commands": [
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.realistic-nuisance.corrected-spmg.v1.r.json"
+      ],
+      "modules": [
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedBlockNuisanceScenarioSuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/MixedBlockNuisanceScenarioSuite.scala",
+          "scenarios": [
+            "fit.realistic-nuisance.v1"
+          ]
+        }
+      ],
+      "title": "Realistic nuisance and independent corrected-SPMG inference"
+    },
+    "E23": {
+      "commands": [
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.ar-censor-boundary-gls.v1.r.json"
+      ],
+      "modules": [
+        "ar",
+        "fit"
+      ],
+      "source_paths": [
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ArCensorBoundaryGlsScenarioSuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/ArCensorBoundaryGlsScenarioSuite.scala",
+          "scenarios": [
+            "fit.ar-censor-boundary-gls.v1"
+          ]
+        }
+      ],
+      "title": "Run/censor-boundary AR and GLS"
+    },
+    "E24": {
+      "commands": [
+        "sbt firstLevelLawsJVM/test",
+        "sbt firstLevelLawsJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "first-level-laws"
+      ],
+      "source_paths": [
+        "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FirstLevelGenerators.scala",
+        "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/ArLawGenerators.scala",
+        "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/MissingResponseGenerators.scala",
+        "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/LawRunProfile.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/DesignGeneratedLawsSuite.scala",
+          "tests": [
+            "generated explicit and mixed acquisition grids preserve run-local and global axes",
+            "generated factor, missingness, provenance, and policy audits remain internally consistent"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/HrfGeneratedLawsSuite.scala",
+          "tests": [
+            "generated impulse and epoch responses are additive, homogeneous, and translation equivariant",
+            "basis permutations transport coefficients without changing the reconstructed response"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FitGeneratedLawsSuite.scala",
+          "tests": [
+            "generated full-rank multiresponse systems recover their planted coefficients",
+            "rank-deficient systems compare fitted geometry and estimable functions, never arbitrary betas"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/ArGeneratedLawsSuite.scala",
+          "tests": [
+            "fixed-order AR estimation is invariant to scale, signs, and response-column permutation"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/MissingResponseGeneratedLawsSuite.scala",
+          "tests": [
+            "propagated missing responses equal explicit finite-voxel fits across selection, chunking, and engines"
+          ]
+        }
+      ],
+      "title": "Deterministic generated-law inputs and shrinking"
+    },
+    "E25": {
+      "commands": [
+        "bash tools/ci/first-level-gate.sh"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "hrf",
+        "design",
+        "fit",
+        "first-level-laws"
+      ],
+      "source_paths": [
+        "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws",
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedContrastGeometrySuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/DesignGeneratedLawsSuite.scala",
+          "tests": [
+            "within-run event-row permutation preserves structural origins and the compiled numerical design",
+            "term permutation is column-equivariant when aligned by structural origin"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/HrfGeneratedLawsSuite.scala",
+          "tests": [
+            "generated pulse partitions agree and numerical quadrature converges under refinement",
+            "basis permutations transport coefficients without changing the reconstructed response"
+          ]
+        },
+        {
+          "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/FitGeneratedLawsSuite.scala",
+          "tests": [
+            "column scaling transports coefficients and preserves fitted geometry",
+            "public fixed WLS preparation is the declared square-root-weight transformation",
+            "multiresponse fitting is invariant to response-column chunking",
+            "known AR(1) GLS equals independently whitened OLS and resets at censor gaps"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedContrastGeometrySuite.scala",
+          "tests": [
+            "rescaling a one-row contrast preserves the effect matrix",
+            "invertible nuisance basis changes preserve effect and residual geometry"
+          ]
+        },
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitBlockSuite.scala",
+          "tests": [
+            "dense OLS block results merge to the same result as a full voxel block"
+          ]
+        }
+      ],
+      "title": "Metamorphic first-level invariants"
+    },
+    "E26": {
+      "commands": [
+        "python3 -S tools/r-parity/test_receipt_tools.py",
+        "python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/design.structural-2x2.v1.r.json",
+        "docs/scenarios/fixtures/fit.dms-multiphase-dsl.corrected-spmg.v1.r.json",
+        "docs/scenarios/fixtures/fit.realistic-nuisance.corrected-spmg.v1.r.json"
+      ],
+      "modules": [
+        "design",
+        "fit"
+      ],
+      "source_paths": [
+        "docs/scenarios/manifest.json",
+        "tools/r-parity/reference-lock.json",
+        "tools/r-parity/mixed-tr-reference-lock.json",
+        "tools/r-parity/receipt_tools.py"
+      ],
+      "suites": [],
+      "title": "Versioned external receipts and declared reference locks"
+    },
+    "E27": {
+      "commands": [
+        "bash -n tools/ci/first-level-release.sh",
+        "python3 -S tools/ci/test_collect_first_level_run_evidence.py",
+        "python3 -S tools/ci/test_collect_first_level_branch_evidence.py"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "repository"
+      ],
+      "source_paths": [
+        ".github/workflows/first-level.yml",
+        ".github/workflows/first-level-laws-calibration.yml",
+        ".github/workflows/scenario-receipts.yml",
+        ".github/workflows/first-level-performance.yml",
+        "tools/ci/first-level-release.sh"
+      ],
+      "suites": [],
+      "title": "Separated PR, scheduled, regeneration, performance, and release lanes"
+    },
+    "E28": {
+      "commands": [
+        "sbt scalafimCompileAll",
+        "bash tools/ci/first-level-coverage.sh",
+        "bash tools/ci/first-level-benchmark.sh"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "repository"
+      ],
+      "source_paths": [
+        "build.sbt",
+        "docs/release-assurance.md",
+        "tools/ci/first-level-coverage.sh",
+        "tools/ci/first-level-benchmark.sh"
+      ],
+      "suites": [],
+      "title": "Compiler, formatting, coverage, compatibility, and performance policy"
+    },
+    "E29": {
+      "commands": [
+        "python3 -S tools/docs/check_first_level_docs.py --check",
+        "sbt fitJVM/testOnly scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite",
+        "sbt fitJS/testOnly scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite"
+      ],
+      "external_fixtures": [
+        "docs/scenarios/fixtures/fit.dms-multiphase-dsl.corrected-spmg.v1.r.json"
+      ],
+      "modules": [
+        "fit",
+        "docs"
+      ],
+      "source_paths": [
+        "docs/first-level-analysis.md",
+        "tools/docs/check_first_level_docs.py",
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala",
+          "scenarios": [
+            "fit.dms-multiphase-dsl.v1"
+          ]
+        }
+      ],
+      "title": "Executable public DMS documentation"
+    },
+    "E30": {
+      "commands": [
+        "bash tools/ci/first-level-release.sh",
+        "python3 -S tools/ci/finalize_first_level_release.py --check <external-report-path>"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "repository"
+      ],
+      "source_paths": [
+        "tools/ci/first-level-release.sh",
+        "tools/ci/finalize_first_level_release.py",
+        "tools/ci/full-repository-tests.sh"
+      ],
+      "suites": [],
+      "title": "Candidate-bound full release court"
+    },
+    "E31": {
+      "commands": [
+        "bash tools/ci/first-level-benchmark.sh",
+        "python3 -S tools/benchmark/finalize_first_level_receipt.py --check <external-receipt-path>"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "hrf-bench",
+        "fit-bench"
+      ],
+      "source_paths": [
+        "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/BasisResponseBenchmark.scala",
+        "benchmarks/hrf-jvm/src/main/scala/scalafim/fmri/hrf/RegressorConvolutionBenchmark.scala",
+        "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala",
+        "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/FirstLevelFitBenchmark.scala",
+        "tools/benchmark/first-level-budgets.json",
+        "tools/benchmark/finalize_first_level_receipt.py"
+      ],
+      "suites": [],
+      "title": "Candidate-bound HRF, AR, planning, reuse, multiresponse, and chunk benchmarks"
+    },
+    "E32": {
+      "commands": [
+        "sbt fitEstimatesJVM/test",
+        "sbt fitEstimatesJS/test"
+      ],
+      "external_fixtures": [],
+      "modules": [
+        "estimates",
+        "fit-estimates",
+        "group"
+      ],
+      "source_paths": [
+        "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala",
+        "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimandCatalog.scala",
+        "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitEstimateProducer.scala",
+        "modules/fit-estimates/shared/src/main/scala/scalafim/fmri/fit/estimates/FitGroupAdapter.scala"
+      ],
+      "suites": [
+        {
+          "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+          "scenarios": [
+            "group.first-level-bridge.v1"
+          ]
+        },
+        {
+          "path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+          "scenarios": [
+            "group.first-level-to-group-known-effect.v1"
+          ]
+        }
+      ],
+      "title": "First-level estimates and fit-estimates bridge"
+    }
+  },
+  "schema_version": "scalafim-first-level-identity-acceptance/v1",
+  "source_epic": "bd-01KZ3ZCDD2RMYQ3WVY606FNKY1",
+  "status_policy": {
+    "blocked": "The mapped evidence cannot be executed or verified because of an explicit external blocker.",
+    "fail": "Fresh candidate evidence ran and did not satisfy the criterion.",
+    "not_run": "Evidence is mapped but has not been executed against the final clean candidate.",
+    "pass": "Every mapped command and external requirement passed against source_candidate."
+  }
+}

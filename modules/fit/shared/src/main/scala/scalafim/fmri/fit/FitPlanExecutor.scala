@@ -332,7 +332,7 @@ object FitPlanExecutor:
       trialTerm <- selectTrialwiseTerm(plan)
       termCols <- trialColumns(plan, trialTerm)
       trialMatrix <- LssTrialDesign.fromMatrix(
-        MatrixAdapters.fromHrfMatrixRowsCols(plan.model.eventModel.designMatrix, timepoints, termCols.trials),
+        MatrixAdapters.designColumns(plan.model, timepoints, termCols.trials),
         termCols.trials.map(plan.model.eventModel.columnNames)
       )
       fixed <- fixedDesign(plan, timepoints, excludedEventCols = termCols.trials ++ termCols.aggregates)
@@ -398,12 +398,10 @@ object FitPlanExecutor:
     val eventFixedCols =
       plan.model.eventModel.columnNames.indices.filterNot(excludedSet.contains).toVector
 
-    val eventFixed =
-      MatrixAdapters.fromHrfMatrixRowsCols(plan.model.eventModel.designMatrix, timepoints, eventFixedCols)
-    val baselineFixed =
-      MatrixAdapters.fromHrfMatrixRows(plan.model.baselineModel.designMatrix, timepoints)
-    val fixedMatrix = MatrixAdapters.bindColumns(eventFixed, baselineFixed)
-    val fixedNames = eventFixedCols.map(plan.model.eventModel.columnNames) ++ plan.model.baselineModel.columnNames
+    val baselineCols = (plan.model.eventModel.columnNames.length until plan.model.nPredictors).toVector
+    val fixedCols = eventFixedCols ++ baselineCols
+    val fixedMatrix = MatrixAdapters.designColumns(plan.model, timepoints, fixedCols)
+    val fixedNames = fixedCols.map(plan.model.columnNames)
 
     if fixedMatrix.cols == 0 then Right(LssFixedDesign.empty(timepoints.length))
     else LssFixedDesign.fromMatrix(fixedMatrix, fixedNames)

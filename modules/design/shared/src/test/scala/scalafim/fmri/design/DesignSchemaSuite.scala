@@ -144,6 +144,8 @@ class DesignSchemaSuite extends munit.FunSuite:
     val second = DesignSchema.validated(matrix, rows, Vector(column)).toOption.get
     assertEquals(first.fingerprint.value, second.fingerprint.value)
     assertEquals(first.fingerprint.canonicalEncoding, second.fingerprint.canonicalEncoding)
+    val expectedValues = matrix.data.map(value => java.lang.Double.doubleToLongBits(value).toString).mkString(",")
+    assert(first.fingerprint.canonicalEncoding.endsWith(s"|values=$expectedValues"))
 
     val changedMatrix = DesignSchema.validated(Mat.unsafe(2, 1, Array(1.0, 2.0)), rows, Vector(column)).toOption.get
     assertNotEquals(first.fingerprint.value, changedMatrix.fingerprint.value)

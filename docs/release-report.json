@@ -5,158 +5,234 @@
       "kind": "dirty_worktree"
     },
     {
-      "detail": "required local gate documentation has status not_run",
+      "detail": "run manifest was not captured from a clean candidate",
+      "kind": "local_evidence"
+    },
+    {
+      "detail": "current candidate is not clean",
+      "kind": "local_evidence"
+    },
+    {
+      "detail": "required local gate documentation has status skipped",
       "kind": "local_gate"
     },
     {
-      "detail": "required local gate focused_first_level has status not_run",
+      "detail": "required local gate focused_first_level has status skipped",
       "kind": "local_gate"
     },
     {
-      "detail": "required local gate scientific_coverage has status not_run",
+      "detail": "required local gate scientific_coverage has status skipped",
       "kind": "local_gate"
     },
     {
-      "detail": "required local gate compile_all has status not_run",
+      "detail": "required local gate compile_all has status skipped",
       "kind": "local_gate"
     },
     {
-      "detail": "required local gate test_all has status not_run",
+      "detail": "required local gate test_all has status skipped",
       "kind": "local_gate"
     },
     {
-      "detail": "required local gate performance has status not_run",
+      "detail": "required local gate performance has status skipped",
       "kind": "local_gate"
     },
     {
-      "detail": "external evidence branch_protection has not been supplied",
+      "detail": "benchmark receipt was not captured from a clean candidate",
+      "kind": "benchmark_receipt"
+    },
+    {
+      "detail": "benchmark raw report hashes do not match available artifacts",
+      "kind": "benchmark_receipt"
+    },
+    {
+      "detail": "benchmark receipt is not release eligible",
+      "kind": "benchmark_receipt"
+    },
+    {
+      "detail": "external evidence branch_protection has status unverified: no evidence bundle or URL supplied",
       "kind": "external_evidence"
     },
     {
-      "detail": "external evidence remote_first_level_ci has not been supplied",
+      "detail": "external evidence remote_first_level_ci has status unverified: no evidence bundle or URL supplied",
       "kind": "external_evidence"
     },
     {
-      "detail": "external evidence reference_regeneration has not been supplied",
+      "detail": "external evidence reference_regeneration has status unverified: no evidence bundle or URL supplied",
       "kind": "external_evidence"
     }
   ],
   "evidence": {
     "benchmark_receipt": {
       "path": "docs/benchmarks/receipts/first-level-current.json",
-      "schema_version": "scalafim-first-level-benchmark-receipt/v1",
-      "sha256": "d32a37a265a035a39d8c6b9abf9ff98eff6dc4a664dc8075eb61464ce27e8368",
-      "status": "pass"
+      "schema_version": "scalafim-first-level-benchmark-receipt/v2",
+      "sha256": "7a53156d09766c91f3fdcbb7643c03f770c3c51c0a721f5f58992cd7f763bafa",
+      "source_files_sha256": "6c22d767893c656104a9e74a74d60f621a5a972844878310af4bf0108f54fe0f",
+      "status": "failed",
+      "workload_sha256": "dfffe76f5c776ecee628928e48299837e600a68a3e83403eb028f72278f1960b"
     },
-    "commit": "https://github.com/canardlapin/scalafim/commit/7b97d69d9d15241fad9cf6d41d85382ebc7bad4c",
+    "commit": "https://github.com/canardlapin/scalafim/commit/e071e83b3a23bc6f304b1e72625d6281d9cfc9ba",
     "reference_lock": "tools/r-parity/reference-lock.json",
     "scenario_manifest": "docs/scenarios/manifest.json"
   },
   "external_evidence": {
     "branch_protection": {
+      "bundle": null,
+      "detail": "no evidence bundle or URL supplied",
       "environment_variable": "SCALAFIM_RELEASE_BRANCH_PROTECTION_URL",
-      "status": "unverified",
-      "url": null
+      "kind": "branch_protection",
+      "observed_at": null,
+      "payload_path": null,
+      "payload_sha256": null,
+      "source_url": null,
+      "status": "unverified"
     },
     "reference_regeneration": {
+      "bundle": null,
+      "detail": "no evidence bundle or URL supplied",
       "environment_variable": "SCALAFIM_RELEASE_RECEIPTS_URL",
-      "status": "unverified",
-      "url": null
+      "kind": "reference_regeneration",
+      "observed_at": null,
+      "payload_path": null,
+      "payload_sha256": null,
+      "source_url": null,
+      "status": "unverified"
     },
     "remote_first_level_ci": {
+      "bundle": null,
+      "detail": "no evidence bundle or URL supplied",
       "environment_variable": "SCALAFIM_RELEASE_CI_URL",
-      "status": "unverified",
-      "url": null
+      "kind": "remote_first_level_ci",
+      "observed_at": null,
+      "payload_path": null,
+      "payload_sha256": null,
+      "source_url": null,
+      "status": "unverified"
     }
   },
-  "generated_at": "2026-08-24T18:21:49.564964+00:00",
+  "generated_at": "2026-09-13T15:50:31.764852+00:00",
   "local_gates": {
     "compile_all": {
       "command": "sbt scalafimCompileAll",
-      "exit_code": null,
-      "log": null,
-      "status": "not_run"
+      "ended_at": "2026-09-13T15:50:31Z",
+      "exit_code": 125,
+      "log": {
+        "path": "/private/tmp/scalafim-first-level-blocked-v2/gates/compile_all.log",
+        "sha256": "c882385f5790e7ed3e05f7658b0abe54c127351e1ddc367a0f016e485d9ec024"
+      },
+      "started_at": "2026-09-13T15:50:31Z",
+      "status": "skipped"
     },
     "documentation": {
-      "command": "python -S tools/docs/check_first_level_docs.py --check",
-      "exit_code": null,
-      "log": null,
-      "status": "not_run"
+      "command": "python3 -S tools/docs/check_first_level_docs.py --check",
+      "ended_at": "2026-09-13T15:50:31Z",
+      "exit_code": 125,
+      "log": {
+        "path": "/private/tmp/scalafim-first-level-blocked-v2/gates/documentation.log",
+        "sha256": "c882385f5790e7ed3e05f7658b0abe54c127351e1ddc367a0f016e485d9ec024"
+      },
+      "started_at": "2026-09-13T15:50:31Z",
+      "status": "skipped"
     },
     "focused_first_level": {
       "command": "bash tools/ci/first-level-gate.sh",
-      "exit_code": null,
-      "log": null,
-      "status": "not_run"
+      "ended_at": "2026-09-13T15:50:31Z",
+      "exit_code": 125,
+      "log": {
+        "path": "/private/tmp/scalafim-first-level-blocked-v2/gates/focused_first_level.log",
+        "sha256": "c882385f5790e7ed3e05f7658b0abe54c127351e1ddc367a0f016e485d9ec024"
+      },
+      "started_at": "2026-09-13T15:50:31Z",
+      "status": "skipped"
     },
     "performance": {
       "command": "bash tools/ci/first-level-benchmark.sh",
-      "exit_code": null,
-      "log": null,
-      "status": "not_run"
+      "ended_at": "2026-09-13T15:50:31Z",
+      "exit_code": 125,
+      "log": {
+        "path": "/private/tmp/scalafim-first-level-blocked-v2/gates/performance.log",
+        "sha256": "c882385f5790e7ed3e05f7658b0abe54c127351e1ddc367a0f016e485d9ec024"
+      },
+      "started_at": "2026-09-13T15:50:31Z",
+      "status": "skipped"
     },
     "scientific_coverage": {
       "command": "bash tools/ci/first-level-coverage.sh",
-      "exit_code": null,
-      "log": null,
-      "status": "not_run"
+      "ended_at": "2026-09-13T15:50:31Z",
+      "exit_code": 125,
+      "log": {
+        "path": "/private/tmp/scalafim-first-level-blocked-v2/gates/scientific_coverage.log",
+        "sha256": "c882385f5790e7ed3e05f7658b0abe54c127351e1ddc367a0f016e485d9ec024"
+      },
+      "started_at": "2026-09-13T15:50:31Z",
+      "status": "skipped"
     },
     "test_all": {
       "command": "bash tools/ci/full-repository-tests.sh",
-      "exit_code": null,
-      "log": null,
-      "status": "not_run"
+      "ended_at": "2026-09-13T15:50:31Z",
+      "exit_code": 125,
+      "log": {
+        "path": "/private/tmp/scalafim-first-level-blocked-v2/gates/test_all.log",
+        "sha256": "c882385f5790e7ed3e05f7658b0abe54c127351e1ddc367a0f016e485d9ec024"
+      },
+      "started_at": "2026-09-13T15:50:31Z",
+      "status": "skipped"
     }
   },
+  "local_run": {
+    "inputs_sha256": "1ebe1d0e908830821d3aa7238cb6af3c653f5c4f6dab38a251414a5a9bd89823",
+    "manifest": "/private/tmp/scalafim-first-level-blocked-v2/run-manifest.json",
+    "run_id": "728cba69-54fd-49d5-9a5f-ab099845918e",
+    "status": "invalid"
+  },
   "release_eligible": false,
-  "schema_version": "scalafim-first-level-release-report/v1",
+  "schema_version": "scalafim-first-level-release-report/v2",
   "source": {
-    "commit": "7b97d69d9d15241fad9cf6d41d85382ebc7bad4c",
+    "commit": "e071e83b3a23bc6f304b1e72625d6281d9cfc9ba",
     "dirty": true,
-    "dirty_path_count": 3,
+    "dirty_path_count": 263,
     "files": {
       ".github/workflows/first-level-laws-calibration.yml": "3160cc9e0b002b6f850e48469e5d7d72d9d0de26f01b0b8ac5107d9a735ceefc",
       ".github/workflows/first-level-mutation-pilot.yml": "1d3e32bae7ed522998f004a8e1973b6c38edc813368a90506930c3da817efc22",
       ".github/workflows/first-level-performance.yml": "baf127bae4b61d5f515081885d0ff30636b79ae01877ccb2045757c4ffe15abc",
       ".github/workflows/first-level.yml": "02af402f57dad40de3c6571a3742933a4b52e5753a54039634d06e7313741207",
-      ".github/workflows/scenario-receipts.yml": "a976f14c693142baa57d22bfa4dc7bd5a0b3ebc1aec983d47a2613166b530697",
+      ".github/workflows/scenario-receipts.yml": "af1e687103bd65269c736099db4c70ab88293ca26848dafedef6d05a3d232269",
       "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/ar/ArEstimationBenchmark.scala": "57446cc7917d3025c6c5044eb4f985c62d786dbc4740501475652046ada6a3a3",
-      "build.sbt": "69ea39e69bfcf62b8f21f0d031d78d021fa7a362c49fb508bb32e1270257794f",
-      "docs/benchmarks/first-level.md": "ed487c88d6112ddd2213d21a36d54da01a35206d9ef3f5fcb5a865970a37459e",
-      "docs/first-level-analysis.md": "554077e219678b68c825f04bdbdb28736be7db71c73fa2ad8af6d4c27d6908aa",
-      "docs/release-assurance.md": "662baa237a50c86b492c08bc661f0f74718050a0775ca22960554cffa205f651",
+      "build.sbt": "7354d9a69906ecc58eda6d5a34b1ecc62dc1e58e1abb68c7fe62677a5ecd0194",
+      "docs/benchmarks/first-level.md": "7dce1ad9733bba7edf914af464e638ba983646f4940e6a16d80b89e09fa94ed9",
+      "docs/first-level-analysis.md": "dd94bc6f5426c3f919bff6173c698bf9621437d89e9236b59b91e963f18f574e",
+      "docs/release-assurance.md": "665dd5283ea4af960f0af88379f1d96867e445030c3bbe32a206bf2549302e0a",
       "docs/scenarios/fixtures/ar.fmriar-parity.v1.r.json": "ca45006d860c62d43dc1518e30edcb0bf3c5ee0593c0f6638076fb9e169b9849",
       "docs/scenarios/fixtures/fit.fmriar-estimated-gls.v1.r.json": "b2755d39f0a0a7496b7b2cfa1d0af6474fe3256a5d9a809e55a814c107000632",
       "modules/ar/shared/src/test/scala/scalafim/fmri/ar/FmriArParitySuite.scala": "3ccacf2e5317b68517279404575554f6309fedd25fdfaf610a597b54cd0924f1",
       "modules/ar/shared/src/test/scala/scalafim/fmri/ar/fixtures/FmriArRFixture.scala": "7bfc7b96e0721c11216370c58cfff3ca102bed5879947d0d0c9559e767ddda56",
       "modules/ar/tools/generate_fmriar_parity.R": "eb98a72e3aebbe3dfae4eea10fb8b16eef478ede6051a76d60d7ffc504672baf",
-      "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/fit/FixedEffectsStatusGeneratedLawsSuite.scala": "0a05faeed790097f2da766edc089e0b9bcb0936e6526e91cf644d24ea2772789",
+      "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/fit/FixedEffectsStatusGeneratedLawsSuite.scala": "f94ee2cd3a8d505d71997cfd94a359f9fd5798ed6dbe3c2f984fef8720320e1f",
       "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/ArGeneratedLawsSuite.scala": "62aad79288530aaf44c5fc9d21e9d7534fe39812da30f99b0a01e9e111b17c99",
       "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/ArLawGenerators.scala": "92a896bc41187376d5bdb0799cd490ba886a716b0b9f75eca239864b585f1ce2",
       "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/LawRunProfile.scala": "59ac1dd058809940ecd38ac33737597e5c58368e3e2a2eb1cdd39d456e07e109",
-      "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/MissingResponseGeneratedLawsSuite.scala": "2fe73ca30e64589ccc88aa6dbe3cadf3dd88cefbcb40fbc6ee1c6cc0416e318d",
+      "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/MissingResponseGeneratedLawsSuite.scala": "4c648ebcee6a04b7415bc0eee6725728772e07ae9f4373833c89de0fb350eaa4",
       "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/MissingResponseGenerators.scala": "a9af67d746bd0d7979cdbc9f10c575f6ce819481926a6d7d962edb8fbff62e6c",
       "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "918589ec29638d84f42ca027b55cb66c70fbd9b0d8ae03bf0d774c97683acff4",
-      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala": "4fb100001a171fc2a80f2592b8e0193bdb6e7b3dd278d77049a2aaf39f058883",
-      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "743e7aad11403ce4bccb471ec1ad76bfd8e29f0037a558b72df259f05223f7b7",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala": "ecb73d976921d99d7fdba344b4b120068e6510fbb854099725bc48078d4449d0",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "8d6205d4551d8d2648822968e772d4f50cd57accda2dbd23ec33ca8ef2a04a59",
       "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ObservationPattern.scala": "c81abe6c645fa17f4fcfaea0cdc28ea7f3f62ed03299c84ce3e10dd0c9535a9e",
       "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelFitStatus.scala": "991952c771adc8086ae8309d955d1ae894792b847875333aeaa5fb8142bc7bd6",
-      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "73d5a905968cd1ee01b0f9af1cfc382fbae0aba266ffffaec31ddf1efd4b3ad9",
-      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "fa0da9b9de80b3e2190bbbd406ab6b38335b277c4df586210a3639d67676b2a3",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "848442545c4ff32bfa4d7a9fec3ae5924007296ed7822b434c527924b8639401",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "e46c1677697135101e791177c4100941132037b31029486cca0a07120c25f4d1",
       "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/FmriArEstimatedGlsFixture.scala": "d4fc25acac16eb1e6b7ad843994ead04c56f913d4abd4ba5311f02e0466bd924",
-      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala": "41b73c3956aced36ac890d366606a05ed0cd40bc34beeafdcb7c828ed56bca48",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/scenarios/DelayedMatchToSampleDslScenarioSuite.scala": "606a096795e170a4100fd301b7ec2f0e4bea6215bfd74a43ed376327bd588fda",
       "modules/fit/tools/generate_fmriar_estimated_gls_parity.R": "fa57161a65bcb49b4d1f61e46d4872aa280e3236dd5605f1b33316df858914d8",
       "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "d09e8f9f4cd13a2581021041176ea67753a756f46c57d00a96a3149b94765838",
       "project/plugins.sbt": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10",
-      "tools/benchmark/finalize_first_level_receipt.py": "1023bab85d457ee7acd74f99e09cb353324e97ca7a32eedf01ea02ca6d426a81",
-      "tools/benchmark/first-level-budgets.json": "b2d649ebcdaf5e3002a18d281da5cca85860215be7bf59a6a80634272c5f0814",
-      "tools/ci/finalize_first_level_release.py": "083508d579ada2238214a5bd916c882ab30b8f6a0d583673a78490606b42d31f",
-      "tools/ci/first-level-benchmark.sh": "62592f869723da778d91024a0897b7a6b3caa2c2391ccb6c7e8ad0dbc75ed401",
+      "tools/benchmark/finalize_first_level_receipt.py": "c9450a436bd737fa88bf541ce1ac5cf916fb2ad8f8b07f5e41c3c69c3833a928",
+      "tools/benchmark/first-level-budgets.json": "11a50dbc56aa9a6b50a6d6647bf54745dc9d6b03993a97b301c24c51097167b9",
+      "tools/ci/finalize_first_level_release.py": "d9f41209c68a99e5277a8a26d7e4b5cb591a294aff27d48e6928d1f1c77432d3",
+      "tools/ci/first-level-benchmark.sh": "c99ce8f168db7ce2007e61bf039fa65b2e743a9562153648daa93818c0983a63",
       "tools/ci/first-level-coverage.sh": "0c91cf0154c62489bde198b7256be2b2b0afe33c6eba00d6407b956d3574df17",
-      "tools/ci/first-level-gate.sh": "5ce3f37d539cb066c2faf59c0bbf2867f58da4f4c76ffe100d0f906f523c3ea3",
-      "tools/ci/first-level-release.sh": "f507d4e02af8b7c7526001ea471b103f19df65e6d2a387b0fd9cf6dc58bc617c",
-      "tools/ci/full-repository-tests.sh": "ca37276751d13b554b1cf17ac80bda2c4a2f23a1c0cc8c26347a11c346cf6a37",
-      "tools/docs/check_first_level_docs.py": "01e550285c1f9a44b725bcd9e971677a56ece66d29a2239c1fbf3c459b072193",
+      "tools/ci/first-level-gate.sh": "a681a4fca02eaf21bc34849590822efa026d1bc4fbfc5e3cb2e4a0f97391ad8f",
+      "tools/ci/first-level-release.sh": "fb3c5fbb47e820f12de22919c50102a995e52f787b126eca3e84b15dca89ba84",
+      "tools/ci/full-repository-tests.sh": "0b17e2ba7770d981670576d0cd3de5a5834e639b2c10fede4994bfaffbc6fe1a",
+      "tools/docs/check_first_level_docs.py": "f52690b976fb37b1f326dbe2de4192639f1bac1aeb334ee6237d451b0b90a8e7",
       "tools/mutation/ar_na_pilot.py": "c27ec87cec27e98ac48bccdb44f8f69d21a652c37900973f79b66f7efbb1e8e5",
       "tools/r-parity/auxiliary-manifest.json": "0d01170a47ad0b45cb57349554ff5e9bced0dfc3feeb969572de9c088b3e7022",
       "tools/r-parity/check_receipts.py": "a10e45755cc9fdb5bbab8bc32c79299cae040f7e6d1dce19c7d5c1c8d7c8ad3e",
@@ -168,11 +244,11 @@
   "status": "blocked",
   "toolchain": {
     "architecture": "arm64",
-    "java": "openjdk version \"22\" 2024-03-19",
-    "java_home": "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home",
+    "java": "openjdk version \"25.0.1\" 2025-10-21",
+    "java_home": "/opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home",
     "node": "v26.7.0",
-    "os": "macOS-14.3-arm64-arm-64bit",
-    "python": "3.9.22",
+    "os": "macOS-14.3-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7",
     "sbt": "1.11.7",
     "scala": "3.7.4"
   }

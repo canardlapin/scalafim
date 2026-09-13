@@ -11,7 +11,7 @@ compiled test source, not copied by hand. Run the documentation check after
 editing either file:
 
 ```sh
-python -S tools/docs/check_first_level_docs.py --check
+python3 -S tools/docs/check_first_level_docs.py --check
 ```
 
 ## 1. Declare one trial table

@@ -1,6 +1,7 @@
 package scalafim.fmri.model
 
-import scalafim.fmri.design.{ColumnId, DesignFingerprint, DesignSchema, StructuralColumn}
+import gale.linalg.{DMat, Matrix}
+import scalafim.fmri.design.{ColumnId, DesignError, DesignFingerprint, DesignSchema, StructuralColumn}
 import scalafim.fmri.design.baseline.BaselineModel
 import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.hrf.linalg.Mat
@@ -29,15 +30,21 @@ object DesignColumn:
     DesignColumn(column.id, column.renderedLabel, source, Some(column))
 
 final class DesignBlock private (
-    val matrix: Mat,
+    val matrixValues: DMat,
     val columns: Vector[DesignColumn],
     val schema: Option[DesignSchema]
 ):
-  require(matrix.cols == columns.length, "design block columns must match matrix columns")
+  require(matrixValues.cols == columns.length, "design block columns must match matrix columns")
   require(columns.nonEmpty, "design block must contain at least one column")
 
-  def rows: Int = matrix.rows
-  def cols: Int = matrix.cols
+  /** Detached compatibility export. Execution reads [[matrixValues]] directly. */
+  def matrix: Mat =
+    val data = new Array[Double](rows * cols)
+    matrixValues.copyRowMajorTo(data)
+    Mat.unsafe(rows, cols, data)
+
+  def rows: Int = matrixValues.rows
+  def cols: Int = matrixValues.cols
   def columnNames: Vector[String] = columns.map(_.name)
   def columnIds: Vector[ColumnId] = columns.map(_.id)
   def structuralColumns: Vector[StructuralColumn] = columns.flatMap(_.structural)
@@ -61,7 +68,7 @@ object DesignBlock:
           case Left(error) => return Left(error)
           case Right(column) => out += column
         i += 1
-      fromColumns(matrix, out.result(), schema = None)
+      fromColumns(Matrix.tabulate(matrix.rows, matrix.cols)(matrix.apply), out.result(), schema = None)
 
   def fromModel(
       eventModel: EventModel,
@@ -80,6 +87,8 @@ object DesignBlock:
       for
         eventSchema0 <- Right(eventModel.designSchema)
         baselineSchema0 <- Right(baselineModel.designSchema)
+        _ <- validateSourceMatrix(eventModel.designMatrix, eventSchema0, "event")
+        _ <- validateSourceMatrix(baselineModel.designMatrix, baselineSchema0, "baseline")
         // The structural schema is authoritative, but keep the public
         // rendered labels supplied by a compatibility copy of the model.
         // This permits legacy callers to rename labels without changing the
@@ -91,16 +100,35 @@ object DesignBlock:
           if baselineSchema0.columns.map(_.renderedLabel) == baselineModel.columnNames then Right(baselineSchema0)
           else baselineSchema0.withRenderedLabels(baselineModel.columnNames).left.map(ModelError.fromDesignError)
         schema <- DesignSchema.combine(eventSchema, baselineSchema).left.map(ModelError.fromDesignError)
-        eventColumns = eventSchema.columns.map(DesignColumn.fromStructural(_, DesignColumnSource.Event))
-        baselineColumns = baselineSchema.columns.map(DesignColumn.fromStructural(_, DesignColumnSource.Baseline))
-        columns = eventColumns ++ baselineColumns
+        columns = schema.columns.zipWithIndex.map { case (column, index) =>
+          val source = if index < eventSchema.columns.length then DesignColumnSource.Event else DesignColumnSource.Baseline
+          DesignColumn.fromStructural(column, source)
+        }
         block <-
           if columns.isEmpty then Left(ModelError.EmptyDesignBlock)
-          else fromColumns(schema.matrix, columns, schema = Some(schema))
+          else fromColumns(schema.matrixValues, columns, schema = Some(schema))
       yield block
 
+  private def validateSourceMatrix(matrix: Mat, schema: DesignSchema, source: String): Either[ModelError, Unit] =
+    val values = schema.matrixValues
+    def mismatch: Either[ModelError, Unit] =
+      Left(ModelError.DesignFailure(DesignError.InvalidSchema(
+        s"$source design matrix differs from its compiled schema; rebuild the schema when changing numerical columns"
+      )))
+    if matrix.rows != values.rows || matrix.cols != values.cols then mismatch
+    else
+      var row = 0
+      while row < matrix.rows do
+        var col = 0
+        while col < matrix.cols do
+          if java.lang.Double.doubleToLongBits(matrix(row, col)) != java.lang.Double.doubleToLongBits(values(row, col)) then
+            return mismatch
+          col += 1
+        row += 1
+      Right(())
+
   private def fromColumns(
-      matrix: Mat,
+      matrix: DMat,
       columns: Vector[DesignColumn],
       schema: Option[DesignSchema]
   ): Either[ModelError, DesignBlock] =
@@ -112,6 +140,6 @@ object DesignBlock:
       seen += id
       i += 1
     schema match
-      case Some(value) if value.matrix.rows != matrix.rows || value.matrix.cols != matrix.cols =>
+      case Some(value) if value.matrixValues.rows != matrix.rows || value.matrixValues.cols != matrix.cols =>
         Left(ModelError.BuildFailed("design schema matrix does not match DesignBlock matrix"))
       case _ => Right(new DesignBlock(matrix, columns, schema))

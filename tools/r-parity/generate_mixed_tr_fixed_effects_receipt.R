@@ -27,6 +27,7 @@ scala_out <- Sys.getenv(
   )
 )
 
+pkgload::load_all(hrf_pkg, quiet = TRUE)
 pkgload::load_all(r_pkg, quiet = TRUE)
 
 git_revision <- function(path) {
@@ -123,11 +124,28 @@ contrast_standard_error <- vapply(
 )
 contrast_statistic <- contrast_estimate / contrast_standard_error
 
+# Pool only the task covariance blocks when intercepts are run-local nuisance.
+task_contrast_estimate <- vapply(seq_len(ncol(response)), function(voxel) {
+  precisions <- lapply(run_fits, function(run) solve(run$covariance_by_voxel[[voxel]][1:2, 1:2]))
+  weighted <- Reduce(`+`, Map(function(precision, run) {
+    precision %*% run$coefficients[1:2, voxel]
+  }, precisions, run_fits))
+  drop(crossprod(c(1, -1), solve(Reduce(`+`, precisions), weighted)))
+}, numeric(1))
+
 fmridesign_root <- normalizePath(r_pkg, mustWork = FALSE)
+source_md5 <- function(path) {
+  paths <- c(file.path(path, "DESCRIPTION"), list.files(file.path(path, "R"), pattern = "[.]R$", full.names = TRUE))
+  values <- tools::md5sum(paths)
+  names(values) <- substring(paths, nchar(path) + 2L)
+  as.list(values)
+}
 source <- list(
   fmridesign_revision = git_revision(fmridesign_root),
   fmrihrf_revision = git_revision(normalizePath(hrf_pkg, mustWork = FALSE)),
   fmridesign_version = as.character(utils::packageVersion("fmridesign")),
+  fmrihrf_source_md5 = source_md5(hrf_pkg),
+  fmridesign_source_md5 = source_md5(r_pkg),
   fmrihrf_version = as.character(utils::packageVersion("fmrihrf")),
   r_version = as.character(getRversion()),
   stats_version = as.character(utils::packageVersion("stats")),
@@ -164,6 +182,7 @@ outputs <- list(
   fixed_standard_errors = matrix_rows(fixed_standard_errors),
   fixed_residual_df = fixed_residual_df,
   contrast_estimate = contrast_estimate,
+  task_contrast_estimate = task_contrast_estimate,
   contrast_standard_error = contrast_standard_error,
   contrast_statistic = contrast_statistic
 )
@@ -237,6 +256,7 @@ writeLines(
     paste0("  val fixedStandardErrors: Vector[Vector[Double]] = ", scala_matrix(fixed_standard_errors)),
     paste0("  val fixedResidualDf: Int = ", as.integer(fixed_residual_df)),
     paste0("  val contrastEstimate: Vector[Double] = ", scala_doubles(contrast_estimate)),
+    paste0("  val taskContrastEstimate: Vector[Double] = ", scala_doubles(task_contrast_estimate)),
     paste0("  val contrastStandardError: Vector[Double] = ", scala_doubles(contrast_standard_error)),
     paste0("  val contrastStatistic: Vector[Double] = ", scala_doubles(contrast_statistic)),
     paste0("  val acceptedDifferences: Vector[String] = ", scala_strings(accepted_differences))

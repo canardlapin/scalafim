@@ -12,7 +12,7 @@ object r:
     val _ = t // Retained for source compatibility with fmrihrf's constructor surface.
     Hrfs.gamma(shape, rate)
   def hrf_gaussian(mean: Double = 6.0, sd: Double = 2.0): Hrf = Hrfs.gaussian(mean, sd)
-  def hrf_spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833): Hrf = Hrfs.spmg1(P1, P2, A1)
+  def hrf_spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0): Hrf = Hrfs.spmg1(P1, P2, A1)
   def hrf_mexhat(mean: Double = 6.0, sd: Double = 2.0): Hrf = Hrfs.mexhat(mean, sd)
   def hrf_inv_logit(mu1: Double = 6.0, s1: Double = 1.0, mu2: Double = 16.0, s2: Double = 1.0, lag: Double = 0.0): Hrf =
     Hrfs.invLogit(mu1, s1, mu2, s2, lag.s)

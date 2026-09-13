@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Finalize or check the external mixed-TR fixed-effects receipt."""
 
-from receipt_tools import check_requested, finalize_receipt
+from receipt_tools import REPO_ROOT, check_requested, finalize_receipt
 
 
 def main() -> int:
@@ -11,6 +11,7 @@ def main() -> int:
     "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/MixedTrFixedEffectsRFixture.scala",
     "independent_end_to_end",
     check=check_requested(__doc__ or ""),
+    lock_path=REPO_ROOT / "tools/r-parity/mixed-tr-reference-lock.json",
   )
 
 

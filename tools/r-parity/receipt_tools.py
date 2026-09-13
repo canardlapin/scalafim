@@ -47,8 +47,9 @@ def check_requested(description: str) -> bool:
   return bool(parser.parse_args().check)
 
 
-def load_environment_lock() -> dict[str, Any]:
-  payload = json.loads(LOCK_PATH.read_text())
+def load_environment_lock(lock_path: Path | None = None) -> dict[str, Any]:
+  lock_path = LOCK_PATH if lock_path is None else lock_path
+  payload = json.loads(lock_path.read_text())
   if payload.get("schema_version") != LOCK_SCHEMA:
     raise SystemExit(f"unexpected environment lock schema: {payload.get('schema_version')!r}")
   return payload
@@ -69,6 +70,15 @@ def require_locked_r_source(source: dict[str, Any], lock: dict[str, Any]) -> Non
   for package, package_lock in packages.items():
     if not isinstance(package_lock, dict):
       raise SystemExit(f"environment lock entry for {package} must be an object")
+    source_keys = (
+      f"{package}_revision",
+      f"{package}_version",
+      f"{package}_source_md5",
+    )
+    if not any(key in source for key in source_keys):
+      continue
+    if "source_md5" in package_lock and source.get(f"{package}_source_md5") != package_lock["source_md5"]:
+      raise SystemExit(f"receipt {package} source hashes do not match lock")
     revision_key = f"{package}_revision"
     version_key = f"{package}_version"
     if revision_key in source and source.get(revision_key) != package_lock.get("revision"):
@@ -81,7 +91,8 @@ def require_locked_r_source(source: dict[str, Any], lock: dict[str, Any]) -> Non
       )
 
 
-def receipt_environment(source: dict[str, Any], lock: dict[str, Any]) -> dict[str, str]:
+def receipt_environment(source: dict[str, Any], lock: dict[str, Any], lock_path: Path | None = None) -> dict[str, str]:
+  lock_path = LOCK_PATH if lock_path is None else lock_path
   producer = source.get("producer")
   if not isinstance(producer, str) or not producer.strip():
     raise SystemExit("receipt source.producer must name the generator")
@@ -97,8 +108,8 @@ def receipt_environment(source: dict[str, Any], lock: dict[str, Any]) -> dict[st
   return {
     "generator_sha256": file_sha256(producer_path),
     "locale": str(r_lock["locale"]),
-    "lock_path": str(LOCK_PATH.relative_to(REPO_ROOT)),
-    "lock_sha256": file_sha256(LOCK_PATH),
+    "lock_path": str(lock_path.relative_to(REPO_ROOT)),
+    "lock_sha256": file_sha256(lock_path),
     "runtime": f"R {source['r_version']}",
   }
 
@@ -110,7 +121,9 @@ def finalize_receipt(
     truth_boundary: str,
     *,
     check: bool,
+    lock_path: Path | None = None,
 ) -> int:
+  lock_path = LOCK_PATH if lock_path is None else lock_path
   json_path = REPO_ROOT / fixture_path
   scala_path = REPO_ROOT / scala_fixture_path
   payload = json.loads(json_path.read_text())
@@ -125,9 +138,9 @@ def finalize_receipt(
   source = payload.get("source")
   if not isinstance(source, dict):
     raise SystemExit(f"source must be an object: {json_path}")
-  lock = load_environment_lock()
+  lock = load_environment_lock(lock_path)
   require_locked_r_source(source, lock)
-  expected_environment = receipt_environment(source, lock)
+  expected_environment = receipt_environment(source, lock, lock_path)
   expected_hashes = {
     "inputs_sha256": canonical_sha256({"schema_version": schema, "inputs": payload["inputs"]}),
     "outputs_sha256": canonical_sha256({"schema_version": schema, "outputs": payload["outputs"]}),

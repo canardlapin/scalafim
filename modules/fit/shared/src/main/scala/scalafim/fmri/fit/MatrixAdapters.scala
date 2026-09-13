@@ -75,7 +75,14 @@ object MatrixAdapters:
       out.result()
 
   def designMatrix(model: FmriModel, timepoints: IndexedSeq[Int]): Either[FitError, DesignMatrix] =
-    DesignMatrix.fromMatrix(fromHrfMatrixRows(model.designMatrix, timepoints))
+    DesignMatrix.fromMatrix(model.designBlock.matrixValues.gatherRows(timepoints))
+
+  /** Select from the same immutable compiled matrix used by ordinary fitting.
+    * In particular, LSS must not read mutable event/baseline compatibility data.
+    */
+  private[fit] def designColumns(model: FmriModel, timepoints: IndexedSeq[Int], columns: IndexedSeq[Int]): DMat =
+    val values = model.designBlock.matrixValues
+    Matrix.tabulate(timepoints.length, columns.length)((row, col) => values(timepoints(row), columns(col)))
 
   def responseBlock(series: FmriSeries): Either[FitError, ResponseBlock] =
     ResponseBlock.fromMatrix(series.data)

@@ -5,7 +5,7 @@ import scalafim.fmri.design.*
 import scalafim.fmri.design.baseline.{BaselineBasis, Intercept, NuisanceCheck, NuisanceIssue}
 import scalafim.fmri.fit.*
 import scalafim.fmri.fit.StructuralHypothesisDsl.*
-import scalafim.fmri.fit.fixtures.RealisticNuisanceRFixture
+import scalafim.fmri.fit.fixtures.CorrectedSpmgRealisticNuisanceRFixture as RealisticNuisanceRFixture
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FmriModelBuilder, ModelBuildSpec, ModelError, NuisanceRegressors, SampledRegressorRun}
@@ -285,6 +285,40 @@ class MixedBlockNuisanceScenarioSuite extends munit.FunSuite:
       RealisticNuisanceRFixture.taskDifference.statistic,
       RealisticNuisanceRFixture.taskOmnibus.statistic
     )
+    val taskDesign = flattenHrf(plan.model.eventModel.designMatrix)
+    val fullDesign = plan.model.designMatrix
+    val fullDesignSums = Vector.tabulate(fullDesign.cols) { column =>
+      var total = 0.0
+      var row = 0
+      while row < fullDesign.rows do
+        total += fullDesign(row, column)
+        row += 1
+      total
+    }
+    val fullDesignSquaredNorms = Vector.tabulate(fullDesign.cols) { column =>
+      var total = 0.0
+      var row = 0
+      while row < fullDesign.rows do
+        val value = fullDesign(row, column)
+        total += value * value
+        row += 1
+      total
+    }
+    val fullDesignProbe = Vector.tabulate(fullDesign.cols) { column =>
+      var total = 0.0
+      var row = 0
+      while row < fullDesign.rows do
+        val index = row + 1
+        total += (math.sin(index * 0.131) + math.cos(index * 0.071)) * fullDesign(row, column)
+        row += 1
+      total
+    }
+    val fullCoefficients = Vector.tabulate(fitted.predictors)(row => fitted.coefficients(row, 0))
+    val fullCovariance =
+      val residualVariance = fitted.inference.varianceScale(0)
+      flattenGale(fitted.coefficientCovariance.unsafeMatrixForVoxelPosition(0)).map(_ * residualVariance)
+    val designProfile = ScenarioComparisonTolerance.bounded(1e-7, 1e-8, 0.999999999, 1e-8)
+    val fullFitProfile = ScenarioComparisonTolerance.bounded(1e-6, 1e-6, 0.99999999, 1e-6)
 
     ScenarioHarness.result(
       "fit.realistic-nuisance.v1",
@@ -318,6 +352,12 @@ class MixedBlockNuisanceScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("R receipt identifies its external HRF source", RealisticNuisanceRFixture.fmrihrfVersion == "0.4.0" && RealisticNuisanceRFixture.fmrihrfRevision.nonEmpty, s"fmrihrf=${RealisticNuisanceRFixture.fmrihrfVersion}@${RealisticNuisanceRFixture.fmrihrfRevision}"),
         ScenarioHarness.fact("direct-fit and design-construction evidence remain separately labelled", RealisticNuisanceRFixture.acceptedDifferences.length == 3, RealisticNuisanceRFixture.acceptedDifferences.mkString("; "))
       ) ++
+        ScenarioHarness.comparisonMetrics("corrected R nuisance task design", taskDesign, RealisticNuisanceRFixture.taskDesign.flatten, designProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R nuisance full-design sums", fullDesignSums, RealisticNuisanceRFixture.fullDesignColumnSums, designProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R nuisance full-design squared norms", fullDesignSquaredNorms, RealisticNuisanceRFixture.fullDesignColumnSquaredNorms, designProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R nuisance full-design deterministic projections", fullDesignProbe, RealisticNuisanceRFixture.fullDesignColumnProbe, designProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R nuisance full coefficients", fullCoefficients, RealisticNuisanceRFixture.fullCoefficients, fullFitProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R nuisance full covariance", fullCovariance, RealisticNuisanceRFixture.fullCovariance.flatten, fullFitProfile) ++
         tReceipt("task-a", aResult, RealisticNuisanceRFixture.taskCoefficients(0), None, tolerance) ++
         tReceipt("task-b", bResult, RealisticNuisanceRFixture.taskCoefficients(1), None, tolerance) ++
         tReceipt("task-a-minus-b", differenceResult, RealisticNuisanceRFixture.taskDifference.estimate, Some(RealisticNuisanceRFixture.taskDifference.standardError -> RealisticNuisanceRFixture.taskDifference.statistic), tolerance) ++
@@ -329,6 +369,12 @@ class MixedBlockNuisanceScenarioSuite extends munit.FunSuite:
           profileTolerance
         )
     )
+
+  private def flattenHrf(matrix: scalafim.fmri.hrf.linalg.Mat): Vector[Double] =
+    Vector.tabulate(matrix.rows * matrix.cols)(index => matrix(index / matrix.cols, index % matrix.cols))
+
+  private def flattenGale(matrix: gale.linalg.DMat): Vector[Double] =
+    Vector.tabulate(matrix.rows * matrix.cols)(index => matrix(index / matrix.cols, index % matrix.cols))
 
   private def tReceipt(
       name: String,

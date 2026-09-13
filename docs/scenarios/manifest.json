@@ -228,12 +228,19 @@
         "kind": "independent_r_multiphase_design_runwise_fit_and_full_covariance_fixed_effects",
         "evidence_scope": "independent_end_to_end",
         "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "peak_timing", "integral", "semantic_alignment", "rank", "residual_df"],
-        "description": "One typed trial table and one public model specification own sample, delay, probe, and RT-modulated probe phases, including the expected 2 + 24 + 12 + 12 task columns, provenance, centering, missingness, and an explicit empty cell. A checked-in R receipt validates the same formula structure, independently constructs per-run semantic coordinates with fmrihrf, plants the response, fits each run with base-R lm.fit, performs full-covariance fixed effects, and supplies five semantic T and two omnibus F results.",
+        "description": "One typed trial table and one public model specification own sample, delay, probe, and RT-modulated probe phases, including the expected 2 + 24 + 12 + 12 task columns, provenance, centering, missingness, and an explicit empty cell. A corrected-SPMG R receipt validates the same formula structure, independently constructs per-run semantic coordinates with fmrihrf, plants the response, fits each run with base-R lm.fit, performs full-covariance fixed effects, and supplies five semantic T and two omnibus F results.",
         "exporter_path": "tools/r-parity/generate_dms_receipt.R",
         "finalizer_path": "tools/r-parity/finalize_dms_receipt.py",
-        "fixture_path": "docs/scenarios/fixtures/fit.dms-multiphase-dsl.v1.r.json",
-        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/DmsRFixture.scala",
-        "receipt_schema": "scalafim-r-dms-fixture/v1"
+        "fixture_path": "docs/scenarios/fixtures/fit.dms-multiphase-dsl.corrected-spmg.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/CorrectedSpmgDmsRFixture.scala",
+        "receipt_schema": "scalafim-r-dms-fixture/v1",
+        "historical_receipts": [
+          {
+            "fixture_path": "docs/scenarios/fixtures/fit.dms-multiphase-dsl.v1.r.json",
+            "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/DmsRFixture.scala",
+            "status": "historical_pre_spmg_correction"
+          }
+        ]
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt designJVM/test", "sbt designJS/test", "sbt fitJVM/test", "sbt fitJS/test"],
@@ -270,12 +277,19 @@
         "kind": "independent_r_fmrihrf_sampled_nuisance_direct_qr",
         "evidence_scope": "independent_end_to_end",
         "comparison_metrics": ["absolute_l2_error", "relative_l2_error", "signed_correlation", "norm_ratio", "semantic_alignment", "rank", "residual_df"],
-        "description": "Public scan-aligned nuisance regressors retain semantic motion, derivative, declared-square, CompCor-like, and spike identities across two runs. Explicit Drop and 0.999 duplicate-report policies remove a constant and exact duplicate while retaining a near duplicate; structural diagnostics and a planted task fit are checked against independent fmrihrf rendering and base-R lm.fit T/F inference.",
+        "description": "Public scan-aligned nuisance regressors retain semantic motion, derivative, declared-square, CompCor-like, and spike identities across two runs. Explicit Drop and 0.999 duplicate-report policies remove a constant and exact duplicate while retaining a near duplicate; structural diagnostics and a planted task fit are checked against corrected-SPMG fmrihrf rendering and base-R lm.fit T/F inference.",
         "exporter_path": "tools/r-parity/generate_realistic_nuisance_receipt.R",
         "finalizer_path": "tools/r-parity/finalize_realistic_nuisance_receipt.py",
-        "fixture_path": "docs/scenarios/fixtures/fit.realistic-nuisance.v1.r.json",
-        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/RealisticNuisanceRFixture.scala",
-        "receipt_schema": "scalafim-r-realistic-nuisance-fixture/v1"
+        "fixture_path": "docs/scenarios/fixtures/fit.realistic-nuisance.corrected-spmg.v1.r.json",
+        "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/CorrectedSpmgRealisticNuisanceRFixture.scala",
+        "receipt_schema": "scalafim-r-realistic-nuisance-fixture/v1",
+        "historical_receipts": [
+          {
+            "fixture_path": "docs/scenarios/fixtures/fit.realistic-nuisance.v1.r.json",
+            "generated_scala_fixture_path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/fixtures/RealisticNuisanceRFixture.scala",
+            "status": "historical_pre_spmg_correction"
+          }
+        ]
       },
       "allowed_statuses": ["pass"],
       "acceptance_commands": [
@@ -570,9 +584,9 @@
     {
       "id": "group.first-level-bridge.v1",
       "tier": "cross_level_workflow",
-      "module": "group",
+      "module": "fit-estimates",
       "suite_class": "scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite",
-      "suite_path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
+      "suite_path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/GroupFirstLevelBridgeScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -580,15 +594,15 @@
         "description": "First-level TContrastResult estimates and SEs are bridged to GroupData, then fixed-effects inverse-variance inference is checked analytically."
       },
       "allowed_statuses": ["pass"],
-      "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "acceptance_commands": ["sbt fitEstimatesJVM/test", "sbt fitEstimatesJS/test"],
       "caveats": []
     },
     {
       "id": "group.first-level-to-group-known-effect.v1",
       "tier": "cross_level_workflow",
-      "module": "group",
+      "module": "fit-estimates",
       "suite_class": "scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite",
-      "suite_path": "modules/group/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
+      "suite_path": "modules/fit-estimates/shared/src/test/scala/scalafim/fmri/group/scenarios/FirstLevelToGroupKnownEffectScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
@@ -596,7 +610,7 @@
         "description": "Subject-level public first-level fits recover injected task effects, bridge into GroupData, and fixed-effects group inference matches an analytic inverse-variance oracle."
       },
       "allowed_statuses": ["pass"],
-      "acceptance_commands": ["sbt groupJVM/test", "sbt groupJS/test"],
+      "acceptance_commands": ["sbt fitEstimatesJVM/test", "sbt fitEstimatesJS/test"],
       "caveats": []
     },
     {
