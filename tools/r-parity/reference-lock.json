@@ -18,7 +18,7 @@
       "fmrihrf": {
         "environment_variable": "FMRIHRF_R",
         "repository": "bbuchsbaum/fmrihrf",
-        "revision": "9423be3f3c6eb65dbee180630779a5d4a6fb3867",
+        "revision": "daca7ba44456052200d361b579a2adb52ddc4d6e",
         "version": "0.4.0"
       },
       "fmrireg": {
