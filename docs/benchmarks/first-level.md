@@ -94,37 +94,38 @@ failure before changing the baseline.
 
 The checked-in receipt was measured on arm64 macOS with OpenJDK 25.0.1 and JMH
 1.37: one fork, two 500-millisecond warmup iterations, and four
-500-millisecond measurement iterations. It passes the admission policy but is
-not release eligible because the source checkout was dirty.
+500-millisecond measurement iterations. It passes the admission policy and was
+release eligible for its clean source commit. It remains a comparison baseline,
+not release evidence for a later candidate.
 
 | Work | Time | Allocation |
 | --- | ---: | ---: |
-| typed basis reconstruction | 0.575 us/op | 912 B/op |
-| direct coordinate contraction | 0.472 us/op | 272 B/op |
-| exact basis window functional | 1.538 us/op | 992 B/op |
-| trapezoid basis window functional | 73.312 us/op | 44,065 B/op |
-| production convolution | 932.514 us/op | 4,684,136 B/op |
-| retained FFT convolution | 9,357.702 us/op | 7,836,304 B/op |
-| retained direct-loop convolution | 2,683.811 us/op | 9,915,710 B/op |
-| exact epoch integration | 312.320 us/op | 55,883 B/op |
-| trapezoid epoch integration | 14,849.877 us/op | 5,864,230 B/op |
-| automatic global AR(4) estimation | 0.589 ms/op | 46,630 B/op |
-| fixed global AR(4) estimation | 0.726 ms/op | 30,251 B/op |
-| fixed runwise AR(4) estimation | 0.850 ms/op | 30,429 B/op |
-| compiled-design planning | 0.701 ms/op | 1,737,973 B/op |
-| OLS plan and fit | 1.939 ms/op | 664,497 B/op |
-| prepared OLS multiresponse fit | 1.693 ms/op | 444,263 B/op |
-| prepared OLS chunk assembly | 1.807 ms/op | 589,986 B/op |
-| prepared OLS single response | 0.032 ms/op | 12,224 B/op |
-| WLS plan and fit | 2.365 ms/op | 1,275,651 B/op |
-| prepared WLS fit | 1.695 ms/op | 444,264 B/op |
-| fixed-GLS plan and fit | 4.091 ms/op | 1,887,845 B/op |
-| prepared fixed-GLS fit | 2.095 ms/op | 1,133,257 B/op |
+| typed basis reconstruction | 0.407 us/op | 928 B/op |
+| direct coordinate contraction | 0.322 us/op | 272 B/op |
+| exact basis window functional | 1.078 us/op | 992 B/op |
+| trapezoid basis window functional | 51.031 us/op | 44,065 B/op |
+| production convolution | 1,175.589 us/op | 4,684,141 B/op |
+| retained FFT convolution | 6,405.560 us/op | 7,836,248 B/op |
+| retained direct-loop convolution | 1,865.266 us/op | 9,920,498 B/op |
+| exact epoch integration | 212.663 us/op | 55,835 B/op |
+| trapezoid epoch integration | 10,248.797 us/op | 5,864,166 B/op |
+| automatic global AR(4) estimation | 0.426 ms/op | 47,282 B/op |
+| fixed global AR(4) estimation | 0.533 ms/op | 29,550 B/op |
+| fixed runwise AR(4) estimation | 0.611 ms/op | 29,813 B/op |
+| compiled-design planning | 1.452 ms/op | 1,738,031 B/op |
+| OLS plan and fit | 2.004 ms/op | 664,499 B/op |
+| prepared OLS multiresponse fit | 1.745 ms/op | 444,264 B/op |
+| prepared OLS chunk assembly | 2.124 ms/op | 590,082 B/op |
+| prepared OLS single response | 0.034 ms/op | 12,208 B/op |
+| WLS plan and fit | 2.485 ms/op | 1,275,662 B/op |
+| prepared WLS fit | 1.778 ms/op | 444,264 B/op |
+| fixed-GLS plan and fit | 4.253 ms/op | 1,887,929 B/op |
+| prepared fixed-GLS fit | 2.188 ms/op | 1,133,287 B/op |
 
 These rounded values are for reading; the JSON receipt retains full precision,
 parameters, source hashes, and comparison ratios.
 
 The initial compiled-design measurement allocated 2,869,588 B/op. Building the
 unchanged canonical fingerprint in one pre-sized buffer reduced that to
-1,737,973 B/op, below the original 2,000,000 B/op ceiling without changing the
-budget or identity encoding.
+1,738,031 B/op on the clean candidate, below the original 2,000,000 B/op
+ceiling without changing the budget or identity encoding.
