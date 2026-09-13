@@ -117,11 +117,11 @@
         1.511469019609342
       ],
       [
-        -0.6369155192588595,
+        -0.6369155192588596,
         0.6766972728846502
       ],
       [
-        -0.5236270611744637,
+        -0.5236270611744638,
         1.5379253311162455
       ],
       [
@@ -129,7 +129,7 @@
         0.8094219165861546
       ],
       [
-        1.8571746954236097,
+        1.8571746954236095,
         0.3411710432236058
       ],
       [
@@ -235,32 +235,32 @@
   "outputs": {
     "coefficients": [
       [
-        1.2501373058862255,
-        -0.7546031550254187
+        1.2501373058862262,
+        -0.7546031550254185
       ],
       [
-        -0.18272064871243765,
-        0.8765975457169093
+        -0.18272064871243773,
+        0.8765975457169092
       ]
     ],
     "estimated_phi": [
-      0.21261356550749974,
+      0.21261356550749966,
       -0.30211449746882546
     ],
     "normalized_covariance": [
       [
         0.0636159358588043,
-        -0.010363251078950307
+        -0.010363251078950309
       ],
       [
-        -0.010363251078950307,
-        0.0434174487386817
+        -0.010363251078950309,
+        0.043417448738681697
       ]
     ],
     "residual_degrees_of_freedom": 22,
     "residual_variance": [
-      0.29699523344665535,
-      0.15910428451507283
+      0.29699523344665546,
+      0.15910428451507286
     ]
   },
   "receipt": {
@@ -280,13 +280,13 @@
       "generator_sha256": "fa57161a65bcb49b4d1f61e46d4872aa280e3236dd5605f1b33316df858914d8",
       "locale": "C",
       "lock_path": "tools/r-parity/reference-lock.json",
-      "lock_sha256": "083b2f7014de600b7184c79d9a06366202805abbf74eb8a1dfa104310f0836e3",
+      "lock_sha256": "69cf97010b03e7ad78ce9251665649708853b5cecbbd7cc45b3872a8b6b4118c",
       "runtime": "R 4.5.1"
     },
     "hashes": {
-      "generated_scala_sha256": "d4fc25acac16eb1e6b7ad843994ead04c56f913d4abd4ba5311f02e0466bd924",
-      "inputs_sha256": "9fc56f673ba620aa110fcbe8e9a64889dcff1cf4724488cc0ffa176bca0744c4",
-      "outputs_sha256": "40109c39499dad6045570ac2cf9f8538e2975bbaca89f160ef962d767a2e043b"
+      "generated_scala_sha256": "d40fcb38a3ca950220887604be9ff75a70cc380e45dad0a72c6639019669305d",
+      "inputs_sha256": "943a555e7672213a7274dc5ad72e461a0bdfacd0ce1ba5851f41aae2dada109d",
+      "outputs_sha256": "ff046f15184d5316c0bcd835a8136b4440b2cb9fd45239ce8b745ddf5018a5ec"
     },
     "producer_command": "bash tools/r-parity/regenerate_receipts.sh --r-only",
     "schema_version": "scalafim-r-fmriar-estimated-gls-fixture/v1",
