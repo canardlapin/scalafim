@@ -3,7 +3,7 @@ package scalafim.fmri.design
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept, NuisanceCheck}
 import scalafim.fmri.design.contrast.{ContrastRegistry, ContrastSpec}
 import scalafim.fmri.design.data.{Column, DataTable}
-import scalafim.fmri.design.fixtures.{RParityFixtures, Structural2x2RFixture}
+import scalafim.fmri.design.fixtures.{RParityFixtures, CorrectedSpmgStructuralRFixture}
 import scalafim.fmri.design.formula.EventModelBuilder
 import scalafim.fmri.design.hrf.HrfGenerators
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -145,7 +145,7 @@ class RParityCorpusSuite extends munit.FunSuite:
   }
 
   test("R parity corpus: fully crossed 2x2 SPMG3 structural design") {
-    val fixture = Structural2x2RFixture.eventStructural2x2
+    val fixture = CorrectedSpmgStructuralRFixture.eventStructural2x2
     val sf = SamplingFrame(blockLens = Seq(80), tr = Seq(1.0))
     val events = DataTable.fromColumns(
       "onset" -> Column.Doubles(Vector(2.0, 12.0, 22.0, 32.0, 42.0, 52.0, 62.0, 70.0)),

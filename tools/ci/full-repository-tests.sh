@@ -42,11 +42,11 @@ run_batch() {
 run_batch core-jvm \
   locusDataJVM/test pipelineJVM/test responseJVM/test responseLawsJVM/test \
   latentJVM/test arJVM/test hrfJVM/test hrfLawsJVM/test \
-  scenarioTestkitJVM/test designJVM/test
+  scenarioTestkitJVM/test designJVM/test providerSpikeJVM/test
 run_batch core-js \
   locusDataJS/test pipelineJS/test responseJS/test responseLawsJS/test \
   latentJS/test arJS/test hrfJS/test hrfLawsJS/test \
-  scenarioTestkitJS/test designJS/test
+  scenarioTestkitJS/test designJS/test providerSpikeJS/test
 
 run_batch image-surface-jvm \
   imageJVM/test imageViewJVM/test imageViewJava2dJVM/test thresholdJVM/test \
@@ -64,6 +64,11 @@ run_batch data-js \
   surfaceViewConnectivityJS/test surfaceViewExamplesJS/test spatialJS/test \
   atlasJS/test archiveJS/test archiveLnaJS/test \
   archivedResponseInteropJS/test datasetJS/test
+
+run_batch estimates-jvm \
+  estimatesJVM/test estimatesIoJVM/test fitEstimatesJVM/test
+run_batch estimates-js \
+  estimatesJS/test estimatesIoJS/test fitEstimatesJS/test
 
 run_batch analysis-jvm \
   modelJVM/test fitJVM/test firstLevelLawsJVM/test mvpaJVM/test mvpaFitJVM/test

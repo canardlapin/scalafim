@@ -82,8 +82,8 @@ runtime tests.
 
 The workflow files configure these lanes, but a local checkout cannot prove
 that GitHub branch protection marks a check as required or that an unpublished
-workflow has run remotely. Verify both facts in the canonical repository before
-release.
+workflow has run remotely. The final court therefore consumes captured GitHub
+API payloads and verifies them offline against the exact candidate commit.
 
 All third-party workflow actions are pinned to immutable commit SHAs. Ordinary
 sbt builds resolve external Scala source dependencies from immutable Git
@@ -128,8 +128,19 @@ executable documentation, and
 a release-eligible performance receipt. It emits a machine-readable report and
 fails closed when the source checkout or benchmark receipt is dirty, a required
 gate was skipped, or the report cannot be tied to one commit and toolchain.
-Remote workflow success and required branch protection remain owner-verified
-external evidence; local scripts cannot manufacture either fact.
+Remote workflow success, locked regeneration, and required branch protection
+remain external evidence. The local finalizer accepts them only through hashed
+payload captures tied to the canonical repository and candidate commit.
+
+At startup the court writes one run manifest containing a fresh run ID, the
+candidate commit and clean-source flag, provider and toolchain pins, the
+scenario-manifest hash, reference-lock hashes, and a hash of the gate inventory.
+Every gate receipt repeats that run ID, candidate commit, and input hash, and
+records its exact logical command, exit status, timezone-qualified start and end
+times, and log SHA-256. Finalization rejects stale or duplicate receipts,
+receipts from another run or commit, changed inputs, missing or modified logs,
+and any skipped or failed gate. Reports and logs belong under `target/` or an
+external output directory so collecting evidence does not dirty the candidate.
 
 Run it only from the candidate commit:
 
@@ -138,12 +149,88 @@ bash tools/ci/first-level-release.sh
 ```
 
 The court writes logs, the release JMH receipt, and `report.json` under
-`target/first-level-release/` by default. The checked-in
-[`release-report.json`](release-report.json) is the current transparent
-snapshot. Its `release_eligible` field remains false whenever the snapshot was
-captured from a dirty checkout, local gates were not run, the benchmark receipt
-is blocked, or URLs for remote first-level CI, locked reference regeneration,
-and branch-protection verification were not supplied.
+`target/first-level-release/` by default. The run manifest and six structured
+gate receipts are retained beside those logs so the report can be checked
+offline. A supplied performance receipt is accepted only when its candidate
+commit, benchmark workload hash, benchmark and policy source hashes, and raw
+report hashes match the current candidate and available artifacts. The checked-in
+[`release-report.json`](release-report.json) is a transparent historical
+snapshot and is never release evidence for a later commit. The exact-candidate
+report is generated and checked from the external evidence directory. Its
+`release_eligible` field remains false whenever the snapshot was captured from
+a dirty checkout, local gates were not run, the benchmark receipt is blocked,
+or any external evidence record is less than `verified`.
+
+### External evidence bundles
+
+Set `SCALAFIM_RELEASE_EVIDENCE_BUNDLE` to a
+`scalafim-first-level-external-evidence/v1` JSON file, or pass the same file to
+`finalize_first_level_release.py --external-evidence`. Each of its three
+records contains `kind`, `repository`, `candidate_commit`, `observed_at`,
+`source_url`, `payload_path`, and `payload_sha256`. Payload paths are relative
+to the bundle and may not escape it.
+
+The remote-CI record captures the run plus its jobs and must show successful
+completion of `full-repository`, `focused-first-level`, and
+`scientific-coverage`. The record maps those workflow job ids to the display
+names returned by the jobs API; those captured names become the required
+branch-protection contexts. The regeneration record applies the same checks to
+both `r-receipts` and `python-receipts`, requires their evidence artifacts, and
+binds every generated fixture and selected reference lock to the candidate.
+The branch record binds a hashed protection snapshot for the inspected branch
+and must contain every context resolved from the candidate CI run.
+
+Collect workflow evidence only with explicit run IDs after both candidate runs
+have reached a terminal state:
+
+```sh
+python3 -S tools/ci/collect_first_level_run_evidence.py \
+  --candidate <full-commit-sha> \
+  --ci-run-id <first-level-run-id> \
+  --regeneration-run-id <release-regeneration-run-id> \
+  --output-dir <external-evidence-directory>
+```
+
+The collector uses the repository-local GitHub wrapper, requests the exact
+rerun attempt, and refuses to select a run by recency or display title. It
+retains the raw run, job, and artifact API responses plus both downloaded
+regeneration manifests. The offline validator checks every capture hash,
+requires the `release` regeneration lane, and compares the manifests' package
+locks and generated-file hashes with the candidate checkout.
+
+Add the branch-policy snapshot to the same directory after the CI record has
+resolved the exact check names:
+
+```sh
+python3 -S tools/ci/collect_first_level_branch_evidence.py \
+  --candidate <full-commit-sha> \
+  --branch main \
+  --output-dir <external-evidence-directory>
+```
+
+This read-only collector captures the branch reference, classic protection,
+and active repository rulesets. A classic `404` can be satisfied by an active
+ruleset that applies to the branch. An absent policy, inaccessible API, stale
+branch reference, or effective policy missing any candidate CI check remains
+unverified or failed; the collector never changes GitHub settings.
+
+External evidence states are fail-closed:
+
+- `unverified`: absent, malformed, foreign, stale, hash-mismatched, or
+  structurally incomplete evidence;
+- `provided`: a legacy URL without a payload, or a valid run that has not yet
+  completed;
+- `failed`: a completed workflow or valid branch-policy snapshot that does not
+  meet the release contract;
+- `verified`: a hashed payload whose parsed facts satisfy the contract for the
+  requested repository, branch, and commit.
+
+The legacy `SCALAFIM_RELEASE_CI_URL`,
+`SCALAFIM_RELEASE_RECEIPTS_URL`, and
+`SCALAFIM_RELEASE_BRANCH_PROTECTION_URL` variables remain readable for old
+automation, but a URL alone is only `provided` and cannot make a release
+eligible. The validator performs no network calls and never treats a
+record-level `status: verified` assertion as evidence.
 
 Maintainers may set `SCALAFIM_RELEASE_ALLOW_DIRTY_DIAGNOSTICS=1` to collect all
 local gate logs while developing. Such a report remains blocked by construction.

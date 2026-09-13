@@ -4,14 +4,14 @@ import scalafim.fmri.hrf.HrfCombinators.*
 
 class HrfNormalizationSuite extends munit.FunSuite:
 
-  // Independent fmrihrf f42da39 receipt, evaluated by R on the package's
+  // Independent corrected fmrihrf receipt (2026-09-12), evaluated by R on the package's
   // declared fixed grids. These pin the scale itself, not only normalized
   // output identities that an incorrect self-consistent implementation could
   // also satisfy.
-  private val rSpmFactor = 491.16496534333595
-  private val rCanonicalPeak = 1.7539456206329838
-  private val rCanonicalIntegral = 9.835035504315636
-  private val rPerBasisPeaks = Vector(1.7539456206329838, 0.6852932984245073, 0.454927494001017)
+  private val rSpmFactor = 41.64609031738775968
+  private val rCanonicalPeak = 0.175441162195463851
+  private val rCanonicalIntegral = 0.83906358697328087
+  private val rPerBasisPeaks = Vector(0.175441162195463851, 0.068556620283581685, 0.084320978694579773)
 
   private val spmGrid =
     Vector.tabulate(1600)(i => 32.0 * i.toDouble / 1599.0)

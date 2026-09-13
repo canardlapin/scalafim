@@ -77,11 +77,15 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
   private def runTwoByTwoScenario(): ScenarioResult =
     val plan = buildPlan(dataset(Vector.fill(80)(Vector(0.0, 0.0))))
     val schema = plan.model.designSchema.getOrElse(fail("public model must expose a design schema"))
-    val responses = synthesize(plan.model)
-    val fitted = FitPlanExecutor.fit(buildPlan(dataset(responses))) match
+    val synthesis = synthesize(plan.model)
+    val fitted = FitPlanExecutor.fit(buildPlan(dataset(synthesis.noisy))) match
       case Right(value: DenseFmriFitResult) => value
       case Right(value) => fail(s"ordinary least squares returned ${value.engine} instead of a dense fit")
       case Left(error) => fail(s"ordinary least squares fit failed: ${error.message}")
+    val noiselessFitted = FitPlanExecutor.fit(buildPlan(dataset(synthesis.noiseless))) match
+      case Right(value: DenseFmriFitResult) => value
+      case Right(value) => fail(s"noiseless ordinary least squares returned ${value.engine} instead of a dense fit")
+      case Left(error) => fail(s"noiseless ordinary least squares fit failed: ${error.message}")
     val f1 = factor(F1)
     val f2 = factor(F2)
     val task = term("task")
@@ -111,11 +115,19 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     val interactionCompiled = interaction.compile(schema)
     val simpleResult = simpleCompiled.flatMap(_.evaluate(fitted))
     val interactionResult = interactionCompiled.flatMap(_.evaluate(fitted))
-    val f1MainResult = f1Main.compile(schema).flatMap(_.evaluate(fitted))
+    val f1MainCompiled = f1Main.compile(schema)
+    val f1MainResult = f1MainCompiled.flatMap(_.evaluate(fitted))
     val omnibusResult = omnibus.compile(schema).flatMap(_.evaluate(fitted))
-    val simpleEstimate = simpleResult.toOption.map(_.estimates(0))
-    val interactionEstimate = interactionResult.toOption.map(_.estimates(0))
-    val f1MainEstimate = f1MainResult.toOption.map(_.estimates(0))
+    val noiselessSimple = simpleCompiled.flatMap(_.evaluate(noiselessFitted)).toOption.map(_.estimates.toVector)
+    val noiselessInteraction = interactionCompiled.flatMap(_.evaluate(noiselessFitted)).toOption.map(_.estimates.toVector)
+    val noiselessMain = f1MainCompiled.flatMap(_.evaluate(noiselessFitted)).toOption.map(_.estimates.toVector)
+    val independentCoefficients = independentHouseholderFit(
+      schema.matrixValues,
+      GaleTestMatrix.fromRows(synthesis.noisy)
+    )
+    val simpleOracle = simpleCompiled.toOption.map(compiled => multiply(compiled.weights, independentCoefficients).row(0).toVector)
+    val interactionOracle = interactionCompiled.toOption.map(compiled => multiply(compiled.weights, independentCoefficients).row(0).toVector)
+    val mainOracle = f1MainCompiled.toOption.map(compiled => multiply(compiled.weights, independentCoefficients).row(0).toVector)
     val structuralCells = schema.columns.flatMap { column =>
       column.origin match
         case event: StructuralColumnOrigin.Event => Some(event.cell)
@@ -139,9 +151,15 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("basis omnibus has twelve independent rows", omnibusResult.toOption.exists(_.numeratorDegreesOfFreedom == 12), omnibusResult.fold(_.message, result => s"numerator df=${result.numeratorDegreesOfFreedom}")),
         ScenarioHarness.fact("simple effect carries estimability", simpleCompiled.toOption.exists(_.estimability.rowSpacePreserved), "simple effect was not estimable"),
         ScenarioHarness.fact("interaction carries estimability", interactionCompiled.toOption.exists(_.estimability.rowSpacePreserved), "interaction was not estimable"),
-        ScenarioHarness.fact("simple effect recovers the planted difference", simpleEstimate.exists(value => math.abs(value - 0.6) < 0.1), s"estimate=${simpleEstimate.getOrElse(Double.NaN)} expected=0.6"),
-        ScenarioHarness.fact("interaction recovers the planted difference", interactionEstimate.exists(value => math.abs(value + 0.1) < 0.1), s"estimate=${interactionEstimate.getOrElse(Double.NaN)} expected=-0.1"),
-        ScenarioHarness.fact("main effect recovers the planted difference", f1MainEstimate.exists(value => math.abs(value - 1.3) < 0.1), s"estimate=${f1MainEstimate.getOrElse(Double.NaN)} expected=1.3"),
+        ScenarioHarness.fact("synthesis exposes planted beta coordinates", synthesis.plantedBeta.length == schema.matrixValues.cols && synthesis.plantedBeta.forall(_.isFinite), s"beta count=${synthesis.plantedBeta.length}"),
+        ScenarioHarness.fact("synthesis exposes the fixed noise realization", synthesis.noise.length == schema.matrixValues.rows && synthesis.noise.forall(_.length == 2), s"noise rows=${synthesis.noise.length}"),
+        ScenarioHarness.fact("canonical hypotheses retain raw beta-coordinate meaning", simpleCompiled.toOption.exists(_.metadata.responseFunctionals.isEmpty), simpleCompiled.fold(_.message, value => s"functionals=${value.metadata.responseFunctionals}")),
+        ScenarioHarness.fact("noiseless simple effect equals the planted raw-coordinate difference", noiselessSimple.exists(close(_, Vector(0.6, 0.66), 1e-9)), s"estimate=$noiselessSimple expected=${Vector(0.6, 0.66)}"),
+        ScenarioHarness.fact("noiseless interaction equals the planted raw-coordinate difference", noiselessInteraction.exists(close(_, Vector(-0.1, -0.11), 1e-9)), s"estimate=$noiselessInteraction expected=${Vector(-0.1, -0.11)}"),
+        ScenarioHarness.fact("noiseless main effect equals the planted raw-coordinate difference", noiselessMain.exists(close(_, Vector(1.3, 1.43), 1e-9)), s"estimate=$noiselessMain expected=${Vector(1.3, 1.43)}"),
+        ScenarioHarness.fact("noisy simple effect matches independent Householder QR", simpleResult.toOption.exists(result => simpleOracle.exists(close(result.estimates.toVector, _, 1e-9))), s"actual=${simpleResult.toOption.map(_.estimates.toVector)} oracle=$simpleOracle"),
+        ScenarioHarness.fact("noisy interaction matches independent Householder QR", interactionResult.toOption.exists(result => interactionOracle.exists(close(result.estimates.toVector, _, 1e-9))), s"actual=${interactionResult.toOption.map(_.estimates.toVector)} oracle=$interactionOracle"),
+        ScenarioHarness.fact("noisy main effect matches independent Householder QR", f1MainResult.toOption.exists(result => mainOracle.exists(close(result.estimates.toVector, _, 1e-9))), s"actual=${f1MainResult.toOption.map(_.estimates.toVector)} oracle=$mainOracle"),
         ScenarioHarness.fact("fitted coefficients are finite", fitted.coefficients.value.valuesRowMajor.forall(_.isFinite), "non-finite coefficients")
       ),
       Vector.empty
@@ -526,7 +544,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
     }
     val duplicateStructuralRank = duplicateRankError.flatMap(_.bind(duplicate.coefficientAxis).toOption)
     val reducedDesign = dropColumn(duplicateDesign, dropped = taskBIndex)
-    val response = GaleTestMatrix.fromRows(synthesize(plan.model))
+    val response = GaleTestMatrix.fromRows(synthesize(plan.model).noisy)
     val reducedFit = Ols.unsafeFit(
       DesignMatrix.unsafe(reducedDesign),
       ResponseBlock.unsafe(response)
@@ -773,6 +791,95 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
       residuals: DMat,
       rank: Int
   )
+
+  /** Test-only Householder QR over primitive arrays. This deliberately avoids
+    * ScalaFIM and Gale factorization/fitting APIs so the noisy S07 expectation
+    * is computed from the exact realized X/Y by an independent algorithm.
+    */
+  private def independentHouseholderFit(design: DMat, response: DMat): DMat =
+    require(design.rows == response.rows, "independent QR rows must align")
+    require(design.rows >= design.cols, "independent QR requires a tall design")
+    val rows = design.rows
+    val columns = design.cols
+    val responses = response.cols
+    val a = design.valuesRowMajor.toArray
+    val b = response.valuesRowMajor.toArray
+    var column = 0
+    while column < columns do
+      var squaredNorm = 0.0
+      var row = column
+      while row < rows do
+        val value = a(row * columns + column)
+        squaredNorm += value * value
+        row += 1
+      val norm = math.sqrt(squaredNorm)
+      require(norm > 1e-12, s"independent QR found a rank-deficient column $column")
+      val diagonal = a(column * columns + column)
+      val alpha = if diagonal >= 0.0 then -norm else norm
+      val reflector = new Array[Double](rows - column)
+      reflector(0) = diagonal - alpha
+      row = column + 1
+      while row < rows do
+        reflector(row - column) = a(row * columns + column)
+        row += 1
+      var reflectorNorm = 0.0
+      var index = 0
+      while index < reflector.length do
+        reflectorNorm += reflector(index) * reflector(index)
+        index += 1
+      require(reflectorNorm > 0.0, s"independent QR formed an empty reflector at column $column")
+
+      var target = column
+      while target < columns do
+        var dot = 0.0
+        index = 0
+        while index < reflector.length do
+          dot += reflector(index) * a((column + index) * columns + target)
+          index += 1
+        val scale = 2.0 * dot / reflectorNorm
+        index = 0
+        while index < reflector.length do
+          a((column + index) * columns + target) -= scale * reflector(index)
+          index += 1
+        target += 1
+
+      target = 0
+      while target < responses do
+        var dot = 0.0
+        index = 0
+        while index < reflector.length do
+          dot += reflector(index) * b((column + index) * responses + target)
+          index += 1
+        val scale = 2.0 * dot / reflectorNorm
+        index = 0
+        while index < reflector.length do
+          b((column + index) * responses + target) -= scale * reflector(index)
+          index += 1
+        target += 1
+      column += 1
+
+    val coefficients = Array.fill(columns * responses)(0.0)
+    var responseColumn = 0
+    while responseColumn < responses do
+      var row = columns - 1
+      while row >= 0 do
+        var total = b(row * responses + responseColumn)
+        var right = row + 1
+        while right < columns do
+          total -= a(row * columns + right) * coefficients(right * responses + responseColumn)
+          right += 1
+        val diagonal = a(row * columns + row)
+        require(math.abs(diagonal) > 1e-12, s"independent QR found a singular R diagonal at $row")
+        coefficients(row * responses + responseColumn) = total / diagonal
+        row -= 1
+      responseColumn += 1
+    GaleTestMatrix.fromRows(
+      Vector.tabulate(columns) { row =>
+        Vector.tabulate(responses) { responseColumn =>
+          coefficients(row * responses + responseColumn)
+        }
+      }
+    )
 
   /** A deliberately independent, test-only normal-equation oracle. It is used
     * only after reducing the duplicate column to a full-rank design, so this
@@ -1059,7 +1166,14 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
   private def rowsIndex(first: String, second: String, repetition: Int): Int =
     (Vector("A", "B", "C").indexOf(first) * 3 + Vector("X", "Y", "Z").indexOf(second)) * 2 + repetition
 
-  private def synthesize(model: FmriModel): Vector[Vector[Double]] =
+  private final case class TwoByTwoSynthesis(
+      plantedBeta: Vector[Double],
+      noise: Vector[Vector[Double]],
+      noiseless: Vector[Vector[Double]],
+      noisy: Vector[Vector[Double]]
+  )
+
+  private def synthesize(model: FmriModel): TwoByTwoSynthesis =
     val schema = model.designSchema.getOrElse(fail("synthesis requires a structural schema"))
     val matrix = model.designMatrix
     val beta = schema.columns.map {
@@ -1080,7 +1194,7 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
               case _ => -0.1 * cellEffect
           case _ => 0.0
     }
-    Vector.tabulate(matrix.rows) { row =>
+    val noiseless = Vector.tabulate(matrix.rows) { row =>
       val signal =
         var total = 0.0
         var column = 0
@@ -1088,11 +1202,19 @@ class StructuralFirstLevelScenarioSuite extends munit.FunSuite:
           total += matrix(row, column) * beta(column)
           column += 1
         total
-      Vector(
-        signal + 0.03 * math.sin(row.toDouble * 0.37),
-        1.1 * signal + 0.03 * math.cos(row.toDouble * 0.29)
-      )
+      Vector(signal, 1.1 * signal)
     }
+    val noise = Vector.tabulate(matrix.rows) { row =>
+      Vector(0.03 * math.sin(row.toDouble * 0.37), 0.03 * math.cos(row.toDouble * 0.29))
+    }
+    TwoByTwoSynthesis(
+      plantedBeta = beta,
+      noise = noise,
+      noiseless = noiseless,
+      noisy = noiseless.zip(noise).map { case (signal, perturbation) =>
+        signal.zip(perturbation).map(_ + _)
+      }
+    )
 
   private def synthesizeThreeByThree(model: FmriModel): Vector[Vector[Double]] =
     val schema = model.designSchema.getOrElse(fail("3x3 synthesis requires a structural schema"))

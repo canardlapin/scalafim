@@ -1,0 +1,74 @@
+{
+  "schema_version": "scalafim-parity-environment-lock/v1",
+  "note": "Mixed-TR receipt regenerated after scientific SPMG correction. Source hashes bind the exact R and DESCRIPTION files, including uncommitted corrections; revisions alone are not a clean-tree claim. Legacy receipt lock is unchanged.",
+  "r": {
+    "locale": "C",
+    "version": "4.5.1",
+    "packages": {
+      "fmrihrf": {
+        "repository": "bbuchsbaum/fmrihrf",
+        "revision": "b7b3a74057d71a3d135084a15ea9adab8bd31ba3",
+        "version": "0.4.0",
+        "source_md5": {
+          "DESCRIPTION": "e3430cfcce72fbcc4492c8fca0cd9309",
+          "R/RcppExports.R": "c811700756db01ea959a4de4929eb409",
+          "R/all_generic.R": "ffdee9bff32034806cc6f538f332ee4c",
+          "R/cli.R": "f0d4e4a7df7c57ea91710b52c821a0a9",
+          "R/deriv-methods.R": "6b0998cf24894c67c943e98701314900",
+          "R/evaluate-helpers.R": "11c6805c50f2b895f296d69fe0c46634",
+          "R/feature-regressor.R": "0503f7849e60d5051092ed04889adc6a",
+          "R/fmrihrf-package.R": "f80ddf372323e274faa0e914eb9648e0",
+          "R/hrf-formula.R": "c61966bd2e622c42e268be777d4451ba",
+          "R/hrf-functions.R": "a48edf3b31dd3650aa17a1fa8c1d47cf",
+          "R/hrf.R": "7084f4f31a8388cfec2d10be035d6b97",
+          "R/hrf_decorators.R": "e04c4cc008bfd56fc2abeb63b3e8089e",
+          "R/hrf_from_coefficients.R": "7c6bebd2d79737d82b794442ecaed487",
+          "R/neural_input_methods.R": "e6efeb4d89b21a6cfde83ad697d7955b",
+          "R/penalty_matrix_methods.R": "d3e4abc0da21b52a8f7dbd4621a9628c",
+          "R/reconstruction_matrix-methods.R": "bde69a21c3fe077822af21d3429ec4d2",
+          "R/reg-constructor.R": "7056da20672401503cf1e21c56edac2f",
+          "R/reg-methods.R": "cc38f8e80fbd857ef1d2c0bed6660a42",
+          "R/regressor-design.R": "5c452d4b4b98e769d8940282f552ce3d",
+          "R/regressor-set.R": "b961528ee2a4b4a8243469054d15ff0c",
+          "R/sampling_frame.R": "ff00da19ea496a09f13c27d250960b12",
+          "R/utils-internal.R": "2b2bed63361d7d64e0ee2e7c61937d74"
+        }
+      },
+      "fmridesign": {
+        "repository": "bbuchsbaum/fmridesign",
+        "revision": "6907d0b43cb0390c331406ff6e8d6608b541d69d",
+        "version": "0.6.0",
+        "source_md5": {
+          "DESCRIPTION": "458a742d5c05ed820afce078246267e0",
+          "R/baseline_model.R": "de071eccd9356ea704973b5835d5c3c6",
+          "R/basis.R": "8ed874998a97144fe1cd6127656e32d4",
+          "R/condition_basis_list.R": "216db18d877590bcc8f3882fb6810ad9",
+          "R/contrast.R": "cdcb54c590d70a699ba2bc5a55e9e2a5",
+          "R/contrast_pipeline.R": "021f96976c895e2629261888c4def5b0",
+          "R/covariate.R": "c809cccdb0c377697063a7668177687d",
+          "R/design_colmap.R": "353470c012353ec50e1c0d6443b89cf6",
+          "R/design_generics.R": "b6438f52776dd27d421047baa597149e",
+          "R/design_map.R": "2ef9fcd73081e9419f67408225403cfe",
+          "R/design_metadata.R": "29196d6a124d708c73b5d32b14b44858",
+          "R/event-classes.R": "96654d9b5adfcc8847876b0be35ca7b9",
+          "R/event_model.R": "ff5172cbe24f6efb79f9f673e8b5b1c1",
+          "R/event_model_helpers.R": "4a7382b76307b83295eb1d06fcf67fa9",
+          "R/event_vector.R": "a3deab1d70135946361c192f6986302a",
+          "R/extension_registry.R": "3ebfee9c56004d0c0df9cf0365d22ec2",
+          "R/feature.R": "4efc8b70005e3376dfd912b0e311c962",
+          "R/fmrihrf-imports.R": "70f44a7b0b32bd702ea107f9f1b481f0",
+          "R/fmrihrf-reexports.R": "5e4693b7b989c72defa248a91072d089",
+          "R/globals.R": "4315fda583469b6d00291c9289ab3826",
+          "R/hrf-formula.R": "14561a71bffdb25e4a9ea437bf531072",
+          "R/namespace-imports.R": "a79d8f3062f616c5d6b885965121896d",
+          "R/naming-utils.R": "66c034f419ef410d8e9353ac5742baa4",
+          "R/residualize.R": "14c2c1c118f20e75ae95a62d93a8e464",
+          "R/sampling_frame.R": "8b184decb86a0ae3333983572cabc5b2",
+          "R/utils-internal.R": "1a70aa637babe82aeedff81f470ccc44",
+          "R/validate.R": "c3a2bd3b325f8ae37a212a79aab1215b",
+          "R/zzz.R": "4b0062cd8c9b86942c53ebc2e6021cc7"
+        }
+      }
+    }
+  }
+}

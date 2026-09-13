@@ -15,11 +15,11 @@ object Deriv:
 
     hrf.descriptor.derivative match
       case DerivativePolicy.Spmg(params, columns) if columns.value == nb =>
-        spmg(params, columns, times, eps)
+        spmg(params, columns, times)
       case _ =>
         numeric(hrf, times, eps)
 
-  private def spmg(params: SpmgParams, columns: BasisCount, times: Seq[Lag], eps: Seconds): Mat =
+  private def spmg(params: SpmgParams, columns: BasisCount, times: Seq[Lag]): Mat =
     val nb = columns.value
     if nb == 1 then
       val out = times.map(t => HrfFunctions.spmg1Deriv(t, params.p1, params.p2, params.a1)).toArray
@@ -35,17 +35,12 @@ object Deriv:
       Mat.unsafe(times.length, 2, out)
     else
       val out = new Array[Double](times.length * nb)
-      val h = eps.value
       var i = 0
       while i < times.length do
         val t = times(i)
         out(i * nb) = HrfFunctions.spmg1Deriv(t, params.p1, params.p2, params.a1)
         out(i * nb + 1) = HrfFunctions.spmg1SecondDeriv(t, params.p1, params.p2, params.a1)
-        val tp = Lag(t.value + h)
-        val tm = Lag(t.value - h)
-        val fp = HrfFunctions.spmg1SecondDeriv(tp, params.p1, params.p2, params.a1)
-        val fm = HrfFunctions.spmg1SecondDeriv(tm, params.p1, params.p2, params.a1)
-        out(i * nb + 2) = (fp - fm) / (2.0 * h)
+        out(i * nb + 2) = HrfFunctions.spmg1DispersionTimeDeriv(t, params.p1, params.a1)
         i += 1
       Mat.unsafe(times.length, nb, out)
 

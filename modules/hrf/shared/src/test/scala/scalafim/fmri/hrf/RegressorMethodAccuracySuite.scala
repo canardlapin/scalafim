@@ -61,7 +61,7 @@ class RegressorMethodAccuracySuite extends munit.FunSuite:
 
   test("sub-bin impulse projection matches the R reference"):
     // The independent R convolution uses the same linear-hat projection. At
-    // p=0.33 its measured gap from R's exact loop is 0.007461368714330785;
+    // p=0.33 its measured gap from R's exact loop is 0.0018037755177099102;
     // the former snapped representation had a 0.210628 gap.
     val reg = Regressor(Seq(10.0, 23.5, 44.2), Hrfs.SPMG1)
     def gapAt(p: Double): Double =
@@ -70,7 +70,7 @@ class RegressorMethodAccuracySuite extends munit.FunSuite:
         reg.evaluate(grid, precision = p, method = Regressor.EvalMethod.Loop)
       )
 
-    assertEqualsDouble(gapAt(0.33), 0.007461368714330785, 1e-12, "the R-matching projection gap")
+    assertEqualsDouble(gapAt(0.33), 0.0018037755177099102, 1e-12, "the R-matching projection gap")
     Seq(0.1, 0.05, 0.01).foreach { p =>
       assertEqualsDouble(gapAt(p), 0.0, 1e-12, s"onsets are grid-representable at $p, so the gap should vanish")
     }
@@ -91,7 +91,7 @@ class RegressorMethodAccuracySuite extends munit.FunSuite:
     envelope.zip(envelope.tail).foreach { (coarse, fine) =>
       assert(fine < coarse, s"worst-case quantization gap did not shrink ($coarse -> $fine)")
     }
-    val rEnvelope = Seq(0.05455397, 0.01336092, 0.003128416, 0.0004815086, 0.0001212584)
+    val rEnvelope = Seq(0.0054575797193609932, 0.0013366264011703509, 0.00031296675709553343, 0.000048186992784138294, 0.000012135126960327591)
     envelope.zip(rEnvelope).zipWithIndex.foreach { case ((actual, expected), index) =>
       assertEqualsDouble(actual, expected, 1e-8, s"R projection envelope at index $index")
     }

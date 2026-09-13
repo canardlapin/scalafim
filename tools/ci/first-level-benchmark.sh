@@ -30,7 +30,7 @@ sbt "${sbt_args[@]}" \
   "fitBenchJVM/Jmh/run $jmh_common -p timepoints=360 -p responses=128 -p order=4 -rff $output_dir/ar-estimation.json .*ArEstimationBenchmark.*" \
   "fitBenchJVM/Jmh/run $jmh_common -p timepoints=360 -p predictors=32 -p responses=128 -rff $output_dir/fit.json .*FirstLevelFitBenchmark.*"
 
-python -S tools/benchmark/finalize_first_level_receipt.py \
+python3 -S tools/benchmark/finalize_first_level_receipt.py \
   --raw "$output_dir/hrf-basis.json" \
   --raw "$output_dir/hrf-convolution.json" \
   --raw "$output_dir/hrf-integration.json" \

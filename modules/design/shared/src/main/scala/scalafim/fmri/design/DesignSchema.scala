@@ -1,5 +1,6 @@
 package scalafim.fmri.design
 
+import gale.linalg.{DMat, Matrix}
 import scalafim.fmri.design.contrast.LevelId
 import scalafim.fmri.design.linalg.QrDecomposition
 import scalafim.fmri.hrf.{BasisElementId, BasisRole, Hrf, Seconds}
@@ -708,11 +709,16 @@ object DesignFingerprint:
       columns: Vector[StructuralColumn],
       audit: DesignAudit
   ): String =
-    val values = matrix.data
-      .map(v => java.lang.Double.doubleToLongBits(v).toString)
-      .mkString(",")
+    val data = matrix.data
+    val values = new java.lang.StringBuilder(math.max(16, data.length * 21))
+    var index = 0
+    while index < data.length do
+      if index > 0 then
+        val _ = values.append(',')
+      values.append(java.lang.Double.doubleToLongBits(data(index)))
+      index += 1
     val cols = columns.map(_.canonical).mkString(";")
-    s"$schemaVersion|matrix=${matrix.rows}x${matrix.cols}|rows=${rows.canonical}|columns=$cols|audit=${audit.canonical}|values=$values"
+    s"$schemaVersion|matrix=${matrix.rows}x${matrix.cols}|rows=${rows.canonical}|columns=$cols|audit=${audit.canonical}|values=${values.toString}"
 
   private def hash(value: String): String =
     // FNV-style 64-bit rolling hash.  It is an identity, not a security hash;
@@ -724,18 +730,26 @@ object DesignFingerprint:
       i += 1
     java.lang.Long.toHexString(h)
 
-/** Matrix plus its structural schema. */
-final case class DesignSchema private (
-    matrix: Mat,
-    rows: RowLayout,
-    columns: Vector[StructuralColumn],
-    audit: DesignAudit,
-    rankPreview: RankPreview,
-    fingerprint: DesignFingerprint
+/** An owned numerical snapshot plus its structural schema.
+  *
+  * Construct through [[DesignSchema.validated]] when changing numerical or
+  * scientific content. There is no unchecked case-class copy: the fingerprint
+  * and rank evidence must describe the retained immutable Gale matrix.
+  */
+final class DesignSchema private (
+    val matrixValues: DMat,
+    val rows: RowLayout,
+    val columns: Vector[StructuralColumn],
+    val audit: DesignAudit,
+    val rankPreview: RankPreview,
+    val fingerprint: DesignFingerprint
 ):
-  require(matrix.rows == rows.rows, "matrix rows must equal RowLayout rows")
-  require(matrix.cols == columns.length, "matrix columns must equal structural column count")
+  require(matrixValues.rows == rows.rows, "matrix rows must equal RowLayout rows")
+  require(matrixValues.cols == columns.length, "matrix columns must equal structural column count")
   require(audit.rankPreview.contains(rankPreview), "design audit must retain the authoritative rank preview")
+
+  /** Detached compatibility export. Prefer [[matrixValues]] for repeated reads. */
+  def matrix: Mat = DesignSchema.exportMatrix(matrixValues)
 
   def rowLayout: RowLayout = rows
 
@@ -763,8 +777,8 @@ final case class DesignSchema private (
       Left(DesignError.InvalidSchema("rendered labels must be non-empty"))
     else
       Right(
-        DesignSchema(
-          matrix = matrix,
+        new DesignSchema(
+          matrixValues = matrixValues,
           rows = rows,
           columns = columns.zip(labels).map { case (column, label) =>
             StructuralColumn(column.id, column.ordinal, column.origin, label, label, column.hrfScale)
@@ -846,14 +860,16 @@ final case class DesignSchema private (
         var outCol = 0
         while outCol < projection.sourceColumnIndices.length do
           val sourceCol = projection.sourceColumnIndices(outCol)
-          out(outRow * projection.sourceColumnIndices.length + outCol) = matrix(sourceRow, sourceCol)
+          out(outRow * projection.sourceColumnIndices.length + outCol) = matrixValues(sourceRow, sourceCol)
           outCol += 1
         outRow += 1
-      RunwiseDesignSlice(
+      new RunwiseDesignSlice(
         run = run,
         sourceRowIndices = sourceRows,
         sourceColumnIndices = projection.sourceColumnIndices,
-        matrix = Mat.unsafe(sourceRows.length, projection.sourceColumnIndices.length, out),
+        matrixValues = Matrix.tabulate(sourceRows.length, projection.sourceColumnIndices.length) { (row, col) =>
+          out(row * projection.sourceColumnIndices.length + col)
+        },
         axis = projection.axis,
         projection = projection
       )
@@ -875,7 +891,7 @@ final case class DesignSchema private (
           var support = 0.0
           var row = 0
           while row < sourceRows.length do
-            val value = math.abs(matrix(sourceRows(row), column))
+            val value = math.abs(matrixValues(sourceRows(row), column))
             if value > support then support = value
             row += 1
           val disposition = runColumnDisposition(origin, run, support > supportTolerance)
@@ -972,19 +988,22 @@ final case class DesignSchema private (
       case StructuralColumnOrigin.Legacy(_, _, _) => true
 
 /** A checked run-local design view used to lower run-specific hypotheses. */
-final case class RunwiseDesignSlice private[design] (
-    run: RunIndex,
-    sourceRowIndices: Vector[Int],
-    sourceColumnIndices: Vector[Int],
-    matrix: Mat,
-    axis: CoefficientAxis,
-    projection: RunCoefficientProjection
+final class RunwiseDesignSlice private[design] (
+    val run: RunIndex,
+    val sourceRowIndices: Vector[Int],
+    val sourceColumnIndices: Vector[Int],
+    val matrixValues: DMat,
+    val axis: CoefficientAxis,
+    val projection: RunCoefficientProjection
 ):
   require(sourceRowIndices.nonEmpty, "runwise design slices must contain at least one source row")
   require(sourceColumnIndices.nonEmpty, "runwise design slices must contain at least one source column")
-  require(matrix.rows == sourceRowIndices.length, "runwise slice rows must match source row indices")
-  require(matrix.cols == axis.predictors, "runwise slice columns must match coefficient axis")
+  require(matrixValues.rows == sourceRowIndices.length, "runwise slice rows must match source row indices")
+  require(matrixValues.cols == axis.predictors, "runwise slice columns must match coefficient axis")
   require(sourceColumnIndices.length == axis.predictors, "runwise source columns must match coefficient axis")
+
+  /** Detached compatibility export; cannot mutate the design bound to [[axis]]. */
+  def matrix: Mat = DesignSchema.exportMatrix(matrixValues)
 
 /** The disposition of a source-design column in one run-local estimand. */
 enum RunColumnDisposition:
@@ -1110,17 +1129,26 @@ object CoefficientAxis:
     )
 
 object DesignSchema:
+  private[design] def exportMatrix(values: DMat): Mat =
+    val data = new Array[Double](values.rows * values.cols)
+    values.copyRowMajorTo(data)
+    Mat.unsafe(values.rows, values.cols, data)
+
   def validated(
       matrix: Mat,
       rows: RowLayout,
       columns: Vector[StructuralColumn],
       audit: DesignAudit = DesignAudit()
   ): Either[DesignError, DesignSchema] =
-    validateShape(matrix, rows, columns).map { _ =>
-      val rankPreview = RankPreview.from(matrix, columns)
+    // Snapshot before deriving any evidence. Neither the caller's Mat nor an
+    // exported compatibility view may later change the matrix being certified.
+    val snapshot = Mat.unsafe(matrix.rows, matrix.cols, matrix.data.clone())
+    validateShape(snapshot, rows, columns).map { _ =>
+      val rankPreview = RankPreview.from(snapshot, columns)
       val verifiedAudit = audit.copy(rankPreview = Some(rankPreview))
-      val fingerprint = DesignFingerprint.from(matrix, rows, columns, verifiedAudit)
-      DesignSchema(matrix, rows, columns, verifiedAudit, rankPreview, fingerprint)
+      val fingerprint = DesignFingerprint.from(snapshot, rows, columns, verifiedAudit)
+      val values = Matrix.tabulate(snapshot.rows, snapshot.cols)(snapshot.apply)
+      new DesignSchema(values, rows, columns, verifiedAudit, rankPreview, fingerprint)
     }
 
   def legacy(

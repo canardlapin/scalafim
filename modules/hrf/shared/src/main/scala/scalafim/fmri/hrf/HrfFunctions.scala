@@ -67,14 +67,14 @@ object HrfFunctions:
     val scale = math.sqrt(2.0 / (3.0 * sd * math.pow(math.Pi, 0.25)))
     scale * a
 
-  private[hrf] val spmg1C = 1.274527e-13
+  private[hrf] val spmg1C = 1.0 / (6.0 * 1307674368000.0)
 
-  def spmg1(lag: Lag, P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833): Double =
+  def spmg1(lag: Lag, P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0): Double =
     val x = lag.value
     if x < 0.0 then 0.0
     else math.exp(-x) * (A1 * math.pow(x, P1) - spmg1C * math.pow(x, P2))
 
-  def spmg1Deriv(lag: Lag, P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833): Double =
+  def spmg1Deriv(lag: Lag, P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0): Double =
     val x = lag.value
     if x < 0.0 then 0.0
     else
@@ -82,7 +82,7 @@ object HrfFunctions:
       val term2 = spmg1C * math.pow(x, P2 - 1.0) * (P2 - x)
       math.exp(-x) * (term1 - term2)
 
-  def spmg1SecondDeriv(lag: Lag, P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833): Double =
+  def spmg1SecondDeriv(lag: Lag, P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0): Double =
     val x = lag.value
     if x < 0.0 then 0.0
     else
@@ -93,6 +93,25 @@ object HrfFunctions:
       val d2p = spmg1C * ((P2 - 1.0) * math.pow(x, P2 - 2.0) * (P2 - x) - math.pow(x, P2 - 1.0))
 
       math.exp(-x) * (d1p - d2p - (d1 - d2))
+
+  /** Raw SPM-sign dispersion difference, with fixed positive-component mean
+    * and mass. The undershoot is unchanged and cancels. Scaling and
+    * orthogonalization are separate from this continuous kernel.
+    */
+  def spmg1DispersionDeriv(lag: Lag, P1: Double = 5.0, A1: Double = 1.0 / 120.0): Double =
+    val mass = A1 * math.exp(logGamma(P1 + 1.0))
+    mass * (gammaPdf(lag, P1 + 1.0, 1.0) - gammaPdf(lag, (P1 + 1.0) / 1.01, 1.0 / 1.01)) / 0.01
+
+  /** Time derivative of the dispersion column. */
+  def spmg1DispersionTimeDeriv(lag: Lag, P1: Double = 5.0, A1: Double = 1.0 / 120.0): Double =
+    val x = lag.value
+    if x <= 0.0 then 0.0
+    else
+      val a = P1 + 1.0
+      val d = 1.01
+      val first = gammaPdf(lag, a, 1.0) * ((a - 1.0) / x - 1.0)
+      val second = gammaPdf(lag, a / d, 1.0 / d) * ((a / d - 1.0) / x - 1.0 / d)
+      A1 * math.exp(logGamma(a)) * (first - second) / 0.01
 
   def sineBasis(lag: Lag, span: Seconds = 24.s, nBasis: Int = 5): Array[Double] =
     val x = lag.value
@@ -322,13 +341,13 @@ object Hrfs:
       Vec.unsafe(Array(HrfFunctions.gaussianPdf(t, mean, sd)))
     }
 
-  def spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833, span: Seconds = 24.s): Hrf =
+  def spmg1(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0, span: Seconds = 24.s): Hrf =
     val params = SpmgParams(P1, P2, A1)
     Hrf.of("SPMG1", nbasis = 1, span = span, descriptor = Some(HrfDescriptor.spmg(HrfKind.Spmg1, 1, span, params))) { t =>
       Vec.unsafe(Array(HrfFunctions.spmg1(t, P1, P2, A1)))
     }
 
-  def spmg1TemporalDeriv(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833, span: Seconds = 24.s): Hrf =
+  def spmg1TemporalDeriv(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0, span: Seconds = 24.s): Hrf =
     val params = SpmgParams(P1, P2, A1)
     val descriptor = HrfDescriptor.derived(
       "SPMG1_temporal_deriv",
@@ -341,7 +360,7 @@ object Hrfs:
       Vec.unsafe(Array(HrfFunctions.spmg1Deriv(t, P1, P2, A1)))
     }
 
-  def spmg1DispersionDeriv(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 0.0833, span: Seconds = 24.s): Hrf =
+  def spmg1DispersionDeriv(P1: Double = 5.0, P2: Double = 15.0, A1: Double = 1.0 / 120.0, span: Seconds = 24.s): Hrf =
     val params = SpmgParams(P1, P2, A1)
     val descriptor = HrfDescriptor.derived(
       "SPMG1_dispersion_deriv",
@@ -351,7 +370,7 @@ object Hrfs:
       integration = IntegrationPolicy.SpmgDispersionDeriv(params)
     )
     Hrf.of("SPMG1_dispersion_deriv", nbasis = 1, span = span, descriptor = Some(descriptor)) { t =>
-      Vec.unsafe(Array(HrfFunctions.spmg1SecondDeriv(t, P1, P2, A1)))
+      Vec.unsafe(Array(HrfFunctions.spmg1DispersionDeriv(t, P1, A1)))
     }
 
   def mexhat(mean: Double = 6.0, sd: Double = 2.0, span: Seconds = 24.s): Hrf =
@@ -677,12 +696,14 @@ object Hrfs:
   val Gamma: Hrf = gamma()
   val Gaussian: Hrf = gaussian()
   val SPMG1: Hrf = spmg1()
+  /** Raw informed basis; no implicit orthogonalization or equal-norm scaling. */
   val SPMG2: Hrf =
     HrfCombinators.bindBasis(
       Seq(spmg1(), spmg1TemporalDeriv()),
       name = Some("SPMG2")
     )
 
+  /** Canonical, analytic time derivative, and response dispersion difference. */
   val SPMG3: Hrf =
     HrfCombinators.bindBasis(
       Seq(spmg1(), spmg1TemporalDeriv(), spmg1DispersionDeriv()),

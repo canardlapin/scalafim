@@ -90,8 +90,8 @@ class FirstLevelFixedEffectsEstimatesSuite extends munit.FunSuite:
     // Independent 2x2 inverse calculation using only the R fixture's task
     // covariance blocks, run coefficients and run variances (run-local offsets
     // do not participate in the pooled coefficient vector).
-    assertEqualsDouble(result.estimates(0, 0), -1.4023927727840713, 1e-7)
-    assertEqualsDouble(result.estimates(0, 1), 2.0939242387249237, 1e-7)
+    assertEqualsDouble(result.estimates(0, 0), R.taskContrastEstimate(1), 1e-7)
+    assertEqualsDouble(result.estimates(0, 1), R.taskContrastEstimate(0), 1e-7)
     val narrow = checked(FirstLevelFixedEffectsEstimates.prepare(f.fitPlan, f.request(), ChunkSize.unsafe(1), selection))
     val blocks = execute(narrow, f)
     for v <- 0 until 2 do assertEqualsDouble(selected(blocks(v)).estimates(0, 0), result.estimates(0, v), 1e-12)

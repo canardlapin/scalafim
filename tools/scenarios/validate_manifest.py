@@ -23,7 +23,12 @@ R_AR_CENSOR_GLS_FIXTURE_SCHEMA = "scalafim-r-ar-censor-gls-fixture/v1"
 LOCAL_AXIS_FIXTURE_SCHEMA = "scalafim-local-axis-oracle/v1"
 SLOW_ORACLE_FIXTURE_SCHEMA = "scalafim-slow-oracle/v1"
 REFERENCE_LOCK_SCHEMA = "scalafim-parity-environment-lock/v1"
-REFERENCE_LOCK_PATH = Path(__file__).resolve().parents[2] / "tools" / "r-parity" / "reference-lock.json"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+REFERENCE_LOCK_PATH = REPO_ROOT / "tools" / "r-parity" / "reference-lock.json"
+APPROVED_REFERENCE_LOCKS = {
+  Path("tools/r-parity/reference-lock.json"),
+  Path("tools/r-parity/mixed-tr-reference-lock.json"),
+}
 ALLOWED_PLATFORMS = {"jvm", "js"}
 ALLOWED_STATUSES = {"pass", "pass_with_caveats", "fail"}
 ALLOWED_EVIDENCE_SCOPES = {
@@ -108,26 +113,50 @@ def validate_locked_environment(
     fixture_path: Path,
     payload: dict[str, Any],
     errors: list[str],
+    repo_root: Path = REPO_ROOT,
 ) -> None:
   receipt = payload.get("receipt")
   source = payload.get("source")
   if not isinstance(receipt, dict) or not isinstance(source, dict):
     return
 
-  lock = read_json(REFERENCE_LOCK_PATH, errors)
-  if not isinstance(lock, dict):
-    return
-  if lock.get("schema_version") != REFERENCE_LOCK_SCHEMA:
-    errors.append(f"{REFERENCE_LOCK_PATH}: schema_version must be {REFERENCE_LOCK_SCHEMA}")
-    return
-
   environment = receipt.get("environment")
   if not isinstance(environment, dict):
     errors.append(f"{fixture_path}: receipt.environment must be an object")
     return
-  expected_lock_path = str(REFERENCE_LOCK_PATH.relative_to(REFERENCE_LOCK_PATH.parents[2]))
-  expected_lock_hash = hashlib.sha256(REFERENCE_LOCK_PATH.read_bytes()).hexdigest()
-  if environment.get("lock_path") != expected_lock_path:
+
+  lock_value = environment.get("lock_path")
+  if not isinstance(lock_value, str) or not lock_value.strip():
+    errors.append(f"{fixture_path}: receipt.environment.lock_path must name an approved reference lock")
+    return
+  lock_relative = Path(lock_value)
+  if lock_relative.is_absolute():
+    errors.append(f"{fixture_path}: receipt.environment.lock_path escapes the repository")
+    return
+  resolved_root = repo_root.resolve()
+  selected_lock = (resolved_root / lock_relative).resolve()
+  try:
+    selected_lock.relative_to(resolved_root)
+  except ValueError:
+    errors.append(f"{fixture_path}: receipt.environment.lock_path escapes the repository")
+    return
+  if lock_relative not in APPROVED_REFERENCE_LOCKS:
+    errors.append(f"{fixture_path}: receipt.environment.lock_path is not an approved repository lock")
+    return
+  if not selected_lock.is_file():
+    errors.append(f"{fixture_path}: reference lock does not exist: {lock_value}")
+    return
+
+  lock = read_json(selected_lock, errors)
+  if not isinstance(lock, dict):
+    return
+  if lock.get("schema_version") != REFERENCE_LOCK_SCHEMA:
+    errors.append(f"{selected_lock}: schema_version must be {REFERENCE_LOCK_SCHEMA}")
+    return
+
+  expected_lock_path = lock_relative.as_posix()
+  expected_lock_hash = hashlib.sha256(selected_lock.read_bytes()).hexdigest()
+  if lock_value != expected_lock_path:
     errors.append(f"{fixture_path}: receipt.environment.lock_path must be {expected_lock_path}")
   if environment.get("lock_sha256") != expected_lock_hash:
     errors.append(f"{fixture_path}: receipt.environment.lock_sha256 is stale")
@@ -135,7 +164,6 @@ def validate_locked_environment(
     errors.append(f"{fixture_path}: receipt.environment.locale must be C")
 
   producer = source.get("producer")
-  repo_root = REFERENCE_LOCK_PATH.parents[2]
   producer_path = repo_root / producer if isinstance(producer, str) else None
   if producer_path is None or not producer_path.is_file():
     errors.append(f"{fixture_path}: source.producer must name an existing generator")
@@ -148,7 +176,7 @@ def validate_locked_environment(
   if isinstance(schema, str) and schema.startswith("scalafim-r-"):
     r_lock = lock.get("r")
     if not isinstance(r_lock, dict):
-      errors.append(f"{REFERENCE_LOCK_PATH}: r must be an object")
+      errors.append(f"{selected_lock}: r must be an object")
       return
     if source.get("r_version") != r_lock.get("version"):
       errors.append(f"{fixture_path}: source.r_version disagrees with the environment lock")
@@ -163,10 +191,13 @@ def validate_locked_environment(
           key = f"{package}_{suffix}"
           if key in source and source.get(key) != package_lock.get(suffix):
             errors.append(f"{fixture_path}: source.{key} disagrees with the environment lock")
+        source_hash_key = f"{package}_source_md5"
+        if source_hash_key in source and source.get(source_hash_key) != package_lock.get("source_md5"):
+          errors.append(f"{fixture_path}: source.{source_hash_key} disagrees with the environment lock")
   elif schema == FIXTURE_SCHEMA:
     python_lock = lock.get("python")
     if not isinstance(python_lock, dict):
-      errors.append(f"{REFERENCE_LOCK_PATH}: python must be an object")
+      errors.append(f"{selected_lock}: python must be an object")
       return
     if environment.get("runtime") != f"Python {python_lock.get('version')}":
       errors.append(f"{fixture_path}: receipt.environment.runtime disagrees with the Python lock")

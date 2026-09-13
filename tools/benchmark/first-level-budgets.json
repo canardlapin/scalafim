@@ -15,6 +15,11 @@
       "max_score": 20.0,
       "score_unit": "ms/op"
     },
+    "scalafim.fmri.fit.FirstLevelFitBenchmark.compiledDesignPlanning": {
+      "max_allocation_bytes_per_op": 2000000,
+      "max_score": 20.0,
+      "score_unit": "ms/op"
+    },
     "scalafim.fmri.fit.FirstLevelFitBenchmark.fixedGlsPlanAndFit": {
       "max_allocation_bytes_per_op": 3000000,
       "max_score": 60.0,

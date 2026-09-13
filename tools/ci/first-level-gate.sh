@@ -37,18 +37,21 @@ fi
 echo "[first-level-ci] JDK $java_version"
 
 echo "[first-level-ci] validating scenario manifest with Python stdlib only"
-python -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json
+python3 -S tools/ci/check_test_inventory.py --check
+python3 -S tools/scenarios/validate_manifest.py docs/scenarios/manifest.json
 
 echo "[first-level-ci] checking checked-in fixture coherence without external packages"
-python -S -m unittest tools/r-parity/test_receipt_tools.py
-python -S tools/r-parity/check_receipts.py
+python3 -S -m unittest tools/r-parity/test_receipt_tools.py
+python3 -S tools/r-parity/check_receipts.py
 
 echo "[first-level-ci] checking executable documentation and benchmark receipt coherence"
-python -S tools/docs/check_first_level_docs.py --check
-python -S tools/benchmark/finalize_first_level_receipt.py \
+python3 -S tools/docs/check_first_level_docs.py --check
+python3 -S tools/benchmark/finalize_first_level_receipt.py \
   --check docs/benchmarks/receipts/first-level-current.json
-python -S tools/ci/finalize_first_level_release.py \
-  --check docs/release-report.json
+
+# The checked-in report is a historical transparent snapshot. An exact
+# candidate report is necessarily generated after checkout and is validated by
+# first-level-release.sh from its external evidence directory.
 
 sbt_cache_root=${SCALAFIM_SBT_CACHE_ROOT:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/scalafim-first-level-sbt}
 mkdir -p "$sbt_cache_root"
@@ -60,29 +63,21 @@ sbt_args=(
   "-Dsbt.ivy.home=$sbt_cache_root/ivy"
   "-Dsbt.supershell=false"
 )
-gates=(
-  firstLevelLawsJVM/Test/scalafmtCheck
-  scenarioTestkitJVM/test
-  scenarioTestkitJS/test
-  arJVM/test
-  arJS/test
-  hrfJVM/test
-  hrfJS/test
-  hrfLawsJVM/test
-  hrfLawsJS/test
-  designJVM/test
-  designJS/test
-  modelJVM/test
-  modelJS/test
-  fitJVM/test
-  fitJS/test
-  firstLevelLawsJVM/test
-  firstLevelLawsJS/test
-)
+run_batch() {
+  local name=$1
+  shift
+  echo "[first-level-ci] running $name"
+  sbt "${sbt_args[@]}" "$@"
+}
 
-echo "[first-level-ci] invoking focused gates:"
-for gate in "${gates[@]}"; do
-  echo "  - $gate"
-done
-sbt "${sbt_args[@]}" "${gates[@]}"
+# Each group gets a fresh sbt JVM so Scala.js linking and Node runners cannot
+# accumulate across the whole first-level court.
+run_batch formatting firstLevelLawsJVM/Test/scalafmtCheck
+run_batch first-level-jvm \
+  scenarioTestkitJVM/test arJVM/test hrfJVM/test hrfLawsJVM/test \
+  designJVM/test modelJVM/test fitJVM/test firstLevelLawsJVM/test
+run_batch first-level-js-a \
+  scenarioTestkitJS/test arJS/test hrfJS/test hrfLawsJS/test
+run_batch first-level-js-b \
+  designJS/test modelJS/test fitJS/test firstLevelLawsJS/test
 echo "[first-level-ci] focused first-level gates passed"

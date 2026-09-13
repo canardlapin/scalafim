@@ -33,7 +33,7 @@ enum BasisCountError:
 final case class SpmgParams(
     p1: Double = 5.0,
     p2: Double = 15.0,
-    a1: Double = 0.0833
+    a1: Double = 1.0 / 120.0
 )
 
 enum SampledProfileError:

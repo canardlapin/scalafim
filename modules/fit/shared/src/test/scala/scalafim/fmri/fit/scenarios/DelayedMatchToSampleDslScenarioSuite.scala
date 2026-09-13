@@ -5,7 +5,7 @@ import scalafim.fmri.design.*
 import scalafim.fmri.design.baseline.Intercept
 import scalafim.fmri.fit.*
 import scalafim.fmri.fit.StructuralHypothesisDsl.*
-import scalafim.fmri.fit.fixtures.DmsRFixture
+import scalafim.fmri.fit.fixtures.CorrectedSpmgDmsRFixture as DmsRFixture
 import scalafim.fmri.hrf.*
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, FmriModelBuilder, ModelBuildSpec, ModelError}
@@ -198,6 +198,38 @@ class DelayedMatchToSampleDslScenarioSuite extends munit.FunSuite:
       DmsRFixture.fExpected.get("probe-shape").map(_.statistic),
       DmsRFixture.fExpected.get("delay-high-omnibus").map(_.statistic)
     ).flatten
+    val sourceColumns = fixed.sufficientStatistics.effectiveSourceColumnIndices
+    val designMatrix = plan.model.designMatrix
+    val designKeys = sourceColumns.map(plan.model.columnNames)
+    val rDesignKeys = DmsRFixture.designColumnKeys.map(_.replace("_rt_centered_", "_rt_"))
+    val designSums = sourceColumns.map { column =>
+      var total = 0.0
+      var row = 0
+      while row < designMatrix.rows do
+        total += designMatrix(row, column)
+        row += 1
+      total
+    }
+    val designSquaredNorms = sourceColumns.map { column =>
+      var total = 0.0
+      var row = 0
+      while row < designMatrix.rows do
+        val value = designMatrix(row, column)
+        total += value * value
+        row += 1
+      total
+    }
+    val designProbe = sourceColumns.map { column =>
+      var total = 0.0
+      var row = 0
+      while row < designMatrix.rows do
+        val index = row + 1
+        total += (math.sin(index * 0.131) + math.cos(index * 0.071)) * designMatrix(row, column)
+        row += 1
+      total
+    }
+    val fixedCoefficients = Vector.tabulate(fixed.predictors)(row => fixed.coefficients(row, 0))
+    val fixedCovariance = flatten(fixed.coefficientCovariance.unsafeMatrixForVoxelPosition(0))
 
     ScenarioHarness.result(
       "fit.dms-multiphase-dsl.v1",
@@ -237,6 +269,13 @@ class DelayedMatchToSampleDslScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("receipt declares independent R sources", DmsRFixture.fmridesignRevision.nonEmpty && DmsRFixture.fmrihrfRevision.nonEmpty && DmsRFixture.fmridesignVersion == "0.6.0" && DmsRFixture.fmrihrfVersion == "0.4.0", s"fmridesign=${DmsRFixture.fmridesignVersion}@${DmsRFixture.fmridesignRevision} fmrihrf=${DmsRFixture.fmrihrfVersion}@${DmsRFixture.fmrihrfRevision}"),
         ScenarioHarness.fact("receipt declares every cross-system difference", DmsRFixture.acceptedDifferences.length == 4, s"differences=${DmsRFixture.acceptedDifferences.length}")
       ) ++
+        Vector(ScenarioHarness.fact("estimable task coordinates align with corrected R", designKeys == rDesignKeys, s"actual=${designKeys.mkString(",")} expected=${rDesignKeys.mkString(",")}")) ++
+        ScenarioHarness.comparisonMetrics("corrected R task-design sums", designSums, DmsRFixture.designColumnSums, DesignReceiptProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R task-design squared norms", designSquaredNorms, DmsRFixture.designColumnSquaredNorms, DesignReceiptProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R task-design deterministic projections", designProbe, DmsRFixture.designColumnProbe, DesignReceiptProfile) ++
+        runFitReceipts(fixed) ++
+        ScenarioHarness.comparisonMetrics("corrected R pooled coefficients", fixedCoefficients, DmsRFixture.fixedCoefficients, FitReceiptProfile) ++
+        ScenarioHarness.comparisonMetrics("corrected R pooled covariance", fixedCovariance, DmsRFixture.fixedCovariance.flatten, FitReceiptProfile) ++
         tReceipt("sample-face-minus-scene", sampleWindowEvaluation) ++
         tReceipt("delay-high-minus-low", delayWindowEvaluation) ++
         tReceipt("probe-mismatch-at-six", probeAtSixEvaluation) ++
@@ -259,6 +298,48 @@ class DelayedMatchToSampleDslScenarioSuite extends munit.FunSuite:
     minimumSignedCorrelation = 0.99999999,
     maxNormRatioDeviation = 2e-6
   )
+  private val DesignReceiptProfile = ScenarioComparisonTolerance.bounded(
+    maxAbsoluteL2Error = 1e-7,
+    maxRelativeL2Error = 1e-8,
+    minimumSignedCorrelation = 0.999999999,
+    maxNormRatioDeviation = 1e-8
+  )
+  private val FitReceiptProfile = ScenarioComparisonTolerance.bounded(
+    maxAbsoluteL2Error = 1e-6,
+    maxRelativeL2Error = 1e-6,
+    minimumSignedCorrelation = 0.99999999,
+    maxNormRatioDeviation = 1e-6
+  )
+
+  private def runFitReceipts(fixed: FixedEffectsFmriFitResult): Vector[ScenarioObservation] =
+    fixed.perRunContributions.zipWithIndex.flatMap { case (contribution, index) =>
+      FixedEffects.inverse(contribution.precisionByVoxel.head, contribution.runIndex, 0) match
+        case Left(error) =>
+          Vector(ScenarioHarness.fact(s"corrected R run ${index + 1} covariance recovers", passed = false, detail = error.message))
+        case Right(covariance) =>
+          val coefficients = Vector.tabulate(covariance.rows) { row =>
+            var value = 0.0
+            var column = 0
+            while column < covariance.cols do
+              value += covariance(row, column) * contribution.precisionWeightedCoefficients(column, 0)
+              column += 1
+            value
+          }
+          ScenarioHarness.comparisonMetrics(
+            s"corrected R run ${index + 1} coefficients",
+            coefficients,
+            DmsRFixture.runCoefficients(index),
+            FitReceiptProfile
+          ) ++ ScenarioHarness.comparisonMetrics(
+            s"corrected R run ${index + 1} covariance",
+            flatten(covariance),
+            DmsRFixture.runCovariance(index).flatten,
+            FitReceiptProfile
+          )
+    }
+
+  private def flatten(matrix: gale.linalg.DMat): Vector[Double] =
+    Vector.tabulate(matrix.rows * matrix.cols)(index => matrix(index / matrix.cols, index % matrix.cols))
 
   private def tReceipt(
       name: String,
