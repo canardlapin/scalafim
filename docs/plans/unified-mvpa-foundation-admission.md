@@ -16,9 +16,10 @@ prototype remains test-only and does not freeze M1 production signatures.
 
 The production change was prepared from clean ScalaFIM remote base
 `528c302e454697055bc9af31c9a6eca684f019e3`, independently of the dirty primary
-checkout. The root build now owns exact source pins for Alder and Resample4s,
-updates Multivar to the mutually compatible landed closure, and retains the
-already-qualified Gale revision. The unpublished
+checkout, and published as ScalaFIM implementation revision
+`37dba04c4e6eb68ec9695c01bfb2ded5f7298826`. The root build now owns exact
+source pins for Alder and Resample4s, updates Multivar to the mutually
+compatible landed closure, and retains the already-qualified Gale revision. The unpublished
 `mvpaFoundationAdmissionJVM/JS` module directly consumes those pins plus the
 production response and locus adapters.
 

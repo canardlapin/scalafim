@@ -3,7 +3,8 @@
   "recordedAt": "2026-09-13T16:11:12.613Z",
   "productionAdmission": true,
   "admissionStatus": "exact-provider-root-build-green",
-  "sourcePublicationStatus": "candidate-not-yet-committed",
+  "sourcePublicationStatus": "remote-main",
+  "implementationRevision": "37dba04c4e6eb68ec9695c01bfb2ded5f7298826",
   "resolvedGap": "ScalaFIM's real root build pins and exercises the immutable Alder, Resample4s, Multivar, Gale, linop4s, locus4s, and Ravel provider closure on JVM and Scala.js. Alder binds exact-once designs at the normalized child-stage seed; its strict precompiled route remains the negative control.",
   "tickets": {
     "providerAdmission": "bd-01M2BNEA7C953AXD5FJ8YDNW9R",
