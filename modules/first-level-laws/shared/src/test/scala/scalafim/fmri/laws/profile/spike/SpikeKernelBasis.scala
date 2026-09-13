@@ -2,38 +2,50 @@ package scalafim.fmri.laws.profile.spike
 
 import gale.linalg.DMat
 
-/** Kernel basis `Phi` (`m x nFine`, row-major by basis column) from an SVD of
-  * the family and its parameter derivatives sampled over a shape grid.
+/** Kernel basis `Phi` (`m x nFine`, row-major by basis column) from an SVD of the family and its parameter derivatives
+  * sampled over a shape grid.
   *
-  * `h_theta ~= Phi' c(theta)` with `c(theta) = Phi h_theta`; coefficient jets
-  * follow from the family's analytic jets by linearity.
+  * `h_theta ~= Phi' c(theta)` with `c(theta) = Phi h_theta`; coefficient jets follow from the family's analytic jets by
+  * linearity.
   */
 final class SpikeKernelBasis(
     val fineTimes: Array[Double],
     val phi: Array[Double],
     val m: Int,
-    val singularValues: Array[Double]):
+    val singularValues: Array[Double]
+):
 
   val nFine: Int = fineTimes.length
 
   def truncated(rank: Int): SpikeKernelBasis =
     require(rank >= 1 && rank <= m, s"rank $rank outside 1..$m")
-    new SpikeKernelBasis(fineTimes, java.util.Arrays.copyOf(phi, rank * nFine), rank, java.util.Arrays.copyOf(singularValues, rank))
+    new SpikeKernelBasis(
+      fineTimes,
+      java.util.Arrays.copyOf(phi, rank * nFine),
+      rank,
+      java.util.Arrays.copyOf(singularValues, rank)
+    )
 
   /** `c(theta)` into `out(0 until m)`; `kernelScratch` has length `nFine`. */
   def coefficientsInto(tau: Double, logSd: Double, kernelScratch: Array[Double], out: Array[Double]): Unit =
     SpikeGaussianFamily.valueInto(fineTimes, tau, logSd, kernelScratch)
     projectInto(kernelScratch, 0, out, 0)
 
-  /** Six-component coefficient jet, component-major: `out(comp * m + j)`;
-    * `kernelScratch` has length `6 * nFine`.
+  /** Six-component coefficient jet, component-major: `out(comp * m + j)`; `kernelScratch` has length `6 * nFine`.
     */
   def coefficientJetInto(tau: Double, logSd: Double, kernelScratch: Array[Double], out: Array[Double]): Unit =
     coefficientJetInto(tau, logSd, kernelScratch, out, SpikeGaussianFamily.JetComponents)
 
   /** Coefficient jet with `components` in {3, 6}: value and first derivatives, or all six. */
-  def coefficientJetInto(tau: Double, logSd: Double, kernelScratch: Array[Double], out: Array[Double], components: Int): Unit =
-    if components >= SpikeGaussianFamily.JetComponents then SpikeGaussianFamily.jetInto(fineTimes, tau, logSd, kernelScratch)
+  def coefficientJetInto(
+      tau: Double,
+      logSd: Double,
+      kernelScratch: Array[Double],
+      out: Array[Double],
+      components: Int
+  ): Unit =
+    if components >= SpikeGaussianFamily.JetComponents then
+      SpikeGaussianFamily.jetInto(fineTimes, tau, logSd, kernelScratch)
     else SpikeGaussianFamily.firstOrderJetInto(fineTimes, tau, logSd, kernelScratch)
     var comp = 0
     while comp < components do
@@ -67,14 +79,18 @@ final class SpikeKernelBasis(
 
 object SpikeKernelBasis:
 
-  final case class ErrorCurve(valueError: Array[Double], firstDerivativeError: Array[Double], secondDerivativeError: Array[Double]):
+  final case class ErrorCurve(
+      valueError: Array[Double],
+      firstDerivativeError: Array[Double],
+      secondDerivativeError: Array[Double]
+  ):
     /** Smallest rank whose held-out value error is below `tolerance`, if any. */
     def rankFor(tolerance: Double): Option[Int] =
       val idx = valueError.indexWhere(_ <= tolerance)
       if idx < 0 then None else Some(idx + 1)
 
-  /** Sample the family (and, optionally, its derivatives) over a grid of
-    * shapes and take the SVD; the left singular vectors are the basis.
+  /** Sample the family (and, optionally, its derivatives) over a grid of shapes and take the SVD; the left singular
+    * vectors are the basis.
     */
   def compile(
       domain: SpikeGaussianFamily.Domain,

@@ -9,7 +9,8 @@ final class SpikeCohort(
     val trueTau: Array[Double],
     val trueLogSd: Array[Double],
     val trueBeta: Array[Double],
-    val snr: Double)
+    val snr: Double
+)
 
 object SpikeCohort:
 
@@ -70,7 +71,8 @@ object SpikeCohort:
         var nuis = 0.0
         var f = 0
         while f < nuisanceCols do
-          nuis += nuisance(t * nuisanceCols + f) * (if f == 0 then 10.0 * signalSd else signalSd) * (if f == 0 then 1.0 else 0.3)
+          nuis += nuisance(t * nuisanceCols + f) * (if f == 0 then 10.0 * signalSd else signalSd) * (if f == 0 then 1.0
+                                                                                                     else 0.3)
           f += 1
         y(v * nT + t) = signal(t) + noise + nuis
         t += 1
@@ -84,9 +86,8 @@ final class SpikeOracleResult(conditions: Int):
   val beta: Array[Double] = new Array[Double](conditions)
   var exactEvaluations: Int = 0
 
-/** Dense time-domain oracle: the exact kernel (no basis) convolved per
-  * shape, whitened and nuisance-projected, scored on a fine shape grid, then
-  * refined by a shrinking compass search with exact evaluations.
+/** Dense time-domain oracle: the exact kernel (no basis) convolved per shape, whitened and nuisance-projected, scored
+  * on a fine shape grid, then refined by a shrinking compass search with exact evaluations.
   */
 final class SpikeOracle(
     schedule: SpikeSchedule,
@@ -96,7 +97,8 @@ final class SpikeOracle(
     domain: SpikeGaussianFamily.Domain,
     tauGrid: Int,
     logSdGrid: Int,
-    compassLevels: Int = 7):
+    compassLevels: Int = 7
+):
 
   private val nT = schedule.nT
   private val c = schedule.conditions
@@ -105,6 +107,7 @@ final class SpikeOracle(
   private val gridLogSd = new Array[Double](shapes)
   private val tauStep = (domain.tauMax - domain.tauMin) / (tauGrid - 1)
   private val logSdStep = (domain.logSdMax - domain.logSdMin) / (logSdGrid - 1)
+
   /** Orthonormal projected designs, shape-major: `q((s * nT + t) * c + i)`. */
   private val q = new Array[Double](shapes * nT * c)
   private val kernel = new Array[Double](fineTimes.length)
@@ -128,7 +131,17 @@ final class SpikeOracle(
         SpikeGaussianFamily.valueInto(fineTimes, gridTau(s), gridLogSd(s), kernel)
         var cond = 0
         while cond < c do
-          SpikeSchedule.convolveSampledInto(schedule, cond, kernel, 0, kernel.length, fine, all, s * c + cond, c * shapes)
+          SpikeSchedule.convolveSampledInto(
+            schedule,
+            cond,
+            kernel,
+            0,
+            kernel.length,
+            fine,
+            all,
+            s * c + cond,
+            c * shapes
+          )
           cond += 1
         s += 1
         bb += 1

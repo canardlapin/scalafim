@@ -4,14 +4,20 @@ import gale.linalg.{DMat, DVec}
 import scalafim.fmri.ar.{ArmaCoefficients, TimeSegment, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.event.{Event, EventTerm}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
-import scalafim.fmri.fit.profile.{CompactConditionPreparation, CompactConditionRuntime, DecodeBudget, DecodeStatus, DecoderCounters, NodeGrid}
+import scalafim.fmri.fit.profile.{
+  CompactConditionPreparation,
+  CompactConditionRuntime,
+  DecodeBudget,
+  DecodeStatus,
+  DecoderCounters,
+  NodeGrid
+}
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{GaussianFamily, JetLayout, NormalizationRule, ShapePoint}
 
-/** End-to-end condition fit against a dense time-domain oracle that uses the
-  * exact family kernel, the same whitening and nuisance projection, a fine
-  * shape grid and a compass refinement with exact evaluations.
+/** End-to-end condition fit against a dense time-domain oracle that uses the exact family kernel, the same whitening
+  * and nuisance projection, a fine shape grid and a compass refinement with exact evaluations.
   */
 class CompactConditionRuntimeSuite extends munit.FunSuite:
 
@@ -24,17 +30,28 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
   private val events = 36
   private val onsets = Vector.fill(events)(rng0.nextInt(2100) / 10.0).sorted.map(Seconds(_))
   private val conditions = Vector.tabulate(events)(i => Vector("A", "B", "C")(i % 3))
-  private val term = EventTerm(events = Vector(Event.factor(conditions, "cond")), onsets = onsets, blockIds = Vector.fill(events)(0), termTag = Some("cond"))
+  private val term = EventTerm(
+    events = Vector(Event.factor(conditions, "cond")),
+    onsets = onsets,
+    blockIds = Vector.fill(events)(0),
+    termTag = Some("cond")
+  )
   private val arPhi = 0.3
   private val whitening = WhiteningPlan.global(ArmaCoefficients.ar(arPhi), Vector(TimeSegment(0, rows, 0)))
   private val nuisanceCols = 4
-  private val nuisance = DMat.tabulate(rows, nuisanceCols)((t, j) => j match
-    case 0 => 1.0
-    case 1 => t.toDouble / rows - 0.5
-    case _ => math.cos(math.Pi * (j - 1) * (t + 0.5) / rows))
-  private lazy val basis = HrfKernelBasis.compile(KernelBasisSpec(family, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40)).fold(e => fail(e.message), identity)
-  private lazy val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
-  private lazy val prep = CompactConditionPreparation.prepare(expanded, Some(whitening), Some(nuisance)).fold(e => fail(e.message), identity)
+  private val nuisance = DMat.tabulate(rows, nuisanceCols)((t, j) =>
+    j match
+      case 0 => 1.0
+      case 1 => t.toDouble / rows - 0.5
+      case _ => math.cos(math.Pi * (j - 1) * (t + 0.5) / rows)
+  )
+  private lazy val basis = HrfKernelBasis
+    .compile(KernelBasisSpec(family, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))
+    .fold(e => fail(e.message), identity)
+  private lazy val expanded =
+    ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
+  private lazy val prep =
+    CompactConditionPreparation.prepare(expanded, Some(whitening), Some(nuisance)).fold(e => fail(e.message), identity)
 
   private def whitenColumns(cols: Int, rowMajor: Array[Double]): Array[Double] =
     val b = DMat.newBuilder(rows, cols)
@@ -198,7 +215,20 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
       v += 1
     val whitened = prep.whiten(voxels, raw).fold(e => fail(e.message), identity)
     val grid = NodeGrid(family.chart, Vector(15, 15))
-    val runtime = new CompactConditionRuntime(prep, grid, DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 2, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0)), None, 1.0, NormalizationRule.Unnormalised)
+    val runtime = new CompactConditionRuntime(
+      prep,
+      grid,
+      DecodeBudget(
+        coarseStride = 2,
+        maxNewtonSteps = 2,
+        maxJets = 2,
+        maxExactEvaluations = 6,
+        weakSdLimit = Vector(0.5, 1.0)
+      ),
+      None,
+      1.0,
+      NormalizationRule.Unnormalised
+    )
     val oracle = new Oracle(51, 21)
     val counters = new DecoderCounters
     val column = new Array[Double](rows)
@@ -230,7 +260,9 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
       v += 1
     val te = tauErr.result().sorted
     val ae = ampErr.result().sorted
-    println(s"[compact-condition] admitted $admitted/$voxels, max |tau - oracle| = ${te.lastOption.getOrElse(Double.NaN)}, max rel amp = ${ae.lastOption.getOrElse(Double.NaN)}, per voxel: nodes ${counters.perVoxel(counters.nodeScores)}, jets ${counters.perVoxel(counters.jets)}, exact ${counters.perVoxel(counters.exactEvaluations)}")
+    println(
+      s"[compact-condition] admitted $admitted/$voxels, max |tau - oracle| = ${te.lastOption.getOrElse(Double.NaN)}, max rel amp = ${ae.lastOption.getOrElse(Double.NaN)}, per voxel: nodes ${counters.perVoxel(counters.nodeScores)}, jets ${counters.perVoxel(counters.jets)}, exact ${counters.perVoxel(counters.exactEvaluations)}"
+    )
     assert(admitted >= 0.9 * voxels, s"admitted $admitted of $voxels")
     assert(te.last <= 0.02, s"max latency error ${te.last}")
     assert(ae.last <= 2e-3, s"max amplitude error ${ae.last}")
@@ -240,7 +272,8 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
 
   test("readout converts amplitudes into the requested normalisation"):
     val grid = NodeGrid(family.chart, Vector(8, 8))
-    val unnormalised = new CompactConditionRuntime(prep, grid, DecodeBudget(), None, 1.0, NormalizationRule.Unnormalised)
+    val unnormalised =
+      new CompactConditionRuntime(prep, grid, DecodeBudget(), None, 1.0, NormalizationRule.Unnormalised)
     val density = new CompactConditionRuntime(prep, grid, DecodeBudget(), None, 1.0, NormalizationRule.Density)
     val rng = new scala.util.Random(5L)
     val y = Array.fill(rows)(rng.nextGaussian())

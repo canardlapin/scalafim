@@ -2,8 +2,8 @@ package scalafim.fmri.laws.profile
 
 import gale.linalg.{BandedCholesky, DMat, DMatBuilder, ExactSolveFactor}
 
-/** Provider admission for trial-sized ridge Gram systems. This qualifies the
-  * Gale seam; the TrialBanded estimator and its scientific gates are PHRF-07.
+/** Provider admission for trial-sized ridge Gram systems. This qualifies the Gale seam; the TrialBanded estimator and
+  * its scientific gates are PHRF-07.
   */
 class BandedSpdProviderSuite extends munit.FunSuite:
   test("overlapping trial Gram solves, energy and determinant match dense factors"):
@@ -25,8 +25,7 @@ class BandedSpdProviderSuite extends munit.FunSuite:
       val scores = design.t * y
       val expected = dense.solve(scores).fold(throw _, identity)
       val actual = capability.solve(scores).fold(throw _, identity)
-      for i <- 0 until trials; j <- 0 until 3 do
-        assertEqualsDouble(actual(i, j), expected(i, j), 2e-8)
+      for i <- 0 until trials; j <- 0 until 3 do assertEqualsDouble(actual(i, j), expected(i, j), 2e-8)
       val residual = system * actual - scores
       for i <- 0 until trials; j <- 0 until 3 do assertEqualsDouble(residual(i, j), 0.0, 3e-11)
       val mutable = DMatBuilder.from(scores)

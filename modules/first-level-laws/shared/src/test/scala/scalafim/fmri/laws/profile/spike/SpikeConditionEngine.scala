@@ -20,8 +20,7 @@ private[spike] object Dense:
     matrix.copyRowMajorTo(out)
     out
 
-  /** In-place Cholesky of the lower triangle of `a` (`n x n` row-major).
-    * Returns false when a pivot is not positive.
+  /** In-place Cholesky of the lower triangle of `a` (`n x n` row-major). Returns false when a pivot is not positive.
     */
   def choleskyInPlace(n: Int, a: Array[Double]): Boolean =
     var j = 0
@@ -68,23 +67,31 @@ private[spike] object Dense:
       b(i) = s / l(i * n + i)
       i -= 1
 
-/** Fine-grid impulse schedule: one onset list per condition, plus the
-  * sampled-row geometry (`nT` rows, `stride` fine samples per row).
+/** Fine-grid impulse schedule: one onset list per condition, plus the sampled-row geometry (`nT` rows, `stride` fine
+  * samples per row).
   */
 final case class SpikeSchedule(onsets: Array[Array[Int]], nFine: Int, nT: Int, stride: Int):
   def conditions: Int = onsets.length
 
 object SpikeSchedule:
 
-  def random(conditions: Int, perCondition: Int, nFine: Int, kernelLength: Int, nT: Int, stride: Int, rng: scala.util.Random): SpikeSchedule =
+  def random(
+      conditions: Int,
+      perCondition: Int,
+      nFine: Int,
+      kernelLength: Int,
+      nT: Int,
+      stride: Int,
+      rng: scala.util.Random
+  ): SpikeSchedule =
     val onsets = Array.tabulate(conditions) { _ =>
       Array.fill(perCondition)(rng.nextInt(nFine - kernelLength)).sorted
     }
     SpikeSchedule(onsets, nFine, nT, stride)
 
-  /** Convolve an impulse train with `kernel(kernelOffset until kernelOffset + kernelLength)`
-    * on the fine grid and write the sampled rows into column `column` of a
-    * row-major matrix with `cols` columns. `fine` is scratch of length `nFine`.
+  /** Convolve an impulse train with `kernel(kernelOffset until kernelOffset + kernelLength)` on the fine grid and write
+    * the sampled rows into column `column` of a row-major matrix with `cols` columns. `fine` is scratch of length
+    * `nFine`.
     */
   def convolveSampledInto(
       schedule: SpikeSchedule,
@@ -142,9 +149,8 @@ object SpikeNuisance:
       t += 1
     out
 
-/** Shared preparation: whitened nuisance basis `qF`, and the rank-revealing
-  * factor `U R` of the whitened, nuisance-projected expanded design
-  * `A_tilde = [S_1 Phi' ... S_C Phi']`, with `R` un-permuted so that
+/** Shared preparation: whitened nuisance basis `qF`, and the rank-revealing factor `U R` of the whitened,
+  * nuisance-projected expanded design `A_tilde = [S_1 Phi' ... S_C Phi']`, with `R` un-permuted so that
   * `D(theta) = R (I_C kron c(theta))`.
   */
 final class SpikePreparation(
@@ -155,7 +161,8 @@ final class SpikePreparation(
     val nuisanceRank: Int,
     val qF: Array[Double],
     val u: Array[Double],
-    val rHat: Array[Double]):
+    val rHat: Array[Double]
+):
 
   /** `z = U' wy`, `qy = qF' wy`; returns `e = ||wy||^2 - ||qy||^2`. */
   def project(wy: Array[Double], offset: Int, z: Array[Double], qy: Array[Double]): Double =
@@ -186,11 +193,18 @@ final class SpikePreparation(
       i += 1
     total - q2
 
-  /** Project four voxels at once from a time-major block
-    * (`wy(t * stride + v0 + j)`, `j < 4`), reading each row of `U` once.
-    * Writes `z(zOffset + j * rank ...)` and `es(v0 + j)`.
+  /** Project four voxels at once from a time-major block (`wy(t * stride + v0 + j)`, `j < 4`), reading each row of `U`
+    * once. Writes `z(zOffset + j * rank ...)` and `es(v0 + j)`.
     */
-  def projectFour(wy: Array[Double], stride: Int, v0: Int, z: Array[Double], zOffset: Int, es: Array[Double], qy: Array[Double]): Unit =
+  def projectFour(
+      wy: Array[Double],
+      stride: Int,
+      v0: Int,
+      z: Array[Double],
+      zOffset: Int,
+      es: Array[Double],
+      qy: Array[Double]
+  ): Unit =
     val k = rank
     val f = nuisanceRank
     java.util.Arrays.fill(z, zOffset, zOffset + 4 * k, 0.0)
@@ -254,7 +268,13 @@ final class SpikePreparation(
 
 object SpikePreparation:
 
-  def compile(schedule: SpikeSchedule, basis: SpikeKernelBasis, nuisance: Array[Double], nuisanceCols: Int, whitener: SpikeWhitener): SpikePreparation =
+  def compile(
+      schedule: SpikeSchedule,
+      basis: SpikeKernelBasis,
+      nuisance: Array[Double],
+      nuisanceCols: Int,
+      whitener: SpikeWhitener
+  ): SpikePreparation =
     val nT = schedule.nT
     val c = schedule.conditions
     val m = basis.m
@@ -265,7 +285,17 @@ object SpikePreparation:
     while cond < c do
       var j = 0
       while j < m do
-        SpikeSchedule.convolveSampledInto(schedule, cond, basis.phi, j * basis.nFine, basis.nFine, fine, expanded, cond * m + j, cm)
+        SpikeSchedule.convolveSampledInto(
+          schedule,
+          cond,
+          basis.phi,
+          j * basis.nFine,
+          basis.nFine,
+          fine,
+          expanded,
+          cond * m + j,
+          cm
+        )
         j += 1
       cond += 1
     val wF = whitener(nuisanceCols, nuisance)
@@ -315,8 +345,8 @@ object SpikePreparation:
       i += 1
     new SpikePreparation(nT, c, m, k, rF, qF, u, rHat)
 
-/** Strict work counters: every scored node, jet, exact evaluation and family
-  * evaluation is counted, whatever the wall clock says.
+/** Strict work counters: every scored node, jet, exact evaluation and family evaluation is counted, whatever the wall
+  * clock says.
   */
 final class SpikeCounters:
   var nodeScores: Long = 0L
@@ -352,8 +382,8 @@ final class SpikeVoxelResult(conditions: Int):
   var predictedDecrease: Double = 0.0
   var actualDecrease: Double = 0.0
 
-/** Condition post-solve in compact coordinates: exhaustive node scan, then
-  * safeguarded Newton refinement verified by exact compact re-evaluation.
+/** Condition post-solve in compact coordinates: exhaustive node scan, then safeguarded Newton refinement verified by
+  * exact compact re-evaluation.
   */
 final class SpikeProfileSolver(
     prep: SpikePreparation,
@@ -364,7 +394,8 @@ final class SpikeProfileSolver(
     maxNewtonSteps: Int = 2,
     maxExactEvaluations: Int = 6,
     refinement: Int = SpikeProfileSolver.FullNewton,
-    coarseStep: Int = 1):
+    coarseStep: Int = 1
+):
 
   private val k = prep.rank
   private val c = prep.conditions
@@ -396,8 +427,9 @@ final class SpikeProfileSolver(
   private val betaAccepted = new Array[Double](c)
   private val residual = new Array[Double](k)
   private val jac = new Array[Double](2 * k)
-  /** Design jets at every node (`nodes x 6 x K x C`): the first jet of every
-    * voxel is at a node, so it costs only small Gram products.
+
+  /** Design jets at every node (`nodes x 6 x K x C`): the first jet of every voxel is at a node, so it costs only small
+    * Gram products.
     */
   private val nodeDesignJets = new Array[Double](nodes * SpikeGaussianFamily.JetComponents * k * c)
 
@@ -419,7 +451,13 @@ final class SpikeProfileSolver(
       while comp < SpikeGaussianFamily.JetComponents do
         designFromCoefficients(comp, comp)
         comp += 1
-      System.arraycopy(design, 0, nodeDesignJets, g * SpikeGaussianFamily.JetComponents * k * c, SpikeGaussianFamily.JetComponents * k * c)
+      System.arraycopy(
+        design,
+        0,
+        nodeDesignJets,
+        g * SpikeGaussianFamily.JetComponents * k * c,
+        SpikeGaussianFamily.JetComponents * k * c
+      )
       gramOf(0, gram)
       System.arraycopy(gram, 0, factor, 0, c * c)
       require(Dense.choleskyInPlace(c, factor), s"node $g has a singular compact Gram")
@@ -538,10 +576,19 @@ final class SpikeProfileSolver(
       i += 1
     acc
 
-  /** Gauss-Newton jet from value and first derivatives only: exact energy and
-    * gradient, curvature `2 J_p'(I - P) J_q` with `J_p = D_p w`.
+  /** Gauss-Newton jet from value and first derivatives only: exact energy and gradient, curvature `2 J_p'(I - P) J_q`
+    * with `J_p = D_p w`.
     */
-  private def jetGaussNewton(tau: Double, logSd: Double, z: Array[Double], e: Double, grad: Array[Double], hess: Array[Double], counters: SpikeCounters, updateHessian: Boolean): Double =
+  private def jetGaussNewton(
+      tau: Double,
+      logSd: Double,
+      z: Array[Double],
+      e: Double,
+      grad: Array[Double],
+      hess: Array[Double],
+      counters: SpikeCounters,
+      updateHessian: Boolean
+  ): Double =
     val t0 = System.nanoTime()
     counters.jets += 1
     counters.gaussNewtonJets += 1
@@ -624,11 +671,21 @@ final class SpikeProfileSolver(
     energy
 
   /** Continuous-step jet according to the refinement mode. */
-  private def refinementJet(tau: Double, logSd: Double, z: Array[Double], e: Double, grad: Array[Double], hess: Array[Double], counters: SpikeCounters): Double =
+  private def refinementJet(
+      tau: Double,
+      logSd: Double,
+      z: Array[Double],
+      e: Double,
+      grad: Array[Double],
+      hess: Array[Double],
+      counters: SpikeCounters
+  ): Double =
     refinement match
-      case SpikeProfileSolver.GaussNewton    => jetGaussNewton(tau, logSd, z, e, grad, hess, counters, updateHessian = true)
-      case SpikeProfileSolver.FrozenHessian  => jetGaussNewton(tau, logSd, z, e, grad, hess, counters, updateHessian = false)
-      case _                                 => jet(tau, logSd, z, e, grad, hess, counters)
+      case SpikeProfileSolver.GaussNewton =>
+        jetGaussNewton(tau, logSd, z, e, grad, hess, counters, updateHessian = true)
+      case SpikeProfileSolver.FrozenHessian =>
+        jetGaussNewton(tau, logSd, z, e, grad, hess, counters, updateHessian = false)
+      case _ => jet(tau, logSd, z, e, grad, hess, counters)
 
   private val grad = new Array[Double](2)
   private val hess = new Array[Double](4)
@@ -649,13 +706,19 @@ final class SpikeProfileSolver(
       i += 1
     System.arraycopy(sym, 0, dst, dstOffset, c * c)
 
-  /** Energy, gradient and Hessian at a shape. Returns energy; fills `grad`
-    * (2) and `hess` (row-major 2x2). Formulas: with `w = G^-1 b`,
-    * `E_p = -2 b_p'w + w'G_p w` and
-    * `E_pq = -2 b_pq'w + w'G_pq w - 2 r_p'G^-1 r_q`, `r_p = b_p - G_p w`;
-    * `s = e` is shape-free in the condition regime.
+  /** Energy, gradient and Hessian at a shape. Returns energy; fills `grad` (2) and `hess` (row-major 2x2). Formulas:
+    * with `w = G^-1 b`, `E_p = -2 b_p'w + w'G_p w` and `E_pq = -2 b_pq'w + w'G_pq w - 2 r_p'G^-1 r_q`,
+    * `r_p = b_p - G_p w`; `s = e` is shape-free in the condition regime.
     */
-  private def jet(tau: Double, logSd: Double, z: Array[Double], e: Double, grad: Array[Double], hess: Array[Double], counters: SpikeCounters): Double =
+  private def jet(
+      tau: Double,
+      logSd: Double,
+      z: Array[Double],
+      e: Double,
+      grad: Array[Double],
+      hess: Array[Double],
+      counters: SpikeCounters
+  ): Double =
     val t0 = System.nanoTime()
     counters.jets += 1
     counters.fullJets += 1
@@ -670,15 +733,34 @@ final class SpikeProfileSolver(
     energy
 
   /** Jet at node `g` from the precomputed design bank. */
-  private def jetAtNode(g: Int, z: Array[Double], e: Double, grad: Array[Double], hess: Array[Double], counters: SpikeCounters): Double =
+  private def jetAtNode(
+      g: Int,
+      z: Array[Double],
+      e: Double,
+      grad: Array[Double],
+      hess: Array[Double],
+      counters: SpikeCounters
+  ): Double =
     val t0 = System.nanoTime()
     counters.jets += 1
-    System.arraycopy(nodeDesignJets, g * SpikeGaussianFamily.JetComponents * k * c, design, 0, SpikeGaussianFamily.JetComponents * k * c)
+    System.arraycopy(
+      nodeDesignJets,
+      g * SpikeGaussianFamily.JetComponents * k * c,
+      design,
+      0,
+      SpikeGaussianFamily.JetComponents * k * c
+    )
     val energy = jetFromDesign(z, e, grad, hess, counters)
     counters.jetNanos += System.nanoTime() - t0
     energy
 
-  private def jetFromDesign(z: Array[Double], e: Double, grad: Array[Double], hess: Array[Double], counters: SpikeCounters): Double =
+  private def jetFromDesign(
+      z: Array[Double],
+      e: Double,
+      grad: Array[Double],
+      hess: Array[Double],
+      counters: SpikeCounters
+  ): Double =
     val energy = energyFromDesign(z, e, counters) // leaves w and the Cholesky factor of G
     if energy.isInfinite then
       grad(0) = Double.NaN
@@ -895,12 +977,14 @@ final class SpikeProfileSolver(
         val em = nodeEnergy((a - 1) * logSdNodes + bb)
         val ep = nodeEnergy((a + 1) * logSdNodes + bb)
         val den = em - 2.0 * bestE + ep
-        if den > 0.0 && !em.isNaN && !ep.isNaN then dTau = math.max(-tauStep, math.min(tauStep, 0.5 * tauStep * (em - ep) / den))
+        if den > 0.0 && !em.isNaN && !ep.isNaN then
+          dTau = math.max(-tauStep, math.min(tauStep, 0.5 * tauStep * (em - ep) / den))
       if bb > 0 && bb < logSdNodes - 1 then
         val em = nodeEnergy(a * logSdNodes + bb - 1)
         val ep = nodeEnergy(a * logSdNodes + bb + 1)
         val den = em - 2.0 * bestE + ep
-        if den > 0.0 && !em.isNaN && !ep.isNaN then dV = math.max(-logSdStep, math.min(logSdStep, 0.5 * logSdStep * (em - ep) / den))
+        if den > 0.0 && !em.isNaN && !ep.isNaN then
+          dV = math.max(-logSdStep, math.min(logSdStep, 0.5 * logSdStep * (em - ep) / den))
       if (dTau != 0.0 || dV != 0.0) && exactUsed < maxExactEvaluations then
         val trial = exactEnergy(domain.clampTau(tau + dTau), domain.clampLogSd(v + dV), z, e, counters)
         exactUsed += 1
@@ -931,7 +1015,9 @@ final class SpikeProfileSolver(
 object SpikeProfileSolver:
   /** Continuous refinement jets carry the full observed Hessian (six components). */
   val FullNewton: Int = 0
+
   /** Continuous refinement jets carry value and first derivatives only (three components). */
   val GaussNewton: Int = 1
+
   /** First-order jets for the gradient; the node's exact observed Hessian is kept for every step. */
   val FrozenHessian: Int = 2

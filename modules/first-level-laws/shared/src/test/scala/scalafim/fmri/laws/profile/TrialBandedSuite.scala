@@ -23,7 +23,8 @@ class TrialBandedSuite extends munit.FunSuite:
       response: Array[Double],
       point: ShapePoint,
       lambda: Double,
-      whitening: Option[WhiteningPlan] = None)
+      whitening: Option[WhiteningPlan] = None
+  )
 
   private def fixture(lambda: Double = 2.5, coincident: Boolean = false): Fixture =
     val rows = 120
@@ -59,7 +60,9 @@ class TrialBandedSuite extends munit.FunSuite:
 
   test("packed cross-basis blocks reconstruct the dense Gram and preserve run boundaries"):
     val fx = fixture()
-    val prep = TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda).fold(error => fail(error.message), identity)
+    val prep = TrialBandedPreparation
+      .prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda)
+      .fold(error => fail(error.message), identity)
     assertEquals(prep.gramBlockCount, basis.rank * (basis.rank + 1) / 2)
     assert(prep.bandwidth < fx.expanded.trials - 1, s"unexpected full bandwidth ${prep.bandwidth}")
     val data = fx.expanded.term.data.data
@@ -94,7 +97,9 @@ class TrialBandedSuite extends munit.FunSuite:
 
   test("banded ridge-and-release energy, means, jets and ML determinant match independent dense equations"):
     val fx = fixture()
-    val prep = TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda).fold(error => fail(error.message), identity)
+    val prep = TrialBandedPreparation
+      .prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda)
+      .fold(error => fail(error.message), identity)
     val grid = NodeGrid(family.chart, Vector(3, 3))
     val objective = prep.objective(grid).fold(error => fail(error.message), identity)
     val encoded = prep.encodeWhitened(fx.response).fold(error => fail(error.message), identity)
@@ -113,10 +118,21 @@ class TrialBandedSuite extends munit.FunSuite:
       val minus = x0.clone()
       plus(p) += h
       minus(p) -= h
-      val gradient = (directFit(fx, ShapePoint.unsafe(plus.toVector))._1 - directFit(fx, ShapePoint.unsafe(minus.toVector))._1) / (2.0 * h)
+      val gradient = (directFit(fx, ShapePoint.unsafe(plus.toVector))._1 - directFit(
+        fx,
+        ShapePoint.unsafe(minus.toVector)
+      )._1) / (2.0 * h)
       assertEqualsDouble(out.gradient(p), gradient, 2e-5 * math.max(1.0, math.abs(gradient)), s"gradient $p")
-      val diagonal = (directFit(fx, ShapePoint.unsafe(plus.toVector))._1 - 2.0 * direct._1 + directFit(fx, ShapePoint.unsafe(minus.toVector))._1) / (h * h)
-      assertEqualsDouble(out.hessian(p * family.dimension + p), diagonal, 2e-3 * math.max(1.0, math.abs(diagonal)), s"hessian $p,$p")
+      val diagonal = (directFit(fx, ShapePoint.unsafe(plus.toVector))._1 - 2.0 * direct._1 + directFit(
+        fx,
+        ShapePoint.unsafe(minus.toVector)
+      )._1) / (h * h)
+      assertEqualsDouble(
+        out.hessian(p * family.dimension + p),
+        diagonal,
+        2e-3 * math.max(1.0, math.abs(diagonal)),
+        s"hessian $p,$p"
+      )
       var q = p + 1
       while q < family.dimension do
         val pp = x0.clone()
@@ -127,9 +143,18 @@ class TrialBandedSuite extends munit.FunSuite:
         pm(p) += h; pm(q) -= h
         mp(p) -= h; mp(q) += h
         mm(p) -= h; mm(q) -= h
-        val mixed = (directFit(fx, ShapePoint.unsafe(pp.toVector))._1 - directFit(fx, ShapePoint.unsafe(pm.toVector))._1 -
-          directFit(fx, ShapePoint.unsafe(mp.toVector))._1 + directFit(fx, ShapePoint.unsafe(mm.toVector))._1) / (4.0 * h * h)
-        assertEqualsDouble(out.hessian(p * family.dimension + q), mixed, 3e-3 * math.max(1.0, math.abs(mixed)), s"hessian $p,$q")
+        val mixed =
+          (directFit(fx, ShapePoint.unsafe(pp.toVector))._1 - directFit(fx, ShapePoint.unsafe(pm.toVector))._1 -
+            directFit(fx, ShapePoint.unsafe(mp.toVector))._1 + directFit(
+              fx,
+              ShapePoint.unsafe(mm.toVector)
+            )._1) / (4.0 * h * h)
+        assertEqualsDouble(
+          out.hessian(p * family.dimension + q),
+          mixed,
+          3e-3 * math.max(1.0, math.abs(mixed)),
+          s"hessian $p,$q"
+        )
         q += 1
       p += 1
 
@@ -145,7 +170,8 @@ class TrialBandedSuite extends munit.FunSuite:
       exactFirstAr1 = true
     )
     val fx = raw.copy(whitening = Some(plan))
-    val prep = TrialBandedPreparation.prepare(fx.expanded, Some(plan), Some(fx.nuisance), fx.lambda)
+    val prep = TrialBandedPreparation
+      .prepare(fx.expanded, Some(plan), Some(fx.nuisance), fx.lambda)
       .fold(error => fail(error.message), identity)
     val whitenedResponse = prep.whitenResponses(1, fx.response).fold(error => fail(error.message), identity)
     val objective = prep.objective(NodeGrid(family.chart, Vector(3, 3))).fold(error => fail(error.message), identity)
@@ -159,7 +185,9 @@ class TrialBandedSuite extends munit.FunSuite:
   test("unequal singleton and coincident conditions remain exact across lambda extremes and trial permutations"):
     for lambda <- Vector(1e-6, 1e4) do
       val fx = fixture(lambda, coincident = true)
-      val prep = TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), lambda).fold(error => fail(error.message), identity)
+      val prep = TrialBandedPreparation
+        .prepare(fx.expanded, None, Some(fx.nuisance), lambda)
+        .fold(error => fail(error.message), identity)
       val objective = prep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
       objective.pointAt(prep.encodeWhitened(fx.response).fold(error => fail(error.message), identity))
       val out = new ProfileJetBuffer(family.dimension, 3)
@@ -167,7 +195,14 @@ class TrialBandedSuite extends munit.FunSuite:
       val expected = directFit(fx, fx.point)
       val tol = if lambda < 1e-3 then 2e-5 else 2e-8
       assertEqualsDouble(actual, expected._1, tol * math.max(1.0, math.abs(expected._1)), s"lambda=$lambda")
-      expected._2.indices.foreach(i => assertEqualsDouble(out.amplitudes(i), expected._2(i), 2e-5 * math.max(1.0, math.abs(expected._2(i))), s"lambda=$lambda condition=$i"))
+      expected._2.indices.foreach(i =>
+        assertEqualsDouble(
+          out.amplitudes(i),
+          expected._2(i),
+          2e-5 * math.max(1.0, math.abs(expected._2(i))),
+          s"lambda=$lambda condition=$i"
+        )
+      )
 
     val original = fixture()
     val permutation = Vector(2, 0, 5, 1, 4, 3)
@@ -186,8 +221,11 @@ class TrialBandedSuite extends munit.FunSuite:
       )
       .fold(error => fail(error.message), identity)
     val permFx = original.copy(expanded = permuted)
-    val permPrep = TrialBandedPreparation.prepare(permuted, None, Some(original.nuisance), original.lambda).fold(error => fail(error.message), identity)
-    val permObjective = permPrep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
+    val permPrep = TrialBandedPreparation
+      .prepare(permuted, None, Some(original.nuisance), original.lambda)
+      .fold(error => fail(error.message), identity)
+    val permObjective =
+      permPrep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
     permObjective.pointAt(permPrep.encodeWhitened(original.response).fold(error => fail(error.message), identity))
     val permOut = new ProfileJetBuffer(family.dimension, 3)
     assert(permObjective.jetAt(original.point.coordinates.toArray, permOut))
@@ -197,10 +235,15 @@ class TrialBandedSuite extends munit.FunSuite:
 
   test("rank aliases are refused and exact per-voxel readout factors are explicit and counted"):
     val fx = fixture()
-    val x = designAt(fx.expanded, ShapePoint.unsafe(Vector(
-      0.5 * (family.chart.lower(0) + family.chart.upper(0)),
-      0.5 * (family.chart.lower(1) + family.chart.upper(1))
-    )))
+    val x = designAt(
+      fx.expanded,
+      ShapePoint.unsafe(
+        Vector(
+          0.5 * (family.chart.lower(0) + family.chart.upper(0)),
+          0.5 * (family.chart.lower(1) + family.chart.upper(1))
+        )
+      )
+    )
     val alias = DMat.tabulate(fx.expanded.rows, 1)((t, _) =>
       var sum = 0.0
       var trial = 0
@@ -209,11 +252,15 @@ class TrialBandedSuite extends munit.FunSuite:
         trial += 1
       sum
     )
-    val aliasPrep = TrialBandedPreparation.prepare(fx.expanded, None, Some(alias), fx.lambda).fold(error => fail(error.message), identity)
+    val aliasPrep = TrialBandedPreparation
+      .prepare(fx.expanded, None, Some(alias), fx.lambda)
+      .fold(error => fail(error.message), identity)
     assert(aliasPrep.objective(NodeGrid(family.chart, Vector(3, 3))).isLeft)
     assert(TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), 0.0).isLeft)
 
-    val prep = TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda).fold(error => fail(error.message), identity)
+    val prep = TrialBandedPreparation
+      .prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda)
+      .fold(error => fail(error.message), identity)
     val objective = prep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
     objective.pointAt(prep.encodeWhitened(fx.response).fold(error => fail(error.message), identity))
     val rhs = Array.tabulate(fx.expanded.trials)(i => math.sin(0.7 * i) - 0.2 * i)
@@ -225,13 +272,17 @@ class TrialBandedSuite extends munit.FunSuite:
     val expected = dense.solve(rhsMatrix).fold(throw _, identity)
     solved.indices.foreach(i => assertEqualsDouble(solved(i), expected(i, 0), 2e-9))
     assertEquals(objective.work.snapshot.exactReadoutFactors, 1L)
-    val readout = objective.readout(TrialReadoutFactorMode.ExactShape(fx.point.coordinates)).fold(error => fail(error.message), identity)
+    val readout = objective
+      .readout(TrialReadoutFactorMode.ExactShape(fx.point.coordinates))
+      .fold(error => fail(error.message), identity)
     val direct = directFit(fx, fx.point)
     assertEqualsDouble(readout.penalizedEnergy, direct._1, 2e-8)
     direct._2.indices.foreach(i => assertEqualsDouble(readout.conditionMeans(i), direct._2(i), 2e-8))
     direct._3.indices.foreach(i => assertEqualsDouble(readout.trialAmplitudes(i), direct._3(i), 2e-8))
     assertEquals(objective.work.snapshot.exactReadoutFactors, 2L)
-    objective.solveReadoutSystem(TrialReadoutFactorMode.PreparedNode(0), rhs).fold(error => fail(error.message), identity)
+    objective
+      .solveReadoutSystem(TrialReadoutFactorMode.PreparedNode(0), rhs)
+      .fold(error => fail(error.message), identity)
     assertEquals(objective.work.snapshot.exactReadoutFactors, 2L)
     var node = 0
     while node < objective.grid.count do
@@ -278,8 +329,7 @@ class TrialBandedSuite extends munit.FunSuite:
         t += 1
       sum
 
-  /** Independent direct normal equations for
-    * `min ||y-F gamma-X a||^2 + lambda ||a-M beta||^2`.
+  /** Independent direct normal equations for `min ||y-F gamma-X a||^2 + lambda ||a-M beta||^2`.
     */
   private def directFit(fx: Fixture, point: ShapePoint): (Double, Vector[Double], Vector[Double]) =
     val rows = fx.expanded.rows
@@ -374,7 +424,7 @@ class TrialBandedSuite extends munit.FunSuite:
 
   private def whitenColumns(plan: Option[WhiteningPlan], rows: Int, cols: Int, values: Array[Double]): Array[Double] =
     plan match
-      case None => java.util.Arrays.copyOf(values, values.length)
+      case None        => java.util.Arrays.copyOf(values, values.length)
       case Some(value) =>
         val matrix = DMat.tabulate(rows, cols)((i, j) => values(i * cols + j))
         val out = new Array[Double](values.length)
