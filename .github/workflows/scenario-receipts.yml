@@ -90,6 +90,20 @@ jobs:
           r-version: ${{ steps.lock.outputs.r_version }}
           use-public-rspm: true
 
+      - name: Install fmrihrf dependencies
+        uses: r-lib/actions/setup-r-dependencies@aae88a2d9cd3d63571eb05980b09f44611788515 # v2-branch
+        with:
+          working-directory: reference/fmrihrf
+          dependencies: '"hard"'
+          packages: |
+            deps::.
+          install-pandoc: false
+          install-quarto: false
+
+      - name: Install the locked fmrihrf reference
+        shell: bash
+        run: R CMD INSTALL reference/fmrihrf
+
       - name: Install fmridesign dependencies
         uses: r-lib/actions/setup-r-dependencies@aae88a2d9cd3d63571eb05980b09f44611788515 # v2-branch
         with:
@@ -113,11 +127,10 @@ jobs:
           install-pandoc: false
           install-quarto: false
 
-      - name: Install the locked local R references
+      - name: Install the remaining locked local R references
         shell: bash
         run: |
           R CMD INSTALL reference/fmriAR
-          R CMD INSTALL reference/fmrihrf
           R CMD INSTALL reference/fmridesign
 
       - name: Regenerate every R receipt
