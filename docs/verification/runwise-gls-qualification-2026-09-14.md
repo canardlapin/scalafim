@@ -72,6 +72,16 @@ Observed worktree gates:
 - focused `RunwiseGlsSuite`: 4/4 JVM and 4/4 Scala.js passed after the final
   fail-closed validation changes.
 
+Committed-candidate gates at `6ae2afe` in detached clean worktree
+`/tmp/scalafim-runwise-gls.HnoQJi`:
+
+- `sbt -Dsbt.supershell=false scalafimCompileAll`: pass, JVM and Scala.js,
+  warning-clean.
+- `sbt -Dsbt.supershell=false 'fitJVM/testOnly scalafim.fmri.fit.RunwiseGlsSuite'
+  'fitJS/testOnly scalafim.fmri.fit.RunwiseGlsSuite' 'fmriWorkflowJVM/test'
+  'fmriWorkflowJS/test'`: 4/4 runwise-GLS tests on each platform plus 23 JVM
+  and 19 Scala.js workflow tests passed.
+
 ## Admission boundary
 
 This evidence qualifies the run-specific AR GLS composition, its result
