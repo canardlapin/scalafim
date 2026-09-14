@@ -160,7 +160,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assert(out(2).rejected)
   }
 
-  test("single-step maxT and max-null threshold use plus-one permutation rules") {
+  test("single-step maxT and max-null decisions use plus-one permutation rules") {
     val observed = Array(3.5, 2.1, 4.2)
     val nulls = matrix(
       Vector(
@@ -178,9 +178,21 @@ class ThresholdCoreSuite extends munit.FunSuite:
 
     val adjusted = value(MultipleTesting.adjust(observed, nulls, Alpha.unsafe(0.5), CorrectionPolicy.MaxTSingleStep))
     assertEquals(adjusted.map(_.adjustedP.value), out.map(_.adjustedP.value))
-    assertEqualsDouble(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))).toLegacyDouble, 4.0, 1e-12)
+    val cutoff = value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4)))
+    cutoff match
+      case ThresholdCutoff.Exclusive(boundary) =>
+        assertEqualsDouble(boundary, 4.0, 0.0)
+      case other =>
+        fail(s"expected an exclusive max-null cutoff, found $other")
+    assertEquals(value(cutoff.rejects(4.0)), false)
+    assertEquals(value(cutoff.rejects(Math.nextUp(4.0))), true)
+    assertEqualsDouble(cutoff.toLegacyDouble, Math.nextUp(4.0), 0.0)
     assertEquals(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))), ThresholdCutoff.NoRejections)
-    assertEqualsDouble(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))), 4.0, 1e-12)
+    assertEqualsDouble(
+      value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))),
+      Math.nextUp(4.0),
+      0.0
+    )
     assert(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))).isPosInfinity)
   }
 

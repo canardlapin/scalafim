@@ -23,6 +23,13 @@ object CountMismatch:
   * than exceptions. Mirrors the `scalafim.fmri.fit.FitError` idiom.
   */
 enum GroupError:
+  case UnsupportedInference(detail: String)
+  case InferenceResourceLimit(detail: String)
+  case SpatialIdentityMismatch(subject: String, contrast: String, detail: String)
+  case ContrastIdentityMismatch(subject: String, expected: String, actual: String)
+  case InvalidStandardError(subject: String, contrast: String, sample: Int, value: Double)
+  case NumericalFailure(detail: String)
+  case AllSamplesFailed(failures: Vector[GroupSampleFailure])
   case EmptyDesign
   case EmptyResponse
   case DuplicateSubjects(subjects: Vector[String])
@@ -48,6 +55,17 @@ enum GroupError:
 
   def message: String =
     this match
+      case UnsupportedInference(detail) => detail
+      case InferenceResourceLimit(detail) => detail
+      case SpatialIdentityMismatch(subject, contrast, detail) =>
+        s"spatial identity mismatch for subject '$subject' contrast '$contrast': $detail"
+      case ContrastIdentityMismatch(subject, expected, actual) =>
+        s"subject '$subject': requested contrast '$expected' but result is '$actual'"
+      case InvalidStandardError(subject, contrast, sample, value) =>
+        s"subject '$subject' contrast '$contrast' sample $sample has invalid standard error $value"
+      case NumericalFailure(detail) => detail
+      case AllSamplesFailed(failures) =>
+        s"all ${failures.length} samples failed; first: ${failures.headOption.map(_.reason.message).getOrElse("unknown")}"
       case EmptyDesign =>
         "group design must have at least one subject row and one term column"
       case EmptyResponse =>
@@ -105,3 +123,6 @@ object GroupError:
 
   def contrastMismatch(expected: Int, actual: Int): GroupError =
     GroupError.ContrastMismatch(CountMismatch.contrasts(expected, actual))
+
+/** A sample position on the attached GroupSpace whose fit is unavailable. */
+final case class GroupSampleFailure(sample: Int, reason: GroupError)

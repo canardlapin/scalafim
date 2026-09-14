@@ -162,12 +162,25 @@ object MaxNull:
       if !maxNull(i).isFinite then return Left(ThresholdError.NonFiniteData("max-null distribution"))
       i += 1
 
-    val k = math.floor(alpha.value * (maxNull.length.toDouble + 1.0)).toInt
-    if k < 1 then Right(ThresholdCutoff.NoRejections)
+    // Count attainable plus-one p-value ranks with the same division used by
+    // pValues. This avoids changing the decision at floating-point alpha
+    // boundaries through a multiply-and-floor rearrangement.
+    val denominator = maxNull.length.toDouble + 1.0
+    var acceptedRanks = 0
+    while acceptedRanks < maxNull.length &&
+        (acceptedRanks.toDouble + 1.0) / denominator <= alpha.value
+    do acceptedRanks += 1
+
+    if acceptedRanks < 1 then Right(ThresholdCutoff.NoRejections)
     else
       val sorted = maxNull.clone.sortWith(_ > _)
-      ThresholdCutoff.inclusive(sorted(math.min(k, sorted.length) - 1))
+      // p(t) = (1 + #{M_b >= t}) / (B + 1), so equality with the kth
+      // descending null is never rejected. The cutoff must be strict.
+      ThresholdCutoff.exclusive(sorted(acceptedRanks - 1))
 
+  /** Legacy inclusive-double view of [[cutoff]]. Consumers must apply it as
+    * `score >= threshold`; new code should prefer `cutoff(...).flatMap(_.rejects(score))`.
+    */
   def threshold(maxNull: Array[Double], alpha: Alpha): Either[ThresholdError, Double] =
     cutoff(maxNull, alpha).map(_.toLegacyDouble)
 
