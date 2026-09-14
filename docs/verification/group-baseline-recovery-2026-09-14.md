@@ -156,7 +156,7 @@ time/allocation reductions for this workload. All raw runs, hashes, environment,
 and caveats are preserved in
 `docs/benchmarks/receipts/group-baseline-comparator-2026-09-14.json`.
 
-## Limitations and completion plan
+## Clean-SHA qualification and limitations
 
 This tranche does not admit a new statistical default or make a universal
 correctness claim. It has no new held-out group-inference calibration. The
@@ -164,10 +164,23 @@ current metafor corpus establishes formula and numerical parity for the named
 policies; it does not overturn the retained adverse calibration results for
 small samples or estimated first-level variances.
 
-Before closing `bd-01M20TKX7VYFT3BHCM7QAMA6NG`, the remaining steps are:
+The review, oracle corpus, and comparator were committed as
+`dc2b2ba4200896c1a5a6b1f7a2b19d1c11364227`. A detached worktree at exactly
+that SHA was clean before and after qualification. It produced:
 
-1. commit the review, oracle corpus, and exact comparator receipt;
-2. qualify the group suite, first-level bridge, and workflow consumers from that clean,
-   identified commit; and
-3. record the resulting evidence in Mote before closing the issue or admitting
-   any method as a default.
+- `groupJVM/test`: 69 passed;
+- `groupJS/test`: 68 passed;
+- `fitEstimatesJVM/test`: 11 passed;
+- `fitEstimatesJS/test`: 8 passed;
+- `fmriWorkflowJVM/test`: 23 passed;
+- `fmriWorkflowJS/test`: 19 passed;
+- `Rscript tools/r-parity/generate_group_metafor_fixture.R --check`: passed; and
+- `sbt -Dsbt.supershell=false scalafimCompileAll`: passed warning-clean across
+  the supported JVM and Scala.js modules.
+
+This evidence completes the numerical-baseline recovery owned by
+`bd-01M20TKX7VYFT3BHCM7QAMA6NG`. It does not complete the separate first-level
+uncertainty-provenance, first-level calibration, nuisance-bootstrap, spatial
+inference, or production-default admission issues. In particular, known versus
+estimated sampling variance and its degrees of freedom remain explicit work;
+no effective degrees of freedom are inferred here.
