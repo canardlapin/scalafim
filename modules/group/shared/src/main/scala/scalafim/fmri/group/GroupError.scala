@@ -28,6 +28,7 @@ enum GroupError:
   case SpatialIdentityMismatch(subject: String, contrast: String, detail: String)
   case ContrastIdentityMismatch(subject: String, expected: String, actual: String)
   case InvalidStandardError(subject: String, contrast: String, sample: Int, value: Double)
+  case InvalidUncertaintyReceipt(detail: String)
   case NumericalFailure(detail: String)
   case AllSamplesFailed(failures: Vector[GroupSampleFailure])
   case EmptyDesign
@@ -63,6 +64,7 @@ enum GroupError:
         s"subject '$subject': requested contrast '$expected' but result is '$actual'"
       case InvalidStandardError(subject, contrast, sample, value) =>
         s"subject '$subject' contrast '$contrast' sample $sample has invalid standard error $value"
+      case InvalidUncertaintyReceipt(detail) => s"invalid first-level uncertainty receipt: $detail"
       case NumericalFailure(detail) => detail
       case AllSamplesFailed(failures) =>
         s"all ${failures.length} samples failed; first: ${failures.headOption.map(_.reason.message).getOrElse("unknown")}"

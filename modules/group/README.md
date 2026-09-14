@@ -10,7 +10,17 @@ It joins catalog IDs, requires one row per identified participant and an explici
 `GroupEstimateAdmission` implementation for scientific and spatial admission.
 `readBlock` opens one verified unit at a time, preserves sample order, and refuses
 unavailable requested cells without shrinking the cohort. Its total cell budget
-counts effects and variances; SE is squared exactly once for weighted group input.
+counts effects, variances, and sample-dependent df; SE is squared exactly once
+for weighted group input. Admission returns retained geometry evidence bound to
+the input world frame rather than a bare boolean.
+
+Every variance-carrying `GroupData` has a subject/contrast/sample-aligned
+`GroupUncertaintyReceipt`. Its sources distinguish known variance, estimated
+variance with scalar or sample-dependent df, approximate effective df, and
+explicitly unknown provenance. Estimator, serial-correlation, nuisance,
+run-combination, pooling, and geometry evidence remain attached to the numerical
+cube. These are provenance contracts, not claims that the supplied uncertainty
+is calibrated for a downstream inferential method.
 The group runtime does not depend on `fit`. The older eager `TContrastResult`
 convenience is now `scalafim.fmri.fit.estimates.FitGroupAdapter` in `fit-estimates`.
 

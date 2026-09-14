@@ -48,6 +48,7 @@ object EstimateMetadata:
   private given codecProductKindVariancetype: ReadWriter[ProductKind.Variance.type] = macroRW
   private given codecProductKindResidualVariancetype: ReadWriter[ProductKind.ResidualVariance.type] = macroRW
   private given codecProductKindCovariancetype: ReadWriter[ProductKind.Covariance.type] = macroRW
+  private given codecProductKindDegreesOfFreedomValuestype: ReadWriter[ProductKind.DegreesOfFreedomValues.type] = macroRW
   private given codecProductKindStatistic: ReadWriter[ProductKind.Statistic] = macroRW
   private given codecProductKind: ReadWriter[ProductKind] = macroRW
   private given codecProductOutcomeAvailable: ReadWriter[ProductOutcome.Available] = macroRW
@@ -66,6 +67,11 @@ object EstimateMetadata:
   private given codecDfValueProduct: ReadWriter[DfValue.Product] = macroRW
   private given codecDfValue: ReadWriter[DfValue] = macroRW
   private given codecDegreesOfFreedom: ReadWriter[DegreesOfFreedom] = macroRW
+  private given codecMarginalVarianceOriginKnown: ReadWriter[MarginalVarianceOrigin.Known] = macroRW
+  private given codecMarginalVarianceOriginEstimated: ReadWriter[MarginalVarianceOrigin.Estimated] = macroRW
+  private given codecMarginalVarianceOriginUnknown: ReadWriter[MarginalVarianceOrigin.Unknown] = macroRW
+  private given codecMarginalVarianceOrigin: ReadWriter[MarginalVarianceOrigin] = macroRW
+  private given codecMarginalUncertaintyDescriptor: ReadWriter[MarginalUncertaintyDescriptor] = macroRW
   private given codecReferenceDistributionUnknown: ReadWriter[ReferenceDistribution.Unknown] = macroRW
   private given codecReferenceDistributionNormaltype: ReadWriter[ReferenceDistribution.Normal.type] = macroRW
   private given codecReferenceDistributionStudentT: ReadWriter[ReferenceDistribution.StudentT] = macroRW
