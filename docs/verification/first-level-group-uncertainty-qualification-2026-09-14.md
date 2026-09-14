@@ -63,15 +63,16 @@ Portable tests cover:
 - runwise GLS contrast propagation with voxelwise AR diagnostics;
 - estimate metadata write/read and pinned group readback.
 
-Worktree JVM gates:
+Clean committed-candidate gates at `b53cd14`:
 
-- `RunwiseGlsSuite`: 4/4 passed.
-- `estimatesJVM/test`: 11/11 passed.
-- `estimatesIoJVM/test`: 9/9 passed.
-- `groupJVM/test`: 75/75 passed.
-- `fitEstimatesJVM/test`: 14/14 passed.
-
-Scala.js and clean committed-candidate gates are recorded below once run.
+- `scalafimCompileAll`: passed for the complete JVM and Scala.js aggregate,
+  warning-clean.
+- `estimatesJVM/test` and `estimatesJS/test`: 11/11 passed on each platform.
+- `estimatesIoJVM/test`: 10/10 passed; `estimatesIoJS/test`: 4/4 passed.
+- `groupJVM/test`: 75/75 passed; `groupJS/test`: 74/74 passed.
+- `fitEstimatesJVM/test`: 14/14 passed; `fitEstimatesJS/test`: 11/11 passed.
+- focused `RunwiseGlsSuite` plus `InferenceSuite`: 15/15 passed on each
+  platform.
 
 ## Admission boundary
 
