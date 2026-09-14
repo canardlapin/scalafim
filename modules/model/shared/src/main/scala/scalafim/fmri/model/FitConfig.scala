@@ -1100,6 +1100,10 @@ enum FitStrategy:
       autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
       controls: FitControls = FitControls()
   )
+  case RunwiseGeneralizedLeastSquares(
+      autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
+      controls: FitControls = FitControls()
+  )
   case RobustLeastSquares(
       robust: RobustConfig,
       controls: FitControls = FitControls(),
@@ -1124,6 +1128,7 @@ enum FitStrategy:
       case RunwiseLeastSquares(_) => FitEngine.RunwiseLeastSquares
       case SeparateRunsThenFixedEffects(_) => FitEngine.FixedEffects
       case GeneralizedLeastSquares(_, _) => FitEngine.GeneralizedLeastSquares
+      case RunwiseGeneralizedLeastSquares(_, _) => FitEngine.GeneralizedLeastSquares
       case RobustLeastSquares(_, _, _) => FitEngine.RobustLeastSquares
       case LeastSquaresSeparate(_, _) => FitEngine.LeastSquaresSeparate
       case LatentSketch(_, _) => FitEngine.LatentSketch
@@ -1138,6 +1143,8 @@ enum FitStrategy:
       case SeparateRunsThenFixedEffects(controls) =>
         controls.toLegacyConfig()
       case GeneralizedLeastSquares(autocorrelation, controls) =>
+        controls.toLegacyConfig(autocorrelation = autocorrelation.toLegacy)
+      case RunwiseGeneralizedLeastSquares(autocorrelation, controls) =>
         controls.toLegacyConfig(autocorrelation = autocorrelation.toLegacy)
       case RobustLeastSquares(robust, controls, autocorrelation) =>
         controls.toLegacyConfig(
@@ -1154,7 +1161,7 @@ enum FitStrategy:
   /** The coefficient estimand exposed by this strategy. */
   def coefficientScope: CoefficientScope =
     this match
-      case RunwiseLeastSquares(_) => CoefficientScope.RunSpecific
+      case RunwiseLeastSquares(_) | RunwiseGeneralizedLeastSquares(_, _) => CoefficientScope.RunSpecific
       case SeparateRunsThenFixedEffects(_) => CoefficientScope.SeparateRunsThenFixedEffects
       case _                      => CoefficientScope.SharedAcrossRuns
 
@@ -1171,6 +1178,17 @@ enum FitStrategy:
         for
           _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
           _ <- autocorrelation.validateFor(nTimepoints)
+        yield ()
+      case RunwiseGeneralizedLeastSquares(autocorrelation, controls) =>
+        for
+          _ <- FitStrategy.validateControls(engine, controls, nTimepoints, allowVolumeWeighting = false)
+          _ <- autocorrelation.validateFor(nTimepoints)
+          _ <-
+            if !autocorrelation.global then Right(())
+            else Left(ModelError.InvalidFitConfig(
+              engine,
+              "runwise GLS requires run-local AR estimation (global=false); shared-coefficient GLS is a separate estimand"
+            ))
         yield ()
       case RobustLeastSquares(robust, controls, autocorrelation) =>
         for

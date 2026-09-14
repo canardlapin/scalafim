@@ -322,7 +322,9 @@ final case class RunwiseFmriRunResult(
     coefficientAxis: Option[CoefficientAxis] = None,
     sourceColumnIndices: Vector[Int] = Vector.empty,
     projection: Option[RunCoefficientProjection] = None,
-    voxelStatuses: Option[Vector[VoxelFitStatus]] = None
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
+    voxelwiseCoefficientCovariance: Option[CoefficientCovariance] = None,
+    autocorrelation: Option[ArDiagnostics] = None
 ):
   require(rowIndices.nonEmpty, "run result must contain at least one selected row")
   require(rowIndices.length == timepoints.length, "run rows and timepoints must align")
@@ -334,6 +336,18 @@ final case class RunwiseFmriRunResult(
   require(olsDiagnostics.predictors == coefficients.predictors, "run OLS diagnostics must match coefficient rows")
   require(coefficientAxis.forall(_.predictors == coefficients.predictors), "run coefficient axis must match coefficient rows")
   require(voxelStatuses.forall(_.length == coefficients.voxels), "run voxel statuses must match coefficient columns")
+  require(
+    voxelwiseCoefficientCovariance.forall(_.predictors == coefficients.predictors),
+    "run coefficient covariance must match coefficient rows"
+  )
+  require(
+    voxelwiseCoefficientCovariance.forall(value =>
+      value.isVoxelwise &&
+        value.validateVoxelCount(coefficients.voxels).isRight &&
+        sameMatrix(value.canonicalMatrix, normalizedCovariance)
+    ),
+    "run coefficient covariance must be shared or match voxel count"
+  )
   require(
     sourceColumnIndices.isEmpty || sourceColumnIndices.length == coefficients.predictors,
     "run source column mapping must match coefficient rows"
@@ -355,7 +369,20 @@ final case class RunwiseFmriRunResult(
   def sourceColumns: Vector[Int] = effectiveSourceColumnIndices
   def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
     voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))
+  def coefficientCovariance: CoefficientCovariance =
+    voxelwiseCoefficientCovariance.getOrElse(CoefficientCovariance.unsafeShared(normalizedCovariance))
 
+  private def sameMatrix(left: DMat, right: DMat): Boolean =
+    if left.rows != right.rows || left.cols != right.cols then false
+    else
+      var row = 0
+      while row < left.rows do
+        var col = 0
+        while col < left.cols do
+          if left(row, col) != right(row, col) then return false
+          col += 1
+        row += 1
+      true
   def localColumnNames(globalColumnNames: Vector[String]): Either[FitError, Vector[String]] =
     if globalColumnNames.isEmpty then
       Left(FitError.InvalidFitAxis("runwise result columns", "global column names must be non-empty"))
@@ -391,11 +418,10 @@ final case class RunwiseFmriRunResult(
     else
       localColumnNames(columnNames).flatMap { localNames =>
         for
-          covariance <- CoefficientCovariance.shared(normalizedCovariance)
           inference <- CoefficientInference.fromExisting(
             scope = CoefficientInferenceScope.All,
             standardErrors = standardErrors,
-            covariance = covariance,
+            covariance = coefficientCovariance,
             varianceScale = residualVariance,
             residualDegreesOfFreedom = residualDegreesOfFreedom
           )
@@ -407,9 +433,10 @@ final case class RunwiseFmriRunResult(
           columnNames = localNames,
           voxelIndices = voxelIndices,
           timepoints = timepoints,
-          engine = FitEngine.RunwiseLeastSquares,
+          engine = summary.engine,
           summary = summary.copy(predictors = coefficients.predictors),
           olsDiagnostics = Some(olsDiagnostics),
+          autocorrelation = autocorrelation,
           coefficientAxis = coefficientAxis,
           voxelStatuses = Some(resolvedVoxelStatuses),
           fitExclusions = fitExclusions
