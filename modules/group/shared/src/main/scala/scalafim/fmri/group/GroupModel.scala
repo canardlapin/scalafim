@@ -65,12 +65,29 @@ object GroupModel:
   ): Either[GroupError, GroupModel[VarianceCapability.WithVariances]] =
     validateShape(data, design).map(_ => GroupModel(data, design, GroupWeighting.InverseVariance))
 
+  /** Compatibility constructor: DL with a plug-in normal reference by default.
+    * This is not a calibrated small-sample inference default.
+    */
   def randomEffects(
       data: GroupData[VarianceCapability.WithVariances],
       design: GroupDesign,
       tau: TauEstimator = TauEstimator.DerSimonianLaird
   ): Either[GroupError, GroupModel[VarianceCapability.WithVariances]] =
     validateShape(data, design).map(_ => GroupModel(data, design, GroupWeighting.RandomEffects(tau)))
+
+  /** Explicit mixed-effects policy, with no inferred default. The older
+    * randomEffects constructor retains DL/z compatibility. Neither plug-in z
+    * nor modified Knapp-Hartung is uniformly calibrated for few subjects and
+    * unequal or estimated sampling variances; select and qualify the policy
+    * for the admitted scientific design. See docs/verification/group-repair-2026-09-08.md.
+    */
+  def mixedEffects(
+      data: GroupData[VarianceCapability.WithVariances],
+      design: GroupDesign,
+      tau: TauEstimator,
+      inference: MetaInference
+  ): Either[GroupError, GroupModel[VarianceCapability.WithVariances]] =
+    validateShape(data, design).map(_ => GroupModel(data, design, GroupWeighting.RandomEffects(tau, inference)))
 
   private def validateShape(
       data: GroupData[? <: VarianceCapability],
