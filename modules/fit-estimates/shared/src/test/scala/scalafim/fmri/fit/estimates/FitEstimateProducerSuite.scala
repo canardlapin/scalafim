@@ -63,7 +63,32 @@ class FitEstimateProducerSuite extends munit.FunSuite:
     assertEquals(producer.unit.bindings.head.weights, Vector(1.0, 0.0))
     assertEquals(producer.unit.provenance.scans.head.zeroBasedRows, Vector(0, 1, 2, 3))
     assertEquals(producer.unit.degreesOfFreedom.head.value, DfValue.Scalar(2.0))
+    assertEquals(producer.unit.marginalUncertainty.head.origin,
+      MarginalVarianceOrigin.Estimated(producer.unit.degreesOfFreedom.head))
     assert(producer.unit.estimability.isInstanceOf[EstimabilityEvidence.FullRank])
+  }
+
+  test("multi-run shared OLS identifies joint-run pooling without inventing effective df") {
+    def checked[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), result => result)
+    val frame = SamplingFrame(blockLens = Seq(2, 2), tr = Seq(1.0, 1.0))
+    val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(scalafim.dataset.DatasetId("pooled-producer-test"),
+      Matrix.tabulate(4, 2)((t, v) => (if v == 0 then 1.0 + 2.0 * t else 5.0 - 3.0 * t) +
+        (v + 1) * Vector(1.0, -1.0, -1.0, 1.0)(t)), SampleSpaces(Vector(2, 1, 1))), frame)
+    val event = EventModel(Vector.empty, frame, Mat.fromRows(Vector.tabulate(4)(t => Vector(t.toDouble))),
+      Vector("task"), Vector(0 -> 1), Map("task" -> Vector(0)))
+    val model = FmriModel(event,
+      BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.Global), dataset)
+    val fit = FitPlan(model)
+    val request = checked(FirstLevelEstimateRequest.make(
+      fit.coefficientAxis.get.columnIds.map(EstimateOutput.Coefficient.apply), EstimateUncertaintyRequest.Marginal))
+    val prepared = checked(FirstLevelEstimates.prepare(fit, request, ChunkSize.unsafe(1)))
+    val identity = ProducerFixture.identity.copy(acquisitions = Vector(AcquisitionId("run-1"), AcquisitionId("run-2")))
+    val producer = checked(FitEstimateProducer.shared(prepared, identity, ProducerFixture.catalog, ProducerFixture.ids, "scanner"))
+    assert(producer.unit.products.forall(_.pooling == PoolingScope.JointRuns))
+    assertEquals(producer.unit.provenance.scans.map(_.zeroBasedRows), Vector(Vector(0, 1), Vector(0, 1)))
+    assertEquals(producer.unit.degreesOfFreedom.head,
+      DegreesOfFreedom(DfRole.Residual, DfValue.Scalar(2.0), "OLS n - numerical rank", false))
+    assert(producer.unit.provenance.runCombination.isInstanceOf[ScientificFact.Known])
   }
 
   test("cancellation aborts the sink without publishing a partial result") {

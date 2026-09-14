@@ -54,6 +54,7 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
     val groupFit = groupResult.fit(ContrastName).get
     val intercept = groupFit.term("(Intercept)").get
     val bridged = data.response(ContrastName).get
+    val uncertainty = data.uncertainty.get
     val expectedEffects = fixture.effectMatrix
     val expectedStandardErrors = fixture.standardErrorRows
     val expectedVariances = fixture.varianceMatrix
@@ -75,6 +76,19 @@ class FirstLevelToGroupKnownEffectScenarioSuite extends munit.FunSuite:
           "variance capability",
           data.hasVariances,
           s"hasVariances=${data.hasVariances}"
+        ),
+        ScenarioCheck.fact(
+          "uncertainty rows retain first-level fit and df provenance",
+          uncertainty.sources.size == fixture.subjects.size &&
+            uncertainty.sources.forall(_.origin.isInstanceOf[scalafim.fmri.group.GroupVarianceOrigin.Estimated]) &&
+            uncertainty.sources.forall(_.fit.estimator.isInstanceOf[scalafim.estimates.ScientificFact.Known]) &&
+            uncertainty.sources.forall(_.fit.runCombination.isInstanceOf[scalafim.estimates.ScientificFact.Known]),
+          s"sources=${uncertainty.sources.size}"
+        ),
+        ScenarioCheck.fact(
+          "eager geometry remains explicitly unverified",
+          uncertainty.geometry.isInstanceOf[scalafim.fmri.group.GroupGeometryEvidence.Unknown],
+          s"geometry=${uncertainty.geometry}"
         ),
         ScenarioCheck.fact(
           "group weighting",

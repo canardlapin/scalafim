@@ -161,6 +161,11 @@ class RunwiseGlsSuite extends munit.FunSuite:
     assertEquals(adapted.coefficientCovariance.scope, CoefficientCovarianceScope.Voxelwise)
     assertEquals(adapted.coefficientCovariance.matrixCount, 3)
     assert(adapted.autocorrelation.nonEmpty)
+    val contrast = TContrast.column(adapted.columnNames.head).evaluate(adapted)
+      .fold(error => fail(error.message), identity)
+    assertEquals(contrast.fitProvenance.map(_.engine), Some(FitEngine.GeneralizedLeastSquares))
+    assert(contrast.fitProvenance.exists(_.summary.coefficientScope == CoefficientScope.RunSpecific))
+    assert(contrast.fitProvenance.exists(_.autocorrelation.nonEmpty))
 
     val fixed = FixedEffects.combine(direct).fold(error => fail(error.message), identity)
     val sourceColumns = fixed.sufficientStatistics.effectiveSourceColumnIndices
