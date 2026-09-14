@@ -52,16 +52,62 @@ the order of `eps * cond * |beta|`, approximately `1.8e-7`. Well-conditioned
 coefficients and covariance remain subject to much tighter checks. This is a
 qualified limitation, not a reproduced historical pass.
 
-Fresh tests on the working candidate:
+Fresh tests on the working candidate after adding the metafor corpus:
 
-- `groupJVM/test`: 54 passed;
-- `groupJS/test`: 53 passed (the JVM suite has one runtime-boundary-only test);
+- `groupJVM/test`: 69 passed;
+- `groupJS/test`: 68 passed (the JVM suite has one runtime-boundary-only test);
 - `fitEstimatesJVM/test`: 11 passed;
 - `fitEstimatesJS/test`: 8 passed;
 - `fmriWorkflowJVM/test`: 23 passed;
 - `fmriWorkflowJS/test`: 19 passed; and
 - `sbt -Dsbt.supershell=false scalafimCompileAll`: passed, both platforms,
   warning-clean.
+
+## Fresh committed-diff review
+
+A second review used `925da6d..f0c9f5c` as the exact boundary, started from the
+changed public types, and traced every repository construction and match site.
+It found no blocking loss of a type guarantee and no unchecked cast,
+exhaustivity suppression, or erased error introduced by the recovery.
+
+Two API consequences are explicit:
+
+- `GroupContrast.difference` now returns `Either[GroupError, GroupContrast]`.
+  This is a source-level change, but it prevents normalized same-term inputs
+  such as `"a"` and `" a "` from constructing an all-zero contrast. All current
+  call sites consume the typed result.
+- Weighted partial failures retain rectangular numerical maps by writing `NaN`
+  at unavailable samples, but the sentinel is paired with a unique,
+  bounds-checked `GroupSampleFailure` vector and is propagated to term and
+  contrast results. It is not an unlabelled success value.
+
+The legacy `randomEffects` constructor continues to name the historical DL/z
+policy. New code can use `mixedEffects`, which requires both tau estimator and
+inference policy explicitly. The review does not reinterpret compatibility DL/z
+as a calibrated default.
+
+## Current metafor oracle
+
+`tools/r-parity/generate_group_metafor_fixture.R` generates a checked JSON
+receipt and shared Scala fixture using R 4.5.1 and metafor 5.0.1. Three designs
+cover an intercept-only heterogeneous case, an offset moderator, and a
+three-term meta-regression. Each is evaluated under FE/z, DL/z, PM/z, DL/mKH,
+and PM/mKH. The Scala suite compares every coefficient and covariance entry,
+including off-diagonals, plus standard errors, statistics, p-values, tau squared,
+fixed-Q, and residual degrees of freedom.
+
+The first oracle run retained three failures rather than weakening the whole
+comparison. One FE p-value differed by `1.73919273e-8`, within the portable
+distribution implementation's documented `1e-7` approximation bound. The two
+PM failures were caused by metafor's default root tolerance: it returned
+coefficient `0.37712550958999003` with reweighted Q
+`6.9997279634404688`, while ScalaFIM returned `0.3771140571511673` at the
+tighter root. Pinning the independent metafor call to
+`control=list(tol=1e-10)` gives coefficient `0.37711405715119023` and Q
+`6.9999999999994884`. No Scala estimator tolerance was changed.
+
+The regenerated corpus passes all 15 cases on both JVM and Scala.js. The
+generator's `--check` mode also reproduces the checked-in JSON and Scala bytes.
 
 ## Current resource receipt
 
@@ -90,24 +136,38 @@ Finite-output checksums were, respectively:
 These measurements qualify the current candidate's resource shape and finite
 outputs. They do not establish an improvement over a pre-recovery comparator.
 
+### Exact pre-recovery comparator
+
+The same harness was subsequently run for five measured iterations on
+`f0c9f5c` and on an archive of exact parent `925da6d`. The comparator adaptation
+only removes unavailable PM/mKH syntax; the workload and measured body are
+unchanged. Negative percentages mean the recovered candidate used less of the
+resource.
+
+| Policy | Candidate wall | Parent wall | Wall change | CPU change | Allocation change |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| OLS | 0.051932167 | 0.051990500 | -0.11% | -0.16% | +0.41% |
+| Fixed effects | 0.155703416 | 0.202976750 | -23.29% | -23.31% | -37.74% |
+| DerSimonian-Laird | 0.298618584 | 0.415503792 | -28.13% | -28.79% | -45.05% |
+
+Checksums agree to floating-point roundoff. OLS therefore has no material
+improvement claim; the fixed-effects and DL weighted paths do show bounded
+time/allocation reductions for this workload. All raw runs, hashes, environment,
+and caveats are preserved in
+`docs/benchmarks/receipts/group-baseline-comparator-2026-09-14.json`.
+
 ## Limitations and completion plan
 
-This stopping point does not admit a new statistical default or make a universal
-correctness claim. It has no held-out group-inference calibration, and the old
-candidate's broad R/metafor grid and performance-improvement percentages were
-not adopted as current evidence. Consumer tests also ran in a worktree that
-contains unrelated in-progress changes; the commit for this tranche therefore
-isolates only the group and threshold files listed in its diff.
+This tranche does not admit a new statistical default or make a universal
+correctness claim. It has no new held-out group-inference calibration. The
+current metafor corpus establishes formula and numerical parity for the named
+policies; it does not overturn the retained adverse calibration results for
+small samples or estimated first-level variances.
 
-To finish `bd-01M20TKX7VYFT3BHCM7QAMA6NG`:
+Before closing `bd-01M20TKX7VYFT3BHCM7QAMA6NG`, the remaining steps are:
 
-1. independently review the narrowed committed diff and its typed API changes;
-2. regenerate a bounded R/metafor oracle fixture against the current estimator
-   policies and verify it on JVM and Scala.js;
-3. if an allocation or throughput improvement will be claimed, measure the
-   committed candidate against an exact pre-recovery comparator under the same
-   harness and environment;
-4. qualify the first-level bridge and workflow consumers from one clean,
+1. commit the review, oracle corpus, and exact comparator receipt;
+2. qualify the group suite, first-level bridge, and workflow consumers from that clean,
    identified commit; and
-5. record the resulting evidence in Mote before closing the issue or admitting
+3. record the resulting evidence in Mote before closing the issue or admitting
    any method as a default.
