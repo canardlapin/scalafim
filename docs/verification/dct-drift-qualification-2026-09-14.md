@@ -63,7 +63,7 @@ that commit:
 - `scalafmtCheckAll`, `testAll`, and `compileAll`: passed
 - `docs/mdoc`: completed with five pre-existing unrelated broken-link warnings
 
-## ScalaFIM qualification
+## Development-worktree regression screen
 
 The ordinary pinned dependency path, without a sibling-build override, passed:
 
@@ -78,8 +78,9 @@ The ordinary pinned dependency path, without a sibling-build override, passed:
 - `scalafimCompileAll`: passed across JVM and Scala.js without compiler warnings
 
 These counts include the eight design-policy tests and the independent fitting
-equivalence test on both platforms. Final clean-commit SHA evidence is recorded
-below after the implementation commit is isolated from the concurrent checkout.
+equivalence test on both platforms. The fit counts also include concurrent,
+uncommitted test additions outside this issue; they are a broad regression
+screen, not the clean-candidate manifest.
 
 ## Admission boundary
 
@@ -91,4 +92,21 @@ commutes with AR/GLS whitening.
 
 ## Clean candidate
 
-Pending implementation commit and isolated-worktree rerun.
+Implementation commit: `32a5d407acc9b0c5292207a61c4b5beea1049cc2`
+
+A detached worktree at that exact commit, with no sibling Gale override and no
+uncommitted ScalaFIM files, passed:
+
+- `designJVM/test`: 249 passed
+- `designJS/test`: 249 passed
+- `latentJVM/test`: 44 passed
+- `latentJS/test`: 44 passed
+- `modelJVM/test`: 28 passed
+- `modelJS/test`: 28 passed
+- `fitJVM/test`: 326 passed
+- `fitJS/test`: 315 passed
+- `scalafimCompileAll`: passed across JVM and Scala.js without compiler warnings
+
+The eight DCT design tests and the independent fitting-equivalence test are
+present and passing in both platform manifests. The clean worktree remained
+unchanged after qualification.
