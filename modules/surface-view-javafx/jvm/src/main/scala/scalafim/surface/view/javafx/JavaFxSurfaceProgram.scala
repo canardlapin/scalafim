@@ -189,13 +189,36 @@ final class JavaFxSurfaceBackend private (
   private var disposed = false
 
   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    render(plan, None)
+
+  /** Apply a colour publication whose atlas pixels were prepared away from the
+    * FX thread. Camera and selection remain part of `plan`, so callers can
+    * rebase interactions immediately before this commit.
+    */
+  def render(
+    plan: SurfaceRenderPlan,
+    preparedColors: JavaFxPreparedColorUpdate
+  ): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    render(plan, Some(preparedColors))
+
+  private def render(
+    plan: SurfaceRenderPlan,
+    preparedColors: Option[JavaFxPreparedColorUpdate]
+  ): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val started = System.nanoTime()
     requireFxThread().flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else plan.clipping match
         case SurfaceClipping.WorldPlanes(_) => Left(JavaFxSurfaceError.IncompatiblePlan("world clipping planes are unsupported by JavaFX Scene3D"))
-        case _ => prepare(plan).flatMap(prepared => renderPrepared(plan, prepared))
+        case _ => prepare(plan).flatMap(prepared => renderPrepared(plan, prepared, preparedColors))
           .map(_.copy(elapsedNanos = System.nanoTime() - started))
+
+  /** Capture the immutable retained-layout inputs needed by worker preparation. */
+  def colorPreparationBasis: Either[JavaFxSurfaceError, JavaFxColorPreparationBasis] =
+    requireFxThread().flatMap: _ =>
+      if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
+      else current.map(_.colorPreparationBasis).toRight(JavaFxSurfaceError.IncompatiblePlan(
+        "the backend has no retained native layout"))
 
   private def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedSurface] =
     approximationConfig match
@@ -214,7 +237,8 @@ final class JavaFxSurfaceBackend private (
               approximation = cached.approximation.map(_.copy(preparationNanos = 0L, reused = true))))
           case _ => JavaFxSurfaceApproximation.prepare(plan, settings, config)
 
-  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+  private def renderPrepared(source: SurfaceRenderPlan, prepared: JavaFxPreparedSurface,
+      suppliedColors: Option[JavaFxPreparedColorUpdate]): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     val plan = prepared.plan
     JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
@@ -224,8 +248,14 @@ final class JavaFxSurfaceBackend private (
         val changesAtlas = incremental.commands.exists:
           case JavaFxSurfaceCommand.UpdateAtlases(_) => true
           case _ => false
-        val preparedColors = if changesAtlas then
-          current.get.prepareColorUpdate(plan, JavaFxSurfaceProgram.materialMode(plan)).map(Some(_))
+        val preparedColors = if changesAtlas then suppliedColors match
+          case Some(colors) if !(colors.owner eq current.get) => Left(JavaFxSurfaceError.IncompatiblePlan(
+            "prepared colour update no longer matches the native layout; prepare again"))
+          case Some(colors) if colors.mode != JavaFxSurfaceProgram.materialMode(plan) ||
+              !JavaFxSurfaceProbe.sameColorContent(colors.plan, plan) =>
+            Left(JavaFxSurfaceError.IncompatiblePlan("prepared colour content differs from the plan; prepare again"))
+          case Some(colors) => Right(Some(colors))
+          case None => current.get.prepareColorUpdate(plan, JavaFxSurfaceProgram.materialMode(plan)).map(Some(_))
         else Right(None)
         val program = preparedColors match
           case Left(error) => scala.util.boundary.break(Left(error))
@@ -286,7 +316,7 @@ final class JavaFxSurfaceBackend private (
                   geometryUpdates += 1
                   geometryBytesUpdated += receipt.bytesUpdated
             case JavaFxSurfaceCommand.UpdateAtlases(_) =>
-              current.get.updatePreparedColors(preparedColors.toOption.flatten.get, commit = true) match
+              current.get.updatePreparedColors(preparedColors.toOption.flatten.get, plan, commit = true) match
                 case Left(error) => failure = Some(error)
                 case Right(receipt) =>
                   atlasUpdates += receipt.atlasesUpdated

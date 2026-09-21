@@ -140,12 +140,25 @@ final class JavaFxSurfaceController private (
   def applyLayerTransaction(
     transaction: SurfaceLayerTransaction
   ): Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
+    applyLayerTransaction(transaction, None)
+
+  def applyLayerTransaction(
+    transaction: SurfaceLayerTransaction,
+    preparedColors: JavaFxPreparedColorUpdate
+  ): Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
+    applyLayerTransaction(transaction, Some(preparedColors))
+
+  private def applyLayerTransaction(
+    transaction: SurfaceLayerTransaction,
+    preparedColors: Option[JavaFxPreparedColorUpdate]
+  ): Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
     if isDisposed then Left(JavaFxInteractionError.Disposed)
     else
       val result =
         for
           nextPlan <- transaction.rebase(model, currentState, currentPlan).left.map(JavaFxInteractionError.View.apply)
-          interpreted <- backend.render(nextPlan).left.map(JavaFxInteractionError.Backend.apply)
+          interpreted <- preparedColors.fold(backend.render(nextPlan))(
+            backend.render(nextPlan, _)).left.map(JavaFxInteractionError.Backend.apply)
         yield
           model = transaction.nextModel
           currentPlan = nextPlan

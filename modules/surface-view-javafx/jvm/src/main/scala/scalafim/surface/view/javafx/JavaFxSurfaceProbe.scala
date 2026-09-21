@@ -85,12 +85,34 @@ final case class JavaFxSurfaceUpdateReceipt(
   * private to the preparation result and may be written into native atlases
   * without recompositing or repeating topology validation on the FX thread.
   */
-private[javafx] final case class JavaFxPreparedColorUpdate(
-  plan: SurfaceRenderPlan,
-  mode: JavaFxMaterialMode,
-  colorsBySurface: Map[SurfaceId, Array[Int]],
-  requiresRebuild: Boolean
+private[javafx] final case class JavaFxPreparedAtlasUpdate(
+  pixels: Array[Int],
+  textureCoordinates: Option[Array[Float]]
 )
+
+/** Immutable work product for one compatible colour publication. The native
+  * backend owns its arrays; callers may prepare it away from the FX thread and
+  * can only return it to the backend that issued its basis.
+  */
+final class JavaFxPreparedColorUpdate private[javafx] (
+  private[javafx] val owner: JavaFxSurfaceProbeResult,
+  private[javafx] val plan: SurfaceRenderPlan,
+  private[javafx] val mode: JavaFxMaterialMode,
+  private[javafx] val colorsBySurface: Map[SurfaceId, Array[Int]],
+  private[javafx] val atlases: Vector[JavaFxPreparedAtlasUpdate],
+  val requiresRebuild: Boolean
+)
+
+/** Snapshot of the current retained native layout. Capture it on the FX thread;
+  * [[prepare]] is pure CPU work and is safe to call on a worker thread.
+  */
+final class JavaFxColorPreparationBasis private[javafx] (
+  private val owner: JavaFxSurfaceProbeResult,
+  private val textureCapacities: Vector[Int]
+):
+  def prepare(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
+    owner.prepareColorUpdate(plan, JavaFxSurfaceProgram.materialMode(plan),
+      renderAtlases = true, Some(textureCapacities))
 
 final class JavaFxFaceAtlas private[javafx] (
   val faceStart: Int,
@@ -106,7 +128,8 @@ final class JavaFxFaceAtlas private[javafx] (
 ):
   def direct: Boolean = pixels.isDirect
 
-  private[javafx] def write(
+  private def writeTo(
+    target: IntBuffer,
     indices: IntBufferView,
     colors: Array[Int]
   ): Rectangle2D =
@@ -117,24 +140,43 @@ final class JavaFxFaceAtlas private[javafx] (
       val a = colors(indices(offset))
       val b = colors(indices(offset + 1))
       val c = colors(indices(offset + 2))
-      writeTile(localFace, a, b, c)
+      writeTile(target, localFace, a, b, c)
       localFace += 1
+    new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
+
+  private[javafx] def write(
+    indices: IntBufferView,
+    colors: Array[Int]
+  ): Rectangle2D =
+    val region = writeTo(pixels, indices, colors)
+    pixels.position(0)
+    region
+
+  private[javafx] def renderPixels(indices: IntBufferView, colors: Array[Int]): Array[Int] =
+    val rendered = new Array[Int](width * height)
+    writeTo(IntBuffer.wrap(rendered), indices, colors)
+    rendered
+
+  private[javafx] def replace(rendered: Array[Int]): Rectangle2D =
+    require(rendered.length == width * height, "prepared atlas size changed")
+    pixels.position(0)
+    pixels.put(rendered)
     pixels.position(0)
     new Rectangle2D(0.0, 0.0, width.toDouble, height.toDouble)
 
   def commit(region: Rectangle2D): Unit =
     pixelBuffer.updateBuffer(_ => region)
 
-  private def writeTile(localFace: Int, a: Int, b: Int, c: Int): Unit =
+  private def writeTile(target: IntBuffer, localFace: Int, a: Int, b: Int, c: Int): Unit =
     val tilesPerRow = width / tileSize
     val tileX = (localFace % tilesPerRow) * tileSize
     val tileY = (localFace / tilesPerRow) * tileSize
     if encoding.adaptive then
       val pivot = if encoding.retainsLayout then adaptiveLayout.get.anchor(localFace) else JavaFxAdaptiveAtlas.anchor(a,b,c)
-      JavaFxAdaptiveAtlas.write(pixels, width, tileX, tileY, a, b, c, pivot)
+      JavaFxAdaptiveAtlas.write(target, width, tileX, tileY, a, b, c, pivot)
       return
     if encoding == JavaFxAtlasEncoding.AffineMidpointOpaque then
-      JavaFxAffineAtlas.write(pixels, width, tileX, tileY, a, b, c)
+      JavaFxAffineAtlas.write(target, width, tileX, tileY, a, b, c)
       return
     val denominator = (tileSize - 1).toDouble
     var y = 0
@@ -149,7 +191,7 @@ final class JavaFxFaceAtlas private[javafx] (
           weightB /= sum
           weightC /= sum
           weightA = 0.0
-        pixels.put((tileY + y) * width + tileX + x, interpolateArgbPre(a, b, c, weightA, weightB, weightC))
+        target.put((tileY + y) * width + tileX + x, interpolateArgbPre(a, b, c, weightA, weightB, weightC))
         x += 1
       y += 1
 
@@ -373,6 +415,9 @@ final class JavaFxSurfaceProbeResult private[javafx] (
   private[javafx] def requiresAtlasRebuild(next: SurfaceRenderPlan, mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, Boolean] =
     prepareColorUpdate(next, mode).map(_.requiresRebuild)
 
+  private[javafx] def colorPreparationBasis: JavaFxColorPreparationBasis =
+    new JavaFxColorPreparationBasis(this, chunks.map(_.mesh.getTexCoords.size()))
+
   private def validatePlanMeshes(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
       Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
@@ -410,36 +455,38 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         index += 1
       Right(changed)
 
-  private def validateColorCapacity(next: SurfaceRenderPlan,
-      colorsBySurface: Map[SurfaceId, Array[Int]]): Either[JavaFxSurfaceError, Unit] =
-    var index = 0
-    var failure: Option[JavaFxSurfaceError] = None
-    while index < chunks.length && failure.isEmpty do
-      val chunk = chunks(index)
-      if !config.encoding.retainsLayout then
-        val packet = next.meshes.find(_.surface == chunk.surface).get
-        val coordinates = JavaFxSurfaceProbe.textureCoordinates(
-          packet, chunk.faceStart, chunk.faceCount, chunk.atlas, colorsBySurface(chunk.surface)
-        )
-        if coordinates.length != chunk.mesh.getTexCoords.size() then
-          failure = Some(JavaFxSurfaceError.IncompatiblePlan(
-            s"surface '${chunk.surface.value}' changed texture-coordinate capacity"
-          ))
-      index += 1
-    failure.toLeft(())
-
   /** Composite and validate once before a native colour publication. The
     * returned buffers are owned by the preparation and reused by commit.
     */
   private[javafx] def prepareColorUpdate(next: SurfaceRenderPlan,
-      mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
+      mode: JavaFxMaterialMode = activeMaterialMode,
+      renderAtlases: Boolean = false,
+      capturedTextureCapacities: Option[Vector[Int]] = None): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
     validatePlanMeshes(next).flatMap: _ =>
       val colorsBySurface = JavaFxSurfaceProbe.compositeColors(next, mode)
       val rebuild = if config.encoding.adaptive then atlasLayoutChanged(next, colorsBySurface) else Right(false)
       rebuild.flatMap: changed =>
-        if changed then Right(JavaFxPreparedColorUpdate(next, mode, colorsBySurface, requiresRebuild = true))
-        else validateColorCapacity(next, colorsBySurface)
-          .map(_ => JavaFxPreparedColorUpdate(next, mode, colorsBySurface, requiresRebuild = false))
+        if changed then Right(new JavaFxPreparedColorUpdate(
+          this, next, mode, colorsBySurface, Vector.empty, requiresRebuild = true))
+        else
+          val prepared = Vector.newBuilder[JavaFxPreparedAtlasUpdate]
+          var index = 0
+          var failure: Option[JavaFxSurfaceError] = None
+          while index < chunks.length && failure.isEmpty do
+            val chunk = chunks(index)
+            val packet = next.meshes.find(_.surface == chunk.surface).get
+            val coordinates = Option.when(!config.encoding.retainsLayout)(JavaFxSurfaceProbe.textureCoordinates(
+              packet, chunk.faceStart, chunk.faceCount, chunk.atlas, colorsBySurface(chunk.surface)))
+            val capacity = capturedTextureCapacities.flatMap(_.lift(index)).getOrElse(chunk.mesh.getTexCoords.size())
+            if coordinates.exists(_.length != capacity) then
+              failure = Some(JavaFxSurfaceError.IncompatiblePlan(
+                s"surface '${chunk.surface.value}' changed texture-coordinate capacity"
+              ))
+            else if renderAtlases then prepared += JavaFxPreparedAtlasUpdate(
+              chunk.atlas.renderPixels(packet.indices, colorsBySurface(chunk.surface)), coordinates)
+            index += 1
+          failure.toLeft(new JavaFxPreparedColorUpdate(
+            this, next, mode, colorsBySurface, prepared.result(), requiresRebuild = false))
 
   private[javafx] def validateColorUpdate(next: SurfaceRenderPlan,
       mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, Unit] =
@@ -480,9 +527,17 @@ final class JavaFxSurfaceProbeResult private[javafx] (
     */
   private[javafx] def updatePreparedColors(prepared: JavaFxPreparedColorUpdate,
       commit: Boolean = false): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
-    if prepared.requiresRebuild then Left(JavaFxSurfaceError.AtlasLayoutChanged)
+    updatePreparedColors(prepared, prepared.plan, commit)
+
+  private[javafx] def updatePreparedColors(prepared: JavaFxPreparedColorUpdate,
+      next: SurfaceRenderPlan,
+      commit: Boolean): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
+    if !(prepared.owner eq this) then Left(JavaFxSurfaceError.IncompatiblePlan(
+      "prepared colour update no longer matches the native layout; prepare again"))
+    else if !JavaFxSurfaceProbe.sameColorContent(prepared.plan, next) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("prepared colour content differs from the plan; prepare again"))
+    else if prepared.requiresRebuild then Left(JavaFxSurfaceError.AtlasLayoutChanged)
     else
-      val next = prepared.plan
       val started = System.nanoTime()
       val colorsBySurface = prepared.colorsBySurface
       activeMaterialMode = prepared.mode
@@ -493,8 +548,10 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         val chunk = chunks(index)
         val mesh = next.meshes.find(_.surface == chunk.surface).get
         val colors = colorsBySurface(chunk.surface)
+        val staged = prepared.atlases.lift(index)
         if !config.encoding.retainsLayout then
-          val coordinates = JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount, chunk.atlas, colors)
+          val coordinates = staged.flatMap(_.textureCoordinates).getOrElse(
+            JavaFxSurfaceProbe.textureCoordinates(mesh, chunk.faceStart, chunk.faceCount, chunk.atlas, colors))
           val previous = chunk.mesh.getTexCoords
           var changed = false
           var coordinate = 0
@@ -504,7 +561,8 @@ final class JavaFxSurfaceProbeResult private[javafx] (
           if changed then
             previous.setAll(coordinates, 0, coordinates.length)
             textureCoordinateBytesUpdated += coordinates.length.toLong * 4
-        val region = chunk.atlas.write(mesh.indices, colors)
+        val region = staged.fold(chunk.atlas.write(mesh.indices, colors))(
+          atlas => chunk.atlas.replace(atlas.pixels))
         if commit then chunk.atlas.commit(region)
         dirtyPixels += chunk.atlas.width.toLong * chunk.atlas.height.toLong
         index += 1
@@ -559,6 +617,18 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       ))
 
 object JavaFxSurfaceProbe:
+  private[javafx] def sameColorContent(
+    prepared: SurfaceRenderPlan,
+    next: SurfaceRenderPlan
+  ): Boolean =
+    prepared.meshes.map(mesh => (mesh.surface, mesh.resourceKey, mesh.geometryKey)) ==
+        next.meshes.map(mesh => (mesh.surface, mesh.resourceKey, mesh.geometryKey)) &&
+      prepared.layers.map(layer => (layer.surface, layer.resourceKey, layer.opacity,
+        layer.blendMode, layer.interpolation, layer.coverage)) ==
+        next.layers.map(layer => (layer.surface, layer.resourceKey, layer.opacity,
+          layer.blendMode, layer.interpolation, layer.coverage)) &&
+      prepared.lighting == next.lighting
+
   def compile(
     plan: SurfaceRenderPlan,
     materialMode: JavaFxMaterialMode = JavaFxMaterialMode.Unlit,

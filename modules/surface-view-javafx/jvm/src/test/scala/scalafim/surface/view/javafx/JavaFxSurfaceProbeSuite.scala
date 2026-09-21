@@ -216,10 +216,11 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     val blue = plan(mesh, Rgba32.unsafe(0, 0, 255), SurfaceViewpoint.Dorsal)
     val result = JavaFxSurfaceProbe.compile(red).toOption.get
     val before = result.chunks.head.atlas.image.getPixelReader.getArgb(1, 1)
-    val prepared = result.prepareColorUpdate(blue).toOption.get
+    val prepared = result.colorPreparationBasis.prepare(blue).toOption.get
 
     assert(!prepared.requiresRebuild)
     assertEquals(prepared.plan, blue)
+    assertEquals(prepared.atlases.size, result.chunks.size)
     val receipt = result.updatePreparedColors(prepared).toOption.get
     assertEquals(receipt.atlasesUpdated, 1)
     assertNotEquals(result.chunks.head.atlas.image.getPixelReader.getArgb(1, 1), before)
