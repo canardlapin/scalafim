@@ -259,7 +259,7 @@ object SurfaceCompiler:
         offset += 3
       SurfaceWorldBounds(minimumX, minimumY, minimumZ, maximumX, maximumY, maximumZ)
 
-  private def compileChrome(readouts: Vector[SurfaceReadout]): Scene =
+  private[view] def compileChrome(readouts: Vector[SurfaceReadout]): Scene =
     readouts.headOption match
       case None => Scene.empty
       case Some(readout) =>
@@ -495,6 +495,12 @@ object SurfaceCompiler:
       0.0f, 0.0f, -0.00200002f, -1.00002f,
       0.0f, 0.0f, 0.0f, 1.0f
     )
+
+  private[view] def compileReadout(
+    model: SurfaceViewerModel,
+    state: SurfaceViewerState
+  ): Either[SurfaceViewError, Vector[SurfaceReadout]] =
+    resolveFrames(model, state).map(frames => compileReadout(model, state, frames))
 
   private def compileReadout(
     model: SurfaceViewerModel,

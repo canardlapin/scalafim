@@ -233,6 +233,32 @@ final class JavaFxSurfaceBackend private (
             // Colour-driven topology changes must be visible in resource receipts.
             val full = JavaFxSurfaceProgram.compile(None, plan)
             full.copy(dirty = full.dirty.copy(removedResources = incremental.dirty.removedResources))
+        var stagedRebuild: Option[JavaFxSurfaceProbeResult] = None
+        def preflightTarget: Either[JavaFxSurfaceError, JavaFxSurfaceProbeResult] =
+          stagedRebuild.orElse(current).toRight(JavaFxSurfaceError.IncompatiblePlan(
+            "an incremental command has no current or staged native scene"))
+        var preflightIndex = 0
+        while preflightIndex < program.commands.length do
+          val checked = program.commands(preflightIndex) match
+            case JavaFxSurfaceCommand.DisposeResources(_) => Right(())
+            case JavaFxSurfaceCommand.RebuildGeometry(next) =>
+              JavaFxSurfaceProbe.compileRetaining(
+                next,
+                JavaFxSurfaceProgram.materialMode(next),
+                config,
+                current
+              ).map: probe =>
+                stagedRebuild = Some(probe)
+            case JavaFxSurfaceCommand.UpdateGeometry(next) => preflightTarget.flatMap(_.validateGeometryUpdate(next))
+            case JavaFxSurfaceCommand.UpdateAtlases(next) =>
+              preflightTarget.flatMap(_.validateColorUpdate(next, JavaFxSurfaceProgram.materialMode(next)))
+            case JavaFxSurfaceCommand.UpdateMaterial(_) => Right(())
+            case JavaFxSurfaceCommand.UpdateCamera(next) => preflightTarget.flatMap(_.validateCameraUpdate(next))
+            case JavaFxSurfaceCommand.UpdateLayout(_, _) => Right(())
+          checked match
+            case Left(error) => scala.util.boundary.break(Left(error))
+            case Right(_) => ()
+          preflightIndex += 1
         var atlasUpdates = 0
         var geometryUpdates = 0
         var geometryBytesUpdated = 0L
@@ -243,14 +269,12 @@ final class JavaFxSurfaceBackend private (
           program.commands(index) match
             case JavaFxSurfaceCommand.DisposeResources(_) => ()
             case JavaFxSurfaceCommand.RebuildGeometry(next) =>
-              JavaFxSurfaceProbe.compileRetaining(next, JavaFxSurfaceProgram.materialMode(next), config, current) match
-                case Left(error) => failure = Some(error)
-                case Right(probe) =>
-                  val mounted = current.toVector.flatMap(_.detachScenes())
-                  current.foreach(_.root.getChildren.clear())
-                  current = Some(probe)
-                  root.getChildren.setAll(probe.root)
-                  mounted.foreach(probe.attachCamera)
+              val probe = stagedRebuild.get
+              val mounted = current.toVector.flatMap(_.detachScenes())
+              current.foreach(_.root.getChildren.clear())
+              current = Some(probe)
+              root.getChildren.setAll(probe.root)
+              mounted.foreach(probe.attachCamera)
             case JavaFxSurfaceCommand.UpdateGeometry(next) =>
               current.get.updateGeometry(next) match
                 case Left(error) => failure = Some(error)

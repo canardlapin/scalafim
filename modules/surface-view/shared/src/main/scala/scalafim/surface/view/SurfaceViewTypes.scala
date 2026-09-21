@@ -12,6 +12,8 @@ enum SurfaceViewError:
   case UnknownSurface(id: SurfaceId)
   case UnknownLayer(id: SurfaceLayerId)
   case IncompatibleLayerDomain(layer: SurfaceLayerId, surface: SurfaceId)
+  case IncompatibleLayerReplacement(layer: SurfaceLayerId, reason: String)
+  case InvalidLayerTransaction(reason: String)
   case InvalidScalarMapping(layer: SurfaceLayerId, cause: ScalarMappingError)
   case InvalidFrameCount(value: Int)
   case InvalidDataLength(expected: Int, actual: Int)
@@ -67,6 +69,9 @@ enum SurfaceViewError:
       case UnknownLayer(id) => s"surface layer '${id.value}' does not exist"
       case IncompatibleLayerDomain(layer, surface) =>
         s"layer '${layer.value}' does not have the exact mesh domain of surface '${surface.value}'"
+      case IncompatibleLayerReplacement(layer, reason) =>
+        s"layer '${layer.value}' is not a compatible replacement: $reason"
+      case InvalidLayerTransaction(reason) => s"invalid surface layer transaction: $reason"
       case InvalidScalarMapping(layer, cause) => s"invalid mapping for layer '${layer.value}': ${cause.message}"
       case InvalidFrameCount(value) => s"surface frame count must be positive; got $value"
       case InvalidDataLength(expected, actual) => s"surface data length must be $expected; got $actual"

@@ -360,29 +360,98 @@ final class JavaFxSurfaceProbeResult private[javafx] (
 
   /** Checked before any native mutation, including geometry/material changes. */
   private[javafx] def requiresAtlasRebuild(next: SurfaceRenderPlan, mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, Boolean] =
-    if !config.encoding.adaptive then Right(false)
-    else atlasLayoutChanged(next, JavaFxSurfaceProbe.compositeColors(next, mode))
+    validatePlanMeshes(next).flatMap: _ =>
+      if !config.encoding.adaptive then Right(false)
+      else atlasLayoutChanged(next, JavaFxSurfaceProbe.compositeColors(next, mode))
+
+  private def validatePlanMeshes(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
+      Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
+    else
+      var index = 0
+      while index < chunks.length do
+        val chunk = chunks(index)
+        next.meshes.find(_.surface == chunk.surface) match
+          case None => return Left(JavaFxSurfaceError.IncompatiblePlan(
+            s"surface '${chunk.surface.value}' has no mesh packet"
+          ))
+          case Some(packet) if packet.indices.length < (chunk.faceStart + chunk.faceCount) * 3 =>
+            return Left(JavaFxSurfaceError.IncompatiblePlan(
+              s"surface '${chunk.surface.value}' does not contain chunk faces ${chunk.faceStart}..${chunk.faceStart + chunk.faceCount - 1}"
+            ))
+          case _ => ()
+        index += 1
+      Right(())
 
   private def atlasLayoutChanged(next: SurfaceRenderPlan, colors: Map[SurfaceId, Array[Int]]): Either[JavaFxSurfaceError, Boolean] =
     if config.encoding != JavaFxAtlasEncoding.LegacyTriangle && !JavaFxAffineAtlas.opaque(colors) then
       Left(JavaFxSurfaceError.IncompatiblePlan("affine encoding requires opaque final vertex colours"))
-    else Right(chunks.exists: chunk =>
-      chunk.atlas.adaptiveLayout.exists: layout =>
+    else
+      var changed = false
+      var index = 0
+      while index < chunks.length && !changed do
+        val chunk = chunks(index)
+        (next.meshes.find(_.surface == chunk.surface), colors.get(chunk.surface)) match
+          case (Some(packet), Some(surfaceColors)) =>
+            changed = chunk.atlas.adaptiveLayout.exists: layout =>
+              !JavaFxAdaptiveAtlas.matches(layout, packet.indices, surfaceColors, chunk.faceStart, chunk.faceCount, config.encoding.retainsLayout)
+          case _ => return Left(JavaFxSurfaceError.IncompatiblePlan(
+            s"surface '${chunk.surface.value}' is incomplete in the prepared colour update"
+          ))
+        index += 1
+      Right(changed)
+
+  private[javafx] def validateColorUpdate(next: SurfaceRenderPlan,
+      mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, Unit] =
+    validatePlanMeshes(next).flatMap: _ =>
+      val colorsBySurface = JavaFxSurfaceProbe.compositeColors(next, mode)
+      atlasLayoutChanged(next, colorsBySurface).flatMap:
+        case true => Left(JavaFxSurfaceError.AtlasLayoutChanged)
+        case false =>
+          var index = 0
+          var failure: Option[JavaFxSurfaceError] = None
+          while index < chunks.length && failure.isEmpty do
+            val chunk = chunks(index)
+            if !config.encoding.retainsLayout then
+              val packet = next.meshes.find(_.surface == chunk.surface).get
+              val coordinates = JavaFxSurfaceProbe.textureCoordinates(
+                packet, chunk.faceStart, chunk.faceCount, chunk.atlas, colorsBySurface(chunk.surface)
+              )
+              if coordinates.length != chunk.mesh.getTexCoords.size() then
+                failure = Some(JavaFxSurfaceError.IncompatiblePlan(
+                  s"surface '${chunk.surface.value}' changed texture-coordinate capacity"
+                ))
+            index += 1
+          failure.toLeft(())
+
+  private[javafx] def validateGeometryUpdate(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    validatePlanMeshes(next).flatMap: _ =>
+      var index = 0
+      var failure: Option[JavaFxSurfaceError] = None
+      while index < chunks.length && failure.isEmpty do
+        val chunk = chunks(index)
         val packet = next.meshes.find(_.surface == chunk.surface).get
-        !JavaFxAdaptiveAtlas.matches(layout, packet.indices, colors(chunk.surface), chunk.faceStart, chunk.faceCount, config.encoding.retainsLayout)
-    )
+        val points = JavaFxSurfaceProbe.attributes(
+          packet, packet.positions, chunk.faceStart, chunk.faceCount, config.encoding, chunk.atlas.adaptiveLayout
+        )
+        val normals = JavaFxSurfaceProbe.attributes(
+          packet, packet.normals, chunk.faceStart, chunk.faceCount, config.encoding, chunk.atlas.adaptiveLayout
+        )
+        if chunk.mesh.getPoints.size() != points.length || chunk.mesh.getNormals.size() != normals.length then
+          failure = Some(JavaFxSurfaceError.IncompatiblePlan(
+            s"surface '${chunk.surface.value}' changed morph buffer capacity"
+          ))
+        index += 1
+      failure.toLeft(())
+
+  private[javafx] def validateCameraUpdate(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
+    validatePlanMeshes(next)
 
   def updateColors(next: SurfaceRenderPlan, commit: Boolean = false,
       mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
-    if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
-      Left(JavaFxSurfaceError.IncompatiblePlan("mesh resource keys changed"))
-    else
+    validateColorUpdate(next, mode).flatMap: _ =>
       val started = System.nanoTime()
       val colorsBySurface = JavaFxSurfaceProbe.compositeColors(next, mode)
-      atlasLayoutChanged(next, colorsBySurface) match
-        case Left(error) => return Left(error)
-        case Right(true) => return Left(JavaFxSurfaceError.AtlasLayoutChanged)
-        case Right(false) => ()
       activeMaterialMode = mode
       var dirtyPixels = 0L
       var textureCoordinateBytesUpdated = 0L
@@ -416,9 +485,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       ))
 
   def updateGeometry(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
-    if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
-      Left(JavaFxSurfaceError.IncompatiblePlan("mesh topology resource keys changed"))
-    else
+    validateGeometryUpdate(next).flatMap: _ =>
       val started = System.nanoTime()
       var verticesUpdated = 0
       var bytesUpdated = 0L
@@ -428,8 +495,6 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         val packet = next.meshes.find(_.surface == chunk.surface).get
         val points = JavaFxSurfaceProbe.attributes(packet, packet.positions, chunk.faceStart, chunk.faceCount, config.encoding, chunk.atlas.adaptiveLayout)
         val normals = JavaFxSurfaceProbe.attributes(packet, packet.normals, chunk.faceStart, chunk.faceCount, config.encoding, chunk.atlas.adaptiveLayout)
-        if chunk.mesh.getPoints.size() != points.length || chunk.mesh.getNormals.size() != normals.length then
-          return Left(JavaFxSurfaceError.IncompatiblePlan("morph buffers changed vertex count"))
         chunk.mesh.getPoints.setAll(points, 0, points.length)
         chunk.mesh.getNormals.setAll(normals, 0, normals.length)
         verticesUpdated += points.length / 3
@@ -446,9 +511,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
       ))
 
   def applyCamera(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
-    if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
-      Left(JavaFxSurfaceError.IncompatiblePlan("camera update also changed mesh resources"))
-    else
+    validateCameraUpdate(next).flatMap: _ =>
       val started = System.nanoTime()
       plan = next
       JavaFxSurfaceProbe.configureCamera(perspectiveCamera, cameraTransform, next)

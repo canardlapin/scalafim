@@ -49,7 +49,7 @@ final case class JavaFxInteractionReceipt(
 )
 
 final class JavaFxSurfaceController private (
-  model: SurfaceViewerModel,
+  private var model: SurfaceViewerModel,
   backend: JavaFxSurfaceBackend,
   scene: SubScene,
   private var currentState: SurfaceViewerState,
@@ -109,6 +109,7 @@ final class JavaFxSurfaceController private (
     if action.nonEmpty then event.consume()
 
   def state: SurfaceViewerState = currentState
+  def viewerModel: SurfaceViewerModel = model
   def plan: SurfaceRenderPlan = currentPlan
   def hovered: Option[JavaFxSurfacePick] = latestPick
   def lastError: Option[JavaFxInteractionError] = lastFailure
@@ -129,6 +130,28 @@ final class JavaFxSurfaceController private (
           atlasUploads += interpreted.atlasUpdates
           interpreted
       navigationNanos :+= System.nanoTime() - started
+      result.left.foreach(record)
+      result
+
+  /** Commit a transaction prepared away from the FX thread. Camera, lighting,
+    * clipping, per-surface viewpoints, and selection are taken from the live
+    * controller state; layer presentation changes require fresh preparation.
+    */
+  def applyLayerTransaction(
+    transaction: SurfaceLayerTransaction
+  ): Either[JavaFxInteractionError, JavaFxInterpretReceipt] =
+    if isDisposed then Left(JavaFxInteractionError.Disposed)
+    else
+      val result =
+        for
+          nextPlan <- transaction.rebase(model, currentState, currentPlan).left.map(JavaFxInteractionError.View.apply)
+          interpreted <- backend.render(nextPlan).left.map(JavaFxInteractionError.Backend.apply)
+        yield
+          model = transaction.nextModel
+          currentPlan = nextPlan
+          if interpreted.dirty.geometry then meshUploads += nextPlan.meshes.length
+          atlasUploads += interpreted.atlasUpdates
+          interpreted
       result.left.foreach(record)
       result
 

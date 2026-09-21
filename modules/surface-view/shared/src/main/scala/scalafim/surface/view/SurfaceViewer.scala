@@ -86,6 +86,13 @@ final case class SurfaceViewerModel private (
   def surface(id: SurfaceId): Option[SurfaceAsset] = surfacesById.get(id)
   def layer(id: SurfaceLayerId): Option[SurfaceLayer] = layersById.get(id)
 
+  /** Replace data-bearing layers without rebuilding surfaces or changing their order.
+    * Replacement constructors already take ownership of caller arrays. This boundary
+    * additionally preserves every presentation-relevant layer contract.
+    */
+  def replaceCompatibleLayers(replacements: Vector[SurfaceLayer]): Either[SurfaceViewError, SurfaceViewerModel] =
+    SurfaceViewerModel.replaceCompatibleLayers(this, replacements)
+
 object SurfaceViewerModel:
   def make(surfaces: Vector[SurfaceAsset], layers: Vector[SurfaceLayer]): Either[SurfaceViewError, SurfaceViewerModel] =
     if surfaces.isEmpty then Left(SurfaceViewError.EmptySurfaces)
@@ -113,6 +120,48 @@ object SurfaceViewerModel:
   private def firstDuplicate[A](values: Vector[A]): Option[A] =
     val seen = scala.collection.mutable.HashSet.empty[A]
     values.find(value => !seen.add(value))
+
+  private def replaceCompatibleLayers(
+    model: SurfaceViewerModel,
+    replacements: Vector[SurfaceLayer]
+  ): Either[SurfaceViewError, SurfaceViewerModel] =
+    firstDuplicate(replacements.map(_.id)) match
+      case Some(id) => Left(SurfaceViewError.DuplicateLayerId(id))
+      case None =>
+        val replacementById = replacements.map(layer => layer.id -> layer).toMap
+        var index = 0
+        while index < replacements.length do
+          val next = replacements(index)
+          model.layer(next.id) match
+            case None => return Left(SurfaceViewError.UnknownLayer(next.id))
+            case Some(previous) =>
+              compatibleReplacement(previous, next) match
+                case Left(error) => return Left(error)
+                case Right(_) => ()
+          index += 1
+        make(model.surfaces, model.layers.map(layer => replacementById.getOrElse(layer.id, layer)))
+
+  private def compatibleReplacement(
+    previous: SurfaceLayer,
+    next: SurfaceLayer
+  ): Either[SurfaceViewError, Unit] =
+    def reject(reason: String): Either[SurfaceViewError, Unit] =
+      Left(SurfaceViewError.IncompatibleLayerReplacement(previous.id, reason))
+
+    if previous.surfaceId != next.surfaceId then reject("surface id changed")
+    else if !previous.geometry.hasSameMeshDomain(next.geometry) then reject("ordered mesh domain changed")
+    else if previous.kind != next.kind then reject("layer kind changed")
+    else if previous.kind != SurfaceLayerKind.Scalar && previous.kind != SurfaceLayerKind.PackedRgba then
+      reject("only scalar and packed-RGBA data layers are replaceable")
+    else if previous.association != next.association then reject("sample association changed")
+    else if previous.interpolation != next.interpolation then reject("interpolation policy changed")
+    else if previous.frameCount != next.frameCount then reject("frame count changed")
+    else if previous.sampleCount != next.sampleCount then reject("sample count changed")
+    else if previous.opacity != next.opacity then reject("default opacity changed")
+    else if previous.blendMode != next.blendMode then reject("blend mode changed")
+    else if previous.supportsWindow != next.supportsWindow || previous.supportsThreshold != next.supportsThreshold then
+      reject("presentation capabilities changed")
+    else Right(())
 
 final case class SurfaceLayerPresentation(
   id: SurfaceLayerId,
