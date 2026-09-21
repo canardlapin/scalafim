@@ -210,6 +210,20 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     val faces = chunk.mesh.getFaces
     assertEquals(Vector.tabulate(9)(faces.get), Vector(0, 0, 0, 1, 1, 1, 2, 2, 2))
 
+  test("prepared colour updates are checked once and can be applied without recomposition"):
+    val mesh = geometry()
+    val red = plan(mesh, Rgba32.unsafe(255, 0, 0), SurfaceViewpoint.Dorsal)
+    val blue = plan(mesh, Rgba32.unsafe(0, 0, 255), SurfaceViewpoint.Dorsal)
+    val result = JavaFxSurfaceProbe.compile(red).toOption.get
+    val before = result.chunks.head.atlas.image.getPixelReader.getArgb(1, 1)
+    val prepared = result.prepareColorUpdate(blue).toOption.get
+
+    assert(!prepared.requiresRebuild)
+    assertEquals(prepared.plan, blue)
+    val receipt = result.updatePreparedColors(prepared).toOption.get
+    assertEquals(receipt.atlasesUpdated, 1)
+    assertNotEquals(result.chunks.head.atlas.image.getPixelReader.getArgb(1, 1), before)
+
   test("toolkit-free programs classify camera, layer, material, and geometry dirt exactly"):
     val mesh = geometry()
     val red = plan(mesh, Rgba32.unsafe(255, 0, 0), SurfaceViewpoint.Dorsal)

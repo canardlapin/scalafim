@@ -224,11 +224,14 @@ final class JavaFxSurfaceBackend private (
         val changesAtlas = incremental.commands.exists:
           case JavaFxSurfaceCommand.UpdateAtlases(_) => true
           case _ => false
-        val rebuild = if changesAtlas then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan)) else Right(false)
-        val program = rebuild match
+        val preparedColors = if changesAtlas then
+          current.get.prepareColorUpdate(plan, JavaFxSurfaceProgram.materialMode(plan)).map(Some(_))
+        else Right(None)
+        val program = preparedColors match
           case Left(error) => scala.util.boundary.break(Left(error))
-          case Right(false) => incremental
-          case Right(true) =>
+          case Right(None) => incremental
+          case Right(Some(prepared)) if !prepared.requiresRebuild => incremental
+          case Right(Some(_)) =>
             // Compile a complete replacement before detaching the old scene.
             // Colour-driven topology changes must be visible in resource receipts.
             val full = JavaFxSurfaceProgram.compile(None, plan)
@@ -250,8 +253,9 @@ final class JavaFxSurfaceBackend private (
               ).map: probe =>
                 stagedRebuild = Some(probe)
             case JavaFxSurfaceCommand.UpdateGeometry(next) => preflightTarget.flatMap(_.validateGeometryUpdate(next))
-            case JavaFxSurfaceCommand.UpdateAtlases(next) =>
-              preflightTarget.flatMap(_.validateColorUpdate(next, JavaFxSurfaceProgram.materialMode(next)))
+            case JavaFxSurfaceCommand.UpdateAtlases(_) =>
+              preparedColors.flatMap(_.toRight(JavaFxSurfaceError.IncompatiblePlan(
+                "colour update was not prepared"))).map(_ => ())
             case JavaFxSurfaceCommand.UpdateMaterial(_) => Right(())
             case JavaFxSurfaceCommand.UpdateCamera(next) => preflightTarget.flatMap(_.validateCameraUpdate(next))
             case JavaFxSurfaceCommand.UpdateLayout(_, _) => Right(())
@@ -281,8 +285,8 @@ final class JavaFxSurfaceBackend private (
                 case Right(receipt) =>
                   geometryUpdates += 1
                   geometryBytesUpdated += receipt.bytesUpdated
-            case JavaFxSurfaceCommand.UpdateAtlases(next) =>
-              current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)) match
+            case JavaFxSurfaceCommand.UpdateAtlases(_) =>
+              current.get.updatePreparedColors(preparedColors.toOption.flatten.get, commit = true) match
                 case Left(error) => failure = Some(error)
                 case Right(receipt) =>
                   atlasUpdates += receipt.atlasesUpdated

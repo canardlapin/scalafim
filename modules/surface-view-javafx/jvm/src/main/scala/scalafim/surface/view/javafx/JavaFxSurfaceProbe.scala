@@ -81,6 +81,17 @@ final case class JavaFxSurfaceUpdateReceipt(
   textureCoordinateBytesUpdated: Long = 0L
 )
 
+/** Fully checked CPU work for one retained colour publication. Arrays are
+  * private to the preparation result and may be written into native atlases
+  * without recompositing or repeating topology validation on the FX thread.
+  */
+private[javafx] final case class JavaFxPreparedColorUpdate(
+  plan: SurfaceRenderPlan,
+  mode: JavaFxMaterialMode,
+  colorsBySurface: Map[SurfaceId, Array[Int]],
+  requiresRebuild: Boolean
+)
+
 final class JavaFxFaceAtlas private[javafx] (
   val faceStart: Int,
   val faceCount: Int,
@@ -360,9 +371,7 @@ final class JavaFxSurfaceProbeResult private[javafx] (
 
   /** Checked before any native mutation, including geometry/material changes. */
   private[javafx] def requiresAtlasRebuild(next: SurfaceRenderPlan, mode: JavaFxMaterialMode): Either[JavaFxSurfaceError, Boolean] =
-    validatePlanMeshes(next).flatMap: _ =>
-      if !config.encoding.adaptive then Right(false)
-      else atlasLayoutChanged(next, JavaFxSurfaceProbe.compositeColors(next, mode))
+    prepareColorUpdate(next, mode).map(_.requiresRebuild)
 
   private def validatePlanMeshes(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
     if next.meshes.map(_.resourceKey) != plan.meshes.map(_.resourceKey) then
@@ -401,28 +410,41 @@ final class JavaFxSurfaceProbeResult private[javafx] (
         index += 1
       Right(changed)
 
-  private[javafx] def validateColorUpdate(next: SurfaceRenderPlan,
-      mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, Unit] =
+  private def validateColorCapacity(next: SurfaceRenderPlan,
+      colorsBySurface: Map[SurfaceId, Array[Int]]): Either[JavaFxSurfaceError, Unit] =
+    var index = 0
+    var failure: Option[JavaFxSurfaceError] = None
+    while index < chunks.length && failure.isEmpty do
+      val chunk = chunks(index)
+      if !config.encoding.retainsLayout then
+        val packet = next.meshes.find(_.surface == chunk.surface).get
+        val coordinates = JavaFxSurfaceProbe.textureCoordinates(
+          packet, chunk.faceStart, chunk.faceCount, chunk.atlas, colorsBySurface(chunk.surface)
+        )
+        if coordinates.length != chunk.mesh.getTexCoords.size() then
+          failure = Some(JavaFxSurfaceError.IncompatiblePlan(
+            s"surface '${chunk.surface.value}' changed texture-coordinate capacity"
+          ))
+      index += 1
+    failure.toLeft(())
+
+  /** Composite and validate once before a native colour publication. The
+    * returned buffers are owned by the preparation and reused by commit.
+    */
+  private[javafx] def prepareColorUpdate(next: SurfaceRenderPlan,
+      mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, JavaFxPreparedColorUpdate] =
     validatePlanMeshes(next).flatMap: _ =>
       val colorsBySurface = JavaFxSurfaceProbe.compositeColors(next, mode)
-      atlasLayoutChanged(next, colorsBySurface).flatMap:
-        case true => Left(JavaFxSurfaceError.AtlasLayoutChanged)
-        case false =>
-          var index = 0
-          var failure: Option[JavaFxSurfaceError] = None
-          while index < chunks.length && failure.isEmpty do
-            val chunk = chunks(index)
-            if !config.encoding.retainsLayout then
-              val packet = next.meshes.find(_.surface == chunk.surface).get
-              val coordinates = JavaFxSurfaceProbe.textureCoordinates(
-                packet, chunk.faceStart, chunk.faceCount, chunk.atlas, colorsBySurface(chunk.surface)
-              )
-              if coordinates.length != chunk.mesh.getTexCoords.size() then
-                failure = Some(JavaFxSurfaceError.IncompatiblePlan(
-                  s"surface '${chunk.surface.value}' changed texture-coordinate capacity"
-                ))
-            index += 1
-          failure.toLeft(())
+      val rebuild = if config.encoding.adaptive then atlasLayoutChanged(next, colorsBySurface) else Right(false)
+      rebuild.flatMap: changed =>
+        if changed then Right(JavaFxPreparedColorUpdate(next, mode, colorsBySurface, requiresRebuild = true))
+        else validateColorCapacity(next, colorsBySurface)
+          .map(_ => JavaFxPreparedColorUpdate(next, mode, colorsBySurface, requiresRebuild = false))
+
+  private[javafx] def validateColorUpdate(next: SurfaceRenderPlan,
+      mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, Unit] =
+    prepareColorUpdate(next, mode).flatMap: prepared =>
+      if prepared.requiresRebuild then Left(JavaFxSurfaceError.AtlasLayoutChanged) else Right(())
 
   private[javafx] def validateGeometryUpdate(next: SurfaceRenderPlan): Either[JavaFxSurfaceError, Unit] =
     validatePlanMeshes(next).flatMap: _ =>
@@ -449,10 +471,21 @@ final class JavaFxSurfaceProbeResult private[javafx] (
 
   def updateColors(next: SurfaceRenderPlan, commit: Boolean = false,
       mode: JavaFxMaterialMode = activeMaterialMode): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
-    validateColorUpdate(next, mode).flatMap: _ =>
+    prepareColorUpdate(next, mode).flatMap: prepared =>
+      if prepared.requiresRebuild then Left(JavaFxSurfaceError.AtlasLayoutChanged)
+      else updatePreparedColors(prepared, commit)
+
+  /** Apply a matching, already checked colour update without repeating the
+    * whole bilateral composite and retained-layout scan.
+    */
+  private[javafx] def updatePreparedColors(prepared: JavaFxPreparedColorUpdate,
+      commit: Boolean = false): Either[JavaFxSurfaceError, JavaFxSurfaceUpdateReceipt] =
+    if prepared.requiresRebuild then Left(JavaFxSurfaceError.AtlasLayoutChanged)
+    else
+      val next = prepared.plan
       val started = System.nanoTime()
-      val colorsBySurface = JavaFxSurfaceProbe.compositeColors(next, mode)
-      activeMaterialMode = mode
+      val colorsBySurface = prepared.colorsBySurface
+      activeMaterialMode = prepared.mode
       var dirtyPixels = 0L
       var textureCoordinateBytesUpdated = 0L
       var index = 0
