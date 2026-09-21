@@ -29,7 +29,7 @@ class LinkedBidsStudyCompilerSuite extends munit.FunSuite:
     LinkedBidsProject.make(projects.map(_._1),files,projects.map((r,p) => r.alias -> p).toMap).toOption.get
   private def recipe(root: BidsRoot = first): LinkedDatasetRecipe =
     LinkedDatasetRecipe.unsafe(DatasetId("linked"),root.alias,
-      BidsQuery.unsafe(filename=Vector("bold\\.nii$"),scope=BidsScope.All),
+      BidsQuery.from(filename=Vector("bold\\.nii$"),scope=BidsScope.All).toOption.get,
       maskPolicy=MaskPolicy.IntersectRunMasks,confounds=Some(ConfoundSelectionConfig(variables=Vector("trans_x"))))
   private val headers = LinkedImageHeaderCatalog(Vector(first,second).flatMap(root => Vector(
     LinkedBidsFileKey(root.alias,BidsPath(bold)) -> ImageHeaderDescriptor(shape),
@@ -68,7 +68,7 @@ class LinkedBidsStudyCompilerSuite extends munit.FunSuite:
   }
   test("selected raw root retains events and explicit mask without derivative linkage") {
     val linked = fixture()
-    val selected = LinkedDatasetRecipe.unsafe(DatasetId("raw"),raw.alias,BidsQuery.unsafe(filename=Vector("bold\\.nii$")),
+    val selected = LinkedDatasetRecipe.unsafe(DatasetId("raw"),raw.alias,BidsQuery.from(filename=Vector("bold\\.nii$"),scope=BidsScope.All).toOption.get,
       maskPolicy=MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///explicit-mask.nii")))
     val actual = BidsStudyCompiler.compile(linked,selected,LinkedImageHeaderCatalog(Map(
       LinkedBidsFileKey(raw.alias,BidsPath(rawBold)) -> ImageHeaderDescriptor(shape)))).fold(r => fail(r.issues.mkString("; ")),identity)
