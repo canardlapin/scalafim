@@ -31,15 +31,16 @@ class BidsStudyCompilerSuite extends FunSuite:
       sidecars = Map(BidsPath(bold.stripSuffix(".nii") + ".json") -> metadata(2.0)))
     val linkedFiles = Vector(
       LinkedBidsFile(rawRoot, rawProject.manifest.files.head, BidsPath("/raw/" + events)),
-      LinkedBidsFile(derivativeRoot, derivativeProject.manifest.files.head, BidsPath("/external/first/" + bold)),
-      LinkedBidsFile(derivativeRoot, derivativeProject.manifest.files(1), BidsPath("/external/first/" + bold.stripSuffix(".nii") + ".json"))
+      LinkedBidsFile(derivativeRoot, derivativeProject.manifest.files.find(_.path.value == bold).get, BidsPath("/external/first/" + bold)),
+      LinkedBidsFile(derivativeRoot, derivativeProject.manifest.files.find(_.path.value.endsWith(".json")).get, BidsPath("/external/first/" + bold.stripSuffix(".nii") + ".json"))
     )
     val linked = LinkedBidsProject.make(Vector(derivativeRoot, rawRoot), linkedFiles, Map(rawRoot.alias -> rawProject, derivativeRoot.alias -> derivativeProject)).toOption.get
     val recipe = LinkedDatasetRecipe.unsafe(DatasetId("linked"), derivativeRoot.alias,
       BidsQuery.from(filename = Vector("desc-preproc_bold\\.nii$"), scope = BidsScope.Derivatives, pipeline = Some(PipelineName("fmriprep"))).toOption.get,
       maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii")))
     val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 3)
-    val catalog = BidsStudyCompiler.compile(linked, recipe, LinkedImageHeaderCatalog(Map(LinkedBidsFileKey(derivativeRoot.alias, BidsPath(bold)) -> ImageHeaderDescriptor(shape)))).toOption.get
+    val catalog = BidsStudyCompiler.compile(linked, recipe, LinkedImageHeaderCatalog(Map(LinkedBidsFileKey(derivativeRoot.alias, BidsPath(bold)) -> ImageHeaderDescriptor(shape))))
+      .fold(report => fail(report.issues.map(issue => s"${issue.code}: ${issue.message}").mkString("; ")), identity)
     val run = catalog.units.head.runs.head
     assertEquals(run.bold.location.value, "file:///external/first/" + bold)
     assertEquals(run.events.location.value, "file:///raw/" + events)
