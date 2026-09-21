@@ -671,9 +671,10 @@ object BidsStudyCompiler:
   ): Either[CatalogCompileReport, StudyCatalog] =
     val bySynthetic = paths.map { case (key, path) => path.value -> key }
     def resolve[A](ref: WorkflowArtifactRef[A]): Either[CatalogCompileReport, WorkflowArtifactRef[A]] =
-      if !ref.location.value.startsWith("linked:///") then Right(ref)
+      if !ref.location.value.startsWith("linked:") then Right(ref)
       else
-        val relative = ref.location.value.stripPrefix("linked:///")
+        // ArtifactLocation normalizes URI slashes (linked:/// becomes linked:/).
+        val relative = ref.location.value.stripPrefix("linked:").dropWhile(_ == '/')
         bySynthetic.get(relative).flatMap(key => project.files.find(file => file.alias == key.root && file.path == key.path)) match
           case Some(file) => LinkedBidsArtifactResolver.resolve[A](project, file).left.map(error =>
             CatalogCompileReport(0, Vector(CatalogIssue(CatalogIssueCode.InvalidUnit, Some(file.path), error.message))))
