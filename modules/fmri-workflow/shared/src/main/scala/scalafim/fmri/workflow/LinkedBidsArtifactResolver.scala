@@ -14,5 +14,17 @@ object LinkedBidsArtifactResolver:
         ))
       case Some(location) =>
         val value = location.value
-        val encoded = if value.startsWith("/") then "file://" + value.replace(" ", "%20") else value
+        val encoded = if value.startsWith("/") then "file://" + encodePath(value) else value
         WorkflowArtifactRef[A](encoded)
+
+  private def encodePath(path: String): String =
+    path.split("/", -1).map(encodeSegment).mkString("/")
+
+  private def encodeSegment(segment: String): String =
+    segment.getBytes("UTF-8").iterator.map { byte =>
+      val value = byte & 0xff
+      if (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') ||
+          (value >= '0' && value <= '9') || "-._~".contains(value.toChar)
+      then value.toChar.toString
+      else f"%%$value%02X"
+    }.mkString

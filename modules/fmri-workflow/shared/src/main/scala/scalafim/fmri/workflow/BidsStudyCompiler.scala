@@ -176,10 +176,16 @@ object BidsStudyCompiler:
   def compile(
       project: BidsProject,
       recipe: DatasetRecipe,
-      imageHeaders: ImageHeaderCatalog,
-      selectedBold: Option[Vector[BidsFile]] = None
+      imageHeaders: ImageHeaderCatalog
   ): Either[CatalogCompileReport, StudyCatalog] =
-    val boldFiles = selectedBold.getOrElse(project.query(recipe.boldQuery).filter(isBoldImage))
+    compileSelected(project, recipe, imageHeaders, project.query(recipe.boldQuery).filter(isBoldImage))
+
+  private def compileSelected(
+      project: BidsProject,
+      recipe: DatasetRecipe,
+      imageHeaders: ImageHeaderCatalog,
+      boldFiles: Vector[BidsFile]
+  ): Either[CatalogCompileReport, StudyCatalog] =
     val eventFiles = project.manifest.files.filter(isEventFile)
     val confoundFiles = project.manifest.files.filter(isConfoundFile)
     val maskFiles = project.manifest.files.filter(isMaskFile)
@@ -232,7 +238,7 @@ object BidsStudyCompiler:
         s"linked BIDS root '${recipe.boldRoot.value}' is not loaded"))))
       case Some(selectedProject) =>
         val selectedFiles = project.files.filter(file => file.alias == recipe.boldRoot &&
-          (project.sourceOf(recipe.boldRoot).nonEmpty || !isEventFile(file.file)))
+          (project.sourceOf(recipe.boldRoot).isEmpty || !isEventFile(file.file)))
         val sourceFiles = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias => project.files.filter(_.alias == alias))
         val all = selectedFiles ++ sourceFiles
         val syntheticPaths = all.map(file => LinkedBidsFileKey(file.alias, file.path) -> BidsPath(file.alias.value + "/" + file.path.value)).toMap
@@ -259,7 +265,7 @@ object BidsStudyCompiler:
           recipe.boldQuery, recipe.runGrouping, recipe.maskPolicy, recipe.confounds)
         val selectedBold = selectedFiles.map(file => syntheticPaths(LinkedBidsFileKey(file.alias, file.path)) -> file.file)
           .collect { case (path, file) if isBoldImage(file) && file.matches(recipe.boldQuery) => file.copy(path = path) }
-        compile(synthetic, legacy, headers, Some(selectedBold)).flatMap(rewriteLinkedArtifacts(project, syntheticPaths, recipe.boldRoot, _))
+        compileSelected(synthetic, legacy, headers, selectedBold).flatMap(rewriteLinkedArtifacts(project, syntheticPaths, recipe.boldRoot, _))
 
   /** Linked projects do not erase loader/validation notices supplied by the
     * caller. As with the single-root overload, error notices fail compilation
