@@ -230,8 +230,9 @@ object BidsStudyCompiler:
       case None => Left(CatalogCompileReport(0, Vector(CatalogIssue(CatalogIssueCode.NoBoldFiles, None,
         s"linked BIDS root '${recipe.boldRoot.value}' is not loaded"))))
       case Some(selectedProject) =>
-        val selectedFiles = project.files.filter(_.alias == recipe.boldRoot)
-        val sourceFiles = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias => project.files.filter(_.alias == alias))
+        val selectedFiles = project.files.filter(file => file.alias == recipe.boldRoot && !isEventFile(file.file))
+        val sourceFiles = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias =>
+          project.files.filter(file => file.alias == alias && (!isBoldImage(file.file) || file.file.extension == "json")))
         val all = selectedFiles ++ sourceFiles
         val syntheticPaths = all.map(file => LinkedBidsFileKey(file.alias, file.path) -> BidsPath(file.alias.value + "/" + file.path.value)).toMap
         val syntheticFiles = all.map(file => file.file.copy(path = syntheticPaths(LinkedBidsFileKey(file.alias, file.path))))
@@ -255,7 +256,7 @@ object BidsStudyCompiler:
         )
         val legacy = DatasetRecipe.unsafe(recipe.datasetId, WorkflowArtifactRef.unsafe[BidsProjectResource]("linked:///"),
           recipe.boldQuery, recipe.runGrouping, recipe.maskPolicy, recipe.confounds)
-        compile(synthetic, legacy, headers).flatMap(rewriteLinkedArtifacts(project, syntheticPaths, _))
+        compile(synthetic, legacy, headers).flatMap(rewriteLinkedArtifacts(project, syntheticPaths, recipe.boldRoot, _))
 
   /** Linked projects do not erase loader/validation notices supplied by the
     * caller. As with the single-root overload, error notices fail compilation
@@ -656,6 +657,7 @@ object BidsStudyCompiler:
   private def rewriteLinkedArtifacts(
       project: LinkedBidsProject,
       paths: Map[LinkedBidsFileKey, BidsPath],
+      root: BidsRootAlias,
       catalog: StudyCatalog
   ): Either[CatalogCompileReport, StudyCatalog] =
     val bySynthetic = paths.map { case (key, path) => path.value -> key }
@@ -684,7 +686,7 @@ object BidsStudyCompiler:
       for
         rebuiltRuns <- runs
         rebuiltMask <- mask
-      yield FirstLevelUnit.unsafe(unit.id, unit.subject, unit.session, unit.task, unit.space, unit.shape, rebuiltRuns,
+      yield FirstLevelUnit.unsafe(FirstLevelUnitId.unsafe(s"root-${root.value}.${unit.id.value}"), unit.subject, unit.session, unit.task, unit.space, unit.shape, rebuiltRuns,
         rebuiltMask, unit.acquisition, unit.echo, unit.resolution, unit.pipeline)
     catalog.units.foldLeft[Either[CatalogCompileReport, Vector[FirstLevelUnit]]](Right(Vector.empty)) { (acc, unit) =>
       for built <- acc; rebuilt <- rebuild(unit) yield built :+ rebuilt

@@ -11,11 +11,38 @@ class BidsStudyCompilerSuite extends FunSuite:
     val linked = LinkedBidsProject.make(Vector(raw), Vector.empty).toOption.get
     val recipe = LinkedDatasetRecipe.unsafe(
       DatasetId("linked"), BidsRootAlias.unsafe("missing"),
-      BidsQuery.unsafe(filename = Vector("bold\\.nii$"), scope = BidsScope.Derivatives),
+      BidsQuery.from(filename = Vector("bold\\.nii$"), scope = BidsScope.Derivatives).toOption.get,
       maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii"))
     )
     val report = BidsStudyCompiler.compile(linked, recipe, LinkedImageHeaderCatalog(Map.empty)).left.toOption.get
     assertEquals(report.issues.map(_.code), Vector(CatalogIssueCode.NoBoldFiles))
+  }
+
+  test("linked compiler binds events to declared raw source and preserves selected derivative location") {
+    val rawRoot = BidsRoot.raw("raw", "/raw").toOption.get
+    val derivativeRoot = BidsRoot.derivative("first", "/external/first", PipelineName("fmriprep"), rawRoot.alias).toOption.get
+    val bold = "sub-01/func/sub-01_task-demo_run-01_space-MNI_desc-preproc_bold.nii"
+    val events = "sub-01/func/sub-01_task-demo_run-01_events.tsv"
+    def files(paths: Vector[String], scope: BidsScope, pipeline: Option[PipelineName] = None) =
+      BidsManifest.fromRelativePaths(paths).files.map(_.copy(scope = scope, pipeline = pipeline))
+    val rawProject = BidsProject(root = BidsPath("/raw"), description = None, participants = Vector("01"), derivatives = Vector.empty, manifest = BidsManifest(files(Vector(events), BidsScope.Raw)))
+    val derivativeProject = BidsProject(root = BidsPath("/external/first"), description = None, participants = Vector.empty, derivatives = Vector.empty,
+      manifest = BidsManifest(files(Vector(bold, bold.stripSuffix(".nii") + ".json"), BidsScope.Derivatives, Some(PipelineName("fmriprep")))),
+      sidecars = Map(BidsPath(bold.stripSuffix(".nii") + ".json") -> metadata(2.0)))
+    val linkedFiles = Vector(
+      LinkedBidsFile(rawRoot, rawProject.manifest.files.head, BidsPath("/raw/" + events)),
+      LinkedBidsFile(derivativeRoot, derivativeProject.manifest.files.head, BidsPath("/external/first/" + bold)),
+      LinkedBidsFile(derivativeRoot, derivativeProject.manifest.files(1), BidsPath("/external/first/" + bold.stripSuffix(".nii") + ".json"))
+    )
+    val linked = LinkedBidsProject.make(Vector(derivativeRoot, rawRoot), linkedFiles, Map(rawRoot.alias -> rawProject, derivativeRoot.alias -> derivativeProject)).toOption.get
+    val recipe = LinkedDatasetRecipe.unsafe(DatasetId("linked"), derivativeRoot.alias,
+      BidsQuery.from(filename = Vector("desc-preproc_bold\\.nii$"), scope = BidsScope.Derivatives, pipeline = Some(PipelineName("fmriprep"))).toOption.get,
+      maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii")))
+    val shape = DatasetShape.unsafe(NeuroSpace(Vector(2, 2, 1)), 3)
+    val catalog = BidsStudyCompiler.compile(linked, recipe, LinkedImageHeaderCatalog(Map(LinkedBidsFileKey(derivativeRoot.alias, BidsPath(bold)) -> ImageHeaderDescriptor(shape)))).toOption.get
+    val run = catalog.units.head.runs.head
+    assertEquals(run.bold.location.value, "file:///external/first/" + bold)
+    assertEquals(run.events.location.value, "file:///raw/" + events)
   }
   test("observed slice-timing metadata preserves true, false and unknown separately") {
     val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))

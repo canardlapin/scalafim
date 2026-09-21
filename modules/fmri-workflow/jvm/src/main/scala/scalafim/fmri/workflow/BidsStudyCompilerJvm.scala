@@ -40,7 +40,8 @@ object BidsStudyCompilerJvm:
     readHeaders(project, (selectedBold ++ derivativeMasks).distinct)
 
   def readHeaders(project: LinkedBidsProject, recipe: LinkedDatasetRecipe): LinkedImageHeaderCatalog =
-    val selected = project.query(recipe.boldQuery, Some(recipe.boldRoot))
+    val selected = project.query(recipe.boldQuery, Some(recipe.boldRoot)) ++
+      project.query(root = Some(recipe.boldRoot)).filter(file => isMaskImage(file.file))
     val source = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias => project.query(root = Some(alias)))
     val files = (selected ++ source).filter(file => isImage(file.file)).distinct
     val headers = Map.newBuilder[LinkedBidsFileKey, ImageHeaderDescriptor]

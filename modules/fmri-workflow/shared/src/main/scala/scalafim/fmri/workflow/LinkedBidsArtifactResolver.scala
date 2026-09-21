@@ -12,4 +12,7 @@ object LinkedBidsArtifactResolver:
           s"${file.alias.value}:${file.path.value}",
           "is not present in the declared linked-project catalog"
         ))
-      case Some(location) => WorkflowArtifactRef[A](location.value)
+      case Some(location) =>
+        val value = location.value
+        val encoded = if value.startsWith("/") then "file://" + value.replace(" ", "%20") else value
+        WorkflowArtifactRef[A](encoded)
