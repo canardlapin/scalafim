@@ -50,6 +50,55 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
     }
   }
 
+  test("external and competing roots compile header-only files with URI and QC identity") {
+    withFixture { root =>
+      val rawPath = root.resolve("raw")
+      writeProject(rawPath)
+      val external = root.resolve("external #1% café")
+      Files.move(rawPath.resolve("derivatives/fmriprep"),external)
+      val competing = root.resolve("competing")
+      val stream = Files.walk(external)
+      try stream.iterator.asScala.foreach { path =>
+        val target = competing.resolve(external.relativize(path))
+        if Files.isDirectory(path) then Files.createDirectories(target) else Files.copy(path,target)
+      }
+      finally stream.close()
+      val raw = BidsRoot.raw("raw",rawPath.toString).toOption.get
+      val selected = BidsRoot.derivative("selected",external.toString,PipelineName("custom"),raw.alias).toOption.get
+      val other = BidsRoot.derivative("other",competing.toString,PipelineName("custom"),raw.alias).toOption.get
+      val roots = Vector(raw,selected,other)
+      def load = BidsProjectLoader.loadLinkedChecked(roots).fold(e => fail(e.message),identity)
+      val recipe = LinkedDatasetRecipe.unsafe(DatasetId("linked"),selected.alias,
+        BidsQuery.from(filename=Vector("desc-preproc_bold\\.nii(\\.gz)?$"),scope=BidsScope.All).toOption.get,
+        maskPolicy=MaskPolicy.IntersectRunMasks,confounds=Some(ConfoundSelectionConfig(variables=Vector("trans_x"))))
+      def compile =
+        val report = load
+        BidsStudyCompilerJvm.compileChecked(report.value,recipe,report.issues)
+      val compilation = compile.fold(r => fail(r.issues.mkString("; ")),identity)
+      assertEquals(compilation.catalog.units.size,2)
+      assert(compilation.catalog.units.forall(_.runs.size == 2))
+      compilation.catalog.units.foreach { unit =>
+        unit.runs.foreach { run =>
+          assert(Path.of(java.net.URI.create(run.bold.location.value)).startsWith(external))
+          assert(Path.of(java.net.URI.create(run.events.location.value)).startsWith(rawPath))
+        }
+        val qc = FirstLevelCompanionReviewJvm.inspectLinked(roots,selected.alias,unit).fold(e => fail(e.message),identity)
+        assert(qc.forall(_.columns.exists(_.name == "trans_x")))
+        assert(qc.forall(_.location.exists(location => Path.of(java.net.URI.create(location.value)).startsWith(external))))
+      }
+      val reversed = BidsProjectLoader.loadLinkedChecked(roots.reverse).toOption.get
+      assertEquals(BidsStudyCompilerJvm.compileChecked(reversed.value,recipe,reversed.issues),Right(compilation))
+      write(competing.resolve("sub-01/func/sub-01_task-demo_run-01_space-MNI152NLin2009cAsym_desc-preproc_bold.json"),"{\"RepetitionTime\":9.0}")
+      assertEquals(compile,Right(compilation))
+      val sidecar = external.resolve("sub-01/func/sub-01_task-demo_run-01_space-MNI152NLin2009cAsym_desc-preproc_bold.json")
+      write(sidecar,"{\"RepetitionTime\":4.0}")
+      assertNotEquals(compile.toOption.get.catalog,compilation.catalog)
+      val mask = external.resolve("sub-01/func/sub-01_task-demo_run-01_space-MNI152NLin2009cAsym_desc-brain_mask.nii")
+      Files.delete(mask)
+      assert(compile.left.toOption.get.errors.exists(_.code == CatalogIssueCode.MissingMask))
+    }
+  }
+
   private def writeProject(root: Path): Unit =
     write(root.resolve("dataset_description.json"), """{"Name":"Workflow fixture","BIDSVersion":"1.10.0","DatasetType":"raw"}""")
     write(root.resolve("participants.tsv"), "participant_id\tage\nsub-01\t25\nsub-02\t30\n")
