@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import bids4s.{BidsQuery, ConfoundSelectionConfig}
+import bids4s.{BidsQuery, BidsRootAlias, ConfoundSelectionConfig}
 import scalafim.dataset.DatasetId
 import scalafim.fmri.design.baseline.BaselineSpec
 import scalafim.fmri.design.formula.ModelFormula
@@ -55,6 +55,43 @@ object DatasetRecipe:
       confounds: Option[ConfoundSelectionConfig] = None
   ): DatasetRecipe =
     make(datasetId, project, boldQuery, runGrouping, maskPolicy, confounds)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+
+/** Linked-root equivalent of [[DatasetRecipe]]. The selected BOLD root is
+  * explicit because query entities alone cannot identify a derivative producer.
+  */
+final case class LinkedDatasetRecipe private (
+    datasetId: DatasetId,
+    boldRoot: BidsRootAlias,
+    boldQuery: BidsQuery,
+    runGrouping: RunGrouping,
+    maskPolicy: MaskPolicy,
+    confounds: Option[ConfoundSelectionConfig]
+):
+  require(boldQuery.filename.nonEmpty, "BIDS query must contain filename patterns")
+
+object LinkedDatasetRecipe:
+  def make(
+      datasetId: DatasetId,
+      boldRoot: BidsRootAlias,
+      boldQuery: BidsQuery,
+      runGrouping: RunGrouping = RunGrouping.BySubjectSessionTask,
+      maskPolicy: MaskPolicy = MaskPolicy.IntersectRunMasks,
+      confounds: Option[ConfoundSelectionConfig] = None
+  ): Either[WorkflowError, LinkedDatasetRecipe] =
+    if boldQuery.filename.isEmpty then
+      Left(WorkflowError.InvalidValue("BIDS query", "filename", "requires at least one filename pattern"))
+    else Right(new LinkedDatasetRecipe(datasetId, boldRoot, boldQuery, runGrouping, maskPolicy, confounds))
+
+  def unsafe(
+      datasetId: DatasetId,
+      boldRoot: BidsRootAlias,
+      boldQuery: BidsQuery,
+      runGrouping: RunGrouping = RunGrouping.BySubjectSessionTask,
+      maskPolicy: MaskPolicy = MaskPolicy.IntersectRunMasks,
+      confounds: Option[ConfoundSelectionConfig] = None
+  ): LinkedDatasetRecipe =
+    make(datasetId, boldRoot, boldQuery, runGrouping, maskPolicy, confounds)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class ModelRecipe private (

@@ -17,6 +17,15 @@ final case class ImageHeaderCatalog(
   def failure(path: BidsPath): Option[String] =
     failures.get(path)
 
+/** Stable header key for one root-relative BIDS artifact. */
+final case class LinkedBidsFileKey(root: BidsRootAlias, path: BidsPath)
+
+final case class LinkedImageHeaderCatalog(
+    headers: Map[LinkedBidsFileKey, ImageHeaderDescriptor],
+    failures: Map[LinkedBidsFileKey, String] = Map.empty
+):
+  require(headers.keySet.intersect(failures.keySet).isEmpty, "header successes and failures must be disjoint")
+
 enum CatalogIssueCode:
   case BidsValidation(code: BidsIssueCode)
   case NoBoldFiles
@@ -205,6 +214,65 @@ object BidsStudyCompiler:
             boldFiles.length,
             Vector(CatalogIssue(CatalogIssueCode.InvalidUnit, None, error.message))
           ))
+
+  /** Compile one explicitly selected root of a linked BIDS project. Raw events
+    * and inherited TR values are taken only from that derivative's declared
+    * source root; derivative companions stay in the selected root.
+    */
+  def compile(
+      project: LinkedBidsProject,
+      recipe: LinkedDatasetRecipe,
+      imageHeaders: LinkedImageHeaderCatalog
+  ): Either[CatalogCompileReport, StudyCatalog] =
+    val selected = project.rootProject(recipe.boldRoot)
+    val source = project.sourceOf(recipe.boldRoot).flatMap(project.rootProject)
+    selected match
+      case None => Left(CatalogCompileReport(0, Vector(CatalogIssue(CatalogIssueCode.NoBoldFiles, None,
+        s"linked BIDS root '${recipe.boldRoot.value}' is not loaded"))))
+      case Some(selectedProject) =>
+        val selectedFiles = project.files.filter(_.alias == recipe.boldRoot)
+        val sourceFiles = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias => project.files.filter(_.alias == alias))
+        val all = selectedFiles ++ sourceFiles
+        val syntheticPaths = all.map(file => LinkedBidsFileKey(file.alias, file.path) -> BidsPath(file.alias.value + "/" + file.path.value)).toMap
+        val syntheticFiles = all.map(file => file.file.copy(path = syntheticPaths(LinkedBidsFileKey(file.alias, file.path))))
+        val sidecars = all.flatMap { file =>
+          project.rootProject(file.alias).toVector.flatMap(_.sidecars.get(file.path).map { metadata =>
+            syntheticPaths(LinkedBidsFileKey(file.alias, file.path)) -> metadata
+          })
+        }.toMap
+        val synthetic = BidsProject(
+          root = BidsPath("linked:///"),
+          description = selectedProject.description,
+          participants = source.orElse(Some(selectedProject)).map(_.participants).getOrElse(Vector.empty),
+          participantsTable = source.orElse(Some(selectedProject)).flatMap(_.participantsTable),
+          derivatives = selectedProject.derivatives,
+          manifest = BidsManifest(syntheticFiles),
+          sidecars = sidecars
+        )
+        val headers = ImageHeaderCatalog(
+          imageHeaders.headers.flatMap { case (key, value) => syntheticPaths.get(key).map(_ -> value) },
+          imageHeaders.failures.flatMap { case (key, value) => syntheticPaths.get(key).map(_ -> value) }
+        )
+        val legacy = DatasetRecipe.unsafe(recipe.datasetId, WorkflowArtifactRef.unsafe[BidsProjectResource]("linked:///"),
+          recipe.boldQuery, recipe.runGrouping, recipe.maskPolicy, recipe.confounds)
+        compile(synthetic, legacy, headers).flatMap(rewriteLinkedArtifacts(project, syntheticPaths, _))
+
+  /** Linked projects do not erase loader/validation notices supplied by the
+    * caller. As with the single-root overload, error notices fail compilation
+    * and warning notices are retained in the successful result. */
+  def compileChecked(
+      project: LinkedBidsProject,
+      recipe: LinkedDatasetRecipe,
+      imageHeaders: LinkedImageHeaderCatalog,
+      notices: Vector[BidsIssue] = Vector.empty
+  ): Either[CatalogCompileReport, CatalogCompilation] =
+    val catalogIssues = notices.map(CatalogIssue.fromBids)
+    compile(project, recipe, imageHeaders) match
+      case Left(report) => Left(report.copy(issues = catalogIssues ++ report.issues))
+      case Right(catalog) =>
+        val errors = catalogIssues.filter(_.severity == BidsIssueSeverity.Error)
+        if errors.nonEmpty then Left(CatalogCompileReport(0, catalogIssues))
+        else Right(CatalogCompilation(catalog, catalogIssues))
 
   def compileChecked(
       project: BidsValidationReport[BidsProject],
@@ -569,13 +637,59 @@ object BidsStudyCompiler:
       requirePipeline: Boolean
   ): Boolean =
     val entitiesMatch = keys.forall { key =>
-      candidate.entities.get(key).forall(value => target.entities.get(key).exists(key.equivalentValue(value, _)))
+      candidate.entities.get(key).forall(value => target.entities.get(key).exists(
+        targetValue => equivalentEntityValue(key, value) == equivalentEntityValue(key, targetValue)
+      ))
     }
     val pipelineMatches = !requirePipeline || candidate.pipeline == target.pipeline
     entitiesMatch && pipelineMatches
 
   private def artifactRef[A](recipe: DatasetRecipe, file: BidsFile): WorkflowArtifactRef[A] =
     new WorkflowArtifactRef[A](recipe.project.location.resolve(file.path.value))
+
+  private def equivalentEntityValue(key: EntityKey, value: String): String =
+    if key == EntityKey.Run && value.nonEmpty && value.forall(char => char >= '0' && char <= '9') then
+      val unpadded = value.dropWhile(_ == '0')
+      if unpadded.isEmpty then "0" else unpadded
+    else value
+
+  private def rewriteLinkedArtifacts(
+      project: LinkedBidsProject,
+      paths: Map[LinkedBidsFileKey, BidsPath],
+      catalog: StudyCatalog
+  ): Either[CatalogCompileReport, StudyCatalog] =
+    val bySynthetic = paths.map { case (key, path) => path.value -> key }
+    def resolve[A](ref: WorkflowArtifactRef[A]): Either[CatalogCompileReport, WorkflowArtifactRef[A]] =
+      val relative = ref.location.value.stripPrefix("linked:///")
+      bySynthetic.get(relative).flatMap(key => project.files.find(file => file.alias == key.root && file.path == key.path)) match
+        case Some(file) => LinkedBidsArtifactResolver.resolve[A](project, file).left.map(error =>
+          CatalogCompileReport(0, Vector(CatalogIssue(CatalogIssueCode.InvalidUnit, Some(file.path), error.message))))
+        case None => Left(CatalogCompileReport(0, Vector(CatalogIssue(CatalogIssueCode.InvalidUnit, None,
+          s"linked compiler cannot recover artifact '$relative'"))))
+    def rebuild(unit: FirstLevelUnit): Either[CatalogCompileReport, FirstLevelUnit] =
+      val runs = unit.runs.foldLeft[Either[CatalogCompileReport, Vector[RunInput]]](Right(Vector.empty)) { (acc, run) =>
+        for
+          built <- acc
+          bold <- resolve(run.bold)
+          events <- resolve(run.events)
+          confounds <- run.confounds.fold[Either[CatalogCompileReport, Option[WorkflowArtifactRef[ConfoundsTableResource]]]](Right(None))(resolve(_).map(Some(_)))
+        yield built :+ RunInput.unsafe(run.id, run.repetitionTime, run.timepoints, bold, events, confounds, run.timing)
+      }
+      val mask = unit.mask match
+        case UnitMask.Single(value) => resolve(value).map(UnitMask.Single.apply)
+        case intersection: UnitMask.Intersection =>
+          intersection.runMasks.foldLeft[Either[CatalogCompileReport, Vector[(RunId, WorkflowArtifactRef[MaskImageResource])]]](Right(Vector.empty)) { case (acc, (id, ref)) =>
+            for built <- acc; resolved <- resolve(ref) yield built :+ (id -> resolved)
+          }.map(UnitMask.unsafeIntersection)
+      for
+        rebuiltRuns <- runs
+        rebuiltMask <- mask
+      yield FirstLevelUnit.unsafe(unit.id, unit.subject, unit.session, unit.task, unit.space, unit.shape, rebuiltRuns,
+        rebuiltMask, unit.acquisition, unit.echo, unit.resolution, unit.pipeline)
+    catalog.units.foldLeft[Either[CatalogCompileReport, Vector[FirstLevelUnit]]](Right(Vector.empty)) { (acc, unit) =>
+      for built <- acc; rebuilt <- rebuild(unit) yield built :+ rebuilt
+    }.flatMap(units => StudyCatalog.make(catalog.datasetId, units, catalog.participants).left.map(error =>
+      CatalogCompileReport(0, Vector(CatalogIssue(CatalogIssueCode.InvalidUnit, None, error.message)))) )
 
   private def isBoldImage(file: BidsFile): Boolean =
     isNifti(file) && file.parsed.exists(_.kind == "bold")

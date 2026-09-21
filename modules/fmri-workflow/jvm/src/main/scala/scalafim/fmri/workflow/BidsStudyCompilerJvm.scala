@@ -1,6 +1,6 @@
 package scalafim.fmri.workflow
 
-import bids4s.{BidsFile, BidsPath, BidsProject, BidsValidationReport}
+import bids4s.{BidsFile, BidsPath, BidsProject, BidsValidationReport, LinkedBidsProject}
 import scalafim.dataset.DatasetShape
 import scalafim.image.NeuroSpace
 import scalafim.image.io.Nifti
@@ -9,6 +9,19 @@ import java.nio.file.Path
 import scala.util.control.NonFatal
 
 object BidsStudyCompilerJvm:
+  def compile(
+      project: LinkedBidsProject,
+      recipe: LinkedDatasetRecipe
+  ): Either[CatalogCompileReport, StudyCatalog] =
+    BidsStudyCompiler.compile(project, recipe, readHeaders(project, recipe))
+
+  def compileChecked(
+      project: LinkedBidsProject,
+      recipe: LinkedDatasetRecipe,
+      notices: Vector[bids4s.BidsIssue] = Vector.empty
+  ): Either[CatalogCompileReport, CatalogCompilation] =
+    BidsStudyCompiler.compileChecked(project, recipe, readHeaders(project, recipe), notices)
+
   def compile(
       project: BidsProject,
       recipe: DatasetRecipe
@@ -25,6 +38,22 @@ object BidsStudyCompilerJvm:
     val selectedBold = project.query(recipe.boldQuery)
     val derivativeMasks = project.manifest.files.filter(isMaskImage)
     readHeaders(project, (selectedBold ++ derivativeMasks).distinct)
+
+  def readHeaders(project: LinkedBidsProject, recipe: LinkedDatasetRecipe): LinkedImageHeaderCatalog =
+    val selected = project.query(recipe.boldQuery, Some(recipe.boldRoot))
+    val source = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias => project.query(root = Some(alias)))
+    val files = (selected ++ source).filter(file => isImage(file.file)).distinct
+    val headers = Map.newBuilder[LinkedBidsFileKey, ImageHeaderDescriptor]
+    val failures = Map.newBuilder[LinkedBidsFileKey, String]
+    files.foreach { file =>
+      val key = LinkedBidsFileKey(file.alias, file.path)
+      resolveLocation(file.location) match
+        case Left(reason) => failures += key -> reason
+        case Right(path) => describe(path) match
+          case Left(reason) => failures += key -> reason
+          case Right(header) => headers += key -> header
+    }
+    LinkedImageHeaderCatalog(headers.result(), failures.result())
 
   def readHeaders(project: BidsProject): ImageHeaderCatalog =
     val files = project.manifest.files.filter(file => file.extension == "nii" || file.extension == "nii.gz")
@@ -52,6 +81,10 @@ object BidsStudyCompilerJvm:
         file.fileName.contains("_mask.nii")
     )
 
+  private def isImage(file: BidsFile): Boolean =
+    (file.extension == "nii" || file.extension == "nii.gz") &&
+      (file.parsed.exists(_.kind == "bold") || isMaskImage(file))
+
   private def describe(path: Path): Either[String, ImageHeaderDescriptor] =
     try
       val header = Nifti.readHeader(path)
@@ -68,3 +101,7 @@ object BidsStudyCompilerJvm:
     val resolved = root.resolve(file.path.value).normalize()
     if resolved.startsWith(root) then Right(resolved)
     else Left(s"path escapes BIDS project root: ${file.path.value}")
+
+  private def resolveLocation(location: BidsPath): Either[String, Path] =
+    try Right(Path.of(location.value).toAbsolutePath.normalize())
+    catch case NonFatal(error) => Left(error.getMessage)
