@@ -103,11 +103,17 @@ class FirstLevelFixedEffectsEstimatesSuite extends munit.FunSuite:
     val plan = checked(FirstLevelFixedEffectsEstimates.prepare(f.fitPlan, f.request(), ChunkSize.unsafe(1)))
     val blocks = execute(plan, f)
     assertEquals(blocks.head.result, FixedEffectsEstimateBlockResult.Excluded(Vector(VoxelInferenceExclusion(0, VoxelFitStatus.AllZero))))
+    assertEquals(blocks.head.runExclusions.map(f => (f.runIndex, f.voxelIndex, f.status, f.residualVariance)),
+      Vector((0, 0, VoxelFitStatus.AllZero, ResidualVarianceStatus.NonpositiveFinite),
+        (1, 0, VoxelFitStatus.AllZero, ResidualVarianceStatus.NonpositiveFinite)))
+    assert(blocks.tail.forall(_.runExclusions.isEmpty))
     assertEquals(selected(blocks(1)).voxelIndices, Vector(1))
     assertEquals(selected(blocks(2)).voxelIndices, Vector(2))
     assertEqualsDouble(selected(blocks(2)).estimates(0, 0), R.contrastEstimate(1), 1e-7)
     val wide = checked(FirstLevelFixedEffectsEstimates.prepare(f.fitPlan, f.request(), ChunkSize.unsafe(3)))
-    execute(wide, f).head.result match
+    val wideBlock = execute(wide, f).head
+    assertEquals(wideBlock.runExclusions, blocks.flatMap(_.runExclusions))
+    wideBlock.result match
       case FixedEffectsEstimateBlockResult.Selected(result, exclusions) =>
         assertEquals(result.voxelIndices, Vector(1, 2))
         assertEquals(exclusions, Vector(VoxelInferenceExclusion(0, VoxelFitStatus.AllZero)))

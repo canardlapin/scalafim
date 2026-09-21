@@ -11,11 +11,25 @@ enum FixedEffectsEstimateBlockResult:
   case Selected(result: FixedEffectsEstimateResult, exclusions: Vector[VoxelInferenceExclusion])
   case Excluded(exclusions: Vector[VoxelInferenceExclusion])
 
+/** Run-local facts for a voxel excluded from the pooled output. Only excluded
+  * voxels are described; no response, coefficient or variance map is retained.
+  */
+enum ResidualVarianceStatus:
+  case PositiveFinite, NonpositiveFinite, Nonfinite
+
+final case class RunVoxelExclusion private[fit] (
+    runIndex: Int,
+    voxelIndex: Int,
+    status: VoxelFitStatus,
+    residualVariance: ResidualVarianceStatus
+)
+
 final case class FirstLevelFixedEffectsEstimateBlock private[fit] (
     ordinal: ChunkOrdinal,
     inputVoxelIndices: Vector[Int],
     result: FixedEffectsEstimateBlockResult,
-    runCoefficients: RunCoefficientRetentionResult
+    runCoefficients: RunCoefficientRetentionResult,
+    runExclusions: Vector[RunVoxelExclusion]
 )
 
 final case class FixedEffectsRunPreparation private[fit] (
@@ -68,11 +82,14 @@ final class FirstLevelFixedEffectsEstimatePlan private[fit] (
     val values = runResults.result()
     val retained = Vector.newBuilder[Int]
     val excluded = Vector.newBuilder[VoxelInferenceExclusion]
+    val excludedPositionsBuilder = Vector.newBuilder[Int]
     var voxel = 0
     while voxel < response.voxels do
       val status = VoxelFitStatus.aggregate(values.map(_.statuses(voxel)))
       if status.supportsInference then retained += voxel
-      else excluded += VoxelInferenceExclusion(chunk.voxelIndices(voxel), status)
+      else
+        excluded += VoxelInferenceExclusion(chunk.voxelIndices(voxel), status)
+        excludedPositionsBuilder += voxel
       voxel += 1
     val positions = retained.result()
     val exclusions = excluded.result()
@@ -92,7 +109,18 @@ final class FirstLevelFixedEffectsEstimatePlan private[fit] (
     val retainedBlocks = values.flatMap(_.retained)
     val retention = if retainedBlocks.isEmpty then RunCoefficientRetentionResult.NotRequested
       else RunCoefficientRetentionResult.Retained(retainedBlocks)
-    result.map(value => FirstLevelFixedEffectsEstimateBlock(chunk.ordinal, chunk.voxelIndices, value, retention))
+    val excludedPositions = excludedPositionsBuilder.result()
+    val facts = values.zip(runs).flatMap { (value, prepared) =>
+      excludedPositions.map { position =>
+        val variance = value.variance(position)
+        val varianceStatus = if !variance.isFinite then ResidualVarianceStatus.Nonfinite
+          else if variance <= 0 then ResidualVarianceStatus.NonpositiveFinite
+          else ResidualVarianceStatus.PositiveFinite
+        RunVoxelExclusion(prepared.preparation.partition.runIndex, chunk.voxelIndices(position),
+          value.statuses(position), varianceStatus)
+      }
+    }
+    result.map(value => FirstLevelFixedEffectsEstimateBlock(chunk.ordinal, chunk.voxelIndices, value, retention, facts))
 
 object FirstLevelFixedEffectsEstimates:
   /** Finite-input OLS within each run, followed by full inverse-covariance
