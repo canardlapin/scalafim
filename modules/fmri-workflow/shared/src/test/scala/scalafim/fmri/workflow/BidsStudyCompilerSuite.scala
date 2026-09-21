@@ -6,6 +6,17 @@ import scalafim.dataset.{DatasetId, DatasetShape}
 import scalafim.image.NeuroSpace
 
 class BidsStudyCompilerSuite extends FunSuite:
+  test("linked compiler refuses an undeclared selected root deterministically") {
+    val raw = BidsRoot.raw("raw", "/study/raw").toOption.get
+    val linked = LinkedBidsProject.make(Vector(raw), Vector.empty).toOption.get
+    val recipe = LinkedDatasetRecipe.unsafe(
+      DatasetId("linked"), BidsRootAlias.unsafe("missing"),
+      BidsQuery.unsafe(filename = Vector("bold\\.nii$"), scope = BidsScope.Derivatives),
+      maskPolicy = MaskPolicy.Explicit(WorkflowArtifactRef.unsafe[MaskImageResource]("file:///mask.nii"))
+    )
+    val report = BidsStudyCompiler.compile(linked, recipe, LinkedImageHeaderCatalog(Map.empty)).left.toOption.get
+    assertEquals(report.issues.map(_.code), Vector(CatalogIssueCode.NoBoldFiles))
+  }
   test("observed slice-timing metadata preserves true, false and unknown separately") {
     val fixture = studyFixture(subjects = Vector("01"), runs = Vector("01"))
     Vector(None, Some(false), Some(true)).foreach { status =>
