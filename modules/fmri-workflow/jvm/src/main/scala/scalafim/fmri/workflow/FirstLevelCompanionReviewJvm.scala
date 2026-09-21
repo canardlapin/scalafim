@@ -12,8 +12,23 @@ import scala.util.Using
 /** Optional table-only inspection; never opens or stages a BOLD payload. */
 object FirstLevelCompanionReviewJvm:
   def inspect(root: Path, unit: FirstLevelUnit, maximumTableBytes: Long = 64L*1024*1024): Either[WorkflowError,Vector[FirstLevelCompanionReview]] =
+    inspectWith(root,unit,maximumTableBytes,() => BidsProjectLoader.loadChecked(root)
+      .left.map(e => WorkflowError.InvalidUnit(unit.id.value,e.message)).map(_.value))
+
+  def inspectLinked(roots: Vector[BidsRoot], boldRoot: BidsRootAlias, unit: FirstLevelUnit,
+      maximumTableBytes: Long = 64L*1024*1024): Either[WorkflowError,Vector[FirstLevelCompanionReview]] =
+    roots.find(_.alias == boldRoot).toRight(WorkflowError.InvalidUnit(unit.id.value,"Selected BIDS root is absent")).flatMap { selected =>
+      inspectWith(Path.of(selected.location.value),unit,maximumTableBytes,() =>
+        BidsProjectLoader.loadLinkedChecked(roots).left.map(e => WorkflowError.InvalidUnit(unit.id.value,e.message)).flatMap { report =>
+          if report.hasErrors then Left(WorkflowError.InvalidUnit(unit.id.value,report.errors.map(_.message).mkString("; ")))
+          else report.value.rootProject(boldRoot).toRight(WorkflowError.InvalidUnit(unit.id.value,"Selected BIDS root is absent"))
+        })
+    }
+
+  private def inspectWith(root: Path,unit: FirstLevelUnit,maximumTableBytes: Long,
+      loadProject: () => Either[WorkflowError,BidsProject]): Either[WorkflowError,Vector[FirstLevelCompanionReview]] =
     def failed(message: String) = WorkflowError.InvalidUnit(unit.id.value,message)
-    def load = BidsProjectLoader.loadChecked(root).left.map(e => failed(e.message)).map(_.value)
+    def load = loadProject()
     def companion(project: BidsProject,run: RunInput): Either[WorkflowError,Option[BidsFile]] =
       val path = Path.of(URI.create(run.bold.location.value)).toAbsolutePath.normalize()
       val base = root.toAbsolutePath.normalize()

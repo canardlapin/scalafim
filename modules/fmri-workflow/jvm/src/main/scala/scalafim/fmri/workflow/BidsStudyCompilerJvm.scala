@@ -42,8 +42,7 @@ object BidsStudyCompilerJvm:
   def readHeaders(project: LinkedBidsProject, recipe: LinkedDatasetRecipe): LinkedImageHeaderCatalog =
     val selected = project.query(recipe.boldQuery, Some(recipe.boldRoot)) ++
       project.query(root = Some(recipe.boldRoot)).filter(file => isMaskImage(file.file))
-    val source = project.sourceOf(recipe.boldRoot).toVector.flatMap(alias => project.query(root = Some(alias)))
-    val files = (selected ++ source).filter(file => isImage(file.file)).distinct
+    val files = selected.filter(file => isImage(file.file)).distinct
     val headers = Map.newBuilder[LinkedBidsFileKey, ImageHeaderDescriptor]
     val failures = Map.newBuilder[LinkedBidsFileKey, String]
     files.foreach { file =>

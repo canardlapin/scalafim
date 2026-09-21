@@ -24,7 +24,8 @@ class BidsStudyCompilerSuite extends FunSuite:
     val bold = "sub-01/func/sub-01_task-demo_run-01_space-MNI_desc-preproc_bold.nii"
     val events = "sub-01/func/sub-01_task-demo_run-01_events.tsv"
     def files(paths: Vector[String], scope: BidsScope, pipeline: Option[PipelineName] = None) =
-      BidsManifest.fromRelativePaths(paths).files.map(_.copy(scope = scope, pipeline = pipeline))
+      val kind = pipeline.fold[BidsRootKind](BidsRootKind.Raw)(p => BidsRootKind.Derivative(p,BidsRootAlias.unsafe("raw")))
+      BidsManifest.fromRootPathsChecked(paths,kind).value.files.map(_.copy(scope=scope,pipeline=pipeline))
     val rawProject = BidsProject(root = BidsPath("/raw"), description = None, participants = Vector("01"), derivatives = Vector.empty, manifest = BidsManifest(files(Vector(events), BidsScope.Raw)))
     val derivativeProject = BidsProject(root = BidsPath("/external/first"), description = None, participants = Vector.empty, derivatives = Vector.empty,
       manifest = BidsManifest(files(Vector(bold, bold.stripSuffix(".nii") + ".json"), BidsScope.Derivatives, Some(PipelineName("fmriprep")))),
