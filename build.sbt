@@ -21,7 +21,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // Immutable source dependency: sbt clones this exact Gale commit into its
 // staging area, so a clean checkout never depends on publishLocal or a sibling
 // developer checkout.
-lazy val galeRevision = "4485cc775ae8233789b019d24a920f86391e9523"
+lazy val galeRevision = "83cac90a678d1b8a31c590e0c1b8fc8bf3427161"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -123,6 +123,35 @@ lazy val alderPreprocessJVM  = ProjectRef(alderBuild, "preprocessJVM")
 lazy val alderPreprocessJS   = ProjectRef(alderBuild, "preprocessJS")
 lazy val alderTuneJVM        = ProjectRef(alderBuild, "tuneJVM")
 lazy val alderTuneJS         = ProjectRef(alderBuild, "tuneJS")
+
+// Alder's own build loads ../gale, ../resample4s and ../linop4s relative to the
+// sbt working directory, so a consumer that loads it cannot stay hermetic. Only
+// predictive MVPA needs Alder: load it on request with
+// -Dscalafim.alder.enabled=true, or implicitly with the clean local-composite
+// -Dscalafim.alder.build override. Otherwise mvpa and the examples built on it
+// stay defined but unaggregated, and compiling them fails with this reason.
+lazy val alderEnabled: Boolean =
+  sys.props.get("scalafim.alder.enabled") match {
+    case Some("true")  => true
+    case Some("false") => false
+    case Some(other) =>
+      sys.error(s"scalafim.alder.enabled must be true or false, not '$other'")
+    case None => sys.props.contains("scalafim.alder.build")
+  }
+lazy val alderJVM: Seq[ClasspathDep[ProjectReference]] =
+  if (alderEnabled) Seq(alderApplicationJVM, alderPreprocessJVM, alderTuneJVM)
+  else Seq.empty
+lazy val alderJS: Seq[ClasspathDep[ProjectReference]] =
+  if (alderEnabled) Seq(alderApplicationJS, alderPreprocessJS, alderTuneJS)
+  else Seq.empty
+lazy val alderDisabledSettings: Seq[Def.Setting[_]] =
+  if (alderEnabled) Seq.empty
+  else
+    Seq(
+      Compile / compile := sys.error(
+        "Predictive MVPA requires Alder; rerun with -Dscalafim.alder.enabled=true"
+      )
+    )
 
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
@@ -895,23 +924,18 @@ lazy val mvpa =
         galeCoreJVM,
         multivarJVM,
         resample4sCoreJVM,
-        resample4sDesignsJVM,
-        alderApplicationJVM,
-        alderPreprocessJVM,
-        alderTuneJVM
-      )
+        resample4sDesignsJVM
+      ).dependsOn(alderJVM: _*)
     )
     .jsConfigure(
       _.dependsOn(
         galeCoreJS,
         multivarJS,
         resample4sCoreJS,
-        resample4sDesignsJS,
-        alderApplicationJS,
-        alderPreprocessJS,
-        alderTuneJS
-      )
+        resample4sDesignsJS
+      ).dependsOn(alderJS: _*)
     )
+    .settings(alderDisabledSettings)
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaJS  = mvpa.js
@@ -1027,6 +1051,11 @@ lazy val datasetZarr =
 lazy val datasetZarrJS  = datasetZarr.js
 lazy val datasetZarrJVM = datasetZarr.jvm
 
+// Projects that need Alder join the root aggregate only when it is loaded.
+lazy val alderAggregates: Seq[ProjectReference] =
+  if (alderEnabled) Seq(mvpaJS, mvpaJVM, atlasExamplesJVM, workflowExamplesJVM)
+  else Seq.empty
+
 lazy val root =
   project
     .in(file("."))
@@ -1090,15 +1119,11 @@ lazy val root =
       fitJVM,
       firstLevelLawsJS,
       firstLevelLawsJVM,
-      mvpaJS,
-      mvpaJVM,
       connectivityJS,
       connectivityJVM,
       surfaceViewConnectivityJS,
       surfaceViewConnectivityJVM,
       surfaceExamplesJVM,
-      atlasExamplesJVM,
-      workflowExamplesJVM,
       groupJS,
       groupJVM,
       fmriWorkflowJS,
@@ -1108,6 +1133,7 @@ lazy val root =
       datasetZarrJS,
       datasetZarrJVM
     )
+    .aggregate(alderAggregates: _*)
     .settings(
       name := "scalafim",
       publish / skip := true

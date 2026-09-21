@@ -38,6 +38,7 @@ final case class EstimateExecutionDescription private[fit] (
     inputVoxelCount: Int,
     maximumVoxelsPerRead: Int,
     preparation: ResponsePreparationProvenance,
+    fixedEffectsPolicy: Option[FixedEffectsPolicy],
     retainedRunCoefficients: Vector[RunCoefficientRetentionDescription]
 )
 
@@ -77,16 +78,18 @@ enum PreparedSelectedEstimates:
 
   lazy val description: EstimateExecutionDescription =
     val uncertainty = request.uncertainty
-    val (topology, computations, outputs, axes, diagnostics, preparation) = this match
+    val (topology, computations, outputs, axes, diagnostics, preparation, fixedEffectsPolicy) = this match
       case Shared(plan) =>
         val work = if uncertainty == EstimateUncertaintyRequest.None then Set(EstimateComputation.SelectedTimeReadout)
           else Set(EstimateComputation.ResponseQrCoordinates, EstimateComputation.ResidualVariance)
-        (EstimateTopology.SharedOrdinaryLeastSquares, work, plan.outputs, Vector(plan.coefficientAxis), Vector(plan.diagnostics), plan.preparation)
+        (EstimateTopology.SharedOrdinaryLeastSquares, work, plan.outputs, Vector(plan.coefficientAxis),
+          Vector(plan.diagnostics), plan.preparation, None)
       case Pooled(plan) =>
         (EstimateTopology.RunwiseInverseCovarianceFixedEffects,
           Set(EstimateComputation.ResponseQrCoordinates, EstimateComputation.ResidualVariance,
             EstimateComputation.JointRunPrecision, EstimateComputation.VoxelwisePrecisionPooling),
-          plan.selection.outputs, plan.runPreparations.map(_.coefficientAxis), plan.runPreparations.map(_.diagnostics), plan.preparation)
+          plan.selection.outputs, plan.runPreparations.map(_.coefficientAxis),
+          plan.runPreparations.map(_.diagnostics), plan.preparation, Some(plan.policy))
     val optionalWork = uncertainty match
       case EstimateUncertaintyRequest.None => Set.empty[EstimateComputation]
       case EstimateUncertaintyRequest.Marginal => Set(EstimateComputation.SelectedMarginalVariance)
@@ -113,7 +116,8 @@ enum PreparedSelectedEstimates:
       EstimateProduct.FittedSeries -> trace, EstimateProduct.ResidualSeries -> trace,
       EstimateProduct.RunCoefficients -> retentionProduct),
       outputs, axes, diagnostics, chunks.timepoints,
-      chunks.iterator.map(_.voxelIndices.length).sum, chunks.iterator.map(_.voxelIndices.length).max, preparation, runRetention)
+      chunks.iterator.map(_.voxelIndices.length).sum, chunks.iterator.map(_.voxelIndices.length).max,
+      preparation, fixedEffectsPolicy, runRetention)
 
   /** Checks cancellation before each read and delivery. The caller owns reader,
     * backend and sink lifetimes, and must discard partial output on failure.

@@ -48,6 +48,7 @@ class SelectedEstimatesSuite extends munit.FunSuite:
     val report = plan.description
     assertEquals(f.reads, 0)
     assertEquals(report.topology, EstimateTopology.RunwiseInverseCovarianceFixedEffects)
+    assertEquals(report.fixedEffectsPolicy, Some(FixedEffects.DefaultPolicy))
     assertEquals(report.inputVoxelCount, 2)
     assertEquals(report.maximumVoxelsPerRead, 1)
     assertEquals(report.diagnostics.map(_.predictors), Vector(3, 3))
@@ -78,6 +79,7 @@ class SelectedEstimatesSuite extends munit.FunSuite:
       val plan = checked(SelectedEstimates.prepare(FitPlan(f.model), f.request(uncertainty), ChunkSize.unsafe(2)))
       val report = plan.description
       assertEquals(report.topology, EstimateTopology.SharedOrdinaryLeastSquares)
+      assertEquals(report.fixedEffectsPolicy, None)
       assertEquals(report.products(EstimateProduct.JointCovariance),
         if uncertainty == EstimateUncertaintyRequest.Joint then EstimateProductDisposition.Retained else EstimateProductDisposition.NotRequested)
       assertEquals(report.computations.contains(EstimateComputation.ResidualVariance), uncertainty != EstimateUncertaintyRequest.None)
