@@ -151,6 +151,8 @@ class SurfaceLayerTransactionSuite extends munit.FunSuite:
     val before = SurfaceCompiler.compile(viewer, state).toOption.get
     val identical = same.rebase(viewer, state, before).toOption.get
     assertEquals(identical.receipt.layerKeys, before.receipt.layerKeys)
+    assert(identical.readouts eq same.preparedPlan.readouts)
+    assert(identical.chrome eq same.preparedPlan.chrome)
 
     val hiddenState = SurfaceViewer.reduce(
       viewer,

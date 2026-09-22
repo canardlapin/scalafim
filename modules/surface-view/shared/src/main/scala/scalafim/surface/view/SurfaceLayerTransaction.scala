@@ -21,8 +21,12 @@ final class SurfaceLayerTransaction private[view] (
     else if !samePreparationContext(preparedState, currentState) then
       Left(SurfaceViewError.InvalidLayerTransaction("layer presentation changed while preparation was pending; prepare again"))
     else
-      SurfaceCompiler.compileReadout(nextModel, currentState).map: readouts =>
-        val chrome = SurfaceCompiler.compileChrome(readouts)
+      val readout =
+        if preparedState.selection == currentState.selection then
+          Right((preparedPlan.readouts, preparedPlan.chrome))
+        else SurfaceCompiler.compileReadout(nextModel, currentState).map: readouts =>
+          (readouts, SurfaceCompiler.compileChrome(readouts))
+      readout.map: (readouts, chrome) =>
         preparedPlan.copy(
           slots = currentPlan.slots,
           meshes = currentPlan.meshes,
