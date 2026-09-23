@@ -481,10 +481,10 @@ failures.
   - FIR bundle `c3c8576c…`;
   - export script `e6bbbb7e…`;
   - per-volume digests from `export.json`, verified on read.
-
-  The PLS export records no TemplateFlow release. The volumes are declared in
-  `MNI152NLin2009cAsym@templateflow@d79aacb1…`, the release of the point map's
-  catalog, so that the frames are exact.
+- **Release (asserted).** The PLS provenance records no TemplateFlow release.
+  The runner **asserts** the source frame
+  `MNI152NLin2009cAsym@templateflow@d79aacb1…`, the point map's catalog
+  revision, so that the frames are exact.
 - **Route.**
   - fsLR 32k L and R midthickness `DeclaredSurface`s in `MNI152NLin6Asym`,
     with the WS2 statement;
@@ -493,42 +493,78 @@ failures.
   - `MidthicknessNearest`, `Continuous`;
   - no support mask declared: the exports are NaN outside the PLS selection,
     so unsupported voxels are nonfinite.
-- **Runner.** `FslrQualification` (surface JVM test scope). Run it with:
+- **Runner and artifacts.** `FslrQualification` (surface JVM test scope, forked
+  JVM 25.0.1, `-Xmx4g`) writes to `scratchpad/qualification/final/{beta,fir}`:
+  `.npy` arrays (receipts and chosen voxels for every volume) and
+  `results.json`. The artifacts, all under `scratchpad/qualification/`, are:
 
-  `sbt 'set surfaceJVM/Test/run/fork := true' 'set surfaceJVM/Test/run/javaOptions ++= Seq("-Xmx4g")' 'set surfaceJVM/Test/run/baseDirectory := file(".")' "surfaceJVM/Test/runMain scalafim.surface.reference.FslrQualification <pls-volumes> <out>"`
+  | Artifact | SHA-256 | Produced by |
+  |---|---|---|
+  | `final/beta/results.json` | `dbcf0f16…` | `FslrQualification` |
+  | `final/fir/results.json` | `0e783dac…` | `FslrQualification` |
+  | `heap-probe.json` | `19c897e6…` | `--probe-heap`, `-XX:+UseSerialGC -Xmn16m` |
+  | `js-timing.json` | `6cf74c52…` | `RouteTimingJsSuite`; FullOpt selected with `set surfaceJS/Test/scalaJSStage := FullOpt`, confirmed by `LinkingInfo.productionMode = true` |
+  | `final/beta-summary.json` | `51da32da…` | the comparison script |
+  | `final/fir-summary.json` | `8c3b7c6f…` | the comparison script |
 
-  It writes `.npy` arrays and `results.json`; the format is documented in its
-  Scaladoc.
+  The large data is not committed.
 - **Comparison.** `tools/fslr-qualification/compare_fslr_qualification.py`,
-  against the SimpleITK oracle `independent_fslr_mapping.py`
-  (`oracle/beta.npz`, `oracle/fir.npz`). The large data is not committed.
+  run with `--export`, `--assets`, `--heap` and `--js`, against the SimpleITK
+  oracle `independent_fslr_mapping.py` (`oracle/beta.npz`, `oracle/fir.npz`).
+  It checks the following independently:
+  - medial wall against the `desc-nomedialwall` labels, vertex by vertex;
+  - ties from both ScalaFIM's and the oracle's positions, on the `export.json`
+    grid;
+  - receipts, voxels and picks for every volume;
+  - picks against the oracle's value and voxel;
+  - JVM timing on median and max.
+
+  It exits non-zero because the NoSupport rate fails.
+
+### Shared inputs and shared contract (common mode)
+
+- **Same export.** ScalaFIM and the oracle read the same exported NIfTI files.
+  The export's linear order was inferred heuristically (x-fastest: in-mask
+  fraction F = 0.976 vs C = 0.835, `export.json`). A wrong order in the export
+  would affect both sides identically and would not be detected here.
+- **Same inverse scheme.** The value oracle is SimpleITK forward arithmetic
+  under the same fixed-point inverse scheme; ITK has no inverse for
+  `DisplacementFieldTransform`.
+- **Same contract.** The oracle re-implements the same declared lookup
+  contract: ties round up; support is `[−0.5, dim−0.5)`; nonfinite means
+  NoSupport.
+- **What agreement shows.** Agreement validates the arithmetic, the placement
+  and the contract's implementation. It does not validate those choices
+  themselves.
 
 ### Results (beta and FIR identical in every count)
 
 | Budget | Measured | Verdict |
 |---|---|---|
-| Values: identical to an independent implementation, \|Δ\| ≤ 1e-9·max(1,\|v\|) over cortical vertices | Max relative \|Δ\| = 0.0 over all 15 volumes. Coverage is identical to the oracle at every vertex (L 26 381 / 2 796 / 3 315, R 25 718 / 2 776 / 3 998 Mapped / MedialWall / NoSupport). Chosen voxel equals the oracle voxel at every cortical vertex. Placed positions differ from the oracle's by ≤ 1.9e-4 mm (L) and 4.0e-6 mm (R), because of the oracle's 12-iteration residuals. | **Pass against the SimpleITK oracle.** Deviation: the budget names Connectome Workbench `-volume-to-surface-mapping -enclosing` as the independent implementation. Workbench was not run. |
-| Values: disagreements only at ties, counted, ≤ 0.1 % | 0 tie vertices (continuous index within 1e-6 of .5) and 0 disagreements, in both hemispheres | **Pass** |
-| MedialWall equals the admitted mask's medial count | L 2 796 = mask 2 796 = oracle; R 2 776 = 2 776 = oracle | **Pass** |
-| NoSupport ≤ 3 % of cortical vertices, for a whole-brain analysis support | L 3 315 / 29 696 = 11.16 %; R 3 998 / 29 716 = 13.45 %. The support is the PLS selection, not whole-brain: 206 070 finite voxels. | **Fail.** The budget's premise (whole-brain support) does not hold for these fixtures, and the rate exceeds 3 %. The budget is not relaxed. |
-| Every NoSupport vertex explained by a receipt | 3 315 / 3 315 (L) and 3 998 / 3 998 (R) have an `inspect` receipt. All are `NonFinite`: the voxel lies outside the PLS selection. None is `OutsideGrid`, and 0 are `BridgeUnavailable`. | **Pass** |
-| Display identity (inflated vs very-inflated) | `onDisplay` onto `tpl-fsLR` inflated (`1672da09…` L, `8237f4e7…` R) and very-inflated (`8639333c…` L, `57d574b8…` R) `DisplaySurface`s returns the same `MappedSurfaceValues` object (`eq`) | **Pass** |
-| Picks: 20 per hemisphere; receipt voxel = oracle voxel, linked to the source voxel | 20/20 L and 20/20 R, at evenly spaced cortical ranks. 16 of each 20 are Mapped (`Included`, and the receipt value equals the volume at that voxel). 4 are NoSupport (`NonFinite` at the oracle's voxel). | **Pass** |
-| JVM ≤ 500 ms warm per hemisphere and volume | Forked JVM 25.0.1, `-Xmx4g`, 3 warm-up runs then 7 timed. Prepare + map median ≤ 79.2 ms, max ≤ 193.0 ms over all 15 volumes × 2 hemispheres. Prepare (whole-grid admission mask) median ≤ 35.3 ms; map median ≤ 39.6 ms. Placement at admission is separate, once per route: warm median 17.5–30.8 ms, cold 23–83 ms. | **Pass** |
-| Scala.js FullOpt ≤ 2 s | There is no Scala.js NIfTI or point-map reader, so this is a **synthetic run of the same size** (`RouteTimingJsSuite`, `SCALAFIM_JS_TIMING=1`, Node, FullOpt): 97×115×97 volume, 32 492-vertex hemisphere, smooth synthetic displacement field on 193×229×193 plus affine, inverse placement. Prepare + map median 171.1 ms, max 258.5 ms; admission + placement median 40.8 ms. | **Pass (synthetic)**. The real assets were not mapped on Scala.js. |
-| ≤ 64 MB additional heap per mapped volume and hemisphere | Retained after `map` (full GC, result held): 0.50 MiB. Live heap sampled by 1 203 forced full collections at arbitrary points during 92 prepare + map runs (Serial GC): max 25.2 MiB, median 1.8 MiB above the post-setup baseline. Transient allocation per prepare + map is 236 MiB, mostly short-lived per-vertex `Vector`s in the kernel and per-voxel reads while building the admission mask. A bound from young-collection heap (max after-GC + eden) gives 167.7 MiB, but that includes promoted garbage and is not a live measure. | **Pass on live heap (sampled, not a proven bound)**. The 236 MiB allocation churn is recorded. |
-| Scope: mapped only through an admitted route; group statistics unchanged | Every volume is mapped through `SurfaceRoute.admit` → `prepare` → `map`, and the volumes are read-only | **Pass** |
+| Values: identical to an independent implementation, \|Δ\| ≤ 1e-9·max(1,\|v\|) over cortical vertices | Max relative \|Δ\| = 0.0 over all 15 volumes. Coverage is identical to the oracle at every vertex (L 26 381 / 2 796 / 3 315, R 25 718 / 2 776 / 3 998 Mapped / MedialWall / NoSupport) and identical across volumes. The chosen voxel equals the oracle voxel at every cortical vertex of every volume. Placed positions differ from the oracle's by ≤ 1.9e-4 mm (L) and 4.0e-6 mm (R), because of the oracle's 12-iteration residuals. | **Not met as written.** The budget names Connectome Workbench `-volume-to-surface-mapping -enclosing`, which was not run. Against the SimpleITK oracle: exact. |
+| Values: disagreements only at ties, counted, ≤ 0.1 % | 0 tie vertices from ScalaFIM's positions and 0 from the oracle's; 0 disagreements | **Pass** |
+| MedialWall equals the admitted mask's medial count | Vertex-exact against the labels: L 2 796, R 2 776 (oracle equal) | **Pass** |
+| NoSupport ≤ 3 % of cortical vertices, for a whole-brain analysis support | L 3 315 / 29 696 = 11.16 %; R 3 998 / 29 716 = 13.45 %. The support is the PLS selection, not whole-brain: 206 070 finite voxels. | **Fail.** The premise (whole-brain support) does not hold, and the rate exceeds 3 %. The budget is not relaxed. |
+| Every NoSupport vertex explained by a receipt | Every NoSupport vertex of every volume has an `inspect` receipt in {OutsideGrid, OutsideSupport, NonFinite}. All are `NonFinite`: outside the PLS selection. | **Pass** |
+| Display identity (inflated vs very-inflated) | `onDisplay` onto `tpl-fsLR` inflated (`1672da09…` L, `8237f4e7…` R) and very-inflated (`8639333c…` L, `57d574b8…` R) returns the same object (`eq`) | **Pass** |
+| Picks: 20 per hemisphere; receipt voxel = oracle voxel, linked to the source | 20 evenly spaced cortical vertices per hemisphere × every volume: beta 60/60 and FIR 240/240 per hemisphere. Each receipt voxel equals the oracle voxel. Each `Included` value equals the mapped value and the oracle value. NoSupport picks agree with the oracle's coverage. | **Pass** |
+| JVM ≤ 500 ms warm per hemisphere and volume | 3 warm-up runs then 7 timed. Prepare + map median ≤ 50.2 ms and max ≤ 128.8 ms over all 15 volumes × 2 hemispheres. Placement at admission is once per route: warm median 17.6–30.4 ms. | **Pass** (median and max) |
+| Scala.js FullOpt ≤ 2 s | Synthetic run of the same size (`js-timing.json`): prepare + map median 183.8 ms, max 504.8 ms over 7 runs; admission + placement median 52.5 ms. The suite asserts max ≤ 2 s and production mode. An earlier run measured 171.1 / 258.5 ms. | **Met with qualification**: synthetic, because no Scala.js NIfTI or point-map reader exists |
+| ≤ 64 MB additional heap per mapped volume and hemisphere | Retained after `map`: 0.50 MiB. Live heap sampled at 1 119 forced full collections during 78 prepare + map runs: max 27.8 MiB, median 1.8 MiB above the post-setup baseline (220.2 MiB). Not bounds: heap-pool peak above baseline `poolPeakAboveBaselineMiB` = 236 (238 in the previous run); young-collection bound 175.2 MiB. Both include uncollected garbage. Transient allocation is 235 MiB per prepare + map. | **Met with qualification**: sampled live heap, not a proven bound |
+| Scope: mapped only through an admitted route; group statistics unchanged | Every volume goes through `SurfaceRoute.admit` → `prepare` → `map`; the volumes are read-only | **Pass (by construction; not script-evaluated)** |
 
 ### Summary
 
-- **Numerically exact.** Against the SimpleITK oracle, the route is exact for
-  every value, every coverage class, every chosen voxel and every pick.
-- **Two budgets not met as written.**
-  1. The value oracle named in the frozen budget (Workbench) was not the one
-     used.
-  2. The NoSupport rate is 11–13 %, against a 3 % budget whose whole-brain
-     premise does not hold for the PLS selection support. Every NoSupport
-     vertex is explained by a `NonFinite` receipt.
-- **Resources.** These are within budget on the JVM (measured), on Scala.js
-  (synthetic same-size) and for live heap (sampled).
-
+- **Not met as written.**
+  - Value oracle: a deviation. The frozen budget names Connectome Workbench;
+    the comparison used SimpleITK, against which the route is exact.
+  - NoSupport rate: a failure. It is 11.2 % (L) and 13.5 % (R) against 3 %,
+    and the budget's whole-brain-support premise does not hold for the PLS
+    selection. Every NoSupport vertex has a `NonFinite` receipt.
+- **Met with qualification.**
+  - Scala.js timing: synthetic, same size.
+  - Heap: sampled live heap, not a proven bound.
+- **Met.** Ties, medial wall, NoSupport receipts, display identity, picks, JVM
+  time, and scope (by construction).
+- **Asserted, not recorded.** The 2009c release `templateflow@d79aacb1…` is
+  asserted by the runner, not recorded in the PLS provenance.
