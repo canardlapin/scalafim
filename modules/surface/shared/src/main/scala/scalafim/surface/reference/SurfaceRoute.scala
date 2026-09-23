@@ -35,7 +35,8 @@ final case class FrameBridge private (from: TemplateFrame, to: TemplateFrame, tr
     transform match
       case BridgeTransform.AffineMap(_) => s"affine ${from.display} -> ${to.display} ($evidence)"
       case BridgeTransform.Displacement(map, use) =>
-        s"point map ${from.display} -> ${to.display}, ${use.label}, source ${map.source.display}" +
+        s"point map ${from.display} -> ${to.display}, ${use.label}, source ${map.source.display}, " +
+          s"manifest sha256 ${map.manifest.sha256.value}" +
           s"${map.stageFiles.map(f => s", stage ${f.display}").mkString} ($evidence)"
 
 object FrameBridge:
@@ -112,6 +113,7 @@ enum RouteRefusal:
   case BridgeMismatch(required: (TemplateFrame, TemplateFrame), supplied: (TemplateFrame, TemplateFrame))
   case UnexpectedBridge(frame: TemplateFrame)
   case BridgeComposition(reason: String)
+  case DepthThroughPointMap(anatomy: String)
   case WhitePialRequired(method: MappingMethod)
   case InvalidMethod(reason: String)
 
@@ -126,6 +128,9 @@ enum RouteRefusal:
         s"required bridge ${from.display} -> ${to.display}; supplied ${suppliedFrom.display} -> ${suppliedTo.display}"
       case UnexpectedBridge(frame) => s"anatomy is already in ${frame.display}; a bridge would be applied twice"
       case BridgeComposition(reason) => s"bridge cannot be composed with the anatomy's surface-to-world affine: $reason"
+      case DepthThroughPointMap(anatomy) =>
+        s"$anatomy anatomy through a point-map bridge would interpolate depth points between warped endpoints " +
+          "instead of warping each depth point; refused until per-depth warping exists"
       case WhitePialRequired(method) => s"${method.label} requires white and pial anatomy"
       case InvalidMethod(reason) => s"invalid mapping method: $reason"
 
@@ -307,10 +312,15 @@ final class AdmittedSurfaceRoute private[reference] (
   /** Per-vertex evidence against a prepared source; no whole-volume work. */
   def inspect(prepared: PreparedSource, vertex: VertexId): Either[RouteError, VertexMappingEvidence] =
     val n = anatomy.reference.vertexCount
-    val volume = prepared.source.volume
-    val outcomes = placement.fold(Vector.empty[PointMapOutcome])(_.outcomesAt(vertex.index))
     if vertex.index >= n then Left(RouteError.VertexOutOfRange(vertex.index, n))
-    else if unavailable(vertex.index) then
+    else
+      val outcomes = placement.fold(Vector.empty[PointMapOutcome])(_.outcomesAt(vertex.index))
+      inspectPlaced(prepared, vertex, outcomes)
+
+  private def inspectPlaced(prepared: PreparedSource, vertex: VertexId,
+      outcomes: Vector[PointMapOutcome]): Either[RouteError, VertexMappingEvidence] =
+    val volume = prepared.source.volume
+    if unavailable(vertex.index) then
       owned(prepared).map: _ =>
         val coverage =
           if !anatomy.reference.medialWall.isCortex(vertex) then VertexCoverage.MedialWall else VertexCoverage.BridgeUnavailable
@@ -443,6 +453,8 @@ object SurfaceRoute:
           white <- place(anatomy.located.white)
           pial <- place(anatomy.located.pial)
         yield (SurfaceGeometryPair(white, pial), None)
+      case Some(BridgeTransform.Displacement(_, _)) if !midthickness =>
+        Left(RouteRefusal.DepthThroughPointMap(anatomy.geometry.label))
       case Some(BridgeTransform.Displacement(map, use)) =>
         val white = placeByPointMap(anatomy.located.white, map.map, use)
         val pial = if midthickness then white else placeByPointMap(anatomy.located.pial, map.map, use)
@@ -501,8 +513,8 @@ final class BridgePlacement private[reference] (
 
   def unavailableCount: Int = available.count(!_)
 
-  /** Residuals (mm) of converged inverse placements on the first surface. */
-  def convergedResidualsMm: Vector[Double] = outcomes.head.toVector.collect:
+  /** Residuals (mm) of converged inverse placements on every surface. */
+  def convergedResidualsMm: Vector[Double] = outcomes.flatMap(_.toVector).collect:
     case PointMapOutcome.Converged(_, residual, _) => residual
 
 final case class RouteCandidate(anatomy: SamplingAnatomy, bridge: Option[FrameBridge] = None)

@@ -274,12 +274,17 @@ WS3 (displacement bridge) re-measured on 2026-09-23:
 
 | Target | Result |
 |---|---|
-| `surfaceJVM/test` | 196/196, real-asset suites ran |
-| `surfaceJS/test` | 161/161 |
-| Reference, GIFTI and sampling suites under Scala.js `FullOpt` | 92/92 |
+| `surfaceJVM/test` | 202/202 after the WS3 review fixes, run locally with `SCALAFIM_REQUIRE_REAL_ASSETS=1` so the real-asset suites could not skip |
+| `surfaceJS/test` | 166/166 |
+| Reference, GIFTI and sampling suites under Scala.js `FullOpt` | 97/97 |
 | `surfaceViewJVM` / `atlasJVM` / `spatialJVM` | 49/49, 90/90, 140/140 |
 | `surfaceViewJS/test` | 49/49 |
 | `FullOpt` links | `atlasJS`, `spatialJS` (`Test/fullLinkJS`), `surfaceViewExamplesJS/fullLinkJS` |
+
+Real-asset suites skip when their inputs are absent, and are reported as
+skipped. `SCALAFIM_REQUIRE_REAL_ASSETS=1` turns absence into failure; this was
+checked in both directions. Counts marked as real-asset runs are local runs with
+the locked cache present.
 
 Mutation checks on the follow-ups each fail their test:
 - removing the source-frame check;
@@ -384,14 +389,18 @@ after it.
 | Type | Admits / refuses |
 |---|---|
 | `DisplacementField` | Dense component-planar field on a voxel grid (`voxelToRas: Affine[D3]`). Evaluation is ITK `DisplacementFieldTransform` with linear interpolation. With `ci = voxelToRas⁻¹·x`, the displacement is zero unless `−0.5 ≤ ci < n − 0.5` on every axis. Inside, it is trilinear over the 8 surrounding centres with neighbour indices clamped to `[0, n−1]`. Nonfinite points are never inside. The inner loop is allocation-free over primitive arrays. |
-| `PointMap` | Ordered `AffineStage` / `DisplacementStage` composite; `stages(0)` is applied first. `forwardInto` has ITK semantics. `forward` returns `Mapped`, or `OutsideSupport` if any displacement stage saw its point outside its field. `inverse` is the fixed-point iteration `y ← y + (x − T(y))` from `y = x` under an `InversePolicy(toleranceMm, maxIterations)`. It returns `Converged(point, residual, iterations)` or `NonConvergent(lastIterate, residual, iterations)`, which is never admitted. It returns `OutsideSupport` when the solution lies outside a field; nothing is extrapolated. |
-| `PointMapManifest`, `DeclaredPointMap` | A `templateflow4s.point-map/1` manifest verified before use: schema; quarantine (either `frames.quarantine` or `QUARANTINED` in `frames.derivation`), refused with no override; source SHA-256 equal to the one the caller expects; frame ids as exact `TemplateId`s. For each displacement stage file it also checks: a plain `stage-<i>-displacement.nii` name, byte count, SHA-256, NIfTI-1 header (`sizeof_hdr`, magic, `dim = [5,nx,ny,nz,1,3,1,1]`, datatype/bitpix 64, intent 1007, `vox_offset` 352, `sform_code` 5), and float32 sform equal to the manifest `voxelToRas` within float32 rounding. The source becomes an `AssetProvenance` when the manifest has a catalog revision, otherwise a `DataAsset`. |
+| `PointMap` | Ordered `AffineStage` / `DisplacementStage` composite; `stages(0)` is applied first. `forwardInto` has ITK semantics. `forward` returns `Mapped`, or `OutsideSupport` if any displacement stage saw its point outside its field. `inverse` is the fixed-point iteration `y ← y + (x − T(y))` from `y = x` under an `InversePolicy(toleranceMm, maxIterations)`. It returns `Converged(point, residual, iterations)` or `NonConvergent(lastIterate, residual, iterations)`, which is never admitted. It returns `OutsideSupport` when the solution lies outside a field (nothing is extrapolated), and `NonFinite` when evaluation overflows. |
+| `PointMapManifest`, `DeclaredPointMap` | A `templateflow4s.point-map/1` manifest verified before use. Its bytes must match the caller's expected manifest SHA-256 before parsing (`PointMapManifest.verified`; the constructor is package-private). So an edited affine, reordered stages or swapped frames cannot pass as the declared manifest, and the digest is recorded in the bridge disclosure. Other checks: schema; quarantine (either `frames.quarantine` or `QUARANTINED` in `frames.derivation`, re-checked in `fromManifest`), refused with no override; source SHA-256 equal to the one the caller expects; frames equal to those implied by the TemplateFlow name `tpl-X/tpl-X_from-Y_mode-image_xfm.h5` (input X, output Y; otherwise `PointMapFrameMismatch`); frame ids as exact `TemplateId`s. For each displacement stage file it also checks: a plain `stage-<i>-displacement.nii` name, byte count, SHA-256, NIfTI-1 header (`sizeof_hdr`, magic, `dim = [5,nx,ny,nz,1,3,1,1]`, datatype/bitpix 64, intent 1007, `vox_offset` 352, `sform_code` 5, `scl_slope`/`scl_inter` 0/0 or 1/0), and float32 sform equal to the manifest `voxelToRas` within float32 rounding. The source becomes an `AssetProvenance` when the manifest has a catalog revision, otherwise a `DataAsset`. |
 | `FrameBridge` | `transform: BridgeTransform` = `AffineMap(Affine[D3])` or `Displacement(DeclaredPointMap, PointMapUse)`. Endpoints come from the map's frames and use: `Forward` is input→output, `Inverse(policy)` is output→input. Their release is the map's catalog revision; an explicit release is required when the map has none and must agree when both exist. `ReversedBridge` / `BridgeMismatch` apply unchanged. The display and disclosure carry the use, tolerance, source digest and stage digests. |
 | Route placement | Each vertex is taken through its surface's `surfaceToWorld` and then the point map (per vertex, once at admission). The placed coordinates feed the unchanged sampling kernel. A vertex whose outcome is not `Mapped`/`Converged` (on every anatomical surface) is `VertexCoverage.BridgeUnavailable`. It is skipped by the kernel (`sampleSelected`), so it is never looked up at a fabricated coordinate, and `inspect` reports its outcome(s) with no samples. `inspect` evidence carries the per-vertex outcome and residual. |
 | `DeclaredPointMapReader` (JVM) | Reads `manifest.json` (ujson) and each stage file once, then verifies them through `DeclaredPointMap.fromManifest`. The Scala.js side has the shared model and verification but no directory reader. |
 
-Using the inverse of a white/pial pair moves both endpoints. Depth fractions are
-then interpolated linearly between the placed endpoints, in the source frame.
+White/pial anatomy is refused through a point-map bridge
+(`RouteRefusal.DepthThroughPointMap`), for `MidthicknessNearest` (the white/pial
+midpoint) and `DepthNearest` alike. The only placement available would warp the
+two endpoints and interpolate depth points between them. That is a second-order
+approximation of warping each depth point. It stays refused until per-depth
+warping exists. Midthickness anatomy is placed vertex by vertex.
 
 ### Evidence
 
@@ -414,9 +423,15 @@ then interpolated linearly between the placed endpoints, in the source frame.
   193×229×193, then an affine) against the templateflow4s SimpleITK oracle on
   200 points: max |Δ| = 2.8e-14 mm. Budget: 1e-6 mm.
 - **Real inverse.** 5 000 fsLR 32k vertices (every 13th per hemisphere),
-  against SimpleITK's 12-iteration fixed-point solutions (fixture
+  against SimpleITK's 12-iteration fixed-point iterates (fixture
   `scalafim.fslr-inverse-oracle/1`, sha256 `8a0fac18…`, committed gzipped):
-  max |Δ| = 1.1e-9 mm. Budget: 1e-6 mm. No point was outside the field.
+  max |Δ| = 1.1e-9 mm. Budget: 1e-6 mm.
+  - ITK has no inverse for `DisplacementFieldTransform`. The fixture is SimpleITK
+    forward arithmetic under the same fixed-point scheme, so it validates forward
+    arithmetic and convergence agreement, not an independent inverse method.
+  - The convergence status at 1e-9 mm agrees with the fixture's residual at every
+    vertex. Every vertex converges under the production policy (1e-6 mm, ≤ 50
+    iterations), and none lies outside the field.
 - **Real `FrameEvidence`.** 2009c res-01 GM probseg as a `DeclaredVolume`, fsLR
   32k midthickness L+R as `DeclaredSurface`s in `MNI152NLin6Asym`, cortex from
   `desc-nomedialwall` (59 412 vertices), nearest voxel through the production
@@ -433,8 +448,9 @@ then interpolated linearly between the placed endpoints, in the source frame.
   | Shift y −3 / +3 mm | 0.6288 / 0.6444 | — |
   | Shift z −3 / +3 mm | 0.6262 / 0.6253 | — |
 
-  Inverse residuals: median 3.0e-7 mm, max 1.0e-6 mm, no non-convergent vertex
-  (gate (b)).
+  Gate (b) asserts that every cortical vertex of both hemispheres is
+  `Converged`: none is `NonConvergent`, `OutsideSupport` or `NonFinite`. It then
+  checks the residuals: median 3.0e-7 mm, max 1.0e-6 mm.
 - **Caveat.** Per hemisphere, the bridged-minus-raw gain is 0.038 for L but only
   0.027 for R, below the 0.03 margin. The margin was declared for the combined
   cortical population, which is how the plan measured it, and the receipt is

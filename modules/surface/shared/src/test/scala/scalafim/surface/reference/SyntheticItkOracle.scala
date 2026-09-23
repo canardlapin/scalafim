@@ -7,17 +7,21 @@ package scalafim.surface.reference
 object SyntheticItkOracle:
   val sourceSha256: String = "22926633b2c0ca9bf348696c56ff9d32f84158af8466f8cc37d984d4338538ca"
 
-  val manifest: PointMapManifest = PointMapManifest(
+  /** SHA-256 of the committed `manifest.json` bytes. */
+  val manifestSha256: String = "ccea7f005d1bec904538a46cd238179f02cef185ac9039211e0a844d7b51ecbe"
+
+  val manifest: PointMapManifest = PointMapManifest(AssetSha256.make(manifestSha256).toOption.get, ManifestFields(
     "templateflow4s.point-map/1",
     PointMapSource("tpl-SynthIn/tpl-SynthIn_from-SynthOut_mode-image_xfm.h5", "22926633b2c0ca9bf348696c56ff9d32f84158af8466f8cc37d984d4338538ca", 19600L, None),
     "SynthIn",
     "SynthOut",
+    "TemplateFlow naming: tpl-SynthIn_from-SynthOut_mode-image resamples SynthOut images onto SynthIn; as a point map it sends SynthIn points to SynthOut points",
     None,
     Vector(
       ManifestStage.DisplacementEntry("stage-0-displacement.nii", "26e86cd4df7a3a14eb4d70c2b68f04da3d19db852fcd9acd671f5922ee0a64eb", 5392L, Vector(5, 6, 7), Vector(-1.416000436094658, 0.5312216898102469, -0.4893511659003957, 3.0, -0.4242622870208673, -1.9138466011227264, 0.16390677150275373, -4.0, -0.2548416700454642, 0.23450949585493142, 2.446154125701704, -5.0, 0.0, 0.0, 0.0, 1.0)),
       ManifestStage.AffineEntry(Vector(1.0269298001694105, -0.11820089258403589, 0.10683779084135615, -2.043716887101881, 0.17129578229624298, 0.9217779159972721, 0.10800308530676514, 1.0893785855295248, -0.13811118887162296, -0.05493653221730848, 1.1099997432487805, 0.07270705138084121, 0.0, 0.0, 0.0, 1.0))
     )
-  )
+  ))
 
   /** `stage-0-displacement.nii`, base64. */
   val stageFile: String =

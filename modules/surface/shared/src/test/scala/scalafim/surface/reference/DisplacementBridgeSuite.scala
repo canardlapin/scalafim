@@ -102,3 +102,20 @@ class DisplacementBridgeSuite extends munit.FunSuite:
     val mapped = route.map(declaredRamp).fold(e => fail(e.message), m => m)
     assertEquals(mapped.count(VertexCoverage.BridgeUnavailable), 6)
     assert(route.inspect(declaredRamp, VertexId(0)).toOption.get.bridge.head.isInstanceOf[PointMapOutcome.NonConvergent])
+
+  test("inspect checks the vertex range before reading point-map outcomes"):
+    val bridge = FrameBridge.displacement(pointMap, inverse).toOption.get
+    val route = SurfaceRoute.admit(request, anatomy(inB, frameB), Some(bridge)).fold(r => fail(r.message), r => r)
+    assertEquals(route.inspect(declaredRamp, VertexId(6)), Left(RouteError.VertexOutOfRange(6, 6)))
+    val prepared = route.prepare(declaredRamp).toOption.get
+    assertEquals(route.inspect(prepared, VertexId(99)), Left(RouteError.VertexOutOfRange(99, 6)))
+
+  test("white/pial anatomy is refused through a point-map bridge"):
+    val bridge = FrameBridge.displacement(pointMap, inverse).toOption.get
+    def declared(kind: SurfaceKind) = DeclaredSurface.unsafeAssumeVerified(declaration(frameB, s"${kind.label}.surf.gii"),
+      SurfaceGeometry(inB.mesh, Hemisphere.Left, kind))
+    val ribbon = SamplingAnatomy.make(reference,
+      AnatomicalGeometry.WhitePial(declared(SurfaceKind.White), declared(SurfaceKind.Pial))).toOption.get
+    for method <- Vector(MappingMethod.MidthicknessNearest, MappingMethod.DepthNearest(Vector(0.0, 0.5, 1.0))) do
+      assertEquals(SurfaceRoute.admit(request.copy(method = method), ribbon, Some(bridge)).left.toOption,
+        Some(RouteRefusal.DepthThroughPointMap("white+pial")))

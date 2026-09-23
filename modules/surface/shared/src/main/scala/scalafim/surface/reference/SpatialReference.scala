@@ -27,6 +27,7 @@ enum ReferenceError:
   case InvalidEvidence(reason: String)
   case InvalidPointMap(reason: String)
   case QuarantinedTransform(archivePath: String, reason: String)
+  case PointMapFrameMismatch(archivePath: String, input: String, output: String)
 
   def message: String =
     this match
@@ -50,6 +51,8 @@ enum ReferenceError:
       case InvalidEvidence(reason) => s"invalid frame evidence: $reason"
       case InvalidPointMap(reason) => s"invalid point map: $reason"
       case QuarantinedTransform(path, reason) => s"$path is quarantined and cannot be used: $reason"
+      case PointMapFrameMismatch(path, input, output) =>
+        s"manifest frames $input -> $output do not match the TemplateFlow name $path (tpl-X_from-Y maps X points to Y)"
 
 /** Exact TemplateFlow-style template identifier such as `MNI152NLin2009cAsym`.
   * Family names (`MNI`, `MNI152`, `ICBM152`, ...) are refused: they do not

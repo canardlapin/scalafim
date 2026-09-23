@@ -7,7 +7,7 @@ import scalafim.surface.io.GiftiSurfaceReader
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 
-class DeclaredSurfaceReaderSuite extends munit.FunSuite:
+class DeclaredSurfaceReaderSuite extends munit.FunSuite, RealAssetGate:
   private val nlin6 = TemplateFrame.unsafe("MNI152NLin6Asym", "templateflow-24.2.0")
   private val realName = "tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii"
   private val realDigest = "036a8b6c84fa4b581b7ad7b36d99190b57ad6755c9d7ef7adc3e9ffc6448f1af"
@@ -24,7 +24,7 @@ class DeclaredSurfaceReaderSuite extends munit.FunSuite:
     ).flatten.find(Files.isRegularFile(_))
 
   private def requireRealAsset(): Path =
-    assume(realAsset.nonEmpty, s"$realName not found (TEMPLATEFLOW_HOME, ~/.cache/templateflow, SCALAFIM_FSLR_ASSET_DIR); real-asset test skipped")
+    requireReal(realAsset.nonEmpty, s"$realName (TEMPLATEFLOW_HOME, ~/.cache/templateflow, SCALAFIM_FSLR_ASSET_DIR)")
     realAsset.get
 
   private def withFile[A](bytes: Array[Byte])(f: Path => A): A =

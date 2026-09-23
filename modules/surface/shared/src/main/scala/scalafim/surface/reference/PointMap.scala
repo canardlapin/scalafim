@@ -130,6 +130,8 @@ enum PointMapOutcome:
   case NonConvergent(point: WorldPoint, residualMm: Double, iterations: Int)
   /** The input, or the solution, lies outside a displacement support; nothing is extrapolated. */
   case OutsideSupport
+  /** Evaluation produced a nonfinite coordinate or residual (overflow). */
+  case NonFinite
 
   /** The admitted location, if any. */
   def placed: Option[WorldPoint] =
@@ -194,8 +196,9 @@ final class PointMap private (val stages: Vector[PointMapStage]):
   /** `T(x)`, refusing points that leave any displacement support. */
   def forward(point: WorldPoint): PointMapOutcome =
     val out = new Array[Double](3)
-    if forwardInto(point.x, point.y, point.z, out, new Array[Double](3)) && out.forall(_.isFinite) then
-      PointMapOutcome.Mapped(WorldPoint(out(0), out(1), out(2)))
+    val supported = forwardInto(point.x, point.y, point.z, out, new Array[Double](3))
+    if !out.forall(_.isFinite) then PointMapOutcome.NonFinite
+    else if supported then PointMapOutcome.Mapped(WorldPoint(out(0), out(1), out(2)))
     else PointMapOutcome.OutsideSupport
 
   /** Solve `T(y) = x`. The solution must lie inside every displacement support. */
@@ -225,8 +228,9 @@ final class PointMap private (val stages: Vector[PointMapStage]):
         ry = y - t(1)
         rz = z - t(2)
         residual = math.sqrt(rx * rx + ry * ry + rz * rz)
-      val supported = residual.isFinite && forwardInto(yx, yy, yz, t, scratch)
-      if !supported then PointMapOutcome.OutsideSupport
+      val finite = residual.isFinite && yx.isFinite && yy.isFinite && yz.isFinite
+      if !finite then PointMapOutcome.NonFinite
+      else if !forwardInto(yx, yy, yz, t, scratch) then PointMapOutcome.OutsideSupport
       else if residual <= policy.toleranceMm then PointMapOutcome.Converged(WorldPoint(yx, yy, yz), residual, iterations)
       else PointMapOutcome.NonConvergent(WorldPoint(yx, yy, yz), residual, iterations)
 

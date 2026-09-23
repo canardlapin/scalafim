@@ -15,18 +15,35 @@ enum ManifestStage:
   case AffineEntry(matrixRowMajor: Vector[Double])
   case DisplacementEntry(file: String, sha256: String, bytes: Long, dims: Vector[Int], voxelToRasRowMajor: Vector[Double])
 
-/** A parsed `templateflow4s.point-map/1` manifest, before any verification. */
-final case class PointMapManifest(
+/** The fields of a `templateflow4s.point-map/1` manifest as parsed, before any verification. */
+final case class ManifestFields(
   schema: String,
   source: PointMapSource,
   input: String,
   output: String,
+  derivation: String,
   quarantine: Option[PointMapQuarantine],
   stages: Vector[ManifestStage]
 )
 
+/** Manifest fields bound to the SHA-256 of the exact manifest bytes they were
+  * parsed from. Only `verified` constructs one outside this package, so an
+  * edited, reordered or re-framed manifest cannot pass as the declared one.
+  */
+final case class PointMapManifest private[reference] (sha256: AssetSha256, fields: ManifestFields)
+
 object PointMapManifest:
   val Schema: String = "templateflow4s.point-map/1"
+
+  /** Check `bytes` against the expected manifest digest, then parse them. */
+  def verified(bytes: Array[Byte], expectedSha256: String,
+      parse: String => Either[String, ManifestFields]): Either[ReferenceError, PointMapManifest] =
+    for
+      expected <- AssetSha256.make(expectedSha256)
+      asset <- DataAsset.make("manifest.json", expected.value)
+      _ <- asset.checkDigest(bytes)
+      fields <- parse(new String(bytes, "UTF-8")).left.map(reason => ReferenceError.InvalidPointMap(s"manifest.json: $reason"))
+    yield PointMapManifest(expected, fields)
 
 /** A composite point map bound to the exact TemplateFlow source it was
   * converted from (its SHA-256 must be the one the caller expects) and to the
@@ -38,6 +55,7 @@ final class DeclaredPointMap private (
   val input: TemplateId,
   val output: TemplateId,
   val catalogRevision: Option[TemplateRelease],
+  val manifest: DataAsset,
   val stageFiles: Vector[DataAsset],
   val map: PointMap
 ):
@@ -55,26 +73,40 @@ object DeclaredPointMap:
     expectedSourceSha256: String,
     stageBytes: String => Option[Array[Byte]]
   ): Either[ReferenceError, DeclaredPointMap] =
+    val f = manifest.fields
     for
-      _ <- Either.cond(manifest.schema == PointMapManifest.Schema, (),
-        ReferenceError.InvalidPointMap(s"expected schema ${PointMapManifest.Schema}; got '${manifest.schema}'"))
-      _ <- manifest.quarantine.fold(Right(()))(q => Left(ReferenceError.QuarantinedTransform(q.archivePath, q.reason)))
-      _ <- Either.cond(manifest.source.sha256 == expectedSourceSha256, (),
-        ReferenceError.DigestMismatch(manifest.source.archivePath, expectedSourceSha256, manifest.source.sha256))
-      input <- TemplateId.make(manifest.input)
-      output <- TemplateId.make(manifest.output)
+      _ <- Either.cond(f.schema == PointMapManifest.Schema, (),
+        ReferenceError.InvalidPointMap(s"expected schema ${PointMapManifest.Schema}; got '${f.schema}'"))
+      _ <- f.quarantine.fold(Right(()))(q => Left(ReferenceError.QuarantinedTransform(q.archivePath, q.reason)))
+      _ <- Either.cond(!f.derivation.contains("QUARANTINED"), (),
+        ReferenceError.QuarantinedTransform(f.source.archivePath, f.derivation))
+      _ <- Either.cond(f.source.sha256 == expectedSourceSha256, (),
+        ReferenceError.DigestMismatch(f.source.archivePath, expectedSourceSha256, f.source.sha256))
+      _ <- namedFrames(f.source.archivePath).filter(_ == (f.input, f.output)).toRight(
+        ReferenceError.PointMapFrameMismatch(f.source.archivePath, f.input, f.output))
+      input <- TemplateId.make(f.input)
+      output <- TemplateId.make(f.output)
       _ <- Either.cond(input != output, (), ReferenceError.InvalidPointMap("input and output frames are identical"))
-      source <- sourceAsset(manifest.source)
-      release <- manifest.source.catalogRevision.fold(Right(None))(r => TemplateRelease.make(r).map(Some(_)))
-      decoded <- sequence(manifest.stages.map(decodeStage(_, stageBytes)))
+      source <- sourceAsset(f.source)
+      release <- f.source.catalogRevision.fold(Right(None))(r => TemplateRelease.make(r).map(Some(_)))
+      manifestAsset <- DataAsset.make("manifest.json", manifest.sha256.value)
+      decoded <- sequence(f.stages.map(decodeStage(_, stageBytes)))
       map <- PointMap.make(decoded.map(_._1)).left.map(e => ReferenceError.InvalidPointMap(e.message))
-    yield DeclaredPointMap(source, input, output, release, decoded.flatMap(_._2), map)
+    yield DeclaredPointMap(source, input, output, release, manifestAsset, decoded.flatMap(_._2), map)
+
+  private val namedTransform = "tpl-([A-Za-z0-9]+)/tpl-([A-Za-z0-9]+)_from-([A-Za-z0-9]+)_mode-image_xfm\\.h5".r
+
+  /** TemplateFlow naming: `tpl-X/tpl-X_from-Y_mode-image_xfm.h5` maps points of X to points of Y. */
+  private def namedFrames(archivePath: String): Option[(String, String)] =
+    archivePath match
+      case namedTransform(directory, x, y) if directory == x => Some((x, y))
+      case _ => None
 
   /** Test-only escape hatch: declares a point map without any source bytes. */
   private[reference] def unsafeAssumeVerified(input: TemplateId, output: TemplateId, release: Option[TemplateRelease],
       map: PointMap): DeclaredPointMap =
     val synthetic = DataAsset.make("synthetic-point-map", "0" * 64).fold(e => throw new IllegalStateException(e.message), identity)
-    DeclaredPointMap(synthetic, input, output, release, Vector.empty, map)
+    DeclaredPointMap(synthetic, input, output, release, synthetic, Vector.empty, map)
 
   private def sourceAsset(source: PointMapSource): Either[ReferenceError, DeclaredAsset] =
     val template = source.archivePath.stripPrefix("tpl-").takeWhile(_ != '/')
@@ -128,6 +160,8 @@ object DeclaredPointMap:
       else if buffer.getShort(68) != 1007 then fail("intent_code is not VECTOR (1007)")
       else if buffer.getFloat(108) != HeaderBytes.toFloat then fail("vox_offset is not 352")
       else if buffer.getShort(254) != 5 then fail("sform_code is not 5")
+      else if !((buffer.getFloat(112) == 0.0f || buffer.getFloat(112) == 1.0f) && buffer.getFloat(116) == 0.0f) then
+        fail("scl_slope/scl_inter must be 0/0 or 1/0 (unscaled)")
       else if !sform.indices.forall(i => math.abs(sform(i).toDouble - voxelToRas(i)) <= math.ulp(voxelToRas(i).toFloat).toDouble) then
         fail("float32 sform does not match the manifest voxelToRas within float32 rounding")
       else

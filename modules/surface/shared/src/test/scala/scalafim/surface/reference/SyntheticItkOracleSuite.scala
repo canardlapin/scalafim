@@ -49,7 +49,9 @@ class SyntheticItkOracleSuite extends munit.FunSuite:
       val outcome = declared.map.forward(WorldPoint(p(0), p(1), p(2)))
       SyntheticItkOracle.pointClass(i) match
         case "interior" | "voxelCentre" => assert(outcome.placed.nonEmpty, s"point $i should be inside the field")
+        // border: 0.02-0.48 voxel beyond an edge centre, still inside the half-voxel border.
+        case "border" => assert(outcome.placed.nonEmpty, s"border point $i should be inside the support")
         case "outside" => assertEquals(outcome, PointMapOutcome.OutsideSupport, s"point $i")
-        case _ => ()
+        case other => fail(s"unexpected point class $other")
       outcome.placed.foreach: q =>
         for c <- 0 until 3 do assertEqualsDouble(q.toVector(c), SyntheticItkOracle.mapped(i)(c), 1e-9)

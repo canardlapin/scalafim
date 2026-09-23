@@ -59,8 +59,9 @@ object PointMapFixtures:
   ): (PointMapManifest, Array[Byte]) =
     val bytes = niftiBytes(dims, voxelToRas, values)
     val source = PointMapSource(s"tpl-$input/tpl-${input}_from-${output}_mode-image_xfm.h5", "a" * 64, 1L, revision)
-    val m = PointMapManifest(PointMapManifest.Schema, source, input, output, None, Vector(
+    val fields = ManifestFields(PointMapManifest.Schema, source, input, output, "synthetic fixture", None, Vector(
       ManifestStage.DisplacementEntry("stage-0-displacement.nii", AssetSha256.of(bytes).value, bytes.length.toLong, dims,
         voxelToRas.rowMajor),
       ManifestStage.AffineEntry(after.rowMajor)))
+    val m = PointMapManifest(AssetSha256.of(fields.toString.getBytes("UTF-8")), fields)
     (m, bytes)

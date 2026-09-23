@@ -8,7 +8,7 @@ import scalafim.surface.*
   * fsLR 32k midthickness vertices, under competing placements. Skipped when
   * the locked assets are absent.
   */
-class RealFrameEvidenceSuite extends munit.FunSuite:
+class RealFrameEvidenceSuite extends munit.FunSuite, RealAssetGate:
   override def munitTimeout = scala.concurrent.duration.Duration(20, "min")
 
   private val policy = InversePolicy.make(1e-6, 50).toOption.get
@@ -50,7 +50,7 @@ class RealFrameEvidenceSuite extends munit.FunSuite:
       WorldPoint(w(0), w(1), w(2))
 
   test("tpl-fsLR in MNI152NLin6Asym survives the GM disconfirmation test; the production route matches"):
-    assume(RealAssets.evidencePresent, s"locked assets not found under ${RealAssets.root}; real evidence test skipped")
+    requireReal(RealAssets.evidencePresent, s"locked assets under ${RealAssets.root}")
     val map = RealAssets.pointMap.map
     val axes = Vector(EvidenceAxis.X -> 0, EvidenceAxis.Y -> 1, EvidenceAxis.Z -> 2)
     val placements = Vector(Placement.Bridged, Placement.Raw, Placement.Reversed) ++
@@ -62,8 +62,9 @@ class RealFrameEvidenceSuite extends munit.FunSuite:
     for h <- RealAssets.hemispheres do
       val raw = rawWorld(h)
       val inverse = raw.map(map.inverse(_, policy))
-      residuals ++= inverse.collect { case PointMapOutcome.Converged(_, r, _) => r }
-      nonConvergent += inverse.count(_.isInstanceOf[PointMapOutcome.NonConvergent])
+      val cortical = inverse.indices.filter(h.cortex).map(inverse)
+      residuals ++= cortical.collect { case PointMapOutcome.Converged(_, r, _) => r }
+      nonConvergent += cortical.count(o => !o.isInstanceOf[PointMapOutcome.Converged])
       val bridged = inverse.map(_.placed)
       def shifted(axis: Int, mm: Double) = bridged.map(_.map(p =>
         WorldPoint(p.x + (if axis == 0 then mm else 0.0), p.y + (if axis == 1 then mm else 0.0), p.z + (if axis == 2 then mm else 0.0))))
@@ -108,7 +109,7 @@ class RealFrameEvidenceSuite extends munit.FunSuite:
       f"raw ${r.mean}%.4f/${r.fraction}%.4f, reversed ${rev.mean}%.4f/${rev.fraction}%.4f; " +
       placements.collect { case p: Placement.Shifted => f"${p.name} ${totals(p).mean}%.4f" }.mkString(", ") +
       perHemisphere.map((h, g) => f"; $h bridged-raw ${g}%.4f").mkString +
-      f"; inverse residual median ${sorted(sorted.size / 2)}%.2e max ${sorted.last}%.2e mm, non-convergent $nonConvergent")
+      f"; inverse residual median ${sorted(sorted.size / 2)}%.2e max ${sorted.last}%.2e mm, not converged $nonConvergent")
     // Plan gates (c): bridged >= 0.69 / 0.78; raw and reversed below; measured by the reference script at
     // 0.703/0.794, 0.670/0.743 and 0.618/0.675.
     assert(b.mean >= 0.69 && b.fraction >= 0.78, s"bridged ${b.mean}/${b.fraction}")
@@ -116,5 +117,7 @@ class RealFrameEvidenceSuite extends munit.FunSuite:
     for (value, expected) <- Vector(b.mean -> 0.703, b.fraction -> 0.794, r.mean -> 0.670, r.fraction -> 0.743,
         rev.mean -> 0.618, rev.fraction -> 0.675) do
       assertEqualsDouble(value, expected, 0.002)
-    // Plan gate (b): inverse consistency.
+    // Plan gate (b): every cortical vertex converges inside the field, then the residual budget.
+    assertEquals(nonConvergent, 0, "cortical vertices not Converged (NonConvergent, OutsideSupport or NonFinite)")
+    assertEquals(residuals.size, b.scored + b.excluded)
     assert(sorted(sorted.size / 2) <= 0.001 && sorted.last <= 0.01)

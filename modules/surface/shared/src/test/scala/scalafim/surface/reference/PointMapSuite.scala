@@ -127,6 +127,12 @@ class PointMapSuite extends munit.FunSuite:
     assert(!map.forwardInto(far.x, far.y, far.z, itk, new Array[Double](3)))
     assertEquals(itk.toVector, far.toVector, "ITK evaluation outside the field uses zero displacement")
 
+  test("overflow to a nonfinite coordinate is its own outcome, not OutsideSupport"):
+    val huge = mapOf(PointMapStage.AffineStage(affine(1e10, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)))
+    assertEquals(huge.forward(WorldPoint(1e300, 0.0, 0.0)), PointMapOutcome.NonFinite)
+    assertEquals(huge.inverse(WorldPoint(1e300, 0.0, 0.0), strict), PointMapOutcome.NonFinite)
+    assertEquals(huge.inverse(WorldPoint(1e300, 0.0, 0.0), strict).placed, None)
+
   test("fields, stages and policies validate their inputs"):
     assert(DisplacementField.make(Vector(2, 2), grid, new Array[Double](12)).isLeft)
     assert(DisplacementField.make(dims, grid, new Array[Double](7)).isLeft)

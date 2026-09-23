@@ -2,20 +2,20 @@ package scalafim.surface.reference
 
 import scalafim.surface.SurfaceError
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scala.util.control.NonFatal
 
 /** Reads a canonical `templateflow4s.point-map/1` directory: `manifest.json`
-  * plus one `stage-<i>-displacement.nii` per displacement stage. Every stage
-  * file is read once and verified against the manifest digest and header
-  * before it is decoded; a quarantined manifest is refused.
+  * plus one `stage-<i>-displacement.nii` per displacement stage. The manifest
+  * bytes are checked against the caller's expected SHA-256 before parsing;
+  * every stage file is read once and verified against the manifest digest and
+  * header before it is decoded; a quarantined manifest is refused.
   */
 object DeclaredPointMapReader:
-  def read(directory: Path, expectedSourceSha256: String): Either[ReferenceError, DeclaredPointMap] =
+  def read(directory: Path, expectedSourceSha256: String, expectedManifestSha256: String): Either[ReferenceError, DeclaredPointMap] =
     for
-      text <- attempt(directory)(new String(Files.readAllBytes(directory.resolve("manifest.json")), StandardCharsets.UTF_8))
-      manifest <- parse(text).left.map(reason => ReferenceError.InvalidPointMap(s"$directory/manifest.json: $reason"))
+      bytes <- attempt(directory)(Files.readAllBytes(directory.resolve("manifest.json")))
+      manifest <- PointMapManifest.verified(bytes, expectedManifestSha256, parse)
       declared <- DeclaredPointMap.fromManifest(manifest, expectedSourceSha256, name =>
         val file = directory.resolve(name)
         if name.contains('/') || name.contains('\\') || !Files.isRegularFile(file) then None
@@ -23,7 +23,7 @@ object DeclaredPointMapReader:
     yield declared
 
   /** Parse the manifest fields ScalaFIM relies on; other fields are ignored. */
-  def parse(text: String): Either[String, PointMapManifest] =
+  def parse(text: String): Either[String, ManifestFields] =
     try
       val json = ujson.read(text)
       val source = json("source")
@@ -42,12 +42,13 @@ object DeclaredPointMapReader:
             ManifestStage.DisplacementEntry(stage("file").str, stage("sha256").str, stage("bytes").num.toLong,
               stage("dims").arr.toVector.map(_.num.toInt), rows(stage("voxelToRas")))
           case other => throw new IllegalArgumentException(s"unknown stage kind '$other'")
-      Right(PointMapManifest(
+      Right(ManifestFields(
         json("schema").str,
         PointMapSource(source("archivePath").str, source("sha256").str, source("bytes").num.toLong,
           source.obj.get("catalogRevision").filterNot(_.isNull).map(_.str)),
         frames("input").str,
         frames("output").str,
+        derivation,
         quarantine,
         stages))
     catch case NonFatal(error) => Left(SurfaceError.reason(error))

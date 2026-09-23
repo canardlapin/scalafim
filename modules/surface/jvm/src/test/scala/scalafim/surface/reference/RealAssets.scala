@@ -12,6 +12,7 @@ import java.nio.file.{Files, Path}
 object RealAssets:
   val catalogRevision = "templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56"
   val transformSha256 = "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe"
+  val manifestSha256 = "34bdcea2dab7c0fccde6e6607cd080fbcea087abaf19721925b5b8fb61d85318"
   val gmProbsegSha256 = "662b18e83dddc554b19c621d9750af3454b54d4e103df03633eacced3884805a"
   val midthicknessSha256 = Map(
     "L" -> "036a8b6c84fa4b581b7ad7b36d99190b57ad6755c9d7ef7adc3e9ffc6448f1af",
@@ -39,7 +40,7 @@ object RealAssets:
       Vector("L", "R").forall(h => Files.isRegularFile(midthicknessPath(h)) && Files.isRegularFile(nomedialwallPath(h)))
 
   lazy val pointMap: DeclaredPointMap =
-    DeclaredPointMapReader.read(pointMapDirectory, transformSha256).fold(e => throw new IllegalStateException(e.message), identity)
+    DeclaredPointMapReader.read(pointMapDirectory, transformSha256, manifestSha256).fold(e => throw new IllegalStateException(e.message), identity)
 
   val gmAsset: AssetProvenance = AssetProvenance.make(TemplateId.unsafe("MNI152NLin2009cAsym"),
     "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz", catalogRevision, gmProbsegSha256).toOption.get
@@ -72,3 +73,14 @@ object RealAssets:
     val wall = MedialWallMask.fromCortexFlags(surface.geometry.meshDomainEither.toOption.get, cortex).toOption.get
     val reference = CorticalMeshReference.make(StandardCorticalMesh.FsLR32k, surface.geometry, wall).toOption.get
     Hemisphere32k(h, surface, cortex, reference)
+
+/** Real-asset suites skip when their inputs are absent, unless
+  * `SCALAFIM_REQUIRE_REAL_ASSETS=1`, which turns absence into a failure.
+  */
+trait RealAssetGate:
+  self: munit.FunSuite =>
+
+  def requireReal(present: Boolean, what: String): Unit =
+    if !present && sys.env.get("SCALAFIM_REQUIRE_REAL_ASSETS").contains("1") then
+      fail(s"$what not found and SCALAFIM_REQUIRE_REAL_ASSETS=1")
+    assume(present, s"$what not found; skipped (set SCALAFIM_REQUIRE_REAL_ASSETS=1 to fail instead)")
