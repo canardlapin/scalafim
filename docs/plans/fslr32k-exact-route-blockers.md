@@ -157,8 +157,19 @@ fixtures (shared). The evidence suite passes on the locked assets.
      convergence tolerance are part of the type. `ReversedBridge` and
      `BridgeMismatch` still apply.
 4. **Gates.**
-   - **(a) Independent oracle.** Against nitransforms on 5 000 vertices: forward
-     map max |Δ| ≤ 0.01 mm; inverse solutions max |Δ| ≤ 0.01 mm.
+   - **(a) Independent oracle.** SimpleITK 2.5.6 (reference ITK semantics) on
+     5 000 vertices plus the committed synthetic and real oracle fixtures
+     (templateflow4s). Forward map and inverse solutions must agree to
+     max |Δ| ≤ 1e‑6 mm.
+     - The ITK semantics being matched are: composite = A(D(x)); trilinear
+       displacement interpolation; direction parameters row-major; each axis
+       inside when −0.5 ≤ c < n − 0.5, with neighbours clamped to the edge;
+       zero displacement outside.
+     - nitransforms 25.1 is only a loose cross-check (≤ 0.05 mm on vertices).
+       It interpolates with cubic B-splines in float32 and has no half-voxel
+       border. On fsLR vertices it differs from ITK by a median of 0.004 mm
+       and at most 0.04 mm, which changes the nearest voxel at about 120
+       vertices per hemisphere.
    - **(b) Inverse consistency.** Median residual ≤ 0.001 mm and max
      ≤ 0.01 mm, measured at 0.0000 / 0.0004 mm.
    - **(c) Anatomical, on the 2009c GM map.**
@@ -195,8 +206,9 @@ This runs only after WS0–WS3 pass. It uses the budgets frozen in
 before any data is evaluated.
 
 - **Amendment.** The independent implementation becomes a nibabel/NumPy
-  nearest-voxel mapper applied to nitransforms-warped vertices, because
-  Connectome Workbench is not installed locally. Workbench on the cluster
+  nearest-voxel mapper applied to SimpleITK-warped vertices
+  (`tools/fslr-qualification/independent_fslr_mapping.py`), because Connectome
+  Workbench is not installed locally. Workbench on the cluster
   remains an optional second oracle.
 - **Inputs.** PLSNeuro beta/FIR fixtures (`real-usable-{beta,fir}-20260911`) in
   MNI152NLin2009cAsym res-2.

@@ -43,6 +43,12 @@ All inputs are from the TemplateFlow S3 archive, fetched 2026-09-23.
 Tools: Python 3.14.7, nibabel 5.4.2, nitransforms 25.1.0, h5py 3.16.0,
 numpy 2.5.3.
 
+nitransforms interpolates the displacement field with cubic B-splines in float32,
+whereas ITK interpolates trilinearly. On these vertices it differs from SimpleITK
+2.5.6 (reference ITK semantics) by at most 0.04 mm. That is two orders of
+magnitude below the effects reported here, so the conclusions do not depend on
+the choice of tool. Qualification oracles nevertheless use SimpleITK.
+
 To reproduce, run:
 
 ```

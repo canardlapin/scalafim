@@ -2,8 +2,12 @@
 """Independent reference mapping of MNI152NLin2009cAsym volumes onto fsLR 32k.
 
 This is the WS5 oracle for docs/plans/fslr32k-exact-route-blockers.md. It shares
-no code with ScalaFIM: nibabel reads inputs, nitransforms applies the ITK
-composite, and the lookup contract is re-implemented from its declaration:
+no code with ScalaFIM: nibabel reads inputs, SimpleITK (the ITK reference
+implementation: trilinear displacement interpolation, half-voxel clamped border,
+zero displacement outside) applies the ITK composite in LPS, and the lookup
+contract is re-implemented from its declaration. nitransforms is NOT used as the
+oracle: it interpolates displacement with cubic B-splines in float32 and differs
+from ITK by up to ~0.015 mm on fsLR vertices (more near field edges).
 
 - fsLR midthickness vertices are in MNI152NLin6Asym; they are moved into
   MNI152NLin2009cAsym by the per-vertex inverse of
@@ -28,7 +32,7 @@ import json
 import pathlib
 
 import nibabel as nib
-import nitransforms as nt
+import SimpleITK as sitk
 import numpy as np
 
 TRANSFORM = "tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5"
@@ -50,7 +54,16 @@ def main():
     parser.add_argument("volumes", nargs="+", type=pathlib.Path)
     args = parser.parse_args()
 
-    transform = nt.manip.load(str(args.assets / TRANSFORM), fmt="itk")
+    itk = sitk.ReadTransform(str(args.assets / TRANSFORM))
+    lps = np.array([-1.0, -1.0, 1.0])
+
+    def point_map(points_ras):
+        """2009c -> 6Asym point map in RAS mm, evaluated by ITK in LPS."""
+        out = np.empty_like(points_ras)
+        for i, p in enumerate(points_ras * lps):
+            out[i] = itk.TransformPoint(tuple(float(v) for v in p))
+        return out * lps
+
     images = [nib.load(p) for p in args.volumes]
     reference = images[0]
     for path, image in zip(args.volumes, images):
@@ -79,8 +92,8 @@ def main():
 
         solution = vertices.copy()
         for _ in range(args.iterations):
-            solution = solution + (vertices - transform.map(solution))
-        residual = np.linalg.norm(vertices - transform.map(solution), axis=1)
+            solution = solution + (vertices - point_map(solution))
+        residual = np.linalg.norm(vertices - point_map(solution), axis=1)
 
         continuous = solution @ world_to_voxel[:3, :3].T + world_to_voxel[:3, 3]
         rounded = np.floor(continuous + 0.5).astype(np.int64)
@@ -126,7 +139,7 @@ def main():
     summary["volumes"] = [p.name for p in args.volumes]
     summary["versions"] = {
         "nibabel": nib.__version__,
-        "nitransforms": nt.__version__,
+        "SimpleITK": sitk.Version_VersionString(),
         "numpy": np.__version__,
     }
     np.savez_compressed(args.out, **arrays)
