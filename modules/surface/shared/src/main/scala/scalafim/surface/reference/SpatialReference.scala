@@ -19,6 +19,12 @@ enum ReferenceError:
   case InvalidAnatomy(reason: String)
   case InvalidDisplay(reason: String)
   case InvalidBridge(reason: String)
+  case InvalidProvenance(reason: String)
+  case InvalidFrameBasis(reason: String)
+  case DigestMismatch(archivePath: String, declared: String, actual: String)
+  case DeclarationConflict(reason: String)
+  case AssetReadFailure(reason: String)
+  case InvalidEvidence(reason: String)
 
   def message: String =
     this match
@@ -34,6 +40,12 @@ enum ReferenceError:
       case InvalidAnatomy(reason) => s"invalid sampling anatomy: $reason"
       case InvalidDisplay(reason) => s"invalid display surface: $reason"
       case InvalidBridge(reason) => s"invalid frame bridge: $reason"
+      case InvalidProvenance(reason) => s"invalid asset provenance: $reason"
+      case InvalidFrameBasis(reason) => s"invalid frame basis: $reason"
+      case DigestMismatch(path, declared, actual) => s"$path has sha256 $actual; its declaration requires $declared"
+      case DeclarationConflict(reason) => s"surface file contradicts the requested reading: $reason"
+      case AssetReadFailure(reason) => s"declared asset could not be read: $reason"
+      case InvalidEvidence(reason) => s"invalid frame evidence: $reason"
 
 /** Exact TemplateFlow-style template identifier such as `MNI152NLin2009cAsym`.
   * Family names (`MNI`, `MNI152`, `ICBM152`, ...) are refused: they do not

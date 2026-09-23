@@ -63,6 +63,17 @@ class SurfaceRouteSuite extends munit.FunSuite:
 
   private val frameA = TemplateFrame.unsafe("MNI152NLin2009cAsym", "templateflow-24.2.0")
   private val frameB = TemplateFrame.unsafe("MNI152NLin6Asym", "templateflow-24.2.0")
+  private val fsLR = TemplateId.unsafe("fsLR")
+
+  /** Test-only declarations: fixture geometries have no file bytes to verify. */
+  private def declaration(frame: TemplateFrame, name: String): FrameDeclaration =
+    FrameDeclaration.make(frame,
+      FrameBasis.literature("10.1093/cercor/bhr291", "synthetic fixture declared in this frame").toOption.get,
+      AssetProvenance.make(fsLR, s"tpl-fsLR/$name", "test", "0" * 64).toOption.get).toOption.get
+
+  private def declared(geometry: SurfaceGeometry, frame: TemplateFrame): DeclaredSurface =
+    DeclaredSurface.unsafeAssumeVerified(declaration(frame, s"${geometry.kind.label}.surf.gii"), geometry)
+
   private val testMesh = StandardCorticalMesh.declare(CorticalMeshFamily.FsLR, "test6", 6).toOption.get
 
   private val midthickness = surface(midIndices.map(world), SurfaceKind.Midthickness)
@@ -71,12 +82,12 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val wall = MedialWallMask.fromCortexFlags(domain, Vector(true, true, true, true, true, false)).toOption.get
     CorticalMeshReference.make(testMesh, midthickness, wall).toOption.get
 
-  private val whitePial = AnatomicalGeometry.WhitePial(SurfaceGeometryPair(
-    surface(midIndices.map(world), SurfaceKind.White),
-    surface(midIndices.map(i => world(Vector.tabulate(3)(a => i(a) + depth(a)))), SurfaceKind.Pial)))
+  private val whitePial = AnatomicalGeometry.WhitePial(
+    declared(surface(midIndices.map(world), SurfaceKind.White), frameA),
+    declared(surface(midIndices.map(i => world(Vector.tabulate(3)(a => i(a) + depth(a)))), SurfaceKind.Pial), frameA))
 
-  private val midAnatomy = SamplingAnatomy.make(reference, frameA, AnatomicalGeometry.Midthickness(midthickness)).toOption.get
-  private val ribbonAnatomy = SamplingAnatomy.make(reference, frameA, whitePial).toOption.get
+  private val midAnatomy = SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(midthickness, frameA))).toOption.get
+  private val ribbonAnatomy = SamplingAnatomy.make(reference, whitePial).toOption.get
   private val source = VolumeReference.make(frameA, space).toOption.get
 
   private def request(method: MappingMethod = MappingMethod.MidthicknessNearest,
@@ -139,15 +150,16 @@ class SurfaceRouteSuite extends munit.FunSuite:
 
   test("anatomy refuses display shapes and topology that differs from the reference"):
     val inflated = surface(midIndices.map(world), SurfaceKind.Inflated)
-    assert(SamplingAnatomy.make(reference, frameA, AnatomicalGeometry.Midthickness(inflated)).isLeft)
+    assert(SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(inflated, frameA))).isLeft)
     val rewound = surface(midIndices.map(world), SurfaceKind.Midthickness, rows = Vector((0, 2, 1), (2, 3, 4), (3, 4, 5)))
-    assert(SamplingAnatomy.make(reference, frameA, AnatomicalGeometry.Midthickness(rewound)).isLeft)
-    val swapped = AnatomicalGeometry.WhitePial(SurfaceGeometryPair(
-      surface(midIndices.map(world), SurfaceKind.Pial), surface(midIndices.map(world), SurfaceKind.White)))
-    assert(SamplingAnatomy.make(reference, frameA, swapped).isLeft)
+    assert(SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(rewound, frameA))).isLeft)
+    val swapped = AnatomicalGeometry.WhitePial(
+      declared(surface(midIndices.map(world), SurfaceKind.Pial), frameA),
+      declared(surface(midIndices.map(world), SurfaceKind.White), frameA))
+    assert(SamplingAnatomy.make(reference, swapped).isLeft)
 
   test("route admission refuses frame, bridge, hemisphere, mesh and method mismatches"):
-    val otherFrame = SamplingAnatomy.make(reference, frameB, AnatomicalGeometry.Midthickness(midthickness)).toOption.get
+    val otherFrame = SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(midthickness, frameB))).toOption.get
     assertEquals(SurfaceRoute.admit(request(), otherFrame), Left(RouteRefusal.FrameMismatch(frameA, frameB)))
     val forward = FrameBridge.affine(frameB, frameA, Affine.identity[D3], "declared test identity").toOption.get
     val reversed = FrameBridge.affine(frameA, frameB, Affine.identity[D3], "declared test identity").toOption.get
@@ -175,7 +187,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val mni2 = spaceOf(Vector(97, 115, 97), Vector(
       Vector(2.0, 0.0, 0.0, -96.5), Vector(0.0, 2.0, 0.0, -132.5), Vector(0.0, 0.0, 2.0, -78.5), Vector(0.0, 0.0, 0.0, 1.0)))
     val groupSource = VolumeReference.make(frameA, mni2).toOption.get
-    val fslrIn6Asym = SamplingAnatomy.make(reference, frameB, AnatomicalGeometry.Midthickness(midthickness)).toOption.get
+    val fslrIn6Asym = SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(midthickness, frameB))).toOption.get
     val refusal = SurfaceRoute.admit(request(from = groupSource), fslrIn6Asym)
     assertEquals(refusal, Left(RouteRefusal.FrameMismatch(frameA, frameB)))
     assert(refusal.left.toOption.get.message.contains("MNI152NLin6Asym"))
@@ -194,6 +206,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     assert(result.valuesCopy(5).isNaN && result.valuesCopy(4).isNaN)
     assertEquals(result.disclosure.qualification, RouteQualification.NumericalContract)
     assertEquals(result.disclosure.anatomy, "midthickness")
+    assertEquals(result.disclosure.anatomyDeclarations.map(_.frame), Vector(frameA))
 
   test("white/pial midpoint and depth lookups follow construction, excluding lookups outside the grid"):
     val fractions = Vector(0.0, 0.5, 1.0)
@@ -227,7 +240,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     def native(p: Vector[Double]) = Vector.tabulate(3)(i => (p(i) - offset(i)) / scale(i))
     val midB = SurfaceGeometry(TriangleMesh.fromRows(midIndices.map(i => native(inB(world(i)))), faces),
       Hemisphere.Left, SurfaceKind.Midthickness, toFrameB)
-    val anatomyB = SamplingAnatomy.make(reference, frameB, AnatomicalGeometry.Midthickness(midB)).toOption.get
+    val anatomyB = SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(midB, frameB))).toOption.get
     val bridge = FrameBridge.affine(frameB, frameA, toA, "synthetic rigid").toOption.get
     val route = admitted(anatomyB, bridge = Some(bridge))
     val bridged = mapped(route, ramp)
@@ -248,7 +261,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val geometry = surface(points, SurfaceKind.Midthickness)
     val ref = CorticalMeshReference.make(testMesh, geometry, MedialWallMask.fromCortexFlags(
       geometry.meshDomainEither.toOption.get, Vector.fill(6)(true)).toOption.get).toOption.get
-    val anatomy = SamplingAnatomy.make(ref, frameA, AnatomicalGeometry.Midthickness(geometry)).toOption.get
+    val anatomy = SamplingAnatomy.make(ref, AnatomicalGeometry.Midthickness(declared(geometry, frameA))).toOption.get
     val src = VolumeReference.make(frameA, simple).toOption.get
     val result = mapped(admitted(anatomy, request(from = src)), volumeOf(code, simple))
     assertEquals((0 until 6).map(v => result.valueAt(VertexId(v))),
@@ -360,7 +373,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     assert(result.onDisplay(DisplaySurface.make(twin, surface(inflatedPoints, SurfaceKind.Inflated)).toOption.get).isRight)
 
   test("selection prefers same-frame anatomy and reports every refusal when none is admissible"):
-    val otherFrame = SamplingAnatomy.make(reference, frameB, AnatomicalGeometry.Midthickness(midthickness)).toOption.get
+    val otherFrame = SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(midthickness, frameB))).toOption.get
     val bridge = FrameBridge.affine(frameB, frameA, Affine.identity[D3], "declared test identity").toOption.get
     val chosen = SurfaceRoute.select(request(), Vector(RouteCandidate(otherFrame), RouteCandidate(otherFrame, Some(bridge)),
       RouteCandidate(midAnatomy))).toOption.get

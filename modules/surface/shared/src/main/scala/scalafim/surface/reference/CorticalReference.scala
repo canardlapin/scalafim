@@ -87,41 +87,59 @@ object CorticalMeshReference:
       else Right(CorticalMeshReference(mesh, domain, medialWall, geometry))
 
 /** Anatomical geometry that locates vertices in a volume frame. Inflated,
-  * very-inflated and spherical shapes can never appear here.
+  * very-inflated and spherical shapes can never appear here. Every surface is
+  * a [[DeclaredSurface]], so its frame comes only from its declaration.
   */
 enum AnatomicalGeometry:
-  case Midthickness(surface: SurfaceGeometry)
-  case WhitePial(pair: SurfaceGeometryPair)
+  case Midthickness(surface: DeclaredSurface)
+  case WhitePial(white: DeclaredSurface, pial: DeclaredSurface)
 
   def label: String =
     this match
       case Midthickness(_) => "midthickness"
-      case WhitePial(_) => "white+pial"
+      case WhitePial(_, _) => "white+pial"
 
-  private[reference] def geometries: Vector[SurfaceGeometry] =
+  def surfaces: Vector[DeclaredSurface] =
     this match
       case Midthickness(surface) => Vector(surface)
-      case WhitePial(pair) => Vector(pair.white, pair.pial)
+      case WhitePial(white, pial) => Vector(white, pial)
 
-/** Anatomical sampling geometry admitted against a cortical mesh reference,
-  * together with the template frame its coordinates are expressed in. The frame
-  * is a declaration carried from the asset's provenance, never inferred from a
-  * file name or density.
+/** Anatomical sampling geometry admitted against a cortical mesh reference.
+  * Its frame is the frame of its surfaces' declarations, which must agree;
+  * it is never supplied separately, inferred from a file name or density, or
+  * read from a GIFTI space code.
   */
-final case class SamplingAnatomy private (reference: CorticalMeshReference, frame: TemplateFrame, geometry: AnatomicalGeometry)
+final case class SamplingAnatomy private (
+  reference: CorticalMeshReference,
+  frame: TemplateFrame,
+  geometry: AnatomicalGeometry,
+  private[reference] val located: SurfaceGeometryPair
+):
+  def declarations: Vector[FrameDeclaration] = geometry.surfaces.map(_.declaration)
 
 object SamplingAnatomy:
-  def make(reference: CorticalMeshReference, frame: TemplateFrame, geometry: AnatomicalGeometry): Either[ReferenceError, SamplingAnatomy] =
+  def make(reference: CorticalMeshReference, geometry: AnatomicalGeometry): Either[ReferenceError, SamplingAnatomy] =
     val kinds = geometry match
-      case AnatomicalGeometry.Midthickness(surface) => Vector(surface.kind -> SurfaceKind.Midthickness)
-      case AnatomicalGeometry.WhitePial(pair) => Vector(pair.white.kind -> SurfaceKind.White, pair.pial.kind -> SurfaceKind.Pial)
+      case AnatomicalGeometry.Midthickness(surface) => Vector(surface.geometry.kind -> SurfaceKind.Midthickness)
+      case AnatomicalGeometry.WhitePial(white, pial) =>
+        Vector(white.geometry.kind -> SurfaceKind.White, pial.geometry.kind -> SurfaceKind.Pial)
+    val frames = geometry.surfaces.map(_.frame).distinct
     kinds.collectFirst { case (actual, expected) if actual != expected => (actual, expected) } match
       case Some((actual, expected)) =>
         Left(ReferenceError.InvalidAnatomy(s"expected ${expected.label} geometry; got ${actual.label}"))
       case None =>
-        if !geometry.geometries.forall(reference.admits) then
+        if frames.size != 1 then
+          Left(ReferenceError.InvalidAnatomy(s"surfaces declare different frames: ${frames.map(_.display).mkString(", ")}"))
+        else if !geometry.surfaces.forall(surface => reference.admits(surface.geometry)) then
           Left(ReferenceError.InvalidAnatomy(s"geometry does not share the ordered mesh domain ${reference.display}"))
-        else Right(SamplingAnatomy(reference, frame, geometry))
+        else
+          val pair = geometry match
+            case AnatomicalGeometry.Midthickness(surface) =>
+              SurfaceGeometryPair.fromEither(surface.geometry, surface.geometry)
+            case AnatomicalGeometry.WhitePial(white, pial) =>
+              SurfaceGeometryPair.fromEither(white.geometry, pial.geometry)
+          pair.left.map(error => ReferenceError.InvalidAnatomy(error.message))
+            .map(located => SamplingAnatomy(reference, frames.head, geometry, located))
 
 enum DisplayForm:
   case Anatomical(kind: SurfaceKind)

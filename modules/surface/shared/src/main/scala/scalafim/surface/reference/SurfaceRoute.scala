@@ -114,6 +114,7 @@ final case class RouteDisclosure(
   hemisphere: CorticalHemisphere,
   anatomyFrame: TemplateFrame,
   anatomy: String,
+  anatomyDeclarations: Vector[FrameDeclaration],
   bridge: Option[FrameBridge],
   method: MappingMethod,
   semantics: ValueSemantics,
@@ -195,7 +196,7 @@ final class AdmittedSurfaceRoute private[reference] (
 ):
   val disclosure: RouteDisclosure = RouteDisclosure(
     request.source.frame, request.source.dims, request.source.voxelToWorld, anatomy.reference.mesh,
-    anatomy.reference.hemisphere, anatomy.frame, anatomy.geometry.label, bridge, request.method, request.semantics,
+    anatomy.reference.hemisphere, anatomy.frame, anatomy.geometry.label, anatomy.declarations, bridge, request.method, request.semantics,
     RouteQualification.NumericalContract)
 
   def map(volume: SomeScalarVolume[Double]): Either[RouteError, MappedSurfaceValues] =
@@ -289,7 +290,7 @@ object SurfaceRoute:
         RouteRefusal.HemisphereMismatch(request.hemisphere, anatomy.reference.hemisphere))
       toSource <- frameTransform(required, bridge)
       path <- samplingPath(request.method, anatomy.geometry)
-      located <- locate(anatomy.geometry, toSource)
+      located <- locate(anatomy, toSource)
     yield
       val aggregation = request.semantics match
         case ValueSemantics.Continuous => SurfaceSampleAggregation.Average
@@ -319,9 +320,9 @@ object SurfaceRoute:
   private def samplingPath(method: MappingMethod, geometry: AnatomicalGeometry): Either[RouteRefusal, SurfaceSamplingPath] =
     (method, geometry) match
       case (MappingMethod.MidthicknessNearest, AnatomicalGeometry.Midthickness(_)) => Right(SurfaceSamplingPath.White)
-      case (MappingMethod.MidthicknessNearest, AnatomicalGeometry.WhitePial(_)) => Right(SurfaceSamplingPath.Midpoint)
+      case (MappingMethod.MidthicknessNearest, AnatomicalGeometry.WhitePial(_, _)) => Right(SurfaceSamplingPath.Midpoint)
       case (MappingMethod.DepthNearest(_), AnatomicalGeometry.Midthickness(_)) => Left(RouteRefusal.WhitePialRequired(method))
-      case (MappingMethod.DepthNearest(fractions), AnatomicalGeometry.WhitePial(_)) =>
+      case (MappingMethod.DepthNearest(fractions), AnatomicalGeometry.WhitePial(_, _)) =>
         if fractions.isEmpty then Left(RouteRefusal.InvalidMethod("depth fractions must be non-empty"))
         else if !fractions.forall(f => f.isFinite && f >= 0.0 && f <= 1.0) then
           Left(RouteRefusal.InvalidMethod("depth fractions must lie in [0, 1]"))
@@ -330,16 +331,15 @@ object SurfaceRoute:
   /** Anatomy placed in source-frame world coordinates. A midthickness surface
     * is paired with itself so the kernel samples its own coordinates.
     */
-  private def locate(geometry: AnatomicalGeometry, toSource: Option[Affine[D3]]): Either[RouteRefusal, SurfaceGeometryPair] =
+  private def locate(anatomy: SamplingAnatomy, toSource: Option[Affine[D3]]): Either[RouteRefusal, SurfaceGeometryPair] =
     // Surface coordinates go through their own surfaceToWorld first, then the bridge.
     def place(surface: SurfaceGeometry): Either[RouteRefusal, SurfaceGeometry] =
       toSource.fold(Right(surface)): bridge =>
         surface.surfaceToWorld.andThen(bridge).map(surface.withSurfaceToWorld)
           .left.map(error => RouteRefusal.BridgeComposition(error.message))
-    geometry match
-      case AnatomicalGeometry.Midthickness(surface) =>
-        place(surface).map(placed => SurfaceGeometryPair(placed, placed))
-      case AnatomicalGeometry.WhitePial(pair) =>
-        for white <- place(pair.white); pial <- place(pair.pial) yield SurfaceGeometryPair(white, pial)
+    for
+      white <- place(anatomy.located.white)
+      pial <- place(anatomy.located.pial)
+    yield SurfaceGeometryPair(white, pial)
 
 final case class RouteCandidate(anatomy: SamplingAnatomy, bridge: Option[FrameBridge] = None)
