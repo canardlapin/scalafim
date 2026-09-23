@@ -16,13 +16,21 @@ in §1 were re-checked against `main`; §3 counts were re-measured after the por
   reference identity, and nothing checked that a volume and a surface share a
   coordinate frame.
 - **What this work adds.** A typed admission layer
-  (`scalafim.surface.reference`) now binds five things before any value is
-  mapped:
-  - an exact template frame;
+  (`scalafim.surface.reference`) binds these at route admission:
+  - an exact template frame for the source;
   - an exact voxel grid;
   - the mesh family, density, hemisphere and ordered topology;
   - a medial-wall mask;
-  - the frame the anatomy is expressed in.
+  - the frame the anatomy is expressed in, taken only from digest-bound
+    `FrameDeclaration`s of the surface files.
+
+  At execution, a route maps only a `DeclaredVolume`: a volume whose frame
+  declaration is bound to the exact bytes it was decoded from. The route refuses
+  it unless the declared frame equals the source frame (`SourceFrameMismatch`)
+  and the grid matches. Grid identity alone cannot tell templates apart: a
+  `MNI152NLin6Asym` volume can sit on a grid identical to a
+  `MNI152NLin2009cAsym` one. Before this change such a volume was admitted
+  silently; the fresh-context review found this.
 
   The layer refuses routes it cannot justify, and it executes through the
   existing kernel rather than a new one.
@@ -81,12 +89,20 @@ PLSNeuro's `SurfaceProjection` calls engine A directly (`Midpoint` + `Nearest`).
     whose index is (−∞, NaN, NaN).
   - Both were accepted as valid samples. The index is now checked for finiteness
     and range-checked as a `Long`.
-  - Regression test: `SurfaceSamplingSuite` "coordinates beyond Int range or
-    nonfinite never alias onto a voxel". The old NaN-translation case is
-    unconstructible on `main`, so the nonfinite case uses a vertex at
-    x = −1e308 under a ×10 `surfaceToWorld`. With the fix reverted, the
-    Int-range cases and the overflow case each fail independently
-    (mutation-checked).
+  - Regression tests in `SurfaceSamplingSuite`:
+    - "indices beyond Int range never alias onto a voxel" pins the `Long`
+      range check.
+    - "NaN indices from world-coordinate overflow never round onto voxel 0"
+      pins the finiteness check. The old NaN-translation case is
+      unconstructible on `main`, so a vertex at (1e308, −1e308, 0) under a ×10
+      in-plane `surfaceToWorld` lands at world (+∞, −∞, 0). Every index axis is
+      then NaN, and `Math.round(NaN) = 0` is in range on every axis.
+  - Mutation checks: reverting the whole fix fails both tests. Removing only the
+    finiteness check fails the NaN test.
+  - **Correction.** The earlier port used a vertex at x = −1e308, whose index is
+    (−∞, NaN, NaN). The −∞ axis is refused by the `Long` range check alone, so
+    that fixture failed only when the whole fix was reverted; it did not pin the
+    finiteness check.
 - `SurfaceVolumeProjection.scalarLayer` built the layer on the *sampling*
   geometry and used the display geometry only for a compatibility check.
   - The layer now carries the display geometry.
@@ -132,15 +148,15 @@ PLSNeuro's `SurfaceProjection` calls engine A directly (`Midpoint` + `Nearest`).
 | Type | Admits / refuses |
 |---|---|
 | `TemplateId`, `TemplateRelease`, `TemplateFrame` | Exact TemplateFlow identifier plus release (and optional cohort). Refuses family names such as `MNI`, `MNI152`, `ICBM152` and `Talairach`. Any `MNI*`/`ICBM*` name must be one of the exact TemplateFlow variants (case-sensitive allowlist), so `MNI2009` or a lowercased variant is refused. Frames compare exactly: no aliases. |
-| `VolumeReference` | Frame + the admitted image4s 3-D grid (dims + voxel-to-world `Affine[D3]` in RAS mm; spaces with non-spatial axes are refused) + optional analysis support (`SomeMaskVolume`) on the identical grid. Grid identity is the same live grid *or* the same persistent grid key (frame, dims, bitwise-equal affine), so a separately constructed identical space is admitted and a one-ulp affine change is not. |
-| `StandardCorticalMesh` | Family + density + vertices per hemisphere (`FsLR32k` = fsLR, 32k, 32492). |
+| `VolumeReference` | Frame + the admitted image4s 3-D grid (dims + voxel-to-world `Affine[D3]` in RAS mm; spaces with non-spatial axes are refused) + optional analysis support (`SomeMaskVolume`) on the identical grid. Grid identity is either the same live grid, or the same frame (live owner or persistent frame key) with equal dims and an affine equal under `==` element by element. So a separately constructed identical space is admitted, and `-0.0`/`0.0` compare equal; the persistent grid key encodes raw bits and would not. A one-ulp affine change is refused. Ephemeral grids match only grids in the same live frame. The `VolumeReference` frame is a declaration about the grid; it is enforced against each volume's own digest-bound declaration at execution. |
+| `StandardCorticalMesh` | Family + density + vertices per hemisphere (`FsLR32k` = fsLR, 32k, 32492). `declare` refuses a published (family, density) with any other count (fsLR 32k/164k; fsaverage 3k/10k/41k/164k), so a mis-declared mesh cannot display as the standard one. |
 | `MedialWallMask` | Cortex flags bound to an ordered `SurfaceMeshDomain`. Requires at least one cortical vertex. |
 | `CorticalMeshReference` | Mesh + cortical hemisphere + ordered topology anchor + medial wall. Refuses a wrong vertex count, a non-cortical hemisphere, or a mask from another domain. |
 | `SamplingAnatomy` | `Midthickness(DeclaredSurface)` or `WhitePial(DeclaredSurface, DeclaredSurface)` on the reference's exact face order. Its frame is taken **only** from the surfaces' `FrameDeclaration`s, which must agree; no frame argument exists. Refuses inflated or other display shapes, swapped white/pial, rewound topology, and white/pial declared in different frames. Route disclosures carry the declarations (`anatomyDeclarations`). |
 | `DisplaySurface` | Inflated / very-inflated / sphere / anatomical display on the same ordered domain. Display coordinates never sample, so a display surface carries no frame and is not digest-bound; its identity is the mesh reference's ordered topology and medial wall. |
 | `FrameBridge` | Explicit `Affine[D3]` from one frame to another, with declared evidence. Finite, homogeneous, invertible and immutable by construction; `Affine.fromRowMajor` copies its input, so later caller mutation cannot change an admitted bridge (tested). Nonlinear warps are not representable. It is composed *after* each surface's own `surfaceToWorld` (`surfaceToWorld.andThen(bridge)`); a composition that image4s rejects is refused as `BridgeComposition`. |
 | `SurfaceRoute.admit` / `select` | Refuses mesh or hemisphere mismatch, a frame mismatch without a bridge, reversed or unrelated bridges, a bridge where frames already agree, and depth methods on midthickness-only anatomy. `select` prefers same-frame anatomy and returns every refusal when none is admissible. |
-| `AdmittedSurfaceRoute.map` / `inspect` | Takes `SomeScalarVolume[Double]`. Refuses a volume on any other grid (`SourceGridMismatch`), and non-integral categorical values (`NonIntegralLabel`, reported by `VoxelCoord`). Excludes nonfinite and unsupported voxels *before* aggregation. Coverage is `Mapped` / `MedialWall` / `NoSupport`. Per-lookup evidence (`Included` with weight, `NonFinite`, `OutsideSupport`, `OutsideGrid`) is reported in source world millimetres. |
+| `AdmittedSurfaceRoute.prepare` / `map` / `inspect` | Takes a `DeclaredVolume`. `prepare` checks it once and returns a `PreparedSource` that holds the admission mask, which `map` and every `inspect` reuse on the same kernel; a pick no longer rebuilds a whole-volume mask. A `PreparedSource` from another route is refused (`ForeignPreparation`). Refuses a volume declared in another frame (`SourceFrameMismatch`), one on any other grid (`SourceGridMismatch`), and non-integral categorical values (`NonIntegralLabel`, reported by `VoxelCoord`). Mapped values carry the source declaration. Excludes nonfinite and unsupported voxels *before* aggregation. Coverage is `Mapped` / `MedialWall` / `NoSupport`. Per-lookup evidence (`Included` with weight, `NonFinite`, `OutsideSupport`, `OutsideGrid`) is reported in source world millimetres. |
 | `MappedSurfaceValues.onDisplay` | Carries the identical value/coverage object onto any display shape admitted against the *same* mesh reference (same mesh, domain and medial wall): no resampling, and vertex ids are preserved. Accessors return `None` for vertices outside the domain. |
 
 ### 2a. Frame declaration (WS2)
@@ -150,12 +166,16 @@ PLSNeuro's `SurfaceProjection` calls engine A directly (`Midpoint` + `Nearest`).
 | `GiftiDeclaredSpace`, `GiftiCoordinateSystem`, `GiftiCoordinateDeclaration` (`surface.gifti`) | Every pointset `CoordinateSystemTransformMatrix` in file order: `NIFTI_XFORM_{UNKNOWN,SCANNER_ANAT,ALIGNED_ANAT,TALAIRACH,MNI_152}` or `Other(text)`, blank/absent as `None`, and the 16 row-major values (an affine view is checked on demand). Also `GeometricType`, `AnatomicalStructurePrimary` and `AnatomicalStructureSecondary` from pointset metadata, falling back to document metadata. Exposed by `GiftiSurfaceReader.readDeclaredEither` (JVM) and `readDeclared`/`readDeclaredString` (Scala.js) beside the existing readers. **There is no conversion to `TemplateFrame`.** |
 | `AssetSha256`, `AssetProvenance` | 64 lowercase hex digits; template id; archive path that is normalized, relative and starts with `tpl-<template>/`; non-blank catalog revision. |
 | `FrameBasis` | `Literature(doi, statement)` (bare DOI `10.NNNN/...`, non-blank statement) or `Derived(recipe, inputs)` (non-blank recipe, at least one provenance-bound input). |
-| `FrameDeclaration` | `(frame, basis, asset)`. A derivation may not consume its own asset. This is the only source of an anatomy frame. |
+| `DeclaredAsset` | `AssetProvenance` (TemplateFlow archive asset) or `DataAsset(name, sha256)` for anything else, such as a group-result NIfTI or a PLS bundle. |
+| `FrameDeclaration` | `(frame, basis, asset)`. A derivation may not consume its own asset. This is the only source of an anatomy frame and of a source volume's frame. |
+| `DeclaredVolume` | No public constructor. JVM `DeclaredVolumeReader.readNifti` reads the file once, refuses a digest mismatch, and decodes a private copy of exactly those bytes. There is no Scala.js NIfTI loader yet. A `private[reference]` `unsafeAssumeVerified` exists for synthetic tests only. |
 | `DeclaredSurface` | No public constructor. `DeclaredSurfaceReader.read` (JVM: path; Scala.js: `Uint8Array`, copied once) hashes the exact bytes with the portable SHA-256, refuses a digest mismatch (`DigestMismatch`), decodes those same bytes, and refuses a file whose own `AnatomicalStructurePrimary`, or (for `Anatomical` geometry) `AnatomicalStructureSecondary`/type, contradicts the requested hemisphere and kind (`DeclarationConflict`). A `private[reference]` `unsafeAssumeVerified` exists for synthetic tests only. |
 | `FrameEvidence` | Disconfirmation receipt: per-`Placement` (`Bridged`, `Raw`, `Reversed`, `Shifted(axis, mm)`) mean GM probability, fraction with p > 0.5, scored and excluded vertex counts; declared `FrameEvidenceThresholds` (default +0.03 over raw, +0.05 over reversed, every ±3 mm shift lower); a total `verdict` returning `Pass` or every failure (missing placement, differing vertex population, insufficient margin, shift not worse). Types and unit tests only; the real-asset evidence suite comes with the WS3 bridge. |
 
 Hashing uses `zarr4s.PortableSha256` from zarr4s-core, which has no
-dependencies, through a new `surface → zarr4s-core` edge. It matches the FIPS
+dependencies, through a new `surface → zarr4s-core` edge. Its single call site
+is `private[surface] SurfaceDigest.sha256Hex`, so the implementation can move
+without touching the witness API. It matches the FIPS
 180-2 vectors on both platforms, and the JDK's `MessageDigest` on the real
 asset.
 
@@ -237,18 +257,21 @@ comparable: the module test sets differ between the two lines.)
 | `surfaceViewJS/test` | 49/49 |
 | Route + sampling suites under Scala.js `FullOpt` | 36/36 (19 route, 13 sampling, 4 receipt) |
 
-WS2 (frame declaration) re-measured on 2026-09-23:
+WS2 (frame declaration, plus review follow-ups) re-measured on 2026-09-23:
 
 | Target | Result |
 |---|---|
-| `surfaceJVM/test` | 159/159, including `GiftiCoordinateDeclarationSuite` (5), `FrameDeclarationSuite` (6), `FrameEvidenceSuite` (5) and `DeclaredSurfaceReaderSuite` (3). The real-asset test ran against `tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii` (sha256 `036a8b6c…f1af`): Talairach/Talairach, `CortexLeft`, `MidThickness`, `Anatomical`, 32 492 vertices. It is skipped, and reported as skipped, when the file is absent from `$TEMPLATEFLOW_HOME/tpl-fsLR`, `~/.cache/templateflow/tpl-fsLR` and `$SCALAFIM_FSLR_ASSET_DIR`. |
-| `surfaceViewJVM/test` | 49/49 |
-| `surfaceJS/test` | 132/132 |
-| `surfaceViewJS/test` | 49/49 |
-| Reference, GIFTI and sampling suites under Scala.js `FullOpt` | 63/63 |
+| `surfaceJVM/test` | 170/170. This includes `SurfaceRouteSuite` (26), `GiftiCoordinateDeclarationSuite` (5), `FrameDeclarationSuite` (7), `FrameEvidenceSuite` (5), `DeclaredSurfaceReaderSuite` (3) and `DeclaredVolumeReaderSuite` (1). The real-asset test ran against `tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii` (sha256 `036a8b6c…f1af`): Talairach/Talairach, `CortexLeft`, `MidThickness`, `Anatomical`, 32 492 vertices. It is skipped, and reported as skipped, when the file is absent from `$TEMPLATEFLOW_HOME/tpl-fsLR`, `~/.cache/templateflow/tpl-fsLR` and `$SCALAFIM_FSLR_ASSET_DIR`. |
+| `surfaceViewJVM` / `atlasJVM` / `spatialJVM` | 49/49, 90/90, 140/140 |
+| `surfaceJS/test` | 142/142 |
+| `surfaceViewJS` / `atlasJS` / `spatialJS` / `surfaceViewRasterJS` / `surfaceViewConnectivityJS` | 49/49, 62/62, 116/116, 11/11, 2/2 |
+| Reference, GIFTI and sampling suites under Scala.js `FullOpt` | 73/73 |
+| `FullOpt` links (`Test/fullLinkJS`) | `surfaceViewJS`, `atlasJS`, `spatialJS`, `surfaceViewThreeJS`, `mvpaSpatialJS`, and `surfaceViewExamplesJS/fullLinkJS`: all link with the new dependency |
 
-`atlasJVM` and `spatialJVM` were not re-run for WS2 (no changed code in them);
-they compile under `scalafimCompileAll`.
+Mutation checks on the follow-ups each fail their test:
+- removing the source-frame check;
+- restoring persistent-key-only grid identity (signed zero);
+- removing the finiteness check (see "Defects found").
 
 `scalafimCompileAll` is warning-clean. Both kernel regressions and the bridge
 composition order were mutation-checked on the ported code: each reverted fix,
