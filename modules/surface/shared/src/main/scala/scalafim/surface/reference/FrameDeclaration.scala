@@ -13,10 +13,17 @@ object AssetSha256:
 
   /** Digest of these bytes, computed with the portable SHA-256 on both platforms. */
   def of(bytes: Array[Byte]): AssetSha256 =
-    zarr4s.PortableSha256.digest(bytes).value
+    SurfaceDigest.sha256Hex(bytes)
 
   extension (digest: AssetSha256)
     def value: String = digest
+
+/** An asset identified by the SHA-256 of its exact bytes. */
+sealed trait DeclaredAsset:
+  def sha256: AssetSha256
+  /** Short identifying name: the archive path or the declared asset name. */
+  def label: String
+  def display: String
 
 /** Where an asset came from: its template, its path inside the TemplateFlow
   * archive (`tpl-<template>/...`), the catalog revision it was resolved
@@ -27,7 +34,8 @@ final case class AssetProvenance private (
   archivePath: String,
   catalogRevision: String,
   sha256: AssetSha256
-):
+) extends DeclaredAsset:
+  def label: String = archivePath
   def display: String = s"$archivePath@$catalogRevision (sha256 ${sha256.value})"
 
 object AssetProvenance:
@@ -43,6 +51,18 @@ object AssetProvenance:
       digest <- AssetSha256.make(sha256)
     yield AssetProvenance(template, archivePath, catalogRevision, digest)
 
+/** An asset outside the TemplateFlow archive, such as a group-result volume
+  * or an exported analysis bundle, identified by name and digest.
+  */
+final case class DataAsset private (name: String, sha256: AssetSha256) extends DeclaredAsset:
+  def label: String = name
+  def display: String = s"$name (sha256 ${sha256.value})"
+
+object DataAsset:
+  def make(name: String, sha256: String): Either[ReferenceError, DataAsset] =
+    if name.trim.isEmpty || name.trim != name then Left(ReferenceError.InvalidProvenance(s"asset name must be non-blank; got '$name'"))
+    else AssetSha256.make(sha256).map(DataAsset(name, _))
+
 /** Why an asset's coordinates are taken to be in a template frame. */
 sealed trait FrameBasis:
   def display: String
@@ -53,8 +73,8 @@ object FrameBasis:
     def display: String = s"doi:$doi: $statement"
 
   /** The frame follows from a recorded recipe applied to provenance-bound inputs. */
-  final case class Derived private[FrameBasis] (recipe: String, inputs: Vector[AssetProvenance]) extends FrameBasis:
-    def display: String = s"derived by $recipe from ${inputs.map(_.archivePath).mkString(", ")}"
+  final case class Derived private[FrameBasis] (recipe: String, inputs: Vector[DeclaredAsset]) extends FrameBasis:
+    def display: String = s"derived by $recipe from ${inputs.map(_.label).mkString(", ")}"
 
   private val doiPattern = "10\\.[0-9]{4,9}/\\S+".r
 
@@ -63,7 +83,7 @@ object FrameBasis:
     else if statement.trim.isEmpty then Left(ReferenceError.InvalidFrameBasis("literature statement must be non-blank"))
     else Right(Literature(doi, statement))
 
-  def derived(recipe: String, inputs: Vector[AssetProvenance]): Either[ReferenceError, FrameBasis] =
+  def derived(recipe: String, inputs: Vector[DeclaredAsset]): Either[ReferenceError, FrameBasis] =
     if recipe.trim.isEmpty then Left(ReferenceError.InvalidFrameBasis("derivation recipe must be non-blank"))
     else if inputs.isEmpty then Left(ReferenceError.InvalidFrameBasis("derivation must name at least one input asset"))
     else Right(Derived(recipe, inputs))
@@ -72,14 +92,19 @@ object FrameBasis:
   * that claim. This is the only source of an anatomy's frame: GIFTI
   * `DataSpace`/`TransformedSpace` codes are generic and never produce one.
   */
-final case class FrameDeclaration private (frame: TemplateFrame, basis: FrameBasis, asset: AssetProvenance):
-  def display: String = s"${asset.archivePath} in ${frame.display} (${basis.display})"
+final case class FrameDeclaration private (frame: TemplateFrame, basis: FrameBasis, asset: DeclaredAsset):
+  def display: String = s"${asset.label} in ${frame.display} (${basis.display})"
+
+  /** Refuse bytes whose digest differs from the declared asset digest. */
+  private[reference] def checkDigest(bytes: Array[Byte]): Either[ReferenceError, Unit] =
+    val actual = AssetSha256.of(bytes)
+    Either.cond(actual == asset.sha256, (), ReferenceError.DigestMismatch(asset.label, asset.sha256.value, actual.value))
 
 object FrameDeclaration:
-  def make(frame: TemplateFrame, basis: FrameBasis, asset: AssetProvenance): Either[ReferenceError, FrameDeclaration] =
+  def make(frame: TemplateFrame, basis: FrameBasis, asset: DeclaredAsset): Either[ReferenceError, FrameDeclaration] =
     basis match
       case FrameBasis.Derived(_, inputs) if inputs.contains(asset) =>
-        Left(ReferenceError.InvalidFrameBasis(s"${asset.archivePath} cannot be an input to its own frame derivation"))
+        Left(ReferenceError.InvalidFrameBasis(s"${asset.label} cannot be an input to its own frame derivation"))
       case _ => Right(FrameDeclaration(frame, basis, asset))
 
 /** A surface whose frame declaration is bound to the exact bytes it was
@@ -97,12 +122,6 @@ final class DeclaredSurface private (
   override def toString: String = s"DeclaredSurface(${declaration.display}, ${geometry.kind.label})"
 
 object DeclaredSurface:
-  /** Refuse bytes whose digest differs from the declared asset digest. */
-  private[reference] def checkDigest(declaration: FrameDeclaration, bytes: Array[Byte]): Either[ReferenceError, Unit] =
-    val actual = AssetSha256.of(bytes)
-    Either.cond(actual == declaration.asset.sha256, (),
-      ReferenceError.DigestMismatch(declaration.asset.archivePath, declaration.asset.sha256.value, actual.value))
-
   /** Bind a surface decoded from `bytes` to its declaration. Callers must
     * decode exactly these bytes; the digest is checked again here. The file's
     * own declared hemisphere and surface type must not contradict the
@@ -114,7 +133,7 @@ object DeclaredSurface:
     decoded: DeclaredGiftiSurface
   ): Either[ReferenceError, DeclaredSurface] =
     for
-      _ <- checkDigest(declaration, bytes)
+      _ <- declaration.checkDigest(bytes)
       _ <- consistent(decoded)
     yield DeclaredSurface(declaration, decoded.geometry, decoded.coordinates)
 

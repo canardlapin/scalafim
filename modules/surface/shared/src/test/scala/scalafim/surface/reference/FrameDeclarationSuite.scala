@@ -37,6 +37,19 @@ class FrameDeclarationSuite extends munit.FunSuite:
         "tpl-fsLR/../tpl-MNI152NLin6Asym/x.gii", "tpl-fsLR//x.gii", "tpl-fsLR\\x.gii", " tpl-fsLR/x.gii") do
       assert(AssetProvenance.make(fsLR, bad, "r", digest).isLeft, s"archive path '$bad'")
 
+  test("non-archive assets are named and digest-identified, and can feed derivations"):
+    val bundle = DataAsset.make("pls-bundle-20260911.zip", digest).toOption.get
+    assertEquals(bundle.label, "pls-bundle-20260911.zip")
+    assert(DataAsset.make(" ", digest).isLeft)
+    assert(DataAsset.make("x", "abc").isLeft)
+    val volume = DataAsset.make("group-bsr.nii.gz", "1" * 64).toOption.get
+    val derived = FrameBasis.derived("PLS group analysis on MNI152NLin2009cAsym res-2", Vector(bundle, asset)).toOption.get
+    val declaration = FrameDeclaration.make(nlin2009c, derived, volume).toOption.get
+    assertEquals(declaration.asset.label, "group-bsr.nii.gz")
+    assert(declaration.display.contains("pls-bundle-20260911.zip"))
+    assert(FrameDeclaration.make(nlin2009c, FrameBasis.derived("r", Vector(volume)).toOption.get, volume).isLeft)
+    assert(declaration.checkDigest(Array[Byte](1, 2, 3)).left.exists(_.isInstanceOf[ReferenceError.DigestMismatch]))
+
   test("frame bases are validated; a derivation cannot consume its own asset"):
     assert(FrameBasis.literature("doi:10.1093/cercor/bhr291", "x").isLeft)
     assert(FrameBasis.literature("10.1093/cercor/bhr291", " ").isLeft)

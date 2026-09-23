@@ -128,11 +128,17 @@ final case class VolumeReference private (
 
   def voxelToWorld: Affine[D3] = grid.indexToFrame
 
-  /** Exact grid identity: the same live grid, or a grid with the same persistent
-    * key (frame, spatial dims and bitwise-equal voxel-to-world affine).
+  /** Exact grid identity: the same live grid, or a grid in the same frame
+    * (same live frame or same persistent frame key) with equal spatial dims and
+    * a numerically equal voxel-to-world affine. Elements compare with `==`, so
+    * `-0.0` equals `0.0`; persistent grid keys encode raw bits and would not.
     */
   def sharesGrid(other: Grid[?, ?]): Boolean =
-    grid.sameRuntimeOwnerAs(other) || grid.samePersistentKeyAs(other)
+    grid.sameRuntimeOwnerAs(other) || (
+      (grid.frame.sameRuntimeOwnerAs(other.frame) || grid.frame.samePersistentKeyAs(other.frame)) &&
+        grid.shape == other.shape &&
+        grid.indexToFrame.rowMajor.corresponds(other.indexToFrame.rowMajor)(_ == _)
+    )
 
 object VolumeReference:
   def make(frame: TemplateFrame, space: SomeSampleSpace, support: Option[SomeMaskVolume] = None): Either[ReferenceError, VolumeReference] =

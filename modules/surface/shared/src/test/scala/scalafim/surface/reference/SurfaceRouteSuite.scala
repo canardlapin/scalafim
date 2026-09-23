@@ -1,6 +1,7 @@
 package scalafim.surface.reference
 
-import image4s.geometry.{Affine, D3}
+import image4s.{NonSpatialAxes, SampleSpace}
+import image4s.geometry.{Affine, D3, Frame, FrameMetadata, Grid}
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
 import scalafim.surface.*
@@ -97,8 +98,15 @@ class SurfaceRouteSuite extends munit.FunSuite:
   private def admitted(anatomy: SamplingAnatomy, req: RouteRequest = request(), bridge: Option[FrameBridge] = None) =
     SurfaceRoute.admit(req, anatomy, bridge).fold(r => fail(r.message), identity)
 
+  /** Test-only source declaration: fixture volumes have no file bytes to verify. */
+  private def declaredIn(volume: SomeScalarVolume[Double], frame: TemplateFrame = frameA): DeclaredVolume =
+    val bundle = DataAsset.make("synthetic-bundle", "1" * 64).toOption.get
+    DeclaredVolume.unsafeAssumeVerified(FrameDeclaration.make(frame,
+      FrameBasis.derived("synthetic fixture", Vector(bundle)).toOption.get,
+      DataAsset.make("synthetic-volume.nii.gz", "2" * 64).toOption.get).toOption.get, volume)
+
   private def mapped(route: AdmittedSurfaceRoute, volume: SomeScalarVolume[Double]) =
-    route.map(volume).fold(e => fail(e.message), identity)
+    route.map(declaredIn(volume)).fold(e => fail(e.message), identity)
 
   private def assertSameValue(actual: Option[Double], expected: Option[Double]): Unit =
     (actual, expected) match
@@ -247,7 +255,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val direct = mapped(admitted(midAnatomy), ramp)
     for v <- 0 until 6 do assertSameValue(bridged.valueAt(VertexId(v)), direct.valueAt(VertexId(v)))
     assertEquals(route.disclosure.bridge, Some(bridge))
-    val evidence = route.inspect(ramp, VertexId(0)).toOption.get
+    val evidence = route.inspect(declaredIn(ramp), VertexId(0)).toOption.get
     val w = world(midIndices(0))
     assertEqualsDouble(evidence.samples.head.world.x, w(0), 1e-9)
     assertEqualsDouble(evidence.samples.head.world.z, w(2), 1e-9)
@@ -276,7 +284,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
       if (i, j, k) == voxels(1) then Double.NaN else if (i, j, k) == voxels(2) then Double.PositiveInfinity else code(i, j, k))
     val result = mapped(route, poisoned)
     assertSameValue(result.valueAt(VertexId(0)), Some(code.tupled(voxels(0))))
-    val evidence = route.inspect(poisoned, VertexId(0)).toOption.get
+    val evidence = route.inspect(declaredIn(poisoned), VertexId(0)).toOption.get
     val kinds = evidence.samples.map(_.contribution)
     assertEquals(kinds(0), Contribution.Included(voxel(voxels(0)), code.tupled(voxels(0)), 1.0))
     assert(kinds(1) match { case Contribution.NonFinite(v, x) => v == voxel(voxels(1)) && x.isNaN; case _ => false })
@@ -291,7 +299,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     }, space, "support")
     val supported = VolumeReference.make(frameA, space, Some(support)).toOption.get
     val restricted = admitted(ribbonAnatomy, request(MappingMethod.DepthNearest(fractions), from = supported))
-    val restrictedEvidence = restricted.inspect(ramp, VertexId(0)).toOption.get
+    val restrictedEvidence = restricted.inspect(declaredIn(ramp), VertexId(0)).toOption.get
     assertEquals(restrictedEvidence.samples.head.contribution, Contribution.OutsideSupport(voxel(voxels(0))))
     val rest = voxels.drop(1).map(code.tupled)
     assertSameValue(restrictedEvidence.value, Some(rest.sum / rest.size))
@@ -300,14 +308,14 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val route = admitted(ribbonAnatomy, request(MappingMethod.DepthNearest(Vector(0.0, 0.0, 0.5, 1.0))))
     val result = mapped(route, ramp)
     for v <- 0 until 6 do
-      val evidence = route.inspect(ramp, VertexId(v)).toOption.get
+      val evidence = route.inspect(declaredIn(ramp), VertexId(v)).toOption.get
       assertEquals(Some(evidence.coverage), result.coverageAt(VertexId(v)))
       val included = evidence.samples.collect { case ContributionSample(_, Contribution.Included(voxel, value, weight)) =>
         assertEqualsDouble(value, code(voxel.x, voxel.y, voxel.z), 0.0)
         value * weight }
       assertSameValue(evidence.value, result.valueAt(VertexId(v)))
       if evidence.coverage == VertexCoverage.Mapped then assertEqualsDouble(included.sum, result.valueAt(VertexId(v)).get, 1e-9)
-    assertEquals(route.inspect(ramp, VertexId(6)), Left(RouteError.VertexOutOfRange(6, 6)))
+    assertEquals(route.inspect(declaredIn(ramp), VertexId(6)), Left(RouteError.VertexOutOfRange(6, 6)))
 
   test("categorical semantics take the modal integral label and refuse non-integral volumes"):
     val route = admitted(ribbonAnatomy, request(MappingMethod.DepthNearest(Vector(0.0, 0.5, 1.0)), ValueSemantics.Categorical))
@@ -319,8 +327,8 @@ class SurfaceRouteSuite extends munit.FunSuite:
     assertSameValue(mapped(tie, labels).valueAt(VertexId(0)), Some(3.0))
     val continuous = admitted(ribbonAnatomy, request(MappingMethod.DepthNearest(Vector(0.0, 0.5, 1.0))))
     assertSameValue(mapped(continuous, labels).valueAt(VertexId(0)), Some(13.0 / 3.0))
-    assert(route.map(volumeOf((i, j, k) => code(i, j, k) + 0.25)).left.exists(_.isInstanceOf[RouteError.NonIntegralLabel]))
-    val evidence = route.inspect(labels, VertexId(0)).toOption.get
+    assert(route.map(declaredIn(volumeOf((i, j, k) => code(i, j, k) + 0.25))).left.exists(_.isInstanceOf[RouteError.NonIntegralLabel]))
+    val evidence = route.inspect(declaredIn(labels), VertexId(0)).toOption.get
     val weights = evidence.samples.collect { case ContributionSample(_, Contribution.Included(_, value, weight)) => value -> weight }
     assertEquals(weights, Vector(7.0 -> 0.0, 3.0 -> 0.5, 3.0 -> 0.5))
     assertEqualsDouble(weights.map((v, w) => v * w).sum, 3.0, 1e-12)
@@ -328,8 +336,8 @@ class SurfaceRouteSuite extends munit.FunSuite:
   test("a volume on any other grid is refused at execution"):
     val shifted = spaceOf(dims, affineRows.updated(1, affineRows(1).updated(3, 4.75)))
     val route = admitted(midAnatomy)
-    assert(route.map(volumeOf(code, shifted)).left.exists(_.isInstanceOf[RouteError.SourceGridMismatch]))
-    assert(route.inspect(volumeOf(code, shifted), VertexId(0)).isLeft)
+    assert(route.map(declaredIn(volumeOf(code, shifted))).left.exists(_.isInstanceOf[RouteError.SourceGridMismatch]))
+    assert(route.inspect(declaredIn(volumeOf(code, shifted)), VertexId(0)).isLeft)
 
   test("grid identity is the persistent grid key, not the live object that admitted the reference"):
     // An independently constructed space with identical dims and bitwise-equal affine
@@ -344,7 +352,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     assert(VolumeReference.make(frameA, space, Some(twinSupport)).isRight)
     // One ulp in one affine element is a different grid.
     val nudged = affineRows.updated(2, affineRows(2).updated(3, math.nextUp(shift(2))))
-    assert(route.map(volumeOf(code, spaceOf(dims, nudged))).left.exists(_.isInstanceOf[RouteError.SourceGridMismatch]))
+    assert(route.map(declaredIn(volumeOf(code, spaceOf(dims, nudged)))).left.exists(_.isInstanceOf[RouteError.SourceGridMismatch]))
 
   test("inflated and very-inflated display keep identical values, coverage and vertex ids"):
     val result = mapped(admitted(midAnatomy), ramp)
@@ -382,3 +390,75 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val refused = SurfaceRoute.select(request(), Vector(RouteCandidate(otherFrame), RouteCandidate(midAnatomy, Some(bridge))))
     assertEquals(refused.left.toOption.get.map(_._2),
       Vector(RouteRefusal.FrameMismatch(frameA, frameB), RouteRefusal.UnexpectedBridge(frameA)))
+
+  test("a volume declared in another template on an identical grid is refused at execution"):
+    // Grid identity cannot tell templates apart; the digest-bound declaration can.
+    val route = admitted(midAnatomy)
+    val in6Asym = declaredIn(ramp, frameB)
+    assertEquals(route.map(in6Asym).left.toOption, Some(RouteError.SourceFrameMismatch(frameA, frameB)))
+    assertEquals(route.inspect(in6Asym, VertexId(0)).left.toOption, Some(RouteError.SourceFrameMismatch(frameA, frameB)))
+    assert(route.prepare(in6Asym).isLeft)
+    assertEquals(mapped(route, ramp).source.frame, frameA)
+
+  test("a prepared source is reused by map and inspect and belongs to one route"):
+    val route = admitted(ribbonAnatomy, request(MappingMethod.DepthNearest(Vector(0.0, 0.5, 1.0))))
+    val source = declaredIn(ramp)
+    val prepared = route.prepare(source).fold(e => fail(e.message), p => p)
+    val once = route.map(prepared).fold(e => fail(e.message), m => m)
+    val direct = mapped(route, ramp)
+    for v <- 0 until 6 do
+      assertSameValue(once.valueAt(VertexId(v)), direct.valueAt(VertexId(v)))
+      assertEquals(route.inspect(prepared, VertexId(v)), route.inspect(source, VertexId(v)))
+    val other = admitted(midAnatomy)
+    assertEquals(other.map(prepared).left.toOption, Some(RouteError.ForeignPreparation))
+    assertEquals(other.inspect(prepared, VertexId(0)).left.toOption, Some(RouteError.ForeignPreparation))
+
+  test("signed zero in an affine element does not change grid identity"):
+    val rows = Vector(Vector(2.0, 0.0, 0.0, -1.0), Vector(0.0, 2.0, 0.0, -1.0), Vector(0.0, 0.0, 2.0, -1.0), Vector(0.0, 0.0, 0.0, 1.0))
+    val positive = spaceOf(Vector(4, 4, 4), rows)
+    val negative = spaceOf(Vector(4, 4, 4), rows.updated(0, rows(0).updated(1, -0.0)))
+    assert(!positive.grid.samePersistentKeyAs(negative.grid), "fixture must differ in the raw-bit grid key")
+    val reference = VolumeReference.make(frameA, positive).toOption.get
+    assert(reference.sharesGrid(negative.grid))
+    val support = SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.fill(64)(true), negative, "support")
+    assert(VolumeReference.make(frameA, positive, Some(support)).isRight)
+
+  test("an unsupported voxel is OutsideSupport even when its value is nonfinite"):
+    val fractions = Vector(0.0, 0.5, 1.0)
+    val at = (f: Double) => Vector.tabulate(3)(a => midIndices(0)(a) + f * depth(a))
+    val voxels = fractions.map(f => expectedVoxel(at(f)).get)
+    val support = SomeMaskVolume.unsafeCopyFromCanonicalArray(Array.tabulate(dims.product) { ordinal =>
+      val g = space.indexToGrid3D(ordinal)
+      (g(0), g(1), g(2)) != voxels(0)
+    }, space, "support")
+    val supported = VolumeReference.make(frameA, space, Some(support)).toOption.get
+    val route = admitted(ribbonAnatomy, request(MappingMethod.DepthNearest(fractions), from = supported))
+    val poisoned = volumeOf((i, j, k) => if (i, j, k) == voxels(0) then Double.NaN else code(i, j, k))
+    val evidence = route.inspect(declaredIn(poisoned), VertexId(0)).toOption.get
+    assertEquals(evidence.samples.head.contribution, Contribution.OutsideSupport(voxel(voxels(0))))
+
+  test("a bridge whose composition with surfaceToWorld is ill-conditioned is refused"):
+    def stretch(x: Double) = affineOf(Vector(Vector(x, 0.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0, 0.0),
+      Vector(0.0, 0.0, 1.0, 0.0), Vector(0.0, 0.0, 0.0, 1.0)))
+    val stretched = midthickness.withSurfaceToWorld(stretch(1.0e7))
+    val anatomyB = SamplingAnatomy.make(reference, AnatomicalGeometry.Midthickness(declared(stretched, frameB))).toOption.get
+    val bridge = FrameBridge.affine(frameB, frameA, stretch(1.0e7), "ill-conditioned test bridge").toOption.get
+    assert(SurfaceRoute.admit(request(), anatomyB, Some(bridge)).left.exists(_.isInstanceOf[RouteRefusal.BridgeComposition]))
+
+  test("volume references refuse non-spatial axes and bind ephemeral grids by live owner"):
+    assert(VolumeReference.make(frameA, SampleSpaces(Vector(6, 5, 4, 3))).left.exists(_.isInstanceOf[ReferenceError.InvalidVolumeGrid]))
+    val affine = affineOf(affineRows)
+    def ephemeral(): SomeSampleSpace =
+      val frame = Frame.ephemeral[D3](FrameMetadata.create("ephemeral").toOption.get)
+      SampleSpace.create(Grid.in(frame)(dims, affine).toOption.get, NonSpatialAxes.empty)
+    val first = ephemeral()
+    val reference = VolumeReference.make(frameA, first).fold(e => fail(e.message), r => r)
+    assert(reference.grid.persistentId.isEmpty, "fixture grid must be ephemeral")
+    assert(reference.sharesGrid(first.grid))
+    assert(!reference.sharesGrid(ephemeral().grid), "same geometry in another ephemeral frame")
+    assert(!reference.sharesGrid(space.grid), "same geometry in the persistent RAS frame")
+
+  test("a published mesh density cannot be declared with another vertex count"):
+    assert(StandardCorticalMesh.declare(CorticalMeshFamily.FsLR, "32k", 32000).isLeft)
+    assertEquals(StandardCorticalMesh.declare(CorticalMeshFamily.FsLR, "32k", 32492), Right(StandardCorticalMesh.FsLR32k))
+    assert(StandardCorticalMesh.declare(CorticalMeshFamily.FsAverage, "10k", 10000).isLeft)

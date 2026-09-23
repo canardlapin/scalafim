@@ -20,11 +20,29 @@ final case class StandardCorticalMesh private (family: CorticalMeshFamily, densi
 object StandardCorticalMesh:
   val FsLR32k: StandardCorticalMesh = StandardCorticalMesh(CorticalMeshFamily.FsLR, "32k", 32492)
 
-  /** Declare another exact family/density, e.g. for a reduced test mesh. */
+  /** Published per-hemisphere vertex counts of standard (family, density) meshes. */
+  private val published: Map[(CorticalMeshFamily, String), Int] = Map(
+    (CorticalMeshFamily.FsLR, "32k") -> 32492,
+    (CorticalMeshFamily.FsLR, "164k") -> 163842,
+    (CorticalMeshFamily.FsAverage, "3k") -> 2562,
+    (CorticalMeshFamily.FsAverage, "10k") -> 10242,
+    (CorticalMeshFamily.FsAverage, "41k") -> 40962,
+    (CorticalMeshFamily.FsAverage, "164k") -> 163842
+  )
+
+  /** Declare another exact family/density, e.g. for a reduced test mesh. A
+    * published (family, density) must carry its published vertex count, so a
+    * mis-declared mesh cannot display as the standard one.
+    */
   def declare(family: CorticalMeshFamily, density: String, verticesPerHemisphere: Int): Either[ReferenceError, StandardCorticalMesh] =
     if density.trim.isEmpty || density.trim != density then Left(ReferenceError.InvalidCorticalMesh(s"invalid density '$density'"))
     else if verticesPerHemisphere <= 0 then Left(ReferenceError.InvalidCorticalMesh("vertices per hemisphere must be positive"))
-    else Right(StandardCorticalMesh(family, density, verticesPerHemisphere))
+    else
+      published.get((family, density)) match
+        case Some(count) if count != verticesPerHemisphere =>
+          Left(ReferenceError.InvalidCorticalMesh(
+            s"${family.label}-$density has $count vertices per hemisphere; declared $verticesPerHemisphere"))
+        case _ => Right(StandardCorticalMesh(family, density, verticesPerHemisphere))
 
 /** Cortex/medial-wall partition of one ordered hemisphere mesh. */
 final class MedialWallMask private (val domain: SurfaceMeshDomain, private val cortex: Array[Boolean]):

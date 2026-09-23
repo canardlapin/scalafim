@@ -20,7 +20,7 @@ object DeclaredSurfaceReader:
     kind: SurfaceKind
   ): Future[Either[ReferenceError, DeclaredSurface]] =
     val owned = new Int8Array(bytes.buffer, bytes.byteOffset, bytes.length).toArray
-    DeclaredSurface.checkDigest(declaration, owned) match
+    declaration.checkDigest(owned) match
       case Left(error) => Future.successful(Left(error))
       case Right(()) =>
         val view = new Uint8Array(owned.length)

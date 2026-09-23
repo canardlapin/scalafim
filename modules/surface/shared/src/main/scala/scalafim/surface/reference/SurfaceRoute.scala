@@ -84,6 +84,8 @@ enum RouteRefusal:
 
 enum RouteError:
   case SourceGridMismatch(expected: Vector[Int], actual: Vector[Int])
+  case SourceFrameMismatch(required: TemplateFrame, declared: TemplateFrame)
+  case ForeignPreparation
   case NonIntegralLabel(voxel: VoxelCoord, value: Double)
   case VertexOutOfRange(vertex: Int, vertexCount: Int)
   case DisplayMismatch(reason: String)
@@ -93,6 +95,9 @@ enum RouteError:
     this match
       case SourceGridMismatch(expected, actual) =>
         s"volume grid differs from the admitted source reference (dims $expected vs $actual, or affine differs)"
+      case SourceFrameMismatch(required, declared) =>
+        s"volume is declared in ${declared.display}; the route requires ${required.display}"
+      case ForeignPreparation => "prepared source belongs to another route"
       case NonIntegralLabel(voxel, value) => s"categorical volume holds non-integral value $value at voxel $voxel"
       case VertexOutOfRange(vertex, count) => s"vertex $vertex is outside [0, $count)"
       case DisplayMismatch(reason) => s"display surface rejected: $reason"
@@ -155,6 +160,7 @@ final case class VertexMappingEvidence(
   */
 final class MappedSurfaceValues private[reference] (
   val disclosure: RouteDisclosure,
+  val source: FrameDeclaration,
   val reference: CorticalMeshReference,
   values: Array[Double],
   coverage: Array[VertexCoverage],
@@ -199,10 +205,21 @@ final class AdmittedSurfaceRoute private[reference] (
     anatomy.reference.hemisphere, anatomy.frame, anatomy.geometry.label, anatomy.declarations, bridge, request.method, request.semantics,
     RouteQualification.NumericalContract)
 
-  def map(volume: SomeScalarVolume[Double]): Either[RouteError, MappedSurfaceValues] =
-    admissionMask(volume).flatMap: mask =>
+  /** Check a declared source volume once: declared frame, grid, support and
+    * value semantics. The result is reused by `map` and every `inspect`.
+    */
+  def prepare(source: DeclaredVolume): Either[RouteError, PreparedSource] =
+    if source.frame != request.source.frame then
+      Left(RouteError.SourceFrameMismatch(request.source.frame, source.frame))
+    else admissionMask(source.volume).map(PreparedSource(this, source, _))
+
+  def map(source: DeclaredVolume): Either[RouteError, MappedSurfaceValues] =
+    prepare(source).flatMap(map)
+
+  def map(prepared: PreparedSource): Either[RouteError, MappedSurfaceValues] =
+    owned(prepared).flatMap: _ =>
       guarded:
-        val sampled = sampler.sample(volume, Some(mask))
+        val sampled = sampler.sample(prepared.source.volume, Some(prepared.admission))
         val medialWall = anatomy.reference.medialWall
         val n = anatomy.reference.vertexCount
         val values = Array.fill(n)(Double.NaN)
@@ -219,14 +236,19 @@ final class AdmittedSurfaceRoute private[reference] (
             else VertexCoverage.Mapped
           if coverage(i) == VertexCoverage.Mapped then values(i) = sampled.values.valueAt(vertex).get
           i += 1
-        MappedSurfaceValues(disclosure, anatomy.reference, values, coverage, counts)
+        MappedSurfaceValues(disclosure, prepared.source.declaration, anatomy.reference, values, coverage, counts)
 
-  def inspect(volume: SomeScalarVolume[Double], vertex: VertexId): Either[RouteError, VertexMappingEvidence] =
+  def inspect(source: DeclaredVolume, vertex: VertexId): Either[RouteError, VertexMappingEvidence] =
+    prepare(source).flatMap(inspect(_, vertex))
+
+  /** Per-vertex evidence against a prepared source; no whole-volume work. */
+  def inspect(prepared: PreparedSource, vertex: VertexId): Either[RouteError, VertexMappingEvidence] =
     val n = anatomy.reference.vertexCount
+    val volume = prepared.source.volume
     if vertex.index >= n then Left(RouteError.VertexOutOfRange(vertex.index, n))
     else
-      admissionMask(volume).flatMap: mask =>
-        sampler.inspectVertexEither(volume, vertex, Some(mask)).left.map(error => RouteError.SamplingFailure(error.message))
+      owned(prepared).flatMap: _ =>
+        sampler.inspectVertexEither(volume, vertex, Some(prepared.admission)).left.map(error => RouteError.SamplingFailure(error.message))
           .map: receipt =>
             val accepted = receipt.acceptedCount
             val winners = receipt.samples.count:
@@ -271,6 +293,9 @@ final class AdmittedSurfaceRoute private[reference] (
         i += 1
       failure.toLeft(()).flatMap: _ =>
         guarded(SomeMaskVolume.unsafeCopyFromCanonicalArray(flags, volume.space, "route-admission"))
+
+  private def owned(prepared: PreparedSource): Either[RouteError, Unit] =
+    Either.cond(prepared.route eq this, (), RouteError.ForeignPreparation)
 
   private def guarded[A](body: => A): Either[RouteError, A] =
     try Right(body)
@@ -341,5 +366,14 @@ object SurfaceRoute:
       white <- place(anatomy.located.white)
       pial <- place(anatomy.located.pial)
     yield SurfaceGeometryPair(white, pial)
+
+/** A declared source volume checked against one route: frame, grid, support
+  * and value semantics, with its support-and-finite admission mask.
+  */
+final class PreparedSource private[reference] (
+  val route: AdmittedSurfaceRoute,
+  val source: DeclaredVolume,
+  private[reference] val admission: SomeMaskVolume
+)
 
 final case class RouteCandidate(anatomy: SamplingAnatomy, bridge: Option[FrameBridge] = None)

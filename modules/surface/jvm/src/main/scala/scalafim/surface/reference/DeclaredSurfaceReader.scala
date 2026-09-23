@@ -21,7 +21,7 @@ object DeclaredSurfaceReader:
       bytes <-
         try Right(Files.readAllBytes(path))
         catch case NonFatal(error) => Left(ReferenceError.AssetReadFailure(s"$path: ${SurfaceError.reason(error)}"))
-      _ <- DeclaredSurface.checkDigest(declaration, bytes)
+      _ <- declaration.checkDigest(bytes)
       decoded <- GiftiReader.read(bytes).flatMap(GiftiSurfaceReader.declared(_, hemisphere, kind))
         .left.map(error => ReferenceError.AssetReadFailure(s"$path: ${error.message}"))
       surface <- DeclaredSurface.verified(declaration, bytes, decoded)
