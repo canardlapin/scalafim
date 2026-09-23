@@ -168,10 +168,16 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     out.result()
 
   private def nearestGrid(volume: NeuroVol[Double], point: Vector[Double]): Option[Vector[Int]] =
+    // Nearest voxel with ties rounded up (Math.round); support is [-0.5, dim - 0.5)
+    // per axis. Range-check the Long before narrowing and reject nonfinite
+    // indices, which Math.round would otherwise map to voxel 0 or alias.
     val index = volume.space.coordToIndex(point)
-    val grid = index.map(v => math.round(v).toInt)
     val dims = volume.space.spatialDims
-    if grid.indices.forall(i => grid(i) >= 0 && grid(i) < dims(i)) then Some(grid) else None
+    if !index.forall(_.isFinite) then None
+    else
+      val rounded = index.map(v => math.round(v))
+      if rounded.indices.forall(i => rounded(i) >= 0L && rounded(i) < dims(i).toLong) then Some(rounded.map(_.toInt))
+      else None
 
   private def aggregate(values: Vector[Double]): Double =
     plan.aggregation match

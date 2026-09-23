@@ -146,6 +146,14 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     assertEqualsDouble(out.valueAt(VertexId(1)).get, 2.0, 1e-12)
     assertEqualsDouble(out.valueAt(VertexId(2)).get, 1.0, 1e-12)
 
+  test("coordinates beyond Int range or nonfinite never alias onto a voxel"):
+    // 2^32 + 1 narrowed through Int would alias to voxel 1; NaN would round to 0.
+    for offset <- Vector(4294967297.0, -4294967295.0, Double.NaN) do
+      val far = SurfaceGeometry(pair.white.mesh, Hemisphere.Left, SurfaceKind.White, translation(offset, 0.0, 0.0))
+      val result = VolumeSurfaceSampler.sample(volume, SurfaceGeometryPair(far, far), path = SurfaceSamplingPath.White)
+      assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(0), s"offset $offset")
+      assert(result.values.valueAt(VertexId(0)).get.isNaN, s"offset $offset")
+
   test("out-of-bounds sample points produce empty samples"):
     val shifted =
       SurfaceGeometry(
