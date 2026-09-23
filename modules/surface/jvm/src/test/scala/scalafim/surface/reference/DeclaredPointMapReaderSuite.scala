@@ -24,7 +24,16 @@ class DeclaredPointMapReaderSuite extends munit.FunSuite:
     val oracle = ujson.read(Files.readString(resource.resolve("synthetic_composite_oracle.json")))
     val points = oracle("points").arr.map(_.arr.map(_.num).toVector).toVector
     val mapped = oracle("mapped").arr.map(_.arr.map(_.num).toVector).toVector
+    def arrays(value: ujson.Value) = value.arr.map(_.arr.map(_.num).toVector).toVector
+    // The shared suite runs on Scala.js from generated Scala data; it must be exactly the committed oracle.
     assertEquals(points, SyntheticItkOracle.points, "generated shared fixture matches the committed oracle")
+    assertEquals(mapped, SyntheticItkOracle.mapped)
+    assertEquals(arrays(oracle("stages")("displacementOnly")), SyntheticItkOracle.displacementOnly)
+    assertEquals(arrays(oracle("stages")("affineOnly")), SyntheticItkOracle.affineOnly)
+    assertEquals(oracle("pointClass").arr.map(_.str).toVector, SyntheticItkOracle.pointClass)
+    assertEquals(java.util.Base64.getEncoder.encodeToString(Files.readAllBytes(resource.resolve("stage-0-displacement.nii"))),
+      SyntheticItkOracle.stageFile)
+    assertEquals(DeclaredPointMapReader.parse(Files.readString(resource.resolve("manifest.json"))), Right(SyntheticItkOracle.manifest))
     val out = new Array[Double](3)
     val scratch = new Array[Double](3)
     for (p, i) <- points.zipWithIndex do
