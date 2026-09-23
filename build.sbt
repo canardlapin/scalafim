@@ -714,6 +714,8 @@ lazy val surface =
     // declared surface assets to their exact bytes on both platforms.
     .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
     .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
+    // JVM only: parses templateflow4s point-map manifests in DeclaredPointMapReader.
+    .jvmSettings(libraryDependencies += "com.lihaoyi" %% "ujson" % "4.1.0")
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js

@@ -61,10 +61,17 @@ The JVM module additionally adds:
 exact references. Anatomy and source volumes carry digest-bound frame
 declarations; the platform `DeclaredSurfaceReader` (and JVM
 `DeclaredVolumeReader`) hash the exact bytes before decoding them.
+Frames are bridged by an exact affine or by a digest-bound displacement point
+map (`templateflow4s.point-map/1`): ITK-exact forward evaluation and a
+per-vertex fixed-point inverse with typed outcomes (`Converged`,
+`NonConvergent`, `OutsideSupport`). Vertices a bridge cannot place are
+reported as `BridgeUnavailable` and never sampled. The JVM
+`DeclaredPointMapReader` reads the canonical directory.
 
 Dependencies: `image`, `locus-data`, standalone graph4s and image4s geometry,
 and standalone zarr4s core for one reason only: its portable SHA-256 for
-digest-bound surface declarations (confined to `SurfaceDigest`).
+digest-bound surface declarations (confined to `SurfaceDigest`). On the JVM only,
+ujson parses point-map manifests in `DeclaredPointMapReader`.
 
 ## Conventions
 
