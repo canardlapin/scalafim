@@ -6,7 +6,7 @@ class FrameEvidenceSuite extends munit.FunSuite:
   private val digest = "0" * 64
   private val declaration = FrameDeclaration.make(
     TemplateFrame.unsafe("MNI152NLin6Asym", "templateflow-24.2.0"),
-    FrameBasis.literature("10.1093/cercor/bhr291", "Conte69 registered to FSL MNI152 NLin6").toOption.get,
+    FrameBasis.literature("10.1093/cercor/bhr291", "TemplateFlow tpl-fsLR (HCP Pipelines templates; ReferencesAndLinks doi:10.1093/cercor/bhr291) — surfaces in MNI152NLin6Asym per HCP convention; corroborated by FrameEvidence on the 2009c GM probseg").toOption.get,
     AssetProvenance.make(fsLR, "tpl-fsLR/midthickness.surf.gii", "r", digest).toOption.get).toOption.get
   private val gmMap = AssetProvenance.make(nlin2009c,
     "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz", "r", digest).toOption.get

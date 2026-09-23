@@ -10,8 +10,8 @@ class FrameDeclarationSuite extends munit.FunSuite:
   private val digest = "036a8b6c84fa4b581b7ad7b36d99190b57ad6755c9d7ef7adc3e9ffc6448f1af"
   private val path = "tpl-fsLR/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii"
   private val asset = AssetProvenance.make(fsLR, path, "templateflow-24.2.0", digest).toOption.get
-  private val conte69 = FrameBasis.literature("10.1093/cercor/bhr291",
-    "Conte69 surfaces registered to FSL MNI152 nonlinear 6th generation").toOption.get
+  private val tplFsLRBasis = FrameBasis.literature("10.1093/cercor/bhr291",
+    "TemplateFlow tpl-fsLR (HCP Pipelines templates; ReferencesAndLinks doi:10.1093/cercor/bhr291) — surfaces in MNI152NLin6Asym per HCP convention; corroborated by FrameEvidence on the 2009c GM probseg").toOption.get
 
   private val geometry = SurfaceGeometry(
     TriangleMesh.fromRows(Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)), Vector((0, 1, 2))),
@@ -58,7 +58,7 @@ class FrameDeclarationSuite extends munit.FunSuite:
     assert(FrameBasis.derived("recipe", Vector.empty).isLeft)
     val circular = FrameBasis.derived("recipe", Vector(asset)).toOption.get
     assert(FrameDeclaration.make(nlin6, circular, asset).isLeft)
-    val declaration = FrameDeclaration.make(nlin6, conte69, asset).toOption.get
+    val declaration = FrameDeclaration.make(nlin6, tplFsLRBasis, asset).toOption.get
     assertEquals(declaration.frame, nlin6)
     assert(declaration.display.contains("10.1093/cercor/bhr291"))
 
@@ -97,7 +97,7 @@ class FrameDeclarationSuite extends munit.FunSuite:
     val reference = CorticalMeshReference.make(mesh, white, MedialWallMask.fromCortexFlags(
       white.meshDomainEither.toOption.get, Vector(true, true, true)).toOption.get).toOption.get
     def on(g: SurfaceGeometry, frame: TemplateFrame) =
-      DeclaredSurface.unsafeAssumeVerified(FrameDeclaration.make(frame, conte69, asset).toOption.get, g)
+      DeclaredSurface.unsafeAssumeVerified(FrameDeclaration.make(frame, tplFsLRBasis, asset).toOption.get, g)
     val agreed = SamplingAnatomy.make(reference, AnatomicalGeometry.WhitePial(on(white, nlin6), on(pial, nlin6)))
     assertEquals(agreed.map(_.frame), Right(nlin6))
     assertEquals(agreed.map(_.declarations.map(_.frame)), Right(Vector(nlin6, nlin6)))

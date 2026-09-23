@@ -68,7 +68,11 @@ sealed trait FrameBasis:
   def display: String
 
 object FrameBasis:
-  /** A published registration, e.g. Conte69 surfaces registered to FSL's MNI152 nonlinear 6th generation. */
+  /** A published reference, with a statement that claims only what the source
+    * and its provenance support, e.g. that TemplateFlow tpl-fsLR (HCP Pipelines
+    * templates, doi:10.1093/cercor/bhr291) surfaces are in MNI152NLin6Asym per
+    * HCP convention.
+    */
   final case class Literature private[FrameBasis] (doi: String, statement: String) extends FrameBasis:
     def display: String = s"doi:$doi: $statement"
 

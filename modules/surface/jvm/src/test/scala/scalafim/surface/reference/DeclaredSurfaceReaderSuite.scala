@@ -80,7 +80,7 @@ class DeclaredSurfaceReaderSuite extends munit.FunSuite:
       Vector((Some(GiftiDeclaredSpace.Talairach), Some(GiftiDeclaredSpace.Talairach))))
 
     val declaration = FrameDeclaration.make(nlin6,
-      FrameBasis.literature("10.1093/cercor/bhr291", "Conte69 surfaces registered to FSL MNI152 nonlinear 6th generation")
+      FrameBasis.literature("10.1093/cercor/bhr291", "TemplateFlow tpl-fsLR (HCP Pipelines templates; ReferencesAndLinks doi:10.1093/cercor/bhr291) — surfaces in MNI152NLin6Asym per HCP convention; corroborated by FrameEvidence on the 2009c GM probseg")
         .toOption.get,
       AssetProvenance.make(TemplateId.unsafe("fsLR"), s"tpl-fsLR/$realName", "templateflow-local", realDigest).toOption.get
     ).toOption.get
