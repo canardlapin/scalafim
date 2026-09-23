@@ -25,6 +25,11 @@ sealed trait DeclaredAsset:
   def label: String
   def display: String
 
+  /** Refuse bytes whose digest differs from this asset's digest. */
+  private[reference] def checkDigest(bytes: Array[Byte]): Either[ReferenceError, Unit] =
+    val actual = AssetSha256.of(bytes)
+    Either.cond(actual == sha256, (), ReferenceError.DigestMismatch(label, sha256.value, actual.value))
+
 /** Where an asset came from: its template, its path inside the TemplateFlow
   * archive (`tpl-<template>/...`), the catalog revision it was resolved
   * against, and the SHA-256 of its exact bytes.
@@ -101,8 +106,7 @@ final case class FrameDeclaration private (frame: TemplateFrame, basis: FrameBas
 
   /** Refuse bytes whose digest differs from the declared asset digest. */
   private[reference] def checkDigest(bytes: Array[Byte]): Either[ReferenceError, Unit] =
-    val actual = AssetSha256.of(bytes)
-    Either.cond(actual == asset.sha256, (), ReferenceError.DigestMismatch(asset.label, asset.sha256.value, actual.value))
+    asset.checkDigest(bytes)
 
 object FrameDeclaration:
   def make(frame: TemplateFrame, basis: FrameBasis, asset: DeclaredAsset): Either[ReferenceError, FrameDeclaration] =

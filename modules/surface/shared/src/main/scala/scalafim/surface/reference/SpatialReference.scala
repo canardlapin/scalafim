@@ -25,6 +25,8 @@ enum ReferenceError:
   case DeclarationConflict(reason: String)
   case AssetReadFailure(reason: String)
   case InvalidEvidence(reason: String)
+  case InvalidPointMap(reason: String)
+  case QuarantinedTransform(archivePath: String, reason: String)
 
   def message: String =
     this match
@@ -46,6 +48,8 @@ enum ReferenceError:
       case DeclarationConflict(reason) => s"surface file contradicts the requested reading: $reason"
       case AssetReadFailure(reason) => s"declared asset could not be read: $reason"
       case InvalidEvidence(reason) => s"invalid frame evidence: $reason"
+      case InvalidPointMap(reason) => s"invalid point map: $reason"
+      case QuarantinedTransform(path, reason) => s"$path is quarantined and cannot be used: $reason"
 
 /** Exact TemplateFlow-style template identifier such as `MNI152NLin2009cAsym`.
   * Family names (`MNI`, `MNI152`, `ICBM152`, ...) are refused: they do not
