@@ -85,6 +85,17 @@ final case class SurfaceVertexSample private[surface] (
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   def sample(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume] = None): SurfaceSampleResult =
+    sampleSelected(volume, mask, null)
+
+  /** Sample only vertices whose `selected` flag is set (all when `selected` is
+    * null); unselected vertices are never located or looked up and report NaN
+    * with zero samples.
+    */
+  private[surface] def sampleSelected(
+    volume: SomeScalarVolume[Double],
+    mask: Option[SomeMaskVolume],
+    selected: Array[Boolean] | Null
+  ): SurfaceSampleResult =
     mask.foreach(validateMask(volume, _))
 
     val vertexCount = plan.surfaces.white.vertexCount
@@ -93,10 +104,11 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
     var i = 0
     while i < vertexCount do
-      val vertex = VertexId.unsafe(i)
-      val samples = sampleValues(volume, mask, samplePoints(vertex))
-      counts(i) = samples.length
-      if samples.nonEmpty then values(i) = aggregate(samples)
+      if selected == null || selected.nn(i) then
+        val vertex = VertexId.unsafe(i)
+        val samples = sampleValues(volume, mask, samplePoints(vertex))
+        counts(i) = samples.length
+        if samples.nonEmpty then values(i) = aggregate(samples)
       i += 1
 
     SurfaceSampleResult(

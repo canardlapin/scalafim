@@ -129,7 +129,9 @@ class SurfaceRouteSuite extends munit.FunSuite:
     val raw = Array(1.0, 0.0, 0.0, 2.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)
     val bridge = FrameBridge.affine(frameB, frameA, Affine.fromRowMajor[D3](raw).toOption.get, "test").toOption.get
     raw(3) = Double.NaN
-    assertEqualsDouble(bridge.matrix.matrix(0, 3), 2.0, 0.0)
+    bridge.transform match
+      case BridgeTransform.AffineMap(matrix) => assertEqualsDouble(matrix.matrix(0, 3), 2.0, 0.0)
+      case other => fail(s"expected an affine bridge; got $other")
     val source = VolumeReference.make(frameA, space).toOption.get
     assertEqualsDouble(source.voxelToWorld.matrix(0, 3), shift(0), 0.0)
 

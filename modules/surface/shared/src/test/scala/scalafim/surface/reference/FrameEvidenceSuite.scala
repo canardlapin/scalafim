@@ -21,7 +21,7 @@ class FrameEvidenceSuite extends munit.FunSuite:
       thresholds.requiredPlacements.collect { case p: Placement.Shifted => score(p, 0.58) }
 
   private def verdict(scores: Vector[PlacementScore]) =
-    FrameEvidence.make(declaration, gmMap, thresholds, scores).toOption.get.verdict
+    FrameEvidence.make(Vector(declaration), gmMap, thresholds, scores).toOption.get.verdict
 
   test("default thresholds are the plan's frozen margins and require nine placements"):
     assertEquals((thresholds.minimumGainOverRaw, thresholds.minimumGainOverReversed, thresholds.shiftMillimetres),
@@ -65,4 +65,8 @@ class FrameEvidenceSuite extends munit.FunSuite:
     assert(FrameEvidenceThresholds.make(-0.01, 0.05, 3.0).isLeft)
     assert(FrameEvidenceThresholds.make(0.03, 0.05, 0.0).isLeft)
     assert(FrameEvidenceThresholds.make(0.03, Double.PositiveInfinity, 3.0).isLeft)
-    assert(FrameEvidence.make(declaration, gmMap, thresholds, passing :+ score(Placement.Raw, 0.1)).isLeft)
+    assert(FrameEvidence.make(Vector(declaration), gmMap, thresholds, passing :+ score(Placement.Raw, 0.1)).isLeft)
+    assert(FrameEvidence.make(Vector.empty, gmMap, thresholds, passing).isLeft)
+    val other = FrameDeclaration.make(TemplateFrame.unsafe("MNI152NLin2009cAsym", "templateflow-24.2.0"),
+      declaration.basis, declaration.asset).toOption.get
+    assert(FrameEvidence.make(Vector(declaration, other), gmMap, thresholds, passing).isLeft)

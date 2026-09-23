@@ -89,11 +89,12 @@ enum FrameEvidenceVerdict:
 
 /** Disconfirmation receipt for a frame declaration: grey-matter probability,
   * from a map in the target frame, sampled at the declared anatomy under
-  * competing placements. Passing does not prove the declaration; failing
-  * refutes it at the declared margins.
+  * competing placements. The declarations are the assets scored together
+  * (e.g. both hemispheres of a mesh) and must declare one frame. Passing does
+  * not prove the declaration; failing refutes it at the declared margins.
   */
 final case class FrameEvidence private (
-  declaration: FrameDeclaration,
+  declarations: Vector[FrameDeclaration],
   probabilityMap: AssetProvenance,
   thresholds: FrameEvidenceThresholds,
   scores: Vector[PlacementScore]
@@ -124,8 +125,11 @@ final case class FrameEvidence private (
     if failures.isEmpty then FrameEvidenceVerdict.Pass else FrameEvidenceVerdict.Fail(failures)
 
 object FrameEvidence:
-  def make(declaration: FrameDeclaration, probabilityMap: AssetProvenance, thresholds: FrameEvidenceThresholds,
+  def make(declarations: Vector[FrameDeclaration], probabilityMap: AssetProvenance, thresholds: FrameEvidenceThresholds,
       scores: Vector[PlacementScore]): Either[ReferenceError, FrameEvidence] =
     val duplicated = scores.groupBy(_.placement).collect { case (p, group) if group.size > 1 => p.name }
-    if duplicated.nonEmpty then Left(ReferenceError.InvalidEvidence(s"duplicate placements: ${duplicated.mkString(", ")}"))
-    else Right(FrameEvidence(declaration, probabilityMap, thresholds, scores))
+    if declarations.isEmpty then Left(ReferenceError.InvalidEvidence("at least one declaration is required"))
+    else if declarations.map(_.frame).distinct.size != 1 then
+      Left(ReferenceError.InvalidEvidence("scored declarations must declare one frame"))
+    else if duplicated.nonEmpty then Left(ReferenceError.InvalidEvidence(s"duplicate placements: ${duplicated.mkString(", ")}"))
+    else Right(FrameEvidence(declarations, probabilityMap, thresholds, scores))

@@ -5,19 +5,66 @@ import scalafim.image.*
 import scalafim.surface.*
 import scala.util.control.NonFatal
 
-/** Explicit affine taking world coordinates in `from` to world coordinates in
-  * `to`. Nonlinear inter-template warps are deliberately not representable: a
-  * route across such a gap is refused rather than approximated. `Affine`
+/** How a displacement point map is used by a bridge. */
+enum PointMapUse:
+  /** Apply the map: its input frame to its output frame. */
+  case Forward
+  /** Solve the map per point: its output frame to its input frame. */
+  case Inverse(policy: InversePolicy)
+
+  def label: String =
+    this match
+      case Forward => "forward"
+      case Inverse(policy) => s"inverse (tolerance ${policy.toleranceMm} mm, at most ${policy.maxIterations} iterations)"
+
+/** The transform a bridge applies to world coordinates. */
+enum BridgeTransform:
+  /** One exact affine. */
+  case AffineMap(matrix: Affine[D3])
+  /** A digest-bound composite point map, applied per vertex. */
+  case Displacement(pointMap: DeclaredPointMap, use: PointMapUse)
+
+/** Explicit transform taking world coordinates in `from` to world coordinates
+  * in `to`. Either an exact affine, or a digest-bound displacement point map
+  * whose endpoints follow from its manifest frames and its declared use. A
+  * route across any other gap is refused rather than approximated. `Affine`
   * values are immutable, finite, homogeneous and invertible by construction.
   */
-final case class FrameBridge private (from: TemplateFrame, to: TemplateFrame, matrix: Affine[D3], evidence: String):
-  def display: String = s"affine ${from.display} -> ${to.display} ($evidence)"
+final case class FrameBridge private (from: TemplateFrame, to: TemplateFrame, transform: BridgeTransform, evidence: String):
+  def display: String =
+    transform match
+      case BridgeTransform.AffineMap(_) => s"affine ${from.display} -> ${to.display} ($evidence)"
+      case BridgeTransform.Displacement(map, use) =>
+        s"point map ${from.display} -> ${to.display}, ${use.label}, source ${map.source.display}" +
+          s"${map.stageFiles.map(f => s", stage ${f.display}").mkString} ($evidence)"
 
 object FrameBridge:
   def affine(from: TemplateFrame, to: TemplateFrame, matrix: Affine[D3], evidence: String): Either[ReferenceError, FrameBridge] =
     if from == to then Left(ReferenceError.InvalidBridge("source and target frames are identical"))
     else if evidence.trim.isEmpty then Left(ReferenceError.InvalidBridge("bridge evidence must be declared"))
-    else Right(FrameBridge(from, to, matrix, evidence))
+    else Right(FrameBridge(from, to, BridgeTransform.AffineMap(matrix), evidence))
+
+  /** A point-map bridge. Forward use runs from the map's input frame to its
+    * output frame; inverse use runs the other way. Frame releases are the
+    * map's catalog revision; `release` is required when the map has none and
+    * must agree with it when both are present.
+    */
+  def displacement(pointMap: DeclaredPointMap, use: PointMapUse, release: Option[TemplateRelease] = None,
+      evidence: String = "digest-bound point map"): Either[ReferenceError, FrameBridge] =
+    val resolved = (pointMap.catalogRevision, release) match
+      case (Some(declared), Some(requested)) if declared != requested =>
+        Left(ReferenceError.InvalidBridge(s"release ${requested.value} differs from the map's catalog revision ${declared.value}"))
+      case (Some(declared), _) => Right(declared)
+      case (None, Some(requested)) => Right(requested)
+      case (None, None) => Left(ReferenceError.InvalidBridge("point map has no catalog revision; declare the frame release"))
+    for
+      value <- resolved
+      _ <- Either.cond(evidence.trim.nonEmpty, (), ReferenceError.InvalidBridge("bridge evidence must be declared"))
+      input <- TemplateFrame.make(pointMap.input, value)
+      output <- TemplateFrame.make(pointMap.output, value)
+    yield use match
+      case PointMapUse.Forward => FrameBridge(input, output, BridgeTransform.Displacement(pointMap, use), evidence)
+      case PointMapUse.Inverse(_) => FrameBridge(output, input, BridgeTransform.Displacement(pointMap, use), evidence)
 
 /** How volume values reach a vertex. Both methods use nearest-voxel lookup
   * (ties round up; per-axis support [-0.5, dim - 0.5)). Neither is a
@@ -129,7 +176,14 @@ final case class RouteDisclosure(
   def nonFinite: String = "nonfinite and out-of-support voxels are excluded before aggregation"
 
 enum VertexCoverage:
-  case Mapped, MedialWall, NoSupport
+  /** Mapped from at least one accepted lookup. */
+  case Mapped
+  /** Medial wall of the admitted mesh; values are withheld. */
+  case MedialWall
+  /** Placed in the source frame, but no lookup was accepted. */
+  case NoSupport
+  /** The bridge could not place the vertex (not converged, or outside the displacement support); never sampled. */
+  case BridgeUnavailable
 
 /** One requested lookup for a vertex, in source-volume world millimetres. */
 enum Contribution:
@@ -152,7 +206,9 @@ final case class VertexMappingEvidence(
   vertex: VertexId,
   coverage: VertexCoverage,
   value: Option[Double],
-  samples: Vector[ContributionSample]
+  samples: Vector[ContributionSample],
+  /** Point-map outcome per anatomical surface (midthickness, or white then pial); empty without a point-map bridge. */
+  bridge: Vector[PointMapOutcome] = Vector.empty
 )
 
 /** Values mapped onto one hemisphere's ordered vertex domain. Non-mapped
@@ -177,7 +233,7 @@ final class MappedSurfaceValues private[reference] (
   /** Accepted lookups, reported for medial-wall vertices too although their value is withheld. */
   def acceptedLookupsAt(vertex: VertexId): Option[Int] = counts.lift(vertex.index)
 
-  /** Dense copy with NaN at medial-wall and unsupported vertices. */
+  /** Dense copy with NaN at every vertex that is not `Mapped`. */
   def valuesCopy: Array[Double] = values.clone()
 
   def count(kind: VertexCoverage): Int = coverage.count(_ == kind)
@@ -198,8 +254,14 @@ final class AdmittedSurfaceRoute private[reference] (
   val request: RouteRequest,
   val anatomy: SamplingAnatomy,
   val bridge: Option[FrameBridge],
-  sampler: VolumeSurfaceSampler
+  sampler: VolumeSurfaceSampler,
+  placement: Option[BridgePlacement]
 ):
+  /** Per-vertex point-map outcomes, when the bridge is a point map. */
+  def bridgePlacement: Option[BridgePlacement] = placement
+
+  private def unavailable(index: Int): Boolean = placement.exists(p => !p.available(index))
+
   val disclosure: RouteDisclosure = RouteDisclosure(
     request.source.frame, request.source.dims, request.source.voxelToWorld, anatomy.reference.mesh,
     anatomy.reference.hemisphere, anatomy.frame, anatomy.geometry.label, anatomy.declarations, bridge, request.method, request.semantics,
@@ -219,7 +281,7 @@ final class AdmittedSurfaceRoute private[reference] (
   def map(prepared: PreparedSource): Either[RouteError, MappedSurfaceValues] =
     owned(prepared).flatMap: _ =>
       guarded:
-        val sampled = sampler.sample(prepared.source.volume, Some(prepared.admission))
+        val sampled = sampler.sampleSelected(prepared.source.volume, Some(prepared.admission), placement.map(_.available).orNull)
         val medialWall = anatomy.reference.medialWall
         val n = anatomy.reference.vertexCount
         val values = Array.fill(n)(Double.NaN)
@@ -232,6 +294,7 @@ final class AdmittedSurfaceRoute private[reference] (
           counts(i) = accepted
           coverage(i) =
             if !medialWall.isCortex(vertex) then VertexCoverage.MedialWall
+            else if unavailable(i) then VertexCoverage.BridgeUnavailable
             else if accepted == 0 then VertexCoverage.NoSupport
             else VertexCoverage.Mapped
           if coverage(i) == VertexCoverage.Mapped then values(i) = sampled.values.valueAt(vertex).get
@@ -245,7 +308,13 @@ final class AdmittedSurfaceRoute private[reference] (
   def inspect(prepared: PreparedSource, vertex: VertexId): Either[RouteError, VertexMappingEvidence] =
     val n = anatomy.reference.vertexCount
     val volume = prepared.source.volume
+    val outcomes = placement.fold(Vector.empty[PointMapOutcome])(_.outcomesAt(vertex.index))
     if vertex.index >= n then Left(RouteError.VertexOutOfRange(vertex.index, n))
+    else if unavailable(vertex.index) then
+      owned(prepared).map: _ =>
+        val coverage =
+          if !anatomy.reference.medialWall.isCortex(vertex) then VertexCoverage.MedialWall else VertexCoverage.BridgeUnavailable
+        VertexMappingEvidence(vertex, coverage, None, Vector.empty, outcomes)
     else
       owned(prepared).flatMap: _ =>
         sampler.inspectVertexEither(volume, vertex, Some(prepared.admission)).left.map(error => RouteError.SamplingFailure(error.message))
@@ -272,7 +341,7 @@ final class AdmittedSurfaceRoute private[reference] (
               if !anatomy.reference.medialWall.isCortex(vertex) then VertexCoverage.MedialWall
               else if accepted == 0 then VertexCoverage.NoSupport
               else VertexCoverage.Mapped
-            VertexMappingEvidence(vertex, coverage, Option.when(coverage == VertexCoverage.Mapped)(receipt.value), samples)
+            VertexMappingEvidence(vertex, coverage, Option.when(coverage == VertexCoverage.Mapped)(receipt.value), samples, outcomes)
 
   /** Support-and-finite mask on the source grid; categorical values must be integral. */
   private def admissionMask(volume: SomeScalarVolume[Double]): Either[RouteError, SomeMaskVolume] =
@@ -320,7 +389,9 @@ object SurfaceRoute:
       val aggregation = request.semantics match
         case ValueSemantics.Continuous => SurfaceSampleAggregation.Average
         case ValueSemantics.Categorical => SurfaceSampleAggregation.Mode
-      AdmittedSurfaceRoute(request, anatomy, bridge, VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(located, path, aggregation)))
+      val (surfaces, placement) = located
+      AdmittedSurfaceRoute(request, anatomy, bridge, VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(surfaces, path, aggregation)),
+        placement)
 
   /** Rank candidates and return the best admitted route: same-frame anatomy
     * before bridged anatomy, then candidate order. All refusals are returned
@@ -332,13 +403,13 @@ object SurfaceRoute:
     admitted.sortBy(route => if route.bridge.isEmpty then 0 else 1).headOption
       .toRight(outcomes.collect { case (candidate, Left(refusal)) => candidate -> refusal })
 
-  private def frameTransform(required: (TemplateFrame, TemplateFrame), bridge: Option[FrameBridge]): Either[RouteRefusal, Option[Affine[D3]]] =
+  private def frameTransform(required: (TemplateFrame, TemplateFrame), bridge: Option[FrameBridge]): Either[RouteRefusal, Option[BridgeTransform]] =
     val (anatomyFrame, sourceFrame) = required
     bridge match
       case None if anatomyFrame == sourceFrame => Right(None)
       case None => Left(RouteRefusal.FrameMismatch(sourceFrame, anatomyFrame))
       case Some(_) if anatomyFrame == sourceFrame => Left(RouteRefusal.UnexpectedBridge(sourceFrame))
-      case Some(b) if b.from == anatomyFrame && b.to == sourceFrame => Right(Some(b.matrix))
+      case Some(b) if b.from == anatomyFrame && b.to == sourceFrame => Right(Some(b.transform))
       case Some(b) if b.from == sourceFrame && b.to == anatomyFrame => Left(RouteRefusal.ReversedBridge(required))
       case Some(b) => Left(RouteRefusal.BridgeMismatch(required, (b.from, b.to)))
 
@@ -354,18 +425,58 @@ object SurfaceRoute:
         else Right(SurfaceSamplingPath.FractionalThickness(fractions))
 
   /** Anatomy placed in source-frame world coordinates. A midthickness surface
-    * is paired with itself so the kernel samples its own coordinates.
+    * is paired with itself so the kernel samples its own coordinates. Surface
+    * coordinates go through their own surfaceToWorld first, then the bridge.
     */
-  private def locate(anatomy: SamplingAnatomy, toSource: Option[Affine[D3]]): Either[RouteRefusal, SurfaceGeometryPair] =
-    // Surface coordinates go through their own surfaceToWorld first, then the bridge.
-    def place(surface: SurfaceGeometry): Either[RouteRefusal, SurfaceGeometry] =
-      toSource.fold(Right(surface)): bridge =>
-        surface.surfaceToWorld.andThen(bridge).map(surface.withSurfaceToWorld)
-          .left.map(error => RouteRefusal.BridgeComposition(error.message))
-    for
-      white <- place(anatomy.located.white)
-      pial <- place(anatomy.located.pial)
-    yield SurfaceGeometryPair(white, pial)
+  private def locate(anatomy: SamplingAnatomy, toSource: Option[BridgeTransform])
+      : Either[RouteRefusal, (SurfaceGeometryPair, Option[BridgePlacement])] =
+    val midthickness = anatomy.geometry match
+      case AnatomicalGeometry.Midthickness(_) => true
+      case AnatomicalGeometry.WhitePial(_, _) => false
+    toSource match
+      case None => Right((anatomy.located, None))
+      case Some(BridgeTransform.AffineMap(matrix)) =>
+        def place(surface: SurfaceGeometry): Either[RouteRefusal, SurfaceGeometry] =
+          surface.surfaceToWorld.andThen(matrix).map(surface.withSurfaceToWorld)
+            .left.map(error => RouteRefusal.BridgeComposition(error.message))
+        for
+          white <- place(anatomy.located.white)
+          pial <- place(anatomy.located.pial)
+        yield (SurfaceGeometryPair(white, pial), None)
+      case Some(BridgeTransform.Displacement(map, use)) =>
+        val white = placeByPointMap(anatomy.located.white, map.map, use)
+        val pial = if midthickness then white else placeByPointMap(anatomy.located.pial, map.map, use)
+        val outcomes = if midthickness then Vector(white._2) else Vector(white._2, pial._2)
+        val n = anatomy.reference.vertexCount
+        val available = Array.tabulate(n)(i => outcomes.forall(_(i).placed.nonEmpty))
+        Right((SurfaceGeometryPair(white._1, pial._1), Some(BridgePlacement(outcomes, available))))
+
+  /** Place every vertex through a point map. A vertex the map cannot place
+    * keeps its pre-bridge world position only so the mesh stays well formed;
+    * it is excluded from sampling and reported as `BridgeUnavailable`.
+    */
+  private def placeByPointMap(surface: SurfaceGeometry, map: PointMap, use: PointMapUse)
+      : (SurfaceGeometry, Array[PointMapOutcome]) =
+    val n = surface.vertexCount
+    val coordinates = new Array[Double](3 * n)
+    val outcomes = new Array[PointMapOutcome](n)
+    var i = 0
+    while i < n do
+      val p = surface.mesh.vertex(VertexId.unsafe(i))
+      val world = surface.surfaceToWorld(Vector(p.x, p.y, p.z)).toOption.flatMap(w => WorldPoint.make(w(0), w(1), w(2)).toOption)
+      val outcome = world.fold(PointMapOutcome.OutsideSupport): point =>
+        use match
+          case PointMapUse.Forward => map.forward(point)
+          case PointMapUse.Inverse(policy) => map.inverse(point, policy)
+      outcomes(i) = outcome
+      val at = outcome.placed.orElse(world).getOrElse(WorldPoint.Origin)
+      coordinates(3 * i) = at.x
+      coordinates(3 * i + 1) = at.y
+      coordinates(3 * i + 2) = at.z
+      i += 1
+    val placed = SurfaceGeometry(TriangleMesh.fromArrays(coordinates, surface.mesh.faceIndices.clone()), surface.hemisphere,
+      surface.kind)
+    (placed, outcomes)
 
 /** A declared source volume checked against one route: frame, grid, support
   * and value semantics, with its support-and-finite admission mask.
@@ -375,5 +486,23 @@ final class PreparedSource private[reference] (
   val source: DeclaredVolume,
   private[reference] val admission: SomeMaskVolume
 )
+
+/** Per-vertex point-map outcomes for one admitted route: one array per
+  * anatomical surface (midthickness, or white then pial). A vertex is
+  * available only when every surface placed it.
+  */
+final class BridgePlacement private[reference] (
+  private val outcomes: Vector[Array[PointMapOutcome]],
+  private[reference] val available: Array[Boolean]
+):
+  def outcomesAt(vertex: Int): Vector[PointMapOutcome] = outcomes.map(_(vertex))
+
+  def isAvailable(vertex: Int): Boolean = available(vertex)
+
+  def unavailableCount: Int = available.count(!_)
+
+  /** Residuals (mm) of converged inverse placements on the first surface. */
+  def convergedResidualsMm: Vector[Double] = outcomes.head.toVector.collect:
+    case PointMapOutcome.Converged(_, residual, _) => residual
 
 final case class RouteCandidate(anatomy: SamplingAnatomy, bridge: Option[FrameBridge] = None)
