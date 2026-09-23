@@ -34,11 +34,13 @@ in §1 were re-checked against `main`; §3 counts were re-measured after the por
 
   The layer refuses routes it cannot justify, and it executes through the
   existing kernel rather than a new one.
-- **The PLSNeuro route is refused, correctly.** The route in question maps
-  `MNI152NLin2009cAsym` res-2 group results to fsLR 32k. It cannot be qualified
-  with the assets that exist today (see "Qualification status" below).
-- **Real-data qualification.** This is item 6 of the ticket. It has not been run
-  and is blocked on the prerequisites listed below.
+- **The PLSNeuro route.** It maps `MNI152NLin2009cAsym` res-2 group results to
+  fsLR 32k. It was first refused, correctly. After WS3 it is admissible for
+  `MidthicknessNearest`: fsLR anatomy is declared in `MNI152NLin6Asym`, and a
+  digest-bound TemplateFlow point map moves it into 2009c through its per-vertex
+  inverse (§5). The oracle, inverse-consistency and GM-evidence gates pass.
+- **Real-data qualification.** This is item 6 of the ticket. The frozen budgets
+  in §4, against an independent implementation, have not been run yet.
 
 ## 1. Inventory of existing machinery (re-checked on `main`)
 
@@ -257,7 +259,7 @@ comparable: the module test sets differ between the two lines.)
 | `surfaceViewJS/test` | 49/49 |
 | Route + sampling suites under Scala.js `FullOpt` | 36/36 (19 route, 13 sampling, 4 receipt) |
 
-WS2 (frame declaration, plus review follow-ups) re-measured on 2026-09-23:
+WS2 (frame declaration, plus review follow-ups) measured on 2026-09-23; WS3 counts follow below.
 
 | Target | Result |
 |---|---|
@@ -267,6 +269,17 @@ WS2 (frame declaration, plus review follow-ups) re-measured on 2026-09-23:
 | `surfaceViewJS` / `atlasJS` / `spatialJS` / `surfaceViewRasterJS` / `surfaceViewConnectivityJS` | 49/49, 62/62, 116/116, 11/11, 2/2 |
 | Reference, GIFTI and sampling suites under Scala.js `FullOpt` | 73/73 |
 | `FullOpt` links (`Test/fullLinkJS`) | `surfaceViewJS`, `atlasJS`, `spatialJS`, `surfaceViewThreeJS`, `mvpaSpatialJS`, and `surfaceViewExamplesJS/fullLinkJS`: all link with the new dependency |
+
+WS3 (displacement bridge) re-measured on 2026-09-23:
+
+| Target | Result |
+|---|---|
+| `surfaceJVM/test` | 196/196, real-asset suites ran |
+| `surfaceJS/test` | 161/161 |
+| Reference, GIFTI and sampling suites under Scala.js `FullOpt` | 92/92 |
+| `surfaceViewJVM` / `atlasJVM` / `spatialJVM` | 49/49, 90/90, 140/140 |
+| `surfaceViewJS/test` | 49/49 |
+| `FullOpt` links | `atlasJS`, `spatialJS` (`Test/fullLinkJS`), `surfaceViewExamplesJS/fullLinkJS` |
 
 Mutation checks on the follow-ups each fail their test:
 - removing the source-frame check;
@@ -280,11 +293,14 @@ and `bridge.andThen(surfaceToWorld)` in place of
 
 ## 4. Qualification status: `MNI152NLin2009cAsym` res-2 → fsLR 32k
 
-**Status: refused. Not qualified.**
+**Status (after WS3): admissible for `MidthicknessNearest` through the inverse
+point-map bridge; the WS3 gates pass; not yet qualified against the frozen
+real-data budgets below.** Items 1, 3 and 4 below are resolved as noted; item 2
+still restricts the method.
 
 The source is PLSNeuro group results on a grid of 97×115×97 at 2 mm, with origin
-(−96.5, −132.5, −78.5), in `MNI152NLin2009cAsym`. Four things block
-qualification:
+(−96.5, −132.5, −78.5), in `MNI152NLin2009cAsym`. As first recorded, four things
+blocked qualification:
 
 1. **No real fsLR 32k assets are present.** Every `tpl-fsLR` GIFTI in the local
    TemplateFlow cache (`~/Library/Caches/templateflow`) is 0 bytes. The files
@@ -302,13 +318,19 @@ qualification:
    not declare a frame, and the GIFTI itself declares only the generic
    `NIFTI_XFORM_TALAIRACH` (now retained, §2a). The frame must be declared from
    asset provenance, not assumed. WS2 supplies the mechanism: a digest-bound
-   `FrameDeclaration` with a literature or derived basis. Its `FrameEvidence`
-   receipt on the locked assets is still outstanding.
+   `FrameDeclaration` with a literature or derived basis. **Resolved (WS3):** the
+   `FrameEvidence` receipt on the locked assets passes (§5).
 4. **No exact bridge exists.** 6Asym ↔ 2009c is a nonlinear warp.
    - TemplateFlow ships it as an ANTs `.h5`, and it is 0 bytes in the local
      cache.
    - ScalaFIM has no warp-field volume→surface capability.
    - `FrameBridge` deliberately admits only exact affines.
+
+   **Resolved (WS3), §5:** `FrameBridge.displacement` applies the digest-bound
+   converted `tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym` point map through
+   its per-vertex inverse. Item 1 is also resolved: the locked fsLR assets are
+   present in `~/.cache/templateflow` with the digests in
+   `docs/audits/templateflow-mni-transform-direction.md`.
 
 Any one of the following would open an exact route; each must be qualified
 separately:
@@ -354,3 +376,74 @@ after it.
   are mapped only through an admitted route. Original group-volume statistics
   are retained unchanged. Cortical display is derived presentation, not
   surface-native inference.
+
+## 5. Displacement-field bridge (WS3)
+
+### Types (`scalafim.surface.reference`)
+
+| Type | Admits / refuses |
+|---|---|
+| `DisplacementField` | Dense component-planar field on a voxel grid (`voxelToRas: Affine[D3]`). Evaluation is ITK `DisplacementFieldTransform` with linear interpolation. With `ci = voxelToRas⁻¹·x`, the displacement is zero unless `−0.5 ≤ ci < n − 0.5` on every axis. Inside, it is trilinear over the 8 surrounding centres with neighbour indices clamped to `[0, n−1]`. Nonfinite points are never inside. The inner loop is allocation-free over primitive arrays. |
+| `PointMap` | Ordered `AffineStage` / `DisplacementStage` composite; `stages(0)` is applied first. `forwardInto` has ITK semantics. `forward` returns `Mapped`, or `OutsideSupport` if any displacement stage saw its point outside its field. `inverse` is the fixed-point iteration `y ← y + (x − T(y))` from `y = x` under an `InversePolicy(toleranceMm, maxIterations)`. It returns `Converged(point, residual, iterations)` or `NonConvergent(lastIterate, residual, iterations)`, which is never admitted. It returns `OutsideSupport` when the solution lies outside a field; nothing is extrapolated. |
+| `PointMapManifest`, `DeclaredPointMap` | A `templateflow4s.point-map/1` manifest verified before use: schema; quarantine (either `frames.quarantine` or `QUARANTINED` in `frames.derivation`), refused with no override; source SHA-256 equal to the one the caller expects; frame ids as exact `TemplateId`s. For each displacement stage file it also checks: a plain `stage-<i>-displacement.nii` name, byte count, SHA-256, NIfTI-1 header (`sizeof_hdr`, magic, `dim = [5,nx,ny,nz,1,3,1,1]`, datatype/bitpix 64, intent 1007, `vox_offset` 352, `sform_code` 5), and float32 sform equal to the manifest `voxelToRas` within float32 rounding. The source becomes an `AssetProvenance` when the manifest has a catalog revision, otherwise a `DataAsset`. |
+| `FrameBridge` | `transform: BridgeTransform` = `AffineMap(Affine[D3])` or `Displacement(DeclaredPointMap, PointMapUse)`. Endpoints come from the map's frames and use: `Forward` is input→output, `Inverse(policy)` is output→input. Their release is the map's catalog revision; an explicit release is required when the map has none and must agree when both exist. `ReversedBridge` / `BridgeMismatch` apply unchanged. The display and disclosure carry the use, tolerance, source digest and stage digests. |
+| Route placement | Each vertex is taken through its surface's `surfaceToWorld` and then the point map (per vertex, once at admission). The placed coordinates feed the unchanged sampling kernel. A vertex whose outcome is not `Mapped`/`Converged` (on every anatomical surface) is `VertexCoverage.BridgeUnavailable`. It is skipped by the kernel (`sampleSelected`), so it is never looked up at a fabricated coordinate, and `inspect` reports its outcome(s) with no samples. `inspect` evidence carries the per-vertex outcome and residual. |
+| `DeclaredPointMapReader` (JVM) | Reads `manifest.json` (ujson) and each stage file once, then verifies them through `DeclaredPointMap.fromManifest`. The Scala.js side has the shared model and verification but no directory reader. |
+
+Using the inverse of a white/pial pair moves both endpoints. Depth fractions are
+then interpolated linearly between the placed endpoints, in the source frame.
+
+### Evidence
+
+- **Analytic (shared; JVM, JS, FullOpt).** Constant, linear-in-position and
+  small-rotation fields reproduce their closed-form forward and inverse maps. The
+  ITK border is tested exactly: −0.5 is inside, `n − 0.5` is outside, the
+  half-voxel border is clamped, and beyond it the displacement is zero. Stage
+  order A∘D vs D∘A is distinguishable (the field has an offset, since a uniform
+  scale commutes with a homogeneous linear field). Inversion is tested for
+  `NonConvergent` within a one-iteration budget and for `OutsideSupport`.
+  Manifest refusals (quarantine, digests, header, sform, file name, schema,
+  family-name frames) are tested, as are bridge endpoints and releases, and
+  route placement against a same-frame route, including `BridgeUnavailable` and
+  `ReversedBridge` for forward use.
+- **Synthetic ITK oracle (shared and JVM reader).** templateflow4s's canonical
+  synthetic map: an oblique 5×6×7 displacement grid, then an affine. It is
+  compared against SimpleITK 2.5.6 on 120 points (interior, voxel centres,
+  border, outside): max |Δ| = 5.7e-14 mm. Budget: 1e-9 mm.
+- **Real forward.** The converted `2e3869a0…` map (stage `4e964918…`,
+  193×229×193, then an affine) against the templateflow4s SimpleITK oracle on
+  200 points: max |Δ| = 2.8e-14 mm. Budget: 1e-6 mm.
+- **Real inverse.** 5 000 fsLR 32k vertices (every 13th per hemisphere),
+  against SimpleITK's 12-iteration fixed-point solutions (fixture
+  `scalafim.fslr-inverse-oracle/1`, sha256 `8a0fac18…`, committed gzipped):
+  max |Δ| = 1.1e-9 mm. Budget: 1e-6 mm. No point was outside the field.
+- **Real `FrameEvidence`.** 2009c res-01 GM probseg as a `DeclaredVolume`, fsLR
+  32k midthickness L+R as `DeclaredSurface`s in `MNI152NLin6Asym`, cortex from
+  `desc-nomedialwall` (59 412 vertices), nearest voxel through the production
+  kernel. The production route with the inverse bridge maps exactly the bridged
+  placement's values at every cortical vertex. `verdict = Pass` over both
+  hemispheres:
+
+  | Placement | Mean GM p | Fraction p > 0.5 |
+  |---|---|---|
+  | Bridged (inverse, tolerance 1e-6 mm, ≤ 50 iterations) | 0.7027 | 0.7937 |
+  | Raw | 0.6702 | 0.7427 |
+  | Reversed (forward map) | 0.6180 | 0.6754 |
+  | Shift x −3 / +3 mm | 0.6157 / 0.6124 | — |
+  | Shift y −3 / +3 mm | 0.6288 / 0.6444 | — |
+  | Shift z −3 / +3 mm | 0.6262 / 0.6253 | — |
+
+  Inverse residuals: median 3.0e-7 mm, max 1.0e-6 mm, no non-convergent vertex
+  (gate (b)).
+- **Caveat.** Per hemisphere, the bridged-minus-raw gain is 0.038 for L but only
+  0.027 for R, below the 0.03 margin. The margin was declared for the combined
+  cortical population, which is how the plan measured it, and the receipt is
+  therefore scored over both hemispheres. A per-hemisphere gate would fail
+  on R.
+- **Mutation checks.** Each of the following fails its tests:
+  - reversing stage application order: the synthetic oracle, the analytic stage
+    order test and the real evidence all fail;
+  - replacing the border rule with `0 ≤ ci ≤ n−1`: the border, synthetic oracle
+    and bridge tests fail;
+  - swapping forward and inverse use in route placement: the bridge tests and the
+    real evidence fail.
