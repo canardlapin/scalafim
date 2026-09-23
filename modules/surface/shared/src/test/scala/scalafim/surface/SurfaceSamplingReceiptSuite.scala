@@ -73,6 +73,24 @@ class SurfaceSamplingReceiptSuite extends munit.FunSuite:
     assertEquals(repeated.samples(0).outcome, repeated.samples(1).outcome)
     assertEqualsDouble(repeated.value, 200.0 / 3.0, 1e-12)
 
+  test("fractional-thickness Mode and Average match construction, independent of the bulk kernel"):
+    // surfaceToWorld equals the grid's voxel-to-world affine, so surface coordinates
+    // are voxel indices: vertex 1 is voxel (1, 0, 0) on white (z = 0) and (1, 0, 2)
+    // on pial (z = 2). Fractions (0, 0, 1) request voxels (1,0,0), (1,0,0), (1,0,2)
+    // holding 1, 1 and 201; none is masked.
+    val path = SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.0, 1.0))
+    val mode = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair, path, SurfaceSampleAggregation.Mode))
+      .inspectVertex(volume, VertexId(1), Some(mask))
+    assertEquals(mode.samples.map(_.outcome), Vector(
+      SurfaceSampleOutcome.Included(VoxelCoord(1, 0, 0), 1.0),
+      SurfaceSampleOutcome.Included(VoxelCoord(1, 0, 0), 1.0),
+      SurfaceSampleOutcome.Included(VoxelCoord(1, 0, 2), 201.0)))
+    assertEqualsDouble(mode.value, 1.0, 0.0)
+    assertEquals(mode.contributingSampleIndices, Vector(0, 1, 2))
+    val average = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair, path, SurfaceSampleAggregation.Average))
+    assertEqualsDouble(average.inspectVertex(volume, VertexId(1), Some(mask)).value, 203.0 / 3.0, 1e-12)
+    assertEqualsDouble(average.sample(volume, Some(mask)).values.valueAt(VertexId(1)).get, 203.0 / 3.0, 1e-12)
+
   test("nonfinite included values retain existing aggregation/count semantics and are explicit"):
     val nonfinite = SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Double](27, Double.NaN), space, "nan")
     val sampler = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair))
