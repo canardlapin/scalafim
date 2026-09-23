@@ -22,8 +22,8 @@ import scala.jdk.CollectionConverters.*
   * Output per dataset `<out>/<dataset>/` (NumPy `.npy`, little-endian):
   *  - `world_<h>.npy` float64 (n, 3): placed vertex in 2009c RAS mm (pre-bridge position when unavailable);
   *  - `residual_<h>.npy` float64 (n): inverse residual mm (NaN when not converged);
-  *  - `voxel_<h>.npy` int32 (n, 3): the voxel the lookup selected, (-1, -1, -1) outside the grid or unavailable;
-  *  - `receipt_<h>.npy` int8 (n): inspect() contribution kind for volume 0:
+  *  - `voxel_<h>_<k>.npy` int32 (n, 3): the voxel the lookup selected, (-1, -1, -1) outside the grid or unavailable;
+  *  - `receipt_<h>_<k>.npy` int8 (n): inspect() contribution kind:
   *    0 Included, 1 OutsideGrid, 2 OutsideSupport, 3 NonFinite, -1 no lookup (bridge unavailable);
   *  - `coverage_<h>_<k>.npy` int8 (n): 0 Mapped, 1 MedialWall, 2 NoSupport, 3 BridgeUnavailable;
   *  - `value_<h>_<k>.npy` float64 (n): mapped value, NaN unless Mapped;
@@ -32,7 +32,7 @@ import scala.jdk.CollectionConverters.*
 object FslrQualification:
 
   def main(args: Array[String]): Unit =
-    if args.headOption.contains("--probe-heap") then probeHeap(Path.of(args(1)), args(2).toInt)
+    if args.headOption.contains("--probe-heap") then probeHeap(Path.of(args(1)), args(2).toInt, Path.of(args(3)))
     else runAll(args)
 
   /** Peak-live-heap probe for prepare+map. Run with `-XX:+UseSerialGC -Xmn16m` so young collections are frequent:
@@ -40,7 +40,7 @@ object FslrQualification:
     * `max(heap used after any collection during the phase) - baseline + eden` bounds the additional live heap
     * from above. The baseline is the live heap after setup (point map, surfaces, routes, one volume).
     */
-  private def probeHeap(volumeDir: Path, repeats: Int): Unit =
+  private def probeHeap(volumeDir: Path, repeats: Int, artifact: Path): Unit =
     val policy = InversePolicy.make(1e-6, 50).toOption.get
     val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(policy)).toOption.get
     val exported = ujson.read(Files.readString(volumeDir.resolve("export.json")))
@@ -96,12 +96,23 @@ object FslrQualification:
     running = false
     watchdog.join()
     def mib(bytes: Long) = bytes.toDouble / (1024 * 1024)
-    println(f"probe: baseline ${mib(baseline)}%.1f MiB, eden ${mib(eden)}%.1f MiB, $collections collections, " +
-      f"max after-GC ${mib(maxAfter)}%.1f MiB, additional live bound ${mib(maxAfter - baseline + eden)}%.1f MiB " +
-      f"over $repeats x ${routes.size} prepare+map runs")
-    println(f"probe: sampled live heap above baseline: max ${mib(samples.max - baseline)}%.1f MiB, median " +
-      f"${mib(samples.sorted.apply(samples.size / 2) - baseline)}%.1f MiB over ${samples.size} full-GC samples during " +
-      f"$runs x ${routes.size} prepare+map runs")
+    val summary = ujson.Obj(
+      "schema" -> "scalafim.fslr-heap-probe/1",
+      "volume" -> name,
+      "volumeSha256" -> declared.declaration.asset.sha256.value,
+      "jvm" -> ujson.Obj("version" -> sys.props("java.version"),
+        "inputArguments" -> ujson.Arr.from(ManagementFactory.getRuntimeMXBean.getInputArguments.asScala.map(ujson.Str(_)))),
+      "baselineMiB" -> mib(baseline),
+      "edenMiB" -> mib(eden),
+      "youngCollectionPhase" -> ujson.Obj("runs" -> repeats * routes.size, "collections" -> collections,
+        "maxAfterCollectionMiB" -> mib(maxAfter), "boundMiB" -> mib(maxAfter - baseline + eden),
+        "note" -> "includes promoted garbage; not a live-heap measure"),
+      "sampledPhase" -> ujson.Obj("runs" -> runs * routes.size, "fullCollectionSamples" -> samples.size,
+        "maxAboveBaselineMiB" -> mib(samples.max - baseline),
+        "medianAboveBaselineMiB" -> mib(samples.sorted.apply(samples.size / 2) - baseline),
+        "note" -> "live heap at forced full collections at arbitrary points; sampled, not a bound"))
+    Files.writeString(artifact, ujson.write(summary, indent = 2), StandardCharsets.UTF_8)
+    println(ujson.write(summary))
 
   private def runAll(args: Array[String]): Unit =
     require(args.length >= 2, "usage: FslrQualification <pls-volumes> <out> [<export-script>]")
@@ -146,34 +157,37 @@ object FslrQualification:
       val route = admit()
       val placement = route.bridgePlacement.get
 
-      // Placement, residual and per-vertex receipts for volume 0.
+      // Placement and residual (volume-independent), then per-vertex receipts and chosen voxels for every volume.
       val prepared0 = route.prepare(volumes.head).fold(e => sys.error(e.message), identity)
       val world = new Array[Double](3 * n)
       val residual = Array.fill(n)(Double.NaN)
-      val voxel = Array.fill(3 * n)(-1)
-      val receipt = Array.fill[Byte](n)(-1)
       for i <- 0 until n do
-        val evidence = route.inspect(prepared0, VertexId(i)).fold(e => sys.error(e.message), identity)
-        evidence.bridge.head match
+        placement.outcomesAt(i).head match
           case PointMapOutcome.Converged(p, r, _) =>
             residual(i) = r
             world(3 * i) = p.x; world(3 * i + 1) = p.y; world(3 * i + 2) = p.z
           case _ =>
             val p = h.surface.geometry.mesh.vertex(VertexId(i))
             world(3 * i) = p.x; world(3 * i + 1) = p.y; world(3 * i + 2) = p.z
-        evidence.samples.headOption.foreach: sample =>
-          val (kind, v) = sample.contribution match
-            case Contribution.Included(v, _, _) => (0, Some(v))
-            case Contribution.OutsideGrid => (1, None)
-            case Contribution.OutsideSupport(v) => (2, Some(v))
-            case Contribution.NonFinite(v, _) => (3, Some(v))
-          receipt(i) = kind.toByte
-          v.foreach: c =>
-            voxel(3 * i) = c.x; voxel(3 * i + 1) = c.y; voxel(3 * i + 2) = c.z
       writeDoubles(out.resolve(s"world_${h.label}.npy"), world, Vector(n, 3))
       writeDoubles(out.resolve(s"residual_${h.label}.npy"), residual, Vector(n))
-      writeInts(out.resolve(s"voxel_${h.label}.npy"), voxel, Vector(n, 3))
-      writeBytes(out.resolve(s"receipt_${h.label}.npy"), receipt, Vector(n))
+      for (declared, k) <- volumes.zipWithIndex do
+        val prepared = route.prepare(declared).fold(e => sys.error(e.message), identity)
+        val voxel = Array.fill(3 * n)(-1)
+        val receipt = Array.fill[Byte](n)(-1)
+        for i <- 0 until n do
+          val evidence = route.inspect(prepared, VertexId(i)).fold(e => sys.error(e.message), identity)
+          evidence.samples.headOption.foreach: sample =>
+            val (kind, v) = sample.contribution match
+              case Contribution.Included(v, _, _) => (0, Some(v))
+              case Contribution.OutsideGrid => (1, None)
+              case Contribution.OutsideSupport(v) => (2, Some(v))
+              case Contribution.NonFinite(v, _) => (3, Some(v))
+            receipt(i) = kind.toByte
+            v.foreach: c =>
+              voxel(3 * i) = c.x; voxel(3 * i + 1) = c.y; voxel(3 * i + 2) = c.z
+        writeInts(out.resolve(s"voxel_${h.label}_$k.npy"), voxel, Vector(n, 3))
+        writeBytes(out.resolve(s"receipt_${h.label}_$k.npy"), receipt, Vector(n))
 
       val timings = ujson.Arr()
       for (declared, k) <- volumes.zipWithIndex do
@@ -216,23 +230,22 @@ object FslrQualification:
       val cortical = (0 until n).filter(h.cortex).toVector
       val picks = ujson.Arr.from((0 until 20).map { j =>
         val v = cortical(j * cortical.size / 20)
-        val e = route.inspect(prepared0, VertexId(v)).toOption.get
-        ujson.Obj("vertex" -> v, "coverage" -> e.coverage.toString, "value" -> e.value.fold[ujson.Value](ujson.Null)(ujson.Num(_)),
-          "bridge" -> e.bridge.map(_.toString).mkString,
-          "samples" -> ujson.Arr.from(e.samples.map { s =>
-            val (kind, voxel, value) = s.contribution match
-              case Contribution.Included(c, x, _) => ("Included", Some(c), Some(x))
-              case Contribution.OutsideGrid => ("OutsideGrid", None, None)
-              case Contribution.OutsideSupport(c) => ("OutsideSupport", Some(c), None)
-              case Contribution.NonFinite(c, x) => ("NonFinite", Some(c), Some(x))
-            ujson.Obj("world" -> ujson.Arr(s.world.x, s.world.y, s.world.z), "kind" -> kind,
-              "voxel" -> voxel.fold[ujson.Value](ujson.Null)(c => ujson.Arr(c.x, c.y, c.z)),
-              "sourceValue" -> value.fold[ujson.Value](ujson.Null)(x => if x.isFinite then ujson.Num(x) else ujson.Str(x.toString)),
-              "volumeAtVoxel" -> voxel.fold[ujson.Value](ujson.Null) { c =>
-                val x = volumes.head.volume(c)
-                if x.isFinite then ujson.Num(x) else ujson.Str(x.toString)
-              })
-          }))
+        ujson.Obj("vertex" -> v, "volumes" -> ujson.Arr.from(volumes.zipWithIndex.map { (declared, k) =>
+          val e = route.inspect(route.prepare(declared).toOption.get, VertexId(v)).toOption.get
+          ujson.Obj("volume" -> k, "coverage" -> e.coverage.toString,
+            "value" -> e.value.fold[ujson.Value](ujson.Null)(ujson.Num(_)),
+            "bridge" -> e.bridge.map(_.toString).mkString,
+            "samples" -> ujson.Arr.from(e.samples.map { s =>
+              val (kind, voxel, value) = s.contribution match
+                case Contribution.Included(c, x, _) => ("Included", Some(c), Some(x))
+                case Contribution.OutsideGrid => ("OutsideGrid", None, None)
+                case Contribution.OutsideSupport(c) => ("OutsideSupport", Some(c), None)
+                case Contribution.NonFinite(c, x) => ("NonFinite", Some(c), Some(x))
+              ujson.Obj("world" -> ujson.Arr(s.world.x, s.world.y, s.world.z), "kind" -> kind,
+                "voxel" -> voxel.fold[ujson.Value](ujson.Null)(c => ujson.Arr(c.x, c.y, c.z)),
+                "sourceValue" -> value.fold[ujson.Value](ujson.Null)(x => if x.isFinite then ujson.Num(x) else ujson.Str(x.toString)))
+            }))
+        }))
       })
 
       hemiReport(h.label) = ujson.Obj(

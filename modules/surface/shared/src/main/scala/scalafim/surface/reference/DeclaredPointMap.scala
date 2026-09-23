@@ -35,8 +35,12 @@ final case class PointMapManifest private[reference] (sha256: AssetSha256, field
 object PointMapManifest:
   val Schema: String = "templateflow4s.point-map/1"
 
-  /** Check `bytes` against the expected manifest digest, then parse them. */
-  def verified(bytes: Array[Byte], expectedSha256: String,
+  /** Check `bytes` against the expected manifest digest, then parse them.
+    * Package-private: the parser must be the reference package's own (the JVM
+    * `DeclaredPointMapReader`), so no caller can pair real bytes with forged
+    * fields. Public code obtains a manifest only through that reader.
+    */
+  private[reference] def verified(bytes: Array[Byte], expectedSha256: String,
       parse: String => Either[String, ManifestFields]): Either[ReferenceError, PointMapManifest] =
     for
       expected <- AssetSha256.make(expectedSha256)

@@ -92,7 +92,19 @@ class RouteTimingJsSuite extends munit.FunSuite:
       val t0 = now(); route.map(source).fold(e => fail(e.message), identity); now() - t0
     }
     val mapped = route.map(source).toOption.get
-    println(f"Scala.js synthetic same-size: admission+placement median ${median(admission.drop(1))}%.1f ms " +
-      f"(first ${admission.head}%.1f ms); prepare+map median ${median(prepareAndMap)}%.1f ms, max ${prepareAndMap.max}%.1f ms; " +
-      s"mapped ${mapped.count(VertexCoverage.Mapped)}, unavailable ${mapped.count(VertexCoverage.BridgeUnavailable)}")
+    val summary = js.Dynamic.literal(
+      schema = "scalafim.fslr-js-timing/1",
+      productionMode = scala.scalajs.LinkingInfo.productionMode,
+      synthetic = "97x115x97 volume, 32492-vertex hemisphere, 193x229x193 displacement field plus affine, inverse placement",
+      admissionMedianMs = median(admission.drop(1)),
+      admissionFirstMs = admission.head,
+      prepareAndMapMedianMs = median(prepareAndMap),
+      prepareAndMapMaxMs = prepareAndMap.max,
+      prepareAndMapRuns = prepareAndMap.size,
+      mapped = mapped.count(VertexCoverage.Mapped),
+      unavailable = mapped.count(VertexCoverage.BridgeUnavailable))
+    println("FSLR_JS_TIMING " + js.JSON.stringify(summary))
     assert(mapped.count(VertexCoverage.Mapped) > n / 2, "fixture must exercise real lookups")
+    // Frozen budget: <= 2 s per hemisphere on Scala.js FullOpt (only meaningful in production mode).
+    assert(scala.scalajs.LinkingInfo.productionMode, "run under FullOpt (set surfaceJS/Test/scalaJSStage := FullOpt)")
+    assert(prepareAndMap.max <= 2000.0, s"prepare+map max ${prepareAndMap.max} ms exceeds 2 s")
