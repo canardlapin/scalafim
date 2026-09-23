@@ -110,6 +110,7 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
       inflated,
       ScalarColorizer(DisplayWindow.unsafe(0.0, 500.0))
     ).toOption.get
+    assert(layer.geometry eq inflated, "layer must carry the display geometry, not the sampling anatomy")
     val model = SurfaceViewerModel.make(
       Vector(SurfaceAsset.make(surfaceId, inflated).toOption.get),
       Vector(layer)
