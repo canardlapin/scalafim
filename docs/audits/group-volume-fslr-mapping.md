@@ -1,13 +1,12 @@
 # Group-volume → fsLR mapping: audit and route admission
 
-Ticket: `bd-01M35BHNDCHM6YXCKYX0544TP3` (ScalaFIM). Consumer ticket:
-PLSNeuro `bd-01M2421N7AZQX1AK5BEMVSB84K`.
+Ticket: `bd-01M35BHNDCHM6YXCKYX0544TP3` (ScalaFIM).
 Originally written on `surface/group-fslr-qualification-20260923` (commits
-`efbfff1`, `d741dff`, based on the consumer pin `7c3ff0a`, which predates the
+`efbfff1`, `d741dff`, based on `7c3ff0a`, which predates the
 image-API refactor). This version records the port onto current `main`
 (`integration/main-catchup-20260923`): `SomeScalarVolume`/`SomeMaskVolume`,
 `SampleSpaces`, image4s `Affine[D3]` and grid runtime ownership. The per-vertex
-receipt API that PLSNeuro uses was ported from `7c3ff0a` alongside it. Findings
+receipt API was ported from `7c3ff0a` alongside it. Findings
 in §1 were re-checked against `main`; §3 counts were re-measured after the port.
 
 ## Summary
@@ -34,13 +33,14 @@ in §1 were re-checked against `main`; §3 counts were re-measured after the por
 
   The layer refuses routes it cannot justify, and it executes through the
   existing kernel rather than a new one.
-- **The PLSNeuro route.** It maps `MNI152NLin2009cAsym` res-2 group results to
+- **The group-analysis route.** It maps `MNI152NLin2009cAsym` res-2 group results to
   fsLR 32k. It was first refused, correctly. After WS3 it is admissible for
   `MidthicknessNearest`: fsLR anatomy is declared in `MNI152NLin6Asym`, and a
   digest-bound TemplateFlow point map moves it into 2009c through its per-vertex
   inverse (§5). The oracle, inverse-consistency and GM-evidence gates pass.
-- **Real-data qualification.** This is item 6 of the ticket. The frozen budgets
-  in §4, against an independent implementation, have not been run yet.
+- **Qualification.** This is item 6 of the ticket. §6 qualifies the route on
+  TemplateFlow-only inputs against the budgets of §4, including the post hoc
+  amendment of 2026-09-24, and an independent implementation.
 
 ## 1. Inventory of existing machinery (re-checked on `main`)
 
@@ -53,7 +53,6 @@ There are three sampling implementations.
 | GPU | `surface-view-three/js/.../ThreeVolumeProjector.scala` | nearest in float32, same support | midpoint only | — | none |
 
 `VolToSurfMorphism` and `SurfaceVolumeProjection` are thin wrappers over engine A.
-PLSNeuro's `SurfaceProjection` calls engine A directly (`Midpoint` + `Nearest`).
 
 ### Numerical contracts of engine A
 
@@ -142,8 +141,6 @@ PLSNeuro's `SurfaceProjection` calls engine A directly (`Midpoint` + `Nearest`).
 - `SurfaceKind` has no very-inflated case.
 - Typed template ids (`atlas.SpaceIdOf`, `StandardSurface.FsLR32k`) live in
   `atlas`, which `surface` cannot see.
-- PLSNeuro's only space check was a string comparison between a manifest
-  `template` field and the BIDS `space` entity.
 
 ## 2. Route admission API (`modules/surface/.../reference`)
 
@@ -168,7 +165,7 @@ PLSNeuro's `SurfaceProjection` calls engine A directly (`Midpoint` + `Nearest`).
 | `GiftiDeclaredSpace`, `GiftiCoordinateSystem`, `GiftiCoordinateDeclaration` (`surface.gifti`) | Every pointset `CoordinateSystemTransformMatrix` in file order: `NIFTI_XFORM_{UNKNOWN,SCANNER_ANAT,ALIGNED_ANAT,TALAIRACH,MNI_152}` or `Other(text)`, blank/absent as `None`, and the 16 row-major values (an affine view is checked on demand). Also `GeometricType`, `AnatomicalStructurePrimary` and `AnatomicalStructureSecondary` from pointset metadata, falling back to document metadata. Exposed by `GiftiSurfaceReader.readDeclaredEither` (JVM) and `readDeclared`/`readDeclaredString` (Scala.js) beside the existing readers. **There is no conversion to `TemplateFrame`.** |
 | `AssetSha256`, `AssetProvenance` | 64 lowercase hex digits; template id; archive path that is normalized, relative and starts with `tpl-<template>/`; non-blank catalog revision. |
 | `FrameBasis` | `Literature(doi, statement)` (bare DOI `10.NNNN/...`, non-blank statement) or `Derived(recipe, inputs)` (non-blank recipe, at least one provenance-bound input). |
-| `DeclaredAsset` | `AssetProvenance` (TemplateFlow archive asset) or `DataAsset(name, sha256)` for anything else, such as a group-result NIfTI or a PLS bundle. |
+| `DeclaredAsset` | `AssetProvenance` (TemplateFlow archive asset) or `DataAsset(name, sha256)` for anything else, such as a group-result NIfTI or a derived volume. |
 | `FrameDeclaration` | `(frame, basis, asset)`. A derivation may not consume its own asset. This is the only source of an anatomy frame and of a source volume's frame. |
 | `DeclaredVolume` | No public constructor. JVM `DeclaredVolumeReader.readNifti` reads the file once, refuses a digest mismatch, and decodes a private copy of exactly those bytes. There is no Scala.js NIfTI loader yet. A `private[reference]` `unsafeAssumeVerified` exists for synthetic tests only. |
 | `DeclaredSurface` | No public constructor. `DeclaredSurfaceReader.read` (JVM: path; Scala.js: `Uint8Array`, copied once) hashes the exact bytes with the portable SHA-256, refuses a digest mismatch (`DigestMismatch`), decodes those same bytes, and refuses a file whose own `AnatomicalStructurePrimary`, or (for `Anatomical` geometry) `AnatomicalStructureSecondary`/type, contradicts the requested hemisphere and kind (`DeclarationConflict`). A `private[reference]` `unsafeAssumeVerified` exists for synthetic tests only. |
@@ -241,7 +238,7 @@ fixtures and behaviours:
 - **fsLR 32k count, hemisphere and medial-wall binding** at full 32 492-vertex
   size.
 - **Identity of inflated and very-inflated values and coverage.**
-- **The PLSNeuro source grid being refused** against fsLR anatomy declared in
+- **A 2009c res-2 group-analysis grid being refused** against fsLR anatomy declared in
   `MNI152NLin6Asym`.
 
 Re-measured on 2026-09-23 after the port, on
@@ -298,12 +295,12 @@ and `bridge.andThen(surfaceToWorld)` in place of
 
 ## 4. Qualification status: `MNI152NLin2009cAsym` res-2 → fsLR 32k
 
-**Status (after WS3): admissible for `MidthicknessNearest` through the inverse
-point-map bridge; the WS3 gates pass; not yet qualified against the frozen
-real-data budgets below.** Items 1, 3 and 4 below are resolved as noted; item 2
+**Status: admissible for `MidthicknessNearest` through the inverse point-map
+bridge; the WS3 gates pass; qualified on TemplateFlow-only inputs (§6) against
+the budgets below as amended post hoc on 2026-09-24.** Items 1, 3 and 4 below are resolved as noted; item 2
 still restricts the method.
 
-The source is PLSNeuro group results on a grid of 97×115×97 at 2 mm, with origin
+The source is group-analysis results on a grid of 97×115×97 at 2 mm, with origin
 (−96.5, −132.5, −78.5), in `MNI152NLin2009cAsym`. As first recorded, four things
 blocked qualification:
 
@@ -377,10 +374,57 @@ after it.
   - One 32 492-vertex hemisphere from a 97×115×97 volume: ≤ 500 ms warm on the
     JVM and ≤ 2 s on Scala.js `FullOpt`.
   - ≤ 64 MB additional heap per mapped volume and hemisphere.
-- **Scope.** Beta and FIR fixtures (`plsneuro-fixtures/real-usable-{beta,fir}-20260911`)
-  are mapped only through an admitted route. Original group-volume statistics
-  are retained unchanged. Cortical display is derived presentation, not
-  surface-native inference.
+- **Scope.** Group-analysis volumes are mapped only through an admitted route.
+  Original group-volume statistics are retained unchanged. Cortical display is
+  derived presentation, not surface-native inference.
+
+### Amendment 2026-09-24 (post hoc)
+
+This amendment was made **after** real data had been evaluated against the
+budgets above. It is post hoc and is recorded as such. The budgets above keep
+their original wording; the only textual change to them is the Scope bullet,
+reworded on 2026-09-24 to remove the name of a consumer's fixtures, with its
+requirement unchanged.
+
+- **Failed premise: NoSupport ≤ 3 %.** That budget assumed route qualification
+  would run on a whole-brain analysis support. A downstream consumer's run on a
+  non-whole-brain support exposed that a NoSupport rate conflates two different
+  things: data coverage (which voxels a dataset supports and holds finite
+  values for) and route quality (whether the placed vertices land in the
+  source template's brain). A rate taken over one dataset's support cannot
+  qualify a route. For route qualification the budget is **superseded**; the
+  rate is still reported.
+- **Replacement budgets for route qualification.**
+  - **GEOMETRIC.** Per hemisphere, the fraction of cortical vertices whose
+    selected lookup voxel lies outside the source template's brain mask must
+    be ≤ 0.5 %. For this route the mask is
+    `tpl-MNI152NLin2009cAsym_res-02_desc-brain_mask` (sha256 `7a71e9ce…`). A
+    vertex with no selected voxel (outside the grid, or bridge unavailable)
+    counts as outside.
+  - **RECEIPT.** 100 % of NoSupport vertices are explained by a typed receipt:
+    `OutsideSupport`, `NonFinite`, `OutsideGrid` or `BridgeUnavailable`.
+- **Defined after seeing data.** Both budgets, and the 0.5 % threshold, were
+  defined after the data were seen. They are not pre-registered, and a reader
+  should weigh them accordingly.
+- **Why GEOMETRIC does not depend on any dataset.** The selected voxel of each
+  vertex is fixed before any volume value is read: the surface is placed once
+  at admission (digest-bound fsLR midthickness, digest-bound point map, fixed
+  inverse policy), and the nearest-voxel lookup uses only the source grid. The
+  brain mask is a digest-bound TemplateFlow asset of the source template. The
+  quantity is therefore a property of the route and the template: every volume
+  on this grid in this frame gets the same count, whatever its values, NaNs or
+  declared support.
+- **Connectome Workbench is not used (maintainer decision).** The values budget
+  above names Workbench `-volume-to-surface-mapping -enclosing`. On
+  coordinates that have already been placed, Workbench would only re-check the
+  nearest-voxel lookup, which the SimpleITK/NumPy oracle already
+  re-implements independently. The values budget is therefore evaluated
+  against that oracle. The independent check of the warp itself is ANTs.
+
+#### ANTs point-transform check
+
+> **PLACEHOLDER — not yet recorded.** The ANTs point-transform check of the
+> 6Asym → 2009c placement is being run separately and will be recorded here.
 
 ## 5. Displacement-field bridge (WS3)
 
@@ -464,107 +508,119 @@ warping exists. Midthickness anatomy is placed vertex by vertex.
   - swapping forward and inverse use in route placement: the bridge tests and the
     real evidence fail.
 
-## 6. Real-data qualification (WS5), 2026-09-23
+## 6. Route qualification on TemplateFlow-only inputs (WS5), 2026-09-24
 
-Each budget frozen in §4 is evaluated as written. Failures are reported as
-failures.
+This replaces the earlier qualification on consumer data. ScalaFIM qualifies
+the route on inputs that are TemplateFlow assets or derived from them only;
+qualification on a consumer's own data is that consumer's responsibility. Each
+budget of §4 is evaluated, with the NoSupport rate replaced by the post hoc
+GEOMETRIC and RECEIPT budgets of the 2026-09-24 amendment. Failures would be
+reported as failures.
 
 ### Setup
 
-- **Inputs.** The PLSNeuro beta and FIR exports, `MNI152NLin2009cAsym` res-2,
-  97×115×97, affine `diag(2,2,2)` with origin (−96.5, −132.5, −78.5): 3 beta
-  and 12 FIR brain-direction volumes. Each is a `DeclaredVolume` with basis
-  `Derived("plsneuro task-PLS brain direction export
-  (tools/fslr-qualification/pls_bundle_to_nifti.py)", inputs = [bundle
-  DataAsset, export-script DataAsset])`. The digests are:
-  - beta bundle `64b5bc0e…`;
-  - FIR bundle `c3c8576c…`;
-  - export script `e6bbbb7e…`;
-  - per-volume digests from `export.json`, verified on read.
-- **Release (asserted).** The PLS provenance records no TemplateFlow release.
-  The runner **asserts** the source frame
-  `MNI152NLin2009cAsym@templateflow@d79aacb1…`, the point map's catalog
-  revision, so that the frames are exact.
-- **Route.**
-  - fsLR 32k L and R midthickness `DeclaredSurface`s in `MNI152NLin6Asym`,
-    with the WS2 statement;
-  - `FrameBridge.displacement` with `Inverse(1e-6 mm, ≤ 50 iterations)` on
-    the locked point map (manifest `34bdcea2…`, source `2e3869a0…`);
-  - `MidthicknessNearest`, `Continuous`;
-  - no support mask declared: the exports are NaN outside the PLS selection,
-    so unsupported voxels are nonfinite.
-- **Runner and artifacts.** `FslrQualification` (surface JVM test scope, forked
-  JVM 25.0.1, `-Xmx4g`) writes to `scratchpad/qualification/final/{beta,fir}`:
-  `.npy` arrays (receipts and chosen voxels for every volume) and
-  `results.json`. The artifacts, all under `scratchpad/qualification/`, are:
+- **Source grid and frame.** `MNI152NLin2009cAsym` res-02: 97×115×97, affine
+  `diag(2,2,2)` with origin (−96.5, −132.5, −78.5), release
+  `templateflow@d79aacb1…` (the catalog revision of the point map and of every
+  TemplateFlow asset used; the cache's digests match the declared ones).
+- **Inputs.** Two declaration specs (`scalafim.fslr-qualification-input/1`),
+  written by `tools/fslr-qualification/derive_templateflow_inputs.py`
+  (sha256 `c44ce5b0…`, `--zmin -30`):
+  - **`gm-probseg`** (spec `d756ceed…`). Volume: `tpl-MNI152NLin2009cAsym_res-02_label-GM_probseg`
+    (sha256 `66aab929…`), a TemplateFlow asset with a literature basis. Declared
+    support: `tpl-MNI152NLin2009cAsym_res-02_desc-brain_mask` (sha256
+    `7a71e9ce…`, > 0.5: 235 840 voxels). The volume is finite everywhere, so
+    every NoSupport vertex here is a vertex outside the template's brain.
+  - **`gm-nan-cut`** (spec `31204786…`). Volume: the GM probseg with NaN
+    outside the brain mask (`7467ac38…`, float64, uncompressed NIfTI), with a
+    `Derived` basis naming both TemplateFlow assets and the script. Declared
+    support: a deliberately non-whole-brain slab, every grid voxel whose centre
+    lies at z ≥ −30 mm (`13e1d1b6…`, 803 160 voxels). It is a slab rather than
+    a cut brain mask because support is checked before finiteness: NaN voxels
+    must lie inside the support to produce `NonFinite` receipts. Removing only
+    the inferior 15 mm of the brain mask (z < −57.5 mm) would exclude no
+    placed cortical vertex (the lowest lies at z ≈ −49 mm), so it would not
+    produce `OutsideSupport` receipts either.
+- **Route.** fsLR 32k L and R midthickness `DeclaredSurface`s in
+  `MNI152NLin6Asym` (WS2 statement); `FrameBridge.displacement` with
+  `Inverse(1e-6 mm, ≤ 50 iterations)` on the locked point map (manifest
+  `34bdcea2…`, source `2e3869a0…`, stage `4e964918…`); `MidthicknessNearest`,
+  `Continuous`; the spec's support as the `VolumeReference` analysis support.
+- **Runner.** `FslrQualification <spec.json> <out>` (surface JVM test scope,
+  forked JVM 25.0.1, `-Xmx4g`). It reads every volume and the support through
+  `DeclaredVolumeReader`, so each digest is checked on read, and it knows
+  nothing about where the inputs came from.
+- **Oracle.** `independent_fslr_mapping.py` (SimpleITK 2.5.6, nibabel 5.4.2,
+  NumPy 2.5.3) with `--support` mirroring the declared support. It shares no
+  code with ScalaFIM. Inverse residual after its 12 iterations: median
+  6.1e-14 / 4.0e-14 mm, max 3.2e-4 / 4.4e-6 mm (L / R).
+- **Comparison.** `compare_fslr_qualification.py --spec … --brain-mask
+  tpl-MNI152NLin2009cAsym_res-02_desc-brain_mask.nii.gz --heap … --js …`. It
+  reads the grid, support and volume values itself with nibabel. It checks the
+  medial wall against the `desc-nomedialwall` labels, the voxel and receipt of
+  every vertex of every volume, the receipt *kind* at every cortical lookup
+  against the kind it derives from the oracle's voxel, the support and the
+  value, and GEOMETRIC from both ScalaFIM's and the oracle's voxels. Both runs
+  exit 0.
+- **Artifacts** (under `scratchpad/qualification-tf/`, not committed):
 
   | Artifact | SHA-256 | Produced by |
   |---|---|---|
-  | `final/beta/results.json` | `dbcf0f16…` | `FslrQualification` |
-  | `final/fir/results.json` | `0e783dac…` | `FslrQualification` |
-  | `heap-probe.json` | `19c897e6…` | `--probe-heap`, `-XX:+UseSerialGC -Xmn16m` |
-  | `js-timing.json` | `6cf74c52…` | `RouteTimingJsSuite`; FullOpt selected with `set surfaceJS/Test/scalaJSStage := FullOpt`, confirmed by `LinkingInfo.productionMode = true` |
-  | `final/beta-summary.json` | `51da32da…` | the comparison script |
-  | `final/fir-summary.json` | `8c3b7c6f…` | the comparison script |
-
-  The large data is not committed.
-- **Comparison.** `tools/fslr-qualification/compare_fslr_qualification.py`,
-  run with `--export`, `--assets`, `--heap` and `--js`, against the SimpleITK
-  oracle `independent_fslr_mapping.py` (`oracle/beta.npz`, `oracle/fir.npz`).
-  It checks the following independently:
-  - medial wall against the `desc-nomedialwall` labels, vertex by vertex;
-  - ties from both ScalaFIM's and the oracle's positions, on the `export.json`
-    grid;
-  - receipts, voxels and picks for every volume;
-  - picks against the oracle's value and voxel;
-  - JVM timing on median and max.
-
-  It exits non-zero because the NoSupport rate fails.
+  | `gm-probseg/results.json` | `9f79630e…` | `FslrQualification` |
+  | `gm-nan-cut/results.json` | `f4677757…` | `FslrQualification` |
+  | `oracle/gm-probseg.npz` | `72479f4f…` | `independent_fslr_mapping.py` |
+  | `oracle/gm-nan-cut.npz` | `967dd231…` | `independent_fslr_mapping.py` |
+  | `heap-probe.json` | `c6a71dd5…` | `--probe-heap` on `gm-probseg`, `-XX:+UseSerialGC -Xmn16m` |
+  | `js-timing.json` | `c7ad2efa…` | `RouteTimingJsSuite` under `FullOpt` (`LinkingInfo.productionMode = true`) |
+  | `gm-probseg-summary.json` | `adae9664…` | the comparison script |
+  | `gm-nan-cut-summary.json` | `b1594219…` | the comparison script |
 
 ### Shared inputs and shared contract (common mode)
 
-- **Same export.** ScalaFIM and the oracle read the same exported NIfTI files.
-  The export's linear order was inferred heuristically (x-fastest: in-mask
-  fraction F = 0.976 vs C = 0.835, `export.json`). A wrong order in the export
-  would affect both sides identically and would not be detected here.
-- **Same inverse scheme.** The value oracle is SimpleITK forward arithmetic
-  under the same fixed-point inverse scheme; ITK has no inverse for
-  `DisplacementFieldTransform`.
-- **Same contract.** The oracle re-implements the same declared lookup
-  contract: ties round up; support is `[−0.5, dim−0.5)`; nonfinite means
-  NoSupport.
+- **Same files.** ScalaFIM and the oracle read the same NIfTI and GIFTI files,
+  and the derived volume and support come from one script. An error in that
+  script would affect both sides identically.
+- **Same inverse scheme.** The oracle is SimpleITK forward arithmetic under the
+  same fixed-point inverse scheme; ITK has no inverse for
+  `DisplacementFieldTransform`. The independent check of the warp is the ANTs
+  point-transform check (§4 amendment, pending).
+- **Same contract.** The oracle and the comparison re-implement the declared
+  lookup contract: ties round up; support is `[−0.5, dim−0.5)`; support is
+  checked before finiteness.
+- **Same template.** GEOMETRIC uses the brain mask of the source template
+  itself. It tests the route's consistency with that template, not with any
+  external anatomy.
 - **What agreement shows.** Agreement validates the arithmetic, the placement
-  and the contract's implementation. It does not validate those choices
-  themselves.
+  and the contract's implementation. It does not validate those choices.
 
-### Results (beta and FIR identical in every count)
+### Results
+
+Counts are per hemisphere, L / R; cortical vertices 29 696 / 29 716.
 
 | Budget | Measured | Verdict |
 |---|---|---|
-| Values: identical to an independent implementation, \|Δ\| ≤ 1e-9·max(1,\|v\|) over cortical vertices | Max relative \|Δ\| = 0.0 over all 15 volumes. Coverage is identical to the oracle at every vertex (L 26 381 / 2 796 / 3 315, R 25 718 / 2 776 / 3 998 Mapped / MedialWall / NoSupport) and identical across volumes. The chosen voxel equals the oracle voxel at every cortical vertex of every volume. Placed positions differ from the oracle's by ≤ 1.9e-4 mm (L) and 4.0e-6 mm (R), because of the oracle's 12-iteration residuals. | **Not met as written.** The budget names Connectome Workbench `-volume-to-surface-mapping -enclosing`, which was not run. Against the SimpleITK oracle: exact. |
-| Values: disagreements only at ties, counted, ≤ 0.1 % | 0 tie vertices from ScalaFIM's positions and 0 from the oracle's; 0 disagreements | **Pass** |
-| MedialWall equals the admitted mask's medial count | Vertex-exact against the labels: L 2 796, R 2 776 (oracle equal) | **Pass** |
-| NoSupport ≤ 3 % of cortical vertices, for a whole-brain analysis support | L 3 315 / 29 696 = 11.16 %; R 3 998 / 29 716 = 13.45 %. The support is the PLS selection, not whole-brain: 206 070 finite voxels. | **Fail.** The premise (whole-brain support) does not hold, and the rate exceeds 3 %. The budget is not relaxed. |
-| Every NoSupport vertex explained by a receipt | Every NoSupport vertex of every volume has an `inspect` receipt in {OutsideGrid, OutsideSupport, NonFinite}. All are `NonFinite`: outside the PLS selection. | **Pass** |
-| Display identity (inflated vs very-inflated) | `onDisplay` onto `tpl-fsLR` inflated (`1672da09…` L, `8237f4e7…` R) and very-inflated (`8639333c…` L, `57d574b8…` R) returns the same object (`eq`) | **Pass** |
-| Picks: 20 per hemisphere; receipt voxel = oracle voxel, linked to the source | 20 evenly spaced cortical vertices per hemisphere × every volume: beta 60/60 and FIR 240/240 per hemisphere. Each receipt voxel equals the oracle voxel. Each `Included` value equals the mapped value and the oracle value. NoSupport picks agree with the oracle's coverage. | **Pass** |
-| JVM ≤ 500 ms warm per hemisphere and volume | 3 warm-up runs then 7 timed. Prepare + map median ≤ 50.2 ms and max ≤ 128.8 ms over all 15 volumes × 2 hemispheres. Placement at admission is once per route: warm median 17.6–30.4 ms. | **Pass** (median and max) |
-| Scala.js FullOpt ≤ 2 s | Synthetic run of the same size (`js-timing.json`): prepare + map median 183.8 ms, max 504.8 ms over 7 runs; admission + placement median 52.5 ms. The suite asserts max ≤ 2 s and production mode. An earlier run measured 171.1 / 258.5 ms. | **Met with qualification**: synthetic, because no Scala.js NIfTI or point-map reader exists |
-| ≤ 64 MB additional heap per mapped volume and hemisphere | Retained after `map`: 0.50 MiB. Live heap sampled at 1 119 forced full collections during 78 prepare + map runs: max 27.8 MiB, median 1.8 MiB above the post-setup baseline (220.2 MiB). Not bounds: heap-pool peak above baseline `poolPeakAboveBaselineMiB` = 236 (238 in the previous run); young-collection bound 175.2 MiB. Both include uncollected garbage. Transient allocation is 235 MiB per prepare + map. | **Met with qualification**: sampled live heap, not a proven bound |
-| Scope: mapped only through an admitted route; group statistics unchanged | Every volume goes through `SurfaceRoute.admit` → `prepare` → `map`; the volumes are read-only | **Pass (by construction; not script-evaluated)** |
+| Values: identical to an independent implementation, \|Δ\| ≤ 1e-9·max(1,\|v\|) over cortical vertices | Max relative \|Δ\| = 0.0 on both inputs. Coverage equals the oracle's at every vertex. The chosen voxel equals the oracle's at every cortical vertex. Placed positions differ from the oracle's by ≤ 1.9e-4 mm (L) and 4.0e-6 mm (R), from the oracle's residuals. | **Met** against the SimpleITK oracle (Workbench not used, per the amendment) |
+| Values: disagreements only at ties, counted, ≤ 0.1 % | 0 tie vertices from ScalaFIM's positions and 0 from the oracle's; 0 disagreements | **Met** |
+| MedialWall equals the admitted mask's medial count | Vertex-exact against the labels: 2 796 / 2 776 (oracle equal) | **Met** |
+| NoSupport ≤ 3 % (superseded; reported only) | `gm-probseg`: 3 / 21 (0.010 % / 0.071 %). `gm-nan-cut`: 751 / 1 089 (2.53 % / 3.66 %) | Not evaluated. The `gm-nan-cut` R rate exceeds 3 % on a route that meets GEOMETRIC, which is the conflation the amendment describes. |
+| GEOMETRIC (post hoc): selected voxel outside the res-02 brain mask ≤ 0.5 % | 3 / 21 vertices (0.010 % / 0.071 %). Identical on both inputs and from the oracle's voxels | **Met** (post hoc budget) |
+| RECEIPT (post hoc): 100 % of NoSupport explained by a typed receipt | `gm-probseg`: 3 / 21 `OutsideSupport`. `gm-nan-cut`: 748 / 1 068 `OutsideSupport` and 3 / 21 `NonFinite` (the vertices outside the brain mask). 0 `OutsideGrid`, 0 `BridgeUnavailable`. Receipt kind equals the independently derived kind at every cortical lookup (0 mismatches). | **Met** (post hoc budget). `OutsideGrid` and `BridgeUnavailable` are not exercised by these inputs. |
+| Display identity (inflated vs very-inflated) | `onDisplay` onto `tpl-fsLR` inflated (`1672da09…` L, `8237f4e7…` R) and very-inflated (`8639333c…` L, `57d574b8…` R) returns the same object (`eq`) | **Met** |
+| Picks: 20 per hemisphere; receipt voxel = oracle voxel, linked to the source | 20 / 20 per hemisphere on each input. Each receipt voxel equals the oracle voxel, each `Included` value equals the mapped and the oracle value, and NoSupport picks agree with the oracle's coverage. | **Met** |
+| JVM ≤ 500 ms warm per hemisphere and volume | 3 warm-up runs, then 7 timed. Prepare + map median ≤ 54.5 ms and max ≤ 56.8 ms over 2 inputs × 2 hemispheres. Placement at admission (once per route): warm median 15.6–23.5 ms. | **Met** (median and max) |
+| Scala.js FullOpt ≤ 2 s | Synthetic run of the same size: prepare + map median 253.3 ms, max 273.5 ms over 7 runs; admission + placement median 89.3 ms; `productionMode = true` | **Met with qualification**: synthetic, because no Scala.js NIfTI or point-map reader exists |
+| ≤ 64 MB additional heap per mapped volume and hemisphere | Retained after `map`: 0.50 MiB. Live heap sampled at 1 213 forced full collections during 72 prepare + map runs: max 27.6 MiB, median 1.5 MiB above the post-setup baseline (229.5 MiB). Not bounds: heap-pool peak above baseline 318 MiB; young-collection bound 335.5 MiB; both include uncollected garbage. Transient allocation is 317 MiB per prepare + map. | **Met with qualification**: sampled live heap, not a proven bound |
+| Scope: mapped only through an admitted route; source volumes unchanged | Every volume goes through `SurfaceRoute.admit` → `prepare` → `map`; the volumes are read-only | **Met (by construction; not script-evaluated)** |
 
 ### Summary
 
-- **Not met as written.**
-  - Value oracle: a deviation. The frozen budget names Connectome Workbench;
-    the comparison used SimpleITK, against which the route is exact.
-  - NoSupport rate: a failure. It is 11.2 % (L) and 13.5 % (R) against 3 %,
-    and the budget's whole-brain-support premise does not hold for the PLS
-    selection. Every NoSupport vertex has a `NonFinite` receipt.
-- **Met with qualification.**
-  - Scala.js timing: synthetic, same size.
-  - Heap: sampled live heap, not a proven bound.
-- **Met.** Ties, medial wall, NoSupport receipts, display identity, picks, JVM
-  time, and scope (by construction).
-- **Asserted, not recorded.** The 2009c release `templateflow@d79aacb1…` is
-  asserted by the runner, not recorded in the PLS provenance.
+- **Met.** Values (against SimpleITK), ties, medial wall, display identity,
+  picks, JVM time, scope (by construction).
+- **Met, post hoc budgets.** GEOMETRIC (0.010 % / 0.071 %) and RECEIPT (100 %,
+  with receipt kinds checked independently). Both were defined after seeing
+  data (§4 amendment).
+- **Met with qualification.** Scala.js timing (synthetic, same size); heap
+  (sampled live heap, not a proven bound).
+- **Not met.** None of the evaluated budgets.
+- **Superseded.** The NoSupport rate, reported only.
+- **Pending.** The ANTs point-transform check of the warp (§4 amendment).
