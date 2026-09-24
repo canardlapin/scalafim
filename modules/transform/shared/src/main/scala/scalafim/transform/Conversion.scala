@@ -7,7 +7,7 @@ import scalafim.transform.afni.{Aff12Codec, Aff12Expression, Aff12Interpretation
 import scalafim.transform.field.{DenseContext, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
 import scalafim.transform.freesurfer.{LtaCodec, LtaExpression, LtaGeometry, LtaInterpretation, MniXfm, MniXfmCodec, MniXfmInterpretation, RegisterDat, RegisterDatCodec, RegisterDatInterpretation, VolGeom}
 import scalafim.transform.fsl.{FlirtCodec, FlirtExpression, FlirtInterpretation}
-import scalafim.transform.itk.{ItkEntry, ItkHdf5Component, ItkHdf5File, ItkHdf5Interpretation, ItkLinearExpression, ItkLinearInterpretation, ItkMatlabCodec, ItkTextCodec}
+import scalafim.transform.itk.{ItkHdf5Interpretation, ItkLinearExpression, ItkLinearInterpretation, ItkMatlabCodec, ItkTextCodec}
 import scalafim.transform.nifti.NiftiWriter
 import scalafim.transform.x5.{X5Domain, X5File, X5Interpretation, X5Node}
 
@@ -49,10 +49,11 @@ object Conversion:
     val frames = Frames[moving.type, fixed.type](moving, fixed)
     interpret(native, frames, decode).flatMap(transform => express(transform, to, frames, encode))
 
-  /** The content of an encoded transform: text/bytes for shared codecs, or a native model the JVM writes to HDF5. */
+  /** The content of an encoded transform: text or bytes for file formats, or an in-memory X5 model. There is no X5 or
+    * ITK HDF5 file writer: the JVM HDF5 library cannot write the variable-length strings both formats require.
+    */
   enum EncodedTransform:
     case Source(format: TransformFormat, source: TransformSource)
-    case Hdf5Itk(file: ItkHdf5File)
     case Hdf5X5(file: X5File)
 
   private def interpret[S <: Frame[D3], T <: Frame[D3]](native: NativeTransform, frames: Frames[S, T], ctx: ConversionContext): Either[TransformError, WorldTransform[S, T]] =
@@ -89,8 +90,7 @@ object Conversion:
         to match
           case TransformFormat.ItkText   => ItkLinearExpression.express(linear, frames).flatMap(f => io(ItkTextCodec.encode(f)))
           case TransformFormat.ItkMatlab => ItkLinearExpression.express(linear, frames).flatMap(f => io(ItkMatlabCodec.encode(f)))
-          case TransformFormat.ItkHdf5 =>
-            ItkLinearExpression.express(linear, frames).map(f => EncodedTransform.Hdf5Itk(ItkHdf5File(f.entries.zipWithIndex.map((e, i) => toHdf5(e, i)))))
+          case TransformFormat.ItkHdf5 => itkHdf5Unsupported("affine")
           case TransformFormat.FslFlirt =>
             need(ctx.fsl, "source and reference FSL geometry").flatMap(p =>
               FlirtExpression.express(linear, FslGrids(frames.source, p.source, frames.target, p.reference)).flatMap(m => io(FlirtCodec.encode(m))))
@@ -114,8 +114,9 @@ object Conversion:
             Left(TransformError.UnsupportedConversion("affine", to, "no FNIRT coefficient parameterisation can be recovered; fitting is deferred"))
       case _ =>
         to match
-          case TransformFormat.AntsDisplacementNifti | TransformFormat.AfniQwarp | TransformFormat.FslFnirtField | TransformFormat.X5 | TransformFormat.ItkHdf5 =>
+          case TransformFormat.AntsDisplacementNifti | TransformFormat.AfniQwarp | TransformFormat.FslFnirtField | TransformFormat.X5 =>
             sampled(transform, to, frames, ctx)
+          case TransformFormat.ItkHdf5 => itkHdf5Unsupported("dense map")
           case TransformFormat.FslFnirtCoefficients =>
             Left(TransformError.UnsupportedConversion("dense map", to, "fitting FNIRT coefficients needs a FittingPolicy; deferred"))
           case other =>
@@ -136,6 +137,10 @@ object Conversion:
             transform.pullPoint(p.asInstanceOf[Point[T, D3]]).map: src =>
               (0 until 3).foreach(c => out(3 * flat + c) = src.coordinates(c))
               out
+      _ <- to match
+        case TransformFormat.AntsDisplacementNifti | TransformFormat.AfniQwarp if !orthogonal(lattice) =>
+          Left(TransformError.UnsupportedConversion("dense map", to, "ITK/ANTs and AFNI fields need orthogonal lattice axes (a rotated, scaled grid); this lattice is sheared"))
+        case _ => Right(())
       encoded <- to match
         case TransformFormat.AntsDisplacementNifti | TransformFormat.AfniQwarp =>
           // (x,y,z,1,3), components slowest, LPS displacements
@@ -177,16 +182,6 @@ object Conversion:
             val flat = x + dims(0) * (y + dims(1) * z)
             sources(3 * flat + c) - worldAt(m, dims, flat, c)
           Right(EncodedTransform.Hdf5X5(X5File(Vector(X5Node(0, "nonlinear", Some("densefield"), Some("displacements"), dims :+ 3, IArray.unsafeFromArray(values), Some(X5Domain(grid = true, dims, m)))), Vector.empty)))
-        case TransformFormat.ItkHdf5 =>
-          val lps = chainUnsafe(lattice.voxelToRas, ToolCoordinates.LpsToRas).rowMajor
-          val spacing = Vector.tabulate(3)(c => math.sqrt(lps(c) * lps(c) + lps(4 + c) * lps(4 + c) + lps(8 + c) * lps(8 + c)))
-          val direction = Vector.tabulate(3, 3)((r, c) => lps(4 * r + c) / spacing(c)).flatten
-          val fixed = dims.map(_.toDouble) ++ Vector(lps(3), lps(7), lps(11)) ++ spacing ++ direction
-          val values = Array.tabulate(3 * count): i =>
-            val (flat, c) = (i / 3, i % 3)
-            val d = sources(3 * flat + c) - worldAt(m, dims, flat, c)
-            if c < 2 then -d else d
-          Right(EncodedTransform.Hdf5Itk(ItkHdf5File(Vector(ItkHdf5Component(0, "DisplacementFieldTransform_double_3_3", IArray.unsafeFromArray(values), IArray.from(fixed))))))
         case other =>
           Left(TransformError.UnsupportedConversion("dense map", other, "not a dense field format"))
     yield encoded
@@ -195,6 +190,14 @@ object Conversion:
     val (x, y, z) = (flat % dims(0), (flat / dims(0)) % dims(1), flat / (dims(0) * dims(1)))
     m(4 * row) * x + m(4 * row + 1) * y + m(4 * row + 2) * z + m(4 * row + 3)
 
+  /** Lattice axes (voxel-to-RAS columns) mutually orthogonal to within 1e-6 of their lengths' product. */
+  private def orthogonal(lattice: ConversionContext.Lattice): Boolean =
+    val m = lattice.voxelToRas.rowMajor
+    val columns = Vector.tabulate(3)(c => Vector(m(c), m(4 + c), m(8 + c)))
+    def dot(a: Vector[Double], b: Vector[Double]) = a.zip(b).map(_ * _).sum
+    val norms = columns.map(c => math.sqrt(dot(c, c)))
+    Vector((0, 1), (0, 2), (1, 2)).forall((i, j) => math.abs(dot(columns(i), columns(j))) <= 1e-6 * norms(i) * norms(j))
+
   private def latticeSpacing(lattice: ConversionContext.Lattice): Vector[Double] =
     val m = lattice.voxelToRas.rowMajor
     Vector.tabulate(3)(c => math.sqrt(m(c) * m(c) + m(4 + c) * m(4 + c) + m(8 + c) * m(8 + c)))
@@ -202,11 +205,10 @@ object Conversion:
   private def header(dims: Vector[Int], lattice: ConversionContext.Lattice, intent: Int): NiftiWriter.Header =
     NiftiWriter.Header(dims, latticeSpacing(lattice) ++ Vector.fill(dims.size - 3)(1.0), intentCode = intent, sformCode = 1, srow = lattice.voxelToRas.rowMajor.take(12))
 
-  private def toHdf5(entry: ItkEntry, index: Int): ItkHdf5Component =
-    ItkHdf5Component(index, entry.typeName, IArray.from(entry.parameters), IArray.from(entry.fixedParameters))
+  /** Writer acceptance (P5.03) showed ITK rejects jHDF's fixed-length strings: ITK HDF5 needs variable-length ones. */
+  private def itkHdf5Unsupported(what: String): Either[TransformError, EncodedTransform] =
+    Left(TransformError.UnsupportedConversion(what, TransformFormat.ItkHdf5, "the JVM HDF5 writer cannot produce the variable-length strings ITK requires; write ITK text, MATLAB v4, or a NIfTI displacement field instead"))
 
   private def chain(steps: Affine[D3]*): Either[TransformError, Affine[D3]] =
     steps.tail.foldLeft[Either[TransformError, Affine[D3]]](Right(steps.head))((acc, next) => acc.flatMap(_.andThen(next).left.map(TransformError.Geometry(_))))
 
-  private def chainUnsafe(steps: Affine[D3]*): Affine[D3] =
-    chain(steps*).fold(e => throw new IllegalStateException(e.message), identity)

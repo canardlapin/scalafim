@@ -1,0 +1,9 @@
+affine.tfm
+affine.mat
+flirt.mat
+affine.aff12.1D
+affine.lta
+talairach.xfm
+register.dat
+field_1Warp.nii
+field_fnirt_relative.nii

@@ -6,7 +6,6 @@ import scalafim.transform.Conversion.EncodedTransform
 import scalafim.transform.field.{DenseContext, FnirtDefinition}
 import scalafim.transform.freesurfer.VolGeom
 import scalafim.transform.fsl.FslHeaderGeometry
-import scalafim.transform.itk.ItkHdf5Interpretation
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}
 import scalafim.transform.x5.X5Interpretation
@@ -37,7 +36,6 @@ class ConversionMatrixSuite extends munit.FunSuite:
   /** Read an encoded result back into a world transform over the test frames. */
   private def reread(encoded: EncodedTransform, ctx: ConversionContext): WorldTransform[moving.type, fixed.type] =
     encoded match
-      case EncodedTransform.Hdf5Itk(file) => ok(ItkHdf5Interpretation.interpret(file, DenseContext(frames))).composed
       case EncodedTransform.Hdf5X5(file)  => ok(X5Interpretation.interpret(file, DenseContext(frames))).composed
       case EncodedTransform.Source(format, source) =>
         val native = ok(Transforms.decode(source, format))
@@ -51,7 +49,7 @@ class ConversionMatrixSuite extends munit.FunSuite:
 
   test("a linear transform converts exactly into every linear format"):
     val linearFormats = Vector(
-      TransformFormat.ItkText, TransformFormat.ItkMatlab, TransformFormat.ItkHdf5, TransformFormat.FslFlirt, TransformFormat.AfniAff12,
+      TransformFormat.ItkText, TransformFormat.ItkMatlab, TransformFormat.FslFlirt, TransformFormat.AfniAff12,
       TransformFormat.FreeSurferLta, TransformFormat.FreeSurferXfm, TransformFormat.FreeSurferRegisterDat, TransformFormat.X5
     )
     linearFormats.foreach: format =>
@@ -64,21 +62,26 @@ class ConversionMatrixSuite extends munit.FunSuite:
       Conversion.convert(lta, TransformFormat.AntsDisplacementNifti, context, context).left.map(_.getClass.getSimpleName),
       Left("MissingContext")
     )
-    val lattice = ConversionContext.Lattice(Vector(6, 5, 4), ok(Affine.fromRowMajor[D3](Vector(2.0, 0.1, 0, -30, -0.1, 2.2, 0.05, -40, 0, 0.02, 2.5, -20, 0, 0, 0, 1))))
+    val lattice = ConversionContext.Lattice(Vector(6, 5, 4), ok(Affine.fromRowMajor[D3](Vector(1.9840289896782464, -0.2688309492111948, 0.07807878523127607, -30.0, 0.23923290058341865, 2.17809331642222, 0.18553837609186435, -40.0, -0.07997866837326832, -0.15375118114363753, 2.4918826646321053, -20.0, 0, 0, 0, 1))))
     // Re-sampling a dense result on its own lattice touches the lattice edge, where round-off can land a hair outside;
     // PreserveSource keeps that re-read total. Comparisons below use interior lattice points only.
     val withLattice = context.copy(lattice = Some(lattice), fnirtDefinition = Some(FnirtDefinition.Relative), boundary = reframe4s.field.CoordinateBoundaryPolicy.PreserveSource)
     val latticePoints = for x <- Vector(1, 3); y <- Vector(1, 2); z <- Vector(1, 2) yield ok(lattice.voxelToRas(Vector(x.toDouble, y.toDouble, z.toDouble)))
     val original = ok(LtaInterpretationFor(lta, frames))
-    Vector(TransformFormat.AntsDisplacementNifti, TransformFormat.AfniQwarp, TransformFormat.FslFnirtField, TransformFormat.X5, TransformFormat.ItkHdf5).foreach: format =>
+    Vector(TransformFormat.AntsDisplacementNifti, TransformFormat.AfniQwarp, TransformFormat.FslFnirtField, TransformFormat.X5).foreach: format =>
       val back = reread(ok(Conversion.convert(lta, format, context, withLattice)), withLattice)
       latticePoints.foreach: p =>
         // NIfTI-1 stores the lattice affine (srow) in float32, so NIfTI outputs agree to float32 geometry precision.
         pull(back, p).zip(pull(original, p)).foreach((a, e) => assertEqualsDouble(a, e, 1e-6, s"$format at $p"))
 
+  test("ITK/ANTs and AFNI fields refuse a sheared lattice"):
+    val sheared = ConversionContext.Lattice(Vector(6, 5, 4), ok(Affine.fromRowMajor[D3](Vector(2.0, 0.3, 0, -30, 0, 2.2, 0, -40, 0, 0, 2.5, -20, 0, 0, 0, 1))))
+    Vector(TransformFormat.AntsDisplacementNifti, TransformFormat.AfniQwarp).foreach: format =>
+      assert(Conversion.convert(lta, format, context, context.copy(lattice = Some(sheared))).left.exists(_.isInstanceOf[TransformError.UnsupportedConversion]), format.toString)
+
   test("unsupported cells refuse with a typed reason"):
     val dense = ok(Transforms.decode(TransformSource.Binary(IArray.unsafeFromArray(OracleFixtures.decoded("neurotransform/itk_oracle/warp.nii.gz"))), TransformFormat.AntsDisplacementNifti))
-    Vector(TransformFormat.FslFlirt, TransformFormat.FreeSurferLta, TransformFormat.ItkText, TransformFormat.FslFnirtCoefficients).foreach: format =>
+    Vector(TransformFormat.FslFlirt, TransformFormat.FreeSurferLta, TransformFormat.ItkText, TransformFormat.FslFnirtCoefficients, TransformFormat.ItkHdf5).foreach: format =>
       Conversion.convert(dense, format, context, context) match
         case Left(TransformError.UnsupportedConversion(_, `format`, _)) => ()
         case other                                                     => fail(s"$format: expected a refusal, got $other")

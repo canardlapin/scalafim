@@ -93,6 +93,7 @@ never with a guess:
 | Motion-parameter files (`.par`, SPM `rp_*`, AFNI dfile) | owned by `motion`, which consumes affine series from this epic |
 | elastix parameter files | `Unsupported(Elastix)` |
 | Fitting FNIRT coefficients from a dense field | `Needs policy` cell in the D4b conversion matrix, deferred |
+| Writing ITK HDF5 or X5 files | `UnsupportedConversion` for ITK HDF5; X5 converts only to an in-memory model. Writer acceptance (P5.03) showed ITK and nitransforms need variable-length HDF5 strings, which jHDF (through 0.13.0) cannot write. Both formats stay read-only until an HDF5 writer with variable-length strings is available. |
 
 ## 6. Oracle tooling and licensing
 
