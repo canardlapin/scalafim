@@ -36,6 +36,7 @@ enum SampleSpaceError:
   case Image(cause: ImageError)
   case WorldRelabel(from: String, to: String)
   case WorldIdentity(reason: String)
+  case InvalidArgument(reason: String)
 
   def message: String =
     this match
@@ -64,6 +65,8 @@ enum SampleSpaceError:
         s"cannot relabel a space in world '$from' as '$to'; moving between world spaces needs a transform"
       case WorldIdentity(reason) =>
         s"sample space has no world-space identity: $reason"
+      case InvalidArgument(reason) =>
+        reason
       case Image(cause) =>
         cause.message
 
