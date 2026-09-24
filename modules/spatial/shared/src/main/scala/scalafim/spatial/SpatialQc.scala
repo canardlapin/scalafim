@@ -397,7 +397,11 @@ object SpatialQc:
             distances <- acc
             l <- left(probe)
             r <- right(probe)
-          yield distances :+ math.sqrt(square(l.x - r.x) + square(l.y - r.y) + square(l.z - r.z))
+            distance = math.sqrt(square(l.x - r.x) + square(l.y - r.y) + square(l.z - r.z))
+            _ <-
+              if distance.isFinite then Right(())
+              else Left(SpatialError.CoordinateTransformFailed(s"$label produced a non-finite point for probe $probe"))
+          yield distances :+ distance
         }
         .map { distances =>
           PathDifference(
