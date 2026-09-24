@@ -1,0 +1,31 @@
+{
+ "generator": "tools/transform/generate_freesurfer_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "reference-implementation",
+ "tools": {
+  "nibabel": "5.4.2",
+  "fslpy": "3.29.1",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nibabel==5.4.2 --with fslpy==3.29.1 --with numpy python tools/transform/generate_freesurfer_oracle.py"
+ ],
+ "notes": "Files follow FreeSurfer transform.cpp/mri.cpp semantics (see generator docstring). points.tsv: reference RAS points and the movable RAS point each maps to under the pullback; every file here encodes that one transform. Torig from nibabel get_vox2ras_tkr; FSLREG matrix from fslpy toFlirt. Native FreeSurfer outputs pending P4.02.",
+ "sha256": {
+  "affines.tsv": "cca388e035e9fa3738652cd26b2888846e9815ccb0edba427d4fc6979566bac7",
+  "coronal.lta": "bd56e2f110112c202648dba4051e34eb43d1efc5b5de0a5f4f280874f10120e7",
+  "fslreg.lta": "b043006a3cb144d1d09844ee403dbffd019e9e79ee8824339d7bc013747805e9",
+  "matrices.tsv": "9de2493b0da01c3ac53fc4fe8274d4ed3b8b5ec6ae65a31a1a19aa6e7f70d034",
+  "movable.nii": "0f06e9b94d4e70fa40a5e3ec997153c4099e5f54a536c08f0ed7f4d0f8fa5160",
+  "points.tsv": "b7da64f15f1e76bfd1598a3f278458db22e55632fb6a203e1edf05e01cdb1de7",
+  "ras2ras.lta": "573560fb5ed37e490c34c8af83b8c053d3024e7929c18df13e7401ec75182228",
+  "reference.nii": "999f7796df9d21201accabbb4deed7b329a41b71fbf3401ebf2bb718da13597c",
+  "register.dat": "d50321a3609d37a522e0d544abbafa0bdb9720c4fceb0b3837efcbb6c7c978d5",
+  "registerdat.lta": "155a22cd0e6771682c3b623125b44b269d468eb2b052ef94ee323984d02e13db",
+  "talairach.xfm": "400d3c16c10b4bb052500eff13c0844426c5781e824401978e3ed1b2b2711593",
+  "target.nii": "4b1ed2c51d6a8c82befa27ff7b7a1f986a4191b148dccdcd1c632394bb10cee2",
+  "vox2vox.lta": "01b28213eda5708ad1591220645f7d312e5f5dd778b6b2a201ed0464e0578321"
+ }
+}

@@ -15,6 +15,7 @@ enum TransformError derives CanEqual:
   case ContextFrameMismatch(role: String, expected: String, actual: String)
   case MissingContext(format: TransformFormat, needed: String)
   case UnsupportedConversion(from: String, to: TransformFormat, reason: String)
+  case AmbiguousFnirtDefinition(reason: String)
   case Invalid(reason: String)
 
   def message: String =
@@ -27,4 +28,5 @@ enum TransformError derives CanEqual:
       case ContextFrameMismatch(role, expected, actual) => s"$role grid lives in $actual, expected $expected"
       case MissingContext(format, needed)         => s"$format needs $needed"
       case UnsupportedConversion(from, to, reason) => s"cannot express $from as $to: $reason"
+      case AmbiguousFnirtDefinition(reason)       => s"cannot tell whether the FNIRT field is relative or absolute: $reason; state it explicitly"
       case Invalid(reason)                        => reason

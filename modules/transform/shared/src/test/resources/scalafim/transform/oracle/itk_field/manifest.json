@@ -1,0 +1,19 @@
+{
+ "generator": "tools/transform/generate_itk_field_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "native-oracle",
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with SimpleITK==2.5.6 --with numpy python tools/transform/generate_itk_field_oracle.py"
+ ],
+ "notes": "Input: ../neurotransform/itk_oracle/warp.nii.gz read by ITK's NIfTI IO. points.tsv: fixed-space LPS points (interior continuous indices mapped by the field's own geometry) and ITK DisplacementFieldTransform.TransformPoint (LPS). grid.tsv: ITK's origin/spacing/direction (LPS) for the field, pinning which NIfTI affine ITK used.",
+ "sha256": {
+  "grid.tsv": "4a7b2ceb49ccde61c7e063a0abe6105c8cbad9228a7ecd0271d2e24544e904bf",
+  "points.tsv": "1f0d81e2e48167f1e886501354e6e76630ac003c9a84caa5551d8f33cec8da0d"
+ }
+}
