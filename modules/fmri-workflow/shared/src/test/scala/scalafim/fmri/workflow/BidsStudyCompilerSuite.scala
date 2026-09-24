@@ -374,12 +374,12 @@ class BidsStudyCompilerSuite extends FunSuite:
   test("non-mask brain images cannot satisfy a required mask") {
     val fixture = studyFixture(Vector("01"),Vector("01"))
     val mask = fixture.project.manifest.files.find(_.parsed.exists(_.kind == "mask")).get
-    val misleading = mask.path.value.replace("_mask.nii","_T1w.nii")
+    val misleading = mask.path.value.replace("_mask.nii","_bold.nii")
     val paths = fixture.project.manifest.files.map(_.path.value).filterNot(_ == mask.path.value) :+ misleading
     val project = fixture.project.copy(manifest=BidsManifest.fromRelativePaths(paths,fixture.project.derivatives))
     val headers = fixture.headers.copy(headers=fixture.headers.headers + (BidsPath(misleading) -> fixture.headers.headers(mask.path)))
     val result = BidsStudyCompiler.compile(project,fixture.recipe,headers)
-    assert(result.isLeft,"A desc-brain T1w image must not masquerade as a brain mask")
+    assert(result.isLeft,"A desc-brain BOLD image must not masquerade as a brain mask")
     assert(result.swap.toOption.get.errors.exists(_.code == CatalogIssueCode.MissingMask))
   }
 
@@ -394,6 +394,23 @@ class BidsStudyCompilerSuite extends FunSuite:
     assert(missing.swap.toOption.get.errors.exists(_.code == CatalogIssueCode.MissingConfounds))
     assert(BidsStudyCompiler.compile(project(paths :+ misleading),fixture.recipe,fixture.headers).isRight,
       "An unrelated timeseries must not create false ambiguity")
+  }
+
+  test("registered legacy confounds and brainmask roles retain exact artifact paths") {
+    val fixture = studyFixture(Vector("01"),Vector("01"))
+    val table = fixture.project.manifest.files.find(_.fileName.endsWith("_desc-confounds_timeseries.tsv")).get
+    for suffix <- Vector("_confounds.tsv", "_desc-confounds_regressors.tsv") do
+      val renamed = table.path.value.replace("_desc-confounds_timeseries.tsv",suffix)
+      val paths = fixture.project.manifest.files.map(file => if file.path == table.path then renamed else file.path.value)
+      val project = fixture.project.copy(manifest=BidsManifest.fromRelativePaths(paths,fixture.project.derivatives))
+      val catalog = BidsStudyCompiler.compile(project,fixture.recipe,fixture.headers).toOption.get
+      assert(catalog.units.head.runs.head.confounds.get.location.value.endsWith(renamed))
+    val mask = fixture.project.manifest.files.find(_.parsed.exists(_.kind == "mask")).get
+    val renamed = mask.path.value.replace("_mask.nii","_brainmask.nii")
+    val project = fixture.project.copy(manifest=BidsManifest.fromRelativePaths(
+      fixture.project.manifest.files.map(file => if file.path == mask.path then renamed else file.path.value),fixture.project.derivatives))
+    val headers = fixture.headers.copy(headers=fixture.headers.headers + (BidsPath(renamed) -> fixture.headers.headers(mask.path)))
+    assert(BidsStudyCompiler.compile(project,fixture.recipe,headers).toOption.get.units.head.mask.artifacts.head.location.value.endsWith(renamed))
   }
 
   private final case class Fixture(
