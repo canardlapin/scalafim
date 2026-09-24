@@ -371,6 +371,31 @@ class BidsStudyCompilerSuite extends FunSuite:
     )
   }
 
+  test("non-mask brain images cannot satisfy a required mask") {
+    val fixture = studyFixture(Vector("01"),Vector("01"))
+    val mask = fixture.project.manifest.files.find(_.parsed.exists(_.kind == "mask")).get
+    val misleading = mask.path.value.replace("_mask.nii","_T1w.nii")
+    val paths = fixture.project.manifest.files.map(_.path.value).filterNot(_ == mask.path.value) :+ misleading
+    val project = fixture.project.copy(manifest=BidsManifest.fromRelativePaths(paths,fixture.project.derivatives))
+    val headers = fixture.headers.copy(headers=fixture.headers.headers + (BidsPath(misleading) -> fixture.headers.headers(mask.path)))
+    val result = BidsStudyCompiler.compile(project,fixture.recipe,headers)
+    assert(result.isLeft,"A desc-brain T1w image must not masquerade as a brain mask")
+    assert(result.swap.toOption.get.errors.exists(_.code == CatalogIssueCode.MissingMask))
+  }
+
+  test("misleading confounds substrings cannot satisfy or compete with a requested table") {
+    val fixture = studyFixture(Vector("01"),Vector("01"))
+    val table = fixture.project.manifest.files.find(_.fileName.endsWith("_desc-confounds_timeseries.tsv")).get
+    val misleading = table.path.value.replace("desc-confounds","desc-notconfounds")
+    val paths = fixture.project.manifest.files.map(_.path.value)
+    def project(values: Vector[String]) = fixture.project.copy(manifest=BidsManifest.fromRelativePaths(values,fixture.project.derivatives))
+    val missing = BidsStudyCompiler.compile(project(paths.filterNot(_ == table.path.value) :+ misleading),fixture.recipe,fixture.headers)
+    assert(missing.isLeft,"A substring in an unrelated descriptor must not establish a confounds role")
+    assert(missing.swap.toOption.get.errors.exists(_.code == CatalogIssueCode.MissingConfounds))
+    assert(BidsStudyCompiler.compile(project(paths :+ misleading),fixture.recipe,fixture.headers).isRight,
+      "An unrelated timeseries must not create false ambiguity")
+  }
+
   private final case class Fixture(
       project: BidsProject,
       recipe: DatasetRecipe,
