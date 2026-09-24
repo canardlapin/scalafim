@@ -402,6 +402,17 @@ final case class ViewerModel private (
     val index = layers.indexWhere(_.id == id)
     if index < 0 then None else Some(alignments(index))
 
+  /** Alignments are derived from the reference grid and the layers, and their frame evidence compares by identity,
+    * so model equality is equality of the reference grid and layers.
+    */
+  override def equals(other: Any): Boolean =
+    other match
+      case that: ViewerModel => referenceSpace == that.referenceSpace && layers == that.layers
+      case _                 => false
+
+  override def hashCode: Int =
+    (referenceSpace, layers).##
+
 object ViewerModel:
   def make(
     referenceSpace: Grid[? <: Frame[D3], D3],

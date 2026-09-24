@@ -7,7 +7,7 @@ import image4s.geometry.{Affine, D3, Frame, Grid}
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
-import scalafim.image.{GridSpec, SomeSampleSpace, Resample, SpatialPullbacks}
+import scalafim.image.{GridSpec, SomeSampleSpace, Resample, SpatialPoint, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
@@ -649,13 +649,9 @@ object TransformAssetLoader:
             native(coord.x, coord.y, coord.z, 1),
             native(coord.x, coord.y, coord.z, 2)
           )
-        val voxelCoord =
-          Vector(
-            coord.x.toDouble,
-            coord.y.toDouble,
-            coord.z.toDouble
-          )
-        val targetWorld = grid.voxelToWorld(voxelCoord)
+        val voxelCoord = Vector(coord.x.toDouble, coord.y.toDouble, coord.z.toDouble)
+        val targetPoint = grid.voxelToWorld(SpatialPoint(voxelCoord(0), voxelCoord(1), voxelCoord(2)))
+        val targetWorld = Vector(targetPoint.x, targetPoint.y, targetPoint.z)
         val sourceWorld =
           options.convention match
             case TransformCoordinateConvention.RasMillimeters =>
