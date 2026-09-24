@@ -57,10 +57,13 @@ import scalafim.atlas.io.*
   families and aliases.
 - `Schaefer2018`, `GlasserHcpMmp1`, `Schaefer2018Surface`, and
   `GlasserHcpMmp1Surface` provide typed standard-atlas descriptors.
-- `SpaceTransforms` is a route planner over known coordinate/template-space
-  steps. Executable affine routes can transform points and lower to
-  `scalafim.image.SpatialMorphism` pullback values; planned nonlinear and
-  surface routes are represented explicitly but not silently executed.
+- `SpaceTransforms` is a manifest of known template-space steps. It populates
+  a `scalafim.spatial.SpatialGraph` (`SpaceTransformGraph`) over unsampled
+  template domains from `TemplateCatalog`, and routes with the spatial graph's
+  forward-first, inverse-fallback search. Steps holding an internal affine or a
+  provider `TransformAsset` (a `scalafim.transform.WorldTransform`) carry
+  points and lower to grid pullbacks; planned nonlinear and surface steps stay
+  typed non-executable edges and are never silently executed.
 
 ## Standard Atlas Descriptors
 

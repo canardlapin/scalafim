@@ -1,6 +1,7 @@
 package scalafim.atlas
 
 import image4s.geometry.GeometryError
+import scalafim.spatial.SpatialError
 
 enum AtlasError:
   case EmptyAtlas
@@ -12,6 +13,7 @@ enum AtlasError:
   case SpaceKindMismatch(space: AnySpaceId, expected: SpaceKindTag, actual: SpaceKindTag)
   case NoTransformRoute(from: AnySpaceId, to: AnySpaceId)
   case TransformNotExecutable(from: AnySpaceId, to: AnySpaceId, reason: String)
+  case TransformGraph(cause: SpatialError)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
   case ExactGridRequired(expected: String, actual: String)
   case Geometry(cause: GeometryError)
@@ -41,6 +43,8 @@ enum AtlasError:
         s"no transform route found from '${from.value}' to '${to.value}'"
       case TransformNotExecutable(from, to, reason) =>
         s"transform route from '${from.value}' to '${to.value}' is not executable: $reason"
+      case TransformGraph(cause) =>
+        s"transform manifest does not form a valid spatial graph: ${cause.message}"
       case SpaceMismatch(expected, actual) =>
         s"expected spatial dimensions ${expected.mkString("x")} but got ${actual.mkString("x")}"
       case ExactGridRequired(expected, actual) =>

@@ -67,6 +67,7 @@ sealed trait SamplingGeometry:
       case SamplingGeometry.Surface(_, _) => DomainKind.Surface
       case SamplingGeometry.Hybrid(_) => DomainKind.Hybrid
       case SamplingGeometry.Latent(_) => DomainKind.Latent
+      case SamplingGeometry.Unsampled(kind, _) => kind
 
   def nElements: Int =
     this match
@@ -78,6 +79,8 @@ sealed trait SamplingGeometry:
         parts.map(_.nElements).sum
       case SamplingGeometry.Latent(dim) =>
         dim
+      case SamplingGeometry.Unsampled(_, _) =>
+        0
 
 object SamplingGeometry:
   final class Volume private[SamplingGeometry] (
@@ -130,6 +133,16 @@ object SamplingGeometry:
   final case class Latent(dim: Int) extends SamplingGeometry:
     require(dim > 0, "latent geometry dimension must be positive")
 
+  /** A world space known by identity and frame whose sampling is not fixed, e.g. a standard template in a transform
+    * catalog. Routes and provider coordinate maps may join it, so coordinates can be carried through it; it has no
+    * sample elements, so no operator or field can be compiled onto it.
+    */
+  final case class Unsampled(domainKind: DomainKind, frame: Frame[D3]) extends SamplingGeometry:
+    require(
+      domainKind == DomainKind.Volume || domainKind == DomainKind.Surface,
+      "unsampled geometry is a volume or surface world space"
+    )
+
   def volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume] = None): Either[SpatialError, SamplingGeometry] =
     for
       admitted <- SampleSpaces
@@ -174,6 +187,11 @@ object SamplingGeometry:
         i += 1
       Right(SamplingGeometry.Hybrid(out.result()))
 
+  def unsampled(kind: DomainKind, frame: Frame[D3]): Either[SpatialError, SamplingGeometry] =
+    kind match
+      case DomainKind.Volume | DomainKind.Surface => Right(SamplingGeometry.Unsampled(kind, frame))
+      case other => Left(SpatialError.UnsupportedGeometry(s"unsampled $other domain"))
+
   def latent(dim: Int): Either[SpatialError, SamplingGeometry] =
     if dim <= 0 then Left(SpatialError.NonPositiveDimension("latent geometry", dim))
     else Right(SamplingGeometry.Latent(dim))
@@ -198,8 +216,12 @@ object Domain:
     space: SpaceRef,
     geometry: SamplingGeometry
   ): Either[SpatialError, Domain] =
-    if geometry.nElements <= 0 then Left(SpatialError.NonPositiveDimension("domain elements", geometry.nElements))
-    else validateKind(id, space, geometry).map(_ => new Domain(id, space, geometry))
+    val sampled =
+      geometry match
+        case SamplingGeometry.Unsampled(_, _) => Right(())
+        case _ if geometry.nElements <= 0 => Left(SpatialError.NonPositiveDimension("domain elements", geometry.nElements))
+        case _ => Right(())
+    sampled.flatMap(_ => validateKind(id, space, geometry)).map(_ => new Domain(id, space, geometry))
 
   private[scalafim] def unsafe(id: DomainId, space: SpaceRef, geometry: SamplingGeometry): Domain =
     new Domain(id, space, geometry)

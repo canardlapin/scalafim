@@ -342,9 +342,8 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 - **`surface`** owns surface geometry, volume-to-surface morphism wrappers,
   and surface-to-surface vertex-map execution.
 - **`atlas`** owns named known-space route descriptors such as
-  `SpaceTransforms`.
-  - **Planned (STP P7):** these become a manifest that populates the
-    `spatial` graph.
+  `SpaceTransforms`, a manifest that populates the `spatial` graph over
+  unsampled template domains (STP P7.01); routing is `SpatialGraph`'s.
 - **`spatial`** owns graph and operator semantics:
   - typed domains, graph morphisms and routing
   - compiled sparse operators, adjoints and QC

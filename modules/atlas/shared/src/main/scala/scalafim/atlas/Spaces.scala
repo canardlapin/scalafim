@@ -9,6 +9,8 @@ import scalafim.image.{
   SpatialPullback,
   SpatialPullbacks
 }
+import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
+import scalafim.transform.WorldTransform
 
 type Point3D = SpatialPoint
 
@@ -34,6 +36,20 @@ enum TransformStatus:
 enum DataKind:
   case Parcel, Vertex, Voxel
 
+/** A provider transform implementing a manifest step: a `scalafim.transform` world transform between the catalog
+  * frames of the step's spaces, and an identity that determines its values (e.g. asset SHA-256 digests plus every
+  * loading policy). The identity keys non-affine maps, whose values cannot be fingerprinted structurally.
+  */
+final case class TransformAsset(transform: WorldTransform[?, ?], identity: String):
+  require(identity.trim.nonEmpty, "transform asset identity must be non-empty")
+
+/** One entry of a transform manifest: a declared edge between two template spaces.
+  *
+  * A step can carry coordinates only when it is `Available` and holds either an internal `affine` (the forward,
+  * source-to-target matrix) or a provider `asset`. Every other step, e.g. a TemplateFlow warp whose H5 file has not been
+  * loaded, stays in the graph as a typed non-executable edge: routes through it are planned and reported, never
+  * guessed.
+  */
 final case class TransformStep(
   from: AnySpaceId,
   to: AnySpaceId,
@@ -44,84 +60,138 @@ final case class TransformStep(
   dataFiles: Vector[String],
   status: TransformStatus,
   notes: Option[String] = None,
-  affine: Option[ProviderAffine[D3]] = None
+  affine: Option[ProviderAffine[D3]] = None,
+  asset: Option[TransformAsset] = None
 ):
   require(dataFiles.forall(_.trim.nonEmpty), "transform data file names must be non-empty")
+  require(affine.isEmpty || asset.isEmpty, "a transform step carries an internal affine or a provider asset, not both")
 
-final case class TransformPlan(
+  /** Implement this step with a loaded provider transform; the step becomes `Available`. */
+  def withAsset(value: TransformAsset): TransformStep =
+    copy(status = TransformStatus.Available, affine = None, asset = Some(value))
+
+/** A route through the transform manifest, resolved by `SpatialGraph` routing.
+  *
+  * `steps` describe the route in order (a step run through its inverse appears with its endpoints swapped); `path` is
+  * the spatial route that executes it. Coordinates are carried only when every step is available and holds a
+  * provider map; otherwise [[executability]] says why not.
+  */
+final case class TransformPlan private (
   from: AnySpaceId,
   to: AnySpaceId,
   steps: Vector[TransformStep],
   status: TransformStatus,
   confidence: Confidence,
-  warnings: Vector[String]
+  warnings: Vector[String],
+  path: MorphismPath
 ):
   require(steps.nonEmpty, "transform plan must contain at least one step")
+  require(steps.length == path.morphisms.length, "transform plan steps must match its route")
 
   def nSteps: Int =
     steps.length
 
+  def usedInverses: Boolean =
+    path.usedInverses
+
   def isExecutable: Boolean =
-    executableCoordinatePlan.isRight
+    executability.isRight
 
-  def executableCoordinatePlan: Either[AtlasError, ExecutableCoordinateTransformPlan] =
-    ExecutableCoordinateTransformPlan.fromRoute(this)
+  /** `Right` when the route can carry coordinates; otherwise the unavailable and map-less steps. */
+  def executability: Either[AtlasError, Unit] =
+    val unavailable = steps.filter(_.status != TransformStatus.Available)
+    val mapless =
+      steps.zip(path.morphisms).collect {
+        case (step, morphism) if !TransformPlan.carriesCoordinates(morphism) => step
+      }
+    if unavailable.isEmpty && mapless.isEmpty then Right(())
+    else
+      val reasons =
+        Vector(
+          Option.when(unavailable.nonEmpty)(s"unavailable steps=${unavailable.map(TransformPlan.label).mkString(",")}"),
+          Option.when(mapless.nonEmpty)(s"steps without a coordinate map=${mapless.map(TransformPlan.label).mkString(",")}")
+        ).flatten
+      Left(AtlasError.TransformNotExecutable(from, to, reasons.mkString("; ")))
 
-final case class ExecutableCoordinateTransformPlan private (
-  route: TransformPlan,
-  affine: ProviderAffine[D3]
-):
-  def from: AnySpaceId =
-    route.from
+  /** Carry points from `from` to `to` through every step's provider map. */
+  def transform(points: Vector[Point3D]): Either[AtlasError, Vector[Point3D]] =
+    executability.flatMap { _ =>
+      points.foldLeft[Either[AtlasError, Vector[Point3D]]](Right(Vector.empty)) { (acc, point) =>
+        acc.flatMap(out => path.push(point).left.map(error => AtlasError.InvalidCoordinate(error.message)).map(out :+ _))
+      }
+    }
 
-  def to: AnySpaceId =
-    route.to
-
-  def steps: Vector[TransformStep] =
-    route.steps
-
-  def transform(points: Vector[Point3D]): Vector[Point3D] =
-    points.map: point =>
-      affine(point.toVector).fold(
-        error => throw new IllegalStateException(error.message),
-        Point3D.fromVector
-      )
-
-  /** Render the atlas route as the provider pullback required by image
-    * resampling: target world coordinates to source world coordinates.
+  /** The route as the provider pullback image resampling needs (target world to source world) between two grids.
+    * Available only for routes made of affine steps, which fuse into one matrix.
     */
   def pullback[S <: Frame[D3], T <: Frame[D3]](
-      source: GridSpec[S],
-      target: GridSpec[T]
-  ): SpatialPullback[T, S] =
-    SpatialPullbacks.affine(source, target, affine.inverse)
+    source: GridSpec[S],
+    target: GridSpec[T]
+  ): Either[AtlasError, SpatialPullback[T, S]] =
+    for
+      _ <- executability
+      executable <- ExecutableAffinePath
+        .from(path)
+        .left
+        .map(error => AtlasError.TransformNotExecutable(from, to, s"grid pullbacks need an affine route: ${error.message}"))
+      operator <- executable.coordinateMap match
+        case CoordinateMap.Identity => Right(ProviderAffine.identity[D3])
+        case CoordinateMap.Geometric(binding) =>
+          binding.affineOperator.toRight(AtlasError.TransformNotExecutable(from, to, "route did not fuse into one affine"))
+        case _ => Left(AtlasError.TransformNotExecutable(from, to, "route did not fuse into one affine"))
+    yield SpatialPullbacks.affine(source, target, operator)
 
-object ExecutableCoordinateTransformPlan:
-  def fromRoute(route: TransformPlan): Either[AtlasError, ExecutableCoordinateTransformPlan] =
-    val unavailable =
-      route.steps.filter(_.status != TransformStatus.Available)
-    val missingAffine =
-      route.steps.filter(_.affine.isEmpty)
-    if unavailable.nonEmpty || missingAffine.nonEmpty then
-      val unavailableReason =
-        if unavailable.isEmpty then Vector.empty
-        else Vector(s"unavailable steps=${unavailable.map(stepLabel).mkString(",")}")
-      val missingReason =
-        if missingAffine.isEmpty then Vector.empty
-        else Vector(s"non-affine steps=${missingAffine.map(stepLabel).mkString(",")}")
-      Left(AtlasError.TransformNotExecutable(route.from, route.to, (unavailableReason ++ missingReason).mkString("; ")))
-    else
-      val affines = route.steps.map(_.affine.get)
-      val composed =
-        affines.tail.foldLeft[Either[AtlasError, ProviderAffine[D3]]](Right(affines.head)):
-          (current, next) =>
-            current.flatMap(
-              _.andThen(next).left.map(AtlasError.Geometry.apply)
-            )
-      composed.map(ExecutableCoordinateTransformPlan(route, _))
+object TransformPlan:
+  private[atlas] def build(
+    from: AnySpaceId,
+    to: AnySpaceId,
+    steps: Vector[TransformStep],
+    path: MorphismPath,
+    dataKind: DataKind
+  ): TransformPlan =
+    val status =
+      if steps.exists(_.status == TransformStatus.Planned) then TransformStatus.Planned
+      else TransformStatus.Available
+    val worst = steps.map(step => confidenceRank(step.confidence)).max
+    val confidence =
+      worst match
+        case 0 => Confidence.Exact
+        case 1 => Confidence.High
+        case 2 => Confidence.Approximate
+        case _ => Confidence.Uncertain
+    new TransformPlan(from, to, steps, status, confidence, warningsFor(steps, path, dataKind), path)
 
-  private def stepLabel(step: TransformStep): String =
+  private[atlas] def confidenceRank(confidence: Confidence): Int =
+    confidence match
+      case Confidence.Exact => 0
+      case Confidence.High => 1
+      case Confidence.Approximate => 2
+      case Confidence.Uncertain => 3
+
+  private def carriesCoordinates(morphism: Morphism): Boolean =
+    morphism.coordinateMap match
+      case CoordinateMap.Identity | CoordinateMap.Geometric(_) => true
+      case _ => false
+
+  private def label(step: TransformStep): String =
     s"${step.from.value}->${step.to.value}:${step.kind}/${step.backend}"
+
+  private def warningsFor(steps: Vector[TransformStep], path: MorphismPath, dataKind: DataKind): Vector[String] =
+    val planned =
+      if steps.exists(_.status == TransformStatus.Planned) then Vector("Plan includes unimplemented/planned transform step(s).")
+      else Vector.empty
+    val lowConfidence =
+      if steps.exists(s => s.confidence == Confidence.Approximate || s.confidence == Confidence.Uncertain) then
+        Vector("Plan includes low-confidence transform step(s).")
+      else Vector.empty
+    val vertexNearest =
+      if dataKind == DataKind.Vertex && steps.exists(_.backend == TransformBackend.SphereNearest) then
+        Vector("Nearest-neighbor surface resampling may be suboptimal for continuous data.")
+      else Vector.empty
+    val inverses =
+      if path.usedInverses then Vector("Plan runs transform step(s) through their inverse.")
+      else Vector.empty
+    planned ++ lowConfidence ++ vertexNearest ++ inverses
 
 object SpaceTransforms:
   val mni305ToMni152: ProviderAffine[D3] =
@@ -275,35 +345,25 @@ object SpaceTransforms:
       )
     )
 
+  /** The standard manifest as a routing graph over [[TemplateCatalog.standard]]. */
+  lazy val standardGraph: Either[AtlasError, SpaceTransformGraph] =
+    SpaceTransformGraph.build(manifest)
+
+  /** A manifest as a routing graph; spaces outside `catalog` receive fresh template frames. */
+  def graph(
+    registry: Vector[TransformStep],
+    catalog: TemplateCatalog = TemplateCatalog.standard
+  ): Either[AtlasError, SpaceTransformGraph] =
+    if (registry eq manifest) && (catalog eq TemplateCatalog.standard) then standardGraph
+    else SpaceTransformGraph.build(registry, catalog)
+
   def plan(
     from: AnySpaceId,
     to: AnySpaceId,
     dataKind: DataKind = DataKind.Parcel,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, TransformPlan] =
-    val fromNorm = SpaceId.normalize(from)
-    val toNorm = SpaceId.normalize(to)
-    if fromNorm == toNorm then
-      val step =
-        TransformStep(
-          fromNorm,
-          toNorm,
-          TransformKind.Identity,
-          TransformBackend.Identity,
-          Confidence.Exact,
-          reversible = true,
-          dataFiles = Vector.empty,
-          TransformStatus.Available,
-          notes = Some("No transform required."),
-          affine = Some(ProviderAffine.identity[D3])
-        )
-      Right(TransformPlan(fromNorm, toNorm, Vector(step), TransformStatus.Available, Confidence.Exact, Vector.empty))
-    else
-      shortestRoute(fromNorm, toNorm, registry).map { steps =>
-        val status = combineStatus(steps)
-        val confidence = combineConfidence(steps)
-        TransformPlan(fromNorm, toNorm, steps, status, confidence, warningsFor(steps, dataKind))
-      }.toRight(AtlasError.NoTransformRoute(fromNorm, toNorm))
+    graph(registry).flatMap(_.plan(from, to, dataKind))
 
   def transformCoords(
     points: Vector[Point3D],
@@ -311,9 +371,7 @@ object SpaceTransforms:
     to: AnySpaceId,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, Vector[Point3D]] =
-    plan(from, to, DataKind.Voxel, registry)
-      .flatMap(_.executableCoordinatePlan)
-      .map(_.transform(points))
+    plan(from, to, DataKind.Voxel, registry).flatMap(_.transform(points))
 
   def spatialPullback[S <: Frame[D3], T <: Frame[D3]](
     from: AnySpaceId,
@@ -322,76 +380,4 @@ object SpaceTransforms:
     target: GridSpec[T],
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, SpatialPullback[T, S]] =
-    plan(from, to, DataKind.Voxel, registry)
-      .flatMap(_.executableCoordinatePlan)
-      .map(_.pullback(source, target))
-
-  private final case class Candidate(space: AnySpaceId, steps: Vector[TransformStep], score: Int)
-
-  private def shortestRoute(from: AnySpaceId, to: AnySpaceId, registry: Vector[TransformStep]): Option[Vector[TransformStep]] =
-    val edges = registry.groupBy(step => SpaceId.normalize(step.from))
-    var frontier = Vector(Candidate(from, Vector.empty, 0))
-    var best = Map(from -> 0)
-    var done = false
-    var found: Option[Vector[TransformStep]] = None
-
-    while frontier.nonEmpty && !done do
-      val idx = frontier.indices.minBy(i => frontier(i).score)
-      val current = frontier(idx)
-      frontier = frontier.patch(idx, Nil, 1)
-      if current.space == to then
-        found = Some(current.steps)
-        done = true
-      else
-        val nextEdges = edges.getOrElse(current.space, Vector.empty)
-        nextEdges.foreach { step =>
-          val dest = SpaceId.normalize(step.to)
-          if !current.steps.exists(s => SpaceId.normalize(s.from) == dest) then
-            val nextScore = current.score + stepScore(step)
-            val keep = best.get(dest).forall(nextScore < _)
-            if keep then
-              best = best.updated(dest, nextScore)
-              frontier = frontier :+ Candidate(dest, current.steps :+ step.copy(from = current.space, to = dest), nextScore)
-        }
-    found
-
-  private def stepScore(step: TransformStep): Int =
-    statusRank(step.status) * 100 + confidenceRank(step.confidence) * 10 + 1
-
-  private def statusRank(status: TransformStatus): Int =
-    status match
-      case TransformStatus.Available => 0
-      case TransformStatus.Planned => 1
-
-  private def confidenceRank(confidence: Confidence): Int =
-    confidence match
-      case Confidence.Exact => 0
-      case Confidence.High => 1
-      case Confidence.Approximate => 2
-      case Confidence.Uncertain => 3
-
-  private def combineStatus(steps: Vector[TransformStep]): TransformStatus =
-    if steps.exists(_.status == TransformStatus.Planned) then TransformStatus.Planned
-    else TransformStatus.Available
-
-  private def combineConfidence(steps: Vector[TransformStep]): Confidence =
-    val worst = steps.map(s => confidenceRank(s.confidence)).max
-    worst match
-      case 0 => Confidence.Exact
-      case 1 => Confidence.High
-      case 2 => Confidence.Approximate
-      case _ => Confidence.Uncertain
-
-  private def warningsFor(steps: Vector[TransformStep], dataKind: DataKind): Vector[String] =
-    val planned =
-      if steps.exists(_.status == TransformStatus.Planned) then Vector("Plan includes unimplemented/planned transform step(s).")
-      else Vector.empty
-    val lowConfidence =
-      if steps.exists(s => s.confidence == Confidence.Approximate || s.confidence == Confidence.Uncertain) then
-        Vector("Plan includes low-confidence transform step(s).")
-      else Vector.empty
-    val vertexNearest =
-      if dataKind == DataKind.Vertex && steps.exists(_.backend == TransformBackend.SphereNearest) then
-        Vector("Nearest-neighbor surface resampling may be suboptimal for continuous data.")
-      else Vector.empty
-    planned ++ lowConfidence ++ vertexNearest
+    plan(from, to, DataKind.Voxel, registry).flatMap(_.pullback(source, target))
