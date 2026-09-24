@@ -62,12 +62,21 @@ class ToolCoordinatesSuite extends ScalaCheckSuite:
     assertEquals(neither.map(_.pixdim), Right(Vector(1.1, 0.8, 2.3)))
     assert(FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 0, None, 3, None).isLeft)
 
-  test("tkRAS to scanner is a translation by c_ras, even for an oblique volume"):
-    val geometry = FreeSurferVolumeGeometry(Vector(64, 72, 50), obliqueRas)
-    val m = geometry.tkrToScanner.rowMajor
-    assertClose(Vector(m(0), m(1), m(2), m(4), m(5), m(6), m(8), m(9), m(10)), Vector(1.0, 0, 0, 0, 1, 0, 0, 0, 1), 1e-12)
-    assertClose(Vector(m(3), m(7), m(11)), geometry.centerRas, 1e-9)
-    assertClose(apply(geometry.torig, Vector(32.0, 36.0, 25.0)), Vector(0.0, 0.0, 0.0), 1e-9)
+  test("Torig is FreeSurfer's fixed LIA tkregister geometry; tkRAS to scanner is a translation only for LIA volumes"):
+    val oblique = FreeSurferVolumeGeometry(Vector(64, 72, 50), obliqueRas)
+    val torig = oblique.torig.rowMajor
+    val Vector(xs, ys, zs) = oblique.voxelSizes
+    assertClose(Vector(torig(0), torig(1), torig(2), torig(4), torig(5), torig(6), torig(8), torig(9), torig(10)), Vector(-xs, 0, 0, 0, 0, zs, 0, -ys, 0), 1e-12)
+    assertClose(apply(oblique.torig, Vector(32.0, 36.0, 25.0)), Vector(0.0, 0.0, 0.0), 1e-9)
+    // oblique: the tkr->scanner map rotates as well as translates, and still sends the centre to c_ras
+    val m = oblique.tkrToScanner.rowMajor
+    assert(math.abs(m(0) - 1.0) > 1e-3, "non-LIA volumes need the full Norig * inv(Torig)")
+    assertClose(apply(oblique.tkrToScanner, Vector(0.0, 0.0, 0.0)), oblique.centerRas, 1e-9)
+    // LIA (conformed-style) volume: pure translation by c_ras
+    val lia = FreeSurferVolumeGeometry(Vector(256, 256, 256), affine(-1, 0, 0, 140.3, 0, 0, 1, -110.6, 0, -1, 0, 135.8, 0, 0, 0, 1))
+    val t = lia.tkrToScanner.rowMajor
+    assertClose(Vector(t(0), t(1), t(2), t(4), t(5), t(6), t(8), t(9), t(10)), Vector(1.0, 0, 0, 0, 1, 0, 0, 0, 1), 1e-12)
+    assertClose(Vector(t(3), t(7), t(11)), lia.centerRas, 1e-9)
 
   test("between composes into and out of RAS"):
     val system = ToolCoordinates.FslScaledVoxel(fsl(obliqueRas))

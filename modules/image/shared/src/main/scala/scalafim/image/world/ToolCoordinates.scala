@@ -57,24 +57,27 @@ object FslVolumeGeometry:
             Right(ToolCoordinates.affine(Vector(zooms(0), 0, 0, 0, 0, zooms(1), 0, 0, 0, 0, zooms(2), 0, 0, 0, 0, 1)) -> FslAffineSource.Scaling)
       chosen.map((affine, source) => FslVolumeGeometry(dims.take(3), zooms, affine, source))
 
-/** FreeSurfer volume geometry. `norig` is the scanner vox2ras. FreeSurfer's tkRAS vox2ras (`Torig`,
-  * `MRIxfmCRS2XYZtkreg`) uses the same direction cosines and voxel sizes with the centre RAS moved to the origin, so
-  * tkRAS -> scanner RAS is `Norig * inverse(Torig)`: a translation by `c_ras = Norig * (dims / 2)`, for oblique volumes
-  * too. `c_ras` must therefore come from the full geometry (dims and Norig), not from a header field alone.
+/** FreeSurfer volume geometry. `norig` is the scanner vox2ras (`MRIxfmCRS2XYZ`). FreeSurfer's tkRAS vox2ras (`Torig`,
+  * `MRIxfmCRS2XYZtkreg`) ignores the volume's direction cosines: it always uses the tkregister LIA axes
+  * (x_r = -1, z_a = 1, y_s = -1) with the volume's voxel sizes and the volume centre at the origin. So
+  * tkRAS -> scanner RAS is `Norig * inverse(Torig)`, which is a pure translation by `c_ras` only for LIA-oriented
+  * (conformed) volumes; for any other orientation it also rotates. Voxel sizes are the column norms of `norig`.
   */
 final case class FreeSurferVolumeGeometry(dims: Vector[Int], norig: Affine[D3]):
   require(dims.size == 3 && dims.forall(_ > 0), s"FreeSurfer geometry needs three positive dims, got $dims")
+
+  def voxelSizes: Vector[Double] =
+    val m = norig.rowMajor
+    Vector.tabulate(3)(c => math.sqrt(m(c) * m(c) + m(4 + c) * m(4 + c) + m(8 + c) * m(8 + c)))
 
   def centerRas: Vector[Double] =
     norig(dims.map(_ / 2.0)).fold(error => throw new IllegalStateException(error.message), identity)
 
   def torig: Affine[D3] =
-    val m = norig.rowMajor
-    val linear = Vector(m(0), m(1), m(2), m(4), m(5), m(6), m(8), m(9), m(10))
-    val half = dims.map(_ / 2.0)
-    def offset(row: Int) = -(linear(3 * row) * half(0) + linear(3 * row + 1) * half(1) + linear(3 * row + 2) * half(2))
+    val Vector(xs, ys, zs) = voxelSizes
+    val Vector(nx, ny, nz) = dims.map(_.toDouble)
     ToolCoordinates.affine(
-      Vector(m(0), m(1), m(2), offset(0), m(4), m(5), m(6), offset(1), m(8), m(9), m(10), offset(2), 0, 0, 0, 1)
+      Vector(-xs, 0.0, 0.0, xs * nx / 2.0, 0.0, 0.0, zs, -zs * nz / 2.0, 0.0, -ys, 0.0, ys * ny / 2.0, 0.0, 0.0, 0.0, 1.0)
     )
 
   /** tkRAS -> scanner RAS. */
