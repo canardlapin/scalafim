@@ -1,7 +1,8 @@
 package scalafim.spatial
 
-import gale.linalg.{DMat, LinAlgError}
+import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError}
 import gale.sparse.{COO, CSR}
+import scalafim.image.SpatialPoint
 
 final case class QcTolerance private (absolute: Double, relative: Double):
   require(absolute.isFinite && absolute >= 0.0, "absolute tolerance must be finite and non-negative")
@@ -110,6 +111,93 @@ object TripletFixture:
       .left.map(SpatialQc.linearError)
       .map(_ => new TripletFixture(rows, cols, rowIndices, colIndices, values, origin))
 
+/** How far two coordinate routes disagree on a set of probe points, in world millimetres.
+  *
+  * For a round trip A -> B -> A the second route is the identity; for a commutativity check it is another route
+  * between the same domains. Distances are Euclidean between the two routes' pulled-back points.
+  */
+final case class PathDifference(
+  label: String,
+  first: Vector[MorphismId],
+  second: Vector[MorphismId],
+  probes: Int,
+  maxDistance: Double,
+  rmsDistance: Double,
+  usedInverses: Boolean
+):
+  require(probes > 0, "a path difference needs at least one probe")
+  require(maxDistance.isFinite && maxDistance >= 0.0, "max distance must be finite and non-negative")
+  require(rmsDistance.isFinite && rmsDistance >= 0.0, "rms distance must be finite and non-negative")
+
+  def check(tolerance: QcTolerance = QcTolerance.default): QcCheck =
+    QcCheck(label, tolerance.accepts(maxDistance, 0.0), expected = 0.0, observed = maxDistance, maxAbsError = maxDistance, tolerance)
+
+/** Row sums of an operator: its response to a constant source. Interpolating rows sum to 1, uncovered rows to 0. */
+final case class RowSumSummary(
+  rows: Int,
+  mean: Double,
+  min: Double,
+  max: Double,
+  fractionAboveHalf: Double,
+  fractionNearOne: Double
+)
+
+/** Sanity of an operator's stored weights: counts of non-finite and negative (below -1e-12) entries. */
+final case class WeightSummary(
+  entries: Int,
+  nonFinite: Int,
+  negative: Int,
+  min: Option[Double],
+  max: Option[Double]
+):
+  def anyNonFinite: Boolean =
+    nonFinite > 0
+
+  def anyNegative: Boolean =
+    negative > 0
+
+enum WeightInspection:
+  /** The operator's stored entries were inspected. */
+  case Stored(summary: WeightSummary)
+
+  /** The operator is matrix-free or composite and exposes no stored entries. */
+  case Unavailable(representation: String)
+
+/** neurofunctor `projection_metrics`, over every row rather than a random sample. */
+final case class ProjectionMetrics(
+  targetRows: Int,
+  sourceColumns: Int,
+  coverage: Double,
+  rowSums: Vector[Double],
+  rowSumSummary: RowSumSummary,
+  weights: WeightInspection
+):
+  def nnzPerRow: Option[Double] =
+    weights match
+      case WeightInspection.Stored(summary) => Some(summary.entries.toDouble / math.max(1, targetRows).toDouble)
+      case WeightInspection.Unavailable(_) => None
+
+  /** Largest `|row sum - expected|` over rows that receive any weight (`coveredOnly`) or over every row. */
+  def rowSumCheck(
+    expected: Double = 1.0,
+    tolerance: QcTolerance = QcTolerance.unsafe(absolute = 1e-9, relative = 0.0),
+    coveredOnly: Boolean = true
+  ): QcCheck =
+    val considered = if coveredOnly then rowSums.filter(sum => math.abs(sum) > 1e-12) else rowSums
+    val error = considered.foldLeft(0.0)((worst, sum) => math.max(worst, math.abs(sum - expected)))
+    QcCheck("row sums", tolerance.accepts(error, 0.0), expected = 0.0, observed = error, maxAbsError = error, tolerance)
+
+  /** Finite and non-negative stored weights. An operator without stored entries fails both, as unverified. */
+  def weightChecks: Vector[QcCheck] =
+    val (nonFinite, negative) =
+      weights match
+        case WeightInspection.Stored(summary) => (summary.nonFinite.toDouble, summary.negative.toDouble)
+        case WeightInspection.Unavailable(_) => (Double.MaxValue, Double.MaxValue)
+    Vector(
+      QcCheck("finite weights", nonFinite == 0.0, expected = 0.0, observed = nonFinite, maxAbsError = nonFinite, QcTolerance.default),
+      QcCheck("non-negative weights", negative == 0.0, expected = 0.0, observed = negative, maxAbsError = negative, QcTolerance.default)
+    )
+
 object SpatialQc:
   def identityLaw(
     operator: SpatialOperator,
@@ -175,6 +263,156 @@ object SpatialQc:
       expected <- fixture.toSparseTriplets
       observed <- operatorTriplets(operator)
     yield tripletCheck(observed.toCSR.toTriplets, expected.toCSR.toTriplets, tolerance)
+
+  /** Round trip A -> B -> A: route A to B and B back to A (inverses allowed, forward-first), evaluate the composite
+    * pullback at `probes` in A's world, and report how far it moves them.
+    */
+  def roundTrip(
+    graph: SpatialGraph,
+    a: DomainId,
+    b: DomainId,
+    probes: Vector[SpatialPoint],
+    policy: RoutingPolicy = RoutingPolicy.Shortest,
+    inversePenalty: InversePenalty = InversePenalty.default
+  ): Either[SpatialError, PathDifference] =
+    for
+      there <- graph.path(a, b, policy, allowInverses = true, inversePenalty)
+      back <- graph.path(b, a, policy, allowInverses = true, inversePenalty)
+      loop <- MorphismPath.build(there.morphisms ++ back.morphisms, there.usedInverses || back.usedInverses)
+      result <- difference(
+        s"round trip ${a.value}->${b.value}->${a.value}",
+        loop,
+        Vector.empty,
+        probes,
+        point => loop.pullback(point),
+        point => Right(point)
+      )
+    yield result
+
+  /** Commutativity of two routes between the same domains: their pullbacks at `probes` in the target's world should
+    * agree.
+    */
+  def commutes(
+    first: MorphismPath,
+    second: MorphismPath,
+    probes: Vector[SpatialPoint]
+  ): Either[SpatialError, PathDifference] =
+    if first.source != second.source || first.target != second.target then
+      Left(SpatialError.PathEndpointsMismatch(first.source, first.target, second.source, second.target))
+    else
+      difference(
+        s"commutativity ${first.source.value}->${first.target.value}",
+        first,
+        second.ids,
+        probes,
+        point => first.pullback(point),
+        point => second.pullback(point)
+      ).map(result => result.copy(usedInverses = first.usedInverses || second.usedInverses))
+
+  /** Compare every alternative simple route from `source` to `target` with the cheapest one. */
+  def commutativity(
+    graph: SpatialGraph,
+    source: DomainId,
+    target: DomainId,
+    probes: Vector[SpatialPoint],
+    policy: RoutingPolicy = RoutingPolicy.Shortest,
+    maxPaths: Int = 10,
+    allowInverses: Boolean = false
+  ): Either[SpatialError, Vector[PathDifference]] =
+    graph.allPaths(source, target, policy, maxPaths, allowInverses).flatMap { routes =>
+      routes.drop(1).foldLeft[Either[SpatialError, Vector[PathDifference]]](Right(Vector.empty)) { (acc, route) =>
+        acc.flatMap(out => commutes(routes.head, route, probes).map(out :+ _))
+      }
+    }
+
+  /** Row sums and weight sanity for a compiled operator (neurofunctor `projection_metrics`). */
+  def projectionMetrics(operator: SpatialOperator): Either[SpatialError, ProjectionMetrics] =
+    metrics(operator.map, operator.qc.coverage.fraction, storedWeights(Vector(operator.map)))
+
+  /** Row sums and weight sanity for an assembled hybrid operator; weights are inspected part by part. */
+  def projectionMetrics(operator: HybridOperator): Either[SpatialError, ProjectionMetrics] =
+    metrics(operator.map, operator.meanPartCoverage, storedWeights(operator.parts.map(_.operator.map)))
+
+  private def metrics(
+    map: DoubleLinearOperator,
+    coverage: Double,
+    weights: WeightInspection
+  ): Either[SpatialError, ProjectionMetrics] =
+    val ones = GaleSpatialSupport.unsafeOwnedMatrix(map.cols, 1, Array.fill(map.cols)(1.0))
+    map.forward(ones).left.map(linearError).map { summed =>
+      val rowSums = Vector.tabulate(summed.rows)(row => summed(row, 0))
+      ProjectionMetrics(map.rows, map.cols, coverage, rowSums, summarizeRowSums(rowSums), weights)
+    }
+
+  private def summarizeRowSums(rowSums: Vector[Double]): RowSumSummary =
+    if rowSums.isEmpty then RowSumSummary(0, 0.0, 0.0, 0.0, 0.0, 0.0)
+    else
+      val n = rowSums.length.toDouble
+      RowSumSummary(
+        rows = rowSums.length,
+        mean = rowSums.sum / n,
+        min = rowSums.min,
+        max = rowSums.max,
+        fractionAboveHalf = rowSums.count(_ > 0.5).toDouble / n,
+        fractionNearOne = rowSums.count(sum => math.abs(sum - 1.0) < 0.1).toDouble / n
+      )
+
+  private def storedWeights(maps: Vector[DoubleLinearOperator]): WeightInspection =
+    val stored = maps.collect { case csr: CSR => csr }
+    if stored.length != maps.length then
+      WeightInspection.Unavailable(maps.find(!_.isInstanceOf[CSR]).fold("unknown")(_.getClass.getName))
+    else
+      var entries = 0
+      var nonFinite = 0
+      var negative = 0
+      var min = Double.PositiveInfinity
+      var max = Double.NegativeInfinity
+      stored.foreach { csr =>
+        csr.foreachStoredEntry: (_, _, weight) =>
+          entries += 1
+          if !weight.isFinite then nonFinite += 1
+          else
+            if weight < -1e-12 then negative += 1
+            min = math.min(min, weight)
+            max = math.max(max, weight)
+      }
+      val finiteSeen = entries > nonFinite
+      WeightInspection.Stored(
+        WeightSummary(entries, nonFinite, negative, Option.when(finiteSeen)(min), Option.when(finiteSeen)(max))
+      )
+
+  private def difference(
+    label: String,
+    first: MorphismPath,
+    second: Vector[MorphismId],
+    probes: Vector[SpatialPoint],
+    left: SpatialPoint => Either[SpatialError, SpatialPoint],
+    right: SpatialPoint => Either[SpatialError, SpatialPoint]
+  ): Either[SpatialError, PathDifference] =
+    if probes.isEmpty then Left(SpatialError.EmptyQcProbes)
+    else
+      probes
+        .foldLeft[Either[SpatialError, Vector[Double]]](Right(Vector.empty)) { (acc, probe) =>
+          for
+            distances <- acc
+            l <- left(probe)
+            r <- right(probe)
+          yield distances :+ math.sqrt(square(l.x - r.x) + square(l.y - r.y) + square(l.z - r.z))
+        }
+        .map { distances =>
+          PathDifference(
+            label,
+            first.ids,
+            second,
+            probes.length,
+            distances.max,
+            math.sqrt(distances.map(square).sum / distances.length.toDouble),
+            first.usedInverses
+          )
+        }
+
+  private def square(value: Double): Double =
+    value * value
 
   def report(checks: QcCheck*): QcReport =
     QcReport(checks.toVector)

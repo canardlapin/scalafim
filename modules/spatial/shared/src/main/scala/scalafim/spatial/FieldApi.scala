@@ -86,6 +86,10 @@ extension (field: Field)
       .map(error => FieldApiError.Demand(error))
       .flatMap(block => field.select(FieldDemand.time(block)))
 
+  /** Carry `data`, given in this view's domain, back to the root domain through the adjoint of the view's operator. */
+  def backproject(data: DMat)(using graph: SpatialGraph): Either[FieldApiError, Backprojection] =
+    Backprojection.of(field, data, graph).left.map(error => FieldApiError.Spatial(error))
+
   def value(using runtime: FieldRuntime): Either[FieldApiError, DMat] =
     runtime.data(field).left.map(error => FieldApiError.Spatial(error))
 
