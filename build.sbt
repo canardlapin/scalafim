@@ -825,6 +825,18 @@ lazy val transform =
         }
         if (platformLeaks.nonEmpty)
           sys.error(s"shared transform sources use platform IO: ${platformLeaks.mkString(", ")}")
+        // STP P1.07: world frames stay typed. Frame-erased maps, pullbacks, grids and points are allowed only where the
+        // heterogeneity is genuinely dynamic and ownership is re-checked at runtime:
+        //   spatial Morphism.scala   graph edges between arbitrary domains (reframe4s eraseFrameRefinements boundary)
+        //   transform StageChain.scala  private stage composition, re-typed to the chain's endpoints on every call
+        val erasureAllowlist = Set("Morphism.scala", "StageChain.scala")
+        val erased = "SpatialMap\\[Frame\\[D3\\], Frame\\[D3\\], D3\\]|SpatialPullback\\[Frame\\[D3\\], Frame\\[D3\\]\\]|GridSpec\\[Frame\\[D3\\]\\]|Point\\[Frame\\[D3\\], D3\\]".r
+        val erasedSignatures =
+          (repository / "modules" ** "*.scala").get
+            .filter(f => f.getPath.contains("/src/main/scala/") && !erasureAllowlist.contains(f.getName))
+            .flatMap(f => IO.readLines(f).zipWithIndex.collect { case (line, i) if erased.findFirstIn(line).nonEmpty && !line.contains("private") => s"${f.getName}:${i + 1}" })
+        if (erasedSignatures.nonEmpty)
+          sys.error(s"frame-erased signatures outside the allowlist (STP P1.07): ${erasedSignatures.mkString(", ")}")
       },
       Compile / compile := (Compile / compile).dependsOn(transformBoundaryCheck).value
     )
