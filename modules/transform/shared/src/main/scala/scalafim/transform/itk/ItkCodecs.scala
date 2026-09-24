@@ -1,6 +1,6 @@
 package scalafim.transform.itk
 
-import scalafim.transform.{TransformCodec, TransformFormat, TransformIoError, TransformSource}
+import scalafim.transform.{NumberText, TransformCodec, TransformFormat, TransformIoError, TransformSource}
 
 /** `#Insight Transform File V1.0` text: `.txt`, `.tfm`, and ANTs text `.mat`. */
 object ItkTextCodec extends TransformCodec[ItkTransformFile]:
@@ -52,15 +52,9 @@ object ItkTextCodec extends TransformCodec[ItkTransformFile]:
         out.append(s"#Transform $index\n")
         out.append(s"Transform: ${entry.typeName}\n")
         if !entry.isComposite then
-          out.append(s"Parameters: ${entry.parameters.map(ItkNumber.format).mkString(" ")}\n")
-          out.append(s"FixedParameters: ${entry.fixedParameters.map(ItkNumber.format).mkString(" ")}\n")
+          out.append(s"Parameters: ${entry.parameters.map(NumberText.format).mkString(" ")}\n")
+          out.append(s"FixedParameters: ${entry.fixedParameters.map(NumberText.format).mkString(" ")}\n")
       Right(TransformSource.Text(out.toString))
-
-/** Shortest decimal text that parses back to exactly the same double. */
-private[transform] object ItkNumber:
-  def format(value: Double): String =
-    if value == math.rint(value) && math.abs(value) < 1e15 then value.toLong.toString
-    else value.toString
 
 /** ITK's MATLAB v4 binary transform file (MatlabTransformIO): one variable named after the transform type and one
   * named `fixed`.
