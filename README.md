@@ -34,6 +34,7 @@ cross-compiled sbt build.
 - `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
 - `surface-view-three`: retained Scala.js Three.js/WebGL backend, browser picking/snapshots, and optional GPU volume projection.
 - `surface-view-connectivity`: cross-platform adapter from typed connectivity edge spaces into surface network render resources.
+- `transform`: toolkit spatial-transform formats (ITK/ANTs, FSL, AFNI, FreeSurfer, X5), their interpretation as typed world-space transforms, and conversion between toolkits; generic transform algebra stays in reframe4s. See `docs/plans/spatial-transform-parity.md`.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
 - `atlas`: typed standard-atlas metadata plus locus parcellations, registry, transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.

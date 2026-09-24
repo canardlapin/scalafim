@@ -1,0 +1,587 @@
+{
+  "producer": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+  "version": "5.0.9",
+  "cases": [
+    {
+      "id": "left_left_relative",
+      "representation": "relative"
+    },
+    {
+      "id": "left_left_absolute",
+      "representation": "absolute"
+    },
+    {
+      "id": "left_right_relative",
+      "representation": "relative"
+    },
+    {
+      "id": "left_right_absolute",
+      "representation": "absolute"
+    },
+    {
+      "id": "right_left_relative",
+      "representation": "relative"
+    },
+    {
+      "id": "right_left_absolute",
+      "representation": "absolute"
+    },
+    {
+      "id": "right_right_relative",
+      "representation": "relative"
+    },
+    {
+      "id": "right_right_absolute",
+      "representation": "absolute"
+    }
+  ],
+  "commands": [
+    {
+      "case": "left_left_relative",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--relout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "left_left_absolute",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--absout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "left_right_relative",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--relout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "left_right_absolute",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--absout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "right_left_relative",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--relout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "right_left_absolute",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--absout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "right_right_relative",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--relout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--rel"
+        ]
+      ],
+      "returncode": 0
+    },
+    {
+      "case": "right_right_absolute",
+      "image": "brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e",
+      "commands": [
+        [
+          "convertwarp",
+          "--ref=target.nii.gz",
+          "--warp1=seed.nii.gz",
+          "--rel",
+          "--absout",
+          "--out=warp.nii.gz"
+        ],
+        [
+          "applywarp",
+          "--in=source.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_source.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord0.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord0.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord1.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord1.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=coord2.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_coord2.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ],
+        [
+          "applywarp",
+          "--in=support.nii.gz",
+          "--ref=target.nii.gz",
+          "--warp=warp.nii.gz",
+          "--out=native_support.nii.gz",
+          "--interp=trilinear",
+          "--abs"
+        ]
+      ],
+      "returncode": 0
+    }
+  ],
+  "generator_sha256": "571f2512a9368209aeaf43bba1a2f64db11d968fff3550b110d7181ef96acbf7",
+  "hashes": {
+    "right_right_relative/warp.nii.gz": "c55d5e55f6584629aea09ff58a224b3589452c7e12f521602871c3bab2ca1faa",
+    "right_right_relative/native_coord0.nii.gz": "5394aac1b1e7f311ba2906659f5db63de32f9e08205178e0fd857bb28b012dcc",
+    "right_right_relative/native_coord2.nii.gz": "4544ccbc46259e99f7255ad38eefc7e598b503a0ab7b61705457de0c97e6044e",
+    "right_right_relative/target.nii.gz": "7d2c60a2e5d8e18a1218521fe716fb192043974b45da3876ebd8430dbade0f34",
+    "right_right_relative/native_support.nii.gz": "55489f314ea5a6494a422cb4c580b15b00642a965ec6f856f8937d4fbc98994b",
+    "right_right_relative/source.nii.gz": "1c9f70c9ffd86b012dccc35ed962488d21e0bcb27edfc48f1243c362e744c54e",
+    "right_right_relative/native_coord1.nii.gz": "5d1dd4ad838bb9eb8007e4d0eb4c57a1b3c3aa7c0428b7b3c06ed01674399138",
+    "right_right_relative/native_source.nii.gz": "8510e454dbd3c505d363ea4c476b8b8456573c7d6efa6d557bd68749008b17a0",
+    "left_left_absolute/warp.nii.gz": "d9b19cc900443265a58c2fe7e94098638163d872375a15ad521433250c3f5ab5",
+    "left_left_absolute/native_coord0.nii.gz": "9f8ca89cbcf7363590967f947c985a637b300c1e7c885a940bc95c6aad86f953",
+    "left_left_absolute/native_coord2.nii.gz": "df5154499197e5819a723ffca113e3aaccff6c0739398b3695aea93968c6d5a9",
+    "left_left_absolute/target.nii.gz": "a863aec0c297b5ea4f2e302bc74589fb0270e6a0d1934fb145d999a4b9d4df97",
+    "left_left_absolute/native_support.nii.gz": "6de500d6b410bd5ea4a619eba41cee208e3dbe0771ef63c9a67862e13062cb8f",
+    "left_left_absolute/source.nii.gz": "b46f3719e2f772b23d121d526cfea0215f459e84d48ed0107ed7a2f34a3e7089",
+    "left_left_absolute/native_coord1.nii.gz": "be41a7c1ca4bb308202636f04f4b08eb312ea80decc9028baace22933124e5ca",
+    "left_left_absolute/native_source.nii.gz": "6a6aa387c0058209d80d5a9fe39869c35002fbcafb1fd3e251f841ea93ecbda6",
+    "left_right_relative/warp.nii.gz": "c55d5e55f6584629aea09ff58a224b3589452c7e12f521602871c3bab2ca1faa",
+    "left_right_relative/native_coord0.nii.gz": "5b18e7f1374ae8edabb844a78f50ab3cab241c592dbff81af338c6f391b1613a",
+    "left_right_relative/native_coord2.nii.gz": "4544ccbc46259e99f7255ad38eefc7e598b503a0ab7b61705457de0c97e6044e",
+    "left_right_relative/target.nii.gz": "7d2c60a2e5d8e18a1218521fe716fb192043974b45da3876ebd8430dbade0f34",
+    "left_right_relative/native_support.nii.gz": "55489f314ea5a6494a422cb4c580b15b00642a965ec6f856f8937d4fbc98994b",
+    "left_right_relative/source.nii.gz": "b46f3719e2f772b23d121d526cfea0215f459e84d48ed0107ed7a2f34a3e7089",
+    "left_right_relative/native_coord1.nii.gz": "cac64aa1b0852118b2a40106ab164b230e4427c1815bee490e8c2a667deb5b8d",
+    "left_right_relative/native_source.nii.gz": "8510e454dbd3c505d363ea4c476b8b8456573c7d6efa6d557bd68749008b17a0",
+    "right_left_relative/warp.nii.gz": "04098bdf4f43a4bf82d2afb5e69ee25ef17c9ce31c8fd349dae4452a960b3a6e",
+    "right_left_relative/native_coord0.nii.gz": "e64dd0e19de92a5da0f8dff09d26a8d9d885acba782219c079ecfb6017abcb2d",
+    "right_left_relative/native_coord2.nii.gz": "df5154499197e5819a723ffca113e3aaccff6c0739398b3695aea93968c6d5a9",
+    "right_left_relative/target.nii.gz": "a863aec0c297b5ea4f2e302bc74589fb0270e6a0d1934fb145d999a4b9d4df97",
+    "right_left_relative/native_support.nii.gz": "6de500d6b410bd5ea4a619eba41cee208e3dbe0771ef63c9a67862e13062cb8f",
+    "right_left_relative/source.nii.gz": "1c9f70c9ffd86b012dccc35ed962488d21e0bcb27edfc48f1243c362e744c54e",
+    "right_left_relative/native_coord1.nii.gz": "cebfc7f8e933e1c28868bdd568eb08b9c9ea56a34814bacdbed6388f104ae02f",
+    "right_left_relative/native_source.nii.gz": "6a6aa387c0058209d80d5a9fe39869c35002fbcafb1fd3e251f841ea93ecbda6",
+    "right_left_absolute/warp.nii.gz": "d9b19cc900443265a58c2fe7e94098638163d872375a15ad521433250c3f5ab5",
+    "right_left_absolute/native_coord0.nii.gz": "e64dd0e19de92a5da0f8dff09d26a8d9d885acba782219c079ecfb6017abcb2d",
+    "right_left_absolute/native_coord2.nii.gz": "df5154499197e5819a723ffca113e3aaccff6c0739398b3695aea93968c6d5a9",
+    "right_left_absolute/target.nii.gz": "a863aec0c297b5ea4f2e302bc74589fb0270e6a0d1934fb145d999a4b9d4df97",
+    "right_left_absolute/native_support.nii.gz": "6de500d6b410bd5ea4a619eba41cee208e3dbe0771ef63c9a67862e13062cb8f",
+    "right_left_absolute/source.nii.gz": "1c9f70c9ffd86b012dccc35ed962488d21e0bcb27edfc48f1243c362e744c54e",
+    "right_left_absolute/native_coord1.nii.gz": "cebfc7f8e933e1c28868bdd568eb08b9c9ea56a34814bacdbed6388f104ae02f",
+    "right_left_absolute/native_source.nii.gz": "6a6aa387c0058209d80d5a9fe39869c35002fbcafb1fd3e251f841ea93ecbda6",
+    "right_right_absolute/warp.nii.gz": "c930a3fe9641c687354a689aa4dbecfb297f8390781293cd2c108decbf2fcc80",
+    "right_right_absolute/native_coord0.nii.gz": "5394aac1b1e7f311ba2906659f5db63de32f9e08205178e0fd857bb28b012dcc",
+    "right_right_absolute/native_coord2.nii.gz": "4544ccbc46259e99f7255ad38eefc7e598b503a0ab7b61705457de0c97e6044e",
+    "right_right_absolute/target.nii.gz": "7d2c60a2e5d8e18a1218521fe716fb192043974b45da3876ebd8430dbade0f34",
+    "right_right_absolute/native_support.nii.gz": "55489f314ea5a6494a422cb4c580b15b00642a965ec6f856f8937d4fbc98994b",
+    "right_right_absolute/source.nii.gz": "1c9f70c9ffd86b012dccc35ed962488d21e0bcb27edfc48f1243c362e744c54e",
+    "right_right_absolute/native_coord1.nii.gz": "5d1dd4ad838bb9eb8007e4d0eb4c57a1b3c3aa7c0428b7b3c06ed01674399138",
+    "right_right_absolute/native_source.nii.gz": "8510e454dbd3c505d363ea4c476b8b8456573c7d6efa6d557bd68749008b17a0",
+    "left_left_relative/warp.nii.gz": "04098bdf4f43a4bf82d2afb5e69ee25ef17c9ce31c8fd349dae4452a960b3a6e",
+    "left_left_relative/native_coord0.nii.gz": "9f8ca89cbcf7363590967f947c985a637b300c1e7c885a940bc95c6aad86f953",
+    "left_left_relative/native_coord2.nii.gz": "df5154499197e5819a723ffca113e3aaccff6c0739398b3695aea93968c6d5a9",
+    "left_left_relative/target.nii.gz": "a863aec0c297b5ea4f2e302bc74589fb0270e6a0d1934fb145d999a4b9d4df97",
+    "left_left_relative/native_support.nii.gz": "6de500d6b410bd5ea4a619eba41cee208e3dbe0771ef63c9a67862e13062cb8f",
+    "left_left_relative/source.nii.gz": "b46f3719e2f772b23d121d526cfea0215f459e84d48ed0107ed7a2f34a3e7089",
+    "left_left_relative/native_coord1.nii.gz": "be41a7c1ca4bb308202636f04f4b08eb312ea80decc9028baace22933124e5ca",
+    "left_left_relative/native_source.nii.gz": "6a6aa387c0058209d80d5a9fe39869c35002fbcafb1fd3e251f841ea93ecbda6",
+    "left_right_absolute/warp.nii.gz": "c930a3fe9641c687354a689aa4dbecfb297f8390781293cd2c108decbf2fcc80",
+    "left_right_absolute/native_coord0.nii.gz": "5b18e7f1374ae8edabb844a78f50ab3cab241c592dbff81af338c6f391b1613a",
+    "left_right_absolute/native_coord2.nii.gz": "4544ccbc46259e99f7255ad38eefc7e598b503a0ab7b61705457de0c97e6044e",
+    "left_right_absolute/target.nii.gz": "7d2c60a2e5d8e18a1218521fe716fb192043974b45da3876ebd8430dbade0f34",
+    "left_right_absolute/native_support.nii.gz": "55489f314ea5a6494a422cb4c580b15b00642a965ec6f856f8937d4fbc98994b",
+    "left_right_absolute/source.nii.gz": "b46f3719e2f772b23d121d526cfea0215f459e84d48ed0107ed7a2f34a3e7089",
+    "left_right_absolute/native_coord1.nii.gz": "cac64aa1b0852118b2a40106ab164b230e4427c1815bee490e8c2a667deb5b8d",
+    "left_right_absolute/native_source.nii.gz": "8510e454dbd3c505d363ea4c476b8b8456573c7d6efa6d557bd68749008b17a0"
+  }
+}

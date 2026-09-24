@@ -311,44 +311,71 @@ into feature sets.
 ## Neurotransform And Neurofunctor Boundary
 
 `~/code/neurotransform` and `~/code/neurofunctor` are related, but ScalaFIM
-keeps their durable ideas at different layers.
+keeps their durable ideas at different layers. The authority is the ledger in
+[`plans/image-module-unification-hardening.md`](plans/image-module-unification-hardening.md);
+the transform design is [`plans/spatial-transform-parity.md`](plans/spatial-transform-parity.md)
+and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 
-- `image` owns executable geometric transform kernels: `SpatialMorphism`,
-  `IdentityMorphism`, `Affine3DMorphism`, dense displacement/coordinate fields,
-  interpolation plans, `GridSpec`, `SpatialPoint`, `ResamplingPlan`, field
-  materialization, and local execution-plan compaction/fusion.
-- Standalone reframe4s owns nonlinear registration, HalfFlow state, midpoint
-  updates, paired flows, acceptance guards, and registration diagnostics.
-  ScalaFIM has no dependency on it after extraction.
-- `surface` owns surface-specific geometric data, volume-to-surface morphism
-  wrappers, and surface-to-surface vertex-map execution.
-- `atlas` owns named known-space route descriptors such as `SpaceTransforms`;
-  available affine routes can lower to image pullback morphisms.
-- `spatial` owns graph/operator semantics: typed domains, graph morphisms,
-  routing, compiled sparse operators, adjoints, QC, provenance, caches, and
-  lowering of executable identity/affine graph paths into image morphisms.
+**Providers:**
 
-There are intentionally two morphism layers:
+- **image4s-geometry** owns `Frame`, `Point`, `Vec`, `Affine` and `Grid`.
+- **reframe4s** (`lie`, `field`, `resample`, consumed through `image`) owns
+  generic transform algebra:
+  - `SpatialMap` with frame-checked composition
+  - `SmoothIso` and `FramedAffine`
+  - `DenseMap` and dense fields
+  - `ResamplingPlan` and the interpolation kernels
+  - nonlinear registration
 
-- `scalafim.image.SpatialMorphism` is an executable coordinate map: target
-  coordinates in, source coordinates out.
-- `scalafim.spatial.Morphism` is a graph edge: ids, source/target domains,
-  cost, inverse quality, route tag, provenance, and optional coordinate map.
+**ScalaFIM modules:**
 
-`scalafim.image.SpatialPoint` is the canonical finite 3D coordinate value across
-the spatial stack. `scalafim.surface.Point3D` and `scalafim.atlas.Point3D` are
-source-compatible aliases/adapters over that image type, not independent point
-records.
+- **`image`** owns neuroimaging adapters over those providers: `GridSpec`,
+  `SpatialPullbacks`, the ScalaFIM `ResamplingPlan` policy wrapper,
+  `DenseVectorField` roles, and anatomical orientation. It defines no
+  morphism or affine algebra of its own; `imageAlgebraBoundaryCheck` rejects
+  the retired `SpatialMorphism`/`Affine3DMorphism` family.
+  - **Planned (STP P1–P2):** `scalafim.image.space` will hold world-space
+    frame identity and the toolkit coordinate-convention kernel.
+- **`transform`** (new) owns toolkit transform formats (ITK/ANTs, FSL, AFNI,
+  FreeSurfer, X5), their interpretation as typed world-space transforms, and
+  conversion between toolkits.
+- **`surface`** owns surface geometry, volume-to-surface morphism wrappers,
+  and surface-to-surface vertex-map execution.
+- **`atlas`** owns named known-space route descriptors such as
+  `SpaceTransforms`.
+  - **Planned (STP P7):** these become a manifest that populates the
+    `spatial` graph.
+- **`spatial`** owns graph and operator semantics:
+  - typed domains, graph morphisms and routing
+  - compiled sparse operators, adjoints and QC
+  - provenance and caches
+  - graph ingestion of transform assets
 
-Where voxel/world roles matter, prefer the narrower `VoxelPoint` and
-`WorldPoint` image types over an unlabelled 3D vector.
+There are intentionally two layers:
 
-Agents should not duplicate coordinate execution in `spatial` when an
-`image.SpatialMorphism` or surface primitive can own it. Use the existing typed
-lowering from `spatial.MorphismPath` to executable image morphisms for
-identity/affine paths, and compiled sampled operators where the target is a
-sampled domain. Dense nonlinear routes should wait until the JVM transform IO
-descriptors can materialize executable dense morphisms.
+- **A coordinate map** is a reframe4s `SpatialMap`, which takes target
+  coordinates and returns source coordinates. `spatial` binds these through
+  `CoordinateMap.Geometric(ProviderMapBinding)`.
+- **`scalafim.spatial.Morphism`** is a graph edge: ids, source and target
+  domains, cost, inverse quality, route tag, provenance, and an optional
+  coordinate map.
+
+**Points:**
+
+- `scalafim.image.SpatialPoint` is the unlabelled finite 3D coordinate at
+  format and kernel boundaries. `scalafim.surface.Point3D` and
+  `scalafim.atlas.Point3D` are aliases of it.
+- Where voxel or world roles matter, prefer `VoxelPoint` and `WorldPoint`.
+- Frame-indexed image4s `Point[F, D3]` values are the target representation
+  (STP P1).
+
+**Rules for agents:**
+
+- Do not duplicate coordinate execution in `spatial` or `atlas`. Compose
+  provider maps, and compile sampled operators where the target is a sampled
+  domain.
+- Dense nonlinear routes execute through reframe4s `DenseMap` pullbacks that
+  are built from transform assets.
 
 ## Placement Rules
 
