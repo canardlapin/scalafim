@@ -196,3 +196,25 @@ class OperatorCompilerSuite extends munit.FunSuite:
       value(executable.coordinateMap.transform(SpatialPoint.Origin)),
       SpatialPoint(1.0, 2.0, 0.0)
     )
+
+  test("operator and field provenance record whether the route used inverses"):
+    val source = domain("inv-source", Vector(3, 1, 1))
+    val target = domain("inv-target", Vector(3, 1, 1))
+    val forward = affine("inv-source-to-target", source, target, translation(1.0, 0.0, 0.0))
+    val routed = graph(Vector(source, target), Vector(forward))
+
+    val direct = value(OperatorCompiler.compile(routed, CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest)))
+    assert(!direct.provenance.usedInverses)
+    assert(!FieldTransform.from(direct).usedInverses)
+
+    val reverse =
+      value(
+        OperatorCompiler.compile(
+          routed,
+          CompileRequest(target.id, source.id, sampling = SamplingPolicy.Nearest, allowInverses = true)
+        )
+      )
+    assert(reverse.path.usedInverses)
+    assert(reverse.provenance.usedInverses)
+    assert(FieldTransform.from(reverse).usedInverses)
+    assertEquals(reverse.provenance.path.map(_.value), Vector("inv-source-to-target:inverse"))

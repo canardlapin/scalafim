@@ -125,7 +125,8 @@ final case class FieldTransform(
   source: DomainId,
   target: DomainId,
   path: Vector[MorphismId],
-  compiler: String
+  compiler: String,
+  usedInverses: Boolean = false
 )
 
 object FieldTransform:
@@ -136,7 +137,8 @@ object FieldTransform:
       source = operator.source,
       target = operator.target,
       path = operator.provenance.path,
-      compiler = operator.provenance.compiler
+      compiler = operator.provenance.compiler,
+      usedInverses = operator.provenance.usedInverses
     )
 
 final case class FieldProvenance(

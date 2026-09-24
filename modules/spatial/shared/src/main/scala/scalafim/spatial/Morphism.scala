@@ -545,11 +545,15 @@ final case class Morphism private (
   isInverted: Boolean,
   plugin: Option[MorphismPlugin]
 ):
+  /** This morphism run backwards, as a routing edge costing `cost + penalty * (1 - inverse.quality)`. */
   def reversed: Either[SpatialError, Morphism] =
+    reversed(InversePenalty.default)
+
+  def reversed(inversePenalty: InversePenalty): Either[SpatialError, Morphism] =
     if plugin.nonEmpty || !inverse.isGeometric then Left(SpatialError.NonInvertibleMorphism(id))
     else
       val inverseId = MorphismId.unsafe(s"${id.value}:inverse")
-      val penalty = 1.0 - inverse.quality
+      val penalty = inversePenalty.value * (1.0 - inverse.quality)
       val inverseMap =
         coordinateMap match
           case CoordinateMap.Unspecified => Right(CoordinateMap.Unspecified)
@@ -719,6 +723,13 @@ final case class MorphismPath private (
 
   def ids: Vector[MorphismId] =
     morphisms.map(_.id)
+
+  /** The steps that run a morphism backwards through its geometric inverse. */
+  def invertedSteps: Vector[MorphismId] =
+    morphisms.filter(_.isInverted).map(_.id)
+
+  def inspect: PathInspection =
+    PathInspection.of(this)
 
 object MorphismPath:
   def build(morphisms: Vector[Morphism], usedInverses: Boolean = false): Either[SpatialError, MorphismPath] =

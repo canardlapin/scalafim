@@ -46,6 +46,8 @@ enum SpatialError:
   case EmptyPath
   case DisconnectedPath(previous: DomainId, next: DomainId)
   case NonInvertibleMorphism(id: MorphismId)
+  case InvalidInversePenalty(value: Double)
+  case InvalidPathLimit(value: Int)
   case InvalidProviderCoordinateMap(reason: String)
   case CoordinateMapDomainMismatch(id: MorphismId, source: DomainId, target: DomainId, mapSource: String, mapTarget: String)
   case ProviderMap(cause: MapError)
@@ -103,7 +105,7 @@ enum SpatialError:
         SpatialErrorReason.MorphismCompatibility
       case DuplicateDomain(_) | DuplicateMorphism(_) | DomainNotFound(_) | MorphismDomainMissing(_, _) =>
         SpatialErrorReason.Graph
-      case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) =>
+      case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) | InvalidInversePenalty(_) | InvalidPathLimit(_) =>
         SpatialErrorReason.Route
       case InvalidProviderCoordinateMap(_) | CoordinateMapDomainMismatch(_, _, _, _, _) | ProviderMap(_) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
         SpatialErrorReason.CoordinateMap
@@ -168,6 +170,10 @@ enum SpatialError:
         s"morphism path is disconnected between ${previous.value} and ${next.value}"
       case NonInvertibleMorphism(id) =>
         s"morphism ${id.value} does not have a geometric inverse"
+      case InvalidInversePenalty(value) =>
+        s"inverse penalty must be finite and non-negative, got $value"
+      case InvalidPathLimit(value) =>
+        s"path limit must be positive, got $value"
       case InvalidProviderCoordinateMap(reason) =>
         s"invalid provider coordinate map: $reason"
       case CoordinateMapDomainMismatch(id, source, target, mapSource, mapTarget) =>

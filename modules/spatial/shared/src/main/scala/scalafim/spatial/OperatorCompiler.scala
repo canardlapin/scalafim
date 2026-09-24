@@ -76,8 +76,12 @@ final case class OperatorQc(
   pathQuality: Double
 )
 
+/** How an operator was made. `usedInverses` records whether its route ran any morphism backwards through a geometric
+  * inverse; [[SpatialOperator.build]] sets it from the operator's path, which is the authority.
+  */
 final case class OperatorProvenance(
-  recipe: OperatorRecipe
+  recipe: OperatorRecipe,
+  usedInverses: Boolean = false
 ):
   def path: Vector[MorphismId] =
     recipe.path
@@ -162,7 +166,7 @@ object SpatialOperator:
       for
         shape <- OperatorShape.build(map.rows, map.cols)
         signature <- OperatorSignature.build(source, target, shape, provenance.recipe)
-      yield new SpatialOperator(source, target, map, path, qc, signature, provenance)
+      yield new SpatialOperator(source, target, map, path, qc, signature, provenance.copy(usedInverses = path.usedInverses))
 
 trait OperatorCompiler:
   def compile(graph: SpatialGraph, request: CompileRequest): Either[SpatialError, SpatialOperator]
