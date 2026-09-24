@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.{SessionId, SubjectId, TemplateName}
+
 import image4s.SampleSpace
 import image4s.geometry.D3
 import image4s.geometry.Frame

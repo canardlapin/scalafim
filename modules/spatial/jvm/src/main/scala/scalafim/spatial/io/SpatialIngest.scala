@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import scalafim.image.space.{SessionId, SubjectId}
+
 import scalafim.spatial.*
 
 import java.nio.file.Path

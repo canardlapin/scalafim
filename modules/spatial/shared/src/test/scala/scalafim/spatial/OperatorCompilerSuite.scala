@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import image4s.geometry.{Affine, D3}
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
@@ -18,7 +20,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
 
   private def domain(name: String, dims: Vector[Int]): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality(name))
     val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))

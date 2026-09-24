@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import ravel.NDArray as RavelArray
 import reframe4s.field.DenseMap
 import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPoint, SpatialPullback, SpatialPullbacks}
@@ -18,7 +20,7 @@ class NonlinearPullbackSuite extends munit.FunSuite:
 
   private def domain(name: String): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry =
       spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))))

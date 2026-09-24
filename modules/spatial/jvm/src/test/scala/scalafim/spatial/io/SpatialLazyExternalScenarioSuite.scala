@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import scalafim.image.space.SubjectId
+
 import scalafim.image.io.Nifti
 import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
 import scalafim.spatial.{ProviderAffines, ProviderAxes}
@@ -18,7 +20,7 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String, space: SomeSampleSpace): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-external"))
+    val subject = spatialValue(SubjectId("sub-external").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(SamplingGeometry.volume(space))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))

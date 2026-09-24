@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import image4s.geometry.GeometryError
 import scalafim.image.{SampleSpaceError, SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
@@ -18,7 +20,7 @@ class FieldSourceSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String, voxels: Int = 4): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
       SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity)))

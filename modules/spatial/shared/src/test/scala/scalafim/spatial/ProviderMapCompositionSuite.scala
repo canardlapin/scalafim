@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import ravel.NDArray as RavelArray
 import scalafim.image.{GridSpec, SampleSpaces, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
@@ -11,7 +13,7 @@ class ProviderMapCompositionSuite extends munit.FunSuite:
 
   private def domain(name: String): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
       SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))

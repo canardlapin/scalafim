@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import scalafim.image.space.SubjectId
+
 import scalafim.image.{GridSpec, SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
@@ -43,7 +45,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     space: SomeSampleSpace = SampleSpaces(Vector(5, 2, 2), affine = Some(ProviderAffines.identity))
   ): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(SamplingGeometry.volume(space))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))

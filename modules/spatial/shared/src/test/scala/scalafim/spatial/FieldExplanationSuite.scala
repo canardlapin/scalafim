@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import image4s.geometry.{Affine, D3}
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
@@ -23,7 +25,7 @@ class FieldExplanationSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
       SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))

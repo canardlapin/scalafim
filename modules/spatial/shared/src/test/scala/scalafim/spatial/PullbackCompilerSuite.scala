@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import image4s.geometry.{Affine, D3}
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
@@ -13,7 +15,7 @@ class PullbackCompilerSuite extends munit.FunSuite:
 
   private def domain(name: String, voxels: Int = 3): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality(name))
     val geometry =
       value(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity))))

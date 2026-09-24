@@ -2,10 +2,12 @@ package scalafim.spatial
 
 import image4s.geometry.GeometryError
 import scalafim.image.SampleSpaceError
+import scalafim.image.space.SpaceError
 import reframe4s.core.MapError
 
 enum SpatialErrorReason:
   case Identifier
+  case Space
   case Dimension
   case Geometry
   case DomainKind
@@ -21,6 +23,7 @@ enum SpatialErrorReason:
 
 enum SpatialError:
   case EmptyIdentifier(label: String)
+  case Space(cause: SpaceError)
   case NonPositiveDimension(label: String, value: Int)
   case EmptyHybrid
   case DuplicatePartName(name: PartName)
@@ -88,6 +91,8 @@ enum SpatialError:
     this match
       case EmptyIdentifier(_) =>
         SpatialErrorReason.Identifier
+      case Space(_) =>
+        SpatialErrorReason.Space
       case NonPositiveDimension(_, _) | LatentDimensionMismatch(_, _, _) | NegativeOffset(_, _) =>
         SpatialErrorReason.Dimension
       case EmptyHybrid | DuplicatePartName(_) | MaskSpaceMismatch(_) | SampleSpaceAdmission(_) | Geometry(_) | UnsupportedGeometry(_) =>
@@ -117,6 +122,8 @@ enum SpatialError:
     this match
       case EmptyIdentifier(label) =>
         s"$label identifier must be non-empty"
+      case Space(cause) =>
+        cause.message
       case NonPositiveDimension(label, value) =>
         s"$label dimension must be positive, got $value"
       case EmptyHybrid =>
@@ -241,3 +248,8 @@ enum SpatialError:
         s"coordinate transform failed: $reason"
       case OperatorAssemblyFailed(reason) =>
         s"operator assembly failed: $reason"
+
+/** Lift a world-space identity failure into the spatial error vocabulary. */
+extension [A](result: Either[SpaceError, A])
+  def asSpatial: Either[SpatialError, A] =
+    result.left.map(SpatialError.Space(_))

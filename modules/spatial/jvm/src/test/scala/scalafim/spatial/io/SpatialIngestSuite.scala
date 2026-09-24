@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import scalafim.image.space.{SessionId, SubjectId}
+
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
@@ -20,7 +22,7 @@ class SpatialIngestSuite extends munit.FunSuite:
 
   private def domain(name: String): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality(name))
     val geometry = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 1, 1), affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
@@ -67,8 +69,8 @@ class SpatialIngestSuite extends munit.FunSuite:
           coordinateMap = value(CoordinateMap.affine(func, t1w, ProviderAffines.identity))
         )
       )
-    val subject = value(SubjectId("sub-01"))
-    val session = Some(value(SessionId("ses-01")))
+    val subject = value(SubjectId("sub-01").asSpatial)
+    val session = Some(value(SessionId("ses-01").asSpatial))
     val spec = ioValue(FmriprepSpatialGraph.build(subject, session, Vector(func, t1w), Vector(descriptor)))
     val graph = ioValue(spec.toSpatialGraph)
 

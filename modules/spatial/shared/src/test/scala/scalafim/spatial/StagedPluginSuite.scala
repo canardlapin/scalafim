@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.{SubjectId, TemplateName}
+
 import gale.linalg.DMat as GaleDMat
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
@@ -14,7 +16,7 @@ class StagedPluginSuite extends munit.FunSuite:
 
   private def volume(name: String, voxels: Int): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
@@ -26,7 +28,7 @@ class StagedPluginSuite extends munit.FunSuite:
     spatialValue(
       Domain.build(
         spatialValue(DomainId(name)),
-        SpaceRef.Template(spatialValue(TemplateName(name)), None, TemplateKind.Hybrid),
+        SpaceRef.Template(spatialValue(TemplateName(name).asSpatial), None, TemplateKind.Hybrid),
         geometry
       )
     )

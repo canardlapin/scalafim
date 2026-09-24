@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.space.SubjectId
+
 import scalafim.image.{SampleSpaces, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
 import scalafim.image.SampleSpaces.*
 import scalafim.image.valueAtCanonicalOrdinal
@@ -36,14 +38,14 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
 
   private def volumeDomain(mask: Option[SomeMaskVolume] = None): Domain =
     val id = value(DomainId("volume"))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality("bold"))
     val geometry = value(SamplingGeometry.volume(space, mask))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(mask: Option[SurfaceRoi[Boolean]] = None): Domain =
     val id = value(DomainId("surface"))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val geometry = value(SamplingGeometry.surface(pair.white, mask))
     value(Domain.build(id, SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.White), geometry))
 
