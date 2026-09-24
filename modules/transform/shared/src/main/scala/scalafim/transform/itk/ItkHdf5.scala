@@ -1,7 +1,7 @@
 package scalafim.transform.itk
 
-import image4s.geometry.{Affine, D3, Frame, Point}
-import reframe4s.core.{MapError, SpatialMap}
+import image4s.geometry.{Affine, D3, Frame}
+import reframe4s.core.SpatialMap
 import reframe4s.field.CoordinateBoundaryPolicy
 import reframe4s.lie.FramedAffine
 import scalafim.image.world.ToolCoordinates
@@ -56,19 +56,11 @@ object ItkHdf5Interpretation extends Interpretation[ItkHdf5File, DenseContext, T
         .interpretWith(ItkTransformFile(stages.map(_.asEntry)), context.frames, asset, TransformFormat.ItkHdf5)
         .map(chain => TransformChain(chainStages, chain.composed))
     else
-      // Stage frames: target -> intermediates -> source, in the order a point travels (last component first).
-      val travel = stages.reverse
-      for
-        middle <- (1 until stages.size).toVector.foldLeft[Either[TransformError, Vector[Frame[D3]]]](Right(Vector.empty)): (acc, i) =>
-          acc.flatMap(done => Frame.named[D3](s"itk-hdf5-stage-$i").left.map(TransformError.Geometry(_)).map(done :+ _))
-        boundaries = (context.frames.target +: middle) :+ context.frames.source
-        maps <- travel.zipWithIndex.foldLeft[Either[TransformError, Vector[SpatialMap[Frame[D3], Frame[D3], D3]]]](Right(Vector.empty)): (acc, stage) =>
-          val (component, i) = stage
-          acc.flatMap(done => stageMap(component, boundaries(i), boundaries(i + 1), context.boundary).map(done :+ _))
-      yield
-        val erased = maps.reduceLeft((a, b) => a.andThen(b))
-        val composed = WorldTransform.Mapped(Typed(context.frames.target, context.frames.source, erased), PushAvailability.Unavailable[S, T](), provenance)
-        TransformChain(chainStages, composed)
+      // ITK applies the last component first: the travel order is the file order reversed.
+      val stagesInTravelOrder = stages.reverse.map(component => (from: Frame[D3], to: Frame[D3]) => stageMap(component, from, to, context.boundary))
+      StageChain
+        .compose(context.frames.target, context.frames.source, "itk-hdf5", stagesInTravelOrder)
+        .map(pull => TransformChain(chainStages, WorldTransform.Mapped(pull, PushAvailability.Unavailable[S, T](), provenance)))
 
   private def stageMap(component: ItkHdf5Component, from: Frame[D3], to: Frame[D3], boundary: CoordinateBoundaryPolicy): Either[TransformError, SpatialMap[Frame[D3], Frame[D3], D3]] =
     if component.isDisplacementField then displacement(component, from, to, boundary)
@@ -105,12 +97,3 @@ object ItkHdf5Interpretation extends Interpretation[ItkHdf5File, DenseContext, T
               val world = m(4 * r) * x + m(4 * r + 1) * y + m(4 * r + 2) * z + m(4 * r + 3)
               world + (if r < 2 then -p(base + r) else p(base + r))
         yield SpatialMap.eraseFrameRefinements(dense)
-
-  /** Re-attach the chain's static endpoint types after composing erased stages; ownership is checked on every call. */
-  private final class Typed[T <: Frame[D3], S <: Frame[D3]](val source: T, val target: S, erased: SpatialMap[Frame[D3], Frame[D3], D3]) extends SpatialMap[T, S, D3]:
-    def apply(point: Point[T, D3]): Either[MapError, Point[S, D3]] =
-      for
-        in <- Frame.alignOwners[D3, T, Frame[D3]](source, erased.source).flatMap(_.pointToRight(point)).left.map(MapError.Geometry(_))
-        out <- erased(in)
-        result <- Frame.alignOwners[D3, Frame[D3], S](erased.target, target).flatMap(_.pointToRight(out)).left.map(MapError.Geometry(_))
-      yield result

@@ -1,0 +1,28 @@
+{
+ "generator": "tools/transform/generate_x5_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "cross-implementation",
+ "tools": {
+  "nitransforms": "25.1.0",
+  "nibabel": "5.4.2",
+  "h5py": "3.16.0",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with h5py==3.16.0 --with numpy python tools/transform/generate_x5_oracle.py"
+ ],
+ "notes": "points.tsv: reference RAS points on the dense lattice and nitransforms' mapped (moving) RAS point (nitransforms interpolates off-grid with a cubic B-spline; ScalaFIM/ITK/FSL are linear). X5 is a draft spec; this is consistency with nitransforms.",
+ "sha256": {
+  "chain.nodes.txt": "462781813fb2e4d1616605bc649358d6516200cb99beb090a8286329d899be11",
+  "chain.x5": "47bd7643a51466abca9a7a563de7d9246aa0b99dad1b8d0c43db15742da65b5d",
+  "deformations.nodes.txt": "23c3135ee165b65f5cab9be8cdc25e93b1fcfde7c6dff66e4e014c4828c78385",
+  "deformations.x5": "bc1be1b850ad307814d328e045df853a73904b0fb967d72510cdaf0ab0b47d75",
+  "displacements.nodes.txt": "35aad9bd0c60ab88d53069968cb6feae89abae09d945511672665539b2e525c9",
+  "displacements.x5": "5d5a9cbf4d6fba5b9d6642e139febbe0ea933f53a34f1b6f8d1a0f4a4e1de7b6",
+  "linear.nodes.txt": "4ee7d9e0ec844e8b4fc377013b4c10581b4af12a1173d22fd1b03f5cc3e88b7c",
+  "linear.x5": "2ef3b3c016e9a59a6bb94c8b124d0056e7731312266f0e1bf079afb96457b41c",
+  "points.tsv": "a8fb15948c0f3fe62aac32785e375875627685280d3425f7545173d9f097f608"
+ }
+}
