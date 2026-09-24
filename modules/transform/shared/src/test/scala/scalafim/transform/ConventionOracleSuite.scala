@@ -7,8 +7,7 @@ import scalafim.transform.oracle.OracleTable
 /** Convention kernel against reference implementations (fslpy, nibabel); see oracle/conventions/manifest.json. */
 class ConventionOracleSuite extends munit.FunSuite:
   private def m16(row: Vector[Double], table: OracleTable, prefix: String): Vector[Double] =
-    val start = table.header.indexOf(s"${prefix}00")
-    row.slice(start, start + 16)
+    table.block(row, s"${prefix}00", 16)
 
   private def affine(values: Vector[Double]): Affine[D3] =
     Affine.fromRowMajor[D3](values).fold(e => fail(e.message), identity)

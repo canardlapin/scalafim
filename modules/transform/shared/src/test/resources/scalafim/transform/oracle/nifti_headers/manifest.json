@@ -1,0 +1,18 @@
+{
+ "generator": "tools/transform/generate_nifti_header_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "reference-implementation",
+ "tools": {
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nibabel==5.4.2 --with numpy python tools/transform/generate_nifti_header_oracle.py"
+ ],
+ "notes": "nibabel header fields, qform/sform (zeros when the code is 0), first values in Fortran (x-fastest) order, sum and max |value| of the scaled data.",
+ "sha256": {
+  "headers.tsv": "b9401d74acec2e1bf2562d6b9dca35f3bdbcf12747406a5af8f66e9f4e81b325"
+ }
+}
