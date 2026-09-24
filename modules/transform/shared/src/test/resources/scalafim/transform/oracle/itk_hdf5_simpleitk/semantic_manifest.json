@@ -1,0 +1,11 @@
+{
+  "affine_only_forward_double.h5": "62149ce8af0409245a9d6726a492fbb47a5a86a9facab199b012f75b19f3a275",
+  "composite_affine_displacement_double.h5": "028712a4df85be9ae03ede503ca3a4c17ba6ea9f5b983a4f570ca59665e6983b",
+  "composite_affine_displacement_legacy_float.h5": "913099e8d8823f1933287b6ad027f4f51c81227cb1c41c6c5411943dc8cbe39e",
+  "malformed_missing_fixed.h5": "1df7c7eb65939ff7f1af99bd19aba9a35577ac81e1b6bb4a5dacebd6ea34899f",
+  "oracles.json": "9415a967b3481cf935d0ed148a481b46085a6e9a68dc8c9900594f2af7c5fcd4",
+  "point_oracles.tsv": "b25684942702579f8163581396f3ab976497106a053945590db860fae2bf92d1",
+  "pullback_minus_one.h5": "d05abec65732194a24b8c531e53949a55d0855120d975927551410d18d3e5187",
+  "pullback_plus_one.h5": "0ad3e3e133c3b7ed5ad0f31c48e83d0f917b21dd58f24482d869417c9868d6b3",
+  "unsupported_bspline.h5": "696f694366917132f8fdb0ae8d12eb0a7319ffa1929131f7374b4e503864f640"
+}

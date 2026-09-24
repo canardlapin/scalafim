@@ -69,6 +69,39 @@ class ItkLinearOracleSuite extends munit.FunSuite:
     assertEquals(mat.entries.map(_.kind), Vector("AffineTransform"))
     tfm.entries.head.parameters.zip(mat.entries.head.parameters).foreach((a, b) => assertEqualsDouble(a, b, 1e-12))
 
+  /** Re-store a decoded MATLAB v4 file with another machine format and precision (MOPT = 1000 * machine + 10 * precision). */
+  private def restore(file: ItkTransformFile, bigEndian: Boolean, precision: Int): TransformSource =
+    val out = Vector.newBuilder[Byte]
+    def int32(v: Int) =
+      val bytes = Vector(v.toByte, (v >>> 8).toByte, (v >>> 16).toByte, (v >>> 24).toByte)
+      out ++= (if bigEndian then bytes.reverse else bytes)
+    def variable(name: String, values: Vector[Double]): Unit =
+      val nameBytes = name.getBytes("US-ASCII").toVector :+ 0.toByte
+      Vector((if bigEndian then 1000 else 0) + 10 * precision, values.size, 1, 0, nameBytes.size).foreach(int32)
+      out ++= nameBytes
+      values.foreach(v => int32(java.lang.Float.floatToIntBits(v.toFloat)))
+    val entry = file.entries.head
+    variable(entry.typeName, entry.parameters)
+    variable("fixed", entry.fixedParameters)
+    TransformSource.Binary(IArray.from(out.result()))
+
+  test("big-endian float32 MATLAB v4 storage decodes to the oracle transform at float precision"):
+    cases.filterNot(_.startsWith("composite")).foreach: name =>
+      val stored = ok(ItkMatlabCodec.decode(binary(name)))
+      val again = ok(ItkMatlabCodec.decode(restore(stored, bigEndian = true, precision = 1)))
+      assertEquals(again.entries.map(_.typeName), stored.entries.map(_.typeName), name)
+      (again.entries.head.parameters ++ again.entries.head.fixedParameters)
+        .zip(stored.entries.head.parameters ++ stored.entries.head.fixedParameters)
+        .foreach((a, b) => assertEqualsDouble(a, b, 1e-6 * math.max(1.0, math.abs(b)), name))
+
+  test("unsupported MATLAB v4 precision codes and truncated records are typed failures"):
+    val stored = ok(ItkMatlabCodec.decode(binary("affine")))
+    ItkMatlabCodec.decode(restore(stored, bigEndian = false, precision = 6)) match
+      case Left(TransformIoError.Malformed(_, reason)) => assert(reason.contains("unsupported variable header"), reason)
+      case other                                      => fail(s"expected a typed precision refusal, got $other")
+    val bytes = OracleFixtures.bytes("itk_linear/affine.mat")
+    assert(ItkMatlabCodec.decode(TransformSource.Binary(IArray.unsafeFromArray(bytes.take(bytes.length - 4)))).isLeft)
+
   test("unsupported and malformed ITK content is a typed failure"):
     val bspline = "#Insight Transform File V1.0\n#Transform 0\nTransform: BSplineTransform_double_3_3\nParameters: 0 0\nFixedParameters: 0\n"
     val file = ok(ItkTextCodec.decode(TransformSource.Text(bspline)))
