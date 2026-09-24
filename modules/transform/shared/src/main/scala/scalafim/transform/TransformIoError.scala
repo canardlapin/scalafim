@@ -9,6 +9,7 @@ enum TransformIoError derives CanEqual:
   case Undetectable(reason: String)
   case Ambiguous(candidates: Vector[TransformFormat], reason: String)
   case WrongSource(format: TransformFormat, expected: String)
+  case UnsupportedLtaType(code: Int, reason: String)
 
   def message: String =
     this match
@@ -19,3 +20,4 @@ enum TransformIoError derives CanEqual:
       case Undetectable(reason)             => s"cannot identify the transform format: $reason"
       case Ambiguous(candidates, reason)    => s"transform format is ambiguous between ${candidates.mkString(", ")}: $reason"
       case WrongSource(format, expected)    => s"$format codec expects $expected"
+      case UnsupportedLtaType(code, reason) => s"LTA type $code is not interpreted: $reason"
