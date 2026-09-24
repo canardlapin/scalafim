@@ -423,8 +423,37 @@ requirement unchanged.
 
 #### ANTs point-transform check
 
-> **PLACEHOLDER — not yet recorded.** The ANTs point-transform check of the
-> 6Asym → 2009c placement is being run separately and will be recorded here.
+Run on 2026-09-24 against the placed positions of the TemplateFlow-only run
+of §6 (`gm-probseg/world_{L,R}.npy`; placement does not depend on the data, and
+the `gm-nan-cut` placement is byte-identical).
+
+- **Tool.** `antsApplyTransformsToPoints` from ANTs 2.6.5, the official
+  macOS-14 ARM64 release (zip sha256 `e9fe0a36…`, binary `0e36a360…`).
+  Points go in as LPS CSV (x, y, z, t), with `-d 3 -p 1` (double precision)
+  and `-t` with the file as given. The script is
+  `tools/fslr-qualification/ants_point_check.py` (sha256 `c277497a…`), and its
+  artifact is `ants-point-check.json` (sha256 `79f30859…`).
+- **Placement.** ANTs applies `tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym`
+  to ScalaFIM's inverse-placed 2009c positions and recovers the original fsLR
+  6Asym vertices, on all 32 492 vertices per hemisphere:
+
+  | Hemisphere | Median | p99 | Max |
+  |---|---|---|---|
+  | L | 3.0e-7 mm | 9.8e-7 mm | 1.0e-6 mm |
+  | R | 2.9e-7 mm | 9.7e-7 mm | 1.0e-6 mm |
+
+  The maximum is the solver tolerance (1e-6 mm).
+- **ANTs vs SimpleITK.** The two point maps agree to ≤ 5.0e-13 mm for both
+  TemplateFlow files.
+- **Direction.** ANTs also sees both opposite-named files as the same
+  direction. Median displacement is 1.69 / 1.26 mm (L / R) for the
+  forward-named file and 1.82 / 1.34 mm for the reverse-named one. The two
+  files differ from each other by a median 0.52 / 0.49 mm, and the ANTs round
+  trip rev(fwd(x)) has a median of 3.40 / 2.46 mm
+  (`docs/audits/templateflow-mni-transform-direction.md`, question 2).
+- **Caveat.** ANTs and SimpleITK share the ITK transform core. This is an
+  independent check of ScalaFIM's placement and of the ANTs command-line
+  direction semantics, not of ITK itself.
 
 ## 5. Displacement-field bridge (WS3)
 
@@ -522,7 +551,10 @@ reported as failures.
 - **Source grid and frame.** `MNI152NLin2009cAsym` res-02: 97×115×97, affine
   `diag(2,2,2)` with origin (−96.5, −132.5, −78.5), release
   `templateflow@d79aacb1…` (the catalog revision of the point map and of every
-  TemplateFlow asset used; the cache's digests match the declared ones).
+  TemplateFlow asset used). The two res-02 assets are in the templateflow4s
+  lock `scalafim-fslr.lock.json` (sha256 `31f3c40b…`): `label-GM_probseg` 1 044 456 B, sha256
+  `66aab929…`; `desc-brain_mask` 29 576 B, sha256 `7a71e9ce…`. The declared
+  digests equal the locked ones.
 - **Inputs.** Two declaration specs (`scalafim.fslr-qualification-input/1`),
   written by `tools/fslr-qualification/derive_templateflow_inputs.py`
   (sha256 `c44ce5b0…`, `--zmin -30`):
@@ -583,7 +615,9 @@ reported as failures.
 - **Same inverse scheme.** The oracle is SimpleITK forward arithmetic under the
   same fixed-point inverse scheme; ITK has no inverse for
   `DisplacementFieldTransform`. The independent check of the warp is the ANTs
-  point-transform check (§4 amendment, pending).
+  point-transform check (§4 amendment): ANTs recovers the fsLR vertices from
+  the placed positions to ≤ 1.0e-6 mm, but it shares the ITK core with
+  SimpleITK.
 - **Same contract.** The oracle and the comparison re-implement the declared
   lookup contract: ties round up; support is `[−0.5, dim−0.5)`; support is
   checked before finiteness.
@@ -623,4 +657,6 @@ Counts are per hemisphere, L / R; cortical vertices 29 696 / 29 716.
   (sampled live heap, not a proven bound).
 - **Not met.** None of the evaluated budgets.
 - **Superseded.** The NoSupport rate, reported only.
-- **Pending.** The ANTs point-transform check of the warp (§4 amendment).
+- **Independent warp check.** ANTs recovers the fsLR vertices from ScalaFIM's
+  placed positions to ≤ 1.0e-6 mm (the solver tolerance) on every vertex
+  (§4 amendment). ANTs shares the ITK core with SimpleITK.

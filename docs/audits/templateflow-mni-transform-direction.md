@@ -132,6 +132,27 @@ This is consistent with the structural evidence in section 1.
 2. Do ANTs/ITK consumers (`antsApplyTransforms` / `antsApplyTransformsToPoints`)
    behave identically? This needs checking with ANTs itself, not only
    nitransforms.
+
+   **Answered 2026-09-24 for `antsApplyTransformsToPoints` (ANTs 2.6.5,
+   official macOS-14 ARM64 release, zip sha256 `e9fe0a36…`; LPS CSV,
+   `-d 3 -p 1`, `-t` with the file as given;
+   `tools/fslr-qualification/ants_point_check.py`, artifact
+   `ants-point-check.json` sha256 `79f30859…`).** Yes, it behaves identically.
+   On all 32 492 fsLR 32k midthickness vertices per hemisphere:
+   - ANTs and SimpleITK point maps agree to ≤ 5.0e-13 mm for both files
+     (L 4.8e-13 / 4.9e-13 mm, R 5.0e-13 / 4.4e-13 mm, forward-named /
+     reverse-named file).
+   - ANTs also sees both opposite-named files as the same direction. Median
+     displacement is 1.69 / 1.26 mm (L / R) for `2009cAsym_from-6Asym` and
+     1.82 / 1.34 mm for `6Asym_from-2009cAsym`. The two files differ from
+     each other by a median 0.52 / 0.49 mm, and the ANTs round trip
+     rev(fwd(x)) moves vertices by a median 3.40 / 2.46 mm instead of
+     returning them.
+   - Caveat: ANTs and SimpleITK share the ITK transform core. This checks the
+     ANTs command-line direction semantics, not ITK itself.
+
+   `antsApplyTransforms` (image resampling) was not run. Questions 1, 3 and
+   4 remain open, and so does the finding.
 3. Does a documented TemplateFlow or ANTs convention explain the naming? For
    example, is the file intended for a different application mode?
 4. Are the other `_from-` pairs in TemplateFlow affected?
