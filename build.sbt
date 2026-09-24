@@ -830,6 +830,7 @@ lazy val transform =
       },
       Compile / compile := (Compile / compile).dependsOn(transformBoundaryCheck).value
     )
+    .jvmSettings(libraryDependencies += "io.jhdf" % "jhdf" % jhdfVersion)
     .jvmConfigure(_.dependsOn(image4sGeometryJVM, reframe4sLieJVM, reframe4sFieldJVM, reframe4sResampleJVM))
     .jsConfigure(_.dependsOn(image4sGeometryJS, reframe4sLieJS, reframe4sFieldJS, reframe4sResampleJS))
     .jsSettings(jsSettingsBase)
