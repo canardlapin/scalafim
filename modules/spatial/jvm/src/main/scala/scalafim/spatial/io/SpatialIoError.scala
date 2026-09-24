@@ -1,6 +1,7 @@
 package scalafim.spatial.io
 
-import image4s.geometry.GeometryError
+import scalafim.transform.{TransformError, TransformFormat, TransformIoError}
+
 import java.nio.file.Path
 
 enum SpatialIoReason:
@@ -10,8 +11,7 @@ enum SpatialIoReason:
   case UnsupportedLinearMap
   case TransformDescriptor
   case TransformAsset
-  case TransformConvention
-  case TransformGeometry
+  case TransformInterpretation
   case MissingInverseQuality
 
 enum SpatialIoError:
@@ -20,11 +20,15 @@ enum SpatialIoError:
   case InvalidCachePayload(path: Path, reason: String)
   case UnsupportedLinearMap(path: Path, className: String)
   case InvalidTransformDescriptor(label: String, reason: String)
-  case UnsupportedTransformAsset(path: Path, format: TransformFileFormat, reason: String)
-  case UnsupportedItkTransformType(path: Path, componentIndex: Int, transformType: String)
-  case MalformedTransformAsset(path: Path, reason: String)
-  case TransformConventionMismatch(path: Path, reason: String)
-  case Geometry(path: Path, cause: GeometryError)
+
+  /** The file could not be read, detected or decoded by the transform codecs. */
+  case TransformRead(path: Path, cause: TransformIoError)
+
+  /** The decoded file has no world-transform meaning between the descriptor's domains (or cannot be inverted). */
+  case TransformInterpretation(path: Path, cause: TransformError)
+
+  /** A decodable format the graph adapter does not ingest as a single route (e.g. a multi-volume series). */
+  case UnsupportedTransformAsset(path: Path, format: TransformFormat, reason: String)
   case MissingInverseQuality(asset: String)
 
   def reasonKind: SpatialIoReason =
@@ -34,9 +38,8 @@ enum SpatialIoError:
       case InvalidCachePayload(_, _) => SpatialIoReason.CachePayload
       case UnsupportedLinearMap(_, _) => SpatialIoReason.UnsupportedLinearMap
       case InvalidTransformDescriptor(_, _) => SpatialIoReason.TransformDescriptor
-      case UnsupportedTransformAsset(_, _, _) | UnsupportedItkTransformType(_, _, _) | MalformedTransformAsset(_, _) => SpatialIoReason.TransformAsset
-      case TransformConventionMismatch(_, _) => SpatialIoReason.TransformConvention
-      case Geometry(_, _) => SpatialIoReason.TransformGeometry
+      case TransformRead(_, _) | UnsupportedTransformAsset(_, _, _) => SpatialIoReason.TransformAsset
+      case TransformInterpretation(_, _) => SpatialIoReason.TransformInterpretation
       case MissingInverseQuality(_) => SpatialIoReason.MissingInverseQuality
 
   def message: String =
@@ -51,15 +54,11 @@ enum SpatialIoError:
         s"spatial triplet cache can only persist CSR operators, got $className for $path"
       case InvalidTransformDescriptor(label, reason) =>
         s"invalid transform descriptor $label: $reason"
+      case TransformRead(path, cause) =>
+        s"cannot read transform asset $path: ${cause.message}"
+      case TransformInterpretation(path, cause) =>
+        s"cannot interpret transform asset $path: ${cause.message}"
       case UnsupportedTransformAsset(path, format, reason) =>
         s"unsupported $format transform asset $path: $reason"
-      case UnsupportedItkTransformType(path, componentIndex, transformType) =>
-        s"unsupported ITK transform type '$transformType' at component $componentIndex in $path"
-      case MalformedTransformAsset(path, reason) =>
-        s"malformed transform asset $path: $reason"
-      case TransformConventionMismatch(path, reason) =>
-        s"transform convention mismatch for $path: $reason"
-      case Geometry(path, cause) =>
-        s"invalid transform geometry for $path: ${cause.message}"
       case MissingInverseQuality(asset) =>
         s"transform descriptor $asset has no declared inverse quality"

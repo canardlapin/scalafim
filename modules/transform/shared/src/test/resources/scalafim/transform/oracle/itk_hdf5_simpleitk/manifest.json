@@ -2,12 +2,12 @@
  "generator": "tools/spatial/generate_itk_hdf5_fixtures.py",
  "kind": "native-oracle",
  "tools": {
-  "SimpleITK": "ITK 5.4.6 (ITKVersion dataset in the files)",
+  "SimpleITK": "2.5.4 (pinned in the regeneration command; the files' ITKVersion dataset reads 5.4.6)",
   "HDF5": "1.12.1 (HDFVersion dataset in the files)",
   "h5py": "rewrites the legacy-float and malformed variants"
  },
  "commands": [
-  "uv run --with SimpleITK --with h5py --with numpy python tools/spatial/generate_itk_hdf5_fixtures.py"
+  "uv run --with h5py --with numpy --with SimpleITK==2.5.4 tools/spatial/generate_itk_hdf5_fixtures.py [--check]"
  ],
  "notes": "Moved from modules/spatial/jvm/src/test/resources/scalafim/spatial/io/itk-hdf5 in P3.11, byte-identical. Points in oracles.json and point_oracles.tsv are RAS; each row is SimpleITK TransformPoint (fixed -> moving) with LPS converted to RAS. 'affine-forward' rows are TransformPoint of affine_only_forward_double.h5; 'constant-forward'/'constant-inverse' rows are pullback_plus_one.h5/pullback_minus_one.h5. composite_affine_displacement_legacy_float.h5 stores the same composite with float32 datasets under ITK's historic 'Tranform*' dataset names. unsupported_bspline.h5 and malformed_missing_fixed.h5 are refusal cases. semantic_manifest.json is the generator's own manifest (HDF5 files hashed by content, not bytes) used by its --check mode; the digests below are of the committed bytes.",
  "sha256": {

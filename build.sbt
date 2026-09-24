@@ -790,10 +790,8 @@ lazy val spatial =
       name := "scalafim-spatial"
     )
     .jvmSettings(
-      libraryDependencies ++= Seq(
-        "io.jhdf" % "jhdf" % jhdfVersion,
-        "org.slf4j" % "slf4j-nop" % "2.0.18" % Test
-      )
+      // HDF5 transform files are read by transform's jHDF container; tests silence jHDF's logging.
+      libraryDependencies += "org.slf4j" % "slf4j-nop" % "2.0.18" % Test
     )
     .jvmConfigure(_.dependsOn(galeCoreJVM))
     .jsConfigure(_.dependsOn(galeCoreJS))

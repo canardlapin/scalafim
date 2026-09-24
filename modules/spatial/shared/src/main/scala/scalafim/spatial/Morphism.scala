@@ -212,6 +212,28 @@ object ProviderMapBinding:
       componentCount = 1
     )
 
+  /** A provider map that is neither a bare affine nor a bare dense map, e.g. a toolkit composite whose stages reframe4s
+    * has already chained. The caller supplies the fingerprint, derived from the map's provenance (asset digests).
+    */
+  private[spatial] def mapped(
+      pullback: SpatialPullback[Frame[D3], Frame[D3]],
+      fingerprint: CoordinateMapFingerprint,
+      inverse: Option[(SpatialPullback[Frame[D3], Frame[D3]], CoordinateMapFingerprint)],
+      containsDense: Boolean
+  ): Either[SpatialError, ProviderMapBinding] =
+    inverse
+      .fold[Either[SpatialError, Unit]](Right(()))((reverse, _) => validateInverse(pullback, reverse))
+      .map: _ =>
+        new ProviderMapBinding(
+          pullback,
+          inverse.map(_._1),
+          fingerprint,
+          inverse.map(_._2),
+          affineOperator = None,
+          containsDense = containsDense,
+          componentCount = 1
+        )
+
   private[spatial] def composed(
       components: Vector[ProviderMapBinding],
       inverseComponents: Option[Vector[ProviderMapBinding]]
@@ -344,6 +366,25 @@ object CoordinateMap:
     inversePullback: Option[SpatialPullback[?, ?]] = None
   ): Either[SpatialError, CoordinateMap] =
     ProviderMapBinding.dense(erase(pullback), inversePullback.map(erase)).map(CoordinateMap.Geometric.apply)
+
+  /** Admit any other provider map (e.g. a toolkit composite) under a caller-derived identity. `identity` must determine
+    * the map, e.g. the SHA-256 digests of the assets it was read from plus every policy that changes its values.
+    */
+  private[spatial] def mapped(
+      pullback: SpatialPullback[?, ?],
+      identity: String,
+      inverse: Option[(SpatialPullback[?, ?], String)],
+      containsDense: Boolean
+  ): Either[SpatialError, CoordinateMap] =
+    def fingerprint(value: String): CoordinateMapFingerprint =
+      val hash = MurmurHash3.stringHash(s"provider-mapped-v1|$value")
+      CoordinateMapFingerprint.unsafe(s"provider-mapped-v1:${java.lang.Integer.toHexString(hash)}")
+    if identity.trim.isEmpty || inverse.exists(_._2.trim.isEmpty) then
+      Left(SpatialError.InvalidProviderCoordinateMap("a mapped provider binding needs a non-empty identity"))
+    else
+      ProviderMapBinding
+        .mapped(erase(pullback), fingerprint(identity), inverse.map((map, id) => erase(map) -> fingerprint(id)), containsDense)
+        .map(CoordinateMap.Geometric.apply)
 
   private def erase[T <: Frame[D3], S <: Frame[D3]](
       map: SpatialPullback[T, S]
