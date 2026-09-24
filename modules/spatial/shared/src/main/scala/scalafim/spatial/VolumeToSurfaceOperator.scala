@@ -188,7 +188,7 @@ object VolumeToSurfaceOperatorCompiler:
       case None => Right(assembly)
 
   private def rowWeights(
-    sourceGrid: GridSpec,
+    sourceGrid: GridSpec[?],
     sourceMask: Option[SomeMaskVolume],
     targetMask: Option[SurfaceRoi[Boolean]],
     surfaces: SurfaceGeometryPair,
@@ -226,7 +226,7 @@ object VolumeToSurfaceOperatorCompiler:
       }
 
   private[spatial] def sourcePointWeights(
-    sourceGrid: GridSpec,
+    sourceGrid: GridSpec[?],
     sourceMask: Option[SomeMaskVolume],
     point: SpatialPoint,
     sampling: SamplingPolicy

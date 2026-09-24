@@ -254,12 +254,6 @@ object Ops:
     def resampleTo[T](target: T, method: Resample.Method)(using Resample.HasSpace[T]): SomeScalarVolume[Double] =
       Resample.resampleTo(v, target, method)
 
-    def resampleTo[T](target: T, method: String)(using Resample.HasSpace[T]): SomeScalarVolume[Double] =
-      Resample.resampleTo(v, target, method)
-
-    def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): SomeScalarVolume[Double] =
-      Resample.resampleTo(v, target, method, engine)
-
   extension (v: SomeScalarSeries[Double])
     @scala.annotation.targetName("resampleNeuroSeriesDefault")
     def resampleTo[T](target: T)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
@@ -268,14 +262,6 @@ object Ops:
     @scala.annotation.targetName("resampleNeuroSeriesMethod")
     def resampleTo[T](target: T, method: Resample.Method)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
       Resample.resampleTo(v, target, method)
-
-    @scala.annotation.targetName("resampleNeuroSeriesNamedMethod")
-    def resampleTo[T](target: T, method: String)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
-      Resample.resampleTo(v, target, method)
-
-    @scala.annotation.targetName("resampleNeuroSeriesEngine")
-    def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
-      Resample.resampleTo(v, target, method, engine)
 
   extension [F <: Frame[D3], S, A: Ring: DType](
       x: SelectedVolume[F, S, A, Continuous]

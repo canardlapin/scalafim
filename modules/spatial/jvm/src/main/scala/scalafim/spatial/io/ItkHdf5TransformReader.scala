@@ -266,8 +266,8 @@ private[io] object AntsHdf5TransformAdapter:
 
   def read(
     path: Path,
-    sourceGrid: GridSpec,
-    targetGrid: GridSpec,
+    sourceGrid: GridSpec[?],
+    targetGrid: GridSpec[?],
     interpolation: Resample.Method
   ): Either[SpatialIoError, DecodedItkHdf5Transform] =
     ItkHdf5TransformReader.read(path).flatMap(
@@ -277,8 +277,8 @@ private[io] object AntsHdf5TransformAdapter:
   private def decode(
     path: Path,
     file: ItkHdf5TransformFile,
-    sourceGrid: GridSpec,
-    targetGrid: GridSpec,
+    sourceGrid: GridSpec[?],
+    targetGrid: GridSpec[?],
     interpolation: Resample.Method
   ): Either[SpatialIoError, DecodedItkHdf5Transform] =
     val executableCount = file.components.count(component => CompositePattern.findFirstIn(component.transformType).isEmpty)
@@ -467,7 +467,7 @@ private[io] object AntsHdf5TransformAdapter:
     index: Int,
     dims: Vector[Int],
     fixed: ItkHdf5NumericValues
-  ): Either[SpatialIoError, GridSpec] =
+  ): Either[SpatialIoError, GridSpec[?]] =
     val origin = fixed.copyRange(3, 6)
     val spacing = fixed.copyRange(6, 9)
     if spacing.exists(value => !value.isFinite || value <= 0.0) then
@@ -500,7 +500,7 @@ private[io] object AntsHdf5TransformAdapter:
 
   private def displacementField(
     parameters: ItkHdf5NumericValues,
-    grid: GridSpec
+    grid: GridSpec[?]
   ): RavelArray[Double, Rank[4]] =
     val nx = grid.shape.x
     val ny = grid.shape.y

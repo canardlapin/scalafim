@@ -346,6 +346,20 @@ object SampleSpaces:
         .inverse(world.toVector)
         .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
 
+  /** An axis-aligned D3 space: the typed form of `make(dims, spacing = Some(...), origin = Some(...))`.
+    *
+    * `dims` holds the three spatial extents followed by any non-spatial extents; `origin` is the world position of
+    * voxel (0, 0, 0).
+    */
+  def regular(
+      dims: Vector[Int],
+      spacing: VoxelSpacing,
+      origin: WorldPoint = WorldPoint.Origin,
+      axes: Option[NonSpatialAxes] = None
+  ): Either[SampleSpaceError, SomeSampleSpace] =
+    if dims.length < 3 then Left(SampleSpaceError.ExpectedDimensionality("regular D3 sample space", 3, dims.length))
+    else make(dims, Some(spacing.toVector), Some(origin.toVector), axes, None)
+
   def fromSpatialDims(
       dims: SpatialDims,
       spacing: Option[Vector[Double]] = None,
