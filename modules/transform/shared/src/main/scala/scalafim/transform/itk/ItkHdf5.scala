@@ -90,10 +90,11 @@ object ItkHdf5Interpretation extends Interpretation[ItkHdf5File, DenseContext, T
           lps <- Affine.fromRowMajor[D3](lpsGrid).left.map(TransformError.Geometry(_))
           latticeToRas <- lps.andThen(ToolCoordinates.LpsToRas).left.map(TransformError.Geometry(_))
           m = latticeToRas.rowMajor
+          flip = ToolCoordinates.LpsToRas.rowMajor // an LPS displacement is a vector: only the flip's diagonal applies
           p = component.parameters
           dense <- DenseLattice.pullback(from, to, dims, latticeToRas, boundary): (x, y, z) =>
             val base = 3 * (x + dims(0) * (y + dims(1) * z))
             Vector.tabulate(3): r =>
               val world = m(4 * r) * x + m(4 * r + 1) * y + m(4 * r + 2) * z + m(4 * r + 3)
-              world + (if r < 2 then -p(base + r) else p(base + r))
+              world + flip(5 * r) * p(base + r)
         yield SpatialMap.eraseFrameRefinements(dense)
