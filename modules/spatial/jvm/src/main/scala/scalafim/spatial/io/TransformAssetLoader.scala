@@ -1,168 +1,98 @@
 package scalafim.spatial.io
 
-import gale.backend.Backend.given
-import gale.linalg.{DMat as GaleDMat, DVec}
-import image4s.SampleSpace
-import image4s.geometry.{Affine, D3, Frame, Grid}
-import ravel.NDArray as RavelArray
-import ravel.Rank
-import ravel.Shape
-import scalafim.image.{GridSpec, SomeSampleSpace, Resample, SpatialPoint, SpatialPullbacks}
-import scalafim.image.SampleSpaces.*
-import scalafim.image.io.Nifti
+import image4s.geometry.{Affine, D3, Frame}
+import reframe4s.field.{CoordinateBoundaryPolicy, DenseMap}
+import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
 import scalafim.spatial.*
+import scalafim.transform.*
+import scalafim.transform.afni.{Aff12Interpretation, AfniCardinal}
+import scalafim.transform.field.{DenseContext, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
+import scalafim.transform.freesurfer.{LtaInterpretation, MniXfmInterpretation, RegisterDatInterpretation}
+import scalafim.transform.fsl.FlirtInterpretation
+import scalafim.transform.itk.{ItkHdf5Interpretation, ItkLinearInterpretation}
+import scalafim.transform.x5.X5Interpretation
 
-import java.nio.charset.StandardCharsets
-import java.nio.file.{Files, Path}
-import java.security.MessageDigest
-import scala.util.Using
-import scala.util.control.NonFatal
+import java.nio.file.Path
 
-enum TransformDirection:
-  case ForwardSourceToTarget, PullbackTargetToSource
-
-enum TransformCoordinateConvention:
-  case RasMillimeters, LpsMillimeters, FslScaledVoxel
-
-enum DenseTransformEncoding:
-  case Displacement, AbsoluteCoordinates
-
+/** Choices that change what a loaded map computes. None of them names a coordinate convention or a storage direction:
+  * those are intrinsic to each format and decided by its `scalafim.transform` interpretation.
+  *
+  * @param boundary what a dense map does at target points outside its lattice. The default rejects them; ITK and ANTs
+  *   themselves extend displacement fields by zero, which is `CoordinateBoundaryPolicy.PreserveSource`.
+  * @param fnirtDefinition whether a FNIRT field is relative or absolute; `None` detects it and refuses when unsure.
+  */
 final case class TransformLoadOptions(
-  direction: TransformDirection,
-  convention: TransformCoordinateConvention,
-  denseEncoding: DenseTransformEncoding = DenseTransformEncoding.Displacement,
-  interpolation: Resample.Method = Resample.Method.Linear
+  boundary: CoordinateBoundaryPolicy = CoordinateBoundaryPolicy.Reject,
+  fnirtDefinition: Option[FnirtDefinition] = None
 )
 
-object TransformLoadOptions:
-  def defaults(format: TransformFileFormat): TransformLoadOptions =
-    format match
-      case TransformFileFormat.AntsAffine =>
-        TransformLoadOptions(
-          TransformDirection.ForwardSourceToTarget,
-          TransformCoordinateConvention.LpsMillimeters
-        )
-      case TransformFileFormat.ANTsH5 =>
-        TransformLoadOptions(
-          TransformDirection.PullbackTargetToSource,
-          TransformCoordinateConvention.LpsMillimeters
-        )
-      case TransformFileFormat.AntsDisplacement =>
-        TransformLoadOptions(
-          TransformDirection.PullbackTargetToSource,
-          TransformCoordinateConvention.LpsMillimeters
-        )
-      case TransformFileFormat.FslFlirt =>
-        TransformLoadOptions(
-          TransformDirection.ForwardSourceToTarget,
-          TransformCoordinateConvention.FslScaledVoxel
-        )
-      case TransformFileFormat.FslFnirt =>
-        TransformLoadOptions(
-          TransformDirection.PullbackTargetToSource,
-          TransformCoordinateConvention.FslScaledVoxel,
-          DenseTransformEncoding.AbsoluteCoordinates
-        )
-      case TransformFileFormat.AfniAffine =>
-        TransformLoadOptions(
-          TransformDirection.ForwardSourceToTarget,
-          TransformCoordinateConvention.LpsMillimeters
-        )
-      case TransformFileFormat.AfniWarp =>
-        TransformLoadOptions(
-          TransformDirection.PullbackTargetToSource,
-          TransformCoordinateConvention.LpsMillimeters
-        )
-      case TransformFileFormat.FreeSurferLta | TransformFileFormat.X5 =>
-        TransformLoadOptions(
-          TransformDirection.ForwardSourceToTarget,
-          TransformCoordinateConvention.RasMillimeters
-        )
+/** A second file holding the opposite direction of a descriptor's file (e.g. ANTs `InverseWarp`, FSL `invwarp`).
+  * Its own endpoints are the primary file's, swapped. `format = None` detects it from content.
+  */
+final case class TransformAssetSpec(path: Path, format: Option[TransformFormat] = None)
 
-final case class TransformAssetSpec(
-  path: Path,
-  format: TransformFileFormat,
-  options: TransformLoadOptions
-)
-
-object TransformAssetSpec:
-  def apply(path: Path, format: TransformFileFormat): TransformAssetSpec =
-    new TransformAssetSpec(path, format, TransformLoadOptions.defaults(format))
-
-final case class TransformAssetFingerprint(
-  size: Long,
-  modifiedMillis: Long,
-  sha256: String
-)
-
+/** Where a loaded morphism came from: exact asset digests, the format, and the transform-level provenance. */
 final case class TransformAssetProvenance(
   primaryPath: Path,
-  format: TransformFileFormat,
+  primary: AssetRef,
+  format: TransformFormat,
   tool: TransformTool,
+  endpoints: TransformFileEndpoints,
   options: TransformLoadOptions,
-  normalization: String,
-  fingerprint: TransformAssetFingerprint,
-  inverseAsset: Option[(TransformAssetSpec, TransformAssetFingerprint)],
-  container: Option[ItkHdf5ContainerProvenance] = None
+  inverseAsset: Option[(TransformAssetSpec, AssetRef)],
+  transform: TransformProvenance
 )
 
+/** A descriptor's file as a graph morphism, with the world transform it was built from. */
 final case class LoadedTransform(
   descriptor: TransformDescriptor,
   morphism: Morphism,
+  transform: WorldTransform[Frame[D3], Frame[D3]],
   provenance: TransformAssetProvenance
 )
 
+/** Spatial-graph adapter over the transform codecs: `TransformFiles` reads and decodes, each format's interpretation
+  * yields a `WorldTransform` between the descriptor's volume frames, and its pullback becomes the morphism's provider
+  * coordinate map (affines through `CoordinateMap.affineBetween`, dense fields through `CoordinateMap.dense`, other
+  * provider maps under an identity derived from their assets' SHA-256 digests).
+  */
 object TransformAssetLoader:
-  private final case class LoadedMap(
-    coordinateMap: CoordinateMap,
-    normalization: String,
-    fingerprint: TransformAssetFingerprint
-  )
+  private type World = WorldTransform[Frame[D3], Frame[D3]]
 
-  private val NumberPattern =
-    "[-+]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][-+]?[0-9]+)?".r
-
-  private val LpsToRas =
-    GaleDMat.dense(
-      4,
-      4,
-      Vector(
-        -1.0, 0.0, 0.0, 0.0,
-        0.0, -1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        0.0, 0.0, 0.0, 1.0
-      )
-    )
+  /** The geometry a format may need from a domain: its world frame and its voxel-to-world lattice. */
+  private final case class Volume(frame: Frame[D3], dims: Vector[Int], voxelToWorld: Affine[D3])
 
   def load(
     descriptor: TransformDescriptor,
     source: Domain,
     target: Domain,
-    options: Option[TransformLoadOptions] = None,
+    options: TransformLoadOptions = TransformLoadOptions(),
     inverseAsset: Option[TransformAssetSpec] = None
   ): Either[SpatialIoError, LoadedTransform] =
+    val path = descriptor.path
     for
-      _ <- validateDomains(descriptor, source, target)
-      format <- resolveFormat(descriptor)
-      _ <- validateFormat(descriptor, format)
-      chosenOptions = options.getOrElse(TransformLoadOptions.defaults(format))
-      loaded <-
-        if format == TransformFileFormat.ANTsH5 then
-          loadHdf5(descriptor, source, target, chosenOptions, inverseAsset)
-        else loadStandard(descriptor, source, target, format, chosenOptions, inverseAsset)
-    yield loaded
-
-  private def loadStandard(
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain,
-    format: TransformFileFormat,
-    chosenOptions: TransformLoadOptions,
-    inverseAsset: Option[TransformAssetSpec]
-  ): Either[SpatialIoError, LoadedTransform] =
-    for
-      primary <- loadMap(descriptor.path, format, chosenOptions, descriptor, source, target)
-      combined <- attachInverse(primary, descriptor, source, target, inverseAsset)
+      volumes <- volumes(descriptor, source, target)
+      (sourceVolume, targetVolume) = volumes
+      primary <- read(path, descriptor.format)
+      _ <- validateTool(descriptor, primary.format)
+      (fileSource, fileTarget) = descriptor.endpoints match
+        case TransformFileEndpoints.AsFile   => (sourceVolume, targetVolume)
+        case TransformFileEndpoints.Reversed => (targetVolume, sourceVolume)
+      asFile <- interpret(path, primary, fileSource, fileTarget, options)
+      inverse <- inverseAsset match
+        case None => Right(None)
+        case Some(spec) =>
+          for
+            loaded <- read(spec.path, spec.format)
+            reverse <- interpret(spec.path, loaded, fileTarget, fileSource, options)
+          yield Some((spec, loaded.asset, reverse))
+      paired = attachInverse(asFile, inverse)
+      routed <- descriptor.endpoints match
+        case TransformFileEndpoints.AsFile   => Right(paired)
+        case TransformFileEndpoints.Reversed => invert(path, paired)
+      identity = s"${primary.format}:${digest(primary.asset)}|inverse=${inverse.fold("none")((_, asset, _) => digest(asset))}|endpoints=${descriptor.endpoints}|$options"
+      coordinateMap <- coordinateMap(routed, identity).left.map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
+      _ <- requireDeclaredInverse(descriptor, coordinateMap)
       morphism <- Morphism
         .build(
           descriptor.id,
@@ -172,211 +102,155 @@ object TransformAssetLoader:
           descriptor.routeTag,
           descriptor.cost,
           descriptor.inverseQuality.toInverse,
-          combined._1
+          coordinateMap
         )
         .left
         .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
-      provenance = TransformAssetProvenance(
-        descriptor.path.toAbsolutePath.normalize(),
-        format,
+    yield LoadedTransform(
+      descriptor,
+      morphism,
+      routed,
+      TransformAssetProvenance(
+        path.toAbsolutePath.normalize(),
+        primary.asset,
+        primary.format,
         descriptor.tool,
-        chosenOptions,
-        primary.normalization,
-        primary.fingerprint,
-        combined._2,
-        None
-      )
-    yield LoadedTransform(descriptor, morphism, provenance)
-
-  private def loadHdf5(
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain,
-    options: TransformLoadOptions,
-    inverseAsset: Option[TransformAssetSpec]
-  ): Either[SpatialIoError, LoadedTransform] =
-    for
-      _ <- validateHdf5Options(descriptor.path, options)
-      sourceGrid = GridSpec.fromSpace(volumeSpace(source))
-      targetGrid = GridSpec.fromSpace(volumeSpace(target))
-      primaryRole =
-        options.direction match
-          case TransformDirection.PullbackTargetToSource => sourceGrid -> targetGrid
-          case TransformDirection.ForwardSourceToTarget => targetGrid -> sourceGrid
-      primary <- AntsHdf5TransformAdapter.read(
-        descriptor.path,
-        primaryRole._1,
-        primaryRole._2,
-        options.interpolation
-      )
-      primaryStamp <- fingerprint(descriptor.path)
-      assembled <- assembleHdf5CoordinateMap(descriptor, source, target, options, primary, inverseAsset)
-      _ <- requireDeclaredCompositeInverse(descriptor, assembled._1)
-      morphism <- Morphism
-        .build(
-          descriptor.id,
-          descriptor.source,
-          descriptor.target,
-          descriptor.kind.morphismKind,
-          descriptor.routeTag,
-          descriptor.cost,
-          descriptor.inverseQuality.toInverse,
-          assembled._1
-        )
-        .left
-        .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
-      provenance = TransformAssetProvenance(
-        descriptor.path.toAbsolutePath.normalize(),
-        TransformFileFormat.ANTsH5,
-        descriptor.tool,
+        descriptor.endpoints,
         options,
-        assembled._3,
-        primaryStamp,
-        assembled._2,
-        Some(primary.provenance)
+        inverse.map((spec, asset, _) => spec -> asset),
+        routed.provenance
       )
-    yield LoadedTransform(descriptor, morphism, provenance)
+    )
 
-  private def assembleHdf5CoordinateMap(
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain,
-    options: TransformLoadOptions,
-    primary: DecodedItkHdf5Transform,
-    inverseAsset: Option[TransformAssetSpec]
-  ): Either[
-    SpatialIoError,
-    (CoordinateMap, Option[(TransformAssetSpec, TransformAssetFingerprint)], String)
-  ] =
-    options.direction match
-      case TransformDirection.PullbackTargetToSource =>
-        inverseAsset match
-          case None =>
-            Right(
-              (
-                primary.coordinateMap,
-                None,
-                "ITK-HDF5:LPS-mm-pullback->ordered-RAS-mm-composite;affine=gale.linalg.DMat"
-              )
-            )
-          case Some(asset) =>
-            for
-              _ <- validateHdf5InverseAsset(descriptor, asset)
-              _ <- validateHdf5Options(asset.path, asset.options)
-              inverse <- AntsHdf5TransformAdapter.read(
-                asset.path,
-                GridSpec.fromSpace(volumeSpace(target)),
-                GridSpec.fromSpace(volumeSpace(source)),
-                asset.options.interpolation
-              )
-              map <- attachCompositeInverse(descriptor, primary.coordinateMap, inverse.coordinateMap)
-              stamp <- fingerprint(asset.path)
-            yield
-              (
-                map,
-                Some(asset -> stamp),
-                "ITK-HDF5:LPS-mm-pullback->ordered-RAS-mm-composite;explicit-inverse-asset;affine=gale.linalg.DMat"
-              )
-      case TransformDirection.ForwardSourceToTarget =>
-        inverseAsset match
-          case Some(asset) =>
-            for
-              _ <- validateHdf5InverseAsset(descriptor, asset)
-              _ <- validateHdf5Options(asset.path, asset.options)
-              inverse <- AntsHdf5TransformAdapter.read(
-                asset.path,
-                GridSpec.fromSpace(volumeSpace(source)),
-                GridSpec.fromSpace(volumeSpace(target)),
-                asset.options.interpolation
-              )
-              map <- attachCompositeInverse(descriptor, inverse.coordinateMap, primary.coordinateMap)
-              stamp <- fingerprint(asset.path)
-            yield
-              (
-                map,
-                Some(asset -> stamp),
-                "ITK-HDF5:forward-LPS-mm-composite+inverse-asset->ordered-RAS-mm-pullback;affine=gale.linalg.DMat"
-              )
-          case None =>
-            primary.coordinateMap.inverted
-              .left
-              .map(_ =>
-                SpatialIoError.TransformConventionMismatch(
-                  descriptor.path,
-                  "a forward HDF5 composite containing a nonlinear component requires an inverse HDF5 asset"
-                )
-              )
-              .map(map =>
-                (
-                  map,
-                  None,
-                  "ITK-HDF5:forward-LPS-mm-affine-composite->exact-RAS-mm-pullback;affine=gale.linalg.DMat"
-                )
-              )
+  private def read(path: Path, format: Option[TransformFormat]): Either[SpatialIoError, LoadedTransformFile] =
+    TransformFiles.load(path, format).left.map(SpatialIoError.TransformRead(path, _))
 
-  private def validateHdf5Options(
+  /** What the file means between the two volumes, as a transform from `from` (the file's moving space) to `to`. */
+  private def interpret(
     path: Path,
+    loaded: LoadedTransformFile,
+    from: Volume,
+    to: Volume,
     options: TransformLoadOptions
-  ): Either[SpatialIoError, Unit] =
-    if options.convention != TransformCoordinateConvention.LpsMillimeters then
-      Left(
-        SpatialIoError.TransformConventionMismatch(
-          path,
-          s"ITK HDF5 transforms are encoded in LPS millimeters, not ${options.convention}"
-        )
-      )
-    else if options.denseEncoding != DenseTransformEncoding.Displacement then
-      Left(
-        SpatialIoError.TransformConventionMismatch(
-          path,
-          s"ITK DisplacementFieldTransform parameters are displacements, not ${options.denseEncoding}"
-        )
-      )
-    else Right(())
+  ): Either[SpatialIoError, World] =
+    val frames = Frames[Frame[D3], Frame[D3]](from.frame, to.frame)
+    val dense = DenseContext(frames, options.boundary)
+    val asset = loaded.asset
+    def meaning[A](result: Either[TransformError, A]): Either[SpatialIoError, A] =
+      result.left.map(SpatialIoError.TransformInterpretation(path, _))
+    val interpreted: Either[SpatialIoError, World] =
+      loaded.native match
+        case NativeTransform.Itk(file, storage) =>
+          meaning(ItkLinearInterpretation.interpretWith(file, frames, asset, storage).map(_.composed))
+        case NativeTransform.ItkHdf5(file) =>
+          meaning(ItkHdf5Interpretation.interpretWith(file, dense, asset).map(_.composed))
+        case NativeTransform.AntsField(field) =>
+          meaning(LpsDisplacementInterpretation.Ants.interpret(field, dense))
+        case NativeTransform.AfniQwarp(field) =>
+          meaning(LpsDisplacementInterpretation.AfniQwarp.interpret(field, dense))
+        case NativeTransform.Flirt(matrix) =>
+          meaning:
+            for
+              fromGeometry <- fslGeometry(from)
+              toGeometry <- fslGeometry(to)
+              linear <- FlirtInterpretation.interpretWith(matrix, FslGrids(from.frame, fromGeometry, to.frame, toGeometry), asset)
+            yield linear
+        case NativeTransform.FnirtField(field) =>
+          meaning(fslGeometry(from).flatMap(geometry => FnirtFieldInterpretation.interpret(field, FnirtContext(frames, geometry, options.fnirtDefinition, options.boundary))))
+        case NativeTransform.FnirtCoefficients(_) =>
+          Left(SpatialIoError.UnsupportedTransformAsset(path, loaded.format, "FNIRT spline coefficients have no interpretation yet; use a dense --fout field"))
+        case NativeTransform.Afni(series) =>
+          // AFNI matrices act on cardinalised datasets; the domains' own affines say whether either side is oblique.
+          val correction = CardinalCorrection.On(AfniCardinal.obliquity(from.voxelToWorld), AfniCardinal.obliquity(to.voxelToWorld))
+          meaning(Aff12Interpretation.interpretWith(series, AfniContext(frames, correction), asset)).flatMap: linear =>
+            linear.transforms match
+              case Vector(single) => Right(single)
+              case many =>
+                Left(SpatialIoError.UnsupportedTransformAsset(path, loaded.format, s"${many.size} affines (a per-volume series) cannot be one route"))
+        case NativeTransform.Lta(file) =>
+          meaning(LtaInterpretation.interpretWith(file, frames, asset))
+        case NativeTransform.Xfm(xfm) =>
+          meaning(MniXfmInterpretation.interpret(xfm, frames))
+        case NativeTransform.RegisterDatFile(dat) =>
+          meaning(
+            RegisterDatInterpretation.interpret(
+              dat,
+              TkRegGrids(from.frame, FreeSurferVolumeGeometry(from.dims, from.voxelToWorld), to.frame, FreeSurferVolumeGeometry(to.dims, to.voxelToWorld))
+            )
+          )
+        case NativeTransform.X5(file) =>
+          meaning(X5Interpretation.interpret(file, dense).map(_.composed))
+    interpreted.map(stamp(_, asset))
 
-  private def validateHdf5InverseAsset(
-    descriptor: TransformDescriptor,
-    asset: TransformAssetSpec
-  ): Either[SpatialIoError, Unit] =
-    if asset.format == TransformFileFormat.ANTsH5 then Right(())
-    else
-      Left(
-        SpatialIoError.InvalidTransformDescriptor(
-          descriptor.id.value,
-          s"an HDF5 composite requires an HDF5 inverse asset, got ${asset.format}"
-        )
+  /** FSL's view of a domain: the domain's voxel-to-world affine as the selected (sform) affine, zooms its column norms. */
+  private def fslGeometry(volume: Volume): Either[TransformError, FslVolumeGeometry] =
+    val m = volume.voxelToWorld.rowMajor
+    val zooms = Vector.tabulate(3)(c => math.sqrt(m(c) * m(c) + m(4 + c) * m(4 + c) + m(8 + c) * m(8 + c)))
+    FslVolumeGeometry.fromHeader(volume.dims, zooms, 0, None, 1, Some(volume.voxelToWorld)).left.map(TransformError.Space(_))
+
+  /** Record the file's digest on the read step: interpretations only know the asset they were handed. */
+  private def stamp(transform: World, asset: AssetRef): World =
+    def stamped(provenance: TransformProvenance): TransformProvenance =
+      TransformProvenance(provenance.steps.map:
+        case TransformProvenance.Step.Read(format, ref) if ref.sha256.isEmpty => TransformProvenance.Step.Read(format, asset)
+        case step                                                             => step
       )
+    transform match
+      case WorldTransform.Linear(framed, provenance)          => WorldTransform.Linear(framed, stamped(provenance))
+      case WorldTransform.Smooth(iso, provenance)             => WorldTransform.Smooth(iso, stamped(provenance))
+      case WorldTransform.Mapped(pull, availability, provenance) => WorldTransform.Mapped(pull, availability, stamped(provenance))
 
-  private def attachCompositeInverse(
-    descriptor: TransformDescriptor,
-    primary: CoordinateMap,
-    inverse: CoordinateMap
-  ): Either[SpatialIoError, CoordinateMap] =
-    CoordinateMap
-      .attachInverse(primary, inverse)
-      .left
-      .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
+  /** A dense primary gains its forward map from the inverse asset; an affine already has an exact one. */
+  private def attachInverse(primary: World, inverse: Option[(TransformAssetSpec, AssetRef, World)]): World =
+    (primary, inverse) match
+      case (WorldTransform.Mapped(pull, _, provenance), Some((_, asset, reverse))) =>
+        WorldTransform.Mapped(pull, PushAvailability.FromAsset(reverse.pull, asset), provenance)
+      case _ => primary
 
-  private def requireDeclaredCompositeInverse(
-    descriptor: TransformDescriptor,
-    coordinateMap: CoordinateMap
-  ): Either[SpatialIoError, Unit] =
+  private def invert(path: Path, transform: World): Either[SpatialIoError, World] =
+    transform match
+      case WorldTransform.Linear(framed, provenance) => Right(WorldTransform.Linear(framed, provenance).inverse)
+      case WorldTransform.Smooth(iso, provenance)    => Right(WorldTransform.Smooth(iso, provenance).inverse)
+      case WorldTransform.Mapped(pull, availability, provenance) =>
+        WorldTransform.Mapped(pull, availability, provenance).invert.left.map(SpatialIoError.TransformInterpretation(path, _))
+
+  private def coordinateMap(transform: World, identity: String): Either[SpatialError, CoordinateMap] =
+    transform match
+      case WorldTransform.Linear(framed, _) =>
+        CoordinateMap.affineBetween(framed.target, framed.source, framed.operator).map(CoordinateMap.Geometric.apply)
+      case WorldTransform.Smooth(iso, _) =>
+        CoordinateMap.mapped(iso, s"$identity|pull", Some(iso.inverse -> s"$identity|push"), containsDense = false)
+      case WorldTransform.Mapped(pull, availability, _) =>
+        val push = availability.map
+        if DenseMap.isDense(pull) && push.forall(DenseMap.isDense) then CoordinateMap.dense(pull, push)
+        else CoordinateMap.mapped(pull, s"$identity|pull", push.map(_ -> s"$identity|push"), containsDense = true)
+
+  private def requireDeclaredInverse(descriptor: TransformDescriptor, coordinateMap: CoordinateMap): Either[SpatialIoError, Unit] =
     coordinateMap match
-      case CoordinateMap.Geometric(binding)
-          if descriptor.inverseQuality.declared && binding.containsDense && binding.inversePullback.isEmpty =>
+      case CoordinateMap.Geometric(binding) if descriptor.inverseQuality.declared && binding.inversePullback.isEmpty =>
         Left(
           SpatialIoError.InvalidTransformDescriptor(
             descriptor.id.value,
-            s"${descriptor.inverseQuality} requires an executable inverse HDF5 asset for a nonlinear composite"
+            s"${descriptor.inverseQuality} requires an executable inverse asset for a dense transform"
           )
         )
       case _ => Right(())
 
-  private def validateDomains(
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain
-  ): Either[SpatialIoError, Unit] =
+  private def validateTool(descriptor: TransformDescriptor, format: TransformFormat): Either[SpatialIoError, Unit] =
+    if descriptor.tool == format.tool then Right(())
+    else
+      Left(
+        SpatialIoError.InvalidTransformDescriptor(
+          descriptor.id.value,
+          s"declared tool ${descriptor.tool} does not match $format (${format.tool})"
+        )
+      )
+
+  private def volumes(descriptor: TransformDescriptor, source: Domain, target: Domain): Either[SpatialIoError, (Volume, Volume)] =
+    def volume(domain: Domain): Option[Volume] =
+      domain.geometry match
+        case SamplingGeometry.Volume(space, _) => Some(Volume(space.grid.frame, space.grid.shape, space.grid.indexToFrame))
+        case _                                 => None
     if descriptor.source != source.id || descriptor.target != target.id then
       Left(
         SpatialIoError.InvalidTransformDescriptor(
@@ -384,513 +258,10 @@ object TransformAssetLoader:
           s"descriptor route ${descriptor.source.value}->${descriptor.target.value} does not match supplied domains ${source.id.value}->${target.id.value}"
         )
       )
-    else if source.kind != DomainKind.Volume || target.kind != DomainKind.Volume then
-      Left(
-        SpatialIoError.InvalidTransformDescriptor(
-          descriptor.id.value,
-          "ANTs, FSL, and AFNI asset adapters currently require volume domains"
-        )
-      )
-    else Right(())
-
-  private def resolveFormat(descriptor: TransformDescriptor): Either[SpatialIoError, TransformFileFormat] =
-    descriptor.format.orElse(TransformFileFormat.detect(descriptor.path)) match
-      case Some(format) => Right(format)
-      case None =>
-        Left(
-          SpatialIoError.InvalidTransformDescriptor(
-            descriptor.id.value,
-            s"cannot infer transform format from ${descriptor.path}; use TransformDescriptor.fromFile"
-          )
-        )
-
-  private def validateFormat(
-    descriptor: TransformDescriptor,
-    format: TransformFileFormat
-  ): Either[SpatialIoError, Unit] =
-    if descriptor.tool != format.tool then
-      Left(
-        SpatialIoError.InvalidTransformDescriptor(
-          descriptor.id.value,
-          s"declared tool ${descriptor.tool} does not match $format (${format.tool})"
-        )
-      )
-    else if descriptor.kind != format.defaultKind then
-      Left(
-        SpatialIoError.InvalidTransformDescriptor(
-          descriptor.id.value,
-          s"declared kind ${descriptor.kind} does not match $format (${format.defaultKind})"
-        )
-      )
-    else Right(())
-
-  private def attachInverse(
-    primary: LoadedMap,
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain,
-    inverseAsset: Option[TransformAssetSpec]
-  ): Either[SpatialIoError, (CoordinateMap, Option[(TransformAssetSpec, TransformAssetFingerprint)])] =
-    primary.coordinateMap match
-      case CoordinateMap.Geometric(primaryBinding) if primaryBinding.containsDense =>
-        inverseAsset match
-          case None if descriptor.inverseQuality.declared =>
-            Left(
-              SpatialIoError.InvalidTransformDescriptor(
-                descriptor.id.value,
-                s"${descriptor.inverseQuality} requires an executable inverse asset for a dense transform"
-              )
-            )
-          case None => Right((primary.coordinateMap, None))
-          case Some(asset) =>
-            val inverseDescriptor =
-              TransformDescriptor.build(
-                MorphismId.unsafe(s"${descriptor.id.value}:provided-inverse"),
-                target.id,
-                source.id,
-                asset.format.tool,
-                asset.format.defaultKind,
-                asset.path,
-                descriptor.routeTag,
-                descriptor.cost,
-                InverseQuality.Missing,
-                CoordinateMap.Unspecified,
-                Some(asset.format)
-              )
-            inverseDescriptor.flatMap { checked =>
-              loadMap(asset.path, asset.format, asset.options, checked, target, source).flatMap {
-                case LoadedMap(inverseMap @ CoordinateMap.Geometric(inverseBinding), _, fingerprint)
-                    if inverseBinding.containsDense =>
-                  CoordinateMap
-                    .attachInverse(primary.coordinateMap, inverseMap)
-                    .left
-                    .map(error => SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, error.message))
-                    .map(map => (map, Some(asset -> fingerprint)))
-                case _ =>
-                  Left(
-                    SpatialIoError.InvalidTransformDescriptor(
-                      descriptor.id.value,
-                      "a dense transform requires a dense inverse asset"
-                    )
-                  )
-              }
-            }
-      case _ =>
-        inverseAsset match
-          case Some(asset) =>
-            fingerprint(asset.path).map(value => (primary.coordinateMap, Some(asset -> value)))
-          case None => Right((primary.coordinateMap, None))
-
-  private def loadMap(
-    path: Path,
-    format: TransformFileFormat,
-    options: TransformLoadOptions,
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain
-  ): Either[SpatialIoError, LoadedMap] =
-    format.defaultKind match
-      case TransformKind.Affine3D => loadAffine(path, format, options, source, target)
-      case TransformKind.Warp3D | TransformKind.DisplacementField3D | TransformKind.CoordinateField3D =>
-        loadDense(path, format, options, descriptor, source, target)
-
-  private def loadAffine(
-    path: Path,
-    format: TransformFileFormat,
-    options: TransformLoadOptions,
-    source: Domain,
-    target: Domain
-  ): Either[SpatialIoError, LoadedMap] =
-    for
-      text <- readText(path)
-      native <- parseAffine(path, format, text)
-      validatedNative <- Affine
-        .fromRowMajor[D3](native.valuesRowMajor)
-        .left
-        .map(cause => SpatialIoError.Geometry(path, cause))
-      pullback <- normalizeAffine(
-        path,
-        validatedNative.matrix,
-        options,
-        volumeSpace(source),
-        volumeSpace(target)
-      )
-      affine <- Affine
-        .fromRowMajor[D3](pullback.valuesRowMajor)
-        .left
-        .map(cause => SpatialIoError.Geometry(path, cause))
-      coordinateMap <- CoordinateMap
-        .affine(source, target, affine)
-        .left
-        .map(error => SpatialIoError.MalformedTransformAsset(path, error.message))
-      stamp <- fingerprint(path)
-    yield
-      LoadedMap(
-        coordinateMap,
-        s"${options.convention}:${options.direction}->RAS-mm-pullback;affine=image4s.geometry.Affine[D3]",
-        stamp
-      )
-
-  private def loadDense(
-    path: Path,
-    format: TransformFileFormat,
-    options: TransformLoadOptions,
-    descriptor: TransformDescriptor,
-    source: Domain,
-    target: Domain
-  ): Either[SpatialIoError, LoadedMap] =
-    if format == TransformFileFormat.X5 || format == TransformFileFormat.FreeSurferLta then
-      Left(SpatialIoError.UnsupportedTransformAsset(path, format, "no built-in executable adapter"))
-    else if options.direction != TransformDirection.PullbackTargetToSource then
-      Left(
-        SpatialIoError.TransformConventionMismatch(
-          path,
-          "a forward dense field cannot be inverted exactly at ingestion; provide a target-grid pullback field"
-        )
-      )
     else
-      try
-        val sourceSpace = volumeSpace(source)
-        val targetSpace = volumeSpace(target)
-        val nativeResult =
-          options.denseEncoding match
-            case DenseTransformEncoding.Displacement =>
-              Nifti
-                .readDisplacementField(path)
-                .map(field => field.values -> field.sampled.sampleSpace)
-            case DenseTransformEncoding.AbsoluteCoordinates =>
-              Nifti
-                .readSourceCoordinateField(path)
-                .map(field => field.values -> field.sampled.sampleSpace)
-        nativeResult
-          .left
-          .map(error =>
-            SpatialIoError.MalformedTransformAsset(path, error.message)
-          )
-          .flatMap: (native, nativeSpace) =>
-            Grid
-              .approximateGeometryMatch(
-                nativeSpace.grid,
-                targetSpace.grid,
-                1e-5
-              )
-              .left
-              .map(cause => SpatialIoError.Geometry(path, cause))
-              .flatMap: _ =>
-                val grid = GridSpec.fromSpace(targetSpace)
-                val field =
-                  normalizeDense(
-                    native,
-                    grid,
-                    sourceSpace,
-                    targetSpace,
-                    options
-                  )
-                SpatialPullbacks
-                  .coordinates(
-                    GridSpec.fromSpace(sourceSpace),
-                    GridSpec.fromSpace(targetSpace),
-                    field,
-                    options.interpolation
-                  )
-                  .left
-                  .map(error =>
-                    SpatialIoError.MalformedTransformAsset(path, error.message)
-                  )
-                  .flatMap { pullback =>
-                    for
-                      coordinateMap <- CoordinateMap
-                        .dense(pullback)
-                        .left
-                        .map(error =>
-                          SpatialIoError.MalformedTransformAsset(
-                            path,
-                            error.message
-                          )
-                        )
-                      stamp <- fingerprint(path)
-                    yield
-                      LoadedMap(
-                        coordinateMap,
-                        s"${options.convention}:${options.denseEncoding}:${options.direction}->absolute-RAS-mm-pullback",
-                        stamp
-                      )
-                  }
-      catch
-        case NonFatal(error) => Left(SpatialIoError.MalformedTransformAsset(path, detail(error)))
+      volume(source)
+        .zip(volume(target))
+        .toRight(SpatialIoError.InvalidTransformDescriptor(descriptor.id.value, "transform assets join volume domains only"))
 
-  private def normalizeDense(
-    native: RavelArray[Double, Rank[4]],
-    grid: GridSpec[?],
-    source: SomeSampleSpace,
-    target: SomeSampleSpace,
-    options: TransformLoadOptions
-  ): RavelArray[Double, Rank[4]] =
-    val count = grid.nVoxels
-    val sourceFslToWorld =
-      options.convention match
-        case TransformCoordinateConvention.FslScaledVoxel =>
-          multiply(source.grid.indexToFrame.matrix, inverseOrThrow(fslVoxelToScaled(source)))
-        case _ => GaleDMat.eye(4)
-    val targetVoxelToFsl =
-      options.convention match
-        case TransformCoordinateConvention.FslScaledVoxel => fslVoxelToScaled(target)
-        case _ => GaleDMat.eye(4)
-
-    val shape = Shape(grid.shape.x, grid.shape.y, grid.shape.z, 3)
-    RavelArray.build[Double, Rank[4]](shape) { builder =>
-      var voxel = 0
-      while voxel < count do
-        val coord =
-          scalafim.image.Indexing.indexToGrid3D(grid.shape, voxel)
-        val nativeValue =
-          Vector(
-            native(coord.x, coord.y, coord.z, 0),
-            native(coord.x, coord.y, coord.z, 1),
-            native(coord.x, coord.y, coord.z, 2)
-          )
-        val voxelCoord = Vector(coord.x.toDouble, coord.y.toDouble, coord.z.toDouble)
-        val targetPoint = grid.voxelToWorld(SpatialPoint(voxelCoord(0), voxelCoord(1), voxelCoord(2)))
-        val targetWorld = Vector(targetPoint.x, targetPoint.y, targetPoint.z)
-        val sourceWorld =
-          options.convention match
-            case TransformCoordinateConvention.RasMillimeters =>
-              options.denseEncoding match
-                case DenseTransformEncoding.Displacement =>
-                  zip3(targetWorld, nativeValue)(_ + _)
-                case DenseTransformEncoding.AbsoluteCoordinates =>
-                  nativeValue
-            case TransformCoordinateConvention.LpsMillimeters =>
-              val targetNative = rasToLps(targetWorld)
-              val sourceNative =
-                options.denseEncoding match
-                  case DenseTransformEncoding.Displacement =>
-                    zip3(targetNative, nativeValue)(_ + _)
-                  case DenseTransformEncoding.AbsoluteCoordinates =>
-                    nativeValue
-              rasToLps(sourceNative)
-            case TransformCoordinateConvention.FslScaledVoxel =>
-              val targetNative =
-                applyAffine(targetVoxelToFsl, voxelCoord)
-              val sourceNative =
-                options.denseEncoding match
-                  case DenseTransformEncoding.Displacement =>
-                    zip3(targetNative, nativeValue)(_ + _)
-                  case DenseTransformEncoding.AbsoluteCoordinates =>
-                    nativeValue
-              applyAffine(sourceFslToWorld, sourceNative)
-        val base =
-          ((coord.x * grid.shape.y + coord.y) * grid.shape.z +
-            coord.z) * 3
-        var component = 0
-        while component < 3 do
-          builder.writeLinear(base + component, sourceWorld(component))
-          component += 1
-        voxel += 1
-    }
-
-  private def parseAffine(
-    path: Path,
-    format: TransformFileFormat,
-    text: String
-  ): Either[SpatialIoError, GaleDMat] =
-    format match
-      case TransformFileFormat.AntsAffine => parseAntsAffine(path, text)
-      case TransformFileFormat.FslFlirt => parseRectangularAffine(path, text, expected = 16)
-      case TransformFileFormat.AfniAffine => parseRectangularAffine(path, text, expected = 12)
-      case other => Left(SpatialIoError.UnsupportedTransformAsset(path, other, "not an affine text format"))
-
-  private def parseAntsAffine(path: Path, text: String): Either[SpatialIoError, GaleDMat] =
-    val transformLines = text.linesIterator.filter(_.trim.startsWith("Transform:")).toVector
-    if transformLines.length != 1 || !transformLines.head.toLowerCase.contains("affinetransform") then
-      Left(SpatialIoError.MalformedTransformAsset(path, "expected exactly one ITK AffineTransform_double_3_3"))
-    else
-      val parameters = keyedNumbers(text, "Parameters:")
-      val center = keyedNumbers(text, "FixedParameters:")
-      if parameters.length != 12 || center.length < 3 then
-        Left(
-          SpatialIoError.MalformedTransformAsset(
-            path,
-            s"expected 12 affine parameters and 3 fixed parameters, got ${parameters.length} and ${center.length}"
-          )
-        )
-      else
-        val rows = Vector.tabulate(3) { row =>
-          val translation =
-            parameters(9 + row) + center(row) -
-              Vector.tabulate(3)(col => parameters(row * 3 + col) * center(col)).sum
-          Vector.tabulate(3)(col => parameters(row * 3 + col)) :+ translation
-        } :+ Vector(0.0, 0.0, 0.0, 1.0)
-        Right(fromRows(rows))
-
-  private def parseRectangularAffine(
-    path: Path,
-    text: String,
-    expected: Int
-  ): Either[SpatialIoError, GaleDMat] =
-    val clean = text.linesIterator.map(_.takeWhile(_ != '#')).mkString("\n")
-    val numbers = NumberPattern.findAllIn(clean).map(_.toDouble).toVector
-    if numbers.length != expected then
-      Left(SpatialIoError.MalformedTransformAsset(path, s"expected $expected numeric values, got ${numbers.length}"))
-    else if expected == 16 then Right(GaleDMat.dense(4, 4, numbers))
-    else
-      Right(
-        GaleDMat.dense(
-          4,
-          4,
-          numbers ++ Vector(0.0, 0.0, 0.0, 1.0)
-        )
-      )
-
-  private def keyedNumbers(text: String, key: String): Vector[Double] =
-    text.linesIterator
-      .find(_.trim.startsWith(key))
-      .toVector
-      .flatMap(line => NumberPattern.findAllIn(line.drop(line.indexOf(key) + key.length)).map(_.toDouble))
-
-  private def normalizeAffine(
-    path: Path,
-    native: GaleDMat,
-    options: TransformLoadOptions,
-    source: SomeSampleSpace,
-    target: SomeSampleSpace
-  ): Either[SpatialIoError, GaleDMat] =
-    options.convention match
-      case TransformCoordinateConvention.RasMillimeters =>
-        val ras = native
-        directionToPullback(path, ras, options.direction)
-      case TransformCoordinateConvention.LpsMillimeters =>
-        val ras = multiply(LpsToRas, multiply(native, LpsToRas))
-        directionToPullback(path, ras, options.direction)
-      case TransformCoordinateConvention.FslScaledVoxel =>
-        val nativePullback = directionToPullback(path, native, options.direction)
-        nativePullback.flatMap { pullback =>
-          for
-            sourceFslInverse <- inverse(path, fslVoxelToScaled(source))
-            targetWorldInverse <- inverse(path, target.grid.indexToFrame.matrix)
-          yield
-            multiply(
-              source.grid.indexToFrame.matrix,
-              multiply(
-                sourceFslInverse,
-                multiply(pullback, multiply(fslVoxelToScaled(target), targetWorldInverse))
-              )
-            )
-        }
-
-  private def directionToPullback(
-    path: Path,
-    matrix: GaleDMat,
-    direction: TransformDirection
-  ): Either[SpatialIoError, GaleDMat] =
-    direction match
-      case TransformDirection.PullbackTargetToSource => Right(matrix)
-      case TransformDirection.ForwardSourceToTarget => inverse(path, matrix)
-
-  private def fslVoxelToScaled(space: SomeSampleSpace): GaleDMat =
-    val affine = space.grid.indexToFrame.matrix
-    val sx = columnNorm(affine, 0)
-    val sy = columnNorm(affine, 1)
-    val sz = columnNorm(affine, 2)
-    val determinant = determinant3(affine)
-    val flipX = determinant > 0.0
-    GaleDMat.dense(
-      4,
-      4,
-      Vector(
-        if flipX then -sx else sx, 0.0, 0.0, if flipX then (space.spatialDims(0) - 1).toDouble * sx else 0.0,
-        0.0, sy, 0.0, 0.0,
-        0.0, 0.0, sz, 0.0,
-        0.0, 0.0, 0.0, 1.0
-      )
-    )
-
-  private def inverse(path: Path, matrix: GaleDMat): Either[SpatialIoError, GaleDMat] =
-    matrix.lu
-      .left
-      .map(error => SpatialIoError.TransformConventionMismatch(path, error.toString))
-      .flatMap { lu =>
-        val builder = GaleDMat.newBuilder(matrix.rows, matrix.cols)
-        var column = 0
-        var error = Option.empty[SpatialIoError]
-        while column < matrix.cols && error.isEmpty do
-          val basis = DVec.tabulate(matrix.rows)(row => if row == column then 1.0 else 0.0)
-          lu.solve(basis) match
-            case Left(err) => error = Some(SpatialIoError.TransformConventionMismatch(path, err.toString))
-            case Right(solution) =>
-              var row = 0
-              while row < matrix.rows do
-                builder(row, column) = solution(row)
-                row += 1
-          column += 1
-        error match
-          case Some(err) => Left(err)
-          case None => Right(builder.result())
-      }
-
-  private def inverseOrThrow(matrix: GaleDMat): GaleDMat =
-    inverse(Path.of("<internal-fsl-convention>"), matrix).fold(error => throw new IllegalArgumentException(error.message), identity)
-
-  private def multiply(left: GaleDMat, right: GaleDMat): GaleDMat =
-    left * right
-
-  private def applyAffine(matrix: GaleDMat, point: Vector[Double]): Vector[Double] =
-    Vector.tabulate(3) { row =>
-      matrix(row, 3) + matrix(row, 0) * point(0) + matrix(row, 1) * point(1) + matrix(row, 2) * point(2)
-    }
-
-  private def volumeSpace(
-    domain: Domain
-  ): SampleSpace[? <: Frame[D3], D3] =
-    domain.geometry match
-      case SamplingGeometry.Volume(space, _) => space
-      case _ => throw new IllegalArgumentException(s"domain ${domain.id.value} is not volumetric")
-
-  private def fromRows(rows: Vector[Vector[Double]]): GaleDMat =
-    GaleDMat.dense(rows.length, rows.head.length, rows.flatten)
-
-  private def columnNorm(matrix: GaleDMat, column: Int): Double =
-    math.sqrt(
-      matrix(0, column) * matrix(0, column) +
-        matrix(1, column) * matrix(1, column) +
-        matrix(2, column) * matrix(2, column)
-    )
-
-  private def determinant3(matrix: GaleDMat): Double =
-    matrix(0, 0) * (matrix(1, 1) * matrix(2, 2) - matrix(1, 2) * matrix(2, 1)) -
-      matrix(0, 1) * (matrix(1, 0) * matrix(2, 2) - matrix(1, 2) * matrix(2, 0)) +
-      matrix(0, 2) * (matrix(1, 0) * matrix(2, 1) - matrix(1, 1) * matrix(2, 0))
-
-  private def rasToLps(point: Vector[Double]): Vector[Double] =
-    Vector(-point(0), -point(1), point(2))
-
-  private def zip3(left: Vector[Double], right: Vector[Double])(f: (Double, Double) => Double): Vector[Double] =
-    Vector(f(left(0), right(0)), f(left(1), right(1)), f(left(2), right(2)))
-
-  private def readText(path: Path): Either[SpatialIoError, String] =
-    try
-      if !Files.isRegularFile(path) then Left(SpatialIoError.IoFailure(path, "file does not exist"))
-      else Right(Files.readString(path, StandardCharsets.UTF_8))
-    catch
-      case NonFatal(error) => Left(SpatialIoError.IoFailure(path, detail(error)))
-
-  private def fingerprint(path: Path): Either[SpatialIoError, TransformAssetFingerprint] =
-    try
-      if !Files.isRegularFile(path) then Left(SpatialIoError.IoFailure(path, "file does not exist"))
-      else
-        val digest = MessageDigest.getInstance("SHA-256")
-        Using.resource(Files.newInputStream(path)) { in =>
-          val buffer = Array.ofDim[Byte](8192)
-          var count = in.read(buffer)
-          while count >= 0 do
-            if count > 0 then digest.update(buffer, 0, count)
-            count = in.read(buffer)
-        }
-        val attributes = Files.readAttributes(path, classOf[java.nio.file.attribute.BasicFileAttributes])
-        val hex = digest.digest().map(byte => f"${byte & 0xff}%02x").mkString
-        Right(TransformAssetFingerprint(attributes.size(), attributes.lastModifiedTime().toMillis, hex))
-    catch
-      case NonFatal(error) => Left(SpatialIoError.IoFailure(path, detail(error)))
-
-  private def detail(error: Throwable): String =
-    Option(error.getMessage).filter(_.nonEmpty).getOrElse(error.getClass.getSimpleName)
+  private def digest(asset: AssetRef): String =
+    asset.sha256.getOrElse(asset.label)

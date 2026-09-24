@@ -5,6 +5,7 @@ import scalafim.image.world.{SessionId, SubjectId}
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
+import scalafim.transform.TransformFormat
 
 import java.nio.file.Path
 
@@ -84,13 +85,14 @@ class SpatialIngestSuite extends munit.FunSuite:
     assertEquals(reverse.ids.map(_.value), Vector("func-to-t1w:inverse"))
     assertEqualsDouble(reverse.pathQuality, 0.8, 1e-12)
 
-  test("transform file formats classify common neurotransform IO surfaces"):
-    assertEquals(TransformFileFormat.detect(Path.of("xfm.h5")), Some(TransformFileFormat.ANTsH5))
-    assertEquals(TransformFileFormat.detect(Path.of("register.lta")), Some(TransformFileFormat.FreeSurferLta))
-    assertEquals(TransformFileFormat.detect(Path.of("warp.x5")), Some(TransformFileFormat.X5))
-    assertEquals(TransformFileFormat.detect(Path.of("epi.aff12.1D")), Some(TransformFileFormat.AfniAffine))
-    assertEquals(TransformFileFormat.detect(Path.of("sub-01_fnirt_warpcoef.nii.gz")), Some(TransformFileFormat.FslFnirt))
-    assertEquals(TransformFileFormat.detect(Path.of("flirt.mat")), Some(TransformFileFormat.FslFlirt))
+  test("transform formats declare their tool and the morphism kind a descriptor starts from"):
+    assertEquals(TransformFormat.ItkHdf5.tool, TransformTool.ANTs)
+    assertEquals(TransformFormat.FslFnirtCoefficients.tool, TransformTool.FSL)
+    assertEquals(TransformFormat.AfniAff12.tool, TransformTool.AFNI)
+    assertEquals(TransformFormat.FreeSurferRegisterDat.tool, TransformTool.FreeSurfer)
+    assertEquals(TransformFormat.X5.tool, TransformTool.X5)
+    assertEquals(TransformFormat.ItkMatlab.defaultKind, TransformKind.Affine3D)
+    assertEquals(TransformFormat.AntsDisplacementNifti.defaultKind, TransformKind.Warp3D)
 
     val func = domain("func")
     val template = domain("template")
@@ -101,7 +103,7 @@ class SpatialIngestSuite extends munit.FunSuite:
           source = func.id,
           target = template.id,
           path = Path.of("sub-01_from-func_to-template_xfm.h5"),
-          format = TransformFileFormat.ANTsH5
+          format = TransformFormat.ItkHdf5
         )
       )
 
