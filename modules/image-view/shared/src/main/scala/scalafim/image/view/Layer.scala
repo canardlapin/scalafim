@@ -2,9 +2,12 @@ package scalafim.image.view
 
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.FrameAlignment
 import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import intaglio.*
+import reframe4s.core.MapError
+import reframe4s.core.SpatialMap
 import scalafim.image.*
 
 import scala.reflect.ClassTag
@@ -31,6 +34,8 @@ enum ImageViewError:
   case SamplingFailed(id: LayerId, cause: SlicePlanError)
   case GeometryFailure(cause: GeometryError)
   case GraphicsFailure(cause: GraphicsError)
+  case LayerFrameMismatch(id: LayerId, cause: GeometryError)
+  case LayerMappingMismatch(id: LayerId, cause: MapError)
 
   def message: String =
     this match
@@ -76,6 +81,10 @@ enum ImageViewError:
         cause.message
       case GraphicsFailure(cause) =>
         cause.message
+      case LayerFrameMismatch(id, cause) =>
+        s"layer '${id.asString}' is not in the reference frame: ${cause.message}"
+      case LayerMappingMismatch(id, cause) =>
+        s"layer '${id.asString}' pullback does not join the reference and layer frames: ${cause.message}"
 
 opaque type LayerId = String
 
@@ -172,6 +181,32 @@ enum LayerMapping:
   case WorldAligned
   case Pullback(referenceToSource: SpatialPullback[?, ?])
 
+/** Checked evidence of how a layer's frame meets the viewer's reference frame. */
+enum LayerAlignment:
+  /** The layer's frame is the reference frame (one runtime owner or one persistent key), so world points are shared. */
+  case SharedWorld(evidence: FrameAlignment[D3, ?, ?])
+
+  /** A pullback whose source is the reference frame's owner and whose result is the layer frame's owner. */
+  case Mapped(referenceToSource: SpatialPullback[?, ?])
+
+object LayerAlignment:
+  /** Check a layer's frame (and mapping, if any) against the reference frame. */
+  def check(reference: Frame[D3], layer: SliceLayer): Either[ImageViewError, LayerAlignment] =
+    layer.mapping match
+      case LayerMapping.WorldAligned =>
+        Frame
+          .alignOwners[D3, Frame[D3], Frame[D3]](layer.frame, reference)
+          .left
+          .map(error => ImageViewError.LayerFrameMismatch(layer.id, error))
+          .map(LayerAlignment.SharedWorld.apply)
+      case LayerMapping.Pullback(referenceToSource) =>
+        val checked =
+          for
+            _ <- SpatialMap.validateSourceFrame(referenceToSource.source, reference)
+            _ <- SpatialMap.validateResultFrame(layer.frame, referenceToSource.target)
+          yield LayerAlignment.Mapped(referenceToSource)
+        checked.left.map(error => ImageViewError.LayerMappingMismatch(layer.id, error))
+
 enum LayerSampleValue:
   case Scalar(value: Double)
   case Label(value: Int)
@@ -212,6 +247,12 @@ sealed trait SliceLayer:
   def timeInvariant: Boolean
   def supportsWindow: Boolean
   def supportsThreshold: Boolean
+  /** How this layer's frame meets the viewer's reference frame. */
+  def mapping: LayerMapping
+
+  /** The frame this layer's samples live in. */
+  def frame: Frame[D3] = sourceSpace.frame
+
   private[view] def sourceSpace: Grid[? <: Frame[D3], D3]
   private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
   private[view] def sample(
@@ -343,15 +384,23 @@ object SliceLayer:
         index += 1
       RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
 
+/** A viewer scene: a reference grid and layers, each carrying its own frame and a checked alignment to the
+  * reference frame (`alignments(i)` belongs to `layers(i)`).
+  */
 final case class ViewerModel private (
   referenceSpace: Grid[? <: Frame[D3], D3],
-  layers: Vector[SliceLayer]
+  layers: Vector[SliceLayer],
+  alignments: Vector[LayerAlignment]
 ): 
   val timepointCount: Int =
     layers.iterator.filterNot(_.timeInvariant).map(_.frameCount).toVector.headOption.getOrElse(1)
 
   def layer(id: LayerId): Option[SliceLayer] =
     layers.find(_.id == id)
+
+  def alignment(id: LayerId): Option[LayerAlignment] =
+    val index = layers.indexWhere(_.id == id)
+    if index < 0 then None else Some(alignments(index))
 
 object ViewerModel:
   def make(
@@ -366,7 +415,13 @@ object ViewerModel:
           val temporalCounts = layers.filterNot(_.timeInvariant).map(_.frameCount).distinct
           if temporalCounts.lengthCompare(1) > 0 then
             Left(ImageViewError.IncompatibleFrameCounts(temporalCounts.sorted))
-          else Right(new ViewerModel(referenceSpace, layers))
+          else
+            sequence(layers.map(layer => LayerAlignment.check(referenceSpace.frame, layer)))
+              .map(alignments => new ViewerModel(referenceSpace, layers, alignments))
+
+  private def sequence[A](values: Vector[Either[ImageViewError, A]]): Either[ImageViewError, Vector[A]] =
+    values.foldLeft[Either[ImageViewError, Vector[A]]](Right(Vector.empty)): (acc, value) =>
+      acc.flatMap(built => value.map(built :+ _))
 
   def fromLayers(first: SliceLayer, rest: SliceLayer*): Either[ImageViewError, ViewerModel] =
     make(first.sourceSpace, first +: rest.toVector)

@@ -2,6 +2,12 @@ package scalafim.fmri.threshold
 
 import scalafim.locus.{Region as LocusRegion}
 
+/** Inclusive voxel-index extents of a region on the masked field's lattice.
+  *
+  * This is a lattice quantity (integer grid indices, no frame, no millimetres), deliberately distinct from the world
+  * box `scalafim.image.WorldBox`: converting it would need the field's grid affine and would lose the exact integer
+  * midpoints the region tree splits on.
+  */
 final case class BoundingBox(x0: Int, x1: Int, y0: Int, y1: Int, z0: Int, z1: Int):
   require(x0 <= x1 && y0 <= y1 && z0 <= z1, "bounding-box minima must be <= maxima")
 

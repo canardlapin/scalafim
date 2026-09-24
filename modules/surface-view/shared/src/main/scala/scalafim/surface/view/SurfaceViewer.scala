@@ -1,22 +1,25 @@
 package scalafim.surface.view
 
+import image4s.geometry.{D3, Frame}
 import intaglio.*
+import scalafim.image.{WorldBox, WorldPoint}
+import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.surface.*
 
-private[view] final case class SurfaceWorldBounds(
-  minimumX: Double,
-  minimumY: Double,
-  minimumZ: Double,
-  maximumX: Double,
-  maximumY: Double,
-  maximumZ: Double
-)
+/** The display frame surface camera framing works in.
+  *
+  * Surfaces do not yet carry a world-space identity, so their `surfaceToWorld` coordinates are RAS millimetres in an
+  * unresolved world; every asset's camera box lives in this one frame so boxes can be combined.
+  */
+private[view] object SurfaceDisplayWorld:
+  val frame: Frame[D3] = FrameCatalog.frame(WorldSpace.Unresolved)
+  type F = frame.type
 
 final case class SurfaceAsset private (
   id: SurfaceId,
   geometries: SurfaceSet,
   domain: SurfaceMeshDomain,
-  private[view] val cameraBounds: SurfaceWorldBounds,
+  private[view] val cameraBounds: Option[WorldBox[SurfaceDisplayWorld.F]],
   private[view] val topologyIndices: IntBufferView
 ):
   def geometry: SurfaceGeometry = geometries.default
@@ -44,7 +47,7 @@ object SurfaceAsset:
     * every presentation state. This keeps a family stable while preventing a
     * distant inflated or spherical state from displacing the folded cortex.
     */
-  private def worldBounds(geometry: SurfaceGeometry): SurfaceWorldBounds =
+  private def worldBounds(geometry: SurfaceGeometry): Option[WorldBox[SurfaceDisplayWorld.F]] =
     var minimumX = Double.PositiveInfinity
     var minimumY = Double.PositiveInfinity
     var minimumZ = Double.PositiveInfinity
@@ -74,7 +77,16 @@ object SurfaceAsset:
       maximumY = math.max(maximumY, worldY)
       maximumZ = math.max(maximumZ, worldZ)
       offset += 3
-    SurfaceWorldBounds(minimumX, minimumY, minimumZ, maximumX, maximumY, maximumZ)
+    val extrema = Vector(minimumX, minimumY, minimumZ, maximumX, maximumY, maximumZ)
+    if !extrema.forall(_.isFinite) then None
+    else
+      WorldBox
+        .fromExtrema[SurfaceDisplayWorld.F](
+          SurfaceDisplayWorld.frame,
+          WorldPoint(minimumX, minimumY, minimumZ),
+          WorldPoint(maximumX, maximumY, maximumZ)
+        )
+        .toOption
 
 final case class SurfaceViewerModel private (
   surfaces: Vector[SurfaceAsset],
