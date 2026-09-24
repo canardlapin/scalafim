@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.space.SubjectId
+import scalafim.image.world.SubjectId
 
 import image4s.geometry.GeometryError
 import scalafim.image.io.Nifti

@@ -20,6 +20,7 @@ import image4s.geometry.LengthUnit
 import image4s.locus.GridDomain
 import gale.linalg.DMat
 import scalafim.image.NeuroAffineSyntax.*
+import scalafim.image.world.{FrameCatalog, WorldSpace}
 
 enum SampleSpaceError:
   case EmptyDimensions
@@ -33,6 +34,8 @@ enum SampleSpaceError:
   case UnexpectedNonSpatialAxes(actual: Vector[AxisKind])
   case Geometry(cause: GeometryError)
   case Image(cause: ImageError)
+  case WorldRelabel(from: String, to: String)
+  case WorldIdentity(reason: String)
 
   def message: String =
     this match
@@ -57,6 +60,10 @@ enum SampleSpaceError:
         s"spatial-only sample space requires no non-spatial axes; got [$kinds]"
       case Geometry(cause) =>
         cause.message
+      case WorldRelabel(from, to) =>
+        s"cannot relabel a space in world '$from' as '$to'; moving between world spaces needs a transform"
+      case WorldIdentity(reason) =>
+        s"sample space has no world-space identity: $reason"
       case Image(cause) =>
         cause.message
 
@@ -69,10 +76,9 @@ object SampleSpaces:
       .parse("scalafim-ras-d2")
       .fold(error => throw new IllegalStateException(error.message), identity)
 
+  /** Unresolved RAS-mm D3 identity; see [[scalafim.image.world.WorldSpace.Unresolved]]. */
   private val rasD3FrameId =
-    FrameId
-      .parse("scalafim-ras-d3")
-      .fold(error => throw new IllegalStateException(error.message), identity)
+    FrameCatalog.frameId(WorldSpace.Unresolved)
 
   private[image] def fromCanonical(space: SomeSampleSpace): SomeSampleSpace =
     space
@@ -118,6 +124,37 @@ object SampleSpaces:
     * their exact geometry and axes while constructing the persistent frame/grid keys used by GridDomain. Existing
     * persistent sample spaces pass through unchanged.
     */
+  /** Re-identify exact D3 sampling geometry in a resolved world space.
+    *
+    * The grid shape, index-to-world affine and non-spatial axes are retained; only the frame identity changes, from
+    * whatever the decoder produced (ephemeral or unresolved) to the persistent frame of `world`. Spaces already in a
+    * different resolved world are rejected: moving between worlds needs a transform, not a relabel.
+    */
+  def inWorld(
+      space: SomeSampleSpace,
+      world: WorldSpace
+  ): Either[SampleSpaceError, SomeSampleSpace] =
+    val current = space.grid.frame
+    val relabelAllowed =
+      current.persistentKey.isEmpty || FrameCatalog.worldOf(current).exists(w => w == WorldSpace.Unresolved || w == world)
+    if space.grid.frame.spatialRank != 3 then
+      Left(SampleSpaceError.ExpectedDimensionality("world-space relabel", 3, space.grid.frame.spatialRank))
+    else if !relabelAllowed then
+      Left(SampleSpaceError.WorldRelabel(FrameCatalog.worldOf(current).fold(_.message, _.displayName), world.displayName))
+    else
+      requireD3(space).flatMap: typed =>
+        val frame = FrameCatalog.frame(world)
+        val result =
+          for
+            gridId <- admittedGridId(3, FrameCatalog.frameId(world), typed.grid.shape, typed.grid.indexToFrame.rowMajor)
+            grid   <- Grid.createPersistent(gridId, frame)(typed.grid.shape, typed.grid.indexToFrame)
+          yield fromCanonical(SampleSpace.create(grid, typed.nonSpatialAxes))
+        result.left.map(SampleSpaceError.Geometry.apply)
+
+  /** The world space a sample space's frame belongs to. */
+  def worldOf(space: SomeSampleSpace): Either[SampleSpaceError, WorldSpace] =
+    FrameCatalog.worldOf(space.grid.frame).left.map(error => SampleSpaceError.WorldIdentity(error.message))
+
   private[scalafim] def persistentD3[F <: Frame[D3]](
       space: SampleSpace[F, D3]
   ): Either[

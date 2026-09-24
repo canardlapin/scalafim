@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.space.SubjectId
+import scalafim.image.world.SubjectId
 
 import ravel.NDArray as RavelArray
 import scalafim.image.{GridSpec, SampleSpaces, SpatialPullbacks}

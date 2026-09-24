@@ -43,7 +43,7 @@ geometric map between named spaces, however it was obtained. Keeping the
 words apart avoids a false reading, such as treating a transform read from an
 FSL `.mat` as a registration result carrying convergence evidence.
 
-`scalafim.spatial.SpaceRef` and `scalafim.image.space.WorldSpace` are
+`scalafim.spatial.SpaceRef` and `scalafim.image.world.WorldSpace` are
 deliberately different:
 
 - A `SpaceRef` names a *sampled domain*: a grid, a mesh or a latent basis.
@@ -122,7 +122,7 @@ never with a guess:
 ## 7. Placement (restates plan D0)
 
 - Frame identity, conventions and orientation live in `image`, under
-  `scalafim.image.space`.
+  `scalafim.image.world`.
 - Formats, `WorldTransform` and conversion live in the new `transform`
   module.
 - Graph ingestion stays in `spatial`.

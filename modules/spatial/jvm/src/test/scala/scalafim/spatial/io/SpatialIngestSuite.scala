@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.space.{SessionId, SubjectId}
+import scalafim.image.world.{SessionId, SubjectId}
 
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*

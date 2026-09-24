@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.space.SubjectId
+import scalafim.image.world.SubjectId
 
 import scalafim.image.{SampleSpaces, Mask, SomeMaskVolume, SomeSampleSpace, SomeScalarVolume, PrimitiveBuffers}
 import scalafim.image.SampleSpaces.*

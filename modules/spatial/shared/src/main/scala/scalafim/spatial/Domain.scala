@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.space.{SessionId, SubjectId, TemplateName}
+import scalafim.image.world.{SessionId, SubjectId, TemplateName}
 
 import image4s.SampleSpace
 import image4s.geometry.D3

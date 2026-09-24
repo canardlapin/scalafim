@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import image4s.geometry.GeometryError
 import scalafim.image.SampleSpaceError
-import scalafim.image.space.SpaceError
+import scalafim.image.world.SpaceError
 import reframe4s.core.MapError
 
 enum SpatialErrorReason:

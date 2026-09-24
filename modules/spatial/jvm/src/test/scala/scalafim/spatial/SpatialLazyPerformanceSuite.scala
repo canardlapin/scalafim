@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.space.SubjectId
+import scalafim.image.world.SubjectId
 
 import com.sun.management.ThreadMXBean
 import scalafim.image.io.Nifti

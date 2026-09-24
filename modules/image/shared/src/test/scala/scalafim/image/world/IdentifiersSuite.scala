@@ -1,4 +1,4 @@
-package scalafim.image.space
+package scalafim.image.world
 
 class IdentifiersSuite extends munit.FunSuite:
   test("identifiers trim surrounding whitespace"):

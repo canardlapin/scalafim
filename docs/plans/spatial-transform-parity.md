@@ -150,7 +150,7 @@ It also has defects we must **not** port:
 ```text
 image4s-geometry ─┐        reframe4s (lie, field, resample, core)
                   ▼                        │
-image  (+ scalafim.image.space: WorldSpace, FrameCatalog, ToolCoordinates, AxisCodes)
+image  (+ scalafim.image.world: WorldSpace, FrameCatalog, ToolCoordinates, AxisCodes)
                   │                        │
                   ▼                        ▼
 transform  (scalafim.transform: WorldTransform, codecs, interpretations, Transforms.convert)
@@ -158,13 +158,13 @@ transform  (scalafim.transform: WorldTransform, codecs, interpretations, Transfo
           ▼                ▼
        spatial   ──►   atlas         (new edges: atlas → spatial, atlas → transform)
           ▲
-       surface ──► (unchanged; surface frames come from image.space)
+       surface ──► (unchanged; surface frames come from image.world)
 ```
 
 - **Frame identity lives in `image`.** `SampleSpaces.persistentFrameId` must
   derive from it, so it cannot sit in any module above `image`.
 - `SubjectId`, `SessionId` and `TemplateName` move **down** from
-  `spatial/Ids.scala` into `scalafim.image.space`. `spatial` imports them.
+  `spatial/Ids.scala` into `scalafim.image.world`. `spatial` imports them.
   There are no aliases (rule 1 of the ledger forbids duplicate authorities).
 - **Orientation stays in `image`,** as the ledger requires (`AnatomicalAxis`
   and `Orientation3D`). `AxisCodes` is a refinement of `Orientation3D`, not a
@@ -190,7 +190,7 @@ There are two different identities in play, and they must stay separate:
 - **`spatial.SpaceRef`** (`Domain.scala:33`) identifies a *sampled domain*:
   this subject's T1w grid, this subject's lh.white mesh, fsLR32k, a latent
   basis.
-- **`image.space.WorldSpace`** identifies a *continuous RAS-mm coordinate
+- **`image.world.WorldSpace`** identifies a *continuous RAS-mm coordinate
   system*: this subject's scanner RAS, their FreeSurfer tkRAS,
   MNI152NLin2009cAsym.
 
@@ -200,7 +200,7 @@ RAS. `SpaceRef` gains `def world: WorldSpace`; `WorldSpace` is not a copy of
 `SpaceRef`.
 
 ```scala
-package scalafim.image.space
+package scalafim.image.world
 
 /** Scope for subject-level identifiers. Two datasets that both have sub-01 must not collide. */
 opaque type DatasetNamespace = String   // BIDS DatasetDOI, else a content hash of dataset_description.json, else explicit
@@ -309,7 +309,7 @@ So:
   syntax over `Point[F, D3]`. The `Vector[Double]` overloads get typed
   replacements and a deprecation cycle.
 
-### D2. One convention kernel (`scalafim.image.space`)
+### D2. One convention kernel (`scalafim.image.world`)
 
 ```scala
 enum ToolCoordinates:
@@ -667,7 +667,7 @@ Develop these with `-Dscalafim.reframe4s.build=../reframe4s`, then bump
 ### Phase 1: World spaces and end-to-end frame typing
 
 - Move `SubjectId`, `SessionId` and `TemplateName` into
-  `scalafim.image.space`.
+  `scalafim.image.world`.
 - Implement `WorldSpace`, `FrameCatalog`, `Spaces.*`, `Placed`/`Rebind` and
   `SpaceResolver`.
 - Add `SpaceRef.world`.

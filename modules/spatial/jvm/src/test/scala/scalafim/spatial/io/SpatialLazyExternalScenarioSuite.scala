@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.space.SubjectId
+import scalafim.image.world.SubjectId
 
 import scalafim.image.io.Nifti
 import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}

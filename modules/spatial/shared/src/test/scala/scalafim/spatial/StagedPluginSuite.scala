@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.space.{SubjectId, TemplateName}
+import scalafim.image.world.{SubjectId, TemplateName}
 
 import gale.linalg.DMat as GaleDMat
 import scalafim.image.{SampleSpaces, SomeSampleSpace}

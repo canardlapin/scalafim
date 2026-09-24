@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.space.SubjectId
+import scalafim.image.world.SubjectId
 
 import image4s.geometry.{Affine, D3}
 import scalafim.image.{SampleSpaces, SomeSampleSpace}

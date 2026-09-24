@@ -1,4 +1,4 @@
-package scalafim.image.space
+package scalafim.image.world
 
 private object SpaceIdentifier:
   def normalize(label: String, value: String): Either[SpaceError, String] =
