@@ -14,20 +14,26 @@ import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import image4s.geometry.Point
 import scala.annotation.targetName
-import scalafim.image.world.{Rebind, SpaceError}
+import scalafim.image.world.{Rebind, SpaceError, ToolCoordinates}
 
 object SpatialCoordinates:
+
+  /** The LPS <-> RAS flip applied to one coordinate triple. It is [[ToolCoordinates.LpsToRas]], the only definition of
+    * the flip; it is self-inverse, so `rasToLps` is the same map.
+    */
+  private def flipLps(point: Vector[Double]): Vector[Double] =
+    ToolCoordinates.LpsToRas(point).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   @deprecated("Use lpsToRas(SpatialPoint) or lpsToRas(WorldPoint); a bare Vector[Double] carries neither arity nor role.", "0.2.0")
   def lpsToRas(point: Vector[Double]): Vector[Double] =
     validatePoint(point, "point")
-    Vector(-point(0), -point(1), point(2))
+    flipLps(point)
 
   def lpsToRas(point: SpatialPoint): SpatialPoint =
-    SpatialPoint(-point.x, -point.y, point.z)
+    SpatialPoint.unsafeFromVector(flipLps(point.toVector), "RAS point")
 
   def lpsToRas(point: WorldPoint): WorldPoint =
-    WorldPoint(-point.x, -point.y, point.z)
+    WorldPoint.unsafeFromVector(flipLps(point.toVector), "RAS point")
 
   @deprecated("Map lpsToRas(WorldPoint) over typed points.", "0.2.0")
   def lpsToRasPoints(points: Vector[Vector[Double]]): Vector[Vector[Double]] =

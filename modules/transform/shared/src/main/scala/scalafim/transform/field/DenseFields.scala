@@ -87,11 +87,11 @@ final class LpsDisplacementInterpretation(format: TransformFormat, lattice: Latt
     for
       latticeToWorld <- LatticeAffine.of(field.raw, lattice)
       m = latticeToWorld.rowMajor
+      flip = ToolCoordinates.LpsToRas.rowMajor // an LPS displacement is a vector: only the flip's diagonal applies
       dense <- DenseLattice.pullback(context.frames.target, context.frames.source, field.spatialDims, latticeToWorld, context.boundary): (x, y, z) =>
         Vector.tabulate(3): r =>
           val world = m(4 * r) * x + m(4 * r + 1) * y + m(4 * r + 2) * z + m(4 * r + 3)
-          val d = field.component(x, y, z, r)
-          world + (if r < 2 then -d else d)
+          world + flip(5 * r) * field.component(x, y, z, r)
     yield WorldTransform.Mapped(dense, PushAvailability.Unavailable(), TransformProvenance.read(format, AssetRef(format.toString, None)))
 
 object LpsDisplacementInterpretation:
