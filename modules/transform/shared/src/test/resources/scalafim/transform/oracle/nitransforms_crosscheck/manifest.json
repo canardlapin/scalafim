@@ -1,0 +1,19 @@
+{
+ "generator": "tools/transform/generate_nitransforms_crosscheck.py",
+ "generated": "2026-09-24",
+ "kind": "cross-implementation",
+ "tools": {
+  "nitransforms": "25.1.0",
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with h5py==3.16.0 --with numpy python tools/transform/generate_nitransforms_crosscheck.py"
+ ],
+ "notes": "Reference RAS points and nitransforms' mapped (moving) RAS point. Unreadable by nitransforms: itk_linear/euler.tfm: ValueError: cannot reshape array of size 3 into shape (3,3); itk_linear/euler_zyx.tfm: ValueError: cannot reshape array of size 3 into shape (3,3); itk_linear/versor_rigid.tfm: ValueError: cannot reshape array of size 3 into shape (3,3); itk_linear/similarity.tfm: ValueError: cannot reshape array of size 4 into shape (3,3); itk_linear/scale_skew_versor.tfm: ValueError: cannot reshape array of size 12 into shape (3,3); itk_linear/translation.tfm: ValueError: could not broadcast input array from shape (0,3) into shape (3,); itk_linear/composite_euler_affine.tfm: IndexError: list index out of range",
+ "sha256": {
+  "points.tsv": "f868897a439ba31e6b7daf42677599ecc901991f8cc1b036202c3954bde6b4fb"
+ }
+}
