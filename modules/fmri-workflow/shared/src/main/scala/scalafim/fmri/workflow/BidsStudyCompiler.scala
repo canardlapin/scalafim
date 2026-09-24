@@ -712,16 +712,16 @@ object BidsStudyCompiler:
     file.scope == BidsScope.Raw && file.extension == "tsv" && file.parsed.exists(_.kind == "events")
 
   private def isConfoundFile(file: BidsFile): Boolean =
-    file.scope == BidsScope.Derivatives && file.extension == "tsv" && (
-      file.parsed.exists(name => name.kind == "confounds" || name.entities.get(EntityKey.Description).contains("confounds")) ||
-        file.fileName.contains("confounds")
-    )
+    file.scope == BidsScope.Derivatives && file.role.exists { role =>
+      role.formatName == "tsv" && (role.suffixName == "confounds" ||
+        ((role.suffixName == "timeseries" || role.suffixName == "regressors") &&
+          file.entities.get(EntityKey.Description).contains("confounds")))
+    }
 
-  private def isMaskFile(file: BidsFile): Boolean =
-    file.scope == BidsScope.Derivatives && isNifti(file) && (
-      file.parsed.exists(name => name.kind == "mask" || name.entities.get(EntityKey.Description).contains("brain")) ||
-        file.fileName.contains("_mask.nii")
-    )
+  /** Header discovery and scientific binding share one registered mask-role policy. */
+  private[workflow] def isMaskFile(file: BidsFile): Boolean =
+    file.scope == BidsScope.Derivatives && isNifti(file) &&
+      file.role.exists(role => role.suffixName == "mask" || role.suffixName == "brainmask")
 
   private def isNifti(file: BidsFile): Boolean =
     file.extension == "nii" || file.extension == "nii.gz"

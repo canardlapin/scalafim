@@ -74,12 +74,7 @@ object BidsStudyCompilerJvm:
     }
     ImageHeaderCatalog(headers.result(), failures.result())
 
-  private def isMaskImage(file: BidsFile): Boolean =
-    val nifti = file.extension == "nii" || file.extension == "nii.gz"
-    nifti && (
-      file.parsed.exists(name => name.kind == "mask" || name.entities.get(bids4s.EntityKey.Description).contains("brain")) ||
-        file.fileName.contains("_mask.nii")
-    )
+  private def isMaskImage(file: BidsFile): Boolean = BidsStudyCompiler.isMaskFile(file)
 
   private def isImage(file: BidsFile): Boolean =
     (file.extension == "nii" || file.extension == "nii.gz") &&
