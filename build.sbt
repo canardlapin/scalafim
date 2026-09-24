@@ -481,7 +481,8 @@ lazy val image =
       libraryDependencies ++= Seq(
         "org.typelevel" %%% "cats-core"   % "2.12.0",
         "org.typelevel" %%% "cats-effect" % "3.5.4",
-        "org.typelevel" %%% "spire"       % "0.18.0"
+        "org.typelevel" %%% "spire"       % "0.18.0",
+        "org.scalameta" %%% "munit-scalacheck" % "1.1.0" % Test
       )
     )
     .jvmConfigure(
