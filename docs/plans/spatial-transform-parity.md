@@ -987,3 +987,30 @@ met:**
 ## Receipts
 
 _(append per phase: date, commits, test commands run, results)_
+
+### P0: contracts, skeleton, vendored oracles (closed 2026-09-24)
+
+- **Commits:** ecc72f64 (plan, epic map, ADR), 7579ca65 (transform module,
+  build edges, transformBoundaryCheck, vendored neurotransform oracles with
+  SHA-256 provenance).
+- **Verification:** transformJVM/test and transformJS/test; spatial and atlas
+  compile on JVM and JS against the new edges.
+
+### P2: convention kernel and orientation (closed 2026-09-24)
+
+- **Commits:**
+  - 85354a3d: ToolCoordinates with a single LPS flip; FSL and FreeSurfer
+    geometry; oracles from fslpy and nibabel.
+  - f028c03f: tkRAS uses FreeSurfer's fixed LIA Torig. This corrects an
+    earlier derivation.
+  - 23ff65b5: AxisCodes and data-and-affine reorientation, checked against
+    nibabel.
+  - 6bdd2dd1: typed deoblique and aligned space.
+  - ffbeeb45: duplicate LPS flips removed.
+- **Verification:** image JVM 353 and JS 333; transform JVM and JS; the
+  convention and orientation oracle suites pass on both platforms;
+  scalafimCompileAll has 0 warnings and 0 errors.
+- **Caveats:**
+  - Native mri_info on an oblique volume is pending (P4.02).
+  - Native flirt outputs are pending (P4.04).
+
