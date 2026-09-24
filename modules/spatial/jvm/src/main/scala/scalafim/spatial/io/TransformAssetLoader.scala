@@ -1,7 +1,7 @@
 package scalafim.spatial.io
 
 import image4s.geometry.{Affine, D3, Frame}
-import reframe4s.field.{CoordinateBoundaryPolicy, DenseMap}
+import reframe4s.field.CoordinateBoundaryPolicy
 import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
 import scalafim.spatial.*
 import scalafim.transform.*
@@ -215,15 +215,7 @@ object TransformAssetLoader:
         WorldTransform.Mapped(pull, availability, provenance).invert.left.map(SpatialIoError.TransformInterpretation(path, _))
 
   private def coordinateMap(transform: World, identity: String): Either[SpatialError, CoordinateMap] =
-    transform match
-      case WorldTransform.Linear(framed, _) =>
-        CoordinateMap.affineBetween(framed.target, framed.source, framed.operator).map(CoordinateMap.Geometric.apply)
-      case WorldTransform.Smooth(iso, _) =>
-        CoordinateMap.mapped(iso, s"$identity|pull", Some(iso.inverse -> s"$identity|push"), containsDense = false)
-      case WorldTransform.Mapped(pull, availability, _) =>
-        val push = availability.map
-        if DenseMap.isDense(pull) && push.forall(DenseMap.isDense) then CoordinateMap.dense(pull, push)
-        else CoordinateMap.mapped(pull, s"$identity|pull", push.map(_ -> s"$identity|push"), containsDense = true)
+    CoordinateMap.fromWorldTransform(transform, identity)
 
   private def requireDeclaredInverse(descriptor: TransformDescriptor, coordinateMap: CoordinateMap): Either[SpatialIoError, Unit] =
     coordinateMap match

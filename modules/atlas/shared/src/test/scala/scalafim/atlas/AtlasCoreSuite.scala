@@ -81,7 +81,8 @@ class AtlasCoreSuite extends munit.FunSuite:
     assertEquals(direct.nSteps, 1)
     assertEquals(direct.confidence, Confidence.Exact)
     assertEquals(direct.status, TransformStatus.Available)
-    assert(direct.executableCoordinatePlan.isRight, clue = direct.executableCoordinatePlan.toString)
+    assert(direct.isExecutable, clue = direct.executability.toString)
+    assert(!direct.usedInverses)
 
     val same = SpaceTransforms.plan(SpaceId.MNI152, SpaceId.MNI152).toOption.get
     assertEquals(same.steps.head.kind, TransformKind.Identity)
@@ -156,18 +157,14 @@ class AtlasCoreSuite extends munit.FunSuite:
         TransformStatus.Available,
         affine = Some(value)
       )
-    val route = TransformPlan(
-      SpaceId.MNI305,
-      SpaceId.MNI152NLin6Asym,
+    val registry =
       Vector(
         step(SpaceId.MNI305, SpaceId.MNI152, translate),
         step(SpaceId.MNI152, SpaceId.MNI152NLin6Asym, scale)
-      ),
-      TransformStatus.Available,
-      Confidence.Exact,
-      Vector.empty
-    )
-    val actual = route.executableCoordinatePlan.toOption.get.transform(Vector(Point3D.Origin)).head
+      )
+    val route = SpaceTransforms.plan(SpaceId.MNI305, SpaceId.MNI152NLin6Asym, registry = registry).toOption.get
+    assertEquals(route.nSteps, 2)
+    val actual = route.transform(Vector(Point3D.Origin)).toOption.get.head
 
     assertEqualsDouble(actual.x, 2.0, 1e-12)
     assertEqualsDouble(actual.y, 0.0, 1e-12)
