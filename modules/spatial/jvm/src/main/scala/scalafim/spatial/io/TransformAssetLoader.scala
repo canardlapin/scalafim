@@ -621,7 +621,7 @@ object TransformAssetLoader:
 
   private def normalizeDense(
     native: RavelArray[Double, Rank[4]],
-    grid: GridSpec,
+    grid: GridSpec[?],
     source: SomeSampleSpace,
     target: SomeSampleSpace,
     options: TransformLoadOptions

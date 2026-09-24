@@ -105,11 +105,9 @@ object AtlasMvpaWorkflows:
     )
 
   private def space: SomeSampleSpace =
-    SampleSpaces(
-      dims = dims,
-      spacing = Some(Vector(2.0, 2.0, 2.0)),
-      origin = Some(Vector(0.0, 0.0, 0.0))
-    )
+    SampleSpaces
+      .regular(dims, VoxelSpacing.unsafe(2.0, 2.0, 2.0), WorldPoint.Origin)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private def labelVolume(): SomeLabelVolume[Int] =
     SomeLabelVolume.unsafeCopyFromCanonicalArray(labelData(), space, "workflow-labels")

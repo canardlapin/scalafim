@@ -170,7 +170,7 @@ object VolumeSource:
 
 enum LayerMapping:
   case WorldAligned
-  case Pullback(referenceToSource: SpatialPullback)
+  case Pullback(referenceToSource: SpatialPullback[?, ?])
 
 enum LayerSampleValue:
   case Scalar(value: Double)

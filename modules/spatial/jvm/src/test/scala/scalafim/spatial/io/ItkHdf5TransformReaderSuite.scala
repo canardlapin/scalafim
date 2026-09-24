@@ -5,6 +5,7 @@ import scalafim.image.world.SubjectId
 import scalafim.image.{GridSpec, SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.spatial.*
+import scalafim.image.SpatialPoint
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -15,6 +16,10 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
+
+  /** Evaluate through the typed `SpatialPoint` entry point while keeping the fixtures' coordinate vectors. */
+  private def transformVector(map: CoordinateMap, point: Vector[Double]): Either[SpatialError, Vector[Double]] =
+    map.transform(SpatialPoint.unsafeFromVector(point)).map(_.toVector)
 
   private def ioValue[A](result: Either[SpatialIoError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -67,7 +72,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
       )
     )
 
-  private def grid(domain: Domain): GridSpec =
+  private def grid(domain: Domain): GridSpec[?] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")
@@ -108,7 +113,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     )
 
     pointOracles.filter(_.label == "composite").foreach { oracle =>
-      assertPoint(spatialValue(decoded.coordinateMap.transform(oracle.input)), oracle.output, 1e-10)
+      assertPoint(spatialValue(transformVector(decoded.coordinateMap, oracle.input)), oracle.output, 1e-10)
     }
     decoded.coordinateMap match
       case CoordinateMap.Geometric(binding) =>
@@ -131,7 +136,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     assert(decoded.provenance.usesLegacyDatasetAliases)
     assert(decoded.provenance.components.drop(1).forall(_.transformType.contains("_float_")))
     pointOracles.filter(_.label == "composite").foreach { oracle =>
-      assertPoint(spatialValue(decoded.coordinateMap.transform(oracle.input)), oracle.output, 2e-6)
+      assertPoint(spatialValue(transformVector(decoded.coordinateMap, oracle.input)), oracle.output, 2e-6)
     }
 
   test("TransformAssetLoader executes an HDF5 pullback through the one-pass operator compiler"):
@@ -175,8 +180,8 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
     val reversed = spatialValue(loaded.morphism.reversed)
 
     pointOracles.filter(_.label == "constant-forward").foreach { oracle =>
-      val transformed = spatialValue(loaded.morphism.coordinateMap.transform(oracle.input))
-      val recovered = spatialValue(reversed.coordinateMap.transform(transformed))
+      val transformed = spatialValue(transformVector(loaded.morphism.coordinateMap, oracle.input))
+      val recovered = spatialValue(transformVector(reversed.coordinateMap, transformed))
       assertPoint(transformed, oracle.output, 1e-12)
       assertPoint(recovered, oracle.input, 1e-12)
     }
@@ -195,7 +200,7 @@ class ItkHdf5TransformReaderSuite extends munit.FunSuite:
 
     pointOracles.filter(_.label == "affine-forward").foreach { oracle =>
       assertPoint(
-        spatialValue(loaded.morphism.coordinateMap.transform(oracle.output)),
+        spatialValue(transformVector(loaded.morphism.coordinateMap, oracle.output)),
         oracle.input,
         1e-10
       )

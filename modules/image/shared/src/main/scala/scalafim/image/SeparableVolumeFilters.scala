@@ -11,14 +11,14 @@ enum BoxBoundary:
   case Truncate
 
 final class BoxSumWorkspace private (
-    val grid: GridSpec,
+    val grid: GridSpec[?],
     private[image] val first: Array[Double],
     private[image] val second: Array[Double]
 ):
   val ownedScalarBuffers: Int = 2
 
 object BoxSumWorkspace:
-  def apply(grid: GridSpec): BoxSumWorkspace =
+  def apply(grid: GridSpec[?]): BoxSumWorkspace =
     new BoxSumWorkspace(
       grid,
       PrimitiveBuffers.ofSize[Double](grid.nVoxels),
@@ -29,7 +29,7 @@ object BoxSumWorkspace:
 object BoxSum3D:
   def sumInto(
       source: Array[Double],
-      grid: GridSpec,
+      grid: GridSpec[?],
       radius: VoxelWindowRadius,
       destination: Array[Double],
       workspace: BoxSumWorkspace,
@@ -47,7 +47,7 @@ object BoxSum3D:
   /** Independent O(N r^3) oracle for tests and tiny diagnostic volumes. */
   private[scalafim] def referenceInto(
       source: Array[Double],
-      grid: GridSpec,
+      grid: GridSpec[?],
       radius: VoxelWindowRadius,
       destination: Array[Double],
       boundary: BoxBoundary = BoxBoundary.Truncate
@@ -209,7 +209,7 @@ object GaussianReduction:
   def apply(): GaussianReduction = new GaussianReduction()
 
 final class GaussianWorkspace private (
-    val grid: GridSpec,
+    val grid: GridSpec[?],
     private[image] val numeratorA: Array[Double],
     private[image] val numeratorB: Array[Double],
     private[image] val denominatorA: Array[Double],
@@ -244,7 +244,7 @@ final class GaussianWorkspace private (
       case _ => throw new IllegalArgumentException(s"Gaussian axis $axis is outside [0, 2]")
 
 object GaussianWorkspace:
-  def apply(grid: GridSpec): GaussianWorkspace =
+  def apply(grid: GridSpec[?]): GaussianWorkspace =
     new GaussianWorkspace(
       grid,
       PrimitiveBuffers.ofSize[Double](grid.nVoxels),
@@ -276,7 +276,7 @@ object GaussianWorkspace:
 object Gaussian3D:
   def smoothInto(
       source: Array[Double],
-      grid: GridSpec,
+      grid: GridSpec[?],
       sigmaMm: Double,
       destination: Array[Double],
       workspace: GaussianWorkspace,
@@ -299,7 +299,7 @@ object Gaussian3D:
   def normalizedInto(
       source: Array[Double],
       support: Array[Double],
-      grid: GridSpec,
+      grid: GridSpec[?],
       sigmaMm: Double,
       minimumWeight: Double,
       destination: Array[Double],
@@ -325,7 +325,7 @@ object Gaussian3D:
   def normalizedInto(
       source: Array[Double],
       support: Array[Double],
-      grid: GridSpec,
+      grid: GridSpec[?],
       sigmaMm: Double,
       minimumWeight: Double,
       destination: Array[Double],
@@ -379,7 +379,7 @@ object Gaussian3D:
 
   private def requireInputs(
       source: Array[Double],
-      grid: GridSpec,
+      grid: GridSpec[?],
       sigmaMm: Double,
       destination: Array[Double],
       workspace: GaussianWorkspace

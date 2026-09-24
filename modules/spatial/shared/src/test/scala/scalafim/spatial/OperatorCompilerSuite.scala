@@ -6,6 +6,8 @@ import image4s.geometry.{Affine, D3}
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
 
+import scala.annotation.nowarn
+
 class OperatorCompilerSuite extends munit.FunSuite:
 
   private def value[A](result: Either[SpatialError, A]): A =
@@ -187,7 +189,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
     assertEquals(executable.source, source.id)
     assertEquals(executable.target, target.id)
     assertEquals(
-      value(executable.coordinateMap.transform(Vector(0.0, 0.0, 0.0))),
+      value(executable.coordinateMap.transform(Vector(0.0, 0.0, 0.0)): @nowarn("cat=deprecation")),
       Vector(1.0, 2.0, 0.0)
     )
     assertEquals(

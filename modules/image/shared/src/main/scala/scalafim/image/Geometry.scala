@@ -1,5 +1,9 @@
 package scalafim.image
 
+import image4s.geometry.D3
+import image4s.geometry.Frame
+import image4s.geometry.GeometryError as ProviderGeometryError
+import image4s.geometry.Point
 import scala.annotation.targetName
 
 enum GeometryError:
@@ -163,6 +167,27 @@ object SpatialPoint:
   def unsafeFromVector(values: Vector[Double], label: String = "spatial point"): SpatialPoint =
     fromVector(values, label).fold(err => throw new IllegalArgumentException(err.message), identity)
 
+/** Positive, finite millimetre spacing along the three voxel axes. */
+final case class VoxelSpacing private (x: Double, y: Double, z: Double):
+  def toVector: Vector[Double] =
+    Vector(x, y, z)
+
+object VoxelSpacing:
+  val OneMillimetre: VoxelSpacing =
+    new VoxelSpacing(1.0, 1.0, 1.0)
+
+  def make(x: Double, y: Double, z: Double): Either[GeometryError, VoxelSpacing] =
+    val values = Vector(x, y, z)
+    val bad = values.indexWhere(value => !value.isFinite || value <= 0.0)
+    if bad >= 0 then Left(GeometryError.InvalidGridGeometry(s"voxel spacing ${SpatialAxis.all(bad).label} must be positive and finite; got ${values(bad)}"))
+    else Right(new VoxelSpacing(x, y, z))
+
+  def isotropic(size: Double): Either[GeometryError, VoxelSpacing] =
+    make(size, size, size)
+
+  def unsafe(x: Double, y: Double, z: Double): VoxelSpacing =
+    make(x, y, z).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 final case class VoxelPoint(x: Double, y: Double, z: Double):
   require(x.isFinite && y.isFinite && z.isFinite, "voxel point coordinates must be finite")
 
@@ -218,7 +243,16 @@ final case class WorldPoint(x: Double, y: Double, z: Double):
   def toSpatialPoint: SpatialPoint =
     SpatialPoint(x, y, z)
 
+  /** Claim this coordinate for `frame`; the result's type names that frame. */
+  def in(frame: Frame[D3]): Either[ProviderGeometryError, Point[frame.type, D3]] =
+    Point.in[D3](frame)(x, y, z)
+
 object WorldPoint:
+  /** Forget the frame owner of a provider point, keeping its RAS-mm coordinates. */
+  def of[F <: Frame[D3]](point: Point[F, D3]): WorldPoint =
+    val values = point.coordinates
+    WorldPoint(values(0), values(1), values(2))
+
   val Origin: WorldPoint =
     WorldPoint(0.0, 0.0, 0.0)
 

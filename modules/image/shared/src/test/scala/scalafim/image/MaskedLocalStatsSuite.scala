@@ -116,7 +116,7 @@ class MaskedLocalStatsSuite extends munit.FunSuite:
   private def naiveNormalized(
       source: Array[Double],
       mask: Array[Boolean],
-      grid: GridSpec,
+      grid: GridSpec[?],
       cx: Int,
       cy: Int,
       cz: Int,

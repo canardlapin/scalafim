@@ -5,7 +5,9 @@ import SampleSpaces.*
 import image4s.filter.LinearFilter
 import image4s.Axis
 import image4s.AxisKind
+import image4s.Continuous
 import image4s.geometry.D3
+import image4s.geometry.Frame
 import image4s.geometry.Grid
 import image4s.ops.Border
 import image4s.ops.Correlation
@@ -20,6 +22,7 @@ import ravel.DType.given
 import ravel.NDArray as RavelArray
 import ravel.Rank
 import ravel.Shape
+import reframe4s.resample.Interpolation
 import scala.annotation.targetName
 
 object Downsample:
@@ -181,6 +184,7 @@ object Resample:
     case Internal
 
   object Engine:
+    /** Parse a user-supplied engine name at a trust boundary (CLI, config). */
     def fromString(value: String): Either[ResampleError, Engine] =
       value.trim.toLowerCase match
         case "internal" => Right(Engine.Internal)
@@ -189,7 +193,15 @@ object Resample:
   enum Method:
     case Nearest, Linear, Cubic
 
+    /** The reframe4s interpolation kernel this method selects. */
+    def interpolation: Interpolation[Continuous] =
+      this match
+        case Nearest => Interpolation.Nearest
+        case Linear  => Interpolation.Linear
+        case Cubic   => Interpolation.Cubic
+
   object Method:
+    /** Parse a user-supplied method name at a trust boundary (CLI, config). */
     def fromString(s: String): Either[ResampleError, Method] =
       s.trim.toLowerCase match
         case "nearest" => Right(Method.Nearest)
@@ -247,58 +259,45 @@ object Resample:
     engine match
       case Engine.Internal => resampleTo(source, target, method)
 
-  def resampleToEither[A, T](
-    source: A,
-    target: T,
-    method: String,
-    engine: String = "internal"
-  )(using r: Resampleable[A], hs: HasSpace[T]): Either[ResampleError, r.Out] =
-    for
-      e <- Engine.fromString(engine)
-      m <- Method.fromString(method)
-    yield resampleTo(source, target, m, e)
-
-  def resampleTo[A, T](source: A, target: T, method: String)(using r: Resampleable[A], hs: HasSpace[T]): r.Out =
-    resampleToEither(source, target, method).fold(err => throw new IllegalArgumentException(err.message), identity)
-
-  def resampleTo[A, T](source: A, target: T, method: String, engine: String)(using r: Resampleable[A], hs: HasSpace[T]): r.Out =
-    resampleToEither(source, target, method, engine).fold(err => throw new IllegalArgumentException(err.message), identity)
-
-  def plan(
-      source: GridSpec,
-      target: GridSpec,
-      pullback: SpatialPullback,
+  def plan[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      pullback: SpatialPullback[T, S],
       method: Method
-  ): Either[ResamplingPlanError, ResamplingPlan] =
+  ): Either[ResamplingPlanError, ResamplingPlan[S, T]] =
     ResamplingPlan.make(source, target, pullback, method)
 
   @targetName("planFromSampleSpaces")
   def plan(
       source: SomeSampleSpace,
       target: SomeSampleSpace,
-      pullback: SpatialPullback,
+      pullback: SpatialPullback[?, ?],
       method: Method
-  ): Either[ResamplingPlanError, ResamplingPlan] =
+  ): Either[ResamplingPlanError, ResamplingPlan[?, ?]] =
     ResamplingPlan.fromSpaces(source, target, pullback, method)
 
-  def resampleTo(
+  def resampleTo[T <: Frame[D3]](
       source: SomeScalarVolume[Double],
-      target: GridSpec,
-      pullback: SpatialPullback,
+      target: GridSpec[T],
+      pullback: SpatialPullback[T, ?],
       method: Method,
       outside: Double
   ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
-    plan(GridSpec.fromSpace(source.space), target, pullback, method).flatMap(_.apply(source, outside))
+    ResamplingPlan
+      .bind(GridSpec.fromSpace(source.space), target, pullback, method)
+      .flatMap(_.apply(source, outside))
 
   @scala.annotation.targetName("resampleToNeuroSeries")
-  def resampleTo(
+  def resampleTo[T <: Frame[D3]](
       source: SomeScalarSeries[Double],
-      target: GridSpec,
-      pullback: SpatialPullback,
+      target: GridSpec[T],
+      pullback: SpatialPullback[T, ?],
       method: Method,
       outside: Double
   ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
-    plan(GridSpec.fromSpace(source.space), target, pullback, method).flatMap(_.apply(source, outside))
+    ResamplingPlan
+      .bind(GridSpec.fromSpace(source.space), target, pullback, method)
+      .flatMap(_.apply(source, outside))
 
   def nearest(vol: SomeScalarVolume[Double], target: SomeSampleSpace): SomeScalarVolume[Double] =
     executeContinuous(vol, target, Method.Nearest)
@@ -396,18 +395,7 @@ object Resample:
       target: SomeSampleSpace,
       method: Method
   ): SomeScalarVolume[Double] =
-    val sourceGrid = GridSpec.fromSpace(volume.space)
-    val targetGrid = GridSpec.fromSpace(target.spatialSpace)
-    ResamplingPlan
-      .make(
-        sourceGrid,
-        targetGrid,
-        reframe4s.lie.FramedAffine.betweenFrames(
-          targetGrid.nativeGrid.frame,
-          sourceGrid.nativeGrid.frame
-        )(image4s.geometry.Affine.identity[image4s.geometry.D3]),
-        method
-      )
+    worldAlignedPlan(GridSpec.fromSpace(volume.space), GridSpec.fromSpace(target.spatialSpace), method)
       .flatMap(_.apply(volume, outside = 0.0))
       .fold(
         error => throw new IllegalArgumentException(error.message),
@@ -419,23 +407,20 @@ object Resample:
       target: SomeSampleSpace,
       method: Method
   ): SomeScalarSeries[Double] =
-    val sourceGrid = GridSpec.fromSpace(series.space)
-    val targetGrid = GridSpec.fromSpace(target.spatialSpace)
-    ResamplingPlan
-      .make(
-        sourceGrid,
-        targetGrid,
-        reframe4s.lie.FramedAffine.betweenFrames(
-          targetGrid.nativeGrid.frame,
-          sourceGrid.nativeGrid.frame
-        )(image4s.geometry.Affine.identity[image4s.geometry.D3]),
-        method
-      )
+    worldAlignedPlan(GridSpec.fromSpace(series.space), GridSpec.fromSpace(target.spatialSpace), method)
       .flatMap(_.apply(series, outside = 0.0))
       .fold(
         error => throw new IllegalArgumentException(error.message),
         identity
       )
+
+  /** Legacy world-aligned resampling: both grids' world coordinates are taken as one space. */
+  private def worldAlignedPlan[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      method: Method
+  ): Either[ResamplingPlanError, ResamplingPlan[S, T]] =
+    ResamplingPlan.make(source, target, SpatialPullbacks.worldAligned(source, target), method)
 
 object SpatialFilters:
 

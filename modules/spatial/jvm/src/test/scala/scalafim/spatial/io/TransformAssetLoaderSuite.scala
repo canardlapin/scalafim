@@ -8,6 +8,7 @@ import scalafim.image.{SampleSpaces, DenseVectorField, GridSpec, SomeSampleSpace
 import scalafim.image.SampleSpaces.*
 import scalafim.image.io.Nifti
 import scalafim.spatial.*
+import scalafim.image.SpatialPoint
 
 import java.nio.file.{Files, Path}
 
@@ -15,6 +16,10 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
+
+  /** Evaluate through the typed `SpatialPoint` entry point while keeping the fixtures' coordinate vectors. */
+  private def transformVector(map: CoordinateMap, point: Vector[Double]): Either[SpatialError, Vector[Double]] =
+    map.transform(SpatialPoint.unsafeFromVector(point)).map(_.toVector)
 
   private def ioValue[A](result: Either[SpatialIoError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -107,7 +112,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
 
       cases.foreach { asset =>
         val loaded = ioValue(asset.load(source, target))
-        val actual = spatialValue(loaded.morphism.coordinateMap.transform(Vector(1.0, 2.0, 3.0)))
+        val actual = spatialValue(transformVector(loaded.morphism.coordinateMap, Vector(1.0, 2.0, 3.0)))
         actual.zip(expected).foreach { case (observed, oracle) =>
           assertEqualsDouble(observed, oracle, 1e-10)
         }
@@ -126,7 +131,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
       writeDenseField(path, space, Vector(Vector(1.0, 1.0), Vector(0.0, 0.0), Vector(0.0, 0.0)))
 
       val loaded = ioValue(descriptor(source, target, path, TransformFileFormat.AntsDisplacement).load(source, target))
-      val atOne = spatialValue(loaded.morphism.coordinateMap.transform(Vector(1.0, 0.0, 0.0)))
+      val atOne = spatialValue(transformVector(loaded.morphism.coordinateMap, Vector(1.0, 0.0, 0.0)))
       assertEqualsDouble(atOne(0), 0.0, 1e-10)
       assertEqualsDouble(atOne(1), 0.0, 1e-10)
       assertEqualsDouble(atOne(2), 0.0, 1e-10)
@@ -162,7 +167,7 @@ class TransformAssetLoaderSuite extends munit.FunSuite:
       assertEquals(loaded.morphism.inverse, Inverse.Provided("inverse-warp", 0.9))
       assert(loaded.provenance.inverseAsset.nonEmpty)
       val reversed = spatialValue(loaded.morphism.reversed)
-      val back = spatialValue(reversed.coordinateMap.transform(Vector(0.0, 0.0, 0.0)))
+      val back = spatialValue(transformVector(reversed.coordinateMap, Vector(0.0, 0.0, 0.0)))
       assertEqualsDouble(back(0), 1.0, 1e-10)
     }
 

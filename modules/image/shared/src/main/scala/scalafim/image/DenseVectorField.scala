@@ -90,19 +90,19 @@ object DenseVectorField:
       out
 
   def sourceCoordinates(
-      grid: GridSpec,
+      grid: GridSpec[?],
       values: RavelArray[Double, Rank[4]]
   ): SourceCoordinateField =
     make[DenseVectorFieldKind.SourceCoordinates.type](grid, values)
 
   def displacement(
-      grid: GridSpec,
+      grid: GridSpec[?],
       values: RavelArray[Double, Rank[4]]
   ): DisplacementField =
     make[DenseVectorFieldKind.Displacement.type](grid, values)
 
   private def make[Role <: DenseVectorFieldKind](
-      grid: GridSpec,
+      grid: GridSpec[?],
       values: RavelArray[Double, Rank[4]]
   )(using role: ValueOf[Role]): DenseVectorField[Role] =
     require(

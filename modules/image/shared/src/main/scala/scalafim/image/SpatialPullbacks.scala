@@ -4,7 +4,6 @@ import SampleSpaces.*
 
 import image4s.Axis
 import image4s.AxisKind
-import image4s.Continuous
 import image4s.ImageError
 import image4s.NonSpatialAxes
 import image4s.SampleSpace
@@ -14,16 +13,13 @@ import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
 import image4s.geometry.Grid
-import image4s.geometry.Point
 import ravel.NDArray
 import ravel.Rank
 import reframe4s.core.MapError
 import reframe4s.field.CoordinateBoundaryPolicy
 import reframe4s.field.DenseMap
 import reframe4s.field.FieldError
-import reframe4s.core.SpatialMap
 import reframe4s.lie.FramedAffine
-import reframe4s.resample.Interpolation
 
 enum SpatialPullbackError:
   case Image(error: ImageError)
@@ -53,25 +49,13 @@ object SpatialPullbacks:
   /** Apply a provider pullback at the neuroimaging value boundary without
     * weakening its live frame-owner checks.
     */
-  def transform(
-      pullback: SpatialPullback,
+  def transform[T <: Frame[D3], S <: Frame[D3]](
+      pullback: SpatialPullback[T, S],
       point: SpatialPoint
   ): Either[SpatialPullbackError, SpatialPoint] =
-    val sourceFrame: Frame[D3] = pullback.source
     for
-      raw <- Point
-        .fromVector(sourceFrame, point.toVector)
-        .left
-        .map(SpatialPullbackError.Geometry.apply)
-      alignment <- Frame
-        .alignOwners[D3, sourceFrame.type, Frame[D3]](
-          sourceFrame,
-          sourceFrame
-        )
-        .left
-        .map(SpatialPullbackError.Geometry.apply)
-      framed <- alignment
-        .pointToRight(raw)
+      framed <- GridSpec
+        .pointIn(pullback.source, point.toVector)
         .left
         .map(SpatialPullbackError.Geometry.apply)
       result <- pullback(framed).left.map(SpatialPullbackError.Map.apply)
@@ -81,41 +65,43 @@ object SpatialPullbacks:
         .map(error => SpatialPullbackError.InvalidCoordinates(error.message))
     yield value
 
-  def affine(
-      source: GridSpec,
-      target: GridSpec,
+  /** The affine pullback from `target` grid points to `source` grid points. */
+  def affine[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
       pull: Affine[D3]
-  ): SpatialPullback =
-    affineBetween(source.providerFrame, target.providerFrame, pull)
+  ): SpatialPullback[T, S] =
+    affineBetween(source.frame, target.frame, pull)
 
   /** Bind an affine to explicit live output/input frame owners. */
-  private[scalafim] def affineBetween(
-      outputFrame: Frame[D3],
-      inputFrame: Frame[D3],
+  private[scalafim] def affineBetween[S <: Frame[D3], T <: Frame[D3]](
+      outputFrame: S,
+      inputFrame: T,
       pull: Affine[D3]
-  ): SpatialPullback =
-    FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](
+  ): SpatialPullback[T, S] =
+    FramedAffine.betweenFrames[T, S, D3](
       inputFrame,
       outputFrame
     )(pull)
 
-  def worldAligned(
-      source: GridSpec,
-      target: GridSpec
-  ): SpatialPullback =
+  /** Identity on world coordinates between two grids whose worlds are taken to coincide. */
+  def worldAligned[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T]
+  ): SpatialPullback[T, S] =
     affine(source, target, Affine.identity[D3])
 
-  def coordinates(
-      source: GridSpec,
-      target: GridSpec,
+  def coordinates[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method = Resample.Method.Linear,
       boundary: CoordinateBoundaryPolicy =
         CoordinateBoundaryPolicy.PreserveSource
-  ): Either[SpatialPullbackError, SpatialPullback] =
-    coordinatesOn(
-      source,
-      target.nativeGrid.frame,
+  ): Either[SpatialPullbackError, SpatialPullback[T, S]] =
+    coordinatesBetween(
+      source.frame,
+      target.frame,
       target,
       values,
       method,
@@ -123,17 +109,17 @@ object SpatialPullbacks:
     )
 
   /** Bind field geometry to the authoritative target-domain frame owner. */
-  def coordinatesOn(
-      source: GridSpec,
-      target: GridSpec,
-      fieldGrid: GridSpec,
+  def coordinatesOn[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      fieldGrid: GridSpec[?],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method,
       boundary: CoordinateBoundaryPolicy
-  ): Either[SpatialPullbackError, SpatialPullback] =
+  ): Either[SpatialPullbackError, SpatialPullback[T, S]] =
     coordinatesBetween(
-      source.providerFrame,
-      target.nativeGrid.frame,
+      source.frame,
+      target.frame,
       fieldGrid,
       values,
       method,
@@ -141,17 +127,17 @@ object SpatialPullbacks:
     )
 
   /** Bind field geometry to the authoritative target-domain frame owner. */
-  def coordinatesOn(
-      source: GridSpec,
-      queryFrame: Frame[D3],
-      fieldGrid: GridSpec,
+  def coordinatesOn[S <: Frame[D3], Q <: Frame[D3]](
+      source: GridSpec[S],
+      queryFrame: Q,
+      fieldGrid: GridSpec[?],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method = Resample.Method.Linear,
       boundary: CoordinateBoundaryPolicy =
         CoordinateBoundaryPolicy.PreserveSource
-  ): Either[SpatialPullbackError, SpatialPullback] =
+  ): Either[SpatialPullbackError, SpatialPullback[Q, S]] =
     coordinatesBetween(
-      source.providerFrame,
+      source.frame,
       queryFrame,
       fieldGrid,
       values,
@@ -159,14 +145,14 @@ object SpatialPullbacks:
       boundary
     )
 
-  private[scalafim] def coordinatesBetween(
-      outputFrame: Frame[D3],
-      queryFrame: Frame[D3],
-      fieldGrid: GridSpec,
+  private[scalafim] def coordinatesBetween[S <: Frame[D3], Q <: Frame[D3]](
+      outputFrame: S,
+      queryFrame: Q,
+      fieldGrid: GridSpec[?],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method,
       boundary: CoordinateBoundaryPolicy
-  ): Either[SpatialPullbackError, SpatialPullback] =
+  ): Either[SpatialPullbackError, SpatialPullback[Q, S]] =
     val expected = fieldGrid.dims :+ 3
     val actual = Vector.tabulate(values.shape.rank)(values.shape.apply)
     if actual != expected then
@@ -182,7 +168,7 @@ object SpatialPullbacks:
           .left
           .map(SpatialPullbackError.Image.apply)
         reboundGrid <- Grid
-          .in(queryFrame)(fieldGrid.dims, fieldGrid.affine)
+          .forFrame[D3, Q](queryFrame)(fieldGrid.dims, fieldGrid.affine)
           .left
           .map(SpatialPullbackError.Geometry.apply)
         space = SampleSpace.create(reboundGrid, axes)
@@ -194,58 +180,58 @@ object SpatialPullbacks:
           .fromCoordinates(
             sampled,
             outputFrame,
-            interpolation(method),
+            method.interpolation,
             boundary
           )
           .left
           .map(SpatialPullbackError.Field.apply)
-      yield SpatialMap.eraseFrameRefinements(map)
+      yield map
 
-  def displacement(
-      source: GridSpec,
-      target: GridSpec,
+  def displacement[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method = Resample.Method.Linear,
       boundary: CoordinateBoundaryPolicy =
         CoordinateBoundaryPolicy.PreserveSource
-  ): Either[SpatialPullbackError, SpatialPullback] =
-    displacementOn(
-      source,
-      target.nativeGrid.frame,
+  ): Either[SpatialPullbackError, SpatialPullback[T, S]] =
+    displacementBetween(
+      source.frame,
+      target.frame,
       target,
       values,
       method,
       boundary
     )
 
-  def displacementOn(
-      source: GridSpec,
-      target: GridSpec,
-      fieldGrid: GridSpec,
+  def displacementOn[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      fieldGrid: GridSpec[?],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method,
       boundary: CoordinateBoundaryPolicy
-  ): Either[SpatialPullbackError, SpatialPullback] =
+  ): Either[SpatialPullbackError, SpatialPullback[T, S]] =
     displacementBetween(
-      source.providerFrame,
-      target.nativeGrid.frame,
+      source.frame,
+      target.frame,
       fieldGrid,
       values,
       method,
       boundary
     )
 
-  def displacementOn(
-      source: GridSpec,
-      queryFrame: Frame[D3],
-      fieldGrid: GridSpec,
+  def displacementOn[S <: Frame[D3], Q <: Frame[D3]](
+      source: GridSpec[S],
+      queryFrame: Q,
+      fieldGrid: GridSpec[?],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method = Resample.Method.Linear,
       boundary: CoordinateBoundaryPolicy =
         CoordinateBoundaryPolicy.PreserveSource
-  ): Either[SpatialPullbackError, SpatialPullback] =
+  ): Either[SpatialPullbackError, SpatialPullback[Q, S]] =
     displacementBetween(
-      source.providerFrame,
+      source.frame,
       queryFrame,
       fieldGrid,
       values,
@@ -253,14 +239,14 @@ object SpatialPullbacks:
       boundary
     )
 
-  private[scalafim] def displacementBetween(
-      outputFrame: Frame[D3],
-      queryFrame: Frame[D3],
-      fieldGrid: GridSpec,
+  private[scalafim] def displacementBetween[S <: Frame[D3], Q <: Frame[D3]](
+      outputFrame: S,
+      queryFrame: Q,
+      fieldGrid: GridSpec[?],
       values: NDArray[Double, Rank[4]],
       method: Resample.Method,
       boundary: CoordinateBoundaryPolicy
-  ): Either[SpatialPullbackError, SpatialPullback] =
+  ): Either[SpatialPullbackError, SpatialPullback[Q, S]] =
     val expected = fieldGrid.dims :+ 3
     val actual = Vector.tabulate(values.shape.rank)(values.shape.apply)
     if actual != expected then
@@ -283,11 +269,3 @@ object SpatialPullbacks:
         method,
         boundary
       )
-
-  private def interpolation(
-      method: Resample.Method
-  ): Interpolation[Continuous] =
-    method match
-      case Resample.Method.Nearest => Interpolation.Nearest
-      case Resample.Method.Linear  => Interpolation.Linear
-      case Resample.Method.Cubic   => Interpolation.Cubic

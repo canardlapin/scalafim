@@ -2,6 +2,7 @@ package scalafim.atlas
 
 import image4s.geometry.Affine as ProviderAffine
 import image4s.geometry.D3
+import image4s.geometry.Frame
 import scalafim.image.{
   GridSpec,
   SpatialPoint,
@@ -89,10 +90,10 @@ final case class ExecutableCoordinateTransformPlan private (
   /** Render the atlas route as the provider pullback required by image
     * resampling: target world coordinates to source world coordinates.
     */
-  def pullback(
-      source: GridSpec,
-      target: GridSpec
-  ): SpatialPullback =
+  def pullback[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T]
+  ): SpatialPullback[T, S] =
     SpatialPullbacks.affine(source, target, affine.inverse)
 
 object ExecutableCoordinateTransformPlan:
@@ -314,13 +315,13 @@ object SpaceTransforms:
       .flatMap(_.executableCoordinatePlan)
       .map(_.transform(points))
 
-  def spatialPullback(
+  def spatialPullback[S <: Frame[D3], T <: Frame[D3]](
     from: AnySpaceId,
     to: AnySpaceId,
-    source: GridSpec,
-    target: GridSpec,
+    source: GridSpec[S],
+    target: GridSpec[T],
     registry: Vector[TransformStep] = manifest
-  ): Either[AtlasError, SpatialPullback] =
+  ): Either[AtlasError, SpatialPullback[T, S]] =
     plan(from, to, DataKind.Voxel, registry)
       .flatMap(_.executableCoordinatePlan)
       .map(_.pullback(source, target))

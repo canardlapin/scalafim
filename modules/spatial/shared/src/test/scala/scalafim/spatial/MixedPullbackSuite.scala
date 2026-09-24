@@ -30,7 +30,7 @@ class MixedPullbackSuite extends munit.FunSuite:
     val sampled = spatialValue(SamplingGeometry.surface(geometry))
     spatialValue(Domain.build(id, SpaceRef.Surface(subject, geometry.hemisphere, geometry.kind), sampled))
 
-  private def volumeGrid(domain: Domain): GridSpec =
+  private def volumeGrid(domain: Domain): GridSpec[?] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")

@@ -18,10 +18,11 @@ class ProviderCoordinateMapBoundaryCompileSuite extends munit.FunSuite:
       "ProviderMapBinding.copy" ->
         typeCheckErrors(
           """
+            import image4s.geometry.{D3, Frame}
             import scalafim.image.SpatialPullback
             import scalafim.spatial.ProviderMapBinding
 
-            def forge(binding: ProviderMapBinding, replacement: SpatialPullback) =
+            def forge(binding: ProviderMapBinding, replacement: SpatialPullback[Frame[D3], Frame[D3]]) =
               binding.copy(pullback = replacement)
           """
         )
@@ -33,10 +34,11 @@ class ProviderCoordinateMapBoundaryCompileSuite extends munit.FunSuite:
   test("spatial routing exposes one provider-map payload"):
     val errors = typeCheckErrors(
       """
+        import image4s.geometry.{D3, Frame}
         import scalafim.image.SpatialPullback
         import scalafim.spatial.{CoordinateMap, ProviderMapBinding}
 
-        def provider(map: CoordinateMap): Option[SpatialPullback] =
+        def provider(map: CoordinateMap): Option[SpatialPullback[Frame[D3], Frame[D3]]] =
           map match
             case CoordinateMap.Geometric(binding: ProviderMapBinding) =>
               Some(binding.pullback)

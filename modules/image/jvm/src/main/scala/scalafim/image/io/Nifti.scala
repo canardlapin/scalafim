@@ -391,7 +391,7 @@ object Nifti:
       options: NiftiReadOptions
   ): Either[
     NiftiError,
-    (GridSpec, ravel.NDArray[Double, Rank[4]])
+    (GridSpec[?], ravel.NDArray[Double, Rank[4]])
   ] =
     ImageNifti
       .readScaledDouble(path, options)
