@@ -1,8 +1,7 @@
 # Exact MNI152NLin2009cAsym → fsLR 32k route: resolving the four blockers
 
-Planning record: 2026-09-23. Ticket `bd-01M35BHNDCHM6YXCKYX0544TP3`. Companion to
-`fslr32k-standard-surface-qualification.md`. This plan defines work and gates. It
-does not report a completed qualification.
+Planning record: 2026-09-23. Ticket `bd-01M35BHNDCHM6YXCKYX0544TP3`. This plan
+defines work and gates. It does not report a completed qualification.
 
 ## Blockers and decisions
 
@@ -208,13 +207,19 @@ before any data is evaluated.
 - **Amendment.** The independent implementation becomes a nibabel/NumPy
   nearest-voxel mapper applied to SimpleITK-warped vertices
   (`tools/fslr-qualification/independent_fslr_mapping.py`), because Connectome
-  Workbench is not installed locally. Workbench on the cluster
-  remains an optional second oracle.
-- **Inputs.** PLSNeuro beta/FIR fixtures (`real-usable-{beta,fir}-20260911`) in
-  MNI152NLin2009cAsym res-2.
+  Workbench is not installed locally. On 2026-09-24 the maintainer decided that
+  Workbench is not used at all: on already-placed coordinates it would only
+  re-check the nearest-voxel lookup. The independent check of the warp is an
+  ANTs point-transform run (recorded in the audit).
+- **Inputs.** TemplateFlow-only volumes in MNI152NLin2009cAsym res-2 (the
+  `label-GM` probseg with its `desc-brain` mask as declared support, plus a
+  derived volume with a non-whole-brain support), given to the runner as a
+  declaration spec. Qualification on a consumer's own data is the consumer's
+  responsibility.
 - **Checks:**
   - value identity;
-  - coverage (medial wall exact, `NoSupport` ≤ 3 %);
+  - coverage (medial wall exact; `NoSupport` budgets as amended post hoc on
+    2026-09-24 in the audit);
   - inflated/veryinflated identity;
   - 20 picks per hemisphere;
   - the time/heap budgets.

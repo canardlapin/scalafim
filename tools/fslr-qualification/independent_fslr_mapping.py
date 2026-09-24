@@ -15,11 +15,14 @@ from ITK by up to ~0.015 mm on fsLR vertices (more near field edges).
   by fixed-point iteration; the residual is reported per vertex;
 - nearest voxel with ties rounded up (floor(i + 0.5)); per-axis support
   [-0.5, dim - 0.5);
-- medial-wall vertices (desc-nomedialwall == 0) are MedialWall; nonfinite or
-  out-of-grid lookups are NoSupport; everything else is Mapped.
+- medial-wall vertices (desc-nomedialwall == 0) are MedialWall; nonfinite,
+  out-of-grid or (with --support) unsupported lookups are NoSupport; everything
+  else is Mapped. The support is the set of voxels of the --support volume whose
+  value exceeds --support-threshold, on the volumes' grid.
 
 Usage:
-    python independent_fslr_mapping.py --assets DIR --out OUT.npz VOLUME.nii.gz [...]
+    python independent_fslr_mapping.py --assets DIR --out OUT.npz \\
+        [--support MASK.nii.gz [--support-threshold 0.5]] VOLUME.nii.gz [...]
 
 Writes OUT.npz with, per hemisphere h in {L, R}: world_<h> (warped vertices, RAS
 mm), residual_<h>, voxel_<h> (int, -1 outside), coverage_<h>
@@ -51,6 +54,8 @@ def main():
     parser.add_argument("--assets", required=True, type=pathlib.Path)
     parser.add_argument("--out", required=True, type=pathlib.Path)
     parser.add_argument("--iterations", type=int, default=12)
+    parser.add_argument("--support", type=pathlib.Path)
+    parser.add_argument("--support-threshold", type=float, default=0.5)
     parser.add_argument("volumes", nargs="+", type=pathlib.Path)
     args = parser.parse_args()
 
@@ -74,9 +79,24 @@ def main():
     dims = np.array(reference.shape[:3])
     world_to_voxel = np.linalg.inv(reference.affine)
     data = [np.asarray(image.dataobj, dtype=np.float64) for image in images]
+    supported = np.ones(tuple(dims), dtype=bool)
+    if args.support:
+        mask = nib.load(args.support)
+        if mask.shape[:3] != reference.shape[:3] or not np.array_equal(
+            mask.affine, reference.affine
+        ):
+            raise SystemExit(f"{args.support} is not on the common grid")
+        supported = np.asarray(mask.dataobj, dtype=np.float64) > args.support_threshold
 
     arrays, summary = {}, {"inputs": {}, "hemispheres": {}}
-    for path in list(args.volumes) + [args.assets / TRANSFORM]:
+    summary["support"] = (
+        {"file": args.support.name, "voxels": int(supported.sum())}
+        if args.support
+        else None
+    )
+    for path in list(args.volumes) + ([args.support] if args.support else []) + [
+        args.assets / TRANSFORM
+    ]:
         summary["inputs"][path.name] = sha256(path)
 
     for hemi in "LR":
@@ -110,7 +130,9 @@ def main():
         for k, volume in enumerate(data):
             values = np.full(len(vertices), np.nan)
             values[inside] = volume.ravel(order="F")[linear[inside]]
-            finite = np.isfinite(values)
+            in_support = np.zeros(len(vertices), dtype=bool)
+            in_support[inside] = supported.ravel(order="F")[linear[inside]]
+            finite = np.isfinite(values) & in_support
             if k == 0:
                 coverage[:] = np.where(~cortex, 1, np.where(finite, 0, 2))
             elif np.any(np.where(~cortex, 1, np.where(finite, 0, 2)) != coverage):

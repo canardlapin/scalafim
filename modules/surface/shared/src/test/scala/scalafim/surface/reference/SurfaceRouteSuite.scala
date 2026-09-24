@@ -193,7 +193,7 @@ class SurfaceRouteSuite extends munit.FunSuite:
     assert(FrameBridge.affine(frameA, frameA, Affine.identity[D3], "x").isLeft)
     assert(FrameBridge.affine(frameB, frameA, Affine.identity[D3], " ").isLeft)
 
-  test("the PLSNeuro source space is refused for fsLR anatomy declared in another template frame"):
+  test("a 2009c res-2 group-analysis grid is refused for fsLR anatomy declared in another template frame"):
     val mni2 = spaceOf(Vector(97, 115, 97), Vector(
       Vector(2.0, 0.0, 0.0, -96.5), Vector(0.0, 2.0, 0.0, -132.5), Vector(0.0, 0.0, 2.0, -78.5), Vector(0.0, 0.0, 0.0, 1.0)))
     val groupSource = VolumeReference.make(frameA, mni2).toOption.get

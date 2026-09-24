@@ -1,33 +1,43 @@
 #!/usr/bin/env python3
-"""Evaluate ScalaFIM's fsLR 32k qualification run against the frozen budgets.
+"""Evaluate ScalaFIM's fsLR 32k qualification run against the qualification budgets.
 
-Reads the output of `FslrQualification` (scalafim.fslr-qualification/1, one
-directory per dataset, see its Scaladoc) and the independent SimpleITK oracle
-of `independent_fslr_mapping.py` (OUT.npz + OUT.json), and evaluates each
-budget frozen in docs/audits/group-volume-fslr-mapping.md section 4:
+Reads the output of `FslrQualification` (scalafim.fslr-qualification/1, see its
+Scaladoc), the declaration spec it ran on (scalafim.fslr-qualification-input/1)
+and the independent SimpleITK oracle of `independent_fslr_mapping.py` (OUT.npz +
+OUT.json), and evaluates each budget of docs/audits/group-volume-fslr-mapping.md
+section 4, including the post hoc amendment of 2026-09-24:
 
 - values: identical (|d| <= 1e-9 * max(1, |v|)) over cortical vertices, with
   disagreements permitted only at tie vertices (a continuous index within 1e-6
-  of a .5 voxel boundary, from ScalaFIM's or the oracle's position on the
-  export.json grid), counted, <= 0.1 % of cortical vertices; coverage must be
-  identical across volumes;
+  of a .5 voxel boundary, from ScalaFIM's or the oracle's position on the grid
+  read here from the first spec volume), counted, <= 0.1 % of cortical
+  vertices; coverage must be identical across volumes;
 - coverage: MedialWall equals the desc-nomedialwall labels read here, vertex
-  by vertex; NoSupport rate, and whether every NoSupport vertex of every volume
-  has a receipt showing OutsideSupport, NonFinite or OutsideGrid;
+  by vertex;
+- geometric (amended): per hemisphere, the fraction of cortical vertices whose
+  selected lookup voxel lies outside the source template's brain mask
+  (--brain-mask; outside the grid or unavailable counts as outside) is
+  <= 0.5 %;
+- receipts (amended): every NoSupport vertex of every volume has a receipt
+  showing OutsideSupport, NonFinite or OutsideGrid, and every
+  BridgeUnavailable vertex has no lookup; at every cortical lookup the receipt
+  kind equals the kind derived here from the oracle's voxel, the spec's support
+  volume and the volume value;
 - display identity: inflated and very-inflated carry the same object;
 - picks: for every volume, the receipt voxel equals the oracle voxel and the
   receipt value equals the oracle value (or the oracle agrees on NoSupport);
 - resources: warm JVM prepare+map per hemisphere and volume (median and max),
   and the live-heap probe and Scala.js FullOpt timing artifacts when given.
 
-The scope budget is not script-evaluated, and the value oracle is SimpleITK,
-not the Connectome Workbench implementation the budget names; both are
-reported as such.
+The NoSupport rate is reported but is no longer a budget: the amendment
+replaced it. The scope budget is not script-evaluated. The value oracle is
+SimpleITK; Connectome Workbench is not used (amendment of 2026-09-24).
 
 Usage:
-    python compare_fslr_qualification.py --scalafim DIR/beta --oracle ORACLE/beta.npz \\
-        --export PLS/beta/export.json --assets TEMPLATEFLOW/tpl-fsLR \\
-        [--heap heap-probe.json] [--js js-timing.json] [--out summary.json]
+    python compare_fslr_qualification.py --scalafim OUT --oracle ORACLE.npz \\
+        --spec SPEC.json --assets TEMPLATEFLOW/tpl-fsLR \\
+        [--brain-mask BRAIN_MASK.nii.gz] [--heap heap-probe.json] \\
+        [--js js-timing.json] [--out summary.json]
 
 Exit status is 0 only when every evaluated budget passes.
 """
@@ -50,7 +60,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scalafim", required=True, type=pathlib.Path)
     parser.add_argument("--oracle", required=True, type=pathlib.Path)
-    parser.add_argument("--export", required=True, type=pathlib.Path)
+    parser.add_argument("--spec", required=True, type=pathlib.Path)
+    parser.add_argument("--brain-mask", type=pathlib.Path)
     parser.add_argument("--assets", required=True, type=pathlib.Path)
     parser.add_argument("--heap", type=pathlib.Path)
     parser.add_argument("--js", type=pathlib.Path)
@@ -61,7 +72,13 @@ def main():
     results = json.loads((ours / "results.json").read_text())
     oracle = np.load(args.oracle)
     oracle_meta = json.loads(args.oracle.with_suffix(".json").read_text())
-    export = json.loads(args.export.read_text())
+    spec = json.loads(args.spec.read_text())
+    if sha256(args.spec) != results["specSha256"]:
+        raise SystemExit("ScalaFIM ran on a different spec")
+    declared = {}
+    for entry in spec["volumes"]:
+        kind = next(iter(entry["asset"].values()))
+        declared[pathlib.Path(entry["path"]).name] = kind["sha256"]
 
     names = [v["file"] for v in results["volumes"]]
     if names != oracle_meta["volumes"]:
@@ -69,25 +86,64 @@ def main():
     for v in results["volumes"]:
         if (
             oracle_meta["inputs"][v["file"]] != v["sha256"]
-            or export["outputs"][v["file"]] != v["sha256"]
+            or declared[v["file"]] != v["sha256"]
         ):
             raise SystemExit(
-                f"{v['file']}: oracle, export and ScalaFIM disagree on the bytes"
+                f"{v['file']}: oracle, spec and ScalaFIM disagree on the bytes"
             )
 
-    grid = np.array(export["affine"], dtype=np.float64).reshape(4, 4)
-    dims = np.array(export["dimensions"])
+    first = nib.load(args.spec.parent / spec["volumes"][0]["path"])
+    grid = np.asarray(first.affine, dtype=np.float64)
+    dims = np.array(first.shape[:3])
     world_to_voxel = np.linalg.inv(grid)
+    volumes = [
+        np.asarray(nib.load(args.spec.parent / v["path"]).dataobj, dtype=np.float64)
+        for v in spec["volumes"]
+    ]
+    supported = np.ones(tuple(dims), dtype=bool)
+    if spec.get("support"):
+        support = spec["support"]
+        supported = (
+            np.asarray(
+                nib.load(args.spec.parent / support["path"]).dataobj, dtype=np.float64
+            )
+            > support.get("threshold", 0.5)
+        )
+
+    def expected_receipt(ijk, volume):
+        """Receipt kind from the selected voxel alone: 1 OutsideGrid, 2
+        OutsideSupport (checked before finiteness), 3 NonFinite, 0 Included."""
+        kind = np.ones(len(ijk), dtype=np.int8)
+        valid = np.all(ijk >= 0, axis=1)
+        index = tuple(ijk[valid].T)
+        kind[valid] = np.where(
+            ~supported[index], 2, np.where(np.isfinite(volume[index]), 0, 3)
+        )
+        return kind
+
+    brain = None
+    if args.brain_mask:
+        mask = nib.load(args.brain_mask)
+        if mask.shape[:3] != tuple(dims) or not np.array_equal(mask.affine, grid):
+            raise SystemExit(f"{args.brain_mask} is not on the source grid")
+        brain = np.asarray(mask.dataobj, dtype=np.float64) > 0.5
+
+    def outside_brain(ijk):
+        """Selected voxel outside the brain mask (or no voxel at all)."""
+        out = np.ones(len(ijk), dtype=bool)
+        valid = np.all(ijk >= 0, axis=1)
+        out[valid] = ~brain[tuple(ijk[valid].T)]
+        return out
 
     def tie(points):
         c = points @ world_to_voxel[:3, :3].T + world_to_voxel[:3, 3]
         return np.any(np.abs(c - np.floor(c) - 0.5) < 1e-6, axis=1)
 
-    artifacts = [ours / "results.json", args.oracle, args.export] + [
-        p for p in (args.heap, args.js) if p
+    artifacts = [ours / "results.json", args.oracle, args.spec] + [
+        p for p in (args.brain_mask, args.heap, args.js) if p
     ]
     summary = {
-        "dataset": results["dataset"],
+        "name": results["name"],
         "artifacts": {str(p): sha256(p) for p in artifacts},
         "hemispheres": {},
     }
@@ -122,14 +178,23 @@ def main():
         voxel_bad = np.zeros(n, dtype=bool)
         coverage_stable = True
         receipts_explained = True
+        receipt_kind_mismatches = 0
         worst = 0.0
         for k in range(len(names)):
             cov = load(f"coverage_{h}_{k}.npy")
             coverage_stable &= bool(np.array_equal(cov, coverage0))
             coverage_bad |= cov != oracle_cov
             voxel_bad |= np.any(load(f"voxel_{h}_{k}.npy") != oracle_ijk, axis=1)
+            receipt = load(f"receipt_{h}_{k}.npy")
             receipts_explained &= bool(
-                np.all(np.isin(load(f"receipt_{h}_{k}.npy")[cov == 2], [1, 2, 3]))
+                np.all(np.isin(receipt[cov == 2], [1, 2, 3]))
+                and np.all(receipt[cov == 3] == -1)
+            )
+            looked_up = cortex & (cov != 3)
+            receipt_kind_mismatches += int(
+                np.sum(
+                    (receipt != expected_receipt(oracle_ijk, volumes[k])) & looked_up
+                )
             )
             ov = oracle[f"value_{h}_{k}"]
             sv = load(f"value_{h}_{k}.npy")
@@ -149,6 +214,16 @@ def main():
         medial_exact = bool(np.array_equal(coverage0 == 1, ~cortex))
         nosupport = coverage0 == 2
         receipt0 = load(f"receipt_{h}_0.npy")
+        if brain is not None:
+            ours_out = outside_brain(load(f"voxel_{h}_0.npy").astype(np.int64)) & cortex
+            oracle_out = outside_brain(oracle_ijk) & cortex
+            geometric = {
+                "outsideBrainMask": int(ours_out.sum()),
+                "outsideBrainMaskOracle": int(oracle_out.sum()),
+                "ratePercentOfCortical": 100.0 * float(ours_out.sum()) / cortical,
+            }
+        else:
+            geometric = None
 
         pick_rows = []
         for p in hemi["picks"]:
@@ -212,10 +287,14 @@ def main():
                 "oracle": int(np.sum(oracle_cov == 1)),
                 "vertexExactVsLabels": medial_exact,
             },
+            "geometric": geometric,
             "noSupport": {
                 "count": int(nosupport.sum()),
                 "ratePercentOfCortical": 100.0 * float(nosupport.sum()) / cortical,
+                "rateNote": "reported only; the 3 % rate budget was superseded post hoc",
                 "receiptsExplainedAllVolumes": receipts_explained,
+                "receiptKindMismatchesVsIndependent": receipt_kind_mismatches,
+                "bridgeUnavailable": int(np.sum(coverage0 == 3)),
                 "receiptKindsVolume0": {
                     name: int(np.sum(nosupport & (receipt0 == code)))
                     for code, name in (
@@ -258,8 +337,7 @@ def main():
             ),
             ("coverageStableAcrossVolumes", coverage_stable),
             ("medialWall", medial_exact),
-            ("noSupportReceipts", receipts_explained),
-            ("noSupportRate", s["noSupport"]["ratePercentOfCortical"] <= 3.0),
+            ("receipts", receipts_explained and receipt_kind_mismatches == 0),
             ("display", all(d["sameObject"] for d in hemi["display"])),
             ("picks", s["picks"]["passed"] == s["picks"]["checked"]),
             (
@@ -269,8 +347,14 @@ def main():
             ),
         ):
             passes.setdefault(name, []).append(ok)
+        if geometric is not None:
+            passes.setdefault("geometric", []).append(
+                geometric["ratePercentOfCortical"] <= 0.5
+            )
 
     budgets = {name: all(values) for name, values in passes.items()}
+    if brain is None:
+        budgets["geometric"] = "not evaluated (no --brain-mask)"
     if args.heap:
         heap = json.loads(args.heap.read_text())
         summary["heapProbe"] = heap
@@ -286,9 +370,10 @@ def main():
     else:
         budgets["jsFullOptSynthetic"] = "not evaluated (no --js artifact)"
     budgets["scope"] = "not script-evaluated"
-    budgets[
-        "valueOracleIsWorkbench"
-    ] = "not met: compared against the SimpleITK oracle, not Connectome Workbench"
+    budgets["noSupportRate"] = "superseded post hoc (2026-09-24); rate reported only"
+    budgets["valueOracle"] = (
+        "SimpleITK; Connectome Workbench not used (amendment 2026-09-24)"
+    )
     summary["budgets"] = budgets
 
     text = json.dumps(summary, indent=2)

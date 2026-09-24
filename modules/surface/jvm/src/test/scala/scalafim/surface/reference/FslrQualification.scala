@@ -10,46 +10,109 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** WS5 real-data qualification runner: maps every exported PLSNeuro volume
-  * (MNI152NLin2009cAsym res-2) onto fsLR 32k L and R through the admitted
-  * route (declared midthickness in MNI152NLin6Asym, inverse point-map bridge,
-  * MidthicknessNearest, Continuous) and writes the results for
-  * `tools/fslr-qualification/compare_fslr_qualification.py`.
+/** fsLR 32k qualification runner. It maps N NIfTI volumes that share one grid
+  * onto fsLR 32k L and R through the admitted route (declared midthickness in
+  * MNI152NLin6Asym, inverse point-map bridge, MidthicknessNearest, Continuous)
+  * and writes the results for `tools/fslr-qualification/compare_fslr_qualification.py`.
+  * The runner knows nothing about where the volumes came from: their frame,
+  * derivation and digests arrive in a declaration spec.
   *
-  * Run: `sbt "surfaceJVM/Test/runMain scalafim.surface.reference.FslrQualification <pls-volumes> <out> [<export-script>]"`
+  * Run: `sbt "surfaceJVM/Test/runMain scalafim.surface.reference.FslrQualification <spec.json> <out>"`
+  * or `... FslrQualification --probe-heap <spec.json> <repeats> <artifact.json>`,
   * with the locked TemplateFlow cache under `$TEMPLATEFLOW_HOME` or `~/.cache/templateflow`.
   *
-  * Output per dataset `<out>/<dataset>/` (NumPy `.npy`, little-endian):
-  *  - `world_<h>.npy` float64 (n, 3): placed vertex in 2009c RAS mm (pre-bridge position when unavailable);
+  * Spec (`scalafim.fslr-qualification-input/1`; relative paths resolve against the spec's directory):
+  * {{{
+  * { "schema": "scalafim.fslr-qualification-input/1", "name": "...",
+  *   "frame": { "template": "MNI152NLin2009cAsym", "release": "templateflow@..." },
+  *   "basis": { "literature": { "doi": "10....", "statement": "..." } }
+  *          | { "derived": { "recipe": "...", "inputs": [<asset>, ...] } },
+  *   "volumes": [ { "path": "...", "asset": <asset> }, ... ],
+  *   "support": { "path": "...", "asset": <asset>, "basis": <basis>, "threshold": 0.5 } }   // optional
+  * <asset> = { "templateflow": { "template", "archivePath", "revision", "sha256" } }
+  *         | { "data": { "name", "sha256" } }
+  * }}}
+  * Every volume (and the support volume) is read through `DeclaredVolumeReader`, so its bytes must match
+  * the declared digest. The support is the set of voxels whose value exceeds `threshold`.
+  *
+  * Output under `<out>/` (NumPy `.npy`, little-endian):
+  *  - `world_<h>.npy` float64 (n, 3): placed vertex in the source frame, RAS mm (pre-bridge position when unavailable);
   *  - `residual_<h>.npy` float64 (n): inverse residual mm (NaN when not converged);
   *  - `voxel_<h>_<k>.npy` int32 (n, 3): the voxel the lookup selected, (-1, -1, -1) outside the grid or unavailable;
   *  - `receipt_<h>_<k>.npy` int8 (n): inspect() contribution kind:
   *    0 Included, 1 OutsideGrid, 2 OutsideSupport, 3 NonFinite, -1 no lookup (bridge unavailable);
   *  - `coverage_<h>_<k>.npy` int8 (n): 0 Mapped, 1 MedialWall, 2 NoSupport, 3 BridgeUnavailable;
   *  - `value_<h>_<k>.npy` float64 (n): mapped value, NaN unless Mapped;
-  *  - `results.json`: inputs and digests, volume order, display identity, picks, timings and heap.
+  *  - `results.json`: spec and digests, grid, volume order, display identity, picks, timings and heap.
   */
 object FslrQualification:
 
   def main(args: Array[String]): Unit =
     if args.headOption.contains("--probe-heap") then probeHeap(Path.of(args(1)), args(2).toInt, Path.of(args(3)))
-    else runAll(args)
+    else
+      require(args.length == 2, "usage: FslrQualification <spec.json> <out> | --probe-heap <spec.json> <repeats> <artifact>")
+      run(Path.of(args(0)), Path.of(args(1)))
+
+  /** A parsed declaration spec: every volume and the optional support, read and digest-checked. */
+  private final case class Inputs(
+    name: String,
+    specSha256: String,
+    spec: ujson.Value,
+    frame: TemplateFrame,
+    volumes: Vector[(String, DeclaredVolume)],
+    support: Option[(DeclaredVolume, SomeMaskVolume)]
+  ):
+    def source: VolumeReference =
+      VolumeReference.make(frame, volumes.head._2.volume.space, support.map(_._2)).fold(e => sys.error(e.message), identity)
+
+  private def orFail[E, A](either: Either[E, A]): A = either.fold(e => sys.error(e.toString), identity)
+
+  private def asset(json: ujson.Value): DeclaredAsset =
+    json.obj.get("templateflow").map: a =>
+      orFail(AssetProvenance.make(orFail(TemplateId.make(a("template").str)), a("archivePath").str, a("revision").str,
+        a("sha256").str))
+    .getOrElse:
+      val a = json("data")
+      orFail(DataAsset.make(a("name").str, a("sha256").str))
+
+  private def basis(json: ujson.Value): FrameBasis =
+    json.obj.get("literature").map(l => orFail(FrameBasis.literature(l("doi").str, l("statement").str)))
+      .getOrElse:
+        val d = json("derived")
+        orFail(FrameBasis.derived(d("recipe").str, d("inputs").arr.toVector.map(asset)))
+
+  private def readInputs(specPath: Path): Inputs =
+    val bytes = Files.readAllBytes(specPath)
+    val spec = ujson.read(bytes)
+    require(spec("schema").str == "scalafim.fslr-qualification-input/1", s"unknown spec schema ${spec("schema")}")
+    val dir = Option(specPath.toAbsolutePath.getParent).getOrElse(Path.of("."))
+    val frame = orFail(TemplateFrame.make(orFail(TemplateId.make(spec("frame")("template").str)),
+      orFail(TemplateRelease.make(spec("frame")("release").str))))
+    def declared(entry: ujson.Value, entryBasis: FrameBasis): (String, DeclaredVolume) =
+      val path = dir.resolve(entry("path").str)
+      val declaration = orFail(FrameDeclaration.make(frame, entryBasis, asset(entry("asset"))))
+      (path.getFileName.toString, DeclaredVolumeReader.readNifti(path, declaration).fold(e => sys.error(e.message), identity))
+    val volumeBasis = basis(spec("basis"))
+    val volumes = spec("volumes").arr.toVector.map(declared(_, volumeBasis))
+    require(volumes.nonEmpty, "spec declares no volumes")
+    val support = spec.obj.get("support").filterNot(_.isNull).map: s =>
+      val (_, mask) = declared(s, s.obj.get("basis").map(basis).getOrElse(volumeBasis))
+      val threshold = s.obj.get("threshold").map(_.num).getOrElse(0.5)
+      val flags = Array.tabulate(mask.volume.space.grid.shape.product)(i => mask.volume.valueAtCanonicalOrdinal(i) > threshold)
+      (mask, SomeMaskVolume.unsafeCopyFromCanonicalArray(flags, mask.volume.space, "analysis-support"))
+    Inputs(spec("name").str, AssetSha256.of(bytes).value, spec, frame, volumes, support)
 
   /** Peak-live-heap probe for prepare+map. Run with `-XX:+UseSerialGC -Xmn16m` so young collections are frequent:
     * between collections live heap can grow by at most the eden capacity, so
     * `max(heap used after any collection during the phase) - baseline + eden` bounds the additional live heap
     * from above. The baseline is the live heap after setup (point map, surfaces, routes, one volume).
     */
-  private def probeHeap(volumeDir: Path, repeats: Int, artifact: Path): Unit =
+  private def probeHeap(specPath: Path, repeats: Int, artifact: Path): Unit =
     val policy = InversePolicy.make(1e-6, 50).toOption.get
     val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(policy)).toOption.get
-    val exported = ujson.read(Files.readString(volumeDir.resolve("export.json")))
-    val name = exported("outputs").obj.keys.toVector.sorted.head
-    val basis = FrameBasis.derived("heap probe", Vector(DataAsset.make(exported("bundle").str, exported("bundleSha256").str).toOption.get))
-      .toOption.get
-    val declared = DeclaredVolumeReader.readNifti(volumeDir.resolve(name), FrameDeclaration.make(RealAssets.nlin2009c, basis,
-      DataAsset.make(name, exported("outputs")(name).str).toOption.get).toOption.get).fold(e => sys.error(e.message), identity)
-    val source = VolumeReference.make(RealAssets.nlin2009c, declared.volume.space).toOption.get
+    val inputs = readInputs(specPath)
+    val (name, declared) = inputs.volumes.head
+    val source = inputs.source
     val routes = RealAssets.hemispheres.map: h =>
       SurfaceRoute.admit(RouteRequest(source, StandardCorticalMesh.FsLR32k, h.reference.hemisphere,
         MappingMethod.MidthicknessNearest, ValueSemantics.Continuous),
@@ -98,6 +161,7 @@ object FslrQualification:
     def mib(bytes: Long) = bytes.toDouble / (1024 * 1024)
     val summary = ujson.Obj(
       "schema" -> "scalafim.fslr-heap-probe/1",
+      "specSha256" -> inputs.specSha256,
       "volume" -> name,
       "volumeSha256" -> declared.declaration.asset.sha256.value,
       "jvm" -> ujson.Obj("version" -> sys.props("java.version"),
@@ -114,35 +178,16 @@ object FslrQualification:
     Files.writeString(artifact, ujson.write(summary, indent = 2), StandardCharsets.UTF_8)
     println(ujson.write(summary))
 
-  private def runAll(args: Array[String]): Unit =
-    require(args.length >= 2, "usage: FslrQualification <pls-volumes> <out> [<export-script>]")
-    val input = Path.of(args(0))
-    val out = Path.of(args(1))
-    val script = Path.of(if args.length > 2 then args(2) else "tools/fslr-qualification/pls_bundle_to_nifti.py")
-    val scriptAsset = DataAsset.make("tools/fslr-qualification/pls_bundle_to_nifti.py",
-      AssetSha256.of(Files.readAllBytes(script)).value).toOption.get
+  private def run(specPath: Path, out: Path): Unit =
+    Files.createDirectories(out)
     val policy = InversePolicy.make(1e-6, 50).toOption.get
     val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(policy)).toOption.get
-    for dataset <- Vector("beta", "fir") if Files.isDirectory(input.resolve(dataset)) do
-      run(dataset, input.resolve(dataset), out.resolve(dataset), scriptAsset, bridge)
-
-  private def run(dataset: String, dir: Path, out: Path, scriptAsset: DataAsset, bridge: FrameBridge): Unit =
-    Files.createDirectories(out)
-    val exported = ujson.read(Files.readString(dir.resolve("export.json")))
-    val bundle = DataAsset.make(exported("bundle").str, exported("bundleSha256").str).toOption.get
-    val basis = FrameBasis.derived(
-      "plsneuro task-PLS brain direction export (tools/fslr-qualification/pls_bundle_to_nifti.py)",
-      Vector(bundle, scriptAsset)).toOption.get
-    val names = exported("outputs").obj.keys.toVector.sorted
-    val volumes = names.map: name =>
-      val declaration = FrameDeclaration.make(RealAssets.nlin2009c, basis,
-        DataAsset.make(name, exported("outputs")(name).str).toOption.get).toOption.get
-      DeclaredVolumeReader.readNifti(dir.resolve(name), declaration).fold(e => sys.error(e.message), identity)
-    val affine = exported("affine").arr.map(_.num).toVector
-    val space = volumes.head.volume.space
-    require(space.grid.shape == exported("dimensions").arr.map(_.num.toInt).toVector, "grid dims differ from export.json")
-    require(volumes.head.volume.grid.indexToFrame.rowMajor == affine, "grid affine differs from export.json")
-    val source = VolumeReference.make(RealAssets.nlin2009c, space).toOption.get
+    val inputs = readInputs(specPath)
+    val names = inputs.volumes.map(_._1)
+    val volumes = inputs.volumes.map(_._2)
+    val source = inputs.source
+    for (name, declared) <- inputs.volumes.tail do
+      require(source.sharesGrid(declared.volume.space.grid), s"$name is not on the grid of ${names.head}")
     val volumeReport = ujson.Arr()
     val hemiReport = ujson.Obj()
 
@@ -263,16 +308,22 @@ object FslrQualification:
         "declaration" -> declared.declaration.display)
     val results = ujson.Obj(
       "schema" -> "scalafim.fslr-qualification/1",
-      "dataset" -> dataset,
-      "bundleSha256" -> exported("bundleSha256").str,
-      "exportScriptSha256" -> scriptAsset.sha256.value,
+      "name" -> inputs.name,
+      "specSha256" -> inputs.specSha256,
+      "spec" -> inputs.spec,
+      "grid" -> ujson.Obj("dimensions" -> ujson.Arr.from(source.dims.map(ujson.Num(_))),
+        "affine" -> ujson.Arr.from(source.voxelToWorld.rowMajor.map(ujson.Num(_)))),
+      "support" -> inputs.support.fold[ujson.Value](ujson.Null) { (mask, flags) =>
+        ujson.Obj("sha256" -> mask.declaration.asset.sha256.value, "declaration" -> mask.declaration.display,
+          "voxels" -> (0 until flags.space.grid.shape.product).count(flags.valueAtCanonicalOrdinal))
+      },
       "bridge" -> bridge.display,
       "pointMapManifestSha256" -> RealAssets.pointMap.manifest.sha256.value,
       "volumes" -> volumeReport,
       "hemispheres" -> hemiReport,
       "jvm" -> ujson.Obj("version" -> sys.props("java.version"), "maxHeapMiB" -> Runtime.getRuntime.maxMemory / (1024 * 1024)))
     Files.writeString(out.resolve("results.json"), ujson.write(results, indent = 2), StandardCharsets.UTF_8)
-    println(s"$dataset: wrote ${out.toAbsolutePath}")
+    println(s"${inputs.name}: wrote ${out.toAbsolutePath}")
 
   private def timed[A](body: => A): (A, Double) =
     val start = System.nanoTime()
