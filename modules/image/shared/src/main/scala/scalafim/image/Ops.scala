@@ -194,9 +194,11 @@ object Ops:
     def reorient(orientation: Orientation3D): SomeSampleSpace =
       Orientation.reorient(s, orientation)
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(axis1: String, axis2: String, axis3: String): SomeSampleSpace =
       Orientation.reorient(s, Seq(axis1, axis2, axis3))
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(orient: Seq[String]): SomeSampleSpace =
       Orientation.reorient(s, orient)
 
@@ -204,9 +206,11 @@ object Ops:
     def reorient(orientation: Orientation3D)(using ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
       Orientation.reorient(v, orientation)
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(axis1: String, axis2: String, axis3: String)(using ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
       Orientation.reorient(v, Seq(axis1, axis2, axis3))
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(orient: Seq[String])(using ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
       Orientation.reorient(v, orient)
 
@@ -239,10 +243,12 @@ object Ops:
     def reorient(orientation: Orientation3D)(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       Orientation.reorient(v, orientation)
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     @scala.annotation.targetName("reorientNeuroSeriesAxisLabels")
     def reorient(axis1: String, axis2: String, axis3: String)(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       Orientation.reorient(v, Seq(axis1, axis2, axis3))
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     @scala.annotation.targetName("reorientNeuroSeriesAxes")
     def reorient(orient: Seq[String])(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       Orientation.reorient(v, orient)

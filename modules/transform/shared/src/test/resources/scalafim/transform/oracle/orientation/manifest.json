@@ -1,0 +1,24 @@
+{
+ "generator": "tools/transform/generate_orientation_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "reference-implementation",
+ "tools": {
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nibabel==5.4.2 --with numpy python tools/transform/generate_orientation_oracle.py"
+ ],
+ "notes": "axcodes follow nibabel: letters name the positive direction of each voxel axis. reoriented_* are nibabel as_reoriented(source, target codes); sform = qform = the reoriented affine.",
+ "sha256": {
+  "axcodes.tsv": "12e4ef005c66b460edfa3c47a7b3569e94179eabf00eaba025e07914011ad873",
+  "reoriented_LAS.nii": "b280b1e92f5eb5f644355d502077d8e4803d2395e835f9c71b4fb82bcb3d66e3",
+  "reoriented_LPI.nii": "f1740111cb8f9b2f35474fd9cb504aa2ea2e126e21d575292ff50e4120b73a83",
+  "reoriented_PIR.nii": "8ff612fba332131c267f7103d38d3e15f5e9b03d8591fac20aa4535b32c3fe45",
+  "reoriented_RAS.nii": "51d8144e7f914a2d6776197c39c03789b099b81e19348c661ac65d90d8a823db",
+  "reoriented_SAL.nii": "6ed69df00806920ffafb7df2ced9af5eb9709a9fb7733b03e6ba4a40fa73adef",
+  "source.nii": "78539b30432f248caec3f754d590a1e6e3619c59d1aa50d52091aae5853bd3f3"
+ }
+}

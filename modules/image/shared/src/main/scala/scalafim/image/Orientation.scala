@@ -13,6 +13,7 @@ enum OrientationError:
   case MatrixTooSmall(rows: Int, cols: Int)
   case SingularMatrix
   case InvalidAxisCode(code: Int)
+  case InvalidSpace(reason: String)
 
   def message: String =
     this match
@@ -29,6 +30,8 @@ enum OrientationError:
         "invalid matrix input, determinant is 0"
       case InvalidAxisCode(code) =>
         s"invalid axis code: $code"
+      case InvalidSpace(reason) =>
+        s"cannot reorient this sample space: $reason"
 
 /** One signed anatomical direction in RAS world coordinates. */
 enum AnatomicalAxis(
@@ -112,6 +115,7 @@ object Orientation3D:
 
 object Orientation:
 
+  @deprecated("Use findAnatomy3DEither or AxisCodes.parse; this throws on invalid input", since = "0.2.0")
   def findAnatomy3D(axis1: String = "L", axis2: String = "P", axis3: String = "I"): Orientation3D =
     findAnatomy3DEither(axis1, axis2, axis3).fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -138,6 +142,7 @@ object Orientation:
         Vector.tabulate(3)(column => axes(column).component(row))
     )
 
+  @deprecated("Use findAnatomyEither or AxisCodes.of; this throws on degenerate matrices", since = "0.2.0")
   def findAnatomy(pmat: DMat, tol: Double = 1e-10): Orientation3D =
     findAnatomyEither(pmat, tol).fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -218,11 +223,13 @@ object Orientation:
         orientation <- Orientation3D.make(ax1, ax2, ax3)
       yield orientation
 
+  @deprecated("Relabels the affine without moving data; use Reorientation.volume/series with AxisCodes", since = "0.2.0")
   def reorient(space: SomeSampleSpace, orient: Seq[String]): SomeSampleSpace =
     val orientation =
       Orientation3D.fromStrings(orient).fold(err => throw new IllegalArgumentException(err.message), identity)
     reorient(space, orientation)
 
+  /** neuroim2-style relabelling of a sample space's axes (no data involved); see [[Reorientation]] for images. */
   def reorient(space: SomeSampleSpace, orientation: Orientation3D): SomeSampleSpace =
     val pmat = permMat3D(orientation)
 
@@ -276,27 +283,33 @@ object Orientation:
       affine = Some(tx)
     )
 
+  @deprecated("Use Reorientation.volume with AxisCodes; this throws on invalid input", since = "0.2.0")
   def reorient[A, Sem](vol: SomeNeuroVolume[A, Sem], orient: Seq[String])(using
       image4s.ValueSemantics[A, Sem]
   ): SomeNeuroVolume[A, Sem] =
-    SomeNeuroVolume.unsafeFromRavel(vol.values, reorient(vol.space, orient), vol.label)
+    val orientation = Orientation3D.fromStrings(orient).fold(err => throw new IllegalArgumentException(err.message), identity)
+    reorient(vol, orientation)
 
+  /** Reorient data and affine together so every voxel keeps its world position (see [[Reorientation]]). */
   def reorient[A, Sem](vol: SomeNeuroVolume[A, Sem], orientation: Orientation3D)(using
       image4s.ValueSemantics[A, Sem]
   ): SomeNeuroVolume[A, Sem] =
-    SomeNeuroVolume.unsafeFromRavel(vol.values, reorient(vol.space, orientation), vol.label)
+    Reorientation.volume(vol, AxisCodes.fromOrientation(orientation)).fold(err => throw new IllegalArgumentException(err.message), identity)
 
+  @deprecated("Use Reorientation.series with AxisCodes; this throws on invalid input", since = "0.2.0")
   @scala.annotation.targetName("reorientNeuroSeriesAxes")
   def reorient[A, Sem](vec: SomeNeuroSeries[A, Sem], orient: Seq[String])(using
       image4s.ValueSemantics[A, Sem]
   ): SomeNeuroSeries[A, Sem] =
-    SomeNeuroSeries.unsafeFromRavel(vec.values, reorient(vec.space, orient), vec.label)
+    val orientation = Orientation3D.fromStrings(orient).fold(err => throw new IllegalArgumentException(err.message), identity)
+    reorient(vec, orientation)
 
+  /** Reorient a series' spatial data and affine together (see [[Reorientation]]). */
   @scala.annotation.targetName("reorientNeuroSeriesOrientation")
   def reorient[A, Sem](vec: SomeNeuroSeries[A, Sem], orientation: Orientation3D)(using
       image4s.ValueSemantics[A, Sem]
   ): SomeNeuroSeries[A, Sem] =
-    SomeNeuroSeries.unsafeFromRavel(vec.values, reorient(vec.space, orientation), vec.label)
+    Reorientation.series(vec, AxisCodes.fromOrientation(orientation)).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   private def axisFromCode(code: Int): Either[OrientationError, AnatomicalAxis] =
     code match

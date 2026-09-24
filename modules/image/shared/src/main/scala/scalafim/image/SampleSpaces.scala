@@ -228,7 +228,7 @@ object SampleSpaces:
 
     private[scalafim] def orientation: Orientation3D =
       val matrix = space.grid.indexToFrame.matrix
-      Orientation.findAnatomy(matrix)
+      Orientation.findAnatomyEither(matrix).fold(error => throw new IllegalStateException(error.message), identity)
 
     private[scalafim] def affineD3: Either[SampleSpaceError, GeometryAffine[D3]] =
       requireD3(space).map(_.grid.indexToFrame)

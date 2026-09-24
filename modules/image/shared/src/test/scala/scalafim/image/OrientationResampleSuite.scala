@@ -10,6 +10,7 @@ import image4s.AxisUnit
 import image4s.NonSpatialAxes
 import Ops.*
 
+@scala.annotation.nowarn("cat=deprecation") // pins the deprecated string and throwing orientation APIs
 class OrientationResampleSuite extends munit.FunSuite:
 
   private def right[E, A](value: Either[E, A]): A =

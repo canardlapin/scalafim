@@ -134,7 +134,7 @@ class ProviderAffineContractSuite extends FunSuite:
       1e-12
     )
     assert(oblique.neuroObliquity.exists(_ > 0.0))
-    val orientation = Orientation.findAnatomy(oblique.matrix)
+    val orientation = Orientation.findAnatomyEither(oblique.matrix).fold(error => fail(error.message), identity)
     assertEquals(orientation.axes.map(_.abbrev), Vector("P", "R", "I"))
 
     val rescaled = right(
