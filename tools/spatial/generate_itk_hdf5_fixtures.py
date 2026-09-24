@@ -16,19 +16,24 @@ import SimpleITK as sitk
 
 
 ROOT = Path(__file__).resolve().parents[2]
+# Canonical home since P3.11 (the transform module owns ITK HDF5 decoding). The spatial graph-adapter tests keep a
+# byte-identical subset under modules/spatial/jvm/src/test/resources/scalafim/spatial/io/itk-hdf5.
 DEFAULT_OUTPUT = (
     ROOT
     / "modules"
-    / "spatial"
-    / "jvm"
+    / "transform"
+    / "shared"
     / "src"
     / "test"
     / "resources"
     / "scalafim"
-    / "spatial"
-    / "io"
-    / "itk-hdf5"
+    / "transform"
+    / "oracle"
+    / "itk_hdf5_simpleitk"
 )
+# The generator's content-hash manifest; manifest.json beside it is the oracle manifest (byte SHA-256 + provenance).
+SEMANTIC_MANIFEST = "semantic_manifest.json"
+MANIFESTS = {"manifest.json", SEMANTIC_MANIFEST}
 
 
 def displacement(
@@ -55,7 +60,9 @@ def lps_to_ras(point) -> list[float]:
 
 def physical_point(origin, spacing, direction, index) -> tuple[float, float, float]:
     matrix = np.asarray(direction, dtype=float).reshape(3, 3)
-    return tuple(np.asarray(origin) + matrix @ (np.asarray(spacing) * np.asarray(index)))
+    return tuple(
+        np.asarray(origin) + matrix @ (np.asarray(spacing) * np.asarray(index))
+    )
 
 
 def write_composite_fixture(output: Path) -> dict:
@@ -112,7 +119,13 @@ def write_constant_pair(output: Path) -> dict:
     )
 
     def write(name: str, shift: float):
-        transform = displacement(size, geometry[0], geometry[1], geometry[2], lambda _x, _y, _z: (shift, 0.0, 0.0))
+        transform = displacement(
+            size,
+            geometry[0],
+            geometry[1],
+            geometry[2],
+            lambda _x, _y, _z: (shift, 0.0, 0.0),
+        )
         composite = sitk.CompositeTransform(3)
         composite.AddTransform(transform)
         sitk.WriteTransform(composite, str(output / name))
@@ -128,7 +141,9 @@ def write_constant_pair(output: Path) -> dict:
             {
                 "input_ras": lps_to_ras(point),
                 "forward_ras": lps_to_ras(forward.TransformPoint(point)),
-                "roundtrip_ras": lps_to_ras(inverse.TransformPoint(forward.TransformPoint(point))),
+                "roundtrip_ras": lps_to_ras(
+                    inverse.TransformPoint(forward.TransformPoint(point))
+                ),
             }
             for point in points
         ],
@@ -166,7 +181,12 @@ def rewrite_as_legacy_float(source: Path, destination: Path) -> None:
             if isinstance(transform_type, bytes):
                 transform_type = transform_type.decode("ascii")
             del group["TransformType"]
-            group.create_dataset("TransformType", data=np.asarray([transform_type.replace("_double_", "_float_")], dtype=string_type))
+            group.create_dataset(
+                "TransformType",
+                data=np.asarray(
+                    [transform_type.replace("_double_", "_float_")], dtype=string_type
+                ),
+            )
             for canonical, legacy in (
                 ("TransformParameters", "TranformParameters"),
                 ("TransformFixedParameters", "TranformFixedParameters"),
@@ -182,17 +202,27 @@ def write_failure_fixtures(output: Path) -> None:
     with h5py.File(output / "unsupported_bspline.h5", "w") as hdf:
         transforms = hdf.create_group("TransformGroup")
         group = transforms.create_group("0")
-        group.create_dataset("TransformType", data=np.asarray(["BSplineTransform_double_3_3"], dtype=string_type))
+        group.create_dataset(
+            "TransformType",
+            data=np.asarray(["BSplineTransform_double_3_3"], dtype=string_type),
+        )
         group.create_dataset("TransformParameters", data=np.zeros(24, dtype=np.float64))
-        group.create_dataset("TransformFixedParameters", data=np.zeros(18, dtype=np.float64))
+        group.create_dataset(
+            "TransformFixedParameters", data=np.zeros(18, dtype=np.float64)
+        )
 
     with h5py.File(output / "malformed_missing_fixed.h5", "w") as hdf:
         transforms = hdf.create_group("TransformGroup")
         group = transforms.create_group("0")
-        group.create_dataset("TransformType", data=np.asarray(["AffineTransform_double_3_3"], dtype=string_type))
+        group.create_dataset(
+            "TransformType",
+            data=np.asarray(["AffineTransform_double_3_3"], dtype=string_type),
+        )
         group.create_dataset(
             "TransformParameters",
-            data=np.asarray([1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]),
+            data=np.asarray(
+                [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0]
+            ),
         )
 
 
@@ -217,8 +247,13 @@ def hdf5_semantic_sha256(path: Path) -> str:
             digest.update(str(node.dtype).encode("ascii"))
             if node.dtype.kind in ("O", "S", "U"):
                 flat = np.asarray(values).reshape(-1).tolist()
-                normalized = [value.decode("utf-8") if isinstance(value, bytes) else str(value) for value in flat]
-                digest.update(json.dumps(normalized, separators=(",", ":")).encode("utf-8"))
+                normalized = [
+                    value.decode("utf-8") if isinstance(value, bytes) else str(value)
+                    for value in flat
+                ]
+                digest.update(
+                    json.dumps(normalized, separators=(",", ":")).encode("utf-8")
+                )
             else:
                 digest.update(np.ascontiguousarray(values).tobytes())
 
@@ -241,36 +276,60 @@ def generate(output: Path) -> None:
         output / "composite_affine_displacement_legacy_float.h5",
     )
     write_failure_fixtures(output)
-    (output / "oracles.json").write_text(json.dumps(oracle, indent=2, sort_keys=True) + "\n")
+    (output / "oracles.json").write_text(
+        json.dumps(oracle, indent=2, sort_keys=True) + "\n"
+    )
     rows = ["case\tin_x\tin_y\tin_z\tout_x\tout_y\tout_z"]
     for point in oracle["composite"]["points"]:
         values = point["input_ras"] + point["output_ras"]
-        rows.append("\t".join(["composite"] + [format(value, ".17g") for value in values]))
+        rows.append(
+            "\t".join(["composite"] + [format(value, ".17g") for value in values])
+        )
     for point in oracle["constant_pair"]["points"]:
         values = point["input_ras"] + point["forward_ras"]
-        rows.append("\t".join(["constant-forward"] + [format(value, ".17g") for value in values]))
+        rows.append(
+            "\t".join(
+                ["constant-forward"] + [format(value, ".17g") for value in values]
+            )
+        )
         roundtrip = point["forward_ras"] + point["roundtrip_ras"]
-        rows.append("\t".join(["constant-inverse"] + [format(value, ".17g") for value in roundtrip]))
+        rows.append(
+            "\t".join(
+                ["constant-inverse"] + [format(value, ".17g") for value in roundtrip]
+            )
+        )
     for point in oracle["affine_only"]["forward_points"]:
         values = point["input_ras"] + point["output_ras"]
-        rows.append("\t".join(["affine-forward"] + [format(value, ".17g") for value in values]))
+        rows.append(
+            "\t".join(["affine-forward"] + [format(value, ".17g") for value in values])
+        )
     (output / "point_oracles.tsv").write_text("\n".join(rows) + "\n")
-    files = sorted(path for path in output.iterdir() if path.is_file() and path.name != "manifest.json")
+    files = sorted(
+        path
+        for path in output.iterdir()
+        if path.is_file() and path.name not in MANIFESTS
+    )
     manifest = {
-        path.name: (hdf5_semantic_sha256(path) if path.suffix == ".h5" else sha256(path))
+        path.name: (
+            hdf5_semantic_sha256(path) if path.suffix == ".h5" else sha256(path)
+        )
         for path in files
     }
-    (output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    (output / SEMANTIC_MANIFEST).write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+    )
 
 
 def check(output: Path) -> None:
-    expected_manifest = json.loads((output / "manifest.json").read_text())
+    expected_manifest = json.loads((output / SEMANTIC_MANIFEST).read_text())
     with tempfile.TemporaryDirectory(prefix="scalafim-itk-hdf5-") as temp:
         generated = Path(temp)
         generate(generated)
-        actual_manifest = json.loads((generated / "manifest.json").read_text())
+        actual_manifest = json.loads((generated / SEMANTIC_MANIFEST).read_text())
     if actual_manifest != expected_manifest:
-        raise SystemExit("ITK HDF5 fixtures are stale; rerun tools/spatial/generate_itk_hdf5_fixtures.py")
+        raise SystemExit(
+            "ITK HDF5 fixtures are stale; rerun tools/spatial/generate_itk_hdf5_fixtures.py"
+        )
 
 
 def main() -> None:

@@ -1,0 +1,136 @@
+{
+  "affine_only": {
+    "fixture": "affine_only_forward_double.h5",
+    "forward_points": [
+      {
+        "input_ras": [
+          -0.0,
+          -0.0,
+          0.0
+        ],
+        "output_ras": [
+          -1.2999999999999998,
+          -1.2,
+          -0.8999999999999999
+        ]
+      },
+      {
+        "input_ras": [
+          -2.0,
+          1.0,
+          3.0
+        ],
+        "output_ras": [
+          -3.35,
+          -0.65,
+          2.6999999999999997
+        ]
+      }
+    ]
+  },
+  "composite": {
+    "application_order": "last component first",
+    "fixture": "composite_affine_displacement_double.h5",
+    "itk_component_order": [
+      "AffineTransform_double_3_3",
+      "DisplacementFieldTransform_double_3_3"
+    ],
+    "points": [
+      {
+        "input_ras": [
+          -8.5,
+          19.0,
+          31.0
+        ],
+        "output_ras": [
+          -11.04125,
+          20.59125,
+          32.052499999999995
+        ]
+      },
+      {
+        "input_ras": [
+          -7.0,
+          17.5,
+          32.0
+        ],
+        "output_ras": [
+          -9.560625,
+          19.085625,
+          33.17999999999999
+        ]
+      },
+      {
+        "input_ras": [
+          -5.5,
+          16.0,
+          33.0
+        ],
+        "output_ras": [
+          -8.08,
+          17.58,
+          34.3075
+        ]
+      }
+    ]
+  },
+  "constant_pair": {
+    "forward_fixture": "pullback_plus_one.h5",
+    "inverse_fixture": "pullback_minus_one.h5",
+    "points": [
+      {
+        "forward_ras": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "input_ras": [
+          -0.0,
+          -0.0,
+          0.0
+        ],
+        "roundtrip_ras": [
+          -0.0,
+          -0.0,
+          0.0
+        ]
+      },
+      {
+        "forward_ras": [
+          -2.0,
+          -0.0,
+          0.0
+        ],
+        "input_ras": [
+          -1.0,
+          -0.0,
+          0.0
+        ],
+        "roundtrip_ras": [
+          -1.0,
+          -0.0,
+          0.0
+        ]
+      },
+      {
+        "forward_ras": [
+          -3.5,
+          -0.5,
+          0.5
+        ],
+        "input_ras": [
+          -2.5,
+          -0.5,
+          0.5
+        ],
+        "roundtrip_ras": [
+          -2.5,
+          -0.5,
+          0.5
+        ]
+      }
+    ]
+  },
+  "coordinate_contract": "fixtures execute in ITK LPS; stored oracle points are converted to RAS by diag(-1,-1,1)",
+  "generator": "SimpleITK 2.5.4 / ITK 5.4"
+}

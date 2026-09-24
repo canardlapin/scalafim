@@ -1,0 +1,24 @@
+{
+ "generator": "tools/spatial/generate_itk_hdf5_fixtures.py",
+ "kind": "native-oracle",
+ "tools": {
+  "SimpleITK": "ITK 5.4.6 (ITKVersion dataset in the files)",
+  "HDF5": "1.12.1 (HDFVersion dataset in the files)",
+  "h5py": "rewrites the legacy-float and malformed variants"
+ },
+ "commands": [
+  "uv run --with SimpleITK --with h5py --with numpy python tools/spatial/generate_itk_hdf5_fixtures.py"
+ ],
+ "notes": "Moved from modules/spatial/jvm/src/test/resources/scalafim/spatial/io/itk-hdf5 in P3.11, byte-identical. Points in oracles.json and point_oracles.tsv are RAS; each row is SimpleITK TransformPoint (fixed -> moving) with LPS converted to RAS. 'affine-forward' rows are TransformPoint of affine_only_forward_double.h5; 'constant-forward'/'constant-inverse' rows are pullback_plus_one.h5/pullback_minus_one.h5. composite_affine_displacement_legacy_float.h5 stores the same composite with float32 datasets under ITK's historic 'Tranform*' dataset names. unsupported_bspline.h5 and malformed_missing_fixed.h5 are refusal cases. semantic_manifest.json is the generator's own manifest (HDF5 files hashed by content, not bytes) used by its --check mode; the digests below are of the committed bytes.",
+ "sha256": {
+  "affine_only_forward_double.h5": "9d6121be7da6c56480bc1ff987538a8ddc9d6a559bb669b2f8061b2ddb23245a",
+  "composite_affine_displacement_double.h5": "6d91c7a03660c902bc2d9dbb23939cb2923689ec6a17d3641e8213d420c7a7db",
+  "composite_affine_displacement_legacy_float.h5": "e24d0e4603ba7e1ffccf758470c5570550a4abd0d5f726bc2f44f09c1c340ff4",
+  "malformed_missing_fixed.h5": "8e22e3f1110e0ead631e70e927132b94b0db589a549bbbf10ddef768a4e3aa61",
+  "oracles.json": "9415a967b3481cf935d0ed148a481b46085a6e9a68dc8c9900594f2af7c5fcd4",
+  "point_oracles.tsv": "b25684942702579f8163581396f3ab976497106a053945590db860fae2bf92d1",
+  "pullback_minus_one.h5": "00d7ad991c3f9b5ef2a002b097ee1d2fe758c4f90acdba0e63ea6aedf76a4ce7",
+  "pullback_plus_one.h5": "49b4e2856737842d50fc9754588379bf90f44070f154ad9cd291d67aec5f6d65",
+  "unsupported_bspline.h5": "4cadbf106037a5a1db6cecb518643cf2af9916563f3d3ff365f049bb7fdc2ac1"
+ }
+}

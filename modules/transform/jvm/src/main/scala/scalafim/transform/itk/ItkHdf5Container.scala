@@ -41,8 +41,11 @@ object ItkHdf5Container:
               case child: Group =>
                 for
                   kind <- string(child, "TransformType", index)
-                  parameters <- numbers(child, ParameterNames)
-                  fixed <- numbers(child, FixedParameterNames)
+                  // ITK writes both parameter datasets for every transform except the CompositeTransform marker; a
+                  // missing one is a truncated file, never an implicit zero centre.
+                  required = !kind.startsWith("CompositeTransform")
+                  parameters <- numbers(child, ParameterNames, index, required)
+                  fixed <- numbers(child, FixedParameterNames, index, required)
                 yield done :+ ItkHdf5Component(index, kind, parameters, fixed)
               case _ => Left(malformed(s"TransformGroup/$name is not a group"))
 
@@ -55,9 +58,10 @@ object ItkHdf5Container:
           case _                                                                   => Left(malformed(s"/TransformGroup/$index/$name is not one non-empty string"))
       case _ => Left(malformed(s"missing /TransformGroup/$index/$name"))
 
-  private def numbers(group: Group, names: Vector[String]): Either[TransformIoError, IArray[Double]] =
+  private def numbers(group: Group, names: Vector[String], index: Int, required: Boolean): Either[TransformIoError, IArray[Double]] =
     names.iterator.map(group.getChild).collectFirst { case d: Dataset => d } match
-      case None => Right(IArray.empty[Double])
+      case None if required => Left(malformed(s"/TransformGroup/$index is missing ${names.head}"))
+      case None             => Right(IArray.empty[Double])
       case Some(dataset) =>
         dataset.getDataFlat match
           case v: Array[Double] => Right(IArray.unsafeFromArray(v))
