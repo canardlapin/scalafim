@@ -289,3 +289,30 @@ class OperatorParitySuite extends munit.FunSuite:
       case SpatialError.HybridLayoutMismatch(_) => true
       case _ => false
     })
+
+  test("commutativity evaluates non-commuting steps in route order"):
+    val a = domain("nc-a")
+    val b = domain("nc-b")
+    val c = domain("nc-c")
+    val scale =
+      ProviderAffines.fromRows(
+        Vector(
+          Vector(2.0, 0.0, 0.0, 0.0),
+          Vector(0.0, 1.0, 0.0, 0.0),
+          Vector(0.0, 0.0, 1.0, 0.0),
+          Vector(0.0, 0.0, 0.0, 1.0)
+        )
+      )
+    // pullbacks: c -> b translates by +1, b -> a scales x by 2; the route pullback at p is scale(translate(p)) = 2(x+1)
+    val ab = affine("a-b", a, b, scale)
+    val bc = affine("b-c", b, c, translation(1.0))
+    val right = affine("a-c-right", a, c, ProviderAffines.fromRows(Vector(Vector(2.0, 0.0, 0.0, 2.0), Vector(0.0, 1.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0, 0.0), Vector(0.0, 0.0, 0.0, 1.0))), cost = 5.0)
+    val swapped = affine("a-c-swapped", a, c, ProviderAffines.fromRows(Vector(Vector(2.0, 0.0, 0.0, 1.0), Vector(0.0, 1.0, 0.0, 0.0), Vector(0.0, 0.0, 1.0, 0.0), Vector(0.0, 0.0, 0.0, 1.0))), cost = 6.0)
+    val graph = value(SpatialGraph.build(Vector(a, b, c), Vector(ab, bc, right, swapped)))
+
+    val composed = value(graph.path(a.id, c.id))
+    assertEquals(value(composed.pullback(SpatialPoint(3.0, 0.0, 0.0))), SpatialPoint(8.0, 0.0, 0.0))
+    val differences = value(SpatialQc.commutativity(graph, a.id, c.id, probes))
+    assertEquals(differences.map(_.second.map(_.value)), Vector(Vector("a-c-right"), Vector("a-c-swapped")))
+    assertEqualsDouble(differences(0).maxDistance, 0.0, 1e-12)
+    assertEqualsDouble(differences(1).maxDistance, 1.0, 1e-12)
