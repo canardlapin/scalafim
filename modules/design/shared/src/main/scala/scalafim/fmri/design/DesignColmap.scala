@@ -467,7 +467,7 @@ object DesignColmap:
           case ColumnRole.Drift =>
             val semantics = baselineColumnSemantics(x.terms(termIndex0 - 1)._2, col0 - x.termSpans(termIndex0 - 1)._1)
             (
-              Some(x.driftSpec.basis.toString.toLowerCase),
+              Some(x.driftSpec.basis.id),
               semantics.run,
               semantics.component,
               semantics.component.map(i => f"component_$i%02d"),

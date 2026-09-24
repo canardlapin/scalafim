@@ -313,14 +313,19 @@ final case class RunwiseFitBlockResult(
     runs: Vector[RunwiseFmriRunResult],
     voxelIndices: Vector[Int],
     timepoints: Vector[Int],
+    fitEngine: FitEngine = FitEngine.RunwiseLeastSquares,
     override val coefficientAxis: Option[CoefficientAxis] = None,
     override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
     override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
 ) extends FitBlockResult:
   require(runs.nonEmpty, "runwise block result must contain at least one run")
   require(runs.forall(_.coefficients.voxels == voxelIndices.length), "runwise block runs must match block voxel count")
+  require(
+    fitEngine == FitEngine.RunwiseLeastSquares || fitEngine == FitEngine.GeneralizedLeastSquares,
+    "runwise block engine must be runwise least squares or generalized least squares"
+  )
   VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "runwise fit block")
-  def engine: FitEngine = FitEngine.RunwiseLeastSquares
+  def engine: FitEngine = fitEngine
 
 object RunwiseFitBlockResult:
   def fromRunwise(input: FitBlockInput, fit: RunwiseOlsFit): RunwiseFitBlockResult =
@@ -358,6 +363,48 @@ object RunwiseFitBlockResult:
       fitExclusions = input.fitExclusions
     )
 
+  def fromRunwiseGls(input: FitBlockInput, fit: RunwiseGlsFit): RunwiseFitBlockResult =
+    RunwiseFitBlockResult(
+      runs = fit.runs.map { run =>
+        RunwiseFmriRunResult(
+          runIndex = run.partition.runIndex,
+          rowIndices = run.partition.rowIndices,
+          timepoints = run.partition.timepoints,
+          coefficients = run.fit.coefficients,
+          standardErrors = run.fit.standardErrors,
+          normalizedCovariance = run.fit.normalizedCovariance,
+          residualVariance = run.fit.residualVariance,
+          residualDegreesOfFreedom = run.fit.residualDegreesOfFreedom,
+          // Structural rank belongs to the unwhitened run design. Voxelwise
+          // whitening can legitimately produce different final QR details in
+          // each chunk, while this initial diagnostic remains common.
+          olsDiagnostics = run.fit.initialOlsDiagnostics,
+          coefficientAxis = run.projection.map(_.axis).orElse {
+            input.coefficientAxis.flatMap { axis =>
+              axis.forRunwiseCoefficient(DesignRunIndex.unsafeOneBased(run.partition.runIndex + 1)).toOption
+            }
+          },
+          sourceColumnIndices = run.projection.map(_.sourceColumnIndices).getOrElse(Vector.empty),
+          projection = run.projection,
+          voxelStatuses = Some(
+            VoxelFitStatus.refine(
+              VoxelFitStatus.classify(input.response.value, run.partition.rowIndices),
+              run.fit.residualVariance
+            )
+          ),
+          voxelwiseCoefficientCovariance =
+            if run.fit.coefficientCovariance.isVoxelwise then Some(run.fit.coefficientCovariance) else None,
+          autocorrelation = Some(run.fit.diagnostics)
+        )
+      },
+      voxelIndices = input.voxelIndices,
+      timepoints = input.timepoints,
+      fitEngine = FitEngine.GeneralizedLeastSquares,
+      coefficientAxis = input.coefficientAxis,
+      preparationProvenance = input.preparationProvenance,
+      fitExclusions = input.fitExclusions
+    )
+
   def merge(blocks: IndexedSeq[RunwiseFitBlockResult]): Either[FitError, RunwiseFitBlockResult] =
     if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one runwise block is required"))
     else
@@ -365,11 +412,13 @@ object RunwiseFitBlockResult:
       for
         _ <- validateCompatible(blocks, first)
         exclusions <- VoxelInferenceExclusions.combine(blocks.iterator.flatMap(_.fitExclusions))
+        runs <- mergeRuns(blocks)
       yield
         RunwiseFitBlockResult(
-          runs = mergeRuns(blocks),
+          runs = runs,
           voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
           timepoints = first.timepoints,
+          fitEngine = first.fitEngine,
           coefficientAxis = first.coefficientAxis,
           preparationProvenance = first.preparationProvenance,
           fitExclusions = exclusions
@@ -388,6 +437,8 @@ object RunwiseFitBlockResult:
     var blockIndex = 0
     while blockIndex < blocks.length do
       val block = blocks(blockIndex)
+      if block.fitEngine != first.fitEngine then
+        return Left(FitError.IncompatibleFitBlocks("all runwise blocks must use the same fit engine"))
       if block.timepoints != first.timepoints then
         return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have the same selected timepoints"))
       if block.preparationProvenance != first.preparationProvenance then
@@ -419,20 +470,28 @@ object RunwiseFitBlockResult:
           return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run projection mappings"))
         if !run.olsDiagnostics.structurallyCompatible(firstRun.olsDiagnostics) then
           return Left(FitError.IncompatibleFitBlocks("all runwise blocks must have identical run OLS diagnostics"))
-        if !sameMatrix(run.normalizedCovariance, firstRun.normalizedCovariance) then
+        if run.voxelwiseCoefficientCovariance.isEmpty &&
+            firstRun.voxelwiseCoefficientCovariance.isEmpty &&
+            !sameMatrix(run.normalizedCovariance, firstRun.normalizedCovariance) then
           return Left(FitError.IncompatibleFitBlocks("all runwise blocks must share run normalized covariance"))
         runIndex += 1
 
       blockIndex += 1
     Right(())
 
-  private def mergeRuns(blocks: IndexedSeq[RunwiseFitBlockResult]): Vector[RunwiseFmriRunResult] =
+  private def mergeRuns(blocks: IndexedSeq[RunwiseFitBlockResult]): Either[FitError, Vector[RunwiseFmriRunResult]] =
     val out = Vector.newBuilder[RunwiseFmriRunResult]
     val first = blocks.head
     var runIndex = 0
     while runIndex < first.runs.length do
       val firstRun = first.runs(runIndex)
       val currentRuns = blocks.map(_.runs(runIndex))
+      val covariance = mergeRunCovariance(currentRuns) match
+        case Left(error) => return Left(error)
+        case Right(value) => value
+      val autocorrelation = mergeRunAutocorrelation(currentRuns) match
+        case Left(error) => return Left(error)
+        case Right(value) => value
       out += RunwiseFmriRunResult(
         runIndex = firstRun.runIndex,
         rowIndices = firstRun.rowIndices,
@@ -446,10 +505,30 @@ object RunwiseFitBlockResult:
         coefficientAxis = firstRun.coefficientAxis,
         sourceColumnIndices = firstRun.sourceColumns,
         projection = firstRun.projection,
-        voxelStatuses = Some(currentRuns.iterator.flatMap(_.resolvedVoxelStatuses).toVector)
+        voxelStatuses = Some(currentRuns.iterator.flatMap(_.resolvedVoxelStatuses).toVector),
+        voxelwiseCoefficientCovariance = covariance,
+        autocorrelation = autocorrelation
       )
       runIndex += 1
-    out.result()
+    Right(out.result())
+
+  private def mergeRunCovariance(
+      runs: IndexedSeq[RunwiseFmriRunResult]
+  ): Either[FitError, Option[CoefficientCovariance]] =
+    val values = runs.map(_.voxelwiseCoefficientCovariance)
+    if values.forall(_.isEmpty) then Right(None)
+    else if values.exists(_.isEmpty) then
+      Left(FitError.IncompatibleFitBlocks("voxelwise run covariance must be present for every voxel block"))
+    else CoefficientCovariance.mergeByVoxel(values.flatten).map(Some(_))
+
+  private def mergeRunAutocorrelation(
+      runs: IndexedSeq[RunwiseFmriRunResult]
+  ): Either[FitError, Option[ArDiagnostics]] =
+    val values = runs.map(_.autocorrelation)
+    if values.forall(_.isEmpty) then Right(None)
+    else if values.exists(_.isEmpty) then
+      Left(FitError.IncompatibleFitBlocks("run autocorrelation diagnostics must be present for every voxel block"))
+    else ArDiagnostics.merge(values.flatten).map(Some(_))
 
   private def bindMatrixColumns(
       runs: IndexedSeq[RunwiseFmriRunResult],

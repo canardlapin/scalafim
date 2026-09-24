@@ -285,8 +285,10 @@ object FitPlanExecutor:
       timepoints: IndexedSeq[Int],
       partitions: Vector[RunPartition]
   ): Either[FitError, Vector[RunCoefficientProjection]] =
-    plan.engine match
-      case scalafim.fmri.model.FitEngine.RunwiseLeastSquares | scalafim.fmri.model.FitEngine.FixedEffects =>
+    plan.strategy match
+      case scalafim.fmri.model.FitStrategy.RunwiseLeastSquares(_) |
+          scalafim.fmri.model.FitStrategy.RunwiseGeneralizedLeastSquares(_, _) |
+          scalafim.fmri.model.FitStrategy.SeparateRunsThenFixedEffects(_) =>
         plan.model.designSchema match
           case None => Right(Vector.empty)
           case Some(schema) if schema.columns.exists(_.origin.isInstanceOf[scalafim.fmri.design.StructuralColumnOrigin.Legacy]) =>

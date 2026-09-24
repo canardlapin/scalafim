@@ -150,14 +150,18 @@ object FitEstimateProducer:
               ScientificFact.Known("independent homoscedastic errors under the fitted model"),
               ScientificFact.Known("nuisance columns retained in the native coefficient binding"),
               ScientificFact.Known("one shared fit over the declared selected rows"), scans, identity.inputs)
+            val residualDf = DegreesOfFreedom(DfRole.Residual,
+              DfValue.Scalar((plan.timepoints.size - plan.diagnostics.rank).toDouble), "OLS n - numerical rank", false)
+            val effectProduct = products.find(_.kind == ProductKind.Effect).get
             val unit = EstimateUnit(identity.dataset, identity.unit, identity.revision, catalog, domain, observations, bindings,
               products, products.map(p => p.id -> ProductOutcome.Available(p.id)).toMap,
               EstimabilityEvidence.FullRank(columns, plan.timepoints.size, plan.diagnostics.rankReport.tolerance,
                 s"${plan.diagnostics.solveMethod}; ${plan.diagnostics.rankReport.toleranceConvention}"), provenance,
               covariance = products.find(_.kind == ProductKind.Covariance).toVector.map(c =>
-                CovarianceDescriptor(c.id, products.find(_.kind == ProductKind.Effect).get.id,
+                CovarianceDescriptor(c.id, effectProduct.id,
                   CovarianceEquation.Normalized(products.find(_.kind == ProductKind.ResidualVariance).get.id), true, true)),
-              degreesOfFreedom = Vector(DegreesOfFreedom(DfRole.Residual,
-                DfValue.Scalar((plan.timepoints.size - plan.diagnostics.rank).toDouble), "OLS n - numerical rank", false)))
+              degreesOfFreedom = Vector(residualDf),
+              marginalUncertainty = products.find(_.kind == ProductKind.StandardError).toVector.map(product =>
+                MarginalUncertaintyDescriptor(product.id, effectProduct.id, MarginalVarianceOrigin.Estimated(residualDf))))
             Right(new FitEstimateProducer(unit, plan, outputs))
         catch case NonFatal(error) => Left(EstimateError.Invalid(error.getMessage))

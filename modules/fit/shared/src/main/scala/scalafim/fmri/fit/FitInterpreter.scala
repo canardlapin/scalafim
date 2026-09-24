@@ -103,7 +103,9 @@ object FitInterpreters:
       case None       => error
 
   def forPlan(plan: FitPlan): Either[FitError, FitInterpreter] =
-    forEngine(plan.engine)
+    plan.strategy match
+      case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) => Right(RunwiseGeneralizedLeastSquares)
+      case _                                                => forEngine(plan.engine)
 
   def forEngine(engine: FitEngine): Either[FitError, FitInterpreter] =
     engine match
@@ -294,6 +296,78 @@ object FitInterpreters:
 
     protected def collect(chunks: IndexedSeq[FitBlockResult]): Either[FitError, IndexedSeq[RunwiseFitBlockResult]] =
       FitBlockCollectors.runwise(chunks)
+
+  /** Reuse the native GLS preparation and solve independently within every
+    * structural run projection. The result remains run-specific even though
+    * the numerical engine is GLS.
+    */
+  private object RunwiseGeneralizedLeastSquares extends FitInterpreter:
+    type Prepared = RunwiseGlsPrepared
+    type Block = RunwiseFitBlockResult
+    type Result = RunwiseFmriFitResult
+
+    val engine: FitEngine = FitEngine.GeneralizedLeastSquares
+
+    def fit(plan: FitPlan, series: FmriSeries): Either[FitError, RunwiseFmriFitResult] =
+      val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+      for
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
+        runwise <- RunwiseGls.fit(
+          input.design,
+          input.response,
+          partitions,
+          plan.config.autocorrelation,
+          input.runwiseProjections
+        )
+        block = RunwiseFitBlockResult.fromRunwiseGls(input, runwise)
+      yield result(plan, block)
+
+    def prepare(plan: FitPlan, series: FmriSeries): Either[FitError, RunwiseGlsPrepared] =
+      val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+      for
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
+        prepared <- RunwiseGls.prepare(
+          input.design,
+          input.response,
+          partitions,
+          plan.config.autocorrelation,
+          input.runwiseProjections,
+          input.voxelIndices
+        )
+      yield prepared
+
+    def fitChunk(
+        plan: FitPlan,
+        series: FmriSeries,
+        prepared: RunwiseGlsPrepared
+    ): Either[FitError, RunwiseFitBlockResult] =
+      val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+      for
+        input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
+        runwise <- prepared.fit(input.response, input.voxelIndices)
+      yield RunwiseFitBlockResult.fromRunwiseGls(input, runwise)
+
+    def merge(
+        plan: FitPlan,
+        chunks: IndexedSeq[RunwiseFitBlockResult]
+    ): Either[FitError, RunwiseFmriFitResult] =
+      RunwiseFitBlockResult.merge(chunks).map(result(plan, _))
+
+    protected def collect(chunks: IndexedSeq[FitBlockResult]): Either[FitError, IndexedSeq[RunwiseFitBlockResult]] =
+      FitBlockCollectors.runwise(chunks)
+
+    private def result(plan: FitPlan, block: RunwiseFitBlockResult): RunwiseFmriFitResult =
+      RunwiseFmriFitResult(
+        runs = block.runs,
+        columnNames = plan.model.columnNames,
+        voxelIndices = block.voxelIndices,
+        timepoints = block.timepoints,
+        engine = engine,
+        summary = plan.summary,
+        coefficientAxis = block.coefficientAxis,
+        preparationProvenance = block.preparationProvenance,
+        fitExclusions = block.fitExclusions
+      )
 
   /** Fit each run with the existing runwise OLS kernel, then combine the
     * resulting coefficient covariances as a fixed-effects estimand.  Keeping

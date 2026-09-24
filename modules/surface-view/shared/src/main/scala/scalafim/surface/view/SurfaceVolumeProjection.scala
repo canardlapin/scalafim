@@ -127,7 +127,7 @@ object SurfaceVolumeProjection:
           case Some(value) => values(vertex) = value
           case None => return Left(SurfaceViewError.InvalidDataLength(displayGeometry.vertexCount, result.values.size))
         vertex += 1
-      SurfaceLayer.scalar(id, surface, result.values.geometry, values, colorizer, opacity = opacity, blendMode = blendMode)
+      SurfaceLayer.scalar(id, surface, displayGeometry, values, colorizer, opacity = opacity, blendMode = blendMode)
 
   private def samplesPerVertex(path: SurfaceSamplingPath): Int =
     path match

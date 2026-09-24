@@ -38,6 +38,7 @@ final class FitPlan private (
         case _ => false,
       autocorrelated = strategy match
         case FitStrategy.GeneralizedLeastSquares(_, _) => true
+        case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) => true
         case FitStrategy.ReducedRankGls(_, _) => true
         case FitStrategy.RobustLeastSquares(_, _, autocorrelation) => autocorrelation.reestimates
         case _ => false,

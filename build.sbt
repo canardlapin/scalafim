@@ -27,7 +27,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"
+lazy val galeRevision = "18d24dbb5056122032b0278f8bad557a9bb1cf23"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -710,8 +710,12 @@ lazy val surface =
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
+    // zarr4s-core supplies the dependency-free portable SHA-256 that binds
+    // declared surface assets to their exact bytes on both platforms.
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
+    // JVM only: parses templateflow4s point-map manifests in DeclaredPointMapReader.
+    .jvmSettings(libraryDependencies += "com.lihaoyi" %% "ujson" % "4.1.0")
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js

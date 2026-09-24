@@ -145,6 +145,30 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     assertEqualsDouble(out.valueAt(VertexId(1)).get, 2.0, 1e-12)
     assertEqualsDouble(out.valueAt(VertexId(2)).get, 1.0, 1e-12)
 
+  test("indices beyond Int range never alias onto a voxel"):
+    // 2^32 + 1 narrowed through Int would alias to voxel 1.
+    for offset <- Vector(4294967297.0, -4294967295.0) do
+      val far = SurfaceGeometry(pair.white.mesh, Hemisphere.Left, SurfaceKind.White, translation(offset, 0.0, 0.0))
+      val result = VolumeSurfaceSampler.sample(volume, SurfaceGeometryPair(far, far), path = SurfaceSamplingPath.White)
+      assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(0), s"offset $offset")
+      assert(result.values.valueAt(VertexId(0)).get.isNaN, s"offset $offset")
+
+  test("NaN indices from world-coordinate overflow never round onto voxel 0"):
+    // Affines are finite by construction, but a finite vertex can still overflow.
+    // Vertex (1e308, -1e308, 0) under a x10 in-plane scale lands at world
+    // (+Infinity, -Infinity, 0); the inverse grid affine then gives NaN on every
+    // axis (Infinity + 0 * -Infinity). Math.round(NaN) = 0 is in range on every
+    // axis, so only the explicit finiteness check refuses it.
+    val overflowing = SurfaceGeometry(
+      TriangleMesh.fromRows(Vector(Vector(1.0e308, -1.0e308, 0.0), Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)), Vector((0, 1, 2))),
+      Hemisphere.Left,
+      SurfaceKind.White,
+      Affine.fromRowMajor[D3](Vector(10.0, 0.0, 0.0, 0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0)).toOption.get
+    )
+    val result = VolumeSurfaceSampler.sample(volume, SurfaceGeometryPair(overflowing, overflowing), path = SurfaceSamplingPath.White)
+    assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(0))
+    assert(result.values.valueAt(VertexId(0)).get.isNaN)
+
   test("out-of-bounds sample points produce empty samples"):
     val shifted =
       SurfaceGeometry(

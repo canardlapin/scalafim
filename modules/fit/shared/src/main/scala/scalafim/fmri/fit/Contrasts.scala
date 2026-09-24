@@ -139,7 +139,13 @@ final case class TContrast(name: String, weights: Map[String, Double]):
           residualDegreesOfFreedom = result.residualDegreesOfFreedom,
           voxelIndices = selection.voxelIndices,
           hypothesis = metadata,
-          excludedVoxels = selection.exclusions
+          excludedVoxels = selection.exclusions,
+          fitProvenance = Some(ContrastFitProvenance(
+            result.result.engine,
+            result.result.summary,
+            result.result.autocorrelation,
+            result.result.preparationProvenance
+          ))
         ))
       case Some(error) => Left(error)
 
@@ -238,6 +244,14 @@ object AlignedTContrast:
   ): AlignedTContrast =
     new AlignedTContrast(name, columnNames, weights, coefficientAxis)
 
+final case class ContrastFitProvenance(
+    engine: scalafim.fmri.model.FitEngine,
+    summary: scalafim.fmri.model.FitSummary,
+    autocorrelation: Option[ArDiagnostics],
+    responsePreparation: Option[ResponsePreparationProvenance]
+):
+  require(summary.engine == engine, "contrast fit provenance engine must match its summary")
+
 final case class TContrastResult(
     name: String,
     estimates: DVec,
@@ -246,7 +260,8 @@ final case class TContrastResult(
     residualDegreesOfFreedom: ResidualDegreesOfFreedom,
     voxelIndices: Vector[Int],
     hypothesis: Option[HypothesisMetadata] = None,
-    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty
+    excludedVoxels: Vector[VoxelInferenceExclusion] = Vector.empty,
+    fitProvenance: Option[ContrastFitProvenance] = None
 ):
   require(estimates.length == voxelIndices.length, "contrast estimates must match voxel indices")
   require(standardErrors.length == voxelIndices.length, "contrast standard errors must match voxel indices")

@@ -1,0 +1,97 @@
+{
+  "schema": "scalafim-group-baseline-comparator/v1",
+  "date": "2026-09-14",
+  "candidate": {
+    "commit": "f0c9f5c175df64355b06b5a1fa0ef06b537fc35c",
+    "benchmark_sha256": "004eb3c101bf1735198db849601dd1506d75080be88dcb0000dbb9cf32d7b2c3"
+  },
+  "comparator": {
+    "commit": "925da6da3ce88394145c012b2a8c68e2e5cca66d",
+    "source_archive_sha256": "b9afca7b474396d70cff5a8846cd6a6d8c6dc9ad61919e8f047ef38eea0cd4f5",
+    "adapted_benchmark_sha256": "1124023a193140bd9c0cbe9adcb5687896fcedba3730b3aa88c290f6e82a702d",
+    "adaptation": "Removed the unavailable PM-MKH mode and used the comparator's one-argument RandomEffects constructor; data generation and measured body are otherwise identical.",
+    "build_note": "The git archive has no .git directory, so build metadata probes printed non-fatal not-a-git-repository warnings before successful compilation and measurement."
+  },
+  "environment": {
+    "os": "macOS 14.3 (23D56)",
+    "architecture": "arm64",
+    "sbt": "1.11.7",
+    "sbt_runtime_banner": "Homebrew Java 25.0.1",
+    "shell_java": "OpenJDK 22+36-2370"
+  },
+  "workload": {
+    "subjects": 100,
+    "terms": 4,
+    "samples": 50000,
+    "warmups": 5,
+    "measured_runs": 5,
+    "seed": 20260914,
+    "measurement": "wall time, current-thread CPU time, and current-thread allocated bytes around one completed GroupEngine.fit"
+  },
+  "results": [
+    {
+      "policy": "OLS",
+      "candidate": {
+        "wall_seconds": [0.051932167, 0.052117917, 0.052017875, 0.051592333, 0.050217667],
+        "cpu_seconds": [0.051895, 0.052101, 0.051915, 0.051503, 0.050206],
+        "allocated_bytes": [5224264, 5223880, 5223880, 5223880, 5223880],
+        "coefficient_checksum": 44901.00478841063,
+        "standard_error_checksum": 26150.966362847816
+      },
+      "comparator": {
+        "wall_seconds": [0.05434075, 0.050935, 0.051002208, 0.0519905, 0.05237475],
+        "cpu_seconds": [0.054323, 0.050883, 0.051015, 0.051976, 0.052319],
+        "allocated_bytes": [5202744, 5202360, 5202360, 5202360, 5202360],
+        "coefficient_checksum": 44901.0047884108,
+        "standard_error_checksum": 26150.966362847827
+      },
+      "median_candidate": {"wall_seconds": 0.051932167, "cpu_seconds": 0.051895, "allocated_bytes": 5223880},
+      "median_comparator": {"wall_seconds": 0.0519905, "cpu_seconds": 0.051976, "allocated_bytes": 5202360},
+      "candidate_change_percent": {"wall": -0.1121993441, "cpu": -0.1558411575, "allocated_bytes": 0.4136584166},
+      "interpretation": "No material performance improvement; allocation is slightly higher."
+    },
+    {
+      "policy": "FE",
+      "candidate": {
+        "wall_seconds": [0.170915416, 0.155703416, 0.178345208, 0.154534125, 0.155220292],
+        "cpu_seconds": [0.161819, 0.155402, 0.155384, 0.154296, 0.15489],
+        "allocated_bytes": [67243224, 67243088, 67243088, 67243088, 67243144],
+        "coefficient_checksum": 44936.01770144746,
+        "standard_error_checksum": 14659.880767320166
+      },
+      "comparator": {
+        "wall_seconds": [0.210543708, 0.216874667, 0.202784666, 0.202067209, 0.20297675],
+        "cpu_seconds": [0.209392, 0.210898, 0.202462, 0.201748, 0.202623],
+        "allocated_bytes": [108001808, 108001672, 108001672, 108001672, 108001672],
+        "coefficient_checksum": 44936.0177014476,
+        "standard_error_checksum": 14659.880767320175
+      },
+      "median_candidate": {"wall_seconds": 0.155703416, "cpu_seconds": 0.155384, "allocated_bytes": 67243088},
+      "median_comparator": {"wall_seconds": 0.20297675, "cpu_seconds": 0.202623, "allocated_bytes": 108001672},
+      "candidate_change_percent": {"wall": -23.2900241037, "cpu": -23.313740296, "allocated_bytes": -37.7388453764},
+      "interpretation": "The recovered weighted solver materially reduces time and allocation for this fixed-effects workload."
+    },
+    {
+      "policy": "DL",
+      "candidate": {
+        "wall_seconds": [0.345333458, 0.298618584, 0.315288875, 0.294963209, 0.294490375],
+        "cpu_seconds": [0.298068, 0.293315, 0.29524, 0.294332, 0.294005],
+        "allocated_bytes": [118043272, 118043136, 118043136, 118043136, 118043136],
+        "coefficient_checksum": 44899.77709618844,
+        "standard_error_checksum": 27844.717547127686
+      },
+      "comparator": {
+        "wall_seconds": [0.414121208, 0.415694292, 0.412191708, 0.415503792, 0.442351916],
+        "cpu_seconds": [0.413326, 0.415052, 0.411572, 0.41325, 0.435612],
+        "allocated_bytes": [214802304, 214802168, 214802168, 214802168, 214802136],
+        "coefficient_checksum": 44899.777096188576,
+        "standard_error_checksum": 27844.717547127704
+      },
+      "median_candidate": {"wall_seconds": 0.298618584, "cpu_seconds": 0.294332, "allocated_bytes": 118043136},
+      "median_comparator": {"wall_seconds": 0.415503792, "cpu_seconds": 0.413326, "allocated_bytes": 214802168},
+      "candidate_change_percent": {"wall": -28.1309605954, "cpu": -28.7893817471, "allocated_bytes": -45.0456496324},
+      "interpretation": "The recovered weighted solver materially reduces time and allocation for this DerSimonian-Laird workload."
+    }
+  ],
+  "scope": "Single-machine bounded comparison, not a universal throughput claim. PM-MKH has no pre-recovery implementation and therefore no comparator result."
+}

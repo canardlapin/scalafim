@@ -7,11 +7,12 @@ enum StatisticKind:
   case T, Z, P, F
 
 enum ProductKind:
-  case Effect, StandardError, Variance, ResidualVariance, Covariance
+  case Effect, StandardError, Variance, ResidualVariance, Covariance, DegreesOfFreedomValues
   case Statistic(kind: StatisticKind)
 
   def accepts(value: Double): Boolean = value.isFinite && (this match
     case StandardError | Variance | ResidualVariance => value >= 0.0
+    case DegreesOfFreedomValues => value > 0.0
     case Statistic(StatisticKind.P) => value >= 0.0 && value <= 1.0
     case Statistic(StatisticKind.F) => value >= 0.0
     case _ => true)
@@ -81,6 +82,32 @@ final case class DegreesOfFreedom(role: DfRole, value: DfValue, method: String, 
     case DfValue.Scalar(df) => require(df.isFinite && (if role == DfRole.Residual then df >= 0 else df > 0))
     case DfValue.Unknown(reason) => require(Invariants.text(reason))
     case _ => ()
+
+/** Scientific origin of a marginal variance or standard-error product.
+  * Estimated uncertainty names its supported df without implying that nominal
+  * residual df are calibrated effective df.
+  */
+enum MarginalVarianceOrigin:
+  case Known(method: String)
+  case Estimated(degreesOfFreedom: DegreesOfFreedom)
+  case Unknown(reason: String)
+
+  private[estimates] def valid: Boolean = this match
+    case Known(method) => Invariants.text(method)
+    case Estimated(df) =>
+      val supported = df.value match
+        case DfValue.Scalar(value) => value.isFinite && value > 0.0
+        case DfValue.Product(_) => true
+        case _ => false
+      supported && df.role != DfRole.Reference && (!df.approximate || df.role == DfRole.Effective)
+    case Unknown(reason) => Invariants.text(reason)
+
+final case class MarginalUncertaintyDescriptor(
+    product: ProductId,
+    effects: ProductId,
+    origin: MarginalVarianceOrigin
+):
+  require(origin.valid)
 
 enum TestTail:
   case Lower, Upper, TwoSided

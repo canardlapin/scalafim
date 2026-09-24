@@ -5,6 +5,7 @@ import scalafim.fmri.fit.estimates.FitGroupAdapter
 import gale.linalg.DVec
 import scalafim.dataset.SubjectId
 import scalafim.fmri.fit.{ResidualDegreesOfFreedom, TContrastResult}
+import scalafim.image.SampleSpaces
 
 class FirstLevelBridgeSuite extends munit.FunSuite:
 
@@ -58,5 +59,47 @@ class FirstLevelBridgeSuite extends munit.FunSuite:
     assertEquals(
       FitGroupAdapter.groupData(GroupSpace.SampleAxis(2), subjects, Vector("faces"), results).left.toOption,
       Some(GroupError.sampleMismatch(2, 1))
+    )
+  }
+
+  test("bridge reorders by voxel identity and keeps subject-bound residual df") {
+    val subject = subjects.head
+    val result = TContrastResult(
+      name = "faces",
+      estimates = DVec.fromSeq(Seq(10.0, 20.0)),
+      standardErrors = DVec.fromSeq(Seq(2.0, 4.0)),
+      statistics = DVec.fromSeq(Seq(5.0, 5.0)),
+      residualDegreesOfFreedom = ResidualDegreesOfFreedom.unsafe(17),
+      voxelIndices = Vector(5, 2)
+    )
+    val data = value(FitGroupAdapter.groupData(
+      GroupSpace.VoxelAxis(SampleSpaces(Vector(6, 1, 1)), Vector(2, 5)),
+      Vector(subject), Vector("faces"), Map((subject, "faces") -> result)))
+    val response = data.response("faces").get
+    assertEqualsDouble(response.effects(0, 0), 20.0, 0.0)
+    assertEqualsDouble(response.effects(0, 1), 10.0, 0.0)
+    assertEqualsDouble(response.variances.get(0, 0), 16.0, 0.0)
+    assertEqualsDouble(response.variances.get(0, 1), 4.0, 0.0)
+    val source = data.uncertainty.get.sources.head
+    assertEquals(source.samples, Vector(2, 5))
+    assertEquals(source.origin,
+      GroupVarianceOrigin.Estimated(GroupDegreesOfFreedom(scalafim.estimates.DfRole.Residual,
+        GroupDfValues.Scalar(17.0), "native TContrastResult residual degrees of freedom", false)))
+    assert(source.fit.serialCorrelation.isInstanceOf[scalafim.estimates.ScientificFact.Unknown])
+  }
+
+  test("bridge refuses named-contrast disagreement and invalid standard errors") {
+    val subject = subjects.head
+    val wrongName = contrastResult(0.4, 0.2).copy(name = "objects")
+    assertEquals(
+      FitGroupAdapter.groupData(GroupSpace.SampleAxis(1), Vector(subject), Vector("faces"),
+        Map((subject, "faces") -> wrongName)).left.toOption,
+      Some(GroupError.ContrastIdentityMismatch(subject.value, "faces", "objects"))
+    )
+    val invalidSe = contrastResult(0.4, 0.2).copy(standardErrors = DVec.fromSeq(Seq(0.0)))
+    assertEquals(
+      FitGroupAdapter.groupData(GroupSpace.SampleAxis(1), Vector(subject), Vector("faces"),
+        Map((subject, "faces") -> invalidSe)).left.toOption,
+      Some(GroupError.InvalidStandardError(subject.value, "faces", 0, 0.0))
     )
   }

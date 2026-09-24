@@ -44,9 +44,58 @@ final case class SurfaceSampleResult(
   sampleCounts: SurfaceField[Int]
 )
 
+/** Outcome of a requested sample. Included values may be nonfinite, matching
+  * ordinary sampling semantics; inclusion describes geometry and mask admission.
+  */
+enum SurfaceSampleOutcome:
+  case OutsideVolume
+  case Masked(voxel: VoxelCoord)
+  case Included(voxel: VoxelCoord, value: Double)
+
+final case class SurfacePointSample(world: WorldPoint, outcome: SurfaceSampleOutcome)
+
+/** Ordered requests and aggregation inputs for one vertex. Duplicate voxel hits
+  * remain distinct requests. Nearest uses the first included request; Average
+  * and Mode use every included request, including duplicates.
+  */
+final case class SurfaceVertexSample private[surface] (
+    vertex: VertexId,
+    path: SurfaceSamplingPath,
+    aggregation: SurfaceSampleAggregation,
+    samples: Vector[SurfacePointSample],
+    value: Double
+):
+  def acceptedSampleIndices: Vector[Int] = samples.indices.filter { index =>
+    samples(index).outcome match
+      case SurfaceSampleOutcome.Included(_, _) => true
+      case _ => false
+  }.toVector
+
+  def contributingSampleIndices: Vector[Int] = aggregation match
+    case SurfaceSampleAggregation.Nearest => acceptedSampleIndices.take(1)
+    case _ => acceptedSampleIndices
+
+  def acceptedCount: Int = acceptedSampleIndices.size
+
+  def hasNonFiniteSamples: Boolean = samples.exists { sample => sample.outcome match
+    case SurfaceSampleOutcome.Included(_, value) => !value.isFinite
+    case _ => false
+  }
+
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   def sample(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume] = None): SurfaceSampleResult =
+    sampleSelected(volume, mask, null)
+
+  /** Sample only vertices whose `selected` flag is set (all when `selected` is
+    * null); unselected vertices are never located or looked up and report NaN
+    * with zero samples.
+    */
+  private[surface] def sampleSelected(
+    volume: SomeScalarVolume[Double],
+    mask: Option[SomeMaskVolume],
+    selected: Array[Boolean] | Null
+  ): SurfaceSampleResult =
     mask.foreach(validateMask(volume, _))
 
     val vertexCount = plan.surfaces.white.vertexCount
@@ -55,16 +104,32 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
     var i = 0
     while i < vertexCount do
-      val vertex = VertexId.unsafe(i)
-      val samples = sampleValues(volume, mask, samplePoints(vertex))
-      counts(i) = samples.length
-      if samples.nonEmpty then values(i) = aggregate(samples)
+      if selected == null || selected.nn(i) then
+        val vertex = VertexId.unsafe(i)
+        val samples = sampleValues(volume, mask, samplePoints(vertex))
+        counts(i) = samples.length
+        if samples.nonEmpty then values(i) = aggregate(samples)
       i += 1
 
     SurfaceSampleResult(
       values = SurfaceField.full(plan.surfaces.white, values.toVector, "surface-sample"),
       sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count")
     )
+
+  /** Inspect just one vertex without allocating receipts for the whole mesh. */
+  def inspectVertex(volume: SomeScalarVolume[Double], vertex: VertexId,
+      mask: Option[SomeMaskVolume] = None): SurfaceVertexSample =
+    require(vertex.index < plan.surfaces.white.vertexCount, "vertex id out of range")
+    mask.foreach(validateMask(volume, _))
+    val points = Vector.newBuilder[SurfacePointSample]
+    val values = sampleValues(volume, mask, samplePoints(vertex), Some(point => { points += point; () }))
+    SurfaceVertexSample(vertex, plan.path, plan.aggregation, points.result(),
+      if values.isEmpty then Double.NaN else aggregate(values))
+
+  def inspectVertexEither(volume: SomeScalarVolume[Double], vertex: VertexId,
+      mask: Option[SomeMaskVolume] = None): Either[SurfaceError, SurfaceVertexSample] =
+    try scala.util.Right(inspectVertex(volume, vertex, mask))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidGeometry(SurfaceError.reason(error)))
 
   private def samplePoints(vertex: VertexId): Vector[Vector[Double]] =
     val white = worldPoint(plan.surfaces.white, vertex)
@@ -96,22 +161,37 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
   private def sampleValues(
     volume: SomeScalarVolume[Double],
     mask: Option[SomeMaskVolume],
-    points: Vector[Vector[Double]]
+    points: Vector[Vector[Double]],
+    observe: Option[SurfacePointSample => Unit] = None
   ): Vector[Double] =
     val out = Vector.newBuilder[Double]
     points.foreach { point =>
-      nearestGrid(volume, point).foreach { grid =>
-        val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-        if mask.forall(_.valueAtCanonicalOrdinal(lin)) then out += volume.valueAtCanonicalOrdinal(lin)
-      }
+      nearestGrid(volume, point) match
+        case None => observe.foreach(callback => callback(SurfacePointSample(
+          WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.OutsideVolume)))
+        case Some(grid) =>
+          val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
+          if mask.forall(_.valueAtCanonicalOrdinal(lin)) then
+            val value = volume.valueAtCanonicalOrdinal(lin)
+            out += value
+            observe.foreach(callback => callback(SurfacePointSample(WorldPoint(point(0), point(1), point(2)),
+              SurfaceSampleOutcome.Included(VoxelCoord(grid(0), grid(1), grid(2)), value))))
+          else observe.foreach(callback => callback(SurfacePointSample(WorldPoint(point(0), point(1), point(2)),
+            SurfaceSampleOutcome.Masked(VoxelCoord(grid(0), grid(1), grid(2))))))
     }
     out.result()
 
   private def nearestGrid(volume: SomeScalarVolume[Double], point: Vector[Double]): Option[Vector[Int]] =
+    // Nearest voxel with ties rounded up (Math.round); support is [-0.5, dim - 0.5)
+    // per axis. Range-check the Long before narrowing and reject nonfinite
+    // indices, which Math.round would otherwise map to voxel 0 or alias.
     val index = volume.space.coordToIndex(point)
-    val grid = index.map(v => math.round(v).toInt)
     val dims = volume.space.spatialDims
-    if grid.indices.forall(i => grid(i) >= 0 && grid(i) < dims(i)) then Some(grid) else None
+    if !index.forall(_.isFinite) then None
+    else
+      val rounded = index.map(v => math.round(v))
+      if rounded.indices.forall(i => rounded(i) >= 0L && rounded(i) < dims(i).toLong) then Some(rounded.map(_.toInt))
+      else None
 
   private def aggregate(values: Vector[Double]): Double =
     plan.aggregation match
