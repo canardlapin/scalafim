@@ -5,62 +5,77 @@ import SampleSpaces.*
 import gale.linalg.DMat
 import image4s.geometry.Affine
 import image4s.geometry.D3
+import image4s.geometry.Frame
+import scalafim.image.world.{FrameCatalog, WorldSpace}
 
 object SpaceUtils:
 
-  final case class Bounds(min: Vector[Double], max: Vector[Double])
-  final case class AlignedSpace(
+  /** An axis-aligned output grid covering a source grid, with the source's world bounds in the source frame. */
+  final case class AlignedSpace[F <: Frame[D3]](
       shape: Vector[Int],
       affine: Affine[D3],
-      bounds: Bounds
+      bounds: WorldBox[F]
   )
 
   enum IndexBase:
     case R, Zero
 
-  def outputAlignedSpace(space: SomeSampleSpace): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace): AlignedSpace[?] =
     outputAlignedSpace(space, None)
 
-  def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Vector[Double]): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Vector[Double]): AlignedSpace[?] =
     outputAlignedSpace(space, Some(voxelSizes))
 
-  def outputAlignedSpace(space: SomeSampleSpace, voxelSize: Double): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace, voxelSize: Double): AlignedSpace[?] =
     outputAlignedSpace(space, Some(Vector(voxelSize)))
 
-  def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Option[Vector[Double]]): AlignedSpace =
+  def outputAlignedSpace(space: SomeSampleSpace, voxelSizes: Option[Vector[Double]]): AlignedSpace[?] =
     val affine =
       space.affineD3
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    outputAlignedSpace(space.dims, affine, voxelSizes)
+    aligned(GridSpec.fromSpace(space).frame, space.dims, affine, voxelSizes)
 
-  def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem]): AlignedSpace =
+  /** The aligned output space of a frame-typed grid; its bounds stay in the grid's frame. */
+  def outputAlignedSpace[F <: Frame[D3]](grid: GridSpec[F], voxelSizes: Option[Vector[Double]]): AlignedSpace[F] =
+    aligned(grid.frame, grid.dims, grid.affine, voxelSizes)
+
+  def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem]): AlignedSpace[?] =
     outputAlignedSpace(vol.space, None)
 
-  def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace =
-    outputAlignedSpace(vol.space.dims, vol.grid.indexToFrame, voxelSizes)
+  def outputAlignedSpace[A, Sem](vol: SomeNeuroVolume[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace[?] =
+    outputAlignedSpace(vol.space, voxelSizes)
 
   @scala.annotation.targetName("outputAlignedNeuroSeries")
-  def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem]): AlignedSpace =
+  def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem]): AlignedSpace[?] =
     outputAlignedSpace(vec.space, None)
 
   @scala.annotation.targetName("outputAlignedNeuroSeriesWithVoxelSizes")
-  def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace =
-    outputAlignedSpace(vec.space.dims, vec.grid.indexToFrame, voxelSizes)
+  def outputAlignedSpace[A, Sem](vec: SomeNeuroSeries[A, Sem], voxelSizes: Option[Vector[Double]]): AlignedSpace[?] =
+    outputAlignedSpace(vec.space, voxelSizes)
 
-  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3]): AlignedSpace =
+  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3]): AlignedSpace[?] =
     outputAlignedSpace(shape, affine, None)
 
-  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSizes: Vector[Double]): AlignedSpace =
+  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSizes: Vector[Double]): AlignedSpace[?] =
     outputAlignedSpace(shape, affine, Some(voxelSizes))
 
-  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSize: Double): AlignedSpace =
+  def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSize: Double): AlignedSpace[?] =
     outputAlignedSpace(shape, affine, Some(Vector(voxelSize)))
 
+  /** A bare shape and affine name no world, so the bounds are placed in the unresolved RAS-mm world frame. */
   def outputAlignedSpace(
       shape: Vector[Int],
       affine: Affine[D3],
       voxelSizes: Option[Vector[Double]]
-  ): AlignedSpace =
+  ): AlignedSpace[?] =
+    aligned(FrameCatalog.frame(WorldSpace.Unresolved), shape, affine, voxelSizes)
+
+  private def aligned[F <: Frame[D3]](
+      frame: F,
+      shape: Vector[Int],
+      affine: Affine[D3],
+      voxelSizes: Option[Vector[Double]]
+  ): AlignedSpace[F] =
     require(shape.nonEmpty, "shape must have at least one dimension")
     require(shape.forall(_ > 0), "shape must contain positive dimensions")
 
@@ -80,9 +95,11 @@ object SpaceUtils:
 
     val worldCorners = corners.map: corner =>
       affine(corner)
+        .flatMap(world => GridSpec.pointIn(frame, world))
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    val mins = Vector.tabulate(3)(axis => worldCorners.map(_(axis)).min)
-    val maxs = Vector.tabulate(3)(axis => worldCorners.map(_(axis)).max)
+    val bounds = WorldBox.enclosing(worldCorners).getOrElse(throw new IllegalStateException("no grid corners"))
+    val mins = bounds.min.coordinates
+    val maxs = bounds.max.coordinates
     val fullShape =
       Vector.tabulate(3) { axis =>
         math.ceil((maxs(axis) - mins(axis)) / outVox(axis)).toInt + 1
@@ -102,12 +119,12 @@ object SpaceUtils:
         )
         .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-    AlignedSpace(outShape, outAffine, Bounds(mins, maxs))
+    AlignedSpace(outShape, outAffine, bounds)
 
-  def vox2outVox(space: SomeSampleSpace): AlignedSpace =
+  def vox2outVox(space: SomeSampleSpace): AlignedSpace[?] =
     outputAlignedSpace(space)
 
-  def vox2outVox(space: SomeSampleSpace, voxelSizes: Vector[Double]): AlignedSpace =
+  def vox2outVox(space: SomeSampleSpace, voxelSizes: Vector[Double]): AlignedSpace[?] =
     outputAlignedSpace(space, voxelSizes)
 
   def sliceToVolumeAffine(

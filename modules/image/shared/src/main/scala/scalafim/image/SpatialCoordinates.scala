@@ -247,6 +247,20 @@ final class GridSpec[F <: Frame[D3]] private (private val space: SampleSpace[F, 
   def bind(world: WorldPoint): Either[GeometryError, Point[F, D3]] =
     GridSpec.pointIn(frame, world.toVector)
 
+  /** The world box enclosing this grid's voxel centres, in the grid's frame. */
+  def bounds: WorldBox[F] =
+    val extents = grid.shape.map(extent => (extent - 1).toDouble)
+    val corners =
+      Vector.tabulate(8): mask =>
+        pointAt(
+          VoxelPoint(
+            if (mask & 1) == 0 then 0.0 else extents(0),
+            if (mask & 2) == 0 then 0.0 else extents(1),
+            if (mask & 4) == 0 then 0.0 else extents(2)
+          )
+        ).fold(error => throw new IllegalStateException(error.message), identity)
+    WorldBox.enclosing(corners).getOrElse(throw new IllegalStateException("a grid has eight corners"))
+
   @deprecated("Use voxelToWorld(VoxelPoint) or pointAt(VoxelPoint); a bare Vector[Double] carries neither arity nor role.", "0.2.0")
   def voxelToWorld(voxel: Vector[Double]): Vector[Double] =
     SpatialCoordinates.voxelToWorld(voxel, affine)

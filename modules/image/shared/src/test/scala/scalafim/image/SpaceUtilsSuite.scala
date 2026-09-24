@@ -5,6 +5,7 @@ import SampleSpaces.*
 import gale.linalg.DMat
 import image4s.geometry.Affine
 import image4s.geometry.D3
+import image4s.geometry.Point
 import scalafim.image.NeuroAffineSyntax.*
 
 class SpaceUtilsSuite extends munit.FunSuite:
@@ -15,6 +16,9 @@ class SpaceUtilsSuite extends munit.FunSuite:
   private def assertClose(actual: Vector[Double], expected: Vector[Double], tol: Double): Unit =
     assertEquals(actual.length, expected.length, clue = "")
     actual.zip(expected).foreach { case (a, e) => assertClose(a, e, tol) }
+
+  private def assertClose(actual: Point[?, D3], expected: Vector[Double], tol: Double): Unit =
+    assertClose(actual.coordinates, expected, tol)
 
   private def assertClose(actual: DMat, expected: DMat, tol: Double): Unit =
     assertEquals(actual.rows, expected.rows, clue = "")

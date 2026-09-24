@@ -1,6 +1,7 @@
 package scalafim.surface.view
 
 import intaglio.*
+import scalafim.image.{x, y, z}
 import scalafim.surface.*
 import scala.util.hashing.MurmurHash3
 
@@ -213,31 +214,11 @@ object SurfaceCompiler:
     normals
 
   private def familyFrame(assets: Vector[SurfaceAsset]): CameraFrame =
-    var minimumX = Double.PositiveInfinity
-    var minimumY = Double.PositiveInfinity
-    var minimumZ = Double.PositiveInfinity
-    var maximumX = Double.NegativeInfinity
-    var maximumY = Double.NegativeInfinity
-    var maximumZ = Double.NegativeInfinity
-    var assetIndex = 0
-    while assetIndex < assets.length do
-      val bounds = assets(assetIndex).cameraBounds
-      minimumX = math.min(minimumX, bounds.minimumX)
-      minimumY = math.min(minimumY, bounds.minimumY)
-      minimumZ = math.min(minimumZ, bounds.minimumZ)
-      maximumX = math.max(maximumX, bounds.maximumX)
-      maximumY = math.max(maximumY, bounds.maximumY)
-      maximumZ = math.max(maximumZ, bounds.maximumZ)
-      assetIndex += 1
-    val dx = maximumX - minimumX
-    val dy = maximumY - minimumY
-    val dz = maximumZ - minimumZ
-    CameraFrame(
-      (minimumX + maximumX) * 0.5,
-      (minimumY + maximumY) * 0.5,
-      (minimumZ + maximumZ) * 0.5,
-      0.5 * math.sqrt(dx * dx + dy * dy + dz * dz)
-    )
+    assets.flatMap(_.cameraBounds).reduceOption(_.union(_)) match
+      case None => CameraFrame(0.0, 0.0, 0.0, 0.0)
+      case Some(bounds) =>
+        val center = bounds.center
+        CameraFrame(center.x, center.y, center.z, 0.5 * bounds.diagonal)
 
   private def cameraPacket(camera: SurfaceCamera, frame: CameraFrame): SurfaceCameraPacket =
     val (baseX, baseY, baseZ) = camera.viewpoint.cameraDirection
