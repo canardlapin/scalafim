@@ -126,6 +126,9 @@ object SampleSpaces:
     * The grid shape, index-to-world affine and non-spatial axes are retained; only the frame identity changes, from
     * whatever the decoder produced (ephemeral or unresolved) to the persistent frame of `world`. Spaces already in a
     * different resolved world are rejected: moving between worlds needs a transform, not a relabel.
+    *
+    * Trust boundary: relabelling an unresolved or ephemeral space asserts that its coordinates are in `world`; nothing
+    * can check that. Callers vouch for it, as `Nifti.readVolumeIn` does after resolving the file's evidence.
     */
   def inWorld(
       space: SomeSampleSpace,

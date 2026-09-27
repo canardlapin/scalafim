@@ -176,3 +176,10 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
     val identityRoute = value(SpaceTransforms.plan(SpaceId.MNI305, SpaceId.MNI305, DataKind.Voxel, registry))
     assert(identityRoute.pullback(mni305, mni305).isRight)
     assert(identityRoute.pullback(mni152, mni305).isLeft)
+
+  test("an identity route over an uncatalogued space plans, but has no world for grid pullbacks"):
+    val unknown = SpaceId.normalize("T1w")
+    val route = value(SpaceTransforms.plan(unknown, unknown))
+    assert(route.isExecutable)
+    val grid = GridSpec.identity(Vector(2, 2, 2))
+    assertEquals(route.pullback(grid, grid).left.toOption, Some(AtlasError.UnknownSpace(unknown)))

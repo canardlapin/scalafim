@@ -50,7 +50,8 @@ final case class SpaceEvidence(
   *
   * An assertion chooses among spaces the file evidence allows; it never overrides evidence that contradicts it. It
   * must agree with a BIDS label (a native label admits only a subject-native assertion, a template label only that
-  * template) and with the xform code, under the same rules a BIDS-named space meets.
+  * template), with a supplied native context (an asserted native space must be the context's), and with the xform
+  * code, under the same rules a BIDS-named space meets.
   */
 object SpaceResolver:
   /** BIDS `space-` labels that denote the subject's own (native) coordinates rather than a template. */
@@ -63,6 +64,7 @@ object SpaceResolver:
       case Some(asserted) =>
         for
           _ <- evidence.bidsSpace.fold(Right(()))(label => assertionMatchesBids(asserted, label.trim, fromBids))
+          _ <- assertionMatchesNative(asserted, evidence.native)
           _ <- consistent(asserted, evidence.xform)
         yield asserted
       case None =>
@@ -80,6 +82,15 @@ object SpaceResolver:
       case WorldSpace.Unresolved =>
         Left(SpaceError.NoWorldSpace("the evidence does not identify a world space; supply a BIDS space- entity, a native context or an assertion"))
       case space => Right(space)
+
+  /** A supplied native context names the subject-native space; an asserted native space must be that one. */
+  private def assertionMatchesNative(asserted: WorldSpace, native: Option[NativeContext]): Either[SpaceError, Unit] =
+    (asserted, native) match
+      case (assertedNative: WorldSpace.SubjectNative, Some(c)) =>
+        val contextSpace = WorldSpace.SubjectNative(c.namespace, c.subject, c.session, c.reference)
+        if assertedNative == contextSpace then Right(())
+        else Left(SpaceError.ConflictingEvidence(assertedNative.displayName, s"native context ${contextSpace.displayName}"))
+      case _ => Right(())
 
   /** A BIDS label names a native or a template space; an assertion may only refine it, never contradict it. */
   private def assertionMatchesBids(

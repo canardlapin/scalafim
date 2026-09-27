@@ -45,7 +45,7 @@ object GeometryDigest:
     val invalid = SpaceError.UnrecognisedWorldSpaceId(canonical)
     def int(text: String): Option[Int] = text.toIntOption
     def bits(text: String): Option[Double] =
-      if text.isEmpty || text.length > 16 || !text.forall(c => Character.digit(c, 16) >= 0) then None
+      if text.isEmpty || text.length > 16 || !text.forall(c => c >= '0' && c <= '9' || c >= 'a' && c <= 'f') then None
       else Some(java.lang.Double.longBitsToDouble(java.lang.Long.parseUnsignedLong(text, 16)))
     canonical.split(";", -1).toList match
       case dimText :: qText :: sText :: affineText :: Nil if qText.startsWith("q") && sText.startsWith("s") =>

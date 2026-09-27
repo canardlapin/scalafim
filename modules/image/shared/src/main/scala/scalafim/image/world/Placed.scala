@@ -1,6 +1,7 @@
 package scalafim.image.world
 
 import image4s.geometry.{D3, Frame, FrameAlignment, Point, Vec}
+import scalafim.image.GridSpec
 
 /** A frame-indexed value whose frame is known only at runtime: a dependent pair.
   *
@@ -53,8 +54,12 @@ object Placed:
         .map(error => SpaceError.FrameBinding(error.message))
         .flatMap(alignment => rebind.toRight(placed.value, alignment))
 
-/** Reads the runtime frame owner of a frame-indexed value. */
-trait FrameOwned[V[_ <: Frame[D3]]]:
+/** Reads the runtime frame owner of a frame-indexed value, for [[Placed.of]]'s ownership check.
+  *
+  * Sealed: the check is only as strong as the instance, so the only instances are the ones here, each returning the
+  * value's sole frame owner.
+  */
+sealed trait FrameOwned[V[_ <: Frame[D3]]]:
   def frameOf[F <: Frame[D3]](value: V[F]): F
 
 object FrameOwned:
@@ -63,6 +68,9 @@ object FrameOwned:
 
   given vectors: FrameOwned[Rebind.VecIn] with
     def frameOf[F <: Frame[D3]](value: Vec[F, D3]): F = value.frame
+
+  given grids: FrameOwned[GridSpec] with
+    def frameOf[F <: Frame[D3]](value: GridSpec[F]): F = value.frame
 
 /** Moves a frame-indexed value across a checked frame alignment. */
 trait Rebind[V[_ <: Frame[D3]]]:

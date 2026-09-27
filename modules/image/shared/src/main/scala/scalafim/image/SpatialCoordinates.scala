@@ -14,7 +14,7 @@ import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import image4s.geometry.Point
 import scala.annotation.targetName
-import scalafim.image.world.{FrameOwned, Rebind, SpaceError, ToolCoordinates}
+import scalafim.image.world.{Rebind, SpaceError, ToolCoordinates}
 
 object SpatialCoordinates:
 
@@ -455,10 +455,6 @@ object GridSpec:
       self <- Frame.alignOwners[D3, frame.type, F](frame, frame)
       owned <- self.pointToRight(raw)
     yield owned
-
-  /** A grid's runtime frame owner, for [[scalafim.image.world.Placed.of]]. */
-  given frameOwned: FrameOwned[GridSpec] with
-    def frameOf[F <: Frame[D3]](value: GridSpec[F]): F = value.frame
 
   /** Move a grid across a checked frame alignment, keeping its shape, affine and persistent grid id. */
   given rebind: Rebind[GridSpec] with

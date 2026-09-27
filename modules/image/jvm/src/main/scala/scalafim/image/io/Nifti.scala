@@ -29,7 +29,7 @@ import ravel.Rank
 import ravel.AnyRank
 import scalafim.image.*
 import scalafim.image.NeuroAffineSyntax.*
-import scalafim.image.world.{SpaceError, SpaceEvidence, SpaceResolver, WorldSpace}
+import scalafim.image.world.{SpaceError, SpaceEvidence, SpaceResolver, WorldSpace, XformCode}
 
 import java.nio.ByteOrder
 import java.nio.file.Path
@@ -195,6 +195,10 @@ object Nifti:
     * `SpaceResolver.resolveKnown` decides the world space, and the decoded geometry is re-identified in it with
     * `SampleSpaces.inWorld`, keeping shape, affine and data. Unresolved or contradictory evidence is a
     * [[NiftiImageReadError.Space]], never a silent fallback to the unresolved world.
+    *
+    * The caller vouches for its evidence: a supplied `NativeContext` is the native space the file is asserted to be in,
+    * and it is not compared with the file's own geometry (a derivative resampled into a subject's T1w space is in that
+    * space without sharing the T1w grid). Use `NiftiSpaceEvidence.nativeContext` when the file is itself the reference.
     */
   def readVolumeIn(
       path: Path,
@@ -440,6 +444,8 @@ object Nifti:
       for
         fromFile <- NiftiSpaceEvidence.fromSelection(decoded.header, decoded.affineSelection.source)
         xform <- (evidence.xform, fromFile.xform) match
+          // An unknown (or scaling-fallback) header code is absence of evidence, not a contradiction.
+          case (Some(claimed), Some(XformCode.Unknown)) => Right(Some(claimed))
           case (Some(claimed), Some(actual)) if claimed != actual =>
             Left(SpaceError.ConflictingEvidence(s"supplied xform code $claimed", s"header xform code $actual"))
           case (claimed, actual) => Right(actual.orElse(claimed))

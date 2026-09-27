@@ -86,9 +86,11 @@ final case class TransformPlan private (
   warnings: Vector[String],
   path: MorphismPath
 )(
-  /** The world spaces of the route's endpoints, as the transform catalog frames them. */
-  private val fromWorld: WorldSpace,
-  private val toWorld: WorldSpace
+  /** The world spaces of the route's endpoints, as the transform catalog frames them; an uncatalogued endpoint (an
+    * identity route over an unknown space) has none, and grid pullbacks over it fail.
+    */
+  private val fromWorld: Either[AtlasError, WorldSpace],
+  private val toWorld: Either[AtlasError, WorldSpace]
 ):
   require(steps.nonEmpty, "transform plan must contain at least one step")
   require(steps.length == path.morphisms.length, "transform plan steps must match its route")
@@ -153,7 +155,15 @@ final case class TransformPlan private (
     yield SpatialPullbacks.affine(source, target, operator)
 
 object TransformPlan:
-  private def requireWorld(role: String, space: AnySpaceId, expected: WorldSpace, frame: Frame[D3]): Either[AtlasError, Unit] =
+  private def requireWorld(
+    role: String,
+    space: AnySpaceId,
+    expectedWorld: Either[AtlasError, WorldSpace],
+    frame: Frame[D3]
+  ): Either[AtlasError, Unit] =
+    expectedWorld.flatMap(expected => requireWorldOf(role, space, expected, frame))
+
+  private def requireWorldOf(role: String, space: AnySpaceId, expected: WorldSpace, frame: Frame[D3]): Either[AtlasError, Unit] =
     FrameCatalog.worldOf(frame) match
       case Right(world) if world == expected => Right(())
       case Right(world) =>
@@ -167,8 +177,8 @@ object TransformPlan:
     steps: Vector[TransformStep],
     path: MorphismPath,
     dataKind: DataKind,
-    fromWorld: WorldSpace,
-    toWorld: WorldSpace
+    fromWorld: Either[AtlasError, WorldSpace],
+    toWorld: Either[AtlasError, WorldSpace]
   ): TransformPlan =
     val status =
       if steps.exists(_.status == TransformStatus.Planned) then TransformStatus.Planned

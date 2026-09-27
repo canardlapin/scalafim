@@ -73,6 +73,7 @@ class SpaceResolverSuite extends munit.FunSuite:
 
   test("an assertion never overrides evidence that contradicts it"):
     val tk = WorldSpace.SubjectTkRas(context.namespace, context.subject, context.reference)
+    val otherSubject = WorldSpace.SubjectNative(context.namespace, ok(SubjectId("sub-02")), context.session, context.reference)
     val conflicts = Vector(
       // A native BIDS label admits only a subject-native assertion.
       SpaceEvidence(bidsSpace = Some("T1w"), assertion = Some(mni2009c)),
@@ -84,7 +85,11 @@ class SpaceResolverSuite extends munit.FunSuite:
       SpaceEvidence(xform = Some(XformCode.ScannerAnatomical), assertion = Some(mni2009c)),
       SpaceEvidence(xform = Some(XformCode.Mni152), assertion = Some(ok(WorldSpace.template("fsaverage")))),
       SpaceEvidence(xform = Some(XformCode.Mni152), assertion = Some(native)),
-      SpaceEvidence(xform = Some(XformCode.Talairach), assertion = Some(tk))
+      SpaceEvidence(xform = Some(XformCode.Talairach), assertion = Some(tk)),
+      // An asserted native space must be the one the supplied native context names.
+      SpaceEvidence(bidsSpace = Some("T1w"), native = Some(context), assertion = Some(otherSubject)),
+      SpaceEvidence(xform = Some(XformCode.ScannerAnatomical), native = Some(context), assertion = Some(otherSubject)),
+      SpaceEvidence(native = Some(context), assertion = Some(otherSubject))
     )
     conflicts.foreach: evidence =>
       resolve(evidence) match

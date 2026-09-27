@@ -55,6 +55,14 @@ class SpaceRefWorldSuite extends munit.FunSuite:
     val sessionless = SpaceRef.Volume(subject, None, ok(Modality("bold")))
     assertEquals(sessionless.worldIn(context), Right(native))
 
+  test("only anatomical surfaces are in the subject's scanner-native world"):
+    Vector(SurfaceKind.Pial, SurfaceKind.SmoothWm, SurfaceKind.Midthickness).foreach: kind =>
+      assertEquals(SpaceRef.Surface(subject, Hemisphere.Right, kind).worldIn(context), Right(native))
+    Vector(SurfaceKind.Inflated, SurfaceKind.Sphere, SurfaceKind.Custom("flat")).foreach: kind =>
+      SpaceRef.Surface(subject, Hemisphere.Right, kind).worldIn(context) match
+        case Left(SpaceError.NoWorldSpace(_)) => ()
+        case other                            => fail(s"a $kind surface resolved to $other")
+
   test("latent domains have no world space"):
     latent.world match
       case Left(SpaceError.NoWorldSpace(_)) => ()

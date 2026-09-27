@@ -122,6 +122,11 @@ class NiftiSpaceEvidenceSuite extends munit.FunSuite:
     assert(spaceError(Nifti.readVolumeIn(path, SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym")), qform)).isInstanceOf[SpaceError.ConflictingEvidence])
     assert(spaceError(Nifti.readVolumeIn(path, SpaceEvidence(xform = Some(XformCode.ScannerAnatomical)))).isInstanceOf[SpaceError.ConflictingEvidence])
 
+  test("an unknown header code is no evidence, so a supplied code is admitted"):
+    val path = crafted(qformCode = 0, sformCode = 0)
+    val placed = ok(Nifti.readVolumeIn(path, SpaceEvidence(xform = Some(XformCode.Mni152), bidsSpace = Some("MNI152NLin2009cAsym"))))
+    assertEquals(SampleSpaces.worldOf(placed.image.space), Right(ok(WorldSpace.template("MNI152NLin2009cAsym"))))
+
   test("two subjects' native volumes get different worlds and no longer align"):
     val path = crafted(qformCode = 1, sformCode = 0)
     val stored = ok(Nifti.readHeader(path))

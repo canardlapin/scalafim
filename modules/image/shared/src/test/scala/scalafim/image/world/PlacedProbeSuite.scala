@@ -14,7 +14,11 @@ class PlacedProbeSuite extends munit.FunSuite:
         Placed[GridSpec](decoded.frame)(decoded)
       """
     )
-    assert(viaApply.exists(_.message.contains("Required")), clue = viaApply.map(_.message))
+    // The mismatch is the capture: the decoded value is GridSpec[?], but apply requires it at the frame's own type.
+    assert(
+      viaApply.exists(e => e.message.contains("Found:    (decoded : scalafim.image.GridSpec[?])") && e.message.contains("Required: scalafim.image.GridSpec[")),
+      clue = viaApply.map(_.message)
+    )
     val viaOf = typeCheckErrors(
       """
         import scalafim.image.GridSpec
@@ -34,4 +38,8 @@ class PlacedProbeSuite extends munit.FunSuite:
           SamplingAlignment.exact(sampled.sampleSpace, admitted).map(alignment => sampled.rebind(alignment))
       """
     )
-    assert(errors.exists(_.message.contains("Required")), clue = errors.map(_.message))
+    // rebind needs the alignment typed at the Sampled's own space owner; exact yields it at the singleton instead.
+    assert(
+      errors.exists(e => e.message.contains("SamplingAlignment[(sampled.sampleSpace") && e.message.contains("Required: image4s.SamplingAlignment[sampled.S")),
+      clue = errors.map(_.message)
+    )

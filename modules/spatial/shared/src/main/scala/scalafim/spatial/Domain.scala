@@ -71,10 +71,11 @@ enum SpaceRef:
 
   /** The world space of this domain given the native context that anchors its subject's coordinates.
     *
-    * Subject volumes and surfaces resolve to the context's scanner-RAS native space; the context must name the same
-    * subject and, when the reference names one, the same session. FreeSurfer tkRAS surfaces are a different world
-    * (`WorldSpace.SubjectTkRas`) and must be stated explicitly rather than derived here. Templates and latent domains
-    * behave as in [[world]].
+    * Subject volumes, and anatomical surfaces (white, pial, smoothed white, midthickness), resolve to the context's
+    * scanner-RAS native space; the context must name the same subject and, when the reference names one, the same
+    * session. Inflated, spherical and custom surfaces are not in scanner coordinates, so they have no native world
+    * here. FreeSurfer tkRAS surfaces are a different world (`WorldSpace.SubjectTkRas`) and must be stated explicitly
+    * rather than derived here. Templates and latent domains behave as in [[world]].
     */
   def worldIn(native: NativeContext): Either[SpaceError, WorldSpace] =
     def subjectNative(subject: SubjectId, session: Option[SessionId]): Either[SpaceError, WorldSpace] =
@@ -90,8 +91,13 @@ enum SpaceRef:
       else Right(WorldSpace.SubjectNative(native.namespace, native.subject, native.session, native.reference))
     this match
       case SpaceRef.Volume(subject, session, _) => subjectNative(subject, session)
-      case SpaceRef.Surface(subject, _, _)      => subjectNative(subject, None)
-      case other                                => other.world
+      case SpaceRef.Surface(subject, _, kind) =>
+        kind match
+          case SurfaceKind.White | SurfaceKind.Pial | SurfaceKind.SmoothWm | SurfaceKind.Midthickness =>
+            subjectNative(subject, None)
+          case SurfaceKind.Inflated | SurfaceKind.Sphere | SurfaceKind.Custom(_) =>
+            Left(SpaceError.NoWorldSpace(s"a $kind surface is not in the subject's scanner coordinates"))
+      case other => other.world
 
 object SpaceRef:
   def latent(
