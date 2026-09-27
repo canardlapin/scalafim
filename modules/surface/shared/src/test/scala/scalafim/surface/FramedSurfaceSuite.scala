@@ -12,7 +12,7 @@ class FramedSurfaceSuite extends munit.FunSuite:
 
   private val namespace = ok(DatasetNamespace("ds-ribbon"))
   private val subject = ok(SubjectId("01"))
-  private val reference = ReferenceAcquisition(Map("acq" -> "mprage"), ok(GeometryDigest(Vector(64, 72, 50), Vector.fill(12)(1.0), 1, 1)))
+  private val reference = ok(ReferenceAcquisition(Map("acq" -> "mprage"), ok(GeometryDigest(Vector(64, 72, 50), Vector.fill(12)(1.0), 1, 1))))
 
   private val scannerWorld = WorldSpace.SubjectNative(namespace, subject, None, reference)
   private val tkRasWorld = WorldSpace.SubjectTkRas(namespace, subject, reference)
@@ -65,7 +65,7 @@ class FramedSurfaceSuite extends munit.FunSuite:
     assert(scannerSurface.toScanner(scanner, volume).left.exists(_.isInstanceOf[SurfaceFrameError.WrongWorld]))
     val ephemeral = ok(Frame.named[D3]("scratch"))
     assert(tkSurface.toScanner(ephemeral, volume).left.exists(_.isInstanceOf[SurfaceFrameError.Space]))
-    val otherReference = ReferenceAcquisition(Map("acq" -> "mprage", "run" -> "2"), ok(GeometryDigest(Vector(64, 72, 50), Vector.fill(12)(1.0), 1, 1)))
+    val otherReference = ok(ReferenceAcquisition(Map("acq" -> "mprage", "run" -> "2"), ok(GeometryDigest(Vector(64, 72, 50), Vector.fill(12)(1.0), 1, 1))))
     val otherRun = FrameCatalog.frame(WorldSpace.SubjectNative(namespace, subject, None, otherReference))
     assert(tkSurface.toScanner(otherRun, volume).left.exists(_.isInstanceOf[SurfaceFrameError.ReferenceMismatch]))
     val otherSession = FrameCatalog.frame(WorldSpace.SubjectNative(namespace, subject, Some(ok(SessionId("02"))), otherReference))
