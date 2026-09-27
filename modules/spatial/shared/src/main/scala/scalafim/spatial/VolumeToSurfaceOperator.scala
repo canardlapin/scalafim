@@ -522,8 +522,11 @@ object MixedPullbackOperatorCompiler:
             tables.pull(targetVertex) match
               case Left(err) => error = Some(err)
               case Right(bridgeRow) =>
-                // each bridge vertex contributes its averaged depth samples, weighted by its share of the target row
+                // each bridge vertex contributes its averaged depth samples, weighted by its share of the target row;
+                // the row is then renormalised over the share that hit the volume, as corners and depth samples are
+                val rowStart = assembly.values.length
                 var coverage = 0.0
+                var keptShare = 0.0
                 var b = 0
                 while b < bridgeRow.vertices.length && error.isEmpty do
                   val share = bridgeRow.weights(b)
@@ -548,10 +551,16 @@ object MixedPullbackOperatorCompiler:
                             coverageSum += weights.coverage
                         pointIndex += 1
                       if error.isEmpty then
-                        appendAveragedWeights(assembly, outRow, pointWeights.result(), share)
+                        if appendAveragedWeights(assembly, outRow, pointWeights.result(), share) then keptShare += share
                         coverage += share * coverageSum / points.length.toDouble
                   b += 1
-                if error.isEmpty then assembly.coverage += math.min(coverage, 1.0)
+                if error.isEmpty then
+                  if keptShare > 0.0 then
+                    var k = rowStart
+                    while k < assembly.values.length do
+                      assembly.values(k) = assembly.values(k) / keptShare
+                      k += 1
+                  assembly.coverage += math.min(coverage, 1.0)
           outRow += 1
 
     error match
@@ -602,15 +611,18 @@ object MixedPullbackOperatorCompiler:
       case Some(err) => Left(err)
       case None => Right(assembly)
 
-  /** Append one bridge vertex's depth samples, averaged over the samples that hit the volume, times `share`. */
+  /** Append one bridge vertex's depth samples, averaged over the samples that hit the volume, times `share`; whether
+    * any sample hit it.
+    */
   private def appendAveragedWeights(
     assembly: MixedRowAssembly,
     outRow: Int,
     weights: Vector[SurfacePointWeights],
     share: Double
-  ): Unit =
+  ): Boolean =
     val valid = weights.filter(_.coverage > 0.0)
-    if valid.nonEmpty then
+    if valid.isEmpty || share <= 0.0 then false
+    else
       val scale = share / valid.length.toDouble
       var point = 0
       while point < valid.length do
@@ -621,6 +633,7 @@ object MixedPullbackOperatorCompiler:
           assembly.values += valid(point).values(index) * scale
           index += 1
         point += 1
+      true
 
   private def pullVolumePoint(
     steps: Vector[PullbackStep],

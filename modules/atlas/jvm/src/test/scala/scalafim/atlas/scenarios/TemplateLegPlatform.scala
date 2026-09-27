@@ -22,30 +22,46 @@ object TemplateLegPlatform:
   private val spheres: Vector[TemplateSurface] =
     Vector(TemplateMesh.FsAverage7, TemplateMesh.FsLR32k).map(TemplateSurface(_, CorticalHemisphere.Left))
 
+  /** Every present asset is admitted (hashed, and for the composite decoded) before absence is considered, so a cached
+    * but refused asset is `Unusable` even when another asset is missing.
+    */
   lazy val assets: TemplateLegAssets =
-    val sphereFiles = spheres.map(surface => surface -> TemplateSphereAssets.relativePath(surface, SphereRegistration.FsAverage).getOrElse(surface.display))
-    val wanted = Vector(TemplateFlowXfm.Mni6ToMni2009c.relativePath, Midthickness) ++ sphereFiles.map(_._2)
+    val sphereFiles =
+      spheres.map: surface =>
+        surface -> TemplateSphereAssets.relativePath(surface, SphereRegistration.FsAverage).getOrElse(throw new IllegalStateException(s"TemplateFlow publishes no ${surface.display} fsaverage sphere"))
+    val composite = TemplateFlowXfm.Mni6ToMni2009c.relativePath
+    val wanted = Vector(composite, Midthickness) ++ sphereFiles.map(_._2)
     val found = wanted.map(relative => relative -> TemplateFlowCache.locate(relative)).toMap
     val missing = wanted.filter(found(_).isEmpty)
-    if missing.nonEmpty then TemplateLegAssets.Absent(missing)
-    else
-      val loaded =
-        for
-          midthickness <- midthickness(found(Midthickness).get)
-          bridge <- MniBridgeFixtures.inverted.getOrElse(Left(AtlasError.TemplateAssetMissing(TemplateFlowXfm.Mni6ToMni2009c.relativePath, Vector.empty)))
-          loadedSpheres <- sphereFiles.foldLeft[Either[AtlasError, Vector[TemplateSphere[SphereRegistration.FsAverage.type]]]](Right(Vector.empty)):
-            case (acc, (surface, relative)) =>
-              acc.flatMap(out => TemplateSphereFiles.load(surface, SphereRegistration.FsAverage, found(relative).get).left.map(AtlasError.TemplateSurface.apply).map(out :+ _))
-          sampling <- TemplateSurfaceSampling.on(SphereRegistration.FsAverage, CorticalHemisphere.Left, loadedSpheres)
-        yield TemplateLegInputs(
-          bridge,
-          midthickness,
-          s"templateflow:$Midthickness|sha256=$MidthicknessSha256",
-          sampling,
-          oracle("pull_points.tsv"),
-          oracle("push_points.tsv")
-        )
-      loaded.fold(error => TemplateLegAssets.Unusable(error.message), TemplateLegAssets.Ready.apply)
+    val loadedSpheres =
+      sphereFiles.foldLeft[Either[AtlasError, Vector[TemplateSphere[SphereRegistration.FsAverage.type]]]](Right(Vector.empty)):
+        case (acc, (surface, relative)) =>
+          found(relative).fold(acc): path =>
+            acc.flatMap(out => TemplateSphereFiles.load(surface, SphereRegistration.FsAverage, path).left.map(AtlasError.TemplateSurface.apply).map(out :+ _))
+    val present =
+      for
+        mid <- found(Midthickness).fold[Either[AtlasError, Option[SurfaceGeometry]]](Right(None))(path => midthickness(path).map(Some(_)))
+        _ <- MniBridgeFixtures.bridge.fold[Either[AtlasError, Unit]](Right(()))(_.map(_ => ()))
+        loaded <- loadedSpheres
+      yield (mid, loaded)
+    present match
+      case Left(error) => TemplateLegAssets.Unusable(error.message)
+      case Right(_) if missing.nonEmpty => TemplateLegAssets.Absent(missing)
+      case Right((mid, loaded)) =>
+        val ready =
+          for
+            bridge <- MniBridgeFixtures.inverted.getOrElse(Left(AtlasError.TemplateAssetMissing(composite, Vector.empty)))
+            sampling <- TemplateSurfaceSampling.on(SphereRegistration.FsAverage, CorticalHemisphere.Left, loaded)
+            geometry <- mid.toRight(AtlasError.TemplateAssetMissing(Midthickness, Vector.empty))
+          yield TemplateLegInputs(
+            bridge,
+            geometry,
+            s"templateflow:$Midthickness|sha256=$MidthicknessSha256",
+            sampling,
+            oracle("pull_points.tsv"),
+            oracle("push_points.tsv")
+          )
+        ready.fold(error => TemplateLegAssets.Unusable(error.message), TemplateLegAssets.Ready.apply)
 
   private def midthickness(path: Path): Either[AtlasError, SurfaceGeometry] =
     val digest = AtlasAsset.sha256(path)

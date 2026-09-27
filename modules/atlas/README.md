@@ -75,8 +75,11 @@ import scalafim.atlas.io.*
   available. `SpaceTransformGraph.vertexOperator(from, to)` compiles such a
   route to a sparse vertex operator (rows interpolate; `map.adjoint` is the
   transposed plan); routes through an unsampled space stay a typed
-  `TransformNotExecutable`. Through the graph, fsaverage <-> fsLR 32k matches
-  Workbench 2.2.1 within the surface module's budgets (JVM, asset-gated).
+  `TransformNotExecutable`. A graph is sampled for one hemisphere
+  (`sampling.hemisphere`); pass that hemisphere's data. Through the graph,
+  fsaverage -> fsLR 32k (both hemispheres), fsLR 32k -> fsaverage (left) and
+  fsaverage -> fsaverage5 (left) match Workbench 2.2.1 within the surface
+  module's budgets (JVM, asset-gated).
 - `MniTemplateBridge` executes `MNI152NLin6Asym -> MNI152NLin2009cAsym` with
   TemplateFlow's exact ANTs composite (`MniTemplateBridgeFiles.loadCached` on
   the JVM, which hashes the bytes; the file is admitted only by its pinned

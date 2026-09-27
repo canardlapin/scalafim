@@ -4,7 +4,7 @@ import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
 import image4s.geometry.{Affine, D3, Frame}
 import ravel.NDArray
 import reframe4s.lie.FramedAffine
-import scalafim.atlas.{DataKind, MniTemplateBridge, Point3D, SpaceId, SpaceTransforms}
+import scalafim.atlas.{DataKind, MniTemplateBridge, Point3D, SpaceId, SpaceTransforms, TransformBackend}
 import scalafim.image.{GridSpec, SpatialDims}
 import scalafim.image.world.*
 import scalafim.scenarios.{
@@ -300,11 +300,22 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
   private def cardinal(spacing: Double, x: Double, y: Double, z: Double): Affine[D3] =
     affine(Vector(spacing, 0.0, 0.0, x, 0.0, spacing, 0.0, y, 0.0, 0.0, spacing, z, 0.0, 0.0, 0.0, 1.0))
 
-  /** The standard manifest with the bridge installed and the left fsaverage and fsLR 32k spaces sampled. */
-  private val templateGraphs = scala.collection.mutable.Map.empty[TemplateLegInputs, Either[String, scalafim.atlas.SpaceTransformGraph]]
+  /** The standard manifest with the bridge installed and the left fsaverage and fsLR 32k spaces sampled; under
+    * [[Mutation.SphereResampledByNearestVertex]] its fsaverage <-> fsLR steps resample by nearest vertex instead.
+    */
+  private val templateGraphs = scala.collection.mutable.Map.empty[(TemplateLegInputs, Boolean), Either[String, scalafim.atlas.SpaceTransformGraph]]
 
-  private def templateGraph(inputs: TemplateLegInputs): Either[String, scalafim.atlas.SpaceTransformGraph] =
-    templateGraphs.getOrElseUpdate(inputs, SpaceTransforms.graph(inputs.bridge.install(SpaceTransforms.manifest), sampling = inputs.sampling).left.map(_.message))
+  private def templateGraph(inputs: TemplateLegInputs, mutation: Mutation): Either[String, scalafim.atlas.SpaceTransformGraph] =
+    val nearest = mutation == Mutation.SphereResampledByNearestVertex
+    templateGraphs.getOrElseUpdate(
+      (inputs, nearest), {
+        val manifest = inputs.bridge.install(SpaceTransforms.manifest)
+        val registry =
+          if !nearest then manifest
+          else manifest.map(step => if step.backend == TransformBackend.Workbench then step.copy(backend = TransformBackend.SphereNearest) else step)
+        SpaceTransforms.graph(registry, sampling = inputs.sampling).left.map(_.message)
+      }
+    )
 
   /** The fsLR midthickness where the volume is sampled, in 2009c: through the bridge's forward map, or as a mutation. */
   private def midthicknessIn2009c(inputs: TemplateLegInputs, mutation: Mutation): Either[String, FramedSurface[Spaces.Mni2009c]] =
@@ -338,14 +349,23 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
       case TemplateLegAssets.Ready(inputs) =>
         (templateObservations(inputs, mutation), Vector.empty)
 
-  private def templateObservations(inputs: TemplateLegInputs, mutation: Mutation): Vector[ScenarioObservation] =
-    def distance(a: Vector[Double], b: Vector[Double]): Double = math.sqrt(a.zip(b).map((x, y) => (x - y) * (x - y)).sum)
-    def worst(values: Iterable[Double]): Double =
-      values.foldLeft(0.0)((acc, v) => if acc.isNaN || v.isNaN then Double.NaN else math.max(acc, v))
+  private def distance(a: Vector[Double], b: Vector[Double]): Double = math.sqrt(a.zip(b).map((x, y) => (x - y) * (x - y)).sum)
 
+  /** The largest entry; NaN if empty or if any entry is NaN, so an empty comparison never passes. */
+  private def worstOf(values: Iterable[Double]): Double =
+    values.foldLeft(Option.empty[Double])((acc, v) => Some(acc.fold(v)(a => if a.isNaN || v.isNaN then Double.NaN else math.max(a, v)))).getOrElse(Double.NaN)
+
+  /** The 99th percentile; NaN if empty or if any entry is NaN. */
+  private def p99Of(values: Array[Double]): Double =
+    if values.isEmpty || values.exists(_.isNaN) then Double.NaN
+    else
+      val sorted = values.sorted
+      sorted(math.min(sorted.length - 1, math.ceil(0.99 * sorted.length).toInt - 1))
+
+  private def templateObservations(inputs: TemplateLegInputs, mutation: Mutation): Vector[ScenarioObservation] =
     // (1) the bridge in the transform graph, anchored to SimpleITK in both directions
     val anchors =
-      templateGraph(inputs).flatMap(_.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, DataKind.Voxel).left.map(_.message)) match
+      templateGraph(inputs, mutation).flatMap(_.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym, DataKind.Voxel).left.map(_.message)) match
         case Left(error) => Vector(ScenarioHarness.fact("template.bridge-route", false, error))
         case Right(route) =>
           val pulled = route.pullPoints(inputs.pullOracle.map(row => Point3D.fromVector(row._1))).left.map(_.message)
@@ -353,12 +373,12 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
           Vector(
             pulled.fold(
               error => ScenarioHarness.fact("template.itk-pull-2009c-to-6asym.max-mm", false, error),
-              points => ScenarioHarness.scalar("template.itk-pull-2009c-to-6asym.max-mm", worst(points.zip(inputs.pullOracle).map((p, row) => distance(p.toVector, row._2))), 0.0, ScenarioTolerance.absolute(1e-8))
+              points => ScenarioHarness.scalar("template.itk-pull-2009c-to-6asym.max-mm", worstOf(points.zip(inputs.pullOracle).map((p, row) => distance(p.toVector, row._2))), 0.0, ScenarioTolerance.absolute(1e-8))
             ),
             // the forward map interpolates inverse samples on the 1 mm 6Asym lattice (MniTemplateBridgeFilesSuite)
             pushed.fold(
               error => ScenarioHarness.fact("template.itk-push-6asym-to-2009c.max-mm", false, error),
-              points => ScenarioHarness.scalar("template.itk-push-6asym-to-2009c.max-mm", worst(points.zip(inputs.pushOracle).map((p, row) => distance(p.toVector, row._2))), 0.0, ScenarioTolerance.absolute(0.05))
+              points => ScenarioHarness.scalar("template.itk-push-6asym-to-2009c.max-mm", worstOf(points.zip(inputs.pushOracle).map((p, row) => distance(p.toVector, row._2))), 0.0, ScenarioTolerance.absolute(0.05))
             )
           )
 
@@ -371,48 +391,82 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
         values <- operator.sample(volume.values).left.map(_.message)
       yield values
 
-    // reference: the 6Asym field at each vertex; the bound is the round trip the forward map was qualified with
+    // references, per vertex p: the exact value h(pull(push(p))) the chain computes (the composite is trilinear on the
+    // volume's lattice), the round trip |pull(push(p)) - p|, and the 6Asym field h(p) itself
     val gates = MniTemplateBridge.defaultInversionPolicy.gates
     val c = inputs.midthickness.mesh.coordinates
-    val expected = Array.tabulate(inputs.midthickness.vertexCount)(v => templateField(c(3 * v), c(3 * v + 1), c(3 * v + 2)))
+    val n = inputs.midthickness.vertexCount
+    val sixAsym = Vector.tabulate(n)(v => Vector(c(3 * v), c(3 * v + 1), c(3 * v + 2)))
+    val expected = sixAsym.map(p => templateField(p(0), p(1), p(2))).toArray
+    val roundTrips: Either[String, Vector[Vector[Double]]] =
+      sixAsym.foldLeft[Either[String, Vector[Vector[Double]]]](Right(Vector.empty)): (acc, p) =>
+        for
+          out <- acc
+          point <- image4s.geometry.Point.in(Spaces.MNI152NLin6Asym)(p(0), p(1), p(2)).left.map(_.message)
+          pushed <- inputs.bridge.transform.mapPoint(point).left.map(_.message)
+          back <- inputs.bridge.transform.pullPoint(pushed).left.map(_.message)
+        yield out :+ back.coordinates
 
-    val values = sampled match
-      case Left(error) => Vector(ScenarioHarness.fact("template.fslr-sample", false, error))
-      case Right(values) =>
+    val topology =
+      val sphere = inputs.sampling.geometry(SpaceId.FsLR32k)
+      ScenarioHarness.fact(
+        "template.midthickness-matches-fslr-sphere",
+        sphere.exists(_.mesh.hasSameTopology(inputs.midthickness.mesh)),
+        "the midthickness and the fsLR 32k sphere must share vertex count and ordered faces"
+      )
+
+    val values = (sampled, roundTrips) match
+      case (Left(error), _) => Vector(ScenarioHarness.fact("template.fslr-sample", false, error))
+      case (_, Left(error)) => Vector(ScenarioHarness.fact("template.fslr-round-trip", false, error))
+      case (Right(values), Right(backs)) =>
         val errors = values.indices.map(v => math.abs(values(v) - expected(v))).toArray
-        val sorted = errors.filterNot(_.isNaN).sorted
-        val p99 = if sorted.length < errors.length || sorted.isEmpty then Double.NaN else sorted(math.min(sorted.length - 1, math.ceil(0.99 * sorted.length).toInt - 1))
+        val exact = values.indices.map(v => math.abs(values(v) - templateField(backs(v)(0), backs(v)(1), backs(v)(2)))).toArray
+        val trips = sixAsym.indices.map(v => distance(backs(v), sixAsym(v))).toArray
         Vector(
-          ScenarioHarness.fact("template.fslr-sampled-vertices", values.length == expected.length, s"${values.length} of ${expected.length} fsLR 32k vertices (${inputs.midthicknessAsset})"),
+          ScenarioHarness.fact("template.fslr-sampled-vertices", values.length == n, s"${values.length} of $n fsLR 32k vertices (${inputs.midthicknessAsset})"),
           ScenarioHarness.finite("template.fslr-sampled-values", values),
-          ScenarioHarness.scalar("template.fslr-value-vs-6asym-field.max-abs", worst(errors), 0.0, ScenarioTolerance.absolute(templateGradientNorm * gates.maximumResidual)),
-          ScenarioHarness.scalar("template.fslr-value-vs-6asym-field.p99-abs", p99, 0.0, ScenarioTolerance.absolute(templateGradientNorm * gates.p99Residual))
-        ) ++ onward(inputs, values)
+          // transport + trilinear sampling reproduce h(pull(push(p))) up to rounding (values are about 10..200)
+          ScenarioHarness.scalar("template.fslr-value-vs-exact-chain.max-abs", worstOf(exact), 0.0, ScenarioTolerance.absolute(1e-9)),
+          // the forward map's round trip at the vertices, against the gates it was qualified with on its lattice
+          ScenarioHarness.scalar("template.fslr-vertex-round-trip.max-mm", worstOf(trips), 0.0, ScenarioTolerance.absolute(gates.maximumResidual)),
+          ScenarioHarness.scalar("template.fslr-vertex-round-trip.p99-mm", p99Of(trips), 0.0, ScenarioTolerance.absolute(gates.p99Residual)),
+          // hence the workflow's value: h(p) within |grad h| times those gates
+          ScenarioHarness.scalar("template.fslr-value-vs-6asym-field.max-abs", worstOf(errors), 0.0, ScenarioTolerance.absolute(templateGradientNorm * gates.maximumResidual)),
+          ScenarioHarness.scalar("template.fslr-value-vs-6asym-field.p99-abs", p99Of(errors), 0.0, ScenarioTolerance.absolute(templateGradientNorm * gates.p99Residual))
+        )
 
-    anchors ++ values
+    anchors ++ Vector(topology) ++ values ++ onward(inputs, mutation)
 
-  /** (3) the fsLR 32k values on to fsaverage through the graph's sphere-resampling operator: one row per fsaverage
-    * vertex, each an interpolation (weights summing to one), so every value lies within the fsLR values' range.
+  /** (3) fsLR 32k vertex data on to fsaverage through the graph's sphere-resampling operator. The probe is a field
+    * linear in fsaverage-sphere coordinates, `s(x) = 5 + b . x / 100`, given at the fsLR 32k sphere's vertices: a
+    * barycentric row evaluates it at the radial hit on the fsLR sphere's chord triangle, so each fsaverage vertex's
+    * value is within `|b|` times the fsLR sphere's sagitta of `s` there.
     */
-  private def onward(inputs: TemplateLegInputs, values: Array[Double]): Vector[ScenarioObservation] =
+  private def onward(inputs: TemplateLegInputs, mutation: Mutation): Vector[ScenarioObservation] =
+    val b = Vector(1.3, -0.7, 0.9)
+    def probe(geometry: SurfaceGeometry): Array[Double] =
+      val x = geometry.mesh.coordinates
+      Array.tabulate(geometry.vertexCount)(i => 5.0 + (b(0) * x(3 * i) + b(1) * x(3 * i + 1) + b(2) * x(3 * i + 2)) / 100.0)
     val routed =
       for
-        graph <- templateGraph(inputs)
+        fsLR <- inputs.sampling.geometry(SpaceId.FsLR32k).toRight("fsLR 32k is not sampled")
+        fsAverage <- inputs.sampling.geometry(SpaceId.FsAverage).toRight("fsaverage is not sampled")
+        graph <- templateGraph(inputs, mutation)
         operator <- graph.vertexOperator(SpaceId.FsLR32k, SpaceId.FsAverage).left.map(_.message)
-        out <- operator.forward(column(values)).left.map(_.toString)
-      yield (operator, Array.tabulate(out.rows)(out(_, 0)))
+        out <- operator.forward(column(probe(fsLR))).left.map(_.toString)
+      yield (operator, Array.tabulate(out.rows)(out(_, 0)), probe(fsAverage), sagitta(fsLR.mesh))
     routed match
       case Left(error) => Vector(ScenarioHarness.fact("template.fslr-to-fsaverage", false, error))
-      case Right((operator, out)) =>
-        val (lo, hi) = (values.min, values.max)
-        val slack = 1e-9 * math.max(1.0, math.max(math.abs(lo), math.abs(hi)))
+      case Right((operator, out, expected, sag)) =>
+        val bound = math.sqrt(b.map(v => v * v).sum) / 100.0 * sag + 1e-12
         Vector(
           ScenarioHarness.fact(
             "template.fslr-to-fsaverage.rows",
-            out.length == 163842 && operator.qc.coverage.rowCoverage.forall(c => math.abs(c - 1.0) <= 1e-12),
+            out.length == expected.length && operator.qc.coverage.rowCoverage.forall(c => math.abs(c - 1.0) <= 1e-12),
             s"${out.length} fsaverage vertices; path ${operator.path.ids.map(_.value).mkString(" -> ")}"
           ),
-          ScenarioHarness.fact("template.fslr-to-fsaverage.interpolates", out.forall(v => v >= lo - slack && v <= hi + slack), f"fsLR range [$lo%.4f, $hi%.4f]")
+          if out.length != expected.length then ScenarioHarness.fact("template.fslr-to-fsaverage.sphere-field.max-abs", false, s"${out.length} values for ${expected.length} vertices")
+          else ScenarioHarness.scalar("template.fslr-to-fsaverage.sphere-field.max-abs", worstOf(out.indices.map(i => math.abs(out(i) - expected(i)))), 0.0, ScenarioTolerance.absolute(bound))
         )
 
   private def column(values: Array[Double]): gale.linalg.DMat =
@@ -453,10 +507,16 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
 
   test("every convention mutation of the template leg fails the scenario"):
     assume(templateAssets.isInstanceOf[TemplateLegAssets.Ready], s"template leg not executed here: $templateAssets")
-    Mutation.template.foreach: mutation =>
+    val guards = Map(
+      Mutation.MniTemplatesTakenAsOne -> "template.fslr-value-vs-6asym-field.max-abs:",
+      Mutation.TemplateBridgeRunBackwards -> "template.fslr-value-vs-6asym-field.max-abs:",
+      Mutation.SphereResampledByNearestVertex -> "template.fslr-to-fsaverage.sphere-field.max-abs:"
+    )
+    assertEquals(guards.keySet, Mutation.template)
+    guards.foreach: (mutation, guard) =>
       val result = runScenario(mutation)
       assertEquals(result.status, ScenarioStatus.Fail, s"$mutation must fail:\n${result.render}")
-      assert(result.failures.exists(_.render.startsWith("template.fslr-value-vs-6asym-field.max-abs:")), s"$mutation must fail the fsLR values:\n${result.render}")
+      assert(result.failures.exists(_.render.startsWith(guard)), s"$mutation must fail $guard:\n${result.render}")
       result.failures.map(_.render).filter(_.startsWith("template.")).foreach(line => println(s"  $mutation: $line"))
 
   test("a tkRAS surface cannot be sampled on a scanner-space grid without moving it first"):
@@ -474,8 +534,12 @@ object SurfaceChainScenarioSuite:
     /** The bridge's pullback (2009c points to 6Asym) applied to 6Asym vertices as if it pushed them to 2009c. */
     case TemplateBridgeRunBackwards
 
+    /** fsLR 32k -> fsaverage resampled by nearest vertex instead of Workbench's barycentric interpolation. */
+    case SphereResampledByNearestVertex
+
   object Mutation:
-    val template: Set[Mutation] = Set(Mutation.MniTemplatesTakenAsOne, Mutation.TemplateBridgeRunBackwards)
+    val template: Set[Mutation] =
+      Set(Mutation.MniTemplatesTakenAsOne, Mutation.TemplateBridgeRunBackwards, Mutation.SphereResampledByNearestVertex)
 
   /** Ribbon QC by overlap (Dice/Jaccard of the operator's support against the geometric ribbon mask) belongs to locus4s
     * region algebra and is not gated here.

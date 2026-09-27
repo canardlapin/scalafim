@@ -132,3 +132,5 @@ class TemplateSurfaceGraphSuite extends munit.FunSuite:
     val implemented = step(SpaceId.FsLR32k, SpaceId.FsAverage5, TransformBackend.Workbench).withResampling(plan)
     assertEquals(implemented.status, TransformStatus.Available)
     intercept[IllegalArgumentException](implemented.copy(affine = Some(image4s.geometry.Affine.identity[image4s.geometry.D3])))
+    // a plan belongs to its step's spaces: fsLR 32k -> fsaverage5 cannot implement the reverse step
+    intercept[IllegalArgumentException](step(SpaceId.FsAverage5, SpaceId.FsLR32k, TransformBackend.Workbench).withResampling(plan))

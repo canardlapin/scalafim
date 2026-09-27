@@ -145,3 +145,20 @@ class SphereResamplingOperatorSuite extends munit.FunSuite:
     val onSphere = Array.tabulate(10242)(i => linear(c(3 * i), c(3 * i + 1), c(3 * i + 2)))
     val expected = ok(toFsLR32k.resample(onSphere))
     assert(maxAbs(columnValues(ok(operator.forward(column(voxels)))), expected) <= 1e-10)
+
+  test("a volume covering part of the sphere: rows renormalise over the bridge vertices that hit it"):
+    // a 3 x 3 x 2 grid starting at z = 50: trilinear corners reach down to z = -50, and vertices below sample nothing
+    val grid = ProviderAffines.fromRows(Vector(Vector(100.0, 0.0, 0.0, -100.0), Vector(0.0, 100.0, 0.0, -100.0), Vector(0.0, 0.0, 100.0, 50.0), Vector(0.0, 0.0, 0.0, 1.0)))
+    val volume =
+      ok(Domain.build(ok(DomainId("half-volume")), SpaceRef.Volume(ok(SubjectId("sub-01").asSpatial), None, ok(Modality("bold"))), ok(SamplingGeometry.volume(SampleSpaces(Vector(3, 3, 2), affine = Some(grid))))))
+    val plan = VolumeSurfaceSamplingPlan(SurfaceGeometryPair(fsAverage5.geometry, fsAverage5.geometry), SurfaceSamplingPath.White)
+    val bridge =
+      ok(Morphism.between(ok(MorphismId("sample-half")), volume, fsAverage5Domain, MorphismKind.VolumeToSurface, RouteTag.Anatomical, inverse = Inverse.AdjointOnly, coordinateMap = CoordinateMap.volumeSamples(plan)))
+    val onward = ok(resampling("to-fslr", fsAverage5Domain, fsLRDomain, toFsLR32k))
+    val operator = compile(Vector(volume, fsAverage5Domain, fsLRDomain), Vector(bridge, onward), volume, fsLRDomain)
+    val coverage = operator.qc.coverage.rowCoverage
+    assert(coverage.exists(c => c > 0.0 && c < 1.0 - 1e-9), "some fsLR rows straddle the volume's edge")
+    assert(coverage.contains(0.0) && coverage.exists(c => math.abs(c - 1.0) <= 1e-12))
+    // a constant volume stays constant wherever a row has any weight: partial rows are not pulled towards zero
+    val ones = columnValues(ok(operator.forward(column(Array.fill(18)(1.0)))))
+    assert(coverage.indices.forall(i => if coverage(i) > 0.0 then math.abs(ones(i) - 1.0) <= 1e-12 else ones(i) == 0.0))

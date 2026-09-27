@@ -73,6 +73,13 @@ final case class TransformStep(
     "a transform step carries an internal affine, a provider asset or a resampling plan, not several"
   )
   require(resampling.isEmpty || kind == TransformKind.SphereResample, "only a sphere-resampling step carries a resampling plan")
+  require(
+    resampling.forall(plan =>
+      TemplateSurfaceSampling.space(plan.source.mesh).contains(SpaceId.normalize(from)) &&
+        TemplateSurfaceSampling.space(plan.target.mesh).contains(SpaceId.normalize(to))
+    ),
+    "a resampling plan must run from this step's source space to its target space"
+  )
 
   /** Implement this step with a loaded provider transform; the step becomes `Available`. */
   def withAsset(value: TransformAsset): TransformStep =

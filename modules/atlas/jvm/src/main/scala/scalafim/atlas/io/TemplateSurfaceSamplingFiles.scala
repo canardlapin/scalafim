@@ -24,17 +24,20 @@ object TemplateSurfaceSamplingFiles:
   /** One hemisphere's manifest surface spaces on the fsaverage sphere, from `roots` ([[TemplateFlowCache.roots]]). */
   def onFsAverage(hemisphere: CorticalHemisphere, roots: Vector[Path] = TemplateFlowCache.roots): Either[AtlasError, Loaded] =
     val registration = SphereRegistration.FsAverage
+    val surfaces = meshes.map(TemplateSurface(_, hemisphere))
+    val unpublished = surfaces.filter(TemplateSphereAssets.relativePath(_, registration).isEmpty)
     val found =
-      meshes.map: mesh =>
-        val surface = TemplateSurface(mesh, hemisphere)
-        val relative = TemplateSphereAssets.relativePath(surface, registration).getOrElse(s"${surface.display} on $registration")
-        relative -> TemplateFlowCache.locate(relative, roots).map(path => surface -> path)
+      surfaces.flatMap: surface =>
+        TemplateSphereAssets.relativePath(surface, registration).map(relative => relative -> TemplateFlowCache.locate(relative, roots).map(surface -> _))
     val absent = found.collect { case (relative, None) => relative }
     val loaded =
       found.collect { case (_, Some((surface, path))) => (surface, path) }.foldLeft[Either[AtlasError, Vector[TemplateSphere[SphereRegistration.FsAverage.type]]]](Right(Vector.empty)):
         case (acc, (surface, path)) =>
           acc.flatMap(spheres => TemplateSphereFiles.load(surface, SphereRegistration.FsAverage, path).left.map(AtlasError.TemplateSurface.apply).map(spheres :+ _))
     for
+      _ <-
+        if unpublished.isEmpty then Right(())
+        else Left(AtlasError.InvalidSurfaceSampling(s"TemplateFlow publishes no fsaverage sphere for ${unpublished.map(_.display).mkString(", ")}"))
       spheres  <- loaded
       sampling <- TemplateSurfaceSampling.on(SphereRegistration.FsAverage, hemisphere, spheres)
     yield Loaded(sampling, absent)

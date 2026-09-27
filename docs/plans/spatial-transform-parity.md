@@ -1102,11 +1102,31 @@ _(append per phase: date, commits, test commands run, results)_
   atlas, the lowest module that sees both the bridge and the graph. On the JVM
   with a TemplateFlow cache, the leg samples an MNI152NLin2009cAsym volume at
   the fsLR 32k left midthickness, carried to 2009c by `MniTemplateBridge`'s
-  forward map. Max error is 0.10 against a budget of 0.76; p99 is 0.018
-  against 0.076. It also anchors the bridge to SimpleITK and routes the values
-  on to fsaverage. Two new mutations fail it: the two MNI templates taken as
-  one, and the bridge run backwards.
+  forward map. The sampled values equal the exact chain value
+  `h(pull(push(p)))` to 1.4e-13. The vertex round trip is 0.081 mm max and
+  0.019 mm p99, against the inversion gates of 0.5 and 0.05. The value against
+  the 6Asym field is 0.10 max (budget 0.76) and 0.018 p99 (budget 0.076). The
+  leg anchors the bridge to SimpleITK: pull 3e-14 mm, push 0.010 mm. It then
+  routes a sphere-linear probe fsLR 32k -> fsaverage through the graph, with
+  error 2.8e-4 against a gradient-times-sagitta bound of 3.5e-4. Three new
+  mutations fail it: the two MNI templates taken as one (5.15), the bridge run
+  backwards (9.32), and nearest-vertex sphere resampling (0.027).
 - **Caveats:** `surface.mni152-nlin6-nlin2009c-bridge` is gone. Where the
   assets are absent (always on Scala.js), the scenario emits the declared caveat
   `surface.template-leg-assets-absent` instead, and the template mutation test
-  is skipped, not passed.
+  is skipped, not passed. A cached asset that is refused fails the scenario,
+  even when another asset is missing.
+- **Commits:** 6d4691b2 (graph wiring), d4a7f47e (template leg), and a review
+  follow-up. The follow-up renormalises volume-root rows over the bridge share
+  that hit the volume, adds the exact-chain, round-trip and sphere-probe
+  observations, and ties a step's plan to its spaces.
+- **Verification (2026-09-27, with a TemplateFlow cache):**
+  - `sbt surfaceJVM/test spatialJVM/test atlasJVM/test`: 155, 219 and 128
+    passed.
+  - `sbt spatialJS/test`: 195 passed.
+  - `sbt atlasJS/test surfaceJS/test`: 87 passed with 1 skipped (the template
+    mutation test), and 121 passed.
+  - `sbt scalafimCompileAll`: 0 warnings. The manifest validator passes.
+- **Not done:** `vertexOperator` takes no hemisphere; a graph is sampled for one
+  (`sampling.hemisphere`). `TemplateSurfaceSampling` refusals are one string.
+  Plans are computed eagerly at graph build.
