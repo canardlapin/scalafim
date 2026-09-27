@@ -10,6 +10,7 @@ import scalafim.image.SomeNeuroVolume.*
 enum RibbonError derives CanEqual:
   case InvalidSteps(steps: Int)
   case TopologyMismatch(reason: String)
+  case RoleMismatch(reason: String)
   case FrameMismatch(reason: String)
   case OpenSurface(role: String, badEdges: Int)
   case LengthMismatch(what: String, expected: Int, actual: Int)
@@ -18,7 +19,8 @@ enum RibbonError derives CanEqual:
 
   def message: String =
     this match
-      case InvalidSteps(steps)                => s"ribbon sampling needs at least one step, got $steps"
+      case InvalidSteps(steps)                => s"ribbon sampling needs 1 to ${RibbonSteps.Max} steps, got $steps"
+      case RoleMismatch(reason)               => s"white and pial surfaces are not an inner/outer pair: $reason"
       case TopologyMismatch(reason)           => s"white and pial surfaces do not correspond: $reason"
       case FrameMismatch(reason)              => s"ribbon inputs are not in one frame: $reason"
       case OpenSurface(role, badEdges)        => s"$role surface is not closed: $badEdges edges are not shared by exactly two faces"
@@ -33,8 +35,11 @@ object RibbonSteps:
   /** neurotransform's `n_ribbon_samples` default. */
   val Default: RibbonSteps = 6
 
+  /** Upper bound: far beyond any useful sub-voxel density, and small enough that row scratch space stays tiny. */
+  val Max: Int = 1024
+
   def apply(steps: Int): Either[RibbonError, RibbonSteps] =
-    if steps >= 1 then Right(steps) else Left(RibbonError.InvalidSteps(steps))
+    if steps >= 1 && steps <= Max then Right(steps) else Left(RibbonError.InvalidSteps(steps))
 
   extension (steps: RibbonSteps)
     inline def value: Int = steps
@@ -102,7 +107,10 @@ final class RibbonOperator[F <: Frame[D3]] private (
       k += 1
     IArray.unsafeFromArray(out)
 
-  /** Voxels with positive coverage: the ribbon as the operator sees it. */
+  /** Voxels with positive coverage: the ribbon as the operator sees it. This includes the clamped and fractional
+    * trilinear corners of every sample, so it is a dilated, sampling-dependent ribbon (it can include corners whose
+    * weight is a rounding residue); use [[RibbonMask]] for the geometric ribbon.
+    */
   def support: IArray[Boolean] = IArray.unsafeFromArray(supportArray)
 
   private lazy val supportArray: Array[Boolean] = Array.tabulate(voxelCount)(i => coverage(i) > 0.0)
@@ -153,7 +161,11 @@ final class RibbonOperator[F <: Frame[D3]] private (
 
   /** [[sample]] of a volume, which must lie on exactly this operator's grid (same frame, shape and affine). */
   def sampleVolume(volume: SomeScalarVolume[Double]): Either[RibbonError, Array[Double]] =
-    RibbonGrid.requireSame(grid, GridSpec.fromSpace(volume.space)).flatMap(_ => sample(volume.copyToCanonicalArray))
+    for
+      actual <- GridSpec.fromSpaceEither(volume.space).left.map(error => RibbonError.VolumeGridMismatch(error.message))
+      _ <- RibbonGrid.requireSame(grid, actual)
+      values <- sample(volume.copyToCanonicalArray)
+    yield values
 
   /** [[project]] as a scalar volume on this operator's grid. */
   def projectVolume(
@@ -178,6 +190,7 @@ object RibbonOperator:
   ): Either[RibbonError, RibbonOperator[F]] =
     for
       _ <- if white.hasSameTopology(pial) then Right(()) else Left(RibbonError.TopologyMismatch("white and pial must share vertex count and ordered faces"))
+      _ <- RibbonGrid.requireRoles(white, pial)
       _ <- RibbonGrid.requireFrame("white", white.frame, grid)
       _ <- RibbonGrid.requireFrame("pial", pial.frame, grid)
     yield build(white.coordinates, pial.coordinates, grid, steps)
@@ -288,9 +301,12 @@ final class RibbonMask[F <: Frame[D3]] private (val grid: GridSpec[F], voxels: A
     NeuroVolume.copyMaskFromCanonicalArray(sampleSpace, voxels.clone()).left.map(error => RibbonError.Volume(error.message))
 
 object RibbonMask:
-  /** Voxel centres inside `pial` and not inside `white`; both surfaces must be closed. */
+  /** Voxel centres inside `pial` and not inside `white`; both surfaces must be closed. Order matters: swapped
+    * surfaces would give an empty ribbon, so surfaces whose kinds say they are swapped are rejected.
+    */
   def fill[F <: Frame[D3]](white: FramedSurface[F], pial: FramedSurface[F], grid: GridSpec[F]): Either[RibbonError, RibbonMask[F]] =
     for
+      _ <- RibbonGrid.requireRoles(white, pial)
       outer <- insideArray("pial", pial, grid)
       inner <- insideArray("white", white, grid)
     yield
@@ -376,21 +392,33 @@ object RibbonMask:
     out
 
   private def requireClosed(role: String, mesh: TriangleMesh): Either[RibbonError, Unit] =
-    val uses = scala.collection.mutable.HashMap.empty[Long, Int]
+    // Undirected edge keys `min * n + max` are exact in a Double (n² < 2^53) and sort fast on both platforms.
+    val n = mesh.vertexCount.toDouble
     val f = mesh.faceIndices
-    var t = 0
-    while t < mesh.faceCount do
-      var e = 0
-      while e < 3 do
-        val (p, q) = (f(3 * t + e), f(3 * t + (e + 1) % 3))
-        val key = math.min(p, q).toLong << 32 | math.max(p, q).toLong
-        uses.update(key, uses.getOrElse(key, 0) + 1)
-        e += 1
-      t += 1
-    val bad = uses.valuesIterator.count(_ != 2)
+    val keys = new Array[Double](f.length)
+    var e = 0
+    while e < f.length do
+      val (p, q) = (f(e), f(if e % 3 == 2 then e - 2 else e + 1))
+      keys(e) = math.min(p, q) * n + math.max(p, q)
+      e += 1
+    java.util.Arrays.sort(keys)
+    var bad = 0
+    var start = 0
+    while start < keys.length do
+      var end = start + 1
+      while end < keys.length && keys(end) == keys(start) do end += 1
+      if end - start != 2 then bad += 1
+      start = end
     if bad == 0 then Right(()) else Left(RibbonError.OpenSurface(role, bad))
 
 private object RibbonGrid:
+  def requireRoles(white: FramedSurface[?], pial: FramedSurface[?]): Either[RibbonError, Unit] =
+    if white.hemisphere != pial.hemisphere then
+      Left(RibbonError.RoleMismatch(s"hemispheres differ: ${white.hemisphere.code} vs ${pial.hemisphere.code}"))
+    else if white.kind == SurfaceKind.Pial || pial.kind == SurfaceKind.White then
+      Left(RibbonError.RoleMismatch(s"inner surface is ${white.kind.label} and outer surface is ${pial.kind.label}"))
+    else Right(())
+
   def requireFrame[F <: Frame[D3]](role: String, frame: F, grid: GridSpec[F]): Either[RibbonError, Unit] =
     Frame
       .alignOwners[D3, F, F](frame, grid.frame)

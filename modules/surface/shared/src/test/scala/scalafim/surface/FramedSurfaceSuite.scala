@@ -65,6 +65,20 @@ class FramedSurfaceSuite extends munit.FunSuite:
     assert(scannerSurface.toScanner(scanner, volume).left.exists(_.isInstanceOf[SurfaceFrameError.WrongWorld]))
     val ephemeral = ok(Frame.named[D3]("scratch"))
     assert(tkSurface.toScanner(ephemeral, volume).left.exists(_.isInstanceOf[SurfaceFrameError.Space]))
+    val otherReference = ReferenceAcquisition(Map("acq" -> "mprage", "run" -> "2"), ok(GeometryDigest(Vector(64, 72, 50), Vector.fill(12)(1.0), 1, 1)))
+    val otherRun = FrameCatalog.frame(WorldSpace.SubjectNative(namespace, subject, None, otherReference))
+    assert(tkSurface.toScanner(otherRun, volume).left.exists(_.isInstanceOf[SurfaceFrameError.ReferenceMismatch]))
+    val otherSession = FrameCatalog.frame(WorldSpace.SubjectNative(namespace, subject, Some(ok(SessionId("02"))), otherReference))
+    assert(tkSurface.toScanner(otherSession, volume).left.exists(_.isInstanceOf[SurfaceFrameError.ReferenceMismatch]))
+    assert(scannerSurface.toTkRas(tk, volume).isRight)
+    assert(scannerSurface.toTkRas(scanner, volume).left.exists(_.isInstanceOf[SurfaceFrameError.WrongWorld]))
+    assert(scannerSurface.toTkRas(ephemeral, volume).left.exists(_.isInstanceOf[SurfaceFrameError.Space]))
+
+  test("transport reports non-finite results instead of throwing"):
+    val scanner = FrameCatalog.frame(scannerWorld)
+    val surface = ok(FramedSurface.in(scanner)(geometry, SurfacePlacement.StoredCoordinates))
+    val huge = reframe4s.lie.FramedAffine.betweenFrames[scanner.type, scanner.type, D3](scanner, scanner)(affine(1e308, 0, 0, 0, 0, 1e308, 0, 0, 0, 0, 1e308, 0, 0, 0, 0, 1))
+    assert(surface.transport(huge).left.exists(_.isInstanceOf[SurfaceFrameError.Map]))
 
   test("surfaces in different frames cannot be substituted for one another"):
     val errors = compileErrors(
@@ -75,7 +89,7 @@ class FramedSurfaceSuite extends munit.FunSuite:
       val wrong: FramedSurface[scanner.type] = white
       """
     )
-    assert(errors.contains("Found:"), errors)
+    assert(errors.contains("Required:") && errors.contains("FramedSurface") && errors.contains("scanner"), errors)
 
   test("a surface placed in a runtime world binds to the static template frame with the same key"):
     val placed = ok(FramedSurface.inWorld(WorldSpace.Template(TemplateName.unsafe("fsaverage")))(geometry, SurfacePlacement.StoredCoordinates))

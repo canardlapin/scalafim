@@ -3,7 +3,6 @@ package scalafim.surface
 import image4s.geometry.{Affine, D3, Frame, FrameAlignment, GeometryError, Point}
 import reframe4s.core.{MapError, SpatialMap}
 import reframe4s.lie.FramedAffine
-import scalafim.image.PrimitiveBuffers
 import scalafim.image.world.{FrameCatalog, FreeSurferVolumeGeometry, Placed, Rebind, SpaceError, WorldSpace}
 
 /** Failures of placing surface vertices in a world frame or moving them between frames. */
@@ -15,6 +14,7 @@ enum SurfaceFrameError derives CanEqual:
   case VertexOutOfRange(vertex: Int, vertexCount: Int)
   case WrongWorld(role: String, expected: String, actual: WorldSpace)
   case SubjectMismatch(tkRas: WorldSpace, scanner: WorldSpace)
+  case ReferenceMismatch(tkRas: WorldSpace, scanner: WorldSpace)
 
   def message: String =
     this match
@@ -25,6 +25,8 @@ enum SurfaceFrameError derives CanEqual:
       case VertexOutOfRange(vertex, count)  => s"vertex $vertex is out of range for a surface with $count vertices"
       case WrongWorld(role, expected, actual) => s"$role frame must be $expected, got ${actual.displayName}"
       case SubjectMismatch(tkRas, scanner)  => s"tkRAS frame ${tkRas.displayName} and scanner frame ${scanner.displayName} belong to different subjects"
+      case ReferenceMismatch(tkRas, scanner) =>
+        s"tkRAS frame ${tkRas.displayName} is not anchored to the acquisition behind scanner frame ${scanner.displayName}"
 
 /** Which coordinates of a [[SurfaceGeometry]] are the ones that live in the declared frame. */
 enum SurfacePlacement derives CanEqual:
@@ -39,11 +41,11 @@ enum SurfacePlacement derives CanEqual:
   * The frame is part of the type, so a FreeSurfer surface in tkRAS and a GIFTI surface in scanner RAS cannot be mixed:
   * moving between frames goes through a typed provider map ([[transport]]), and for FreeSurfer's tkRAS through the
   * volume geometry that defines it ([[toScanner]]). Coordinates are stored once, row-major `x, y, z` per vertex, and are
-  * always finite.
+  * always finite; the mesh is owned by this value and never handed out mutably.
   */
 final class FramedSurface[F <: Frame[D3]] private (
     val frame: F,
-    val mesh: TriangleMesh,
+    private[surface] val mesh: TriangleMesh,
     val hemisphere: Hemisphere,
     val kind: SurfaceKind
 ):
@@ -52,7 +54,7 @@ final class FramedSurface[F <: Frame[D3]] private (
   def faceCount: Int = mesh.faceCount
 
   /** Placed coordinates, row-major `x, y, z` per vertex, in frame `F`. */
-  def coordinates: IArray[Double] = IArray.unsafeFromArray(mesh.coordinates)
+  def coordinates: IArray[Double] = IArray.unsafeFromArray(mesh.coordinates.clone())
 
   /** The placed position of one vertex as a point owned by this surface's frame. */
   def vertex(id: VertexId): Either[SurfaceFrameError, Point[F, D3]] =
@@ -62,7 +64,7 @@ final class FramedSurface[F <: Frame[D3]] private (
       FramedSurface.pointIn(frame, Vector(mesh.coordinates(3 * i), mesh.coordinates(3 * i + 1), mesh.coordinates(3 * i + 2)))
 
   /** The same surface as a plain geometry whose stored coordinates are the placed ones. */
-  def geometry: SurfaceGeometry = SurfaceGeometry(mesh, hemisphere, kind)
+  def geometry: SurfaceGeometry = SurfaceGeometry(TriangleMesh.fromArrays(mesh.coordinates.clone(), mesh.faceIndices.clone()), hemisphere, kind)
 
   def hasSameTopology(other: FramedSurface[?]): Boolean = mesh.hasSameTopology(other.mesh)
 
@@ -72,27 +74,36 @@ final class FramedSurface[F <: Frame[D3]] private (
 
   /** Move every vertex through a typed provider map out of this surface's frame. Topology is unchanged. */
   def transport[G <: Frame[D3]](map: SpatialMap[F, G, D3]): Either[SurfaceFrameError, FramedSurface[G]] =
-    val out = new Array[Double](mesh.coordinates.length)
-    var i = 0
+    val c = mesh.coordinates
+    val out = new Array[Double](c.length)
     var failure = Option.empty[SurfaceFrameError]
-    while i < vertexCount && failure.isEmpty do
-      val moved =
-        for
-          point <- vertex(VertexId.unsafe(i))
-          next <- map(point).left.map(SurfaceFrameError.Map.apply)
-        yield next.coordinates
-      moved match
-        case Left(error) => failure = Some(error)
-        case Right(xyz) =>
-          out(3 * i) = xyz(0)
-          out(3 * i + 1) = xyz(1)
-          out(3 * i + 2) = xyz(2)
-      i += 1
+    FramedSurface.selfAlignment(frame) match
+      case Left(error) => failure = Some(error)
+      case Right(self) =>
+        var i = 0
+        while i < vertexCount && failure.isEmpty do
+          val moved =
+            for
+              raw <- Point.fromVector[D3](frame, Vector(c(3 * i), c(3 * i + 1), c(3 * i + 2))).left.map(SurfaceFrameError.Geometry.apply)
+              point <- self.pointToRight(raw).left.map(SurfaceFrameError.Geometry.apply)
+              next <- map(point).left.map(SurfaceFrameError.Map.apply)
+            yield next.coordinates
+          moved match
+            case Left(error) => failure = Some(error)
+            case Right(xyz) if xyz.length == 3 && xyz.forall(_.isFinite) =>
+              out(3 * i) = xyz(0)
+              out(3 * i + 1) = xyz(1)
+              out(3 * i + 2) = xyz(2)
+            case Right(_) => failure = Some(SurfaceFrameError.NonFiniteVertex(i))
+          i += 1
     failure.toLeft(new FramedSurface(map.target, TriangleMesh.fromArrays(out, mesh.faceIndices.clone()), hemisphere, kind))
 
   /** Move a FreeSurfer tkRAS surface into the subject's scanner RAS with `Norig * inverse(Torig)` of the volume that
     * defines its tkRAS (usually `orig.mgz`). This surface's frame must be a [[WorldSpace.SubjectTkRas]] frame and
-    * `scanner` a [[WorldSpace.SubjectNative]] frame of the same dataset and subject.
+    * `scanner` a [[WorldSpace.SubjectNative]] frame of the same dataset and subject whose reference acquisition is the
+    * tkRAS space's conformed volume: `Norig` lands in that acquisition's scanner RAS, and other sessions or references
+    * are distinct spaces until a coregistration says otherwise. The caller vouches that `geometry` is the header of
+    * that conformed volume; nothing here can check it.
     */
   def toScanner(scanner: Frame[D3], geometry: FreeSurferVolumeGeometry): Either[SurfaceFrameError, FramedSurface[scanner.type]] =
     for
@@ -132,11 +143,15 @@ object FramedSurface:
       else Left(SpaceError.FrameBinding(s"surface frame ${value.frame} is not the alignment's left frame ${alignment.left}"))
 
   private[surface] def pointIn[F <: Frame[D3]](frame: F, coordinates: Vector[Double]): Either[SurfaceFrameError, Point[F, D3]] =
-    (for
-      raw <- Point.fromVector[D3](frame, coordinates)
-      self <- Frame.alignOwners[D3, frame.type, F](frame, frame)
-      owned <- self.pointToRight(raw)
-    yield owned).left.map(SurfaceFrameError.Geometry.apply)
+    for
+      self <- selfAlignment(frame)
+      raw <- Point.fromVector[D3](frame, coordinates).left.map(SurfaceFrameError.Geometry.apply)
+      owned <- self.pointToRight(raw).left.map(SurfaceFrameError.Geometry.apply)
+    yield owned
+
+  /** Evidence retyping points made at `frame.type` to the (possibly wider) static owner `F`. */
+  private def selfAlignment[F <: Frame[D3]](frame: F): Either[SurfaceFrameError, FrameAlignment[D3, frame.type, F]] =
+    Frame.alignOwners[D3, frame.type, F](frame, frame).left.map(SurfaceFrameError.Geometry.apply)
 
   private def placed(geometry: SurfaceGeometry, placement: SurfacePlacement): Either[SurfaceFrameError, Array[Double]] =
     placement match
@@ -162,8 +177,10 @@ object FramedSurface:
       tkWorld <- FrameCatalog.worldOf(tkRas).left.map(SurfaceFrameError.Space.apply)
       scWorld <- FrameCatalog.worldOf(scanner).left.map(SurfaceFrameError.Space.apply)
       _ <- (tkWorld, scWorld) match
-        case (WorldSpace.SubjectTkRas(ns, sub, _), WorldSpace.SubjectNative(ns2, sub2, _, _)) =>
-          if ns == ns2 && sub == sub2 then Right(()) else Left(SurfaceFrameError.SubjectMismatch(tkWorld, scWorld))
+        case (WorldSpace.SubjectTkRas(ns, sub, conformed), WorldSpace.SubjectNative(ns2, sub2, _, reference)) =>
+          if ns != ns2 || sub != sub2 then Left(SurfaceFrameError.SubjectMismatch(tkWorld, scWorld))
+          else if conformed != reference then Left(SurfaceFrameError.ReferenceMismatch(tkWorld, scWorld))
+          else Right(())
         case (WorldSpace.SubjectTkRas(_, _, _), other) =>
           Left(SurfaceFrameError.WrongWorld("scanner", "a subject-native (scanner RAS) space", other))
         case (other, _) =>
