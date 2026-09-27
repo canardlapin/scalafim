@@ -249,6 +249,10 @@ warp.resampleModulated(density, mniGrid, VolumeModulation.Jacobian, boundary = B
   FNIRT registration it matches FSL 5.0.9 `fnirtfileutils --jac`, which
   differentiates the spline analytically, to a median relative error below
   1%.
+- **`resample(image, onto, interpolation)`** is plain resampling: one
+  reframe4s `ResamplingPlan` evaluates the pullback at every target voxel.
+  Affine pullbacks keep the affine kernel. A target voxel whose pullback
+  leaves the source image fails the plan unless a `BoundaryPolicy` fills it.
 - **`resampleModulated`** scales each resampled value by `|det|`
   (`Jacobian`), which preserves a density's integral. `SqrtJacobian` scales
   by `sqrt|det|` instead and preserves the squared L2 norm of an amplitude.

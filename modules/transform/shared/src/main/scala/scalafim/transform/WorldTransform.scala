@@ -6,7 +6,7 @@ import ravel.AnyRank
 import reframe4s.core.{SmoothIso, SpatialMap}
 import reframe4s.field.{CoordinateBoundaryPolicy, CoverageReportingMap, DenseMap, DeterminantDirection, LogDeterminantField}
 import reframe4s.lie.FramedAffine
-import reframe4s.resample.{Interpolation, VolumeModulation}
+import reframe4s.resample.{Interpolation, ResamplingResult, VolumeModulation}
 
 /** A spatial transform from world space `S` (source, moving) to world space `T` (target, fixed), whatever toolkit it
   * came from.
@@ -82,6 +82,18 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
       direction: DeterminantDirection = DeterminantDirection.Pull
   ): Either[TransformError, LogDeterminantField[T, D3]] =
     jacobianDeterminant(on, direction).map(_.logJacobian)
+
+  /** Resample a source image onto `onto` through the pullback, as one reframe4s `ResamplingPlan` (affine pullbacks keep
+    * the affine kernel). A target point whose pullback leaves the source image fails the plan unless `boundary` fills it:
+    * there is no silent identity outside a field.
+    */
+  final def resample[Space <: SampleSpace[S, D3], R <: AnyRank](
+      image: ContinuousImage[Space, Double, R],
+      onto: Grid[T, D3],
+      interpolation: Interpolation[Continuous] = Interpolation.Linear,
+      boundary: BoundaryPolicy[Double] = BoundaryPolicy.Reject
+  ): Either[TransformError, ResamplingResult[T, D3, Continuous]] =
+    WarpAlgebra.resample(this, image, onto, interpolation, boundary)
 
   /** Resample a source image onto `onto` through the pullback, scaling each target sample by the volume change:
     * `Jacobian` preserves a density's integral, `SqrtJacobian` the squared L2 norm of an amplitude.

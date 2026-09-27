@@ -414,3 +414,18 @@ class WarpAlgebraSuite extends munit.FunSuite:
     val (_, warp) = pulls(1.3)(1)
     val thin = grid(target, Vector(1, 8, 8), axisAligned(Vector(0.0, 0.0, 0.0), 1.0))
     assert(warp.resampleModulated(sourceImage, thin, VolumeModulation.Jacobian, boundary = BoundaryPolicy.Constant(0.0)).left.exists(_.isInstanceOf[TransformError.Resampling]))
+
+  test("resample samples the source through the pullback and rejects target points outside it by default"):
+    val gaussian = (y: Vector[Double]) => math.exp(-y.map(v => v * v).sum / (2.0 * sigma * sigma))
+    pulls(0.7).foreach: (name, transform) =>
+      val plain = ok(transform.resample(sourceImage, targetGrid, boundary = BoundaryPolicy.Constant(0.0))).image.data
+      val unmodulated = ok(transform.resampleModulated(sourceImage, targetGrid, VolumeModulation.Unmodulated, boundary = BoundaryPolicy.Constant(0.0))).result.image.data
+      for i <- 0 until 40 by 3; j <- 0 until 40 by 5; k <- 0 until 40 by 7 do
+        val y = Vector(i, j, k).map(v => -17.55 + targetSpacing * v)
+        val pulled = if name == "affine" then y.map(_ * 0.7) else Vector.tabulate(3)(a => 0.7 * y(a) + 0.3 * math.sin(0.12 * y((a + 1) % 3)))
+        assertEqualsDouble(plain.at(IArray(i, j, k)), unmodulated.at(IArray(i, j, k)), 1e-12, s"$name matches unmodulated at ($i,$j,$k)")
+        // Trilinear error is at most h^2/8 * sum_a max|d2f/dy_a^2| = 3 * 0.25/8 / sigma^2 ~ 1.04e-2 (h = 0.5, sigma = 3).
+        assertEqualsDouble(plain.at(IArray(i, j, k)), gaussian(pulled), 3 * sourceSpacing * sourceSpacing / 8.0 / (sigma * sigma), s"$name value at ($i,$j,$k)")
+    // An expansive pull reaches beyond the source image (|1.3 y| up to 22.8 mm against 12.75 mm): Reject fails the plan.
+    val (_, expansive) = pulls(1.3).head
+    assert(expansive.resample(sourceImage, targetGrid).left.exists(_.isInstanceOf[TransformError.Resampling]))

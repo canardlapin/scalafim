@@ -20,7 +20,7 @@ import reframe4s.field.{
   NumericalInversion,
   TopologyAssessor
 }
-import reframe4s.resample.{Interpolation, ModulatedResamplingPlan, ModulationDiagnostics, ResamplingResult, VolumeModulation}
+import reframe4s.resample.{Interpolation, ModulatedResamplingPlan, ModulationDiagnostics, ResamplingPlan, ResamplingResult, VolumeModulation}
 
 /** A world transform's pullback sampled on a target lattice: an absolute source-coordinate field plus the report of
   * which lattice points every stage covered.
@@ -162,6 +162,18 @@ private[transform] object WarpAlgebra:
       materialized <- materialize(transform, on, CoordinateBoundaryPolicy.Reject, Interpolation.Linear)
       determinant  <- TopologyAssessor.determinantField(materialized.field, direction).left.map(TransformError.Determinant(_))
     yield JacobianDeterminant(determinant, materialized.coverage)
+
+  def resample[S <: Frame[D3], T <: Frame[D3], Space <: SampleSpace[S, D3], R <: AnyRank](
+      transform: WorldTransform[S, T],
+      image: ContinuousImage[Space, Double, R],
+      onto: Grid[T, D3],
+      interpolation: Interpolation[Continuous],
+      boundary: BoundaryPolicy[Double]
+  ): Either[TransformError, ResamplingResult[T, D3, Continuous]] =
+    for
+      plan   <- ResamplingPlan.mapped(image, onto, transform.pull, interpolation, boundary).left.map(TransformError.Resampling(_))
+      result <- plan.run(plan.newWorkspace()).left.map(TransformError.Resampling(_))
+    yield result
 
   def resampleModulated[S <: Frame[D3], T <: Frame[D3], Space <: SampleSpace[S, D3], R <: AnyRank](
       transform: WorldTransform[S, T],
