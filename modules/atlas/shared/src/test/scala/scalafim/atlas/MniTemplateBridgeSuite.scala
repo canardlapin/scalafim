@@ -39,7 +39,7 @@ class MniTemplateBridgeSuite extends munit.FunSuite:
     assert(refusal(file, AssetRef("unhashed.h5", None)).contains("no SHA-256"))
     assert(refusal(file, AssetRef("other.h5", Some("00" * 32))).contains("not an inspected TemplateFlow composite"))
     val reverse = refusal(file, AssetRef("reverse.h5", Some(TemplateFlowXfm.Mni2009cToMni6.sha256)))
-    assert(reverse.contains("named to pull Mni6ToMni2009c but measured to pull Mni2009cToMni6"), reverse)
+    assert(reverse.contains("named to pull PointsFrom6AsymTo2009c but measured to pull PointsFrom2009cTo6Asym"), reverse)
     assertEquals(TemplateFlowXfm.bySha256(forwardSha.toUpperCase), Some(TemplateFlowXfm.Mni6ToMni2009c))
 
   test("the admitted digest must still hold an affine and a field on the 2009c res-01 lattice"):
@@ -49,6 +49,20 @@ class MniTemplateBridgeSuite extends munit.FunSuite:
     val lattice = refusal(ItkHdf5File(Vector(marker, affine, field((91.0, 126.0, -72.0)))), asset)
     assert(lattice.contains("is not MNI152NLin2009cAsym res-01"), lattice)
     assert(MniTemplateBridge.checkLayout(ItkHdf5File(Vector(marker, affine, field((96.0, 132.0, -78.0)))), TemplateFlowXfm.Mni6ToMni2009c).isLeft)
+
+  test("the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01"):
+    // checkLayout never reads the displacements, so the true 193 x 229 x 193 layout needs no 25M-value payload
+    def lattice(origin: Vector[Double], spacing: Double, direction: Vector[Double]): ItkHdf5File =
+      val fixed = Vector(193.0, 229.0, 193.0) ++ origin ++ Vector.fill(3)(spacing) ++ direction
+      ItkHdf5File(Vector(marker, affine, ItkHdf5Component(2, "DisplacementFieldTransform_double_3_3", IArray.empty[Double], IArray.from(fixed))))
+    val lpsAxes = Vector(-1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0)
+    val check = (file: ItkHdf5File) => MniTemplateBridge.checkLayout(file, TemplateFlowXfm.Mni6ToMni2009c)
+    val admitted = check(lattice(Vector(96.0, 132.0, -78.0), 1.0, lpsAxes))
+    assert(admitted.isRight, admitted.toString)
+    // the RAS origin written as if it were LPS, RAS axes written as LPS, and a 2 mm lattice are all other grids
+    assert(check(lattice(Vector(-96.0, -132.0, -78.0), 1.0, lpsAxes)).isLeft)
+    assert(check(lattice(Vector(96.0, 132.0, -78.0), 1.0, Vector(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0))).isLeft)
+    assert(check(lattice(Vector(96.0, 132.0, -78.0), 2.0, lpsAxes)).isLeft)
 
   test("stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids"):
     val grids = Vector(

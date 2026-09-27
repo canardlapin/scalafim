@@ -10,10 +10,10 @@ import scalafim.transform.itk.{ItkHdf5File, ItkHdf5Interpretation}
 /** Which way a transform file pulls points: the resampling direction, fixed (target) point to moving (source) point. */
 enum TemplatePull derives CanEqual:
   /** An MNI152NLin2009cAsym point to its MNI152NLin6Asym correspondent: resamples 6Asym data onto 2009c grids. */
-  case Mni2009cToMni6
+  case PointsFrom2009cTo6Asym
 
   /** An MNI152NLin6Asym point to its MNI152NLin2009cAsym correspondent: resamples 2009c data onto 6Asym grids. */
-  case Mni6ToMni2009c
+  case PointsFrom6AsymTo2009c
 
 /** A TemplateFlow inter-template composite whose bytes and pull direction ScalaFIM has inspected.
   *
@@ -21,7 +21,8 @@ enum TemplatePull derives CanEqual:
   * grid with, so ITK `TransformPoint` should take an `X` point to a `Y` point. `measured` is what the file actually
   * does, established by resampling each template's brain T1w and mask through it under both hypotheses (evidence and
   * generator: `tools/transform/generate_templateflow_mni_bridge_oracle.py`). Only a file whose measurement agrees with
-  * its name is admitted.
+  * its name is admitted. Cases are named by the data direction their file name declares (`Mni6ToMni2009c` moves 6Asym
+  * data onto 2009c grids); [[TemplatePull]] names point directions, which run the other way.
   */
 enum TemplateFlowXfm(
     val template: String,
@@ -40,8 +41,8 @@ enum TemplateFlowXfm(
         "tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5",
         "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe",
         204735104L,
-        TemplatePull.Mni2009cToMni6,
-        TemplatePull.Mni2009cToMni6
+        TemplatePull.PointsFrom2009cTo6Asym,
+        TemplatePull.PointsFrom2009cTo6Asym
       )
 
   /** Named as the reverse, but it pulls 2009c points to 6Asym too: used as named it worsens the templates' agreement
@@ -54,8 +55,8 @@ enum TemplateFlowXfm(
         "tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5",
         "2a19853bc99ebd1d711d230ea4a4dc4db3b9a60f8b50b9181f93b44036dfbd0f",
         204735104L,
-        TemplatePull.Mni6ToMni2009c,
-        TemplatePull.Mni2009cToMni6
+        TemplatePull.PointsFrom6AsymTo2009c,
+        TemplatePull.PointsFrom2009cTo6Asym
       )
 
   /** The path under a TemplateFlow home, e.g. `tpl-MNI152NLin2009cAsym/tpl-..._xfm.h5`. */
@@ -88,9 +89,13 @@ final class MniTemplateBridge private (
   def identity: String =
     val inverse =
       transform.availability match
-        case PushAvailability.Estimated(estimate) =>
-          val gates = estimate.policy.gates
-          s"|inverse=numerical(coverage>=${gates.minimumCoverage},max<=${gates.maximumResidual}mm,p99<=${gates.p99Residual}mm)"
+        case PushAvailability.Estimated(inverse) =>
+          val (gates, settings) = (inverse.policy.gates, inverse.policy.settings)
+          val lattice = inverse.evidence.lattice
+          val latticeId = lattice.persistentId.fold(lattice.shape.mkString("x"))(_.value)
+          s"|inverse=numerical(lattice=$latticeId,iterations<=${settings.maximumIterations},tolerance=${settings.tolerance}," +
+            s"divergence=${settings.divergenceRatio},coverage>=${gates.minimumCoverage},max<=${gates.maximumResidual}mm," +
+            s"p99<=${gates.p99Residual}mm,margin=${gates.interiorMargin})"
         case _ => ""
     s"templateflow:${xfm.relativePath}|sha256=${xfm.sha256}|itk-composite|outside-lattice=reject$inverse"
 
@@ -129,9 +134,15 @@ final class MniTemplateBridge private (
         TransformStatus.Planned,
         notes = Some(MniTemplateBridge.reverseFileRefusal)
       )
+    // `invert` exists only once an estimate is attached. The swapped step's pullback is that estimate, so the step is
+    // Approximate even though its forward map (the composite) is exact.
     transform.invert.toOption.fold(base): inverted =>
       base.withAsset(TransformAsset(inverted, s"$identity|swapped")).copy(
-        notes = Some("Inverse of the TemplateFlow composite: pullback from a qualified numerical inverse, forward map exact")
+        confidence = Confidence.Approximate,
+        notes = Some(
+          "Inverse of the TemplateFlow composite: pullback is the qualified numerical inverse (approximate), " +
+            "forward map is the exact composite"
+        )
       )
 
   /** `manifest` with its TemplateFlow 6Asym <-> 2009c steps replaced by this bridge's (added when absent). */
@@ -177,11 +188,12 @@ object MniTemplateBridge:
       "the same way as the forward composite, so it is not an inverse. Carry 2009c points to 6Asym through the " +
       "6Asym -> 2009c route's pullback, or qualify a numerical inverse."
 
-  /** Admit a decoded ITK composite as the bridge. `asset` must carry the SHA-256 of the file's bytes: only the
-    * inspected TemplateFlow composite is admitted, and its layout and displacement lattice are checked before it is
-    * interpreted.
+  /** Admit a decoded ITK composite as the bridge. `asset` must carry the SHA-256 of the file's bytes, which only the
+    * loaders that hashed those bytes can vouch for (`scalafim.atlas.io.MniTemplateBridgeFiles` on the JVM), hence
+    * package-private: only the inspected TemplateFlow composite is admitted, and its layout and displacement lattice are
+    * checked before it is interpreted.
     */
-  def fromItk(file: ItkHdf5File, asset: AssetRef): Either[AtlasError, MniTemplateBridge] =
+  private[atlas] def fromItk(file: ItkHdf5File, asset: AssetRef): Either[AtlasError, MniTemplateBridge] =
     for
       xfm <- admitted(asset)
       _   <- checkLayout(file, xfm)
@@ -201,7 +213,8 @@ object MniTemplateBridge:
         case other => Left(refused(xfm, s"expected a dense composite, the file interpreted as ${other.getClass.getSimpleName}"))
     yield new MniTemplateBridge(mapped, asset)
 
-  private def admitted(asset: AssetRef): Either[AtlasError, TemplateFlowXfm] =
+  /** The inspected composite `asset`'s digest names, if it is admitted; a loader checks this before decoding. */
+  private[atlas] def admitted(asset: AssetRef): Either[AtlasError, TemplateFlowXfm] =
     asset.sha256 match
       case None => Left(AtlasError.TemplateAssetRefused(asset.label, "no SHA-256 was recorded for the file's bytes"))
       case Some(digest) =>

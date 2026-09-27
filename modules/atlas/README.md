@@ -66,8 +66,9 @@ import scalafim.atlas.io.*
   typed non-executable edges and are never silently executed.
 - `MniTemplateBridge` executes `MNI152NLin6Asym -> MNI152NLin2009cAsym` with
   TemplateFlow's exact ANTs composite (`MniTemplateBridgeFiles.loadCached` on
-  the JVM; the file is admitted only by its pinned SHA-256 and its 2009c res-01
-  displacement lattice). It pulls 2009c points to 6Asym and resamples 6Asym data
+  the JVM, which hashes the bytes; the file is admitted only by its pinned
+  SHA-256 and its 2009c res-01 displacement lattice; the ITK parity tests need
+  the file locally and are skipped, not failed, without it). It pulls 2009c points to 6Asym and resamples 6Asym data
   onto 2009c grids, matching ITK `TransformPoint` to 1e-8 mm; `install` puts its
   steps in a manifest, where the route is pullback-executable
   (`TransformPlan.pullPoints`). The forward map exists only after

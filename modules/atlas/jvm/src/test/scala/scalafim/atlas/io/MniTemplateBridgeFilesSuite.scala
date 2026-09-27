@@ -104,17 +104,19 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
     val evidence = table("direction.tsv").map(cells => (cells(0), cells(1)) -> (cells(2).toDouble, cells(3).toDouble)).toMap
     def score(transform: String, pull: TemplatePull): (Double, Double) =
       val hypothesis = pull match
-        case TemplatePull.Mni2009cToMni6 => "pulls-2009c-to-6Asym"
-        case TemplatePull.Mni6ToMni2009c => "pulls-6Asym-to-2009c"
+        case TemplatePull.PointsFrom2009cTo6Asym => "pulls-2009c-to-6Asym"
+        case TemplatePull.PointsFrom6AsymTo2009c => "pulls-6Asym-to-2009c"
       evidence((transform, hypothesis))
     TemplateFlowXfm.values.foreach: xfm =>
       val other = TemplatePull.values.filterNot(_ == xfm.measured).head
       val (measuredR, measuredDice) = score(xfm.fileName, xfm.measured)
       val (otherR, otherDice) = score(xfm.fileName, other)
+      // each hypothesis is compared with doing nothing on the same target grid
       val (identityR, identityDice) = score("identity", xfm.measured)
+      val (otherIdentityR, otherIdentityDice) = score("identity", other)
       // the measured direction improves on doing nothing; the other one is worse than doing nothing
       assert(measuredR > identityR + 0.01 && measuredDice > identityDice + 0.005, s"${xfm.fileName}: $measuredR, $measuredDice")
-      assert(otherR < identityR - 0.02 && otherDice < identityDice - 0.02, s"${xfm.fileName}: $otherR, $otherDice")
+      assert(otherR < otherIdentityR - 0.02 && otherDice < otherIdentityDice - 0.02, s"${xfm.fileName}: $otherR, $otherDice")
     assert(TemplateFlowXfm.Mni6ToMni2009c.agreesWithName)
     assert(!TemplateFlowXfm.Mni2009cToMni6.agreesWithName, "TemplateFlow's reverse file pulls the same way as the forward one")
 
@@ -172,12 +174,12 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
     MniTemplateBridgeFiles.load(cached(TemplateFlowXfm.Mni2009cToMni6)) match
       case Left(AtlasError.TemplateAssetRefused(asset, reason)) =>
         assertEquals(asset, TemplateFlowXfm.Mni2009cToMni6.relativePath)
-        assert(reason.contains("measured to pull Mni2009cToMni6"), reason)
+        assert(reason.contains("measured to pull PointsFrom2009cTo6Asym"), reason)
       case other => fail(s"expected a refusal, got $other")
 
   test("in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back"):
     // Were it the inverse, it would pull 6Asym points to 2009c and, to first order, send x to 2x - F(x). At 22 of the
-    // 23 points it lands nearer F(x) (median 0.54 mm) than that (median 4.5 mm); the exception lies outside the brain.
+    // 23 points it lands nearer F(x) (median 0.54 mm) than that (median 4.4 mm); the exception lies outside the brain.
     val reverse = rows("reverse_points.tsv")
     val forward = rows("pull_points.tsv")
     assertEquals(reverse.map(_.key), forward.map(_.key))

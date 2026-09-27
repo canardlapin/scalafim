@@ -119,6 +119,12 @@ class TemplateSphereFilesSuite extends munit.FunSuite:
           case SphereRegistration.FsAverage => ok(TemplateSphereFiles.load(asset.surface, SphereRegistration.FsAverage, path)).sphere
           case SphereRegistration.FsLR      => ok(TemplateSphereFiles.load(asset.surface, SphereRegistration.FsLR, path)).sphere
       assertEquals((loaded.vertexCount, loaded.faceCount), (asset.surface.mesh.vertices, asset.surface.mesh.faces), asset.relativePath)
+    // widening the registration type defeats the static check; the registrations are still compared at runtime
+    val native: TemplateSphere[SphereRegistration] = onFsLR(TemplateMesh.FsLR32k, CorticalHemisphere.Left).asInstanceOf[TemplateSphere[SphereRegistration]]
+    val deformed: TemplateSphere[SphereRegistration] = onFsAverage(TemplateMesh.FsAverage5, CorticalHemisphere.Left).asInstanceOf[TemplateSphere[SphereRegistration]]
+    TemplateResampling.plan(native, deformed) match
+      case Left(SurfaceError.InvalidGeometry(reason)) => assert(reason.contains("is on FsLR"), reason)
+      case other                                      => fail(s"expected a registration refusal, got $other")
     val left32k = TemplateSurface(TemplateMesh.FsLR32k, CorticalHemisphere.Left)
     // the native fsLR sphere's bytes are not the fsaverage-registered asset's
     TemplateSphereFiles.load(left32k, SphereRegistration.FsAverage, present(left32k, SphereRegistration.FsLR)) match

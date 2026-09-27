@@ -55,9 +55,11 @@ The shared module cross-compiles to JVM and Scala.js and contains:
   fsaverage <-> fsLR plans through the fsLR meshes deformed onto the fsaverage
   sphere, as Workbench does; `TemplateSphereAssets` pins the 18 TemplateFlow
   sphere files by SHA-256. On the JVM, `TemplateSphereFiles` loads them from a
-  local TemplateFlow cache (`TemplateFlowCache`, read-only). Plans match
-  Workbench 2.2.1 `-metric-resample BARYCENTRIC` within 6e-7 on smooth fields
-  and 2.4e-5 on seeded values.
+  local TemplateFlow cache (`TemplateFlowCache`, read-only). Against Workbench
+  2.2.1 `-metric-resample BARYCENTRIC` the gated budgets are 5e-5 on smooth
+  fields and on 99% of seeded values (1e-3 at most); measured maxima are 6e-7
+  and 2.4e-5. These parity tests need the TemplateFlow spheres locally and are
+  skipped, not failed, without them.
 
 The platform modules add matching GIFTI APIs:
 
