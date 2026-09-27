@@ -8,7 +8,7 @@ import ravel.DType.given
 import ravel.NDArray
 import reframe4s.field.CoordinateBoundaryPolicy
 import reframe4s.resample.VolumeModulation
-import scalafim.image.world.{FrameCatalog, Spaces, WorldSpace}
+import scalafim.image.world.{FrameCatalog, LinkDirection, Spaces, WorldLinkError, WorldSpace}
 import scalafim.transform.Conversion.EncodedTransform
 import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, LatticeAffine, LpsDisplacementInterpretation}
 import scalafim.transform.fsl.{FlirtInterpretation, FslHeaderGeometry}
@@ -131,6 +131,22 @@ class GuideExamplesSuite extends munit.FunSuite:
     // an impossible tolerance is refused with the evidence, never returned as a weaker estimate
     val strict = InversionPolicy.create(minimumCoverage = 1.0, maximumResidual = 1e-9, p99Residual = 1e-9)
     assert(strict.flatMap(p => warp.invertNumerically(subjectLattice, p)).left.exists(_.isInstanceOf[TransformError.Inversion]))
+
+  test("guide: linked cursors cross worlds through a transform's link"):
+    val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)
+    val mni = Spaces.MNI152NLin2009cAsym
+    val warp = antsWarp[subject.type, mni.type](subject, mni)
+    val warpRaw = gunzipped("neurotransform/itk_oracle/warp.nii.gz")
+    val mniGrid = Grid.forFrame[D3, mni.type](mni)(warpRaw.spatialShape, LatticeAffine.of(warpRaw, LatticeAffine.Itk).toOption.get).toOption.get
+    val peak = mniGrid.pointAt(image4s.geometry.LatticeIndex.fromVector[D3](warpRaw.spatialShape.map(_ / 2)).toOption.get).toOption.get
+
+    val link = warp.link.toOption.get                         // WorldLink.Mapped[subject.type, mni.type]
+    val inSubject = link.toLeft(peak)                         // MNI cursor -> subject point: the pullback
+    assert(inSubject.isRight, clue = inSubject)
+    assertEquals(inSubject.toOption.map(_.coordinates), warp.pullPoint(peak).toOption.map(_.coordinates))
+    link.toRight(inSubject.toOption.get) match                // subject cursor -> MNI needs the forward map
+      case Left(WorldLinkError.DirectionUnavailable(LinkDirection.LeftToRight, _)) => ()
+      case other => fail(s"expected the forward direction to be unavailable, got $other")
 
   test("guide: warp algebra: fields, determinants and modulation"):
     val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)

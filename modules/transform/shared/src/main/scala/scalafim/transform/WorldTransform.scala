@@ -7,6 +7,7 @@ import reframe4s.core.{SmoothIso, SpatialMap}
 import reframe4s.field.{CoordinateBoundaryPolicy, CoverageReportingMap, DenseMap, DeterminantDirection, LogDeterminantField}
 import reframe4s.lie.FramedAffine
 import reframe4s.resample.{Interpolation, ResamplingResult, VolumeModulation}
+import scalafim.image.world.WorldLink
 
 /** A spatial transform from world space `S` (source, moving) to world space `T` (target, fixed), whatever toolkit it
   * came from.
@@ -35,6 +36,14 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
     push
       .toRight(TransformError.NoForwardMap(provenance.describe))
       .flatMap(forward => forward(point).left.map(TransformError.Map(_)))
+
+  /** This transform as a typed point link from its source frame (left) to its target frame (right), the map behind a
+    * linked cursor between data in the two worlds. `toLeft` is the pullback and always exists; `toRight` exists exactly
+    * when [[push]] does, and is otherwise `WorldLinkError.DirectionUnavailable`, never an approximation. Read the other
+    * way with `swap`.
+    */
+  final def link: Either[TransformError, WorldLink.Mapped[S, T]] =
+    WorldLink.pullback(pull, push, provenance.describe).left.map(error => TransformError.Invalid(error.message))
 
   /** Lazy composition `S -> T -> U`. Two affines are better fused with [[WorldTransform.Linear.andThen]].
     *
