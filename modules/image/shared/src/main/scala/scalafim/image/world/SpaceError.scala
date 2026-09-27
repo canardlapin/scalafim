@@ -11,6 +11,7 @@ enum SpaceError derives CanEqual:
   case AmbiguousTemplate(reason: String)
   case ConflictingEvidence(first: String, second: String)
   case MissingNativeContext(reason: String)
+  case NoWorldSpace(reason: String)
 
   def message: String =
     this match
@@ -23,3 +24,4 @@ enum SpaceError derives CanEqual:
       case AmbiguousTemplate(reason)      => s"ambiguous template space: $reason"
       case ConflictingEvidence(a, b)      => s"conflicting world-space evidence: $a vs $b"
       case MissingNativeContext(reason)   => s"$reason, but no dataset/subject/reference context was supplied"
+      case NoWorldSpace(reason)           => s"no world-space identity: $reason"

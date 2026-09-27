@@ -3,6 +3,7 @@ package scalafim.image
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.Grid
 import scala.compiletime.testing.typeCheckErrors
 import scalafim.image.world.{Placed, Spaces}
 
@@ -44,11 +45,11 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assertEquals(point.toWorldPoint, WorldPoint(12.0, 26.0, 42.0))
     assertVoxel(grid.voxelAt(point).fold(error => fail(error.message), identity), VoxelPoint(1.0, 2.0, 3.0))
 
-    val bound = grid.bind(WorldPoint(12.0, 26.0, 42.0)).fold(error => fail(error.message), identity)
+    val bound = grid.claimUnchecked(WorldPoint(12.0, 26.0, 42.0)).fold(error => fail(error.message), identity)
     assertVoxel(grid.voxelAt(bound).fold(error => fail(error.message), identity), VoxelPoint(1.0, 2.0, 3.0))
 
-  test("WorldPoint.in claims a coordinate for exactly the named frame"):
-    val point = WorldPoint(1.0, 2.0, 3.0).in(Spaces.MNI152NLin2009cAsym).fold(error => fail(error.message), identity)
+  test("WorldPoint.claimUnchecked claims a coordinate for exactly the named frame"):
+    val point = WorldPoint(1.0, 2.0, 3.0).claimUnchecked(Spaces.MNI152NLin2009cAsym).fold(error => fail(error.message), identity)
     assert(point.frame eq Spaces.MNI152NLin2009cAsym)
     assertEquals(WorldPoint.of(point), WorldPoint(1.0, 2.0, 3.0))
 
@@ -142,6 +143,48 @@ class GridSpecFrameSuite extends munit.FunSuite:
 
     assert(placed.bindTo(Spaces.fsaverage).isLeft, clue = "binding to a different world must fail")
 
+  test("Placed.of packages a runtime-decoded GridSpec[?] and binds it to the static template frame"):
+    val decodedFrame = scalafim.image.world.FrameCatalog.frame(
+      scalafim.image.world.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get
+    )
+    val decoded: GridSpec[?] = GridSpec.in(decodedFrame)(shape, affine).fold(error => fail(error.message), identity)
+    val placed = Placed.of(decoded.frame)(decoded).fold(error => fail(error.message), identity)
+    assert(placed.frame eq decoded.frame)
+    val bound: GridSpec[Spaces.Mni2009c] =
+      placed.bindTo(Spaces.MNI152NLin2009cAsym).fold(error => fail(error.message), identity)
+    assertEquals(bound.affine, decoded.affine)
+    assert(placed.bindTo(Spaces.fsaverage).isLeft)
+
+  test("Placed.of checks the value's runtime frame owner when its static frame type is wide"):
+    val subjectFrame = scalafim.image.world.FrameCatalog.frame(scalafim.image.world.WorldSpace.declare("subject").toOption.get)
+    val wide: GridSpec[Frame[D3]] =
+      GridSpec.fromGrid(Grid.forFrame[D3, Frame[D3]](subjectFrame)(shape.toVector, affine).fold(error => fail(error.message), identity))
+    val mni: Frame[D3] = Spaces.MNI152NLin2009cAsym
+    assert(Placed.of[Frame[D3], GridSpec](mni)(wide).isLeft, clue = "a subject grid must not be packaged as an MNI grid")
+    assert(Placed.of[Frame[D3], GridSpec](subjectFrame)(wide).isRight)
+
+  test("worldAligned relates grids of one world space and refuses grids of different ones"):
+    val mni = mniGrid
+    val otherMniOwner = GridSpec
+      .in(scalafim.image.world.FrameCatalog.frame(scalafim.image.world.FrameCatalog.worldOf(Spaces.MNI152NLin2009cAsym).toOption.get))(shape, affine)
+      .fold(error => fail(error.message), identity)
+    assert(SpatialPullbacks.worldAligned(mni, otherMniOwner).isRight, clue = "one world, two runtime owners")
+    val fs = GridSpec.in(Spaces.fsaverage)(shape, affine).fold(error => fail(error.message), identity)
+    SpatialPullbacks.worldAligned(mni, fs) match
+      case Left(SpatialPullbackError.WorldMismatch(_)) => ()
+      case other                                      => fail(s"expected a world mismatch, got $other")
+    val unresolved = GridSpec(shape.toVector, affine)
+    assert(SpatialPullbacks.worldAligned(mni, unresolved).isLeft, clue = "an unresolved grid is not in MNI space")
+
+  test("legacy world-aligned resampling surfaces a world mismatch instead of resampling across worlds"):
+    val subjectA = SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), scalafim.image.world.WorldSpace.declare("sub-01").toOption.get)
+      .fold(error => fail(error.message), identity)
+    val subjectB = SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), scalafim.image.world.WorldSpace.declare("sub-02").toOption.get)
+      .fold(error => fail(error.message), identity)
+    val volume = SomeScalarVolume.unsafeCopyFromCanonicalArray(Array.tabulate(27)(_.toDouble), subjectA, "a")
+    assertEqualsDouble(Resample.trilinear(volume, subjectA)(1, 1, 1), volume(1, 1, 1), 1e-12)
+    intercept[IllegalArgumentException](Resample.trilinear(volume, subjectB))
+
   test("typed plans resample within one static frame"):
     val grid = mniGrid
     val plan = ResamplingPlan.identity(grid, Resample.Method.Nearest).fold(error => fail(error.message), identity)
@@ -152,7 +195,7 @@ class GridSpecFrameSuite extends munit.FunSuite:
     val source = GridSpec.identity(Vector(2, 2, 2))
     val target = GridSpec.identity(Vector(2, 2, 2))
     val unrelated = GridSpec.identity(Vector(2, 2, 2))
-    val pullback = SpatialPullbacks.worldAligned(source, target)
+    val pullback = SpatialPullbacks.worldAligned(source, target).fold(error => fail(error.message), identity)
     assert(ResamplingPlan.bind(source, target, pullback, Resample.Method.Linear).isRight)
     assert(ResamplingPlan.bind(unrelated, target, pullback, Resample.Method.Linear).isLeft)
 

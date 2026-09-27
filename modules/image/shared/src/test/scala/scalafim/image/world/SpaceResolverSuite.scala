@@ -8,7 +8,7 @@ class SpaceResolverSuite extends munit.FunSuite:
     ok(DatasetNamespace("ds")),
     ok(SubjectId("sub-01")),
     Some(ok(SessionId("01"))),
-    ReferenceAcquisition(Map("task" -> "rest"), ok(GeometryDigest(Vector(4, 4, 4), Vector.fill(12)(0.5), 1, 1)))
+    ok(ReferenceAcquisition(Map("task" -> "rest"), ok(GeometryDigest(Vector(4, 4, 4), Vector.fill(12)(0.5), 1, 1))))
   )
   private val native = WorldSpace.SubjectNative(context.namespace, context.subject, context.session, context.reference)
   private val mni2009c = ok(WorldSpace.template("MNI152NLin2009cAsym"))
@@ -63,8 +63,38 @@ class SpaceResolverSuite extends munit.FunSuite:
         case Left(SpaceError.ConflictingEvidence(_, _)) => ()
         case other                                      => fail(s"$evidence resolved to $other")
 
-  test("an explicit assertion wins over codes and agrees with native BIDS labels"):
+  test("an explicit assertion settles ambiguous codes and refines native BIDS labels"):
     assertEquals(resolve(SpaceEvidence(xform = Some(XformCode.Mni152), assertion = Some(mni2009c))), Right(mni2009c))
     assertEquals(resolve(SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"), assertion = Some(mni2009c))), Right(mni2009c))
+    assertEquals(resolve(SpaceEvidence(bidsSpace = Some("T1w"), native = Some(context), assertion = Some(native))), Right(native))
+    // The label says only "native"; a native assertion supplies which one, with or without a context.
+    assertEquals(resolve(SpaceEvidence(bidsSpace = Some("T1w"), assertion = Some(native))), Right(native))
+    assertEquals(resolve(SpaceEvidence(xform = Some(XformCode.ScannerAnatomical), assertion = Some(native))), Right(native))
+
+  test("an assertion never overrides evidence that contradicts it"):
     val tk = WorldSpace.SubjectTkRas(context.namespace, context.subject, context.reference)
-    assertEquals(resolve(SpaceEvidence(bidsSpace = Some("T1w"), native = Some(context), assertion = Some(tk))), Right(tk))
+    val conflicts = Vector(
+      // A native BIDS label admits only a subject-native assertion.
+      SpaceEvidence(bidsSpace = Some("T1w"), assertion = Some(mni2009c)),
+      SpaceEvidence(bidsSpace = Some("T1w"), native = Some(context), assertion = Some(mni2009c)),
+      SpaceEvidence(bidsSpace = Some("T1w"), native = Some(context), assertion = Some(tk)),
+      // A template label admits only that template.
+      SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"), assertion = Some(native)),
+      // Assertions meet the xform code like BIDS-named spaces do.
+      SpaceEvidence(xform = Some(XformCode.ScannerAnatomical), assertion = Some(mni2009c)),
+      SpaceEvidence(xform = Some(XformCode.Mni152), assertion = Some(ok(WorldSpace.template("fsaverage")))),
+      SpaceEvidence(xform = Some(XformCode.Mni152), assertion = Some(native)),
+      SpaceEvidence(xform = Some(XformCode.Talairach), assertion = Some(tk))
+    )
+    conflicts.foreach: evidence =>
+      resolve(evidence) match
+        case Left(SpaceError.ConflictingEvidence(_, _)) => ()
+        case other                                      => fail(s"$evidence resolved to $other")
+
+  test("resolveKnown refuses evidence that identifies no world space"):
+    assertEquals(SpaceResolver.resolveKnown(SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"))), Right(mni2009c))
+    Vector(SpaceEvidence(), SpaceEvidence(xform = Some(XformCode.Unknown)), SpaceEvidence(xform = Some(XformCode.ScannerAnatomical))).foreach:
+      evidence =>
+        SpaceResolver.resolveKnown(evidence) match
+          case Left(SpaceError.NoWorldSpace(_)) => ()
+          case other                            => fail(s"$evidence resolved to $other")

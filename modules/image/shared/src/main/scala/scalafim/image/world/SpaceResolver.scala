@@ -47,6 +47,10 @@ final case class SpaceEvidence(
 /** Turns file evidence into a [[WorldSpace]]. Precedence: an explicit assertion, then the BIDS `space-` entity, then
   * the xform code of the selected affine. Contradictions and under-determined templates are typed failures, never
   * guesses; absence of any evidence is [[WorldSpace.Unresolved]].
+  *
+  * An assertion chooses among spaces the file evidence allows; it never overrides evidence that contradicts it. It
+  * must agree with a BIDS label (a native label admits only a subject-native assertion, a template label only that
+  * template) and with the xform code, under the same rules a BIDS-named space meets.
   */
 object SpaceResolver:
   /** BIDS `space-` labels that denote the subject's own (native) coordinates rather than a template. */
@@ -57,16 +61,43 @@ object SpaceResolver:
     val fromXform = evidence.xform.map(code => xformSpace(code, evidence.native))
     evidence.assertion match
       case Some(asserted) =>
-        fromBids match
-          case Some(Right(bids)) if bids != asserted && !bids.isInstanceOf[WorldSpace.SubjectNative] =>
-            Left(SpaceError.ConflictingEvidence(asserted.displayName, s"BIDS space-${evidence.bidsSpace.getOrElse("")}"))
-          case _ => Right(asserted)
+        for
+          _ <- evidence.bidsSpace.fold(Right(()))(label => assertionMatchesBids(asserted, label.trim, fromBids))
+          _ <- consistent(asserted, evidence.xform)
+        yield asserted
       case None =>
         fromBids match
           case Some(result) =>
             result.flatMap(space => consistent(space, evidence.xform).map(_ => space))
           case None =>
             fromXform.getOrElse(Right(WorldSpace.Unresolved))
+
+  /** [[resolve]], but evidence that identifies no world space is itself a failure. Loaders that promise a world
+    * identity use this: [[WorldSpace.Unresolved]] is an admission of ignorance, not an answer.
+    */
+  def resolveKnown(evidence: SpaceEvidence): Either[SpaceError, WorldSpace] =
+    resolve(evidence).flatMap:
+      case WorldSpace.Unresolved =>
+        Left(SpaceError.NoWorldSpace("the evidence does not identify a world space; supply a BIDS space- entity, a native context or an assertion"))
+      case space => Right(space)
+
+  /** A BIDS label names a native or a template space; an assertion may only refine it, never contradict it. */
+  private def assertionMatchesBids(
+      asserted: WorldSpace,
+      label: String,
+      fromBids: Option[Either[SpaceError, WorldSpace]]
+  ): Either[SpaceError, Unit] =
+    val conflict = Left(SpaceError.ConflictingEvidence(asserted.displayName, s"BIDS space-$label"))
+    if NativeBidsLabels.contains(label) then
+      // The label says only "subject native"; the assertion supplies which native space.
+      asserted match
+        case _: WorldSpace.SubjectNative => Right(())
+        case _                           => conflict
+    else
+      fromBids match
+        case Some(Right(bids)) if bids == asserted => Right(())
+        case Some(Left(error))                     => Left(error)
+        case _                                     => conflict
 
   private def bidsSpace(label: String, native: Option[NativeContext]): Either[SpaceError, WorldSpace] =
     if label.isEmpty then Left(SpaceError.EmptyIdentifier("BIDS space"))
@@ -89,16 +120,16 @@ object SpaceResolver:
       case XformCode.Unknown =>
         Right(WorldSpace.Unresolved)
 
-  /** A BIDS-named space must not contradict the file's own xform code. */
+  /** A named space (from BIDS or an assertion) must not contradict the file's own xform code. */
   private def consistent(space: WorldSpace, xform: Option[XformCode]): Either[SpaceError, Unit] =
     (space, xform) match
       case (WorldSpace.Template(name), Some(XformCode.ScannerAnatomical)) =>
-        Left(SpaceError.ConflictingEvidence(s"BIDS space-${name.value}", "NIFTI_XFORM_SCANNER_ANAT"))
+        Left(SpaceError.ConflictingEvidence(s"template space ${name.value}", "NIFTI_XFORM_SCANNER_ANAT"))
       case (WorldSpace.Template(name), Some(XformCode.Mni152)) if !name.value.startsWith("MNI152") =>
-        Left(SpaceError.ConflictingEvidence(s"BIDS space-${name.value}", "NIFTI_XFORM_MNI_152"))
+        Left(SpaceError.ConflictingEvidence(s"template space ${name.value}", "NIFTI_XFORM_MNI_152"))
       case (WorldSpace.Template(name), Some(XformCode.Talairach)) if !(name.value == "MNI305" || name.value.contains("Talairach")) =>
-        Left(SpaceError.ConflictingEvidence(s"BIDS space-${name.value}", "NIFTI_XFORM_TALAIRACH"))
-      case (WorldSpace.SubjectNative(_, _, _, _), Some(code @ (XformCode.Mni152 | XformCode.Talairach))) =>
-        Left(SpaceError.ConflictingEvidence("BIDS subject-native space", s"xform code $code"))
+        Left(SpaceError.ConflictingEvidence(s"template space ${name.value}", "NIFTI_XFORM_TALAIRACH"))
+      case (subject @ (WorldSpace.SubjectNative(_, _, _, _) | WorldSpace.SubjectTkRas(_, _, _)), Some(code @ (XformCode.Mni152 | XformCode.Talairach))) =>
+        Left(SpaceError.ConflictingEvidence(s"subject space ${subject.displayName}", s"xform code $code"))
       case _ =>
         Right(())

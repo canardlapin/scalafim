@@ -46,7 +46,7 @@ class NativeImageAllocationSuite extends munit.FunSuite:
         .make(
           grid,
           grid,
-          SpatialPullbacks.worldAligned(grid, grid),
+          SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity),
           Resample.Method.Linear
         )
         .fold(error => fail(error.message), identity)

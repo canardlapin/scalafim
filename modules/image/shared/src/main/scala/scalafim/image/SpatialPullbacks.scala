@@ -28,6 +28,7 @@ enum SpatialPullbackError:
   case Map(error: MapError)
   case ShapeMismatch(expected: Vector[Int], actual: Vector[Int])
   case InvalidCoordinates(reason: String)
+  case WorldMismatch(error: GeometryError)
 
   def message: String =
     this match
@@ -38,6 +39,8 @@ enum SpatialPullbackError:
       case ShapeMismatch(expected, actual) =>
         s"coordinate field shape mismatch: expected $expected, got $actual"
       case InvalidCoordinates(reason) => reason
+      case WorldMismatch(error) =>
+        s"grids are not in one world space, so world coordinates cannot be shared without a transform: ${error.message}"
 
 /** Neuroimaging renditions that produce provider maps directly.
   *
@@ -84,12 +87,20 @@ object SpatialPullbacks:
       outputFrame
     )(pull)
 
-  /** Identity on world coordinates between two grids whose worlds are taken to coincide. */
+  /** Identity on world coordinates between two grids in one world space.
+    *
+    * The grids' frames must be one runtime owner or share a persistent key (image4s `Frame.alignOwners`); grids in
+    * different world spaces are a [[SpatialPullbackError.WorldMismatch]], because relating them needs a transform.
+    */
   def worldAligned[S <: Frame[D3], T <: Frame[D3]](
       source: GridSpec[S],
       target: GridSpec[T]
-  ): SpatialPullback[T, S] =
-    affine(source, target, Affine.identity[D3])
+  ): Either[SpatialPullbackError, SpatialPullback[T, S]] =
+    Frame
+      .alignOwners[D3, S, T](source.frame, target.frame)
+      .left
+      .map(SpatialPullbackError.WorldMismatch.apply)
+      .map(_ => affine(source, target, Affine.identity[D3]))
 
   def coordinates[S <: Frame[D3], T <: Frame[D3]](
       source: GridSpec[S],

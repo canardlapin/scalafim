@@ -38,8 +38,31 @@ object GeometryDigest:
       val bits = voxelToWorldRowMajor.take(12).map(v => java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(v + 0.0)))
       Right(GeometryDigest(s"${dims.mkString("x")};q$qformCode;s$sformCode;${bits.mkString(",")}"))
 
-  private[world] def fromCanonical(canonical: String): GeometryDigest =
-    GeometryDigest(canonical)
+  /** Parse persisted digest text. The text is decoded into its fields and re-validated through [[apply]]; it is
+    * accepted only when it is exactly the canonical form of the geometry it describes.
+    */
+  private[world] def fromCanonical(canonical: String): Either[SpaceError, GeometryDigest] =
+    val invalid = SpaceError.UnrecognisedWorldSpaceId(canonical)
+    def int(text: String): Option[Int] = text.toIntOption
+    def bits(text: String): Option[Double] =
+      if text.isEmpty || text.length > 16 || !text.forall(c => Character.digit(c, 16) >= 0) then None
+      else Some(java.lang.Double.longBitsToDouble(java.lang.Long.parseUnsignedLong(text, 16)))
+    canonical.split(";", -1).toList match
+      case dimText :: qText :: sText :: affineText :: Nil if qText.startsWith("q") && sText.startsWith("s") =>
+        val dims = dimText.split("x", -1).toVector.map(int)
+        val affine = affineText.split(",", -1).toVector.map(bits)
+        val parsed =
+          for
+            q <- int(qText.drop(1))
+            s <- int(sText.drop(1))
+            if dims.forall(_.nonEmpty) && affine.size == 12 && affine.forall(_.nonEmpty)
+          yield (dims.flatten, affine.flatten, q, s)
+        parsed match
+          case Some((d, a, q, s)) =>
+            apply(d, a, q, s).flatMap: digest =>
+              if digest.canonical == canonical then Right(digest) else Left(invalid)
+          case None => Left(invalid)
+      case _ => Left(invalid)
 
 /** The acquisition that anchors a native world space. Distinct boldrefs within one session are distinct spaces until
   * an identity-certified coregistration says otherwise.
@@ -47,9 +70,7 @@ object GeometryDigest:
   * @param entities
   *   BIDS entities other than subject/session that distinguish the acquisition (task, run, acq, echo, ...)
   */
-final case class ReferenceAcquisition(entities: Map[String, String], geometry: GeometryDigest) derives CanEqual:
-  require(entities.forall((k, v) => k.trim.nonEmpty && v.trim.nonEmpty), "BIDS entities must be non-empty")
-
+final case class ReferenceAcquisition private (entities: Map[String, String], geometry: GeometryDigest) derives CanEqual:
   private[world] def canonical: String =
     entities.toVector
       .sortBy(_._1)
@@ -57,6 +78,12 @@ final case class ReferenceAcquisition(entities: Map[String, String], geometry: G
       .mkString("_") + "|" + geometry.canonical
 
 object ReferenceAcquisition:
+  /** Admit an acquisition; every BIDS entity key and value must be non-blank. */
+  def apply(entities: Map[String, String], geometry: GeometryDigest): Either[SpaceError, ReferenceAcquisition] =
+    entities.collectFirst { case (k, v) if k.trim.isEmpty || v.trim.isEmpty => k } match
+      case Some(key) => Left(SpaceError.EmptyIdentifier(s"BIDS entity '$key'"))
+      case None      => Right(new ReferenceAcquisition(entities, geometry))
+
   /** Escape everything but ASCII alphanumerics and '.', so '-', '_' and '|' stay structural. */
   private[world] def strict(text: String): String =
     text.flatMap: c =>
@@ -65,20 +92,40 @@ object ReferenceAcquisition:
   private[world] def unstrict(text: String): Either[SpaceError, String] =
     WorldSpace.unescapeComponent(text)
 
-/** A freshly minted identity for a space declared by the caller; the label never participates in equality. */
-final case class DeclaredToken private (value: String) derives CanEqual
+/** A freshly minted identity for a space declared by the caller, with its display label.
+  *
+  * Identity is the token `value` alone: equality, hashing and the persistent frame id ignore the label, which travels
+  * as presentation metadata (the frame's `FrameMetadata`).
+  */
+final class DeclaredToken private (val value: String, val label: String) derives CanEqual:
+  override def equals(other: Any): Boolean =
+    other match
+      case that: DeclaredToken => value == that.value
+      case _                   => false
+
+  override def hashCode(): Int =
+    value.hashCode
+
+  override def toString: String =
+    s"DeclaredToken($value, $label)"
 
 object DeclaredToken:
   private val sessionNonce: String = java.lang.Long.toHexString(Random.nextLong())
   private var counter: Long = 0L
 
-  private[world] def fresh(): DeclaredToken =
+  /** Label for a restored declaration whose presentation metadata is missing or unusable. */
+  private[world] val FallbackLabel = "declared space"
+
+  private[world] def fresh(label: String): DeclaredToken =
     synchronized:
       counter += 1
-      DeclaredToken(s"$sessionNonce-$counter")
+      new DeclaredToken(s"$sessionNonce-$counter", label)
 
-  private[world] def restored(value: String): Either[SpaceError, DeclaredToken] =
-    SpaceIdentifier.normalize("declared token", value).map(DeclaredToken(_))
+  /** Restore a persisted token; the label is normalised, and a blank one falls back to [[FallbackLabel]]. */
+  private[world] def restored(value: String, label: Option[String]): Either[SpaceError, DeclaredToken] =
+    SpaceIdentifier
+      .normalize("declared token", value)
+      .map(token => new DeclaredToken(token, label.flatMap(l => SpaceIdentifier.normalize("label", l).toOption).getOrElse(FallbackLabel)))
 
 /** A continuous RAS-millimetre coordinate system: the identity that world frames carry.
   *
@@ -100,8 +147,8 @@ enum WorldSpace derives CanEqual:
   /** FreeSurfer surface RAS (tkRAS) of one subject's conformed volume. Not per hemisphere. */
   case SubjectTkRas(namespace: DatasetNamespace, subject: SubjectId, conformed: ReferenceAcquisition)
 
-  /** A caller-declared space. Fresh by construction; the label is display-only. */
-  case Declared(token: DeclaredToken, label: String)
+  /** A caller-declared space. Fresh by construction; identity is the token alone, and its label is display-only. */
+  case Declared(token: DeclaredToken)
 
   /** No identity evidence. Every unresolved RAS-mm space shares this identity, which preserves the historical
     * behaviour of independently loaded volumes aligning with one another. It is an explicit admission that the
@@ -114,13 +161,13 @@ enum WorldSpace derives CanEqual:
       case Template(name)                       => name.value
       case SubjectNative(ns, sub, ses, _)       => s"${ns.value}/${sub.value}${ses.fold("")(s => s"/${s.value}")}/native"
       case SubjectTkRas(ns, sub, _)             => s"${ns.value}/${sub.value}/tkRAS"
-      case Declared(_, label)                   => label
+      case Declared(token)                      => token.label
       case Unresolved                           => "unresolved RAS"
 
 object WorldSpace:
   /** Declare a new space. Two declarations never share an identity, whatever their labels. */
   def declare(label: String): Either[SpaceError, WorldSpace] =
-    SpaceIdentifier.normalize("declared space label", label).map(l => Declared(DeclaredToken.fresh(), l))
+    SpaceIdentifier.normalize("declared space label", label).map(l => Declared(DeclaredToken.fresh(l)))
 
   def template(name: String): Either[SpaceError, WorldSpace] =
     TemplateName(name).map(Template(_))
@@ -134,13 +181,18 @@ object WorldSpace:
         s"scalafim-world:native:${escape(ns.value)}:${escape(sub.value)}:${ses.fold("")(s => escape(s.value))}:${escape(ref.canonical)}"
       case SubjectTkRas(ns, sub, ref) =>
         s"scalafim-world:tkras:${escape(ns.value)}:${escape(sub.value)}:${escape(ref.canonical)}"
-      case Declared(token, label) =>
-        s"scalafim-world:declared:${escape(token.value)}:${escape(label)}"
+      case Declared(token) =>
+        s"scalafim-world:declared:${escape(token.value)}"
       case Unresolved =>
         UnresolvedId
 
-  /** Inverse of [[encode]]; used when restoring persisted frame records. */
-  def decode(text: String): Either[SpaceError, WorldSpace] =
+  /** Inverse of [[encode]]; used when restoring persisted frame records.
+    *
+    * A declared space's label is not part of its identity and so is not in `text`; `declaredLabel` restores it (e.g.
+    * from the frame's metadata), and a blank or missing one falls back to a generic label. Malformed text of any shape
+    * is a `Left`, never an exception.
+    */
+  def decode(text: String, declaredLabel: Option[String] = None): Either[SpaceError, WorldSpace] =
     if text == UnresolvedId then Right(Unresolved)
     else
       text.split(":", -1).toList match
@@ -159,11 +211,8 @@ object WorldSpace:
             subject   <- unescape(sub).flatMap(SubjectId(_))
             reference <- unescape(ref).flatMap(decodeReference)
           yield SubjectTkRas(namespace, subject, reference)
-        case "scalafim-world" :: "declared" :: token :: label :: Nil =>
-          for
-            t <- unescape(token).flatMap(DeclaredToken.restored)
-            l <- unescape(label)
-          yield Declared(t, l)
+        case "scalafim-world" :: "declared" :: token :: Nil =>
+          unescape(token).flatMap(DeclaredToken.restored(_, declaredLabel)).map(Declared(_))
         case _ =>
           Left(SpaceError.UnrecognisedWorldSpaceId(text))
 
@@ -188,7 +237,11 @@ object WorldSpace:
                   yield acc.updated(key, value)
                 case (Right(_), other)           => Left(SpaceError.UnrecognisedWorldSpaceId(other.mkString("-")))
                 case (left, _)                   => left
-        entities.map(ReferenceAcquisition(_, GeometryDigest.fromCanonical(geometry)))
+        for
+          checkedEntities <- entities
+          digest          <- GeometryDigest.fromCanonical(geometry)
+          reference       <- ReferenceAcquisition(checkedEntities, digest)
+        yield reference
       case _ =>
         Left(SpaceError.UnrecognisedWorldSpaceId(canonical))
 

@@ -117,7 +117,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(4, 4, 4))
     val volume = testVolume(space)
     val grid = GridSpec.fromSpace(space)
-    val id = SpatialPullbacks.worldAligned(grid, grid)
+    val id = SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
 
     val nearestPlan = plan(grid, grid, id, Resample.Method.Nearest)
     val nearest = nearestPlan(volume).fold(err => fail(err.message), identity)
@@ -135,7 +135,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(4, 4, 4))
     val vec = testVec(space, nVolumes = 2)
     val grid = GridSpec.fromSpace(space)
-    val id = SpatialPullbacks.worldAligned(grid, grid)
+    val id = SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
 
     val nearestPlan = plan(grid, grid, id, Resample.Method.Nearest)
     val nearest = nearestPlan(vec).fold(err => fail(err.message), identity)
@@ -152,7 +152,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
   test("Resample plan helpers build and execute morphism-aware plans") {
     val space = SampleSpaces(Vector(3, 2, 1))
     val grid = GridSpec.fromSpace(space)
-    val id = SpatialPullbacks.worldAligned(grid, grid)
+    val id = SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
     val volume = testVolume(space)
     val vec = testVec(space, nVolumes = 2)
 
@@ -320,7 +320,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val p = plan(
       grid,
       grid,
-      SpatialPullbacks.worldAligned(grid, grid),
+      SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity),
       Resample.Method.Cubic
     )
 
@@ -362,7 +362,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
         .coordinates(grid, grid, coordinates)
         .fold(err => fail(err.message), identity)
     val rebound = grid
-      .bind(WorldPoint(0.5, 0.0, 0.0))
+      .claimUnchecked(WorldPoint(0.5, 0.0, 0.0))
       .fold(err => fail(err.message), identity)
     val mapped = map(rebound).fold(err => fail(err.message), identity)
 
@@ -377,7 +377,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val p = plan(
       plannedSource,
       target,
-      SpatialPullbacks.worldAligned(plannedSource, target),
+      SpatialPullbacks.worldAligned(plannedSource, target).fold(error => fail(error.message), identity),
       Resample.Method.Nearest
     )
 

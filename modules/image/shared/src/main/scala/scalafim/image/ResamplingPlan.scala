@@ -7,6 +7,7 @@ import image4s.BoundaryPolicy
 import image4s.Continuous
 import image4s.SampleSpace
 import image4s.Sampled
+import image4s.SamplingAlignment
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
@@ -40,12 +41,16 @@ enum ResamplingPlanError:
   case Geometry(error: GeometryError)
   case Map(error: MapError)
   case Provider(error: ResamplingError)
+  case Pullback(error: SpatialPullbackError)
+  case Image(error: image4s.ImageError)
 
   def message: String =
     this match
       case Geometry(error) => error.message
       case Map(error)      => error.message
       case Provider(error) => error.message
+      case Pullback(error) => error.message
+      case Image(error)    => error.message
 
 enum JacobianModulation:
   case None, Jacobian, SqrtJacobian
@@ -221,11 +226,26 @@ final class ResamplingPlan[S <: Frame[D3], T <: Frame[D3]] private (
       outside: Double,
       factors: ModulationFactors
   ): Either[ResamplingPlanError, Unit] =
-    // `apply` admitted the image only after image4s certified exact congruence of its grid with `source.grid`
-    // (aligned frames, identical geometry), so its sample space is typed at the source frame here.
-    val captured = sampled.asInstanceOf[
-      Sampled[SampleSpace[S, D3], Double, Continuous, R]
-    ]
+    // Re-own the image at the plan's source frame without a cast: image4s certifies that the image's sample space and
+    // `admitted` (the source grid plus the image's own non-spatial axes) sample identical points, and the image's
+    // storage is then re-wrapped at `admitted` without copying. `Sampled.rebind` cannot be used here: it needs the
+    // alignment typed at the image's static space owner, which the existential `SomeScalarVolume` does not retain.
+    val admitted: SampleSpace[S, D3] = SampleSpace.create(source.grid, sampled.nonSpatialAxes)
+    SamplingAlignment
+      .exact(sampled.sampleSpace, admitted)
+      .flatMap(_ => Sampled.continuous(admitted, sampled.data, sampled.metadata))
+      .left
+      .map(ResamplingPlanError.Image.apply)
+      .flatMap: captured =>
+        scanAdmitted(captured, output, trailingSize, outside, factors)
+
+  private def scanAdmitted[R <: AnyRank](
+      captured: Sampled[? <: SampleSpace[S, D3], Double, Continuous, R],
+      output: ArrayBuilder[Double],
+      trailingSize: Int,
+      outside: Double,
+      factors: ModulationFactors
+  ): Either[ResamplingPlanError, Unit] =
     ReframeResamplingPlan
       .mapped(
         captured,

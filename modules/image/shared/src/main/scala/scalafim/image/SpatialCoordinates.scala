@@ -14,7 +14,7 @@ import image4s.geometry.GeometryError
 import image4s.geometry.Grid
 import image4s.geometry.Point
 import scala.annotation.targetName
-import scalafim.image.world.{Rebind, SpaceError, ToolCoordinates}
+import scalafim.image.world.{FrameOwned, Rebind, SpaceError, ToolCoordinates}
 
 object SpatialCoordinates:
 
@@ -249,8 +249,12 @@ final class GridSpec[F <: Frame[D3]] private (private val space: SampleSpace[F, 
   def voxelAt(point: Point[F, D3]): Either[GeometryError, VoxelPoint] =
     grid.continuousIndexOf(point).map(index => VoxelPoint(index.values(0), index.values(1), index.values(2)))
 
-  /** Claim an unowned world coordinate for this grid's frame. */
-  def bind(world: WorldPoint): Either[GeometryError, Point[F, D3]] =
+  /** Trust boundary: assert that an unowned world coordinate is in this grid's frame.
+    *
+    * Nothing about a bare `WorldPoint` says which space its numbers are in, so nothing is checked beyond arity and
+    * finiteness; the caller vouches for the frame. Prefer [[pointAt]], or a point already owned by this frame.
+    */
+  def claimUnchecked(world: WorldPoint): Either[GeometryError, Point[F, D3]] =
     GridSpec.pointIn(frame, world.toVector)
 
   /** The world box enclosing this grid's voxel centres, in the grid's frame. */
@@ -451,6 +455,10 @@ object GridSpec:
       self <- Frame.alignOwners[D3, frame.type, F](frame, frame)
       owned <- self.pointToRight(raw)
     yield owned
+
+  /** A grid's runtime frame owner, for [[scalafim.image.world.Placed.of]]. */
+  given frameOwned: FrameOwned[GridSpec] with
+    def frameOf[F <: Frame[D3]](value: GridSpec[F]): F = value.frame
 
   /** Move a grid across a checked frame alignment, keeping its shape, affine and persistent grid id. */
   given rebind: Rebind[GridSpec] with

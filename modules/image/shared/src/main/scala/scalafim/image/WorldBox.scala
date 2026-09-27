@@ -57,7 +57,12 @@ object WorldBox:
   def enclosing[F <: Frame[D3]](points: Iterable[Point[F, D3]]): Option[WorldBox[F]] =
     points.headOption.map(head => enclosingNonEmpty(head, points.iterator.drop(1)))
 
-  /** A box from coordinate extrema in `frame`; rejects non-finite or inverted extrema. */
+  /** Trust boundary: a box from unowned coordinate extrema asserted to lie in `frame`.
+    *
+    * Only finiteness and ordering are checked (non-finite or inverted extrema are rejected); nothing can check that the
+    * numbers are coordinates of `frame`, so the caller vouches for it, exactly as with `WorldPoint.claimUnchecked`.
+    * Boxes computed from frame-owned points should use [[spanning]] or [[enclosing]], which need no such trust.
+    */
   def fromExtrema[F <: Frame[D3]](
       frame: F,
       minimum: WorldPoint,

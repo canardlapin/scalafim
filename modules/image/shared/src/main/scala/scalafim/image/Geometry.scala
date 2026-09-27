@@ -243,8 +243,12 @@ final case class WorldPoint(x: Double, y: Double, z: Double):
   def toSpatialPoint: SpatialPoint =
     SpatialPoint(x, y, z)
 
-  /** Claim this coordinate for `frame`; the result's type names that frame. */
-  def in(frame: Frame[D3]): Either[ProviderGeometryError, Point[frame.type, D3]] =
+  /** Trust boundary: assert that this unowned coordinate is in `frame`; the result's type names that frame.
+    *
+    * A `WorldPoint` carries no frame, so nothing is checked beyond arity and finiteness: the caller vouches that the
+    * numbers are coordinates of `frame`. Points computed inside a frame (grid lookups, transforms) should stay owned.
+    */
+  def claimUnchecked(frame: Frame[D3]): Either[ProviderGeometryError, Point[frame.type, D3]] =
     Point.in[D3](frame)(x, y, z)
 
 object WorldPoint:

@@ -41,7 +41,7 @@ object FrameCatalog:
       case Some(key) if key.convention != CoordinateConvention.RAS =>
         Left(SpaceError.NotAWorldFrame(s"convention ${key.convention}"))
       case Some(key) =>
-        WorldSpace.decode(key.id.value)
+        WorldSpace.decode(key.id.value, declaredLabel = Some(frame.metadata.label))
 
   /** The persistence record for a world frame, for storage alongside data that lives in it. */
   def record(world: WorldSpace): FrameRecord =

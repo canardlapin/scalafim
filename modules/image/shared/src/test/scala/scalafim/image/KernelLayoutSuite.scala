@@ -50,7 +50,7 @@ class KernelLayoutSuite extends munit.FunSuite:
 
     val grid = GridSpec.fromSpace(volumeSpace)
     val identityMorphism =
-      SpatialPullbacks.worldAligned(grid, grid)
+      SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
     val resampling =
       ResamplingPlan
         .make(grid, grid, identityMorphism, Resample.Method.Linear)

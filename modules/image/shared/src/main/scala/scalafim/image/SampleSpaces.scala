@@ -121,12 +121,6 @@ object SampleSpaces:
       if nonSpatialKinds.isEmpty then Right(spatial)
       else Left(SampleSpaceError.UnexpectedNonSpatialAxes(nonSpatialKinds))
 
-  /** Assign deterministic persistent identity to exact D3 sampling geometry.
-    *
-    * External decoders intentionally produce ephemeral frame and grid owners. ScalaFIM admits those values by retaining
-    * their exact geometry and axes while constructing the persistent frame/grid keys used by GridDomain. Existing
-    * persistent sample spaces pass through unchanged.
-    */
   /** Re-identify exact D3 sampling geometry in a resolved world space.
     *
     * The grid shape, index-to-world affine and non-spatial axes are retained; only the frame identity changes, from
@@ -158,6 +152,15 @@ object SampleSpaces:
   def worldOf(space: SomeSampleSpace): Either[SampleSpaceError, WorldSpace] =
     FrameCatalog.worldOf(space.grid.frame).left.map(error => SampleSpaceError.WorldIdentity(error.message))
 
+  /** Assign deterministic persistent identity to exact D3 sampling geometry.
+    *
+    * External decoders intentionally produce ephemeral frame and grid owners. ScalaFIM admits those values by retaining
+    * their exact geometry and axes while constructing the persistent frame/grid keys used by GridDomain. Existing
+    * persistent sample spaces pass through unchanged.
+    *
+    * An ephemeral RAS-mm D3 frame becomes the [[scalafim.image.world.WorldSpace.Unresolved]] frame: this is the legacy
+    * identity every file read without world evidence gets (see [[make]]).
+    */
   private[scalafim] def persistentD3[F <: Frame[D3]](
       space: SampleSpace[F, D3]
   ): Either[
@@ -372,6 +375,15 @@ object SampleSpaces:
   ): SomeSampleSpace =
     SampleSpaces(dims.toVector, spacing, origin, axes, affine)
 
+  /** Admit sampling geometry from dimensions and an optional affine (or spacing and origin).
+    *
+    * **World identity (deferred, STP P1.07).** A D3 result lives in [[scalafim.image.world.WorldSpace.Unresolved]], the
+    * historical shared frame `scalafim-ras-d3`. Every space built here, and every NIfTI read through the legacy
+    * `Nifti.readVolume`/`readSeries`, therefore aligns with every other one, whichever subject or template it came from.
+    * That keeps same-subject pipelines working, but it is not evidence that two spaces coincide. To give geometry a
+    * real identity, relabel it with [[inWorld]], or read it with `Nifti.readVolumeIn`/`readSeriesIn`, which resolve the
+    * file's world-space evidence and refuse unresolved or contradictory evidence.
+    */
   def make(
       dims: Vector[Int],
       spacing: Option[Vector[Double]] = None,

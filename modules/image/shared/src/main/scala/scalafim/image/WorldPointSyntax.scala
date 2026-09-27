@@ -8,7 +8,8 @@ import image4s.geometry.Point
   *
   * `Point[F, D3]` is the frame-typed world point: its RAS-mm coordinates cannot be mixed with another frame's without
   * a checked alignment. [[WorldPoint]] remains the unowned coordinate record for display and interchange; move between
-  * the two with `WorldPoint.in(frame)`, `GridSpec.bind` and `toWorldPoint`.
+  * the two with `toWorldPoint` and, at a trust boundary where the caller vouches for the frame,
+  * `WorldPoint.claimUnchecked(frame)` or `GridSpec.claimUnchecked`.
   */
 extension [F <: Frame[D3]](point: Point[F, D3])
   /** Right (+) / left (-) RAS coordinate in millimetres. */

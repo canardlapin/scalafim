@@ -414,13 +414,19 @@ object Resample:
         identity
       )
 
-  /** Legacy world-aligned resampling: both grids' world coordinates are taken as one space. */
+  /** Legacy world-aligned resampling: the grids must be in one world space; otherwise the failure surfaces (and the
+    * public wrappers throw it) rather than silently treating two worlds' coordinates as one.
+    */
   private def worldAlignedPlan[S <: Frame[D3], T <: Frame[D3]](
       source: GridSpec[S],
       target: GridSpec[T],
       method: Method
   ): Either[ResamplingPlanError, ResamplingPlan[S, T]] =
-    ResamplingPlan.make(source, target, SpatialPullbacks.worldAligned(source, target), method)
+    SpatialPullbacks
+      .worldAligned(source, target)
+      .left
+      .map(ResamplingPlanError.Pullback.apply)
+      .flatMap(pullback => ResamplingPlan.make(source, target, pullback, method))
 
 object SpatialFilters:
 

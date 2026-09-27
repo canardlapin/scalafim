@@ -13,7 +13,7 @@ class PlacedSuite extends munit.FunSuite:
       ok(DatasetNamespace("ds")),
       ok(SubjectId("sub-01")),
       None,
-      ReferenceAcquisition(Map("task" -> "rest"), ok(GeometryDigest(Vector(2, 2, 2), Vector.fill(12)(1.0), 1, 1)))
+      ok(ReferenceAcquisition(Map("task" -> "rest"), ok(GeometryDigest(Vector(2, 2, 2), Vector.fill(12)(1.0), 1, 1))))
     )
 
   test("a value decoded in a fresh MNI frame binds to the static template frame"):
