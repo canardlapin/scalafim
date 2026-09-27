@@ -1,0 +1,16 @@
+{
+  "generator": "tools/r-parity/generate_neurofunctor_law_fixtures.R",
+  "packet": "STP P7.06",
+  "r_version": "R version 4.5.1 (2025-06-13)",
+  "neurofunctor_version": "0.1.0",
+  "neurotransform_version": "0.1.0",
+  "matrix_version": "1.7.3",
+  "igraph_version": "2.3.1",
+  "neurofunctor_source_commit": "363e48f72874df882154b018990ef926d0a53dda",
+  "neurofunctor_source_dirty": false,
+  "index_origin": 0,
+  "element_order": "scalafim: z fastest (row-major x, y, z); converted from neurofunctor's x-fastest order",
+  "affine_convention": "pullback: target world -> source world, row-major 4x4",
+  "files": ["domains.tsv", "edges.tsv", "triplets.tsv"],
+  "triplets": 25
+}

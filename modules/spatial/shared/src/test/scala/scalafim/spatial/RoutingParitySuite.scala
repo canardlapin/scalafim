@@ -11,6 +11,10 @@ import scalafim.image.SampleSpaces
   * e1 A->B affine cost 1, e2 B->C warp cost 1 inverse quality 0.2, e3 D->C warp cost 0.5 quality 0.9, e4 A->D affine
   * cost 2, e5 E->A warp cost 0.3 quality 0.5. neurofunctor affines have exact inverses; warps with an inverse asset
   * have provided ones.
+  *
+  * The generator's second, "penalty flip" graph (rows after `# flip`) has X reach Y only through inverses: one
+  * zero-quality inverse (f1: Y->X warp, cost 1, quality 0) or two full-quality ones (f2: M->X, f3: Y->M, cost 0.8
+  * each). The inverse penalty alone decides which route wins.
   */
 class RoutingParitySuite extends munit.FunSuite:
 
@@ -24,8 +28,14 @@ class RoutingParitySuite extends munit.FunSuite:
   )
 
   // source,target,penalty,edges,used_inverses,total_cost (neurofunctor output, verbatim)
+  private def parse(rows: Vector[String]): Vector[Expected] =
+    rows.map { row =>
+      val cells = row.split(",", -1).toVector
+      Expected(cells(0), cells(1), cells(2).toDouble, cells(3).split("\\|").toVector, cells(4) == "TRUE", cells(5).toDouble)
+    }
+
   private val oracle =
-    Vector(
+    parse(Vector(
       "A,C,1.0,e1|e2,FALSE,2.000000",
       "C,A,1.0,e3:inverse|e4:inverse,TRUE,2.600000",
       "C,A,10.0,e3:inverse|e4:inverse,TRUE,3.500000",
@@ -34,10 +44,16 @@ class RoutingParitySuite extends munit.FunSuite:
       "C,B,0.0,e2:inverse,TRUE,1.000000",
       "D,B,1.0,e3|e2:inverse,TRUE,2.300000",
       "B,E,1.0,e1:inverse|e5:inverse,TRUE,1.800000"
-    ).map { row =>
-      val cells = row.split(",", -1).toVector
-      Expected(cells(0), cells(1), cells(2).toDouble, cells(3).split("\\|").toVector, cells(4) == "TRUE", cells(5).toDouble)
-    }
+    ))
+
+  // rows after "# flip" (neurofunctor output, verbatim)
+  private val flipOracle =
+    parse(Vector(
+      "X,Y,0.0,f1:inverse,TRUE,1.000000",
+      "X,Y,0.5,f1:inverse,TRUE,1.500000",
+      "X,Y,1.0,f2:inverse|f3:inverse,TRUE,1.600000",
+      "X,Y,10.0,f2:inverse|f3:inverse,TRUE,1.600000"
+    ))
 
   private def value[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -76,15 +92,52 @@ class RoutingParitySuite extends munit.FunSuite:
       )
     )
 
-  oracle.foreach { expected =>
-    test(s"find_path_with_inverses ${expected.source}->${expected.target} penalty ${expected.penalty}"):
+  private val flipDomains = Vector("X", "Y", "M").map(name => name -> domain(name)).toMap
+
+  private def flipEdge(name: String, source: String, target: String, cost: Double, quality: Double): Morphism =
+    value(
+      Morphism.build(
+        value(MorphismId(name)),
+        flipDomains(source).id,
+        flipDomains(target).id,
+        MorphismKind.Warp3D,
+        RouteTag.Anatomical,
+        cost,
+        Inverse.Provided("file", quality)
+      )
+    )
+
+  private val flipGraph =
+    value(
+      SpatialGraph.build(
+        Vector("X", "Y", "M").map(flipDomains),
+        Vector(
+          flipEdge("f1", "Y", "X", 1.0, 0.0),
+          flipEdge("f2", "M", "X", 0.8, 1.0),
+          flipEdge("f3", "Y", "M", 0.8, 1.0)
+        )
+      )
+    )
+
+  private def replay(label: String, routed: SpatialGraph, byName: Map[String, Domain], expected: Expected): Unit =
+    test(s"$label ${expected.source}->${expected.target} penalty ${expected.penalty}"):
       val penalty = value(InversePenalty(expected.penalty))
-      val path = value(graph.path(domains(expected.source).id, domains(expected.target).id, allowInverses = true, inversePenalty = penalty))
+      val path = value(routed.path(byName(expected.source).id, byName(expected.target).id, allowInverses = true, inversePenalty = penalty))
       assertEquals(path.ids.map(_.value), expected.edges)
       assertEquals(path.usedInverses, expected.usedInverses)
       assertEqualsDouble(path.cost, expected.totalCost, 1e-9)
       assertEquals(path.invertedSteps.map(_.value), expected.edges.filter(_.endsWith(":inverse")))
-  }
+
+  oracle.foreach(replay("find_path_with_inverses", graph, domains, _))
+  flipOracle.foreach(replay("penalty flip", flipGraph, flipDomains, _))
+
+  test("the penalty flip fixture changes the winning route"):
+    assertEquals(flipOracle.map(_.edges).distinct.length, 2)
+    val x = flipDomains("X").id
+    val y = flipDomains("Y").id
+    val low = value(flipGraph.path(x, y, allowInverses = true, inversePenalty = value(InversePenalty(0.5))))
+    val high = value(flipGraph.path(x, y, allowInverses = true, inversePenalty = value(InversePenalty(1.0))))
+    assertNotEquals(low.ids, high.ids)
 
   test("forward routes win even when an inverse route would be cheaper"):
     val a = domain("fa")

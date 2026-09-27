@@ -159,6 +159,29 @@ To add a morphism family:
 6. Add an independent fixture when direction, convention, interpolation, or
    statistical parity matters.
 
+## neurofunctor parity
+
+`tools/r-parity/generate_neurofunctor_law_fixtures.R` exports neurofunctor's
+functor, QC, hybrid and backprojection laws as (input, operation, expected)
+triplets under `jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/`,
+with a manifest recording R, the package versions and the neurofunctor source
+commit. `NeurofunctorLawParitySuite` replays every triplet on the JVM and
+Scala.js. Indices are zero-based, and element-indexed values are exported in
+ScalaFIM's volume order (z fastest), not neurofunctor's (x fastest).
+
+Declared deviations, each kept as a triplet whose replay asserts the
+difference:
+
+- `allPaths` ranks routes by cost before capping at `maxPaths`; neurofunctor
+  truncates its depth-first listing.
+- Projection metrics summarise every row; neurofunctor samples up to 1000.
+- Backprojection compiles with the view's own inverse setting; neurofunctor
+  always allows inverses. Forward-first routing makes the values agree.
+- Trilinear sampling renormalises the in-grid corners of a point less than
+  one voxel outside the grid and reports fractional row coverage;
+  neurofunctor drops the row.
+- ROI operators hold only the ROI rows; neurofunctor keeps full height.
+
 ## Deliberate limitations
 
 - A row-linear stage interleaved with coordinate pullbacks needs a backend that
