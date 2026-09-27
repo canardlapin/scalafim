@@ -2,15 +2,20 @@ package scalafim.transform
 
 import java.nio.file.{Path, Paths}
 
-import image4s.geometry.Point
+import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
+import image4s.geometry.{D3, Grid, GridId, Point}
+import ravel.DType.given
+import ravel.NDArray
+import reframe4s.field.CoordinateBoundaryPolicy
+import reframe4s.resample.VolumeModulation
 import scalafim.image.world.{FrameCatalog, Spaces, WorldSpace}
 import scalafim.transform.Conversion.EncodedTransform
-import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, LpsDisplacementInterpretation}
+import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, LatticeAffine, LpsDisplacementInterpretation}
 import scalafim.transform.fsl.{FlirtInterpretation, FslHeaderGeometry}
 import scalafim.transform.itk.ItkHdf5Interpretation
 import scalafim.transform.nifti.NiftiRaw
 
-/** The examples in docs/guides/spatial-transforms.md, compiled and executed. Keep the two in step: each test body is
+/** The examples in docs/spatial-transforms.md, compiled and executed. Keep the two in step: each test body is
   * the guide's snippet for the section named in the test.
   */
 class GuideExamplesSuite extends munit.FunSuite:
@@ -84,14 +89,66 @@ class GuideExamplesSuite extends munit.FunSuite:
     val warp = TransformFiles.load(oracle("neurotransform/itk_oracle/warp.nii.gz")).toOption.get.native
     assert(Conversion.convert(warp, TransformFormat.FslFlirt, ConversionContext.empty, context).left.exists(_.isInstanceOf[TransformError.UnsupportedConversion]))
 
-  test("guide: a dense warp has no forward map unless its inverse is supplied"):
+  private def gunzipped(file: String): NiftiRaw =
+    val stream = java.util.zip.GZIPInputStream(java.nio.file.Files.newInputStream(oracle(file)))
+    try NiftiRaw.parse(IArray.unsafeFromArray(stream.readAllBytes())).toOption.get
+    finally stream.close()
+
+  private def antsWarp[S <: image4s.geometry.Frame[D3], T <: image4s.geometry.Frame[D3]](
+      subject: S,
+      mni: T,
+      boundary: CoordinateBoundaryPolicy = CoordinateBoundaryPolicy.Reject
+  ): WorldTransform.Mapped[S, T] =
+    TransformFiles.load(oracle("neurotransform/itk_oracle/warp.nii.gz")).toOption.get.native match
+      case NativeTransform.AntsField(field) => LpsDisplacementInterpretation.Ants.interpret(field, DenseContext(Frames[S, T](subject, mni), boundary)).toOption.get
+      case other                            => fail(s"expected an ANTs field, got ${other.format}")
+
+  test("guide: a dense warp has no forward map until it is inverted"):
     val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)
     val mni = Spaces.MNI152NLin2009cAsym
-    val warp = TransformFiles.load(oracle("neurotransform/itk_oracle/warp.nii.gz")).toOption.get.native match
-      case NativeTransform.AntsField(field) => LpsDisplacementInterpretation.Ants.interpret(field, DenseContext(Frames[subject.type, mni.type](subject, mni))).toOption.get
-      case other                            => fail(s"expected an ANTs field, got ${other.format}")
-    val point = Point.fromVector(subject, Vector(0.0, 0.0, 0.0)).toOption.get
-    // Resampling only needs the pullback, which every warp has. Mapping points forward needs an inverse warp.
-    warp.mapPoint(point) match
+    val warp = antsWarp[subject.type, mni.type](subject, mni)
+    // a subject point whose image lies inside the warp's lattice
+    val warpRaw = gunzipped("neurotransform/itk_oracle/warp.nii.gz")
+    val mniGrid = Grid.forFrame[D3, mni.type](mni)(warpRaw.spatialShape, LatticeAffine.of(warpRaw, LatticeAffine.Itk).toOption.get).toOption.get
+    val centre = mniGrid.pointAt(image4s.geometry.LatticeIndex.fromVector[D3](warpRaw.spatialShape.map(_ / 2)).toOption.get).toOption.get
+    val pointInSubject = warp.pullPoint(centre).toOption.get
+    // Resampling only needs the pullback, which every warp has. Mapping points forward needs an inverse.
+    warp.mapPoint(pointInSubject) match
       case Left(TransformError.NoForwardMap(_)) => ()
       case other                                => fail(s"expected NoForwardMap, got $other")
+
+    // The estimate lives on a persistent lattice of the source space: here, the subject image's own grid.
+    val subjectRaw = gunzipped("neurotransform/itk_oracle/source.nii.gz")
+    val subjectLattice = GridId
+      .parse("sub-01-T1w")
+      .flatMap(id => Grid.createPersistent[D3, subject.type](id, subject)(subjectRaw.spatialShape, LatticeAffine.of(subjectRaw, LatticeAffine.Itk).toOption.get))
+      .toOption
+      .get
+    val policy = InversionPolicy.create(minimumCoverage = 0.5, maximumResidual = 0.05, p99Residual = 0.01)
+    val inverted = policy.flatMap(p => warp.invertNumerically(subjectLattice, p))
+    val forward = inverted.flatMap(_.mapPoint(pointInSubject))
+    forward.toOption.get.coordinates.zip(centre.coordinates).foreach((a, e) => assertEqualsDouble(a, e, 0.05))
+    // an impossible tolerance is refused with the evidence, never returned as a weaker estimate
+    val strict = InversionPolicy.create(minimumCoverage = 1.0, maximumResidual = 1e-9, p99Residual = 1e-9)
+    assert(strict.flatMap(p => warp.invertNumerically(subjectLattice, p)).left.exists(_.isInstanceOf[TransformError.Inversion]))
+
+  test("guide: warp algebra: fields, determinants and modulation"):
+    val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)
+    val mni = Spaces.MNI152NLin2009cAsym
+    // read with ITK's zero-displacement extension (see the guide: face points of an oblique lattice)
+    val warp = antsWarp[subject.type, mni.type](subject, mni, CoordinateBoundaryPolicy.PreserveSource)
+    val warpRaw = gunzipped("neurotransform/itk_oracle/warp.nii.gz")
+    val mniGrid = Grid.forFrame[D3, mni.type](mni)(warpRaw.spatialShape, LatticeAffine.of(warpRaw, LatticeAffine.Itk).toOption.get).toOption.get
+    val subjectRaw = gunzipped("neurotransform/itk_oracle/source.nii.gz")
+    val subjectGrid = Grid.forFrame[D3, subject.type](subject)(subjectRaw.spatialShape, LatticeAffine.of(subjectRaw, LatticeAffine.Itk).toOption.get).toOption.get
+    val Vector(nx, ny, nz) = subjectRaw.spatialShape: @unchecked
+    val density = Sampled.continuous(subjectGrid, NonSpatialAxes.empty, NDArray.tabulate[Double](nx, ny, nz)((i, j, k) => subjectRaw.value(i, j, k))).toOption.get
+
+    val field = warp.materialize(mniGrid)                  // convertwarp: the pullback sampled on a lattice
+    assertEquals(field.map(f => f.coverage.counts.covered + f.coverage.counts.sourcePreserved), Right(mniGrid.shape.product.toLong))
+    assertEquals(field.map(_.coverage.counts.rejected), Right(0L))
+    val jac = warp.jacobianDeterminant(mniGrid)            // det D pull, per target voxel (FSL --jac)
+    assertEquals(jac.map(_.foldCount), Right(0L))          // folds (det <= 0) are masked and counted
+    assert(warp.logJacobian(mniGrid).isRight)              // NonPositive status at folds, never -Inf
+    val modulated = warp.resampleModulated(density, mniGrid, VolumeModulation.Jacobian, boundary = BoundaryPolicy.Constant(0.0))
+    assert(modulated.exists(_.diagnostics.orientationReversingPoints == 0L))

@@ -170,22 +170,92 @@ ITK `.h5` and X5 are read-only. The JVM HDF5 library cannot write the
 variable-length strings both formats require, which writer acceptance
 discovered. ANTs and AFNI fields also require orthogonal lattice axes.
 
-## Why a warp has no `mapPoint`
+## Why a warp has no `mapPoint` until it is inverted
 
 Resampling an image from source to target evaluates the pullback at target
 points, and every transform has one. Mapping a *source* point forward
-through a dense warp needs the inverse warp. That can come from a file (ANTs
-`InverseWarp`, FSL `invwarp` output) or, once the reframe4s numerical inverse
-lands, from an estimate that carries its residual evidence. Without either,
-`mapPoint` returns `TransformError.NoForwardMap` instead of an approximation:
+through a dense warp needs the inverse warp. That comes either from a file
+(ANTs `InverseWarp`, FSL `invwarp` output) or from a numerical inverse that
+passed its qualification gates. Without one, `mapPoint` returns
+`TransformError.NoForwardMap` instead of an approximation:
 
 ```scala
-warp.mapPoint(pointInSubject)   // Left(NoForwardMap(...)) unless an inverse was supplied
+warp.mapPoint(pointInSubject)   // Left(NoForwardMap(...))
+
+// Qualification gates: coverage fraction, then max and p99 residuals in mm, in both directions.
+val policy = InversionPolicy.create(minimumCoverage = 0.5, maximumResidual = 0.05, p99Residual = 0.01)
+val inverted = policy.flatMap(p => warp.invertNumerically(subjectLattice, p))
+inverted.flatMap(_.mapPoint(pointInSubject))   // Right(point in MNI)
 ```
+
+`invertNumerically` estimates the forward map on a persistent source lattice
+with reframe4s' fixed-point solver. It starts from the identity, so it
+converges only for warps that are close to the identity (where `I - D pull`
+is a contraction), like the ANTs field in this example. It refuses a FNIRT
+field between differently placed volumes, or any field that contains a large
+affine. A qualified result is a
+`Mapped` warp with `PushAvailability.Estimated`, which carries evidence:
+
+- the reframe4s `InverseEstimate`;
+- the evaluation-domain mask and its coverage fraction;
+- per-point status counts (`Converged`, `MaxIterations`, `Diverged`,
+  `OutsideCoverage`);
+- interior residuals in both directions: `|pull(push(x)) - x|` and
+  `|push(pull(y)) - y|`.
+
+If any gate fails, the result is
+`Left(TransformError.Inversion(GatesFailed(failures, evidence)))`. It is
+never a weaker estimate that still counts as success. The estimate also
+rejects points outside its evaluation domain rather than extrapolating.
+A composite pullback must be materialized on a lattice before it can be
+inverted. A forward map read from an inverse asset is never replaced by an
+estimate.
 
 Points outside a field's lattice are rejected by default
 (`CoordinateBoundaryPolicy.Reject`). Pass `PreserveSource` to get ITK's
 zero-displacement extension.
+
+## Warp algebra: fields, determinants and modulation
+
+These operations are available on every `WorldTransform[S, T]`, whether it
+is an affine, a composite or a dense warp. Each one hands the numerics to
+reframe4s and keeps the result tied to the frame it lives in.
+
+```scala
+// here the warp is read with DenseContext(frames, CoordinateBoundaryPolicy.PreserveSource); see the note below
+val field = warp.materialize(mniGrid)                  // convertwarp: the pullback sampled on a lattice
+field.map(_.coverage.counts)                           // covered / filled / rejected lattice points
+val jac = warp.jacobianDeterminant(mniGrid)            // det D pull, per target voxel (FSL --jac)
+jac.map(_.foldCount)                                   // folds (det <= 0) are masked and counted
+warp.logJacobian(mniGrid)                              // NonPositive status at folds, never -Inf
+warp.resampleModulated(density, mniGrid, VolumeModulation.Jacobian, boundary = BoundaryPolicy.Constant(0.0))
+```
+
+- **`materialize`** evaluates the pullback at every point of the lattice.
+  Each point is attributed to the first stage whose boundary policy supplied
+  its value. Rejected points fail with `TransformError.Composition` and the
+  coverage report, unless a fill policy is given. The fill never happens
+  silently. To compose two transforms into one field, write
+  `first.andThen(second).materialize(grid)`. On an oblique lattice, a face
+  point of the field's own lattice can round to just outside it, and
+  `Reject` then counts it as rejected. Read such fields with `PreserveSource`
+  if you need every lattice point. Those points are then reported as
+  `SourcePreserved`, and the boundary weight is about 1e-16. The
+  materialized field has no forward map of its own, and a field whose
+  rejected points were filled cannot be inverted.
+- **`jacobianDeterminant`** gives the volume change of the pullback in mm³
+  per mm³. It uses central differences of the materialized field, and it
+  refuses lattices that the transform does not cover. On a real
+  FNIRT registration it matches FSL 5.0.9 `fnirtfileutils --jac`, which
+  differentiates the spline analytically, to a median relative error below
+  1%.
+- **`resampleModulated`** scales each resampled value by `|det|`
+  (`Jacobian`), which preserves a density's integral. `SqrtJacobian` scales
+  by `sqrt|det|` instead and preserves the squared L2 norm of an amplitude.
+  The two laws differ, so the two modes are not interchangeable. Folds are
+  modulated by `|det|` and counted in `diagnostics.orientationReversingPoints`.
+  If you must not resample through a fold, check that count, or check
+  `jacobianDeterminant(...).foldCount` first.
 
 ## Orientation
 
@@ -229,3 +299,12 @@ so its points are compared only where both interpolants agree:
 - on lattice nodes
 - off the lattice, for fields that are affine in space, at least eight voxels
   from every face
+
+The warp algebra is checked in two ways. Analytic laws cover affine and
+radial determinants, the chain rule, folds, the sinusoidal inverse bound, and
+the modulation laws. Native outputs cover FSL 5.0.9 `convertwarp` and
+`fnirtfileutils --jac`, and ITK `TransformPoint` on composites. Numerical
+inverses have not yet been checked against ANTs `InverseWarp` or FSL
+`invwarp`. The reframe4s solver starts from the identity, so it refuses
+fields that are far from it, such as FNIRT fields between differently placed
+volumes. That refusal is itself tested.
