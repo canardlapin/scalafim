@@ -79,7 +79,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision.
-lazy val reframe4sRevision = "e3ddb48b4a084b3f08063cad849c8100207fb19c"
+lazy val reframe4sRevision = "9a4508351d74567147b8ea3221d82db89e5892b0"
 lazy val reframe4sBuild =
   sys.props
     .get("scalafim.reframe4s.build")
