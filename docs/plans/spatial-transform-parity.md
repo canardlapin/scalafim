@@ -1050,3 +1050,35 @@ _(append per phase: date, commits, test commands run, results)_
   - Native mri_info on an oblique volume is pending (P4.02).
   - Native flirt outputs are pending (P4.04).
 
+
+### P7.07: scenario contracts for the fMRIPrep, FSL and surface chains (2026-09-27)
+
+- **Suites** (registered in `docs/scenarios/manifest.json`; each returns one
+  `ScenarioResult` and runs every convention mutation, which must fail):
+  - `transform.fmriprep-chain.v1` (`FmriprepChainScenarioSuite`):
+    boldref -> T1w (ITK rigid) -> template (ITK HDF5 composite) against
+    SimpleITK `TransformPoint` and `Resample`, a gated numerical-inverse round
+    trip, and SHA-256 provenance. **PassWithCaveats**, caveat
+    `transform.itk-border-band`: ITK holds a displacement field's (and an
+    image's) border value for half a voxel outside the lattice, reframe4s
+    blends across the first voxel; voxels in that band are not compared.
+  - `transform.fsl-chain.v1` (`FslChainScenarioSuite`): FLIRT -> FNIRT
+    `--cout --aff` materialized on the standard lattice, against FSL 5.0.9
+    `applywarp` ramps and phantom, a FLIRT oracle built from a declared world
+    registration, the Jacobian chain rule, and `fnirtfileutils --jac`.
+    **Pass**.
+  - `surface.volume-to-template-mesh-chain.v1` (`SurfaceChainScenarioSuite`):
+    scanner volume -> tkRAS ribbon (`toScanner`, `RibbonOperator`) ->
+    registered sphere -> fsaverage-like -> fsLR-like, commuting with the
+    direct route. **PassWithCaveats**, caveats
+    `surface.mni152-nlin6-nlin2009c-bridge` (bead
+    bd-01M37FQFRRF1TW2REJPWS8BRM8) and `surface.ribbon-overlap-metrics`
+    (P7.05).
+- **Build:** `transform` and `surface` gain a test-scope edge on
+  `scenario-testkit`.
+- **Verification:** transformJVM 149 and transformJS 125; surfaceJVM 146 and
+  surfaceJS 118; scalafimCompileAll 0 warnings; manifest validator passes.
+- **Deviation from the Phase 7 text:** the fMRIPrep chain uses the synthetic
+  SimpleITK composites, not demo1 outputs, and no native
+  `convertwarp --premat` exists for the FSL pair, so the composed field is
+  checked as the FLIRT oracle applied to native FNIRT output.

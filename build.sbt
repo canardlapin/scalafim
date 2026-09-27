@@ -323,9 +323,10 @@ lazy val ar =
 lazy val arJS  = ar.js
 lazy val arJVM = ar.jvm
 
-// Cross-built scenario verdict/policy core. It is test-support only: design
-// and fit depend on its main classes from test scope, so published production
-// artifacts do not acquire MUnit or scenario-testkit dependencies.
+// Cross-built scenario verdict/policy core. It is test-support only: design,
+// fit, transform and surface depend on its main classes from test scope, so
+// published production artifacts do not acquire MUnit or scenario-testkit
+// dependencies.
 lazy val scenarioTestkit =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
@@ -669,7 +670,7 @@ lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface"))
-    .dependsOn(image, locusData)
+    .dependsOn(image, locusData, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface",
@@ -813,7 +814,7 @@ lazy val transform =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/transform"))
-    .dependsOn(image)
+    .dependsOn(image, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(strictFirstLevelCompilerSettings)
     .settings(

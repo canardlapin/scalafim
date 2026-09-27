@@ -213,7 +213,11 @@ estimate.
 
 Points outside a field's lattice are rejected by default
 (`CoordinateBoundaryPolicy.Reject`). Pass `PreserveSource` to get ITK's
-zero-displacement extension.
+zero-displacement extension. The two differ only in the first voxel outside
+the lattice: ITK holds the border displacement for half a voxel before
+dropping to zero, while `PreserveSource` blends linearly towards zero
+displacement across that voxel. The fMRIPrep chain scenario declares this as
+the caveat `transform.itk-border-band`.
 
 ## Warp algebra: fields, determinants and modulation
 
