@@ -11,6 +11,7 @@ import scalafim.image.{
 }
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
+import scalafim.surface.TemplateResamplingPlan
 import scalafim.transform.WorldTransform
 
 type Point3D = SpatialPoint
@@ -47,9 +48,10 @@ final case class TransformAsset(transform: WorldTransform[?, ?], identity: Strin
 /** One entry of a transform manifest: a declared edge between two template spaces.
   *
   * A step can carry coordinates only when it is `Available` and holds either an internal `affine` (the forward,
-  * source-to-target matrix) or a provider `asset`. Every other step, e.g. a TemplateFlow warp whose H5 file has not been
-  * loaded, stays in the graph as a typed non-executable edge: routes through it are planned and reported, never
-  * guessed.
+  * source-to-target matrix) or a provider `asset`. A sphere-resampling step carries vertex data instead, once it holds
+  * a `resampling` plan between the two spaces' template spheres. Every other step, e.g. a TemplateFlow warp whose H5
+  * file has not been loaded, stays in the graph as a typed non-executable edge: routes through it are planned and
+  * reported, never guessed.
   */
 final case class TransformStep(
   from: AnySpaceId,
@@ -62,14 +64,31 @@ final case class TransformStep(
   status: TransformStatus,
   notes: Option[String] = None,
   affine: Option[ProviderAffine[D3]] = None,
-  asset: Option[TransformAsset] = None
+  asset: Option[TransformAsset] = None,
+  resampling: Option[TemplateResamplingPlan] = None
 ):
   require(dataFiles.forall(_.trim.nonEmpty), "transform data file names must be non-empty")
-  require(affine.isEmpty || asset.isEmpty, "a transform step carries an internal affine or a provider asset, not both")
+  require(
+    Vector(affine.nonEmpty, asset.nonEmpty, resampling.nonEmpty).count(identity) <= 1,
+    "a transform step carries an internal affine, a provider asset or a resampling plan, not several"
+  )
+  require(resampling.isEmpty || kind == TransformKind.SphereResample, "only a sphere-resampling step carries a resampling plan")
 
   /** Implement this step with a loaded provider transform; the step becomes `Available`. */
   def withAsset(value: TransformAsset): TransformStep =
-    copy(status = TransformStatus.Available, affine = None, asset = Some(value))
+    copy(status = TransformStatus.Available, affine = None, asset = Some(value), resampling = None)
+
+  /** Implement this sphere-resampling step with a plan between its spaces' template spheres; it becomes `Available`
+    * and its notes record the plan's identity (method, sphere assets).
+    */
+  def withResampling(plan: TemplateResamplingPlan): TransformStep =
+    copy(
+      status = TransformStatus.Available,
+      affine = None,
+      asset = None,
+      resampling = Some(plan),
+      notes = Some(notes.fold("")(note => s"$note; ") + s"resampled by ${plan.identity}")
+    )
 
 /** A route through the transform manifest, resolved by `SpatialGraph` routing.
   *
@@ -119,6 +138,22 @@ final case class TransformPlan private (
     */
   def pullbackExecutability: Either[AtlasError, Unit] =
     notExecutable(None)
+
+  /** `Right` when the route carries per-vertex data: every step is available and resamples vertices (a template
+    * sphere resampling plan, or the identity). See [[SpaceTransformGraph.vertexOperator]].
+    */
+  def vertexExecutability: Either[AtlasError, Unit] =
+    val unavailable = steps.filter(_.status != TransformStatus.Available)
+    val nonVertex =
+      steps.zip(path.morphisms).collect {
+        case (step, morphism) if !TransformPlan.carriesVertices(morphism) => step
+      }
+    val reasons =
+      Vector(
+        Option.when(unavailable.nonEmpty)(s"unavailable steps=${unavailable.map(TransformPlan.label).mkString(",")}"),
+        Option.when(nonVertex.nonEmpty)(s"steps without a vertex resampling plan=${nonVertex.map(TransformPlan.label).mkString(",")}")
+      ).flatten
+    if reasons.isEmpty then Right(()) else Left(AtlasError.TransformNotExecutable(from, to, reasons.mkString("; ")))
 
   /** Carry points from `from` to `to` through every step's provider map. */
   def transform(points: Vector[Point3D]): Either[AtlasError, Vector[Point3D]] =
@@ -224,6 +259,11 @@ object TransformPlan:
   private def carriesCoordinates(morphism: Morphism): Boolean =
     morphism.coordinateMap match
       case CoordinateMap.Identity | CoordinateMap.Geometric(_) => true
+      case _ => false
+
+  private def carriesVertices(morphism: Morphism): Boolean =
+    morphism.coordinateMap match
+      case CoordinateMap.Identity | CoordinateMap.SphereResampling(_) => true
       case _ => false
 
   private def label(step: TransformStep): String =
@@ -405,13 +445,16 @@ object SpaceTransforms:
   lazy val standardGraph: Either[AtlasError, SpaceTransformGraph] =
     SpaceTransformGraph.build(manifest)
 
-  /** A manifest as a routing graph; spaces outside `catalog` receive fresh template frames. */
+  /** A manifest as a routing graph; spaces outside `catalog` receive fresh template frames, and the surface spaces
+    * `sampling` holds template spheres for get vertex-bearing domains.
+    */
   def graph(
     registry: Vector[TransformStep],
-    catalog: TemplateCatalog = TemplateCatalog.standard
+    catalog: TemplateCatalog = TemplateCatalog.standard,
+    sampling: TemplateSurfaceSampling = TemplateSurfaceSampling.none
   ): Either[AtlasError, SpaceTransformGraph] =
-    if (registry eq manifest) && (catalog eq TemplateCatalog.standard) then standardGraph
-    else SpaceTransformGraph.build(registry, catalog)
+    if (registry eq manifest) && (catalog eq TemplateCatalog.standard) && sampling.isEmpty then standardGraph
+    else SpaceTransformGraph.build(registry, catalog, sampling)
 
   def plan(
     from: AnySpaceId,

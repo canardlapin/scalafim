@@ -790,7 +790,7 @@ lazy val spatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/spatial"))
-    .dependsOn(image, surface, locusData, transform)
+    .dependsOn(image, surface % "compile->compile;test->test", locusData, transform)
     .settings(commonSettings)
     .settings(
       name := "scalafim-spatial"
@@ -855,7 +855,7 @@ lazy val atlas =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/atlas"))
-    .dependsOn(image, surface, locusData, spatial, transform)
+    .dependsOn(image, surface % "compile->compile;test->test", locusData, spatial, transform)
     .settings(commonSettings)
     .settings(
       name := "scalafim-atlas"

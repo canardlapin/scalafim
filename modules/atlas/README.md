@@ -64,6 +64,19 @@ import scalafim.atlas.io.*
   provider `TransformAsset` (a `scalafim.transform.WorldTransform`) carry
   points and lower to grid pullbacks; planned nonlinear and surface steps stay
   typed non-executable edges and are never silently executed.
+- `TemplateSurfaceSampling` gives template surface domains vertex geometry:
+  one hemisphere's `TemplateSphere`s on one registration sphere
+  (`TemplateSurfaceSamplingFiles.onFsAverage` loads fsaverage, fsaverage5/6 and
+  fsLR 32k on the fsaverage sphere from a TemplateFlow cache on the JVM). Built
+  with it (`SpaceTransforms.graph(registry, sampling = ...)`), a sampled space's
+  domain carries its sphere's vertices, and a sphere-resampling step between
+  two sampled spaces carries its `TemplateResamplingPlan` (barycentric for
+  Workbench steps, nearest-vertex for `SphereNearest` ones) and becomes
+  available. `SpaceTransformGraph.vertexOperator(from, to)` compiles such a
+  route to a sparse vertex operator (rows interpolate; `map.adjoint` is the
+  transposed plan); routes through an unsampled space stay a typed
+  `TransformNotExecutable`. Through the graph, fsaverage <-> fsLR 32k matches
+  Workbench 2.2.1 within the surface module's budgets (JVM, asset-gated).
 - `MniTemplateBridge` executes `MNI152NLin6Asym -> MNI152NLin2009cAsym` with
   TemplateFlow's exact ANTs composite (`MniTemplateBridgeFiles.loadCached` on
   the JVM, which hashes the bytes; the file is admitted only by its pinned

@@ -3,6 +3,7 @@ package scalafim.atlas
 import image4s.geometry.{Affine as ProviderAffine, D3, Frame}
 import scalafim.image.world.{FrameCatalog, Spaces as WorldFrames, TemplateName, WorldSpace}
 import scalafim.spatial.{
+  CompileRequest,
   CoordinateMap,
   Domain,
   DomainId,
@@ -12,14 +13,17 @@ import scalafim.spatial.{
   MorphismId,
   MorphismKind,
   MorphismPath,
+  OperatorCompiler,
   RouteTag,
   RoutingPolicy,
   SamplingGeometry,
   SpaceRef,
   SpatialError,
   SpatialGraph,
+  SpatialOperator,
   TemplateKind
 }
+import scalafim.surface.SurfaceResampling
 import scalafim.transform.{PushAvailability, WorldTransform}
 
 /** Stable world frames for the template spaces a transform manifest names.
@@ -48,11 +52,21 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
 
   /** The routing-graph domain of a catalogued space: unsampled, in the space's world frame. */
   def domain(space: AnySpaceId): Either[AtlasError, Domain] =
+    domain(space, TemplateSurfaceSampling.none)
+
+  /** The routing-graph domain of a catalogued space. A surface space `sampling` holds a sphere for is sampled on that
+    * sphere's vertices; every other space is unsampled, in the space's world frame.
+    */
+  def domain(space: AnySpaceId, sampling: TemplateSurfaceSampling): Either[AtlasError, Domain] =
     val normalized = SpaceId.normalize(space)
     for
       world <- frame(normalized)
       kind = TemplateCatalog.domainKind(normalized)
-      geometry <- SamplingGeometry.unsampled(kind, world).left.map(AtlasError.TransformGraph.apply)
+      geometry <- sampling.geometry(normalized) match
+        case Some(sphere) if kind == DomainKind.Surface =>
+          SamplingGeometry.surface(sphere).left.map(AtlasError.TransformGraph.apply)
+        case _ =>
+          SamplingGeometry.unsampled(kind, world).left.map(AtlasError.TransformGraph.apply)
       templateKind = if kind == DomainKind.Surface then TemplateKind.Surface else TemplateKind.Volume
       domain <- Domain
         .build(
@@ -97,7 +111,11 @@ object TemplateCatalog:
   private def templateFrame(name: String): Frame[D3] =
     FrameCatalog.frame(WorldSpace.Template(TemplateName.unsafe(name)))
 
-/** A transform manifest as a [[SpatialGraph]]: one unsampled domain per catalogued space, one morphism per step.
+/** A transform manifest as a [[SpatialGraph]]: one domain per catalogued space, one morphism per step.
+  *
+  * Domains are unsampled unless [[sampling]] holds a template sphere for a surface space; such a domain carries that
+  * sphere's vertices, and every sphere-resampling step between two sampled spaces carries its
+  * [[scalafim.surface.TemplateResamplingPlan]] and is available (see [[vertexOperator]]).
   *
   * Routing is `SpatialGraph.path` with inverse fallback, so the route is the cheapest forward one and inverses are used
   * only where no forward route exists. Edge cost ranks availability before confidence, as the manifest always has:
@@ -106,8 +124,44 @@ object TemplateCatalog:
 final case class SpaceTransformGraph private (
   catalog: TemplateCatalog,
   graph: SpatialGraph,
+  sampling: TemplateSurfaceSampling,
   private val stepsById: Map[MorphismId, TransformStep]
 ):
+  /** The route from `from` to `to` compiled to a sparse vertex operator: rows are `to`'s vertices, columns `from`'s,
+    * and each row interpolates (its weights sum to one); its transpose (`map.adjoint`) carries `to` data back.
+    *
+    * Both spaces must be sampled and every step of the route an available sphere resampling (an identity route is the
+    * identity operator). Otherwise the route is a typed [[AtlasError.TransformNotExecutable]]: a space without vertex
+    * geometry (its sphere asset was not loaded), or a step without a resampling plan.
+    */
+  def vertexOperator(from: AnySpaceId, to: AnySpaceId): Either[AtlasError, SpatialOperator] =
+    val (fromNorm, toNorm) = (SpaceId.normalize(from), SpaceId.normalize(to))
+    val unsampled = Vector(fromNorm, toNorm).distinct.filter(sampling.geometry(_).isEmpty)
+    for
+      plan <- this.plan(fromNorm, toNorm, DataKind.Vertex)
+      _ <-
+        if unsampled.isEmpty then Right(())
+        else
+          Left(
+            AtlasError.TransformNotExecutable(
+              fromNorm,
+              toNorm,
+              s"spaces without vertex geometry (no template sphere loaded)=${unsampled.map(_.value).mkString(",")}"
+            )
+          )
+      _ <- plan.vertexExecutability
+      operator <- OperatorCompiler
+        .compile(
+          graph,
+          CompileRequest(TemplateCatalog.domainId(fromNorm), TemplateCatalog.domainId(toNorm), allowInverses = true)
+        )
+        .left
+        .map(AtlasError.TransformGraph.apply)
+      _ <-
+        if operator.path.ids == plan.path.ids then Right(())
+        else Left(AtlasError.TransformNotExecutable(fromNorm, toNorm, "the compiled route differs from the planned one"))
+    yield operator
+
   def plan(from: AnySpaceId, to: AnySpaceId, dataKind: DataKind = DataKind.Parcel): Either[AtlasError, TransformPlan] =
     val fromNorm = SpaceId.normalize(from)
     val toNorm = SpaceId.normalize(to)
@@ -166,27 +220,29 @@ final case class SpaceTransformGraph private (
 object SpaceTransformGraph:
   def build(
     registry: Vector[TransformStep],
-    catalog: TemplateCatalog = TemplateCatalog.standard
+    catalog: TemplateCatalog = TemplateCatalog.standard,
+    sampling: TemplateSurfaceSampling = TemplateSurfaceSampling.none
   ): Either[AtlasError, SpaceTransformGraph] =
     val spaces = registry.flatMap(step => Vector(SpaceId.normalize(step.from), SpaceId.normalize(step.to))).distinct
     val fullCatalog = catalog.including(spaces)
     for
-      domains <- traverse(spaces)(fullCatalog.domain)
-      edges <- traverse(registry.zipWithIndex) { (step, index) => morphism(step, index, fullCatalog) }
+      domains <- traverse(spaces)(fullCatalog.domain(_, sampling))
+      edges <- traverse(registry.zipWithIndex) { (step, index) => morphism(step, index, fullCatalog, sampling) }
       graph <- SpatialGraph.build(domains, edges.map(_._1)).left.map(AtlasError.TransformGraph.apply)
-    yield SpaceTransformGraph(fullCatalog, graph, edges.map((edge, step) => edge.id -> step).toMap)
+    yield SpaceTransformGraph(fullCatalog, graph, sampling, edges.map((edge, step) => edge.id -> step).toMap)
 
   private def morphism(
     step: TransformStep,
     index: Int,
-    catalog: TemplateCatalog
+    catalog: TemplateCatalog,
+    sampling: TemplateSurfaceSampling
   ): Either[AtlasError, (Morphism, TransformStep)] =
     val from = SpaceId.normalize(step.from)
     val to = SpaceId.normalize(step.to)
-    val normalized = step.copy(from = from, to = to)
     for
-      source <- catalog.domain(from)
-      target <- catalog.domain(to)
+      normalized <- resampled(step.copy(from = from, to = to), sampling)
+      source <- catalog.domain(from, sampling)
+      target <- catalog.domain(to, sampling)
       coordinateMap <- coordinateMapOf(normalized, source, target)
       morphism <- Morphism
         .between(
@@ -203,19 +259,37 @@ object SpaceTransformGraph:
         .map(AtlasError.TransformGraph.apply)
     yield (morphism, normalized)
 
-  /** The step's pullback (target world to source world); non-executable steps carry no map. */
+  /** A sphere-resampling step between two sampled spaces, implemented by their plan: nearest-vertex for `SphereNearest`
+    * steps, barycentric otherwise (Workbench's `-metric-resample BARYCENTRIC`). Every other step is unchanged.
+    */
+  private def resampled(step: TransformStep, sampling: TemplateSurfaceSampling): Either[AtlasError, TransformStep] =
+    if step.kind != TransformKind.SphereResample || step.affine.nonEmpty || step.asset.nonEmpty then Right(step)
+    else
+      val method =
+        if step.backend == TransformBackend.SphereNearest then SurfaceResampling.Method.Nearest
+        else SurfaceResampling.Method.Barycentric
+      sampling.plan(step.from, step.to, method) match
+        case None => Right(step)
+        case Some(planned) => planned.map(step.withResampling)
+
+  /** The step's pullback (target world to source world), or its vertex resampling; non-executable steps carry no map. */
   private def coordinateMapOf(step: TransformStep, source: Domain, target: Domain): Either[AtlasError, CoordinateMap] =
-    (step.affine, step.asset) match
-      case (Some(forward), _) =>
+    (step.affine, step.asset, step.resampling) match
+      case (None, None, Some(plan)) =>
+        Right(CoordinateMap.sphereResampling(plan))
+      case (Some(forward), _, _) =>
         CoordinateMap.affine(source, target, forward.inverse).left.map(AtlasError.TransformGraph.apply)
-      case (None, Some(asset)) =>
+      case (None, Some(asset), _) =>
         CoordinateMap.fromWorldTransform(asset.transform, asset.identity).left.map(AtlasError.TransformGraph.apply)
-      case (None, None) =>
+      case (None, None, None) =>
         Right(CoordinateMap.Unspecified)
 
-  /** A reversible step whose map runs backwards may be routed in reverse; otherwise its reverse must be listed. */
+  /** A reversible step whose map runs backwards may be routed in reverse; otherwise its reverse must be listed. A
+    * resampling plan has an adjoint (its transpose) but no inverse, so its reverse is always a step of its own.
+    */
   private def inverseOf(step: TransformStep): Inverse =
-    if !step.reversible then Inverse.None
+    if step.resampling.nonEmpty then Inverse.AdjointOnly
+    else if !step.reversible then Inverse.None
     else
       (step.affine, step.asset.map(_.transform)) match
         case (Some(_), _) => Inverse.Exact("affine")

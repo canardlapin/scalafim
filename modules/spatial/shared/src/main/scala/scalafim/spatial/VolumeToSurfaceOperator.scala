@@ -347,6 +347,21 @@ object VolumeToSurfaceOperatorCompiler:
           .fromVector(values, "surface sample point")
           .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
 
+  /** [[surfaceMaskAllows]] for every vertex of a `vertexCount`-vertex surface, in one pass over the ROI (its first
+    * entry for a vertex decides, as there).
+    */
+  private[spatial] def surfaceMaskTable(mask: Option[SurfaceRoi[Boolean]], vertexCount: Int): Array[Boolean] =
+    mask match
+      case None => Array.fill(vertexCount)(true)
+      case Some(roi) =>
+        val table = new Array[Boolean](vertexCount)
+        var i = roi.indices.length - 1
+        while i >= 0 do
+          val vertex = roi.indices(i)
+          if vertex >= 0 && vertex < vertexCount then table(vertex) = roi.data(i)
+          i -= 1
+        table
+
   private[spatial] def surfaceMaskAllows(mask: Option[SurfaceRoi[Boolean]], vertex: VertexId): Boolean =
     mask match
       case None =>
@@ -492,46 +507,52 @@ object MixedPullbackOperatorCompiler:
     val sourceGrid = GridSpec.fromSpace(source.space)
     val assembly = MixedRowAssembly()
     val rows = program.route.targetRows
+    val targetAllows = VolumeToSurfaceOperatorCompiler.surfaceMaskTable(target.mask, target.geometry.vertexCount)
     var outRow = 0
     var error = Option.empty[SpatialError]
 
-    while outRow < rows.length && error.isEmpty do
-      val targetVertex = VertexId(rows.indices(outRow))
-      if !VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(target.mask, targetVertex) then
-        assembly.coverage += 0.0
-      else
-        pullSurfaceVertex(program.steps, bridgeIndex + 1, targetVertex) match
-          case Left(err) => error = Some(err)
-          case Right(bridgeVertex) =>
-            VolumeToSurfaceOperatorCompiler.samplePoints(plan.surfaces, plan.path, bridgeVertex) match
+    SurfaceRowTables.of(program.steps, bridgeIndex + 1) match
+      case Left(err) => error = Some(err)
+      case Right(tables) =>
+        while outRow < rows.length && error.isEmpty do
+          val targetVertex = VertexId(rows.indices(outRow))
+          if !targetAllows(targetVertex.index) then
+            assembly.coverage += 0.0
+          else
+            tables.pull(targetVertex) match
               case Left(err) => error = Some(err)
-              case Right(points) =>
-                val pointWeights = Vector.newBuilder[SurfacePointWeights]
-                var coverageSum = 0.0
-                var pointIndex = 0
-                while pointIndex < points.length && error.isEmpty do
-                  pullVolumePoint(program.steps, bridgeIndex, points(pointIndex)) match
+              case Right(bridgeRow) =>
+                // each bridge vertex contributes its averaged depth samples, weighted by its share of the target row
+                var coverage = 0.0
+                var b = 0
+                while b < bridgeRow.vertices.length && error.isEmpty do
+                  val share = bridgeRow.weights(b)
+                  VolumeToSurfaceOperatorCompiler.samplePoints(plan.surfaces, plan.path, VertexId(bridgeRow.vertices(b))) match
                     case Left(err) => error = Some(err)
-                    case Right(rootPoint) =>
-                      val weights =
-                        VolumeToSurfaceOperatorCompiler.sourcePointWeights(
-                          sourceGrid,
-                          source.mask,
-                          rootPoint,
-                          program.route.sampling
-                        )
-                      pointWeights += weights
-                      coverageSum += weights.coverage
-                  pointIndex += 1
-
-                if error.isEmpty then
-                  appendAveragedWeights(
-                    assembly,
-                    outRow,
-                    pointWeights.result(),
-                    coverageSum / points.length.toDouble
-                  )
-      outRow += 1
+                    case Right(points) =>
+                      val pointWeights = Vector.newBuilder[SurfacePointWeights]
+                      var coverageSum = 0.0
+                      var pointIndex = 0
+                      while pointIndex < points.length && error.isEmpty do
+                        pullVolumePoint(program.steps, bridgeIndex, points(pointIndex)) match
+                          case Left(err) => error = Some(err)
+                          case Right(rootPoint) =>
+                            val weights =
+                              VolumeToSurfaceOperatorCompiler.sourcePointWeights(
+                                sourceGrid,
+                                source.mask,
+                                rootPoint,
+                                program.route.sampling
+                              )
+                            pointWeights += weights
+                            coverageSum += weights.coverage
+                        pointIndex += 1
+                      if error.isEmpty then
+                        appendAveragedWeights(assembly, outRow, pointWeights.result(), share)
+                        coverage += share * coverageSum / points.length.toDouble
+                  b += 1
+                if error.isEmpty then assembly.coverage += math.min(coverage, 1.0)
+          outRow += 1
 
     error match
       case Some(err) => Left(err)
@@ -544,37 +565,53 @@ object MixedPullbackOperatorCompiler:
   ): Either[SpatialError, MixedRowAssembly] =
     val assembly = MixedRowAssembly()
     val rows = program.route.targetRows
+    val targetAllows = VolumeToSurfaceOperatorCompiler.surfaceMaskTable(target.mask, target.geometry.vertexCount)
+    val sourceAllows = VolumeToSurfaceOperatorCompiler.surfaceMaskTable(source.mask, source.geometry.vertexCount)
     var outRow = 0
     var error = Option.empty[SpatialError]
-    while outRow < rows.length && error.isEmpty do
-      val targetVertex = VertexId(rows.indices(outRow))
-      if !VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(target.mask, targetVertex) then
-        assembly.coverage += 0.0
-      else
-        pullSurfaceVertex(program.steps, 0, targetVertex) match
-          case Left(err) => error = Some(err)
-          case Right(rootVertex) =>
-            if VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(source.mask, rootVertex) then
-              assembly.rowIndices += outRow
-              assembly.colIndices += rootVertex.index
-              assembly.values += 1.0
-              assembly.coverage += 1.0
-            else assembly.coverage += 0.0
-      outRow += 1
+    SurfaceRowTables.of(program.steps, 0) match
+      case Left(err) => error = Some(err)
+      case Right(tables) =>
+        while outRow < rows.length && error.isEmpty do
+          val targetVertex = VertexId(rows.indices(outRow))
+          if !targetAllows(targetVertex.index) then
+            assembly.coverage += 0.0
+          else
+            tables.pull(targetVertex) match
+              case Left(err) => error = Some(err)
+              case Right(rootRow) =>
+                // root vertices outside the source mask drop out and the rest are renormalised; the dropped share is
+                // the row's missing coverage
+                val allowed = rootRow.vertices.map(v => v >= 0 && v < sourceAllows.length && sourceAllows(v))
+                var kept = 0.0
+                var k = 0
+                while k < rootRow.vertices.length do
+                  if allowed(k) then kept += rootRow.weights(k)
+                  k += 1
+                if kept > 0.0 then
+                  k = 0
+                  while k < rootRow.vertices.length do
+                    if allowed(k) then
+                      assembly.rowIndices += outRow
+                      assembly.colIndices += rootRow.vertices(k)
+                      assembly.values += rootRow.weights(k) / kept
+                    k += 1
+                assembly.coverage += math.min(kept, 1.0)
+          outRow += 1
     error match
       case Some(err) => Left(err)
       case None => Right(assembly)
 
+  /** Append one bridge vertex's depth samples, averaged over the samples that hit the volume, times `share`. */
   private def appendAveragedWeights(
     assembly: MixedRowAssembly,
     outRow: Int,
     weights: Vector[SurfacePointWeights],
-    coverage: Double
+    share: Double
   ): Unit =
     val valid = weights.filter(_.coverage > 0.0)
-    assembly.coverage += coverage
     if valid.nonEmpty then
-      val scale = 1.0 / valid.length.toDouble
+      val scale = share / valid.length.toDouble
       var point = 0
       while point < valid.length do
         var index = 0
@@ -599,24 +636,6 @@ object MixedPullbackOperatorCompiler:
         case Right(next) => current = next
       index -= 1
     error.toLeft(current)
-
-  private def pullSurfaceVertex(
-    steps: Vector[PullbackStep],
-    start: Int,
-    target: VertexId
-  ): Either[SpatialError, VertexId] =
-    var current = target
-    var index = steps.length - 1
-    while index >= start do
-      steps(index).coordinateMap match
-        case CoordinateMap.SurfaceVertices(mapping) =>
-          if current.index < 0 || current.index >= mapping.sourceForTarget.length then
-            return Left(SpatialError.InvalidMixedPullback(s"surface target vertex ${current.index} is out of bounds"))
-          current = mapping.sourceForTarget(current.index)
-        case other =>
-          return Left(SpatialError.InvalidMixedPullback(s"expected surface vertex mapping, got $other"))
-      index -= 1
-    Right(current)
 
   private def validateVolumePrefix(steps: Vector[PullbackStep]): Either[SpatialError, Unit] =
     steps.find { step =>
@@ -683,3 +702,93 @@ private final case class MixedRowAssembly(
   values: ArrayBuffer[Double] = ArrayBuffer.empty[Double],
   coverage: ArrayBuffer[Double] = ArrayBuffer.empty[Double]
 )
+
+/** A target vertex's row as weights over source vertices (distinct vertices, in first-reached order). */
+private final class SurfaceRow(val vertices: Array[Int], val weights: Array[Double])
+
+/** The surface-to-surface pullback steps as row tables (target vertex to weighted source vertices), composed from the
+  * last step back to the first: a vertex mapping is a row with one unit weight, a sphere resampling plan a row of its
+  * element-normalised weights.
+  */
+private final class SurfaceRowTables private (tables: Vector[SurfaceRowTable]):
+  def pull(target: VertexId): Either[SpatialError, SurfaceRow] =
+    var vertices = Array(target.index)
+    var weights = Array(1.0)
+    var index = tables.length - 1
+    var error = Option.empty[SpatialError]
+    while index >= 0 && error.isEmpty do
+      val table = tables(index)
+      val next = scala.collection.mutable.LinkedHashMap.empty[Int, Double]
+      var k = 0
+      while k < vertices.length && error.isEmpty do
+        val vertex = vertices(k)
+        if vertex < 0 || vertex >= table.targetVertices then
+          error = Some(SpatialError.InvalidMixedPullback(s"surface target vertex $vertex is out of bounds"))
+        else
+          var e = table.rowStart(vertex)
+          while e < table.rowStart(vertex + 1) do
+            val col = table.cols(e)
+            next.update(col, next.getOrElse(col, 0.0) + weights(k) * table.vals(e))
+            e += 1
+        k += 1
+      vertices = next.keysIterator.toArray
+      weights = next.valuesIterator.toArray
+      index -= 1
+    error.toLeft(SurfaceRow(vertices, weights))
+
+private object SurfaceRowTables:
+  def of(steps: Vector[PullbackStep], start: Int): Either[SpatialError, SurfaceRowTables] =
+    val out = Vector.newBuilder[SurfaceRowTable]
+    var index = start
+    var error = Option.empty[SpatialError]
+    while index < steps.length && error.isEmpty do
+      steps(index).coordinateMap match
+        case CoordinateMap.SurfaceVertices(mapping) =>
+          out += SurfaceRowTable.unit(mapping.sourceForTarget.map(_.index))
+        case CoordinateMap.SphereResampling(resampling) =>
+          out += SurfaceRowTable.normalised(resampling.plan)
+        case other =>
+          error = Some(SpatialError.InvalidMixedPullback(s"expected a surface vertex mapping or sphere resampling, got $other"))
+      index += 1
+    error.toLeft(new SurfaceRowTables(out.result()))
+
+/** Compressed rows: target vertex `t` owns entries `rowStart(t) until rowStart(t + 1)`. */
+private final class SurfaceRowTable(val rowStart: Array[Int], val cols: Array[Int], val vals: Array[Double]):
+  def targetVertices: Int = rowStart.length - 1
+
+private object SurfaceRowTable:
+  def unit(sourceForTarget: Vector[Int]): SurfaceRowTable =
+    SurfaceRowTable(Array.tabulate(sourceForTarget.length + 1)(identity), sourceForTarget.toArray, Array.fill(sourceForTarget.length)(1.0))
+
+  /** The plan's rows, each normalised to sum to one (`SurfaceResampling.Normalization.Element`). */
+  def normalised(plan: scalafim.surface.SurfaceResamplingPlan): SurfaceRowTable =
+    val n = plan.referenceVertices
+    val rowStart = new Array[Int](n + 1)
+    var k = 0
+    while k < plan.nonZeros do
+      rowStart(plan.rows(k) + 1) += 1
+      k += 1
+    var t = 0
+    while t < n do
+      rowStart(t + 1) += rowStart(t)
+      t += 1
+    val fill = rowStart.clone()
+    val totals = new Array[Double](n)
+    val cols = new Array[Int](plan.nonZeros)
+    val vals = new Array[Double](plan.nonZeros)
+    k = 0
+    while k < plan.nonZeros do
+      val row = plan.rows(k)
+      cols(fill(row)) = plan.cols(k)
+      vals(fill(row)) = plan.vals(k)
+      totals(row) += plan.vals(k)
+      fill(row) += 1
+      k += 1
+    t = 0
+    while t < n do
+      var e = rowStart(t)
+      while e < rowStart(t + 1) do
+        if totals(t) != 0.0 then vals(e) = vals(e) / totals(t)
+        e += 1
+      t += 1
+    SurfaceRowTable(rowStart, cols, vals)

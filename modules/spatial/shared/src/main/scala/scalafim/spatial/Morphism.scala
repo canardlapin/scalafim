@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import image4s.geometry.{Affine, D3, Frame}
 import scalafim.image.{SpatialPoint, SpatialPullback, SpatialPullbacks}
-import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
+import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, TemplateResamplingPlan, VolumeSurfaceSamplingPlan}
 import scalafim.transform.WorldTransform
 import reframe4s.core.{FrameErasedMap, SpatialMap}
 import reframe4s.field.DenseMap
@@ -43,6 +43,12 @@ enum CoordinateMap:
   case Geometric(binding: ProviderMapBinding)
   case VolumeSamples(plan: VolumeSurfaceSamplingPlan)
   case SurfaceVertices(mapping: SurfaceVertexMapping)
+
+  /** Registration-sphere resampling between two template surfaces' vertex domains: each target vertex is a weighted
+    * combination of source vertices (the plan's rows, normalised to sum to one). It is a value map, not a point map, and
+    * has no geometric inverse; its adjoint is the compiled operator's transpose.
+    */
+  case SphereResampling(plan: TemplateResamplingPlan)
   case Unspecified
 
   @deprecated("Use transform(SpatialPoint); a bare Vector[Double] carries neither arity nor role.", "0.2.0")
@@ -64,6 +70,8 @@ enum CoordinateMap:
         Left(SpatialError.CoordinateTransformFailed("volume-to-surface sampling is not a point transform"))
       case CoordinateMap.SurfaceVertices(_) =>
         Left(SpatialError.CoordinateTransformFailed("surface vertex mapping is not a world-coordinate transform"))
+      case CoordinateMap.SphereResampling(_) =>
+        Left(SpatialError.CoordinateTransformFailed("sphere resampling weighs vertex values; it is not a world-coordinate transform"))
       case CoordinateMap.Unspecified =>
         Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
 
@@ -73,7 +81,7 @@ enum CoordinateMap:
         Right(CoordinateMap.Identity)
       case CoordinateMap.Geometric(binding) =>
         binding.inverted.map(CoordinateMap.Geometric.apply)
-      case CoordinateMap.VolumeSamples(_) | CoordinateMap.SurfaceVertices(_) =>
+      case CoordinateMap.VolumeSamples(_) | CoordinateMap.SurfaceVertices(_) | CoordinateMap.SphereResampling(_) =>
         Left(SpatialError.CoordinateTransformFailed("discrete or sampling coordinate maps have no geometric inverse"))
       case CoordinateMap.Unspecified =>
         Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
@@ -88,6 +96,8 @@ enum CoordinateMap:
         CoordinateMap.volumeSamplesFingerprint(plan)
       case CoordinateMap.SurfaceVertices(mapping) =>
         CoordinateMap.surfaceVerticesFingerprint(mapping)
+      case CoordinateMap.SphereResampling(plan) =>
+        CoordinateMap.sphereResamplingFingerprint(plan)
       case CoordinateMap.Unspecified =>
         "unspecified-v1"
 
@@ -448,6 +458,12 @@ object CoordinateMap:
   def surfaceVertices(mapping: SurfaceVertexMapping): CoordinateMap =
     CoordinateMap.SurfaceVertices(mapping)
 
+  /** A template resampling plan as a `SurfaceToSurface` edge's map; the edge's domains must be sampled on the plan's
+    * sphere geometries (`plan.sourceGeometry`, `plan.targetGeometry`).
+    */
+  def sphereResampling(plan: TemplateResamplingPlan): CoordinateMap =
+    CoordinateMap.SphereResampling(plan)
+
   private def geometricBindings(
       maps: Vector[CoordinateMap]
   ): Either[SpatialError, Vector[ProviderMapBinding]] =
@@ -494,6 +510,19 @@ object CoordinateMap:
       hash = MurmurHash3.mix(hash, mapping.sourceForTarget(i).index)
       i += 1
     s"surface-vertices-v1:${java.lang.Integer.toHexString(MurmurHash3.finalizeHash(hash, mapping.sourceForTarget.length))}"
+
+  private def sphereResamplingFingerprint(resampling: TemplateResamplingPlan): String =
+    val plan = resampling.plan
+    var hash = MurmurHash3.stringHash(s"sphere-resampling-v1|${resampling.identity}|${resampling.source.display}->${resampling.target.display}")
+    hash = hashSurfaceGeometry(hash, resampling.sourceGeometry)
+    hash = hashSurfaceGeometry(hash, resampling.targetGeometry)
+    var k = 0
+    while k < plan.nonZeros do
+      hash = MurmurHash3.mix(hash, plan.rows(k))
+      hash = MurmurHash3.mix(hash, plan.cols(k))
+      hash = MurmurHash3.mix(hash, plan.vals(k).hashCode)
+      k += 1
+    s"sphere-resampling-v1:${java.lang.Integer.toHexString(MurmurHash3.finalizeHash(hash, plan.nonZeros))}"
 
   private def hashSurfaceGeometry(seed: Int, geometry: SurfaceGeometry): Int =
     var hash = MurmurHash3.mix(seed, geometry.hemisphere.hashCode)
@@ -675,6 +704,7 @@ object Morphism:
       case (MorphismKind.Warp3D, CoordinateMap.Geometric(_)) => true
       case (MorphismKind.VolumeToSurface, CoordinateMap.VolumeSamples(_)) => true
       case (MorphismKind.SurfaceToSurface, CoordinateMap.SurfaceVertices(_)) => true
+      case (MorphismKind.SurfaceToSurface, CoordinateMap.SphereResampling(_)) => true
       case (_, CoordinateMap.Unspecified) => true
       case _ => false
 
@@ -702,6 +732,14 @@ object Morphism:
                   SamplingGeometry.Surface(sourceGeometry, _),
                   SamplingGeometry.Surface(targetGeometry, _)
                 ) if sourceGeometry == mapping.sourceGeometry && targetGeometry == mapping.targetGeometry =>
+              Right(())
+            case _ => Left(SpatialError.SurfaceMappingGeometryMismatch(morphism.id))
+        case CoordinateMap.SphereResampling(plan) =>
+          (source.geometry, target.geometry) match
+            case (
+                  SamplingGeometry.Surface(sourceGeometry, _),
+                  SamplingGeometry.Surface(targetGeometry, _)
+                ) if sourceGeometry == plan.sourceGeometry && targetGeometry == plan.targetGeometry =>
               Right(())
             case _ => Left(SpatialError.SurfaceMappingGeometryMismatch(morphism.id))
         case _ => Right(())

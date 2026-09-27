@@ -92,8 +92,13 @@ descriptive steps, and recorded execution explanation.
 ## Supported execution families
 
 Coordinate pullbacks currently cover identity, affine volume transforms, dense
-coordinate warps, volume-to-surface sampling, and surface vertex mappings.
-Mixed affine/nonlinear/volume-surface routes compile into one root operator.
+coordinate warps, volume-to-surface sampling, surface vertex mappings, and
+template sphere resampling (`CoordinateMap.sphereResampling`, a
+`scalafim.surface.TemplateResamplingPlan` between two surface domains sampled
+on the plan's own sphere geometries: each target vertex is a weighted, row-
+normalised combination of source vertices, with an adjoint but no inverse).
+Mixed affine/nonlinear/volume-surface routes compile into one root operator;
+surface steps after the volume bridge compose their weights.
 
 Value plugins make non-coordinate morphisms explicit:
 

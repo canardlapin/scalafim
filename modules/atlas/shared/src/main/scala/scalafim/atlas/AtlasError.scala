@@ -2,6 +2,7 @@ package scalafim.atlas
 
 import image4s.geometry.GeometryError
 import scalafim.spatial.SpatialError
+import scalafim.surface.SurfaceError
 import scalafim.transform.TransformError
 
 enum AtlasError:
@@ -22,6 +23,12 @@ enum AtlasError:
 
   /** A template asset is in none of the searched caches; nothing is downloaded or substituted. */
   case TemplateAssetMissing(asset: String, searched: Vector[String])
+
+  /** Template surface spheres that cannot sample a transform graph's surface domains together. */
+  case InvalidSurfaceSampling(detail: String)
+
+  /** A template surface operation (e.g. planning a sphere resampling) failed. */
+  case TemplateSurface(cause: SurfaceError)
   case GridWorldMismatch(role: String, space: AnySpaceId, detail: String)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
   case ExactGridRequired(expected: String, actual: String)
@@ -60,6 +67,10 @@ enum AtlasError:
         s"template asset $asset is refused: $reason"
       case TemplateAssetMissing(asset, searched) =>
         s"template asset $asset is not cached under ${searched.mkString(", ")}"
+      case InvalidSurfaceSampling(detail) =>
+        s"template surface sampling is invalid: $detail"
+      case TemplateSurface(cause) =>
+        cause.message
       case GridWorldMismatch(role, space, detail) =>
         s"the $role grid is not in the world space of '${space.value}': $detail"
       case SpaceMismatch(expected, actual) =>

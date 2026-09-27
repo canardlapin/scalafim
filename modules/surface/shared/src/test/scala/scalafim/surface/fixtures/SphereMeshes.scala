@@ -32,3 +32,31 @@ object SphereMeshes:
       val n = math.sqrt(x * x + y * y + z * z)
       Vector(center._1 + x / n * radius, center._2 + y / n * radius, center._3 + z / n * radius)
     TriangleMesh.fromRows(placed, faces)
+
+  /** A closed latitude-longitude sphere about the origin: two poles and `rings` rings of `segments` vertices, so
+    * `rings * segments + 2` vertices and `2 * rings * segments` faces (171 x 190 gives fsLR 32k's 32492 and 64980).
+    * `tilt` rotates it about the x axis, so its poles need not sit on another test mesh's vertices.
+    */
+  def uvSphere(rings: Int, segments: Int, radius: Double, tilt: Double = 0.0): TriangleMesh =
+    require(rings >= 1 && segments >= 3, "a uv sphere needs at least one ring of three segments")
+    val (ct, st) = (math.cos(tilt), math.sin(tilt))
+    def place(x: Double, y: Double, z: Double): Vector[Double] = Vector(radius * x, radius * (ct * y - st * z), radius * (st * y + ct * z))
+    val ringVertices =
+      for
+        r <- 1 to rings
+        s <- 0 until segments
+      yield
+        val (theta, phi) = (math.Pi * r / (rings + 1), 2.0 * math.Pi * (s + 0.5 * (r % 2)) / segments)
+        place(math.sin(theta) * math.cos(phi), math.sin(theta) * math.sin(phi), math.cos(theta))
+    val south = rings * segments + 1
+    val vertices = (place(0.0, 0.0, 1.0) +: ringVertices.toVector) :+ place(0.0, 0.0, -1.0)
+    def v(r: Int, s: Int): Int = 1 + (r - 1) * segments + Math.floorMod(s, segments)
+    val cap = (0 until segments).map(s => (0, v(1, s), v(1, s + 1)))
+    val bands =
+      for
+        r <- 1 until rings
+        s <- 0 until segments
+        face <- Vector((v(r, s), v(r + 1, s), v(r, s + 1)), (v(r, s + 1), v(r + 1, s), v(r + 1, s + 1)))
+      yield face
+    val bottom = (0 until segments).map(s => (south, v(rings, s + 1), v(rings, s)))
+    TriangleMesh.fromRows(vertices, (cap ++ bands ++ bottom).toVector)

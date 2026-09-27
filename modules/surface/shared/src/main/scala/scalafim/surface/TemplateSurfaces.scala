@@ -48,6 +48,11 @@ final class TemplateSphere[R <: SphereRegistration] private (
     val sphere: TriangleMesh,
     val identity: String
 ):
+  /** The sphere as the template surface's vertex domain: one geometry value per sphere, so a sampled domain built on it
+    * and a resampling plan planned on it are recognisably the same vertices.
+    */
+  val geometry: SurfaceGeometry = SurfaceGeometry(sphere, surface.hemisphere.tag, SurfaceKind.Sphere)
+
   override def toString: String = s"TemplateSphere(${surface.display} on $registration, $identity)"
 
 object TemplateSphere:
@@ -74,13 +79,17 @@ object TemplateSphere:
       Left(SurfaceError.InvalidGeometry(s"${surface.display} is registered on the fsaverage sphere, not $registration"))
     else SphereMesh.withRadius(mesh, Radius).map(projected => new TemplateSphere(surface, registration, projected, identity))
 
-/** A sparse resampling operator from `source` vertex data to `target` vertices, planned on one registration sphere. */
+/** A sparse resampling operator from `source` vertex data to `target` vertices, planned on one registration sphere.
+  * `sourceGeometry` and `targetGeometry` are the planned spheres' [[TemplateSphere.geometry]].
+  */
 final class TemplateResamplingPlan private[surface] (
     val source: TemplateSurface,
     val target: TemplateSurface,
     val registration: SphereRegistration,
     val plan: SurfaceResamplingPlan,
-    val identity: String
+    val identity: String,
+    val sourceGeometry: SurfaceGeometry,
+    val targetGeometry: SurfaceGeometry
 ):
   /** Source values to target values. `Element` (the default) interpolates: every target row sums to one. */
   def resample(
@@ -119,5 +128,7 @@ object TemplateResampling:
             target.surface,
             source.registration,
             plan,
-            s"$method on ${source.registration}: ${source.identity} -> ${target.identity}"
+            s"$method on ${source.registration}: ${source.identity} -> ${target.identity}",
+            source.geometry,
+            target.geometry
           )
