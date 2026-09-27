@@ -1,16 +1,20 @@
 package scalafim.transform
 
-import image4s.geometry.{D3, Frame, Point}
+import image4s.{BoundaryPolicy, Continuous, ContinuousImage, SampleSpace}
+import image4s.geometry.{D3, Frame, Grid, Point}
+import ravel.AnyRank
 import reframe4s.core.{SmoothIso, SpatialMap}
+import reframe4s.field.{CoordinateBoundaryPolicy, CoverageReportingMap, DenseMap, DeterminantDirection, LogDeterminantField}
 import reframe4s.lie.FramedAffine
+import reframe4s.resample.{Interpolation, VolumeModulation}
 
 /** A spatial transform from world space `S` (source, moving) to world space `T` (target, fixed), whatever toolkit it
   * came from.
   *
   * Every transform carries its pullback [[pull]], `T -> S`: resampling data from `S` onto a grid in `T` evaluates the
   * pullback at target points. Whether the forward direction `S -> T` exists is part of the type: affines and analytic
-  * isomorphisms always have it; a dense warp has it only when an inverse asset (or, later, a numerical estimate) was
-  * supplied. No caller ever passes a direction flag.
+  * isomorphisms always have it; a dense warp has it only when an inverse asset was supplied or a numerical estimate
+  * passed its qualification gates ([[WorldTransform.Mapped.invertNumerically]]). No caller ever passes a direction flag.
   */
 sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
   def source: S
@@ -32,18 +36,68 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
       .toRight(TransformError.NoForwardMap(provenance.describe))
       .flatMap(forward => forward(point).left.map(TransformError.Map(_)))
 
-  /** Lazy composition `S -> T -> U`. Two affines are better fused with [[WorldTransform.Linear.andThen]]. */
-  def andThen[U <: Frame[D3]](next: WorldTransform[T, U]): WorldTransform[S, U] =
+  /** Lazy composition `S -> T -> U`. Two affines are better fused with [[WorldTransform.Linear.andThen]].
+    *
+    * The composed pullback reports, per evaluation, the first stage whose boundary policy supplied the value, so a
+    * later [[materialize]] attributes coverage to the stage that left its support.
+    */
+  def andThen[U <: Frame[D3]](next: WorldTransform[T, U]): WorldTransform.Mapped[S, U] =
     val pushed =
       for
         first  <- push
         second <- next.push
       yield first.andThen(second)
     WorldTransform.Mapped(
-      next.pull.andThen(pull),
+      CoverageReportingMap.compose(next.pull, pull),
       pushed.fold(PushAvailability.Unavailable[S, U]())(PushAvailability.Composed(_)),
       provenance.andThen(next.provenance)
     )
+
+  /** Sample the pullback at every point of `on` as an absolute-coordinate field (the `convertwarp` operation).
+    *
+    * Points where a stage leaves its sampled support are counted in the coverage report and filled only by an explicit
+    * `fill` policy; the default `Reject` fails with [[TransformError.Composition]] carrying the report.
+    */
+  final def materialize(
+      on: Grid[T, D3],
+      fill: CoordinateBoundaryPolicy = CoordinateBoundaryPolicy.Reject,
+      interpolation: Interpolation[Continuous] = Interpolation.Linear
+  ): Either[TransformError, MaterializedField[S, T]] =
+    WarpAlgebra.materialize(this, on, fill, interpolation)
+
+  /** Physical Jacobian determinant of the pullback, `det D pull(y)` (source volume per unit target volume), at every
+    * point of `on`; `Push` reports its reciprocal. Folds (`det <= 0`) are masked and counted, never `NaN`. Every
+    * lattice point must be evaluated by the transform itself (its stages' own boundary policies included): a point
+    * that leaves a rejecting stage fails with [[TransformError.Composition]] rather than being differentiated as fill.
+    */
+  final def jacobianDeterminant(
+      on: Grid[T, D3],
+      direction: DeterminantDirection = DeterminantDirection.Pull
+  ): Either[TransformError, JacobianDeterminant[S, T]] =
+    WarpAlgebra.jacobianDeterminant(this, on, direction)
+
+  /** Log-Jacobian of the pullback on `on`; folded points are a typed `NonPositive` status, not `-Inf`. */
+  final def logJacobian(
+      on: Grid[T, D3],
+      direction: DeterminantDirection = DeterminantDirection.Pull
+  ): Either[TransformError, LogDeterminantField[T, D3]] =
+    jacobianDeterminant(on, direction).map(_.logJacobian)
+
+  /** Resample a source image onto `onto` through the pullback, scaling each target sample by the volume change:
+    * `Jacobian` preserves a density's integral, `SqrtJacobian` the squared L2 norm of an amplitude.
+    *
+    * Determinants are central differences of the pullback on `onto` (exact for affines). Orientation-reversing points
+    * are modulated by `|det|` and singular points by zero; both are counted in the result's diagnostics, which callers
+    * that must not resample through folds check. A target point the pullback rejects fails the whole plan.
+    */
+  final def resampleModulated[Space <: SampleSpace[S, D3], R <: AnyRank](
+      image: ContinuousImage[Space, Double, R],
+      onto: Grid[T, D3],
+      modulation: VolumeModulation,
+      interpolation: Interpolation[Continuous] = Interpolation.Linear,
+      boundary: BoundaryPolicy[Double] = BoundaryPolicy.Reject
+  ): Either[TransformError, ModulatedResample[T]] =
+    WarpAlgebra.resampleModulated(this, image, onto, modulation, interpolation, boundary)
 
 object WorldTransform:
   /** An affine transform; `framed` is its pullback `T -> S`. The inverse is total. */
@@ -87,9 +141,30 @@ object WorldTransform:
       availability: PushAvailability[S, T],
       provenance: TransformProvenance
   ) extends WorldTransform[S, T]:
+    availability match
+      case PushAvailability.Estimated(inverse) =>
+        require(inverse.qualifiedPull eq pull, "an estimated forward map belongs to the pullback it was qualified against")
+      case _ => ()
+
     def source: S = pull.target
     def target: T = pull.source
     def push: Option[SpatialMap[S, T, D3]] = availability.map
+
+    /** Estimate the forward map numerically on the source lattice `on` (which must be persistent: the estimate
+      * records its evaluation domain). The result carries [[PushAvailability.Estimated]] only when every gate of
+      * `policy` passes; otherwise it is [[TransformError.Inversion]] with the complete evidence. The pullback must be
+      * dense: materialize composites first. A forward map read from an inverse asset is never silently replaced.
+      *
+      * Points the pullback's own boundary policy supplies (`PreserveSource`, `Constant`) are part of the map being
+      * inverted and count towards coverage like any other.
+      */
+    def invertNumerically(on: Grid[S, D3], policy: InversionPolicy): Either[TransformError, Mapped[S, T]] =
+      (pull, availability) match
+        case (_, PushAvailability.FromAsset(_, asset)) =>
+          Left(TransformError.Invalid(s"${provenance.describe} already has a forward map from ${asset.label}"))
+        // DenseMap is final and invariant, and `pull` is statically SpatialMap[T, S, D3]: a class test suffices.
+        case (dense: DenseMap[T, S, D3, ?] @unchecked, _) => WarpAlgebra.invertNumerically(this, dense, on, policy)
+        case _                                            => Left(TransformError.NeedsMaterialization(provenance.describe))
 
     /** Swap directions; possible only when the forward map exists. */
     def invert: Either[TransformError, Mapped[T, S]] =
@@ -108,10 +183,16 @@ enum PushAvailability[S <: Frame[D3], T <: Frame[D3]]:
   /** Composed from forward maps that were themselves available. */
   case Composed(push: SpatialMap[S, T, D3])
 
+  /** A numerical inverse that passed its qualification gates, bound to the pullback it was qualified against. It
+    * carries the reframe4s `InverseEstimate` and the full residual evidence.
+    */
+  case Estimated(inverse: QualifiedInverse[S, T])
+
   case Unavailable()
 
   def map: Option[SpatialMap[S, T, D3]] =
     this match
       case FromAsset(push, _) => Some(push)
       case Composed(push)     => Some(push)
+      case Estimated(inverse) => Some(inverse.estimate.value)
       case Unavailable()      => None

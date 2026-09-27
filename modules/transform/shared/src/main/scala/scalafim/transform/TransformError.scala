@@ -2,6 +2,8 @@ package scalafim.transform
 
 import image4s.geometry.GeometryError
 import reframe4s.core.MapError
+import reframe4s.field.{CompositionError, InversionError, TopologyAssessmentError}
+import reframe4s.resample.ResamplingError
 import scalafim.image.world.SpaceError
 
 /** Failures of interpreting, composing, inverting or applying a world transform. */
@@ -23,6 +25,21 @@ enum TransformError derives CanEqual:
   case UnqualifiedConvention(format: TransformFormat, reason: String)
   case Invalid(reason: String)
 
+  /** Materializing a pullback on a lattice failed; `RejectedPoints` carries the full coverage report. */
+  case Composition(cause: CompositionError)
+
+  /** Numerical inversion failed; `GatesFailed` carries the complete residual evidence. It is never a degraded success. */
+  case Inversion(cause: InversionError)
+
+  /** A Jacobian-determinant field could not be evaluated. */
+  case Determinant(cause: TopologyAssessmentError)
+
+  /** Compiling or running a (modulated) resampling plan failed. */
+  case Resampling(cause: ResamplingError)
+
+  /** The operation needs a dense pullback; materialize the transform on a lattice first. */
+  case NeedsMaterialization(transform: String)
+
   def message: String =
     this match
       case NoForwardMap(t)                        => s"$t has no forward (source -> target) map; supply its inverse asset or a numerical inverse"
@@ -37,3 +54,8 @@ enum TransformError derives CanEqual:
       case AmbiguousFnirtDefinition(reason)       => s"cannot tell whether the FNIRT field is relative or absolute: $reason; state it explicitly"
       case UnqualifiedConvention(format, reason)  => s"$format: $reason; this reading is not yet qualified against the native tool"
       case Invalid(reason)                        => reason
+      case Composition(cause)                     => cause.message
+      case Inversion(cause)                       => cause.message
+      case Determinant(cause)                     => cause.message
+      case Resampling(cause)                      => cause.message
+      case NeedsMaterialization(t)                => s"$t has no dense pullback; materialize it on a target lattice first"
