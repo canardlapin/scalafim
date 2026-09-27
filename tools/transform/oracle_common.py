@@ -61,7 +61,9 @@ def write_manifest(
     """Record what produced the fixtures and hash every file in `directory` (except the manifest itself).
 
     kind: "native-oracle" (output of the reference tool itself), "reference-implementation" (an independent
-    implementation of the tool's documented convention, e.g. nibabel/fslpy), or "cross-implementation".
+    implementation of the tool's documented convention, e.g. nibabel/fslpy), "cross-implementation" (another
+    converter, e.g. nitransforms), or "self-consistency" (files the generator writes from its own reading of a
+    convention; shows only that every encoding of one transform reads alike).
     """
     files = {}
     for root, _, names in os.walk(directory):

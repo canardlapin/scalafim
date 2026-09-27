@@ -1,7 +1,7 @@
 {
  "generator": "tools/transform/generate_freesurfer_oracle.py",
- "generated": "2026-09-24",
- "kind": "reference-implementation",
+ "generated": "2026-09-27",
+ "kind": "self-consistency",
  "tools": {
   "nibabel": "5.4.2",
   "fslpy": "3.29.1",
@@ -12,7 +12,7 @@
  "commands": [
   "uv run --with nibabel==5.4.2 --with fslpy==3.29.1 --with numpy python tools/transform/generate_freesurfer_oracle.py"
  ],
- "notes": "Files follow FreeSurfer transform.cpp/mri.cpp semantics (see generator docstring). points.tsv: reference RAS points and the movable RAS point each maps to under the pullback; every file here encodes that one transform. Torig from nibabel get_vox2ras_tkr; FSLREG matrix from fslpy toFlirt. Native FreeSurfer outputs pending P4.02.",
+ "notes": "Self-consistency: the LTA/register.dat/xfm files are written by this generator from FreeSurfer transform.cpp/mri.cpp semantics (see generator docstring), not by FreeSurfer or an independent implementation. points.tsv: reference RAS points and the movable RAS point each maps to under the pullback; every file here encodes that one transform. Reference-implementation inputs: Torig from nibabel get_vox2ras_tkr; FSLREG matrix from fslpy toFlirt. Cross-implementation: nitransforms reads ras2ras.lta and vox2vox.lta in ../nitransforms_crosscheck. PENDING (P4.02): native lta_convert / tkregister2 / mri_vol2vol outputs.",
  "sha256": {
   "coronal.lta": "bd56e2f110112c202648dba4051e34eb43d1efc5b5de0a5f4f280874f10120e7",
   "fslreg.lta": "b043006a3cb144d1d09844ee403dbffd019e9e79ee8824339d7bc013747805e9",

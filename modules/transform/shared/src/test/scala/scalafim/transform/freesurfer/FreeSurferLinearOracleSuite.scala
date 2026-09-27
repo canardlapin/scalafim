@@ -6,7 +6,11 @@ import scalafim.transform.*
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}
 
-/** Every FreeSurfer linear format encoding one transform must yield the same pullback (see oracle manifest). */
+/** Every FreeSurfer linear format encoding one transform must yield the same pullback. The files are self-consistency
+  * evidence (written by the generator from FreeSurfer's source semantics; see the oracle manifest); nitransforms'
+  * independent reading of ras2ras.lta and vox2vox.lta is in NitransformsCrosscheckSuite, and native FreeSurfer
+  * (lta_convert, tkregister2) remains pending (P4.02).
+  */
 class FreeSurferLinearOracleSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =
     result.fold(error => fail(s"unexpected failure: $error"), identity)

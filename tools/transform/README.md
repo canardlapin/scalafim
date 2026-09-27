@@ -26,6 +26,7 @@ and the tooling decision is ADR §6.
 | `native-oracle` | output of the reference tool itself | `flirt`, `antsApplyTransformsToPoints`, `mri_info` |
 | `reference-implementation` | an independent implementation of the tool's documented convention | nibabel's `MGHHeader.get_vox2ras_tkr`, fslpy's FLIRT coordinate transforms |
 | `cross-implementation` | consistency with another converter | nitransforms |
+| `self-consistency` | files the generator writes from its own reading of a convention; only shows that every encoding of one transform reads alike | `freesurfer_linear` (LTA, register.dat, xfm) |
 
 A packet whose acceptance calls for a native oracle does not close on the
 weaker kinds. It records the gap as a caveat instead.
