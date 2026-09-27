@@ -3,7 +3,7 @@ package scalafim.image.view
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import scalafim.image.*
-import scalafim.image.world.{TemplateName, WorldSpace}
+import scalafim.image.world.{DatasetNamespace, GeometryDigest, ReferenceAcquisition, SubjectId, TemplateName, WorldSpace}
 
 class LayerAlignmentSuite extends munit.FunSuite:
   private def volumeIn(space: SomeSampleSpace, label: String): SomeScalarVolume[Double] =
@@ -48,6 +48,26 @@ class LayerAlignmentSuite extends munit.FunSuite:
     val other = volumeIn(inTemplate("fsaverage"), "other")
     ViewerModel.make(reference.grid, Vector(layer("reference", reference), layer("other", other))) match
       case Left(ImageViewError.LayerFrameMismatch(id, _)) => assertEquals(id, LayerId.unsafe("other"))
+      case result                                         => fail(s"expected a frame mismatch, got $result")
+
+  test("two subjects' native volumes are different worlds and do not overlay without a transform"):
+    def native(subject: String): SomeSampleSpace =
+      val world =
+        for
+          namespace <- DatasetNamespace("ds")
+          id <- SubjectId(subject)
+          digest <- GeometryDigest(Vector(3, 3, 3), Vector.tabulate(12)(i => if i % 5 == 0 then 1.0 else 0.0), 1, 1)
+          reference <- ReferenceAcquisition(Map("suffix" -> "T1w"), digest)
+        yield WorldSpace.SubjectNative(namespace, id, None, reference)
+      world
+        .flatMap(w => SampleSpaces.inWorld(SampleSpaces(Vector(3, 3, 3)), w).left.map(e => fail(e.message)))
+        .fold(error => fail(error.message), identity)
+    val first = volumeIn(native("sub-01"), "sub-01")
+    val sameSubject = volumeIn(native("sub-01"), "sub-01 again")
+    val second = volumeIn(native("sub-02"), "sub-02")
+    assert(ViewerModel.make(first.grid, Vector(layer("a", first), layer("b", sameSubject))).isRight)
+    ViewerModel.make(first.grid, Vector(layer("a", first), layer("b", second))) match
+      case Left(ImageViewError.LayerFrameMismatch(id, _)) => assertEquals(id, LayerId.unsafe("b"))
       case result                                         => fail(s"expected a frame mismatch, got $result")
 
   test("a pullback layer must map the reference frame to its own frame"):
