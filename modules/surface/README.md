@@ -33,6 +33,16 @@ The shared module cross-compiles to JVM and Scala.js and contains:
 - Pure algorithms for connected components, thresholded clusters, geodesic and
   spherical neighborhoods, parcel representatives, parcel distances, and parcel
   boundary contacts.
+- `FramedSurface[F]`: vertex coordinates typed in a world frame `F` from
+  `scalafim.image.world`, so tkRAS and scanner-RAS surfaces cannot be mixed.
+  `toScanner`/`toTkRas` move FreeSurfer surfaces with `Norig * inverse(Torig)`
+  of a `FreeSurferVolumeGeometry`; `transport` takes any typed reframe4s map.
+- Cortical-ribbon operators on a `GridSpec[F]` in the same frame:
+  `RibbonOperator` compiles neurotransform's white-to-pial trilinear ribbon
+  weights `W` (vertex x voxel), with `sample` (`W v`, volume to surface),
+  `adjoint` (`Wᵀ s`, surface to volume) and `project` (adjoint or weighted-mean
+  ribbon fill); `RibbonMask` marks voxel centres inside the closed pial and
+  outside the closed white surface.
 
 The platform modules add matching GIFTI APIs:
 
