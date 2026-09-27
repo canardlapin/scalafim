@@ -1,5 +1,6 @@
 package scalafim.surface.view
 
+import image4s.geometry.{D3, Frame}
 import intaglio.*
 import scalafim.image.{x, y, z}
 import scalafim.surface.*
@@ -26,7 +27,7 @@ object SurfaceCompiler:
   /** The pose the state's viewpoint camera ([[SurfaceCamera]]: viewpoint, orbit, pan and zoom) takes, as typed points
     * in `display`'s frame. The layout must be the single surface `display` shows.
     */
-  def cameraPose[F <: image4s.geometry.Frame[image4s.geometry.D3]](
+  def cameraPose[F <: Frame[D3]](
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
     display: SurfaceDisplayFrame[F]
@@ -41,9 +42,11 @@ object SurfaceCompiler:
 
   /** Compile with an explicit camera pose, typed in `display`'s frame, in place of the state camera's viewpoint, orbit,
     * pan and zoom distance. The projection, and the zoom of an orthographic projection, still come from the state
-    * camera. The layout must be the single surface `display` shows.
+    * camera; the perspective clipping planes stay at 0.01 and 1000 display units, so an eye farther than that from the
+    * surface clips it. The layout must be the single surface `display` shows, and the model must still hold the very
+    * asset `display` was declared for (a rebuilt model needs its display frame declared again).
     */
-  def compile[F <: image4s.geometry.Frame[image4s.geometry.D3]](
+  def compile[F <: Frame[D3]](
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
     display: SurfaceDisplayFrame[F],
@@ -69,7 +72,7 @@ object SurfaceCompiler:
       frames <- resolveFrames(model, state)
     yield compileUnsafe(model, state, frames, pose)
 
-  private def displayedAsset[F <: image4s.geometry.Frame[image4s.geometry.D3]](
+  private def displayedAsset[F <: Frame[D3]](
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
     display: SurfaceDisplayFrame[F]
@@ -78,7 +81,7 @@ object SurfaceCompiler:
       case SurfaceLayout.Single(surface) if surface == display.surfaceId =>
         model.surface(surface) match
           case None => Left(SurfaceCameraError.UnknownSurface(surface))
-          case Some(asset) if asset == display.asset => Right(asset)
+          case Some(asset) if asset eq display.asset => Right(asset)
           case Some(_) =>
             Left(SurfaceCameraError.DisplayMismatch(surface, "the model no longer shows the geometry the display frame was declared for"))
       case layout => Left(SurfaceCameraError.LayoutMismatch(display.surfaceId, layout))

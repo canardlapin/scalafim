@@ -33,7 +33,7 @@ class WorldTransformLinkSuite extends munit.FunSuite:
     a.coordinates.zip(b.coordinates).foreach((x, y) => assertEqualsDouble(x, y, 1e-9))
 
   test("an affine transform links both ways, agreeing with pullPoint and mapPoint"):
-    val link = ok(registration.link)
+    val link = registration.link
     assert(LinkDirection.values.forall(link.supports))
     val peak = ok(Point.in(mni)(-42.0, 18.0, 24.0))
     val inSubject = ok(link.toLeft(peak))
@@ -43,7 +43,7 @@ class WorldTransformLinkSuite extends munit.FunSuite:
 
   test("a composite whose warp has no inverse links target to source only; the forward direction is a typed error"):
     val composite: WorldTransform[native.type, mni.type] = registration.andThen(warp)
-    val link = ok(composite.link)
+    val link = composite.link
     val peak = ok(Point.in(mni)(-42.0, 18.0, 24.0))
     close(ok(link.toLeft(peak)), ok(composite.pullPoint(peak)))
     assert(!link.supports(LinkDirection.LeftToRight))

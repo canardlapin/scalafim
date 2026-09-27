@@ -27,7 +27,7 @@ enum SurfaceCursorError derives CanEqual:
 /** The surface vertex nearest a linked volume point: the selection, its placed position, and its distance from the
   * linked point (in the surface frame's units).
   */
-final case class SurfaceCursorHit[S <: Frame[D3]](selection: SurfaceSelection, vertex: Point[S, D3], distance: Double)
+final case class SurfaceCursorHit[S <: Frame[D3]] private[view] (selection: SurfaceSelection, vertex: Point[S, D3], distance: Double)
 
 /** A cursor linking one displayed surface, in frame `S`, with a volume in frame `V`.
   *

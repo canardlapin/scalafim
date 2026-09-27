@@ -42,8 +42,8 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
     * when [[push]] does, and is otherwise `WorldLinkError.DirectionUnavailable`, never an approximation. Read the other
     * way with `swap`.
     */
-  final def link: Either[TransformError, WorldLink.Mapped[S, T]] =
-    WorldLink.pullback(pull, push, provenance.describe).left.map(error => TransformError.Invalid(error.message))
+  final def link: WorldLink.Mapped[S, T] =
+    WorldLink.pullbackUnchecked(pull, push, provenance.describe)
 
   /** Lazy composition `S -> T -> U`. Two affines are better fused with [[WorldTransform.Linear.andThen]].
     *

@@ -293,7 +293,7 @@ typed `WorldLink[L, R]` (in `scalafim.image.world`):
   `toRight` exists exactly when the forward map does.
 
 ```scala
-val link = warp.link.toOption.get              // WorldLink.Mapped[subject.type, mni.type]
+val link = warp.link              // WorldLink.Mapped[subject.type, mni.type]
 link.toLeft(peakInMni)                         // Right(point in subject): the pullback
 link.toRight(pointInSubject)                   // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
 ```

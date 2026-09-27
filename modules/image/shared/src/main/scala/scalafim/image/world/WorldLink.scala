@@ -29,7 +29,7 @@ enum WorldLinkError derives CanEqual:
   /** The map exists but failed at this point (outside a field's support, a rejected boundary). */
   case Map(direction: LinkDirection, error: MapError)
 
-  /** A point or map does not belong to the frame the link expects. */
+  /** A point, map or frame is not in the world the link expects (at construction or when a point crosses). */
   case FrameMismatch(error: GeometryError)
 
   def message: String =
@@ -38,7 +38,7 @@ enum WorldLinkError derives CanEqual:
         s"$link has no ${WorldLinkError.describe(direction)} map; it is not approximated"
       case NoDirection(link)       => s"$link supplies no map in either direction"
       case Map(direction, error)   => s"${WorldLinkError.describe(direction)} map failed: ${error.message}"
-      case FrameMismatch(error)    => s"point is not in the link's frame: ${error.message}"
+      case FrameMismatch(error)    => s"frame mismatch: ${error.message}"
 
 object WorldLinkError:
   private def describe(direction: LinkDirection): String =
@@ -72,8 +72,10 @@ sealed trait WorldLink[L <: Frame[D3], R <: Frame[D3]]:
 
 object WorldLink:
   /** Both frames are one world (one runtime owner or one persistent key): coordinates carry over unchanged. */
-  final class Shared[L <: Frame[D3], R <: Frame[D3]] private[WorldLink] (val alignment: FrameAlignment[D3, L, R])
-      extends WorldLink[L, R]:
+  final class Shared[L <: Frame[D3], R <: Frame[D3]] private[WorldLink] (
+      val alignment: FrameAlignment[D3, L, R],
+      private val reverse: FrameAlignment[D3, R, L]
+  ) extends WorldLink[L, R]:
     def left: L = alignment.left
     def right: R = alignment.right
     def supports(direction: LinkDirection): Boolean = true
@@ -90,12 +92,7 @@ object WorldLink:
         moved <- alignment.pointToLeft(owned).left.map(WorldLinkError.FrameMismatch.apply)
       yield moved
 
-    def swap: Shared[R, L] =
-      new Shared(
-        Frame
-          .alignOwners[D3, R, L](alignment.right, alignment.left)
-          .fold(error => throw new IllegalStateException(s"an alignment failed to reverse: ${error.message}"), identity)
-      )
+    def swap: Shared[R, L] = new Shared(reverse, alignment)
 
     override def toString: String = s"WorldLink.Shared($left, $right)"
 
@@ -139,11 +136,16 @@ object WorldLink:
 
   /** Link two frames of one world; fails when they name different worlds. */
   def shared[L <: Frame[D3], R <: Frame[D3]](left: L, right: R): Either[WorldLinkError, Shared[L, R]] =
-    Frame.alignOwners[D3, L, R](left, right).left.map(WorldLinkError.FrameMismatch.apply).map(aligned)
+    val checked =
+      for
+        forward <- Frame.alignOwners[D3, L, R](left, right)
+        backward <- Frame.alignOwners[D3, R, L](right, left)
+      yield new Shared(forward, backward)
+    checked.left.map(WorldLinkError.FrameMismatch.apply)
 
   /** Link two frames through an alignment already checked. */
-  def aligned[L <: Frame[D3], R <: Frame[D3]](alignment: FrameAlignment[D3, L, R]): Shared[L, R] =
-    new Shared(alignment)
+  def aligned[L <: Frame[D3], R <: Frame[D3]](alignment: FrameAlignment[D3, L, R]): Either[WorldLinkError, Shared[L, R]] =
+    shared(alignment.left, alignment.right)
 
   /** Link through a pullback `R -> L`, which always exists, and a forward map `L -> R` when one is known.
     *
@@ -177,6 +179,16 @@ object WorldLink:
         _ <- toRight.fold(Right(()))(joins(_, left, right))
         _ <- toLeft.fold(Right(()))(joins(_, right, left))
       yield new Mapped(left, right, toRight, toLeft, label)
+
+  /** For providers whose own invariants already tie the maps to `left` and `right` (a `WorldTransform`'s pullback and
+    * forward map): no construction check, and `pull` must exist.
+    */
+  private[scalafim] def pullbackUnchecked[L <: Frame[D3], R <: Frame[D3]](
+      pull: SpatialMap[R, L, D3],
+      push: Option[SpatialMap[L, R, D3]],
+      description: String
+  ): Mapped[L, R] =
+    new Mapped(pull.target, pull.source, push, Some(pull), description)
 
   /** Rebind a point to `owner` when it belongs to any runtime owner of `owner`'s persistent key. */
   private def own[F <: Frame[D3]](point: Point[F, D3], owner: F): Either[WorldLinkError, Point[F, D3]] =

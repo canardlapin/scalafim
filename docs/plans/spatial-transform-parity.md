@@ -1091,7 +1091,7 @@ _(append per phase: date, commits, test commands run, results)_
   behind a linked cursor: `Shared` (one world, a checked `FrameAlignment`,
   coordinates unchanged) or `Mapped` (different worlds, typed maps; a missing
   direction is `WorldLinkError.DirectionUnavailable`, never approximated).
-  `WorldTransform.link` adapts any transform: `toLeft` is the pullback,
+  `WorldTransform.link` (total) adapts any transform: `toLeft` is the pullback,
   `toRight` exists exactly when `push` does. `SurfaceVolumeCursor[S, V]`
   (surface-view) maps a selected vertex of a `FramedSurface[S]` to a volume
   point and a volume point to the nearest vertex within a `SurfaceLinkRadius`;
@@ -1115,14 +1115,27 @@ _(append per phase: date, commits, test commands run, results)_
   each `SliceLayer` has its frame, `LayerAlignment.check` proves `SharedWorld`
   or `Mapped` against the reference, and a `WorldTransform`'s `pull` is
   already a valid `LayerMapping.Pullback` (`SpatialPullback` is `SpatialMap`).
-  The remaining gap was the cursor: `ViewerState.cursor` is a frame-erased
-  `WorldPoint`. `ViewerCursor` closes it at the API boundary; retyping the
-  field itself would edit `Interaction.scala` and `ViewerScene.scala`
-  throughout and is left for a follow-up.
+  The remaining gap is the cursor: `ViewerState.cursor` is a frame-erased
+  `WorldPoint`. `ViewerCursor` adds a checked entry point beside it, but
+  `ViewerAction.SetCursor(WorldPoint)` stays public and unchecked. Retyping
+  the field and the action would edit `Interaction.scala` and
+  `ViewerScene.scala` throughout, which have concurrent uncommitted edits, so
+  it is left for a follow-up.
 - **Verification:** imageJVM 377 and imageJS 351; imageViewJVM 36 and
   imageViewJS 36; surfaceViewJVM 58 and surfaceViewJS 58; transformJVM 152
   and transformJS 127; scalafimCompileAll 0 warnings.
-- **Caveats:** a typed pose needs a single-surface layout (bilateral slots
-  are re-centred per viewport). The untyped `SurfaceWorldLink` in
-  `SurfaceDynamics` still assumes one world; it is left in place because that
-  file has concurrent uncommitted edits.
+- **Caveats:**
+  - A typed pose needs a single-surface layout (bilateral slots are
+    re-centred per viewport), and the perspective clipping planes stay at
+    0.01 and 1000 display units.
+  - A `SurfaceDisplayFrame` belongs to the asset instance it was declared
+    for; `declare` is an unchecked assertion, `bind` checks coordinates.
+  - **Open:** the untyped `SurfaceWorldLink.toVolume` in `SurfaceDynamics`
+    (used by `SurfaceNetwork` and `ThreeVolumeProjector`) still accepts a
+    volume grid in any world and succeeds silently for, say, a tkRAS surface
+    over an MNI grid. It should be deprecated in favour of
+    `SurfaceVolumeCursor` or take a `WorldLink`; it is left in place because
+    that file has concurrent uncommitted edits.
+- **Build:** `FrameErasureGate.FramedTypes` now also covers `WorldLink`,
+  `SurfaceCameraPose`, `SurfaceDisplayFrame`, `SurfaceVolumeCursor` and
+  `SurfaceCursorHit`.

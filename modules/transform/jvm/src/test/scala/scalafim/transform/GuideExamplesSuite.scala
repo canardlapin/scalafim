@@ -140,7 +140,7 @@ class GuideExamplesSuite extends munit.FunSuite:
     val mniGrid = Grid.forFrame[D3, mni.type](mni)(warpRaw.spatialShape, LatticeAffine.of(warpRaw, LatticeAffine.Itk).toOption.get).toOption.get
     val peak = mniGrid.pointAt(image4s.geometry.LatticeIndex.fromVector[D3](warpRaw.spatialShape.map(_ / 2)).toOption.get).toOption.get
 
-    val link = warp.link.toOption.get                         // WorldLink.Mapped[subject.type, mni.type]
+    val link = warp.link                         // WorldLink.Mapped[subject.type, mni.type]
     val inSubject = link.toLeft(peak)                         // MNI cursor -> subject point: the pullback
     assert(inSubject.isRight, clue = inSubject)
     assertEquals(inSubject.toOption.map(_.coordinates), warp.pullPoint(peak).toOption.map(_.coordinates))

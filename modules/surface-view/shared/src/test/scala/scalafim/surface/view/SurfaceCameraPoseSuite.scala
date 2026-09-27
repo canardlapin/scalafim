@@ -46,7 +46,7 @@ class SurfaceCameraPoseSuite extends munit.FunSuite:
     assertEqualsDouble(pose.direction.coordinates(2), direction._3, 1e-12)
     val plain = ok(SurfaceCompiler.compile(model, state))
     val posed = ok(SurfaceCompiler.compile(model, state, display, pose))
-    plain.camera.viewMatrix.unsafeArray.zip(posed.camera.viewMatrix.unsafeArray).foreach((a, b) => assertEqualsDouble(a.toDouble, b.toDouble, 1e-4))
+    plain.camera.viewMatrix.unsafeArray.zip(posed.camera.viewMatrix.unsafeArray).foreach((a, b) => assertEqualsDouble(a.toDouble, b.toDouble, 0.0))
     assertEqualsDouble(posed.camera.directionX, plain.camera.directionX, 1e-12)
     assert(posed.receipt.cameraKey.startsWith("pose:"))
     assertEquals(posed.meshes.map(_.geometryKey), plain.meshes.map(_.geometryKey))
@@ -102,6 +102,13 @@ class SurfaceCameraPoseSuite extends munit.FunSuite:
     SurfaceCompiler.compile(replaced, SurfaceViewerState.initial(replaced), display, pose) match
       case Left(SurfaceCameraError.DisplayMismatch(`id`, _)) => ()
       case other                                             => fail(s"expected a replaced geometry to be refused, got $other")
+    val rebuilt = ok(SurfaceViewerModel.make(Vector(ok(SurfaceAsset.make(id, placedGeometry))), Vector.empty))
+    assert(
+      SurfaceCompiler.compile(rebuilt, state, display, pose).left.exists(_.isInstanceOf[SurfaceCameraError.DisplayMismatch]),
+      clue = "a display frame belongs to the asset instance it was declared for"
+    )
+    val redeclared = ok(SurfaceDisplayFrame.declare(rebuilt, id, tkRas))
+    assert(SurfaceCompiler.compile(rebuilt, state, redeclared, ok(SurfaceCompiler.cameraPose(rebuilt, state, redeclared))).isRight)
 
   test("a pose needs distinct eye and target points"):
     val p = ok(SurfaceCameraPose.pointIn(tkRas, Vector(1.0, 2.0, 3.0)))

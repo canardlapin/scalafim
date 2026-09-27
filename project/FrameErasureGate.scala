@@ -32,7 +32,12 @@ object FrameErasureGate {
       "WorldBox",
       "WorldTransform",
       "FramedAffine",
-      "FrameAlignment"
+      "FrameAlignment",
+      "WorldLink",
+      "SurfaceCameraPose",
+      "SurfaceDisplayFrame",
+      "SurfaceVolumeCursor",
+      "SurfaceCursorHit"
     )
 
   /** Files where frame erasure is the point, with the reason recorded next to each entry in build.sbt. Paths are

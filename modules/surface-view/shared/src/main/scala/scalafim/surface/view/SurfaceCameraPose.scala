@@ -46,7 +46,10 @@ final class SurfaceDisplayFrame[F <: Frame[D3]] private (
   override def toString: String = s"SurfaceDisplayFrame(${surfaceId.value}, $frame)"
 
 object SurfaceDisplayFrame:
-  /** Declare that surface `id`'s display coordinates are points in `frame`. */
+  /** Declare that surface `id`'s display coordinates are points in `frame`. This is an unchecked assertion, the trust
+    * boundary of the typed camera: nothing here can tell a tkRAS surface from an MNI one. Prefer [[bind]] with a
+    * `FramedSurface` whose frame came from its source (IO, `toScanner`).
+    */
   def declare(model: SurfaceViewerModel, id: SurfaceId, frame: Frame[D3]): Either[SurfaceCameraError, SurfaceDisplayFrame[frame.type]] =
     for
       asset <- model.surface(id).toRight(SurfaceCameraError.UnknownSurface(id))
