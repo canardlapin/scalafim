@@ -722,25 +722,25 @@
     {
       "id": "surface.volume-to-template-mesh-chain.v1",
       "tier": "workflow_parity",
-      "module": "surface",
-      "suite_class": "scalafim.surface.scenarios.SurfaceChainScenarioSuite",
-      "suite_path": "modules/surface/shared/src/test/scala/scalafim/surface/scenarios/SurfaceChainScenarioSuite.scala",
+      "module": "atlas",
+      "suite_class": "scalafim.atlas.scenarios.SurfaceChainScenarioSuite",
+      "suite_path": "modules/atlas/shared/src/test/scala/scalafim/atlas/scenarios/SurfaceChainScenarioSuite.scala",
       "public_seam": true,
       "platforms": ["jvm", "js"],
       "reference": {
-        "kind": "mathematical_linear_field_and_sagitta_bound",
-        "description": "A linear scanner-RAS volume sampled through a tkRAS white/pial ribbon (FramedSurface.toScanner, RibbonOperator) equals the field at mid-thickness + c_ras; barycentric resampling from the registered sphere to fsaverage-like and fsLR-like meshes stays within the gradient-times-sagitta bound, and the two-step and direct routes commute within the summed bounds."
+        "kind": "mathematical_linear_field_sagitta_bound_and_simpleitk_bridge_oracle",
+        "description": "Subject leg (JVM and JS): a linear scanner-RAS volume sampled through a tkRAS white/pial ribbon (FramedSurface.toScanner, RibbonOperator) equals the field at mid-thickness + c_ras; barycentric resampling from the registered sphere to fsaverage-like and fsLR-like meshes stays within the gradient-times-sagitta bound, and the two-step and direct routes commute within the summed bounds. Template leg (JVM, TemplateFlow cache): an MNI152NLin2009cAsym volume g = h(pull(q)), h linear in MNI152NLin6Asym, on the TemplateFlow composite's own res-01 lattice is sampled at each fsLR 32k left midthickness vertex carried to 2009c by MniTemplateBridge's qualified forward map, and must equal h at the vertex within |grad h| times the inversion gates (0.5 mm max, 0.05 mm p99); the graph's 6Asym -> 2009c route matches SimpleITK TransformPoint (1e-8 mm) and its fixed-point inverse (0.05 mm); the fsLR values route on to fsaverage through SpaceTransformGraph.vertexOperator. The template leg runs only where its assets are cached: the composite H5, tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii (SHA-256 036a8b6c...), and the left fsaverage-sphere spheres of fsaverage and fsLR 32k."
       },
       "allowed_statuses": ["pass_with_caveats"],
-      "acceptance_commands": ["sbt surfaceJVM/test", "sbt surfaceJS/test"],
+      "acceptance_commands": ["sbt atlasJVM/test", "sbt atlasJS/test"],
       "caveats": [
         {
-          "id": "surface.mni152-nlin6-nlin2009c-bridge",
-          "kind": "public_api_gap",
+          "id": "surface.template-leg-assets-absent",
+          "kind": "fixture_freshness",
           "severity": "actionable",
-          "owner": "spatial",
-          "follow_up": "bd-01M37FQFRRF1TW2REJPWS8BRM8",
-          "detail": "The MNI152NLin2009cAsym volume -> fsLR leg needs the MNI152NLin6Asym <-> 2009cAsym nonlinear bridge; it is declared, not executed, and never approximated with an affine."
+          "owner": "atlas",
+          "follow_up": "run atlasJVM/test with a TemplateFlow cache holding the MNI152NLin6Asym -> 2009cAsym composite, the fsLR 32k left midthickness and the left fsaverage-sphere spheres",
+          "detail": "Emitted only when the template leg's TemplateFlow assets are absent (every Scala.js run; a JVM without a TemplateFlow cache): the MNI152NLin2009cAsym volume -> fsLR 32k -> fsaverage leg was not executed. A cached asset that is refused or fails to load fails the scenario instead, and the suite asserts the caveat is absent whenever the leg ran."
         },
         {
           "id": "surface.ribbon-overlap-metrics",

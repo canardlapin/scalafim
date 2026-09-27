@@ -63,14 +63,16 @@ class MniTemplateBridgeFilesSuite extends munit.FunSuite:
     assume(found.nonEmpty, s"asset missing: ${xfm.relativePath} is in no TemplateFlow cache (${TemplateFlowCache.roots.mkString(", ")})")
     found.get
 
-  /** Loaded once per suite run: reading, hashing and decoding the composite takes a few seconds. */
-  private lazy val bridge: MniTemplateBridge = ok(MniTemplateBridgeFiles.load(cached(TemplateFlowXfm.Mni6ToMni2009c)))
+  /** Loaded once per test run and shared with the surface chain scenario ([[MniBridgeFixtures]]): reading, hashing and
+    * decoding the composite takes a few seconds, qualifying its inverse over a minute.
+    */
+  private def bridge: MniTemplateBridge =
+    cached(TemplateFlowXfm.Mni6ToMni2009c)
+    ok(MniBridgeFixtures.bridge.getOrElse(fail("the composite is cached but was not loaded")))
 
-  private lazy val inverted: MniTemplateBridge =
-    val started = System.nanoTime()
-    val result = ok(bridge.withNumericalInverse())
-    println(f"numerical inverse on MNI152NLin6Asym res-01: ${(System.nanoTime() - started) / 1e9}%.1f s; ${result.transform.provenance.describe}")
-    result
+  private def inverted: MniTemplateBridge =
+    cached(TemplateFlowXfm.Mni6ToMni2009c)
+    ok(MniBridgeFixtures.inverted.getOrElse(fail("the composite is cached but was not inverted")))
 
   private def distance(a: Vector[Double], b: Vector[Double]): Double =
     math.sqrt(a.zip(b).map((x, y) => (x - y) * (x - y)).sum)

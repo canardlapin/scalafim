@@ -1084,3 +1084,29 @@ _(append per phase: date, commits, test commands run, results)_
 - **Deviation from the Phase 7 text:** the fMRIPrep chain uses the synthetic
   SimpleITK composites, not demo1 outputs. The surface chain uses synthetic
   icospheres, not fsaverage or fsLR32k meshes.
+
+
+### P7.04 graph wiring and the P7.07 template leg (2026-09-27)
+
+- **Graph wiring (P7.04):** `TemplateSurfaceSampling` (atlas) gives a
+  transform graph's template surface domains the vertices of loaded
+  `TemplateSphere`s (JVM: `TemplateSurfaceSamplingFiles.onFsAverage`). A
+  sphere-resampling step between two sampled spaces carries its
+  `TemplateResamplingPlan` as `CoordinateMap.SphereResampling` (spatial) and
+  becomes available. `SpaceTransformGraph.vertexOperator` compiles the route
+  with the mixed pullback compiler, which now composes weighted surface rows.
+  A space without a sphere stays unsampled, and routes through it remain a
+  typed `TransformNotExecutable`. Through the graph, fsaverage <-> fsLR 32k and
+  fsaverage -> fsaverage5 match Workbench 2.2.1 within the surface budgets.
+- **Template leg (P7.07):** `surface.volume-to-template-mesh-chain.v1` moved to
+  atlas, the lowest module that sees both the bridge and the graph. On the JVM
+  with a TemplateFlow cache, the leg samples an MNI152NLin2009cAsym volume at
+  the fsLR 32k left midthickness, carried to 2009c by `MniTemplateBridge`'s
+  forward map. Max error is 0.10 against a budget of 0.76; p99 is 0.018
+  against 0.076. It also anchors the bridge to SimpleITK and routes the values
+  on to fsaverage. Two new mutations fail it: the two MNI templates taken as
+  one, and the bridge run backwards.
+- **Caveats:** `surface.mni152-nlin6-nlin2009c-bridge` is gone. Where the
+  assets are absent (always on Scala.js), the scenario emits the declared caveat
+  `surface.template-leg-assets-absent` instead, and the template mutation test
+  is skipped, not passed.
