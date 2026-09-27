@@ -1,0 +1,30 @@
+{
+ "generator": "tools/transform/generate_template_sphere_resampling_oracle.py",
+ "generated": "2026-09-27",
+ "kind": "native-oracle",
+ "tools": {
+  "wb_command": "Connectome Workbench Type: Command Line Application Version: 2.2.1",
+  "wb_command_sha256": "b2506d131aec9bc8e32930b8e8fdd055dd926b060ae661a1eb09b8c0a9f7ba27",
+  "nibabel": "5.3.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "WB_COMMAND=... uv run --with nibabel==5.3.2 --with numpy python tools/transform/generate_template_sphere_resampling_oracle.py",
+  "wb_command -metric-resample <fields> tpl-fsaverage/tpl-fsaverage_hemi-L_den-164k_desc-std_sphere.surf.gii tpl-fsLR/tpl-fsLR_space-fsaverage_hemi-L_den-32k_sphere.surf.gii BARYCENTRIC <out>",
+  "wb_command -metric-resample <fields> tpl-fsaverage/tpl-fsaverage_hemi-R_den-164k_desc-std_sphere.surf.gii tpl-fsLR/tpl-fsLR_space-fsaverage_hemi-R_den-32k_sphere.surf.gii BARYCENTRIC <out>",
+  "wb_command -metric-resample <fields> tpl-fsLR/tpl-fsLR_space-fsaverage_hemi-L_den-32k_sphere.surf.gii tpl-fsaverage/tpl-fsaverage_hemi-L_den-164k_desc-std_sphere.surf.gii BARYCENTRIC <out>",
+  "wb_command -metric-resample <fields> tpl-fsLR/tpl-fsLR_hemi-L_den-32k_sphere.surf.gii tpl-fsLR/tpl-fsLR_hemi-L_den-164k_sphere.surf.gii BARYCENTRIC <out>",
+  "wb_command -metric-resample <fields> tpl-fsaverage/tpl-fsaverage_hemi-L_den-164k_desc-std_sphere.surf.gii tpl-fsaverage/tpl-fsaverage_hemi-L_den-10k_sphere.surf.gii BARYCENTRIC <out>"
+ ],
+ "notes": "Sphere assets are TemplateFlow cache files (not committed), pinned in spheres.tsv. Rows are a seeded subset of 1000 target vertices plus the first and last; fields: hash, ramp = x/100, saddle = y*z/10000 of the current sphere's file coordinates, float32.",
+ "sha256": {
+  "L_fsLR32k_to_fsLR164k.tsv": "c41446c9e9a62fa73ed8e304287464d2e0a67df8df060a3b8352fd2d07853d3b",
+  "L_fsLR32k_to_fsaverage164k.tsv": "1e398662e4ddbc45c232fb22822b2540ad6f123caaad73fdba5f26d26be7aebe",
+  "L_fsaverage164k_to_fsLR32k.tsv": "8ee837783a65d370bf578b72f96950d11359c4817fbb3481c29f63a290e1d639",
+  "L_fsaverage164k_to_fsaverage10k.tsv": "0cb3fedeca9a37935ba29507be97d5d501dfbbce98556d17c2effd6d5e7ef631",
+  "R_fsaverage164k_to_fsLR32k.tsv": "357fdc8e3d0b5825295c1b56f2a726027ed74b0ba86bf070520ae26f739d7b24",
+  "spheres.tsv": "55a1c3045b4034cdd5b844ab748a13ee9f03b998b35e3647290ca9099ade72e0"
+ }
+}
