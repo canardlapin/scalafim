@@ -96,6 +96,18 @@ class ItkHdf5SimpleItkSuite extends munit.FunSuite:
       case Left(TransformIoError.Malformed(_, reason)) => assert(reason.contains("missing TransformFixedParameters"), reason)
       case other                                      => fail(s"expected a malformed-file refusal, got $other")
 
+  test("jHDF decodes every readable file to the h5py dump the shared ItkHdf5SimpleItkDumpSuite interprets"):
+    Vector(
+      "affine_only_forward_double.h5",
+      "composite_affine_displacement_double.h5",
+      "composite_affine_displacement_legacy_float.h5",
+      "pullback_plus_one.h5",
+      "pullback_minus_one.h5",
+      "unsupported_bspline.h5"
+    ).foreach: name =>
+      val dumped = ItkHdf5Dumps.parse(OracleFixtures.text(s"itk_hdf5_simpleitk_dumps/${name.stripSuffix(".h5")}.components.txt"))
+      assertEquals(file(name), dumped, name)
+
   test("every fixture loads from disk with SHA-256 provenance matching its manifest"):
     val manifest = OracleFixtures.text("itk_hdf5_simpleitk/manifest.json")
     val recorded = "\"([^\"]+\\.h5)\":\\s*\"([0-9a-f]{64})\"".r.findAllMatchIn(manifest).map(m => m.group(1) -> m.group(2)).toVector
