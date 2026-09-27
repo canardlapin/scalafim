@@ -158,7 +158,9 @@ oc.write_manifest(
     commands=[
         "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with h5py==3.16.0 --with numpy python tools/transform/generate_nitransforms_crosscheck.py"
     ],
-    notes="Reference RAS points and nitransforms' mapped (moving) RAS point. Unreadable by nitransforms: "
-    + ("; ".join(notes) or "none"),
+    notes="Reference RAS points and nitransforms' mapped (moving) RAS point. A '#oblique' key reads the file with the "
+    "oblique afni_oblique_base.nii / afni_oblique_source.nii images (AFNI cardinal/real correction). PENDING native "
+    "checks: AFNI 3dAllineate/Vecwarp on oblique datasets; FreeSurfer lta_convert for the LTAs (P4.02). "
+    "Unreadable by nitransforms: " + ("; ".join(notes) or "none"),
 )
 print(len(rows), "rows;", len(notes), "unreadable:", notes)

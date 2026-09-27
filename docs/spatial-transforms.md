@@ -84,7 +84,12 @@ transform.pullPoint(peakInMni)                                 // MNI point -> s
 
 Every toolkit convention is decoded once, in `ToolCoordinates`:
 
-- **ITK/ANTs and AFNI** store LPS millimetres.
+- **ITK/ANTs and AFNI** store LPS millimetres. ANTs and AFNI 3dQwarp
+  displacement fields share one convention, an LPS displacement from each
+  target lattice point to its source point. They differ only in which NIfTI
+  affine places the lattice. ANTs follows ITK's NIfTI reader: an orthonormal
+  sform wins when the qform code is unset or the sform code is
+  `SCANNER_ANAT`; otherwise the qform wins. AFNI prefers the sform.
 - **FSL** uses scaled-voxel coordinates, flipped along x when the volume's
   FSL-selected affine is neurological.
 - **FreeSurfer tkRAS** is `Norig · inverse(Torig)`, where Torig is
@@ -190,7 +195,25 @@ fixture directory's `manifest.json` under
 - **Native tools:** SimpleITK/ITK; AFNI 26.1.04 and FSL 5.0.9, via the
   neurotransform oracles.
 - **Reference implementations:** fslpy, nibabel, neurotransform.
-- **Cross-implementations:** nitransforms.
+- **Cross-implementations:** nitransforms. It covers AFNI 3dQwarp fields,
+  FreeSurfer LTAs, a generic oblique AFNI affine with cardinal correction,
+  FLIRT and X5.
+- **Self-consistency:** the FreeSurfer LTA, `register.dat` and `talairach.xfm`
+  files are written by our own generator from FreeSurfer's source semantics.
+  They show only that every encoding of one transform reads alike.
 
-Checks that need FreeSurfer, ANTs or FSL 6 binaries are recorded as pending
-until those tools are available.
+Checks that need FreeSurfer, ANTs, AFNI or FSL 6 binaries are recorded as
+pending until those tools are available:
+
+- `lta_convert` and `tkregister2` for FreeSurfer
+- `3dNwarpXYZ` for 3dQwarp fields
+- AFNI's own handling of oblique datasets in `.aff12.1D` matrices
+
+The read path interpolates dense fields trilinearly. Cubic interpolation and
+Jacobian determinants are out of its scope; Jacobians belong to the warp
+algebra (P6.03). nitransforms interpolates dense fields with a cubic B-spline,
+so its points are compared only where both interpolants agree:
+
+- on lattice nodes
+- off the lattice, for fields that are affine in space, at least eight voxels
+  from every face
