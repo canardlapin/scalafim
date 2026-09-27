@@ -104,29 +104,51 @@ final case class TransformPlan private (
   def isExecutable: Boolean =
     executability.isRight
 
-  /** `Right` when the route can carry coordinates; otherwise the unavailable and map-less steps. */
+  /** `Right` when [[transform]] can carry `from` points to `to`; otherwise the unavailable steps, the map-less steps,
+    * and the steps whose map runs only backwards (a dense warp without a forward map, see [[pullbackExecutability]]).
+    */
   def executability: Either[AtlasError, Unit] =
+    val pullOnly =
+      steps.zip(path.morphisms).collect {
+        case (step, morphism) if TransformPlan.carriesCoordinates(morphism) && morphism.coordinateMap.inverted.isLeft => step
+      }
+    notExecutable(Option.when(pullOnly.nonEmpty)(s"steps with a pullback only (no forward map)=${pullOnly.map(TransformPlan.label).mkString(",")}"))
+
+  /** `Right` when [[pullPoints]] can carry `to` points back to `from`: every step is available and holds a provider
+    * map. A route whose dense warps have no forward map is pullback-executable though not [[executability]]-executable.
+    */
+  def pullbackExecutability: Either[AtlasError, Unit] =
+    notExecutable(None)
+
+  /** Carry points from `from` to `to` through every step's provider map. */
+  def transform(points: Vector[Point3D]): Either[AtlasError, Vector[Point3D]] =
+    executability.flatMap(_ => carry(points, path.push))
+
+  /** Carry points from `to` back to `from` through every step's pullback: the direction a dense warp always has. */
+  def pullPoints(points: Vector[Point3D]): Either[AtlasError, Vector[Point3D]] =
+    pullbackExecutability.flatMap(_ => carry(points, path.pullback))
+
+  private def carry(
+    points: Vector[Point3D],
+    step: Point3D => Either[scalafim.spatial.SpatialError, Point3D]
+  ): Either[AtlasError, Vector[Point3D]] =
+    points.foldLeft[Either[AtlasError, Vector[Point3D]]](Right(Vector.empty)) { (acc, point) =>
+      acc.flatMap(out => step(point).left.map(error => AtlasError.InvalidCoordinate(error.message)).map(out :+ _))
+    }
+
+  private def notExecutable(extra: Option[String]): Either[AtlasError, Unit] =
     val unavailable = steps.filter(_.status != TransformStatus.Available)
     val mapless =
       steps.zip(path.morphisms).collect {
         case (step, morphism) if !TransformPlan.carriesCoordinates(morphism) => step
       }
-    if unavailable.isEmpty && mapless.isEmpty then Right(())
-    else
-      val reasons =
-        Vector(
-          Option.when(unavailable.nonEmpty)(s"unavailable steps=${unavailable.map(TransformPlan.label).mkString(",")}"),
-          Option.when(mapless.nonEmpty)(s"steps without a coordinate map=${mapless.map(TransformPlan.label).mkString(",")}")
-        ).flatten
-      Left(AtlasError.TransformNotExecutable(from, to, reasons.mkString("; ")))
-
-  /** Carry points from `from` to `to` through every step's provider map. */
-  def transform(points: Vector[Point3D]): Either[AtlasError, Vector[Point3D]] =
-    executability.flatMap { _ =>
-      points.foldLeft[Either[AtlasError, Vector[Point3D]]](Right(Vector.empty)) { (acc, point) =>
-        acc.flatMap(out => path.push(point).left.map(error => AtlasError.InvalidCoordinate(error.message)).map(out :+ _))
-      }
-    }
+    val reasons =
+      Vector(
+        Option.when(unavailable.nonEmpty)(s"unavailable steps=${unavailable.map(TransformPlan.label).mkString(",")}"),
+        Option.when(mapless.nonEmpty)(s"steps without a coordinate map=${mapless.map(TransformPlan.label).mkString(",")}"),
+        extra
+      ).flatten
+    if reasons.isEmpty then Right(()) else Left(AtlasError.TransformNotExecutable(from, to, reasons.mkString("; ")))
 
   /** The route as the provider pullback image resampling needs (target world to source world) between two grids.
     * Available only for routes made of affine steps, which fuse into one matrix.
@@ -271,9 +293,9 @@ object SpaceTransforms:
         TransformBackend.TemplateFlowAnts,
         Confidence.High,
         reversible = true,
-        dataFiles = Vector("from-MNI152NLin6Asym_to-MNI152NLin2009cAsym_mode-image_xfm.h5"),
+        dataFiles = Vector(TemplateFlowXfm.Mni6ToMni2009c.relativePath),
         TransformStatus.Planned,
-        notes = Some("TemplateFlow composite warp")
+        notes = Some("TemplateFlow composite warp; load it with MniTemplateBridge and install the bridge's steps")
       ),
       TransformStep(
         SpaceId.MNI152NLin2009cAsym,
@@ -282,9 +304,12 @@ object SpaceTransforms:
         TransformBackend.TemplateFlowAnts,
         Confidence.High,
         reversible = true,
-        dataFiles = Vector("from-MNI152NLin2009cAsym_to-MNI152NLin6Asym_mode-image_xfm.h5"),
+        dataFiles = Vector(TemplateFlowXfm.Mni6ToMni2009c.relativePath),
         TransformStatus.Planned,
-        notes = Some("TemplateFlow composite warp inverse")
+        notes = Some(
+          "Inverse of the TemplateFlow composite warp; needs a qualified numerical inverse " +
+            s"(${TemplateFlowXfm.Mni2009cToMni6.fileName} pulls the same way as the forward file and is refused)"
+        )
       ),
       TransformStep(
         SpaceId.FsAverage,

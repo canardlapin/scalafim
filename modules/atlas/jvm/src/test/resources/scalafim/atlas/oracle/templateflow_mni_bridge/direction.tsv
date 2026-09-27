@@ -1,0 +1,7 @@
+transform	hypothesis	t1w_pearson_r	mask_dice
+identity	pulls-2009c-to-6Asym	0.9743385447463472	0.9677251194660372
+identity	pulls-6Asym-to-2009c	0.9730539529214729	0.9677251194660372
+tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5	pulls-2009c-to-6Asym	0.9851657225683451	0.9735618000099137
+tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5	pulls-6Asym-to-2009c	0.9437168325420693	0.9428523834512552
+tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5	pulls-2009c-to-6Asym	0.9850310590734324	0.9735723166712595
+tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym_mode-image_xfm.h5	pulls-6Asym-to-2009c	0.94332934405992	0.9427105700955232
