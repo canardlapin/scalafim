@@ -9,6 +9,7 @@ import scalafim.image.{
   SpatialPullback,
   SpatialPullbacks
 }
+import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.spatial.{CoordinateMap, ExecutableAffinePath, Morphism, MorphismPath}
 import scalafim.transform.WorldTransform
 
@@ -84,6 +85,10 @@ final case class TransformPlan private (
   confidence: Confidence,
   warnings: Vector[String],
   path: MorphismPath
+)(
+  /** The world spaces of the route's endpoints, as the transform catalog frames them. */
+  private val fromWorld: WorldSpace,
+  private val toWorld: WorldSpace
 ):
   require(steps.nonEmpty, "transform plan must contain at least one step")
   require(steps.length == path.morphisms.length, "transform plan steps must match its route")
@@ -123,12 +128,18 @@ final case class TransformPlan private (
 
   /** The route as the provider pullback image resampling needs (target world to source world) between two grids.
     * Available only for routes made of affine steps, which fuse into one matrix.
+    *
+    * The route carries `from` points to `to` points, so the target grid (whose points are pulled back) must be in the
+    * `from` world and the source grid in the `to` world. Grids in any other world space, including the unresolved one,
+    * are rejected: the route says nothing about their coordinates.
     */
   def pullback[S <: Frame[D3], T <: Frame[D3]](
     source: GridSpec[S],
     target: GridSpec[T]
   ): Either[AtlasError, SpatialPullback[T, S]] =
     for
+      _ <- TransformPlan.requireWorld("target", from, fromWorld, target.frame)
+      _ <- TransformPlan.requireWorld("source", to, toWorld, source.frame)
       _ <- executability
       executable <- ExecutableAffinePath
         .from(path)
@@ -142,12 +153,22 @@ final case class TransformPlan private (
     yield SpatialPullbacks.affine(source, target, operator)
 
 object TransformPlan:
+  private def requireWorld(role: String, space: AnySpaceId, expected: WorldSpace, frame: Frame[D3]): Either[AtlasError, Unit] =
+    FrameCatalog.worldOf(frame) match
+      case Right(world) if world == expected => Right(())
+      case Right(world) =>
+        Left(AtlasError.GridWorldMismatch(role, space, s"expected ${expected.displayName}, got ${world.displayName}"))
+      case Left(error) =>
+        Left(AtlasError.GridWorldMismatch(role, space, error.message))
+
   private[atlas] def build(
     from: AnySpaceId,
     to: AnySpaceId,
     steps: Vector[TransformStep],
     path: MorphismPath,
-    dataKind: DataKind
+    dataKind: DataKind,
+    fromWorld: WorldSpace,
+    toWorld: WorldSpace
   ): TransformPlan =
     val status =
       if steps.exists(_.status == TransformStatus.Planned) then TransformStatus.Planned
@@ -159,7 +180,7 @@ object TransformPlan:
         case 1 => Confidence.High
         case 2 => Confidence.Approximate
         case _ => Confidence.Uncertain
-    new TransformPlan(from, to, steps, status, confidence, warningsFor(steps, path, dataKind), path)
+    new TransformPlan(from, to, steps, status, confidence, warningsFor(steps, path, dataKind), path)(fromWorld, toWorld)
 
   private[atlas] def confidenceRank(confidence: Confidence): Int =
     confidence match

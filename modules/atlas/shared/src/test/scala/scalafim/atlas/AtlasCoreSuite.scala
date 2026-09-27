@@ -111,8 +111,12 @@ class AtlasCoreSuite extends munit.FunSuite:
     assert(math.abs(pt.y + 18.406) < 0.01, clue = pt.toString)
     assert(math.abs(pt.z - 36.139) < 0.01, clue = pt.toString)
 
-    val sourceGrid = GridSpec.identity(Vector(2, 2, 2))
-    val targetGrid = GridSpec.identity(Vector(2, 2, 2))
+    // The route carries MNI305 points to MNI152 points: the target grid is in MNI305, the source grid in MNI152.
+    def gridIn(space: AnySpaceId): GridSpec[?] =
+      val world = TemplateCatalog.standard.world(space).toOption.get
+      GridSpec.in(scalafim.image.world.FrameCatalog.frame(world))(SpatialDims(2, 2, 2), Affine.identity[D3]).toOption.get
+    val sourceGrid = gridIn(SpaceId.MNI152)
+    val targetGrid = gridIn(SpaceId.MNI305)
     val pullback =
       SpaceTransforms
         .spatialPullback(

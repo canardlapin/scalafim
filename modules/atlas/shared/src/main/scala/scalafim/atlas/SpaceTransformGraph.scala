@@ -39,6 +39,20 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
     val normalized = SpaceId.normalize(space)
     frames.get(normalized).toRight(AtlasError.UnknownSpace(normalized))
 
+  /** The world space a space's coordinates live in: its catalog frame's world, or, for an uncatalogued space, the
+    * template world of that name (the world [[including]] would give it).
+    */
+  def world(space: AnySpaceId): Either[AtlasError, WorldSpace] =
+    val normalized = SpaceId.normalize(space)
+    frames.get(normalized) match
+      case Some(frame) =>
+        FrameCatalog.worldOf(frame).left.map(error => AtlasError.GridWorldMismatch("catalog", normalized, error.message))
+      case None =>
+        TemplateName(normalized.value)
+          .map(WorldSpace.Template(_))
+          .left
+          .map(error => AtlasError.GridWorldMismatch("catalog", normalized, error.message))
+
   /** The routing-graph domain of a catalogued space: unsampled, in the space's world frame. */
   def domain(space: AnySpaceId): Either[AtlasError, Domain] =
     val normalized = SpaceId.normalize(space)
@@ -118,7 +132,8 @@ final case class SpaceTransformGraph private (
           notes = Some("No transform required."),
           affine = Some(ProviderAffine.identity[D3])
         )
-      Right(TransformPlan.build(fromNorm, toNorm, Vector(step), MorphismPath.identity(TemplateCatalog.domainId(fromNorm)), dataKind))
+      catalog.world(fromNorm).map: world =>
+        TransformPlan.build(fromNorm, toNorm, Vector(step), MorphismPath.identity(TemplateCatalog.domainId(fromNorm)), dataKind, world, world)
     else if !catalog.contains(fromNorm) || !catalog.contains(toNorm) then Left(AtlasError.NoTransformRoute(fromNorm, toNorm))
     else
       graph
@@ -133,7 +148,12 @@ final case class SpaceTransformGraph private (
             .foldLeft[Either[AtlasError, Vector[TransformStep]]](Right(Vector.empty)) { (acc, morphism) =>
               acc.flatMap(steps => describe(morphism).map(steps :+ _))
             }
-            .map(steps => TransformPlan.build(fromNorm, toNorm, steps, path, dataKind))
+            .flatMap { steps =>
+              for
+                fromWorld <- catalog.world(fromNorm)
+                toWorld <- catalog.world(toNorm)
+              yield TransformPlan.build(fromNorm, toNorm, steps, path, dataKind, fromWorld, toWorld)
+            }
         }
 
   /** The manifest step a routed morphism runs; a step run through its inverse is described with swapped endpoints. */

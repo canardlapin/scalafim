@@ -14,6 +14,7 @@ enum AtlasError:
   case NoTransformRoute(from: AnySpaceId, to: AnySpaceId)
   case TransformNotExecutable(from: AnySpaceId, to: AnySpaceId, reason: String)
   case TransformGraph(cause: SpatialError)
+  case GridWorldMismatch(role: String, space: AnySpaceId, detail: String)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
   case ExactGridRequired(expected: String, actual: String)
   case Geometry(cause: GeometryError)
@@ -45,6 +46,8 @@ enum AtlasError:
         s"transform route from '${from.value}' to '${to.value}' is not executable: $reason"
       case TransformGraph(cause) =>
         s"transform manifest does not form a valid spatial graph: ${cause.message}"
+      case GridWorldMismatch(role, space, detail) =>
+        s"the $role grid is not in the world space of '${space.value}': $detail"
       case SpaceMismatch(expected, actual) =>
         s"expected spatial dimensions ${expected.mkString("x")} but got ${actual.mkString("x")}"
       case ExactGridRequired(expected, actual) =>

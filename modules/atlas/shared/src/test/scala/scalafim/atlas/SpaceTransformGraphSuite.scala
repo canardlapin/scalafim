@@ -26,6 +26,11 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
     val pullback = FramedAffine.betweenFrames[Frame[D3], Frame[D3], D3](targetFrame, sourceFrame)(translation(-x, -y, -z))
     TransformAsset(WorldTransform.Linear(pullback, TransformProvenance.constructed("test translation")), s"test:${from.value}->${to.value}")
 
+  /** A small grid in the world a catalogued space's coordinates live in, on a fresh frame of that world. */
+  private def gridIn(space: AnySpaceId): GridSpec[?] =
+    val world = value(TemplateCatalog.standard.world(space))
+    GridSpec.in(FrameCatalog.frame(world))(scalafim.image.SpatialDims(2, 2, 2), Affine.identity[D3]).fold(error => fail(error.message), identity)
+
   private def affineStep(from: AnySpaceId, to: AnySpaceId, forward: Affine[D3], reversible: Boolean = true): TransformStep =
     TransformStep(
       from,
@@ -142,7 +147,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
   test("grid pullbacks come from fused affine routes, including inverse steps"):
     val registry = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, translation(1.0, 2.0, 3.0)))
     val grid = GridSpec.identity(Vector(2, 2, 2))
-    val pullback = value(SpaceTransforms.spatialPullback(SpaceId.MNI152, SpaceId.MNI305, grid, grid, registry))
+    val pullback = value(SpaceTransforms.spatialPullback(SpaceId.MNI152, SpaceId.MNI305, gridIn(SpaceId.MNI305), gridIn(SpaceId.MNI152), registry))
     val pulled = SpatialPullbacks.transform(pullback, Point3D(0.0, 0.0, 0.0)).fold(error => fail(error.message), identity)
     assertEqualsDouble(pulled.x, 1.0, 1e-12)
     assertEqualsDouble(pulled.y, 2.0, 1e-12)
@@ -150,3 +155,24 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
 
     val warp = value(SpaceTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym))
     assert(warp.pullback(grid, grid).isLeft)
+
+  test("grid pullbacks reject grids outside the route's endpoint worlds"):
+    val registry = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, translation(1.0, 2.0, 3.0)))
+    val plan = value(SpaceTransforms.plan(SpaceId.MNI152, SpaceId.MNI305, DataKind.Voxel, registry))
+    val mni152 = gridIn(SpaceId.MNI152)
+    val mni305 = gridIn(SpaceId.MNI305)
+    assert(plan.pullback(mni305, mni152).isRight)
+    // Swapped endpoints: the source must be in MNI305 (`to`) and the target in MNI152 (`from`).
+    plan.pullback(mni152, mni305) match
+      case Left(AtlasError.GridWorldMismatch("target", space, _)) => assertEquals(space, SpaceId.MNI152)
+      case other                                                  => fail(s"expected a target world mismatch, got $other")
+    // Unresolved grids carry no evidence of being in either template.
+    val unresolved = GridSpec.identity(Vector(2, 2, 2))
+    plan.pullback(unresolved, mni152) match
+      case Left(AtlasError.GridWorldMismatch("source", space, _)) => assertEquals(space, SpaceId.MNI305)
+      case other                                                  => fail(s"expected a source world mismatch, got $other")
+    assert(plan.pullback(mni305, unresolved).isLeft)
+    // An identity route still requires both grids in its one world.
+    val identityRoute = value(SpaceTransforms.plan(SpaceId.MNI305, SpaceId.MNI305, DataKind.Voxel, registry))
+    assert(identityRoute.pullback(mni305, mni305).isRight)
+    assert(identityRoute.pullback(mni152, mni305).isLeft)
