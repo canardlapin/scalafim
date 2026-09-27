@@ -1,0 +1,21 @@
+{
+ "generator": "tools/transform/generate_afni_qwarp_crosscheck.py",
+ "generated": "2026-09-27",
+ "kind": "cross-implementation",
+ "tools": {
+  "nitransforms": "25.1.0",
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with numpy python tools/transform/generate_afni_qwarp_crosscheck.py"
+ ],
+ "notes": "AFNI 3dQwarp-layout fields constructed here (AFNI not installed) and mapped by nitransforms DenseFieldTransform(fmt='afni'). points.tsv: base (reference) RAS point and nitransforms' source RAS point. qform (code 1) and sform (code 2) disagree; nitransforms and AFNI's default both use the sform. affine_WARP.nii rows are off-grid; nitransforms' cubic result differs from the analytic affine value by at most 1.19e-05 mm. smooth_WARP.nii rows are lattice nodes. PENDING: native AFNI 3dNwarpXYZ on these files.",
+ "sha256": {
+  "affine_WARP.nii": "7d97d9a1d382f3f62f35e3e6c2bf049eda4f4d9bfe1afc3bc300879a1d5efedc",
+  "points.tsv": "df424e9dd946276d8c68de3eb5d7d5d79fd912fa0a0e48da3709c68f42154366",
+  "smooth_WARP.nii": "5e4e7bafa0005a7426e28d778da50f887aa8c297c9c0f48daed4b53f91b254dc"
+ }
+}

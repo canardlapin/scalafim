@@ -33,6 +33,30 @@ class DenseFieldOracleSuite extends munit.FunSuite:
       Vector(-pulled(0), -pulled(1), pulled(2)).zip(expected).foreach((a, e) => assertEqualsDouble(a, e, 1e-5, s"at $lps"))
     assert(warp.mapPoint(ok(Point.fromVector(source, Vector(0.0, 0.0, 0.0))).asInstanceOf[Point[source.type, D3]]).isLeft, "a warp without an inverse has no forward map")
 
+  test("ANTs fields whose qform and sform disagree are placed with the affine ITK chooses, off the lattice too"):
+    val forms = OracleTable.load("itk_field/forms.tsv")
+    val points = OracleTable.load("itk_field/forms_points.tsv")
+    assertEquals(forms.column("chosen").map(_.toInt).distinct.sorted, Vector(-1, 0, 1, 2))
+    forms.keyed.foreach: (name, row) =>
+      val warpField = field(s"itk_field/$name")
+      val interpreted = LpsDisplacementInterpretation.Ants.interpret(warpField, DenseContext(frames))
+      row(forms.index("chosen")).toInt match
+        case -1 => assert(interpreted.isLeft, s"$name: ITK refuses a lone non-orthonormal sform, so must ScalaFIM")
+        case chosen =>
+          val lattice = ok(LatticeAffine.of(warpField.raw, LatticeAffine.Itk)).rowMajor
+          val stored = chosen match
+            case 2 => warpField.raw.sformRowMajor
+            case 1 => warpField.raw.qformRowMajor
+            case _ => Vector.fill(16)(0.0)
+          Vector(3, 7, 11).foreach(i => assertEqualsDouble(lattice(i), stored(i), 1e-5, s"$name origin"))
+          val warp = ok(interpreted)
+          val rows = points.keyed.filter(_._1 == name)
+          assertEquals(rows.size, 12, name)
+          rows.foreach: (_, point) =>
+            val lps = point.take(3)
+            val pulled = pull(warp, Vector(-lps(0), -lps(1), lps(2)))
+            Vector(-pulled(0), -pulled(1), pulled(2)).zip(point.slice(3, 6)).foreach((a, e) => assertEqualsDouble(a, e, 1e-5, s"$name at $lps"))
+
   test("outside the lattice the default policy rejects instead of returning identity"):
     val warp = ok(LpsDisplacementInterpretation.Ants.interpret(field("neurotransform/itk_oracle/warp.nii.gz"), DenseContext(frames)))
     assert(warp.pullPoint(ok(Point.fromVector(target, Vector(500.0, 500.0, 500.0))).asInstanceOf[Point[target.type, D3]]).isLeft)

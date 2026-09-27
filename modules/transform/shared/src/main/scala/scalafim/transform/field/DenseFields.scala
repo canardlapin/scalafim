@@ -42,19 +42,42 @@ object VectorFieldNiftiCodec extends TransformCodec[VectorFieldNifti]:
 
 /** Which stored NIfTI affine a toolkit places a field's lattice with. */
 enum LatticeAffine derives CanEqual:
-  /** ITK NiftiImageIO and AFNI: the qform when its code is set, else the sform, else pixdim scaling. */
-  case QformFirst
+  /** ITK 5.4 NiftiImageIO (`SetImageIOOrientationFromNIfTI`), which ANTs uses: the sform when it is orthonormal once
+    * its column scales are removed and either the qform code is unset, the sform code is SCANNER_ANAT (1), or the two
+    * forms agree; otherwise the qform. Spacing is always pixdim, so an sform contributes only directions and origin.
+    * With neither code the lattice is pixdim scaling along LPS at the origin. A non-orthonormal sform with no qform is
+    * refused, as ITK refuses it.
+    */
+  case Itk
 
-  /** FSL: the sform when its code is set, else the qform, else pixdim scaling (see [[FslVolumeGeometry]]). */
+  /** FSL, and AFNI's default `AFNI_NIFTI_PRIORITY=S` (`thd_niftiread.c`): the sform when its code is set, else the
+    * qform, else pixdim scaling (see [[FslVolumeGeometry]]).
+    */
   case SformFirst
 
 object LatticeAffine:
   def of(raw: NiftiRaw, choice: LatticeAffine): Either[TransformError, Affine[D3]] =
     val scaling = Vector(raw.pixdim(1), 0.0, 0.0, 0.0, 0.0, raw.pixdim(2), 0.0, 0.0, 0.0, 0.0, raw.pixdim(3), 0.0, 0.0, 0.0, 0.0, 1.0)
     val values = choice match
-      case QformFirst => if raw.qformCode > 0 then raw.qformRowMajor else if raw.sformCode > 0 then raw.sformRowMajor else scaling
-      case SformFirst => if raw.sformCode > 0 then raw.sformRowMajor else if raw.qformCode > 0 then raw.qformRowMajor else scaling
-    Affine.fromRowMajor[D3](values).left.map(TransformError.Geometry(_))
+      case Itk        => itk(raw)
+      case SformFirst => Right(if raw.sformCode > 0 then raw.sformRowMajor else if raw.qformCode > 0 then raw.qformRowMajor else scaling)
+    values.flatMap(Affine.fromRowMajor[D3](_).left.map(TransformError.Geometry(_)))
+
+  private def itk(raw: NiftiRaw): Either[TransformError, Vector[Double]] =
+    val spacing = Vector(raw.pixdim(1), raw.pixdim(2), raw.pixdim(3))
+    val s = raw.sformRowMajor
+    val columns = Vector.tabulate(3)(c => Vector(s(c), s(4 + c), s(8 + c)))
+    val norms = columns.map(column => math.sqrt(column.map(v => v * v).sum))
+    val directions = columns.zip(norms).map((column, norm) => column.map(_ / norm))
+    val orthonormal = norms.forall(n => n > 0.0 && n.isFinite) &&
+      (0 until 3).forall(i => (0 until 3).forall(j => math.abs(directions(i).zip(directions(j)).map(_ * _).sum - (if i == j then 1.0 else 0.0)) <= 1e-4))
+    val formsAgree = raw.qformCode > 0 && raw.qformRowMajor.zip(s).forall((q, v) => math.abs(q - v) <= 1e-4)
+    if raw.qformCode <= 0 && raw.sformCode <= 0 then
+      Right(Vector(-spacing(0), 0.0, 0.0, 0.0, 0.0, -spacing(1), 0.0, 0.0, 0.0, 0.0, spacing(2), 0.0, 0.0, 0.0, 0.0, 1.0))
+    else if raw.sformCode > 0 && orthonormal && (raw.qformCode <= 0 || raw.sformCode == 1 || formsAgree) then
+      Right(Vector.tabulate(3)(r => Vector.tabulate(3)(c => directions(c)(r) * spacing(c)) :+ s(4 * r + 3)).flatten ++ Vector(0.0, 0.0, 0.0, 1.0))
+    else if raw.qformCode > 0 then Right(raw.qformRowMajor)
+    else Left(TransformError.Invalid("ITK reads a NIfTI whose only orientation is a non-orthonormal sform as an error; so does ScalaFIM"))
 
 /** Builds provider dense maps: a reframe4s [[DenseMap]] over an image4s grid in the target frame whose samples are
   * absolute source coordinates. Out-of-lattice behaviour is the explicit boundary policy (default: reject).
@@ -95,8 +118,12 @@ final class LpsDisplacementInterpretation(format: TransformFormat, lattice: Latt
     yield WorldTransform.Mapped(dense, PushAvailability.Unavailable(), TransformProvenance.read(format, AssetRef(format.toString, None)))
 
 object LpsDisplacementInterpretation:
-  val Ants: LpsDisplacementInterpretation = LpsDisplacementInterpretation(TransformFormat.AntsDisplacementNifti, LatticeAffine.QformFirst)
-  val AfniQwarp: LpsDisplacementInterpretation = LpsDisplacementInterpretation(TransformFormat.AfniQwarp, LatticeAffine.QformFirst)
+  val Ants: LpsDisplacementInterpretation = LpsDisplacementInterpretation(TransformFormat.AntsDisplacementNifti, LatticeAffine.Itk)
+
+  /** 3dQwarp `_WARP` datasets use the ITK displacement convention (`3dQwarp -help`: DICOM/LPS mm displacements from
+    * the base grid to the source, a pullback); only the NIfTI affine choice differs, AFNI preferring the sform.
+    */
+  val AfniQwarp: LpsDisplacementInterpretation = LpsDisplacementInterpretation(TransformFormat.AfniQwarp, LatticeAffine.SformFirst)
 
 /** Whether a FNIRT field stores relative displacements or absolute source coordinates (FSL scaled-voxel mm). */
 enum FnirtDefinition derives CanEqual:

@@ -1,18 +1,29 @@
 {
  "generator": "tools/transform/generate_itk_field_oracle.py",
- "generated": "2026-09-24",
+ "generated": "2026-09-27",
  "kind": "native-oracle",
  "tools": {
   "SimpleITK": "2.5.6",
+  "nibabel": "5.4.2",
   "numpy": "2.5.3"
  },
  "python": "3.12.11",
  "platform": "macOS-14.3-arm64-arm-64bit",
  "commands": [
-  "uv run --with SimpleITK==2.5.6 --with numpy python tools/transform/generate_itk_field_oracle.py"
+  "uv run --with SimpleITK==2.5.6 --with nibabel==5.4.2 --with numpy python tools/transform/generate_itk_field_oracle.py"
  ],
- "notes": "Input: ../neurotransform/itk_oracle/warp.nii.gz read by ITK's NIfTI IO. points.tsv: fixed-space LPS points (interior continuous indices mapped by the field's own geometry) and ITK DisplacementFieldTransform.TransformPoint (LPS). grid.tsv: ITK's origin/spacing/direction (LPS) for the field, pinning which NIfTI affine ITK used.",
+ "notes": "Input: ../neurotransform/itk_oracle/warp.nii.gz read by ITK's NIfTI IO. points.tsv: fixed-space LPS points (interior continuous indices mapped by the field's own geometry) and ITK DisplacementFieldTransform.TransformPoint (LPS). grid.tsv: ITK's origin/spacing/direction (LPS) for the field, pinning which NIfTI affine ITK used. forms_*.nii: fields written by nibabel with disagreeing qform/sform codes; forms.tsv 'chosen' is the affine ITK placed each with (2=sform, 1=qform, 0=neither: LPS pixdim scaling, -1=ITK refused the file); forms_points.tsv holds 12 off-grid LPS points per readable field and ITK TransformPoint.",
  "sha256": {
+  "forms.tsv": "cef387216af95587b2a738a222bf539ecd8937fc7b3ffcc1244e8c4446b97594",
+  "forms_points.tsv": "01e2aaa9088d0b73f7f6067c37ae9c24a05613eb447e6143a67def749290c476",
+  "forms_q0_s0.nii": "b9c00bea13b64157d3c6ff01aef6a4b149145e343379cd73dec6e3396c647520",
+  "forms_q0_s1_scale.nii": "c43b86dafddf8e1f844728242989ba67bad574c7c88520da9c2f2bf2faa63e8f",
+  "forms_q0_s2.nii": "b2c9cae03182aaf588131bd9fc7f73c4778105937fd061006bf00f70de4aaa88",
+  "forms_q0_s2_shear.nii": "b9e733bc7979a3e21af832ec684e4027321e104c9462cbced8ba1773d96fcd42",
+  "forms_q1_s0.nii": "481021d626160f9ffb7b134b30c6295e04e8d2a0c7acf4615473bcd12eedaa56",
+  "forms_q1_s1.nii": "e7cb26f30c118b9fb1c47a470510018ad4645ccbf6e14ea49f2a63fae0124675",
+  "forms_q1_s2.nii": "e30aa4d86e157c68df975998ecb7885a9fa2ead935b21323f0ce005221d680df",
+  "forms_q2_s4.nii": "4997a80f8395db5a5917fedb74cf13fb877d750008e60727072b60a81c0ca4fe",
   "grid.tsv": "4a7b2ceb49ccde61c7e063a0abe6105c8cbad9228a7ecd0271d2e24544e904bf",
   "points.tsv": "1f0d81e2e48167f1e886501354e6e76630ac003c9a84caa5551d8f33cec8da0d"
  }

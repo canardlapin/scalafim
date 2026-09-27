@@ -81,7 +81,7 @@ object TransformDetection:
         if name.contains("qwarp") || name.contains("_warp.") then Right(TransformFormat.AfniQwarp)
         else if name.contains("warp") then Right(TransformFormat.AntsDisplacementNifti)
         else
-          Left(TransformIoError.Ambiguous(Vector(TransformFormat.AntsDisplacementNifti, TransformFormat.AfniQwarp), "5D (x,y,z,1,3) displacement field: ANTs and AFNI write the same layout with different sign conventions"))
+          Left(TransformIoError.Ambiguous(Vector(TransformFormat.AntsDisplacementNifti, TransformFormat.AfniQwarp), "5D (x,y,z,1,3) displacement field: ANTs and AFNI write the same layout and LPS displacement convention but choose between qform and sform differently; name the file or state the format"))
       case _ if shape.size == 4 && shape(3) == 3 => Right(TransformFormat.FslFnirtField)
       case other =>
         Left(TransformIoError.Undetectable(s"NIfTI with intent $other and shape ${shape.mkString("x")} is not a transform container"))
