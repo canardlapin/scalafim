@@ -78,10 +78,38 @@ deform = DenseFieldTransform(
     is_deltas=False,
 )
 
+# A displacement field affine in space on a larger lattice: nitransforms' cubic B-spline and ScalaFIM's trilinear
+# interpolation then agree off the lattice, away from the faces where nitransforms' mirror boundary spoils cubic
+# exactness (the error decays by ~0.27 per voxel). Dyadic values keep the h5py dump short and exact.
+affine_shape = (24, 22, 20)
+affine_margin = 8.0
+affine_reference = np.array(
+    [
+        [1.25, 0.125, 0.0, -30.0],
+        [-0.0625, 1.5, 0.125, -40.5],
+        [0.03125, -0.0625, 1.125, -20.25],
+        [0, 0, 0, 1.0],
+    ]
+)
+ai, aj, ak = np.meshgrid(*[np.arange(n, dtype=float) for n in affine_shape], indexing="ij")
+affine_coefficients = np.array(
+    [
+        [0.0625, -0.03125, 0.015625, 0.5],
+        [0.015625, 0.046875, -0.03125, -0.25],
+        [-0.03125, 0.0078125, 0.0625, 0.75],
+    ]
+)
+affine_deltas = np.stack(
+    [affine_coefficients[r, 0] * ai + affine_coefficients[r, 1] * aj + affine_coefficients[r, 2] * ak + affine_coefficients[r, 3] for r in range(3)],
+    axis=-1,
+)
+affine_dense = DenseFieldTransform(nib.Nifti1Image(affine_deltas.astype(np.float64), affine_reference), is_deltas=True)
+
 cases = {
     "linear": [linear.to_x5()],
     "displacements": [dense.to_x5()],
     "deformations": [deform.to_x5()],
+    "affine_displacements": [affine_dense.to_x5()],
 }
 for name, nodes in cases.items():
     to_filename(os.path.join(OUT, f"{name}.x5"), nodes)
@@ -139,7 +167,7 @@ lattice = sorted(
 )[:12]
 on_grid = [(reference_affine @ np.append(np.array(p, dtype=float), 1.0))[:3] for p in lattice]
 linear_inverse = np.linalg.inv(linear.matrix)
-for name in list(cases) + ["chain"]:
+for name in [n for n in cases if n != "affine_displacements"] + ["chain"]:
     path = os.path.join(OUT, f"{name}.x5")
     if name == "chain":
         chain = TransformChain.from_filename(path, fmt="X5", x5_chain=0)
@@ -150,6 +178,20 @@ for name in list(cases) + ["chain"]:
         queries = on_grid
     for q in queries:
         rows.append([name, *q, *np.asarray(chain.map([q]))[0]])
+# off-lattice points on the affine field, at least `affine_margin` voxels from every face
+inner = tuple(int(n - 2 * affine_margin) for n in affine_shape)
+off_lattice = [tuple(affine_margin + v for v in p) for p in oc.asymmetric_points(inner, count=12, seed=41)]
+assert all(any(abs(v - round(v)) > 0.1 for v in p) for p in off_lattice)
+affine_chain = TransformChain.from_filename(os.path.join(OUT, "affine_displacements.x5"), fmt="X5", x5_chain=None)[0]
+affine_worst = 0.0
+for p in off_lattice:
+    world = (affine_reference @ np.append(np.array(p), 1.0))[:3]
+    mapped = np.asarray(affine_chain.map([world]))[0]
+    analytic = world + affine_coefficients[:, :3] @ np.array(p) + affine_coefficients[:, 3]
+    affine_worst = max(affine_worst, float(np.abs(mapped - analytic).max()))
+    rows.append(["affine_displacements", *world, *mapped])
+assert affine_worst < 1e-4, affine_worst
+
 oc.write_table(
     os.path.join(OUT, "points.tsv"), ["key", "x", "y", "z", "sx", "sy", "sz"], rows
 )
@@ -166,6 +208,12 @@ oc.write_manifest(
     commands=[
         "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with h5py==3.16.0 --with numpy python tools/transform/generate_x5_oracle.py"
     ],
-    notes="points.tsv: reference RAS points on the dense lattice and nitransforms' mapped (moving) RAS point (nitransforms interpolates off-grid with a cubic B-spline; ScalaFIM/ITK/FSL are linear). X5 is a draft spec; this is consistency with nitransforms.",
+    notes=(
+        "points.tsv: reference RAS points and nitransforms' mapped (moving) RAS point. nitransforms interpolates off-grid "
+        "with a cubic B-spline (mirror boundary) while ScalaFIM/ITK/FSL are linear, so the linear, displacements, "
+        "deformations and chain rows lie on the dense lattice, and the affine_displacements rows lie off the lattice, at "
+        "least 8 voxels from every face of a field affine in space, where both interpolants agree (nitransforms differs "
+        f"from the analytic value by at most {affine_worst:.2e} mm). X5 is a draft spec; this is consistency with nitransforms."
+    ),
 )
 print(len(rows), "points")

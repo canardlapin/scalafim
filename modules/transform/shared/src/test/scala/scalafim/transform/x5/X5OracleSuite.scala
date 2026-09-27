@@ -1,12 +1,15 @@
 package scalafim.transform.x5
 
-import image4s.geometry.{D3, Frame, Point}
+import image4s.geometry.{Affine, D3, Frame, Point}
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.field.DenseContext
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}
 
-/** X5 nodes and chains against nitransforms (X5's reference implementation), on both platforms via h5py dumps. */
+/** X5 nodes and chains against nitransforms (X5's reference implementation), on both platforms via h5py dumps. Dense
+  * rows lie on the lattice, except on a field affine in space, where nitransforms' cubic and ScalaFIM's linear
+  * interpolation agree off the lattice.
+  */
 class X5OracleSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =
     result.fold(error => fail(s"unexpected failure: $error"), identity)
@@ -22,6 +25,20 @@ class X5OracleSuite extends munit.FunSuite:
       points.keyed.filter(_._1 == name).foreach: (_, row) =>
         val pulled = ok(chain.composed.pullPoint(ok(Point.fromVector(reference, row.take(3))).asInstanceOf[Point[reference.type, D3]])).coordinates
         pulled.zip(row.slice(3, 6)).foreach((a, e) => assertEqualsDouble(a, e, 1e-5, s"$name at ${row.take(3)}")) // nitransforms maps in float32
+
+  test("off the lattice, a field affine in space maps points as nitransforms does (cubic and linear agree there)"):
+    // nitransforms' cubic B-spline differs from the analytic affine value by up to 7.4e-6 mm at these points (manifest).
+    val chain = ok(X5Interpretation.interpret(X5Dumps.parse(OracleFixtures.text("x5/affine_displacements.nodes.txt")), context))
+    val rows = points.keyed.filter(_._1 == "affine_displacements")
+    assert(rows.size >= 8, "at least eight off-lattice points")
+    val node = X5Dumps.parse(OracleFixtures.text("x5/affine_displacements.nodes.txt")).nodes.head
+    val worldToIndex = ok(Affine.fromRowMajor[D3](node.domain.get.mapping)).inverse.rowMajor
+    rows.foreach: (_, row) =>
+      // the query is off the lattice: its continuous index has a fractional part on some axis
+      val ijk = Vector.tabulate(3)(r => (0 until 3).map(c => worldToIndex(4 * r + c) * row(c)).sum + worldToIndex(4 * r + 3))
+      assert(ijk.exists(v => math.abs(v - math.rint(v)) > 0.1), s"$ijk is on the lattice")
+      val pulled = ok(chain.composed.pullPoint(ok(Point.fromVector(reference, row.take(3))).asInstanceOf[Point[reference.type, D3]])).coordinates
+      pulled.zip(row.slice(3, 6)).foreach((a, e) => assertEqualsDouble(a, e, 5e-5, s"affine_displacements at ${row.take(3)}"))
 
   test("a single linear node is an affine; multi-node files need a chain"):
     assert(ok(X5Interpretation.interpret(X5Dumps.parse(OracleFixtures.text("x5/linear.nodes.txt")), context)).composed.isInstanceOf[WorldTransform.Linear[?, ?]])
