@@ -43,6 +43,23 @@ The shared module cross-compiles to JVM and Scala.js and contains:
   `adjoint` (`Wᵀ s`, surface to volume) and `project` (adjoint or weighted-mean
   ribbon fill); `RibbonMask` marks voxel centres inside the closed pial and
   outside the closed white surface.
+- Sphere resampling: `SphereMesh` (`isSphere`, `withRadius`) and
+  `SurfaceResampling` (barycentric on the radial ray with nearest-vertex
+  fallback, or nearest vertex; `Element`/`Sum`/`None` normalisation and the
+  exact adjoint).
+- Stock template domains: `TemplateMesh` (fsaverage 5/6/7, fsLR 32k/59k/164k
+  with their TemplateFlow counts), `TemplateSurface` (one hemisphere of one),
+  and `TemplateSphere[R]`, a mesh on the registration sphere `R`
+  (`SphereRegistration.FsAverage` or `FsLR`, a singleton type, so meshes on
+  different spheres cannot be paired). `TemplateResampling.plan` builds
+  fsaverage <-> fsLR plans through the fsLR meshes deformed onto the fsaverage
+  sphere, as Workbench does; `TemplateSphereAssets` pins the 18 TemplateFlow
+  sphere files by SHA-256. On the JVM, `TemplateSphereFiles` loads them from a
+  local TemplateFlow cache (`TemplateFlowCache`, read-only). Against Workbench
+  2.2.1 `-metric-resample BARYCENTRIC` the gated budgets are 5e-5 on smooth
+  fields and on 99% of seeded values (1e-3 at most); measured maxima are 6e-7
+  and 2.4e-5. These parity tests need the TemplateFlow spheres locally and are
+  skipped, not failed, without them.
 
 The platform modules add matching GIFTI APIs:
 
