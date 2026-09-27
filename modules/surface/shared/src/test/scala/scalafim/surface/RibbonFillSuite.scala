@@ -144,7 +144,12 @@ class RibbonFillSuite extends munit.FunSuite:
     val values = Array.tabulate(op.vertexCount)(_.toDouble)
     val filled = ok(op.projectVolume(values, RibbonProjection.Adjoint))
     val erased = SomeNeuroVolume.eraseSpace(filled)
-    assertEquals(erased.copyToCanonicalArray.toVector, ok(op.project(values, RibbonProjection.Adjoint)).toVector)
+    val flat = ok(op.project(values, RibbonProjection.Adjoint))
+    assertEquals(erased.copyToCanonicalArray.toVector, flat.toVector)
+    // Read ribbon voxels back through the (i, j, k) accessor to pin the canonical order to the volume's axes.
+    Shell.voxels.filter((_, _, _, o) => flat(o) != 0.0).take(50).foreach: (i, j, k, o) =>
+      assertEqualsDouble(erased(i, j, k), flat(o), 0.0)
+      assert(math.abs(Shell.radius(i, j, k) - 13.0) < 5.0, s"($i,$j,$k) is not near the ribbon")
     assertEquals(ok(op.sampleVolume(erased)).toVector, ok(op.sample(erased.copyToCanonicalArray)).toVector)
     val supportVolume = SomeNeuroVolume.eraseSpace(ok(op.supportVolume))
     assertEquals(supportVolume.grid.shape, Vector(40, 40, 44))
@@ -164,7 +169,7 @@ class RibbonFillSuite extends munit.FunSuite:
       RibbonOperator.compile(Parity.white, Parity.pial, grid)
       """
     )
-    assert(errors.contains("Found:"), errors)
+    assert(errors.contains("Required:") && errors.contains("GridSpec"), errors)
     // Simulate owners erased at a dynamic boundary, where only the runtime check stands between the inputs.
     val other: Frame[D3] = ok(WorldSpace.declare("another scanner").map(FrameCatalog.frame))
     val erasedGrid = ok(GridSpec.in(other)(SpatialDims(7, 6, 5), Affine.identity[D3])).asInstanceOf[GridSpec[Frame[D3]]]
@@ -178,4 +183,48 @@ class RibbonFillSuite extends munit.FunSuite:
     val pial = Shell.surface(Shell.pialRadius, 3)
     assert(RibbonOperator.compile(white, pial, Shell.grid).left.exists(_.isInstanceOf[RibbonError.TopologyMismatch]))
     assertEquals(RibbonSteps(0), Left(RibbonError.InvalidSteps(0)))
+    assertEquals(RibbonSteps(RibbonSteps.Max + 1), Left(RibbonError.InvalidSteps(RibbonSteps.Max + 1)))
+    assert(RibbonSteps(RibbonSteps.Max).isRight)
+
+  test("inner and outer roles are checked: hemispheres must agree and kinds must not be swapped"):
+    def sphere(radius: Double, hemisphere: Hemisphere, kind: SurfaceKind) =
+      ok(FramedSurface.in(scanner)(SurfaceGeometry(SphereMeshes.icosphere(2, radius, Shell.center), hemisphere, kind), SurfacePlacement.StoredCoordinates))
+    val lhWhite = sphere(Shell.whiteRadius, Hemisphere.Left, SurfaceKind.White)
+    val lhPial = sphere(Shell.pialRadius, Hemisphere.Left, SurfaceKind.Pial)
+    val rhPial = sphere(Shell.pialRadius, Hemisphere.Right, SurfaceKind.Pial)
+    assert(RibbonOperator.compile(lhWhite, lhPial, Shell.grid).isRight)
+    assert(RibbonOperator.compile(lhWhite, rhPial, Shell.grid).left.exists(_.isInstanceOf[RibbonError.RoleMismatch]))
+    assert(RibbonOperator.compile(lhPial, lhWhite, Shell.grid).left.exists(_.isInstanceOf[RibbonError.RoleMismatch]))
+    assert(RibbonMask.fill(lhPial, lhWhite, Shell.grid).left.exists(_.isInstanceOf[RibbonError.RoleMismatch]))
+
+  // ---- scanline degeneracies ----------------------------------------------------------------------------------------
+
+  /** A closed box whose y/z faces sit exactly on voxel lattice lines of an identity grid: every ray meets vertices and
+    * edges, the worst case for crossing parity. Rays are offset by a tiny positive jitter, so a face at lattice value
+    * `a` includes the voxel line `a` and a face at `b` excludes line `b`.
+    */
+  private def box(x: (Double, Double), y: (Double, Double), z: (Double, Double)): FramedSurface[scanner.type] =
+    val vertices = for
+      xi <- Vector(x._1, x._2)
+      yi <- Vector(y._1, y._2)
+      zi <- Vector(z._1, z._2)
+    yield Vector(xi, yi, zi)
+    val faces = Vector(
+      (0, 1, 3), (0, 3, 2), (4, 6, 7), (4, 7, 5), (0, 4, 5), (0, 5, 1),
+      (2, 3, 7), (2, 7, 6), (0, 2, 6), (0, 6, 4), (1, 5, 7), (1, 7, 3)
+    )
+    ok(FramedSurface.in(scanner)(SurfaceGeometry(TriangleMesh.fromRows(vertices, faces)), SurfacePlacement.StoredCoordinates))
+
+  private val latticeGrid = ok(GridSpec.in(scanner)(SpatialDims(10, 10, 10), Affine.identity[D3]))
+
+  test("lattice-aligned faces and edges fill exactly, with half-open faces"):
+    val mask = ok(RibbonMask.inside(box((1.5, 7.5), (2.0, 7.0), (2.0, 7.0)), latticeGrid))
+    assertEquals(mask.count, 6 * 5 * 5)
+    for i <- 0 until 10; j <- 0 until 10; k <- 0 until 10 do
+      assertEquals(mask.contains(i, j, k), i >= 2 && i <= 7 && j >= 2 && j <= 6 && k >= 2 && k <= 6, s"($i,$j,$k)")
+
+  test("a closed surface that extends past the grid along the ray axis still fills by parity"):
+    val mask = ok(RibbonMask.inside(box((-3.5, 4.5), (2.0, 7.0), (2.0, 7.0)), latticeGrid))
+    assertEquals(mask.count, 5 * 5 * 5)
+    assert(mask.contains(0, 3, 3) && mask.contains(4, 3, 3) && !mask.contains(5, 3, 3))
     assertEquals(RibbonSteps.Default.value, 6)
