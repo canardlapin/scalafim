@@ -476,6 +476,11 @@ lazy val image =
           sys.error(s"public SampleSpaces provider-state alias returned: ${publicProviderStateAliases.get}")
         if (packageFacadeReturned)
           sys.error("package-wide SampleSpaces export returned")
+        // STP P1.07 exit gate, image half: the same frame-erasure scan as transformBoundaryCheck.
+        FrameErasureGate.selfTest()
+        val erasedSignatures = FrameErasureGate.check(repository)
+        if (erasedSignatures.nonEmpty)
+          sys.error(s"frame-erased signatures outside the allowlist (STP P1.07):\n${erasedSignatures.mkString("\n")}")
       },
       Compile / compile := (Compile / compile).dependsOn(imageAlgebraBoundaryCheck).value,
       libraryDependencies ++= Seq(
@@ -825,18 +830,15 @@ lazy val transform =
         }
         if (platformLeaks.nonEmpty)
           sys.error(s"shared transform sources use platform IO: ${platformLeaks.mkString(", ")}")
-        // STP P1.07: world frames stay typed. Frame-erased maps, pullbacks, grids and points are allowed only where the
-        // heterogeneity is genuinely dynamic and ownership is re-checked at runtime:
-        //   spatial Morphism.scala   graph edges between arbitrary domains (reframe4s eraseFrameRefinements boundary)
+        // STP P1.07: world frames stay typed (project/FrameErasureGate.scala). Frame-erased maps, pullbacks, grids,
+        // sample spaces, boxes and points are allowed only in IO packages and where the heterogeneity is genuinely
+        // dynamic and ownership is re-checked at runtime (FrameErasureGate.Allowlist, by repository-relative path):
+        //   spatial Morphism.scala      graph edges between arbitrary domains (reframe4s eraseFrameRefinements boundary)
         //   transform StageChain.scala  private stage composition, re-typed to the chain's endpoints on every call
-        val erasureAllowlist = Set("Morphism.scala", "StageChain.scala")
-        val erased = "SpatialMap\\[Frame\\[D3\\], Frame\\[D3\\], D3\\]|SpatialPullback\\[Frame\\[D3\\], Frame\\[D3\\]\\]|GridSpec\\[Frame\\[D3\\]\\]|Point\\[Frame\\[D3\\], D3\\]".r
-        val erasedSignatures =
-          (repository / "modules" ** "*.scala").get
-            .filter(f => f.getPath.contains("/src/main/scala/") && !erasureAllowlist.contains(f.getName))
-            .flatMap(f => IO.readLines(f).zipWithIndex.collect { case (line, i) if erased.findFirstIn(line).nonEmpty && !line.contains("private") => s"${f.getName}:${i + 1}" })
+        FrameErasureGate.selfTest()
+        val erasedSignatures = FrameErasureGate.check(repository)
         if (erasedSignatures.nonEmpty)
-          sys.error(s"frame-erased signatures outside the allowlist (STP P1.07): ${erasedSignatures.mkString(", ")}")
+          sys.error(s"frame-erased signatures outside the allowlist (STP P1.07):\n${erasedSignatures.mkString("\n")}")
       },
       Compile / compile := (Compile / compile).dependsOn(transformBoundaryCheck).value
     )
