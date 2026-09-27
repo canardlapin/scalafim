@@ -28,7 +28,7 @@ cross-compiled sbt build.
 - `image-view-javafx`: thin JVM JavaFX Canvas host behind the existing toolkit-free drawing contract.
 - `threshold`: spatial inference over statistic maps — locus-backed active support, LR-MFT set scoring, maxT/stepdown correction, octree candidates, and thresholding primitives.
 - `motion`: fMRI rigid-motion traces, baseline rigid estimation, motion QC metrics, and one-pass motion application over 4D runs.
-- `surface`: surface-mesh data structures, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
+- `surface`: surface-mesh data structures, frame-typed surfaces, cortical-ribbon fill and masks, exact locus domains, topology, vertex fields, region-backed ROIs, quotient-backed labels, geodesic searchlights, parcel operations, and JVM surface IO.
 - `surface-view`: renderer-neutral surface layers, thresholds, layouts, cameras, interaction, projection/network primitives, scene documents, and versioned render plans.
 - `surface-view-raster`: deterministic JVM/Scala.js CPU raster, depth, clipping, compositing, and picking oracle.
 - `surface-view-javafx`: retained JVM JavaFX Scene3D backend, controller, picking, snapshots, and resource/timing receipts.
