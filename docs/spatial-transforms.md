@@ -77,6 +77,7 @@ transform.pullPoint(peakInMni)                                 // MNI point -> s
 | ANTs / AFNI 3dQwarp displacement NIfTI | `VectorFieldNifti` | `DenseContext` |
 | FSL FLIRT | `FlirtMatrix` | `FslGrids`: FSL geometry of both volumes |
 | FSL FNIRT field (relative or absolute) | `VectorFieldNifti` | `FnirtContext`: source FSL geometry; relative vs absolute detected when unstated |
+| FSL FNIRT coefficients (`--cout`, cubic or quadratic, with or without `--aff`) | `FnirtCoefficientFile` | `FnirtCoefficientContext`: `FslGrids` for both volumes; the reference must match the dimensions and voxel sizes the file records |
 | AFNI `.aff12.1D` (one or many rows) | `Aff12Series` | `AfniContext` (oblique correction) |
 | FreeSurfer LTA, `talairach.xfm`, `register.dat` | `LtaFile`, `MniXfm`, `RegisterDat` | `Frames`; `TkRegGrids` for register.dat |
 | X5 (draft BIDS spec) | `X5File` | `DenseContext` |
@@ -105,6 +106,23 @@ val registration: WorldTransform.Linear[input.type, reference.type] = FlirtInter
 val back: WorldTransform.Linear[reference.type, input.type] = registration.inverse   // affines always invert exactly
 ```
 
+FNIRT coefficient files (`--cout`) need the same pair of geometries. The
+header records the spline order (intent 2007 cubic, 2009 quadratic), the knot
+spacing (pixdim), the reference dimensions (qform translation) and voxel sizes
+(`intent_p1`–`p3`), and the `--aff` matrix (sform). The spline lives on the
+reference's FSL voxel lattice, which is mirrored along x for a neurological
+reference, and yields displacements in FSL mm. The source FSL point is
+`inverse(aff) · r + d`. `FnirtCoefficientInterpretation` evaluates the spline
+exactly at every queried point. It matches FSL 5.0.9 `fnirtfileutils` and
+`applywarp` in all ten handedness, order and `--aff` cases. DCT coefficients
+(intent 2008) and TOPUP files are refused.
+
+```scala
+val file = FnirtCoefficientsCodec.decode(TransformSource.Binary(uncompressedCoefBytes)).toOption.get
+val context = FnirtCoefficientContext(FslGrids[input.type, reference.type](input, fslGeometry(inputNifti), reference, fslGeometry(referenceNifti)))
+val warp: WorldTransform.Mapped[input.type, reference.type] = FnirtCoefficientInterpretation.interpret(file, context).toOption.get
+```
+
 ## Converting between toolkits
 
 `Conversion.convert` works like `lta_convert` or `c3d_affine_tool`: it
@@ -123,6 +141,7 @@ Each target has an explicit capability:
 |---|---|---|---|---|
 | Affine | exact (FLIRT, register.dat and LTA need geometry) | needs a sampling lattice | unsupported | unsupported (read-only) |
 | Dense map | unsupported | needs a lattice | unsupported (fitting deferred) | unsupported (read-only) |
+| FNIRT coefficients | unsupported | needs FSL geometry and a lattice | unsupported (read-only; fitting deferred) | unsupported (read-only) |
 
 Two rules govern failures:
 

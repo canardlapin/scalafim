@@ -1,7 +1,7 @@
 package scalafim.transform
 
 import scalafim.transform.afni.{Aff12Codec, Aff12Series}
-import scalafim.transform.field.{VectorFieldNifti, VectorFieldNiftiCodec}
+import scalafim.transform.field.{FnirtCoefficientFile, FnirtCoefficientsCodec, VectorFieldNifti, VectorFieldNiftiCodec}
 import scalafim.transform.freesurfer.{LtaCodec, LtaFile, MniXfm, MniXfmCodec, RegisterDat, RegisterDatCodec}
 import scalafim.transform.fsl.{FlirtCodec, FlirtMatrix}
 import scalafim.transform.itk.{ItkHdf5File, ItkMatlabCodec, ItkTextCodec, ItkTransformFile}
@@ -13,7 +13,7 @@ enum NativeTransform:
   case ItkHdf5(file: ItkHdf5File)
   case Flirt(matrix: FlirtMatrix)
   case FnirtField(field: VectorFieldNifti)
-  case FnirtCoefficients(field: VectorFieldNifti)
+  case FnirtCoefficients(file: FnirtCoefficientFile)
   case Afni(series: Aff12Series)
   case AfniQwarp(field: VectorFieldNifti)
   case AntsField(field: VectorFieldNifti)
@@ -48,7 +48,7 @@ object Transforms:
       case TransformFormat.ItkMatlab             => ItkMatlabCodec.decode(source).map(NativeTransform.Itk(_, format))
       case TransformFormat.FslFlirt              => FlirtCodec.decode(source).map(NativeTransform.Flirt(_))
       case TransformFormat.FslFnirtField         => VectorFieldNiftiCodec.decode(source).map(NativeTransform.FnirtField(_))
-      case TransformFormat.FslFnirtCoefficients  => VectorFieldNiftiCodec.decode(source).map(NativeTransform.FnirtCoefficients(_))
+      case TransformFormat.FslFnirtCoefficients  => FnirtCoefficientsCodec.decode(source).map(NativeTransform.FnirtCoefficients(_))
       case TransformFormat.AfniAff12             => Aff12Codec.decode(source).map(NativeTransform.Afni(_))
       case TransformFormat.AfniQwarp             => VectorFieldNiftiCodec.decode(source).map(NativeTransform.AfniQwarp(_))
       case TransformFormat.AntsDisplacementNifti => VectorFieldNiftiCodec.decode(source).map(NativeTransform.AntsField(_))

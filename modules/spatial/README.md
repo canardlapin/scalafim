@@ -166,7 +166,7 @@ To add a morphism family:
 - A selection cannot be followed by another spatial `.to`; demand remains
   terminal so support pullback is unambiguous.
 - Compressed NIfTI must be staged uncompressed before random-access reads.
-- Transform families the codecs refuse (ITK B-splines, FNIRT spline
+- Transform families the codecs refuse (ITK B-splines, FNIRT DCT
   coefficients, multi-volume affine series as a single route) fail as typed
   `TransformRead`, `TransformInterpretation` or `UnsupportedTransformAsset`
   errors.

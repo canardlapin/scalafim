@@ -6,7 +6,7 @@ import scalafim.image.world.{FreeSurferVolumeGeometry, FslVolumeGeometry}
 import scalafim.spatial.*
 import scalafim.transform.*
 import scalafim.transform.afni.{Aff12Interpretation, AfniCardinal}
-import scalafim.transform.field.{DenseContext, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
+import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
 import scalafim.transform.freesurfer.{LtaInterpretation, MniXfmInterpretation, RegisterDatInterpretation}
 import scalafim.transform.fsl.FlirtInterpretation
 import scalafim.transform.itk.{ItkHdf5Interpretation, ItkLinearInterpretation}
@@ -157,8 +157,14 @@ object TransformAssetLoader:
             yield linear
         case NativeTransform.FnirtField(field) =>
           meaning(fslGeometry(from).flatMap(geometry => FnirtFieldInterpretation.interpret(field, FnirtContext(frames, geometry, options.fnirtDefinition, options.boundary))))
-        case NativeTransform.FnirtCoefficients(_) =>
-          Left(SpatialIoError.UnsupportedTransformAsset(path, loaded.format, "FNIRT spline coefficients have no interpretation yet; use a dense --fout field"))
+        case NativeTransform.FnirtCoefficients(file) =>
+          meaning:
+            for
+              fromGeometry <- fslGeometry(from)
+              toGeometry <- fslGeometry(to)
+              grids = FslGrids(from.frame, fromGeometry, to.frame, toGeometry)
+              warp <- FnirtCoefficientInterpretation.interpretWith(file, FnirtCoefficientContext(grids, options.boundary), asset)
+            yield warp
         case NativeTransform.Afni(series) =>
           // AFNI matrices act on cardinalised datasets; the domains' own affines say whether either side is oblique.
           val correction = CardinalCorrection.On(AfniCardinal.obliquity(from.voxelToWorld), AfniCardinal.obliquity(to.voxelToWorld))

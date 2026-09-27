@@ -3,7 +3,7 @@ package scalafim.transform
 import java.nio.file.{Files, Path, Paths}
 
 import scalafim.transform.afni.Aff12Codec
-import scalafim.transform.field.VectorFieldNiftiCodec
+import scalafim.transform.field.{FnirtCoefficientsCodec, VectorFieldNiftiCodec}
 import scalafim.transform.freesurfer.{LtaCodec, MniXfmCodec, RegisterDatCodec}
 import scalafim.transform.fsl.FlirtCodec
 import scalafim.transform.itk.{ItkMatlabCodec, ItkTextCodec}
@@ -30,13 +30,22 @@ class RoundTripSuite extends munit.FunSuite:
   /** NIfTI containers are compared field by field: the writer uses float64 data and its own header layout. */
   private def fieldRoundTrip(path: Path, f: scalafim.transform.field.VectorFieldNifti) =
     VectorFieldNiftiCodec.encode(f).flatMap(VectorFieldNiftiCodec.decode).map: g =>
-      assertEquals(g.raw.shape, f.raw.shape, rel(path))
-      assertEquals((g.raw.intentCode, g.raw.qformCode, g.raw.sformCode), (f.raw.intentCode, f.raw.qformCode, f.raw.sformCode), rel(path))
-      assertEquals(g.raw.intentP, f.raw.intentP, rel(path))
-      assertEquals(g.raw.sformRowMajor, f.raw.sformRowMajor, rel(path))
-      assertEquals(g.raw.qformRowMajor, f.raw.qformRowMajor, rel(path))
-      (0L until f.raw.voxelCount).foreach(i => assertEquals(g.raw.value(i), f.raw.value(i)))
+      sameContainer(path, g.raw, f.raw)
       g
+
+  private def coefficientRoundTrip(path: Path, f: scalafim.transform.field.FnirtCoefficientFile) =
+    FnirtCoefficientsCodec.encode(f).flatMap(FnirtCoefficientsCodec.decode).map: g =>
+      sameContainer(path, g.raw, f.raw)
+      assertEquals((g.order, g.knotSpacing, g.referenceDims, g.referencePixdim, g.premat), (f.order, f.knotSpacing, f.referenceDims, f.referencePixdim, f.premat), rel(path))
+      g
+
+  private def sameContainer(path: Path, g: scalafim.transform.nifti.NiftiRaw, f: scalafim.transform.nifti.NiftiRaw): Unit =
+    assertEquals(g.shape, f.shape, rel(path))
+    assertEquals((g.intentCode, g.qformCode, g.sformCode), (f.intentCode, f.qformCode, f.sformCode), rel(path))
+    assertEquals(g.intentP, f.intentP, rel(path))
+    assertEquals(g.sformRowMajor, f.sformRowMajor, rel(path))
+    assertEquals(g.qformRowMajor, f.qformRowMajor, rel(path))
+    (0L until f.voxelCount).foreach(i => assertEquals(g.value(i), f.value(i)))
 
   test("every oracle transform file round-trips value-exactly through its codec"):
     var checked = Map.empty[TransformFormat, Int]
@@ -58,7 +67,7 @@ class RoundTripSuite extends munit.FunSuite:
             case NativeTransform.RegisterDatFile(d) => RegisterDatCodec.encode(d).flatMap(RegisterDatCodec.decode).map(NativeTransform.RegisterDatFile(_))
             case NativeTransform.AntsField(f)         => fieldRoundTrip(path, f).map(NativeTransform.AntsField(_))
             case NativeTransform.FnirtField(f)        => fieldRoundTrip(path, f).map(NativeTransform.FnirtField(_))
-            case NativeTransform.FnirtCoefficients(f) => fieldRoundTrip(path, f).map(NativeTransform.FnirtCoefficients(_))
+            case NativeTransform.FnirtCoefficients(f) => coefficientRoundTrip(path, f).map(NativeTransform.FnirtCoefficients(_))
             case NativeTransform.AfniQwarp(f)         => fieldRoundTrip(path, f).map(NativeTransform.AfniQwarp(_))
           again match
             case Left(error)  => fail(s"${rel(path)}: ${error.message}")
