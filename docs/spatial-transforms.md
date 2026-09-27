@@ -278,6 +278,42 @@ explicitly.
 ravel views) and updates the affine to match. Every voxel keeps its world
 position and world identity; this matches nibabel's `as_reoriented`.
 
+## Linked cursors between worlds
+
+A viewer that links a cortical surface with a volume often shows data from two
+worlds: a surface in the subject's tkRAS or scanner space, and a volume in MNI
+reached through an fMRIPrep composite. The link between the two cursors is a
+typed `WorldLink[L, R]` (in `scalafim.image.world`):
+
+- `WorldLink.shared(left, right)` links two frames of one world. Coordinates
+  carry over unchanged under a checked alignment, and frames of different
+  worlds are refused.
+- `WorldLink.Mapped` joins different worlds through typed maps. A
+  `WorldTransform` supplies one with `link`: `toLeft` is its pullback, and
+  `toRight` exists exactly when the forward map does.
+
+```scala
+val link = warp.link.toOption.get              // WorldLink.Mapped[subject.type, mni.type]
+link.toLeft(peakInMni)                         // Right(point in subject): the pullback
+link.toRight(pointInSubject)                   // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
+```
+
+The direction that needs a missing forward map is always a typed error, never
+an approximation. The viewers consume the link without depending on this
+module:
+
+- `SurfaceVolumeCursor` (surface-view) takes a `FramedSurface[S]` and a
+  `WorldLink[S, V]`. It maps a selected vertex to a volume point, and a
+  volume point to the nearest vertex within a radius.
+- `ViewerCursor` (image-view) reads and sets the orthogonal viewer's cursor as
+  a point of the reference frame. It refuses a point from another world.
+- A surface camera pose is a pair of typed points in the displayed surface's
+  frame, `SurfaceCameraPose[F]`. `focusedOn(hit.vertex)` centres the view on
+  a linked vertex.
+
+The surface half is exercised by `SurfaceVolumeCursorSuite` and
+`SurfaceCameraPoseSuite`.
+
 ## Evidence
 
 The oracle fixtures, and the tools that produced them, are listed in each

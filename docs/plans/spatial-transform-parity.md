@@ -1084,3 +1084,45 @@ _(append per phase: date, commits, test commands run, results)_
 - **Deviation from the Phase 7 text:** the fMRIPrep chain uses the synthetic
   SimpleITK composites, not demo1 outputs. The surface chain uses synthetic
   icospheres, not fsaverage or fsLR32k meshes.
+
+### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
+
+- **Linked cursor.** `scalafim.image.world.WorldLink[L, R]` is the typed map
+  behind a linked cursor: `Shared` (one world, a checked `FrameAlignment`,
+  coordinates unchanged) or `Mapped` (different worlds, typed maps; a missing
+  direction is `WorldLinkError.DirectionUnavailable`, never approximated).
+  `WorldTransform.link` adapts any transform: `toLeft` is the pullback,
+  `toRight` exists exactly when `push` does. `SurfaceVolumeCursor[S, V]`
+  (surface-view) maps a selected vertex of a `FramedSurface[S]` to a volume
+  point and a volume point to the nearest vertex within a `SurfaceLinkRadius`;
+  `ViewerCursor` (image-view) reads and sets the orthogonal viewer's cursor
+  as a point of the reference frame and refuses other worlds.
+- **Placement.** `image-view` and `surface-view` do not depend on
+  `transform`, and no module sees both views. The link type lives in `image`,
+  the lowest module both views and `transform` already see; `transform`
+  supplies the adapter (`WorldTransform.link`), and the views consume the
+  link. No build edge changed.
+- **Typed surface camera.** `SurfaceDisplayFrame[F]` declares (or binds a
+  `FramedSurface[F]` to) the frame of a viewer surface's display coordinates.
+  `SurfaceCameraPose[F]` holds `target` and `eye` as `Point[F, D3]` and
+  `direction` as `Vec[F, D3]`. `SurfaceCompiler.cameraPose` gives the pose of
+  the renderer-neutral viewpoint camera, and `SurfaceCompiler.compile(model,
+  state, display, pose)` renders an explicit pose; `focusedOn` centres a pose
+  on a linked vertex. The viewpoint camera (`SurfaceCamera`: viewpoint,
+  orbit, pan, zoom) is unchanged; it holds no target or position, so no shim
+  was needed.
+- **Image-view layers.** P1.05-P1.07 closed "layers carry their own frames":
+  each `SliceLayer` has its frame, `LayerAlignment.check` proves `SharedWorld`
+  or `Mapped` against the reference, and a `WorldTransform`'s `pull` is
+  already a valid `LayerMapping.Pullback` (`SpatialPullback` is `SpatialMap`).
+  The remaining gap was the cursor: `ViewerState.cursor` is a frame-erased
+  `WorldPoint`. `ViewerCursor` closes it at the API boundary; retyping the
+  field itself would edit `Interaction.scala` and `ViewerScene.scala`
+  throughout and is left for a follow-up.
+- **Verification:** imageJVM 377 and imageJS 351; imageViewJVM 36 and
+  imageViewJS 36; surfaceViewJVM 58 and surfaceViewJS 58; transformJVM 152
+  and transformJS 127; scalafimCompileAll 0 warnings.
+- **Caveats:** a typed pose needs a single-surface layout (bilateral slots
+  are re-centred per viewport). The untyped `SurfaceWorldLink` in
+  `SurfaceDynamics` still assumes one world; it is left in place because that
+  file has concurrent uncommitted edits.
