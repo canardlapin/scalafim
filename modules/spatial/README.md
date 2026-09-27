@@ -169,8 +169,8 @@ commit. `NeurofunctorLawParitySuite` replays every triplet on the JVM and
 Scala.js. Indices are zero-based, and element-indexed values are exported in
 ScalaFIM's volume order (z fastest), not neurofunctor's (x fastest).
 
-Declared deviations, each kept as a triplet whose replay asserts the
-difference:
+Declared deviations, each kept as a triplet; where the fixture can observe
+the difference, the replay asserts it:
 
 - `allPaths` ranks routes by cost before capping at `maxPaths`; neurofunctor
   truncates its depth-first listing.

@@ -2,6 +2,7 @@ package scalafim.spatial
 
 import scalafim.image.SpatialPoint
 import scalafim.image.world.TemplateName
+import scalafim.spatial.NeurofunctorLawTriplets.*
 
 /** Replays every neurofunctor law triplet (STP P7.06) through ScalaFIM's spatial API.
   *
@@ -12,8 +13,10 @@ import scalafim.image.world.TemplateName
   * block-diagonal oracle built from neurofunctor's per-part projectors) and `backproject`.
   *
   * A triplet marked `deviation:<key>` records a place where ScalaFIM deliberately differs from neurofunctor; the key
-  * must be one of [[declaredDeviations]], and its replay compares everything the deviation leaves comparable and
-  * asserts the declared difference itself, so a deviation that silently disappears also fails.
+  * must be one of [[declaredDeviations]], and its replay compares everything the deviation leaves comparable. Where
+  * the fixture can observe the difference, the replay asserts it, so a deviation that silently disappears fails;
+  * `projection-metrics-rows` and `backproject-inverse-setting` are not observable in values (the generator samples
+  * every row; forward-first routing picks the same route), and their replays assert full agreement instead.
   */
 class NeurofunctorLawParitySuite extends munit.FunSuite:
 
@@ -211,6 +214,9 @@ class NeurofunctorLawParitySuite extends munit.FunSuite:
         val full = compile(g, t.arg("source"), t.arg("target"))
         val x = matrix(t.in("x"))
         assertEquals(restricted.rows, roi.length)
+        // the declared difference: neurofunctor's ROI operator keeps the full target height
+        assertEquals(int(t.out("n_rows")), full.rows)
+        assertNotEquals(restricted.rows, int(t.out("n_rows")))
         assertEquals(restricted.qc.coverage.targetRows, roi)
         assertMatrix(s"${t.id} forward", linValue(restricted.forward(x)), t.out("forward"), tol)
         assertMatrix(s"${t.id} full rows", linValue(full.forward(x)).selectRows(roi), t.out("full_forward"), tol)
@@ -277,15 +283,17 @@ class NeurofunctorLawParitySuite extends munit.FunSuite:
           assertEqualsDouble(difference.maxDistance, maxDistance, tol)
           assertEqualsDouble(difference.rmsDistance, rms, tol)
         }
-        val direct = value(MorphismPath.build(scala.find(_.ids.map(_.value) == routes.head._1).get.morphisms))
-        val pair = value(SpatialQc.commutes(scala.head, direct, probes))
+        val firstListed = value(MorphismPath.build(scala.find(_.ids.map(_.value) == routes.head._1).get.morphisms))
+        val pair = value(SpatialQc.commutes(scala.head, firstListed, probes))
         assertEqualsDouble(pair.maxDistance, routes.head._4, tol)
 
       case "all-paths" =>
         val source = g.domain(t.arg("source")).id
         val target = g.domain(t.arg("target")).id
-        // routes are separated by "/" inside one ids cell
-        val rRoutes = ids(t.out("uncapped")).mkString("|").split("/").toVector.map(_.split("\\|").toVector)
+        val rRoutes =
+          t.out("uncapped") match
+            case LawValue.Routes(routes) => routes
+            case other => fail(s"expected routes, got $other")
         assert(rRoutes.length > 1)
         val scalaAll = value(g.graph.allPaths(source, target))
         assertEquals(scalaAll.map(_.ids.map(_.value)).toSet, rRoutes.toSet)
@@ -329,16 +337,28 @@ class NeurofunctorLawParitySuite extends munit.FunSuite:
         scalaRows.indices.foreach { row =>
           if dropped(row) then
             // declared difference: a partially covered row, renormalised to sum to one
-            val coverage = operator.qc.coverage.rowCoverage(row)
-            assert(coverage > 0.0 && coverage < 1.0, clue = s"row $row coverage $coverage")
-            assertEqualsDouble(scalaRows(row).sum, 1.0, tol, clue = s"row $row")
+            // x = 3.5 on a 4-voxel axis: one in-grid corner of weight 0.5, renormalised to 1
+            assertEqualsDouble(operator.qc.coverage.rowCoverage(row), 0.5, tol, clue = s"row $row coverage")
+            val stored = scalaRows(row).filter(_ != 0.0)
+            assertEquals(stored.length, 1, clue = s"row $row")
+            assertEqualsDouble(stored.head, 1.0, tol, clue = s"row $row")
           else assertMatrix(s"${t.id} row $row", Vector(scalaRows(row)), Vector(rRows(row)), tol)
         }
         // with the renormalised rows emptied again, every neurofunctor metric is reproduced exactly
         val asR = scalaRows.zipWithIndex.map((row, i) => if dropped(i) then row.map(_ => 0.0) else row)
-        assertRMetrics(t.id, rMetrics(asR), t)
+        val emptied = rMetrics(asR)
+        assertRMetrics(t.id, emptied, t)
+        assertEqualsDouble(emptied.nnz.toDouble / asR.length, scalar(t.out("nnz_per_row")), tol)
+        assertEquals(int(t.out("sample_n")), int(t.out("n_target")), clue = "the generator must sample every row")
+        assert(!bool(t.out("any_na")) && !bool(t.out("any_negative")))
         val metrics = value(SpatialQc.projectionMetrics(operator))
         assertEquals(metrics.targetRows, int(t.out("n_target")))
+        assertEquals(metrics.sourceColumns, int(t.out("n_source")))
+        metrics.weights match
+          case WeightInspection.Stored(summary) =>
+            assert(!summary.anyNonFinite && !summary.anyNegative)
+            assertEquals(summary.entries, int(t.out("nnz")) + dropped.size)
+          case other => fail(s"expected stored weights, got $other")
         assertEqualsDouble(metrics.coverage, 1.0, tol)
         assert(metrics.coverage > scalar(t.out("coverage")))
 

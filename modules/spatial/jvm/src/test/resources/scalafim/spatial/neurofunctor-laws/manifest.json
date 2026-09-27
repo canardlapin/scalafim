@@ -8,6 +8,7 @@
   "igraph_version": "2.3.1",
   "neurofunctor_source_commit": "363e48f72874df882154b018990ef926d0a53dda",
   "neurofunctor_source_dirty": false,
+  "installed_functions_match_source": 220,
   "index_origin": 0,
   "element_order": "scalafim: z fastest (row-major x, y, z); converted from neurofunctor's x-fastest order",
   "affine_convention": "pullback: target world -> source world, row-major 4x4",

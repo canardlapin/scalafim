@@ -30,6 +30,7 @@
 #   sparse:RxC:i,j,x;...   zero-based triplets, R's stored entries
 #   scalar:v | int:n | bool:TRUE | text:word
 #   ids:e1|e2:inverse      morphism path, ":inverse" marks an inverted step
+#   routes:e1|e2/e3        several paths, "/"-separated
 #   points:x,y,z;...       world points (mm)
 #   rows:i,...             zero-based target rows
 #   error:nopath           neurofunctor raised an error
@@ -205,9 +206,14 @@ path_ids <- function(graph_name, path) {
 }
 
 # "laws": the operator fixture. A, B, C, S, Q, T have identity voxel-to-world
-# affines; R has 0.75 mm voxels and an offset origin. Every compiled mapping
-# lands strictly inside its source grid, so trilinear boundary policy never
-# enters these triplets (see the "boundary" graph for that).
+# affines; R has 0.75 mm voxels and an offset origin. Every fractional mapping
+# lands inside its source grid. The integer shifts ab and bc pull some rows to
+# exactly one voxel outside the grid (x = 4 or y = 3), which both libraries
+# leave empty; that agreement relies on the shift being exact in floating
+# point, since a point a rounding error inside the edge would be renormalised
+# by ScalaFIM and dropped by neurofunctor (see the "boundary" graph). sq has a
+# scaling term, so it does not commute with as and the composed routes test
+# the order in which path steps apply.
 new_graph("laws")
 add_dom("laws", "A", c(4, 3, 2))
 add_dom("laws", "B", c(4, 3, 2))
@@ -221,7 +227,7 @@ general <- affine_of(c(0.9, 0.1, 0, 0.2, 0, 0.8, 0.1, 0.3, 0, 0, 0.5, 0.1))
 add_edge("laws", "ab", "A", "B", translation(1))
 add_edge("laws", "bc", "B", "C", translation(0, 1))
 add_edge("laws", "as", "A", "S", translation(0.3, 0.6, 0.25))
-add_edge("laws", "sq", "S", "Q", translation(0.5, 0.5))
+add_edge("laws", "sq", "S", "Q", affine_of(c(1.2, 0, 0, 0.5, 0, 1, 0, 0.5, 0, 0, 1, 0)))
 add_edge("laws", "ar", "A", "R", general)
 add_edge("laws", "bs", "B", "S", translation(0.1, 0.2, 0.5))
 add_edge("laws", "br", "B", "R", translation(0.5, 0.25, -0.3))
@@ -251,7 +257,9 @@ new_graph("loop2")
 add_dom("loop2", "A", c(4, 3, 2))
 add_dom("loop2", "B", c(4, 3, 2))
 add_edge("loop2", "ab", "A", "B", translation(1, 0, 0))
-add_edge("loop2", "ba", "B", "A", affine_of(c(1, 0, 0, -0.5, 0, 1.1, 0, 0, 0, 0, 1, 0.2)))
+# ba scales x, so it does not commute with ab's x shift: the loop's result
+# depends on the order its two steps are applied in.
+add_edge("loop2", "ba", "B", "A", affine_of(c(1.2, 0, 0, -0.5, 0, 1.1, 0, 0, 0, 0, 1, 0.2)))
 
 # "diamond": two commuting routes A->B->D and A->C->D, inserted so that
 # neurofunctor's depth-first enumeration lists the dearer one first, and a
@@ -360,7 +368,7 @@ emit("roi-01", "roi-restriction", "compile-roi", "laws", paste0("source=A target
      fields(x = enc_dense(x, ord("laws", "A"))),
      fields(forward = enc_dense(apply_p(p, x)[roi, , drop = FALSE]),
             full_forward = enc_dense(apply_p(full, x)[roi, , drop = FALSE]),
-            coverage = enc_scalar(p@coverage)),
+            coverage = enc_scalar(p@coverage), n_rows = enc_int(nrow(p@matrix))),
      1e-12,
      "deviation:roi-shape",
      "neurofunctor keeps every target row and leaves rows outside the ROI empty; ScalaFIM returns only the ROI rows, in ROI order. Expected values are neurofunctor's ROI rows; nothing else is compared.")
@@ -436,7 +444,7 @@ capped <- all_paths(g("diamond"), hash("diamond", "A"), hash("diamond", "D"), ma
 emit("paths-01", "commutativity", "all-paths", "diamond", "source=A target=D max_paths=1",
      "none=text:none",
      fields(capped = path_ids("diamond", capped[[1]]),
-            uncapped = paste0("ids:", paste(vapply(routes, function(r) sub("^ids:", "", path_ids("diamond", r)), character(1)), collapse = "/"))),
+            uncapped = paste0("routes:", paste(vapply(routes, function(r) sub("^ids:", "", path_ids("diamond", r)), character(1)), collapse = "/"))),
      0,
      "deviation:all-paths-order",
      "neurofunctor lists routes in igraph depth-first order and truncates to max_paths before any ranking; ScalaFIM sorts by cost (then length, then ids) before capping. The uncapped route sets must be equal; the capped route is compared as ScalaFIM's cheapest, and neurofunctor's first-found route is kept for the record.")
@@ -469,13 +477,13 @@ emit("qc-02", "projection-metrics", "projection-metrics", "boundary", "source=A 
 
 # -- hybrid assembly -----------------------------------------------------------
 hy <- suppressWarnings(compile_to_hybrid(g("laws"), hash("laws", "A"),
-                                         list(left = hash("laws", "S"), right = hash("laws", "R"))))
+                                         list(left = hash("laws", "S"), right = hash("laws", "R"), shifted = hash("laws", "C"))))
 x <- probe(24, 2, salt = 29L)
 y <- probe(nrow(hy$projector@matrix), 2, salt = 31L)
-emit("hy-01", "hybrid", "to-hybrid", "laws", "source=A parts=left:S,right:R",
-     fields(x = enc_dense(x, ord("laws", "A")), y = enc_dense(y, ord("laws", "S", "R"))),
-     fields(matrix = enc_sparse(hy$projector@matrix, ord("laws", "S", "R"), ord("laws", "A")),
-            forward = enc_dense(apply_p(hy$projector, x), ord("laws", "S", "R")),
+emit("hy-01", "hybrid", "to-hybrid", "laws", "source=A parts=left:S,right:R,shifted:C",
+     fields(x = enc_dense(x, ord("laws", "A")), y = enc_dense(y, ord("laws", "S", "R", "C"))),
+     fields(matrix = enc_sparse(hy$projector@matrix, ord("laws", "S", "R", "C"), ord("laws", "A")),
+            forward = enc_dense(apply_p(hy$projector, x), ord("laws", "S", "R", "C")),
             adjoint = enc_dense(apply_p(projector_transpose(hy$projector), y), ord("laws", "A")),
             coverage = enc_scalar(hy$projector@coverage)),
      1e-12)
@@ -500,7 +508,8 @@ emit("hy-03", "hybrid", "block-diagonal", "laws", "parts=left:A>S,right:B>R",
      fields(x = enc_dense(x, ord("laws", "A", "B")), y = enc_dense(y, ord("laws", "S", "R"))),
      fields(matrix = enc_sparse(bd, ord("laws", "S", "R"), ord("laws", "A", "B")),
             forward = enc_dense(bd %*% x, ord("laws", "S", "R")),
-            adjoint = enc_dense(t(bd) %*% y, ord("laws", "A", "B"))),
+            adjoint = enc_dense(t(bd) %*% y, ord("laws", "A", "B")),
+            coverage = enc_scalar(mean(c(p_left@coverage, p_right@coverage)))),
      1e-12)
 
 # -- backprojection ------------------------------------------------------------
@@ -565,6 +574,31 @@ source_dirty <- tryCatch(
   error = function(e) NA
 )
 
+# The triplets come from the installed package; confirm its plain R functions
+# are the ones in the recorded source checkout, so the commit is meaningful.
+installed_matches_source <- local({
+  ns <- asNamespace("neurofunctor")
+  checked <- 0L
+  for (file in list.files(file.path(source_dir, "R"), pattern = "[.]R$", full.names = TRUE)) {
+    for (expr in parse(file, keep.source = FALSE)) {
+      if (is.call(expr) && identical(expr[[1]], as.name("<-")) && is.name(expr[[2]]) &&
+          is.call(expr[[3]]) && identical(expr[[3]][[1]], as.name("function"))) {
+        name <- as.character(expr[[2]])
+        if (!exists(name, envir = ns, inherits = FALSE)) stop("installed neurofunctor lacks ", name)
+        installed <- get(name, envir = ns, inherits = FALSE)
+        if (!is.function(installed)) next
+        from_source <- eval(expr[[3]], envir = baseenv())
+        if (!identical(deparse(body(installed)), deparse(body(from_source))) ||
+            !identical(deparse(formals(installed)), deparse(formals(from_source)))) {
+          stop("installed neurofunctor function ", name, " differs from ", source_dir)
+        }
+        checked <- checked + 1L
+      }
+    }
+  }
+  checked
+})
+
 json_string <- function(x) paste0("\"", gsub("\"", "\\\\\"", x), "\"")
 manifest <- c(
   "{",
@@ -577,6 +611,7 @@ manifest <- c(
   sprintf("  \"igraph_version\": %s,", json_string(as.character(packageVersion("igraph")))),
   sprintf("  \"neurofunctor_source_commit\": %s,", json_string(source_commit)),
   sprintf("  \"neurofunctor_source_dirty\": %s,", if (isTRUE(source_dirty)) "true" else "false"),
+  sprintf("  \"installed_functions_match_source\": %d,", installed_matches_source),
   "  \"index_origin\": 0,",
   "  \"element_order\": \"scalafim: z fastest (row-major x, y, z); converted from neurofunctor's x-fastest order\",",
   "  \"affine_convention\": \"pullback: target world -> source world, row-major 4x4\",",
