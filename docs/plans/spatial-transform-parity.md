@@ -198,7 +198,9 @@ Many domains share one world space. The T1w grid, the functional grid after
 coregistration, and the white and pial surfaces all live in subject scanner
 RAS. `SpaceRef` gains `def world: Either[SpaceError, WorldSpace]` (only
 templates resolve from the reference alone) and `worldIn(native: NativeContext)`
-(subject volumes and surfaces resolve to that subject's native world);
+(subject volumes and anatomical surfaces resolve to that subject's native
+world; inflated and spherical surfaces have none, and tkRAS is stated
+explicitly);
 `WorldSpace` is not a copy of `SpaceRef`.
 
 ```scala
