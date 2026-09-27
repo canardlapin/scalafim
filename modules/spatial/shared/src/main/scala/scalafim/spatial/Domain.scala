@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.{SessionId, SubjectId, TemplateName}
+import scalafim.image.world.{NativeContext, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
 
 import image4s.SampleSpace
 import image4s.geometry.D3
@@ -50,6 +50,48 @@ enum SpaceRef:
       case SpaceRef.Surface(_, _, _) => DomainKind.Surface
       case SpaceRef.Template(_, _, kind) => kind.domainKind
       case SpaceRef.Latent(_, _, _) => DomainKind.Latent
+
+  /** The continuous world space this sampled domain lives in, when the reference alone determines it.
+    *
+    * A `SpaceRef` names a sampled domain and a `WorldSpace` the coordinate system it lives in; many domains share one
+    * world. Only templates are globally identified, so only they resolve here. A subject's volume or surface lives in
+    * that subject's native space, which needs a dataset namespace and a reference acquisition (use [[worldIn]]); a
+    * latent domain has no continuous coordinate system at all.
+    */
+  def world: Either[SpaceError, WorldSpace] =
+    this match
+      case SpaceRef.Template(name, _, _) =>
+        Right(WorldSpace.Template(name))
+      case SpaceRef.Volume(subject, _, _) =>
+        Left(SpaceError.MissingNativeContext(s"subject ${subject.value}'s volume lives in subject-native coordinates"))
+      case SpaceRef.Surface(subject, _, _) =>
+        Left(SpaceError.MissingNativeContext(s"subject ${subject.value}'s surface lives in subject-native coordinates"))
+      case SpaceRef.Latent(_, _, _) =>
+        Left(SpaceError.NoWorldSpace("a latent domain has no continuous coordinate system"))
+
+  /** The world space of this domain given the native context that anchors its subject's coordinates.
+    *
+    * Subject volumes and surfaces resolve to the context's scanner-RAS native space; the context must name the same
+    * subject and, when the reference names one, the same session. FreeSurfer tkRAS surfaces are a different world
+    * (`WorldSpace.SubjectTkRas`) and must be stated explicitly rather than derived here. Templates and latent domains
+    * behave as in [[world]].
+    */
+  def worldIn(native: NativeContext): Either[SpaceError, WorldSpace] =
+    def subjectNative(subject: SubjectId, session: Option[SessionId]): Either[SpaceError, WorldSpace] =
+      if native.subject != subject then
+        Left(SpaceError.ConflictingEvidence(s"domain subject ${subject.value}", s"native context subject ${native.subject.value}"))
+      else if session.exists(ses => !native.session.contains(ses)) then
+        Left(
+          SpaceError.ConflictingEvidence(
+            s"domain session ${session.fold("")(_.value)}",
+            s"native context session ${native.session.fold("none")(_.value)}"
+          )
+        )
+      else Right(WorldSpace.SubjectNative(native.namespace, native.subject, native.session, native.reference))
+    this match
+      case SpaceRef.Volume(subject, session, _) => subjectNative(subject, session)
+      case SpaceRef.Surface(subject, _, _)      => subjectNative(subject, None)
+      case other                                => other.world
 
 object SpaceRef:
   def latent(
