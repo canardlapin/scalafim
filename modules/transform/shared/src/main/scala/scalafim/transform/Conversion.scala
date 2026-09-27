@@ -3,7 +3,7 @@ package scalafim.transform
 import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.field.CoordinateBoundaryPolicy
 import scalafim.image.world.{FrameCatalog, FreeSurferVolumeGeometry, FslVolumeGeometry, ToolCoordinates, WorldSpace}
-import scalafim.transform.afni.{Aff12Codec, Aff12Expression, Aff12Interpretation}
+import scalafim.transform.afni.{Aff12Codec, Aff12Expression, Aff12Interpretation, AfniCardinal}
 import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
 import scalafim.transform.freesurfer.{LtaCodec, LtaExpression, LtaGeometry, LtaInterpretation, MniXfm, MniXfmCodec, MniXfmInterpretation, RegisterDat, RegisterDatCodec, RegisterDatInterpretation, VolGeom}
 import scalafim.transform.fsl.{FlirtCodec, FlirtExpression, FlirtInterpretation}
@@ -142,6 +142,8 @@ object Conversion:
       _ <- to match
         case TransformFormat.AntsDisplacementNifti | TransformFormat.AfniQwarp if !orthogonal(lattice) =>
           Left(TransformError.UnsupportedConversion("dense map", to, "ITK/ANTs and AFNI fields need orthogonal lattice axes (a rotated, scaled grid); this lattice is sheared"))
+        case TransformFormat.AfniQwarp if AfniCardinal.obliquity(lattice.voxelToRas).nonEmpty =>
+          Left(TransformError.UnsupportedConversion("dense map", to, "AFNI places a warp on an oblique grid's cardinalised axes, which is not yet qualified; sample on a cardinal lattice"))
         case _ => Right(())
       encoded <- to match
         case TransformFormat.AntsDisplacementNifti | TransformFormat.AfniQwarp =>

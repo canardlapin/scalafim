@@ -61,12 +61,15 @@ for name in NAMES:
                         )
                 return ""
 
+            parameters = values(["TransformParameters", "TranformParameters"])
+            # only a CompositeTransform marker may lack parameters; a missing fixed set is the malformed case
+            assert parameters or kind.startswith("CompositeTransform"), (name, index, kind)
             lines.append(
                 "\t".join(
                     [
                         index,
                         kind,
-                        values(["TransformParameters", "TranformParameters"]),
+                        parameters,
                         values(["TransformFixedParameters", "TranformFixedParameters"]),
                     ]
                 )
@@ -87,7 +90,8 @@ oc.write_manifest(
         "uv run --with h5py==3.16.0 --with numpy python tools/transform/generate_itk_hdf5_simpleitk_dumps.py"
     ],
     notes=(
-        "h5py decodes of ../itk_hdf5_simpleitk/*.h5 (SimpleITK-written; see that manifest). The legacy-float file "
+        "Native-oracle inputs, h5py decode: these are h5py decodes of ../itk_hdf5_simpleitk/*.h5 (SimpleITK-written; see "
+        "that manifest). The legacy-float file "
         "stores float32 datasets under the historic 'Tranform*' names. malformed_missing_fixed's missing fixed "
         "parameters are an empty cell; refusing that file is a JVM container check (jHDF). Point oracles: ../itk_hdf5_simpleitk/point_oracles.tsv."
     ),

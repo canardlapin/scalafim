@@ -76,5 +76,6 @@ class NitransformsCrosscheckSuite extends munit.FunSuite:
   test("oblique base and source images change the generic AFNI pullback, so the cardinal correction is exercised"):
     val plain = table.keyed.filter(_._1 == "nitransforms_crosscheck/afni_generic.aff12.1D").map(_._2)
     val oblique = table.keyed.filter(_._1 == "nitransforms_crosscheck/afni_generic.aff12.1D#oblique").map(_._2)
+    assert(plain.size >= 8, "the generic AFNI matrix needs at least eight rows")
     assertEquals(plain.map(_.take(3)), oblique.map(_.take(3)))
     assert(plain.zip(oblique).forall((a, b) => a.slice(3, 6).zip(b.slice(3, 6)).exists((x, y) => math.abs(x - y) > 1e-2)))

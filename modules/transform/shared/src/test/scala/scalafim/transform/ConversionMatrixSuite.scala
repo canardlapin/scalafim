@@ -68,11 +68,23 @@ class ConversionMatrixSuite extends munit.FunSuite:
     val withLattice = context.copy(lattice = Some(lattice), fnirtDefinition = Some(FnirtDefinition.Relative), boundary = reframe4s.field.CoordinateBoundaryPolicy.PreserveSource)
     val latticePoints = for x <- Vector(1, 3); y <- Vector(1, 2); z <- Vector(1, 2) yield ok(lattice.voxelToRas(Vector(x.toDouble, y.toDouble, z.toDouble)))
     val original = ok(LtaInterpretationFor(lta, frames))
-    Vector(TransformFormat.AntsDisplacementNifti, TransformFormat.AfniQwarp, TransformFormat.FslFnirtField, TransformFormat.X5).foreach: format =>
-      val back = reread(ok(Conversion.convert(lta, format, context, withLattice)), withLattice)
-      latticePoints.foreach: p =>
+    // AFNI places warps on cardinal axes, so its field is written on a cardinal (permuted, flipped) lattice.
+    val cardinal = ConversionContext.Lattice(Vector(6, 5, 4), ok(Affine.fromRowMajor[D3](Vector(0, 0, -2.5, -20.0, -2.0, 0, 0, -30.0, 0, 2.2, 0, -40.0, 0, 0, 0, 1))))
+    val withCardinal = withLattice.copy(lattice = Some(cardinal))
+    val cardinalPoints = for x <- Vector(1, 3); y <- Vector(1, 2); z <- Vector(1, 2) yield ok(cardinal.voxelToRas(Vector(x.toDouble, y.toDouble, z.toDouble)))
+    Vector(
+      (TransformFormat.AntsDisplacementNifti, withLattice, latticePoints),
+      (TransformFormat.AfniQwarp, withCardinal, cardinalPoints),
+      (TransformFormat.FslFnirtField, withLattice, latticePoints),
+      (TransformFormat.X5, withLattice, latticePoints)
+    ).foreach: (format, sampling, queries) =>
+      val back = reread(ok(Conversion.convert(lta, format, context, sampling)), sampling)
+      queries.foreach: p =>
         // NIfTI-1 stores the lattice affine (srow) in float32, so NIfTI outputs agree to float32 geometry precision.
         pull(back, p).zip(pull(original, p)).foreach((a, e) => assertEqualsDouble(a, e, 1e-6, s"$format at $p"))
+    Conversion.convert(lta, TransformFormat.AfniQwarp, context, withLattice) match
+      case Left(TransformError.UnsupportedConversion(_, TransformFormat.AfniQwarp, reason)) => assert(reason.contains("cardinal"), reason)
+      case other                                                                         => fail(s"an oblique AFNI warp must be refused, got $other")
 
   test("ITK/ANTs and AFNI fields refuse a sheared lattice"):
     val sheared = ConversionContext.Lattice(Vector(6, 5, 4), ok(Affine.fromRowMajor[D3](Vector(2.0, 0.3, 0, -30, 0, 2.2, 0, -40, 0, 0, 2.5, -20, 0, 0, 0, 1))))

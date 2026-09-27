@@ -5,9 +5,14 @@ Evidence kind: cross-implementation. AFNI itself is not installed, so these file
 3dQwarp writes (`3dQwarp -help`, "STORAGE of 3D warps in AFNI"): a 5D (x,y,z,1,3) float32 NIfTI on the base grid whose
 components are DICOM (LPS) millimetre displacements from each base point to the matching source point, i.e. a
 pullback `source = base + d`. nitransforms 25.1.0 (`io/afni.py`, AFNIDisplacementsField) negates the x and y components
-into RAS and places the lattice with nibabel's `img.affine`: the sform when its code is set, else the qform. That is also
-AFNI's own default (`thd_niftiread.c`, `AFNI_NIFTI_PRIORITY` defaults to 'S'), while ITK prefers the qform here because
-the sform code is not SCANNER_ANAT. The fields therefore carry a qform that disagrees with the sform.
+into RAS and places the lattice with nibabel's `img.affine`: the sform when its code is set, else the qform.
+
+AFNI reads the same form (`thd_niftiread.c`, `AFNI_NIFTI_PRIORITY` defaults to 'S') but its warp code (`mri_nwarp.c`,
+e.g. THD_nwarp_forward_xyz) places the field with `daxes->ijk_to_dicom`, the cardinalised version of that form. For a
+cardinal (permuted, possibly flipped) sform the two coincide, so the read fields here have a cardinal radiological sform
+(code 2) and an oblique qform (code 1) that ITK would pick instead. Agreement with nitransforms therefore also reflects
+AFNI's placement. An oblique field (oblique_WARP.nii) is kept only as a refusal case: ScalaFIM rejects it as an
+unqualified convention until 3dNwarpXYZ can pin AFNI's cardinalised placement.
 
 Cases:
   * affine_WARP.nii: displacements affine in space, so nitransforms' cubic B-spline and ScalaFIM's trilinear
@@ -15,6 +20,7 @@ Cases:
     boundary spoils cubic exactness near faces).
   * smooth_WARP.nii: nonlinear displacements, compared on 12 interior lattice nodes, where nitransforms returns the
     stored value exactly.
+  * oblique_WARP.nii: the smooth field on an oblique sform; no points (refusal case).
 
 A native AFNI check (3dNwarpXYZ on these files) is pending until AFNI is available.
 
@@ -65,8 +71,16 @@ def affine(linear, offset):
     return out
 
 
-# radiological, oblique sform (code 2: not SCANNER_ANAT) and a different qform (code 1)
-SFORM = affine(
+# cardinal, radiological, permuted sform (code 2: not SCANNER_ANAT); an oblique qform (code 1) that ITK would choose
+SFORM = np.array(
+    [
+        [0.0, 0.0, -ZOOMS[2], 14.5],
+        [-ZOOMS[0], 0.0, 0.0, -21.0],
+        [0.0, ZOOMS[1], 0.0, -6.25],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+)
+OBLIQUE_SFORM = affine(
     rotation(0.21, -0.13, 0.34) @ np.diag([-ZOOMS[0], ZOOMS[1], ZOOMS[2]]),
     (14.5, -21.0, -6.25),
 )
@@ -101,11 +115,11 @@ smooth_lps = np.stack(
 )
 
 
-def write(name, lps):
+def write(name, lps, sform=SFORM):
     img = nib.Nifti1Image(lps[:, :, :, None, :].astype(np.float32), None)
     img.header.set_zooms(ZOOMS + (1.0, 1.0))
     img.header.set_qform(QFORM, code=1)
-    img.header.set_sform(SFORM, code=2)
+    img.header.set_sform(sform, code=2)
     path = os.path.join(OUT, name)
     nib.save(img, path)
     return path
@@ -148,6 +162,8 @@ for node in nodes:
     mapped = np.asarray(field.map([world]))[0]
     rows.append(["smooth_WARP.nii", *world, *mapped])
 
+write("oblique_WARP.nii", smooth_lps, sform=OBLIQUE_SFORM)
+
 oc.write_table(
     os.path.join(OUT, "points.tsv"), ["key", "x", "y", "z", "sx", "sy", "sz"], rows
 )
@@ -166,9 +182,12 @@ oc.write_manifest(
     notes=(
         "AFNI 3dQwarp-layout fields constructed here (AFNI not installed) and mapped by nitransforms "
         "DenseFieldTransform(fmt='afni'). points.tsv: base (reference) RAS point and nitransforms' source RAS point. "
-        "qform (code 1) and sform (code 2) disagree; nitransforms and AFNI's default both use the sform. "
+        "The read fields have a cardinal radiological sform (code 2), which nitransforms and AFNI both use, and an "
+        "oblique qform (code 1), which ITK would use. "
         f"affine_WARP.nii rows are off-grid; nitransforms' cubic result differs from the analytic affine value by at most "
-        f"{worst:.2e} mm. smooth_WARP.nii rows are lattice nodes. PENDING: native AFNI 3dNwarpXYZ on these files."
+        f"{worst:.2e} mm. smooth_WARP.nii rows are lattice nodes. oblique_WARP.nii (oblique sform) has no rows: AFNI's "
+        "warp code places it on the cardinalised grid, which ScalaFIM refuses as unqualified. "
+        "PENDING: native AFNI 3dNwarpXYZ on these files."
     ),
 )
 print(len(rows), "rows; worst affine deviation", worst)

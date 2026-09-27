@@ -38,7 +38,7 @@ class X5OracleSuite extends munit.FunSuite:
       val ijk = Vector.tabulate(3)(r => (0 until 3).map(c => worldToIndex(4 * r + c) * row(c)).sum + worldToIndex(4 * r + 3))
       assert(ijk.exists(v => math.abs(v - math.rint(v)) > 0.1), s"$ijk is on the lattice")
       val pulled = ok(chain.composed.pullPoint(ok(Point.fromVector(reference, row.take(3))).asInstanceOf[Point[reference.type, D3]])).coordinates
-      pulled.zip(row.slice(3, 6)).foreach((a, e) => assertEqualsDouble(a, e, 5e-5, s"affine_displacements at ${row.take(3)}"))
+      pulled.zip(row.slice(3, 6)).foreach((a, e) => assertEqualsDouble(a, e, 2e-5, s"affine_displacements at ${row.take(3)}"))
 
   test("a single linear node is an affine; multi-node files need a chain"):
     assert(ok(X5Interpretation.interpret(X5Dumps.parse(OracleFixtures.text("x5/linear.nodes.txt")), context)).composed.isInstanceOf[WorldTransform.Linear[?, ?]])

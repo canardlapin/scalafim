@@ -18,6 +18,9 @@ enum TransformError derives CanEqual:
   case ContextMismatch(format: TransformFormat, reason: String)
   case UnsupportedConversion(from: String, to: TransformFormat, reason: String)
   case AmbiguousFnirtDefinition(reason: String)
+
+  /** A well-formed file whose meaning under the toolkit's convention has no oracle yet: refused rather than guessed. */
+  case UnqualifiedConvention(format: TransformFormat, reason: String)
   case Invalid(reason: String)
 
   def message: String =
@@ -32,4 +35,5 @@ enum TransformError derives CanEqual:
       case ContextMismatch(format, reason)        => s"$format context does not match the file: $reason"
       case UnsupportedConversion(from, to, reason) => s"cannot express $from as $to: $reason"
       case AmbiguousFnirtDefinition(reason)       => s"cannot tell whether the FNIRT field is relative or absolute: $reason; state it explicitly"
+      case UnqualifiedConvention(format, reason)  => s"$format: $reason; this reading is not yet qualified against the native tool"
       case Invalid(reason)                        => reason

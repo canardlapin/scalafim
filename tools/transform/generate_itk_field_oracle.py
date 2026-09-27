@@ -89,6 +89,9 @@ FORM_CASES = [
     ("forms_q0_s0.nii", None, 0, None, 0),  # neither: LPS pixdim scaling at the origin
     ("forms_q0_s1_scale.nii", None, 0, SCALE_MISMATCH, 1),  # sform directions, pixdim spacing
     ("forms_q0_s2_shear.nii", None, 0, SHEARED, 2),  # refused by ITK
+    ("forms_q1_s2_shear.nii", QFORM, 1, SHEARED, 2),  # a sheared sform falls back to the qform
+    ("forms_q1_s2_agree.nii", QFORM, 1, QFORM, 2),  # equal forms: ITK prefers the sform
+    ("forms_q1_s2_flipcol.nii", QFORM, 1, QFORM @ np.diag([-1.0, 1.0, 1.0, 1.0]), 2),  # same U W, flipped V: sform
 ]
 form_rows = []
 form_points = []

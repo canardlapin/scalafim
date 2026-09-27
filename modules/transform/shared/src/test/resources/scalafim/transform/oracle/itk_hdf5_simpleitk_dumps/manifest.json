@@ -11,7 +11,7 @@
  "commands": [
   "uv run --with h5py==3.16.0 --with numpy python tools/transform/generate_itk_hdf5_simpleitk_dumps.py"
  ],
- "notes": "h5py decodes of ../itk_hdf5_simpleitk/*.h5 (SimpleITK-written; see that manifest). The legacy-float file stores float32 datasets under the historic 'Tranform*' names. malformed_missing_fixed's missing fixed parameters are an empty cell; refusing that file is a JVM container check (jHDF). Point oracles: ../itk_hdf5_simpleitk/point_oracles.tsv.",
+ "notes": "Native-oracle inputs, h5py decode: these are h5py decodes of ../itk_hdf5_simpleitk/*.h5 (SimpleITK-written; see that manifest). The legacy-float file stores float32 datasets under the historic 'Tranform*' names. malformed_missing_fixed's missing fixed parameters are an empty cell; refusing that file is a JVM container check (jHDF). Point oracles: ../itk_hdf5_simpleitk/point_oracles.tsv.",
  "sha256": {
   "affine_only_forward_double.components.txt": "cd00e4ea569b3a25387c57a0fc90ae3e51947a4fc370532218cdfbdab452d4d5",
   "composite_affine_displacement_double.components.txt": "b747945a38694e27f5068d89c2c3efdf37529e439ba6e796b7908321ce5301b2",

@@ -7,9 +7,10 @@ import scalafim.transform.oracle.{OracleFixtures, OracleTable}
 
 /** AFNI 3dQwarp `_WARP` fields against nitransforms' AFNI reader (cross-implementation; see oracle/afni_qwarp).
   *
-  * The fields carry a qform that disagrees with an sform of code 2. AFNI's default and nitransforms place the lattice
-  * with the sform, ITK with the qform, so these rows pin both the LPS displacement sign and AFNI's affine choice.
-  * A native AFNI check (3dNwarpXYZ) is still pending.
+  * The read fields have a cardinal sform (code 2) and an oblique qform (code 1). nitransforms and AFNI place the lattice
+  * with the sform (AFNI through its cardinalised grid, which equals a cardinal sform), ITK with the qform, so these rows
+  * pin both the LPS displacement sign and AFNI's affine choice. An oblique field is refused: AFNI's warp code places it
+  * on cardinalised axes, which no oracle pins yet. A native AFNI check (3dNwarpXYZ) is still pending.
   */
 class AfniQwarpCrosscheckSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =
@@ -25,8 +26,8 @@ class AfniQwarpCrosscheckSuite extends munit.FunSuite:
   private def pull(transform: WorldTransform[source.type, base.type], p: Vector[Double]): Vector[Double] =
     ok(transform.pullPoint(ok(Point.fromVector(base, p)).asInstanceOf[Point[base.type, D3]])).coordinates
 
-  /** Off-grid rows: nitransforms' cubic B-spline differs from the analytic affine field by up to 1.2e-5 mm. */
-  private val tolerance = Map("affine_WARP.nii" -> 5e-5, "smooth_WARP.nii" -> 1e-5)
+  /** Off-grid rows: nitransforms' cubic B-spline differs from the analytic affine field by up to 1.1e-5 mm. */
+  private val tolerance = Map("affine_WARP.nii" -> 2e-5, "smooth_WARP.nii" -> 1e-5)
 
   test("_WARP fields are detected as 3dQwarp and pull points as nitransforms' AFNI reader does"):
     assertEquals(table.keys.distinct.sorted, tolerance.keys.toVector.sorted)
@@ -39,14 +40,18 @@ class AfniQwarpCrosscheckSuite extends munit.FunSuite:
       table.keyed.filter(_._1 == name).foreach: (_, row) =>
         pull(warp, row.take(3)).zip(row.slice(3, 6)).foreach((a, e) => assertEqualsDouble(a, e, tol, s"$name at ${row.take(3)}"))
 
-  test("ITK's reading of the same file differs: the affine choice, not the displacement sign, separates ANTs and AFNI"):
+  test("ITK would place the same file with its qform: the affine choice, not the displacement sign, separates ANTs and AFNI"):
     val field = ok(VectorFieldNiftiCodec.decode(bytes("smooth_WARP.nii")))
     assertEquals((field.raw.qformCode, field.raw.sformCode), (1, 2))
-    val afni = ok(LatticeAffine.of(field.raw, LatticeAffine.SformFirst)).rowMajor
+    val afni = ok(LatticeAffine.of(field.raw, LatticeAffine.AfniCardinal)).rowMajor
     val itk = ok(LatticeAffine.of(field.raw, LatticeAffine.Itk)).rowMajor
     afni.zip(field.raw.sformRowMajor).foreach((a, e) => assertEqualsDouble(a, e, 1e-12))
     itk.zip(field.raw.qformRowMajor).foreach((a, e) => assertEqualsDouble(a, e, 1e-12))
-    val ants = ok(LpsDisplacementInterpretation.Ants.interpret(field, context))
-    val (_, row) = table.keyed.filter(_._1 == "smooth_WARP.nii").head
-    val moved = ants.pullPoint(ok(Point.fromVector(base, row.take(3))).asInstanceOf[Point[base.type, D3]])
-    assert(moved.fold(_ => true, p => p.coordinates.zip(row.slice(3, 6)).exists((a, e) => math.abs(a - e) > 1e-3)), s"ITK placement unexpectedly agrees: $moved")
+    assert(afni.zip(itk).exists((a, b) => math.abs(a - b) > 1.0), "the two placements must differ materially")
+
+  test("an oblique _WARP field is refused as an unqualified convention, never placed on its oblique sform"):
+    val field = ok(VectorFieldNiftiCodec.decode(bytes("oblique_WARP.nii")))
+    LpsDisplacementInterpretation.AfniQwarp.interpret(field, context) match
+      case Left(TransformError.UnqualifiedConvention(TransformFormat.AfniQwarp, reason)) => assert(reason.contains("cardinal"), reason)
+      case other                                                                      => fail(s"expected an unqualified-convention refusal, got $other")
+    assert(LpsDisplacementInterpretation.Ants.interpret(field, context).isRight, "the same bytes remain readable as an ITK field")

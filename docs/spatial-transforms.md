@@ -86,10 +86,13 @@ Every toolkit convention is decoded once, in `ToolCoordinates`:
 
 - **ITK/ANTs and AFNI** store LPS millimetres. ANTs and AFNI 3dQwarp
   displacement fields share one convention, an LPS displacement from each
-  target lattice point to its source point. They differ only in which NIfTI
-  affine places the lattice. ANTs follows ITK's NIfTI reader: an orthonormal
-  sform wins when the qform code is unset or the sform code is
-  `SCANNER_ANAT`; otherwise the qform wins. AFNI prefers the sform.
+  target lattice point to its source point. They differ only in how the
+  lattice is placed. ANTs follows ITK's NIfTI reader: an orthonormal sform
+  wins when the qform code is unset, the sform code is `SCANNER_ANAT`, or the
+  two forms agree; otherwise the qform wins. AFNI reads the sform first but
+  places a warp on that form's cardinalised axes. ScalaFIM therefore reads
+  3dQwarp fields on cardinal grids only, and refuses an oblique one as
+  `UnqualifiedConvention` until AFNI's own tools can pin it.
 - **FSL** uses scaled-voxel coordinates, flipped along x when the volume's
   FSL-selected affine is neurological.
 - **FreeSurfer tkRAS** is `Norig · inverse(Torig)`, where Torig is
@@ -206,7 +209,7 @@ Checks that need FreeSurfer, ANTs, AFNI or FSL 6 binaries are recorded as
 pending until those tools are available:
 
 - `lta_convert` and `tkregister2` for FreeSurfer
-- `3dNwarpXYZ` for 3dQwarp fields
+- `3dNwarpXYZ` for 3dQwarp fields, including oblique ones
 - AFNI's own handling of oblique datasets in `.aff12.1D` matrices
 
 The read path interpolates dense fields trilinearly. Cubic interpolation and
