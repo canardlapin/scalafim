@@ -76,7 +76,7 @@ object X5Interpretation extends Interpretation[X5File, DenseContext, TransformCh
         for
           // nitransforms returns the query point itself at any index outside [0, n - 1] (scipy map_coordinates, mode
           // "constant" with a NaN fill): no ITK border band.
-          _ <- DenseLattice.refuseItkBorder(TransformFormat.X5, context.boundary, "nitransforms")
+          _ <- DenseLattice.refuseItkBorder(TransformFormat.X5, context.boundary)
           isAbsolute <- absolute
           domain <- node.domain.toRight(TransformError.Io(TransformIoError.Malformed("X5", "a densefield node needs a Domain")))
           dims = node.shape.take(3)

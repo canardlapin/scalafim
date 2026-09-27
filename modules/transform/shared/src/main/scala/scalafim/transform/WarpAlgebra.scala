@@ -37,7 +37,9 @@ final class MaterializedField[S <: Frame[D3], T <: Frame[D3]] private[transform]
   def lattice: Grid[T, D3] = coverage.grid
 
   /** Estimate the forward map of this field on the source lattice `on`; see [[WorldTransform.Mapped.invertNumerically]].
-    * A field whose rejected points were filled by the `fill` policy is refused: fill is not the transform.
+    * A field whose rejected points were filled by the `fill` policy is refused: fill is not the transform. Values a
+    * stage's own boundary policy supplied (`SourcePreserved`, `ConstantFilled`, `BorderHeld`) are lattice samples of
+    * the materialized field and are inverted like any other.
     */
   def invertNumerically(
       on: Grid[S, D3],
@@ -92,9 +94,10 @@ object InversionPolicy:
       gates    <- InversionGates.create(minimumCoverage, maximumResidual, p99Residual, interiorMargin).left.map(TransformError.Inversion(_))
     yield InversionPolicy(settings, gates)
 
-/** Where each source-lattice point's fixed-point iteration starts. The evidence records the choice
-  * (`evidence.start`, `evidence.preconditioned`) together with the points the start itself rejected
-  * (`evidence.startRejections`) and the iteration total (`evidence.totalIterations`).
+/** Where each source-lattice point's fixed-point iteration starts: ScalaFIM's typed view of reframe4s'
+  * `InversionStart`, whose guess is a frame-checked [[WorldTransform.Linear]]. The evidence records the choice
+  * (`evidence.start`, `evidence.preconditioned`) and the iteration total (`evidence.totalIterations`).
+  * `evidence.startRejections` counts points a guess map rejects; every start here is total, so it is always 0.
   */
 enum InversionStart[S <: Frame[D3], T <: Frame[D3]]:
   /** `push(x)` starts at `x`. The iteration converges only where `I - D pull` is a contraction: fields close to the

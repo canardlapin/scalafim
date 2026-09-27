@@ -20,7 +20,7 @@ import java.nio.file.Path
   * @param boundary what a dense map does at target points outside its lattice. The default rejects them. ITK and ANTs
   *   themselves hold the border displacement for half a voxel and use zero displacement beyond it, which is
   *   `CoordinateBoundaryPolicy.HoldBorderDisplacement` ([[TransformLoadOptions.itk]]); FSL, AFNI and X5 files refuse
-  *   that policy with `TransformError.UnsupportedBoundary`.
+  *   that policy with `TransformError.ItkBorderHoldUnsupported`.
   * @param fnirtDefinition whether a FNIRT field is relative or absolute; `None` detects it and refuses when unsure.
   */
 final case class TransformLoadOptions(

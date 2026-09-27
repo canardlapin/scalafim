@@ -73,8 +73,9 @@ class WarpOracleSuite extends munit.FunSuite:
 
   test("a native FSL dense field far from the identity is refused by the inversion gates, with its evidence"):
     // FNIRT maps between FSL scaled-voxel frames, so these fields send reference points to source points up to ~20 mm
-    // away. reframe4s' fixed-point solver starts every source point at the identity, which lies outside the pull's
-    // support here: the estimate must fail its coverage gate as a typed failure, never return a partial success.
+    // away. The default identity start lies outside the pull's support here: the estimate must fail its coverage gate as
+    // a typed failure, never return a partial success. (NumericalInverseParitySuite qualifies the same fields from an
+    // affine-guess start against derived coverage bounds.)
     handedness.foreach: pair =>
       val dir = s"neurotransform/fsl_dense_oracle/${pair}_relative"
       val sourceRaw = raw(s"$dir/source.nii.gz")

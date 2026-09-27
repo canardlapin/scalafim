@@ -69,10 +69,12 @@ class NumericalInverseParitySuite extends munit.FunSuite:
   /** The coverage an affine-guess start must reach, and can at most reach, on `inverse`.
     *
     * The guess pull `pull0(y) = L y + b` differs from the field's trilinear pull by a trilinear displacement, whose norm
-    * is largest at a lattice node: `displacement`. The preconditioned iterates `y_k+1 = y0 - L^-1 (pull(y_k) - pull0(y_k))` all lie within
-    * `D = ||L^-1|| displacement` of the guess image `y0`, and so does the solution. A source point whose `y0` lies at
-    * least `D` inside the field lattice therefore keeps every iterate inside it (and converges when the iteration
-    * contracts); one whose `y0` lies more than `D` outside cannot be covered.
+    * is largest at a lattice node: `displacement`. With the preconditioner `P = L^-1` (the linear part of the guess's
+    * push), the iterates `y_k+1 = y0 - P (pull(y_k) - pull0(y_k))` all lie within `D = ||P|| displacement` of the guess
+    * image `y0`, and so does the solution. A source point whose `y0` lies at least `D` inside the field lattice
+    * therefore keeps every iterate inside it (and converges when the iteration contracts); one whose `y0` lies more
+    * than `D` outside cannot be covered. Distances to the faces use the lattice spacing, so the lattice must be
+    * orthogonal.
     */
   private def coverageBounds(
       inverse: Grid[source.type, D3],
@@ -81,7 +83,8 @@ class NumericalInverseParitySuite extends munit.FunSuite:
       samples: Vector[Int] => Vector[Double]
   ): (Double, Double) =
     val displacement = lattice(fieldLattice.shape).map(i => distance(samples(i), ok(guess.pullPoint(pointAt(fieldLattice, i))).coordinates)).max
-    val reach = spectralBound(inverse3(linearPart(guess.framed.inverse.operator))) * displacement
+    requireOrthogonal(fieldLattice.indexToFrame)
+    val reach = spectralBound(linearPart(guess.framed.inverse.operator)) * displacement
     val spacing = columnNorms(linearPart(fieldLattice.indexToFrame))
     val shape = fieldLattice.shape
     val depths = lattice(inverse.shape).map: index =>
@@ -131,14 +134,16 @@ class NumericalInverseParitySuite extends munit.FunSuite:
       evidence.statusAt(index) match
         case Some(InversePointStatus.Converged) =>
           assert(!expected.contains(false), s"$index: converged although ITK's preimage lies outside the field lattice")
-          // pull(ours) = x + r1 and pull(itk) = p + r2 with |x - p| = delta, so |ours - itk| <= K (r1 + r2 + delta).
+          // With our pull, pull(ours) = x + r1 and pull(itk) = x + r2, so |ours - itk| <= K (|r1| + |r2|): both points
+          // lie in the lattice and band where K bounds the pull's inverse.
           val ours = nodeEstimate(estimated, index)
           val itk = flipLps(row.slice(3, 6).zip(row.slice(6, 9)).map(_ + _))
-          val delta = distance(x.coordinates, flipLps(row.slice(3, 6)))
+          assert(row(9) <= 1e-9, s"$index: ITK's own residual ${row(9)}") // the oracle converged
           val residual = distance(ok(warp.pullPoint(targetPoint(ours))).coordinates, x.coordinates)
+          val itkResidual = distance(ok(warp.pullPoint(targetPoint(itk))).coordinates, x.coordinates)
           val error = distance(ours, itk)
           // 1e-12 mm: double rounding of coordinates near 20 mm, well above their ulp (3.6e-15)
-          assert(error <= stability * (residual + row(9) + delta) + 1e-12, s"$index: |ours - ITK| = $error, residuals $residual and ${row(9)}")
+          assert(error <= stability * (residual + itkResidual) + 1e-12, s"$index: |ours - ITK| = $error, residuals $residual and $itkResidual")
           worst = math.max(worst, error)
           compared += 1
         case Some(InversePointStatus.OutsideCoverage) =>
@@ -147,7 +152,8 @@ class NumericalInverseParitySuite extends munit.FunSuite:
     assert(compared >= inside, s"$compared compared, $inside preimages inside the lattice")
     // measured: 336 of 504 points in the domain, K 1.134, largest difference 9.5e-12 mm. The comparison reads the
     // estimate's lattice samples: reframe4s' mapPoint also refuses 56 of these nodes, whose continuous index rounds to
-    // -2.2e-16 and so gives an out-of-domain neighbour a weight of that size (an upstream follow-up).
+    // 2.2e-16 below its integer value, so an in-lattice neighbour outside the domain gets a weight of that size
+    // (an upstream follow-up).
     assert(worst < 1e-9, s"largest difference from ITK $worst mm")
 
   test("a continuation start is recorded in the evidence and qualifies like the identity start"):
@@ -173,8 +179,13 @@ class NumericalInverseParitySuite extends munit.FunSuite:
   /** The FLIRT identity between two volumes: FSL's own placement of each, which FNIRT fields displace from. */
   private val FlirtIdentity = FlirtMatrix(Vector(1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0, 0, 0, 0, 0, 1.0))
 
-  /** `applywarp` coordinate ramps are float32 RAS coordinates: 3e-5 mm per component (the oracle README's tolerance). */
+  /** `applywarp` coordinate ramps agree with our pull within 3e-5 mm per component on their exact support
+    * (`DenseFieldOracleSuite`); checked again per voxel below.
+    */
   private val DenseRampTolerance = math.sqrt(3.0) * 3e-5
+
+  /** The solver's convergence tolerance on `|pull(push(x)) - x|` (the `InversionPolicy` default). */
+  private val SolverTolerance = 1e-8
 
   test("FNIRT fields between differently placed volumes invert from an affine guess; the identity start is refused"):
     handedness.foreach: pair =>
@@ -201,56 +212,74 @@ class NumericalInverseParitySuite extends munit.FunSuite:
         case other => fail(s"$pair: the identity start must fail its coverage gate, got $other")
       val estimated = ok(warp.invertNumerically(inverseLattice, policy, InversionStart.AffineGuess(guess)))
       val evidence = evidenceOf(estimated)
+      // a FramedAffine guess is total, so it never rejects a start
       assertEquals((evidence.start, evidence.preconditioned, evidence.startRejections), (InversionStartKind.Guess, true, 0L), pair)
       assertEquals(evidence.interiorStatusCounts.diverged, 0L, pair)
       assert(evidence.coveredFraction >= lower && evidence.coveredFraction <= upper, s"$pair: coverage ${evidence.coveredFraction} outside [$lower, $upper]")
       assert(estimated.provenance.describe.contains("affine-guess start"), estimated.provenance.describe)
-      // Round trip through FSL's own pullback: at reference voxels where applywarp's ramps are exact, the estimate must
-      // send FSL's source coordinate n back to the voxel. With p our pull of the voxel, |push(n) - y| is at most the
-      // gated reverse residual |push(p) - y| plus Lip(push) |n - p|; a trilinear estimate of an inverse whose Lipschitz
-      // bound is K is at most sqrt(3) K-Lipschitz on an orthogonal lattice.
       val stability = cellwiseInverseLipschitz(samples, fieldLattice.shape, fieldLattice.indexToFrame)
         .getOrElse(fail(s"$pair: the field's pull is not bi-Lipschitz"))
-      val tolerance = reverseMaximum(evidence) + math.sqrt(3.0) * stability * DenseRampTolerance
-      val checked = nativeRoundTrip(dir, estimated, fieldLattice, supportMargin = 2, tolerance, pair)
-      assert(checked >= 8, s"$pair: only $checked voxels round-tripped")
+      val checked = nativeRoundTrip(dir, estimated, warp, fieldLattice, inverseLattice, NativeSupport(margin = 2, threshold = 0.5), reverseMaximum(evidence), stability, DenseRampTolerance, pair)
+      assert(checked >= 55, s"$pair: only $checked voxels round-tripped") // measured 62 per case
 
-  /** Send FSL `applywarp`'s coordinate ramps (source RAS at each reference voxel) through the estimated forward map and
-    * back onto the reference voxel. Voxels are interior (the reverse-residual margin) and exactly supported.
+  /** Which reference voxels of an `applywarp` fixture are exact: `native_support` above `threshold` over a
+    * `(2 margin + 1)^3` neighbourhood.
+    */
+  private final case class NativeSupport(margin: Int, threshold: Double)
+
+  /** Send FSL `applywarp`'s coordinate ramps (source RAS `n` at each reference voxel `y`) through the estimated forward
+    * map and back onto the voxel. Voxels are interior (the reverse-residual margin) and exactly supported.
+    *
+    * With `p = pull(y)` (our pull, which the estimate inverts), `|push(n) - y| <= |push(p) - y| + Lip(push) |n - p|`.
+    * The first term is the gated reverse residual. `push` interpolates trilinearly, on the orthogonal source lattice,
+    * samples of `pull^-1` that are `K`-Lipschitz up to the solver tolerance, so `Lip(push) <= sqrt(3) K` and each
+    * sample adds at most `K * SolverTolerance`. `|n - p|` is measured per voxel and must itself stay within the ramps'
+    * float32 tolerance. Returns the number of voxels checked.
     */
   private def nativeRoundTrip(
       dir: String,
       estimated: WorldTransform.Mapped[source.type, target.type],
+      pull: WorldTransform[source.type, target.type],
       fieldLattice: Grid[target.type, D3],
-      supportMargin: Int,
-      tolerance: Double,
+      inverseLattice: Grid[source.type, D3],
+      support: NativeSupport,
+      reverse: Double,
+      stability: Double,
+      rampTolerance: Double,
       label: String
   ): Int =
+    requireOrthogonal(inverseLattice.indexToFrame)
     val ramps = Vector(0, 1, 2).map(i => raw(s"$dir/native_coord$i.nii.gz"))
-    val support = raw(s"$dir/native_support.nii.gz")
+    val supportImage = raw(s"$dir/native_support.nii.gz")
     val shape = fieldLattice.shape
     def supported(i: Vector[Int]): Boolean =
-      val offsets = -supportMargin to supportMargin
+      val offsets = -support.margin to support.margin
       offsets.forall(dx => offsets.forall(dy => offsets.forall { dz =>
         val (x, y, z) = (i(0) + dx, i(1) + dy, i(2) + dz)
-        x >= 0 && y >= 0 && z >= 0 && x < shape(0) && y < shape(1) && z < shape(2) && support.value(x, y, z) > 0.5
+        x >= 0 && y >= 0 && z >= 0 && x < shape(0) && y < shape(1) && z < shape(2) && supportImage.value(x, y, z) > support.threshold
       }))
     var checked = 0
     lattice(shape).filter(i => i.zip(shape).forall((v, n) => v >= 1 && v <= n - 2) && supported(i)).foreach: index =>
+      val y = pointAt(fieldLattice, index)
       val native = Vector.tabulate(3)(c => ramps(c).value(index(0), index(1), index(2)))
+      val ramp = distance(native, ok(pull.pullPoint(y)).coordinates)
+      assert(ramp <= rampTolerance, s"$label $index: applywarp differs from our pull by $ramp")
       estimated.mapPoint(sourcePoint(native)) match
         case Right(back) =>
-          val error = distance(back.coordinates, pointAt(fieldLattice, index).coordinates)
+          val tolerance = reverse + math.sqrt(3.0) * stability * ramp + stability * SolverTolerance
+          val error = distance(back.coordinates, y.coordinates)
           assert(error <= tolerance, s"$label $index: |push(applywarp) - y| = $error > $tolerance")
           checked += 1
-        case Left(_) => () // outside the estimate's evaluation domain
+        case Left(_) => () // outside the estimate's evaluation domain; the caller's floor bounds how many
     checked
 
   // ------------------------------------------------------------------------------ FNIRT --cout --aff, FSL 5.0.9
 
   private val CoefRoot = "neurotransform/fsl_coef_oracle"
 
-  /** applywarp --warp=coef ramps: 2e-5 mm per component (see FnirtCoefficientOracleSuite). */
+  /** applywarp --warp=coef ramps agree with the exact spline within 2e-5 mm per component on their exact support
+    * (`FnirtCoefficientOracleSuite`); at lattice nodes the materialized field equals the spline.
+    */
   private val CoefRampTolerance = math.sqrt(3.0) * 2e-5
 
   test("FNIRT --aff coefficient fields invert from their FLIRT matrix and round-trip through the exact spline"):
@@ -279,9 +308,9 @@ class NumericalInverseParitySuite extends munit.FunSuite:
       assertEquals((evidence.start, evidence.preconditioned, evidence.startRejections), (InversionStartKind.Guess, true, 0L), name)
       assertEquals(evidence.interiorStatusCounts.diverged, 0L, name)
       assert(evidence.coveredFraction >= lower && evidence.coveredFraction <= upper, s"$name: coverage ${evidence.coveredFraction} outside [$lower, $upper]")
-      // Analytic round trip: at every converged source node, the exact spline pullback of the estimate returns the node
-      // to within the solver's residual on the materialized field plus the materialization's interpolation error.
-      // Trilinear interpolation on the unit reference lattice errs by at most (1/8) sum_a sup|d2f/du_a^2|; a quadratic
+      // Analytic round trip: at every converged source node x the estimate y satisfies |materialized(y) - x| <= the
+      // solver tolerance, so the exact spline returns the node to within that tolerance plus the materialization's
+      // interpolation error |exact - materialized|. Trilinear interpolation on the unit reference lattice errs by at most (1/8) sum_a sup|d2f/du_a^2|; a quadratic
       // or cubic B-spline's second derivative along u_a is a convex combination of the coefficients' second differences
       // divided by the knot spacing squared. The displacement is in FSL mm, scaled to world by the source FSL map.
       val interpolation = spectralBound(linearPart(fslToWorld(sourceGeometry))) * math.sqrt((0 until 3).map { c =>
@@ -292,28 +321,29 @@ class NumericalInverseParitySuite extends munit.FunSuite:
       lattice(inverseLattice.shape).filter(i => evidence.statusAt(i).contains(InversePointStatus.Converged)).foreach: index =>
         val x = pointAt(inverseLattice, index)
         val y = targetPoint(nodeEstimate(estimated, index))
-        val solver = distance(ok(materialized.transform.pullPoint(y)).coordinates, x.coordinates)
         val error = distance(ok(exact.pullPoint(y)).coordinates, x.coordinates)
-        assert(error <= solver + interpolation, s"$name $index: |exact(push(x)) - x| = $error > $solver + $interpolation")
+        assert(error <= SolverTolerance + interpolation, s"$name $index: |exact(push(x)) - x| = $error > $interpolation")
         converged += 1
       assertEquals(converged.toLong, evidence.statusCounts.converged, name)
-      // measured: round trips 0.090-0.126 mm against interpolation bounds of 0.30-0.64 mm
       // Round trip through applywarp --warp=coef, as for the dense fields.
       val stability = cellwiseInverseLipschitz(samples, fieldLattice.shape, fieldLattice.indexToFrame)
         .getOrElse(fail(s"$name: the field's pull is not bi-Lipschitz"))
-      val tolerance = reverseMaximum(evidence) + math.sqrt(3.0) * stability * CoefRampTolerance
-      val checked = nativeRoundTrip(s"$CoefRoot/$name", estimated, fieldLattice, supportMargin = 0, tolerance, name)
-      assert(checked >= 20, s"$name: only $checked voxels round-tripped")
+      val checked = nativeRoundTrip(s"$CoefRoot/$name", estimated, materialized.transform, fieldLattice, inverseLattice, NativeSupport(margin = 0, threshold = 0.999), reverseMaximum(evidence), stability, CoefRampTolerance, name)
+      assert(checked >= 270, s"$name: only $checked voxels round-tripped") // measured 290-473
 
   private def fslToWorld(geometry: FslVolumeGeometry): Affine[D3] = ToolCoordinates.toRas(ToolCoordinates.FslScaledVoxel(geometry))
 
-  /** Largest second difference of coefficient component `c` along `axis`, over the whole coefficient grid (FSL mm). */
+  /** Largest second difference of coefficient component `c` along `axis` (FSL mm). reframe4s treats coefficients
+    * outside the stored grid as zero, and FNIRT omits the outermost knots, so the grid is padded with zeros: second
+    * differences are taken at every index from -1 to n along `axis`.
+    */
   private def secondDifference(file: FnirtCoefficientFile, c: Int, axis: Int): Double =
     val dims = file.coefficientDims
-    lattice(dims).filter(i => i(axis) >= 1 && i(axis) <= dims(axis) - 2).map { i =>
-      def at(offset: Int) =
-        val j = i.updated(axis, i(axis) + offset)
-        file.raw.value(j(0), j(1), j(2), c)
+    def value(j: Vector[Int]): Double =
+      if j.zip(dims).forall((v, n) => v >= 0 && v < n) then file.raw.value(j(0), j(1), j(2), c) else 0.0
+    val padded = for i <- lattice(dims.updated(axis, 1)); k <- -1 to dims(axis) yield i.updated(axis, k)
+    padded.map { i =>
+      def at(offset: Int) = value(i.updated(axis, i(axis) + offset))
       math.abs(at(1) - 2.0 * at(0) + at(-1))
     }.max
 
@@ -334,6 +364,14 @@ object NumericalInverseParitySuite:
   def linearPart(affine: Affine[D3]): Vector[Double] =
     val m = affine.rowMajor
     Vector(m(0), m(1), m(2), m(4), m(5), m(6), m(8), m(9), m(10))
+
+  /** The derived bounds use per-axis lattice spacings: the lattice axes must be orthogonal. */
+  def requireOrthogonal(indexToWorld: Affine[D3]): Unit =
+    val m = linearPart(indexToWorld)
+    val norms = columnNorms(m)
+    for a <- 0 until 3; b <- a + 1 until 3 do
+      val cosine = (0 until 3).map(r => m(3 * r + a) * m(3 * r + b)).sum / (norms(a) * norms(b))
+      require(math.abs(cosine) <= 1e-6, s"lattice axes $a and $b are not orthogonal (cosine $cosine)")
 
   def columnNorms(m: Vector[Double]): Vector[Double] =
     Vector.tabulate(3)(c => math.sqrt((0 until 3).map(r => m(3 * r + c) * m(3 * r + c)).sum))

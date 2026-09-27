@@ -214,8 +214,10 @@ which carries evidence:
 
 - the reframe4s `InverseEstimate`;
 - the evaluation-domain mask and its coverage fraction. The domain is the set
-  of source points whose preimage lies inside the field's sampled support;
-  values a boundary policy supplies are never inverted;
+  of source points whose preimage lies inside the field's sampled support.
+  For a field read from a file, values its boundary policy supplies outside
+  the lattice are not inverted. A materialized field has no such values: what
+  a stage's policy supplied became lattice samples, and those are inverted;
 - per-point status counts (`Converged`, `MaxIterations`, `Diverged`,
   `OutsideCoverage`);
 - interior residuals in both directions: `|pull(push(x)) - x|` and
@@ -251,7 +253,7 @@ composite.resample(t1w, templateGrid, Interpolation.Linear, BoundaryPolicy.Const
 The fMRIPrep chain scenario compares every template voxel with SimpleITK
 `Resample` this way and passes without caveats. FNIRT fields and
 coefficients, AFNI 3dQwarp fields and X5 dense nodes refuse
-`HoldBorderDisplacement` with `TransformError.UnsupportedBoundary`, because
+`HoldBorderDisplacement` with `TransformError.ItkBorderHoldUnsupported`, because
 their own tools do not extend a field that way. `PreserveSource` (the query
 point itself, blended across the first voxel outside) and `Constant` remain
 available as general extensions for any dense field.

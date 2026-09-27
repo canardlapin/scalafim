@@ -174,7 +174,15 @@ which reads the field with `CoordinateBoundaryPolicy.HoldBorderDisplacement`.
 - Resampling onto the field's own lattice, materializing, Jacobians and
   numerical inversion all work under `Reject`: since reframe4s U6, roundoff at
   a lattice face no longer rejects a point on the lattice, so the earlier
-  reason to read ITK fields with `PreserveSource` is gone.
+  reason to read ITK fields with `PreserveSource` is gone. (One exception
+  remains upstream: a numerical inverse's `mapPoint` can still refuse a node
+  of its own evaluation domain whose index rounds just below an integer next
+  to an out-of-domain neighbour. It errs towards refusal, never a wrong
+  value.)
+- Cost: reframe4s has no primitive linear sampler under
+  `HoldBorderDisplacement`, so materializing or inverting a field read with
+  `DenseContext.itk` evaluates it pointwise and is markedly slower on large
+  fields.
 - Reproducing a native ITK output exactly is a choice the caller makes and
   can see, together with `BorderBand.HoldHalfVoxel` for the resampled image.
   The fMRIPrep chain scenario does exactly that and passes cleanly.
@@ -182,7 +190,7 @@ which reads the field with `CoordinateBoundaryPolicy.HoldBorderDisplacement`.
 **Which formats accept `HoldBorderDisplacement`.** It is ITK's semantics, so
 only the ITK HDF5 composite and ANTs NIfTI readings accept it. FNIRT dense
 fields and coefficients, AFNI 3dQwarp fields and X5 dense nodes refuse it
-with `TransformError.UnsupportedBoundary`, rather than claiming a semantics
+with `TransformError.ItkBorderHoldUnsupported`, rather than claiming a semantics
 their own tools do not have or aliasing it to another policy. (nitransforms,
 the X5 reference, returns the query point at any index outside `[0, n - 1]`,
 which is neither ITK's band nor `PreserveSource`'s blend.)

@@ -1,11 +1,12 @@
 package scalafim.transform.scenarios
 
-import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
+import image4s.{BoundaryPolicy, Continuous, NonSpatialAxes, Sampled}
 import image4s.geometry.{D3, Frame, Grid, GridId, Point}
 import ravel.DType.given
 import ravel.NDArray
 import reframe4s.core.MapError
-import reframe4s.resample.{BorderBand, Interpolation}
+import reframe4s.field.CoordinateBoundaryPolicy
+import reframe4s.resample.{BorderBand, Interpolation, ResamplingResult}
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.scenarios.{ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
@@ -63,7 +64,11 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
         ok(ItkLinearInterpretation.linear(file, Frames[t1w.type, boldref.type](t1w, boldref), asset, TransformFormat.ItkText)).inverse
       case _ => ok(ItkLinearInterpretation.linear(file, Frames[boldref.type, t1w.type](boldref, t1w), asset, TransformFormat.ItkText))
 
-  private def composite(name: String, mutation: Mutation): WorldTransform[t1w.type, template.type] =
+  private def composite(
+      name: String,
+      mutation: Mutation,
+      boundary: CoordinateBoundaryPolicy = CoordinateBoundaryPolicy.HoldBorderDisplacement
+  ): WorldTransform[t1w.type, template.type] =
     val dump = ItkHdf5Dumps.parse(OracleFixtures.text(s"itk_hdf5/$name.components.txt"))
     val file = mutation match
       case Mutation.CompositeStagesReversed => ItkHdf5File(dump.components.filter(_.isComposite) ++ dump.stages.reverse)
@@ -71,7 +76,7 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
       case _                                => dump
     val h5 = s"neurotransform/itk_oracle/$name.h5"
     // ITK's DisplacementFieldTransform: the border displacement for half a voxel outside the lattice, zero beyond.
-    val context = DenseContext.itk(Frames[t1w.type, template.type](t1w, template))
+    val context = DenseContext(Frames[t1w.type, template.type](t1w, template), boundary)
     ok(ItkHdf5Interpretation.interpretWith(file, context, AssetRef(h5, Some(OracleFixtures.sha256Hex(h5))))).composed
 
   /** The composite a reader would build if it took ITK's LPS parameters for RAS: every stored matrix, offset, centre,
@@ -143,9 +148,24 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
         case Left(error) => Vector(ScenarioHarness.fact(s"volume.$name.resample", false, error.toString))
         case Right(resampled) =>
           // Every template voxel, including those whose field query or final pullback lies in ITK's half-voxel border band.
-          val errors = voxels.map(index => math.abs(resampled.image.data.at(IArray(index(0), index(1), index(2))) - native.value(index(0), index(1), index(2))))
+          def errorsOf(image: ResamplingResult[template.type, D3, Continuous]) =
+            voxels.map(index => math.abs(image.image.data.at(IArray(index(0), index(1), index(2))) - native.value(index(0), index(1), index(2))))
+          val errors = errorsOf(resampled)
+          // Both bands must matter here, or the clean pass would not show that either is ITK's: without the image band,
+          // or with PreserveSource in place of the field's border hold, voxels leave the tolerance. (Only warp_affine
+          // queries the field in its band at template voxels: affine_warp moves every query inside the field lattice.)
+          val withoutImageBand = transform.resample(sourceImage, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0)).map(r => errorsOf(r).count(_ > 2e-5))
+          val withoutFieldHold = composite(name, mutation, CoordinateBoundaryPolicy.PreserveSource)
+            .resample(sourceImage, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0), BorderBand.HoldHalfVoxel)
+            .map(r => errorsOf(r).count(_ > 2e-5))
+          val fieldHoldMatters = if name == "warp_affine" then withoutFieldHold.exists(_ > 0) else withoutFieldHold == Right(0)
           Vector(
             ScenarioHarness.fact(s"volume.$name.compared-voxels", errors.size == shape.product, s"${errors.size} of ${shape.product} voxels compared"),
+            ScenarioHarness.fact(
+              s"volume.$name.border-band-exercised",
+              withoutImageBand.exists(_ > 0) && fieldHoldMatters,
+              s"voxels off tolerance without BorderBand.HoldHalfVoxel: $withoutImageBand; with PreserveSource for the field instead of ITK's hold: $withoutFieldHold"
+            ),
             // float64 on both sides; the residual is the float32 geometry SimpleITK wrote to the NIfTI header
             // (the STP Phase 4 intensity tolerance for itk_oracle is 2e-5)
             ScenarioHarness.scalar(s"volume.$name.linear-resample.max-abs", worst(errors), 0.0, ScenarioTolerance.absolute(2e-5))

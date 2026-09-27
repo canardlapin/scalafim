@@ -83,8 +83,8 @@ class DenseFieldOracleSuite extends munit.FunSuite:
   test("ITK's border hold is refused by formats whose tool does not use it"):
     def refused[A](result: Either[TransformError, A], format: TransformFormat): Unit =
       result match
-        case Left(TransformError.UnsupportedBoundary(`format`, CoordinateBoundaryPolicy.HoldBorderDisplacement, _)) => ()
-        case other                                                                                             => fail(s"$format must refuse HoldBorderDisplacement, got $other")
+        case Left(TransformError.ItkBorderHoldUnsupported(`format`)) => ()
+        case other                                                  => fail(s"$format must refuse HoldBorderDisplacement, got $other")
     val itk = DenseContext.itk(frames)
     refused(LpsDisplacementInterpretation.AfniQwarp.interpret(field("afni_qwarp/affine_WARP.nii"), itk), TransformFormat.AfniQwarp)
     refused(X5Interpretation.interpret(X5Dumps.parse(OracleFixtures.text("x5/displacements.nodes.txt")), itk), TransformFormat.X5)

@@ -56,7 +56,8 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
   /** Sample the pullback at every point of `on` as an absolute-coordinate field (the `convertwarp` operation).
     *
     * Points where a stage leaves its sampled support are counted in the coverage report and filled only by an explicit
-    * `fill` policy; the default `Reject` fails with [[TransformError.Composition]] carrying the report.
+    * `fill` policy; the default `Reject` fails with [[TransformError.Composition]] carrying the report. A rejected point
+    * has no border to hold, so `fill = HoldBorderDisplacement` is refused with `CompositionError.UnsupportedRejectedFill`.
     */
   final def materialize(
       on: Grid[T, D3],

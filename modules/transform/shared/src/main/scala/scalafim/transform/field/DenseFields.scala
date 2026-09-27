@@ -105,17 +105,10 @@ object DenseLattice:
   /** `HoldBorderDisplacement` is ITK's `DisplacementFieldTransform` extension, so only ITK and ANTs fields may use it.
     * Any other format refuses it rather than claiming a semantics its own tool does not have.
     */
-  private[transform] def refuseItkBorder(format: TransformFormat, boundary: CoordinateBoundaryPolicy, tool: String): Either[TransformError, Unit] =
+  private[transform] def refuseItkBorder(format: TransformFormat, boundary: CoordinateBoundaryPolicy): Either[TransformError, Unit] =
     boundary match
-      case CoordinateBoundaryPolicy.HoldBorderDisplacement => Left(itkBorderRefusal(format, tool))
+      case CoordinateBoundaryPolicy.HoldBorderDisplacement => Left(TransformError.ItkBorderHoldUnsupported(format))
       case CoordinateBoundaryPolicy.Reject | CoordinateBoundaryPolicy.PreserveSource | CoordinateBoundaryPolicy.Constant(_) => Right(())
-
-  private[transform] def itkBorderRefusal(format: TransformFormat, tool: String): TransformError =
-    TransformError.UnsupportedBoundary(
-      format,
-      CoordinateBoundaryPolicy.HoldBorderDisplacement,
-      s"it reproduces ITK's half-voxel border hold, which $tool does not use; choose Reject, Constant or PreserveSource"
-    )
 
   def pullback[S <: Frame[D3], T <: Frame[D3]](
       target: T,
@@ -145,7 +138,10 @@ object DenseContext:
     * within half a voxel outside the lattice a point keeps the border displacement, and beyond that band its
     * displacement is zero, so the point maps to itself. This is `CoordinateBoundaryPolicy.HoldBorderDisplacement`,
     * accepted by ITK HDF5 composites and ANTs NIfTI fields only; the other dense formats refuse it with
-    * [[TransformError.UnsupportedBoundary]].
+    * [[TransformError.ItkBorderHoldUnsupported]].
+    *
+    * Performance: reframe4s has no primitive linear sampler for this policy, so materializing or inverting a field
+    * read this way evaluates it pointwise, which allocates per point and is markedly slower on large fields.
     */
   def itk[S <: Frame[D3], T <: Frame[D3]](frames: Frames[S, T]): DenseContext[S, T] =
     DenseContext(frames, CoordinateBoundaryPolicy.HoldBorderDisplacement)
@@ -156,9 +152,8 @@ object DenseContext:
 final class LpsDisplacementInterpretation(format: TransformFormat, lattice: LatticeAffine) extends Interpretation[VectorFieldNifti, DenseContext, WorldTransform.Mapped]:
   def interpret[S <: Frame[D3], T <: Frame[D3]](field: VectorFieldNifti, context: DenseContext[S, T]): Either[TransformError, WorldTransform.Mapped[S, T]] =
     for
-      _ <- lattice match
-        case LatticeAffine.Itk          => Right(())
-        case LatticeAffine.AfniCardinal => DenseLattice.refuseItkBorder(format, context.boundary, "AFNI")
+      // ITK's border hold is ANTs' own semantics only, whatever lattice placement this reading uses
+      _ <- if format == TransformFormat.AntsDisplacementNifti then Right(()) else DenseLattice.refuseItkBorder(format, context.boundary)
       latticeToWorld <- LatticeAffine.of(field.raw, lattice)
       m = latticeToWorld.rowMajor
       flip = ToolCoordinates.LpsToRas.rowMajor // an LPS displacement is a vector: only the flip's diagonal applies
@@ -194,7 +189,7 @@ final case class FnirtContext[S <: Frame[D3], T <: Frame[D3]](
 object FnirtFieldInterpretation extends Interpretation[VectorFieldNifti, FnirtContext, WorldTransform.Mapped]:
   def interpret[S <: Frame[D3], T <: Frame[D3]](field: VectorFieldNifti, context: FnirtContext[S, T]): Either[TransformError, WorldTransform.Mapped[S, T]] =
     for
-      _ <- DenseLattice.refuseItkBorder(TransformFormat.FslFnirtField, context.boundary, "FSL")
+      _ <- DenseLattice.refuseItkBorder(TransformFormat.FslFnirtField, context.boundary)
       reference <- FslHeaderGeometry(field.raw)
       definition <- context.definition.fold(FnirtDetection.detect(field, reference, context.sourceGeometry))(Right(_))
       toFsl = reference.voxelToFsl.rowMajor

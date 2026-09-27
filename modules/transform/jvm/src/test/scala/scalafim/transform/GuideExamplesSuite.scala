@@ -169,13 +169,16 @@ class GuideExamplesSuite extends munit.FunSuite:
 
     val composite = ItkHdf5Interpretation.interpret(file, DenseContext.itk(frames)).toOption.get.composed
     val resampled = composite.resample(t1w, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0), BorderBand.HoldHalfVoxel)
-    assert(resampled.isRight, resampled.toString)
+    // every voxel matches ITK's own Resample (float32 header geometry: 2e-5)
+    val native = gunzipped("neurotransform/itk_oracle/affine_warp_resampled.nii.gz")
+    val data = resampled.toOption.get.image.data
+    for i <- 0 until nx; j <- 0 until ny; k <- 0 until nz do assertEqualsDouble(data.at(IArray(i, j, k)), native.value(i, j, k), 2e-5)
     // FSL, AFNI and X5 readings refuse ITK's border hold rather than alias it
     val fnirtContext = FnirtCoefficientContext(FslGrids[subject.type, mni.type](subject, FslHeaderGeometry(subjectRaw).toOption.get, mni, FslHeaderGeometry(subjectRaw).toOption.get), CoordinateBoundaryPolicy.HoldBorderDisplacement)
     val coef = TransformFiles.load(oracle("neurotransform/fsl_coef_oracle/srcleft_refright_aff/coef.nii.gz")).toOption.get.native match
       case NativeTransform.FnirtCoefficients(f) => f
       case other                                => fail(s"expected FNIRT coefficients, got ${other.format}")
-    assert(FnirtCoefficientInterpretation.interpret(coef, fnirtContext).left.exists(_.isInstanceOf[TransformError.UnsupportedBoundary]))
+    assert(FnirtCoefficientInterpretation.interpret(coef, fnirtContext).left.exists(_.isInstanceOf[TransformError.ItkBorderHoldUnsupported]))
 
   test("guide: warp algebra: fields, determinants and modulation"):
     val subject = FrameCatalog.frame(WorldSpace.declare("sub-01 T1w").toOption.get)

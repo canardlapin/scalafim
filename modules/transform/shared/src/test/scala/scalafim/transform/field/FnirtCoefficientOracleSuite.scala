@@ -162,7 +162,7 @@ class FnirtCoefficientOracleSuite extends munit.FunSuite:
       ok(FslHeaderGeometry(raw(s"$Root/srcleft_refleft_aff/target.nii.gz")))
     )
     FnirtCoefficientInterpretation.interpret(file, FnirtCoefficientContext(grids, CoordinateBoundaryPolicy.HoldBorderDisplacement)) match
-      case Left(TransformError.UnsupportedBoundary(TransformFormat.FslFnirtCoefficients, CoordinateBoundaryPolicy.HoldBorderDisplacement, _)) => ()
+      case Left(TransformError.ItkBorderHoldUnsupported(TransformFormat.FslFnirtCoefficients)) => ()
       case other => fail(s"FNIRT coefficients must refuse HoldBorderDisplacement, got $other")
     val l = load("srcleft_refleft_aff")
     assert(l.warp.mapPoint(ok(Point.fromVector(source, Vector(0.0, 0.0, 0.0))).asInstanceOf[Point[source.type, D3]]).isLeft, "no inverse, so no forward map")

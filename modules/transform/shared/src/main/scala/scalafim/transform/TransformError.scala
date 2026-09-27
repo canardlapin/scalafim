@@ -2,7 +2,7 @@ package scalafim.transform
 
 import image4s.geometry.GeometryError
 import reframe4s.core.MapError
-import reframe4s.field.{CompositionError, CoordinateBoundaryPolicy, InversionError, TopologyAssessmentError}
+import reframe4s.field.{CompositionError, InversionError, TopologyAssessmentError}
 import reframe4s.resample.ResamplingError
 import scalafim.image.world.SpaceError
 
@@ -25,10 +25,10 @@ enum TransformError derives CanEqual:
   case UnqualifiedConvention(format: TransformFormat, reason: String)
   case Invalid(reason: String)
 
-  /** An out-of-lattice policy that states another toolkit's semantics, such as ITK's half-voxel border hold
-    * (`HoldBorderDisplacement`) for a format whose own tool does not extend its field that way.
+  /** `CoordinateBoundaryPolicy.HoldBorderDisplacement` (ITK's half-voxel border hold) asked of a format whose own tool
+    * does not extend its field that way: FNIRT fields and coefficients, AFNI 3dQwarp, X5.
     */
-  case UnsupportedBoundary(format: TransformFormat, policy: CoordinateBoundaryPolicy, reason: String)
+  case ItkBorderHoldUnsupported(format: TransformFormat)
 
   /** Materializing a pullback on a lattice failed; `RejectedPoints` carries the full coverage report. */
   case Composition(cause: CompositionError)
@@ -59,7 +59,8 @@ enum TransformError derives CanEqual:
       case AmbiguousFnirtDefinition(reason)       => s"cannot tell whether the FNIRT field is relative or absolute: $reason; state it explicitly"
       case UnqualifiedConvention(format, reason)  => s"$format: $reason; this reading is not yet qualified against the native tool"
       case Invalid(reason)                        => reason
-      case UnsupportedBoundary(format, policy, reason) => s"$format does not support the $policy boundary: $reason"
+      case ItkBorderHoldUnsupported(format)       =>
+        s"$format: HoldBorderDisplacement reproduces ITK's half-voxel border hold, which this format's own tool does not use; choose Reject, Constant or PreserveSource"
       case Composition(cause)                     => cause.message
       case Inversion(cause)                       => cause.message
       case Determinant(cause)                     => cause.message

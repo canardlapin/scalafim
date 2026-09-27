@@ -136,7 +136,7 @@ final case class FnirtCoefficientContext[S <: Frame[D3], T <: Frame[D3]](
   * the reference volume follow the context's boundary policy (default: reject). Unlike a linearly interpolated
   * [[reframe4s.field.DenseMap]], the cut-off is sharp at the first and last reference voxel: `Constant` and
   * `PreserveSource` do not blend across a one-voxel band. `HoldBorderDisplacement` is ITK's semantics, not FSL's, and
-  * is refused with [[TransformError.UnsupportedBoundary]].
+  * is refused with [[TransformError.ItkBorderHoldUnsupported]].
   */
 object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFile, FnirtCoefficientContext, WorldTransform.Mapped]:
   def interpret[S <: Frame[D3], T <: Frame[D3]](file: FnirtCoefficientFile, context: FnirtCoefficientContext[S, T]): Either[TransformError, WorldTransform.Mapped[S, T]] =
@@ -158,7 +158,7 @@ object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFil
         case CoordinateBoundaryPolicy.Reject           => Right(FnirtBoundary.Reject)
         case CoordinateBoundaryPolicy.PreserveSource   => Right(FnirtBoundary.PreserveSource)
         case CoordinateBoundaryPolicy.HoldBorderDisplacement =>
-          Left(DenseLattice.itkBorderRefusal(TransformFormat.FslFnirtCoefficients, "FSL"))
+          Left(TransformError.ItkBorderHoldUnsupported(TransformFormat.FslFnirtCoefficients))
       _ <- file.referenceDims match
         case Some(dims) if dims != reference.dims =>
           Left(mismatch(s"the coefficients were fitted on a ${dims.mkString("x")} reference, the context reference is ${reference.dims.mkString("x")}"))
