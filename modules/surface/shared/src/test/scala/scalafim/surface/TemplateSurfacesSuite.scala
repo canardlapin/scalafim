@@ -79,7 +79,6 @@ class TemplateSurfacesSuite extends munit.FunSuite:
       "val a: TemplateSphere[SphereRegistration.FsLR.type] = ???; TemplateResampling.plan(a, onFsAverage)"
     )
     assert(errors.contains("Found:") && errors.contains("FsLR") && errors.contains("FsAverage"), errors)
-
   test("planning refuses hemispheres that differ"):
     val right = ok(TemplateSphere.admit(TemplateSurface(TemplateMesh.FsAverage5, CorticalHemisphere.Right), SphereRegistration.FsAverage, ico5, "test:ico5-rh"))
     TemplateResampling.plan(onFsAverage, right) match

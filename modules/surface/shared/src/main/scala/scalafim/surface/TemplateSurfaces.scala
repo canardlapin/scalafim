@@ -105,7 +105,10 @@ object TemplateResampling:
       target: TemplateSphere[R],
       method: SurfaceResampling.Method = SurfaceResampling.Method.Barycentric
   ): Either[SurfaceError, TemplateResamplingPlan] =
-    if source.surface.hemisphere != target.surface.hemisphere then
+    // `R` rules out mixing spheres statically, unless a caller widens it to SphereRegistration; check the values too.
+    if source.registration != target.registration then
+      Left(SurfaceError.InvalidGeometry(s"${source.surface.display} is on ${source.registration}, ${target.surface.display} on ${target.registration}"))
+    else if source.surface.hemisphere != target.surface.hemisphere then
       Left(SurfaceError.InvalidGeometry(s"cannot resample ${source.surface.display} onto ${target.surface.display}: hemispheres differ"))
     else
       SurfaceResampling
