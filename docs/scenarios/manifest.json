@@ -682,7 +682,7 @@
           "severity": "actionable",
           "owner": "transform",
           "follow_up": "a reframe4s CoordinateBoundaryPolicy (and image BoundaryPolicy) reproducing ITK's half-voxel border extension",
-          "detail": "ITK extends a displacement field (and clamps an image) by its border sample for half a voxel outside the lattice; reframe4s blends across the first voxel outside. Volume voxels whose field query or final pullback fall in that band are not compared."
+          "detail": "ITK extends a displacement field (and clamps an image) by its border sample for half a voxel outside the lattice; reframe4s PreserveSource blends the coordinate towards the query point (Constant towards the fill) across the first voxel outside. Volume voxels whose field query or final pullback fall in that band, chosen from the native data, are not compared."
         }
       ]
     },
@@ -698,9 +698,26 @@
         "kind": "native_fsl509_applywarp_and_jacobian_plus_flirt_oracle",
         "description": "example_func -> highres (FLIRT) -> standard (FNIRT --cout with --aff) materialized on the standard lattice, against FSL 5.0.9 applywarp coordinate ramps and phantom (fsl_coef_oracle srcleft_refright_aff), a FLIRT matrix synthesized from a declared world registration through FSL's scaled-voxel convention, the Jacobian chain rule, and fnirtfileutils --jac (fsl_jacobian)."
       },
-      "allowed_statuses": ["pass"],
+      "allowed_statuses": ["pass_with_caveats"],
       "acceptance_commands": ["sbt transformJVM/test", "sbt transformJS/test"],
-      "caveats": []
+      "caveats": [
+        {
+          "id": "transform.fsl-jacobian-spline-vs-finite-difference",
+          "kind": "algorithm_divergence",
+          "severity": "actionable",
+          "owner": "transform",
+          "follow_up": "an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)",
+          "detail": "FSL differentiates the spline analytically, the module differences the dense field centrally; fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise."
+        },
+        {
+          "id": "transform.fsl-chain-no-native-flirt-convertwarp",
+          "kind": "fixture_freshness",
+          "severity": "actionable",
+          "owner": "transform",
+          "follow_up": "STP P4.04: native flirt -applyxfm and convertwarp --premat outputs for a func/highres/standard triple",
+          "detail": "The FLIRT leg and the composed field are checked against a mathematical FLIRT oracle applied to native FNIRT output."
+        }
+      ]
     },
     {
       "id": "surface.volume-to-template-mesh-chain.v1",

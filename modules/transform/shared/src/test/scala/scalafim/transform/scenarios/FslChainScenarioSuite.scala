@@ -4,11 +4,11 @@ import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
 import image4s.geometry.{Affine, D3, Frame, Grid, GridId, Point}
 import ravel.DType.given
 import ravel.NDArray
-import reframe4s.field.{DeterminantValue, InversionError}
+import reframe4s.field.{DeterminantValue, InversionError, InversionGateFailure}
 import reframe4s.lie.FramedAffine
 import reframe4s.resample.Interpolation
 import scalafim.image.world.{FrameCatalog, FslVolumeGeometry, WorldSpace}
-import scalafim.scenarios.{ScenarioHarness, ScenarioObservation, ScenarioResult, ScenarioStatus, ScenarioTolerance}
+import scalafim.scenarios.{CaveatKind, CaveatSeverity, ScenarioCaveat, ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{
   FnirtCoefficientContext,
@@ -40,13 +40,15 @@ import ChainScenarioSupport.*
   *     through FSL's documented scaled-voxel convention, written inline here (not through the module), so the
   *     interpretation must recover `W` itself;
   *   - the Jacobian: native FSL 5.0.9 `fnirtfileutils --jac --withaff` of a real FLIRT+FNIRT registration to MNI152
-  *     (`fsl_jacobian`), and the chain rule `det D(W^-1 . pull) = det(W^-1) det D pull` on the composed field.
+  *     (`fsl_jacobian`, in its own declared frames), compared through statistical gates (caveat JacobianGates).
   *
-  * No native `convertwarp --premat` output exists for this pair, so the composed field is checked as the FLIRT oracle
-  * applied to the native FNIRT output.
+  * A law check, not an oracle: the chain rule `det D(W^-1 . pull) = det(W^-1) det D pull` on the composed field.
+  *
+  * No native FLIRT output or `convertwarp --premat` output exists for this pair, so the composed field is checked as the
+  * FLIRT oracle applied to the native FNIRT output (caveat NoNativeComposition).
   */
 class FslChainScenarioSuite extends munit.FunSuite:
-  import FslChainScenarioSuite.Mutation
+  import FslChainScenarioSuite.{Caveats, Mutation, Policy}
 
   private val Id = "transform.fsl-chain.v1"
   private val Case = "neurotransform/fsl_coef_oracle/srcleft_refright_aff"
@@ -55,6 +57,9 @@ class FslChainScenarioSuite extends munit.FunSuite:
   private val func: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("fsl chain example_func (synthesized)")))
   private val highres: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("fsl_coef_oracle source (highres)")))
   private val standard: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("fsl_coef_oracle reference (standard)")))
+  // the fsl_jacobian registration is a different subject and template: its own frames
+  private val jacobianSource: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("fsl_jacobian highres (FLIRT+FNIRT source)")))
+  private val jacobianTemplate: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("fsl_jacobian MNI152 2 mm block")))
 
   private def ok[E, A](result: Either[E, A])(using munit.Location): A =
     result.fold(error => fail(s"unexpected failure: $error"), identity)
@@ -209,7 +214,7 @@ class FslChainScenarioSuite extends munit.FunSuite:
       val g = Vector(1.5, -0.7, 2.2)
       math.sqrt((0 until 3).map(c => math.pow((0 until 3).map(r => g(r) * m(4 * r + c)).sum, 2)).sum)
 
-    // (6) Jacobians: the chain rule on the composed field, then FSL's own --jac on a real FNIRT registration
+    // (6) Jacobians: the chain rule on the composed field (a law check), then FSL's own --jac on a real registration
     val detToFunc =
       val m = toFunc.rowMajor
       m(0) * (m(5) * m(10) - m(6) * m(9)) - m(1) * (m(4) * m(10) - m(6) * m(8)) + m(2) * (m(4) * m(9) - m(5) * m(8))
@@ -222,7 +227,9 @@ class FslChainScenarioSuite extends munit.FunSuite:
           case (Some(DeterminantValue.Regular(a)), Some(DeterminantValue.Regular(b))) => math.abs(a - detToFunc * b) / math.abs(detToFunc * b)
           case _                                                                      => Double.PositiveInfinity
 
-    // (7) direction: FNIRT coefficients carry no inverse, and a numerical estimate of this field is refused, not degraded
+    // (7) direction: FNIRT coefficients carry no inverse, and a numerical estimate of this field is refused, not degraded.
+    // The fixed-point solver starts every functional point at the identity, which for a field containing FLIRT and
+    // --aff affines lies outside the pull's support: the coverage gate must be among the failures.
     val probe = ok(Point.fromVector(func, affineAt(toFunc, affineAt(highresGeometry.voxelToWorld, highresGeometry.dims.map(_ / 2.0)))))
     val noForward = chain.push.isEmpty && chain.mapPoint(probe).left.exists(_.isInstanceOf[TransformError.NoForwardMap])
     val inversion =
@@ -232,7 +239,8 @@ class FslChainScenarioSuite extends munit.FunSuite:
         policy <- InversionPolicy.create(minimumCoverage = 0.5, maximumResidual = 0.05, p99Residual = 0.01)
       yield field.invertNumerically(lattice, policy)
     val refused = inversion match
-      case Right(Left(TransformError.Inversion(InversionError.GatesFailed(failures, _)))) => Right(failures.map(_.toString).mkString("; "))
+      case Right(Left(TransformError.Inversion(InversionError.GatesFailed(failures, _)))) if failures.exists(_.isInstanceOf[InversionGateFailure.CoverageBelowMinimum]) =>
+        Right(failures.map(_.toString).mkString("; "))
       case other                                                                          => Left(other.toString)
 
     // (8) provenance: FLIRT then FNIRT, the coefficient file with the hash FSL's oracle manifest recorded
@@ -256,7 +264,8 @@ class FslChainScenarioSuite extends munit.FunSuite:
         ScenarioHarness.scalar("flirt-leg.pullback.max-abs-mm", worst(flirtErrors), 0.0, ScenarioTolerance.absolute(1e-6)),
         // applywarp ramps are float32 trilinear arithmetic on |x| < 64 mm: 2e-5 mm (FnirtCoefficientOracleSuite)
         errorsOf("fnirt-leg.materialized-vs-applywarp.max-abs-mm", fnirtErrors, 2e-5),
-        // W^-1 is within 2% of a rotation, so the ramp bound carries over with a sqrt(3) component allowance: 5e-5 mm
+        // W^-1 is within 2% of a rotation: a 2e-5 mm component error becomes at most sqrt(3) * 1.02 * 2e-5 = 3.5e-5 mm
+        // in any component; 5e-5 mm leaves headroom
         errorsOf("chain.materialized-vs-reference.max-abs-mm", chainErrors, 5e-5),
         ScenarioHarness.fact("chain.materialized-coverage", fullCoverage, chainField.fold(_.toString, f => f.coverage.counts.toString)),
         errorsOf("fnirt-leg.phantom-vs-applywarp.max-abs", phantomErrors, phantomTolerance),
@@ -267,7 +276,7 @@ class FslChainScenarioSuite extends munit.FunSuite:
         ScenarioHarness.fact("chain.inversion-refused-by-gates", refused.isRight, refused.merge),
         ScenarioHarness.fact("chain.provenance", chain.provenance.steps == expectedProvenance && coefHashRecorded, chain.provenance.describe)
       ) ++ nativeJacobian
-    ScenarioHarness.result(Id, observations)
+    ScenarioHarness.result(Id, observations, Caveats)
 
   /** FSL 5.0.9 `fnirtfileutils --jac --withaff` of a real FLIRT+FNIRT registration to MNI152 against the determinant of
     * the same registration's `convertwarp --absout` field (a 20^3 brain block of the 2 mm template). FSL differentiates
@@ -278,9 +287,9 @@ class FslChainScenarioSuite extends munit.FunSuite:
     val dir = "fsl_jacobian"
     val warpField = ok(VectorFieldNiftiCodec.decode(TransformSource.Binary(IArray.unsafeFromArray(OracleFixtures.decoded(s"$dir/field_abs.nii.gz")))))
     val sourceGeometry = ok(FslHeaderGeometry(raw(s"$dir/source_header.nii.gz")))
-    val frames = Frames[highres.type, standard.type](highres, standard)
+    val frames = Frames[jacobianSource.type, jacobianTemplate.type](jacobianSource, jacobianTemplate)
     val warp = ok(FnirtFieldInterpretation.interpret(warpField, FnirtContext(frames, sourceGeometry, Some(FnirtDefinition.Absolute))))
-    val lattice = ok(Grid.forFrame[D3, standard.type](standard)(warpField.spatialDims, ok(FslHeaderGeometry(warpField.raw)).voxelToWorld))
+    val lattice = ok(Grid.forFrame[D3, jacobianTemplate.type](jacobianTemplate)(warpField.spatialDims, ok(FslHeaderGeometry(warpField.raw)).voxelToWorld))
     val fsl = raw(s"$dir/jac.nii.gz")
     val support = raw(s"$dir/support.nii.gz")
     val shape = lattice.shape
@@ -306,8 +315,8 @@ class FslChainScenarioSuite extends munit.FunSuite:
 
   test("FSL chain: example_func -> highres (FLIRT) -> standard (FNIRT --aff) composes to one field matching FSL"):
     val result = runScenario(Mutation.Faithful)
-    assertEquals(result.status, ScenarioStatus.Pass, result.render)
-    if !result.ciPass then fail(result.render)
+    assertEquals(result.status, ScenarioStatus.PassWithCaveats, result.render)
+    if !result.ciPass(Policy) then fail(result.render)
 
   test("every convention mutation of the FSL chain fails the scenario on the FLIRT guard"):
     Mutation.values.filterNot(_ == Mutation.Faithful).foreach: mutation =>
@@ -318,9 +327,36 @@ class FslChainScenarioSuite extends munit.FunSuite:
 
   test("the FLIRT and FNIRT legs compose only in registration order: a reversed composite does not compile"):
     val errors = compileErrors("fnirtLeg.andThen(flirtLeg(Mutation.Faithful))")
-    assert(errors.contains("Found:") && errors.contains("Required:"), errors)
+    assert(errors.contains("Required:") && errors.contains("this.standard") && errors.contains("this.func"), errors)
 
 object FslChainScenarioSuite:
   /** Convention errors an FSL chain can make; `Faithful` is the correct reading. */
   enum Mutation derives CanEqual:
     case Faithful, FlirtDirectionSwapped, FslXFlipDropped
+
+  /** FSL differentiates the FNIRT spline analytically; the module differences the dense field centrally. The native
+    * Jacobian comparison is therefore statistical (median, p99 and max relative error), not elementwise.
+    */
+  val JacobianGates: ScenarioCaveat = ScenarioCaveat(
+    id = "transform.fsl-jacobian-spline-vs-finite-difference",
+    kind = CaveatKind.AlgorithmDivergence,
+    severity = CaveatSeverity.Actionable,
+    owner = "transform",
+    followUp = Some("an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)"),
+    detail = "fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise"
+  )
+
+  /** The fixtures hold no native FLIRT output and no `convertwarp --premat` output for this pair. */
+  val NoNativeComposition: ScenarioCaveat = ScenarioCaveat(
+    id = "transform.fsl-chain-no-native-flirt-convertwarp",
+    kind = CaveatKind.FixtureFreshness,
+    severity = CaveatSeverity.Actionable,
+    owner = "transform",
+    followUp = Some("STP P4.04: native flirt -applyxfm and convertwarp --premat outputs for a func/highres/standard triple"),
+    detail = "the FLIRT leg and the composed field are checked against a mathematical FLIRT oracle applied to native FNIRT output"
+  )
+
+  val Caveats: Vector[ScenarioCaveat] = Vector(JacobianGates, NoNativeComposition)
+
+  /** The manifest's policy for this scenario: pass with exactly the two declared caveats. */
+  val Policy: ScenarioPolicy = ScenarioPolicy(Set(ScenarioStatus.PassWithCaveats), Caveats.map(_.id).toSet)

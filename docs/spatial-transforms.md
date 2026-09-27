@@ -212,12 +212,14 @@ inverted. A forward map read from an inverse asset is never replaced by an
 estimate.
 
 Points outside a field's lattice are rejected by default
-(`CoordinateBoundaryPolicy.Reject`). Pass `PreserveSource` to get ITK's
-zero-displacement extension. The two differ only in the first voxel outside
-the lattice: ITK holds the border displacement for half a voxel before
-dropping to zero, while `PreserveSource` blends linearly towards zero
-displacement across that voxel. The fMRIPrep chain scenario declares this as
-the caveat `transform.itk-border-band`.
+(`CoordinateBoundaryPolicy.Reject`). `PreserveSource` fills an out-of-lattice
+interpolation corner with the query point itself, so beyond the first voxel
+outside the lattice the map is the identity, which matches ITK's zero
+displacement there. Within that first voxel the two differ: ITK holds the
+border displacement for half a voxel and then drops to zero, while
+`PreserveSource` blends the absolute coordinate towards the query point. The
+fMRIPrep chain scenario declares this as the caveat
+`transform.itk-border-band`.
 
 ## Warp algebra: fields, determinants and modulation
 

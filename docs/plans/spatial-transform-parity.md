@@ -1065,8 +1065,11 @@ _(append per phase: date, commits, test commands run, results)_
   - `transform.fsl-chain.v1` (`FslChainScenarioSuite`): FLIRT -> FNIRT
     `--cout --aff` materialized on the standard lattice, against FSL 5.0.9
     `applywarp` ramps and phantom, a FLIRT oracle built from a declared world
-    registration, the Jacobian chain rule, and `fnirtfileutils --jac`.
-    **Pass**.
+    registration, the Jacobian chain rule (a law check), and
+    `fnirtfileutils --jac`. **PassWithCaveats**, caveats
+    `transform.fsl-jacobian-spline-vs-finite-difference` (statistical
+    Jacobian gates) and `transform.fsl-chain-no-native-flirt-convertwarp`
+    (no native FLIRT or `convertwarp --premat` output for the pair).
   - `surface.volume-to-template-mesh-chain.v1` (`SurfaceChainScenarioSuite`):
     scanner volume -> tkRAS ribbon (`toScanner`, `RibbonOperator`) ->
     registered sphere -> fsaverage-like -> fsLR-like, commuting with the
@@ -1079,6 +1082,5 @@ _(append per phase: date, commits, test commands run, results)_
 - **Verification:** transformJVM 149 and transformJS 125; surfaceJVM 146 and
   surfaceJS 118; scalafimCompileAll 0 warnings; manifest validator passes.
 - **Deviation from the Phase 7 text:** the fMRIPrep chain uses the synthetic
-  SimpleITK composites, not demo1 outputs, and no native
-  `convertwarp --premat` exists for the FSL pair, so the composed field is
-  checked as the FLIRT oracle applied to native FNIRT output.
+  SimpleITK composites, not demo1 outputs. The surface chain uses synthetic
+  icospheres, not fsaverage or fsLR32k meshes.

@@ -18,9 +18,11 @@ private[scenarios] object ChainScenarioSupport:
   def maxAbsDifference(actual: Vector[Double], expected: Vector[Double]): Double =
     actual.zip(expected).map((a, e) => math.abs(a - e)).maxOption.getOrElse(Double.NaN)
 
-  /** The largest entry, NaN for an empty collection (so an empty comparison can never pass a tolerance). */
+  /** The largest entry; NaN if the collection is empty or holds any NaN, so neither can pass a tolerance. */
   def worst(values: Iterable[Double]): Double =
-    values.foldLeft(Double.NaN)((acc, v) => if acc.isNaN || v > acc || v.isNaN then v else acc)
+    values
+      .foldLeft(Option.empty[Double])((acc, v) => Some(acc.fold(v)(a => if a.isNaN || v.isNaN then Double.NaN else math.max(a, v))))
+      .getOrElse(Double.NaN)
 
   /** The exact affine `y = A x + t` through point pairs, by least squares on the normal equations of `[x 1]`. With four
     * or more affinely independent pairs of an affine map this recovers it to rounding; the residual is returned so a

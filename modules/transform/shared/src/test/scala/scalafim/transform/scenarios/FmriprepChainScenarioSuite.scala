@@ -11,7 +11,7 @@ import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.scenarios.{CaveatKind, CaveatSeverity, ScenarioCaveat, ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{DenseContext, LatticeAffine}
-import scalafim.transform.itk.{ItkHdf5Dumps, ItkHdf5File, ItkHdf5Interpretation, ItkLinearInterpretation, ItkTextCodec}
+import scalafim.transform.itk.{ItkHdf5Component, ItkHdf5Dumps, ItkHdf5File, ItkHdf5Interpretation, ItkLinearInterpretation, ItkTextCodec}
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}
 import ChainScenarioSupport.*
@@ -22,7 +22,7 @@ import ChainScenarioSupport.*
   *
   * Workflow risk protected: a template-space point or voxel must pull back to the right subject location through two
   * toolkit files whose conventions all differ from RAS world space. The chain is wrong if ITK's pullback is read as a
-  * forward map, if LPS is taken for RAS, or if the composite's last-component-first order is reversed; each of those
+  * forward map, if ITK's LPS parameters are taken for RAS, or if the composite's last-component-first order is reversed; each of those
   * mutations is run below and must fail.
   *
   * References are native SimpleITK 2.5.6 outputs only, never this module:
@@ -34,7 +34,7 @@ import ChainScenarioSupport.*
   * The composites are small synthetic SimpleITK files on an oblique, anisotropic lattice, not fMRIPrep demo outputs.
   */
 class FmriprepChainScenarioSuite extends munit.FunSuite:
-  import FmriprepChainScenarioSuite.{LatticePlacement, Mutation}
+  import FmriprepChainScenarioSuite.{ItkReference, Mutation}
 
   private val Id = "transform.fmriprep-chain.v1"
 
@@ -62,13 +62,32 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
 
   private def composite(name: String, mutation: Mutation): WorldTransform[t1w.type, template.type] =
     val dump = ItkHdf5Dumps.parse(OracleFixtures.text(s"itk_hdf5/$name.components.txt"))
-    val file =
-      if mutation == Mutation.CompositeStagesReversed then ItkHdf5File(dump.components.filter(_.isComposite) ++ dump.stages.reverse)
-      else dump
+    val file = mutation match
+      case Mutation.CompositeStagesReversed => ItkHdf5File(dump.components.filter(_.isComposite) ++ dump.stages.reverse)
+      case Mutation.ItkLpsReadAsRas         => ItkHdf5File(dump.components.map(lpsReadAsRas))
+      case _                                => dump
     val h5 = s"neurotransform/itk_oracle/$name.h5"
     // ITK uses zero displacement outside a field's lattice; PreserveSource agrees except in the border band (BorderBand).
     val context = DenseContext(Frames[t1w.type, template.type](t1w, template), CoordinateBoundaryPolicy.PreserveSource)
     ok(ItkHdf5Interpretation.interpretWith(file, context, AssetRef(h5, Some(OracleFixtures.sha256Hex(h5))))).composed
+
+  /** The composite a reader would build if it took ITK's LPS parameters for RAS: every stored matrix, offset, centre,
+    * lattice origin and direction, and displacement vector is conjugated by the LPS flip, so the module's own (correct)
+    * LPS -> RAS conjugation turns it back into the raw LPS numbers applied to RAS points.
+    */
+  private def lpsReadAsRas(component: ItkHdf5Component): ItkHdf5Component =
+    val f = Vector(-1.0, -1.0, 1.0)
+    val p = component.parameters
+    val fixed = component.fixedParameters
+    if component.isComposite then component
+    else if component.isDisplacementField then
+      val direction = (0 until 9).map(i => fixed(9 + i) * f(i / 3) * f(i % 3))
+      val geometry = (0 until 3).map(i => fixed(i)) ++ (0 until 3).map(i => fixed(3 + i) * f(i)) ++ (0 until 3).map(i => fixed(6 + i)) ++ direction
+      component.copy(parameters = IArray.tabulate(p.length)(i => p(i) * f(i % 3)), fixedParameters = IArray.from(geometry))
+    else
+      // AffineTransform_double_3_3: nine row-major matrix entries, three translations; fixed = centre
+      val matrix = (0 until 9).map(i => p(i) * f(i / 3) * f(i % 3))
+      component.copy(parameters = IArray.from(matrix ++ (0 until 3).map(i => p(9 + i) * f(i))), fixedParameters = IArray.tabulate(3)(i => fixed(i) * f(i)))
 
   private def templatePoint(ras: Vector[Double]): Point[template.type, D3] = ok(Point.fromVector(template, ras))
   private def t1wPoint(ras: Vector[Double]): Point[t1w.type, D3] = ok(Point.fromVector(t1w, ras))
@@ -82,8 +101,7 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
 
   private def runScenario(mutation: Mutation): ScenarioResult =
     val pointTable = OracleTable.load("itk_hdf5/points.tsv")
-    // Points are given to the chain as RAS; the LpsPointsReadAsRas mutation skips that conversion.
-    def asRas(lps: Vector[Double]) = if mutation == Mutation.LpsPointsReadAsRas then lps else flipLps(lps)
+    def asRas(lps: Vector[Double]) = flipLps(lps)
 
     // (1) the rigid leg's native reference, fitted exactly through ITK's own 12 point pairs
     val eulerPairs = itkRows(OracleTable.load("itk_linear/points.tsv"), "euler", skip = 1)
@@ -116,28 +134,19 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
     val templateGrid = ok(Grid.forFrame[D3, template.type](template)(shape, latticeAffine))
     val sourceImage = ok(Sampled.continuous(sourceGrid, NonSpatialAxes.empty, NDArray.tabulate[Double](shape(0), shape(1), shape(2))((i, j, k) => sourceRaw.value(i, j, k))))
     val voxels = for i <- (0 until shape(0)).toVector; j <- 0 until shape(1); k <- 0 until shape(2) yield Vector(i, j, k)
-    // ITK's field stage: the affine_warp composite queries its displacement field at the template point itself,
-    // warp_affine at the affine's image of it (ITK applies the last component first).
-    val affineOnly = composite("affine", Mutation.Faithful)
-    def fieldQuery(name: String, y: Point[template.type, D3]): Vector[Double] =
-      if name == "warp_affine" then ok(affineOnly.pullPoint(y)).coordinates else y.coordinates
-    def placement(world: Vector[Double]): LatticePlacement =
-      val index = affineAt(latticeAffine.inverse, world)
-      if index.zip(shape).exists((c, n) => c <= -1.0 || c >= n.toDouble) then LatticePlacement.Beyond
-      else if index.zip(shape).forall((c, n) => c >= 0.0 && c <= n - 1.0) then LatticePlacement.Inside
-      else LatticePlacement.Band
+    // The comparison set is chosen from the native data alone: the affine fitted through ITK's own TransformPoint of
+    // affine.h5 and the displacement samples as stored, evaluated in LPS exactly as ITK composes them.
+    val itk = ItkReference(itkRows(pointTable, "affine.h5", skip = 0), ItkHdf5Dumps.parse(OracleFixtures.text("itk_hdf5/affine_warp.components.txt")))
     val volumeObservations = composites.toVector.sortBy(_._1).flatMap: (name, transform) =>
       val native = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded(s"neurotransform/itk_oracle/${name}_resampled.nii.gz"))))
       transform.resample(sourceImage, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0)) match
         case Left(error) => Vector(ScenarioHarness.fact(s"volume.$name.resample", false, error.toString))
         case Right(resampled) =>
           // Every voxel is compared except those whose field query or final pullback lands in the one-voxel band just
-          // outside a lattice, where ITK and reframe4s extend differently (caveat BorderBand). The selection uses the
-          // faithful ITK reading, so a wrong candidate cannot shrink its own test set.
-          val itkTransform = composite(name, Mutation.Faithful)
+          // outside a lattice, where ITK and reframe4s extend differently (caveat BorderBand).
           val (compared, band) = voxels.partition: index =>
-            val y = ok(LatticeIndex.fromVector[D3](index).flatMap(templateGrid.pointAt))
-            placement(fieldQuery(name, y)) != LatticePlacement.Band && placement(ok(itkTransform.pullPoint(y)).coordinates) != LatticePlacement.Band
+            val y = flipLps(ok(LatticeIndex.fromVector[D3](index).flatMap(templateGrid.pointAt)).coordinates)
+            !itk.inBand(y, affineFirst = name == "warp_affine")
           val errors = compared.map(index => math.abs(resampled.image.data.at(IArray(index(0), index(1), index(2))) - native.value(index(0), index(1), index(2))))
           Vector(
             ScenarioHarness.fact(
@@ -240,7 +249,7 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
     val guards = Map(
       Mutation.BoldLegReadAsForwardMap -> "chain.boldref-point.max-abs-mm",
       Mutation.CompositeStagesReversed -> "volume.affine_warp.linear-resample.max-abs",
-      Mutation.LpsPointsReadAsRas -> "composite.affine_warp.transform-point.max-abs-mm"
+      Mutation.ItkLpsReadAsRas -> "composite.affine_warp.transform-point.max-abs-mm"
     )
     assertEquals(guards.keySet, Mutation.values.toSet - Mutation.Faithful)
     guards.foreach: (mutation, guard) =>
@@ -250,12 +259,62 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
 
   test("a template -> T1w warp cannot stand in for the T1w -> template composite: the direction is a type"):
     val errors = compileErrors("val swapped: WorldTransform[t1w.type, template.type] = composite(\"affine_warp\", Mutation.Faithful).materialize(???).toOption.get.transform.invert.toOption.get")
-    assert(errors.contains("Found:") && errors.contains("Required:"), errors)
+    // the mismatch is between the frames, reversed
+    assert(errors.contains("Required: scalafim.transform.WorldTransform[") && errors.contains("t1w.type") && errors.contains("template.type"), errors)
 
 object FmriprepChainScenarioSuite:
   /** Where a continuous lattice index falls: on the lattice, in the one-voxel band just outside it, or beyond. */
   private enum LatticePlacement derives CanEqual:
     case Inside, Band, Beyond
+
+  /** ITK's composite evaluated from native data only, in LPS: `affine` fitted through TransformPoint pairs of the affine
+    * alone, `field` the stored displacement component. Used to decide which voxels touch the border band.
+    */
+  private final case class ItkReference(affinePairs: Vector[(Vector[Double], Vector[Double])], dump: ItkHdf5File):
+    private val (affine, _) = ChainScenarioSupport.fitAffine(affinePairs)
+    private val field = dump.stages.find(_.isDisplacementField).getOrElse(throw new IllegalArgumentException("no displacement field"))
+    private val f = field.fixedParameters
+    private val size = Vector(0, 1, 2).map(i => math.rint(f(i)).toInt)
+    private val origin = Vector(f(3), f(4), f(5))
+    private val spacing = Vector(f(6), f(7), f(8))
+    private def direction(r: Int, c: Int): Double = f(9 + 3 * r + c)
+
+    private def applyAffine(p: Vector[Double]): Vector[Double] =
+      Vector.tabulate(3)(r => (0 until 3).map(c => affine(4 * r + c) * p(c)).sum + affine(4 * r + 3))
+
+    /** Continuous index of an LPS point on the field lattice (orthonormal direction). */
+    private def index(p: Vector[Double]): Vector[Double] =
+      Vector.tabulate(3)(c => (0 until 3).map(r => direction(r, c) * (p(r) - origin(r))).sum / spacing(c))
+
+    private def placement(p: Vector[Double]): LatticePlacement =
+      val c = index(p)
+      if c.zip(size).exists((v, n) => v <= -1.0 || v >= n.toDouble) then LatticePlacement.Beyond
+      // template lattice points come from the float32 NIfTI header: they land within 1e-6 of the faces
+      else if c.zip(size).forall((v, n) => v >= -1e-6 && v <= n - 1.0 + 1e-6) then LatticePlacement.Inside
+      else LatticePlacement.Band
+
+    /** Trilinear displacement at an LPS point inside the lattice; zero beyond it (ITK). */
+    private def displacement(p: Vector[Double]): Vector[Double] =
+      if placement(p) != LatticePlacement.Inside then Vector(0.0, 0.0, 0.0)
+      else
+        val c = index(p)
+        val lo = c.zip(size).map((v, n) => math.max(0, math.min(math.floor(v).toInt, n - 2)))
+        val t = c.zip(lo).map(_ - _)
+        Vector.tabulate(3): component =>
+          (for dx <- 0 to 1; dy <- 0 to 1; dz <- 0 to 1 yield
+            val w = (if dx == 1 then t(0) else 1 - t(0)) * (if dy == 1 then t(1) else 1 - t(1)) * (if dz == 1 then t(2) else 1 - t(2))
+            val v = (lo(0) + dx) + size(0) * ((lo(1) + dy) + size(1) * (lo(2) + dz))
+            w * field.parameters(3 * v + component)
+          ).sum
+
+    /** Whether ITK's field query or final pullback of the LPS template point lies in the border band. The image lattice
+      * is the field lattice (the oracle's source copies the field's geometry).
+      */
+    def inBand(y: Vector[Double], affineFirst: Boolean): Boolean =
+      val query = if affineFirst then applyAffine(y) else y
+      val moved = query.zip(displacement(query)).map(_ + _)
+      val last = if affineFirst then moved else applyAffine(moved)
+      placement(query) == LatticePlacement.Band || placement(last) == LatticePlacement.Band
 
   /** ITK extends a displacement field (and clamps an image) by its border sample up to half a voxel outside the
     * lattice, then uses zero displacement (and zero padding). reframe4s' `PreserveSource` (and `Constant`) blend towards
@@ -272,8 +331,8 @@ object FmriprepChainScenarioSuite:
   )
 
   /** The manifest's policy for this scenario: pass, or pass with exactly the declared border-band caveat. */
-  val Policy: ScenarioPolicy = ScenarioPolicy.allowCaveats(BorderBand.id)
+  val Policy: ScenarioPolicy = ScenarioPolicy(Set(ScenarioStatus.PassWithCaveats), Set(BorderBand.id))
 
   /** Convention errors a registration chain can make; `Faithful` is the correct reading. */
   enum Mutation derives CanEqual:
-    case Faithful, BoldLegReadAsForwardMap, CompositeStagesReversed, LpsPointsReadAsRas
+    case Faithful, BoldLegReadAsForwardMap, CompositeStagesReversed, ItkLpsReadAsRas

@@ -91,7 +91,8 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
   private val registrationAngle = 0.13
   private val sphereReg = rotatedSphere(3, registrationAngle)
   private val fsaverageLike = rotatedSphere(4, 0.37)
-  private val fsLrLike = rotatedSphere(2, 0.91)
+  // the same resolution as the subject sphere, so a plan applied against its direction still type-checks by length
+  private val fsLrLike = rotatedSphere(3, 0.91)
 
   // ------------------------------------------------------------------------------------------------------- volume
 
@@ -187,39 +188,51 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
       val (ref, mov) = if mutation == Mutation.ResamplingDirectionSwapped then (moving, target) else (target, moving)
       SurfaceResampling.plan(ref, mov).flatMap(plan => SurfaceResampling.apply(plan, values)).left.map(_.message)
 
+    /** The largest entry; NaN if empty or if any entry is NaN. */
+    def worst(values: Iterable[Double]): Double =
+      values.foldLeft(Option.empty[Double])((acc, v) => Some(acc.fold(v)(a => if a.isNaN || v.isNaN then Double.NaN else math.max(a, v)))).getOrElse(Double.NaN)
+
     def errorTo(target: TriangleMesh, values: Array[Double]): Double =
       if values.length != target.vertexCount then Double.PositiveInfinity
-      else (0 until target.vertexCount).map(i => math.abs(values(i) - onSphere(target, i))).max
+      else worst((0 until target.vertexCount).map(i => math.abs(values(i) - onSphere(target, i))))
+
+    def routeError(name: String, route: Either[String, Array[Double]], target: TriangleMesh, bound: Double): ScenarioObservation =
+      route.fold(error => ScenarioHarness.fact(name, false, error), values => ScenarioHarness.scalar(name, errorTo(target, values), 0.0, ScenarioTolerance.absolute(bound)))
 
     val observations: Vector[ScenarioObservation] = sampled match
       case Left(error) => Vector(ScenarioHarness.fact("ribbon.sample", false, error))
       case Right((white, values)) =>
-        val vertexErrors = values.indices.map(v => math.abs(values(v) - expectedVertex(v)))
+        val vertexErrors =
+          if values.length != expectedVertex.length then Vector(Double.PositiveInfinity)
+          else values.indices.map(v => math.abs(values(v) - expectedVertex(v)))
         // where the scanner-space white surface landed: its centre is the tkRAS centre shifted by c_ras
         val whiteCentre = Vector.tabulate(3)(a => (0 until white.vertexCount).map(v => white.coordinates(3 * v + a)).sum / white.vertexCount)
-        val chain =
+        // each route is judged on its own, so a failure names the route that broke
+        val fsaverage = resample(fsaverageLike, sphereReg, values)
+        val twoStep = fsaverage.flatMap(resample(fsLrLike, fsaverageLike, _))
+        val direct = resample(fsLrLike, sphereReg, values)
+        val gap =
           for
-            fsaverage <- resample(fsaverageLike, sphereReg, values)
-            twoStep <- resample(fsLrLike, fsaverageLike, fsaverage)
-            direct <- resample(fsLrLike, sphereReg, values)
-          yield (fsaverage, twoStep, direct)
-        val resampling = chain match
-          case Left(error) => Vector(ScenarioHarness.fact("resampling.plans", false, error))
-          case Right((fsaverage, twoStep, direct)) =>
-            val gap = if twoStep.length == direct.length then twoStep.indices.map(i => math.abs(twoStep(i) - direct(i))).max else Double.PositiveInfinity
-            Vector(
-              ScenarioHarness.fact("resampling.sagitta", subjectSag > 0.0 && fsaverageSag > 0.0, f"subject $subjectSag%.4f mm, fsaverage-like $fsaverageSag%.4f mm at radius 100"),
-              ScenarioHarness.scalar("resampling.subject-to-fsaverage.max-abs", errorTo(fsaverageLike, fsaverage), 0.0, ScenarioTolerance.absolute(gradientOnSphere * subjectSag)),
-              ScenarioHarness.scalar("resampling.subject-to-fslr-direct.max-abs", errorTo(fsLrLike, direct), 0.0, ScenarioTolerance.absolute(gradientOnSphere * subjectSag)),
-              ScenarioHarness.scalar("resampling.subject-to-fsaverage-to-fslr.max-abs", errorTo(fsLrLike, twoStep), 0.0, ScenarioTolerance.absolute(gradientOnSphere * (subjectSag + fsaverageSag))),
-              // the two routes commute up to the sum of their interpolation bounds
-              ScenarioHarness.scalar("resampling.commutativity.max-abs", gap, 0.0, ScenarioTolerance.absolute(gradientOnSphere * (2.0 * subjectSag + fsaverageSag)))
-            )
+            a <- twoStep
+            b <- direct
+          yield if a.length == b.length then worst(a.indices.map(i => math.abs(a(i) - b(i)))) else Double.PositiveInfinity
+        val resampling = Vector(
+          ScenarioHarness.fact("resampling.sagitta", subjectSag > 0.0 && fsaverageSag > 0.0, f"subject $subjectSag%.4f mm, fsaverage-like $fsaverageSag%.4f mm at radius 100"),
+          routeError("resampling.subject-to-fsaverage.max-abs", fsaverage, fsaverageLike, gradientOnSphere * subjectSag),
+          routeError("resampling.subject-to-fslr-direct.max-abs", direct, fsLrLike, gradientOnSphere * subjectSag),
+          routeError("resampling.subject-to-fsaverage-to-fslr.max-abs", twoStep, fsLrLike, gradientOnSphere * (subjectSag + fsaverageSag)),
+          // the two routes commute up to the sum of their interpolation bounds
+          gap.fold(
+            error => ScenarioHarness.fact("resampling.commutativity.max-abs", false, error),
+            g => ScenarioHarness.scalar("resampling.commutativity.max-abs", g, 0.0, ScenarioTolerance.absolute(gradientOnSphere * (2.0 * subjectSag + fsaverageSag)))
+          )
+        )
         Vector(
           ScenarioHarness.scalar("tkras-to-scanner.white-centre.max-abs-mm", whiteCentre.zip(centreScanner).map((a, e) => math.abs(a - e)).max, 0.0, ScenarioTolerance.absolute(1e-9)),
+          ScenarioHarness.fact("ribbon.sampled-vertices", values.length == whiteMesh.vertexCount, s"${values.length} of ${whiteMesh.vertexCount} vertices"),
           ScenarioHarness.finite("ribbon.sampled-values", values),
           // trilinear interpolation of a linear field is exact; the residual is floating-point rounding
-          ScenarioHarness.scalar("ribbon.sample-vs-mid-thickness-field.max-abs", vertexErrors.max, 0.0, ScenarioTolerance.absolute(1e-9))
+          ScenarioHarness.scalar("ribbon.sample-vs-mid-thickness-field.max-abs", worst(vertexErrors), 0.0, ScenarioTolerance.absolute(1e-9))
         ) ++ resampling
     ScenarioHarness.result(Id, observations, Caveats)
 
@@ -233,10 +246,12 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
 
   test("every convention mutation of the surface chain fails the scenario"):
     val guards = Map(
-      Mutation.TkRasTakenAsScanner -> "tkras-to-scanner.white-centre.max-abs-mm",
-      Mutation.TkRasLinkReversed -> "tkras-to-scanner.white-centre.max-abs-mm",
-      Mutation.VolumeAxesReadAsLps -> "ribbon.sample", // the sampling step, its finiteness, or its values
-      Mutation.ResamplingDirectionSwapped -> "resampling.plans"
+      Mutation.TkRasTakenAsScanner -> "tkras-to-scanner.white-centre.max-abs-mm:",
+      Mutation.TkRasLinkReversed -> "tkras-to-scanner.white-centre.max-abs-mm:",
+      // the mirrored grid no longer covers the ribbon: every segment samples outside it
+      Mutation.VolumeAxesReadAsLps -> "ribbon.sampled-values:",
+      // same-resolution meshes: the swapped plan runs, and its values are wrong
+      Mutation.ResamplingDirectionSwapped -> "resampling.subject-to-fslr-direct.max-abs:"
     )
     assertEquals(guards.keySet, Mutation.values.toSet - Mutation.Faithful)
     guards.foreach: (mutation, guard) =>
@@ -246,7 +261,7 @@ class SurfaceChainScenarioSuite extends munit.FunSuite:
 
   test("a tkRAS surface cannot be sampled on a scanner-space grid without moving it first"):
     val errors = compileErrors("RibbonOperator.compile(whiteTk, pialTk, GridSpec.in(scanner)(SpatialDims(2, 2, 2), affine(volumeAffine)).toOption.get)")
-    assert(errors.contains("Found:") || errors.contains("Required:"), errors)
+    assert(errors.contains("Required:") && errors.contains("this.tkRas") && errors.contains("this.scanner"), errors)
 
 object SurfaceChainScenarioSuite:
   /** Convention errors a surface chain can make; `Faithful` is the correct reading. */
@@ -281,4 +296,4 @@ object SurfaceChainScenarioSuite:
   val Caveats: Vector[ScenarioCaveat] = Vector(TemplateBridge, RibbonOverlap)
 
   /** The manifest's policy for this scenario: pass with exactly the two declared caveats. */
-  val Policy: ScenarioPolicy = ScenarioPolicy.allowCaveats(Caveats.map(_.id)*)
+  val Policy: ScenarioPolicy = ScenarioPolicy(Set(ScenarioStatus.PassWithCaveats), Caveats.map(_.id).toSet)
