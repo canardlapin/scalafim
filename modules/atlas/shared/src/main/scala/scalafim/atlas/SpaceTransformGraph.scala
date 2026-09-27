@@ -20,7 +20,7 @@ import scalafim.spatial.{
   SpatialGraph,
   TemplateKind
 }
-import scalafim.transform.WorldTransform
+import scalafim.transform.{PushAvailability, WorldTransform}
 
 /** Stable world frames for the template spaces a transform manifest names.
   *
@@ -221,8 +221,12 @@ object SpaceTransformGraph:
         case (Some(_), _) => Inverse.Exact("affine")
         case (None, Some(WorldTransform.Linear(_, _))) => Inverse.Exact("affine")
         case (None, Some(WorldTransform.Smooth(_, _))) => Inverse.Exact("analytic")
-        case (None, Some(mapped: WorldTransform.Mapped[?, ?])) if mapped.push.nonEmpty =>
-          Inverse.Provided("inverse asset", 1.0)
+        case (None, Some(mapped: WorldTransform.Mapped[?, ?])) =>
+          mapped.availability match
+            case PushAvailability.FromAsset(_, _) => Inverse.Provided("inverse asset", 1.0)
+            case PushAvailability.Composed(_)     => Inverse.Provided("composed forward maps", 1.0)
+            case PushAvailability.Estimated(_)    => Inverse.Approximate("qualified numerical inverse", 0.9)
+            case PushAvailability.Unavailable()   => Inverse.None
         case _ => Inverse.None
 
   private def morphismKind(kind: TransformKind): MorphismKind =

@@ -1,0 +1,24 @@
+{
+ "generator": "tools/transform/generate_templateflow_mni_bridge_oracle.py",
+ "generated": "2026-09-27",
+ "kind": "native-oracle",
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "h5py": "3.16.0",
+  "nibabel": "5.3.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with SimpleITK==2.5.6 --with h5py==3.16.0 --with nibabel==5.3.2 --with numpy python tools/transform/generate_templateflow_mni_bridge_oracle.py"
+ ],
+ "notes": "Inputs are TemplateFlow cache files (not committed); their SHA-256 are in xfm.tsv and inputs below. Points are RAS mm; tx,ty,tz = ITK TransformPoint (fixed -> moving) or its fixed-point inverse (push). inputs: tpl-MNI152NLin2009cAsym_res-01_desc-brain_T1w.nii.gz=97cee2cf7f51388d76d7b3632c8375d688d0fa171e1bede81fcef23726bb3d73, tpl-MNI152NLin2009cAsym_res-01_desc-brain_mask.nii.gz=e40bb1816736504d4c25abc243c1c8503df1d308f64c048318aa4b829e09a7ae, tpl-MNI152NLin6Asym_res-01_desc-brain_T1w.nii.gz=72f8edc99d7e696da7717db20b73897d8da5909d7f30b1c9a7e2a79e9f64ff2f, tpl-MNI152NLin6Asym_res-01_desc-brain_mask.nii.gz=6d540075dac093fa5070a929dc5ea52795d54cc9ab57fe1272086dc70314b428",
+ "sha256": {
+  "direction.tsv": "ca31df3e26565c32b26030fbd2a7cc6433397791668e7087b3628a7be3dbfeac",
+  "pull_points.tsv": "57f298a00fda3b495bbb890361f170de37f970e8994ee9fabe8fdfb1d394007c",
+  "push_points.tsv": "cfe544e9d48d2f64ff16e3aa5c11f67108d707f2c3c1e8c427a37eb1d360071e",
+  "reverse_points.tsv": "2da32cb7ba4fa4e2717bf72fd96527b38e7a078418363f68efb9d3caafba66a3",
+  "xfm.tsv": "f2b79bf013738af03fe1479f29bfe333c526b8bb1bf34886ea0c5ab181395f91"
+ }
+}
