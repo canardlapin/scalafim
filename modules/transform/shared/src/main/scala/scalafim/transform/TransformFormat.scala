@@ -20,7 +20,7 @@ enum TransformFormat derives CanEqual:
   /** FSL FNIRT dense field (`--fout`, relative or absolute). */
   case FslFnirtField
 
-  /** FSL FNIRT spline coefficients (`--cout`, intent 2007-2009). */
+  /** FSL FNIRT spline coefficients (`--cout`: cubic intent 2007, quadratic intent 2009). Read-only. */
   case FslFnirtCoefficients
 
   /** AFNI `.aff12.1D` affine, one or more rows. */
@@ -44,3 +44,9 @@ enum TransformFormat derives CanEqual:
 /** Formats deliberately not supported (ADR s5); detection names them so the refusal is explicit. */
 enum UnsupportedFormat derives CanEqual:
   case ItkBSpline, AfniBrik, FreeSurferM3z, Elastix
+
+  /** FNIRT DCT-basis coefficients (intent 2008). */
+  case FslDctCoefficients
+
+  /** TOPUP fieldmaps and their spline coefficients (intents 2016-2018): scalar off-resonance fields, not transforms. */
+  case FslTopup

@@ -5,7 +5,7 @@ import java.nio.file.{Path, Paths}
 import image4s.geometry.Point
 import scalafim.image.world.{FrameCatalog, Spaces, WorldSpace}
 import scalafim.transform.Conversion.EncodedTransform
-import scalafim.transform.field.{DenseContext, LpsDisplacementInterpretation}
+import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, LpsDisplacementInterpretation}
 import scalafim.transform.fsl.{FlirtInterpretation, FslHeaderGeometry}
 import scalafim.transform.itk.ItkHdf5Interpretation
 import scalafim.transform.nifti.NiftiRaw
@@ -51,6 +51,22 @@ class GuideExamplesSuite extends munit.FunSuite:
     val p = Point.fromVector(input, Vector(1.0, 2.0, 3.0)).toOption.get
     val there = registration.mapPoint(p).toOption.get
     assertEqualsDouble(back.mapPoint(there).toOption.get.coordinates(0), 1.0, 1e-9)
+
+  test("guide: FNIRT coefficient files need both volumes' geometry"):
+    val input = FrameCatalog.frame(WorldSpace.declare("highres").toOption.get)
+    val reference = FrameCatalog.frame(WorldSpace.declare("standard").toOption.get)
+    val dir = "neurotransform/fsl_coef_oracle/srcleft_refright_aff"
+    def fslGeometry(file: String) =
+      val gz = new java.util.zip.GZIPInputStream(java.nio.file.Files.newInputStream(oracle(s"$dir/$file")))
+      try FslHeaderGeometry(NiftiRaw.parse(IArray.unsafeFromArray(gz.readAllBytes())).toOption.get).toOption.get
+      finally gz.close()
+    val file = TransformFiles.load(oracle(s"$dir/coef.nii.gz")).toOption.get.native match
+      case NativeTransform.FnirtCoefficients(f) => f
+      case other                                => fail(s"expected FNIRT coefficients, got ${other.format}")
+    val context = FnirtCoefficientContext(FslGrids[input.type, reference.type](input, fslGeometry("source.nii.gz"), reference, fslGeometry("target.nii.gz")))
+    val warp: WorldTransform.Mapped[input.type, reference.type] = FnirtCoefficientInterpretation.interpret(file, context).toOption.get
+    val centre = fslGeometry("target.nii.gz").voxelToWorld(Vector(5.0, 5.0, 4.0)).toOption.get
+    assert(warp.pullPoint(Point.fromVector(reference, centre).toOption.get).isRight)
 
   test("guide: convert between toolkits"):
     val lta = TransformFiles.load(oracle("freesurfer_linear/ras2ras.lta")).toOption.get.native

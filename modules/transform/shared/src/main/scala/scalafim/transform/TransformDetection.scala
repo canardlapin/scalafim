@@ -68,10 +68,14 @@ object TransformDetection:
   private def detectNifti(nifti: NiftiRaw, name: String): Either[TransformIoError, TransformFormat] =
     val shape = nifti.shape
     nifti.intentCode match
-      case 2006                      => Right(TransformFormat.FslFnirtField)
-      case 2007 | 2008 | 2009        => Right(TransformFormat.FslFnirtCoefficients)
-      case 2016 | 2017 | 2018 | 2019 =>
-        Left(TransformIoError.Unsupported(UnsupportedFormat.ItkBSpline, s"FNIRT intent ${nifti.intentCode} (DCT/other bases) is out of scope"))
+      // FSL intent codes (fslpy fsl.data.constants): 2006 FNIRT displacement field, 2007 cubic and 2009 quadratic spline
+      // coefficients, 2008 DCT coefficients, 2016/2017 TOPUP spline coefficients, 2018 TOPUP field.
+      case 2006        => Right(TransformFormat.FslFnirtField)
+      case 2007 | 2009 => Right(TransformFormat.FslFnirtCoefficients)
+      case 2008 =>
+        Left(TransformIoError.Unsupported(UnsupportedFormat.FslDctCoefficients, "FNIRT DCT-basis coefficients (intent 2008) are out of scope"))
+      case 2016 | 2017 | 2018 =>
+        Left(TransformIoError.Unsupported(UnsupportedFormat.FslTopup, s"TOPUP intent ${nifti.intentCode} is an off-resonance field, not a spatial transform"))
       case _ if shape.size == 5 && shape(3) == 1 && shape(4) == 3 =>
         // 3dQwarp writes <prefix>_WARP.nii; ANTs writes <prefix>[0-9]Warp.nii.gz / InverseWarp.nii.gz.
         if name.contains("qwarp") || name.contains("_warp.") then Right(TransformFormat.AfniQwarp)

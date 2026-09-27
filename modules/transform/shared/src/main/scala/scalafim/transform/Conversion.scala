@@ -4,7 +4,7 @@ import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.field.CoordinateBoundaryPolicy
 import scalafim.image.world.{FrameCatalog, FreeSurferVolumeGeometry, FslVolumeGeometry, ToolCoordinates, WorldSpace}
 import scalafim.transform.afni.{Aff12Codec, Aff12Expression, Aff12Interpretation}
-import scalafim.transform.field.{DenseContext, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
+import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, FnirtContext, FnirtDefinition, FnirtFieldInterpretation, LpsDisplacementInterpretation}
 import scalafim.transform.freesurfer.{LtaCodec, LtaExpression, LtaGeometry, LtaInterpretation, MniXfm, MniXfmCodec, MniXfmInterpretation, RegisterDat, RegisterDatCodec, RegisterDatInterpretation, VolGeom}
 import scalafim.transform.fsl.{FlirtCodec, FlirtExpression, FlirtInterpretation}
 import scalafim.transform.itk.{ItkHdf5Interpretation, ItkLinearExpression, ItkLinearInterpretation, ItkMatlabCodec, ItkTextCodec}
@@ -37,8 +37,9 @@ object ConversionContext:
   val empty: ConversionContext = ConversionContext()
 
 /** Conversion between toolkit formats: decode, interpret with the decode context, express with the encode context,
-  * encode. Linear transforms convert exactly between all linear formats; dense maps convert to dense formats only on a
-  * sampling lattice; dense to linear formats and anything to FNIRT coefficients are refused.
+  * encode. Linear transforms convert exactly between all linear formats; dense maps (including evaluated FNIRT
+  * coefficients) convert to dense formats only on a sampling lattice; dense to linear formats and anything to FNIRT
+  * coefficients (which would need fitting) are refused.
   */
 object Conversion:
   /** Convert a decoded file. HDF5 inputs (ITK composites, X5) are decoded by the JVM container readers first. */
@@ -79,8 +80,9 @@ object Conversion:
       case NativeTransform.FnirtField(f) =>
         need(ctx.fsl, TransformFormat.FslFnirtField, "source FSL geometry").flatMap(p =>
           FnirtFieldInterpretation.interpret(f, FnirtContext(frames, p.source, ctx.fnirtDefinition, ctx.boundary)))
-      case NativeTransform.FnirtCoefficients(_) =>
-        Left(TransformError.UnsupportedConversion("FNIRT coefficients", TransformFormat.FslFnirtCoefficients, "coefficient evaluation needs reframe4s B-spline fields (STP U1)"))
+      case NativeTransform.FnirtCoefficients(file) =>
+        need(ctx.fsl, TransformFormat.FslFnirtCoefficients, "source and reference FSL geometry").flatMap(p =>
+          FnirtCoefficientInterpretation.interpret(file, FnirtCoefficientContext(FslGrids(frames.source, p.source, frames.target, p.reference), ctx.boundary)))
 
   private def express[S <: Frame[D3], T <: Frame[D3]](transform: WorldTransform[S, T], to: TransformFormat, frames: Frames[S, T], ctx: ConversionContext): Either[TransformError, EncodedTransform] =
     def need[A](value: Option[A], what: String) = value.toRight(TransformError.MissingContext(to, what))

@@ -14,6 +14,8 @@ enum TransformError derives CanEqual:
   case Io(cause: TransformIoError)
   case ContextFrameMismatch(role: String, expected: String, actual: String)
   case MissingContext(format: TransformFormat, needed: String)
+  /** The supplied context contradicts what the file records (e.g. a reference volume of another shape). */
+  case ContextMismatch(format: TransformFormat, reason: String)
   case UnsupportedConversion(from: String, to: TransformFormat, reason: String)
   case AmbiguousFnirtDefinition(reason: String)
   case Invalid(reason: String)
@@ -27,6 +29,7 @@ enum TransformError derives CanEqual:
       case Io(cause)                              => cause.message
       case ContextFrameMismatch(role, expected, actual) => s"$role grid lives in $actual, expected $expected"
       case MissingContext(format, needed)         => s"$format needs $needed"
+      case ContextMismatch(format, reason)        => s"$format context does not match the file: $reason"
       case UnsupportedConversion(from, to, reason) => s"cannot express $from as $to: $reason"
       case AmbiguousFnirtDefinition(reason)       => s"cannot tell whether the FNIRT field is relative or absolute: $reason; state it explicitly"
       case Invalid(reason)                        => reason
