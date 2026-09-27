@@ -46,7 +46,16 @@ GIFTI coordinate system, and the BIDS `space-` entity. It refuses to guess:
 
 - Bare `NIFTI_XFORM_MNI_152` does not say *which* MNI152, so it is a typed
   `AmbiguousTemplate`.
-- Contradictory evidence is `ConflictingEvidence`.
+- Contradictory evidence is `ConflictingEvidence`. An explicit assertion
+  settles ambiguity but never overrides a contradicting label or code.
+
+`Nifti.readVolumeIn(path, evidence)` (and `readSeriesIn`) is the
+identity-bearing read: it adds the header's selected xform code to the
+caller's `SpaceEvidence`, resolves it, and returns the volume in that world
+space, or a typed error when the evidence is missing or contradictory. The
+plain `Nifti.readVolume` still returns volumes in the shared `Unresolved`
+world, where every such volume aligns with every other; that is a legacy
+convenience, not evidence that two files share a space.
 
 A frame read from a file is a different runtime object from the static
 template frame, even when both name the same space. `Placed[V].bindTo(frame)`

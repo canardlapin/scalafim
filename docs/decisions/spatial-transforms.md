@@ -131,3 +131,27 @@ never with a guess:
   - `transform` → `image`, reframe4s
   - `spatial` → `transform`
   - `atlas` → `spatial`, `transform`
+
+## 8. World identity of loaded data (STP P1.07 review)
+
+**Decision.** Identity-bearing reads are explicit; the legacy reads keep the
+shared unresolved world for now.
+
+- `Nifti.readVolumeIn`/`readSeriesIn` resolve a file's world space from its
+  selected xform code plus caller evidence (BIDS `space-`, a `NativeContext`,
+  an assertion) and re-identify the geometry in that world. Unresolved or
+  contradictory evidence is a typed error.
+- `Nifti.readVolume`/`readSeries` and `SampleSpaces.make` keep
+  `WorldSpace.Unresolved`. Every file read this way aligns with every other,
+  which same-subject pipelines rely on. That alignment is not evidence that two
+  spaces coincide, and the scaladoc says so.
+- **Deferred:** moving the legacy callers onto evidence-bearing reads. Until
+  then, two subjects' natively read volumes still align.
+
+**Assertions do not override evidence.** A caller's asserted world space must
+agree with the BIDS label (a native label admits only a subject-native
+assertion) and with the xform code, under the rules a BIDS-named space meets.
+
+**A declared space is its token.** The label is presentation metadata carried
+by the token and the frame's `FrameMetadata`; it is not encoded in the
+persistent frame id and does not take part in equality.

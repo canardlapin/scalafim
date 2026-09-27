@@ -196,8 +196,10 @@ There are two different identities in play, and they must stay separate:
 
 Many domains share one world space. The T1w grid, the functional grid after
 coregistration, and the white and pial surfaces all live in subject scanner
-RAS. `SpaceRef` gains `def world: WorldSpace`; `WorldSpace` is not a copy of
-`SpaceRef`.
+RAS. `SpaceRef` gains `def world: Either[SpaceError, WorldSpace]` (only
+templates resolve from the reference alone) and `worldIn(native: NativeContext)`
+(subject volumes and surfaces resolve to that subject's native world);
+`WorldSpace` is not a copy of `SpaceRef`.
 
 ```scala
 package scalafim.image.world
@@ -206,16 +208,18 @@ package scalafim.image.world
 opaque type DatasetNamespace = String   // BIDS DatasetDOI, else a content hash of dataset_description.json, else explicit
 
 /** Which acquisition anchors a native space. Distinct boldrefs within one session are distinct spaces. */
-final case class ReferenceAcquisition(entities: BidsEntities, geometryDigest: GeometryDigest)
-// geometryDigest = hash of (dims, selected vox2world affine, qform/sform codes); entities = task/run/acq/echo/...
+final case class ReferenceAcquisition private (entities: Map[String, String], geometry: GeometryDigest)
+// ReferenceAcquisition(entities, geometry): Either[SpaceError, _] rejects blank entities
+// geometry = lossless (dims, selected vox2world affine, qform/sform codes); entities = task/run/acq/echo/...
 
 enum WorldSpace:
   case Template(name: TemplateName)            // globally unique by definition: MNI152NLin2009cAsym, MNI305, fsaverage, fsLR ...
   case SubjectNative(ns: DatasetNamespace, subject: SubjectId, session: Option[SessionId], reference: ReferenceAcquisition)
   case SubjectTkRas(ns: DatasetNamespace, subject: SubjectId, conformed: ReferenceAcquisition)
       // FreeSurfer surface RAS of one subject's conformed volume (orig.mgz); not per hemisphere
-  case Declared(token: DeclaredToken, label: String)
-      // token is minted fresh by FrameCatalog.declare(label); the label is display-only and never defines identity
+  case Declared(token: DeclaredToken)
+      // token is minted fresh by WorldSpace.declare(label). The label rides on the token for display and in the
+      // frame's FrameMetadata; equality, hashing and the persistent frame id use the token alone
 ```
 
 **Identity rules:**
@@ -273,13 +277,17 @@ So:
   ```scala
   /** V is a frame-indexed family: [F] =>> Point[F, D3], GridSpec, NeuroVolume[F] ... */
   sealed trait Placed[V[_ <: Frame[D3]]]:
-    val frame: Frame[D3]
+    type F <: Frame[D3]
+    val frame: F
     val world: WorldSpace
-    def value: V[frame.type]
+    def value: V[F]
 
   object Placed:
-    /** Only constructor: the value must already be typed at exactly this frame. */
-    def apply[V[_ <: Frame[D3]]](f: Frame[D3], w: WorldSpace)(v: V[f.type]): Placed[V]
+    /** The value must already be typed at exactly this frame. */
+    def apply[V[_ <: Frame[D3]]](frame: Frame[D3])(value: V[frame.type]): Either[SpaceError, Placed[V]]
+    /** Also accepts a decoder's existential value (GridSpec[?]) by capture; the value's runtime frame owner is
+      * checked against `frame`, because a wide F (e.g. Frame[D3]) alone would not prove ownership. */
+    def of[F <: Frame[D3], V[_ <: Frame[D3]]](frame: F)(value: V[F])(using FrameOwned[V]): Either[SpaceError, Placed[V]]
 
   extension [V[_ <: Frame[D3]]](p: Placed[V])
     /** Checked retyping to a static frame, through image4s FrameAlignment on persistent keys. */
@@ -291,7 +299,11 @@ So:
     that frame.
   - `Rebind[V]` is implemented with `FrameAlignment.pointToRight` and
     `Frame.alignOwners`. It fails when the persistent keys differ.
-  - Without a static target, code works inside `p.frame.type`.
+  - Without a static target, code works inside `p.F`.
+  - The frame is a type member rather than `frame.type`, because the
+    singleton encoding cannot hold a runtime-decoded `GridSpec[?]`: the
+    decoded value's type is a capture of the wildcard, not the singleton type
+    of its frame (confirmed by `PlacedProbeSuite`).
   - **Negative tests** (`compileErrors`):
     - `Placed(mniFrame, w)(subjectPoint)` does not compile
     - `p.value` cannot be used as a `Point[Mni2009c, D3]` without `bindTo`
@@ -673,6 +685,11 @@ Develop these with `-Dscalafim.reframe4s.build=../reframe4s`, then bump
 - Add `SpaceRef.world`.
 - Replace the constant persistent frame id.
 - Add `GridSpec[F]`, `SpatialPullback[T, S]` and typed `WorldPoint` syntax.
+- Add identity-bearing loaders: `Nifti.readVolumeIn`/`readSeriesIn` take
+  `SpaceEvidence`, add the header's selected xform code, run
+  `SpaceResolver.resolveKnown`, and re-identify the geometry with
+  `SampleSpaces.inWorld`. Unresolved, ambiguous or contradictory evidence is a
+  typed `NiftiImageReadError.Space`.
 - **Migrate:**
   - `SpatialPullbacks`, `ResamplingPlan`
   - `Resample`: remove the `method: String` / `engine: String` overloads in
@@ -693,7 +710,24 @@ Develop these with `-Dscalafim.reframe4s.build=../reframe4s`, then bump
 
 **Exit:** a grep gate in `transformBoundaryCheck` and
 `imageAlgebraBoundaryCheck` proves no public signature outside the IO packages
-mentions `Frame[D3]` erased.
+mentions `Frame[D3]` erased. Both tasks run `project/FrameErasureGate.scala`,
+which matches a `Frame[D3]` type argument of `SpatialMap`, `SpatialPullback`,
+`GridSpec`, `Point`, `Vec`, `Grid`, `SampleSpace`, `WorldBox` and
+`WorldTransform`, and reframe4s `FrameErasedMap[D3]`, across line breaks and
+outside comments and strings. Only `private`/`private[this]` definitions,
+method-local code, IO packages and a path allowlist are exempt, and the gate
+self-tests its matcher on known-bad and known-good snippets before every run.
+
+**Deferred: world identity of legacy reads.** `Nifti.readVolume`/`readSeries`,
+`NiftiHeader.space` and `SampleSpaces.make` still place D3 geometry in
+`WorldSpace.Unresolved` (frame id `scalafim-ras-d3`), so two subjects' native
+volumes, or a native volume and a template, align with each other, including
+in the viewer's `LayerAlignment.check`. Giving each legacy read a distinct
+frame would break same-subject alignment across the codebase, which relies on
+independently read files sharing one frame. Callers that need identity use
+`readVolumeIn`/`readSeriesIn` or `SampleSpaces.inWorld`. Migrating the legacy
+callers (dataset ingest, viewers, examples) onto evidence-bearing reads is a
+follow-up ticket, not part of P1.07.
 
 ### Phase 2: Convention kernel and orientation
 
