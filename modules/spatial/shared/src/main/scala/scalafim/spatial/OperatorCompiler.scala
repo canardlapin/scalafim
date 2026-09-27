@@ -342,7 +342,8 @@ object VolumePullbackOperatorCompiler extends OperatorCompiler:
         values(i) = values(i) / coverage
         i += 1
 
-    RowWeights(cols.toVector, values.toVector, coverage)
+    // The eight corner weights sum to one only up to rounding; coverage is a fraction and must stay in [0, 1].
+    RowWeights(cols.toVector, values.toVector, math.min(coverage, 1.0))
 
   private def addTrilinearCorner(
     dims: SpatialDims,

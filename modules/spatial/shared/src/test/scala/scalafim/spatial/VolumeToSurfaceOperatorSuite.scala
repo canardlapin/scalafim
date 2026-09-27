@@ -95,6 +95,21 @@ class VolumeToSurfaceOperatorSuite extends munit.FunSuite:
     assertEqualsDouble(back(10, 0), 2.0, 1e-12)
     assertEqualsDouble(back(4, 0), 3.0, 1e-12)
 
+  test("interior trilinear sample points report coverage no greater than one"):
+    // corner weights can sum to 1.0000000000000002; the reported coverage is a fraction and is clamped
+    val grid = scalafim.image.GridSpec.fromSpace(space)
+    val tenths = (1 to 9).map(_ / 10.0)
+    for
+      x <- tenths
+      y <- tenths
+      z <- tenths
+    do
+      val weights =
+        VolumeToSurfaceOperatorCompiler.sourcePointWeights(grid, None, scalafim.image.SpatialPoint(x, y, z), SamplingPolicy.Trilinear)
+      assert(weights.coverage <= 1.0, clue = s"point ($x, $y, $z) coverage ${weights.coverage}")
+      assertEqualsDouble(weights.coverage, 1.0, 1e-12)
+      assertEqualsDouble(weights.values.sum, 1.0, 1e-12)
+
   test("ribbon operator averages normalized white-to-pial sample weights"):
     val source = volumeDomain()
     val target = surfaceDomain()

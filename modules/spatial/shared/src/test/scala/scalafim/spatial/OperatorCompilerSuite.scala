@@ -98,6 +98,23 @@ class OperatorCompilerSuite extends munit.FunSuite:
     val sampled = linValue(operator.forward(sourceValues))
     assertEqualsDouble(sampled(0, 0), 12.5, 1e-12)
 
+  test("interior trilinear rows report full coverage despite rounding in the corner weights"):
+    // The eight corner weights of an interior point sum to one only up to rounding (1.0000000000000002 for some
+    // fractional offsets); coverage must still be a valid fraction rather than failing the compile.
+    val source = domain("rounding-source", Vector(3, 3, 3))
+    val target = domain("rounding-target", Vector(1, 1, 1))
+    val tenths = (1 to 9).map(_ / 10.0)
+    for
+      x <- tenths
+      y <- tenths
+      z <- tenths
+    do
+      val morphism = affine("rounding", source, target, translation(1.0 + x, 1.0 + y, 1.0 + z))
+      val operator =
+        value(OperatorCompiler.compile(graph(Vector(source, target), Vector(morphism)), CompileRequest(source.id, target.id)))
+      assertEqualsDouble(operator.qc.coverage.rowCoverage.head, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
+      assertEqualsDouble(triplets(operator).values.toVector.sum, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
+
   test("ROI rows preserve order and report out-of-bounds coverage"):
     val source = domain("source", Vector(2, 1, 1))
     val target = domain("target", Vector(3, 1, 1))
