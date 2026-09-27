@@ -1,6 +1,6 @@
 package scalafim.transform
 
-import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
+import image4s.{BoundaryPolicy, Continuous, NonSpatialAxes, Sampled}
 import image4s.geometry.{Affine, D3, Frame, Grid, GridId, LatticeIndex, Point}
 import ravel.DType.given
 import ravel.NDArray
@@ -14,10 +14,11 @@ import reframe4s.field.{
   InversionError,
   InversionGateFailure,
   LogDeterminant,
-  MaterializedOutcome
+  MaterializedOutcome,
+  CoverageCounts
 }
 import reframe4s.lie.FramedAffine
-import reframe4s.resample.VolumeModulation
+import reframe4s.resample.{BorderBand, ResamplingResult, VolumeModulation}
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.transform.field.DenseLattice
 
@@ -123,8 +124,8 @@ class WarpAlgebraSuite extends munit.FunSuite:
     assertEquals(filled.coverage.rejectedFill, CoordinateBoundaryPolicy.Constant(Vector(0.0, 0.0, 0.0)))
 
   test("coverage is attributed to the stage whose boundary policy supplied the value"):
-    // ITK-style zero-displacement extension on the warp, then an affine: points outside the warp's lattice are
-    // SourcePreserved by the warp stage, not reported as covered.
+    // A zero-displacement extension (PreserveSource) on the warp, then an affine: points outside the warp's lattice
+    // are SourcePreserved by the warp stage, not reported as covered.
     val warpMT: WorldTransform.Mapped[middle.type, target.type] =
       WorldTransform.Mapped(
         ok(DenseLattice.pullback[middle.type, target.type](target, middle, Vector(8, 8, 8), axisAligned(Vector(0.0, 0.0, 0.0), 1.0), CoordinateBoundaryPolicy.PreserveSource)(
@@ -142,6 +143,24 @@ class WarpAlgebraSuite extends munit.FunSuite:
     assertEquals(field.coverage.outcomeAt(Vector(9, 0, 0)), Some(MaterializedOutcome.SourcePreserved))
     // x = 9 lies outside the warp lattice, so its displacement is zero and only the affine applies
     close(Vector.tabulate(3)(c => ok(field.field.coordinates.valueAt(Vector(9, 2, 3), Vector(c)))), Vector(10.0, 2.0, 3.0), 1e-12, "preserved point")
+
+  test("ITK's border hold is reported as BorderHeld within half a voxel and as SourcePreserved beyond it"):
+    val warp: WorldTransform.Mapped[source.type, target.type] =
+      WorldTransform.Mapped(
+        ok(DenseLattice.pullback[source.type, target.type](target, source, Vector(8, 8, 8), axisAligned(Vector(0.0, 0.0, 0.0), 1.0), CoordinateBoundaryPolicy.HoldBorderDisplacement)(
+          (x, y, z) => Vector(x + 0.25, y - 0.25, z + 0.5)
+        )),
+        PushAvailability.Unavailable(),
+        TransformProvenance.constructed("ITK warp")
+      )
+    // x = 0.3, 1.3, ..., 9.3 against warp indices 0..7: 7.3 lies in ITK's band [-0.5, 7.5), 8.3 and 9.3 beyond it
+    val lattice = grid(target, Vector(10, 8, 8), axisAligned(Vector(0.3, 0.0, 0.0), 1.0))
+    val field = ok(warp.materialize(lattice))
+    assertEquals(field.coverage.counts, CoverageCounts(covered = 448L, constantFilled = 0L, sourcePreserved = 128L, rejected = 0L, borderHeld = 64L))
+    assertEquals(field.coverage.outcomeAt(Vector(7, 2, 3)), Some(MaterializedOutcome.BorderHeld))
+    assertEquals(field.coverage.outcomeAt(Vector(8, 2, 3)), Some(MaterializedOutcome.SourcePreserved))
+    close(Vector.tabulate(3)(c => ok(field.field.coordinates.valueAt(Vector(7, 2, 3), Vector(c)))), Vector(7.55, 1.75, 3.5), 1e-12, "held point")
+    close(Vector.tabulate(3)(c => ok(field.field.coordinates.valueAt(Vector(8, 2, 3), Vector(c)))), Vector(8.3, 2.0, 3.0), 1e-12, "point beyond the band")
 
   // ---------------------------------------------------------------- P6.02 invertNumerically
 
@@ -372,7 +391,7 @@ class WarpAlgebraSuite extends munit.FunSuite:
   private def pulls(s: Double): Vector[(String, WorldTransform[source.type, target.type])] =
     Vector(
       "affine" -> linear(source, target, s, 0, 0, 0, 0, s, 0, 0, 0, 0, s, 0, 0, 0, 0, 1),
-      "dense" -> dense(Vector(40, 40, 40), axisAligned(Vector.fill(3)(-17.55), targetSpacing), CoordinateBoundaryPolicy.PreserveSource)(y =>
+      "dense" -> dense(Vector(40, 40, 40), axisAligned(Vector.fill(3)(-17.55), targetSpacing))(y =>
         Vector.tabulate(3)(i => s * y(i) + 0.3 * math.sin(0.12 * y((i + 1) % 3)))
       )
     )
@@ -429,3 +448,18 @@ class WarpAlgebraSuite extends munit.FunSuite:
     // An expansive pull reaches beyond the source image (|1.3 y| up to 22.8 mm against 12.75 mm): Reject fails the plan.
     val (_, expansive) = pulls(1.3).head
     assert(expansive.resample(sourceImage, targetGrid).left.exists(_.isInstanceOf[TransformError.Resampling]))
+
+  test("resample and resampleModulated take ITK's half-voxel border band for the source image"):
+    val identity = linear(source, target, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1)
+    // Target point (3, 0, 0) lies at source index (51.2, 2, 3): inside ITK's band [-0.5, 51.5) of the 52-voxel image.
+    val edge = grid(target, Vector(4, 4, 4), axisAligned(Vector(11.35, -11.75, -11.25), 0.5))
+    val border = sourceImage.data.at(IArray(51, 2, 3))
+    def at(result: ResamplingResult[target.type, D3, Continuous]) = result.image.data.at(IArray(3, 0, 0))
+    // without the band, the outside neighbour's weight 0.2 meets the constant 0
+    assertEqualsDouble(at(ok(identity.resample(sourceImage, edge, boundary = BoundaryPolicy.Constant(0.0)))), 0.8 * border, 1e-12)
+    assertEqualsDouble(at(ok(identity.resample(sourceImage, edge, boundary = BoundaryPolicy.Constant(0.0), borderBand = BorderBand.HoldHalfVoxel))), border, 1e-12)
+    val modulated = ok(identity.resampleModulated(sourceImage, edge, VolumeModulation.Jacobian, boundary = BoundaryPolicy.Constant(0.0), borderBand = BorderBand.HoldHalfVoxel))
+    assertEqualsDouble(at(modulated.result), border, 1e-12) // det = 1
+    // beyond the band (index 51.7) the boundary policy applies to the whole point
+    val beyond = grid(target, Vector(4, 4, 4), axisAligned(Vector(11.6, -11.75, -11.25), 0.5))
+    assertEqualsDouble(at(ok(identity.resample(sourceImage, beyond, boundary = BoundaryPolicy.Constant(0.0), borderBand = BorderBand.HoldHalfVoxel))), 0.0, 0.0)

@@ -1,14 +1,13 @@
 package scalafim.transform.scenarios
 
 import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
-import image4s.geometry.{D3, Frame, Grid, GridId, LatticeIndex, Point}
+import image4s.geometry.{D3, Frame, Grid, GridId, Point}
 import ravel.DType.given
 import ravel.NDArray
 import reframe4s.core.MapError
-import reframe4s.field.CoordinateBoundaryPolicy
-import reframe4s.resample.Interpolation
+import reframe4s.resample.{BorderBand, Interpolation}
 import scalafim.image.world.{FrameCatalog, WorldSpace}
-import scalafim.scenarios.{CaveatKind, CaveatSeverity, ScenarioCaveat, ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
+import scalafim.scenarios.{ScenarioHarness, ScenarioObservation, ScenarioPolicy, ScenarioResult, ScenarioStatus, ScenarioTolerance}
 import scalafim.transform.*
 import scalafim.transform.field.{DenseContext, LatticeAffine}
 import scalafim.transform.itk.{ItkHdf5Component, ItkHdf5Dumps, ItkHdf5File, ItkHdf5Interpretation, ItkLinearInterpretation, ItkTextCodec}
@@ -27,14 +26,18 @@ import ChainScenarioSupport.*
   *
   * References are native SimpleITK 2.5.6 outputs only, never this module:
   *   - `itk_hdf5/points.tsv`: ITK `TransformPoint` of both composite orders at 12 template points;
-  *   - `neurotransform/itk_oracle/{affine_warp,warp_affine}_resampled.nii.gz`: ITK `Resample` (linear) of the T1w ramp through each composite;
+  *   - `neurotransform/itk_oracle/{affine_warp,warp_affine}_resampled.nii.gz`: ITK `Resample` (linear, default pixel
+  *     value 0) of the T1w ramp through each composite, compared at every template voxel;
   *   - `itk_linear/points.tsv`: ITK `TransformPoint` of `euler.tfm` at 12 points. The rigid leg's reference at the
   *     composite's output points is the exact affine through those 12 native pairs (residual reported below).
   *
   * The composites are small synthetic SimpleITK files on an oblique, anisotropic lattice, not fMRIPrep demo outputs.
+  * ITK's own out-of-lattice behaviour is read explicitly: displacement fields hold their border value for half a voxel
+  * and then use zero displacement (`DenseContext.itk`), and `Resample` samples the source image's clamped border within
+  * half a voxel of its lattice before padding with 0 (`BorderBand.HoldHalfVoxel` with `BoundaryPolicy.Constant(0.0)`).
   */
 class FmriprepChainScenarioSuite extends munit.FunSuite:
-  import FmriprepChainScenarioSuite.{ItkReference, Mutation}
+  import FmriprepChainScenarioSuite.Mutation
 
   private val Id = "transform.fmriprep-chain.v1"
 
@@ -67,8 +70,8 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
       case Mutation.ItkLpsReadAsRas         => ItkHdf5File(dump.components.map(lpsReadAsRas))
       case _                                => dump
     val h5 = s"neurotransform/itk_oracle/$name.h5"
-    // ITK uses zero displacement outside a field's lattice; PreserveSource agrees except in the border band (BorderBand).
-    val context = DenseContext(Frames[t1w.type, template.type](t1w, template), CoordinateBoundaryPolicy.PreserveSource)
+    // ITK's DisplacementFieldTransform: the border displacement for half a voxel outside the lattice, zero beyond.
+    val context = DenseContext.itk(Frames[t1w.type, template.type](t1w, template))
     ok(ItkHdf5Interpretation.interpretWith(file, context, AssetRef(h5, Some(OracleFixtures.sha256Hex(h5))))).composed
 
   /** The composite a reader would build if it took ITK's LPS parameters for RAS: every stored matrix, offset, centre,
@@ -134,28 +137,17 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
     val templateGrid = ok(Grid.forFrame[D3, template.type](template)(shape, latticeAffine))
     val sourceImage = ok(Sampled.continuous(sourceGrid, NonSpatialAxes.empty, NDArray.tabulate[Double](shape(0), shape(1), shape(2))((i, j, k) => sourceRaw.value(i, j, k))))
     val voxels = for i <- (0 until shape(0)).toVector; j <- 0 until shape(1); k <- 0 until shape(2) yield Vector(i, j, k)
-    // The comparison set is chosen from the native data alone: the affine fitted through ITK's own TransformPoint of
-    // affine.h5 and the displacement samples as stored, evaluated in LPS exactly as ITK composes them.
-    val itk = ItkReference(itkRows(pointTable, "affine.h5", skip = 0), ItkHdf5Dumps.parse(OracleFixtures.text("itk_hdf5/affine_warp.components.txt")))
     val volumeObservations = composites.toVector.sortBy(_._1).flatMap: (name, transform) =>
       val native = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded(s"neurotransform/itk_oracle/${name}_resampled.nii.gz"))))
-      transform.resample(sourceImage, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0)) match
+      transform.resample(sourceImage, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0), BorderBand.HoldHalfVoxel) match
         case Left(error) => Vector(ScenarioHarness.fact(s"volume.$name.resample", false, error.toString))
         case Right(resampled) =>
-          // Every voxel is compared except those whose field query or final pullback lands in the one-voxel band just
-          // outside a lattice, where ITK and reframe4s extend differently (caveat BorderBand).
-          val (compared, band) = voxels.partition: index =>
-            val y = flipLps(ok(LatticeIndex.fromVector[D3](index).flatMap(templateGrid.pointAt)).coordinates)
-            !itk.inBand(y, affineFirst = name == "warp_affine")
-          val errors = compared.map(index => math.abs(resampled.image.data.at(IArray(index(0), index(1), index(2))) - native.value(index(0), index(1), index(2))))
+          // Every template voxel, including those whose field query or final pullback lies in ITK's half-voxel border band.
+          val errors = voxels.map(index => math.abs(resampled.image.data.at(IArray(index(0), index(1), index(2))) - native.value(index(0), index(1), index(2))))
           Vector(
-            ScenarioHarness.fact(
-              s"volume.$name.compared-voxels",
-              compared.size >= voxels.size / 2,
-              s"${compared.size} of ${voxels.size} voxels compared; ${band.size} in the border band"
-            ),
+            ScenarioHarness.fact(s"volume.$name.compared-voxels", errors.size == shape.product, s"${errors.size} of ${shape.product} voxels compared"),
             // float64 on both sides; the residual is the float32 geometry SimpleITK wrote to the NIfTI header
-            // (measured <= 6.6e-7; the STP Phase 4 intensity tolerance for itk_oracle is 2e-5)
+            // (the STP Phase 4 intensity tolerance for itk_oracle is 2e-5)
             ScenarioHarness.scalar(s"volume.$name.linear-resample.max-abs", worst(errors), 0.0, ScenarioTolerance.absolute(2e-5))
           )
 
@@ -185,7 +177,7 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
           provenanceSteps.map(_.toString).mkString(" then ")
         )
       ) ++ compositePointErrors ++ volumeObservations ++ roundTrip
-    ScenarioHarness.result(Id, observations, Vector(FmriprepChainScenarioSuite.BorderBand))
+    ScenarioHarness.result(Id, observations)
 
   /** Materialize the composite on the template lattice, invert it numerically on a persistent T1w lattice, and send the
     * native moving points (and, through the exactly invertible rigid leg, the boldref points) forward again.
@@ -241,7 +233,7 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
 
   test("fMRIPrep chain: boldref -> T1w (ITK rigid) -> template (ITK HDF5 composite) matches native ITK points and volumes"):
     val result = runScenario(Mutation.Faithful)
-    assertEquals(result.status, ScenarioStatus.PassWithCaveats, result.render)
+    assertEquals(result.status, ScenarioStatus.Pass, result.render)
     if !result.ciPass(FmriprepChainScenarioSuite.Policy) then fail(result.render)
 
   test("every convention mutation of the fMRIPrep chain fails the scenario"):
@@ -263,75 +255,8 @@ class FmriprepChainScenarioSuite extends munit.FunSuite:
     assert(errors.contains("Required: scalafim.transform.WorldTransform[") && errors.contains("t1w.type") && errors.contains("template.type"), errors)
 
 object FmriprepChainScenarioSuite:
-  /** Where a continuous lattice index falls: on the lattice, in the one-voxel band just outside it, or beyond. */
-  private enum LatticePlacement derives CanEqual:
-    case Inside, Band, Beyond
-
-  /** ITK's composite evaluated from native data only, in LPS: `affine` fitted through TransformPoint pairs of the affine
-    * alone, `field` the stored displacement component. Used to decide which voxels touch the border band.
-    */
-  private final case class ItkReference(affinePairs: Vector[(Vector[Double], Vector[Double])], dump: ItkHdf5File):
-    private val (affine, _) = ChainScenarioSupport.fitAffine(affinePairs)
-    private val field = dump.stages.find(_.isDisplacementField).getOrElse(throw new IllegalArgumentException("no displacement field"))
-    private val f = field.fixedParameters
-    private val size = Vector(0, 1, 2).map(i => math.rint(f(i)).toInt)
-    private val origin = Vector(f(3), f(4), f(5))
-    private val spacing = Vector(f(6), f(7), f(8))
-    private def direction(r: Int, c: Int): Double = f(9 + 3 * r + c)
-
-    private def applyAffine(p: Vector[Double]): Vector[Double] =
-      Vector.tabulate(3)(r => (0 until 3).map(c => affine(4 * r + c) * p(c)).sum + affine(4 * r + 3))
-
-    /** Continuous index of an LPS point on the field lattice (orthonormal direction). */
-    private def index(p: Vector[Double]): Vector[Double] =
-      Vector.tabulate(3)(c => (0 until 3).map(r => direction(r, c) * (p(r) - origin(r))).sum / spacing(c))
-
-    private def placement(p: Vector[Double]): LatticePlacement =
-      val c = index(p)
-      if c.zip(size).exists((v, n) => v <= -1.0 || v >= n.toDouble) then LatticePlacement.Beyond
-      // template lattice points come from the float32 NIfTI header: they land within 1e-6 of the faces
-      else if c.zip(size).forall((v, n) => v >= -1e-6 && v <= n - 1.0 + 1e-6) then LatticePlacement.Inside
-      else LatticePlacement.Band
-
-    /** Trilinear displacement at an LPS point inside the lattice; zero beyond it (ITK). */
-    private def displacement(p: Vector[Double]): Vector[Double] =
-      if placement(p) != LatticePlacement.Inside then Vector(0.0, 0.0, 0.0)
-      else
-        val c = index(p)
-        val lo = c.zip(size).map((v, n) => math.max(0, math.min(math.floor(v).toInt, n - 2)))
-        val t = c.zip(lo).map(_ - _)
-        Vector.tabulate(3): component =>
-          (for dx <- 0 to 1; dy <- 0 to 1; dz <- 0 to 1 yield
-            val w = (if dx == 1 then t(0) else 1 - t(0)) * (if dy == 1 then t(1) else 1 - t(1)) * (if dz == 1 then t(2) else 1 - t(2))
-            val v = (lo(0) + dx) + size(0) * ((lo(1) + dy) + size(1) * (lo(2) + dz))
-            w * field.parameters(3 * v + component)
-          ).sum
-
-    /** Whether ITK's field query or final pullback of the LPS template point lies in the border band. The image lattice
-      * is the field lattice (the oracle's source copies the field's geometry).
-      */
-    def inBand(y: Vector[Double], affineFirst: Boolean): Boolean =
-      val query = if affineFirst then applyAffine(y) else y
-      val moved = query.zip(displacement(query)).map(_ + _)
-      val last = if affineFirst then moved else applyAffine(moved)
-      placement(query) == LatticePlacement.Band || placement(last) == LatticePlacement.Band
-
-  /** ITK extends a displacement field (and clamps an image) by its border sample up to half a voxel outside the
-    * lattice, then uses zero displacement (and zero padding). reframe4s' `PreserveSource` (and `Constant`) blend towards
-    * the identity (or the constant) across the whole first voxel outside. The two agree on the lattice and beyond that
-    * band, and the volume comparison skips the band.
-    */
-  val BorderBand: ScenarioCaveat = ScenarioCaveat(
-    id = "transform.itk-border-band",
-    kind = CaveatKind.AlgorithmDivergence,
-    severity = CaveatSeverity.Actionable,
-    owner = "transform",
-    followUp = Some("a reframe4s CoordinateBoundaryPolicy (and image BoundaryPolicy) reproducing ITK's half-voxel border extension"),
-    detail = "voxels whose displacement-field query or final pullback lies in the one-voxel band outside a lattice are not compared with ITK Resample"
-  )
-
-  /** The manifest's policy for this scenario: pass, or pass with exactly the declared border-band caveat. */
-  val Policy: ScenarioPolicy = ScenarioPolicy(Set(ScenarioStatus.PassWithCaveats), Set(BorderBand.id))
+  /** The manifest's policy for this scenario: a clean pass only. */
+  val Policy: ScenarioPolicy = ScenarioPolicy.PassOnly
 
   /** Convention errors a registration chain can make; `Faithful` is the correct reading. */
   enum Mutation derives CanEqual:

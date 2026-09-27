@@ -119,7 +119,8 @@ object FnirtCoefficientsCodec extends TransformCodec[FnirtCoefficientFile]:
     Right(TransformSource.Binary(NiftiWriter.write(NiftiWriter.headerOf(file.raw), values)))
 
 /** FNIRT coefficients need the FSL geometry of both volumes: the file stores neither placement, only the reference
-  * dimensions and voxel sizes (which must agree with `grids.referenceGeometry`).
+  * dimensions and voxel sizes (which must agree with `grids.referenceGeometry`). `HoldBorderDisplacement` (ITK's
+  * half-voxel border hold) is refused by [[FnirtCoefficientInterpretation]]: FSL does not extend a warp that way.
   */
 final case class FnirtCoefficientContext[S <: Frame[D3], T <: Frame[D3]](
     grids: FslGrids[S, T],
@@ -134,7 +135,8 @@ final case class FnirtCoefficientContext[S <: Frame[D3], T <: Frame[D3]](
   * The pullback evaluates the spline exactly at every query point, not a lattice interpolation of it. Points outside
   * the reference volume follow the context's boundary policy (default: reject). Unlike a linearly interpolated
   * [[reframe4s.field.DenseMap]], the cut-off is sharp at the first and last reference voxel: `Constant` and
-  * `PreserveSource` do not blend across a one-voxel band.
+  * `PreserveSource` do not blend across a one-voxel band. `HoldBorderDisplacement` is ITK's semantics, not FSL's, and
+  * is refused with [[TransformError.UnsupportedBoundary]].
   */
 object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFile, FnirtCoefficientContext, WorldTransform.Mapped]:
   def interpret[S <: Frame[D3], T <: Frame[D3]](file: FnirtCoefficientFile, context: FnirtCoefficientContext[S, T]): Either[TransformError, WorldTransform.Mapped[S, T]] =
@@ -149,6 +151,14 @@ object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFil
     def affine(values: Vector[Double]) = Affine.fromRowMajor[D3](values).left.map(TransformError.Geometry(_))
     def mismatch(reason: String) = TransformError.ContextMismatch(TransformFormat.FslFnirtCoefficients, reason)
     for
+      boundary <- context.boundary match
+        case CoordinateBoundaryPolicy.Constant(values) if values.size != 3 || values.exists(v => !v.isFinite) =>
+          Left(TransformError.Invalid(s"a constant boundary needs three finite coordinates, got ${values.mkString(" ")}"))
+        case CoordinateBoundaryPolicy.Constant(values) => Right(FnirtBoundary.Constant(values))
+        case CoordinateBoundaryPolicy.Reject           => Right(FnirtBoundary.Reject)
+        case CoordinateBoundaryPolicy.PreserveSource   => Right(FnirtBoundary.PreserveSource)
+        case CoordinateBoundaryPolicy.HoldBorderDisplacement =>
+          Left(DenseLattice.itkBorderRefusal(TransformFormat.FslFnirtCoefficients, "FSL"))
       _ <- file.referenceDims match
         case Some(dims) if dims != reference.dims =>
           Left(mismatch(s"the coefficients were fitted on a ${dims.mkString("x")} reference, the context reference is ${reference.dims.mkString("x")}"))
@@ -156,10 +166,6 @@ object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFil
       _ <- file.referencePixdim match
         case Some(sizes) if sizes.zip(reference.pixdim).exists((a, b) => math.abs(a - b) > 1e-4 * math.max(1.0, math.abs(b))) =>
           Left(mismatch(s"the coefficients were fitted on ${sizes.mkString("x")} mm reference voxels, the context reference has ${reference.pixdim.mkString("x")}"))
-        case _ => Right(())
-      _ <- context.boundary match
-        case CoordinateBoundaryPolicy.Constant(values) if values.size != 3 || values.exists(v => !v.isFinite) =>
-          Left(TransformError.Invalid(s"a constant boundary needs three finite coordinates, got ${values.mkString(" ")}"))
         case _ => Right(())
       _ <- coverage(file, reference.dims).map(mismatch).toLeft(())
       aff <- affine(file.premat.rowMajor)
@@ -176,7 +182,7 @@ object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFil
         worldToLattice.rowMajor.toArray,
         latticeToAligned.rowMajor.toArray,
         sourceFslToWorld.rowMajor.toArray,
-        context.boundary
+        boundary
       )
       WorldTransform.Mapped(pull, PushAvailability.Unavailable(), TransformProvenance.read(TransformFormat.FslFnirtCoefficients, asset))
 
@@ -191,6 +197,14 @@ object FnirtCoefficientInterpretation extends Interpretation[FnirtCoefficientFil
       .find(axis => centre(axis) >= file.coefficientDims(axis))
       .map(axis => s"axis $axis has ${file.coefficientDims(axis)} coefficients, too few for ${dims(axis)} reference voxels at knot spacing ${file.knotSpacing(axis)}")
 
+/** The out-of-lattice policies a FNIRT coefficient pullback implements. ITK's `HoldBorderDisplacement` is not one of
+  * them, so the pullback cannot be built with it.
+  */
+private enum FnirtBoundary derives CanEqual:
+  case Reject
+  case Constant(coordinates: Vector[Double])
+  case PreserveSource
+
 /** Exact spline pullback, reference world `T` to source world `S`. Affines are precomposed row-major 4x4 arrays;
   * `lattice` is the reference FSL voxel lattice whose extents bound the support.
   */
@@ -202,7 +216,7 @@ private final class FnirtCoefficientPullback[T <: Frame[D3], S <: Frame[D3]](
     worldToLattice: Array[Double],
     latticeToAligned: Array[Double],
     sourceFslToWorld: Array[Double],
-    boundary: CoordinateBoundaryPolicy
+    boundary: FnirtBoundary
 ) extends CoverageReportingMap[T, S, D3]:
   private val Slack = 1e-6 // lattice units: round-off at the first and last reference voxel is still inside
 
@@ -224,9 +238,9 @@ private final class FnirtCoefficientPullback[T <: Frame[D3], S <: Frame[D3]](
         Vector.tabulate(3)(r => row(sourceFslToWorld, r, aligned(0), aligned(1), aligned(2))) -> SupportOutcome.Covered
     else
       boundary match
-        case CoordinateBoundaryPolicy.Reject           => Left(MapError.OutsideDomain(p))
-        case CoordinateBoundaryPolicy.Constant(values) => Right(values -> SupportOutcome.ConstantFilled)
-        case CoordinateBoundaryPolicy.PreserveSource   => Right(p -> SupportOutcome.SourcePreserved)
+        case FnirtBoundary.Reject           => Left(MapError.OutsideDomain(p))
+        case FnirtBoundary.Constant(values) => Right(values -> SupportOutcome.ConstantFilled)
+        case FnirtBoundary.PreserveSource   => Right(p -> SupportOutcome.SourcePreserved)
 
   private def row(m: Array[Double], r: Int, x: Double, y: Double, z: Double): Double =
     m(4 * r) * x + m(4 * r + 1) * y + m(4 * r + 2) * z + m(4 * r + 3)

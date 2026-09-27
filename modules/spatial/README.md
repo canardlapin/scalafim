@@ -138,9 +138,10 @@ the file's moving and fixed spaces, `Reversed` when the graph edge runs the
 other way. A reversed affine uses its exact inverse. A reversed dense map needs
 an inverse asset (`TransformAssetSpec`, e.g. ANTs `InverseWarp`); without one
 the load fails with `NoForwardMap`. `TransformLoadOptions` holds only choices
-that change values: the dense boundary policy (default `Reject`; ITK's own
-behaviour is `PreserveSource`) and an explicit FNIRT relative/absolute
-definition when detection should not decide.
+that change values: the dense boundary policy (default `Reject`; ITK's and
+ANTs' own half-voxel border hold is `TransformLoadOptions.itk`, which FSL,
+AFNI and X5 files refuse) and an explicit FNIRT relative/absolute definition
+when detection should not decide.
 
 ## Extension protocol
 

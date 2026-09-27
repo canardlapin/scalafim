@@ -17,14 +17,20 @@ import java.nio.file.Path
 /** Choices that change what a loaded map computes. None of them names a coordinate convention or a storage direction:
   * those are intrinsic to each format and decided by its `scalafim.transform` interpretation.
   *
-  * @param boundary what a dense map does at target points outside its lattice. The default rejects them; ITK and ANTs
-  *   themselves extend displacement fields by zero, which is `CoordinateBoundaryPolicy.PreserveSource`.
+  * @param boundary what a dense map does at target points outside its lattice. The default rejects them. ITK and ANTs
+  *   themselves hold the border displacement for half a voxel and use zero displacement beyond it, which is
+  *   `CoordinateBoundaryPolicy.HoldBorderDisplacement` ([[TransformLoadOptions.itk]]); FSL, AFNI and X5 files refuse
+  *   that policy with `TransformError.UnsupportedBoundary`.
   * @param fnirtDefinition whether a FNIRT field is relative or absolute; `None` detects it and refuses when unsure.
   */
 final case class TransformLoadOptions(
   boundary: CoordinateBoundaryPolicy = CoordinateBoundaryPolicy.Reject,
   fnirtDefinition: Option[FnirtDefinition] = None
 )
+
+object TransformLoadOptions:
+  /** ITK's and ANTs' own out-of-lattice behaviour for displacement fields (`DenseContext.itk`). */
+  val itk: TransformLoadOptions = TransformLoadOptions(boundary = CoordinateBoundaryPolicy.HoldBorderDisplacement)
 
 /** A second file holding the opposite direction of a descriptor's file (e.g. ANTs `InverseWarp`, FSL `invwarp`).
   * Its own endpoints are the primary file's, swapped. `format = None` detects it from content.

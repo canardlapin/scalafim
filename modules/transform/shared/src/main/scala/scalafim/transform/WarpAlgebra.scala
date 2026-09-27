@@ -16,11 +16,12 @@ import reframe4s.field.{
   FieldComposition,
   InversionGates,
   InversionSettings,
+  InversionStart as FieldInversionStart,
   LogDeterminantField,
   NumericalInversion,
   TopologyAssessor
 }
-import reframe4s.resample.{Interpolation, ModulatedResamplingPlan, ModulationDiagnostics, ResamplingPlan, ResamplingResult, VolumeModulation}
+import reframe4s.resample.{BorderBand, Interpolation, ModulatedResamplingPlan, ModulationDiagnostics, ResamplingPlan, ResamplingResult, VolumeModulation}
 
 /** A world transform's pullback sampled on a target lattice: an absolute source-coordinate field plus the report of
   * which lattice points every stage covered.
@@ -38,8 +39,12 @@ final class MaterializedField[S <: Frame[D3], T <: Frame[D3]] private[transform]
   /** Estimate the forward map of this field on the source lattice `on`; see [[WorldTransform.Mapped.invertNumerically]].
     * A field whose rejected points were filled by the `fill` policy is refused: fill is not the transform.
     */
-  def invertNumerically(on: Grid[S, D3], policy: InversionPolicy): Either[TransformError, WorldTransform.Mapped[S, T]] =
-    WarpAlgebra.unfilled(coverage).flatMap(_ => WarpAlgebra.invertNumerically(transform, field, on, policy))
+  def invertNumerically(
+      on: Grid[S, D3],
+      policy: InversionPolicy,
+      start: InversionStart[S, T] = InversionStart.Identity[S, T]()
+  ): Either[TransformError, WorldTransform.Mapped[S, T]] =
+    WarpAlgebra.unfilled(coverage).flatMap(_ => WarpAlgebra.invertNumerically(transform, field, on, policy, start))
 
 /** The Jacobian determinant of a transform's pullback on a target lattice, with the coverage of the field it was
   * differentiated from. Values are physical (mm³ per mm³): central differences in the interior, one-sided on the
@@ -87,6 +92,42 @@ object InversionPolicy:
       gates    <- InversionGates.create(minimumCoverage, maximumResidual, p99Residual, interiorMargin).left.map(TransformError.Inversion(_))
     yield InversionPolicy(settings, gates)
 
+/** Where each source-lattice point's fixed-point iteration starts. The evidence records the choice
+  * (`evidence.start`, `evidence.preconditioned`) together with the points the start itself rejected
+  * (`evidence.startRejections`) and the iteration total (`evidence.totalIterations`).
+  */
+enum InversionStart[S <: Frame[D3], T <: Frame[D3]]:
+  /** `push(x)` starts at `x`. The iteration converges only where `I - D pull` is a contraction: fields close to the
+    * identity.
+    */
+  case Identity()
+
+  /** `push(x)` starts at `guess.push(x)`, and the guess's linear part preconditions every update, so the iteration
+    * converges where `I - L D pull` is a contraction (`L` the linear part of `guess.push`). This is how a field that
+    * contains a large affine inverts: a FNIRT field with its `--aff` FLIRT matrix, or any field between differently
+    * placed volumes with the affine that relates them. A point the guess sends outside the pull's support is
+    * `OutsideCoverage`.
+    */
+  case AffineGuess(guess: WorldTransform.Linear[S, T])
+
+  /** Each point starts from an already converged lattice neighbour shifted by the lattice step, and from `x` when none
+    * has converged. It helps fields that drift smoothly away from the identity; it cannot rescue a field that is far
+    * from the identity at the first lattice point.
+    */
+  case Continuation()
+
+  private[transform] def toField: FieldInversionStart[S, T, D3] =
+    this match
+      case Identity()         => FieldInversionStart.identity[S, T, D3]
+      case AffineGuess(guess) => FieldInversionStart.guess[S, T, D3](guess.framed.inverse)
+      case Continuation()     => FieldInversionStart.continuation[S, T, D3]
+
+  def describe: String =
+    this match
+      case Identity()         => "identity start"
+      case AffineGuess(guess) => s"affine-guess start (${guess.provenance.describe})"
+      case Continuation()     => "continuation start"
+
 /** A numerical inverse that passed every gate of its policy. Only [[WorldTransform.Mapped.invertNumerically]] makes
   * one, and a [[WorldTransform.Mapped]] accepts it only together with `qualifiedPull`, so a
   * [[PushAvailability.Estimated]] forward map always comes with evidence about the pullback it is paired with.
@@ -131,16 +172,17 @@ private[transform] object WarpAlgebra:
       transform: WorldTransform.Mapped[S, T],
       pull: DenseMap[T, S, D3, ?],
       on: Grid[S, D3],
-      policy: InversionPolicy
+      policy: InversionPolicy,
+      start: InversionStart[S, T]
   ): Either[TransformError, WorldTransform.Mapped[S, T]] =
     for
       revision <- inversionRevision
-      inverse  <- NumericalInversion.invert(pull, on, policy.settings, policy.gates, revision).left.map(TransformError.Inversion(_))
+      inverse  <- NumericalInversion.invert(pull, on, policy.settings, policy.gates, revision, start.toField).left.map(TransformError.Inversion(_))
     yield
       val evidence = inverse.evidence
       def worst(summary: Option[reframe4s.field.ResidualSummary]) = summary.fold("none")(s => f"${s.maximum}%.3g")
       val step = TransformProvenance.Step.Derived(
-        f"numerical inverse on a ${on.shape.mkString("x")} lattice (coverage ${evidence.coveredFraction}%.4f, " +
+        f"numerical inverse on a ${on.shape.mkString("x")} lattice from the ${start.describe} (coverage ${evidence.coveredFraction}%.4f, " +
           s"max residual forward ${worst(evidence.forwardResidual)} mm, reverse ${worst(evidence.reverseResidual)} mm)"
       )
       WorldTransform.Mapped(
@@ -168,10 +210,11 @@ private[transform] object WarpAlgebra:
       image: ContinuousImage[Space, Double, R],
       onto: Grid[T, D3],
       interpolation: Interpolation[Continuous],
-      boundary: BoundaryPolicy[Double]
+      boundary: BoundaryPolicy[Double],
+      borderBand: BorderBand
   ): Either[TransformError, ResamplingResult[T, D3, Continuous]] =
     for
-      plan   <- ResamplingPlan.mapped(image, onto, transform.pull, interpolation, boundary).left.map(TransformError.Resampling(_))
+      plan   <- ResamplingPlan.mapped(image, onto, transform.pull, interpolation, boundary, borderBand).left.map(TransformError.Resampling(_))
       result <- plan.run(plan.newWorkspace()).left.map(TransformError.Resampling(_))
     yield result
 
@@ -181,10 +224,11 @@ private[transform] object WarpAlgebra:
       onto: Grid[T, D3],
       modulation: VolumeModulation,
       interpolation: Interpolation[Continuous],
-      boundary: BoundaryPolicy[Double]
+      boundary: BoundaryPolicy[Double],
+      borderBand: BorderBand
   ): Either[TransformError, ModulatedResample[T]] =
     for
-      plan   <- ModulatedResamplingPlan.compile(image, onto, transform.pull, interpolation, modulation, boundary).left.map(TransformError.Resampling(_))
+      plan   <- ModulatedResamplingPlan.compile(image, onto, transform.pull, interpolation, modulation, boundary, borderBand).left.map(TransformError.Resampling(_))
       result <- plan.run(plan.newWorkspace()).left.map(TransformError.Resampling(_))
     yield ModulatedResample(result, modulation, plan.diagnostics)
 

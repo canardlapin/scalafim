@@ -1,7 +1,7 @@
 package scalafim.transform.field
 
 import image4s.geometry.{Affine, D3, Frame, Grid, GridId, LatticeIndex, Point}
-import reframe4s.field.{CoordinateBoundaryPolicy, DeterminantValue, InversionError, InversionGateFailure, MaterializedOutcome}
+import reframe4s.field.{CoverageCounts, DeterminantValue, InversionError, InversionGateFailure}
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.fsl.FslHeaderGeometry
@@ -38,23 +38,19 @@ class WarpOracleSuite extends munit.FunSuite:
 
   test("materializing a relative FNIRT field on its lattice reproduces FSL convertwarp --absout in every handedness case"):
     handedness.foreach: pair =>
-      // PreserveSource: on these oblique lattices, mapping a face point to its continuous index can round to just
-      // outside [0, n - 1]; the out-of-lattice stencil corner then has weight ~1e-16 instead of being rejected.
+      // Reject: on these oblique lattices a face point's continuous index can round to just outside [0, n - 1], and
+      // reframe4s drops the resulting outside stencil corner (weight ~1e-16) rather than rejecting the point.
       def fnirt(kind: String, definition: FnirtDefinition) =
         val dir = s"neurotransform/fsl_dense_oracle/${pair}_$kind"
         val sourceGeometry = ok(FslHeaderGeometry(raw(s"$dir/source.nii.gz")))
         val warpField = field(s"$dir/warp.nii.gz")
-        (warpField, ok(FnirtFieldInterpretation.interpret(warpField, FnirtContext(frames, sourceGeometry, Some(definition), CoordinateBoundaryPolicy.PreserveSource))))
+        (warpField, ok(FnirtFieldInterpretation.interpret(warpField, FnirtContext(frames, sourceGeometry, Some(definition)))))
       val (_, relative) = fnirt("relative", FnirtDefinition.Relative)
       val (absoluteField, absolute) = fnirt("absolute", FnirtDefinition.Absolute)
       val lattice = fieldLattice(absoluteField)
       val materialized = ok(relative.materialize(lattice))
-      val counts = materialized.coverage.counts
-      assertEquals(counts.covered + counts.sourcePreserved, lattice.shape.product.toLong, pair)
-      assertEquals(counts.rejected + counts.constantFilled, 0L, pair)
-      // every lattice point the field did not cover outright lies on a lattice face
-      indices(lattice.shape).filterNot(i => materialized.coverage.outcomeAt(i).contains(MaterializedOutcome.Covered)).foreach: index =>
-        assert(index.zip(lattice.shape).exists((v, n) => v == 0 || v == n - 1), s"$pair: interior point $index not covered")
+      // every lattice point, faces included, is covered by the field itself
+      assertEquals(materialized.coverage.counts, CoverageCounts(lattice.shape.product.toLong, 0L, 0L, 0L, 0L), pair)
       // convertwarp's absolute output, read through the FNIRT absolute interpretation, sampled at its own lattice points
       indices(lattice.shape).foreach: index =>
         val expected = ok(absolute.pullPoint(pointAt(lattice, index))).coordinates
@@ -62,7 +58,7 @@ class WarpOracleSuite extends munit.FunSuite:
         actual.zip(expected).foreach((a, e) => assertEqualsDouble(a, e, 1e-4, s"$pair at $index")) // float32 storage
 
   test("materialized ITK composites reproduce ITK TransformPoint at the lattice points"):
-    val context = DenseContext(frames, CoordinateBoundaryPolicy.PreserveSource)
+    val context = DenseContext.itk(frames)
     val points = OracleTable.load("itk_hdf5/points.tsv")
     def lps(v: Vector[Double]) = Vector(-v(0), -v(1), v(2))
     Vector("affine_warp.h5", "warp_affine.h5").foreach: name =>

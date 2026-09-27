@@ -6,7 +6,7 @@ import ravel.AnyRank
 import reframe4s.core.{SmoothIso, SpatialMap}
 import reframe4s.field.{CoordinateBoundaryPolicy, CoverageReportingMap, DenseMap, DeterminantDirection, LogDeterminantField}
 import reframe4s.lie.FramedAffine
-import reframe4s.resample.{Interpolation, ResamplingResult, VolumeModulation}
+import reframe4s.resample.{BorderBand, Interpolation, ResamplingResult, VolumeModulation}
 
 /** A spatial transform from world space `S` (source, moving) to world space `T` (target, fixed), whatever toolkit it
   * came from.
@@ -86,14 +86,19 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
   /** Resample a source image onto `onto` through the pullback, as one reframe4s `ResamplingPlan` (affine pullbacks keep
     * the affine kernel). A target point whose pullback leaves the source image fails the plan unless `boundary` fills it:
     * there is no silent identity outside a field.
+    *
+    * `borderBand = BorderBand.HoldHalfVoxel` is ITK's `ResampleImageFilter` convention: a pullback within half a voxel
+    * outside the source lattice samples the clamped border, and only points beyond that band meet `boundary` (ITK's
+    * default pixel value is `BoundaryPolicy.Constant(0.0)`). The default `Off` treats the lattice faces as the edge.
     */
   final def resample[Space <: SampleSpace[S, D3], R <: AnyRank](
       image: ContinuousImage[Space, Double, R],
       onto: Grid[T, D3],
       interpolation: Interpolation[Continuous] = Interpolation.Linear,
-      boundary: BoundaryPolicy[Double] = BoundaryPolicy.Reject
+      boundary: BoundaryPolicy[Double] = BoundaryPolicy.Reject,
+      borderBand: BorderBand = BorderBand.Off
   ): Either[TransformError, ResamplingResult[T, D3, Continuous]] =
-    WarpAlgebra.resample(this, image, onto, interpolation, boundary)
+    WarpAlgebra.resample(this, image, onto, interpolation, boundary, borderBand)
 
   /** Resample a source image onto `onto` through the pullback, scaling each target sample by the volume change:
     * `Jacobian` preserves a density's integral, `SqrtJacobian` the squared L2 norm of an amplitude.
@@ -101,15 +106,17 @@ sealed trait WorldTransform[S <: Frame[D3], T <: Frame[D3]]:
     * Determinants are central differences of the pullback on `onto` (exact for affines). Orientation-reversing points
     * are modulated by `|det|` and singular points by zero; both are counted in the result's diagnostics, which callers
     * that must not resample through folds check. A target point the pullback rejects fails the whole plan.
+    * `borderBand` is as for [[resample]].
     */
   final def resampleModulated[Space <: SampleSpace[S, D3], R <: AnyRank](
       image: ContinuousImage[Space, Double, R],
       onto: Grid[T, D3],
       modulation: VolumeModulation,
       interpolation: Interpolation[Continuous] = Interpolation.Linear,
-      boundary: BoundaryPolicy[Double] = BoundaryPolicy.Reject
+      boundary: BoundaryPolicy[Double] = BoundaryPolicy.Reject,
+      borderBand: BorderBand = BorderBand.Off
   ): Either[TransformError, ModulatedResample[T]] =
-    WarpAlgebra.resampleModulated(this, image, onto, modulation, interpolation, boundary)
+    WarpAlgebra.resampleModulated(this, image, onto, modulation, interpolation, boundary, borderBand)
 
 object WorldTransform:
   /** An affine transform; `framed` is its pullback `T -> S`. The inverse is total. */
@@ -167,15 +174,23 @@ object WorldTransform:
       * `policy` passes; otherwise it is [[TransformError.Inversion]] with the complete evidence. The pullback must be
       * dense: materialize composites first. A forward map read from an inverse asset is never silently replaced.
       *
-      * Points the pullback's own boundary policy supplies (`PreserveSource`, `Constant`) are part of the map being
-      * inverted and count towards coverage like any other.
+      * The evaluation domain is the set of lattice points whose preimage lies inside the field's sampled support.
+      * Values the pullback's boundary policy supplies (`PreserveSource`, `Constant`, `HoldBorderDisplacement`) are not
+      * inverted: a point whose iterate leaves the support is `OutsideCoverage` and counts against the coverage gate.
+      *
+      * `start` says where each point's iteration begins ([[InversionStart]]). The default identity start suits fields
+      * close to the identity; a field that contains a large affine needs [[InversionStart.AffineGuess]].
       */
-    def invertNumerically(on: Grid[S, D3], policy: InversionPolicy): Either[TransformError, Mapped[S, T]] =
+    def invertNumerically(
+        on: Grid[S, D3],
+        policy: InversionPolicy,
+        start: InversionStart[S, T] = InversionStart.Identity[S, T]()
+    ): Either[TransformError, Mapped[S, T]] =
       (pull, availability) match
         case (_, PushAvailability.FromAsset(_, asset)) =>
           Left(TransformError.Invalid(s"${provenance.describe} already has a forward map from ${asset.label}"))
         // DenseMap is final and invariant, and `pull` is statically SpatialMap[T, S, D3]: a class test suffices.
-        case (dense: DenseMap[T, S, D3, ?] @unchecked, _) => WarpAlgebra.invertNumerically(this, dense, on, policy)
+        case (dense: DenseMap[T, S, D3, ?] @unchecked, _) => WarpAlgebra.invertNumerically(this, dense, on, policy, start)
         case _                                            => Left(TransformError.NeedsMaterialization(provenance.describe))
 
     /** Swap directions; possible only when the forward map exists. */

@@ -153,6 +153,17 @@ class FnirtCoefficientOracleSuite extends munit.FunSuite:
     assert(pull(load("srcleft_refleft_aff").warp, outside).left.exists(_.isInstanceOf[TransformError.Map]))
     assertEquals(pull(load("srcleft_refleft_aff", CoordinateBoundaryPolicy.PreserveSource).warp, outside), Right(outside))
     assertEquals(pull(load("srcleft_refleft_aff", CoordinateBoundaryPolicy.Constant(Vector(1.0, 2.0, 3.0))).warp, outside), Right(Vector(1.0, 2.0, 3.0)))
+    // ITK's half-voxel border hold is not FSL's: refused, never aliased to another policy
+    val file = coefficients("srcleft_refleft_aff")
+    val grids = FslGrids[source.type, reference.type](
+      source,
+      ok(FslHeaderGeometry(raw(s"$Root/srcleft_refleft_aff/source.nii.gz"))),
+      reference,
+      ok(FslHeaderGeometry(raw(s"$Root/srcleft_refleft_aff/target.nii.gz")))
+    )
+    FnirtCoefficientInterpretation.interpret(file, FnirtCoefficientContext(grids, CoordinateBoundaryPolicy.HoldBorderDisplacement)) match
+      case Left(TransformError.UnsupportedBoundary(TransformFormat.FslFnirtCoefficients, CoordinateBoundaryPolicy.HoldBorderDisplacement, _)) => ()
+      case other => fail(s"FNIRT coefficients must refuse HoldBorderDisplacement, got $other")
     val l = load("srcleft_refleft_aff")
     assert(l.warp.mapPoint(ok(Point.fromVector(source, Vector(0.0, 0.0, 0.0))).asInstanceOf[Point[source.type, D3]]).isLeft, "no inverse, so no forward map")
 

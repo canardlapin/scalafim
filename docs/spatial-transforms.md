@@ -189,19 +189,40 @@ inverted.flatMap(_.mapPoint(pointInSubject))   // Right(point in MNI)
 ```
 
 `invertNumerically` estimates the forward map on a persistent source lattice
-with reframe4s' fixed-point solver. It starts from the identity, so it
-converges only for warps that are close to the identity (where `I - D pull`
-is a contraction), like the ANTs field in this example. It refuses a FNIRT
-field between differently placed volumes, or any field that contains a large
-affine. A qualified result is a
-`Mapped` warp with `PushAvailability.Estimated`, which carries evidence:
+with reframe4s' fixed-point solver. By default each point starts from the
+identity, so it converges only for warps that are close to the identity
+(where `I - D pull` is a contraction), like the ANTs field in this example.
+A field that contains a large affine, such as a FNIRT field between
+differently placed volumes, needs a typed `InversionStart`:
+
+```scala
+// FSL places each volume in its own scaled-voxel frame: start from the FLIRT matrix the field displaces from
+val flirt = FlirtInterpretation.interpret(flirtMatrix, grids).toOption.get     // WorldTransform.Linear[input, reference]
+val fromGuess = policy.flatMap(p => fnirt.invertNumerically(inputLattice, p, InversionStart.AffineGuess(flirt)))
+```
+
+- `InversionStart.Identity()` (the default) starts `push(x)` at `x`.
+- `InversionStart.AffineGuess(linear)` starts at `linear`'s forward map and
+  preconditions every update with its linear part, so the iteration converges
+  where `I - L D pull` contracts. On the FSL 5.0.9 dense fixtures the
+  identity start fails its coverage gate, and the FLIRT guess qualifies.
+- `InversionStart.Continuation()` starts each point from an already
+  converged lattice neighbour.
+
+A qualified result is a `Mapped` warp with `PushAvailability.Estimated`,
+which carries evidence:
 
 - the reframe4s `InverseEstimate`;
-- the evaluation-domain mask and its coverage fraction;
+- the evaluation-domain mask and its coverage fraction. The domain is the set
+  of source points whose preimage lies inside the field's sampled support;
+  values a boundary policy supplies are never inverted;
 - per-point status counts (`Converged`, `MaxIterations`, `Diverged`,
   `OutsideCoverage`);
 - interior residuals in both directions: `|pull(push(x)) - x|` and
-  `|push(pull(y)) - y|`.
+  `|push(pull(y)) - y|`;
+- the start (`start`, `preconditioned`), the points the start itself
+  rejected (`startRejections`) and the total iteration count. The provenance
+  step names the start too.
 
 If any gate fails, the result is
 `Left(TransformError.Inversion(GatesFailed(failures, evidence)))`. It is
@@ -212,14 +233,28 @@ inverted. A forward map read from an inverse asset is never replaced by an
 estimate.
 
 Points outside a field's lattice are rejected by default
-(`CoordinateBoundaryPolicy.Reject`). `PreserveSource` fills an out-of-lattice
-interpolation corner with the query point itself, so beyond the first voxel
-outside the lattice the map is the identity, which matches ITK's zero
-displacement there. Within that first voxel the two differ: ITK holds the
-border displacement for half a voxel and then drops to zero, while
-`PreserveSource` blends the absolute coordinate towards the query point. The
-fMRIPrep chain scenario declares this as the caveat
-`transform.itk-border-band`.
+(`CoordinateBoundaryPolicy.Reject`): outside its lattice a field has no
+measured displacement, so ScalaFIM does not invent one. To reproduce ITK and
+ANTs exactly, read the field with `DenseContext.itk(frames)`
+(`TransformLoadOptions.itk` in `spatial`). That is ITK's own
+`DisplacementFieldTransform` extension, `HoldBorderDisplacement`: within half
+a voxel outside the lattice a point keeps the border displacement, and
+beyond that band its displacement is zero. Resample the image with
+`borderBand = BorderBand.HoldHalfVoxel` and `BoundaryPolicy.Constant(0.0)` to
+match ITK's `ResampleImageFilter` as well:
+
+```scala
+val composite = ItkHdf5Interpretation.interpret(file, DenseContext.itk(frames)).toOption.get.composed
+composite.resample(t1w, templateGrid, Interpolation.Linear, BoundaryPolicy.Constant(0.0), BorderBand.HoldHalfVoxel)
+```
+
+The fMRIPrep chain scenario compares every template voxel with SimpleITK
+`Resample` this way and passes without caveats. FNIRT fields and
+coefficients, AFNI 3dQwarp fields and X5 dense nodes refuse
+`HoldBorderDisplacement` with `TransformError.UnsupportedBoundary`, because
+their own tools do not extend a field that way. `PreserveSource` (the query
+point itself, blended across the first voxel outside) and `Constant` remain
+available as general extensions for any dense field.
 
 ## Warp algebra: fields, determinants and modulation
 
@@ -228,7 +263,6 @@ is an affine, a composite or a dense warp. Each one hands the numerics to
 reframe4s and keeps the result tied to the frame it lives in.
 
 ```scala
-// here the warp is read with DenseContext(frames, CoordinateBoundaryPolicy.PreserveSource); see the note below
 val field = warp.materialize(mniGrid)                  // convertwarp: the pullback sampled on a lattice
 field.map(_.coverage.counts)                           // covered / filled / rejected lattice points
 val jac = warp.jacobianDeterminant(mniGrid)            // det D pull, per target voxel (FSL --jac)
@@ -242,13 +276,13 @@ warp.resampleModulated(density, mniGrid, VolumeModulation.Jacobian, boundary = B
   its value. Rejected points fail with `TransformError.Composition` and the
   coverage report, unless a fill policy is given. The fill never happens
   silently. To compose two transforms into one field, write
-  `first.andThen(second).materialize(grid)`. On an oblique lattice, a face
-  point of the field's own lattice can round to just outside it, and
-  `Reject` then counts it as rejected. Read such fields with `PreserveSource`
-  if you need every lattice point. Those points are then reported as
-  `SourcePreserved`, and the boundary weight is about 1e-16. The
-  materialized field has no forward map of its own, and a field whose
-  rejected points were filled cannot be inverted.
+  `first.andThen(second).materialize(grid)`. A field materialized on its own
+  lattice covers every point under `Reject`, faces included, even on an
+  oblique lattice where a face point's continuous index rounds to just
+  outside it. Points a stage's boundary policy supplied are reported as
+  `ConstantFilled`, `SourcePreserved` or `BorderHeld`. The materialized field
+  has no forward map of its own, and a field whose rejected points were
+  filled cannot be inverted.
 - **`jacobianDeterminant`** gives the volume change of the pullback in mm³
   per mm³. It uses central differences of the materialized field, and it
   refuses lattices that the transform does not cover. On a real
@@ -259,6 +293,8 @@ warp.resampleModulated(density, mniGrid, VolumeModulation.Jacobian, boundary = B
   reframe4s `ResamplingPlan` evaluates the pullback at every target voxel.
   Affine pullbacks keep the affine kernel. A target voxel whose pullback
   leaves the source image fails the plan unless a `BoundaryPolicy` fills it.
+  `borderBand = BorderBand.HoldHalfVoxel` samples the clamped border within
+  half a voxel of the source lattice first, as ITK does.
 - **`resampleModulated`** scales each resampled value by `|det|`
   (`Jacobian`), which preserves a density's integral. `SqrtJacobian` scales
   by `sqrt|det|` instead and preserves the squared L2 norm of an amplitude.
@@ -314,7 +350,11 @@ The warp algebra is checked in two ways. Analytic laws cover affine and
 radial determinants, the chain rule, folds, the sinusoidal inverse bound, and
 the modulation laws. Native outputs cover FSL 5.0.9 `convertwarp` and
 `fnirtfileutils --jac`, and ITK `TransformPoint` on composites. Numerical
-inverses have not yet been checked against ANTs `InverseWarp` or FSL
-`invwarp`. The reframe4s solver starts from the identity, so it refuses
-fields that are far from it, such as FNIRT fields between differently placed
-volumes. That refusal is itself tested.
+inverses are checked against ITK's `InvertDisplacementFieldImageFilter` at
+every lattice point of the evaluation domain, within a stability bound
+derived from both residuals (largest difference 9.5e-12 mm). FSL 5.0.9 dense
+fields and `--cout --aff` coefficient files invert from an affine guess and
+round-trip through the exact spline and through `applywarp`'s own coordinate
+ramps; from the identity start the dense fields are refused, and that
+refusal is itself tested. Checks against ANTs `InverseWarp` and FSL
+`invwarp` outputs are pending until those tools are available.

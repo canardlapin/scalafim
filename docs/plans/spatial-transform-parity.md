@@ -422,7 +422,9 @@ enum PushAvailability[S <: Frame[D3], T <: Frame[D3]]:
   is the user-facing entry point (the `resample_volume` equivalent). It
   expands into a single reframe4s `ResamplingPlan` (ledger rule 1). The
   default boundary policy is `CoordinateBoundaryPolicy.Reject`; there is no
-  silent identity outside the field.
+  silent identity outside the field. ITK's own half-voxel border hold is an
+  explicit opt-in (`DenseContext.itk`, `BorderBand.HoldHalfVoxel`); see
+  decision 9 of the ADR.
 - **Affine build/decompose helpers** (`build_affine_matrix`,
   `decompose_affine_matrix`) delegate to reframe4s-lie. If a parameterisation
   is missing there, it lands upstream.
@@ -872,7 +874,8 @@ gate.
 
 - Match `convertwarp` and ANTs composite outputs on the fixture lattices.
 - Points where any stage leaves its coverage are reported under the
-  `Reject` / `Constant` / `PreserveSource` policy, never silently filled.
+  `Reject` / `Constant` / `PreserveSource` / `HoldBorderDisplacement`
+  policy, never silently filled.
 
 **Numerical inverse (`Estimated`).** The evidence record has these fields:
 
@@ -1084,3 +1087,60 @@ _(append per phase: date, commits, test commands run, results)_
 - **Deviation from the Phase 7 text:** the fMRIPrep chain uses the synthetic
   SimpleITK composites, not demo1 outputs. The surface chain uses synthetic
   icospheres, not fsaverage or fsLR32k meshes.
+
+### U6 follow-up and P6.02: ITK border band, face roundoff, native inverse parity (2026-09-27)
+
+- **Upstream:** built against reframe4s `stp-u6` (cc7bcfa face roundoff,
+  59ebf8d typed inversion start, be6d77c ITK half-voxel border band); the
+  `reframe4sRevision` pin moves when that branch is published.
+- **Boundary policy** (ADR decision 9): `Reject` stays the default.
+  `DenseContext.itk` / `TransformLoadOptions.itk` read ITK HDF5 composites and
+  ANTs fields with `HoldBorderDisplacement`; FNIRT dense fields and
+  coefficients, AFNI 3dQwarp and X5 dense nodes refuse it with
+  `TransformError.UnsupportedBoundary`. `WorldTransform.resample` and
+  `resampleModulated` take `borderBand: BorderBand = BorderBand.Off`.
+- **Face roundoff:** the `PreserveSource` workarounds for oblique face points
+  are gone; materializing a field on its own lattice under `Reject` covers
+  every point. (`ConversionMatrixSuite` keeps `PreserveSource` for a different
+  reason: NIfTI-1 stores a written lattice in float32, so a face point of the
+  float64 lattice lies genuinely outside the re-read one.)
+- **`transform.fmriprep-chain.v1` is now a clean `Pass`:** every template voxel
+  is compared with SimpleITK `Resample` under `DenseContext.itk` and
+  `BorderBand.HoldHalfVoxel` with `BoundaryPolicy.Constant(0.0)`, within the
+  unchanged 2e-5 tolerance; the caveat `transform.itk-border-band` is retired.
+- **P6.02** (`bd-01M39Q53JNRCWQG7ZRPWWK74EE`): `invertNumerically` takes a
+  typed `InversionStart` (`Identity`, `AffineGuess(WorldTransform.Linear)`,
+  `Continuation`), recorded in the evidence (`start`, `preconditioned`,
+  `startRejections`, `totalIterations`) and in the provenance step.
+  `NumericalInverseParitySuite`:
+  - ITK `InvertDisplacementFieldImageFilter` (new native oracle
+    `itk_inverse`, SimpleITK 2.5.6, ITK residual <= 4.2e-10 mm): all 336
+    lattice points whose preimage lies in the field agree within
+    `K (r_ours + r_itk + delta)` with the field's derived inverse-Lipschitz
+    bound K = 1.134; largest difference 9.5e-12 mm. The evaluation domain is
+    exactly the sampled support: border-held values are not inverted.
+  - FNIRT dense fields between differently placed volumes (four handedness
+    cases): the identity start fails its coverage gate, the FLIRT-identity
+    affine guess qualifies (coverage 0.082 inside the derived bounds
+    [0.065, 0.125], reverse residual max 5.3e-3 mm), and 248 voxels of FSL's
+    own `applywarp` ramps round-trip within the gated reverse residual plus
+    `sqrt(3) K` times the ramps' float32 error (5.5e-3 mm).
+  - FNIRT `--cout --aff` (five cases, cubic and quadratic): materialized on the
+    reference lattice and inverted from the `--aff` FLIRT matrix; the exact
+    spline round trip stays within the derived B-spline interpolation bound
+    (0.09-0.13 mm against 0.30-0.64 mm), and 336-501 `applywarp` voxels
+    round-trip. These fields are close to the identity in world space, so the
+    identity start also qualifies on them.
+- **Verification** (built with `-Dscalafim.reframe4s.build` on `stp-u6`):
+  transformJVM 160 and transformJS 134; spatialJVM 212 and spatialJS 188;
+  surfaceJVM 146 and surfaceJS 118; imageJVM 371 and atlasJVM 99;
+  scalafimCompileAll 0 warnings; manifest validator passes.
+- **Pending:** FSL `invwarp` and ANTs `InverseWarp` comparisons (no native
+  outputs for these fixtures; Docker and the FSL/ANTs binaries are not
+  available). Upstream: reframe4s' `DomainRestrictedMap` still refuses a
+  lattice node of the evaluation domain when roundoff gives an in-lattice
+  neighbour outside the domain a weight of about 1e-16 (56 of the 336 domain
+  nodes of the ITK field, all interior, continuous index -2.2e-16 off); the
+  estimate is conservative there, never wrong, and the parity suite compares
+  its lattice samples.
+

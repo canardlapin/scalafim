@@ -1,7 +1,6 @@
 package scalafim.transform.itk
 
 import image4s.geometry.{D3, Frame, Point}
-import reframe4s.field.CoordinateBoundaryPolicy
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.field.DenseContext
@@ -24,8 +23,10 @@ class ItkHdf5OracleSuite extends munit.FunSuite:
   private def lps(v: Vector[Double]) = Vector(-v(0), -v(1), v(2))
 
   test("affine-only, affine-then-warp and warp-then-affine composites reproduce ITK TransformPoint"):
-    // ITK extends displacement fields by zero outside their lattice; PreserveSource is exactly that extension.
-    val context = DenseContext(frames, CoordinateBoundaryPolicy.PreserveSource)
+    // ITK holds a displacement field's border value for half a voxel outside its lattice and uses zero displacement
+    // beyond that band: DenseContext.itk (HoldBorderDisplacement). PreserveSource differs inside the band, where it
+    // blends the border displacement towards zero across the whole first voxel.
+    val context = DenseContext.itk(frames)
     Vector("affine.h5", "affine_warp.h5", "warp_affine.h5").foreach: name =>
       val chain = ok(ItkHdf5Interpretation.interpret(decoded(name), context))
       points.keyed.filter(_._1 == name).foreach: (_, row) =>

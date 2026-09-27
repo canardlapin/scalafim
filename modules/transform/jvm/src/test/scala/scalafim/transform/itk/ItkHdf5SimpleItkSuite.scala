@@ -1,7 +1,6 @@
 package scalafim.transform.itk
 
 import image4s.geometry.{D3, Frame, Point}
-import reframe4s.field.CoordinateBoundaryPolicy
 import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.field.DenseContext
@@ -21,8 +20,8 @@ class ItkHdf5SimpleItkSuite extends munit.FunSuite:
   private val moving: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("simpleitk moving")))
   private val fixed: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("simpleitk fixed")))
 
-  // ITK extends displacement fields by zero outside their lattice; PreserveSource is exactly that extension.
-  private val itk = DenseContext(Frames[moving.type, fixed.type](moving, fixed), CoordinateBoundaryPolicy.PreserveSource)
+  // ITK's own out-of-lattice behaviour: the border displacement for half a voxel, zero displacement beyond.
+  private val itk = DenseContext.itk(Frames[moving.type, fixed.type](moving, fixed))
 
   private final case class Row(label: String, input: Vector[Double], output: Vector[Double])
 
@@ -70,7 +69,7 @@ class ItkHdf5SimpleItkSuite extends munit.FunSuite:
 
   test("a constant displacement pair is a pullback and its supplied inverse"):
     val forward = chain("pullback_plus_one.h5").composed
-    val inverse = ok(ItkHdf5Interpretation.interpret(file("pullback_minus_one.h5"), DenseContext(Frames[fixed.type, moving.type](fixed, moving), CoordinateBoundaryPolicy.PreserveSource))).composed
+    val inverse = ok(ItkHdf5Interpretation.interpret(file("pullback_minus_one.h5"), DenseContext.itk(Frames[fixed.type, moving.type](fixed, moving)))).composed
     val paired = WorldTransform.Mapped(forward.pull, PushAvailability.FromAsset(inverse.pull, AssetRef("pullback_minus_one.h5", None)), forward.provenance)
     rows.filter(_.label == "constant-forward").foreach: row =>
       assertClose(pull(forward, row.input), row.output, 1e-12, s"forward at ${row.input}")

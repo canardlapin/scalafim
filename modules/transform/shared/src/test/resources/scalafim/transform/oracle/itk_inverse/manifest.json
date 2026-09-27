@@ -1,0 +1,18 @@
+{
+ "generator": "tools/transform/generate_itk_inverse_oracle.py",
+ "generated": "2026-09-27",
+ "kind": "native-oracle",
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with SimpleITK==2.5.6 --with numpy python tools/transform/generate_itk_inverse_oracle.py"
+ ],
+ "notes": "Input: ../neurotransform/itk_oracle/warp.nii.gz (a 7x8x9 oblique ITK displacement field, float64 on read) inverted by InvertDisplacementFieldImageFilter (MaximumNumberOfIterations 500, MaxErrorToleranceThreshold 1e-10, MeanErrorToleranceThreshold 1e-12, EnforceBoundaryCondition off; the filter reported max error norm 4.01e-10 and mean 7.97e-13). inverse.tsv: one row per lattice point, x fastest: index (i, j, k), the fixed LPS point p, the inverse displacement e(p) (LPS mm), and the residual |TransformPoint(p + e(p)) - p| (mm) through ITK's DisplacementFieldTransform of the forward field (largest 4.2e-10 mm).",
+ "sha256": {
+  "inverse.tsv": "4a8b184ea465aaf6f4e779a2e66d2fd545ddb2ae3741f8c24b61b4db4f7b09ff"
+ }
+}

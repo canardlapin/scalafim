@@ -1,6 +1,5 @@
 package scalafim.spatial.io
 
-import reframe4s.field.CoordinateBoundaryPolicy
 import scalafim.image.world.SubjectId
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
@@ -72,7 +71,7 @@ class TransformIngestSuite extends munit.FunSuite:
       val cells = line.split('\t').toVector
       Row(cells.head, cells.slice(1, 4).map(_.toDouble), cells.slice(4, 7).map(_.toDouble))
 
-  private val itk = TransformLoadOptions(boundary = CoordinateBoundaryPolicy.PreserveSource)
+  private val itk = TransformLoadOptions.itk
 
   /** One `fsl_cases.tsv` volume: its dims and FSL-selected voxel-to-world matrix (the sform for cases 0 and 1). */
   private def fslDomain(name: String, index: Int): Domain =

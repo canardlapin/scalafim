@@ -63,8 +63,10 @@ class ConversionMatrixSuite extends munit.FunSuite:
       Left("MissingContext")
     )
     val lattice = ConversionContext.Lattice(Vector(6, 5, 4), ok(Affine.fromRowMajor[D3](Vector(1.9840289896782464, -0.2688309492111948, 0.07807878523127607, -30.0, 0.23923290058341865, 2.17809331642222, 0.18553837609186435, -40.0, -0.07997866837326832, -0.15375118114363753, 2.4918826646321053, -20.0, 0, 0, 0, 1))))
-    // Re-sampling a dense result on its own lattice touches the lattice edge, where round-off can land a hair outside;
-    // PreserveSource keeps that re-read total. Comparisons below use interior lattice points only.
+    // reread() samples each NIfTI output on the float64 lattice to convert it to X5, but NIfTI-1 stores that lattice in
+    // float32 (srow), so a face point of the float64 lattice lies genuinely outside the stored one by float32 rounding
+    // (about 1e-7 voxel, far above reframe4s' 1e-12 support tolerance). PreserveSource keeps that re-read total; the
+    // comparisons below use interior lattice points only.
     val withLattice = context.copy(lattice = Some(lattice), fnirtDefinition = Some(FnirtDefinition.Relative), boundary = reframe4s.field.CoordinateBoundaryPolicy.PreserveSource)
     val latticePoints = for x <- Vector(1, 3); y <- Vector(1, 2); z <- Vector(1, 2) yield ok(lattice.voxelToRas(Vector(x.toDouble, y.toDouble, z.toDouble)))
     val original = ok(LtaInterpretationFor(lta, frames))

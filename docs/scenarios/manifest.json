@@ -671,20 +671,11 @@
       "platforms": ["jvm", "js"],
       "reference": {
         "kind": "native_simpleitk_transform_point_and_resample",
-        "description": "boldref -> T1w (ITK rigid text) -> template (ITK HDF5 affine+displacement composite) against SimpleITK 2.5.6 TransformPoint (itk_hdf5, itk_linear) and linear Resample (neurotransform itk_oracle), plus a gated numerical-inverse round trip and SHA-256 provenance. Synthetic SimpleITK composites, not fMRIPrep demo outputs."
+        "description": "boldref -> T1w (ITK rigid text) -> template (ITK HDF5 affine+displacement composite) against SimpleITK 2.5.6 TransformPoint (itk_hdf5, itk_linear) and linear Resample (neurotransform itk_oracle) at every template voxel, with ITK's half-voxel border band for the displacement field (DenseContext.itk) and the resampled image (BorderBand.HoldHalfVoxel), plus a gated numerical-inverse round trip and SHA-256 provenance. Synthetic SimpleITK composites, not fMRIPrep demo outputs."
       },
-      "allowed_statuses": ["pass_with_caveats"],
+      "allowed_statuses": ["pass"],
       "acceptance_commands": ["sbt transformJVM/test", "sbt transformJS/test"],
-      "caveats": [
-        {
-          "id": "transform.itk-border-band",
-          "kind": "algorithm_divergence",
-          "severity": "actionable",
-          "owner": "transform",
-          "follow_up": "a reframe4s CoordinateBoundaryPolicy (and image BoundaryPolicy) reproducing ITK's half-voxel border extension",
-          "detail": "ITK extends a displacement field (and clamps an image) by its border sample for half a voxel outside the lattice; reframe4s PreserveSource blends the coordinate towards the query point (Constant towards the fill) across the first voxel outside. Volume voxels whose field query or final pullback fall in that band, chosen from the native data, are not compared."
-        }
-      ]
+      "caveats": []
     },
     {
       "id": "transform.fsl-chain.v1",

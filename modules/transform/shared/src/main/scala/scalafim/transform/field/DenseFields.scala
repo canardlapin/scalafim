@@ -102,6 +102,21 @@ object LatticeAffine:
   * absolute source coordinates. Out-of-lattice behaviour is the explicit boundary policy (default: reject).
   */
 object DenseLattice:
+  /** `HoldBorderDisplacement` is ITK's `DisplacementFieldTransform` extension, so only ITK and ANTs fields may use it.
+    * Any other format refuses it rather than claiming a semantics its own tool does not have.
+    */
+  private[transform] def refuseItkBorder(format: TransformFormat, boundary: CoordinateBoundaryPolicy, tool: String): Either[TransformError, Unit] =
+    boundary match
+      case CoordinateBoundaryPolicy.HoldBorderDisplacement => Left(itkBorderRefusal(format, tool))
+      case CoordinateBoundaryPolicy.Reject | CoordinateBoundaryPolicy.PreserveSource | CoordinateBoundaryPolicy.Constant(_) => Right(())
+
+  private[transform] def itkBorderRefusal(format: TransformFormat, tool: String): TransformError =
+    TransformError.UnsupportedBoundary(
+      format,
+      CoordinateBoundaryPolicy.HoldBorderDisplacement,
+      s"it reproduces ITK's half-voxel border hold, which $tool does not use; choose Reject, Constant or PreserveSource"
+    )
+
   def pullback[S <: Frame[D3], T <: Frame[D3]](
       target: T,
       source: S,
@@ -118,8 +133,22 @@ object DenseLattice:
       dense <- DenseMap.fromCoordinates[T, S, D3, Rank[4]](image, source, Interpolation.Linear, boundary).left.map(e => TransformError.Invalid(e.message))
     yield dense
 
-/** Context for fields whose files carry their own lattice: endpoint frames and the out-of-lattice policy. */
+/** Context for fields whose files carry their own lattice: endpoint frames and the out-of-lattice policy.
+  *
+  * The default policy is `Reject`: a target point outside the field's lattice is an error, never a silent identity.
+  * [[DenseContext.itk]] reproduces ITK and ANTs, and `PreserveSource` or `Constant` are explicit general extensions.
+  */
 final case class DenseContext[S <: Frame[D3], T <: Frame[D3]](frames: Frames[S, T], boundary: CoordinateBoundaryPolicy = CoordinateBoundaryPolicy.Reject)
+
+object DenseContext:
+  /** ITK's own extension of a displacement field (`DisplacementFieldTransform` with its default linear interpolator):
+    * within half a voxel outside the lattice a point keeps the border displacement, and beyond that band its
+    * displacement is zero, so the point maps to itself. This is `CoordinateBoundaryPolicy.HoldBorderDisplacement`,
+    * accepted by ITK HDF5 composites and ANTs NIfTI fields only; the other dense formats refuse it with
+    * [[TransformError.UnsupportedBoundary]].
+    */
+  def itk[S <: Frame[D3], T <: Frame[D3]](frames: Frames[S, T]): DenseContext[S, T] =
+    DenseContext(frames, CoordinateBoundaryPolicy.HoldBorderDisplacement)
 
 /** ITK/ANTs displacement fields (and AFNI 3dQwarp, which shares the layout): on the target lattice, an LPS
   * displacement `d` sends target point `p` to source point `p + d` (ITK `DisplacementFieldTransform`, AFNI DICOM order).
@@ -127,6 +156,9 @@ final case class DenseContext[S <: Frame[D3], T <: Frame[D3]](frames: Frames[S, 
 final class LpsDisplacementInterpretation(format: TransformFormat, lattice: LatticeAffine) extends Interpretation[VectorFieldNifti, DenseContext, WorldTransform.Mapped]:
   def interpret[S <: Frame[D3], T <: Frame[D3]](field: VectorFieldNifti, context: DenseContext[S, T]): Either[TransformError, WorldTransform.Mapped[S, T]] =
     for
+      _ <- lattice match
+        case LatticeAffine.Itk          => Right(())
+        case LatticeAffine.AfniCardinal => DenseLattice.refuseItkBorder(format, context.boundary, "AFNI")
       latticeToWorld <- LatticeAffine.of(field.raw, lattice)
       m = latticeToWorld.rowMajor
       flip = ToolCoordinates.LpsToRas.rowMajor // an LPS displacement is a vector: only the flip's diagonal applies
@@ -162,6 +194,7 @@ final case class FnirtContext[S <: Frame[D3], T <: Frame[D3]](
 object FnirtFieldInterpretation extends Interpretation[VectorFieldNifti, FnirtContext, WorldTransform.Mapped]:
   def interpret[S <: Frame[D3], T <: Frame[D3]](field: VectorFieldNifti, context: FnirtContext[S, T]): Either[TransformError, WorldTransform.Mapped[S, T]] =
     for
+      _ <- DenseLattice.refuseItkBorder(TransformFormat.FslFnirtField, context.boundary, "FSL")
       reference <- FslHeaderGeometry(field.raw)
       definition <- context.definition.fold(FnirtDetection.detect(field, reference, context.sourceGeometry))(Right(_))
       toFsl = reference.voxelToFsl.rowMajor

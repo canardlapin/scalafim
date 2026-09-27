@@ -155,3 +155,34 @@ assertion) and with the xform code, under the rules a BIDS-named space meets.
 **A declared space is its token.** The label is presentation metadata carried
 by the token and the frame's `FrameMetadata`; it is not encoded in the
 persistent frame id and does not take part in equality.
+
+## 9. Out-of-lattice policy for dense fields (reframe4s U6)
+
+**Decision.** `CoordinateBoundaryPolicy.Reject` stays the default for every
+dense field. ITK's own extension is an explicit, format-checked opt-in:
+`DenseContext.itk(frames)` (and `TransformLoadOptions.itk` in `spatial`),
+which reads the field with `CoordinateBoundaryPolicy.HoldBorderDisplacement`.
+`PreserveSource` and `Constant` remain general, user-chosen extensions.
+
+**Why not make ITK's behaviour the default for ITK files.**
+- A target point outside a registration field's lattice has no measured
+  displacement. What ITK returns there (the border value for half a voxel,
+  then the identity) is a convention of one toolkit, not information in the
+  file. Silently adopting it would make a pullback answer where the data say
+  nothing, which is what the plan's "no silent identity outside a field"
+  rule forbids.
+- Resampling onto the field's own lattice, materializing, Jacobians and
+  numerical inversion all work under `Reject`: since reframe4s U6, roundoff at
+  a lattice face no longer rejects a point on the lattice, so the earlier
+  reason to read ITK fields with `PreserveSource` is gone.
+- Reproducing a native ITK output exactly is a choice the caller makes and
+  can see, together with `BorderBand.HoldHalfVoxel` for the resampled image.
+  The fMRIPrep chain scenario does exactly that and passes cleanly.
+
+**Which formats accept `HoldBorderDisplacement`.** It is ITK's semantics, so
+only the ITK HDF5 composite and ANTs NIfTI readings accept it. FNIRT dense
+fields and coefficients, AFNI 3dQwarp fields and X5 dense nodes refuse it
+with `TransformError.UnsupportedBoundary`, rather than claiming a semantics
+their own tools do not have or aliasing it to another policy. (nitransforms,
+the X5 reference, returns the query point at any index outside `[0, n - 1]`,
+which is neither ITK's band nor `PreserveSource`'s blend.)
