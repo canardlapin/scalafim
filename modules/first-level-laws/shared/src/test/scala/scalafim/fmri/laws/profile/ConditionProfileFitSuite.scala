@@ -161,6 +161,33 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     )
     assert(result.isLeft)
 
+  test("admission refuses same-shaped shifted task and nuisance geometry, and OLS whitening"):
+    val shifted = term.copy(onsets = term.onsets.updated(0, Seconds(term.onsets.head.value + 0.2)))
+    val shiftedConvolved = shifted.convolve(basis.kernel, frame, precision = precision)
+    val shiftedModel = EventModel.build(Vector(shiftedConvolved), frame)
+    val shiftedPlan = FitPlan(FmriModel(shiftedModel, baseline, dataset))
+    val shiftedStructure = ConditionProfileFit.structureFor(shiftedPlan, shiftedConvolved).fold(e => fail(e.message), identity)
+    val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
+    val points = Vector(family.chart.point(4.0, math.log(1.2)).fold(e => fail(e.message), identity))
+    val shiftedResult = ObservedFamilyCertification.admitForCondition(
+      shiftedPlan, shiftedStructure, expanded, term, frame, precision, None, Some(nuisance), points,
+      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+    )
+    assert(shiftedResult.isLeft)
+    val changedNuisance = DMat.tabulate(rows, nuisance.cols)((row, column) => nuisance(row, column) + (if row == 0 && column == 0 then 1e-8 else 0.0))
+    val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
+    val nuisanceResult = ObservedFamilyCertification.admitForCondition(
+      plan, structure, expanded, term, frame, precision, None, Some(changedNuisance), points,
+      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+    )
+    assert(nuisanceResult.isLeft)
+    val whitenedResult = ObservedFamilyCertification.admitForCondition(
+      plan, structure, expanded, term, frame, precision,
+      Some(scalafim.fmri.ar.WhiteningPlan.global(scalafim.fmri.ar.ArmaCoefficients.ar(0.2), Vector(scalafim.fmri.ar.TimeSegment(0, rows, 0)))),
+      Some(nuisance), points, ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+    )
+    assert(whitenedResult.isLeft)
+
   test("the Gram route agrees with the compact route and the direct oracle, streaming blocks in order"):
     val queries = Vector(SignedQuery.make("A-B", Vector(1.0, -1.0, 0.0), 1e-6).fold(e => fail(e.message), identity))
     val prep = ConditionProfileFit
