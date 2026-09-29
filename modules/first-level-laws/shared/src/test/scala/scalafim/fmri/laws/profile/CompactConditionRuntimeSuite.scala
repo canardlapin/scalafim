@@ -235,9 +235,9 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
       grid,
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 2,
-        maxJets = 2,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0)
       ),
       None,

@@ -264,17 +264,17 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     if family.dimension == 2 then
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 2,
-        maxJets = 2,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0)
       )
     else
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 3,
-        maxJets = 3,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0, 1.0)
       )
 

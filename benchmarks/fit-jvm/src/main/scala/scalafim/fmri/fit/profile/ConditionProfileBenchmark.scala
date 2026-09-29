@@ -70,7 +70,7 @@ class ConditionProfileBenchmark:
       .fold(e => throw new IllegalArgumentException(e.message), identity)
     prep = CompactConditionPreparation.prepare(expanded, admission, Some(whitening), Some(nuisance), term, frame, Seconds(0.1)).fold(e => throw new IllegalArgumentException(e.message), identity)
     val grid = NodeGrid(family.chart, Vector(15, 15))
-    val budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 2, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0))
+    val budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 3, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0))
     runtime = new CompactConditionRuntime(prep, grid, budget, None, 1.0, NormalizationRule.Unnormalised)
     objective = new CompactConditionObjective(prep, grid)
     // synthetic responses through the basis: shape + signed amplitudes + AR(1) noise at SNR 0.5
