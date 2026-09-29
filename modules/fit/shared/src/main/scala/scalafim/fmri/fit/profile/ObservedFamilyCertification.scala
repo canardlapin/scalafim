@@ -105,6 +105,12 @@ object ObservedFamilyCertification:
     if frame.blockLens.sum != expanded.rows || term.onsets.length != term.durations0.length || term.onsets.length != term.blockIds0.length ||
         nuisance.exists(m => m.rows != expanded.rows) then
       return Left(ObservedFamilyError.Admission("frame, term, and nuisance rows must match the observed design"))
+    if expanded.term.term != term then
+      return Left(ObservedFamilyError.Admission("source event assignments or weights differ from the expanded condition design"))
+    val relowered = term.convolve(expanded.basis.kernel, frame, precision = precision).data
+    if relowered.rows != expanded.term.data.rows || relowered.cols != expanded.term.data.cols ||
+        !java.util.Arrays.equals(relowered.data.map(value => java.lang.Double.doubleToLongBits(value)), expanded.term.data.data.map(value => java.lang.Double.doubleToLongBits(value))) then
+      return Left(ObservedFamilyError.Admission("frame or precision does not reproduce the expanded basis design"))
     if points.exists(p => p.coordinates.length != expanded.basis.family.dimension || p.coordinates.exists(!_.isFinite) || expanded.basis.family.chart.point(p.coordinates*).isLeft) then
       return Left(ObservedFamilyError.Admission("held-out shapes must be finite and inside the family chart"))
     val family = expanded.basis.family
