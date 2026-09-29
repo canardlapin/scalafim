@@ -95,6 +95,22 @@ class ConditionProfileFitSuite extends munit.FunSuite:
 
   private lazy val plan: FitPlan = FitPlan(FmriModel(eventModel, baseline, dataset))
 
+  private lazy val nuisance: DMat =
+    val taskNames = convolved.columnNames.toSet
+    val indices = plan.model.columnNames.indices.filterNot(i => taskNames.contains(plan.model.columnNames(i))).toVector
+    DMat.tabulate(rows, indices.length)((t, j) => plan.model.designMatrix(t, indices(j)))
+
+  private lazy val admission: ObservedFamilyAdmission =
+    val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
+    val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
+    val points = Vector((4.0, math.log(1.2)), (6.0, math.log(2.0))).map { case (tau, logSd) =>
+      family.chart.point(tau, logSd).fold(e => fail(e.message), identity)
+    }
+    ObservedFamilyCertification.admitForCondition(
+      plan, structure, expanded, term, frame, precision, None, Some(nuisance), points,
+      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+    ).fold(e => fail(e.message), identity)
+
   private def policy(output: OutputRequest): ConditionProfilePolicy =
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
     ConditionProfilePolicy(
@@ -111,6 +127,7 @@ class ConditionProfileFitSuite extends munit.FunSuite:
       None,
       1.0,
       output,
+      admission,
       blockSize = 8
     )
 
@@ -148,12 +165,8 @@ class ConditionProfileFitSuite extends munit.FunSuite:
 
     // Compact route on the same data: nuisance = the plan's baseline columns, no whitening.
     val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
-    val model = plan.model
-    val taskNames = convolved.columnNames.toSet
-    val nuisanceCols = model.columnNames.indices.filterNot(i => taskNames.contains(model.columnNames(i))).toVector
-    val nuisance = DMat.tabulate(rows, nuisanceCols.length)((t, j) => model.designMatrix(t, nuisanceCols(j)))
     val compactPrep =
-      CompactConditionPreparation.prepare(expanded, None, Some(nuisance)).fold(e => fail(e.message), identity)
+      CompactConditionPreparation.prepare(expanded, admission, None, Some(nuisance), term, frame, precision).fold(e => fail(e.message), identity)
     val runtime = new CompactConditionRuntime(
       compactPrep,
       NodeGrid(family.chart, Vector(15, 15)),

@@ -21,6 +21,7 @@ final case class ConditionProfilePolicy(
     prior: Option[ShapePrior],
     noiseVariance: Double,
     output: OutputRequest,
+    admission: ObservedFamilyAdmission,
     blockSize: Int = 256)
 
 final case class ConditionVoxelResult(
@@ -170,6 +171,7 @@ object ConditionProfileFit:
     else
       for
         _ <- policy.output.validateFor(c).left.map(err => FitError.InvalidFitAxis("condition profile output", err.message))
+        _ <- policy.admission.admits(plan, policy.structure, policy.basis).left.map(err => FitError.InvalidFitAxis("condition profile observed-family admission", err.message))
         size <- ChunkSize(policy.blockSize)
         retention <- BasisExpandedRetention.prepare(plan, policy.structure, size)
       yield

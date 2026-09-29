@@ -9,12 +9,14 @@ enum CompactConditionError:
   case Whitening(detail: String)
   case RankDeficient(rank: Int, columns: Int)
   case Normalization(rule: NormalizationRule)
+  case Admission(detail: String)
 
   def message: String =
     this match
       case Whitening(detail) => s"whitening failed: $detail"
       case RankDeficient(rank, columns) => s"the projected expanded design has rank $rank of $columns; identify the shape-invariant directions before fitting"
       case Normalization(rule) => s"the family does not support ${rule.label} normalisation"
+      case Admission(detail) => s"observed-family admission refused: $detail"
 
 /** Response-independent preparation of the compact condition backend: the
   * whitened nuisance basis `qF`, and the rank-revealing `U R` of the
@@ -81,8 +83,12 @@ object CompactConditionPreparation:
 
   def prepare(
       expanded: ExpandedConditionDesign,
+      admission: ObservedFamilyAdmission,
       whitening: Option[WhiteningPlan],
-      nuisance: Option[DMat]
+      nuisance: Option[DMat],
+      sourceTerm: scalafim.fmri.design.event.EventTerm,
+      frame: scalafim.fmri.hrf.design.SamplingFrame,
+      precision: scalafim.fmri.hrf.Seconds
   ): Either[CompactConditionError, CompactConditionPreparation] =
     val rows = expanded.rows
     val cm = expanded.columns
@@ -102,7 +108,7 @@ object CompactConditionPreparation:
             qr.q.slice(0, rows, 0, rf).copyRowMajorTo(q)
             (q, rf)
           }
-    for
+    admission.admits(expanded, sourceTerm, frame, precision, whitening, nuisance).left.map(err => CompactConditionError.Admission(err.message)).flatMap { _ => for
       nb <- nuisanceBasis
       wa <- whitenD(CompactCondition.toDMat(rows, cm, expanded.term.data.data))
     yield
@@ -151,6 +157,7 @@ object CompactConditionPreparation:
           j += 1
         i += 1
       new CompactConditionPreparation(expanded, whitening, rows, k, rf, qF, u, rHat)
+    }
 
 /** The compact condition backend as a [[ShapeObjective]]: a node bank of
   * orthonormal node projectors (for exact node scores) and full design jets
