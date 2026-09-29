@@ -180,7 +180,8 @@ final case class DenseFmriFitResult(
     override val coefficientAxis: Option[CoefficientAxis] = None,
     override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
     voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
-    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty,
+    traceCapture: Option[CapturedFitTrace] = None
 ) extends FmriFitResult:
   require(columnNames.length == coefficients.predictors, "column names must match coefficient rows")
   require(voxelIndices.length == coefficients.voxels, "voxel indices must match coefficient columns")
@@ -199,6 +200,16 @@ final case class DenseFmriFitResult(
   def normalizedCovariance: DMat = inference.normalizedCovariance
   def coefficientCovariance: CoefficientCovariance = inference.covariance
   def inferenceScope: CoefficientInferenceScope = inference.scope
+  /** Available only when the caller requested a bounded capture during this
+    * exact fit. A copied result with changed fit state cannot reuse it.
+    */
+  def traceIdentity: Option[FitTraceIdentity] = traceCapture.map(_.identity)
+  def trace(request: FitTraceRequest): Either[FitTraceFailure, FitTraceResult] =
+    traceCapture match
+      case None => Left(FitTraceFailure.Unavailable("this fit did not retain a bounded trace capture"))
+      case Some(capture) if copy(traceCapture = None) != capture.fit =>
+        Left(FitTraceFailure.Refused("fit result was changed after trace capture"))
+      case Some(capture) => capture.trace(request)
   def rankReport: Option[RankDiagnostics] = olsDiagnostics.map(_.rankReport)
   def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
     voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))

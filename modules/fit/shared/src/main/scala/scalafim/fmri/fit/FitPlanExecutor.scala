@@ -73,6 +73,20 @@ object FitPlanExecutor:
   ): Either[FitError, DenseFmriFitResult] =
     fit(reader, plan, selection).flatMap(requireDense)
 
+  /** Fit one explicitly bounded selection and attach its exact selected
+    * response/operator to the returned dense result for later trace queries.
+    * The capture is opt-in because it retains the selected response block.
+    */
+  def fitWithTraceCapture(
+      reader: DatasetSeriesReader,
+      plan: FitPlan,
+      selection: DataSelection,
+      maxRows: Int,
+      maxVoxels: Int,
+      cancelled: () => Boolean = () => false
+  ): Either[FitTraceFailure, DenseFmriFitResult] =
+    FitTraceDiagnostics.fitAndCapture(reader, plan, selection, maxRows, maxVoxels, cancelled)
+
   def unsafeFit(
       reader: DatasetSeriesReader,
       plan: FitPlan,
