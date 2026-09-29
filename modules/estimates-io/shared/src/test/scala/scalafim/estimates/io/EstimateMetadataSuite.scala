@@ -15,6 +15,7 @@ class EstimateMetadataSuite extends munit.FunSuite:
   test("catalog roundtrip preserves physical response intervals, IDs and repeated labels") {
     val text = EstimateMetadata.catalog(catalog)
     assertEquals(EstimateMetadata.readCatalog(text), Right(catalog))
+    assertEquals(EstimateMetadata.estimandsTsv(catalog), "index\testimand_id\n0\ta/β\n1\tb\n")
     assert(text.contains("0.2.0"))
     assert(!text.contains("scalafim.fmri.fit"))
   }
@@ -62,6 +63,7 @@ class EstimateMetadataSuite extends munit.FunSuite:
         MarginalVarianceOrigin.Estimated(df))))
     val catalogRef = FileReference("catalog.json", ContentDigest.unsafeSha256("b" * 64), 1)
     val text = EstimateMetadata.unit(unit, catalogRef)
+    assertEquals(EstimateMetadata.observationsTsv(unit), "index\tobservation_id\n0\trow\n")
     val decoded = EstimateMetadata.readUnit(text, catalog).toOption.get
     assertEquals(decoded.products, unit.products)
     assertEquals(decoded.degreesOfFreedom, unit.degreesOfFreedom)

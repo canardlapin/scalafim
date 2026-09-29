@@ -3,7 +3,7 @@
 The `estimates`, `estimates-io` and `fit-estimates` modules implement a first
 vertical slice of the [native implementation plan](plans/estimate-set-implementation.md).
 They are **development APIs, not a claim of full estimate-set V0 conformance**.
-The scientific target remains [V0 0.2.0](../../plsneuro/docs/first-level-artifact-spec.md).
+The scientific target is the [canonical ScalaFIM V0 0.2.0 specification](estimate-set-v0-spec.md).
 The wire discriminator is `scalafim-estimates-development-1`; `ProfileVersion`
 records the scientific target. Do not treat this development layout as the final
 interchange schema or BIDS-shaped directory layout.
@@ -35,6 +35,8 @@ interchange schema or BIDS-shaped directory layout.
   fsync files/directories and publish immutable names without overwrite. Discovery
   updates use a filesystem lock and compare-and-swap; stale writers must reread
   and explicitly merge compatible additions. No last-writer-wins update exists.
+  A same-revision retry may reuse an already published object only when its exact
+  length and SHA256 match the staged bytes; changed bytes conflict without overwrite.
 
 ## Current restrictions
 
@@ -48,8 +50,14 @@ product/observation files. Shared code does not pretend to implement browser IO.
 
 The development metadata embeds ordered support indices. Metadata documents are
 limited to 16 MiB and exact JSON byte counts through 2^53-1. This is not the final
-TSV/mask/profile schema. Support and catalog metadata occupy memory proportional
-to their size; payload streaming alone is not a general whole-job peak-memory certificate. The
+TSV/mask/profile schema. Current new units include `estimands.tsv` and
+`observations.tsv` with zero-based `index` columns; the unit manifest pins their
+digests and the reader verifies that their ordered IDs agree exactly with the
+JSON catalog and unit. JSON is the scientific authority, and these TSV files are
+checked projections rather than editable alternative definitions. Development
+documents predating the tables remain readable. Support and catalog metadata
+occupy memory proportional to their size; payload streaming alone is not a
+general whole-job peak-memory certificate. The
 initial [heap/relocation probe](verification/estimate-set-increment/heap-and-relocation.json)
 wrote 16,777,216 Float64 cells (128 MiB numerical payload) under `-Xmx64m` in 3.10 s
 on this machine, then reopened in a separate 64 MiB JVM after relocation with no

@@ -1,0 +1,163 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-development-1",
+  "DocumentKind": "unit",
+  "Content": {
+    "dataset": "00000000-0000-4000-8000-000000000051",
+    "unit": "00000000-0000-4000-8000-000000000053",
+    "revision": "00000000-0000-4000-8000-000000000054",
+    "domain": {
+      "Dimensions": [
+        2,
+        1,
+        1
+      ],
+      "VoxelToWorldRASMillimetres": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "WorldFrame": "scanner",
+      "Support": [
+        0,
+        1
+      ]
+    },
+    "observations": [
+      {
+        "id": "row",
+        "participant": {
+          "dataset": "00000000-0000-4000-8000-000000000051",
+          "label": "01"
+        },
+        "acquisitions": [
+          "run-1"
+        ]
+      }
+    ],
+    "bindings": [],
+    "products": [
+      {
+        "id": "z-statistic",
+        "kind": {
+          "$type": "Statistic",
+          "kind": "Z"
+        },
+        "precision": "Float64",
+        "observations": [
+          "row"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "A",
+            "B"
+          ]
+        },
+        "pooling": "Run",
+        "units": "dimensionless"
+      }
+    ],
+    "outcomes": [
+      [
+        "z-statistic",
+        {
+          "$type": "Available",
+          "product": "z-statistic"
+        }
+      ]
+    ],
+    "estimability": {
+      "$type": "Unknown",
+      "reason": "synthetic fixture"
+    },
+    "provenance": {
+      "producer": "python-stdlib",
+      "version": "1",
+      "executionId": "statistic-only",
+      "estimator": {
+        "$type": "Unknown",
+        "reason": "synthetic fixture"
+      },
+      "noise": {
+        "$type": "Unknown",
+        "reason": "synthetic fixture"
+      },
+      "nuisance": {
+        "$type": "Unknown",
+        "reason": "synthetic fixture"
+      },
+      "runCombination": {
+        "$type": "Unknown",
+        "reason": "synthetic fixture"
+      },
+      "scans": [],
+      "inputs": []
+    },
+    "Catalog": {
+      "Path": "units/00000000-0000-4000-8000-000000000054/estimands.json",
+      "SHA256": "a6d8f41f32b00c21ab3196da6011c21f1269869262f9b0abcfb5a9e26d06dd9a",
+      "Bytes": 552
+    },
+    "Representations": [
+      {
+        "product": "z-statistic",
+        "observation": "row",
+        "values": {
+          "Path": "units/00000000-0000-4000-8000-000000000054/values.nii",
+          "SHA256": "012f17a01c6e846f6a1117ad4e7de380210ecaa23c8038c8f19f46d17a856821",
+          "Bytes": 384
+        },
+        "validity": {
+          "Path": "units/00000000-0000-4000-8000-000000000054/validity.nii",
+          "SHA256": "45f3e0e0b1258ce160724a07e11646bf110dd28554ba9cb086491d56903d4975",
+          "Bytes": 356
+        },
+        "precision": "Float64",
+        "slope": 1,
+        "intercept": 0,
+        "volumeOrder": [
+          "A",
+          "B"
+        ],
+        "selectedTransform": "scanner-sform"
+      }
+    ],
+    "Tables": {
+      "estimands": {
+        "Path": "units/00000000-0000-4000-8000-000000000054/estimands.tsv",
+        "SHA256": "fc9bde5b594965f5c461ed6e145a8da182d0c1cd14c5ab0fb136ab697af4d369",
+        "Bytes": 26
+      },
+      "observations": {
+        "Path": "units/00000000-0000-4000-8000-000000000054/observations.tsv",
+        "SHA256": "3d10384c1415142c78ca00717f43c67f5286f1fa875430feebe839eaa2f0337f",
+        "Bytes": 27
+      }
+    },
+    "ModelRevisionId": "00000000-0000-4000-8000-000000000052",
+    "statistics": [
+      {
+        "product": "z-statistic",
+        "distribution": "Normal",
+        "tail": "TwoSided",
+        "nullValue": 0,
+        "effect": null,
+        "standardError": null
+      }
+    ]
+  }
+}

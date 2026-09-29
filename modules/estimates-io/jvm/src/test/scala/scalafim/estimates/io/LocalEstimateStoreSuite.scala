@@ -2,6 +2,7 @@ package scalafim.estimates.io
 
 import java.nio.file.Files
 import java.nio.{ByteBuffer, ByteOrder}
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scalafim.estimates.*
 import scalafim.image.SampleSpaces
 
@@ -78,6 +79,84 @@ class LocalEstimateStoreSuite extends munit.FunSuite:
     assert(store.inspect(ref).isLeft)
   }
 
+  test("estimate NIfTI axis refuses time sampling even when spatial geometry agrees") {
+    val root = Files.createTempDirectory("scalafim-estimate-axis-")
+    val ref = write(right(LocalEstimateStore.open(root)))
+    val representation = right(EstimateMetadata.representations(Files.readString(root.resolve(ref.manifest.path)))).head
+    val path = root.resolve(representation.values.path)
+    val original = Files.readAllBytes(path)
+    val encoded = original.clone()
+    val bytes = ByteBuffer.wrap(encoded).order(ByteOrder.LITTLE_ENDIAN)
+    bytes.put(123, 10.toByte) // millimetres plus seconds; this is not a time axis
+    bytes.putFloat(136, 2.0f)
+    val altered = root.resolve("altered-axis.nii")
+    Files.write(altered, encoded)
+    val header = scalafim.image.io.Nifti.readHeader(altered).toOption.get
+    assert(NiftiEstimateSource.validateHeader(unit, product, header, false).isLeft)
+    assertEquals(ByteBuffer.wrap(original).order(ByteOrder.LITTLE_ENDIAN).getFloat(136), 0.0f)
+  }
+
+  test("digest-pinned TSV projections cannot redefine ordered JSON estimand axes") {
+    val root = Files.createTempDirectory("scalafim-estimate-tables-")
+    val store = right(LocalEstimateStore.open(root))
+    val ref = write(store)
+    val manifest = Files.readString(root.resolve(ref.manifest.path))
+    val tables = right(EstimateMetadata.indexTables(manifest)).get
+    assertEquals(Files.readString(root.resolve(tables.estimands.path)), EstimateMetadata.estimandsTsv(unit.catalog))
+    assertEquals(Files.readString(root.resolve(tables.observations.path)), EstimateMetadata.observationsTsv(unit))
+    val conflicting = right(store.writeText(s"units/${revision.value}/reordered-estimands.tsv",
+      "index\testimand_id\n0\tB\n1\tA\n"))
+    val catalog = right(EstimateMetadata.catalogReference(manifest))
+    val representations = right(EstimateMetadata.representations(manifest))
+    val changed = EstimateMetadata.unit(unit, catalog, representations, Some(tables.copy(estimands = conflicting)))
+    val changedRef = right(store.writeText(s"units/${revision.value}/reordered-manifest.json", changed))
+    assert(store.inspect(ref.copy(manifest = changedRef)).isLeft)
+  }
+
+  test("validly pinned but oversized payloads and conflicting volume axes refuse") {
+    val root = Files.createTempDirectory("scalafim-estimate-invalid-bundle-")
+    val store = right(LocalEstimateStore.open(root))
+    val ref = write(store)
+    val original = Files.readString(root.resolve(ref.manifest.path))
+    val catalog = right(EstimateMetadata.catalogReference(original))
+    val tables = right(EstimateMetadata.indexTables(original))
+    val representations = right(EstimateMetadata.representations(original))
+    val first = representations.head
+    def candidate(name: String, rep: NiftiRepresentation): PinnedUnit =
+      val manifest = EstimateMetadata.unit(unit, catalog, Vector(rep), tables)
+      ref.copy(manifest = right(store.writeText(s"units/${revision.value}/$name.json", manifest)))
+
+    val raw = Files.readAllBytes(root.resolve(first.values.path))
+    val oversizedObject = store.objects.write(s"units/${revision.value}/oversized-values.nii"):
+      output =>
+        output.write(raw)
+        output.write(0)
+    val oversized = right(oversizedObject.left.map(store.fromStore))
+    val extra = candidate("oversized", first.copy(values = store.reference(oversized)))
+    assert(store.open(extra, ReadLimits(8)).isLeft)
+
+    val reordered = candidate("reordered-axis", first.copy(volumeOrder = Vector(b, a)))
+    assert(store.open(reordered, ReadLimits(8)).isLeft)
+  }
+
+  test("deficient-rank subspace evidence is pinned and required on fresh reopen") {
+    val root = Files.createTempDirectory("scalafim-deficient-evidence-")
+    val store = right(LocalEstimateStore.open(root))
+    val basis = right(store.writeText("evidence/estimable-subspace.tsv", "column\tcomponent\nA\t1\nB\t0\n"))
+    val deficient = unit.copy(estimability = EstimabilityEvidence.Subspace(
+      Vector(ColumnId("A"), ColumnId("B")), basis, 1, 1e-8, "synthetic SVD"))
+    val sink = right(store.newSink(deficient, 8))
+    right(sink.write(product.id, EstimateSelection(Vector(obs.id), Vector(a, b), domain.support),
+      Array.fill(8)(2.0), Array.fill[Byte](8)(0)))
+    val ref = right(sink.seal())
+    val reopened = right(LocalEstimateStore.open(root))
+    val source = right(reopened.open(ref, ReadLimits(8)))
+    try assertEquals(source.unit.estimability, deficient.estimability)
+    finally right(source.close())
+    Files.writeString(root.resolve(basis.path), "altered\n")
+    assert(reopened.open(ref, ReadLimits(8)).isLeft)
+  }
+
   test("partial abort never publishes a unit and stale pointer updates cannot lose a revision") {
     val root = Files.createTempDirectory("scalafim-estimate-collection-")
     val store = right(LocalEstimateStore.open(root))
@@ -91,6 +170,49 @@ class LocalEstimateStoreSuite extends munit.FunSuite:
     right(store.discover(pinned, None))
     assert(store.discover(pinned, None).isLeft)
     assertEquals(right(store.current()).get._1, pinned)
+  }
+
+  test("concurrent pointer contenders admit one CAS winner without clobber") {
+    val root = Files.createTempDirectory("scalafim-estimate-cas-")
+    val store = right(LocalEstimateStore.open(root))
+    val ref = write(store)
+    val collection = EstimateCollection(dataset, CollectionRevisionId("00000000-0000-4000-8000-000000000041"), model,
+      Map(id -> UnitOutcome.Published(ref)))
+    val pinned = right(store.publishCollection(collection))
+    val ready = new CountDownLatch(2)
+    val start = new CountDownLatch(1)
+    val results = new Array[Either[EstimateError, Unit]](2)
+    val threads = Vector.tabulate(2): index =>
+      new Thread(() =>
+        ready.countDown()
+        if start.await(60, TimeUnit.SECONDS) then
+          results(index) = LocalEstimateStore.open(root).flatMap(_.discover(pinned, None))
+        else results(index) = Left(EstimateError.Io("CAS contender start barrier timed out"))
+      )
+    threads.foreach(_.start())
+    assert(ready.await(60, TimeUnit.SECONDS))
+    start.countDown()
+    threads.foreach(_.join(60000))
+    assert(threads.forall(thread => !thread.isAlive))
+    assert(results.forall(_ != null))
+    assertEquals(results.count(_.isRight), 1)
+    assertEquals(results.count(_.isLeft), 1)
+    assertEquals(right(store.current()).get._1, pinned)
+  }
+
+  test("same-revision retry reuses identical bytes and refuses altered payload") {
+    val root = Files.createTempDirectory("scalafim-estimate-retry-")
+    val store = right(LocalEstimateStore.open(root))
+    val original = write(store)
+    assertEquals(write(right(LocalEstimateStore.open(root))), original)
+    val before = Files.readAllBytes(root.resolve(original.manifest.path)).toVector
+    val sink = right(store.newSink(unit, 8))
+    right(sink.write(product.id,
+      EstimateSelection(Vector(obs.id), Vector(a, b), domain.support),
+      Array.fill(8)(99.0), Array.fill[Byte](8)(0)))
+    assert(sink.seal().left.toOption.exists(_.isInstanceOf[EstimateError.Conflict]))
+    assertEquals(Files.readAllBytes(root.resolve(original.manifest.path)).toVector, before)
+    assert(store.open(original, ReadLimits(8)).isRight)
   }
 
   test("statistic-only products persist without beta or SE links") {

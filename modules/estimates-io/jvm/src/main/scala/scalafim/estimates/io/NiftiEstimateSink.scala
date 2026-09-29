@@ -157,9 +157,9 @@ private[io] final class NiftiEstimateSink(
                   validityHeader <- Nifti.readHeader(output.validityStage.path).left.map(e => EstimateError.Integrity(e.message))
                   _ <- NiftiEstimateSource.validateHeader(unit, output.product, dataHeader, false)
                   _ <- NiftiEstimateSource.validateHeader(unit, output.product, validityHeader, true)
-                  data <- store.objects.publishStaged(output.valueStage, s"${prefix}_values.nii").left.map(store.fromStore)
-                  valid <- store.objects.publishStaged(output.validityStage, s"${prefix}_validity.nii").left.map(store.fromStore)
-                yield refs :+ NiftiRepresentation(output.product.id, output.observation, store.reference(data), store.reference(valid),
+                  data <- store.publishStagedIdempotent(output.valueStage, s"${prefix}_values.nii")
+                  valid <- store.publishStagedIdempotent(output.validityStage, s"${prefix}_validity.nii")
+                yield refs :+ NiftiRepresentation(output.product.id, output.observation, data, valid,
                   output.product.precision, 1.0, 0.0, output.product.targets.estimands, "scanner-sform", output.product.targets.pairs.map((a, b) => EstimandPair(a, b)))
             .flatMap(refs => store.publishUnit(unit, refs))
         result match

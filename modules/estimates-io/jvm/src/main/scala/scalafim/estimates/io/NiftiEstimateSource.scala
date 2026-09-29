@@ -106,6 +106,9 @@ private[io] object NiftiEstimateSource:
     if header.native.spatialUnit != image4s.nifti.NiftiSpatialUnit.Millimeter || header.native.storage != image4s.nifti.NiftiStorage.SingleFile then
       Left(EstimateError.Unsupported("local representation requires single-file NIfTI in millimetres"))
     else if header.dims != expected then Left(EstimateError.Integrity("NIfTI dimensions differ from declared logical axes"))
+    else if header.native.temporalUnit != image4s.nifti.NiftiTemporalUnit.Unknown ||
+        header.native.temporalOrigin.value != 0.0 || header.pixdim.lift(3).getOrElse(1.0) != 1.0 then
+      Left(EstimateError.Integrity("estimate fourth axis is an ordered identity axis, not acquisition time"))
     else if header.datatype != dtype then Left(EstimateError.Integrity("NIfTI dtype differs from declared precision"))
     else if validity && (header.slope != 1.0 || header.intercept != 0.0) then Left(EstimateError.Integrity("validity must use unscaled uint8 codes"))
     else if header.sformCode != 1 || header.sform.isEmpty || unit.domain.worldFrame != "scanner" then
@@ -145,9 +148,9 @@ private[io] object NiftiEstimateSource:
                    else Left(EstimateError.Integrity("physical encoding differs from declared precision, scaling or volume mapping"))
               _ <- validateHeader(unit, descriptor, dataHeader, false)
               _ <- validateHeader(unit, descriptor, validityHeader, true)
-              _ <- if representation.values.bytes >= dataHeader.voxOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width * (dataHeader.bitpix / 8) &&
-                       representation.validity.bytes >= validityHeader.voxOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width then Right(())
-                   else Left(EstimateError.Integrity("NIfTI file is shorter than its declared logical payload"))
+              _ <- if representation.values.bytes == dataHeader.voxOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width * (dataHeader.bitpix / 8) &&
+                       representation.validity.bytes == validityHeader.voxOffset.toLong + unit.domain.sampleCount.toLong * descriptor.targets.width then Right(())
+                   else Left(EstimateError.Integrity("NIfTI file length differs from its declared logical payload"))
               _ <- store.protect:
                 val data = FileChannel.open(store.root.resolve(representation.values.path), READ)
                 try

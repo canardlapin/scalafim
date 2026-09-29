@@ -8,11 +8,28 @@ import image4s.geometry.{Affine, D3}
 import upickle.default.*
 import scala.util.control.NonFatal
 
+/** Digest-pinned projections of the JSON catalog and unit observation order. */
+final case class EstimateIndexTables(estimands: FileReference, observations: FileReference):
+  require(estimands.path != observations.path)
+
 /** Shared metadata codec. Profile members are ordinary JSON; physical payloads
   * remain external. Decoding invokes the same validating public constructors.
   */
 object EstimateMetadata:
   val version = "0.2.0"
+
+  /** Canonical UTF-8 projections. JSON remains the scientific authority; these
+    * tables are digest-pinned and must agree byte-for-byte with its ordered IDs.
+    */
+  def estimandsTsv(value: EstimandCatalog): String =
+    "index\testimand_id\n" + value.entries.zipWithIndex.map { (entry, index) =>
+      s"$index\t${entry.id.value}\n"
+    }.mkString
+
+  def observationsTsv(value: EstimateUnit): String =
+    "index\tobservation_id\n" + value.observations.zipWithIndex.map { (observation, index) =>
+      s"$index\t${observation.id.value}\n"
+    }.mkString
 
   private def checked[A](body: => A): Either[EstimateError, A] =
     try Right(body)
@@ -132,6 +149,7 @@ object EstimateMetadata:
   private given codecEstimateUnit: ReadWriter[EstimateUnit] = macroRW
   private given codecEstimandPair: ReadWriter[EstimandPair] = macroRW
   private given codecNiftiRepresentation: ReadWriter[NiftiRepresentation] = macroRW
+  private given codecEstimateIndexTables: ReadWriter[EstimateIndexTables] = macroRW
 
   private def document(kind: String, value: ujson.Value): String =
     ujson.write(ujson.Obj("ProfileVersion" -> version, "Schema" -> "scalafim-estimates-development-1", "DocumentKind" -> kind, "Content" -> value), indent = 2) + "\n"
@@ -147,11 +165,14 @@ object EstimateMetadata:
   def readCatalog(text: String): Either[EstimateError, EstimandCatalog] = checked(read[EstimandCatalog](content(text, "catalog")))
 
   /** The catalog is an immutable referenced leaf, not a second editable inline authority. */
-  def unit(value: EstimateUnit, catalogReference: FileReference, representations: Vector[NiftiRepresentation] = Vector.empty): String =
+  def unit(value: EstimateUnit, catalogReference: FileReference,
+      representations: Vector[NiftiRepresentation] = Vector.empty,
+      tables: Option[EstimateIndexTables] = None): String =
     val encoded = writeJs(value)
     encoded.obj.remove("catalog")
     encoded("Catalog") = writeJs(catalogReference)
     encoded("Representations") = writeJs(representations)
+    tables.foreach(table => encoded("Tables") = writeJs(table))
     encoded("ModelRevisionId") = writeJs(value.catalog.model)
     document("unit", encoded)
 
@@ -163,12 +184,17 @@ object EstimateMetadata:
     require(read[ModelRevisionId](encoded("ModelRevisionId")) == catalog.model, "unit and catalog model revisions differ")
     encoded.obj.remove("Catalog")
     encoded.obj.remove("Representations")
+    encoded.obj.remove("Tables")
     encoded.obj.remove("ModelRevisionId")
     encoded("catalog") = writeJs(catalog)
     read[EstimateUnit](encoded)
 
   def representations(text: String): Either[EstimateError, Vector[NiftiRepresentation]] =
     checked(read[Vector[NiftiRepresentation]](content(text, "unit")("Representations")))
+
+  def indexTables(text: String): Either[EstimateError, Option[EstimateIndexTables]] = checked:
+    val encoded = content(text, "unit")
+    encoded.obj.get("Tables").map(value => read[EstimateIndexTables](value))
 
   def collection(value: EstimateCollection): String = document("collection", writeJs(value))
   def readCollection(text: String): Either[EstimateError, EstimateCollection] = checked(read[EstimateCollection](content(text, "collection")))
