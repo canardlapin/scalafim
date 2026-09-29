@@ -71,21 +71,32 @@ final case class ShapePrior(mean: Vector[Double], precision: Vector[Double]):
   def dimension: Int = mean.length
   require(precision.length == dimension * dimension, "precision must be d x d row-major")
 
-/** Per-voxel work caps; every cap is a counter with a reported actual. */
+/** Per-voxel work caps; every cap is a counter with a reported actual.
+  * `stationarityStepTolerance` is the largest projected Newton correction (in
+  * chart coordinates) that counts as a budget-qualified approximation rather
+  * than requiring another candidate evaluation.
+  */
 final case class DecodeBudget(
     coarseStride: Int = 2,
     maxNewtonSteps: Int = 2,
     maxJets: Int = 2,
     maxExactEvaluations: Int = 6,
     weakSdLimit: Vector[Double] = Vector.empty,
-    ambiguityEnergy: Double = 0.0):
-  require(coarseStride >= 1 && maxNewtonSteps >= 0 && maxJets >= 1 && maxExactEvaluations >= 0)
+    ambiguityEnergy: Double = 0.0,
+    maxCandidateAttempts: Int = 4,
+    stationarityStepTolerance: Double = 1e-9):
+  require(
+    coarseStride >= 1 && maxNewtonSteps >= 0 && maxJets >= 1 && maxExactEvaluations >= 0 &&
+      maxCandidateAttempts >= 1 && stationarityStepTolerance > 0.0 && !stationarityStepTolerance.isInfinite
+  )
 
 final class DecoderCounters:
   var voxels: Long = 0L
   var nodeScores: Long = 0L
   var jets: Long = 0L
   var exactEvaluations: Long = 0L
+  var candidateAttempts: Long = 0L
+  var terminalVerifications: Long = 0L
   var newtonSteps: Long = 0L
   var fallbacks: Long = 0L
   def perVoxel(value: Long): Double = if voxels == 0L then 0.0 else value.toDouble / voxels
@@ -97,6 +108,7 @@ enum DecodeStatus:
   case CurvatureNotPositive
   case AmbiguousCells
   case BudgetExceeded
+  case NoAdmissibleNode
 
 final case class ShapeDecodeResult(
     coordinates: Vector[Double],
@@ -111,6 +123,11 @@ final case class ShapeDecodeResult(
     ambiguityGap: Double):
   def point: ShapePoint = ShapePoint.unsafe(coordinates)
 
+private enum NewtonDirectionStatus:
+  case Stationary
+  case Direction
+  case CurvatureNotPositive
+
 /** The shared bounded decoder: a hierarchical scan of the node bank (coarse
   * sub-grid, then the fine neighbourhood of the coarse best), a jet at the
   * best node from the bank, then projected Newton steps on the box with every
@@ -124,6 +141,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val d = grid.dimension
   private val c = objective.amplitudeCount
   private val nodeEnergy = new Array[Double](grid.count)
+  private val nodeObjectiveEnergy = new Array[Double](grid.count)
   private val jet = new ProfileJetBuffer(d, c)
   private val x = new Array[Double](d)
   private val trial = new Array[Double](d)
@@ -131,13 +149,47 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val grad = new Array[Double](d)
   private val hess = new Array[Double](d * d)
   private val dataHess = new Array[Double](d * d)
+  private val factor = new Array[Double](d * d)
   private val free = new Array[Boolean](d)
-  private val reduced = new Array[Double](d * d)
   private val rhs = new Array[Double](d)
   private val betaAccepted = new Array[Double](c)
   private val indices = new Array[Int](d)
   private val neighbour = new Array[Int](d)
+  private val nodeScored = new Array[Boolean](grid.count)
   prior.foreach(p => require(p.dimension == d, "prior dimension must match the chart"))
+
+  private def finite(value: Double): Boolean = !value.isNaN && !value.isInfinite
+
+  private def finiteValues(values: Array[Double]): Boolean =
+    var i = 0
+    while i < values.length do
+      if !finite(values(i)) then return false
+      i += 1
+    true
+
+  private def clearJet(): Unit =
+    jet.energy = Double.NaN
+    java.util.Arrays.fill(jet.gradient, Double.NaN)
+    java.util.Arrays.fill(jet.hessian, Double.NaN)
+    java.util.Arrays.fill(jet.amplitudes, Double.NaN)
+    jet.curvature = CurvatureStatus.GramNotPositiveDefinite
+
+  private def finiteJet(): Boolean =
+    finite(jet.energy) && finiteValues(jet.gradient) && finiteValues(jet.hessian) && finiteValues(jet.amplitudes)
+
+  private def finiteEnergyEvaluation(value: Double): Boolean = finite(value) && finiteValues(jet.amplitudes)
+
+  private def copyJetState(coords: Array[Double]): Unit =
+    System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
+    System.arraycopy(jet.gradient, 0, grad, 0, d)
+    System.arraycopy(jet.hessian, 0, hess, 0, d * d)
+    System.arraycopy(jet.hessian, 0, dataHess, 0, d * d)
+    augment(coords)
+
+  private def clearCurvature(): Unit =
+    java.util.Arrays.fill(grad, Double.NaN)
+    java.util.Arrays.fill(hess, Double.NaN)
+    java.util.Arrays.fill(dataHess, Double.NaN)
 
   private def priorEnergy(coords: Array[Double]): Double =
     prior match
@@ -170,9 +222,22 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
 
   private def scan(counters: DecoderCounters): Int =
     java.util.Arrays.fill(nodeEnergy, Double.NaN)
+    java.util.Arrays.fill(nodeObjectiveEnergy, Double.NaN)
+    java.util.Arrays.fill(nodeScored, false)
     var best = -1
     var bestE = Double.PositiveInfinity
     val stride = budget.coarseStride
+
+    def evaluateNode(node: Int): Double =
+      val data = objective.scoreNode(node)
+      counters.nodeScores += 1
+      nodeScored(node) = true
+      nodeEnergy(node) = data
+      grid.coordinatesInto(node, trial)
+      val augmented = data + priorEnergy(trial)
+      nodeObjectiveEnergy(node) = augmented
+      augmented
+
     var node = 0
     while node < grid.count do
       grid.indicesInto(node, indices)
@@ -182,14 +247,23 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         if indices(axis) % stride != 0 then coarse = false
         axis += 1
       if coarse then
-        val e = objective.scoreNode(node)
-        counters.nodeScores += 1
-        nodeEnergy(node) = e
-        if e < bestE then
-          bestE = e
+        val augmented = evaluateNode(node)
+        if finite(augmented) && augmented < bestE then
+          bestE = augmented
           best = node
       node += 1
-    if stride > 1 then
+    // A refused coarse sub-grid is not evidence that every bank node is
+    // inadmissible. Complete the scan only on this failure path.
+    if best < 0 && stride > 1 then
+      node = 0
+      while node < grid.count do
+        if !nodeScored(node) then
+          val augmented = evaluateNode(node)
+          if finite(augmented) && augmented < bestE then
+            bestE = augmented
+            best = node
+        node += 1
+    if stride > 1 && best >= 0 then
       grid.indicesInto(best, indices)
       // enumerate the (2 stride - 1)^d neighbourhood
       val span = 2 * stride - 1
@@ -208,12 +282,10 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           axis += 1
         if inside then
           val n = grid.indexOf(neighbour)
-          if nodeEnergy(n).isNaN then
-            val e = objective.scoreNode(n)
-            counters.nodeScores += 1
-            nodeEnergy(n) = e
-            if e < bestE then
-              bestE = e
+          if !nodeScored(n) then
+            val augmented = evaluateNode(n)
+            if finite(augmented) && augmented < bestE then
+              bestE = augmented
               best = n
         cell += 1
     best
@@ -224,8 +296,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     var second = Double.PositiveInfinity
     var node = 0
     while node < grid.count do
-      val e = nodeEnergy(node)
-      if !e.isNaN && node != best then
+      val e = nodeObjectiveEnergy(node)
+      if finite(e) && node != best then
         grid.indicesInto(node, neighbour)
         var adjacent = true
         var axis = 0
@@ -234,7 +306,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           axis += 1
         if !adjacent && e < second then second = e
       node += 1
-    if second.isInfinite then Double.PositiveInfinity else second - nodeEnergy(best)
+    if second.isInfinite then Double.PositiveInfinity else second - nodeObjectiveEnergy(best)
 
   private def onBoundary(coords: Array[Double]): Boolean =
     var i = 0
@@ -243,8 +315,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       i += 1
     false
 
-  /** Projected Newton direction on the box; false when the free block is not positive definite. */
-  private def newtonDirection(coords: Array[Double]): Boolean =
+  /** Projected Newton direction on the box, separated from a constrained stationary point. */
+  private def newtonDirection(coords: Array[Double]): NewtonDirectionStatus =
     var i = 0
     while i < d do
       val atLower = coords(i) <= grid.chart.lower(i) + 1e-12
@@ -260,24 +332,27 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         var col = 0
         while j < d do
           if free(j) then
-            reduced(nFree * d + col) = hess(i * d + j)
+            factor(nFree * d + col) = hess(i * d + j)
             col += 1
           j += 1
         rhs(nFree) = -grad(i)
         nFree += 1
       i += 1
-    if nFree == 0 then return false
-    // pack the reduced matrix as nFree x nFree
-    val packed = new Array[Double](nFree * nFree)
+    if nFree == 0 then
+      System.arraycopy(hess, 0, factor, 0, d * d)
+      return
+        if SmallCholesky.factorInPlace(d, factor) then NewtonDirectionStatus.Stationary
+        else NewtonDirectionStatus.CurvatureNotPositive
+    // Compact the active block in place; d <= 3.
     var r = 0
     while r < nFree do
       var col = 0
       while col < nFree do
-        packed(r * nFree + col) = reduced(r * d + col)
+        factor(r * nFree + col) = factor(r * d + col)
         col += 1
       r += 1
-    if !SmallCholesky.factorInPlace(nFree, packed) then return false
-    SmallCholesky.solveInPlace(nFree, packed, rhs)
+    if !SmallCholesky.factorInPlace(nFree, factor) then return NewtonDirectionStatus.CurvatureNotPositive
+    SmallCholesky.solveInPlace(nFree, factor, rhs)
     var k = 0
     i = 0
     while i < d do
@@ -285,18 +360,23 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         delta(i) = rhs(k)
         k += 1
       i += 1
-    true
+    var norm = 0.0
+    i = 0
+    while i < d do
+      norm = math.max(norm, math.abs(delta(i)))
+      i += 1
+    if norm <= budget.stationarityStepTolerance then NewtonDirectionStatus.Stationary else NewtonDirectionStatus.Direction
 
   private def conditionalSd(out: Array[Double]): Boolean =
-    val copy = java.util.Arrays.copyOf(dataHess, d * d)
-    if !SmallCholesky.factorInPlace(d, copy) then
+    System.arraycopy(dataHess, 0, factor, 0, d * d)
+    if !SmallCholesky.factorInPlace(d, factor) then
       java.util.Arrays.fill(out, Double.NaN)
       return false
     var i = 0
     while i < d do
       java.util.Arrays.fill(rhs, 0.0)
       rhs(i) = 1.0
-      SmallCholesky.solveInPlace(d, copy, rhs)
+      SmallCholesky.solveInPlace(d, factor, rhs)
       out(i) = math.sqrt(math.max(0.0, 2.0 * noiseVariance * rhs(i)))
       i += 1
     true
@@ -304,26 +384,50 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   /** Node energies from the last scan (`NaN` where unscanned); valid until the next decode. */
   def lastNodeEnergies: Array[Double] = nodeEnergy
 
+  /** Data-plus-prior node energies used for selection and ambiguity. */
+  def lastAugmentedNodeEnergies: Array[Double] = nodeObjectiveEnergy
+
+  private def refused(best: Int, gap: Double): ShapeDecodeResult =
+    if best >= 0 then grid.coordinatesInto(best, x)
+    else java.util.Arrays.fill(x, Double.NaN)
+    java.util.Arrays.fill(betaAccepted, Double.NaN)
+    clearCurvature()
+    ShapeDecodeResult(
+      coordinates = x.toVector,
+      energy = if best >= 0 && finite(nodeEnergy(best)) then nodeEnergy(best) else Double.PositiveInfinity,
+      amplitudes = betaAccepted.toVector,
+      status = DecodeStatus.NoAdmissibleNode,
+      node = best,
+      newtonSteps = 0,
+      dataHessian = dataHess.toVector,
+      augmentedHessian = hess.toVector,
+      conditionalSd = Vector.fill(d)(Double.NaN),
+      ambiguityGap = gap
+    )
+
   def decode(counters: DecoderCounters): ShapeDecodeResult =
     counters.voxels += 1
     val best = scan(counters)
+    if best < 0 then return refused(best, Double.NaN)
     val gap = ambiguity(best)
     grid.coordinatesInto(best, x)
     var jetsUsed = 0
     var exactUsed = 0
     var steps = 0
     var fallback = false
-    val nodeOk = objective.jetAtNode(best, jet)
+    var budgetExceeded = false
+    var terminalCurvature = true
+    clearJet()
+    val nodeOk = objective.jetAtNode(best, jet) && finiteJet()
     jetsUsed += 1
     counters.jets += 1
-    var current = if nodeOk then jet.energy + priorEnergy(x) else Double.PositiveInfinity
-    System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
-    System.arraycopy(jet.gradient, 0, grad, 0, d)
-    System.arraycopy(jet.hessian, 0, hess, 0, d * d)
-    System.arraycopy(jet.hessian, 0, dataHess, 0, d * d)
-    augment(x)
-    val curvatureOk = nodeOk && newtonDirection(x)
-    var continue = curvatureOk
+    if !nodeOk then return refused(best, gap)
+    var current = jet.energy + priorEnergy(x)
+    copyJetState(x)
+    var directionStatus = newtonDirection(x)
+    val initialCurvatureNotPositive = directionStatus == NewtonDirectionStatus.CurvatureNotPositive
+    var continue = directionStatus == NewtonDirectionStatus.Direction
+    if continue && budget.maxNewtonSteps == 0 then budgetExceeded = true
     while continue && steps < budget.maxNewtonSteps do
       // clip to the box by scaling the step
       var alpha = 1.0
@@ -338,49 +442,59 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         delta(i) *= alpha
         norm = math.max(norm, math.abs(delta(i)))
         i += 1
-      if norm <= 1e-9 then continue = false
+      if norm <= budget.stationarityStepTolerance then
+        directionStatus = NewtonDirectionStatus.Stationary
+        continue = false
       else
-        val lastStep = steps == budget.maxNewtonSteps - 1
         var accepted = false
         var scale = 1.0
         var tries = 0
-        while !accepted && tries < 4 && continue do
+        while !accepted && tries < budget.maxCandidateAttempts && continue do
           i = 0
           while i < d do
             trial(i) = grid.chart.clamp(i, x(i) + scale * delta(i))
             i += 1
-          val useJet = !lastStep && jetsUsed < budget.maxJets
-          if !useJet && exactUsed >= budget.maxExactEvaluations then continue = false
+          val useJet = jetsUsed < budget.maxJets
+          if !useJet && exactUsed >= budget.maxExactEvaluations then
+            budgetExceeded = true
+            continue = false
           else
+            counters.candidateAttempts += 1
+            tries += 1
             val value =
               if useJet then
+                clearJet()
                 jetsUsed += 1
                 counters.jets += 1
-                if objective.jetAt(trial, jet) then jet.energy + priorEnergy(trial) else Double.PositiveInfinity
+                if objective.jetAt(trial, jet) && finiteJet() then jet.energy + priorEnergy(trial) else Double.PositiveInfinity
               else
+                clearJet()
                 exactUsed += 1
                 counters.exactEvaluations += 1
-                objective.energyAt(trial, jet) + priorEnergy(trial)
-            if value < current then
+                val data = objective.energyAt(trial, jet)
+                if finiteEnergyEvaluation(data) then data + priorEnergy(trial) else Double.PositiveInfinity
+            if finite(value) && value < current then
               accepted = true
               current = value
               System.arraycopy(trial, 0, x, 0, d)
               System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
+              steps += 1
+              counters.newtonSteps += 1
               if useJet then
-                System.arraycopy(jet.gradient, 0, grad, 0, d)
-                System.arraycopy(jet.hessian, 0, hess, 0, d * d)
-                System.arraycopy(jet.hessian, 0, dataHess, 0, d * d)
-                augment(x)
-                if !newtonDirection(x) then continue = false
-              else continue = false
+                copyJetState(x)
+                directionStatus = newtonDirection(x)
+                continue = directionStatus == NewtonDirectionStatus.Direction
+              else
+                terminalCurvature = false
+                budgetExceeded = true
+                continue = false
             else
               scale *= 0.5
-              tries += 1
-        if accepted then
-          steps += 1
-          counters.newtonSteps += 1
-        else continue = false
-    if !curvatureOk && nodeOk then
+        if !accepted && continue then
+          budgetExceeded = true
+          continue = false
+    if directionStatus == NewtonDirectionStatus.Direction && steps >= budget.maxNewtonSteps then budgetExceeded = true
+    if initialCurvatureNotPositive then
       // derivative-free fallback: parabolic interpolation along each axis of the node grid
       fallback = true
       counters.fallbacks += 1
@@ -393,12 +507,12 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         if idx > 0 && idx < n - 1 then
           System.arraycopy(indices, 0, neighbour, 0, d)
           neighbour(i) = idx - 1
-          val em = nodeEnergy(grid.indexOf(neighbour))
+          val em = nodeObjectiveEnergy(grid.indexOf(neighbour))
           neighbour(i) = idx + 1
-          val ep = nodeEnergy(grid.indexOf(neighbour))
-          val e0 = nodeEnergy(best)
+          val ep = nodeObjectiveEnergy(grid.indexOf(neighbour))
+          val e0 = nodeObjectiveEnergy(best)
           val den = em - 2.0 * e0 + ep
-          if !em.isNaN && !ep.isNaN && den > 0.0 then
+          if finite(em) && finite(ep) && den > 0.0 then
             val h = grid.step(i)
             trial(i) = grid.chart.clamp(i, x(i) + math.max(-h, math.min(h, 0.5 * h * (em - ep) / den)))
             moved = true
@@ -406,20 +520,38 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         else trial(i) = x(i)
         i += 1
       if moved && exactUsed < budget.maxExactEvaluations then
+        counters.candidateAttempts += 1
+        clearJet()
         exactUsed += 1
         counters.exactEvaluations += 1
-        val value = objective.energyAt(trial, jet) + priorEnergy(trial)
-        if value < current then
+        val data = objective.energyAt(trial, jet)
+        val value = if finiteEnergyEvaluation(data) then data + priorEnergy(trial) else Double.PositiveInfinity
+        if finite(value) && value < current then
           current = value
           System.arraycopy(trial, 0, x, 0, d)
           System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
+          terminalCurvature = false
+          if jetsUsed < budget.maxJets then
+            clearJet()
+            jetsUsed += 1
+            counters.jets += 1
+            counters.terminalVerifications += 1
+            if objective.jetAt(x, jet) && finiteJet() then
+              current = jet.energy + priorEnergy(x)
+              copyJetState(x)
+              terminalCurvature = true
+            else clearCurvature()
+          else budgetExceeded = true
+      else if moved then budgetExceeded = true
+    if !terminalCurvature then clearCurvature()
     val sd = new Array[Double](d)
-    val sdOk = conditionalSd(sd)
+    val sdOk = terminalCurvature && conditionalSd(sd)
+    if !sdOk then java.util.Arrays.fill(sd, Double.NaN)
     val weak =
       sdOk && budget.weakSdLimit.nonEmpty && (0 until d).exists(i => !(sd(i) <= budget.weakSdLimit(i)))
     val status =
-      if !nodeOk then DecodeStatus.CurvatureNotPositive
-      else if fallback then DecodeStatus.CurvatureNotPositive
+      if budgetExceeded then DecodeStatus.BudgetExceeded
+      else if fallback || directionStatus == NewtonDirectionStatus.CurvatureNotPositive then DecodeStatus.CurvatureNotPositive
       else if gap <= budget.ambiguityEnergy then DecodeStatus.AmbiguousCells
       else if onBoundary(x) then DecodeStatus.Boundary
       else if !sdOk || weak then DecodeStatus.WeaklyIdentified

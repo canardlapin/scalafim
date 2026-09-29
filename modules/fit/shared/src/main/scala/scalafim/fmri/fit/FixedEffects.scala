@@ -269,7 +269,7 @@ object FixedEffects:
       run: RunwiseFmriRunResult,
       voxelPosition: Int
   ): VoxelFitStatus =
-    run.resolvedVoxelStatuses(voxelPosition) match
+    run.voxelStatuses.fold(VoxelFitStatus.Estimable)(_(voxelPosition)) match
       case VoxelFitStatus.Estimable =>
         val variance = run.residualVariance(voxelPosition)
         if !variance.isFinite then VoxelFitStatus.NonFinite
