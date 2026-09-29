@@ -25,6 +25,82 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(!capabilities.supports(SurfaceBackendFeature.WorldClipping))
     assert(capabilities.caveats.exists(_.contains("world clipping")))
 
+  test("runtime receipt parses the observed Prism pipeline rather than trusting the request"):
+    val log =
+      """Prism pipeline init order: mtl
+        |Initialized prism pipeline: com.sun.prism.mtl.MTLPipeline
+        |""".stripMargin
+    assertEquals(
+      JavaFxPrismPipeline.observe(log),
+      Right((JavaFxPrismPipeline.Metal, "com.sun.prism.mtl.MTLPipeline"))
+    )
+    assert(JavaFxPrismPipeline.observe("Prism pipeline init order: mtl").isLeft)
+
+  test("stock Metal admission fails closed on fallback, version drift, and module mutation"):
+    val baseHash = "a" * 64
+    val graphicsHash = "b" * 64
+    val expectedArtifacts = Map("javafx-base" -> baseHash, "javafx-graphics" -> graphicsHash)
+    val admitted = JavaFxRuntimeCapabilityReceipt(
+      javaFxRuntimeVersion = "25.0.4",
+      javaRuntimeName = "OpenJDK Runtime Environment",
+      javaRuntimeVersion = "25.0.1+8",
+      osName = "Mac OS X",
+      osVersion = "15.6",
+      osArch = "aarch64",
+      requestedPipelines = Vector("mtl"),
+      noFallback = true,
+      verbose = true,
+      observedPipeline = JavaFxPrismPipeline.Metal,
+      observedPipelineClass = "com.sun.prism.mtl.MTLPipeline",
+      relevantJvmArguments = Vector("-Dprism.order=mtl", "-Dprism.noFallback=true", "-Dprism.verbose=true"),
+      moduleMutationArguments = Vector.empty,
+      artifacts = Vector(
+        JavaFxArtifactReceipt("javafx-base", "javafx.base", None, Some("file:/javafx-base.jar"), Some(baseHash)),
+        JavaFxArtifactReceipt("javafx-graphics", "javafx.graphics", None, Some("file:/javafx-graphics.jar"), Some(graphicsHash))
+      )
+    )
+    assertEquals(admitted.stockMetalFailures("25.0.4", expectedArtifacts), Vector.empty)
+    assertEquals(
+      JavaFxStockMetalAdmission.assess(admitted, "25.0.4", expectedArtifacts),
+      Left(JavaFxStockMetalRefusal.UnqualifiedClosure("25.0.4"))
+    )
+    val rejected = admitted.copy(
+      javaFxRuntimeVersion = "26.0.2",
+      observedPipeline = JavaFxPrismPipeline.Es2,
+      observedPipelineClass = "com.sun.prism.es2.ES2Pipeline",
+      moduleMutationArguments = Vector("--patch-module=javafx.graphics=/tmp/private-patch")
+    )
+    val failures = rejected.stockMetalFailures("25.0.4", expectedArtifacts)
+    assert(failures.exists(_.contains("does not match expected")))
+    assert(failures.exists(_.contains("not MTLPipeline")))
+    assert(failures.exists(_.contains("fell back")))
+    assert(failures.exists(_.contains("module mutation")))
+    val runtimeRefusal = JavaFxStockMetalAdmission.assess(rejected, "25.0.4", expectedArtifacts).swap.toOption.get
+    assert(runtimeRefusal match
+      case JavaFxStockMetalRefusal.Runtime(errors) => errors.exists(_.contains("not MTLPipeline"))
+      case _ => false
+    )
+    assertEquals(
+      JavaFxStockMetalAdmission.assess(admitted.copy(javaFxRuntimeVersion = "27"), "27", expectedArtifacts),
+      Left(JavaFxStockMetalRefusal.UnqualifiedClosure("27"))
+    )
+    assert(
+      admitted
+        .copy(artifacts = Vector.empty)
+        .stockMetalFailures("25.0.4", expectedArtifacts)
+        .exists(_.contains("exactly one javafx-base"))
+    )
+    assert(
+      admitted
+        .stockMetalFailures("25.0.4", expectedArtifacts.updated("javafx-base", "c" * 64))
+        .exists(_.contains("SHA-256"))
+    )
+    assert(admitted.copy(osArch = "x86_64").stockMetalFailures("25.0.4", expectedArtifacts).exists(_.contains("arm64")))
+    assert(
+      admitted.copy(artifacts = admitted.artifacts.updated(0, admitted.artifacts.head.copy(module = "unnamed")))
+        .stockMetalFailures("25.0.4", expectedArtifacts).exists(_.contains("loaded from module"))
+    )
+
   private def geometry(faceCopies: Int = 1): SurfaceGeometry =
     val faces = Vector.fill(faceCopies)((0, 1, 2))
     SurfaceGeometry(
