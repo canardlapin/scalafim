@@ -148,6 +148,19 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     assertEquals(structure.conditionCount, 3)
     assertEquals(structure.basisSize, basis.rank)
 
+  test("admission refuses a different compiled-plan nuisance geometry before preparation"):
+    val alteredBaseline =
+      BaselineModel.build(samplingFrame = frame, basis = BaselineBasis.Poly, degree = 1, intercept = Intercept.Global)
+    val alteredPlan = FitPlan(FmriModel(eventModel, alteredBaseline, dataset))
+    val structure = ConditionProfileFit.structureFor(alteredPlan, convolved).fold(e => fail(e.message), identity)
+    val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
+    val points = Vector((4.0, math.log(1.2))).map { case (tau, logSd) => family.chart.point(tau, logSd).fold(e => fail(e.message), identity) }
+    val result = ObservedFamilyCertification.admitForCondition(
+      alteredPlan, structure, expanded, term, frame, precision, None, Some(nuisance), points,
+      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+    )
+    assert(result.isLeft)
+
   test("the Gram route agrees with the compact route and the direct oracle, streaming blocks in order"):
     val queries = Vector(SignedQuery.make("A-B", Vector(1.0, -1.0, 0.0), 1e-6).fold(e => fail(e.message), identity))
     val prep = ConditionProfileFit
