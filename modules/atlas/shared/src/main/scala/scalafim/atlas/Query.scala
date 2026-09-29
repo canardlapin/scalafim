@@ -18,6 +18,7 @@ final case class QueryHit(
     region.map(_.label)
 
 object AtlasQuery:
+  private val maxRadiusVisitedVoxels = 1000000L
   def exactEither(
     atlas: VolumeAtlas,
     point: Point3D,
@@ -67,21 +68,24 @@ object AtlasQuery:
       else
         SpaceTransforms.transformCoords(points, fromNorm, toNorm)
 
-    atlasPointsEither.map { atlasPoints =>
+    atlasPointsEither.flatMap { atlasPoints =>
       if radiusMm == 0.0 then
-        atlasPoints.zip(points).zipWithIndex.map { case ((atlasPoint, input), idx) =>
-          exactOne(atlas, input, atlasPoint, idx)
+        atlasPoints.zip(points).zipWithIndex.foldLeft(Right(Vector.empty): Either[AtlasError, Vector[QueryHit]]) {
+          case (result, ((atlasPoint, input), idx)) =>
+            result.flatMap(hits => exactOne(atlas, input, atlasPoint, idx).map(hits :+ _))
         }
       else
-        atlasPoints.zip(points).zipWithIndex.flatMap { case ((atlasPoint, input), idx) =>
-          radiusOne(atlas, input, atlasPoint, idx, radiusMm)
+        atlasPoints.zip(points).zipWithIndex.foldLeft(Right(Vector.empty): Either[AtlasError, Vector[QueryHit]]) {
+          case (result, ((atlasPoint, input), idx)) =>
+            result.flatMap(hits => radiusOne(atlas, input, atlasPoint, idx, radiusMm).map(hits ++ _))
         }
     }
 
-  private def exactOne(atlas: VolumeAtlas, input: Point3D, atlasPoint: Point3D, pointIndex: Int): QueryHit =
-    val grid = atlas.space.coordToIndex(atlasPoint.toVector).map(v => math.round(v).toInt)
-    val id = labelAtGrid(atlas, grid)
-    QueryHit(pointIndex, input, atlasPoint, atlas.name, id.flatMap(atlas.region), Some(0.0))
+  private def exactOne(atlas: VolumeAtlas, input: Point3D, atlasPoint: Point3D, pointIndex: Int): Either[AtlasError, QueryHit] =
+    gridCenter(atlas, atlasPoint).map { grid =>
+      val id = labelAtGrid(atlas, grid)
+      QueryHit(pointIndex, input, atlasPoint, atlas.name, id.flatMap(atlas.region), Some(0.0))
+    }
 
   private def radiusOne(
     atlas: VolumeAtlas,
@@ -89,30 +93,92 @@ object AtlasQuery:
     atlasPoint: Point3D,
     pointIndex: Int,
     radiusMm: Double
-  ): Vector[QueryHit] =
-    val center = atlas.space.coordToIndex(atlasPoint.toVector).map(v => math.round(v).toInt)
-    val offsets = radiusOffsets(atlas, radiusMm)
-    var hits = Map.empty[RegionId, Double]
-    offsets.foreach { off =>
-      val grid = Vector(center(0) + off(0), center(1) + off(1), center(2) + off(2))
-      if inBounds(atlas, grid) then
-        val world = Point3D.fromVector(atlas.space.indexToCoord(grid.map(_.toDouble)))
-        val dist = distance(world, atlasPoint)
-        if dist <= radiusMm + 1e-12 then
-          labelAtGrid(atlas, grid).foreach { id =>
-            val old = hits.get(id)
-            if old.isEmpty || dist < old.get then hits = hits.updated(id, dist)
-          }
+  ): Either[AtlasError, Vector[QueryHit]] =
+    gridCenter(atlas, atlasPoint).flatMap { center =>
+      radiusBounds(atlas, center, radiusMm).flatMap { case (lower, upper) =>
+        var hits = Map.empty[RegionId, Double]
+        var validWorldCoordinates = true
+        var z = lower(2)
+        while z <= upper(2) do
+          var y = lower(1)
+          while y <= upper(1) do
+            var x = lower(0)
+            while x <= upper(0) do
+              val grid = Vector(x, y, z)
+              pointFromFiniteCoordinates(atlas.space.indexToCoord(grid.map(_.toDouble))) match
+                case Left(_) => validWorldCoordinates = false
+                case Right(world) =>
+                  val dist = distance(world, atlasPoint)
+                  if dist <= radiusMm + 1e-12 then
+                    labelAtGrid(atlas, grid).foreach { id =>
+                      val old = hits.get(id)
+                      if old.isEmpty || dist < old.get then hits = hits.updated(id, dist)
+                    }
+              x += 1
+            y += 1
+          z += 1
+
+        if !validWorldCoordinates then
+          Left(AtlasError.InvalidQuery("atlas query voxel coordinates do not map to finite world coordinates"))
+        else if hits.isEmpty then
+          Right(Vector(QueryHit(pointIndex, input, atlasPoint, atlas.name, None, None)))
+        else
+          Right(hits.toVector
+            .sortBy { case (id, dist) => (dist, id.value) }
+            .map { case (id, dist) =>
+              QueryHit(pointIndex, input, atlasPoint, atlas.name, atlas.region(id), Some(dist))
+            })
+      }
     }
 
-    if hits.isEmpty then
-      Vector(QueryHit(pointIndex, input, atlasPoint, atlas.name, None, None))
+  private def gridCenter(atlas: VolumeAtlas, atlasPoint: Point3D): Either[AtlasError, Vector[Int]] =
+    val coordinates = atlas.space.coordToIndex(atlasPoint.toVector)
+    if coordinates.length != 3 || !coordinates.forall(_.isFinite) then
+      Left(AtlasError.InvalidQuery("atlas query coordinates must transform to three finite voxel coordinates"))
     else
-      hits.toVector
-        .sortBy { case (id, dist) => (dist, id.value) }
-        .map { case (id, dist) =>
-          QueryHit(pointIndex, input, atlasPoint, atlas.name, atlas.region(id), Some(dist))
-        }
+      val rounded = coordinates.map(math.round)
+      if rounded.exists(value => value < Int.MinValue || value > Int.MaxValue) then
+        Left(AtlasError.InvalidQuery("atlas query voxel coordinates exceed Int range"))
+      else Right(rounded.map(_.toInt))
+
+  private[atlas] def pointFromFiniteCoordinates(coordinates: Vector[Double]): Either[AtlasError, Point3D] =
+    if coordinates.length != 3 || !coordinates.forall(_.isFinite) then
+      Left(AtlasError.InvalidQuery("atlas query voxel coordinates do not map to finite world coordinates"))
+    else Right(Point3D.fromVector(coordinates))
+
+  private def radiusBounds(atlas: VolumeAtlas, center: Vector[Int], radiusMm: Double): Either[AtlasError, (Vector[Int], Vector[Int])] =
+    val spacing = atlas.space.spacing
+    if spacing.length != 3 || !spacing.forall(value => value.isFinite && value > 0.0) then
+      Left(AtlasError.InvalidQuery("atlas query requires three finite positive voxel spacings"))
+    else
+      val extents = spacing.map(value => math.ceil(radiusMm / value) + 1.0)
+      if !extents.forall(_.isFinite) then
+        Left(AtlasError.InvalidQuery("atlas query radius extent overflow"))
+      else
+        val dims = atlas.space.spatialDims
+        val lower = Vector.tabulate(3)(axis =>
+          val c = center(axis).toDouble
+          val extent = extents(axis)
+          math.max(0.0, math.min(dims(axis).toDouble, c - extent)).toInt
+        )
+        val upper = Vector.tabulate(3)(axis =>
+          val c = center(axis).toDouble
+          val last = (dims(axis) - 1).toDouble
+          val extent = extents(axis)
+          math.max(-1.0, math.min(last, c + extent)).toInt
+        )
+        var candidates = 1L
+        var axis = 0
+        while axis < 3 && candidates > 0 && candidates <= maxRadiusVisitedVoxels do
+          val width = math.max(0L, upper(axis).toLong - lower(axis).toLong + 1L)
+          if width == 0 then candidates = 0
+          else if width > maxRadiusVisitedVoxels / candidates then
+            candidates = maxRadiusVisitedVoxels + 1
+          else candidates *= width
+          axis += 1
+        if candidates > maxRadiusVisitedVoxels then
+          Left(AtlasError.InvalidQuery("atlas query radius traversal exceeds the voxel budget"))
+        else Right((lower, upper))
 
   private def labelAtGrid(atlas: VolumeAtlas, grid: Vector[Int]): Option[RegionId] =
     if !inBounds(atlas, grid) then None
@@ -130,22 +196,8 @@ object AtlasQuery:
       grid(1) >= 0 && grid(1) < dims(1) &&
       grid(2) >= 0 && grid(2) < dims(2)
 
-  private def radiusOffsets(atlas: VolumeAtlas, radiusMm: Double): Vector[Vector[Int]] =
-    val spacing = atlas.space.spacing
-    val rx = math.ceil(radiusMm / spacing(0)).toInt + 1
-    val ry = math.ceil(radiusMm / spacing(1)).toInt + 1
-    val rz = math.ceil(radiusMm / spacing(2)).toInt + 1
-    Vector.tabulate((2 * rx + 1) * (2 * ry + 1) * (2 * rz + 1)) { idx =>
-      val nx = 2 * rx + 1
-      val ny = 2 * ry + 1
-      val x = idx % nx
-      val y = (idx / nx) % ny
-      val z = idx / (nx * ny)
-      Vector(x - rx, y - ry, z - rz)
-    }
-
   private def distance(a: Point3D, b: Point3D): Double =
     val dx = a.x - b.x
     val dy = a.y - b.y
     val dz = a.z - b.z
-    math.sqrt(dx * dx + dy * dy + dz * dz)
+    math.hypot(math.hypot(dx, dy), dz)

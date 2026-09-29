@@ -293,6 +293,30 @@ class AtlasCoverageSuite extends munit.FunSuite:
         AtlasQuery.query(a, Vector(Point3D(0.0, 0.0, 0.0)), fromSpace = SpaceId.FsLR32k)
     assert(err.getMessage.contains("no transform route found from 'fsLR_32k' to 'MNI152'"), clue = err.getMessage)
 
+  test("atlas queries reject unsafe coordinate narrowing and bounded radius traversal"):
+    val a = atlas(Vector(1, 2, 1, 2))
+    def invalid(point: Point3D): Unit =
+      assert(AtlasQuery.exactEither(a, point, SpaceId.MNI152).left.exists(_.message.contains("coordinates")))
+
+    invalid(Point3D(4294967296.0, 0.0, 0.0))
+    invalid(Point3D(-4294967296.0, 0.0, 0.0))
+    invalid(Point3D(Double.MaxValue, 0.0, 0.0))
+    intercept[IllegalArgumentException]:
+      Point3D(Double.NaN, 0.0, 0.0)
+    val hugeRadius = AtlasQuery.queryEither(a, Vector(Point3D(0.0, 0.0, 0.0)), Double.MaxValue).toOption.get
+    assertEquals(hugeRadius.map(_.id).distinct, Vector(Some(RegionId(1)), Some(RegionId(2))))
+
+    val outside = AtlasQuery.queryEither(a, Vector(Point3D(100.0, 0.0, 0.0)), 1.0).toOption.get
+    assertEquals(outside.map(_.id), Vector(None))
+    assert(AtlasQuery.pointFromFiniteCoordinates(Vector(Double.PositiveInfinity, 0.0, 0.0)).isLeft)
+
+    val reachesZero = AtlasQuery.queryEither(a, Vector(Point3D(Int.MinValue.toDouble, 0.0, 0.0)),
+      Int.MaxValue.toDouble + 1.0).toOption.get
+    assert(reachesZero.exists(_.id.contains(RegionId(1))))
+
+    val finite = AtlasQuery.queryEither(a, Vector(Point3D(0.0, 0.0, 0.0)), 2.0).toOption.get
+    assertEquals(finite.map(_.id).distinct, Vector(Some(RegionId(1)), Some(RegionId(2))))
+
   test("atlas error messages and provenance helper aliases remain explicit"):
     val gridMismatch = GeometryError.GridsNotCongruent(0.0)
     val errors =
