@@ -249,6 +249,55 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assertEqualsDouble(result.dataHessian(0), actualDataHessian, 1e-12)
     assertEqualsDouble(result.augmentedHessian(0), actualDataHessian + 6.0, 1e-12)
 
+  test("a reserved terminal jet verifies an energy-only move before admission"):
+    val target = 0.2
+    val objective = new ShapeObjective:
+      val grid = NodeGrid(ShapeChart(("x", -1.0, 1.0)), Vector(3))
+      def amplitudeCount: Int = 1
+      private def fill(value: Double, out: ProfileJetBuffer): Unit =
+        out.energy = 5.0 + (value - target) * (value - target)
+        out.gradient(0) = 2.0 * (value - target)
+        out.hessian(0) = 2.0
+        out.amplitudes(0) = value + 1.0
+        out.curvature = CurvatureStatus.PositiveDefinite
+      def scoreNode(node: Int): Double =
+        val value = grid.point(node)(0)
+        5.0 + (value - target) * (value - target)
+      def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+        fill(grid.point(node)(0), out)
+        true
+      def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+        fill(coordinates(0), out)
+        true
+      def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+        out.energy = 5.0 + (coordinates(0) - target) * (coordinates(0) - target)
+        out.amplitudes(0) = coordinates(0) + 1.0
+        out.energy
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 1),
+      None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assertEqualsDouble(result.coordinates(0), target, 1e-12)
+    assertEqualsDouble(result.amplitudes(0), 1.2, 1e-12)
+    assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+    assertEqualsDouble(result.conditionalSd(0), 1.0, 1e-12)
+    assertEquals(counters.jets, 2L)
+    assertEquals(counters.exactEvaluations, 1L)
+    assertEquals(counters.terminalVerifications, 1L)
+    assertEquals(counters.candidateAttempts, 1L)
+
+  test("terminal verification retains a nonstationary budget refusal and current curvature"):
+    val objective = new Quartic
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 1),
+      None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.BudgetExceeded)
+    assertEqualsDouble(result.dataHessian(0), objective.curvature(result.coordinates(0)), 1e-12)
+    assertEquals(counters.jets, 2L)
+    assertEquals(counters.terminalVerifications, 1L)
+
   test("exhausted refinement and rejected candidate caps are explicit and counted"):
     val noEvaluationCounters = new DecoderCounters
     val noEvaluation = new ShapeDecoder(

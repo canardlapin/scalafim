@@ -454,7 +454,10 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           while i < d do
             trial(i) = grid.chart.clamp(i, x(i) + scale * delta(i))
             i += 1
-          val useJet = jetsUsed < budget.maxJets
+          // Keep one jet available to verify an accepted energy-only move.
+          // A candidate evaluated with a full jet already carries curvature at
+          // its coordinates and needs no duplicate terminal evaluation.
+          val useJet = jetsUsed < budget.maxJets - 1
           if !useJet && exactUsed >= budget.maxExactEvaluations then
             budgetExceeded = true
             continue = false
@@ -486,8 +489,20 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                 continue = directionStatus == NewtonDirectionStatus.Direction
               else
                 terminalCurvature = false
-                budgetExceeded = true
                 continue = false
+                if jetsUsed < budget.maxJets then
+                  clearJet()
+                  jetsUsed += 1
+                  counters.jets += 1
+                  counters.terminalVerifications += 1
+                  if objective.jetAt(x, jet) && finiteJet() then
+                    current = jet.energy + priorEnergy(x)
+                    copyJetState(x)
+                    terminalCurvature = true
+                    directionStatus = newtonDirection(x)
+                    budgetExceeded = directionStatus == NewtonDirectionStatus.Direction
+                  else budgetExceeded = true
+                else budgetExceeded = true
             else
               scale *= 0.5
         if !accepted && continue then
