@@ -80,4 +80,15 @@ separately as `bd-01M2BAAYDG9CJRD60YF01MG3B3`.
 
 Implementation issue `bd-01M2B8MAZ0H5PVGD4YES7N36RC`; provider prerequisite is
 scene-codec head`4d00cc0` above admitted`a3ee73b`. This candidate is unadmitted
-until both platform gates and downstream app boundary evidence pass.
+until downstream app boundary evidence is admitted.
+
+## Local qualification receipt
+
+The source pair `96d0001f` (checked coordinate/radius traversal) and
+`177adaf5` (boundary query and witness contract) passed the bounded atlas gate
+on 2026-09-29: `atlasJVM/test` passed 131/131 and `atlasJS/test` passed 95/95.
+The serialized run took 157.59036 seconds and exited 0. Its log is
+`/private/tmp/scalafim-execution-20260929/logs/atlas-final-96d0001f-177adaf5.log`,
+SHA-256 `106851925b3d8e35690170d70752cd603042116bcfd40d052e4b521d20a6f29e`.
+This is local JVM/Scala.js module evidence only; consumer adoption and further
+application qualification remain separate.
