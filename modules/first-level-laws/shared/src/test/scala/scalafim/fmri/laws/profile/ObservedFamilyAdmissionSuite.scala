@@ -1,6 +1,5 @@
 package scalafim.fmri.laws.profile
 
-import gale.linalg.DMat
 import scalafim.fmri.design.event.{Event, EventTerm}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
 import scalafim.fmri.fit.profile.{ObservedFamilyCertification, ObservedFamilyRequirements}
@@ -23,7 +22,7 @@ class ObservedFamilyAdmissionSuite extends munit.FunSuite:
 
   test("swapped condition assignment, changed event weight, frame, and precision refuse before certification"):
     val swapped = term.copy(events = Vector(Event.factor(Vector("B", "A", "B", "A"), "condition")))
-    val weighted = EventTerm(Vector(Event.continuous(Vector(1.0, 2.0, 1.0, 2.0), "weight")), term.onsets, blockIds = term.blockIds0)
+    val weighted = EventTerm(Vector(Event.factor(Vector("A", "B", "A", "B"), "condition")), term.onsets.updated(1, Seconds(12.1)), blockIds = term.blockIds0)
     val changedFrame = SamplingFrame(blockLens = Seq(40, 40), tr = Seq(1.0, 1.0))
     assert(ObservedFamilyCertification.certify(expanded, swapped, frame, Seconds(0.1), None, None, point, 1e-6).isLeft)
     assert(ObservedFamilyCertification.certify(expanded, weighted, frame, Seconds(0.1), None, None, point, 1e-6).isLeft)
