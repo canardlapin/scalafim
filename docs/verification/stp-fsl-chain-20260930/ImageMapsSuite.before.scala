@@ -36,7 +36,7 @@ class ImageMapsSuite extends munit.FunSuite:
       samplingFrame = samplingFrame
     )
 
-  private def model(source: FmriDataset): FmriModel =
+  private def model: FmriModel =
     val eventModel =
       EventModel(
         terms = Vector.empty,
@@ -52,13 +52,12 @@ class ImageMapsSuite extends munit.FunSuite:
         basis = BaselineBasis.Constant,
         intercept = Intercept.Global
       )
-    FmriModel(eventModel, baseline, source)
+    FmriModel(eventModel, baseline, dataset)
 
   test("Dense fit coefficient and SE maps preserve full voxel placement") {
-    val source = dataset
-    val result = FitPlanExecutor.unsafeFit(FitPlan(model(source))).asInstanceOf[DenseFmriFitResult]
-    val coef = result.coefficientMaps(source.shape)
-    val se = result.standardErrorMaps(source.shape)
+    val result = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
+    val coef = result.coefficientMaps(dataset.shape)
+    val se = result.standardErrorMaps(dataset.shape)
 
     assertEquals(coef.names, Vector("task", "base_constant"))
     assertEquals(coef.values.value.selection.size, 4)
@@ -71,15 +70,14 @@ class ImageMapsSuite extends munit.FunSuite:
   }
 
   test("image maps place selected voxels into their original image locations") {
-    val source = dataset
     val result = FitPlanExecutor.unsafeFit(
-      FitPlan(model(source)),
+      FitPlan(model),
       DataSelection(voxels = IndexSelection.indices(3, 1))
     ).asInstanceOf[DenseFmriFitResult]
 
     assertEquals(result.voxelIndices, Vector(3, 1))
     assertEquals(result.selectedVoxels.toVector, Vector(3, 1))
-    val coef = result.coefficientMaps(source.shape)
+    val coef = result.coefficientMaps(dataset.shape)
     val dense = coef.dense
 
     assertEquals(coef.values.value.selection.size, 2)
@@ -90,14 +88,13 @@ class ImageMapsSuite extends munit.FunSuite:
   }
 
   test("typed result manifest coefficient maps adapt to existing image maps") {
-    val source = dataset
     val result = FitPlanExecutor.unsafeFit(
-      FitPlan(model(source)),
+      FitPlan(model),
       DataSelection(voxels = IndexSelection.indices(3, 1))
     ).asInstanceOf[DenseFmriFitResult]
 
-    val legacy = result.coefficientMaps(source.shape).dense
-    val manifest = ResultManifest.fromDenseFit(result, source.shape).toOption.get
+    val legacy = result.coefficientMaps(dataset.shape).dense
+    val manifest = ResultManifest.fromDenseFit(result, dataset.shape).toOption.get
     val adapted =
       FitImageMaps
         .fromParameterMaps(manifest.parameterMaps(ParameterMapKind.Coefficient))
@@ -108,32 +105,14 @@ class ImageMapsSuite extends munit.FunSuite:
     val adaptedSpace = SampleSpaces.requireD3(adapted.space).toOption.get
     val legacySpace = SampleSpaces.requireD3(legacy.space).toOption.get
     assert(SamplingAlignment.exact(adaptedSpace, legacySpace).isRight)
-    assert(SamplingAlignment.exact(adaptedSpace.spatialOnly, source.shape.space).isRight)
     assertVectorClose(adapted.timeSeries(0).iterator.toVector, legacy.timeSeries(0).iterator.toVector, 1e-10)
     assertVectorClose(adapted.timeSeries(1).iterator.toVector, legacy.timeSeries(1).iterator.toVector, 1e-10)
     assertVectorClose(adapted.timeSeries(2).iterator.toVector, legacy.timeSeries(2).iterator.toVector, 1e-10)
     assertVectorClose(adapted.timeSeries(3).iterator.toVector, legacy.timeSeries(3).iterator.toVector, 1e-10)
   }
 
-  test("image map adapters retain source identity and reject another world with identical geometry"):
-    val source = dataset
-    val unrelated = dataset
-    assertEquals(source.shape.spatialDims, unrelated.shape.spatialDims)
-    assertEquals(source.shape.grid.indexToFrame.rowMajor, unrelated.shape.grid.indexToFrame.rowMajor)
-    assert(SamplingAlignment.exact(source.shape.space, unrelated.shape.space).isLeft)
-
-    val result = FitPlanExecutor.unsafeFit(FitPlan(model(source))).asInstanceOf[DenseFmriFitResult]
-    val maps = ResultManifest.fromDenseFit(result, source.shape).toOption.get.parameterMaps(ParameterMapKind.Coefficient)
-    val foreignMaps = ResultManifest.fromDenseFit(result, unrelated.shape).toOption.get.parameterMaps(ParameterMapKind.Coefficient)
-    val adapted = FitImageMaps.fromParameterMaps(maps).toOption.get.dense
-    val adaptedSpace = SampleSpaces.requireD3(adapted.space).toOption.get.spatialOnly
-    assert(SamplingAlignment.exact(adaptedSpace, source.shape.space).isRight)
-    assert(SamplingAlignment.exact(adaptedSpace, unrelated.shape.space).isLeft)
-    assert(FitImageMaps.fromParameterMaps(Vector(maps.head, foreignMaps.last)).isLeft)
-
   test("standard-error image maps omit coefficients outside the inference scope") {
-    val source = dataset
-    val result = FitPlanExecutor.unsafeFit(FitPlan(model(source))).asInstanceOf[DenseFmriFitResult]
+    val result = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
     val restricted = result.copy(
       inference = CoefficientInference
         .fromCovariance(
@@ -154,13 +133,12 @@ class ImageMapsSuite extends munit.FunSuite:
         .get
     )
 
-    val maps = restricted.standardErrorMaps(source.shape)
+    val maps = restricted.standardErrorMaps(dataset.shape)
     assertEquals(maps.names, Vector("task"))
     assertEquals(maps.nMaps, 1)
   }
 
   test("t and F contrast statistics map into image space") {
-    val source = dataset
     val design = DesignMatrix.unsafe(
       scalafim.fmri.fit.GaleTestMatrix.fromRows(
         Vector(
@@ -202,12 +180,12 @@ class ImageMapsSuite extends munit.FunSuite:
     )
 
     val t = TContrast("task", Map("task" -> 1.0)).evaluate(result).toOption.get
-    val tMap = t.statisticMap(source.shape).dense
+    val tMap = t.statisticMap(dataset.shape).dense
     assertEqualsDouble(tMap.timeSeries(0)(0), 0.0, 1e-10)
     assertEqualsDouble(tMap.timeSeries(1)(0), t.statistics(0), 1e-10)
 
     val f = FContrast("task", Vector(Map("task" -> 1.0))).evaluate(result).toOption.get
-    val fMap = f.statisticMap(source.shape).dense
+    val fMap = f.statisticMap(dataset.shape).dense
     assertEqualsDouble(fMap.timeSeries(0)(0), 0.0, 1e-10)
     assertEqualsDouble(fMap.timeSeries(1)(0), f.statistics(0), 1e-10)
   }

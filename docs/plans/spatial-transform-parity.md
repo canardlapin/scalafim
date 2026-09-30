@@ -1085,6 +1085,23 @@ _(append per phase: date, commits, test commands run, results)_
   SimpleITK composites, not demo1 outputs. The surface chain uses synthetic
   icospheres, not fsaverage or fsLR32k meshes.
 
+### P7.07 native FSL composition follow-up (2026-09-30)
+
+The existing FSL scenario now has frozen native `flirt -applyxfm`,
+`convertwarp --premat --absout`, and both `applywarp` routes for its exact
+functional/highres/standard triple. The stored NIfTI header and matrix are
+shared by Scala and the pinned FSL command-package image. Full native support,
+coordinate/ramp comparisons, manifest hashes and convention mutations guard
+these references. The native-composition freshness caveat is retired following
+successful JVM and JS checks; the analytic-spline versus dense
+finite-difference Jacobian caveat remains. These are synthetic functional
+inputs, not a new registration fit or real-subject scenario qualification.
+Evidence: `docs/verification/stp-fsl-chain-20260930/README.md`.
+
+Verified local candidate based on `9c656bc7`, with exact source hashes recorded: fit JVM 327, transform JVM 166, fit JS 316,
+transform JS 138; warning-clean `scalafimCompileAll` and all 35 manifest entries
+passed. See `docs/verification/stp-fsl-chain-20260930/qualification.json`.
+
 ### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
 
 - **Linked cursor.** `scalafim.image.world.WorldLink[L, R]` is the typed map

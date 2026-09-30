@@ -1,0 +1,76 @@
+{
+  "base_commit": "9c656bc79254be9142a8b605d0d4e404b410bd1b",
+  "source_manifest": "tested-source-manifest.json",
+  "commands": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitJVM/test",
+    "transformJVM/test",
+    "fitJS/test",
+    "transformJS/test",
+    "scalafimCompileAll"
+  ],
+  "exit_code": 0,
+  "duration_seconds": 419.399904,
+  "tests": {
+    "fitJVM": 327,
+    "transformJVM": 166,
+    "fitJS": 316,
+    "transformJS": 138
+  },
+  "total_tests": 947,
+  "warnings": 0,
+  "errors": 0,
+  "skips_reported": 0,
+  "full_compile": "passed",
+  "scenario_manifest_entries": 35,
+  "native_fixture_hash_checks": 168,
+  "native_commands": 16,
+  "native_full_support": {
+    "highres": 3136,
+    "standard": 1188
+  },
+  "native_observations": {
+    "native.flirt-coordinates.max-abs-mm": {
+      "maximum_absolute_error": 2.5540975842730518e-05,
+      "tolerance": 5e-05
+    },
+    "native.flirt-ramp.max-abs": {
+      "maximum_absolute_error": 2.686172419430477e-05,
+      "tolerance": 8.759980703767784e-05
+    },
+    "native.chain-premat-coordinates.max-abs-mm": {
+      "maximum_absolute_error": 9.813265247515801e-06,
+      "tolerance": 5e-05
+    },
+    "native.chain-composed-coordinates.max-abs-mm": {
+      "maximum_absolute_error": 1.0573231099542113e-05,
+      "tolerance": 5e-05
+    },
+    "native.chain-convertwarp-field.max-abs-mm": {
+      "maximum_absolute_error": 7.3581749528983664e-06,
+      "tolerance": 5e-05
+    },
+    "native.chain-premat-ramp.max-abs": {
+      "maximum_absolute_error": 1.582632928887051e-05,
+      "tolerance": 8.759980703767784e-05
+    },
+    "native.chain-composed-ramp.max-abs": {
+      "maximum_absolute_error": 1.2756235889810341e-05,
+      "tolerance": 8.759980703767784e-05
+    }
+  },
+  "remaining_caveats": [
+    "transform.fsl-jacobian-spline-vs-finite-difference"
+  ],
+  "broader_p7_07_acceptance": "open; real fMRIPrep and surface-chain commutativity are not established by this synthetic FSL packet",
+  "fit_baseline": "peer reproduction at 7989608d; exact original source preserved; local focused check validates the repaired fixture",
+  "receipt_sha256": {
+    "stp-fit-image-identity-reproduction.log": "b85b9674793936231e381fa9be3adb92a7a82bdd8457968f52be242e80b878e9",
+    "stp-fit-image-identity-reproduction.log.meta.json": "be905a8690e417a53b30e5d1de4f854fc606def83febb48c86dfc96d3060dc46",
+    "stp-followup-qualified-jvm-js-compile.log": "76d69611e1c5c1e59e89536d5b70792edd8dc6db0002fe37b8ad6b3a973fa7b5",
+    "stp-followup-qualified-jvm-js-compile.log.meta.json": "a494923285f02172495a6b3c5438a32d8a4d87e1c7fc9bcda283e38e7873eae7"
+  }
+}

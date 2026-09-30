@@ -1,0 +1,13 @@
+{
+  "reported_failing_commit": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+  "reported_passing_commit": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+  "reporter": "umvpa-helper-claude",
+  "fray_card": 89,
+  "fray_receipt": 539,
+  "test": "ImageMapsSuite.typed result manifest coefficient maps adapt to existing image maps",
+  "reported_ci_run": 36706164193,
+  "source_sha256": "5f57d6fbff4dd7a2b5b3bf2081bfa73f57e10f8d12e1dd8c8bf28823879f5aed",
+  "source_inspection": "private def dataset creates a new bare D3 unresolved world on every call. Legacy and manifest adapters were given different dataset.shape objects; production already preserves each supplied shape.space.",
+  "local_reproduction_run": false,
+  "local_check": "The queued focused job was still waiting for the lock, with no raw sbt log created, when the repair was applied. Its historical log filename contains reproduction; the actual task validates the repaired fixture. Do not count it as a local failing baseline."
+}
