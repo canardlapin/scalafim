@@ -29,8 +29,8 @@ object ResponseActionFixture:
   /** Every field is the most positive-looking value a consumer could supply. */
   val request: ResponseActionRequest = ResponseActionRequest(ResponseActionEvidence.Version, binding, Some(model), cycle,
     NullConstraint.Linear(digest("B = N Gamma, N = condition-invariant basis")))
-  val summary: StatusSummary = StatusSummary(unit, new InferenceStatusScope.Fit(observation), features,
-    Map(InferenceStatusCode.Estimable -> 3L), ScientificFact.Known("full-rank shared design, rank-revealing QR"))
+  val summary: StatusSummary = StatusSummary(unit, new InferenceStatusScope.Fit(observation), features, columns.dropRight(1),
+    3L, Map(InferenceStatusCode.Estimable -> 3L), ScientificFact.Known("full-rank shared design, rank-revealing QR"))
   val scanned: Option[StatusEvidence] = Some(StatusEvidence.Scanned(summary))
 
   def evaluate(req: ResponseActionRequest = request, actual: ResponseSourceBinding = binding,
@@ -93,7 +93,11 @@ class ResponseActionEvidenceSuite extends munit.FunSuite:
       statusRow(SourceField.StatusUnit, summary.copy(unit = otherUnit), unit.value, otherUnit.value),
       statusRow(SourceField.StatusFeatures, summary.copy(features = reorderedFeatures), features.render, reorderedFeatures.render),
       statusRow(SourceField.StatusPlane, summary.copy(plane = new InferenceStatusScope.Fit(ObservationId("sub-02"))), "sub-01", "sub-02"),
-      statusRow(SourceField.StatusOutsideSupport, summary.copy(counts = summary.counts + (InferenceStatusCode.OutsideSupport -> 1L)), "0", "1")
+      // A summary scanned for another selection is refused for this one.
+      statusRow(SourceField.StatusSelected, summary.copy(selected = columns.take(2)),
+        columns.dropRight(1).map(_.value).mkString("[", ",", "]"), "[A_0,A_1]"),
+      statusRow(SourceField.StatusOutsideSupport, summary.copy(counts = Map(InferenceStatusCode.Estimable -> 2L,
+        InferenceStatusCode.OutsideSupport -> 1L)), "0", "1")
     )
     val table = bindingRows ++ statusRows
     assertEquals(table.map(_._1), SourceField.values.toVector, "the table must cover every SourceField in declared order")
@@ -107,7 +111,7 @@ class ResponseActionEvidenceSuite extends munit.FunSuite:
     assertEquals(evaluate(actual = late, status = otherSummary),
       SourceMismatch(SourceField.RealizedCombination, "SingleRun", "Unrecorded"))
     val scope = summary.copy(features = digest("x"), plane = new InferenceStatusScope.Fit(ObservationId("sub-02")),
-      counts = Map(InferenceStatusCode.OutsideSupport -> 2L))
+      counts = Map(InferenceStatusCode.Estimable -> 1L, InferenceStatusCode.OutsideSupport -> 2L))
     assertEquals(evaluate(status = Some(StatusEvidence.Scanned(scope))),
       SourceMismatch(SourceField.StatusFeatures, features.render, digest("x").render))
 
@@ -269,13 +273,31 @@ class ResponseActionEvidenceSuite extends munit.FunSuite:
     assertEquals(evaluate(request.copy(action = ConditionAction.Permute(Map.empty), model = None), binding, None),
       ActionMismatch(ActionDefect.LevelsIncomplete(Vector(level("A"), level("B"), level("C")))))
 
+  test("a status summary covers exactly the features it counted"):
+    intercept[IllegalArgumentException](summary.copy(samples = 4L))
+    intercept[IllegalArgumentException](summary.copy(samples = 0L, counts = Map.empty))
+    intercept[IllegalArgumentException](summary.copy(counts = Map(InferenceStatusCode.Estimable -> 4L, InferenceStatusCode.Constant -> -1L)))
+    intercept[IllegalArgumentException](summary.copy(selected = Vector.empty))
+
+  test("text that could not be encoded losslessly is not admissible"):
+    intercept[IllegalArgumentException](ConditionLevelId("A\uD800"))
+    intercept[IllegalArgumentException](ConditionLevelId("\uDC00A"))
+    intercept[IllegalArgumentException](ProviderDigest("schema\uD800", digest("x").digest))
+    val lone = ColumnId("x\uD800")
+    intercept[IllegalArgumentException](binding.copy(columns = columns :+ lone))
+    intercept[IllegalArgumentException](binding.copy(observation = ObservationId("sub\uDC00")))
+    // A well-formed supplementary character (U+1D6BA) is admissible.
+    assertEquals(ConditionLevelId("\uD835\uDEBA").value.length, 2)
+    assertEquals(binding.copy(columns = columns :+ ColumnId("\uD835\uDEBA")).columns.size, columns.size + 1)
+
   test("PLS literal fixtures all return Unavailable in v1"):
     def fixture(designLabel: String, conditions: Vector[String], bins: Int, spatial: SpatialClaim): ResponseActionRefusal =
       val levels = conditions.map(level)
       val cols = for c <- conditions; b <- (0 until bins).toVector yield ColumnId(s"${c}_fir$b")
       val b = binding.copy(design = digest(designLabel), readoutAxis = axis(conditions, bins), columns = cols, selected = cols)
       val shift = ConditionAction.Permute(levels.zip(levels.tail :+ levels.head).toMap)
-      evaluate(request.copy(expected = b, action = shift, model = Some(model.copy(spatial = spatial))), b)
+      evaluate(request.copy(expected = b, action = shift, model = Some(model.copy(spatial = spatial))), b,
+        Some(StatusEvidence.Scanned(summary.copy(selected = cols))))
     val v1 = Unavailable(NoPositiveContractInVersion(ResponseActionEvidence.Version))
     assertEquals(fixture("balanced 5/5/5 FIR5", Vector("A", "B", "C"), 5, SpatialClaim.KroneckerSeparable), v1)
     assertEquals(fixture("unequal 9/4/2 FIR5", Vector("A", "B", "C"), 5, SpatialClaim.KroneckerSeparable), v1)
@@ -318,14 +340,17 @@ class ResponseActionEvidenceSuite extends munit.FunSuite:
       val status: Option[StatusEvidence] = (if random.nextBoolean() then 7 else random.nextInt(8)) match
         case 0 => None
         case 1 => Some(StatusEvidence.Absent(pick(absences)))
-        case _ => Some(StatusEvidence.Scanned(summary.copy(
-          unit = if random.nextInt(12) == 0 then otherUnit else unit,
-          features = if random.nextInt(12) == 0 then digest("f3") else features,
-          plane = new InferenceStatusScope.Fit(if random.nextInt(12) == 0 then ObservationId("sub-03") else observation),
-          counts = Map(InferenceStatusCode.Estimable -> 3L) ++
+        case _ =>
+          val counts = Map(InferenceStatusCode.Estimable -> 3L) ++
             (if random.nextInt(8) == 0 then Map(InferenceStatusCode.OutsideSupport -> 1L) else Map.empty) ++
-            (if random.nextInt(4) == 0 then Map(InferenceStatusCode.Unrecorded -> 2L) else Map.empty),
-          conditioning = if random.nextInt(4) == 0 then ScientificFact.Unknown("u") else summary.conditioning)))
+            (if random.nextInt(4) == 0 then Map(InferenceStatusCode.Unrecorded -> 2L) else Map.empty)
+          Some(StatusEvidence.Scanned(summary.copy(
+            unit = if random.nextInt(12) == 0 then otherUnit else unit,
+            features = if random.nextInt(12) == 0 then digest("f3") else features,
+            plane = new InferenceStatusScope.Fit(if random.nextInt(12) == 0 then ObservationId("sub-03") else observation),
+            selected = if random.nextInt(12) == 0 then columns.take(3) else summary.selected,
+            samples = counts.values.sum, counts = counts,
+            conditioning = if random.nextInt(4) == 0 then ScientificFact.Unknown("u") else summary.conditioning)))
       val declared = Option.when(random.nextInt(6) != 0)(DeclaredResponseModel(mostly(temporals), mostly(declaredCombinations),
         mostly(spatials), DistributionClaim.Gaussian, mostly(origins)))
       val req = ResponseActionRequest(if random.nextInt(20) == 0 then "v0" else ResponseActionEvidence.Version, expected, declared,
@@ -387,6 +412,7 @@ object ResponseActionOracle:
     val scopePairs: Vector[(SourceField, Any, Any)] = status match
       case Some(StatusEvidence.Scanned(s)) => Vector((SourceField.StatusUnit, a.unit, s.unit),
         (SourceField.StatusFeatures, a.features, s.features), (SourceField.StatusPlane, a.observation, s.plane.observation),
+        (SourceField.StatusSelected, a.selected, s.selected),
         (SourceField.StatusOutsideSupport, 0L, s.count(InferenceStatusCode.OutsideSupport)))
       case _ => Vector.empty
     // Rendering is checked by the table test; the oracle keys source refusals by field.

@@ -11,7 +11,7 @@ import scalafim.fmri.design.event.EventModel
 import scalafim.fmri.fit.{DenseFmriFitResult, FitPlanExecutor, FixedEffectsFmriFitResult, FmriFitResult}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
+import scalafim.fmri.model.{ArOptions, CoefficientScope, ArStructure, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, ModelBuildSpec}
 import scalafim.image.SampleSpaces
 
 /** A small real first-level fit: two task columns (A, B) plus an intercept. */
@@ -133,6 +133,20 @@ class ResponseSourceBinderSuite extends munit.FunSuite:
     val golden = Vector(binding.design, binding.preparation, binding.noise, binding.runCombination, binding.readout, binding.features)
       .map(d => s"${d.schema}=${d.digest.value}")
     assertEquals(golden, BinderGolden.digests)
+    val runs = compiledTwoRuns()
+    val twoRun = runs.fit(FitPlan(runs.model, FitEngine.OrdinaryLeastSquares))
+    val twoRunBinding = bound(twoRun, unit(twoRun, acquisitions = 2))
+    def rendered(d: ProviderDigest) = s"${d.schema}=${d.digest.value}"
+    // Platform-independent parts of a compiled two-run design agree exactly.
+    assertEquals(Vector(twoRunBinding.preparation, twoRunBinding.noise, twoRunBinding.runCombination, twoRunBinding.features)
+      .map(rendered), BinderGolden.twoRunStableDigests)
+    // Known upstream divergence: the native structural column IDs of a compiled
+    // design differ between JVM and Scala.js, so design and readout identity do
+    // too. Pinned per platform; the tripwire fails once upstream converges.
+    val js = System.getProperty("java.vm.name") == "Scala.js"
+    assertEquals(Vector(twoRunBinding.design, twoRunBinding.readout).map(rendered),
+      if js then BinderGolden.twoRunNativeDigestsJs else BinderGolden.twoRunNativeDigestsJvm)
+    assertNotEquals(BinderGolden.twoRunNativeDigestsJs, BinderGolden.twoRunNativeDigestsJvm)
 
   test("the binder refuses an axis-less dense fit result"):
     assertEquals(bind(ols.copy(coefficientAxis = None), materialized(ols, olsUnit)), Left(BindError.MissingCoefficientAxis))
@@ -206,6 +220,11 @@ class ResponseSourceBinderSuite extends munit.FunSuite:
     assertEquals(bound(joint, unit(joint, acquisitions = 1)).realizedCombination, RealizedCombination.SingleRun,
       "control: the acquisition record, not the engine alone, decides single-run")
 
+  test("a single acquisition is a single run only for a shared-across-runs coefficient scope"):
+    val runSpecific = ols.copy(summary = ols.summary.copy(coefficientScope = CoefficientScope.RunSpecific))
+    assertEquals(bound(runSpecific, olsUnit).realizedCombination, RealizedCombination.Unrecorded)
+    assertEquals(bound(ols, olsUnit).realizedCombination, RealizedCombination.SingleRun)
+
   test("AR truth fitted by OLS is recorded as white: the truth is undetectable and v1 still refuses"):
     val arTruth = fixture(noise = Some(0.6))
     val fit = arTruth.ols
@@ -223,8 +242,8 @@ class ResponseSourceBinderSuite extends munit.FunSuite:
     val swap = ConditionAction.Permute(Map(ConditionLevelId("A") -> ConditionLevelId("B"), ConditionLevelId("B") -> ConditionLevelId("A")))
     val request = ResponseActionRequest(ResponseActionEvidence.Version, binding, Some(model), swap,
       NullConstraint.Linear(ResponseDigests.provider("fixture/v1", "A = B")))
-    val summary = StatusSummary(binding.unit, new InferenceStatusScope.Fit(observation), binding.features,
-      Map(InferenceStatusCode.Estimable -> voxels.toLong), ScientificFact.Known("full rank"))
+    val summary = StatusSummary(binding.unit, new InferenceStatusScope.Fit(observation), binding.features, binding.selected,
+      voxels.toLong, Map(InferenceStatusCode.Estimable -> voxels.toLong), ScientificFact.Known("full rank"))
     assertEquals(ResponseActionEvidence.evaluate(request, binding, Some(StatusEvidence.Scanned(summary))),
       ResponseActionRefusal.Unavailable(UnavailableReason.NoPositiveContractInVersion(ResponseActionEvidence.Version)))
 
@@ -250,3 +269,18 @@ object BinderGolden:
     "scalafim.run-combination/1=6f2a151c279a232281033352cfc9208f0204682c3fad933c09f71ac47cdef250",
     "scalafim.selected-readout/1=ea56575341fcac0f658b4074128a66d2db8e5a00921b5c6802c4aaa0ac0da0b4",
     "scalafim.response-features/1=5a3ea51c1fee30a27c113054cf9ef04bc9148ca0931dc89b8e2518b19dc402d3")
+
+  /** Compiled two-run design: digests that agree on JVM and Scala.js. */
+  val twoRunStableDigests: Vector[String] = Vector(
+    "scalafim.response-preparation/1=60a62deaf5bf9f1b1a8bbe7aae3b46f314c9905a2f267633a4d27e8b2e864e39",
+    "scalafim.realized-noise/1=411aa3cd429cda2f900c5ca93c23d8b2bc17edc7ba602a936c76097a6a36ccc0",
+    "scalafim.run-combination/1=648f3aaca225354726688a7c46380b766caedb54553bbc667bc38856912986e8",
+    "scalafim.response-features/1=5a3ea51c1fee30a27c113054cf9ef04bc9148ca0931dc89b8e2518b19dc402d3")
+
+  /** Design and readout identity of the compiled two-run design, per platform (upstream divergence). */
+  val twoRunNativeDigestsJvm: Vector[String] = Vector(
+    "scalafim.response-design/1=107f4b3b59023057d5b8cb71bda3eb09540b42bc5b7136a5b920d0753b3b2872",
+    "scalafim.selected-readout/1=8cb1de7b659352369f5201be6ebc61200b68c5f06c74f29587c5511fe34b4340")
+  val twoRunNativeDigestsJs: Vector[String] = Vector(
+    "scalafim.response-design/1=363adff5cc7013cded533d121dfbd6ca48f922dd002d7730d6e04a64ed152068",
+    "scalafim.selected-readout/1=25930dc789e533187ece08714221fc8e4fd466d0677a18a6b1067f588ca553b3")

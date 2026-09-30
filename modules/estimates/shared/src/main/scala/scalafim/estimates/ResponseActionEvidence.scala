@@ -2,18 +2,35 @@ package scalafim.estimates
 
 import scalafim.archive.ContentDigest
 
+/** Text is admissible for canonical UTF-8 encoding only without unpaired
+  * surrogates; otherwise encoding would silently substitute characters.
+  */
+private[estimates] object WellFormed:
+  def text(value: String): Boolean =
+    var i = 0
+    var ok = true
+    while ok && i < value.length do
+      val c = value.charAt(i)
+      if Character.isHighSurrogate(c) then
+        ok = i + 1 < value.length && Character.isLowSurrogate(value.charAt(i + 1))
+        i += 2
+      else
+        ok = !Character.isLowSurrogate(c)
+        i += 1
+    ok
+
 /** A digest derived by a ScalaFIM binder from native provenance. It is identity
   * evidence (two records agree or differ), never scientific truth or an
   * authenticated origin.
   */
 final case class ProviderDigest(schema: String, digest: ContentDigest):
-  require(Invariants.text(schema), "provider digest schema must be nonempty text")
+  require(Invariants.text(schema) && WellFormed.text(schema), "provider digest schema must be nonempty well-formed text")
   require(digest.algorithm == "sha256" && digest.value.matches("[0-9a-f]{64}"), "provider digests are lowercase SHA-256")
 
   def render: String = s"$schema@${digest.render}"
 
 final case class ConditionLevelId(value: String):
-  require(Invariants.text(value), "ConditionLevelId must be nonempty text without control characters")
+  require(Invariants.text(value) && WellFormed.text(value), "ConditionLevelId must be nonempty well-formed text without control characters")
 
 final case class ReadoutRowId(condition: ConditionLevelId, bin: Int):
   require(bin >= 0, "readout bins are zero-based")
@@ -172,6 +189,8 @@ final class ResponseSourceBinding private[scalafim] (
   require(Invariants.unique(columns), "binding columns must be unique and nonempty")
   require(Invariants.unique(selected) && selected.forall(columns.contains), "selected columns must be a unique nonempty subset")
   require(realizedNoise.arOrder.forall(_ >= 1), "AR order must be positive")
+  require(WellFormed.text(observation.value) && columns.forall(c => WellFormed.text(c.value)),
+    "binding text must be well-formed UTF-16 so that its canonical encoding is lossless")
 
   private def fields: Product = (unit, observation, design, preparation, noise, runCombination, readout, readoutAxis, columns, selected, features, realizedNoise, realizedCombination)
 
@@ -269,19 +288,26 @@ final case class ResponseActionRequest(
     nullConstraint: NullConstraint
 )
 
-/** Immutable, source- and selection-bound summary of the Fit status plane over
-  * the bound in-support features. Codes are declarations: `Estimable` implies
-  * neither numerical validity nor a response-law contract. Issued only by the
-  * ScalaFIM scanner; not a case class, so there is no public `fromProduct`.
+/** Immutable summary of the Fit status plane over the bound in-support
+  * features, bound to the scanned unit revision, plane, feature identity and
+  * selected columns. `samples` is the number of features read; the counts
+  * always sum to it and it is positive, so no summary can claim coverage it
+  * did not read. Codes are declarations: `Estimable` implies neither numerical
+  * validity nor a response-law contract. Issued only by the ScalaFIM scanner;
+  * not a case class, so there is no public `fromProduct`.
   */
 final class StatusSummary private[scalafim] (
     val unit: UnitRevisionId,
     val plane: InferenceStatusScope.Fit,
     val features: ProviderDigest,
+    val selected: Vector[ColumnId],
+    val samples: Long,
     val counts: Map[InferenceStatusCode, Long],
     val conditioning: ScientificFact
 ):
-  require(counts.values.forall(_ >= 0L), "status counts are nonnegative")
+  require(Invariants.unique(selected), "summary selection must be unique and nonempty")
+  require(samples > 0L, "a summary covers at least one feature")
+  require(counts.values.forall(_ >= 0L) && counts.values.sum == samples, "status counts must be nonnegative and sum to the scanned features")
 
   def count(code: InferenceStatusCode): Long = counts.getOrElse(code, 0L)
 
@@ -290,15 +316,17 @@ final class StatusSummary private[scalafim] (
     case (code, n) if code != InferenceStatusCode.Estimable && code != InferenceStatusCode.OutsideSupport => n
   }.sum
 
-  private def fields: Product = (unit, plane, features, counts, conditioning)
+  private def fields: Product = (unit, plane, features, selected, samples, counts, conditioning)
 
   private[scalafim] def copy(
       unit: UnitRevisionId = unit,
       plane: InferenceStatusScope.Fit = plane,
       features: ProviderDigest = features,
+      selected: Vector[ColumnId] = selected,
+      samples: Long = samples,
       counts: Map[InferenceStatusCode, Long] = counts,
       conditioning: ScientificFact = conditioning
-  ): StatusSummary = new StatusSummary(unit, plane, features, counts, conditioning)
+  ): StatusSummary = new StatusSummary(unit, plane, features, selected, samples, counts, conditioning)
 
   override def equals(other: Any): Boolean = other match
     case that: StatusSummary => fields == that.fields
@@ -311,9 +339,11 @@ object StatusSummary:
       unit: UnitRevisionId,
       plane: InferenceStatusScope.Fit,
       features: ProviderDigest,
+      selected: Vector[ColumnId],
+      samples: Long,
       counts: Map[InferenceStatusCode, Long],
       conditioning: ScientificFact
-  ): StatusSummary = new StatusSummary(unit, plane, features, counts, conditioning)
+  ): StatusSummary = new StatusSummary(unit, plane, features, selected, samples, counts, conditioning)
 
 enum StatusAbsence:
   case UnitHasNoEvidence
@@ -331,7 +361,8 @@ enum StatusEvidence:
 /** Binding fields in comparison order, then the status scope. */
 enum SourceField:
   case Unit, Observation, Design, Preparation, Noise, RunCombination, Readout, ReadoutAxis, Columns, Selected,
-    Features, RealizedNoise, RealizedCombination, StatusUnit, StatusFeatures, StatusPlane, StatusOutsideSupport
+    Features, RealizedNoise, RealizedCombination, StatusUnit, StatusFeatures, StatusPlane, StatusSelected,
+    StatusOutsideSupport
 
 enum ModelDefect:
   case TemporalMismatch(declared: DeclaredTemporal, realized: RealizedNoise)
@@ -414,6 +445,7 @@ object ResponseActionEvidence:
       field(SourceField.StatusUnit, a.unit, summary.unit)(_.value)
         .orElse(field(SourceField.StatusFeatures, a.features, summary.features)(_.render))
         .orElse(field(SourceField.StatusPlane, a.observation, summary.plane.observation)(_.value))
+        .orElse(field(SourceField.StatusSelected, a.selected, summary.selected)(columns))
         .orElse(field(SourceField.StatusOutsideSupport, 0L, summary.count(InferenceStatusCode.OutsideSupport))(_.toString))
     binding.flatten.headOption.orElse(status match
       case Some(StatusEvidence.Scanned(summary)) => scope(summary)

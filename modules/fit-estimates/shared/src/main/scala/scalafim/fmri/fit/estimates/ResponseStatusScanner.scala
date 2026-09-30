@@ -7,8 +7,9 @@ import scalafim.estimates.*
   * It looks up exactly the coefficient evidence of the bound observation and
   * the `Fit(observation)` plane, never falling back to an all-Estimable
   * default. It reads only the bound in-support features, in chunks of at most
-  * `chunk` samples, and verifies every receipt. IO failure, cancellation or an
-  * unverifiable receipt returns `Left` and no summary exists.
+  * `chunk` samples, and verifies every receipt. A different unit revision or
+  * feature identity, IO failure, cancellation or an unverifiable receipt
+  * returns `Left` and no summary exists.
   */
 object ResponseStatusScanner:
   def scan(
@@ -27,13 +28,14 @@ object ResponseStatusScanner:
         case Right(coefficients) =>
           val plane = new InferenceStatusScope.Fit(b.observation)
           val features = ResponseDigests.features(unit.domain)
-          // A different feature identity is reported by evaluation as a source
-          // mismatch; nothing is read from features the binding does not name.
+          // A different feature identity is refused before any read, like a
+          // different unit revision: nothing is read from unbound features.
           if features != b.features then
-            Right(StatusEvidence.Scanned(StatusSummary(unit.revision, plane, features, Map.empty, coefficients.conditioning)))
+            Left(EstimateError.Conflict("source feature identity differs from the bound ordered features"))
           else
             count(src, plane, unit.domain.support, math.min(chunk, src.limits.maximumCells), cancelled).map: counts =>
-              StatusEvidence.Scanned(StatusSummary(unit.revision, plane, features, counts, coefficients.conditioning))
+              StatusEvidence.Scanned(StatusSummary(unit.revision, plane, features, b.selected,
+                unit.domain.support.size.toLong, counts, coefficients.conditioning))
 
   /** Exact lookups in declared order; any absence is typed, never Estimable. */
   private def evidence(unit: EstimateUnit, b: ResponseSourceBinding): Either[StatusAbsence, CoefficientInferenceEvidence] =

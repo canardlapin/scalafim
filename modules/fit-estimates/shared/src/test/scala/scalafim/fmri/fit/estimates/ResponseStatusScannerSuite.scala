@@ -10,7 +10,8 @@ final class InstrumentedStatusSource(
     fitCodes: Map[Int, InferenceStatusCode],
     val limits: ReadLimits = ReadLimits(maximumCells = 64),
     failOnRead: Option[Int] = None,
-    tamper: InferenceStatusReceipt => InferenceStatusReceipt = identity
+    tamper: InferenceStatusReceipt => InferenceStatusReceipt = identity,
+    honourCancellation: Boolean = true
 ) extends InferenceEvidenceSource:
   val reads: ArrayBuffer[InferenceStatusSelection] = ArrayBuffer.empty
   def samplesRead: Vector[Int] = reads.iterator.flatMap(_.samples).toVector
@@ -24,7 +25,7 @@ final class InstrumentedStatusSource(
     InferenceStatusValidation.check(unit, selection, codes.length, limits.maximumCells).flatMap: _ =>
       reads += selection
       if failOnRead.contains(reads.size) then Left(EstimateError.Io("simulated device failure"))
-      else if cancelled() then Left(EstimateError.Cancelled)
+      else if honourCancellation && cancelled() then Left(EstimateError.Cancelled)
       else
         var i = 0
         selection.planes.foreach: plane =>
@@ -98,7 +99,7 @@ class ResponseStatusScannerSuite extends munit.FunSuite:
     for chunk <- Vector(1, 2, 40) do
       val src = InstrumentedStatusSource(u, codes)
       val result = scan(src, b, chunk)
-      val expected = StatusSummary(u.revision, new InferenceStatusScope.Fit(observation), b.features,
+      val expected = StatusSummary(u.revision, new InferenceStatusScope.Fit(observation), b.features, b.selected, support.size.toLong,
         Map(InferenceStatusCode.Estimable -> 3L, InferenceStatusCode.Constant -> 1L, InferenceStatusCode.Unrecorded -> 1L), conditioning)
       assertEquals(result, Right(StatusEvidence.Scanned(expected)), s"chunk $chunk")
       assertEquals(src.samplesRead, support, s"chunk $chunk: exactly the ordered support, once")
@@ -144,6 +145,11 @@ class ResponseStatusScannerSuite extends munit.FunSuite:
     val cancelAfterFirst: () => Boolean = () => src.reads.nonEmpty
     assertEquals(scan(src, binding(u), 2, cancelAfterFirst), Left(EstimateError.Cancelled))
     assertEquals(src.reads.size, 1, "no read after cancellation is observed")
+    // Cancellation observed only after the last chunk returned: the scanner's
+    // own final check must still discard the complete-looking result.
+    val late = InstrumentedStatusSource(u, codes, honourCancellation = false)
+    assertEquals(scan(late, binding(u), 2, () => late.reads.size >= 3), Left(EstimateError.Cancelled))
+    assertEquals(late.reads.size, 3, "all three chunks were read before cancellation was observed")
     val immediate = InstrumentedStatusSource(u, codes)
     assertEquals(scan(immediate, binding(u), 2, () => true), Left(EstimateError.Cancelled))
     assert(immediate.reads.isEmpty)
@@ -167,20 +173,25 @@ class ResponseStatusScannerSuite extends munit.FunSuite:
     val planeless = unit(evidence = Some(evidence(observations = Vector(observation, other), planes = Vector(InferenceStatusScope.Fit(other)))))
     absent(planeless, binding(planeless), StatusAbsence.FitPlaneAbsent)
 
-  test("a different unit revision is refused before any read; a different feature identity reads nothing"):
+  test("a different unit revision or feature identity is refused before any read"):
     val u = unit()
     val src = InstrumentedStatusSource(u, codes)
     val foreign = binding(u).copy(unit = UnitRevisionId("00000000-0000-4000-8000-000000000499"))
     assert(scan(src, foreign).left.exists(_.isInstanceOf[EstimateError.Conflict]))
     assert(src.reads.isEmpty)
-    // Same sample-ID set, different physical order.
+    // Same sample-ID set, different physical order: no summary, nothing read.
     val permuted = unit(domainSupport = support.reverse)
-    val stale = binding(u)
     val permutedSource = InstrumentedStatusSource(permuted, codes)
-    val result = scan(permutedSource, stale)
+    assert(scan(permutedSource, binding(u)).left.exists(_.isInstanceOf[EstimateError.Conflict]))
     assert(permutedSource.reads.isEmpty, "features the binding does not name are never read")
-    assertEquals(ResponseActionEvidence.evaluate(request(stale), stale, result.toOption),
-      ResponseActionRefusal.SourceMismatch(SourceField.StatusFeatures, stale.features.render, ResponseDigests.features(permuted.domain).render))
+
+  test("a summary is bound to the selection it was scanned for"):
+    val u = unit()
+    val narrow = binding(u, selected = columns.take(1))
+    val wide = binding(u)
+    val scanned = scan(InstrumentedStatusSource(u, codes), narrow).toOption
+    assertEquals(ResponseActionEvidence.evaluate(request(wide), wide, scanned),
+      ResponseActionRefusal.SourceMismatch(SourceField.StatusSelected, "[A,B]", "[A]"))
 
   test("a non-positive chunk is refused"):
     val u = unit()

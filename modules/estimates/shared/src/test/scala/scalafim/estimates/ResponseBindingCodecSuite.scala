@@ -86,6 +86,33 @@ class ResponseBindingCodecSuite extends munit.FunSuite:
     assert(decode(golden.replace("7:FixedAr", "7:FixedAq")).left.exists(_.isInstanceOf[BindingCodecError.Malformed]))
     assert(decode("").left.exists(_.isInstanceOf[BindingCodecError.Malformed]))
 
+  test("length prefixes count UTF-8 bytes; non-ASCII goldens are recomputed independently"):
+    assertEquals(ResponseDigests.token("\u03a3-01"), "5:\u03a3-01")
+    assertEquals(ResponseDigests.token("\uD835\uDEBA"), "4:\uD835\uDEBA")
+    val unicode = binding.copy(observation = ObservationId("\u03a3-01"),
+      readoutAxis = ResponseActionFixture.axis(Vector("\u03a3", "\uD835\uDEBA"), 2))
+    val bytes = ResponseBindingCodec.encode(unicode)
+    assertEquals(bytes.length, 899)
+    // Python: hashlib.sha256 over the same tokens with len(s.encode()) prefixes.
+    assertEquals(ResponseDigests.sha256Hex(bytes), "499929542177c6207d22a409f233671d2569f08bf2146bb148b9f40cf49d6358")
+    assertEquals(ResponseBindingCodec.decode(bytes), Right(DecodedBindingClaim.of(unicode)))
+
+  test("declared counts and lengths are bounded by the remaining input before any work"):
+    def decode(text: String) = ResponseBindingCodec.decode(utf8(text))
+    val rows = "1:41:A1:01:A1:11:B1:01:B1:1"
+    assertEquals(decode(golden.replace(rows, "9:9999999991:A1:0")), Left(BindingCodecError.Malformed("count exceeds remaining input")))
+    assertEquals(decode(golden.replace("1:43:A_03:A_13:B_03:B_1", "9:9999999993:A_0")),
+      Left(BindingCodecError.Malformed("count exceeds remaining input")))
+    assertEquals(decode(golden.take(105) + "999999999:x"), Left(BindingCodecError.Malformed("truncated token")))
+    assertEquals(decode("1234567890:x"), Left(BindingCodecError.Malformed("invalid token length")))
+    assertEquals(decode("12345"), Left(BindingCodecError.Malformed("missing token")))
+
+  test("invalid UTF-8 is refused as non-canonical"):
+    val bytes = utf8(golden)
+    val at = golden.indexOf("sub-01")
+    bytes(at) = 0xff.toByte
+    assertEquals(ResponseBindingCodec.decode(bytes), Left(BindingCodecError.NonCanonical))
+
   test("feature identity is ordered and platform-stable"):
     val domain = EstimateDomain.make(SampleSpaces(Vector(4, 1, 1)), Vector(0, 2, 3), "scanner").toOption.get
     val permuted = EstimateDomain.make(SampleSpaces(Vector(4, 1, 1)), Vector(2, 0, 3), "scanner").toOption.get

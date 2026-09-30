@@ -10,8 +10,10 @@ import scalafim.image.SampleSpaces.*
 private[scalafim] object ResponseDigests:
   val FeaturesSchema: String = "scalafim.response-features/1"
 
-  /** Length-prefixed token: unambiguous for any text. */
-  def token(value: String): String = s"${value.length}:$value"
+  /** Length-prefixed token: the prefix counts UTF-8 bytes, so any
+    * reimplementation that frames by bytes agrees. Unambiguous for any text.
+    */
+  def token(value: String): String = s"${value.getBytes(StandardCharsets.UTF_8).length}:$value"
 
   def number(value: Double): String = java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(value))
 
@@ -111,6 +113,7 @@ final case class DecodedBindingClaim(
   require(Invariants.unique(columns), "claimed columns must be unique and nonempty")
   require(Invariants.unique(selected) && selected.forall(columns.contains), "claimed selection must be a unique nonempty subset")
   require(realizedNoise.arOrder.forall(_ >= 1), "claimed AR order must be positive")
+  require(WellFormed.text(observation.value) && columns.forall(c => WellFormed.text(c.value)), "claimed text must be well-formed")
 
 object DecodedBindingClaim:
   def of(b: ResponseSourceBinding): DecodedBindingClaim =
@@ -177,8 +180,7 @@ object ResponseBindingCodec:
     * of the claim they decode to.
     */
   def decode(bytes: Array[Byte]): Either[BindingCodecError, DecodedBindingClaim] =
-    val text = new String(bytes, StandardCharsets.UTF_8)
-    val cursor = new Cursor(text)
+    val cursor = new Cursor(bytes)
     val decoded =
       for
         format <- cursor.token
@@ -190,10 +192,10 @@ object ResponseBindingCodec:
         noise <- cursor.digest
         runCombination <- cursor.digest
         readout <- cursor.digest
-        rowCount <- cursor.count
+        rowCount <- cursor.count(minimumItemBytes = 4)
         rows <- cursor.repeat(rowCount)(for
           condition <- cursor.token.flatMap(value => checked(ConditionLevelId(value)))
-          bin <- cursor.count
+          bin <- cursor.number
         yield ReadoutRowId(condition, bin))
         axis <- ReadoutAxis.parse(rows).left.map(BindingCodecError.InvalidAxis.apply)
         columns <- cursor.ids
@@ -205,40 +207,59 @@ object ResponseBindingCodec:
         claim <- checked(DecodedBindingClaim(unit, observation, design, preparation, noise, runCombination, readout, axis,
           columns, selected, features, realizedNoise, realizedCombination))
       yield claim
+    // Invalid UTF-8 decodes to replacement characters, so it fails this check.
     decoded.flatMap(claim => if java.util.Arrays.equals(encode(claim), bytes) then Right(claim) else Left(BindingCodecError.NonCanonical))
 
   private def checked[A](value: => A): Either[BindingCodecError, A] =
     try Right(value)
     catch case error: IllegalArgumentException => Left(BindingCodecError.Malformed(Option(error.getMessage).getOrElse("invalid field")))
 
-  private final class Cursor(text: String):
+  /** Frames by UTF-8 byte counts; every declared length or count is bounded
+    * by the remaining input before anything is allocated or iterated.
+    */
+  private final class Cursor(bytes: Array[Byte]):
     private var position = 0
 
-    def atEnd: Boolean = position == text.length
+    def atEnd: Boolean = position == bytes.length
+    private def remaining: Int = bytes.length - position
 
     def token: Either[BindingCodecError, String] =
-      val colon = text.indexOf(':', position)
-      if colon < 0 then Left(BindingCodecError.Malformed("missing token"))
+      var colon = position
+      while colon < bytes.length && colon - position <= 9 && bytes(colon) != ':'.toByte do colon += 1
+      if colon >= bytes.length || bytes(colon) != ':'.toByte then Left(BindingCodecError.Malformed("missing token"))
       else
-        val length = text.substring(position, colon)
+        val length = new String(bytes, position, colon - position, StandardCharsets.US_ASCII)
         if !length.matches("0|[1-9][0-9]{0,8}") then Left(BindingCodecError.Malformed("invalid token length"))
+        else if length.toLong > (bytes.length - colon - 1).toLong then Left(BindingCodecError.Malformed("truncated token"))
         else
-          val end = colon + 1 + length.toInt
-          if end > text.length then Left(BindingCodecError.Malformed("truncated token"))
-          else
-            val value = text.substring(colon + 1, end)
-            position = end
-            Right(value)
+          val start = colon + 1
+          val end = start + length.toInt
+          position = end
+          Right(new String(bytes, start, end - start, StandardCharsets.UTF_8))
 
-    def count: Either[BindingCodecError, Int] =
+    def number: Either[BindingCodecError, Int] =
       token.flatMap(value =>
-        if value.matches("0|[1-9][0-9]{0,8}") then Right(value.toInt) else Left(BindingCodecError.Malformed("invalid count")))
+        if value.matches("0|[1-9][0-9]{0,8}") then Right(value.toInt) else Left(BindingCodecError.Malformed("invalid number")))
+
+    /** A count of items, each occupying at least `minimumItemBytes`. */
+    def count(minimumItemBytes: Int): Either[BindingCodecError, Int] =
+      number.flatMap(n =>
+        if n.toLong * minimumItemBytes > remaining.toLong then Left(BindingCodecError.Malformed("count exceeds remaining input"))
+        else Right(n))
 
     def repeat[A](n: Int)(read: => Either[BindingCodecError, A]): Either[BindingCodecError, Vector[A]] =
-      (0 until n).foldLeft[Either[BindingCodecError, Vector[A]]](Right(Vector.empty))((acc, _) => acc.flatMap(values => read.map(values :+ _)))
+      val out = Vector.newBuilder[A]
+      var i = 0
+      var failure: Option[BindingCodecError] = None
+      while failure.isEmpty && i < n do
+        read match
+          case Right(value) => out += value
+          case Left(error) => failure = Some(error)
+        i += 1
+      failure.toLeft(out.result())
 
     def ids: Either[BindingCodecError, Vector[ColumnId]] =
-      count.flatMap(n => repeat(n)(token.flatMap(value => checked(ColumnId(value)))))
+      count(minimumItemBytes = 2).flatMap(n => repeat(n)(token.flatMap(value => checked(ColumnId(value)))))
 
     def digest: Either[BindingCodecError, ProviderDigest] =
       for
@@ -258,7 +279,7 @@ object ResponseBindingCodec:
         case "White" => Right(RealizedNoise.White)
         case "FixedAr" =>
           for
-            order <- count
+            order <- number
             pooling <- scope
             flag <- token
             exact <- flag match
@@ -266,7 +287,7 @@ object ResponseBindingCodec:
               case "None" => Right(None)
               case other => Left(BindingCodecError.Malformed(s"unknown option tag '$other'"))
           yield RealizedNoise.FixedAr(order, pooling, exact)
-        case "EstimatedAr" => for order <- count; pooling <- scope yield RealizedNoise.EstimatedAr(order, pooling)
+        case "EstimatedAr" => for order <- number; pooling <- scope yield RealizedNoise.EstimatedAr(order, pooling)
         case "Robust" => Right(RealizedNoise.Robust)
         case "LearnedSubspace" => Right(RealizedNoise.LearnedSubspace)
         case "Unrecorded" => Right(RealizedNoise.Unrecorded)
