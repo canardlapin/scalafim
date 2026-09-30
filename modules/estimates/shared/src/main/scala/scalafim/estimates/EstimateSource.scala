@@ -1,7 +1,7 @@
 package scalafim.estimates
 
-final case class ReadLimits(maximumCells: Int):
-  require(maximumCells > 0)
+final case class ReadLimits(maximumCells: Int, maximumStagingBytes: Long = 1024L * 1024L * 1024L):
+  require(maximumCells > 0 && maximumStagingBytes > 0)
 
 /** Scalar-product requests preserve caller axis order. Covariance has a separate
   * pair-axis API; it cannot masquerade as an ordinary estimand read.

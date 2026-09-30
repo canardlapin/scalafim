@@ -20,12 +20,17 @@ if output.exists():
 output.mkdir(parents=True)
 execution = Path("/private/tmp/scalafim-execution-20260929")
 worktree = execution / "io"
-provider = execution / "image4s-provider"
+provider = Path("/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s")
+provider_head = subprocess.check_output(["git", "-C", str(provider), "rev-parse", "HEAD"], text=True).strip()
+if provider_head != "2695f891cbec31a7f565a9b39e2554fe3b6d4b40":
+    raise SystemExit(f"unexpected default image4s provider HEAD: {provider_head}")
 classpath_file = worktree / "modules/estimates-io/jvm/target/streams/test/fullClasspath/_global/streams/export"
 classpath = classpath_file.read_text().strip()
 if str(provider) not in classpath:
-    raise SystemExit("compiled classpath does not contain the local image4s provider")
+    raise SystemExit("compiled classpath does not contain the hosted default image4s provider")
 classpath_sha256 = hashlib.sha256(classpath.encode()).hexdigest()
+probe_class = worktree / "modules/estimates-io/jvm/target/scala-3.7.4/test-classes/scalafim/estimates/io/EstimateCrashProbe$.class"
+probe_class_sha256 = hashlib.sha256(probe_class.read_bytes()).hexdigest()
 receipt = []
 
 
@@ -52,6 +57,8 @@ def run(stage: str, action: str, root: Path, expected: int, read_expectation="")
         "actual_exit": completed.returncode,
         "passed": passed,
         "classpath_sha256": classpath_sha256,
+        "probe_class_sha256": probe_class_sha256,
+        "provider_head": provider_head,
         "raw_log": str(log),
     }
     receipt.append(entry)

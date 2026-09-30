@@ -97,6 +97,10 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       catalogRef <- EstimateMetadata.catalogReference(manifest)
       catalogText <- text(catalogRef)
       catalog <- EstimateMetadata.readCatalog(catalogText)
+      schema <- EstimateMetadata.schema(manifest, "unit")
+      catalogSchema <- EstimateMetadata.schema(catalogText, "catalog")
+      _ <- if schema != EstimateMetadata.coreSchema || catalogSchema == schema then Right(())
+           else Left(EstimateError.Integrity("Core-NIfTI unit requires a Core-NIfTI catalog"))
       unit <- EstimateMetadata.readUnit(manifest, catalog)
       tables <- EstimateMetadata.indexTables(manifest)
       _ <- tables match
@@ -112,6 +116,14 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       _ <- if unit.unit == reference.unit && unit.revision == reference.revision then Right(())
            else Left(EstimateError.Integrity("pinned unit identity does not match the manifest"))
       representations <- EstimateMetadata.representations(manifest)
+      _ <- if schema != EstimateMetadata.coreSchema || representations.forall(_.storedDatatype.nonEmpty) then Right(())
+           else Left(EstimateError.Integrity("Core-NIfTI representations require explicit physical stored datatype"))
+      _ <- if schema != EstimateMetadata.coreSchema then Right(())
+           else
+             val expected = unit.products.flatMap(p => p.observations.map(o => p.id -> o)).toSet
+             val actual = representations.map(r => r.product -> r.observation)
+             if actual.distinct.size == actual.size && actual.toSet == expected then Right(())
+             else Left(EstimateError.Integrity("Core-NIfTI representation inventory must exactly cover declared pairs"))
     yield (unit, representations)
 
   def inspect(reference: PinnedUnit): Either[EstimateError, EstimateUnit] = inspectWithRepresentations(reference).map(_._1)

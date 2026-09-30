@@ -96,6 +96,69 @@ class LocalEstimateStoreSuite extends munit.FunSuite:
     assertEquals(ByteBuffer.wrap(original).order(ByteOrder.LITTLE_ENDIAN).getFloat(136), 0.0f)
   }
 
+  test("coded qform handedness and explicitly named alternative frame are checked against sform") {
+    val root = Files.createTempDirectory("scalafim-estimate-qform-")
+    val store = right(LocalEstimateStore.open(root))
+    val ref = write(store)
+    val manifest = Files.readString(root.resolve(ref.manifest.path))
+    val representation = right(EstimateMetadata.representations(manifest)).head
+    val original = Files.readAllBytes(root.resolve(representation.values.path))
+    def header(name: String, qformCode: Int, qfac: Float, xOffset: Float) =
+      val altered = original.clone()
+      val bytes = ByteBuffer.wrap(altered).order(ByteOrder.LITTLE_ENDIAN)
+      bytes.putShort(252, qformCode.toShort)
+      bytes.putFloat(76, qfac)
+      bytes.putFloat(268, xOffset)
+      val path = root.resolve(name)
+      Files.write(path, altered)
+      scalafim.image.io.Nifti.readHeader(path).toOption.get
+    val unset = header("qform-unset.nii", 0, 1.0f, 0.0f)
+    assert(NiftiEstimateSource.validateHeader(unit, product, unset, false).isRight)
+    assert(NiftiEstimateSource.validateHeader(unit, product, unset, false, Some("aligned-anatomical")).isLeft)
+    val agreeing = header("qform-agree.nii", 1, 1.0f, 0.0f)
+    assert(NiftiEstimateSource.validateHeader(unit, product, agreeing, false).isRight)
+    val reversed = header("qform-reversed.nii", 1, -1.0f, 0.0f)
+    assert(NiftiEstimateSource.validateHeader(unit, product, reversed, false).left.toOption.exists(_.message.contains("handedness")))
+    val altered = right(store.objects.write(s"units/${revision.value}/opposite-handed.nii")(
+      _.write(Files.readAllBytes(root.resolve("qform-reversed.nii")))).left.map(store.fromStore))
+    val alternateManifest = EstimateMetadata.unit(unit, right(EstimateMetadata.catalogReference(manifest)),
+      Vector(representation.copy(values = store.reference(altered))), right(EstimateMetadata.indexTables(manifest)))
+    val alternateRef = ref.copy(manifest = right(store.writeText(s"units/${revision.value}/opposite-handed.json", alternateManifest)))
+    assert(store.open(alternateRef, ReadLimits(8)).left.toOption.exists(_.message.contains("handedness")))
+    val alternate = header("qform-alternate.nii", 2, 1.0f, 10.0f)
+    assert(NiftiEstimateSource.validateHeader(unit, product, alternate, false).isLeft)
+    assert(NiftiEstimateSource.validateHeader(unit, product, alternate, false, Some("aligned-anatomical")).isRight)
+    assert(NiftiEstimateSource.validateHeader(unit, product, alternate, false, Some("mni-152")).isLeft)
+  }
+
+  test("reader caps product observation pairs before accessing missing payloads and closes boundary handles") {
+    val root = Files.createTempDirectory("scalafim-estimate-handle-budget-")
+    val store = right(LocalEstimateStore.open(root))
+    val ref = write(store)
+    val representation = right(EstimateMetadata.representations(Files.readString(root.resolve(ref.manifest.path)))).head
+    def candidate(size: Int, missing: Boolean): (EstimateUnit, Vector[NiftiRepresentation]) =
+      val observations = Vector.tabulate(size): index =>
+        obs.copy(id = ObservationId(f"participant-$index%02d"))
+      val declaredProduct = product.copy(observations = observations.map(_.id))
+      val declared = unit.copy(observations = observations, products = Vector(declaredProduct))
+      val reps = observations.zipWithIndex.map: (observation, index) =>
+        val values = if missing then representation.values.copy(path = s"missing/values-$index.nii") else representation.values
+        val validity = if missing then representation.validity.copy(path = s"missing/validity-$index.nii") else representation.validity
+        representation.copy(observation = observation.id, values = values, validity = validity)
+      (declared, reps)
+    val (tooMany, missing) = candidate(33, true)
+    val rejected = NiftiEstimateSource.open(store, tooMany, missing, ReadLimits(8))
+    assert(rejected.left.toOption.exists(e => e.isInstanceOf[EstimateError.Unsupported] && e.message.contains("32")))
+    val (boundary, available) = candidate(32, false)
+    val source = right(NiftiEstimateSource.open(store, boundary, available, ReadLimits(8)))
+    val values = new Array[Double](1)
+    val validity = new Array[Byte](1)
+    right(source.read(product.id, EstimateSelection(Vector(boundary.observations.last.id), Vector(a), Vector(0)), values, validity))
+    assertEqualsDouble(values(0), 0.0, 0.0)
+    right(source.close())
+    assert(source.read(product.id, EstimateSelection(Vector(boundary.observations.head.id), Vector(a), Vector(0)), values, validity).isLeft)
+  }
+
   test("digest-pinned TSV projections cannot redefine ordered JSON estimand axes") {
     val root = Files.createTempDirectory("scalafim-estimate-tables-")
     val store = right(LocalEstimateStore.open(root))

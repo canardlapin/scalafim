@@ -17,6 +17,9 @@ final case class EstimateIndexTables(estimands: FileReference, observations: Fil
   */
 object EstimateMetadata:
   val version = "0.2.0"
+  val coreSchema = "scalafim-estimates-core-nifti-1"
+  val developmentSchema = "scalafim-estimates-development-1"
+  val wireVersion = "1.0.0"
 
   /** Canonical UTF-8 projections. JSON remains the scientific authority; these
     * tables are digest-pinned and must agree byte-for-byte with its ordered IDs.
@@ -95,6 +98,11 @@ object EstimateMetadata:
   private given codecReferenceDistributionFisherF: ReadWriter[ReferenceDistribution.FisherF] = macroRW
   private given codecReferenceDistribution: ReadWriter[ReferenceDistribution] = macroRW
   private given codecTestTail: ReadWriter[TestTail] = readwriter[String].bimap(_.toString, TestTail.valueOf)
+  private given codecHypothesisTarget: ReadWriter[HypothesisTarget] = macroRW
+  private given codecStatisticCorrespondenceKnown: ReadWriter[StatisticCorrespondence.Known] = macroRW
+  private given codecStatisticCorrespondenceUnknown: ReadWriter[StatisticCorrespondence.Unknown] = macroRW
+  private given codecStatisticCorrespondence: ReadWriter[StatisticCorrespondence] = macroRW
+  private given codecStatisticProductLink: ReadWriter[StatisticProductLink] = macroRW
   private given codecStatisticSemantics: ReadWriter[StatisticSemantics] = macroRW
   private given codecCovarianceEquationAbsolutetype: ReadWriter[CovarianceEquation.Absolute.type] = macroRW
   private given codecCovarianceEquationNormalized: ReadWriter[CovarianceEquation.Normalized] = macroRW
@@ -148,18 +156,30 @@ object EstimateMetadata:
 
   private given codecEstimateUnit: ReadWriter[EstimateUnit] = macroRW
   private given codecEstimandPair: ReadWriter[EstimandPair] = macroRW
+  private given codecNiftiStoredDatatype: ReadWriter[NiftiStoredDatatype] = readwriter[String].bimap(_.toString, NiftiStoredDatatype.valueOf)
   private given codecNiftiRepresentation: ReadWriter[NiftiRepresentation] = macroRW
   private given codecEstimateIndexTables: ReadWriter[EstimateIndexTables] = macroRW
 
-  private def document(kind: String, value: ujson.Value): String =
-    ujson.write(ujson.Obj("ProfileVersion" -> version, "Schema" -> "scalafim-estimates-development-1", "DocumentKind" -> kind, "Content" -> value), indent = 2) + "\n"
+  private def document(kind: String, value: ujson.Value, schema: String = coreSchema): String =
+    val envelope = ujson.Obj("ProfileVersion" -> version, "Schema" -> schema, "DocumentKind" -> kind, "Content" -> value)
+    if schema == coreSchema then envelope("WireVersion") = wireVersion
+    ujson.write(envelope, indent = 2) + "\n"
 
-  private def content(text: String, kind: String): ujson.Value =
+  private def envelope(text: String, kind: String): (String, ujson.Value) =
     val value = ujson.read(text)
-    require(value("Schema").str == "scalafim-estimates-development-1", "unsupported estimate metadata schema")
+    val schema = value("Schema").str
+    require(schema == coreSchema || schema == developmentSchema, "unsupported estimate metadata schema")
     require(value("ProfileVersion").str == version, "unsupported estimate profile version")
     require(value("DocumentKind").str == kind, "wrong estimate document kind")
-    value("Content")
+    if schema == coreSchema then
+      require(value("WireVersion").str == wireVersion, "unsupported Core-NIfTI wire version")
+      require(value.obj.keySet == Set("Schema", "WireVersion", "ProfileVersion", "DocumentKind", "Content"),
+        "Core-NIfTI envelope has unknown fields")
+    (schema, value("Content"))
+
+  private def content(text: String, kind: String): ujson.Value = envelope(text, kind)._2
+
+  def schema(text: String, kind: String): Either[EstimateError, String] = checked(envelope(text, kind)._1)
 
   def catalog(value: EstimandCatalog): String = document("catalog", writeJs(value))
   def readCatalog(text: String): Either[EstimateError, EstimandCatalog] = checked(read[EstimandCatalog](content(text, "catalog")))
@@ -174,14 +194,35 @@ object EstimateMetadata:
     encoded("Representations") = writeJs(representations)
     tables.foreach(table => encoded("Tables") = writeJs(table))
     encoded("ModelRevisionId") = writeJs(value.catalog.model)
-    document("unit", encoded)
+    if tables.nonEmpty then
+      encoded("covariance") = writeJs(value.covariance)
+      encoded("statistics") = writeJs(value.statistics)
+      encoded("degreesOfFreedom") = writeJs(value.degreesOfFreedom)
+      encoded("marginalUncertainty") = writeJs(value.marginalUncertainty)
+    document("unit", encoded, if tables.nonEmpty then coreSchema else developmentSchema)
 
   def catalogReference(text: String): Either[EstimateError, FileReference] =
     checked(read[FileReference](content(text, "unit")("Catalog")))
 
   def readUnit(text: String, catalog: EstimandCatalog): Either[EstimateError, EstimateUnit] = checked:
-    val encoded = content(text, "unit")
+    val (wireSchema, encoded) = envelope(text, "unit")
     require(read[ModelRevisionId](encoded("ModelRevisionId")) == catalog.model, "unit and catalog model revisions differ")
+    if wireSchema == coreSchema then
+      val required = Set("dataset", "unit", "revision", "domain", "observations", "bindings", "products",
+        "outcomes", "estimability", "provenance", "covariance", "statistics", "degreesOfFreedom",
+        "marginalUncertainty", "Catalog", "Representations", "Tables", "ModelRevisionId")
+      require(encoded.obj.keySet == required, "Core-NIfTI unit fields differ from the versioned schema")
+      read[EstimateIndexTables](encoded("Tables"))
+      read[Vector[NiftiRepresentation]](encoded("Representations"))
+    else
+      encoded.obj.get("statistics").foreach: entries =>
+        entries.arr.foreach: statistic =>
+          Vector("effect", "standardError").foreach: field =>
+            statistic.obj.get(field) match
+              case Some(ujson.Str(id)) =>
+                statistic(field) = writeJs(StatisticProductLink(ProductId(id),
+                  StatisticCorrespondence.Unknown("development-1 link lacks hypothesis correspondence")))
+              case _ => ()
     encoded.obj.remove("Catalog")
     encoded.obj.remove("Representations")
     encoded.obj.remove("Tables")

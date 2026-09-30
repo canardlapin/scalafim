@@ -48,11 +48,51 @@ final case class EstimateUnit(
           p.observations == covarianceProduct.get.observations && p.targets.estimands == covarianceProduct.get.targets.estimands && p.pooling == covarianceProduct.get.pooling))
   )
   require(products.filter(_.kind == ProductKind.Covariance).forall(p => covariance.exists(_.product == p.id)))
+  require(degreesOfFreedom.forall:
+    case DegreesOfFreedom(_, DfValue.Product(id), _, _) =>
+      products.exists(p => p.id == id && p.kind == ProductKind.DegreesOfFreedomValues)
+    case _ => true
+  )
   require(statistics.map(_.product).distinct.size == statistics.size)
   require(products.filter(_.kind.isInstanceOf[ProductKind.Statistic]).forall(p => statistics.exists(_.product == p.id)))
-  require(statistics.forall(s => products.exists(p => p.id == s.product && p.kind.isInstanceOf[ProductKind.Statistic]) &&
-    s.effect.forall(id => products.exists(p => p.id == id && p.kind == ProductKind.Effect)) &&
-    s.standardError.forall(id => products.exists(p => p.id == id && p.kind == ProductKind.StandardError))))
+  require(statistics.forall: semantics =>
+    products.find(_.id == semantics.product).exists: statistic =>
+      def referenceDf(df: DegreesOfFreedom): Boolean = df.value match
+        case DfValue.Scalar(value) => value.isFinite && value > 0.0
+        case DfValue.Product(id) => products.exists(p => p.id == id && p.kind == ProductKind.DegreesOfFreedomValues &&
+          p.observations == statistic.observations && p.targets == statistic.targets && p.pooling == statistic.pooling)
+        case _ => false
+      def linkValid(link: StatisticProductLink, kind: ProductKind): Boolean =
+        products.find(_.id == link.product).exists: target =>
+          target.kind == kind && target.observations == statistic.observations && target.pooling == statistic.pooling &&
+            (link.correspondence match
+              case StatisticCorrespondence.Unknown(_) => true
+              case StatisticCorrespondence.Known(mapping) =>
+                mapping.map(_.hypothesis).toSet == statistic.targets.estimands.toSet &&
+                  mapping.forall(entry => entry.targets.forall(target.targets.estimands.contains)))
+      def known(link: StatisticProductLink): Option[Map[EstimandId, Set[EstimandId]]] = link.correspondence match
+        case StatisticCorrespondence.Known(mapping) => Some(mapping.map(entry => entry.hypothesis -> entry.targets.toSet).toMap)
+        case StatisticCorrespondence.Unknown(_) => None
+      val distributionValid = semantics.distribution match
+        case ReferenceDistribution.StudentT(df) => referenceDf(df)
+        case ReferenceDistribution.FisherF(numerator, denominator) => referenceDf(numerator) && referenceDf(denominator)
+        case _ => true
+      val distributionMatchesKind = (statistic.kind, semantics.distribution) match
+        case (ProductKind.Statistic(_), ReferenceDistribution.Unknown(_)) => true
+        case (ProductKind.Statistic(StatisticKind.T), ReferenceDistribution.StudentT(_)) => true
+        case (ProductKind.Statistic(StatisticKind.F), ReferenceDistribution.FisherF(_, _)) => true
+        case (ProductKind.Statistic(StatisticKind.Z), ReferenceDistribution.Normal) => true
+        case (ProductKind.Statistic(StatisticKind.P), _) => true
+        case _ => false
+      val linksAgree = (semantics.effect.flatMap(known), semantics.standardError.flatMap(known)) match
+        case (Some(effects), Some(errors)) =>
+          effects == errors && semantics.effect.flatMap(link => products.find(_.id == link.product)).exists: effect =>
+            semantics.standardError.flatMap(link => products.find(_.id == link.product)).exists(_.units == effect.units)
+        case _ => true
+      distributionMatchesKind && distributionValid &&
+        semantics.effect.forall(linkValid(_, ProductKind.Effect)) &&
+        semantics.standardError.forall(linkValid(_, ProductKind.StandardError)) && linksAgree
+  )
   require(marginalUncertainty.map(_.product).distinct.size == marginalUncertainty.size)
   require(marginalUncertainty.forall: descriptor =>
     val uncertainty = products.find(_.id == descriptor.product)

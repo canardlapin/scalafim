@@ -6,6 +6,7 @@ header fields directly. It never calls image4s or ScalaFIM.
 
 from pathlib import Path
 import hashlib
+import gzip
 import struct
 
 
@@ -34,10 +35,33 @@ def nifti(dtype: int, bits: int, payload: bytes) -> bytes:
     return bytes(header) + payload
 
 
+def singleton_3d_big_endian(dtype: int, bits: int, payload: bytes, slope: float, intercept: float) -> bytes:
+    header = bytearray(352)
+    struct.pack_into(">i", header, 0, 348)
+    struct.pack_into(">8h", header, 40, 3, 2, 1, 1, 1, 1, 1, 1)
+    struct.pack_into(">h", header, 70, dtype)
+    struct.pack_into(">h", header, 72, bits)
+    struct.pack_into(">8f", header, 76, 1.0, 2.0, 3.0, 4.0, 1.0, 1.0, 1.0, 1.0)
+    struct.pack_into(">f", header, 108, 352.0)
+    struct.pack_into(">f", header, 112, slope)
+    struct.pack_into(">f", header, 116, intercept)
+    header[123] = 2  # millimetres, no temporal unit
+    struct.pack_into(">h", header, 254, 1)
+    struct.pack_into(">4f", header, 280, -2.0, 0.0, 0.0, 8.0)
+    struct.pack_into(">4f", header, 296, 0.0, 3.0, 0.0, -4.0)
+    struct.pack_into(">4f", header, 312, 0.0, 0.0, 4.0, 2.0)
+    header[344:348] = b"n+1\0"
+    return bytes(header) + payload
+
+
 fixtures = {
     "values.nii": nifti(64, 64, struct.pack("<4d", 2.0, 4.0, 6.0, 8.0)),
     "validity.nii": nifti(2, 8, bytes((0, 3, 0, 0))),
+    "values-3d-be-scaled.nii": singleton_3d_big_endian(16, 32, struct.pack(">2f", 1.5, -2.0), 2.0, 1.0),
+    "validity-3d.nii": singleton_3d_big_endian(2, 8, bytes((0, 0)), 1.0, 0.0),
 }
+fixtures["values-3d-be-scaled.nii.gz"] = gzip.compress(fixtures["values-3d-be-scaled.nii"], mtime=0)
+fixtures["validity-3d.nii.gz"] = gzip.compress(fixtures["validity-3d.nii"], mtime=0)
 for name, content in fixtures.items():
     path = OUTPUT / name
     path.write_bytes(content)

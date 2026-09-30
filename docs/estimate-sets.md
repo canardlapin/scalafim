@@ -2,11 +2,15 @@
 
 The `estimates`, `estimates-io` and `fit-estimates` modules implement a first
 vertical slice of the [native implementation plan](plans/estimate-set-implementation.md).
-They are **development APIs, not a claim of full estimate-set V0 conformance**.
+They are **not a claim of full estimate-set V0 conformance**.
 The scientific target is the [canonical ScalaFIM V0 0.2.0 specification](estimate-set-v0-spec.md).
-The wire discriminator is `scalafim-estimates-development-1`; `ProfileVersion`
-records the scientific target. Do not treat this development layout as the final
-interchange schema or BIDS-shaped directory layout.
+New locally published JSON/TSV/NIfTI units use the versioned
+`scalafim-estimates-core-nifti-1` wire discriminator and `WireVersion` `1.0.0`.
+`ProfileVersion` `0.2.0` names the scientific target separately. The reader also
+accepts `scalafim-estimates-development-1` for historical bundles; a direct
+metadata encode without TSV references remains a development document. The
+Core-NIfTI checks below do not qualify the retained HDF5, compact covariance,
+producer/workflow or downstream consumer scope.
 
 ## Implemented boundary
 
@@ -40,22 +44,31 @@ interchange schema or BIDS-shaped directory layout.
 
 ## Current restrictions
 
-The local physical implementation supports uncompressed NIfTI-1 scalar Float64
-and exactly representable declared Float32 products, matching UInt8 validity,
+The local writer emits uncompressed NIfTI-1 scalar Float64 and exactly
+representable declared Float32 products. The reader accepts `.nii` and `.nii.gz`,
+physical Float32/Float64 with separately declared logical precision and NIfTI
+scaling applied once, matching UInt8 validity, singleton 3D or ordered 4D axes,
 RAS world coordinates in millimetres, and the explicitly qualified scanner sform.
 It compares manifest/header grid corners within 0.001 mm before publication and
-on opening. It supports arbitrary stored voxel orientation within that binding.
-It refuses other frame bindings and more than 32 open
-product/observation files. Shared code does not pretend to implement browser IO.
+on opening. A coded qform with opposite handedness is refused. A differing
+same-handed qform needs an explicit alternate-frame declaration matching its
+NIfTI transform code (`aligned-anatomical`, `talairach`, or `mni-152`). It supports
+arbitrary stored voxel orientation within that binding. Other selected frame
+bindings are not yet qualified. The reader and writer cap an open unit at 32
+product/observation pairs (64 data/validity handles); the reader checks this
+before touching payloads. Shared code does not pretend to implement browser IO.
 
-The development metadata embeds ordered support indices. Metadata documents are
-limited to 16 MiB and exact JSON byte counts through 2^53-1. This is not the final
-TSV/mask/profile schema. Current new units include `estimands.tsv` and
+The metadata embeds ordered support indices. Metadata documents are
+limited to 16 MiB and exact JSON byte counts through 2^53-1. Core units require `estimands.tsv` and
 `observations.tsv` with zero-based `index` columns; the unit manifest pins their
 digests and the reader verifies that their ordered IDs agree exactly with the
 JSON catalog and unit. JSON is the scientific authority, and these TSV files are
-checked projections rather than editable alternative definitions. Development
-documents predating the tables remain readable. Support and catalog metadata
+checked projections rather than editable alternative definitions. Core unit
+representations must cover every product/observation pair and declare physical
+stored dtype separately from decoded product precision. Development documents
+predating the tables remain readable. Legacy bare statistic effect/SE IDs decode
+as explicitly unknown hypothesis correspondence; only a complete named mapping
+can establish a known link. Support and catalog metadata
 occupy memory proportional to their size; payload streaming alone is not a
 general whole-job peak-memory certificate. The
 initial [heap/relocation probe](verification/estimate-set-increment/heap-and-relocation.json)
@@ -63,8 +76,16 @@ wrote 16,777,216 Float64 cells (128 MiB numerical payload) under `-Xmx64m` in 3.
 on this machine, then reopened in a separate 64 MiB JVM after relocation with no
 fitter on its classpath. Independent Python checked every value and validity byte.
 That one workload does not qualify the full performance/access matrix.
-Current sparse reads are bounded but use individual scalar file reads. Access
-performance and gzip staging are not qualified. Directory fsync and exclusive
+Current sparse reads are bounded but use individual scalar file reads. Gzip
+payloads are decompressed into owned temporary seekable files using a 64 KiB
+buffer, with a cumulative `ReadLimits.maximumStagingBytes` cap (1 GiB default)
+checked during expansion; temporary files are removed on close or failed open.
+The independent 3D big-endian/scaled fixture stages exactly 714 bytes at the
+boundary and refuses 713 bytes. A separate `-Xmx64m` JVM staged 75,498,176
+bytes under that exact cap and measured 38,172,664 bytes peak heap; it refused
+one byte less and removed its staging files on close. See the
+[Core-NIfTI receipt](verification/estimate-set-core-nifti-2026-09-29/README.md).
+Broader access performance remains open. Directory fsync and exclusive
 hard links must be supported by the actual destination filesystem. The tests
 exercise failures and pointer conflicts, not power-loss/crash durability at every
 publication boundary. Failed staging remains available for explicit recovery.
@@ -98,7 +119,7 @@ their presence. The receipt is provenance, not a first-level calibration result 
 automatic second-level inference admission.
 
 Pooled selected execution is available in `fit`, but its persistence adapter,
-compact shared-matrix encoding, final wire schemas/fixtures, HDF5, workflow and
+compact shared-matrix encoding, HDF5 schema/fixtures, workflow and
 PLS Neuro adoption remain outstanding. `ResultManifestWriter` remains until its
 replacement covers and tests its useful scientific extraction. The older eager
 canonical archive writer remains; the new local streaming primitives do not yet

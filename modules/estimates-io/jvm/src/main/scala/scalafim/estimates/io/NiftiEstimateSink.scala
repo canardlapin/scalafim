@@ -160,7 +160,9 @@ private[io] final class NiftiEstimateSink(
                   data <- store.publishStagedIdempotent(output.valueStage, s"${prefix}_values.nii")
                   valid <- store.publishStagedIdempotent(output.validityStage, s"${prefix}_validity.nii")
                 yield refs :+ NiftiRepresentation(output.product.id, output.observation, data, valid,
-                  output.product.precision, 1.0, 0.0, output.product.targets.estimands, "scanner-sform", output.product.targets.pairs.map((a, b) => EstimandPair(a, b)))
+                  output.product.precision, 1.0, 0.0, output.product.targets.estimands, "scanner-sform",
+                  output.product.targets.pairs.map((a, b) => EstimandPair(a, b)),
+                  storedDatatype = Some(if output.product.precision == NumericPrecision.Float32 then NiftiStoredDatatype.Float32 else NiftiStoredDatatype.Float64))
             .flatMap(refs => store.publishUnit(unit, refs))
         result match
           case Left(error) => failure = Some(error); Left(error)

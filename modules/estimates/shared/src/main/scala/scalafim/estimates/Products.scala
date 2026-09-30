@@ -67,6 +67,18 @@ enum ReferenceDistribution:
   case StudentT(df: DegreesOfFreedom)
   case FisherF(numerator: DegreesOfFreedom, denominator: DegreesOfFreedom)
 
+  def valid: Boolean =
+    def supported(df: DegreesOfFreedom): Boolean = df.value match
+      case DfValue.Scalar(value) => value.isFinite && value > 0.0
+      case DfValue.Product(_) => true
+      case _ => false
+    this match
+      case Unknown(reason) => Invariants.text(reason)
+      case Normal => true
+      case StudentT(df) => supported(df)
+      case FisherF(numerator, denominator) => supported(numerator) && supported(denominator)
+
+
 enum DfRole:
   case Residual, Effective, Reference
 
@@ -112,15 +124,30 @@ final case class MarginalUncertaintyDescriptor(
 enum TestTail:
   case Lower, Upper, TwoSided
 
+final case class HypothesisTarget(hypothesis: EstimandId, targets: Vector[EstimandId]):
+  require(targets.nonEmpty && Invariants.unique(targets), "a hypothesis needs distinct explicit target IDs")
+
+enum StatisticCorrespondence:
+  case Known(mapping: Vector[HypothesisTarget])
+  case Unknown(reason: String)
+
+  def valid: Boolean = this match
+    case Known(mapping) => mapping.nonEmpty && Invariants.unique(mapping.map(_.hypothesis))
+    case Unknown(reason) => Invariants.text(reason)
+
+final case class StatisticProductLink(product: ProductId, correspondence: StatisticCorrespondence):
+  require(correspondence.valid)
+
 final case class StatisticSemantics(
     product: ProductId,
     distribution: ReferenceDistribution,
     tail: Option[TestTail],
     nullValue: Option[Double],
-    effect: Option[ProductId],
-    standardError: Option[ProductId]
+    effect: Option[StatisticProductLink],
+    standardError: Option[StatisticProductLink]
 ):
   require(nullValue.forall(_.isFinite))
+  require(distribution.valid, "known t/F reference distributions require positive scalar or product-backed df")
 
 /** Scaling is always a variance multiplier; never silently square an SD. */
 enum CovarianceEquation:

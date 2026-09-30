@@ -63,6 +63,7 @@ class EstimateMetadataSuite extends munit.FunSuite:
         MarginalVarianceOrigin.Estimated(df))))
     val catalogRef = FileReference("catalog.json", ContentDigest.unsafeSha256("b" * 64), 1)
     val text = EstimateMetadata.unit(unit, catalogRef)
+    assert(text.contains(EstimateMetadata.developmentSchema))
     assertEquals(EstimateMetadata.observationsTsv(unit), "index\tobservation_id\n0\trow\n")
     val decoded = EstimateMetadata.readUnit(text, catalog).toOption.get
     assertEquals(decoded.products, unit.products)
@@ -74,4 +75,58 @@ class EstimateMetadataSuite extends munit.FunSuite:
     val previous = ujson.read(text)
     previous("Content").obj.remove("marginalUncertainty")
     assertEquals(EstimateMetadata.readUnit(ujson.write(previous), catalog).map(_.marginalUncertainty), Right(Vector.empty))
+
+    val tableRef = FileReference("estimands.tsv", ContentDigest.unsafeSha256("c" * 64), 10)
+    val stable = EstimateMetadata.unit(unit, catalogRef, tables = Some(EstimateIndexTables(
+      tableRef, tableRef.copy(path = "observations.tsv"))))
+    assert(stable.contains(EstimateMetadata.coreSchema))
+    assert(stable.contains(EstimateMetadata.wireVersion))
+    assert(EstimateMetadata.readUnit(stable, catalog).isRight)
+    val withoutTables = ujson.read(stable)
+    withoutTables("Content").obj.remove("Tables")
+    assert(EstimateMetadata.readUnit(ujson.write(withoutTables), catalog).isLeft)
+    val withoutStatistics = ujson.read(stable)
+    withoutStatistics("Content").obj.remove("statistics")
+    assert(EstimateMetadata.readUnit(ujson.write(withoutStatistics), catalog).isLeft)
+    val wrongWire = ujson.read(stable)
+    wrongWire("WireVersion") = "2.0.0"
+    assert(EstimateMetadata.readUnit(ujson.write(wrongWire), catalog).isLeft)
+    val extraEnvelope = ujson.read(stable)
+    extraEnvelope("Unexpected") = true
+    assert(EstimateMetadata.readUnit(ujson.write(extraEnvelope), catalog).isLeft)
+  }
+
+  test("development bare statistic links migrate to unknown correspondence; Core requires structured mapping") {
+    val dataset = DatasetId("00000000-0000-4000-8000-000000000020")
+    val observation = Observation(ObservationId("row"), ParticipantId(dataset, "01"), Vector(AcquisitionId("run-1")))
+    val effect = ProductDescriptor(ProductId("effect"), ProductKind.Effect, NumericPrecision.Float64,
+      Vector(observation.id), ProductTargets.Scalar(Vector(catalog.entries.head.id)), PoolingScope.Run, "signal")
+    val statistic = effect.copy(id = ProductId("t"), kind = ProductKind.Statistic(StatisticKind.T),
+      targets = ProductTargets.Scalar(Vector(catalog.entries.last.id)), units = "dimensionless")
+    val products = Vector(effect, statistic)
+    val unknown = ScientificFact.Unknown("imported")
+    val semantics = StatisticSemantics(statistic.id, ReferenceDistribution.StudentT(
+      DegreesOfFreedom(DfRole.Reference, DfValue.Scalar(9.0), "known reference", false)),
+      Some(TestTail.TwoSided), Some(0.0), Some(StatisticProductLink(effect.id,
+        StatisticCorrespondence.Known(Vector(HypothesisTarget(catalog.entries.last.id, Vector(catalog.entries.head.id)))))), None)
+    val unit = EstimateUnit(dataset, UnitId("00000000-0000-4000-8000-000000000021"),
+      UnitRevisionId("00000000-0000-4000-8000-000000000022"), catalog,
+      EstimateDomain.make(SampleSpaces(Vector(1, 1, 1)), Vector(0), "scanner").toOption.get,
+      Vector(observation), Vector.empty, products,
+      products.map(p => p.id -> ProductOutcome.Available(p.id)).toMap,
+      EstimabilityEvidence.Unknown("imported"),
+      EstimateProvenance("fixture", "1", "run", unknown, unknown, unknown, unknown, Vector.empty, Vector.empty),
+      statistics = Vector(semantics))
+    val catalogRef = FileReference("catalog.json", ContentDigest.unsafeSha256("d" * 64), 1)
+    val old = ujson.read(EstimateMetadata.unit(unit, catalogRef))
+    old("Content")("statistics")(0)("effect") = effect.id.value
+    val decoded = EstimateMetadata.readUnit(ujson.write(old), catalog).toOption.get
+    assertEquals(decoded.statistics.head.effect.map(_.correspondence),
+      Some(StatisticCorrespondence.Unknown("development-1 link lacks hypothesis correspondence")))
+    val tableRef = FileReference("estimands.tsv", ContentDigest.unsafeSha256("e" * 64), 10)
+    val stable = ujson.read(EstimateMetadata.unit(unit, catalogRef,
+      tables = Some(EstimateIndexTables(tableRef, tableRef.copy(path = "observations.tsv")))))
+    assertEquals(EstimateMetadata.readUnit(ujson.write(stable), catalog).map(_.statistics.head.effect), Right(semantics.effect))
+    stable("Content")("statistics")(0)("effect") = effect.id.value
+    assert(EstimateMetadata.readUnit(ujson.write(stable), catalog).isLeft)
   }

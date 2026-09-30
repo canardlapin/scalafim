@@ -293,6 +293,35 @@ The pointer is a small JSON object containing profile version, collection ID and
 its `{Path,SHA256,Bytes}` reference. An analysis resolves it once and pins the
 immutable collection reference. No completed analysis follows a moving pointer.
 
+### Core-NIfTI-1 metadata dispatch
+
+The implemented Core-NIfTI JSON envelope has exactly `Schema`, `WireVersion`,
+`ProfileVersion`, `DocumentKind` and `Content`. `Schema` is
+`scalafim-estimates-core-nifti-1`; `WireVersion` is `1.0.0`; and
+`ProfileVersion` is the independently versioned scientific target `0.2.0`.
+`DocumentKind` selects `catalog`, `unit`, `collection` or `pointer`. Unknown
+envelope fields or versions refuse. `Content` is authoritative JSON; no TSV or
+NIfTI header may silently redefine scientific IDs, ordered axes, pooling or
+statistics. Core unit content explicitly includes every scientific field plus
+`Catalog`, `ModelRevisionId`, `Representations` and `Tables`; omitted fields do
+not acquire implicit scientific defaults. The catalog is an immutable digest
+reference. Both TSV tables are digest-pinned projections with zero-based indices,
+and their bytes must reproduce the JSON catalog and observation order exactly.
+
+Every Core representation covers one declared product/observation pair and names
+`precision` (decoded logical product precision), `storedDatatype` (physical
+NIfTI Float32/Float64), `slope`/`intercept`, ordered volume or pair IDs, selected
+transform, and value/validity `{Path,SHA256,Bytes}` references. A coded qform may
+agree with selected scanner sform, or a same-handed difference can be described
+by `qformAlternativeFrame` matching transform code 2/3/4 as
+`aligned-anatomical`/`talairach`/`mni-152`. Opposite handedness refuses even
+with that declaration. Statistic effect/SE links use structured product IDs and
+either `Known` complete hypothesis-to-target mappings or `Unknown` with a reason;
+unknown links supply no positional inference capability. The development-1
+decoder remains for historical bundles, mapping its bare link IDs to `Unknown`.
+New local store publications use Core-NIfTI-1; this wire freeze is specific to
+the Core-NIfTI baseline and does not claim HDF5 or optional capability conformance.
+
 ## 7. Encoding rules
 
 Core-NIfTI supports NIfTI-1 single-file `.nii` and `.nii.gz`, IEEE float32/float64

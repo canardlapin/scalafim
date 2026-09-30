@@ -38,6 +38,56 @@ class EstimateContractSuite extends munit.FunSuite:
     intercept[IllegalArgumentException](t.copy(statistics = Vector.empty))
   }
 
+  test("known statistic distributions and links require positive aligned df and explicit hypothesis mapping") {
+    val h1 = EstimandId("hypothesis-one")
+    val h2 = EstimandId("hypothesis-two")
+    val hypotheses = Vector(h1, h2).map(id =>
+      EstimandDefinition(id, id.value, EstimandKind.Hypothesis, "dimensionless", "none", id.value))
+    val stat = effect.copy(id = ProductId("t"), kind = ProductKind.Statistic(StatisticKind.T),
+      targets = ProductTargets.Scalar(Vector(h1, h2)), units = "dimensionless")
+    val se = effect.copy(id = ProductId("se"), kind = ProductKind.StandardError,
+      targets = ProductTargets.Scalar(Vector(b, a)))
+    val dfProduct = stat.copy(id = ProductId("df"), kind = ProductKind.DegreesOfFreedomValues)
+    val products = Vector(effect, se, stat, dfProduct)
+    val mapping = StatisticCorrespondence.Known(Vector(HypothesisTarget(h1, Vector(a)), HypothesisTarget(h2, Vector(b))))
+    val semantics = StatisticSemantics(stat.id,
+      ReferenceDistribution.StudentT(DegreesOfFreedom(DfRole.Reference, DfValue.Product(dfProduct.id), "voxel df", false)),
+      Some(TestTail.TwoSided), Some(0.0), Some(StatisticProductLink(effect.id, mapping)),
+      Some(StatisticProductLink(se.id, mapping)))
+    val declared = unit.copy(catalog = catalog.copy(entries = catalog.entries ++ hypotheses), products = products,
+      outcomes = products.map(p => p.id -> ProductOutcome.Available(p.id)).toMap, statistics = Vector(semantics))
+    assertEquals(declared.statistics.head.effect.flatMap(_.correspondence match
+      case StatisticCorrespondence.Known(entries) => Some(entries.map(_.hypothesis))
+      case _ => None), Some(Vector(h1, h2)))
+    intercept[IllegalArgumentException]:
+      declared.copy(statistics = Vector(semantics.copy(distribution = ReferenceDistribution.StudentT(
+        DegreesOfFreedom(DfRole.Residual, DfValue.Scalar(0.0), "zero residual", false)))))
+    intercept[IllegalArgumentException]:
+      declared.copy(statistics = Vector(semantics.copy(distribution = ReferenceDistribution.Normal)))
+    intercept[IllegalArgumentException]:
+      declared.copy(statistics = Vector(semantics.copy(distribution = ReferenceDistribution.FisherF(
+        DegreesOfFreedom(DfRole.Reference, DfValue.NotApplicable, "unknown numerator", false),
+        DegreesOfFreedom(DfRole.Reference, DfValue.Scalar(8.0), "denominator", false)))))
+    intercept[IllegalArgumentException]:
+      declared.copy(products = products.updated(3, dfProduct.copy(targets = ProductTargets.Scalar(Vector(h1)))))
+    intercept[IllegalArgumentException]:
+      declared.copy(statistics = Vector(semantics.copy(effect = Some(StatisticProductLink(effect.id,
+        StatisticCorrespondence.Known(Vector(HypothesisTarget(h1, Vector(a)))))))))
+    intercept[IllegalArgumentException]:
+      declared.copy(statistics = Vector(semantics.copy(standardError = Some(StatisticProductLink(se.id,
+        StatisticCorrespondence.Known(Vector(HypothesisTarget(h1, Vector(b)), HypothesisTarget(h2, Vector(a)))))))))
+    intercept[IllegalArgumentException]:
+      declared.copy(degreesOfFreedom = Vector(DegreesOfFreedom(DfRole.Effective, DfValue.Product(effect.id), "wrong kind", true)))
+    val fisher = stat.copy(kind = ProductKind.Statistic(StatisticKind.F))
+    val fisherSemantics = semantics.copy(distribution = ReferenceDistribution.FisherF(
+      DegreesOfFreedom(DfRole.Reference, DfValue.Scalar(2.0), "numerator rank", false),
+      DegreesOfFreedom(DfRole.Reference, DfValue.Product(dfProduct.id), "denominator map", false)))
+    assert(declared.copy(products = Vector(effect, se, fisher, dfProduct), statistics = Vector(fisherSemantics)).statistics.nonEmpty)
+    val imported = semantics.copy(effect = Some(StatisticProductLink(effect.id, StatisticCorrespondence.Unknown("legacy mapping absent"))),
+      standardError = None)
+    assert(declared.copy(statistics = Vector(imported)).statistics.head.effect.nonEmpty)
+  }
+
   test("logical selection preserves reversed estimand and sparse sample order with checked capacities") {
     val request = EstimateSelection(Vector(observation.id), Vector(b, a), Vector(23, 0, 3))
     val checked = EstimateReadValidation.check(unit, effect.id, request, 6, 6, ReadLimits(6))
