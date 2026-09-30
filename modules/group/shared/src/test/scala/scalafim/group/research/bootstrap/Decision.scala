@@ -23,11 +23,18 @@ final case class PowerVerdict(gain: Boolean, nonLoss: Boolean, definiteLoss: Boo
 
 enum CandidateOutcome:
   case Adopt
-  case Bound(subFamily: SubFamily)
+  /** Adopt restricted to the union of the qualifying sub-families (owner decision 2026-09-30). */
+  case Bound(subFamilies: Vector[SubFamily])
   case Decline
   case Unresolved
 
-/** Owner-predeclared sub-families that may Bound (§6 default). */
+  /** The declared domain: every cell for Adopt, the union of the sub-families for Bound, none otherwise. */
+  def domain(cell: Cell): Boolean = this match
+    case Adopt => true
+    case Bound(families) => families.exists(_.contains(cell))
+    case Decline | Unresolved => false
+
+/** Owner-declared sub-families that may Bound (§6; owner decision 2026-09-30). */
 enum SubFamily(val label: String):
   case LargeN extends SubFamily("n >= 20")
   case LargeNu extends SubFamily("nu >= 40")
@@ -104,7 +111,8 @@ object Decision:
 
   /** The frozen §6 outcome for one candidate. Refuses unless every cell has R = 20000 studies, the cells
     * are exactly 12 distinct core cells including the six fixed ones, and the power cells are exactly the four
-    * declared ones. Precedence (pending owner confirmation): Adopt, then Decline, then Bound, else Unresolved.
+    * declared ones. Precedence (owner decision 2026-09-30, "Bound = Adopt restricted to S"): Adopt; else
+    * Bound on the union of the qualifying sub-families; else Decline on any Fail or definite loss; else Unresolved.
     */
   def outcome(cells: Vector[CellEvidence], power: Vector[PowerEvidence]): Either[DecisionRefusal, CandidateOutcome] =
     val ids = cells.map(_.cell.id)
@@ -119,17 +127,24 @@ object Decision:
           Left(DecisionRefusal.WrongPowerCells(s"need exactly ${CellManifest.PowerCells.map(_.value).mkString(", ")}"))
         else Right(frozenOutcome(cells, power))
 
+  /** A confirmation cell passes when both its null and its failure criteria pass. */
+  def passes(e: CellEvidence): Boolean =
+    nullVerdict(e.nullRejections, e.studies) == NullVerdict.Pass && failureVerdict(e.studyFailures, e.studies) == FailureVerdict.Pass
+
+  /** The full Adopt criteria restricted to the cells in S: every confirmation cell in S passes, Gain holds in
+    * at least one power cell in S, and Non-loss holds in every power cell in S. With no power cell in S, Gain is
+    * unreachable, so S cannot qualify. Fails outside S are allowed.
+    */
+  def qualifies(inS: Cell => Boolean, cells: Vector[CellEvidence], power: Vector[PowerEvidence]): Boolean =
+    val cellsInS = cells.filter(e => inS(e.cell))
+    val powerInS = power.filter(e => inS(e.cell)).map(powerVerdict)
+    cellsInS.nonEmpty && cellsInS.forall(passes) && powerInS.nonEmpty && powerInS.exists(_.gain) && powerInS.forall(_.nonLoss)
+
   private def frozenOutcome(cells: Vector[CellEvidence], power: Vector[PowerEvidence]): CandidateOutcome =
-    val nulls = cells.map(c => c -> nullVerdict(c.nullRejections, c.studies))
-    val failures = cells.map(c => failureVerdict(c.studyFailures, c.studies))
-    val powers = power.map(powerVerdict)
-    val allPass = nulls.forall(_._2 == NullVerdict.Pass) && failures.forall(_ == FailureVerdict.Pass)
-    if allPass && powers.exists(_.gain) && powers.forall(_.nonLoss) then CandidateOutcome.Adopt
-    else if nulls.exists(_._2 == NullVerdict.Fail) || powers.exists(_.definiteLoss) then CandidateOutcome.Decline
+    if qualifies(_ => true, cells, power) then CandidateOutcome.Adopt
     else
-      val passing = cells.zip(failures).collect {
-        case (c, FailureVerdict.Pass) if nullVerdict(c.nullRejections, c.studies) == NullVerdict.Pass => c.cell
-      }
-      SubFamily.values
-        .find(sf => passing.nonEmpty && passing.forall(sf.contains) && nulls.forall((c, v) => !sf.contains(c.cell) || v != NullVerdict.Fail))
-        .fold(CandidateOutcome.Unresolved)(CandidateOutcome.Bound(_))
+      val bound = SubFamily.values.toVector.filter(sf => qualifies(sf.contains, cells, power))
+      if bound.nonEmpty then CandidateOutcome.Bound(bound)
+      else if cells.exists(e => nullVerdict(e.nullRejections, e.studies) == NullVerdict.Fail) || power.exists(e => powerVerdict(e).definiteLoss)
+      then CandidateOutcome.Decline
+      else CandidateOutcome.Unresolved

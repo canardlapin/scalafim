@@ -93,10 +93,12 @@ class DfAndDecisionSuite extends munit.FunSuite:
   test("candidate outcomes: Adopt, Decline on a Fail or a definite loss, Bound on a sub-family, else Unresolved"):
     assertEquals(Decision.outcome(evidence(_ => 1000), power(800, 400)), Right(CandidateOutcome.Adopt))
     assertEquals(Decision.outcome(evidence(_ => 1000), power(400, 400)), Right(CandidateOutcome.Unresolved))
-    assertEquals(Decision.outcome(evidence(c => if c.n == 80 then 1500 else 1000), power(800, 400)), Right(CandidateOutcome.Decline))
+    // A Fail inside n >= 20 blocks that Bound; nu >= 40 has an n = 20 power cell with a gain, so it still qualifies.
+    assertEquals(Decision.outcome(evidence(c => if c.n == 80 then 1500 else 1000), power(800, 400)), Right(CandidateOutcome.Bound(Vector(SubFamily.LargeNu))))
+    assertEquals(Decision.outcome(evidence(_ => 1500), power(800, 400)), Right(CandidateOutcome.Decline))
     assertEquals(Decision.outcome(evidence(_ => 1000), power(100, 1500)), Right(CandidateOutcome.Decline))
     val largeN = Decision.outcome(evidence(c => if c.n < 20 then 1300 else 1000), power(800, 400))
-    assertEquals(largeN, Right(CandidateOutcome.Bound(SubFamily.LargeN)))
+    assertEquals(largeN, Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN))))
     val gain = Decision.powerVerdict(power(800, 400).head)
     assert(gain.gain && gain.nonLoss && !gain.definiteLoss)
 
@@ -116,9 +118,8 @@ class DfAndDecisionSuite extends munit.FunSuite:
   private def flat(k: Int, n: Int = 2000): Vector[StudyVerdict] = Vector.fill(k)(Reject) ++ Vector.fill(n - k)(Retain)
   private val candidates = Vector(Scheme.Plug, Scheme.FixV, Scheme.EmpiricalBayes)
 
-  test("selection defaults are the pending placeholders"):
-    assert(SelectionRule.Pending)
-    assertEquals(SelectionRule.PendingDefault, SelectionRule(PilotFailureAccounting.CountAsRejection, SelectionPool.CoreMinusFixed, candidates, TieOrder.LowestIdString, 6))
+  test("the owner selection rule: CountAsRejection, core minus fixed, max over the 3 candidates, lowest ID string, 6 cells"):
+    assertEquals(SelectionRule.Owner, SelectionRule(PilotFailureAccounting.CountAsRejection, SelectionPool.CoreMinusFixed, candidates, TieOrder.LowestIdString, 6))
     assertEquals(pool.length, 84)
     assert(pool.forall(c => c.family == Family.Core && !CellManifest.FixedConfirmation.contains(c.id)))
 
@@ -138,7 +139,7 @@ class DfAndDecisionSuite extends munit.FunSuite:
     assertEquals(ConfirmationSelection.rate(v, PilotFailureAccounting.CountAsRejection), Some(4.0 / 8))
     assertEquals(ConfirmationSelection.rate(v, PilotFailureAccounting.CountAsRetention), Some(2.0 / 8))
     assertEquals(ConfirmationSelection.rate(v, PilotFailureAccounting.ExcludeFromDenominator), Some(2.0 / 6))
-    val rule = SelectionRule.PendingDefault.copy(accounting = PilotFailureAccounting.CountAsRetention)
+    val rule = SelectionRule.Owner.copy(accounting = PilotFailureAccounting.CountAsRetention)
     val failing = pool.take(6).map(_.id).toSet
     val picked = ConfirmationSelection.select(pilot { c =>
       val vs = if failing.contains(c.id) then Vector.fill(300)(Failed) ++ Vector.fill(1700)(Retain) else flat(120)
@@ -159,3 +160,35 @@ class DfAndDecisionSuite extends munit.FunSuite:
     assert(ConfirmationSelection.select(noEb).left.exists(_.isInstanceOf[SelectionError.MissingCandidate]))
     val empty = full.updated(0, full.head.copy(verdicts = candidates.map(_ -> Vector.empty[StudyVerdict]).toMap))
     assert(ConfirmationSelection.select(empty).left.exists(_.isInstanceOf[SelectionError.NoStudies]))
+
+  // n8 cells with finite nu < 40 lie in neither sub-family.
+  private def outside(c: Cell): Boolean = !SubFamily.LargeN.contains(c) && !SubFamily.LargeNu.contains(c)
+
+  test("Bound: both sub-families qualify, and the declared domain is their union"):
+    val both = Decision.outcome(evidence(c => if outside(c) then 1300 else 1000), power(800, 400))
+    assertEquals(both, Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN, SubFamily.LargeNu))))
+    val domain = both.toOption.get
+    assert(confirmation.filterNot(outside).forall(domain.domain), "every cell of either sub-family is in the domain")
+    assert(!confirmation.filter(outside).exists(domain.domain))
+
+  test("Bound: a Fail outside S is allowed"):
+    val failOutside = Decision.outcome(evidence(c => if outside(c) then 1500 else 1000), power(800, 400))
+    assertEquals(failOutside, Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN, SubFamily.LargeNu))))
+    val failInNu = Decision.outcome(evidence(c => if c.n < 20 then 1500 else 1000), power(800, 400))
+    assertEquals(failInNu, Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN))))
+
+  test("Bound: a Pass outside S does not block it"):
+    val oneUnresolved = confirmation.find(outside).get
+    val result = Decision.outcome(evidence(c => if c == oneUnresolved then 1300 else 1000), power(800, 400))
+    assert(confirmation.filter(outside).exists(c => c != oneUnresolved), "other cells outside S pass")
+    assertEquals(result, Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN, SubFamily.LargeNu))))
+
+  test("Bound: a sub-family without a power cell cannot qualify (Gain is unreachable)"):
+    val cells = evidence(_ => 1000)
+    val noPowerCell: Cell => Boolean = c => c.n == 8 && !CellManifest.PowerCells.contains(c.id)
+    assert(cells.exists(e => noPowerCell(e.cell)) && !power(800, 400).exists(e => noPowerCell(e.cell)))
+    assert(!Decision.qualifies(noPowerCell, cells, power(800, 400)))
+    assert(Decision.qualifies(SubFamily.LargeN.contains, cells, power(800, 400)))
+    // A failing power cell in S (non-loss broken) blocks S even when its cells pass.
+    val lossy = power(800, 400).map(e => if SubFamily.LargeNu.contains(e.cell) then power(100, 1500).find(_.cell == e.cell).get else e)
+    assert(!Decision.qualifies(SubFamily.LargeNu.contains, cells, lossy))

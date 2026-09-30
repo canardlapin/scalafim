@@ -39,7 +39,7 @@ object ComparatorVerdict:
     case Left(_) => Failed
     case Right(c) => if c.failed then Failed else if c.pValue <= alpha then Reject else Retain
 
-/** PENDING OWNER DECISION: how failures and Unresolved bounds enter the pilot k used for selection. */
+/** How failures and Unresolved bounds enter the pilot k (owner decision 2026-09-30: `CountAsRejection`). */
 enum PilotFailureAccounting:
   /** k counts failures and Unresolved bounds as rejections (the §6 level convention). */
   case CountAsRejection
@@ -48,14 +48,14 @@ enum PilotFailureAccounting:
   /** Failures and Unresolved bounds leave both k and R. */
   case ExcludeFromDenominator
 
-/** PENDING OWNER DECISION: the cells the six selected confirmation cells are drawn from. */
+/** The cells the six selected confirmation cells are drawn from (owner decision 2026-09-30). */
 enum SelectionPool:
-  /** The 90 core cells minus the six fixed-now cells (the only pool implemented until the owner decides). */
+  /** The 90 core cells minus the six fixed-now cells. */
   case CoreMinusFixed
 
   def cells: Vector[Cell] = Cell.core.filterNot(c => CellManifest.FixedConfirmation.contains(c.id))
 
-/** PENDING OWNER DECISION: tie order among equal maximum null-excess rates. */
+/** Tie order among equal maximum null-excess rates (owner decision 2026-09-30: `LowestIdString`). */
 enum TieOrder:
   /** Lexicographically lowest ID string first. */
   case LowestIdString
@@ -63,8 +63,7 @@ enum TieOrder:
   case ManifestOrder
 
 /** The selection rule of §6 ("the other six are the worst pilot null-excess cells, maximum over candidates
-  * of k/R, ties to lowest ID"). Every field is a parameter awaiting the owner decision; the defaults are
-  * placeholders, recorded as pending in the receipt.
+  * of k/R, ties to lowest ID"), parameterised; `SelectionRule.Owner` is the owner-decided rule.
   */
 final case class SelectionRule(
     accounting: PilotFailureAccounting,
@@ -77,8 +76,11 @@ final case class SelectionRule(
   require(candidates.nonEmpty && candidates.forall(_.role == SchemeRole.Candidate), "the max runs over candidates only")
 
 object SelectionRule:
-  /** PENDING OWNER DECISION: placeholder defaults only. */
-  val PendingDefault: SelectionRule = SelectionRule(
+  /** Owner decision 2026-09-30: score = max over B-plug, B-fixV, B-EB of (null rejections + study failures)/R,
+    * where null rejections are resolved rejections, i.e. failures and Unresolved bounds count as rejections;
+    * pool = 90 core cells minus the six fixed; ties to the lexicographically lowest ID string; six cells.
+    */
+  val Owner: SelectionRule = SelectionRule(
     accounting = PilotFailureAccounting.CountAsRejection,
     pool = SelectionPool.CoreMinusFixed,
     candidates = Vector(Scheme.Plug, Scheme.FixV, Scheme.EmpiricalBayes),
@@ -86,7 +88,8 @@ object SelectionRule:
     count = 6
   )
 
-  val Pending: Boolean = true
+  /** Version tag recorded in manifest-v2.json. */
+  val Version = "selection-rule/v1"
 
 /** Pilot null-stream verdicts of one cell, per scheme (one verdict per study). */
 final case class PilotEvidence(cell: Cell, verdicts: Map[Scheme, Vector[StudyVerdict]])
@@ -136,7 +139,7 @@ object ConfirmationSelection:
         }
 
   /** The `rule.count` worst cells, worst first. */
-  def select(pilot: Vector[PilotEvidence], rule: SelectionRule = SelectionRule.PendingDefault): Either[SelectionError, Vector[CellId]] =
+  def select(pilot: Vector[PilotEvidence], rule: SelectionRule = SelectionRule.Owner): Either[SelectionError, Vector[CellId]] =
     scores(pilot, rule).flatMap { scored =>
       if scored.length < rule.count then Left(SelectionError.TooFewCells(scored.length, rule.count))
       else
