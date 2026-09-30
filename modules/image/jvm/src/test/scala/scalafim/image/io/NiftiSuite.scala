@@ -114,6 +114,26 @@ class NiftiSuite extends munit.FunSuite:
     Files.write(path, bytes)
     path
 
+  test("series read refuses unknown-unit zero stored step under physical-time assumptions"):
+    val path = Files.createTempFile("scalafim-unknown-zero-step", ".nii")
+    writeFixture(path, Vector(1, 1, 1, 2), Vector(1.0, 1.0, 1.0),
+      None, None, Vector(1.0, 2.0))
+    val ordinal = Nifti.readSeries(path).toOption.get.image
+    assertEquals(ordinal.sampled.nonSpatialAxes.values.head.coordinateAt(1),
+      Right(AxisCoordinate.Ordinal(1)))
+
+    Vector(
+      NiftiUnknownTemporalUnitPolicy.AssumeSeconds,
+      NiftiUnknownTemporalUnitPolicy.AssumeMilliseconds,
+      NiftiUnknownTemporalUnitPolicy.AssumeMicroseconds
+    ).foreach: policy =>
+      assert(Nifti.readSeries(path, NiftiReadOptions.default.copy(
+        unknownTemporalUnit = policy)).left.toOption.exists {
+        case NiftiImageReadError.Provider(
+            NiftiError.InvalidHeader(image4s.nifti.NiftiHeaderField.PixelDimension(4), _)) => true
+        case _ => false
+      })
+
   test("native series round-trip asymmetric 2x3x5x7 coordinates through nii and gzip") {
     val dir = Files.createTempDirectory("scalafim-nifti-suite")
     val sourceSpace =
