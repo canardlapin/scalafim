@@ -98,7 +98,7 @@
     }
   ],
   "integrationBase": "1d2bdf5dcae4885e57ea5069932ca26da72f7747",
-  "recordedUtc": "2026-09-30T08:37:37.567717+00:00",
+  "recordedUtc": "2026-09-30T11:05:04.657361+00:00",
   "reviewer": "/root/decoder_review",
   "schema": "scalafim.p1.review-dispositions.v1",
   "scope": "Independent source/evidence review; no fresh qualification, publication, merge or release. Failed candidates remain blocked.",
@@ -292,7 +292,94 @@
         "sha256": "af08a8e52524c283c4bae6baaaf343c597f785dfd1690606be557fbcce036e5f",
         "payloads": 40
       }
+    },
+    {
+      "commit": "3d75dea0e3a8c9cbb3907abb72b9252a9f79bd49",
+      "provider": "da38f8c429294657d30ec29f06eae3fab636d428",
+      "integrationCommit": "944b6fe3a30cc65bbf402c4a668a62c952b1f4e1",
+      "verdict": "AcceptBoundedHostedNativeMlCoreAndHelper",
+      "integratedChecks": "56 fit +9 laws EACH platform; CompileAll",
+      "fullTicketClosed": false,
+      "scientificAdmitted": false,
+      "archive": {
+        "archive": "hosted-ml-core-qualified.json.gz",
+        "sha256": "d885e20a57ad32c31cb695c3e70f1291a80236d697aa4930269f5dddfb0cd55d",
+        "payloads": 84,
+        "bytes": 261421
+      }
+    },
+    {
+      "integrationCommit": "0edf75c213c123f5c538518d9ad9d9900cef406c",
+      "verdict": "AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration",
+      "sourcePathsVerified": 21,
+      "nativeOptInChecks": "20 JVM/10 JS",
+      "publicChecks": "75 JVM/50 JS",
+      "c0DefaultControls": "8 EACH platform; CompileAll",
+      "independentReviewSha256": "8537d3f5a497f0bd8dbfd409f557940b4007535b591921bbed192ab7847c902a",
+      "c0Scientific": "HOLD",
+      "estimateHdfBackendAdmitted": false,
+      "fullTicketClosed": false,
+      "archive": {
+        "archive": "hdf-public-c0-integration-qualified.json.gz",
+        "sha256": "141d2180dfbd91e63c534a8bcf641000b8a80163c9f1cc544958a46b94721f57",
+        "payloads": 47,
+        "bytes": 1184234
+      }
+    },
+    {
+      "commit": "d44b90685c43c39aff3c68923761e5180ad80d93",
+      "integrationCommit": "17a7e7108a82a1aa3b2c312b60a9b0b97a6ddbb9",
+      "verdict": "AcceptBoundedPooledEstimateProducer",
+      "integratedChecks": "122 JVM/113 JS; CompileAll",
+      "effectiveDf": "Unknown",
+      "fullCoreTicketClosed": false,
+      "archive": {
+        "archive": "pooled-producer-qualified.json.gz",
+        "sha256": "81305f6ee2a277e34480f849318bc4d6d30c51957ea44a4f6a6b247873ee3be3",
+        "payloads": 29,
+        "bytes": 2704260
+      }
+    },
+    {
+      "commit": "10fbbb46728485fd860745dba7396c6e217d8fba",
+      "integrationCommit": "b11d1909ac36bc4e732a1224605f1f90c5113798",
+      "verdict": "AcceptBoundedCore3InferenceEvidenceAndTransactionalReadbackRepair",
+      "sourcePathsVerified": 87,
+      "integratedChecks": "181 JVM/125 JS; CompileAll",
+      "freshReadback": "12 cells/3 planes; late cancellation and callback leave caller buffer unchanged",
+      "fullCoreTicketClosed": false,
+      "archive": {
+        "archive": "inference-core3-repair-qualified.json.gz",
+        "sha256": "b1e8ec064d8dbd3afaae900344d7400367a78a2f0d8bf89e7b768b487d729edd",
+        "payloads": 141,
+        "bytes": 2920047
+      }
+    },
+    {
+      "verdict": "FrayFeedbackFiledDirectlyInUserRequestedRepository",
+      "motes": [
+        "bd-01M3RQ4Y6YNB6D242VZ2F0RPMN",
+        "bd-01M3RQ4Y9ABGTRB5XXNSWXCBCD",
+        "bd-01M3RQ4YAJVNM47M3ZC778GXDB"
+      ],
+      "fraySourceChanged": false,
+      "archive": {
+        "archive": "fray-feedback-filed.json.gz",
+        "sha256": "1b231eba87649bc4f078b3e4a6728b0913b1cbfba1bd7fde17a30146a4fbb916",
+        "payloads": 15,
+        "bytes": 19075
+      }
+    },
+    {
+      "verdict": "CalibrationExecutionAmendmentAcceptedForOwnerDecisionOnly",
+      "decisionManifestSha256": "d4d2c79e7de486f8f3a8330cae0f64df9002ae648f1cd134d3e65b972307b693",
+      "readySha256": "767e4c8ed6fa961e3195d36bfd75005f1628bbf288df32a0a97f449ae2a95542",
+      "actualControllerTests": 36,
+      "actualUserAmendmentApproval": "pending",
+      "campaignFits": 0,
+      "scientificPass": null
     }
   ],
-  "updatedUtc": "2026-09-30T07:32:11.726928+00:00"
+  "updatedUtc": "2026-09-30T07:32:11.726928+00:00",
+  "currentIntegration": "b11d1909ac36bc4e732a1224605f1f90c5113798"
 }

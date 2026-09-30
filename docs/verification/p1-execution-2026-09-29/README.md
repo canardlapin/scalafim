@@ -6,6 +6,51 @@ power-loss durability, scientific calibration, or downstream admission.
 The original shared checkout contains unrelated edits; implementation candidates
 are integrated in an isolated clone.
 
+## Current qualified integration
+
+The latest qualified integration is `b11d1909`. Seven of the original sixteen
+issues are done. The records below retain earlier review history; subsequent
+acceptance does not erase failed candidates or promote broader qualifications.
+
+- Hosted Gale `da38f8c` and the repaired ML core/helper pass 56 fit and nine law
+  tests on each platform plus CompileAll. Only the approved Gale draft PR12 is
+  published. Executor routing candidate `8523c8c7` is independently accepted
+  but is awaiting parent integration checks; it is not included in this gate.
+- The opt-in HDF adapter, public executor provenance repair and default C0
+  controls are independently accepted at `0edf75c2`: native 20 JVM/10 JS,
+  public 75 JVM/50 JS, C0 eight controls per platform, and CompileAll.
+  The HDF estimate metadata/lifecycle hooks are still separately in progress;
+  no physical estimate HDF backend or unsupported-platform admission is claimed.
+- The selected pooled producer passes 122 JVM/113 JS executions and CompileAll
+  at `17a7e710`; effective pooled degrees of freedom remain explicitly Unknown.
+- Core3 inference-evidence and transactional readback pass 181 JVM/125 JS
+  executions and CompileAll at `b11d1909`. Fresh fitter-free readback checks
+  twelve cells across three planes; late cancellation and callback failure
+  leave the caller buffer unchanged. The full Core ticket remains open.
+
+The five new archives preserve 316 embedded source, review, receipt and raw
+attempt payloads, each decoded and SHA-256 verified. Runtime manifests retain
+compiled-file identities; compiled binaries are not embedded. Prior failed
+attempts, warnings and platform/native measurement limits remain in the records.
+The three Fray bugs/pain points were filed directly in `~/code/rust/fray/.mote`;
+this work does not change Fray source.
+
+Calibration's original campaign cost was approved, but no confirmation fits
+have started. One compiled NIfTI payload changed after the freeze and its old
+bytes could not be recovered. The independently reviewed amendment isolates
+all 56 classpath entries, preserves 55 payload fingerprints and the source,
+protocol, seeds, 748000 blocks, sixteen commands and 400-scan geometry.
+Actual READY `767e4c8e` and 36 controller tests are accepted for the owner's
+execution-identity decision only. Decision package SHA-256 is
+`d4d2c79e7de486f8f3a8330cae0f64df9002ae648f1cd134d3e65b972307b693`.
+The amendment reply is pending. The retained 17.36-hour projection is not a new
+timing measurement. Regular-moment, dependence and group-transfer inference
+remain Unresolved; the failed Gaussian validation remains unadmitted.
+
+C0 scientific qualification remains HOLD: JVM low-SNR admissions are 185/200
+against the unchanged 190/200 requirement. No fresh/100k performance campaign,
+full scientific gate, ScalaFIM publication, merge or release is implied.
+
 ## Completed decisions and implementation gates
 
 | Work | Reviewed result | Evidence boundary |
@@ -421,7 +466,7 @@ remain required before fresh qualification. A separate seven-path executor
 consumer seam is implementing an explicit typed public conditional-output
 view; legacy raw behavior and the early ML refusal remain unchanged.
 
-## Compact output integration and native ML review (latest)
+## Earlier compact output integration and native ML review
 
 Compact shared-U NIfTI output candidate `40c4a83c` is independently accepted
 and integrated as `d2ab88cc`. Its exact 42 source/blob hashes remain unchanged
