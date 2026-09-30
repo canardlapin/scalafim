@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.profile
 
+import scala.util.control.NonFatal
+
 /** A contiguous range of voxel indices processed as one unit. */
 final case class VoxelBlock(index: Int, start: Int, count: Int):
   def end: Int = start + count
@@ -59,21 +61,31 @@ object BlockExecutor:
   ): Either[ExecutionError, ExecutionSummary[R]] =
     budget.validate.flatMap { b =>
       val plan = blocks(voxels, b.blockSize)
-      val worker = newWorker()
       val receipts = Vector.newBuilder[R]
       var failure: Option[ExecutionError] = None
       var i = 0
+      val worker =
+        if plan.isEmpty then None
+        else
+          try Some(newWorker())
+          catch
+            case NonFatal(t) =>
+              failure = Some(ExecutionError.WorkerFailed(plan.head, t.toString))
+              None
       while i < plan.length && failure.isEmpty do
         if cancelled() then failure = Some(ExecutionError.Cancelled(i))
         else
           val block = plan(i)
           val payload =
-            try Right(worker.process(block))
-            catch case scala.util.control.NonFatal(t) => Left(ExecutionError.WorkerFailed(block, t.toString))
+            try Right(worker.get.process(block))
+            catch case NonFatal(t) => Left(ExecutionError.WorkerFailed(block, t.toString))
           payload match
             case Left(err) => failure = Some(err)
             case Right(p) =>
-              sink.accept(block, p) match
+              val accepted =
+                try sink.accept(block, p)
+                catch case NonFatal(t) => Left(t.toString)
+              accepted match
                 case Left(detail) => failure = Some(ExecutionError.SinkFailed(block, detail))
                 case Right(r) => receipts += r
         i += 1
