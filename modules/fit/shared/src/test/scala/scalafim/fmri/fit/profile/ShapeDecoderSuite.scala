@@ -137,6 +137,70 @@ class ShapeDecoderSuite extends munit.FunSuite:
         fill(coordinates(0), out)
         out.energy
 
+  private final class OffsetQuadratic(
+      candidateJet: String = "valid", energyHigher: Boolean = false, priorTarget: Double = 0.2
+  ) extends ShapeObjective:
+    val grid = NodeGrid(ShapeChart(("x", -1.0, 1.0)), Vector(3))
+    val offset = 1e15
+    val energyProbes = scala.collection.mutable.ArrayBuffer.empty[Double]
+    def amplitudeCount: Int = 1
+    private def data(x: Double): Double = offset + (x - priorTarget) * (x - priorTarget)
+    private def fill(x: Double, out: ProfileJetBuffer): Unit =
+      out.energy = data(x)
+      out.gradient(0) = 2.0 * (x - priorTarget)
+      out.hessian(0) = 2.0
+      out.amplitudes(0) = x + 1.0
+      out.curvature = CurvatureStatus.PositiveDefinite
+    def scoreNode(node: Int): Double = data(grid.point(node)(0))
+    def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+      fill(grid.point(node)(0), out)
+      true
+    def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+      fill(coordinates(0), out)
+      candidateJet match
+        case "refused" => false
+        case "nan" =>
+          out.gradient(0) = Double.NaN
+          true
+        case "indefinite" =>
+          out.hessian(0) = -2.0
+          true
+        case "higher" =>
+          out.energy = java.lang.Math.nextUp(offset)
+          true
+        case _ => true
+    def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+      energyProbes += coordinates(0)
+      fill(coordinates(0), out)
+      if energyHigher then out.energy = java.lang.Math.nextUp(offset)
+      out.energy
+
+  private final class OffsetQuartic extends ShapeObjective:
+    val grid = NodeGrid(ShapeChart(("x", -1.0, 1.0)), Vector(3))
+    val energyProbes = scala.collection.mutable.ArrayBuffer.empty[Double]
+    def amplitudeCount: Int = 1
+    private def fill(x: Double, out: ProfileJetBuffer): Unit =
+      val z = x - 0.2
+      out.energy = 1e15 + z * z + 10.0 * z * z * z * z
+      out.gradient(0) = 2.0 * z + 40.0 * z * z * z
+      out.hessian(0) = 2.0 + 120.0 * z * z
+      out.amplitudes(0) = x + 1.0
+      out.curvature = CurvatureStatus.PositiveDefinite
+    def scoreNode(node: Int): Double =
+      val out = new ProfileJetBuffer(1, 1)
+      fill(grid.point(node)(0), out)
+      out.energy
+    def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+      fill(grid.point(node)(0), out)
+      true
+    def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+      fill(coordinates(0), out)
+      true
+    def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+      energyProbes += coordinates(0)
+      fill(coordinates(0), out)
+      out.energy
+
   private val chart2 = ShapeChart(("a", -2.0, 3.0), ("b", -1.0, 4.0))
   private val grid2 = NodeGrid(chart2, Vector(15, 15))
 
@@ -297,6 +361,126 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assertEqualsDouble(result.dataHessian(0), objective.curvature(result.coordinates(0)), 1e-12)
     assertEquals(counters.jets, 2L)
     assertEquals(counters.terminalVerifications, 1L)
+
+  test("equal rounded energy accepts a stationary candidate through either jet route"):
+    for maxJets <- List(2, 3) do
+      val objective = new OffsetQuadratic
+      val counters = new DecoderCounters
+      val result = new ShapeDecoder(objective,
+        DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = maxJets, maxExactEvaluations = 1),
+        None, 1.0).decode(counters)
+      assertEquals(result.status, DecodeStatus.Accepted)
+      assertEqualsDouble(result.coordinates(0), 0.2, 1e-12)
+      assertEqualsDouble(result.amplitudes(0), 1.2, 1e-12)
+      assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+      assertEqualsDouble(result.augmentedHessian(0), 2.0, 1e-12)
+      assertEqualsDouble(result.conditionalSd(0), 1.0, 1e-12)
+      assertEquals(result.newtonSteps, 1)
+      assertEquals(counters.newtonSteps, 1L)
+      assertEquals(counters.candidateAttempts, 1L)
+      assertEquals(counters.jets, 2L)
+      assertEquals(counters.exactEvaluations, if maxJets == 2 then 1L else 0L)
+      assertEquals(counters.terminalVerifications, if maxJets == 2 then 1L else 0L)
+
+  test("equal rounded quartic energy refuses a nonstationary move and preserves halving"):
+    val objective = new OffsetQuartic
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 2,
+        maxCandidateAttempts = 2), None, 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.BudgetExceeded)
+    assertEqualsDouble(objective.energyProbes(0), 0.10588235294117647, 1e-12)
+    assertEqualsDouble(objective.energyProbes(1), 0.052941176470588235, 1e-12)
+    assertEqualsDouble(result.coordinates(0), 0.0, 1e-12)
+    assertEqualsDouble(result.amplitudes(0), 1.0, 1e-12)
+    assertEqualsDouble(result.dataHessian(0), 6.8, 1e-12)
+    assertEqualsDouble(result.augmentedHessian(0), 6.8, 1e-12)
+    assertEqualsDouble(result.conditionalSd(0), math.sqrt(2.0 / 6.8), 1e-12)
+    assertEquals(result.newtonSteps, 0)
+    assertEquals(counters.candidateAttempts, 2L)
+    assertEquals(counters.jets, 2L)
+    assertEquals(counters.exactEvaluations, 2L)
+    assertEquals(counters.terminalVerifications, 1L)
+
+  test("equal energy candidate requires a finite positive and matching full jet"):
+    for behavior <- List("refused", "nan", "indefinite", "higher") do
+      val objective = new OffsetQuadratic(candidateJet = behavior)
+      val counters = new DecoderCounters
+      val result = new ShapeDecoder(objective,
+        DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 1,
+          maxCandidateAttempts = 1), None, 1.0).decode(counters)
+      assertEquals(result.status, DecodeStatus.BudgetExceeded, behavior)
+      assertEqualsDouble(result.coordinates(0), 0.0, 1e-12)
+      assertEqualsDouble(result.amplitudes(0), 1.0, 1e-12)
+      assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+      assertEquals(counters.jets, 2L)
+      assertEquals(counters.terminalVerifications, 1L)
+      assertEquals(counters.exactEvaluations, 1L)
+    for (objective, maxJets) <- List(
+      (new OffsetQuadratic, 1),
+      (new OffsetQuadratic(energyHigher = true), 2)
+    ) do
+      val counters = new DecoderCounters
+      val result = new ShapeDecoder(objective,
+        DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = maxJets, maxExactEvaluations = 1,
+          maxCandidateAttempts = 1), None, 1.0).decode(counters)
+      assertEquals(result.status, DecodeStatus.BudgetExceeded)
+      assertEqualsDouble(result.coordinates(0), 0.0, 1e-12)
+      assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+      assertEquals(counters.jets, 1L)
+    val higherJet = new OffsetQuadratic(candidateJet = "higher")
+    val higherCounters = new DecoderCounters
+    val higher = new ShapeDecoder(higherJet,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 3, maxExactEvaluations = 0,
+        maxCandidateAttempts = 1), None, 1.0).decode(higherCounters)
+    assertEquals(higher.status, DecodeStatus.BudgetExceeded)
+    assertEqualsDouble(higher.coordinates(0), 0.0, 1e-12)
+    assertEqualsDouble(higher.amplitudes(0), 1.0, 1e-12)
+    assertEquals(higherCounters.jets, 2L)
+    assertEquals(higherCounters.exactEvaluations, 0L)
+
+  test("equal energy stationarity uses prior augmentation and retains identification gates"):
+    val objective = new OffsetQuadratic
+    val prior = ShapePrior(Vector(0.0), Vector(1.0))
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(objective,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 1),
+      Some(prior), 1.0).decode(counters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assertEqualsDouble(result.coordinates(0), 0.1, 1e-12)
+    assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+    assertEqualsDouble(result.augmentedHessian(0), 4.0, 1e-12)
+    assertEqualsDouble(result.conditionalSd(0), 1.0, 1e-12)
+    val weak = new ShapeDecoder(new OffsetQuadratic,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 1,
+        weakSdLimit = Vector(0.5)), None, 1.0).decode(new DecoderCounters)
+    assertEquals(weak.status, DecodeStatus.WeaklyIdentified)
+    assertEqualsDouble(weak.coordinates(0), 0.2, 1e-12)
+
+    val boundaryObjective = new ShapeObjective:
+      val grid = NodeGrid(ShapeChart(("x", -1.0, 1.0)), Vector(3))
+      def amplitudeCount: Int = 1
+      def scoreNode(node: Int): Double = if node == 1 then 1e15 else 1e15 + 1.0
+      private def fill(x: Double, out: ProfileJetBuffer): Unit =
+        out.energy = 1e15
+        out.gradient(0) = -2.0
+        out.hessian(0) = 2.0
+        out.amplitudes(0) = x + 1.0
+        out.curvature = CurvatureStatus.PositiveDefinite
+      def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+        fill(grid.point(node)(0), out)
+        true
+      def jetAt(coordinates: Array[Double], out: ProfileJetBuffer): Boolean =
+        fill(coordinates(0), out)
+        true
+      def energyAt(coordinates: Array[Double], out: ProfileJetBuffer): Double =
+        fill(coordinates(0), out)
+        out.energy
+    val boundary = new ShapeDecoder(boundaryObjective,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 1),
+      None, 1.0).decode(new DecoderCounters)
+    assertEquals(boundary.status, DecodeStatus.Boundary)
+    assertEqualsDouble(boundary.coordinates(0), 1.0, 1e-12)
 
   test("exhausted refinement and rejected candidate caps are explicit and counted"):
     val noEvaluationCounters = new DecoderCounters

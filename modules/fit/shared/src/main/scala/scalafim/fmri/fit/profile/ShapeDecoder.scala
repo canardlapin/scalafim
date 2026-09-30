@@ -148,6 +148,9 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val delta = new Array[Double](d)
   private val grad = new Array[Double](d)
   private val hess = new Array[Double](d * d)
+  private val candidateDelta = new Array[Double](d)
+  private val candidateGrad = new Array[Double](d)
+  private val candidateHess = new Array[Double](d * d)
   private val dataHess = new Array[Double](d * d)
   private val factor = new Array[Double](d * d)
   private val free = new Array[Boolean](d)
@@ -184,7 +187,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     System.arraycopy(jet.gradient, 0, grad, 0, d)
     System.arraycopy(jet.hessian, 0, hess, 0, d * d)
     System.arraycopy(jet.hessian, 0, dataHess, 0, d * d)
-    augment(coords)
+    augment(coords, grad, hess)
 
   private def clearCurvature(): Unit =
     java.util.Arrays.fill(grad, Double.NaN)
@@ -205,8 +208,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           i += 1
         acc
 
-  /** Add the prior's gradient and Hessian to `grad`/`hess` at `coords`. */
-  private def augment(coords: Array[Double]): Unit =
+  /** Add the prior's gradient and Hessian to the supplied jet at `coords`. */
+  private def augment(coords: Array[Double], gradient: Array[Double], hessian: Array[Double]): Unit =
     prior.foreach { p =>
       var i = 0
       while i < d do
@@ -214,9 +217,9 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         var j = 0
         while j < d do
           g += 2.0 * p.precision(i * d + j) * (coords(j) - p.mean(j))
-          hess(i * d + j) += 2.0 * p.precision(i * d + j)
+          hessian(i * d + j) += 2.0 * p.precision(i * d + j)
           j += 1
-        grad(i) += g
+        gradient(i) += g
         i += 1
     }
 
@@ -316,13 +319,15 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     false
 
   /** Projected Newton direction on the box, separated from a constrained stationary point. */
-  private def newtonDirection(coords: Array[Double]): NewtonDirectionStatus =
+  private def newtonDirection(
+      coords: Array[Double], gradient: Array[Double], hessian: Array[Double], direction: Array[Double]
+  ): NewtonDirectionStatus =
     var i = 0
     while i < d do
       val atLower = coords(i) <= grid.chart.lower(i) + 1e-12
       val atUpper = coords(i) >= grid.chart.upper(i) - 1e-12
-      free(i) = !((atLower && grad(i) > 0.0) || (atUpper && grad(i) < 0.0))
-      delta(i) = 0.0
+      free(i) = !((atLower && gradient(i) > 0.0) || (atUpper && gradient(i) < 0.0))
+      direction(i) = 0.0
       i += 1
     var nFree = 0
     i = 0
@@ -332,14 +337,14 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         var col = 0
         while j < d do
           if free(j) then
-            factor(nFree * d + col) = hess(i * d + j)
+            factor(nFree * d + col) = hessian(i * d + j)
             col += 1
           j += 1
-        rhs(nFree) = -grad(i)
+        rhs(nFree) = -gradient(i)
         nFree += 1
       i += 1
     if nFree == 0 then
-      System.arraycopy(hess, 0, factor, 0, d * d)
+      System.arraycopy(hessian, 0, factor, 0, d * d)
       return
         if SmallCholesky.factorInPlace(d, factor) then NewtonDirectionStatus.Stationary
         else NewtonDirectionStatus.CurvatureNotPositive
@@ -357,15 +362,23 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     i = 0
     while i < d do
       if free(i) then
-        delta(i) = rhs(k)
+        direction(i) = rhs(k)
         k += 1
       i += 1
     var norm = 0.0
     i = 0
     while i < d do
-      norm = math.max(norm, math.abs(delta(i)))
+      norm = math.max(norm, math.abs(direction(i)))
       i += 1
     if norm <= budget.stationarityStepTolerance then NewtonDirectionStatus.Stationary else NewtonDirectionStatus.Direction
+
+  /** Probe a candidate without changing the accepted derivatives or search direction. */
+  private def candidateStationary(coords: Array[Double]): Boolean =
+    System.arraycopy(jet.gradient, 0, candidateGrad, 0, d)
+    System.arraycopy(jet.hessian, 0, candidateHess, 0, d * d)
+    augment(coords, candidateGrad, candidateHess)
+    finiteValues(candidateGrad) && finiteValues(candidateHess) &&
+      newtonDirection(coords, candidateGrad, candidateHess, candidateDelta) == NewtonDirectionStatus.Stationary
 
   private def conditionalSd(out: Array[Double]): Boolean =
     System.arraycopy(dataHess, 0, factor, 0, d * d)
@@ -424,7 +437,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     if !nodeOk then return refused(best, gap)
     var current = jet.energy + priorEnergy(x)
     copyJetState(x)
-    var directionStatus = newtonDirection(x)
+    var directionStatus = newtonDirection(x, grad, hess, delta)
     val initialCurvatureNotPositive = directionStatus == NewtonDirectionStatus.CurvatureNotPositive
     var continue = directionStatus == NewtonDirectionStatus.Direction
     if continue && budget.maxNewtonSteps == 0 then budgetExceeded = true
@@ -476,16 +489,29 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                 counters.exactEvaluations += 1
                 val data = objective.energyAt(trial, jet)
                 if finiteEnergyEvaluation(data) then data + priorEnergy(trial) else Double.PositiveInfinity
-            if finite(value) && value < current then
+            var equalStationary = false
+            if finite(value) && value == current then
+              if useJet then equalStationary = candidateStationary(trial)
+              else if jetsUsed < budget.maxJets then
+                // An energy-only equality must be checked by its reserved full
+                // jet before committing any coordinates or accepted state.
+                clearJet()
+                jetsUsed += 1
+                counters.jets += 1
+                counters.terminalVerifications += 1
+                equalStationary = objective.jetAt(trial, jet) && finiteJet() &&
+                  finite(jet.energy + priorEnergy(trial)) && jet.energy + priorEnergy(trial) == current &&
+                  candidateStationary(trial)
+            if finite(value) && (value < current || equalStationary) then
               accepted = true
               current = value
               System.arraycopy(trial, 0, x, 0, d)
               System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
               steps += 1
               counters.newtonSteps += 1
-              if useJet then
+              if useJet || equalStationary then
                 copyJetState(x)
-                directionStatus = newtonDirection(x)
+                directionStatus = newtonDirection(x, grad, hess, delta)
                 continue = directionStatus == NewtonDirectionStatus.Direction
               else
                 terminalCurvature = false
@@ -499,7 +525,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                     current = jet.energy + priorEnergy(x)
                     copyJetState(x)
                     terminalCurvature = true
-                    directionStatus = newtonDirection(x)
+                    directionStatus = newtonDirection(x, grad, hess, delta)
                     budgetExceeded = directionStatus == NewtonDirectionStatus.Direction
                   else budgetExceeded = true
                 else budgetExceeded = true
