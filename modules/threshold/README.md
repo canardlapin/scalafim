@@ -21,7 +21,17 @@ Permutation inference is explicit about two conventions:
   nulls never reach an observed statistic is refused as missing the identity.
 
 `MaxNull.reduce` streams draws into per-draw maxima without a
-draws-by-voxels matrix.
+draws-by-voxels matrix. `MaxT.runMap` builds a voxelwise result from it whose
+reject mask, adjusted p-value map and cutoff agree by construction.
+
+Decision scale is explicit. Only voxelwise `MapThresholdResult`s carry a
+`cutoff`. A `HierScanResult` rejects the union of its significant regions,
+scored on set statistics, so it exposes no voxel threshold.
+
+Every null draw is accounted for. A failed or invalid draw aborts the
+procedure with `NullDrawFailed(index, cause)` rather than being dropped. A
+draw that returns a different field when HierScan revisits it is refused as
+`NondeterministicNullDraw(index)`.
 
 The module is cross-compiled for JVM and Scala.js. Shared code depends on
 `scalafim-image` for volumes, masks, spaces, and connected components, and on

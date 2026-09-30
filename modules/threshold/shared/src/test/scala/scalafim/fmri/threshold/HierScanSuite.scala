@@ -20,8 +20,6 @@ class HierScanSuite extends munit.FunSuite:
     assertEquals(result.nodeTests.filter(_.rejected).map(_.path), Vector(Vector(7)))
     assert(result.reject.valueAtCanonicalOrdinal(7))
     assertEquals((0 until 8).count(result.reject.valueAtCanonicalOrdinal), 1)
-    assertEqualsDouble(result.threshold, result.significantRegions.head.score, 1e-12)
-    assertEqualsDouble(result.cutoff.toLegacyDouble, result.significantRegions.head.score, 1e-12)
   }
 
   test("HierScan descends into rejected octree children") {
@@ -47,8 +45,6 @@ class HierScanSuite extends munit.FunSuite:
 
     assertEquals(result.significantRegions, Vector.empty)
     assertEquals(result.nodeTests.count(_.rejected), 0)
-    assert(result.threshold.isPosInfinity)
-    assertEquals(result.cutoff, ThresholdCutoff.NoRejections)
     assertEquals((0 until 8).count(result.reject.valueAtCanonicalOrdinal), 0)
   }
 
@@ -74,7 +70,7 @@ class HierScanSuite extends munit.FunSuite:
 
     assertEquals(
       HierScan.run(stat, nulls, config = simpleConfig(alpha = 0.5)).left.toOption,
-      Some(ThresholdError.ShapeMismatch("null draw", "8", "7"))
+      Some(ThresholdError.NullDrawFailed(0, ThresholdError.ShapeMismatch("null draw", "8", "7")))
     )
   }
 

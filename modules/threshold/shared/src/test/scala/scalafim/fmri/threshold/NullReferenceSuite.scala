@@ -174,9 +174,9 @@ class NullReferenceSuite extends munit.FunSuite:
     def reduce(rows: Vector[Array[Double]], alternative: ThresholdAlternative, orientation: EvidenceOrientation) =
       MaxNull.reduce(FixedNullDraw(rows, NullReference.MonteCarlo), 2, alternative, orientation).left.toOption
 
-    assertEquals(reduce(Vector(Array(1.0)), ThresholdAlternative.Greater, EvidenceOrientation.Signed), Some(ThresholdError.ShapeMismatch("null draw", "2", "1")))
-    assertEquals(reduce(Vector(Array(1.0, Double.NaN)), ThresholdAlternative.Greater, EvidenceOrientation.Signed), Some(ThresholdError.NonFiniteData("null draw")))
-    assertEquals(reduce(Vector(Array(1.0, -0.5)), ThresholdAlternative.Greater, EvidenceOrientation.Unsigned), Some(ThresholdError.NegativeUnsignedEvidence(1, -0.5)))
+    assertEquals(reduce(Vector(Array(1.0)), ThresholdAlternative.Greater, EvidenceOrientation.Signed), Some(ThresholdError.NullDrawFailed(0, ThresholdError.ShapeMismatch("null draw", "2", "1"))))
+    assertEquals(reduce(Vector(Array(1.0, Double.NaN)), ThresholdAlternative.Greater, EvidenceOrientation.Signed), Some(ThresholdError.NullDrawFailed(0, ThresholdError.NonFiniteData("null draw"))))
+    assertEquals(reduce(Vector(Array(1.0, -0.5)), ThresholdAlternative.Greater, EvidenceOrientation.Unsigned), Some(ThresholdError.NullDrawFailed(0, ThresholdError.NegativeUnsignedEvidence(1, -0.5))))
     assertEquals(
       reduce(Vector(Array(1.0, 0.5)), ThresholdAlternative.Less, EvidenceOrientation.Unsigned),
       Some(ThresholdError.IncompatibleAlternative(ThresholdAlternative.Less, EvidenceOrientation.Unsigned))

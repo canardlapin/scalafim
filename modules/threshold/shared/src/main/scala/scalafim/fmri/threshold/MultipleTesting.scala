@@ -1,6 +1,8 @@
 package scalafim.fmri.threshold
 
 import gale.linalg.DMat
+import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
+import scalafim.image.SampleSpaces.spatialDims
 
 enum CorrectionPolicy:
   case WestfallYoungStepDown
@@ -109,6 +111,60 @@ object WestfallYoung:
 
 object MaxT:
 
+  /** Voxelwise single-step maxT over a statistic map.
+    *
+    * Draws stream through [[MaxNull.reduce]], so no draws-by-voxels matrix is
+    * built. The reject mask, the adjusted p-value map and the cutoff all derive
+    * from the same max-null distribution: a voxel is rejected iff its adjusted
+    * p-value is at most `alpha`, iff the cutoff rejects its oriented score.
+    * P-values are NaN outside the analysis mask; the cutoff is on the oriented
+    * scale.
+    */
+  def runMap(
+    statistic: StatisticMap,
+    nullDraw: NullDraw,
+    mask: Option[SomeMaskVolume],
+    alpha: Alpha,
+    alternative: ThresholdAlternative
+  ): Either[ThresholdError, MapThresholdResult] =
+    for
+      statisticField <- mask match
+        case Some(m) => StatisticField.fromMap(statistic, m, alternative)
+        case None    => StatisticField.fromMap(statistic, alternative)
+      field = statisticField.evidence
+      nulls <- MaxNull.reduce(nullDraw, field.size, alternative, statistic.orientation)
+      p <- MaxNull.orientedPValues(field.valuesCopy, nulls)
+      cutoff <- MaxNull.cutoff(nulls, alpha)
+      reject <- field.maskFromMaskSpace(rejectedIndices(p, alpha), "MaxT")
+    yield
+      val full = Array.fill(statistic.volume.space.spatialDims.product)(Double.NaN)
+      var i = 0
+      while i < field.size do
+        full(field.originalIndex(i)) = p(i).value
+        i += 1
+      val pMap = SomeScalarVolume.unsafeCopyFromCanonicalArray(full, field.space, "MaxT adjusted p")
+      MapThresholdResult(
+        method = ThresholdMethod.MaxT,
+        reject = reject,
+        pValueSemantics = ThresholdPValues.Adjusted(pMap, CorrectionPolicy.MaxTSingleStep),
+        cutoff = cutoff,
+        params = Map(
+          "alpha" -> alpha.value.toString,
+          "alternative" -> alternative.toString,
+          "statKind" -> statistic.kind.toString,
+          "nPermutations" -> nulls.draws.toString,
+          "nullReference" -> nulls.reference.toString
+        )
+      )
+
+  private def rejectedIndices(p: Array[AdjustedP], alpha: Alpha): Array[Int] =
+    val out = Array.newBuilder[Int]
+    var i = 0
+    while i < p.length do
+      if p(i).value <= alpha.value then out += i
+      i += 1
+    out.result()
+
   /** Single-step maxT over raw `observed` statistics and a raw draws-by-tests
     * null matrix, both oriented by `alternative`. Callers whose draws arrive one
     * at a time should use [[MaxNull.reduce]] instead of materializing the matrix.
@@ -210,7 +266,8 @@ object MaxNull:
     * requested, so memory is one draw plus one maximum per draw, never a
     * draws-by-tests matrix. Draw values are oriented with `alternative`, which
     * must be admissible for `orientation`; unsigned evidence must be
-    * non-negative. The reference convention comes from the draw set.
+    * non-negative. The reference convention comes from the draw set. Any
+    * failed or invalid draw is reported with its index, never dropped.
     */
   def reduce(
     nullDraw: NullDraw,
@@ -222,22 +279,19 @@ object MaxNull:
     alternative.validate(orientation) match
       case Left(err) => return Left(err)
       case Right(()) => ()
-    val draws = nullDraw.nPermutations.value
-    val maxima = new Array[Double](draws)
+    val ledger = NullDrawLedger(nullDraw, fieldSize)
+    val maxima = new Array[Double](ledger.size)
     var b = 0
-    while b < draws do
-      nullDraw.draw(b) match
+    while b < ledger.size do
+      ledger.fetch(b) match
         case Left(err) => return Left(err)
         case Right(raw) =>
-          if raw.length != fieldSize then
-            return Left(ThresholdError.ShapeMismatch("null draw", fieldSize.toString, raw.length.toString))
           var mx = Double.NegativeInfinity
           var i = 0
           while i < raw.length do
             val rawValue = raw(i)
-            if !rawValue.isFinite then return Left(ThresholdError.NonFiniteData("null draw"))
             if orientation == EvidenceOrientation.Unsigned && rawValue < 0.0 then
-              return Left(ThresholdError.NegativeUnsignedEvidence(i, rawValue))
+              return Left(ThresholdError.NullDrawFailed(b, ThresholdError.NegativeUnsignedEvidence(i, rawValue)))
             val value = alternative.applyTo(rawValue)
             if value > mx then mx = value
             i += 1
@@ -251,22 +305,28 @@ object MaxNull:
   def pValues(observed: Array[Double], nulls: MaxNullDistribution): Either[ThresholdError, Array[AdjustedP]] =
     validateObserved(observed) match
       case Left(err) => Left(err)
-      case Right(()) =>
-        val reference = nulls.reference
-        val draws = nulls.draws
-        val out = new Array[AdjustedP](observed.length)
-        var i = 0
-        while i < observed.length do
-          val score = nulls.alternative.applyTo(observed(i))
-          var count = 0
-          var b = 0
-          while b < draws do
-            if nulls.maximum(b) >= score then count += 1
-            b += 1
-          if count < reference.minimumCount then return Left(ThresholdError.MissingIdentityAction(i))
-          out(i) = AdjustedP.unsafe(reference.pValue(count, draws))
-          i += 1
-        Right(out)
+      case Right(()) => orientedPValues(orient(observed, nulls.alternative), nulls)
+
+  /** P-values for statistics already oriented by `nulls.alternative`. */
+  private[threshold] def orientedPValues(
+    oriented: Array[Double],
+    nulls: MaxNullDistribution
+  ): Either[ThresholdError, Array[AdjustedP]] =
+    val reference = nulls.reference
+    val draws = nulls.draws
+    val out = new Array[AdjustedP](oriented.length)
+    var i = 0
+    while i < oriented.length do
+      val score = oriented(i)
+      var count = 0
+      var b = 0
+      while b < draws do
+        if nulls.maximum(b) >= score then count += 1
+        b += 1
+      if count < reference.minimumCount then return Left(ThresholdError.MissingIdentityAction(i))
+      out(i) = AdjustedP.unsafe(reference.pValue(count, draws))
+      i += 1
+    Right(out)
 
   def pValueDoubles(observed: Array[Double], nulls: MaxNullDistribution): Either[ThresholdError, Array[Double]] =
     pValues(observed, nulls).map { values =>

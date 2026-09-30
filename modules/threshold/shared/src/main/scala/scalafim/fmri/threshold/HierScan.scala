@@ -83,15 +83,13 @@ object HierScan:
         case None    => PriorWeights.uniform(field.size)
       priors <- rawPriors.shrinkToUniform(config.priorEta)
       root <- Octree.root(field, priors)
-      scan <- scan(field, priors, root, nullDraw, config, statistic.orientation)
+      scan <- scan(field, priors, root, NullDrawLedger(nullDraw, field.size), config, statistic.orientation)
       reject <- field.maskFromMaskSpace(scan.hitIndices, "HierScan")
-      cutoff <- hitCutoff(scan.hits)
     yield
       HierScanResult(
         reject = reject,
         significantRegions = scan.hits,
         nodeTests = scan.tests,
-        cutoff = cutoff,
         params = params(config, nullDraw)
       )
 
@@ -99,7 +97,7 @@ object HierScan:
     field: MaskedField,
     priors: PriorWeights,
     root: ThresholdRegion,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, ScanOutput] =
@@ -124,7 +122,7 @@ object HierScan:
     alphaBudget: Double,
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation,
     builder: ScanBuilder
@@ -145,7 +143,7 @@ object HierScan:
     alphaBudget: Double,
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation,
     builder: ScanBuilder
@@ -181,7 +179,7 @@ object HierScan:
     alphaBudget: Double,
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation,
     builder: ScanBuilder
@@ -226,20 +224,20 @@ object HierScan:
     children: Vector[ThresholdRegion],
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, DMat] =
-    val rows = nullDraw.nPermutations.value
+    val rows = nullDraw.size
     val cols = children.length
     val out = DMat.newBuilder(rows, cols)
     var row = 0
     while row < rows do
-      nullDraw.draw(row) match
+      nullDraw.fetch(row) match
         case Left(err) => return Left(err)
         case Right(raw) =>
-          transformDraw(raw, field, config.alternative, orientation) match
-            case Left(err) => return Left(err)
+          transformDraw(raw, config.alternative, orientation) match
+            case Left(err) => return Left(ThresholdError.NullDrawFailed(row, err))
             case Right(draw) =>
               var col = 0
               while col < cols do
@@ -253,13 +251,12 @@ object HierScan:
       row += 1
     Right(out.result())
 
+  /** Orient one ledger-validated draw (correct length, finite values). */
   private def transformDraw(
     raw: Array[Double],
-    field: MaskedField,
     alternative: ThresholdAlternative,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, Array[Double]] =
-    if raw.length != field.size then return Left(ThresholdError.ShapeMismatch("null draw", field.size.toString, raw.length.toString))
     alternative.validate(orientation) match
       case Left(err) => return Left(err)
       case Right(()) => ()
@@ -267,26 +264,12 @@ object HierScan:
     var i = 0
     while i < raw.length do
       val rawValue = raw(i)
-      if !rawValue.isFinite then return Left(ThresholdError.NonFiniteData("null draw"))
       if orientation == EvidenceOrientation.Unsigned && rawValue < 0.0 then
         return Left(ThresholdError.NegativeUnsignedEvidence(i, rawValue))
       val value = alternative.applyTo(rawValue)
       out(i) = value
       i += 1
     Right(out)
-
-  private def hitCutoff(hits: Vector[HierScanRegionHit]): Either[ThresholdError, ThresholdCutoff] =
-    if hits.isEmpty then Right(ThresholdCutoff.NoRejections)
-    else
-      var minScore = Double.PositiveInfinity
-      var i = 0
-      while i < hits.length do
-        hits(i).scoreValue.finiteOrError("hierarchical scan hit score") match
-          case Left(err) => return Left(err)
-          case Right(value) =>
-            if value < minScore then minScore = value
-        i += 1
-      ThresholdCutoff.inclusive(minScore)
 
   private def params(config: HierScanConfig, nullDraw: NullDraw): Map[String, String] =
     Map(

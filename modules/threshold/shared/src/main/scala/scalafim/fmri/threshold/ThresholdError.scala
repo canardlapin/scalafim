@@ -24,6 +24,8 @@ enum ThresholdError:
   case InvalidArgument(name: String, reason: String)
   case MissingIdentityAction(testIndex: Int)
   case MissingIdentityRow
+  case NullDrawFailed(index: Int, cause: ThresholdError)
+  case NondeterministicNullDraw(index: Int)
 
   def message: String =
     this match
@@ -69,3 +71,7 @@ enum ThresholdError:
         s"exact enumeration must include the identity action, but no null statistic reaches observed test $testIndex"
       case MissingIdentityRow =>
         "exact enumeration must include the identity action, but no null row equals the oriented observed statistics"
+      case NullDrawFailed(index, cause) =>
+        s"null draw $index failed: ${cause.message}"
+      case NondeterministicNullDraw(index) =>
+        s"null draw $index returned a different field when fetched again"

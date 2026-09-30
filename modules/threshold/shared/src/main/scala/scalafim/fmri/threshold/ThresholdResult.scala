@@ -90,29 +90,33 @@ object ThresholdPValues:
       case Some(map) => Unadjusted(map)
       case None      => NotComputed
 
+/** A thresholded map. `reject` is the decision. Only voxelwise results carry
+  * a scalar cutoff; region-set procedures such as HierScan decide by region
+  * and have no voxel-scale threshold that reproduces their mask.
+  */
 sealed trait ThresholdResult:
   def method: ThresholdMethod
   def reject: SomeMaskVolume
   def pValueSemantics: ThresholdPValues
-  def cutoff: ThresholdCutoff
   def params: Map[String, String]
 
   def pValues: Option[SomeScalarVolume[Double]] =
     pValueSemantics.valuesOption
 
-  /** Legacy inclusive-double view. Consumers apply `score >= threshold`; code
-    * that retains the cutoff should use its typed decision method.
-    */
-  def threshold: Double =
-    cutoff.toLegacyDouble
-
+/** A voxelwise result whose `cutoff` applies to each voxel's statistic. */
 final case class MapThresholdResult(
     method: ThresholdMethod,
     reject: SomeMaskVolume,
     pValueSemantics: ThresholdPValues,
     cutoff: ThresholdCutoff,
     params: Map[String, String] = Map.empty
-) extends ThresholdResult
+) extends ThresholdResult:
+
+  /** Legacy inclusive-double view. Consumers apply `score >= threshold`; code
+    * that retains the cutoff should use its typed decision method.
+    */
+  def threshold: Double =
+    cutoff.toLegacyDouble
 
 object MapThresholdResult:
   def fromLegacy(
@@ -126,11 +130,14 @@ object MapThresholdResult:
       MapThresholdResult(method, reject, ThresholdPValues.fromOption(pValues), cutoff, params)
     }
 
+/** A hierarchical scan. `reject` is exactly the union of the significant
+  * regions. Node scores are set scores, not voxel statistics, so there is no
+  * voxel cutoff: a voxel's own statistic does not decide its rejection.
+  */
 final case class HierScanResult(
     reject: SomeMaskVolume,
     significantRegions: Vector[HierScanRegionHit],
     nodeTests: Vector[HierScanNodeTest],
-    cutoff: ThresholdCutoff,
     params: Map[String, String] = Map.empty
 ) extends ThresholdResult:
   override def method: ThresholdMethod =
