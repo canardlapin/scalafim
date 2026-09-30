@@ -140,7 +140,7 @@ class NativeReadPolicySuite extends FunSuite:
     assertEquals(inputOperator.calls, 3)
     assertEquals(targetOperator.calls, 0)
 
-    val (targetObservations, targetResponses, targetMapping, targetInputOperator, targetOperator) = tables(failTarget = true)
+    val (targetObservations, targetResponses, targetMapping, targetInputOperator, failedTargetOperator) = tables(failTarget = true)
     AlderPredictiveAdmission.nativeTables(targetObservations, targetResponses, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), targetMapping, policy) match
       case Left(AlderPredictiveAdmissionError.NativeReadFailure("targets", _, receipt)) =>
         assertEquals(receipt.inputBlockCalls, 2)
@@ -151,4 +151,4 @@ class NativeReadPolicySuite extends FunSuite:
         assertEquals(receipt.targetCopiedCells, 0L)
       case other => fail(s"expected failed native target receipt, got $other")
     assertEquals(targetInputOperator.calls, 3)
-    assertEquals(targetOperator.calls, 1)
+    assertEquals(failedTargetOperator.calls, 1)
