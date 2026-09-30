@@ -1,6 +1,6 @@
 package scalafim.fmri.fit.profile
 
-import gale.linalg.{BandedCholesky, CholeskyOptions, DMat, DMatBuilder}
+import gale.linalg.{BandedCholesky, DMat, DMatBuilder}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, TrialMembership}
 import scalafim.fmri.hrf.family.{JetLayout, ShapePoint}
@@ -134,6 +134,18 @@ final class TrialBandedWork private[profile] ():
   private[profile] var conditionalInverseFailures: Long = 0L
   private[profile] var conditionalCorrectionAttempts: Long = 0L
   private[profile] var conditionalCorrectionFailures: Long = 0L
+  // ML accounting outside the 22-field attempted snapshot (whose schema is unchanged):
+  // N-sized accepted-band factorisations within `factorAttempts`, and legacy scalar
+  // constrained-determinant membership RHS columns within `rightHandSideAttempts`.
+  private[profile] var bandFactorAttempts: Long = 0L
+  private[profile] var bandFactorFailures: Long = 0L
+  private[profile] var membershipRightHandSides: Long = 0L
+  // Determinant-helper work charged where the helper runs, so no caller can hide it.
+  private[profile] var helperSolveAttempts: Long = 0L
+  private[profile] var helperRightHandSides: Long = 0L
+  private[profile] var helperMembershipRightHandSides: Long = 0L
+  private[profile] var helperConditionFactorAttempts: Long = 0L
+  private[profile] var helperLogDetJetAttempts: Long = 0L
 
   private[profile] def referenceFailed(release: Boolean): Unit =
     referenceFailures += 1L
@@ -500,15 +512,19 @@ object TrialBandedPreparation:
       i += 1
     out.result()
 
+/** `accepted` is the stamped bundle: its factor is the Gale factor of exactly
+  * its own frozen copy of the value band, so energy and determinant share it.
+  */
 private final case class TrialBandedReference(
     coefficients: Array[Double],
-    factor: BandedCholesky,
+    accepted: TrialAcceptedTrialBand,
     aJets: Array[Double],
     cJets: Array[Double],
     wcJets: Array[Double],
     hJets: Array[Double],
     releaseLower: Array[Double],
-    logDetK: Double)
+    logDetK: Double):
+  def factor: BandedCholesky = accepted.factor
 
 /** Trial-sized profile objective. Its node factors and releases are immutable
   * and shared; each worker owns only response statistics and primitive scratch.
@@ -555,7 +571,7 @@ final class TrialBandedObjective private (
     */
   private def referenceDoubles(components: Int): Long =
     components.toLong * m + components.toLong * bandSize + 2L * components * n * k +
-      components.toLong * k * k + bandSize + k.toLong * k
+      components.toLong * k * k + 2L * bandSize + k.toLong * k
 
   val estimatedReferenceBytes: Long = 8L * referenceDoubles(comps)
   val estimatedValueReferenceBytes: Long = 8L * referenceDoubles(1)
@@ -645,6 +661,87 @@ final class TrialBandedObjective private (
       work.continuousFactors += 1
       reference.logDetK
     }
+
+  // ----- Native ML hooks. Each returns raw energy and the determinant from ONE
+  // reference, whose stamped bundle factor both use; they never pair public
+  // jetAt with logDetAt. Raw energy/amplitudes are written to `out`.
+
+  /** Node value from the shared node reference; its determinant is cached by the caller. */
+  private[profile] def mlValueAtNode(node: Int, out: ProfileJetBuffer): Either[TrialBandedError, Double] =
+    if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
+    else
+      work.bankValueEvaluations += 1
+      Right(scoreReference(references(node), currentResponse, out))
+
+  /** Node raw full jet from the shared node reference. */
+  private[profile] def mlJetAtNode(node: Int, out: ProfileJetBuffer): Either[TrialBandedError, Boolean] =
+    work.jetAttempts += 1L
+    if node < 0 || node >= references.length then
+      work.jetFailures += 1L
+      Left(TrialBandedError.InvalidNode(node, references.length))
+    else
+      work.jetEvaluations += 1
+      val completed = fullJet(references(node), currentResponse, out)
+      if !completed then work.jetFailures += 1L
+      Right(completed)
+
+  /** Response-independent determinant jet of a node reference, for setup caching. */
+  private[profile] def mlNodeDeterminant(node: Int): Either[TrialBandedError, TrialDeterminantAttempt] =
+    if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
+    else Right(determinantJet(references(node)))
+
+  /** One value-only reference: raw energy into `out` and the scalar constrained
+    * determinant of the same factor. No determinant derivatives are formed.
+    */
+  private[profile] def mlValueAt(coordinates: Array[Double], out: ProfileJetBuffer): Either[TrialBandedError, (Double, Double)] =
+    buildReference(coordinates, 1, None).map { reference =>
+      work.continuousFactors += 1
+      (scoreReference(reference, currentResponse, out), reference.logDetK)
+    }
+
+  /** One full reference: raw full jet into `out` and the determinant jet of the
+    * same bundle. The reference and its derivative bands are released on return.
+    */
+  private[profile] def mlJetAt(coordinates: Array[Double], out: ProfileJetBuffer)
+      : Either[TrialBandedError, (Boolean, TrialDeterminantAttempt)] =
+    work.jetAttempts += 1L
+    buildReference(coordinates, comps, None) match
+      case Left(error) =>
+        work.jetFailures += 1L
+        Left(error)
+      case Right(reference) =>
+        work.continuousFactors += 1
+        work.jetEvaluations += 1
+        val completed = fullJet(reference, currentResponse, out)
+        if !completed then work.jetFailures += 1L
+        Right((completed, determinantJet(reference)))
+
+  /** Helper input made only from this reference's stamped bundle plus its own
+    * derivative bands (row-packed ScalaFIM second order); no separate factor.
+    */
+  private def determinantJet(reference: TrialBandedReference): TrialDeterminantAttempt =
+    val width = preparation.bandWidth
+    def band(component: Int): DMat =
+      val out = DMatBuilder.zeros(n, width)
+      val base = component * bandSize
+      var i = 0
+      while i < bandSize do
+        out.writeLinear(i, reference.aJets(base + i))
+        i += 1
+      out.result()
+    val first = Vector.tabulate(d)(axis => band(JetLayout.first(axis)))
+    val second = Vector.tabulate(comps - 1 - d)(index => band(1 + d + index))
+    val attempt = TrialDeterminantInput(reference.accepted, first, second) match
+      case Left(error) =>
+        TrialDeterminantAttempt(Left(error), TrialDeterminantWork(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L))
+      case Right(input) => TrialConstrainedLogDetJet.evaluate(input, TrialDeterminantNumerics.Default)
+    val h = attempt.work
+    work.helperSolveAttempts += h.bandedSolveAttempts
+    work.helperRightHandSides += h.rightHandSideAttempts
+    if h.bandedSolveAttempts > 0L then work.helperMembershipRightHandSides += c
+    work.helperConditionFactorAttempts += h.conditionFactorAttempts
+    work.helperLogDetJetAttempts += h.logDetJetAttempts
+    attempt
 
   /** Solve the trial ridge system for later conditional readout. Exact-shape
     * factorisation is deliberately named and counted; PHRF-11 owns the final
@@ -885,7 +982,8 @@ final class TrialBandedObjective private (
 
   private def buildReference(coordinates: Array[Double], activeComponents: Int, node: Option[Int]): Either[TrialBandedError, TrialBandedReference] =
     preparation.basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coefficients, activeComponents)
-    TrialBandedObjective.reference(preparation, java.util.Arrays.copyOf(coefficients, activeComponents * m), activeComponents, node, work).map { reference =>
+    TrialBandedObjective.reference(preparation, coordinates.toVector, java.util.Arrays.copyOf(coefficients, activeComponents * m),
+      activeComponents, node, work).map { reference =>
       work.bandedSolveCalls += activeComponents + 1L
       work.bandedRightHandSides += activeComponents.toLong * k + c
       reference
@@ -1127,7 +1225,8 @@ object TrialBandedObjective:
       while node < grid.count do
         grid.coordinatesInto(node, coords)
         basis.coefficientJetInto(ShapePoint.unsafe(coords.toVector), scratch, coefficients, comps)
-        reference(preparation, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node), setupWork) match
+        reference(preparation, coords.toVector, java.util.Arrays.copyOf(coefficients, coefficients.length), comps, Some(node),
+          setupWork) match
           case Left(error) => return Left(error)
           case Right(ref) => refs += ref
         node += 1
@@ -1136,6 +1235,7 @@ object TrialBandedObjective:
 
   private def reference(
       prep: TrialBandedPreparation,
+      coordinates: Vector[Double],
       coefficients: Array[Double],
       activeComponents: Int,
       node: Option[Int],
@@ -1192,18 +1292,24 @@ object TrialBandedObjective:
     while i < n do
       aJets(i * width) += prep.lambda
       i += 1
-    val factorBuilder = DMatBuilder.zeros(n, width)
+    val valueBand = DMatBuilder.zeros(n, width)
     i = 0
     while i < bandSize do
-      factorBuilder.writeLinear(i, aJets(i))
+      valueBand.writeLinear(i, aJets(i))
       i += 1
-    work.factorAttempts += 1L
-    factorBuilder.consumeBandedCholesky(CholeskyOptions()) match
+    // At most one N-sized factorisation, of the bundle's own frozen canonical copy. Charge the
+    // factory's actual receipt: a pre-factor construction refusal attempts no Gale factorisation.
+    val bundle = TrialAcceptedTrialBand.atPreparationLambda(prep, coordinates, valueBand.result())
+    work.factorAttempts += bundle.work.factorAttempts
+    work.bandFactorAttempts += bundle.work.factorAttempts
+    work.factorFailures += bundle.work.factorFailures
+    work.bandFactorFailures += bundle.work.factorFailures
+    bundle.outcome match
       case Left(error) =>
-        work.factorFailures += 1L
         work.referenceFailed(release = false)
-        Left(TrialBandedError.Factorisation(error.getMessage))
-      case Right(factor) =>
+        Left(TrialBandedError.Factorisation(error.message))
+      case Right(accepted) =>
+        val factor = accepted.factor
         val cJets = new Array[Double](activeComponents * n * k)
         val dJets = new Array[Double](activeComponents * k * k)
         var comp = 0
@@ -1384,7 +1490,8 @@ object TrialBandedObjective:
                     case _ => false
                   work.referenceFailed(releaseFailure)
                   Left(error)
-                case Right(logDet) => Right(TrialBandedReference(coefficients, factor, aJets, cJets, wcJets, hJets, releaseLower, logDet))
+                case Right(logDet) =>
+                  Right(TrialBandedReference(coefficients, accepted, aJets, cJets, wcJets, hJets, releaseLower, logDet))
 
   private def constrainedLogDet(prep: TrialBandedPreparation, factor: BandedCholesky, work: TrialBandedWork): Either[TrialBandedError, Double] =
     val n = prep.trials
@@ -1395,6 +1502,7 @@ object TrialBandedObjective:
       mSolve(i, prep.membership.conditionOfTrial(i)) = 1.0
       i += 1
     work.solveAttempt(c)
+    work.membershipRightHandSides += c
     factor.solveInPlace(mSolve) match
       case Left(error) =>
         work.solveFailed(c)
