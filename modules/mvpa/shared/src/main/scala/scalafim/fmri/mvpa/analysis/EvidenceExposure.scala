@@ -19,6 +19,9 @@ object ResultIdentity:
 opaque type ExposureRecordId = String
 
 object ExposureRecordId:
+  private[analysis] def derived(write: AxisDigest.Writer => Unit): ExposureRecordId =
+    AxisDigest.sha256Hex(write)
+
   extension (value: ExposureRecordId) inline def text: String = value
 
 /** The immutable identities to which an exposure account belongs. */
@@ -127,7 +130,7 @@ object EvidenceExposure:
     apply(reference, ExposureScope.Training, Vector.empty)
 
   private[analysis] def apply(reference: ExposureReference, initialScope: ExposureScope, events: Vector[ExposureEvent]): EvidenceExposure =
-    val identity = AxisDigest.sha256Hex: writer =>
+    val identity = ExposureRecordId.derived: writer =>
       writer.string("scalafim.mvpa.evidence-exposure.v1")
       writer.string(reference.plan.text)
       writer.string(reference.evidenceIdentity)
