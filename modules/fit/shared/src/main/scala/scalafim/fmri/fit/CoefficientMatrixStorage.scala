@@ -10,7 +10,7 @@ private[fit] sealed abstract class CoefficientMatrixStorage extends IndexedSeq[D
   def retainedDoubleCount: Long
 
 private[fit] object CoefficientMatrixStorage:
-  private final class Scaled(base: DMat, scales: DVec) extends CoefficientMatrixStorage:
+  private final class Scaled(val base: DMat, val scales: DVec) extends CoefficientMatrixStorage:
     val predictors: Int = base.rows
     def length: Int = scales.length
     def retainedDoubleCount: Long = predictors.toLong * predictors + scales.length
@@ -92,19 +92,35 @@ private[fit] object CoefficientMatrixStorage:
   def concatenated(parts: Vector[IndexedSeq[DMat]]): IndexedSeq[DMat] = new Concatenated(parts)
 
   def sumAt(components: Vector[IndexedSeq[DMat]], voxel: Int): DMat =
-    val matrices = components.map(_(voxel))
-    val size = matrices.head.rows
-    val out = Matrix.newBuilder(size, size)
-    matrices.foreach { matrix =>
-      var r = 0
-      while r < size do
-        var c = 0
-        while c < size do
-          out(r, c) = out(r, c) + matrix(r, c)
-          c += 1
-        r += 1
-    }
-    out.result()
+    if components.forall(_.isInstanceOf[Scaled]) then
+      val size = components.head.asInstanceOf[Scaled].predictors
+      val out = Matrix.newBuilder(size, size)
+      components.foreach { component =>
+        val field = component.asInstanceOf[Scaled]
+        val scale = field.scales(voxel)
+        var r = 0
+        while r < size do
+          var c = 0
+          while c < size do
+            out(r, c) = out(r, c) + field.base(r, c) * scale
+            c += 1
+          r += 1
+      }
+      out.result()
+    else
+      val matrices = components.map(_(voxel))
+      val size = matrices.head.rows
+      val out = Matrix.newBuilder(size, size)
+      matrices.foreach { matrix =>
+        var r = 0
+        while r < size do
+          var c = 0
+          while c < size do
+            out(r, c) = out(r, c) + matrix(r, c)
+            c += 1
+          r += 1
+      }
+      out.result()
 
   private def inverse(matrix: DMat): Either[FitError, DMat] =
     val scale = (0 until matrix.rows).map(i => math.abs(matrix(i, i))).max
