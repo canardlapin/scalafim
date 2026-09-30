@@ -3,6 +3,7 @@ package scalafim.fmri.motion
 import scalafim.image.SampleSpaces.*
 
 import scalafim.image.*
+import gale.linalg.{CholeskyOptions, Matrix}
 
 object MotionEstimator:
   def estimate(
@@ -209,12 +210,15 @@ object MotionEstimator:
         else evaluate(ctx, level, template, frame, pose)
       var iter = 0
       var levelConverged = false
+      var levelSolverFailed = false
 
       while iter < level.maxIterations && !levelConverged do
         val system = buildSystem(ctx, level, template, frame, pose, lambda)
-        solve6(system.hessian, system.gradient.map(-_)) match
+        solveNormal6(system.hessian, system.gradient.map(-_)) match
           case None =>
+            // A singular normal system ends this level without convergence.
             levelConverged = true
+            levelSolverFailed = true
           case Some(rawStep) =>
             val step = limitStep(rawStep)
             val stepNorm = poseStepNorm(step)
@@ -243,7 +247,7 @@ object MotionEstimator:
         iter += 1
 
       totalIterations += iter
-      converged = levelConverged
+      converged = levelConverged && !levelSolverFailed
       levelIndex += 1
 
     val outputPose = shrinkLowMotionPose(ctx, pose)
@@ -364,9 +368,17 @@ object MotionEstimator:
           a += 1
       s += 1
 
+    // Levenberg-Marquardt damping proportional to each diagonal. The floor is
+    // relative to the largest diagonal so the step does not depend on the
+    // image intensity scale; a zero system stays singular.
+    var maxDiag = 0.0
     var d = 0
     while d < 6 do
-      h(d * 6 + d) += lambda * (math.abs(h(d * 6 + d)) + 1e-6)
+      maxDiag = math.max(maxDiag, math.abs(h(d * 6 + d)))
+      d += 1
+    d = 0
+    while d < 6 do
+      h(d * 6 + d) += lambda * math.max(math.abs(h(d * 6 + d)), DampingFloor * maxDiag)
       d += 1
 
     NormalSystem(h, g)
@@ -994,51 +1006,29 @@ object MotionEstimator:
         radius * radius * (step(3) * step(3) + step(4) * step(4) + step(5) * step(5))
     )
 
-  private def solve6(aIn: Array[Double], bIn: Array[Double]): Option[Array[Double]] =
+  private val DampingFloor = 1e-6
+  private val RelativePivotTolerance = 1e-12
+
+  /** Solve the damped 6x6 Gauss-Newton system `h x = rhs` by Gale's Cholesky
+    * factorization of the Jacobi-scaled matrix `D^-1/2 h D^-1/2`, which has a
+    * unit diagonal. The pivot tolerance is therefore relative, and the solve
+    * does not depend on the image intensity scale. Returns None when `h` is not
+    * numerically positive definite at that tolerance.
+    */
+  private[motion] def solveNormal6(h: Array[Double], rhs: Array[Double]): Option[Array[Double]] =
     val n = 6
-    val a = aIn.clone()
-    val b = bIn.clone()
-    var i = 0
-    while i < n do
-      var pivot = i
-      var maxAbs = math.abs(a(i * n + i))
-      var r = i + 1
-      while r < n do
-        val value = math.abs(a(r * n + i))
-        if value > maxAbs then
-          pivot = r
-          maxAbs = value
-        r += 1
-      if maxAbs < 1e-12 || !maxAbs.isFinite then return None
-      if pivot != i then
-        var c = i
-        while c < n do
-          val tmp = a(i * n + c)
-          a(i * n + c) = a(pivot * n + c)
-          a(pivot * n + c) = tmp
-          c += 1
-        val tb = b(i)
-        b(i) = b(pivot)
-        b(pivot) = tb
-
-      val diag = a(i * n + i)
-      var c = i
-      while c < n do
-        a(i * n + c) /= diag
-        c += 1
-      b(i) /= diag
-
-      r = 0
-      while r < n do
-        if r != i then
-          val factor = a(r * n + i)
-          if factor != 0.0 then
-            c = i
-            while c < n do
-              a(r * n + c) -= factor * a(i * n + c)
-              c += 1
-            b(r) -= factor * b(i)
-        r += 1
-      i += 1
-
-    Some(b)
+    val scale = new Array[Double](n)
+    var d = 0
+    while d < n do
+      val diag = h(d * n + d)
+      if !(diag > 0.0 && diag.isFinite) then return None
+      scale(d) = 1.0 / math.sqrt(diag)
+      d += 1
+    val scaled = Matrix.tabulate(n, n)((r, c) => h(r * n + c) * scale(r) * scale(c))
+    val b = Matrix.tabulate(n, 1)((r, _) => rhs(r) * scale(r))
+    scaled
+      .cholesky(CholeskyOptions(RelativePivotTolerance))
+      .flatMap(_.solve(b))
+      .toOption
+      .map(y => Array.tabulate(n)(r => y(r, 0) * scale(r)))
+      .filter(_.forall(_.isFinite))
