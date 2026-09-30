@@ -1,0 +1,140 @@
+{
+  "candidates": [
+    {
+      "acceptedScope": [
+        "scientific selection/source identity",
+        "distinct readers and bounded worker window",
+        "real1/2/8worker x1/2/256block invariance",
+        "setup once and fieldwise current16 attempted fields"
+      ],
+      "blockingFindings": [
+        "ParallelBlockExecutor may return on timeout after priorfailure or interrupted termination wait with worker still running",
+        "ProfileHrfFit snapshots mutable counters and falsely relinquishes reader use before proven termination"
+      ],
+      "commit": "2c22772e3ed7a890ddeae4adb835552466500ab9",
+      "next": "Monotonic bounded cleanup and explicit nonfinal termination/lifetime handle; deterministic held-reader interrupt/deadline controls; affected both-platform gates and exact rereview",
+      "scope": "PHRF29 bounded parallel interpreter",
+      "verdict": "RequestChanges",
+      "verifiedChecks": "32 JVM executions (13 shared +19 subclass incl inherited),13 JS, warning-clean CompileAll",
+      "verifiedLogSha256": "da54f2586119363148c19350b3597946405da18e281d2a3fbd9ca8e51bd47297",
+      "verifiedMetaSha256": "af60b8ca3af13960bd6787005d47eb17ffd4aa995f2c26444e0d7ad113fb1d0a"
+    },
+    {
+      "acceptedScope": [
+        "positive/aligned known t/F df and typed mappings",
+        "coded affine handedness/frame-code policy",
+        "32pairs/64channels checked beforepayload",
+        "dispatch/unit/digestpinnedTSV/storedtype/singleton3D/gzip budget"
+      ],
+      "blockingFindings": [
+        "valid decoded logicalFloat32 representability not checked",
+        "raw stream leaks when gzip constructor rejects header",
+        "Unknown legacy correspondence improperly requires Known scope alignment",
+        "no independent complete literal Core1 bundle; complete independent fixtures development1"
+      ],
+      "commit": "11fe7e991b15255708054f5c77a8865f1ae20850",
+      "handoffSha256": "d2404ca5625f8ec4a8fb654b856b614f40272d4b9fa50a6f21df54f21b5a54c8",
+      "limits": [
+        "gzip75,498,176bytes under64MiB is one measured workload",
+        "12crash actions=4completedAPIboundaries x3fresh processes, notpowerloss"
+      ],
+      "next": "Three code repairs + independent literal Corebundle, affected JVM/JS gates and exact rereview",
+      "scope": "Core-NIfTI schema",
+      "verdict": "RequestChanges",
+      "verifiedChecks": "estimates12/12 each platform;IO24JVM/5JS;CompileAll;subsequent codec5/5each",
+      "verifiedLogSha256": "31dbdfe440c48e096282ce11e0196afaa0452d9661b6282753b9c6a42c46c7d9",
+      "verifiedReceipts": 9,
+      "verifiedSourceFiles": 23
+    },
+    {
+      "blockingFindings": [
+        "rare-tail Gaussian approximation failed",
+        "54coordinate independent training validator differs300coordinate sample-estimated production procedure andR2000 excursions",
+        "all point estimates wrongly suppressed if any planned cell incomplete",
+        "alpha/72 each tail supports TOSTPass but notsimultaneous99.9percent Pass-Fail confidence family"
+      ],
+      "commit": "4bc68c5d67af92e1aec012f216899a1b1708d5e3",
+      "confirmationLaunched": false,
+      "next": "Keep original native regular/dependence/transfer Unresolved; descriptive percellpoints; ratealpha/(2*72); independent cheap reporting checks then freeze+costapproval",
+      "oneSided95LowerErrorApprox": 0.00414,
+      "oneSided95UpperError": 0.008427808307499458,
+      "projectedCampaignHoursBeforeOverhead": 17.36,
+      "proposedRatePowerOnlyPerEndpoint": {
+        "effectR5000": 0.9333,
+        "nullR15000": 0.7757
+      },
+      "scope": "first-level regular-moment confidence method",
+      "syntheticFamilies": 4000,
+      "syntheticFamilyMisses": 24,
+      "targetFamilyError": 0.001,
+      "verdict": "RejectMethodPromotionAndRetainHold"
+    },
+    {
+      "acceptedScope": [
+        "single fixedprospectivebudgetcandidate",
+        "directGaussianamplitude normalization andrelativeL2 units",
+        "complete retirement ofsmoke-contaminated freshseed7000930101"
+      ],
+      "actual100kLaunched": false,
+      "base": "1d2bdf5dcae4885e57ea5069932ca26da72f7747",
+      "blockingFindings": [
+        "row-major block passed to contiguous runtime offset mixes responses forwidth>1",
+        "chunk-dependent inputchecksum",
+        "terminalSD copied, no freshH/E/amp/SD/stationarity gate",
+        "directreference search stability unestablished and energydeficit omitted",
+        "pervoxel receipt/newlyadmittederrors/frozen101102cells missing;zeroadmitted percentile crashes",
+        "phase/endtoend memory/outputaudit/actual100klauncher incomplete"
+      ],
+      "freshQualificationLaunched": false,
+      "next": "Complete development-only repairs, cache responseindependent reference geometry; source freeze+rereview beforefresh",
+      "scope": "C0 pre-fresh qualification harness",
+      "sourceSha256": {
+        "doc": "8a23b8c43811b754037dbd26aa1939b434ab1ff4afd0a47f009ca2374e188da9",
+        "jsHelper": "1b57eaab739bb0ab53affdd22cf24c344c98115e8357e2fefbb365b3703ab63b",
+        "jvmHelper": "4094d0b568cc43bc343f266b4ec712ce3388c23d38826bc5d7c055e8c117816d",
+        "sharedSuite": "7e0d739de5bbd2a2352288d169817ca2c7be11508f186b47f0752821573e50b6"
+      },
+      "verdict": "RequestChangesBeforeFreshOr100k"
+    }
+  ],
+  "integrationBase": "1d2bdf5dcae4885e57ea5069932ca26da72f7747",
+  "recordedUtc": "2026-09-30T04:10:00.884260+00:00",
+  "reviewer": "/root/decoder_review",
+  "schema": "scalafim.p1.review-dispositions.v1",
+  "scope": "Independent source/evidence review; no fresh qualification, publication, merge or release. Failed candidates remain blocked.",
+  "subsequentReviews": [
+    {
+      "commit": "43673482d226e43e97af8a7ecbfc2e89ccb557cf",
+      "verdict": "AcceptBoundedCore",
+      "integrationCommit": "536a1a679490b94051704179a27269b452c7152b",
+      "supersedesRejectedCandidate": "11fe7e991b15255708054f5c77a8865f1ae20850",
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "d1879b4d2559e5c2f5d488290bcc7984fdbe9d50",
+      "verdict": "AcceptBoundedLifecycle",
+      "supersedesRejectedCandidate": "2c22772e3ed7a890ddeae4adb835552466500ab9",
+      "counterAndIntegrationGate": "pending"
+    },
+    {
+      "commit": "42c394dc316235f4b1a272cdfd5bf557bb13c693",
+      "verdict": "AcceptDescriptiveReportingAndRateProposal",
+      "regularMethodAdmitted": false,
+      "campaignLaunched": false,
+      "costApproval": "pending actualreply"
+    },
+    {
+      "snapshotSuiteSha256": "4dc3a06870e6f2cb451aae26d9961416b7d7f4a9768e60d549d88282f92699cc",
+      "verdict": "RequestChangesBeforeFresh",
+      "findings": [
+        "Newtoncorrection stationarity vsrawgradient",
+        "fullretained pervoxel study/audit/cap records",
+        "boundedcontinuousreference cache",
+        "full development-path and expanded predeclaredoraclecontrols"
+      ],
+      "freshLaunched": false,
+      "actual100kLaunched": false
+    }
+  ],
+  "updatedUtc": "2026-09-30T05:09:17.201746+00:00"
+}

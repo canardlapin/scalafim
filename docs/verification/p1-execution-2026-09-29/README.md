@@ -16,6 +16,7 @@ are integrated in an isolated clone.
 | Bounded identified residual traces | Actual fitted/prepared response and source-scan segment identity; runwise GLS refusal before read | Focused7JVM/6JS and full340JVM/328JS; integrated warning-clean compile192s. Original trace issue closed |
 | Selected precision pooling | Same estimator/accumulation order; measured full-call allocation down3.52%/3.53%, whole-call timing unchanged within observed range | Reviewed20-payload archive, both full fit suites and integrated compile passed. Original pooling issue closed |
 | PHRF-12 condition integration | Admission binds actual source, condition labels, weights, frame, precision, nuisance, whitening and lowered column values; cancellation stays typed | Both admission entries 4/4, required condition/certification/compact suites 11/11 on JVM and JS; source `b1df154d`, warning-clean compile-all exit 0 |
+| Temporal origin and sampling policy | Reviewed hosted image4s pin preserves temporal origin and rejects invalid spacing without fabrication | Final default-pin image380/351, estimates11/11, IO20/4 and warning-clean compile; provider draft PR13, no merge/release |
 
 ## Reviewed local changes whose remaining gates are separate
 
@@ -36,9 +37,15 @@ are integrated in an isolated clone.
   tests. It is not an executing trial fitter. Fixed-source compatibility binds
   the exact kernel object rather than a same-sized descriptor.
 - Parallel profile execution uses at most one window of `workers` payloads and
-  ordered delivery. Worker/sink failures and caller interruption are typed and
-  cleaned up; a proposed fixed workload deadline was removed. Exact author
-  candidates `74f4adcf`/`fed64de7` pass 11 JVM/4 JS focused tests.
+  ordered delivery. Exact author candidates `74f4adcf`/`fed64de7` pass
+  11 JVM/4 JS focused cooperative-worker tests. Review of the new interpreter
+  exposed a remaining cleanup defect: timeout after an earlier failure or an
+  interrupted termination wait can return while a blocked reader remains active.
+  Final mutable counters and reader lifetime cannot be claimed until workers stop.
+  The repair is independently accepted at `d1879b4d`, with a nonfinal
+  termination handle and deterministic blocked-reader regressions. Its final
+  counter-adoption/integration gate is pending. The older cooperative tests do
+  not establish this stronger contract.
 - Decoder equality termination at `bd367f03` passes 19 tests on each platform
   and independent transactional-state review. Exact finite equal energy may
   terminate only through the candidate's own coherent, finite, prior-augmented
@@ -95,15 +102,37 @@ one under a units-only assumption. The correction is reviewed and tested at prov
 `52b26c52`: provider 59 JVM/40 JS and image 380 JVM/351 JS pass. The pre-fix
 regression fails as expected. Refreshed transport archive SHA-256
 `045e69d29bffdccc0d27aa75af9c48336b1201b3e412861f6295f49aadccec69`
-and all 38 payload/46 source hashes were independently verified. No qualified provider publication or pin exists yet.
+and all 38 payload/46 source hashes were independently verified. The owner authorized
+publication of only the provider review branch and draft PR. Exact local,
+tracking and remote `review/nifti-temporal-origin-20260929` refs agree at
+`2695f891cbec31a7f565a9b39e2554fe3b6d4b40`; [image4s draft PR13](https://github.com/canardlapin/image4s/pull/13)
+has that head and unchanged main base `26a74ad`. This does not authorize merge,
+release or ScalaFIM publication.
 
-Estimate wire format remains `scalafim-estimates-development-1`. Bounded HDF5
-slice writes, compact covariance/support, producer/exporter/workflow/group
-adoption and broader access/performance gates remain. The crash record is four
-completed public-operation boundaries times three fresh processes, not twelve
-distinct fault boundaries or power-loss proof. Historical runner metadata
-records commands/times, not cryptographic source-tree identity; the crash
-receipt hashes a classpath string, not compiled class contents.
+Default-pin candidate `b6501047` passed image380/351, estimates IO20/4 and
+warning-clean CompileAll without local override. The final integrated candidate
+`2e230d4e` passed image380/351, estimates11/11, estimates IO20/4 and warning-clean
+CompileAll, exit0 in218.804 seconds. Raw log SHA256
+`b32b99044f683ab8c4139cbfbca0f20cac08ecb560fe4c6f59631eb53c7b99cf`. The temporal ticket is closed; stableCore remains open.
+
+The final Core-NIfTI-1 milestone `43673482`, integrated unchanged as
+`3ad53957`/`536a1a67`, is independently accepted. The reader enforces valid decoded
+Float32 representability, owns malformed-gzip streams through construction,
+preserves explicitly Unknown legacy correspondence without inferring alignment,
+and admits the independently authored complete literal Core bundle. The earlier
+`11fe7e99` rejection remains recorded as historical review evidence.
+All19 final source/blob/hash identities match. Integrated estimates12/12,
+IO30/5, group75/74 and fit-estimates14/11 pass on JVM/JS, followed by warning-clean
+CompileAll, exit0 in182.357464 seconds. Raw SHA256
+`03a031794f3343a234321fb8fb2ff072c2bce57b651458011f5cecc4a3bf6598`.
+The reader still supports the explicit development discriminator; its fixtures
+are not relabelled as Core conformance. The final archive retains43 payloads.
+Bounded HDF5 slice writes, compact covariance/support, producer/exporter/workflow
+adoption and broader access/performance gates remain open. The earlier crash
+record is four completed public-operation boundaries times three fresh processes,
+not twelve distinct fault boundaries or power-loss proof. Historical runner
+metadata records commands/times, not cryptographic source-tree identity; the
+crash receipt hashes a classpath string, not compiled class contents.
 
 Known-truth calibration foundation `c2d6d401` includes independent simulator and
 OLS/known-AR fixtures and a completed native 144-cell by 10000-study PM/mKH
@@ -121,14 +150,100 @@ of freedom proxy is poorly identified at this high df and replicate count; Step0
 must validate its uncertainty, scale sensitivity and undefined outcomes using
 known Gaussian/chi-square controls. Keep the original estimators and gates.
 The proposed 2000 effect coverage replication count has no passing count under its
-adjusted exact interval; 5000 has nominal per-endpoint power about0.955. Null 15000
-has nominal per-endpoint power about0.833, without an all-endpoint assurance.
+adjusted exact interval. Historical alpha/72 in each tail supports equivalence
+Pass tests but does not give a simultaneous two-sided confidence family for both
+Pass and Fail. The revised protocol uses alpha/(2*72) in each tail at family
+alpha0.001: coverage5000 has nominal per-endpoint power about0.9333 and null15000
+about0.7757, without an all-endpoint assurance.
 Exploratory2000-draw percentile bootstrap cannot qualify the proposed adjusted
 ratio tails. Explicit primary families, simultaneous inference, prospective power,
 separate effect/null launch streams and disjoint seed ranges must be frozen and
-reviewed first. Current include-null launch runs both streams at the same count;
-15000would take roughly24 hours before excursions/analysis. No confirmation has
-been launched and no scientific calibration gate is closed.
+reviewed first. Source `446e96b8` now has separate effect/null modes, shared campaign-entry guards,
+protocol-derived budgets, pilot completeness checks, explicit disjoint seed ranges
+and Step0 synthetic scale/lower-tail controls. The legacy joint mode is explicitly
+blocked for confirmation. The candidate 5000-effect/15000-null backbone plus
+14 proposed excursions costs about17.36 hours before overhead. Source `4bc68c5d`
+fixes undefined inverse-moment bootstrap handling and pre-fit launch guards, and
+uses all5000 planned backbone effect replicates for regular moments. Its Gaussian
+influence family method failed independent synthetic controls:24/4000 family
+misses, with95% lower error bound approximately0.00414 against a0.001 target.
+The54-coordinate training-covariance validator also does not reproduce the
+300-coordinate native procedure or2000-replicate excursions. The method is not
+admitted; no critical-value tuning is authorized. Native regular-moment,
+distance-correlation and conditional group-transfer conclusions remain Unresolved.
+Final reporting/proposal `42c394dc` is independently accepted: all50 planned
+cell rows retain original descriptive moments, failure/nonfinite/missing IDs and
+valid neighboring points. Every regular/dependence/group-transfer decision remains
+Unresolved. Independent R checks reproduce the corrected CP thresholds and marginal
+powers; 9/9 JVM and JS and CompileAll pass. Parent inspected the revised standalone
+df legend and accepted it as descriptive. The concrete748000 replicate-block,
+16-command campaign is frozen at a measured projection62506.25 seconds (17.36h)
+before overhead. Actual user cost approval is pending; no confirmation has been
+launched and no scientific calibration gate is closed.
+
+## Current independently reviewed prerequisites and open candidates
+
+The actual trial executor candidate `2c22772e` passes32 JVM test executions,
+13 JS and full compilation. Independent review accepts its scientific and
+bounded-worker phase: distinct readers, actual1/2/8 workers and1/2/256 chunks,
+ordered output, physical identities and fieldwise attempted counters. The historical
+blocked-reader defect is repaired in independently accepted `d1879b4d`: monotonic
+bounded cleanup retries interrupted waits; expiry returns explicit nonfinal failure,
+ordered delivery IDs and an owned termination/lifetime handle. Final progress is
+available only after join. Its47 JVM/17 JS and CompileAll receipts are verified.
+The author is adapting the accepted22-field schema and improving nonexpiry latch
+controls before a final parent integration gate. Public readout wiring and literal
+PHRF29 closure remain separate.
+
+Stage1 corrected conditional trial solve `bf05dde6` plus `72ed9bc6` is now
+independently accepted and locally integrated as `bf304201`/`5cb42af9`.
+Corrected error ratios7.9146/7.9664/7.9869 separate cubic behavior from the
+actual omitted-correction predictor's4.1783/4.1038/4.0558. Separate conditional
+request/inverse/correction attempt and failure counts preserve legacy semantics.
+The actual snapshot has22 fields; the peer's earlier20-field prose was corrected
+against source. Benchmark adapter `498021e3` aggregates and reports all22.
+Final integrated core/accounting7/7 and laws9/9 pass on each platform, explicit
+`fitBenchJVM/compile` and warning-clean full compilation exit0 in170.473552s.
+Raw SHA256 `b7a35f10d95e8eaa221bb4cfd2709b7d6a632a8e69735b214164c8878136837e`.
+The receipt identifies the exact seven changed-source files, including three
+accepted diagnostic files uncommitted during that historical gate; that tested
+HEAD alone is incomplete. The exact unchanged prerequisite files are now recorded
+locally in `041514a6`. Executor aggregation adoption is a pending consumer gate.
+This is internal prepared-basis readout, not normalized public queries, ML or
+certified original-family error. No benchmark runtime or speed claim follows.
+
+Gale's generic accepted-factor determinant-jet prerequisite is independently
+accepted at an exact three-file uncommitted snapshot, with20/20 tests on JVM and
+JS and mutation sensitivity. Review package SHA256
+`8d3a7b3fed1b7c9b5a2983fc9ff2fbacd22f68d03c25e6ee433aa9a0253f7c23`
+is frozen pending separate publication authorization. No Gale commit, hosted
+pin, fit ML criterion or consumer qualification is inferred.
+
+The C0 harness has repaired row-major gathering and chunk-independent checksums,
+but its second pre-fresh review still requires exact projected Newton stationarity,
+complete per-voxel/audit/cap records, bounded continuous reference storage and a
+full paired development-path control across the declared reference panel. The
+subsequent targeted test command was invalid: JVM ran zero tests and JS rejected
+its arguments. That exit1 receipt is preserved; it is not passing evidence.
+An unfiltered development-only rerun is queued. No fresh comparison or100k run
+has occurred. The contaminated7000930101 stream is entirely development-only;
+replacement7000930201 and the other two fresh streams remain unconsumed.
+Exactly one prospective D2 policy candidate and unchanged scientific gates apply.
+
+Run-aware AR transpose is independently accepted:19 tests on each platform plus
+warning-clean CompileAll, independent dense defining-equation oracle and two
+sensitive planted mutants. Exact unchanged files are local commit `d797a0dd`;
+the10-payload archive retains the original uncommitted snapshot and receipts.
+Full conditional consumer adjoint qualification belongs to public Stage2.
+
+The public trial output/query/normalization/conditional-adjoint writer is active
+in its isolated tree, with the global22 attempted counters unchanged and separate
+local action/visit/output/scratch receipts. The ML helper has a separate decided
+three-new-path scope using accepted local Gale capabilities: full whitened trial
+design, intrinsic fixed lambda, explicit3D derivative-layout remapping and typed
+solve/residual/work receipts. The existing owners will wire coherent reference,
+criterion and executor routes after review. Public ML remains explicitly refused;
+local provider tests cannot satisfy the hosted exact-pin gate.
 
 ## Durable embedded receipts
 
@@ -146,6 +261,12 @@ contains its original relative path, exact SHA-256 and full text:
   integrated counter/law/compile raw logs and metadata.
 - `condition-admission-open-receipts.json.gz`: both unchanged cohort gate failures
   and the separate passing all-attempt diagnostic; it records open qualification.
+- `trial-conditional-stage1-final.json.gz`: fourteen exact source/raw-log/metadata
+  payloads for the accepted corrected core, native diagnostic prerequisites,
+  benchmark adapter and author/integrated gates; all payload hashes verified.
+
+[Current review dispositions](current-review-dispositions.json) preserve exact
+rejected candidate identities and the concrete repairs required before admission.
 
 Full adaptive TrialBanded execution, public normalized trial readout/query and
 ML determinant derivatives, whole-engine attempted-work accounting, actual C0/B0
@@ -180,3 +301,34 @@ rejected production hash; it is not accepted or integrated. The worker now read
 the review and received the authoritative Mote claim for six corrections. Acceptance
 requires corrected source identity, meaningful both-platform regressions and a new
 independent verdict. No stored message or test artifact was lost.
+
+## Hosted temporal-pin and benchmark follow-up receipts
+
+`temporal-hosted-pin-final.json.gz` embeds the five default-pin author logs,
+the final combined integrated gate, the narrow benchmark compile, matching
+exit receipts, publication receipt and exact temporal/pin source files.
+`io-handoff-20260930-r2.tar.gz` retains the independently verified38-payload
+provider/consumer handoff (incremental Git bundles require their stated bases).
+Neither archive claims a stable Core format or image4s main merge.
+
+The benchmark constructor was repaired in `cb1e71d1`, integrated `1d2bdf5d`:
+all16attempted fields are summed from disjoint workers; banksetup remains
+separate. `fitBenchJVM/compile` passed warning-free (50.36 seconds). This target
+is outside CompileAll and must be an explicit gate for future counter or B0
+harness changes. No JMH harness or throughput run is claimed by this fix.
+
+## Final bounded review archives
+
+- [Core final qualification](io-core-final-qualified.json.gz):43 embedded source,
+  handoff and raw/meta payloads; author43673482 and tested integrated536a1a67.
+- [AR transpose prerequisite](ar-adjoint-final.json.gz):10 embedded payloads,
+  original snapshot, both-platform receipt and sensitive mutant evidence.
+- [Calibration reporting/proposal review](calibration-final-reporting-reviewed.json.gz):
+  20 payloads; negative method validation and frozen reviewed rate proposal,
+  with no campaign or inference admission.
+- [Accepted local prerequisite commits](accepted-prerequisite-local-commits.json):
+  exact unchanged six-source identities, no publication or work-policy promotion.
+
+All transport hashes and embedded payload hashes were read back and verified.
+The SHA manifest covers the named archives and disposition JSON; this README is
+not itself included in that manifest. Original7/16 ticket completion is unchanged.
