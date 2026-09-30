@@ -246,11 +246,15 @@ object VolumeToSurfaceOperatorCompiler:
     sourceMask: Option[SomeMaskVolume],
     voxel: SpatialPoint
   ): SurfacePointWeights =
-    val x = math.round(voxel.x).toInt
-    val y = math.round(voxel.y).toInt
-    val z = math.round(voxel.z).toInt
-    if inBounds(sourceDims, x, y, z) then
-      val col = Indexing.gridToIndex3D(sourceDims, x, y, z)
+    val x = math.round(voxel.x)
+    val y = math.round(voxel.y)
+    val z = math.round(voxel.z)
+    if voxel.x.isFinite && voxel.y.isFinite && voxel.z.isFinite &&
+      x >= 0L && x < sourceDims.x.toLong &&
+      y >= 0L && y < sourceDims.y.toLong &&
+      z >= 0L && z < sourceDims.z.toLong
+    then
+      val col = Indexing.gridToIndex3D(sourceDims, x.toInt, y.toInt, z.toInt)
       if sourceMask.forall(_.valueAtCanonicalOrdinal(col)) then SurfacePointWeights(Vector(col), Vector(1.0), 1.0)
       else SurfacePointWeights.empty
     else SurfacePointWeights.empty

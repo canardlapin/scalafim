@@ -155,9 +155,12 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   private def nearestGrid(volume: SomeScalarVolume[Double], point: Vector[Double]): Option[Vector[Int]] =
     val index = volume.space.coordToIndex(point)
-    val grid = index.map(v => math.round(v).toInt)
+    val rounded = index.map(v => math.round(v))
     val dims = volume.space.spatialDims
-    if grid.indices.forall(i => grid(i) >= 0 && grid(i) < dims(i)) then Some(grid) else None
+    // A far-outside Long can wrap into the grid when narrowed to Int.
+    if rounded.indices.forall(i => index(i).isFinite && rounded(i) >= 0L && rounded(i) < dims(i).toLong) then
+      Some(rounded.map(_.toInt))
+    else None
 
   private def aggregate(values: Vector[Double]): Double =
     plan.aggregation match
