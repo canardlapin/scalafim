@@ -244,7 +244,9 @@ class LnaDatasetSuite extends munit.FunSuite:
         dataset
           .backendFor(root.relativize(root.resolve("sub-01/func/sub-01_task-rest_space-MNI_bold.lna.h5")), backend.id)
           .fold(err => fail(err.message), identity)
-      assert(Grid.exactCongruence(relativeBackend.shape.grid, backend.shape.grid).isRight)
+      // Two independent reads of an archive without world evidence carry distinct
+      // unresolved frames; they must decode the same geometry.
+      assert(Grid.exactGeometryMatch(relativeBackend.shape.grid, backend.shape.grid).isRight)
       assertEquals(relativeBackend.shape.timepoints, backend.shape.timepoints)
 
       val series =
