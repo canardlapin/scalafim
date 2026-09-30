@@ -145,7 +145,7 @@ object RepairAdvice:
       case RepairKind.ChangedClaim => new RepairAdvice(kind, true, true, "claim changed; create and bind a new specification")
       case RepairKind.RoiShrink => new RepairAdvice(kind, true, false, "ROI scope is not inferable from a frame hash; declare a new measurement scope and rebind")
 
-final class PlanDiff private (
+final class PlanDiff private[analysis] (
     val changes: Set[PlanChange],
     val left: PlanId,
     val right: PlanId

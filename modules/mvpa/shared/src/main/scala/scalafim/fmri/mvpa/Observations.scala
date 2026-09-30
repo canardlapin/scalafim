@@ -180,15 +180,21 @@ final class Observations[S <: SemanticSpace, N <: SemanticSpace] private (
     )
 
 object Observations:
+  def fromDense[SK, NK](samples: AxisRef[SK], neural: AxisRef[NK], values: DMat, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
+    fromDense(samples, neural, values, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
+
   def fromDense[SK, NK](
       samples: AxisRef[SK],
       neural: AxisRef[NK],
       values: DMat,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
     decode(samples, neural, samples.toRecord, neural.toRecord, values, valueIdentity, source, origins)
+
+  def fromOperator[SK, NK](samples: AxisRef[SK], neural: AxisRef[NK], operator: DoubleLinearOperator, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
+    fromOperator(samples, neural, operator, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
 
   def fromOperator[SK, NK](
       samples: AxisRef[SK],
@@ -196,9 +202,12 @@ object Observations:
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
     decode(samples, neural, samples.toRecord, neural.toRecord, operator, valueIdentity, source, origins)
+
+  def fromSparse[SK, NK](samples: AxisRef[SK], neural: AxisRef[NK], values: CSR, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
+    fromSparse(samples, neural, values, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
 
   def fromSparse[SK, NK](
       samples: AxisRef[SK],
@@ -206,7 +215,7 @@ object Observations:
       values: CSR,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
     decode(samples, neural, samples.toRecord, neural.toRecord, values, valueIdentity, source, origins)
 
@@ -214,6 +223,9 @@ object Observations:
     * the expected nominal witnesses. Constructing the semantic operator does
     * not evaluate or materialize its payload.
     */
+  def decode[SK, NK](samples: AxisRef[SK], neural: AxisRef[NK], declaredSamples: AxisRecord, declaredNeural: AxisRecord, operator: DoubleLinearOperator, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
+    decode(samples, neural, declaredSamples, declaredNeural, operator, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
+
   def decode[SK, NK](
       samples: AxisRef[SK],
       neural: AxisRef[NK],
@@ -222,7 +234,7 @@ object Observations:
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
     if !origins.matches(source, valueIdentity, samples.descriptor) then
       Left(EvidenceError.InvalidSource("evidence origins do not match the observation source, values, or output axis"))
@@ -302,15 +314,21 @@ final class MultiResponse[S <: SemanticSpace, F <: SemanticSpace] private (
     )
 
 object MultiResponse:
+  def fromDense[SK, FK](samples: AxisRef[SK], features: AxisRef[FK], values: DMat, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
+    fromDense(samples, features, values, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
+
   def fromDense[SK, FK](
       samples: AxisRef[SK],
       features: AxisRef[FK],
       values: DMat,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
     decode(samples, features, samples.toRecord, features.toRecord, values, valueIdentity, source, origins)
+
+  def fromOperator[SK, FK](samples: AxisRef[SK], features: AxisRef[FK], operator: DoubleLinearOperator, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
+    fromOperator(samples, features, operator, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
 
   def fromOperator[SK, FK](
       samples: AxisRef[SK],
@@ -318,9 +336,12 @@ object MultiResponse:
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
     decode(samples, features, samples.toRecord, features.toRecord, operator, valueIdentity, source, origins)
+
+  def fromSparse[SK, FK](samples: AxisRef[SK], features: AxisRef[FK], values: CSR, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
+    fromSparse(samples, features, values, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
 
   def fromSparse[SK, FK](
       samples: AxisRef[SK],
@@ -328,9 +349,12 @@ object MultiResponse:
       values: CSR,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
     decode(samples, features, samples.toRecord, features.toRecord, values, valueIdentity, source, origins)
+
+  def decode[SK, FK](samples: AxisRef[SK], features: AxisRef[FK], declaredSamples: AxisRecord, declaredFeatures: AxisRecord, operator: DoubleLinearOperator, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
+    decode(samples, features, declaredSamples, declaredFeatures, operator, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
 
   def decode[SK, FK](
       samples: AxisRef[SK],
@@ -340,7 +364,7 @@ object MultiResponse:
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
       source: EvidenceSource,
-      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
+      origins: EvidenceOrigins
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
     if !origins.matches(source, valueIdentity, samples.descriptor) then
       Left(EvidenceError.InvalidSource("evidence origins do not match the response source, values, or output axis"))
