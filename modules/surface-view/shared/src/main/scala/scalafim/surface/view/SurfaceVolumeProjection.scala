@@ -37,6 +37,8 @@ final case class SurfaceProjectionPolicy(
 /** Sample accounting is the sampler's observed [[SurfaceSampleTally]]:
   * `acceptedSamples` counts finite values only, and `rejectedSamples` counts
   * samples outside the volume, excluded by the mask, or non-finite.
+  * `qualifiedVertices` follows the per-vertex `sampleCounts`, which include
+  * non-finite samples, so a qualified vertex can still carry a NaN value.
   */
 final case class SurfaceProjectionReceipt(
   vertices: Int,

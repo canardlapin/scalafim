@@ -21,8 +21,10 @@ final case class TriangleMesh private (
         (this eq that) ||
           (vertexCount == that.vertexCount &&
             faceCount == that.faceCount &&
-            java.util.Arrays.equals(faceIndices, that.faceIndices) &&
-            java.util.Arrays.equals(coordinates, that.coordinates))
+            structuralHash == that.structuralHash &&
+            // White and pial meshes share faces, so coordinates usually differ first.
+            java.util.Arrays.equals(coordinates, that.coordinates) &&
+            java.util.Arrays.equals(faceIndices, that.faceIndices))
       case _ => false
 
   override def hashCode(): Int =
