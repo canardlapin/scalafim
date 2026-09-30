@@ -13,19 +13,6 @@ object Alpha:
   extension (alpha: Alpha)
     inline def value: Double = alpha
 
-opaque type QValue = Double
-object QValue:
-  def apply(value: Double): Either[ThresholdError, QValue] =
-    if value.isFinite && value > 0.0 && value < 1.0 then Right(value)
-    else Left(ThresholdError.InvalidQValue(value))
-
-  def unsafe(value: Double): QValue =
-    require(value.isFinite && value > 0.0 && value < 1.0, "q must be finite and in (0, 1)")
-    value
-
-  extension (q: QValue)
-    inline def value: Double = q
-
 opaque type Kappa = Double
 object Kappa:
   def apply(value: Double): Either[ThresholdError, Kappa] =
@@ -150,11 +137,6 @@ enum NullReference:
     this match
       case MonteCarlo       => (count.toDouble + 1.0) / (draws.toDouble + 1.0)
       case ExactEnumeration => count.toDouble / draws.toDouble
-
-enum EvidenceScore:
-  case SoftMax(kappa: Kappa)
-  case Diffuse
-  case Omnibus(kappas: Vector[Kappa])
 
 enum StatKind:
   case Z

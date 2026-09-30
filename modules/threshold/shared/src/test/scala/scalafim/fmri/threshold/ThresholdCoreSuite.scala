@@ -16,7 +16,6 @@ class ThresholdCoreSuite extends munit.FunSuite:
   test("checked scalar constructors reject invalid inference settings") {
     assert(Alpha(0.05).isRight)
     assertEquals(Alpha(0.0).left.toOption, Some(ThresholdError.InvalidAlpha(0.0)))
-    assertEquals(QValue(1.0).left.toOption, Some(ThresholdError.InvalidQValue(1.0)))
     assertEquals(Kappa(-1.0).left.toOption, Some(ThresholdError.InvalidKappa(-1.0)))
     assertEquals(DegreesOfFreedom(0.0).left.toOption, Some(ThresholdError.InvalidDegreesOfFreedom(0.0)))
     assertEquals(AdjustedP(1.1).left.toOption, Some(ThresholdError.InvalidAdjustedPValue(1.1)))

@@ -4,7 +4,6 @@ import image4s.geometry.GeometryError
 
 enum ThresholdError:
   case InvalidAlpha(value: Double)
-  case InvalidQValue(value: Double)
   case InvalidKappa(value: Double)
   case InvalidDegreesOfFreedom(value: Double)
   case InvalidAdjustedPValue(value: Double)
@@ -31,8 +30,6 @@ enum ThresholdError:
     this match
       case InvalidAlpha(value) =>
         s"alpha must be finite and in (0, 1), got $value"
-      case InvalidQValue(value) =>
-        s"q must be finite and in (0, 1), got $value"
       case InvalidKappa(value) =>
         s"kappa must be finite and positive, got $value"
       case InvalidDegreesOfFreedom(value) =>
