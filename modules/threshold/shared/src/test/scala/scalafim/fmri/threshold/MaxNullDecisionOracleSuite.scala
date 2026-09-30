@@ -2,6 +2,9 @@ package scalafim.fmri.threshold
 
 class MaxNullDecisionOracleSuite extends munit.FunSuite:
 
+  private def monteCarlo(maxima: Array[Double]): MaxNullDistribution =
+    MaxNullDistribution.fromOrientedMaxima(maxima, ThresholdAlternative.Greater, NullReference.MonteCarlo).toOption.get
+
   test("cutoff decisions equal an independent plus-one rank oracle exhaustively"):
     val distributions =
       Vector.range(1, 6).flatMap(length => arraysOfLength(length, Vector(-1.0, 0.0, 1.0, 2.0)))
@@ -10,12 +13,12 @@ class MaxNullDecisionOracleSuite extends munit.FunSuite:
     distributions.foreach: nulls =>
       val observed = observedCandidates(nulls)
       alphaCandidates(nulls.length).foreach: alpha =>
-        val cutoff = MaxNull.cutoff(nulls, alpha).toOption.get
+        val cutoff = MaxNull.cutoff(monteCarlo(nulls), alpha).toOption.get
         observed.foreach: score =>
           val exceedances = nulls.count(_ >= score)
           val referenceP = (exceedances.toDouble + 1.0) / (nulls.length.toDouble + 1.0)
           val referenceReject = referenceP <= alpha.value
-          val publicP = MaxNull.pValues(Array(score), nulls).toOption.get.head.value
+          val publicP = MaxNull.pValues(Array(score), monteCarlo(nulls)).toOption.get.head.value
           val cutoffReject = cutoff.rejects(score).toOption.get
           val legacyReject = score >= cutoff.toLegacyDouble
 
@@ -30,7 +33,7 @@ class MaxNullDecisionOracleSuite extends munit.FunSuite:
   test("the reported defect rejects only above the maximum null draw"):
     val nulls = Array.tabulate(19)(index => index.toDouble + 1.0)
     val alpha = Alpha.unsafe(0.05)
-    val cutoff = MaxNull.cutoff(nulls, alpha).toOption.get
+    val cutoff = MaxNull.cutoff(monteCarlo(nulls), alpha).toOption.get
 
     cutoff match
       case ThresholdCutoff.Exclusive(boundary) =>
@@ -38,9 +41,9 @@ class MaxNullDecisionOracleSuite extends munit.FunSuite:
       case other =>
         fail(s"expected an exclusive cutoff, found $other")
 
-    assertEqualsDouble(MaxNull.pValues(Array(19.0), nulls).toOption.get.head.value, 0.1, 0.0)
+    assertEqualsDouble(MaxNull.pValues(Array(19.0), monteCarlo(nulls)).toOption.get.head.value, 0.1, 0.0)
     assertEqualsDouble(
-      MaxNull.pValues(Array(Math.nextUp(19.0)), nulls).toOption.get.head.value,
+      MaxNull.pValues(Array(Math.nextUp(19.0)), monteCarlo(nulls)).toOption.get.head.value,
       0.05,
       0.0
     )
@@ -49,13 +52,13 @@ class MaxNullDecisionOracleSuite extends munit.FunSuite:
     assertEqualsDouble(cutoff.toLegacyDouble, Math.nextUp(19.0), 0.0)
 
   test("ties, finite extrema, and legacy conversion retain explicit comparison semantics"):
-    val tied = MaxNull.cutoff(Array(5.0, 5.0, 4.0), Alpha.unsafe(0.5)).toOption.get
+    val tied = MaxNull.cutoff(monteCarlo(Array(5.0, 5.0, 4.0)), Alpha.unsafe(0.5)).toOption.get
     assertEquals(tied.rejects(5.0).toOption.get, false)
     assertEquals(tied.rejects(Math.nextUp(5.0)).toOption.get, true)
 
     val maximum =
       MaxNull
-        .cutoff(Array(Double.MaxValue), Alpha.unsafe(0.5))
+        .cutoff(monteCarlo(Array(Double.MaxValue)), Alpha.unsafe(0.5))
         .toOption
         .get
     assert(maximum.toLegacyDouble.isPosInfinity)

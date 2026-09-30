@@ -92,7 +92,10 @@ class HierScanSuite extends munit.FunSuite:
   private def volume(dims: Vector[Int], data: Array[Double]): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(dims))
 
-  private final class FixedNullDraw(rows: Vector[Array[Double]]) extends NullDraw:
+  private final class FixedNullDraw(
+      rows: Vector[Array[Double]],
+      override val reference: NullReference = NullReference.MonteCarlo
+  ) extends NullDraw:
     override val nPermutations: PermutationCount =
       PermutationCount.unsafe(rows.length)
 

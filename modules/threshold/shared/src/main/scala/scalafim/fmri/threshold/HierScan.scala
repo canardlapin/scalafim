@@ -167,7 +167,9 @@ object HierScan:
     for
       nullMatrix <- childNullMatrix(children, field, priors, nullDraw, config, orientation)
       nodeAlpha <- Alpha(alphaBudget)
-      tests <- WestfallYoung.stepDown(observed, nullMatrix, nodeAlpha)
+      // Child scores and null scores are already oriented by the statistic
+      // field and transformDraw, so the step-down compares them as given.
+      tests <- WestfallYoung.stepDown(observed, nullMatrix, nodeAlpha, ThresholdAlternative.Greater, nullDraw.reference)
       _ <- applyTests(children, tests, parentPath, parentDepth, alphaBudget, field, priors, nullDraw, config, orientation, builder)
     yield ()
 
@@ -297,7 +299,8 @@ object HierScan:
       "maxDepth" -> config.maxDepth.toString,
       "priorEta" -> config.priorEta.toString,
       "minPriorMass" -> config.minPriorMass.toString,
-      "nPermutations" -> nullDraw.nPermutations.value.toString
+      "nPermutations" -> nullDraw.nPermutations.value.toString,
+      "nullReference" -> nullDraw.reference.toString
     )
 
   private final class ScanBuilder:

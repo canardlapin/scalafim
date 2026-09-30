@@ -13,24 +13,37 @@ final case class AdjustedTest(testIndex: Int, score: Double, adjustedP: Adjusted
     adjustedP.value
 
 object MultipleTesting:
+  /** Adjust `observed` against a draws-by-tests null matrix. Both are supplied
+    * raw; `alternative` orients them identically before any comparison, and
+    * `reference` fixes the permutation p-value convention.
+    */
   def adjust(
     observed: Array[Double],
     nullMatrix: DMat,
     alpha: Alpha,
-    policy: CorrectionPolicy
+    policy: CorrectionPolicy,
+    alternative: ThresholdAlternative,
+    reference: NullReference
   ): Either[ThresholdError, Vector[AdjustedTest]] =
     policy match
       case CorrectionPolicy.WestfallYoungStepDown =>
-        WestfallYoung.stepDown(observed, nullMatrix, alpha)
+        WestfallYoung.stepDown(observed, nullMatrix, alpha, alternative, reference)
       case CorrectionPolicy.MaxTSingleStep =>
-        MaxT.singleStep(observed, nullMatrix, alpha)
+        MaxT.singleStep(observed, nullMatrix, alpha, alternative, reference)
 
 object WestfallYoung:
 
+  /** Westfall-Young step-down over raw `observed` statistics and a raw
+    * draws-by-tests null matrix, both oriented by `alternative`. Adjusted
+    * p-values follow `reference`; under exact enumeration the identity action
+    * must be among the rows.
+    */
   def stepDown(
     observed: Array[Double],
     nullMatrix: DMat,
-    alpha: Alpha
+    alpha: Alpha,
+    alternative: ThresholdAlternative,
+    reference: NullReference
   ): Either[ThresholdError, Vector[AdjustedTest]] =
     validateObserved(observed) match
       case Left(err) => Left(err)
@@ -42,7 +55,8 @@ object WestfallYoung:
         validateNull(nullMatrix) match
           case Left(err) => Left(err)
           case Right(()) =>
-            val order = observed.indices.toArray.sortWith((a, b) => observed(a) > observed(b))
+            val oriented = orient(observed, alternative)
+            val order = oriented.indices.toArray.sortWith((a, b) => oriented(a) > oriented(b))
             val counts = new Array[Int](m)
 
             var b = 0
@@ -51,9 +65,9 @@ object WestfallYoung:
               var rank = m - 1
               while rank >= 0 do
                 val testIndex = order(rank)
-                val value = nullMatrix(b, testIndex)
+                val value = alternative.applyTo(nullMatrix(b, testIndex))
                 if value > running then running = value
-                if running >= observed(testIndex) then counts(rank) += 1
+                if running >= oriented(testIndex) then counts(rank) += 1
                 rank -= 1
               b += 1
 
@@ -61,7 +75,9 @@ object WestfallYoung:
             var previous = 0.0
             var rank = 0
             while rank < m do
-              val raw = (counts(rank).toDouble + 1.0) / (nullMatrix.rows.toDouble + 1.0)
+              if counts(rank) < reference.minimumCount then
+                return Left(ThresholdError.MissingIdentityAction(order(rank)))
+              val raw = reference.pValue(counts(rank), nullMatrix.rows)
               val adj = math.max(raw, previous)
               sortedP(rank) = adj
               previous = adj
@@ -84,10 +100,16 @@ object WestfallYoung:
 
 object MaxT:
 
+  /** Single-step maxT over raw `observed` statistics and a raw draws-by-tests
+    * null matrix, both oriented by `alternative`. Callers whose draws arrive one
+    * at a time should use [[MaxNull.reduce]] instead of materializing the matrix.
+    */
   def singleStep(
     observed: Array[Double],
     nullMatrix: DMat,
-    alpha: Alpha
+    alpha: Alpha,
+    alternative: ThresholdAlternative,
+    reference: NullReference
   ): Either[ThresholdError, Vector[AdjustedTest]] =
     validateObserved(observed) match
       case Left(err) => Left(err)
@@ -105,13 +127,14 @@ object MaxT:
               var mx = Double.NegativeInfinity
               var col = 0
               while col < nullMatrix.cols do
-                val value = nullMatrix(row, col)
+                val value = alternative.applyTo(nullMatrix(row, col))
                 if value > mx then mx = value
                 col += 1
               maxNull(row) = mx
               row += 1
 
-            MaxNull.pValues(observed, maxNull).map { p =>
+            val distribution = MaxNullDistribution.unsafe(maxNull, alternative, reference)
+            MaxNull.pValues(observed, distribution).map { p =>
               val out = Vector.newBuilder[AdjustedTest]
               out.sizeHint(m)
               var i = 0
@@ -121,32 +144,116 @@ object MaxT:
               out.result()
             }
 
+/** Per-draw maxima of an oriented null field.
+  *
+  * The distribution carries the alternative that oriented its draws and the
+  * reference convention of its draw set, so observed statistics are always
+  * oriented the same way before they are compared with it.
+  */
+final class MaxNullDistribution private (
+    maxima: Array[Double],
+    val alternative: ThresholdAlternative,
+    val reference: NullReference
+):
+  def draws: Int =
+    maxima.length
+
+  def maximum(index: Int): Double =
+    maxima(index)
+
+  def toArray: Array[Double] =
+    maxima.clone
+
+object MaxNullDistribution:
+
+  /** Admit per-draw maxima that were already oriented by `alternative`. */
+  def fromOrientedMaxima(
+    maxima: Array[Double],
+    alternative: ThresholdAlternative,
+    reference: NullReference
+  ): Either[ThresholdError, MaxNullDistribution] =
+    if maxima.isEmpty then return Left(ThresholdError.InvalidArgument("maxNull", "must be non-empty"))
+    var i = 0
+    while i < maxima.length do
+      if !maxima(i).isFinite then return Left(ThresholdError.NonFiniteData("max-null distribution"))
+      i += 1
+    Right(new MaxNullDistribution(maxima.clone, alternative, reference))
+
+  private[threshold] def unsafe(
+    maxima: Array[Double],
+    alternative: ThresholdAlternative,
+    reference: NullReference
+  ): MaxNullDistribution =
+    new MaxNullDistribution(maxima, alternative, reference)
+
 object MaxNull:
 
-  def pValues(observed: Array[Double], maxNull: Array[Double]): Either[ThresholdError, Array[AdjustedP]] =
+  /** Stream raw mask-space draws into per-draw oriented maxima.
+    *
+    * Each draw is requested exactly once and reduced before the next is
+    * requested, so memory is one draw plus one maximum per draw, never a
+    * draws-by-tests matrix. Draw values are oriented with `alternative`, which
+    * must be admissible for `orientation`; unsigned evidence must be
+    * non-negative. The reference convention comes from the draw set.
+    */
+  def reduce(
+    nullDraw: NullDraw,
+    fieldSize: Int,
+    alternative: ThresholdAlternative,
+    orientation: EvidenceOrientation
+  ): Either[ThresholdError, MaxNullDistribution] =
+    if fieldSize <= 0 then return Left(ThresholdError.InvalidArgument("fieldSize", "must be positive"))
+    alternative.validate(orientation) match
+      case Left(err) => return Left(err)
+      case Right(()) => ()
+    val draws = nullDraw.nPermutations.value
+    val maxima = new Array[Double](draws)
+    var b = 0
+    while b < draws do
+      nullDraw.draw(b) match
+        case Left(err) => return Left(err)
+        case Right(raw) =>
+          if raw.length != fieldSize then
+            return Left(ThresholdError.ShapeMismatch("null draw", fieldSize.toString, raw.length.toString))
+          var mx = Double.NegativeInfinity
+          var i = 0
+          while i < raw.length do
+            val rawValue = raw(i)
+            if !rawValue.isFinite then return Left(ThresholdError.NonFiniteData("null draw"))
+            if orientation == EvidenceOrientation.Unsigned && rawValue < 0.0 then
+              return Left(ThresholdError.NegativeUnsignedEvidence(i, rawValue))
+            val value = alternative.applyTo(rawValue)
+            if value > mx then mx = value
+            i += 1
+          maxima(b) = mx
+      b += 1
+    Right(MaxNullDistribution.unsafe(maxima, alternative, nullDraw.reference))
+
+  /** Family-wise adjusted p-values for raw `observed` statistics, oriented by
+    * the distribution's alternative and computed with its reference convention.
+    */
+  def pValues(observed: Array[Double], nulls: MaxNullDistribution): Either[ThresholdError, Array[AdjustedP]] =
     validateObserved(observed) match
       case Left(err) => Left(err)
       case Right(()) =>
-        if maxNull.isEmpty then return Left(ThresholdError.InvalidArgument("maxNull", "must be non-empty"))
-        var b = 0
-        while b < maxNull.length do
-          if !maxNull(b).isFinite then return Left(ThresholdError.NonFiniteData("max-null distribution"))
-          b += 1
-
+        val reference = nulls.reference
+        val draws = nulls.draws
         val out = new Array[AdjustedP](observed.length)
         var i = 0
         while i < observed.length do
+          val score = nulls.alternative.applyTo(observed(i))
           var count = 0
-          b = 0
-          while b < maxNull.length do
-            if maxNull(b) >= observed(i) then count += 1
+          var b = 0
+          while b < draws do
+            if nulls.maximum(b) >= score then count += 1
             b += 1
-          out(i) = AdjustedP.unsafe((count.toDouble + 1.0) / (maxNull.length.toDouble + 1.0))
+          if count < reference.minimumCount then return Left(ThresholdError.MissingIdentityAction(i))
+          out(i) = AdjustedP.unsafe(reference.pValue(count, draws))
           i += 1
         Right(out)
 
-  def pValueDoubles(observed: Array[Double], maxNull: Array[Double]): Either[ThresholdError, Array[Double]] =
-    pValues(observed, maxNull).map { values =>
+  def pValueDoubles(observed: Array[Double], nulls: MaxNullDistribution): Either[ThresholdError, Array[Double]] =
+    pValues(observed, nulls).map { values =>
       val out = new Array[Double](values.length)
       var i = 0
       while i < values.length do
@@ -155,34 +262,35 @@ object MaxNull:
       out
     }
 
-  def cutoff(maxNull: Array[Double], alpha: Alpha): Either[ThresholdError, ThresholdCutoff] =
-    if maxNull.isEmpty then return Left(ThresholdError.InvalidArgument("maxNull", "must be non-empty"))
-    var i = 0
-    while i < maxNull.length do
-      if !maxNull(i).isFinite then return Left(ThresholdError.NonFiniteData("max-null distribution"))
-      i += 1
+  /** The family-wise cutoff at `alpha`, on the oriented scale: a raw score
+    * `s` is rejected when the cutoff rejects `nulls.alternative.applyTo(s)`.
+    * Decisions agree with `pValues(...) <= alpha` for every admissible score.
+    */
+  def cutoff(nulls: MaxNullDistribution, alpha: Alpha): Either[ThresholdError, ThresholdCutoff] =
+    val reference = nulls.reference
+    val draws = nulls.draws
 
-    // Count attainable plus-one p-value ranks with the same division used by
+    // Walk attainable exceedance counts with the same division used by
     // pValues. This avoids changing the decision at floating-point alpha
     // boundaries through a multiply-and-floor rearrangement.
-    val denominator = maxNull.length.toDouble + 1.0
-    var acceptedRanks = 0
-    while acceptedRanks < maxNull.length &&
-        (acceptedRanks.toDouble + 1.0) / denominator <= alpha.value
-    do acceptedRanks += 1
+    var count = reference.minimumCount
+    while count < draws && reference.pValue(count, draws) <= alpha.value do count += 1
 
-    if acceptedRanks < 1 then Right(ThresholdCutoff.NoRejections)
+    if count == reference.minimumCount then Right(ThresholdCutoff.NoRejections)
     else
-      val sorted = maxNull.clone.sortWith(_ > _)
-      // p(t) = (1 + #{M_b >= t}) / (B + 1), so equality with the kth
-      // descending null is never rejected. The cutoff must be strict.
-      ThresholdCutoff.exclusive(sorted(acceptedRanks - 1))
+      val sorted = nulls.toArray.sortWith(_ > _)
+      // A score is rejected iff at most count - 1 null maxima reach it, so
+      // equality with the count-th descending maximum is never rejected. The
+      // cutoff must be strict.
+      ThresholdCutoff.exclusive(sorted(count - 1))
 
-  /** Legacy inclusive-double view of [[cutoff]]. Consumers must apply it as
-    * `score >= threshold`; new code should prefer `cutoff(...).flatMap(_.rejects(score))`.
-    */
-  def threshold(maxNull: Array[Double], alpha: Alpha): Either[ThresholdError, Double] =
-    cutoff(maxNull, alpha).map(_.toLegacyDouble)
+private def orient(values: Array[Double], alternative: ThresholdAlternative): Array[Double] =
+  val out = new Array[Double](values.length)
+  var i = 0
+  while i < values.length do
+    out(i) = alternative.applyTo(values(i))
+    i += 1
+  out
 
 private def validateObserved(observed: Array[Double]): Either[ThresholdError, Unit] =
   var i = 0

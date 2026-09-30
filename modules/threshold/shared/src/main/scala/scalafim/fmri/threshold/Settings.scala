@@ -120,6 +120,34 @@ object Tail:
       case ThresholdAlternative.Less     => Negative
       case ThresholdAlternative.TwoSided => TwoSided
 
+/** How a null draw set relates to the observed labelling.
+  *
+  * `MonteCarlo`: B null actions sampled at random, the observed (identity)
+  * action not among them. The observed statistic is counted once more:
+  * p = (1 + #{null >= t}) / (B + 1).
+  *
+  * `ExactEnumeration`: the complete set of B equally likely null actions,
+  * including the identity action, so the observed statistic is already among
+  * the draws: p = #{null >= t} / B. Adding one again would double-count it, and
+  * a set in which no null statistic reaches an observed one cannot contain the
+  * identity action and is refused.
+  */
+enum NullReference:
+  case MonteCarlo, ExactEnumeration
+
+  /** Smallest exceedance count a valid draw set can produce for an observed
+    * statistic.
+    */
+  private[threshold] def minimumCount: Int =
+    this match
+      case MonteCarlo       => 0
+      case ExactEnumeration => 1
+
+  private[threshold] def pValue(count: Int, draws: Int): Double =
+    this match
+      case MonteCarlo       => (count.toDouble + 1.0) / (draws.toDouble + 1.0)
+      case ExactEnumeration => count.toDouble / draws.toDouble
+
 enum EvidenceScore:
   case SoftMax(kappa: Kappa)
   case Diffuse

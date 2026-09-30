@@ -2,8 +2,11 @@ package scalafim.fmri.threshold
 
 import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
 
+/** Threshold methods with an implemented decision path. Methods are added
+  * here only together with their implementation.
+  */
 enum ThresholdMethod:
-  case HierScan, Tfce, ClusterFdr, RftPeak, RftCluster, MaxT
+  case HierScan, MaxT
 
 sealed trait ThresholdCutoff:
   def toLegacyDouble: Double
@@ -136,6 +139,17 @@ final case class HierScanResult(
   override def pValueSemantics: ThresholdPValues =
     ThresholdPValues.NotComputed
 
+/** A fixed family of null actions applied to the observed data.
+  *
+  * `draw(index)` returns the raw, unoriented statistic field of one action, in
+  * mask space (compact index order). Consumers apply the analysis alternative
+  * themselves, so a draw must not be pre-negated or pre-absoluted. The same
+  * index must return the same field on every call: hierarchical procedures
+  * revisit draws and rely on one common null action per index. `reference`
+  * declares whether the family is a Monte Carlo sample or a complete
+  * enumeration that includes the identity action.
+  */
 trait NullDraw:
   def nPermutations: PermutationCount
+  def reference: NullReference
   def draw(index: Int): Either[ThresholdError, Array[Double]]

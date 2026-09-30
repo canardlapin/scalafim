@@ -150,7 +150,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
       )
     )
 
-    val out = value(WestfallYoung.stepDown(observed, nulls, Alpha.unsafe(0.5)))
+    val out = value(WestfallYoung.stepDown(observed, nulls, Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.MonteCarlo))
     assertEquals(out.map(_.testIndex), Vector(0, 1, 2))
     assertEqualsDouble(out(0).adjustedP.value, 0.6, 1e-12)
     assertEqualsDouble(out(1).adjustedP.value, 0.6, 1e-12)
@@ -171,14 +171,15 @@ class ThresholdCoreSuite extends munit.FunSuite:
       )
     )
 
-    val out = value(MaxT.singleStep(observed, nulls, Alpha.unsafe(0.5)))
+    val out = value(MaxT.singleStep(observed, nulls, Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.MonteCarlo))
     assertEqualsDouble(out(0).adjustedP.value, 0.6, 1e-12)
     assertEqualsDouble(out(1).adjustedP.value, 1.0, 1e-12)
     assertEqualsDouble(out(2).adjustedP.value, 0.4, 1e-12)
 
-    val adjusted = value(MultipleTesting.adjust(observed, nulls, Alpha.unsafe(0.5), CorrectionPolicy.MaxTSingleStep))
+    val adjusted = value(MultipleTesting.adjust(observed, nulls, Alpha.unsafe(0.5), CorrectionPolicy.MaxTSingleStep, ThresholdAlternative.Greater, NullReference.MonteCarlo))
     assertEquals(adjusted.map(_.adjustedP.value), out.map(_.adjustedP.value))
-    val cutoff = value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4)))
+    val maxima = value(MaxNullDistribution.fromOrientedMaxima(Array(3.0, 4.0, 3.0, 5.0), ThresholdAlternative.Greater, NullReference.MonteCarlo))
+    val cutoff = value(MaxNull.cutoff(maxima, Alpha.unsafe(0.4)))
     cutoff match
       case ThresholdCutoff.Exclusive(boundary) =>
         assertEqualsDouble(boundary, 4.0, 0.0)
@@ -187,13 +188,8 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assertEquals(value(cutoff.rejects(4.0)), false)
     assertEquals(value(cutoff.rejects(Math.nextUp(4.0))), true)
     assertEqualsDouble(cutoff.toLegacyDouble, Math.nextUp(4.0), 0.0)
-    assertEquals(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))), ThresholdCutoff.NoRejections)
-    assertEqualsDouble(
-      value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))),
-      Math.nextUp(4.0),
-      0.0
-    )
-    assert(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))).isPosInfinity)
+    assertEquals(value(MaxNull.cutoff(maxima, Alpha.unsafe(0.05))), ThresholdCutoff.NoRejections)
+    assert(value(MaxNull.cutoff(maxima, Alpha.unsafe(0.05))).toLegacyDouble.isPosInfinity)
   }
 
   test("octree root and split use mask-space coordinates and prior mass") {
