@@ -39,9 +39,36 @@ final case class VolumeSurfaceSamplingPlan(
 ):
   SurfaceSamplingPath.validate(path)
 
+/** What one sampling pass observed, over all vertices. Every requested sample
+  * point lands in exactly one category: outside the volume grid, excluded by
+  * the mask, a non-finite volume value, or an accepted finite value.
+  */
+final case class SurfaceSampleTally(
+  requested: Long,
+  outsideVolume: Long,
+  masked: Long,
+  nonFinite: Long,
+  accepted: Long
+):
+  require(
+    requested >= 0L && outsideVolume >= 0L && masked >= 0L && nonFinite >= 0L && accepted >= 0L,
+    "sample tallies must be non-negative"
+  )
+  require(
+    outsideVolume + masked + nonFinite + accepted == requested,
+    "every requested sample must be outside the volume, masked, non-finite, or accepted"
+  )
+
+  def rejected: Long =
+    outsideVolume + masked + nonFinite
+
+/** `sampleCounts` counts in-volume, in-mask samples per vertex, including
+  * non-finite volume values, which the aggregate then propagates.
+  */
 final case class SurfaceSampleResult(
   values: SurfaceField[Double],
-  sampleCounts: SurfaceField[Int]
+  sampleCounts: SurfaceField[Int],
+  tally: SurfaceSampleTally
 )
 
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
@@ -52,18 +79,20 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     val vertexCount = plan.surfaces.white.vertexCount
     val values = Array.fill(vertexCount)(Double.NaN)
     val counts = Array.ofDim[Int](vertexCount)
+    val tally = TallyBuilder()
 
     var i = 0
     while i < vertexCount do
       val vertex = VertexId.unsafe(i)
-      val samples = sampleValues(volume, mask, samplePoints(vertex))
+      val samples = sampleValues(volume, mask, samplePoints(vertex), tally)
       counts(i) = samples.length
       if samples.nonEmpty then values(i) = aggregate(samples)
       i += 1
 
     SurfaceSampleResult(
       values = SurfaceField.full(plan.surfaces.white, values.toVector, "surface-sample"),
-      sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count")
+      sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count"),
+      tally = tally.result()
     )
 
   private def samplePoints(vertex: VertexId): Vector[Vector[Double]] =
@@ -96,16 +125,33 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
   private def sampleValues(
     volume: SomeScalarVolume[Double],
     mask: Option[SomeMaskVolume],
-    points: Vector[Vector[Double]]
+    points: Vector[Vector[Double]],
+    tally: TallyBuilder
   ): Vector[Double] =
     val out = Vector.newBuilder[Double]
     points.foreach { point =>
-      nearestGrid(volume, point).foreach { grid =>
-        val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-        if mask.forall(_.valueAtCanonicalOrdinal(lin)) then out += volume.valueAtCanonicalOrdinal(lin)
-      }
+      tally.requested += 1L
+      nearestGrid(volume, point) match
+        case None => tally.outsideVolume += 1L
+        case Some(grid) =>
+          val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
+          if !mask.forall(_.valueAtCanonicalOrdinal(lin)) then tally.masked += 1L
+          else
+            val value = volume.valueAtCanonicalOrdinal(lin)
+            if value.isFinite then tally.accepted += 1L else tally.nonFinite += 1L
+            out += value
     }
     out.result()
+
+  private final class TallyBuilder:
+    var requested = 0L
+    var outsideVolume = 0L
+    var masked = 0L
+    var nonFinite = 0L
+    var accepted = 0L
+
+    def result(): SurfaceSampleTally =
+      SurfaceSampleTally(requested, outsideVolume, masked, nonFinite, accepted)
 
   private def nearestGrid(volume: SomeScalarVolume[Double], point: Vector[Double]): Option[Vector[Int]] =
     val index = volume.space.coordToIndex(point)

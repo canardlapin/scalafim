@@ -221,6 +221,44 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: mask/volume space mismatch"):
       VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair)).sample(volume, Some(badMask))
 
+  test("the sample tally observes every requested point exactly once"):
+    val inside = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair)).sample(volume)
+    assertEquals(inside.tally, SurfaceSampleTally(requested = 3, outsideVolume = 0, masked = 0, nonFinite = 0, accepted = 3))
+
+    val ribbon = VolumeSurfaceSampler.sample(volume, pair, path = SurfaceSamplingPath.FractionalThickness(Vector(0.0, 0.5, 1.0)))
+    assertEquals(ribbon.tally.requested, 9L)
+    assertEquals(ribbon.tally.accepted, 9L)
+
+    val emptyMask = SomeMaskVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fillConst[Boolean](27, false), space, "empty-mask")
+    val masked = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair)).sample(volume, Some(emptyMask))
+    assertEquals(masked.tally, SurfaceSampleTally(requested = 3, outsideVolume = 0, masked = 3, nonFinite = 0, accepted = 0))
+
+    val shifted = SurfaceGeometry(pair.white.mesh, Hemisphere.Left, SurfaceKind.White, translation(10.0, 0.0, 0.0))
+    val outside = VolumeSurfaceSampler.sample(volume, SurfaceGeometryPair(shifted, shifted), path = SurfaceSamplingPath.White)
+    assertEquals(outside.tally, SurfaceSampleTally(requested = 3, outsideVolume = 3, masked = 0, nonFinite = 0, accepted = 0))
+
+  test("non-finite volume values are tallied apart from accepted samples"):
+    // Vertex 0 samples voxel (0, 0, 1) at the midpoint.
+    val withNaN =
+      SomeScalarVolume.unsafeCopyFromCanonicalArray(
+        PrimitiveBuffers.tabulate[Double](27) { idx =>
+          val g = space.indexToGrid3D(idx)
+          if g == Vector(0, 0, 1) then Double.NaN else g(0).toDouble + 10.0 * g(1).toDouble + 100.0 * g(2).toDouble
+        },
+        space,
+        "with-nan"
+      )
+    val result = VolumeSurfaceSampler(VolumeSurfaceSamplingPlan(pair)).sample(withNaN)
+    assertEquals(result.tally, SurfaceSampleTally(requested = 3, outsideVolume = 0, masked = 0, nonFinite = 1, accepted = 2))
+    assertEquals(result.tally.rejected, 1L)
+    // Per-vertex counts keep their documented meaning: in-volume, in-mask samples.
+    assertEquals(result.sampleCounts.valueAt(VertexId(0)), Some(1))
+    assert(result.values.valueAt(VertexId(0)).exists(_.isNaN))
+
+  test("sample tallies must account for every requested sample"):
+    intercept[IllegalArgumentException](SurfaceSampleTally(requested = 3, outsideVolume = 1, masked = 0, nonFinite = 0, accepted = 1))
+    intercept[IllegalArgumentException](SurfaceSampleTally(requested = 0, outsideVolume = -1, masked = 0, nonFinite = 0, accepted = 1))
+
   private def surfaceAtZ(z: Double, kind: SurfaceKind): SurfaceGeometry =
     SurfaceGeometry(
       TriangleMesh.fromRows(

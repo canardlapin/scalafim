@@ -158,9 +158,11 @@ object ThreeVolumeProjector:
           val counts = new Array[Int](vertexCount)
           val quality = new Array[Boolean](vertexCount)
           var renderedPixels = 0
+          var nonFinite = 0L
           vertex = 0
           while vertex < vertexCount do
             val valid = coordinates(vertex * 4 + 3) > 0.5f
+            if valid && !output(vertex * 4).toDouble.isFinite then nonFinite += 1L
             counts(vertex) = if valid then 1 else 0
             quality(vertex) = valid
             values(vertex) =
@@ -177,9 +179,14 @@ object ThreeVolumeProjector:
             SurfaceField.full(geometry, quality.toIndexedSeq, "gpu-surface-projection-quality"),
             SurfaceProjectionReceipt(
               vertexCount,
-              vertexCount.toLong,
-              accepted.toLong,
-              (vertexCount - accepted).toLong,
+              // One midpoint sample per vertex; the GPU path applies no mask.
+              SurfaceSampleTally(
+                requested = vertexCount.toLong,
+                outsideVolume = (vertexCount - accepted).toLong,
+                masked = 0L,
+                nonFinite = nonFinite,
+                accepted = accepted.toLong - nonFinite
+              ),
               accepted,
               volumeValues.toLong,
               volumeValues.toLong * 8L,

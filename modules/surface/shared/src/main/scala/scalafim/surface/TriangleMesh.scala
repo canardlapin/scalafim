@@ -11,6 +11,26 @@ final case class TriangleMesh private (
   lazy val topologyIdentity: MeshTopologyIdentity =
     MeshTopologyIdentity.from(vertexCount, faceIndices)
 
+  /** Structural equality: the same ordered faces and bitwise-equal vertex
+    * coordinates (so `-0.0` and `0.0` differ). Generated case-class equality
+    * would compare the arrays by reference.
+    */
+  override def equals(other: Any): Boolean =
+    other match
+      case that: TriangleMesh =>
+        (this eq that) ||
+          (vertexCount == that.vertexCount &&
+            faceCount == that.faceCount &&
+            java.util.Arrays.equals(faceIndices, that.faceIndices) &&
+            java.util.Arrays.equals(coordinates, that.coordinates))
+      case _ => false
+
+  override def hashCode(): Int =
+    structuralHash
+
+  private lazy val structuralHash: Int =
+    31 * java.util.Arrays.hashCode(coordinates) + java.util.Arrays.hashCode(faceIndices)
+
   /** Exact ordered-topology compatibility for fields and alternate surface
     * coordinates. The fingerprint is a cheap rejection path; the full index
     * comparison is the proof used at construction boundaries.

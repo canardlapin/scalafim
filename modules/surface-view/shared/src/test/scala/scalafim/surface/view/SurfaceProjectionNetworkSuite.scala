@@ -93,9 +93,29 @@ class SurfaceProjectionNetworkSuite extends munit.FunSuite:
     )
     assertEquals(projection.receipt.acceptedSamples, 0L)
     assertEquals(projection.receipt.rejectedSamples, 4L)
+    assertEquals(projection.receipt.tally.masked, 4L)
     assertEquals(projection.receipt.qualifiedVertices, 0)
     assertEquals(projection.values.valueAt(VertexId(0)), Some(-99.0))
     assertEquals(projection.quality.valueAt(VertexId(0)), Some(false))
+
+  test("receipts count non-finite samples as rejected, not accepted"):
+    // Vertex 0's midpoint (1, 0, 1) reads a NaN voxel.
+    val withNaN = SomeScalarVolume.unsafeCopyFromCanonicalArray(
+      PrimitiveBuffers.tabulate[Double](125): index =>
+        val grid = volumeSpace.indexToGrid3D(index)
+        if grid == Vector(1, 0, 1) then Double.NaN
+        else grid(0).toDouble + 10.0 * grid(1).toDouble + 100.0 * grid(2).toDouble,
+      volumeSpace,
+      "volume-with-nan"
+    )
+    val projection = SurfaceVolumeProjection.materialize(
+      morphism(SurfaceSamplingPath.Midpoint, SurfaceSampleAggregation.Nearest),
+      withNaN
+    )
+    assertEquals(projection.receipt.requestedSamples, 4L)
+    assertEquals(projection.receipt.acceptedSamples, 3L)
+    assertEquals(projection.receipt.rejectedSamples, 1L)
+    assertEquals(projection.receipt.tally.nonFinite, 1L)
 
   test("materialized projection is an ordinary layer on topology-compatible display geometry"):
     val projection = SurfaceVolumeProjection.materialize(
