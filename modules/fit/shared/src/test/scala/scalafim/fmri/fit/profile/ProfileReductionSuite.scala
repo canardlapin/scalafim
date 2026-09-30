@@ -1,7 +1,6 @@
 package scalafim.fmri.fit.profile
 
 import scalafim.fmri.hrf.family.JetLayout
-import scalafim.fmri.model.ProfileCriterion
 
 class ProfileReductionSuite extends munit.FunSuite:
 
@@ -171,15 +170,20 @@ class ProfileReductionSuite extends munit.FunSuite:
         assertEqualsDouble(out.amplitudes(i), -amplitudes(i), 1e-12)
         i += 1
 
-  test("criterion assembly scales the energy jet and demands a determinant for trial ML"):
+  test("criterion assembly directly forms J from dedicated coherent determinant jets"):
+    val owner = CriterionOwner.checked(1.0).toOption.get
+    val reference = CriterionReference.checked(owner, Vector(0.0, 0.0), CriterionDerivativeOrder.Full).toOption.get
+    val epoch = CriterionEpoch.checked(owner, 1L).toOption.get
     val jet = ProfileJet(4.0, Vector(1.0, -2.0), Vector(2.0, 0.5, 0.5, 3.0), Vector(1.0, 2.0, 3.0), CurvatureStatus.PositiveDefinite)
-    val penalised = CriterionJet.assemble(ProfileCriterion.PenalizedProfile(2.0), jet, None).fold(e => fail(e.message), identity)
-    assertEqualsDouble(penalised.score, -1.0, 1e-15)
-    assertEquals(penalised.gradient, Vector(-0.25, 0.5))
-    assertEquals(penalised.hessian, Vector(-0.5, -0.125, -0.125, -0.75))
-    assert(CriterionJet.assemble(ProfileCriterion.TrialRandomEffectsML(2.0), jet, None).isLeft)
-    assert(CriterionJet.assemble(ProfileCriterion.PenalizedProfile(0.0), jet, None).isLeft)
-    val logDet = ProfileJet(2.0, Vector(0.2, 0.0), Vector(0.0, 0.0, 0.0, 0.0), Vector.empty, CurvatureStatus.PositiveDefinite)
-    val ml = CriterionJet.assemble(ProfileCriterion.TrialRandomEffectsML(2.0), jet, Some(logDet)).fold(e => fail(e.message), identity)
-    assertEqualsDouble(ml.score, -1.0 - 1.0, 1e-15)
-    assertEqualsDouble(ml.gradient(0), -0.25 - 0.1, 1e-15)
+    val raw = RawEnergyJet.checked(reference, epoch, jet, 3).fold(e => fail(e.message), identity)
+    val penalized = CriterionJet.assemble(2.0, CriterionJet.Input.Penalized(raw)).fold(e => fail(e.message), identity)
+    assertEqualsDouble(penalized.score, -1.0, 1e-15)
+    assertEquals(penalized.minimizationJet, jet)
+    assert(CriterionJet.assemble(0.0, CriterionJet.Input.Penalized(raw)).isLeft)
+    val determinant = DeterminantJet.checked(reference, 2.0, Vector(0.2, 0.0), Vector.fill(4)(0.0)).fold(e => fail(e.message), identity)
+    val pair = CoherentCriterionJet.checked(raw, determinant).fold(e => fail(e.message), identity)
+    val ml = CriterionJet.assemble(2.0, CriterionJet.Input.TrialMl(pair)).fold(e => fail(e.message), identity)
+    assertEqualsDouble(ml.score, -2.0, 1e-15)
+    assertEqualsDouble(ml.minimizationJet.energy, 8.0, 1e-15)
+    assertEqualsDouble(ml.minimizationJet.gradient(0), 1.4, 1e-15)
+    assertEquals(ml.raw.jet, jet)
