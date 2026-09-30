@@ -19,6 +19,14 @@ depth samples. Its coverage records retained corner mass before normalization;
 an uncovered sparse row evaluates to zero, while eager projection uses its fill
 policy. Fractional-depth sampling is point sampling along a surface pair.
 
+Cross-engine nearest-voxel identity is qualified on identity or exactly
+invertible grid fixtures. The spatial compiler uses `GridSpec.worldToVoxel`,
+while eager and GPU sampling use `SampleSpaces.coordToIndex`. Their affine
+inverses can differ by a few ulps on oblique grids, selecting different voxels
+at exact half-voxel ties or admitting different samples at the support boundary.
+This evidence does not establish universal voxel identity across those inverse
+paths for every world affine.
+
 The engine-parity evidence and remaining qualification boundaries are recorded
 in [the numerical receipt](../../docs/verification/volume-surface-engine-parity-20260930.md).
 

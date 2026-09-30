@@ -35,7 +35,7 @@ The axis/tie repair resolves nearest indices in double precision before uploadin
 
 ## Validation
 
-The tested source commit is `dbcce3043a809547d6103764de2f1d3f385f20e1`. The final receipt is a documentation-only followup; production/test sources and module README remain identical to that source commit. No local-main integration or remote publication occurred.
+The tested source commit is `dbcce3043a809547d6103764de2f1d3f385f20e1`. At the original candidate `9ba0f367` freeze, its receipt was a documentation-only followup; production/test sources and module README remained identical to that source commit. At that freeze, no local-main integration or remote publication had occurred. The later integration evidence is recorded below.
 
 | Gate | Result | Raw log and metadata |
 | --- | --- | --- |
@@ -55,3 +55,23 @@ The loaded source-provider closure contains 11 staged checkouts, all tracked-cle
 `/private/tmp/scalafim-engine-parity-20260930/evidence-manifest.json` binds source-file blob IDs and SHA256s, final gate outcomes, and baseline/final artifact digests. Its SHA256 is `a32e109e53c381e2f404a0d863fa8dba4678e7b6a34af1a79b7a677bce6934f3`. Independent review is recorded separately on Fray #83 and the final Mote candidate; test passage alone does not imply review or landing authorization.
 
 This completes the bounded engine-parity slice of item (1), subject to the separately recorded review outcome. Mote remains open for GIFTI frame-metadata admission, the historical consumer-pin compile check, and broader exact group-space/fsLR qualification. The existing source-value nonfinite/minimumSamples decision also remains separate.
+
+
+## Independent review and local integration
+
+Fray #83, seq 600, records independent **ACCEPT-WITH-NOTES** for both the source commit `dbcce304` and the receipt-only candidate `9ba0f367`. The named reviewer recorded native Mote approval on `cand-45CM72CYF12236MMTM8G3T8MC1`. No changed-kernel correctness defect was found. An independent BigDecimal oracle checked 96 adversarial points per kernel on the relevant JVM/JS paths, including ties, support boundaries, far-outside values, and saturation; it found zero mismatches. The reviewer separately checked Scala.js/JVM rounding agreement for NaN and infinities. CPU/GPU narrowing and GPU tie mutants were killed.
+
+The qualification has a pre-existing affine-inverse limit. Spatial sampling uses `GridSpec.worldToVoxel`; eager/GPU sampling uses `SampleSpaces.coordToIndex`. Their inverses can differ by a few ulps on oblique grids. The independent review found different nearest voxels for 486 of 3000 deliberately exact half-integer ties, on both platforms. Boundary admission can also differ: at voxel `(1,1,-0.5)`, one oblique spatial inverse produced `z=-0.5000000000000002` and rejected the point, while eager produced `z=-0.5` and admitted ordinal 25 on a 3 x 4 x 5 grid. **Cross-engine nearest voxel identity is qualified on identity or exactly invertible fixtures, not every world affine.** The analytic oblique-grid trilinear test qualifies the spatial path, not universal inverse agreement between engines.
+
+Two other non-blocking review findings remain outside this repair. A simultaneous half-down tie mutant in both CPU kernels survived their owning suites, although a surface-view consumer suite detected it; absolute owning-suite CPU tie/boundary sensitivity remains follow-up work. Extremely large finite world coordinates can overflow the spatial index conversion and throw, while eager rejects them. The texture mock remains a transport oracle; the separately captured real software WebGL evidence retains its stated limits. These findings are preserved in the broader open Mote ticket.
+
+The proposed committed integration `2f45f1ab5fe29ebf9e554db2e9e8cd523160ed7c` merges the approved candidate into then-current main `0aa969a2`. Its production/test sources for this slice are identical to `9ba0f367`. Fresh integration gates passed:
+
+- JVM: `set surfaceJVM / Test / parallelExecution := false`, `surfaceJVM/test`, `spatialJVM/test`: 166 + 224 = 390 passed, exit 0. Raw log `/private/tmp/scalafim-execution-20260929/logs/volume-surface-parity-integration-jvm-serial.log`, SHA256 `f0f45d21278ba30ee10be83c2b1bfb0d9d7336f0cd758c9a91c6ce471898fe38`.
+- JS: `surfaceJS/test`, `spatialJS/test`, `surfaceViewThreeJS/test`: 132 + 199 + 18 = 349 passed; `scalafimCompileAll` exited 0 with no warnings/errors. Raw log `/private/tmp/scalafim-execution-20260929/logs/volume-surface-parity-integration-js.log`, SHA256 `d460a457959db7e7d22378258dfe2045ca3189a9ea6a50cf293052eee55d733a`.
+
+Both default-scheduling JVM attempts timed out in the unchanged `TemplateSphereFilesSuite` nested-prefix fixture; each passed the other 165 surface tests and stopped before spatial tests. Their full logs and metadata are retained as `volume-surface-parity-integration-jvm.log` and `volume-surface-parity-integration-jvm-retry.log`. The successful controlled run changed only process-local suite scheduling. Every assertion and the original 30-second per-test deadline remained intact; the same fixture passed in 11.116 seconds. This establishes the sequential-suite gate, not reliability of that fixture under default parallel scheduling on a contended host.
+
+The integration provider closure contains 14 tracked-clean staged checkouts, reflecting current main's additional provider graph. `/private/tmp/scalafim-engine-parity-20260930/integration-provider-closure.json` binds them to the tested integration/log; SHA256 `ee923b56f7bafaf6200c950f5f61789e188f702f1152749b7d1e4c8d098082c2`. The concurrent main commit `43616621` changes only an unrelated dataset test fixture and its evidence; it is preserved in the final integration, with no production/build or this slice's test changes. This README/receipt amendment states review limits and does not change compiled sources.
+
+The user requested a local merge if ready. Exact landing reachability and authority are recorded in the native Mote candidate; no remote push was requested. The broader ticket remains open for metadata/consumer qualification and the recorded remaining numerical/test gaps.
