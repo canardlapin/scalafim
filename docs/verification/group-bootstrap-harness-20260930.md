@@ -411,3 +411,14 @@ in addition to `ManifestFileSuite` (2 failed of 12; log `bootstrap-harness-conf2
 manifest-v2 regenerated (34 sources, status pending, sha256 `98929d09...`). Gates: clean `scalafimCompileAll` 0 warnings
 (`bootstrap-harness-conf2-compileall`); `groupJVM/test` Total 185, Failed 0, Passed 176, Skipped 9 (`bootstrap-harness-conf2-jvm`);
 `groupJS/test` Total 158, Failed 0, Passed 154, Skipped 4 (`bootstrap-harness-conf2-js`). These supersede the counts above (JVM 184 to 185).
+
+## Freeze for confirmation
+
+The confirmation runner went to independent review at `43e063cf`: ACCEPT-WITH-NOTES, GO for freeze-then-run. The review's N1 was fixed at `e523760a` with a paired-power re-parse test. The reviewer's mis-pairing mutant is killed, and the gates pass: clean CompileAll with 0 warnings, groupJVM 185 with 0 failed, groupJS 158 with 0 failed (`bootstrap-harness-conf2-*`).
+
+Frozen by `write_manifest_v2.py --freeze-confirmation`:
+- manifest-v2.json status "frozen for confirmation";
+- manifest-v2.json sha256 `b37f83fa441d753d0a6275b7b7bbff3e1b431092d7541f1364abbbf6a6491a9d`;
+- parent `cells.json` `76e6785b…`, unchanged.
+
+The freeze commit changes only the manifest status, its sha file and this receipt. No harness source changes. The confirmation is launched from a clean worktree at the freeze commit, and the commit's SHA is stamped into every confirmation output.
