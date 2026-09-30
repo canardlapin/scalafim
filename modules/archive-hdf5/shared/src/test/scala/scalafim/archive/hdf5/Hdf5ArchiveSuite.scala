@@ -10,6 +10,33 @@ class Hdf5ArchiveSuite extends munit.FunSuite:
     List(null, "", "/data", "x/y", ".", "1data", "é", "a" * 129, "bad\u0000").foreach(n => assert(Hdf5DatasetName(n).isLeft))
     assertEquals(value(Hdf5DatasetName("A_9")).value, "A_9")
 
+  test("flat inventory validates cardinality, distinctness and every boundary name"):
+    val a = value(Hdf5DatasetName("values"))
+    val b = value(Hdf5DatasetName("validity"))
+    assertEquals(value(Hdf5FlatInventory(Vector(a))).expected, Vector(a))
+    assertEquals(value(Hdf5FlatInventory(Vector(b, a))).expected, Vector(b, a))
+    for names <- Vector(null, Vector.empty, Vector(a, a), Vector(a, b, a)) do
+      assert(Hdf5FlatInventory(names).isLeft)
+    // Simulate an unvalidated interop boundary: opaque names still get revalidated.
+    for raw <- Vector(null, "", "x/y", "a" * 129, "é", "bad\u0000") do
+      assert(Hdf5FlatInventory(Vector(raw.asInstanceOf[Hdf5DatasetName])).isLeft)
+    assertEquals(value(Hdf5FlatInventory(Vector(value(Hdf5DatasetName("a" * 128))))).expected.size, 1)
+
+  test("existing file implementations fail closed without an inventory capability"):
+    var touched = false
+    val file = new Hdf5File:
+      def create(i: Hdf5DatasetInfo) =
+        touched = true
+        Left(Hdf5Error.Closed("fixture"))
+      def inspect(n: Hdf5DatasetName) =
+        touched = true
+        Left(Hdf5Error.Closed("fixture"))
+      def close() = Right(())
+    val inventory = value(Hdf5FlatInventory(Vector(value(Hdf5DatasetName("values")))))
+    assertEquals(file.verifyFlatInventory(inventory), Left(Hdf5Error.UnsupportedStored("flat inventory capability unavailable")))
+    assert(file.verifyFlatInventory(null).isLeft)
+    assert(!touched)
+
   test("extent rejects rank, sign and product overflow without Double conversion"):
     List(Vector.empty, Vector(1L, 1L, 1L, 1L), Vector(0L), Vector(-1L)).foreach(d => assert(Hdf5Extent(d).isLeft))
     assert(Hdf5Extent(Vector(Long.MaxValue, 2)).left.toOption.exists(_.isInstanceOf[Hdf5Error.Overflow]))

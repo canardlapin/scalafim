@@ -293,6 +293,23 @@ object JvmHdf5JniAdapter:
           d
         attach(id, info)
 
+      override def verifyFlatInventory(inventory: Hdf5FlatInventory): Either[Hdf5Error, Unit] = guarded("flat inventory"):
+        live()
+        if inventory == null then refuse(Hdf5Error.InvalidName("null flat inventory"))
+        val root = H5.H5Gget_info_by_name(file.value, "/", H5P_DEFAULT)
+        if root == null || root.mounted || root.nlinks != inventory.expected.size.toLong then
+          refuse(Hdf5Error.UnsupportedStored("exact unmounted flat root link count required"))
+        // Only validated expected names reach JNI. No enumeration, traversal or link following.
+        for name <- inventory.expected do
+          if !H5.H5Lexists(file.value, name.value, H5P_DEFAULT) then
+            refuse(Hdf5Error.UnsupportedStored("expected root link absent"))
+          val link = H5.H5Lget_info(file.value, name.value, H5P_DEFAULT)
+          if link == null || link.`type` != H5L_TYPE_HARD then
+            refuse(Hdf5Error.UnsupportedStored("hard root dataset link required"))
+          val obj = H5.H5Oget_info_by_name(file.value, name.value, H5O_INFO_BASIC, H5P_DEFAULT)
+          if obj == null || obj.`type` != H5O_TYPE_DATASET || obj.rc != 1 then
+            refuse(Hdf5Error.UnsupportedStored("singly linked root dataset required"))
+
       def inspect(name: Hdf5DatasetName): Either[Hdf5Error, Hdf5Dataset] = guarded("inspect dataset"):
         live()
         get(Hdf5DatasetName(name.value))

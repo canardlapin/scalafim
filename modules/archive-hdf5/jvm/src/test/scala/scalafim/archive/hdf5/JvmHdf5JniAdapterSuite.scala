@@ -330,3 +330,85 @@ class JvmHdf5JniAdapterSuite extends munit.FunSuite:
       get(f.close())
       get(g.close())
     clean()
+
+  private val inventory = get(Hdf5FlatInventory(Vector(name("values"), name("validity"))))
+  private val inventoryRoot = root.resolve("inventory")
+  private def verify(file: Hdf5File, plan: Hdf5FlatInventory, accepted: Boolean): Unit =
+    val before = archive.receipt
+    val result = file.verifyFlatInventory(plan)
+    if accepted then assertEquals(result, Right(()))
+    else assert(result.left.toOption.exists(_.isInstanceOf[Hdf5Error.UnsupportedStored]), result.toString)
+    val after = archive.receipt
+    assertEquals(after.attempts, before.attempts + 1)
+    assertEquals(after.failures, before.failures + (if accepted then 0 else 1))
+    assertEquals(after.payloadCalls, before.payloadCalls)
+    assertEquals(after.selectedElements, before.selectedElements)
+    assertEquals(after.selectedBytes, before.selectedBytes)
+    assertEquals(after.ownedIds, before.ownedIds)
+    assertEquals(after.peakOwnedIds, before.peakOwnedIds)
+    assertEquals(after.providerOpenIds, before.providerOpenIds)
+    assertEquals(after.openDatasets, before.openDatasets)
+    assertEquals(after.openFiles, before.openFiles)
+
+  test("independent flat inventories reject foreign names, groups, types, aliases and links without payload or IDs"):
+    val cases = Vector(
+      "good1" -> true, "good2" -> true, "reversed" -> true,
+      "third" -> false, "missing" -> false, "empty" -> false, "wrongname" -> false,
+      "group" -> false, "nested" -> false, "cycle" -> false, "namedtype" -> false,
+      "hardalias" -> false, "soft" -> false, "danglingsoft" -> false,
+      "external" -> false, "danglingexternal" -> false,
+      "longforeign" -> false, "manyforeign" -> false)
+    // Make even the existing external target unavailable: inventory must not open it.
+    val target = inventoryRoot.resolve("external-target.h5")
+    val hidden = inventoryRoot.resolve("external-target.hidden")
+    Files.move(target, hidden)
+    try
+      for (n, accepted) <- cases do
+        get(Hdf5Scope.file(archive.openReadOnly(inventoryRoot.resolve(n + ".h5").toString)): file =>
+          val plan = if n == "good1" then get(Hdf5FlatInventory(Vector(name("values")))) else inventory
+          verify(file, plan, accepted)
+          verify(file, get(Hdf5FlatInventory(plan.expected.reverse)), accepted)
+          Right(())
+        )
+        clean()
+        println(s"INVENTORY_CASE_PASS name=$n accepted=$accepted receipt=${archive.receipt}")
+    finally Files.move(hidden, target)
+
+  test("inventory at the attached dataset cap acquires no IDs; invalid and closed calls retain resources"):
+    val file = get(archive.openReadOnly(inventoryRoot.resolve("good2.h5").toString))
+    try
+      get(file.inspect(name("values")))
+      get(file.inspect(name("validity")))
+      JvmHdf5JniAdapter.failAcquisitionAt(1)
+      try verify(file, inventory, true)
+      finally JvmHdf5JniAdapter.failAcquisitionAt(-1)
+      val before = archive.receipt
+      assert(noPayload(file.verifyFlatInventory(null)).isInstanceOf[Hdf5Error.InvalidName])
+      assertEquals(archive.receipt.openDatasets, before.openDatasets)
+      assertEquals(archive.receipt.providerOpenIds, before.providerOpenIds)
+    finally get(file.close())
+    clean()
+    assertEquals(noPayload(file.verifyFlatInventory(inventory)), Hdf5Error.Closed("file"))
+    get(file.close())
+    clean()
+    println(s"INVENTORY_CAP_INVALID_CLOSED_PASS receipt=${archive.receipt}")
+
+  test("100 good and bad inventory lifetimes return provider IDs and descriptors to baseline"):
+    def cycle(): Unit =
+      for (n, accepted) <- Vector("good2" -> true, "hardalias" -> false, "danglingexternal" -> false, "manyforeign" -> false) do
+        get(Hdf5Scope.file(archive.openReadOnly(inventoryRoot.resolve(n + ".h5").toString)): file =>
+          verify(file, inventory, accepted)
+          Right(())
+        )
+        clean()
+    for _ <- 0 until 3 do cycle()
+    val beforeFd = fdCount
+    val before = archive.receipt
+    for _ <- 0 until 100 do cycle()
+    val after = archive.receipt
+    val afterFd = fdCount
+    assert(afterFd <= beforeFd + 1, s"descriptors $beforeFd -> $afterFd")
+    assertEquals(after.attempts - before.attempts, 1200L)
+    assertEquals(after.failures - before.failures, 300L)
+    assertEquals(after.payloadCalls, before.payloadCalls)
+    println(s"INVENTORY_LIFETIME_PASS cycles=100 files=400 failures=300 fdBefore=$beforeFd fdAfter=$afterFd receipt=$after")

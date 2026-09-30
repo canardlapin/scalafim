@@ -43,6 +43,22 @@ object Hdf5DatasetName:
     else Right(value)
   extension (name: Hdf5DatasetName) def value: String = name
 
+/** Exact reachable root namespace, limited to one or two distinct flat dataset names.
+  * This does not describe deleted/unreachable file bytes or dataset shape, dtype or payload.
+  */
+final class Hdf5FlatInventory private (val expected: Vector[Hdf5DatasetName])
+object Hdf5FlatInventory:
+  def apply(expected: Vector[Hdf5DatasetName]): Either[Hdf5Error, Hdf5FlatInventory] =
+    if expected == null || expected.isEmpty || expected.size > 2 then
+      Left(Hdf5Error.InvalidName("flat inventory requires 1..2 distinct names"))
+    else
+      for
+        _ <- expected.foldLeft[Either[Hdf5Error, Unit]](Right(())):
+          (acc, name) => acc.flatMap(_ => Hdf5DatasetName(name.value).map(_ => ()))
+        _ <- if expected.distinct.size == expected.size then Right(())
+          else Left(Hdf5Error.InvalidName("flat inventory requires distinct names"))
+      yield new Hdf5FlatInventory(expected)
+
 opaque type Hdf5Extent = Vector[Long]
 object Hdf5Extent:
   def apply(dimensions: Vector[Long]): Either[Hdf5Error, Hdf5Extent] =
@@ -172,6 +188,11 @@ trait Hdf5Dataset:
 trait Hdf5File:
   def create(info: Hdf5DatasetInfo): Either[Hdf5Error, Hdf5Dataset]
   def inspect(name: Hdf5DatasetName): Either[Hdf5Error, Hdf5Dataset]
+  /** Verify exact root links are singly linked hard datasets, without reading payload.
+    * Dataset metadata validation remains the separate inspect capability.
+    */
+  def verifyFlatInventory(inventory: Hdf5FlatInventory): Either[Hdf5Error, Unit] =
+    Left(Hdf5Error.UnsupportedStored("flat inventory capability unavailable"))
   def close(): Either[Hdf5Error, Unit]
 
 trait Hdf5Archive:
