@@ -15,10 +15,10 @@ import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitPlan, FmriMode
 import scalafim.image.SampleSpaces
 
 class ProfileHrfFitSuite extends munit.FunSuite:
-  private val rows = 120
-  private val frame = SamplingFrame(blockLens = Seq(60, 60), tr = Seq(1.0, 1.0))
+  protected val rows = 120
+  protected val frame = SamplingFrame(blockLens = Seq(60, 60), tr = Seq(1.0, 1.0))
   private val point = ShapePoint.unsafe(Vector(5.3, math.log(1.55)))
-  private lazy val basis = HrfKernelBasis.compile(KernelBasisSpec(
+  protected lazy val basis = HrfKernelBasis.compile(KernelBasisSpec(
     GaussianFamily.Default, PositiveSeconds.unsafe(Seconds(0.2)), Vector(26, 21), tolerance = 1e-4,
     maxRank = 40)).fold(error => fail(error.message), identity)
   private lazy val fixedBasis = HrfKernelBasis.compile(KernelBasisSpec(
@@ -33,21 +33,21 @@ class ProfileHrfFitSuite extends munit.FunSuite:
   private val deviations = Vector(0.0, -0.3, 0.1, 0.2, -0.4, 0.4)
   private lazy val schedule = EventSchedule.fromParts(onsets, Vector.fill(6)(Seconds(0.0)), blocks)
     .fold(error => fail(error.message), identity)
-  private lazy val drive = ProfileTrialDrive.make(schedule, membership,
+  protected lazy val drive = ProfileTrialDrive.make(schedule, membership,
     labels.map(ConditionId.unsafe), Vector.tabulate(6)(i => TrialId.unsafe(s"trial${i + 1}")),
     membership.conditionOfTrial.map(i => ConditionId.unsafe(labels(i))))
     .fold(error => fail(error.message), identity)
   private lazy val expanded = ExpandedTrialDesign.lower(onsets, blocks, Vector.fill(6)(Seconds(0.0)),
     membership, frame, basis, Seconds(0.2)).fold(error => fail(error.message), identity)
-  private lazy val baseline = BaselineModel.build(frame, BaselineBasis.Constant, intercept = Intercept.Global)
+  protected lazy val baseline = BaselineModel.build(frame, BaselineBasis.Constant, intercept = Intercept.Global)
   private lazy val nuisance =
     val mat = baseline.designMatrix
     DMat.tabulate(rows, mat.cols)((t, j) => mat(t, j))
-  private val arPlan = WhiteningPlan.global(ArmaCoefficients.ar(0.37),
+  protected val arPlan = WhiteningPlan.global(ArmaCoefficients.ar(0.37),
     Vector(TimeSegment(0, 60, 0), TimeSegment(60, 120, 1)), exactFirstAr1 = true)
-  private val arConfig = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), global = true, rho = Some(0.37)))
+  protected val arConfig = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), global = true, rho = Some(0.37)))
 
-  private def designAt(coords: Vector[Double]): Array[Double] =
+  protected def designAt(coords: Vector[Double]): Array[Double] =
     val coefficients = new Array[Double](expanded.rank)
     basis.coefficientsInto(ShapePoint.unsafe(coords), new Array[Double](basis.fineCount), coefficients)
     val x = new Array[Double](rows * expanded.trials)
@@ -66,7 +66,7 @@ class ProfileHrfFitSuite extends munit.FunSuite:
       t += 1
     x
 
-  private lazy val responseColumns: Vector[Array[Double]] =
+  protected lazy val responseColumns: Vector[Array[Double]] =
     val x = designAt(point.coordinates)
     Vector.tabulate(4) { voxel =>
       Array.tabulate(rows) { t =>
@@ -79,18 +79,18 @@ class ProfileHrfFitSuite extends munit.FunSuite:
         value + 0.03 * math.sin(0.37 * t + voxel) - 0.02 * math.cos(0.11 * t)
       }
     }
-  private lazy val dataset: FmriDataset =
+  protected lazy val dataset: FmriDataset =
     val data = Matrix.dense(rows, 4, (0 until rows).flatMap(t => responseColumns.map(_(t))))
     FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("profile-executor"), data,
       SampleSpaces(Vector(4, 1, 1))), frame).dataset
-  private def plan(alpha: Double, config: FitConfig = arConfig,
+  protected def plan(alpha: Double, config: FitConfig = arConfig,
                    criterion: ProfileCriterion = ProfileCriterion.PenalizedProfile(1.0)): ProfileHrfPlan =
     ProfileHrfPlan.fromTrialEvents(dataset, drive, baseline, config, basis, alpha, criterion)
       .fold(error => fail(error.message), identity)
-  private def reader: SynchronousFmriDataset =
+  protected def reader: SynchronousFmriDataset =
     SynchronousFmriDataset.readerFor(dataset).fold(error => fail(error.message), identity)
-  private def selection = DataSelection(voxels = VoxelSelection.indices(3, 0, 2))
-  private def policy(blockSize: Int = 2, admission: Option[ObservedFamilyAdmission] = None) =
+  protected def selection = DataSelection(voxels = VoxelSelection.indices(3, 0, 2))
+  protected def policy(blockSize: Int = 2, admission: Option[ObservedFamilyAdmission] = None) =
     ProfileDecodePolicy(Vector(3, 3), DecodeBudget(maxNewtonSteps = 3, maxJets = 4,
       maxExactEvaluations = 8), prior = None, execution = ExecutionBudget(blockSize, 1),
       observedAdmission = admission)
@@ -122,7 +122,7 @@ class ProfileHrfFitSuite extends munit.FunSuite:
 
   protected def parallelSink(results: scala.collection.mutable.ArrayBuffer[ProfileFitBlock]) = sink(results)
 
-  private def whiten(values: Array[Double], columns: Int): Array[Double] =
+  protected def whiten(values: Array[Double], columns: Int): Array[Double] =
     val matrix = DMat.tabulate(rows, columns)((t, j) => values(t * columns + j))
     val result = WhiteningTransform.matrix(arPlan, matrix).fold(error => fail(error.message), identity)
     val out = new Array[Double](rows * columns)
@@ -130,7 +130,11 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     out
 
   /** Independent dense augmented normal equations at the returned shape. */
-  private def denseAt(voxel: Int, coords: Vector[Double]): (Double, Vector[Double], Vector[Double]) =
+  protected def denseAt(voxel: Int, coords: Vector[Double]): (Double, Vector[Double], Vector[Double]) =
+    val (energy, conditions, trials, _) = denseAllAt(voxel, coords)
+    (energy, conditions, trials)
+
+  protected def denseAllAt(voxel: Int, coords: Vector[Double]): (Double, Vector[Double], Vector[Double], Vector[Double]) =
     val n = expanded.trials
     val c = membership.conditionCount
     val f = nuisance.cols
@@ -181,13 +185,17 @@ class ProfileHrfFitSuite extends munit.FunSuite:
       val delta = solved(trial, 0) - solved(n + f + membership.conditionOfTrial(trial), 0)
       energy += lambda * delta * delta
       trial += 1
-    (energy, Vector.tabulate(c)(i => solved(n + f + i, 0)), Vector.tabulate(n)(i => solved(i, 0)))
+    (energy, Vector.tabulate(c)(i => solved(n + f + i, 0)), Vector.tabulate(n)(i => solved(i, 0)),
+      Vector.tabulate(f)(i => solved(n + i, 0)))
 
   test("off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape"):
     val prepared = checked(ProfileHrfFit.prepare(plan(0.4), selection,
       CanonicalTemporalWhitening.Shared(arPlan), policy()))
     val payloads = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
     val completed = checked(prepared.run(reader, sink(payloads)))
+    assertEquals(completed.provenance, prepared.provenance)
+    assert(completed.provenance.endsWith("|exact-readout=true"))
+    assertEquals(completed.publicExecution, None)
     assertEquals(completed.progress.deliveredBlocks, 2)
     assertEquals(completed.progress.deliveredVoxels, 3)
     assertEquals(completed.progress.workersUsed, 1)
@@ -301,6 +309,7 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     val payloads = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
     val completed = checked(prepared.run(reader, sink(payloads)))
     assertEquals(completed.progress.trial, None)
+    assert(prepared.trialOutputs.isLeft)
     assert(completed.provenance.contains("direct-condition-compact"))
     val aggregate = expanded.aggregateConditions
     val expected = condition.term.data

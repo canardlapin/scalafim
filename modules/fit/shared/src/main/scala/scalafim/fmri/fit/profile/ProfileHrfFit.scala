@@ -14,7 +14,7 @@ import scalafim.fmri.model.{AmplitudeStructure, ArStructure, FitConfig, FitEngin
 import scala.util.control.NonFatal
 
 /** The observed-family admission is mandatory for either condition route.
-  * Trial readout remains an unnormalised internal backend result until PHRF-11.
+  * The legacy run retains raw backend readout; trialOutputs is explicit.
   */
 final case class ProfileDecodePolicy(
     nodesPerAxis: Vector[Int],
@@ -45,11 +45,16 @@ final case class ProfileRunProgress(
     workersUsed: Int,
     decoder: ProfileDecoderWork,
     trial: Option[TrialBandedWorkSnapshot],
-    decodeStatuses: Map[DecodeStatus, Long] = Map.empty)
+    decodeStatuses: Map[DecodeStatus, Long] = Map.empty,
+    publicReadout: Option[ProfileTrialOutputProgress] = None,
+    publicExecution: Option[ProfileTrialExecutionDeclaration] = None)
 
 enum ProfileFitError:
   case Unsupported(detail: String)
   case Preparation(detail: String)
+  case TrialOutputAdmission(error: ProfileTrialReadoutError)
+  case TrialExecutionAdmission(detail: String, execution: ProfileTrialExecutionDeclaration)
+  case TrialReadoutFailure(error: ProfileTrialReadoutError, progress: ProfileRunProgress)
   case Dataset(detail: String, progress: ProfileRunProgress)
   case Backend(detail: String, progress: ProfileRunProgress)
   case Cancelled(progress: ProfileRunProgress)
@@ -58,10 +63,25 @@ enum ProfileFitError:
   case WorkersStillRunning(original: ExecutionError, receipts: Vector[ProfileFitReceipt],
     setup: ProfileSetupReceipt, provenance: String, termination: ProfileRunTermination)
 
+  def publicExecution: Option[ProfileTrialExecutionDeclaration] =
+    this match
+      case TrialExecutionAdmission(_, execution) => Some(execution)
+      case TrialReadoutFailure(_, progress) => progress.publicExecution
+      case Dataset(_, progress) => progress.publicExecution
+      case Backend(_, progress) => progress.publicExecution
+      case Cancelled(progress) => progress.publicExecution
+      case SinkRefused(_, progress) => progress.publicExecution
+      case SinkThrew(_, progress) => progress.publicExecution
+      case WorkersStillRunning(_, _, _, _, termination) => termination.publicExecution
+      case Unsupported(_) | Preparation(_) | TrialOutputAdmission(_) => None
+
   def message: String =
     this match
+      case TrialExecutionAdmission(detail, _) => "profile trial execution refused: " + detail
       case Unsupported(detail) => s"unsupported profile fit: $detail"
       case Preparation(detail) => s"profile preparation failed: $detail"
+      case TrialOutputAdmission(error) => s"profile trial output refused: ${error.message}"
+      case TrialReadoutFailure(error, _) => s"profile trial readout failed: ${error.message}"
       case Dataset(detail, _) => s"profile dataset read failed: $detail"
       case Backend(detail, _) => s"profile backend failed: $detail"
       case Cancelled(_) => "profile execution cancelled; previously delivered blocks remain partial"
@@ -99,14 +119,16 @@ final case class ProfileRunSummary(
     receipts: Vector[ProfileFitReceipt],
     progress: ProfileRunProgress,
     setup: ProfileSetupReceipt,
-    provenance: String)
+    provenance: String):
+  def publicExecution: Option[ProfileTrialExecutionDeclaration] = progress.publicExecution
 
 /** Finalizes a failed parallel run only after its owned workers have stopped.
   * The resulting progress is captured once and can be read repeatedly.
   */
 final class ProfileRunTermination private[profile] (
     private val workers: ExecutionTermination,
-    private val finish: () => ProfileFitError):
+    private val finish: () => ProfileFitError,
+    val publicExecution: Option[ProfileTrialExecutionDeclaration] = None):
   private var completed: Option[ProfileFitError] = None
 
   def isTerminated: Boolean = workers.isTerminated
@@ -126,10 +148,39 @@ private enum ProfileBackend:
   case Compact(prepared: CompactConditionPreparation)
   case Trial(prepared: TrialBandedPreparation, bank: TrialBandedObjective)
 
-private enum ProfileWorkFailure:
+private[profile] enum ProfileWorkFailure:
   case Dataset(detail: String)
   case Backend(detail: String)
+  case TrialReadout(error: ProfileTrialReadoutError)
   case Cancelled
+
+private[profile] trait ProfilePayload[V, P]:
+  def publicOutputs: Boolean = false
+  def publicExecution: Option[ProfileTrialExecutionDeclaration] = None
+  def condition(voxelId: Int, fit: CompactConditionFit, normalization: scalafim.fmri.hrf.family.NormalizationRule): V
+  def trial(voxelId: Int, decoded: ShapeDecodeResult, objective: TrialBandedObjective,
+    whitened: Array[Double], work: ProfileTrialOutputWork): Either[ProfileWorkFailure, V]
+  def block(ordinal: Int, ids: Vector[Int], values: Vector[V]): P
+  def ids(payload: P): Vector[Int]
+  def retainedTrialValues(payload: P): Long = 0L
+
+private object LegacyProfilePayload extends ProfilePayload[ProfileVoxelResult, ProfileFitBlock]:
+  def condition(voxelId: Int, fit: CompactConditionFit, normalization: scalafim.fmri.hrf.family.NormalizationRule): ProfileVoxelResult =
+    ProfileVoxelResult(voxelId, fit.decode.coordinates, fit.decode.status,
+      fit.residualEnergy, fit.amplitudes, ProfileAmplitudeReadout.ConditionMeans(fit.amplitudes,
+        normalization), fit.decode.conditionalSd)
+  def trial(voxelId: Int, decoded: ShapeDecodeResult, objective: TrialBandedObjective,
+      whitened: Array[Double], work: ProfileTrialOutputWork): Either[ProfileWorkFailure, ProfileVoxelResult] =
+    if !decoded.energy.isFinite || decoded.coordinates.exists(!_.isFinite) then
+      Left(ProfileWorkFailure.Backend("nonfinite decoded point; exact conditional readout unavailable"))
+    else objective.readout(TrialReadoutFactorMode.ExactShape(decoded.coordinates))
+      .left.map(error => ProfileWorkFailure.Backend(error.message))
+      .map(readout => ProfileVoxelResult(voxelId, decoded.coordinates, decoded.status,
+        readout.penalizedEnergy, readout.conditionMeans, ProfileAmplitudeReadout.AdaptiveTrial(readout),
+        decoded.conditionalSd))
+  def block(ordinal: Int, ids: Vector[Int], values: Vector[ProfileVoxelResult]): ProfileFitBlock =
+    ProfileFitBlock(ordinal, ids, values)
+  def ids(payload: ProfileFitBlock): Vector[Int] = payload.voxelIds
 
 private final class ProfileWorkerAbort extends RuntimeException with scala.util.control.NoStackTrace
 
@@ -149,6 +200,10 @@ final class PreparedProfileHrf private[profile] (
   private[profile] def isTrial: Boolean = backend match
     case ProfileBackend.Trial(_, _) => true
     case _ => false
+
+  lazy val trialOutputs: Either[ProfileFitError, PreparedProfileTrialOutputs] = backend match
+    case ProfileBackend.Trial(prepared, bank) => PreparedProfileTrialOutputs.make(this, prepared, bank)
+    case _ => Left(ProfileFitError.Unsupported("public trial outputs require the trial backend"))
 
   def run(
       reader: DatasetSeriesReader,
@@ -246,13 +301,27 @@ final class PreparedProfileHrf private[profile] (
         BlockSink[ProfileFitBlock, ProfileFitReceipt], () => Boolean) =>
         Either[ExecutionError, ExecutionSummary[ProfileFitReceipt]]
   ): Either[ProfileFitError, ProfileRunSummary] =
+    runPayload(readers, sink, cancelled, parallel, LegacyProfilePayload, execute)
+
+  private[profile] def runPayload[V, P](
+      readers: Vector[DatasetSeriesReader],
+      sink: BlockSink[P, ProfileFitReceipt],
+      cancelled: () => Boolean,
+      parallel: Boolean,
+      payload: ProfilePayload[V, P],
+      execute: (Int, ExecutionBudget, () => BlockWorker[P],
+        BlockSink[P, ProfileFitReceipt], () => Boolean) =>
+        Either[ExecutionError, ExecutionSummary[ProfileFitReceipt]]
+  ): Either[ProfileFitError, ProfileRunSummary] =
+    val publicExecution = payload.publicExecution
+    val runProvenance = publicExecution.fold(provenance)(_.provenance)
     if parallel && !isTrial then
       return Left(ProfileFitError.Unsupported("parallel execution is available for the trial route only"))
     val voxels = selected.voxels
     val blocks = BlockExecutor.blocks(voxels.length, policy.execution.blockSize)
     val expectedReaders = if blocks.isEmpty then 0 else if parallel then math.min(policy.execution.workers, blocks.length) else 1
     val empty = ProfileRunProgress(0, 0, 0, 0,
-      ProfileDecoderWork(0, 0, 0, 0, 0, 0, 0, 0), None)
+      ProfileDecoderWork(0, 0, 0, 0, 0, 0, 0, 0), None, publicExecution = publicExecution)
     if readers.length != expectedReaders then
       return Left(ProfileFitError.Dataset(s"expected $expectedReaders caller-owned readers; got ${readers.length}", empty))
     if readers.indices.exists(i => (0 until i).exists(j => readers(i) eq readers(j))) then
@@ -274,6 +343,7 @@ final class PreparedProfileHrf private[profile] (
     var sinkCancelled = false
     var deliveredBlocks = 0
     var deliveredVoxels = 0
+    var emittedTrialValues = 0L
     val completedReceipts = Vector.newBuilder[ProfileFitReceipt]
     val grid = NodeGrid(plan.basis.family.chart, policy.nodesPerAxis)
     val rows = dataset.shape.timepoints
@@ -284,7 +354,7 @@ final class PreparedProfileHrf private[profile] (
         lock.synchronized { callbackFailure = Some(error.toString) }
         true
 
-    final class ProfileBlockWorker(val reader: DatasetSeriesReader) extends BlockWorker[ProfileFitBlock]:
+    final class ProfileBlockWorker(val reader: DatasetSeriesReader) extends BlockWorker[P]:
       val counters = new DecoderCounters
       val compact = backend match
         case ProfileBackend.Compact(prepared) => Some(new CompactConditionRuntime(prepared, grid, policy.budget,
@@ -298,8 +368,9 @@ final class PreparedProfileHrf private[profile] (
         case _ => None
       val statuses = scala.collection.mutable.Map.empty[DecodeStatus, Long]
       var attempted = 0
+      val publicWork = new ProfileTrialOutputWork
 
-      def process(block: VoxelBlock): ProfileFitBlock =
+      def process(block: VoxelBlock): P =
         def abort(error: ProfileWorkFailure): Nothing =
           lock.synchronized { failures.update(block.index, error) }
           throw new ProfileWorkerAbort
@@ -329,7 +400,7 @@ final class PreparedProfileHrf private[profile] (
           case _ => abort(ProfileWorkFailure.Backend("unexpected fixed backend"))
         val matrix = whitened.fold(abort, identity)
         val contiguous = new Array[Double](rows)
-        val results = Vector.newBuilder[ProfileVoxelResult]
+        val results = Vector.newBuilder[V]
         var within = 0
         while within < ids.length do
           checkCancel()
@@ -343,28 +414,20 @@ final class PreparedProfileHrf private[profile] (
               case ProfileBackend.Compact(_) =>
                 val fit = compact.get.fit(contiguous, 0, counters)
                 statuses.update(fit.decode.status, statuses.getOrElse(fit.decode.status, 0L) + 1L)
-                Right(ProfileVoxelResult(ids(within), fit.decode.coordinates, fit.decode.status,
-                  fit.residualEnergy, fit.amplitudes, ProfileAmplitudeReadout.ConditionMeans(fit.amplitudes,
-                    plan.basis.family.libraryNormalization), fit.decode.conditionalSd))
+                Right(payload.condition(ids(within), fit, plan.basis.family.libraryNormalization))
               case ProfileBackend.Trial(prepared, _) =>
                 val (objective, decoder, buffer) = trial.get
                 prepared.encodeWhitenedInto(contiguous, 0, buffer).left.map(error => ProfileWorkFailure.Backend(error.message)).flatMap { encoded =>
                   objective.pointAt(encoded)
                   val decoded = decoder.decode(counters)
                   statuses.update(decoded.status, statuses.getOrElse(decoded.status, 0L) + 1L)
-                  if !decoded.energy.isFinite || decoded.coordinates.exists(!_.isFinite) then
-                    Left(ProfileWorkFailure.Backend("nonfinite decoded point; exact conditional readout unavailable"))
-                  else objective.readout(TrialReadoutFactorMode.ExactShape(decoded.coordinates))
-                    .left.map(error => ProfileWorkFailure.Backend(error.message))
-                    .map(readout => ProfileVoxelResult(ids(within), decoded.coordinates, decoded.status,
-                      readout.penalizedEnergy, readout.conditionMeans, ProfileAmplitudeReadout.AdaptiveTrial(readout),
-                      decoded.conditionalSd))
+                  payload.trial(ids(within), decoded, objective, contiguous, publicWork)
                 }
               case _ => Left(ProfileWorkFailure.Backend("unexpected fixed backend"))
           catch case NonFatal(error) => Left(ProfileWorkFailure.Backend(error.toString))
           results += result.fold(abort, identity)
           within += 1
-        ProfileFitBlock(block.index, ids, results.result())
+        payload.block(block.index, ids, results.result())
 
     def progress: ProfileRunProgress =
       val live = states.iterator.take(allocated).toVector
@@ -376,10 +439,13 @@ final class PreparedProfileHrf private[profile] (
           sum.fallbacks + c.fallbacks)
       }
       val statuses = live.flatMap(_.statuses).groupMapReduce(_._1)(_._2)(_ + _)
-      val snapshots = live.flatMap(_.trial.map(_._1.work.snapshot))
+      val snapshots = live.flatMap(worker => worker.trial.map(_._1.work.snapshot).toVector ++
+        (if payload.publicOutputs then Vector(worker.publicWork.numerical) else Vector.empty))
       val trialWork = if !isTrial then None else Some(ProfileHrfFit.sumTrialWork(snapshots))
       ProfileRunProgress(deliveredBlocks, deliveredVoxels, live.map(_.attempted).sum, live.length,
-        decoder, trialWork, statuses)
+        decoder, trialWork, statuses,
+        if payload.publicOutputs then Some(ProfileTrialOutputProgress.aggregate(live.map(_.publicWork), emittedTrialValues)) else None,
+        publicExecution)
 
     val factory = () => lock.synchronized {
       val slot = allocated
@@ -388,12 +454,12 @@ final class PreparedProfileHrf private[profile] (
       allocated += 1
       worker
     }
-    val guardedSink = new BlockSink[ProfileFitBlock, ProfileFitReceipt]:
-      def accept(block: VoxelBlock, payload: ProfileFitBlock): Either[String, ProfileFitReceipt] =
+    val guardedSink = new BlockSink[P, ProfileFitReceipt]:
+      def accept(block: VoxelBlock, value: P): Either[String, ProfileFitReceipt] =
         if stop() then
           sinkCancelled = true
           return Left("cancelled before sink delivery")
-        val accepted = try sink.accept(block, payload)
+        val accepted = try sink.accept(block, value)
           catch case NonFatal(error) =>
             sinkFailure = Some((true, error.toString))
             Left(error.toString)
@@ -401,18 +467,21 @@ final class PreparedProfileHrf private[profile] (
           case Left(detail) =>
             if sinkFailure.isEmpty then sinkFailure = Some((false, detail))
             Left(detail)
-          case Right(receipt) if receipt.ordinal != block.index || receipt.voxelIds != payload.voxelIds =>
+          case Right(receipt) if receipt.ordinal != block.index || receipt.voxelIds != payload.ids(value) =>
             sinkFailure = Some((false, "receipt axis differs from delivered block"))
             Left("receipt axis differs from delivered block")
           case Right(receipt) =>
             deliveredBlocks += 1
             deliveredVoxels += block.count
+            emittedTrialValues += payload.retainedTrialValues(value)
             completedReceipts += receipt
             Right(receipt)
     def finalFailure(error: ExecutionError): ProfileFitError =
       val p = progress
       error match
-        case ExecutionError.InvalidBudget(detail) => ProfileFitError.Unsupported(detail)
+        case ExecutionError.InvalidBudget(detail) => publicExecution match
+          case Some(declaration) => ProfileFitError.TrialExecutionAdmission(detail, declaration)
+          case None => ProfileFitError.Unsupported(detail)
         case ExecutionError.Cancelled(_) => callbackFailure match
           case Some(detail) => ProfileFitError.Backend(s"cancellation callback: $detail", p)
           case None => ProfileFitError.Cancelled(p)
@@ -427,16 +496,17 @@ final class PreparedProfileHrf private[profile] (
           failures.get(block.index) match
             case Some(ProfileWorkFailure.Dataset(reason)) => ProfileFitError.Dataset(reason, p)
             case Some(ProfileWorkFailure.Backend(reason)) => ProfileFitError.Backend(reason, p)
+            case Some(ProfileWorkFailure.TrialReadout(error)) => ProfileFitError.TrialReadoutFailure(error, p)
             case Some(ProfileWorkFailure.Cancelled) => ProfileFitError.Cancelled(p)
             case None => ProfileFitError.Backend(detail, p)
         case ExecutionError.WorkersStillRunning(_, _, _) =>
           ProfileFitError.Backend("nested unfinished worker outcome", p)
     val result = execute(voxels.length, policy.execution, factory, guardedSink, stop)
     result match
-      case Right(summary) => Right(ProfileRunSummary(summary.receipts, progress, setup, provenance))
+      case Right(summary) => Right(ProfileRunSummary(summary.receipts, progress, setup, runProvenance))
       case Left(ExecutionError.WorkersStillRunning(original, _, termination)) =>
-        Left(ProfileFitError.WorkersStillRunning(original, completedReceipts.result(), setup, provenance,
-          new ProfileRunTermination(termination, () => finalFailure(original))))
+        Left(ProfileFitError.WorkersStillRunning(original, completedReceipts.result(), setup, runProvenance,
+          new ProfileRunTermination(termination, () => finalFailure(original), publicExecution)))
       case Left(error) => Left(finalFailure(error))
 
   private def deliver(

@@ -2,6 +2,8 @@ package scalafim.fmri.fit.profile
 
 import scalafim.dataset.{DataSelection, DatasetError, DatasetSeriesReader, FmriDataset, FmriSeries, VoxelSelection}
 import scalafim.fmri.fit.profile.ProfileHrfFitParallel.*
+import scalafim.fmri.fit.profile.ProfileHrfTrialOutputsParallel.*
+import scalafim.fmri.hrf.family.NormalizationRule
 
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReference}
@@ -277,6 +279,211 @@ class ProfileHrfFitParallelSuite extends ProfileHrfFitSuite:
           assert(returned.await(5, TimeUnit.SECONDS))
           result.get() match
             case Left(ProfileFitError.SinkRefused(reason, progress)) =>
+              assertEquals(reason, "reject trial block")
+              assertEquals(progress.deliveredBlocks, 0)
+              assert(progress.attemptedVoxels >= 1 && progress.attemptedVoxels <= 2)
+              assertEquals(progress.workersUsed, 2)
+            case other => fail(s"expected final trial sink failure, got $other")
+        assertEquals(activeReaders.get(), 0)
+        assertEquals(sinkCalls.get(), 1)
+        assert(restored.get())
+      finally
+        releaseReader.countDown()
+        runner.join(5000)
+      assert(!runner.isAlive)
+
+  private def publicPrepared(blockSize: Int, workers: Int, count: Int = 16): (FmriDataset, PreparedProfileTrialOutputs) =
+    val (dataset, plan) = parallelFixture(count)
+    val selected = if count == 16 then chosen else DataSelection(voxels = VoxelSelection.indices(
+      (0 until count).map(i => (i * 257 + 15) % count)*))
+    val policy = parallelPolicy(blockSize, workers).copy(budget = DecodeBudget(maxNewtonSteps = 16,
+      maxJets = 20, maxExactEvaluations = 40, maxCandidateAttempts = 12, stationarityStepTolerance = 1e-8))
+    val fit = parallelChecked(ProfileHrfFit.prepare(plan, selected, parallelWhitening, policy))
+    (dataset, parallelChecked(fit.trialOutputs))
+
+  private def publicSink(values: ArrayBuffer[ProfileTrialOutputBlock]) =
+    new BlockSink[ProfileTrialOutputBlock, ProfileFitReceipt]:
+      def accept(block: VoxelBlock, value: ProfileTrialOutputBlock): Either[String, ProfileFitReceipt] =
+        values += value
+        Right(ProfileFitReceipt(value.ordinal, value.voxelIds))
+
+  test("public conditional route preserves ordered physical axes and all numerical totals across 1/2/8 workers and 1/2/256 chunks"):
+    val count = 2048 // Eight actual blocks even at chunk size 256.
+    val physicalIds = (0 until count).map(i => (i * 257 + 15) % count).toVector
+    def runPublic(chunk: Int, workers: Int): (ProfileRunSummary, Vector[ProfileTrialOutputVoxel]) =
+      val (dataset, view) = publicPrepared(chunk, workers, count)
+      val q = ProfileTrialSignedQuery.make("signed", view.axis, Vector(0.5, -0.3, 0, 0.2, -0.1, 0.7), 1e-6).toOption.get
+      val values = ArrayBuffer.empty[ProfileTrialOutputBlock]
+      val actualWorkers = workers
+      val summary = parallelChecked(view.runParallel(readers(dataset, actualWorkers),
+        OutputRequest.TrialQueries(Vector(q), NormalizationRule.Density),
+        ProfileTrialReadoutMode.CorrectedReference, publicSink(values)))
+      val voxels = values.toVector.flatMap(_.results)
+      voxels.foreach(_.output match
+        case ProfileTrialOutputOutcome.Emitted(token, value) =>
+          assert(value.axis eq view.axis)
+          assert(token.bank eq view.bank)
+          assert(token.axis eq view.axis)
+          assert(value.axis.preparation eq view.bank.preparation)
+        case other => fail(s"expected accepted public output, got $other"))
+      (summary, voxels)
+    val (reference, expected) = runPublic(1, 1)
+    for chunk <- Vector(1, 2, 256); workers <- Vector(1, 2, 8) do
+      val (summary, actual) = runPublic(chunk, workers)
+      assertEquals(summary.receipts.flatMap(_.voxelIds), physicalIds)
+      assertEquals(summary.receipts.map(_.ordinal), summary.receipts.indices.toVector)
+      assertEquals(summary.progress.workersUsed, workers)
+      assertEquals(summary.progress.decoder, reference.progress.decoder)
+      assertEquals(summary.progress.trial, reference.progress.trial)
+      assertEquals(summary.progress.decodeStatuses, reference.progress.decodeStatuses)
+      assertEquals(summary.progress.publicReadout.get.copy(storage = reference.progress.publicReadout.get.storage), reference.progress.publicReadout.get)
+      assertEquals(summary.setup.bankSetup, reference.setup.bankSetup)
+      actual.zip(expected).foreach { (a, b) =>
+        assertEquals(a.voxelId, b.voxelId)
+        assertEquals(a.selection, b.selection)
+        (a.output, b.output) match
+          case (ProfileTrialOutputOutcome.Emitted(ar, av), ProfileTrialOutputOutcome.Emitted(br, bv)) =>
+            assertEquals(ar.index, br.index)
+            assertEquals(av.axis.trialIds, bv.axis.trialIds)
+            assertEquals(av.axis.conditionIds, bv.axis.conditionIds)
+            assertEquals(av.axis.conditionForTrial, bv.axis.conditionForTrial)
+            assertEquals(av.axis.nuisanceColumnIds, bv.axis.nuisanceColumnIds)
+            assertEquals(av.axis.selectedResponseRows, bv.axis.selectedResponseRows)
+            assertEquals(av.actualCoordinates, bv.actualCoordinates)
+            assertEquals(av.queries, bv.queries)
+            assertEquals(av.conditionMeans, bv.conditionMeans)
+            assertEquals(av.nuisanceCoefficients, bv.nuisanceCoefficients)
+          case other => fail(s"expected emitted pair, got $other")
+      }
+
+  test("public parallel invalid query and certificate touch no reader descriptors or cancellation callbacks"):
+    val (_, view) = publicPrepared(1, 2)
+    val (_, foreign) = publicPrepared(1, 2)
+    val query = ProfileTrialSignedQuery.make("foreign", foreign.axis, Vector(1.0, 0, 0, 0, 0, 0), 1e-6).toOption.get
+    val touched = new AtomicInteger(0)
+    val poison = new DatasetSeriesReader:
+      def dataset: FmriDataset = { touched.incrementAndGet(); fail("descriptor touched") }
+      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] = fail("read touched")
+    assert(view.runParallel(Vector(poison), OutputRequest.TrialQueries(Vector(query), NormalizationRule.Density),
+      ProfileTrialReadoutMode.ExactShape, publicSink(ArrayBuffer.empty), () => { touched.incrementAndGet(); true }).isLeft)
+    assert(view.runParallel(Vector(poison), OutputRequest.TrialAmplitudes(NormalizationRule.Density),
+      ProfileTrialReadoutMode.ExactShape, publicSink(ArrayBuffer.empty),
+      evidence = ProfileTrialEvidenceRequest.CertifiedOriginalEquations).isLeft)
+    assertEquals(touched.get(), 0)
+
+  test("public sequential and parallel executions retain the same checked declaration including runtime admission failures"):
+    val (dataset, view) = publicPrepared(1, 2)
+    val query = ProfileTrialSignedQuery.make("same scientific query", view.axis,
+      Vector(0.5, -0.3, 0, 0.2, -0.1, 0.7), 1e-6).toOption.get
+    val request = OutputRequest.TrialQueries(Vector(query), NormalizationRule.Density)
+    val mode = ProfileTrialReadoutMode.CorrectedReference
+    val sequential = parallelChecked(view.run(parallelReader(dataset), request, mode, publicSink(ArrayBuffer.empty)))
+    val parallel = parallelChecked(view.runParallel(readers(dataset, 2), request, mode, publicSink(ArrayBuffer.empty)))
+    assertEquals(sequential.publicExecution, parallel.publicExecution)
+    assertEquals(sequential.provenance, parallel.provenance)
+    assert(parallel.publicExecution.get.axis eq view.axis)
+    assertEquals(parallel.publicExecution.get.queries.head.weights.map(java.lang.Double.toHexString),
+      query.weights.map(java.lang.Double.toHexString))
+    assertEqualsDouble(parallel.publicExecution.get.queries.head.absoluteTolerance, query.absoluteTolerance, 0.0)
+    val noReaders = view.runParallel(Vector.empty, request, mode, publicSink(ArrayBuffer.empty)).left.toOption.get
+    assertEquals(noReaders.publicExecution, parallel.publicExecution)
+    val invalidCleanup = view.runParallel(readers(dataset, 2), request, mode,
+      publicSink(ArrayBuffer.empty), cleanupTimeoutMillis = 0L).left.toOption.get
+    assert(invalidCleanup.isInstanceOf[ProfileFitError.TrialExecutionAdmission])
+    assertEquals(invalidCleanup.publicExecution, parallel.publicExecution)
+
+  test("public readout interruption/deadline finalizes once after the held real reader stops"):
+    for expires <- Vector(false, true) do
+      val (dataset, view) = publicPrepared(1, 2)
+      val request = OutputRequest.TrialAmplitudes(NormalizationRule.Density)
+      val declaration = parallelChecked(view.executionDeclaration(request, ProfileTrialReadoutMode.CorrectedReference))
+      val heldStarted = new CountDownLatch(1)
+      val readerInterrupted = new CountDownLatch(1)
+      val releaseReader = new CountDownLatch(1)
+      val returned = new CountDownLatch(1)
+      val activeReaders = new AtomicInteger(0)
+      val sinkCalls = new AtomicInteger(0)
+      val restored = new AtomicBoolean(false)
+      val result = new AtomicReference[Either[ProfileFitError, ProfileRunSummary]]()
+      val firstSource = parallelReader(dataset)
+      val heldSource = parallelReader(dataset)
+      def delayed(source: DatasetSeriesReader): DatasetSeriesReader = new DatasetSeriesReader:
+        val dataset: FmriDataset = source.dataset
+        def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
+          val series = source.seriesEither(selection)
+          if series.toOption.exists(_.voxelIndices.head == ids.head) then
+            if !heldStarted.await(5, TimeUnit.SECONDS) then throw new IllegalStateException("held reader did not start")
+          else
+            activeReaders.incrementAndGet()
+            heldStarted.countDown()
+            try
+              var done = false
+              while !done do
+                try done = releaseReader.await(10, TimeUnit.SECONDS)
+                catch case _: InterruptedException => readerInterrupted.countDown()
+              if !done then throw new IllegalStateException("reader was not released")
+            finally
+              activeReaders.decrementAndGet()
+              ()
+          series
+      val sink = new BlockSink[ProfileTrialOutputBlock, ProfileFitReceipt]:
+        def accept(block: VoxelBlock, payload: ProfileTrialOutputBlock): Either[String, ProfileFitReceipt] =
+          sinkCalls.incrementAndGet()
+          Thread.currentThread().interrupt()
+          Left("reject trial block")
+      val runner = new Thread(() =>
+        result.set(view.runParallel(Vector(delayed(firstSource), delayed(heldSource)),
+          request, ProfileTrialReadoutMode.CorrectedReference, sink,
+          cleanupTimeoutMillis = if expires then 40L else 60000L))
+        restored.set(Thread.currentThread().isInterrupted)
+        returned.countDown()
+      )
+      runner.start()
+      try
+        assert(readerInterrupted.await(5, TimeUnit.SECONDS))
+        assertEquals(activeReaders.get(), 1)
+        if expires then
+          assert(returned.await(5, TimeUnit.SECONDS))
+          assertEquals(activeReaders.get(), 1)
+          result.get() match
+            case Left(ProfileFitError.WorkersStillRunning(
+                ExecutionError.SinkFailed(block, detail), receipts, setup, provenance, termination)) =>
+              assertEquals(block.index, 0)
+              assertEquals(detail, "reject trial block")
+              assertEquals(receipts, Vector.empty[ProfileFitReceipt])
+              assertEquals(setup, view.prepared.setup)
+              assertEquals(provenance, declaration.provenance)
+              assert(!provenance.contains("|exact-readout=true"))
+              val retained = result.get().left.toOption.get.publicExecution.get
+              assertEquals(retained, declaration)
+              assert(retained eq termination.publicExecution.get)
+              assert(!termination.isTerminated)
+              releaseReader.countDown()
+              val finalFailure = termination.awaitFinal()
+              assertEquals(finalFailure, termination.awaitFinal())
+              assert(finalFailure.publicExecution.get eq retained)
+              assert(termination.isTerminated)
+              finalFailure match
+                case ProfileFitError.SinkRefused(reason, progress) =>
+                  assert(progress.publicExecution.get eq retained)
+                  assertEquals(reason, "reject trial block")
+                  assertEquals(progress.deliveredBlocks, 0)
+                  assert(progress.attemptedVoxels >= 1 && progress.attemptedVoxels <= 2)
+                  assertEquals(progress.workersUsed, 2)
+                  assert(progress.trial.nonEmpty)
+                  assertEquals(progress.publicReadout.get.attempts, progress.attemptedVoxels.toLong)
+                  assertEquals(progress.publicReadout.get.successes, progress.attemptedVoxels.toLong)
+                  assertEquals(progress.publicReadout.get.numerical.attempted.conditionalReadoutAttempts, progress.attemptedVoxels.toLong)
+                  assertEquals(progress.publicReadout.get.storage.emittedTrialAmplitudeValues, 0L)
+                case other => fail(s"expected final trial sink failure, got $other")
+            case other => fail(s"expected nonfinal trial failure, got $other")
+        else
+          assert(!returned.await(50, TimeUnit.MILLISECONDS))
+          releaseReader.countDown()
+          assert(returned.await(5, TimeUnit.SECONDS))
+          result.get() match
+            case Left(ProfileFitError.SinkRefused(reason, progress)) =>
+              assertEquals(progress.publicExecution, Some(declaration))
               assertEquals(reason, "reject trial block")
               assertEquals(progress.deliveredBlocks, 0)
               assert(progress.attemptedVoxels >= 1 && progress.attemptedVoxels <= 2)

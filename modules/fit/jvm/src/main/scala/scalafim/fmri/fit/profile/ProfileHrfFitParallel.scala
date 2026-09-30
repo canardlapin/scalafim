@@ -16,3 +16,19 @@ object ProfileHrfFitParallel:
       prepared.runWithExecutor(readers, sink, cancelled, parallel = true,
         (n, budget, factory, target, stop) =>
           ParallelBlockExecutor.run(n, budget, factory, target, stop, cleanupTimeoutMillis))
+
+object ProfileHrfTrialOutputsParallel:
+  /** Preserves the same checked scientific execution declaration as shared run. */
+  extension (outputs: PreparedProfileTrialOutputs)
+    def runParallel(
+        readers: Vector[DatasetSeriesReader],
+        request: OutputRequest,
+        mode: ProfileTrialReadoutMode,
+        sink: BlockSink[ProfileTrialOutputBlock, ProfileFitReceipt],
+        cancelled: () => Boolean = () => false,
+        evidence: ProfileTrialEvidenceRequest = ProfileTrialEvidenceRequest.PreparedBasisResidual,
+        cleanupTimeoutMillis: Long = 60000L
+    ): Either[ProfileFitError, ProfileRunSummary] =
+      outputs.runWithExecutor(readers, request, mode, sink, cancelled, evidence, parallel = true,
+        (n, budget, factory, target, stop) =>
+          ParallelBlockExecutor.run(n, budget, factory, target, stop, cleanupTimeoutMillis))
