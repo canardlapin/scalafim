@@ -190,10 +190,11 @@ object PlanId:
       assumptions: Vector[String],
       preparation: Vector[String],
       reduction: String,
-      estimandParameters: Vector[(String, String)]
+      estimandParameters: Vector[(String, String)],
+      requiredCapabilities: Set[CapabilityId]
   ): PlanId =
     AxisDigest.sha256Hex: writer =>
-      writer.string("scalafim.mvpa.analysis.plan.v1")
+      writer.string("scalafim.mvpa.analysis.plan.v2")
       writer.string(estimand.text)
       writer.intLE(sourceAxes.length)
       sourceAxes.foreach(axis => writer.string(axis.value))
@@ -212,6 +213,9 @@ object PlanId:
       estimandParameters.foreach: (name, value) =>
         writer.string(name)
         writer.string(value)
+      val required = requiredCapabilities.toVector.map(_.text).sorted
+      writer.intLE(required.length)
+      required.foreach(writer.string)
 
   extension (value: PlanId) inline def text: String = value
 
@@ -258,6 +262,8 @@ final class AnalysisSpecification[Source, Design, Frame, E <: Estimand[Source, D
     val design: Design,
     val frame: Frame,
     val estimand: E,
+    val estimandId: EstimandId,
+    val requiredCapabilities: Set[CapabilityId],
     val sourceAxes: Vector[AxisSignature],
     val designAxis: AxisSignature,
     val frameAxis: AxisSignature,
@@ -297,11 +303,13 @@ object AnalysisSpecification:
     val designIdentity = inputs.designIdentity(design)
     val frameIdentity = inputs.frameIdentity(frame)
     val estimandParameters = estimand.parameters
+    val estimandId = estimand.id
+    val requiredCapabilities = estimand.requiredCapabilities
     new AnalysisSpecification(
-      source, design, frame, estimand, sourceAxes, designAxis, frameAxis,
+      source, design, frame, estimand, estimandId, requiredCapabilities, sourceAxes, designAxis, frameAxis,
       sourceIdentity, designIdentity, frameIdentity, inputs.sourceCapabilities(source),
       question, assumptions, preparation, reduction, estimandParameters,
-      PlanId.derived(estimand.id, sourceAxes, designAxis, frameAxis, sourceIdentity, designIdentity, frameIdentity, question, assumptions, preparation, reduction, estimandParameters)
+      PlanId.derived(estimandId, sourceAxes, designAxis, frameAxis, sourceIdentity, designIdentity, frameIdentity, question, assumptions, preparation, reduction, estimandParameters, requiredCapabilities)
     )
 
 /** The scientific receipt is immutable evidence of what was requested and
@@ -329,7 +337,7 @@ object ScientificReceipt:
       specification: AnalysisSpecification[Source, Design, Frame, E]
   ): ScientificReceipt =
     new ScientificReceipt(
-      specification.plan, specification.estimand.id, specification.sourceAxes,
+      specification.plan, specification.estimandId, specification.sourceAxes,
       specification.designAxis, specification.frameAxis, specification.sourceIdentity,
       specification.designIdentity, specification.frameIdentity, specification.question,
       specification.assumptions, specification.preparation, specification.reduction,
@@ -467,10 +475,10 @@ object AnalysisCompiler:
   ] =
     val actual = specification.sourceCapabilities
     val admittedCapabilities = CapabilitySet.from(
-      specification.estimand.requiredCapabilities.toVector.flatMap: capability =>
+      specification.requiredCapabilities.toVector.flatMap: capability =>
         if actual.contains(capability) && available.contains(capability) then actual.get(capability) else None
     )
-    CapabilityAdmission.evaluate(specification.estimand.requiredCapabilities, admittedCapabilities) match
+    CapabilityAdmission.evaluate(specification.requiredCapabilities, admittedCapabilities) match
       case CapabilityAdmission.Unsupported(missing, _) => Left(BindError.Unsupported(missing))
       case admitted: CapabilityAdmission.Admitted =>
         compiler.bind(specification, available).map: bound =>

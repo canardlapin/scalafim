@@ -1078,7 +1078,7 @@ lazy val mvpa =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa"))
-    .dependsOn(response, locusData)
+    .dependsOn(response, locusData, pipeline)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa"
