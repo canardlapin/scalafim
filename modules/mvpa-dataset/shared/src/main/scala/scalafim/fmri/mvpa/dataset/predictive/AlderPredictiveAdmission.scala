@@ -239,7 +239,7 @@ object AlderPredictiveAdmission:
         Right((inputValues, targetValues))
       catch case NonFatal(error) => Left(AlderPredictiveAdmissionError.NativeReadFailure("retained-allocation", error.toString, attemptReceipt))
 
-    def copyBlocks(table: multivar.core.Table[?, ?], columns: Int, destination: Array[Array[Double]], stage: String): Either[AlderPredictiveAdmissionError, Unit] =
+    def copyBlocks[R <: SemanticSpace, C <: SemanticSpace](table: multivar.core.Table[R, C], columns: Int, destination: Array[Array[Double]], stage: String): Either[AlderPredictiveAdmissionError, Unit] =
       var start = 0
       while start < columns do
         val width = math.min(policy.maximumColumnsPerRead, columns - start)
