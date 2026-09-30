@@ -397,3 +397,26 @@ unchanged margins, policies and seeds. No full frozen200, fresh cohort or
 100000-voxel qualification has been launched. Original7/16 ticket completion
 is unchanged. Separate Gale publication and calibration-cost approvals remain
 pending actual user replies.
+
+## Qualified native provider probe and next owned seams
+
+The standalone HDF5 probe `64a14f02` is independently accepted and copied
+unchanged into `1a303565`. Its [65-payload archive](hdf5-provider-probe-qualified.json.gz)
+contains all six sources, the runtime lock and all24 actual command raw/meta
+receipts. Fresh128/256MiB payloads and relocated readers checked every value
+and validity cell with JNI and independent h5py under a64MiB JVM heap.
+RSS was67–70MiB; native allocation and physical disk read bytes are unavailable.
+The exclusive creation race has one creator and one native EEXIST refusal;
+owned abort is staging evidence, not transaction or power-loss durability.
+This is macOSARM/JDK25 evidence; JDK21/Linux and production packaging remain
+open. A separately owned ten-path optional generic archive adapter may use
+only the explicitly selected locked cache and must stay outside default
+aggregates/aliases. It is not an estimate schema or codec.
+
+The [full C0 non-oracle harness review](c0-prefresh-179-independent-review.md)
+accepts gathering, terminal audits, work caps, indexed reports and bounded
+output controls at immutable179af271. Oracle repair, full frozen cohorts,
+renewed source/provider freeze review and parent seed-history confirmation
+remain required before fresh qualification. A separate seven-path executor
+consumer seam is implementing an explicit typed public conditional-output
+view; legacy raw behavior and the early ML refusal remain unchanged.

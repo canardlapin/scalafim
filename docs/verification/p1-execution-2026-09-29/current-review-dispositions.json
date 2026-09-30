@@ -210,7 +210,29 @@
       "fullFrozen200Launched": false,
       "actual100kLaunched": false,
       "next": "ONE fixed14main/16dense DEV-only oracle refinement repair; scientific margins/seeds/policy unchanged"
+    },
+    {
+      "commit": "64a14f023013a0c0c3fbccdd1e6e3fd69bcab656",
+      "verdict": "AcceptBoundedOfficialJniProviderProbe",
+      "integrationCommit": "1a303565f169f5c4641ebf4a3cecab0378395d53",
+      "verifiedCommandReceipts": 24,
+      "runtimeManifestSha256": "5af1d1b94cdfca3dd784655222ce2d5c51fd4b36e798b2d77d6b4837d4f664f9",
+      "parentReceiptSha256": "53d730cfa8ae45711846956c819b3181bf1577adfefc4cc8b3638c1307fc471d",
+      "lane": "macOSARM/JDK25.0.1",
+      "heapCapBytes": 67108864,
+      "processRssIsNotHeapCap": true,
+      "productionModuleAdmitted": false,
+      "estimateBackendAdmitted": false,
+      "fullCoreTicketClosed": false
+    },
+    {
+      "commit": "179af2714b9349caf61461289b1857976703b0fa",
+      "verdict": "AcceptBoundedNonOracleHarnessControlsOnly",
+      "oracleQualified": false,
+      "freshLaunched": false,
+      "fullFrozen200Launched": false,
+      "actual100kLaunched": false
     }
   ],
-  "updatedUtc": "2026-09-30T06:40:50.989324+00:00"
+  "updatedUtc": "2026-09-30T07:03:56.775751+00:00"
 }
