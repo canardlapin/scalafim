@@ -29,16 +29,15 @@ class AlderExposureReadsSuite extends FunSuite:
     val id = SourceId.unsafe(name)
     right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"$name-root"), id)))
 
-  private def fixture(fail: Boolean = false) =
+  private final class Fixture(fail: Boolean = false):
     val samples = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, Vector("train", "holdout"), "trial", "none", "one"))
     val inputs = right(AxisRef.fromStableKeys("inputs", SpaceRole.Observed, Vector("i1"), "native", "none", "one"))
     val responses = right(AxisRef.fromStableKeys("responses", SpaceRole.Observed, Vector("y1"), "native", "none", "one"))
-    val poison = new Poison(DMat.dense(2, 1, Vector(1.0, 2.0)), fail)
-    val target = new Poison(DMat.dense(2, 1, Vector(3.0, 4.0)), fail)
-    val observations = right(Observations.fromOperator(samples, inputs, poison, ValueIdentity.source(ValueId.unsafe("x")), source("x-source")))
-    val targets = right(MultiResponse.fromOperator(samples, responses, target, ValueIdentity.source(ValueId.unsafe("y")), source("y-source")))
+    val inputOperator = new Poison(DMat.dense(2, 1, Vector(1.0, 2.0)), fail)
+    val targetOperator = new Poison(DMat.dense(2, 1, Vector(3.0, 4.0)), fail)
+    val observations: Observations[samples.Id, inputs.Id] = right(Observations.fromOperator(samples, inputs, inputOperator, ValueIdentity.source(ValueId.unsafe("x")), source("x-source")))
+    val targets: MultiResponse[samples.Id, responses.Id] = right(MultiResponse.fromOperator(samples, responses, targetOperator, ValueIdentity.source(ValueId.unsafe("y")), source("y-source")))
     val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(10L, 20L), DataFingerprint.external("declared")))
-    (observations, targets, mapping, poison, target)
 
   /* The opaque PlanId is produced by analysis compilation in production. A
    * fixture only needs a stable serialized value to exercise this adapter. */
@@ -49,17 +48,21 @@ class AlderExposureReadsSuite extends FunSuite:
     ExposureRequest(ExposurePurpose.PayloadRead, ExposureActorRole.Service, scope, ExposurePayload.Payload, assurance, cells)
 
   test("training-only native probe is refused before poison parent operators run"):
-    val (observations, targets, mapping, inputs, outputs) = fixture()
+    val fixture = new Fixture
+    import fixture.*
     val current = exposure(observations, targets, mapping)
     val required = request(ExposureScope.Training)
     val permit = ExposureControl.permit(current, request(ExposureScope.WholePopulation)).toOption.get
     val result = AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(1, right(MaterializationBudget(64L)))), current, permit, required)
-    assert(result.isInstanceOf[AlderExposureReadResult.Refused])
-    assertEquals(inputs.calls, 0)
-    assertEquals(outputs.calls, 0)
+    result match
+      case AlderExposureReadResult.Refused(ExposureError.TrainingOnlyConstraintUnsupported, _) => ()
+      case other => fail(s"expected training-only refusal, got $other")
+    assertEquals(inputOperator.calls, 0)
+    assertEquals(targetOperator.calls, 0)
 
   test("approved wider read is budgeted and preserves exposure after provider failure"):
-    val (observations, targets, mapping, inputs, _) = fixture(fail = true)
+    val fixture = new Fixture(fail = true)
+    import fixture.*
     val current = exposure(observations, targets, mapping)
     val required = request(ExposureScope.WholePopulation)
     val permit = ExposureControl.permit(current, required).toOption.get
@@ -69,10 +72,11 @@ class AlderExposureReadsSuite extends FunSuite:
         assertEquals(next.events.head.request.scope, ExposureScope.WholePopulation)
         assertEquals(next.events.head.request.maximumCells, 64L)
       case other => fail(s"expected recorded failure, got $other")
-    assert(inputs.calls > 0)
+    assert(inputOperator.calls > 0)
 
   test("native reads reject caller constrained assurance and foreign references before callbacks"):
-    val (observations, targets, mapping, inputs, outputs) = fixture()
+    val fixture = new Fixture
+    import fixture.*
     val current = exposure(observations, targets, mapping)
     val constrained = request(ExposureScope.WholePopulation, assurance = ExposureAssurance.Constrained)
     val constrainedPermit = ExposureControl.permit(current, constrained).toOption.get
@@ -88,8 +92,8 @@ class AlderExposureReadsSuite extends FunSuite:
       AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy, foreign, foreignPermit, approved),
       AlderExposureReadResult.Refused(ExposureError.ReferenceMismatch, foreign)
     )
-    assertEquals(inputs.calls, 0)
-    assertEquals(outputs.calls, 0)
+    assertEquals(inputOperator.calls, 0)
+    assertEquals(targetOperator.calls, 0)
 
   test("provenance evidence and preparation support bind exposure and native root identities"):
     val samples = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, Vector("train", "holdout"), "trial", "none", "one"))
@@ -97,7 +101,12 @@ class AlderExposureReadsSuite extends FunSuite:
     val responses = right(AxisRef.fromStableKeys("responses", SpaceRole.Observed, Vector("y1"), "native", "none", "one"))
     val sourceId = SourceId.unsafe("same-source")
     def evidenceSource(reference: String) =
-      right(EvidenceSource(sourceId, Provenance.source(ProvenanceId.unsafe("same-root"), sourceId, Vector(ProvenanceEvidence.Domain(DomainReference.unsafe("bids", reference)))))
+      val provenance = Provenance.source(
+        ProvenanceId.unsafe("same-root"),
+        sourceId,
+        Vector(ProvenanceEvidence.Domain(DomainReference.unsafe("bids", reference)))
+      )
+      right(EvidenceSource(sourceId, provenance))
     val targetSource = source("target-source")
     def observations(value: Double, provenance: String) =
       val operator = new Poison(DMat.dense(2, 1, Vector(value, value + 1.0)))
