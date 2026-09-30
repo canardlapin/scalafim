@@ -56,7 +56,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "26a74ad99b9ee49a9555344e19b82d69a2ba50e4"
+lazy val image4sRevision = "2695f891cbec31a7f565a9b39e2554fe3b6d4b40"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")

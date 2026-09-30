@@ -46,7 +46,7 @@ zero origin and unit pixel dimension for that axis.
 ## Evidence and limits
 
 Provider source base: `26a74ad99b9ee49a9555344e19b82d69a2ba50e4`.
-Local candidate: `e0d720f4b968f7d6deeac6978aa986e75dc2f721`
+The first local candidate was `e0d720f4b968f7d6deeac6978aa986e75dc2f721`
 (implementation `b999436`, added coverage `818ba35`, malformed-step validation
 `e0d720f`). The provider run passed 58 JVM and 39 Scala.js tests, including
 independent byte inspection of single, gzip and pair headers, malformed
@@ -60,5 +60,57 @@ against this provider source; both ran in `io-image-policy-r4.log` with exit 0
 and no compiler warnings. `scalafimCompileAll` passed with exit 0 and no
 warnings in `io-compile-all-r1.log`; that broad compile preceded the final
 ordinal-series reidentification, which was then compiled and exercised by the
-JVM and JS image suites. Neither a provider pin nor upstream publication is
-implied by these local candidate checks.
+JVM and JS image suites. These are historical local-override checks, not
+evidence for the later default pin.
+
+The reviewed provider follow-up is
+`2695f891cbec31a7f565a9b39e2554fe3b6d4b40`. It additionally refuses a
+raw zero `pixdim[4]` with typed `PixelDimension(4)` when an unknown temporal
+unit is explicitly interpreted as seconds, milliseconds or microseconds.
+Default ordinal interpretation and positive-step assumptions retain their
+separate behaviors. A pre-fix standalone provider clone reproduced the new
+regression failure; the corrected provider passed 59/59 JVM and 40/40 Scala.js
+NIfTI tests (`io-provider-zero-final-r2.log` and `.meta.json`). The ScalaFIM
+consumer candidate `52b26c524a73db672d49029ed1f6ea62ec18de28` passed
+`imageJVM/test` 380/380 and `imageJS/test` 351/351 against that local provider
+source (`io-image-zero-final-r2.log` and `.meta.json`).
+
+The provider revision is hosted at the head of
+`review/nifti-temporal-origin-20260929` and draft image4s PR #13. `git
+ls-remote` resolved both that branch and `refs/pull/13/head` to the exact
+revision above on 29 September 2026. This is review-branch publication, not a
+merge into image4s `main`. ScalaFIM's `build.sbt` now names this exact revision;
+the default-pin tests below qualify the source dependency fetched without
+`scalafim.image4s.build`, not a ScalaFIM push or release.
+
+The default source dependency was loaded at
+`~/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s`, whose Git `HEAD` is
+`2695f891cbec31a7f565a9b39e2554fe3b6d4b40`. The image JVM and JS build
+logs show direct image4s sources compiling from that checkout. Sbt also loaded
+an older image4s staging checkout through a transitive build definition; its
+`HEAD` was `26a74ad99b9ee49a9555344e19b82d69a2ba50e4`. This evidence
+qualifies ScalaFIM's direct default provider pin, not the removal of every
+older transitive project reference.
+
+The following commands used `run-sbt.py` in the ScalaFIM `execution/io`
+checkout, without `-Dscalafim.image4s.build`. Each successful run has a
+matching `.meta.json` exit receipt under
+`/private/tmp/scalafim-execution-20260929/logs/`. Hashes are SHA-256 of the
+complete raw `.log` files. All five runs exited 0 with no `[warn]` or
+`[error]` lines.
+
+| Command | Result | Raw log | SHA-256 |
+| --- | --- | --- | --- |
+| `imageJVM/test` | 380/380 | `io-default-pin-image-jvm-r2.log` | `b4aedcb6066c0f201e968429c447f91150912dad63997e8bdc7e3b30b19faa28` |
+| `imageJS/test` | 351/351 | `io-default-pin-image-js-r1.log` | `8ffd88515058fc2a137b27d33fb0f89e6da4e43cbb9623347467485555e10707` |
+| `estimatesIoJVM/test` | 20/20 | `io-default-pin-estimates-io-jvm-r2.log` | `bee9fc6745990981b1eb992a76f6ef84a7a1b27f546bdaf6205ec92cf0202717` |
+| `estimatesIoJS/test` | 4/4 | `io-default-pin-estimates-io-js-r1.log` | `38347868a57d0e1498a54ad4ddef3e3e54540a3e650644f3af070f4750726620` |
+| `scalafimCompileAll` | 89 successful alias steps | `io-default-pin-compile-all-r1.log` | `1deffc33362c7e338cc9e7dd4fe74f0acea5d4fdddbd0ea6a7b6642d1d8baff5` |
+
+The first sandboxed JVM attempt stopped before sbt project loading because it
+could not write `~/.sbt/boot/sbt.boot.lock`. A subsequent estimates IO attempt
+used the nonexistent `estimatesIOJVM` target and stopped at sbt command
+parsing; the successful `estimatesIoJVM` run above is the actual test evidence.
+These local results qualify the pinned ScalaFIM candidate only. The stable
+estimate interchange, HDF5, producer/workflow adoption and downstream release
+gates remain separate open work.
