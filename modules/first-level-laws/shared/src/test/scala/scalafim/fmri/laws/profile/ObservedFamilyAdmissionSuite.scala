@@ -56,9 +56,9 @@ class ObservedFamilyAdmissionSuite extends munit.FunSuite:
     assertEquals(bothAdmissions(lower(term), swapped), Vector(false, false))
 
   test("both public admissions refuse changed continuous weights with the same source form"):
-    val weighted = EventTerm(Vector(Event.continuous(Vector(1.0, 1.0, 1.0, 1.0), "weight")),
+    val weighted = EventTerm(Vector(Event.variable(Vector(1.0, 1.0, 1.0, 1.0), "weight")),
       term.onsets, blockIds = term.blockIds0)
-    val altered = weighted.copy(events = Vector(Event.continuous(Vector(1.0, 2.0, 1.0, 2.0), "weight")))
+    val altered = weighted.copy(events = Vector(Event.variable(Vector(1.0, 2.0, 1.0, 2.0), "weight")))
     val expanded = lower(weighted)
     assertEquals(bothAdmissions(expanded, weighted), Vector(true, true))
     assertEquals(bothAdmissions(expanded, altered), Vector(false, false))
