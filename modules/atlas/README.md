@@ -57,10 +57,25 @@ import scalafim.atlas.io.*
   families and aliases.
 - `Schaefer2018`, `GlasserHcpMmp1`, `Schaefer2018Surface`, and
   `GlasserHcpMmp1Surface` provide typed standard-atlas descriptors.
-- `SpaceTransforms` is a route planner over known coordinate/template-space
-  steps. Executable affine routes can transform points and lower to
-  `scalafim.image.SpatialMorphism` pullback values; planned nonlinear and
-  surface routes are represented explicitly but not silently executed.
+- `SpaceTransforms` is a manifest of known template-space steps. It populates
+  a `scalafim.spatial.SpatialGraph` (`SpaceTransformGraph`) over unsampled
+  template domains from `TemplateCatalog`, and routes with the spatial graph's
+  forward-first, inverse-fallback search. Steps holding an internal affine or a
+  provider `TransformAsset` (a `scalafim.transform.WorldTransform`) carry
+  points and lower to grid pullbacks; planned nonlinear and surface steps stay
+  typed non-executable edges and are never silently executed.
+- `MniTemplateBridge` executes `MNI152NLin6Asym -> MNI152NLin2009cAsym` with
+  TemplateFlow's exact ANTs composite (`MniTemplateBridgeFiles.loadCached` on
+  the JVM, which hashes the bytes; the file is admitted only by its pinned
+  SHA-256 and its 2009c res-01 displacement lattice; the ITK parity tests need
+  the file locally and are skipped, not failed, without it). It pulls 2009c points to 6Asym and resamples 6Asym data
+  onto 2009c grids, matching ITK `TransformPoint` to 1e-8 mm; `install` puts its
+  steps in a manifest, where the route is pullback-executable
+  (`TransformPlan.pullPoints`). The forward map exists only after
+  `withNumericalInverse` passes its gates. TemplateFlow's
+  `tpl-MNI152NLin6Asym_from-MNI152NLin2009cAsym` file pulls the same way as the
+  forward file (measured, see `TemplateFlowXfm`), so it is refused rather than
+  used as the inverse. `TemplateGrids` holds the stock MNI res-01/res-02 grids.
 
 ## Standard Atlas Descriptors
 
@@ -218,8 +233,9 @@ val bridge =
 ```
 
 The route can include planned nonlinear, sphere-resampling, and volume/surface
-steps. `scalafim-atlas` does not execute Workbench, TemplateFlow, or projection
-backends from the shared core.
+steps. `scalafim-atlas` does not execute Workbench or projection backends from
+the shared core; the TemplateFlow 6Asym/2009c composite runs through
+`MniTemplateBridge` once the JVM loader has read it.
 
 ## JVM Loading
 

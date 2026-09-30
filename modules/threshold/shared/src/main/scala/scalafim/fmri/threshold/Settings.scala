@@ -13,19 +13,6 @@ object Alpha:
   extension (alpha: Alpha)
     inline def value: Double = alpha
 
-opaque type QValue = Double
-object QValue:
-  def apply(value: Double): Either[ThresholdError, QValue] =
-    if value.isFinite && value > 0.0 && value < 1.0 then Right(value)
-    else Left(ThresholdError.InvalidQValue(value))
-
-  def unsafe(value: Double): QValue =
-    require(value.isFinite && value > 0.0 && value < 1.0, "q must be finite and in (0, 1)")
-    value
-
-  extension (q: QValue)
-    inline def value: Double = q
-
 opaque type Kappa = Double
 object Kappa:
   def apply(value: Double): Either[ThresholdError, Kappa] =
@@ -120,10 +107,36 @@ object Tail:
       case ThresholdAlternative.Less     => Negative
       case ThresholdAlternative.TwoSided => TwoSided
 
-enum EvidenceScore:
-  case SoftMax(kappa: Kappa)
-  case Diffuse
-  case Omnibus(kappas: Vector[Kappa])
+/** How a null draw set relates to the observed labelling.
+  *
+  * `MonteCarlo`: B null actions sampled at random, the observed (identity)
+  * action not among them. The observed statistic is counted once more:
+  * p = (1 + #{null >= t}) / (B + 1).
+  *
+  * `ExactEnumeration`: the complete set of B equally likely null actions,
+  * including the identity action, so the observed statistic is already among
+  * the draws: p = #{null >= t} / B. Adding one again would double-count it.
+  * Matrix procedures, which see every null row, require a row equal to the
+  * oriented observed statistics. Max-null procedures see only per-draw maxima
+  * and can check only the necessary condition that some maximum reaches each
+  * observed statistic; declaring a Monte Carlo sample as exact there is the
+  * caller's error and yields p-values that are too small.
+  */
+enum NullReference:
+  case MonteCarlo, ExactEnumeration
+
+  /** Smallest exceedance count a valid draw set can produce for an observed
+    * statistic.
+    */
+  private[threshold] def minimumCount: Int =
+    this match
+      case MonteCarlo       => 0
+      case ExactEnumeration => 1
+
+  private[threshold] def pValue(count: Int, draws: Int): Double =
+    this match
+      case MonteCarlo       => (count.toDouble + 1.0) / (draws.toDouble + 1.0)
+      case ExactEnumeration => count.toDouble / draws.toDouble
 
 enum StatKind:
   case Z

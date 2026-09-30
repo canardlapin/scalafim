@@ -16,7 +16,6 @@ class ThresholdCoreSuite extends munit.FunSuite:
   test("checked scalar constructors reject invalid inference settings") {
     assert(Alpha(0.05).isRight)
     assertEquals(Alpha(0.0).left.toOption, Some(ThresholdError.InvalidAlpha(0.0)))
-    assertEquals(QValue(1.0).left.toOption, Some(ThresholdError.InvalidQValue(1.0)))
     assertEquals(Kappa(-1.0).left.toOption, Some(ThresholdError.InvalidKappa(-1.0)))
     assertEquals(DegreesOfFreedom(0.0).left.toOption, Some(ThresholdError.InvalidDegreesOfFreedom(0.0)))
     assertEquals(AdjustedP(1.1).left.toOption, Some(ThresholdError.InvalidAdjustedPValue(1.1)))
@@ -150,7 +149,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
       )
     )
 
-    val out = value(WestfallYoung.stepDown(observed, nulls, Alpha.unsafe(0.5)))
+    val out = value(WestfallYoung.stepDown(observed, nulls, Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.MonteCarlo))
     assertEquals(out.map(_.testIndex), Vector(0, 1, 2))
     assertEqualsDouble(out(0).adjustedP.value, 0.6, 1e-12)
     assertEqualsDouble(out(1).adjustedP.value, 0.6, 1e-12)
@@ -160,7 +159,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assert(out(2).rejected)
   }
 
-  test("single-step maxT and max-null threshold use plus-one permutation rules") {
+  test("single-step maxT and max-null decisions use plus-one permutation rules") {
     val observed = Array(3.5, 2.1, 4.2)
     val nulls = matrix(
       Vector(
@@ -171,17 +170,25 @@ class ThresholdCoreSuite extends munit.FunSuite:
       )
     )
 
-    val out = value(MaxT.singleStep(observed, nulls, Alpha.unsafe(0.5)))
+    val out = value(MaxT.singleStep(observed, nulls, Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.MonteCarlo))
     assertEqualsDouble(out(0).adjustedP.value, 0.6, 1e-12)
     assertEqualsDouble(out(1).adjustedP.value, 1.0, 1e-12)
     assertEqualsDouble(out(2).adjustedP.value, 0.4, 1e-12)
 
-    val adjusted = value(MultipleTesting.adjust(observed, nulls, Alpha.unsafe(0.5), CorrectionPolicy.MaxTSingleStep))
+    val adjusted = value(MultipleTesting.adjust(observed, nulls, Alpha.unsafe(0.5), CorrectionPolicy.MaxTSingleStep, ThresholdAlternative.Greater, NullReference.MonteCarlo))
     assertEquals(adjusted.map(_.adjustedP.value), out.map(_.adjustedP.value))
-    assertEqualsDouble(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))).toLegacyDouble, 4.0, 1e-12)
-    assertEquals(value(MaxNull.cutoff(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))), ThresholdCutoff.NoRejections)
-    assertEqualsDouble(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.4))), 4.0, 1e-12)
-    assert(value(MaxNull.threshold(Array(3.0, 4.0, 3.0, 5.0), Alpha.unsafe(0.05))).isPosInfinity)
+    val maxima = value(MaxNullDistribution.fromOrientedMaxima(Array(3.0, 4.0, 3.0, 5.0), ThresholdAlternative.Greater, NullReference.MonteCarlo))
+    val cutoff = value(MaxNull.cutoff(maxima, Alpha.unsafe(0.4)))
+    cutoff match
+      case ThresholdCutoff.Exclusive(boundary) =>
+        assertEqualsDouble(boundary, 4.0, 0.0)
+      case other =>
+        fail(s"expected an exclusive max-null cutoff, found $other")
+    assertEquals(value(cutoff.rejects(4.0)), false)
+    assertEquals(value(cutoff.rejects(Math.nextUp(4.0))), true)
+    assertEqualsDouble(cutoff.toLegacyDouble, Math.nextUp(4.0), 0.0)
+    assertEquals(value(MaxNull.cutoff(maxima, Alpha.unsafe(0.05))), ThresholdCutoff.NoRejections)
+    assert(value(MaxNull.cutoff(maxima, Alpha.unsafe(0.05))).toLegacyDouble.isPosInfinity)
   }
 
   test("octree root and split use mask-space coordinates and prior mass") {

@@ -4,7 +4,10 @@ import SampleSpaces.*
 
 import image4s.geometry.Affine
 import image4s.geometry.D3
+import scala.annotation.nowarn
 
+/** Pins the deprecated `Vector[Double]` overloads until their removal; typed replacements are in `GridSpecFrameSuite`. */
+@nowarn("cat=deprecation")
 class SpatialCoordinatesSuite extends munit.FunSuite:
 
   private def assertClose(actual: Double, expected: Double, tol: Double = 1e-10): Unit =

@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
@@ -13,14 +15,14 @@ class SpatialGraphSuite extends munit.FunSuite:
 
   private def domain(name: String, voxels: Int = 1): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality(name))
     val geometry = value(SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(name: String): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val mesh =
       TriangleMesh.fromRows(
         vertices = Vector(

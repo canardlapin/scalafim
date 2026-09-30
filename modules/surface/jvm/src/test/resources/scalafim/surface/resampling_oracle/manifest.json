@@ -1,0 +1,24 @@
+{
+ "generator": "tools/transform/generate_surface_resampling_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "reference-implementation",
+ "tools": {
+  "neurotransform": "0.1.0",
+  "numpy": "2.5.3",
+  "R": ""
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with numpy python tools/transform/generate_surface_resampling_oracle.py"
+ ],
+ "notes": "0-based triplets from neurotransform surface_resampling_plan(reference, moving, method) on icospheres (moving: level 3, r 87; reference: level 2, r 101, rotated).",
+ "sha256": {
+  "moving_faces.tsv": "ad01e9b58d54a96771e30af8967bbe2aefc8a1f30826c2215305675b8575e0e5",
+  "moving_vertices.tsv": "b7b878f1436d68fd87e9034b6db715702ca9b97c60c3930db4e2838af2f80831",
+  "plan_barycentric.tsv": "b40f9cee5b7b83c711f83c7ec6692cbe829303c7d45a53f682ad4f9ce2f0799e",
+  "plan_nearest.tsv": "10a590760a4c041f8bcd4241f759fb58406a7e424d1c2b1ecd46c15845787513",
+  "reference_faces.tsv": "9f4bc720e84ab5ac7d41b9cc60808d9bce54a29eefe9d3879065691b90bfdd67",
+  "reference_vertices.tsv": "cf622b272a0b40d746a4bdd7a5bed4b75aed12bbf2d412ba0fbd7f1046c2ff95"
+ }
+}

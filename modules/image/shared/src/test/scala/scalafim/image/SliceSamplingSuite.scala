@@ -371,27 +371,10 @@ class SliceSamplingSuite extends munit.FunSuite:
         while column < grid.dimensions.width do
           val pixel = PixelCoord(column, row)
           val referenceWorld = grid.worldAt(pixel).toOption.get
-          val mapFrame: image4s.geometry.Frame[D3] = mapping.source
-          val raw = image4s.geometry.Point
-            .in[D3](mapFrame)(
-              referenceWorld.x,
-              referenceWorld.y,
-              referenceWorld.z
-            )
+          val mapped = SpatialPullbacks
+            .transform(mapping, referenceWorld.toSpatialPoint)
             .fold(error => fail(error.message), identity)
-          val point = image4s.geometry.Frame
-            .alignOwners[D3, mapFrame.type, image4s.geometry.Frame[D3]](
-              mapFrame,
-              mapFrame
-            )
-            .flatMap(_.pointToRight(raw))
-            .fold(error => fail(error.message), identity)
-          val mapped = mapping(point).fold(error => fail(error.message), identity)
-          val mappedWorld = WorldPoint(
-            mapped.coordinates(0),
-            mapped.coordinates(1),
-            mapped.coordinates(2)
-          )
+          val mappedWorld = WorldPoint(mapped.x, mapped.y, mapped.z)
           val expected = source.grid.worldToVoxel(mappedWorld).fold(error => fail(error.message), identity)
           val actual = plan.sourceVoxelAt(pixel).toOption.get
           assertEqualsDouble(actual.x, expected.x, Tol)

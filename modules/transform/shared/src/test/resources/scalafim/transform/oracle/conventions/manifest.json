@@ -1,0 +1,36 @@
+{
+ "generator": "tools/transform/generate_convention_oracle.py",
+ "generated": "2026-09-27",
+ "kind": "reference-implementation",
+ "tools": {
+  "nibabel": "5.4.2",
+  "fslpy": "3.29.1",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nibabel==5.4.2 --with fslpy==3.29.1 --with numpy python tools/transform/generate_convention_oracle.py"
+ ],
+ "notes": "FSL cases: qform/sform disagree in code and handedness; 'selected' is 2=sform, 1=qform, 0=scaling fallback; v2w is fslpy voxToWorld, v2f is fslpy voxel->fsl. FLIRT pairs: fslpy fromFlirt world->world. flirt_fresh_*: an 11x7x5 neurological source (sform selected over a conflicting radiological qform), a 6x13x9 radiological reference (qform selected) and a generic FLIRT matrix; flirt_fresh.tsv holds fslpy's geometry. flirt_points.tsv: fslpy fromFlirt images of ten asymmetric source-world points for every FLIRT case (the matrix files are written with 10 or 12 decimals). FreeSurfer: conformed LIA 256^3 1mm volumes only; nibabel's tkr matrix is float32 and hard-codes LIA, so it is a reference only for conformed volumes. Native mri_info (oblique) and flirt oracles are pending P4.02/P4.04.",
+ "sha256": {
+  "flirt_0_to_1.mat": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+  "flirt_1_to_0.mat": "e03496405e51034e6fd72360b9ce2bef548708e46a9a3f9548213b4734571d8e",
+  "flirt_2_to_3.mat": "a249bed5cbc711fd8e57380602ca46886184e07e949b1ca43e6d2d38a9cf3559",
+  "flirt_3_to_0.mat": "15131b1f698b7aa027c525aa6caa6285cfbe62664e55b8c8ded3f7b3231517ab",
+  "flirt_4_to_2.mat": "9302b1bd3cd6dc52521cd466e92aa4e24ed9c59a616b2af4e77c247290c9dd4f",
+  "flirt_fresh.mat": "707d50b7857c63b79fc5abdc649e7c6bd6381462cf2468a69d568f879141be87",
+  "flirt_fresh.tsv": "c04b020a41ab3c9b8ed2c56a747e2fc776cc8a314cb0728c0136eacbdf2b5745",
+  "flirt_fresh_ref.nii": "d6f0b60f73e1825e476c34b10c5af004356d1ce319d835f0b34cf23996293d24",
+  "flirt_fresh_src.nii": "5f6766919fd67b08dfc47a9e7863460c5b758eb07f9a0a57e1bbfe3e27116f24",
+  "flirt_pairs.tsv": "84636286cd0059f6c509e812dbcd49a6b497f462b864de3861140715874b25a2",
+  "flirt_points.tsv": "0fbf53e4769428c69d07634599023ee030ecf76ed31b1bf3f871eb71fa0d1ec3",
+  "freesurfer_conformed.tsv": "47e0b9af5d99641c8c0afe7414058d0ce0524ab95fa2d70daab230dd63e3f9db",
+  "fsl_case0.nii": "0b16a20f0a375bfa57c4fa2a35cc989c51f1865331180b1db31407c5d4945f84",
+  "fsl_case1.nii": "7791cb6bb0bdca878632ce307c720684256b8efc0eb4dc9ab5ef9d86ca1726ec",
+  "fsl_case2.nii": "cf5523c002cf947e927199af8a3a690fcd7c3d4b4263e3e5ce9fbc5f3c287362",
+  "fsl_case3.nii": "00fb052c67f09d497e791860f1bf90cf5c576d1b4cb4cbaaba225f5b81e94762",
+  "fsl_case4.nii": "08c9f7e1bd98abd93d44cc94e0d5ac60b1f7cad5c7768161914fe5e9bcda43af",
+  "fsl_cases.tsv": "5a34a9547c8add158c92d41cc08c6ebfbe02df649e1e435a2fbadfc3b5453d50"
+ }
+}

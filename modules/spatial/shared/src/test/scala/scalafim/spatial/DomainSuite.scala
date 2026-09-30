@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import image4s.geometry.GeometryError
 import scalafim.image.{SampleSpaceError, SampleSpaces, Mask, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
@@ -14,7 +16,7 @@ class DomainSuite extends munit.FunSuite:
 
   private def volumeDomain(idValue: String, dims: Vector[Int] = Vector(2, 2, 1)): Domain =
     val id = value(DomainId(idValue))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality("bold"))
     val space = SampleSpaces(dims, affine = Some(ProviderAffines.identity))
     val geometry = value(SamplingGeometry.volume(space))
@@ -102,7 +104,7 @@ class DomainSuite extends munit.FunSuite:
 
   test("domain construction rejects mismatched declared and sampled kinds"):
     val id = value(DomainId("bad-surface"))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality("bold"))
     val volume = value(SamplingGeometry.volume(SampleSpaces(Vector(2, 2, 1), affine = Some(ProviderAffines.identity))))
 

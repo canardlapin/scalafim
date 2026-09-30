@@ -1,0 +1,22 @@
+{
+ "generator": "tools/transform/generate_itk_hdf5_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "native-oracle",
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "h5py": "3.16.0",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with SimpleITK==2.5.6 --with h5py==3.16.0 --with numpy python tools/transform/generate_itk_hdf5_oracle.py"
+ ],
+ "notes": "Inputs are ../neurotransform/itk_oracle/*.h5. Points are LPS; tx,ty,tz = ITK TransformPoint (fixed -> moving).",
+ "sha256": {
+  "affine.components.txt": "162d8a955b01542259e67b13d8fb752464b7d2abfec46ec9a186958cef415101",
+  "affine_warp.components.txt": "af280733df85db122774abf3acfc18847ee86505b7d7e48771db493e43a6e8e1",
+  "points.tsv": "8d0c34d232250145cddabc73205d845d1d8e93640c164810924b9eb82e44ca3e",
+  "warp_affine.components.txt": "6855b4de7a64e9ef867984549c25488e8771ddcc9ac186774568e10cee712c34"
+ }
+}

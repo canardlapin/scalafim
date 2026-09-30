@@ -111,7 +111,7 @@ final class SliceCompatibilityParitySuite extends munit.FunSuite:
       MappedSlicePlan.make(
         source,
         grid,
-        SpatialPullbacks.worldAligned(sourceGrid, sourceGrid)
+        SpatialPullbacks.worldAligned(sourceGrid, sourceGrid).fold(error => fail(error.message), identity)
       ).fold(error => fail(error.message), identity)
 
     Vector(

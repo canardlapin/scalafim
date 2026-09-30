@@ -7,6 +7,7 @@ import image4s.BoundaryPolicy
 import image4s.Continuous
 import image4s.SampleSpace
 import image4s.Sampled
+import image4s.SamplingAlignment
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
@@ -24,28 +25,32 @@ import reframe4s.core.MapError
 import reframe4s.core.SmoothMap
 import reframe4s.core.SpatialDifferential
 import reframe4s.core.SpatialMap
-import reframe4s.resample.Interpolation
 import reframe4s.resample.ResamplingError
 import reframe4s.resample.ResamplingPlan as ReframeResamplingPlan
 import reframe4s.resample.ResamplingSink
 
-/** Dynamic D3 boundary used by ScalaFIM's owner-erased image API.
+/** A provider pullback from target-grid points (frame `T`) to source-grid points (frame `S`).
   *
-  * The value is the provider `SpatialMap` itself. Endpoints are widened only
-  * after runtime owner checks against the source and target grids.
+  * The value is the reframe4s `SpatialMap` itself; ScalaFIM adds only the resampling direction convention. Maps whose
+  * endpoints are known only at runtime are `SpatialPullback[?, ?]` and meet typed grids through
+  * [[ResamplingPlan.bind]], which checks both endpoints against the grids' live frame owners.
   */
-type SpatialPullback = SpatialMap[Frame[D3], Frame[D3], D3]
+type SpatialPullback[T <: Frame[D3], S <: Frame[D3]] = SpatialMap[T, S, D3]
 
 enum ResamplingPlanError:
   case Geometry(error: GeometryError)
   case Map(error: MapError)
   case Provider(error: ResamplingError)
+  case Pullback(error: SpatialPullbackError)
+  case Image(error: image4s.ImageError)
 
   def message: String =
     this match
       case Geometry(error) => error.message
       case Map(error)      => error.message
       case Provider(error) => error.message
+      case Pullback(error) => error.message
+      case Image(error)    => error.message
 
 enum JacobianModulation:
   case None, Jacobian, SqrtJacobian
@@ -74,10 +79,10 @@ private object ModulationFactors:
   * interpolation, boundary handling, and prepared coordinates belong to
   * reframe4s.
   */
-final class ResamplingPlan private (
-    val source: GridSpec,
-    val target: GridSpec,
-    val pullback: SpatialPullback,
+final class ResamplingPlan[S <: Frame[D3], T <: Frame[D3]] private (
+    val source: GridSpec[S],
+    val target: GridSpec[T],
+    val pullback: SpatialPullback[T, S],
     val method: Resample.Method
 ):
   private def timeAxis(extent: Int): image4s.Axis =
@@ -112,7 +117,7 @@ final class ResamplingPlan private (
       modulation: JacobianModulation
   ): Either[ResamplingPlanError, SomeScalarVolume[Double]] =
     Grid
-      .exactCongruence(source.nativeGrid, volume.grid)
+      .exactCongruence(source.grid, volume.grid)
       .left
       .map(ResamplingPlanError.Geometry.apply)
       .flatMap: _ =>
@@ -139,7 +144,7 @@ final class ResamplingPlan private (
       modulation: JacobianModulation
   ): Either[ResamplingPlanError, SomeScalarSeries[Double]] =
     Grid
-      .exactCongruence(source.nativeGrid, series.grid)
+      .exactCongruence(source.grid, series.grid)
       .left
       .map(ResamplingPlanError.Geometry.apply)
       .flatMap: _ =>
@@ -221,15 +226,32 @@ final class ResamplingPlan private (
       outside: Double,
       factors: ModulationFactors
   ): Either[ResamplingPlanError, Unit] =
-    val captured = sampled.asInstanceOf[
-      Sampled[SampleSpace[Frame[D3], D3], Double, Continuous, R]
-    ]
+    // Re-own the image at the plan's source frame without a cast: image4s certifies that the image's sample space and
+    // `admitted` (the source grid plus the image's own non-spatial axes) sample identical points, and the image's
+    // storage is then re-wrapped at `admitted` without copying. `Sampled.rebind` cannot be used here: it needs the
+    // alignment typed at the image's static space owner, which the existential `SomeScalarVolume` does not retain.
+    val admitted: SampleSpace[S, D3] = SampleSpace.create(source.grid, sampled.nonSpatialAxes)
+    SamplingAlignment
+      .exact(sampled.sampleSpace, admitted)
+      .flatMap(_ => Sampled.continuous(admitted, sampled.data, sampled.metadata))
+      .left
+      .map(ResamplingPlanError.Image.apply)
+      .flatMap: captured =>
+        scanAdmitted(captured, output, trailingSize, outside, factors)
+
+  private def scanAdmitted[R <: AnyRank](
+      captured: Sampled[? <: SampleSpace[S, D3], Double, Continuous, R],
+      output: ArrayBuilder[Double],
+      trailingSize: Int,
+      outside: Double,
+      factors: ModulationFactors
+  ): Either[ResamplingPlanError, Unit] =
     ReframeResamplingPlan
       .mapped(
         captured,
-        target.nativeGrid,
+        target.grid,
         pullback,
-        ResamplingPlan.interpolation(method),
+        method.interpolation,
         BoundaryPolicy.Constant(outside)
       )
       .left
@@ -283,12 +305,11 @@ final class ResamplingPlan private (
               )
 
   private def differentialAt(
-      point: Point[Frame[D3], D3]
+      point: Point[T, D3]
   ): Either[MapError, DMat] =
     pullback match
-      case smooth: SmoothMap[?, ?, ?] =>
+      case smooth: SmoothMap[T, S, D3] @unchecked =>
         smooth
-          .asInstanceOf[SmoothMap[Frame[D3], Frame[D3], D3]]
           .jet1At(point)
           .map(_.differential)
       case _ =>
@@ -296,9 +317,9 @@ final class ResamplingPlan private (
           .centralDifference(pullback, point, step = 1e-3)
           .map(_.differential)
 
-  private def targetPoints: Either[ResamplingPlanError, Vector[Point[Frame[D3], D3]]] =
-    val grid = target.nativeGrid
-    val points = Vector.newBuilder[Point[Frame[D3], D3]]
+  private def targetPoints: Either[ResamplingPlanError, Vector[Point[T, D3]]] =
+    val grid = target.grid
+    val points = Vector.newBuilder[Point[T, D3]]
     var linear = 0
     var failure = Option.empty[GeometryError]
     while linear < target.nVoxels && failure.isEmpty do
@@ -317,51 +338,63 @@ final class ResamplingPlan private (
       .getOrElse(Right(points.result()))
 
 object ResamplingPlan:
-  def make(
-      source: GridSpec,
-      target: GridSpec,
-      pullback: SpatialPullback,
+  /** Plan with a statically typed pullback; endpoint owners are still checked, since `S`/`T` may be wide frame types. */
+  def make[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      pullback: SpatialPullback[T, S],
       method: Resample.Method
-  ): Either[ResamplingPlanError, ResamplingPlan] =
-    for
-      _ <- SpatialMap
-        .validateSourceFrame(pullback.source, target.nativeGrid.frame)
-        .left
-        .map(ResamplingPlanError.Map.apply)
-      _ <- SpatialMap
-        .validateResultFrame(source.nativeGrid.frame, pullback.target)
-        .left
-        .map(ResamplingPlanError.Map.apply)
-    yield new ResamplingPlan(source, target, pullback, method)
+  ): Either[ResamplingPlanError, ResamplingPlan[S, T]] =
+    checkEndpoints(source, target, pullback).map(_ => new ResamplingPlan(source, target, pullback, method))
 
-  def identity(
-      source: GridSpec,
+  /** Plan with a pullback whose endpoints are known only at runtime.
+    *
+    * reframe4s checks that the map's source is the target grid's live frame owner and its result is the source grid's;
+    * only then is the map typed at those frames.
+    */
+  def bind[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      pullback: SpatialPullback[?, ?],
+      method: Resample.Method
+  ): Either[ResamplingPlanError, ResamplingPlan[S, T]] =
+    checkEndpoints(source, target, pullback).map: _ =>
+      new ResamplingPlan(source, target, pullback.asInstanceOf[SpatialPullback[T, S]], method)
+
+  def identity[F <: Frame[D3]](
+      source: GridSpec[F],
       method: Resample.Method = Resample.Method.Linear
-  ): Either[ResamplingPlanError, ResamplingPlan] =
-    val frame = source.nativeGrid.frame
-    val pullback = AffineMap.identity[D3, Frame[D3]](frame)
-    make(source, source, pullback, method)
+  ): Either[ResamplingPlanError, ResamplingPlan[F, F]] =
+    make(source, source, AffineMap.identity[D3, F](source.frame), method)
 
   def fromSpaces(
       source: SomeSampleSpace,
       target: SomeSampleSpace,
-      pullback: SpatialPullback,
+      pullback: SpatialPullback[?, ?],
       method: Resample.Method
-  ): Either[ResamplingPlanError, ResamplingPlan] =
-    make(
+  ): Either[ResamplingPlanError, ResamplingPlan[?, ?]] =
+    bind(
       GridSpec.fromSpace(source),
       GridSpec.fromSpace(target),
       pullback,
       method
     )
 
-  private def interpolation(
-      method: Resample.Method
-  ): Interpolation[Continuous] =
-    method match
-      case Resample.Method.Nearest => Interpolation.Nearest
-      case Resample.Method.Linear  => Interpolation.Linear
-      case Resample.Method.Cubic   => Interpolation.Cubic
+  private def checkEndpoints(
+      source: GridSpec[?],
+      target: GridSpec[?],
+      pullback: SpatialPullback[?, ?]
+  ): Either[ResamplingPlanError, Unit] =
+    for
+      _ <- SpatialMap
+        .validateSourceFrame(pullback.source, target.frame)
+        .left
+        .map(ResamplingPlanError.Map.apply)
+      _ <- SpatialMap
+        .validateResultFrame(source.frame, pullback.target)
+        .left
+        .map(ResamplingPlanError.Map.apply)
+    yield ()
 
   private def determinant3(matrix: DMat): Double =
     require(matrix.rows == 3 && matrix.cols == 3, "D3 differential must be 3x3")

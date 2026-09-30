@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.{NativeContext, SessionId, SpaceError, SubjectId, TemplateName, WorldSpace}
+
 import image4s.SampleSpace
 import image4s.geometry.D3
 import image4s.geometry.Frame
@@ -49,6 +51,54 @@ enum SpaceRef:
       case SpaceRef.Template(_, _, kind) => kind.domainKind
       case SpaceRef.Latent(_, _, _) => DomainKind.Latent
 
+  /** The continuous world space this sampled domain lives in, when the reference alone determines it.
+    *
+    * A `SpaceRef` names a sampled domain and a `WorldSpace` the coordinate system it lives in; many domains share one
+    * world. Only templates are globally identified, so only they resolve here. A subject's volume or surface lives in
+    * that subject's native space, which needs a dataset namespace and a reference acquisition (use [[worldIn]]); a
+    * latent domain has no continuous coordinate system at all.
+    */
+  def world: Either[SpaceError, WorldSpace] =
+    this match
+      case SpaceRef.Template(name, _, _) =>
+        Right(WorldSpace.Template(name))
+      case SpaceRef.Volume(subject, _, _) =>
+        Left(SpaceError.MissingNativeContext(s"subject ${subject.value}'s volume lives in subject-native coordinates"))
+      case SpaceRef.Surface(subject, _, _) =>
+        Left(SpaceError.MissingNativeContext(s"subject ${subject.value}'s surface lives in subject-native coordinates"))
+      case SpaceRef.Latent(_, _, _) =>
+        Left(SpaceError.NoWorldSpace("a latent domain has no continuous coordinate system"))
+
+  /** The world space of this domain given the native context that anchors its subject's coordinates.
+    *
+    * Subject volumes, and anatomical surfaces (white, pial, smoothed white, midthickness), resolve to the context's
+    * scanner-RAS native space; the context must name the same subject and, when the reference names one, the same
+    * session. Inflated, spherical and custom surfaces are not in scanner coordinates, so they have no native world
+    * here. FreeSurfer tkRAS surfaces are a different world (`WorldSpace.SubjectTkRas`) and must be stated explicitly
+    * rather than derived here. Templates and latent domains behave as in [[world]].
+    */
+  def worldIn(native: NativeContext): Either[SpaceError, WorldSpace] =
+    def subjectNative(subject: SubjectId, session: Option[SessionId]): Either[SpaceError, WorldSpace] =
+      if native.subject != subject then
+        Left(SpaceError.ConflictingEvidence(s"domain subject ${subject.value}", s"native context subject ${native.subject.value}"))
+      else if session.exists(ses => !native.session.contains(ses)) then
+        Left(
+          SpaceError.ConflictingEvidence(
+            s"domain session ${session.fold("")(_.value)}",
+            s"native context session ${native.session.fold("none")(_.value)}"
+          )
+        )
+      else Right(WorldSpace.SubjectNative(native.namespace, native.subject, native.session, native.reference))
+    this match
+      case SpaceRef.Volume(subject, session, _) => subjectNative(subject, session)
+      case SpaceRef.Surface(subject, _, kind) =>
+        kind match
+          case SurfaceKind.White | SurfaceKind.Pial | SurfaceKind.SmoothWm | SurfaceKind.Midthickness =>
+            subjectNative(subject, None)
+          case SurfaceKind.Inflated | SurfaceKind.Sphere | SurfaceKind.Custom(_) =>
+            Left(SpaceError.NoWorldSpace(s"a $kind surface is not in the subject's scanner coordinates"))
+      case other => other.world
+
 object SpaceRef:
   def latent(
     dim: Int,
@@ -65,6 +115,7 @@ sealed trait SamplingGeometry:
       case SamplingGeometry.Surface(_, _) => DomainKind.Surface
       case SamplingGeometry.Hybrid(_) => DomainKind.Hybrid
       case SamplingGeometry.Latent(_) => DomainKind.Latent
+      case SamplingGeometry.Unsampled(kind, _) => kind
 
   def nElements: Int =
     this match
@@ -76,6 +127,8 @@ sealed trait SamplingGeometry:
         parts.map(_.nElements).sum
       case SamplingGeometry.Latent(dim) =>
         dim
+      case SamplingGeometry.Unsampled(_, _) =>
+        0
 
 object SamplingGeometry:
   final class Volume private[SamplingGeometry] (
@@ -128,6 +181,16 @@ object SamplingGeometry:
   final case class Latent(dim: Int) extends SamplingGeometry:
     require(dim > 0, "latent geometry dimension must be positive")
 
+  /** A world space known by identity and frame whose sampling is not fixed, e.g. a standard template in a transform
+    * catalog. Routes and provider coordinate maps may join it, so coordinates can be carried through it; it has no
+    * sample elements, so no operator or field can be compiled onto it.
+    */
+  final case class Unsampled(domainKind: DomainKind, frame: Frame[D3]) extends SamplingGeometry:
+    require(
+      domainKind == DomainKind.Volume || domainKind == DomainKind.Surface,
+      "unsampled geometry is a volume or surface world space"
+    )
+
   def volume(space: SomeSampleSpace, mask: Option[SomeMaskVolume] = None): Either[SpatialError, SamplingGeometry] =
     for
       admitted <- SampleSpaces
@@ -172,6 +235,11 @@ object SamplingGeometry:
         i += 1
       Right(SamplingGeometry.Hybrid(out.result()))
 
+  def unsampled(kind: DomainKind, frame: Frame[D3]): Either[SpatialError, SamplingGeometry] =
+    kind match
+      case DomainKind.Volume | DomainKind.Surface => Right(SamplingGeometry.Unsampled(kind, frame))
+      case other => Left(SpatialError.UnsupportedGeometry(s"unsampled $other domain"))
+
   def latent(dim: Int): Either[SpatialError, SamplingGeometry] =
     if dim <= 0 then Left(SpatialError.NonPositiveDimension("latent geometry", dim))
     else Right(SamplingGeometry.Latent(dim))
@@ -196,8 +264,12 @@ object Domain:
     space: SpaceRef,
     geometry: SamplingGeometry
   ): Either[SpatialError, Domain] =
-    if geometry.nElements <= 0 then Left(SpatialError.NonPositiveDimension("domain elements", geometry.nElements))
-    else validateKind(id, space, geometry).map(_ => new Domain(id, space, geometry))
+    val sampled =
+      geometry match
+        case SamplingGeometry.Unsampled(_, _) => Right(())
+        case _ if geometry.nElements <= 0 => Left(SpatialError.NonPositiveDimension("domain elements", geometry.nElements))
+        case _ => Right(())
+    sampled.flatMap(_ => validateKind(id, space, geometry)).map(_ => new Domain(id, space, geometry))
 
   private[scalafim] def unsafe(id: DomainId, space: SpaceRef, geometry: SamplingGeometry): Domain =
     new Domain(id, space, geometry)

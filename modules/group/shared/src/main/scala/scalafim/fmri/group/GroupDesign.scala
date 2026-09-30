@@ -52,20 +52,19 @@ object GroupDesign:
     */
   def twoSample(groupLabels: Vector[String]): Either[GroupError, GroupDesign] =
     if groupLabels.isEmpty then Left(GroupError.EmptyDesign)
-    else
-      val levels = groupLabels.distinct
+    else parseTermNames(groupLabels).flatMap { labels =>
+      val levels = labels.distinct
       if levels.length != 2 then Left(GroupError.contrastMismatch(2, levels.length))
       else
         val other = levels(1)
-        val otherTerm = DesignTermName.unsafe(other)
-        val n = groupLabels.length
-        val matrix = Matrix.newBuilder(n, 2)
+        val matrix = Matrix.newBuilder(labels.length, 2)
         var i = 0
-        while i < n do
+        while i < labels.length do
           matrix(i, 0) = 1.0
-          matrix(i, 1) = if groupLabels(i) == other then 1.0 else 0.0
+          matrix(i, 1) = if labels(i) == other then 1.0 else 0.0
           i += 1
-        Right(new GroupDesign(matrix.result(), Vector(InterceptName, otherTerm)))
+        fromTypedMatrix(matrix.result(), Vector(InterceptName, other))
+    }
 
   /** Covariate / meta-regression design from a typed `DataTable`. Numeric
     * columns become terms, optionally prefixed by an intercept column. Missing

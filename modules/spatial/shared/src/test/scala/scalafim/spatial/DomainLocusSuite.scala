@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import scalafim.image.{SampleSpaces, SomeSampleSpace}
 import scalafim.image.SampleSpaces.*
 import scalafim.locus.{Region, Relation, Selection, TotalMap, mapping}
@@ -20,7 +22,7 @@ class DomainLocusSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String, size: Int = 4): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality("bold"))
     val geometry =
       value(

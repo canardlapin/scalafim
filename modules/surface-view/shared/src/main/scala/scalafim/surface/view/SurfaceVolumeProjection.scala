@@ -34,11 +34,15 @@ final case class SurfaceProjectionPolicy(
   fill: SurfaceProjectionFill = SurfaceProjectionFill.NaN
 )
 
+/** Sample accounting is the sampler's observed [[SurfaceSampleTally]]:
+  * `acceptedSamples` counts finite values only, and `rejectedSamples` counts
+  * samples outside the volume, excluded by the mask, or non-finite.
+  * `qualifiedVertices` follows the per-vertex `sampleCounts`, which include
+  * non-finite samples, so a qualified vertex can still carry a NaN value.
+  */
 final case class SurfaceProjectionReceipt(
   vertices: Int,
-  requestedSamples: Long,
-  acceptedSamples: Long,
-  rejectedSamples: Long,
+  tally: SurfaceSampleTally,
   qualifiedVertices: Int,
   sourceVolumeValues: Long,
   sourceBytes: Long,
@@ -46,7 +50,15 @@ final case class SurfaceProjectionReceipt(
   elapsedNanos: Long,
   path: SurfaceSamplingPath,
   reducer: SurfaceSampleAggregation
-)
+):
+  def requestedSamples: Long =
+    tally.requested
+
+  def acceptedSamples: Long =
+    tally.accepted
+
+  def rejectedSamples: Long =
+    tally.rejected
 
 final case class SurfaceProjectionResult(
   values: SurfaceField[Double],
@@ -68,7 +80,6 @@ object SurfaceVolumeProjection:
     val values = new Array[Double](vertexCount)
     val counts = new Array[Int](vertexCount)
     val quality = new Array[Boolean](vertexCount)
-    var accepted = 0L
     var qualified = 0
     var vertex = 0
     while vertex < vertexCount do
@@ -78,7 +89,6 @@ object SurfaceVolumeProjection:
       val keep = count >= policy.minimumSamples.value
       counts(vertex) = count
       quality(vertex) = keep
-      accepted += count.toLong
       if keep then
         values(vertex) = observed
         qualified += 1
@@ -87,7 +97,6 @@ object SurfaceVolumeProjection:
           case SurfaceProjectionFill.NaN => Double.NaN
           case SurfaceProjectionFill.Constant(value) => value
       vertex += 1
-    val requested = vertexCount.toLong * samplesPerVertex(morphism.plan.path).toLong
     val volumeValues = volume.space.spatialDims.iterator.map(_.toLong).product
     SurfaceProjectionResult(
       SurfaceField.full(sampled.values.geometry, values.toIndexedSeq, sampled.values.label),
@@ -95,9 +104,7 @@ object SurfaceVolumeProjection:
       SurfaceField.full(sampled.values.geometry, quality.toIndexedSeq, "surface-projection-quality"),
       SurfaceProjectionReceipt(
         vertexCount,
-        requested,
-        accepted,
-        (requested - accepted).max(0L),
+        sampled.tally,
         qualified,
         volumeValues,
         volumeValues * 8L,
@@ -128,9 +135,3 @@ object SurfaceVolumeProjection:
           case None => return Left(SurfaceViewError.InvalidDataLength(displayGeometry.vertexCount, result.values.size))
         vertex += 1
       SurfaceLayer.scalar(id, surface, result.values.geometry, values, colorizer, opacity = opacity, blendMode = blendMode)
-
-  private def samplesPerVertex(path: SurfaceSamplingPath): Int =
-    path match
-      case SurfaceSamplingPath.White | SurfaceSamplingPath.Pial | SurfaceSamplingPath.Midpoint => 1
-      case SurfaceSamplingPath.FractionalThickness(fractions) => fractions.length
-      case SurfaceSamplingPath.NormalLine(offsets) => offsets.length

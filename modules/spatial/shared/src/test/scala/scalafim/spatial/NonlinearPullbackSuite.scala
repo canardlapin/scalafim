@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import ravel.NDArray as RavelArray
 import reframe4s.field.DenseMap
 import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPoint, SpatialPullback, SpatialPullbacks}
@@ -18,13 +20,13 @@ class NonlinearPullbackSuite extends munit.FunSuite:
 
   private def domain(name: String): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry =
       spatialValue(SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def grid(domain: Domain): GridSpec =
+  private def grid(domain: Domain): GridSpec[?] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")
@@ -33,7 +35,7 @@ class NonlinearPullbackSuite extends munit.FunSuite:
     source: Domain,
     target: Domain,
     sourceX: Vector[Double]
-  ): SpatialPullback =
+  ): SpatialPullback[?, ?] =
     require(sourceX.length == 4)
     val sourceGrid = grid(source)
     val targetGrid = grid(target)
@@ -62,8 +64,8 @@ class NonlinearPullbackSuite extends munit.FunSuite:
     name: String,
     source: Domain,
     target: Domain,
-    forward: SpatialPullback,
-    inverse: Option[SpatialPullback] = None,
+    forward: SpatialPullback[?, ?],
+    inverse: Option[SpatialPullback[?, ?]] = None,
     inverseClaim: Inverse = Inverse.None
   ): Morphism =
     spatialValue(

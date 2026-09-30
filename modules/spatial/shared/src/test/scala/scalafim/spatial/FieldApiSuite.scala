@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialAxis, VoxelCoord}
 import scalafim.image.SampleSpaces.*
 import scalafim.surface.{Hemisphere, SurfaceGeometry, SurfaceKind, TriangleMesh}
@@ -18,7 +20,7 @@ class FieldApiSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String, dims: Vector[Int] = Vector(4, 1, 1)): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
@@ -35,7 +37,7 @@ class FieldApiSuite extends munit.FunSuite:
       )
     val geometry = SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Midthickness)
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val sampling = spatialValue(SamplingGeometry.surface(geometry))
     spatialValue(Domain.build(id, SpaceRef.Surface(subject, Hemisphere.Left, SurfaceKind.Midthickness), sampling))
 

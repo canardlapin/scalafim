@@ -1,7 +1,9 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import ravel.NDArray as RavelArray
-import scalafim.image.{GridSpec, SampleSpaces, SpatialPullbacks}
+import scalafim.image.{GridSpec, SampleSpaces, SpatialPoint, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
 
 class ProviderMapCompositionSuite extends munit.FunSuite:
@@ -9,16 +11,20 @@ class ProviderMapCompositionSuite extends munit.FunSuite:
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
 
+  /** Evaluate through the typed `SpatialPoint` entry point while keeping the fixtures' coordinate vectors. */
+  private def transformVector(map: CoordinateMap, point: Vector[Double]): Either[SpatialError, Vector[Double]] =
+    map.transform(SpatialPoint.unsafeFromVector(point)).map(_.toVector)
+
   private def domain(name: String): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(
       SamplingGeometry.volume(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
     )
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
-  private def grid(domain: Domain): GridSpec =
+  private def grid(domain: Domain): GridSpec[?] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")
@@ -94,7 +100,7 @@ class ProviderMapCompositionSuite extends munit.FunSuite:
         )
       )
     )
-    val actual = spatialValue(composite.transform(Vector(0.25, 0.0, 0.0)))
+    val actual = spatialValue(transformVector(composite, Vector(0.25, 0.0, 0.0)))
 
     assertEqualsDouble(actual(0), 2.5, 1e-12)
     assertEqualsDouble(actual(1), 0.0, 1e-12)
@@ -120,8 +126,8 @@ class ProviderMapCompositionSuite extends munit.FunSuite:
     )
     val inverse = spatialValue(composite.inverted)
     val roundTrip = spatialValue(inverse.inverted)
-    val transformed = spatialValue(composite.transform(Vector(0.5, 0.0, 0.0)))
-    val recovered = spatialValue(inverse.transform(transformed))
+    val transformed = spatialValue(transformVector(composite, Vector(0.5, 0.0, 0.0)))
+    val recovered = spatialValue(transformVector(inverse, transformed))
 
     assertNotEquals(inverse.fingerprint, composite.fingerprint)
     assertEquals(roundTrip.fingerprint, composite.fingerprint)
@@ -141,8 +147,8 @@ class ProviderMapCompositionSuite extends munit.FunSuite:
     )
     val inverse = spatialValue(composite.inverted)
     val roundTrip = spatialValue(inverse.inverted)
-    val transformed = spatialValue(composite.transform(Vector(1.0, 0.0, 0.0)))
-    val recovered = spatialValue(inverse.transform(transformed))
+    val transformed = spatialValue(transformVector(composite, Vector(1.0, 0.0, 0.0)))
+    val recovered = spatialValue(transformVector(inverse, transformed))
 
     assertNotEquals(inverse.fingerprint, composite.fingerprint)
     assertEquals(roundTrip.fingerprint, composite.fingerprint)
@@ -171,7 +177,7 @@ class ProviderMapCompositionSuite extends munit.FunSuite:
         coordinateMap = coordinateMap
       )
     )
-    val actual = spatialValue(morphism.coordinateMap.transform(Vector(0.25, 0.0, 0.0)))
+    val actual = spatialValue(transformVector(morphism.coordinateMap, Vector(0.25, 0.0, 0.0)))
 
     assertEquals(morphism.source, source.id)
     assertEquals(morphism.target, target.id)

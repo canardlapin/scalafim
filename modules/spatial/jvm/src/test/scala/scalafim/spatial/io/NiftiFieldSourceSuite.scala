@@ -1,5 +1,7 @@
 package scalafim.spatial.io
 
+import scalafim.image.world.SubjectId
+
 import image4s.geometry.GeometryError
 import scalafim.image.io.Nifti
 import scalafim.image.{SampleSpaceError, SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
@@ -27,7 +29,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String, space: SomeSampleSpace): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-01"))
+    val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(SamplingGeometry.volume(space))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))

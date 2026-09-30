@@ -1,0 +1,77 @@
+{
+ "goldens": {
+  "affine.tfm": "1ec72efc3af737731c1ba03b0bc9cdd873f3ccd65005ffb9d372269b42b452d3",
+  "affine.mat": "fe952dac961a933a6198144c3fb424dd28f99203f29319e24bfc29621ea5948d",
+  "flirt.mat": "c4cd5bce6a83bd530789f5bb45108878ab51c15b7e5238ae24f5b1f5f29c5ffb",
+  "affine.aff12.1D": "d74273bcb1b80e3111c6ad4ec6901f0393bc4260d5c97ab41c0d9d9f806eb4c3",
+  "affine.lta": "18c7d3f5a1596d8591ba6da56d5db87110b8a2cb5339c6778a26a26c79db2872",
+  "talairach.xfm": "d3be7f8f45819583a38ed88d3a7a799e5e9569ccc9e121adc7f550e331e786d0",
+  "register.dat": "0b0c244411d2cae2b754a3c2d2377e2df8a5c9e73305673dc41b8401494d3625",
+  "field_1Warp.nii": "138dd34c1251d4b31fd243a0b8eb8a1886dce4f3ba51c5b1242e7f34d0e2a005",
+  "field_fnirt_relative.nii": "9f34e75e105e99de19ad03e4abe06b5bec416958b803f0c8c8693e517e857af7",
+  "queries.tsv": "644a941d36d340002160c32ae29deff251b3af90095ea858eca7c71d5ae063b8",
+  "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8",
+  "goldens.txt": "5590f427ed52b3185570f9dd2a6f1d5a1d9b6d8e54d1c25e6762c97f38d56d72"
+ },
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "fslpy": "3.29.1"
+ },
+ "tolerance_mm": 1e-05,
+ "checks": {
+  "affine.aff12.1D": {
+   "tool": "AFNI 3dAllineate -1Dmatrix_apply",
+   "status": "pending-native",
+   "max_error_mm": null,
+   "note": "tool not installed on the generating machine"
+  },
+  "affine.lta": {
+   "tool": "FreeSurfer mri_vol2vol --lta / lta_convert",
+   "status": "pending-native",
+   "max_error_mm": null,
+   "note": "tool not installed on the generating machine"
+  },
+  "affine.mat": {
+   "tool": "SimpleITK ReadTransform/TransformPoint",
+   "status": "pass",
+   "max_error_mm": 7.105427357601002e-15,
+   "note": ""
+  },
+  "affine.tfm": {
+   "tool": "SimpleITK ReadTransform/TransformPoint",
+   "status": "pass",
+   "max_error_mm": 7.105427357601002e-15,
+   "note": ""
+  },
+  "field_1Warp.nii": {
+   "tool": "SimpleITK DisplacementFieldTransform",
+   "status": "pass",
+   "max_error_mm": 3.1324935534371434e-08,
+   "note": ""
+  },
+  "field_fnirt_relative.nii": {
+   "tool": "FSL applywarp",
+   "status": "pending-native",
+   "max_error_mm": null,
+   "note": "tool not installed on the generating machine"
+  },
+  "flirt.mat": {
+   "tool": "fslpy fromFlirt (reference implementation)",
+   "status": "pass",
+   "max_error_mm": 1.1668703017164717e-06,
+   "note": "native flirt -applyxfm still pending"
+  },
+  "register.dat": {
+   "tool": "FreeSurfer tkregister2 --noedit",
+   "status": "pending-native",
+   "max_error_mm": null,
+   "note": "tool not installed on the generating machine"
+  },
+  "talairach.xfm": {
+   "tool": "FreeSurfer / MINC xfm reader",
+   "status": "pending-native",
+   "max_error_mm": null,
+   "note": "tool not installed on the generating machine"
+  }
+ }
+}

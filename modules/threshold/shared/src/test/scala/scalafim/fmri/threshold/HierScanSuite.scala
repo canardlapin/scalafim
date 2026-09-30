@@ -20,8 +20,6 @@ class HierScanSuite extends munit.FunSuite:
     assertEquals(result.nodeTests.filter(_.rejected).map(_.path), Vector(Vector(7)))
     assert(result.reject.valueAtCanonicalOrdinal(7))
     assertEquals((0 until 8).count(result.reject.valueAtCanonicalOrdinal), 1)
-    assertEqualsDouble(result.threshold, result.significantRegions.head.score, 1e-12)
-    assertEqualsDouble(result.cutoff.toLegacyDouble, result.significantRegions.head.score, 1e-12)
   }
 
   test("HierScan descends into rejected octree children") {
@@ -31,13 +29,15 @@ class HierScanSuite extends munit.FunSuite:
     val nulls = FixedNullDraw(Vector.fill(9)(Array.fill(16)(0.2)))
     val result = value(HierScan.run(stat, nulls, config = simpleConfig(alpha = 0.8)))
 
-    assertEquals(result.significantRegions.size, 1)
-    assertEquals(result.significantRegions.head.path, Vector(7, 1))
-    assertEquals(result.significantRegions.head.maskSpaceIndices, Vector(15))
-    assert(result.nodeTests.exists(t => t.path == Vector(7) && t.rejected))
-    assert(result.nodeTests.exists(t => t.path == Vector(7, 1) && t.rejected))
-    assert(result.reject.valueAtCanonicalOrdinal(15))
-    assertEquals((0 until 16).count(result.reject.valueAtCanonicalOrdinal), 1)
+    // Every rejected node is reported, as in neurothresh: the coarse region
+    // tested at gamma * alpha and the voxel it localizes to at gamma * (1 - gamma) * alpha.
+    assertEquals(result.significantRegions.map(_.path), Vector(Vector(7), Vector(7, 1)))
+    assertEquals(result.significantRegions.last.maskSpaceIndices, Vector(15))
+    assert(result.significantRegions.head.maskSpaceIndices.contains(15))
+    assertEqualsDouble(result.significantRegions.head.alphaTest, 0.4, 1e-15)
+    assertEqualsDouble(result.significantRegions.last.alphaTest, 0.2, 1e-15)
+    val coarse = result.significantRegions.head.maskSpaceIndices.toSet
+    assertEquals((0 until 16).filter(result.reject.valueAtCanonicalOrdinal).toSet, coarse)
   }
 
   test("HierScan keeps the reject mask empty when the null dominates") {
@@ -47,8 +47,6 @@ class HierScanSuite extends munit.FunSuite:
 
     assertEquals(result.significantRegions, Vector.empty)
     assertEquals(result.nodeTests.count(_.rejected), 0)
-    assert(result.threshold.isPosInfinity)
-    assertEquals(result.cutoff, ThresholdCutoff.NoRejections)
     assertEquals((0 until 8).count(result.reject.valueAtCanonicalOrdinal), 0)
   }
 
@@ -74,7 +72,7 @@ class HierScanSuite extends munit.FunSuite:
 
     assertEquals(
       HierScan.run(stat, nulls, config = simpleConfig(alpha = 0.5)).left.toOption,
-      Some(ThresholdError.ShapeMismatch("null draw", "8", "7"))
+      Some(ThresholdError.NullDrawFailed(0, ThresholdError.ShapeMismatch("null draw", "8", "7")))
     )
   }
 
@@ -92,7 +90,10 @@ class HierScanSuite extends munit.FunSuite:
   private def volume(dims: Vector[Int], data: Array[Double]): SomeScalarVolume[Double] =
     SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(dims))
 
-  private final class FixedNullDraw(rows: Vector[Array[Double]]) extends NullDraw:
+  private final class FixedNullDraw(
+      rows: Vector[Array[Double]],
+      override val reference: NullReference = NullReference.MonteCarlo
+  ) extends NullDraw:
     override val nPermutations: PermutationCount =
       PermutationCount.unsafe(rows.length)
 

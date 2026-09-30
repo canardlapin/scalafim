@@ -20,6 +20,7 @@ import image4s.geometry.LengthUnit
 import image4s.locus.GridDomain
 import gale.linalg.DMat
 import scalafim.image.NeuroAffineSyntax.*
+import scalafim.image.world.{FrameCatalog, WorldSpace}
 
 enum SampleSpaceError:
   case EmptyDimensions
@@ -33,6 +34,9 @@ enum SampleSpaceError:
   case UnexpectedNonSpatialAxes(actual: Vector[AxisKind])
   case Geometry(cause: GeometryError)
   case Image(cause: ImageError)
+  case WorldRelabel(from: String, to: String)
+  case WorldIdentity(reason: String)
+  case InvalidArgument(reason: String)
 
   def message: String =
     this match
@@ -57,6 +61,12 @@ enum SampleSpaceError:
         s"spatial-only sample space requires no non-spatial axes; got [$kinds]"
       case Geometry(cause) =>
         cause.message
+      case WorldRelabel(from, to) =>
+        s"cannot relabel a space in world '$from' as '$to'; moving between world spaces needs a transform"
+      case WorldIdentity(reason) =>
+        s"sample space has no world-space identity: $reason"
+      case InvalidArgument(reason) =>
+        reason
       case Image(cause) =>
         cause.message
 
@@ -69,10 +79,9 @@ object SampleSpaces:
       .parse("scalafim-ras-d2")
       .fold(error => throw new IllegalStateException(error.message), identity)
 
+  /** Unresolved RAS-mm D3 identity; see [[scalafim.image.world.WorldSpace.Unresolved]]. */
   private val rasD3FrameId =
-    FrameId
-      .parse("scalafim-ras-d3")
-      .fold(error => throw new IllegalStateException(error.message), identity)
+    FrameCatalog.frameId(WorldSpace.Unresolved)
 
   private[image] def fromCanonical(space: SomeSampleSpace): SomeSampleSpace =
     space
@@ -112,11 +121,48 @@ object SampleSpaces:
       if nonSpatialKinds.isEmpty then Right(spatial)
       else Left(SampleSpaceError.UnexpectedNonSpatialAxes(nonSpatialKinds))
 
+  /** Re-identify exact D3 sampling geometry in a resolved world space.
+    *
+    * The grid shape, index-to-world affine and non-spatial axes are retained; only the frame identity changes, from
+    * whatever the decoder produced (ephemeral or unresolved) to the persistent frame of `world`. Spaces already in a
+    * different resolved world are rejected: moving between worlds needs a transform, not a relabel.
+    *
+    * Trust boundary: relabelling an unresolved or ephemeral space asserts that its coordinates are in `world`; nothing
+    * can check that. Callers vouch for it, as `Nifti.readVolumeIn` does after resolving the file's evidence.
+    */
+  def inWorld(
+      space: SomeSampleSpace,
+      world: WorldSpace
+  ): Either[SampleSpaceError, SomeSampleSpace] =
+    val current = space.grid.frame
+    val relabelAllowed =
+      current.persistentKey.isEmpty || FrameCatalog.worldOf(current).exists(w => w == WorldSpace.Unresolved || w == world)
+    if space.grid.frame.spatialRank != 3 then
+      Left(SampleSpaceError.ExpectedDimensionality("world-space relabel", 3, space.grid.frame.spatialRank))
+    else if !relabelAllowed then
+      Left(SampleSpaceError.WorldRelabel(FrameCatalog.worldOf(current).fold(_.message, _.displayName), world.displayName))
+    else
+      requireD3(space).flatMap: typed =>
+        val frame = FrameCatalog.frame(world)
+        val result =
+          for
+            gridId <- admittedGridId(3, FrameCatalog.frameId(world), typed.grid.shape, typed.grid.indexToFrame.rowMajor)
+            grid   <- Grid.createPersistent(gridId, frame)(typed.grid.shape, typed.grid.indexToFrame)
+          yield fromCanonical(SampleSpace.create(grid, typed.nonSpatialAxes))
+        result.left.map(SampleSpaceError.Geometry.apply)
+
+  /** The world space a sample space's frame belongs to. */
+  def worldOf(space: SomeSampleSpace): Either[SampleSpaceError, WorldSpace] =
+    FrameCatalog.worldOf(space.grid.frame).left.map(error => SampleSpaceError.WorldIdentity(error.message))
+
   /** Assign deterministic persistent identity to exact D3 sampling geometry.
     *
     * External decoders intentionally produce ephemeral frame and grid owners. ScalaFIM admits those values by retaining
     * their exact geometry and axes while constructing the persistent frame/grid keys used by GridDomain. Existing
     * persistent sample spaces pass through unchanged.
+    *
+    * An ephemeral RAS-mm D3 frame becomes the [[scalafim.image.world.WorldSpace.Unresolved]] frame: this is the legacy
+    * identity every file read without world evidence gets (see [[make]]).
     */
   private[scalafim] def persistentD3[F <: Frame[D3]](
       space: SampleSpace[F, D3]
@@ -191,7 +237,7 @@ object SampleSpaces:
 
     private[scalafim] def orientation: Orientation3D =
       val matrix = space.grid.indexToFrame.matrix
-      Orientation.findAnatomy(matrix)
+      Orientation.findAnatomyEither(matrix).fold(error => throw new IllegalStateException(error.message), identity)
 
     private[scalafim] def affineD3: Either[SampleSpaceError, GeometryAffine[D3]] =
       requireD3(space).map(_.grid.indexToFrame)
@@ -309,6 +355,20 @@ object SampleSpaces:
         .inverse(world.toVector)
         .map(value => VoxelPoint.unsafeFromVector(value, "voxel point"))
 
+  /** An axis-aligned D3 space: the typed form of `make(dims, spacing = Some(...), origin = Some(...))`.
+    *
+    * `dims` holds the three spatial extents followed by any non-spatial extents; `origin` is the world position of
+    * voxel (0, 0, 0).
+    */
+  def regular(
+      dims: Vector[Int],
+      spacing: VoxelSpacing,
+      origin: WorldPoint = WorldPoint.Origin,
+      axes: Option[NonSpatialAxes] = None
+  ): Either[SampleSpaceError, SomeSampleSpace] =
+    if dims.length < 3 then Left(SampleSpaceError.ExpectedDimensionality("regular D3 sample space", 3, dims.length))
+    else make(dims, Some(spacing.toVector), Some(origin.toVector), axes, None)
+
   def fromSpatialDims(
       dims: SpatialDims,
       spacing: Option[Vector[Double]] = None,
@@ -318,6 +378,15 @@ object SampleSpaces:
   ): SomeSampleSpace =
     SampleSpaces(dims.toVector, spacing, origin, axes, affine)
 
+  /** Admit sampling geometry from dimensions and an optional affine (or spacing and origin).
+    *
+    * **World identity (deferred, STP P1.07).** A D3 result lives in [[scalafim.image.world.WorldSpace.Unresolved]], the
+    * historical shared frame `scalafim-ras-d3`. Every space built here, and every NIfTI read through the legacy
+    * `Nifti.readVolume`/`readSeries`, therefore aligns with every other one, whichever subject or template it came from.
+    * That keeps same-subject pipelines working, but it is not evidence that two spaces coincide. To give geometry a
+    * real identity, relabel it with [[inWorld]], or read it with `Nifti.readVolumeIn`/`readSeriesIn`, which resolve the
+    * file's world-space evidence and refuse unresolved or contradictory evidence.
+    */
   def make(
       dims: Vector[Int],
       spacing: Option[Vector[Double]] = None,

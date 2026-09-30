@@ -1,8 +1,12 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import image4s.geometry.{Affine, D3}
 import scalafim.image.{SampleSpaces, SomeSampleSpace, SpatialPoint}
 import scalafim.image.SampleSpaces.*
+
+import scala.annotation.nowarn
 
 class OperatorCompilerSuite extends munit.FunSuite:
 
@@ -18,7 +22,7 @@ class OperatorCompilerSuite extends munit.FunSuite:
 
   private def domain(name: String, dims: Vector[Int]): Domain =
     val id = value(DomainId(name))
-    val subject = value(SubjectId("sub-01"))
+    val subject = value(SubjectId("sub-01").asSpatial)
     val modality = value(Modality(name))
     val geometry = value(SamplingGeometry.volume(SampleSpaces(dims, affine = Some(ProviderAffines.identity))))
     value(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
@@ -93,6 +97,23 @@ class OperatorCompilerSuite extends munit.FunSuite:
     val sourceValues = DoubleMatrix.fromRows(Vector(Vector(10.0), Vector(20.0), Vector(30.0)))
     val sampled = linValue(operator.forward(sourceValues))
     assertEqualsDouble(sampled(0, 0), 12.5, 1e-12)
+
+  test("interior trilinear rows report full coverage despite rounding in the corner weights"):
+    // The eight corner weights of an interior point sum to one only up to rounding (1.0000000000000002 for some
+    // fractional offsets); coverage must still be a valid fraction rather than failing the compile.
+    val source = domain("rounding-source", Vector(3, 3, 3))
+    val target = domain("rounding-target", Vector(1, 1, 1))
+    val tenths = (1 to 9).map(_ / 10.0)
+    for
+      x <- tenths
+      y <- tenths
+      z <- tenths
+    do
+      val morphism = affine("rounding", source, target, translation(1.0 + x, 1.0 + y, 1.0 + z))
+      val operator =
+        value(OperatorCompiler.compile(graph(Vector(source, target), Vector(morphism)), CompileRequest(source.id, target.id)))
+      assertEqualsDouble(operator.qc.coverage.rowCoverage.head, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
+      assertEqualsDouble(triplets(operator).values.toVector.sum, 1.0, 1e-12, clue = s"offset ($x, $y, $z)")
 
   test("ROI rows preserve order and report out-of-bounds coverage"):
     val source = domain("source", Vector(2, 1, 1))
@@ -185,10 +206,32 @@ class OperatorCompilerSuite extends munit.FunSuite:
     assertEquals(executable.source, source.id)
     assertEquals(executable.target, target.id)
     assertEquals(
-      value(executable.coordinateMap.transform(Vector(0.0, 0.0, 0.0))),
+      value(executable.coordinateMap.transform(Vector(0.0, 0.0, 0.0)): @nowarn("cat=deprecation")),
       Vector(1.0, 2.0, 0.0)
     )
     assertEquals(
       value(executable.coordinateMap.transform(SpatialPoint.Origin)),
       SpatialPoint(1.0, 2.0, 0.0)
     )
+
+  test("operator and field provenance record whether the route used inverses"):
+    val source = domain("inv-source", Vector(3, 1, 1))
+    val target = domain("inv-target", Vector(3, 1, 1))
+    val forward = affine("inv-source-to-target", source, target, translation(1.0, 0.0, 0.0))
+    val routed = graph(Vector(source, target), Vector(forward))
+
+    val direct = value(OperatorCompiler.compile(routed, CompileRequest(source.id, target.id, sampling = SamplingPolicy.Nearest)))
+    assert(!direct.provenance.usedInverses)
+    assert(!FieldTransform.from(direct).usedInverses)
+
+    val reverse =
+      value(
+        OperatorCompiler.compile(
+          routed,
+          CompileRequest(target.id, source.id, sampling = SamplingPolicy.Nearest, allowInverses = true)
+        )
+      )
+    assert(reverse.path.usedInverses)
+    assert(reverse.provenance.usedInverses)
+    assert(FieldTransform.from(reverse).usedInverses)
+    assertEquals(reverse.provenance.path.map(_.value), Vector("inv-source-to-target:inverse"))

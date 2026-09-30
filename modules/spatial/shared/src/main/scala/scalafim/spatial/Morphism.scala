@@ -3,13 +3,14 @@ package scalafim.spatial
 import image4s.geometry.{Affine, D3, Frame}
 import scalafim.image.{SpatialPoint, SpatialPullback, SpatialPullbacks}
 import scalafim.surface.{SurfaceGeometry, SurfaceSamplingPath, SurfaceVertexMapping, VolumeSurfaceSamplingPlan}
-import reframe4s.core.SpatialMap
+import scalafim.transform.WorldTransform
+import reframe4s.core.{FrameErasedMap, SpatialMap}
 import reframe4s.field.DenseMap
 
 import scala.util.hashing.MurmurHash3
 
 enum MorphismKind:
-  case Identity, Affine3D, Warp3D, VolumeToSurface, SurfaceToSurface, Functional, Filter, Hybrid
+  case Identity, Affine3D, Warp3D, VolumeToSurface, SurfaceToVolume, SurfaceToSurface, Functional, Filter, Hybrid
 
 object MorphismKind:
   def compatible(kind: MorphismKind, source: DomainKind, target: DomainKind): Boolean =
@@ -20,6 +21,8 @@ object MorphismKind:
         source == DomainKind.Volume && target == DomainKind.Volume
       case MorphismKind.VolumeToSurface =>
         source == DomainKind.Volume && target == DomainKind.Surface
+      case MorphismKind.SurfaceToVolume =>
+        source == DomainKind.Surface && target == DomainKind.Volume
       case MorphismKind.SurfaceToSurface =>
         source == DomainKind.Surface && target == DomainKind.Surface
       case MorphismKind.Functional =>
@@ -42,27 +45,27 @@ enum CoordinateMap:
   case SurfaceVertices(mapping: SurfaceVertexMapping)
   case Unspecified
 
+  @deprecated("Use transform(SpatialPoint); a bare Vector[Double] carries neither arity nor role.", "0.2.0")
   def transform(point: Vector[Double]): Either[SpatialError, Vector[Double]] =
+    if point.length != 3 || point.exists(value => !value.isFinite) then
+      Left(SpatialError.CoordinateTransformFailed("point must be finite 3D"))
+    else transform(SpatialPoint(point(0), point(1), point(2))).map(_.toVector)
+
+  def transform(point: SpatialPoint): Either[SpatialError, SpatialPoint] =
     this match
-      case _ if point.length != 3 || point.exists(value => !value.isFinite) =>
-        Left(SpatialError.CoordinateTransformFailed("point must be finite 3D"))
       case CoordinateMap.Identity =>
         Right(point)
       case CoordinateMap.Geometric(binding) =>
-        CoordinateMap.transformProvider(binding.pullback, point)
+        SpatialPullbacks
+          .transform(binding.pullback, point)
+          .left
+          .map(error => SpatialError.CoordinateTransformFailed(error.message))
       case CoordinateMap.VolumeSamples(_) =>
         Left(SpatialError.CoordinateTransformFailed("volume-to-surface sampling is not a point transform"))
       case CoordinateMap.SurfaceVertices(_) =>
         Left(SpatialError.CoordinateTransformFailed("surface vertex mapping is not a world-coordinate transform"))
       case CoordinateMap.Unspecified =>
         Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
-
-  def transform(point: SpatialPoint): Either[SpatialError, SpatialPoint] =
-    transform(point.toVector).flatMap { values =>
-      SpatialPoint
-        .fromVector(values, "transformed point")
-        .left.map(err => SpatialError.CoordinateTransformFailed(err.message))
-    }
 
   def inverted: Either[SpatialError, CoordinateMap] =
     this match
@@ -110,8 +113,8 @@ object CoordinateMapFingerprint:
   * composed value are reframe4s `SpatialMap`s.
   */
 final case class ProviderMapBinding private (
-  pullback: SpatialPullback,
-  inversePullback: Option[SpatialPullback],
+  pullback: SpatialPullback[Frame[D3], Frame[D3]],
+  inversePullback: Option[SpatialPullback[Frame[D3], Frame[D3]]],
   fingerprint: CoordinateMapFingerprint,
   private[spatial] val inverseFingerprint: Option[CoordinateMapFingerprint],
   affineOperator: Option[Affine[D3]],
@@ -157,8 +160,8 @@ object ProviderMapBinding:
       )
 
   private[spatial] def affine(
-    pullback: SpatialPullback,
-    inversePullback: SpatialPullback,
+    pullback: SpatialPullback[Frame[D3], Frame[D3]],
+    inversePullback: SpatialPullback[Frame[D3], Frame[D3]],
     operator: Affine[D3]
   ): Either[SpatialError, ProviderMapBinding] =
     validateInverse(pullback, inversePullback).map: _ =>
@@ -177,8 +180,8 @@ object ProviderMapBinding:
       )
 
   private[spatial] def dense(
-    pullback: SpatialPullback,
-    inversePullback: Option[SpatialPullback] = None
+    pullback: SpatialPullback[Frame[D3], Frame[D3]],
+    inversePullback: Option[SpatialPullback[Frame[D3], Frame[D3]]] = None
   ): Either[SpatialError, ProviderMapBinding] =
     val denseValidation =
       if DenseMap.isDense(pullback) && inversePullback.forall(DenseMap.isDense)
@@ -211,6 +214,28 @@ object ProviderMapBinding:
       containsDense = true,
       componentCount = 1
     )
+
+  /** A provider map that is neither a bare affine nor a bare dense map, e.g. a toolkit composite whose stages reframe4s
+    * has already chained. The caller supplies the fingerprint, derived from the map's provenance (asset digests).
+    */
+  private[spatial] def mapped(
+      pullback: SpatialPullback[Frame[D3], Frame[D3]],
+      fingerprint: CoordinateMapFingerprint,
+      inverse: Option[(SpatialPullback[Frame[D3], Frame[D3]], CoordinateMapFingerprint)],
+      containsDense: Boolean
+  ): Either[SpatialError, ProviderMapBinding] =
+    inverse
+      .fold[Either[SpatialError, Unit]](Right(()))((reverse, _) => validateInverse(pullback, reverse))
+      .map: _ =>
+        new ProviderMapBinding(
+          pullback,
+          inverse.map(_._1),
+          fingerprint,
+          inverse.map(_._2),
+          affineOperator = None,
+          containsDense = containsDense,
+          componentCount = 1
+        )
 
   private[spatial] def composed(
       components: Vector[ProviderMapBinding],
@@ -246,14 +271,14 @@ object ProviderMapBinding:
 
   private def composeProvider(
       components: Vector[ProviderMapBinding]
-  ): Either[SpatialError, SpatialPullback] =
+  ): Either[SpatialError, SpatialPullback[Frame[D3], Frame[D3]]] =
     if components.isEmpty then
       Left(SpatialError.InvalidProviderCoordinateMap("at least one provider map is required"))
     else composeProviderMaps(components.map(_.pullback))
 
   private def composeProviderMaps(
-      components: Vector[SpatialPullback]
-  ): Either[SpatialError, SpatialPullback] =
+      components: Vector[SpatialPullback[Frame[D3], Frame[D3]]]
+  ): Either[SpatialError, SpatialPullback[Frame[D3], Frame[D3]]] =
     var current = components.head
     var index = 1
     var error = Option.empty[SpatialError]
@@ -285,8 +310,8 @@ object ProviderMapBinding:
         case None => Right(Some(current))
 
   private[spatial] def validateInverse(
-      pullback: SpatialPullback,
-      inverse: SpatialPullback
+      pullback: SpatialPullback[Frame[D3], Frame[D3]],
+      inverse: SpatialPullback[Frame[D3], Frame[D3]]
   ): Either[SpatialError, Unit] =
     for
       _ <- SpatialMap
@@ -307,22 +332,6 @@ object ProviderMapBinding:
     CoordinateMapFingerprint.unsafe(s"provider-composite-v1:${java.lang.Integer.toHexString(hash)}")
 
 object CoordinateMap:
-  private[spatial] def transformProvider(
-    map: SpatialPullback,
-    coordinates: Vector[Double]
-  ): Either[SpatialError, Vector[Double]] =
-    SpatialPoint
-      .fromVector(coordinates, "provider pullback input")
-      .left
-      .map(error => SpatialError.CoordinateTransformFailed(error.message))
-      .flatMap(point =>
-        SpatialPullbacks
-          .transform(map, point)
-          .left
-          .map(error => SpatialError.CoordinateTransformFailed(error.message))
-          .map(_.toVector)
-      )
-
   def affine(
       source: Domain,
       target: Domain,
@@ -335,8 +344,8 @@ object CoordinateMap:
     yield CoordinateMap.Geometric(binding)
 
   private[spatial] def affine(
-      source: scalafim.image.GridSpec,
-      target: scalafim.image.GridSpec,
+      source: scalafim.image.GridSpec[?],
+      target: scalafim.image.GridSpec[?],
       operator: Affine[D3]
   ): Either[SpatialError, CoordinateMap] =
     affineBetween(source.providerFrame, target.providerFrame, operator).map(CoordinateMap.Geometric.apply)
@@ -350,11 +359,63 @@ object CoordinateMap:
     val inverse = SpatialPullbacks.affineBetween(inputFrame, outputFrame, operator.inverse)
     ProviderMapBinding.affine(pullback, inverse, operator)
 
+  /** Admit a dense provider map into the routing graph.
+    *
+    * Graph edges join domains whose frames are known only at runtime, so the map is stored in reframe4s' erased form,
+    * which re-validates both endpoint owners on every application.
+    */
   def dense(
-    pullback: SpatialPullback,
-    inversePullback: Option[SpatialPullback] = None
+    pullback: SpatialPullback[?, ?],
+    inversePullback: Option[SpatialPullback[?, ?]] = None
   ): Either[SpatialError, CoordinateMap] =
-    ProviderMapBinding.dense(pullback, inversePullback).map(CoordinateMap.Geometric.apply)
+    ProviderMapBinding.dense(erase(pullback), inversePullback.map(erase)).map(CoordinateMap.Geometric.apply)
+
+  /** Admit a `scalafim.transform` world transform as a routing edge's map, stored as its pullback.
+    *
+    * Affines keep their exact inverse and fuse with neighbouring affines; analytic isomorphisms keep their analytic
+    * inverse; dense and composite maps carry a forward direction only when the transform has one (an inverse asset).
+    * `identity` must determine the transform's values, e.g. the SHA-256 digests of the assets it was read from plus
+    * every policy that changes them; it keys non-affine maps, whose values cannot be fingerprinted structurally.
+    */
+  def fromWorldTransform[S <: Frame[D3], T <: Frame[D3]](
+      transform: WorldTransform[S, T],
+      identity: String
+  ): Either[SpatialError, CoordinateMap] =
+    transform match
+      case WorldTransform.Linear(framed, _) =>
+        affineBetween(framed.target, framed.source, framed.operator).map(CoordinateMap.Geometric.apply)
+      case WorldTransform.Smooth(iso, _) =>
+        mapped(iso, s"$identity|pull", Some(iso.inverse -> s"$identity|push"), containsDense = false)
+      case WorldTransform.Mapped(pull, availability, _) =>
+        val push = availability.map
+        if DenseMap.isDense(erase(pull)) && push.forall(map => DenseMap.isDense(erase(map))) then dense(pull, push)
+        else mapped(pull, s"$identity|pull", push.map(_ -> s"$identity|push"), containsDense = true)
+
+  /** Admit any other provider map (e.g. a toolkit composite) under a caller-derived identity. `identity` must determine
+    * the map, e.g. the SHA-256 digests of the assets it was read from plus every policy that changes its values.
+    */
+  private[spatial] def mapped(
+      pullback: SpatialPullback[?, ?],
+      identity: String,
+      inverse: Option[(SpatialPullback[?, ?], String)],
+      containsDense: Boolean
+  ): Either[SpatialError, CoordinateMap] =
+    def fingerprint(value: String): CoordinateMapFingerprint =
+      val hash = MurmurHash3.stringHash(s"provider-mapped-v1|$value")
+      CoordinateMapFingerprint.unsafe(s"provider-mapped-v1:${java.lang.Integer.toHexString(hash)}")
+    if identity.trim.isEmpty || inverse.exists(_._2.trim.isEmpty) then
+      Left(SpatialError.InvalidProviderCoordinateMap("a mapped provider binding needs a non-empty identity"))
+    else
+      ProviderMapBinding
+        .mapped(erase(pullback), fingerprint(identity), inverse.map((map, id) => erase(map) -> fingerprint(id)), containsDense)
+        .map(CoordinateMap.Geometric.apply)
+
+  private def erase[T <: Frame[D3], S <: Frame[D3]](
+      map: SpatialPullback[T, S]
+  ): SpatialPullback[Frame[D3], Frame[D3]] =
+    map match
+      case erased: FrameErasedMap[D3 @unchecked] => erased
+      case typed => SpatialMap.eraseFrameRefinements(typed)
 
   /** Compose provider maps in the order they are applied to a point. */
   def compose(
@@ -410,6 +471,7 @@ object CoordinateMap:
   private def volumeFrame(domain: Domain): Either[SpatialError, Frame[D3]] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => Right(space.grid.frame)
+      case SamplingGeometry.Unsampled(DomainKind.Volume, frame) => Right(frame)
       case _ =>
         Left(
           SpatialError.InvalidProviderCoordinateMap(
@@ -508,11 +570,15 @@ final case class Morphism private (
   isInverted: Boolean,
   plugin: Option[MorphismPlugin]
 ):
+  /** This morphism run backwards, as a routing edge costing `cost + penalty * (1 - inverse.quality)`. */
   def reversed: Either[SpatialError, Morphism] =
+    reversed(InversePenalty.default)
+
+  def reversed(inversePenalty: InversePenalty): Either[SpatialError, Morphism] =
     if plugin.nonEmpty || !inverse.isGeometric then Left(SpatialError.NonInvertibleMorphism(id))
     else
       val inverseId = MorphismId.unsafe(s"${id.value}:inverse")
-      val penalty = 1.0 - inverse.quality
+      val penalty = inversePenalty.value * (1.0 - inverse.quality)
       val inverseMap =
         coordinateMap match
           case CoordinateMap.Unspecified => Right(CoordinateMap.Unspecified)
@@ -642,22 +708,19 @@ object Morphism:
       geometryValidation.flatMap(_ => MorphismPlugin.validateDomains(morphism, source, target))
 
   private def validateProviderMapDomains(
-      pullback: SpatialPullback,
+      pullback: SpatialPullback[Frame[D3], Frame[D3]],
       source: Domain,
       target: Domain
   ): Either[SpatialError, Unit] =
-    (source.geometry, target.geometry) match
-      case (
-            SamplingGeometry.Volume(sourceSpace, _),
-            SamplingGeometry.Volume(targetSpace, _)
-          ) =>
+    (worldFrame(source.geometry), worldFrame(target.geometry)) match
+      case (Some(sourceFrame), Some(targetFrame)) =>
         for
           _ <- SpatialMap
-            .validateSourceFrame(targetSpace.grid.frame, pullback.source)
+            .validateSourceFrame(targetFrame, pullback.source)
             .left
             .map(SpatialError.ProviderMap.apply)
           _ <- SpatialMap
-            .validateResultFrame(sourceSpace.grid.frame, pullback.target)
+            .validateResultFrame(sourceFrame, pullback.target)
             .left
             .map(SpatialError.ProviderMap.apply)
         yield ()
@@ -667,6 +730,13 @@ object Morphism:
             "provider spatial maps require volume source and target domains"
           )
         )
+
+  /** The world frame a volumetric domain's coordinates live in: its grid's frame, or an unsampled volume's frame. */
+  private def worldFrame(geometry: SamplingGeometry): Option[Frame[D3]] =
+    geometry match
+      case SamplingGeometry.Volume(space, _) => Some(space.grid.frame)
+      case SamplingGeometry.Unsampled(DomainKind.Volume, frame) => Some(frame)
+      case _ => None
 
 final case class MorphismPath private (
   source: DomainId,
@@ -683,6 +753,34 @@ final case class MorphismPath private (
   def ids: Vector[MorphismId] =
     morphisms.map(_.id)
 
+  /** The steps that run a morphism backwards through its geometric inverse. */
+  def invertedSteps: Vector[MorphismId] =
+    morphisms.filter(_.isInverted).map(_.id)
+
+  def inspect: PathInspection =
+    PathInspection.of(this)
+
+  /** Evaluate the route's pullback: a point in the target's world to the corresponding point in the source's world.
+    * Every non-identity step must carry a provider geometric map.
+    */
+  def pullback(point: SpatialPoint): Either[SpatialError, SpatialPoint] =
+    morphisms.reverse.foldLeft[Either[SpatialError, SpatialPoint]](Right(point)) { (current, morphism) =>
+      current.flatMap(p => MorphismPath.geometricMap(morphism).flatMap(_.transform(p)))
+    }
+
+  /** Evaluate the route forwards: a point in the source's world to the target's world. Every non-identity step must
+    * carry a provider geometric map with an executable inverse (its forward direction).
+    */
+  def push(point: SpatialPoint): Either[SpatialError, SpatialPoint] =
+    morphisms.foldLeft[Either[SpatialError, SpatialPoint]](Right(point)) { (current, morphism) =>
+      current.flatMap { p =>
+        MorphismPath
+          .geometricMap(morphism)
+          .flatMap(_.inverted.left.map(_ => SpatialError.NonInvertibleMorphism(morphism.id)))
+          .flatMap(_.transform(p))
+      }
+    }
+
 object MorphismPath:
   def build(morphisms: Vector[Morphism], usedInverses: Boolean = false): Either[SpatialError, MorphismPath] =
     if morphisms.isEmpty then Left(SpatialError.EmptyPath)
@@ -697,6 +795,12 @@ object MorphismPath:
 
   def identity(domain: DomainId): MorphismPath =
     new MorphismPath(domain, domain, Vector(Morphism.identity(domain)), usedInverses = false)
+
+  private def geometricMap(morphism: Morphism): Either[SpatialError, CoordinateMap] =
+    morphism.coordinateMap match
+      case CoordinateMap.Identity => Right(CoordinateMap.Identity)
+      case geometric @ CoordinateMap.Geometric(_) => Right(geometric)
+      case _ => Left(SpatialError.MissingCoordinateMap(morphism.id))
 
 final case class ExecutableAffinePath private (
   path: MorphismPath,

@@ -1,5 +1,7 @@
 package scalafim.spatial
 
+import scalafim.image.world.SubjectId
+
 import ravel.NDArray as RavelArray
 import scalafim.image.{GridSpec, Resample, SampleSpaces, SpatialPullbacks}
 import scalafim.image.SampleSpaces.*
@@ -78,18 +80,18 @@ class SpatialLazyAcceptanceSuite extends munit.FunSuite:
 
   private def volumeDomain(name: String): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-acceptance"))
+    val subject = spatialValue(SubjectId("sub-acceptance").asSpatial)
     val modality = spatialValue(Modality(name))
     val geometry = spatialValue(SamplingGeometry.volume(volumeSpace))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def surfaceDomain(name: String, geometry: SurfaceGeometry): Domain =
     val id = spatialValue(DomainId(name))
-    val subject = spatialValue(SubjectId("sub-acceptance"))
+    val subject = spatialValue(SubjectId("sub-acceptance").asSpatial)
     val sampled = spatialValue(SamplingGeometry.surface(geometry))
     spatialValue(Domain.build(id, SpaceRef.Surface(subject, geometry.hemisphere, geometry.kind), sampled))
 
-  private def volumeGrid(domain: Domain): GridSpec =
+  private def volumeGrid(domain: Domain): GridSpec[?] =
     domain.geometry match
       case SamplingGeometry.Volume(space, _) => GridSpec.fromSpace(space)
       case _ => fail(s"domain ${domain.id.value} is not volumetric")

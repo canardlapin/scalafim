@@ -109,9 +109,8 @@ barriers remain visible; unsupported orderings fail with
 math.
 
 Linear algebra uses Gale directly. Plugin matrices are `gale.linalg.DMat`;
-sampled maps use Gale `DoubleLinearOperator`, `COO`, and `CSR`; and JVM transform
-ingestion uses Gale factorization. Spatial image geometry still exposes its
-current Gale `DMat` ABI, so conversions at that domain boundary are
+sampled maps use Gale `DoubleLinearOperator`, `COO`, and `CSR`. Spatial image
+geometry still exposes its current Gale `DMat` ABI, so conversions at that domain boundary are
 deliberate rather than a second generic linear-algebra implementation.
 
 ## JVM sources and transform assets
@@ -120,23 +119,28 @@ deliberate rather than a second generic linear-algebra implementation.
 and reads compact row/observation windows. Its revision participates in cache
 identity, and stale or geometry-mismatched files produce typed failures.
 
-The JVM transform loader normalizes executable ANTs ITK affine/displacement and
-HDF5 composite, FSL FLIRT and dense-warp, and AFNI affine/warp assets to the
-canonical RAS pullback convention. The HDF5 path is in-process through jHDF: it
-reads the ordered `/TransformGroup`, decodes affine and displacement components,
-applies ITK's last-component-first composition rule, converts LPS geometry and
-vectors to RAS, and lowers the result to a portable `CompositeCoordinateMap`.
-Affine algebra and validation use Gale.
+`TransformDescriptor.load` (through `TransformAssetLoader`) is a graph adapter
+over the `transform` module. `TransformFiles.load` reads, gunzips, detects and
+decodes the file (ITK text/MATLAB/HDF5, ANTs and AFNI 3dQwarp fields, FLIRT,
+FNIRT fields, AFNI `.aff12.1D`, LTA, `.xfm`, `register.dat`, X5) and records
+its SHA-256. The format's interpretation then yields a `WorldTransform` between
+the descriptor's volume frames, taking any geometry it needs (FSL scaled-voxel
+geometry, FreeSurfer volume geometry, AFNI obliquity) from the domains. Its
+pullback becomes the morphism's provider map: affines through
+`CoordinateMap.affineBetween`, dense fields through `CoordinateMap.dense`, and
+other provider maps (e.g. ITK composites) under an identity built from their
+asset digests and load options.
 
-ANTs HDF5 defaults to a stored target-to-source pullback. A caller may declare a
-forward affine-only file, which is inverted exactly. A forward composite with a
-nonlinear component needs an explicit inverse HDF5 asset; the loader never
-pretends that reversing a displacement field is an inverse. Native direction,
-coordinate convention, ordered component types, canonical or historical
-`Tranform*` dataset names, optional ITK/HDF metadata, inverse asset, and content
-fingerprint remain in provenance. Float parameter datasets stay in float
-storage while decoding, avoiding a full-size double copy before construction of
-the runtime field.
+Coordinate conventions and storage direction are intrinsic to each format, so
+descriptors carry no convention or direction flags. The one routing choice is
+`TransformFileEndpoints`: `AsFile` when the descriptor's source and target are
+the file's moving and fixed spaces, `Reversed` when the graph edge runs the
+other way. A reversed affine uses its exact inverse. A reversed dense map needs
+an inverse asset (`TransformAssetSpec`, e.g. ANTs `InverseWarp`); without one
+the load fails with `NoForwardMap`. `TransformLoadOptions` holds only choices
+that change values: the dense boundary policy (default `Reject`; ITK's own
+behaviour is `PreserveSource`) and an explicit FNIRT relative/absolute
+definition when detection should not decide.
 
 ## Extension protocol
 
@@ -155,6 +159,29 @@ To add a morphism family:
 6. Add an independent fixture when direction, convention, interpolation, or
    statistical parity matters.
 
+## neurofunctor parity
+
+`tools/r-parity/generate_neurofunctor_law_fixtures.R` exports neurofunctor's
+functor, QC, hybrid and backprojection laws as (input, operation, expected)
+triplets under `jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/`,
+with a manifest recording R, the package versions and the neurofunctor source
+commit. `NeurofunctorLawParitySuite` replays every triplet on the JVM and
+Scala.js. Indices are zero-based, and element-indexed values are exported in
+ScalaFIM's volume order (z fastest), not neurofunctor's (x fastest).
+
+Declared deviations, each kept as a triplet; where the fixture can observe
+the difference, the replay asserts it:
+
+- `allPaths` ranks routes by cost before capping at `maxPaths`; neurofunctor
+  truncates its depth-first listing.
+- Projection metrics summarise every row; neurofunctor samples up to 1000.
+- Backprojection compiles with the view's own inverse setting; neurofunctor
+  always allows inverses. Forward-first routing makes the values agree.
+- Trilinear sampling renormalises the in-grid corners of a point less than
+  one voxel outside the grid and reports fractional row coverage;
+  neurofunctor drops the row.
+- ROI operators hold only the ROI rows; neurofunctor keeps full height.
+
 ## Deliberate limitations
 
 - A row-linear stage interleaved with coordinate pullbacks needs a backend that
@@ -162,12 +189,12 @@ To add a morphism family:
 - A selection cannot be followed by another spatial `.to`; demand remains
   terminal so support pullback is unambiguous.
 - Compressed NIfTI must be staged uncompressed before random-access reads.
-- The built-in ITK HDF5 semantic adapter accepts composite markers, affine or
-  matrix-offset transforms, and 3D displacement-field transforms. B-splines,
-  velocity fields, and other transform families fail as
-  `UnsupportedItkTransformType` until a typed decoder is added.
-- A nonlinear HDF5 mapping is reversible only when its inverse HDF5 asset is
-  supplied. Numerical field inversion is deliberately outside ingestion.
+- Transform families the codecs refuse (ITK B-splines, FNIRT DCT
+  coefficients, multi-volume affine series as a single route) fail as typed
+  `TransformRead`, `TransformInterpretation` or `UnsupportedTransformAsset`
+  errors.
+- A dense mapping is reversible only when its inverse asset is supplied.
+  Numerical field inversion is deliberately outside ingestion.
 - `CachedFieldRuntime` and `Field.pending` remain a legacy compatibility path.
   New code should use semantic `Field.to` views with `LazyFieldRuntime`.
 
@@ -177,8 +204,6 @@ Run both platforms:
 
 ```text
 sbt spatialJVM/test spatialJS/test
-uv run --with h5py --with numpy --with SimpleITK==2.5.4 \
-  tools/spatial/generate_itk_hdf5_fixtures.py --check
 ```
 
 `SpatialLazyContractSuite`, `SpatialLazyAcceptanceSuite`, and the focused
@@ -189,15 +214,13 @@ acceptance oracle was generated independently with R 4.5.1 `stats::approx` and
 distinguishes direct root-first values `[4, 8, 0]` from sequentially resampled
 values `[4, 4, 3]`.
 
-`ItkHdf5TransformReaderSuite` uses compact files emitted by SimpleITK/ITK and
-point outputs computed by SimpleITK, not by ScalaFIM. It protects noncommuting
-component order, affine centers, oriented displacement grids, LPS-to-RAS
-conversion, voxel-interleaved displacement parameters, float/double datasets,
-historical aliases, executable inverse pairs, and explicit malformed or
-unsupported failures. The generator's `--check` compares semantic HDF5 dataset
-hashes because byte-for-byte HDF container layout is not deterministic; Python
-with the pinned SimpleITK 2.5.4, h5py, and NumPy is needed only to regenerate or
-verify fixtures, not to run the Scala adapter.
+`TransformIngestSuite` checks the graph adapter on oracle files: SimpleITK
+HDF5 composites and a constant displacement pair (with its inverse asset), and
+a FLIRT matrix against fslpy's world mapping. The files are byte-identical
+copies of transform-module oracles; each directory's `manifest.json` names its
+canonical source. Codec and convention coverage (component order, centres,
+oriented fields, LPS-to-RAS, float and legacy `Tranform*` datasets, refusals)
+lives in the `transform` module's oracle suites.
 
 See [the normative contract](../../docs/plans/spatial-lazy-pullthrough.md) and
 [the benchmark receipt](../../docs/benchmarks/spatial-lazy.md).

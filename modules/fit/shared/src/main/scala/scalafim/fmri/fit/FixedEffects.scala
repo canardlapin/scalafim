@@ -350,6 +350,8 @@ object FixedEffects:
           Left(FitError.FixedEffectsIncompatible(
             s"run ${run.runIndex} does not carry every shared source column (${sourceColumns.mkString(", ")})"
           ))
+        else if run.voxelwiseCoefficientCovariance.nonEmpty then
+          voxelwiseContribution(run, sourceColumns, localPositions, voxelPositions)
         else
           val predictors = localPositions.length
           val localCoefficients = selectColumns(selectRows(run.coefficients.value, localPositions), voxelPositions)
@@ -392,6 +394,60 @@ object FixedEffects:
                     sourceColumnIndices = sourceColumns
                   ) }
             }
+
+  private def voxelwiseContribution(
+      run: RunwiseFmriRunResult,
+      sourceColumns: Vector[Int],
+      localPositions: Vector[Int],
+      voxelPositions: Vector[Int]
+  ): Either[FitError, FixedEffectsRunContribution] =
+    val predictors = localPositions.length
+    val precision = Vector.newBuilder[DMat]
+    val weighted = Matrix.newBuilder(predictors, voxelPositions.length)
+    var voxel = 0
+    while voxel < voxelPositions.length do
+      val sourceVoxel = voxelPositions(voxel)
+      val variance = run.residualVariance(sourceVoxel)
+      if !(variance > 0.0 && variance.isFinite) then
+        return Left(FitError.FixedEffectsContributionFailure(
+          run.runIndex,
+          sourceVoxel,
+          s"residual variance must be positive and finite, got $variance"
+        ))
+      val covariance = run.coefficientCovariance.matrixForVoxelPosition(sourceVoxel) match
+        case Left(error) =>
+          return Left(FitError.FixedEffectsContributionFailure(run.runIndex, sourceVoxel, error.message))
+        case Right(value) => selectRowsCols(value, localPositions)
+      val basePrecision = inverse(covariance, run.runIndex, sourceVoxel) match
+        case Left(error) => return Left(error)
+        case Right(value) => value
+      val scaledPrecision = Matrix.tabulate(predictors, predictors) { (row, col) =>
+        basePrecision(row, col) / variance
+      }
+      precision += scaledPrecision
+      var row = 0
+      while row < predictors do
+        var value = 0.0
+        var col = 0
+        while col < predictors do
+          value += scaledPrecision(row, col) * run.coefficients(localPositions(col), sourceVoxel)
+          col += 1
+        weighted(row, voxel) = value
+        row += 1
+      voxel += 1
+    val weightedResult = weighted.result()
+    if !FixedEffectsRunContribution.allFinite(weightedResult) then
+      Left(FitError.FixedEffectsContributionFailure(run.runIndex, -1, "non-finite precision-weighted coefficients"))
+    else
+      Right(FixedEffectsRunContribution(
+        runIndex = run.runIndex,
+        rowCount = run.rowIndices.length,
+        timepoints = run.timepoints,
+        residualDegreesOfFreedom = run.residualDegreesOfFreedom,
+        precisionByVoxel = precision.result(),
+        precisionWeightedCoefficients = weightedResult,
+        sourceColumnIndices = sourceColumns
+      ))
 
   private def columnNamesFor(
       names: Vector[String],

@@ -1,0 +1,24 @@
+{
+ "generator": "tools/transform/generate_itk_hdf5_simpleitk_dumps.py",
+ "generated": "2026-09-27",
+ "kind": "native-oracle",
+ "tools": {
+  "h5py": "3.16.0",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with h5py==3.16.0 --with numpy python tools/transform/generate_itk_hdf5_simpleitk_dumps.py"
+ ],
+ "notes": "Native-oracle inputs, h5py decode: these are h5py decodes of ../itk_hdf5_simpleitk/*.h5 (SimpleITK-written; see that manifest). The legacy-float file stores float32 datasets under the historic 'Tranform*' names. malformed_missing_fixed's missing fixed parameters are an empty cell; refusing that file is a JVM container check (jHDF). Point oracles: ../itk_hdf5_simpleitk/point_oracles.tsv.",
+ "sha256": {
+  "affine_only_forward_double.components.txt": "cd00e4ea569b3a25387c57a0fc90ae3e51947a4fc370532218cdfbdab452d4d5",
+  "composite_affine_displacement_double.components.txt": "b747945a38694e27f5068d89c2c3efdf37529e439ba6e796b7908321ce5301b2",
+  "composite_affine_displacement_legacy_float.components.txt": "0e00ab1efa45df5f8efe0a222a6af49952aaad43ad129cd69fe9bef2ccee7f3f",
+  "malformed_missing_fixed.components.txt": "ba505f92295cf4e3fdfe8d33437e7e5b1d63f385c52465e28673d2d1f028caa9",
+  "pullback_minus_one.components.txt": "b97b3db37e2b0349b09548084c30d2cc6d8fc04ea2672faf949b3647b1388fa9",
+  "pullback_plus_one.components.txt": "be976e1368b60b1c1da020b1e2ddcada30eb88e1d867102f905fa100541b1d5b",
+  "unsupported_bspline.components.txt": "5f46af46ff35e5be275269c9906e3a41a4f4e999651583ed94a014e517fabcbb"
+ }
+}

@@ -92,6 +92,27 @@ class EstimateContractSuite extends munit.FunSuite:
     intercept[IllegalArgumentException](FileReference("payload", hash, -1))
   }
 
+  test("marginal uncertainty binds supported df to the same observation, target and pooling axes") {
+    val se = effect.copy(id = ProductId("se"), kind = ProductKind.StandardError)
+    val dfProduct = effect.copy(id = ProductId("df"), kind = ProductKind.DegreesOfFreedomValues, units = "dimensionless")
+    val df = DegreesOfFreedom(DfRole.Effective, DfValue.Product(dfProduct.id), "effective-df provider", true)
+    val products = Vector(effect, se, dfProduct)
+    val declared = unit.copy(products = products, outcomes = products.map(p => p.id -> ProductOutcome.Available(p.id)).toMap,
+      degreesOfFreedom = Vector(df),
+      marginalUncertainty = Vector(MarginalUncertaintyDescriptor(se.id, effect.id, MarginalVarianceOrigin.Estimated(df))))
+    assertEquals(declared.marginalUncertainty.head.origin, MarginalVarianceOrigin.Estimated(df))
+    assert(ProductKind.DegreesOfFreedomValues.accepts(0.5))
+    assert(!ProductKind.DegreesOfFreedomValues.accepts(0.0))
+
+    val misalignedDf = dfProduct.copy(targets = ProductTargets.Scalar(Vector(a)))
+    intercept[IllegalArgumentException]:
+      declared.copy(products = Vector(effect, se, misalignedDf),
+        outcomes = Vector(effect, se, misalignedDf).map(p => p.id -> ProductOutcome.Available(p.id)).toMap)
+    intercept[IllegalArgumentException]:
+      MarginalUncertaintyDescriptor(se.id, effect.id,
+        MarginalVarianceOrigin.Estimated(DegreesOfFreedom(DfRole.Residual, DfValue.Scalar(8.0), "approximation", true)))
+  }
+
   test("partial collection coverage preserves missing intended units") {
     val other = UnitId("00000000-0000-4000-8000-000000000005")
     val ref = PinnedUnit(unitId, revision, FileReference("unit.json", ContentDigest.unsafeSha256("a" * 64), 5))

@@ -1,0 +1,57 @@
+scenario=threshold.hierscan-calibration.exact-n6.white.greater.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=26/2000 rate=0.0130 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.white.greater.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=22/2000 rate=0.0110 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=334/2000 rate=0.1670 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.white.twosided.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.white.twosided.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=0/2000 rate=0.0000 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.smooth.greater.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=28/2000 rate=0.0140 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.smooth.greater.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=25/2000 rate=0.0125 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=1694/2000 rate=0.8470 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.smooth.twosided.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.exact-n6.smooth.twosided.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=0/2000 rate=0.0000 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.white.greater.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=35/2000 rate=0.0175 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.white.greater.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=48/2000 rate=0.0240 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=1516/2000 rate=0.7580 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.white.twosided.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=43/2000 rate=0.0215 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.white.twosided.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=44/2000 rate=0.0220 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=1753/2000 rate=0.8765 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.smooth.greater.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=39/2000 rate=0.0195 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.smooth.greater.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=59/2000 rate=0.0295 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=1951/2000 rate=0.9755 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.smooth.twosided.complete-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=41/2000 rate=0.0205 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.hierscan-calibration.montecarlo-n10.smooth.twosided.partial-null.v2 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=48/2000 rate=0.0240 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.recorded: detections=1969/2000 rate=0.9845 pass=true
+[info] Passed: Total 16, Failed 0, Errors 0, Passed 16

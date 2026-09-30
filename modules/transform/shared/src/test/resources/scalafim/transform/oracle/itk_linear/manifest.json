@@ -1,0 +1,33 @@
+{
+ "generator": "tools/transform/generate_itk_linear_oracle.py",
+ "generated": "2026-09-24",
+ "kind": "native-oracle",
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with SimpleITK==2.5.6 --with numpy python tools/transform/generate_itk_linear_oracle.py"
+ ],
+ "notes": "Expected points use the transform as re-read from each written .tfm (ITK ReadTransform). Points are LPS millimetres; tx,ty,tz = ITK TransformPoint (fixed -> moving pullback). Composite text lists transforms in ITK order (last applied first).",
+ "sha256": {
+  "affine.mat": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41",
+  "affine.tfm": "0965cc44a2750df6cbc7f76259cb9dbb6a342ab598d773734f54df70ed373568",
+  "composite_euler_affine.tfm": "80f4d18f75cd157d3c5b1030d771d07d3fd03dc679080e294d0602070117d16e",
+  "euler.mat": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e",
+  "euler.tfm": "c405aea08f946d13e23dec9cb6bfd550611b7c858e235d55a48bc43679b45b04",
+  "euler_zyx.mat": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611",
+  "euler_zyx.tfm": "7830e506964498bfcaed938a8b2d2d3a763ca62c4d5e6155a9f441f8c44537f9",
+  "points.tsv": "cc02f8ded2069d1951750682c82931b6d4a4d21b0a0f710d47a6f7af5ba38059",
+  "scale_skew_versor.mat": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e",
+  "scale_skew_versor.tfm": "326347a314c0c29815b88ba6e2969147820b0276dbf3791a6b02495fd488ed48",
+  "similarity.mat": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985",
+  "similarity.tfm": "28c5ccb78b1b8b4e7d7a7f0242c59a5974b7cd176189970f5a791d2eec92d317",
+  "translation.mat": "eef14efe619be664f7dab3e2c9fe0a883d514284c3202658462bad895f455c12",
+  "translation.tfm": "231341a41db742d7f91e20ad65f09324ce92fb7d5f936ba8ecfcfad584027fbc",
+  "versor_rigid.mat": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f",
+  "versor_rigid.tfm": "1728a4dcad9faf16610d503636d5683442c3158e15296c90a8b86c598c510ec8"
+ }
+}

@@ -11,7 +11,7 @@ final case class MaskedLocalStatsSummary(validPerChannel: Vector[Int], voxels: I
 
 /** Reusable integral-image and physical-gradient workspace. */
 final class MaskedLocalStatsWorkspace private (
-    val grid: GridSpec,
+    val grid: GridSpec[?],
     private[image] val sum: Array[Double],
     private[image] val sumSquares: Array[Double],
     private[image] val weights: Array[Double],
@@ -20,7 +20,7 @@ final class MaskedLocalStatsWorkspace private (
   val ownedScalarBuffers: Int = 3
 
 object MaskedLocalStatsWorkspace:
-  def apply(grid: GridSpec): MaskedLocalStatsWorkspace =
+  def apply(grid: GridSpec[?]): MaskedLocalStatsWorkspace =
     val padded = (grid.shape.x + 1) * (grid.shape.y + 1) * (grid.shape.z + 1)
     val inverse = grid.affine.inverse.matrix
     new MaskedLocalStatsWorkspace(
@@ -36,7 +36,7 @@ object MaskedLocalStats:
   def normalizeChannelsInto(
       source: Array[Double],
       sourceValidity: FieldValidity,
-      grid: GridSpec,
+      grid: GridSpec[?],
       radii: Vector[VoxelWindowRadius],
       epsilonPerChannel: Vector[Double],
       minimumValidFraction: Double,
@@ -83,7 +83,7 @@ object MaskedLocalStats:
   def physicalGradientChannelsInto(
       values: Array[Double],
       valueValidity: Array[Boolean],
-      grid: GridSpec,
+      grid: GridSpec[?],
       channels: Int,
       destination: Array[Double],
       destinationValidity: Array[Boolean],
@@ -114,7 +114,7 @@ object MaskedLocalStats:
   private def buildIntegrals(
       source: Array[Double],
       validity: FieldValidity,
-      grid: GridSpec,
+      grid: GridSpec[?],
       workspace: MaskedLocalStatsWorkspace
   ): Unit =
     clear(workspace.sum)
@@ -160,7 +160,7 @@ object MaskedLocalStats:
   private def normalizeChannel(
       source: Array[Double],
       sourceValidity: FieldValidity,
-      grid: GridSpec,
+      grid: GridSpec[?],
       radius: VoxelWindowRadius,
       epsilon: Double,
       minimumValidFraction: Double,
@@ -215,7 +215,7 @@ object MaskedLocalStats:
   private def gradientChannel(
       values: Array[Double],
       validity: Array[Boolean],
-      grid: GridSpec,
+      grid: GridSpec[?],
       channel: Int,
       destination: Array[Double],
       destinationValidity: Array[Boolean],

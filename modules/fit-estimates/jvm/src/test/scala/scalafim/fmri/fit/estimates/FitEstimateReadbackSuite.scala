@@ -22,6 +22,7 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
       Vector(5.0, 1.0, -3.0, 2.0).zip(values).foreach((expected, actual) => assertEqualsDouble(actual, expected, 1e-12))
       assertEquals(validity.toVector, Vector[Byte](0, 0, 0, 0))
       assertEquals(reader.unit.degreesOfFreedom, producer.unit.degreesOfFreedom)
+      assertEquals(reader.unit.marginalUncertainty, producer.unit.marginalUncertainty)
       assertEquals(reader.unit.bindings, producer.unit.bindings)
     finally right(reader.close())
   }
@@ -71,7 +72,8 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
     val admission = new scalafim.fmri.group.GroupEstimateAdmission:
       def verify(units: Vector[EstimateUnit]) =
         // These two fixtures were generated on this exact shared synthetic grid.
-        if units.forall(u => u.domain.dimensions == Vector(2, 1, 1) && u.domain.worldFrame == "scanner") then Right(())
+        if units.forall(u => u.domain.dimensions == Vector(2, 1, 1) && u.domain.worldFrame == "scanner") then
+          Right(scalafim.fmri.group.GroupGeometryEvidence.Verified("scanner", "owned identical synthetic scanner grid", Vector.empty))
         else Left(EstimateError.Invalid("unexpected fixture geometry"))
     val group = right(scalafim.fmri.group.EstimateGroup.prepare(store, inputs, fixture.ids.reverse, admission, 16))
     val block = right(group.readBlock(Vector(1, 0)))
@@ -81,5 +83,15 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
     assertEqualsDouble(data.response("intercept").get.effects(1, 0), 5.0, 1e-12)
     assertEqualsDouble(data.response("task").get.effects(0, 1), 2.0, 1e-12)
     assertEqualsDouble(data.response("task").get.variances.get(0, 0), 1.6, 1e-12)
+    val uncertainty = data.uncertainty.get
+    assertEquals(uncertainty.geometry,
+      scalafim.fmri.group.GroupGeometryEvidence.Verified("scanner", "owned identical synthetic scanner grid", Vector.empty))
+    assertEquals(uncertainty.sources.map(_.samples).distinct, Vector(Vector(1, 0)))
+    assert(uncertainty.sources.forall(_.origin ==
+      scalafim.fmri.group.GroupVarianceOrigin.Estimated(
+        scalafim.fmri.group.GroupDegreesOfFreedom(DfRole.Residual,
+          scalafim.fmri.group.GroupDfValues.Scalar(2.0), "OLS n - numerical rank", false))))
+    assert(uncertainty.sources.forall(_.fit.estimator ==
+      ScientificFact.Known("shared ordinary least squares; compiled rank-revealing QR selected readout")))
     assert(group.readBlock(Vector(0, 0)).isLeft)
   }

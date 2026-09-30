@@ -42,11 +42,11 @@ class ProviderTransformBoundaryCompileSuite extends munit.FunSuite:
         import reframe4s.core.SpatialMap
         import scalafim.image.{SpatialPullback, SpatialPullbacks}
 
-        def consume(map: SpatialPullback): SpatialMap[Frame[D3], Frame[D3], D3] =
+        def consume[T <: Frame[D3], S <: Frame[D3]](map: SpatialPullback[T, S]): SpatialMap[T, S, D3] =
           map
 
         def applyAt(
-          map: SpatialPullback,
+          map: SpatialPullback[?, ?],
           point: scalafim.image.SpatialPoint
         ) = SpatialPullbacks.transform(map, point)
       """

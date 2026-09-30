@@ -10,6 +10,7 @@ import image4s.AxisUnit
 import image4s.NonSpatialAxes
 import Ops.*
 
+@scala.annotation.nowarn("cat=deprecation") // pins the deprecated string and throwing orientation APIs
 class OrientationResampleSuite extends munit.FunSuite:
 
   private def right[E, A](value: Either[E, A]): A =
@@ -157,34 +158,34 @@ class OrientationResampleSuite extends munit.FunSuite:
     assert(dropped.nonSpatialAxes.values.head eq categorical)
   }
 
-  test("resampleTo maps method strings to internal interpolators") {
+  private def parsedMethod(name: String): Resample.Method =
+    Resample.Method.fromString(name).fold(err => fail(err.message), identity)
+
+  private def parsedEngine(name: String): Resample.Engine =
+    Resample.Engine.fromString(name).fold(err => fail(err.message), identity)
+
+  test("parsed method names select internal interpolators") {
     val spSrc = SampleSpaces(Vector(4, 4, 4))
     val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(_.toDouble), spSrc)
     val spTarg = SampleSpaces(Vector(3, 3, 3))
 
-    val n = Resample.resampleTo(vol, spTarg, method = "nearest", engine = "internal")
-    val l = Resample.resampleTo(vol, spTarg, method = "linear", engine = "internal")
-    val c = Resample.resampleTo(vol, spTarg, method = "cubic", engine = "internal")
+    val n = Resample.resampleTo(vol, spTarg, method = parsedMethod("nearest"), engine = parsedEngine("internal"))
+    val l = Resample.resampleTo(vol, spTarg, method = parsedMethod("linear"), engine = parsedEngine("internal"))
+    val c = Resample.resampleTo(vol, spTarg, method = parsedMethod("cubic"), engine = parsedEngine("internal"))
 
     assertEquals(n.space.dims, spTarg.dims, clue = "")
     assertEquals(l.space.dims, spTarg.dims, clue = "")
     assertEquals(c.space.dims, spTarg.dims, clue = "")
 
-    val n2 = Resample.resampleTo(vol, spTarg, method = "nearest")
+    val n2 = Resample.resampleTo(vol, spTarg, method = parsedMethod("nearest"))
     assertEquals(n2.space.dims, spTarg.dims, clue = "")
   }
 
-  test("resampleTo refuses unknown engine") {
-    val spSrc = SampleSpaces(Vector(4, 4, 4))
-    val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(i => (i + 1).toDouble), spSrc)
-    val spTarg = SampleSpaces(Vector(2, 2, 2))
-
-    interceptMessage[IllegalArgumentException]("Only engine = 'internal'") {
-      Resample.resampleTo(vol, spTarg, method = "nearest", engine = "RNiftyReg")
-    }
+  test("engine parsing refuses unknown engines") {
+    assertEquals(Resample.Engine.fromString("RNiftyReg").left.map(_.message), Left("Only engine = 'internal'"))
   }
 
-  test("resampleToEither reports parser failures without throwing") {
+  test("method and engine parsers report failures without throwing") {
     val spSrc = SampleSpaces(Vector(2, 2, 2))
     val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
     val spTarg = SampleSpaces(Vector(2, 2, 2))
@@ -192,12 +193,12 @@ class OrientationResampleSuite extends munit.FunSuite:
     val ok = Resample.resampleTo(vol, spTarg, method = Resample.Method.Nearest, engine = Resample.Engine.Internal)
     assertEquals(ok.space.dims, spTarg.dims, clue = "")
 
-    val badEngine = Resample.resampleToEither(vol, spTarg, method = "nearest", engine = "RNiftyReg")
+    val badEngine = Resample.Engine.fromString("RNiftyReg")
     badEngine match
       case Left(Resample.ResampleError.UnsupportedEngine(_)) => ()
       case other => fail(s"expected UnsupportedEngine, got $other")
 
-    val badMethod = Resample.resampleToEither(vol, spTarg, method = "unknown")
+    val badMethod = Resample.Method.fromString("unknown")
     badMethod match
       case Left(Resample.ResampleError.UnknownMethod(_)) => ()
       case other => fail(s"expected UnknownMethod, got $other")
@@ -218,6 +219,6 @@ class OrientationResampleSuite extends munit.FunSuite:
     val outVec = Resample.resampleTo(vec, targVec, method = Resample.Method.Linear)
     assertEquals(outVec.space.dims, Vector(3, 3, 3, 3), clue = "")
 
-    val outVec2 = vec.resampleTo(targVec, "linear")
+    val outVec2 = vec.resampleTo(targVec, Resample.Method.Linear)
     assertEquals(outVec2.space.dims, Vector(3, 3, 3, 3), clue = "")
   }

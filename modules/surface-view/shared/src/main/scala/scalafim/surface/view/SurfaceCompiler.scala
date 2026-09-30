@@ -1,6 +1,8 @@
 package scalafim.surface.view
 
+import image4s.geometry.{D3, Frame}
 import intaglio.*
+import scalafim.image.{x, y, z}
 import scalafim.surface.*
 import scala.util.hashing.MurmurHash3
 
@@ -20,18 +22,75 @@ object SurfaceCompiler:
         case None => from.mesh.coordinates(offset) + fraction * (to.mesh.coordinates(offset) - from.mesh.coordinates(offset))
 
   def compile(model: SurfaceViewerModel, state: SurfaceViewerState): Either[SurfaceViewError, SurfaceRenderPlan] =
+    compileWith(model, state, None)
+
+  /** The pose the state's viewpoint camera ([[SurfaceCamera]]: viewpoint, orbit, pan and zoom) takes, as typed points
+    * in `display`'s frame. The layout must be the single surface `display` shows.
+    */
+  def cameraPose[F <: Frame[D3]](
+    model: SurfaceViewerModel,
+    state: SurfaceViewerState,
+    display: SurfaceDisplayFrame[F]
+  ): Either[SurfaceCameraError, SurfaceCameraPose[F]] =
+    for
+      asset <- displayedAsset(model, state, display)
+      pose = viewpointPose(state.camera, familyFrame(Vector(asset)))
+      target <- SurfaceCameraPose.pointIn(display.frame, Vector(pose.targetX, pose.targetY, pose.targetZ))
+      eye <- SurfaceCameraPose.pointIn(display.frame, Vector(pose.eyeX, pose.eyeY, pose.eyeZ))
+      typed <- SurfaceCameraPose.make(target, eye)
+    yield typed
+
+  /** Compile with an explicit camera pose, typed in `display`'s frame, in place of the state camera's viewpoint, orbit,
+    * pan and zoom distance. The projection, and the zoom of an orthographic projection, still come from the state
+    * camera; the perspective clipping planes stay at 0.01 and 1000 display units, so an eye farther than that from the
+    * surface clips it. The layout must be the single surface `display` shows, and the model must still hold the very
+    * asset `display` was declared for (a rebuilt model needs its display frame declared again).
+    */
+  def compile[F <: Frame[D3]](
+    model: SurfaceViewerModel,
+    state: SurfaceViewerState,
+    display: SurfaceDisplayFrame[F],
+    pose: SurfaceCameraPose[F]
+  ): Either[SurfaceCameraError, SurfaceRenderPlan] =
+    for
+      _ <- displayedAsset(model, state, display)
+      target <- SurfaceCameraPose.own(pose.target, display.frame)
+      eye <- SurfaceCameraPose.own(pose.eye, display.frame)
+      plan <- compileWith(model, state, Some(poseCoordinates(target.coordinates, eye.coordinates))).left.map(SurfaceCameraError.View.apply)
+    yield plan
+
+  private def compileWith(
+    model: SurfaceViewerModel,
+    state: SurfaceViewerState,
+    pose: Option[PoseCoordinates]
+  ): Either[SurfaceViewError, SurfaceRenderPlan] =
     for
       _ <- SurfaceViewer.validateLayout(model, state.layout)
       _ <-
         if state.timepoint >= 0 && state.timepoint < model.frameCount then Right(())
         else Left(SurfaceViewError.TimepointOutOfBounds(state.timepoint, model.frameCount))
       frames <- resolveFrames(model, state)
-    yield compileUnsafe(model, state, frames)
+    yield compileUnsafe(model, state, frames, pose)
+
+  private def displayedAsset[F <: Frame[D3]](
+    model: SurfaceViewerModel,
+    state: SurfaceViewerState,
+    display: SurfaceDisplayFrame[F]
+  ): Either[SurfaceCameraError, SurfaceAsset] =
+    state.layout match
+      case SurfaceLayout.Single(surface) if surface == display.surfaceId =>
+        model.surface(surface) match
+          case None => Left(SurfaceCameraError.UnknownSurface(surface))
+          case Some(asset) if asset eq display.asset => Right(asset)
+          case Some(_) =>
+            Left(SurfaceCameraError.DisplayMismatch(surface, "the model no longer shows the geometry the display frame was declared for"))
+      case layout => Left(SurfaceCameraError.LayoutMismatch(display.surfaceId, layout))
 
   private def compileUnsafe(
     model: SurfaceViewerModel,
     state: SurfaceViewerState,
-    frames: Map[SurfaceId, GeometryFrame]
+    frames: Map[SurfaceId, GeometryFrame],
+    pose: Option[PoseCoordinates]
   ): SurfaceRenderPlan =
     val viewportSlots = compileSlots(state.layout)
     val assets = viewportSlots.map(slot => model.surface(slot.surface).get)
@@ -68,7 +127,7 @@ object SurfaceCompiler:
 
     val layers = layerPackets.result()
     val drawPasses = passes.result()
-    val camera = cameraPacket(state.camera, frame)
+    val camera = posePacket(state.camera, pose.getOrElse(viewpointPose(state.camera, frame)))
     val readouts = compileReadout(model, state, frames)
     val chrome = compileChrome(readouts)
     val vertices = assets.iterator.map(_.domain.vertexCount).sum
@@ -79,7 +138,7 @@ object SurfaceCompiler:
     val receipt = SurfaceRenderReceipt(
       meshes.map(_.resourceKey),
       layers.map(_.resourceKey),
-      cameraKey(state.camera, frame),
+      pose.fold(cameraKey(state.camera, frame))(poseKey(state.camera, _)),
       drawPasses.length,
       state.timepoint
     )
@@ -213,33 +272,26 @@ object SurfaceCompiler:
     normals
 
   private def familyFrame(assets: Vector[SurfaceAsset]): CameraFrame =
-    var minimumX = Double.PositiveInfinity
-    var minimumY = Double.PositiveInfinity
-    var minimumZ = Double.PositiveInfinity
-    var maximumX = Double.NegativeInfinity
-    var maximumY = Double.NegativeInfinity
-    var maximumZ = Double.NegativeInfinity
-    var assetIndex = 0
-    while assetIndex < assets.length do
-      val bounds = assets(assetIndex).cameraBounds
-      minimumX = math.min(minimumX, bounds.minimumX)
-      minimumY = math.min(minimumY, bounds.minimumY)
-      minimumZ = math.min(minimumZ, bounds.minimumZ)
-      maximumX = math.max(maximumX, bounds.maximumX)
-      maximumY = math.max(maximumY, bounds.maximumY)
-      maximumZ = math.max(maximumZ, bounds.maximumZ)
-      assetIndex += 1
-    val dx = maximumX - minimumX
-    val dy = maximumY - minimumY
-    val dz = maximumZ - minimumZ
-    CameraFrame(
-      (minimumX + maximumX) * 0.5,
-      (minimumY + maximumY) * 0.5,
-      (minimumZ + maximumZ) * 0.5,
-      0.5 * math.sqrt(dx * dx + dy * dy + dz * dz)
-    )
+    assets.flatMap(_.cameraBounds).reduceOption(_.union(_)) match
+      case None => CameraFrame(0.0, 0.0, 0.0, 0.0)
+      case Some(bounds) =>
+        val center = bounds.center
+        CameraFrame(center.x, center.y, center.z, 0.5 * bounds.diagonal)
 
-  private def cameraPacket(camera: SurfaceCamera, frame: CameraFrame): SurfaceCameraPacket =
+  /** Eye, target and unit viewing direction (target to eye) in display coordinates. */
+  private final case class PoseCoordinates(
+    eyeX: Double, eyeY: Double, eyeZ: Double,
+    targetX: Double, targetY: Double, targetZ: Double,
+    directionX: Double, directionY: Double, directionZ: Double
+  ):
+    def stableKey: String = s"$eyeX:$eyeY:$eyeZ:$targetX:$targetY:$targetZ"
+
+  private def poseCoordinates(target: Vector[Double], eye: Vector[Double]): PoseCoordinates =
+    val (dx, dy, dz) = (eye(0) - target(0), eye(1) - target(1), eye(2) - target(2))
+    val norm = math.sqrt(dx * dx + dy * dy + dz * dz)
+    PoseCoordinates(eye(0), eye(1), eye(2), target(0), target(1), target(2), dx / norm, dy / norm, dz / norm)
+
+  private def viewpointPose(camera: SurfaceCamera, frame: CameraFrame): PoseCoordinates =
     val (baseX, baseY, baseZ) = camera.viewpoint.cameraDirection
     val yaw = camera.orbit.yawDegrees * math.Pi / 180.0
     val yawCos = math.cos(yaw)
@@ -269,12 +321,15 @@ object SurfaceCompiler:
     val ex = dx * eyeDistance + targetX
     val ey = dy * eyeDistance + targetY
     val ez = dz * eyeDistance + targetZ
-    val (upx, upy, upz) = if math.abs(dz) > 0.9 then (0.0, 1.0, 0.0) else (0.0, 0.0, 1.0)
-    val view = lookAt(ex, ey, ez, targetX, targetY, targetZ, upx, upy, upz)
+    PoseCoordinates(ex, ey, ez, targetX, targetY, targetZ, dx, dy, dz)
+
+  private def posePacket(camera: SurfaceCamera, pose: PoseCoordinates): SurfaceCameraPacket =
+    val (upx, upy, upz) = if math.abs(pose.directionZ) > 0.9 then (0.0, 1.0, 0.0) else (0.0, 0.0, 1.0)
+    val view = lookAt(pose.eyeX, pose.eyeY, pose.eyeZ, pose.targetX, pose.targetY, pose.targetZ, upx, upy, upz)
     val projection = camera.projection match
       case CameraProjection.Perspective(fov) => perspective(fov.value, 1.0, 0.01, 1000.0)
       case CameraProjection.Orthographic(scale) => orthographic(scale.value / camera.zoom.value)
-    SurfaceCameraPacket(new FloatBufferView(view), new FloatBufferView(projection), dx, dy, dz)
+    SurfaceCameraPacket(new FloatBufferView(view), new FloatBufferView(projection), pose.directionX, pose.directionY, pose.directionZ)
 
   private def lookAt(
     ex: Double, ey: Double, ez: Double,
@@ -404,6 +459,9 @@ object SurfaceCompiler:
 
   private def cameraKey(camera: SurfaceCamera, frame: CameraFrame): String =
     s"${camera.viewpoint}:${camera.projection}:${camera.zoom.value}:${camera.panX}:${camera.panY}:${camera.orbit}:${frame.stableKey}"
+
+  private def poseKey(camera: SurfaceCamera, pose: PoseCoordinates): String =
+    s"pose:${pose.stableKey}:${camera.projection}:${camera.zoom.value}"
 
   private def hex(value: Int): String =
     val raw = java.lang.Integer.toHexString(value)

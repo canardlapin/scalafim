@@ -71,13 +71,23 @@ bounded eigensolve is not interruptible; cancellation is checked before and afte
 
 `group.EstimateGroup` now accepts pinned unit references without importing `fit`.
 Preparation requires explicit `GroupEstimateAdmission` for scientific suitability
-and common sample-grid alignment. It rejects repeated participant rows and
-incompatible catalogs, pooling scopes or uncertainty axes. Bounded blocks preserve
-pinned input receipts, participant/estimand/sample order and validity; unavailable
-cells refuse the block rather than silently reduce the cohort. One unit is opened,
-fully verified and closed at a time. Repeated integrity scans are a documented
-cost, not a qualified cohort-performance policy. The old eager bridge moved to
-`fit-estimates.FitGroupAdapter`, with its tests.
+and common sample-grid alignment; successful admission returns retained geometry
+evidence whose world frame must match every unit. It rejects repeated participant
+rows and incompatible catalogs, pooling scopes or uncertainty axes. Bounded blocks
+preserve pinned input receipts, participant/estimand/sample order and validity;
+unavailable cells refuse the block rather than silently reduce the cohort. One unit
+is opened, fully verified and closed at a time. Repeated integrity scans are a
+documented cost, not a qualified cohort-performance policy. The old eager bridge
+moved to `fit-estimates.FitGroupAdapter`, with its tests.
+
+Variance and standard-error products may bind a
+`MarginalUncertaintyDescriptor` to their effect. The origin is explicitly known,
+estimated with scalar or sample-dependent df, approximate effective df, or unknown.
+`GroupData` retains the resolved subject/contrast/sample receipt, including
+estimator, serial-noise, nuisance, run-combination, pooling, and geometry evidence.
+Raw variance matrices acquire an explicit unknown receipt; no df is inferred from
+their presence. The receipt is provenance, not a first-level calibration result or
+automatic second-level inference admission.
 
 Pooled selected execution is available in `fit`, but its persistence adapter,
 compact shared-matrix encoding, final wire schemas/fixtures, HDF5, workflow and

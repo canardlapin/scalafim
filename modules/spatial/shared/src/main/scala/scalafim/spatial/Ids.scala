@@ -42,30 +42,6 @@ object OperatorId:
   extension (id: OperatorId)
     inline def value: String = id
 
-opaque type SubjectId = String
-
-object SubjectId:
-  def apply(value: String): Either[SpatialError, SubjectId] =
-    SpatialId.normalize("subject", value)
-
-  private[scalafim] def unsafe(value: String): SubjectId =
-    value
-
-  extension (id: SubjectId)
-    inline def value: String = id
-
-opaque type SessionId = String
-
-object SessionId:
-  def apply(value: String): Either[SpatialError, SessionId] =
-    SpatialId.normalize("session", value)
-
-  private[scalafim] def unsafe(value: String): SessionId =
-    value
-
-  extension (id: SessionId)
-    inline def value: String = id
-
 opaque type Modality = String
 
 object Modality:
@@ -76,18 +52,6 @@ object Modality:
     value
 
   extension (id: Modality)
-    inline def value: String = id
-
-opaque type TemplateName = String
-
-object TemplateName:
-  def apply(value: String): Either[SpatialError, TemplateName] =
-    SpatialId.normalize("template", value)
-
-  private[scalafim] def unsafe(value: String): TemplateName =
-    value
-
-  extension (id: TemplateName)
     inline def value: String = id
 
 opaque type Resolution = String

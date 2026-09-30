@@ -3,6 +3,14 @@ package scalafim.fmri.threshold
 import gale.linalg.DMat
 import scalafim.image.{SomeMaskVolume, SomeScalarVolume}
 
+/** HierScan settings.
+  *
+  * Each tested node spends `gamma` of its alpha budget on the step-down test
+  * of its children. The remaining `(1 - gamma)` is shared among the rejected
+  * children in proportion to their prior mass, so a whole tree spends at most
+  * `alpha`, as in `neurothresh::hier_descend`. Regions with fewer than
+  * `minVoxels` voxels are not split and tested.
+  */
 final case class HierScanConfig(
     alpha: Alpha = Alpha.unsafe(0.05),
     alternative: ThresholdAlternative = ThresholdAlternative.Greater,
@@ -11,7 +19,8 @@ final case class HierScanConfig(
     minAlpha: Double = 1e-6,
     maxDepth: Int = 32,
     priorEta: Double = 1.0,
-    minPriorMass: Double = 1e-10
+    minPriorMass: Double = 1e-10,
+    gamma: Double = 0.5
 ):
   require(kappas.nonEmpty, "kappas must be non-empty")
   require(minVoxels > 0, "minVoxels must be positive")
@@ -19,6 +28,7 @@ final case class HierScanConfig(
   require(maxDepth > 0, "maxDepth must be positive")
   require(priorEta.isFinite && priorEta >= 0.0 && priorEta <= 1.0, "priorEta must be finite and in [0, 1]")
   require(minPriorMass.isFinite && minPriorMass >= 0.0, "minPriorMass must be finite and non-negative")
+  require(gamma.isFinite && gamma > 0.0 && gamma <= 1.0, "gamma must be finite and in (0, 1]")
 
   def tail: Tail =
     Tail.fromAlternative(alternative)
@@ -39,12 +49,18 @@ final case class HierScanNodeTest(
   def adjustedPValue: Double =
     adjustedP.value
 
+/** A rejected region. Every rejected node is a hit, including a coarse region
+  * whose own children are not rejected: the procedure then localizes the
+  * effect to this region but no further. `alphaTest` is the level at which
+  * its step-down test ran.
+  */
 final case class HierScanRegionHit(
     path: Vector[Int],
     depth: Int,
     region: ThresholdRegion,
     scoreValue: ScoreValue,
-    adjustedP: AdjustedP
+    adjustedP: AdjustedP,
+    alphaTest: Double
 ):
   def score: Double =
     scoreValue.toLegacyDouble
@@ -83,15 +99,13 @@ object HierScan:
         case None    => PriorWeights.uniform(field.size)
       priors <- rawPriors.shrinkToUniform(config.priorEta)
       root <- Octree.root(field, priors)
-      scan <- scan(field, priors, root, nullDraw, config, statistic.orientation)
+      scan <- scan(field, priors, root, NullDrawLedger(nullDraw, field.size), config, statistic.orientation)
       reject <- field.maskFromMaskSpace(scan.hitIndices, "HierScan")
-      cutoff <- hitCutoff(scan.hits)
     yield
       HierScanResult(
         reject = reject,
         significantRegions = scan.hits,
         nodeTests = scan.tests,
-        cutoff = cutoff,
         params = params(config, nullDraw)
       )
 
@@ -99,7 +113,7 @@ object HierScan:
     field: MaskedField,
     priors: PriorWeights,
     root: ThresholdRegion,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, ScanOutput] =
@@ -124,12 +138,12 @@ object HierScan:
     alphaBudget: Double,
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation,
     builder: ScanBuilder
   ): Either[ThresholdError, Unit] =
-    if depth >= config.maxDepth || region.size <= config.minVoxels || alphaBudget < config.minAlpha then Right(())
+    if depth >= config.maxDepth || region.size < config.minVoxels || alphaBudget < config.minAlpha then Right(())
     else
       for
         children <- Octree.split(region, field, priors, config.minPriorMass)
@@ -145,7 +159,7 @@ object HierScan:
     alphaBudget: Double,
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation,
     builder: ScanBuilder
@@ -164,11 +178,14 @@ object HierScan:
                 case Right(value) => observed(i) = value
       i += 1
 
+    val alphaTest = config.gamma * alphaBudget
     for
       nullMatrix <- childNullMatrix(children, field, priors, nullDraw, config, orientation)
-      nodeAlpha <- Alpha(alphaBudget)
-      tests <- WestfallYoung.stepDown(observed, nullMatrix, nodeAlpha)
-      _ <- applyTests(children, tests, parentPath, parentDepth, alphaBudget, field, priors, nullDraw, config, orientation, builder)
+      nodeAlpha <- Alpha(alphaTest)
+      // Child scores and null scores are already oriented by the statistic
+      // field and transformDraw, so the step-down compares them as given.
+      tests <- WestfallYoung.stepDown(observed, nullMatrix, nodeAlpha, ThresholdAlternative.Greater, nullDraw.reference)
+      _ <- applyTests(children, tests, parentPath, parentDepth, alphaTest, alphaBudget - alphaTest, field, priors, nullDraw, config, orientation, builder)
     yield ()
 
   private def applyTests(
@@ -176,15 +193,20 @@ object HierScan:
     tests: Vector[AdjustedTest],
     parentPath: Vector[Int],
     parentDepth: Int,
-    alphaBudget: Double,
+    alphaTest: Double,
+    alphaDescend: Double,
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation,
     builder: ScanBuilder
   ): Either[ThresholdError, Unit] =
-    val childAlpha = alphaBudget / children.length.toDouble
+    var rejectedMass = 0.0
+    var r = 0
+    while r < tests.length do
+      if tests(r).rejected then rejectedMass += children(tests(r).testIndex).priorMass
+      r += 1
     var i = 0
     while i < tests.length do
       val test = tests(i)
@@ -205,39 +227,35 @@ object HierScan:
       )
 
       if test.rejected then
-        if terminal(child, childDepth, childAlpha, config) then
-          builder.addHit(HierScanRegionHit(childPath, childDepth, child, ScoreValue.unsafeFinite(test.score), test.adjustedP))
-        else
-          descend(child, childPath, childDepth, childAlpha, field, priors, nullDraw, config, orientation, builder) match
-            case Left(err) => return Left(err)
-            case Right(()) => ()
+        builder.addHit(HierScanRegionHit(childPath, childDepth, child, ScoreValue.unsafeFinite(test.score), test.adjustedP, alphaTest))
+        // Share the descendant budget among rejected children by prior mass.
+        val childBudget =
+          if rejectedMass > 0.0 then alphaDescend * child.priorMass / rejectedMass
+          else 0.0
+        descend(child, childPath, childDepth, childBudget, field, priors, nullDraw, config, orientation, builder) match
+          case Left(err) => return Left(err)
+          case Right(()) => ()
       i += 1
     Right(())
-
-  private def terminal(region: ThresholdRegion, depth: Int, alphaBudget: Double, config: HierScanConfig): Boolean =
-    region.size <= config.minVoxels ||
-      region.bbox.isSingleton ||
-      depth >= config.maxDepth ||
-      alphaBudget < config.minAlpha
 
   private def childNullMatrix(
     children: Vector[ThresholdRegion],
     field: MaskedField,
     priors: PriorWeights,
-    nullDraw: NullDraw,
+    nullDraw: NullDrawLedger,
     config: HierScanConfig,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, DMat] =
-    val rows = nullDraw.nPermutations.value
+    val rows = nullDraw.size
     val cols = children.length
     val out = DMat.newBuilder(rows, cols)
     var row = 0
     while row < rows do
-      nullDraw.draw(row) match
+      nullDraw.fetch(row) match
         case Left(err) => return Left(err)
         case Right(raw) =>
-          transformDraw(raw, field, config.alternative, orientation) match
-            case Left(err) => return Left(err)
+          transformDraw(raw, config.alternative, orientation) match
+            case Left(err) => return Left(ThresholdError.NullDrawFailed(row, err))
             case Right(draw) =>
               var col = 0
               while col < cols do
@@ -251,40 +269,24 @@ object HierScan:
       row += 1
     Right(out.result())
 
+  /** Orient one ledger-validated draw (correct length, finite values). The
+    * alternative was admitted for the evidence by `StatisticField.fromMap`.
+    */
   private def transformDraw(
     raw: Array[Double],
-    field: MaskedField,
     alternative: ThresholdAlternative,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, Array[Double]] =
-    if raw.length != field.size then return Left(ThresholdError.ShapeMismatch("null draw", field.size.toString, raw.length.toString))
-    alternative.validate(orientation) match
-      case Left(err) => return Left(err)
-      case Right(()) => ()
     val out = new Array[Double](raw.length)
     var i = 0
     while i < raw.length do
       val rawValue = raw(i)
-      if !rawValue.isFinite then return Left(ThresholdError.NonFiniteData("null draw"))
       if orientation == EvidenceOrientation.Unsigned && rawValue < 0.0 then
         return Left(ThresholdError.NegativeUnsignedEvidence(i, rawValue))
       val value = alternative.applyTo(rawValue)
       out(i) = value
       i += 1
     Right(out)
-
-  private def hitCutoff(hits: Vector[HierScanRegionHit]): Either[ThresholdError, ThresholdCutoff] =
-    if hits.isEmpty then Right(ThresholdCutoff.NoRejections)
-    else
-      var minScore = Double.PositiveInfinity
-      var i = 0
-      while i < hits.length do
-        hits(i).scoreValue.finiteOrError("hierarchical scan hit score") match
-          case Left(err) => return Left(err)
-          case Right(value) =>
-            if value < minScore then minScore = value
-        i += 1
-      ThresholdCutoff.inclusive(minScore)
 
   private def params(config: HierScanConfig, nullDraw: NullDraw): Map[String, String] =
     Map(
@@ -297,7 +299,9 @@ object HierScan:
       "maxDepth" -> config.maxDepth.toString,
       "priorEta" -> config.priorEta.toString,
       "minPriorMass" -> config.minPriorMass.toString,
-      "nPermutations" -> nullDraw.nPermutations.value.toString
+      "gamma" -> config.gamma.toString,
+      "nPermutations" -> nullDraw.nPermutations.value.toString,
+      "nullReference" -> nullDraw.reference.toString
     )
 
   private final class ScanBuilder:
@@ -313,7 +317,8 @@ object HierScan:
       testBuilder += test
 
     def result(): ScanOutput =
-      ScanOutput(hitBuilder.result(), testBuilder.result(), indexBuilder.result())
+      // Hits are nested, so the same voxel can appear in several of them.
+      ScanOutput(hitBuilder.result(), testBuilder.result(), indexBuilder.result().distinct.sorted)
 
   private final case class ScanOutput(
       hits: Vector[HierScanRegionHit],

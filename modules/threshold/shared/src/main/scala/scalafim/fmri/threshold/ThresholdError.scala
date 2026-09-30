@@ -4,7 +4,6 @@ import image4s.geometry.GeometryError
 
 enum ThresholdError:
   case InvalidAlpha(value: Double)
-  case InvalidQValue(value: Double)
   case InvalidKappa(value: Double)
   case InvalidDegreesOfFreedom(value: Double)
   case InvalidAdjustedPValue(value: Double)
@@ -22,13 +21,15 @@ enum ThresholdError:
   case IndexOutOfBounds(index: Int, length: Int)
   case NullMatrixShape(rows: Int, cols: Int, expectedCols: Int)
   case InvalidArgument(name: String, reason: String)
+  case MissingIdentityAction(testIndex: Int)
+  case MissingIdentityRow
+  case NullDrawFailed(index: Int, cause: ThresholdError)
+  case NondeterministicNullDraw(index: Int)
 
   def message: String =
     this match
       case InvalidAlpha(value) =>
         s"alpha must be finite and in (0, 1), got $value"
-      case InvalidQValue(value) =>
-        s"q must be finite and in (0, 1), got $value"
       case InvalidKappa(value) =>
         s"kappa must be finite and positive, got $value"
       case InvalidDegreesOfFreedom(value) =>
@@ -63,3 +64,11 @@ enum ThresholdError:
         s"null matrix has shape ${rows}x$cols, expected *x$expectedCols with at least one row"
       case InvalidArgument(name, reason) =>
         s"$name is invalid: $reason"
+      case MissingIdentityAction(testIndex) =>
+        s"exact enumeration must include the identity action, but no null statistic reaches observed test $testIndex"
+      case MissingIdentityRow =>
+        "exact enumeration must include the identity action, but no null row equals the oriented observed statistics"
+      case NullDrawFailed(index, cause) =>
+        s"null draw $index failed: ${cause.message}"
+      case NondeterministicNullDraw(index) =>
+        s"null draw $index returned a different field when fetched again"

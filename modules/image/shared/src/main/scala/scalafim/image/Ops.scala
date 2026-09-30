@@ -194,9 +194,11 @@ object Ops:
     def reorient(orientation: Orientation3D): SomeSampleSpace =
       Orientation.reorient(s, orientation)
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(axis1: String, axis2: String, axis3: String): SomeSampleSpace =
       Orientation.reorient(s, Seq(axis1, axis2, axis3))
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(orient: Seq[String]): SomeSampleSpace =
       Orientation.reorient(s, orient)
 
@@ -204,9 +206,11 @@ object Ops:
     def reorient(orientation: Orientation3D)(using ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
       Orientation.reorient(v, orientation)
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(axis1: String, axis2: String, axis3: String)(using ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
       Orientation.reorient(v, Seq(axis1, axis2, axis3))
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     def reorient(orient: Seq[String])(using ValueSemantics[A, Sem]): SomeNeuroVolume[A, Sem] =
       Orientation.reorient(v, orient)
 
@@ -239,10 +243,12 @@ object Ops:
     def reorient(orientation: Orientation3D)(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       Orientation.reorient(v, orientation)
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     @scala.annotation.targetName("reorientNeuroSeriesAxisLabels")
     def reorient(axis1: String, axis2: String, axis3: String)(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       Orientation.reorient(v, Seq(axis1, axis2, axis3))
 
+    @deprecated("Use Reorientation with AxisCodes", since = "0.2.0")
     @scala.annotation.targetName("reorientNeuroSeriesAxes")
     def reorient(orient: Seq[String])(using ValueSemantics[A, Sem]): SomeNeuroSeries[A, Sem] =
       Orientation.reorient(v, orient)
@@ -254,12 +260,6 @@ object Ops:
     def resampleTo[T](target: T, method: Resample.Method)(using Resample.HasSpace[T]): SomeScalarVolume[Double] =
       Resample.resampleTo(v, target, method)
 
-    def resampleTo[T](target: T, method: String)(using Resample.HasSpace[T]): SomeScalarVolume[Double] =
-      Resample.resampleTo(v, target, method)
-
-    def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): SomeScalarVolume[Double] =
-      Resample.resampleTo(v, target, method, engine)
-
   extension (v: SomeScalarSeries[Double])
     @scala.annotation.targetName("resampleNeuroSeriesDefault")
     def resampleTo[T](target: T)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
@@ -268,14 +268,6 @@ object Ops:
     @scala.annotation.targetName("resampleNeuroSeriesMethod")
     def resampleTo[T](target: T, method: Resample.Method)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
       Resample.resampleTo(v, target, method)
-
-    @scala.annotation.targetName("resampleNeuroSeriesNamedMethod")
-    def resampleTo[T](target: T, method: String)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
-      Resample.resampleTo(v, target, method)
-
-    @scala.annotation.targetName("resampleNeuroSeriesEngine")
-    def resampleTo[T](target: T, method: String, engine: String)(using Resample.HasSpace[T]): SomeScalarSeries[Double] =
-      Resample.resampleTo(v, target, method, engine)
 
   extension [F <: Frame[D3], S, A: Ring: DType](
       x: SelectedVolume[F, S, A, Continuous]

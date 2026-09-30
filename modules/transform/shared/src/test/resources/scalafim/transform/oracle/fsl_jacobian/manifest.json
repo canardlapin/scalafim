@@ -1,0 +1,23 @@
+{
+ "generator": "tools/transform/generate_fsl_jacobian_oracle.py",
+ "generated": "2026-09-27",
+ "kind": "native-oracle",
+ "tools": {
+  "FSL": "5.0.9 (brainlife/fsl@sha256:fbd262c385e9de22aa58bf7b6311cbd5cd96c7b4eaff151f879191e869bf224e)",
+  "nibabel": "5.3.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "neurotransform inst/extdata/fsl/register_to_mni.sh (flirt; fnirt --cout; convertwarp --absout; fnirtfileutils --jac --withaff; applywarp)",
+  "uv run --with nibabel==5.3.2 --with numpy python tools/transform/generate_fsl_jacobian_oracle.py"
+ ],
+ "notes": "Crop corner (voxel) [34, 66, 32] of the 91x109x91 MNI152 2 mm reference, block 20^3, chosen as the fully brain-supported window with the largest FSL determinant spread (std 0.4477). Values are copied, not recomputed. Full-size input sha256: field_abs 8c6b3f3482a160041b17cde6757fa6e9767e6129e2535c6993c49f144b0607ec, jac 33bc44ea95e77358de2096370e66ea8c4acef5cbdecfebc64572d93ddca45512, applywarp 3910096e13bbd53609bab99fb90dc4a471b58b172faa00d83b914e246e62069d, source 2c26d01ab8c8d11777d7e306c735179b30af0d4693148d5e25edc8f202d8afe4. FSL differentiates the B-spline coefficient field analytically; a dense-field finite difference is expected to agree to about 1% (neurotransform measured median 0.36%, p99 2.3% over the whole brain). Pending: the same check against FSL 6 fnirtfileutils --jac, with the FSL 6 native set (STP P4.04).",
+ "sha256": {
+  "field_abs.nii.gz": "ee75a77ad4545cd871e4c127507de5e285180e6d5c504cc4e7f752d73016219d",
+  "jac.nii.gz": "5d74b12b24fdacc77b96be4af68e344b28c7a51ffa606108ac0b8759f7e4e41f",
+  "source_header.nii.gz": "f9b18b4ff7f7189eb958a193e70f9c966d576761683913291b034913b9a6329b",
+  "support.nii.gz": "790c97453b020411dac8ae0bd9262f20dd48237ee474b1a25e1705c7f9112fbc"
+ }
+}

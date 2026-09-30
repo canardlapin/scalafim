@@ -1,0 +1,10 @@
+{
+ "kind": "copied-oracle-subset",
+ "canonical": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/conventions (manifest.json there records generate_convention_oracle.py, nibabel 5.4.2 and fslpy 3.29.1)",
+ "notes": "Byte-identical copies for the spatial graph-adapter FLIRT test (TransformIngestSuite): flirt_pairs.tsv row src=0 ref=1 is fslpy's source-world -> reference-world matrix for flirt_0_to_1.mat; fsl_cases.tsv gives each case's dims and FSL-selected voxel-to-world (v2w, the sform for cases 0 and 1).",
+ "sha256": {
+  "flirt_0_to_1.mat": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+  "flirt_pairs.tsv": "84636286cd0059f6c509e812dbcd49a6b497f462b864de3861140715874b25a2",
+  "fsl_cases.tsv": "5a34a9547c8add158c92d41cc08c6ebfbe02df649e1e435a2fbadfc3b5453d50"
+ }
+}

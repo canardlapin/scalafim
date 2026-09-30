@@ -188,7 +188,7 @@ object VolumeToSurfaceOperatorCompiler:
       case None => Right(assembly)
 
   private def rowWeights(
-    sourceGrid: GridSpec,
+    sourceGrid: GridSpec[?],
     sourceMask: Option[SomeMaskVolume],
     targetMask: Option[SurfaceRoi[Boolean]],
     surfaces: SurfaceGeometryPair,
@@ -226,7 +226,7 @@ object VolumeToSurfaceOperatorCompiler:
       }
 
   private[spatial] def sourcePointWeights(
-    sourceGrid: GridSpec,
+    sourceGrid: GridSpec[?],
     sourceMask: Option[SomeMaskVolume],
     point: SpatialPoint,
     sampling: SamplingPolicy
@@ -286,7 +286,8 @@ object VolumeToSurfaceOperatorCompiler:
         values(i) = values(i) / coverage
         i += 1
 
-    SurfacePointWeights(cols.toVector, values.toVector, coverage)
+    // The eight corner weights sum to one only up to rounding; coverage is a fraction and must stay in [0, 1].
+    SurfacePointWeights(cols.toVector, values.toVector, math.min(coverage, 1.0))
 
   private def addTrilinearCorner(
     dims: SpatialDims,

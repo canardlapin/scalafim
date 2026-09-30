@@ -2,10 +2,12 @@ package scalafim.spatial
 
 import image4s.geometry.GeometryError
 import scalafim.image.SampleSpaceError
+import scalafim.image.world.SpaceError
 import reframe4s.core.MapError
 
 enum SpatialErrorReason:
   case Identifier
+  case Space
   case Dimension
   case Geometry
   case DomainKind
@@ -21,6 +23,7 @@ enum SpatialErrorReason:
 
 enum SpatialError:
   case EmptyIdentifier(label: String)
+  case Space(cause: SpaceError)
   case NonPositiveDimension(label: String, value: Int)
   case EmptyHybrid
   case DuplicatePartName(name: PartName)
@@ -43,6 +46,12 @@ enum SpatialError:
   case EmptyPath
   case DisconnectedPath(previous: DomainId, next: DomainId)
   case NonInvertibleMorphism(id: MorphismId)
+  case InvalidInversePenalty(value: Double)
+  case InvalidPathLimit(value: Int)
+  case PathEndpointsMismatch(firstSource: DomainId, firstTarget: DomainId, secondSource: DomainId, secondTarget: DomainId)
+  case EmptyQcProbes
+  case HybridLayoutMismatch(detail: String)
+  case FieldIsRoot(domain: DomainId)
   case InvalidProviderCoordinateMap(reason: String)
   case CoordinateMapDomainMismatch(id: MorphismId, source: DomainId, target: DomainId, mapSource: String, mapTarget: String)
   case ProviderMap(cause: MapError)
@@ -88,9 +97,11 @@ enum SpatialError:
     this match
       case EmptyIdentifier(_) =>
         SpatialErrorReason.Identifier
+      case Space(_) =>
+        SpatialErrorReason.Space
       case NonPositiveDimension(_, _) | LatentDimensionMismatch(_, _, _) | NegativeOffset(_, _) =>
         SpatialErrorReason.Dimension
-      case EmptyHybrid | DuplicatePartName(_) | MaskSpaceMismatch(_) | SampleSpaceAdmission(_) | Geometry(_) | UnsupportedGeometry(_) =>
+      case EmptyHybrid | DuplicatePartName(_) | HybridLayoutMismatch(_) | MaskSpaceMismatch(_) | SampleSpaceAdmission(_) | Geometry(_) | UnsupportedGeometry(_) =>
         SpatialErrorReason.Geometry
       case DomainKindMismatch(_, _, _) =>
         SpatialErrorReason.DomainKind
@@ -98,15 +109,15 @@ enum SpatialError:
         SpatialErrorReason.MorphismCompatibility
       case DuplicateDomain(_) | DuplicateMorphism(_) | DomainNotFound(_) | MorphismDomainMissing(_, _) =>
         SpatialErrorReason.Graph
-      case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) =>
+      case NoPath(_, _) | EmptyPath | DisconnectedPath(_, _) | NonInvertibleMorphism(_) | InvalidInversePenalty(_) | InvalidPathLimit(_) | PathEndpointsMismatch(_, _, _, _) =>
         SpatialErrorReason.Route
       case InvalidProviderCoordinateMap(_) | CoordinateMapDomainMismatch(_, _, _, _, _) | ProviderMap(_) | MissingCoordinateMap(_) | CoordinateTransformFailed(_) =>
         SpatialErrorReason.CoordinateMap
-      case NonVolumeDomain(_) | NonSurfaceDomain(_) | UnsupportedMorphismForCompilation(_, _) | MorphismCompilerNotFound(_) | DuplicateMorphismCompiler(_) | MorphismCompilerKindMismatch(_, _, _) | InvalidMorphismPlugin(_, _) | UnsupportedPluginComposition(_) | UnsupportedSurfaceSampling(_) | SurfacePairMismatch(_) | SurfaceSamplingGeometryMismatch(_) | SurfaceMappingGeometryMismatch(_) | InvalidMixedPullback(_) | OperatorAssemblyFailed(_) =>
+      case NonVolumeDomain(_) | NonSurfaceDomain(_) | UnsupportedMorphismForCompilation(_, _) | MorphismCompilerNotFound(_) | DuplicateMorphismCompiler(_) | MorphismCompilerKindMismatch(_, _, _) | InvalidMorphismPlugin(_, _) | UnsupportedPluginComposition(_) | UnsupportedSurfaceSampling(_) | SurfacePairMismatch(_) | SurfaceSamplingGeometryMismatch(_) | SurfaceMappingGeometryMismatch(_) | InvalidMixedPullback(_) | OperatorAssemblyFailed(_) | EmptyQcProbes =>
         SpatialErrorReason.Operator
       case InvalidRoiRow(_, _) | DuplicateRoiRow(_) | EmptyRoi =>
         SpatialErrorReason.RowSelection
-      case FieldDataUnavailable(_) | FieldDomainMismatch(_, _) | FieldShapeMismatch(_, _) | FieldObservationMismatch(_, _) | FieldMaterializedShapeMismatch(_, _, _, _) =>
+      case FieldDataUnavailable(_) | FieldIsRoot(_) | FieldDomainMismatch(_, _) | FieldShapeMismatch(_, _) | FieldObservationMismatch(_, _) | FieldMaterializedShapeMismatch(_, _, _, _) =>
         SpatialErrorReason.Field
       case FieldSourceUnavailable(_, _) | FieldSourceStale(_, _, _) | FieldSourceDomainMismatch(_, _, _) | FieldSourceGeometryMismatch(_) | FieldSourceSampleSpaceAdmission(_, _) | FieldSourceGridMismatch(_, _) | FieldSourceShapeMismatch(_, _, _) | FieldSourceIndexOutOfBounds(_, _, _) | DuplicateFieldSourceIndex(_, _) | FieldSourceRequestMismatch(_) | FieldSourceBlockShapeMismatch(_, _, _, _, _) | FieldSourceReadFailed(_, _) =>
         SpatialErrorReason.Source
@@ -117,6 +128,8 @@ enum SpatialError:
     this match
       case EmptyIdentifier(label) =>
         s"$label identifier must be non-empty"
+      case Space(cause) =>
+        cause.message
       case NonPositiveDimension(label, value) =>
         s"$label dimension must be positive, got $value"
       case EmptyHybrid =>
@@ -161,6 +174,18 @@ enum SpatialError:
         s"morphism path is disconnected between ${previous.value} and ${next.value}"
       case NonInvertibleMorphism(id) =>
         s"morphism ${id.value} does not have a geometric inverse"
+      case InvalidInversePenalty(value) =>
+        s"inverse penalty must be finite and non-negative, got $value"
+      case InvalidPathLimit(value) =>
+        s"path limit must be positive, got $value"
+      case PathEndpointsMismatch(firstSource, firstTarget, secondSource, secondTarget) =>
+        s"routes must join the same domains: ${firstSource.value}->${firstTarget.value} vs ${secondSource.value}->${secondTarget.value}"
+      case EmptyQcProbes =>
+        "QC needs at least one probe point"
+      case HybridLayoutMismatch(detail) =>
+        s"hybrid layout mismatch: $detail"
+      case FieldIsRoot(domain) =>
+        s"field is already in its root domain ${domain.value}; there is nothing to backproject through"
       case InvalidProviderCoordinateMap(reason) =>
         s"invalid provider coordinate map: $reason"
       case CoordinateMapDomainMismatch(id, source, target, mapSource, mapTarget) =>
@@ -241,3 +266,8 @@ enum SpatialError:
         s"coordinate transform failed: $reason"
       case OperatorAssemblyFailed(reason) =>
         s"operator assembly failed: $reason"
+
+/** Lift a world-space identity failure into the spatial error vocabulary. */
+extension [A](result: Either[SpaceError, A])
+  def asSpatial: Either[SpatialError, A] =
+    result.left.map(SpatialError.Space(_))

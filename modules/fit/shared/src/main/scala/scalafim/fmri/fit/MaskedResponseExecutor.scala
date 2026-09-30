@@ -9,6 +9,7 @@ import scalafim.dataset.{
 import scalafim.fmri.model.{
   FitEngine,
   FitPlan,
+  FitStrategy,
   FixedWeightAlignment,
   MissingDataPolicy,
   NuisanceProjection,
@@ -248,27 +249,33 @@ private[fit] object MaskedResponseExecutor:
     yield result
 
   private def validateSupported(plan: FitPlan): Either[FitError, Unit] =
-    plan.engine match
-      case FitEngine.OrdinaryLeastSquares |
-          FitEngine.GeneralizedLeastSquares |
-          FitEngine.RunwiseLeastSquares |
-          FitEngine.FixedEffects =>
-        plan.config.volumeWeighting match
-          case VolumeWeighting.Estimated(_) =>
-            Left(FitError.UnsupportedVolumeWeighting(
-              "response-derived weights do not yet define how unlike observation patterns share a temporal weight estimate"
-            ))
-          case _ =>
-            plan.config.nuisanceProjection match
-              case NuisanceProjection.MatrixProjection(_, _) =>
-                Left(FitError.UnsupportedMissingDataPolicy(
-                  "voxel-specific row omission does not yet subset an explicit nuisance-projection matrix"
-                ))
-              case NuisanceProjection.Disabled => Right(())
-      case unsupported =>
+    plan.strategy match
+      case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) =>
         Left(FitError.UnsupportedMissingDataPolicy(
-          s"${MissingDataPolicy.OmitRowsPerVoxel} is not implemented for $unsupported"
+          s"${MissingDataPolicy.OmitRowsPerVoxel} is not implemented for runwise GLS; unlike row patterns require separately qualified run-local AR receipts"
         ))
+      case _ =>
+        plan.engine match
+          case FitEngine.OrdinaryLeastSquares |
+              FitEngine.GeneralizedLeastSquares |
+              FitEngine.RunwiseLeastSquares |
+              FitEngine.FixedEffects =>
+            plan.config.volumeWeighting match
+              case VolumeWeighting.Estimated(_) =>
+                Left(FitError.UnsupportedVolumeWeighting(
+                  "response-derived weights do not yet define how unlike observation patterns share a temporal weight estimate"
+                ))
+              case _ =>
+                plan.config.nuisanceProjection match
+                  case NuisanceProjection.MatrixProjection(_, _) =>
+                    Left(FitError.UnsupportedMissingDataPolicy(
+                      "voxel-specific row omission does not yet subset an explicit nuisance-projection matrix"
+                    ))
+                  case NuisanceProjection.Disabled => Right(())
+          case unsupported =>
+            Left(FitError.UnsupportedMissingDataPolicy(
+              s"${MissingDataPolicy.OmitRowsPerVoxel} is not implemented for $unsupported"
+            ))
 
   private def childPlan(
       plan: FitPlan,

@@ -1,0 +1,5 @@
+#Insight Transform File V1.0
+#Transform 0
+Transform: ScaleSkewVersor3DTransform_double_3_3
+Parameters: -0.03270200527411665 0.0654040105482333 0.016351002637058326 0.5 1.5 -0.75 1.05 0.94 1.1 0.01 -0.02 0.03 0.015 -0.025 0.005
+FixedParameters: 13.9 -21.4 7.25

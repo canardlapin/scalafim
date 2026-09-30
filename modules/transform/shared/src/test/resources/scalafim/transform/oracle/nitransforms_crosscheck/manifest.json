@@ -1,0 +1,22 @@
+{
+ "generator": "tools/transform/generate_nitransforms_crosscheck.py",
+ "generated": "2026-09-27",
+ "kind": "cross-implementation",
+ "tools": {
+  "nitransforms": "25.1.0",
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with h5py==3.16.0 --with numpy python tools/transform/generate_nitransforms_crosscheck.py"
+ ],
+ "notes": "Reference RAS points and nitransforms' mapped (moving) RAS point. A '#oblique' key reads the file with the oblique afni_oblique_base.nii / afni_oblique_source.nii images (AFNI cardinal/real correction). PENDING native checks: AFNI 3dAllineate/Vecwarp on oblique datasets; FreeSurfer lta_convert for the LTAs (P4.02). Unreadable by nitransforms: itk_linear/euler.tfm: ValueError: cannot reshape array of size 3 into shape (3,3); itk_linear/euler_zyx.tfm: ValueError: cannot reshape array of size 3 into shape (3,3); itk_linear/versor_rigid.tfm: ValueError: cannot reshape array of size 3 into shape (3,3); itk_linear/similarity.tfm: ValueError: cannot reshape array of size 4 into shape (3,3); itk_linear/scale_skew_versor.tfm: ValueError: cannot reshape array of size 12 into shape (3,3); itk_linear/translation.tfm: ValueError: could not broadcast input array from shape (0,3) into shape (3,); itk_linear/composite_euler_affine.tfm: IndexError: list index out of range",
+ "sha256": {
+  "afni_generic.aff12.1D": "3ac4c09096ed780b0de13e5d827bc428adb47795433f9d8acac50655f2a2ca52",
+  "afni_oblique_base.nii": "823d45a30f1efddc44a283dfe232b9b57b796608f6851127105a5894304dbd7a",
+  "afni_oblique_source.nii": "c1a2bb21036e02298c16848335c05ad7167ebfbc1ba25db7028ca5d6ed0f89e1",
+  "points.tsv": "1509bcda8cb677a0c4261ac75a88a6aaac603a994d03a9a4d78fc210292d1e1a"
+ }
+}

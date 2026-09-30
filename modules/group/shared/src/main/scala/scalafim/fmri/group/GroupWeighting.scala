@@ -16,25 +16,40 @@ package scalafim.fmri.group
 enum GroupWeighting:
   case Unweighted
   case InverseVariance
-  case RandomEffects(tau: TauEstimator = TauEstimator.DerSimonianLaird)
+  case RandomEffects(tau: TauEstimator = TauEstimator.DerSimonianLaird, inference: MetaInference = MetaInference.Normal)
 
   /** Whether this estimator needs per-subject variances to run. */
   def requiresVariance: Boolean =
     this match
       case Unweighted        => false
       case InverseVariance   => true
-      case RandomEffects(_)  => true
+      case RandomEffects(_, _)  => true
 
   def label: String =
     this match
       case Unweighted          => "ols"
       case InverseVariance     => "meta:fe"
-      case RandomEffects(tau)  => s"meta:re(${tau.label})"
+      case RandomEffects(tau, inference) => s"meta:re(${tau.label},${inference.label})"
 
 /** Estimator of the between-subject heterogeneity variance `tau^2`. */
 enum TauEstimator:
   case DerSimonianLaird
+  case PauleMandel
 
   def label: String =
     this match
       case DerSimonianLaird => "DL"
+      case PauleMandel => "PM"
+
+/** Reference-distribution policy is independent of heterogeneity estimation.
+  * Normal preserves the legacy plug-in z test. ModifiedKnappHartung scales
+  * covariance by max(1, Q_RE / (n-p)) and uses t(n-p). It is a pointwise
+  * small-sample method, not a guarantee under arbitrary variance misspecification.
+  */
+enum MetaInference:
+  case Normal
+  case ModifiedKnappHartung
+
+  def label: String = this match
+    case Normal => "z"
+    case ModifiedKnappHartung => "mKH"

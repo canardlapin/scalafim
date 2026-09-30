@@ -5,6 +5,7 @@ import SampleSpaces.*
 import image4s.SamplingAlignment
 import image4s.geometry.Affine
 import image4s.geometry.D3
+import image4s.geometry.Frame
 import ravel.NDArray as RavelArray
 import ravel.Rank
 
@@ -65,7 +66,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     SomeScalarSeries.unsafeFromRavel(data, spatial.addDim(ProviderAxes.time(nVolumes)), "plan-vec-fixture")
 
   private def denseField(
-      grid: GridSpec
+      grid: GridSpec[?]
   )(f: (VoxelCoord, Int) => Double): RavelArray[Double, Rank[4]] =
     RavelArray.tabulate[Double](
       grid.shape.x,
@@ -97,26 +98,26 @@ class ResamplingPlanSuite extends munit.FunSuite:
       )
     )
 
-  private def affine(
-      source: GridSpec,
-      target: GridSpec,
+  private def affine[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
       matrix: Affine[D3]
-  ): SpatialPullback =
+  ): SpatialPullback[T, S] =
     SpatialPullbacks.affine(source, target, matrix)
 
-  private def plan(
-      source: GridSpec,
-      target: GridSpec,
-      pullback: SpatialPullback,
+  private def plan[S <: Frame[D3], T <: Frame[D3]](
+      source: GridSpec[S],
+      target: GridSpec[T],
+      pullback: SpatialPullback[T, S],
       method: Resample.Method
-  ): ResamplingPlan =
+  ): ResamplingPlan[S, T] =
     ResamplingPlan.make(source, target, pullback, method).fold(err => fail(err.message), identity)
 
   test("identity plan matches existing nearest and linear resampling") {
     val space = SampleSpaces(Vector(4, 4, 4))
     val volume = testVolume(space)
     val grid = GridSpec.fromSpace(space)
-    val id = SpatialPullbacks.worldAligned(grid, grid)
+    val id = SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
 
     val nearestPlan = plan(grid, grid, id, Resample.Method.Nearest)
     val nearest = nearestPlan(volume).fold(err => fail(err.message), identity)
@@ -134,7 +135,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val space = SampleSpaces(Vector(4, 4, 4))
     val vec = testVec(space, nVolumes = 2)
     val grid = GridSpec.fromSpace(space)
-    val id = SpatialPullbacks.worldAligned(grid, grid)
+    val id = SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
 
     val nearestPlan = plan(grid, grid, id, Resample.Method.Nearest)
     val nearest = nearestPlan(vec).fold(err => fail(err.message), identity)
@@ -151,14 +152,14 @@ class ResamplingPlanSuite extends munit.FunSuite:
   test("Resample plan helpers build and execute morphism-aware plans") {
     val space = SampleSpaces(Vector(3, 2, 1))
     val grid = GridSpec.fromSpace(space)
-    val id = SpatialPullbacks.worldAligned(grid, grid)
+    val id = SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity)
     val volume = testVolume(space)
     val vec = testVec(space, nVolumes = 2)
 
     val byGrid = Resample.plan(grid, grid, id, Resample.Method.Nearest).fold(err => fail(err.message), identity)
     val bySpace = Resample.plan(space, space, id, Resample.Method.Nearest).fold(err => fail(err.message), identity)
-    assertEquals(byGrid.source, bySpace.source, clue = "")
-    assertEquals(byGrid.target, bySpace.target, clue = "")
+    assertEquals[Any, Any](byGrid.source, bySpace.source, clue = "")
+    assertEquals[Any, Any](byGrid.target, bySpace.target, clue = "")
 
     val volumeOut =
       Resample.resampleTo(volume, grid, id, Resample.Method.Nearest, outside = 0.0)
@@ -319,7 +320,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val p = plan(
       grid,
       grid,
-      SpatialPullbacks.worldAligned(grid, grid),
+      SpatialPullbacks.worldAligned(grid, grid).fold(error => fail(error.message), identity),
       Resample.Method.Cubic
     )
 
@@ -360,16 +361,8 @@ class ResamplingPlanSuite extends munit.FunSuite:
       SpatialPullbacks
         .coordinates(grid, grid, coordinates)
         .fold(err => fail(err.message), identity)
-    val sourceFrame: image4s.geometry.Frame[D3] = map.source
-    val point = image4s.geometry.Point
-      .in[D3](sourceFrame)(0.5, 0.0, 0.0)
-      .fold(err => fail(err.message), identity)
-    val rebound = image4s.geometry.Frame
-      .alignOwners[D3, sourceFrame.type, image4s.geometry.Frame[D3]](
-        sourceFrame,
-        sourceFrame
-      )
-      .flatMap(_.pointToRight(point))
+    val rebound = grid
+      .claimUnchecked(WorldPoint(0.5, 0.0, 0.0))
       .fold(err => fail(err.message), identity)
     val mapped = map(rebound).fold(err => fail(err.message), identity)
 
@@ -384,7 +377,7 @@ class ResamplingPlanSuite extends munit.FunSuite:
     val p = plan(
       plannedSource,
       target,
-      SpatialPullbacks.worldAligned(plannedSource, target),
+      SpatialPullbacks.worldAligned(plannedSource, target).fold(error => fail(error.message), identity),
       Resample.Method.Nearest
     )
 

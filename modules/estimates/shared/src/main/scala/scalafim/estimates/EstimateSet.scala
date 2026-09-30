@@ -14,7 +14,8 @@ final case class EstimateUnit(
     provenance: EstimateProvenance,
     covariance: Vector[CovarianceDescriptor] = Vector.empty,
     statistics: Vector[StatisticSemantics] = Vector.empty,
-    degreesOfFreedom: Vector[DegreesOfFreedom] = Vector.empty
+    degreesOfFreedom: Vector[DegreesOfFreedom] = Vector.empty,
+    marginalUncertainty: Vector[MarginalUncertaintyDescriptor] = Vector.empty
 ):
   require(Invariants.unique(observations.map(_.id)))
   require(observations.forall(_.participant.dataset == dataset))
@@ -52,6 +53,24 @@ final case class EstimateUnit(
   require(statistics.forall(s => products.exists(p => p.id == s.product && p.kind.isInstanceOf[ProductKind.Statistic]) &&
     s.effect.forall(id => products.exists(p => p.id == id && p.kind == ProductKind.Effect)) &&
     s.standardError.forall(id => products.exists(p => p.id == id && p.kind == ProductKind.StandardError))))
+  require(marginalUncertainty.map(_.product).distinct.size == marginalUncertainty.size)
+  require(marginalUncertainty.forall: descriptor =>
+    val uncertainty = products.find(_.id == descriptor.product)
+    val effect = products.find(_.id == descriptor.effects)
+    val aligned = uncertainty.exists(p => (p.kind == ProductKind.StandardError || p.kind == ProductKind.Variance) &&
+      effect.exists(e => e.kind == ProductKind.Effect && p.observations == e.observations &&
+        p.targets == e.targets && p.pooling == e.pooling))
+    val validDf = descriptor.origin match
+      case MarginalVarianceOrigin.Estimated(df) =>
+        degreesOfFreedom.contains(df) && (df.value match
+          case DfValue.Product(id) =>
+            products.find(_.id == id).exists(p => p.kind == ProductKind.DegreesOfFreedomValues &&
+              uncertainty.exists(u => p.observations == u.observations && p.targets == u.targets && p.pooling == u.pooling))
+          case DfValue.Scalar(_) => true
+          case _ => false)
+      case _ => true
+    aligned && validDf
+  )
 
 final case class PinnedUnit(unit: UnitId, revision: UnitRevisionId, manifest: FileReference)
 

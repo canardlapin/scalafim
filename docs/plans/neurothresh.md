@@ -111,9 +111,11 @@ The public entry points can accept `Region`, `MaskedField`, and `PriorWeights`.
 
 Port `R/stepdown.R` as a small pure kernel:
 
-- `WestfallYoung.stepDown(observed, nullMatrix, alpha)`;
-- `MaxT.singleStep(observed, nullMatrix, alpha)`;
-- `MaxNull.pValues(observed, maxNull)` and `MaxNull.threshold(maxNull, alpha)`.
+- `WestfallYoung.stepDown(observed, nullMatrix, alpha, alternative, reference)`;
+- `MaxT.singleStep(observed, nullMatrix, alpha, alternative, reference)`;
+- `MaxNull.reduce(nullDraw, fieldSize, alternative, orientation)`, then
+  `MaxNull.pValues(observed, nulls)` and `MaxNull.cutoff(nulls, alpha)` over the
+  orientation-carrying `MaxNullDistribution`.
 
 Use a compact row-major null matrix representation, probably `DoubleMatrix`, so
 the implementation can stay portable and testable.

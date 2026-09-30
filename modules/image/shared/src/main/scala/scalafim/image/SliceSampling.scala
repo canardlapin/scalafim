@@ -230,10 +230,20 @@ final class MappedSlicePlan private (
         SliceImage.unsafe(grid, out)
 
 object MappedSlicePlan:
+  /** Plan through a provider pullback from reference-world points to the source grid's frame; the map's result frame
+    * is checked against the source grid's live owner.
+    */
   def make(
     source: Grid[? <: Frame[D3], D3],
     grid: SliceGrid,
-    referenceToSource: SpatialPullback
+    referenceToSource: SpatialPullback[?, ?]
+  ): Either[SlicePlanError, MappedSlicePlan] =
+    makeTyped(source, grid, referenceToSource)
+
+  private def makeTyped[R <: Frame[D3], S <: Frame[D3]](
+    source: Grid[? <: Frame[D3], D3],
+    grid: SliceGrid,
+    referenceToSource: SpatialPullback[R, S]
   ): Either[SlicePlanError, MappedSlicePlan] =
     val count = grid.dimensions.pixelCount
     val width = grid.dimensions.width
@@ -241,7 +251,7 @@ object MappedSlicePlan:
     val ys = new Array[Double](count)
     val zs = new Array[Double](count)
     val sourceInverse = source.indexToFrame.inverse.matrix
-    val referenceFrame: Frame[D3] = referenceToSource.source
+    val referenceFrame: R = referenceToSource.source
     var failure =
       reframe4s.core.SpatialMap
         .validateResultFrame(source.frame, referenceToSource.target)
@@ -264,19 +274,8 @@ object MappedSlicePlan:
             grid.plane.screenUp.z * upDistance
         val mapped =
           for
-            raw <- Point
-              .in[D3](referenceFrame)(referenceX, referenceY, referenceZ)
-              .left
-              .map(reframe4s.core.MapError.Geometry.apply)
-            alignment <- Frame
-              .alignOwners[D3, referenceFrame.type, Frame[D3]](
-                referenceFrame,
-                referenceFrame
-              )
-              .left
-              .map(reframe4s.core.MapError.Geometry.apply)
-            point <- alignment
-              .pointToRight(raw)
+            point <- GridSpec
+              .pointIn(referenceFrame, Vector(referenceX, referenceY, referenceZ))
               .left
               .map(reframe4s.core.MapError.Geometry.apply)
             result <- referenceToSource(point)

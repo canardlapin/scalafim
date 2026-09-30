@@ -1,0 +1,22 @@
+{
+ "generator": "tools/transform/generate_afni_qwarp_crosscheck.py",
+ "generated": "2026-09-27",
+ "kind": "cross-implementation",
+ "tools": {
+  "nitransforms": "25.1.0",
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with nitransforms==25.1.0 --with nibabel==5.4.2 --with numpy python tools/transform/generate_afni_qwarp_crosscheck.py"
+ ],
+ "notes": "AFNI 3dQwarp-layout fields constructed here (AFNI not installed) and mapped by nitransforms DenseFieldTransform(fmt='afni'). points.tsv: base (reference) RAS point and nitransforms' source RAS point. The read fields have a cardinal radiological sform (code 2), which nitransforms and AFNI both use, and an oblique qform (code 1), which ITK would use. affine_WARP.nii rows are off-grid; nitransforms' cubic result differs from the analytic affine value by at most 1.09e-05 mm. smooth_WARP.nii rows are lattice nodes. oblique_WARP.nii (oblique sform) has no rows: AFNI's warp code places it on the cardinalised grid, which ScalaFIM refuses as unqualified. PENDING: native AFNI 3dNwarpXYZ on these files.",
+ "sha256": {
+  "affine_WARP.nii": "09cf509584498d8341e0baa7e6fb80a35c53b37013aacf460ab01f7760694848",
+  "oblique_WARP.nii": "5e4e7bafa0005a7426e28d778da50f887aa8c297c9c0f48daed4b53f91b254dc",
+  "points.tsv": "e96dc661b2a54bda68e4eedc12bf4a287ebd3e2e8cfb9baf81e6d76d9f628e66",
+  "smooth_WARP.nii": "5a58ade0864646e9e8840b1cba802d3aa4258d81003d763a20b6b9a06dc90fca"
+ }
+}

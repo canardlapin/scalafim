@@ -57,11 +57,13 @@ run_batch image-surface-js \
   surfaceViewThreeJS/test
 
 run_batch data-jvm \
-  surfaceViewConnectivityJVM/test surfaceViewExamplesJVM/test spatialJVM/test \
+  surfaceViewConnectivityJVM/test surfaceViewExamplesJVM/test transformJVM/test \
+  spatialJVM/test \
   atlasJVM/test archiveJVM/test archiveLnaJVM/test \
   archivedResponseInteropJVM/test datasetJVM/test
 run_batch data-js \
-  surfaceViewConnectivityJS/test surfaceViewExamplesJS/test spatialJS/test \
+  surfaceViewConnectivityJS/test surfaceViewExamplesJS/test transformJS/test \
+  spatialJS/test \
   atlasJS/test archiveJS/test archiveLnaJS/test \
   archivedResponseInteropJS/test datasetJS/test
 
