@@ -351,6 +351,40 @@ class ShapeDecoderSuite extends munit.FunSuite:
     assertEquals(counters.terminalVerifications, 1L)
     assertEquals(counters.candidateAttempts, 1L)
 
+  test("a final full jet reaches a stationary candidate when exact evaluation is unavailable"):
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(
+      new OffsetQuadratic,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 0),
+      None,
+      1.0
+    ).decode(counters)
+    assertEquals(result.status, DecodeStatus.Accepted)
+    assertEqualsDouble(result.coordinates(0), 0.2, 1e-12)
+    assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+    assertEquals(counters.jets, 2L)
+    assertEquals(counters.exactEvaluations, 0L)
+    assertEquals(counters.candidateAttempts, 1L)
+    assertEquals(counters.terminalVerifications, 0L)
+
+  test("a rejected final full candidate preserves accepted state and caps"):
+    val counters = new DecoderCounters
+    val result = new ShapeDecoder(
+      new OffsetQuadratic(candidateJet = "higher"),
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 2, maxExactEvaluations = 0,
+        maxCandidateAttempts = 1),
+      None,
+      1.0
+    ).decode(counters)
+    assertEquals(result.status, DecodeStatus.BudgetExceeded)
+    assertEqualsDouble(result.coordinates(0), 0.0, 1e-12)
+    assertEqualsDouble(result.amplitudes(0), 1.0, 1e-12)
+    assertEqualsDouble(result.dataHessian(0), 2.0, 1e-12)
+    assertEquals(counters.jets, 2L)
+    assertEquals(counters.exactEvaluations, 0L)
+    assertEquals(counters.candidateAttempts, 1L)
+    assertEquals(counters.terminalVerifications, 0L)
+
   test("terminal verification retains a nonstationary budget refusal and current curvature"):
     val objective = new Quartic
     val counters = new DecoderCounters
