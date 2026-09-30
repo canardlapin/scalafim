@@ -1,0 +1,133 @@
+{
+  "schema": "voxelwise-rrg-followup-study-design-v1",
+  "baseline_commit": "3a3b53815744e196c2022de353ae64702cdbbac3",
+  "primary_estimands": [
+    "coefficient_0",
+    "coefficient_1",
+    "difference_0_minus_1",
+    "average_0_plus_1_over_2"
+  ],
+  "voxels": [
+    0,
+    1,
+    2
+  ],
+  "confidence_level": 0.95,
+  "regular_datasets": 400,
+  "stress_datasets": 200,
+  "stationary_reset_datasets": 100,
+  "main_replicates": 399,
+  "modes": [
+    "FrozenWhitening",
+    "RefitAutocorrelation"
+  ],
+  "generator": {
+    "version": "independent_scalar_ar1_burnin500_v1",
+    "noise_sd": 0.6,
+    "dataset_seed": "10007+7919*dataset",
+    "bootstrap_seed": "2017+101*dataset",
+    "input_rows_before_gaps": 80,
+    "censored_runs": 2,
+    "censored_local_rows_retained": [
+      8,
+      28
+    ],
+    "omitted_local_rows": [
+      16,
+      17
+    ],
+    "stationary_segment_starts": [
+      0,
+      9,
+      18,
+      29
+    ],
+    "joint_lag_offsets": [
+      0,
+      1,
+      2
+    ]
+  },
+  "scenarios": {
+    "baseline": {
+      "runs": 1,
+      "rho": [
+        0.1,
+        0.5,
+        -0.2
+      ],
+      "innovation_correlation": 0.5
+    },
+    "multiple_runs": {
+      "runs": 2,
+      "run_length": 40,
+      "run_specific_intercepts": true
+    },
+    "strong_ar": {
+      "rho": [
+        0.1,
+        0.8,
+        -0.5
+      ],
+      "innovation_correlation": 0.8
+    },
+    "censor_continuous": {
+      "runs": 2,
+      "latent_process_continues_through_gaps": true
+    },
+    "censor_reset": {
+      "runs": 2,
+      "independent_stationary_segment_initialization": true,
+      "exact_bootstrap_joint_initial_distribution_match": false
+    },
+    "joint_lag_block1": {
+      "joint_lag_dependence": true,
+      "block_size": 1
+    },
+    "joint_lag_block4": {
+      "joint_lag_dependence": true,
+      "block_size": 4
+    },
+    "weak": {
+      "signal_scale": 0.15
+    },
+    "boundary": {
+      "signal_scale": 0
+    }
+  },
+  "replicate_sensitivity": {
+    "nested": {
+      "scenarios": [
+        "baseline",
+        "censor_continuous"
+      ],
+      "first_datasets": 100,
+      "replicates": 1999
+    },
+    "independent_seeds": {
+      "scenario": "baseline",
+      "first_datasets": 20,
+      "count_including_main": 5,
+      "offset": "100003*seed_index"
+    }
+  },
+  "expected_rows": 5560,
+  "expected_requested_replicates": 2858440,
+  "reporting": "Separate coordinate coverage with Wilson95 intervals, both tail misses, bias/RMSE, sampling variance, bootstrap variance ratio, widths; failed attempts remain in denominator of success-and-coverage; no pooling across coordinates; unadjusted investigation flags do not constitute familywise testing.",
+  "compute_budget": {
+    "platform": "JVM",
+    "max_heap_gib": 3,
+    "active_processor_count": 4,
+    "sequential": true,
+    "pilot_before_full_study": true,
+    "full_run_timeout_seconds": 3600
+  },
+  "non_claims": [
+    "Exact nominal coverage",
+    "Generic T/F or p-values",
+    "Global optimizer certificate",
+    "Adaptive rank",
+    "Whole-brain streaming",
+    "Realistic spatial covariance in resource workload"
+  ]
+}

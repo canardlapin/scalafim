@@ -2,7 +2,7 @@ package scalafim.fmri.fit
 
 import gale.linalg.{DMat, DVec, Matrix}
 import scalafim.fmri.ar.WhiteningPlan
-import scalafim.fmri.model.{AutocorrelationConfig, ReducedRankSolverConfig, VoxelwiseReducedRankBootstrapConfig}
+import scalafim.fmri.model.{AutocorrelationConfig, ReducedRankSolverConfig, VoxelwiseBootstrapContrast, VoxelwiseReducedRankBootstrapConfig}
 
 enum ReducedRankSolverStatus:
   case Converged
@@ -73,6 +73,18 @@ sealed trait VoxelwiseReducedRankUncertainty:
   def label: String
   def bootstrap: Option[VoxelwiseReducedRankUncertainty.Bootstrap]
 
+final case class VoxelwiseReducedRankBootstrapContrast(
+    definition: VoxelwiseBootstrapContrast,
+    estimate: DVec,
+    standardErrors: DVec,
+    lower: DVec,
+    upper: DVec
+):
+  require(estimate.length == standardErrors.length && estimate.length == lower.length && estimate.length == upper.length, "bootstrap contrast vector lengths must agree")
+  require((estimate.toSeq ++ standardErrors.toSeq ++ lower.toSeq ++ upper.toSeq).forall(_.isFinite), "bootstrap contrast summaries must be finite")
+  require(standardErrors.toSeq.forall(_ >= 0.0), "bootstrap contrast standard errors must be non-negative")
+  require((0 until lower.length).forall(index => lower(index) <= upper(index)), "bootstrap contrast lower bounds must not exceed upper bounds")
+
 object VoxelwiseReducedRankUncertainty:
   case object Unavailable extends VoxelwiseReducedRankUncertainty:
     val label: String = "estimates_only_inference_not_requested"
@@ -85,13 +97,17 @@ object VoxelwiseReducedRankUncertainty:
       standardErrors: StandardErrorBlock,
       lower: CoefficientBlock,
       upper: CoefficientBlock,
-      diagnostics: VoxelwiseReducedRankBootstrapDiagnostics
+      diagnostics: VoxelwiseReducedRankBootstrapDiagnostics,
+      contrasts: Vector[VoxelwiseReducedRankBootstrapContrast] = Vector.empty
   ) extends VoxelwiseReducedRankUncertainty:
     require(targetColumns.nonEmpty && targetColumns.distinct == targetColumns && targetColumns.forall(_ >= 0), "bootstrap target columns must be unique")
     require(covariance.isVoxelwise && covariance.predictors == targetColumns.length, "bootstrap covariance must contain target rows per voxel")
     require(standardErrors.predictors == targetColumns.length && standardErrors.voxels == covariance.matrixCount, "bootstrap SE shape mismatch")
     require(lower.predictors == targetColumns.length && upper.predictors == targetColumns.length && lower.voxels == covariance.matrixCount && upper.voxels == covariance.matrixCount, "bootstrap interval shape mismatch")
     require((0 until lower.predictors).forall(r => (0 until lower.voxels).forall(v => lower(r, v) <= upper(r, v))), "bootstrap lower bounds must not exceed upper bounds")
+    require(contrasts.map(_.definition.name).distinct.length == contrasts.length, "bootstrap contrast names must be unique")
+    require(contrasts.map(_.definition) == diagnostics.config.contrasts, "bootstrap contrast definitions must match bootstrap configuration")
+    require(contrasts.forall(_.estimate.length == covariance.matrixCount), "bootstrap contrast voxels must match covariance")
     val label: String = "voxelwise_reduced_rank_bootstrap_uncertainty"
     def bootstrap: Option[Bootstrap] = Some(this)
 
@@ -119,7 +135,15 @@ final case class VoxelwiseReducedRankEstimate(
               covariance = covariance,
               standardErrors = StandardErrorBlock(select(b.standardErrors.value, positions)),
               lower = CoefficientBlock(select(b.lower.value, positions)),
-              upper = CoefficientBlock(select(b.upper.value, positions))
+              upper = CoefficientBlock(select(b.upper.value, positions)),
+              contrasts = b.contrasts.map { contrast =>
+                contrast.copy(
+                  estimate = select(contrast.estimate, positions),
+                  standardErrors = select(contrast.standardErrors, positions),
+                  lower = select(contrast.lower, positions),
+                  upper = select(contrast.upper, positions)
+                )
+              }
             )
           }
       selected.map(u => copy(
@@ -130,6 +154,9 @@ final case class VoxelwiseReducedRankEstimate(
 
   private def select(matrix: DMat, positions: Vector[Int]): DMat =
     Matrix.tabulate(matrix.rows, positions.length)((r, c) => matrix(r, positions(c)))
+
+  private def select(values: DVec, positions: Vector[Int]): DVec =
+    DVec.fromSeq(positions.map(values.apply))
 
 object VoxelwiseReducedRankEstimate:
   def merge(values: IndexedSeq[VoxelwiseReducedRankEstimate]): Either[FitError, VoxelwiseReducedRankEstimate] =
@@ -145,14 +172,23 @@ object VoxelwiseReducedRankEstimate:
             else Left(FitError.IncompatibleFitBlocks("reduced-rank uncertainty modes differ"))
           case b: VoxelwiseReducedRankUncertainty.Bootstrap =>
             val bs = values.flatMap(_.uncertainty.bootstrap)
-            if bs.length != values.length || bs.exists(v => v.diagnostics != b.diagnostics || v.targetColumns != b.targetColumns) then
+            if bs.length != values.length || bs.exists(v => v.diagnostics != b.diagnostics || v.targetColumns != b.targetColumns || v.contrasts.map(_.definition) != b.contrasts.map(_.definition)) then
               Left(FitError.IncompatibleFitBlocks("reduced-rank bootstrap preparations differ"))
             else CoefficientCovariance.voxelwise(bs.flatMap(_.covariance.matrices).toVector).map { covariance =>
               b.copy(
                 covariance = covariance,
                 standardErrors = StandardErrorBlock(bind(bs.map(_.standardErrors.value))),
                 lower = CoefficientBlock(bind(bs.map(_.lower.value))),
-                upper = CoefficientBlock(bind(bs.map(_.upper.value)))
+                upper = CoefficientBlock(bind(bs.map(_.upper.value))),
+                contrasts = b.contrasts.indices.map { index =>
+                  val contrasts = bs.map(_.contrasts(index))
+                  b.contrasts(index).copy(
+                    estimate = DVec.fromSeq(contrasts.flatMap(_.estimate.toSeq)),
+                    standardErrors = DVec.fromSeq(contrasts.flatMap(_.standardErrors.toSeq)),
+                    lower = DVec.fromSeq(contrasts.flatMap(_.lower.toSeq)),
+                    upper = DVec.fromSeq(contrasts.flatMap(_.upper.toSeq))
+                  )
+                }.toVector
               )
             }
         uncertainty.map(u => first.copy(

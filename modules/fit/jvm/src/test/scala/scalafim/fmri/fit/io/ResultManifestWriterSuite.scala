@@ -3,6 +3,7 @@ package scalafim.fmri.fit.io
 import scalafim.image.SampleSpaces
 import scalafim.image.{apply, space, valueAtCanonicalOrdinal}
 import scalafim.image.SampleSpaces.*
+import scalafim.image.world.{DatasetNamespace, SpaceEvidence, SubjectId, WorldSpace}
 
 import scalafim.dataset.DatasetShape
 import scalafim.fmri.fit.*
@@ -10,13 +11,15 @@ import scalafim.fmri.design.{DesignSchema, ModelSource}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
-import scalafim.fmri.model.{ArCoefficientSpec, AutocorrelationConfig, ReducedRankBootstrapConfig, ReducedRankComponentSpec, ReducedRankGlsConfig, ReducedRankInferencePolicy, VoxelwiseReducedRankBootstrapConfig}
+import scalafim.fmri.model.{ArCoefficientSpec, AutocorrelationConfig, ReducedRankBootstrapConfig, ReducedRankComponentSpec, ReducedRankGlsConfig, ReducedRankInferencePolicy, VoxelwiseBootstrapContrast, VoxelwiseReducedRankBootstrapConfig}
 import scalafim.fmri.fit.fixtures.ReducedRankGlsFmriregFixtures
-import scalafim.image.io.Nifti
+import scalafim.image.io.{Nifti, NiftiSpaceEvidence}
+import image4s.nifti.NiftiAffinePolicy
 import gale.linalg.DVec
 
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
+import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
 class ResultManifestWriterSuite extends munit.FunSuite:
 
@@ -53,7 +56,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(written.paths.contains(sidecarPath))
 
     val coefficientImage =
-      Nifti.readSeries(coefficientPath).fold(error => fail(error.message), _.image)
+      Nifti.readSeriesIn(coefficientPath, writerSpaceEvidence(coefficientPath)).fold(error => fail(error.message), _.image)
     assertEquals(coefficientImage.space.dims.take(4), Vector(2, 1, 1, 2))
     assertEqualsDouble(coefficientImage(0, 0, 0, 0), 2.0, 1e-12)
     assertEqualsDouble(coefficientImage(0, 0, 0, 1), 3.0, 1e-12)
@@ -61,7 +64,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assertEqualsDouble(coefficientImage(1, 0, 0, 1), 4.0, 1e-12)
 
     val contrastImage =
-      Nifti.readSeries(contrastPath).fold(error => fail(error.message), _.image)
+      Nifti.readSeriesIn(contrastPath, writerSpaceEvidence(contrastPath)).fold(error => fail(error.message), _.image)
     assertEquals(contrastImage.space.dims.take(4), Vector(2, 1, 1, 3))
     assertEqualsDouble(contrastImage(0, 0, 0, 0), t.estimates(0), 1e-12)
     assertEqualsDouble(contrastImage(1, 0, 0, 0), t.estimates(1), 1e-12)
@@ -120,7 +123,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(written.artifacts.filter(_.path.toString.endsWith(".nii")).forall(_.labels.length == 1))
 
     val taskCoefficient =
-      Nifti.readVolume(expectedNiftis.head).fold(error => fail(error.message), _.image)
+      Nifti.readVolumeIn(expectedNiftis.head, writerSpaceEvidence(expectedNiftis.head)).fold(error => fail(error.message), _.image)
     assertEquals(taskCoefficient.space.dims, Vector(2, 1, 1))
     assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(0), 2.0, 1e-12)
     assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(1), -1.0, 1e-12)
@@ -257,8 +260,8 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     val upper = root.resolve("sub-01_task-bootstrap_desc-parameterbootstrapupper_statmap.nii")
     assert(written.paths.contains(lower))
     assert(written.paths.contains(upper))
-    assertEqualsDouble(Nifti.readVolume(lower).toOption.get.image.valueAtCanonicalOrdinal(0), 1.0, 1e-12)
-    assertEqualsDouble(Nifti.readVolume(upper).toOption.get.image.valueAtCanonicalOrdinal(1), 0.0, 1e-12)
+    assertEqualsDouble(Nifti.readVolumeIn(lower, writerSpaceEvidence(lower)).toOption.get.image.valueAtCanonicalOrdinal(0), 1.0, 1e-12)
+    assertEqualsDouble(Nifti.readVolumeIn(upper, writerSpaceEvidence(upper)).toOption.get.image.valueAtCanonicalOrdinal(1), 0.0, 1e-12)
   }
 
   test("ResultManifestWriter retains voxelwise reduced-rank estimates-only diagnostics") {
@@ -278,7 +281,8 @@ class ResultManifestWriterSuite extends munit.FunSuite:
 
   test("ResultManifestWriter retains bootstrap uncertainty provenance and artifacts") {
     val bootstrap = VoxelwiseReducedRankBootstrapConfig.unsafe(
-      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 2, blockSize = 1, seed = 7)
+      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 2, blockSize = 1, seed = 7),
+      contrasts = Vector(VoxelwiseBootstrapContrast.unsafe("task_difference", Vector(0 -> 1.0, 1 -> -1.0)))
     )
     val result = voxelwiseReducedRankResult(ReducedRankInferencePolicy.VoxelwiseBootstrap(bootstrap))
     val manifest = ResultManifest.fromVoxelwiseReducedRankFit(result, shape, source = "rrg-bootstrap-writer").toOption.get
@@ -291,6 +295,41 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(manifest.parameterMaps(ParameterMapKind.BootstrapLower).nonEmpty)
     assert(manifest.parameterMaps(ParameterMapKind.BootstrapUpper).nonEmpty)
     assert(manifest.coefficientCovariance.nonEmpty)
+    val contrastMaps = manifest.parameters.filter(_.parameter == "bootstrap_contrast:task_difference")
+    assertEquals(contrastMaps.length, 4)
+    assert(contrastMaps.exists(_.statistic == ParameterMapKind.Coefficient))
+    assert(contrastMaps.exists(_.statistic == ParameterMapKind.StandardError))
+    assert(sidecar.contains("\"contrasts\": [{\"name\": \"task_difference\""))
+    assert(sidecar.contains("\"original_column_index\": 0, \"original_column_name\": \"task_a\", \"weight\": 1"))
+    assert(sidecar.contains("\"confidence_scope\": \"pointwise\""))
+
+    val suffixCollision = VoxelwiseReducedRankBootstrapConfig.unsafe(
+      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 2, blockSize = 1, seed = 7),
+      contrasts = Vector(
+        VoxelwiseBootstrapContrast.unsafe("a", Vector(0 -> 1.0)),
+        VoxelwiseBootstrapContrast.unsafe("a_standard_error", Vector(0 -> 1.0))
+      )
+    )
+    val collisionResult = voxelwiseReducedRankResult(ReducedRankInferencePolicy.VoxelwiseBootstrap(suffixCollision))
+    assert(ResultManifest.fromVoxelwiseReducedRankFit(collisionResult, shape).left.toOption.exists(_.message.contains("unique after statistic suffixing")))
+
+    val escaped = VoxelwiseReducedRankBootstrapConfig.unsafe(
+      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 2, blockSize = 1, seed = 7),
+      contrasts = Vector(VoxelwiseBootstrapContrast.unsafe("huge\u0001weight", Vector(0 -> 1.0e20)))
+    )
+    val escapedManifest = ResultManifest.fromVoxelwiseReducedRankFit(
+      voxelwiseReducedRankResult(ReducedRankInferencePolicy.VoxelwiseBootstrap(escaped)),
+      shape,
+      source = "rrg-bootstrap-json-escape"
+    ).toOption.get
+    val escapedRoot = Files.createTempDirectory("scalafim-rrg-bootstrap-json-escape")
+    ResultManifestWriter.writeBidsDirectory(escapedManifest, escapedRoot, "sub-01_task-rrgescape").toOption.get
+    val escapedSidecar = escapedRoot.resolve("sub-01_task-rrgescape_resultmanifest.json")
+    val escapedJson = Files.readString(escapedSidecar, StandardCharsets.UTF_8)
+    assert(escapedJson.contains("huge\\u0001weight"))
+    assert(escapedJson.contains("1.0E20"))
+    Files.createDirectories(Path.of("/private/tmp/scalafim-rrg-next"))
+    Files.copy(escapedSidecar, Path.of("/private/tmp/scalafim-rrg-next/contrast-sidecar.json"), REPLACE_EXISTING)
   }
 
   private def voxelwiseReducedRankResult(
@@ -312,7 +351,19 @@ class ResultManifestWriterSuite extends munit.FunSuite:
       FitSummary(FitEngine.ReducedRankGls, rows.length, 2, 2, robust = false, autocorrelated = true))
 
   private def shape: DatasetShape =
-    DatasetShape.unsafe(SampleSpaces(Vector(2, 1, 1)), timepoints = 4)
+    DatasetShape.unsafe(SampleSpaces.inWorld(SampleSpaces.make(Vector(2, 1, 1)).toOption.get, WorldSpace.template("MNI152NLin6Asym").toOption.get).toOption.get, timepoints = 4)
+
+  private def writerSpaceEvidence(path: Path): SpaceEvidence =
+    val header = Nifti.readHeader(path).fold(error => fail(error.message), identity)
+    val native = NiftiSpaceEvidence.nativeContext(
+      header,
+      NiftiAffinePolicy.PreferSform,
+      DatasetNamespace("writer-suite").toOption.get,
+      SubjectId("sub-01").toOption.get,
+      None,
+      Map("suffix" -> "statmap")
+    ).fold(error => fail(error.message), identity)
+    SpaceEvidence(native = Some(native))
 
   private def denseResult(): DenseFmriFitResult =
     val covariance =

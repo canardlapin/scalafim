@@ -1,8 +1,8 @@
 package scalafim.fmri.fit
 
-import gale.linalg.{DMat, Matrix}
+import gale.linalg.{DMat, DVec, Matrix}
 import scalafim.fmri.ar.{NoiseEstimationLayout, WhiteningPlan}
-import scalafim.fmri.model.{ReducedRankGlsConfig, VoxelwiseBootstrapMode, VoxelwiseReducedRankBootstrapConfig}
+import scalafim.fmri.model.{ReducedRankGlsConfig, VoxelwiseBootstrapContrast, VoxelwiseBootstrapMode, VoxelwiseReducedRankBootstrapConfig}
 
 private[fit] object VoxelwiseReducedRankBootstrap:
   import VoxelwiseReducedRankGls.*
@@ -21,6 +21,7 @@ private[fit] object VoxelwiseReducedRankBootstrap:
       config: VoxelwiseReducedRankBootstrapConfig
   ): Either[FitError, VoxelwiseReducedRankUncertainty] =
     for
+      _ <- validateContrasts(config.contrasts, partition)
       layout <- Gls.noiseEstimationLayout(partitions, fitConfig.autocorrelation.toLegacy.censoredTimepoints)
       _ <- if plans.forall(_.segments == layout.whiteningSegments) then Right(())
         else Left(FitError.InvalidFitAxis("bootstrap whitening segments", "all voxel plans must match the noise layout"))
@@ -109,7 +110,10 @@ private[fit] object VoxelwiseReducedRankBootstrap:
         upper(r, v) = quantile(values, 1.0 - alpha)
         v += 1
       r += 1
-    CoefficientCovariance.voxelwise(covariance).map { cov =>
+    for
+      cov <- CoefficientCovariance.voxelwise(covariance)
+      contrasts <- summarizeContrasts(config.contrasts, partition, fitted.targetCoefficients, samples, alpha)
+    yield
       VoxelwiseReducedRankUncertainty.Bootstrap(
         partition.targetColumns,
         cov,
@@ -124,8 +128,64 @@ private[fit] object VoxelwiseReducedRankBootstrap:
           objectives.result(),
           if config.mode == VoxelwiseBootstrapMode.RefitAutocorrelation then count else 0,
           trace.value
-        )
+        ),
+        contrasts
       )
+
+  private def validateContrasts(
+      contrasts: Vector[VoxelwiseBootstrapContrast],
+      partition: ReducedRankDesignPartition
+  ): Either[FitError, Unit] =
+    contrasts.collectFirst {
+      case contrast if contrast.weights.exists { case (column, _) => !partition.targetColumns.contains(column) } =>
+        FitError.InvalidFitAxis(
+          "voxelwise bootstrap contrast",
+          s"contrast '${contrast.name}' must reference target columns only"
+        )
+    }.toLeft(())
+
+  private def summarizeContrasts(
+      definitions: Vector[VoxelwiseBootstrapContrast],
+      partition: ReducedRankDesignPartition,
+      fitted: DMat,
+      samples: Vector[DMat],
+      alpha: Double
+  ): Either[FitError, Vector[VoxelwiseReducedRankBootstrapContrast]] =
+    val targetRows = partition.targetColumns.zipWithIndex.toMap
+    definitions.foldLeft[Either[FitError, Vector[VoxelwiseReducedRankBootstrapContrast]]](Right(Vector.empty)) { (acc, definition) =>
+      acc.flatMap { out =>
+        val weights = definition.weights.map { case (column, weight) =>
+          targetRows.get(column).map(_ -> weight).toRight(FitError.InvalidFitAxis("voxelwise bootstrap contrast", s"contrast '${definition.name}' references a non-target column"))
+        }
+        sequence(weights).flatMap { rows =>
+          val voxels = fitted.cols
+          val estimate = Vector.tabulate(voxels)(voxel => rows.map { case (row, weight) => weight * fitted(row, voxel) }.sum)
+          val draws = Vector.tabulate(voxels) { voxel =>
+            samples.map(sample => rows.map { case (row, weight) => weight * sample(row, voxel) }.sum)
+          }
+          val se = draws.map { values =>
+            val mean = values.sum / values.length.toDouble
+            math.sqrt(math.max(0.0, values.iterator.map(value => (value - mean) * (value - mean)).sum / (values.length - 1).toDouble))
+          }
+          val lower = draws.map(values => quantile(values.sorted, alpha))
+          val upper = draws.map(values => quantile(values.sorted, 1.0 - alpha))
+          val values = estimate ++ draws.flatten ++ se ++ lower ++ upper
+          if values.forall(_.isFinite) then
+            Right(VoxelwiseReducedRankBootstrapContrast(
+              definition,
+              DVec.fromSeq(estimate),
+              DVec.fromSeq(se),
+              DVec.fromSeq(lower),
+              DVec.fromSeq(upper)
+            ) +: out)
+          else Left(FitError.NonFiniteInput(s"voxelwise bootstrap contrast '${definition.name}' summaries"))
+        }
+      }
+    }.map(_.reverse)
+
+  private def sequence[A](values: Vector[Either[FitError, A]]): Either[FitError, Vector[A]] =
+    values.foldLeft[Either[FitError, Vector[A]]](Right(Vector.empty)) { (acc, value) =>
+      for xs <- acc; x <- value yield xs :+ x
     }
 
   private def correctedResiduals(gs: Vector[Geometry], layout: NoiseEstimationLayout): Either[FitError, (DMat, Double)] =

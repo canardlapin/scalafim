@@ -33,6 +33,7 @@ import scalafim.fmri.model.{
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy,
   VoxelwiseBootstrapMode,
+  VoxelwiseBootstrapContrast,
   VoxelwiseReducedRankBootstrapConfig,
   VolumeWeighting
 }
@@ -587,10 +588,12 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
 
   for mode <- Vector(None, Some(VoxelwiseBootstrapMode.FrozenWhitening), Some(VoxelwiseBootstrapMode.RefitAutocorrelation)) do
     test(s"global voxelwise reduced-rank estimates and $mode uncertainty are chunk and order invariant") {
+      val contrasts = Vector(VoxelwiseBootstrapContrast.unsafe("task_difference", Vector(0 -> 1.0, 1 -> -1.0)))
       val inference = mode.fold[ReducedRankInferencePolicy](ReducedRankInferencePolicy.EstimatesOnly) { value =>
         ReducedRankInferencePolicy.VoxelwiseBootstrap(VoxelwiseReducedRankBootstrapConfig.unsafe(
           resampling = ReducedRankBootstrapConfig.unsafe(replicates = 12, blockSize = 2, seed = 17),
-          mode = value
+          mode = value,
+          contrasts = contrasts
         ))
       }
       val plan = FitPlan(reducedRankGlsModel, FitStrategy.ReducedRankGls(ReducedRankGlsConfig.unsafe(
@@ -616,6 +619,14 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
             assertEqualsDouble(a.standardErrors(r, v), e.standardErrors(r, v), 1e-10)
             assertEqualsDouble(a.lower(r, v), e.lower(r, v), 1e-10)
             assertEqualsDouble(a.upper(r, v), e.upper(r, v), 1e-10)
+          assertEquals(a.contrasts.map(_.definition), e.contrasts.map(_.definition))
+          a.contrasts.zip(e.contrasts).foreach { case (actualContrast, expectedContrast) =>
+            for v <- 0 until actual.voxels do
+              assertEqualsDouble(actualContrast.estimate(v), expectedContrast.estimate(v), 1e-10)
+              assertEqualsDouble(actualContrast.standardErrors(v), expectedContrast.standardErrors(v), 1e-10)
+              assertEqualsDouble(actualContrast.lower(v), expectedContrast.lower(v), 1e-10)
+              assertEqualsDouble(actualContrast.upper(v), expectedContrast.upper(v), 1e-10)
+          }
           assertCoefficientCovarianceClose(a.covariance, e.covariance, 1e-10)
         }
       val expected = result(FitPlanExecutor.fit(plan, selection))

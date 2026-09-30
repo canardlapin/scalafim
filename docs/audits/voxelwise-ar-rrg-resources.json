@@ -1,0 +1,402 @@
+{
+  "schema": "voxelwise-rrg-resources-v1",
+  "recorded_utc_date": "2026-09-30",
+  "environment": {
+    "hardware": "Mac15,11 arm64",
+    "physical_ram_bytes": 38654705664,
+    "logical_cpus": 14,
+    "os": "Darwin 23.3.0",
+    "java": "Homebrew OpenJDK 25.0.1",
+    "scala": "3.7.4",
+    "sbt": "1.11.7"
+  },
+  "design": {
+    "timepoints": 240,
+    "runs": 2,
+    "rows_per_run": 120,
+    "targets": 8,
+    "nuisance_run_intercepts": 2,
+    "fixed_rank": 2,
+    "ar_order": 1,
+    "rho_range": [
+      -0.2,
+      0.6
+    ],
+    "noise_sd": 0.6,
+    "input_seed": 73019,
+    "bootstrap_seed": 17029,
+    "bootstrap_mode": "RefitAutocorrelation",
+    "block_size": 1,
+    "named_contrasts": 2,
+    "warmup_small_fits_per_process": 10,
+    "processes": "sequential fresh JVMs",
+    "interference": "Task-owned builds and simulations finished before these measurements. Shared-host quietness was not guaranteed."
+  },
+  "measurement_limits": [
+    "Fit timer measures preparation including global solve and requested bootstrap; excludes startup, warmup, input generation and fitBlock extraction.",
+    "Peak process RSS from macOS time -l includes startup, warmup, generated input and result extraction.",
+    "Heap field sums each pool peak and is not a simultaneous maximum; it can exceed the heap cap.",
+    "GC count and milliseconds are deltas during timed preparation.",
+    "Synthetic workloads measure resource use only, not inference calibration, realistic spatial covariance, speedup versus another method, or whole-brain streaming.",
+    "25000-voxel and 99-replicate workloads have one process measurement each."
+  ],
+  "workloads": [
+    {
+      "schema": "voxelwise-rrg-resource-v1",
+      "voxels": 1000,
+      "replicates": 0,
+      "requested_repeats": 3,
+      "heap_cap_bytes": 3221225472,
+      "active_processor_count": 4,
+      "timeout_per_process_seconds": 300,
+      "measurement_scope": "fit timer covers preparation including bootstrap; RSS includes warmup/input/extraction; sum of heap-pool peaks is not simultaneous peak heap",
+      "records": [
+        {
+          "repeat": 0,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 2.7064737910113763,
+          "peak_process_rss_bytes": 459325440,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 0,
+            "seconds": 1.867690667,
+            "heap_pool_peak_sum_bytes": 335673136,
+            "gc_count": 3,
+            "gc_ms": 13,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        },
+        {
+          "repeat": 1,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 3.2620315839885734,
+          "peak_process_rss_bytes": 444858368,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 0,
+            "seconds": 2.624716792,
+            "heap_pool_peak_sum_bytes": 336721712,
+            "gc_count": 3,
+            "gc_ms": 29,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        },
+        {
+          "repeat": 2,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 2.563242292002542,
+          "peak_process_rss_bytes": 457244672,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 0,
+            "seconds": 1.907514375,
+            "heap_pool_peak_sum_bytes": 335673136,
+            "gc_count": 3,
+            "gc_ms": 14,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        }
+      ],
+      "summary": {
+        "fit_seconds_median": 1.907514375,
+        "fit_seconds_min_max": [
+          1.867690667,
+          2.624716792
+        ],
+        "peak_process_rss_gib_min_max": [
+          0.414306640625,
+          0.4277801513671875
+        ]
+      }
+    },
+    {
+      "schema": "voxelwise-rrg-resource-v1",
+      "voxels": 10000,
+      "replicates": 0,
+      "requested_repeats": 3,
+      "heap_cap_bytes": 3221225472,
+      "active_processor_count": 4,
+      "timeout_per_process_seconds": 300,
+      "measurement_scope": "fit timer covers preparation including bootstrap; RSS includes warmup/input/extraction; sum of heap-pool peaks is not simultaneous peak heap",
+      "records": [
+        {
+          "repeat": 0,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 35.1833845830115,
+          "peak_process_rss_bytes": 1380450304,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 10000,
+            "replicates": 0,
+            "seconds": 34.007823583,
+            "heap_pool_peak_sum_bytes": 1201796912,
+            "gc_count": 51,
+            "gc_ms": 108,
+            "status": "ok",
+            "objective": 843679.6851597636,
+            "rank": 2
+          }
+        },
+        {
+          "repeat": 1,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 37.94989312501275,
+          "peak_process_rss_bytes": 1262731264,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 10000,
+            "replicates": 0,
+            "seconds": 36.836417083,
+            "heap_pool_peak_sum_bytes": 1202845488,
+            "gc_count": 51,
+            "gc_ms": 92,
+            "status": "ok",
+            "objective": 843679.6851597636,
+            "rank": 2
+          }
+        },
+        {
+          "repeat": 2,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 31.491697249992285,
+          "peak_process_rss_bytes": 1403944960,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 10000,
+            "replicates": 0,
+            "seconds": 30.482211458,
+            "heap_pool_peak_sum_bytes": 1214379824,
+            "gc_count": 51,
+            "gc_ms": 64,
+            "status": "ok",
+            "objective": 843679.6851597636,
+            "rank": 2
+          }
+        }
+      ],
+      "summary": {
+        "fit_seconds_median": 34.007823583,
+        "fit_seconds_min_max": [
+          30.482211458,
+          36.836417083
+        ],
+        "peak_process_rss_gib_min_max": [
+          1.1760101318359375,
+          1.307525634765625
+        ]
+      }
+    },
+    {
+      "schema": "voxelwise-rrg-resource-v1",
+      "voxels": 25000,
+      "replicates": 0,
+      "requested_repeats": 1,
+      "heap_cap_bytes": 3221225472,
+      "active_processor_count": 4,
+      "timeout_per_process_seconds": 300,
+      "measurement_scope": "fit timer covers preparation including bootstrap; RSS includes warmup/input/extraction; sum of heap-pool peaks is not simultaneous peak heap",
+      "records": [
+        {
+          "repeat": 0,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 115.82771237500128,
+          "peak_process_rss_bytes": 3050782720,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 25000,
+            "replicates": 0,
+            "seconds": 114.006217459,
+            "heap_pool_peak_sum_bytes": 3550467264,
+            "gc_count": 80,
+            "gc_ms": 284,
+            "status": "ok",
+            "objective": 2110417.5487163016,
+            "rank": 2
+          }
+        }
+      ],
+      "summary": {
+        "fit_seconds_median": 114.006217459,
+        "fit_seconds_min_max": [
+          114.006217459,
+          114.006217459
+        ],
+        "peak_process_rss_gib_min_max": [
+          2.8412628173828125,
+          2.8412628173828125
+        ]
+      }
+    },
+    {
+      "schema": "voxelwise-rrg-resource-v1",
+      "voxels": 1000,
+      "replicates": 25,
+      "requested_repeats": 3,
+      "heap_cap_bytes": 3221225472,
+      "active_processor_count": 4,
+      "timeout_per_process_seconds": 300,
+      "measurement_scope": "fit timer covers preparation including bootstrap; RSS includes warmup/input/extraction; sum of heap-pool peaks is not simultaneous peak heap",
+      "records": [
+        {
+          "repeat": 0,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 44.36876745900372,
+          "peak_process_rss_bytes": 898727936,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 25,
+            "seconds": 43.577950042,
+            "heap_pool_peak_sum_bytes": 650245936,
+            "gc_count": 173,
+            "gc_ms": 201,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        },
+        {
+          "repeat": 1,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 46.396898250008235,
+          "peak_process_rss_bytes": 742064128,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 25,
+            "seconds": 45.771878625,
+            "heap_pool_peak_sum_bytes": 641857328,
+            "gc_count": 158,
+            "gc_ms": 178,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        },
+        {
+          "repeat": 2,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 45.18521100000362,
+          "peak_process_rss_bytes": 746815488,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 25,
+            "seconds": 44.589527208,
+            "heap_pool_peak_sum_bytes": 642905904,
+            "gc_count": 176,
+            "gc_ms": 219,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        }
+      ],
+      "summary": {
+        "fit_seconds_median": 44.589527208,
+        "fit_seconds_min_max": [
+          43.577950042,
+          45.771878625
+        ],
+        "peak_process_rss_gib_min_max": [
+          0.69110107421875,
+          0.837005615234375
+        ]
+      }
+    },
+    {
+      "schema": "voxelwise-rrg-resource-v1",
+      "voxels": 1000,
+      "replicates": 99,
+      "requested_repeats": 1,
+      "heap_cap_bytes": 3221225472,
+      "active_processor_count": 4,
+      "timeout_per_process_seconds": 300,
+      "measurement_scope": "fit timer covers preparation including bootstrap; RSS includes warmup/input/extraction; sum of heap-pool peaks is not simultaneous peak heap",
+      "records": [
+        {
+          "repeat": 0,
+          "exit_code": 0,
+          "timed_out": false,
+          "whole_process_wall_seconds": 171.50803420800366,
+          "peak_process_rss_bytes": 748044288,
+          "process_log_sha256": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+          "fit": {
+            "timepoints": 240,
+            "targets": 8,
+            "nuisance": 2,
+            "voxels": 1000,
+            "replicates": 99,
+            "seconds": 170.905991375,
+            "heap_pool_peak_sum_bytes": 653391664,
+            "gc_count": 822,
+            "gc_ms": 764,
+            "status": "ok",
+            "objective": 84231.67562130337,
+            "rank": 2
+          }
+        }
+      ],
+      "summary": {
+        "fit_seconds_median": 170.905991375,
+        "fit_seconds_min_max": [
+          170.905991375,
+          170.905991375
+        ],
+        "peak_process_rss_gib_min_max": [
+          0.6966705322265625,
+          0.6966705322265625
+        ]
+      }
+    }
+  ]
+}

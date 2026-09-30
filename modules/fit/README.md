@@ -379,9 +379,17 @@ correction and centering. The inverse-whitening generator respects every reset;
 blocks exclude noise-censored donor rows and never cross donor reset boundaries.
 Every replicate must succeed. This is a model-conditional residual approximation;
 HC2 does not exactly restore joint covariance under differing voxel hat matrices.
+Expanded simulations found substantial undercoverage of requested 95%
+intervals, down to 82% for one strong-AR coordinate. Re-estimating AR did not
+resolve it. Bootstrap intervals remain experimental model-conditional summaries,
+not qualified nominal 95% inference.
 
 Bootstrap payloads contain absolute marginal target covariance, SEs and pointwise
-percentile intervals. They do not authorize generic T/F contrasts. Nuisance
+percentile intervals. Declare named `VoxelwiseBootstrapContrast` definitions in
+the bootstrap config to obtain estimates, SEs and percentile bounds for weighted
+sums of target coefficients. Their weights use original design-column indices,
+and their intervals are computed from each replicate's contrast value. These
+summaries do not authorize generic T/F contrasts. Nuisance
 coefficients remain available without nuisance uncertainty. Sidecars preserve
 the solver, whitening actions, mode, seed, interval convention and replicate
 losses. The original `Conditional` full-rank voxelwise GLS fallback remains

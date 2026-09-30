@@ -598,8 +598,26 @@ object ResultManifest:
         )
       }
     }
+    val bootstrapContrastSpecs = result.uncertainty.bootstrap.toVector.flatMap { bootstrap =>
+      bootstrap.contrasts.flatMap { contrast =>
+        val parameter = s"bootstrap_contrast:${contrast.definition.name}"
+        Vector(
+          (parameter, ParameterMapKind.Coefficient, contrast.estimate),
+          (parameter, ParameterMapKind.StandardError, contrast.standardErrors),
+          (parameter, ParameterMapKind.BootstrapLower, contrast.lower),
+          (parameter, ParameterMapKind.BootstrapUpper, contrast.upper)
+        )
+      }
+    }
+    val existingNames = (coefficientSpecs ++ residualSpec ++ bootstrapSpecs).map(_._1).toSet
+    val contrastNames = bootstrapContrastSpecs.map(_._1).toSet
+    val allSpecs = coefficientSpecs ++ residualSpec ++ bootstrapSpecs ++ bootstrapContrastSpecs
     for
-      parameters <- buildAll(coefficientSpecs ++ residualSpec ++ bootstrapSpecs) { case (parameter, kind, values) =>
+      _ <- if existingNames.intersect(contrastNames).isEmpty then Right(())
+        else Left(FitError.InvalidFitAxis("voxelwise bootstrap contrast export", "contrast namespace collides with an existing parameter name"))
+      _ <- if allSpecs.map { case (parameter, kind, _) => kind.mapName(parameter) }.distinct.length == allSpecs.length then Right(())
+        else Left(FitError.InvalidFitAxis("voxelwise bootstrap contrast export", "parameter map names must be unique after statistic suffixing"))
+      parameters <- buildAll(allSpecs) { case (parameter, kind, values) =>
         ParameterMap.make(parameter, kind, values, shape, selectedVoxels, provenance, exportIntent)
       }
       covariance <- result.uncertainty.bootstrap match

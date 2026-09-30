@@ -438,7 +438,15 @@ object ResultManifestWriter:
             case Some(bootstrap) =>
               val detail = bootstrap.diagnostics
               val donors = detail.donorBlocksByRun.map { case (run, count) => s"""{"run": $run, "blocks": $count}""" }.mkString("[", ", ", "]")
-              s"""{$base, "bootstrap": {"method": "${escape(detail.method)}", "covariance_convention": "absolute_sample_covariance_of_refitted_target_coefficients_no_residual_variance_multiplier", "interval_convention": "${escape(detail.intervalConvention)}", "noise_model": "${escape(detail.noiseModel)}", "calibration": "${escape(detail.calibration)}", "random_stream": "${escape(detail.randomStream)}", "replicates": ${detail.config.resampling.replicates.value}, "block_size": ${detail.config.resampling.blockSize.value}, "seed": ${detail.config.resampling.seed.value}, "mode": "${escape(detail.config.mode.toString)}", "confidence_level": ${formatDouble(detail.config.confidenceLevel)}, "target_columns": ${bootstrap.targetColumns.mkString("[", ", ", "]")}, "donor_blocks_by_run": $donors, "excluded_noise_rows": ${detail.excludedNoiseRows.mkString("[", ", ", "]")}, "minimum_residual_leverage": ${formatDouble(detail.minimumResidualLeverage)}, "replicate_objectives": ${detail.replicateObjectives.map(formatDouble).mkString("[", ", ", "]")}, "refitted_whitening_replicates": ${detail.refittedWhiteningReplicates}, "donor_trace_fingerprint": "${escape(detail.donorTraceFingerprint)}"}}"""
+              val contrasts = bootstrap.contrasts.map { contrast =>
+                val weights = contrast.definition.weights.map { case (column, weight) =>
+                  val columnName = manifest.provenance.columnNames.lift(column).getOrElse(s"column_$column")
+                  s"""{"original_column_index": $column, "original_column_name": "${escape(columnName)}", "weight": ${formatDouble(weight)}}"""
+                }.mkString("[", ", ", "]")
+                val parameter = s"bootstrap_contrast:${contrast.definition.name}"
+                s"""{"name": "${escape(contrast.definition.name)}", "weights": $weights, "confidence_scope": "pointwise", "estimate_map": "${escape(ParameterMapKind.Coefficient.mapName(parameter))}", "standard_error_map": "${escape(ParameterMapKind.StandardError.mapName(parameter))}", "lower_map": "${escape(ParameterMapKind.BootstrapLower.mapName(parameter))}", "upper_map": "${escape(ParameterMapKind.BootstrapUpper.mapName(parameter))}"}"""
+              }.mkString("[", ", ", "]")
+              s"""{$base, "bootstrap": {"method": "${escape(detail.method)}", "covariance_convention": "absolute_sample_covariance_of_refitted_target_coefficients_no_residual_variance_multiplier", "interval_convention": "${escape(detail.intervalConvention)}", "noise_model": "${escape(detail.noiseModel)}", "calibration": "${escape(detail.calibration)}", "random_stream": "${escape(detail.randomStream)}", "replicates": ${detail.config.resampling.replicates.value}, "block_size": ${detail.config.resampling.blockSize.value}, "seed": ${detail.config.resampling.seed.value}, "mode": "${escape(detail.config.mode.toString)}", "confidence_level": ${formatDouble(detail.config.confidenceLevel)}, "target_columns": ${bootstrap.targetColumns.mkString("[", ", ", "]")}, "contrasts": $contrasts, "donor_blocks_by_run": $donors, "excluded_noise_rows": ${detail.excludedNoiseRows.mkString("[", ", ", "]")}, "minimum_residual_leverage": ${formatDouble(detail.minimumResidualLeverage)}, "replicate_objectives": ${detail.replicateObjectives.map(formatDouble).mkString("[", ", ", "]")}, "refitted_whitening_replicates": ${detail.refittedWhiteningReplicates}, "donor_trace_fingerprint": "${escape(detail.donorTraceFingerprint)}"}}"""
     val contrastExclusions =
       manifest.contrasts
         .map(_.contrastId.value)
@@ -488,12 +496,13 @@ object ResultManifestWriter:
         case '\n' => out.append("\\n")
         case '\r' => out.append("\\r")
         case '\t' => out.append("\\t")
+        case c if c < ' ' => out.append(f"\\u${c.toInt}%04x")
         case c    => out.append(c)
       i += 1
     out.result()
 
   private def formatDouble(value: Double): String =
-    if value.isWhole then value.toLong.toString else value.toString
+    java.lang.Double.toString(value)
 
 private type VectorBuilder[A] = scala.collection.mutable.Builder[A, Vector[A]]
 

@@ -28,3 +28,15 @@ class VoxelwiseReducedRankConfigSuite extends munit.FunSuite:
       assertEquals(config.mode, mode)
     }
   }
+
+  test("voxelwise bootstrap contrasts require a stable non-empty definition") {
+    assert(VoxelwiseBootstrapContrast("", Vector(0 -> 1.0)).isLeft)
+    assert(VoxelwiseBootstrapContrast("x", Vector.empty).isLeft)
+    assert(VoxelwiseBootstrapContrast("x", Vector(-1 -> 1.0)).isLeft)
+    assert(VoxelwiseBootstrapContrast("x", Vector(0 -> Double.NaN)).isLeft)
+    assert(VoxelwiseBootstrapContrast("x", Vector(0 -> 1.0, 0 -> -1.0)).isLeft)
+    assert(VoxelwiseBootstrapContrast("x", Vector(0 -> 0.0)).isLeft)
+    val contrast = VoxelwiseBootstrapContrast.unsafe("difference", Vector(2 -> 1.0, 0 -> -1.0))
+    assertEquals(contrast.weights, Vector(2 -> 1.0, 0 -> -1.0))
+    assert(VoxelwiseReducedRankBootstrapConfig(contrasts = Vector(contrast, contrast)).isLeft)
+  }

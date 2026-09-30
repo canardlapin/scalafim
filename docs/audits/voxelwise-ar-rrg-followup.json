@@ -1,0 +1,1365 @@
+{
+  "schema": "voxelwise-rrg-followup-v1",
+  "recorded_utc": "2026-09-30T03:04:01.464154+00:00",
+  "issue": "bd-01M3R15Y3QC2VVAQE1WGTBH0QX",
+  "branch": "work/voxelwise-rrg-qualified",
+  "base_commit": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+  "implementation_commit": "3a3b53815744e196c2022de353ae64702cdbbac3",
+  "followup_identity": "This receipt and its path hashes are committed together; use the containing commit for immutable final identity.",
+  "scope": "Complete four authorized followups: scoped local implementation commit, expanded coverage investigation, resource measurement, named target bootstrap contrasts. No push or merge.",
+  "findings": {
+    "execution": "Fixed-rank voxelwise GLS and named contrast summaries are implemented; numerical and lifecycle checks pass on JVM and Scala.js.",
+    "inference": "Observed substantial undercoverage. Requested 95% intervals are experimental model-conditional approximations, not qualified nominal inference. AR refitting, increased replicate count and block4 did not resolve the investigated deficits.",
+    "known_whitening": "Exploratory diagnostic after baseline inspection: selected coordinate coverage rises from .88 estimated Frozen to .9425 known rank1 and .9525 known full rank. This implicates estimated-whitening interactions without isolating a single cause or proving calibrated joint HC2.",
+    "resources": "All 11 fresh processes succeeded; 240 rows,8 targets,2 nuisance,rank2. 25000 voxels estimates:114.006sec/2.841GiB RSS. 1000 voxels99 AR-refit bootstrap replicates:170.906sec/.697GiB RSS. Single measurements for these two cases; no comparative speed claim."
+  },
+  "source_sha256": {
+    "docs/plans/voxelwise-ar-reduced-rank-gls.md": "54c2ffda6da3fbb6a7fe738a523ed04093090fab7dd24eccf0e96b8bc25fb593",
+    "modules/fit/README.md": "6f5acfd53087197b29a86ba72a8ab41eb623c75d45358940479dda3d7bf756cb",
+    "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala": "c9d3817719c9a813dba782ae4059dc9222a5a24d07d8b01e914df5bc780b72b4",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankKnownWhitening.scala": "209c5392defb0bf7186f735be3c7c7763ffbe57a6eee9488cf4648eb4fa7e48c",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankQualification.scala": "dd9af369e78dea7e6843b1e0823a22fc61d997b8ee1e80ab9cd8332a2e668913",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala": "a1f8a8383d89d4d9850c06e07c0f4796fd890d3fa9559153c1d88a66f8eaccf1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": "eb72f49d76dc9b19bce16170d67e37cf9351c95f9512839a3e4d652de00c157e",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "da5f815a56a68e85bd04f19a5d116dd539317ff858337907f58ddb9021d642ee",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "c8e22f3b28d770eeb463984c07cb5359a11410e662601d1fda4d152890b81c15",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "f0606b7f3dd47e6e707e8048dd0ba2dece6e342c34653638070a6faf82421263",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "3d60f11553fe7bde006aea06581f2105912fc23d1043203797e5177b02907014",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "dd3bf7c6fb0289344c56378d4fd6afd95b7deab1c09198e6c8a66d4cc1b7c024",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "f2869eac5157d748ae5a90180e95071bf808946210ff17c168fe88248553f72b",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "0b6b0ea2af7ca56556aa02917bf65506ba9a9a80f6ceda6d94c98032f6735ac0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala": "56edad7ac092bd34e4674d7ca34b012ebf216e2695e68874e87f57da63fad0d2",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala": "3b995ac3c21f8d7c89310e5346b288305e5d149d4f9e2928139081cd2d0c8011",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankContrastSuite.scala": "9b8f37f86a95306e2e2fb87143cd8ec36c03207142c57a62bea38ad886ed5ed6",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala": "04edfa220c216d15fa3081bd2b1d8ce5529218e40063a30c9fc89c2647c22f22",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala": "aa5f0b870e0a2b8e7f2b65b04a5bac3435e756299e964e516963341c70202cc0",
+    "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "5008613bc591690ef5347e92c49849185f9f969817ad64677adac3e284ee61ca",
+    "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala": "3dfa6daec52d4702cbb7c06f95515ac4eeb0c275d6e58755b8f611bb1c5930f9",
+    "tools/qualification/measure_voxelwise_rrg.py": "f1f84dab1e5e7df4ca5fd1afaf681241bf4bf236b72b6dbd3c701903f5974e43",
+    "tools/qualification/summarize_voxelwise_rrg.py": "3f118af4fc8d13e9d9f68931d49a453a0a7344717f58f8f6387064c4f1d9f361",
+    "tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R": "c8de49a9db396b7bb39ea6d382cf27fb8682a5c10a77baa55ff2787e6812df8d",
+    "tools/r-parity/verify_voxelwise_ar_rrg_design.R": "3717cf3e15290b8f4be42467aa27072f0935e486a900efde3073a7280a9d90e2"
+  },
+  "dependency_revisions": {
+    "ravelRevision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "galeRevision": "18d24dbb5056122032b0278f8bad557a9bb1cf23",
+    "locus4sRevision": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+    "image4sRevision": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+    "reframe4sRevision": "9a4508351d74567147b8ea3221d82db89e5892b0",
+    "graph4sRevision": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+    "multivarRevision": "c4329fc95688929236c942cca889aa67ad17cbe0",
+    "intaglioRevision": "596b398af380079e4b251535230d0bc03cd88c51",
+    "bids4sRevision": "a33678390614a91fadbdef13f22970e78c26e091",
+    "zarr4sRevision": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+  },
+  "build_sha256": {
+    "build.sbt": "169cc65ead936dd2c20bb0e35243c4f3c2370b7bb8f0b6b2a92c8a97f3f3c5e6",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2"
+  },
+  "execution_identity": {
+    "study_source_archive": "voxelwise-ar-rrg-study-sources.json.gz",
+    "study_snapshot": {
+      "classpath": [
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/fit/jvm/target/scala-3.7.4/test-classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-0.jar",
+          "sha256": "6244240ba0fd1488061ebe585dedeb5ecf9afc857afd3f886aaf756a51ca8f99"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/fit/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-1.jar",
+          "sha256": "cae5183f566b36403a7296503de02f7171cdbd00698ccb0a42e44428ccc96d91"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/model/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-2.jar",
+          "sha256": "538c0c7b543f1d696ea112794507693e14dd0a10a11881cae0fa987f55b98d23"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/design/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-3.jar",
+          "sha256": "aaa4d9dda261f49ab0a68fb4f260f13329cb837c3b203dad03e5c773b6e9bfeb"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/hrf/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-4.jar",
+          "sha256": "f87dbff3d02639146670b174581f3bf9c48449b1a693ea676a9364e4fc773792"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-5.jar",
+          "sha256": "517459956e909b0813b0577f44dce485c2c8257ef039c58aac6fc42199142d4c"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/jvm/target/scala-3.4.2/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-6.jar",
+          "sha256": "17fc1fd46362885c57ba923da91720d2aa6a098ba0a7e47a2334cd86778bc319"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/dataset/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-7.jar",
+          "sha256": "41c8907548ba551259fca36bc1df2ec7d91347d1e09eb1815f6b48e43f5b2d81"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/response/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-8.jar",
+          "sha256": "22611052fab278386b74944c40d9fbcbe0269254c3aa1d08fa9f8a98e026a408"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-9.jar",
+          "sha256": "999a942d9a4cfb106188bf73841613e20d4f9c27af52fe849dc7a5fbf2c3ba8e"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/image/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-10.jar",
+          "sha256": "66f1367c7510db5d4aab18bd7666dc8c1d63feef207f11d48939cb140e5a05d5"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/locus-data/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-11.jar",
+          "sha256": "bf3eca6127702edc854f1f1ebe07be563c40e5435d89066218c40d5244d85bff"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-12.jar",
+          "sha256": "4bbe5bde7ccc6645efdcb65f05964be8d92a4f74de7fbbd82027ef6cae06234c"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-13.jar",
+          "sha256": "d2a07faccd208d67c35e7992a6426001d5abe5fcd75776246c05051c039d8f4f"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-14.jar",
+          "sha256": "e532a44617f9c500c49b3a78068332554b0956233269d66404063fce91d11036"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-15.jar",
+          "sha256": "c8322235817c032f0c17b63c76e6c033aebb1ce04dde4278a53086edfbe6aa6f"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-16.jar",
+          "sha256": "1cfea73492ffdf97c91f330a05cdc43a5b9b1616f740f5730b544e60b16d449d"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-17.jar",
+          "sha256": "d2904fdce8b6cd252b0b1c835b9ae178f5687c0da635327f896a7dbb374b1ec5"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-18.jar",
+          "sha256": "964970d16c7c6fc1fa1853f5aaa3bafcf8b1acc612a30b42f84693071efa0927"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-19.jar",
+          "sha256": "8dd676bc12abe2199a8753601c88e50bbffbfae97a402ef0e942cb910e2b9be9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-20.jar",
+          "sha256": "48e41a58bbd41bddcdabbd9a907ac319c3de1c426856b855f4e1972ec22722ed"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-21.jar",
+          "sha256": "fb6cb8ba0b3e4ac11671c28108c341b2c38ff3c6201d3518007ac166812a26ff"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-22.jar",
+          "sha256": "6ea0db5ec5caddd69ca17527f9c7f7ed45386cfb4fbc42719b790e8b8cda2e8b"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-23.jar",
+          "sha256": "f7deed030043bb3f4b63c088f70011f83e2dc454d80d3d7df6ff0564bb0622c5"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-24.jar",
+          "sha256": "85a74f1684749572ae02943c34aa8f2c55b6375b2375fa20e5c6b565099de053"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-25.jar",
+          "sha256": "9aec0e8737d281e27ba771f3825519709434fd60644a5a3c31818582f4c90eee"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-26.jar",
+          "sha256": "62f2a193bb203529ae36a626a241d7b43e67932a4ad1f74e4f95fd40952b9787"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/ar/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-27.jar",
+          "sha256": "37adccb06dd988ac6402f02c971e60194e6277c44c59814627850f57d97e242a"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/pipeline/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-28.jar",
+          "sha256": "716ffc634689f420fc261b12c6633b9711fca13018ffb5c4aa5beb124b6d23d3"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/algorithms/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-29.jar",
+          "sha256": "2aa7040c59cd6b9b31afb3c5c522ce021737396badc715f8548bbe8ee83488a9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/core/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-30.jar",
+          "sha256": "d1d2f61636b7c7aea0b1e8f7cdc658b7485e7db5e49835e451f4187636efd6b8"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/indexed/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-31.jar",
+          "sha256": "f6b0e64caf502f95ea49eabac3d469ca0fd0aed94f2b70ae8ca03d6f20ca7682"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/data/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-32.jar",
+          "sha256": "a13f7064796e254a4ee595961d8f618eef7b54e85090a396003d5df8fd72db48"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/scenario-testkit/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/frozen-classpath/classes-33.jar",
+          "sha256": "af4de485c077a1fbe8646b22f267081e8fa69998f730e6bbf3a30f9de7805919"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+          "sha256": "73089d33f763b94758170e0a66be978f9397c14b7795e343898aa89b3d7b6639"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+          "sha256": "19d09014eaf69ca8abd8d9e0c43be4c2e5d7c693bc1c6cf3a1c93697ad8bca50"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-collections-core_3/0.9.10/cats-collections-core_3-0.9.10.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-collections-core_3/0.9.10/cats-collections-core_3-0.9.10.jar",
+          "sha256": "9db07413c4f133f1a0deb80582a515b4a94bfb4bc1c3f7026b15518b5dd2deed"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+          "sha256": "1ebb2b6f9e4eb4022497c19b1e1e825019c08514f962aaac197145f88ed730f1"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+          "sha256": "66a48070e1fa9bda5aa7142ff8b6638c4a9555d1d760965241b7f4617ce758b9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+          "sha256": "10506a15c369f8b66f5347e6fc0ed284f801a07598d9a835b2c8bc6052c3deaf"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+          "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.13.0/cats-core_3-2.13.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.13.0/cats-core_3-2.13.0.jar",
+          "sha256": "e2abfcdfe041ce08d8407412b09d55eb33eb85655c22c9c8815712d3aad633c6"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+          "sha256": "755e6bca07ff0ddde6b2cbb984fe1178389a44887d5aaf610a1402e9fcfe99ac"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.13.0/algebra_3-2.13.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.13.0/algebra_3-2.13.0.jar",
+          "sha256": "c2751d6b6b02650e56065b6b5affc116de186f9c8e47519d5bc58728991fce41"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+          "sha256": "15f70b38bb95f3002fec9aea54030f19bb4ecfbad64c67424b5e5fea09cd749e"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+          "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+          "sha256": "d9dffa3e27793040dccb97b054d95267df46e669c396bf1ca4f3b085069bc2d5"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.13.0/cats-kernel_3-2.13.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.13.0/cats-kernel_3-2.13.0.jar",
+          "sha256": "a6afaad274e2a0fbbd189bfe3a0e91810bd562745573995011943427ea489040"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+          "sha256": "65f223a3ccba177f96c999f0287527b18557eb14f92b7bda88d162c5d0696db8"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+          "sha256": "8b1dd10891b95e0e2cf2e375972fe0ee0fd231c31b150e352a6940d2bec89652"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+          "sha256": "de87255aa776a57ac105561e24673bde83a3d9980048582ab763be4e682ca42d"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+          "sha256": "ac62797add23b03c9185f5742039246712aad2dda4c2b2d19d0564d23dab2c97"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+          "sha256": "dcf9768726b82e8d7b8a928447b08bca7cfe2773d5120a63a41ec224207c1a29"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+          "sha256": "6dca5ab23e1fdb9190a257c04687a9ea19111c36b6ec9478bce6b2a128ca1aeb"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+          "sha256": "03375636fdd1086417531e0305b4b7fba3e2f62bd7b241587df05b5cb95aa5c7"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+          "sha256": "748eb2ef8d015c75e96842280c2c648782a5b0fec7cc4a4b3a80a2f26f6a2baa"
+        }
+      ],
+      "source_sha256": {
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "5008613bc591690ef5347e92c49849185f9f969817ad64677adac3e284ee61ca",
+        "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankQualification.scala": "2f937a8de10299f18b26a594e11e877d64534b25d2952697a719b1135132234d",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "dd3bf7c6fb0289344c56378d4fd6afd95b7deab1c09198e6c8a66d4cc1b7c024",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "d50a9668d8de9f710ca768bdf67f237f7a72848c9c78cc8e9c3477dea48d92ba"
+      }
+    },
+    "final_snapshot": {
+      "classpath": [
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/fit/jvm/target/scala-3.7.4/test-classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-0.jar",
+          "sha256": "5153ac03fe0bafab781bb1e2b1ef9bc756e39c68c0fcabae9c07bc89ba923014"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/fit/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-1.jar",
+          "sha256": "557f2dc05a7c444442e40710cc4e716357934cc0624d1bab451f8f969dc5bca2"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/model/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-2.jar",
+          "sha256": "538c0c7b543f1d696ea112794507693e14dd0a10a11881cae0fa987f55b98d23"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/design/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-3.jar",
+          "sha256": "aaa4d9dda261f49ab0a68fb4f260f13329cb837c3b203dad03e5c773b6e9bfeb"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/hrf/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-4.jar",
+          "sha256": "f87dbff3d02639146670b174581f3bf9c48449b1a693ea676a9364e4fc773792"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-5.jar",
+          "sha256": "517459956e909b0813b0577f44dce485c2c8257ef039c58aac6fc42199142d4c"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/jvm/target/scala-3.4.2/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-6.jar",
+          "sha256": "17fc1fd46362885c57ba923da91720d2aa6a098ba0a7e47a2334cd86778bc319"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/dataset/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-7.jar",
+          "sha256": "41c8907548ba551259fca36bc1df2ec7d91347d1e09eb1815f6b48e43f5b2d81"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/response/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-8.jar",
+          "sha256": "22611052fab278386b74944c40d9fbcbe0269254c3aa1d08fa9f8a98e026a408"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-9.jar",
+          "sha256": "999a942d9a4cfb106188bf73841613e20d4f9c27af52fe849dc7a5fbf2c3ba8e"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/image/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-10.jar",
+          "sha256": "66f1367c7510db5d4aab18bd7666dc8c1d63feef207f11d48939cb140e5a05d5"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/locus-data/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-11.jar",
+          "sha256": "bf3eca6127702edc854f1f1ebe07be563c40e5435d89066218c40d5244d85bff"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-12.jar",
+          "sha256": "4bbe5bde7ccc6645efdcb65f05964be8d92a4f74de7fbbd82027ef6cae06234c"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-13.jar",
+          "sha256": "d2a07faccd208d67c35e7992a6426001d5abe5fcd75776246c05051c039d8f4f"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-14.jar",
+          "sha256": "e532a44617f9c500c49b3a78068332554b0956233269d66404063fce91d11036"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-15.jar",
+          "sha256": "c8322235817c032f0c17b63c76e6c033aebb1ce04dde4278a53086edfbe6aa6f"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-16.jar",
+          "sha256": "1cfea73492ffdf97c91f330a05cdc43a5b9b1616f740f5730b544e60b16d449d"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-17.jar",
+          "sha256": "d2904fdce8b6cd252b0b1c835b9ae178f5687c0da635327f896a7dbb374b1ec5"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-18.jar",
+          "sha256": "964970d16c7c6fc1fa1853f5aaa3bafcf8b1acc612a30b42f84693071efa0927"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-19.jar",
+          "sha256": "8dd676bc12abe2199a8753601c88e50bbffbfae97a402ef0e942cb910e2b9be9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-20.jar",
+          "sha256": "48e41a58bbd41bddcdabbd9a907ac319c3de1c426856b855f4e1972ec22722ed"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-21.jar",
+          "sha256": "fb6cb8ba0b3e4ac11671c28108c341b2c38ff3c6201d3518007ac166812a26ff"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-22.jar",
+          "sha256": "6ea0db5ec5caddd69ca17527f9c7f7ed45386cfb4fbc42719b790e8b8cda2e8b"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-23.jar",
+          "sha256": "f7deed030043bb3f4b63c088f70011f83e2dc454d80d3d7df6ff0564bb0622c5"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-24.jar",
+          "sha256": "85a74f1684749572ae02943c34aa8f2c55b6375b2375fa20e5c6b565099de053"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-25.jar",
+          "sha256": "9aec0e8737d281e27ba771f3825519709434fd60644a5a3c31818582f4c90eee"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-26.jar",
+          "sha256": "62f2a193bb203529ae36a626a241d7b43e67932a4ad1f74e4f95fd40952b9787"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/ar/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-27.jar",
+          "sha256": "37adccb06dd988ac6402f02c971e60194e6277c44c59814627850f57d97e242a"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/pipeline/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-28.jar",
+          "sha256": "716ffc634689f420fc261b12c6633b9711fca13018ffb5c4aa5beb124b6d23d3"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/algorithms/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-29.jar",
+          "sha256": "2aa7040c59cd6b9b31afb3c5c522ce021737396badc715f8548bbe8ee83488a9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/core/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-30.jar",
+          "sha256": "d1d2f61636b7c7aea0b1e8f7cdc658b7485e7db5e49835e451f4187636efd6b8"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/indexed/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-31.jar",
+          "sha256": "f6b0e64caf502f95ea49eabac3d469ca0fd0aed94f2b70ae8ca03d6f20ca7682"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/data/.jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-32.jar",
+          "sha256": "a13f7064796e254a4ee595961d8f618eef7b54e85090a396003d5df8fd72db48"
+        },
+        {
+          "origin": "/private/tmp/scalafim-rrg-final-check/modules/scenario-testkit/jvm/target/scala-3.7.4/classes",
+          "frozen": "/private/tmp/scalafim-rrg-next/final-classpath/classes-33.jar",
+          "sha256": "af4de485c077a1fbe8646b22f267081e8fa69998f730e6bbf3a30f9de7805919"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+          "sha256": "73089d33f763b94758170e0a66be978f9397c14b7795e343898aa89b3d7b6639"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+          "sha256": "19d09014eaf69ca8abd8d9e0c43be4c2e5d7c693bc1c6cf3a1c93697ad8bca50"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-collections-core_3/0.9.10/cats-collections-core_3-0.9.10.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-collections-core_3/0.9.10/cats-collections-core_3-0.9.10.jar",
+          "sha256": "9db07413c4f133f1a0deb80582a515b4a94bfb4bc1c3f7026b15518b5dd2deed"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+          "sha256": "1ebb2b6f9e4eb4022497c19b1e1e825019c08514f962aaac197145f88ed730f1"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+          "sha256": "66a48070e1fa9bda5aa7142ff8b6638c4a9555d1d760965241b7f4617ce758b9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+          "sha256": "10506a15c369f8b66f5347e6fc0ed284f801a07598d9a835b2c8bc6052c3deaf"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+          "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.13.0/cats-core_3-2.13.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.13.0/cats-core_3-2.13.0.jar",
+          "sha256": "e2abfcdfe041ce08d8407412b09d55eb33eb85655c22c9c8815712d3aad633c6"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+          "sha256": "755e6bca07ff0ddde6b2cbb984fe1178389a44887d5aaf610a1402e9fcfe99ac"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.13.0/algebra_3-2.13.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.13.0/algebra_3-2.13.0.jar",
+          "sha256": "c2751d6b6b02650e56065b6b5affc116de186f9c8e47519d5bc58728991fce41"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+          "sha256": "15f70b38bb95f3002fec9aea54030f19bb4ecfbad64c67424b5e5fea09cd749e"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+          "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+          "sha256": "d9dffa3e27793040dccb97b054d95267df46e669c396bf1ca4f3b085069bc2d5"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.13.0/cats-kernel_3-2.13.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.13.0/cats-kernel_3-2.13.0.jar",
+          "sha256": "a6afaad274e2a0fbbd189bfe3a0e91810bd562745573995011943427ea489040"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+          "sha256": "65f223a3ccba177f96c999f0287527b18557eb14f92b7bda88d162c5d0696db8"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+          "sha256": "8b1dd10891b95e0e2cf2e375972fe0ee0fd231c31b150e352a6940d2bec89652"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+          "sha256": "de87255aa776a57ac105561e24673bde83a3d9980048582ab763be4e682ca42d"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+          "sha256": "ac62797add23b03c9185f5742039246712aad2dda4c2b2d19d0564d23dab2c97"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+          "sha256": "dcf9768726b82e8d7b8a928447b08bca7cfe2773d5120a63a41ec224207c1a29"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+          "sha256": "6dca5ab23e1fdb9190a257c04687a9ea19111c36b6ec9478bce6b2a128ca1aeb"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+          "sha256": "03375636fdd1086417531e0305b4b7fba3e2f62bd7b241587df05b5cb95aa5c7"
+        },
+        {
+          "origin": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+          "frozen": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+          "sha256": "748eb2ef8d015c75e96842280c2c648782a5b0fec7cc4a4b3a80a2f26f6a2baa"
+        }
+      ],
+      "source_sha256": {
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypothesisDsl.scala": "899d2c16f9b84de79990d62fcc795ed9bf0c9a180bede044be47525e0cc480ce",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MatrixAdapters.scala": "bad3cc33e97c9392753b39c3980b7eb07f5cbe3ad6aeeb3aca4b9c3c196a2276",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Robust.scala": "23b0fbe32243ee8cf43ea913058e398aea62845aab67ae0ce641dea51b55911c",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/OlsEstimates.scala": "a2461897d003086dfb27761f4a7bd58ce516a7db93815e8d4e5ebae54c77949e",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ChunkProgram.scala": "f3ffcb546fdaec76ee2c31793d3d4c644705cf4291f5804aa0c77b0e24ef6375",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ObservationPattern.scala": "c81abe6c645fa17f4fcfaea0cdc28ea7f3f62ed03299c84ce3e10dd0c9535a9e",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/SelectedEstimates.scala": "236964e8e4f4a9eee8a98096feb80f97ca6a645a5f0c294384f0ef5112444cbf",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/BasisExpandedRetention.scala": "c3d2aa14f6f1c91aa6530dbab765792aa2461500a1f9a80e0fe3da52cd8a0a8e",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPlanExecutor.scala": "e59c529d07dc1bc7e926f5270d5bf6378db91a8d98e5653f5d2e18d9a293f92b",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "dd3bf7c6fb0289344c56378d4fd6afd95b7deab1c09198e6c8a66d4cc1b7c024",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitTypes.scala": "314caa40664834865106a914ea9010e67b3f1d9c4cf747d5bdab90733475ffa9",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedContrastGeometry.scala": "effa564f281857cc394963f0076c74551d2bafa1c58101967da55205f7b38b98",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Gls.scala": "3d5d0dc5ecc447bb1497f03d9bca99c523b5ce1120198d23e478693bbb44ff8f",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitCovariance.scala": "06c98438c8368d5cb27d96234bbdca505e10fa2171b88558178fd04e120d98e1",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala": "8b4d896eb1f752f3bc50538a129a81e1fb9ab4269a9932fad82bef1ec2887d2a",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala": "092df1e31aaf94c23c2d00bcad8070d45a213f3a822000b1c19bc127a9ee5b93",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/CoefficientMatrixStorage.scala": "8873341868ab393aa5e2071f78b03dd6fabf1cee62df20529a3f8661c70afe4e",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Blocks.scala": "ffbde1852a57483f75d3240e07c18163708fb8451dbaa6df017f5e7c37c64365",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelFixedEffectsEstimates.scala": "951483a49d45d038811ff52812564a60cf1c7a4161ebcdb1d93c71d0698a977f",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelFitStatus.scala": "991952c771adc8086ae8309d955d1ae894792b847875333aeaa5fb8142bc7bd6",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Ols.scala": "83948b9bec096e3456d9cf522fddc9f298b3f99c3bbfbff3a00e4e1943b0c26d",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala": "55564c4e6944c04052154d704814069472d833f392b09ec24a44aacd0ac9b9c7",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "3d60f11553fe7bde006aea06581f2105912fc23d1043203797e5177b02907014",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedManovaGeometry.scala": "eddf92aa9db1eb1c66e598ba6520286463ca3efcf044e012c43c4db5cfe118de",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "da5f815a56a68e85bd04f19a5d116dd539317ff858337907f58ddb9021d642ee",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/TrialReadout.scala": "b5a7236e52db93239f0300444bdd9f499a4eb7d9f4275706f0ae805d01126c1a",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/OpenedDatasetFitExecutor.scala": "3c407d016fafb59561208f1695f7c13f94a2158b67935ae934e79e75227ba73b",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FirstLevelEstimates.scala": "1b29c4ccbe1194eb7f03d45cafffcd029b8a573b02eee7a35fc6fd63e9e2a612",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ContrastReprojection.scala": "44d80fa488e23c07c2107cce56d3112f95621801edc570e71ee1e7fbb30cf4ed",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": "eb72f49d76dc9b19bce16170d67e37cf9351c95f9512839a3e4d652de00c157e",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala": "b8453e0d73e0508f3736b99cd5c01d4aae713611dd118d60fc5722e59cce3ac0",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunCoefficientRetention.scala": "5e70476d7c07e900f05b6fa38bdb37fdc3a52b2047b37117a43091e3041e31c4",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/LatentSketch.scala": "14a7a3a3b0e25143b1e70e25614f9be66929af23513c607c3a84bd4674ca4107",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "c8e22f3b28d770eeb463984c07cb5359a11410e662601d1fda4d152890b81c15",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "f0606b7f3dd47e6e707e8048dd0ba2dece6e342c34653638070a6faf82421263",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffectsEstimates.scala": "95177f1004742019a0a06e9c91de9106d4a604916a67d51994f0a272692bacd3",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseOls.scala": "35c23f61c9cf6a97b6ef430e9bc4aba6567576471e90d1cc2174e9dcad9223f3",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Lss.scala": "52eeb66478d58ad3718d0a5710ba6e18ceeac17e64314e59ee2c4cd590f3f8d8",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunPartition.scala": "bdefadd677240031e0133dc9fc351d23ca9b1cbb8dbac242efd8af9fc7aa9566",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RankDiagnostics.scala": "8eba375ede73a0db69639efbdeec5a579f0658e22a1861563980abd8f27e8618",
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala": "179bbc07da97a81ef347a3ba22afb73821da13f0e76318324a26b94091f30f11",
+        "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "5008613bc591690ef5347e92c49849185f9f969817ad64677adac3e284ee61ca",
+        "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankQualification.scala": "dd9af369e78dea7e6843b1e0823a22fc61d997b8ee1e80ab9cd8332a2e668913",
+        "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankKnownWhitening.scala": "209c5392defb0bf7186f735be3c7c7763ffbe57a6eee9488cf4648eb4fa7e48c"
+      }
+    },
+    "known_whitening_command": [
+      "python3",
+      "-c",
+      "import pathlib,subprocess; cp=pathlib.Path(\"/private/tmp/scalafim-rrg-next/final-classpath.txt\").read_text().strip(); raise SystemExit(subprocess.call([\"/opt/homebrew/opt/openjdk/bin/java\",\"-Xmx3g\",\"-XX:ActiveProcessorCount=4\",\"-cp\",cp,\"scalafim.fmri.fit.VoxelwiseReducedRankKnownWhitening\",\"/private/tmp/scalafim-rrg-next/known-whitening.jsonl\"]))"
+    ],
+    "study_to_final_changes": "Finite-summary refusal guards added to bootstrap arithmetic path; baselineInput accessor added for diagnostic driver. Other late changes concern export validation and serialization, not study arithmetic.",
+    "ordinary_value_parity": {
+      "attempts": 30,
+      "all_fields_except_elapsed_seconds_bit_identical": true,
+      "coverage": "all9scenarios,bothmodes,nested1999andindependent399budgets",
+      "meaning": "final arithmetic matches frozen study executable on the fixed smoke inputs; admission and serialization guards do not modify ordinary values"
+    },
+    "compiled_artifact_retention": "Classpath jar hashes are retained; temporary classpath archives are local execution aids, not committed binaries. Exact five launch source bodies are archived; unchanged dependencies resolve from pinned revisions."
+  },
+  "study": {
+    "planned_fitting_attempts": 5560,
+    "successful_attempts": 5559,
+    "requested_replicates": 2858440,
+    "failures": [
+      {
+        "scenario": "weak",
+        "dataset": 116,
+        "mode": "FrozenWhitening",
+        "replicates": 399,
+        "seed": 13733,
+        "budget": "main",
+        "seconds": 0.409322959,
+        "status": "failed",
+        "completed_replicates": 363,
+        "error": "voxelwise reduced-rank bootstrap replicate 364 failed: invalid voxelwise reduced-rank solver: no start converged in 4000 iterations"
+      }
+    ],
+    "independent_datasets": "400 per regular scenario;200 per stress;100 stationary reset diagnostic. Modes and sensitivity budgets share datasets.",
+    "independent_numerical_review": "Second agent recomputed all coverage and empirical/bootstrap variance from both compressed raw files and verified paired known-whitening comparison; reporting review accepted. Resources not included in that review."
+  },
+  "checks": [
+    {
+      "log": "logs/packaging-check.log",
+      "sha256": "373134ee6d07970ffd482ee3550141a25467472ad695e861ff7d4113308405cd",
+      "exit_code": 0,
+      "duration_seconds": 47.379914,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fitJVM/testOnly *VoxelwiseReducedRankResultSuite *ResultManifestWriterSuite",
+        "fitJS/testOnly *VoxelwiseReducedRankResultSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/full-study.log",
+      "sha256": "2cc64fbe509d536fb341cd0dbca339c7b8d091b0bc46f6320850270fbd67095e",
+      "exit_code": 0,
+      "duration_seconds": 1428.762534,
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,subprocess; cp=pathlib.Path(\"/private/tmp/scalafim-rrg-next/frozen-classpath.txt\").read_text().strip(); raise SystemExit(subprocess.call([\"/opt/homebrew/opt/openjdk/bin/java\",\"-Xmx3g\",\"-XX:ActiveProcessorCount=4\",\"-cp\",cp,\"scalafim.fmri.fit.VoxelwiseReducedRankQualification\",\"study\",\"/private/tmp/scalafim-rrg-next/study.jsonl\"]))"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/known-whitening.log",
+      "sha256": "7f902b1d7dfd0432dd35c5a2a758cad732314a079c186317e708f1655460cbe5",
+      "exit_code": 0,
+      "duration_seconds": 81.189428,
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,subprocess; cp=pathlib.Path(\"/private/tmp/scalafim-rrg-next/final-classpath.txt\").read_text().strip(); raise SystemExit(subprocess.call([\"/opt/homebrew/opt/openjdk/bin/java\",\"-Xmx3g\",\"-XX:ActiveProcessorCount=4\",\"-cp\",cp,\"scalafim.fmri.fit.VoxelwiseReducedRankKnownWhitening\",\"/private/tmp/scalafim-rrg-next/known-whitening.jsonl\"]))"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/final-snapshot-parity.log",
+      "sha256": "dafa856e7bfd669d48ac77c39967dcabd3f5c0097da05b3ea239ed0708e65b2a",
+      "exit_code": 0,
+      "duration_seconds": 13.319696,
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,subprocess; cp=pathlib.Path(\"/private/tmp/scalafim-rrg-next/final-classpath.txt\").read_text().strip(); raise SystemExit(subprocess.call([\"/opt/homebrew/opt/openjdk/bin/java\",\"-Xmx3g\",\"-XX:ActiveProcessorCount=4\",\"-cp\",cp,\"scalafim.fmri.fit.VoxelwiseReducedRankQualification\",\"smoke\",\"/private/tmp/scalafim-rrg-next/final-smoke.jsonl\"]))"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/final-branch-writer.log",
+      "sha256": "039c22f82c54a09a00b2229fda1b8c943e0db759d132ca8facf5d972c4a4d4ef",
+      "exit_code": 0,
+      "duration_seconds": 31.509234,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fitJVM/testOnly *ResultManifestWriterSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/integration-compile.log",
+      "sha256": "853a9e11b855b45cb5b36f44e3b5c166621c853a548ad6bd90050930fb40209c",
+      "exit_code": 0,
+      "duration_seconds": 221.510717,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-next/integration",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/integration-tests-jvm.log",
+      "sha256": "6c2c4c8cb13692951a9729c38c57dc4e7c0ff4d6571f8541d08f36b311aa0b52",
+      "exit_code": 1,
+      "duration_seconds": 30.298153,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fitJVM/testOnly *VoxelwiseReducedRank*Suite *ChunkedFitExecutorSuite *ResultManifestWriterSuite",
+        "fitEstimatesJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-next/integration",
+      "expected_failure": true
+    },
+    {
+      "log": "logs/integration-tests-jvm-02.log",
+      "sha256": "4abc30198b14f00a4d5c4c39aabbfe01a32d2996027bbe39b4071fbfb1ce925b",
+      "exit_code": 0,
+      "duration_seconds": 65.05637,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fitJVM/testOnly *VoxelwiseReducedRank*Suite *ChunkedFitExecutorSuite *ResultManifestWriterSuite",
+        "fitEstimatesJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-next/integration",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/integration-tests-js.log",
+      "sha256": "1fd2729e10941177dea0276c490817e8a3ca6960f2269b8c4db0a6c4ad148008",
+      "exit_code": 0,
+      "duration_seconds": 103.927593,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fitJS/testOnly *VoxelwiseReducedRank*Suite *ChunkedFitExecutorSuite",
+        "fitEstimatesJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-next/integration",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/final-resources.log",
+      "sha256": "f5a34c2d25a7fdd91409b934b40c821532da0195561ca7a75e69fd96244a9717",
+      "exit_code": 0,
+      "duration_seconds": 536.875534,
+      "command": [
+        "python3",
+        "-c",
+        "import subprocess,sys; workloads=[(1000,0,3),(10000,0,3),(25000,0,1),(1000,25,3),(1000,99,1)]; root=\"/private/tmp/scalafim-rrg-next\"; driver=\"tools/qualification/measure_voxelwise_rrg.py\"; [(print(\"WORKLOAD\",v,b,n,flush=True),subprocess.run([sys.executable,driver,root+\"/final-classpath.txt\",root+\"/resources-\"+str(v)+\"-\"+str(b),\"--voxels\",str(v),\"--replicates\",str(b),\"--repeats\",str(n),\"--timeout\",\"300\"],check=True)) for v,b,n in workloads]"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/diagnostic-compile.log",
+      "sha256": "aa41a3b6d35f70952f8878f339ffc2f876e5164e57891e1b8bdbe105b0c7bdf9",
+      "exit_code": 0,
+      "duration_seconds": 29.383409,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fitJVM/Test/compile"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/smoke.log",
+      "sha256": "dafa856e7bfd669d48ac77c39967dcabd3f5c0097da05b3ea239ed0708e65b2a",
+      "exit_code": 0,
+      "duration_seconds": 11.137823,
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,subprocess; cp=pathlib.Path(\"/private/tmp/scalafim-rrg-next/frozen-classpath.txt\").read_text().strip(); raise SystemExit(subprocess.call([\"/opt/homebrew/opt/openjdk/bin/java\",\"-Xmx3g\",\"-XX:ActiveProcessorCount=4\",\"-cp\",cp,\"scalafim.fmri.fit.VoxelwiseReducedRankQualification\",\"smoke\",\"/private/tmp/scalafim-rrg-next/smoke.jsonl\"]))"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/timing-pilot-02.log",
+      "sha256": "3d8e6496f11ad8f0333e79da7d360abe993782256cc67071876657742893eab1",
+      "exit_code": 0,
+      "duration_seconds": 37.094812,
+      "command": [
+        "python3",
+        "-c",
+        "import pathlib,subprocess; cp=pathlib.Path(\"/private/tmp/scalafim-rrg-next/classpath.txt\").read_text().strip(); raise SystemExit(subprocess.call([\"/opt/homebrew/opt/openjdk/bin/java\",\"-Xmx3g\",\"-XX:ActiveProcessorCount=4\",\"-cp\",cp,\"scalafim.fmri.fit.VoxelwiseReducedRankQualification\",\"pilot\",\"/private/tmp/scalafim-rrg-next/pilot.jsonl\"]))"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/named-contrasts-final-jvm.log",
+      "sha256": "8ebb9b47dfe1a0f9cad6311c98a2c65c9d25f65ce8d52cb32dfb41c48cd68cdb",
+      "exit_code": 0,
+      "duration_seconds": 42.347033,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "-Dsbt.supershell=false",
+        "modelJVM/testOnly scalafim.fmri.model.VoxelwiseReducedRankConfigSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.VoxelwiseReducedRankBootstrapSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.VoxelwiseReducedRankContrastSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.VoxelwiseReducedRankResultSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.ChunkedFitExecutorSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.io.ResultManifestWriterSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    },
+    {
+      "log": "logs/named-contrasts-final-js.log",
+      "sha256": "e3f9350a8e6d7c21188d69c3dfe7b1b066dd857eae2503addfcba27b11205118",
+      "exit_code": 0,
+      "duration_seconds": 56.183071,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "-Dsbt.supershell=false",
+        "modelJS/testOnly scalafim.fmri.model.VoxelwiseReducedRankConfigSuite",
+        "fitJS/testOnly scalafim.fmri.fit.VoxelwiseReducedRankBootstrapSuite",
+        "fitJS/testOnly scalafim.fmri.fit.VoxelwiseReducedRankContrastSuite",
+        "fitJS/testOnly scalafim.fmri.fit.VoxelwiseReducedRankResultSuite",
+        "fitJS/testOnly scalafim.fmri.fit.ChunkedFitExecutorSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "expected_failure": false
+    }
+  ],
+  "test_summary": {
+    "focused_scoped_branch": {
+      "jvm": 58,
+      "js": 49
+    },
+    "final_explicit_space_writer_recheck": {
+      "jvm": 9
+    },
+    "integration": {
+      "fit_jvm": 69,
+      "fit_estimates_jvm": 14,
+      "fit_js": 60,
+      "fit_estimates_js": 11,
+      "compile_all": "passed with four existing concurrent deprecation warnings at SurfaceResamplingBinding.scala:51; not warning-clean"
+    },
+    "independent_oracle": "R scalar projective-circle bootstrap32 reproduces difference endpoints at2e-6; target covariance at1e-8; shared suites cover direct replicate contrast/covariance/selection/merge contracts.",
+    "json_parser": "Independent Python parser preserves1e20 weight and U+0001 name; sidecar archived.",
+    "source_parity": "30 full smoke rows bit-identical except elapsed time between launch and final executable.",
+    "failed_initial_integration": "Legacy readSeries calls failed after concurrent NIfTI migration. Both changed to readSeriesIn with explicit space evidence; writer9 and integrated JVM83/JS71 rerun and passed."
+  },
+  "integration_snapshot": {
+    "root_head": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+    "root_source_sha256": {
+      "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala": "9bbdf5c984f5b9d71b2acbd15195a0e02da763247b77850696f5bac47eecb7b7",
+      "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AtlasLabelMaps.scala": "03b6083a09f45b1a91f41a6246a827bc7d9e1e02a2018105efccf5342e8e6cd9",
+      "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala": "b12f07e5d2d1f46abc4836e66ed8845fe8c3006120d53045d6d7d2fabf05e16f",
+      "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala": "15d3637b7cd32514cb4275adea72bf4f4e527ee36c994882d0db41d3565d24b7",
+      "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala": "f64b36831ce6563126e7ff599fe0cfdeeb766218ba0d227bd0cb1ae83e6b0026",
+      "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AsegLoaderSuite.scala": "9a6cc45fc351e5e3218f759477afe577bb8adce10a394e83ccf78fdc7120cb88",
+      "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AtlasIoSuite.scala": "41acb957b5073e8c4b30963d41a87a700fa9870621353e2662502617f1ce1a34",
+      "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/BrainnetomeLoaderSuite.scala": "429c5003436644fa2c162de622946b20c5238210157ef9fc471b87a587f69202",
+      "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala": "368e30b3699b5ea1eebb3bab8a411246b0430b7358dc4969257c50c8b25b72ab",
+      "modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala": "adab0330e68e89ad83e88983d73a71d3afc749b6fda6cb2af0e5024314f2f7f3",
+      "modules/atlas/shared/src/test/scala/scalafim/atlas/TemplateSampledCatalogSuite.scala": "5d0e3bfb595f8e7930991cf27e4fea5169d3da82ce68120099bc6f8145db5549",
+      "modules/dataset-zarr/jvm/src/test/scala/scalafim/dataset/zarr/NiftiZarrBridgeSuite.scala": "9398034ff73fe775250517b0f7819e5de4b68b7b4ad63e9c57ba938d64cf21b6",
+      "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiResponseBlockSource.scala": "4aa1dbfcd83101bb3a0b5b808d3fcdf6b6c381cdede0193801752d2476de71ba",
+      "modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiReadBenchmark.scala": "4e4672eb904f628c6231c82c8448422b4482ed4427266ed3bda3e55a53601f0d",
+      "modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiResponseBlockSourceSuite.scala": "7cdb9f0e8072de6fa333982e9107370e804ad804b7147a37ff18373461fdfab0",
+      "modules/fit/README.md": "46ff1aa6376009cc719d6f8ca8d8bfe0a8463ee7039f8bd4b9a737432aee1bda",
+      "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala": "2d34c616f6898db78a7277ccbca8de708ad95eb0903f21b832e7759a2478b070",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelStatusAllocationSuite.scala": "124d047fbfa4ff23a396d650720f7b687dedfeddb659bbf3b71a7a82598c060e",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala": "19c28e65a09051c0fddc5fe7e1e5992b72f3116dc49f5be1cf1bf4f11ebe79c4",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": "eb72f49d76dc9b19bce16170d67e37cf9351c95f9512839a3e4d652de00c157e",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala": "e0f87abbd66f7723378f52b266019b425fbfb9e4c3bc5870603daf5c106c223a",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "964446c98d1b50289c76c6b9e19bda99b685fb84a85dfa1c4836bf42cf19351e",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "c8e22f3b28d770eeb463984c07cb5359a11410e662601d1fda4d152890b81c15",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "8dfe38ddf13da033fd0d09da100e9014d8b68187f8856ee343f3318097a6b760",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "0496e573434dbef63710232b38fe911e659b35473355870ec7de45984036a66f",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "99ac53d654e0e453b01e4e91c6e3747c23c931a722d7b706de2b778ab94e4c2c",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "bc849f2869ab206f5686fb98673e92485862737b2116279f3f4c55fb5c834ecb",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala": "6922499e0b35ef261b153c4eb790a76497a324a41c0c547e78cba42e3c05e7ad",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "917236b03e91d92cd27e2325894a4bf715a36f9a82051bd3461aa1482d4ee429",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/CompactFixedEffectsSuite.scala": "77ad4d9a2160a694558e883ba733e2023c62904445fa2c506a018746e0190038",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "0b6b0ea2af7ca56556aa02917bf65506ba9a9a80f6ceda6d94c98032f6735ac0",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelStatusLookupSuite.scala": "8f442c147cc59d8a152d818ea790396e303d7cb853221019f8c983155b1aa66c",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala": "1978ec83ccd1a6096b52ebb1ec29c45d44bd6dc570d6d6bb7019f8bed5bd2722",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala": "3b995ac3c21f8d7c89310e5346b288305e5d149d4f9e2928139081cd2d0c8011",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala": "04edfa220c216d15fa3081bd2b1d8ce5529218e40063a30c9fc89c2647c22f22",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala": "aa5f0b870e0a2b8e7f2b65b04a5bac3435e756299e964e516963341c70202cc0",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala": "813a9cedcc915b45dec400cd7753fc72a75cf172d0a4b16d3215203fdd10923b",
+      "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/BidsStudyCompilerJvm.scala": "158b139ff928b30c0658eafce4d02adabf9d06455eca01fade796265c48cfd50",
+      "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala": "c45b8b15abaa5abbed3ec053b67c43b1ea35089364b5e5631e09ebf829f8f84c",
+      "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerJvmSuite.scala": "709ffadce7200b2178e6ceff687e22a79a990d6ad4e00649d613b0630f7b8604",
+      "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelUnitSourceSuite.scala": "f17355335e6745f9a800627b902622d977a4914dd1cd966c6ed529d450c5e49e",
+      "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/WorkflowIngestAcceptanceSuite.scala": "d7488e7b298b854c44c619d451608c6305d3ecc3f84197a699e45500d748bd79",
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala": "3c4ff01473804f3fa75d8975d8d2d48ce6c51eff1d3ccee4b76b562a9fbd4ce4",
+      "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfFunctions.scala": "443646d1d116bcdf4f56a110785c907bee5be38803bfc0cf1125294bb3fc7f43",
+      "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/CompleteBsplineSuite.scala": "31da4a50dda0c49a56215573a2e308b5c483b48a46c2e6a59c6716e2e5227233",
+      "modules/image-view-canvas/js/src/main/scala/scalafim/image/view/canvas/CanvasViewerHost.scala": "7e0425dac3708a0756c322e0b11e406c32ba404ec29511c4039402b64df635f9",
+      "modules/image-view-canvas/js/src/test/scala/scalafim/image/view/canvas/BrowserBenchmark.scala": "45d3ae2698baebbf9655ac40198fdc426750413b92c0e0e048d24039b415aafc",
+      "modules/image-view-canvas/js/src/test/scala/scalafim/image/view/canvas/CanvasViewerHostSuite.scala": "390a7d13aeb4890654649cb5ea27395d2e15d1ece9d25cf663d8196ee31eac32",
+      "modules/image-view/README.md": "804e736dad946f12de71fc47fa034ded659d65517e7fd5a7119cc93ce3ed39d3",
+      "modules/image-view/shared/src/main/scala/scalafim/image/view/AdvancedView.scala": "6e64d1ae6d1f1aab665d19978e2652b7b265f6a9651aae5ecb94d4d47737f13b",
+      "modules/image-view/shared/src/main/scala/scalafim/image/view/Interaction.scala": "ff72509525cb89c483d6ad64e11914b9fc95a59f845d0db6d997c6d38effc679",
+      "modules/image-view/shared/src/main/scala/scalafim/image/view/Layer.scala": "31b16391c2a32b5e3cec59b66ddd238508ffc9a7cc80add7de46a4952401111e",
+      "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerCursor.scala": "4712b15f9fe07b0e94c7507e48c9aaa84638a850578d717ae2a1370cd4c2c51a",
+      "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala": "42f494795670207d99ac4b8ea466183c9b78943c25b1206434575df6326266c7",
+      "modules/image-view/shared/src/test/scala/scalafim/image/view/AdvancedViewSuite.scala": "91bbc1a6c3465fd8ebaeef9e866669d5b2b10e9697a8531f3d6fd8c525f1df90",
+      "modules/image-view/shared/src/test/scala/scalafim/image/view/InteractionSuite.scala": "ca44877a34675d73b42e8329568088765d9860aaafd83bbe12cdb6fd320805a3",
+      "modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerCursorSuite.scala": "27336d8473831690296b80e03fd4b16c6b1ea0082c6fe64424e37d52396e17e5",
+      "modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerModelUpdateSuite.scala": "6b46934aca285c1c603c1fb9b76a91ce6e31bb00a2bec9829e4012c6cc2be996",
+      "modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerSceneSuite.scala": "fb3331a9d0b9611879888aa3e487dd141239a9011d6214855855a04fbefc8b7f",
+      "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala": "2a285a211f1beaccae83de4202d77542fbaa0f2bcc3377dbc62a15cfa717b2ff",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/ImageLibraryParitySuite.scala": "bda3aaad2e390365742320b7dda9eff72bd3bba1d769d5cc4683866f6a754eec",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/NativeNiftiAllocationSuite.scala": "4312e8876a37454d39573117a85d6b5b18128c68f63c1d30b6e8d6ebed22600b",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiIncrementalOutputSuite.scala": "cee846f210aedbeff2652df5410a781a9332bb0857077da3e572d51fe6bb53f8",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiResliceOracleSuite.scala": "ee1b9be49fff0d74eb35fd2ccb007749908d160ed62686243dde4492ace8af9c",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiSpaceEvidenceSuite.scala": "2ddfa1de519aedd3c3f771c1e89c2ecd0638c90638f7472cdcbea521c9e5b080",
+      "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiSuite.scala": "4125a894adfa978e84f33aaa7ecd0ba56145f318773887e454f09f570219d6a6",
+      "modules/locus-data/README.md": "84b1f50576f03353395dc6081df8e1bbfa2ff5d3da3276dfda3123cdf654ffff",
+      "modules/locus-data/shared/src/main/scala/scalafim/locus/Aggregation.scala": null,
+      "modules/locus-data/shared/src/test/scala/scalafim/locus/AggregationSuite.scala": null,
+      "modules/locus-data/shared/src/test/scala/scalafim/locus/ProviderAggregationSuite.scala": "0816c54c9ee472ee156319cc2779778db0cd95ce69354df8cd647443e7113bfb",
+      "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "b05c6b7d03ba162838c9267ed01a4e6bdff277143c57d66da8df348a148750a1",
+      "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala": "605672c3404d5a8f2d2ec948d169176aa0447cc8bc486e0f12b70afb72390b9b",
+      "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionBids.scala": "dce6d36591dd4bf1fdd890af08b8c3d50464f427953aee534f6ca62381f45ae9",
+      "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionCli.scala": "457e77c59d8f8967d567657800383282a2d808d917fbcb84f996636ff7695ed3",
+      "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionNifti.scala": "7d62f9b1b88ecbaef5cdc372d0674a0077c6da6f17481cef97edef7cdca4c910",
+      "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionNiftiIo.scala": "989e98cde138dad8b2f5df654b6210f41dd3589f9fca2d8ed10e53a7da363d8d",
+      "modules/motion/jvm/src/test/scala/scalafim/fmri/motion/io/MotionIoSuite.scala": "47daae8347d1c61ed7e2f85dbff6247c5baead21a2f504739a2ad03fcb1fa733",
+      "modules/mvpa-foundation-spike/README.md": "44f4fa63fd2eb7efab35eac50c9a7f612a0c7652ba788add0e555497b085ed22",
+      "modules/mvpa-foundation-spike/build.sbt": "9b34919df6e9afe59dcadf2c5dfc2bb3c22a7fa6da12cf3df29ab9467aba87c4",
+      "modules/mvpa-foundation-spike/project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+      "modules/mvpa-foundation-spike/project/plugins.sbt": "b0cd8165faf8b727643e5862040f92b6b4d3fad5af93a15986992dc85c00a0a3",
+      "modules/mvpa-foundation-spike/shared/src/test/scala/scalafim/umvpaspike/IdentityPrototype.scala": "36602f8a34ca8a2856b2675c010bc117188188b0cdd1cf941a74fb2235d2b04a",
+      "modules/mvpa-foundation-spike/shared/src/test/scala/scalafim/umvpaspike/IdentityPrototypeSuite.scala": "649491b4c1d82d6f26480ae73a1f1306e6a9e7f89627bee21a7de9568fb9ac97",
+      "modules/mvpa-foundation-spike/shared/src/test/scala/scalafim/umvpaspike/ProviderAdmissionSuite.scala": "0384c11ef787fee79d969ba606b6fe97f48893b298ed1df9fe5302cb2ea1f4dd",
+      "modules/mvpa-spatial/jvm/src/test/scala/scalafim/fmri/mvpa/spatial/SearchlightPerformanceReceiptSuite.scala": "111f5cf44b2ed2d952be09a46e8ca228961480bd950593fdd2caa5cb63cfbd7d",
+      "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/PyMvpaSearchlightParityFixtures.scala": "17440358eadd98d61900f1e3455727c600b7a5d14501238379a3edec0330aae2",
+      "modules/mvpa-spatial/shared/src/test/scala/scalafim/fmri/mvpa/spatial/PyMvpaSearchlightParitySuite.scala": "a263790e1371155339443c83aecade7e6bddbf74ea315c90a4695b9ae6411500",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaMigrationParityFixtures.scala": "07b43b26101e02c1e4cbf3c14588515fa647a86a00841bf1bdbb47ebadff29cb",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/MvpaMigrationParitySuite.scala": "7f64430df113eb73f1802266c8a4e84e2114ca6592fe3b260e72b44687c76b28",
+      "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/NiftiFieldSource.scala": "e08903fc0edc23e71d17d0bc4175b1fef4b76f6af090986a9f36db3ebbb977ac",
+      "modules/spatial/jvm/src/test/scala/scalafim/spatial/SpatialLazyPerformanceSuite.scala": "c439e2b4723451e169ee2b8168afc7b47d3a97f2432e7f621e6947fdffb4de4d",
+      "modules/spatial/jvm/src/test/scala/scalafim/spatial/io/NiftiFieldSourceSuite.scala": "3f88f90d4d9caef24d5a265426e66e0584e2c9f4b37a70a03ce6f240a5e2a712",
+      "modules/spatial/jvm/src/test/scala/scalafim/spatial/io/SpatialLazyExternalScenarioSuite.scala": "4c9b9f8386e25646b8d782f6fedf6d58f8cf9a0beaac88ddca081e6ae1202eb9",
+      "modules/spatial/shared/src/main/scala/scalafim/spatial/GaleSpatialSupport.scala": "7c637eedb4e4d0c155ad15904e4433a0e0f368d7d09081d2d4f4cab5ef2d4949",
+      "modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala": "7568e51eb34592a296f48a1ddcdb63997320a8b18d6855cbba7919fae4872980",
+      "modules/spatial/shared/src/main/scala/scalafim/spatial/SurfaceResamplingBinding.scala": "1fdf07ed8c114854faecd4b8372787b2b88f0030ce9753b1452cf42bb9dc8aca",
+      "modules/spatial/shared/src/main/scala/scalafim/spatial/VolumeToSurfaceOperator.scala": "d8865c70cfb9013ba92a085f8ed33b81d0e92aa3a51b2eff54b4c95cffea69ea",
+      "modules/spatial/shared/src/test/scala/scalafim/spatial/TemplateSurfaceOperatorSuite.scala": "46d153752e9a69da866f68eb5140801a68907c2b4fdb6db166879e84c316542d",
+      "modules/surface-view-raster/README.md": "878594294646c9fd0347a4dd1aa497c12f3c01d7225ef66c2010b3924ec35643",
+      "modules/surface-view-raster/shared/src/main/scala/scalafim/surface/view/raster/SurfaceRasterizer.scala": "08dcfb6865e5d5b4b493acbe79a437f2e2b5b3bf7b8e1dd5d888c4b4e279cd8a",
+      "modules/surface-view-raster/shared/src/test/scala/scalafim/surface/view/raster/SurfaceRasterizerSuite.scala": "6df62b153561d830a4f2a0cad782063781903f2cd7f891d2f52f375d95b28430",
+      "modules/surface-view/README.md": "9e35e385ac5efa533787f84db530fa61835eb45ce0ea3d7949c40d5abb9cb6ef",
+      "modules/surface-view/jvm/src/test/scala/scalafim/surface/view/SurfaceWorldIndexBenchmark.scala": "e6305752ae7cc28f73aa1d7fac1f103425091180d4a6ca85fb135468873f6376",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDynamics.scala": "b9f968e96ab53d11810a9000481ef08ff558b207244ce27ff62045c376aa0c22",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala": "3d79bac757cdae4c1ff2122d18b725060a2455b3ce197fd55fcfb9dc7144feb1",
+      "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceWorldIndex.scala": "b39d886f2572211680b237d5311adf6f9e637c0664e786cfc44148b5e5a599c9",
+      "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala": "ccc3b1b4627768b9a6060442218b01ed9f8f705e22bdd4baccbb1df0789866e2",
+      "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceWorldIndexSuite.scala": "191d14ee0600f6784b8dc3f06bf5cde66c82e0e05464179c7c953a45e96e62dc",
+      "modules/surface/README.md": "6a4b6cc92a9c31bedafea108b03e6d5682410955dc31ce413034c66958fb744c",
+      "modules/surface/js/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala": "dd3bdd47251ce2be8fd464286e623079319b8b6c6b7804f41a3f019549234951",
+      "modules/surface/js/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderJsSuite.scala": "10592e9ded6d57822230af528117205ad25efa100b2f4fce42516027eec34a2d",
+      "modules/surface/js/src/test/scala/scalafim/surface/io/GiftiPlacementReaderJsSuite.scala": "e7811a417a99a4abad23c1ea31602cbb3898273643ae1cf80fb44aad9929df68",
+      "modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiSurfaceReader.scala": "cdc0b98ad97e02132f6a8a2de1b9af9e93f18680f8e55a4b26bbd7092b071755",
+      "modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiFloat64ReaderSuite.scala": "d5b26d22f47751cb755d3aa6c22ba9ca9bb7300d6594c70c77f2a7dd00835045",
+      "modules/surface/jvm/src/test/scala/scalafim/surface/io/GiftiPlacementReaderSuite.scala": "db159c467f575d8e98080a654d633b5abdd4270f281a0111d9d41b2c74d49639",
+      "modules/surface/shared/src/main/scala/scalafim/surface/TemplateSurfaces.scala": "0dbf19a9b78b44d7566b47471cd5e3cd0b3c6ab83639317c41cb39239ff30609",
+      "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiModel.scala": "bc5b90ebd84f4226f00cfa75c22ea8d437d78c5973da3c98d42272100218fd92",
+      "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPayloadDecoder.scala": "94a389886575eedfe82b3edad24494e5e1b31a3a0f2c684d27db975fbc6fae54",
+      "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiPlacement.scala": "e6edca6688360d293adb60f6ea8b79fc3bb384d1cceb2742ab9fdccb7c33e259",
+      "modules/surface/shared/src/main/scala/scalafim/surface/gifti/GiftiSurfaceCodec.scala": "5c79a60abc44fb063e091437f0a6b65bb3519afa82af3c979c795b37e31efcb5",
+      "modules/surface/shared/src/test/scala/scalafim/surface/TemplatePlanTopologySuite.scala": "b1cfda35e6725c9a7191b255630be773512a5588055edf12feb65a1d4617d252",
+      "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Fixtures.scala": "ad2b7c909339b798ccbf6974925e1d52581256074188993a679f9d7f3fe54197",
+      "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiFloat64Suite.scala": "dc83e927e6aa33c9b4db1257a5334268afc3bb70b4cfe20f1902d3d8338c4bf9",
+      "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementFixtures.scala": "777dab4c6b94efe5229f958f6c929a436fcda344db5fc408615892d343858131",
+      "modules/surface/shared/src/test/scala/scalafim/surface/gifti/GiftiPlacementSuite.scala": "b6ae54de0b6dfa62d66d4b988d31de36dbbc135b89f6e415cf1572b2ff2df8f7",
+      "modules/transform/jvm/src/test/scala/scalafim/transform/WriterGoldens.scala": "a9ab030bf78347ccd068876455b7420a79264efc4841c3b394f3d019c7a5d4b5",
+      "modules/transform/jvm/src/test/scala/scalafim/transform/WriterGoldensSuite.scala": "054292812d1c244ed848061364a36239469e8c19474bdda4729cbf1731202d86",
+      "modules/transform/jvm/src/test/scala/scalafim/transform/itk/AntsNativeContainerSuite.scala": "2901ef8d252c40ecb7baceda19de3a544278e1951ff294cf00e4bcf7dc45a3cc",
+      "modules/transform/jvm/src/test/scala/scalafim/transform/qualification/P312FreshFlirtSuite.scala": "30a9921707e8c18d78fda223777398c665c0cfa337a035a28705cfbfcecff4f0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/affine.mat": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/euler.mat": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/euler_zyx.mat": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/fixed.nii.gz": "a943c1f2a73243dddd4d14468e60723d241737222040f25ad9c412b119334ba4",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/manifest.json": "52b4ab0d7f8702d9e6870e4ee85c4672c5da980a34d9a8f6713304e985a89bee",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/moving.nii.gz": "8d91c63cff27a7fa037b9fd34dd259194a69e9a6a7ce2bf5683b1a57b42104e1",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/points.tsv": "064bbf54b68d0ceb08944173b6832aae0d41e46a36e452a415699cd371b1b6df",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/queries.csv": "7fd3d4b797e739c9e2d744bd8299c94d255dda66168528d49d5f7110b01a0b49",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/scale_skew_versor.mat": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/similarity.mat": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_0InverseWarp.nii.gz": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_0Warp.nii.gz": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.components.txt": "021f3acd0cf5440973c4fc33b315c863644b0c50b1a161fa1dfbdcce619f2560",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.h5": "134a9c45c3cd1a2a8805b4357f8cbdc89d2d6adf66ec27869c24c57182bad0f4",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.components.txt": "06a63af2fae61808e6bf72b4bc3ad2034bc6455a316f38b10aa230acd429b04a",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.h5": "b3e0591214f3d792a7be34b40bf61d78ae7affe0cef0b8864205ad33cfddf397",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/versor_rigid.mat": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord0.nii.gz": "7a93e03d18ed87a1e8182b2c75e4a6dbe149ead890649e5c7152388dab35b851",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord1.nii.gz": "968967c299b51d1b4d0f4609190f0be870f5bb1a19975f155429ce2d1fbbb4e2",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord2.nii.gz": "5cc336e5cd430b461aaf875a081ad2c53553ff1327fa437cd73f90d28c445418",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_field_aff.nii.gz": "3c1aef7c79f974251d9481f9a64dfe3a6e8a4b37e4c1716c993bac45203104b5",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_field_noaff.nii.gz": "8521b3a0b78f7114ab37160a2a40363bf06707d76685b32dfb06d158428c4655",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_jac.nii.gz": "04379bcefd3c4c55d7f19ec22bb91b628098577789cb4b36486384e5f151cb72",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_support.nii.gz": "07e5263449358e68d5d246076ffe8d9e27a9b7806f5bf06cbcde397366f3d56d",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord0.nii.gz": "f11440dcc896001c40c156225637b0f76f65e43fc8acb9aa1fb538b159627eda",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord1.nii.gz": "c239e730039df270246c5bdc9ff6ce9a7a980ac6b7803718692c43e2015aa0ba",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord2.nii.gz": "3a515ccd054d9de389b8bfd5e0afff558e585609a517f9a13a6662f7aa4b4bb4",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_field_aff.nii.gz": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_field_noaff.nii.gz": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_jac.nii.gz": "f9b56a404c3f2444041bf8372d6314719563f47506b6341db61fd2030687786b",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_support.nii.gz": "8078324a1f5156d59d60c6738680f4aa5a777c4c5beb4676faec8184522f1c2f",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord0.nii.gz": "e670e34646cdf6152394b3a52e56e0a15901892ca2f61bcec8c8cd41cd5c300e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord1.nii.gz": "3e2314d3f07bbe6506df51ff95cff92bfc7d51ce49091f3269906a00458aa17e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord2.nii.gz": "fe8b34ce3def6aca21e19a68cf04a5149c565b5b056e096a9edd8dbbe8313c0e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_field_aff.nii.gz": "76f058a494b0215afebc495ac196bfb8b47afa3032d8ec374cedf52971127f45",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_field_noaff.nii.gz": "48b5a8263bf3d717b560c62f641ce4e46eae87964ec0be775912d8f0199f9b85",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_jac.nii.gz": "1734246100e1027a6c38755db4cbe5f3432894d5150062854e0a7f794e1c2820",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord0.nii.gz": "19b399a3f2b50663d5853c34c715fefa4053601adec59a85c8591f68792fef9d",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord1.nii.gz": "8cae638753ffdaa32ae1ddad07d7bc09462ad1664ea1e849cddfa63787cf574a",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord2.nii.gz": "ac32713f66cf6f383dce748238967cf5bbe10d7fe6ee1e6e5b7c8a2dfe0efb6a",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_field_aff.nii.gz": "4a9be873aa10013c32c64945fb36a92ac77e4ea6e05239d9bac17ade02a09675",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_field_noaff.nii.gz": "d8762ca5e929649fa014f788c77ce765adc3901d434d7900b85e84656d83166a",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_jac.nii.gz": "4d79cc32c0f70ac71160a7fc0f359941b575b6d91edccf7df0809b3985d2a6b4",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_support.nii.gz": "7c037237efe4ddc70ca15960d9d89b918f5457d3604bd9d7f0c1780b4c1cfdea",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_support.nii.gz": "34745de94ab04e00f7693cdb5ea1bf13dd1208cb2392ec9f4300628afacb7f38",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord0.nii.gz": "c4fe47d6baeeed8d0ce4777443a2c0e8600650e1615eef3acf66c0af5ff4e8f1",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord1.nii.gz": "b347ffb7d923a4de2fab7c62c0438a6c05806059df96aa2632d500ba62328a64",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord2.nii.gz": "c008f3a4edea1ddf47165b33304302d8da9608ab566af5e4c114e46a47cebf43",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_field_aff.nii.gz": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_field_noaff.nii.gz": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_jac.nii.gz": "053bd72d0df9faecf3ed6eb0ff9c78131388b34c6d7a17dff71da05c9d62de8b",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_support.nii.gz": "12613b2867a3ac66106df2bc5e02b13dd504d8868e85fffcf71deae99bdba1bf",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord0.nii.gz": "6a8e9d240d0d78b68d6636086a4633c6c025f862c22f2b04013a4c74af07fb69",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord1.nii.gz": "26f49f184cd24242e9dabef62500d0a32cdd4857c7f8e13540338ddec46da5cf",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord2.nii.gz": "e26107abf2077c6c42985b26bbae909dcda652b0f142849771b465a870524665",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_field_aff.nii.gz": "952f1a6c1183cfb220bcfdacde282d7e08533af76a1ce6eb5f0e55b715fa6ed3",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_field_noaff.nii.gz": "98d0a052e63f172875beca9ffadf89e2fbab0f243617977320b08e73cf4f597c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_jac.nii.gz": "10501d22916b805db1c25f3f0d0534c249154a968e4ab7992d02d4793f03d24e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_support.nii.gz": "93a85d801312048ad20476aa009bbeddcee6a440695f195b8521f36d357ec3b9",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord0.nii.gz": "fa1fd9ca4b2aaedc71cad21969cb3ceb8efa868c68238977069645376714893f",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord1.nii.gz": "b53ce2bdbe90b51613ee1fd0ea2532a5ae172db2c84c110be50290c94430acc8",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord2.nii.gz": "6d2fb740d243d47e353d37f54729269abcc6d3b19fca7065e72dbe096b79063e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_field_aff.nii.gz": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_field_noaff.nii.gz": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_jac.nii.gz": "3173ef2fa8a44a9e55f15cc03295e13963356e397e298faa49f09b3677492048",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord0.nii.gz": "074cdb88fbc172a395d0ade711ca52a4fabf632e021155caa6cd15c2149d9377",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord1.nii.gz": "4393f58d00220f86a302f2dacd89607f7ee152ff1ac3933968d21eaffdf40504",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord2.nii.gz": "8aaf9f5e474eaf0e957c0ac32287cfad0d487b15407e6c7859c9773aa263aaec",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_field_aff.nii.gz": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_field_noaff.nii.gz": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_jac.nii.gz": "08c6b3a4f2d9c2b5417c7b9f03be62447d89c1d5ed6bc5818cfb36ac71a35cdb",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_support.nii.gz": "ee2ecef826b038fb5b19cf6123d2fd265682a2ea159cee92b0ef62a39d4a99b0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_support.nii.gz": "3e6096d00f57d9a6f33ff37c276bbcabed7960de7436ab74b4297806675dd157",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord0.nii.gz": "e40d3d10b59ff61755c26564c2e128c15ed36b95ea6118cd076d237ec140a370",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord1.nii.gz": "408ebdffb736d55ebef3fc7eab955db6e5938c3315551f7220f90a730146d913",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord2.nii.gz": "ed1c7f8d7ce8eaf0ed24803e3c4fdac53e57d752179af3ea915634047bbe8f01",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_field_aff.nii.gz": "37fabc6a4c8622a86f988a146820cc387f5694c3efc6f83493b564c3e60059b1",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_field_noaff.nii.gz": "310aced96189834ca90059e4abb31418213cc8434ecbfa0bd7a5709834f5fc92",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_jac.nii.gz": "8edced3f9479ef0b56869bb47f34a976204ab0e59eb0a122fa406ef95f4e1c50",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_support.nii.gz": "dd9b574cb3b58e88bdaa12dc8b9c26148d2e5cb17d9b837998099a250c707cfc",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord0.nii.gz": "d1be4169f6972efadd782d107810d3b5570af27905219b1d5cfade383c01c2cd",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord1.nii.gz": "a5302d8c4285abc3dee0c150443a6a0e9650fc69d53b90be83d5e15dcbf36eb9",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord2.nii.gz": "30392625c9472d94bf6cc4ec6cf31b8590d10454263070afed70cca4a7ea37fb",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_field_aff.nii.gz": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_field_noaff.nii.gz": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_jac.nii.gz": "af9131065a92a8cb14d9501e1e86b8c52084e432022ea84cc4fe368f4c744bdc",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_support.nii.gz": "5b31173b5252a5b5ec81a3a1d883675adf898a11439a2a25746baa8b5ff500c4",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord0.nii.gz": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord1.nii.gz": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord2.nii.gz": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_support.nii.gz": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord0.nii.gz": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord1.nii.gz": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord2.nii.gz": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_support.nii.gz": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord0.nii.gz": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord1.nii.gz": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord2.nii.gz": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_support.nii.gz": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord0.nii.gz": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord1.nii.gz": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord2.nii.gz": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_support.nii.gz": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord0.nii.gz": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord1.nii.gz": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord2.nii.gz": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_support.nii.gz": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord0.nii.gz": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord1.nii.gz": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord2.nii.gz": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_support.nii.gz": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord0.nii.gz": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord1.nii.gz": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord2.nii.gz": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_support.nii.gz": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord0.nii.gz": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord1.nii.gz": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord2.nii.gz": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_support.nii.gz": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_0_to_1.tsv": "50362f2444b8b6e97734993fcebf4741c7a4dc2168d98eff166dbc37cd7166aa",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_1_to_0.tsv": "b0edcef6fa7045816745f529488c813a7d2f69455a3ed44e75c18cdb5af78eaa",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_2_to_3.tsv": "6d4ce5c9a434ff7ac92af4850499a2b9bfc6d41f3e19dd0e5b13030a57d5b4f2",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_3_to_0.tsv": "0a17555a8fcf19b68f7659e7139b4f2e6b84169aec3a629a43acbbd307b6ddf0",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_4_to_2.tsv": "314396453d0b0315868a8e28b594805bc8bd0cc6bfb90a667ce0a712c36f7867",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_fresh.tsv": "cf370ee7129377e0eace515463dbbdd9b7096378c47ce0e4f0437531791e248d",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/fsl6-package-lock.json": "640446f7949c5083b0e06bf08dd825b6c3f6b27a4607086f6889ff2cc864aae1",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_dense_left_left_relative.nii.gz": "1d89358294b5f854581306e558786292db178cc2d3afc302dc4de9d9500bb572",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_dense_matched_geometry.nii.gz": "a494175828e39979b8f278afb5810e73c7fa4b7205a19bf3956285fb7bdeb087",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_srcleft_refright_aff.nii.gz": "33f7654bfcf8036c0f70a2cf5e16e3f0618476664166d612a1fa9a86f6a224d7",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/manifest.json": "59fc50f5f7db97b69f4235ce86b9563cb90331815d29d56e5dc4bc7467b922cb",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+      "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+      "modules/transform/shared/src/test/scala/scalafim/transform/NativeInverseOracleSuite.scala": "608ebb05fe50e360c7470ac0f0582ffbc92fc51bfa08c2b97381ded82caaae4b",
+      "modules/transform/shared/src/test/scala/scalafim/transform/fsl/Fsl6NativeOracleSuite.scala": "1e3497fa7b9a18d6980820d05dd8d2af1c59868e7024bfaa4ebd60e21ea0d87d",
+      "modules/transform/shared/src/test/scala/scalafim/transform/itk/AntsNativeOracleSuite.scala": "42c8260b11355c60cb490bb58c9ae0a5f8f3372ce26ca50104feb583a88caf63"
+    },
+    "rrg_followup_overlay_sha256": {
+      "modules/fit/README.md": "73f8dccc17e1f059fe039285b01ac1c7ab879d1f6b373eb01ef663abc4a328d6",
+      "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala": "c9d3817719c9a813dba782ae4059dc9222a5a24d07d8b01e914df5bc780b72b4",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala": "a1f8a8383d89d4d9850c06e07c0f4796fd890d3fa9559153c1d88a66f8eaccf1",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "f0606b7f3dd47e6e707e8048dd0ba2dece6e342c34653638070a6faf82421263",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "3d60f11553fe7bde006aea06581f2105912fc23d1043203797e5177b02907014",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "dd3bf7c6fb0289344c56378d4fd6afd95b7deab1c09198e6c8a66d4cc1b7c024",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "f2869eac5157d748ae5a90180e95071bf808946210ff17c168fe88248553f72b",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala": "56edad7ac092bd34e4674d7ca34b012ebf216e2695e68874e87f57da63fad0d2",
+      "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "5008613bc591690ef5347e92c49849185f9f969817ad64677adac3e284ee61ca",
+      "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala": "3dfa6daec52d4702cbb7c06f95515ac4eeb0c275d6e58755b8f611bb1c5930f9",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankKnownWhitening.scala": "209c5392defb0bf7186f735be3c7c7763ffbe57a6eee9488cf4648eb4fa7e48c",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankQualification.scala": "dd9af369e78dea7e6843b1e0823a22fc61d997b8ee1e80ab9cd8332a2e668913",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankContrastSuite.scala": "9b8f37f86a95306e2e2fb87143cd8ec36c03207142c57a62bea38ad886ed5ed6"
+    }
+  },
+  "integration_policy": "Separate worktree overlays final RRG onto captured concurrent root changes. Root files were not overwritten and changes by other agents are excluded from these commits.",
+  "archived_logs": {
+    "file": "voxelwise-ar-rrg-followup-logs.tar.gz",
+    "members_sha256": {
+      "logs/packaging-check.log": "373134ee6d07970ffd482ee3550141a25467472ad695e861ff7d4113308405cd",
+      "logs/packaging-check.log.meta.json": "55b36411dc8f87e1c2dd48cec07ec071eae8471cde2b2b5292f1d316f53eb606",
+      "logs/full-study.log": "2cc64fbe509d536fb341cd0dbca339c7b8d091b0bc46f6320850270fbd67095e",
+      "logs/full-study.log.meta.json": "a7c3179c66a546c2c92c4463d61916e210cde55385849dfda82d94cb533b6419",
+      "logs/known-whitening.log": "7f902b1d7dfd0432dd35c5a2a758cad732314a079c186317e708f1655460cbe5",
+      "logs/known-whitening.log.meta.json": "433c5ee9bdf01068b011e1f77610b2392bdcb491580654d5a03d1c72530e4074",
+      "logs/final-snapshot-parity.log": "dafa856e7bfd669d48ac77c39967dcabd3f5c0097da05b3ea239ed0708e65b2a",
+      "logs/final-snapshot-parity.log.meta.json": "a0e9233c78227168bf3941453cc0f7a975f1e5947286a7e38bf235e725261e89",
+      "logs/final-branch-writer.log": "039c22f82c54a09a00b2229fda1b8c943e0db759d132ca8facf5d972c4a4d4ef",
+      "logs/final-branch-writer.log.meta.json": "6a3457ccbcf49c117fcdba7a618e432585a3226ec0e25e44bdfc63b04a5564ca",
+      "logs/integration-compile.log": "853a9e11b855b45cb5b36f44e3b5c166621c853a548ad6bd90050930fb40209c",
+      "logs/integration-compile.log.meta.json": "fc5e14b5b40bc9f6c08d58e4e5a3efe518495e1114980fdf0cd3ba39f10dbb5c",
+      "logs/integration-tests-jvm.log": "6c2c4c8cb13692951a9729c38c57dc4e7c0ff4d6571f8541d08f36b311aa0b52",
+      "logs/integration-tests-jvm.log.meta.json": "c8d720e6df881d03227d71213051757c7e7bc91223b7627e9071c1dce98c074d",
+      "logs/integration-tests-jvm-02.log": "4abc30198b14f00a4d5c4c39aabbfe01a32d2996027bbe39b4071fbfb1ce925b",
+      "logs/integration-tests-jvm-02.log.meta.json": "fc6889b67ebc9208f277bb93a42ea28d53335b9db30d3d2dcd93955dfb6574af",
+      "logs/integration-tests-js.log": "1fd2729e10941177dea0276c490817e8a3ca6960f2269b8c4db0a6c4ad148008",
+      "logs/integration-tests-js.log.meta.json": "5b94d50d12f2921036a6c93d30f756d85ed2c9e3290e8a2cd51d051807e8e9d4",
+      "logs/final-resources.log": "f5a34c2d25a7fdd91409b934b40c821532da0195561ca7a75e69fd96244a9717",
+      "logs/final-resources.log.meta.json": "c8ba892ed920c1e2436330facb4f535bdd67d419353f359ed4eb4fabcd5151e0",
+      "logs/diagnostic-compile.log": "aa41a3b6d35f70952f8878f339ffc2f876e5164e57891e1b8bdbe105b0c7bdf9",
+      "logs/diagnostic-compile.log.meta.json": "ac87d34d596e6c5f208cc2dc6fd1e5bd5503c2fd751a806139514ec7fcca68e7",
+      "logs/smoke.log": "dafa856e7bfd669d48ac77c39967dcabd3f5c0097da05b3ea239ed0708e65b2a",
+      "logs/smoke.log.meta.json": "04ca54b8023d36629e2d04eec013d1ee6e8c47f62ef05a92672680bebb289cef",
+      "logs/timing-pilot-02.log": "3d8e6496f11ad8f0333e79da7d360abe993782256cc67071876657742893eab1",
+      "logs/timing-pilot-02.log.meta.json": "b50e98f34c479a9a81fa39791743f110e3c893b726e56e1eae3e5e84df0c9796",
+      "logs/named-contrasts-final-jvm.log": "8ebb9b47dfe1a0f9cad6311c98a2c65c9d25f65ce8d52cb32dfb41c48cd68cdb",
+      "logs/named-contrasts-final-jvm.log.meta.json": "9e0861fa62af81f9490788f484b46934d99e5cffcdc99d288f88b84cd78a5ed6",
+      "logs/named-contrasts-final-js.log": "e3f9350a8e6d7c21188d69c3dfe7b1b066dd857eae2503addfcba27b11205118",
+      "logs/named-contrasts-final-js.log.meta.json": "08fa3abc6ba577b84016f809fbdfdbc10c6401d87ba7638354425503a027530b",
+      "execution-snapshot.json": "77fe01434a9b82830ac8171cbef022ddbeae882df232dd1d1bc30ba7040a80a6",
+      "final-execution-snapshot.json": "6531a654647ddb17d2dd7b64c2ae23920d966e776864b6acd83ee91e83eef64a",
+      "integration-root-snapshot.json": "a2b595395b27a2d7412156f1022d0c5987ffa6a7d25369a4de221b252e0a96b2",
+      "snapshot-parity.json": "b7cc472f639971ee4fe6df303e4c5d5a2c6f273eba90ee8c2519ad2b648a8123",
+      "contrast-sidecar.json": "d48b9a6c61a8b52d9279a3e7a8b15f5eaf5af741de29f3c981a3073c15db4fac",
+      "known-paired.json": "2052f9e7e2a983941d154c10d3c68dd3cf59a3f125c68301f6df61a8e755b1f3",
+      "resources-1000-0/fit-0.json": "234b99f9b710f2ddf4aa355cff370ba3a97751e85f8d855685e1c0213420d5c2",
+      "resources-1000-0/fit-1.json": "606907e53397d6ae750a62381b4b289d12760a2e53bcf7cccaeeb93d0e5e8f9b",
+      "resources-1000-0/fit-2.json": "9d813a3972c2f29923fd7bb4223601b82e3d3a2e736ae9c8c7a76ae8549d6b6a",
+      "resources-1000-0/process-0.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-0/process-1.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-0/process-2.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-0/receipt.json": "1a67ebc3d5e7d65bdbfe655ef5301955a0f9d52f433fd528516531cc942ef86f",
+      "resources-1000-0/resources-0.txt": "8b1fdf2159a1dcd40b150f2547af03d10f0d951071cbacae6de573c045a15a61",
+      "resources-1000-0/resources-1.txt": "23992e9b5bfc85e63412e5aa89f0d12438c70bfa44a68749814c0abc09140510",
+      "resources-1000-0/resources-2.txt": "d431b0c7e83c8950a1ebf77acb72c4054eb1b7a508f5d22e0c72420ace3b6c99",
+      "resources-1000-25/fit-0.json": "55cd2d5d2e15f031a9577df49f676a7387f703e2a7d55460f4de042f15dcf457",
+      "resources-1000-25/fit-1.json": "381cbcc74cdc060db2fae00fa80bf1926653b3f77aac615f5663c879d7225b10",
+      "resources-1000-25/fit-2.json": "29ad4ded74cd501d1209366a98c4d9164ce20e60036deb05354df46cfc5b7769",
+      "resources-1000-25/process-0.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-25/process-1.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-25/process-2.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-25/receipt.json": "470695610077295b61743a3f0a35aacb58bc20d1df7402853705e0f38cf31d34",
+      "resources-1000-25/resources-0.txt": "5181afef095fe144dfd5024209ef0f27ec2bc0fc84fd1d91250cdbfa18d7eae6",
+      "resources-1000-25/resources-1.txt": "7c68bb8cf13cca5610d8239443adee986abd6ab82e0652d04cfbe3615df08822",
+      "resources-1000-25/resources-2.txt": "d1bcc01e60d1d696e5dc0846449c2609d96867a23e5f73d0b5c1607b0c83946b",
+      "resources-1000-99/fit-0.json": "3fe43d976bef89367240d788222a3f5111cd39e6a4579f65e879bd9d5e350e99",
+      "resources-1000-99/process-0.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-1000-99/receipt.json": "45cacbc3f32e2b4791212fffa7626a2c13c4f5acacba012ce3defc7cb5ea0526",
+      "resources-1000-99/resources-0.txt": "df93a27a7594fd4187fe4503764b8b3bf5e58d068da9b273c0a87cfa18d33074",
+      "resources-10000-0/fit-0.json": "9028c6595c70e298eb801954ae21fc147e4a9bd05b867bb7293b1207fb67bd45",
+      "resources-10000-0/fit-1.json": "facb05f3122fd18e283da8e84c1e0eded73a64c07001a6f848f00fd564590c90",
+      "resources-10000-0/fit-2.json": "9d0732e947b538e7e73f29df9e2da80462a859f5e7b14fdfb8719fda5c0d05c8",
+      "resources-10000-0/process-0.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-10000-0/process-1.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-10000-0/process-2.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-10000-0/receipt.json": "af4f88843c67e6787dd6cfc53cc5e141caa46752766439412ade68da3c74c336",
+      "resources-10000-0/resources-0.txt": "f31b03abdea2e2ac045020aa1455bde082b3021fe77c5bec6d3cf513e1888131",
+      "resources-10000-0/resources-1.txt": "89fdb88d71aac533b38fa00769a784f3bf4146d82ebf7f7ef2c7b2d5639a45a8",
+      "resources-10000-0/resources-2.txt": "39499839a1be5ea5dd7d134d5aff21d37df93d588fbe37bd1bd5ff956b252849",
+      "resources-25000-0/fit-0.json": "92376c41bc6c4f9793190366c31a5e50eadfa85d755900d87a898e91a40ce604",
+      "resources-25000-0/process-0.log": "9f7a7b88d4f74705d3ca9fcb1f5d6143be860b3c81dca669dbeebf14371e63f9",
+      "resources-25000-0/receipt.json": "5dec7f6bfb89979a7c124e7549549d7c2107db54a2edec2a51c4aff466d718bb",
+      "resources-25000-0/resources-0.txt": "bf2bb370045dae1cd3c5464d33ed5ea7309eab9ff5affd6d685f1237cd3a54b9",
+      "final-smoke.jsonl": "51e6807aa121916089f75d49c7d080c3131a9a73b80e5e3caf509ece6d8c5256",
+      "study-snapshot-smoke.jsonl": "e75a686ce8f7f964f7cf522abcc3c17936a5ef0c1354a4aeb30486bab94547cc"
+    }
+  },
+  "artifact_sha256": {
+    "voxelwise-ar-rrg-contrast-oracle.json": "b595cc28e755cde2081be8d23b756f11456222b40f484a683b904ac825f3463d",
+    "voxelwise-ar-rrg-coverage.json": "46f4c90b734f80246ed52b646d792ee5f8f1fa24aef140bb29a441124e89a203",
+    "voxelwise-ar-rrg-coverage.jsonl.gz": "d46e6d0a8a94579e163ea38d7e1262ae4ec9ecdef874679f660cc274a958b446",
+    "voxelwise-ar-rrg-design-oracle.json": "5eb1647fbbd5ab17189b46f3fd6b6d72c9a89bf6d657d1f798aad016c32973d3",
+    "voxelwise-ar-rrg-followup-logs.tar.gz": "03e68511f88e444ab9bfe3025ddba77e6b5f901c4abe11655900f022fcdd834c",
+    "voxelwise-ar-rrg-known-whitening.json": "ac4568ab85be52c6fd0f06fea5398b985a21bd7a28275506e845227fb444ba9e",
+    "voxelwise-ar-rrg-known-whitening.jsonl.gz": "caccf819205c49b4896b7a527724a4fe2a16de9448059d7d6e2bfc2f218876b3",
+    "voxelwise-ar-rrg-packaging.json": "ff0a509cbcfa08ffe5ab293c5301e8986ecc97ee4e5e37a54530d6c9115bf293",
+    "voxelwise-ar-rrg-qualification.json": "025b54673629f569302938c875e9fe953cfe7b20c0363888f366437910ae9740",
+    "voxelwise-ar-rrg-resources.json": "a5f4ea0d00aab39c14658247ae167953d9c004d534af42b733e4fdd54e96e120",
+    "voxelwise-ar-rrg-study-design.json": "1fb468aabc833bde9e360b9c1f32eb74bdef05877915f83603a5d714e96be06d",
+    "voxelwise-ar-rrg-study-sources.json.gz": "15bd6110a39aeea52336997c3131d56daa8e4452eebe9aa1b25b862c83898f69"
+  },
+  "limits": [
+    "Generic T/F, p-values and adaptive voxelwise rank remain refused.",
+    "No global optimizer certificate; weak-signal replicate failure is retained.",
+    "No nominal interval calibration, simultaneous coverage, real-data validation, realistic spatial covariance or whole-brain streaming claim.",
+    "Known whitening analysis is exploratory, chosen after baseline inspection.",
+    "Resource observations come from synthetic fresh-JVM workloads on a shared host and are not performance comparisons.",
+    "Local scoped commits only; neither pushed nor merged."
+  ]
+}

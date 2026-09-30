@@ -69,6 +69,13 @@ class VoxelwiseReducedRankBootstrapSuite extends munit.FunSuite:
     val highLeverage = VoxelwiseReducedRankBootstrap.run(DesignMatrix.unsafe(x), y, Vector(RunPartition(0, rows, rows)), Vector(0, 1), plans, gs, partition, 1, fitted, config, bootstrap)
     assert(highLeverage.left.toOption.exists(_.message.contains("residual leverage")))
 
+    val nuisanceContrast = VoxelwiseReducedRankBootstrapConfig.unsafe(
+      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 2, seed = 19),
+      contrasts = Vector(VoxelwiseBootstrapContrast.unsafe("nuisance", Vector(2 -> 1.0)))
+    )
+    val rejected = VoxelwiseReducedRankBootstrap.run(DesignMatrix.unsafe(x), y, Vector(RunPartition(0, rows, rows)), Vector(0, 1), plans, gs, partition, 1, fitted, config, nuisanceContrast)
+    assert(rejected.left.toOption.exists(_.message.contains("target columns only")))
+
     import VoxelwiseReducedRankFixtures.{design as oracleX, response as oracleY, plans as oraclePlans, partition as oraclePartition}
     val oracleGs = checked(VoxelwiseReducedRankGls.geometry(oracleX, oracleY, oraclePlans, oraclePartition))
     val oracleFit = checked(VoxelwiseReducedRankGls.solve(oracleGs, oraclePartition, 1, config.solver))
@@ -92,7 +99,14 @@ class VoxelwiseReducedRankBootstrapSuite extends munit.FunSuite:
     val rows = (0 until 12).toVector
     val times = (0 until 6).toVector ++ (7 until 13).toVector
     val runs = Vector(RunPartition(0, rows, times))
-    val bootstrap = VoxelwiseReducedRankBootstrapConfig.unsafe(resampling = ReducedRankBootstrapConfig.unsafe(replicates = 32, blockSize = 2, seed = 19))
+    val difference = VoxelwiseBootstrapContrast.unsafe("difference", Vector(0 -> 1.0, 1 -> -1.0))
+    val unit = VoxelwiseBootstrapContrast.unsafe("task_a", Vector(0 -> 1.0))
+    val negated = VoxelwiseBootstrapContrast.unsafe("negative_difference", Vector(0 -> -1.0, 1 -> 1.0))
+    val reordered = VoxelwiseBootstrapContrast.unsafe("reordered_difference", Vector(1 -> -1.0, 0 -> 1.0))
+    val bootstrap = VoxelwiseReducedRankBootstrapConfig.unsafe(
+      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 32, blockSize = 2, seed = 19),
+      contrasts = Vector(difference, unit, negated, reordered)
+    )
     val actual = checked(VoxelwiseReducedRankBootstrap.run(DesignMatrix.unsafe(design), response, runs, Vector(0, 1, 2, 3), plans, gs, partition, 1, fit, config, bootstrap)).bootstrap.get
     // tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R, R 4.5.1; independent
     // 128/256 grid refinement error < 2.5e-8. Compare original coefficient axes.
@@ -113,4 +127,31 @@ class VoxelwiseReducedRankBootstrapSuite extends munit.FunSuite:
     actual.diagnostics.replicateObjectives.zip(objectives).foreach { case (a, e) => assertEqualsDouble(a, e, 1e-8) }
     assertEquals(actual.diagnostics.donorBlocksByRun, Vector(0 -> 10))
     assertEquals(actual.diagnostics.refittedWhiteningReplicates, 0)
+    val contrast = actual.contrasts.head
+    val unitContrast = actual.contrasts(1)
+    val negatedContrast = actual.contrasts(2)
+    val reorderedContrast = actual.contrasts(3)
+    assertEquals(contrast.definition, difference)
+    val expectedContrastLower = Vector(0.7847589652809042, -2.315952335516221, 1.3106680744944792, -0.12799472814901863)
+    val expectedContrastUpper = Vector(0.9584850307126647, -2.1715032662542857, 1.5488670946865852, 0.05148358253416878)
+    for v <- 0 until 4 do
+      assertEqualsDouble(contrast.estimate(v), fit.targetCoefficients(0, v) - fit.targetCoefficients(1, v), 1e-12)
+      val c = Vector(1.0, -1.0)
+      val expectedVariance = (for a <- 0 until 2; b <- 0 until 2 yield c(a) * covariance(v)(a, b) * c(b)).sum
+      assertEqualsDouble(contrast.standardErrors(v) * contrast.standardErrors(v), expectedVariance, 1e-8)
+      assertEqualsDouble(contrast.lower(v), expectedContrastLower(v), 2e-6)
+      assertEqualsDouble(contrast.upper(v), expectedContrastUpper(v), 2e-6)
+      assertEqualsDouble(unitContrast.estimate(v), fit.targetCoefficients(0, v), 1e-12)
+      assertEqualsDouble(unitContrast.lower(v), actual.lower(0, v), 1e-12)
+      assertEqualsDouble(unitContrast.upper(v), actual.upper(0, v), 1e-12)
+      assertEqualsDouble(negatedContrast.estimate(v), -contrast.estimate(v), 1e-12)
+      assertEqualsDouble(negatedContrast.standardErrors(v), contrast.standardErrors(v), 1e-12)
+      assertEqualsDouble(negatedContrast.lower(v), -contrast.upper(v), 1e-12)
+      assertEqualsDouble(negatedContrast.upper(v), -contrast.lower(v), 1e-12)
+      assertEqualsDouble(reorderedContrast.estimate(v), contrast.estimate(v), 1e-12)
+      assertEqualsDouble(reorderedContrast.standardErrors(v), contrast.standardErrors(v), 1e-12)
+      assertEqualsDouble(reorderedContrast.lower(v), contrast.lower(v), 1e-12)
+      assertEqualsDouble(reorderedContrast.upper(v), contrast.upper(v), 1e-12)
+      assert(contrast.lower(v) <= contrast.upper(v))
+    assert((0 until 4).exists(v => math.abs(contrast.lower(v) - (actual.lower(0, v) - actual.upper(1, v))) > 1e-4))
   }

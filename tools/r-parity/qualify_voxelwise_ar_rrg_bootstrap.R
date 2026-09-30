@@ -81,6 +81,9 @@ stopifnot(refinement_error < 1e-6)
 covariances <- lapply(seq_len(4), function(v) cov(t(samples[, v, ])))
 lower <- apply(samples, 1:2, quantile, probs = 0.025, type = 7)
 upper <- apply(samples, 1:2, quantile, probs = 0.975, type = 7)
+difference <- samples[1, , ] - samples[2, , ]
+difference_lower <- apply(difference, 1, quantile, probs = 0.025, type = 7)
+difference_upper <- apply(difference, 1, quantile, probs = 0.975, type = 7)
 array_json <- function(x) paste0("[", paste(sprintf("%.17g", x), collapse = ","), "]")
 matrix_json <- function(x) paste0("[", paste(apply(x, 1, array_json), collapse = ","), "]")
 script <- sub("^--file=", "", grep("^--file=", commandArgs(), value = TRUE))
@@ -92,6 +95,8 @@ json <- paste0('{\n  "schema":"scalafim.voxelwise-rrg-bootstrap-oracle.v1",\n',
   '  "refinement_max_error":', sprintf("%.17g", refinement_error), ',\n',
   '  "covariance_by_voxel":[', paste(lapply(covariances, matrix_json), collapse = ","), '],\n',
   '  "lower":', matrix_json(lower), ',\n  "upper":', matrix_json(upper), ',\n',
+  '  "difference_lower":', array_json(difference_lower), ',\n',
+  '  "difference_upper":', array_json(difference_upper), ',\n',
   '  "objectives":', array_json(objectives), ',\n',
   '  "donor_indices":', matrix_json(donor_indices), '\n}\n')
 args <- commandArgs(trailingOnly = TRUE)

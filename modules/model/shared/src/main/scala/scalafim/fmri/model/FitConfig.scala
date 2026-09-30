@@ -985,31 +985,60 @@ enum VoxelwiseBootstrapMode:
   case FrozenWhitening
   case RefitAutocorrelation
 
+/** A linear contrast of original, full-design target columns for voxelwise bootstrap summaries.
+  * The order of `weights` is part of the contrast identity and is retained in exported provenance.
+  */
+final case class VoxelwiseBootstrapContrast private (
+    name: String,
+    weights: Vector[(Int, Double)]
+)
+
+object VoxelwiseBootstrapContrast:
+  def apply(name: String, weights: Vector[(Int, Double)]): Either[ModelError, VoxelwiseBootstrapContrast] =
+    val trimmed = name.trim
+    if trimmed.isEmpty then Left(ModelError.InvalidParameter("voxelwise bootstrap contrast name", "must be non-blank"))
+    else if weights.isEmpty then Left(ModelError.InvalidParameter("voxelwise bootstrap contrast weights", "must be non-empty"))
+    else if weights.exists { case (column, weight) => column < 0 || !weight.isFinite } then
+      Left(ModelError.InvalidParameter("voxelwise bootstrap contrast weights", "columns must be non-negative and weights finite"))
+    else if weights.map(_._1).distinct.length != weights.length then
+      Left(ModelError.InvalidParameter("voxelwise bootstrap contrast weights", "columns must be unique"))
+    else if weights.forall(_._2 == 0.0) then
+      Left(ModelError.InvalidParameter("voxelwise bootstrap contrast weights", "must contain a non-zero weight"))
+    else Right(new VoxelwiseBootstrapContrast(trimmed, weights))
+
+  def unsafe(name: String, weights: Vector[(Int, Double)]): VoxelwiseBootstrapContrast =
+    apply(name, weights).fold(error => throw new IllegalArgumentException(error.message), identity)
+
 /** Synchronized, run-local residual blocks with marginal HC2 correction.
   * This is an explicit residual approximation, not a claim of calibrated T/F inference.
   */
 final case class VoxelwiseReducedRankBootstrapConfig private (
     resampling: ReducedRankBootstrapConfig,
     mode: VoxelwiseBootstrapMode,
-    confidenceLevel: Double
+    confidenceLevel: Double,
+    contrasts: Vector[VoxelwiseBootstrapContrast]
 )
 
 object VoxelwiseReducedRankBootstrapConfig:
   def apply(
       resampling: ReducedRankBootstrapConfig = ReducedRankBootstrapConfig.Default,
       mode: VoxelwiseBootstrapMode = VoxelwiseBootstrapMode.FrozenWhitening,
-      confidenceLevel: Double = 0.95
+      confidenceLevel: Double = 0.95,
+      contrasts: Vector[VoxelwiseBootstrapContrast] = Vector.empty
   ): Either[ModelError, VoxelwiseReducedRankBootstrapConfig] =
     if confidenceLevel.isFinite && confidenceLevel > 0.0 && confidenceLevel < 1.0 then
-      Right(new VoxelwiseReducedRankBootstrapConfig(resampling, mode, confidenceLevel))
+      if contrasts.map(_.name).distinct.length == contrasts.length then
+        Right(new VoxelwiseReducedRankBootstrapConfig(resampling, mode, confidenceLevel, contrasts))
+      else Left(ModelError.InvalidParameter("voxelwise bootstrap contrasts", "names must be unique"))
     else Left(ModelError.InvalidParameter("voxelwise bootstrap confidence level", "must be finite and in (0, 1)"))
 
   def unsafe(
       resampling: ReducedRankBootstrapConfig = ReducedRankBootstrapConfig.Default,
       mode: VoxelwiseBootstrapMode = VoxelwiseBootstrapMode.FrozenWhitening,
-      confidenceLevel: Double = 0.95
+      confidenceLevel: Double = 0.95,
+      contrasts: Vector[VoxelwiseBootstrapContrast] = Vector.empty
   ): VoxelwiseReducedRankBootstrapConfig =
-    apply(resampling, mode, confidenceLevel).fold(error => throw new IllegalArgumentException(error.message), identity)
+    apply(resampling, mode, confidenceLevel, contrasts).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class ReducedRankSolverConfig private (
     maxIterations: Int,
