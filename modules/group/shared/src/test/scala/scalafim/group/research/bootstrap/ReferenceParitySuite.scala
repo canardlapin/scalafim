@@ -7,7 +7,7 @@ import ResearchTestSupport.*
   * sandwich HC3) against the harness.
   */
 class ReferenceParitySuite extends munit.FunSuite:
-  /** Relative tolerance on every T* (task contract; metafor tol 1e-10, harness root 1e-12). */
+  /** Tolerance on every T*: absolute for |T*| < 1, relative otherwise (metafor tol 1e-10, harness root 1e-12). */
   val StatisticTolerance = 1e-8
 
   private val fixtures = BootstrapReferenceFixtures.Cases
@@ -28,6 +28,9 @@ class ReferenceParitySuite extends munit.FunSuite:
     assert(fixtures.exists(_.tau2Hat > 0.0) && fixtures.exists(_.restrictedTau2 > 0.0))
     assert(fixtures.exists(_.b0 != 0.0), "one fixture tests a non-zero b0")
     assert(fixtures.exists(_.p > 1) && fixtures.exists(_.p == 1))
+    assert(fixtures.exists(_.d0.isInfinite), "one fixture has an infinite Smyth d0")
+    assert(fixtures.exists(_.nu.forall(_.isInfinite)), "one fixture has nu = infinity")
+    assert(fixtures.exists(_.expected.exists(_.failed > 0)), "one fixture has failed draws")
     println(s"REFERENCE_ORACLE,${BootstrapReferenceFixtures.Oracle},inputs=${BootstrapReferenceFixtures.InputSha256}")
 
   test("observed statistic and tau^2 match metafor PM + adhoc"):
@@ -39,7 +42,11 @@ class ReferenceParitySuite extends munit.FunSuite:
     }
 
   test("Smyth EB hyperparameters match the explicit R moment fit"):
-    fixtures.foreach { c =>
+    fixtures.filter(_.nu.forall(_.isInfinite)).foreach { c =>
+      assert(c.d0.isNaN, s"${c.id}: R reports no hyperparameters for known variances")
+      assertEquals(new BootstrapEngine(design(c)).hyperparameters(data(c)), Right(None))
+    }
+    fixtures.filterNot(_.nu.exists(_.isInfinite)).foreach { c =>
       val fit = value(SmythFit.fit(c.v, c.nu))
       if c.d0.isInfinite then assert(fit.d0.isInfinite, c.id)
       else assertEqualsDouble(fit.d0, c.d0, 1e-8 * c.d0, s"${c.id} d0")

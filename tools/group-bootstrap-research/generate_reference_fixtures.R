@@ -227,6 +227,19 @@ d1 <- function(x) {
   if (is.na(x)) "Double.NaN" else if (is.infinite(x)) "Double.PositiveInfinity" else fmt(x)
 }
 
+# ---- special functions (reference values for the Scala implementations) ------------------
+special_x <- c(0.1, 0.5, 1, 1.5, 2.5, 4, 7.3, 10, 20, 55.5, 1000)
+special_scala <- vapply(special_x, function(x) {
+  sprintf("    SpecialCase(%s, %s, %s, %s, %s)", fmt(x), fmt(lgamma(x)), fmt(digamma(x)), fmt(trigamma(x)), fmt(psigamma(x, 2)))
+}, character(1))
+# trigamma inverse by uniroot in log space, including the x > 1e7 and x < 1e-6 branches.
+trigamma_inverse_x <- c(1e-8, 5e-7, 1e-3, 0.05, 0.3, 1, 3.7, 50, 1e5, 5e7, 1e9)
+trigamma_inverse_scala <- vapply(trigamma_inverse_x, function(x) {
+  y <- exp(uniroot(function(l) trigamma(exp(l)) - x, c(-40, 40), tol = 1e-15, maxiter = 10000)$root)
+  sprintf("    TrigammaInverseCase(%s, %s)", fmt(x), fmt(y))
+}, character(1))
+
+
 case_scala <- function(cs) {
   expected <- vapply(cs$expected, function(e) {
     sprintf("        SchemeExpected(\"%s\", %s, %d, %d, %d)", e$scheme, vec(e$stats), e$exceed, e$failed, e$ties)
@@ -303,6 +316,8 @@ lines <- c(
   "  )",
   "  final case class SignFlipCase(id: String, failingPatterns: Vector[Int], statistics: Array[Double], rejections: Int)",
   "  final case class ClopperPearsonCase(k: Int, r: Int, delta: Double, upper: Double, lower: Double)",
+  "  final case class SpecialCase(x: Double, logGamma: Double, digamma: Double, trigamma: Double, tetragamma: Double)",
+  "  final case class TrigammaInverseCase(x: Double, y: Double)",
   "",
   "  val Cases: Vector[Case] = Vector(",
   paste(vapply(cases, case_scala, character(1)), collapse = ",\n"),
@@ -314,6 +329,14 @@ lines <- c(
   "",
   "  val ClopperPearsonCases: Vector[ClopperPearsonCase] = Vector(",
   paste(cp_scala, collapse = ",\n"),
+  "  )",
+  "",
+  "  val SpecialCases: Vector[SpecialCase] = Vector(",
+  paste(special_scala, collapse = ",\n"),
+  "  )",
+  "",
+  "  val TrigammaInverseCases: Vector[TrigammaInverseCase] = Vector(",
+  paste(trigamma_inverse_scala, collapse = ",\n"),
   "  )"
 )
 writeLines(lines, out_path)

@@ -59,8 +59,8 @@ MUTATIONS = [
         "M6",
         "B-EB posterior df ignores nu_i: sigma*^2 = d0 s~^2 / chi2",
         PKG + "Bootstrap.scala",
-        "(fit.d0 + study.nu(i)) * scale(i) / post(i)",
-        "fit.d0 * scale(i) / post(i)",
+        "else (d0 + nu) * posteriorScale(v, nu) / chi",
+        "else d0 * posteriorScale(v, nu) / chi",
     ),
     (
         "M7",
@@ -75,6 +75,34 @@ MUTATIONS = [
         PKG + "SignFlip.scala",
         "        case _ =>\n          failures += 1\n          0.0\n      g += 1",
         "        case _ =>\n          failures += 1\n          Double.NegativeInfinity\n      g += 1",
+    ),
+    (
+        "X5",
+        "family H sigma^2 drawn as scaled chi^2 instead of scaled-inverse chi^2",
+        PKG + "ModelJ.scala",
+        "10.0 * 0.52 / lane.nextChiSquare(10.0)",
+        "0.52 * lane.nextChiSquare(10.0) / 10.0",
+    ),
+    (
+        "X6",
+        "lognormal u/e not at unit variance",
+        PKG + "ModelJ.scala",
+        "/ math.sqrt((e - 1.0) * e)",
+        "/ ((e - 1.0) * e)",
+    ),
+    (
+        "X7",
+        "t3 u/e not at unit variance",
+        PKG + "ModelJ.scala",
+        "z / math.sqrt(lane.nextChiSquare(3.0) / 3.0) / math.sqrt(3.0)",
+        "z / math.sqrt(lane.nextChiSquare(3.0) / 3.0)",
+    ),
+    (
+        "X8",
+        "AR naive variance uses RSS/T instead of RSS/(T - rank)",
+        PKG + "ModelJ.scala",
+        "rss / series.nominalDf)",
+        "rss / series.length)",
     ),
 ]
 

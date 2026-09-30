@@ -38,11 +38,35 @@ enum SubFamily(val label: String):
         case NuLevel.Infinite => true
         case NuLevel.Finite(nu) => nu >= 40
 
-/** Confirmation evidence for one cell and candidate. */
-final case class CellEvidence(cell: Cell, studies: Int, nullRejections: Int, studyFailures: Int)
+/** Confirmation evidence for one cell and candidate, built only by `CellEvidence.aggregate`
+  * from per-study verdicts, so a raw rejection count cannot be passed in (§6 accounting).
+  */
+final case class CellEvidence private (cell: Cell, studies: Int, nullRejections: Int, studyFailures: Int)
 
-/** Discordance counts on the power stream: n10 = candidate only rejects, n01 = comparator only. */
-final case class PowerEvidence(cell: Cell, studies: Int, candidateOnly: Int, comparatorOnly: Int)
+object CellEvidence:
+  /** Study failures are outer PM/solve failures plus Unresolved p bounds; for level each counts as a rejection. */
+  def aggregate(cell: Cell, verdicts: Vector[StudyVerdict]): CellEvidence =
+    new CellEvidence(cell, verdicts.length, verdicts.count(_.levelRejects), verdicts.count(_.isStudyFailure))
+
+/** Discordance counts on the power stream (n10 = candidate only rejects, n01 = comparator only),
+  * built only by `PowerEvidence.aggregate` from paired per-study verdicts.
+  */
+final case class PowerEvidence private (cell: Cell, studies: Int, candidateOnly: Int, comparatorOnly: Int)
+
+object PowerEvidence:
+  /** Candidate: a failure or Unresolved p is a non-rejection. Comparator: a failure is a rejection (§6). */
+  def aggregate(cell: Cell, paired: Vector[(StudyVerdict, ComparatorVerdict)]): PowerEvidence =
+    val candidate = paired.map(_._1.powerRejects)
+    val comparator = paired.map(_._2.rejects)
+    val n10 = candidate.zip(comparator).count((a, b) => a && !b)
+    val n01 = candidate.zip(comparator).count((a, b) => !a && b)
+    new PowerEvidence(cell, paired.length, n10, n01)
+
+/** Why the frozen decision refuses to run. */
+enum DecisionRefusal(val message: String):
+  case WrongStudyCount(cell: String, studies: Int) extends DecisionRefusal(s"$cell has $studies studies; the protocol fixes R = 20000")
+  case WrongConfirmationCells(detail: String) extends DecisionRefusal(s"confirmation cells: $detail")
+  case WrongPowerCells(detail: String) extends DecisionRefusal(s"power cells: $detail")
 
 /** Frozen decision protocol of §6 (O2 defaults: margin .065, g = 0, non-loss .02). */
 object Decision:
@@ -78,10 +102,24 @@ object Decision:
       definiteLoss = u10 - l01 < -NonLossMargin
     )
 
-  /** Level assertions count a study failure as a rejection (§6): pass `nullRejections` already including failures.
-    * Precedence: Adopt, then Decline, then Bound, else Unresolved.
+  /** The frozen §6 outcome for one candidate. Refuses unless every cell has R = 20000 studies, the cells
+    * are exactly 12 distinct core cells including the six fixed ones, and the power cells are exactly the four
+    * declared ones. Precedence (pending owner confirmation): Adopt, then Decline, then Bound, else Unresolved.
     */
-  def outcome(cells: Vector[CellEvidence], power: Vector[PowerEvidence]): CandidateOutcome =
+  def outcome(cells: Vector[CellEvidence], power: Vector[PowerEvidence]): Either[DecisionRefusal, CandidateOutcome] =
+    val ids = cells.map(_.cell.id)
+    val powerIds = power.map(_.cell.id)
+    (cells.map(e => e.cell.id -> e.studies) ++ power.map(e => e.cell.id -> e.studies)).find(_._2 != Studies) match
+      case Some((id, r)) => Left(DecisionRefusal.WrongStudyCount(id.value, r))
+      case None =>
+        if ids.length != 12 || ids.distinct.length != 12 then Left(DecisionRefusal.WrongConfirmationCells(s"need 12 distinct cells, got ${ids.length} (${ids.distinct.length} distinct)"))
+        else if !cells.forall(_.cell.family == Family.Core) then Left(DecisionRefusal.WrongConfirmationCells("every confirmation cell is a core Gaussian cell"))
+        else if !CellManifest.FixedConfirmation.forall(ids.contains) then Left(DecisionRefusal.WrongConfirmationCells("the six fixed cells must be included"))
+        else if powerIds.length != 4 || powerIds.toSet != CellManifest.PowerCells.toSet then
+          Left(DecisionRefusal.WrongPowerCells(s"need exactly ${CellManifest.PowerCells.map(_.value).mkString(", ")}"))
+        else Right(frozenOutcome(cells, power))
+
+  private def frozenOutcome(cells: Vector[CellEvidence], power: Vector[PowerEvidence]): CandidateOutcome =
     val nulls = cells.map(c => c -> nullVerdict(c.nullRejections, c.studies))
     val failures = cells.map(c => failureVerdict(c.studyFailures, c.studies))
     val powers = power.map(powerVerdict)

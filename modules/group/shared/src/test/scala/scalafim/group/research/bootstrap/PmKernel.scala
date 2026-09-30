@@ -191,8 +191,9 @@ private[bootstrap] object Cholesky:
   * r^2/s), so Newton from the left with dQ/dtau^2 = -sum w_i^2 r_i^2 is monotone;
   * a bisection safeguard is kept anyway. Stopping: |Q - target| <= 1e-12 target.
   */
-final class PmSolver(val n: Int, val q: Int, z: Array[Double]):
+final class PmSolver(val n: Int, val q: Int, z: Array[Double], val maxIterations: Int = 200):
   require(n > 0 && q >= 0 && z.length == n * q, "solver shape mismatch")
+  require(maxIterations >= 1, "at least one PM iteration")
   val beta = new Array[Double](q)
   val residual = new Array[Double](n)
   private val factor = new Array[Double](math.max(1, q * q))
@@ -233,7 +234,7 @@ final class PmSolver(val n: Int, val q: Int, z: Array[Double]):
     while !done do
       val error = qStatistic - m
       if math.abs(error) <= RootTolerance * m then done = true
-      else if iterations >= 200 then
+      else if iterations >= maxIterations then
         status = FitStatus.NoConvergence
         done = true
       else
@@ -365,9 +366,9 @@ final class PmSolver(val n: Int, val q: Int, z: Array[Double]):
   *   T = (c'beta_hat - b0) / sqrt(max(1, Q(tau_hat^2)/(n-p)) * c'(X'WX)^{-1}c),
   * referred (by the native baseline) to t(n-p).
   */
-final class StudyFitter(val design: ResearchDesign):
-  val full = new PmSolver(design.n, design.p, design.x)
-  val restricted = new PmSolver(design.n, design.p0, design.nullDesign)
+final class StudyFitter(val design: ResearchDesign, maxIterations: Int = 200):
+  val full = new PmSolver(design.n, design.p, design.x, maxIterations)
+  val restricted = new PmSolver(design.n, design.p0, design.nullDesign, maxIterations)
   private val shifted = new Array[Double](design.n)
 
   /** Unrestricted fit (target n - p) under `policy`. */

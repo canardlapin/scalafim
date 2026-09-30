@@ -10,6 +10,14 @@ final case class SmythFit(d0: Double, s0Squared: Double):
     else if d0.isInfinite then s0Squared
     else (d0 * s0Squared + nu * v) / (d0 + nu)
 
+  /** One posterior draw sigma*^2 = (d0 + nu) s~^2 / chi, chi a chi^2_{d0+nu} variate (§1, B-EB);
+    * s0^2 when d0 is infinite; v when nu is (known variance).
+    */
+  def posteriorDraw(v: Double, nu: Double, chi: Double): Double =
+    if nu.isInfinite then v
+    else if d0.isInfinite then s0Squared
+    else (d0 + nu) * posteriorScale(v, nu) / chi
+
 object SmythFit:
   /** The Smyth 2004 moment fit (limma fitFDist without covariates), written out:
     *   e_i = log v_i - digamma(nu_i/2) + log(nu_i/2),  ebar = mean e,
@@ -183,9 +191,9 @@ final case class BootstrapOutcome(
 /** The bootstrap of §2 for one study. Allocation happens once per call (work
   * arrays); the B-draw loop itself allocates nothing.
   */
-final class BootstrapEngine(val design: ResearchDesign):
+final class BootstrapEngine(val design: ResearchDesign, maxIterations: Int = 200):
   private val n = design.n
-  val fitter = new StudyFitter(design)
+  val fitter = new StudyFitter(design, maxIterations)
   private val mean = new Array[Double](n)
   private val yStar = new Array[Double](n)
   private val vStar = new Array[Double](n)
@@ -193,7 +201,6 @@ final class BootstrapEngine(val design: ResearchDesign):
   private val ze = new Array[Double](n)
   private val chi = new Array[Double](n)
   private val post = new Array[Double](n)
-  private val scale = new Array[Double](n)
   private val zeroTau = TauPolicy.Fixed(0.0)
 
   /** Relative band inside which |T*| and |T| are flagged as a near tie (§7.5). */
@@ -254,7 +261,6 @@ final class BootstrapEngine(val design: ResearchDesign):
         tau2World <- world
         eb <- smyth
       yield
-        eb.foreach(fit => (0 until n).foreach(i => scale(i) = fit.posteriorScale(study.v(i), study.nu(i))))
         val source = variates(chiDf(study, scheme), posteriorDf(study, scheme, eb))
         val frozen = TauPolicy.Fixed(tau2Hat)
         val drawPolicy = statistic match
@@ -276,9 +282,8 @@ final class BootstrapEngine(val design: ResearchDesign):
             val sigma2 = scheme match
               case Scheme.EmpiricalBayes =>
                 eb match
-                  case Some(fit) if study.nu(i).isFinite =>
-                    if fit.d0.isInfinite then fit.s0Squared else (fit.d0 + study.nu(i)) * scale(i) / post(i)
-                  case _ => v
+                  case Some(fit) => fit.posteriorDraw(v, study.nu(i), post(i))
+                  case None => v
               case _ => v
             yStar(i) = mean(i) + tauU * zu(i) + math.sqrt(sigma2) * ze(i)
             vStar(i) = scheme match

@@ -21,7 +21,7 @@ object ModelJ:
     val firstLevel = StreamKey.of(phase, purpose, cell.id, study, StreamKind.FirstLevel)
     val sigma2 = cell.sigma2.getOrElse {
       val lane = firstLevel.lane(Lane.HierarchySigma)
-      Array.fill(n)(10.0 * 0.52 / lane.nextChiSquare(10.0))
+      Array.fill(n)(hierarchySigma2(lane))
     }
     val beta = purpose match
       case StudyPurpose.Null => new Array[Double](cell.p)
@@ -59,8 +59,11 @@ object ModelJ:
     val nu = Array.fill(n)(cell.declaredNu.value)
     SimulatedStudy(cell, phase, purpose, study, StudyData(design, y, v, nu, 0.0), StudyTruth(sigma2, tau2, beta))
 
+  /** Family H: sigma^2 ~ scaled-inv-chi^2(10, .52), i.e. 10 * .52 / chi^2_10. */
+  private[bootstrap] def hierarchySigma2(lane: SplitMix64): Double = 10.0 * 0.52 / lane.nextChiSquare(10.0)
+
   /** A unit-variance, mean-zero variate of the given law. */
-  private def standard(law: ErrorLaw, lane: SplitMix64): Double = law match
+  private[bootstrap] def standard(law: ErrorLaw, lane: SplitMix64): Double = law match
     case ErrorLaw.Gaussian => lane.nextGaussian()
     case ErrorLaw.StudentT3 =>
       val z = lane.nextGaussian()
@@ -73,7 +76,7 @@ object ModelJ:
     * so that under rho = 0 it is N(0, 1); returns (slope, s^2) with s^2 = RSS/(T - 2)
     * the naive residual variance (so v = sigma^2 s^2 has nominal df T - 2).
     */
-  private def arSlope(series: FirstLevelSeries, lane: SplitMix64): (Double, Double) =
+  private[bootstrap] def arSlope(series: FirstLevelSeries, lane: SplitMix64): (Double, Double) =
     val t = series.length
     val x = series.regressor
     val xbar = x.sum / t
@@ -104,19 +107,13 @@ final case class StudyRecord(
     signFlip: Option[Double]
 ):
   /** Level accounting (§6): a study failure or an Unresolved p counts as a rejection. */
-  def levelReject(scheme: Scheme, alpha: Double): Boolean =
-    schemes.find(_._1 == scheme).map(_._2) match
-      case Some(Right(outcome)) => outcome.decision(alpha) != StudyDecision.Retain
-      case _ => true
+  def levelReject(scheme: Scheme, alpha: Double): Boolean = StudyVerdict.of(this, scheme, alpha).levelRejects
 
   /** Candidate power accounting (§6): a failure or Unresolved p counts as a non-rejection. */
-  def powerReject(scheme: Scheme, alpha: Double): Boolean =
-    schemes.find(_._1 == scheme).map(_._2) match
-      case Some(Right(outcome)) => outcome.decision(alpha) == StudyDecision.Reject
-      case _ => false
+  def powerReject(scheme: Scheme, alpha: Double): Boolean = StudyVerdict.of(this, scheme, alpha).powerRejects
 
   /** Comparator power accounting: a native failure counts as a rejection. */
-  def nativeReject(alpha: Double): Boolean = native.fold(_ => true, c => c.failed || c.pValue <= alpha)
+  def nativeReject(alpha: Double): Boolean = ComparatorVerdict.of(this, alpha).rejects
 
 /** Runs one study through all requested schemes and baselines. Used by the tests
   * at small sizes; the pilot itself is not run by this harness's tests.
