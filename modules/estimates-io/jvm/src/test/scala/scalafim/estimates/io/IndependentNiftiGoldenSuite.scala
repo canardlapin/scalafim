@@ -1,6 +1,7 @@
 package scalafim.estimates.io
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.security.MessageDigest
 import image4s.geometry.{Affine, D3}
 import scalafim.estimates.*
@@ -118,3 +119,102 @@ class IndependentNiftiGoldenSuite extends munit.FunSuite:
         assertEquals(codes.toVector, Vector[Byte](0, 0))
       finally right(source.close())
       assert(staged.forall(path => !Files.exists(path)))
+
+  test("logical Float32 admits only exactly representable valid decoded cells"):
+    assertEquals(sha256(resource("values-f64-fraction.nii")),
+      "099eb7d8172d4b895ce405246ff090ebb413efd079a5bd6174934f45aebe8183")
+    assertEquals(sha256(resource("values-3d-be-fraction.nii")),
+      "6edff266b3e8263c27dcb86d53b84bf83fbfe19a51264423f8c01999b4198099")
+    val root = Files.createTempDirectory("scalafim-independent-precision-")
+    val store = right(LocalEstimateStore.open(root))
+    val dataset = DatasetId("00000000-0000-4000-8000-000000000071")
+    val model = ModelRevisionId("00000000-0000-4000-8000-000000000072")
+    val unitId = UnitId("00000000-0000-4000-8000-000000000073")
+    val observation = Observation(ObservationId("row"), ParticipantId(dataset, "01"), Vector(AcquisitionId("run-1")))
+    val a = EstimandId("A")
+    val b = EstimandId("B")
+    val catalog = EstimandCatalog(model, Vector(a, b).map(id =>
+      EstimandDefinition(id, id.value, EstimandKind.Coefficient, "signal", "unit", id.value)))
+    val domain = right(EstimateDomain.make(SampleSpaces(Vector(2, 1, 1)), Vector(0, 1), "scanner"))
+    val unknown = ScientificFact.Unknown("independent fixture")
+    def open(valuesName: String, precision: NumericPrecision, suffix: String): EstimateSource =
+      val revision = UnitRevisionId(s"00000000-0000-4000-8000-00000000007$suffix")
+      val product = ProductDescriptor(ProductId("effect"), ProductKind.Effect, precision,
+        Vector(observation.id), ProductTargets.Scalar(Vector(a, b)), PoolingScope.Run, "signal")
+      val unit = EstimateUnit(dataset, unitId, revision, catalog, domain, Vector(observation), Vector.empty,
+        Vector(product), Map(product.id -> ProductOutcome.Available(product.id)), EstimabilityEvidence.Unknown("imported"),
+        EstimateProvenance("python-struct", "1", "fixture", unknown, unknown, unknown, unknown, Vector.empty, Vector.empty))
+      def publish(name: String): FileReference =
+        store.reference(right(store.objects.write(s"units/${revision.value}/$name")(_.write(resource(name))).left.map(store.fromStore)))
+      val representation = NiftiRepresentation(product.id, observation.id,
+        publish(valuesName), publish("validity.nii"), precision, 1.0, 0.0, Vector(a, b), "scanner-sform",
+        storedDatatype = Some(NiftiStoredDatatype.Float64))
+      val ref = right(store.publishUnit(unit, Vector(representation)))
+      right(right(LocalEstimateStore.open(root)).open(ref, ReadLimits(4)))
+    val fractional = open("values-f64-fraction.nii", NumericPrecision.Float32, "4")
+    try
+      val out = new Array[Double](1)
+      val codes = new Array[Byte](1)
+      val selection = EstimateSelection(Vector(observation.id), Vector(a), Vector(0))
+      assert(fractional.read(ProductId("effect"), selection, out, codes).left.toOption.exists(_.isInstanceOf[EstimateError.Integrity]))
+      right(fractional.read(ProductId("effect"), selection.copy(samples = Vector(1)), out, codes))
+      assertEquals(codes(0), Validity.NonEstimable.code)
+      assertEqualsDouble(out(0), 0.1, 0.0)
+    finally right(fractional.close())
+    val exact = open("values.nii", NumericPrecision.Float32, "5")
+    try
+      val out = new Array[Double](1)
+      val codes = new Array[Byte](1)
+      right(exact.read(ProductId("effect"), EstimateSelection(Vector(observation.id), Vector(a), Vector(0)), out, codes))
+      assertEqualsDouble(out(0), 2.0, 0.0)
+    finally right(exact.close())
+    val wide = open("values-f64-fraction.nii", NumericPrecision.Float64, "6")
+    try
+      val out = new Array[Double](1)
+      val codes = new Array[Byte](1)
+      right(wide.read(ProductId("effect"), EstimateSelection(Vector(observation.id), Vector(a), Vector(0)), out, codes))
+      assertEqualsDouble(out(0), 0.1, 0.0)
+    finally right(wide.close())
+    val scaledRevision = UnitRevisionId("00000000-0000-4000-8000-000000000077")
+    val affine = Affine.fromRowMajor[D3](Vector(
+      -2.0, 0.0, 0.0, 8.0, 0.0, 3.0, 0.0, -4.0,
+      0.0, 0.0, 4.0, 2.0, 0.0, 0.0, 0.0, 1.0)).toOption.get
+    val scaledDomain = right(EstimateDomain.make(SampleSpaces(Vector(2, 1, 1), affine = Some(affine)), Vector(0, 1), "scanner"))
+    val scaledProduct = ProductDescriptor(ProductId("effect"), ProductKind.Effect, NumericPrecision.Float32,
+      Vector(observation.id), ProductTargets.Scalar(Vector(a)), PoolingScope.Run, "signal")
+    val scaledUnit = EstimateUnit(dataset, unitId, scaledRevision, catalog, scaledDomain, Vector(observation), Vector.empty,
+      Vector(scaledProduct), Map(scaledProduct.id -> ProductOutcome.Available(scaledProduct.id)),
+      EstimabilityEvidence.Unknown("imported"),
+      EstimateProvenance("python-struct", "1", "fixture", unknown, unknown, unknown, unknown, Vector.empty, Vector.empty))
+    def publishScaled(name: String): FileReference =
+      store.reference(right(store.objects.write(s"units/${scaledRevision.value}/$name")(_.write(resource(name))).left.map(store.fromStore)))
+    val scaledRepresentation = NiftiRepresentation(scaledProduct.id, observation.id,
+      publishScaled("values-3d-be-fraction.nii"), publishScaled("validity-3d.nii"),
+      NumericPrecision.Float32, 0.10000000149011612, 0.0, Vector(a), "scanner-sform",
+      storedDatatype = Some(NiftiStoredDatatype.Float32))
+    val scaledRef = right(store.publishUnit(scaledUnit, Vector(scaledRepresentation)))
+    val scaled = right(right(LocalEstimateStore.open(root)).open(scaledRef, ReadLimits(2)))
+    try
+      val out = new Array[Double](1)
+      val codes = new Array[Byte](1)
+      assert(scaled.read(ProductId("effect"), EstimateSelection(Vector(observation.id), Vector(a), Vector(0)), out, codes)
+        .left.toOption.exists(_.isInstanceOf[EstimateError.Integrity]))
+    finally right(scaled.close())
+
+  test("malformed gzip header closes raw input descriptors across repeated constructor failures"):
+    val fdDirectory = if Files.isDirectory(Path.of("/dev/fd")) then Path.of("/dev/fd") else Path.of("/proc/self/fd")
+    assert(Files.isDirectory(fdDirectory))
+    def openDescriptors(): Long =
+      val entries = Files.list(fdDirectory)
+      try entries.count()
+      finally entries.close()
+    val root = Files.createTempDirectory("scalafim-malformed-gzip-")
+    val malformed = root.resolve("bad.nii.gz")
+    val truncated = root.resolve("truncated.nii.gz")
+    Files.write(malformed, Array[Byte](1, 2, 3))
+    Files.write(truncated, Array[Byte](0x1f, 0x8b.toByte, 8))
+    val before = openDescriptors()
+    for path <- Vector(malformed, truncated); _ <- 0 until 64 do
+      assert(NiftiEstimateSource.seekable(path, 1024).isLeft)
+    val after = openDescriptors()
+    assert(after <= before + 8, s"gzip constructor failures leaked descriptors: before=$before after=$after")

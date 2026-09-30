@@ -1,0 +1,27 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-core-nifti-1",
+  "DocumentKind": "catalog",
+  "Content": {
+    "model": "00000000-0000-4000-8000-000000000082",
+    "entries": [
+      {
+        "id": "effect-A",
+        "label": "A effect",
+        "kind": "Coefficient",
+        "units": "percent-signal",
+        "normalization": "unit",
+        "definition": "A"
+      },
+      {
+        "id": "hypothesis-A",
+        "label": "A versus zero",
+        "kind": "Hypothesis",
+        "units": "dimensionless",
+        "normalization": "none",
+        "definition": "A = 0"
+      }
+    ]
+  },
+  "WireVersion": "1.0.0"
+}

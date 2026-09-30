@@ -86,6 +86,21 @@ class EstimateContractSuite extends munit.FunSuite:
     val imported = semantics.copy(effect = Some(StatisticProductLink(effect.id, StatisticCorrespondence.Unknown("legacy mapping absent"))),
       standardError = None)
     assert(declared.copy(statistics = Vector(imported)).statistics.head.effect.nonEmpty)
+    val otherObservation = Observation(ObservationId("other-row"), ParticipantId(dataset, "02"), Vector(AcquisitionId("run-2")))
+    val otherEffect = effect.copy(id = ProductId("other-effect"), observations = Vector(otherObservation.id), pooling = PoolingScope.JointRuns)
+    val crossScope = declared.copy(observations = Vector(observation, otherObservation), products = products :+ otherEffect,
+      outcomes = (products :+ otherEffect).map(p => p.id -> ProductOutcome.Available(p.id)).toMap,
+      statistics = Vector(semantics.copy(effect = Some(StatisticProductLink(otherEffect.id,
+        StatisticCorrespondence.Unknown("legacy scope not established"))), standardError = None)))
+    assertEquals(crossScope.statistics.head.effect.map(_.product), Some(otherEffect.id))
+    intercept[IllegalArgumentException]:
+      crossScope.copy(statistics = Vector(semantics.copy(effect = Some(StatisticProductLink(otherEffect.id, mapping)), standardError = None)))
+    intercept[IllegalArgumentException]:
+      crossScope.copy(statistics = Vector(semantics.copy(effect = Some(StatisticProductLink(stat.id,
+        StatisticCorrespondence.Unknown("wrong product kind"))), standardError = None)))
+    intercept[IllegalArgumentException]:
+      crossScope.copy(statistics = Vector(semantics.copy(effect = Some(StatisticProductLink(ProductId("missing"),
+        StatisticCorrespondence.Unknown("missing product"))), standardError = None)))
   }
 
   test("logical selection preserves reversed estimand and sparse sample order with checked capacities") {

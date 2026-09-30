@@ -1,0 +1,249 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-core-nifti-1",
+  "DocumentKind": "unit",
+  "Content": {
+    "dataset": "00000000-0000-4000-8000-000000000081",
+    "unit": "00000000-0000-4000-8000-000000000083",
+    "revision": "00000000-0000-4000-8000-000000000084",
+    "domain": {
+      "Dimensions": [
+        2,
+        1,
+        1
+      ],
+      "VoxelToWorldRASMillimetres": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "WorldFrame": "scanner",
+      "Support": [
+        0,
+        1
+      ]
+    },
+    "observations": [
+      {
+        "id": "row-1",
+        "participant": {
+          "dataset": "00000000-0000-4000-8000-000000000081",
+          "label": "01"
+        },
+        "acquisitions": [
+          "run-1"
+        ]
+      }
+    ],
+    "bindings": [],
+    "products": [
+      {
+        "id": "effect",
+        "kind": "Effect",
+        "precision": "Float64",
+        "observations": [
+          "row-1"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "effect-A"
+          ]
+        },
+        "pooling": "Run",
+        "units": "percent-signal"
+      },
+      {
+        "id": "t-statistic",
+        "kind": {
+          "$type": "Statistic",
+          "kind": "T"
+        },
+        "precision": "Float64",
+        "observations": [
+          "row-1"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "hypothesis-A"
+          ]
+        },
+        "pooling": "Run",
+        "units": "dimensionless"
+      }
+    ],
+    "outcomes": [
+      [
+        "effect",
+        {
+          "$type": "Available",
+          "product": "effect"
+        }
+      ],
+      [
+        "t-statistic",
+        {
+          "$type": "Available",
+          "product": "t-statistic"
+        }
+      ]
+    ],
+    "estimability": {
+      "$type": "Unknown",
+      "reason": "independent Core literal"
+    },
+    "provenance": {
+      "producer": "python-stdlib-literal",
+      "version": "1",
+      "executionId": "core-literal",
+      "estimator": {
+        "$type": "Unknown",
+        "reason": "independent Core literal"
+      },
+      "noise": {
+        "$type": "Unknown",
+        "reason": "independent Core literal"
+      },
+      "nuisance": {
+        "$type": "Unknown",
+        "reason": "independent Core literal"
+      },
+      "runCombination": {
+        "$type": "Unknown",
+        "reason": "independent Core literal"
+      },
+      "scans": [],
+      "inputs": []
+    },
+    "covariance": [],
+    "statistics": [
+      {
+        "product": "t-statistic",
+        "distribution": {
+          "$type": "StudentT",
+          "df": {
+            "role": "Reference",
+            "value": {
+              "$type": "Scalar",
+              "value": 9
+            },
+            "method": "literal nine residual degrees",
+            "approximate": false
+          }
+        },
+        "tail": "TwoSided",
+        "nullValue": 0,
+        "effect": {
+          "product": "effect",
+          "correspondence": {
+            "$type": "Known",
+            "mapping": [
+              {
+                "hypothesis": "hypothesis-A",
+                "targets": [
+                  "effect-A"
+                ]
+              }
+            ]
+          }
+        },
+        "standardError": null
+      }
+    ],
+    "degreesOfFreedom": [
+      {
+        "role": "Reference",
+        "value": {
+          "$type": "Scalar",
+          "value": 9
+        },
+        "method": "literal nine residual degrees",
+        "approximate": false
+      }
+    ],
+    "marginalUncertainty": [],
+    "Catalog": {
+      "Path": "units/00000000-0000-4000-8000-000000000084/estimands.json",
+      "SHA256": "4a79d5173e638732ed3d186db66e721082eadb7dac0dc188efa7496578a59445",
+      "Bytes": 634
+    },
+    "Representations": [
+      {
+        "product": "effect",
+        "observation": "row-1",
+        "values": {
+          "Path": "units/00000000-0000-4000-8000-000000000084/effect-values.nii",
+          "SHA256": "e1f7c6e89f02b88ab407f155cf7eef962d0a2c764499cdac250aba28ed4fe09e",
+          "Bytes": 368
+        },
+        "validity": {
+          "Path": "units/00000000-0000-4000-8000-000000000084/effect-validity.nii",
+          "SHA256": "fbb1f739ff7439f75a2a4138fe8452d2099318145754184c7f82aba4890ca704",
+          "Bytes": 354
+        },
+        "precision": "Float64",
+        "slope": 1,
+        "intercept": 0,
+        "volumeOrder": [
+          "effect-A"
+        ],
+        "selectedTransform": "scanner-sform",
+        "pairOrder": [],
+        "qformAlternativeFrame": null,
+        "storedDatatype": "Float64"
+      },
+      {
+        "product": "t-statistic",
+        "observation": "row-1",
+        "values": {
+          "Path": "units/00000000-0000-4000-8000-000000000084/t-values.nii",
+          "SHA256": "2eca81e10c1efb684448df43a758d2f1436670e4d174e3f688b158156f4f7aef",
+          "Bytes": 368
+        },
+        "validity": {
+          "Path": "units/00000000-0000-4000-8000-000000000084/t-validity.nii",
+          "SHA256": "4b7f24a857b5f507b109290e99fee269413fa76a6935dd34ff34698fc6f6bf3b",
+          "Bytes": 354
+        },
+        "precision": "Float64",
+        "slope": 1,
+        "intercept": 0,
+        "volumeOrder": [
+          "hypothesis-A"
+        ],
+        "selectedTransform": "scanner-sform",
+        "pairOrder": [],
+        "qformAlternativeFrame": null,
+        "storedDatatype": "Float64"
+      }
+    ],
+    "Tables": {
+      "estimands": {
+        "Path": "units/00000000-0000-4000-8000-000000000084/estimands.tsv",
+        "SHA256": "3c7ca58dd9293091f37b93509fe4c692ae4cbe0779f3f6cdf46fa489fe83d28e",
+        "Bytes": 44
+      },
+      "observations": {
+        "Path": "units/00000000-0000-4000-8000-000000000084/observations.tsv",
+        "SHA256": "37cfa6ae6a44cd41a40e845b188308ab1214624401059695df1b7504b961be97",
+        "Bytes": 29
+      }
+    },
+    "ModelRevisionId": "00000000-0000-4000-8000-000000000082"
+  },
+  "WireVersion": "1.0.0"
+}

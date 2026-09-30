@@ -120,9 +120,11 @@ class EstimateMetadataSuite extends munit.FunSuite:
     val catalogRef = FileReference("catalog.json", ContentDigest.unsafeSha256("d" * 64), 1)
     val old = ujson.read(EstimateMetadata.unit(unit, catalogRef))
     old("Content")("statistics")(0)("effect") = effect.id.value
+    old("Content")("products")(0)("pooling") = "JointRuns"
     val decoded = EstimateMetadata.readUnit(ujson.write(old), catalog).toOption.get
     assertEquals(decoded.statistics.head.effect.map(_.correspondence),
       Some(StatisticCorrespondence.Unknown("development-1 link lacks hypothesis correspondence")))
+    assertEquals(decoded.products.head.pooling, PoolingScope.JointRuns)
     val tableRef = FileReference("estimands.tsv", ContentDigest.unsafeSha256("e" * 64), 10)
     val stable = ujson.read(EstimateMetadata.unit(unit, catalogRef,
       tables = Some(EstimateIndexTables(tableRef, tableRef.copy(path = "observations.tsv")))))

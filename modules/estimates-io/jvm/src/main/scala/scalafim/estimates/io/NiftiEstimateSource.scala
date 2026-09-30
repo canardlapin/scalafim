@@ -85,6 +85,9 @@ private[io] final class NiftiEstimateSource(
                     failure = Some(EstimateError.Integrity("stored product validity disagrees with support"))
                   else if status == Validity.Valid && (!descriptor.kind.accepts(value) || (diagonalVolumes.contains(volume) && value < 0.0)) then
                     failure = Some(EstimateError.Integrity("stored valid value violates its numeric domain"))
+                  else if status == Validity.Valid && descriptor.precision == NumericPrecision.Float32 &&
+                      value.toFloat.toDouble != value then
+                    failure = Some(EstimateError.Integrity("stored valid value is not exactly representable as logical Float32"))
                   else
                     values(offset) = value
                     validity(offset) = status.code
@@ -114,32 +117,37 @@ private[io] object NiftiEstimateSource:
     * a cumulative disk budget. The 64 KiB buffer is the only decompression
     * payload allocation; the source deletes every staged file on close/failure.
     */
-  private def seekable(path: Path, remainingBytes: Long): Either[EstimateError, (Path, Long, Option[Path])] =
+  private[io] def seekable(path: Path, remainingBytes: Long): Either[EstimateError, (Path, Long, Option[Path])] =
     if !path.toString.endsWith(".nii.gz") then Right((path, 0L, None))
     else
       val stage = Files.createTempFile("scalafim-estimate-", ".nii")
-      val result = try
-        val input = new GZIPInputStream(Files.newInputStream(path))
-        try
-          val output = Files.newOutputStream(stage)
+      var retained = false
+      try
+        val raw = Files.newInputStream(path)
+        val result = try
+          val input = new GZIPInputStream(raw)
           try
-            val buffer = new Array[Byte](65536)
-            var written = 0L
-            var count = input.read(buffer)
-            var overBudget = false
-            while count >= 0 && !overBudget do
-              if count.toLong > remainingBytes - written then overBudget = true
-              else
-                output.write(buffer, 0, count)
-                written += count.toLong
-                count = input.read(buffer)
-            if overBudget then Left(EstimateError.Unsupported("gzip staging exceeds declared disk budget"))
-            else Right((stage, written, Some(stage)))
-          finally output.close()
-        finally input.close()
+            val output = Files.newOutputStream(stage)
+            try
+              val buffer = new Array[Byte](65536)
+              var written = 0L
+              var count = input.read(buffer)
+              var overBudget = false
+              while count >= 0 && !overBudget do
+                if count.toLong > remainingBytes - written then overBudget = true
+                else
+                  output.write(buffer, 0, count)
+                  written += count.toLong
+                  count = input.read(buffer)
+              if overBudget then Left(EstimateError.Unsupported("gzip staging exceeds declared disk budget"))
+              else Right((stage, written, Some(stage)))
+            finally output.close()
+          finally input.close()
+        finally raw.close()
+        retained = result.isRight
+        result
       catch case error: java.io.IOException => Left(EstimateError.Io(Option(error.getMessage).getOrElse("gzip staging failed")))
-      if result.isLeft then Files.deleteIfExists(stage)
-      result
+      finally if !retained then Files.deleteIfExists(stage)
 
   private def determinant3(header: image4s.geometry.Affine[image4s.geometry.D3]): Double =
     val m = header.matrix

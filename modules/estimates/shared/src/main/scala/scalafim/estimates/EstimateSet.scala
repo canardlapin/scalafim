@@ -64,12 +64,12 @@ final case class EstimateUnit(
         case _ => false
       def linkValid(link: StatisticProductLink, kind: ProductKind): Boolean =
         products.find(_.id == link.product).exists: target =>
-          target.kind == kind && target.observations == statistic.observations && target.pooling == statistic.pooling &&
-            (link.correspondence match
-              case StatisticCorrespondence.Unknown(_) => true
-              case StatisticCorrespondence.Known(mapping) =>
+          target.kind == kind && (link.correspondence match
+            case StatisticCorrespondence.Unknown(_) => true
+            case StatisticCorrespondence.Known(mapping) =>
+              target.observations == statistic.observations && target.pooling == statistic.pooling &&
                 mapping.map(_.hypothesis).toSet == statistic.targets.estimands.toSet &&
-                  mapping.forall(entry => entry.targets.forall(target.targets.estimands.contains)))
+                mapping.forall(entry => entry.targets.forall(target.targets.estimands.contains)))
       def known(link: StatisticProductLink): Option[Map[EstimandId, Set[EstimandId]]] = link.correspondence match
         case StatisticCorrespondence.Known(mapping) => Some(mapping.map(entry => entry.hypothesis -> entry.targets.toSet).toMap)
         case StatisticCorrespondence.Unknown(_) => None

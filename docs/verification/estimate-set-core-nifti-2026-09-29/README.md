@@ -119,3 +119,67 @@ whole payloads and replaces its output. This limitation was recorded on Mote
 `bd-01KX6G9B8R86MRBZ9S8K8F5G7V`.
 
 Local evidence does not authorize publication or ticket closure.
+
+## Independent Core-1 review repairs
+
+The Core reader now refuses a *valid* decoded cell declared logical Float32
+unless its Double value is exactly representable as Float32, matching sink
+admission. Invalid fill cells retain their validity code without imposing a
+numeric precision claim. `generate_physical_golden.py` independently emits
+physical Float64 fraction bytes (SHA256
+`099eb7d8172d4b895ce405246ff090ebb413efd079a5bd6174934f45aebe8183`)
+and scaled, big-endian physical Float32 fraction bytes (SHA256
+`6edff266b3e8263c27dcb86d53b84bf83fbfe19a51264423f8c01999b4198099`).
+The JVM checks logical Float32 refusal, logical Float64 acceptance, an exactly
+representable Float32 control and non-estimable fill handling.
+
+Gzip input ownership begins with the raw stream, before constructing the
+decoder. Both raw and wrapped streams close on constructor/read/output failures;
+owned staging files are removed. Repeated malformed and truncated gzip headers
+are checked against process descriptor counts, including failure after an
+earlier representation's data and validity channels have opened.
+
+An Unknown statistic correspondence validates the referenced product's
+existence, kind and nonempty reason only; it supplies no alignment or inference
+capability. Known correspondence still checks observation and pooling alignment
+and complete named hypothesis targets. The shared tests cover a legacy bare
+link crossing pooling scopes as Unknown, plus Known refusal on the same scope.
+
+`generate_core_bundle.py` is a separate literal Python standard-library source
+for a **complete** Core-NIfTI-1 bundle, including Core catalog and unit JSON,
+digest-pinned TSV projections, two NIfTI value/validity pairs, explicit stored
+datatype, product units and axes, and a named Student-t hypothesis-to-effect
+mapping with scalar reference df. It does not import a production encoder or
+copy production output. Its complete unit manifest is SHA256
+`e2d54370a163f98b44d670e9d87d46af1d1982b818a11190ad613bd53ad0706d`;
+the test pins that digest and checks decoded scientific fields and physical
+cells against literal expectations. Negative variants change the wire version,
+remove required product units, or replace and re-pin the TSV with an axis that
+disagrees with JSON. The generator and all eight fixture files are committed
+with the source so later decoder drift is visible.
+
+The literal Core generator is SHA256
+`eb0269082a2b87096cbd5058644ab5187398d7fbe328884e57d553a3d9b8e154`.
+The `core-literal/units/00000000-0000-4000-8000-000000000084/` fixture
+files are pinned as follows:
+
+| File | SHA256 |
+|---|---|
+| `estimands.json` | `4a79d5173e638732ed3d186db66e721082eadb7dac0dc188efa7496578a59445` |
+| `estimands.tsv` | `3c7ca58dd9293091f37b93509fe4c692ae4cbe0779f3f6cdf46fa489fe83d28e` |
+| `observations.tsv` | `37cfa6ae6a44cd41a40e845b188308ab1214624401059695df1b7504b961be97` |
+| `effect-values.nii` | `e1f7c6e89f02b88ab407f155cf7eef962d0a2c764499cdac250aba28ed4fe09e` |
+| `effect-validity.nii` | `fbb1f739ff7439f75a2a4138fe8452d2099318145754184c7f82aba4890ca704` |
+| `t-values.nii` | `2eca81e10c1efb684448df43a758d2f1436670e4d174e3f688b158156f4f7aef` |
+| `t-validity.nii` | `4b7f24a857b5f507b109290e99fee269413fa76a6935dd34ff34698fc6f6bf3b` |
+| `estimates.json` | `e2d54370a163f98b44d670e9d87d46af1d1982b818a11190ad613bd53ad0706d` |
+
+The final affected gates passed: `estimatesJVM/test` 12/12,
+`estimatesJS/test` 12/12, `estimatesIoJVM/test` 30/30,
+`estimatesIoJS/test` 5/5, and `scalafimCompileAll` 89 alias steps.
+The complete raw log `io-core-final-repair-gates-r3.log` is SHA256
+`54a39a9101184e6892672be7c28d84866592480e209b41026f3289bbddc1537a`;
+its `.meta.json` records exit 0. There are no `[warn]` or `[error]` lines in
+the complete log. Earlier r1 ended before project load at the sandboxed sbt
+boot lock, and r2 found a test-only misspelled pooling enum; neither is test
+evidence for this candidate.
