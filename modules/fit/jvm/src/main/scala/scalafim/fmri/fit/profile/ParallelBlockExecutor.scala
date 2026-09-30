@@ -54,7 +54,7 @@ object ParallelBlockExecutor:
               while offset < submitted && failure.isEmpty do
                 val block = plan(next + offset)
                 val completed =
-                  try futures(offset).get(1, TimeUnit.MINUTES)
+                  try futures(offset).get()
                   catch
                     case _: InterruptedException =>
                       interrupted = true

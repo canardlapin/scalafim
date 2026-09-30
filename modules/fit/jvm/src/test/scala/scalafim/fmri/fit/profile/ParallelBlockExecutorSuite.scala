@@ -102,3 +102,62 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
       case Left(ExecutionError.Cancelled(completed)) => assertEquals(completed, 0)
       case other => fail(s"expected Cancelled, got $other")
     assert(seenThreads.asScala.forall(t => !t.isAlive))
+
+  test("worker failure interrupts another in-flight task and releases owned threads"):
+    val bothStarted = new CountDownLatch(2)
+    val otherInterrupted = new CountDownLatch(1)
+    val seenThreads = new ConcurrentLinkedQueue[Thread]()
+    val worker = new BlockWorker[Int]:
+      def process(block: VoxelBlock): Int =
+        seenThreads.add(Thread.currentThread())
+        bothStarted.countDown()
+        if !bothStarted.await(5, TimeUnit.SECONDS) then throw new IllegalStateException("workers did not start")
+        if block.index == 0 then throw new IllegalStateException("worker boom")
+        try
+          if !new CountDownLatch(1).await(5, TimeUnit.SECONDS) then throw new IllegalStateException("task was not interrupted")
+        catch
+          case _: InterruptedException => otherInterrupted.countDown()
+        block.index
+    val sink = new BlockSink[Int, Int]:
+      def accept(block: VoxelBlock, payload: Int): Either[String, Int] = Right(payload)
+    ParallelBlockExecutor.run(2, ExecutionBudget(1, 2), () => worker, sink) match
+      case Left(ExecutionError.WorkerFailed(block, detail)) =>
+        assertEquals(block.index, 0)
+        assert(detail.contains("worker boom"))
+      case other => fail(s"expected WorkerFailed, got $other")
+    assertEquals(otherInterrupted.getCount, 0L)
+    assert(seenThreads.asScala.forall(t => !t.isAlive))
+
+  test("interrupting the caller cancels in-flight tasks and restores its interrupt flag"):
+    val bothStarted = new CountDownLatch(2)
+    val workerInterrupted = new CountDownLatch(2)
+    val seenThreads = new ConcurrentLinkedQueue[Thread]()
+    val result = new AtomicReference[Either[ExecutionError, ExecutionSummary[Int]]]()
+    val interruptRestored = new AtomicBoolean(false)
+    val worker = new BlockWorker[Int]:
+      def process(block: VoxelBlock): Int =
+        seenThreads.add(Thread.currentThread())
+        bothStarted.countDown()
+        try
+          if !new CountDownLatch(1).await(5, TimeUnit.SECONDS) then throw new IllegalStateException("task was not interrupted")
+        catch
+          case _: InterruptedException => workerInterrupted.countDown()
+        block.index
+    val sink = new BlockSink[Int, Int]:
+      def accept(block: VoxelBlock, payload: Int): Either[String, Int] = Right(payload)
+    val runner = new Thread(() =>
+      result.set(ParallelBlockExecutor.run(2, ExecutionBudget(1, 2), () => worker, sink))
+      interruptRestored.set(Thread.currentThread().isInterrupted)
+    )
+    runner.start()
+    try
+      assert(bothStarted.await(5, TimeUnit.SECONDS))
+      runner.interrupt()
+      runner.join(5000)
+    finally
+      if runner.isAlive then runner.interrupt()
+    assert(!runner.isAlive)
+    assertEquals(result.get(), Left(ExecutionError.Cancelled(0)))
+    assert(interruptRestored.get())
+    assertEquals(workerInterrupted.getCount, 0L)
+    assert(seenThreads.asScala.forall(t => !t.isAlive))
