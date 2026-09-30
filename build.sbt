@@ -638,7 +638,7 @@ lazy val threshold =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/threshold"))
-    .dependsOn(image)
+    .dependsOn(image, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-threshold"

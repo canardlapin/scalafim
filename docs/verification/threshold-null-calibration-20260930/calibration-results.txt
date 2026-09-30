@@ -1,0 +1,89 @@
+scenario=threshold.null-calibration.exact-n6.white.greater.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=99/2000 rate=0.0495 P(X>=k|alpha)=0.555 pass=true
+  westfallYoung.fwer.notLiberal: errors=99/2000 rate=0.0495 P(X>=k|alpha)=0.555 pass=true
+  maxT.fwer.notConservative: errors=99/2000 size=0.0469 P(X<=k|size)=0.732 pass=true
+  westfallYoung.fwer.notConservative: errors=99/2000 size=0.0469 P(X<=k|size)=0.732 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.exact-n6.white.greater.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=56/2000 rate=0.0280 P(X>=k|alpha)=1.00 pass=true
+  westfallYoung.fwer.notLiberal: errors=56/2000 rate=0.0280 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.null-calibration.exact-n6.white.twosided.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=70/2000 rate=0.0350 P(X>=k|alpha)=0.999 pass=true
+  westfallYoung.fwer.notLiberal: errors=70/2000 rate=0.0350 P(X>=k|alpha)=0.999 pass=true
+  maxT.fwer.notConservative: errors=70/2000 size=0.0313 P(X<=k|size)=0.848 pass=true
+  westfallYoung.fwer.notConservative: errors=70/2000 size=0.0313 P(X<=k|size)=0.848 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.exact-n6.white.twosided.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=68/2000 rate=0.0340 P(X>=k|alpha)=1.00 pass=true
+  westfallYoung.fwer.notLiberal: errors=68/2000 rate=0.0340 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.null-calibration.exact-n6.smooth.greater.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=91/2000 rate=0.0455 P(X>=k|alpha)=0.835 pass=true
+  westfallYoung.fwer.notLiberal: errors=91/2000 rate=0.0455 P(X>=k|alpha)=0.835 pass=true
+  maxT.fwer.notConservative: errors=91/2000 size=0.0469 P(X<=k|size)=0.412 pass=true
+  westfallYoung.fwer.notConservative: errors=91/2000 size=0.0469 P(X<=k|size)=0.412 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.exact-n6.smooth.greater.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=89/2000 rate=0.0445 P(X>=k|alpha)=0.882 pass=true
+  westfallYoung.fwer.notLiberal: errors=89/2000 rate=0.0445 P(X>=k|alpha)=0.882 pass=true
+scenario=threshold.null-calibration.exact-n6.smooth.twosided.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=50/2000 rate=0.0250 P(X>=k|alpha)=1.00 pass=true
+  westfallYoung.fwer.notLiberal: errors=50/2000 rate=0.0250 P(X>=k|alpha)=1.00 pass=true
+  maxT.fwer.notConservative: errors=50/2000 size=0.0313 P(X<=k|size)=0.0578 pass=true
+  westfallYoung.fwer.notConservative: errors=50/2000 size=0.0313 P(X<=k|size)=0.0578 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.exact-n6.smooth.twosided.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=53/2000 rate=0.0265 P(X>=k|alpha)=1.00 pass=true
+  westfallYoung.fwer.notLiberal: errors=53/2000 rate=0.0265 P(X>=k|alpha)=1.00 pass=true
+scenario=threshold.null-calibration.montecarlo-n10.white.greater.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=107/2000 rate=0.0535 P(X>=k|alpha)=0.250 pass=true
+  westfallYoung.fwer.notLiberal: errors=107/2000 rate=0.0535 P(X>=k|alpha)=0.250 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.montecarlo-n10.white.greater.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=82/2000 rate=0.0410 P(X>=k|alpha)=0.974 pass=true
+  westfallYoung.fwer.notLiberal: errors=82/2000 rate=0.0410 P(X>=k|alpha)=0.974 pass=true
+scenario=threshold.null-calibration.montecarlo-n10.white.twosided.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=115/2000 rate=0.0575 P(X>=k|alpha)=0.0707 pass=true
+  westfallYoung.fwer.notLiberal: errors=115/2000 rate=0.0575 P(X>=k|alpha)=0.0707 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.montecarlo-n10.white.twosided.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=92/2000 rate=0.0460 P(X>=k|alpha)=0.807 pass=true
+  westfallYoung.fwer.notLiberal: errors=92/2000 rate=0.0460 P(X>=k|alpha)=0.807 pass=true
+scenario=threshold.null-calibration.montecarlo-n10.smooth.greater.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=108/2000 rate=0.0540 P(X>=k|alpha)=0.219 pass=true
+  westfallYoung.fwer.notLiberal: errors=108/2000 rate=0.0540 P(X>=k|alpha)=0.219 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.montecarlo-n10.smooth.greater.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=110/2000 rate=0.0550 P(X>=k|alpha)=0.165 pass=true
+  westfallYoung.fwer.notLiberal: errors=113/2000 rate=0.0565 P(X>=k|alpha)=0.101 pass=true
+scenario=threshold.null-calibration.montecarlo-n10.smooth.twosided.complete-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=102/2000 rate=0.0510 P(X>=k|alpha)=0.433 pass=true
+  westfallYoung.fwer.notLiberal: errors=102/2000 rate=0.0510 P(X>=k|alpha)=0.433 pass=true
+  hierScan.fwer.notLiberal: errors=0/2000 rate=0.0000 P(X>=k|alpha)=1.00 pass=true
+  maxT.equals.westfallYoung: 0 disagreeing replicates pass=true
+scenario=threshold.null-calibration.montecarlo-n10.smooth.twosided.partial-null.v1 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  maxT.fwer.notLiberal: errors=107/2000 rate=0.0535 P(X>=k|alpha)=0.250 pass=true
+  westfallYoung.fwer.notLiberal: errors=113/2000 rate=0.0565 P(X>=k|alpha)=0.101 pass=true
+[info] Passed: Total 16, Failed 0, Errors 0, Passed 16
