@@ -1169,6 +1169,8 @@ lazy val mvpaDataset =
     .settings(
       name := "scalafim-fmri-mvpa-dataset"
     )
+    .jvmConfigure(_.dependsOn(alderKernelJVM, alderDataJVM))
+    .jsConfigure(_.dependsOn(alderKernelJS, alderDataJS))
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaDatasetJS  = mvpaDataset.js
