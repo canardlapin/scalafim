@@ -34,8 +34,10 @@ shown:
 - **Exact-size checks.** Where the size is exactly known, the observed
   rates match it: all lower tails are ≥ 0.058.
 - **Agreement.** maxT and WY agreed in every complete-null replicate.
-- **Strong control.** Under partial nulls WY rejects a superset of maxT, as it
-  should, and both stay within the liberal gate.
+- **Strong control.** Under partial nulls both procedures stay within the
+  liberal gate, and WY's error count is at least maxT's in every condition, as
+  step-down implies. Per-replicate nesting was not checked, and the signal-voxel
+  detection rate (power) was not recorded.
 
 ## Pull-request profile and its power
 
@@ -73,10 +75,11 @@ rate of 4–12 in 200 (about α), and zero terminal hits in every case:
     `(1 − γ) · budget`, weighted by child prior mass, to the rejected
     children, so a whole tree spends at most α.
   - The Scala port tests each node at its full budget and gives each rejected
-    child `budget / nChildren`. Under a partial null, a correctly rejected
-    signal node is followed by further tests whose budgets add up. The bound
-    is roughly α(1 + 1/8 + 1/64 + …), so strong FWER control is not
-    guaranteed.
+    child `budget / nChildren`. Each rejected sibling group is then its own
+    step-down family at that budget. With k of n children rejected, a level
+    spends k/n of its parent's budget, and up to all of it. Under a partial
+    null the union bound therefore grows to about α per level (α × depth),
+    so strong FWER control is not guaranteed.
   - The protocol does not score HierScan under partial nulls, so this
     calibration run neither confirms nor refutes it.
 
@@ -94,10 +97,40 @@ argument. Packet 4 will align HierScan with the reference:
 
 | Method | Status |
 | --- | --- |
-| `MaxT` (`runMap`, `singleStep`) | Admitted for FWER under sign-flip-exchangeable nulls: complete and partial null, white and smooth fields, heterogeneous subjects, n = 6 exact and n = 10 Monte Carlo. |
+| `MaxT` (`runMap`, `singleStep`) | Admitted for FWER under sign-flip-exchangeable nulls: complete and partial null, white and smooth fields, heterogeneous subjects, n = 6 exact and n = 10 Monte Carlo. The calibration exercises `runMap`. `singleStep` is admitted through `DecisionScaleSuite`'s bit-exact runMap ≡ singleStep parity on shared draws. |
 | `WestfallYoung.stepDown` | Admitted on the same terms, including strong control in the tested partial nulls. |
 | `HierScan` | Not admitted; see the finding above. |
 | TFCE, cluster-FDR, RFT, voxelwise FDR | Unavailable: not implemented, and removed from `ThresholdMethod` in packet 1. |
+
+## Independent review
+
+A fresh-context reviewer returned ACCEPT-WITH-FIXES on `8f744a3b`. It
+confirmed the following:
+
+- The code follows the protocol, including the data-generating process
+  (smoothing before the signal), the flip families, the exact sizes, the
+  gates, the seeds and the profiles.
+- The sign-flip null is valid. Strong control follows from monotonicity:
+  the randomization test restricted to the null voxels is exact.
+- The binomial tails are correct, with no underflow at R = 2000.
+- HierScan's terminal-only reporting is confirmed.
+- The pull-request profile reproduced 60/60 on both platforms, with
+  identical counts on JVM and JS.
+
+Its three text findings are addressed above:
+
+- `singleStep` admission now rests on the parity test.
+- The HierScan over-spend bound is corrected.
+- The superset claim is reduced to a count comparison.
+
+Its low-severity notes are recorded here:
+
+- Partial-null power is not recorded.
+- The seed contract depends on the condition order in the code:
+  exact/MC × white/smooth × greater/two-sided × complete/partial, in that
+  nesting. The next dated protocol must state it.
+- Git can show that the held-out seed was first committed with the protocol
+  (`8cd94057`), but it cannot prove the seed was not used before.
 
 ## Not covered
 
