@@ -40,11 +40,27 @@ object PyramidControl:
   ): PyramidControl =
     new PyramidControl(downsample, maxIterations, sampleCounts, enabled)
 
+/** Units of the Huber threshold `huberK`. */
+enum HuberScale:
+  /** `huberK` counts robust residual standard deviations: the absolute threshold
+    * is `huberK * 1.4826 * MAD` of the frame's residuals at its warm-start pose,
+    * fixed for that frame's capture, levels and diagnostics. Scaling the image
+    * intensities scales every residual and the threshold together, so robust
+    * weights and the estimated motion do not depend on the intensity scale.
+    */
+  case RobustResidual
+
+  /** `huberK` is an absolute intensity difference, as in volregger. Robust
+    * weighting then depends on the image intensity scale; kept for parity.
+    */
+  case Absolute
+
 final case class OptimizerControl private (
     huberK: Double,
     lambda0: Double,
     stepTolerance: Double,
-    costTolerance: Double
+    costTolerance: Double,
+    huberScale: HuberScale
 ):
   require(huberK.isFinite && huberK > 0.0, "huberK must be positive")
   require(lambda0.isFinite && lambda0 >= 0.0, "lambda0 must be non-negative")
@@ -53,22 +69,32 @@ final case class OptimizerControl private (
 
 object OptimizerControl:
   val default: OptimizerControl =
-    unsafe(huberK = 1.5, lambda0 = 1e-2, stepTolerance = 1e-5, costTolerance = 1e-6)
+    unsafe(huberK = 1.5, lambda0 = 1e-2, stepTolerance = 1e-5, costTolerance = 1e-6, HuberScale.RobustResidual)
+
+  /** The volregger estimand: an absolute-intensity Huber threshold. */
+  val volreggerParity: OptimizerControl = default.copy(huberScale = HuberScale.Absolute)
 
   def make(
       huberK: Double,
       lambda0: Double,
       stepTolerance: Double,
-      costTolerance: Double
+      costTolerance: Double,
+      huberScale: HuberScale = HuberScale.RobustResidual
   ): Either[MotionError, OptimizerControl] =
     if !huberK.isFinite || huberK <= 0.0 then Left(MotionError.InvalidScalar("huberK", huberK, "must be positive"))
     else if !lambda0.isFinite || lambda0 < 0.0 then Left(MotionError.InvalidScalar("lambda0", lambda0, "must be non-negative"))
     else if !stepTolerance.isFinite || stepTolerance < 0.0 then Left(MotionError.InvalidScalar("stepTolerance", stepTolerance, "must be non-negative"))
     else if !costTolerance.isFinite || costTolerance < 0.0 then Left(MotionError.InvalidScalar("costTolerance", costTolerance, "must be non-negative"))
-    else Right(unsafe(huberK, lambda0, stepTolerance, costTolerance))
+    else Right(unsafe(huberK, lambda0, stepTolerance, costTolerance, huberScale))
 
-  def unsafe(huberK: Double, lambda0: Double, stepTolerance: Double, costTolerance: Double): OptimizerControl =
-    new OptimizerControl(huberK, lambda0, stepTolerance, costTolerance)
+  def unsafe(
+      huberK: Double,
+      lambda0: Double,
+      stepTolerance: Double,
+      costTolerance: Double,
+      huberScale: HuberScale = HuberScale.RobustResidual
+  ): OptimizerControl =
+    new OptimizerControl(huberK, lambda0, stepTolerance, costTolerance, huberScale)
 
 final case class TemplateControl(
     robustTemplate: Boolean,
