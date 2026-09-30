@@ -1,0 +1,10 @@
+{
+  "commit": "0aa969a2b30b13c62afb8ef9a2b9eaecef1f995b",
+  "parent": "9c656bc79254be9142a8b605d0d4e404b410bd1b",
+  "tree": "d4861521056e7f968b260f8d01ea80a488574b62",
+  "explicit_paths": 87,
+  "staged_and_committed_hashes_match": true,
+  "working_files_unchanged_by_commit": true,
+  "normal_index_empty": true,
+  "publication": "local only"
+}
