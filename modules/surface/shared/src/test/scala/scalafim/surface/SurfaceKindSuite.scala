@@ -3,8 +3,17 @@ package scalafim.surface
 class SurfaceKindSuite extends munit.FunSuite:
 
   // Independent oracle for the canonical saved-identity spelling of every kind.
-  // The match has no wildcard: under -Werror a new SurfaceKind case that is not
-  // given a canonical spelling here fails compilation of this suite.
+  // The match has no wildcard, so a new SurfaceKind case without a canonical
+  // spelling here is a non-exhaustive-match warning. This module is not built
+  // with -Werror; the warning-clean scalafimCompileAll gate catches it.
+  test("a directly built Custom with the very-inflated spelling is not the canonical kind; parsing canonicalizes it"):
+    val legacy = SurfaceKind.Custom("veryinflated")
+    // Direct construction is not normalized: it has the canonical label but is a different identity.
+    assertNotEquals[SurfaceKind, SurfaceKind](legacy, SurfaceKind.VeryInflated)
+    assertEquals(legacy.label, SurfaceKind.VeryInflated.label)
+    // Every parsing path maps the saved label back to the canonical kind.
+    assertEquals(SurfaceKind.fromString(legacy.label), SurfaceKind.VeryInflated)
+
   private def canonicalSpelling(kind: SurfaceKind): String =
     kind match
       case SurfaceKind.White => "white"
