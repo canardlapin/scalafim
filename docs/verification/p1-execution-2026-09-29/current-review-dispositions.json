@@ -98,7 +98,7 @@
     }
   ],
   "integrationBase": "1d2bdf5dcae4885e57ea5069932ca26da72f7747",
-  "recordedUtc": "2026-09-30T04:10:00.884260+00:00",
+  "recordedUtc": "2026-09-30T08:37:37.567717+00:00",
   "reviewer": "/root/decoder_review",
   "schema": "scalafim.p1.review-dispositions.v1",
   "scope": "Independent source/evidence review; no fresh qualification, publication, merge or release. Failed candidates remain blocked.",
@@ -252,6 +252,46 @@
       "repairReturnedNormally": true,
       "nativeBackendAdmitted": false,
       "hostedProviderAdmitted": false
+    },
+    {
+      "commit": "090f3d1f6fea76c8cc4c7aaec2ec72b9129850b8",
+      "verdict": "AcceptBoundedOracleAdequacy",
+      "freezeSha256": "451be51b9abca9c127c9d8d2f012d7ef871f262922ec5c68ae3f7f06513e023d",
+      "archive": {
+        "archive": "c0-oracle-repair-qualified.json.gz",
+        "sha256": "469f2e2b0d79edd9a656242f9d86900f2cb3e9926ab4b12ed0dc54bc49dcd83d",
+        "payloads": 39
+      }
+    },
+    {
+      "commit": "090f3d1f6fea76c8cc4c7aaec2ec72b9129850b8",
+      "verdict": "HoldBothPlatformScientificQualification",
+      "jvmCandidateAdmissions": [
+        190,
+        185
+      ],
+      "jsCandidateAdmissions": [
+        190,
+        192
+      ],
+      "requiredPerCell": 190,
+      "freshLaunched": false,
+      "performance100kLaunched": false,
+      "archive": {
+        "archive": "c0-frozen200-jvm-hold.json.gz",
+        "sha256": "4a5b11c80d3a67899aa95dc1a3ea0ba5fc0d11b9829db1dd8e76169c72fbc47e",
+        "payloads": 9
+      }
+    },
+    {
+      "commit": "e6543fb639b53b1fe938b7465540bd9747d5424f",
+      "verdict": "RequestChangesPublicDeclarationProvenance",
+      "verifiedChecks": "72 JVM/48 JS and warning-clean CompileAll",
+      "archive": {
+        "archive": "trial-public-executor-e654-request-changes.json.gz",
+        "sha256": "af08a8e52524c283c4bae6baaaf343c597f785dfd1690606be557fbcce036e5f",
+        "payloads": 40
+      }
     }
   ],
   "updatedUtc": "2026-09-30T07:32:11.726928+00:00"

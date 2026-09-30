@@ -439,3 +439,20 @@ but acceptance waits for actual factory-work mapping and a discriminating
 regression. The independent review supports the bounded determinant and energy
 mathematics. The original candidate, mutant history and verdict are archived;
 no native executor admission, hosted pin, calibration or performance claim follows.
+
+## Completed frozen C0 study and public declaration review
+
+The repaired C0 reference at `090f3d1f` is independently accepted for bounded
+reference adequacy. Its complete frozen development study remains a scientific
+HOLD: JVM candidate admissions are 190/200 and 185/200 at SNR 1/.5; JS gives
+190/200 and 192/200. Every platform's 800 indexed audits and work aggregates
+reconcile. Both platforms must meet the unchanged 190/200 gate; no fresh or
+100k run follows. The two C0 archives retain all raw records, failed JVM exit,
+independent reviews, source identities, and prior reference history.
+
+The seven-file public executor candidate `e6543fb6` passes its actual 72 JVM
+and 48 JS checks and warning-clean compile. Independent review requests a
+repair because public mode, normalization, output/query intent and evidence
+are absent from returned provenance, which retains a false legacy
+`exact-readout=true` claim. Its immutable source and complete review receipts
+are archived separately from the active repair.
