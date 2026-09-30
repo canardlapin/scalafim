@@ -54,7 +54,7 @@ gate_command() {
     documentation) printf '%s\n' 'python3 -S tools/docs/check_first_level_docs.py --check' ;;
     focused_first_level) printf '%s\n' 'bash tools/ci/first-level-gate.sh' ;;
     scientific_coverage) printf '%s\n' 'bash tools/ci/first-level-coverage.sh' ;;
-    compile_all) printf '%s\n' 'sbt scalafimCompileAll' ;;
+    compile_all) printf '%s\n' 'bash tools/prepare-pinned-dependencies.sh && sbt scalafimCompileAll' ;;
     test_all) printf '%s\n' 'bash tools/ci/full-repository-tests.sh' ;;
     performance) printf '%s\n' 'bash tools/ci/first-level-benchmark.sh' ;;
     *) echo "unknown release gate: $1" >&2; return 2 ;;
@@ -133,9 +133,20 @@ run_gate focused_first_level \
 run_gate scientific_coverage \
   "$(gate_command scientific_coverage)" \
   bash tools/ci/first-level-coverage.sh
+
+run_compile_all() {
+  local provider_sbt_opts
+  provider_sbt_opts="-Dsbt.boot.directory=$sbt_cache_root/boot -Dsbt.global.base=$sbt_cache_root/global -Dsbt.ivy.home=$sbt_cache_root/ivy -Dsbt.supershell=false"
+  env \
+    COURSIER_CACHE="$COURSIER_CACHE" \
+    SBT_OPTS="${SBT_OPTS:+$SBT_OPTS }$provider_sbt_opts" \
+    bash tools/prepare-pinned-dependencies.sh || return $?
+  sbt "${sbt_args[@]}" scalafimCompileAll
+}
+
 run_gate compile_all \
   "$(gate_command compile_all)" \
-  sbt "${sbt_args[@]}" scalafimCompileAll
+  run_compile_all
 run_gate test_all \
   "$(gate_command test_all)" \
   bash tools/ci/full-repository-tests.sh

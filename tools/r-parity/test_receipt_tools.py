@@ -24,12 +24,14 @@ class ReceiptToolsSuite(unittest.TestCase):
     self.scala = self.root / "Fixture.scala"
     self.generator = self.root / "generator.R"
     self.lock.parent.mkdir(parents=True)
+    self.serializer = self.root / receipt_tools.SERIALIZER_PATH
     self.lock.write_text(json.dumps({
       "schema_version": receipt_tools.LOCK_SCHEMA,
       "r": {"locale": "C", "packages": {}, "version": "4.5.1"},
       "python": {"packages": {}, "version": "3.11"},
     }))
     self.generator.write_text("# deterministic generator\n")
+    self.serializer.write_text("# deterministic serializer\n")
     self.scala.write_text("object Fixture\n")
     source = {
       "producer": "generator.R",
@@ -69,6 +71,11 @@ class ReceiptToolsSuite(unittest.TestCase):
       receipt_tools.COMPARISON_POLICY,
     )
     self.assertEqual(self.finalize(check=True), 0)
+
+    self.serializer.write_text("# changed serializer\n")
+    with self.assertRaisesRegex(SystemExit, "receipt.environment"):
+      self.finalize(check=True)
+    self.serializer.write_text("# deterministic serializer\n")
 
     payload = json.loads(current_json)
     payload["receipt"]["comparison_policy"]["alignment"] = "best_lag"

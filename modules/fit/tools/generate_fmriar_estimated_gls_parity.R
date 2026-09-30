@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+source(file.path("tools", "r-parity", "receipt_serialization.R"))
+
 # Regenerate the locked fmriAR estimated-GLS receipt and its portable Scala
 # fixture. Normal Scala tests consume only the generated Scala source.
 
@@ -139,7 +141,7 @@ payload <- list(
 
 scala_number <- function(value) {
   if (abs(value) < 5e-16) return("0.0")
-  rendered <- sprintf("%.17g", value)
+  rendered <- receipt_format_number(value)
   if (grepl("[.eE]", rendered)) rendered else paste0(rendered, ".0")
 }
 scala_doubles <- function(values) {
@@ -160,8 +162,11 @@ scala_matrix <- function(value, row_expr, col_expr) {
   )
 }
 
+payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
+payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = 17, pretty = TRUE)
+jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
 message("wrote ", out_file)
 
 scala_lines <- c(

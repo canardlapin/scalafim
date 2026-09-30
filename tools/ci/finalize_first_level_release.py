@@ -31,7 +31,7 @@ GATES = {
   "documentation": "python3 -S tools/docs/check_first_level_docs.py --check",
   "focused_first_level": "bash tools/ci/first-level-gate.sh",
   "scientific_coverage": "bash tools/ci/first-level-coverage.sh",
-  "compile_all": "sbt scalafimCompileAll",
+  "compile_all": "bash tools/prepare-pinned-dependencies.sh && sbt scalafimCompileAll",
   "test_all": "bash tools/ci/full-repository-tests.sh",
   "performance": "bash tools/ci/first-level-benchmark.sh",
 }
@@ -77,6 +77,7 @@ SOURCE_PATHS = (
   "tools/ci/first-level-gate.sh",
   "tools/ci/first-level-release.sh",
   "tools/ci/full-repository-tests.sh",
+  "tools/prepare-pinned-dependencies.sh",
   "tools/docs/check_first_level_docs.py",
   "tools/mutation/ar_na_pilot.py",
   "tools/r-parity/auxiliary-manifest.json",
@@ -222,6 +223,7 @@ def release_inputs(repo_root: Path = REPO) -> dict[str, Any]:
     "tools/ci/full-repository-tests.sh",
     "tools/ci/first-level-benchmark.sh",
     "tools/ci/check_test_inventory.py",
+    "tools/prepare-pinned-dependencies.sh",
   )
   inventory = {
     path: sha256(repo_root / path)

@@ -13,6 +13,7 @@ from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 LOCK_PATH = REPO_ROOT / "tools" / "r-parity" / "reference-lock.json"
+SERIALIZER_PATH = Path("tools") / "r-parity" / "receipt_serialization.R"
 LOCK_SCHEMA = "scalafim-parity-environment-lock/v1"
 COMPARISON_POLICY = {
   "alignment": "identity_only_no_post_hoc_lag_shift",
@@ -105,12 +106,15 @@ def receipt_environment(source: dict[str, Any], lock: dict[str, Any], lock_path:
     raise SystemExit(f"receipt generator does not exist: {producer}")
 
   r_lock = lock["r"]
+  serializer_path = REPO_ROOT / SERIALIZER_PATH
   return {
     "generator_sha256": file_sha256(producer_path),
     "locale": str(r_lock["locale"]),
     "lock_path": str(lock_path.relative_to(REPO_ROOT)),
     "lock_sha256": file_sha256(lock_path),
     "runtime": f"R {source['r_version']}",
+    "serializer_path": str(SERIALIZER_PATH),
+    "serializer_sha256": file_sha256(serializer_path),
   }
 
 

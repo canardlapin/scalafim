@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+source(file.path("tools", "r-parity", "receipt_serialization.R"))
+
 # Independent sampled-nuisance and direct-QR receipt for P3.3 / S15.
 #
 # R fmrihrf owns event rendering, this script owns deterministic fMRIPrep-like
@@ -39,6 +41,40 @@ git_revision <- function(path) {
 
 matrix_rows <- function(value) {
   lapply(seq_len(nrow(value)), function(index) unname(value[index, ]))
+}
+
+reference_computation_digits <- 12L
+canonicalize_reference_computation <- function(value) {
+  stopifnot(is.double(value))
+  value <- signif(value, digits = reference_computation_digits)
+  value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  value
+}
+reference_computation_convention <- function() {
+  paste0(
+    "externally generated design coordinates are fixed at ",
+    reference_computation_digits,
+    " significant decimal digits before response synthesis and fitting"
+  )
+}
+reference_result_coefficient_digits <- 9L
+reference_result_covariance_digits <- 7L
+reference_result_hypothesis_digits <- 10L
+canonicalize_reference_result <- function(value, digits) {
+  if (is.list(value)) return(lapply(value, canonicalize_reference_result, digits = digits))
+  if (is.double(value)) {
+    value <- signif(value, digits = digits)
+    value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  }
+  value
+}
+reference_result_convention <- function() {
+  paste0(
+    "derived coefficients use ", reference_result_coefficient_digits,
+    ", covariance matrices use ", reference_result_covariance_digits,
+    ", and hypothesis summaries use ", reference_result_hypothesis_digits,
+    " significant decimal digits"
+  )
 }
 
 run_length <- 80L
@@ -163,6 +199,8 @@ colnames(drift) <- unlist(lapply(seq_len(n_runs), function(run) paste0("drift_",
 colnames(intercepts) <- paste0("intercept_", seq_len(n_runs))
 colnames(nuisance) <- unlist(lapply(seq_len(n_runs), function(run) paste0(retained_names, "_run_", run)))
 full_design <- cbind(task_design, drift, intercepts, nuisance)
+full_design <- canonicalize_reference_computation(full_design)
+task_design <- full_design[, seq_len(ncol(task_design)), drop = FALSE]
 
 beta <- rep(0, ncol(full_design))
 beta[1:2] <- c(0.75, -0.25)
@@ -202,6 +240,31 @@ t_estimate <- drop(crossprod(t_weights, task_coefficients))
 t_standard_error <- sqrt(drop(crossprod(t_weights, task_covariance %*% t_weights)))
 t_statistic <- t_estimate / t_standard_error
 f_statistic <- drop(crossprod(task_coefficients, solve(task_covariance, task_coefficients))) / 2
+
+# QR and cross-product reductions can vary in their last bits even when the
+# locked design is identical. Canonicalize only derived fit results, on grids
+# much finer than this scenario's frozen tolerance; retain design and response
+# evidence at the ordinary 13-digit receipt precision.
+full_coefficients <- canonicalize_reference_result(
+  unname(fit$coefficients),
+  reference_result_coefficient_digits
+)
+task_coefficients <- canonicalize_reference_result(
+  task_coefficients,
+  reference_result_coefficient_digits
+)
+covariance <- canonicalize_reference_result(
+  covariance,
+  reference_result_covariance_digits
+)
+task_covariance <- canonicalize_reference_result(
+  task_covariance,
+  reference_result_covariance_digits
+)
+t_estimate <- canonicalize_reference_result(t_estimate, reference_result_hypothesis_digits)
+t_standard_error <- canonicalize_reference_result(t_standard_error, reference_result_hypothesis_digits)
+t_statistic <- canonicalize_reference_result(t_statistic, reference_result_hypothesis_digits)
+f_statistic <- canonicalize_reference_result(f_statistic, reference_result_hypothesis_digits)
 
 source <- list(
   fmrihrf_revision = git_revision(normalizePath(hrf_pkg, mustWork = FALSE)),
@@ -257,7 +320,7 @@ outputs <- list(
   residual_df = fit$df.residual,
   task_coefficients = task_coefficients,
   task_covariance = matrix_rows(task_covariance),
-  full_coefficients = unname(fit$coefficients),
+  full_coefficients = full_coefficients,
   full_covariance = matrix_rows(covariance),
   t_hypotheses = list(
     `task-a-minus-b` = list(
@@ -279,7 +342,7 @@ receipt <- list(
   producer_command = "LC_ALL=C LANG=C Rscript tools/r-parity/generate_realistic_nuisance_receipt.R && python3 tools/r-parity/finalize_realistic_nuisance_receipt.py",
   conventions = list(
     dtype = "float64",
-    json_encoding = "JSON numbers are finite IEEE-754 binary64 values serialized with 17 significant digits",
+    json_encoding = "JSON numbers are finite IEEE-754 binary64 values serialized with 13 significant digits",
     matrix_orientation = "rows are scans; nuisance columns retain their semantic fMRIPrep-style names",
     task_design = "each run is rendered independently with fmrihrf::regressor_design at 0.05-second precision and then concatenated",
     nuisance = "motion, first derivatives, declared squares, CompCor-like components, spikes, a constant alias, an exact duplicate, and a retained near duplicate",
@@ -305,7 +368,7 @@ scala_string <- function(value) {
 scala_number <- function(value) {
   if (is.na(value)) "Double.NaN"
   else if (abs(value) < 5e-16) "0.0"
-  else sprintf("%.17g", value)
+  else receipt_format_number(value)
 }
 scala_vector <- function(values, render) {
   if (length(values) == 0) "Vector.empty"
@@ -324,8 +387,13 @@ scala_run <- function(value) {
   paste0("RealisticNuisanceRun(Vector(", paste(entries, collapse = ", "), "))")
 }
 
+payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
+payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+payload$receipt$conventions$reference_computation_boundary <- reference_computation_convention()
+payload$receipt$conventions$derived_result_serialization <- reference_result_convention()
+
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = 17, pretty = TRUE)
+jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
 message("wrote ", out_file)
 
 dir.create(dirname(scala_out), recursive = TRUE, showWarnings = FALSE)
@@ -356,7 +424,7 @@ writeLines(
     paste0("  val residualDf: Int = ", as.integer(fit$df.residual)),
     paste0("  val taskCoefficients: Vector[Double] = ", scala_doubles(task_coefficients)),
     paste0("  val taskCovariance: Vector[Double] = ", scala_doubles(as.vector(t(task_covariance)))),
-    paste0("  val fullCoefficients: Vector[Double] = ", scala_doubles(fit$coefficients)),
+    paste0("  val fullCoefficients: Vector[Double] = ", scala_doubles(full_coefficients)),
     paste0("  val fullCovariance: Vector[Vector[Double]] = ", scala_matrix(matrix_rows(covariance))),
     paste0("  val taskDifference: RealisticNuisanceTExpected = RealisticNuisanceTExpected(", scala_number(t_estimate), ", ", scala_number(t_standard_error), ", ", scala_number(t_statistic), ")"),
     paste0("  val taskOmnibus: RealisticNuisanceFExpected = RealisticNuisanceFExpected(2, ", as.integer(fit$df.residual), ", ", scala_number(f_statistic), ")"),

@@ -28,9 +28,10 @@ explicit reference domain and coefficient transform.
 This is a breaking scientific correction: refit existing analyses. Changing
 normalization cannot convert the old canonical shape or second-time-derivative
 basis into the corrected basis. No existing historical receipt is recertified
-by this change. The separate corrected structural fixture uses the local source
-hashes in `spmg-correction-source.json`; the old locked structural receipt and
-fixture remain historical artifacts.
+by this change. The separate corrected structural fixture is bound to immutable `fmrihrf`
+commit `daca7ba44456052200d361b579a2adb52ddc4d6e` and the source hashes in
+`spmg-correction-source.json`; the old locked structural receipt and fixture
+remain historical artifacts.
 
 Validation uses independent SciPy 1.17.1 gamma PDF/CDF values, finite differences
 of the public basis, R normalization contracts, refreshed R HRF/design fixtures,
@@ -47,8 +48,9 @@ References:
 
 ## Reproducing the reference values
 
-Load the corrected local HRF package before loading `fmridesign` (otherwise R
-may resolve the installed, older dependency):
+Check out `fmrihrf` commit `daca7ba44456052200d361b579a2adb52ddc4d6e`
+and load it before loading `fmridesign` (otherwise R may resolve an installed,
+older dependency):
 
 ```r
 pkgload::load_all("~/code/fmrihrf", quiet = TRUE)
@@ -83,4 +85,6 @@ The correction was subsequently applied cleanly on top of Cascade34 commit
 `fd62ea7` after its session ended and reservations cleared. Combined JVM and
 Scala.js HRF (250 each), law (82 each), and design (238 each) suites passed:
 1,140 tests total. The integrated `scalafimCompileAll` gate also passed with
-no warnings or errors. Source hashes for the tested R changes still match.
+no warnings or errors. The R correction is published on `bbuchsbaum/fmrihrf` at immutable commit
+`daca7ba44456052200d361b579a2adb52ddc4d6e`; the retained source hashes match
+that clean commit.

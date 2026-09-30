@@ -35,6 +35,26 @@ class GlsSuite extends munit.FunSuite:
       assert(math.abs(a - e) <= tol, clues(i, a, e))
     }
 
+  private def assertMatrixMixedClose(
+      actual: DMat,
+      expected: DMat,
+      absoluteTolerance: Double,
+      relativeTolerance: Double
+  ): Unit =
+    assertEquals(actual.rows, expected.rows)
+    assertEquals(actual.cols, expected.cols)
+    var row = 0
+    while row < actual.rows do
+      var col = 0
+      while col < actual.cols do
+        val a = actual(row, col)
+        val e = expected(row, col)
+        val scale = math.max(math.abs(a), math.abs(e))
+        val tolerance = absoluteTolerance + relativeTolerance * scale
+        assert(math.abs(a - e) <= tolerance, clues(row, col, a, e, tolerance))
+        col += 1
+      row += 1
+
   private def assertFinite(values: Iterable[Double]): Unit =
     assert(values.forall(_.isFinite), clues(values.toVector))
 
@@ -739,7 +759,22 @@ class GlsSuite extends munit.FunSuite:
       ).fold(error => fail(error.message), identity)
 
     assertMatrixClose(transformed.design, GaleTestMatrix.fromRows(fixture.whitenedDesignRows), 1e-12)
-    assertMatrixClose(transformed.response, GaleTestMatrix.fromRows(fixture.whitenedResponseRows), 1e-12)
-    assertMatrixClose(direct.coefficients.value, GaleTestMatrix.fromRows(fixture.coefficients), 1e-12)
-    assertMatrixClose(direct.normalizedCovariance, GaleTestMatrix.fromRows(fixture.normalizedCovariance), 1e-12)
+    assertMatrixMixedClose(
+      transformed.response,
+      GaleTestMatrix.fromRows(fixture.whitenedResponseRows),
+      absoluteTolerance = 1e-12,
+      relativeTolerance = 5e-13
+    )
+    assertMatrixMixedClose(
+      direct.coefficients.value,
+      GaleTestMatrix.fromRows(fixture.coefficients),
+      absoluteTolerance = 1e-11,
+      relativeTolerance = 5e-13
+    )
+    assertMatrixMixedClose(
+      direct.normalizedCovariance,
+      GaleTestMatrix.fromRows(fixture.normalizedCovariance),
+      absoluteTolerance = 1e-11,
+      relativeTolerance = 5e-13
+    )
   }

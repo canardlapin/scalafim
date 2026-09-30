@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+source(file.path("tools", "r-parity", "receipt_serialization.R"))
+
 # Independent delayed-match-to-sample response and inference receipt.
 #
 # R fmridesign constructs the event regressors; base R owns centering,
@@ -42,6 +44,40 @@ git_revision <- function(path) {
 
 matrix_rows <- function(value) {
   lapply(seq_len(nrow(value)), function(index) unname(value[index, ]))
+}
+
+reference_computation_digits <- 12L
+canonicalize_reference_computation <- function(value) {
+  stopifnot(is.double(value))
+  value <- signif(value, digits = reference_computation_digits)
+  value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  value
+}
+reference_computation_convention <- function() {
+  paste0(
+    "externally generated design coordinates are fixed at ",
+    reference_computation_digits,
+    " significant decimal digits before response synthesis and fitting"
+  )
+}
+reference_result_coefficient_digits <- 9L
+reference_result_covariance_digits <- 7L
+reference_result_hypothesis_digits <- 10L
+canonicalize_reference_result <- function(value, digits) {
+  if (is.list(value)) return(lapply(value, canonicalize_reference_result, digits = digits))
+  if (is.double(value)) {
+    value <- signif(value, digits = digits)
+    value[is.finite(value) & abs(value) < RECEIPT_ZERO_THRESHOLD] <- 0
+  }
+  value
+}
+reference_result_convention <- function() {
+  paste0(
+    "derived coefficients use ", reference_result_coefficient_digits,
+    ", covariance matrices use ", reference_result_covariance_digits,
+    ", and hypothesis summaries use ", reference_result_hypothesis_digits,
+    " significant decimal digits"
+  )
 }
 
 # fmrihrf stores multi-condition HRF values in condition-major order. Reorder
@@ -191,6 +227,7 @@ run_design <- function(run_id) {
 design <- unname(do.call(rbind, lapply(levels(events$run), run_design)))
 stopifnot(nrow(design) == 360L, ncol(design) == 46L)
 colnames(design) <- semantic_names
+design <- canonicalize_reference_computation(design)
 
 beta <- setNames(rep(0, ncol(design)), colnames(design))
 beta[c("sample_stimulus.face", "sample_stimulus.scene")] <- c(0.8, -0.4)
@@ -350,6 +387,32 @@ f_results <- lapply(f_contrasts, function(contrast) {
   list(numerator_df = numerator_df, denominator_df = fixed_df, statistic = statistic)
 })
 
+# The same locked R/BLAS environment can choose different last-bit reduction
+# orders for QR-derived values. Preserve substantially more precision than the
+# scenario accepts, but serialize those derived result classes on declared,
+# scale-aware decimal grids so candidate regeneration is reproducible.
+run_fits <- lapply(run_fits, function(run) {
+  run$coefficients <- canonicalize_reference_result(
+    run$coefficients,
+    reference_result_coefficient_digits
+  )
+  run$covariance <- canonicalize_reference_result(
+    run$covariance,
+    reference_result_covariance_digits
+  )
+  run
+})
+fixed_coefficients <- canonicalize_reference_result(
+  fixed_coefficients,
+  reference_result_coefficient_digits
+)
+fixed_covariance <- canonicalize_reference_result(
+  fixed_covariance,
+  reference_result_covariance_digits
+)
+t_results <- canonicalize_reference_result(t_results, reference_result_hypothesis_digits)
+f_results <- canonicalize_reference_result(f_results, reference_result_hypothesis_digits)
+
 fmridesign_root <- normalizePath(r_pkg, mustWork = FALSE)
 fmrihrf_root <- normalizePath(hrf_pkg, mustWork = FALSE)
 source_md5 <- function(path) {
@@ -391,7 +454,7 @@ inputs <- list(
     stimulus = as.character(events$stimulus),
     load = as.character(events$load),
     match = as.character(events$match),
-    rt = ifelse(is.na(events$rt), "NaN", format(events$rt, digits = 17, scientific = FALSE, trim = TRUE))
+    rt = ifelse(is.na(events$rt), "NaN", format(events$rt, digits = RECEIPT_SIGNIFICANT_DIGITS, scientific = FALSE, trim = TRUE))
   ),
   sampling_frame = list(blocklens = c(180, 180), tr = c(1, 1), start_time = c(0, 0)),
   precision = precision,
@@ -445,7 +508,7 @@ scala_string <- function(value) {
 scala_number <- function(value) {
   if (is.na(value)) "Double.NaN"
   else if (abs(value) < 5e-16) "0.0"
-  else sprintf("%.17g", value)
+  else receipt_format_number(value)
 }
 scala_vector <- function(values, render) {
   if (length(values) == 0) "Vector.empty"
@@ -478,8 +541,13 @@ scala_f_map <- function(values) {
   paste0("Map(", paste(entries, collapse = ", "), ")")
 }
 
+payload$outputs <- canonicalize_receipt_numbers(payload$outputs)
+payload$receipt$conventions$reference_serialization <- receipt_serialization_convention()
+payload$receipt$conventions$reference_computation_boundary <- reference_computation_convention()
+payload$receipt$conventions$derived_result_serialization <- reference_result_convention()
+
 dir.create(dirname(out_file), recursive = TRUE, showWarnings = FALSE)
-jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = 17, pretty = TRUE)
+jsonlite::write_json(payload, out_file, auto_unbox = TRUE, digits = RECEIPT_SIGNIFICANT_DIGITS, pretty = TRUE)
 message("wrote ", out_file)
 
 dir.create(dirname(scala_out), recursive = TRUE, showWarnings = FALSE)
