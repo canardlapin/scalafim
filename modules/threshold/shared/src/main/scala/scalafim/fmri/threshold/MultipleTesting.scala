@@ -116,9 +116,9 @@ object MaxT:
     * Draws stream through [[MaxNull.reduce]], so no draws-by-voxels matrix is
     * built. The reject mask, the adjusted p-value map and the cutoff all derive
     * from the same max-null distribution: a voxel is rejected iff its adjusted
-    * p-value is at most `alpha`, iff the cutoff rejects its oriented score.
-    * P-values are NaN outside the analysis mask; the cutoff is on the oriented
-    * scale.
+    * p-value is at most `alpha`, iff [[MapThresholdResult.rejects]] accepts its
+    * raw statistic. P-values are NaN outside the analysis mask. An exact
+    * enumeration must contain the identity draw.
     */
   def runMap(
     statistic: StatisticMap,
@@ -132,8 +132,9 @@ object MaxT:
         case Some(m) => StatisticField.fromMap(statistic, m, alternative)
         case None    => StatisticField.fromMap(statistic, alternative)
       field = statisticField.evidence
-      nulls <- MaxNull.reduce(nullDraw, field.size, alternative, statistic.orientation)
-      p <- MaxNull.orientedPValues(field.valuesCopy, nulls)
+      observed = field.valuesCopy
+      nulls <- MaxNull.reduceOriented(nullDraw, observed, alternative, statistic.orientation)
+      p <- MaxNull.orientedPValues(observed, nulls)
       cutoff <- MaxNull.cutoff(nulls, alpha)
       reject <- field.maskFromMaskSpace(rejectedIndices(p, alpha), "MaxT")
     yield
@@ -148,6 +149,7 @@ object MaxT:
         reject = reject,
         pValueSemantics = ThresholdPValues.Adjusted(pMap, CorrectionPolicy.MaxTSingleStep),
         cutoff = cutoff,
+        alternative = alternative,
         params = Map(
           "alpha" -> alpha.value.toString,
           "alternative" -> alternative.toString,
@@ -264,21 +266,39 @@ object MaxNull:
     *
     * Each draw is requested exactly once and reduced before the next is
     * requested, so memory is one draw plus one maximum per draw, never a
-    * draws-by-tests matrix. Draw values are oriented with `alternative`, which
-    * must be admissible for `orientation`; unsigned evidence must be
-    * non-negative. The reference convention comes from the draw set. Any
-    * failed or invalid draw is reported with its index, never dropped.
+    * draws-by-tests matrix. `observed` holds the raw observed statistics in
+    * the same mask-space order as the draws; it fixes the field size and, for
+    * an exact enumeration, identifies the required identity draw. Draw values
+    * are oriented with `alternative`, which must be admissible for
+    * `orientation`; unsigned evidence must be non-negative. The reference
+    * convention comes from the draw set. Any failed or invalid draw is
+    * reported with its index, never dropped.
     */
   def reduce(
     nullDraw: NullDraw,
-    fieldSize: Int,
+    observed: Array[Double],
     alternative: ThresholdAlternative,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, MaxNullDistribution] =
-    if fieldSize <= 0 then return Left(ThresholdError.InvalidArgument("fieldSize", "must be positive"))
+    if observed.isEmpty then return Left(ThresholdError.InvalidArgument("observed", "must be non-empty"))
+    validateObserved(observed) match
+      case Left(err) => return Left(err)
+      case Right(()) => ()
+    reduceOriented(nullDraw, orient(observed, alternative), alternative, orientation)
+
+  /** [[reduce]] for observed statistics already oriented by `alternative`. */
+  private[threshold] def reduceOriented(
+    nullDraw: NullDraw,
+    orientedObserved: Array[Double],
+    alternative: ThresholdAlternative,
+    orientation: EvidenceOrientation
+  ): Either[ThresholdError, MaxNullDistribution] =
     alternative.validate(orientation) match
       case Left(err) => return Left(err)
       case Right(()) => ()
+    val fieldSize = orientedObserved.length
+    val requireIdentity = nullDraw.reference == NullReference.ExactEnumeration
+    var identitySeen = false
     val ledger = NullDrawLedger(nullDraw, fieldSize)
     val maxima = new Array[Double](ledger.size)
     var b = 0
@@ -287,6 +307,7 @@ object MaxNull:
         case Left(err) => return Left(err)
         case Right(raw) =>
           var mx = Double.NegativeInfinity
+          var matches = requireIdentity && !identitySeen
           var i = 0
           while i < raw.length do
             val rawValue = raw(i)
@@ -294,10 +315,13 @@ object MaxNull:
               return Left(ThresholdError.NullDrawFailed(b, ThresholdError.NegativeUnsignedEvidence(i, rawValue)))
             val value = alternative.applyTo(rawValue)
             if value > mx then mx = value
+            if matches && value != orientedObserved(i) then matches = false
             i += 1
+          if matches then identitySeen = true
           maxima(b) = mx
       b += 1
-    Right(MaxNullDistribution.unsafe(maxima, alternative, nullDraw.reference))
+    if requireIdentity && !identitySeen then Left(ThresholdError.MissingIdentityRow)
+    else Right(MaxNullDistribution.unsafe(maxima, alternative, nullDraw.reference))
 
   /** Family-wise adjusted p-values for raw `observed` statistics, oriented by
     * the distribution's alternative and computed with its reference convention.

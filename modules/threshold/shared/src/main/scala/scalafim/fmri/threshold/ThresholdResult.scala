@@ -103,20 +103,25 @@ sealed trait ThresholdResult:
   def pValues: Option[SomeScalarVolume[Double]] =
     pValueSemantics.valuesOption
 
-/** A voxelwise result whose `cutoff` applies to each voxel's statistic. */
+/** A voxelwise result. `cutoff` is on the scale oriented by `alternative`:
+  * a raw voxel statistic `s` is rejected iff the cutoff rejects
+  * `alternative.applyTo(s)`. Use [[rejects]] rather than comparing raw
+  * statistics with the cutoff; under `Less` or `TwoSided` the two scales
+  * differ.
+  */
 final case class MapThresholdResult(
     method: ThresholdMethod,
     reject: SomeMaskVolume,
     pValueSemantics: ThresholdPValues,
     cutoff: ThresholdCutoff,
+    alternative: ThresholdAlternative,
     params: Map[String, String] = Map.empty
 ) extends ThresholdResult:
 
-  /** Legacy inclusive-double view. Consumers apply `score >= threshold`; code
-    * that retains the cutoff should use its typed decision method.
-    */
-  def threshold: Double =
-    cutoff.toLegacyDouble
+  /** Decide one raw voxel statistic on this result's scale. */
+  def rejects(score: Double): Either[ThresholdError, Boolean] =
+    if score.isFinite then cutoff.rejects(alternative.applyTo(score))
+    else Left(ThresholdError.NonFiniteData("threshold score"))
 
 object MapThresholdResult:
   def fromLegacy(
@@ -127,7 +132,9 @@ object MapThresholdResult:
     params: Map[String, String] = Map.empty
   ): Either[ThresholdError, MapThresholdResult] =
     ThresholdCutoff.fromLegacy(threshold).map { cutoff =>
-      MapThresholdResult(method, reject, ThresholdPValues.fromOption(pValues), cutoff, params)
+      // Legacy consumers compare raw scores, `score >= threshold`: the
+      // greater alternative.
+      MapThresholdResult(method, reject, ThresholdPValues.fromOption(pValues), cutoff, ThresholdAlternative.Greater, params)
     }
 
 /** A hierarchical scan. `reject` is exactly the union of the significant

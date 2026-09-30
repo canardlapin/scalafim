@@ -43,7 +43,11 @@ class NullReferenceSuite extends munit.FunSuite:
       alternative <- alternatives
       reference <- references
     do
-      val nulls = value(MaxNull.reduce(FixedNullDraw(draws, reference), 2, alternative, EvidenceOrientation.Signed))
+      // The Monte Carlo reduction orients the raw draws; the exact-enumeration
+      // arithmetic is then exercised on the same maxima through the trust
+      // boundary, since these draw sets need not contain an identity draw.
+      val streamed = value(MaxNull.reduce(FixedNullDraw(draws, NullReference.MonteCarlo), Array(0.0, 0.0), alternative, EvidenceOrientation.Signed))
+      val nulls = value(MaxNullDistribution.fromOrientedMaxima(streamed.toArray, alternative, reference))
       val oracleMaxima = draws.map(field => field.map(oracleOrient(alternative, _)).max)
       assertEquals(nulls.toArray.toVector, oracleMaxima)
       val b = draws.length
@@ -88,8 +92,8 @@ class NullReferenceSuite extends munit.FunSuite:
       val maxTMonte = value(MaxT.singleStep(observed, matrix(others), alpha, alternative, NullReference.MonteCarlo))
       assertEquals(maxTExact.map(_.adjustedP.value), maxTMonte.map(_.adjustedP.value))
 
-      val exact = value(MaxNull.reduce(FixedNullDraw(exactRows, NullReference.ExactEnumeration), m, alternative, EvidenceOrientation.Signed))
-      val monte = value(MaxNull.reduce(FixedNullDraw(others, NullReference.MonteCarlo), m, alternative, EvidenceOrientation.Signed))
+      val exact = value(MaxNull.reduce(FixedNullDraw(exactRows, NullReference.ExactEnumeration), observed, alternative, EvidenceOrientation.Signed))
+      val monte = value(MaxNull.reduce(FixedNullDraw(others, NullReference.MonteCarlo), observed, alternative, EvidenceOrientation.Signed))
       assertEquals(value(MaxNull.pValueDoubles(observed, exact)).toVector, value(MaxNull.pValueDoubles(observed, monte)).toVector)
 
   test("less and two-sided alternatives equal the greater alternative on negated and absolute inputs"):
@@ -113,7 +117,7 @@ class NullReferenceSuite extends munit.FunSuite:
 
   test("a hand-computed less-alternative max-null orients observed and null draws together"):
     val draws = Vector(Array(1.0, -3.0), Array(2.0, -1.0), Array(0.0, -5.0))
-    val nulls = value(MaxNull.reduce(FixedNullDraw(draws, NullReference.MonteCarlo), 2, ThresholdAlternative.Less, EvidenceOrientation.Signed))
+    val nulls = value(MaxNull.reduce(FixedNullDraw(draws, NullReference.MonteCarlo), Array(0.0, 0.0), ThresholdAlternative.Less, EvidenceOrientation.Signed))
     assertEquals(nulls.toArray.toVector, Vector(3.0, 1.0, 5.0))
     assertEquals(nulls.alternative, ThresholdAlternative.Less)
     // Observed -4 orients to 4; only the draw with maximum 5 reaches it.
@@ -168,11 +172,11 @@ class NullReferenceSuite extends munit.FunSuite:
   test("streaming reduction requests each draw once and validates it"):
     val draws = Vector(Array(1.0, 2.0), Array(0.5, -1.0), Array(3.0, 0.0))
     val counting = FixedNullDraw(draws, NullReference.MonteCarlo)
-    value(MaxNull.reduce(counting, 2, ThresholdAlternative.TwoSided, EvidenceOrientation.Signed))
+    value(MaxNull.reduce(counting, Array(0.0, 0.0), ThresholdAlternative.TwoSided, EvidenceOrientation.Signed))
     assertEquals(counting.requests.toVector, Vector(0, 1, 2))
 
     def reduce(rows: Vector[Array[Double]], alternative: ThresholdAlternative, orientation: EvidenceOrientation) =
-      MaxNull.reduce(FixedNullDraw(rows, NullReference.MonteCarlo), 2, alternative, orientation).left.toOption
+      MaxNull.reduce(FixedNullDraw(rows, NullReference.MonteCarlo), Array(0.0, 0.0), alternative, orientation).left.toOption
 
     assertEquals(reduce(Vector(Array(1.0)), ThresholdAlternative.Greater, EvidenceOrientation.Signed), Some(ThresholdError.NullDrawFailed(0, ThresholdError.ShapeMismatch("null draw", "2", "1"))))
     assertEquals(reduce(Vector(Array(1.0, Double.NaN)), ThresholdAlternative.Greater, EvidenceOrientation.Signed), Some(ThresholdError.NullDrawFailed(0, ThresholdError.NonFiniteData("null draw"))))
@@ -182,6 +186,22 @@ class NullReferenceSuite extends munit.FunSuite:
       Some(ThresholdError.IncompatibleAlternative(ThresholdAlternative.Less, EvidenceOrientation.Unsigned))
     )
     assert(MaxNullDistribution.fromOrientedMaxima(Array.emptyDoubleArray, ThresholdAlternative.Greater, NullReference.MonteCarlo).isLeft)
+    assert(MaxNull.reduce(FixedNullDraw(draws, NullReference.MonteCarlo), Array.emptyDoubleArray, ThresholdAlternative.Greater, EvidenceOrientation.Signed).isLeft)
+
+  test("streamed exact enumeration requires the identity draw, not only dominating draws"):
+    val observed = Array(1.0, -2.0)
+    val dominating = Vector(Array(5.0, 5.0), Array(4.0, 3.0))
+    assertEquals(
+      MaxNull.reduce(FixedNullDraw(dominating, NullReference.ExactEnumeration), observed, ThresholdAlternative.TwoSided, EvidenceOrientation.Signed).left.toOption,
+      Some(ThresholdError.MissingIdentityRow)
+    )
+    // A sign-flipped copy is the identity under the two-sided alternative only.
+    val withIdentity = Array(-1.0, 2.0) +: dominating
+    assert(MaxNull.reduce(FixedNullDraw(withIdentity, NullReference.ExactEnumeration), observed, ThresholdAlternative.TwoSided, EvidenceOrientation.Signed).isRight)
+    assertEquals(
+      MaxNull.reduce(FixedNullDraw(withIdentity, NullReference.ExactEnumeration), observed, ThresholdAlternative.Greater, EvidenceOrientation.Signed).left.toOption,
+      Some(ThresholdError.MissingIdentityRow)
+    )
 
   test("HierScan under the less alternative equals the greater alternative on negated statistic and draws"):
     val stat = hierField(sign = -1.0)

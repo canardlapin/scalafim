@@ -8,8 +8,9 @@ package scalafim.fmri.threshold
   * would change the reference distribution. Each draw is fingerprinted on first
   * fetch, and a later fetch of the same index that differs is refused as
   * [[ThresholdError.NondeterministicNullDraw]]: hierarchical procedures revisit
-  * draws and rely on one common null action per index. Memory is one
-  * fingerprint per draw.
+  * draws and rely on one common null action per index. The fingerprint is
+  * over raw bits, so a draw that alternates `-0.0` and `0.0` counts as changed.
+  * Memory is one fingerprint per draw.
   */
 private[threshold] final class NullDrawLedger(nullDraw: NullDraw, fieldSize: Int):
   private val draws = nullDraw.nPermutations.value
@@ -23,6 +24,7 @@ private[threshold] final class NullDrawLedger(nullDraw: NullDraw, fieldSize: Int
     nullDraw.reference
 
   def fetch(index: Int): Either[ThresholdError, Array[Double]] =
+    if index < 0 || index >= draws then return Left(ThresholdError.IndexOutOfBounds(index, draws))
     nullDraw.draw(index) match
       case Left(cause) =>
         Left(ThresholdError.NullDrawFailed(index, cause))

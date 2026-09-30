@@ -251,15 +251,14 @@ object HierScan:
       row += 1
     Right(out.result())
 
-  /** Orient one ledger-validated draw (correct length, finite values). */
+  /** Orient one ledger-validated draw (correct length, finite values). The
+    * alternative was admitted for the evidence by `StatisticField.fromMap`.
+    */
   private def transformDraw(
     raw: Array[Double],
     alternative: ThresholdAlternative,
     orientation: EvidenceOrientation
   ): Either[ThresholdError, Array[Double]] =
-    alternative.validate(orientation) match
-      case Left(err) => return Left(err)
-      case Right(()) => ()
     val out = new Array[Double](raw.length)
     var i = 0
     while i < raw.length do

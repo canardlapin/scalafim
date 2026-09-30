@@ -18,6 +18,13 @@ packet is the second bounded packet and builds on packet 1
   through `MaxNull.reduce`. From that single distribution it derives the
   reject mask, an adjusted p-value map (`ThresholdPValues.Adjusted(_,
   MaxTSingleStep)`, NaN outside the mask) and the oriented-scale cutoff.
+  `MapThresholdResult` records its `alternative` and decides raw scores
+  with `rejects(score)`. The legacy `threshold` double is removed, because
+  it disagreed with `reject` under `Less` and `TwoSided`.
+- **Streamed identity check.** `MaxNull.reduce` now takes the observed
+  statistics rather than a field size. Under exact enumeration it requires a
+  draw equal to the oriented observed values (`MissingIdentityRow`), matching
+  the matrix procedures, at O(n) per draw with no extra memory.
 - **Null-draw accounting.** The new private `NullDrawLedger` fetches draws
   for `MaxNull.reduce` and `HierScan`:
   - A failed, wrong-length, non-finite or invalid unsigned draw aborts with
@@ -50,6 +57,29 @@ New `DecisionScaleSuite` (shared):
 - **Draw accounting.** A failed draw is reported with its index by both
   maxT and HierScan. A drifting draw is refused at the deeper-node revisit,
   and a deterministic control shows the scan does reach that revisit.
+
+## Independent review
+
+A fresh-context reviewer ran the gate (40/40 JVM and JS) and returned
+ACCEPT-WITH-FIXES on `20fa13d0`. It confirmed the index mapping,
+single orientation, ledger routing and hashing, and the API removals. Its
+findings are fixed in the follow-up commit:
+
+- **Medium: `MapThresholdResult.threshold` disagreed with `reject` under
+  `Less`.** The result now carries its alternative and decides raw scores
+  with `rejects`, and `threshold` is removed.
+- **Medium: `runMap` admitted mislabelled exact enumeration.** The streamed
+  identity check above closes this.
+- **Low:** alternative admissibility is no longer re-checked, and wrapped,
+  inside HierScan's per-draw loop. The ledger bounds-checks indices. The
+  fingerprint's treatment of -0.0 is documented. New tests cover unsigned
+  maps, exact enumeration through `runMap`, non-finite draws, and
+  out-of-range fetches.
+
+| Gate after fixes | Result | Log SHA-256 prefix |
+| --- | --- | --- |
+| `sbt thresholdJVM/test thresholdJS/test` | 44/44 JVM, 44/44 JS, exit 0, no warnings | `03da04e7aa128807` |
+| Mutation check: streamed identity check disabled | 2 tests fail, exit 1; source restored | `bfaf1194c2973507` |
 
 ## Remaining scope on the ticket
 

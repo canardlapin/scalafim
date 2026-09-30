@@ -43,11 +43,14 @@ class DecisionScaleSuite extends munit.FunSuite:
           assertEqualsDouble(p, expectedP, 0.0)
           assertEquals(rejected, expectedP <= alpha.value, s"voxel $v under $alternative")
           assertEquals(value(result.cutoff.rejects(t)), rejected, s"cutoff at voxel $v under $alternative")
+          assertEquals(value(result.rejects(stat(v))), rejected, s"raw decision at voxel $v under $alternative")
           if rejected then rejections += 1
         else
           assert(pMap.valueAtCanonicalOrdinal(v).isNaN)
           assert(!result.reject.valueAtCanonicalOrdinal(v))
       assert(rejections > 0, s"$alternative rejected nothing")
+      assertEquals(result.alternative, alternative)
+      assert(compileErrors("(??? : scalafim.fmri.threshold.MapThresholdResult).threshold").nonEmpty)
       assertEquals(result.params.get("nullReference"), Some("MonteCarlo"))
 
   test("voxelwise maxT map equals the matrix maxT procedure on the same draws"):
@@ -112,6 +115,58 @@ class DecisionScaleSuite extends munit.FunSuite:
       Some(ThresholdError.NondeterministicNullDraw(0))
     )
 
+  test("voxelwise maxT on an unsigned -log10 p map accepts only the greater alternative"):
+    val rng = scala.util.Random(41L)
+    val stat = Array.tabulate(n)(i => if i == 9 then 12.0 else math.abs(rng.nextGaussian()))
+    val draws = Vector.fill(29)(Array.fill(n)(math.abs(rng.nextGaussian())))
+    val map = StatisticMap.negLog10P(volume(stat), PSide.OneSided)
+    val result = value(MaxT.runMap(map, FixedNullDraw(draws), None, Alpha.unsafe(0.1), ThresholdAlternative.Greater))
+    assert(result.reject.valueAtCanonicalOrdinal(9))
+    assertEquals(
+      MaxT.runMap(map, FixedNullDraw(draws), None, Alpha.unsafe(0.1), ThresholdAlternative.TwoSided).left.toOption,
+      Some(ThresholdError.IncompatibleAlternative(ThresholdAlternative.TwoSided, EvidenceOrientation.Unsigned))
+    )
+    val negativeDraw = draws.updated(3, draws(3).updated(5, -0.5))
+    assertEquals(
+      MaxT.runMap(map, FixedNullDraw(negativeDraw), None, Alpha.unsafe(0.1), ThresholdAlternative.Greater).left.toOption,
+      Some(ThresholdError.NullDrawFailed(3, ThresholdError.NegativeUnsignedEvidence(5, -0.5)))
+    )
+
+  test("voxelwise maxT under exact enumeration requires the identity draw"):
+    val rng = scala.util.Random(43L)
+    val stat = Array.tabulate(n)(i => if i == 2 then 6.0 else rng.nextGaussian())
+    val others = Vector.fill(19)(Array.fill(n)(rng.nextGaussian()))
+    val map = StatisticMap.z(volume(stat))
+    val alpha = Alpha.unsafe(0.1)
+
+    val dominating = Vector.fill(9)(Array.fill(n)(50.0))
+    assertEquals(
+      MaxT.runMap(map, FixedNullDraw(dominating, NullReference.ExactEnumeration), None, alpha, ThresholdAlternative.Greater).left.toOption,
+      Some(ThresholdError.MissingIdentityRow)
+    )
+    val exact = value(MaxT.runMap(map, FixedNullDraw(stat.clone +: others, NullReference.ExactEnumeration), None, alpha, ThresholdAlternative.Greater))
+    val monte = value(MaxT.runMap(map, FixedNullDraw(others), None, alpha, ThresholdAlternative.Greater))
+    for v <- 0 until n do
+      assertEqualsDouble(exact.pValues.get.valueAtCanonicalOrdinal(v), monte.pValues.get.valueAtCanonicalOrdinal(v), 0.0)
+      assertEquals(exact.reject.valueAtCanonicalOrdinal(v), monte.reject.valueAtCanonicalOrdinal(v))
+    assert(exact.reject.valueAtCanonicalOrdinal(2))
+
+  test("the ledger reports non-finite and out-of-range draws with their index"):
+    val rng = scala.util.Random(47L)
+    val draws = Vector.fill(5)(Array.fill(n)(rng.nextGaussian()))
+    val stat = StatisticMap.z(volume(Array.tabulate(n)(i => if i == 0 then 6.0 else 0.0)))
+    val nonFinite = draws.updated(2, draws(2).updated(7, Double.PositiveInfinity))
+    assertEquals(
+      MaxT.runMap(stat, FixedNullDraw(nonFinite), None, Alpha.unsafe(0.2), ThresholdAlternative.Greater).left.toOption,
+      Some(ThresholdError.NullDrawFailed(2, ThresholdError.NonFiniteData("null draw")))
+    )
+    assertEquals(
+      HierScan.runMap(stat, FixedNullDraw(nonFinite), config = scanConfig(0.5)).left.toOption,
+      Some(ThresholdError.NullDrawFailed(2, ThresholdError.NonFiniteData("null draw")))
+    )
+    assertEquals(NullDrawLedger(FixedNullDraw(draws), n).fetch(5), Left(ThresholdError.IndexOutOfBounds(5, 5)))
+    assertEquals(NullDrawLedger(FixedNullDraw(draws), n).fetch(-1), Left(ThresholdError.IndexOutOfBounds(-1, 5)))
+
   private def scanConfig(alpha: Double): HierScanConfig =
     HierScanConfig(
       alpha = Alpha.unsafe(alpha),
@@ -128,6 +183,7 @@ class DecisionScaleSuite extends munit.FunSuite:
 
   private final class FixedNullDraw(
       rows: Vector[Array[Double]],
+      override val reference: NullReference = NullReference.MonteCarlo,
       failAt: Option[Int] = None,
       driftAfterFirstFetch: Boolean = false
   ) extends NullDraw:
@@ -135,9 +191,6 @@ class DecisionScaleSuite extends munit.FunSuite:
 
     override val nPermutations: PermutationCount =
       PermutationCount.unsafe(rows.length)
-
-    override val reference: NullReference =
-      NullReference.MonteCarlo
 
     override def draw(index: Int): Either[ThresholdError, Array[Double]] =
       if failAt.contains(index) then Left(ThresholdError.InvalidArgument("draw", "simulated failure"))
