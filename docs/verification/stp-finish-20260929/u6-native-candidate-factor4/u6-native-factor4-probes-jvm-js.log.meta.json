@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T04:07:10.242676+00:00",
+  "finished_utc": "2026-09-30T04:07:37.363853+00:00",
+  "duration_seconds": 27.120871,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dscalafim.reframe4s.build=../u6-native-provider",
+    "transformJVM/testOnly scalafim.transform.NativeInverseOracleSuite",
+    "transformJS/testOnly scalafim.transform.NativeInverseOracleSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/u6-native-candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/u6-native-factor4-probes-jvm-js.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 6326
+}

@@ -3,6 +3,7 @@ package scalafim.atlas.io
 import java.net.URI
 import java.nio.file.Path
 import scalafim.atlas.*
+import scalafim.image.world.SpaceEvidence
 
 object AsegLoader:
   final case class Assets(volume: AtlasAsset)
@@ -34,7 +35,7 @@ object AsegLoader:
     loadFromPaths(spec, volumePath)
 
   def loadFromPaths(spec: FreeSurferAseg, volumePath: Path): VolumeAtlas =
-    val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
+    val labelVol = AtlasLabelMaps.readIntVolume(volumePath, SpaceEvidence(bidsSpace = Some(spec.atlasRef().templateSpace.value)), spec.id)
     val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val allRegions = regionsFor(spec)
     val regions = RegionIndex(allRegions.filter(r => presentIds.contains(r.id)))

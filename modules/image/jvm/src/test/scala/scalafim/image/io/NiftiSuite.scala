@@ -23,6 +23,10 @@ import java.nio.file.Path
 
 class NiftiSuite extends munit.FunSuite:
 
+  private val readEvidence = scalafim.image.world.SpaceEvidence(
+    assertion = Some(scalafim.image.world.WorldSpace.declare("synthetic NIfTI IO fixture").toOption.get)
+  )
+
   private final case class QForm(
       b: Double,
       c: Double,
@@ -133,7 +137,7 @@ class NiftiSuite extends munit.FunSuite:
       val path = dir.resolve(name)
       assert(Nifti.writeSeries(path, source, options).isRight)
       assertEquals(Nifti.ioStrategy(path), NiftiIoStrategy.BoundedStreaming)
-      val loaded = Nifti.readSeries(path).toOption.get.image
+      val loaded = Nifti.readSeries(path, readEvidence).toOption.get.image
       assertEquals(loaded.data.shape, Shape(2, 3, 5, 7))
       var x = 0
       while x < 2 do
@@ -167,8 +171,8 @@ class NiftiSuite extends munit.FunSuite:
         .get
 
     assert(Nifti.writeVolume(path, source).isRight)
-    val loaded = Nifti.readVolume(path).toOption.get.image
-    val reloaded = Nifti.readVolume(path).toOption.get.image
+    val loaded = Nifti.readVolume(path, readEvidence).toOption.get.image
+    val reloaded = Nifti.readVolume(path, readEvidence).toOption.get.image
 
     assertEquals(loaded.data.shape, Shape(2, 3, 5))
     assert(loaded.grid.record.isRight)
@@ -259,7 +263,7 @@ class NiftiSuite extends munit.FunSuite:
     assertEquals(header.qformCode, 1)
     assertEquals(header.sformCode, 0)
     assertMatrix(header.qform.getOrElse(fail("expected qform")), expected)
-    assertMatrix(header.space.affineD3.toOption.get, expected)
+    assertMatrix(header.spaceIn(readEvidence).toOption.get.affineD3.toOption.get, expected)
   }
 
   test("sform remains the preferred affine when both qform and sform are present") {
@@ -286,7 +290,7 @@ class NiftiSuite extends munit.FunSuite:
     assert(header.qform.nonEmpty)
     assert(header.sform.nonEmpty)
     assertMatrix(header.preferredAffine.getOrElse(fail("expected preferred affine")), sform)
-    assertMatrix(header.space.affineD3.toOption.get, sform)
+    assertMatrix(header.spaceIn(readEvidence).toOption.get.affineD3.toOption.get, sform)
   }
 
   test("affine conflicts, unsupported encodings, and resource limits fail with typed errors") {
@@ -311,6 +315,7 @@ class NiftiSuite extends munit.FunSuite:
 
     Nifti.readVolume(
       conflictPath,
+      readEvidence,
       Nifti.ReadOptions.default.copy(
         affinePolicy = NiftiAffinePolicy.RequireAgreement(1e-6)
       )
@@ -361,7 +366,7 @@ class NiftiSuite extends munit.FunSuite:
       values = Vector(2.0, 5.0)
     )
 
-    val loaded = Nifti.readVolume(path).toOption.get.image
+    val loaded = Nifti.readVolume(path, readEvidence).toOption.get.image
     val expected = affine(
       Vector(
         Vector(2.0, 0.0, 0.0, 10.0),

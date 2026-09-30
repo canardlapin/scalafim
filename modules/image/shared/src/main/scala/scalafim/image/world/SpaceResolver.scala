@@ -72,14 +72,14 @@ object SpaceResolver:
           case Some(result) =>
             result.flatMap(space => consistent(space, evidence.xform).map(_ => space))
           case None =>
-            fromXform.getOrElse(Right(WorldSpace.Unresolved))
+            fromXform.getOrElse(Right(WorldSpace.freshUnresolved()))
 
   /** [[resolve]], but evidence that identifies no world space is itself a failure. Loaders that promise a world
     * identity use this: [[WorldSpace.Unresolved]] is an admission of ignorance, not an answer.
     */
   def resolveKnown(evidence: SpaceEvidence): Either[SpaceError, WorldSpace] =
     resolve(evidence).flatMap:
-      case WorldSpace.Unresolved =>
+      case WorldSpace.Unresolved(_) =>
         Left(SpaceError.NoWorldSpace("the evidence does not identify a world space; supply a BIDS space- entity, a native context or an assertion"))
       case space => Right(space)
 
@@ -127,9 +127,9 @@ object SpaceResolver:
       case XformCode.TemplateOther =>
         Left(SpaceError.AmbiguousTemplate("NIFTI_XFORM_TEMPLATE_OTHER does not name a template; supply an assertion"))
       case XformCode.ScannerAnatomical | XformCode.AlignedAnatomical =>
-        Right(native.fold(WorldSpace.Unresolved)(c => WorldSpace.SubjectNative(c.namespace, c.subject, c.session, c.reference)))
+        Right(native.fold(WorldSpace.freshUnresolved())(c => WorldSpace.SubjectNative(c.namespace, c.subject, c.session, c.reference)))
       case XformCode.Unknown =>
-        Right(WorldSpace.Unresolved)
+        Right(WorldSpace.freshUnresolved())
 
   /** A named space (from BIDS or an assertion) must not contradict the file's own xform code. */
   private def consistent(space: WorldSpace, xform: Option[XformCode]): Either[SpaceError, Unit] =

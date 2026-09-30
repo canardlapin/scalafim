@@ -15,6 +15,17 @@ import scalafim.surface.{
 
 class AtlasQuotientSuite extends munit.FunSuite:
 
+  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("atlas fixture shared world")
+    .fold(error => fail(error.message), identity)
+
+  private def fixtureSpace(
+      dims: Vector[Int],
+      origin: Option[Vector[Double]] = None,
+      affine: Option[image4s.geometry.Affine[image4s.geometry.D3]] = None
+  ): SomeSampleSpace =
+    SampleSpaces.inWorld(SampleSpaces(dims, origin = origin, affine = affine), fixtureWorld)
+      .fold(error => fail(error.message), identity)
+
   private val volumeRef =
     AtlasRef.volume(
       family = "quotient",
@@ -29,7 +40,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
         AtlasRegionMetadata(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
         AtlasRegionMetadata(RegionId(1), "First", network = Some(NetworkId("Visual")))
       ),
-      space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))
+      space: SomeSampleSpace = fixtureSpace(Vector(2, 2, 1))
   ): VolumeAtlas =
     VolumeAtlas.fromLabelVolume(
       volumeRef,
@@ -171,7 +182,7 @@ class AtlasQuotientSuite extends munit.FunSuite:
   test("overlap requires exact grids unless alignment is explicitly requested"):
     val reference = volumeAtlas()
     val shiftedSpace =
-      SampleSpaces(
+      fixtureSpace(
         dims = Vector(2, 2, 1),
         origin = Some(Vector(10.0, 0.0, 0.0))
       )

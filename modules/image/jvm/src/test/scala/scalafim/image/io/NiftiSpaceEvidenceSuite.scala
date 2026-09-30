@@ -24,6 +24,10 @@ class NiftiSpaceEvidenceSuite extends munit.FunSuite:
     Paths.get(resource.toURI)
 
   private val header = Nifti.readHeader(fixture("nibabel-oblique.nii")).fold(e => fail(e.message), identity)
+  private val mniEvidence = SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"))
+
+  private def providerDecoded(path: Path, options: Nifti.ReadOptions) =
+    image4s.nifti.Nifti.readScaledDouble(path, options).fold(error => fail(error.message), identity)
 
   private def ok[E, A](result: Either[E, A]): A =
     result.fold(error => fail(s"unexpected failure: $error"), identity)
@@ -69,9 +73,7 @@ class NiftiSpaceEvidenceSuite extends munit.FunSuite:
 
   test("the mirrored selection agrees with the affine image4s actually selected"):
     Vector(NiftiAffinePolicy.PreferSform, NiftiAffinePolicy.PreferQform).foreach: policy =>
-      val decoded = Nifti
-        .readVolume(fixture("nibabel-oblique.nii"), Nifti.ReadOptions.default.copy(affinePolicy = policy))
-        .fold(e => fail(e.message), identity)
+      val decoded = providerDecoded(fixture("nibabel-oblique.nii"), Nifti.ReadOptions.default.copy(affinePolicy = policy))
       val digest = NiftiSpaceEvidence.geometry(header, policy).fold(e => fail(e.message), identity)
       val bits = decoded.affineSelection.affine.rowMajor.take(12).map(v => java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(v + 0.0)))
       assert(digest.canonical.endsWith(bits.mkString(",")), s"$policy: ${digest.canonical}")
@@ -82,7 +84,7 @@ class NiftiSpaceEvidenceSuite extends munit.FunSuite:
       val path = crafted(qformCode, sformCode)
       val stored = ok(Nifti.readHeader(path))
       policies.foreach: policy =>
-        val decoded = ok(Nifti.readVolume(path, Nifti.ReadOptions.default.copy(affinePolicy = policy)))
+        val decoded = providerDecoded(path, Nifti.ReadOptions.default.copy(affinePolicy = policy))
         val (source, affine) = NiftiSpaceEvidence.selectedSource(stored.native, policy)
         val clue = s"q=$qformCode s=$sformCode $policy"
         assertEquals(source, decoded.affineSelection.source, clue)
@@ -94,18 +96,42 @@ class NiftiSpaceEvidenceSuite extends munit.FunSuite:
 
   test("without a native context the evidence resolves to the unresolved space"):
     val evidence = NiftiSpaceEvidence.fromHeader(header, NiftiAffinePolicy.PreferSform).fold(e => fail(e.message), identity)
-    assertEquals(SpaceResolver.resolve(evidence), Right(WorldSpace.Unresolved))
+    assert(SpaceResolver.resolve(evidence).exists(_.isInstanceOf[WorldSpace.Unresolved]))
 
   test("readVolumeIn places a template file in its template world, keeping geometry and data"):
     val path = crafted(qformCode = 1, sformCode = 4)
-    val legacy = ok(Nifti.readVolume(path))
-    val placed = ok(Nifti.readVolumeIn(path, SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"))))
-    assertEquals(SampleSpaces.worldOf(legacy.image.space), Right(WorldSpace.Unresolved))
+    val placed = ok(Nifti.readVolume(path, mniEvidence))
     assertEquals(SampleSpaces.worldOf(placed.image.space), Right(ok(WorldSpace.template("MNI152NLin2009cAsym"))))
     assert(Frame.alignOwners[D3, Frame[D3], Frame[D3]](placed.image.grid.frame, Spaces.MNI152NLin2009cAsym).isRight)
-    assertEquals(placed.image.grid.indexToFrame.rowMajor, legacy.image.grid.indexToFrame.rowMajor)
-    assertEquals(placed.image.grid.shape, legacy.image.grid.shape)
-    assertEqualsDouble(placed.image(1, 1, 1), legacy.image(1, 1, 1), 0.0)
+    assertEquals(placed.image.grid.indexToFrame.rowMajor, ok(Nifti.readVolumeIn(path, mniEvidence)).image.grid.indexToFrame.rowMajor)
+
+  test("semantic volume and header placement both reject missing, ambiguous, and contradictory evidence"):
+    val path = crafted(qformCode = 1, sformCode = 4)
+    val stored = ok(Nifti.readHeader(path))
+    def spaceError(result: Either[NiftiImageReadError, ?]): SpaceError =
+      result match
+        case Left(NiftiImageReadError.Space(error)) => error
+        case other                                  => fail(s"expected a world-space failure, got $other")
+
+    assert(spaceError(Nifti.readVolume(path, SpaceEvidence())).isInstanceOf[SpaceError.AmbiguousTemplate])
+    assert(spaceError(stored.spaceIn(SpaceEvidence())).isInstanceOf[SpaceError.AmbiguousTemplate])
+    val qform = Nifti.ReadOptions.default.copy(affinePolicy = NiftiAffinePolicy.PreferQform)
+    assert(spaceError(Nifti.readVolume(path, SpaceEvidence(), qform)).isInstanceOf[SpaceError.NoWorldSpace])
+    assert(spaceError(stored.spaceIn(SpaceEvidence(), qform)).isInstanceOf[SpaceError.NoWorldSpace])
+    val contradictory = SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym"))
+    assert(spaceError(Nifti.readVolume(path, contradictory, qform)).isInstanceOf[SpaceError.ConflictingEvidence])
+    assert(spaceError(stored.spaceIn(contradictory, qform)).isInstanceOf[SpaceError.ConflictingEvidence])
+
+  test("header placement enforces the same affine agreement gate as a full read"):
+    val path = crafted(qformCode = 1, sformCode = 4)
+    val stored = ok(Nifti.readHeader(path))
+    Vector(0.0, -1.0, Double.NaN).foreach: tolerance =>
+      val options = Nifti.ReadOptions.default.copy(affinePolicy = NiftiAffinePolicy.RequireAgreement(tolerance))
+      val full = Nifti.readVolume(path, mniEvidence, options).left.toOption
+      val headerOnly = stored.spaceIn(mniEvidence, options).left.toOption
+      assert(full.exists(_.isInstanceOf[NiftiImageReadError.Provider]))
+      // NaN is not equal to itself inside a case class; compare the actual provider message.
+      assertEquals(headerOnly.map(_.message), full.map(_.message))
 
   test("readVolumeIn refuses unresolved, ambiguous and contradictory evidence"):
     val path = crafted(qformCode = 1, sformCode = 4)
@@ -140,13 +166,21 @@ class NiftiSpaceEvidenceSuite extends munit.FunSuite:
       case other                                         => fail(s"expected a subject-native world, got $other")
     assert(Frame.alignOwners[D3, Frame[D3], Frame[D3]](first.image.grid.frame, again.image.grid.frame).isRight, "one subject, one world")
     assert(Frame.alignOwners[D3, Frame[D3], Frame[D3]](first.image.grid.frame, second.image.grid.frame).isLeft, "two subjects, two worlds")
-    // The legacy read still puts both in the shared unresolved world.
-    val legacy = ok(Nifti.readVolume(path))
-    assert(Frame.alignOwners[D3, Frame[D3], Frame[D3]](legacy.image.grid.frame, ok(Nifti.readVolume(path)).image.grid.frame).isRight)
 
   test("readSeriesIn places a 4D series in its world, keeping its time axis"):
     val path = crafted(qformCode = 1, sformCode = 4, volumes = 3)
     val placed = ok(Nifti.readSeriesIn(path, SpaceEvidence(bidsSpace = Some("MNI152NLin6Asym"))))
     assertEquals(SampleSpaces.worldOf(placed.image.space), Right(ok(WorldSpace.template("MNI152NLin6Asym"))))
     assertEquals(placed.image.nVolumes, 3)
-    assertEqualsDouble(placed.image(1, 0, 0, 2), ok(Nifti.readSeries(path)).image(1, 0, 0, 2), 0.0)
+    assertEqualsDouble(placed.image(1, 0, 0, 2), ok(Nifti.readSeries(path, SpaceEvidence(bidsSpace = Some("MNI152NLin6Asym")))).image(1, 0, 0, 2), 0.0)
+
+  test("header and full reads refuse metre, micrometre and incompatible unknown-unit fallback geometry"):
+    import image4s.geometry.LengthUnit
+    Vector((1, LengthUnit.Millimeter), (3, LengthUnit.Millimeter), (0, LengthUnit.Meter)).foreach: (unitCode, fallback) =>
+      val path = crafted(1, 4)
+      val bytes = Files.readAllBytes(path)
+      bytes(123) = (unitCode | 8).toByte
+      Files.write(path, bytes)
+      val options = Nifti.ReadOptions.default.copy(fallbackSpatialUnit = fallback)
+      assert(ok(Nifti.readHeader(path)).spaceIn(mniEvidence, options).isLeft)
+      assert(Nifti.readVolumeIn(path, mniEvidence, options).isLeft)

@@ -1,0 +1,8 @@
+FSLDIR=/opt/fsl6
+FLIRT version 6.0
+Usage: img2imgcoord [options] <filename containing coordinates>
+
+  Options are:
+python=3.14.7
+numpy=2.5.3
+nibabel=5.4.2

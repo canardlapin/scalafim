@@ -176,15 +176,18 @@ final case class ViewLink(properties: Set[LinkedViewProperty]):
     if linkedTimepoint < 0 || linkedTimepoint >= targetModel.timepointCount then
       Left(ImageViewError.TimepointOutOfBounds(linkedTimepoint, targetModel.timepointCount))
     else
-      Right(
+      val cursor =
+        if properties.contains(LinkedViewProperty.Cursor) then ViewerState.alignCursor(targetModel, source.cursor)
+        else Right(target.cursor)
+      cursor.map { alignedCursor =>
         target.copy(
-          cursor = if properties.contains(LinkedViewProperty.Cursor) then source.cursor else target.cursor,
+          cursor = alignedCursor,
           timepoint = linkedTimepoint,
           convention =
             if properties.contains(LinkedViewProperty.Convention) then source.convention
             else target.convention
         )
-      )
+      }
 
 object ViewLink:
   val Spatial: ViewLink =

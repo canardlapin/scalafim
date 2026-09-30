@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T02:11:07.585650+00:00",
+  "finished_utc": "2026-09-30T02:11:38.080085+00:00",
+  "duration_seconds": 30.494007,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "imageViewJVM/test",
+    "transformJVM/Test/runMain scalafim.transform.WriterGoldens /private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-viewer-jvm-writers-6.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 7195
+}

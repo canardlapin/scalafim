@@ -1,5 +1,7 @@
 package scalafim.image.io
 
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
+
 import image4s.{Axis, AxisKind, AxisUnit, NonSpatialAxes, SampleSpace}
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, Grid, LengthUnit}
 import image4s.nifti.{
@@ -14,6 +16,7 @@ import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path}
 
 class NiftiIncrementalOutputSuite extends munit.FunSuite:
+  private val readEvidence = SpaceEvidence(assertion = Some(WorldSpace.declare("synthetic IO fixture").toOption.get))
   private def right[E, A](value: Either[E, A]): A = value.fold(e => fail(e.toString), identity)
 
   private def withPath[A](run: Path => A): A =
@@ -70,7 +73,7 @@ class NiftiIncrementalOutputSuite extends munit.FunSuite:
       assertEquals(bytes.getFloat(284), 0.25f)
       assertEquals(bytes.getFloat(292), -12.0f)
       val offset = bytes.getFloat(108).toInt
-      val loaded = right(Nifti.readSeries(path)).image
+      val loaded = right(Nifti.readSeries(path, readEvidence)).image
       for x <- 0 until 2; y <- 0 until 3; z <- 0 until 5; t <- 0 until 4 do
         val expected = x * 1000.0 + y * 100.0 + z * 10.0 + t
         val physicalIndex = x + 2 * (y + 3 * (z + 5 * t))

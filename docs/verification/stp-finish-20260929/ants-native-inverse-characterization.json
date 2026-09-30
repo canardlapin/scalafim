@@ -1,0 +1,19 @@
+{
+  "kind": "native-inverse-composition-characterization",
+  "provider": "SimpleITK",
+  "version": "2.5.6",
+  "domain": "all native forward-grid nodes, two-voxel margin on every face",
+  "query_count": 1287,
+  "infinity_residual_mm": {
+    "maximum": 0.01792923770000243,
+    "p99": 0.0075835192684690885
+  },
+  "euclidean_residual_mm": {
+    "maximum": 0.023598135365555748,
+    "p99": 0.008974903465750238
+  },
+  "input_sha256": {
+    "syn_0Warp.nii.gz": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+    "syn_0InverseWarp.nii.gz": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302"
+  }
+}

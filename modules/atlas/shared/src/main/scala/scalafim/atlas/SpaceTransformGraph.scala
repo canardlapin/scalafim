@@ -21,6 +21,7 @@ import scalafim.spatial.{
   TemplateKind
 }
 import scalafim.transform.{PushAvailability, WorldTransform}
+import scalafim.surface.{SurfaceGeometry, TemplateSphere}
 
 /** Stable world frames for the template spaces a transform manifest names.
   *
@@ -64,6 +65,36 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
         .map(AtlasError.TransformGraph.apply)
     yield domain
 
+  /** Admit a concrete sampled template surface. Catalog domains deliberately remain unsampled; this explicit factory
+    * binds an executable vertex domain to the registered sphere and its ordered topology.
+    */
+  def sampledSurface[R <: scalafim.surface.SphereRegistration](
+      id: DomainId,
+      sphere: TemplateSphere[R],
+      geometry: SurfaceGeometry
+  ): Either[AtlasError, Domain] =
+    val space = SpaceId.surface(sphere.surface.mesh.label)
+    for
+      _ <- sphere.surface.hemisphere.tag match
+        case expected if expected == geometry.hemisphere => Right(())
+        case _ => Left(AtlasError.TransformGraph(SpatialError.UnsupportedGeometry("sampled template hemisphere mismatch")))
+      _ <- Either.cond(
+        sphere.sphere.hasSameTopology(geometry.mesh),
+        (),
+        AtlasError.TransformGraph(SpatialError.UnsupportedGeometry("sampled template topology mismatch"))
+      )
+      _ <- frame(space)
+      sampling <- SamplingGeometry.surface(geometry).left.map(AtlasError.TransformGraph.apply)
+      domain <- Domain
+        .build(
+          id,
+          SpaceRef.Template(TemplateName.unsafe(space.value), None, TemplateKind.Surface),
+          sampling
+        )
+        .left
+        .map(AtlasError.TransformGraph.apply)
+    yield domain
+
   /** This catalog plus fresh template frames for any of `extra` it does not already hold. */
   def including(extra: Iterable[AnySpaceId]): TemplateCatalog =
     val missing = extra.iterator.map(SpaceId.normalize).filterNot(frames.contains).toVector.distinct
@@ -81,7 +112,9 @@ object TemplateCatalog:
         SpaceId.FsAverage -> WorldFrames.fsaverage,
         SpaceId.FsAverage5 -> WorldFrames.fsaverage,
         SpaceId.FsAverage6 -> WorldFrames.fsaverage,
-        SpaceId.FsLR32k -> WorldFrames.fsLR
+        SpaceId.FsLR32k -> WorldFrames.fsLR,
+        SpaceId.FsLR59k -> WorldFrames.fsLR,
+        SpaceId.FsLR164k -> WorldFrames.fsLR
       )
     )
 

@@ -9,16 +9,27 @@ import image4s.geometry.{Affine, D3}
 enum FslAffineSource derives CanEqual:
   case Sform, Qform, Scaling
 
-/** The geometry FSL sees for one volume, enough to define its scaled-voxel ("fsl") coordinate system. */
-final case class FslVolumeGeometry private (
-    dims: Vector[Int],
-    pixdim: Vector[Double],
-    voxelToWorld: Affine[D3],
-    selected: FslAffineSource
+/** Admission of contradictory header orientation. The compatibility policy is
+  * for reproducing historical fslpy/nitransforms fixtures, not native FSL admission.
+  */
+enum FslHeaderPolicy derives CanEqual:
+  case Strict, FslpyCompatibility
+
+enum FslStorageOrder derives CanEqual:
+  case Radiological, Neurological
+
+/** World placement and native storage order are separate: absent forms use
+  * positive world scaling but radiological storage. Opposite active q/sform
+  * handedness is rejected unless historical reference compatibility is explicit.
+  */
+final class FslVolumeGeometry private (
+    val dims: Vector[Int],
+    val pixdim: Vector[Double],
+    val voxelToWorld: Affine[D3],
+    val selected: FslAffineSource,
+    val storageOrder: FslStorageOrder
 ):
-  /** FSL treats a volume whose selected voxel-to-world affine has positive determinant as neurological. */
-  def neurological: Boolean =
-    ToolCoordinates.determinant3(voxelToWorld) > 0.0
+  def neurological: Boolean = storageOrder == FslStorageOrder.Neurological
 
   /** Voxel index -> FSL scaled-voxel mm: `voxel * pixdim`, with x mirrored to `(nx - 1 - i) * px` when neurological. */
   def voxelToFsl: Affine[D3] =
@@ -40,11 +51,14 @@ object FslVolumeGeometry:
       qformCode: Int,
       qform: Option[Affine[D3]],
       sformCode: Int,
-      sform: Option[Affine[D3]]
+      sform: Option[Affine[D3]],
+      policy: FslHeaderPolicy = FslHeaderPolicy.Strict
   ): Either[SpaceError, FslVolumeGeometry] =
     if dims.size < 3 || dims.take(3).exists(_ <= 0) then Left(SpaceError.InvalidGeometry(s"FSL geometry needs three positive dims, got $dims"))
     else if pixdim.size < 3 || pixdim.take(3).exists(p => !p.isFinite || p == 0.0) then
       Left(SpaceError.InvalidGeometry(s"FSL geometry needs three finite non-zero pixdims, got $pixdim"))
+    else if qformCode != 0 && qform.isEmpty then Left(SpaceError.InvalidGeometry(s"qform_code $qformCode but no qform"))
+    else if sformCode != 0 && sform.isEmpty then Left(SpaceError.InvalidGeometry(s"sform_code $sformCode but no sform"))
     else
       val zooms = pixdim.take(3).map(math.abs)
       val chosen =
@@ -55,7 +69,21 @@ object FslVolumeGeometry:
           case (_, _, q, None) if q != 0         => Left(SpaceError.InvalidGeometry(s"qform_code $q but no qform"))
           case _ =>
             Right(ToolCoordinates.affine(Vector(zooms(0), 0, 0, 0, 0, zooms(1), 0, 0, 0, 0, zooms(2), 0, 0, 0, 0, 1)) -> FslAffineSource.Scaling)
-      chosen.map((affine, source) => FslVolumeGeometry(dims.take(3), zooms, affine, source))
+      chosen.flatMap: (affine, source) =>
+        val conflict = for
+          q <- qform.filter(_ => qformCode != 0)
+          s <- sform.filter(_ => sformCode != 0)
+          qdet = ToolCoordinates.determinant3(q)
+          sdet = ToolCoordinates.determinant3(s)
+          if math.signum(qdet) != math.signum(sdet)
+        yield SpaceError.FslHandednessConflict(qformCode, qdet, sformCode, sdet)
+        if policy == FslHeaderPolicy.Strict && conflict.nonEmpty then Left(conflict.get)
+        else
+          val neurological =
+            (policy == FslHeaderPolicy.FslpyCompatibility || source != FslAffineSource.Scaling) &&
+              ToolCoordinates.determinant3(affine) > 0.0
+          val order = if neurological then FslStorageOrder.Neurological else FslStorageOrder.Radiological
+          Right(new FslVolumeGeometry(dims.take(3), zooms, affine, source, order))
 
 /** FreeSurfer volume geometry. `norig` is the scanner vox2ras (`MRIxfmCRS2XYZ`). FreeSurfer's tkRAS vox2ras (`Torig`,
   * `MRIxfmCRS2XYZtkreg`) ignores the volume's direction cosines: it always uses the tkregister LIA axes

@@ -1,5 +1,7 @@
 package scalafim.dataset.zarr
 
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
+
 import scalafim.image.valueAtCanonicalOrdinal
 
 import java.nio.file.Files
@@ -11,6 +13,7 @@ import scalafim.image.io.Nifti
 import zarr4s.{IndexLocation, JvmCodecRuntime, JvmFileStore, JvmGzip, PhysicalLayout, Shape}
 
 class NiftiZarrBridgeSuite extends munit.FunSuite:
+  private val readEvidence = SpaceEvidence(assertion = Some(WorldSpace.declare("synthetic IO fixture").toOption.get))
   private def assertRegularSeconds(
       timing: AcquisitionTiming,
       expectedStep: Double,
@@ -53,7 +56,7 @@ class NiftiZarrBridgeSuite extends munit.FunSuite:
     assertEquals(header.intercept, -2.0)
     assertEquals(header.sformCode, 1)
     val exportedSeries =
-      Nifti.readSeries(exported).fold(error => fail(error.message), _.image)
+      Nifti.readSeries(exported, readEvidence).fold(error => fail(error.message), _.image)
     assertEquals(exportedSeries.valueAtCanonicalOrdinal(23), 3.75)
     BidsProjectLoader.loadStrict(fixture.exportRoot).fold(error => fail(error.message), _ => ())
 

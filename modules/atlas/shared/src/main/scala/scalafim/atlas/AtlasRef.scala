@@ -36,6 +36,8 @@ object SpaceId:
   val FsAverage5: SurfaceSpaceId = surface("fsaverage5")
   val FsAverage6: SurfaceSpaceId = surface("fsaverage6")
   val FsLR32k: SurfaceSpaceId = surface("fsLR_32k")
+  val FsLR59k: SurfaceSpaceId = surface("fsLR_59k")
+  val FsLR164k: SurfaceSpaceId = surface("fsLR_164k")
   val Custom: UnknownSpaceId = unknown("custom")
   val Unknown: UnknownSpaceId = unknown("unknown")
 
@@ -62,6 +64,8 @@ object SpaceId:
       case "fsaverage5" => FsAverage5
       case "fsaverage6" => FsAverage6
       case "fslr" | "fslr32k" | "fslr_32k" => FsLR32k
+      case "fslr59k" | "fslr_59k" => FsLR59k
+      case "fslr164k" | "fslr_164k" => FsLR164k
       case "" => Unknown
       case other => unknown(space.trim)
 
@@ -69,7 +73,7 @@ object SpaceId:
     normalize(space) match
       case MNI152 | MNI305 | MNI152NLin6Asym | MNI152NLin2009cAsym =>
         SpaceKindTag.Volume
-      case FsAverage | FsAverage5 | FsAverage6 | FsLR32k =>
+      case FsAverage | FsAverage5 | FsAverage6 | FsLR32k | FsLR59k | FsLR164k =>
         SpaceKindTag.Surface
       case _ =>
         SpaceKindTag.Unknown
@@ -89,6 +93,8 @@ object SpaceId:
       case FsAverage5 => Right(FsAverage5)
       case FsAverage6 => Right(FsAverage6)
       case FsLR32k => Right(FsLR32k)
+      case FsLR59k => Right(FsLR59k)
+      case FsLR164k => Right(FsLR164k)
       case other =>
         Left(AtlasError.SpaceKindMismatch(other, SpaceKindTag.Surface, kind(other)))
 

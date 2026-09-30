@@ -29,6 +29,23 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     DeviceContext.unsafe(640.0, 480.0)
   )
 
+  test("model edits retain controller state and unchanged runtime cache entries"):
+    val second = SliceLayer(LayerId.unsafe("second"), volume, SliceSampling.Linear(),
+      ScalarColorizer(DisplayWindow.unsafe(0.0, 10.0)))
+    val initial = ViewerModel.unsafe(space, Vector(layer, second))
+    val controller = CanvasViewerHost.controller(initial, session).toOption.get
+    controller.compile().toOption.get
+    assert(controller.updateModel(ViewerModelUpdate.ReorderLayers(Vector(second.id))).isRight)
+    assertEquals(controller.session, Right(session))
+    val compiled = controller.compile().toOption.get
+    assertEquals(compiled.viewerProfile.cacheHits, 6)
+    assertEquals(compiled.viewerProfile.sourceReads, 0)
+    val accepted = controller.model
+    assert(controller.updateModel(ViewerModelUpdate.ReorderLayers(Vector(LayerId.unsafe("missing")))).isLeft)
+    assertEquals(controller.model, accepted)
+    controller.close()
+    assertEquals(controller.updateModel(ViewerModelUpdate.ReorderLayers(Vector.empty)), Left(CanvasViewerError.ControllerClosed))
+
   test("Canvas host compiles viewer scenes through the existing backend") {
     val compiled = CanvasViewerHost.compile(model, session).toOption.get
 
@@ -121,10 +138,10 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(batch.submittedEvents, 3)
     assertEquals(batch.executedActions, 1)
     assertEquals(batch.netSteps, Map(AnatomicalPlane.Axial -> 1))
-    assertEquals(
-      controller.session.toOption.get.state.cursor,
-      session.state.cursor + AnatomicalPlane.Axial.positiveNormal.unit.scaled(session.state.sliceStep.millimeters)
-    )
+    val actualCursor = controller.session.toOption.get.state.cursor
+    val expectedCursor = ViewerState.move(session.state.cursor, AnatomicalPlane.Axial.positiveNormal.unit.scaled(session.state.sliceStep.millimeters)).toOption.get
+    actualCursor.coordinates.zip(expectedCursor.coordinates).foreach((actual, expected) => assertEqualsDouble(actual, expected, 1e-12))
+    assertEquals(actualCursor.frame.persistentKey, expectedCursor.frame.persistentKey)
 
     val prefetchController = CanvasViewerHost.controller(
       model,
@@ -144,6 +161,31 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(warm.viewerProfile.sampledPixels, 0L)
     assertEquals(warm.viewerProfile.colorizedPixels, 0L)
     assert(prefetchController.prefetchSlices(AnatomicalPlane.Axial, Vector(2)).isLeft)
+  }
+
+  test("cancel or controller close suppresses pending scroll callbacks") {
+    for closeController <- Vector(false, true) do
+      val controller = CanvasViewerHost.controller(model, session).toOption.get
+      var tasks = Vector.empty[() => Unit]
+      val scheduler = new CanvasTaskScheduler:
+        def schedule(task: () => Unit): Unit = tasks :+= task
+      var callbacks = 0
+      val coordinator = controller.scrollCoordinator(scheduler) { (_, _) =>
+        callbacks += 1
+      }.toOption.get
+      coordinator.enqueue(AnatomicalPlane.Axial, 1)
+      assertEquals(tasks.length, 1)
+      if closeController then controller.close()
+      else
+        coordinator.cancel()
+        coordinator.cancel()
+      tasks.foreach(_())
+      assertEquals(callbacks, 0)
+      if !closeController then assertEquals(controller.session.toOption.get, session)
+      tasks = Vector.empty
+      coordinator.enqueue(AnatomicalPlane.Axial, 1)
+      assertEquals(tasks.length, 0)
+      controller.close()
   }
 
   test("runtime preserves viewer rasters and Canvas uploads across redraws") {
@@ -179,7 +221,7 @@ class CanvasViewerHostSuite extends munit.FunSuite:
     assertEquals(resized.canvasProfile, CanvasDrawProfile(3, 3, 0, 0L))
 
     val movedSession = session.copy(
-      state = session.state.copy(cursor = session.state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0))
+      state = session.state.copy(cursor = ViewerState.move(session.state.cursor, AnatomicalDirection.Superior.unit.scaled(1.0)).toOption.get)
     )
     val moved = runtime.render(model, movedSession, context).toOption.get
     assertEquals(moved.compiled.viewerProfile.cacheHits, 2)

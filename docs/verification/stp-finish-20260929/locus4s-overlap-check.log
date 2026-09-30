@@ -1,0 +1,24 @@
+[info] welcome to sbt 1.12.14 (Homebrew Java 25.0.1)
+[info] loading settings for project locus-overlap-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/locus-overlap/project
+[info] loading settings for project root from build.sbt...
+[info] set current project to locus4s-root (in build file:/private/tmp/scalafim-stp-finish-20260929/locus-overlap/)
+[info] compiling 11 Scala sources to /private/tmp/scalafim-stp-finish-20260929/locus-overlap/modules/locus4s-core/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-stp-finish-20260929/locus-overlap/modules/locus4s-core/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+Test run locus4s.RegionOverlapSuite started
+locus4s.RegionOverlapSuite: finished 0.045s
+Test run locus4s.RegionOverlapSuite finished: 0 failed, 0 ignored, 3 total 0.056s
+[info] Passed: Total 3, Failed 0, Errors 0, Passed 3
+[success] Total time: 7 s, completed Sep 29, 2026, 10:16:59 p.m.
+[info] compiling 11 Scala sources to /private/tmp/scalafim-stp-finish-20260929/locus-overlap/modules/locus4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-stp-finish-20260929/locus-overlap/modules/locus4s-core/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/locus-overlap/modules/locus4s-core/js/target/scala-3.7.4/locus4s-core-test-fastopt
+Test run locus4s.RegionOverlapSuite started
+locus4s.RegionOverlapSuite: finished 0.011s
+Test run locus4s.RegionOverlapSuite finished: 0 failed, 0 ignored, 3 total 0.011s
+[info] Passed: Total 3, Failed 0, Errors 0, Passed 3
+[success] Total time: 6 s, completed Sep 29, 2026, 10:17:05 p.m.

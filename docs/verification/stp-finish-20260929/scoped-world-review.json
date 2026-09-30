@@ -1,0 +1,40 @@
+{
+  "scope": "Read-only design review of scoped unknown-world identity and implementation; bounded local integration only.",
+  "reviewer": "stp_frame_decision",
+  "decision": "Unknown world values carry fresh persistent tokens, distinct from anatomical declarations. Same token may be reused/restored; geometry equality never infers identity.",
+  "review_findings": [
+    {
+      "finding": "Removing pre-evidence persistence exposes metre/micrometre numeric affine relabelling into millimetres.",
+      "resolution": "SampleSpaces.inWorld rejects non-RAS/non-mm frames; NiftiHeader.spaceIn checks header unit plus fallbackSpatialUnit; direct and header/full read regressions added."
+    },
+    {
+      "finding": "Downsample constructs fresh geometry and loses original frame.",
+      "resolution": "derivedD3 retains exact source frame, persistent geometry when supported, and non-spatial axes; both volume and series paths covered."
+    },
+    {
+      "finding": "Private surface display box frame is not a scientific world.",
+      "resolution": "Use one private ephemeral display frame; public cursor linkage still requires WorldLink."
+    }
+  ],
+  "additional_parent_finding": {
+    "finding": "Generic label nearest-neighbour volume/series resampling used raw coordinates without world alignment.",
+    "resolution": "Both entry points require checked world alignment; foreign unknown worlds refuse; same-world label values remain unchanged."
+  },
+  "compatibility_limits": [
+    "WorldSpace.Unresolved now carries a token.",
+    "Legacy scalafim-ras-d3 decode requires explicit migration; generic image4s frame-record restore is not blocked globally.",
+    "Geometry-only estimate/LNA/Zarr metadata reconstruction mints fresh unknown worlds per open; it does not preserve cross-open identity without an explicit stored world record.",
+    "2D synthetic constructor identity is outside this D3 neuroimaging world migration."
+  ],
+  "final_verdict": "No blocking source-review findings; final affected consumer platform checks still required.",
+  "independent_test_reproduction": "Reviewer did not rerun tests; parent owns actual check receipts.",
+  "reviewed_sources": {
+    "modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala": "0808ed22049de55b4c30d8c0f5514ed2d50d349c512a57b628fd342b6ed90842",
+    "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala": "5152a7fc3b6d875646b1bd852a6a0252e2ce47248ca95e71422077f6164df5fa",
+    "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala": "5bffcb2cb5c84394da56d0e7f6b8192bbfb8d758291a0e7a7b078da3f6919f95",
+    "modules/image/shared/src/main/scala/scalafim/image/world/WorldSpace.scala": "3264dda4aba5cee58360f933c430283edf54e76b620e42b837cb9a3158988b3e",
+    "modules/image/shared/src/main/scala/scalafim/image/world/SpaceResolver.scala": "b95e407564718a280ee15d9ea7b60e939961365573dd4ff6a2c0e3579682f803",
+    "modules/image/shared/src/main/scala/scalafim/image/SpaceUtils.scala": "261e635002c58a26cc50354090a4c010f9a7d8654356123c92d8bdae9beda616",
+    "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala": "e5bff441b2fec1631c4882842281931e194c3d9d61dcea7bd0d8cf2a80a6bdbd"
+  }
+}

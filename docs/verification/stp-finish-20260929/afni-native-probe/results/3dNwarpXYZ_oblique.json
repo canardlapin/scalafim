@@ -1,0 +1,12 @@
+{
+  "name": "3dNwarpXYZ_oblique",
+  "argv": [
+    "/opt/afni/src/../install/3dNwarpXYZ",
+    "-nwarp",
+    "/probe/oblique_WARP.nii",
+    "/probe/oblique_cardinal_lps_points.1D"
+  ],
+  "returncode": 0,
+  "stdout": "       -10.4899        18.5177       -3.65369\n       -8.51924        16.7311        -2.8581\n        -7.3274        18.9177        -2.1024\n       -5.41276        16.5311       -3.92708\n       -3.93769        14.8349       -3.20896\n       -3.13619        16.9311       -2.19672\n        -9.6582         17.743       -3.48477\n       -7.46164        16.1781       -2.85171\n       -6.53698        17.8016       -2.60515\n       -5.07837        15.8692       -3.54066\n       -3.67971        15.4409       -3.05181\n       -3.65596         17.843       -3.53536\n",
+  "stderr": "++ 3dNwarpXYZ: AFNI version=AFNI_26.1.04 (Jun  2 2026) [64-bit]\n++ Authored by: Zhark the Coordinated\n\u001b[7m*+ WARNING:\u001b[0m NIfTI('/probe/oblique_WARP.nii'): Qform/Sform handedness differ; S wins!\n\u001b[7m*+ WARNING:\u001b[0m   If you are performing spatial transformations on an oblique dset,\n  such as /probe/oblique_WARP.nii,\n  or viewing/combining it with volumes of differing obliquity,\n  you should consider running: \n     3dWarp -deoblique \n  on this and  other oblique datasets in the same session.\n See 3dWarp -help for details.\n++ Oblique dataset:/probe/oblique_WARP.nii is 24.072336 degrees from plumb.\n"
+}

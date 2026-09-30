@@ -1,0 +1,92 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/image-view/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.008s
+  + threshold bands hide only their strict interior and disable explicitly 0.002s
+  + ramps interpolate every RGBA channel 0.0s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.002s
+  + label and mask colorizers keep missing data transparent by default 0.001s
+  + layer identifiers and opacities reject invalid states 0.004s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.023s
+  + a world-aligned layer in another world is rejected 0.001s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.007s
+  + a pullback layer must map the reference frame to its own frame 0.006s
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.001s
+  + panel picking is an exact root-npc to world-space roundtrip 0.012s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.0s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.029s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.007s
+  + timepoint actions drive temporal layers while static overlays persist 0.014s
+  + models reject temporal layers with incompatible frame counts 0.001s
+  + resize changes only device layout and reduction is deterministic 0.004s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.006s
+  + lazy frame sources preserve exact provider grid failures 0.002s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.006s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.009s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.019s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.003s
+  + linked view policies synchronize only declared state 0.003s
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.002s
+  + panel fitting preserves physical slice aspect on a non-square device 0.002s
+  + orthogonal layouts support checked row and column arrangements 0.001s
+  + heterogeneous layers sample in world space and retain draw order 0.001s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.001s
+  + crosshairs and orientation labels are explicit removable decorations 0.001s
+  + left-right convention changes labels and raster orientation together 0.002s
+  + viewer models reject empty and duplicate layer sets 0.001s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.001s
+  + a typed point sets the cursor only when its frame is the reference frame 0.002s
+  + a point in another world reaches the cursor through a typed link 0.003s
+  + cursor actions and states cannot replay into an equally shaped different world 0.001s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.001s
+[info] Passed: Total 38, Failed 0, Errors 0, Passed 38
+[success] Total time: 5 s, completed Sep 29, 2026, 10:11:35 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] running scalafim.transform.WriterGoldens /private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens
+wrote 9 goldens to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens
+[success] Total time: 3 s, completed Sep 29, 2026, 10:11:37 p.m.

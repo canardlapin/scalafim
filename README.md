@@ -20,7 +20,7 @@ cross-compiled sbt build.
 - `first-level-laws`: non-published generated JVM/Scala.js laws for constrained HRF, design, and fit workflows, with reproducible counterexample shrinking and separate PR/calibration budgets.
 - `scenario-testkit`: non-published cross-built scenario verdicts, caveat policies, tolerances, and matrix/vector comparison views shared by design and fit tests.
 - `design`: fMRI event models, formulas, baselines, contrasts, and design matrices.
-- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, affine/dense-field spatial morphisms, statistics, clustering, and image IO.
+- `image`: neuroimaging volumes, locus-backed masks/selections and volume domains, metric searchlight construction, world-space identity, toolkit coordinate conventions, provider-backed resampling, statistics, clustering, and image IO.
 - `provider-spike`: unpublished JVM/Scala.js compile contract proving direct composition of image4s, image4s-locus, locus4s, Gale, Ravel, and reframe4s without a ScalaFIM wrapper algebra.
 - `image-view`: renderer-neutral world-space slice viewing, typed colorizers and layers, orthogonal scene compilation, and interaction receipts.
 - `image-view-canvas`: thin Scala.js Canvas host for image-view scenes and device-event translation.
@@ -60,6 +60,12 @@ cross-compiled sbt build.
 
 Each module is built for both the JVM and Scala.js with `sbt-crossproject`.
 
+The proposed unified MVPA replacement has a separate, unpublished
+[foundation spike](modules/mvpa-foundation-spike/README.md) for exact-provider
+and typed-axis qualification. It is a standalone diagnostic build, not a
+shipping module or an addition to the production aggregates; see its runner
+and the [implementation epic](docs/plans/unified-mvpa-epic.md).
+
 The immutable typed dataframe work formerly incubated here now lives in the
 standalone [`frame4s`](https://github.com/canardlapin/frame4s) repository.
 
@@ -76,7 +82,9 @@ neuroimaging integrations.
 
 Nonlinear registration and the experimental HalfFlow engine now live in
 standalone [`reframe4s`](https://github.com/canardlapin/reframe4s). ScalaFIM
-does not retain a registration module or depend on reframe4s.
+does not retain a registration module. Its image and transform modules consume
+reframe4s geometry, field and resampling capabilities through an immutable
+source revision.
 
 Renderer-neutral graphics, plotting, and the SVG/Canvas/Java2D/JavaFX backends
 live in standalone [`Intaglio`](https://github.com/canardlapin/intaglio).

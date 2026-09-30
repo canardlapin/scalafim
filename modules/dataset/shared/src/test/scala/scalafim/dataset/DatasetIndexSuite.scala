@@ -7,7 +7,17 @@ import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetIndexSuite extends munit.FunSuite:
 
-  private val space = SampleSpaces(Vector(1, 1, 1))
+  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("dataset fixture shared world")
+    .fold(error => fail(error.message), identity)
+
+  private def fixtureSpace(
+      dims: Vector[Int],
+      affine: Option[image4s.geometry.Affine[image4s.geometry.D3]] = None
+  ): SomeSampleSpace =
+    SampleSpaces.inWorld(SampleSpaces(dims, affine = affine), fixtureWorld)
+      .fold(error => fail(error.message), identity)
+
+  private val space = fixtureSpace(Vector(1, 1, 1))
 
   test("dataset keys have safe string constructors") {
     val key =
@@ -136,7 +146,7 @@ class DatasetIndexSuite extends munit.FunSuite:
             data = GaleTestData.matrixFromRows(
               Vector.tabulate(5)(time => Vector(time.toDouble, time.toDouble + 10.0))
             ),
-            space = SampleSpaces(Vector(2, 1, 1))
+            space = fixtureSpace(Vector(2, 1, 1))
           ),
           samplingFrame = samplingFrame,
           runIds = Vector(RunId("run-a"), RunId("run-b"))
@@ -194,13 +204,13 @@ class DatasetIndexSuite extends munit.FunSuite:
       datasetRun(
         RunKey.unsafe("sub-01", "run-1", space = Some("MNI")),
         "first-grid",
-        SampleSpaces(Vector(2, 1, 1))
+        fixtureSpace(Vector(2, 1, 1))
       )
     val second =
       datasetRun(
         RunKey.unsafe("sub-01", "run-2", space = Some("MNI")),
         "second-grid",
-        SampleSpaces(Vector(2, 1, 1), affine = Some(GaleTestData.affineD3(translated)))
+        fixtureSpace(Vector(2, 1, 1), affine = Some(GaleTestData.affineD3(translated)))
       )
     val index =
       DatasetIndex

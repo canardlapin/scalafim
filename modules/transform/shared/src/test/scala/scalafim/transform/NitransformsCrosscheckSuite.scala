@@ -1,7 +1,7 @@
 package scalafim.transform
 
 import image4s.geometry.{Affine, D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, WorldSpace}
+import scalafim.image.world.{FrameCatalog, FslHeaderPolicy, WorldSpace}
 import scalafim.transform.afni.{Aff12Codec, Aff12Interpretation, AfniCardinal}
 import scalafim.transform.freesurfer.{LtaCodec, LtaInterpretation}
 import scalafim.transform.fsl.{FlirtCodec, FlirtInterpretation, FslHeaderGeometry}
@@ -24,7 +24,7 @@ class NitransformsCrosscheckSuite extends munit.FunSuite:
   private val table = OracleTable.load("nitransforms_crosscheck/points.tsv")
 
   private def raw(path: String) = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded(path))))
-  private def fsl(name: String) = ok(FslHeaderGeometry(raw(s"conventions/$name.nii")))
+  private def fsl(name: String) = ok(FslHeaderGeometry(raw(s"conventions/$name.nii"), FslHeaderPolicy.FslpyCompatibility))
 
   private def obliquity(name: String) =
     AfniCardinal.obliquity(ok(Affine.fromRowMajor[D3](raw(s"nitransforms_crosscheck/$name").sformRowMajor)))

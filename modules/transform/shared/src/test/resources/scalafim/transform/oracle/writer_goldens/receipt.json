@@ -2,16 +2,21 @@
  "goldens": {
   "affine.tfm": "1ec72efc3af737731c1ba03b0bc9cdd873f3ccd65005ffb9d372269b42b452d3",
   "affine.mat": "fe952dac961a933a6198144c3fb424dd28f99203f29319e24bfc29621ea5948d",
-  "flirt.mat": "c4cd5bce6a83bd530789f5bb45108878ab51c15b7e5238ae24f5b1f5f29c5ffb",
-  "affine.aff12.1D": "d74273bcb1b80e3111c6ad4ec6901f0393bc4260d5c97ab41c0d9d9f806eb4c3",
-  "affine.lta": "18c7d3f5a1596d8591ba6da56d5db87110b8a2cb5339c6778a26a26c79db2872",
+  "flirt.mat": "520dac288873a6967467d6d2dc5f0c239d2261679efca99091a6087c95e7b3a1",
+  "affine.aff12.1D": "c3f5140a5272cca9dafc0df6e600fbe2dbafec799fa03c1bcde9aad1138f9094",
+  "affine.lta": "e612a2a2567f93293a6160f2e027c358783bfb55455928da28abfee7fb1bd0f2",
   "talairach.xfm": "d3be7f8f45819583a38ed88d3a7a799e5e9569ccc9e121adc7f550e331e786d0",
-  "register.dat": "0b0c244411d2cae2b754a3c2d2377e2df8a5c9e73305673dc41b8401494d3625",
+  "register.dat": "3ba93d50e067f2ad6783bd5f5a9472f630f4961a43dd80c313f8a96caa5624ef",
   "field_1Warp.nii": "138dd34c1251d4b31fd243a0b8eb8a1886dce4f3ba51c5b1242e7f34d0e2a005",
-  "field_fnirt_relative.nii": "9f34e75e105e99de19ad03e4abe06b5bec416958b803f0c8c8693e517e857af7",
+  "field_fnirt_relative.nii": "cc482d4ef8e77f238e6e0a63b84a8de3fcfb3ec1c789873ebd851269950d304d",
   "queries.tsv": "644a941d36d340002160c32ae29deff251b3af90095ea858eca7c71d5ae063b8",
   "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8",
   "goldens.txt": "5590f427ed52b3185570f9dd2a6f1d5a1d9b6d8e54d1c25e6762c97f38d56d72"
+ },
+ "geometry": {
+  "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+  "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+  "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c"
  },
  "tools": {
   "SimpleITK": "2.5.6",
@@ -58,7 +63,7 @@
   "flirt.mat": {
    "tool": "fslpy fromFlirt (reference implementation)",
    "status": "pass",
-   "max_error_mm": 1.1668703017164717e-06,
+   "max_error_mm": 9.236607994012047e-07,
    "note": "native flirt -applyxfm still pending"
   },
   "register.dat": {
@@ -72,6 +77,785 @@
    "status": "pending-native",
    "max_error_mm": null,
    "note": "tool not installed on the generating machine"
+  }
+ },
+ "native_checks": {
+  "affine.tfm": {
+   "tool": "ANTs",
+   "image": "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+   "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+   "golden_sha256": "1ec72efc3af737731c1ba03b0bc9cdd873f3ccd65005ffb9d372269b42b452d3",
+   "input_hashes": {
+    "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
+   },
+   "reference_geometry": {
+    "shape": [
+     29,
+     25,
+     21
+    ],
+    "affine": [
+     [
+      1.689725399017,
+      -0.241512268782,
+      0.0,
+      -20.758007049561
+     ],
+     [
+      0.186623111367,
+      2.186703443527,
+      0.0,
+      -28.853164672852
+     ],
+     [
+      0.0,
+      0.0,
+      2.799999952316,
+      -28.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ]
+   },
+   "version_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--platform",
+    "linux/amd64",
+    "--cpus",
+    "2",
+    "--memory",
+    "1g",
+    "-e",
+    "OMP_NUM_THREADS=1",
+    "-e",
+    "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+    "-e",
+    "FSLOUTPUTTYPE=NIFTI_GZ",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+    "-v",
+    "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+    "--entrypoint",
+    "/bin/sh",
+    "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+    "-ec",
+    "export PATH=/opt/fsl6/bin:$PATH; antsRegistration --version"
+   ],
+   "version_returncode": 0,
+   "version_output": "ANTs Version: 2.6.5.dev1-gfdce4d2\nCompiled: Jan 14 2026 17:11:24\n\n",
+   "commands": [
+    [
+     "docker",
+     "run",
+     "--rm",
+     "--network",
+     "none",
+     "--platform",
+     "linux/amd64",
+     "--cpus",
+     "2",
+     "--memory",
+     "1g",
+     "-e",
+     "OMP_NUM_THREADS=1",
+     "-e",
+     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+     "-e",
+     "FSLOUTPUTTYPE=NIFTI_GZ",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+     "-v",
+     "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+     "--entrypoint",
+     "/bin/sh",
+     "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+     "-ec",
+     "export PATH=/opt/fsl6/bin:$PATH; /bin/sh -ec 'antsApplyTransforms -d 3 -i /work/ramp_x.nii.gz -r /fixtures/reference.nii -o /work/affine_tfm_x.nii.gz -n Linear -t /goldens/affine.tfm\nantsApplyTransforms -d 3 -i /work/ramp_y.nii.gz -r /fixtures/reference.nii -o /work/affine_tfm_y.nii.gz -n Linear -t /goldens/affine.tfm\nantsApplyTransforms -d 3 -i /work/ramp_z.nii.gz -r /fixtures/reference.nii -o /work/affine_tfm_z.nii.gz -n Linear -t /goldens/affine.tfm\nantsApplyTransforms -d 3 -i /work/support.nii.gz -r /fixtures/reference.nii -o /work/affine_tfm_support.nii.gz -n Linear -t /goldens/affine.tfm'"
+    ]
+   ],
+   "command_returncodes": [
+    0
+   ],
+   "status": "pass",
+   "sample_count": 11799,
+   "analytically_valid_query_count": 11799,
+   "max_mm_error": 2.2250561424625677e-06,
+   "tolerance_mm": 0.0002,
+   "output_hashes": {
+    "affine_tfm_x.nii.gz": "424467949152bf1bb1fd89989a4f0074ef909797ce6fae22eaa9cee062cd8c80",
+    "affine_tfm_y.nii.gz": "8c5625cb3828710ecef3d6b5031b729b5d068a41111fb604d9c1126a761c6c5c",
+    "affine_tfm_z.nii.gz": "25c43fe96edf7ad6ef5a4aefb9792e6e3351a25808df5857fec95aa181d7793a",
+    "affine_tfm_support.nii.gz": "b971d6da230042a3412e8823e32ee5edab6d8179a1ddee03aaabe13d8cd00453"
+   }
+  },
+  "affine.mat": {
+   "tool": "ANTs",
+   "image": "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+   "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+   "golden_sha256": "fe952dac961a933a6198144c3fb424dd28f99203f29319e24bfc29621ea5948d",
+   "input_hashes": {
+    "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
+   },
+   "reference_geometry": {
+    "shape": [
+     29,
+     25,
+     21
+    ],
+    "affine": [
+     [
+      1.689725399017,
+      -0.241512268782,
+      0.0,
+      -20.758007049561
+     ],
+     [
+      0.186623111367,
+      2.186703443527,
+      0.0,
+      -28.853164672852
+     ],
+     [
+      0.0,
+      0.0,
+      2.799999952316,
+      -28.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ]
+   },
+   "version_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--platform",
+    "linux/amd64",
+    "--cpus",
+    "2",
+    "--memory",
+    "1g",
+    "-e",
+    "OMP_NUM_THREADS=1",
+    "-e",
+    "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+    "-e",
+    "FSLOUTPUTTYPE=NIFTI_GZ",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+    "-v",
+    "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+    "--entrypoint",
+    "/bin/sh",
+    "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+    "-ec",
+    "export PATH=/opt/fsl6/bin:$PATH; antsRegistration --version"
+   ],
+   "version_returncode": 0,
+   "version_output": "ANTs Version: 2.6.5.dev1-gfdce4d2\nCompiled: Jan 14 2026 17:11:24\n\n",
+   "commands": [
+    [
+     "docker",
+     "run",
+     "--rm",
+     "--network",
+     "none",
+     "--platform",
+     "linux/amd64",
+     "--cpus",
+     "2",
+     "--memory",
+     "1g",
+     "-e",
+     "OMP_NUM_THREADS=1",
+     "-e",
+     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+     "-e",
+     "FSLOUTPUTTYPE=NIFTI_GZ",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+     "-v",
+     "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+     "--entrypoint",
+     "/bin/sh",
+     "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+     "-ec",
+     "export PATH=/opt/fsl6/bin:$PATH; /bin/sh -ec 'antsApplyTransforms -d 3 -i /work/ramp_x.nii.gz -r /fixtures/reference.nii -o /work/affine_mat_x.nii.gz -n Linear -t /goldens/affine.mat\nantsApplyTransforms -d 3 -i /work/ramp_y.nii.gz -r /fixtures/reference.nii -o /work/affine_mat_y.nii.gz -n Linear -t /goldens/affine.mat\nantsApplyTransforms -d 3 -i /work/ramp_z.nii.gz -r /fixtures/reference.nii -o /work/affine_mat_z.nii.gz -n Linear -t /goldens/affine.mat\nantsApplyTransforms -d 3 -i /work/support.nii.gz -r /fixtures/reference.nii -o /work/affine_mat_support.nii.gz -n Linear -t /goldens/affine.mat'"
+    ]
+   ],
+   "command_returncodes": [
+    0
+   ],
+   "status": "pass",
+   "sample_count": 11799,
+   "analytically_valid_query_count": 11799,
+   "max_mm_error": 2.2250561424625677e-06,
+   "tolerance_mm": 0.0002,
+   "output_hashes": {
+    "affine_mat_x.nii.gz": "424467949152bf1bb1fd89989a4f0074ef909797ce6fae22eaa9cee062cd8c80",
+    "affine_mat_y.nii.gz": "8c5625cb3828710ecef3d6b5031b729b5d068a41111fb604d9c1126a761c6c5c",
+    "affine_mat_z.nii.gz": "25c43fe96edf7ad6ef5a4aefb9792e6e3351a25808df5857fec95aa181d7793a",
+    "affine_mat_support.nii.gz": "b971d6da230042a3412e8823e32ee5edab6d8179a1ddee03aaabe13d8cd00453"
+   }
+  },
+  "field_1Warp.nii": {
+   "tool": "ANTs",
+   "image": "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+   "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+   "golden_sha256": "138dd34c1251d4b31fd243a0b8eb8a1886dce4f3ba51c5b1242e7f34d0e2a005",
+   "input_hashes": {
+    "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
+   },
+   "reference_geometry": {
+    "shape": [
+     7,
+     6,
+     5
+    ],
+    "affine": [
+     [
+      3.982223749161,
+      -0.354854166508,
+      -0.187165245414,
+      -12.0
+     ],
+     [
+      0.319259285927,
+      4.163977146149,
+      -0.465697050095,
+      -10.0
+     ],
+     [
+      0.199916675687,
+      0.418776333332,
+      4.471922874451,
+      -8.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ]
+   },
+   "version_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--platform",
+    "linux/amd64",
+    "--cpus",
+    "2",
+    "--memory",
+    "1g",
+    "-e",
+    "OMP_NUM_THREADS=1",
+    "-e",
+    "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+    "-e",
+    "FSLOUTPUTTYPE=NIFTI_GZ",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+    "-v",
+    "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+    "--entrypoint",
+    "/bin/sh",
+    "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+    "-ec",
+    "export PATH=/opt/fsl6/bin:$PATH; antsRegistration --version"
+   ],
+   "version_returncode": 0,
+   "version_output": "ANTs Version: 2.6.5.dev1-gfdce4d2\nCompiled: Jan 14 2026 17:11:24\n\n",
+   "commands": [
+    [
+     "docker",
+     "run",
+     "--rm",
+     "--network",
+     "none",
+     "--platform",
+     "linux/amd64",
+     "--cpus",
+     "2",
+     "--memory",
+     "1g",
+     "-e",
+     "OMP_NUM_THREADS=1",
+     "-e",
+     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+     "-e",
+     "FSLOUTPUTTYPE=NIFTI_GZ",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+     "-v",
+     "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+     "--entrypoint",
+     "/bin/sh",
+     "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+     "-ec",
+     "export PATH=/opt/fsl6/bin:$PATH; /bin/sh -ec 'antsApplyTransforms -d 3 -i /work/ramp_x.nii.gz -r /work/reference_field_1Warp.nii.gz -o /work/field_1Warp_nii_x.nii.gz -n Linear -t /goldens/field_1Warp.nii\nantsApplyTransforms -d 3 -i /work/ramp_y.nii.gz -r /work/reference_field_1Warp.nii.gz -o /work/field_1Warp_nii_y.nii.gz -n Linear -t /goldens/field_1Warp.nii\nantsApplyTransforms -d 3 -i /work/ramp_z.nii.gz -r /work/reference_field_1Warp.nii.gz -o /work/field_1Warp_nii_z.nii.gz -n Linear -t /goldens/field_1Warp.nii\nantsApplyTransforms -d 3 -i /work/support.nii.gz -r /work/reference_field_1Warp.nii.gz -o /work/field_1Warp_nii_support.nii.gz -n Linear -t /goldens/field_1Warp.nii'"
+    ]
+   ],
+   "command_returncodes": [
+    0
+   ],
+   "status": "pass",
+   "sample_count": 60,
+   "analytically_valid_query_count": 60,
+   "max_mm_error": 2.27476435936856e-06,
+   "tolerance_mm": 0.0002,
+   "output_hashes": {
+    "field_1Warp_nii_x.nii.gz": "26cb8be3485072fa972258ae0c2518db36086f9110e09512e9f92f76244e226b",
+    "field_1Warp_nii_y.nii.gz": "0236a23d1d2a2c49204deec50abf93eb008a108e9db8aed9a7cc42629400eb63",
+    "field_1Warp_nii_z.nii.gz": "8d4480965a8ac15bd9a99177bfab1ad792eb15edad01c121ac7be3eee693777e",
+    "field_1Warp_nii_support.nii.gz": "96083ad61af335b2fd1a6d618118e24598e231a804cfc4c630e75234423f5e74"
+   }
+  },
+  "flirt.mat": {
+   "tool": "FSL",
+   "image": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+   "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+   "golden_sha256": "520dac288873a6967467d6d2dc5f0c239d2261679efca99091a6087c95e7b3a1",
+   "input_hashes": {
+    "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
+   },
+   "reference_geometry": {
+    "shape": [
+     29,
+     25,
+     21
+    ],
+    "affine": [
+     [
+      1.689725399017,
+      -0.241512268782,
+      0.0,
+      -20.758007049561
+     ],
+     [
+      0.186623111367,
+      2.186703443527,
+      0.0,
+      -28.853164672852
+     ],
+     [
+      0.0,
+      0.0,
+      2.799999952316,
+      -28.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ]
+   },
+   "version_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--platform",
+    "linux/amd64",
+    "--cpus",
+    "2",
+    "--memory",
+    "1g",
+    "-e",
+    "OMP_NUM_THREADS=1",
+    "-e",
+    "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+    "-e",
+    "FSLOUTPUTTYPE=NIFTI_GZ",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+    "-v",
+    "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+    "--entrypoint",
+    "/bin/sh",
+    "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+    "-ec",
+    "export PATH=/opt/fsl6/bin:$PATH; flirt -version"
+   ],
+   "version_returncode": 0,
+   "version_output": "FLIRT version 6.0\n",
+   "commands": [
+    [
+     "docker",
+     "run",
+     "--rm",
+     "--network",
+     "none",
+     "--platform",
+     "linux/amd64",
+     "--cpus",
+     "2",
+     "--memory",
+     "1g",
+     "-e",
+     "OMP_NUM_THREADS=1",
+     "-e",
+     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+     "-e",
+     "FSLOUTPUTTYPE=NIFTI_GZ",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+     "-v",
+     "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+     "--entrypoint",
+     "/bin/sh",
+     "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+     "-ec",
+     "export PATH=/opt/fsl6/bin:$PATH; /bin/sh -ec 'flirt -in /work/ramp_x.nii.gz -ref /fixtures/reference.nii -applyxfm -init /goldens/flirt.mat -interp trilinear -out /work/flirt_mat_x.nii.gz -paddingsize 0\nflirt -in /work/ramp_y.nii.gz -ref /fixtures/reference.nii -applyxfm -init /goldens/flirt.mat -interp trilinear -out /work/flirt_mat_y.nii.gz -paddingsize 0\nflirt -in /work/ramp_z.nii.gz -ref /fixtures/reference.nii -applyxfm -init /goldens/flirt.mat -interp trilinear -out /work/flirt_mat_z.nii.gz -paddingsize 0\nflirt -in /work/support.nii.gz -ref /fixtures/reference.nii -applyxfm -init /goldens/flirt.mat -interp trilinear -out /work/flirt_mat_support.nii.gz -paddingsize 0'"
+    ]
+   ],
+   "command_returncodes": [
+    0
+   ],
+   "status": "pass",
+   "sample_count": 11799,
+   "analytically_valid_query_count": 11799,
+   "max_mm_error": 5.803825732860604e-05,
+   "tolerance_mm": 0.0002,
+   "output_hashes": {
+    "flirt_mat_x.nii.gz": "83e61b5791fbf3497a5c6bf3abc9f64a0c2b90061e34d3151ac578e74617b713",
+    "flirt_mat_y.nii.gz": "e81b2ec20a470c183ee71ed28b00310882de14e09ba1d3ef220d46b3241361a8",
+    "flirt_mat_z.nii.gz": "aa4051c082eaea9b8e428f3a71fcefa8e012f1218bb38aea65017dac4273155f",
+    "flirt_mat_support.nii.gz": "c2cd183ccef55c0624a3e90f5d95b890ff737f116d6497086064580bbb5b09d4"
+   }
+  },
+  "field_fnirt_relative.nii": {
+   "tool": "FSL",
+   "image": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+   "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+   "golden_sha256": "cc482d4ef8e77f238e6e0a63b84a8de3fcfb3ec1c789873ebd851269950d304d",
+   "input_hashes": {
+    "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
+   },
+   "reference_geometry": {
+    "shape": [
+     7,
+     6,
+     5
+    ],
+    "affine": [
+     [
+      3.982223749161,
+      -0.354854166508,
+      -0.187165245414,
+      -12.0
+     ],
+     [
+      0.319259285927,
+      4.163977146149,
+      -0.465697050095,
+      -10.0
+     ],
+     [
+      0.199916675687,
+      0.418776333332,
+      4.471922874451,
+      -8.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ]
+   },
+   "version_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--platform",
+    "linux/amd64",
+    "--cpus",
+    "2",
+    "--memory",
+    "1g",
+    "-e",
+    "OMP_NUM_THREADS=1",
+    "-e",
+    "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+    "-e",
+    "FSLOUTPUTTYPE=NIFTI_GZ",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+    "-v",
+    "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+    "--entrypoint",
+    "/bin/sh",
+    "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+    "-ec",
+    "export PATH=/opt/fsl6/bin:$PATH; flirt -version"
+   ],
+   "version_returncode": 0,
+   "version_output": "FLIRT version 6.0\n",
+   "commands": [
+    [
+     "docker",
+     "run",
+     "--rm",
+     "--network",
+     "none",
+     "--platform",
+     "linux/amd64",
+     "--cpus",
+     "2",
+     "--memory",
+     "1g",
+     "-e",
+     "OMP_NUM_THREADS=1",
+     "-e",
+     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+     "-e",
+     "FSLOUTPUTTYPE=NIFTI_GZ",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+     "-v",
+     "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+     "--entrypoint",
+     "/bin/sh",
+     "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+     "-ec",
+     "export PATH=/opt/fsl6/bin:$PATH; /bin/sh -ec 'applywarp --in=/work/ramp_x.nii.gz --ref=/work/reference_field_fnirt_relative.nii.gz --warp=/goldens/field_fnirt_relative.nii --out=/work/field_fnirt_relative_nii_x.nii.gz --interp=trilinear --rel\napplywarp --in=/work/ramp_y.nii.gz --ref=/work/reference_field_fnirt_relative.nii.gz --warp=/goldens/field_fnirt_relative.nii --out=/work/field_fnirt_relative_nii_y.nii.gz --interp=trilinear --rel\napplywarp --in=/work/ramp_z.nii.gz --ref=/work/reference_field_fnirt_relative.nii.gz --warp=/goldens/field_fnirt_relative.nii --out=/work/field_fnirt_relative_nii_z.nii.gz --interp=trilinear --rel\napplywarp --in=/work/support.nii.gz --ref=/work/reference_field_fnirt_relative.nii.gz --warp=/goldens/field_fnirt_relative.nii --out=/work/field_fnirt_relative_nii_support.nii.gz --interp=trilinear --rel'"
+    ]
+   ],
+   "command_returncodes": [
+    0
+   ],
+   "status": "pass",
+   "sample_count": 60,
+   "analytically_valid_query_count": 60,
+   "max_mm_error": 6.313315016782648e-06,
+   "tolerance_mm": 0.0002,
+   "output_hashes": {
+    "field_fnirt_relative_nii_x.nii.gz": "367af3cb9f68523b7f5314b4ac1352d97a331ec249534d398b0fef1bef6939e0",
+    "field_fnirt_relative_nii_y.nii.gz": "ffb1a4a09a2c7d88aefce52f110241fc01768dfa25acdf41fa0391012e96b045",
+    "field_fnirt_relative_nii_z.nii.gz": "e636ff7754978ced348933c9b6e4b9375d30806a6c22b0a3fbf102ec1e4b92ac",
+    "field_fnirt_relative_nii_support.nii.gz": "a8b65542246221eddac1662b7953b279eb717b8b40f0a3fe0a0095c2f2fc0f40"
+   }
+  },
+  "affine.aff12.1D": {
+   "tool": "AFNI",
+   "image": "afni/afni_make_build@sha256:6bc2b04e92e0874d7cf252006be35f2671438904c233f844633c40a8fc7cf9bf",
+   "image_id": "sha256:013e7d4af742b288b6ed21bea70935530041b76f15557ba5d5530dcbefa70f59",
+   "golden_sha256": "c3f5140a5272cca9dafc0df6e600fbe2dbafec799fa03c1bcde9aad1138f9094",
+   "input_hashes": {
+    "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
+   },
+   "reference_geometry": {
+    "shape": [
+     29,
+     25,
+     21
+    ],
+    "affine": [
+     [
+      1.689725399017,
+      -0.241512268782,
+      0.0,
+      -20.758007049561
+     ],
+     [
+      0.186623111367,
+      2.186703443527,
+      0.0,
+      -28.853164672852
+     ],
+     [
+      0.0,
+      0.0,
+      2.799999952316,
+      -28.0
+     ],
+     [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+     ]
+    ]
+   },
+   "version_command": [
+    "docker",
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--platform",
+    "linux/amd64",
+    "--cpus",
+    "2",
+    "--memory",
+    "1g",
+    "-e",
+    "OMP_NUM_THREADS=1",
+    "-e",
+    "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+    "-e",
+    "FSLOUTPUTTYPE=NIFTI_GZ",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+    "-v",
+    "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+    "-v",
+    "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+    "--entrypoint",
+    "/bin/sh",
+    "afni/afni_make_build@sha256:6bc2b04e92e0874d7cf252006be35f2671438904c233f844633c40a8fc7cf9bf",
+    "-ec",
+    "export PATH=/opt/fsl6/bin:$PATH; afni -ver"
+   ],
+   "version_returncode": 0,
+   "version_output": "Precompiled binary linux_ubuntu_16_64_glw_local_shared: Jun  2 2026 (Version AFNI_26.1.04 'Balbinus')\n",
+   "commands": [
+    [
+     "docker",
+     "run",
+     "--rm",
+     "--network",
+     "none",
+     "--platform",
+     "linux/amd64",
+     "--cpus",
+     "2",
+     "--memory",
+     "1g",
+     "-e",
+     "OMP_NUM_THREADS=1",
+     "-e",
+     "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=1",
+     "-e",
+     "FSLOUTPUTTYPE=NIFTI_GZ",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens:/goldens:ro",
+     "-v",
+     "/private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry:/fixtures:ro",
+     "-v",
+     "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-native-writer-d48shts2:/work",
+     "--entrypoint",
+     "/bin/sh",
+     "afni/afni_make_build@sha256:6bc2b04e92e0874d7cf252006be35f2671438904c233f844633c40a8fc7cf9bf",
+     "-ec",
+     "export PATH=/opt/fsl6/bin:$PATH; /bin/sh -ec '3dAllineate -overwrite -input /work/ramp_x.nii.gz -master /fixtures/reference.nii -1Dmatrix_apply /goldens/affine.aff12.1D -final linear -prefix /work/affine_aff12_1D_x.nii.gz\n3dAllineate -overwrite -input /work/ramp_y.nii.gz -master /fixtures/reference.nii -1Dmatrix_apply /goldens/affine.aff12.1D -final linear -prefix /work/affine_aff12_1D_y.nii.gz\n3dAllineate -overwrite -input /work/ramp_z.nii.gz -master /fixtures/reference.nii -1Dmatrix_apply /goldens/affine.aff12.1D -final linear -prefix /work/affine_aff12_1D_z.nii.gz\n3dAllineate -overwrite -input /work/support.nii.gz -master /fixtures/reference.nii -1Dmatrix_apply /goldens/affine.aff12.1D -final linear -prefix /work/affine_aff12_1D_support.nii.gz'"
+    ]
+   ],
+   "command_returncodes": [
+    0
+   ],
+   "status": "pass",
+   "sample_count": 11799,
+   "analytically_valid_query_count": 11799,
+   "max_mm_error": 1.4342359624152405e-05,
+   "tolerance_mm": 0.0002,
+   "output_hashes": {
+    "affine_aff12_1D_x.nii.gz": "27f11768023a42c3500cb1bd6bdae456310f5bcb101e74bbd8af0d9d661eabd0",
+    "affine_aff12_1D_y.nii.gz": "b074f355d1843f3f80eabbd787fd7f56e05b4d2d58488961bff97688a73de243",
+    "affine_aff12_1D_z.nii.gz": "3550be7c53601993dc482d1354b961b814a604673ec505281c5821feff164b3b",
+    "affine_aff12_1D_support.nii.gz": "b3fbb81d3ebe584a47c1cc92d7463abc5c02d3d941e0eb454600408b159e1120"
+   }
+  },
+  "affine.lta": {
+   "tool": "FreeSurfer",
+   "status": "pending-native",
+   "reason": "no immutable image requested",
+   "sample_count": null,
+   "analytically_valid_query_count": null,
+   "max_mm_error": null
+  },
+  "register.dat": {
+   "tool": "FreeSurfer",
+   "status": "pending-native",
+   "reason": "no immutable image requested",
+   "sample_count": null,
+   "analytically_valid_query_count": null,
+   "max_mm_error": null
+  },
+  "talairach.xfm": {
+   "tool": "FreeSurfer",
+   "status": "pending-native",
+   "reason": "no immutable image requested",
+   "sample_count": null,
+   "analytically_valid_query_count": null,
+   "max_mm_error": null
+  }
+ },
+ "native_harness": {
+  "tolerance_mm": 0.0002,
+  "minimum_supported_points": 8,
+  "requested_images": {
+   "ANTs": "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3",
+   "FSL": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+   "AFNI": "afni/afni_make_build@sha256:6bc2b04e92e0874d7cf252006be35f2671438904c233f844633c40a8fc7cf9bf"
+  },
+  "input_hashes": {
+   "writer_geometry/movable.nii": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+   "writer_geometry/reference.nii": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+   "writer_geometry/manifest.json": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+   "pullback.json": "fa0714765fe82a2136531a3758c3894df74be968e6e0286cab5bf06a6751b4d8"
   }
  }
 }

@@ -1,10 +1,16 @@
 package scalafim.fmri.motion.io
 
 import scalafim.fmri.motion.*
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.{Path, Paths}
 
 object MotionCli:
+  /** One input acquisition per CLI execution. This assertion is scoped to the operation;
+    * it never certifies identity with another file or another invocation.
+    */
+  private def inputEvidence: SpaceEvidence =
+    SpaceEvidence(assertion = Some(WorldSpace.declare("motion CLI input acquisition").fold(error => throw new IllegalStateException(error.message), identity)))
   def parse(args: Array[String]): Either[MotionIoError, MotionCommand] =
     parse(args.toVector)
 
@@ -84,7 +90,7 @@ object MotionCli:
       plan: MotionPlan
   ): Either[MotionIoError, MotionCliResult] =
     for
-      run <- MotionNifti.read(input)
+      run <- MotionNifti.read(input, inputEvidence)
       estimate <- MotionEstimator.estimate(run.run, None, plan).left.map(MotionIoError.fromMotion)
       bundle <- writeBundle(outputPrefix, MotionCorrectionResult.estimateOnly(estimate, plan))
     yield MotionCliResult(command, Vector(bundle.motionTsv, bundle.matricesCsv, bundle.summaryCsv))
@@ -97,7 +103,7 @@ object MotionCli:
       control: ApplyControl
   ): Either[MotionIoError, MotionCliResult] =
     for
-      run <- MotionNifti.read(input)
+      run <- MotionNifti.read(input, inputEvidence)
       estimate <- MotionReportWriter.readEstimate(motionTsv)
       corrected <- MotionApplier.apply(run.run, estimate.trace, control).left.map(MotionIoError.fromMotion)
       out <- MotionNifti.write(output, corrected, Some(run.metadata.copy(path = output)))
@@ -113,7 +119,7 @@ object MotionCli:
     val (directory, prefix) = splitOutputPrefix(outputPrefix)
     val correctedPath = directory.resolve(s"${prefix}_corrected.nii")
     for
-      run <- MotionNifti.read(input)
+      run <- MotionNifti.read(input, inputEvidence)
       estimate <- MotionEstimator.estimate(run.run, None, plan).left.map(MotionIoError.fromMotion)
       corrected <- MotionCorrectionResult
         .fromEstimate(run.run, estimate, plan, applyControl = applyControl)

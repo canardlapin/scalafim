@@ -8,6 +8,8 @@ import scalafim.image.SampleSpaces.*
 
 class FieldSourceSuite extends munit.FunSuite:
 
+  private val fixtureWorld = scalafim.image.world.WorldSpace.freshUnresolved()
+
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result match
       case Right(value) => value
@@ -22,9 +24,9 @@ class FieldSourceSuite extends munit.FunSuite:
     val id = spatialValue(DomainId(name))
     val subject = spatialValue(SubjectId("sub-01").asSpatial)
     val modality = spatialValue(Modality(name))
-    val geometry = spatialValue(
-      SamplingGeometry.volume(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity)))
-    )
+    val sampleSpace = SampleSpaces.inWorld(SampleSpaces(Vector(voxels, 1, 1), affine = Some(ProviderAffines.identity)), fixtureWorld)
+      .fold(error => fail(error.message), identity)
+    val geometry = spatialValue(SamplingGeometry.volume(sampleSpace))
     spatialValue(Domain.build(id, SpaceRef.Volume(subject, None, modality), geometry))
 
   private def descriptor(domain: Domain, label: String = "archive-run"): FieldSourceDescriptor =

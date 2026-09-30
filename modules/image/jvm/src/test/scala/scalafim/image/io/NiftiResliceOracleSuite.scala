@@ -1,5 +1,7 @@
 package scalafim.image.io
 
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
+
 import scalafim.image.SampleSpaces.*
 
 import image4s.geometry.Affine
@@ -10,6 +12,7 @@ import java.nio.file.Paths
 import scala.io.Source
 
 class NiftiResliceOracleSuite extends munit.FunSuite:
+  private val readEvidence = SpaceEvidence(assertion = Some(WorldSpace.declare("synthetic IO fixture").toOption.get))
 
   private val WorldTolerance = 2e-6
   private val LinearTolerance = 2e-5
@@ -80,7 +83,7 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
   test("nibabel oblique fixture retains its independent spatial metadata") {
     val expected = fixture
     val path = resourcePath("nibabel-oblique.nii")
-    val decoded = Nifti.readVolume(path).toOption.get
+    val decoded = Nifti.readVolume(path, readEvidence).toOption.get
     val header = NiftiHeader.fromNative(decoded.header)
     val volume = decoded.image
 
@@ -97,7 +100,7 @@ class NiftiResliceOracleSuite extends munit.FunSuite:
 
   test("file-to-reslice pixels match nibabel in every plane and display convention") {
     val expected = fixture
-    val volume = Nifti.readVolume(resourcePath("nibabel-oblique.nii")).toOption.get.image
+    val volume = Nifti.readVolume(resourcePath("nibabel-oblique.nii"), readEvidence).toOption.get.image
     val groups = expected.pixels.groupBy(pixel => pixel.plane -> pixel.convention)
 
     assertEquals(groups.size, AnatomicalPlane.values.length * LeftRightConvention.values.length)

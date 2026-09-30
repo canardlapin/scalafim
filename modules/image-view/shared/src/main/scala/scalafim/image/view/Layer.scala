@@ -33,6 +33,7 @@ enum ImageViewError:
   case InvalidOrthogonalLayout(margin: Double, gap: Double)
   case SamplingFailed(id: LayerId, cause: SlicePlanError)
   case GeometryFailure(cause: GeometryError)
+  case CursorFrameMismatch(cause: GeometryError)
   case GraphicsFailure(cause: GraphicsError)
   case LayerFrameMismatch(id: LayerId, cause: GeometryError)
   case LayerMappingMismatch(id: LayerId, cause: MapError)
@@ -79,6 +80,8 @@ enum ImageViewError:
         s"layer '${id.asString}' could not be sampled: ${cause.message}"
       case GeometryFailure(cause) =>
         cause.message
+      case CursorFrameMismatch(cause) =>
+        s"viewer cursor is not in the reference frame: ${cause.message}"
       case GraphicsFailure(cause) =>
         cause.message
       case LayerFrameMismatch(id, cause) =>
@@ -384,6 +387,14 @@ object SliceLayer:
         index += 1
       RasterImage.unsafeFromOwnedPackedArray(dimensions, pixels)
 
+/** Pure model edits. Reordering promotes listed ids in the requested order;
+  * unmentioned layers follow in their previous relative order. Replacement
+  * takes an already typed SliceLayer, never an existential colorizer cast.
+  */
+enum ViewerModelUpdate:
+  case ReorderLayers(ids: Vector[LayerId])
+  case ReplaceLayer(layer: SliceLayer)
+
 /** A viewer scene: a reference grid and layers, each carrying its own frame and a checked alignment to the
   * reference frame (`alignments(i)` belongs to `layers(i)`).
   */
@@ -412,6 +423,23 @@ final case class ViewerModel private (
 
   override def hashCode: Int =
     (referenceSpace, layers).##
+
+  def updated(update: ViewerModelUpdate): Either[ImageViewError, ViewerModel] =
+    update match
+      case ViewerModelUpdate.ReorderLayers(ids) =>
+        ids.groupBy(identity).collectFirst { case (id, occurrences) if occurrences.size > 1 => id } match
+          case Some(id) => Left(ImageViewError.DuplicateLayerId(id))
+          case None =>
+            ids.find(id => layer(id).isEmpty) match
+              case Some(id) => Left(ImageViewError.UnknownLayer(id))
+              case None =>
+                val selected = ids.toSet
+                ViewerModel.make(referenceSpace, ids.flatMap(layer) ++ layers.filterNot(l => selected(l.id)))
+      case ViewerModelUpdate.ReplaceLayer(replacement) =>
+        val index = layers.indexWhere(_.id == replacement.id)
+        if index < 0 then Left(ImageViewError.UnknownLayer(replacement.id))
+        else ViewerModel.make(referenceSpace, layers.updated(index, replacement))
+
 
 object ViewerModel:
   def make(

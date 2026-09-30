@@ -1,6 +1,7 @@
 package scalafim.image.view
 
 import intaglio.DeviceContext
+import image4s.geometry.{D3, Frame, Point}
 import scalafim.image.*
 
 opaque type SliceStep = Double
@@ -92,7 +93,7 @@ object ViewerPointer:
 enum ViewerAction:
   case Pick(plane: AnatomicalPlane, pointer: ViewerPointer)
   case Scroll(plane: AnatomicalPlane, steps: Int)
-  case SetCursor(cursor: WorldPoint)
+  case SetCursor(cursor: Point[? <: Frame[D3], D3])
   case SetConvention(convention: LeftRightConvention)
   case SetPixelSpacing(spacing: PixelSpacing)
   case SetSliceStep(step: SliceStep)
@@ -114,6 +115,21 @@ final case class ViewerSession(
   device: DeviceContext,
   layout: OrthogonalLayout = OrthogonalLayout.Default
 ):
+  /** Validate adoption without resolving or sampling any layer. */
+  def validateModel(model: ViewerModel): Either[ImageViewError, Unit] =
+    ViewerState.validateFrame(model, state.cursor).flatMap { _ =>
+      if state.timepoint < 0 || state.timepoint >= model.timepointCount then
+        Left(ImageViewError.TimepointOutOfBounds(state.timepoint, model.timepointCount))
+      else
+        state.layerPresentation.iterator.map { (id, presentation) =>
+          model.layer(id) match
+            case None => Left(ImageViewError.UnknownLayer(id))
+            case Some(layer) if presentation.window.nonEmpty && !layer.supportsWindow => Left(ImageViewError.WindowUnsupported(id))
+            case Some(layer) if presentation.threshold.nonEmpty && !layer.supportsThreshold => Left(ImageViewError.ThresholdUnsupported(id))
+            case _ => Right(())
+        }.collectFirst { case Left(error) => Left(error) }.getOrElse(Right(()))
+    }
+
   def frame(model: ViewerModel): Either[ImageViewError, ViewerFrame] =
     ViewerCompiler.compile(model, state, device, layout)
 
@@ -129,18 +145,31 @@ object ViewerReducer:
     session: ViewerSession,
     action: ViewerAction
   ): Either[ImageViewError, ViewerSession] =
+    session.validateModel(model).flatMap(_ => reduceValidated(model, session, action))
+
+  private def reduceValidated(
+    model: ViewerModel,
+    session: ViewerSession,
+    action: ViewerAction
+  ): Either[ImageViewError, ViewerSession] =
     action match
       case ViewerAction.Pick(plane, pointer) =>
         val panel = ViewerCompiler.panels(model.referenceSpace, session.state, session.device, session.layout)(plane)
         panel.worldAtRootNpc(pointer.rootX, pointer.rootY) match
-          case Some(cursor) => Right(session.copy(state = session.state.copy(cursor = cursor)))
+          case Some(cursor) =>
+            Point
+              .fromVector[D3](model.referenceSpace.frame, cursor.toVector)
+              .left
+              .map(ImageViewError.GeometryFailure.apply)
+              .map(point => session.copy(state = session.state.copy(cursor = point)))
           case None => Left(ImageViewError.PointerOutsidePanel(plane))
       case ViewerAction.Scroll(plane, steps) =>
         val distance = steps.toDouble * session.state.sliceStep.millimeters
-        val cursor = session.state.cursor + plane.positiveNormal.unit.scaled(distance)
-        Right(session.copy(state = session.state.copy(cursor = cursor)))
+        ViewerState
+          .move(session.state.cursor, plane.positiveNormal.unit.scaled(distance))
+          .map(cursor => session.copy(state = session.state.copy(cursor = cursor)))
       case ViewerAction.SetCursor(cursor) =>
-        Right(session.copy(state = session.state.copy(cursor = cursor)))
+        ViewerState.alignCursor(model, cursor).map(point => session.copy(state = session.state.copy(cursor = point)))
       case ViewerAction.SetConvention(convention) =>
         Right(session.copy(state = session.state.copy(convention = convention)))
       case ViewerAction.SetPixelSpacing(spacing) =>

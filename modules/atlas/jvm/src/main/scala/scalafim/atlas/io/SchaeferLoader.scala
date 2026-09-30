@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
+import scalafim.image.world.SpaceEvidence
 
 object SchaeferLoader:
   private val baseUri =
@@ -42,7 +43,7 @@ object SchaeferLoader:
     loadFromPaths(spec, volumePath, labelPath)
 
   def loadFromPaths(spec: Schaefer2018, volumePath: Path, labelPath: Path): VolumeAtlas =
-    val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
+    val labelVol = AtlasLabelMaps.readIntVolume(volumePath, SpaceEvidence(bidsSpace = Some(spec.atlasRef().templateSpace.value)), spec.id)
     val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val allRegions = parseLut(Files.readString(labelPath, StandardCharsets.UTF_8), spec)
     val regions = RegionIndex(allRegions.filter(r => presentIds.contains(r.id)))

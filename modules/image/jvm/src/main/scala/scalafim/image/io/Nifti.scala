@@ -11,9 +11,12 @@ import image4s.SomeSampled
 import image4s.geometry.Affine as ImageAffine
 import image4s.geometry.D3
 import image4s.geometry.Frame
+import image4s.geometry.LengthUnit
+import image4s.nifti.NiftiSpatialUnit
 import image4s.nifti.DecodedNifti
 import image4s.nifti.Nifti as ImageNifti
 import image4s.nifti.NiftiByteOrder
+import image4s.nifti.NiftiAffinePolicy
 import image4s.nifti.NiftiError
 import image4s.nifti.NiftiExtension
 import image4s.nifti.NiftiFiles
@@ -94,20 +97,44 @@ final class NiftiHeader private[io] (
   lazy val selectedAffine: ImageAffine[D3] =
     native.sform.orElse(native.qform).getOrElse(native.fallbackAffine)
 
-  lazy val space: SomeSampleSpace =
-    val affine = selectedAffine
-    val origin =
-      Vector(
-        affine.matrix(0, 3),
-        affine.matrix(1, 3),
-        affine.matrix(2, 3)
-      )
-    SampleSpaces(
-      dims,
-      spacing = Some(affine.neuroVoxelSizes),
-      origin = Some(origin),
-      affine = Some(affine)
-    )
+  /** Place this header's selected geometry in an asserted, resolved world. */
+  def spaceIn(
+    evidence: SpaceEvidence,
+    options: NiftiReadOptions = NiftiReadOptions.default
+  ): Either[NiftiImageReadError, SomeSampleSpace] =
+    // image4s keeps selectAffine private. Match its admission gate as well as its selection;
+    // a header-only read must not admit geometry the corresponding full read refuses.
+    val agreement: Either[NiftiImageReadError, Unit] = options.affinePolicy match
+      case NiftiAffinePolicy.RequireAgreement(tolerance) =>
+        if !tolerance.isFinite || tolerance < 0.0 then
+          Left(NiftiImageReadError.Provider(NiftiError.InvalidAffineAgreementTolerance(tolerance)))
+        else (native.qform, native.sform) match
+          case (Some(q), Some(s)) =>
+            val difference = q.rowMajor.zip(s.rowMajor).map((a, b) => math.abs(a - b)).max
+            if difference > tolerance then Left(NiftiImageReadError.Provider(NiftiError.AffineFormsDisagree(difference, tolerance)))
+            else Right(())
+          case _ => Right(())
+      case _ => Right(())
+    val unit = native.spatialUnit match
+      case NiftiSpatialUnit.Meter => LengthUnit.Meter
+      case NiftiSpatialUnit.Micrometer => LengthUnit.Micrometer
+      case NiftiSpatialUnit.Millimeter => LengthUnit.Millimeter
+      case NiftiSpatialUnit.Unknown => options.fallbackSpatialUnit
+    for
+      _ <- agreement
+      _ <- Either.cond(unit == LengthUnit.Millimeter, (),
+        NiftiImageReadError.Space(SpaceError.NotAWorldFrame(s"world admission requires millimetres, got $unit")))
+      selection = NiftiSpaceEvidence.selectedSource(native, options.affinePolicy)
+      (source, affine) = selection
+      world <- Nifti.resolveWorld(native, source, evidence).left.map(NiftiImageReadError.Space.apply)
+      placed <- SampleSpaces
+        .inWorld(
+          SampleSpaces(dims, spacing = Some(affine.neuroVoxelSizes), origin = Some(Vector(affine.matrix(0, 3), affine.matrix(1, 3), affine.matrix(2, 3))), affine = Some(affine)),
+          world
+        )
+        .left
+        .map(error => NiftiImageReadError.Image(NeuroImageError.Space(error)))
+    yield placed
 
 object NiftiHeader:
   private[io] def fromNative(
@@ -162,20 +189,18 @@ object Nifti:
   ): Either[NiftiError, DecodedNifti[NiftiScalarStored]] =
     ImageNifti.readScalarStored(path, options)
 
-  /** Read a volume in the legacy unresolved world.
-    *
-    * **Deferred world identity (STP P1.07).** The result lives in [[scalafim.image.world.WorldSpace.Unresolved]], the
-    * shared frame `scalafim-ras-d3`, so it aligns with every other volume read this way, even another subject's or a
-    * template image. Giving each file a distinct frame here would break same-subject alignment across the codebase, so
-    * the legacy entry point keeps it; [[readVolumeIn]] is the identity-bearing read.
-    */
+  /** Read a volume in the world its evidence identifies. */
   def readVolume(
       path: Path,
+      evidence: SpaceEvidence,
       options: NiftiReadOptions = NiftiReadOptions.default
-  ): Either[
-    NiftiImageReadError,
-    DecodedNifti[SomeScalarVolume[Double]]
-  ] =
+  ): Either[NiftiImageReadError, DecodedNifti[SomeScalarVolume[Double]]] =
+    readVolumeIn(path, evidence, options)
+
+  private def decodeVolume(
+      path: Path,
+      options: NiftiReadOptions
+  ): Either[NiftiImageReadError, DecodedNifti[SomeScalarVolume[Double]]] =
     ImageNifti
       .readScaledDouble(path, options)
       .left
@@ -205,7 +230,7 @@ object Nifti:
       evidence: SpaceEvidence,
       options: NiftiReadOptions = NiftiReadOptions.default
   ): Either[NiftiImageReadError, DecodedNifti[SomeScalarVolume[Double]]] =
-    readVolume(path, options).flatMap: decoded =>
+    decodeVolume(path, options).flatMap: decoded =>
       for
         world  <- resolveWorld(decoded, evidence)
         placed <- placeIn(decoded.image.sampled, world)
@@ -217,21 +242,25 @@ object Nifti:
       evidence: SpaceEvidence,
       options: NiftiReadOptions = Nifti.defaultSeriesReadOptions
   ): Either[NiftiImageReadError, DecodedNifti[SomeScalarSeries[Double]]] =
-    readSeries(path, options).flatMap: decoded =>
+    decodeSeries(path, options).flatMap: decoded =>
       for
         world  <- resolveWorld(decoded, evidence)
         placed <- placeIn(decoded.image.sampled, world)
         series <- NeuroSeries.fromSampled(placed).left.map(NiftiImageReadError.Image.apply)
       yield DecodedNifti(SomeNeuroSeries.eraseSpace(series), decoded.header, decoded.affineSelection)
 
-  /** Read a series in the legacy unresolved world; see [[readVolume]] for the deferred world identity. */
+  /** Read a series in the world its evidence identifies. */
   def readSeries(
       path: Path,
+      evidence: SpaceEvidence,
       options: NiftiReadOptions = Nifti.defaultSeriesReadOptions
-  ): Either[
-    NiftiImageReadError,
-    DecodedNifti[SomeScalarSeries[Double]]
-  ] =
+  ): Either[NiftiImageReadError, DecodedNifti[SomeScalarSeries[Double]]] =
+    readSeriesIn(path, evidence, options)
+
+  private def decodeSeries(
+      path: Path,
+      options: NiftiReadOptions
+  ): Either[NiftiImageReadError, DecodedNifti[SomeScalarSeries[Double]]] =
     ImageNifti
       .readScaledDouble(path, options)
       .left
@@ -346,7 +375,6 @@ object Nifti:
           case 3 =>
             d3.value
               .requireDataRank[3]
-              .flatMap(persistDecoded)
               .left
               .map(providerImageError)
               .map(SomeNeuroVolume.unsafeFromSampled)
@@ -357,7 +385,6 @@ object Nifti:
               .requireDataRank[4]
               .flatMap(_.selectNonSpatial(0, 0))
               .flatMap(_.requireDataRank[3])
-              .flatMap(persistDecoded)
               .left
               .map(providerImageError)
               .map(SomeNeuroVolume.unsafeFromSampled)
@@ -399,59 +426,35 @@ object Nifti:
                 )
               )
             else
-              persistDecoded(ranked)
+              NeuroSeries
+                .fromSampled(ranked)
                 .left
-                .map(providerImageError)
-                .flatMap: persistent =>
-                  NeuroSeries
-                    .fromSampled(persistent)
-                    .left
-                    .map(NiftiImageReadError.Image.apply)
-                    .map(SomeNeuroSeries.eraseSpace)
+                .map(NiftiImageReadError.Image.apply)
+                .map(SomeNeuroSeries.eraseSpace)
     )
 
-  /** Rebind an external decode to deterministic persistent geometry without
-    * copying its Ravel data owner.
-    */
-  private def persistDecoded[A, R <: AnyRank](
-      sampled: Sampled[
-        ? <: SampleSpace[?, D3],
-        A,
-        Continuous,
-        R
-      ]
-  )(using
-      image4s.ValueSemantics[A, Continuous]
-  ): Either[
-    ImageError,
-    Sampled[? <: SampleSpace[?, D3], A, Continuous, R]
-  ] =
-    for
-      persistent <- SampleSpaces
-        .persistentD3(sampled.sampleSpace)
-        .left
-        .map(ImageError.Geometry.apply)
-      rebound <- Sampled
-        .continuous(persistent, sampled.data, sampled.metadata)
-    yield rebound
-
   /** The world space of a completed read: the header's selected xform code plus the caller's evidence. */
+  private[io] def resolveWorld(
+      header: image4s.nifti.NiftiHeader,
+      source: image4s.nifti.NiftiAffineSource,
+      evidence: SpaceEvidence
+  ): Either[SpaceError, WorldSpace] =
+    for
+      fromFile <- NiftiSpaceEvidence.fromSelection(header, source)
+      xform <- (evidence.xform, fromFile.xform) match
+        // An unknown (or scaling-fallback) header code is absence of evidence, not a contradiction.
+        case (Some(claimed), Some(XformCode.Unknown)) => Right(Some(claimed))
+        case (Some(claimed), Some(actual)) if claimed != actual =>
+          Left(SpaceError.ConflictingEvidence(s"supplied xform code $claimed", s"header xform code $actual"))
+        case (claimed, actual) => Right(actual.orElse(claimed))
+      world <- SpaceResolver.resolveKnown(evidence.copy(xform = xform))
+    yield world
+
   private def resolveWorld(
       decoded: DecodedNifti[?],
       evidence: SpaceEvidence
   ): Either[NiftiImageReadError, WorldSpace] =
-    val resolved =
-      for
-        fromFile <- NiftiSpaceEvidence.fromSelection(decoded.header, decoded.affineSelection.source)
-        xform <- (evidence.xform, fromFile.xform) match
-          // An unknown (or scaling-fallback) header code is absence of evidence, not a contradiction.
-          case (Some(claimed), Some(XformCode.Unknown)) => Right(Some(claimed))
-          case (Some(claimed), Some(actual)) if claimed != actual =>
-            Left(SpaceError.ConflictingEvidence(s"supplied xform code $claimed", s"header xform code $actual"))
-          case (claimed, actual) => Right(actual.orElse(claimed))
-        world <- SpaceResolver.resolveKnown(evidence.copy(xform = xform))
-      yield world
-    resolved.left.map(NiftiImageReadError.Space.apply)
+    resolveWorld(decoded.header, decoded.affineSelection.source, evidence).left.map(NiftiImageReadError.Space.apply)
 
   /** Re-identify a decoded image's geometry in `world` without copying its data. */
   private def placeIn[A, R <: AnyRank](

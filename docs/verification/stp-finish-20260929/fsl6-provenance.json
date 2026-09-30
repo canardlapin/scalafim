@@ -1,0 +1,52 @@
+{
+  "status": "installed",
+  "platform": "linux/amd64",
+  "base_image": "mambaorg/micromamba@sha256:0d1b4789ca6835e0c9d0b65194735053388555a76afc92c7abace8725119c665",
+  "channels": [
+    "https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/",
+    "conda-forge"
+  ],
+  "requested_packages": [
+    "fsl-flirt",
+    "fsl-fnirt"
+  ],
+  "selected_packages": {
+    "fsl-flirt": {
+      "version": "2111.4",
+      "build": "h28ab0de_3",
+      "file": "mamba/pkgs/fsl-flirt-2111.4-h28ab0de_3.conda",
+      "sha256": "f12fcd76e08db2847d0eb334fc877f2af3f991d33f65e16c9389d4c28f9bc809"
+    },
+    "fsl-fnirt": {
+      "version": "2203.2",
+      "build": "ha905fa9_5",
+      "file": "mamba/pkgs/fsl-fnirt-2203.2-ha905fa9_5.conda",
+      "sha256": "40ba52323d4c09113ebbacf334bec805c8aa48b5d2db437ff1456d5d256f03ec"
+    }
+  },
+  "internal_filesystem_image": "sha256:a1645dc03b9500bb7f6e5352ccc28fe800ef958a959092ae7ea744db453db97b",
+  "image_tag": "scalafim-fsl6-tooling:20260929",
+  "executables": [
+    "/opt/fsl6/bin/flirt",
+    "/opt/fsl6/bin/fnirt",
+    "/opt/fsl6/bin/invwarp"
+  ],
+  "version_probes": {
+    "flirt": "FLIRT version 6.0",
+    "applywarp": "not exposed after fsl-warpfns install",
+    "fnirtfileutils": "not exposed after fsl-warpfns install",
+    "convertwarp": "not exposed after fsl-warpfns install"
+  },
+  "artifacts": {
+    "build_log": "build-warpfns.log",
+    "build_metadata": "build-warpfns.log.meta.json",
+    "explicit_package_urls": "fsl6-warpfns-explicit.txt",
+    "probe_output": "fsl6-warpfns-probes.txt",
+    "image_identity": "image-id.txt"
+  },
+  "prior_failed_host_bind_mount_install": "preserved package archives but was not used for the successful image build; macOS case-insensitive extraction caused the fsl-flirt hardlink cache failure",
+  "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+  "package_lock": "fsl6-package-lock.json",
+  "warp_cli_package": "fsl-fugue",
+  "build_log": "build-fugue-2.log"
+}

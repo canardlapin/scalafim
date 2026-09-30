@@ -1,0 +1,10 @@
+{
+  "name": "afni_version",
+  "argv": [
+    "/opt/afni/src/../install/afni",
+    "-ver"
+  ],
+  "returncode": 0,
+  "stdout": "Precompiled binary linux_ubuntu_16_64_glw_local_shared: Jun  2 2026 (Version AFNI_26.1.04 'Balbinus')\n",
+  "stderr": ""
+}

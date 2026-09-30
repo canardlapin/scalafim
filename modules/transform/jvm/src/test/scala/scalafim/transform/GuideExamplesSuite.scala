@@ -46,7 +46,7 @@ class GuideExamplesSuite extends munit.FunSuite:
     val reference = FrameCatalog.frame(WorldSpace.declare("highres").toOption.get)
     def fslGeometry(file: String) =
       FslHeaderGeometry(NiftiRaw.parse(IArray.unsafeFromArray(java.nio.file.Files.readAllBytes(oracle(file)))).toOption.get).toOption.get
-    val grids = FslGrids[input.type, reference.type](input, fslGeometry("conventions/fsl_case0.nii"), reference, fslGeometry("conventions/fsl_case1.nii"))
+    val grids = FslGrids[input.type, reference.type](input, fslGeometry("fsl6_header_controls/consistent_positive_source.nii"), reference, fslGeometry("fsl6_header_controls/consistent_positive_reference.nii"))
     val flirt = TransformFiles.load(oracle("conventions/flirt_0_to_1.mat")).toOption.get.native match
       case NativeTransform.Flirt(m) => m
       case other                    => fail(s"expected FLIRT, got ${other.format}")

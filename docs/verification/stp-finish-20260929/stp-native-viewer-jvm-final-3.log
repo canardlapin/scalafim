@@ -1,0 +1,104 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] compiling 3 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.transform.WriterGoldensSuite:
+  + every writer reproduces its committed golden byte for byte 0.09s
+  + the receipt was produced from exactly the committed goldens 0.012s
+  + a planted stale native golden or geometry receipt is rejected even when top-level golden hashes remain current 0.006s
+==> X scalafim.transform.WriterGoldensSuite.no native check in the receipt failed  0.011s munit.FailException: modules/transform/jvm/src/test/scala/scalafim/transform/WriterGoldensSuite.scala:80 missing required native numerical passes: HashSet(fnirt_field.nii, ants_field.nii)
+79:      case (name, body) if body.contains("\"status\": \"pass\"") => name
+80:    assert(required.subsetOf(passed.toSet), s"missing required native numerical passes: ${required -- passed.toSet}")
+    at munit.FunSuite.assert(FunSuite.scala:13)
+    at scalafim.transform.WriterGoldensSuite.$init$$$anonfun$4(WriterGoldensSuite.scala:80)
+scalafim.transform.fsl.Fsl6NativeOracleSuite:
+  + manifest pins the approved FSL6 image, package lock, every generated fixture, and numerical receipts 0.063s
+  + FSL6 FNIRT coefficient ramps and fields agree with Scala decoders on every frozen asymmetric case 0.224s
+  + FSL6 dense coordinate ramps reproduce Scala relative and absolute interpretations in every handedness 0.261s
+==> X scalafim.transform.fsl.Fsl6NativeOracleSuite.FSL6 FLIRT -vox coordinates follow the decoder's explicit source-voxel to reference-voxel convention  0.005s munit.ComparisonFailException: modules/transform/shared/src/test/scala/scalafim/transform/fsl/Fsl6NativeOracleSuite.scala:126 0_to_1 voxel Vector(0.0, 0.0, 0.0) expected: 2.27273 but was: 8.385078817067232
+125:        val expected = affineAt(referenceGeometry.voxelToWorld.inverse, mapped)
+126:        expected.zip(native).foreach((a, e) => assertEqualsDouble(a, e, 2e-4, s"$key voxel $voxel"))
+127:
+    at munit.FunSuite.assertEqualsDouble(FunSuite.scala:13)
+    at scalafim.transform.fsl.Fsl6NativeOracleSuite.$init$$$anonfun$4$$anonfun$1$$anonfun$2$$anonfun$1(Fsl6NativeOracleSuite.scala:126)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.transform.fsl.Fsl6NativeOracleSuite.$init$$$anonfun$4$$anonfun$1$$anonfun$2(Fsl6NativeOracleSuite.scala:126)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.transform.fsl.Fsl6NativeOracleSuite.$init$$$anonfun$4$$anonfun$1(Fsl6NativeOracleSuite.scala:122)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.transform.fsl.Fsl6NativeOracleSuite.$init$$$anonfun$4(Fsl6NativeOracleSuite.scala:109)
+  + FSL6 analytic coefficient Jacobians agree with the warp algebra's interior finite differences 0.057s
+scalafim.transform.NativeInverseOracleSuite:
+==> X scalafim.transform.NativeInverseOracleSuite.a successful gated estimate agrees with ANTs native InverseWarp on its declared interior  0.12s munit.FailException: modules/transform/shared/src/test/scala/scalafim/transform/NativeInverseOracleSuite.scala:96 unexpected failure: Inversion(GatesFailed(Vector(MaximumResidualExceeded(Reverse,0.020531737232830444,0.01), P99ResidualExceeded(Reverse,0.01675993108980929,0.01)),reframe4s.field.DenseInverseEvidence@337856c3))
+95:    val inverse = ok(LpsDisplacementInterpretation.Ants.interpret(inverseFile, DenseContext(inverseFrames)))
+96:    qualifies("ants", forwardFile.spatialDims, affine, forward, inverse, (x, y, z) => Vector(-forwardFile.component(x, y, z, 0), -forwardFile.component(x, y, z, 1), forwardFile.component(x, y, z, 2)))
+97:
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.transform.NativeInverseOracleSuite.ok$$anonfun$1(NativeInverseOracleSuite.scala:14)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.transform.NativeInverseOracleSuite.ok(NativeInverseOracleSuite.scala:14)
+    at scalafim.transform.NativeInverseOracleSuite.qualifies(NativeInverseOracleSuite.scala:66)
+    at scalafim.transform.NativeInverseOracleSuite.$init$$$anonfun$1(NativeInverseOracleSuite.scala:96)
+==> X scalafim.transform.NativeInverseOracleSuite.a successful gated estimate agrees with FSL6 invwarp for the separately declared coincident-geometry control  0.04s munit.FailException: modules/transform/shared/src/test/scala/scalafim/transform/NativeInverseOracleSuite.scala:110 unexpected failure: Map(OutsideDomain(Vector(2.0073946118354797, -4.563773512840271, -9.5)))
+109:      Vector.tabulate(3)(r => (0 until 3).map(c => toWorld(4 * r + c) * vector(c)).sum)
+110:    )
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.transform.NativeInverseOracleSuite.ok$$anonfun$1(NativeInverseOracleSuite.scala:14)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.transform.NativeInverseOracleSuite.ok(NativeInverseOracleSuite.scala:14)
+    at scalafim.transform.NativeInverseOracleSuite.qualifies$$anonfun$9$$anonfun$1$$anonfun$1(NativeInverseOracleSuite.scala:78)
+    at scala.collection.immutable.Range.foreach(Range.scala:192)
+    at scalafim.transform.NativeInverseOracleSuite.qualifies$$anonfun$9$$anonfun$1(NativeInverseOracleSuite.scala:75)
+    at scala.collection.immutable.Range.foreach(Range.scala:192)
+    at scalafim.transform.NativeInverseOracleSuite.qualifies$$anonfun$9(NativeInverseOracleSuite.scala:75)
+    at scala.collection.immutable.Range.foreach(Range.scala:192)
+    at scalafim.transform.NativeInverseOracleSuite.qualifies(NativeInverseOracleSuite.scala:75)
+    at scalafim.transform.NativeInverseOracleSuite.$init$$$anonfun$2(NativeInverseOracleSuite.scala:110)
+[error] Failed: Total 11, Failed 4, Errors 0, Passed 7
+[error] Failed tests:
+[error] 	scalafim.transform.fsl.Fsl6NativeOracleSuite
+[error] 	scalafim.transform.NativeInverseOracleSuite
+[error] 	scalafim.transform.WriterGoldensSuite
+[error] (transformJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 9 s, completed Sep 29, 2026, 11:03:12 p.m.

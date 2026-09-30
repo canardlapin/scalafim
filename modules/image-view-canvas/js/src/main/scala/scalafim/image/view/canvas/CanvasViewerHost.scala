@@ -179,10 +179,24 @@ object CanvasViewerRuntime:
   * call these typed bindings from their preferred UI framework.
   */
 final class CanvasViewerController private[canvas] (
-  val model: ViewerModel,
+  initialModel: ViewerModel,
   initialSession: ViewerSession,
   val runtime: CanvasViewerRuntime
 ):
+  private var currentModel = initialModel
+  def model: ViewerModel = currentModel
+
+  /** Adopt a validated model edit atomically, retaining session and runtime caches. */
+  def updateModel(update: ViewerModelUpdate): Either[CanvasViewerError, ViewerModel] =
+    ensureActive.flatMap { _ =>
+      currentModel.updated(update).left.map(CanvasViewerError.View.apply).flatMap { next =>
+        currentSession.validateModel(next).left.map(CanvasViewerError.View.apply).map { _ =>
+          currentModel = next
+          next
+        }
+      }
+    }
+
   private var currentSession = initialSession
   private var active = true
 
@@ -275,9 +289,19 @@ final class CanvasScrollCoordinator private[canvas] (
   private var pending = Map.empty[AnatomicalPlane, Int]
   private var eventCount = 0
   private var scheduled = false
+  private var cancelled = false
+
+  /** Permanently stop this coordinator and discard any pending scroll burst.
+    * An already scheduled task may run, but cannot dispatch or call onFlush.
+    */
+  def cancel(): Unit =
+    cancelled = true
+    pending = Map.empty
+    eventCount = 0
+    scheduled = false
 
   def enqueue(plane: AnatomicalPlane, steps: Int): Unit =
-    if steps != 0 then
+    if !cancelled && !controller.isClosed && steps != 0 then
       pending = pending.updated(plane, pending.getOrElse(plane, 0) + steps)
       eventCount += 1
       if !scheduled then
@@ -285,24 +309,26 @@ final class CanvasScrollCoordinator private[canvas] (
         scheduler.schedule(() => flush())
 
   private def flush(): Unit =
-    val net = pending.filter((_, steps) => steps != 0)
-    val submitted = eventCount
-    pending = Map.empty
-    eventCount = 0
-    scheduled = false
-    val actions = Vector(
-      AnatomicalPlane.Sagittal,
-      AnatomicalPlane.Coronal,
-      AnatomicalPlane.Axial
-    ).flatMap { plane =>
-      net.get(plane).map(steps => ViewerAction.Scroll(plane, steps))
-    }
-    var result = controller.session
-    var index = 0
-    while index < actions.length && result.isRight do
-      result = result.flatMap(_ => controller.dispatch(actions(index)))
-      index += 1
-    onFlush(result, CanvasScrollBatch(submitted, actions.length, net))
+    if cancelled || controller.isClosed then cancel()
+    else
+      val net = pending.filter((_, steps) => steps != 0)
+      val submitted = eventCount
+      pending = Map.empty
+      eventCount = 0
+      scheduled = false
+      val actions = Vector(
+        AnatomicalPlane.Sagittal,
+        AnatomicalPlane.Coronal,
+        AnatomicalPlane.Axial
+      ).flatMap { plane =>
+        net.get(plane).map(steps => ViewerAction.Scroll(plane, steps))
+      }
+      var result = controller.session
+      var index = 0
+      while index < actions.length && result.isRight do
+        result = result.flatMap(_ => controller.dispatch(actions(index)))
+        index += 1
+      onFlush(result, CanvasScrollBatch(submitted, actions.length, net))
 
 object CanvasViewerHost:
   def controller(

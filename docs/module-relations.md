@@ -12,6 +12,12 @@ workflow.
 
 Live dependency edges are declared in `build.sbt`.
 
+`modules/mvpa-foundation-spike` is an unpublished standalone diagnostic build
+for the [unified MVPA epic](plans/unified-mvpa-epic.md), not a production
+dependency edge. Its runner snapshots exact candidate provider revisions and
+the actual response/locus adapter sources. It neither changes production pins
+nor introduces a second shipping identity or predictive-lifecycle system.
+
 The estimate artifact modules form a separate reader boundary:
 
 ```text
@@ -334,9 +340,10 @@ and [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
   `DenseVectorField` roles, and anatomical orientation. It defines no
   morphism or affine algebra of its own; `imageAlgebraBoundaryCheck` rejects
   the retired `SpatialMorphism`/`Affine3DMorphism` family.
-  - **Planned (STP P1–P2):** `scalafim.image.space` will hold world-space
-    frame identity and the toolkit coordinate-convention kernel.
-- **`transform`** (new) owns toolkit transform formats (ITK/ANTs, FSL, AFNI,
+  - `scalafim.image.world` owns world-space frame identity and toolkit
+    coordinate conventions. Bare D3 geometry receives a fresh unknown-world
+    scope; file admission requires explicit resolved evidence.
+- **`transform`** owns toolkit transform formats (ITK/ANTs, FSL, AFNI,
   FreeSurfer, X5), their interpretation as typed world-space transforms, and
   conversion between toolkits.
 - **`surface`** owns surface geometry, volume-to-surface morphism wrappers,
@@ -365,8 +372,9 @@ There are intentionally two layers:
   format and kernel boundaries. `scalafim.surface.Point3D` and
   `scalafim.atlas.Point3D` are aliases of it.
 - Where voxel or world roles matter, prefer `VoxelPoint` and `WorldPoint`.
-- Frame-indexed image4s `Point[F, D3]` values are the target representation
-  (STP P1).
+- Frame-indexed image4s `Point[F, D3]` values carry world coordinates through
+  transforms and linked viewer cursors; cross-world sharing requires a
+  `WorldLink`.
 
 **Rules for agents:**
 

@@ -64,7 +64,7 @@ object SpaceUtils:
   def outputAlignedSpace(shape: Vector[Int], affine: Affine[D3], voxelSize: Double): AlignedSpace[?] =
     outputAlignedSpace(shape, affine, Some(Vector(voxelSize)))
 
-  /** A bare shape and affine name no world, so the bounds are placed in the unresolved RAS-mm world frame. */
+  /** A bare shape and affine name no world, so the bounds are placed in a fresh unresolved RAS-mm world frame. */
   def outputAlignedSpace(
       shape: Vector[Int],
       affine: Affine[D3],
@@ -78,7 +78,7 @@ object SpaceUtils:
       affine: Affine[D3],
       voxelSizes: Option[Vector[Double]]
   ): Either[SampleSpaceError, AlignedSpace[?]] =
-    aligned(FrameCatalog.frame(WorldSpace.Unresolved), shape, affine, voxelSizes)
+    aligned(FrameCatalog.frame(WorldSpace.freshUnresolved()), shape, affine, voxelSizes)
 
   private def aligned[F <: Frame[D3]](
       frame: F,

@@ -11,12 +11,15 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
 import scalafim.image.io.Nifti
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
 import gale.linalg.DVec
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
 class ResultManifestWriterSuite extends munit.FunSuite:
+
+  private val readEvidence = SpaceEvidence(assertion = Some(WorldSpace.declare("result writer synthetic fixture").toOption.get))
 
   test("ResultManifestWriter writes BIDS-style NIfTI, covariance TSV, and sidecar artifacts") {
     val result = denseResult().copy(
@@ -51,7 +54,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(written.paths.contains(sidecarPath))
 
     val coefficientImage =
-      Nifti.readSeries(coefficientPath).fold(error => fail(error.message), _.image)
+      Nifti.readSeries(coefficientPath, readEvidence).fold(error => fail(error.message), _.image)
     assertEquals(coefficientImage.space.dims.take(4), Vector(2, 1, 1, 2))
     assertEqualsDouble(coefficientImage(0, 0, 0, 0), 2.0, 1e-12)
     assertEqualsDouble(coefficientImage(0, 0, 0, 1), 3.0, 1e-12)
@@ -59,7 +62,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assertEqualsDouble(coefficientImage(1, 0, 0, 1), 4.0, 1e-12)
 
     val contrastImage =
-      Nifti.readSeries(contrastPath).fold(error => fail(error.message), _.image)
+      Nifti.readSeries(contrastPath, readEvidence).fold(error => fail(error.message), _.image)
     assertEquals(contrastImage.space.dims.take(4), Vector(2, 1, 1, 3))
     assertEqualsDouble(contrastImage(0, 0, 0, 0), t.estimates(0), 1e-12)
     assertEqualsDouble(contrastImage(1, 0, 0, 0), t.estimates(1), 1e-12)
@@ -118,7 +121,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(written.artifacts.filter(_.path.toString.endsWith(".nii")).forall(_.labels.length == 1))
 
     val taskCoefficient =
-      Nifti.readVolume(expectedNiftis.head).fold(error => fail(error.message), _.image)
+      Nifti.readVolume(expectedNiftis.head, readEvidence).fold(error => fail(error.message), _.image)
     assertEquals(taskCoefficient.space.dims, Vector(2, 1, 1))
     assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(0), 2.0, 1e-12)
     assertEqualsDouble(taskCoefficient.valueAtCanonicalOrdinal(1), -1.0, 1e-12)

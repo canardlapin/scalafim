@@ -7,6 +7,16 @@ import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
 
+  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("dataset fixture shared world")
+    .fold(error => fail(error.message), identity)
+
+  private def fixtureSpace(
+      dims: Vector[Int],
+      affine: Option[image4s.geometry.Affine[image4s.geometry.D3]] = None
+  ): SomeSampleSpace =
+    SampleSpaces.inWorld(SampleSpaces(dims, affine = affine), fixtureWorld)
+      .fold(error => fail(error.message), identity)
+
   test("cross-session coordinate window remains segmented until explicitly concatenated") {
     val result = runScenario()
     assert(result.ciPass(ScenarioPolicy.PassOnly), result.render)
@@ -138,7 +148,7 @@ class DatasetHierarchyWorkflowScenarioSuite extends munit.FunSuite:
                   base + time.toDouble * 10.0 + 2.0
                 )
             ),
-            space = SampleSpaces(Vector(2, 1, 1)),
+            space = fixtureSpace(Vector(2, 1, 1)),
             metadata = DatasetMetadata(Map("session" -> sessionId))
           ),
           samplingFrame = SamplingFrame(blockLens = Seq(3), tr = Seq(1.0)),
