@@ -1,9 +1,14 @@
 package scalafim.fmri.mvpa.relation
 
 import gale.backend.Backend.given
-import gale.linalg.{DMat, DVec, DoubleLinearOperator, LinAlgError, MutableDVec}
-import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SemanticProvenanceEvent, SemanticSpace, SpaceEvidence, Table, ValueIdentity}
+import gale.linalg.DMat
+import multivar.core.{Dual, Lin, Primal, SemanticSpace, SpaceEvidence, Table}
 import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, EvidenceError}
+
+/** A signed cross-space covariant closure. It need not be square, symmetric,
+  * or positive. Its primal-to-dual orientation is checked by Multivar.
+  */
+type CrossClosure[L <: SemanticSpace, R <: SemanticSpace] = Lin[Primal[R], Dual[L]]
 
 /** A first-order contrast has an explicitly identified contrast output axis.
   * It cannot be used as a second-order effect query.
@@ -11,21 +16,19 @@ import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, EvidenceError}
 final class FirstOrderQuery[E <: SemanticSpace, C <: SemanticSpace] private[relation] (
     val contrasts: SpaceEvidence[C],
     val contrastAxis: AxisDescriptor,
-    val weights: Table[E, C]
+    val weights: Lin[Primal[E], Primal[C]]
 ):
   def apply[N <: SemanticSpace](relation: Relation[E, N]): Either[EvidenceError, FirstOrderPattern[C, N]] =
-    QueryEvaluation.table(
-      contrasts, relation.neural, "first-order-pattern",
-      Vector(weights.valueIdentity, relation.estimate.valueIdentity),
-      input => relation.estimate(input).flatMap(weights.star.apply),
-      input => weights(input).flatMap(relation.estimate.star.apply)
-    ).map(pattern => new FirstOrderPattern(contrasts, contrastAxis, relation.neural, relation.neuralAxis, pattern, relation.origins))
+    Right(new FirstOrderPattern(
+      contrasts, contrastAxis, relation.neural, relation.neuralAxis,
+      relation.estimate.andThen(weights), relation.origins
+    ))
 
 object FirstOrderQuery:
   def apply[EK, CK](
       effects: AxisRef[EK],
       contrasts: AxisRef[CK],
-      weights: Table[effects.Id, contrasts.Id]
+      weights: Lin[Primal[effects.Id], Primal[contrasts.Id]]
   ): FirstOrderQuery[effects.Id, contrasts.Id] =
     new FirstOrderQuery(contrasts.evidence, contrasts.descriptor, weights)
 
@@ -77,11 +80,11 @@ final class OpenRelationTransport[
   def reverse: OpenRelationTransport[ER, NR, EL, NL] =
     new OpenRelationTransport(pair.reverse)
 
-  def closeNeural(metric: Table[NL, NR]): Either[EvidenceError, EffectForm[EL, ER]] =
+  def closeNeural(metric: CrossClosure[NL, NR]): Either[EvidenceError, EffectForm[EL, ER]] =
     SecondOrderQuery(pair, metric = Some(metric)).effectForm
 
   /** The Frobenius-adjoint closure: H maps to B_L^T H B_R. */
-  def closeExperimental(query: Table[EL, ER]): Either[EvidenceError, NeuralForm[NL, NR]] =
+  def closeExperimental(query: CrossClosure[EL, ER]): Either[EvidenceError, NeuralForm[NL, NR]] =
     SecondOrderQuery(pair, query = Some(query)).neuralForm
 
 /** Effect-space cross-form. This may be rectangular and signed; it makes no
@@ -133,8 +136,8 @@ final class SecondOrderQuery[
     NR <: SemanticSpace
 ] private[relation] (
     val pair: RelationPair[EL, NL, ER, NR],
-    val query: Option[Table[EL, ER]],
-    val metric: Option[Table[NL, NR]]
+    val query: Option[CrossClosure[EL, ER]],
+    val metric: Option[CrossClosure[NL, NR]]
 ):
   def open: OpenRelationTransport[EL, NL, ER, NR] =
     new OpenRelationTransport(pair)
@@ -146,23 +149,21 @@ final class SecondOrderQuery[
     metric match
       case None => Left(EvidenceError.InvalidAxis("neural metric", "an effect form requires a neural closure"))
       case Some(value) =>
-        QueryEvaluation.table(
-          pair.left.effects, pair.right.effects, "effect-form",
-          Vector(pair.left.estimate.valueIdentity, value.valueIdentity, pair.right.estimate.valueIdentity),
-          input => pair.right.estimate.star(input).flatMap(value.apply).flatMap(pair.left.estimate.apply),
-          input => pair.left.estimate.star(input).flatMap(value.star.apply).flatMap(pair.right.estimate.apply)
-        ).map(form => new EffectForm(pair.left.effects, pair.right.effects, form, pair.left.origins, pair.right.origins))
+        Right(new EffectForm(
+          pair.left.effects, pair.right.effects,
+          pair.right.estimate.star.andThen(value).andThen(pair.left.estimate),
+          pair.left.origins, pair.right.origins
+        ))
 
   def neuralForm: Either[EvidenceError, NeuralForm[NL, NR]] =
     query match
       case None => Left(EvidenceError.InvalidAxis("experimental query", "a neural form requires an experimental closure"))
       case Some(value) =>
-        QueryEvaluation.table(
-          pair.left.neural, pair.right.neural, "neural-form",
-          Vector(pair.left.estimate.valueIdentity, value.valueIdentity, pair.right.estimate.valueIdentity),
-          input => pair.right.estimate(input).flatMap(value.apply).flatMap(pair.left.estimate.star.apply),
-          input => pair.left.estimate(input).flatMap(value.star.apply).flatMap(pair.right.estimate.star.apply)
-        ).map(form => new NeuralForm(pair.left.neural, pair.right.neural, form, pair.left.origins, pair.right.origins))
+        Right(new NeuralForm(
+          pair.left.neural, pair.right.neural,
+          pair.right.estimate.andThen(value).andThen(pair.left.estimate.star),
+          pair.left.origins, pair.right.origins
+        ))
 
   /** Contract one right-effect basis column at a time. This does not require
     * either complete cross-form or a quadratic identity allocation.
@@ -175,15 +176,14 @@ final class SecondOrderQuery[
           pair.left.origins.access == RelationAccess.OneShot || pair.right.origins.access == RelationAccess.OneShot =>
         Left(EvidenceError.InvalidSource("scalar contraction requires declared owned replay for both relation endpoints"))
       case (Some(experimental), Some(neural)) =>
+        val contraction = pair.right.estimate.star.andThen(neural)
+          .andThen(pair.left.estimate).andThen(experimental.star)
         var index = 0
         var total = 0.0
         var failure: Option[EvidenceError] = None
         while index < pair.right.effectAxis.size && failure.isEmpty do
           val basis = DMat.tabulate(pair.right.effectAxis.size, 1)((row, _) => if row == index then 1.0 else 0.0)
-          val diagonal = pair.right.estimate.star(basis)
-            .flatMap(neural.apply)
-            .flatMap(pair.left.estimate.apply)
-            .flatMap(experimental.star.apply)
+          val diagonal = contraction(basis)
           diagonal match
             case Left(error) => failure = Some(EvidenceError.SemanticFailure(error))
             case Right(value) => total += value(index, 0)
@@ -202,53 +202,7 @@ object SecondOrderQuery:
       NR <: SemanticSpace
   ](
       pair: RelationPair[EL, NL, ER, NR],
-      query: Option[Table[EL, ER]] = None,
-      metric: Option[Table[NL, NR]] = None
+      query: Option[CrossClosure[EL, ER]] = None,
+      metric: Option[CrossClosure[NL, NR]] = None
   ): SecondOrderQuery[EL, NL, ER, NR] =
     new SecondOrderQuery(pair, query, metric)
-
-/** Domain-specific closure adapter: the numerical operations remain calls to
-  * the admitted Multivar maps. No operator storage is exposed or copied.
-  */
-private object QueryEvaluation:
-  def table[R <: SemanticSpace, C <: SemanticSpace](
-      rows: SpaceEvidence[R],
-      columns: SpaceEvidence[C],
-      operation: String,
-      inputs: Vector[ValueIdentity],
-      forward: DMat => Either[multivar.core.SemanticError, DMat],
-      backward: DMat => Either[multivar.core.SemanticError, DMat]
-  ): Either[EvidenceError, Table[R, C]] =
-    val rowsDimension = rows.dimension
-    val columnsDimension = columns.dimension
-    val operator = new DoubleLinearOperator:
-      def rows: Int = rowsDimension
-      def cols: Int = columnsDimension
-      override def applyTo(input: DMat): Either[LinAlgError, DMat] =
-        forward(input).left.map(error => LinAlgError.InvalidArgument(error.message))
-      override def transposeApplyTo(input: DMat): Either[LinAlgError, DMat] =
-        backward(input).left.map(error => LinAlgError.InvalidArgument(error.message))
-      def applyTo(input: DVec, output: MutableDVec): Unit =
-        copy(forward, input, output)
-      override def transposeApplyTo(input: DVec, output: MutableDVec): Unit =
-        copy(backward, input, output)
-      private def copy(
-          evaluate: DMat => Either[multivar.core.SemanticError, DMat],
-          input: DVec,
-          output: MutableDVec
-      ): Unit =
-        val result = evaluate(DMat.tabulate(input.length, 1)((row, _) => input(row)))
-          .fold(error => throw LinAlgError.InvalidArgument(error.message), identity)
-        if result.rows != output.length then
-          throw LinAlgError.VectorLengthMismatch(result.rows, output.length)
-        var row = 0
-        while row < output.length do
-          output(row) = result(row, 0)
-          row += 1
-    Lin.fromLinearMap(
-      operator, CoordinateEvidence.dual(columns), CoordinateEvidence.primal(rows),
-      ValueIdentity.derived(operation, inputs*),
-      SemanticProvenance.source("scalafim-mvpa-relation-query").append(
-        SemanticProvenanceEvent.Derived(operation, inputs)
-      )
-    ).left.map(EvidenceError.SemanticFailure.apply)

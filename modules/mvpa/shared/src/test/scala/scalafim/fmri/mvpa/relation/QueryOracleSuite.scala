@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.relation
 
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, LinAlgError, MutableDVec}
-import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SemanticSpace, SpaceRole, Table, ValueId, ValueIdentity}
+import multivar.core.{CoordinateEvidence, Dual, FormOperator, Lin, MetricSpec, Primal, SemanticProvenance, SemanticSpace, SpaceRole, Table, ValueId, ValueIdentity}
 import scala.compiletime.testing.typeCheckErrors
 import scalafim.fmri.mvpa.{AxisRef, EvidenceError}
 
@@ -27,6 +27,23 @@ class QueryOracleSuite extends munit.FunSuite:
   private def operatorTable[RK, CK](rows: AxisRef[RK], columns: AxisRef[CK], operator: DoubleLinearOperator, name: String): Table[rows.Id, columns.Id] =
     Lin
       .fromLinearMap(operator, CoordinateEvidence.dual(columns.evidence), CoordinateEvidence.primal(rows.evidence), valueIdentity(name), SemanticProvenance.source("query-oracle"))
+      .fold(error => fail(error.toString), result => result)
+
+  private def crossClosure[LK, RK](rows: AxisRef[LK], columns: AxisRef[RK], values: DMat, name: String): CrossClosure[rows.Id, columns.Id] =
+    Lin
+      .fromDenseMatrix(values, CoordinateEvidence.primal(columns.evidence), CoordinateEvidence.dual(rows.evidence), valueIdentity(name), SemanticProvenance.source("query-oracle"))
+      .fold(error => fail(error.toString), result => result)
+
+  private def operatorCrossClosure[LK, RK](rows: AxisRef[LK], columns: AxisRef[RK], operator: DoubleLinearOperator, name: String): CrossClosure[rows.Id, columns.Id] =
+    Lin
+      .fromLinearMap(operator, CoordinateEvidence.primal(columns.evidence), CoordinateEvidence.dual(rows.evidence), valueIdentity(name), SemanticProvenance.source("query-oracle"))
+      .fold(error => fail(error.toString), result => result)
+
+  /** The fixture is stated effect-by-contrast; FirstOrderQuery stores its
+    * primal contrast-by-effect map. */
+  private def contrast[EK, CK](effects: AxisRef[EK], contrasts: AxisRef[CK], effectByContrast: DMat, name: String): Lin[Primal[effects.Id], Primal[contrasts.Id]] =
+    Lin
+      .fromDenseMatrix(effectByContrast.t, CoordinateEvidence.primal(effects.evidence), CoordinateEvidence.primal(contrasts.evidence), valueIdentity(name), SemanticProvenance.source("query-oracle"))
       .fold(error => fail(error.toString), result => result)
 
   private def dense[R <: SemanticSpace, C <: SemanticSpace](value: Table[R, C]): DMat =
@@ -143,7 +160,7 @@ class QueryOracleSuite extends munit.FunSuite:
     val rightNeural = axis("right-neural", SpaceRole.Observed, 2)
     val (bLeft, bRight, h, k) = matrices
     val pair = RelationPair(relation(leftEffects, leftNeural, bLeft, "b-left"), relation(rightEffects, rightNeural, bRight, "b-right"))
-    val query = SecondOrderQuery(pair, Some(table(leftEffects, rightEffects, h, "h")), Some(table(leftNeural, rightNeural, k, "k")))
+    val query = SecondOrderQuery(pair, Some(crossClosure(leftEffects, rightEffects, h, "h")), Some(crossClosure(leftNeural, rightNeural, k, "k")))
 
     val expectedScalar = scalarOracle(bLeft, bRight, h, k)
     val expectedEffect = effectOracle(bLeft, bRight, k)
@@ -166,7 +183,7 @@ class QueryOracleSuite extends munit.FunSuite:
     val left = relation(leftEffects, leftNeural, bLeft, "b-left")
     val rightRelation = relation(rightEffects, rightNeural, bRight, "b-right")
     val weights = DMat.dense(2, 2, Vector(2.0, -1.0, 0.5, 3.0))
-    val first = FirstOrderQuery(leftEffects, contrasts, table(leftEffects, contrasts, weights, "contrast"))
+    val first = FirstOrderQuery(leftEffects, contrasts, contrast(leftEffects, contrasts, weights, "contrast"))
     val firstValues = dense(right(first(left)).values)
     val expectedFirst = DMat.dense(2, 3, Vector(
       2.0 * bLeft(0, 0) + 0.5 * bLeft(1, 0), 2.0 * bLeft(0, 1) + 0.5 * bLeft(1, 1), 2.0 * bLeft(0, 2) + 0.5 * bLeft(1, 2),
@@ -176,8 +193,8 @@ class QueryOracleSuite extends munit.FunSuite:
     assertMatrixClose(dense(right(first(left)).values.star), transpose(expectedFirst))
 
     val pair = RelationPair(left, rightRelation)
-    val hTable = table(leftEffects, rightEffects, h, "h")
-    val kTable = table(leftNeural, rightNeural, k, "k")
+    val hTable = crossClosure(leftEffects, rightEffects, h, "h")
+    val kTable = crossClosure(leftNeural, rightNeural, k, "k")
     val query = SecondOrderQuery(pair, Some(hTable), Some(kTable))
     val reversed = query.reverse
     val expectedEffect = effectOracle(bLeft, bRight, k)
@@ -190,12 +207,75 @@ class QueryOracleSuite extends munit.FunSuite:
     assertMatrixClose(dense(right(query.neuralForm).values.star), transpose(expectedNeural))
 
   test("foreign same-sized closure axes do not typecheck"):
-    val errors = typeCheckErrors("""
-import multivar.core.{SemanticSpace, Table}
-import scalafim.fmri.mvpa.relation.OpenRelationTransport
+    val leftErrors = typeCheckErrors("""
+import multivar.core.SemanticSpace
+import scalafim.fmri.mvpa.relation.{CrossClosure, OpenRelationTransport}
 def invalid[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <: SemanticSpace, Foreign <: SemanticSpace](
-  open: OpenRelationTransport[EL, NL, ER, NR], foreign: Table[Foreign, ER]
+  open: OpenRelationTransport[EL, NL, ER, NR], foreign: CrossClosure[Foreign, ER]
 ) = open.closeExperimental(foreign)
+""")
+    val rightErrors = typeCheckErrors("""
+import multivar.core.SemanticSpace
+import scalafim.fmri.mvpa.relation.{CrossClosure, OpenRelationTransport}
+def invalidRight[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <: SemanticSpace, Foreign <: SemanticSpace](
+  open: OpenRelationTransport[EL, NL, ER, NR], foreign: CrossClosure[NL, Foreign]
+) = open.closeNeural(foreign)
+""")
+    assert(leftErrors.nonEmpty)
+    assert(rightErrors.nonEmpty)
+
+  test("closures refuse table witnesses even when their nominal axes match"):
+    val metricErrors = typeCheckErrors("""
+import multivar.core.{SemanticSpace, Table}
+import scalafim.fmri.mvpa.relation.{RelationPair, SecondOrderQuery}
+def invalidMetric[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <: SemanticSpace](
+  pair: RelationPair[EL, NL, ER, NR], value: Table[NL, NR]
+) = SecondOrderQuery(pair, metric = Some(value))
+""")
+    val queryErrors = typeCheckErrors("""
+import multivar.core.{SemanticSpace, Table}
+import scalafim.fmri.mvpa.relation.{RelationPair, SecondOrderQuery}
+def invalidQuery[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <: SemanticSpace](
+  pair: RelationPair[EL, NL, ER, NR], value: Table[EL, ER]
+) = SecondOrderQuery(pair, query = Some(value))
+""")
+    assert(metricErrors.nonEmpty)
+    assert(queryErrors.nonEmpty)
+
+  test("first-order queries refuse the old dual-table weight witness"):
+    val errors = typeCheckErrors("""
+import multivar.core.Table
+import scalafim.fmri.mvpa.{AxisRef}
+import scalafim.fmri.mvpa.relation.FirstOrderQuery
+def invalid[EK, CK](
+  effects: AxisRef[EK], contrasts: AxisRef[CK], weights: Table[effects.Id, contrasts.Id]
+) = FirstOrderQuery(effects, contrasts, weights)
+""")
+    assert(errors.nonEmpty)
+
+  test("public primal forms inhabit same-axis cross closures without a PSD claim"):
+    val neural = axis("form-neural", SpaceRole.Observed, 2)
+    val effects = axis("form-effects", SpaceRole.Latent, 2)
+    val metric = MetricSpec.identity(neural.size, Some(neural.evidence.descriptor)).fold(error => fail(error.toString), result => result)
+    val closure: CrossClosure[neural.Id, neural.Id] =
+      FormOperator.primal(metric, neural.evidence, valueIdentity("public-primal-form")).fold(error => fail(error.toString), result => result)
+    val signed: CrossClosure[neural.Id, neural.Id] =
+      crossClosure(neural, neural, DMat.dense(2, 2, Vector(-2.0, 1.0, 1.0, -3.0)), "known-signed")
+    val identityRelation = relation(effects, neural, DMat.eye(2), "form-identity-relation")
+    val pair = RelationPair(identityRelation, identityRelation)
+    val h = crossClosure(effects, effects, DMat.eye(2), "form-identity-query")
+    assertEqualsDouble(right(SecondOrderQuery(pair, Some(h), Some(closure)).scalar).value, 2.0, 1e-12)
+    assertMatrixClose(dense(right(SecondOrderQuery(pair).open.closeNeural(closure)).values), DMat.eye(2))
+    assertEqualsDouble(right(SecondOrderQuery(pair, Some(h), Some(signed)).scalar).value, -5.0, 1e-12)
+
+  test("public dual forms cannot be used as cross closures"):
+    val errors = typeCheckErrors("""
+import multivar.core.{FormOperator, MetricSpec, SemanticSpace, SpaceEvidence, ValueIdentity}
+import scalafim.fmri.mvpa.relation.CrossClosure
+def invalid[S <: SemanticSpace](metric: MetricSpec, space: SpaceEvidence[S], value: ValueIdentity) =
+  val dual = FormOperator.dual(metric, space, value).toOption.get
+  val closure: CrossClosure[S, S] = dual
+  closure
 """)
     assert(errors.nonEmpty)
 
@@ -227,7 +307,7 @@ def invalid[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <:
         throw new IllegalStateException("one-shot endpoint was read")
     val endpoint = right(Relation(effects, neural, operatorTable(effects, neural, poison, "one-shot"), oneShotOrigins, Vector(EffectEstimability.Estimable)))
     val pair = RelationPair(endpoint, endpoint)
-    val closure = SecondOrderQuery(pair, Some(table(effects, effects, DMat.eye(1), "one-shot-h")), Some(table(neural, neural, DMat.eye(1), "one-shot-k")))
+    val closure = SecondOrderQuery(pair, Some(crossClosure(effects, effects, DMat.eye(1), "one-shot-h")), Some(crossClosure(neural, neural, DMat.eye(1), "one-shot-k")))
     closure.scalar match
       case Left(EvidenceError.InvalidSource(_)) => ()
       case other => fail(s"expected one-shot scalar refusal, got $other")
@@ -275,7 +355,7 @@ def invalid[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <:
       right(Relation(leftEffects, leftNeural, operatorTable(leftEffects, leftNeural, leftOperator, "lazy-left"), origins, Vector.fill(2)(EffectEstimability.Estimable))),
       right(Relation(rightEffects, rightNeural, operatorTable(rightEffects, rightNeural, rightOperator, "lazy-right"), origins, Vector.fill(3)(EffectEstimability.Estimable)))
     )
-    val query = SecondOrderQuery(pair, Some(operatorTable(leftEffects, rightEffects, hOperator, "lazy-h")), Some(operatorTable(leftNeural, rightNeural, kOperator, "lazy-k")))
+    val query = SecondOrderQuery(pair, Some(operatorCrossClosure(leftEffects, rightEffects, hOperator, "lazy-h")), Some(operatorCrossClosure(leftNeural, rightNeural, kOperator, "lazy-k")))
     assertEquals(leftOperator.applications + rightOperator.applications + hOperator.applications + kOperator.applications, 0)
     assertEqualsDouble(right(query.scalar).value, scalarOracle(bLeft, bRight, h, k), 1e-12)
     val operators = Vector(leftOperator, rightOperator, hOperator, kOperator)
@@ -301,8 +381,8 @@ def invalid[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <:
         val k = scaled(baseK, kScale)
         val query = SecondOrderQuery(
           RelationPair(relation(leftEffects, leftNeural, left, "scaled-left"), relation(rightEffects, rightNeural, rightValues, "scaled-right")),
-          Some(table(leftEffects, rightEffects, h, "scaled-h")),
-          Some(table(leftNeural, rightNeural, k, "scaled-k"))
+          Some(crossClosure(leftEffects, rightEffects, h, "scaled-h")),
+          Some(crossClosure(leftNeural, rightNeural, k, "scaled-k"))
         )
         val expected = scalarOracle(left, rightValues, h, k)
         val tolerance = math.max(1e-300, math.abs(expected)) * 1e-12
