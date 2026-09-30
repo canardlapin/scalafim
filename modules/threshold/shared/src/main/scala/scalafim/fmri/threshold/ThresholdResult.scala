@@ -138,8 +138,10 @@ object MapThresholdResult:
     }
 
 /** A hierarchical scan. `reject` is exactly the union of the significant
-  * regions. Node scores are set scores, not voxel statistics, so there is no
-  * voxel cutoff: a voxel's own statistic does not decide its rejection.
+  * regions. It is a region-level decision, not a voxel-level FWER mask: a
+  * rejected coarse region can contain null voxels. Node scores are set scores,
+  * not voxel statistics, so there is no voxel cutoff: a voxel's own statistic
+  * does not decide its rejection.
   */
 final case class HierScanResult(
     reject: SomeMaskVolume,

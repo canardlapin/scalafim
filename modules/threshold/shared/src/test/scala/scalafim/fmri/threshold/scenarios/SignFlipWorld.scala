@@ -34,7 +34,8 @@ private[scenarios] object SignFlipWorld:
       exact: Boolean,
       smooth: Boolean,
       alternative: ThresholdAlternative,
-      partial: Boolean
+      partial: Boolean,
+      twoBlocks: Boolean = false
   ):
     val n: Int = if exact then 6 else 10
 
@@ -47,9 +48,21 @@ private[scenarios] object SignFlipWorld:
       val hypothesis = if partial then "partial-null" else "complete-null"
       s"$nullKind.$field.${alternative.toString.toLowerCase}.$hypothesis"
 
-    /** The 2x2x2 signal block, present only in the partial null. */
+    /** The partial-null signal: the 2x2x2 block A, plus the 2x2x1 block B in
+      * the opposite root octant under the reallocation addendum.
+      */
     def isSignal(v: Int): Boolean =
-      partial && v % side < 2 && (v / side) % side < 2 && v / (side * side) < 2
+      partial && (inBlockA(v) || (twoBlocks && inBlockB(v)))
+
+    def inBlockA(v: Int): Boolean =
+      v % side < 2 && (v / side) % side < 2 && v / (side * side) < 2
+
+    def inBlockB(v: Int): Boolean =
+      v % side >= 4 && (v / side) % side >= 4 && v / (side * side) == 5
+
+    /** Non-uniform prior of the reallocation addendum: weight 2 on the upper half of the slowest axis. */
+    def prior: Option[Array[Double]] =
+      if twoBlocks then Some(Array.tabulate(voxels)(v => if v / (side * side) >= 3 then 2.0 else 1.0)) else None
 
     /** Exact test size, where the packet 3 protocol declares one. */
     def exactSize(alpha: Alpha): Option[Double] =

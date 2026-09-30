@@ -1,0 +1,25 @@
+scenario=threshold.hierscan-reallocation.montecarlo-n10.white.greater.partial-null.two-blocks.v3 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=43/2000 rate=0.0215 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.blockA.recorded: 1528/2000 rate=0.7640 pass=true
+  hierScan.power.blockB.recorded: 836/2000 rate=0.4180 pass=true
+  hierScan.reallocation.bothBlocks.recorded: 741/2000 rate=0.3705 pass=true
+scenario=threshold.hierscan-reallocation.montecarlo-n10.white.twosided.partial-null.two-blocks.v3 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=34/2000 rate=0.0170 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.blockA.recorded: 1774/2000 rate=0.8870 pass=true
+  hierScan.power.blockB.recorded: 882/2000 rate=0.4410 pass=true
+  hierScan.reallocation.bothBlocks.recorded: 844/2000 rate=0.4220 pass=true
+scenario=threshold.hierscan-reallocation.montecarlo-n10.smooth.greater.partial-null.two-blocks.v3 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=36/2000 rate=0.0180 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.blockA.recorded: 1943/2000 rate=0.9715 pass=true
+  hierScan.power.blockB.recorded: 1654/2000 rate=0.8270 pass=true
+  hierScan.reallocation.bothBlocks.recorded: 1620/2000 rate=0.8100 pass=true
+scenario=threshold.hierscan-reallocation.montecarlo-n10.smooth.twosided.partial-null.two-blocks.v3 status=Pass
+  replicates.complete: 2000 replicates pass=true
+  hierScan.regionFwer.notLiberal: errors=40/2000 rate=0.0200 P(X>=k|alpha)=1.00 pass=true
+  hierScan.power.blockA.recorded: 1953/2000 rate=0.9765 pass=true
+  hierScan.power.blockB.recorded: 1618/2000 rate=0.8090 pass=true
+  hierScan.reallocation.bothBlocks.recorded: 1615/2000 rate=0.8075 pass=true
+[info] Passed: Total 4, Failed 0, Errors 0, Passed 4

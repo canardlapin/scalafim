@@ -16,10 +16,10 @@ fmt_num <- function(x) paste0(formatC(x, digits = 17, format = "fg", flag = "#")
 fmt_vec <- function(x) paste0("Vector(", paste(vapply(x, fmt_num, character(1)), collapse = ", "), ")")
 fmt_int_vec <- function(x) paste0("Vector(", paste(as.integer(x), collapse = ", "), ")")
 
-make_case <- function(name, dims, stat, nulls, alpha, kappa, gamma, min_voxels, prior_eta) {
+make_case <- function(name, dims, stat, nulls, alpha, kappa, gamma, min_voxels, prior_eta, prior = rep(1.0, prod(dims))) {
   n <- prod(dims)
   mask_idx <- seq_len(n)
-  pi_vec <- neurothresh:::.prep_prior(rep(1.0, n), eta = prior_eta)
+  pi_vec <- neurothresh:::.prep_prior(prior, eta = prior_eta)
   grid <- neurothresh:::.index_to_grid(mask_idx, dims)
   x <- as.integer(grid[, 1]); y <- as.integer(grid[, 2]); z <- as.integer(grid[, 3])
   bbox <- neurothresh:::bbox_from_indices_cpp(mask_idx, x, y, z)
@@ -46,6 +46,7 @@ make_case <- function(name, dims, stat, nulls, alpha, kappa, gamma, min_voxels, 
     "    val gamma: Double = ", fmt_num(gamma), "\n",
     "    val minVoxels: Int = ", min_voxels, "\n",
     "    val priorEta: Double = ", fmt_num(prior_eta), "\n",
+    "    val prior: Vector[Double] = ", fmt_vec(prior), "\n",
     "    val stat: Vector[Double] = ", fmt_vec(stat), "\n",
     "    val nulls: Vector[Vector[Double]] = Vector(\n      ", paste(null_rows, collapse = ",\n      "), "\n    )\n",
     "    val hits: Vector[RHit] =\n      Vector(\n",
@@ -79,3 +80,20 @@ cat("  final case class RHit(indices: Vector[Int], score: Double, adjustedP: Dou
 cat(make_case("BlockSignal", dims, stat_block, nulls_block, alpha = 0.2, kappa = c(1, 2), gamma = 0.5, min_voxels = 2L, prior_eta = 0.9))
 cat("\n")
 cat(make_case("SingleVoxel", dims, stat_single, nulls_single, alpha = 0.3, kappa = c(1), gamma = 0.5, min_voxels = 2L, prior_eta = 0.9))
+cat("\n")
+
+# Odd, unequal extents and a non-uniform prior: children have unequal sizes
+# and masses, two separated signals are rejected as siblings so the
+# descendant budget is split by mass, and adjusted p-values sit above the
+# 1/(B + 1) floor.
+dims_u <- c(5L, 3L, 4L)
+n_u <- prod(dims_u)
+grid_u <- neurothresh:::.index_to_grid(seq_len(n_u), dims_u)
+prior_u <- round(1 + 2 * (grid_u[, 1] >= 4) + 0.5 * (grid_u[, 3] <= 2), 6)
+stat_u <- round(rnorm(n_u) * 0.6, 6)
+near <- grid_u[, 1] <= 2 & grid_u[, 2] <= 2 & grid_u[, 3] <= 2
+far <- grid_u[, 1] >= 4 & grid_u[, 3] >= 3
+stat_u[near] <- stat_u[near] + 1.6
+stat_u[far] <- stat_u[far] + 1.3
+nulls_u <- matrix(round(rnorm(99 * n_u), 6), nrow = 99)
+cat(make_case("UnequalPrior", dims_u, stat_u, nulls_u, alpha = 0.4, kappa = c(1, 2), gamma = 0.5, min_voxels = 2L, prior_eta = 0.5, prior = prior_u))
