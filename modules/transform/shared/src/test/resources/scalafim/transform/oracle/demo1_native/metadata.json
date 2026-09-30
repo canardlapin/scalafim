@@ -1,0 +1,133 @@
+{
+  "scope": "real-demo1-interior-chain",
+  "target_shape": [
+    7,
+    9,
+    5
+  ],
+  "target_index_to_ras": [
+    [
+      1.100000023841858,
+      0.0,
+      0.0,
+      -7.75
+    ],
+    [
+      0.0,
+      1.25,
+      0.0,
+      -14.25
+    ],
+    [
+      0.0,
+      0.0,
+      1.2999999523162842,
+      18.5
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "source_index_to_ras_itk": [
+    [
+      -1.9642857313156128,
+      0.0,
+      0.0,
+      111.42266082763672
+    ],
+    [
+      0.0,
+      1.7799917042658202,
+      -2.1144868832451613,
+      -46.962799072265625
+    ],
+    [
+      0.0,
+      0.8306912585280846,
+      4.530887906424541,
+      -63.199462890625
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "grid_queries": 315,
+  "off_grid_holdouts": 32,
+  "inverse_queries": 32,
+  "point_budget_mm": 1e-06,
+  "crop_equality_budget_mm": 1e-10,
+  "intensity_budget": 0.01,
+  "source_gradient_precision_bound": 0.0022218579998356746,
+  "minimum_bold_source_margin_voxels": 10.87656646692394,
+  "forward_crop": {
+    "start": [
+      81,
+      109,
+      88
+    ],
+    "shape": [
+      12,
+      16,
+      11
+    ],
+    "original_shape": [
+      182,
+      218,
+      182
+    ],
+    "origin_lps": [
+      10.0,
+      17.0,
+      16.0
+    ],
+    "minimum_query_margin_voxels": 2.1499998569488525,
+    "retained_values": 6336,
+    "retained_float32_bits_exact": true
+  },
+  "inverse_crop": {
+    "start": [
+      77,
+      72,
+      72
+    ],
+    "shape": [
+      16,
+      57,
+      31
+    ],
+    "original_shape": [
+      182,
+      218,
+      182
+    ],
+    "origin_lps": [
+      14.0,
+      54.0,
+      0.0
+    ],
+    "minimum_query_margin_voxels": 2.1401198260574574,
+    "retained_values": 84816,
+    "retained_float32_bits_exact": true
+  },
+  "original_crop_point_maxima_mm": {
+    "t1": 7.105427357601002e-15,
+    "bold": 7.105427357601002e-15,
+    "inverse": 7.105427357601002e-15,
+    "roundtrip": 3.774758283725532e-15
+  },
+  "original_crop_intensity_maximum": 0.0,
+  "native_sequential_chain_maximum_mm": 0.0,
+  "native_point_image_maximum_mm": 4.973799150320701e-14,
+  "native_roundtrip_maximum_mm": 0.023391299374471597,
+  "forbidden_claims": [
+    "whole-domain registration accuracy",
+    "ITK border parity",
+    "all P7.07 workflows qualified"
+  ]
+}

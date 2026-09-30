@@ -1,0 +1,302 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-p707-demo1-20260930-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-p707-demo1-20260930/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (322631 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-p707-demo1-20260930/)
+[info] compiling 2 Scala sources to /private/tmp/scalafim-p707-demo1-20260930/modules/transform/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.transform.scenarios.FmriprepChainScenarioSuite:
+  + fMRIPrep chain: boldref -> T1w (ITK rigid) -> template (ITK HDF5 composite) matches native ITK points and volumes 0.307s
+  + every convention mutation of the fMRIPrep chain fails the scenario 0.21s
+  + a template -> T1w warp cannot stand in for the T1w -> template composite: the direction is a type 0.001s
+scenario=transform.fsl-chain.v1 status=PassWithCaveats
+  func.neurological: the x mirror applies to the functional grid pass=true
+  native-inputs.func-dims: Vector(28, 31, 25) pass=true
+  native-inputs.func-stored-affine.max-abs-mm: actual=0.0 expected=0.0 delta=0.0 tol=1.0E-9 pass=true
+  native-inputs.flirt-matrix.max-abs: actual=0.0 expected=0.0 delta=0.0 tol=1.0E-9 pass=true
+  fnirt.supported-voxels: 605 standard voxels on the native source interior pass=true
+  flirt-leg.pullback.max-abs-mm: actual=4.751329996111053E-9 expected=0.0 delta=4.751329996111053E-9 tol=1.0E-6 pass=true
+  fnirt-leg.materialized-vs-applywarp.max-abs-mm: actual=5.8317638274019146E-6 expected=0.0 delta=5.8317638274019146E-6 tol=2.0E-5 pass=true
+  chain.materialized-vs-reference.max-abs-mm: actual=5.80375335657024E-6 expected=0.0 delta=5.80375335657024E-6 tol=5.0E-5 pass=true
+  chain.materialized-coverage: CoverageCounts(1188,0,0,0) pass=true
+  fnirt-leg.phantom-vs-applywarp.max-abs: actual=3.07688932025485E-4 expected=0.0 delta=3.07688932025485E-4 tol=0.0029943857656662934 pass=true
+  chain.ramp-voxels: 605 supported voxels pull back inside the functional grid pass=true
+  chain.ramp-resample.max-abs: actual=4.511806622531367E-6 expected=0.0 delta=4.511806622531367E-6 tol=5.708322891267785E-5 pass=true
+  native.flirt.full-support: 3136 of 3136 highres queries pass=true
+  native.flirt-coordinates.max-abs-mm: actual=2.5540975842730518E-5 expected=0.0 delta=2.5540975842730518E-5 tol=5.0E-5 pass=true
+  native.flirt-ramp.max-abs: actual=2.686172419430477E-5 expected=0.0 delta=2.686172419430477E-5 tol=8.759980703767784E-5 pass=true
+  native.chain.full-support: 1188 of 1188 standard queries pass=true
+  native.chain-premat-coordinates.max-abs-mm: actual=9.813265247515801E-6 expected=0.0 delta=9.813265247515801E-6 tol=5.0E-5 pass=true
+  native.chain-composed-coordinates.max-abs-mm: actual=1.0573231099542113E-5 expected=0.0 delta=1.0573231099542113E-5 tol=5.0E-5 pass=true
+  native.chain-convertwarp-field.max-abs-mm: actual=7.3581749528983664E-6 expected=0.0 delta=7.3581749528983664E-6 tol=5.0E-5 pass=true
+  native.chain-premat-ramp.max-abs: actual=1.582632928887051E-5 expected=0.0 delta=1.582632928887051E-5 tol=8.759980703767784E-5 pass=true
+  native.chain-composed-ramp.max-abs: actual=1.2756235889810341E-5 expected=0.0 delta=1.2756235889810341E-5 tol=8.759980703767784E-5 pass=true
+  chain.jacobian-chain-rule.max-rel: actual=2.0917861154976372E-11 expected=0.0 delta=2.0917861154976372E-11 tol=1.0E-9 pass=true
+  chain.push-unavailable: no FNIRT inverse was supplied pass=true
+  chain.inversion-refused-by-gates: CoverageBelowMinimum(0.03875576036866359,0.5); MaximumResidualExceeded(Reverse,0.11028454655894203,0.05); P99ResidualExceeded(Reverse,0.08620479622044228,0.01) pass=true
+  chain.provenance: FslFlirt fsl_chain_native/example_func2highres.mat then FslFnirtCoefficients neurotransform/fsl_coef_oracle/srcleft_refright_aff/coef.nii.gz pass=true
+  fnirt-jacobian.interior-voxels: 5832 interior voxels, 0 folds pass=true
+  fnirt-jacobian.fsl-jac.median-rel: actual=0.005985953794479578 expected=0.0 delta=0.005985953794479578 tol=0.01 pass=true
+  fnirt-jacobian.fsl-jac.p99-rel: actual=0.032503542821958574 expected=0.0 delta=0.032503542821958574 tol=0.05 pass=true
+  fnirt-jacobian.fsl-jac.max-rel: actual=0.052167847965236755 expected=0.0 delta=0.052167847965236755 tol=0.08 pass=true
+  caveat=transform.fsl-jacobian-spline-vs-finite-difference kind=AlgorithmDivergence severity=Actionable owner=transform detail=fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise followUp=an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)
+scalafim.transform.scenarios.FslChainScenarioSuite:
+  + FSL chain: example_func -> highres (FLIRT) -> standard (FNIRT --aff) composes to one field matching FSL 0.251s
+  + every convention mutation of the FSL chain fails the scenario on the FLIRT guard 0.22s
+  + native FSL chain references bind every fixture and the exact historical coefficient inputs 0.006s
+  + the FLIRT and FNIRT legs compose only in registration order: a reversed composite does not compile 0.0s
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+scalafim.transform.x5.X5ContainerSuite:
+  + jHDF reads the same nodes and chains as h5py 0.074s
+  + ITK HDF5 files are not X5 0.008s
+scalafim.transform.x5.X5OracleSuite:
+  + linear, displacement, deformation and chained X5 files map points exactly as nitransforms does 0.01s
+  + off the lattice, a field affine in space maps points as nitransforms does (cubic and linear agree there) 0.016s
+  + a single linear node is an affine; multi-node files need a chain 0.001s
+scalafim.transform.field.DenseFieldOracleSuite:
+  + ANTs/ITK 5D displacement fields reproduce ITK DisplacementFieldTransform 0.004s
+  + ANTs fields whose qform and sform disagree are placed with the affine ITK chooses, off the lattice too 0.013s
+  + outside the lattice the default policy rejects instead of returning identity 0.002s
+  + FNIRT relative and absolute fields reproduce FSL applywarp coordinate ramps in every handedness case 0.075s
+  + relative vs absolute FNIRT fields are detected from content in every case 0.033s
+  + vector-field containers round-trip value-exactly 0.021s
+  + non-vector NIfTI is refused 0.001s
+scalafim.transform.field.WarpOracleSuite:
+  + materializing a relative FNIRT field on its lattice reproduces FSL convertwarp --absout in every handedness case 0.095s
+  + materialized ITK composites reproduce ITK TransformPoint at the lattice points 0.006s
+  + a native FSL dense field far from the identity is refused by the inversion gates, with its evidence 0.084s
+  + Jacobian determinants of a real FNIRT registration match FSL fnirtfileutils --jac 0.035s
+scalafim.transform.field.FnirtCoefficientOracleSuite:
+  + the oracle manifest lists the ten cubic and quadratic cases 0.0s
+  + headers decode to FNIRT's order, knot spacing, reference geometry and --aff matrix 0.009s
+  + the spline on the reference FSL voxel lattice reproduces fnirtfileutils displacement fields 0.128s
+  + the world pullback reproduces fnirtfileutils --withaff fields at every reference voxel 0.082s
+  + the world pullback reproduces applywarp --warp=coef coordinate ramps on the source interior 0.031s
+  + off-lattice points evaluate the spline exactly, matching a direct tensor-product sum 0.006s
+  + points outside the reference follow the boundary policy 0.002s
+  + a reference volume other than the one FNIRT fitted on is a typed mismatch 0.001s
+  + coefficient files are detected by intent and decode through Transforms 0.004s
+  + DCT coefficients and TOPUP files are refused by name 0.002s
+  + a reflecting --aff matrix and non-integer knot spacing are refused 0.001s
+  + optional header fields: no qform, no intent_p, no sform 0.002s
+  + reference voxel sizes, grid coverage and boundary arity are checked against the context 0.003s
+  + coefficient files round-trip value-exactly 0.014s
+  + coefficients convert to a dense FNIRT field on a lattice, matching fnirtfileutils --withaff 0.051s
+  + coefficient conversion needs FSL geometry and a lattice, and never targets linear or coefficient formats 0.001s
+scalafim.transform.scenarios.Demo1NativeContainerSuite:
+  + jHDF and the public loader bind both real-field crops to their complete shared dumps 0.115s
+  + explicit original-container qualification refuses invocation without its real assets 0.002s
+scalafim.transform.OrientationOracleSuite:
+  + axis codes agree with nibabel aff2axcodes for permuted, flipped and oblique affines 0.015s
+  + reorienting data and affine together reproduces nibabel as_reoriented 0.032s
+  + reorientation keeps world identity and returns to the start 0.004s
+scalafim.transform.WriterGoldensSuite:
+  + every writer reproduces its committed golden byte for byte 0.031s
+  + the receipt was produced from exactly the committed goldens 0.006s
+  + a planted stale native golden or geometry receipt is rejected even when top-level golden hashes remain current 0.003s
+  + no native check in the receipt failed 0.001s
+scalafim.transform.TransformFilesSuite:
+  + oracle files of every format load with SHA-256 provenance 0.019s
+  + an ambiguous file loads once its format is stated 0.0s
+  + missing files are typed failures 0.0s
+scalafim.transform.NitransformsCrosscheckSuite:
+  + every file nitransforms can read maps points as ScalaFIM does 0.018s
+  + oblique base and source images change the generic AFNI pullback, so the cardinal correction is exercised 0.001s
+scalafim.transform.GuideExamplesSuite:
+  + guide: read a registration file, whatever toolkit wrote it 0.005s
+  + guide: FSL needs each volume's own geometry 0.001s
+  + guide: FNIRT coefficient files need both volumes' geometry 0.001s
+  + guide: convert between toolkits 0.004s
+  + guide: a dense warp has no forward map until it is inverted 0.011s
+  + guide: linked cursors cross worlds through a transform's link 0.007s
+  + guide: warp algebra: fields, determinants and modulation 0.028s
+scalafim.transform.itk.ItkHdf5ContainerSuite:
+  + jHDF reads the same components as h5py for every HDF5 oracle file 0.005s
+  + non-HDF5 bytes are a typed failure 0.001s
+scalafim.transform.ConventionOracleSuite:
+  + FSL affine selection and handedness match fslpy when qform and sform disagree 0.003s
+  + FLIRT matrices convert to world->world exactly as fslpy.fromFlirt does 0.001s
+  + FreeSurfer Norig/Torig of conformed volumes match nibabel, and tkRAS maps to scanner by c_ras 0.001s
+scalafim.transform.TransformModuleSuite:
+  + transform module links on this platform 0.0s
+scalafim.transform.itk.AntsNativeContainerSuite:
+  + jHDF reads native Composite and InverseComposite exactly as the shared h5py dumps 0.024s
+  + native 5D fields load through the public container reader with unchanged values and provenance 0.01s
+scalafim.transform.itk.ItkHdf5SimpleItkDumpSuite:
+  + an affine + displacement composite reproduces SimpleITK TransformPoint 0.002s
+  + the legacy float32 file with historic Tranform* dataset names keeps the composite's meaning 0.001s
+  + a constant displacement pair is a pullback and its supplied inverse 0.002s
+  + an affine-only composite fuses to an exact affine whose inverse is the forward map 0.001s
+  + BSpline components are a typed refusal on every platform 0.0s
+  + the truncated file's dump shows the missing fixed parameters the JVM container refuses 0.001s
+scalafim.transform.fsl.Fsl6NativeOracleSuite:
+  + manifest pins the approved FSL6 image, package lock, every generated fixture, and numerical receipts 0.036s
+  + FSL6 FNIRT coefficient ramps and fields agree with Scala decoders on every frozen asymmetric case 0.104s
+  + FSL6 dense coordinate ramps reproduce Scala relative and absolute interpretations in every handedness 0.055s
+  + ScalaFIM rejects contradictory FLIRT handedness and maps admitted FSL6 -vox coordinates 0.003s
+  + native FLIRT applyxfm preserves the positive-handed stored voxel pullback 0.007s
+  + FSL6 analytic coefficient Jacobians agree with the warp algebra's interior finite differences 0.02s
+scalafim.transform.WorldTransformLinkSuite:
+  + an affine transform links both ways, agreeing with pullPoint and mapPoint 0.0s
+  + a composite whose warp has no inverse links target to source only; the forward direction is a typed error 0.0s
+scalafim.transform.TransformDetectionSuite:
+  + vendored oracle files are recognised by content 0.002s
+  + content wins over a misleading file name 0.0s
+  + a 5D displacement field with no telling name is ambiguous between ANTs and AFNI 0.001s
+  + an HDF5 container without a telling name is ambiguous between ITK and X5 0.0s
+  + FreeSurfer text formats are recognised 0.0s
+  + out-of-scope formats are refused by name, not guessed 0.001s
+  + gzip content must be decompressed first 0.0s
+scalafim.transform.ConversionMatrixSuite:
+  + a linear transform converts exactly into every linear format 0.004s
+  + dense outputs need a sampling lattice and are exact at its points 0.006s
+  + ITK/ANTs and AFNI fields refuse a sheared lattice 0.0s
+  + unsupported cells refuse with a typed reason 0.002s
+  + formats that need geometry say which geometry is missing 0.0s
+scalafim.transform.freesurfer.FreeSurferLinearOracleSuite:
+  + LTA RAS_TO_RAS, VOX_TO_VOX, REGISTER_DAT and FSLREG files all encode the same pullback 0.003s
+  + LTA volume geometry reproduces the NIfTI voxel-to-world of each volume 0.001s
+  + register.dat and talairach.xfm give the same pullback 0.001s
+  + CORONAL_RAS_TO_CORONAL_RAS and unknown LTA types are refused, never guessed 0.001s
+  + expression writes RAS_TO_RAS LTAs that read back to the same pullback, and every codec round-trips 0.003s
+  + malformed FreeSurfer files are typed failures 0.001s
+scalafim.transform.itk.AntsNativeOracleSuite:
+  + the native manifest pins ANTs 2.6 and every fixture byte 0.008s
+  + every MATLAB parameterisation reproduces antsApplyTransformsToPoints 0.003s
+  + ANTs-written 5D forward and inverse vector fields reproduce native point output 0.003s
+  + decoded Composite and InverseComposite reproduce native ANTs point output on both platforms 0.01s
+scalafim.transform.itk.ItkLinearOracleSuite:
+  + the oracle covers every linear parameterisation 0.002s
+  + text files reproduce ITK TransformPoint for every parameterisation and the composite 0.003s
+  + MATLAB v4 files decode to the same transforms as their text twins 0.003s
+  + encode then decode is value-exact for both codecs 0.005s
+  + a linear world transform written as an ITK affine reads back to the same mapping 0.002s
+  + the imported neurotransform ITK affine decodes identically from .tfm and .mat 0.0s
+  + big-endian float32 MATLAB v4 storage decodes to the oracle transform at float precision 0.003s
+  + unsupported MATLAB v4 precision codes and truncated records are typed failures 0.001s
+  + unsupported and malformed ITK content is a typed failure 0.001s
+scalafim.transform.afni.AfniAff12OracleSuite:
+  + the pullback sends each base landmark to where AFNI placed it in the source (image oracle) 0.002s
+  + the pullback agrees with AFNI Vecwarp point mapping 0.0s
+  + our exact inverse equals AFNI's own cat_matvec -I 0.001s
+  + a 3dvolreg series decodes to one transform per volume and round-trips value-exactly, negative zeros included 0.002s
+  + expression inverts interpretation, with and without cardinal correction 0.001s
+  + malformed aff12 content is a typed failure 0.0s
+scalafim.transform.itk.ItkHdf5SimpleItkSuite:
+  + an affine + displacement composite reproduces SimpleITK TransformPoint 0.005s
+  + historic Tranform* dataset names and float32 storage keep the composite's meaning 0.003s
+  + a constant displacement pair is a pullback and its supplied inverse 0.005s
+  + an affine-only composite fuses to an exact affine whose inverse is the forward map 0.002s
+  + BSpline components and missing fixed parameters are typed refusals 0.001s
+  + jHDF decodes every readable file to the h5py dump the shared ItkHdf5SimpleItkDumpSuite interprets 0.003s
+  + every fixture loads from disk with SHA-256 provenance matching its manifest 0.003s
+scalafim.transform.scenarios.Demo1NativeScenarioSuite:
+  + real demo1 boldref -> T1w -> MNI chain has one clean interior scenario result 0.132s
+  + native fixture manifest closes every byte and the exact real source identities 0.019s
+  + origin, component, LPS, stage-order and scanner-direction mutations fail their point observations 0.275s
+  + the compact field refuses points outside its declared support 0.005s
+  + the two registration legs cannot be composed in the opposite typed order 0.001s
+scalafim.transform.RoundTripSuite:
+  + every oracle transform file round-trips value-exactly through its codec 0.215s
+scalafim.transform.WorldTransformSuite:
+  + pullPoint and mapPoint are mutually inverse for affines 0.0s
+  + the affine inverse swaps directions exactly 0.0s
+  + two affines fuse into one affine equal to their lazy composition 0.002s
+  + a dense-style map without an inverse has no forward direction 0.001s
+  + transforms between mismatched spaces do not compose 0.0s
+scalafim.transform.field.AfniQwarpCrosscheckSuite:
+  + _WARP fields are detected as 3dQwarp and pull points as nitransforms' AFNI reader does 0.006s
+  + ITK would place the same file with its qform: the affine choice, not the displacement sign, separates ANTs and AFNI 0.001s
+  + an oblique _WARP field is refused as an unqualified convention, never placed on its oblique sform 0.001s
+scalafim.transform.WarpAlgebraSuite:
+  + an affine materialized on a lattice samples its pullback exactly, fully covered 0.002s
+  + a typed composition S -> M -> T materializes to one field equal to the lazy chain 0.012s
+  + points that leave a stage's support are rejected by default and reported, never silently filled 0.01s
+  + coverage is attributed to the stage whose boundary policy supplied the value 0.004s
+  + a dense warp gains a forward map only through a qualified numerical estimate 0.102s
+  + an estimate whose evidence fails the declared tolerance is refused with the evidence 0.118s
+  + invalid policies and non-persistent lattices are typed errors; composites must be materialized first 0.13s
+  + an affine has the constant determinant det(A); Push is its reciprocal and the log is finite 0.003s
+  + radial scaling matches its closed-form determinant and the chain rule holds through a composition 0.019s
+  + a folded warp is reported by mask and count, with NonPositive log-determinants and no NaN 0.006s
+  + jacobian modulation preserves a density's integral under a compressive pull, and not its squared norm 0.515s
+  + sqrt-jacobian modulation preserves the squared L2 norm under a compressive pull, and not the integral 0.41s
+  + unmodulated resampling preserves neither law under a compressive pull 0.413s
+  + jacobian modulation preserves a density's integral under a expansive pull, and not its squared norm 0.362s
+  + sqrt-jacobian modulation preserves the squared L2 norm under a expansive pull, and not the integral 0.349s
+  + unmodulated resampling preserves neither law under a expansive pull 0.35s
+  + modulation diagnostics report the exact affine determinant; a single-sample axis is a typed error 0.056s
+  + resample samples the source through the pullback and rejects target points outside it by default 0.532s
+scalafim.transform.oracle.OracleProvenanceSuite:
+  + SHA-256 matches the FIPS 180-4 test vectors 0.012s
+  + vendored neurotransform oracles cover the four imported sets 0.002s
+  + every vendored neurotransform oracle file matches its recorded SHA-256 0.014s
+  + gzip fixtures decode to NIfTI-1 headers on this platform 0.0s
+scalafim.transform.itk.ItkHdf5OracleSuite:
+  + affine-only, affine-then-warp and warp-then-affine composites reproduce ITK TransformPoint 0.002s
+  + a linear-only file fuses to an affine; composites with fields are dense chains without a forward map 0.001s
+  + the default boundary policy rejects points that leave a displacement lattice 0.001s
+  + malformed composites are typed failures 0.003s
+scalafim.transform.fsl.FlirtOracleSuite:
+  + FLIRT matrices read from disk map ten asymmetric points per case exactly as fslpy's world->world conversion 0.005s
+  + the fresh case selects the sform of a neurological source and the qform of a radiological reference, as fslpy does 0.001s
+  + expressing a FLIRT transform reproduces the stored matrix, and encoding round-trips 0.003s
+  + malformed FLIRT text is a typed failure 0.001s
+scalafim.transform.nifti.NiftiRawSuite:
+  + the oracle covers every vendored NIfTI transform container 0.0s
+  + header fields, affines and scaled data agree with nibabel 0.04s
+  + non-NIfTI and truncated input is a typed failure 0.001s
+[info] Passed: Total 173, Failed 0, Errors 0, Passed 173
+[success] Total time: 14 s, completed Sep 30, 2026, 3:34:42 p.m.
+[info] running scalafim.transform.scenarios.Demo1OriginalContainerQualification /Users/bbuchsbaum/code/neurotransform/inst/extdata/demo1/sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5 /Users/bbuchsbaum/code/neurotransform/inst/extdata/demo1/sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+DEMO1_ORIGINAL_CONTAINER direction=t1 sha256=44fba8c2aec16da828b20bdd53b7c534f4c80bfc7281a1bc2affc10f8b4eb363 retained_values=6336 native_queries=694 status=pass
+DEMO1_ORIGINAL_CONTAINER direction=inverse sha256=4903d429d8f6dbd30d6b7cdd1b93fac8dd451d34ddcedc4d9d2066bbac4782fe retained_values=84816 native_queries=379 status=pass
+[success] Total time: 10 s, completed Sep 30, 2026, 3:34:52 p.m.

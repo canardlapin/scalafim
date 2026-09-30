@@ -1,0 +1,79 @@
+{
+  "upstream_repository": "https://github.com/OpenNeuroDerivatives/ds002748-fmriprep",
+  "upstream_commit": "1d8407e467d1af0ac8933c0539bbbb0168badab6",
+  "local_repository": "neurotransform",
+  "local_commit": "933edddda462593941e167726e8aaa7168ff103a",
+  "license": "CC0",
+  "assets": {
+    "sub-01_boldref.nii.gz": {
+      "size": 286010,
+      "md5": "8cf0686a92511e57cbc310a8f4e45db7",
+      "sha256": "4ef3fb341cd8452223528b5e115e674ec1582e5c3b311a4fbc5e2524472f7e36",
+      "git_blob": "5d3be83c6add9bb26298700fc405689592634b71",
+      "upstream_name": "sub-01_task-rest_boldref.nii.gz",
+      "path": "sub-01/func/sub-01_task-rest_boldref.nii.gz",
+      "target": "../../.git/annex/objects/kW/fz/MD5E-s286010--8cf0686a92511e57cbc310a8f4e45db7.nii.gz/MD5E-s286010--8cf0686a92511e57cbc310a8f4e45db7.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/func/sub-01_task-rest_boldref.nii.gz"
+    },
+    "sub-01_T1w.nii.gz": {
+      "size": 7212866,
+      "md5": "cafcf9dbf15d3a8263a33dfc36e423e2",
+      "sha256": "c3348f1124001ebfdd7c7f9b7b9aa99af106ee86c7839698c7d7ae5e9b467c98",
+      "git_blob": "61df182b25842f311eaabfe7b8d07dfbc58ecfa2",
+      "upstream_name": "sub-01_desc-preproc_T1w.nii.gz",
+      "path": "sub-01/anat/sub-01_desc-preproc_T1w.nii.gz",
+      "target": "../../.git/annex/objects/VJ/3f/MD5E-s7212866--cafcf9dbf15d3a8263a33dfc36e423e2.nii.gz/MD5E-s7212866--cafcf9dbf15d3a8263a33dfc36e423e2.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz"
+    },
+    "sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5": {
+      "size": 74516537,
+      "md5": "5326ca8e954fdfc284b3b34dd9a713d7",
+      "sha256": "44fba8c2aec16da828b20bdd53b7c534f4c80bfc7281a1bc2affc10f8b4eb363",
+      "git_blob": "eb5fb11edc12a2358a67d449b74e823ec47308e8",
+      "upstream_name": "sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5",
+      "path": "sub-01/anat/sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5",
+      "target": "../../.git/annex/objects/WF/4v/MD5E-s74516537--5326ca8e954fdfc284b3b34dd9a713d7.h5/MD5E-s74516537--5326ca8e954fdfc284b3b34dd9a713d7.h5",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/anat/sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5"
+    },
+    "sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5": {
+      "size": 74524486,
+      "md5": "a9510c893948c0f99ff4b72b243ccae3",
+      "sha256": "4903d429d8f6dbd30d6b7cdd1b93fac8dd451d34ddcedc4d9d2066bbac4782fe",
+      "git_blob": "be440b2c81475c899891006e92428bfabf215f3f",
+      "upstream_name": "sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5",
+      "path": "sub-01/anat/sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5",
+      "target": "../../.git/annex/objects/Fk/4v/MD5E-s74524486--a9510c893948c0f99ff4b72b243ccae3.h5/MD5E-s74524486--a9510c893948c0f99ff4b72b243ccae3.h5",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/anat/sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5"
+    },
+    "sub-01_task-rest_from-scanner_to-T1w_mode-image_xfm.txt": {
+      "size": 237,
+      "md5": "7a6c6423a86b4f2f222ed7c036150ce2",
+      "sha256": "6f6bd33d6864da7de02a1838a05df507e1b63ac3e04c44d05fffbca47cb35476",
+      "payload_url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/func/sub-01_task-rest_from-scanner_to-T1w_mode-image_xfm.txt",
+      "path": "sub-01/func/sub-01_task-rest_from-scanner_to-T1w_mode-image_xfm.txt",
+      "target": "../../.git/annex/objects/FQ/XX/MD5E-s237--7a6c6423a86b4f2f222ed7c036150ce2.txt/MD5E-s237--7a6c6423a86b4f2f222ed7c036150ce2.txt",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/func/sub-01_task-rest_from-scanner_to-T1w_mode-image_xfm.txt"
+    },
+    "sub-01_task-rest_from-T1w_to-scanner_mode-image_xfm.txt": {
+      "size": 235,
+      "md5": "e1644fcd5c7c33c6207399f669cb0a8d",
+      "sha256": "16f73f230e9a323ae5ff566abf7966daf49881bff3c3370bea188d3604647658",
+      "payload_url": "https://openneuro-derivatives.s3.amazonaws.com/fmriprep/ds002748-fmriprep/sub-01/func/sub-01_task-rest_from-T1w_to-scanner_mode-image_xfm.txt",
+      "path": "sub-01/func/sub-01_task-rest_from-T1w_to-scanner_mode-image_xfm.txt",
+      "target": "../../.git/annex/objects/P4/23/MD5E-s235--e1644fcd5c7c33c6207399f669cb0a8d.txt/MD5E-s235--e1644fcd5c7c33c6207399f669cb0a8d.txt",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/func/sub-01_task-rest_from-T1w_to-scanner_mode-image_xfm.txt"
+    }
+  },
+  "metadata": [
+    {
+      "path": "dataset_description.json",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/dataset_description.json",
+      "sha256": "b21ca3e4fdc7f9f78508b024f97635aa4a0a833e3e52970074b46da189d246a5"
+    },
+    {
+      "path": "README.md",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/README.md",
+      "sha256": "a317d0fd22615bffdd24879e0a59ba7ea61a8fac106535517383162fd60d8553"
+    }
+  ]
+}

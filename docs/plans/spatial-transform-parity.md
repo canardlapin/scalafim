@@ -1102,6 +1102,33 @@ Verified local candidate based on `9c656bc7`, with exact source hashes recorded:
 transform JS 138; warning-clean `scalafimCompileAll` and all 35 manifest entries
 passed. See `docs/verification/stp-fsl-chain-20260930/qualification.json`.
 
+### P7.07 real demo1 interior qualification (2026-09-30)
+
+`transform.fmriprep-demo1-interior.v1` adds the actual ds002748 sub-01 task-rest
+fMRIPrep 21.0.2 scanner/boldref -> T1w -> MNI152NLin6Asym chain. The local demo1
+HDF5 pair, T1w and BOLD reference match the pinned public derivative's annex
+identities; the missing matching scanner/T1w text transforms were recovered from
+that derivative and verified. No replacement registration was fitted.
+
+Original full containers produce the frozen native ANTs double-precision
+references. Exact field crops retain every interpolation neighbourhood for the
+one declared approximately 8 x 11 x 6.5 mm patch (315 interior voxels and 32
+off-grid queries); native original/crop point
+agreement is below 7.11e-15 mm and actual BOLD resampling is identical. Shared
+JVM/JS checks require one clean `Pass`, exercise the supplied inverse through
+`mapPoint`, and reject origin, component, LPS, stage-order and scanner-direction
+mutations. The default JVM suite also binds the cropped HDF5 containers to the
+shared dumps through jHDF and the public loader. An explicit external-asset JVM
+gate requires both SHA-bound full originals and compares their retained samples
+and native point results; missing assets fail instead of silently skipping.
+
+The scope is the declared interior, with rejecting field and image boundaries.
+The native forward/inverse pair has a measured 0.0233913 mm maximum closure
+residual on this set; that is characterization, not an exact-inverse assertion.
+The historical synthetic fMRIPrep border caveat remains, as do broader real FSL
+and volume -> fsaverage -> fsLR commutativity acceptance. P7.07 stays open.
+Evidence and reproduction: `docs/verification/stp-demo1-20260930/README.md`.
+
 ### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
 
 - **Linked cursor.** `scalafim.image.world.WorldLink[L, R]` is the typed map

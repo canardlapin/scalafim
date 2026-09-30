@@ -687,6 +687,30 @@
       ]
     },
     {
+      "id": "transform.fmriprep-demo1-interior.v1",
+      "tier": "workflow_parity",
+      "module": "transform",
+      "suite_class": "scalafim.transform.scenarios.Demo1NativeScenarioSuite",
+      "suite_path": "modules/transform/shared/src/test/scala/scalafim/transform/scenarios/Demo1NativeScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": [
+        "jvm",
+        "js"
+      ],
+      "reference": {
+        "kind": "native_ants_real_fmriprep_demo1_interior",
+        "description": "Pinned public ds002748 v1.0.5 sub-01 task-rest fMRIPrep 21.0.2 scanner/boldref -> T1w -> MNI152NLin6Asym assets. Original full HDF5 containers produce binary-double native ANTs point, real BOLD resampling and coordinate-ramp references for one declared approximately 8 x 11 x 6.5 mm interior patch (315 target voxels and 32 off-grid holdouts); exact field crops support offline JVM/JS checks. Independent inverse queries and native pair closure use the supplied inverse asset. No excluded frozen query, boundary parity, whole-domain registration accuracy or surface qualification. The explicit JVM original-container gate additionally requires both full files with exact SHA256."
+      },
+      "allowed_statuses": [
+        "pass"
+      ],
+      "acceptance_commands": [
+        "sbt transformJVM/test",
+        "sbt transformJS/test"
+      ],
+      "caveats": []
+    },
+    {
       "id": "transform.fsl-chain.v1",
       "tier": "workflow_parity",
       "module": "transform",
