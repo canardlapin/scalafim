@@ -38,8 +38,11 @@ work in the shared tree (`GiftiModel`, `GiftiPayloadDecoder`, `GiftiSurfaceCodec
   very-inflated model, and the reverse, with `identity differs`.
 
 Exhaustive matches: `SurfaceKind.label` and `SpaceRef.worldIn` have no wildcard.
-The test oracle `SurfaceKindSuite.canonicalSpelling` also has none, so under
-`-Werror` a new case that is missing from any of the three fails compilation.
+The test oracle `SurfaceKindSuite.canonicalSpelling` also has none. The
+surface, spatial and surface-view modules use `commonSettings` without
+`-Werror` (build.sbt:171-177), so a new case missing from any of the three is
+a non-exhaustive-match warning. The warning-clean `scalafimCompileAll` gate
+catches it; the compiler alone does not reject it.
 `scalafimCompileAll` found no other exhaustive `SurfaceKind` match.
 
 ## Evidence
