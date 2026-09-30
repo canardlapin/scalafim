@@ -1078,12 +1078,27 @@ lazy val mvpa =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa"))
+    .dependsOn(response, locusData)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa"
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jvmConfigure(
+      _.dependsOn(
+        galeCoreJVM,
+        multivarJVM,
+        resample4sCoreJVM,
+        resample4sDesignsJVM
+      )
+    )
+    .jsConfigure(
+      _.dependsOn(
+        galeCoreJS,
+        multivarJS,
+        resample4sCoreJS,
+        resample4sDesignsJS
+      )
+    )
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaJS  = mvpa.js
