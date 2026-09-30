@@ -70,16 +70,15 @@ object GroupBaselineBenchmark:
 
     val bean = ManagementFactory.getThreadMXBean.asInstanceOf[ThreadMXBean]
     bean.setThreadAllocatedMemoryEnabled(true)
-    val thread = Thread.currentThread().threadId()
     var run = 0
     while run < runs do
-      val allocationStart = bean.getThreadAllocatedBytes(thread)
+      val allocationStart = bean.getCurrentThreadAllocatedBytes()
       val cpuStart = bean.getCurrentThreadCpuTime()
       val wallStart = System.nanoTime()
       val fit = value(GroupEngine.fit(model)).fit("effect").get
       val wallSeconds = (System.nanoTime() - wallStart) / 1e9
       val cpuSeconds = (bean.getCurrentThreadCpuTime() - cpuStart) / 1e9
-      val allocatedBytes = bean.getThreadAllocatedBytes(thread) - allocationStart
+      val allocatedBytes = bean.getCurrentThreadAllocatedBytes() - allocationStart
 
       var coefficientSum = 0.0
       var standardErrorSum = 0.0
