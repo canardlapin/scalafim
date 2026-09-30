@@ -1,0 +1,317 @@
+package scalafim.fmri.fit.profile
+
+import gale.linalg.DMat
+import scalafim.fmri.ar.{ArmaCoefficients, TimeSegment, WhiteningPlan}
+import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, KernelBasisSpec, TrialMembership}
+import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
+import scalafim.fmri.hrf.design.SamplingFrame
+import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, ParametricHrfFamily, ShapePoint}
+
+/** Dense original `(a, gamma)` equations are assembled from time-row design
+  * columns and a membership projector, independently of packed Gram assembly.
+  * The oracle deliberately shares the compiled basis coefficients with the
+  * production model: this proves the prepared-basis solve, not HRF-family or
+  * basis-approximation accuracy.
+  */
+class TrialConditionalSolveSuite extends munit.FunSuite:
+  private val step = PositiveSeconds(0.2).fold(error => fail(error.message), identity)
+  private lazy val gaussian = HrfKernelBasis.compile(
+    KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))
+    .fold(error => fail(error.message), identity)
+  private lazy val cascade = HrfKernelBasis.compile(
+    KernelBasisSpec(Cascade34Family.Default, step, Vector(9, 7, 5), tolerance = 1e-4, maxRank = 40))
+    .fold(error => fail(error.message), identity)
+
+  private final case class Fixture(
+      expanded: ExpandedTrialDesign,
+      nuisance: Option[DMat],
+      rawResponse: Array[Double],
+      whitening: Option[WhiteningPlan],
+      lambda: Double):
+    def rows: Int = expanded.rows
+    def trials: Int = expanded.trials
+    def nuisanceColumns: Int = nuisance.fold(0)(_.cols)
+
+  private def fixture(
+      basis: HrfKernelBasis,
+      lambda: Double = 2.0,
+      nuisanceColumns: Int = 2,
+      ar: Boolean = false,
+      coincident: Boolean = false): Fixture =
+    val rows = if basis.family.dimension == 3 then 48 else 80
+    val run = rows / 2
+    val membership = TrialMembership.make(Vector(0, 1, 1, 1, 2, 2), 3)
+      .fold(error => fail(error.message), identity)
+    val onsets =
+      if coincident then Vector(2.5, 8.0, 8.0, 17.0, 4.0, 14.0)
+      else Vector(2.5, 8.0, 15.0, 21.0, 4.0, 14.0)
+    val expanded = ExpandedTrialDesign.lower(
+      onsets.map(Seconds(_)), Vector(0, 0, 0, 0, 1, 1),
+      Vector.fill(6)(Seconds(0.0)), membership,
+      SamplingFrame(blockLens = Seq(run, run), tr = Seq(1.0, 1.0)),
+      basis, Seconds(0.2)).fold(error => fail(error.message), identity)
+    val nuisance = if nuisanceColumns == 0 then None else Some(DMat.tabulate(rows, nuisanceColumns): (t, j) =>
+      val local = if t < run then t else t - run
+      if j == 0 then 1.0 else (local - (run - 1) * 0.5) / run)
+    val center = centerPoint(basis.family)
+    val x = designAt(expanded, center)
+    val signed = Array(0.7, -0.4, 0.35, 0.9, -0.65, 0.2)
+    val response = Array.tabulate(rows): t =>
+      var value = 0.03 * math.sin(0.31 * t) - 0.02 * math.cos(0.17 * t)
+      var i = 0
+      while i < expanded.trials do
+        value += x(t * expanded.trials + i) * signed(i)
+        i += 1
+      nuisance.foreach: matrix =>
+        value += 0.42 * matrix(t, 0)
+        if nuisanceColumns > 1 then value -= 0.18 * matrix(t, 1)
+      value
+    val whitening =
+      if ar then Some(WhiteningPlan.global(ArmaCoefficients.ar(0.31),
+        Vector(TimeSegment(0, run, 0), TimeSegment(run, rows, 1))))
+      else None
+    Fixture(expanded, nuisance, response, whitening, lambda)
+
+  private def centerPoint(family: ParametricHrfFamily): ShapePoint =
+    ShapePoint.unsafe(Vector.tabulate(family.dimension): axis =>
+      0.5 * (family.chart.lower(axis) + family.chart.upper(axis)))
+
+  private def reference(fx: Fixture): (TrialBandedPreparation, TrialBandedObjective, TrialBandedResponse, Int) =
+    val prep = TrialBandedPreparation.prepare(fx.expanded, fx.whitening, fx.nuisance, fx.lambda)
+      .fold(error => fail(error.message), identity)
+    val grid = NodeGrid(fx.expanded.basis.family.chart, Vector.fill(fx.expanded.basis.family.dimension)(3))
+    val objective = prep.objective(grid).fold(error => fail(error.message), identity)
+    val whitened = prep.whitenResponses(1, fx.rawResponse).fold(error => fail(error.message), identity)
+    val encoded = prep.encodeWhitened(whitened).fold(error => fail(error.message), identity)
+    val indices = Array.fill(grid.dimension)(1)
+    (prep, objective, encoded, grid.indexOf(indices))
+
+  private def designAt(expanded: ExpandedTrialDesign, point: ShapePoint): Array[Double] =
+    val basis = expanded.basis
+    val coefficients = new Array[Double](basis.rank)
+    basis.coefficientsInto(point, new Array[Double](basis.fineCount), coefficients)
+    val rows = expanded.rows
+    val n = expanded.trials
+    val m = basis.rank
+    val source = expanded.term.data.data
+    Array.tabulate(rows * n): index =>
+      val row = index / n
+      val trial = index % n
+      var value = 0.0
+      var p = 0
+      while p < m do
+        value += source(row * n * m + p * n + trial) * coefficients(p)
+        p += 1
+      value
+
+  private def whiten(fx: Fixture, columns: Int, data: Array[Double]): Array[Double] =
+    fx.whitening match
+      case None => java.util.Arrays.copyOf(data, data.length)
+      case Some(plan) =>
+        val out = new Array[Double](data.length)
+        // Explicit two-run AR(1) recurrence, reset at each run boundary.
+        plan.segments.foreach: segment =>
+          val phi = plan.coefficientsFor(segment).phi.head
+          var col = 0
+          while col < columns do
+            out(segment.start * columns + col) = data(segment.start * columns + col) *
+              (if plan.exactFirstAr1 then math.sqrt(1.0 - phi * phi) else 1.0)
+            var row = segment.start + 1
+            while row < segment.endExclusive do
+              out(row * columns + col) = data(row * columns + col) - phi * data((row - 1) * columns + col)
+              row += 1
+            col += 1
+        out
+
+  private def denseNormal(fx: Fixture, point: ShapePoint): DMat =
+    val rows = fx.rows
+    val n = fx.trials
+    val f = fx.nuisanceColumns
+    val x = whiten(fx, n, designAt(fx.expanded, point))
+    val nuisanceRaw = new Array[Double](rows * f)
+    fx.nuisance.foreach(_.copyRowMajorTo(nuisanceRaw))
+    val nuisance = whiten(fx, f, nuisanceRaw)
+    val membership = fx.expanded.membership
+    DMat.tabulate(n + f, n + f): (i, j) =>
+      var sum = 0.0
+      var t = 0
+      while t < rows do
+        val xi = if i < n then x(t * n + i) else nuisance(t * f + i - n)
+        val xj = if j < n then x(t * n + j) else nuisance(t * f + j - n)
+        sum += xi * xj
+        t += 1
+      if i < n && j < n then
+        val same = membership.conditionOfTrial(i) == membership.conditionOfTrial(j)
+        sum += fx.lambda * ((if i == j then 1.0 else 0.0) -
+          (if same then 1.0 / membership.trialsOf(membership.conditionOfTrial(i)).length else 0.0))
+      sum
+
+  private def denseRhs(fx: Fixture, point: ShapePoint): Array[Double] =
+    val rows = fx.rows
+    val n = fx.trials
+    val f = fx.nuisanceColumns
+    val x = whiten(fx, n, designAt(fx.expanded, point))
+    val nuisanceRaw = new Array[Double](rows * f)
+    fx.nuisance.foreach(_.copyRowMajorTo(nuisanceRaw))
+    val nuisance = whiten(fx, f, nuisanceRaw)
+    val response = whiten(fx, 1, fx.rawResponse)
+    Array.tabulate(n + f): j =>
+      var sum = 0.0
+      var t = 0
+      while t < rows do
+        val column = if j < n then x(t * n + j) else nuisance(t * f + j - n)
+        sum += column * response(t)
+        t += 1
+      sum
+
+  private def denseSolve(normal: DMat, rhs: Array[Double]): Array[Double] =
+    val column = DMat.tabulate(rhs.length, 1)((i, _) => rhs(i))
+    val result = normal.cholesky.fold(throw _, identity).solve(column).fold(throw _, identity)
+    Array.tabulate(rhs.length)(i => result(i, 0))
+
+  private def norm(values: Array[Double]): Double =
+    math.sqrt(values.map(x => x * x).sum)
+
+  private def difference(left: Array[Double], right: Array[Double]): Double =
+    norm(Array.tabulate(left.length)(i => left(i) - right(i)))
+
+  private def coefficients(result: TrialConditionalResult): Array[Double] =
+    (result.trialAmplitudes ++ result.nuisanceCoefficients).toArray
+
+  test("arbitrary reference RHS uses the original projector normal inverse"):
+    for lambda <- Vector(1e-6, 2.0, 1e4); nuisance <- Vector(0, 2); coincident <- Vector(false, true) do
+      val fx = fixture(gaussian, lambda, nuisance, coincident = coincident)
+      val (_, objective, _, node) = reference(fx)
+      val rhs = Array.tabulate(fx.trials + nuisance)(i => 0.3 * math.sin(0.8 * (i + 1)) + (if i % 2 == 0 then 0.1 else -0.2))
+      val actual = new Array[Double](rhs.length)
+      objective.solveConditionalReference(node, rhs, actual).fold(error => fail(error.message), identity)
+      val expected = denseSolve(denseNormal(fx, objective.grid.point(node)), rhs)
+      val relative = difference(actual, expected) / math.max(1.0, norm(expected))
+      assert(relative < (if lambda == 1e-6 then 5e-6 else 1e-8),
+        s"arbitrary RHS mismatch lambda=$lambda nuisance=$nuisance coincident=$coincident: $relative")
+      val work = objective.work.snapshot
+      assertEquals(work.attempted.conditionalInverseAttempts, 1L)
+      assertEquals(work.attempted.conditionalInverseFailures, 0L)
+      assertEquals(work.attempted.solveAttempts, 1L)
+      assertEquals(work.bandedSolveCalls, 1L)
+      val rejected = objective.solveConditionalReference(node, Array(1.0), actual)
+      assertEquals(rejected, Left(TrialBandedError.ReadoutRhs(rhs.length, 1)))
+      assertEquals(objective.solveConditionalReference(node, rhs, Array(0.0)),
+        Left(TrialBandedError.ReadoutOutput(rhs.length, 1)))
+      val nonfinite = rhs.clone()
+      nonfinite(2) = Double.NaN
+      assert(objective.solveConditionalReference(node, nonfinite, actual).left.toOption.exists:
+        case TrialBandedError.NonFiniteReadoutRhs(2, _) => true
+        case _ => false)
+      val refusedWork = objective.work.snapshot
+      assertEquals(refusedWork.attempted.conditionalInverseAttempts, 4L)
+      assertEquals(refusedWork.attempted.conditionalInverseFailures, 3L)
+      assertEquals(refusedWork.attempted.solveAttempts, 1L)
+
+  test("zero displacement is the exact prepared-node control"):
+    val fx = fixture(gaussian, lambda = 2.0, nuisanceColumns = 2, ar = true)
+    val (_, objective, encoded, node) = reference(fx)
+    val point = objective.grid.point(node)
+    val result = new TrialConditionalSolve(objective.newWorker())
+      .solve(encoded, node, point.coordinates).fold(error => fail(error.message), identity)
+    val expected = denseSolve(denseNormal(fx, point), denseRhs(fx, point))
+    assert(difference(coefficients(result), expected) / math.max(1.0, norm(expected)) < 1e-8)
+    assert(result.preparedBasisResidualNorm < 1e-8)
+    assertEquals(result.work.referenceInverseAttempts, 3L)
+
+  test("corrected actual-shape coefficients and prepared-basis residual match dense original equations"):
+    for (basis, nuisance, ar, coincident, lambda) <- Vector(
+      (gaussian, 2, false, false, 2.0),
+      (gaussian, 0, true, true, 1e-6),
+      (cascade, 2, true, false, 2.0),
+      (cascade, 0, false, true, 1e4)) do
+      val fx = fixture(basis, lambda, nuisance, ar, coincident)
+      val (prep, objective, encoded, node) = reference(fx)
+      val referencePoint = objective.grid.point(node)
+      val delta = if basis.family.dimension == 3 then Vector(0.01, -0.011, 0.008) else Vector(0.055, -0.024)
+      val actual = referencePoint.coordinates.zip(delta).map((x, dx) => x + dx)
+      val solver = new TrialConditionalSolve(objective.newWorker())
+      val result = solver.solve(encoded, node, actual).fold(error => fail(error.message), identity)
+      val dense = denseSolve(denseNormal(fx, ShapePoint.unsafe(actual)), denseRhs(fx, ShapePoint.unsafe(actual)))
+      val relative = difference(coefficients(result), dense) / math.max(1.0, norm(dense))
+      assert(relative < (if lambda == 1e-6 then 2e-4 else 2e-5),
+        s"off-node mismatch ${basis.family.name}, lambda=$lambda, nuisance=$nuisance: $relative")
+      var condition = 0
+      while condition < prep.conditions do
+        val trials = prep.membership.trialsOf(condition)
+        val arithmetic = trials.map(i => result.trialAmplitudes(i)).sum / trials.length
+        assertEqualsDouble(result.conditionMeans(condition), arithmetic, 1e-12)
+        condition += 1
+      val normal = denseNormal(fx, ShapePoint.unsafe(actual))
+      val rhs = denseRhs(fx, ShapePoint.unsafe(actual))
+      val fitted = coefficients(result)
+      val residual = Array.tabulate(rhs.length): i =>
+        var value = rhs(i)
+        var j = 0
+        while j < rhs.length do
+          value -= normal(i, j) * fitted(j)
+          j += 1
+        value
+      assertEqualsDouble(result.preparedBasisResidualNorm, norm(residual), 1e-7)
+      assertEquals(result.work.referenceInverseAttempts, 3L)
+      assertEquals(result.work.referenceInverseFailures, 0L)
+      assertEquals(result.work.bandedSolveAttempts, 3L)
+      assertEquals(result.work.bandedSolveFailures, 0L)
+      assertEquals(result.work.bandedRightHandSideAttempts, 3L)
+      assertEquals(result.work.factorAttempts, 0L)
+      assertEquals(result.work.continuousFactors, 0L)
+      assertEquals(result.work.exactReadoutFactorAttempts, 0L)
+      assertEquals(result.work.residualCorrections, 1)
+      assertEquals(solver.worker.work.snapshot.continuousFactors, 0L)
+      assertEquals(objective.setupReceipt, objective.newWorker().setupReceipt)
+
+  test("one residual correction has local cubic error before floating-point floor"):
+    val fx = fixture(gaussian, lambda = 2.0)
+    val (_, objective, encoded, node) = reference(fx)
+    val ref = objective.grid.point(node).coordinates
+    val direction = Vector(0.3, -0.14)
+    val solver = new TrialConditionalSolve(objective.newWorker())
+    val errors = Vector(1.0, 0.5, 0.25).map: scale =>
+      val actual = ref.zip(direction).map((x, dx) => x + scale * dx)
+      val result = solver.solve(encoded, node, actual).fold(error => fail(error.message), identity)
+      val expected = denseSolve(denseNormal(fx, ShapePoint.unsafe(actual)), denseRhs(fx, ShapePoint.unsafe(actual)))
+      difference(coefficients(result), expected)
+    assert(errors(0) > errors(1) * 4.0, s"first cubic ratio: $errors")
+    assert(errors(1) > errors(2) * 4.0, s"second cubic ratio: $errors")
+    assertEquals(solver.worker.work.snapshot.attempted.conditionalInverseAttempts, 9L)
+
+    // An independently differenced first-order predictor exposes both an
+    // omitted correction and a reversed shape direction at this displacement.
+    val epsilon = 1e-4
+    def denseAt(scale: Double): Array[Double] =
+      val point = ShapePoint.unsafe(ref.zip(direction).map((x, dx) => x + scale * dx))
+      denseSolve(denseNormal(fx, point), denseRhs(fx, point))
+    val base = denseAt(0.0)
+    val plus = denseAt(epsilon)
+    val minus = denseAt(-epsilon)
+    val firstOrder = Array.tabulate(base.length)(i => base(i) + (plus(i) - minus(i)) / (2.0 * epsilon))
+    val reversed = Array.tabulate(base.length)(i => base(i) - (plus(i) - minus(i)) / (2.0 * epsilon))
+    val exact = denseAt(1.0)
+    assert(difference(firstOrder, exact) > errors(0) * 4.0)
+    assert(difference(reversed, exact) > errors(0) * 10.0)
+
+  test("invalid shape, node, owner and certificate refuse before inverse work"):
+    val fx = fixture(gaussian)
+    val (prep, objective, encoded, node) = reference(fx)
+    val worker = objective.newWorker()
+    val solver = new TrialConditionalSolve(worker)
+    val center = objective.grid.point(node).coordinates
+    assertEquals(solver.solve(encoded, -1, center),
+      Left(TrialConditionalError.InvalidReferenceNode(-1, objective.grid.count)))
+    assert(solver.solve(encoded, node, Vector(Double.NaN, center(1))).left.toOption.exists:
+      case TrialConditionalError.InvalidShape(_) => true
+      case _ => false)
+    assertEquals(solver.solve(encoded, node, center, TrialConditionalEvidence.CertifiedOriginalEquations),
+      Left(TrialConditionalError.CertificateUnavailable))
+    val foreign = TrialBandedPreparation.prepare(fx.expanded, None, fx.nuisance, fx.lambda)
+      .fold(error => fail(error.message), identity).encodeWhitened(fx.rawResponse)
+      .fold(error => fail(error.message), identity)
+    assertEquals(solver.solve(foreign, node, center), Left(TrialConditionalError.ForeignResponse))
+    assertEquals(worker.work.snapshot.attempted.conditionalInverseAttempts, 0L)
+    assertEquals(worker.work.snapshot.attempted.readoutFailures, 4L)
+    assert(prep ne foreign.owner)

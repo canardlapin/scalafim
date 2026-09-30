@@ -15,6 +15,8 @@ enum TrialBandedError:
   case ReleaseRank(node: Option[Int], columns: Int)
   case InvalidNode(node: Int, count: Int)
   case ReadoutRhs(expected: Int, actual: Int)
+  case ReadoutOutput(expected: Int, actual: Int)
+  case NonFiniteReadoutRhs(index: Int, value: Double)
 
   def message: String =
     this match
@@ -29,6 +31,8 @@ enum TrialBandedError:
         s"the $where nuisance/condition release is rank deficient ($columns columns)"
       case InvalidNode(node, count) => s"reference node $node is outside 0 until $count"
       case ReadoutRhs(expected, actual) => s"trial readout RHS has length $actual; expected $expected"
+      case ReadoutOutput(expected, actual) => s"trial readout output has length $actual; expected $expected"
+      case NonFiniteReadoutRhs(index, value) => s"trial readout RHS entry $index must be finite, got $value"
 
 /** Response-independent accounting for the packed trial geometry. */
 final case class TrialBandedPreparationReceipt(
@@ -88,7 +92,9 @@ final case class TrialBandedAttemptedWorkSnapshot(
     readoutAttempts: Long,
     readoutFailures: Long,
     exactReadoutFactorAttempts: Long,
-    exactReadoutFactorFailures: Long)
+    exactReadoutFactorFailures: Long,
+    conditionalInverseAttempts: Long,
+    conditionalInverseFailures: Long)
 
 final class TrialBandedWork private[profile] ():
   private[profile] var voxels: Long = 0L
@@ -116,6 +122,8 @@ final class TrialBandedWork private[profile] ():
   private[profile] var readoutFailures: Long = 0L
   private[profile] var exactReadoutFactorAttempts: Long = 0L
   private[profile] var exactReadoutFactorFailures: Long = 0L
+  private[profile] var conditionalInverseAttempts: Long = 0L
+  private[profile] var conditionalInverseFailures: Long = 0L
 
   private[profile] def referenceFailed(release: Boolean): Unit =
     referenceFailures += 1L
@@ -147,7 +155,9 @@ final class TrialBandedWork private[profile] ():
       readoutAttempts,
       readoutFailures,
       exactReadoutFactorAttempts,
-      exactReadoutFactorFailures)
+      exactReadoutFactorFailures,
+      conditionalInverseAttempts,
+      conditionalInverseFailures)
 
   def snapshot: TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(voxels, trialBasisScores, bankValueEvaluations, jetEvaluations, amplitudeCorrections,
@@ -499,6 +509,7 @@ final class TrialBandedObjective private (
   private val jetSolveBuilder = DMatBuilder.zeros(n, 1)
   private val scoreRelease = new Array[Double](k)
   private val scoreSolved = new Array[Double](k)
+  private val conditionalRelease = new Array[Double](k)
   private val releaseReduction = new ProfileReduction(d, k)
   private val releaseOut = new ProfileJetBuffer(d, k)
   private val kernelScratch = new Array[Double](comps * preparation.basis.fineCount)
@@ -523,7 +534,8 @@ final class TrialBandedObjective private (
   val estimatedWorkerBytes: Long =
     val worker = responseB.length.toLong + zTy.length + wbJets.length +
       s.length + b.length + g.length + n.toLong + n.toLong + n.toLong +
-      scoreRelease.length + scoreSolved.length + comps.toLong * preparation.basis.fineCount + coefficients.length
+      scoreRelease.length + scoreSolved.length + conditionalRelease.length +
+      comps.toLong * preparation.basis.fineCount + coefficients.length
     8L * worker
 
   val estimatedEngineBytes: Long = estimatedSharedBytes + estimatedWorkerBytes
@@ -643,6 +655,83 @@ final class TrialBandedObjective private (
               work.bandedSolveCalls += 1
               work.bandedRightHandSides += 1
               Right(Vector.tabulate(n)(i => builder(i, 0)))
+
+  /** Apply the original condition-centred trial normal inverse at a prepared
+    * node to an arbitrary `(trial, nuisance)` RHS. The augmented coordinates
+    * are `(v, gamma, beta)` with `a = v + M beta`; the lifted RHS is
+    * `(r_a, r_gamma, M' r_a)`. The reference's ridge factor and release are
+    * reused without constructing another factor or a dense trial inverse.
+    */
+  private[profile] def solveConditionalReference(
+      node: Int,
+      rhs: Array[Double],
+      out: Array[Double]
+  ): Either[TrialBandedError, Unit] =
+    work.conditionalInverseAttempts += 1L
+    if node < 0 || node >= references.length then
+      work.conditionalInverseFailures += 1L
+      Left(TrialBandedError.InvalidNode(node, references.length))
+    else if rhs.length != n + f then
+      work.conditionalInverseFailures += 1L
+      Left(TrialBandedError.ReadoutRhs(n + f, rhs.length))
+    else if out.length != n + f then
+      work.conditionalInverseFailures += 1L
+      Left(TrialBandedError.ReadoutOutput(n + f, out.length))
+    else
+      var bad = 0
+      while bad < rhs.length do
+        if !rhs(bad).isFinite then
+          work.conditionalInverseFailures += 1L
+          return Left(TrialBandedError.NonFiniteReadoutRhs(bad, rhs(bad)))
+        bad += 1
+      val ref = references(node)
+      var i = 0
+      while i < n do
+        readoutBuilder.writeLinear(i, rhs(i))
+        i += 1
+      work.solveAttempt(1)
+      ref.factor.solveInPlace(readoutBuilder) match
+        case Left(error) =>
+          work.solveFailed(1)
+          work.conditionalInverseFailures += 1L
+          Left(TrialBandedError.Factorisation(error.getMessage))
+        case Right(_) =>
+          work.bandedSolveCalls += 1L
+          work.bandedRightHandSides += 1L
+          var col = 0
+          while col < f do
+            var value = rhs(n + col)
+            i = 0
+            while i < n do
+              value -= ref.cJets(i * k + col) * readoutBuilder(i, 0)
+              i += 1
+            conditionalRelease(col) = value
+            col += 1
+          col = 0
+          while col < c do
+            var value = 0.0
+            i = 0
+            while i < n do
+              if preparation.membership.conditionOfTrial(i) == col then value += rhs(i)
+              value -= ref.cJets(i * k + f + col) * readoutBuilder(i, 0)
+              i += 1
+            conditionalRelease(f + col) = value
+            col += 1
+          SmallCholesky.solveInPlace(k, ref.releaseLower, conditionalRelease)
+          i = 0
+          while i < n do
+            var value = readoutBuilder(i, 0) + conditionalRelease(f + preparation.membership.conditionOfTrial(i))
+            col = 0
+            while col < k do
+              value -= ref.wcJets(i * k + col) * conditionalRelease(col)
+              col += 1
+            out(i) = value
+            i += 1
+          col = 0
+          while col < f do
+            out(n + col) = conditionalRelease(col)
+            col += 1
+          Right(())
 
   /** Unnormalised conditional trial readout for this backend. The public
     * normalization/query surface remains PHRF-11; this method closes the
