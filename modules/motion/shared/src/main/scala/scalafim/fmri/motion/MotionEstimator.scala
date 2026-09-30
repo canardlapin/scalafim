@@ -258,8 +258,8 @@ object MotionEstimator:
                   trialStep = trialStep.map(_ * 0.5)
                   attempt += 1
               // Six failed halvings end the level. That counts as convergence only
-              // when the last trial step is already below the step tolerance; a
-              // larger step that cannot reduce the cost is a stalled search.
+              // when the next, untried step (step / 64) is below the step tolerance;
+              // a larger step that cannot reduce the cost is a stalled search.
               if !accepted then
                 levelConverged = true
                 if !lineSearchResolved(poseStepNorm(trialStep), ctx.control.optimizer.stepTolerance) then

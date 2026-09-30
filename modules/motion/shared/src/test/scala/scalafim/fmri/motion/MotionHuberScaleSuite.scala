@@ -149,34 +149,54 @@ class MotionHuberScaleSuite extends munit.FunSuite:
       val leastSquares = bigEstimate(1.0, offset, OptimizerControl.unsafe(1e12, 1e-2, 1e-5, 1e-6))
       val p = pose(robust)
       val q = pose(leastSquares)
-      println(s"big offset=$offset robust=$p diag=${robust.diagnostics(1)} leastSquares=$q")
       assert(robust.diagnostics(1).converged, clues(offset, robust.diagnostics(1)))
       assert(robust.diagnostics(1).overlap >= 0.9, clues(robust.diagnostics(1)))
       val robustError = math.abs(math.abs(p.tx) - offset)
       val lsError = math.abs(math.abs(q.tx) - offset)
       assert(robustError < 0.05, clues(offset, p))
+      assert(p.tx > 0.0, clues(offset, p))
       assert(math.abs(p.ty) < 0.05 && math.abs(p.tz) < 0.05, clues(offset, p))
+      assert(math.abs(p.rx) < 0.02 && math.abs(p.ry) < 0.02 && math.abs(p.rz) < 0.02, clues(offset, p))
       assert(robustError < lsError, clues(offset, p, q))
       for scale <- Vector(1e-6, 1e6) do
         val scaled = pose(bigEstimate(scale, offset))
         for ((name, a), (_, b)) <- components(p).zip(components(scaled)) do
           assertEqualsDouble(b, a, 1e-6, clues(offset, scale, name))
 
-  private def threeFrameEstimate(scale: Double) =
+  /** A frame with a small deterministic frame-specific pattern (a stand-in for noise), so the
+    * refreshed template (an average of aligned frames) genuinely differs from the reference frame.
+    */
+  private def patternedFrame(t: Int, offsetX: Double, scale: Double, artefact: Boolean): Array[Double] =
+    val clean = bigFrame(offsetX, 1.0, artefact)
+    Array.tabulate(bigN) { lin =>
+      val v = bigSpace.indexToVoxel3D(lin)
+      scale * (clean(lin) + 1.5 * math.sin(1.7 * v.x + 2.3 * v.y + 0.9 * v.z + 1.3 * t))
+    }
+
+  private def threeFrameBig(scale: Double, template: TemplateControl) =
+    val base = plan(OptimizerControl.default)
     MotionEstimator
-      .estimate(run(Vector(frame(0.0, scale, artefact = false), frame(0.6, scale, artefact = true),
-        frame(1.0, scale, artefact = false))), Some(interiorMask), plan(OptimizerControl.default))
+      .estimate(bigRun(Vector(patternedFrame(0, 0.0, scale, artefact = false), patternedFrame(1, 0.6, scale, artefact = true),
+        patternedFrame(2, 1.0, scale, artefact = false))), Some(bigMask), base.copy(control = base.control.copy(template = template)))
       .fold(err => fail(err.message), identity)
 
-  test("with template refresh (three frames), poses are invariant and every cost scales by the square of the factor"):
-    val unit = threeFrameEstimate(1.0)
+  test("with a template refresh that actually runs (three frames, realistic volume), poses are invariant and costs scale by c^2"):
+    val refresh = TemplateControl.default
+    val noRefresh = TemplateControl(robustTemplate = false, refreshValidOnly = false, edgeExcludeFraction = refresh.edgeExcludeFraction)
+    val unit = threeFrameBig(1.0, refresh)
+    // The refresh pass runs: without it the second-pass poses differ.
+    val firstPassOnly = threeFrameBig(1.0, noRefresh)
+    val refreshShift = (0 until 3).flatMap(t =>
+      components(unit.trace.unsafeFrame(t)).zip(components(firstPassOnly.trace.unsafeFrame(t))).map((a, b) => math.abs(a._2 - b._2))).max
+    assert(refreshShift > 1e-4, clues(refreshShift))
+    for t <- 0 until 3 do assert(unit.diagnostics(t).converged, clues(t, unit.diagnostics(t)))
     for scale <- Vector(1e-6, 1e3) do
-      val scaled = threeFrameEstimate(scale)
+      val scaled = threeFrameBig(scale, refresh)
       for t <- 0 until 3 do
         for ((name, a), (_, b)) <- components(unit.trace.unsafeFrame(t)).zip(components(scaled.trace.unsafeFrame(t))) do
           assertEqualsDouble(b, a, 1e-6, clues(scale, t, name))
-        val expectedCost = unit.diagnostics(t).costFinal * scale * scale
         // Poses agree to ~1e-7 and cost is quadratic in the residual, so relative 1e-5 is the right tolerance.
+        val expectedCost = unit.diagnostics(t).costFinal * scale * scale
         assertEqualsDouble(scaled.diagnostics(t).costFinal, expectedCost, 1e-5 * math.abs(expectedCost), clues(scale, t))
         assertEquals(scaled.diagnostics(t).converged, unit.diagnostics(t).converged, clues(scale, t))
 

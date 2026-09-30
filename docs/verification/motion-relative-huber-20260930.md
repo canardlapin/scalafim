@@ -60,37 +60,66 @@ only as a stall witness. Accuracy is established on a realistic volume.
 
 ## Evidence
 
-- Unit tests pass: 105/105 on `motionJVM/testOnly scalafim.fmri.motion.*` (JS in
-  the final gate). This includes the unchanged `VolreggerParitySuite`, whose
-  tolerances still hold under the new default; they do not discriminate between
-  the two thresholds, so parity under `volreggerParity` is not separately
-  claimed.
+- Unit tests pass: 105/105 on `motionJVM/testOnly scalafim.fmri.motion.*`, and on
+  JS in the final gate. This includes the unchanged `VolreggerParitySuite`,
+  whose tolerances still hold under the new default. They do not discriminate
+  between the two thresholds, so parity under `volreggerParity` is not
+  separately claimed.
 - `MotionHuberScaleSuite`:
   - Defaults: `RobustResidual` is the default, and `volreggerParity` is
     `Absolute` with the same `huberK`.
   - Realistic 20x18x14 volume with an artefact block: the robust fit converges
-    and recovers the true x shift, with tx = 0.583 at a true 0.6 and 1.385 at a
-    true 1.4, and |ty|, |tz| < 0.025. Least squares is pulled well away, and the
+    with overlap 1.0 and recovers the true x shift with the correct sign (tx =
+    0.583 at a true 0.6 and 1.385 at a true 1.4). |ty| and |tz| are below 0.05
+    and all rotations below 0.02 rad. Least squares is pulled well away, and the
     pose is invariant across intensity scales 1e-6 to 1e6.
-  - Small fixture with Huber active: all six pose parameters are equal within
-    1e-6 across scales 1e-6 to 1e6, with equal iteration counts and convergence.
-  - Three frames with template refresh: poses are invariant and every
-    `costFinal` scales by `c²` (relative tolerance 1e-5; poses agree to about
-    1e-7).
+  - Template refresh that actually runs: three patterned frames on the
+    realistic volume, all converged. Poses with the refresh differ from the
+    first pass by more than 1e-4, so the second pass used a refreshed template.
+    With the refresh, poses are invariant across scales, convergence flags are
+    equal, and every `costFinal` scales by `c²` (relative 1e-5; poses agree to
+    about 1e-7).
+  - Small 7x5x5 fixture with Huber active: all six pose parameters are equal
+    within 1e-6 across scales 1e-6 to 1e6, with equal iteration counts and
+    convergence flags.
   - Zero-background (exactly matching) fixture: poses are invariant across
-    scales, exercising the round-off-aware fallback.
+    scales. This test checks covariance only; it does not distinguish which
+    fallback branch fires.
   - End-to-end stall: the 7x5x5 fixture stalls and is reported non-converged
     after one iteration under both thresholds, while realistic fits stay
-    converged. The rule is also unit-tested at, below and above the tolerance.
+    converged. This relies on the fixture's incidental stall, not on a stall
+    constructed deliberately. The rule is also unit-tested at, below and above
+    the tolerance.
   - `Absolute` still shows its intensity-scale dependence (a documented
     control).
-- Mutation and diagnosis:
-  - Forcing the absolute threshold under `RobustResidual` fails the invariance
-    tests.
-  - A zero-only (no round-off) degenerate check fails the existing pure-offset
-    `MotionEstimatorSuite` tests; rounding in `(a + 12) - a` produced a spurious
-    1e-15 scale.
-  - Sources restored and verified by hash.
+- Mutations (logs `motion-huber-rev2-mutant{A,B,C,D}.log`; source restored and
+  verified by hash):
+  - A: forcing the absolute threshold under `RobustResidual` fails 4 tests
+    (invariance, realistic accuracy, refresh invariance, stall).
+  - B: no re-estimation at the captured pose (warm-start scale throughout)
+    fails 1 test, the realistic-accuracy test, through its translation/rotation
+    bounds.
+  - C: no round-off guard fails 2 tests, the existing pure-offset
+    `MotionEstimatorSuite` tests (a spurious 1e-15 scale from rounding in
+    `(a + 12) - a`). The new zero-background test does not catch it.
+  - D: taking the scale at the identity pose (the first candidate) fails 1
+    test, the realistic-accuracy test.
+
+Limitations:
+
+- The captured pose comes from a coarse grid (translation steps up to 1 mm),
+  so the fixed scale can still include misregistration of up to half a grid
+  step.
+- When more than half the residuals are exactly zero (for example unmasked
+  zero background), the scale switches to the MAD of the non-zero deviations.
+  So the scale can jump as that fraction crosses one half; a brain mask avoids
+  this regime.
+- Final costs are compared across frames in the robust-template rule without
+  per-frame normalisation.
+
+Candidate follow-ups (not blocking): re-estimate the scale after the first
+pyramid level; normalise costs across frames in the template rule; construct a
+deliberate stall fixture.
 
 Not claimed: any change to real-data motion accuracy. The new default changes
 robust weights relative to volregger's absolute threshold, and real-data
