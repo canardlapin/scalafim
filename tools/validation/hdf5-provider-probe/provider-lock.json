@@ -1,0 +1,32 @@
+{
+  "archive_bytes": 34803158,
+  "archive_sha256": "7402939a854b643022e239dfa544a200c048b798bb0861890010db48a72efc73",
+  "archive_url": "https://github.com/HDFGroup/hdf5/releases/download/2.2.0/hdf5-2.2.0-macos15_clang.tar.gz",
+  "artifacts": {
+    "jarhdf5-2.2.0.jar": {
+      "bytes": 86209,
+      "sha256": "8a561afd611d95ef2167195eaf89b43f2f96f517690280094d7ffcde306a3895"
+    },
+    "libhdf5.320.2.0.dylib": {
+      "bytes": 10592048,
+      "sha256": "9c681586a5fee10ad7efaf49bab058c38dfc9119aa5d55a78c04e476962ebf8e"
+    },
+    "libhdf5_java.dylib": {
+      "bytes": 1236544,
+      "sha256": "0a67221b6e1617aef522dcf9fc3aad1c27f424fbc4844087efcab560adb3a93c"
+    },
+    "slf4j-api-2.0.16.jar": {
+      "bytes": 69435,
+      "sha256": "a12578dde1ba00bd9b816d388a0b879928d00bab3c83c240f7013bf4196c579a"
+    },
+    "slf4j-nop-2.0.16.jar": {
+      "bytes": 4982,
+      "sha256": "deca6c04ed35515a0a911fa44c0e836bee92c0c59d2e8fa9bab8ffbc464a9ba7"
+    }
+  },
+  "classfile_major": 65,
+  "lane": "macOS ARM64; runtime JDK25, JDK21 not run",
+  "provider": "HDFGroup official JNI 2.2.0",
+  "release_metadata_url": "https://api.github.com/repos/HDFGroup/hdf5/releases/tags/2.2.0",
+  "threadsafety": false
+}
