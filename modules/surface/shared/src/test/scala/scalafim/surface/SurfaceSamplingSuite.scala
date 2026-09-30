@@ -259,6 +259,44 @@ class SurfaceSamplingSuite extends munit.FunSuite:
     intercept[IllegalArgumentException](SurfaceSampleTally(requested = 3, outsideVolume = 1, masked = 0, nonFinite = 0, accepted = 1))
     intercept[IllegalArgumentException](SurfaceSampleTally(requested = 0, outsideVolume = -1, masked = 0, nonFinite = 0, accepted = 1))
 
+
+  Vector(0 -> 3, 1 -> 4, 2 -> 5).foreach: (axis, length) =>
+    test(s"eager nearest sampling has absolute half-up ties and support boundaries on axis $axis"):
+      val grid = SampleSpaces(Vector(3, 4, 5))
+      val encoded = SomeScalarVolume.unsafeCopyFromCanonicalArray(
+        PrimitiveBuffers.tabulate[Double](60): ordinal =>
+          val x = ordinal / 20
+          val y = (ordinal / 5) % 4
+          val z = ordinal % 5
+          x.toDouble + 10.0 * y + 100.0 * z,
+        grid,
+        "absolute-nearest-oracle"
+      )
+      val epsilon = 1e-8
+      val cases = Vector(
+        (-0.5 - epsilon, None), (-0.5, Some(0)), (-0.5 + epsilon, Some(0)),
+        (0.5 - epsilon, Some(0)), (0.5, Some(1)), (0.5 + epsilon, Some(1)),
+        (length - 0.5 - epsilon, Some(length - 1)), (length - 0.5, None), (length - 0.5 + epsilon, None)
+      )
+      val points = cases.map((coordinate, _) => Vector(1.0, 1.0, 1.0).updated(axis, coordinate))
+      val mesh = TriangleMesh.fromRows(points, Vector.tabulate(points.length - 2)(i => (0, i + 1, i + 2)))
+      val surfaces = SurfaceGeometryPair(
+        SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.White),
+        SurfaceGeometry(mesh, Hemisphere.Left, SurfaceKind.Pial)
+      )
+      val result = VolumeSurfaceSampler.sample(encoded, surfaces, SurfaceSamplingPath.White)
+      cases.zipWithIndex.foreach: (entry, row) =>
+        val (coordinate, expectedIndex) = entry
+        val vertex = VertexId(row)
+        assertEquals(result.sampleCounts.valueAt(vertex), Some(if expectedIndex.isDefined then 1 else 0),
+          s"axis=$axis coordinate=$coordinate")
+        expectedIndex match
+          case Some(index) =>
+            val p = Vector(1, 1, 1).updated(axis, index)
+            assertEqualsDouble(result.values.valueAt(vertex).get, p(0) + 10.0 * p(1) + 100.0 * p(2), 0.0)
+          case None => assert(result.values.valueAt(vertex).exists(_.isNaN))
+      assertEquals(result.tally, SurfaceSampleTally(9, 3, 0, 0, 6))
+
   private def surfaceAtZ(z: Double, kind: SurfaceKind): SurfaceGeometry =
     SurfaceGeometry(
       TriangleMesh.fromRows(
