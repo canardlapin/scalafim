@@ -342,6 +342,7 @@ private[fit] object MaskedResponseExecutor:
       })
     }
     result match
+      case reduced: VoxelwiseReducedRankFmriFitResult => reduced.copy(preparationProvenance = provenance)
       case dense: DenseFmriFitResult => dense.copy(preparationProvenance = provenance)
       case runwise: RunwiseFmriFitResult => runwise.copy(preparationProvenance = provenance)
       case fixed: FixedEffectsFmriFitResult => fixed.copy(preparationProvenance = provenance)

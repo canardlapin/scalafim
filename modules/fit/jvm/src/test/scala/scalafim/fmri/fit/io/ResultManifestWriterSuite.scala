@@ -10,6 +10,8 @@ import scalafim.fmri.design.{DesignSchema, ModelSource}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
 import scalafim.fmri.model.{FitConfig, FitEngine, FitSummary}
+import scalafim.fmri.model.{ArCoefficientSpec, AutocorrelationConfig, ReducedRankBootstrapConfig, ReducedRankComponentSpec, ReducedRankGlsConfig, ReducedRankInferencePolicy, VoxelwiseReducedRankBootstrapConfig}
+import scalafim.fmri.fit.fixtures.ReducedRankGlsFmriregFixtures
 import scalafim.image.io.Nifti
 import gale.linalg.DVec
 
@@ -240,6 +242,74 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(sidecar.contains("\"inferable_columns\": [\"task\"]"))
     assert(sidecar.contains("\"inferable_column_ids\": [\"legacy|Event|0|task\"]"))
   }
+
+  test("ResultManifestWriter physically writes bootstrap interval parameter maps") {
+    val provenance = AnalysisProvenance.fromResult(denseResult(), source = "bootstrap-export")
+    val selected = SelectedVoxelIndices.unsafe(Vector(0, 1))
+    val parameters = Vector(
+      ParameterMap.make("task", ParameterMapKind.BootstrapLower, DVec.fromSeq(Vector(1.0, -2.0)), shape, selected, provenance).toOption.get,
+      ParameterMap.make("task", ParameterMapKind.BootstrapUpper, DVec.fromSeq(Vector(3.0, 0.0)), shape, selected, provenance).toOption.get
+    )
+    val manifest = ResultManifest(provenance, parameters, Vector.empty)
+    val root = Files.createTempDirectory("scalafim-bootstrap-result-writer")
+    val written = ResultManifestWriter.writeBidsDirectory(manifest, root, "sub-01_task-bootstrap").toOption.get
+    val lower = root.resolve("sub-01_task-bootstrap_desc-parameterbootstraplower_statmap.nii")
+    val upper = root.resolve("sub-01_task-bootstrap_desc-parameterbootstrapupper_statmap.nii")
+    assert(written.paths.contains(lower))
+    assert(written.paths.contains(upper))
+    assertEqualsDouble(Nifti.readVolume(lower).toOption.get.image.valueAtCanonicalOrdinal(0), 1.0, 1e-12)
+    assertEqualsDouble(Nifti.readVolume(upper).toOption.get.image.valueAtCanonicalOrdinal(1), 0.0, 1e-12)
+  }
+
+  test("ResultManifestWriter retains voxelwise reduced-rank estimates-only diagnostics") {
+    val result = voxelwiseReducedRankResult()
+    val manifest = ResultManifest.fromVoxelwiseReducedRankFit(result, shape, source = "rrg-writer").toOption.get
+    val root = Files.createTempDirectory("scalafim-rrg-result-writer")
+    ResultManifestWriter.writeBidsDirectory(manifest, root, "sub-01_task-rrg").toOption.get
+    val sidecar = Files.readString(root.resolve("sub-01_task-rrg_resultmanifest.json"), StandardCharsets.UTF_8)
+    assert(sidecar.contains("\"voxelwise_reduced_rank\": {"))
+    assert(sidecar.contains("\"whitening_plans\": ["))
+    assert(sidecar.contains("\"first_scale\": 1"))
+    assert(sidecar.contains("\"coordinate_convention\": "))
+    assert(sidecar.contains("\"rank_tolerance_convention\": "))
+    assert(sidecar.contains("\"uncertainty\": \"estimates_only_inference_not_requested\""))
+    assert(!sidecar.contains("\"bootstrap\": {"))
+  }
+
+  test("ResultManifestWriter retains bootstrap uncertainty provenance and artifacts") {
+    val bootstrap = VoxelwiseReducedRankBootstrapConfig.unsafe(
+      resampling = ReducedRankBootstrapConfig.unsafe(replicates = 2, blockSize = 1, seed = 7)
+    )
+    val result = voxelwiseReducedRankResult(ReducedRankInferencePolicy.VoxelwiseBootstrap(bootstrap))
+    val manifest = ResultManifest.fromVoxelwiseReducedRankFit(result, shape, source = "rrg-bootstrap-writer").toOption.get
+    val root = Files.createTempDirectory("scalafim-rrg-bootstrap-writer")
+    ResultManifestWriter.writeBidsDirectory(manifest, root, "sub-01_task-rrgbootstrap").toOption.get
+    val sidecar = Files.readString(root.resolve("sub-01_task-rrgbootstrap_resultmanifest.json"), StandardCharsets.UTF_8)
+    assert(sidecar.contains("\"bootstrap\": {"))
+    assert(sidecar.contains("\"replicate_objectives\": ["))
+    assert(sidecar.contains("absolute_sample_covariance_of_refitted_target_coefficients_no_residual_variance_multiplier"))
+    assert(manifest.parameterMaps(ParameterMapKind.BootstrapLower).nonEmpty)
+    assert(manifest.parameterMaps(ParameterMapKind.BootstrapUpper).nonEmpty)
+    assert(manifest.coefficientCovariance.nonEmpty)
+  }
+
+  private def voxelwiseReducedRankResult(
+      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.EstimatesOnly
+  ): VoxelwiseReducedRankFmriFitResult =
+    val design = DesignMatrix.unsafe(ReducedRankGlsFmriregFixtures.design)
+    val response = ResponseBlock.unsafe(ReducedRankGlsFmriregFixtures.response)
+    val rows = (0 until response.timepoints).toVector
+    val partitions = Vector(RunPartition(0, rows, rows))
+    val config = ReducedRankGlsConfig.unsafe(
+      components = ReducedRankComponentSpec.unsafeFixed(1),
+      autocorrelation = AutocorrelationConfig.unsafe(order = 1, iterations = 0, coefficients = ArCoefficientSpec.Rho(0.0)),
+      inference = inference
+    )
+    val prepared = ReducedRankGlsPrepared.prepare(design, response, partitions, config, Vector(0, 1)).toOption.get
+    val block = prepared.fitBlock(FitBlockInput(design, response, Vector(0, 1), rows, partitions = partitions)).toOption.get
+      .asInstanceOf[VoxelwiseReducedRankFitBlockResult]
+    VoxelwiseReducedRankFmriFitResult(block.estimate, Vector("task_a", "task_b"), Vector(0, 1), rows, FitEngine.ReducedRankGls,
+      FitSummary(FitEngine.ReducedRankGls, rows.length, 2, 2, robust = false, autocorrelated = true))
 
   private def shape: DatasetShape =
     DatasetShape.unsafe(SampleSpaces(Vector(2, 1, 1)), timepoints = 4)

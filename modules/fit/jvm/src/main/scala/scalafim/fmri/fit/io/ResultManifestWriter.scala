@@ -209,7 +209,13 @@ object ResultManifestWriter:
       manifest: ResultManifest,
       target: ResultManifestExportTarget
   ): Either[ResultManifestIoError, Vector[PlannedNifti]] =
-    buildAll(Vector(ParameterMapKind.Coefficient, ParameterMapKind.StandardError)) { kind =>
+    buildAll(Vector(
+      ParameterMapKind.Coefficient,
+      ParameterMapKind.StandardError,
+      ParameterMapKind.ResidualVariance,
+      ParameterMapKind.BootstrapLower,
+      ParameterMapKind.BootstrapUpper
+    )) { kind =>
       val maps = manifest.parameterMaps(kind)
       if maps.isEmpty then Right(None)
       else
@@ -398,6 +404,41 @@ object ResultManifestWriter:
           records
             .map(record => s"""{"voxel": ${record.voxelIndex}, "status": "${escape(record.status.label)}"}""")
             .mkString("[", ", ", "]")
+    val voxelwiseReducedRank =
+      manifest.provenance.voxelwiseReducedRank match
+        case None =>
+          "null"
+        case Some(value) =>
+          val diagnostics = value.diagnostics
+          val starts = diagnostics.starts.map { start =>
+            s"""{"start": ${start.start}, "status": "${escape(start.status.toString)}", "iterations": ${start.iterations}, "objective": ${formatDouble(start.objective)}, "projected_gradient_residual": ${formatDouble(start.projectedGradientResidual)}}"""
+          }.mkString("[", ", ", "]")
+          val whiteningPlans = diagnostics.preparedVoxelIndices.zip(diagnostics.whiteningPlans).map { case (voxel, plan) =>
+            val segments = plan.segments.map { segment =>
+              val coefficients = plan.coefficientsFor(segment)
+              val (firstScale, firstScaleError) = coefficients.firstScale(plan.initialCondition) match
+                case Right(value) => (formatDouble(value), "null")
+                case Left(error)  => ("null", s"\"${escape(error.message)}\"")
+              val phi = coefficients.phi.map(formatDouble).mkString("[", ", ", "]")
+              val theta = coefficients.theta.map(formatDouble).mkString("[", ", ", "]")
+              s"""{"run": ${segment.runIndex}, "start": ${segment.start}, "end_exclusive": ${segment.endExclusive}, "phi": $phi, "theta": $theta, "first_scale": $firstScale, "first_scale_error": $firstScaleError}"""
+            }.mkString("[", ", ", "]")
+            s"""{"voxel": $voxel, "pooling": "${escape(plan.pooling.toString)}", "initial_condition": "${escape(plan.initialCondition.toString)}", "method": "${escape(plan.method.toString)}", "segments": $segments}"""
+          }.mkString("[", ", ", "]")
+          val autocorrelation = diagnostics.autocorrelation
+          val coefficients = autocorrelation.coefficients match
+            case scalafim.fmri.model.ArCoefficientSpec.Estimate => "{\"kind\": \"estimate\"}"
+            case scalafim.fmri.model.ArCoefficientSpec.Rho(value) => s"{\"kind\": \"rho\", \"value\": ${formatDouble(value)}}"
+            case scalafim.fmri.model.ArCoefficientSpec.Phi(values) => s"{\"kind\": \"phi\", \"values\": ${values.map(formatDouble).mkString("[", ", ", "]")}}"
+          val autocorrelationJson = s"""{"order": ${autocorrelation.order.value}, "iterations": ${autocorrelation.iterations}, "global": ${autocorrelation.global}, "voxelwise": ${autocorrelation.voxelwise}, "exact_first": ${autocorrelation.exactFirst}, "censored_timepoints": ${autocorrelation.censoredTimepoints.values.mkString("[", ", ", "]")}, "coefficients": $coefficients}"""
+          val base =
+            s""""method": "${escape(diagnostics.method)}", "objective_convention": "${escape(diagnostics.objectiveConvention)}", "residual_variance_convention": "${escape(diagnostics.residualVarianceConvention)}", "residual_degrees_of_freedom": ${value.residualDegreesOfFreedom.value}, "coordinate_convention": "${escape(diagnostics.coordinateConvention)}", "rank_tolerance_convention": "${escape(diagnostics.rankToleranceConvention)}", "autocorrelation": $autocorrelationJson, "optimality": "${escape(diagnostics.optimality)}", "requested_rank": ${diagnostics.requestedRank}, "achieved_rank": ${diagnostics.achievedRank}, "objective": ${formatDouble(diagnostics.objective)}, "selected_start": ${diagnostics.selectedStart}, "starts": $starts, "solver": {"max_iterations": ${diagnostics.solver.maxIterations}, "tolerance": ${formatDouble(diagnostics.solver.tolerance)}}, "target_columns": ${diagnostics.targetColumns.mkString("[", ", ", "]")}, "prepared_voxel_indices": ${diagnostics.preparedVoxelIndices.mkString("[", ", ", "]")}, "whitening_plans": $whiteningPlans, "preparation_fingerprint": "${escape(diagnostics.preparationFingerprint)}", "uncertainty": "${escape(value.uncertainty.label)}""" + "\""
+          value.uncertainty.bootstrap match
+            case None => s"{$base}"
+            case Some(bootstrap) =>
+              val detail = bootstrap.diagnostics
+              val donors = detail.donorBlocksByRun.map { case (run, count) => s"""{"run": $run, "blocks": $count}""" }.mkString("[", ", ", "]")
+              s"""{$base, "bootstrap": {"method": "${escape(detail.method)}", "covariance_convention": "absolute_sample_covariance_of_refitted_target_coefficients_no_residual_variance_multiplier", "interval_convention": "${escape(detail.intervalConvention)}", "noise_model": "${escape(detail.noiseModel)}", "calibration": "${escape(detail.calibration)}", "random_stream": "${escape(detail.randomStream)}", "replicates": ${detail.config.resampling.replicates.value}, "block_size": ${detail.config.resampling.blockSize.value}, "seed": ${detail.config.resampling.seed.value}, "mode": "${escape(detail.config.mode.toString)}", "confidence_level": ${formatDouble(detail.config.confidenceLevel)}, "target_columns": ${bootstrap.targetColumns.mkString("[", ", ", "]")}, "donor_blocks_by_run": $donors, "excluded_noise_rows": ${detail.excludedNoiseRows.mkString("[", ", ", "]")}, "minimum_residual_leverage": ${formatDouble(detail.minimumResidualLeverage)}, "replicate_objectives": ${detail.replicateObjectives.map(formatDouble).mkString("[", ", ", "]")}, "refitted_whitening_replicates": ${detail.refittedWhiteningReplicates}, "donor_trace_fingerprint": "${escape(detail.donorTraceFingerprint)}"}}"""
     val contrastExclusions =
       manifest.contrasts
         .map(_.contrastId.value)
@@ -426,6 +467,7 @@ object ResultManifestWriter:
        |  "response_preparation": $responsePreparation,
        |  "rank_reports": $rankReports,
        |  "voxel_statuses": $voxelStatuses,
+       |  "voxelwise_reduced_rank": $voxelwiseReducedRank,
        |  "contrast_exclusions": $contrastExclusions,
        |  "notes": $notes,
        |  "artifacts": $artifactJson

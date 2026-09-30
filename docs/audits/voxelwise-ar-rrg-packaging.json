@@ -1,0 +1,42 @@
+{
+  "base": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+  "historical_qualification": "voxelwise-ar-rrg-qualification.json",
+  "scope_correction": "Excluded pre-existing DenseFmriFitResult.voxelStatus optimization from clean commit; kept original baseline expression. Shared checkout unchanged. Historical qualification hashes intentionally remain historical. Normalized trailing blank line in design oracle JSON without changing data.",
+  "packaging_check": {
+    "command": "fitJVM/testOnly *VoxelwiseReducedRankResultSuite *ResultManifestWriterSuite; fitJS/testOnly *VoxelwiseReducedRankResultSuite",
+    "jvm_pass": 10,
+    "js_pass": 1,
+    "exit": 0,
+    "log": "/private/tmp/scalafim-rrg-next/packaging-check.log"
+  },
+  "source_sha256": {
+    "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "b05c6b7d03ba162838c9267ed01a4e6bdff277143c57d66da8df348a148750a1",
+    "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala": "605672c3404d5a8f2d2ec948d169176aa0447cc8bc486e0f12b70afb72390b9b",
+    "modules/fit/README.md": "46ff1aa6376009cc719d6f8ca8d8bfe0a8463ee7039f8bd4b9a737432aee1bda",
+    "docs/plans/voxelwise-ar-reduced-rank-gls.md": "39c7281363c71702fbeb9b5b28235a4ed81a99b940967dcbd4795bf9a89e62aa",
+    "tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R": "32ae8c4d1c5f9f5ba7107a5c23a264b5d657ccbe9f9090694cf57831f52f813e",
+    "tools/r-parity/verify_voxelwise_ar_rrg_design.R": "3717cf3e15290b8f4be42467aa27072f0935e486a900efde3073a7280a9d90e2",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": "eb72f49d76dc9b19bce16170d67e37cf9351c95f9512839a3e4d652de00c157e",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "da5f815a56a68e85bd04f19a5d116dd539317ff858337907f58ddb9021d642ee",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "c8e22f3b28d770eeb463984c07cb5359a11410e662601d1fda4d152890b81c15",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "8dfe38ddf13da033fd0d09da100e9014d8b68187f8856ee343f3318097a6b760",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "0496e573434dbef63710232b38fe911e659b35473355870ec7de45984036a66f",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "99ac53d654e0e453b01e4e91c6e3747c23c931a722d7b706de2b778ab94e4c2c",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "917236b03e91d92cd27e2325894a4bf715a36f9a82051bd3461aa1482d4ee429",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "0b6b0ea2af7ca56556aa02917bf65506ba9a9a80f6ceda6d94c98032f6735ac0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala": "04edfa220c216d15fa3081bd2b1d8ce5529218e40063a30c9fc89c2647c22f22",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala": "1978ec83ccd1a6096b52ebb1ec29c45d44bd6dc570d6d6bb7019f8bed5bd2722",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala": "aa5f0b870e0a2b8e7f2b65b04a5bac3435e756299e964e516963341c70202cc0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala": "3b995ac3c21f8d7c89310e5346b288305e5d149d4f9e2928139081cd2d0c8011",
+    "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala": "2d34c616f6898db78a7277ccbca8de708ad95eb0903f21b832e7759a2478b070",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala": "42c1a9cd2aa0dcc951131a7b85409e8164662b138aefc200155bcd9943e7f608",
+    "docs/audits/voxelwise-ar-rrg-qualification.json": "025b54673629f569302938c875e9fe953cfe7b20c0363888f366437910ae9740",
+    "docs/audits/voxelwise-ar-rrg-design-oracle.json": "5eb1647fbbd5ab17189b46f3fd6b6d72c9a89bf6d657d1f798aad016c32973d3"
+  }
+}

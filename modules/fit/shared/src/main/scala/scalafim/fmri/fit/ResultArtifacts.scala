@@ -36,16 +36,25 @@ object ContrastId:
 enum ParameterMapKind:
   case Coefficient
   case StandardError
+  case ResidualVariance
+  case BootstrapLower
+  case BootstrapUpper
 
   def label: String =
     this match
       case Coefficient   => "coefficient"
       case StandardError => "standard_error"
+      case ResidualVariance => "residual_variance"
+      case BootstrapLower => "bootstrap_lower"
+      case BootstrapUpper => "bootstrap_upper"
 
   def mapName(parameterName: String): String =
     this match
       case Coefficient   => parameterName
       case StandardError => s"${parameterName}_standard_error"
+      case ResidualVariance => "residual_variance"
+      case BootstrapLower => s"${parameterName}_bootstrap_lower"
+      case BootstrapUpper => s"${parameterName}_bootstrap_upper"
 
 enum ContrastMapKind:
   case Estimate(component: Int)
@@ -128,7 +137,8 @@ final case class AnalysisProvenance(
     coefficientAxis: Option[CoefficientAxis] = None,
     responsePreparation: Option[ResponsePreparationProvenance] = None,
     rankReports: Vector[StructuralRankReport] = Vector.empty,
-    voxelStatuses: Option[Vector[VoxelFitStatusRecord]] = None
+    voxelStatuses: Option[Vector[VoxelFitStatusRecord]] = None,
+    voxelwiseReducedRank: Option[VoxelwiseReducedRankArtifactProvenance] = None
 ):
   require(columnNames.nonEmpty, "analysis provenance column names must be non-empty")
   require(source.trim.nonEmpty, "analysis provenance source must be non-empty")
@@ -140,6 +150,13 @@ final case class AnalysisProvenance(
   require(rankReports.forall(report => coefficientAxis.exists(_.designFingerprint == report.designFingerprint)), "rank reports require the matching structural coefficient axis")
   require(voxelStatuses.forall(_.nonEmpty), "present voxel status provenance must be non-empty")
   require(voxelStatuses.forall(records => records.map(_.voxelIndex).distinct.length == records.length), "voxel status provenance indices must be unique")
+
+final case class VoxelwiseReducedRankArtifactProvenance(
+    diagnostics: VoxelwiseReducedRankDiagnostics,
+    uncertainty: VoxelwiseReducedRankUncertainty,
+    residualDegreesOfFreedom: ResidualDegreesOfFreedom
+):
+  require(diagnostics.targetColumns.nonEmpty, "voxelwise reduced-rank provenance requires target columns")
 
 object AnalysisProvenance:
   def fromResult(
@@ -159,6 +176,10 @@ object AnalysisProvenance:
           ))
         case _ =>
           None
+    val voxelwiseReducedRank = result match
+      case reducedRank: VoxelwiseReducedRankFmriFitResult =>
+        Some(VoxelwiseReducedRankArtifactProvenance(reducedRank.diagnostics, reducedRank.uncertainty, reducedRank.estimate.residualDegreesOfFreedom))
+      case _ => None
     val rankReports =
       result match
         case dense: DenseFmriFitResult =>
@@ -181,6 +202,10 @@ object AnalysisProvenance:
             }
           case fixed: FixedEffectsFmriFitResult =>
             fixed.voxelIndices.map(VoxelFitStatusRecord(_, VoxelFitStatus.Estimable))
+          case reducedRank: VoxelwiseReducedRankFmriFitResult =>
+            reducedRank.voxelIndices
+              .zip(reducedRank.resolvedVoxelStatuses)
+              .map(VoxelFitStatusRecord.apply)
           case patterned: PatternedFmriFitResult =>
             patterned.voxelIndices.map { voxelIndex =>
               val status = patterned.resultForVoxel(voxelIndex) match
@@ -207,7 +232,8 @@ object AnalysisProvenance:
       coefficientAxis = result.coefficientAxis,
       responsePreparation = result.preparationProvenance,
       rankReports = rankReports,
-      voxelStatuses = voxelStatuses
+      voxelStatuses = voxelStatuses,
+      voxelwiseReducedRank = voxelwiseReducedRank
     )
 
 final case class StatMap private (
@@ -549,6 +575,45 @@ object ResultManifest:
       }
       covariance <- CoefficientCovarianceArtifact.fromDenseFit(result, shape, provenance, exportIntent)
     yield ResultManifest(provenance, parameters, contrasts = Vector.empty, coefficientCovariance = Some(covariance), exportIntent = exportIntent)
+
+  def fromVoxelwiseReducedRankFit(
+      result: VoxelwiseReducedRankFmriFitResult,
+      shape: DatasetShape,
+      exportIntent: ResultExportIntent = ResultExportIntent.InMemory,
+      source: String = "voxelwise-reduced-rank-fit"
+  ): Either[FitError, ResultManifest] =
+    val provenance = AnalysisProvenance.fromResult(result, source)
+    val selectedVoxels = result.selectedVoxels
+    val coefficientSpecs = result.columnNames.zipWithIndex.map { case (parameter, row) =>
+      (parameter, ParameterMapKind.Coefficient, matrixRow(result.coefficients.value, row))
+    }
+    val residualSpec = Vector(("residual_variance", ParameterMapKind.ResidualVariance, result.residualVariance))
+    val bootstrapSpecs = result.uncertainty.bootstrap.toVector.flatMap { bootstrap =>
+      bootstrap.targetColumns.zipWithIndex.map { case (column, row) =>
+        (result.columnNames(column), ParameterMapKind.StandardError, matrixRow(bootstrap.standardErrors.value, row))
+      } ++ bootstrap.targetColumns.zipWithIndex.flatMap { case (column, row) =>
+        Vector(
+          (result.columnNames(column), ParameterMapKind.BootstrapLower, matrixRow(bootstrap.lower.value, row)),
+          (result.columnNames(column), ParameterMapKind.BootstrapUpper, matrixRow(bootstrap.upper.value, row))
+        )
+      }
+    }
+    for
+      parameters <- buildAll(coefficientSpecs ++ residualSpec ++ bootstrapSpecs) { case (parameter, kind, values) =>
+        ParameterMap.make(parameter, kind, values, shape, selectedVoxels, provenance, exportIntent)
+      }
+      covariance <- result.uncertainty.bootstrap match
+        case None => Right(None)
+        case Some(bootstrap) =>
+          CoefficientCovarianceArtifact.make(
+            parameterNames = bootstrap.targetColumns.map(result.columnNames),
+            covariance = bootstrap.covariance,
+            shape = shape,
+            selectedVoxels = selectedVoxels,
+            provenance = provenance,
+            exportIntent = exportIntent
+          ).map(Some.apply)
+    yield ResultManifest(provenance, parameters, contrasts = Vector.empty, coefficientCovariance = covariance, exportIntent = exportIntent)
 
 private def matrixRow(matrix: DMat, row: Int): DVec =
   val out = Vec.newBuilder(matrix.cols)

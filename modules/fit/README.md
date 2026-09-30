@@ -360,11 +360,33 @@ Park-Miller stream rather than platform RNG state, making the prepared result
 byte-stable across JVM, Scala.js, direct, and chunked execution. The fixture
 generator is `tools/r-parity/generate_fmrireg_rrr_fixtures.R`.
 
-Voxelwise-AR compressed reduced-rank GLS remains explicit unsupported behavior.
-Per-voxel whitening removes the single shared response geometry required by the
-current QR-SVD subspace, so that extension is tracked as a separate design task
-rather than treated as a routine backend branch. Full-rank voxelwise-AR fallback
-remains available with event-only inference scope.
+Voxelwise-AR compression has an explicit fixed-rank path. Select
+`ReducedRankInferencePolicy.EstimatesOnly` or `VoxelwiseBootstrap` to fit one
+global target-coefficient rank constraint with each voxel's own whitening and
+nuisance projection. The Gale projected-gradient solver uses three deterministic
+starts in normalized coordinates; diagnostics report convergence, achieved rank
+and original-metric residual loss. This is a converged candidate for a nonconvex
+problem, with no global-optimality certificate. Adaptive energy/RSS policies
+remain unsupported on this path.
+
+The result is `VoxelwiseReducedRankFmriFitResult`. Estimates-only results contain
+coefficients and descriptive reduced residual variance, with explicitly absent
+uncertainty. `VoxelwiseReducedRankBootstrapConfig` offers `FrozenWhitening` and
+`RefitAutocorrelation`: both refit the global rank-constrained coefficients, and
+the latter also re-estimates AR in each replicate. Joint voxel residual vectors
+are resampled synchronously in run-local moving blocks after marginal HC2
+correction and centering. The inverse-whitening generator respects every reset;
+blocks exclude noise-censored donor rows and never cross donor reset boundaries.
+Every replicate must succeed. This is a model-conditional residual approximation;
+HC2 does not exactly restore joint covariance under differing voxel hat matrices.
+
+Bootstrap payloads contain absolute marginal target covariance, SEs and pointwise
+percentile intervals. They do not authorize generic T/F contrasts. Nuisance
+coefficients remain available without nuisance uncertainty. Sidecars preserve
+the solver, whitening actions, mode, seed, interval convention and replicate
+losses. The original `Conditional` full-rank voxelwise GLS fallback remains
+available. See the [design and qualification](../../docs/plans/voxelwise-ar-reduced-rank-gls.md)
+for the mathematical target, tested cases and remaining limits.
 
 Chunked execution asks the selected `FitInterpreter` to prepare engine-specific
 context once for the resolved selection and then applies that immutable context
