@@ -346,6 +346,17 @@ object ConditionC0QualificationHarness:
       voxel += 1
     raw
 
+  /** Fresh native, unnormalised, no-prior diagnostic objective for a literal column. */
+  private[profile] def platformTraceSetup(column: Array[Double]): (CompactConditionObjective, Vector[Double], Double) =
+    require(column.length == Rows && column.forall(java.lang.Double.isFinite))
+    val prep = preparation
+    val z = new Array[Double](prep.rank)
+    val qy = new Array[Double](prep.nuisanceRank)
+    val energy = prep.project(column, 0, z, qy)
+    val objective = new CompactConditionObjective(prep, NodeGrid(GaussianFamily.Default.chart, Vector(15, 15)))
+    objective.pointAt(z, energy)
+    (objective, z.toVector, energy)
+
   private def percentile(values: Vector[Double]): Double =
     if values.isEmpty then Double.NaN
     else
