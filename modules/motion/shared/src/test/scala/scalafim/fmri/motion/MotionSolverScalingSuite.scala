@@ -59,7 +59,10 @@ class MotionSolverScalingSuite extends munit.FunSuite:
       .estimate(run(Vector(frame(0.0, scale), frame(0.6, scale))), Some(interiorMask), plan)
       .fold(err => fail(err.message), identity)
 
-  test("estimated motion does not depend on the image intensity scale"):
+  // The Huber threshold (MotionControl huberK) is in absolute intensity units,
+  // so robust weighting is not scale invariant; these fixtures keep residuals
+  // below it at both scales, isolating the solve, damping and stopping rule.
+  test("with Huber weighting inactive, estimated motion does not depend on the image intensity scale"):
     val unit = estimate(1.0)
     val tiny = estimate(1e-6)
     val a = unit.trace.unsafeFrame(1)
@@ -68,6 +71,12 @@ class MotionSolverScalingSuite extends munit.FunSuite:
     for (name, x, y) <- Vector(("tx", a.tx, b.tx), ("ty", a.ty, b.ty), ("tz", a.tz, b.tz), ("rx", a.rx, b.rx), ("ry", a.ry, b.ry), ("rz", a.rz, b.rz)) do
       assertEqualsDouble(y, x, 1e-6, s"$name differs under intensity scaling")
     assertEquals(tiny.diagnostics(1).iterations, unit.diagnostics(1).iterations)
+
+  test("the relative-drop stopping rule does not stop early on very low-intensity images"):
+    val unit = estimate(1.0)
+    val faint = estimate(1e-9)
+    assertEquals(faint.diagnostics(1).iterations, unit.diagnostics(1).iterations)
+    assertEqualsDouble(faint.trace.unsafeFrame(1).tx, unit.trace.unsafeFrame(1).tx, 1e-6)
 
   test("a singular normal system is not reported as convergence"):
     // A spatially constant moving frame gives zero image gradients, so every
@@ -115,4 +124,10 @@ class MotionSolverScalingSuite extends munit.FunSuite:
     // Unit diagonal but indefinite: the (0,1) block has eigenvalues 1 +/- 2.
     val indefinite = Array.tabulate(36)(k => if k / 6 == k % 6 then 1.0 else if k == 1 || k == 6 then 2.0 else 0.0)
     assertEquals(MotionEstimator.solveNormal6(indefinite, Array.fill(6)(1.0)).map(_.toVector), None)
+
+  test("the relative pivot tolerance refuses a numerically singular unit-diagonal system"):
+    // The (0,1) block has Schur complement 1 - (1 - 1e-14)^2 ~ 2e-14, below the
+    // 1e-12 relative tolerance; with a zero tolerance it would be accepted.
+    val nearSingular = Array.tabulate(36)(k => if k / 6 == k % 6 then 1.0 else if k == 1 || k == 6 then 1.0 - 1e-14 else 0.0)
+    assertEquals(MotionEstimator.solveNormal6(nearSingular, Array.fill(6)(1.0)).map(_.toVector), None)
 

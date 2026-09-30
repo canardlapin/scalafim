@@ -233,7 +233,9 @@ object MotionEstimator:
                 if trialCost.cost < current.cost then
                   val relDrop =
                     if current.cost == 0.0 then current.cost - trialCost.cost
-                    else (current.cost - trialCost.cost) / math.max(1e-12, math.abs(current.cost))
+                    // Relative to the current cost itself: an absolute floor would
+                    // declare convergence after one step on low-intensity images.
+                    else (current.cost - trialCost.cost) / math.abs(current.cost)
                   pose = trialPose
                   current = trialCost
                   lambda = math.max(1e-8, lambda * 0.5)
