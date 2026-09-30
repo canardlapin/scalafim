@@ -8,50 +8,46 @@ are integrated in an isolated clone.
 
 ## Current qualified integration
 
-The latest qualified source integration is `16f7e35b`. Seven of the original
-sixteen issues are done. Mote owns their current state; the bounded milestones
-below do not close the remaining scientific, performance or release gates.
+The latest qualified source integration is `895e37ff`. Seven of the original
+sixteen issues are done. Mote owns current status; bounded milestones do not
+close outstanding scientific, performance, consumer, publication or release gates.
 
-- Native ML executor routing at `a6dbd3b1` passes 134 JVM and 101 Scala.js tests
-  plus CompileAll. The complete log retains a multiple-main-classes sbt warning;
-  no compiler warning was reported. Public ML amplitude/query output remains
-  under implementation in a separate eleven-file lane.
-- HDF metadata/lifecycle hooks at `16f7e35b` pass 192 JVM and 129 Scala.js tests
-  plus provider-free CompileAll. The physical HDF backend is a separately active
-  eighteen-file lane and has not been admitted.
-- Earlier hosted ML core, generic HDF adapter, public provenance repair,
-  compact/pooled producers and Core3 transactional readback remain bounded
-  qualifications. Their preserved source, review and actual receipts follow.
+- Public ML trial output is qualified at `327eda76`: 207 JVM/163 JS and
+  CompileAll. Exact ML output and typed unsupported policies remain distinct.
+- Gaussian precision repair is qualified at `fcb0addb`: 368 tests on each
+  platform and CompileAll. Previously examined development responses cannot
+  count as fresh validation; historical failed gates remain preserved.
+- Physical HDF output is qualified at `895e37ff`: 133 JVM/49 JS plus provider-free
+  CompileAll. Independent reentrant-abort reproduction drove a focused fix.
+  Native evidence is bounded to macOS ARM/JDK25; full Core legacy/workflow
+  migration remains under implementation, with no shared landing authorization.
+- The fresh condition freeze `ad59a8b9` passed ten root and ten independent
+  launcher controls. Its JVM study is running; JS is next. Each qualifying SNR
+  must pass independently on both platforms. No scientific admission or final
+  live-output hash is asserted. Custodian reports no known use outside audited
+  logs; unlogged or other-machine use is not universally excluded.
 
-The four new archives embed 171 immutable source, review, raw attempt,
-approval and control payloads, decoded and SHA-256 verified. Runtime manifests
-retain compiled identities; compiled binaries are not embedded. Prior failed
-attempts and measurement limits remain visible. Four Fray bugs/pain points are
-filed directly in `~/code/rust/fray/.mote`; Fray source was not changed.
+Calibration command zero completed 180000 blocks with 1920000 rows across 384
+complete coordinates and zero fit failures. Four final output hashes, actual
+exit zero and owned-process termination were independently verified. The V6
+continuation controller passed 65 controls, but the remaining fifteen commands
+and 568000 blocks are stopped pending the actual decision on exact package
+`b5d3f1ad`. The old approval binds the former controller. The retained 17.36-hour
+projection is historical. Regular-moment, dependence and group-transfer inference
+remain Unresolved; completed runtime does not establish scientific Pass.
 
-The owner approved calibration amendment `d4d2c79e` and launch. Only command0
-started. Its controller stopped on a macOS Python process-identity check; an
-independently reviewed read-only monitor adopted that job. The other fifteen
-commands remain stopped while the replacement lifecycle is repaired and reviewed.
-The control archive contains no growing raw output or final scientific hashes.
-The amended 56-entry isolated classpath preserves 55 fingerprints; equivalence
-of the sole changed NIfTI compiled payload remains unproven and was disclosed
-in the approved amendment. Source, protocol, seeds, 748000 blocks, sixteen
-commands and 400-scan geometry are unchanged. The retained 17.36-hour projection
-is historical, not a new timing measurement.
-
-C0 scientific qualification remains HOLD: JVM low-SNR admissions are 185/200
-against the unchanged 190/200 requirement. A single literal-column JVM/JS trace
-is being implemented to diagnose control divergence; no study policy is changed.
-Regular-moment, dependence and group-transfer inference remain Unresolved.
-No fresh/100k performance campaign, full scientific admission, ScalaFIM
+Nine new archives preserve completed source, review, failed and successful
+attempts and control evidence. All prior 35 transport files and 930 embedded
+payloads were verified before staging. Compiled binaries and the 951251730-byte
+calibration raw remain external with exact hashes. Five Fray bugs/pain points
+are filed directly in `~/code/rust/fray/.mote`; no Fray source change or shared
+daemon restart is claimed. No 100000-response performance campaign, ScalaFIM
 publication, merge or release is implied.
 
 ## Historical milestones and review chronology
 
-Sections below preserve the state recorded at each earlier milestone, including
-then-pending approvals and candidates later repaired. The current integration
-and execution state above governs; historical refusals and failures remain evidence.
+Earlier sections preserve their then-current state, including subsequently
+repaired candidates and approvals. The current state above governs.
 
 ## Completed decisions and implementation gates
 

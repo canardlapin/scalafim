@@ -447,9 +447,129 @@
       },
       "fraySourceChanged": false,
       "sharedDaemonRestarted": false
+    },
+    {
+      "verdict": "AcceptBoundedLiteralColumnPlatformTrace",
+      "archive": {
+        "archive": "c0-literal-platform-trace-qualified-v2.json.gz",
+        "sha256": "a5cf5e84947b0ed0398c667f3678d5cfb0af2c5bd20304f383aaba7bd7e6d5c3",
+        "bytes": 174462,
+        "payloads": 14
+      },
+      "integrationCommit": "a9fecbb4acee8c0e23a490b65addca826bfe869f",
+      "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedFlatHdfInventory",
+      "archive": {
+        "archive": "hdf5-flat-inventory-qualified-v2.json.gz",
+        "sha256": "05c3cf51392d55df43e4b0d8814e8f1b6b8ffd554196370879c59dc7d1a5d2d8",
+        "bytes": 34269,
+        "payloads": 8
+      },
+      "integrationCommit": "fe810a584dcf38df3194491a4a643e0ab2fd847c",
+      "tests": {
+        "jvm": 25,
+        "js": 12
+      }
+    },
+    {
+      "verdict": "AcceptDirectGaussianPrecisionRepair",
+      "archive": {
+        "archive": "gaussian-direct-lag-qualified-v2.json.gz",
+        "sha256": "07825be14208694e4134137ff947aa66c0aec929bcca987c93d758a039b192f4",
+        "bytes": 2194870,
+        "payloads": 63
+      },
+      "integrationCommit": "fcb0addb91f573196cd1d1b248cb57099b0145e1",
+      "tests": {
+        "jvm": 368,
+        "js": 368,
+        "compileAll": true
+      },
+      "freshAdmission": false
+    },
+    {
+      "verdict": "AcceptBoundedPublicMlOutput",
+      "archive": {
+        "archive": "profile-ml-public-output-qualified-v2.json.gz",
+        "sha256": "d311854d682464b924a1091fd6ff16bde3ed23cec35cabe690046c6a60360404",
+        "bytes": 268176,
+        "payloads": 20
+      },
+      "integrationCommit": "327eda76792bcb0e542cb9e9c6f0d1351f45b1ea",
+      "tests": {
+        "jvm": 207,
+        "js": 163,
+        "compileAll": true
+      },
+      "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedPhysicalHdfAbortFixed",
+      "archive": {
+        "archive": "estimate-hdf5-physical-fixed-qualified-v2.json.gz",
+        "sha256": "47a048a41f134518976e579b380c61d4cf48aea92462eec9195524229ce7a8d4",
+        "bytes": 1601952,
+        "payloads": 37
+      },
+      "integrationCommit": "895e37ffd93286631691ec02b15433f4fb9787ad",
+      "tests": {
+        "jvm": 133,
+        "js": 49,
+        "compileAll": true
+      },
+      "fullCoreClosed": false,
+      "sharedLandingAuthorized": false
+    },
+    {
+      "verdict": "AcceptBoundedPrefreshRecordedHistory",
+      "archive": {
+        "archive": "condition-prefresh-audit-qualified-v2.json.gz",
+        "sha256": "62654e50ebb8a8bdd7733160d4138d57bece4e4d0ab4c406230c7997b974df9f",
+        "bytes": 154330,
+        "payloads": 16
+      },
+      "universalNonuseProven": false
+    },
+    {
+      "verdict": "AcceptActualCommandZeroTerminalAndV6Controls",
+      "archive": {
+        "archive": "calibration-zero-terminal-v6-control-qualified-v2.json.gz",
+        "sha256": "a3cc34f12122ee6bbb7945be992dfa7b04345b50e6a7fa7accd8e70a19ce0db0",
+        "bytes": 161802,
+        "payloads": 19
+      },
+      "completedBlocks": 180000,
+      "remainingBlocks": 568000,
+      "continuationApproval": "pending",
+      "scientificPass": null
+    },
+    {
+      "verdict": "FifthFrayFeedbackFiledDirectly",
+      "archive": {
+        "archive": "fray-fifth-startup-feedback-v2.json.gz",
+        "sha256": "94c20fa8414c6f1ca477e126223248cde5be4f7b4ceb3ce3e81e11be28fcb01b",
+        "bytes": 2727,
+        "payloads": 2
+      },
+      "mote": "bd-01M3SEKPA3YEM08CNEF01HYV8N",
+      "totalFiled": 5
+    },
+    {
+      "verdict": "AcceptFinal08ConditionLaunchControls",
+      "archive": {
+        "archive": "condition-final08-launcher-controls-v2.json.gz",
+        "sha256": "c7a9fc4b76ad7e2b6c2c2251a48ab5fc604b69796025b81959ed65768f58c6f0",
+        "bytes": 3263208,
+        "payloads": 26
+      },
+      "jvmFresh": "running",
+      "jsFresh": "not started",
+      "scientificPass": null
     }
   ],
-  "updatedUtc": "2026-09-30T13:44:09.453361+00:00",
-  "currentIntegration": "16f7e35b5fe4c8ff9ed00f35c860f364138be33b",
+  "updatedUtc": "2026-09-30T17:39:21.520389+00:00",
+  "currentIntegration": "895e37ffd93286631691ec02b15433f4fb9787ad",
   "historicalRecords": "Earlier candidate/subsequent-review fields describe their recorded point in time; latest records below govern current disposition."
 }
