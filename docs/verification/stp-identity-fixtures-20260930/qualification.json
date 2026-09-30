@@ -1,0 +1,25 @@
+{
+  "base_commit": "0aa969a2b30b13c62afb8ef9a2b9eaecef1f995b",
+  "source_manifest": "source-manifest.json",
+  "tests": {
+    "archivedResponseInteropJVM": 142,
+    "archivedResponseInteropJS": 104
+  },
+  "exit_code": 0,
+  "warnings": 0,
+  "skips_reported": 0,
+  "commands": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "archivedResponseInteropJVM/test",
+    "archivedResponseInteropJS/test"
+  ],
+  "archive_io_case_platform": "JVM; portable module contracts tested on JS",
+  "full_compile_reused": "0aa969a2 production/build sources unchanged; prior full warning-clean receipt in ../stp-fsl-chain-20260930",
+  "receipt_sha256": {
+    "stp-lna-world-fixture-jvm-js.log": "8d17cb0ca0526db377e3de094f8c59f020f9f2fbdbae624e9b173b4063dad02f",
+    "stp-lna-world-fixture-jvm-js.log.meta.json": "641b23bb8ab8332a11f869b58ba197df8fe140277981dddb686634692677e6b2"
+  }
+}

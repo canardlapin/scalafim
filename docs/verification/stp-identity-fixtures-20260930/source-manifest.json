@@ -1,0 +1,7 @@
+{
+  "base_commit": "0aa969a2b30b13c62afb8ef9a2b9eaecef1f995b",
+  "paths": {
+    "modules/interop-archived-response/jvm/src/test/scala/scalafim/dataset/io/LnaDatasetSuite.scala": "01a84ec1117a2565460da17b5c1b06526f8f6d3c058520b902fa6dd012235064"
+  },
+  "before_sha256": "3cc8a4d83970a3cb4ecc4b43005001f7c69cea4ab48a5e9a5de21b988c8b5517"
+}
