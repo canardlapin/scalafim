@@ -1,0 +1,358 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-umvpa-20260930-wave3-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260930-wave3/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-fixed-rows-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/35134e4fbd77703f1507/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (303158 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-umvpa-20260930-wave3/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 33 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.analysis.LocalExecutionSuite:
+  + addresses derive stable domain-separated streams regardless of scheduling order 0.025s
+  + duplicate retry with the same contribution commits one reducer and OOF row 0.207s
+  + conflicting retry is terminal and never double-counts a contribution 0.003s
+  + failure immediately before commit leaves no contribution and closes the owned resource once 0.002s
+  + partial and cancellation remain incomplete, and compute plus close failures are both preserved 0.005s
+  + omitted expected units never form a complete family 0.002s
+  + identical declared fingerprint cannot hide a conflicting contribution 0.002s
+  + plan identity and measurement identity separate complete stream paths 0.002s
+  + explicit schedule reorder preserves canonical reducer and OOF order 0.003s
+  + cancellation callback failure is typed and acquires no resources 0.001s
+  + reduction faults retain committed coverage including an empty family 0.002s
+  + a close-failing retry cannot be healed by an earlier or later commit 0.002s
+  + conflict survives a later cancellation and stops further work 0.001s
+  + throwing acquire and before-commit preserve their exact typed cause 0.003s
+scalafim.fmri.mvpa.analysis.DiagnosticsSuite:
+  + describe and explain only inspect cached metadata 0.009s
+  + native diagnostic binding does not apply a poison evidence operator 0.108s
+  + large axis inspection is bounded and continuation-driven 0.056s
+  + identity evidence never overclaims complete verification 0.004s
+  + structural plan differences require rebind and repairs preserve scientific scope 0.006s
+  + open estimand metadata is captured once and never re-entered by diagnostics 0.002s
+  + capability changes require renewed admission and explain legal next operations 0.002s
+  + large scientific metadata pages retain all entries through continuations 0.003s
+scalafim.fmri.mvpa.SearchlightClassificationSuite:
+  + SWIFT searchlight scanner matches the reference classifier analysis 0.044s
+  + SWIFT searchlight scanner matches reference classification with overlapping folds 0.004s
+  + ridge LDA searchlight scanner matches the reference classifier analysis 0.019s
+  + searchlight scanner falls back to the classifier contract for non-specialized classifiers 0.005s
+  + SWIFT searchlight scanner preserves reference failures 0.005s
+scalafim.fmri.mvpa.OperatorRsaSuite:
+  + operator crossnobis is exactly equivalent to the explicit-pattern oracle 0.022s
+  + operator geometry uses only adjoint sufficient statistics and has a fold-independent bound 0.001s
+  + samples absent from every held-out partition cannot leak into the geometry 0.002s
+  + crossnobis retains negative null geometry 0.0s
+  + operator RSA reuses labeled model scoring and partial nuisance controls through the ordinary engine 0.015s
+scalafim.fmri.mvpa.GroupedValidationSuite:
+  + identified leave-one-group-out retains complete membership and predictor separation 0.061s
+  + display-label changes preserve stable grouping semantics but remain visible in source provenance 0.009s
+  + row reordering requires a matching axis while preserving group-keyed scientific membership 0.013s
+  + identified schedule is numerically equivalent to legacy leave-one-block-out by held-out group 0.004s
+  + invalid stable keys and single-group validation fail through typed boundaries 0.005s
+scalafim.fmri.mvpa.MvpaParitySuite:
+  + RDM parity fixtures keep squared, normalized, and Euclidean estimands explicit 0.002s
+  + crossnobis parity fixture keeps feature normalization explicit 0.001s
+  + RSA scorer parity fixture residualizes labeled nuisance RDMs 0.001s
+  + classifier parity fixtures anchor centroid and ridge probability oracles 0.003s
+  + rMVPA feature_rsa reference fixture anchors bidirectional regional ridge fits 0.02s
+  + rMVPA feature_rsa reference fixture anchors searchlight feature-model execution 0.004s
+  + rMVPA naive_xdec reference fixture anchors regional cross-decoding 0.009s
+  + rMVPA naive_xdec reference fixture anchors searchlight scanner cross-decoding 0.003s
+  + lightweight benchmark harness runs deterministic workloads with explicit checksums 0.003s
+  + lightweight benchmark harness validates workload shape 0.002s
+scalafim.fmri.mvpa.analysis.CompilationSuite:
+  + an open test-only estimand binds and compiles without a registry 0.006s
+  + actual source capability is required; a caller label cannot admit a poison source 0.001s
+  + source revision, realized splits, map weights, and estimand parameters all change the plan 0.001s
+  + schedule changes preserve scientific identity 0.002s
+  + result completion is bound to the estimand result type and receipt 0.002s
+  + result completion rejects String for a Double estimand at compile time 0.0s
+  + dependent entries retain distinct nominal measurement spaces without casts 0.006s
+  + native metadata distinguishes structural value and provenance lineage without reading a one-shot operator 0.005s
+  + native one-shot observations cannot be admitted as replayable without applying the operator 0.002s
+  + pooled-trial and mean-run accuracy retain distinct denominators 0.008s
+  + pooled reduction retains exact totals beyond Long range 0.0s
+  + empty and duplicate reductions are not numerical results 0.001s
+scalafim.fmri.mvpa.EvidenceDesignSuite:
+  + exact-once cross-fit covers every identified sample exactly once 0.009s
+  + repeated exact validation remains exact but cannot become exact-once cross-fit 0.006s
+  + bootstrap analysis rows retain draw occurrence identity and ordinary coverage 0.028s
+  + randomization receipts and assignments are axis-scoped and access-order independent 0.019s
+  + public plan mapping forgets coverage and design families cannot be interchanged 0.0s
+  + unknown plan units return a typed boundary error 0.001s
+scalafim.fmri.mvpa.ColumnSuite:
+  + columns bind values to the full ordered sample axis 0.001s
+  + stable keys, rather than implementation ordinals, survive selection-shaped export 0.001s
+  + categorical, scalar and metadata columns remain ordinary distinct Scala types 0.002s
+  + column length and nominal row boundaries fail at construction or compilation 0.002s
+scalafim.fmri.mvpa.ClassificationSuite:
+  + correlation centroid classifier predicts by class templates 0.0s
+  + correlation centroid predictions are invariant to a common row offset 0.001s
+  + swift centroid classifier supports cross-validated ROI analysis 0.001s
+  + cross-validated classifier analysis can store prediction payloads 0.0s
+  + ridge LDA classifier returns normalized probabilities 0.001s
+  + ridge LDA matches a one-dimensional analytic oracle 0.001s
+  + swift centroid keeps finite normalized probabilities with a zero-variance feature 0.0s
+  + swift diagonal shrinkage validates alpha through typed errors 0.001s
+  + classifiers reject non-finite training and prediction matrices 0.0s
+  + cross-validation aligns classifier probability columns by class label 0.002s
+  + cross-validation averages repeated test rows and sorts sample outputs 0.002s
+  + cross-validation validates fold sample counts when called directly 0.001s
+  + accuracy rejects empty predictions 0.001s
+  + cross-validated classifier analysis requires every class in every training fold 0.0s
+scalafim.fmri.mvpa.measurement.MeasurementFrameSuite:
+  + lazy frames open entries only during traversal and always release the owned observation 0.006s
+  + frame construction canonicalizes eager ordering and refuses duplicate ids 0.002s
+  + a local task failure preserves later successful outputs and closes exactly once 0.002s
+  + iterator failure preserves completed outputs and releases the source 0.008s
+  + invalid budgets and failed opens perform no entry or source work 0.003s
+  + close failure is reported after retaining successful outputs 0.001s
+  + streaming fold does not retain generated entries and owns at most one resource 0.028s
+  + eager identity binds actual maps while rendition stays outside scientific identity 0.0s
+  + invalid lazy ordering cannot lower the high-water mark and execute a duplicate 0.002s
+scalafim.fmri.mvpa.ObservationsSuite:
+  + dense and operator realizations share scientific identity without hidden materialization 0.008s
+  + complete decoded descriptors fail before a poison source is read 0.002s
+  + multiresponse targets retain both sample and target-feature identity 0.003s
+  + response provenance must declare the bound source 0.002s
+  + nominal sample and feature boundaries reject invalid supervision at compile time 0.0s
+scalafim.fmri.mvpa.FeatureModelSuite:
+  + feature model encodes design features into held-out neural patterns 0.001s
+  + feature model decodes held-out neural patterns into design features 0.001s
+  + feature model averages repeated held-out samples with a zero-variance source 0.002s
+  + feature model design validates labels, dimensions, and finite values 0.001s
+  + feature model analysis reports typed shape errors through ROI failures 0.0s
+scalafim.fmri.mvpa.MvpaPropertySuite:
+  + naive cross-decoding scanner matches the reference engine over deterministic generated cases 0.014s
+  + feature model encoding is invariant to affine source feature transforms 0.002s
+  + feature model decoding is invariant to affine source pattern transforms 0.001s
+  + naive cross-decoding scanner has a deterministic benchmark checksum 0.003s
+scalafim.fmri.mvpa.CrossDecodingScannerSuite:
+  + naive cross-decoding scanner matches the reference engine with shuffled target storage 0.001s
+  + naive cross-decoding scanner omits prediction payloads when disabled 0.001s
+  + naive cross-decoding scanner preserves local ROI failures 0.001s
+  + naive cross-decoding scanner reports non-finite target data like the reference engine 0.001s
+scalafim.fmri.mvpa.MvpaAdversarialSuite:
+  + feature ridge fit stays finite for near-collinear high-dynamic-range predictors 0.002s
+  + feature model non-finite pattern values fail only selected local ROIs 0.001s
+  + naive cross-decoding source non-finites are local and scanner matches reference 0.003s
+  + degenerate prototype correlations stay finite and normalized 0.001s
+scalafim.fmri.mvpa.relation.QueryOracleSuite:
+  + rectangular signed closures agree with the independent four-index contraction oracle 0.009s
+  + first-order contrasts and reversed pairs preserve their bilinear laws 0.003s
+  + foreign same-sized closure axes do not typecheck 0.0s
+  + constructing relations and opening a transport do not read operators 0.001s
+  + one-shot scalar closure is refused before reading either aliased endpoint 0.001s
+  + scalar closure reads lazy tables in width-one batches 0.001s
+scalafim.fmri.mvpa.MvpaMigrationParitySuite:
+  + Swift centroid freezes training Z-score, class order, priors, scores, and probabilities 0.002s
+  + Swift cross-validation freezes pooled-sample reduction and unequal-fold denominators 0.003s
+  + identity-metric RDM uses every ordered distinct partition pair and retains signed values 0.002s
+  + migration baseline failure policy remains typed 0.0s
+scalafim.fmri.mvpa.MvpaCoreSuite:
+  + leave-one-block-out fold plan preserves held-out blocks 0.001s
+  + feature sets reject empty and duplicate indices 0.001s
+  + feature set plans build regional and searchlight feature streams 0.001s
+  + searchlight plans require explicit centers inside each feature set 0.001s
+  + engine runs ROI analysis and records per-ROI feature failures 0.001s
+  + single ROI task evaluates through a pattern source 0.001s
+  + source runner matches the in-memory engine collector 0.0s
+  + streaming outcomes match the local engine collector 0.0s
+  + streaming visitor can stop before materializing later feature sets 0.002s
+  + streaming foldLeft can stop with accumulated state 0.0s
+  + streaming validates response and folds before visiting feature sets 0.001s
+  + fold-required analyses reject missing folds before visiting feature sets 0.0s
+  + streaming emits ROI failures without stopping the stream 0.001s
+  + engine records the named feature set plan used for an analysis 0.003s
+scalafim.fmri.mvpa.AxisRefSuite:
+  + compact signatures are deterministic while complete records remain verified 0.003s
+  + ordered keys and complete scientific metadata participate in axis identity 0.001s
+  + decoded records and supplied indexes are checked before use 0.001s
+  + production axes are not subject to the prototype 64-coordinate bound 0.005s
+  + locus points retain their runtime owner at compile time 0.0s
+scalafim.fmri.mvpa.relation.RelationsSuite:
+  + residual methods require supplied residual moment precision and df capabilities 0.0s
+  + replay provenance must name its reader owner 0.001s
+  + a restriction from a different identified effect axis cannot typecheck 0.0s
+scalafim.fmri.mvpa.OperatorRidgeSuite:
+  + membership and solver smart constructors reject invalid states 0.005s
+  + analytic centered ridge fit has an unpenalized intercept and operator receipt 0.014s
+  + operator LSQR coefficients and scores match an independent dense normal-equation oracle 0.005s
+  + feature translation and permutation preserve fitted class scores 0.003s
+  + soft simplex targets obey the affine target law under cross-validation 0.019s
+  + held-out target perturbations cannot change fitted fold scores 0.001s
+  + canonical operator analysis returns scores and execution receipts without a dense adapter 0.002s
+  + missing fold classes, non-convergence, poisoned operators, and feature mismatch are typed failures 0.005s
+scalafim.fmri.mvpa.CrossDecodingSuite:
+  + naive cross-decoding matches analytic source prototypes 0.001s
+  + cross-domain engine preserves searchlight feature-set plans 0.001s
+  + cross-domain single-ROI task is a distributed execution boundary 0.001s
+  + cross-domain dataset supports paired source and target feature sets 0.001s
+  + paired feature sets reject mismatched ROI ids 0.0s
+  + cross-domain accuracy is target-row aligned, not sample-id indexed 0.0s
+  + naive cross-decoding is invariant to common feature permutation 0.001s
+  + cross-decoding design rejects unknown target labels 0.001s
+  + cross-domain engine validates sample counts before visiting feature sets 0.0s
+  + cross-domain ROI failures stay local to the offending feature set 0.0s
+scalafim.fmri.mvpa.measurement.MeasurementLegSuite:
+  + identity and sparse selection equal explicit dense and matrix-free slicing without construction reads 0.002s
+  + weighted maps match independent arithmetic and distinguish coefficient changes while ignoring rendition 0.004s
+  + rank-deficient basis maps preserve explicit metric requirements and reject unverified isometry 0.001s
+  + a foreign nominal neural space cannot enter a measurement even with equal dimensions 0.001s
+scalafim.fmri.mvpa.RsaSuite:
+  + RDM analysis can use class-mean rows and store the observed RDM payload 0.001s
+  + crossnobis analysis computes crossvalidated class distances 0.0s
+  + Spearman RDM scorer uses average ranks for ties 0.0s
+  + Spearman RDM scorer reports typed finite and zero-variance errors 0.001s
+  + RDM vectors expose symmetric row-distance access 0.0s
+  + partial Pearson RDM scorer aligns labeled controls and residualizes them 0.0s
+  + partial Pearson RDM scorer reports typed zero-residual errors 0.0s
+  + RSA analysis aligns labeled model RDMs to observed class order 0.003s
+  + RSA analysis passes labeled observed RDMs to partial Pearson scorer 0.001s
+  + RSA analysis can use a Spearman scorer 0.0s
+  + RSA analysis reports a typed error for model item mismatches 0.001s
+  + samplewise RSA computes block-excluded row-wise second-order scores 0.005s
+  + samplewise RSA is invariant to consistent sample reordering 0.001s
+  + samplewise RSA represents undefined row scores without failing the ROI 0.0s
+  + samplewise RSA reports typed design and shape errors 0.001s
+scalafim.fmri.mvpa.OperatorMvpaSuite:
+  + pattern source and ROI analysis representations must agree at compile time 0.0s
+  + canonical MVPA engine accepts operator analyses without a parallel hierarchy 0.003s
+  + operator analyses use the ordinary task and streaming boundaries 0.001s
+  + operator execution preserves canonical fold and feature failure contracts 0.001s
+scalafim.fmri.mvpa.RdmSuite:
+  + squared Euclidean RDM uses lower-triangle order 0.0s
+  + correlation RDM computes one minus row correlation 0.001s
+  + RDM kernels reject non-finite pattern values 0.0s
+  + partition means builder computes fold-wise class means 0.001s
+  + partition means builder requires every fold to contain every class 0.0s
+  + crossnobis distances use cross-fold second moments 0.0s
+  + crossnobis distances keep feature normalization explicit 0.0s
+scalafim.fmri.mvpa.PatternOperatorSuite:
+  + dense pattern operator preserves the matrix and satisfies the adjoint law 0.001s
+  + row and feature restrictions match an explicit dense reference 0.001s
+  + row stacking and composed operators match explicit block matrices 0.005s
+  + generated operators preserve adjoints and feature-permutation laws 0.007s
+  + pattern operator reports malformed axes, shapes, and non-finite inputs 0.001s
+scalafim.fmri.mvpa.ReindexingLegSuite:
+  + selection, injection, draw and permutation retain distinct axis identity 0.003s
+  + nested draws preserve root keys and occurrence paths through composition 0.004s
+  + composition is associative and agrees with an independent direct ordinal oracle 0.002s
+  + columns, observations and multiresponse targets restrict without reading matrix-free evidence 0.002s
+  + foreign row legs and abstract reindexings fail at the public type boundary 0.0s
+[info] Passed: Total 204, Failed 0, Errors 0, Passed 204
+[success] Total time: 17 s, completed Sep 30, 2026, 6:52:09 a.m.
+[info] compiling 36 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/hrf/jvm/target/scala-3.7.4/classes ...
+[info] compiling 8 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/ar/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 40 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 41 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/design/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/model/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 57 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.fit.SignedCrossRunRayleighMvpaSuite:
+  + folds match the independent dense base-R cross-run fixture 0.573s
+  + a held-out run sign flip reverses its signed fold without changing the frozen training fit 0.015s
+  + global response sign, common scale, contrast scale, and run order obey their invariance laws 0.031s
+  + ordinary feature-set streaming can stop without a signed-specific execution engine 0.009s
+  + non-finite signed values and degenerate training residuals are represented as typed failures 0.028s
+scalafim.fmri.mvpa.fit.ConstrainedCanonicalMvpaSuite:
+  + complete nonnegative one-shot MVPA agrees with the independent base-R active-face oracle 0.092s
+  + held-out response perturbation cannot change its frozen training fit 0.017s
+  + feature permutations preserve the estimand while general rotations need not 0.011s
+  + ordinary MVPA summary and streaming stop contracts remain available 0.01s
+scalafim.fmri.mvpa.fit.IdentifiedReadoutRelationsSuite:
+  + runwise B = A Y agrees with the dense TrialReadout oracle without eager adapter materialization 0.099s
+  + effect and feature metadata are checked before response composition 0.002s
+  + escaped direct and restricted forward and adjoint values refuse after closure 0.053s
+  + rejected nested acquisition does not close the outer scope 0.002s
+  + later acquisition failure closes only earlier owned resources 0.001s
+  + task failure and multiple returned or thrown close failures are preserved 0.002s
+  + foreign residual source is rejected before any capability callback 0.003s
+scalafim.fmri.mvpa.fit.OneShotDatasetSuite:
+  + run-local readouts compose and stack to the explicit trial-pattern oracle 0.011s
+  + stacked one-shot operator satisfies adjoint and fold-restriction laws 0.009s
+  + one-shot pattern source pushes ROI selection into each run composition 0.005s
+  + one-shot engine returns existing ridge-LDA outcomes across feature sets 0.037s
+  + one-shot engine trains operator-native ridge through composed readouts 0.065s
+  + one-shot soft LDA pulls class relations through trial readout operators 0.105s
+  + one-shot constructors reject incompatible run and feature structure 0.004s
+scalafim.fmri.mvpa.fit.CanonicalEffectAcceptanceSuite:
+  + the complete leave-one-run-out path agrees with the committed base-R oracle 0.027s
+  + run and row order, contrast scale, and nuisance basis do not change the estimand 0.018s
+  + feature rotations, scale, and semantic feature-axis permutations obey their covariance laws 0.013s
+  + zero effects remain zero and perfect held-out effects report typed denominator degeneracy 0.008s
+  + held-out signal recovery dominates deterministic null calibration without response leakage 0.07s
+  + large time axes still produce only feature and design sufficient statistics 0.029s
+scalafim.fmri.mvpa.fit.CanonicalEffectMvpaSuite:
+  + runwise streaming moments agree with batch products and explicit dense projectors 0.002s
+  + regional and searchlight plans execute through ordinary MVPA summaries and typed canonical payloads 0.01s
+  + held-out response perturbations change the held-out score but cannot alter its frozen training frame 0.003s
+  + feature-set traversal honors the existing streaming stop control 0.003s
+  + dataset and geometry schedules reject incomplete or mismatched run structure 0.005s
+  + response-learned temporal geometry must resolve the exact training-run scope 0.042s
+  + the canonical analysis surface requires no trialwise beta or TrialReadout artifact 0.004s
+scalafim.fmri.mvpa.fit.BetaFreeRsaAcceptanceSuite:
+  + trial readouts feed exact beta-free crossnobis and RSA through the ordinary MVPA engine 0.03s
+scalafim.fmri.mvpa.fit.SoftLdaSuite:
+  + pulled-back soft LDA agrees for operator and explicit pattern sources 0.009s
+  + simplex memberships remain soft through every training fold 0.006s
+  + trial nuisance is selected within folds and remains distinct in the receipt 0.023s
+  + analysis adapter integrates soft LDA with the ordinary MVPA engine 0.008s
+scalafim.fmri.mvpa.fit.ManovaMvpaSuite:
+  + one-shot MANOVA matches the independent dense base-R fold fixture 0.356s
+  + invertible contrast-basis changes preserve every held-out estimand 0.006s
+  + held-out perturbations cannot alter the frozen training spectrum 0.016s
+  + MANOVA feature traversal uses the ordinary summary and streaming stop contract 0.019s
+[info] Passed: Total 45, Failed 0, Errors 0, Passed 45
+[success] Total time: 44 s, completed Sep 30, 2026, 6:52:52 a.m.

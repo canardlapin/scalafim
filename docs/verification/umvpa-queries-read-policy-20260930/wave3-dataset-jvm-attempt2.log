@@ -1,0 +1,202 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-umvpa-20260930-wave3-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260930-wave3/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-fixed-rows-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/35134e4fbd77703f1507/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (303158 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-umvpa-20260930-wave3/)
+[info] compiling 3 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:72:77 
+[error] 72 |    val admitted = right(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, policy))
+[error]    |                                                                             ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]    |
+[error]    |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:93:64 
+[error] 93 |      right(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external(metadata), mapping, policy)).root.fingerprint.digest
+[error]    |                                                                ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]    |
+[error]    |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:106:63 
+[error] 106 |    assert(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, refused).isLeft)
+[error]     |                                                               ^^^^^^^
+[error]     |Found:    (targets :
+[error]     |  scalafim.fmri.mvpa.MultiResponse[
+[error]     |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]     |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]     |)
+[error]     |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]     |
+[error]     |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:116:59 
+[error] 116 |      AlderPredictiveAdmission.nativeTables(blockedInputs, blockedTargets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), blockedMapping, requiresReplay),
+[error]     |                                                           ^^^^^^^^^^^^^^
+[error]     |Found:    (blockedTargets :
+[error]     |  scalafim.fmri.mvpa.MultiResponse[
+[error]     |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]     |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]     |)
+[error]     |Required: scalafim.fmri.mvpa.MultiResponse[blockedInputs.S, F]
+[error]     |
+[error]     |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:124:77 
+[error] 124 |    val admitted = right(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, fullWidth))
+[error]     |                                                                             ^^^^^^^
+[error]     |Found:    (targets :
+[error]     |  scalafim.fmri.mvpa.MultiResponse[
+[error]     |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]     |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]     |)
+[error]     |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]     |
+[error]     |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:133:56 
+[error] 133 |    AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, policy) match
+[error]     |                                                        ^^^^^^^
+[error]     |Found:    (targets :
+[error]     |  scalafim.fmri.mvpa.MultiResponse[
+[error]     |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]     |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]     |)
+[error]     |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]     |
+[error]     |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:135:21 
+[error] 135 |        assertEquals(receipt.inputBlockCalls, 2)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:136:21 
+[error] 136 |        assertEquals(receipt.targetBlockCalls, 0)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:137:21 
+[error] 137 |        assertEquals(receipt.inputReturnedCells, 6L)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:138:21 
+[error] 138 |        assertEquals(receipt.inputCopiedCells, 6L)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:144:62 
+[error] 144 |    AlderPredictiveAdmission.nativeTables(targetObservations, targetResponses, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), targetMapping, policy) match
+[error]     |                                                              ^^^^^^^^^^^^^^^
+[error]     |Found:    (targetResponses :
+[error]     |  scalafim.fmri.mvpa.MultiResponse[
+[error]     |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]     |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]     |)
+[error]     |Required: scalafim.fmri.mvpa.MultiResponse[targetObservations.S, F]
+[error]     |
+[error]     |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:146:21 
+[error] 146 |        assertEquals(receipt.inputBlockCalls, 2)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:147:21 
+[error] 147 |        assertEquals(receipt.inputReturnedCells, 9L)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:148:21 
+[error] 148 |        assertEquals(receipt.inputCopiedCells, 9L)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:149:21 
+[error] 149 |        assertEquals(receipt.targetBlockCalls, 1)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:150:21 
+[error] 150 |        assertEquals(receipt.targetReturnedCells, 0L)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-wave3/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala:151:21 
+[error] 151 |        assertEquals(receipt.targetCopiedCells, 0L)
+[error]     |                     ^^^^^^^
+[error]     |                     Not found: receipt
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] 17 errors found
+[error] (mvpaDatasetJVM / Test / compileIncremental) Compilation failed
+[error] Total time: 16 s, completed Sep 30, 2026, 6:59:03 a.m.

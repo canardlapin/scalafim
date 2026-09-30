@@ -1,0 +1,21 @@
+[
+  {
+    "scope": "native",
+    "receipt_source": "aabc30fe395cfb2ee8f515d118431d48986026db",
+    "final_source": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+    "paths": [
+      "modules/mvpa-dataset",
+      "modules/mvpa-fit"
+    ],
+    "identical_tree": true
+  },
+  {
+    "scope": "fit-jvm",
+    "receipt_source": "0ff124c4f7797f6cbc01708c6390a468faf5f877",
+    "final_source": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+    "paths": [
+      "modules/mvpa-fit"
+    ],
+    "identical_tree": true
+  }
+]

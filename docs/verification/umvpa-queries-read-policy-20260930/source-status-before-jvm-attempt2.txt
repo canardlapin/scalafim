@@ -1,0 +1,6 @@
+ M modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmission.scala
+?? docs/verification/umvpa-m1-06-read-policy-20260930.md
+?? docs/verification/umvpa-m2-03-20260930.md
+?? modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala
+?? modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Queries.scala
+?? modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/relation/QueryOracleSuite.scala

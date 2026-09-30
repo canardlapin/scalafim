@@ -1,0 +1,66 @@
+{
+  "schema": "umvpa.wave3.source.v1",
+  "local_source": {
+    "path": "/private/tmp/scalafim-umvpa-20260930-wave3",
+    "sha": "aabc30fe395cfb2ee8f515d118431d48986026db",
+    "clean_verified": true,
+    "provider_pins": {
+      "ravelRevision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+      "galeRevision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+      "resample4sRevision": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "alderRevision": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+      "locus4sRevision": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+      "image4sRevision": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "reframe4sRevision": "e3ddb48b4a084b3f08063cad849c8100207fb19c",
+      "graph4sRevision": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+      "multivarRevision": "f74d631720d65147c51496dcbdd37c01912de1cb",
+      "intaglioRevision": "596b398af380079e4b251535230d0bc03cd88c51",
+      "bids4sRevision": "a33678390614a91fadbdef13f22970e78c26e091",
+      "zarr4sRevision": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+    }
+  },
+  "canonical_queries": {
+    "path": "/private/tmp/scalafim-umvpa-20260930-queries",
+    "sha": "4f52d15fb72493dabeac20914604a07275663d31",
+    "clean_verified": true,
+    "provider_pins": {
+      "ravelRevision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+      "galeRevision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+      "resample4sRevision": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "alderRevision": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+      "locus4sRevision": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+      "image4sRevision": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "reframe4sRevision": "e3ddb48b4a084b3f08063cad849c8100207fb19c",
+      "graph4sRevision": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+      "multivarRevision": "f74d631720d65147c51496dcbdd37c01912de1cb",
+      "intaglioRevision": "596b398af380079e4b251535230d0bc03cd88c51",
+      "bids4sRevision": "a33678390614a91fadbdef13f22970e78c26e091",
+      "zarr4sRevision": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+    }
+  },
+  "local_alder": {
+    "path": "/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+    "sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "base": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+    "admission": "local override only; publication and immutable downstream pin pending",
+    "clean_verified": true
+  },
+  "source_files": {
+    "local_source": {
+      "build.sbt": "56764cb48a216323ff6a233ed60800c7efd1c869d1e5b6db13d54dcefb99f3ef",
+      "docs/verification/umvpa-m1-06-20260930.md": "fbb28008ca89ffcda2b8d28b942bd4582de3d19812f00a671647964bb4bd07ee",
+      "docs/verification/umvpa-m1-06-read-policy-20260930.md": "8c114c8afc7f0a5e053bc9ba342761bf48043d53ed91ddda66de9a67f7081db7",
+      "docs/verification/umvpa-m2-03-20260930.md": "43c7011031e991b775e6f0503b2b775c184def3c19ad40fc3b0af0e7770c1557",
+      "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmission.scala": "562f59af9ff2bff3c2636fdfccd017d68ca41058549bb9fd9d3093ddbf173f73",
+      "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmissionSuite.scala": "10a6f882e215283cc0a517b779ebce726daa30b0fea7f0fb1aa4b9bd89081739",
+      "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala": "45de4adcb92c0e77b70b17343857fbe2d8e6c4b9927aafaab17d0857b5075317",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Queries.scala": "1f9bd14f7efe239983d8ce4dcc902b2391f260af587bd7a58e2e687ae3ec5e45",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/relation/QueryOracleSuite.scala": "a1229032af655154f5c6e8948b37f991fcc0fbf5bf9683529d847faaed8c6dfe"
+    },
+    "canonical_queries": {
+      "docs/verification/umvpa-m2-03-20260930.md": "43c7011031e991b775e6f0503b2b775c184def3c19ad40fc3b0af0e7770c1557",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Queries.scala": "1f9bd14f7efe239983d8ce4dcc902b2391f260af587bd7a58e2e687ae3ec5e45",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/relation/QueryOracleSuite.scala": "a1229032af655154f5c6e8948b37f991fcc0fbf5bf9683529d847faaed8c6dfe"
+    }
+  }
+}

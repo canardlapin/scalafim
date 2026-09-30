@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T11:05:28.502825+00:00",
+  "finished_utc": "2026-09-30T11:12:10.781871+00:00",
+  "duration_seconds": 402.275471,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-umvpa-20260930-queries",
+  "log": "/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-compile-all.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 22670
+}

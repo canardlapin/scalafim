@@ -1,0 +1,12 @@
+{
+  "alder-provider.bundle": {
+    "sha256": "974e371252a1b57d4c3c9747678e3a3d57650370ce0f8ff243ccee44e7e4cd69",
+    "bytes": 4896,
+    "source": "/Users/bbuchsbaum/code/scala/scalafim/docs/verification/umvpa-frontier-20260930/alder-provider.bundle"
+  },
+  "alder-provider.patch": {
+    "sha256": "479d2ac4011428a3fd4db0fa8e07a69167c171d983b29c1a551e99558de92865",
+    "bytes": 15324,
+    "source": "/Users/bbuchsbaum/code/scala/scalafim/docs/verification/umvpa-frontier-20260930/alder-provider.patch"
+  }
+}
