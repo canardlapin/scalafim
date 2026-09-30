@@ -3,16 +3,20 @@ package scalafim.group.research.bootstrap
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import java.util.concurrent.{Executors, TimeUnit}
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicLong}
 import scala.jdk.CollectionConverters.*
 
-/** Why the pilot runner refuses to start or to resume. */
+/** Why the pilot runner refuses to start, to resume, or to continue. */
 enum PilotRefusal(val message: String):
   case DirtyWorktree(detail: String) extends PilotRefusal(s"worktree has uncommitted changes: $detail")
+  case RedirectedBuild(properties: Vector[String])
+      extends PilotRefusal(s"dependency build redirected by ${properties.mkString(", ")}; a redirected build must not produce pilot evidence")
   case CellsManifestChanged(found: String) extends PilotRefusal(s"cells.json sha256 $found is not the frozen manifest")
   case StampMismatch(field: String) extends PilotRefusal(s"existing output was produced under a different stamp (field $field); refusing to resume")
   case ProjectionExceedsCeiling(projected: Double, ceiling: Double)
       extends PilotRefusal(f"projected $projected%.3f core-hours exceeds the ceiling $ceiling%.3f")
+  case CpuCeilingReached(cpuSeconds: Double, ceilingCoreHours: Double)
+      extends PilotRefusal(f"process CPU time $cpuSeconds%.1f s reached the ceiling of $ceilingCoreHours%.3f core-hours; stopped (resumable)")
   case Failure(detail: String) extends PilotRefusal(detail)
 
 /** Everything a pilot run depends on; a resume must reproduce it field for field. */
@@ -24,7 +28,12 @@ final case class PilotStamp(fields: Vector[(String, String)]):
     val b = other.fields.toMap
     (a.keySet ++ b.keySet).toVector.sorted.find(k => a.get(k) != b.get(k))
 
-/** The pilot configuration. `PilotConfig.declared` is the §6 pilot; tests use tiny harness-seed configs. */
+/** The pilot configuration. `PilotConfig.declared` is the §6 pilot; tests use tiny harness-seed configs.
+  * `ceilingCoreHours` bounds the projection before launch; `runtimeCeilingCoreHours` bounds the measured process
+  * CPU time of the whole run, summed over resumed invocations (owner rule: stop and ask if a run would exceed the
+  * ceiling). Both are 15 when declared. Ceilings are not stamped (they do not change results), so an owner-approved
+  * raise can resume the same output.
+  */
 final case class PilotConfig(
     repo: Path,
     output: Path,
@@ -39,7 +48,8 @@ final case class PilotConfig(
     ceilingCoreHours: Double,
     calibrationStudies: Int,
     requireCleanWorktree: Boolean,
-    selectConfirmation: Boolean
+    selectConfirmation: Boolean,
+    runtimeCeilingCoreHours: Double = 15.0
 ):
   require(studies >= 1 && draws >= 1 && threads >= 1 && calibrationStudies >= 1, "positive sizes")
 
@@ -61,18 +71,22 @@ object PilotConfig:
     ceilingCoreHours = 15.0,
     calibrationStudies = 2,
     requireCleanWorktree = true,
-    selectConfirmation = true
+    selectConfirmation = true,
+    runtimeCeilingCoreHours = 15.0
   )
 
-final case class PilotReport(projectedCoreHours: Double, cellsRun: Int, cellsSkipped: Int, selectionFile: Option[Path])
+final case class PilotReport(projectedCoreHours: Double, cellsRun: Int, cellsSkipped: Int, selectionFile: Option[Path], cpuSeconds: Double, wallSeconds: Double)
 
 /** Opt-in pilot runner (declaration §6). It never prints rates: stdout gets only the projection, progress
-  * counts and file paths. Outputs, under `config.output`:
+  * counts, cost numbers and file paths. Every file is written atomically (temp file + ATOMIC_MOVE). Outputs,
+  * under `config.output`:
   *   stamp.json                         the run stamp (git SHA, manifest-v2, cells.json, production group sources,
-  *                                      build.sbt, run configuration); a resume must match it exactly
+  *                                      build.sbt, JVM, run configuration); a resume must match it exactly
   *   cells/<cell>.<null|power>.jsonl    one header line (stamp) + one canonical JSON line per study and scheme
-  *   cells/<cell>.<stream>.jsonl.sha256
-  *   summaries/<cell>.<stream>.json     descriptive per-scheme counts (files only, never printed)
+  *   summaries/<cell>.<stream>.json     descriptive per-scheme counts (files only, never printed), written
+  *                                      before the cell's .sha256, and regenerated on resume when missing
+  *   cells/<cell>.<stream>.jsonl.sha256 written last: its presence means the cell stream is complete
+  *   run-cost.json                      process CPU seconds and wall seconds of the latest invocation
   *   selection.json (+ .sha256)         the six confirmation cells chosen by ConfirmationSelection.select
   */
 object PilotRunner:
@@ -82,6 +96,12 @@ object PilotRunner:
     java.security.MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 0xff}%02x").mkString
 
   private def shaFile(p: Path): String = sha(Files.readAllBytes(p))
+
+  /** Writes via a temp file in the same directory and an atomic move. */
+  def writeAtomic(path: Path, text: String): Unit =
+    val tmp = Files.createTempFile(path.getParent, path.getFileName.toString + ".", ".tmp")
+    Files.write(tmp, text.getBytes(UTF_8))
+    val _ = Files.move(tmp, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
 
   private def git(repo: Path, args: String*): Either[PilotRefusal, String] =
     try
@@ -97,11 +117,17 @@ object PilotRunner:
       try stream.iterator().asScala.filter(p => Files.isRegularFile(p) && p.toString.endsWith(suffix)).toVector.sortBy(_.toString)
       finally stream.close()
 
+  /** System properties that redirect a source dependency to a local checkout (build.sbt `scalafim.<dep>.build`). */
+  def redirectedBuildProperties: Vector[String] =
+    sys.props.keySet.toVector.filter(k => k.startsWith("scalafim.") && k.endsWith(".build")).sorted
+
   /** The run stamp. Production sources: every .scala file under modules/group/{shared,jvm,js}/src/main. */
   def stamp(config: PilotConfig): Either[PilotRefusal, PilotStamp] =
     val repo = config.repo
     val tools = repo.resolve("tools/group-bootstrap-research")
+    val redirected = redirectedBuildProperties
     for
+      _ <- if redirected.nonEmpty then Left(PilotRefusal.RedirectedBuild(redirected)) else Right(())
       head <- git(repo, "rev-parse", "HEAD")
       status <- git(repo, "status", "--porcelain")
       _ <- if config.requireCleanWorktree && status.nonEmpty then Left(PilotRefusal.DirtyWorktree(status.linesIterator.take(5).mkString("; "))) else Right(())
@@ -118,6 +144,10 @@ object PilotRunner:
         "group_main_sources_sha256" -> productionDigest,
         "group_main_sources_count" -> production.length.toString,
         "build_sbt_sha256" -> shaFile(repo.resolve("build.sbt")),
+        "java_version" -> sys.props.getOrElse("java.version", "unknown"),
+        "java_vendor" -> sys.props.getOrElse("java.vendor", "unknown"),
+        "java_vm_version" -> sys.props.getOrElse("java.vm.version", "unknown"),
+        "redirected_builds" -> "none",
         "phase" -> config.phase.toString,
         "roots" -> StreamKind.values.map(config.phase.root).mkString("-"),
         "studies" -> config.studies.toString,
@@ -128,6 +158,12 @@ object PilotRunner:
         "power_schemes" -> config.powerSchemes.map(_.code).mkString("+"),
         "selection_rule" -> SelectionRule.Version
       ))
+
+  /** Process CPU time in ns (all JVM threads, conservative), or None when the platform bean is unavailable. */
+  def processCpuNanos(): Option[Long] =
+    java.lang.management.ManagementFactory.getOperatingSystemMXBean match
+      case bean: com.sun.management.OperatingSystemMXBean => Option(bean.getProcessCpuTime).filter(_ >= 0L)
+      case _ => None
 
   private def num(d: Double): String = if d.isFinite then java.lang.Double.toString(d) else "null"
   private def str(s: String): String = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
@@ -176,13 +212,33 @@ object PilotRunner:
     }.sum
     nanos / 3.6e12
 
+
   private def cellFile(config: PilotConfig, cell: Cell, stream: String): Path =
     config.output.resolve("cells").resolve(s"${cell.id.value}.$stream.jsonl")
+
+  private def summaryFile(config: PilotConfig, cell: Cell, stream: String): Path =
+    config.output.resolve("summaries").resolve(s"${cell.id.value}.$stream.json")
 
   private def header(stamp: PilotStamp, cell: Cell, stream: String): String =
     s"""{"stamp":${stamp.json},"cell":"${cell.id.value}","stream":"$stream"}"""
 
-  /** A cell stream is complete when its file and sha256 exist and agree; a stamp difference refuses. */
+  /** Descriptive per-scheme counts, rebuilt from the durable records (so a missing summary can be regenerated). */
+  private def writeSummary(config: PilotConfig, stamp: PilotStamp, cell: Cell, stream: String): Unit =
+    val line = "\"scheme\":\"([^\"]+)\",\"verdict\":\"([A-Za-z]+)\",\"k\":".r
+    val counts = scala.collection.mutable.LinkedHashMap.empty[String, (Int, Int)]
+    val lines = Files.readAllLines(cellFile(config, cell, stream), UTF_8).asScala.iterator.drop(1)
+    lines.flatMap(l => line.findFirstMatchIn(l)).foreach { m =>
+      val v = StudyVerdict.valueOf(m.group(2))
+      val (n, k) = counts.getOrElse(m.group(1), (0, 0))
+      counts(m.group(1)) = (n + 1, k + (if stream == "null" then (if v.levelRejects then 1 else 0) else (if v.powerRejects then 1 else 0)))
+    }
+    val label = if stream == "null" then "level_rejections" else "power_rejections"
+    val body = counts.map((code, nk) => s""""$code":{"studies":${nk._1},"$label":${nk._2}}""")
+    writeAtomic(summaryFile(config, cell, stream), s"""{"stamp":${stamp.json},"cell":"${cell.id.value}","stream":"$stream","schemes":{${body.mkString(",")}}}\n""")
+
+  /** A cell stream is complete when its file and sha256 exist and agree; a stamp difference refuses; a missing
+    * summary of a complete cell is regenerated from its records.
+    */
   private def complete(config: PilotConfig, stamp: PilotStamp, cell: Cell, stream: String): Either[PilotRefusal, Boolean] =
     val file = cellFile(config, cell, stream)
     val shaPath = Paths.get(file.toString + ".sha256")
@@ -190,41 +246,44 @@ object PilotRunner:
     else if new String(Files.readAllBytes(shaPath), UTF_8).trim.split("\\s+").head != shaFile(file) then Right(false)
     else
       val first = Files.lines(file)
-      try
-        if first.findFirst().orElse("") == header(stamp, cell, stream) then Right(true)
-        else Left(PilotRefusal.StampMismatch(s"${cell.id.value}.$stream header"))
-      finally first.close()
+      val headerOk = try first.findFirst().orElse("") == header(stamp, cell, stream) finally first.close()
+      if !headerOk then Left(PilotRefusal.StampMismatch(s"${cell.id.value}.$stream header"))
+      else
+        if !Files.exists(summaryFile(config, cell, stream)) then writeSummary(config, stamp, cell, stream)
+        Right(true)
 
-  private def runCell(config: PilotConfig, stamp: PilotStamp, cell: Cell, stream: String): Unit =
+  /** Runs one cell stream. Returns false, leaving no partial data, if `abort` turns true between studies. */
+  private def runCell(config: PilotConfig, stamp: PilotStamp, cell: Cell, stream: String, abort: () => Boolean): Boolean =
     val (purpose, schemes) = stream match
       case "null" => (StudyPurpose.Null, config.nullSchemes)
       case _ => (StudyPurpose.Power, config.powerSchemes)
     val engine = new BootstrapEngine(cell.researchDesign)
     val file = cellFile(config, cell, stream)
-    val partial = Paths.get(file.toString + ".partial")
-    val counts = scala.collection.mutable.LinkedHashMap.empty[String, (Int, Int)]
+    val partial = Files.createTempFile(file.getParent, file.getFileName.toString + ".", ".partial")
+    var aborted = false
     val writer = Files.newBufferedWriter(partial, UTF_8)
     try
       writer.write(header(stamp, cell, stream))
       writer.write("\n")
-      (0 until config.studies).foreach { i =>
-        val record = StudyRunner.run(cell, config.phase, purpose, i, config.draws, schemes, engine)
-        records(record, config.draws).foreach { line =>
-          writer.write(line)
-          writer.write("\n")
-        }
-        record.schemes.foreach { (s, r) =>
-          val v = StudyVerdict.of(r, Alpha)
-          val (n, k) = counts.getOrElse(s.code, (0, 0))
-          counts(s.code) = (n + 1, k + (if purpose == StudyPurpose.Null then (if v.levelRejects then 1 else 0) else (if v.powerRejects then 1 else 0)))
-        }
-      }
+      var i = 0
+      while i < config.studies && !aborted do
+        if abort() then aborted = true
+        else
+          val record = StudyRunner.run(cell, config.phase, purpose, i, config.draws, schemes, engine)
+          records(record, config.draws).foreach { line =>
+            writer.write(line)
+            writer.write("\n")
+          }
+          i += 1
     finally writer.close()
-    val _ = Files.move(partial, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-    Files.write(Paths.get(file.toString + ".sha256"), s"${shaFile(file)}  ${file.getFileName}\n".getBytes(UTF_8))
-    val summary = config.output.resolve("summaries").resolve(s"${cell.id.value}.$stream.json")
-    val body = counts.map((code, nk) => s""""$code":{"studies":${nk._1},"${if purpose == StudyPurpose.Null then "level_rejections" else "power_rejections"}":${nk._2}}""")
-    val _ = Files.write(summary, s"""{"stamp":${stamp.json},"cell":"${cell.id.value}","stream":"$stream","schemes":{${body.mkString(",")}}}\n""".getBytes(UTF_8))
+    if aborted then
+      Files.deleteIfExists(partial): Unit
+      false
+    else
+      val _ = Files.move(partial, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+      writeSummary(config, stamp, cell, stream)
+      writeAtomic(Paths.get(file.toString + ".sha256"), s"${shaFile(file)}  ${file.getFileName}\n")
+      true
 
   /** Candidate verdicts of every core cell's null stream, read back from the durable records. */
   def pilotEvidence(config: PilotConfig, cells: Vector[Cell]): Vector[PilotEvidence] =
@@ -239,6 +298,25 @@ object PilotRunner:
     }
 
   def run(config: PilotConfig, log: String => Unit): Either[PilotRefusal, PilotReport] =
+    val wallStart = System.nanoTime()
+    val cpuStart = processCpuNanos()
+    val threadBean = java.lang.management.ManagementFactory.getThreadMXBean
+    val workerCpu = new AtomicLong(0L)
+    // Process CPU (every JVM thread, conservative) when available; otherwise CPU summed over the pool threads.
+    def invocationCpuNanos(): Long = cpuStart.flatMap(s => processCpuNanos().map(_ - s)).getOrElse(workerCpu.get)
+    // CPU of earlier invocations of this output (from run-cost.json), so the ceiling bounds the whole run.
+    var priorCpuNanos = 0L
+    def cpuUsedNanos(): Long = priorCpuNanos + invocationCpuNanos()
+    val cpuSource = if cpuStart.isDefined then "process" else "pool-threads"
+    val ceilingNanos = config.runtimeCeilingCoreHours * 3.6e12
+    def seconds(ns: Double): String = f"${ns / 1e9}%.3f"
+    def writeCost(status: String, cellsRun: Int): (Double, Double) =
+      val cpu = invocationCpuNanos().toDouble
+      val total = priorCpuNanos.toDouble + cpu
+      val wall = (System.nanoTime() - wallStart).toDouble
+      writeAtomic(config.output.resolve("run-cost.json"),
+        s"""{"status":"$status","cpu_source":"$cpuSource","cpu_seconds":${seconds(cpu)},"cpu_seconds_total":${seconds(total)},"wall_seconds":${seconds(wall)},"cells_run":$cellsRun,"runtime_ceiling_core_hours":${config.runtimeCeilingCoreHours}}""" + "\n")
+      (cpu / 1e9, wall / 1e9)
     stamp(config).flatMap { current =>
       val projected = projectCoreHours(config)
       log(f"PILOT_PROJECTION,core_hours=$projected%.3f,ceiling=${config.ceilingCoreHours}%.3f,cells=${config.cells.length},studies=${config.studies},draws=${config.draws},threads=${config.threads}")
@@ -255,45 +333,74 @@ object PilotRunner:
               val pairs = "\"([^\"]+)\":\"([^\"]*)\"".r.findAllMatchIn(text).map(m => m.group(1) -> m.group(2)).toVector
               Left(PilotRefusal.StampMismatch(PilotStamp(pairs).firstDifference(current).getOrElse("stamp")))
           else
-            Files.write(stampPath, (current.json + "\n").getBytes(UTF_8))
+            writeAtomic(stampPath, current.json + "\n")
             Right(())
         existing.flatMap { _ =>
+          val costPath = config.output.resolve("run-cost.json")
+          if Files.exists(costPath) then
+            val prior = "\"cpu_seconds_total\":([0-9.]+)".r.findFirstMatchIn(new String(Files.readAllBytes(costPath), UTF_8))
+            priorCpuNanos = prior.fold(0L)(m => (m.group(1).toDouble * 1e9).toLong)
           val work = config.cells.flatMap(c => Vector(c -> "null") ++ (if config.powerCells.contains(c.id) then Vector(c -> "power") else Vector.empty))
           work.foldLeft[Either[PilotRefusal, Vector[(Cell, String)]]](Right(Vector.empty)) { (acc, cs) =>
             acc.flatMap(todo => complete(config, current, cs._1, cs._2).map(done => if done then todo else todo :+ cs))
           }.flatMap { todo =>
             val skipped = work.length - todo.length
             val pool = Executors.newFixedThreadPool(config.threads)
+            val next = new AtomicInteger(0)
             val done = new AtomicInteger(0)
+            val stop = new AtomicBoolean(false)
             val failures = new java.util.concurrent.ConcurrentLinkedQueue[String]()
-            todo.foreach { (cell, stream) =>
-              val task: Runnable = () =>
-                try runCell(config, current, cell, stream)
-                catch case e: Throwable => failures.add(s"${cell.id.value}.$stream: $e"): Unit
-                log(s"PILOT_PROGRESS,done=${done.incrementAndGet()}/${todo.length},skipped=$skipped")
-              val _ = pool.submit(task)
-            }
+            def overCeiling(): Boolean =
+              if cpuUsedNanos() > ceilingNanos then stop.set(true)
+              stop.get
+            val worker: Runnable = () =>
+              var mine = threadBean.getCurrentThreadCpuTime
+              var more = true
+              while more do
+                if overCeiling() then more = false
+                else
+                  val i = next.getAndIncrement()
+                  if i >= todo.length then more = false
+                  else
+                    val (cell, stream) = todo(i)
+                    val finished =
+                      try runCell(config, current, cell, stream, () => overCeiling())
+                      catch
+                        case e: Throwable =>
+                          failures.add(s"${cell.id.value}.$stream: $e"): Unit
+                          false
+                    val now = threadBean.getCurrentThreadCpuTime
+                    workerCpu.addAndGet(now - mine): Unit
+                    mine = now
+                    if finished then log(s"PILOT_PROGRESS,done=${done.incrementAndGet()}/${todo.length},skipped=$skipped")
+            (0 until config.threads).foreach(_ => pool.submit(worker): Unit)
             pool.shutdown()
             val _ = pool.awaitTermination(7, TimeUnit.DAYS)
-            if !failures.isEmpty then Left(PilotRefusal.Failure(failures.asScala.mkString("; ")))
+            if !failures.isEmpty then
+              writeCost("failed", done.get): Unit
+              Left(PilotRefusal.Failure(failures.asScala.mkString("; ")))
+            else if stop.get then
+              val (cpu, wall) = writeCost("stopped-at-ceiling", done.get)
+              log(f"PILOT_STOPPED,cpu_seconds=$cpu%.3f,cpu_seconds_total=${cpuUsedNanos() / 1e9}%.3f,wall_seconds=$wall%.3f,cells_run=${done.get},cells_skipped=$skipped")
+              Left(PilotRefusal.CpuCeilingReached(cpuUsedNanos() / 1e9, config.runtimeCeilingCoreHours))
             else
               val selection =
                 if !config.selectConfirmation then Right(None)
                 else
-                  val pool = SelectionRule.Owner.pool.cells.filter(c => config.cells.contains(c))
-                  ConfirmationSelection.select(pilotEvidence(config, pool), SelectionRule.Owner, config.studies)
+                  val poolCells = SelectionRule.Owner.pool.cells.filter(c => config.cells.contains(c))
+                  ConfirmationSelection.select(pilotEvidence(config, poolCells), SelectionRule.Owner, config.studies)
                     .left.map(e => PilotRefusal.Failure(s"selection: ${e.message}"))
                     .map { ids =>
                       val path = config.output.resolve("selection.json")
-                      val text = s"""{"stamp":${current.json},"rule":"${SelectionRule.Version}","selected":[${ids.map(i => "\"" + i.value + "\"").mkString(",")}]}\n"""
-                      Files.write(path, text.getBytes(UTF_8))
-                      Files.write(Paths.get(path.toString + ".sha256"), s"${shaFile(path)}  selection.json\n".getBytes(UTF_8))
+                      writeAtomic(path, s"""{"stamp":${current.json},"rule":"${SelectionRule.Version}","selected":[${ids.map(i => "\"" + i.value + "\"").mkString(",")}]}\n""")
+                      writeAtomic(Paths.get(path.toString + ".sha256"), s"${shaFile(path)}  selection.json\n")
                       log(s"PILOT_SELECTION_WRITTEN,$path")
                       Some(path)
                     }
               selection.map { sel =>
-                log(s"PILOT_DONE,cells_run=${todo.length},cells_skipped=$skipped,output=${config.output}")
-                PilotReport(projected, todo.length, skipped, sel)
+                val (cpu, wall) = writeCost("complete", todo.length)
+                log(f"PILOT_DONE,cells_run=${todo.length},cells_skipped=$skipped,cpu_seconds=$cpu%.3f,cpu_seconds_total=${cpuUsedNanos() / 1e9}%.3f,wall_seconds=$wall%.3f,output=${config.output}")
+                PilotReport(projected, todo.length, skipped, sel, cpu, wall)
               }
           }
         }
@@ -301,7 +408,7 @@ object PilotRunner:
 
 /** Opt-in entry points. Projection only (harness-seed calibration, no pilot roots, no output):
   *   -Dscalafim.group.bootstrapPilot.projectOnly=true
-  * The pilot itself (declared config; requires a clean worktree, the ceiling of 15 core-hours):
+  * The pilot itself (declared config; requires a clean worktree and no redirected build; ceilings 15 core-hours):
   *   -Dscalafim.group.bootstrapPilot.run=true [-Dscalafim.group.bootstrapPilot.threads=4]
   */
 class PilotLaunch extends munit.FunSuite:

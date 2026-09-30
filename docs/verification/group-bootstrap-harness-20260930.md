@@ -115,6 +115,7 @@ All through `python3 /private/tmp/scalafim-execution-20260929/run-sbt.py <worktr
 
 | gate | command task | result | log |
 |---|---|---|---|
+GATES_R5
 | JVM (round 4, final) | `groupJVM/clean` then `groupJVM/test` | Total 170, Failed 0, Passed 163, Skipped 7 (research: 94 = 88 passed + 6 opt-in skipped: 3 heavy, input writer, 2 pilot entry points; the 7th is the timing probe); 0 warnings | `bootstrap-harness-r4-final-jvm.log` |
 | JS (round 4, final) | `groupJS/clean` then `groupJS/test` | Total 158, Failed 0, Passed 154, Skipped 4 (research: 83 = 80 passed + 3 opt-in heavy skipped); 0 warnings | `bootstrap-harness-r4-final-js.log` |
 | warning gate (round 4, final) | `groupJVM/clean`, `groupJS/clean`, then `scalafimCompileAll` (group main recompiled, not a no-op) | success, 0 warnings, 0 errors; the log shows group main recompiled (17 sources, JVM and JS) | `bootstrap-harness-r4-final-compileall.log` |
@@ -247,7 +248,11 @@ SHA-256 of every harness Scala source (shared and JVM, including the pilot runne
 `write_manifest_v2.py` itself (32 entries); and the heavy log's path and SHA-256 only, marked sealed. What a pilot run
 depends on (git SHA, build, production sources) is stamped into the pilot's own output, not into the manifest.
 `ManifestFileSuite` recomputes every hash and fails if a listed file changes, or a harness file is added or removed,
-without the manifest being rewritten. sha256: `2091b2d75918eb1d9f6840d0484463a8ba632c3798d106d742bbaac2030f5c03`. **Status: pending re-review; not frozen.**
+without the manifest being rewritten. sha256: see Freeze below.
+
+## Freeze
+
+FREEZE_TEXT
 
 ## Pilot runner (round 4; the pilot was NOT run)
 
@@ -276,10 +281,40 @@ on the power stream, ceiling 15 core-hours, output `/private/tmp/scalafim-execut
   Carlo sign flips included) and scaled to R = 2000. `bootstrap-harness-r4-projection.log` printed
   `PILOT_PROJECTION,core_hours=1.207,ceiling=15.000,cells=117,studies=2000,draws=499`; it wrote no output. The figure is
   an in-process JVM estimate with JIT and GC noise, and excludes R parity and JS runs.
-- **Tested** (`PilotRunnerSuite`, harness seeds, two cells, R = 3, B = 19): record format and stamps, `.sha256` files,
-  summaries, rebuilding selection input from the records, resume without rewriting, recomputation of a damaged cell
-  with identical bytes, refusal on a changed configuration and on a forged cell header, refusal by an artificially tiny
-  ceiling before any file is written, and no rate-like stdout.
+- **Round 5 hardening:**
+  - *Runtime inputs (L1):* the stamp also records `java.version`, `java.vendor` and `java.vm.version`. The runner refuses
+    with `PilotRefusal.RedirectedBuild` when any `scalafim.*.build` system property is set (build.sbt redirects gale,
+    ravel and the other source dependencies to local checkouts with these); a redirected build cannot produce pilot
+    evidence.
+  - *Runtime CPU guard (L2):* process CPU time (`com.sun.management.OperatingSystemMXBean.getProcessCpuTime`, every JVM
+    thread, conservative; fallback: CPU summed over the pool threads) is summed over resumed invocations via
+    `run-cost.json`. Workers take the next cell only below the 15 core-hour ceiling and check it between studies; at
+    the ceiling they stop, abandon in-flight cells without writing partial data, write `run-cost.json`
+    (`stopped-at-ceiling`) and return `PilotRefusal.CpuCeilingReached`. Ceilings are not stamped, so after the owner
+    approves a raise the same output resumes. `run-cost.json` and the `PILOT_DONE` / `PILOT_STOPPED` lines carry CPU
+    and wall seconds (numbers only).
+  - *Atomic files (L3):* every file (stamp, cell records, summaries, sha256 files, run-cost, selection) is written to a
+    temp file and moved with `ATOMIC_MOVE`; a cell's summary is written before its `.sha256`, so a present sha implies a
+    complete summary; resume regenerates a missing summary from the durable records.
+- **Tested** (`PilotRunnerSuite`, harness seeds, two cells, R = 3, B = 19): record format and stamps (including the JVM
+  fields), `.sha256` files, summaries, rebuilding selection input from the records, resume without rewriting,
+  recomputation of a damaged cell with identical bytes, regeneration of a deleted summary with identical bytes, no
+  temp or partial files after a run, refusal on a changed configuration and on a forged cell header, refusal by an
+  artificially tiny projection ceiling before any file is written, the runtime CPU guard with a tiny runtime ceiling
+  (stop, no cell output, no partial files, `stopped-at-ceiling`, then a resume that completes with an accumulated CPU
+  total), refusal of a redirected build (property set in-test and cleared afterwards), and no rate-like stdout.
+
+### Cost reconciliation (L5)
+
+The probe's ≈ 7 JVM core-hours covered pilot **and** confirmation (bootstrap 1578.8 M fits for three candidates plus
+≤ 528 M sign-flip fits) at 13.8 µs per fit (prepared native fit + `scala.util.Random` B-plug draws). The pilot's share
+at that unit, from the probe's own table: 350.3 M + 269.5 M = 619.8 M candidate bootstrap fits × 13.8 µs ≈ 2.4
+core-hours, plus its part of the sign-flip allowance (≤ 0.8 h at 5.3 µs for all sign flips). The review's note gives
+≈ 4.8 h for the pilot at the probe's unit; I could not reproduce that figure from the probe table and record both. In
+either reading the 7 h included confirmation. This harness projects ≈ 1.2 core-hours for the pilot although it runs
+all eight schemes and every baseline, because its WLS + PM kernel works on a prepared design without allocation and
+its variates come from SplitMix64 lanes rather than a synchronized `java.util.Random`. The independent review measured
+1.13–1.34 core-hours on a 5%-scale run. The confirmation (12 cells, R = 20000, B = 999) is not projected here.
 
 ## Seeds used by tests
 

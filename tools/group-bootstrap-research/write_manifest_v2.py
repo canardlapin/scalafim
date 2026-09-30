@@ -5,12 +5,13 @@ Manifest v2 extends the unchanged cell manifest (cells.json, its parent) with th
 owner-decided selection and decision rules, the SHA-256 of every harness source
 and of the R reference script, and the sealed heavy log (hash only; its content is
 never read into any report). Canonical form: sorted keys, no whitespace, ASCII,
-one trailing newline. Run from the repository root after the final source edit;
+one trailing newline. Run from the repository root after the final source edit (add --freeze, after the gates pass, to mark it "frozen for pilot");
 ManifestFileSuite fails if a harness source changes without this file being rewritten.
 """
 import hashlib
 import json
 import pathlib
+import sys
 
 ROOT = pathlib.Path.cwd()
 TOOLS = ROOT / "tools/group-bootstrap-research"
@@ -29,6 +30,11 @@ def sha(path: pathlib.Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+FROZEN = "frozen for pilot"
+PENDING = "pending re-review; not frozen"
+STATUS = FROZEN if "--freeze" in sys.argv[1:] else PENDING
+
+
 def main() -> None:
     sources = {}
     for d in SOURCE_DIRS:
@@ -40,7 +46,7 @@ def main() -> None:
     manifest = {
         "schema": "scalafim-group-bootstrap-manifest/v2",
         "mote": "bd-01M21BNZR9ZBRAYY9JD5WCQ8KX",
-        "status": "pending re-review; not frozen",
+        "status": STATUS,
         "parent": {
             "path": "tools/group-bootstrap-research/cells.json",
             "sha256": cells_sha,
@@ -95,7 +101,7 @@ def main() -> None:
     (TOOLS / "manifest-v2.json").write_text(text)
     digest = hashlib.sha256(text.encode()).hexdigest()
     (TOOLS / "manifest-v2.json.sha256").write_text(f"{digest}  manifest-v2.json\n")
-    print(f"manifest-v2.json sha256 {digest} ({len(sources)} sources)")
+    print(f"manifest-v2.json sha256 {digest} ({len(sources)} sources, status: {STATUS})")
 
 
 if __name__ == "__main__":
