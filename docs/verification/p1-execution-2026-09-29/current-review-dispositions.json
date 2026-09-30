@@ -652,9 +652,49 @@
         "bytes": 102798,
         "payloads": 60
       }
+    },
+    {
+      "verdict": "BoundedReviewPreserved",
+      "archive": "core-native-conformance-bounded-v4.json.gz",
+      "sha256": "3e09c9533f94b124e4df066568b193794bcb295ad1ea8c1d127b23132277bf48",
+      "bytes": 28208,
+      "payloads": 12,
+      "scope": "Privately integrated analytic non-RAS geometry, physical validity and genuine NIfTI-1 extent refusal; 11 JVM tests and applicable 14 JS checks. Full Core remains incomplete.",
+      "originalCoreClosed": false,
+      "integration": "e623dcfcc6b7d12f19a5c12121040a5fb8884f1d"
+    },
+    {
+      "verdict": "BoundedReviewPreserved",
+      "archive": "condition-warm-helper-bounded-v4.json.gz",
+      "sha256": "7c3c91c79aa53fa316f1374f64360e4832d9680cbbbb3a8512270e64ded2c42d",
+      "bytes": 15350,
+      "payloads": 10,
+      "scope": "Test-only helper source admission at 0c3ca0a9 with two JVM and two JS checks; no cold standalone, V256, 100k, timing, peak memory or scientific qualification.",
+      "fullPerformanceAdmission": false,
+      "privatelyIntegrated": false
+    },
+    {
+      "verdict": "BoundedReviewPreserved",
+      "archive": "gale-outward-primitive-bounded-v4.json.gz",
+      "sha256": "7fb1d0b20002c0a7815b83b0432bfd358f6a19be451c7bc8e94805a7b764dc0d",
+      "bytes": 15430,
+      "payloads": 2,
+      "scope": "Finite primitive interval source and independent eight JVM/eight JS controls; embedded seven-payload source archive. Implementation remains untracked upstream; control-only commit is not a self-contained capability.",
+      "trialCertificateImplemented": false,
+      "upstreamPublicationAuthorized": false
+    },
+    {
+      "verdict": "BoundedReviewPreserved",
+      "archive": "lwu-historical-diagnosis-bounded-v4.json.gz",
+      "sha256": "d5f76712d56b043e44a26f01bf3b03711b965b564113fab6a17353c3cecffaab",
+      "bytes": 1918331,
+      "payloads": 31,
+      "scope": "Historical DEV diagnosis at 9db33590: 400 records, independent algebra audits, retained failed attempts. JVM91/81 and JS89/82 remain below all four admission gates; no solver repair or fresh qualification.",
+      "scientificAdmission": false,
+      "privatelyIntegrated": false
     }
   ],
-  "updatedUtc": "2026-09-30T19:24:11.695824+00:00",
-  "currentIntegration": "8d5b0e5152240819152a434b11af4be1095cee60",
+  "updatedUtc": "2026-09-30T22:28:02.384923+00:00",
+  "currentIntegration": "e623dcfcc6b7d12f19a5c12121040a5fb8884f1d",
   "historicalRecords": "Earlier candidate/subsequent-review fields describe their recorded point in time; latest records below govern current disposition."
 }

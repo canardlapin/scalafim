@@ -28,8 +28,8 @@ that scientific failure.
 
 Both v4 C0 pilots completed 256 responses with zeroFloat32 failures. Their
 timings were contaminated and nonqualifying; no 100k campaign has run. The new
-same-process warm wrapper is in review. The trial original-family certificate
-has an accepted mathematical design; interval and domain prerequisites remain
+same-process warm wrapper now has bounded test-only source admission. The trial
+original-family certificate has an accepted mathematical design; interval and domain prerequisites remain
 under implementation and review. No implemented trial certificate is claimed.
 
 Calibration command zero completed 180000 blocks and passed terminal review.
@@ -45,6 +45,31 @@ binaries and the 951251730-byte calibration raw remain external and hash-pinned.
 Five Fray issues are lodged directly in `~/code/rust/fray/.mote`; no daemon
 restart or Fray source repair is claimed. No ScalaFIM publication, merge or
 release is authorized.
+
+## Latest bounded reviews
+
+Private integration `e623dcfc` adds the reviewed native Core conformance suite:
+11 JVM tests and the applicable 14 JS checks passed. Its manually encoded
+non-RAS oblique/sheared geometry, independent values/validity and logical
+32768 extent refusal do not replace the required provenance-bound real header,
+OS durability-step fault matrix or independent-process unit publication races.
+The latter race tests are being implemented separately. Full Core remains open.
+
+The same-process warm helper passed two tests on each platform. It is a test-only
+source admission, with no standalone cold, V256 or 100k performance measurement.
+Gale finite primitive interval arithmetic passed eight independent controls on
+each platform. The archived exact implementation remains untracked upstream;
+the test-only commit cannot deliver the capability alone. Neither work supplies
+a trial original-family certificate, performance qualification or release.
+
+The historical LWU diagnosis retains all 400 records and independent algebra
+checks, including nonstationary boundary fits. All four original admission gates
+still fail. It changes no production solver, thresholds, budgets or scientific
+admission and cannot be treated as fresh validation.
+
+Calibration continuation remains owner-approved and unlaunched: the initial
+start stopped for disk space before intent or child creation. No command zero
+replay, cleanup approval, scientific Pass, publication or release is implied.
 
 ## Historical milestones and review chronology
 
