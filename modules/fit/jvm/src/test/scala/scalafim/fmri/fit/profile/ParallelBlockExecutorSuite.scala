@@ -161,3 +161,140 @@ class ParallelBlockExecutorSuite extends munit.FunSuite:
     assert(interruptRestored.get())
     assertEquals(workerInterrupted.getCount, 0L)
     assert(seenThreads.asScala.forall(t => !t.isAlive))
+
+  test("sink interruption waits for owned workers or returns a nonfinal termination handle"):
+    for expires <- Vector(false, true) do
+      val bothStarted = new CountDownLatch(3)
+      val workerInterrupted = new CountDownLatch(1)
+      val release = new CountDownLatch(1)
+      val returned = new CountDownLatch(1)
+      val active = new AtomicInteger(0)
+      val deliveries = new AtomicInteger(0)
+      val result = new AtomicReference[Either[ExecutionError, ExecutionSummary[Int]]]()
+      val restored = new AtomicBoolean(false)
+      val worker = new BlockWorker[Int]:
+        def process(block: VoxelBlock): Int =
+          bothStarted.countDown()
+          if !bothStarted.await(5, TimeUnit.SECONDS) then throw new IllegalStateException("second worker did not start")
+          if block.index == 2 then
+            active.incrementAndGet()
+            try
+              var done = false
+              while !done do
+                try done = release.await(10, TimeUnit.SECONDS)
+                catch case _: InterruptedException => workerInterrupted.countDown()
+              if !done then throw new IllegalStateException("held worker was not released")
+            finally
+              active.decrementAndGet()
+              ()
+          block.index
+      val sink = new BlockSink[Int, Int]:
+        def accept(block: VoxelBlock, payload: Int): Either[String, Int] =
+          deliveries.incrementAndGet()
+          if block.index == 0 then Right(block.index)
+          else
+            Thread.currentThread().interrupt()
+            Left("reject")
+      val runner = new Thread(() =>
+        result.set(ParallelBlockExecutor.run(3, ExecutionBudget(1, 3), () => worker, sink,
+          cleanupTimeoutMillis = if expires then 40L else 60000L))
+        restored.set(Thread.currentThread().isInterrupted)
+        returned.countDown()
+      )
+      runner.start()
+      try
+        assert(workerInterrupted.await(5, TimeUnit.SECONDS))
+        assertEquals(active.get(), 1)
+        if expires then
+          assert(returned.await(5, TimeUnit.SECONDS))
+          assertEquals(active.get(), 1)
+          result.get() match
+            case Left(ExecutionError.WorkersStillRunning(ExecutionError.SinkFailed(block, detail), ids, handle)) =>
+              assertEquals(block.index, 1)
+              assertEquals(detail, "reject")
+              assertEquals(ids, Vector(0))
+              assert(!handle.isTerminated)
+              release.countDown()
+              handle.awaitStopped()
+              assert(handle.isTerminated)
+            case other => fail(s"expected nonfinal sink failure, got $other")
+        else
+          assert(!returned.await(50, TimeUnit.MILLISECONDS))
+          release.countDown()
+          assert(returned.await(5, TimeUnit.SECONDS))
+          result.get() match
+            case Left(ExecutionError.SinkFailed(block, detail)) =>
+              assertEquals(block.index, 1)
+              assertEquals(detail, "reject")
+            case other => fail(s"expected final sink failure, got $other")
+        assertEquals(deliveries.get(), 2)
+        assert(restored.get())
+      finally
+        release.countDown()
+        runner.join(5000)
+      assert(!runner.isAlive)
+
+  test("cleanup timeout seam rejects unbounded and nonpositive values before work"):
+    val started = new AtomicBoolean(false)
+    val sink = new BlockSink[Int, Int]:
+      def accept(block: VoxelBlock, payload: Int): Either[String, Int] = Right(payload)
+    for timeout <- Vector(0L, -1L, 60001L) do
+      val result = ParallelBlockExecutor.run(2, ExecutionBudget(1, 2), () =>
+        started.set(true)
+        new BlockWorker[Int]:
+          def process(block: VoxelBlock): Int = block.index
+      , sink, cleanupTimeoutMillis = timeout)
+      assert(result.left.toOption.exists(_.isInstanceOf[ExecutionError.InvalidBudget]))
+    assert(!started.get())
+
+  test("caller interruption keeps the owned pool nonfinal while workers ignore cancellation"):
+    val started = new CountDownLatch(2)
+    val interrupted = new CountDownLatch(2)
+    val release = new CountDownLatch(1)
+    val returned = new CountDownLatch(1)
+    val active = new AtomicInteger(0)
+    val restored = new AtomicBoolean(false)
+    val result = new AtomicReference[Either[ExecutionError, ExecutionSummary[Int]]]()
+    val worker = new BlockWorker[Int]:
+      def process(block: VoxelBlock): Int =
+        active.incrementAndGet()
+        started.countDown()
+        try
+          var done = false
+          while !done do
+            try done = release.await(10, TimeUnit.SECONDS)
+            catch case _: InterruptedException => interrupted.countDown()
+          if !done then throw new IllegalStateException("worker was not released")
+          block.index
+        finally
+          active.decrementAndGet()
+          ()
+    val sink = new BlockSink[Int, Int]:
+      def accept(block: VoxelBlock, payload: Int): Either[String, Int] = fail("no delivery after caller interrupt")
+    val runner = new Thread(() =>
+      result.set(ParallelBlockExecutor.run(2, ExecutionBudget(1, 2), () => worker, sink,
+        cleanupTimeoutMillis = 40L))
+      restored.set(Thread.currentThread().isInterrupted)
+      returned.countDown()
+    )
+    runner.start()
+    try
+      assert(started.await(5, TimeUnit.SECONDS))
+      runner.interrupt()
+      assert(interrupted.await(5, TimeUnit.SECONDS))
+      assert(returned.await(5, TimeUnit.SECONDS))
+      assertEquals(active.get(), 2)
+      result.get() match
+        case Left(ExecutionError.WorkersStillRunning(ExecutionError.Cancelled(completed), ids, handle)) =>
+          assertEquals(completed, 0)
+          assertEquals(ids, Vector.empty[Int])
+          assert(!handle.isTerminated)
+          release.countDown()
+          handle.awaitStopped()
+          assert(handle.isTerminated)
+        case other => fail(s"expected nonfinal caller cancellation, got $other")
+      assert(restored.get())
+    finally
+      release.countDown()
+      runner.join(5000)
+    assert(!runner.isAlive)

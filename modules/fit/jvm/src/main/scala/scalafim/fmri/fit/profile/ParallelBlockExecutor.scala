@@ -8,16 +8,31 @@ import scala.util.control.NonFatal
   * has released every payload in the current one.
   */
 object ParallelBlockExecutor:
+  private val DefaultCleanupTimeoutMillis = 60000L
+
+  private final class PoolTermination(pool: java.util.concurrent.ExecutorService) extends ExecutionTermination:
+    def isTerminated: Boolean = pool.isTerminated
+
+    def awaitStopped(): Unit =
+      var interrupted = false
+      var stopped = false
+      while !stopped do
+        try stopped = pool.awaitTermination(1, TimeUnit.DAYS)
+        catch case _: InterruptedException => interrupted = true
+      if interrupted then Thread.currentThread().interrupt()
 
   def run[P, R](
       voxels: Int,
       budget: ExecutionBudget,
       newWorker: () => BlockWorker[P],
       sink: BlockSink[P, R],
-      cancelled: () => Boolean = () => false
+      cancelled: () => Boolean = () => false,
+      cleanupTimeoutMillis: Long = DefaultCleanupTimeoutMillis
   ): Either[ExecutionError, ExecutionSummary[R]] =
     budget.validate.flatMap { b =>
-      if b.workers == 1 then BlockExecutor.runSequential(voxels, b, newWorker, sink, cancelled)
+      if cleanupTimeoutMillis < 1 || cleanupTimeoutMillis > DefaultCleanupTimeoutMillis then
+        Left(ExecutionError.InvalidBudget(s"cleanup timeout must be 1..$DefaultCleanupTimeoutMillis ms, got $cleanupTimeoutMillis"))
+      else if b.workers == 1 then BlockExecutor.runSequential(voxels, b, newWorker, sink, cancelled)
       else
         val plan = BlockExecutor.blocks(voxels, b.blockSize)
         if plan.isEmpty then Right(ExecutionSummary(Vector.empty[R], 0, voxels, 0))
@@ -25,9 +40,11 @@ object ParallelBlockExecutor:
           val workerCount = math.min(b.workers, plan.length)
           val workers = new Array[BlockWorker[P]](workerCount)
           val receipts = Vector.newBuilder[R]
+          val deliveredBlockIds = Vector.newBuilder[Int]
           var delivered = 0
           var failure: Option[ExecutionError] = None
           var interrupted = false
+          var unfinished: Option[ExecutionTermination] = None
           val pool = Executors.newFixedThreadPool(workerCount)
           try
             var next = 0
@@ -81,6 +98,7 @@ object ParallelBlockExecutor:
                           case Left(detail) => failure = Some(ExecutionError.SinkFailed(block, detail))
                           case Right(receipt) =>
                             receipts += receipt
+                            deliveredBlockIds += block.index
                             delivered += 1
                 offset += 1
               if failure.nonEmpty then
@@ -91,17 +109,29 @@ object ParallelBlockExecutor:
               next += windowSize
           finally
             if failure.nonEmpty then pool.shutdownNow() else pool.shutdown()
-            try
-              if !pool.awaitTermination(1, TimeUnit.MINUTES) && failure.isEmpty then
-                failure = Some(ExecutionError.WorkerFailed(plan.last, "worker pool did not terminate within one minute"))
-            catch
-              case _: InterruptedException =>
-                interrupted = true
-                if failure.isEmpty then failure = Some(ExecutionError.Cancelled(delivered))
-                pool.shutdownNow()
+            val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(cleanupTimeoutMillis)
+            var stopped = pool.isTerminated
+            while !stopped && deadline - System.nanoTime() > 0L do
+              try stopped = pool.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS)
+              catch
+                case _: InterruptedException =>
+                  interrupted = true
+                  if failure.isEmpty then failure = Some(ExecutionError.Cancelled(delivered))
+                  pool.shutdownNow()
+                  ()
+            if !stopped && !pool.isTerminated then
+              if failure.isEmpty then
+                failure = Some(ExecutionError.WorkerFailed(plan.last, "worker pool did not terminate within cleanup deadline"))
+              pool.shutdownNow()
+              unfinished = Some(new PoolTermination(pool))
             if interrupted then Thread.currentThread().interrupt()
 
-          failure match
-            case Some(err) => Left(err)
-            case None => Right(ExecutionSummary(receipts.result(), plan.length, voxels, workerCount))
+          unfinished match
+            case Some(termination) =>
+              val original = failure.getOrElse(ExecutionError.WorkerFailed(plan.last,
+                "worker pool did not terminate within cleanup deadline"))
+              Left(ExecutionError.WorkersStillRunning(original, deliveredBlockIds.result(), termination))
+            case None => failure match
+              case Some(err) => Left(err)
+              case None => Right(ExecutionSummary(receipts.result(), plan.length, voxels, workerCount))
     }

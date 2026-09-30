@@ -11,6 +11,7 @@ enum ExecutionError:
   case WorkerFailed(block: VoxelBlock, detail: String)
   case SinkFailed(block: VoxelBlock, detail: String)
   case Cancelled(completedBlocks: Int)
+  case WorkersStillRunning(original: ExecutionError, deliveredBlockIds: Vector[Int], termination: ExecutionTermination)
 
   def message: String =
     this match
@@ -18,6 +19,15 @@ enum ExecutionError:
       case WorkerFailed(block, detail) => s"worker failed on block ${block.index} (voxels ${block.start} until ${block.end}): $detail"
       case SinkFailed(block, detail) => s"sink refused block ${block.index}: $detail"
       case Cancelled(completed) => s"execution cancelled after $completed blocks"
+      case WorkersStillRunning(original, _, _) => s"${original.message}; owned workers are still running"
+
+/** An owned worker pool that may outlive a nonfinal execution result. Readers
+  * used by that pool must stay available until this handle confirms termination.
+  * Waiting tolerates interruption and restores the caller's interrupt flag.
+  */
+trait ExecutionTermination:
+  def isTerminated: Boolean
+  def awaitStopped(): Unit
 
 /** Per-worker state owned by the backend; one instance per worker, never shared. */
 trait BlockWorker[P]:
