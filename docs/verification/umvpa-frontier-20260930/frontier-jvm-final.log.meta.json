@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T08:13:28.478610+00:00",
+  "finished_utc": "2026-09-30T08:14:27.022237+00:00",
+  "duration_seconds": 58.542955,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+    "-Dscalafim.alder.build=/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+    "mvpaJVM/test",
+    "mvpaFitJVM/test",
+    "mvpaDatasetJVM/test"
+  ],
+  "cwd": "/private/tmp/scalafim-umvpa-20260929/candidate",
+  "log": "/private/tmp/scalafim-umvpa-20260929/frontier-jvm-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 27515
+}

@@ -1,0 +1,23 @@
+{
+  "frontier-independent-review.md": "e0da311547f25de4f98e6a0cccce9129dc431cb82edb82cb0feb48460201ecfa",
+  "frontier-jvm-final.log.meta.json": "0c91bca426d2fa65dbe2f46fa0951b93192b8edca1dc27f76de11cd93da61f7b",
+  "alder-fixed-rows-frontier-source.json": "dd48815ede21dd82afc4f9422f203d71ce553adc64dafce20c3c82103e518d0d",
+  "qualification.json": "a9d2cce1e7d03002c96bdc9276dbad8e4ac83be05981383f5ce17f6453d163c8",
+  "mote-next-ready.json": "bc7526c949862ef10b94ea0a567a4bdbd12539f949f8af1a66865a40828054b4",
+  "frontier-review.json": "bd1d6cd1fb2aeac399273c44a49a0f819b798bcca8fa59f87d65a7f388ed36ac",
+  "alder-provider.bundle": "974e371252a1b57d4c3c9747678e3a3d57650370ce0f8ff243ccee44e7e4cd69",
+  "frontier-core-js.log.meta.json": "829d1476cbd6d9708a8f8534b51c927439e184bcaad80be88abb5e298d0cb13d",
+  "frontier-core-qualification.log.meta.json": "6faa49573e5c4168b856908724df1faef6251298f41d9eeddfcc132f25bbd4e4",
+  "frontier-core-qualification.log": "cce18b11e9e8a93a9d4dcaaabc3f6ea3939d81405a38650745c82f0ac55efa07",
+  "alder-provider.patch": "479d2ac4011428a3fd4db0fa8e07a69167c171d983b29c1a551e99558de92865",
+  "frontier-alder-jvm-js-03.log": "1446fc1f84f7ef3992bbfe3b7d3cd74bb598490d2a04629c3fc0feeef7f17ff4",
+  "mote-packet-status.json": "bee212a945119dfd955e9ccc2f0dcec3813ed295cb41ecfe7d26c40dd9cd791d",
+  "core-frontier-source.json": "a4cddd4513821a398187901df895b364d61e0baed6bf813a0b5d3426bc94c87a",
+  "candidate-frontier-source.json": "be0094059929e4fdc787e3908bc78f6e1af179ed937993a2e1261d77d6761ce6",
+  "frontier-jvm-final.log": "6275dce468f9f5ceaaa691d4312b0a01747d7cd239f9270b33db187199129606",
+  "mote-candidate-reviewed.json": "a1567ca3c3396c7aede4898e93641835889b8fc0a97bb060b8bedcccaadaa540",
+  "frontier-alder-jvm-js-03.log.meta.json": "f3187fd5fd851a42770c2d7d81d08a7682c18fdc5fa93e7e7ba2ecda6e311520",
+  "frontier-js-final.log": "14f4ae79fc3dd0411c8d3bd713210a641d28a74819f244cb7e156e2d1cd9bf78",
+  "frontier-js-final.log.meta.json": "95de993e897162c4761e48ffc20d91be7e1c3cbca9c7ab3d91992ab94fe5bb7b",
+  "frontier-core-js.log": "7b7b97409840b93d568d7946d78f46d7a0597f0e68d7acc7c3d37d7f958eb259"
+}

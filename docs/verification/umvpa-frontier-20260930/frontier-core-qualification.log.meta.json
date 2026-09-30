@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T08:16:52.193265+00:00",
+  "finished_utc": "2026-09-30T08:22:21.448071+00:00",
+  "duration_seconds": 329.2521,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+    "scalafimCompileAll",
+    "mvpaJVM/test",
+    "mvpaFitJVM/test",
+    "mvpaDatasetJVM/test"
+  ],
+  "cwd": "/private/tmp/scalafim-umvpa-20260929/core",
+  "log": "/private/tmp/scalafim-umvpa-20260929/frontier-core-qualification.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 46940
+}
