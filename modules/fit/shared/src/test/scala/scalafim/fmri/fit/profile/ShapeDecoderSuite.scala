@@ -190,6 +190,7 @@ class ShapeDecoderSuite extends munit.FunSuite:
       val out = new ProfileJetBuffer(1, 1)
       fill(grid.point(node)(0), out)
       out.energy
+
     def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
       fill(grid.point(node)(0), out)
       true
@@ -200,6 +201,26 @@ class ShapeDecoderSuite extends munit.FunSuite:
       energyProbes += coordinates(0)
       fill(coordinates(0), out)
       out.energy
+
+  private final class ObservedObjective(val underlying: ShapeObjective) extends ShapeObjective:
+    var nodeScores = 0L
+    var nodeJets = 0L
+    var jets = 0L
+    var exact = 0L
+    def grid: NodeGrid = underlying.grid
+    def amplitudeCount: Int = underlying.amplitudeCount
+    def scoreNode(node: Int): Double =
+      nodeScores += 1L
+      underlying.scoreNode(node)
+    def jetAtNode(node: Int, out: ProfileJetBuffer): Boolean =
+      nodeJets += 1L
+      underlying.jetAtNode(node, out)
+    def jetAt(coords: Array[Double], out: ProfileJetBuffer): Boolean =
+      jets += 1L
+      underlying.jetAt(coords, out)
+    def energyAt(coords: Array[Double], out: ProfileJetBuffer): Double =
+      exact += 1L
+      underlying.energyAt(coords, out)
 
   private val chart2 = ShapeChart(("a", -2.0, 3.0), ("b", -1.0, 4.0))
   private val grid2 = NodeGrid(chart2, Vector(15, 15))
@@ -525,6 +546,7 @@ class ShapeDecoderSuite extends munit.FunSuite:
       1.0
     ).decode(noEvaluationCounters)
     assertEquals(noEvaluation.status, DecodeStatus.BudgetExceeded)
+    assertEquals(noEvaluation.budgetExit, Some(DecodeBudgetExit.RemainingEvaluationQuota))
     assertEquals(noEvaluation.newtonSteps, 0)
     assertEquals(noEvaluationCounters.candidateAttempts, 0L)
 
@@ -536,10 +558,23 @@ class ShapeDecoderSuite extends munit.FunSuite:
       1.0
     ).decode(rejectedCounters)
     assertEquals(rejected.status, DecodeStatus.BudgetExceeded)
+    assertEquals(rejected.budgetExit, Some(DecodeBudgetExit.CandidateAttemptCap))
     assertEqualsDouble(rejected.coordinates(0), 0.0, 1e-12)
     assertEqualsDouble(rejected.dataHessian(0), 2.0, 1e-12)
     assertEquals(rejectedCounters.candidateAttempts, 4L)
     assertEquals(rejectedCounters.exactEvaluations, 4L)
+
+  test("budget exits reset per decode and observation delegates exactly once"):
+    val observed = new ObservedObjective(new Quartic)
+    val decoder = new ShapeDecoder(observed,
+      DecodeBudget(coarseStride = 1, maxNewtonSteps = 1, maxJets = 1, maxExactEvaluations = 0), None, 1.0)
+    val first = decoder.decode(new DecoderCounters)
+    assertEquals(first.budgetExit, Some(DecodeBudgetExit.RemainingEvaluationQuota))
+    val second = decoder.decode(new DecoderCounters)
+    assertEquals(second.budgetExit, Some(DecodeBudgetExit.RemainingEvaluationQuota))
+    assertEquals(observed.nodeJets, 2L)
+    assertEquals(observed.jets, 0L)
+    assertEquals(observed.exact, 0L)
 
   test("node ranking, ambiguity inputs and fallback use the data-plus-prior objective"):
     val objective = new Quartic

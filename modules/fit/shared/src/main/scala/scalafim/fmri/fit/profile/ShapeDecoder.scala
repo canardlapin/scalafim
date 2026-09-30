@@ -110,6 +110,16 @@ enum DecodeStatus:
   case BudgetExceeded
   case NoAdmissibleNode
 
+enum DecodeBudgetExit:
+  case CandidateAttemptCap
+  case RemainingEvaluationQuota
+  case AcceptedEnergyOnlyNonstationaryTerminal
+  case AcceptedEnergyOnlyTerminalVerificationFailed
+  case AcceptedEnergyOnlyTerminalJetQuota
+  case NewtonStepCap
+  case FallbackExactEvaluationQuota
+  case FallbackTerminalJetQuota
+
 final case class ShapeDecodeResult(
     coordinates: Vector[Double],
     energy: Double,
@@ -120,7 +130,8 @@ final case class ShapeDecodeResult(
     dataHessian: Vector[Double],
     augmentedHessian: Vector[Double],
     conditionalSd: Vector[Double],
-    ambiguityGap: Double):
+    ambiguityGap: Double,
+    budgetExit: Option[DecodeBudgetExit] = None):
   def point: ShapePoint = ShapePoint.unsafe(coordinates)
 
 private enum NewtonDirectionStatus:
@@ -429,6 +440,10 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     var steps = 0
     var fallback = false
     var budgetExceeded = false
+    var budgetExit: Option[DecodeBudgetExit] = None
+    def exhaust(reason: DecodeBudgetExit): Unit =
+      budgetExceeded = true
+      if budgetExit.isEmpty then budgetExit = Some(reason)
     var terminalCurvature = true
     clearJet()
     val nodeOk = objective.jetAtNode(best, jet) && finiteJet()
@@ -440,7 +455,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     var directionStatus = newtonDirection(x, grad, hess, delta)
     val initialCurvatureNotPositive = directionStatus == NewtonDirectionStatus.CurvatureNotPositive
     var continue = directionStatus == NewtonDirectionStatus.Direction
-    if continue && budget.maxNewtonSteps == 0 then budgetExceeded = true
+    if continue && budget.maxNewtonSteps == 0 then exhaust(DecodeBudgetExit.NewtonStepCap)
     while continue && steps < budget.maxNewtonSteps do
       // clip to the box by scaling the step
       var alpha = 1.0
@@ -473,7 +488,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           val useJet = jetsUsed < budget.maxJets - 1 ||
             (jetsUsed < budget.maxJets && exactUsed >= budget.maxExactEvaluations)
           if !useJet && exactUsed >= budget.maxExactEvaluations then
-            budgetExceeded = true
+            exhaust(DecodeBudgetExit.RemainingEvaluationQuota)
             continue = false
           else
             counters.candidateAttempts += 1
@@ -527,15 +542,16 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                     copyJetState(x)
                     terminalCurvature = true
                     directionStatus = newtonDirection(x, grad, hess, delta)
-                    budgetExceeded = directionStatus == NewtonDirectionStatus.Direction
-                  else budgetExceeded = true
-                else budgetExceeded = true
+                    if directionStatus == NewtonDirectionStatus.Direction then
+                      exhaust(DecodeBudgetExit.AcceptedEnergyOnlyNonstationaryTerminal)
+                  else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalVerificationFailed)
+                else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalJetQuota)
             else
               scale *= 0.5
         if !accepted && continue then
-          budgetExceeded = true
+          exhaust(DecodeBudgetExit.CandidateAttemptCap)
           continue = false
-    if directionStatus == NewtonDirectionStatus.Direction && steps >= budget.maxNewtonSteps then budgetExceeded = true
+    if directionStatus == NewtonDirectionStatus.Direction && steps >= budget.maxNewtonSteps then exhaust(DecodeBudgetExit.NewtonStepCap)
     if initialCurvatureNotPositive then
       // derivative-free fallback: parabolic interpolation along each axis of the node grid
       fallback = true
@@ -583,8 +599,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
               copyJetState(x)
               terminalCurvature = true
             else clearCurvature()
-          else budgetExceeded = true
-      else if moved then budgetExceeded = true
+          else exhaust(DecodeBudgetExit.FallbackTerminalJetQuota)
+      else if moved then exhaust(DecodeBudgetExit.FallbackExactEvaluationQuota)
     if !terminalCurvature then clearCurvature()
     val sd = new Array[Double](d)
     val sdOk = terminalCurvature && conditionalSd(sd)
@@ -608,5 +624,6 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       dataHessian = dataHess.toVector,
       augmentedHessian = hess.toVector,
       conditionalSd = sd.toVector,
-      ambiguityGap = gap
+      ambiguityGap = gap,
+      budgetExit = if status == DecodeStatus.BudgetExceeded then budgetExit else None
     )
