@@ -275,6 +275,11 @@ object PilotRunner:
             writer.write("\n")
           }
           i += 1
+    catch
+      case e: Throwable =>
+        writer.close()
+        Files.deleteIfExists(partial): Unit
+        throw e
     finally writer.close()
     if aborted then
       Files.deleteIfExists(partial): Unit
@@ -349,6 +354,7 @@ object PilotRunner:
             val next = new AtomicInteger(0)
             val done = new AtomicInteger(0)
             val stop = new AtomicBoolean(false)
+            val costLock = new Object
             val failures = new java.util.concurrent.ConcurrentLinkedQueue[String]()
             def overCeiling(): Boolean =
               if cpuUsedNanos() > ceilingNanos then stop.set(true)
@@ -372,7 +378,10 @@ object PilotRunner:
                     val now = threadBean.getCurrentThreadCpuTime
                     workerCpu.addAndGet(now - mine): Unit
                     mine = now
-                    if finished then log(s"PILOT_PROGRESS,done=${done.incrementAndGet()}/${todo.length},skipped=$skipped")
+                    if finished then
+                      log(s"PILOT_PROGRESS,done=${done.incrementAndGet()}/${todo.length},skipped=$skipped")
+                      // Checkpoint the cost after every completed cell, so a killed run still bounds a resume.
+                      costLock.synchronized(writeCost("running", done.get)): Unit
             (0 until config.threads).foreach(_ => pool.submit(worker): Unit)
             pool.shutdown()
             val _ = pool.awaitTermination(7, TimeUnit.DAYS)
