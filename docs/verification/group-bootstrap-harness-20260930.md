@@ -115,9 +115,10 @@ All through `python3 /private/tmp/scalafim-execution-20260929/run-sbt.py <worktr
 
 | gate | command task | result | log |
 |---|---|---|---|
-| JVM (review round, final) | `groupJVM/test` | Total 157, Failed 0, Passed 152, Skipped 5 (research: 81 = 77 passed + 4 opt-in skipped; the other skip is the timing probe) | `bootstrap-harness-r3-final-jvm.log` |
-| JS (review round, final) | `groupJS/test` | Total 152, Failed 0, Passed 148, Skipped 4 (research: 77 = 74 passed + 3 opt-in skipped) | `bootstrap-harness-r3-final-js.log` |
-| warning gate (review round, final) | `scalafimCompileAll` | success (89 tasks), no warnings or errors | `bootstrap-harness-r3-final-compileall.log` |
+| JVM (round 4, final) | `groupJVM/clean` then `groupJVM/test` | GATE_JVM | `bootstrap-harness-r4-final-jvm.log` |
+| JS (round 4, final) | `groupJS/clean` then `groupJS/test` | GATE_JS | `bootstrap-harness-r4-final-js.log` |
+| warning gate (round 4, final) | `groupJVM/clean`, `groupJS/clean`, then `scalafimCompileAll` (group main recompiled, not a no-op) | GATE_CA | `bootstrap-harness-r4-final-compileall.log` |
+| review round 3 | `groupJVM/test`, `groupJS/test`, `scalafimCompileAll` at `51927430` | 157 / 152 total, all passing; CompileAll was an incremental no-op for the group module | `bootstrap-harness-r3-final-{jvm,js,compileall}.log` |
 | first round | `groupJVM/test`, `groupJS/test`, `scalafimCompileAll` | 132 / 128 total, all passing, no warnings | `bootstrap-harness-final-{jvm,js,compileall}.log` |
 | heavy (opt-in) | `-Dscalafim.group.bootstrapResearch.heavy=true "groupJVM/testOnly scalafim.group.research.bootstrap.*"` | Total 57, Failed 0, Passed 56, Skipped 1 (run before the pilot-like test was removed) | `bootstrap-harness-jvm-heavy.log` |
 | R reference | `Rscript tools/group-bootstrap-research/generate_reference_fixtures.R` | regenerates `BootstrapReferenceFixtures.scala`; R itself asserts 1149/1456/59 and the sign-flip bound | stdout |
@@ -160,6 +161,17 @@ Logs: `bootstrap-harness-mutation-{X5,X6,X7,X8}.log`, `bootstrap-harness-mutatio
 `bootstrap-harness-mutation-M6-r3.log`. After each run the file was restored, and all harness sources were re-verified
 against the pre-mutation SHA-256 list (0 mismatches). The mutated targets (ModelJ.scala, Bootstrap.scala) were not
 edited after this round; the later owner-decision edits touched Decision.scala, Evidence.scala and the suites only.
+
+Round 4 (N1): three decision-rule mutants that had survived every semantic suite, re-planted against the new tests:
+
+| id | planted bug | JVM research result (94 tests) | killed by (semantic) | also |
+|---|---|---|---|---|
+| R4 | `outcome` keeps only the power-cell length check | 2 failed | DfAndDecisionSuite: outcome refuses four non-power cells | ManifestFileSuite (hash) |
+| R7 | Gain required in every power cell of S (`forall`) | 2 failed | DfAndDecisionSuite: mixed gain (Adopt and Bound(n ≥ 20)) | ManifestFileSuite (hash) |
+| R8 | `passes` ignores the failure criterion (f ≤ 59) | 2 failed | DfAndDecisionSuite: k ≤ 1149 with f ≥ 60 is Unresolved | ManifestFileSuite (hash) |
+
+Logs `bootstrap-harness-mutation-{R4,R7,R8}.log`; Decision.scala restored after each and all shared harness sources
+re-verified against the pre-mutation hashes (0 mismatches).
 
 ## Deviations and interpretations (for review before the manifest freeze)
 
@@ -207,12 +219,19 @@ edited after this round; the later owner-decision edits touched Decision.scala, 
   S and Non-loss holds in every power cell in S (Fails outside S allowed; an S without a power cell cannot qualify);
   otherwise Decline on any Fail or Definite loss; otherwise Unresolved. Unit tests cover Adopt, Bound on one and on both
   sub-families (union domain), a Fail outside S, a Pass outside S, a Fail inside S, S without a power cell, a lossy power
-  cell in S, Decline and Unresolved.
+  cell in S, Decline and Unresolved; since round 4 also four non-power cells passed as power evidence (refusal), mixed
+  gain across the power cells of S, and k ≤ 1149 with f ≥ 60 (neither Adopt nor Bound).
+- **Clarifications (round 4; they follow from the declaration and the owner's rule, not new choices), stated also in
+  manifest v2:** "Fail" means a null Fail (k ≥ 1456); a failure count above 59 with k < 1456 does not Pass, so that
+  cell is Unresolved, not Decline. A Definite loss in a power cell outside S does not block Bound(S), because Bound
+  precedes Decline. The selection score counts each study once, whether it is a Reject, Unresolved or Failed.
 - **Confirmation selection** (`ConfirmationSelection.select(pilot: Vector[PilotEvidence], rule: SelectionRule =
   SelectionRule.Owner): Either[SelectionError, Vector[CellId]]`): score = max over B-plug, B-fixV and B-EB of
   (null rejections + study failures)/R, where study failures are outer failures plus Unresolved bounds
   (`CountAsRejection`); pool = 90 core cells minus the six fixed (84); ties to the lexicographically lowest ID string;
-  six cells, worst first. The alternative accountings and tie order remain as tested parameters only.
+  six cells, worst first. The alternative accountings and tie order remain as tested parameters only. `select`
+  refuses with a typed `SelectionError` (`WrongStudyCount`, `UnequalStudyCounts`) unless every candidate of every pool
+  cell has exactly R = 2000 pilot verdicts.
 - **Known-v / frozen-τ² control:** u* from the restricted τ̂0² is owner-confirmed.
 - **Still open:** the stress-cell dimensions (deviation 2) should be reviewed before the freeze.
 
@@ -221,10 +240,50 @@ edited after this round; the later owner-decision edits touched Decision.scala, 
 `tools/group-bootstrap-research/manifest-v2.json` (+ `.sha256`), written by
 `python3 tools/group-bootstrap-research/write_manifest_v2.py` after the final source edit. Canonical JSON (sorted keys,
 no whitespace). It records: parent = `cells.json` sha256 `76e6785b…` (unchanged); `selection-rule/v1` and
-`decision-rule/v2` with their parameters; the owner-confirmed known-v control; the SHA-256 of all 28 harness Scala
-sources and of the R script (29 entries); and the heavy log's path and SHA-256 only, marked sealed. `ManifestFileSuite`
-recomputes every source hash and fails if a harness source changes, or a file is added or removed, without the
-manifest being rewritten. sha256: `fbf1f8dee51deb9229a2217d99a4d42e2f86a8673bb900e3f9d3f3bebe1371ac`. **Status: pending independent re-review; not frozen for the pilot.**
+`decision-rule/v2` with their parameters and the round-4 clarifications; the owner-confirmed known-v control; the
+SHA-256 of every harness Scala source (shared and JVM, including the pilot runner), of the R script and of
+`write_manifest_v2.py` itself (32 entries); and the heavy log's path and SHA-256 only, marked sealed. What a pilot run
+depends on (git SHA, build, production sources) is stamped into the pilot's own output, not into the manifest.
+`ManifestFileSuite` recomputes every hash and fails if a listed file changes, or a harness file is added or removed,
+without the manifest being rewritten. sha256: `2091b2d75918eb1d9f6840d0484463a8ba632c3798d106d742bbaac2030f5c03`. **Status: pending re-review; not frozen.**
+
+## Pilot runner (round 4; the pilot was NOT run)
+
+`modules/group/jvm/src/test/scala/scalafim/group/research/bootstrap/PilotRunner.scala`:
+`PilotRunner.run(config: PilotConfig, log: String => Unit): Either[PilotRefusal, PilotReport]`, with
+`PilotConfig.declared(repo, threads)` = 117 cells, R = 2000, B = 499, `Phase.Pilot` (roots 2026100101–05), power stream
+on the 90 core cells, all 8 schemes plus every baseline on the null stream, the 3 candidates plus the native comparator
+on the power stream, ceiling 15 core-hours, output `/private/tmp/scalafim-execution-20260929/bootstrap-pilot-20260930/`
+(created by the runner only when it starts). Opt-in entry points (`PilotLaunch`):
+`-Dscalafim.group.bootstrapPilot.projectOnly=true` (projection only) and `-Dscalafim.group.bootstrapPilot.run=true`
+(`[-Dscalafim.group.bootstrapPilot.threads=N]`; refuses a dirty worktree).
+
+- **Output layout:** `stamp.json`; `cells/<cell>.<null|power>.jsonl` (a header line with the stamp, then one canonical
+  JSON line per study and scheme: verdict, k, f, B, T, failure type; lines for `native-pm-mkh`, `hc3-equal`,
+  `hc3-inverse-v`, `oracle-z`, `sign-flip` (intercept-only cells) and a `study` line with mean log(v/σ²)) with a
+  `.sha256` beside each; `summaries/<cell>.<stream>.json` (descriptive counts, files only); `selection.json` (+ `.sha256`)
+  with the six IDs from `ConfirmationSelection.select`.
+- **Stamp:** git SHA and clean flag, manifest-v2 sha256, cells.json sha256 (must be `76e6785b…`), a combined sha256 of
+  the production `modules/group/{shared,jvm,js}/src/main` sources, build.sbt sha256, phase and roots, R, B, cell and
+  power-cell lists, scheme lists and the selection-rule version. Resume works at cell granularity (a cell stream is
+  complete when its file and `.sha256` agree); any stamp difference, in `stamp.json` or a cell header, is a refusal.
+- **Parallelism:** a fixed thread pool across cells (default 4). **Output:** stdout carries only `PILOT_PROJECTION`,
+  `PILOT_PROGRESS` (counts), `PILOT_SELECTION_WRITTEN` (path) and `PILOT_DONE`; never a rate.
+- **Projection (harness seeds only, never pilot roots):** each cell's per-study cost is timed single-threaded after one
+  warm-up study (2 timed studies per cell and stream, B = 499, every scheme, baselines, EB, AR generation and Monte
+  Carlo sign flips included) and scaled to R = 2000. `bootstrap-harness-r4-projection.log` printed
+  `PILOT_PROJECTION,core_hours=1.207,ceiling=15.000,cells=117,studies=2000,draws=499`; it wrote no output. The figure is
+  an in-process JVM estimate with JIT and GC noise, and excludes R parity and JS runs.
+- **Tested** (`PilotRunnerSuite`, harness seeds, two cells, R = 3, B = 19): record format and stamps, `.sha256` files,
+  summaries, rebuilding selection input from the records, resume without rewriting, recomputation of a damaged cell
+  with identical bytes, refusal on a changed configuration and on a forged cell header, refusal by an artificially tiny
+  ceiling before any file is written, and no rate-like stdout.
+
+## Seeds used by tests
+
+Every draw in the tests and fixtures uses the harness roots 2026093001–05. Until round 4, one `ManifestSuite` test drew
+study 5 of C-n20-DG-Vspread-T2-N40 from the pilot roots (outcome and first-level streams; no statistic computed) to
+check reproducibility; round 4 moved it to harness seeds. `StreamsSuite` computes root numbers only and draws nothing.
 
 ## Limitations
 
