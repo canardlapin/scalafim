@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "gate": "origins-core-jvm-03",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head_before": "6f147401610e1f0497b4c47b537ecb28569e2907",
+    "head_after": "6f147401610e1f0497b4c47b537ecb28569e2907"
+  },
+  "requested_command": [
+    "mvpaJVM/test",
+    "mvpaFitJVM/test"
+  ],
+  "receipt": {
+    "raw_log": "origins-core-jvm-03.log",
+    "raw_log_sha256": "5ebc929a5594ab1ccea8a9353ad41801f787c6df3b1f5910aacb9d5c13428134",
+    "metadata": "origins-core-jvm-03.log.meta.json",
+    "metadata_sha256": "4114d163797096927839903e796609a51e9a46334e99370b711b5da5735bc403"
+  },
+  "outcome": {
+    "status": "test_compile_failed_before_test_execution",
+    "exit_code": 1,
+    "main_compile_completed": true,
+    "error": {
+      "path": "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/EvidenceOriginsSuite.scala",
+      "line": 10,
+      "column": 46,
+      "code": "E007",
+      "message": "ValueIdentity supplied where generic success value A is required"
+    },
+    "test_suites_completed": 0,
+    "tests_completed": 0,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "js_gate_started": false,
+    "reason": "JVM test compile failed"
+  }
+}

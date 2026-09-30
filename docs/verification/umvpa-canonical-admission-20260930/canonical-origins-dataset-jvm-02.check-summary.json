@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "gate": "canonical-origins-dataset-jvm-02",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head_before": "eab6e02036a073b537f9899083803615463465a5",
+    "head_after": "eab6e02036a073b537f9899083803615463465a5"
+  },
+  "provider": {
+    "override_supplied": false,
+    "staged_alder_path": "/private/tmp/scalafim-umvpa-20260929/sbt-global/staging/70113493d2034afa26c1/alder",
+    "staged_alder_head": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "staged_alder_worktree_clean": true
+  },
+  "requested_command": ["mvpaDatasetJVM/test"],
+  "receipt": {
+    "raw_log": "canonical-origins-dataset-jvm-02.log",
+    "raw_log_sha256": "336ca41a9c356788625f3c5307890dbda009b62079d7e87a00043cafda268278",
+    "metadata": "canonical-origins-dataset-jvm-02.log.meta.json",
+    "metadata_sha256": "e43d78f59c11995aa559709290ee3e99288a4ea4efa6f46c61033c26bdad21ca"
+  },
+  "outcome": {
+    "status": "test_compile_failed_before_test_execution",
+    "exit_code": 1,
+    "error_count": 12,
+    "errors": [
+      {"path": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala", "line": 101, "code": "E040", "message": "syntax error: ')' expected but val found"},
+      {"path": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala", "line": 53, "code": "E007", "message": "targets semantic type does not match observations.S"},
+      {"path": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala", "line": 69, "code": "E006", "message": "next not found"},
+      {"path": "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala", "line": 107, "code": "E006", "message": "targetSource not found"}
+    ],
+    "test_suites_completed": 0,
+    "tests_completed": 0,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "dataset_js_gate_started": false,
+    "compile_all_started": false
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "gate": "canonical-origins-dataset-jvm-03",
+  "source_head": "9d8ec21454774e840baf41de9dff345e7fd88418",
+  "provider": {"override_supplied": false, "staged_alder_head": "e555bad92307af1c2cbc104aef398cb9d9de88f0", "staged_alder_worktree_clean": true},
+  "requested_command": ["mvpaDatasetJVM/test"],
+  "receipt": {"raw_log": "canonical-origins-dataset-jvm-03.log", "raw_log_sha256": "fbc38d4dc05f4b1536167b20208f3e6dfc58cf3d3e6dc1c441249318932c9b64", "metadata": "canonical-origins-dataset-jvm-03.log.meta.json", "metadata_sha256": "3b0dbc3ec4ab4a067b9431e9a851974a46da69867c3a6728f8edc84c4c29b189"},
+  "outcome": {"status": "passed", "exit_code": 0, "tests_passed": 26, "tests_failed": 0, "errors": 0, "warnings_found": 0, "skipped_tests_found": 0}
+}

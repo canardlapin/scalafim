@@ -1,0 +1,143 @@
+{
+  "schema_version": 1,
+  "core_sha": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+  "base_sha": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+  "core_mote_candidate": "cand-5611573MF23VAWY3GVB5FDH48R",
+  "core_qualified_tests": 500,
+  "local_predictive_sha": "723268a8516518801e9c98c9ac9f354551c36532",
+  "predictive_code_review_sha": "326019976a5eb08e97abb3ab228cce19c6e25049",
+  "provider_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "provider_base_sha": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+  "provider_qualified_tests": 140,
+  "predictive_new_scenarios_both_platforms": 18,
+  "mixed_owning_tests": 518,
+  "runs": [
+    {
+      "raw_log": "frontier-core-qualification.log",
+      "metadata": "frontier-core-qualification.log.meta.json",
+      "exit_code": 0,
+      "cwd": "/private/tmp/scalafim-umvpa-20260929/core",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "scalafimCompileAll",
+        "mvpaJVM/test",
+        "mvpaFitJVM/test",
+        "mvpaDatasetJVM/test"
+      ],
+      "passed_suite_totals": [
+        198,
+        45,
+        7
+      ],
+      "sha256": "cce18b11e9e8a93a9d4dcaaabc3f6ea3939d81405a38650745c82f0ac55efa07",
+      "source_warnings": 0
+    },
+    {
+      "raw_log": "frontier-core-js.log",
+      "metadata": "frontier-core-js.log.meta.json",
+      "exit_code": 0,
+      "cwd": "/private/tmp/scalafim-umvpa-20260929/core",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "mvpaJS/test",
+        "mvpaFitJS/test",
+        "mvpaDatasetJS/test"
+      ],
+      "passed_suite_totals": [
+        198,
+        45,
+        7
+      ],
+      "sha256": "7b7b97409840b93d568d7946d78f46d7a0597f0e68d7acc7c3d37d7f958eb259",
+      "source_warnings": 0
+    },
+    {
+      "raw_log": "frontier-jvm-final.log",
+      "metadata": "frontier-jvm-final.log.meta.json",
+      "exit_code": 0,
+      "cwd": "/private/tmp/scalafim-umvpa-20260929/candidate",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "-Dscalafim.alder.build=/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+        "mvpaJVM/test",
+        "mvpaFitJVM/test",
+        "mvpaDatasetJVM/test"
+      ],
+      "passed_suite_totals": [
+        198,
+        45,
+        16
+      ],
+      "sha256": "6275dce468f9f5ceaaa691d4312b0a01747d7cd239f9270b33db187199129606",
+      "source_warnings": 0
+    },
+    {
+      "raw_log": "frontier-js-final.log",
+      "metadata": "frontier-js-final.log.meta.json",
+      "exit_code": 0,
+      "cwd": "/private/tmp/scalafim-umvpa-20260929/candidate",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "-Dscalafim.alder.build=/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+        "mvpaJS/test",
+        "mvpaFitJS/test",
+        "mvpaDatasetJS/test"
+      ],
+      "passed_suite_totals": [
+        198,
+        45,
+        16
+      ],
+      "sha256": "14f4ae79fc3dd0411c8d3bd713210a641d28a74819f244cb7e156e2d1cd9bf78",
+      "source_warnings": 0
+    },
+    {
+      "raw_log": "frontier-alder-jvm-js-03.log",
+      "metadata": "frontier-alder-jvm-js-03.log.meta.json",
+      "exit_code": 0,
+      "cwd": "/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "dataJVM/test",
+        "dataJS/test"
+      ],
+      "passed_suite_totals": [
+        70,
+        70
+      ],
+      "sha256": "1446fc1f84f7ef3992bbfe3b7d3cd74bb598490d2a04629c3fc0feeef7f17ff4",
+      "source_warnings": 1
+    }
+  ],
+  "boundaries": {
+    "core": "canonical unchanged provider pins, source approved, all-module compile warning-clean, owning JVM+JS pass",
+    "predictive": "local-provider override, materialized-only scope; M1.06 remains open",
+    "publication": "no push, merge, release or landing",
+    "main_checkout": "unrelated shared work not changed; only new review refs/evidence files created"
+  },
+  "outstanding": [
+    "upstream provider publication and immutable pinning",
+    "complete native operator-table admission and matrix-native Ridge",
+    "landing authorization; ancestor foundation candidate is pending"
+  ]
+}

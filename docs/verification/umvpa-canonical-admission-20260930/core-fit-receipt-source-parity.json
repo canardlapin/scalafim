@@ -1,0 +1,17 @@
+{
+  "receipt_source": "d44b91ca0c366068ed194ab3c859f012883f98de",
+  "final_source": "9d8ec21454774e840baf41de9dff345e7fd88418",
+  "unchanged_git_blobs": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceOrigins.scala": "2865b1c61901c1fcad38d90479d06c561af94e55",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Observations.scala": "334590253ba028f855f5816a4114d8559ef6728c",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Relations.scala": "9506efb2966f5197f5230c71b7cf9708c2f88833",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala": "c9a61e039a9a8d223302021503282d3c1e8ea961",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Compilation.scala": "f3c0652f84a9dc53103d4ea0efa31400038b7f86",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Diagnostics.scala": "e1535e7e68007050e3935dab881f8d7744b67557",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/EvidenceOriginsSuite.scala": "7e6cb50572bd95b53e2d4ea2ec479bdb298ad1c2",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/EvidenceExposureSuite.scala": "228d563a0d417dbc5b52d42bdb1a6b412ef6c167",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/DiagnosticsSuite.scala": "fd6852008bfb7efb4d819af4941baac8c52213d3",
+    "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala": "0c49018574caa20962ad28039b4bda55b57169bb",
+    "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala": "1e56f75c85821fbae667b58f1154fbe882c20083"
+  }
+}

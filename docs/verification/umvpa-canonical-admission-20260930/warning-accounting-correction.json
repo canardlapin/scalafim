@@ -1,0 +1,15 @@
+{
+  "rejected_artifacts": [
+    "rejected-provider-warning-scan.json",
+    "rejected-qualification-provider-warning-scan.json"
+  ],
+  "reason": "Bracketed-only warning scan omitted an unbracketed transitive sbt lint warning. Rejected drafts cannot qualify warning-free provider evidence.",
+  "provider_warning_count": 1,
+  "provider_errors": 0,
+  "provider_test_counts": [
+    70,
+    70
+  ],
+  "raw_logs_changed": false,
+  "fresh_owning_gates_warning_count": 0
+}

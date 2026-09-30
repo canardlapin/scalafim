@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "gate": "origins-core-jvm-04",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head_before": "d44b91ca0c366068ed194ab3c859f012883f98de",
+    "head_after": "d44b91ca0c366068ed194ab3c859f012883f98de"
+  },
+  "requested_command": ["mvpaJVM/test", "mvpaFitJVM/test"],
+  "receipt": {
+    "raw_log": "origins-core-jvm-04.log",
+    "raw_log_sha256": "3fe6c4948fa4d7fb26172566dc935eee49c86fb18b0694e1711118603c887851",
+    "metadata": "origins-core-jvm-04.log.meta.json",
+    "metadata_sha256": "3051c815bd153ede96dd55e7c9f90cc2009526eb1c74002229bbeb75d684d36f"
+  },
+  "outcome": {
+    "status": "passed",
+    "exit_code": 0,
+    "module_results": [
+      {"module": "mvpaJVM", "tests_passed": 222, "tests_failed": 0, "errors": 0},
+      {"module": "mvpaFitJVM", "tests_passed": 46, "tests_failed": 0, "errors": 0}
+    ],
+    "tests_passed": 268,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  }
+}

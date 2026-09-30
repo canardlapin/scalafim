@@ -1,0 +1,168 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-umvpa-20260930-canonical-admission-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260930-canonical-admission/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/70113493d2034afa26c1/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/35134e4fbd77703f1507/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (303158 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-umvpa-20260930-canonical-admission/)
+[info] compiling 4 Scala sources to /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/jvm/target/scala-3.7.4/test-classes ...
+[error] -- [E040] Syntax Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:101:4 
+[error] 101 |    val targetSource = source("target-source")
+[error]     |    ^^^
+[error]     |    ')' expected, but 'val' found
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:53:41 
+[error] 53 |    val current = exposure(observations, targets, mapping)
+[error]    |                                         ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, FK]
+[error]    |
+[error]    |where:    FK is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:56:63 
+[error] 56 |    val result = AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(1, right(MaterializationBudget(64L)))), current, permit, required)
+[error]    |                                                               ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]    |
+[error]    |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E171] Type Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:57:10 
+[error] 57 |    assert(result.isInstanceOf[AlderExposureReadResult.Refused])
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |missing argument for parameter clue of method assert in trait Assertions: (cond: => Boolean, clue: => Any)(implicit loc: munit.Location): Unit
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:63:41 
+[error] 63 |    val current = exposure(observations, targets, mapping)
+[error]    |                                         ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, FK]
+[error]    |
+[error]    |where:    FK is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:66:63 
+[error] 66 |    val result = AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(1, right(MaterializationBudget(64L)))), current, permit, required)
+[error]    |                                                               ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]    |
+[error]    |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:69:21 
+[error] 69 |        assertEquals(next.events.head.request.scope, ExposureScope.WholePopulation)
+[error]    |                     ^^^^
+[error]    |                     Not found: next - did you mean test?
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:70:21 
+[error] 70 |        assertEquals(next.events.head.request.maximumCells, 64L)
+[error]    |                     ^^^^
+[error]    |                     Not found: next - did you mean test?
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:76:41 
+[error] 76 |    val current = exposure(observations, targets, mapping)
+[error]    |                                         ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, FK]
+[error]    |
+[error]    |where:    FK is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:81:52 
+[error] 81 |      AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy, current, constrainedPermit, constrained),
+[error]    |                                                    ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]    |
+[error]    |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:88:52 
+[error] 88 |      AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy, foreign, foreignPermit, approved),
+[error]    |                                                    ^^^^^^^
+[error]    |Found:    (targets :
+[error]    |  scalafim.fmri.mvpa.MultiResponse[
+[error]    |    ? <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id, ?
+[error]    |     <: scalafim.fmri.mvpa.AxisRef[String]#semantic.Id]
+[error]    |)
+[error]    |Required: scalafim.fmri.mvpa.MultiResponse[observations.S, F]
+[error]    |
+[error]    |where:    F is a type variable with constraint <: multivar.core.SemanticSpace
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala:107:123 
+[error] 107 |      right(MultiResponse.fromOperator(samples, responses, operator, ValueIdentity.source(ValueId.unsafe("same-targets")), targetSource, EvidenceOrigins.Unknown)) -> operator
+[error]     |                                                                                                                           ^^^^^^^^^^^^
+[error]     |                                               Not found: targetSource
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] 12 errors found
+[error] (mvpaDatasetJVM / Test / compileIncremental) Compilation failed
+[error] Total time: 13 s, completed Sep 30, 2026, 3:32:29 p.m.
