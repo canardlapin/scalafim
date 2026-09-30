@@ -38,6 +38,7 @@ cross-compiled sbt build.
 - `spatial`: spatial-functor infrastructure — typed domains with locus packages, sampled geometries, exact/crisp/sampled transport, selections, lazy fields, and graph/operator compilation.
 - `atlas`: typed standard-atlas metadata plus locus parcellations, registry, transform plans, parcel/network lookup, one-pass reduction, explicit-alignment overlap, and quotient adjacency.
 - `archive`: format-neutral revisions and publication state, separately versioned normalized manifests, exact canonical encoding, transactional write orchestration, and typed resource-backed payload execution and receipts.
+- `archive-hdf5`: explicitly opt-in generic fixed chunked HDF5 slabs, checked primitive blocks, serialized JVM JNI and typed Scala.js refusal; excluded from root/global builds pending production provider packaging. See [local capability checks](docs/verification/archive-hdf5-native-adapter-2026-09-30.md).
 - `estimates`: fit-independent estimate catalogs, scientific identities, product/validity/uncertainty metadata and bounded read/write contracts.
 - `estimates-io`: shared development-schema JSON codecs and a JVM local NIfTI sink, verified reader and immutable collection publication. See [implementation scope](docs/estimate-sets.md).
 - `fit-estimates`: physical-IO-independent shared-OLS effects and joint-uncertainty producer, plus the eager direct-fit group adapter.

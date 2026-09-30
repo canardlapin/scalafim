@@ -907,6 +907,82 @@ lazy val archive =
 lazy val archiveJS  = archive.js
 lazy val archiveJVM = archive.jvm
 
+// Local native experiment only: deliberately absent from root aggregation and global aliases.
+lazy val hdf5ProviderPrepare = taskKey[File]("Validate the retained official HDF5 cache without downloading or extracting")
+
+def hdf5Hash(path: File): String = {
+  val digest = java.security.MessageDigest.getInstance("SHA-256")
+  val input = new java.io.FileInputStream(path)
+  try {
+    val buffer = new Array[Byte](1048576)
+    var n = input.read(buffer)
+    while (n >= 0) {
+      if (n > 0) digest.update(buffer, 0, n)
+      n = input.read(buffer)
+    }
+  } finally input.close()
+  digest.digest().map(b => f"${b & 0xff}%02x").mkString
+}
+
+lazy val archiveHdf5 =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/archive-hdf5"))
+    .dependsOn(archive)
+    .settings(commonSettings)
+    .settings(name := "scalafim-archive-hdf5", publish / skip := true, scalacOptions += "-Werror")
+    .jvmSettings(
+      hdf5ProviderPrepare := {
+        val cache = sys.props.get("scalafim.hdf5.provider.dir").map(file).getOrElse(
+          sys.error("MissingCapability: opt-in archiveHdf5JVM requires -Dscalafim.hdf5.provider.dir=<existing verified task cache>"))
+        val lib = cache / "provider/HDF5-2.2.0-Darwin/HDF_Group/HDF5/2.2.0/lib"
+        val archiveName = "hdf5-2.2.0-macos15_clang.tar.gz"
+        val archiveUrl = "https://github.com/HDFGroup/hdf5/releases/download/2.2.0/" + archiveName
+        val archiveSha = "7402939a854b643022e239dfa544a200c048b798bb0861890010db48a72efc73"
+        def verify(path: File, bytes: Long, sha: String): Unit = {
+          require(path.isFile && path.length == bytes && hdf5Hash(path) == sha,
+            "MissingCapability: locked artifact mismatch: " + path)
+        }
+        require(sys.props("os.name") == "Mac OS X" && Set("aarch64", "arm64").contains(sys.props("os.arch")),
+          "MissingCapability: only macOS ARM64 is admitted")
+        require(sys.props("java.specification.version") == "25", "MissingCapability: only the actual JDK25 lane is admitted")
+        verify((LocalRootProject / baseDirectory).value / "tools/validation/hdf5-provider-probe/provider-lock.json", 1202,
+          "a0f1eda7c29dee1dead84cd7c4d55ca031624721f56953a886fa8e37ee94ad29")
+        verify(cache / archiveName, 34803158, archiveSha)
+        require(IO.read(cache / "hdf5-2.2.0.sha256sums.txt").contains(archiveSha + "  " + archiveName), "MissingCapability: publisher checksum")
+        require(IO.read(cache / "release.json").contains(archiveUrl), "MissingCapability: official archive URL")
+        verify(cache / "outer/hdf5/HDF5-2.2.0-Darwin.tar.gz", 36490631,
+          "6df762cc48394584e86fade25e972189d3706a9370923f3ccc968de3b5ee5543")
+        Seq(
+          ("jarhdf5-2.2.0.jar", 86209L, "8a561afd611d95ef2167195eaf89b43f2f96f517690280094d7ffcde306a3895"),
+          ("slf4j-api-2.0.16.jar", 69435L, "a12578dde1ba00bd9b816d388a0b879928d00bab3c83c240f7013bf4196c579a"),
+          ("slf4j-nop-2.0.16.jar", 4982L, "deca6c04ed35515a0a911fa44c0e836bee92c0c59d2e8fa9bab8ffbc464a9ba7"),
+          ("libhdf5_java.dylib", 1236544L, "0a67221b6e1617aef522dcf9fc3aad1c27f424fbc4844087efcab560adb3a93c"),
+          ("libhdf5.320.2.0.dylib", 10592048L, "9c681586a5fee10ad7efaf49bab058c38dfc9119aa5d55a78c04e476962ebf8e"),
+          ("libhdf5.320.dylib", 10592048L, "9c681586a5fee10ad7efaf49bab058c38dfc9119aa5d55a78c04e476962ebf8e"),
+          ("libhdf5.settings", 4248L, "732d3e1857023a3d9e505966fd11192d49c2a7805250ae6d71a5d75a2292d642")
+        ).foreach { case (name, bytes, sha) => verify(lib / name, bytes, sha) }
+        lib.getCanonicalFile
+      },
+      Compile / unmanagedJars ++= {
+        val lib = hdf5ProviderPrepare.value
+        Seq("jarhdf5-2.2.0.jar", "slf4j-api-2.0.16.jar", "slf4j-nop-2.0.16.jar").map(n => Attributed.blank(lib / n))
+      },
+      Test / fork := true,
+      Test / parallelExecution := false,
+      Test / javaOptions ++= {
+        val lib = hdf5ProviderPrepare.value
+        Seq("-Xmx64m", "--enable-native-access=ALL-UNNAMED", "-Djava.library.path=" + lib,
+          "-Dscalafim.hdf5.provider.dir=" + sys.props("scalafim.hdf5.provider.dir")) ++
+          sys.props.get("scalafim.hdf5.test.dir").toSeq.map("-Dscalafim.hdf5.test.dir=" + _)
+      },
+      Test / envVars += "HDF5_PLUGIN_PRELOAD" -> "::"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val archiveHdf5JS = archiveHdf5.js
+lazy val archiveHdf5JVM = archiveHdf5.jvm
+
 lazy val estimates =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
