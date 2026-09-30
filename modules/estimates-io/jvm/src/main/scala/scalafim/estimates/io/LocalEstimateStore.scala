@@ -85,6 +85,8 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
 
   private[io] def publishMixedUnit(unit: EstimateUnit, representations: Vector[EstimateRepresentation], compact: Boolean,
       status: Option[InferenceStatusRepresentation] = None): Either[EstimateError, PinnedUnit] =
+    if representations.exists(_.isInstanceOf[EstimateRepresentation.Hdf5]) then
+      return Left(EstimateError.Unsupported("NIfTI publication refuses HDF5 representations"))
     val prefix = s"units/${unit.revision.value}"
     // A fresh unit owns its catalog reference. Identical catalog bytes still
     // retain model identity; content-addressed deduplication is optional.
@@ -103,6 +105,23 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
         EstimateMetadata.inferenceUnit(unit, catalog, representations.collect { case EstimateRepresentation.Nifti(value) => value }, tables, status.get)
         else if compact then EstimateMetadata.compactUnit(unit, catalog, representations, tables)
         else EstimateMetadata.unit(unit, catalog, representations.collect { case EstimateRepresentation.Nifti(value) => value }, Some(tables)))
+    yield PinnedUnit(unit.unit, unit.revision, manifest)
+
+  /** Metadata-only hook. The backend must close and re-inspect its actual
+    * datasets before supplying these digest-pinned container declarations.
+    */
+  private[io] def publishHdf5Unit(unit: EstimateUnit, records: Vector[Hdf5Representation]): Either[EstimateError, PinnedUnit] =
+    val prefix = s"units/${unit.revision.value}"
+    for
+      _ <- Hdf5Representation.validateInventory(unit, records)
+      _ <- verifyEstimability(unit)
+      _ <- records.map(_.container).distinct.foldLeft[Either[EstimateError, Unit]](Right(())):
+        (previous, container) => previous.flatMap(_ => objects.verify(verified(container)).left.map(fromStore))
+      catalog <- writeText(s"$prefix/estimands.json", EstimateMetadata.catalog(unit.catalog))
+      estimands <- writeText(s"$prefix/estimands.tsv", EstimateMetadata.estimandsTsv(unit.catalog))
+      observations <- writeText(s"$prefix/observations.tsv", EstimateMetadata.observationsTsv(unit))
+      encoded <- EstimateMetadata.hdf5Unit(unit, catalog, records, EstimateIndexTables(estimands, observations))
+      manifest <- writeText(s"$prefix/estimates.json", encoded)
     yield PinnedUnit(unit.unit, unit.revision, manifest)
 
   private[io] def inspectWithRepresentations(reference: PinnedUnit): Either[EstimateError, (EstimateUnit, Vector[EstimateRepresentation], Option[InferenceStatusRepresentation])] =
@@ -134,6 +153,7 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       _ <- if schema == EstimateMetadata.developmentSchema || representations.forall {
              case EstimateRepresentation.Nifti(value) => value.storedDatatype.nonEmpty
              case EstimateRepresentation.SharedNormalizedUpperTriangle(_) => true
+             case EstimateRepresentation.Hdf5(_) => schema == EstimateMetadata.hdf5Schema
            } then Right(())
            else Left(EstimateError.Integrity("Core-NIfTI representations require explicit physical stored datatype"))
       _ <- if schema == EstimateMetadata.developmentSchema then Right(())
@@ -144,7 +164,13 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
              else Left(EstimateError.Integrity("Core-NIfTI representation inventory must exactly cover declared pairs"))
     yield (unit, representations, status)
 
-  def inspect(reference: PinnedUnit): Either[EstimateError, EstimateUnit] = inspectWithRepresentations(reference).map(_._1)
+  private def niftiOnly(representations: Vector[EstimateRepresentation]): Either[EstimateError, Unit] =
+    if representations.exists(_.isInstanceOf[EstimateRepresentation.Hdf5]) then
+      Left(EstimateError.Unsupported("default NIfTI store refuses HDF5 units"))
+    else Right(())
+
+  def inspect(reference: PinnedUnit): Either[EstimateError, EstimateUnit] =
+    inspectWithRepresentations(reference).flatMap((unit, records, _) => niftiOnly(records).map(_ => unit))
 
   def open(reference: PinnedUnit, limits: ReadLimits): Either[EstimateError, EstimateSource] =
     inspectWithRepresentations(reference).flatMap: (unit, representations, status) =>
@@ -162,48 +188,22 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       covarianceLayout: CovarianceLayout = CovarianceLayout.PairNifti): Either[EstimateError, InferenceEvidenceSink] =
     verifyEstimability(unit).flatMap(_ => NiftiEstimateSink.open(this, unit, maximumBlockCells, covarianceLayout, inference = true))
 
-  private def validateCollection(collection: EstimateCollection): Either[EstimateError, Unit] =
-    val published = collection.units.values.collect { case UnitOutcome.Published(ref) => ref }.toVector
-    published.foldLeft[Either[EstimateError, Option[EstimandCatalog]]](Right(None)): (previous, ref) =>
-      previous.flatMap: expectedCatalog =>
-        inspectWithRepresentations(ref).flatMap: (unit, _, status) =>
-          val verifiedStatus = status match
-            case Some(value) => objects.verify(verified(value.file)).left.map(fromStore)
-            case None => Right(())
-          verifiedStatus.flatMap: _ =>
-            if unit.dataset != collection.dataset || unit.catalog.model != collection.model then
-              Left(EstimateError.Invalid("collection unit has a different dataset or model"))
-            else if expectedCatalog.exists(_ != unit.catalog) then
-              Left(EstimateError.Conflict("one model revision cannot identify different immutable catalogs"))
-            else Right(Some(unit.catalog))
-    .map(_ => ())
+  private def inspectDefaultPublished(reference: PinnedUnit): Either[EstimateError, EstimateUnit] =
+    inspectWithRepresentations(reference).flatMap: (unit, records, status) =>
+      for
+        _ <- niftiOnly(records)
+        _ <- status match
+          case Some(value) => objects.verify(verified(value.file)).left.map(fromStore)
+          case None => Right(())
+      yield unit
 
-  def publishCollection(collection: EstimateCollection): Either[EstimateError, PinnedEstimateSet] =
-    validateCollection(collection).flatMap: _ =>
-      writeText(s"collections/${collection.revision.value}/estimateset.json", EstimateMetadata.collection(collection))
-        .map(PinnedEstimateSet(collection.revision, _))
+  private val collections = new LocalEstimateCollections(this, inspectDefaultPublished)
 
-  def current(): Either[EstimateError, Option[(PinnedEstimateSet, scalafim.archive.ContentDigest)]] =
-    if !Files.exists(root.resolve("current.json")) then Right(None)
-    else for
-      pointer <- objects.inspect("current.json").left.map(fromStore)
-      encoded <- text(reference(pointer))
-      pinned <- EstimateMetadata.readPointer(encoded)
-      _ <- openCollection(pinned)
-    yield Some(pinned -> pointer.digest)
-
-  def openCollection(reference: PinnedEstimateSet): Either[EstimateError, EstimateCollection] =
-    text(reference.manifest).flatMap(EstimateMetadata.readCollection).flatMap: collection =>
-      if collection.revision == reference.revision then validateCollection(collection).map(_ => collection)
-      else Left(EstimateError.Integrity("collection identity differs from pinned reference"))
-
-  /** Stale writers receive a conflict; the scientific owner must merge compatible
-    * additions into a new immutable collection before retrying.
-    */
+  def publishCollection(collection: EstimateCollection): Either[EstimateError, PinnedEstimateSet] = collections.publish(collection)
+  def openCollection(reference: PinnedEstimateSet): Either[EstimateError, EstimateCollection] = collections.open(reference)
+  def current(): Either[EstimateError, Option[(PinnedEstimateSet, scalafim.archive.ContentDigest)]] = collections.current()
   def discover(reference: PinnedEstimateSet, expectedPointerDigest: Option[scalafim.archive.ContentDigest]): Either[EstimateError, Unit] =
-    openCollection(reference).flatMap: _ =>
-      objects.compareAndSwapPointer("current.json", expectedPointerDigest, EstimateMetadata.pointer(reference).getBytes(UTF_8))
-        .left.map(fromStore).map(_ => ())
+    collections.discover(reference, expectedPointerDigest)
 
 object LocalEstimateStore:
   def open(root: Path): Either[EstimateError, LocalEstimateStore] =

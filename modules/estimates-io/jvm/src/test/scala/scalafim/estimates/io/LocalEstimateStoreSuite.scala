@@ -419,3 +419,78 @@ class LocalEstimateStoreSuite extends munit.FunSuite:
       assertEqualsDouble(bytes.getDouble(offset + 8 * (48 + 23)), 72.0, 0.0)
     finally right(source.close())
   }
+
+  // Opaque .h5 leaves exercise metadata closure only, never HDF5 conformance.
+  private def opaqueHdf5(store: LocalEstimateStore): Vector[Hdf5Representation] =
+    Hdf5MetadataFixture.records.groupBy(_.product).toVector.flatMap: (_, rows) =>
+      val container = right(store.objects.write(rows.head.container.path)(_.write(Array[Byte](7, 11, 5))).left.map(store.fromStore))
+      rows.map(_.copy(container = store.reference(container)))
+
+  test("HDF5 hook publishes identical catalog/TSV projections and exact immutable metadata retries"):
+    val f = Hdf5MetadataFixture
+    val store = right(LocalEstimateStore.open(Files.createTempDirectory("hdf5-metadata-only-")))
+    val records = opaqueHdf5(store).sortBy(r => f.records.indexWhere(x => x.product == r.product && x.observation == r.observation))
+    val pinned = right(store.publishHdf5Unit(f.unit, records))
+    assertEquals(store.publishHdf5Unit(f.unit, records), Right(pinned))
+    val (decoded, reps, status) = right(store.inspectWithRepresentations(pinned))
+    assertEquals(decoded.copy(domain = f.unit.domain), f.unit)
+    assertEquals(reps, records.map(EstimateRepresentation.Hdf5.apply))
+    assertEquals(status, None)
+    val manifest = Files.readString(store.root.resolve(pinned.manifest.path))
+    val catalog = right(EstimateMetadata.catalogReference(manifest))
+    val tables = right(EstimateMetadata.indexTables(manifest)).get
+    assertEquals(Files.readString(store.root.resolve(catalog.path)), EstimateMetadata.catalog(f.unit.catalog))
+    assertEquals(Files.readString(store.root.resolve(tables.estimands.path)), EstimateMetadata.estimandsTsv(f.unit.catalog))
+    assertEquals(Files.readString(store.root.resolve(tables.observations.path)), EstimateMetadata.observationsTsv(f.unit))
+    val before = Files.readString(store.root.resolve(pinned.manifest.path))
+    val changed = f.unit.copy(provenance = f.unit.provenance.copy(executionId = "different-execution"))
+    assert(store.publishHdf5Unit(changed, records).left.toOption.exists(_.isInstanceOf[EstimateError.Conflict]))
+    assertEquals(Files.readString(store.root.resolve(pinned.manifest.path)), before)
+    val paths = Files.walk(store.root.resolve(".staging"))
+    try assert(!paths.anyMatch(Files.isRegularFile(_)))
+    finally paths.close()
+
+  test("invalid HDF5 closure, evidence and old publication routing refuse before metadata writes"):
+    val f = Hdf5MetadataFixture
+    for mode <- Vector("inventory", "evidence", "estimability", "missing", "corrupt", "old-default", "old-compact", "byte-count") do
+      val store = right(LocalEstimateStore.open(Files.createTempDirectory(s"hdf5-refusal-$mode-")))
+      val records = opaqueHdf5(store)
+      val evidence = InferenceEvidence(Vector.empty, Vector(InferenceStatusScope.Fit(f.unit.observations.head.id)))
+      val result = mode match
+        case "inventory" => store.publishHdf5Unit(f.unit, records.drop(1))
+        case "evidence" => store.publishHdf5Unit(f.unit.copy(inferenceEvidence = Some(evidence)), records)
+        case "estimability" => store.publishHdf5Unit(f.unit.copy(estimability = EstimabilityEvidence.Design(Vector(ColumnId("z")),
+          f.catalogRef.copy(path = "absent-design.tsv"))), records)
+        case "missing" =>
+          Files.delete(store.root.resolve(records.head.container.path))
+          store.publishHdf5Unit(f.unit, records)
+        case "corrupt" =>
+          Files.write(store.root.resolve(records.head.container.path), Array[Byte](1, 2, 3))
+          store.publishHdf5Unit(f.unit, records)
+        case "byte-count" => store.publishHdf5Unit(f.unit, records.map(_.copy(container = records.head.container.copy(bytes = Long.MaxValue))))
+        case _ => store.publishMixedUnit(f.unit, records.map(EstimateRepresentation.Hdf5.apply), mode == "old-compact")
+      assert(result.isLeft, mode)
+      assert(!Files.exists(store.root.resolve(s"units/${f.unit.revision.value}")), mode)
+      assert(!Files.exists(store.root.resolve("current.json")), mode)
+      val stages = Files.walk(store.root.resolve(".staging"))
+      try assert(!stages.anyMatch(Files.isRegularFile(_)), mode)
+      finally stages.close()
+
+  test("default inspection, collections and NIfTI opening refuse HDF5 before absent container access"):
+    val f = Hdf5MetadataFixture
+    val store = right(LocalEstimateStore.open(Files.createTempDirectory("hdf5-default-refusal-")))
+    val records = opaqueHdf5(store)
+    val pinned = right(store.publishHdf5Unit(f.unit, records))
+    records.map(_.container.path).distinct.foreach(path => Files.delete(store.root.resolve(path)))
+    def unsupported[A](result: Either[EstimateError, A]): Unit =
+      assert(result.left.toOption.exists(_.isInstanceOf[EstimateError.Unsupported]))
+    assert(store.inspectWithRepresentations(pinned).isRight) // metadata, not closed-container verification
+    unsupported(store.inspect(pinned))
+    unsupported(store.open(pinned, ReadLimits(1)))
+    unsupported(NiftiEstimateSource.preflight(store, f.unit, records.map(EstimateRepresentation.Hdf5.apply), ReadLimits(1)))
+    unsupported(NiftiEstimateSource.openMixed(store, f.unit, records.map(EstimateRepresentation.Hdf5.apply), ReadLimits(1)))
+    val collection = EstimateCollection(f.unit.dataset, CollectionRevisionId("00000000-0000-4000-8000-000000000150"),
+      f.unit.catalog.model, Map(f.unit.unit -> UnitOutcome.Published(pinned)))
+    unsupported(store.publishCollection(collection))
+    assert(!Files.exists(store.root.resolve("collections")))
+    assert(!Files.exists(store.root.resolve("current.json")))

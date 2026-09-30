@@ -260,6 +260,8 @@ private[io] object NiftiEstimateSource:
 
   private[io] def preflight(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits,
       status: Option[InferenceStatusRepresentation] = None): Either[EstimateError, Unit] =
+    if representations.exists(_.isInstanceOf[EstimateRepresentation.Hdf5]) then
+      return Left(EstimateError.Unsupported("NIfTI reader refuses HDF5 representations"))
     if unit.inferenceEvidence.nonEmpty != status.nonEmpty then return Left(EstimateError.Integrity("inference evidence and payload inventory differ"))
     val statusCheck = status.map(record => InferenceStatusRepresentation.preflight(unit).flatMap(_ => record.validate(unit))).getOrElse(Right(()))
     statusCheck match
@@ -343,6 +345,7 @@ private[io] object NiftiEstimateSource:
                   _ = tables :+= table
                 yield ()
               case EstimateRepresentation.Nifti(representation) => openNifti(representation)
+              case EstimateRepresentation.Hdf5(_) => Left(EstimateError.Unsupported("NIfTI reader refuses HDF5 representations"))
         .flatMap: _ =>
           val opening = status match
             case None => Right(())

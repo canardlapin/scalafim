@@ -96,6 +96,7 @@ object CompactCovarianceProbe:
       val uBytes = records.filter(_.product == cov.id).map {
         case EstimateRepresentation.Nifti(value) => value.values.bytes + value.validity.bytes
         case EstimateRepresentation.SharedNormalizedUpperTriangle(value) => value.table.bytes
+        case EstimateRepresentation.Hdf5(_) => throw new AssertionError("compact NIfTI probe cannot produce HDF5")
       }.sum
       val stages = Files.walk(store.root.resolve(".staging"))
       val stageFiles = try stages.filter(path => Files.isRegularFile(path)).count() finally stages.close()
