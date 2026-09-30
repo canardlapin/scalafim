@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T12:04:54.993861+00:00",
+  "finished_utc": "2026-09-30T12:13:56.275134+00:00",
+  "duration_seconds": 541.28404,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dsbt.global.staging=/private/tmp/scalafim-phrf-push-20260930/staging",
+    "hrfJVM/testOnly scalafim.fmri.hrf.family.GaussianFamilySuite",
+    "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite",
+    "scalafimCompileAll",
+    "show firstLevelLawsJVM/Test/fullClasspath"
+  ],
+  "cwd": "/private/tmp/scalafim-phrf-push-20260930/work",
+  "log": "/private/tmp/scalafim-phrf-push-20260930/evidence/final-jvm-compile.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 31002
+}
