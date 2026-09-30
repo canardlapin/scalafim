@@ -57,9 +57,20 @@ final case class TrialBandedWorkSnapshot(
     exactReadoutFactors: Long,
     attempted: TrialBandedAttemptedWorkSnapshot)
 
-/** Actual numerical operations attempted by either immutable node-bank setup or
-  * one worker. The legacy fields above deliberately retain their original
-  * successful-work meanings.
+/** Bounded reference-build and banded-work accounting for immutable node-bank
+  * setup or one worker. Legacy counters retain their original increment semantics.
+  *
+  * `factorAttempts` and `factorFailures` count reference-build Cholesky calls:
+  * the banded ridge, dense release and dense constrained-determinant factors.
+  * Solve and RHS counters cover banded calls and their requested RHS columns only.
+  * `releaseFailures` counts references returning `ReleaseRank`, including the
+  * constrained determinant. `partialReferenceFailures` currently equals
+  * `referenceFailures`; it does not imply a solve succeeded before refusal.
+  * Exact-readout factor attempts count exact-reference requests, including a
+  * coordinate-dimension refusal before numerical factorisation.
+  *
+  * Small release solves, profile reduction and curvature checks are excluded.
+  * Failed bank construction returns an error without exposing its setup receipt.
   */
 final case class TrialBandedAttemptedWorkSnapshot(
     referenceAttempts: Long,
