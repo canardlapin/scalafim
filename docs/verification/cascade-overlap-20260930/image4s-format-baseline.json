@@ -1,0 +1,21 @@
+{
+  "base": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+  "classification": "pre-existing repository-wide scalafmt failures outside one-line build pin change",
+  "files": [
+    {
+      "path": "modules/image4s-geometry/shared/src/main/scala/image4s/geometry/Affine.scala",
+      "identical_to_base": true,
+      "sha256": "1be9f95d10bb96c70a8e7a5e6a4e8e9ad805c5aaa8c92f58b92bb569ee747268"
+    },
+    {
+      "path": "modules/image4s-geometry/shared/src/main/scala/image4s/geometry/Grid.scala",
+      "identical_to_base": true,
+      "sha256": "cdfa14a409a188454e532dc57bed5daf0c2df1c0d4395edb98646ecb2fbfd74f"
+    },
+    {
+      "path": "modules/image4s-geometry/shared/src/test/scala/image4s/geometry/GeometrySuite.scala",
+      "identical_to_base": true,
+      "sha256": "bd55db6940e807bdf0097643ea26110d55d705c75e17b5ce30964b3620504e4d"
+    }
+  ]
+}

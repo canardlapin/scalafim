@@ -1,0 +1,15 @@
+{
+  "base_commit": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+  "locus4s_commit": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+  "files": {
+    "build.sbt": "cd716b30d1c64454312e61762b6f32157cf388b15084b49226cfa7bfe9d942f5",
+    "modules/hrf/README.md": "24eae030b9a43c8263bda67760841b173803384b382d9aefa9d8f31d8f6d1463",
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/Cascade34Realization.scala": "c0103821928dadcc2bc8fc04d19945924e43ecacf5d3843ab3fababfecc6e229",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/Cascade34RealizationSuite.scala": "5dd183ced30fe4f1705f988a8a9f75438f9c1b8130154e5bb495a8018bbc2295",
+    "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/Cascade34RealizationFixtures.scala": "2cffa9110241ee348bab00c9fc25ae35788e545b6d68ac8f04e57a9c6c924853",
+    "modules/locus-data/shared/src/test/scala/scalafim/locus/RegionOverlapConsumerSuite.scala": "65c4bbc5118cdd75df9075172c8a2910dbf678ab2b8b921f9f45deacdc34771a",
+    "tools/validation/cascade34_realization_reference.py": "00871bf98b7adc91305a3371233e61618c9a6e9ecdac39f271b6233c4677fe22"
+  },
+  "reframe4s_commit": "221f46163f5039e62c74e042e1c50f0762757fc0",
+  "image4s_commit": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0"
+}

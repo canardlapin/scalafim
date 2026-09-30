@@ -1,0 +1,119 @@
+{
+  "scope": "atlas Compile/fullClasspath, covering ScalaFIM image, locus and reframe consumers",
+  "raw_log_sha256": "2ad627fd479f281f62bb59da63c44e76c54de466cdfb2f3a25540cae15789bbe",
+  "one_source_build_per_owner": true,
+  "source_checkouts_clean": true,
+  "effective_classpaths": [
+    {
+      "owner": "locus4s",
+      "platform": "jvm",
+      "revision": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "module_classpaths": {
+        "locus4s-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes"
+        ],
+        "locus4s-data": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes"
+        ]
+      }
+    },
+    {
+      "owner": "locus4s",
+      "platform": "js",
+      "revision": "a67bc87c33b5da8a5dc2cad49919c015b59f3050",
+      "module_classpaths": {
+        "locus4s-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-core/js/target/scala-3.7.4/classes"
+        ],
+        "locus4s-data": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/b51ea69c1c3a30e37df3/locus4s/modules/locus4s-data/js/target/scala-3.7.4/classes"
+        ]
+      }
+    },
+    {
+      "owner": "image4s",
+      "platform": "jvm",
+      "revision": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+      "module_classpaths": {
+        "image4s-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes"
+        ],
+        "image4s-geometry": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes"
+        ],
+        "image4s-locus": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes"
+        ],
+        "image4s-filter": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes"
+        ],
+        "image4s-ops-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes"
+        ],
+        "image4s-nifti": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes"
+        ]
+      }
+    },
+    {
+      "owner": "image4s",
+      "platform": "js",
+      "revision": "03288b6d5c4e8c24d3fcfa22df1e977839f007d0",
+      "module_classpaths": {
+        "image4s-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-core/js/target/scala-3.7.4/classes"
+        ],
+        "image4s-geometry": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-geometry/js/target/scala-3.7.4/classes"
+        ],
+        "image4s-locus": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-locus/js/target/scala-3.7.4/classes"
+        ],
+        "image4s-filter": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-filter/js/target/scala-3.7.4/classes"
+        ],
+        "image4s-ops-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/ed8ec197fdd25239170c/image4s/modules/image4s-ops-core/js/target/scala-3.7.4/classes"
+        ]
+      }
+    },
+    {
+      "owner": "reframe4s",
+      "platform": "jvm",
+      "revision": "221f46163f5039e62c74e042e1c50f0762757fc0",
+      "module_classpaths": {
+        "reframe4s-lie": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes"
+        ],
+        "reframe4s-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes"
+        ],
+        "reframe4s-field": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes"
+        ],
+        "reframe4s-resample": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes"
+        ]
+      }
+    },
+    {
+      "owner": "reframe4s",
+      "platform": "js",
+      "revision": "221f46163f5039e62c74e042e1c50f0762757fc0",
+      "module_classpaths": {
+        "reframe4s-lie": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-lie/js/target/scala-3.7.4/classes"
+        ],
+        "reframe4s-core": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-core/js/target/scala-3.7.4/classes"
+        ],
+        "reframe4s-field": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-field/js/target/scala-3.7.4/classes"
+        ],
+        "reframe4s-resample": [
+          "/private/tmp/scalafim-cascade-overlap-20260930/staging/528bd8b25dc4bf1e1c2e/reframe4s/modules/reframe4s-resample/js/target/scala-3.7.4/classes"
+        ]
+      }
+    }
+  ]
+}
