@@ -43,7 +43,7 @@ lazy val galeCoreJS  = ProjectRef(galeBuild, "coreJS")
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
 // coordinated development.
-lazy val locus4sRevision = "58c9739be51345ad9adc4bc9c9e7335023254ec9"
+lazy val locus4sRevision = "a67bc87c33b5da8a5dc2cad49919c015b59f3050"
 lazy val locus4sBuild =
   sys.props
     .get("scalafim.locus4s.build")
@@ -56,7 +56,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "26a74ad99b9ee49a9555344e19b82d69a2ba50e4"
+lazy val image4sRevision = "03288b6d5c4e8c24d3fcfa22df1e977839f007d0"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -79,7 +79,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision.
-lazy val reframe4sRevision = "9a4508351d74567147b8ea3221d82db89e5892b0"
+lazy val reframe4sRevision = "221f46163f5039e62c74e042e1c50f0762757fc0"
 lazy val reframe4sBuild =
   sys.props
     .get("scalafim.reframe4s.build")
