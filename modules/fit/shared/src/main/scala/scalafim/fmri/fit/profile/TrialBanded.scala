@@ -72,6 +72,8 @@ final case class TrialBandedWorkSnapshot(
   * `referenceFailures`; it does not imply a solve succeeded before refusal.
   * Exact-readout factor attempts count exact-reference requests, including a
   * coordinate-dimension refusal before numerical factorisation.
+  * Conditional requests, reference inverses and residual corrections have
+  * separate counters; they do not change legacy readout/amplitude counters.
   *
   * Small release solves, profile reduction and curvature checks are excluded.
   * Failed bank construction returns an error without exposing its setup receipt.
@@ -93,8 +95,12 @@ final case class TrialBandedAttemptedWorkSnapshot(
     readoutFailures: Long,
     exactReadoutFactorAttempts: Long,
     exactReadoutFactorFailures: Long,
+    conditionalReadoutAttempts: Long,
+    conditionalReadoutFailures: Long,
     conditionalInverseAttempts: Long,
-    conditionalInverseFailures: Long)
+    conditionalInverseFailures: Long,
+    conditionalCorrectionAttempts: Long,
+    conditionalCorrectionFailures: Long)
 
 final class TrialBandedWork private[profile] ():
   private[profile] var voxels: Long = 0L
@@ -122,8 +128,12 @@ final class TrialBandedWork private[profile] ():
   private[profile] var readoutFailures: Long = 0L
   private[profile] var exactReadoutFactorAttempts: Long = 0L
   private[profile] var exactReadoutFactorFailures: Long = 0L
+  private[profile] var conditionalReadoutAttempts: Long = 0L
+  private[profile] var conditionalReadoutFailures: Long = 0L
   private[profile] var conditionalInverseAttempts: Long = 0L
   private[profile] var conditionalInverseFailures: Long = 0L
+  private[profile] var conditionalCorrectionAttempts: Long = 0L
+  private[profile] var conditionalCorrectionFailures: Long = 0L
 
   private[profile] def referenceFailed(release: Boolean): Unit =
     referenceFailures += 1L
@@ -156,8 +166,12 @@ final class TrialBandedWork private[profile] ():
       readoutFailures,
       exactReadoutFactorAttempts,
       exactReadoutFactorFailures,
+      conditionalReadoutAttempts,
+      conditionalReadoutFailures,
       conditionalInverseAttempts,
-      conditionalInverseFailures)
+      conditionalInverseFailures,
+      conditionalCorrectionAttempts,
+      conditionalCorrectionFailures)
 
   def snapshot: TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(voxels, trialBasisScores, bankValueEvaluations, jetEvaluations, amplitudeCorrections,

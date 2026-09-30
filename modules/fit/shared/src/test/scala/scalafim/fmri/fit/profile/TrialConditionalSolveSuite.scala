@@ -169,6 +169,31 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
     val result = normal.cholesky.fold(throw _, identity).solve(column).fold(throw _, identity)
     Array.tabulate(rhs.length)(i => result(i, 0))
 
+  private def conditionInf(normal: DMat): Double =
+    val size = normal.rows
+    val inverseRowSums = Array.fill(size)(0.0)
+    var normalNorm = 0.0
+    var row = 0
+    while row < size do
+      var rowSum = 0.0
+      var col = 0
+      while col < size do
+        rowSum += math.abs(normal(row, col))
+        col += 1
+      normalNorm = math.max(normalNorm, rowSum)
+      row += 1
+    var col = 0
+    while col < size do
+      val unit = Array.fill(size)(0.0)
+      unit(col) = 1.0
+      val inverseColumn = denseSolve(normal, unit)
+      row = 0
+      while row < size do
+        inverseRowSums(row) += math.abs(inverseColumn(row))
+        row += 1
+      col += 1
+    normalNorm * inverseRowSums.max
+
   private def norm(values: Array[Double]): Double =
     math.sqrt(values.map(x => x * x).sum)
 
@@ -185,13 +210,22 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
       val rhs = Array.tabulate(fx.trials + nuisance)(i => 0.3 * math.sin(0.8 * (i + 1)) + (if i % 2 == 0 then 0.1 else -0.2))
       val actual = new Array[Double](rhs.length)
       objective.solveConditionalReference(node, rhs, actual).fold(error => fail(error.message), identity)
-      val expected = denseSolve(denseNormal(fx, objective.grid.point(node)), rhs)
+      val normal = denseNormal(fx, objective.grid.point(node))
+      val expected = denseSolve(normal, rhs)
       val relative = difference(actual, expected) / math.max(1.0, norm(expected))
-      assert(relative < (if lambda == 1e-6 then 5e-6 else 1e-8),
+      // At tiny lambda, coincident/near-coincident trial columns are only
+      // weakly regularized on the within-condition contrast subspace. Report
+      // the dense oracle's infinity-norm condition estimate with the wider
+      // forward-error tolerance; the ordinary fixtures remain tighter.
+      if lambda == 1e-6 then
+        println(s"reference normal conditionInf=${conditionInf(normal)} relative=$relative nuisance=$nuisance coincident=$coincident")
+      assert(relative < (if lambda == 1e-6 then 1e-6 else 1e-8),
         s"arbitrary RHS mismatch lambda=$lambda nuisance=$nuisance coincident=$coincident: $relative")
       val work = objective.work.snapshot
       assertEquals(work.attempted.conditionalInverseAttempts, 1L)
       assertEquals(work.attempted.conditionalInverseFailures, 0L)
+      assertEquals(work.attempted.conditionalReadoutAttempts, 0L)
+      assertEquals(work.attempted.conditionalCorrectionAttempts, 0L)
       assertEquals(work.attempted.solveAttempts, 1L)
       assertEquals(work.bandedSolveCalls, 1L)
       val rejected = objective.solveConditionalReference(node, Array(1.0), actual)
@@ -218,6 +252,8 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
     assert(difference(coefficients(result), expected) / math.max(1.0, norm(expected)) < 1e-8)
     assert(result.preparedBasisResidualNorm < 1e-8)
     assertEquals(result.work.referenceInverseAttempts, 3L)
+    val work = result.work
+    assertEquals(work.residualCorrections, 1)
 
   test("corrected actual-shape coefficients and prepared-basis residual match dense original equations"):
     for (basis, nuisance, ar, coincident, lambda) <- Vector(
@@ -234,7 +270,12 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
       val result = solver.solve(encoded, node, actual).fold(error => fail(error.message), identity)
       val dense = denseSolve(denseNormal(fx, ShapePoint.unsafe(actual)), denseRhs(fx, ShapePoint.unsafe(actual)))
       val relative = difference(coefficients(result), dense) / math.max(1.0, norm(dense))
-      assert(relative < (if lambda == 1e-6 then 2e-4 else 2e-5),
+      // The small-lambda/coincident fixture has conditionInf about 2.9e6.
+      // Unlike the reference inverse check, this also includes the local
+      // cubic truncation at a fixed off-node displacement (observed ~1.1e-5).
+      if lambda == 1e-6 then
+        println(s"off-node normal conditionInf=${conditionInf(denseNormal(fx, ShapePoint.unsafe(actual)))} relative=$relative")
+      assert(relative < (if lambda == 1e-6 then 5e-5 else 2e-5),
         s"off-node mismatch ${basis.family.name}, lambda=$lambda, nuisance=$nuisance: $relative")
       var condition = 0
       while condition < prep.conditions do
@@ -262,7 +303,15 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
       assertEquals(result.work.continuousFactors, 0L)
       assertEquals(result.work.exactReadoutFactorAttempts, 0L)
       assertEquals(result.work.residualCorrections, 1)
-      assertEquals(solver.worker.work.snapshot.continuousFactors, 0L)
+      val snapshot = solver.worker.work.snapshot
+      assertEquals(snapshot.attempted.conditionalReadoutAttempts, 1L)
+      assertEquals(snapshot.attempted.conditionalReadoutFailures, 0L)
+      assertEquals(snapshot.attempted.conditionalCorrectionAttempts, 1L)
+      assertEquals(snapshot.attempted.conditionalCorrectionFailures, 0L)
+      assertEquals(snapshot.attempted.readoutAttempts, 0L)
+      assertEquals(snapshot.attempted.readoutFailures, 0L)
+      assertEquals(snapshot.amplitudeCorrections, 0L)
+      assertEquals(snapshot.continuousFactors, 0L)
       assertEquals(objective.setupReceipt, objective.newWorker().setupReceipt)
 
   test("one residual correction has local cubic error before floating-point floor"):
@@ -271,14 +320,28 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
     val ref = objective.grid.point(node).coordinates
     val direction = Vector(0.3, -0.14)
     val solver = new TrialConditionalSolve(objective.newWorker())
-    val errors = Vector(1.0, 0.5, 0.25).map: scale =>
+    val scales = Vector(1.0, 0.5, 0.25, 0.125)
+    val observations = scales.map: scale =>
       val actual = ref.zip(direction).map((x, dx) => x + scale * dx)
       val result = solver.solve(encoded, node, actual).fold(error => fail(error.message), identity)
       val expected = denseSolve(denseNormal(fx, ShapePoint.unsafe(actual)), denseRhs(fx, ShapePoint.unsafe(actual)))
-      difference(coefficients(result), expected)
-    assert(errors(0) > errors(1) * 4.0, s"first cubic ratio: $errors")
-    assert(errors(1) > errors(2) * 4.0, s"second cubic ratio: $errors")
-    assertEquals(solver.worker.work.snapshot.attempted.conditionalInverseAttempts, 9L)
+      (difference(coefficients(result), expected),
+        difference(solver.lastFirstOrderPredictor.toArray, expected))
+    val errors = observations.map(_._1)
+    val omittedCorrectionErrors = observations.map(_._2)
+    val ratios = errors.zip(errors.tail).map((larger, smaller) => larger / smaller)
+    val omittedRatios = omittedCorrectionErrors.zip(omittedCorrectionErrors.tail)
+      .map((larger, smaller) => larger / smaller)
+    println(s"conditional cubic errors=$errors ratios=$ratios; omitted correction errors=$omittedCorrectionErrors ratios=$omittedRatios")
+    assert(ratios.forall(_ > 6.0), s"cubic ratio must separate quadratic: $errors, $ratios")
+    assert(omittedCorrectionErrors.head > errors.head * 4.0)
+    assert(omittedRatios.forall(_ < 6.0), s"omitting the correction must remain quadratic: $omittedRatios")
+    val snapshot = solver.worker.work.snapshot
+    assertEquals(snapshot.attempted.conditionalInverseAttempts, 12L)
+    assertEquals(snapshot.attempted.conditionalReadoutAttempts, 4L)
+    assertEquals(snapshot.attempted.conditionalCorrectionAttempts, 4L)
+    assertEquals(snapshot.attempted.readoutAttempts, 0L)
+    assertEquals(snapshot.amplitudeCorrections, 0L)
 
     // An independently differenced first-order predictor exposes both an
     // omitted correction and a reversed shape direction at this displacement.
@@ -313,5 +376,11 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
     assertEquals(solver.solve(foreign, node, center), Left(TrialConditionalError.ForeignResponse))
     assertEquals(worker.work.snapshot.attempted.conditionalInverseAttempts, 0L)
-    assertEquals(worker.work.snapshot.attempted.readoutFailures, 4L)
+    assertEquals(worker.work.snapshot.attempted.conditionalReadoutAttempts, 4L)
+    assertEquals(worker.work.snapshot.attempted.conditionalReadoutFailures, 4L)
+    assertEquals(worker.work.snapshot.attempted.conditionalCorrectionAttempts, 0L)
+    assertEquals(worker.work.snapshot.attempted.conditionalCorrectionFailures, 0L)
+    assertEquals(worker.work.snapshot.attempted.readoutAttempts, 0L)
+    assertEquals(worker.work.snapshot.attempted.readoutFailures, 0L)
+    assertEquals(worker.work.snapshot.amplitudeCorrections, 0L)
     assert(prep ne foreign.owner)

@@ -83,6 +83,12 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
   private val conditionCounts = Array.tabulate(c)(i => prep.membership.trialsOf(i).length)
   private val conditionSums = new Array[Double](c)
 
+  /** The production predictor before its single residual correction. This
+    * reads existing worker scratch after a solve, for the cubic-law test.
+    */
+  private[profile] def lastFirstOrderPredictor: Vector[Double] =
+    Vector.tabulate(size)(i => base(i) + direction(i))
+
   def solve(
       encoded: TrialBandedResponse,
       referenceNode: Int,
@@ -90,9 +96,13 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
       evidence: TrialConditionalEvidence = TrialConditionalEvidence.PreparedBasisResidual
   ): Either[TrialConditionalError, TrialConditionalResult] =
     val work = worker.work
-    work.readoutAttempts += 1L
+    work.conditionalReadoutAttempts += 1L
     def refuse(error: TrialConditionalError): Either[TrialConditionalError, TrialConditionalResult] =
-      work.readoutFailures += 1L
+      work.conditionalReadoutFailures += 1L
+      Left(error)
+    def refuseCorrection(error: TrialConditionalError): Either[TrialConditionalError, TrialConditionalResult] =
+      work.conditionalCorrectionFailures += 1L
+      work.conditionalReadoutFailures += 1L
       Left(error)
 
     if !(encoded.owner eq prep) then return refuse(TrialConditionalError.ForeignResponse)
@@ -146,20 +156,21 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
     while i < size do
       predictor(i) = base(i) + direction(i)
       i += 1
+    work.conditionalCorrectionAttempts += 1L
     normalAction(actualCoefficients, directionalCoefficients, predictor, action, directional = false)
     i = 0
     while i < size do
       inverseRhs(i) = rhsActual(i) - action(i)
       i += 1
-    if !finite(inverseRhs) then return refuse(TrialConditionalError.NonFiniteAssembly("correction RHS"))
+    if !finite(inverseRhs) then return refuseCorrection(TrialConditionalError.NonFiniteAssembly("correction RHS"))
     worker.solveConditionalReference(referenceNode, inverseRhs, correction) match
-      case Left(error) => return refuse(TrialConditionalError.ReferenceSolve(error))
+      case Left(error) => return refuseCorrection(TrialConditionalError.ReferenceSolve(error))
       case Right(_) => ()
     i = 0
     while i < size do
       predictor(i) += correction(i)
       i += 1
-    if !finite(predictor) then return refuse(TrialConditionalError.NonFiniteAssembly("corrected coefficients"))
+    if !finite(predictor) then return refuseCorrection(TrialConditionalError.NonFiniteAssembly("corrected coefficients"))
 
     normalAction(actualCoefficients, directionalCoefficients, predictor, action, directional = false)
     var residualSquared = 0.0
@@ -176,7 +187,6 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
     while i < n do
       conditionSums(prep.membership.conditionOfTrial(i)) += predictor(i)
       i += 1
-    work.amplitudeCorrections += 1L
     val after = work.snapshot
     val receipt = TrialConditionalWorkReceipt(
       after.attempted.conditionalInverseAttempts - before.attempted.conditionalInverseAttempts,
