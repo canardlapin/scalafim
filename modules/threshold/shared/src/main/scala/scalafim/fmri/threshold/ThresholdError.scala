@@ -23,6 +23,7 @@ enum ThresholdError:
   case NullMatrixShape(rows: Int, cols: Int, expectedCols: Int)
   case InvalidArgument(name: String, reason: String)
   case MissingIdentityAction(testIndex: Int)
+  case MissingIdentityRow
 
   def message: String =
     this match
@@ -66,3 +67,5 @@ enum ThresholdError:
         s"$name is invalid: $reason"
       case MissingIdentityAction(testIndex) =>
         s"exact enumeration must include the identity action, but no null statistic reaches observed test $testIndex"
+      case MissingIdentityRow =>
+        "exact enumeration must include the identity action, but no null row equals the oriented observed statistics"

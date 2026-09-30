@@ -6,6 +6,9 @@ enum CorrectionPolicy:
   case WestfallYoungStepDown
   case MaxTSingleStep
 
+/** One adjusted test. `score` is the observed statistic as supplied, before
+  * orientation; ordering and p-values refer to the oriented statistic.
+  */
 final case class AdjustedTest(testIndex: Int, score: Double, adjustedP: AdjustedP, rejected: Boolean):
   require(score.isFinite, "score must be finite")
 
@@ -16,6 +19,11 @@ object MultipleTesting:
   /** Adjust `observed` against a draws-by-tests null matrix. Both are supplied
     * raw; `alternative` orients them identically before any comparison, and
     * `reference` fixes the permutation p-value convention.
+    *
+    * These matrix procedures are orientation-agnostic primitives: they do not
+    * know whether the statistic is signed or unsigned evidence. Admissibility of
+    * `alternative` for the evidence is checked where the evidence kind is known
+    * (`StatisticField`, [[MaxNull.reduce]]).
     */
   def adjust(
     observed: Array[Double],
@@ -56,6 +64,9 @@ object WestfallYoung:
           case Left(err) => Left(err)
           case Right(()) =>
             val oriented = orient(observed, alternative)
+            requireIdentityRow(oriented, nullMatrix, alternative, reference) match
+              case Left(err) => return Left(err)
+              case Right(()) => ()
             val order = oriented.indices.toArray.sortWith((a, b) => oriented(a) > oriented(b))
             val counts = new Array[Int](m)
 
@@ -75,8 +86,6 @@ object WestfallYoung:
             var previous = 0.0
             var rank = 0
             while rank < m do
-              if counts(rank) < reference.minimumCount then
-                return Left(ThresholdError.MissingIdentityAction(order(rank)))
               val raw = reference.pValue(counts(rank), nullMatrix.rows)
               val adj = math.max(raw, previous)
               sortedP(rank) = adj
@@ -121,6 +130,9 @@ object MaxT:
         validateNull(nullMatrix) match
           case Left(err) => Left(err)
           case Right(()) =>
+            requireIdentityRow(orient(observed, alternative), nullMatrix, alternative, reference) match
+              case Left(err) => return Left(err)
+              case Right(()) => ()
             val maxNull = new Array[Double](nullMatrix.rows)
             var row = 0
             while row < nullMatrix.rows do
@@ -166,7 +178,11 @@ final class MaxNullDistribution private (
 
 object MaxNullDistribution:
 
-  /** Admit per-draw maxima that were already oriented by `alternative`. */
+  /** Admit per-draw maxima that the caller has already oriented by
+    * `alternative` and whose draw set follows `reference`. This is a trust
+    * boundary: neither claim can be checked from the maxima. Prefer
+    * [[MaxNull.reduce]], which orients raw draws itself.
+    */
   def fromOrientedMaxima(
     maxima: Array[Double],
     alternative: ThresholdAlternative,
@@ -283,6 +299,28 @@ object MaxNull:
       // equality with the count-th descending maximum is never rejected. The
       // cutoff must be strict.
       ThresholdCutoff.exclusive(sorted(count - 1))
+
+/** Under exact enumeration the identity action is one of the rows, so some
+  * row oriented by `alternative` equals the oriented observed statistics
+  * exactly. The per-count condition alone would accept a mislabelled Monte
+  * Carlo sample whose draws happen to exceed every observed statistic.
+  */
+private def requireIdentityRow(
+    oriented: Array[Double],
+    nullMatrix: DMat,
+    alternative: ThresholdAlternative,
+    reference: NullReference
+): Either[ThresholdError, Unit] =
+  reference match
+    case NullReference.MonteCarlo => Right(())
+    case NullReference.ExactEnumeration =>
+      var row = 0
+      while row < nullMatrix.rows do
+        var col = 0
+        while col < oriented.length && alternative.applyTo(nullMatrix(row, col)) == oriented(col) do col += 1
+        if col == oriented.length then return Right(())
+        row += 1
+      Left(ThresholdError.MissingIdentityRow)
 
 private def orient(values: Array[Double], alternative: ThresholdAlternative): Array[Double] =
   val out = new Array[Double](values.length)

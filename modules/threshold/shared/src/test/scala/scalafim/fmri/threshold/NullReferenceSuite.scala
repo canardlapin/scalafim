@@ -121,18 +121,35 @@ class NullReferenceSuite extends munit.FunSuite:
     // Observed +4 orients to -4, which every draw reaches.
     assertEqualsDouble(value(MaxNull.pValueDoubles(Array(-4.0, 4.0), nulls))(1), 1.0, 0.0)
 
-  test("exact enumeration refuses a draw set that cannot contain the identity action"):
+  test("exact enumeration refuses a null matrix without the identity row"):
     val observed = Array(1.0, 9.0)
     val rows = Vector(Array(0.5, 2.0), Array(3.0, 1.0))
-    assertEquals(
-      MaxT.singleStep(observed, matrix(rows), Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.ExactEnumeration).left.toOption,
-      Some(ThresholdError.MissingIdentityAction(1))
-    )
-    assertEquals(
-      WestfallYoung.stepDown(observed, matrix(rows), Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.ExactEnumeration).left.toOption,
-      Some(ThresholdError.MissingIdentityAction(1))
-    )
+    def refusal(r: Vector[Array[Double]], alternative: ThresholdAlternative) =
+      (
+        MaxT.singleStep(observed, matrix(r), Alpha.unsafe(0.5), alternative, NullReference.ExactEnumeration).left.toOption,
+        WestfallYoung.stepDown(observed, matrix(r), Alpha.unsafe(0.5), alternative, NullReference.ExactEnumeration).left.toOption
+      )
+    assertEquals(refusal(rows, ThresholdAlternative.Greater), (Some(ThresholdError.MissingIdentityRow), Some(ThresholdError.MissingIdentityRow)))
     assert(MaxT.singleStep(observed, matrix(rows), Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.MonteCarlo).isRight)
+
+    // Every observed statistic is reached, yet no row is the identity action:
+    // a mislabelled Monte Carlo sample must not be admitted as exact.
+    val dominating = Vector(Array(2.0, 10.0), Array(0.5, 0.5))
+    assertEquals(refusal(dominating, ThresholdAlternative.Greater), (Some(ThresholdError.MissingIdentityRow), Some(ThresholdError.MissingIdentityRow)))
+    assertEquals(
+      WestfallYoung.stepDown(Array(1.0), matrix(Vector(Array(2.0), Array(0.5))), Alpha.unsafe(0.5), ThresholdAlternative.Greater, NullReference.ExactEnumeration).left.toOption,
+      Some(ThresholdError.MissingIdentityRow)
+    )
+
+    // The identity row is recognised after orientation: under a two-sided
+    // alternative a sign-flipped copy of the observed statistics is equivalent.
+    val flipped = Vector(Array(-1.0, -9.0), Array(0.5, 2.0))
+    assertEquals(refusal(flipped, ThresholdAlternative.TwoSided), (None, None))
+    assertEquals(refusal(flipped, ThresholdAlternative.Greater), (Some(ThresholdError.MissingIdentityRow), Some(ThresholdError.MissingIdentityRow)))
+
+  test("max-null exact enumeration refuses observed statistics that no draw reaches"):
+    val nulls = value(MaxNullDistribution.fromOrientedMaxima(Array(2.0, 3.0), ThresholdAlternative.Greater, NullReference.ExactEnumeration))
+    assertEquals(MaxNull.pValues(Array(1.0, 9.0), nulls).left.toOption, Some(ThresholdError.MissingIdentityAction(1)))
 
   test("exact cutoffs admit only attainable p-values"):
     // B = 10 exact actions: attainable p-values are 1/10, 2/10, ...
@@ -167,31 +184,48 @@ class NullReferenceSuite extends munit.FunSuite:
     assert(MaxNullDistribution.fromOrientedMaxima(Array.emptyDoubleArray, ThresholdAlternative.Greater, NullReference.MonteCarlo).isLeft)
 
   test("HierScan under the less alternative equals the greater alternative on negated statistic and draws"):
-    val stat = Array(-0.2, 0.3, -0.1, 0.4, -0.3, 0.2, -0.4, -5.0)
+    val stat = hierField(sign = -1.0)
     val rng = scala.util.Random(11L)
-    val draws = Vector.fill(19)(Array.fill(8)(rng.nextGaussian()))
-    val config = scanConfig(0.2)
+    val draws = Vector.fill(39)(Array.fill(64)(rng.nextGaussian()))
+    val config = scanConfig(0.8)
 
-    val less = value(HierScan.run(volume(stat), FixedNullDraw(draws, NullReference.MonteCarlo), config = config.copy(alternative = ThresholdAlternative.Less)))
-    val greater = value(HierScan.run(volume(stat.map(-_)), FixedNullDraw(draws.map(_.map(-_)), NullReference.MonteCarlo), config = config))
+    val less = value(HierScan.run(cube(stat), FixedNullDraw(draws, NullReference.MonteCarlo), config = config.copy(alternative = ThresholdAlternative.Less)))
+    val greater = value(HierScan.run(cube(stat.map(-_)), FixedNullDraw(draws.map(_.map(-_)), NullReference.MonteCarlo), config = config))
 
     assertEquals(less.nodeTests.map(t => (t.path, t.adjustedP.value, t.rejected)), greater.nodeTests.map(t => (t.path, t.adjustedP.value, t.rejected)))
-    assertEquals((0 until 8).map(less.reject.valueAtCanonicalOrdinal), (0 until 8).map(greater.reject.valueAtCanonicalOrdinal))
-    assert(less.reject.valueAtCanonicalOrdinal(7))
+    assertEquals((0 until 64).map(less.reject.valueAtCanonicalOrdinal), (0 until 64).map(greater.reject.valueAtCanonicalOrdinal))
+    assert(less.significantRegions.nonEmpty)
+    assert(less.nodeTests.filter(_.rejected).map(_.depth).max > 1)
     assertEquals(less.params.get("nullReference"), Some("MonteCarlo"))
 
   test("HierScan exact enumeration with the identity action equals Monte Carlo over the remaining actions"):
-    val stat = Array(0.2, -0.3, 0.1, 0.4, 0.3, -0.2, 0.4, 4.0)
     val rng = scala.util.Random(13L)
-    val others = Vector.fill(19)(Array.fill(8)(rng.nextGaussian()))
-    val config = scanConfig(0.2)
+    val others = Vector.fill(39)(Array.fill(64)(rng.nextGaussian()))
+    val config = scanConfig(0.8)
 
     for alternative <- alternatives do
+      val stat = hierField(sign = if alternative == ThresholdAlternative.Less then -1.0 else 1.0)
       val c = config.copy(alternative = alternative)
-      val exact = value(HierScan.run(volume(stat), FixedNullDraw(stat.clone +: others, NullReference.ExactEnumeration), config = c))
-      val monte = value(HierScan.run(volume(stat), FixedNullDraw(others, NullReference.MonteCarlo), config = c))
+      val exact = value(HierScan.run(cube(stat), FixedNullDraw(stat.clone +: others, NullReference.ExactEnumeration), config = c))
+      val monte = value(HierScan.run(cube(stat), FixedNullDraw(others, NullReference.MonteCarlo), config = c))
       assertEquals(exact.nodeTests.map(t => (t.path, t.adjustedP.value, t.rejected)), monte.nodeTests.map(t => (t.path, t.adjustedP.value, t.rejected)))
+      assert(exact.significantRegions.nonEmpty, s"$alternative rejected nothing")
+      assert(exact.nodeTests.filter(_.rejected).map(_.depth).max > 1, s"$alternative did not descend")
       assertEquals(exact.params.get("nullReference"), Some("ExactEnumeration"))
+
+  /** A 4x4x4 field with weak asymmetric background and a strong signal in
+    * one 2x2x2 octant, so the scan rejects and descends below the root split.
+    */
+  private def hierField(sign: Double): Array[Double] =
+    val rng = scala.util.Random(3L)
+    Array.tabulate(64): i =>
+      val x = i % 4
+      val y = (i / 4) % 4
+      val z = i / 16
+      if x >= 2 && y >= 2 && z >= 2 then sign * (6.0 + (i % 3).toDouble) else 0.3 * rng.nextGaussian()
+
+  private def cube(data: Array[Double]): SomeScalarVolume[Double] =
+    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(Vector(4, 4, 4)))
 
   private def scanConfig(alpha: Double): HierScanConfig =
     HierScanConfig(
@@ -203,9 +237,6 @@ class NullReferenceSuite extends munit.FunSuite:
       priorEta = 1.0,
       minPriorMass = 0.0
     )
-
-  private def volume(data: Array[Double]): SomeScalarVolume[Double] =
-    SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(data), SampleSpaces(Vector(2, 2, 2)))
 
   private def matrix(rows: Vector[Array[Double]]): DMat =
     Matrix.tabulate(rows.length, rows.head.length)((row, col) => rows(row)(col))

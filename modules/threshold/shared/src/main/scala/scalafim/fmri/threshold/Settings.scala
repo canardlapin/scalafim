@@ -128,9 +128,12 @@ object Tail:
   *
   * `ExactEnumeration`: the complete set of B equally likely null actions,
   * including the identity action, so the observed statistic is already among
-  * the draws: p = #{null >= t} / B. Adding one again would double-count it, and
-  * a set in which no null statistic reaches an observed one cannot contain the
-  * identity action and is refused.
+  * the draws: p = #{null >= t} / B. Adding one again would double-count it.
+  * Matrix procedures, which see every null row, require a row equal to the
+  * oriented observed statistics. Max-null procedures see only per-draw maxima
+  * and can check only the necessary condition that some maximum reaches each
+  * observed statistic; declaring a Monte Carlo sample as exact there is the
+  * caller's error and yields p-values that are too small.
   */
 enum NullReference:
   case MonteCarlo, ExactEnumeration

@@ -15,9 +15,11 @@ the first bounded packet of that ticket, not its closure.
 - **Null reference convention.** New `NullReference` (`MonteCarlo`,
   `ExactEnumeration`), declared by each `NullDraw`. Monte Carlo keeps the
   plus-one rule `(1 + c) / (B + 1)` with unchanged arithmetic. Exact
-  enumeration uses `c / B` and refuses, with `MissingIdentityAction`, any
-  observed test that no null statistic reaches. A complete enumeration that
-  includes the identity action cannot produce that.
+  enumeration uses `c / B`. The matrix procedures (WY, maxT, and HierScan per
+  node) require a null row equal to the oriented observed statistics
+  (`MissingIdentityRow`). The max-null path sees only maxima, so it can check
+  only the necessary condition: some maximum must reach each observed statistic
+  (`MissingIdentityAction`). This limit is documented on `NullReference`.
 - **Orientation.** `WestfallYoung.stepDown`, `MaxT.singleStep` and
   `MultipleTesting.adjust` take an explicit `ThresholdAlternative` and orient
   observed and null values with the same transform. The new
@@ -45,6 +47,26 @@ worktree.
 | --- | --- | --- |
 | `sbt thresholdJVM/test thresholdJS/test` | 34/34 JVM, 34/34 JS, exit 0, no warnings | `ca03603a…c3ed39e` |
 | Mutation check: exact enumeration using plus-one, and WY not orienting nulls | `NullReferenceSuite` 5/10 fail, exit 1; sources restored | `084e3385…aae436e` |
+| After review fixes: `sbt thresholdJVM/test thresholdJS/test` | 35/35 JVM, 35/35 JS, exit 0, no warnings | `52c7654b…` |
+| Mutation check: identity-row check disabled | refusal test fails, exit 1; source restored | `84760167…` |
+
+## Independent review
+
+A fresh-context reviewer ran the gate and returned ACCEPT-WITH-FIXES on
+`6d7ad148`, with no statistical defects. It independently derived the
+conventions, the cutoff/p-value equivalence (0 mismatches over an exact sweep
+with B ≤ 6), WY validity under orientation, and unchanged Monte Carlo/Greater
+arithmetic. All of its findings are addressed in the follow-up commit:
+
+- The identity check was only necessary, so a mislabelled Monte Carlo sample
+  could pass as exact. The matrix procedures now require an identity row, and
+  the reviewer's reproducer is a regression test.
+- The matrix APIs are documented as orientation-agnostic primitives, and
+  `fromOrientedMaxima` as a trust boundary.
+- `AdjustedTest.score` is documented as the raw supplied value.
+- The HierScan law tests now use a 4×4×4 field and assert rejections and
+  descent past depth 1, under all three alternatives.
+- The stale signatures in `docs/plans/neurothresh.md` are updated.
 
 New `NullReferenceSuite` (shared, so it runs on both platforms):
 
