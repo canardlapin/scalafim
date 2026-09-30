@@ -378,8 +378,78 @@
       "actualUserAmendmentApproval": "pending",
       "campaignFits": 0,
       "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedNativeMlExecutorIntegration",
+      "integrationCommit": "a6dbd3b188bd321c41053877121ccf64cf93259b",
+      "candidate": "8523c8c73f5ecf3a450390ba39523d7a20bdf6c0",
+      "tests": {
+        "jvm": 134,
+        "js": 101,
+        "compileAll": true
+      },
+      "archive": {
+        "archive": "native-ml-executor-integrated-qualified.json.gz",
+        "sha256": "0629972d3473abf1cbd887bce5e766a3056ad2afe9768b5cb4dfd0565348ca30",
+        "payloads": 41,
+        "bytes": 1136628
+      },
+      "fullTicketClosed": false,
+      "publicMlOutputsAdmitted": false,
+      "scientificAdmitted": false
+    },
+    {
+      "verdict": "AcceptBoundedHdfMetadataLifecycleIntegration",
+      "integrationCommit": "16f7e35b5fe4c8ff9ed00f35c860f364138be33b",
+      "candidate": "9ac55efc7c5ef03e9014be76ad10e990b06b509b",
+      "tests": {
+        "jvm": 192,
+        "js": 129,
+        "compileAll": true
+      },
+      "providerProperty": null,
+      "archive": {
+        "archive": "hdf5-metadata-hooks-integrated-qualified.json.gz",
+        "sha256": "b7fe20512f5b287355918c85acc418fda26aabae7e2355212cd48d61650c9459",
+        "payloads": 73,
+        "bytes": 1975196
+      },
+      "physicalBackendAdmitted": false,
+      "fullCoreTicketClosed": false
+    },
+    {
+      "verdict": "ActualOwnerApprovedAmendmentAndFirstLaunchObservedOnly",
+      "actualApproval": true,
+      "archive": {
+        "archive": "calibration-first-launch-monitor-control-only.json.gz",
+        "sha256": "d77dcdcabf1680b1f97ca38cf1a9887ad51bc8473f499679179f1644e37139d6",
+        "payloads": 50,
+        "bytes": 918717
+      },
+      "originalControllerStopped": true,
+      "commandsStarted": [
+        0
+      ],
+      "remainingCommandsStopped": true,
+      "terminalOutputHashesFinal": false,
+      "continuationController": "unqualified replacement under repair",
+      "scientificPass": null
+    },
+    {
+      "verdict": "FourthFrayFeedbackFiledDirectly",
+      "mote": "bd-01M3S3KRC8RBJ3X5H4RCPV4ZCC",
+      "totalFrayMotesFiled": 4,
+      "archive": {
+        "archive": "fray-fourth-compatibility-feedback.json.gz",
+        "sha256": "8000705c54c623549bbbda56825412f32b2cb7ea84b2d1864d7122e300974539",
+        "payloads": 7,
+        "bytes": 4274
+      },
+      "fraySourceChanged": false,
+      "sharedDaemonRestarted": false
     }
   ],
-  "updatedUtc": "2026-09-30T07:32:11.726928+00:00",
-  "currentIntegration": "b11d1909ac36bc4e732a1224605f1f90c5113798"
+  "updatedUtc": "2026-09-30T13:44:09.453361+00:00",
+  "currentIntegration": "16f7e35b5fe4c8ff9ed00f35c860f364138be33b",
+  "historicalRecords": "Earlier candidate/subsequent-review fields describe their recorded point in time; latest records below govern current disposition."
 }

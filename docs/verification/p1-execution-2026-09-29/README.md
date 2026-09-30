@@ -8,48 +8,50 @@ are integrated in an isolated clone.
 
 ## Current qualified integration
 
-The latest qualified integration is `b11d1909`. Seven of the original sixteen
-issues are done. The records below retain earlier review history; subsequent
-acceptance does not erase failed candidates or promote broader qualifications.
+The latest qualified source integration is `16f7e35b`. Seven of the original
+sixteen issues are done. Mote owns their current state; the bounded milestones
+below do not close the remaining scientific, performance or release gates.
 
-- Hosted Gale `da38f8c` and the repaired ML core/helper pass 56 fit and nine law
-  tests on each platform plus CompileAll. Only the approved Gale draft PR12 is
-  published. Executor routing candidate `8523c8c7` is independently accepted
-  but is awaiting parent integration checks; it is not included in this gate.
-- The opt-in HDF adapter, public executor provenance repair and default C0
-  controls are independently accepted at `0edf75c2`: native 20 JVM/10 JS,
-  public 75 JVM/50 JS, C0 eight controls per platform, and CompileAll.
-  The HDF estimate metadata/lifecycle hooks are still separately in progress;
-  no physical estimate HDF backend or unsupported-platform admission is claimed.
-- The selected pooled producer passes 122 JVM/113 JS executions and CompileAll
-  at `17a7e710`; effective pooled degrees of freedom remain explicitly Unknown.
-- Core3 inference-evidence and transactional readback pass 181 JVM/125 JS
-  executions and CompileAll at `b11d1909`. Fresh fitter-free readback checks
-  twelve cells across three planes; late cancellation and callback failure
-  leave the caller buffer unchanged. The full Core ticket remains open.
+- Native ML executor routing at `a6dbd3b1` passes 134 JVM and 101 Scala.js tests
+  plus CompileAll. The complete log retains a multiple-main-classes sbt warning;
+  no compiler warning was reported. Public ML amplitude/query output remains
+  under implementation in a separate eleven-file lane.
+- HDF metadata/lifecycle hooks at `16f7e35b` pass 192 JVM and 129 Scala.js tests
+  plus provider-free CompileAll. The physical HDF backend is a separately active
+  eighteen-file lane and has not been admitted.
+- Earlier hosted ML core, generic HDF adapter, public provenance repair,
+  compact/pooled producers and Core3 transactional readback remain bounded
+  qualifications. Their preserved source, review and actual receipts follow.
 
-The five new archives preserve 316 embedded source, review, receipt and raw
-attempt payloads, each decoded and SHA-256 verified. Runtime manifests retain
-compiled-file identities; compiled binaries are not embedded. Prior failed
-attempts, warnings and platform/native measurement limits remain in the records.
-The three Fray bugs/pain points were filed directly in `~/code/rust/fray/.mote`;
-this work does not change Fray source.
+The four new archives embed 171 immutable source, review, raw attempt,
+approval and control payloads, decoded and SHA-256 verified. Runtime manifests
+retain compiled identities; compiled binaries are not embedded. Prior failed
+attempts and measurement limits remain visible. Four Fray bugs/pain points are
+filed directly in `~/code/rust/fray/.mote`; Fray source was not changed.
 
-Calibration's original campaign cost was approved, but no confirmation fits
-have started. One compiled NIfTI payload changed after the freeze and its old
-bytes could not be recovered. The independently reviewed amendment isolates
-all 56 classpath entries, preserves 55 payload fingerprints and the source,
-protocol, seeds, 748000 blocks, sixteen commands and 400-scan geometry.
-Actual READY `767e4c8e` and 36 controller tests are accepted for the owner's
-execution-identity decision only. Decision package SHA-256 is
-`d4d2c79e7de486f8f3a8330cae0f64df9002ae648f1cd134d3e65b972307b693`.
-The amendment reply is pending. The retained 17.36-hour projection is not a new
-timing measurement. Regular-moment, dependence and group-transfer inference
-remain Unresolved; the failed Gaussian validation remains unadmitted.
+The owner approved calibration amendment `d4d2c79e` and launch. Only command0
+started. Its controller stopped on a macOS Python process-identity check; an
+independently reviewed read-only monitor adopted that job. The other fifteen
+commands remain stopped while the replacement lifecycle is repaired and reviewed.
+The control archive contains no growing raw output or final scientific hashes.
+The amended 56-entry isolated classpath preserves 55 fingerprints; equivalence
+of the sole changed NIfTI compiled payload remains unproven and was disclosed
+in the approved amendment. Source, protocol, seeds, 748000 blocks, sixteen
+commands and 400-scan geometry are unchanged. The retained 17.36-hour projection
+is historical, not a new timing measurement.
 
 C0 scientific qualification remains HOLD: JVM low-SNR admissions are 185/200
-against the unchanged 190/200 requirement. No fresh/100k performance campaign,
-full scientific gate, ScalaFIM publication, merge or release is implied.
+against the unchanged 190/200 requirement. A single literal-column JVM/JS trace
+is being implemented to diagnose control divergence; no study policy is changed.
+Regular-moment, dependence and group-transfer inference remain Unresolved.
+No fresh/100k performance campaign, full scientific admission, ScalaFIM
+publication, merge or release is implied.
+
+## Historical milestones and review chronology
+
+Sections below preserve the state recorded at each earlier milestone, including
+then-pending approvals and candidates later repaired. The current integration
+and execution state above governs; historical refusals and failures remain evidence.
 
 ## Completed decisions and implementation gates
 
@@ -501,3 +503,15 @@ repair because public mode, normalization, output/query intent and evidence
 are absent from returned provenance, which retains a false legacy
 `exact-readout=true` claim. Its immutable source and complete review receipts
 are archived separately from the active repair.
+
+## Newly preserved qualification and control archives
+
+- [Native ML executor](native-ml-executor-integrated-qualified.json.gz): exact
+  eight integrated sources, independent review and all retained build attempts.
+- [HDF metadata/lifecycle](hdf5-metadata-hooks-integrated-qualified.json.gz):
+  exact ten sources, prior fixture failures, provider closure and root gates.
+- [Calibration first-launch control](calibration-first-launch-monitor-control-only.json.gz):
+  actual owner approval, prelaunch/failure and accepted observational monitor;
+  no live output or final scientific receipt.
+- [Fourth Fray filing](fray-fourth-compatibility-feedback.json.gz): client/daemon
+  incompatibility and the exact-version local workaround, separate from a fix.
