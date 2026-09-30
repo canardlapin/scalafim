@@ -38,6 +38,17 @@ class NativeReadPolicySuite extends FunSuite:
     val sourceId = SourceId.unsafe(name)
     right(EvidenceSource(sourceId, Provenance.source(ProvenanceId.unsafe(s"${provenanceRoot.getOrElse(name)}-root"), sourceId)))
 
+  private final class Fixture[SK, NK, FK](
+      val samples: AxisRef[SK],
+      val inputs: AxisRef[NK],
+      val responses: AxisRef[FK],
+      val observations: Observations[samples.Id, inputs.Id],
+      val targets: MultiResponse[samples.Id, responses.Id],
+      val mapping: NativeAxisMapping,
+      val inputOperator: OneShotColumns,
+      val targetOperator: OneShotColumns
+  )
+
   private def tables(
       inputValues: DMat = DMat.dense(3, 3, Vector(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)),
       targetValues: DMat = DMat.dense(3, 2, Vector(10.0, 11.0, 12.0, 13.0, 14.0, 15.0)),
@@ -60,24 +71,24 @@ class NativeReadPolicySuite extends FunSuite:
     val observations = right(Observations.fromOperator(samples, inputs, inputOperator, ValueIdentity.source(ValueId.unsafe(inputValue)), source(inputSource, inputProvenance)))
     val targets = right(MultiResponse.fromOperator(samples, responses, targetOperator, ValueIdentity.source(ValueId.unsafe(targetValue)), source(targetSource, targetProvenance)))
     val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(30L, 10L, 20L), DataFingerprint.external("declared-native-source")))
-    (observations, targets, mapping, inputOperator, targetOperator)
+    new Fixture(samples, inputs, responses, observations, targets, mapping, inputOperator, targetOperator)
 
   private def allRows(rows: AlderMaterializedRows[String]) =
     right(rows.root.training(rows.mapping.nativeIds)).data.foldRows(Vector.empty[(Long, Vector[Double], Vector[Double], String)]): (out, id, example) =>
       out :+ (id.value, example.input.toVector, example.target.toVector, example.meta)
 
   test("rectangular batches retain all values and read every native column once"):
-    val (observations, targets, mapping, inputOperator, targetOperator) = tables()
+    val fixture = tables()
     val policy = right(NativeReadPolicy(2, right(MaterializationBudget(80L)), right(NativeReadAccess.OwnedReplay("suite-owned-fixture"))))
-    val admitted = right(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, policy))
+    val admitted = right(AlderPredictiveAdmission.nativeTables(fixture.observations, fixture.targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), fixture.mapping, policy))
 
     assertEquals(allRows(admitted), Vector(
       (30L, Vector(1.0, 2.0, 3.0), Vector(10.0, 11.0), "a"),
       (10L, Vector(4.0, 5.0, 6.0), Vector(12.0, 13.0), "b"),
       (20L, Vector(7.0, 8.0, 9.0), Vector(14.0, 15.0), "c")
     ))
-    assertEquals(inputOperator.calls, 3)
-    assertEquals(targetOperator.calls, 2)
+    assertEquals(fixture.inputOperator.calls, 3)
+    assertEquals(fixture.targetOperator.calls, 2)
     val receipt = admitted.nativeReadReceipt.getOrElse(fail("missing native read receipt"))
     assertEquals(receipt.inputBlockCalls, 2)
     assertEquals(receipt.targetBlockCalls, 1)
@@ -89,8 +100,8 @@ class NativeReadPolicySuite extends FunSuite:
   test("metadata, axis, provenance, and value identities bind the training fingerprint"):
     val policy = right(NativeReadPolicy(2, right(MaterializationBudget(80L)), right(NativeReadAccess.OwnedReplay("suite-identity-fixture"))))
     def fingerprint(inputSource: String, targetSource: String, inputValue: String, targetValue: String, metadata: String = "metadata-v1", inputProvenance: Option[String] = None, sampleKeys: Vector[String] = Vector("a", "b", "c")): String =
-      val (observations, targets, mapping, _, _) = tables(inputSource = inputSource, targetSource = targetSource, inputValue = inputValue, targetValue = targetValue, inputProvenance = inputProvenance, sampleKeys = sampleKeys)
-      right(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external(metadata), mapping, policy)).root.fingerprint.digest
+      val fixture = tables(inputSource = inputSource, targetSource = targetSource, inputValue = inputValue, targetValue = targetValue, inputProvenance = inputProvenance, sampleKeys = sampleKeys)
+      right(AlderPredictiveAdmission.nativeTables(fixture.observations, fixture.targets, Vector("a", "b", "c"), DataFingerprint.external(metadata), fixture.mapping, policy)).root.fingerprint.digest
     val baseline = fingerprint("input-source", "target-source", "input-values", "target-values")
     assertNotEquals(fingerprint("other-input-source", "target-source", "input-values", "target-values"), baseline)
     assertNotEquals(fingerprint("input-source", "other-target-source", "input-values", "target-values"), baseline)
@@ -101,47 +112,47 @@ class NativeReadPolicySuite extends FunSuite:
     assertNotEquals(fingerprint("input-source", "target-source", "input-values", "target-values", sampleKeys = Vector("a", "b", "changed")), baseline)
 
   test("preflight refusal performs zero reads and large dimensions overflow safely"):
-    val (observations, targets, mapping, inputOperator, targetOperator) = tables()
+    val fixture = tables()
     val refused = right(NativeReadPolicy(2, right(MaterializationBudget(20L)), right(NativeReadAccess.OwnedReplay("suite-budget-fixture"))))
-    assert(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, refused).isLeft)
-    assertEquals(inputOperator.calls, 0)
-    assertEquals(targetOperator.calls, 0)
+    assert(AlderPredictiveAdmission.nativeTables(fixture.observations, fixture.targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), fixture.mapping, refused).isLeft)
+    assertEquals(fixture.inputOperator.calls, 0)
+    assertEquals(fixture.targetOperator.calls, 0)
     assert(MaterializationBudget.authorizeNative(right(MaterializationBudget(Long.MaxValue)), Int.MaxValue, Int.MaxValue, Int.MaxValue, Int.MaxValue).isLeft)
     assert(MaterializationBudget.authorizeNative(right(MaterializationBudget(Long.MaxValue)), Int.MaxValue, Int.MaxValue, Int.MaxValue, 1).isLeft)
 
   test("poison single-application sources reject replay before callbacks, but one full-width application is admitted"):
-    val (blockedInputs, blockedTargets, blockedMapping, blockedInputOperator, blockedTargetOperator) = tables(failInput = true)
+    val blocked = tables(failInput = true)
     val requiresReplay = right(NativeReadPolicy(2, right(MaterializationBudget(80L))))
     assertEquals(
-      AlderPredictiveAdmission.nativeTables(blockedInputs, blockedTargets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), blockedMapping, requiresReplay),
+      AlderPredictiveAdmission.nativeTables(blocked.observations, blocked.targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), blocked.mapping, requiresReplay),
       Left(AlderPredictiveAdmissionError.ReplayRequired(2, 1))
     )
-    assertEquals(blockedInputOperator.calls, 0)
-    assertEquals(blockedTargetOperator.calls, 0)
+    assertEquals(blocked.inputOperator.calls, 0)
+    assertEquals(blocked.targetOperator.calls, 0)
 
-    val (observations, targets, mapping, inputOperator, targetOperator) = tables()
+    val fixture = tables()
     val fullWidth = right(NativeReadPolicy(3, right(MaterializationBudget(80L))))
-    val admitted = right(AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, fullWidth))
+    val admitted = right(AlderPredictiveAdmission.nativeTables(fixture.observations, fixture.targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), fixture.mapping, fullWidth))
     assertEquals(admitted.nativeReadReceipt.getOrElse(fail("missing receipt")).inputBlockCalls, 1)
     assertEquals(admitted.nativeReadReceipt.getOrElse(fail("missing receipt")).targetBlockCalls, 1)
-    assertEquals(inputOperator.calls, 3)
-    assertEquals(targetOperator.calls, 2)
+    assertEquals(fixture.inputOperator.calls, 3)
+    assertEquals(fixture.targetOperator.calls, 2)
 
   test("failed blocks preserve prior returned and copied cell totals"):
-    val (observations, targets, mapping, inputOperator, targetOperator) = tables(failInputAt = Some(2))
+    val fixture = tables(failInputAt = Some(2))
     val policy = right(NativeReadPolicy(2, right(MaterializationBudget(80L)), right(NativeReadAccess.OwnedReplay("suite-failure-fixture"))))
-    AlderPredictiveAdmission.nativeTables(observations, targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), mapping, policy) match
+    AlderPredictiveAdmission.nativeTables(fixture.observations, fixture.targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), fixture.mapping, policy) match
       case Left(AlderPredictiveAdmissionError.NativeReadFailure("inputs", _, receipt)) =>
         assertEquals(receipt.inputBlockCalls, 2)
         assertEquals(receipt.targetBlockCalls, 0)
         assertEquals(receipt.inputReturnedCells, 6L)
         assertEquals(receipt.inputCopiedCells, 6L)
       case other => fail(s"expected failed native input receipt, got $other")
-    assertEquals(inputOperator.calls, 3)
-    assertEquals(targetOperator.calls, 0)
+    assertEquals(fixture.inputOperator.calls, 3)
+    assertEquals(fixture.targetOperator.calls, 0)
 
-    val (targetObservations, targetResponses, targetMapping, targetInputOperator, failedTargetOperator) = tables(failTarget = true)
-    AlderPredictiveAdmission.nativeTables(targetObservations, targetResponses, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), targetMapping, policy) match
+    val targetFixture = tables(failTarget = true)
+    AlderPredictiveAdmission.nativeTables(targetFixture.observations, targetFixture.targets, Vector("a", "b", "c"), DataFingerprint.external("metadata-v1"), targetFixture.mapping, policy) match
       case Left(AlderPredictiveAdmissionError.NativeReadFailure("targets", _, receipt)) =>
         assertEquals(receipt.inputBlockCalls, 2)
         assertEquals(receipt.inputReturnedCells, 9L)
@@ -150,5 +161,5 @@ class NativeReadPolicySuite extends FunSuite:
         assertEquals(receipt.targetReturnedCells, 0L)
         assertEquals(receipt.targetCopiedCells, 0L)
       case other => fail(s"expected failed native target receipt, got $other")
-    assertEquals(targetInputOperator.calls, 3)
-    assertEquals(failedTargetOperator.calls, 1)
+    assertEquals(targetFixture.inputOperator.calls, 3)
+    assertEquals(targetFixture.targetOperator.calls, 1)
