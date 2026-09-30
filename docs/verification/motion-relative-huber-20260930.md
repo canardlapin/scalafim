@@ -11,21 +11,29 @@ scale.
 `OptimizerControl` gains a typed `huberScale: HuberScale`.
 
 - `HuberScale.RobustResidual` (new default): `huberK` counts robust residual
-  standard deviations. For each frame and template the absolute threshold is
-  `huberK * s`, where `s = 1.4826 * MAD` of the frame's residuals against the
-  template at the identity pose over the diagnostic samples. The same `s` is
-  used for that frame's capture, every pyramid level, the reference cost and
-  the diagnostics recomputation.
-  - It is computed at the identity pose, not the warm start, so it is
-    deterministic and independent of frame processing order.
+  standard deviations, and the absolute threshold is `huberK * s`.
+  - `s = 1.4826 * MAD` of the frame's residuals over the diagnostic samples. It
+    is estimated at the warm-start pose for the coarse capture search, then
+    re-estimated once at the captured pose, where residuals are nearer
+    alignment. It is then fixed for that frame's pyramid levels and diagnostics,
+    and the stored per-frame values are reused when diagnostics are recomputed.
+  - The first candidate took `s` at the identity pose. The independent review
+    showed that this inflates `s` for high-motion frames, making Huber nearly
+    inactive exactly where robustness matters. Its stated benefit (independence
+    from processing order) was also false, since fitting is already sequential
+    and warm-started.
   - Scaling all intensities by `c` scales every residual and `s` by `c`. The
-    Huber weights are unchanged, and every cost scales by `c²`. Because the
-    stopping rule is relative (`9504d696`), the estimated motion and iteration
-    counts are invariant.
-  - A zero MAD means more than half the residuals are identical (for example a
-    pure intensity offset), so the robust scale is degenerate. It then falls
-    back to the residual RMS, and for an exact match to `1e-12` of the mean
-    absolute template value. Both fallbacks are covariant.
+    Huber weights are unchanged and every cost scales by `c²`. With the relative
+    stopping rule (`9504d696`), the motion estimates and iteration counts are
+    invariant.
+  - Degenerate scales use covariant fallbacks, with round-off defined as `1e-9`
+    of the residual RMS:
+    - a MAD at or below round-off (more than half the residuals identical) falls
+      back to the MAD of the deviations above round-off, for exactly matching
+      background;
+    - then to the residual RMS when all residuals are equal (a pure intensity
+      offset);
+    - then, for an exact match, to `1e-12` of the mean absolute template value.
 - `HuberScale.Absolute` (`OptimizerControl.volreggerParity`): the previous
   volregger estimand, kept explicitly for parity studies.
 
@@ -34,38 +42,56 @@ is now `1e-12 * |median cost|` instead of an absolute `1e-12`.
 
 ## Line-search exhaustion
 
-Previously, six failed step halvings set `levelConverged = true` and the frame
+Previously, six failed step halvings set `levelConverged = true`, so the frame
 reported `converged`. Exhaustion still ends the level, but it now counts as
-converged only when the final halved step is at or below `stepTolerance`
-(`MotionEstimator.lineSearchResolved`). A larger step that cannot reduce the
-cost is reported as a stalled, non-converged level.
+converged only when the untried final step `step / 64` is at or below
+`stepTolerance` (`MotionEstimator.lineSearchResolved`). So a Gauss-Newton step
+up to 64 times `stepTolerance` still counts as resolved; a larger step that
+cannot reduce the cost makes the level stalled and the frame non-converged.
+
+Consequence for the default pipeline: template refresh keeps only converged
+frames (`refreshValidOnly = true`), so stalled frames are now excluded from the
+refreshed template where they were previously included.
+
+Finding: on the 7x5x5 estimator fixture, the search stalls at the capture grid
+point after one iteration under either threshold. The previous rule reported
+this as converged; it is now reported honestly. That fixture is therefore used
+only as a stall witness. Accuracy is established on a realistic volume.
 
 ## Evidence
 
-- `motionJVM/testOnly scalafim.fmri.motion.*`: 101/101. `motionJS`: 88/88. This
-  includes the unchanged `VolreggerParitySuite`, whose parity tolerances still
-  hold under the new default, so no switch to `Absolute` was needed there.
-- New `MotionHuberScaleSuite`:
+- Unit tests pass: 105/105 on `motionJVM/testOnly scalafim.fmri.motion.*` (JS in
+  the final gate). This includes the unchanged `VolreggerParitySuite`, whose
+  tolerances still hold under the new default; they do not discriminate between
+  the two thresholds, so parity under `volreggerParity` is not separately
+  claimed.
+- `MotionHuberScaleSuite`:
   - Defaults: `RobustResidual` is the default, and `volreggerParity` is
     `Absolute` with the same `huberK`.
-  - Invariance, with Huber genuinely active: an artefact block, and the fit
-    measurably differs from an effectively infinite threshold (least squares).
-    At shifts of 0.6 and 1.4 voxels, all six pose parameters agree within 1e-6
-    across intensity scales 1e-6, 1e-3, 1, 1e3 and 1e6, with equal iteration
-    counts and convergence flags.
+  - Realistic 20x18x14 volume with an artefact block: the robust fit converges
+    and recovers the true x shift, with tx = 0.583 at a true 0.6 and 1.385 at a
+    true 1.4, and |ty|, |tz| < 0.025. Least squares is pulled well away, and the
+    pose is invariant across intensity scales 1e-6 to 1e6.
+  - Small fixture with Huber active: all six pose parameters are equal within
+    1e-6 across scales 1e-6 to 1e6, with equal iteration counts and convergence.
+  - Three frames with template refresh: poses are invariant and every
+    `costFinal` scales by `c²` (relative tolerance 1e-5; poses agree to about
+    1e-7).
+  - Zero-background (exactly matching) fixture: poses are invariant across
+    scales, exercising the round-off-aware fallback.
+  - End-to-end stall: the 7x5x5 fixture stalls and is reported non-converged
+    after one iteration under both thresholds, while realistic fits stay
+    converged. The rule is also unit-tested at, below and above the tolerance.
   - `Absolute` still shows its intensity-scale dependence (a documented
     control).
-  - The line-search resolution rule is tested at, below and above the
-    tolerance.
-- `MotionSolverScalingSuite`: its comment no longer claims Huber is inactive.
-- Degenerate-scale control: the first candidate used a template-magnitude
-  fallback for a zero MAD. `MotionEstimatorSuite`'s frame-mean nuisance tests
-  (a pure +12 offset) exposed it: the threshold collapsed and the raw cost fell
-  below its `> 15` check. The RMS fallback fixes this; those tests are unchanged.
-- Mutation: forcing the absolute threshold under `RobustResidual` fails the
-  invariance test (`logs/motion-huber-mutantA.log`). The source was restored
-  and verified by hash.
+- Mutation and diagnosis:
+  - Forcing the absolute threshold under `RobustResidual` fails the invariance
+    tests.
+  - A zero-only (no round-off) degenerate check fails the existing pure-offset
+    `MotionEstimatorSuite` tests; rounding in `(a + 12) - a` produced a spurious
+    1e-15 scale.
+  - Sources restored and verified by hash.
 
-Not claimed: any change to real-data motion accuracy. On real data the new
-default changes robust weights relative to volregger's absolute threshold, and
-that comparison is not measured here.
+Not claimed: any change to real-data motion accuracy. The new default changes
+robust weights relative to volregger's absolute threshold, and real-data
+comparison is not measured here.

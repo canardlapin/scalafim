@@ -71,7 +71,7 @@ object MotionEstimator:
 
   private final case class CostResult(cost: Double, overlap: Double)
 
-  private final case class FitResult(pose: RigidPose, diagnostics: FrameFitDiagnostics)
+  private final case class FitResult(pose: RigidPose, diagnostics: FrameFitDiagnostics, huber: Double)
 
   private final case class CaptureStart(pose: RigidPose, warmCost: CostResult, startCost: CostResult)
 
@@ -101,7 +101,9 @@ object MotionEstimator:
     val poses = Array.fill(nt)(RigidPose.identity)
     val diagnostics = Array.ofDim[FrameFitDiagnostics](nt)
 
-    val huber = Array.tabulate(nt)(frame => huberThreshold(ctx, template, frame))
+    // Per-frame absolute Huber thresholds, fixed when each frame is fitted and reused for diagnostics.
+    val huber = Array.fill(nt)(Double.NaN)
+    huber(ctx.referenceIndex) = huberThreshold(ctx, template, ctx.referenceIndex, RigidPose.identity)
     val refCost = evaluate(ctx, ctx.diagnosticLevel, template, ctx.referenceIndex, RigidPose.identity, huber(ctx.referenceIndex))
     diagnostics(ctx.referenceIndex) =
       FrameFitDiagnostics(
@@ -115,22 +117,24 @@ object MotionEstimator:
 
     var t = ctx.referenceIndex + 1
     while t < nt do
-      val result = fitFrame(ctx, template, t, poses(t - 1), huber(t))
+      val result = fitFrame(ctx, template, t, poses(t - 1))
       poses(t) = result.pose
       diagnostics(t) = result.diagnostics
+      huber(t) = result.huber
       t += 1
 
     t = ctx.referenceIndex - 1
     while t >= 0 do
-      val result = fitFrame(ctx, template, t, poses(t + 1), huber(t))
+      val result = fitFrame(ctx, template, t, poses(t + 1))
       poses(t) = result.pose
       diagnostics(t) = result.diagnostics
+      huber(t) = result.huber
       t -= 1
 
     val outputPoses = regularizeTrace(ctx, poses)
     val outputDiagnostics =
       if outputPoses eq poses then diagnostics
-      else recomputeFinalDiagnostics(ctx, template, outputPoses, diagnostics)
+      else recomputeFinalDiagnostics(ctx, template, outputPoses, diagnostics, huber)
 
     MotionEstimate(
       trace = MotionTrace.unsafe(outputPoses.toVector),
@@ -177,12 +181,13 @@ object MotionEstimator:
       ctx: EstimatorContext,
       template: Array[Double],
       poses: Array[RigidPose],
-      diagnostics: Array[FrameFitDiagnostics]
+      diagnostics: Array[FrameFitDiagnostics],
+      huber: Array[Double]
   ): Array[FrameFitDiagnostics] =
     val frameIds = Vector.tabulate(poses.length)(identity)
     val out =
       mapFrames(ctx, frameIds) { t =>
-        val finalCost = evaluate(ctx, ctx.diagnosticLevel, template, t, poses(t), huberThreshold(ctx, template, t))
+        val finalCost = evaluate(ctx, ctx.diagnosticLevel, template, t, poses(t), huber(t))
         val d = diagnostics(t)
         d.copy(
           costFinal = finalCost.cost,
@@ -195,10 +200,14 @@ object MotionEstimator:
       ctx: EstimatorContext,
       template: Array[Double],
       frame: Int,
-      warmStart: RigidPose,
-      huber: Double
+      warmStart: RigidPose
   ): FitResult =
-    val capture = captureStart(ctx, ctx.levels.head, template, frame, warmStart, huber)
+    // The robust scale is estimated at the warm start for the coarse capture search, then
+    // re-estimated once at the captured pose (residuals nearer alignment) and fixed for this
+    // frame's levels and diagnostics, so one objective is minimised and costs stay comparable.
+    val captureHuber = huberThreshold(ctx, template, frame, warmStart)
+    val capture = captureStart(ctx, ctx.levels.head, template, frame, warmStart, captureHuber)
+    val huber = huberThreshold(ctx, template, frame, capture.pose)
     var pose = capture.pose
     var lambda = math.max(1e-6, ctx.control.optimizer.lambda0)
     var totalIterations = 0
@@ -208,7 +217,7 @@ object MotionEstimator:
     while levelIndex < ctx.levels.length do
       val level = ctx.levels(levelIndex)
       var current =
-        if levelIndex == 0 then capture.startCost
+        if levelIndex == 0 && huber == captureHuber then capture.startCost
         else evaluate(ctx, level, template, frame, pose, huber)
       var iter = 0
       var levelConverged = false
@@ -275,7 +284,8 @@ object MotionEstimator:
         overlap = finalCost.overlap,
         restarted = start.cost < initial.cost,
         converged = converged
-      )
+      ),
+      huber = huber
     )
 
   private final case class NormalSystem(hessian: Array[Double], gradient: Array[Double])
@@ -961,19 +971,20 @@ object MotionEstimator:
 
   /** Absolute Huber threshold for one frame against one template. With
     * `HuberScale.RobustResidual` it is `huberK * 1.4826 * MAD` of the frame's
-    * residuals at the identity pose over the diagnostic samples: deterministic,
-    * independent of the fitting path, and covariant with the intensity scale.
-    * A zero MAD means more than half the residuals are identical (for example
-    * a pure intensity offset), so the robust scale is degenerate; it then falls
-    * back to the residual RMS, and for an exact match (all residuals zero) to
-    * `1e-12` of the mean absolute template value. Both are also covariant.
+    * residuals at `pose` over the diagnostic samples, covariant with the
+    * intensity scale. A MAD at or below round-off (`1e-9` of the residual RMS)
+    * means more than half the residuals are identical. The scale then falls
+    * back to the MAD of the deviations above round-off
+    * (exactly matching background), to the residual RMS when all residuals are
+    * equal (a pure intensity offset), and for an exact match to `1e-12` of the
+    * mean absolute template value. All fallbacks are covariant.
     */
-  private def huberThreshold(ctx: EstimatorContext, template: Array[Double], frame: Int): Double =
+  private def huberThreshold(ctx: EstimatorContext, template: Array[Double], frame: Int, pose: RigidPose): Double =
     ctx.control.optimizer.huberScale match
       case HuberScale.Absolute => ctx.control.optimizer.huberK
       case HuberScale.RobustResidual =>
         val level = ctx.diagnosticLevel
-        val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, RigidPose.identity)
+        val map = MotionSampling.voxelMap(ctx.nx, ctx.ny, ctx.nz, zpad = 0, ctx.px, ctx.py, ctx.pz, pose)
         val residuals = Array.ofDim[Double](level.samples.length)
         var count = 0
         var templateMagnitude = 0.0
@@ -992,26 +1003,43 @@ object MotionEstimator:
             templateMagnitude += math.abs(template(sample.ordinal))
             count += 1
           s += 1
-        val scale =
-          if count == 0 then 0.0
-          else
-            val used = java.util.Arrays.copyOf(residuals, count)
-            java.util.Arrays.sort(used)
-            val median = MotionMetrics.quantileSorted(used.toVector, 0.5)
-            val deviations = used.map(r => math.abs(r - median))
-            java.util.Arrays.sort(deviations)
-            1.4826 * MotionMetrics.quantileSorted(deviations.toVector, 0.5)
+        var scale = 0.0
+        var informative = 0.0
         val rms = if count == 0 then 0.0 else math.sqrt(squares / count)
+        // Scale-covariant round-off level: deviations below it are rounding noise
+        // (for example (a + c) - a != c exactly), not residual spread.
+        val noise = 1e-9 * rms
+        if count > 0 then
+          val used = java.util.Arrays.copyOf(residuals, count)
+          java.util.Arrays.sort(used)
+          val median = sortedMedian(used, count)
+          val deviations = Array.ofDim[Double](count)
+          var i = 0
+          while i < count do
+            deviations(i) = math.abs(used(i) - median)
+            i += 1
+          java.util.Arrays.sort(deviations)
+          scale = 1.4826 * sortedMedian(deviations, count)
+          var firstPositive = 0
+          while firstPositive < count && deviations(firstPositive) <= noise do firstPositive += 1
+          if firstPositive < count then
+            val positive = java.util.Arrays.copyOfRange(deviations, firstPositive, count)
+            informative = 1.4826 * sortedMedian(positive, count - firstPositive)
         val floor = if count == 0 then 0.0 else 1e-12 * templateMagnitude / count
         val chosen =
-          if scale > 0.0 then scale
+          if scale > noise then scale
+          else if informative > noise then informative
           else if rms > 0.0 then rms
           else if floor > 0.0 then floor
           else 1.0
         ctx.control.optimizer.huberK * chosen
 
+  private def sortedMedian(sorted: Array[Double], length: Int): Double =
+    if length % 2 == 1 then sorted(length / 2) else 0.5 * (sorted(length / 2 - 1) + sorted(length / 2))
+
   /** A line search that exhausted its halvings is resolved when its final step
-    * is already negligible.
+    * is already negligible. The step compared is the untried `step / 64`, so a
+    * Gauss-Newton step up to 64 times `stepTolerance` still counts as resolved.
     */
   private[motion] def lineSearchResolved(finalStepNorm: Double, stepTolerance: Double): Boolean =
     finalStepNorm <= stepTolerance

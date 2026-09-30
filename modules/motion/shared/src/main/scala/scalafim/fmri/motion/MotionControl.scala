@@ -43,10 +43,12 @@ object PyramidControl:
 /** Units of the Huber threshold `huberK`. */
 enum HuberScale:
   /** `huberK` counts robust residual standard deviations: the absolute threshold
-    * is `huberK * 1.4826 * MAD` of the frame's residuals at its warm-start pose,
-    * fixed for that frame's capture, levels and diagnostics. Scaling the image
-    * intensities scales every residual and the threshold together, so robust
-    * weights and the estimated motion do not depend on the intensity scale.
+    * is `huberK * 1.4826 * MAD` of the frame's residuals. The scale is estimated
+    * at the warm start for the coarse capture search, then re-estimated once at
+    * the captured pose and fixed for that frame's levels and diagnostics.
+    * Scaling the image intensities scales every residual and the threshold
+    * together, so robust weights and the estimated motion do not depend on the
+    * intensity scale, and every cost scales by the square of the factor.
     */
   case RobustResidual
 
