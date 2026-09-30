@@ -4,6 +4,7 @@ import bids4s.*
 import bids4s.io.{BidsLoadConfig, BidsProjectLoader}
 import scalafim.fmri.motion.*
 import scalafim.image.*
+import scalafim.image.world.SpaceEvidence
 
 import java.nio.file.{Path, Paths}
 
@@ -52,8 +53,10 @@ object MotionBids:
       )
     )
 
-  def loadRun(scan: MotionBidsScan): Either[MotionIoError, SomeScalarSeries[Double]] =
-    MotionNiftiIo.readRun(scan.path)
+  def loadRun(scan: MotionBidsScan, evidence: SpaceEvidence): Either[MotionIoError, SomeScalarSeries[Double]] =
+    if scan.space.exists(label => evidence.bidsSpace.exists(_ != label)) then
+      Left(MotionIoError.InvalidInput(scan.path, "caller world evidence contradicts the BIDS space entity"))
+    else MotionNiftiIo.readRun(scan.path, evidence.copy(bidsSpace = scan.space.orElse(evidence.bidsSpace)))
 
   private def scans(project: BidsProject, files: Vector[BidsFile]): Either[MotionIoError, Vector[MotionBidsScan]] =
     project

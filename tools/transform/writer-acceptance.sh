@@ -5,5 +5,5 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 GOLDENS=modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens
 sbt -batch "transformJVM/Test/runMain scalafim.transform.WriterGoldens $GOLDENS"
-uv run --with SimpleITK==2.5.6 --with nibabel==5.4.2 --with fslpy==3.29.1 --with nitransforms==25.1.0 --with h5py==3.16.0 --with numpy \
+uv run --with SimpleITK==2.5.6 --with nibabel==5.4.2 --with fslpy==3.29.1 --with nitransforms==25.1.0 --with h5py==3.16.0 --with numpy==2.5.3 \
   python tools/transform/writer_acceptance.py "$GOLDENS"

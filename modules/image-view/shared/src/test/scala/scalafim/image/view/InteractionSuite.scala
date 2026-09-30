@@ -1,6 +1,7 @@
 package scalafim.image.view
 
 import intaglio.*
+import image4s.geometry.Point
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
 
@@ -52,7 +53,7 @@ class InteractionSuite extends munit.FunSuite:
 
   test("centered state derives its cursor and steps from reference geometry") {
     val centered = ViewerState.centered(space)
-    assertEquals(centered.cursor, WorldPoint(1.5, 1.0, 0.5))
+    assertEquals(centered.cursor.toWorldPoint, WorldPoint(1.5, 1.0, 0.5))
     assertEqualsDouble(centered.pixelSpacing.horizontal, 1.0, 0.0)
     assertEqualsDouble(centered.sliceStep.millimeters, 1.0, 0.0)
   }
@@ -81,14 +82,14 @@ class InteractionSuite extends munit.FunSuite:
   }
 
   test("scrolling follows positive anatomical normals independent of display mirroring") {
-    val origin = initial.copy(state = initial.state.copy(cursor = WorldPoint.Origin))
+    val origin = initial.copy(state = initial.state.copy(cursor = Point.in(space.frame)(0.0, 0.0, 0.0).toOption.get))
     val sagittal = ViewerReducer.reduce(model, origin, ViewerAction.Scroll(AnatomicalPlane.Sagittal, 1)).toOption.get
     val coronal = ViewerReducer.reduce(model, origin, ViewerAction.Scroll(AnatomicalPlane.Coronal, 1)).toOption.get
     val axial = ViewerReducer.reduce(model, origin, ViewerAction.Scroll(AnatomicalPlane.Axial, 1)).toOption.get
 
-    assertEquals(sagittal.state.cursor, WorldPoint(2.0, 0.0, 0.0))
-    assertEquals(coronal.state.cursor, WorldPoint(0.0, 2.0, 0.0))
-    assertEquals(axial.state.cursor, WorldPoint(0.0, 0.0, 2.0))
+    assertEquals(sagittal.state.cursor.toWorldPoint, WorldPoint(2.0, 0.0, 0.0))
+    assertEquals(coronal.state.cursor.toWorldPoint, WorldPoint(0.0, 2.0, 0.0))
+    assertEquals(axial.state.cursor.toWorldPoint, WorldPoint(0.0, 0.0, 2.0))
 
     val mirrored = origin.copy(
       state = origin.state.copy(convention = LeftRightConvention.PatientRightOnLeft)
@@ -98,7 +99,8 @@ class InteractionSuite extends munit.FunSuite:
       mirrored,
       ViewerAction.Scroll(AnatomicalPlane.Axial, 1)
     ).toOption.get
-    assertEquals(mirroredAxial.state.cursor, axial.state.cursor)
+    assertEquals(mirroredAxial.state.cursor.toWorldPoint, axial.state.cursor.toWorldPoint)
+    assertEquals(mirroredAxial.state.cursor.frame.persistentKey, axial.state.cursor.frame.persistentKey)
   }
 
   test("zoomed panel views preserve inverse picking and stay plane-local") {

@@ -25,9 +25,9 @@ class SpaceResolverSuite extends munit.FunSuite:
     assert(XformCode.fromGifti("NIFTI_XFORM_BOGUS").isLeft)
 
   test("no evidence, or only unknown/scanner codes without context, is the unresolved space"):
-    assertEquals(resolve(SpaceEvidence()), Right(WorldSpace.Unresolved))
-    assertEquals(resolve(SpaceEvidence(xform = Some(XformCode.Unknown))), Right(WorldSpace.Unresolved))
-    assertEquals(resolve(SpaceEvidence(xform = Some(XformCode.ScannerAnatomical))), Right(WorldSpace.Unresolved))
+    assert(resolve(SpaceEvidence()).exists(_.isInstanceOf[WorldSpace.Unresolved]))
+    assert(resolve(SpaceEvidence(xform = Some(XformCode.Unknown))).exists(_.isInstanceOf[WorldSpace.Unresolved]))
+    assert(resolve(SpaceEvidence(xform = Some(XformCode.ScannerAnatomical))).exists(_.isInstanceOf[WorldSpace.Unresolved]))
 
   test("scanner and aligned codes with a native context resolve to that native space"):
     assertEquals(resolve(SpaceEvidence(xform = Some(XformCode.ScannerAnatomical), native = Some(context))), Right(native))

@@ -1,0 +1,1012 @@
+{
+  "image_id_expected": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+  "platform": "Linux-6.12.5-linuxkit-x86_64-with-glibc2.36",
+  "python": "3.14.7",
+  "numpy": "2.5.3",
+  "nibabel": "5.4.2",
+  "tool_commands": [
+    {
+      "name": "tool_flirt_version",
+      "argv": [
+        "/opt/fsl6/bin/flirt",
+        "-version"
+      ],
+      "returncode": 0,
+      "stdout": "FLIRT version 6.0\n",
+      "stderr": ""
+    },
+    {
+      "name": "tool_fslversion",
+      "argv": [
+        "/opt/fsl6/bin/fslversion"
+      ],
+      "returncode": 0,
+      "stdout": "FSLDIR:  /opt/fsl6\nVersion: Unknown [$FSLDIR/etc/fslversion does not exist]\n",
+      "stderr": ""
+    },
+    {
+      "name": "tool_img2imgcoord_help",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-help"
+      ],
+      "returncode": 0,
+      "stdout": "Usage: /opt/fsl6/bin/img2imgcoord [options] <filename containing coordinates>\n\n  Options are:\n        -src <filename of source image>        \n        -dest <filename of destination image>  \n        -xfm <filename of affine transform     (e.g. source2dest.mat)>\n        -warp <filename of warpfield (e.g. intermediate2dest_warp.nii.gz)>\n        -premat <filename of pre-warp affine transform  (e.g. source2intermediate.mat)>   (default=identity)\n        -vox                                   (all coordinates in voxels - default)\n        -mm                                    (all coordinates in mm)\n        -v                                     (verbose)\n        -help\n\n Notes:\n  (1) if '-' is used as coordinate filename then coordinates are read from standard input\n  (2) the first three options are compulsory\n",
+      "stderr": ""
+    }
+  ],
+  "tool_sha256": {
+    "flirt": "36f248e35fda52012190f08606f5f53b5f3f5afd31f3ba837ef8bf5b23a4cb52",
+    "img2imgcoord": "6b9018bbbb240019dc876e8ae74d7ccf24e11ced4ba60c5fba21c2337f6f41aa",
+    "fslversion": "9c5e27237d16d178b376736513172c52f211a6f0ada5a7c74762678d6504b35c"
+  },
+  "probe_source_sha256": {
+    "img2imgcoord.cc": "d3e79fa75791f3cdb0bd810b4595ff2c775ee0aa01b247bdfc11e2a21c44f3ac",
+    "img2imgcoord-master.cc": "02dcdfcc0fc8173f149d4e9f61928f42b729bd6a8cf57987983b1736009f7cc1"
+  },
+  "source_original": {
+    "shape": [
+      7,
+      9,
+      6
+    ],
+    "zooms": [
+      1.100000023841858,
+      0.800000011920929,
+      2.299999952316284
+    ],
+    "qform_code": 1,
+    "sform_code": 2,
+    "qform": [
+      [
+        -1.074625149004484,
+        -0.16529342769476876,
+        -0.12414684997321919,
+        40.5
+      ],
+      [
+        -0.21783720277041152,
+        0.7768943641454479,
+        -0.3061035778351134,
+        -21.25
+      ],
+      [
+        -0.08790787603133679,
+        0.09546333743087429,
+        2.2761563961936315,
+        -12.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "sform": [
+      [
+        1.0822144746780396,
+        0.11545424908399582,
+        0.24393299221992493,
+        -35.0
+      ],
+      [
+        -0.16356071829795837,
+        0.7906247973442078,
+        0.07939066737890244,
+        -18.5
+      ],
+      [
+        -0.10981675982475281,
+        -0.03978358581662178,
+        2.285649538040161,
+        9.75
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "best_affine": [
+      [
+        1.0822144746780396,
+        0.11545424908399582,
+        0.24393299221992493,
+        -35.0
+      ],
+      [
+        -0.16356071829795837,
+        0.7906247973442078,
+        0.07939066737890244,
+        -18.5
+      ],
+      [
+        -0.10981675982475281,
+        -0.03978358581662178,
+        2.285649538040161,
+        9.75
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "reference_original": {
+    "shape": [
+      7,
+      9,
+      6
+    ],
+    "zooms": [
+      1.100000023841858,
+      0.800000011920929,
+      2.299999952316284
+    ],
+    "qform_code": 1,
+    "sform_code": 4,
+    "qform": [
+      [
+        1.082214499964449,
+        0.11545424428812949,
+        0.2439329857243003,
+        -35.0
+      ],
+      [
+        -0.16356071643087625,
+        0.7906248180267764,
+        0.07939066909099984,
+        -18.5
+      ],
+      [
+        -0.10981675900974462,
+        -0.03978358542753605,
+        2.285649492111995,
+        9.75
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "sform": [
+      [
+        -1.0746252536773682,
+        -0.165293350815773,
+        -0.12414327263832092,
+        40.5
+      ],
+      [
+        -0.21783731877803802,
+        0.7768943309783936,
+        -0.3061032295227051,
+        -21.25
+      ],
+      [
+        -0.08790616691112518,
+        0.09546346962451935,
+        2.2761566638946533,
+        -12.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "best_affine": [
+      [
+        -1.0746252536773682,
+        -0.165293350815773,
+        -0.12414327263832092,
+        40.5
+      ],
+      [
+        -0.21783731877803802,
+        0.7768943309783936,
+        -0.3061032295227051,
+        -21.25
+      ],
+      [
+        -0.08790616691112518,
+        0.09546346962451935,
+        2.2761566638946533,
+        -12.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "derived_headers": {
+    "consistent_positive": {
+      "source": {
+        "shape": [
+          7,
+          9,
+          6
+        ],
+        "zooms": [
+          1.100000023841858,
+          0.800000011920929,
+          2.299999952316284
+        ],
+        "qform_code": 2,
+        "sform_code": 2,
+        "qform": [
+          [
+            1.082214499964449,
+            0.11545424428812949,
+            0.2439329857243003,
+            -35.0
+          ],
+          [
+            -0.16356071643087625,
+            0.7906248180267764,
+            0.07939066909099984,
+            -18.5
+          ],
+          [
+            -0.10981675900974462,
+            -0.03978358542753605,
+            2.285649492111995,
+            9.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "sform": [
+          [
+            1.0822144746780396,
+            0.11545424908399582,
+            0.24393299221992493,
+            -35.0
+          ],
+          [
+            -0.16356071829795837,
+            0.7906247973442078,
+            0.07939066737890244,
+            -18.5
+          ],
+          [
+            -0.10981675982475281,
+            -0.03978358581662178,
+            2.285649538040161,
+            9.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "best_affine": [
+          [
+            1.0822144746780396,
+            0.11545424908399582,
+            0.24393299221992493,
+            -35.0
+          ],
+          [
+            -0.16356071829795837,
+            0.7906247973442078,
+            0.07939066737890244,
+            -18.5
+          ],
+          [
+            -0.10981675982475281,
+            -0.03978358581662178,
+            2.285649538040161,
+            9.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      "reference": {
+        "shape": [
+          7,
+          9,
+          6
+        ],
+        "zooms": [
+          1.100000023841858,
+          0.800000011920929,
+          2.299999952316284
+        ],
+        "qform_code": 1,
+        "sform_code": 1,
+        "qform": [
+          [
+            1.082214499964449,
+            0.11545424428812949,
+            0.2439329857243003,
+            -35.0
+          ],
+          [
+            -0.16356071643087625,
+            0.7906248180267764,
+            0.07939066909099984,
+            -18.5
+          ],
+          [
+            -0.10981675900974462,
+            -0.03978358542753605,
+            2.285649492111995,
+            9.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "sform": [
+          [
+            1.0822144746780396,
+            0.11545424163341522,
+            0.24393299221992493,
+            -35.0
+          ],
+          [
+            -0.16356071829795837,
+            0.7906247973442078,
+            0.07939066737890244,
+            -18.5
+          ],
+          [
+            -0.10981675982475281,
+            -0.03978358581662178,
+            2.285649538040161,
+            9.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "best_affine": [
+          [
+            1.0822144746780396,
+            0.11545424163341522,
+            0.24393299221992493,
+            -35.0
+          ],
+          [
+            -0.16356071829795837,
+            0.7906247973442078,
+            0.07939066737890244,
+            -18.5
+          ],
+          [
+            -0.10981675982475281,
+            -0.03978358581662178,
+            2.285649538040161,
+            9.75
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    },
+    "consistent_negative": {
+      "source": {
+        "shape": [
+          7,
+          9,
+          6
+        ],
+        "zooms": [
+          1.100000023841858,
+          0.800000011920929,
+          2.299999952316284
+        ],
+        "qform_code": 1,
+        "sform_code": 1,
+        "qform": [
+          [
+            -1.074625149004484,
+            -0.16529342769476876,
+            -0.12414684997321919,
+            40.5
+          ],
+          [
+            -0.21783720277041152,
+            0.7768943641454479,
+            -0.3061035778351134,
+            -21.25
+          ],
+          [
+            -0.08790787603133679,
+            0.09546333743087429,
+            2.2761563961936315,
+            -12.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "sform": [
+          [
+            -1.0746251344680786,
+            -0.16529342532157898,
+            -0.12414684891700745,
+            40.5
+          ],
+          [
+            -0.21783719956874847,
+            0.7768943905830383,
+            -0.30610358715057373,
+            -21.25
+          ],
+          [
+            -0.08790787309408188,
+            0.0954633355140686,
+            2.276156425476074,
+            -12.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "best_affine": [
+          [
+            -1.0746251344680786,
+            -0.16529342532157898,
+            -0.12414684891700745,
+            40.5
+          ],
+          [
+            -0.21783719956874847,
+            0.7768943905830383,
+            -0.30610358715057373,
+            -21.25
+          ],
+          [
+            -0.08790787309408188,
+            0.0954633355140686,
+            2.276156425476074,
+            -12.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      "reference": {
+        "shape": [
+          7,
+          9,
+          6
+        ],
+        "zooms": [
+          1.100000023841858,
+          0.7999999523162842,
+          2.299999952316284
+        ],
+        "qform_code": 4,
+        "sform_code": 4,
+        "qform": [
+          [
+            -1.074625149004484,
+            -0.16529341537944892,
+            -0.12414684997321919,
+            40.5
+          ],
+          [
+            -0.21783720277041152,
+            0.7768943062623079,
+            -0.3061035778351134,
+            -21.25
+          ],
+          [
+            -0.08790787603133679,
+            0.0954633303183015,
+            2.2761563961936315,
+            -12.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "sform": [
+          [
+            -1.0746252536773682,
+            -0.165293350815773,
+            -0.12414327263832092,
+            40.5
+          ],
+          [
+            -0.21783731877803802,
+            0.7768943309783936,
+            -0.3061032295227051,
+            -21.25
+          ],
+          [
+            -0.08790616691112518,
+            0.09546346962451935,
+            2.2761566638946533,
+            -12.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ],
+        "best_affine": [
+          [
+            -1.0746252536773682,
+            -0.165293350815773,
+            -0.12414327263832092,
+            40.5
+          ],
+          [
+            -0.21783731877803802,
+            0.7768943309783936,
+            -0.3061032295227051,
+            -21.25
+          ],
+          [
+            -0.08790616691112518,
+            0.09546346962451935,
+            2.2761566638946533,
+            -12.0
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    },
+    "no_forms": {
+      "source": {
+        "shape": [
+          7,
+          9,
+          6
+        ],
+        "zooms": [
+          1.100000023841858,
+          0.800000011920929,
+          2.299999952316284
+        ],
+        "qform_code": 0,
+        "sform_code": 0,
+        "qform": null,
+        "sform": null,
+        "best_affine": [
+          [
+            -1.100000023841858,
+            0.0,
+            0.0,
+            3.3000000715255737
+          ],
+          [
+            0.0,
+            0.800000011920929,
+            0.0,
+            -3.200000047683716
+          ],
+          [
+            0.0,
+            0.0,
+            2.299999952316284,
+            -5.7499998807907104
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      "reference": {
+        "shape": [
+          7,
+          9,
+          6
+        ],
+        "zooms": [
+          1.100000023841858,
+          0.800000011920929,
+          2.299999952316284
+        ],
+        "qform_code": 0,
+        "sform_code": 0,
+        "qform": null,
+        "sform": null,
+        "best_affine": [
+          [
+            -1.100000023841858,
+            0.0,
+            0.0,
+            3.3000000715255737
+          ],
+          [
+            0.0,
+            0.800000011920929,
+            0.0,
+            -3.200000047683716
+          ],
+          [
+            0.0,
+            0.0,
+            2.299999952316284,
+            -5.7499998807907104
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    }
+  },
+  "hashes": {
+    "applyxfm_consistent_positive_support.nii": "6bd4161f1d4126ee981ce60c2a5177f71f83043bd6a246f1745ddb6a2bba0983",
+    "applyxfm_consistent_positive_world_x.nii": "622ba937056058765059ab472ab70e881d87de7485e89b82e0d3ee619fd5f249",
+    "applyxfm_consistent_positive_world_y.nii": "eb7fe8671bb2084847ee0fb837d5ec31817e8609c63be02a97139cadbea7c934",
+    "applyxfm_consistent_positive_world_z.nii": "610bda16948abe40a3f01c51f47b730080b60f0d64a42dfb2b9a52e83cc968aa",
+    "applyxfm_original_conflict_support.nii": "d123a6771ce0bf90ad0a1496eb125758b19e531594596c18af0e326caec432c3",
+    "applyxfm_original_conflict_world_x.nii": "eff99434fa1ace5729ffad7a2bc4185b907f58635f237ef309c8c9bb3576a857",
+    "applyxfm_original_conflict_world_y.nii": "63c54d1e60a46cb9f9e5308a219029eab49312a0eb0675f2e4f65c014a605b44",
+    "applyxfm_original_conflict_world_z.nii": "c77eb07a15d99a11a2de4fc7afc5e66252c19109d56b5eb3c98e302bf9c740bf",
+    "consistent_negative_reference.nii": "fe06f99142ff905989c9d264f96a853f60dce4593af6fe6417dbd1506d5b7930",
+    "consistent_negative_source.nii": "aeeb1e128b8997dd3a4095b52b76e735ced54c7b8b5d44f9300098264c8ac35e",
+    "consistent_positive_reference.nii": "4925fda43d8316e2d7872224d77ecb4b31a6e73eb9bcafdbc376350e6a8cde43",
+    "consistent_positive_source.nii": "7562afa2b9659ddfb2bf35f47fde9003f82c5c746c73e729b8f82365e8755ceb",
+    "consistent_positive_support.nii": "7e385e7f1141981ffbfd9416b5442996839cf23a7c2d16c554208831e02316de",
+    "consistent_positive_world_x.nii": "b4606835c9e447904a7f199781dc2e366e7f63dd83df9d349cb3ca179a8396c4",
+    "consistent_positive_world_y.nii": "34e8cfeb1f063bfa6fa0e7d43b092b48fbda6e0218d8bc5f9450861ded8273f3",
+    "consistent_positive_world_z.nii": "fda54f7f052aa7d083477c22111fd403d851a59ad299fc57deb70bcf13b8a1ff",
+    "no_forms_reference.nii": "41c880771d9dba45d0eee5958db9a812e05890db0529c400117d5670ec4a3ba2",
+    "no_forms_source.nii": "0d73a26f24bc4da7667a77ac7c8abaae88ba3e4c6580cb73af90a641a87d55ed",
+    "original_conflict_support.nii": "d4bcde07e5cf6d052a0d5b39c74ba2886d6b706f8f4143bdd0c18a53cf2bd7d6",
+    "original_conflict_world_x.nii": "653ae67d10cf5779778edf3351b726bfb9a7df9cf09fbc136d224badd7cbd4d0",
+    "original_conflict_world_y.nii": "80e9687b5cac5e4ab2f8a4d496454aed5f0aae3ab5cb0239b19ca72b7026c32a",
+    "original_conflict_world_z.nii": "7e58c1b0e3369744d947356a6301beb677d491a61f8668ea9973e292f8bf5236",
+    "original_reference.nii": "7791cb6bb0bdca878632ce307c720684256b8efc0eb4dc9ab5ef9d86ca1726ec",
+    "original_source.nii": "0b16a20f0a375bfa57c4fa2a35cc989c51f1865331180b1db31407c5d4945f84",
+    "flirt_0_to_1.mat": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+    "source_voxel_zero.txt": "a17138988e1387532b5cb0bd7a23f18a11d537123873e67154dada3c6359e53e"
+  },
+  "img2imgcoord_probes": [
+    {
+      "name": "01_original_conflict_default",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/original_source.nii",
+        "-dest",
+        "/probe/original_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n2.27273  -1.5625  1.63043\n",
+      "stderr": ""
+    },
+    {
+      "name": "02_original_conflict_flirt",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/original_source.nii",
+        "-dest",
+        "/probe/original_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "-flirt",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n2.27273  -1.5625  1.63043\n",
+      "stderr": ""
+    },
+    {
+      "name": "03_consistent_positive_default",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/consistent_positive_source.nii",
+        "-dest",
+        "/probe/consistent_positive_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n-2.38508  -1.14193  1.63043\n",
+      "stderr": ""
+    },
+    {
+      "name": "04_consistent_positive_flirt",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/consistent_positive_source.nii",
+        "-dest",
+        "/probe/consistent_positive_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "-flirt",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n-2.38508  -1.14193  1.63043\n",
+      "stderr": ""
+    },
+    {
+      "name": "05_consistent_negative_default",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/consistent_negative_source.nii",
+        "-dest",
+        "/probe/consistent_negative_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n2.27273  -1.5625  1.63043\n",
+      "stderr": ""
+    },
+    {
+      "name": "06_consistent_negative_flirt",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/consistent_negative_source.nii",
+        "-dest",
+        "/probe/consistent_negative_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "-flirt",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n2.27273  -1.5625  1.63043\n",
+      "stderr": ""
+    },
+    {
+      "name": "07_no_forms_default",
+      "argv": [
+        "/opt/fsl6/bin/img2imgcoord",
+        "-src",
+        "/probe/no_forms_source.nii",
+        "-dest",
+        "/probe/no_forms_reference.nii",
+        "-xfm",
+        "/probe/flirt_0_to_1.mat",
+        "-vox",
+        "/probe/source_voxel_zero.txt"
+      ],
+      "returncode": 0,
+      "stdout": "Coordinates in Destination volume (in voxels)\n2.27273  -1.5625  1.63043\n",
+      "stderr": ""
+    }
+  ],
+  "equations": {
+    "current_selectedS_flip": [
+      [
+        -1.0187252656,
+        -0.00615125806742687,
+        0.0032913159604269163,
+        8.385078817067239
+      ],
+      [
+        -0.07009578543727661,
+        0.9683518308,
+        -0.0904357503899837,
+        -1.1419252640932762
+      ],
+      [
+        0.0,
+        0.010120221299746417,
+        1.0495275354,
+        1.6304348164109523
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "native_LR_fallback_noflip": [
+      [
+        1.0187252656,
+        -0.00615125806742687,
+        0.0032913159604269163,
+        2.272727223467237
+      ],
+      [
+        0.07009578543727661,
+        0.9683518308,
+        -0.0904357503899837,
+        -1.5624999767169359
+      ],
+      [
+        0.0,
+        0.010120221299746417,
+        1.0495275354,
+        1.6304348164109523
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "flirt_applyxfm_validation": {
+    "current_selectedS_flip": {
+      "source_voxels_total": 378,
+      "target_in_bounds": 112,
+      "support_at_least_0_999": 112,
+      "finite_ramp_samples": 112,
+      "max_abs_source_voxel_error": 7.398290953723382,
+      "mean_abs_source_voxel_error": 3.0180375202072303,
+      "minimum_sampled_support": 0.9999999999999998,
+      "query_source_voxel_0_target_voxel": [
+        8.385078817067239,
+        -1.1419252640932762,
+        1.6304348164109523
+      ]
+    },
+    "native_LR_fallback_noflip": {
+      "source_voxels_total": 378,
+      "target_in_bounds": 112,
+      "support_at_least_0_999": 112,
+      "finite_ramp_samples": 112,
+      "max_abs_source_voxel_error": 7.398290953723393,
+      "mean_abs_source_voxel_error": 1.430392144345651,
+      "minimum_sampled_support": 0.9999999999999998,
+      "query_source_voxel_0_target_voxel": [
+        2.272727223467237,
+        -1.5624999767169359,
+        1.6304348164109523
+      ]
+    },
+    "measured_flirt_ramp_map": {
+      "support_at_least_0_999": 378,
+      "target_to_source_voxel": [
+        [
+          0.21173427742805206,
+          -0.04694792545529293,
+          0.11103626117729001,
+          0.7195657149508282
+        ],
+        [
+          0.4912129851395757,
+          -0.021972663809900164,
+          0.44871015160011263,
+          -0.9670094053315703
+        ],
+        [
+          0.20831918860557774,
+          -0.08766656050873009,
+          0.30386988662069636,
+          -0.625687642651829
+        ],
+        [
+          1.138657889720595e-17,
+          0.0,
+          -7.632783294297951e-17,
+          1.0
+        ]
+      ],
+      "source_to_target_voxel": [
+        [
+          6.207751915120248,
+          0.8613849681648069,
+          -3.5403236384698458,
+          -5.849054830793015
+        ],
+        [
+          -10.604083889568559,
+          7.832607318933082,
+          -7.691228029159392,
+          10.39223381641073
+        ],
+        [
+          -7.315030221279219,
+          1.669183911120363,
+          3.4990431338451193,
+          9.067069542295844
+        ],
+        [
+          -6.290254616584448e-16,
+          1.1759696281822844e-16,
+          3.0738655421148997e-16,
+          1.0000000000000009
+        ]
+      ],
+      "max_abs_fit_residual": 6.508313238095807,
+      "source_voxel_0_target_voxel": [
+        -5.849054830793015,
+        10.39223381641073,
+        9.067069542295844
+      ],
+      "max_abs_difference_from_current_selectedS_flip": 14.234133647860254,
+      "max_abs_difference_from_native_LR_fallback_noflip": 11.954733793127666
+    },
+    "consistent_positive_flirt_outputs": {
+      "output_shape": [
+        7,
+        9,
+        6
+      ],
+      "support_at_least_0_999": 378,
+      "support_minimum": 1.0,
+      "support_maximum": 1.0,
+      "finite_ramp_values": [
+        378,
+        378,
+        378
+      ],
+      "ramp_total_values": 378
+    }
+  },
+  "ramp_header_forms_preserved": {
+    "original_conflict_world_x": true,
+    "original_conflict_support": true,
+    "consistent_positive_world_x": true,
+    "consistent_positive_support": true
+  }
+}

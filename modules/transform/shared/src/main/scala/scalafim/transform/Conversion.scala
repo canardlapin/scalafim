@@ -45,8 +45,8 @@ object Conversion:
   /** Convert a decoded file. HDF5 inputs (ITK composites, X5) are decoded by the JVM container readers first. */
   def convert(native: NativeTransform, to: TransformFormat, decode: ConversionContext, encode: ConversionContext): Either[TransformError, EncodedTransform] =
     // Conversion is frame-agnostic: the endpoints are fresh declared spaces that exist only for this call.
-    val moving: Frame[D3] = FrameCatalog.frame(WorldSpace.declare("conversion source").getOrElse(WorldSpace.Unresolved))
-    val fixed: Frame[D3] = FrameCatalog.frame(WorldSpace.declare("conversion target").getOrElse(WorldSpace.Unresolved))
+    val moving: Frame[D3] = FrameCatalog.frame(WorldSpace.declare("conversion source").fold(error => throw new IllegalStateException(error.message), identity))
+    val fixed: Frame[D3] = FrameCatalog.frame(WorldSpace.declare("conversion target").fold(error => throw new IllegalStateException(error.message), identity))
     val frames = Frames[moving.type, fixed.type](moving, fixed)
     interpret(native, frames, decode).flatMap(transform => express(transform, to, frames, encode))
 

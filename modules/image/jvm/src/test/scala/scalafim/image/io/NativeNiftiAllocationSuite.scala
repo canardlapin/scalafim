@@ -1,5 +1,7 @@
 package scalafim.image.io
 
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
+
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 
@@ -19,6 +21,7 @@ import scalafim.image.SomeSampleSpace
 import scalafim.image.SomeNeuroSeries
 
 final class NativeNiftiAllocationSuite extends FunSuite:
+  private val readEvidence = SpaceEvidence(assertion = Some(WorldSpace.declare("synthetic IO fixture").toOption.get))
   @volatile private var retained: AnyRef = new Object
 
   test("native NIfTI adapters retain one scaled Ravel destination with bounded streaming"):
@@ -58,7 +61,7 @@ final class NativeNiftiAllocationSuite extends FunSuite:
       assertEquals(Nifti.ioStrategy(path), NiftiIoStrategy.BoundedStreaming)
 
       val read = () =>
-        retained = Nifti.readSeries(path).toOption.get.image.data
+        retained = Nifti.readSeries(path, readEvidence).toOption.get.image.data
       Vector.fill(3)(read())
       val readAllocated = medianAllocation(read())
       val readNanos = medianElapsed(read())

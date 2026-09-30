@@ -1,0 +1,24 @@
+{
+ "generator": "tools/transform/generate_native_inverse_coordinate_oracles.py",
+ "generated": "2026-09-30",
+ "kind": "reference-implementation",
+ "tools": {
+  "SimpleITK": "2.5.6",
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3",
+  "fslpy": "3.29.1"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "uv run --with SimpleITK==2.5.6 --with nibabel==5.4.2 --with numpy==2.5.3 --with fslpy==3.29.1 python tools/transform/generate_native_inverse_coordinate_oracles.py"
+ ],
+ "notes": "Independent native decoder tables. The ANTs pair's independently characterized native composition closure is recorded as evidence, not an estimate residual gate.",
+ "sha256": {
+  "ants_inverse_nodes.tsv": "e5e94c928c6371183b96bd3ed511e21731d48aadc818e3d15914654959ecdab5",
+  "ants_inverse_off_nodes.tsv": "cabd37015e8d287ac397a230c279c0257299514f39ed9707c01f722147817523",
+  "fsl_inverse_nodes.tsv": "04d19f7d73ae1bb93c7d1d597ce71f906b51a9fc55cae59a95b4244691b94025",
+  "fsl_inverse_off_nodes.tsv": "2a207254da56d0f2d2e953090764fc129d9dd6cc0eec2772a8a4ff68971e0d39",
+  "metadata.json": "a32a68b6d47901d40899d131326454fda0a3da151e16479fd9c72d03c327a6d4"
+ }
+}

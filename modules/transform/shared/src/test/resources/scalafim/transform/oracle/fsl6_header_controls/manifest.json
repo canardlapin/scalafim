@@ -1,0 +1,18 @@
+{
+  "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+  "fixture_sha256": {
+    "consistent_positive_source.nii": "7562afa2b9659ddfb2bf35f47fde9003f82c5c746c73e729b8f82365e8755ceb",
+    "consistent_positive_reference.nii": "4925fda43d8316e2d7872224d77ecb4b31a6e73eb9bcafdbc376350e6a8cde43",
+    "flirt_0_to_1.mat": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+    "positive_axis_x.nii": "86c9c2496b5a136eced2235831d8c30f1aa40bf52f89aff2382cef4b9e2b03cc",
+    "positive_axis_y.nii": "d83c7c4fef2ae54bdcc8cfec82dab7cbd311547dcf96cee93a84c2c77bbeaaee",
+    "positive_axis_z.nii": "86e83c8125b83e027db5475b520ba027ba20b1e077c4bbc619760ce9a0bac659",
+    "applyxfm_positive_axis_x.nii": "38d30e4df92a8112acc1f8565d53b0ceb6da5ae2422ac35175e71df36f7d48b9",
+    "applyxfm_positive_axis_y.nii": "deec635efb4048a4c7670950d45927dfb42efd85b6e894c7bb7bdb6da560059f",
+    "applyxfm_positive_axis_z.nii": "216bda96967e11895b6019885555174effded9871045d373d1ffb7c126331f87",
+    "positive_control_applyxfm_equation.json": "cb0d0957c082903d620479eace0c7380e33974d42233107bcb701fd44c22fd2f",
+    "03_consistent_positive_default.json": "bdbf9e05514dc611b89af9dab253b2c928880b7c143b77d59a740c08cc82e51b"
+  },
+  "description": "Native positive-handed control: analytically selected source and target interiors; 20 finite stored-voxel pullback probes. Header conflict controls remain negative evidence, not qualification.",
+  "producer": "verification artifact run_positive_control_check.py; native commands and raw SHA receipts in positive_control_applyxfm_equation.json"
+}

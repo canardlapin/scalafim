@@ -42,7 +42,6 @@ object Downsample:
     val oldSpatial = old.spatialDims
     val tLen = vec.nVolumes
 
-    val newDims4 = newSpatialDims :+ tLen
     val scale = Vector.tabulate(3)(d => oldSpatial(d).toDouble / newSpatialDims(d).toDouble)
 
     def blockRange(d: Int, o: Int): (Int, Int) =
@@ -85,15 +84,10 @@ object Downsample:
           newShape = Some(newSpatialDims)
         )
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    val newOrigin = Vector.tabulate(3)(i => newTrans.matrix(i, 3))
-    val newSpace =
-      SampleSpaces(
-        dims = newDims4,
-        spacing = Some(newSpacing),
-        origin = Some(newOrigin),
-        axes = Some(old.nonSpatialAxes),
-        affine = Some(newTrans)
-      )
+    val sourceSpace = SampleSpaces.requireD3(old)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val newSpace = SampleSpaces.derivedD3(sourceSpace, newSpatialDims, newTrans)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     SomeNeuroSeries.unsafeFromRavel(out, newSpace, vec.label)
 
   @scala.annotation.targetName("byFactorNeuroVolumeScalar")
@@ -154,15 +148,10 @@ object Downsample:
           newShape = Some(newSpatialDims)
         )
         .fold(error => throw new IllegalArgumentException(error.message), identity)
-    val newOrigin = Vector.tabulate(3)(i => newTrans.matrix(i, 3))
-    val newSpace =
-      SampleSpaces(
-        dims = newSpatialDims,
-        spacing = Some(newSpacing),
-        origin = Some(newOrigin),
-        axes = Some(old.nonSpatialAxes),
-        affine = Some(newTrans)
-      )
+    val sourceSpace = SampleSpaces.requireD3(old)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
+    val newSpace = SampleSpaces.derivedD3(sourceSpace, newSpatialDims, newTrans)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
     SomeNeuroVolume.unsafeFromRavel(out, newSpace, vol.label)
 
 object Resample:
@@ -313,6 +302,8 @@ object Resample:
   ): SomeNeuroVolume[A, Sem] =
     val src = vol.space
     val targ = target.spatialSpace
+    SpatialPullbacks.worldAligned(GridSpec.fromSpace(src), GridSpec.fromSpace(targ))
+      .fold(error => throw new IllegalArgumentException(error.message), _ => ())
     val targDims = targ.spatialDims
     val srcDims = src.spatialDims
     val out =
@@ -351,6 +342,8 @@ object Resample:
     val src = vec.space
     val tLen = vec.nVolumes
     val targSpatial = target.spatialSpace
+    SpatialPullbacks.worldAligned(GridSpec.fromSpace(src), GridSpec.fromSpace(targSpatial))
+      .fold(error => throw new IllegalArgumentException(error.message), _ => ())
     val targDims = targSpatial.spatialDims
     val srcDims = src.spatialDims
     val out =

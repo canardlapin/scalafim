@@ -150,11 +150,10 @@ enum WorldSpace derives CanEqual:
   /** A caller-declared space. Fresh by construction; identity is the token alone, and its label is display-only. */
   case Declared(token: DeclaredToken)
 
-  /** No identity evidence. Every unresolved RAS-mm space shares this identity, which preserves the historical
-    * behaviour of independently loaded volumes aligning with one another. It is an explicit admission that the
-    * space is unknown, not evidence that two such spaces coincide.
+  /** No anatomical identity evidence, with a fresh scope retained through persistence.
+    * Equal geometry does not establish that independently constructed unknown worlds coincide.
     */
-  case Unresolved
+  case Unresolved(token: DeclaredToken)
 
   def displayName: String =
     this match
@@ -162,9 +161,13 @@ enum WorldSpace derives CanEqual:
       case SubjectNative(ns, sub, ses, _)       => s"${ns.value}/${sub.value}${ses.fold("")(s => s"/${s.value}")}/native"
       case SubjectTkRas(ns, sub, _)             => s"${ns.value}/${sub.value}/tkRAS"
       case Declared(token)                      => token.label
-      case Unresolved                           => "unresolved RAS"
+      case Unresolved(_)                        => "unresolved RAS"
 
 object WorldSpace:
+  /** A fresh unknown world; retain this value when constructing related grids. */
+  def freshUnresolved(): WorldSpace =
+    Unresolved(DeclaredToken.fresh("unresolved RAS"))
+
   /** Declare a new space. Two declarations never share an identity, whatever their labels. */
   def declare(label: String): Either[SpaceError, WorldSpace] =
     SpaceIdentifier.normalize("declared space label", label).map(l => Declared(DeclaredToken.fresh(l)))
@@ -183,8 +186,8 @@ object WorldSpace:
         s"scalafim-world:tkras:${escape(ns.value)}:${escape(sub.value)}:${escape(ref.canonical)}"
       case Declared(token) =>
         s"scalafim-world:declared:${escape(token.value)}"
-      case Unresolved =>
-        UnresolvedId
+      case Unresolved(token) =>
+        s"scalafim-world:unresolved:${escape(token.value)}"
 
   /** Inverse of [[encode]]; used when restoring persisted frame records.
     *
@@ -193,7 +196,8 @@ object WorldSpace:
     * is a `Left`, never an exception.
     */
   def decode(text: String, declaredLabel: Option[String] = None): Either[SpaceError, WorldSpace] =
-    if text == UnresolvedId then Right(Unresolved)
+    if text == UnresolvedId then
+      Left(SpaceError.NoWorldSpace("legacy shared scalafim-ras-d3 identity requires explicit world-space migration"))
     else
       text.split(":", -1).toList match
         case "scalafim-world" :: "template" :: name :: Nil =>
@@ -211,12 +215,14 @@ object WorldSpace:
             subject   <- unescape(sub).flatMap(SubjectId(_))
             reference <- unescape(ref).flatMap(decodeReference)
           yield SubjectTkRas(namespace, subject, reference)
+        case "scalafim-world" :: "unresolved" :: token :: Nil =>
+          unescape(token).flatMap(DeclaredToken.restored(_, Some("unresolved RAS"))).map(Unresolved(_))
         case "scalafim-world" :: "declared" :: token :: Nil =>
           unescape(token).flatMap(DeclaredToken.restored(_, declaredLabel)).map(Declared(_))
         case _ =>
           Left(SpaceError.UnrecognisedWorldSpaceId(text))
 
-  /** The historical shared RAS-mm D3 frame id, kept byte-identical so persisted records still restore. */
+  /** The retired shared RAS-mm D3 frame id; decoding requires an explicit migration. */
   private[world] val UnresolvedId = "scalafim-ras-d3"
 
   private def decodeReference(canonical: String): Either[SpaceError, ReferenceAcquisition] =

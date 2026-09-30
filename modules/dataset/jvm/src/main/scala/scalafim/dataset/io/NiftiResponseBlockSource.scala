@@ -5,6 +5,7 @@ import scalafim.image.SampleSpaces.*
 import scalafim.dataset.*
 import scalafim.image.{PrimitiveBuffers, SomeSampleSpace}
 import scalafim.image.io.{Nifti, NiftiHeader}
+import scalafim.image.world.SpaceEvidence
 
 import java.io.BufferedInputStream
 import java.nio.ByteBuffer
@@ -173,6 +174,7 @@ final class NiftiResponseBlockSource private (
 object NiftiResponseBlockSource:
   def open(
       path: Path,
+      evidence: SpaceEvidence,
       staging: Option[NiftiStagingCache] = None,
       voxelDomain: Option[VoxelDomain] = None,
       metadata: DatasetMetadata = DatasetMetadata.Empty
@@ -187,7 +189,7 @@ object NiftiResponseBlockSource:
 
     resolved.flatMap { dataPath =>
       readHeader(dataPath).flatMap { header =>
-        validateHeader(header).flatMap { case (space, timepoints) =>
+        validateHeader(header, evidence).flatMap { case (space, timepoints) =>
           DatasetShape.make(space, timepoints).flatMap { shape =>
             val domain = voxelDomain.getOrElse(VoxelDomain.fullUnsafe(shape))
             if domain.spatialSize != shape.spatialSize then
@@ -207,7 +209,7 @@ object NiftiResponseBlockSource:
     catch
       case NonFatal(error) => Left(DatasetError.StorageFailure(s"failed to read NIfTI header '$path': ${error.getMessage}"))
 
-  private def validateHeader(header: NiftiHeader): Either[DatasetError, (SomeSampleSpace, Int)] =
+  private def validateHeader(header: NiftiHeader, evidence: SpaceEvidence): Either[DatasetError, (SomeSampleSpace, Int)] =
     val bytesPerValue = header.bitpix / 8
     val supported =
       (header.datatype == 2 && bytesPerValue == 1) ||
@@ -224,7 +226,9 @@ object NiftiResponseBlockSource:
     else
       try
         val timepoints = if header.dims.length == 4 then header.dims(3) else 1
-        val space = header.space.spatialSpace
-        Right(space -> timepoints)
+        header.spaceIn(evidence)
+          .left
+          .map(error => DatasetError.StorageFailure(s"NIfTI space evidence failed: ${error.message}"))
+          .map(_.spatialSpace -> timepoints)
       catch
         case NonFatal(error) => Left(DatasetError.StorageFailure(s"invalid NIfTI geometry: ${error.getMessage}"))

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T04:48:52.217928+00:00",
+  "finished_utc": "2026-09-30T04:49:20.013211+00:00",
+  "duration_seconds": 27.795073,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "motionJS/test",
+    "fmriWorkflowJS/test",
+    "surfaceJS/test",
+    "surfaceViewJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-scoped-world-consumer-js-3.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 12668
+}

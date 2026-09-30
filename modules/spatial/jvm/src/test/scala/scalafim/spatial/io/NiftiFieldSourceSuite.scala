@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.world.SubjectId
+import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
 
 import image4s.geometry.GeometryError
 import scalafim.image.io.Nifti
@@ -16,6 +16,11 @@ import java.nio.file.StandardOpenOption.APPEND
 import java.nio.file.{Files, Path}
 
 class NiftiFieldSourceSuite extends munit.FunSuite:
+  private val fixtureWorld = WorldSpace.declare("NIfTI field source fixture").fold(error => fail(error.message), identity)
+  private val fixtureEvidence = SpaceEvidence(assertion = Some(fixtureWorld))
+
+  private def inFixtureWorld(space: SomeSampleSpace): SomeSampleSpace =
+    SampleSpaces.inWorld(space, fixtureWorld).fold(error => fail(error.message), identity)
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result match
@@ -44,9 +49,9 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   test("lazy runtime reads one exact NIfTI support block and closes its channel"):
     withNiftiPath { path =>
-      val spatial = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
+      val spatial = inFixtureWorld(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
       val domain = volumeDomain("root", spatial)
-      val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 3, label = "bold"))
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, fixtureEvidence, observations = 3, label = "bold"))
       val field = spatialValue(Field.fromSource(domain, source))
       given SpatialGraph = spatialValue(SpatialGraph.build(Vector(domain), Vector.empty))
       val view = field.rows(3, 1).flatMap(_.timeBlock(1, 2)) match
@@ -84,9 +89,9 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
   test("big-endian int16 fixtures preserve byte order, scaling, and request order"):
     withNiftiPath { path =>
       writeBigEndianInt16(path)
-      val spatial = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
+      val spatial = inFixtureWorld(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
       val domain = volumeDomain("root", spatial)
-      val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 2))
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, fixtureEvidence, observations = 2))
       val request = spatialValue(
         FieldSourceRequest.make(source.descriptor, sourceRows = Vector(3, 1), observations = Vector(1))
       )
@@ -103,9 +108,9 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
 
   test("terminal validation reports unavailable, stale, and geometry-mismatched NIfTI roots"):
     withNiftiPath { path =>
-      val spatial = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
+      val spatial = inFixtureWorld(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
       val domain = volumeDomain("root", spatial)
-      val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, fixtureEvidence, observations = 1))
       val field = spatialValue(Field.fromSource(domain, source))
       given SpatialGraph = spatialValue(SpatialGraph.build(Vector(domain), Vector.empty))
       val runtime = LazyFieldRuntime(summon[SpatialGraph])
@@ -132,8 +137,8 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
     }
 
     withNiftiPath { path =>
-      val identity = SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity))
-      val translated = SampleSpaces(
+      val identity = inFixtureWorld(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
+      val translated = inFixtureWorld(SampleSpaces(
         Vector(4, 1, 1),
         affine = Some(
           ProviderAffines.fromRows(
@@ -145,7 +150,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
             )
           )
         )
-      )
+      ))
       Nifti
         .writeSeries(
           path,
@@ -156,7 +161,7 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         )
         .fold(error => fail(error.message), _ => ())
       val domain = volumeDomain("translated", translated)
-      val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, fixtureEvidence, observations = 1))
 
       assertEquals(
         source.validate().left.toOption,
@@ -173,8 +178,8 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
   test("NIfTI validation preserves an exact D2 sample-space admission failure"):
     withNiftiPath { path =>
       writeTwoDimensionalFloat32(path)
-      val domain = volumeDomain("d2-header", SampleSpaces(Vector(2, 2, 1)))
-      val source = spatialValue(NiftiFieldSource.prepare(path, domain, observations = 1))
+      val domain = volumeDomain("d2-header", inFixtureWorld(SampleSpaces(Vector(2, 2, 1))))
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, fixtureEvidence, observations = 1))
       val cause =
         SampleSpaceError.ExpectedDimensionality(
           "D3 sample space",
@@ -186,6 +191,29 @@ class NiftiFieldSourceSuite extends munit.FunSuite:
         source.validate().left.toOption,
         Some(SpatialError.FieldSourceSampleSpaceAdmission(source.descriptor.id, cause))
       )
+      assertEquals(source.stats.channelOpens, 0L)
+    }
+
+  test("same-grid NIfTI in a different declared world is rejected"):
+    withNiftiPath { path =>
+      val spatial = inFixtureWorld(SampleSpaces(Vector(4, 1, 1), affine = Some(ProviderAffines.identity)))
+      Nifti
+        .writeSeries(
+          path,
+          SomeScalarSeries.unsafeCopyFromCanonicalArray(
+            PrimitiveBuffers.fromArray(Array(1.0, 2.0, 3.0, 4.0)),
+            spatial.addDim(ProviderAxes.time(1))
+          )
+        )
+        .fold(error => fail(error.message), _ => ())
+      val domain = volumeDomain("world-a", spatial)
+      val otherWorld = WorldSpace.declare("NIfTI field source different world").fold(error => fail(error.message), identity)
+      val source = spatialValue(NiftiFieldSource.prepare(path, domain, SpaceEvidence(assertion = Some(otherWorld)), observations = 1))
+
+      assert(source.validate().left.toOption.exists {
+        case SpatialError.FieldSourceGridMismatch(id, _) => id == source.descriptor.id
+        case _                                           => false
+      })
       assertEquals(source.stats.channelOpens, 0L)
     }
 

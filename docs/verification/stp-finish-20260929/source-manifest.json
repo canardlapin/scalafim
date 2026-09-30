@@ -1,0 +1,1550 @@
+[
+  {
+    "path": "README.md",
+    "candidate_sha256": "f21061df4856b96c3a56789ff2042447fbe3053e36a03f95c19d0fec6b7d49b2",
+    "shared_sha256": "f21061df4856b96c3a56789ff2042447fbe3053e36a03f95c19d0fec6b7d49b2",
+    "same_as_shared": true
+  },
+  {
+    "path": "docs/module-relations.md",
+    "candidate_sha256": "67922383d26c925e93aa733aa40c7e4e1b9ffd88960ac43a98ad832edd584055",
+    "shared_sha256": "67922383d26c925e93aa733aa40c7e4e1b9ffd88960ac43a98ad832edd584055",
+    "same_as_shared": true
+  },
+  {
+    "path": "docs/spatial-transforms.md",
+    "candidate_sha256": "52386ef951ceba6c3f0121d66905d0b9633af732518c2104be88d08f2a7313a3",
+    "shared_sha256": "52386ef951ceba6c3f0121d66905d0b9633af732518c2104be88d08f2a7313a3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AsegLoader.scala",
+    "candidate_sha256": "9bbdf5c984f5b9d71b2acbd15195a0e02da763247b77850696f5bac47eecb7b7",
+    "shared_sha256": "9bbdf5c984f5b9d71b2acbd15195a0e02da763247b77850696f5bac47eecb7b7",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/AtlasLabelMaps.scala",
+    "candidate_sha256": "03b6083a09f45b1a91f41a6246a827bc7d9e1e02a2018105efccf5342e8e6cd9",
+    "shared_sha256": "03b6083a09f45b1a91f41a6246a827bc7d9e1e02a2018105efccf5342e8e6cd9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/BrainnetomeLoader.scala",
+    "candidate_sha256": "b12f07e5d2d1f46abc4836e66ed8845fe8c3006120d53045d6d7d2fabf05e16f",
+    "shared_sha256": "b12f07e5d2d1f46abc4836e66ed8845fe8c3006120d53045d6d7d2fabf05e16f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/GlasserLoader.scala",
+    "candidate_sha256": "15d3637b7cd32514cb4275adea72bf4f4e527ee36c994882d0db41d3565d24b7",
+    "shared_sha256": "15d3637b7cd32514cb4275adea72bf4f4e527ee36c994882d0db41d3565d24b7",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SchaeferLoader.scala",
+    "candidate_sha256": "f64b36831ce6563126e7ff599fe0cfdeeb766218ba0d227bd0cb1ae83e6b0026",
+    "shared_sha256": "f64b36831ce6563126e7ff599fe0cfdeeb766218ba0d227bd0cb1ae83e6b0026",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AsegLoaderSuite.scala",
+    "candidate_sha256": "9a6cc45fc351e5e3218f759477afe577bb8adce10a394e83ccf78fdc7120cb88",
+    "shared_sha256": "9a6cc45fc351e5e3218f759477afe577bb8adce10a394e83ccf78fdc7120cb88",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/AtlasIoSuite.scala",
+    "candidate_sha256": "41acb957b5073e8c4b30963d41a87a700fa9870621353e2662502617f1ce1a34",
+    "shared_sha256": "41acb957b5073e8c4b30963d41a87a700fa9870621353e2662502617f1ce1a34",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/jvm/src/test/scala/scalafim/atlas/io/BrainnetomeLoaderSuite.scala",
+    "candidate_sha256": "429c5003436644fa2c162de622946b20c5238210157ef9fc471b87a587f69202",
+    "shared_sha256": "429c5003436644fa2c162de622946b20c5238210157ef9fc471b87a587f69202",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasRef.scala",
+    "candidate_sha256": "368e30b3699b5ea1eebb3bab8a411246b0430b7358dc4969257c50c8b25b72ab",
+    "shared_sha256": "368e30b3699b5ea1eebb3bab8a411246b0430b7358dc4969257c50c8b25b72ab",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala",
+    "candidate_sha256": "adab0330e68e89ad83e88983d73a71d3afc749b6fda6cb2af0e5024314f2f7f3",
+    "shared_sha256": "adab0330e68e89ad83e88983d73a71d3afc749b6fda6cb2af0e5024314f2f7f3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoverageSuite.scala",
+    "candidate_sha256": "e064916c6b47cd08441ea8a41d8131e92fd7333e2758138d169cf871ac88b578",
+    "shared_sha256": "e064916c6b47cd08441ea8a41d8131e92fd7333e2758138d169cf871ac88b578",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasQuotientSuite.scala",
+    "candidate_sha256": "0d979a79168981b5250d20139107a4b1cf689ef4ec4157794ecd93eaa2d03c63",
+    "shared_sha256": "0d979a79168981b5250d20139107a4b1cf689ef4ec4157794ecd93eaa2d03c63",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/atlas/shared/src/test/scala/scalafim/atlas/TemplateSampledCatalogSuite.scala",
+    "candidate_sha256": "5d0e3bfb595f8e7930991cf27e4fea5169d3da82ce68120099bc6f8145db5549",
+    "shared_sha256": "5d0e3bfb595f8e7930991cf27e4fea5169d3da82ce68120099bc6f8145db5549",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset-zarr/jvm/src/test/scala/scalafim/dataset/zarr/NiftiZarrBridgeSuite.scala",
+    "candidate_sha256": "9398034ff73fe775250517b0f7819e5de4b68b7b4ad63e9c57ba938d64cf21b6",
+    "shared_sha256": "9398034ff73fe775250517b0f7819e5de4b68b7b4ad63e9c57ba938d64cf21b6",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/jvm/src/main/scala/scalafim/dataset/io/NiftiResponseBlockSource.scala",
+    "candidate_sha256": "4aa1dbfcd83101bb3a0b5b808d3fcdf6b6c381cdede0193801752d2476de71ba",
+    "shared_sha256": "4aa1dbfcd83101bb3a0b5b808d3fcdf6b6c381cdede0193801752d2476de71ba",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiReadBenchmark.scala",
+    "candidate_sha256": "4e4672eb904f628c6231c82c8448422b4482ed4427266ed3bda3e55a53601f0d",
+    "shared_sha256": "4e4672eb904f628c6231c82c8448422b4482ed4427266ed3bda3e55a53601f0d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiResponseBlockSourceSuite.scala",
+    "candidate_sha256": "7cdb9f0e8072de6fa333982e9107370e804ad804b7147a37ff18373461fdfab0",
+    "shared_sha256": "7cdb9f0e8072de6fa333982e9107370e804ad804b7147a37ff18373461fdfab0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/shared/src/test/scala/scalafim/dataset/DatasetIndexSuite.scala",
+    "candidate_sha256": "bc034b9bedbbf273a92e9c232719a949f71cb2cb6bc9f52c3b1ce16bccfdfda3",
+    "shared_sha256": "bc034b9bedbbf273a92e9c232719a949f71cb2cb6bc9f52c3b1ce16bccfdfda3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/shared/src/test/scala/scalafim/dataset/ResponseBlockSourceSuite.scala",
+    "candidate_sha256": "47cedb9bf20d313ff3fe8fd44ea661003a80a742cdc1337f2883b5ed774af5f9",
+    "shared_sha256": "47cedb9bf20d313ff3fe8fd44ea661003a80a742cdc1337f2883b5ed774af5f9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/shared/src/test/scala/scalafim/dataset/SegmentedFmriSeriesSuite.scala",
+    "candidate_sha256": "6d6cb12a5792a3d5c37b6f9a8d08789b941192e25169b385c344b3541019e530",
+    "shared_sha256": "6d6cb12a5792a3d5c37b6f9a8d08789b941192e25169b385c344b3541019e530",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/dataset/shared/src/test/scala/scalafim/dataset/scenarios/DatasetHierarchyWorkflowScenarioSuite.scala",
+    "candidate_sha256": "36fcb229e534beed08da1802fa33a434c820ca4b82a8e41695ace76ad7535f34",
+    "shared_sha256": "36fcb229e534beed08da1802fa33a434c820ca4b82a8e41695ace76ad7535f34",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala",
+    "candidate_sha256": "379e22fcc8df0c3521ebffb42a50bb34986fe46fe8efee10a57a540dcaffe1ff",
+    "shared_sha256": "19c28e65a09051c0fddc5fe7e1e5992b72f3116dc49f5be1cf1bf4f11ebe79c4",
+    "same_as_shared": false
+  },
+  {
+    "path": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/BidsStudyCompilerJvm.scala",
+    "candidate_sha256": "158b139ff928b30c0658eafce4d02adabf9d06455eca01fade796265c48cfd50",
+    "shared_sha256": "158b139ff928b30c0658eafce4d02adabf9d06455eca01fade796265c48cfd50",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/FirstLevelUnitSource.scala",
+    "candidate_sha256": "c45b8b15abaa5abbed3ec053b67c43b1ea35089364b5e5631e09ebf829f8f84c",
+    "shared_sha256": "c45b8b15abaa5abbed3ec053b67c43b1ea35089364b5e5631e09ebf829f8f84c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerJvmSuite.scala",
+    "candidate_sha256": "709ffadce7200b2178e6ceff687e22a79a990d6ad4e00649d613b0630f7b8604",
+    "shared_sha256": "709ffadce7200b2178e6ceff687e22a79a990d6ad4e00649d613b0630f7b8604",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/FirstLevelUnitSourceSuite.scala",
+    "candidate_sha256": "f17355335e6745f9a800627b902622d977a4914dd1cd966c6ed529d450c5e49e",
+    "shared_sha256": "f17355335e6745f9a800627b902622d977a4914dd1cd966c6ed529d450c5e49e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/fmri-workflow/jvm/src/test/scala/scalafim/fmri/workflow/WorkflowIngestAcceptanceSuite.scala",
+    "candidate_sha256": "d7488e7b298b854c44c619d451608c6305d3ecc3f84197a699e45500d748bd79",
+    "shared_sha256": "d7488e7b298b854c44c619d451608c6305d3ecc3f84197a699e45500d748bd79",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerSuite.scala",
+    "candidate_sha256": "ae87601d67f9ffe4f13b745e9a8c94dbace130f01aa35cf1b2716ee3fb7bcde0",
+    "shared_sha256": "ae87601d67f9ffe4f13b745e9a8c94dbace130f01aa35cf1b2716ee3fb7bcde0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view-canvas/js/src/main/scala/scalafim/image/view/canvas/CanvasViewerHost.scala",
+    "candidate_sha256": "7e0425dac3708a0756c322e0b11e406c32ba404ec29511c4039402b64df635f9",
+    "shared_sha256": "7e0425dac3708a0756c322e0b11e406c32ba404ec29511c4039402b64df635f9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view-canvas/js/src/test/scala/scalafim/image/view/canvas/BrowserBenchmark.scala",
+    "candidate_sha256": "45d3ae2698baebbf9655ac40198fdc426750413b92c0e0e048d24039b415aafc",
+    "shared_sha256": "45d3ae2698baebbf9655ac40198fdc426750413b92c0e0e048d24039b415aafc",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view-canvas/js/src/test/scala/scalafim/image/view/canvas/CanvasViewerHostSuite.scala",
+    "candidate_sha256": "8a04de2195a6ee16ee1c6c3772398a5c42c2c41a77e8113d68bc94c166b032a6",
+    "shared_sha256": "8a04de2195a6ee16ee1c6c3772398a5c42c2c41a77e8113d68bc94c166b032a6",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/main/scala/scalafim/image/view/AdvancedView.scala",
+    "candidate_sha256": "6e64d1ae6d1f1aab665d19978e2652b7b265f6a9651aae5ecb94d4d47737f13b",
+    "shared_sha256": "6e64d1ae6d1f1aab665d19978e2652b7b265f6a9651aae5ecb94d4d47737f13b",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/main/scala/scalafim/image/view/Interaction.scala",
+    "candidate_sha256": "ff72509525cb89c483d6ad64e11914b9fc95a59f845d0db6d997c6d38effc679",
+    "shared_sha256": "ff72509525cb89c483d6ad64e11914b9fc95a59f845d0db6d997c6d38effc679",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/main/scala/scalafim/image/view/Layer.scala",
+    "candidate_sha256": "31b16391c2a32b5e3cec59b66ddd238508ffc9a7cc80add7de46a4952401111e",
+    "shared_sha256": "31b16391c2a32b5e3cec59b66ddd238508ffc9a7cc80add7de46a4952401111e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerCursor.scala",
+    "candidate_sha256": "4712b15f9fe07b0e94c7507e48c9aaa84638a850578d717ae2a1370cd4c2c51a",
+    "shared_sha256": "4712b15f9fe07b0e94c7507e48c9aaa84638a850578d717ae2a1370cd4c2c51a",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala",
+    "candidate_sha256": "42f494795670207d99ac4b8ea466183c9b78943c25b1206434575df6326266c7",
+    "shared_sha256": "42f494795670207d99ac4b8ea466183c9b78943c25b1206434575df6326266c7",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/test/scala/scalafim/image/view/AdvancedViewSuite.scala",
+    "candidate_sha256": "ae87ec25817bbe545ad7b1275651e5894d0286cf807ba0cf1d2d43a5ebc9006c",
+    "shared_sha256": "ae87ec25817bbe545ad7b1275651e5894d0286cf807ba0cf1d2d43a5ebc9006c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/test/scala/scalafim/image/view/InteractionSuite.scala",
+    "candidate_sha256": "ca44877a34675d73b42e8329568088765d9860aaafd83bbe12cdb6fd320805a3",
+    "shared_sha256": "ca44877a34675d73b42e8329568088765d9860aaafd83bbe12cdb6fd320805a3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerCursorSuite.scala",
+    "candidate_sha256": "27336d8473831690296b80e03fd4b16c6b1ea0082c6fe64424e37d52396e17e5",
+    "shared_sha256": "27336d8473831690296b80e03fd4b16c6b1ea0082c6fe64424e37d52396e17e5",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image-view/shared/src/test/scala/scalafim/image/view/ViewerSceneSuite.scala",
+    "candidate_sha256": "8d0dc106ad97fed2612fdaebab2a610b984ea612c8a8bd0be1de4810c5d6eac2",
+    "shared_sha256": "8d0dc106ad97fed2612fdaebab2a610b984ea612c8a8bd0be1de4810c5d6eac2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala",
+    "candidate_sha256": "5bffcb2cb5c84394da56d0e7f6b8192bbfb8d758291a0e7a7b078da3f6919f95",
+    "shared_sha256": "5bffcb2cb5c84394da56d0e7f6b8192bbfb8d758291a0e7a7b078da3f6919f95",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/test/scala/scalafim/image/io/ImageLibraryParitySuite.scala",
+    "candidate_sha256": "bda3aaad2e390365742320b7dda9eff72bd3bba1d769d5cc4683866f6a754eec",
+    "shared_sha256": "bda3aaad2e390365742320b7dda9eff72bd3bba1d769d5cc4683866f6a754eec",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/test/scala/scalafim/image/io/NativeNiftiAllocationSuite.scala",
+    "candidate_sha256": "4312e8876a37454d39573117a85d6b5b18128c68f63c1d30b6e8d6ebed22600b",
+    "shared_sha256": "4312e8876a37454d39573117a85d6b5b18128c68f63c1d30b6e8d6ebed22600b",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiIncrementalOutputSuite.scala",
+    "candidate_sha256": "cee846f210aedbeff2652df5410a781a9332bb0857077da3e572d51fe6bb53f8",
+    "shared_sha256": "cee846f210aedbeff2652df5410a781a9332bb0857077da3e572d51fe6bb53f8",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiResliceOracleSuite.scala",
+    "candidate_sha256": "ee1b9be49fff0d74eb35fd2ccb007749908d160ed62686243dde4492ace8af9c",
+    "shared_sha256": "ee1b9be49fff0d74eb35fd2ccb007749908d160ed62686243dde4492ace8af9c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiSpaceEvidenceSuite.scala",
+    "candidate_sha256": "9d8b9f523fd9d38e330ddbe95874f960f8979fe9160fef1bd6acfde842152b81",
+    "shared_sha256": "9d8b9f523fd9d38e330ddbe95874f960f8979fe9160fef1bd6acfde842152b81",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/jvm/src/test/scala/scalafim/image/io/NiftiSuite.scala",
+    "candidate_sha256": "4125a894adfa978e84f33aaa7ecd0ba56145f318773887e454f09f570219d6a6",
+    "shared_sha256": "4125a894adfa978e84f33aaa7ecd0ba56145f318773887e454f09f570219d6a6",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala",
+    "candidate_sha256": "0808ed22049de55b4c30d8c0f5514ed2d50d349c512a57b628fd342b6ed90842",
+    "shared_sha256": "0808ed22049de55b4c30d8c0f5514ed2d50d349c512a57b628fd342b6ed90842",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/SpaceUtils.scala",
+    "candidate_sha256": "261e635002c58a26cc50354090a4c010f9a7d8654356123c92d8bdae9beda616",
+    "shared_sha256": "261e635002c58a26cc50354090a4c010f9a7d8654356123c92d8bdae9beda616",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala",
+    "candidate_sha256": "5152a7fc3b6d875646b1bd852a6a0252e2ce47248ca95e71422077f6164df5fa",
+    "shared_sha256": "5152a7fc3b6d875646b1bd852a6a0252e2ce47248ca95e71422077f6164df5fa",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/world/SpaceError.scala",
+    "candidate_sha256": "cb9a53ccb2a67f159de95de954834c7463869bdb27dac65a21fbc397f8f332b8",
+    "shared_sha256": "cb9a53ccb2a67f159de95de954834c7463869bdb27dac65a21fbc397f8f332b8",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/world/SpaceResolver.scala",
+    "candidate_sha256": "b95e407564718a280ee15d9ea7b60e939961365573dd4ff6a2c0e3579682f803",
+    "shared_sha256": "b95e407564718a280ee15d9ea7b60e939961365573dd4ff6a2c0e3579682f803",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/world/ToolCoordinates.scala",
+    "candidate_sha256": "819909af735094da792315f411b7c04290c1dc649d8cb34dbeab0ef30625f0ec",
+    "shared_sha256": "819909af735094da792315f411b7c04290c1dc649d8cb34dbeab0ef30625f0ec",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/main/scala/scalafim/image/world/WorldSpace.scala",
+    "candidate_sha256": "3264dda4aba5cee58360f933c430283edf54e76b620e42b837cb9a3158988b3e",
+    "shared_sha256": "3264dda4aba5cee58360f933c430283edf54e76b620e42b837cb9a3158988b3e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/CoreSuite.scala",
+    "candidate_sha256": "8cde887cc2b95d9616bfe8c8ffae70fc4381eab93dfcdb9dea978093c7697b4e",
+    "shared_sha256": "8cde887cc2b95d9616bfe8c8ffae70fc4381eab93dfcdb9dea978093c7697b4e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/GridDomainSuite.scala",
+    "candidate_sha256": "aff63b3560fe7242d637dfb008e7e29bbc339e1874c06bfe868a31523d6f4a70",
+    "shared_sha256": "aff63b3560fe7242d637dfb008e7e29bbc339e1874c06bfe868a31523d6f4a70",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/GridSpecFrameSuite.scala",
+    "candidate_sha256": "cd70016b9762188380f22b2c8d4955004f20f8c9ffe11934ba37c9573c803d87",
+    "shared_sha256": "cd70016b9762188380f22b2c8d4955004f20f8c9ffe11934ba37c9573c803d87",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/OrientationResampleSuite.scala",
+    "candidate_sha256": "76f4d8bd8edca01c876534f87c0f9938c6f087c20248c09f604078db58db619d",
+    "shared_sha256": "76f4d8bd8edca01c876534f87c0f9938c6f087c20248c09f604078db58db619d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/ResamplingPlanSuite.scala",
+    "candidate_sha256": "dd10bc099694d45ee74ab3657c80d5dd510153d7e86542d0205cbe398ae13618",
+    "shared_sha256": "dd10bc099694d45ee74ab3657c80d5dd510153d7e86542d0205cbe398ae13618",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/world/SpaceResolverSuite.scala",
+    "candidate_sha256": "4be22cc7523b4ccd5f15c4dd7d40585e8f2f0d9339bba73ed3250b4afc774229",
+    "shared_sha256": "4be22cc7523b4ccd5f15c4dd7d40585e8f2f0d9339bba73ed3250b4afc774229",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/world/ToolCoordinatesSuite.scala",
+    "candidate_sha256": "cd62c862957dca16f08655080fd551e2bca048e57abccee725a06140e5817170",
+    "shared_sha256": "cd62c862957dca16f08655080fd551e2bca048e57abccee725a06140e5817170",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/image/shared/src/test/scala/scalafim/image/world/WorldSpaceSuite.scala",
+    "candidate_sha256": "305bdffb2276d5b9ababa9e1079f2652f711df3cc80e3c9533a251019ab3e42e",
+    "shared_sha256": "305bdffb2276d5b9ababa9e1079f2652f711df3cc80e3c9533a251019ab3e42e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionBids.scala",
+    "candidate_sha256": "dce6d36591dd4bf1fdd890af08b8c3d50464f427953aee534f6ca62381f45ae9",
+    "shared_sha256": "dce6d36591dd4bf1fdd890af08b8c3d50464f427953aee534f6ca62381f45ae9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionCli.scala",
+    "candidate_sha256": "457e77c59d8f8967d567657800383282a2d808d917fbcb84f996636ff7695ed3",
+    "shared_sha256": "457e77c59d8f8967d567657800383282a2d808d917fbcb84f996636ff7695ed3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionNifti.scala",
+    "candidate_sha256": "7d62f9b1b88ecbaef5cdc372d0674a0077c6da6f17481cef97edef7cdca4c910",
+    "shared_sha256": "7d62f9b1b88ecbaef5cdc372d0674a0077c6da6f17481cef97edef7cdca4c910",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionNiftiIo.scala",
+    "candidate_sha256": "989e98cde138dad8b2f5df654b6210f41dd3589f9fca2d8ed10e53a7da363d8d",
+    "shared_sha256": "989e98cde138dad8b2f5df654b6210f41dd3589f9fca2d8ed10e53a7da363d8d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/motion/jvm/src/test/scala/scalafim/fmri/motion/io/MotionIoSuite.scala",
+    "candidate_sha256": "47daae8347d1c61ed7e2f85dbff6247c5baead21a2f504739a2ad03fcb1fa733",
+    "shared_sha256": "47daae8347d1c61ed7e2f85dbff6247c5baead21a2f504739a2ad03fcb1fa733",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/jvm/src/main/scala/scalafim/spatial/io/NiftiFieldSource.scala",
+    "candidate_sha256": "e08903fc0edc23e71d17d0bc4175b1fef4b76f6af090986a9f36db3ebbb977ac",
+    "shared_sha256": "e08903fc0edc23e71d17d0bc4175b1fef4b76f6af090986a9f36db3ebbb977ac",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/jvm/src/test/scala/scalafim/spatial/SpatialLazyPerformanceSuite.scala",
+    "candidate_sha256": "c439e2b4723451e169ee2b8168afc7b47d3a97f2432e7f621e6947fdffb4de4d",
+    "shared_sha256": "c439e2b4723451e169ee2b8168afc7b47d3a97f2432e7f621e6947fdffb4de4d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/jvm/src/test/scala/scalafim/spatial/io/NiftiFieldSourceSuite.scala",
+    "candidate_sha256": "3f88f90d4d9caef24d5a265426e66e0584e2c9f4b37a70a03ce6f240a5e2a712",
+    "shared_sha256": "3f88f90d4d9caef24d5a265426e66e0584e2c9f4b37a70a03ce6f240a5e2a712",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/jvm/src/test/scala/scalafim/spatial/io/SpatialLazyExternalScenarioSuite.scala",
+    "candidate_sha256": "4c9b9f8386e25646b8d782f6fedf6d58f8cf9a0beaac88ddca081e6ae1202eb9",
+    "shared_sha256": "4c9b9f8386e25646b8d782f6fedf6d58f8cf9a0beaac88ddca081e6ae1202eb9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/main/scala/scalafim/spatial/GaleSpatialSupport.scala",
+    "candidate_sha256": "7c637eedb4e4d0c155ad15904e4433a0e0f368d7d09081d2d4f4cab5ef2d4949",
+    "shared_sha256": "7c637eedb4e4d0c155ad15904e4433a0e0f368d7d09081d2d4f4cab5ef2d4949",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala",
+    "candidate_sha256": "0710870da00be7e3518b8b6b9fc99fa04350d46846b679502f96736a2c460945",
+    "shared_sha256": "0710870da00be7e3518b8b6b9fc99fa04350d46846b679502f96736a2c460945",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/main/scala/scalafim/spatial/SurfaceResamplingBinding.scala",
+    "candidate_sha256": "14ba7aa903172d2df375a8dc388b2938b01de06ee96cfee40dc76c38de1cb2ce",
+    "shared_sha256": "14ba7aa903172d2df375a8dc388b2938b01de06ee96cfee40dc76c38de1cb2ce",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/main/scala/scalafim/spatial/VolumeToSurfaceOperator.scala",
+    "candidate_sha256": "d8865c70cfb9013ba92a085f8ed33b81d0e92aa3a51b2eff54b4c95cffea69ea",
+    "shared_sha256": "d8865c70cfb9013ba92a085f8ed33b81d0e92aa3a51b2eff54b4c95cffea69ea",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/test/scala/scalafim/spatial/DomainSuite.scala",
+    "candidate_sha256": "96cd9cc286a20285088961513ec02dabe0a8e8a2e8ddaea1ffa20b39b9bb6fcf",
+    "shared_sha256": "96cd9cc286a20285088961513ec02dabe0a8e8a2e8ddaea1ffa20b39b9bb6fcf",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/test/scala/scalafim/spatial/FieldSourceSuite.scala",
+    "candidate_sha256": "e96e40ec903d21662f1cac5443963b927f134ee85d268eb226e630eadf48f26c",
+    "shared_sha256": "e96e40ec903d21662f1cac5443963b927f134ee85d268eb226e630eadf48f26c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/spatial/shared/src/test/scala/scalafim/spatial/TemplateSurfaceOperatorSuite.scala",
+    "candidate_sha256": "1208226c790c00ac5d139d63d0765be1d2718690137350ab6782345387346257",
+    "shared_sha256": "1208226c790c00ac5d139d63d0765be1d2718690137350ab6782345387346257",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDynamics.scala",
+    "candidate_sha256": "258ac0e76fad64496c434cf385c5d8399a503cf198e2fa2f291cf61519509872",
+    "shared_sha256": "258ac0e76fad64496c434cf385c5d8399a503cf198e2fa2f291cf61519509872",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewTypes.scala",
+    "candidate_sha256": "3d79bac757cdae4c1ff2122d18b725060a2455b3ce197fd55fcfb9dc7144feb1",
+    "shared_sha256": "3d79bac757cdae4c1ff2122d18b725060a2455b3ce197fd55fcfb9dc7144feb1",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala",
+    "candidate_sha256": "e5bff441b2fec1631c4882842281931e194c3d9d61dcea7bd0d8cf2a80a6bdbd",
+    "shared_sha256": "e5bff441b2fec1631c4882842281931e194c3d9d61dcea7bd0d8cf2a80a6bdbd",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceWorldIndex.scala",
+    "candidate_sha256": "b39d886f2572211680b237d5311adf6f9e637c0664e786cfc44148b5e5a599c9",
+    "shared_sha256": "b39d886f2572211680b237d5311adf6f9e637c0664e786cfc44148b5e5a599c9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceDynamicsSuite.scala",
+    "candidate_sha256": "dfb8082566f8603502f1caaddaab98f46c23de2549f0c8c3c9255a0cfc0f080e",
+    "shared_sha256": "dfb8082566f8603502f1caaddaab98f46c23de2549f0c8c3c9255a0cfc0f080e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala",
+    "candidate_sha256": "ccc3b1b4627768b9a6060442218b01ed9f8f705e22bdd4baccbb1df0789866e2",
+    "shared_sha256": "ccc3b1b4627768b9a6060442218b01ed9f8f705e22bdd4baccbb1df0789866e2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceWorldIndexSuite.scala",
+    "candidate_sha256": "191d14ee0600f6784b8dc3f06bf5cde66c82e0e05464179c7c953a45e96e62dc",
+    "shared_sha256": "191d14ee0600f6784b8dc3f06bf5cde66c82e0e05464179c7c953a45e96e62dc",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface/shared/src/main/scala/scalafim/surface/TemplateSurfaces.scala",
+    "candidate_sha256": "0dbf19a9b78b44d7566b47471cd5e3cd0b3c6ab83639317c41cb39239ff30609",
+    "shared_sha256": "0dbf19a9b78b44d7566b47471cd5e3cd0b3c6ab83639317c41cb39239ff30609",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface/shared/src/test/scala/scalafim/surface/RibbonFillSuite.scala",
+    "candidate_sha256": "bfd32e4b4f5810370f17b4b1df2ca50d0f6f04ef8ce366b50d36e5e122229e2c",
+    "shared_sha256": "bfd32e4b4f5810370f17b4b1df2ca50d0f6f04ef8ce366b50d36e5e122229e2c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/surface/shared/src/test/scala/scalafim/surface/TemplatePlanTopologySuite.scala",
+    "candidate_sha256": "db926b42968c12e3aec95e03cc5bb02872524e2ebbadc3387f974bd97be4f4dd",
+    "shared_sha256": "db926b42968c12e3aec95e03cc5bb02872524e2ebbadc3387f974bd97be4f4dd",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala",
+    "candidate_sha256": "1e52ac2a638ddd940046d3ac533968c4eae6f4f1a3eefbe90b25aecd58233f85",
+    "shared_sha256": "1e52ac2a638ddd940046d3ac533968c4eae6f4f1a3eefbe90b25aecd58233f85",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/jvm/src/test/scala/scalafim/transform/WriterGoldens.scala",
+    "candidate_sha256": "a9ab030bf78347ccd068876455b7420a79264efc4841c3b394f3d019c7a5d4b5",
+    "shared_sha256": "a9ab030bf78347ccd068876455b7420a79264efc4841c3b394f3d019c7a5d4b5",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/jvm/src/test/scala/scalafim/transform/WriterGoldensSuite.scala",
+    "candidate_sha256": "c9a983ef3a8ba763d5876a7a8188667173f94906b37c7a0d2c8d62a14985db7e",
+    "shared_sha256": "c9a983ef3a8ba763d5876a7a8188667173f94906b37c7a0d2c8d62a14985db7e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/jvm/src/test/scala/scalafim/transform/itk/AntsNativeContainerSuite.scala",
+    "candidate_sha256": "2901ef8d252c40ecb7baceda19de3a544278e1951ff294cf00e4bcf7dc45a3cc",
+    "shared_sha256": "2901ef8d252c40ecb7baceda19de3a544278e1951ff294cf00e4bcf7dc45a3cc",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/main/scala/scalafim/transform/Conversion.scala",
+    "candidate_sha256": "20d9aca378a9f4420a0953d8b3fa9f61e30b4661b2530157a8350d7e6cbfa4c7",
+    "shared_sha256": "20d9aca378a9f4420a0953d8b3fa9f61e30b4661b2530157a8350d7e6cbfa4c7",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/main/scala/scalafim/transform/fsl/Flirt.scala",
+    "candidate_sha256": "56c80583d52920194759e4fd0c7ec790b0880f46f13a8bec9d4ef0e3403f20fe",
+    "shared_sha256": "56c80583d52920194759e4fd0c7ec790b0880f46f13a8bec9d4ef0e3403f20fe",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/affine.mat",
+    "candidate_sha256": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41",
+    "shared_sha256": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/euler.mat",
+    "candidate_sha256": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e",
+    "shared_sha256": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/euler_zyx.mat",
+    "candidate_sha256": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611",
+    "shared_sha256": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/fixed.nii.gz",
+    "candidate_sha256": "a943c1f2a73243dddd4d14468e60723d241737222040f25ad9c412b119334ba4",
+    "shared_sha256": "a943c1f2a73243dddd4d14468e60723d241737222040f25ad9c412b119334ba4",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/manifest.json",
+    "candidate_sha256": "52b4ab0d7f8702d9e6870e4ee85c4672c5da980a34d9a8f6713304e985a89bee",
+    "shared_sha256": "52b4ab0d7f8702d9e6870e4ee85c4672c5da980a34d9a8f6713304e985a89bee",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/moving.nii.gz",
+    "candidate_sha256": "8d91c63cff27a7fa037b9fd34dd259194a69e9a6a7ce2bf5683b1a57b42104e1",
+    "shared_sha256": "8d91c63cff27a7fa037b9fd34dd259194a69e9a6a7ce2bf5683b1a57b42104e1",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/points.tsv",
+    "candidate_sha256": "064bbf54b68d0ceb08944173b6832aae0d41e46a36e452a415699cd371b1b6df",
+    "shared_sha256": "064bbf54b68d0ceb08944173b6832aae0d41e46a36e452a415699cd371b1b6df",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/queries.csv",
+    "candidate_sha256": "7fd3d4b797e739c9e2d744bd8299c94d255dda66168528d49d5f7110b01a0b49",
+    "shared_sha256": "7fd3d4b797e739c9e2d744bd8299c94d255dda66168528d49d5f7110b01a0b49",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/scale_skew_versor.mat",
+    "candidate_sha256": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e",
+    "shared_sha256": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/similarity.mat",
+    "candidate_sha256": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985",
+    "shared_sha256": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_0InverseWarp.nii.gz",
+    "candidate_sha256": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302",
+    "shared_sha256": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_0Warp.nii.gz",
+    "candidate_sha256": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+    "shared_sha256": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.components.txt",
+    "candidate_sha256": "021f3acd0cf5440973c4fc33b315c863644b0c50b1a161fa1dfbdcce619f2560",
+    "shared_sha256": "021f3acd0cf5440973c4fc33b315c863644b0c50b1a161fa1dfbdcce619f2560",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.h5",
+    "candidate_sha256": "134a9c45c3cd1a2a8805b4357f8cbdc89d2d6adf66ec27869c24c57182bad0f4",
+    "shared_sha256": "134a9c45c3cd1a2a8805b4357f8cbdc89d2d6adf66ec27869c24c57182bad0f4",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.components.txt",
+    "candidate_sha256": "06a63af2fae61808e6bf72b4bc3ad2034bc6455a316f38b10aa230acd429b04a",
+    "shared_sha256": "06a63af2fae61808e6bf72b4bc3ad2034bc6455a316f38b10aa230acd429b04a",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.h5",
+    "candidate_sha256": "b3e0591214f3d792a7be34b40bf61d78ae7affe0cef0b8864205ad33cfddf397",
+    "shared_sha256": "b3e0591214f3d792a7be34b40bf61d78ae7affe0cef0b8864205ad33cfddf397",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/versor_rigid.mat",
+    "candidate_sha256": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f",
+    "shared_sha256": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/03_consistent_positive_default.json",
+    "candidate_sha256": "bdbf9e05514dc611b89af9dab253b2c928880b7c143b77d59a740c08cc82e51b",
+    "shared_sha256": "bdbf9e05514dc611b89af9dab253b2c928880b7c143b77d59a740c08cc82e51b",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/applyxfm_positive_axis_x.nii",
+    "candidate_sha256": "38d30e4df92a8112acc1f8565d53b0ceb6da5ae2422ac35175e71df36f7d48b9",
+    "shared_sha256": "38d30e4df92a8112acc1f8565d53b0ceb6da5ae2422ac35175e71df36f7d48b9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/applyxfm_positive_axis_y.nii",
+    "candidate_sha256": "deec635efb4048a4c7670950d45927dfb42efd85b6e894c7bb7bdb6da560059f",
+    "shared_sha256": "deec635efb4048a4c7670950d45927dfb42efd85b6e894c7bb7bdb6da560059f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/applyxfm_positive_axis_z.nii",
+    "candidate_sha256": "216bda96967e11895b6019885555174effded9871045d373d1ffb7c126331f87",
+    "shared_sha256": "216bda96967e11895b6019885555174effded9871045d373d1ffb7c126331f87",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/consistent_positive_reference.nii",
+    "candidate_sha256": "4925fda43d8316e2d7872224d77ecb4b31a6e73eb9bcafdbc376350e6a8cde43",
+    "shared_sha256": "4925fda43d8316e2d7872224d77ecb4b31a6e73eb9bcafdbc376350e6a8cde43",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/consistent_positive_source.nii",
+    "candidate_sha256": "7562afa2b9659ddfb2bf35f47fde9003f82c5c746c73e729b8f82365e8755ceb",
+    "shared_sha256": "7562afa2b9659ddfb2bf35f47fde9003f82c5c746c73e729b8f82365e8755ceb",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/flirt_0_to_1.mat",
+    "candidate_sha256": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+    "shared_sha256": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/manifest.json",
+    "candidate_sha256": "645ebc28a4bce9206dfbd67d7606d6f44655c4aeabb6d56cfc550104e2e79654",
+    "shared_sha256": "645ebc28a4bce9206dfbd67d7606d6f44655c4aeabb6d56cfc550104e2e79654",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_axis_x.nii",
+    "candidate_sha256": "86c9c2496b5a136eced2235831d8c30f1aa40bf52f89aff2382cef4b9e2b03cc",
+    "shared_sha256": "86c9c2496b5a136eced2235831d8c30f1aa40bf52f89aff2382cef4b9e2b03cc",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_axis_y.nii",
+    "candidate_sha256": "d83c7c4fef2ae54bdcc8cfec82dab7cbd311547dcf96cee93a84c2c77bbeaaee",
+    "shared_sha256": "d83c7c4fef2ae54bdcc8cfec82dab7cbd311547dcf96cee93a84c2c77bbeaaee",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_axis_z.nii",
+    "candidate_sha256": "86e83c8125b83e027db5475b520ba027ba20b1e077c4bbc619760ce9a0bac659",
+    "shared_sha256": "86e83c8125b83e027db5475b520ba027ba20b1e077c4bbc619760ce9a0bac659",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_control_applyxfm_equation.json",
+    "candidate_sha256": "cb0d0957c082903d620479eace0c7380e33974d42233107bcb701fd44c22fd2f",
+    "shared_sha256": "cb0d0957c082903d620479eace0c7380e33974d42233107bcb701fd44c22fd2f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord0.nii.gz",
+    "candidate_sha256": "7a93e03d18ed87a1e8182b2c75e4a6dbe149ead890649e5c7152388dab35b851",
+    "shared_sha256": "7a93e03d18ed87a1e8182b2c75e4a6dbe149ead890649e5c7152388dab35b851",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord1.nii.gz",
+    "candidate_sha256": "968967c299b51d1b4d0f4609190f0be870f5bb1a19975f155429ce2d1fbbb4e2",
+    "shared_sha256": "968967c299b51d1b4d0f4609190f0be870f5bb1a19975f155429ce2d1fbbb4e2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord2.nii.gz",
+    "candidate_sha256": "5cc336e5cd430b461aaf875a081ad2c53553ff1327fa437cd73f90d28c445418",
+    "shared_sha256": "5cc336e5cd430b461aaf875a081ad2c53553ff1327fa437cd73f90d28c445418",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_field_aff.nii.gz",
+    "candidate_sha256": "3c1aef7c79f974251d9481f9a64dfe3a6e8a4b37e4c1716c993bac45203104b5",
+    "shared_sha256": "3c1aef7c79f974251d9481f9a64dfe3a6e8a4b37e4c1716c993bac45203104b5",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_field_noaff.nii.gz",
+    "candidate_sha256": "8521b3a0b78f7114ab37160a2a40363bf06707d76685b32dfb06d158428c4655",
+    "shared_sha256": "8521b3a0b78f7114ab37160a2a40363bf06707d76685b32dfb06d158428c4655",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_jac.nii.gz",
+    "candidate_sha256": "04379bcefd3c4c55d7f19ec22bb91b628098577789cb4b36486384e5f151cb72",
+    "shared_sha256": "04379bcefd3c4c55d7f19ec22bb91b628098577789cb4b36486384e5f151cb72",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_support.nii.gz",
+    "candidate_sha256": "07e5263449358e68d5d246076ffe8d9e27a9b7806f5bf06cbcde397366f3d56d",
+    "shared_sha256": "07e5263449358e68d5d246076ffe8d9e27a9b7806f5bf06cbcde397366f3d56d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord0.nii.gz",
+    "candidate_sha256": "f11440dcc896001c40c156225637b0f76f65e43fc8acb9aa1fb538b159627eda",
+    "shared_sha256": "f11440dcc896001c40c156225637b0f76f65e43fc8acb9aa1fb538b159627eda",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord1.nii.gz",
+    "candidate_sha256": "c239e730039df270246c5bdc9ff6ce9a7a980ac6b7803718692c43e2015aa0ba",
+    "shared_sha256": "c239e730039df270246c5bdc9ff6ce9a7a980ac6b7803718692c43e2015aa0ba",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord2.nii.gz",
+    "candidate_sha256": "3a515ccd054d9de389b8bfd5e0afff558e585609a517f9a13a6662f7aa4b4bb4",
+    "shared_sha256": "3a515ccd054d9de389b8bfd5e0afff558e585609a517f9a13a6662f7aa4b4bb4",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_field_aff.nii.gz",
+    "candidate_sha256": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+    "shared_sha256": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_field_noaff.nii.gz",
+    "candidate_sha256": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+    "shared_sha256": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_jac.nii.gz",
+    "candidate_sha256": "f9b56a404c3f2444041bf8372d6314719563f47506b6341db61fd2030687786b",
+    "shared_sha256": "f9b56a404c3f2444041bf8372d6314719563f47506b6341db61fd2030687786b",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_support.nii.gz",
+    "candidate_sha256": "8078324a1f5156d59d60c6738680f4aa5a777c4c5beb4676faec8184522f1c2f",
+    "shared_sha256": "8078324a1f5156d59d60c6738680f4aa5a777c4c5beb4676faec8184522f1c2f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord0.nii.gz",
+    "candidate_sha256": "e670e34646cdf6152394b3a52e56e0a15901892ca2f61bcec8c8cd41cd5c300e",
+    "shared_sha256": "e670e34646cdf6152394b3a52e56e0a15901892ca2f61bcec8c8cd41cd5c300e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord1.nii.gz",
+    "candidate_sha256": "3e2314d3f07bbe6506df51ff95cff92bfc7d51ce49091f3269906a00458aa17e",
+    "shared_sha256": "3e2314d3f07bbe6506df51ff95cff92bfc7d51ce49091f3269906a00458aa17e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord2.nii.gz",
+    "candidate_sha256": "fe8b34ce3def6aca21e19a68cf04a5149c565b5b056e096a9edd8dbbe8313c0e",
+    "shared_sha256": "fe8b34ce3def6aca21e19a68cf04a5149c565b5b056e096a9edd8dbbe8313c0e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_field_aff.nii.gz",
+    "candidate_sha256": "76f058a494b0215afebc495ac196bfb8b47afa3032d8ec374cedf52971127f45",
+    "shared_sha256": "76f058a494b0215afebc495ac196bfb8b47afa3032d8ec374cedf52971127f45",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_field_noaff.nii.gz",
+    "candidate_sha256": "48b5a8263bf3d717b560c62f641ce4e46eae87964ec0be775912d8f0199f9b85",
+    "shared_sha256": "48b5a8263bf3d717b560c62f641ce4e46eae87964ec0be775912d8f0199f9b85",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_jac.nii.gz",
+    "candidate_sha256": "1734246100e1027a6c38755db4cbe5f3432894d5150062854e0a7f794e1c2820",
+    "shared_sha256": "1734246100e1027a6c38755db4cbe5f3432894d5150062854e0a7f794e1c2820",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord0.nii.gz",
+    "candidate_sha256": "19b399a3f2b50663d5853c34c715fefa4053601adec59a85c8591f68792fef9d",
+    "shared_sha256": "19b399a3f2b50663d5853c34c715fefa4053601adec59a85c8591f68792fef9d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord1.nii.gz",
+    "candidate_sha256": "8cae638753ffdaa32ae1ddad07d7bc09462ad1664ea1e849cddfa63787cf574a",
+    "shared_sha256": "8cae638753ffdaa32ae1ddad07d7bc09462ad1664ea1e849cddfa63787cf574a",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord2.nii.gz",
+    "candidate_sha256": "ac32713f66cf6f383dce748238967cf5bbe10d7fe6ee1e6e5b7c8a2dfe0efb6a",
+    "shared_sha256": "ac32713f66cf6f383dce748238967cf5bbe10d7fe6ee1e6e5b7c8a2dfe0efb6a",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_field_aff.nii.gz",
+    "candidate_sha256": "4a9be873aa10013c32c64945fb36a92ac77e4ea6e05239d9bac17ade02a09675",
+    "shared_sha256": "4a9be873aa10013c32c64945fb36a92ac77e4ea6e05239d9bac17ade02a09675",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_field_noaff.nii.gz",
+    "candidate_sha256": "d8762ca5e929649fa014f788c77ce765adc3901d434d7900b85e84656d83166a",
+    "shared_sha256": "d8762ca5e929649fa014f788c77ce765adc3901d434d7900b85e84656d83166a",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_jac.nii.gz",
+    "candidate_sha256": "4d79cc32c0f70ac71160a7fc0f359941b575b6d91edccf7df0809b3985d2a6b4",
+    "shared_sha256": "4d79cc32c0f70ac71160a7fc0f359941b575b6d91edccf7df0809b3985d2a6b4",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_support.nii.gz",
+    "candidate_sha256": "7c037237efe4ddc70ca15960d9d89b918f5457d3604bd9d7f0c1780b4c1cfdea",
+    "shared_sha256": "7c037237efe4ddc70ca15960d9d89b918f5457d3604bd9d7f0c1780b4c1cfdea",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_support.nii.gz",
+    "candidate_sha256": "34745de94ab04e00f7693cdb5ea1bf13dd1208cb2392ec9f4300628afacb7f38",
+    "shared_sha256": "34745de94ab04e00f7693cdb5ea1bf13dd1208cb2392ec9f4300628afacb7f38",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord0.nii.gz",
+    "candidate_sha256": "c4fe47d6baeeed8d0ce4777443a2c0e8600650e1615eef3acf66c0af5ff4e8f1",
+    "shared_sha256": "c4fe47d6baeeed8d0ce4777443a2c0e8600650e1615eef3acf66c0af5ff4e8f1",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord1.nii.gz",
+    "candidate_sha256": "b347ffb7d923a4de2fab7c62c0438a6c05806059df96aa2632d500ba62328a64",
+    "shared_sha256": "b347ffb7d923a4de2fab7c62c0438a6c05806059df96aa2632d500ba62328a64",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord2.nii.gz",
+    "candidate_sha256": "c008f3a4edea1ddf47165b33304302d8da9608ab566af5e4c114e46a47cebf43",
+    "shared_sha256": "c008f3a4edea1ddf47165b33304302d8da9608ab566af5e4c114e46a47cebf43",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_field_aff.nii.gz",
+    "candidate_sha256": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+    "shared_sha256": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_field_noaff.nii.gz",
+    "candidate_sha256": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+    "shared_sha256": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_jac.nii.gz",
+    "candidate_sha256": "053bd72d0df9faecf3ed6eb0ff9c78131388b34c6d7a17dff71da05c9d62de8b",
+    "shared_sha256": "053bd72d0df9faecf3ed6eb0ff9c78131388b34c6d7a17dff71da05c9d62de8b",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_support.nii.gz",
+    "candidate_sha256": "12613b2867a3ac66106df2bc5e02b13dd504d8868e85fffcf71deae99bdba1bf",
+    "shared_sha256": "12613b2867a3ac66106df2bc5e02b13dd504d8868e85fffcf71deae99bdba1bf",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord0.nii.gz",
+    "candidate_sha256": "6a8e9d240d0d78b68d6636086a4633c6c025f862c22f2b04013a4c74af07fb69",
+    "shared_sha256": "6a8e9d240d0d78b68d6636086a4633c6c025f862c22f2b04013a4c74af07fb69",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord1.nii.gz",
+    "candidate_sha256": "26f49f184cd24242e9dabef62500d0a32cdd4857c7f8e13540338ddec46da5cf",
+    "shared_sha256": "26f49f184cd24242e9dabef62500d0a32cdd4857c7f8e13540338ddec46da5cf",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord2.nii.gz",
+    "candidate_sha256": "e26107abf2077c6c42985b26bbae909dcda652b0f142849771b465a870524665",
+    "shared_sha256": "e26107abf2077c6c42985b26bbae909dcda652b0f142849771b465a870524665",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_field_aff.nii.gz",
+    "candidate_sha256": "952f1a6c1183cfb220bcfdacde282d7e08533af76a1ce6eb5f0e55b715fa6ed3",
+    "shared_sha256": "952f1a6c1183cfb220bcfdacde282d7e08533af76a1ce6eb5f0e55b715fa6ed3",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_field_noaff.nii.gz",
+    "candidate_sha256": "98d0a052e63f172875beca9ffadf89e2fbab0f243617977320b08e73cf4f597c",
+    "shared_sha256": "98d0a052e63f172875beca9ffadf89e2fbab0f243617977320b08e73cf4f597c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_jac.nii.gz",
+    "candidate_sha256": "10501d22916b805db1c25f3f0d0534c249154a968e4ab7992d02d4793f03d24e",
+    "shared_sha256": "10501d22916b805db1c25f3f0d0534c249154a968e4ab7992d02d4793f03d24e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_support.nii.gz",
+    "candidate_sha256": "93a85d801312048ad20476aa009bbeddcee6a440695f195b8521f36d357ec3b9",
+    "shared_sha256": "93a85d801312048ad20476aa009bbeddcee6a440695f195b8521f36d357ec3b9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord0.nii.gz",
+    "candidate_sha256": "fa1fd9ca4b2aaedc71cad21969cb3ceb8efa868c68238977069645376714893f",
+    "shared_sha256": "fa1fd9ca4b2aaedc71cad21969cb3ceb8efa868c68238977069645376714893f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord1.nii.gz",
+    "candidate_sha256": "b53ce2bdbe90b51613ee1fd0ea2532a5ae172db2c84c110be50290c94430acc8",
+    "shared_sha256": "b53ce2bdbe90b51613ee1fd0ea2532a5ae172db2c84c110be50290c94430acc8",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord2.nii.gz",
+    "candidate_sha256": "6d2fb740d243d47e353d37f54729269abcc6d3b19fca7065e72dbe096b79063e",
+    "shared_sha256": "6d2fb740d243d47e353d37f54729269abcc6d3b19fca7065e72dbe096b79063e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_field_aff.nii.gz",
+    "candidate_sha256": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+    "shared_sha256": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_field_noaff.nii.gz",
+    "candidate_sha256": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+    "shared_sha256": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_jac.nii.gz",
+    "candidate_sha256": "3173ef2fa8a44a9e55f15cc03295e13963356e397e298faa49f09b3677492048",
+    "shared_sha256": "3173ef2fa8a44a9e55f15cc03295e13963356e397e298faa49f09b3677492048",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord0.nii.gz",
+    "candidate_sha256": "074cdb88fbc172a395d0ade711ca52a4fabf632e021155caa6cd15c2149d9377",
+    "shared_sha256": "074cdb88fbc172a395d0ade711ca52a4fabf632e021155caa6cd15c2149d9377",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord1.nii.gz",
+    "candidate_sha256": "4393f58d00220f86a302f2dacd89607f7ee152ff1ac3933968d21eaffdf40504",
+    "shared_sha256": "4393f58d00220f86a302f2dacd89607f7ee152ff1ac3933968d21eaffdf40504",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord2.nii.gz",
+    "candidate_sha256": "8aaf9f5e474eaf0e957c0ac32287cfad0d487b15407e6c7859c9773aa263aaec",
+    "shared_sha256": "8aaf9f5e474eaf0e957c0ac32287cfad0d487b15407e6c7859c9773aa263aaec",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_field_aff.nii.gz",
+    "candidate_sha256": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+    "shared_sha256": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_field_noaff.nii.gz",
+    "candidate_sha256": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+    "shared_sha256": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_jac.nii.gz",
+    "candidate_sha256": "08c6b3a4f2d9c2b5417c7b9f03be62447d89c1d5ed6bc5818cfb36ac71a35cdb",
+    "shared_sha256": "08c6b3a4f2d9c2b5417c7b9f03be62447d89c1d5ed6bc5818cfb36ac71a35cdb",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_support.nii.gz",
+    "candidate_sha256": "ee2ecef826b038fb5b19cf6123d2fd265682a2ea159cee92b0ef62a39d4a99b0",
+    "shared_sha256": "ee2ecef826b038fb5b19cf6123d2fd265682a2ea159cee92b0ef62a39d4a99b0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_support.nii.gz",
+    "candidate_sha256": "3e6096d00f57d9a6f33ff37c276bbcabed7960de7436ab74b4297806675dd157",
+    "shared_sha256": "3e6096d00f57d9a6f33ff37c276bbcabed7960de7436ab74b4297806675dd157",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord0.nii.gz",
+    "candidate_sha256": "e40d3d10b59ff61755c26564c2e128c15ed36b95ea6118cd076d237ec140a370",
+    "shared_sha256": "e40d3d10b59ff61755c26564c2e128c15ed36b95ea6118cd076d237ec140a370",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord1.nii.gz",
+    "candidate_sha256": "408ebdffb736d55ebef3fc7eab955db6e5938c3315551f7220f90a730146d913",
+    "shared_sha256": "408ebdffb736d55ebef3fc7eab955db6e5938c3315551f7220f90a730146d913",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord2.nii.gz",
+    "candidate_sha256": "ed1c7f8d7ce8eaf0ed24803e3c4fdac53e57d752179af3ea915634047bbe8f01",
+    "shared_sha256": "ed1c7f8d7ce8eaf0ed24803e3c4fdac53e57d752179af3ea915634047bbe8f01",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_field_aff.nii.gz",
+    "candidate_sha256": "37fabc6a4c8622a86f988a146820cc387f5694c3efc6f83493b564c3e60059b1",
+    "shared_sha256": "37fabc6a4c8622a86f988a146820cc387f5694c3efc6f83493b564c3e60059b1",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_field_noaff.nii.gz",
+    "candidate_sha256": "310aced96189834ca90059e4abb31418213cc8434ecbfa0bd7a5709834f5fc92",
+    "shared_sha256": "310aced96189834ca90059e4abb31418213cc8434ecbfa0bd7a5709834f5fc92",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_jac.nii.gz",
+    "candidate_sha256": "8edced3f9479ef0b56869bb47f34a976204ab0e59eb0a122fa406ef95f4e1c50",
+    "shared_sha256": "8edced3f9479ef0b56869bb47f34a976204ab0e59eb0a122fa406ef95f4e1c50",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_support.nii.gz",
+    "candidate_sha256": "dd9b574cb3b58e88bdaa12dc8b9c26148d2e5cb17d9b837998099a250c707cfc",
+    "shared_sha256": "dd9b574cb3b58e88bdaa12dc8b9c26148d2e5cb17d9b837998099a250c707cfc",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord0.nii.gz",
+    "candidate_sha256": "d1be4169f6972efadd782d107810d3b5570af27905219b1d5cfade383c01c2cd",
+    "shared_sha256": "d1be4169f6972efadd782d107810d3b5570af27905219b1d5cfade383c01c2cd",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord1.nii.gz",
+    "candidate_sha256": "a5302d8c4285abc3dee0c150443a6a0e9650fc69d53b90be83d5e15dcbf36eb9",
+    "shared_sha256": "a5302d8c4285abc3dee0c150443a6a0e9650fc69d53b90be83d5e15dcbf36eb9",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord2.nii.gz",
+    "candidate_sha256": "30392625c9472d94bf6cc4ec6cf31b8590d10454263070afed70cca4a7ea37fb",
+    "shared_sha256": "30392625c9472d94bf6cc4ec6cf31b8590d10454263070afed70cca4a7ea37fb",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_field_aff.nii.gz",
+    "candidate_sha256": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+    "shared_sha256": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_field_noaff.nii.gz",
+    "candidate_sha256": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+    "shared_sha256": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_jac.nii.gz",
+    "candidate_sha256": "af9131065a92a8cb14d9501e1e86b8c52084e432022ea84cc4fe368f4c744bdc",
+    "shared_sha256": "af9131065a92a8cb14d9501e1e86b8c52084e432022ea84cc4fe368f4c744bdc",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_support.nii.gz",
+    "candidate_sha256": "5b31173b5252a5b5ec81a3a1d883675adf898a11439a2a25746baa8b5ff500c4",
+    "shared_sha256": "5b31173b5252a5b5ec81a3a1d883675adf898a11439a2a25746baa8b5ff500c4",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord0.nii.gz",
+    "candidate_sha256": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+    "shared_sha256": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord1.nii.gz",
+    "candidate_sha256": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+    "shared_sha256": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord2.nii.gz",
+    "candidate_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "shared_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_support.nii.gz",
+    "candidate_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "shared_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord0.nii.gz",
+    "candidate_sha256": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+    "shared_sha256": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord1.nii.gz",
+    "candidate_sha256": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+    "shared_sha256": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord2.nii.gz",
+    "candidate_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "shared_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_support.nii.gz",
+    "candidate_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "shared_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord0.nii.gz",
+    "candidate_sha256": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+    "shared_sha256": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord1.nii.gz",
+    "candidate_sha256": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+    "shared_sha256": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord2.nii.gz",
+    "candidate_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "shared_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_support.nii.gz",
+    "candidate_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "shared_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord0.nii.gz",
+    "candidate_sha256": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+    "shared_sha256": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord1.nii.gz",
+    "candidate_sha256": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+    "shared_sha256": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord2.nii.gz",
+    "candidate_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "shared_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_support.nii.gz",
+    "candidate_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "shared_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord0.nii.gz",
+    "candidate_sha256": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+    "shared_sha256": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord1.nii.gz",
+    "candidate_sha256": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+    "shared_sha256": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord2.nii.gz",
+    "candidate_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "shared_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_support.nii.gz",
+    "candidate_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "shared_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord0.nii.gz",
+    "candidate_sha256": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+    "shared_sha256": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord1.nii.gz",
+    "candidate_sha256": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+    "shared_sha256": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord2.nii.gz",
+    "candidate_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "shared_sha256": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_support.nii.gz",
+    "candidate_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "shared_sha256": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord0.nii.gz",
+    "candidate_sha256": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+    "shared_sha256": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord1.nii.gz",
+    "candidate_sha256": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+    "shared_sha256": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord2.nii.gz",
+    "candidate_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "shared_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_support.nii.gz",
+    "candidate_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "shared_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord0.nii.gz",
+    "candidate_sha256": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+    "shared_sha256": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord1.nii.gz",
+    "candidate_sha256": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+    "shared_sha256": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord2.nii.gz",
+    "candidate_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "shared_sha256": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_support.nii.gz",
+    "candidate_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "shared_sha256": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_0_to_1.tsv",
+    "candidate_sha256": "50362f2444b8b6e97734993fcebf4741c7a4dc2168d98eff166dbc37cd7166aa",
+    "shared_sha256": "50362f2444b8b6e97734993fcebf4741c7a4dc2168d98eff166dbc37cd7166aa",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_1_to_0.tsv",
+    "candidate_sha256": "b0edcef6fa7045816745f529488c813a7d2f69455a3ed44e75c18cdb5af78eaa",
+    "shared_sha256": "b0edcef6fa7045816745f529488c813a7d2f69455a3ed44e75c18cdb5af78eaa",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_2_to_3.tsv",
+    "candidate_sha256": "6d4ce5c9a434ff7ac92af4850499a2b9bfc6d41f3e19dd0e5b13030a57d5b4f2",
+    "shared_sha256": "6d4ce5c9a434ff7ac92af4850499a2b9bfc6d41f3e19dd0e5b13030a57d5b4f2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_3_to_0.tsv",
+    "candidate_sha256": "0a17555a8fcf19b68f7659e7139b4f2e6b84169aec3a629a43acbbd307b6ddf0",
+    "shared_sha256": "0a17555a8fcf19b68f7659e7139b4f2e6b84169aec3a629a43acbbd307b6ddf0",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_4_to_2.tsv",
+    "candidate_sha256": "314396453d0b0315868a8e28b594805bc8bd0cc6bfb90a667ce0a712c36f7867",
+    "shared_sha256": "314396453d0b0315868a8e28b594805bc8bd0cc6bfb90a667ce0a712c36f7867",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_fresh.tsv",
+    "candidate_sha256": "cf370ee7129377e0eace515463dbbdd9b7096378c47ce0e4f0437531791e248d",
+    "shared_sha256": "cf370ee7129377e0eace515463dbbdd9b7096378c47ce0e4f0437531791e248d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/fsl6-package-lock.json",
+    "candidate_sha256": "640446f7949c5083b0e06bf08dd825b6c3f6b27a4607086f6889ff2cc864aae1",
+    "shared_sha256": "640446f7949c5083b0e06bf08dd825b6c3f6b27a4607086f6889ff2cc864aae1",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_dense_left_left_relative.nii.gz",
+    "candidate_sha256": "1d89358294b5f854581306e558786292db178cc2d3afc302dc4de9d9500bb572",
+    "shared_sha256": "1d89358294b5f854581306e558786292db178cc2d3afc302dc4de9d9500bb572",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_dense_matched_geometry.nii.gz",
+    "candidate_sha256": "a494175828e39979b8f278afb5810e73c7fa4b7205a19bf3956285fb7bdeb087",
+    "shared_sha256": "a494175828e39979b8f278afb5810e73c7fa4b7205a19bf3956285fb7bdeb087",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_srcleft_refright_aff.nii.gz",
+    "candidate_sha256": "33f7654bfcf8036c0f70a2cf5e16e3f0618476664166d612a1fa9a86f6a224d7",
+    "shared_sha256": "33f7654bfcf8036c0f70a2cf5e16e3f0618476664166d612a1fa9a86f6a224d7",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/manifest.json",
+    "candidate_sha256": "59fc50f5f7db97b69f4235ce86b9563cb90331815d29d56e5dc4bc7467b922cb",
+    "shared_sha256": "59fc50f5f7db97b69f4235ce86b9563cb90331815d29d56e5dc4bc7467b922cb",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/manifest.json",
+    "candidate_sha256": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "shared_sha256": "9f3bc21c565ae3b5bc38bca2b69d605883632dd93b3155e8ad161658f719983c",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/movable.nii",
+    "candidate_sha256": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "shared_sha256": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/reference.nii",
+    "candidate_sha256": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "shared_sha256": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/affine.aff12.1D",
+    "candidate_sha256": "c3f5140a5272cca9dafc0df6e600fbe2dbafec799fa03c1bcde9aad1138f9094",
+    "shared_sha256": "c3f5140a5272cca9dafc0df6e600fbe2dbafec799fa03c1bcde9aad1138f9094",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/affine.lta",
+    "candidate_sha256": "e612a2a2567f93293a6160f2e027c358783bfb55455928da28abfee7fb1bd0f2",
+    "shared_sha256": "e612a2a2567f93293a6160f2e027c358783bfb55455928da28abfee7fb1bd0f2",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/field_fnirt_relative.nii",
+    "candidate_sha256": "cc482d4ef8e77f238e6e0a63b84a8de3fcfb3ec1c789873ebd851269950d304d",
+    "shared_sha256": "cc482d4ef8e77f238e6e0a63b84a8de3fcfb3ec1c789873ebd851269950d304d",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/flirt.mat",
+    "candidate_sha256": "520dac288873a6967467d6d2dc5f0c239d2261679efca99091a6087c95e7b3a1",
+    "shared_sha256": "520dac288873a6967467d6d2dc5f0c239d2261679efca99091a6087c95e7b3a1",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/receipt.json",
+    "candidate_sha256": "b74bba430fc91d190de42fb67437a98d456771f9474be0e40ca8bfedf93d7773",
+    "shared_sha256": "b74bba430fc91d190de42fb67437a98d456771f9474be0e40ca8bfedf93d7773",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/register.dat",
+    "candidate_sha256": "3ba93d50e067f2ad6783bd5f5a9472f630f4961a43dd80c313f8a96caa5624ef",
+    "shared_sha256": "3ba93d50e067f2ad6783bd5f5a9472f630f4961a43dd80c313f8a96caa5624ef",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/scala/scalafim/transform/ConventionOracleSuite.scala",
+    "candidate_sha256": "c8290a25c283b860a89b7665f48e2802f7b226ea2d6b56f398100744cb0dcfaa",
+    "shared_sha256": "c8290a25c283b860a89b7665f48e2802f7b226ea2d6b56f398100744cb0dcfaa",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/scala/scalafim/transform/NitransformsCrosscheckSuite.scala",
+    "candidate_sha256": "b00f0cdf64f60d37aa909277cc7f309e660c1a292a6a2ddc4c5356cd21dadf97",
+    "shared_sha256": "b00f0cdf64f60d37aa909277cc7f309e660c1a292a6a2ddc4c5356cd21dadf97",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/scala/scalafim/transform/fsl/FlirtOracleSuite.scala",
+    "candidate_sha256": "4ef2c0d9d83dc2ee419178f7140a25e6d477ff786e617a243242b30c957ff646",
+    "shared_sha256": "4ef2c0d9d83dc2ee419178f7140a25e6d477ff786e617a243242b30c957ff646",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/scala/scalafim/transform/fsl/Fsl6NativeOracleSuite.scala",
+    "candidate_sha256": "bbc8e6f13861d1cea927c7a588f009774ea5681b8415c048fbd2bcaddc49f645",
+    "shared_sha256": "bbc8e6f13861d1cea927c7a588f009774ea5681b8415c048fbd2bcaddc49f645",
+    "same_as_shared": true
+  },
+  {
+    "path": "modules/transform/shared/src/test/scala/scalafim/transform/itk/AntsNativeOracleSuite.scala",
+    "candidate_sha256": "42c8260b11355c60cb490bb58c9ae0a5f8f3372ce26ca50104feb583a88caf63",
+    "shared_sha256": "42c8260b11355c60cb490bb58c9ae0a5f8f3372ce26ca50104feb583a88caf63",
+    "same_as_shared": true
+  },
+  {
+    "path": "tools/transform/generate_ants_native_oracle.py",
+    "candidate_sha256": "2a788d2fcbfff9c82baf79820c402db4ecc446509020ebd3cb3cc100d0e4101a",
+    "shared_sha256": "2a788d2fcbfff9c82baf79820c402db4ecc446509020ebd3cb3cc100d0e4101a",
+    "same_as_shared": true
+  },
+  {
+    "path": "tools/transform/generate_fsl6_native_oracle.py",
+    "candidate_sha256": "d077a1b41654beacd983414e0bcbe3ddc6f9137306f49b76aeb937b293e2bede",
+    "shared_sha256": "d077a1b41654beacd983414e0bcbe3ddc6f9137306f49b76aeb937b293e2bede",
+    "same_as_shared": true
+  },
+  {
+    "path": "tools/transform/native_writer_acceptance.py",
+    "candidate_sha256": "d8f4f75082f42a62f1c878bb2afc05ab76ac94aac6e90ed7fa99a57830355ce6",
+    "shared_sha256": "d8f4f75082f42a62f1c878bb2afc05ab76ac94aac6e90ed7fa99a57830355ce6",
+    "same_as_shared": true
+  },
+  {
+    "path": "tools/transform/writer-acceptance.sh",
+    "candidate_sha256": "c07560aed40ea8958a732fb6bc28f7655f8028b628f16d509c73c84d7776c27e",
+    "shared_sha256": "c07560aed40ea8958a732fb6bc28f7655f8028b628f16d509c73c84d7776c27e",
+    "same_as_shared": true
+  },
+  {
+    "path": "tools/transform/writer_acceptance.py",
+    "candidate_sha256": "6dfc463d86fc66efc3744c635604831b0cc58b10e724be231e172acd90821f3b",
+    "shared_sha256": "6dfc463d86fc66efc3744c635604831b0cc58b10e724be231e172acd90821f3b",
+    "same_as_shared": true
+  }
+]

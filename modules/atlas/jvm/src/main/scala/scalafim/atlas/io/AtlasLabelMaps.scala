@@ -7,15 +7,17 @@ import image4s.ImageMetadata
 import scalafim.atlas.*
 import scalafim.image.*
 import scalafim.image.io.Nifti
+import scalafim.image.world.SpaceEvidence
 
 object AtlasLabelMaps:
   def readIntVolume(
       path: Path,
+      evidence: SpaceEvidence,
       label: String = ""
   ): SomeLabelVolume[Int] =
     val decoded =
       Nifti
-        .readVolume(path)
+        .readVolume(path, evidence)
         .fold(
           error => throw new IllegalArgumentException(error.message),
           identity

@@ -1,20 +1,24 @@
 package scalafim.transform.fsl
 
 import image4s.geometry.{D3, Frame, Point}
-import scalafim.image.world.{FrameCatalog, FslAffineSource, FslVolumeGeometry, WorldSpace}
+import scalafim.image.world.{FrameCatalog, FslAffineSource, FslHeaderPolicy, FslVolumeGeometry, WorldSpace}
 import scalafim.transform.*
 import scalafim.transform.nifti.NiftiRaw
 import scalafim.transform.oracle.{OracleFixtures, OracleTable}
 
 /** FLIRT matrices against fslpy's world<->world conversion (reference implementation), on volumes whose qform and
   * sform disagree, including a fresh case whose source and reference grids differ in shape, spacing and handedness.
+  * Opposite-handed historical headers use explicit FslpyCompatibility; they are not positive native FSL evidence.
   */
 class FlirtOracleSuite extends munit.FunSuite:
   private def ok[E, A](result: Either[E, A]): A =
     result.fold(error => fail(s"unexpected failure: $error"), identity)
 
+  private def historical(raw: NiftiRaw): FslVolumeGeometry =
+    ok(FslHeaderGeometry(raw, FslHeaderPolicy.FslpyCompatibility))
+
   private def geometry(index: Int): FslVolumeGeometry =
-    ok(FslHeaderGeometry(ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded(s"conventions/fsl_case$index.nii"))))))
+    historical(ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded(s"conventions/fsl_case$index.nii")))))
 
   private val source: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("flirt input")))
   private val reference: Frame[D3] = FrameCatalog.frame(ok(WorldSpace.declare("flirt reference")))
@@ -27,7 +31,7 @@ class FlirtOracleSuite extends munit.FunSuite:
 
   /** key -> (matrix file, source geometry, reference geometry) for the five shared-grid pairs and the fresh case. */
   private def files(key: String): (String, FslVolumeGeometry, FslVolumeGeometry) =
-    if key == "fresh" then ("flirt_fresh.mat", ok(FslHeaderGeometry(raw("flirt_fresh_src.nii"))), ok(FslHeaderGeometry(raw("flirt_fresh_ref.nii"))))
+    if key == "fresh" then ("flirt_fresh.mat", historical(raw("flirt_fresh_src.nii")), historical(raw("flirt_fresh_ref.nii")))
     else
       val Array(src, ref) = key.split("_to_").map(_.toInt)
       (s"flirt_${src}_to_$ref.mat", geometry(src), geometry(ref))
@@ -49,7 +53,7 @@ class FlirtOracleSuite extends munit.FunSuite:
   test("the fresh case selects the sform of a neurological source and the qform of a radiological reference, as fslpy does"):
     val fresh = OracleTable.load("conventions/flirt_fresh.tsv")
     fresh.keyed.foreach: (key, row) =>
-      val g = ok(FslHeaderGeometry(raw(s"flirt_fresh_$key.nii")))
+      val g = historical(raw(s"flirt_fresh_$key.nii"))
       assertEquals(g.selected, if row(fresh.index("selected")) == 2.0 then FslAffineSource.Sform else FslAffineSource.Qform, key)
       assertEquals(g.neurological, row(fresh.index("neurological")) == 1.0, key)
       g.voxelToWorld.rowMajor.zip(fresh.block(row, "v2w00", 16)).foreach((a, e) => assertEqualsDouble(a, e, 1e-5, s"$key voxel->world"))

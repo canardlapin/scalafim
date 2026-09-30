@@ -1,0 +1,42 @@
+{
+  "provider_tip": "842ec9a752d76793f936d7024681d50de89117db",
+  "ordinary_pin_unchanged": "9a4508351d74567147b8ea3221d82db89e5892b0",
+  "qualification": "Local unpublished dependency candidate; no continuous-domain or large-affine qualification claim.",
+  "final_log": "u6-native-factor4-final-jvm-js.log",
+  "exit_code": 0,
+  "JVM_tests_passed": 2,
+  "JS_tests_passed": 2,
+  "gates": {
+    "forward_max_mm": 0.01,
+    "reverse_max_mm": 0.01,
+    "reverse_p99_mm": 0.01,
+    "coverage": 1.0,
+    "divergence_count": 0
+  },
+  "tools": {
+    "ants": {
+      "coarse_native_nodes": 1287,
+      "reverse_probes": 962,
+      "crop_interior_off_node_holdouts": 12,
+      "inverse_lattice_spacing_factor": 0.25,
+      "contraction_k": 0.676205046,
+      "estimated_forward_max_mm": 9.9998102e-09,
+      "estimated_reverse_max_mm": 0.00732356195,
+      "native_pair_closure_max_inf_mm": 0.0179292485,
+      "estimated_native_inverse_max_inf_mm": 0.0168572582,
+      "estimated_native_inverse_p99_inf_mm": 0.00728509393
+    },
+    "fsl": {
+      "coarse_native_nodes": 693,
+      "reverse_probes": 423,
+      "crop_interior_off_node_holdouts": 12,
+      "inverse_lattice_spacing_factor": 0.5,
+      "contraction_k": 0.0815796399,
+      "estimated_forward_max_mm": 9.87329637e-09,
+      "estimated_reverse_max_mm": 0.00181896117,
+      "native_pair_closure_max_inf_mm": 0.000244696222,
+      "estimated_native_inverse_max_inf_mm": 0.000242778382
+    }
+  },
+  "distinction": "Native-tool approximate inverse agreement is separate from estimate composition residuals; the native ANTs pair itself exceeds 0.01 mm closure. All original reverse probes are checked without outside-domain filtering; independent whole-field decoder holdouts and crop-interior estimated-inverse holdouts have separate domains."
+}

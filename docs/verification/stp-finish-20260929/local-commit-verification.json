@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "scope": "Current main HEAD plus the recorded STP source snapshot. Concurrent uncommitted changes are excluded.",
+  "base_commit": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+  "tested_tree_before_commit_receipts": "86dfd3b779f320d581335e35e00ed13c17882f81",
+  "source_manifest": "source-manifest.json",
+  "source_manifest_sha256": "7e89b484b51eb85306fa62ed49b610f259ecdec6cf338b93a9876090c0637a37",
+  "source_paths": 258,
+  "checks": [
+    {
+      "platform": "JVM",
+      "tasks": [
+        "scalafimCompileAll",
+        "motionJVM/test",
+        "surfaceJVM/test",
+        "surfaceViewJVM/test"
+      ],
+      "suite_pass_counts": {
+        "motion": 97,
+        "surface": 166,
+        "surfaceView": 65
+      },
+      "exit_code": 0,
+      "warning_lines": 0,
+      "error_lines": 0,
+      "raw_log": "checks/stp-local-commit-current-main-jvm-compile.log",
+      "raw_log_sha256": "bf7e4c1f6c5c4630d29848f3cdd9c0a4962c446e52d64732480c588e54f6404d",
+      "metadata": "checks/stp-local-commit-current-main-jvm-compile.log.meta.json",
+      "metadata_sha256": "4e2fbdc12fe637c18fb0f63d5df4d8c7e375c8ec1cc1cae0abe8154d606453bf"
+    },
+    {
+      "platform": "JS",
+      "tasks": [
+        "motionJS/test",
+        "surfaceJS/test",
+        "surfaceViewJS/test"
+      ],
+      "suite_pass_counts": {
+        "motion": 84,
+        "surface": 132,
+        "surfaceView": 65
+      },
+      "exit_code": 0,
+      "warning_lines": 0,
+      "error_lines": 0,
+      "raw_log": "checks/stp-local-commit-current-main-js.log",
+      "raw_log_sha256": "bb93fa13ef6bc7d6b8a827a546c37f8cfb20d0dab87b092151165f5fcc17c09c",
+      "metadata": "checks/stp-local-commit-current-main-js.log.meta.json",
+      "metadata_sha256": "31f984502c718f417a38347aae8774c8a958c405a6f1a90020a85644e95452ee"
+    }
+  ],
+  "raw_artifact_whitespace_preserved": [
+    "docs/verification/stp-finish-20260929/checks/stp-scoped-world-image-jvm",
+    "docs/verification/stp-finish-20260929/locus4s-overlap.patch",
+    "docs/verification/stp-finish-20260929/u6-native-candidate/u6-native-jvm-2",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.components.txt",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.components.txt",
+    "docs/verification/stp-finish-20260929/checks/stp-scoped-world-image-jvm-2.log"
+  ],
+  "publication": "none; local commit authorized only",
+  "remaining_gates": "FreeSurfer license, upstream publication and pins, real scenario acceptance, final epic review and prepared HalfFlow request submission."
+}

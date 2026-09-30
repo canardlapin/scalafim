@@ -1,0 +1,95 @@
+{
+  "receipt_sha256": "b74bba430fc91d190de42fb67437a98d456771f9474be0e40ca8bfedf93d7773",
+  "native_checks": {
+    "affine.tfm": {
+      "status": "pass",
+      "sample_count": 11799,
+      "analytically_valid_query_count": 11799,
+      "max_mm_error": 2.2250561424625677e-06,
+      "tolerance_mm": 0.0002,
+      "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+      "golden_sha256": "1ec72efc3af737731c1ba03b0bc9cdd873f3ccd65005ffb9d372269b42b452d3",
+      "reason": null
+    },
+    "affine.mat": {
+      "status": "pass",
+      "sample_count": 11799,
+      "analytically_valid_query_count": 11799,
+      "max_mm_error": 2.2250561424625677e-06,
+      "tolerance_mm": 0.0002,
+      "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+      "golden_sha256": "fe952dac961a933a6198144c3fb424dd28f99203f29319e24bfc29621ea5948d",
+      "reason": null
+    },
+    "field_1Warp.nii": {
+      "status": "pass",
+      "sample_count": 60,
+      "analytically_valid_query_count": 60,
+      "max_mm_error": 2.27476435936856e-06,
+      "tolerance_mm": 0.0002,
+      "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+      "golden_sha256": "138dd34c1251d4b31fd243a0b8eb8a1886dce4f3ba51c5b1242e7f34d0e2a005",
+      "reason": null
+    },
+    "flirt.mat": {
+      "status": "pass",
+      "sample_count": 11799,
+      "analytically_valid_query_count": 11799,
+      "max_mm_error": 5.803825732860604e-05,
+      "tolerance_mm": 0.0002,
+      "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+      "golden_sha256": "520dac288873a6967467d6d2dc5f0c239d2261679efca99091a6087c95e7b3a1",
+      "reason": null
+    },
+    "field_fnirt_relative.nii": {
+      "status": "pass",
+      "sample_count": 60,
+      "analytically_valid_query_count": 60,
+      "max_mm_error": 6.313315016782648e-06,
+      "tolerance_mm": 0.0002,
+      "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+      "golden_sha256": "cc482d4ef8e77f238e6e0a63b84a8de3fcfb3ec1c789873ebd851269950d304d",
+      "reason": null
+    },
+    "affine.aff12.1D": {
+      "status": "pass",
+      "sample_count": 11799,
+      "analytically_valid_query_count": 11799,
+      "max_mm_error": 1.4342359624152405e-05,
+      "tolerance_mm": 0.0002,
+      "image_id": "sha256:013e7d4af742b288b6ed21bea70935530041b76f15557ba5d5530dcbefa70f59",
+      "golden_sha256": "c3f5140a5272cca9dafc0df6e600fbe2dbafec799fa03c1bcde9aad1138f9094",
+      "reason": null
+    },
+    "affine.lta": {
+      "status": "pending-native",
+      "sample_count": null,
+      "analytically_valid_query_count": null,
+      "max_mm_error": null,
+      "tolerance_mm": null,
+      "image_id": null,
+      "golden_sha256": null,
+      "reason": "no immutable image requested"
+    },
+    "register.dat": {
+      "status": "pending-native",
+      "sample_count": null,
+      "analytically_valid_query_count": null,
+      "max_mm_error": null,
+      "tolerance_mm": null,
+      "image_id": null,
+      "golden_sha256": null,
+      "reason": "no immutable image requested"
+    },
+    "talairach.xfm": {
+      "status": "pending-native",
+      "sample_count": null,
+      "analytically_valid_query_count": null,
+      "max_mm_error": null,
+      "tolerance_mm": null,
+      "image_id": null,
+      "golden_sha256": null,
+      "reason": "no immutable image requested"
+    }
+  }
+}

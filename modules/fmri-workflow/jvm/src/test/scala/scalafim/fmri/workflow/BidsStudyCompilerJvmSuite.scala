@@ -9,6 +9,7 @@ import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
 
+import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import java.util.zip.GZIPOutputStream
@@ -99,6 +100,7 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
       .fold(error => fail(error.message), _ => ())
+    markMni152Xform(path)
     Files.write(path, Files.readAllBytes(path).take(352))
 
   private def writeHeaderOnlyMask(path: Path): Unit =
@@ -108,7 +110,14 @@ class BidsStudyCompilerJvmSuite extends FunSuite:
     Nifti
       .writeVolume(path, SomeScalarVolume.unsafeCopyFromCanonicalArray(values, space, "mask"))
       .fold(error => fail(error.message), _ => ())
+    markMni152Xform(path)
     Files.write(path, Files.readAllBytes(path).take(352))
+
+  private def markMni152Xform(path: Path): Unit =
+    val bytes = Files.readAllBytes(path)
+    val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+    header.putShort(254, 4.toShort)
+    Files.write(path, bytes)
 
   private def gzip(source: Path, target: Path): Unit =
     val input = Files.newInputStream(source)

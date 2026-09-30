@@ -24,7 +24,7 @@ import sys
 import numpy as np
 
 GOLDENS = sys.argv[1]
-FIXTURES = os.path.join(os.path.dirname(GOLDENS), "freesurfer_linear")
+FIXTURES = os.path.join(os.path.dirname(GOLDENS), "writer_geometry")
 TOLERANCE = 1e-5
 
 queries = np.loadtxt(os.path.join(GOLDENS, "queries.tsv"), skiprows=1)
@@ -145,6 +145,10 @@ for name in listed + ["queries.tsv", "pullback.json", "goldens.txt"]:
 
 receipt = {
     "goldens": goldens,
+    "geometry": {
+        "writer_geometry/" + name: hashlib.sha256(open(os.path.join(FIXTURES, name), "rb").read()).hexdigest()
+        for name in ["movable.nii", "reference.nii", "manifest.json"]
+    },
     "tools": tools,
     "tolerance_mm": TOLERANCE,
     "checks": dict(sorted(checks.items())),

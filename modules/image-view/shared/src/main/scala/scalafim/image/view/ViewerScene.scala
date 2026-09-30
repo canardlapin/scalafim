@@ -2,16 +2,14 @@ package scalafim.image.view
 
 import scalafim.image.SampleSpaces.*
 
-import image4s.geometry.D3
-import image4s.geometry.Frame
-import image4s.geometry.Grid
+import image4s.geometry.{ContinuousIndex, D3, Frame, Grid, Point as GeoPoint}
 import intaglio.*
 import scalafim.image.*
 import scalafim.image.NeuroAffineSyntax.*
 import scala.collection.mutable
 
 final case class ViewerState(
-  cursor: WorldPoint,
+  cursor: GeoPoint[? <: Frame[D3], D3],
   pixelSpacing: PixelSpacing,
   sliceStep: SliceStep = SliceStep.One,
   convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft,
@@ -25,17 +23,50 @@ final case class ViewerState(
     layerPresentation.getOrElse(id, LayerPresentation.Default)
 
 object ViewerState:
+  def validateFrame(model: ViewerModel, cursor: GeoPoint[? <: Frame[D3], D3]): Either[ImageViewError, Unit] =
+    Frame
+      .alignOwners[D3, cursor.frame.type, Frame[D3]](cursor.frame, model.referenceSpace.frame)
+      .left
+      .map(ImageViewError.CursorFrameMismatch.apply)
+      .map(_ => ())
+
+  def alignCursor[F <: Frame[D3]](
+    model: ViewerModel,
+    cursor: GeoPoint[F, D3]
+  ): Either[ImageViewError, GeoPoint[? <: Frame[D3], D3]] =
+    Frame
+      .alignOwners[D3, F, Frame[D3]](cursor.frame, model.referenceSpace.frame)
+      .left
+      .map(ImageViewError.CursorFrameMismatch.apply)
+      .flatMap(_.pointToRight(cursor).left.map(ImageViewError.GeometryFailure.apply))
+
+  def move(
+    cursor: GeoPoint[? <: Frame[D3], D3],
+    delta: WorldVector
+  ): Either[ImageViewError, GeoPoint[? <: Frame[D3], D3]] =
+    val current = cursor.coordinates
+    GeoPoint
+      .fromVector[D3](cursor.frame, Vector(
+        current(0) + delta.x,
+        current(1) + delta.y,
+        current(2) + delta.z
+      ))
+      .left
+      .map(ImageViewError.GeometryFailure.apply)
+
   def centered(
     referenceSpace: Grid[? <: Frame[D3], D3],
     convention: LeftRightConvention = LeftRightConvention.PatientLeftOnLeft
   ): ViewerState =
     val shape = referenceSpace.spatialShape
-    val center = referenceSpace.voxelToWorld(
-      VoxelPoint(
-        (shape.x - 1).toDouble / 2.0,
-        (shape.y - 1).toDouble / 2.0,
-        (shape.z - 1).toDouble / 2.0
-      )
+    val center = referenceSpace.pointAt(
+      ContinuousIndex
+        .fromVector[D3](Vector(
+          (shape.x - 1).toDouble / 2.0,
+          (shape.y - 1).toDouble / 2.0,
+          (shape.z - 1).toDouble / 2.0
+        ))
+        .fold(error => throw new IllegalArgumentException(error.message), identity)
     ).fold(error => throw new IllegalArgumentException(error.message), identity)
     val nativeStep = referenceSpace.indexToFrame.neuroVoxelSizes.min
     ViewerState(
@@ -233,6 +264,18 @@ object ViewerCompiler:
     layout: OrthogonalLayout = OrthogonalLayout.Default,
     theme: ViewerTheme = ViewerTheme.Default
   ): Either[ImageViewError, ViewerCompilation] =
+    ViewerState.validateFrame(model, state.cursor).flatMap { _ =>
+      compileValidated(model, state, device, cache, layout, theme)
+    }
+
+  private def compileValidated(
+    model: ViewerModel,
+    state: ViewerState,
+    device: DeviceContext,
+    cache: ViewerCache,
+    layout: OrthogonalLayout,
+    theme: ViewerTheme
+  ): Either[ImageViewError, ViewerCompilation] =
     if state.timepoint < 0 || state.timepoint >= model.timepointCount then
       Left(ImageViewError.TimepointOutOfBounds(state.timepoint, model.timepointCount))
     else
@@ -275,7 +318,7 @@ object ViewerCompiler:
   ): PanelReceipts[PanelReceipt] =
     val grids = OrthogonalSliceGrids.covering(
       referenceSpace,
-      state.cursor,
+      state.cursor.toWorldPoint,
       state.pixelSpacing,
       state.convention
     )
@@ -350,13 +393,13 @@ object ViewerCompiler:
       case Some(value) => Left(value)
       case None =>
         decorationGrobs(state, panel, theme).flatMap { overlay =>
-          model.referenceSpace.worldToVoxel(state.cursor)
+          model.referenceSpace.worldToVoxel(state.cursor.toWorldPoint)
             .left.map(ImageViewError.GeometryFailure.apply)
             .map { referenceVoxel =>
               val group = Grob.group(background +: (images.result() ++ overlay), viewport = Some(viewport))
               val readout = PanelReadout(
                 panel.anatomicalPlane,
-                state.cursor,
+                state.cursor.toWorldPoint,
                 referenceVoxel,
                 readouts.result()
               )
@@ -383,7 +426,7 @@ object ViewerCompiler:
           Right(
             (
               raster,
-              sample.flatMap(readout(layer.id, _, panel, state.cursor)),
+              sample.flatMap(readout(layer.id, _, panel, state.cursor.toWorldPoint)),
               sampleCache,
               ViewerProfile(0, 1, 1, 0, 0L)
             )
@@ -397,7 +440,7 @@ object ViewerCompiler:
               Right(
                 (
                   raster,
-                  readout(layer.id, sample, panel, state.cursor),
+                  readout(layer.id, sample, panel, state.cursor.toWorldPoint),
                   sampleCache.storeRaster(rasterKey, raster),
                   ViewerProfile(0, 1, 0, 1, 0L, 1, 0, pixelCount)
                 )
@@ -411,7 +454,7 @@ object ViewerCompiler:
                     .storeRaster(rasterKey, raster)
                   (
                     raster,
-                    readout(layer.id, sample, panel, state.cursor),
+                    readout(layer.id, sample, panel, state.cursor.toWorldPoint),
                     nextCache,
                     ViewerProfile(
                       0,
@@ -485,7 +528,7 @@ object ViewerCompiler:
     val crosshair =
       if !state.showCrosshair then Right(Vector.empty)
       else
-        val projected = panel.grid.project(state.cursor).pixel
+        val projected = panel.grid.project(state.cursor.toWorldPoint).pixel
         val x = (projected.column + 0.5) / panel.grid.dimensions.width
         val y = 1.0 - (projected.row + 0.5) / panel.grid.dimensions.height
         val viewedX = panel.view.imageToLocal(x, panel.view.centerX)

@@ -1,0 +1,32 @@
+{
+  "authorization": "pending explicit owner response; no external mutations performed",
+  "actions": [
+    {
+      "repository": "canardlapin/reframe4s",
+      "candidate_commit": "842ec9a752d76793f936d7024681d50de89117db",
+      "ordinary_scalafim_pin": "9a4508351d74567147b8ea3221d82db89e5892b0",
+      "evidence": "u6-native-candidate-factor4/qualification.json"
+    },
+    {
+      "repository": "locus4s owner repository",
+      "patch": "locus4s-overlap.patch",
+      "base_commit": "5a61003379483c19f2aab0e8ce1b7408397da299",
+      "patch_sha256": "ccb1ae6a8088b3a419df6d5473d3d349282faed8d6e97a193ef8219f80e234f8",
+      "evidence": "locus4s-overlap.log and metadata"
+    },
+    {
+      "repository": "scalafim",
+      "action": "Update dependency pins after upstream publication and rerun affected consumer gates."
+    },
+    {
+      "repository": "reframe4s",
+      "action": "Submit prepared HalfFlow geometry ownership request.",
+      "request": "halfflow-geometry-request.md"
+    }
+  ],
+  "limits": [
+    "FreeSurfer license still absent.",
+    "Pin changes do not automatically qualify real scenarios or close final epic review.",
+    "Foreign repository routing, candidate ancestry and upstream checks must be verified before publication."
+  ]
+}

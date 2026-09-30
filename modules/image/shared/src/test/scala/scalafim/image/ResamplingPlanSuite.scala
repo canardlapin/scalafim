@@ -371,9 +371,12 @@ class ResamplingPlanSuite extends munit.FunSuite:
   }
 
   test("plan rejects volumes whose source grid differs from the planned source") {
-    val plannedSource = GridSpec.identity(Vector(2, 2, 2))
-    val target = GridSpec.identity(Vector(2, 2, 2))
-    val volume = testVolume(SampleSpaces(Vector(3, 2, 2)))
+    val plannedSpace = SampleSpaces(Vector(2, 2, 2))
+    val world = SampleSpaces.worldOf(plannedSpace).fold(e => fail(e.message), identity)
+    def placed(dims: Vector[Int]) = SampleSpaces.inWorld(SampleSpaces(dims), world).fold(e => fail(e.message), identity)
+    val plannedSource = GridSpec.fromSpace(plannedSpace)
+    val target = GridSpec.fromSpace(placed(Vector(2, 2, 2)))
+    val volume = testVolume(placed(Vector(3, 2, 2)))
     val p = plan(
       plannedSource,
       target,

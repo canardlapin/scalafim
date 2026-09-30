@@ -43,6 +43,7 @@ enum CoordinateMap:
   case Geometric(binding: ProviderMapBinding)
   case VolumeSamples(plan: VolumeSurfaceSamplingPlan)
   case SurfaceVertices(mapping: SurfaceVertexMapping)
+  case SurfaceResampling(binding: SurfaceResamplingBinding)
   case Unspecified
 
   @deprecated("Use transform(SpatialPoint); a bare Vector[Double] carries neither arity nor role.", "0.2.0")
@@ -64,6 +65,8 @@ enum CoordinateMap:
         Left(SpatialError.CoordinateTransformFailed("volume-to-surface sampling is not a point transform"))
       case CoordinateMap.SurfaceVertices(_) =>
         Left(SpatialError.CoordinateTransformFailed("surface vertex mapping is not a world-coordinate transform"))
+      case CoordinateMap.SurfaceResampling(_) =>
+        Left(SpatialError.CoordinateTransformFailed("surface resampling is not a world-coordinate transform"))
       case CoordinateMap.Unspecified =>
         Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
 
@@ -73,7 +76,7 @@ enum CoordinateMap:
         Right(CoordinateMap.Identity)
       case CoordinateMap.Geometric(binding) =>
         binding.inverted.map(CoordinateMap.Geometric.apply)
-      case CoordinateMap.VolumeSamples(_) | CoordinateMap.SurfaceVertices(_) =>
+      case CoordinateMap.VolumeSamples(_) | CoordinateMap.SurfaceVertices(_) | CoordinateMap.SurfaceResampling(_) =>
         Left(SpatialError.CoordinateTransformFailed("discrete or sampling coordinate maps have no geometric inverse"))
       case CoordinateMap.Unspecified =>
         Left(SpatialError.CoordinateTransformFailed("coordinate map is unspecified"))
@@ -88,6 +91,8 @@ enum CoordinateMap:
         CoordinateMap.volumeSamplesFingerprint(plan)
       case CoordinateMap.SurfaceVertices(mapping) =>
         CoordinateMap.surfaceVerticesFingerprint(mapping)
+      case CoordinateMap.SurfaceResampling(binding) =>
+        CoordinateMap.surfaceResamplingFingerprint(binding)
       case CoordinateMap.Unspecified =>
         "unspecified-v1"
 
@@ -448,6 +453,9 @@ object CoordinateMap:
   def surfaceVertices(mapping: SurfaceVertexMapping): CoordinateMap =
     CoordinateMap.SurfaceVertices(mapping)
 
+  def surfaceResampling(binding: SurfaceResamplingBinding): CoordinateMap =
+    CoordinateMap.SurfaceResampling(binding)
+
   private def geometricBindings(
       maps: Vector[CoordinateMap]
   ): Either[SpatialError, Vector[ProviderMapBinding]] =
@@ -494,6 +502,19 @@ object CoordinateMap:
       hash = MurmurHash3.mix(hash, mapping.sourceForTarget(i).index)
       i += 1
     s"surface-vertices-v1:${java.lang.Integer.toHexString(MurmurHash3.finalizeHash(hash, mapping.sourceForTarget.length))}"
+
+  private def surfaceResamplingFingerprint(binding: SurfaceResamplingBinding): String =
+    val raw = binding.plan.plan
+    var hash = MurmurHash3.stringHash(s"surface-resampling-v1|${binding.plan.source}|${binding.plan.target}|${binding.normalization}|${binding.plan.registration}|${binding.plan.sourceSphereIdentity}|${binding.plan.targetSphereIdentity}|${raw.method}|${raw.referenceVertices}|${raw.movingVertices}")
+    var i = 0
+    while i < raw.vals.length do
+      hash = MurmurHash3.mix(hash, raw.rows(i))
+      hash = MurmurHash3.mix(hash, raw.cols(i))
+      hash = MurmurHash3.mix(hash, raw.vals(i).hashCode)
+      i += 1
+    hash = hashSurfaceGeometry(hash, binding.sourceGeometry)
+    hash = hashSurfaceGeometry(hash, binding.targetGeometry)
+    s"surface-resampling-v1:${java.lang.Integer.toHexString(MurmurHash3.finalizeHash(hash, raw.vals.length))}"
 
   private def hashSurfaceGeometry(seed: Int, geometry: SurfaceGeometry): Int =
     var hash = MurmurHash3.mix(seed, geometry.hemisphere.hashCode)
@@ -675,6 +696,7 @@ object Morphism:
       case (MorphismKind.Warp3D, CoordinateMap.Geometric(_)) => true
       case (MorphismKind.VolumeToSurface, CoordinateMap.VolumeSamples(_)) => true
       case (MorphismKind.SurfaceToSurface, CoordinateMap.SurfaceVertices(_)) => true
+      case (MorphismKind.SurfaceToSurface, CoordinateMap.SurfaceResampling(_)) => true
       case (_, CoordinateMap.Unspecified) => true
       case _ => false
 
@@ -704,6 +726,21 @@ object Morphism:
                 ) if sourceGeometry == mapping.sourceGeometry && targetGeometry == mapping.targetGeometry =>
               Right(())
             case _ => Left(SpatialError.SurfaceMappingGeometryMismatch(morphism.id))
+        case CoordinateMap.SurfaceResampling(binding) =>
+          binding.validateEndpoints
+            .flatMap { _ =>
+              (source.space, target.space, source.geometry, target.geometry) match
+                case (
+                      SpaceRef.Template(sourceName, _, TemplateKind.Surface),
+                      SpaceRef.Template(targetName, _, TemplateKind.Surface),
+                      SamplingGeometry.Surface(sourceGeometry, _),
+                      SamplingGeometry.Surface(targetGeometry, _)
+                    )
+                    if sourceName.value == binding.plan.source.mesh.label &&
+                      targetName.value == binding.plan.target.mesh.label &&
+                      sourceGeometry == binding.sourceGeometry && targetGeometry == binding.targetGeometry => Right(())
+                case _ => Left(SpatialError.SurfaceMappingGeometryMismatch(morphism.id))
+            }
         case _ => Right(())
       geometryValidation.flatMap(_ => MorphismPlugin.validateDomains(morphism, source, target))
 

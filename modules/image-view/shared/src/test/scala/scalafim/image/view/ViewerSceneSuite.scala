@@ -2,6 +2,7 @@ package scalafim.image.view
 
 import image4s.geometry.Affine
 import image4s.geometry.D3
+import image4s.geometry.Point
 import intaglio.*
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
@@ -31,12 +32,8 @@ class ViewerSceneSuite extends munit.FunSuite:
         Vector(0.0, 0.0, 0.0, 1.0)
       )
     )
-    SampleSpaces
-      .requireVolumeD3(
-        SampleSpaces(Vector(1, 1, 1), affine = Some(affine))
-      )
-      .toOption
-      .get
+    SampleSpaces.derivedD3(referenceSampleSpace, Vector(1, 1, 1), affine)
+      .fold(error => fail(error.message), identity)
 
   private val shiftedMask =
     SomeMaskVolume.unsafeCopyFromCanonicalArray(
@@ -67,7 +64,7 @@ class ViewerSceneSuite extends munit.FunSuite:
 
   private val state =
     ViewerState(
-      cursor = WorldPoint(1.0, 1.0, 0.0),
+      cursor = Point.in(referenceSpace.frame)(1.0, 1.0, 0.0).toOption.get,
       pixelSpacing = PixelSpacing(1.0, 1.0)
     )
 
@@ -86,7 +83,7 @@ class ViewerSceneSuite extends munit.FunSuite:
     assertEquals(first.panels.coronal.anatomicalPlane, AnatomicalPlane.Coronal)
     assertEquals(first.panels.axial.anatomicalPlane, AnatomicalPlane.Axial)
     first.panels.all.foreach { panel =>
-      val (x, y) = panel.cursorRootNpc(state.cursor)
+      val (x, y) = panel.cursorRootNpc(state.cursor.toWorldPoint)
       assert(panel.rect.contains(x, y))
     }
   }
@@ -135,7 +132,7 @@ class ViewerSceneSuite extends munit.FunSuite:
     val frame = ViewerCompiler.compile(model, state, DeviceContext.unsafe(800.0, 800.0)).toOption.get
 
     frame.readouts.all.foreach { readout =>
-      assertEquals(readout.world, state.cursor)
+      assertEquals(readout.world, state.cursor.toWorldPoint)
       assertEquals(readout.referenceVoxel, VoxelPoint(1.0, 1.0, 0.0))
       assertEquals(
         readout.layers,

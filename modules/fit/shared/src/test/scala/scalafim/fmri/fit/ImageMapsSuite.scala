@@ -22,7 +22,8 @@ class ImageMapsSuite extends munit.FunSuite:
   private def samplingFrame: SamplingFrame =
     SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
 
-  private def dataset: FmriDataset =
+  // One dataset, so every fit and comparison shares its (unresolved) frame.
+  private lazy val dataset: FmriDataset =
     val data = GaleTestMatrix.fromRows(
       Vector(
         Vector(1.0, 2.0, 10.0, -1.0),

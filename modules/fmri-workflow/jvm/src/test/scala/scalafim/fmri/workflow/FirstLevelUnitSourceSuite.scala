@@ -8,14 +8,20 @@ import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace, So
 import scalafim.image.{SomeScalarSeries, SomeScalarVolume}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 class FirstLevelUnitSourceSuite extends FunSuite:
+  private val fixtureWorld = WorldSpace.declare("unit source synthetic acquisition").toOption.get
+  private val fixtureEvidence = SpaceEvidence(assertion = Some(fixtureWorld))
+  private def place(space: SomeSampleSpace): SomeSampleSpace =
+    SampleSpaces.inWorld(space, fixtureWorld).toOption.get
+
   test("unit source opens run references lazily and applies the exact mask intersection") {
     withFixture { root =>
-      val space = SampleSpaces(Vector(2, 2, 1))
+      val space = place(SampleSpaces(Vector(2, 2, 1)))
       val bold1 = writeBold(root.resolve("run-1.nii"), space, 0.0)
       val bold2 = writeBold(root.resolve("run-2.nii"), space, 100.0)
       val mask1 = writeMask(root.resolve("mask-1.nii"), space, Array(1.0, 1.0, 1.0, 0.0))
@@ -40,7 +46,7 @@ class FirstLevelUnitSourceSuite extends FunSuite:
 
       val opened =
         FirstLevelUnitSource
-          .open(unit)
+          .open(unit, _ => Right(fixtureEvidence))
           .fold(error => fail(error.message), identity)
       val block = opened.source.readBlock(
         DataSelection(
@@ -72,7 +78,7 @@ class FirstLevelUnitSourceSuite extends FunSuite:
 
   test("unit source preserves provider geometry failure beyond the admitted tolerance") {
     withFixture { root =>
-      val space = SampleSpaces(Vector(2, 2, 1))
+      val space = place(SampleSpaces(Vector(2, 2, 1)))
       val translated =
         SampleSpaces(
           Vector(2, 2, 1),
@@ -104,7 +110,7 @@ class FirstLevelUnitSourceSuite extends FunSuite:
         )
       )
 
-      FirstLevelUnitSource.open(unit) match
+      FirstLevelUnitSource.open(unit, _ => Right(fixtureEvidence)) match
         case Left(DatasetError.Geometry(GeometryError.GridsNotCongruent(tolerance))) =>
           assertEqualsDouble(tolerance, 1e-6, 0.0)
         case other => fail(s"expected provider grid-congruence failure, found $other")

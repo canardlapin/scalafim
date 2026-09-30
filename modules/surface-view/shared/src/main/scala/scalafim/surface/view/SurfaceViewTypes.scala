@@ -32,6 +32,7 @@ enum SurfaceViewError:
   case IncompatibleMorph(reason: String)
   case InvalidAnnotation(reason: String)
   case InvalidSelectionHistoryCapacity(value: Int)
+  case InvalidWorldIndex(reason: String)
   case InvalidLinkRadius(value: Double)
   case InvalidVertexIndex(index: Int, count: Int)
   case LinkDistanceExceeded(distance: Double, maximum: Double)
@@ -92,6 +93,7 @@ enum SurfaceViewError:
       case InvalidAnnotation(reason) => s"invalid surface annotation: $reason"
       case InvalidSelectionHistoryCapacity(value) =>
         s"surface selection history capacity must be positive; got $value"
+      case InvalidWorldIndex(reason) => s"invalid world-space surface index: $reason"
       case InvalidLinkRadius(value) => s"surface link radius must be finite and non-negative; got $value"
       case InvalidVertexIndex(index, count) => s"surface vertex $index is outside 0..${count - 1}"
       case LinkDistanceExceeded(distance, maximum) =>

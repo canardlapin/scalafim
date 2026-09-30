@@ -1,5 +1,7 @@
 package scalafim.image.io
 
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
+
 import scalafim.image.SampleSpaces.*
 
 import image4s.ImageMetadata
@@ -18,6 +20,7 @@ import java.nio.file.{Files, Path, Paths}
 import scala.io.Source
 
 final class ImageLibraryParitySuite extends munit.FunSuite:
+  private val readEvidence = SpaceEvidence(assertion = Some(WorldSpace.declare("synthetic IO fixture").toOption.get))
   private val Tolerance = 1e-6
 
   private final case class OracleRow(
@@ -144,7 +147,7 @@ final class ImageLibraryParitySuite extends munit.FunSuite:
     val nibabel = readOracle("nibabel-basic-4d.tsv")
     val neuroim2 = readOracle("neuroim2-basic-4d.tsv")
     val decoded = Nifti
-      .readSeries(resourcePath(nibabel.source))
+      .readSeries(resourcePath(nibabel.source), readEvidence)
       .fold(error => fail(error.message), identity)
     val header = NiftiHeader.fromNative(decoded.header)
     val series = decoded.image

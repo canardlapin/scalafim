@@ -3,6 +3,7 @@ package scalafim.spatial.io
 import image4s.geometry.Grid
 import scalafim.image.{SampleSpaceError, SampleSpaces}
 import scalafim.image.io.{Nifti, NiftiHeader}
+import scalafim.image.world.SpaceEvidence
 import scalafim.spatial.*
 
 import java.nio.ByteBuffer
@@ -41,6 +42,7 @@ private final case class NiftiReadWindow(
 
 final class NiftiFieldSource private (
   val path: Path,
+  val evidence: SpaceEvidence,
   override val descriptor: FieldSourceDescriptor
 ) extends FieldSource:
   private var baseline = Option.empty[NiftiFileStamp]
@@ -141,7 +143,10 @@ final class NiftiFieldSource private (
               )
             )
           else
-            SampleSpaces.requireSpatialD3(header.space)
+            header.spaceIn(evidence)
+              .left
+              .map(error => SampleSpaceError.InvalidArgument(error.message))
+              .flatMap(SampleSpaces.requireSpatialD3)
         admittedHeaderSpace
           .left
           .map(error => SpatialError.FieldSourceSampleSpaceAdmission(descriptor.id, error))
@@ -290,6 +295,7 @@ object NiftiFieldSource:
   def prepare(
     path: Path,
     domain: Domain,
+    evidence: SpaceEvidence,
     observations: Int,
     label: String = ""
   ): Either[SpatialError, NiftiFieldSource] =
@@ -314,4 +320,4 @@ object NiftiFieldSource:
           domain.nElements,
           observations
         )
-      yield new NiftiFieldSource(normalized, descriptor)
+      yield new NiftiFieldSource(normalized, evidence, descriptor)

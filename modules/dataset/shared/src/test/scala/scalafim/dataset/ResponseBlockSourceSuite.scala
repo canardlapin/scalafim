@@ -5,6 +5,16 @@ import munit.FunSuite
 import scalafim.image.{Mask, PrimitiveBuffers, SampleSpaces, SomeSampleSpace}
 
 class ResponseBlockSourceSuite extends FunSuite:
+
+  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("dataset fixture shared world")
+    .fold(error => fail(error.message), identity)
+
+  private def fixtureSpace(
+      dims: Vector[Int],
+      affine: Option[image4s.geometry.Affine[image4s.geometry.D3]] = None
+  ): SomeSampleSpace =
+    SampleSpaces.inWorld(SampleSpaces(dims, affine = affine), fixtureWorld)
+      .fold(error => fail(error.message), identity)
   test("composite source preserves requested global time and voxel order") {
     val first = new RecordingSource(timepoints = 2, base = 0.0)
     val second = new RecordingSource(timepoints = 2, base = 100.0)
@@ -41,7 +51,7 @@ class ResponseBlockSourceSuite extends FunSuite:
     val differentGeometry = new RecordingSource(
       timepoints = 2,
       base = 100.0,
-      space = SampleSpaces(Vector(1, 3, 1))
+      space = fixtureSpace(Vector(1, 3, 1))
     )
     val masked = new RecordingSource(
       timepoints = 2,
@@ -72,7 +82,7 @@ class ResponseBlockSourceSuite extends FunSuite:
 
   test("dataset backend rejects a mask from incompatible geometry during construction") {
     val source = new RecordingSource(timepoints = 2, base = 0.0)
-    val mask = Mask.all(SampleSpaces(Vector(1, 3, 1)))
+    val mask = Mask.all(fixtureSpace(Vector(1, 3, 1)))
 
     val result =
       ResponseBlockDatasetBackend.make(
@@ -89,7 +99,7 @@ class ResponseBlockSourceSuite extends FunSuite:
   private final class RecordingSource(
       timepoints: Int,
       base: Double,
-      val space: SomeSampleSpace = SampleSpaces(Vector(3, 1, 1)),
+      val space: SomeSampleSpace = fixtureSpace(Vector(3, 1, 1)),
       domain: VoxelDomain | Null = null
   ) extends ResponseBlockSource:
     val shape: DatasetShape = DatasetShape.unsafe(space, timepoints)

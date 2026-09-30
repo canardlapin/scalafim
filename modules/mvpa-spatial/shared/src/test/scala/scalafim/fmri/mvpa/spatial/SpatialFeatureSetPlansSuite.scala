@@ -35,7 +35,8 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
           row += 1
         Right(RoiAnalysisResult(MetricVector("mean" -> (sum / (roi.value.rows * roi.value.cols)))))
 
-  private def volumeSpace: SomeSampleSpace =
+  // One space, so the label volume and the expected domain share its frame.
+  private lazy val volumeSpace: SomeSampleSpace =
     SampleSpaces(
       dims = Vector(3, 2, 1),
       spacing = Some(Vector(1.0, 1.0, 1.0)),

@@ -13,6 +13,10 @@ import Ops.*
 @scala.annotation.nowarn("cat=deprecation") // pins the deprecated string and throwing orientation APIs
 class OrientationResampleSuite extends munit.FunSuite:
 
+  private def sameWorld(space: SomeSampleSpace, source: SomeSampleSpace): SomeSampleSpace =
+    val world = SampleSpaces.worldOf(source).fold(e => fail(e.message), identity)
+    SampleSpaces.inWorld(space, world).fold(e => fail(e.message), identity)
+
   private def right[E, A](value: Either[E, A]): A =
     value.fold(error => fail(error.toString), identity)
 
@@ -167,7 +171,7 @@ class OrientationResampleSuite extends munit.FunSuite:
   test("parsed method names select internal interpolators") {
     val spSrc = SampleSpaces(Vector(4, 4, 4))
     val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](64)(_.toDouble), spSrc)
-    val spTarg = SampleSpaces(Vector(3, 3, 3))
+    val spTarg = sameWorld(SampleSpaces(Vector(3, 3, 3)), spSrc)
 
     val n = Resample.resampleTo(vol, spTarg, method = parsedMethod("nearest"), engine = parsedEngine("internal"))
     val l = Resample.resampleTo(vol, spTarg, method = parsedMethod("linear"), engine = parsedEngine("internal"))
@@ -188,7 +192,7 @@ class OrientationResampleSuite extends munit.FunSuite:
   test("method and engine parsers report failures without throwing") {
     val spSrc = SampleSpaces(Vector(2, 2, 2))
     val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
-    val spTarg = SampleSpaces(Vector(2, 2, 2))
+    val spTarg = sameWorld(SampleSpaces(Vector(2, 2, 2)), spSrc)
 
     val ok = Resample.resampleTo(vol, spTarg, method = Resample.Method.Nearest, engine = Resample.Engine.Internal)
     assertEquals(ok.space.dims, spTarg.dims, clue = "")
@@ -208,14 +212,14 @@ class OrientationResampleSuite extends munit.FunSuite:
     val spSrc = SampleSpaces(Vector(2, 2, 2))
     val vol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](8)(_.toDouble), spSrc)
 
-    val targVol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 0.0), SampleSpaces(Vector(3, 3, 3)))
+    val targVol = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](27, 0.0), sameWorld(SampleSpaces(Vector(3, 3, 3)), spSrc))
     val outVol = Resample.resampleTo(vol, targVol, method = Resample.Method.Nearest)
     assertEquals(outVol.space.dims, Vector(3, 3, 3), clue = "")
 
     val spVec = SampleSpaces(Vector(2, 2, 2, 3))
     val vec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.tabulate[Double](2 * 2 * 2 * 3)(_.toDouble), spVec)
 
-    val targVec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](3 * 3 * 3 * 2, 0.0), SampleSpaces(Vector(3, 3, 3, 2)))
+    val targVec = SomeScalarSeries.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fillConst[Double](3 * 3 * 3 * 2, 0.0), sameWorld(SampleSpaces(Vector(3, 3, 3, 2)), spVec))
     val outVec = Resample.resampleTo(vec, targVec, method = Resample.Method.Linear)
     assertEquals(outVec.space.dims, Vector(3, 3, 3, 3), clue = "")
 

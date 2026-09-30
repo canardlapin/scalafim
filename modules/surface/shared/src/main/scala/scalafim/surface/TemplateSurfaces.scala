@@ -80,7 +80,11 @@ final class TemplateResamplingPlan private[surface] (
     val target: TemplateSurface,
     val registration: SphereRegistration,
     val plan: SurfaceResamplingPlan,
-    val identity: String
+    val identity: String,
+    val sourceSphereIdentity: String,
+    val targetSphereIdentity: String,
+    private val sourceTopology: TriangleMesh,
+    private val targetTopology: TriangleMesh
 ):
   /** Source values to target values. `Element` (the default) interpolates: every target row sums to one. */
   def resample(
@@ -98,6 +102,39 @@ final class TemplateResamplingPlan private[surface] (
   ): Either[SurfaceError, Array[Double]] =
     SurfaceResampling.apply(plan, values, inverse = true, normalization)
 
+  /** Check a sampled source surface without requiring its display coordinates to be sphere coordinates. */
+  def validateSourceGeometry(geometry: SurfaceGeometry): Either[SurfaceError, Unit] =
+    validateGeometry("source", source, sourceTopology, geometry)
+
+  /** Check a sampled target surface without requiring its display coordinates to be sphere coordinates. */
+  def validateTargetGeometry(geometry: SurfaceGeometry): Either[SurfaceError, Unit] =
+    validateGeometry("target", target, targetTopology, geometry)
+
+  private def validateGeometry(
+      role: String,
+      expected: TemplateSurface,
+      topology: TriangleMesh,
+      geometry: SurfaceGeometry
+  ): Either[SurfaceError, Unit] =
+    for
+      hemi <- geometry.hemisphere.toCortical
+      _ <- Either.cond(
+        hemi == expected.hemisphere,
+        (),
+        SurfaceError.InvalidGeometry(s"$role hemisphere ${geometry.hemisphere} does not match ${expected.hemisphere}")
+      )
+      _ <- Either.cond(
+        geometry.vertexCount == expected.vertexCount && geometry.faceCount == expected.mesh.faces,
+        (),
+        SurfaceError.InvalidTopology(s"$role geometry counts do not match ${expected.display}")
+      )
+      _ <- Either.cond(
+        topology.hasSameTopology(geometry.mesh),
+        (),
+        SurfaceError.InvalidTopology(s"$role geometry does not retain the ordered template topology")
+      )
+    yield ()
+
 object TemplateResampling:
   /** Plan resampling from `source` onto `target`, both on the registration sphere `R` and of one hemisphere. */
   def plan[R <: SphereRegistration](
@@ -113,11 +150,22 @@ object TemplateResampling:
     else
       SurfaceResampling
         .plan(reference = target.sphere, moving = source.sphere, method = method, spherical = true, radius = TemplateSphere.Radius)
-        .map: plan =>
+        .map: rawPlan =>
+          // Mesh arrays are mutable at the IO boundary. Keep the planned topology and COO values private snapshots.
+          val sourceSnapshot = TriangleMesh.fromArrays(source.sphere.coordinates.clone(), source.sphere.faceIndices.clone())
+          val targetSnapshot = TriangleMesh.fromArrays(target.sphere.coordinates.clone(), target.sphere.faceIndices.clone())
+          val plan = SurfaceResamplingPlan(
+            IArray.from(rawPlan.rows), IArray.from(rawPlan.cols), IArray.from(rawPlan.vals),
+            rawPlan.referenceVertices, rawPlan.movingVertices, rawPlan.method
+          )
           TemplateResamplingPlan(
             source.surface,
             target.surface,
             source.registration,
             plan,
-            s"$method on ${source.registration}: ${source.identity} -> ${target.identity}"
+            s"$method on ${source.registration}: ${source.identity} -> ${target.identity}",
+            source.identity,
+            target.identity,
+            sourceSnapshot,
+            targetSnapshot
           )

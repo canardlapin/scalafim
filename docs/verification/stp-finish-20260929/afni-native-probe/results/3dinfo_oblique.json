@@ -1,0 +1,11 @@
+{
+  "name": "3dinfo_oblique",
+  "argv": [
+    "/opt/afni/src/../install/3dinfo",
+    "-verb",
+    "/probe/oblique_WARP.nii"
+  ],
+  "returncode": 0,
+  "stdout": "\nDataset File:    /probe/oblique_WARP.nii\nIdentifier Code: XYZ_Hpo6c6JH8Tqu6Apv2lMRLw  Creation Date: Wed Sep 30 03:57:51 2026\nTemplate Space:  ORIG\nDataset Type:    Anat Bucket (-abuc)\nByte Order:      LSB_FIRST {assumed} [this CPU native = LSB_FIRST]\nStorage Mode:    NIFTI\nStorage Space:   4,536 (4.5 thousand) bytes\nGeometry String: \"MATRIX(1.495679,0.808766,0.060012,-14.5,0.529077,-2.099972,0.28657,21,-0.207415,0.475412,1.163734,-6.25):9,7,6\"\nData Axes Tilt:  Oblique (24.072 deg. from plumb)\nData Axes Approximate Orientation:\n  first  (x) = Right-to-Left\n  second (y) = Posterior-to-Anterior\n  third  (z) = Inferior-to-Superior   [-orient RPI]\nR-to-L extent:   -14.500 [R] -to-    -1.700 [R] -step-     1.600 mm [  9 voxels]\nA-to-P extent:     7.200 [P] -to-    21.000 [P] -step-     2.300 mm [  7 voxels]\nI-to-S extent:    -6.250 [I] -to-    -0.250 [I] -step-     1.200 mm [  6 voxels]\nNumber of values stored at each pixel = 3\n  -- At sub-brick #0 '?' datum type is float\n  -- At sub-brick #1 '?' datum type is float\n  -- At sub-brick #2 '?' datum type is float\n\n",
+  "stderr": "++ 3dinfo: AFNI version=AFNI_26.1.04 (Jun  2 2026) [64-bit]\n\u001b[7m*+ WARNING:\u001b[0m NIfTI('/probe/oblique_WARP.nii'): Qform/Sform handedness differ; S wins!\n"
+}

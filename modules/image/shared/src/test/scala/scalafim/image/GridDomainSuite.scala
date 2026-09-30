@@ -101,7 +101,10 @@ class GridDomainSuite extends munit.FunSuite:
 
   test("same persistent grid key does not admit a foreign live owner"):
     val foreignSpace =
-      ProviderSpaces.volume(SampleSpaces(Vector(2, 3, 5)))
+      ProviderSpaces.volume(right(SampleSpaces.inWorld(
+        SampleSpaces(Vector(2, 3, 5)),
+        right(SampleSpaces.worldOf(volumeSpace))
+      )))
     val foreignVolume =
       SomeScalarVolume.unsafeFromRavel(
         volumeData,

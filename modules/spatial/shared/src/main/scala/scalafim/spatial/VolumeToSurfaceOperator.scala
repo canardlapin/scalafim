@@ -500,37 +500,43 @@ object MixedPullbackOperatorCompiler:
       if !VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(target.mask, targetVertex) then
         assembly.coverage += 0.0
       else
-        pullSurfaceVertex(program.steps, bridgeIndex + 1, targetVertex) match
+        pullSurfaceWeights(program.steps, bridgeIndex + 1, targetVertex) match
           case Left(err) => error = Some(err)
-          case Right(bridgeVertex) =>
-            VolumeToSurfaceOperatorCompiler.samplePoints(plan.surfaces, plan.path, bridgeVertex) match
-              case Left(err) => error = Some(err)
-              case Right(points) =>
-                val pointWeights = Vector.newBuilder[SurfacePointWeights]
-                var coverageSum = 0.0
-                var pointIndex = 0
-                while pointIndex < points.length && error.isEmpty do
-                  pullVolumePoint(program.steps, bridgeIndex, points(pointIndex)) match
-                    case Left(err) => error = Some(err)
-                    case Right(rootPoint) =>
-                      val weights =
-                        VolumeToSurfaceOperatorCompiler.sourcePointWeights(
-                          sourceGrid,
-                          source.mask,
-                          rootPoint,
-                          program.route.sampling
-                        )
-                      pointWeights += weights
-                      coverageSum += weights.coverage
-                  pointIndex += 1
-
-                if error.isEmpty then
-                  appendAveragedWeights(
-                    assembly,
-                    outRow,
-                    pointWeights.result(),
-                    coverageSum / points.length.toDouble
-                  )
+          case Right(bridgeWeights) =>
+            var weightIndex = 0
+            var rowCoverage = 0.0
+            while weightIndex < bridgeWeights.length && error.isEmpty do
+              val (bridgeVertex, bridgeWeight) = bridgeWeights(weightIndex)
+              VolumeToSurfaceOperatorCompiler.samplePoints(plan.surfaces, plan.path, bridgeVertex) match
+                case Left(err) => error = Some(err)
+                case Right(points) =>
+                  val pointWeights = Vector.newBuilder[SurfacePointWeights]
+                  var coverageSum = 0.0
+                  var pointIndex = 0
+                  while pointIndex < points.length && error.isEmpty do
+                    pullVolumePoint(program.steps, bridgeIndex, points(pointIndex)) match
+                      case Left(err) => error = Some(err)
+                      case Right(rootPoint) =>
+                        val weights =
+                          VolumeToSurfaceOperatorCompiler.sourcePointWeights(
+                            sourceGrid,
+                            source.mask,
+                            rootPoint,
+                            program.route.sampling
+                          )
+                        pointWeights += weights
+                        coverageSum += weights.coverage
+                    pointIndex += 1
+                  if error.isEmpty then
+                    appendAveragedWeights(
+                      assembly,
+                      outRow,
+                      pointWeights.result(),
+                      bridgeWeight
+                    )
+                    rowCoverage += bridgeWeight * coverageSum / points.length.toDouble
+              weightIndex += 1
+            if error.isEmpty then assembly.coverage += coverageFraction(rowCoverage)
       outRow += 1
 
     error match
@@ -551,15 +557,20 @@ object MixedPullbackOperatorCompiler:
       if !VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(target.mask, targetVertex) then
         assembly.coverage += 0.0
       else
-        pullSurfaceVertex(program.steps, 0, targetVertex) match
+        pullSurfaceWeights(program.steps, 0, targetVertex) match
           case Left(err) => error = Some(err)
-          case Right(rootVertex) =>
-            if VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(source.mask, rootVertex) then
-              assembly.rowIndices += outRow
-              assembly.colIndices += rootVertex.index
-              assembly.values += 1.0
-              assembly.coverage += 1.0
-            else assembly.coverage += 0.0
+          case Right(rootWeights) =>
+            var weightIndex = 0
+            var coverage = 0.0
+            while weightIndex < rootWeights.length do
+              val (rootVertex, weight) = rootWeights(weightIndex)
+              if VolumeToSurfaceOperatorCompiler.surfaceMaskAllows(source.mask, rootVertex) then
+                assembly.rowIndices += outRow
+                assembly.colIndices += rootVertex.index
+                assembly.values += weight
+                coverage += weight
+              weightIndex += 1
+            assembly.coverage += coverageFraction(coverage)
       outRow += 1
     error match
       case Some(err) => Left(err)
@@ -569,21 +580,23 @@ object MixedPullbackOperatorCompiler:
     assembly: MixedRowAssembly,
     outRow: Int,
     weights: Vector[SurfacePointWeights],
-    coverage: Double
+    outerScale: Double = 1.0
   ): Unit =
     val valid = weights.filter(_.coverage > 0.0)
-    assembly.coverage += coverage
     if valid.nonEmpty then
-      val scale = 1.0 / valid.length.toDouble
+      val pointScale = 1.0 / valid.length.toDouble
       var point = 0
       while point < valid.length do
         var index = 0
         while index < valid(point).cols.length do
           assembly.rowIndices += outRow
           assembly.colIndices += valid(point).cols(index)
-          assembly.values += valid(point).values(index) * scale
+          assembly.values += valid(point).values(index) * pointScale * outerScale
           index += 1
         point += 1
+
+  private def coverageFraction(value: Double): Double =
+    math.max(0.0, math.min(1.0, value))
 
   private def pullVolumePoint(
     steps: Vector[PullbackStep],
@@ -600,23 +613,58 @@ object MixedPullbackOperatorCompiler:
       index -= 1
     error.toLeft(current)
 
-  private def pullSurfaceVertex(
+  private def pullSurfaceWeights(
     steps: Vector[PullbackStep],
     start: Int,
     target: VertexId
-  ): Either[SpatialError, VertexId] =
-    var current = target
+  ): Either[SpatialError, Vector[(VertexId, Double)]] =
+    var current = Vector(target -> 1.0)
     var index = steps.length - 1
-    while index >= start do
+    var error = Option.empty[SpatialError]
+    while index >= start && error.isEmpty do
       steps(index).coordinateMap match
         case CoordinateMap.SurfaceVertices(mapping) =>
-          if current.index < 0 || current.index >= mapping.sourceForTarget.length then
-            return Left(SpatialError.InvalidMixedPullback(s"surface target vertex ${current.index} is out of bounds"))
-          current = mapping.sourceForTarget(current.index)
+          val next = Vector.newBuilder[(VertexId, Double)]
+          var currentIndex = 0
+          while currentIndex < current.length && error.isEmpty do
+            val (vertex, weight) = current(currentIndex)
+            if vertex.index < 0 || vertex.index >= mapping.sourceForTarget.length then
+              error = Some(SpatialError.InvalidMixedPullback(s"surface target vertex ${vertex.index} is out of bounds"))
+            else next += mapping.sourceForTarget(vertex.index) -> weight
+            currentIndex += 1
+          if error.isEmpty then current = next.result()
+        case CoordinateMap.SurfaceResampling(binding) =>
+          val raw = binding.plan.plan
+          val matrix = binding.normalizedCsr
+          val currentRows = new Array[Int](current.length)
+          val currentColumns = new Array[Int](current.length)
+          val currentValues = new Array[Double](current.length)
+          var currentIndex = 0
+          while currentIndex < current.length && error.isEmpty do
+            val (vertex, weight) = current(currentIndex)
+            if vertex.index < 0 || vertex.index >= raw.referenceVertices then
+              error = Some(SpatialError.InvalidMixedPullback(s"surface target vertex ${vertex.index} is out of bounds"))
+            else
+              currentColumns(currentIndex) = vertex.index
+              currentValues(currentIndex) = weight
+            currentIndex += 1
+          if error.isEmpty then
+            GaleSpatialSupport
+              .sparseCsr(1, raw.referenceVertices, currentRows, currentColumns, currentValues)
+              .left
+              .map(value => SpatialError.OperatorAssemblyFailed(value.getMessage)) match
+                case Left(value) => error = Some(value)
+                case Right(selector) =>
+                  GaleSpatialSupport.product(selector, matrix).left.map(value => SpatialError.OperatorAssemblyFailed(value.getMessage)) match
+                    case Left(value) => error = Some(value)
+                    case Right(product) =>
+                      val next = Vector.newBuilder[(VertexId, Double)]
+                      product.foreachStoredEntry { (_, column, value) => next += VertexId(column) -> value }
+                      current = next.result()
         case other =>
-          return Left(SpatialError.InvalidMixedPullback(s"expected surface vertex mapping, got $other"))
+          error = Some(SpatialError.InvalidMixedPullback(s"expected surface vertex mapping, got $other"))
       index -= 1
-    Right(current)
+    error.toLeft(current)
 
   private def validateVolumePrefix(steps: Vector[PullbackStep]): Either[SpatialError, Unit] =
     steps.find { step =>
@@ -626,7 +674,7 @@ object MixedPullbackOperatorCompiler:
       case None => Right(())
 
   private def validateSurfaceSuffix(steps: Vector[PullbackStep]): Either[SpatialError, Unit] =
-    steps.find(_.morphism.kind != MorphismKind.SurfaceToSurface) match
+    steps.find(step => step.morphism.kind != MorphismKind.SurfaceToSurface) match
       case Some(step) => Left(SpatialError.InvalidMixedPullback(s"${step.morphism.kind} appears after the surface bridge"))
       case None => Right(())
 

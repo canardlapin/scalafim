@@ -164,12 +164,12 @@ class CoreSuite extends munit.FunSuite:
 
   test("NeuroSeriesSeq indexes across runs") {
     val sp1 = SampleSpaces(Vector(2, 1, 1, 2))
-    val sp2 = SampleSpaces(
+    val sp2 = SampleSpaces.inWorld(SampleSpaces(
       Vector(2, 1, 1, 3),
       spacing = Some(sp1.spacing),
       origin = Some(sp1.origin),
       affine = Some(sp1.affineD3.toOption.get)
-    )
+    ), SampleSpaces.worldOf(sp1).fold(e => fail(e.message), identity)).fold(e => fail(e.message), identity)
     val v1 = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](4)(identity), sp1)
     val v2 = SomeLabelSeries.unsafeCopyFromCanonicalArray[Int](PrimitiveBuffers.tabulate[Int](6)(i => i + 100), sp2)
     val seq = NeuroSeriesSeq(Vector(v1, v2))
