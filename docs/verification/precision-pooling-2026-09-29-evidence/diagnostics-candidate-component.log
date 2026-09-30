@@ -1,0 +1,338 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project diagnostics-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/diagnostics/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/diagnostics/)
+[info] running (fork) org.openjdk.jmh.Main -wi 2 -i 5 -w 300ms -r 300ms -f 1 -t 1 -p outputs=2,64 -p uncertainty=none -prof gc -rf json -rff /private/tmp/scalafim-execution-20260929/candidate-component-jmh.json .*SelectedPrecisionPoolingBenchmark.(precisionAccumulation|selectedPooling)
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_8ef1c361/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation
+[info] # Parameters: (outputs = 2, uncertainty = none)
+[info] # Run progress: 0.00% complete, ETA 00:00:08
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_8ef1c361/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 0.348 ms/op
+[info] # Warmup Iteration   2: 0.242 ms/op
+[info] Iteration   1: 0.211 ms/op
+[info]                  gc.alloc.rate:      4747.058 MB/sec
+[info]                  gc.alloc.rate.norm: 1048620.954 B/op
+[info]                  gc.count:           4.000 counts
+[info]                  gc.time:            6.000 ms
+[info] Iteration   2: 0.226 ms/op
+[info]                  gc.alloc.rate:      4418.237 MB/sec
+[info]                  gc.alloc.rate.norm: 1048621.208 B/op
+[info]                  gc.count:           2.000 counts
+[info]                  gc.time:            2.000 ms
+[info] Iteration   3: 0.205 ms/op
+[info]                  gc.alloc.rate:      4871.823 MB/sec
+[info]                  gc.alloc.rate.norm: 1048620.837 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            5.000 ms
+[info] Iteration   4: 0.203 ms/op
+[info]                  gc.alloc.rate:      4926.727 MB/sec
+[info]                  gc.alloc.rate.norm: 1048620.676 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            1.000 ms
+[info] Iteration   5: 0.202 ms/op
+[info]                  gc.alloc.rate:      4944.009 MB/sec
+[info]                  gc.alloc.rate.norm: 1048620.660 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            2.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation":
+[info]   0.209 ?(99.9%) 0.038 ms/op [Average]
+[info]   (min, avg, max) = (0.202, 0.209, 0.226), stdev = 0.010
+[info]   CI (99.9%): [0.171, 0.248] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate":
+[info]   4781.571 ?(99.9%) 836.584 MB/sec [Average]
+[info]   (min, avg, max) = (4418.237, 4781.571, 4944.009), stdev = 217.258
+[info]   CI (99.9%): [3944.987, 5618.155] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate.norm":
+[info]   1048620.867 ?(99.9%) 0.870 B/op [Average]
+[info]   (min, avg, max) = (1048620.660, 1048620.867, 1048621.208), stdev = 0.226
+[info]   CI (99.9%): [1048619.997, 1048621.737] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.count":
+[info]   15.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (2.000, 3.000, 4.000), stdev = 0.707
+[info]   CI (99.9%): [15.000, 15.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.time":
+[info]   16.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (1.000, 3.200, 6.000), stdev = 2.168
+[info]   CI (99.9%): [16.000, 16.000] (assumes normal distribution)
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation
+[info] # Parameters: (outputs = 64, uncertainty = none)
+[info] # Run progress: 25.00% complete, ETA 00:00:07
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_8ef1c361/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 54.658 ms/op
+[info] # Warmup Iteration   2: 47.609 ms/op
+[info] Iteration   1: 44.656 ms/op
+[info]                  gc.alloc.rate:      5751.782 MB/sec
+[info]                  gc.alloc.rate.norm: 269550612.571 B/op
+[info]                  gc.count:           4.000 counts
+[info]                  gc.time:            6.000 ms
+[info] Iteration   2: 48.808 ms/op
+[info]                  gc.alloc.rate:      5263.323 MB/sec
+[info]                  gc.alloc.rate.norm: 269550608.000 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            5.000 ms
+[info] Iteration   3: 43.558 ms/op
+[info]                  gc.alloc.rate:      5896.796 MB/sec
+[info]                  gc.alloc.rate.norm: 269550608.000 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            2.000 ms
+[info] Iteration   4: 43.891 ms/op
+[info]                  gc.alloc.rate:      5851.559 MB/sec
+[info]                  gc.alloc.rate.norm: 269550608.000 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            2.000 ms
+[info] Iteration   5: 43.638 ms/op
+[info]                  gc.alloc.rate:      5886.514 MB/sec
+[info]                  gc.alloc.rate.norm: 269550608.000 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            2.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation":
+[info]   44.910 ?(99.9%) 8.555 ms/op [Average]
+[info]   (min, avg, max) = (43.558, 44.910, 48.808), stdev = 2.222
+[info]   CI (99.9%): [36.355, 53.465] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate":
+[info]   5729.995 ?(99.9%) 1028.484 MB/sec [Average]
+[info]   (min, avg, max) = (5263.323, 5729.995, 5896.796), stdev = 267.094
+[info]   CI (99.9%): [4701.511, 6758.479] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate.norm":
+[info]   269550608.914 ?(99.9%) 7.872 B/op [Average]
+[info]   (min, avg, max) = (269550608.000, 269550608.914, 269550612.571), stdev = 2.044
+[info]   CI (99.9%): [269550601.042, 269550616.787] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.count":
+[info]   16.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (3.000, 3.200, 4.000), stdev = 0.447
+[info]   CI (99.9%): [16.000, 16.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.time":
+[info]   17.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (2.000, 3.400, 6.000), stdev = 1.949
+[info]   CI (99.9%): [17.000, 17.000] (assumes normal distribution)
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling
+[info] # Parameters: (outputs = 2, uncertainty = none)
+[info] # Run progress: 50.00% complete, ETA 00:00:05
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_8ef1c361/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 3.940 ms/op
+[info] # Warmup Iteration   2: 1.089 ms/op
+[info] Iteration   1: 1.110 ms/op
+[info]                  gc.alloc.rate:      3884.167 MB/sec
+[info]                  gc.alloc.rate.norm: 4523857.455 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            5.000 ms
+[info] Iteration   2: 1.114 ms/op
+[info]                  gc.alloc.rate:      3871.046 MB/sec
+[info]                  gc.alloc.rate.norm: 4523858.745 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            4.000 ms
+[info] Iteration   3: 1.204 ms/op
+[info]                  gc.alloc.rate:      3580.045 MB/sec
+[info]                  gc.alloc.rate.norm: 4523859.559 B/op
+[info]                  gc.count:           2.000 counts
+[info]                  gc.time:            3.000 ms
+[info] Iteration   4: 1.012 ms/op
+[info]                  gc.alloc.rate:      4260.132 MB/sec
+[info]                  gc.alloc.rate.norm: 4523858.940 B/op
+[info]                  gc.count:           2.000 counts
+[info]                  gc.time:            3.000 ms
+[info] Iteration   5: 0.993 ms/op
+[info]                  gc.alloc.rate:      4342.906 MB/sec
+[info]                  gc.alloc.rate.norm: 4523855.373 B/op
+[info]                  gc.count:           3.000 counts
+[info]                  gc.time:            2.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling":
+[info]   1.086 ?(99.9%) 0.331 ms/op [Average]
+[info]   (min, avg, max) = (0.993, 1.086, 1.204), stdev = 0.086
+[info]   CI (99.9%): [0.755, 1.418] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate":
+[info]   3987.659 ?(99.9%) 1203.750 MB/sec [Average]
+[info]   (min, avg, max) = (3580.045, 3987.659, 4342.906), stdev = 312.610
+[info]   CI (99.9%): [2783.909, 5191.409] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate.norm":
+[info]   4523858.014 ?(99.9%) 6.406 B/op [Average]
+[info]   (min, avg, max) = (4523855.373, 4523858.014, 4523859.559), stdev = 1.664
+[info]   CI (99.9%): [4523851.608, 4523864.420] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.count":
+[info]   13.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (2.000, 2.600, 3.000), stdev = 0.548
+[info]   CI (99.9%): [13.000, 13.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.time":
+[info]   17.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (2.000, 3.400, 5.000), stdev = 1.140
+[info]   CI (99.9%): [17.000, 17.000] (assumes normal distribution)
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling
+[info] # Parameters: (outputs = 64, uncertainty = none)
+[info] # Run progress: 75.00% complete, ETA 00:00:02
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_8ef1c361/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 423.358 ms/op
+[info] # Warmup Iteration   2: 317.790 ms/op
+[info] Iteration   1: 311.408 ms/op
+[info]                  gc.alloc.rate:      1708.726 MB/sec
+[info]                  gc.alloc.rate.norm: 558298616.000 B/op
+[info]                  gc.count:           2.000 counts
+[info]                  gc.time:            3.000 ms
+[info] Iteration   2: 306.913 ms/op
+[info]                  gc.alloc.rate:      1733.936 MB/sec
+[info]                  gc.alloc.rate.norm: 558298552.000 B/op
+[info]                  gc.count:           1.000 counts
+[info]                  gc.time:            1.000 ms
+[info] Iteration   3: 310.224 ms/op
+[info]                  gc.alloc.rate:      1715.393 MB/sec
+[info]                  gc.alloc.rate.norm: 558298552.000 B/op
+[info]                  gc.count:           2.000 counts
+[info]                  gc.time:            3.000 ms
+[info] Iteration   4: 309.656 ms/op
+[info]                  gc.alloc.rate:      1718.602 MB/sec
+[info]                  gc.alloc.rate.norm: 558298552.000 B/op
+[info]                  gc.count:           2.000 counts
+[info]                  gc.time:            3.000 ms
+[info] Iteration   5: 306.741 ms/op
+[info]                  gc.alloc.rate:      1734.428 MB/sec
+[info]                  gc.alloc.rate.norm: 558298800.000 B/op
+[info]                  gc.count:           1.000 counts
+[info]                  gc.time:            1.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling":
+[info]   308.988 ?(99.9%) 7.982 ms/op [Average]
+[info]   (min, avg, max) = (306.741, 308.988, 311.408), stdev = 2.073
+[info]   CI (99.9%): [301.006, 316.970] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate":
+[info]   1722.217 ?(99.9%) 44.245 MB/sec [Average]
+[info]   (min, avg, max) = (1708.726, 1722.217, 1734.428), stdev = 11.490
+[info]   CI (99.9%): [1677.972, 1766.462] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate.norm":
+[info]   558298614.400 ?(99.9%) 413.524 B/op [Average]
+[info]   (min, avg, max) = (558298552.000, 558298614.400, 558298800.000), stdev = 107.391
+[info]   CI (99.9%): [558298200.876, 558299027.924] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.count":
+[info]   8.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (1.000, 1.600, 2.000), stdev = 0.548
+[info]   CI (99.9%): [8.000, 8.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionPoolingBenchmark.selectedPooling:gc.time":
+[info]   11.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (1.000, 2.200, 3.000), stdev = 1.095
+[info]   CI (99.9%): [11.000, 11.000] (assumes normal distribution)
+[info] # Run complete. Total time: 00:00:10
+[info] REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+[info] why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+[info] experiments, perform baseline and negative tests that provide experimental control, make sure
+[info] the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+[info] Do not assume the numbers tell you what you want them to tell.
+[info] NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+[info] extra caution when trusting the results, look into the generated code to check the benchmark still
+[info] works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+[info] different JVMs are already problematic, the performance difference caused by different Blackhole
+[info] modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+[info] Benchmark                                                                   (outputs)  (uncertainty)  Mode  Cnt          Score      Error   Units
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation                             2           none  avgt    5          0.209 ?    0.038   ms/op
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate               2           none  avgt    5       4781.571 ?  836.584  MB/sec
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate.norm          2           none  avgt    5    1048620.867 ?    0.870    B/op
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.count                    2           none  avgt    5         15.000             counts
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.time                     2           none  avgt    5         16.000                 ms
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation                            64           none  avgt    5         44.910 ?    8.555   ms/op
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate              64           none  avgt    5       5729.995 ? 1028.484  MB/sec
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.alloc.rate.norm         64           none  avgt    5  269550608.914 ?    7.872    B/op
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.count                   64           none  avgt    5         16.000             counts
+[info] SelectedPrecisionPoolingBenchmark.precisionAccumulation:gc.time                    64           none  avgt    5         17.000                 ms
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling                                   2           none  avgt    5          1.086 ?    0.331   ms/op
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate                     2           none  avgt    5       3987.659 ? 1203.750  MB/sec
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate.norm                2           none  avgt    5    4523858.014 ?    6.406    B/op
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.count                          2           none  avgt    5         13.000             counts
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.time                           2           none  avgt    5         17.000                 ms
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling                                  64           none  avgt    5        308.988 ?    7.982   ms/op
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate                    64           none  avgt    5       1722.217 ?   44.245  MB/sec
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.alloc.rate.norm               64           none  avgt    5  558298614.400 ?  413.524    B/op
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.count                         64           none  avgt    5          8.000             counts
+[info] SelectedPrecisionPoolingBenchmark.selectedPooling:gc.time                          64           none  avgt    5         11.000                 ms
+[info] Benchmark result is saved to /private/tmp/scalafim-execution-20260929/candidate-component-jmh.json
+[success] Total time: 14 s, completed Sep 29, 2026, 8:15:42 p.m.

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T00:15:03.230631+00:00",
+  "finished_utc": "2026-09-30T00:15:42.568990+00:00",
+  "duration_seconds": 39.337904,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitBenchJVM/Jmh/run -wi 2 -i 5 -w 300ms -r 300ms -f 1 -t 1 -p outputs=2,64 -p uncertainty=none -prof gc -rf json -rff /private/tmp/scalafim-execution-20260929/candidate-component-jmh.json .*SelectedPrecisionPoolingBenchmark.(precisionAccumulation|selectedPooling)"
+  ],
+  "cwd": "/private/tmp/scalafim-execution-20260929/diagnostics",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/diagnostics-candidate-component.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 24977
+}

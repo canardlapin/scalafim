@@ -1,0 +1,343 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project diagnostics-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/diagnostics/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/diagnostics/)
+[info] running (fork) org.openjdk.jmh.generators.bytecode.JmhBytecodeGenerator /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/classes /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/src_managed/jmh /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/resource_managed/jmh default
+[info] Processing 13 classes from /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/classes with "reflection" generator
+[info] Writing out Java source to /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/src_managed/jmh and resources to /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/resource_managed/jmh
+[info] compiling 49 Java sources to /private/tmp/scalafim-execution-20260929/diagnostics/benchmarks/fit-jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] running (fork) org.openjdk.jmh.Main -wi 2 -i 5 -w 300ms -r 300ms -f 1 -t 1 -p outputs=2,64 -p backing=resident,mapped-file -p uncertainty=none -prof gc -rf json -rff /private/tmp/scalafim-execution-20260929/baseline-full-jmh.json .*SelectedPrecisionEndToEndBenchmark.fullSelectedFit
+[error] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_65ca29a6/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[error] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[error] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit
+[info] # Parameters: (backing = resident, outputs = 2, uncertainty = none)
+[info] # Run progress: 0.00% complete, ETA 00:00:08
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_65ca29a6/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 4429.681 ms/op
+[info] # Warmup Iteration   2: 3590.387 ms/op
+[info] Iteration   1: 3561.877 ms/op
+[info]                  gc.alloc.rate:      3918.038 MB/sec
+[info]                  gc.alloc.rate.norm: 14634395192.000 B/op
+[info]                  gc.count:           28.000 counts
+[info]                  gc.time:            17.000 ms
+[info] Iteration   2: 3553.553 ms/op
+[info]                  gc.alloc.rate:      3927.254 MB/sec
+[info]                  gc.alloc.rate.norm: 14634348256.000 B/op
+[info]                  gc.count:           28.000 counts
+[info]                  gc.time:            18.000 ms
+[info] Iteration   3: 3589.122 ms/op
+[info]                  gc.alloc.rate:      3888.220 MB/sec
+[info]                  gc.alloc.rate.norm: 14634051936.000 B/op
+[info]                  gc.count:           28.000 counts
+[info]                  gc.time:            18.000 ms
+[info] Iteration   4: 3692.010 ms/op
+[info]                  gc.alloc.rate:      3779.568 MB/sec
+[info]                  gc.alloc.rate.norm: 14632799576.000 B/op
+[info]                  gc.count:           28.000 counts
+[info]                  gc.time:            21.000 ms
+[info] Iteration   5: 3576.531 ms/op
+[info]                  gc.alloc.rate:      3901.496 MB/sec
+[info]                  gc.alloc.rate.norm: 14632629160.000 B/op
+[info]                  gc.count:           28.000 counts
+[info]                  gc.time:            19.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit":
+[info]   3594.619 ?(99.9%) 216.124 ms/op [Average]
+[info]   (min, avg, max) = (3553.553, 3594.619, 3692.010), stdev = 56.127
+[info]   CI (99.9%): [3378.495, 3810.742] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate":
+[info]   3882.915 ?(99.9%) 229.862 MB/sec [Average]
+[info]   (min, avg, max) = (3779.568, 3882.915, 3927.254), stdev = 59.694
+[info]   CI (99.9%): [3653.053, 4112.777] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm":
+[info]   14633644824.000 ?(99.9%) 3317831.115 B/op [Average]
+[info]   (min, avg, max) = (14632629160.000, 14633644824.000, 14634395192.000), stdev = 861630.204
+[info]   CI (99.9%): [14630326992.885, 14636962655.115] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count":
+[info]   140.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (28.000, 28.000, 28.000), stdev = 0.001
+[info]   CI (99.9%): [140.000, 140.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time":
+[info]   93.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (17.000, 18.600, 21.000), stdev = 1.517
+[info]   CI (99.9%): [93.000, 93.000] (assumes normal distribution)
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit
+[info] # Parameters: (backing = resident, outputs = 64, uncertainty = none)
+[info] # Run progress: 25.00% complete, ETA 00:01:22
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_65ca29a6/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 6862.867 ms/op
+[info] # Warmup Iteration   2: 6118.896 ms/op
+[info] Iteration   1: 6123.725 ms/op
+[info]                  gc.alloc.rate:      2456.822 MB/sec
+[info]                  gc.alloc.rate.norm: 15776297872.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            21.000 ms
+[info] Iteration   2: 6110.423 ms/op
+[info]                  gc.alloc.rate:      2462.168 MB/sec
+[info]                  gc.alloc.rate.norm: 15776229336.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            20.000 ms
+[info] Iteration   3: 6108.232 ms/op
+[info]                  gc.alloc.rate:      2463.066 MB/sec
+[info]                  gc.alloc.rate.norm: 15776234304.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            21.000 ms
+[info] Iteration   4: 6115.670 ms/op
+[info]                  gc.alloc.rate:      2460.035 MB/sec
+[info]                  gc.alloc.rate.norm: 15776089232.000 B/op
+[info]                  gc.count:           29.000 counts
+[info]                  gc.time:            26.000 ms
+[info] Iteration   5: 6106.063 ms/op
+[info]                  gc.alloc.rate:      2463.861 MB/sec
+[info]                  gc.alloc.rate.norm: 15775918512.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            24.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit":
+[info]   6112.822 ?(99.9%) 27.193 ms/op [Average]
+[info]   (min, avg, max) = (6106.063, 6112.822, 6123.725), stdev = 7.062
+[info]   CI (99.9%): [6085.629, 6140.016] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate":
+[info]   2461.190 ?(99.9%) 10.895 MB/sec [Average]
+[info]   (min, avg, max) = (2456.822, 2461.190, 2463.861), stdev = 2.829
+[info]   CI (99.9%): [2450.295, 2472.086] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm":
+[info]   15776153851.200 ?(99.9%) 585477.648 B/op [Average]
+[info]   (min, avg, max) = (15775918512.000, 15776153851.200, 15776297872.000), stdev = 152046.686
+[info]   CI (99.9%): [15775568373.552, 15776739328.849] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count":
+[info]   149.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (29.000, 29.800, 30.000), stdev = 0.447
+[info]   CI (99.9%): [149.000, 149.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time":
+[info]   112.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (20.000, 22.400, 26.000), stdev = 2.510
+[info]   CI (99.9%): [112.000, 112.000] (assumes normal distribution)
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit
+[info] # Parameters: (backing = mapped-file, outputs = 2, uncertainty = none)
+[info] # Run progress: 50.00% complete, ETA 00:01:12
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_65ca29a6/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 4258.016 ms/op
+[info] # Warmup Iteration   2: 3546.751 ms/op
+[info] Iteration   1: 3562.929 ms/op
+[info]                  gc.alloc.rate:      3916.829 MB/sec
+[info]                  gc.alloc.rate.norm: 14634047416.000 B/op
+[info]                  gc.count:           23.000 counts
+[info]                  gc.time:            17.000 ms
+[info] Iteration   2: 3551.724 ms/op
+[info]                  gc.alloc.rate:      3929.139 MB/sec
+[info]                  gc.alloc.rate.norm: 14633874904.000 B/op
+[info]                  gc.count:           23.000 counts
+[info]                  gc.time:            17.000 ms
+[info] Iteration   3: 3518.042 ms/op
+[info]                  gc.alloc.rate:      3966.649 MB/sec
+[info]                  gc.alloc.rate.norm: 14633544496.000 B/op
+[info]                  gc.count:           22.000 counts
+[info]                  gc.time:            16.000 ms
+[info] Iteration   4: 3532.724 ms/op
+[info]                  gc.alloc.rate:      3949.801 MB/sec
+[info]                  gc.alloc.rate.norm: 14632106720.000 B/op
+[info]                  gc.count:           23.000 counts
+[info]                  gc.time:            16.000 ms
+[info] Iteration   5: 3520.192 ms/op
+[info]                  gc.alloc.rate:      3963.123 MB/sec
+[info]                  gc.alloc.rate.norm: 14632105656.000 B/op
+[info]                  gc.count:           23.000 counts
+[info]                  gc.time:            15.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit":
+[info]   3537.122 ?(99.9%) 75.781 ms/op [Average]
+[info]   (min, avg, max) = (3518.042, 3537.122, 3562.929), stdev = 19.680
+[info]   CI (99.9%): [3461.341, 3612.903] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate":
+[info]   3945.108 ?(99.9%) 83.152 MB/sec [Average]
+[info]   (min, avg, max) = (3916.829, 3945.108, 3966.649), stdev = 21.594
+[info]   CI (99.9%): [3861.956, 4028.260] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm":
+[info]   14633135838.400 ?(99.9%) 3685648.203 B/op [Average]
+[info]   (min, avg, max) = (14632105656.000, 14633135838.400, 14634047416.000), stdev = 957151.134
+[info]   CI (99.9%): [14629450190.197, 14636821486.603] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count":
+[info]   114.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (22.000, 22.800, 23.000), stdev = 0.447
+[info]   CI (99.9%): [114.000, 114.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time":
+[info]   81.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (15.000, 16.200, 17.000), stdev = 0.837
+[info]   CI (99.9%): [81.000, 81.000] (assumes normal distribution)
+[info] # JMH version: 1.37
+[info] # VM version: JDK 25.0.1, OpenJDK 64-Bit Server VM, 25.0.1
+[info] # VM invoker: /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java
+[info] # VM options: <none>
+[info] # Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+[info] # Warmup: 2 iterations, 300 ms each
+[info] # Measurement: 5 iterations, 300 ms each
+[info] # Timeout: 10 min per iteration
+[info] # Threads: 1 thread, will synchronize iterations
+[info] # Benchmark mode: Average time, time/op
+[info] # Benchmark: scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit
+[info] # Parameters: (backing = mapped-file, outputs = 64, uncertainty = none)
+[info] # Run progress: 75.00% complete, ETA 00:00:33
+[info] # Fork: 1 of 1
+[info] WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset has been called by org.openjdk.jmh.util.Utils (file:/private/tmp/scalafim-execution-20260929/diagnostics/target/bg-jobs/sbt_65ca29a6/target/cafb636a/1296d6b9/jmh-core-1.37.jar)
+[info] WARNING: Please consider reporting this to the maintainers of class org.openjdk.jmh.util.Utils
+[info] WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[info] # Warmup Iteration   1: 8111.381 ms/op
+[info] # Warmup Iteration   2: 7222.485 ms/op
+[info] Iteration   1: 7192.381 ms/op
+[info]                  gc.alloc.rate:      2092.033 MB/sec
+[info]                  gc.alloc.rate.norm: 15778067776.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            20.000 ms
+[info] Iteration   2: 7246.943 ms/op
+[info]                  gc.alloc.rate:      2076.265 MB/sec
+[info]                  gc.alloc.rate.norm: 15777864272.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            20.000 ms
+[info] Iteration   3: 7172.721 ms/op
+[info]                  gc.alloc.rate:      2097.752 MB/sec
+[info]                  gc.alloc.rate.norm: 15777867928.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            18.000 ms
+[info] Iteration   4: 7136.120 ms/op
+[info]                  gc.alloc.rate:      2108.515 MB/sec
+[info]                  gc.alloc.rate.norm: 15777850152.000 B/op
+[info]                  gc.count:           29.000 counts
+[info]                  gc.time:            17.000 ms
+[info] Iteration   5: 7136.828 ms/op
+[info]                  gc.alloc.rate:      2107.806 MB/sec
+[info]                  gc.alloc.rate.norm: 15777824800.000 B/op
+[info]                  gc.count:           30.000 counts
+[info]                  gc.time:            17.000 ms
+[info] Result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit":
+[info]   7176.998 ?(99.9%) 176.794 ms/op [Average]
+[info]   (min, avg, max) = (7136.120, 7176.998, 7246.943), stdev = 45.913
+[info]   CI (99.9%): [7000.205, 7353.792] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate":
+[info]   2096.474 ?(99.9%) 51.054 MB/sec [Average]
+[info]   (min, avg, max) = (2076.265, 2096.474, 2108.515), stdev = 13.259
+[info]   CI (99.9%): [2045.420, 2147.528] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm":
+[info]   15777894985.600 ?(99.9%) 377618.573 B/op [Average]
+[info]   (min, avg, max) = (15777824800.000, 15777894985.600, 15778067776.000), stdev = 98066.344
+[info]   CI (99.9%): [15777517367.027, 15778272604.173] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count":
+[info]   149.000 ?(99.9%) 0.001 counts [Sum]
+[info]   (min, avg, max) = (29.000, 29.800, 30.000), stdev = 0.447
+[info]   CI (99.9%): [149.000, 149.000] (assumes normal distribution)
+[info] Secondary result "scalafim.fmri.fit.SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time":
+[info]   92.000 ?(99.9%) 0.001 ms [Sum]
+[info]   (min, avg, max) = (17.000, 18.400, 20.000), stdev = 1.517
+[info]   CI (99.9%): [92.000, 92.000] (assumes normal distribution)
+[info] # Run complete. Total time: 00:02:31
+[info] REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+[info] why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+[info] experiments, perform baseline and negative tests that provide experimental control, make sure
+[info] the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+[info] Do not assume the numbers tell you what you want them to tell.
+[info] NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+[info] extra caution when trusting the results, look into the generated code to check the benchmark still
+[info] works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+[info] different JVMs are already problematic, the performance difference caused by different Blackhole
+[info] modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+[info] Benchmark                                                                (backing)  (outputs)  (uncertainty)  Mode  Cnt            Score         Error   Units
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit                        resident          2           none  avgt    5         3594.619 ?     216.124   ms/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate          resident          2           none  avgt    5         3882.915 ?     229.862  MB/sec
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm     resident          2           none  avgt    5  14633644824.000 ? 3317831.115    B/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count               resident          2           none  avgt    5          140.000                counts
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time                resident          2           none  avgt    5           93.000                    ms
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit                        resident         64           none  avgt    5         6112.822 ?      27.193   ms/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate          resident         64           none  avgt    5         2461.190 ?      10.895  MB/sec
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm     resident         64           none  avgt    5  15776153851.200 ?  585477.648    B/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count               resident         64           none  avgt    5          149.000                counts
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time                resident         64           none  avgt    5          112.000                    ms
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit                     mapped-file          2           none  avgt    5         3537.122 ?      75.781   ms/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate       mapped-file          2           none  avgt    5         3945.108 ?      83.152  MB/sec
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm  mapped-file          2           none  avgt    5  14633135838.400 ? 3685648.203    B/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count            mapped-file          2           none  avgt    5          114.000                counts
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time             mapped-file          2           none  avgt    5           81.000                    ms
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit                     mapped-file         64           none  avgt    5         7176.998 ?     176.794   ms/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate       mapped-file         64           none  avgt    5         2096.474 ?      51.054  MB/sec
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.alloc.rate.norm  mapped-file         64           none  avgt    5  15777894985.600 ?  377618.573    B/op
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.count            mapped-file         64           none  avgt    5          149.000                counts
+[info] SelectedPrecisionEndToEndBenchmark.fullSelectedFit:gc.time             mapped-file         64           none  avgt    5           92.000                    ms
+[info] Benchmark result is saved to /private/tmp/scalafim-execution-20260929/baseline-full-jmh.json
+[success] Total time: 158 s (0:02:38.0), completed Sep 29, 2026, 7:59:01 p.m.

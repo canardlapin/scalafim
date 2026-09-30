@@ -164,3 +164,9 @@ candidate-full, candidate-component order) are
 `a5d826b753ffdfa6a0766ed1e70c7369540553d4e60f492241443354423d20db`,
 `70e88b9c625613f3c5f835a7dc21b804b21b21beb516f3afb3056f88eaa8c4f0`,
 and `4c3b7667156f6ec76f05d860014ba8433cbe14523a8dc1cdf0224139fe4e85da`.
+The tracked [evidence archive](precision-pooling-2026-09-29-evidence/SHA256SUMS)
+contains byte-identical copies of all four raw JMH JSON files, their complete
+sbt logs and exit metadata, and the four `/usr/bin/time -l` resource logs.
+The manifest hashes all 16 files. Source and provider hashes appear above;
+these receipts make the before/after comparison reviewable after the temporary
+execution root is removed.
