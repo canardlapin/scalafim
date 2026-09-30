@@ -18,11 +18,11 @@ and a search of the sibling checkouts under `~/code/scala` found:
 
 | Symbol | Uses |
 | --- | --- |
-| `PSide` | Declared in `Settings.scala`. It was a payload of `StatKind.NegLog10P` and a parameter of `StatisticMap.negLog10P`. Three tests passed `PSide.OneSided` (`ThresholdCoreSuite` ×2, `DecisionScaleSuite`, `HierScanSuite`). **No code ever read the value.** `StatKind.orientation` matched `NegLog10P(_)`. |
+| `PSide` | Declared in `Settings.scala`. It was a payload of `StatKind.NegLog10P` and a parameter of `StatisticMap.negLog10P`. Four test call sites passed `PSide.OneSided` (`ThresholdCoreSuite` ×2, `DecisionScaleSuite`, `HierScanSuite`). **No code ever read the value.** `StatKind.orientation` matched `NegLog10P(_)`. |
 | `StatKind.T.df` | A payload of `StatKind.T` and a parameter of `StatisticMap.t`. **No caller, test or example constructed a `T` map, and no code read the df.** `orientation` matched `T(_)`. |
 | `DegreesOfFreedom` (threshold's opaque type) and `ThresholdError.InvalidDegreesOfFreedom` | These existed only to carry `T.df`. The only use was one constructor test in `ThresholdCoreSuite`. The `DegreesOfFreedom` types in `fit`, `group` and `estimates` are separate types and are unaffected. |
 | Other modules and examples | None. No module in `build.sbt` depends on `threshold`. `~/code/scala/scalafim-spike-raster` is an older copy of this module, not a consumer. |
-| Docs | `docs/plans/neurothresh.md` (lines 82 and 171) describes a planned `CanonicalStat` for t(df)→Z and p→Z. It was never implemented, and the plan is left as a plan. The packet 1–4 receipts list the item as open. |
+| Docs | `docs/plans/neurothresh.md` (lines 82 and 171) describes a planned `CanonicalStat` for t(df)→Z and p→Z. It was never implemented. That plan text is now stale on this point; it is not claimed by this packet and is left unedited (a pointer to this receipt would be a follow-up). The packet 1–4 receipts list the item as open. |
 
 ### Why removal, not admission
 
@@ -33,11 +33,17 @@ Neither payload can affect a result.
 
 - **df cannot matter to maxT or Westfall-Young.** Their adjusted p-values
   depend on the observed and null values only through the order of the
-  oriented values. Any fixed-df t→z conversion `g` is strictly increasing and
-  odd. Under Greater and Less, `g` preserves order. Under TwoSided,
-  `|g(x)| = g(|x|)`, so `g` preserves order there too. A df would therefore
-  be dead data, and a type that carries dead data implies a guarantee it
-  cannot keep.
+  oriented values. A t→z conversion `g` with one df shared by all voxels is
+  strictly increasing and odd. Under Greater and Less, `g` preserves order.
+  Under TwoSided, `|g(x)| = g(|x|)`, so `g` preserves order there too. A df
+  would therefore be dead data, and a type that carries dead data implies a
+  guarantee it cannot keep. Three conditions bound this claim. It covers
+  adjusted p-values and rejections, not the cutoff, which is on the value
+  scale and moves with `g`. It requires the *same* `g` applied to the map and
+  to every null draw. And it holds in exact arithmetic: a floating-point
+  `pt`/`qnorm` saturates at large |t| and can create ties that change
+  p-values unless it is computed in log space. A per-voxel df vector is not
+  a common transform and is not covered.
 - **df would matter to HierScan only through a conversion that does not
   exist.** HierScan's set scores sum evidence non-linearly, so a t→z
   conversion would change its results. Admitting df would mean implementing
@@ -57,9 +63,11 @@ Neither payload can affect a result.
 The smaller correct change is to remove the payloads. `StatKind` stays as a
 closed label, `Z | T | NegLog10P`, because its orientation is used: it
 decides the admissible alternatives and whether negative evidence is
-refused. `T` stays as an honest provenance label. It is recorded in maxT
-`params` as `statKind`, and without it a t map would have to be mislabelled
-`Z`.
+refused. `T` stays as an honest provenance label. It is recorded as
+`statKind` in the `params` of both maxT and HierScan results. HierScan
+recording it matters most, because HierScan is the procedure whose scores
+t versus z would change. Without the label a t map would have to be
+mislabelled `Z`.
 
 ### Change
 
@@ -69,7 +77,7 @@ refused. `T` stays as an honest provenance label. It is recorded in maxT
 - `StatisticMap.scala`: `StatisticMap.t(volume)` and
   `StatisticMap.negLog10P(volume)`.
 - `ThresholdError.scala`: `InvalidDegreesOfFreedom` is removed.
-- Tests: the three existing `PSide.OneSided` call sites and the
+- Tests: the four existing `PSide.OneSided` call sites and the
   `DegreesOfFreedom` constructor assertion are updated. `StatKindSuite` is
   new.
 - `modules/threshold/README.md`: a paragraph on what a `StatKind` label means
@@ -131,6 +139,33 @@ its SHA-256 re-checked against the pre-mutation hash:
 `modules/threshold/README.md` was edited after the final gate. It is prose
 only and is not compiled.
 
+### Review revision (after independent review of `50ac01f5`: ACCEPT-WITH-FIXES)
+
+- **Required fix.** `HierScan` results now record `statKind` in `params`, as
+  maxT results already did (`HierScan.params`). HierScan is the procedure
+  whose scores t versus z would change, so erasing the label there was the
+  one place where it mattered. `StatKindSuite`'s t/z test now compares HierScan
+  `params` with `statKind` removed, and asserts separately that the entries
+  are `T` and `Z`. A new test, "every procedure records the stat kind of the
+  map it was run on", checks both procedures over all three kinds. The suite
+  now has 7 tests, and the module has 90.
+- **Doc fixes.** Four `PSide` call sites, not three. The zero-mass failure
+  is `InvalidArgument("observed child score", "scoring set has zero prior
+  mass")`. The invariance now states its scope: p-values and rejections
+  only, the same transform on the map and its draws, one shared df, and
+  exact arithmetic. The README says the same. `docs/plans/neurothresh.md` is
+  recorded as a stale plan reference.
+
+| Run | Result | Log SHA-256 |
+| --- | --- | --- |
+| `threshold-pside-df-r2-gate-20260930.log`: `thresholdJVM/test thresholdJS/test scalafimCompileAll` | exit 0; JVM 90/90, JS 90/90, all compiles succeed, 0 `[warn]` lines | `a670b2e2c2f6e6a86c1d0ace5de25c0f83f48dae1ccbf081c6b10b9e7496aa1d` |
+| **Mutation 3** `threshold-pside-df-r2-mutation3-20260930.log`: HierScan `params` drops the `statKind` key | exit 1; JVM 88/90. The t/z test and the new recording test fail. | `4368af622ce598d4eac2739ea22b642e300b052f81b1006cf3f90d42a3748751` |
+
+After mutation 3, `HierScan.scala` was restored from a scratch copy, and its
+SHA-256 matches the pre-mutation hash
+`b1c250ea88ed46e8f70da180acdf63ead161edc4b68afa3611bdb1a6ab83119f`. This
+receipt was edited after the gate; it is prose only.
+
 ### Not claimed
 
 - No t→z, p→z or df-aware conversion exists or is claimed. HierScan on a t
@@ -172,8 +207,10 @@ Two facts frame all three divergences:
   default, which keeps the raw prior.
 - **Which is right.** A zero-mass region has no prior-weighted score:
   `log Σπ = −∞` and `1/√Σπ² = ∞`. Scala's scorer returns
-  `NotScored(ZeroPriorMass)`, and `HierScan` would then abort with a
-  non-finite-score error. R would feed non-finite scores into `wy_stepdown`.
+  `NotScored(ZeroPriorMass)`. `HierScan` would then abort through
+  `finiteOrError` with
+  `InvalidArgument("observed child score", "scoring set has zero prior mass")`
+  (`ScoreSet.scala:26-30`, `HierScan.scala:176`). R would feed non-finite scores into `wy_stepdown`.
   Its descendant budget share would be 0 in both implementations anyway.
   Strict `>` excludes exactly the regions that cannot be scored, so it is
   the sound choice.
@@ -186,8 +223,8 @@ Two facts frame all three divergences:
      pins strictness, since `>=` would return 8.
   2. With a prior that is zero on one octant and `minPriorMass = 0`, that
      octant is absent from the split.
-  3. With the same prior, `HierScan.runMap` completes rather than returning a
-     non-finite-score error. This is the end-to-end consequence.
+  3. With the same prior, `HierScan.runMap` completes rather than returning
+     `InvalidArgument("observed child score", …)`. This is the end-to-end consequence.
 
 ### 2b. Singleton-bbox regions: Scala returns no children, R returns one child equal to the parent
 

@@ -106,7 +106,7 @@ object HierScan:
         reject = reject,
         significantRegions = scan.hits,
         nodeTests = scan.tests,
-        params = params(config, nullDraw)
+        params = params(config, nullDraw, statistic.kind)
       )
 
   private def scan(
@@ -288,8 +288,9 @@ object HierScan:
       i += 1
     Right(out)
 
-  private def params(config: HierScanConfig, nullDraw: NullDraw): Map[String, String] =
+  private def params(config: HierScanConfig, nullDraw: NullDraw, kind: StatKind): Map[String, String] =
     Map(
+      "statKind" -> kind.toString,
       "alpha" -> config.alpha.value.toString,
       "alternative" -> config.alternative.toString,
       "tail" -> config.tail.toString,

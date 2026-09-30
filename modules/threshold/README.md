@@ -25,8 +25,11 @@ the evidence orientation: `Z` and `T` maps are signed and admit every
 alternative; a `NegLog10P` map is unsigned and admits only `Greater`. The
 label carries no degrees of freedom and no p-value sidedness. Every admitted
 procedure judges a map only against null draws of the same statistic, and
-maxT and Westfall-Young p-values are unchanged by any common strictly
-increasing odd transform, such as a fixed-df t-to-z conversion. Whether a
+maxT and Westfall-Young p-values and rejections (not the value-scale
+cutoff) are unchanged by a strictly increasing odd transform applied to both
+the map and its null draws, such as an exact t-to-z conversion with one df
+shared by all voxels. HierScan's set scores are not invariant this way, so
+both procedures record the label as `statKind` in their `params`. Whether a
 `NegLog10P` map is one- or two-sided is part of the caller's hypothesis,
 and the null draws must match it. No scale conversion is implemented.
 

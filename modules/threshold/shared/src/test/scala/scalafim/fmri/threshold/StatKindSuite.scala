@@ -7,10 +7,12 @@ import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeScalarVolume, valueAt
   *
   * These tests pin why that is sound for the admitted permutation procedures.
   * Adjusted p-values depend on the observed and null statistics only through
-  * the order of their oriented values. A common strictly increasing, odd
-  * transform preserves that order under every alternative, and any fixed-df
-  * t-to-z conversion is such a transform, so a df could not change a maxT or
-  * Westfall-Young result. Likewise, one- versus two-sided evidence is carried
+  * the order of their oriented values. A strictly increasing, odd transform
+  * applied to both the map and its null draws preserves that order under
+  * every alternative. In exact arithmetic, a t-to-z conversion with one df
+  * shared by all voxels is such a transform, so a df could not change maxT or
+  * Westfall-Young p-values or rejections (the cutoff, which is on the value
+  * scale, is transformed with it). Likewise, one- versus two-sided evidence is carried
   * by the alternative and the null draws together, not by a label.
   */
 class StatKindSuite extends munit.FunSuite:
@@ -74,8 +76,24 @@ class StatKindSuite extends munit.FunSuite:
         assertEqualsDouble(a.adjustedPValue, b.adjustedPValue, 0.0)
         assertEqualsDouble(a.score, b.score, 0.0)
       assertEquals(scanT.nodeTests.map(t => (t.path, t.rejected)), scanZ.nodeTests.map(t => (t.path, t.rejected)))
-      assertEquals(scanT.params, scanZ.params)
+      // HierScan scores are not invariant under t-to-z, so the label must
+      // survive into the result even though it changes no number here.
+      assertEquals(scanT.params.get("statKind"), Some("T"))
+      assertEquals(scanZ.params.get("statKind"), Some("Z"))
+      assertEquals(scanT.params - "statKind", scanZ.params - "statKind")
     assert(maxTRejections > 0, "maxT rejected nothing, so the comparison is vacuous")
+
+  test("every procedure records the stat kind of the map it was run on"):
+    val rng = scala.util.Random(4090L)
+    val stat = Array.tabulate(n)(i => if i < 8 then 5.0 else rng.nextGaussian())
+    val draws = Vector.fill(19)(Array.fill(n)(rng.nextGaussian()))
+    val config = HierScanConfig(alpha = Alpha.unsafe(0.2), kappas = Vector(Kappa.unsafe(1.0)))
+    for kind <- StatKind.values do
+      val map = value(StatisticMap(volume(stat.map(math.abs)), kind))
+      val scan = value(HierScan.runMap(map, FixedNullDraw(draws.map(_.map(math.abs))), config = config))
+      assertEquals(scan.params.get("statKind"), Some(kind.toString), s"HierScan on $kind")
+      val maxT = value(MaxT.runMap(map, FixedNullDraw(draws.map(_.map(math.abs))), None, Alpha.unsafe(0.1), ThresholdAlternative.Greater))
+      assertEquals(maxT.params.get("statKind"), Some(kind.toString), s"maxT on $kind")
 
   test("maxT and Westfall-Young p-values are invariant under a common odd strictly increasing transform"):
     // g(x) = x + x^3 is odd with g'(x) = 1 + 3x^2 > 0, the shape of any
