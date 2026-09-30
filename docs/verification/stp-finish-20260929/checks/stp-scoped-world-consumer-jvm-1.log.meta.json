@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T04:43:28.877065+00:00",
+  "finished_utc": "2026-09-30T04:44:08.372235+00:00",
+  "duration_seconds": 39.495004,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "imageJVM/test",
+    "transformJVM/test",
+    "spatialJVM/test",
+    "datasetJVM/test",
+    "imageViewJVM/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-scoped-world-consumer-jvm-1.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 71755
+}

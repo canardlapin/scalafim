@@ -6,6 +6,7 @@ import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.geometry.Frame
 import image4s.geometry.GeometryError
+import image4s.geometry.Point
 import intaglio.*
 import ravel.NDArray as RavelArray
 import scalafim.image.*
@@ -115,10 +116,8 @@ class AdvancedViewSuite extends munit.FunSuite:
 
     foreignAffines.foreach { case (label, affine) =>
       val foreign =
-        SampleSpaces
-          .requireVolumeD3(SampleSpaces(Vector(2, 2, 1), affine = Some(affine)))
-          .toOption
-          .get
+        SampleSpaces.derivedD3(declared, Vector(2, 2, 1), affine)
+          .fold(error => fail(error.message), identity)
       val frame = volume(foreign, label)((x, y, _) => x + y)
       val source = VolumeSource.lazyFrames(declared.grid, 1)(_ => Right(frame)).toOption.get
       assertEquals(
@@ -233,7 +232,7 @@ class AdvancedViewSuite extends munit.FunSuite:
 
     val moved = ViewerCompiler.compileCached(
       model,
-      state.copy(cursor = state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0)),
+      state.copy(cursor = ViewerState.move(state.cursor, AnatomicalDirection.Superior.unit.scaled(1.0)).toOption.get),
       device,
       thresholded.cache
     ).toOption.get
@@ -245,7 +244,7 @@ class AdvancedViewSuite extends munit.FunSuite:
 
     val coldMoved = ViewerCompiler.compile(
       model,
-      state.copy(cursor = state.cursor + AnatomicalDirection.Superior.unit.scaled(1.0)),
+      state.copy(cursor = ViewerState.move(state.cursor, AnatomicalDirection.Superior.unit.scaled(1.0)).toOption.get),
       device
     ).toOption.get
     AnatomicalPlane.values.foreach { plane =>
@@ -333,14 +332,15 @@ class AdvancedViewSuite extends munit.FunSuite:
     val temporalModel = ViewerModel.unsafe(space, Vector(temporal))
     val staticModel = ViewerModel.unsafe(space, Vector(layer("static", source)))
     val sourceState = ViewerState.centered(space).copy(
-      cursor = WorldPoint(10.0, 20.0, 30.0),
+      cursor = Point.in(space.frame)(10.0, 20.0, 30.0).toOption.get,
       timepoint = 1,
       convention = LeftRightConvention.PatientRightOnLeft
     )
     val target = ViewerState.centered(space).copy(pixelSpacing = PixelSpacing(2.0, 2.0))
 
     val spatial = ViewLink.Spatial.synchronize(sourceState, target, staticModel).toOption.get
-    assertEquals(spatial.cursor, sourceState.cursor)
+    assertEquals(spatial.cursor.toWorldPoint, sourceState.cursor.toWorldPoint)
+    assertEquals(spatial.cursor.frame.persistentKey, sourceState.cursor.frame.persistentKey)
     assertEquals(spatial.convention, sourceState.convention)
     assertEquals(spatial.timepoint, 0)
     assertEquals(spatial.pixelSpacing, target.pixelSpacing)

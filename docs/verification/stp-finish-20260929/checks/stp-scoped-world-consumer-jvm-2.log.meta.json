@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T04:46:52.828145+00:00",
+  "finished_utc": "2026-09-30T04:47:21.522647+00:00",
+  "duration_seconds": 28.694309,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "spatialJVM/test",
+    "datasetJVM/test",
+    "imageViewJVM/test",
+    "motionJVM/test",
+    "fmriWorkflowJVM/test",
+    "surfaceJVM/test",
+    "surfaceViewJVM/test",
+    "atlasJVM/test",
+    "datasetZarrJVM/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-scoped-world-consumer-jvm-2.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 33865
+}

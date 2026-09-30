@@ -53,14 +53,28 @@ class ToolCoordinatesSuite extends ScalaCheckSuite:
     assertClose(apply(radio.voxelToFsl, Vector(0.0, 1.0, 2.0)), Vector(0.0, 0.8, 4.6))
 
   test("FSL selects the sform, then the qform, then scaling"):
-    val both = FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 1, Some(obliqueLas), 2, Some(obliqueRas))
+    val both = FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 1, Some(obliqueRas), 2, Some(obliqueRas))
     val qformOnly = FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 1, Some(obliqueLas), 0, Some(obliqueRas))
     val neither = FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(-1.1, 0.8, 2.3), 0, None, 0, None)
     assertEquals(both.map(_.selected), Right(FslAffineSource.Sform))
     assertEquals(qformOnly.map(_.selected), Right(FslAffineSource.Qform))
     assertEquals(neither.map(_.selected), Right(FslAffineSource.Scaling))
     assertEquals(neither.map(_.pixdim), Right(Vector(1.1, 0.8, 2.3)))
+    assertEquals(neither.map(_.storageOrder), Right(FslStorageOrder.Radiological))
+    assertClose(apply(neither.toOption.get.voxelToFsl, Vector(0.0, 1.0, 2.0)), Vector(0.0, 0.8, 4.6))
     assert(FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 0, None, 3, None).isLeft)
+
+  test("opposite active q/sform handedness is a typed refusal; historical compatibility must be explicit"):
+    val conflict = FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 1, Some(obliqueLas), 2, Some(obliqueRas))
+    conflict match
+      case Left(SpaceError.FslHandednessConflict(qcode, qdet, scode, sdet)) =>
+        assertEquals((qcode, scode), (1, 2))
+        assert(qdet < 0.0 && sdet > 0.0)
+      case other => fail(s"expected opposite-handed forms to be refused, got $other")
+    val historical = FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 1, Some(obliqueLas), 2, Some(obliqueRas), FslHeaderPolicy.FslpyCompatibility)
+    assertEquals(historical.map(_.storageOrder), Right(FslStorageOrder.Neurological))
+    val translated = affine(0.9, -0.2, 0.1, 99, 0.15, 1.1, 0.05, -77, -0.1, 0.02, 2.4, 66, 0, 0, 0, 1)
+    assert(FslVolumeGeometry.fromHeader(Vector(7, 9, 6), Vector(1.1, 0.8, 2.3), 1, Some(translated), 2, Some(obliqueRas)).isRight)
 
   test("Torig is FreeSurfer's fixed LIA tkregister geometry; tkRAS to scanner is a translation only for LIA volumes"):
     val oblique = FreeSurferVolumeGeometry(Vector(64, 72, 50), obliqueRas)

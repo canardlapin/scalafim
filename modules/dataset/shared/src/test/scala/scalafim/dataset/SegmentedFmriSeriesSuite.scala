@@ -7,6 +7,16 @@ import scalafim.image.{SampleSpaces, SomeSampleSpace, VoxelCoord}
 
 class SegmentedFmriSeriesSuite extends munit.FunSuite:
 
+  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("dataset fixture shared world")
+    .fold(error => fail(error.message), identity)
+
+  private def fixtureSpace(
+      dims: Vector[Int],
+      affine: Option[image4s.geometry.Affine[image4s.geometry.D3]] = None
+  ): SomeSampleSpace =
+    SampleSpaces.inWorld(SampleSpaces(dims, affine = affine), fixtureWorld)
+      .fold(error => fail(error.message), identity)
+
   test("indexed reads preserve ordered run origins, partitions, and provenance") {
     val fixture = studyFixture()
     val result =
@@ -103,8 +113,8 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
       )
     val fixtures =
       Vector(
-        runFixture("ses-01", "run-1", 0.0, SampleSpaces(Vector(2, 1, 1))),
-        runFixture("ses-01", "run-2", 100.0, SampleSpaces(Vector(2, 1, 1), affine = Some(GaleTestData.affineD3(translated))))
+        runFixture("ses-01", "run-1", 0.0, fixtureSpace(Vector(2, 1, 1))),
+        runFixture("ses-01", "run-2", 100.0, fixtureSpace(Vector(2, 1, 1), affine = Some(GaleTestData.affineD3(translated))))
       )
     val index =
       DatasetIndex
@@ -165,7 +175,7 @@ class SegmentedFmriSeriesSuite extends munit.FunSuite:
       session: String,
       run: String,
       base: Double,
-      space: SomeSampleSpace = SampleSpaces(Vector(2, 1, 1))
+      space: SomeSampleSpace = fixtureSpace(Vector(2, 1, 1))
   ): (DatasetRun, SynchronousFmriDataset) =
     val key =
       RunKey.unsafe(

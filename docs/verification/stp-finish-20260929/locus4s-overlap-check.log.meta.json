@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T02:16:46.192874+00:00",
+  "finished_utc": "2026-09-30T02:17:05.338298+00:00",
+  "duration_seconds": 19.145126,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "locus4s-coreJVM/testOnly locus4s.RegionOverlapSuite",
+    "locus4s-coreJS/testOnly locus4s.RegionOverlapSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/locus-overlap",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-locus-overlap-jvm-js.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 1821
+}

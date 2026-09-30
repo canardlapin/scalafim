@@ -1,0 +1,170 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] compiling 4 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/dataset/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/dataset/js/target/scala-3.7.4/scalafim-dataset-test-fastopt
+scalafim.dataset.DatasetIndexSuite:
+  + dataset keys have safe string constructors 0.001s
+  + dataset index enumerates and resolves typed run keys 0.003s
+  + dataset index rejects duplicate keys and ambiguous one-run queries 0.001s
+  + single-run compatibility wraps an existing FmriDataset 0.000s
+  + DatasetRun rejects mismatched keys and multi-run datasets expand as zero-copy views 0.002s
+  + cross-run coordinate reads require exact grids 0.001s
+scalafim.dataset.DatasetTimeAxisSuite:
+  + dataset time axis maps global timepoints to run-local positions 0.001s
+  + dataset time axis partitions censored selections by run 0.000s
+  + dataset time axis rejects duplicate and out-of-bounds selected timepoints 0.000s
+  + FmriDataset derives a time axis and exposes dataset-backed partitions 0.004s
+  + FmriDataset accepts explicit typed run ids when block lengths align 0.000s
+scalafim.dataset.scenarios.DatasetHierarchyWorkflowScenarioSuite:
+  + cross-session coordinate window remains segmented until explicitly concatenated 0.004s
+scalafim.dataset.SegmentedFmriSeriesSuite:
+  + indexed reads preserve ordered run origins, partitions, and provenance 0.004s
+  + groupBy reorganizes, blockConcatenate relayouts with boundaries, and reduceBy changes values once per group 0.002s
+  + block concatenation rejects incompatible voxel grids and empty queries stay typed 0.001s
+scalafim.dataset.DataSelectionSuite:
+  + mask domains reject equal-shaped spaces with different affines 0.001s
+  + voxel coordinate selections resolve through exact dataset geometry and mask membership 0.001s
+  + timepoint windows are checked, ordered, and may overlap 0.000s
+  + excluded timepoints are an explicit ordered censor selection 0.001s
+scalafim.dataset.ResponseKernelAdaptersSuite:
+  + dataset adapter preserves selected values, order, shape, and receipt truth 0.007s
+  + dataset adapter preserves current public duplicate rejection 0.001s
+  + sampling-frame adapter preserves regular timing raw bits 0.000s
+  + backend attachment reports incompatible response cardinality precisely 0.000s
+  + backend attachment rejects equal-sized foreign sample references 0.000s
+scalafim.dataset.OpenedDatasetSuite:
+  + checked attachment plans run-local selections and preserves read evidence 0.007s
+  + multi-acquisition bridge preserves direct reads and segmentation 0.002s
+  + attachment accumulates timing, geometry, ordering, and signal failures 0.001s
+  + explicit bijective sample alignment authorizes reordering without resampling 0.001s
+  + surface adapter reports topology drift as a typed attachment issue 0.001s
+  + a read plan cannot execute against another attachment 0.001s
+scalafim.dataset.DatasetMultiRunFixtureSuite:
+  + typed index resolves multi-subject session run datasets into selected series views 0.002s
+  + multi-run FmriDataset aligns events and partitions selected rows by run 0.001s
+scalafim.dataset.ResponseBlockSourceSuite:
+  + composite source preserves requested global time and voxel order 0.001s
+  + composite source rejects incompatible geometry and voxel domains 0.000s
+  + source validates selections before invoking storage 0.000s
+  + dataset backend rejects a mask from incompatible geometry during construction 0.000s
+scalafim.dataset.DatasetAcquisitionDomainSuite:
+  + semantic acquisition identity includes dataset and exact grid geometry 0.001s
+  + active-to-full injection and checked reverse preserve global voxel identity 0.000s
+  + All and AllSpatial retain availability policy while explicit order survives 0.000s
+  + matching semantic acquisitions share one live owner 0.000s
+  + acquisitions differing only in run length get distinct time domains 0.000s
+  + image selection adapter preserves requested order and checks exact volume grid 0.001s
+  + compatibility constructor rejects duplicate resolved order 0.000s
+scalafim.dataset.DatasetCongruenceBindingSuite:
+  + matching provider congruence admits its exact mask endpoint 0.000s
+  + a congruence cannot be substituted, reversed, or paired with swapped operands 0.000s
+  + approximate congruence admits aligned persistent owners and rejects ephemeral substitutes 0.000s
+scalafim.dataset.DatasetSuite:
+  + opaque identifiers reject blank values 0.000s
+  + dataset shape validates sampling frame alignment 0.000s
+  + checked dataset construction reports temporal incompatibility 0.000s
+  + pure dataset descriptions require an explicit synchronous reader 0.000s
+  + dataset shape rejects 4D spaces as spatial-only shapes 0.000s
+  + selection reads timepoints x voxels in canonical orientation 0.000s
+  + dense dataset default read uses the full spatial voxel domain 0.000s
+  + selection reports duplicate and out-of-bounds indices as DatasetError 0.001s
+  + safe series read agrees with the throwing convenience method 0.000s
+  + FmriSeries safe constructor validates matrix and typed index shape 0.000s
+scalafim.dataset.DatasetEventsSuite:
+  + fromRows parses reserved event fields into typed accessors 0.001s
+  + fromRows reports invalid event fields as typed row errors 0.000s
+  + fromRows rejects ragged event tables at construction 0.000s
+  + fromColumns preserves typed values including missing numeric markers 0.000s
+  + fromColumns rejects duplicate, empty, and ragged columns 0.000s
+  + validateAgainst checks typed run labels against the dataset time axis 0.000s
+[info] Passed: Total 62, Failed 0, Errors 0, Passed 62
+[success] Total time: 9 s, completed Sep 30, 2026, 12:54:44 a.m.
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/image-view/js/target/scala-3.7.4/scalafim-image-view-test-fastopt
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.001s
+  + panel picking is an exact root-npc to world-space roundtrip 0.002s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.000s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.004s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.003s
+  + timepoint actions drive temporal layers while static overlays persist 0.002s
+  + models reject temporal layers with incompatible frame counts 0.000s
+  + resize changes only device layout and reduction is deterministic 0.002s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.013s
+==> X scalafim.image.view.AdvancedViewSuite.lazy frame sources preserve exact provider grid failures 0.013s munit.ComparisonFailException: modules/image-view/shared/src/test/scala/scalafim/image/view/AdvancedViewSuite.scala:129
+128:        clue = label
+129:      )
+130:    }
+translated
+=> Obtained
+Some(
+  value = Geometry(
+    cause = FrameMismatch(
+      expected = "scalafim-world:unresolved:9ce32fe360cbd563-2",
+      actual = "scalafim-world:unresolved:9ce32fe360cbd563-3"
+    )
+  )
+)
+=> Diff (- expected, + obtained)
+   value = Geometry(
+-    cause = GridsNotCongruent(
+-      tolerance = 0
++    cause = FrameMismatch(
++      expected = "scalafim-world:unresolved:9ce32fe360cbd563-2",
++      actual = "scalafim-world:unresolved:9ce32fe360cbd563-3"
+     )
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.001s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.008s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.004s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.002s
+  + linked view policies synchronize only declared state 0.001s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.001s
+  + a world-aligned layer in another world is rejected 0.001s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.001s
+  + a pullback layer must map the reference frame to its own frame 0.000s
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.000s
+  + a typed point sets the cursor only when its frame is the reference frame 0.000s
+  + a point in another world reaches the cursor through a typed link 0.000s
+  + cursor actions and states cannot replay into an equally shaped different world 0.001s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.000s
+==> X scalafim.image.view.ViewerSceneSuite java.lang.IllegalArgumentException: layer 'mask' is not in the reference frame: expected frame scalafim-world:unresolved:bf171dfb15fa8db9-12, got scalafim-world:unresolved:bf171dfb15fa8db9-11

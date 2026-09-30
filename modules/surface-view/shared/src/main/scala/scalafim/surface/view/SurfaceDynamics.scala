@@ -924,6 +924,15 @@ object SurfaceLinkRadius:
 final case class SurfaceLinkedSelection(selection: SurfaceSelection, world: WorldPoint, voxel: VoxelPoint)
 
 object SurfaceWorldLink:
+  /** Capture placement and coordinates once for repeated picks. The returned
+    * index owns its snapshot; rebuild explicitly after geometry changes.
+    */
+  def prepare(surface: SurfaceId, geometry: SurfaceGeometry): Either[SurfaceViewError, SurfaceWorldIndex] =
+    SurfaceWorldIndex.prepare(surface, geometry)
+
+  def nearestVertex(index: SurfaceWorldIndex, world: WorldPoint, maximumDistance: SurfaceLinkRadius): Either[SurfaceViewError, SurfaceSelection] =
+    index.nearestVertex(world, maximumDistance)
+
   def worldPoint(geometry: SurfaceGeometry, vertex: VertexId): Either[SurfaceViewError, WorldPoint] =
     if vertex.index < 0 || vertex.index >= geometry.vertexCount then
       Left(SurfaceViewError.InvalidVertexIndex(vertex.index, geometry.vertexCount))
@@ -932,16 +941,6 @@ object SurfaceWorldLink:
       geometry.surfaceToWorld(Vector(point.x, point.y, point.z))
         .left.map(SurfaceViewError.GeometryFailure.apply)
         .map(coordinates => WorldPoint(coordinates(0), coordinates(1), coordinates(2)))
-
-  def toVolume(
-    selection: SurfaceSelection,
-    geometry: SurfaceGeometry,
-    volume: image4s.geometry.Grid[? <: image4s.geometry.Frame[image4s.geometry.D3], image4s.geometry.D3]
-  ): Either[SurfaceViewError, SurfaceLinkedSelection] =
-    worldPoint(geometry, selection.vertex).flatMap: world =>
-      volume.worldToVoxel(world)
-        .left.map(SurfaceViewError.GeometryFailure.apply)
-        .map(voxel => SurfaceLinkedSelection(selection, world, voxel))
 
   def nearestVertex(
     surface: SurfaceId,

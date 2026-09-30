@@ -49,7 +49,9 @@ class DomainSuite extends munit.FunSuite:
     val masked = value(SamplingGeometry.volume(space, Some(mask)))
     assertEquals(masked.nElements, 8)
 
-    val other = SampleSpaces(Vector(2, 2, 1), affine = Some(ProviderAffines.identity))
+    val world = SampleSpaces.worldOf(space).fold(e => fail(e.message), identity)
+    val other = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1), affine = Some(ProviderAffines.identity)), world)
+      .fold(e => fail(e.message), identity)
     val badMask = Mask.fromIndices(other, scalafim.image.PrimitiveBuffers.fromArray(Array(0)), "bad")
     assertEquals(
       SamplingGeometry.volume(space, Some(badMask)).left.toOption,

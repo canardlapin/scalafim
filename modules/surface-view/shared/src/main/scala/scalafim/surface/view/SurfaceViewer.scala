@@ -3,16 +3,12 @@ package scalafim.surface.view
 import image4s.geometry.{D3, Frame}
 import intaglio.*
 import scalafim.image.{WorldBox, WorldPoint}
-import scalafim.image.world.{FrameCatalog, WorldSpace}
 import scalafim.surface.*
 
-/** The display frame surface camera framing works in.
-  *
-  * Surfaces do not yet carry a world-space identity, so their `surfaceToWorld` coordinates are RAS millimetres in an
-  * unresolved world; every asset's camera box lives in this one frame so boxes can be combined.
-  */
+/** Private render coordinates for camera bounds; these are not a scientific world-space identity. */
 private[view] object SurfaceDisplayWorld:
-  val frame: Frame[D3] = FrameCatalog.frame(WorldSpace.Unresolved)
+  val frame: Frame[D3] = Frame.named[D3]("surface display coordinates")
+    .fold(error => throw new IllegalStateException(error.message), identity)
   type F = frame.type
 
 final case class SurfaceAsset private (

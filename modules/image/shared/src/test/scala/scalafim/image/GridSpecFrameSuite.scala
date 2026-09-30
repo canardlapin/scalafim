@@ -192,8 +192,11 @@ class GridSpecFrameSuite extends munit.FunSuite:
     assert(typed.pullback.source eq Spaces.MNI152NLin2009cAsym)
 
   test("bind checks a runtime pullback's endpoints against the grids"):
-    val source = GridSpec.identity(Vector(2, 2, 2))
-    val target = GridSpec.identity(Vector(2, 2, 2))
+    val sourceSpace = SampleSpaces(Vector(2, 2, 2))
+    val world = SampleSpaces.worldOf(sourceSpace).fold(e => fail(e.message), identity)
+    val targetSpace = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 2)), world).fold(e => fail(e.message), identity)
+    val source = GridSpec.fromSpace(sourceSpace)
+    val target = GridSpec.fromSpace(targetSpace)
     val unrelated = GridSpec.identity(Vector(2, 2, 2))
     val pullback = SpatialPullbacks.worldAligned(source, target).fold(error => fail(error.message), identity)
     assert(ResamplingPlan.bind(source, target, pullback, Resample.Method.Linear).isRight)

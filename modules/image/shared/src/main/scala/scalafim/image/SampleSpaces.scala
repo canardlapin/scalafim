@@ -79,10 +79,6 @@ object SampleSpaces:
       .parse("scalafim-ras-d2")
       .fold(error => throw new IllegalStateException(error.message), identity)
 
-  /** Unresolved RAS-mm D3 identity; see [[scalafim.image.world.WorldSpace.Unresolved]]. */
-  private val rasD3FrameId =
-    FrameCatalog.frameId(WorldSpace.Unresolved)
-
   private[image] def fromCanonical(space: SomeSampleSpace): SomeSampleSpace =
     space
 
@@ -136,9 +132,11 @@ object SampleSpaces:
   ): Either[SampleSpaceError, SomeSampleSpace] =
     val current = space.grid.frame
     val relabelAllowed =
-      current.persistentKey.isEmpty || FrameCatalog.worldOf(current).exists(w => w == WorldSpace.Unresolved || w == world)
+      current.persistentKey.isEmpty || FrameCatalog.worldOf(current).exists(w => w.isInstanceOf[WorldSpace.Unresolved] || w == world)
     if space.grid.frame.spatialRank != 3 then
       Left(SampleSpaceError.ExpectedDimensionality("world-space relabel", 3, space.grid.frame.spatialRank))
+    else if current.unit != LengthUnit.Millimeter || current.convention != CoordinateConvention.RAS then
+      Left(SampleSpaceError.WorldIdentity(s"world admission requires RAS millimetres, got ${current.convention} ${current.unit}"))
     else if !relabelAllowed then
       Left(SampleSpaceError.WorldRelabel(FrameCatalog.worldOf(current).fold(_.message, _.displayName), world.displayName))
     else
@@ -155,46 +153,19 @@ object SampleSpaces:
   def worldOf(space: SomeSampleSpace): Either[SampleSpaceError, WorldSpace] =
     FrameCatalog.worldOf(space.grid.frame).left.map(error => SampleSpaceError.WorldIdentity(error.message))
 
-  /** Assign deterministic persistent identity to exact D3 sampling geometry.
-    *
-    * External decoders intentionally produce ephemeral frame and grid owners. ScalaFIM admits those values by retaining
-    * their exact geometry and axes while constructing the persistent frame/grid keys used by GridDomain. Existing
-    * persistent sample spaces pass through unchanged.
-    *
-    * An ephemeral RAS-mm D3 frame becomes the [[scalafim.image.world.WorldSpace.Unresolved]] frame: this is the legacy
-    * identity every file read without world evidence gets (see [[make]]).
-    */
-  private[scalafim] def persistentD3[F <: Frame[D3]](
-      space: SampleSpace[F, D3]
-  ): Either[
-    GeometryError,
-    SampleSpace[? <: Frame[D3], D3]
-  ] =
-    if space.grid.persistentId.nonEmpty then Right(space)
-    else
-      for
-        frameId <- persistentFrameId(
-          3,
-          space.grid.frame.unit,
-          space.grid.frame.convention
-        )
-        frame = Frame.createPersistent[D3](
-          frameId,
-          space.grid.frame.metadata,
-          space.grid.frame.unit,
-          space.grid.frame.convention
-        )
-        gridId <- admittedGridId(
-          3,
-          frameId,
-          space.grid.shape,
-          space.grid.indexToFrame.rowMajor
-        )
-        grid <- Grid.createPersistent(gridId, frame)(
-          space.grid.shape,
-          space.grid.indexToFrame
-        )
-      yield SampleSpace.create(grid, space.nonSpatialAxes)
+  /** Rebuild sampling geometry in its exact source frame, retaining non-spatial axes. */
+  private[image] def derivedD3[F <: Frame[D3]](
+      source: SampleSpace[F, D3],
+      shape: Vector[Int],
+      affine: GeometryAffine[D3]
+  ): Either[GeometryError, SampleSpace[F, D3]] =
+    val frame = source.grid.frame
+    val grid = frame.persistentId match
+      case Some(id) =>
+        admittedGridId(3, id, shape, affine.rowMajor)
+          .flatMap(gridId => Grid.createPersistent(gridId, frame)(shape, affine))
+      case None => Grid.forFrame(frame)(shape, affine)
+    grid.map(value => SampleSpace.create(value, source.nonSpatialAxes))
 
   private[image] def logicalDims(space: SomeSampleSpace): Vector[Int] =
     space.logicalShape
@@ -380,12 +351,9 @@ object SampleSpaces:
 
   /** Admit sampling geometry from dimensions and an optional affine (or spacing and origin).
     *
-    * **World identity (deferred, STP P1.07).** A D3 result lives in [[scalafim.image.world.WorldSpace.Unresolved]], the
-    * historical shared frame `scalafim-ras-d3`. Every space built here, and every NIfTI read through the legacy
-    * `Nifti.readVolume`/`readSeries`, therefore aligns with every other one, whichever subject or template it came from.
-    * That keeps same-subject pipelines working, but it is not evidence that two spaces coincide. To give geometry a
-    * real identity, relabel it with [[inWorld]], or read it with `Nifti.readVolumeIn`/`readSeriesIn`, which resolve the
-    * file's world-space evidence and refuse unresolved or contradictory evidence.
+    * Each bare D3 construction creates a fresh unresolved world scope. Equal dimensions and affine do not
+    * establish shared identity. Use [[inWorld]] with one explicit world value for related geometry, or reuse
+    * an existing space. NIfTI readers require evidence and admit only resolved worlds.
     */
   def make(
       dims: Vector[Int],
@@ -487,17 +455,11 @@ object SampleSpaces:
       )
     else
       for
-        metadata <- FrameMetadata
-          .create("scalafim-space")
-          .left
-          .map(SampleSpaceError.Geometry.apply)
-        frame = Frame.createPersistent[D3](
-          rasD3FrameId,
-          metadata,
-          convention = CoordinateConvention.RAS
-        )
+        world <- Right(WorldSpace.freshUnresolved())
+        frame = FrameCatalog.frame(world)
         spatialShape = dims.take(3)
-        gridId <- persistentGridId(3, spatialShape, transform.rowMajor)
+        gridId <- admittedGridId(3, FrameCatalog.frameId(world), spatialShape, transform.rowMajor)
+          .left.map(SampleSpaceError.Geometry.apply)
         grid <- Grid
           .createPersistent(gridId, frame)(spatialShape, transform)
           .left
@@ -518,9 +480,7 @@ object SampleSpaces:
       shape: Vector[Int],
       affineRowMajor: Vector[Double]
   ): Either[GeometryError, GridId] =
-    val frameComponent =
-      if frameId == rasD3FrameId then None else Some(frameId.value)
-    parseGridId(rank, frameComponent, shape, affineRowMajor)
+    parseGridId(rank, Some(frameId.value), shape, affineRowMajor)
 
   private def parseGridId(
       rank: Int,
@@ -538,34 +498,6 @@ object SampleSpaces:
     GridId.parse(
       s"scalafim-grid$framePart-d$rank-${shape.mkString("x")}-${affineBits.mkString("-")}"
     )
-
-  private def persistentFrameId(
-      rank: Int,
-      unit: LengthUnit,
-      convention: CoordinateConvention
-  ): Either[GeometryError, FrameId] =
-    if rank == 3 &&
-      unit == LengthUnit.Millimeter &&
-      convention == CoordinateConvention.RAS
-    then Right(rasD3FrameId)
-    else
-      FrameId.parse(
-        s"scalafim-frame-d$rank-${lengthUnitId(unit)}-${coordinateConventionId(convention)}"
-      )
-
-  private def lengthUnitId(unit: LengthUnit): String =
-    unit match
-      case LengthUnit.Millimeter => "millimeter"
-      case LengthUnit.Meter      => "meter"
-      case LengthUnit.Micrometer => "micrometer"
-
-  private def coordinateConventionId(
-      convention: CoordinateConvention
-  ): String =
-    convention match
-      case CoordinateConvention.Unspecified => "unspecified"
-      case CoordinateConvention.RAS         => "ras"
-      case CoordinateConvention.LPS         => "lps"
 
   private def defaultNonSpatialAxes(
       extents: Vector[Int]

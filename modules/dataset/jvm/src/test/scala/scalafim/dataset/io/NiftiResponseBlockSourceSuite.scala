@@ -13,6 +13,7 @@ import scalafim.dataset.{
 import scalafim.image.{PrimitiveBuffers, SampleSpaces, SomeSampleSpace, SomeScalarSeries}
 import scalafim.image.SampleSpaces.addDim
 import scalafim.image.io.Nifti
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
 import scalafim.response.*
 
 import java.nio.file.{Files, Path}
@@ -21,10 +22,13 @@ import java.util.zip.GZIPOutputStream
 import scala.jdk.CollectionConverters.*
 
 class NiftiResponseBlockSourceSuite extends FunSuite:
+  private val fixtureWorld = WorldSpace.declare("NIfTI response block source fixture").fold(error => fail(error.message), identity)
+  private val fixtureEvidence = SpaceEvidence(assertion = Some(fixtureWorld))
+
   test("uncompressed NIfTI source reads only the requested ordered block") {
     withFixture { root =>
       val path = writeSeries(root.resolve("bold.nii"))
-      val source = NiftiResponseBlockSource.open(path).toOption.get
+      val source = NiftiResponseBlockSource.open(path, fixtureEvidence).toOption.get
       val selection = DataSelection(
         time = TimepointSelection.indices(2, 0),
         voxels = VoxelSelection.indices(3, 1)
@@ -46,7 +50,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
     withFixture { root =>
       val source =
         NiftiResponseBlockSource
-          .open(writeSeries(root.resolve("adapter-bold.nii")))
+          .open(writeSeries(root.resolve("adapter-bold.nii")), fixtureEvidence)
           .toOption
           .get
       val schemaId = ResponseSchemaId.unsafe("nifti-adapter")
@@ -117,11 +121,11 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
       val compressed = gzip(raw, root.resolve("bold.nii.gz"))
       val cache = NiftiStagingCache.unsafe(root.resolve("cache"))
 
-      assert(NiftiResponseBlockSource.open(compressed).isLeft)
+      assert(NiftiResponseBlockSource.open(compressed, fixtureEvidence).isLeft)
 
       val first = cache.stage(compressed).toOption.get
       val second = cache.stage(compressed).toOption.get
-      val source = NiftiResponseBlockSource.open(compressed, staging = Some(cache)).toOption.get
+      val source = NiftiResponseBlockSource.open(compressed, fixtureEvidence, staging = Some(cache)).toOption.get
       val block = source.readBlock(
         DataSelection(
           time = TimepointSelection.indices(1),
@@ -165,7 +169,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
     withFixture { root =>
       cases.foreach { case (label, datatype, bitpix, raw, tolerance) =>
         val path = NiftiByteFixture.write(root.resolve(s"$label.nii"), datatype, bitpix, raw)
-        val source = NiftiResponseBlockSource.open(path).toOption.get
+        val source = NiftiResponseBlockSource.open(path, fixtureEvidence).toOption.get
         val block = source.readBlock(
           DataSelection(
             time = TimepointSelection.indices(1, 0),
@@ -194,7 +198,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         intercept = -3.0f,
         voxOffset = 368
       )
-      val scaled = NiftiResponseBlockSource.open(bigEndian).toOption.get.readBlock().toOption.get
+      val scaled = NiftiResponseBlockSource.open(bigEndian, fixtureEvidence).toOption.get.readBlock().toOption.get
       assertMatrixEquals(scaled.data, Vector(Vector(-0.5, -8.0), Vector(747.0, -1003.0)))
 
       val zeroSlope = NiftiByteFixture.write(
@@ -205,7 +209,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         slope = 0.0f,
         intercept = 5.0f
       )
-      val identityScaled = NiftiResponseBlockSource.open(zeroSlope).toOption.get.readBlock().toOption.get
+      val identityScaled = NiftiResponseBlockSource.open(zeroSlope, fixtureEvidence).toOption.get.readBlock().toOption.get
       assertMatrixEquals(identityScaled.data, Vector(Vector(6.0, 7.0), Vector(8.0, 9.0)))
     }
   }
@@ -219,7 +223,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         rawValues = Vector(1.0, 2.0, 3.0, 4.0)
       )
       Files.write(truncated, Files.readAllBytes(truncated).dropRight(1))
-      val truncatedRead = NiftiResponseBlockSource.open(truncated).toOption.get.readBlock()
+      val truncatedRead = NiftiResponseBlockSource.open(truncated, fixtureEvidence).toOption.get.readBlock()
       assert(truncatedRead.left.toOption.exists(_.message.contains("unexpected EOF")))
 
       val unsupported = NiftiByteFixture.write(
@@ -228,7 +232,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         bitpix = 16,
         rawValues = Vector.empty
       )
-      assert(NiftiResponseBlockSource.open(unsupported).left.toOption.exists(_.message.contains("unsupported NIfTI datatype")))
+      assert(NiftiResponseBlockSource.open(unsupported, fixtureEvidence).left.toOption.exists(_.message.contains("unsupported NIfTI datatype")))
 
       val mismatched = NiftiByteFixture.write(
         root.resolve("mismatched.nii"),
@@ -238,7 +242,7 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
       )
       assert(
         NiftiResponseBlockSource
-          .open(mismatched)
+          .open(mismatched, fixtureEvidence)
           .left
           .toOption
           .exists(_.message.contains("datatype 64 with 32 bits"))
@@ -255,7 +259,11 @@ class NiftiResponseBlockSourceSuite extends FunSuite:
         3.0, 7.0, 11.0
       )
     )
-    val space = SampleSpaces(Vector(2, 2, 1)).addDim(ProviderAxes.time(3))
+    val space =
+      SampleSpaces
+        .inWorld(SampleSpaces(Vector(2, 2, 1)), fixtureWorld)
+        .fold(error => fail(error.message), identity)
+        .addDim(ProviderAxes.time(3))
     Nifti
       .writeSeries(path, SomeScalarSeries.unsafeCopyFromCanonicalArray(values, space, "bold"))
       .fold(error => fail(error.message), _ => path)

@@ -11,6 +11,8 @@ import scalafim.dataset.io.NiftiStagingCache
 import scalafim.image.{PrimitiveBuffers, SomeSampleSpace, SomeNeuroVolume}
 import scalafim.image.SomeScalarVolume
 import scalafim.image.io.Nifti
+import scalafim.image.world.{SpaceEvidence, TemplateName, WorldSpace}
+import image4s.nifti.{NiftiCoordinateSystem, NiftiWriteOptions}
 
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.charset.StandardCharsets
@@ -37,7 +39,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
         confounds = Some(ConfoundSelectionConfig(variables = Vector("motion6")))
       )
 
-      val compilation = BidsStudyCompilerJvm.compileChecked(projectReport, recipe).toOption.get
+      val compilation = BidsStudyCompilerJvm.compileChecked(projectReport, recipe).fold(error => fail(s"catalog admission: $error"), identity)
       val catalog = compilation.catalog
       assertEquals(compilation.issues, Vector.empty)
 
@@ -51,7 +53,14 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       val cache = NiftiStagingCache.unsafe(root.resolve("nifti-cache"))
       val opened =
         FirstLevelUnitSource
-          .open(unit, staging = Some(cache))
+          .open(
+            unit,
+            evidenceFor = location =>
+              if location.value.contains("space-MNI152NLin2009cAsym") then
+                Right(SpaceEvidence(bidsSpace = Some("MNI152NLin2009cAsym")))
+              else Left(DatasetError.StorageFailure(s"no fixture evidence for ${location.value}")),
+            staging = Some(cache)
+          )
           .fold(error => fail(error.message), identity)
       val block = opened.source.readBlock(
         DataSelection(
@@ -86,11 +95,11 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       root.resolve("derivatives/fmriprep/dataset_description.json"),
       """{"Name":"fMRIPrep","BIDSVersion":"1.10.0","DatasetType":"derivative"}"""
     )
-    val space = SampleSpaces(Vector(2, 2, 1))
+    val space = SampleSpaces.inWorld(SampleSpaces(Vector(2, 2, 1)), WorldSpace.Template(TemplateName.unsafe("MNI152NLin2009cAsym"))).toOption.get
 
     Vector("01", "02").foreach { run =>
       val prefix = s"sub-01_task-demo_run-$run"
-      val derivativePrefix = s"${prefix}_space-MNI"
+      val derivativePrefix = s"${prefix}_space-MNI152NLin2009cAsym"
       val func = root.resolve("derivatives/fmriprep/sub-01/func")
       val boldNii = func.resolve(s"${derivativePrefix}_desc-preproc_bold.nii")
       if run == "01" then
@@ -130,7 +139,8 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
       Nifti
         .writeVolume(
           func.resolve(s"${derivativePrefix}_desc-brain_mask.nii"),
-          SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run")
+          SomeScalarVolume.unsafeCopyFromCanonicalArray(PrimitiveBuffers.fromArray(maskValues), space, s"mask-$run"),
+          NiftiWriteOptions.default.withCoordinateSystem(NiftiCoordinateSystem.Mni152)
         )
         .fold(error => fail(error.message), _ => ())
       write(
@@ -172,7 +182,7 @@ class WorkflowIngestAcceptanceSuite extends FunSuite:
     buffer.putFloat(108, 352.0f)
     buffer.putFloat(112, slope)
     buffer.putFloat(116, intercept)
-    buffer.putShort(254, 1.toShort)
+    buffer.putShort(254, 4.toShort)
     var column = 0
     while column < 4 do
       buffer.putFloat(280 + column * 4, if column == 0 then 1.0f else 0.0f)

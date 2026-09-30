@@ -1,0 +1,17 @@
+{
+  "name": "03_consistent_positive_default",
+  "argv": [
+    "/opt/fsl6/bin/img2imgcoord",
+    "-src",
+    "/probe/consistent_positive_source.nii",
+    "-dest",
+    "/probe/consistent_positive_reference.nii",
+    "-xfm",
+    "/probe/flirt_0_to_1.mat",
+    "-vox",
+    "/probe/source_voxel_zero.txt"
+  ],
+  "returncode": 0,
+  "stdout": "Coordinates in Destination volume (in voxels)\n-2.38508  -1.14193  1.63043\n",
+  "stderr": ""
+}

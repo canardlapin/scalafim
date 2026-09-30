@@ -4,6 +4,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scalafim.atlas.*
+import scalafim.image.world.SpaceEvidence
 
 object BrainnetomeLoader:
   private val downloadBase =
@@ -43,7 +44,7 @@ object BrainnetomeLoader:
     lutPath: Path,
     networkPath: Option[Path] = None
   ): VolumeAtlas =
-    val labelVol = AtlasLabelMaps.readIntVolume(volumePath, spec.id)
+    val labelVol = AtlasLabelMaps.readIntVolume(volumePath, SpaceEvidence(bidsSpace = Some(spec.atlasRef().templateSpace.value)), spec.id)
     val presentIds = AtlasLabelMaps.presentRegionIds(labelVol)
     val networkText = networkPath.map(path => Files.readString(path, StandardCharsets.UTF_8))
     val allRegions = parseLut(Files.readString(lutPath, StandardCharsets.UTF_8), networkText, spec)

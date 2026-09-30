@@ -80,7 +80,7 @@ object BrowserBenchmark:
       val distance = (index + 1).toDouble
       val next = affine.session.copy(
         state = affine.session.state.copy(
-          cursor = affine.session.state.cursor + AnatomicalDirection.Superior.unit.scaled(distance)
+          cursor = ViewerState.move(affine.session.state.cursor, AnatomicalDirection.Superior.unit.scaled(distance)).toOption.get
         )
       )
       render(scrollRuntime, affine.model, next, context)
@@ -113,7 +113,7 @@ object BrowserBenchmark:
       val distance = (index + 1).toDouble
       val next = nonlinear.session.copy(
         state = nonlinear.session.state.copy(
-          cursor = nonlinear.session.state.cursor + AnatomicalDirection.Superior.unit.scaled(distance)
+          cursor = ViewerState.move(nonlinear.session.state.cursor, AnatomicalDirection.Superior.unit.scaled(distance)).toOption.get
         )
       )
       render(nonlinearRuntime, nonlinear.model, next, context)
@@ -317,8 +317,10 @@ object BrowserBenchmark:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
     val current = controller.session
       .fold(error => throw new IllegalArgumentException(error.message), identity)
-    val expectedCursor = picked.state.cursor +
+    val expectedCursor = ViewerState.move(
+      picked.state.cursor,
       AnatomicalPlane.Axial.positiveNormal.unit.scaled(picked.state.sliceStep.millimeters)
+    ).toOption.get
     val axialSliceDirection = current.state.cursor == expectedCursor
     val exercised =
       model.layers.length == 2 &&
@@ -405,7 +407,7 @@ object BrowserBenchmark:
         .fold(error => throw new IllegalArgumentException(error.message), identity)
       val next = current.copy(
         state = current.state.copy(
-          cursor = current.state.cursor + AnatomicalDirection.Superior.unit.scaled(current.state.sliceStep.millimeters)
+          cursor = ViewerState.move(current.state.cursor, AnatomicalDirection.Superior.unit.scaled(current.state.sliceStep.millimeters)).toOption.get
         )
       )
       val started = js.Dynamic.global.performance.now().asInstanceOf[Double]

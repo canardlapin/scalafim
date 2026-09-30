@@ -4,6 +4,7 @@ package scalafim.image.world
 enum SpaceError derives CanEqual:
   case EmptyIdentifier(label: String)
   case InvalidGeometry(reason: String)
+  case FslHandednessConflict(qformCode: Int, qformDeterminant: Double, sformCode: Int, sformDeterminant: Double)
   case UnrecognisedWorldSpaceId(text: String)
   case NotAWorldFrame(reason: String)
   case FrameBinding(reason: String)
@@ -17,6 +18,8 @@ enum SpaceError derives CanEqual:
     this match
       case EmptyIdentifier(label)         => s"$label identifier must be non-empty"
       case InvalidGeometry(reason)        => s"invalid acquisition geometry: $reason"
+      case FslHandednessConflict(qcode, qdet, scode, sdet) =>
+        s"FSL qform (code $qcode, determinant $qdet) and sform (code $scode, determinant $sdet) disagree in handedness"
       case UnrecognisedWorldSpaceId(text) => s"not a ScalaFIM world-space identifier: $text"
       case NotAWorldFrame(reason)         => s"frame is not a RAS-millimetre D3 world frame: $reason"
       case FrameBinding(reason)           => s"frame binding failed: $reason"

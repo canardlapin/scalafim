@@ -1,6 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.dataset.{DataSelection, TimepointSelection, VoxelIndex, VoxelSelection}
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
 
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.channels.FileChannel
@@ -20,6 +21,8 @@ object NiftiReadBenchmark:
   private val SelectedVoxels = 50000
   private val Timepoints = 200
   private val BytesPerValue = 8
+  private val fixtureEvidence =
+    SpaceEvidence(assertion = Some(WorldSpace.declare("NIfTI read benchmark fixture").fold(error => throw new IllegalStateException(error.message), identity)))
 
   def main(args: Array[String]): Unit =
     val root = Files.createTempDirectory("scalafim-nifti-read-benchmark-")
@@ -33,7 +36,7 @@ object NiftiReadBenchmark:
         time = TimepointSelection.All,
         voxels = VoxelSelection.Indices(voxels.map(VoxelIndex.unsafe))
       )
-      val source = NiftiResponseBlockSource.open(path).fold(error => throw new IllegalStateException(error.message), identity)
+      val source = NiftiResponseBlockSource.open(path, fixtureEvidence).fold(error => throw new IllegalStateException(error.message), identity)
 
       val started = System.nanoTime()
       val block = source.readBlock(selection).fold(error => throw new IllegalStateException(error.message), identity)

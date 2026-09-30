@@ -164,7 +164,7 @@ class RibbonFillSuite extends munit.FunSuite:
   test("ribbon inputs must share a frame: statically when frames are typed, at runtime when they are erased"):
     val errors = compileErrors(
       """
-      val elsewhere = FrameCatalog.frame(WorldSpace.Unresolved)
+      val elsewhere = FrameCatalog.frame(WorldSpace.freshUnresolved())
       val grid = GridSpec.in(elsewhere)(SpatialDims(7, 6, 5), Affine.identity[D3]).toOption.get
       RibbonOperator.compile(Parity.white, Parity.pial, grid)
       """

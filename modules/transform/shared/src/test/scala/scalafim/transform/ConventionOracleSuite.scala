@@ -1,7 +1,7 @@
 package scalafim.transform
 
 import image4s.geometry.{Affine, D3}
-import scalafim.image.world.{FreeSurferVolumeGeometry, FslAffineSource, FslVolumeGeometry, ToolCoordinates}
+import scalafim.image.world.{FreeSurferVolumeGeometry, FslAffineSource, FslHeaderPolicy, FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.oracle.OracleTable
 
 /** Convention kernel against reference implementations (fslpy, nibabel); see oracle/conventions/manifest.json. */
@@ -22,7 +22,7 @@ class ConventionOracleSuite extends munit.FunSuite:
     val q = Option.when(col("qcode") != 0)(affine(m16(row, fslCases, "qform")))
     val s = Option.when(col("scode") != 0)(affine(m16(row, fslCases, "sform")))
     FslVolumeGeometry
-      .fromHeader(Vector(col("nx"), col("ny"), col("nz")).map(_.toInt), Vector(col("px"), col("py"), col("pz")), col("qcode").toInt, q, col("scode").toInt, s)
+      .fromHeader(Vector(col("nx"), col("ny"), col("nz")).map(_.toInt), Vector(col("px"), col("py"), col("pz")), col("qcode").toInt, q, col("scode").toInt, s, FslHeaderPolicy.FslpyCompatibility)
       .fold(e => fail(e.message), identity)
 
   test("FSL affine selection and handedness match fslpy when qform and sform disagree"):

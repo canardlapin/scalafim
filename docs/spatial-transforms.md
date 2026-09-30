@@ -13,9 +13,11 @@ Two ideas carry the design:
   its *pullback* (target point → source point), which is what resampling
   needs. The forward direction exists exactly when it is known to exist.
 
-The examples below are compiled and run in CI by
-`modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala`;
-each section corresponds to one test there. The design rationale is in
+The transform examples below are compiled and run in CI by
+`modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala`.
+The linked-cursor example runs on both JVM and JS in
+`modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala`.
+The design rationale is in
 [`plans/spatial-transform-parity.md`](plans/spatial-transform-parity.md) and
 [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
 
@@ -28,7 +30,7 @@ A `WorldSpace` names a continuous RAS-millimetre coordinate system:
   scoped by dataset
 - a subject's FreeSurfer tkRAS
 - a declared space
-- `Unresolved`, when there is no identity evidence
+- `Unresolved(token)`, a fresh persistent scope when there is no anatomical identity evidence
 
 `FrameCatalog` turns a world space into an image4s `Frame[D3]`. Standard
 templates have stable frames that can appear in types:
@@ -52,10 +54,19 @@ GIFTI coordinate system, and the BIDS `space-` entity. It refuses to guess:
 `Nifti.readVolumeIn(path, evidence)` (and `readSeriesIn`) is the
 identity-bearing read: it adds the header's selected xform code to the
 caller's `SpaceEvidence`, resolves it, and returns the volume in that world
-space, or a typed error when the evidence is missing or contradictory. The
-plain `Nifti.readVolume` still returns volumes in the shared `Unresolved`
-world, where every such volume aligns with every other; that is a legacy
-convenience, not evidence that two files share a space.
+space, or a typed error when the evidence is missing or contradictory.
+`Nifti.readVolume` and `readSeries` also require `SpaceEvidence` and delegate
+to these identity-bearing readers. Public readers cannot admit a file without
+resolved world evidence.
+
+Bare `SampleSpaces.make` constructions each receive a fresh unknown-world
+scope. Identical dimensions and affine values do not establish shared identity.
+Reuse a space, or explicitly place related grids with `SampleSpaces.inWorld`
+and the same `WorldSpace`. The retired `scalafim-ras-d3` persistence key requires
+an explicit migration that identifies which stored records belong together.
+World admission requires RAS coordinates measured in millimetres; incompatible
+units or conventions are rejected rather than relabelled.
+
 
 A frame read from a file is a different runtime object from the static
 template frame, even when both name the same space. `Placed[V].bindTo(frame)`
@@ -102,8 +113,9 @@ Every toolkit convention is decoded once, in `ToolCoordinates`:
   places a warp on that form's cardinalised axes. ScalaFIM therefore reads
   3dQwarp fields on cardinal grids only, and refuses an oblique one as
   `UnqualifiedConvention` until AFNI's own tools can pin it.
-- **FSL** uses scaled-voxel coordinates, flipped along x when the volume's
-  FSL-selected affine is neurological.
+- **FSL** uses scaled-voxel coordinates, flipped along x for neurological
+  storage. A volume without active forms has radiological storage even though
+  its fallback world affine has positive scaling.
 - **FreeSurfer tkRAS** is `Norig · inverse(Torig)`, where Torig is
   FreeSurfer's fixed LIA tkregister geometry.
 
@@ -116,6 +128,13 @@ needs the FSL geometry of both volumes. `FslHeaderGeometry` builds that
 geometry from each volume's raw NIfTI header, applying FSL's own affine
 choice: sform, then qform, then scaling. That choice can differ from the
 affine ScalaFIM reads the image with.
+
+World placement and storage order are separate. The default geometry policy
+rejects active qform and sform matrices with opposite handedness as
+`FslHandednessConflict`; differences in position with consistent handedness
+still use the sform. `FslHeaderPolicy.FslpyCompatibility` reproduces historical
+reference-library fixtures explicitly. Native positive-handed `applyxfm`
+coordinate ramps independently check the admitted storage-axis convention.
 
 ```scala
 val grids = FslGrids[input.type, reference.type](input, fslGeometry(inputNifti), reference, fslGeometry(referenceNifti))
@@ -298,6 +317,41 @@ link.toLeft(peakInMni)                         // Right(point in subject): the p
 link.toRight(pointInSubject)                   // Left(DirectionUnavailable(LeftToRight, ...)) until the warp is inverted
 ```
 
+### Map one MNI peak to a subject volume and surface
+
+The following **synthetic fixture** is the executable guide example in
+`SurfaceVolumeCursorSuite`. Its pullback maps the MNI peak to the subject's
+tkRAS coordinate `(0.5, 10.5, 0.5)`. The subject `GridSpec` then gives the
+continuous voxel coordinate, while the cursor selects the closest vertex of
+the framed subject surface. The explicit radius makes the surface-selection
+policy visible.
+
+```scala
+val link = pullOnly
+val peakInMni = ok(Point.in(mni)(-4.5, 13.5, -0.5))
+val subjectVolume = ok(GridSpec.in(tkRas)(
+  SpatialDims(3, 4, 3),
+  affine(1, 0, 0, -0.5, 0, 1, 0, 8.5, 0, 0, 1, -0.5, 0, 0, 0, 1)
+))
+val peakInSubject = ok(link.toLeft(peakInMni))
+val voxel = ok(subjectVolume.voxelAt(peakInSubject))
+assertEquals(voxel, VoxelPoint(1.0, 2.0, 1.0))
+
+val cursor = ok(SurfaceVolumeCursor.make(surfaceId, white, link))
+val hit = ok(cursor.toSurface(peakInMni, SurfaceLinkRadius.unsafe(2.0)))
+assertEquals(hit.selection, SurfaceSelection(surfaceId, VertexId(2)))
+close(hit.vertex, Vector(0.0, 10.0, 0.0))
+
+assertEquals(
+  link.toRight(peakInSubject),
+  Left(WorldLinkError.DirectionUnavailable(LinkDirection.LeftToRight, "fMRIPrep composite without inverse warp"))
+)
+```
+
+The final check is intentional: a pullback-only composite can bring an MNI
+peak into the subject, but cannot map the subject point back until an inverse
+asset or a qualified numerical inverse supplies the forward direction.
+
 The direction that needs a missing forward map is always a typed error, never
 an approximation. The viewers consume the link without depending on this
 module:
@@ -320,8 +374,17 @@ The oracle fixtures, and the tools that produced them, are listed in each
 fixture directory's `manifest.json` under
 `modules/transform/shared/src/test/resources/scalafim/transform/oracle/`.
 
-- **Native tools:** SimpleITK/ITK; AFNI 26.1.04 and FSL 5.0.9, via the
-  neurotransform oracles.
+- **Native tools:** SimpleITK/ITK; AFNI 26.1.04 and FSL 5.0.9 via the
+  neurotransform oracles; ANTs 2.6.5.dev1 and the frozen FSL 6 command packages
+  in `ants_native` and `fsl6_native`. Their manifests bind input and output
+  hashes, immutable container identities, versions and actual commands.
+  The FSL 6 set covers ten cubic/quadratic coefficient cases, eight dense
+  relative/absolute cases, six FLIRT coordinate cases, Jacobians and inverse
+  assets. Supported coordinate/field comparisons with the frozen FSL 5 set
+  have maximum absolute difference zero; this is a statement about those
+  fixtures, not all FSL registrations. Contradictory FLIRT headers are retained
+  as negative admission evidence. `fsl6_header_controls` adds a consistent
+  positive-handed native resampling control.
 - **Reference implementations:** fslpy, nibabel, neurotransform.
 - **Cross-implementations:** nitransforms. It covers AFNI 3dQwarp fields,
   FreeSurfer LTAs, a generic oblique AFNI affine with cardinal correction,
@@ -330,12 +393,16 @@ fixture directory's `manifest.json` under
   files are written by our own generator from FreeSurfer's source semantics.
   They show only that every encoding of one transform reads alike.
 
-Checks that need FreeSurfer, ANTs, AFNI or FSL 6 binaries are recorded as
-pending until those tools are available:
+The writer receipt in `writer_goldens/receipt.json` records native numerical
+passes for ANTs affine/field, FSL FLIRT/field and AFNI oblique `.aff12.1D`
+writers. Coordinate ramps compare every analytically supported interior query
+against the declared pullback at a predeclared tolerance of 0.0002 mm. Passing
+records bind the exact golden, geometry, pullback, container and output hashes;
+`WriterGoldensSuite` rejects stale bindings.
 
-- `lta_convert` and `tkregister2` for FreeSurfer
-- `3dNwarpXYZ` for 3dQwarp fields, including oblique ones
-- AFNI's own handling of oblique datasets in `.aff12.1D` matrices
+FreeSurfer `lta_convert`/`tkregister2` qualification remains pending: this run
+has no local FreeSurfer license. Native `3dNwarpXYZ` qualification of oblique
+3dQwarp fields is a separate remaining gate.
 
 The read path interpolates dense fields trilinearly. Cubic interpolation and
 Jacobian determinants are out of its scope; Jacobians belong to the warp
@@ -350,7 +417,17 @@ The warp algebra is checked in two ways. Analytic laws cover affine and
 radial determinants, the chain rule, folds, the sinusoidal inverse bound, and
 the modulation laws. Native outputs cover FSL 5.0.9 `convertwarp` and
 `fnirtfileutils --jac`, and ITK `TransformPoint` on composites. Numerical
-inverses have not yet been checked against ANTs `InverseWarp` or FSL
-`invwarp`. The reframe4s solver starts from the identity, so it refuses
-fields that are far from it, such as FNIRT fields between differently placed
-volumes. That refusal is itself tested.
+inverse fixtures now include ANTs `InverseWarp` and FSL 6 `invwarp`.
+The native inverse regression declares a cropped evaluation domain before
+inversion and requires full coverage, 0.01 mm residual gates and zero interior
+divergence. Its original source and failing published-provider log are
+preserved in `verification/stp-finish-20260929`. Independent diagnosis found
+inverse interpolation across the ANTs field's knot planes; a development
+candidate using fixed quarter spacing passes the unchanged gates on JVM and
+JS. The original coarse nodes, including faces, remain checked. FSL uses a
+separate coincident-geometry control with fixed half spacing. These are local
+candidate results; the provider publication and consumer pin are still pending.
+The pinned reframe4s solver starts from the identity, so large affine
+registrations still require the unpublished upstream start-guess work. That
+limitation and typed refusal remain explicit; the new controls do not qualify
+those registrations.

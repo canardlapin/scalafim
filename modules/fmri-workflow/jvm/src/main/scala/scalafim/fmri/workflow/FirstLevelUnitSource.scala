@@ -11,6 +11,7 @@ import scalafim.image.PrimitiveBuffers
 import scalafim.image.SomeScalarVolume
 import scalafim.image.{space, valueAtCanonicalOrdinal, values}
 import scalafim.image.io.Nifti
+import scalafim.image.world.SpaceEvidence
 
 import java.net.URI
 import java.nio.file.Path
@@ -37,11 +38,12 @@ final case class OpenedFirstLevelUnit(
 object FirstLevelUnitSource:
   def open(
       unit: FirstLevelUnit,
+      evidenceFor: ArtifactLocation => Either[DatasetError, SpaceEvidence],
       staging: Option[NiftiStagingCache] = None,
       metadata: DatasetMetadata = DatasetMetadata.Empty
   ): Either[DatasetError, OpenedFirstLevelUnit] =
     for
-      mask <- readMask(unit.mask)
+      mask <- readMask(unit.mask, evidenceFor)
       maskCongruence <- Grid
         .approximateCongruence(unit.shape.grid, mask.grid, 1e-6)
         .left
@@ -50,7 +52,8 @@ object FirstLevelUnitSource:
       openedRuns <- traverse(unit.runs) { run =>
         for
           path <- filePath(run.bold.location)
-          source <- NiftiResponseBlockSource.open(path, staging, Some(voxelDomain), metadata)
+          evidence <- evidenceFor(run.bold.location)
+          source <- NiftiResponseBlockSource.open(path, evidence, staging, Some(voxelDomain), metadata)
           congruence <- validateRunSource(unit, run, source)
         yield RunResponseBlockSource(run.id, source) -> congruence
       }
@@ -90,22 +93,23 @@ object FirstLevelUnitSource:
         else Right(())
     yield congruence
 
-  private def readMask(mask: UnitMask): Either[DatasetError, Mask.MaskVol] =
+  private def readMask(mask: UnitMask, evidenceFor: ArtifactLocation => Either[DatasetError, SpaceEvidence]): Either[DatasetError, Mask.MaskVol] =
     mask match
       case UnitMask.Single(artifact) =>
-        readMaskArtifact(artifact).flatMap(mask => intersectMasks(Vector(mask)))
+        readMaskArtifact(artifact, evidenceFor).flatMap(mask => intersectMasks(Vector(mask)))
       case intersection: UnitMask.Intersection =>
-        traverse(intersection.runMasks.map(_._2))(readMaskArtifact).flatMap(intersectMasks)
+        traverse(intersection.runMasks.map(_._2))(artifact => readMaskArtifact(artifact, evidenceFor)).flatMap(intersectMasks)
 
   private def readMaskArtifact(
-      artifact: WorkflowArtifactRef[MaskImageResource]
+      artifact: WorkflowArtifactRef[MaskImageResource],
+      evidenceFor: ArtifactLocation => Either[DatasetError, SpaceEvidence]
   ): Either[DatasetError, SomeScalarVolume[Double]] =
     filePath(artifact.location).flatMap { path =>
-      Nifti
-        .readVolume(path)
+      evidenceFor(artifact.location).flatMap { evidence => Nifti
+        .readVolume(path, evidence)
         .left
         .map(error => DatasetError.StorageFailure(s"failed to read mask NIfTI '$path': ${error.message}"))
-        .map(_.image)
+        .map(_.image) }
     }
 
   private def intersectMasks(

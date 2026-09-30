@@ -205,7 +205,7 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
     bytes.putFloat(108, voxOffset.toFloat)
     bytes.putFloat(112, 1.0f)
     bytes.putFloat(116, 0.0f)
-    bytes.putShort(254, 1.toShort)
+    bytes.putShort(254, 4.toShort)
     bytes.putFloat(280, 1.0f)
     bytes.putFloat(296 + 1 * 4, 1.0f)
     bytes.putFloat(312 + 2 * 4, 1.0f)

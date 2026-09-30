@@ -9,13 +9,14 @@ import image4s.nifti.NiftiTemporalUnit
 import image4s.nifti.NiftiWriteOptions
 import scalafim.fmri.motion.*
 import scalafim.image.io.Nifti
+import scalafim.image.world.SpaceEvidence
 import scalafim.image.*
 
 import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 
 object MotionNifti:
-  def read(path: Path): Either[MotionIoError, MotionNiftiRun] =
+  def read(path: Path, evidence: SpaceEvidence): Either[MotionIoError, MotionNiftiRun] =
     if !Files.isRegularFile(path) then Left(MotionIoError.MissingFile(path))
     else
       try
@@ -25,7 +26,7 @@ object MotionNifti:
             .left
             .map(error => MotionIoError.InvalidInput(path, error.message))
           decoded <- Nifti
-            .readSeries(path)
+            .readSeries(path, evidence)
             .left
             .map(error => MotionIoError.InvalidInput(path, error.message))
           metadata <- sidecarMetadata(

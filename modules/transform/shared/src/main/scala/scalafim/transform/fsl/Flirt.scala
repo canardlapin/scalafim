@@ -2,7 +2,7 @@ package scalafim.transform.fsl
 
 import image4s.geometry.{Affine, D3, Frame}
 import reframe4s.lie.FramedAffine
-import scalafim.image.world.{FslVolumeGeometry, ToolCoordinates}
+import scalafim.image.world.{FslHeaderPolicy, FslVolumeGeometry, ToolCoordinates}
 import scalafim.transform.*
 import scalafim.transform.nifti.NiftiRaw
 
@@ -67,13 +67,13 @@ object FlirtExpression extends Expression[FlirtMatrix, FslGrids, WorldTransform.
 
 /** FSL's geometry for a volume read from its raw NIfTI-1 header, applying FSL's own qform/sform selection. */
 object FslHeaderGeometry:
-  def apply(raw: NiftiRaw): Either[TransformError, FslVolumeGeometry] =
+  def apply(raw: NiftiRaw, policy: FslHeaderPolicy = FslHeaderPolicy.Strict): Either[TransformError, FslVolumeGeometry] =
     def affine(values: Vector[Double]) = Affine.fromRowMajor[D3](values).left.map(TransformError.Geometry(_))
     for
       q <- if raw.qformCode > 0 then affine(raw.qformRowMajor).map(Some(_)) else Right(None)
       s <- if raw.sformCode > 0 then affine(raw.sformRowMajor).map(Some(_)) else Right(None)
       g <- FslVolumeGeometry
-        .fromHeader(raw.spatialShape, raw.pixdim.slice(1, 4), raw.qformCode, q, raw.sformCode, s)
+        .fromHeader(raw.spatialShape, raw.pixdim.slice(1, 4), raw.qformCode, q, raw.sformCode, s, policy)
         .left
         .map(TransformError.Space(_))
     yield g

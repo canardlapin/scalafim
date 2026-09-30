@@ -34,10 +34,13 @@ object WriterGoldens:
     val source = FrameCatalog.frame(ok(WorldSpace.declare("golden source")))
     val target = FrameCatalog.frame(ok(WorldSpace.declare("golden reference")))
     val linear = WorldTransform.Linear(FramedAffine.betweenFrames[target.type, source.type, D3](target, source)(pullback), TransformProvenance.constructed("writer golden"))
-    val movable = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded("freesurfer_linear/movable.nii"))))
-    val reference = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded("freesurfer_linear/reference.nii"))))
+    // Writer geometry is deliberately separate from the FreeSurfer parity oracle:
+    // it is small, oblique, anisotropic and has support under the writer pullback.
+    val movable = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded("writer_geometry/movable.nii"))))
+    val reference = ok(NiftiRaw.parse(IArray.unsafeFromArray(OracleFixtures.decoded("writer_geometry/reference.nii"))))
     def sform(r: NiftiRaw) = ok(Affine.fromRowMajor[D3](r.sformRowMajor))
     val context = ConversionContext(
+      afni = CardinalCorrection.On(afni.AfniCardinal.obliquity(sform(movable)), afni.AfniCardinal.obliquity(sform(reference))),
       fsl = Some(ConversionContext.FslPair(ok(FslHeaderGeometry(movable)), ok(FslHeaderGeometry(reference)))),
       tkreg = Some(ConversionContext.TkRegPair(FreeSurferVolumeGeometry(movable.spatialShape, sform(movable)), FreeSurferVolumeGeometry(reference.spatialShape, sform(reference)))),
       lta = Some(ConversionContext.LtaPair(VolGeom.of(movable.spatialShape, sform(movable), "movable.nii"), VolGeom.of(reference.spatialShape, sform(reference), "reference.nii"))),

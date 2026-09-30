@@ -1,0 +1,499 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] compiling 31 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/surface/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 25 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 34 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/spatial/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/spatial/js/target/scala-3.7.4/scalafim-spatial-test-fastopt
+scalafim.spatial.FieldExplanationSuite:
+  + descriptive explanation is deterministic and performs no planning or evaluation 0.008s
+  + explicit planning explains normalization, compilers, fusion, support, cache, and QC without evaluation 0.005s
+  + evaluated explanation is retained per field and materialization records full lineage 0.003s
+  + plugin fusion barriers remain explicit in planned stage order 0.001s
+  + coverage and path-quality QC failures remain typed 0.001s
+scalafim.spatial.DemandSuite:
+  + volume, surface, ROI, mask, and time demands normalize to target indices 0.004s
+  + row and time-block refinements compose relative to the current demand 0.000s
+  + structured demands enforce domain kinds, bounds, masks, and terminal composition 0.000s
+  + normalized demand fingerprints include spatial and observation semantics 0.000s
+  + ViewPlan retains normalized spatial and time demand without executing 0.001s
+  + selected evaluation matches full evaluation and narrows exact source support 0.005s
+scalafim.spatial.SpatialGraphSuite:
+  + graph rejects duplicate domains and morphisms 0.000s
+  + shortest routing chooses the lowest cost path 0.000s
+  + route policies filter anatomical and functional edges 0.000s
+  + inverse routing uses only geometric inverses 0.001s
+  + graph rejects morphisms whose kind is incompatible with domain kinds 0.000s
+  + provided inverse quality increases reverse edge cost 0.000s
+scalafim.spatial.StagedPluginSuite:
+  + functional observation stages commute across one fused spatial pullback 0.006s
+  + filter row plugins execute through Gale and honor final row demand 0.001s
+  + hybrid plugins execute typed row projections between hybrid and volume domains 0.002s
+  + terminal pointwise barriers stay ordered and pre-spatial barriers fail explicitly 0.002s
+  + standard registry dispatch is exhaustive and plugin payload failures are typed 0.000s
+scalafim.spatial.SpatialLazyContractSuite:
+  + lazy contract: view construction preserves root identity and performs no work 0.000s
+  + lazy contract: chained transforms equal a direct root-first fused view 0.000s
+  + lazy contract: partial demand equals full selection and restricts source support 0.000s
+  + lazy contract: cache identity includes result-affecting semantics 0.000s
+  + lazy contract: only terminal materialization performs work 0.000s
+  + lazy contract: invalid demand is typed and performs no partial work 0.000s
+  + lazy contract: explanations retain root, intent, demand, and execution facts 0.000s
+scalafim.spatial.FieldRuntimeSuite:
+  + field views are inspectable before materialization 0.001s
+  + field runtime materializes by applying cached operators 0.001s
+  + runtime supports chained lazy views 0.001s
+  + field roots have distinct identities even when domain and label match 0.000s
+  + cache misses are explicit and caches are not ambient registries 0.001s
+  + field runtime rejects mismatched operator domains and shapes 0.000s
+  + source-backed field refs are inspectable but not materialized 0.000s
+scalafim.spatial.FieldApiSuite:
+  + volume pipelines read as lazy descriptions and retain one root 0.001s
+  + volume-to-surface pipelines need no manual compiler or runtime view call 0.000s
+  + typed selectors report domain, bound, route, and terminal-order failures 0.001s
+  + materialization validates the terminal runtime result shape 0.000s
+scalafim.spatial.SpatialQcSuite:
+  + identity law reports identity operator behavior 0.001s
+  + composition law matches direct and composed affine paths 0.001s
+  + adjoint law checks dot(Px, y) equals dot(x, P^T y) 0.001s
+  + ROI restriction law preserves selected target rows 0.001s
+  + coverage law reports invalid target samples explicitly 0.000s
+  + one-based neurofunctor-style triplet fixtures compare against zero-based operators 0.001s
+external.consumer.ProviderCoordinateMapBoundaryCompileSuite:
+  + parallel spatial geometric variants cannot be imported or constructed 0.000s
+  + spatial routing exposes one provider-map payload 0.000s
+scalafim.spatial.ViewPlanSuite:
+  + field root ids and root plans validate identity and shape 0.000s
+  + chained reexpression remains one root-first intent with inspectable steps 0.000s
+  + terminal row selections compose into absolute target rows 0.000s
+  + invalid targets and non-terminal selections return typed plan errors 0.000s
+  + selecting all is a semantic no-op 0.000s
+scalafim.spatial.OperatorCompilerSuite:
+  + identity volume compilation emits zero-based target-by-source rows 0.001s
+  + trilinear affine compilation normalizes row weights 0.001s
+  + interior trilinear rows report full coverage despite rounding in the corner weights 0.077s
+  + ROI rows preserve order and report out-of-bounds coverage 0.000s
+  + typed row selections produce the same cache signature as ROI adapters 0.000s
+  + compiler rejects duplicate and out-of-bounds ROI rows 0.000s
+  + compiler requires executable coordinate maps 0.000s
+  + spatial affine paths compile without a second image transform hierarchy 0.001s
+  + operator and field provenance record whether the route used inverses 0.000s
+scalafim.spatial.SpaceRefWorldSuite:
+  + a template reference names its template world; many domains share it 0.000s
+  + subject references need a native context, and then live in that subject's native world 0.000s
+  + a native context for another subject or session is a conflict, not a relabel 0.000s
+  + only anatomical surfaces are in the subject's scanner-native world 0.000s
+  + latent domains have no world space 0.000s
+scalafim.spatial.NonlinearPullbackSuite:
+  + an affine-equivalent dense coordinate field matches the affine one-pass operator 0.003s
+  + an independent nonlinear coordinate fixture fixes direction and convention 0.001s
+  + dense map content participates in pullback fingerprints 0.000s
+  + dense inverse availability is supplied explicitly and preserves direction 0.000s
+  + the default lazy runtime materializes nonlinear views with one value resampling 0.001s
+scalafim.spatial.PullbackCompilerSuite:
+  + identity routes lower to a zero-work pullback program 0.000s
+  + complete affine routes lower and pull target coordinates back to the root 0.001s
+  + program fingerprints include row demand and sampling policy 0.000s
+  + missing and duplicate morphism compilers are explicit typed failures 0.000s
+  + a new morphism compiler registers without changing central lowering logic 0.000s
+  + compiler inputs retain graph domain compatibility checks 0.000s
+scalafim.spatial.NeurofunctorLawParitySuite:
+  + id-01 identity: compile 0.006s
+  + op-01 operator: compile 0.001s
+  + op-02 operator: compile 0.001s
+  + op-03 operator: compile 0.001s
+  + op-04 operator: compile 0.001s
+  + op-05 operator: compile 0.000s
+  + comp-01 composition: compose 0.002s
+  + comp-02 composition: compose 0.001s
+  + adj-01 adjoint: adjoint 0.001s
+  + adj-02 adjoint: adjoint 0.000s
+  + roi-01 roi-restriction: compile-roi [declared deviation: roi-shape] 0.000s
+  + rt-01 round-trip: round-trip-operator 0.000s
+  + rt-02 round-trip: field-reexpress 0.001s
+  + rt-03 round-trip: round-trip-coordinates 0.000s
+  + rt-04 round-trip: round-trip-coordinates 0.000s
+  + comm-01 commutativity: commutativity 0.001s
+  + paths-01 commutativity: all-paths [declared deviation: all-paths-order] 0.000s
+  + qc-01 projection-metrics: projection-metrics [declared deviation: projection-metrics-rows] 0.001s
+  + qc-02 projection-metrics: projection-metrics [declared deviation: trilinear-boundary] 0.001s
+  + hy-01 hybrid: to-hybrid 0.004s
+  + hy-02 hybrid: from-hybrid 0.002s
+  + hy-03 hybrid: block-diagonal 0.001s
+  + bp-01 backprojection: backproject [declared deviation: backproject-inverse-setting] 0.001s
+  + bp-02 backprojection: backproject 0.001s
+  + bp-03 backprojection: view 0.000s
+  + the manifest records the R toolchain, the neurofunctor commit and zero-based indices 0.000s
+  + triplet ids are unique and every law family is covered 0.000s
+  + every deviation is declared, explained, and used 0.000s
+  + tolerances are explicit and tight 0.000s
+scalafim.spatial.TemplateSurfaceOperatorSuite:
+  + template graph compiles selected reordered rows, matches native resampling, and obeys its adjoint 0.764s
+  + template resampling refuses typed reverse routing and wrong endpoint template label 0.030s
+  + masked volume ribbon followed by weighted template resampling matches staged native resampling and reports bounded coverage 0.223s
+scalafim.spatial.AffineFusionSuite:
+  + executable affine paths compose provider affines in pullback order 0.001s
+  + an affine route samples the root once and agrees with an independent direct composite 0.001s
+  + fused root sampling is observably different from sequential double interpolation 0.000s
+  + ROI order, boundary coverage, policies, and original route survive fusion 0.000s
+scalafim.spatial.DomainSuite:
+  + opaque ids trim valid input and reject empty identifiers 0.000s
+  + volume geometry counts sampled voxels and validates masks 0.001s
+  + volume geometry preserves exact D3 admission failures 0.000s
+  + volume geometry exposes its admitted provider D3 space for matching 0.000s
+  + surface geometry counts vertices 0.000s
+  + latent space smart constructor rejects invalid dimensions 0.000s
+  + domain construction rejects mismatched declared and sampled kinds 0.000s
+  + hybrid geometry computes stable offsets and rejects duplicate part names 0.000s
+scalafim.spatial.SpatialLazyAcceptanceSuite:
+  + affine, nonlinear, and surface pull-through scenario returns one clean verdict 0.004s
+  + frozen R oracle distinguishes root-first interpolation from sequential interpolation 0.000s
+scalafim.spatial.UnsampledDomainSuite:
+  + unsampled world domains have no elements and only volume or surface kinds 0.000s
+  + provider maps join unsampled domains and carry points both ways along a route 0.001s
+  + maps on foreign frames and operators onto unsampled domains are rejected 0.000s
+  + routes through steps without provider maps cannot carry points 0.000s
+  + surface-to-volume morphisms join surface sources to volume targets only 0.000s
+  + world transforms become provider maps with their exact affine inverse 0.000s
+scalafim.spatial.ProviderMapCompositionSuite:
+  + provider composition rejects empty and non-geometric component lists 0.000s
+  + composition delegates ordered point evaluation to provider SpatialMap 0.001s
+  + provider component content and order participate in the routing fingerprint 0.000s
+  + an affine-only provider composition derives an exact inverse 0.000s
+  + a supplied provider inverse makes a dense route executable in reverse 0.001s
+  + a composed provider map remains executable through spatial routing 0.000s
+scalafim.spatial.VolumeToSurfaceOperatorSuite:
+  + midpoint operator matches eager surface sampling and exposes an adjoint 0.001s
+  + interior trilinear sample points report coverage no greater than one 0.003s
+  + ribbon operator averages normalized white-to-pial sample weights 0.001s
+  + source masks keep valid ribbon samples normalized and report partial coverage 0.000s
+  + surface masks produce empty operator rows for masked vertices 0.000s
+  + ROI rows preserve requested vertex order 0.000s
+  + compiler rejects paths without a volume-to-surface morphism 0.000s
+scalafim.spatial.MixedPullbackSuite:
+  + affine-to-ribbon-to-surface routes compile selected vertices into one root operator 0.002s
+  + nonlinear-to-surface chains pull sample points through the warp before root sampling 0.001s
+  + surface-root routes compose vertex maps and target selection into one operator 0.001s
+  + surface payloads reject mesh mismatches before compilation 0.000s
+scalafim.spatial.FieldSourceSuite:
+  + source-backed views remain IO-free and terminal demand performs one compact read 0.001s
+  + cached values never hide a source that has become stale 0.001s
+  + field runtime preserves typed source sample-space admission failures 0.000s
+  + source construction validates root domain, geometry, and shape without reading 0.000s
+  + unavailable sources and request-contract violations are typed and do not poison caches 0.000s
+scalafim.spatial.OperatorParitySuite:
+  + round trips through exact inverses return every probe 0.001s
+  + round trips expose an explicit reverse edge that does not invert the forward one 0.000s
+  + commutes compares two routes between the same domains 0.001s
+  + projection metrics report row sums and weight sanity 0.000s
+  + backproject applies the adjoint of the view's operator and keeps its provenance 0.001s
+  + backproject rejects root fields and data of the wrong height 0.000s
+  + backproject follows the inverse route a view was planned with 0.000s
+  + compile to a hybrid target stacks the per-part rows in part order 0.001s
+  + compile from a hybrid source concatenates per-part columns 0.001s
+  + block-diagonal hybrid compile maps part i to part i 0.001s
+  + commutativity evaluates non-commuting steps in route order 0.000s
+scalafim.spatial.LazyFieldRuntimeSuite:
+  + value compiles and executes one root-first operator, then memoizes the result 0.002s
+  + demand, policy, and root revision are independent cache dimensions 0.001s
+  + failed compilation does not poison plan or result caches 0.001s
+  + materialize creates a fresh current-domain root for descendants 0.001s
+  + identity row demand is inspectable as zero spatial resampling passes 0.000s
+external.consumer.SamplingGeometryBoundaryCompileSuite:
+  + external consumers cannot bypass checked volume-geometry admission 0.000s
+scalafim.spatial.RoutingParitySuite:
+  + find_path_with_inverses A->C penalty 1 0.000s
+  + find_path_with_inverses C->A penalty 1 0.000s
+  + find_path_with_inverses C->A penalty 10 0.000s
+  + find_path_with_inverses A->E penalty 1 0.000s
+  + find_path_with_inverses C->B penalty 1 0.000s
+  + find_path_with_inverses C->B penalty 0 0.000s
+  + find_path_with_inverses D->B penalty 1 0.000s
+  + find_path_with_inverses B->E penalty 1 0.000s
+  + penalty flip X->Y penalty 0 0.000s
+  + penalty flip X->Y penalty 0.5 0.000s
+  + penalty flip X->Y penalty 1 0.000s
+  + penalty flip X->Y penalty 10 0.000s
+  + the penalty flip fixture changes the winning route 0.000s
+  + forward routes win even when an inverse route would be cheaper 0.000s
+  + inverse penalty must be finite and non-negative 0.000s
+  + inspectPath reports steps, routed costs and inverse use 0.001s
+  + allPaths lists simple forward routes cheapest first and honours the limit 0.000s
+  + allPaths can enumerate inverse alternatives and keeps parallel edges distinct 0.000s
+scalafim.spatial.DomainLocusSuite:
+  + domain locus lowers unordered regions and ordered selections distinctly 0.001s
+  + same-sized semantic domains retain distinct unforgeable locus owners 0.000s
+  + exact maps, crisp relations, and sampled operators remain distinct contracts 0.000s
+  + surface mask compatibility requires exact ordered topology 0.000s
+[info] Passed: Total 191, Failed 0, Errors 0, Passed 191
+[success] Total time: 25 s, completed Sep 29, 2026, 11:48:41 p.m.
+[info] compiling 22 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/surface/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/surface/js/target/scala-3.7.4/scalafim-surface-test-fastopt
+scalafim.surface.io.GiftiReaderJsSuite:
+  + Scala.js reads a generated fsaverage5-scale compressed GIFTI surface 0.213s
+  + Scala.js byte ingestion accepts an outer gzip stream 0.013s
+  + Scala.js bounds compressed payloads by their declared shape 0.015s
+  + Scala.js label ingestion preserves LabelTable and NODE_INDEX semantics 0.004s
+scalafim.surface.SurfaceDataSuite:
+  + SurfaceField stores indexed vertex values 0.001s
+  + SurfaceField validates data length, uniqueness, and bounds 0.000s
+  + SurfaceMatrix stores vertices by feature columns 0.001s
+  + SurfaceRoi extracts a checked subset from a field 0.000s
+  + LabeledSurface stores label data and table metadata 0.000s
+  + SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates 0.003s
+  + HemispherePair provides typed left/right containers 0.000s
+scalafim.surface.SurfaceGeodesicsSuite:
+  + geodesic distance matrix matches tetrahedron edge distances 0.001s
+  + distance matrix supports source and target subsets 0.000s
+  + neighborsWithin includes self and vertices inside radius 0.000s
+  + neighborsWithin uses a closed radius boundary 0.000s
+  + euclidean metric ignores mesh paths 0.000s
+  + spherical metric clamps cosine and returns finite distances 0.000s
+  + unreachable vertices remain Infinity for geodesic metric 0.000s
+  + cache policy stores and reuses distance matrices 0.000s
+  + custom edge weights drive geodesic distances and cache keys 0.000s
+  + geodesic input validation catches bad radius, vertices, and weights 0.000s
+scalafim.surface.TemplatePlanTopologySuite:
+  + fsaverage5 plan freezes endpoint topology and rejects a later face-order mutation 0.771s
+scalafim.surface.SurfaceSearchlightSuite:
+  + zero-radius metric balls are the identity relation 0.001s
+  + geodesic metric balls are symmetric and monotone in radius 0.000s
+  + metric-ball composition is contained by the summed radius 0.000s
+  + metric balls use a closed radius boundary 0.000s
+  + partial center support leaves every non-center relation row empty 0.000s
+  + equal vertex counts do not excuse a topology mismatch 0.000s
+  + local extraction is ordinary indexed-field restriction 0.000s
+  + invalid radii are rejected before geometry work 0.000s
+scalafim.surface.TemplateSurfacesSuite:
+  + stock template meshes carry their TemplateFlow counts and native registration 0.000s
+  + a template sphere is admitted only with the template's counts, on a sphere, and on a registration it has 0.026s
+  + meshes on different registration spheres cannot be planned against each other 0.001s
+  + planning refuses hemispheres that differ 0.001s
+  + a plan interpolates with unit rows, its adjoint is the exact transpose, and Sum conserves mass 0.616s
+  + the pinned TemplateFlow spheres cover every mesh, hemisphere and published registration 0.001s
+scalafim.surface.SurfaceSamplingSuite:
+  + SurfaceGeometryPair exposes a shared cortical domain 0.000s
+  + midpoint path is a named policy that preserves midpoint sampling semantics 0.001s
+  + white and pial paths sample endpoint surfaces 0.000s
+  + surfaceToWorld transforms are applied before SomeSampleSpace coordinate lookup 0.000s
+  + fractional thickness supports average aggregation 0.000s
+  + mode aggregation chooses the most frequent sampled value 0.000s
+  + normal-line sampling uses offsets around the midpoint 0.000s
+  + masking can produce explicit empty samples 0.000s
+  + volume-to-surface morphism wraps reusable sampling plans 0.000s
+  + surface-to-surface morphism applies explicit target-to-source vertex maps 0.000s
+  + out-of-bounds sample points produce empty samples 0.000s
+  + sampling plans validate surface pairs, paths, and masks 0.000s
+scalafim.surface.SurfaceResamplingSuite:
+  + sphere helpers recognise spheres and normalise their radius 0.001s
+  + barycentric weights reconstruct a point on the query's own radial ray (never the antipodal face) 0.010s
+  + nearest-vertex resampling of a mesh onto itself is the identity 0.036s
+  + normalisations: element rows total one, sum conserves mass, and the inverse is the exact adjoint 0.008s
+  + a linear field on the sphere is reproduced to within the triangle-sagitta error 0.008s
+  + input of the wrong length is a typed failure 0.008s
+scalafim.surface.SurfaceComponentsSuite:
+  + connectedComponents labels active connected sets by decreasing size 0.001s
+  + connectedComponents returns zero fields when no vertices pass threshold 0.000s
+  + clusterThreshold keeps only clusters meeting minimum size 0.000s
+  + SurfaceThreshold validates range order 0.000s
+scalafim.surface.SurfaceModuleSuite:
+  + module metadata is available 0.000s
+scalafim.surface.GraphDifferentialSuite:
+  + thresholded surface components match induced generic graph components 0.003s
+  + surface geodesics match graph shortest paths for default and custom weights 0.002s
+  + MeshTopology graph interop preserves explicit indexing, edges, and distances 0.000s
+  + unreachable surface geodesics correspond to graph NoPath 0.000s
+scalafim.surface.gifti.GiftiModelSuite:
+  + typed attributes normalize known GIFTI codes 0.000s
+  + unknown attributes preserve their source text 0.000s
+  + data arrays expose shape and intent contracts 0.000s
+  + label color conversion keeps GIFTI 0-1 color values explicit 0.000s
+  + payload vectors and matrices expose typed shape semantics 0.000s
+  + payload matrices make row-major and column-major order explicit 0.000s
+  + documents provide typed array lookup and reject duplicate labels 0.000s
+  + GIFTI XML parsing rejects entity declarations before expansion 0.000s
+  + GIFTI payload sizing rejects dimension products before overflow 0.000s
+scalafim.surface.SurfaceLocusDomainSuite:
+  + surface domain identity includes exact ordered topology 0.000s
+  + full and sparse surface fields preserve their distinct support semantics 0.000s
+  + legacy SurfaceRoi adapts to a region, restricted values, and annotation 0.000s
+  + labeled surfaces become quotients with metadata and explicit display order 0.000s
+  + a disconnected label remains one valid extensional quotient fiber 0.000s
+  + runtime-loaded domains preserve the hidden semantic space type 0.000s
+scalafim.surface.MeshTopologySuite:
+  + MeshTopology derives unique edges and neighbor rows 0.001s
+  + MeshTopology computes Euclidean edge lengths 0.000s
+  + MeshTopology computes face and mesh metrics 0.000s
+  + MeshTopology computes unit vertex normals when possible 0.000s
+  + MeshTopology handles open fragmented meshes 0.000s
+  + MeshTopology carries a surface domain when built from geometry 0.000s
+scalafim.surface.SurfaceCoreSuite:
+  + Point3D is a surface alias for image SpatialPoint 0.000s
+  + TriangleMesh builds a valid tetrahedron 0.000s
+  + mesh topology identity ignores coordinates but preserves exact face ordering 0.000s
+  + TriangleMesh rejects invalid shapes and indices 0.000s
+  + SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform 0.000s
+  + SurfaceGeometry accepts only provider-validated D3 affines 0.000s
+  + surface domains reject IO-only hemisphere tags 0.000s
+  + surface tag parsers normalize common labels 0.000s
+scalafim.surface.FramedSurfaceSuite:
+  + stored coordinates and the geometry's surface-to-world placement are distinct declarations 0.002s
+  + tkRAS surfaces reach scanner RAS through Norig * inverse(Torig) and back 0.002s
+  + tkRAS -> scanner transport requires a tkRAS source and a same-subject scanner target 0.002s
+  + transport reports non-finite results instead of throwing 0.000s
+  + surfaces in different frames cannot be substituted for one another 0.000s
+  + a surface placed in a runtime world binds to the static template frame with the same key 0.000s
+scalafim.surface.RibbonFillSuite:
+  + ribbon weights match neurotransform cpp_ribbon_weights entry for entry 0.003s
+  + surface-to-volume fill matches neurotransform backproject_surface_to_volume(method = "ribbon") 0.000s
+  + rows sum to one, and a segment that never enters the grid samples to NaN 0.000s
+  + the fill is the exact adjoint of volume-to-surface sampling 0.000s
+  + ribbon mask of concentric spheres is the lattice shell between their radii 0.067s
+  + the ribbon mask requires closed surfaces 0.000s
+  + ribbon sampling of a radial volume recovers the mid-ribbon radius, and the mean fill of ones is one 0.032s
+  + volume adapters keep the operator's grid and reject other grids 0.051s
+  + ribbon inputs must share a frame: statically when frames are typed, at runtime when they are erased 0.000s
+  + white and pial must be vertex-matched, and steps must be positive 0.002s
+  + inner and outer roles are checked: hemispheres must agree and kinds must not be swapped 0.002s
+  + lattice-aligned faces and edges fill exactly, with half-open faces 0.001s
+  + a closed surface that extends past the grid along the ray axis still fills by parity 0.000s
+scalafim.surface.scenarios.SurfaceChainScenarioSuite:
+  + surface chain: scanner volume -> tkRAS ribbon -> registered sphere -> template meshes, commuting routes 0.195s
+  + every convention mutation of the surface chain fails the scenario 0.584s
+  + a tkRAS surface cannot be sampled on a scanner-space grid without moving it first 0.000s
+scalafim.surface.SurfaceParcelsSuite:
+  + boundary edges derive directly from mesh topology and endpoint labels 0.000s
+  + units returns contiguous parcels in label order 0.000s
+  + parcel operations reject equal-sized but topologically different meshes 0.000s
+  + fragmented parcel policies error, keep largest, split, or merge 0.000s
+  + ParcelKey validates split parcel parts 0.000s
+  + centroid and geodesic medoid can select different parcel representatives 0.000s
+  + geodesic medoid rejects merged disconnected parcel 0.000s
+  + distance matrices are symmetric for centroid and minimum methods 0.000s
+  + medoid distance matrix uses geodesic medoid representatives 0.000s
+  + boundaryContacts counts shared mesh edges symmetrically 0.000s
+  + ignoredLabels removes labels from parcel outputs and contacts 0.000s
+[info] Passed: Total 125, Failed 0, Errors 0, Passed 125
+[success] Total time: 11 s, completed Sep 29, 2026, 11:48:52 p.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 11 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/surface-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/surface-view/js/target/scala-3.7.4/scalafim-surface-view-test-fastopt
+scalafim.surface.view.SurfaceDynamicsSuite:
+  + time axes are strictly increasing and resolve nearest and linear samples 0.001s
+  + SurfaceMatrix temporal fields read columns lazily 0.001s
+  + lazy sources validate frame shape and bounded LRU caches evict deterministically 0.001s
+  + playback reducer clamps, loops, reverses, and produces bounded prefetch requests 0.000s
+  + prefetched temporal materialization distinguishes source reads from layer uploads 0.001s
+  + morphing preserves exact endpoints and rejects topology or transform mismatch 0.001s
+  + linked surface and image selections roundtrip through world coordinates without flips 0.002s
+  + typed annotations and bounded selection histories retain reproducible sequence ids 0.003s
+scalafim.surface.view.SurfaceSceneDocumentSuite:
+  + canonical document roundtrip reproduces state, camera, and semantic render resources 0.014s
+  + unknown fields and future revisions obey explicit read policy 0.002s
+  + external digests and exact mesh identities are checked before state restoration 0.001s
+  + backend-neutral requirements admit capabilities without naming an implementation 0.001s
+  + codec rejects duplicate fields, malformed JSON, invalid digests, and invalid document state 0.001s
+scalafim.surface.view.SurfaceVolumeCursorSuite:
+  + guide: an MNI peak maps to subject voxels and a framed tkRAS surface through a pullback link 0.001s
+  + a tkRAS surface links to an MNI volume through the pullback; the forward direction is a typed error 0.000s
+  + with a forward map the cursor round-trips vertex -> volume -> vertex 0.000s
+  + one world links directly under an explicit alignment 0.002s
+  + the cursor refuses another world's link, another surface's selection, and points beyond the radius 0.000s
+scalafim.surface.view.SurfaceBackendConformanceSuite:
+  + semantic matrix covers every conformance family 0.000s
+  + cold-load observations expose stable structural counters 0.000s
+  + camera-only and data-only admission paths reject geometry churn 0.000s
+  + invalid resource and revision receipts fail admission explicitly 0.000s
+scalafim.surface.view.SurfaceCameraPoseSuite:
+  + the viewpoint camera's pose is typed in the display frame and compiles to the same view 0.001s
+  + a volume point linked to the surface focuses the camera on its vertex 0.001s
+  + typed poses need the single-surface layout of their display surface 0.000s
+  + display frames are checked against what the viewer shows 0.001s
+  + a pose needs distinct eye and target points 0.000s
+scalafim.surface.view.SurfaceBenchmarkFixtureSuite:
+  + pinned fixtures have exact vertex and layer counts 0.056s
+  + admission-path fixtures encode only their expected dirty resource 0.008s
+scalafim.surface.view.SurfaceBenchmarkReceiptSuite:
+  + pinned matrix spans both mesh scales, every layer count, and every path 0.001s
+  + timing summaries use deterministic nearest-rank percentiles 0.000s
+  + benchmark JSON is deterministic, versioned, escaped, and includes structural counters 0.001s
+scalafim.surface.view.SurfaceWorldIndexSuite:
+  + prepared picks agree with independent world landmarks under full affine transforms 0.051s
+  + ties choose original lowest id and radius boundaries are inclusive 0.000s
+  + snapshot lifetime is explicit across coordinate mutation and equal-topology replacements 0.000s
+  + repeated coincident points retain deterministic ties 0.001s
+  + malformed transforms are refused at the affine boundary and mutated nonfinite coordinates cannot be indexed 0.000s
+scalafim.surface.view.SurfaceAnatomicalDisplaySuite:
+  + curvature is an ordinary scalar field transferable only across exact topology 0.001s
+  + world clip planes normalize normals and retain an explicit side 0.000s
+  + publication decoration records camera and layer identity and composes through Scene 0.001s
+scalafim.surface.view.SurfaceViewerSuite:
+  + opaque ids and camera scalars reject invalid states 0.000s
+  + canonical anatomical viewpoints encode RAS directions explicitly for both hemispheres 0.000s
+  + layers own input buffers and validate frame-major lengths 0.001s
+  + model rejects duplicate ids, unknown surfaces, topology mismatch, and dynamic frame disagreement 0.000s
+  + reducer is total over timepoint, layer capability, ordering, and selection actions 0.000s
+  + bilateral layout validates hemispheres and preserves explicit order 0.000s
+  + compiler applies surfaceToWorld before packing positions and readouts 0.000s
+  + compiler centers the camera on transformed world bounds 0.000s
+  + anatomical camera distance scales beyond millimetre-space geometry 0.000s
+  + threshold boundaries, layer order, receipts, and profile are deterministic 0.000s
+  + camera-only actions preserve every mesh and layer resource key 0.000s
+  + geometry families morph without changing topology, layers, selection, or camera framing 0.001s
+  + geodesic reveal weights have analytic smootherstep values and reject invalid domains 0.001s
+  + direct reveal lens remains an explicit diagnostic correspondence mode 0.002s
+  + natural reveal is translation-invariant, pin-fixed, harmonic, and inversion-free 0.004s
+  + lens quality detects an intermediate collapse even when endpoint winding agrees 0.000s
+  + geometry family actions reject absent variants and invalid transition updates 0.000s
+  + orbit and reset preserve canonical anatomical bases without resource uploads 0.000s
+scalafim.surface.view.SurfaceProjectionNetworkSuite:
+  + CPU ribbon projection is the typed oracle and records exact work 0.001s
+  + projection quality and fill policy preserve rejected samples explicitly 0.001s
+  + materialized projection is an ordinary layer on topology-compatible display geometry 0.001s
+  + network filters preserve node identity, negative weights, regions, and stable top-N order 0.001s
+  + network tubes attach as ordinary mesh and color resources for every backend 0.001s
+  + large signed network compilation reports bounded primitive work and memory 0.055s
+[info] Passed: Total 64, Failed 0, Errors 0, Passed 64
+[success] Total time: 7 s, completed Sep 29, 2026, 11:48:59 p.m.

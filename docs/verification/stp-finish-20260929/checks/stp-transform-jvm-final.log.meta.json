@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T03:45:22.881454+00:00",
+  "finished_utc": "2026-09-30T03:46:38.162845+00:00",
+  "duration_seconds": 75.280794,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "transformJVM/test",
+    "transformJS/test",
+    "imageViewJS/test",
+    "imageViewCanvasJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-transform-jvm-final.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 39113
+}

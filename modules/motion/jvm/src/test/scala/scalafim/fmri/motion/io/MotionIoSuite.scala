@@ -6,12 +6,14 @@ import image4s.geometry.D3
 import scalafim.fmri.motion.*
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
+import scalafim.image.world.{SpaceEvidence, WorldSpace}
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.{Files, Path}
 
 class MotionIoSuite extends munit.FunSuite:
+  private val evidence = SpaceEvidence(assertion = Some(WorldSpace.declare("motion IO synthetic acquisition").toOption.get))
 
   test("NIfTI adapter reads 4D runs and 3D masks through existing image IO") {
     val dir = Files.createTempDirectory("scalafim-motion-nifti")
@@ -21,8 +23,8 @@ class MotionIoSuite extends munit.FunSuite:
     writeFloat32Nifti(runPath, Vector(2, 1, 1, 3), Vector(1.0, 2.0, 3.0, 4.0, 5.0, 6.0))
     writeFloat32Nifti(maskPath, Vector(2, 1, 1), Vector(1.0, 0.0))
 
-    val run = MotionNiftiIo.readRun(runPath).fold(err => fail(err.message), identity)
-    val mask = MotionNiftiIo.readMask(maskPath).fold(err => fail(err.message), identity)
+    val run = MotionNiftiIo.readRun(runPath, evidence).fold(err => fail(err.message), identity)
+    val mask = MotionNiftiIo.readMask(maskPath, evidence).fold(err => fail(err.message), identity)
 
     assertEquals(run.space.dims.take(4), Vector(2, 1, 1, 3))
     assertEquals(run.nVolumes, 3)
@@ -57,7 +59,7 @@ class MotionIoSuite extends munit.FunSuite:
       )
 
     MotionNifti.write(path, run, Some(metadata)).fold(err => fail(err.message), identity)
-    val loaded = MotionNifti.read(path).fold(err => fail(err.message), identity)
+    val loaded = MotionNifti.read(path, evidence).fold(err => fail(err.message), identity)
 
     assertEquals(loaded.metadata.path, path)
     assertEquals(loaded.metadata.dims, Vector(2, 1, 2, 2))
@@ -79,7 +81,7 @@ class MotionIoSuite extends munit.FunSuite:
     writeFloat32Nifti(path, Vector(2, 1, 1, 2), Vector(1.0, 2.0, 3.0, 4.0))
     write(MotionNifti.defaultSidecar(path), """{"RepetitionTime":-1.0}""")
 
-    val error = MotionNifti.read(path).left.getOrElse(fail("expected invalid sidecar"))
+    val error = MotionNifti.read(path, evidence).left.getOrElse(fail("expected invalid sidecar"))
     assert(error.message.contains("RepetitionTime"))
   }
 
@@ -233,7 +235,7 @@ class MotionIoSuite extends munit.FunSuite:
     assert(applied.outputs.contains(applyOut))
     assert(Files.isRegularFile(applyOut))
     assert(Files.isRegularFile(MotionNifti.defaultSidecar(applyOut)))
-    assertEquals(MotionNifti.read(applyOut).fold(err => fail(err.message), _.run.nVolumes), 2)
+    assertEquals(MotionNifti.read(applyOut, evidence).fold(err => fail(err.message), _.run.nVolumes), 2)
 
     val reported =
       MotionCli

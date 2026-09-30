@@ -1,0 +1,744 @@
+{
+  "schema_version": 1,
+  "scope": "Local unpublished STP integration snapshot; concurrent shared checkout is not wholly qualified by these checks.",
+  "base_commit": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+  "shared_head_at_recording": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+  "provider_pins": {
+    "ravelRevision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "galeRevision": "18d24dbb5056122032b0278f8bad557a9bb1cf23",
+    "locus4sRevision": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+    "image4sRevision": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+    "reframe4sRevision": "9a4508351d74567147b8ea3221d82db89e5892b0",
+    "graph4sRevision": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+    "multivarRevision": "c4329fc95688929236c942cca889aa67ad17cbe0",
+    "intaglioRevision": "596b398af380079e4b251535230d0bc03cd88c51",
+    "bids4sRevision": "a33678390614a91fadbdef13f22970e78c26e091",
+    "zarr4sRevision": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+  },
+  "source_manifest": "source-manifest.json",
+  "source_manifest_sha256": "7e89b484b51eb85306fa62ed49b610f259ecdec6cf338b93a9876090c0637a37",
+  "checks": [
+    {
+      "log": "checks/stp-fsl-policy-jvm-1.log",
+      "log_sha256": "f7422f4957017096b0b7c9b5b5dc19521150abf82aff7d8c3a774c61c113b499",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test",
+        "transformJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T03:43:45.846335+00:00",
+      "passing_suite_totals": [
+        380
+      ],
+      "warning_count": 0,
+      "error_line_count": 6,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-transform-jvm-final.log",
+      "log_sha256": "95accb602b9b00bd854c6e20f27f7fe1d786a9d781653f3d83a81e73b13de9b8",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "transformJVM/test",
+        "transformJS/test",
+        "imageViewJS/test",
+        "imageViewCanvasJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T03:46:38.162845+00:00",
+      "passing_suite_totals": [
+        165,
+        137,
+        38
+      ],
+      "warning_count": 0,
+      "error_line_count": 5,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-ingest-jvm-1.log",
+      "log_sha256": "014859b523a8b2d57e864808ed3b3e01a5e155439d6daad2cd68d6edfca241c2",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test",
+        "datasetJVM/test",
+        "spatialJVM/test",
+        "fmriWorkflowJVM/test",
+        "motionJVM/test",
+        "atlasJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T02:15:33.918922+00:00",
+      "passing_suite_totals": [
+        379,
+        76,
+        213
+      ],
+      "warning_count": 0,
+      "error_line_count": 5,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-ingest-jvm-3.log",
+      "log_sha256": "bea2ed3ff67e0a543711d8a1831450637ba5ff695b516582d375c54db3f3eb7b",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "fmriWorkflowJVM/test",
+        "motionJVM/test",
+        "atlasJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T02:25:58.527418+00:00",
+      "passing_suite_totals": [
+        23,
+        91
+      ],
+      "warning_count": 0,
+      "error_line_count": 7,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-viewer-jvm-writers-6.log",
+      "log_sha256": "d6006cf6ba4d639a656fcab0cf8c1d725802cb9ab10fdc088211cf34be0d6243",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageViewJVM/test",
+        "transformJVM/Test/runMain scalafim.transform.WriterGoldens /private/tmp/scalafim-stp-finish-20260929/candidate/modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T02:11:38.080085+00:00",
+      "passing_suite_totals": [
+        38
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-surface-atlas-jvm-final-2.log",
+      "log_sha256": "9c4643f491171cca6361bc9c0a2bb277e3823011c9a0fccb09541c86c1d1c929",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "spatialJVM/testOnly scalafim.spatial.TemplateSurfaceOperatorSuite",
+        "surfaceJVM/testOnly scalafim.surface.TemplatePlanTopologySuite",
+        "surfaceViewJVM/test",
+        "atlasJVM/test",
+        "datasetZarrJVM/test",
+        "transformJVM/testOnly scalafim.transform.WriterGoldensSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T03:16:21.005495+00:00",
+      "passing_suite_totals": [
+        3,
+        1,
+        64,
+        115,
+        15,
+        4
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-surface-spatial-js-final.log",
+      "log_sha256": "3701592e6a63dab441ff90011cf2d7d711f3a3be5f8effce5289b3e1b75503ce",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "spatialJS/test",
+        "surfaceJS/test",
+        "surfaceViewJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T03:48:59.610828+00:00",
+      "passing_suite_totals": [
+        191,
+        125,
+        64
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-ingest-js-final.log",
+      "log_sha256": "963a51b4243c3dc6f62090e715a2fb439cc99f2447850c665075139a8f43622b",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJS/test",
+        "datasetJS/test",
+        "motionJS/test",
+        "imageViewCanvasJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T03:49:55.770454+00:00",
+      "passing_suite_totals": [
+        352,
+        62,
+        78,
+        8
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-workflow-atlas-js-final.log",
+      "log_sha256": "301b56daa502d4f2c54c330e0bdc9fa748d1c25fa0f67b7f5e8c53cd1add6aee",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "atlasJS/test",
+        "fmriWorkflowJS/test",
+        "datasetZarrJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T03:51:05.520647+00:00",
+      "passing_suite_totals": [
+        79,
+        19,
+        7
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-compile-all-final.log",
+      "log_sha256": "80f8fd40f2ed0726e1e775f634a7854939f03aef98da3b758327685223f75edd",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "scalafimCompileAll",
+        "fitJVM/testOnly scalafim.fmri.fit.io.ResultManifestWriterSuite"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T03:54:35.500367+00:00",
+      "passing_suite_totals": [
+        6
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-surface-spatial-jvm-final.log",
+      "log_sha256": "a8eb7f09ad79f6866980a23ff5c7ad8f9781c64e4f7d9e02076ccf85f6722d6a",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "surfaceJVM/test",
+        "spatialJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T03:58:05.497524+00:00",
+      "passing_suite_totals": [
+        159,
+        216
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-surface-normalization-jvm-js.log",
+      "log_sha256": "21f896e7b20ccc368bcbc1019d035e8480acaec7b4ecf2e661f33a7dbc09136c",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "spatialJVM/test",
+        "spatialJS/test",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T04:11:22.587948+00:00",
+      "passing_suite_totals": [
+        217,
+        192
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Earlier failed batches retained alongside final replacements; individual earlier passing tasks remain scoped evidence."
+    },
+    {
+      "log": "checks/stp-scoped-world-image-jvm-3.log",
+      "log_sha256": "a0c87b98659539eca6ac23acb44e24089acbc3d25d2571c5efe29c5ae6b564bd",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:37:49.603840+00:00",
+      "passing_suite_totals": [],
+      "warning_count": 0,
+      "error_line_count": 8,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-image-jvm-4.log",
+      "log_sha256": "9a126aed2cd9d71c33fcd2d2100d8cf6aca59b3f2846d4e7b91ccf18aba4f5ad",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T04:41:23.739072+00:00",
+      "passing_suite_totals": [
+        383
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-image-jvm-js-final.log",
+      "log_sha256": "8f790ffec26f7b2094f844380508453f3984fbd9d721e68fd1a32be2392b0bba",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test",
+        "imageJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T04:42:28.750291+00:00",
+      "passing_suite_totals": [
+        383,
+        354
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-jvm-1.log",
+      "log_sha256": "c1189bbd14f3a411369ea27170934d9878aed0a53fc0b58cb0c53d318935b7d7",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test",
+        "transformJVM/test",
+        "spatialJVM/test",
+        "datasetJVM/test",
+        "imageViewJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:44:08.372235+00:00",
+      "passing_suite_totals": [
+        384,
+        165
+      ],
+      "warning_count": 0,
+      "error_line_count": 6,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-jvm-2.log",
+      "log_sha256": "f3e7a31899b3e91d3edc08c0efa1347d0e8f60ba8417d45645eac7c07f0d5b99",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "spatialJVM/test",
+        "datasetJVM/test",
+        "imageViewJVM/test",
+        "motionJVM/test",
+        "fmriWorkflowJVM/test",
+        "surfaceJVM/test",
+        "surfaceViewJVM/test",
+        "atlasJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:47:21.522647+00:00",
+      "passing_suite_totals": [
+        217
+      ],
+      "warning_count": 0,
+      "error_line_count": 8,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-js-1.log",
+      "log_sha256": "1ba1d4b63b5005c7c8e489f0ffb666749de5f934066117c1a25b91aebfcdbce5",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJS/test",
+        "transformJS/test",
+        "spatialJS/test",
+        "imageViewJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:45:06.302659+00:00",
+      "passing_suite_totals": [
+        355,
+        137
+      ],
+      "warning_count": 0,
+      "error_line_count": 6,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-js-2.log",
+      "log_sha256": "a33a8a59a011a5338d33ce195c0e489ab626566372307680352df4ba00200274",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "spatialJS/test",
+        "datasetJS/test",
+        "imageViewJS/test",
+        "imageViewCanvasJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:47:51.898360+00:00",
+      "passing_suite_totals": [
+        192
+      ],
+      "warning_count": 0,
+      "error_line_count": 8,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-js-3.log",
+      "log_sha256": "f812a15c02ecb533be9c8ad6e63ed633ed10d020370e36786e0825813b62e261",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "motionJS/test",
+        "fmriWorkflowJS/test",
+        "surfaceJS/test",
+        "surfaceViewJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:49:20.013211+00:00",
+      "passing_suite_totals": [
+        78
+      ],
+      "warning_count": 0,
+      "error_line_count": 5,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-js-4.log",
+      "log_sha256": "35ae18c72fdae868cb0a1d5ec70ee86f30054ba2b377b167819c1e088b63a56b",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "datasetJS/test",
+        "imageViewJS/test",
+        "imageViewCanvasJS/test",
+        "fmriWorkflowJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 143,
+      "finished_utc": "2026-09-30T04:59:43.954991+00:00",
+      "passing_suite_totals": [
+        62
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Stopped owned sbt PID384 after Scala.js suite initialization failure stalled this run; actual exit143 retained. Corrected viewer fixtures pass replacement js-6 run."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-js-5.log",
+      "log_sha256": "4f8ed887923dda6b7e8923562aa8c6fca050ef29f1207a64b720c16a9ee12492",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "surfaceJS/test",
+        "surfaceViewJS/test",
+        "atlasJS/test",
+        "datasetZarrJS/test",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T05:00:21.906289+00:00",
+      "passing_suite_totals": [
+        125,
+        64
+      ],
+      "warning_count": 0,
+      "error_line_count": 6,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-js-6.log",
+      "log_sha256": "a293f920e1d4d69b6da5c98c28efacd8006f7a00defb10c1bb3051b7f0c18392",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageViewJS/test",
+        "imageViewCanvasJS/test",
+        "fmriWorkflowJS/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T05:05:51.830008+00:00",
+      "passing_suite_totals": [
+        38,
+        8,
+        19
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-jvm-3.log",
+      "log_sha256": "782e4af31f63951247958d8e8cd70e3614bcfc46ac2b03deea6bdf7de268ff3f",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "datasetJVM/test",
+        "imageViewJVM/test",
+        "motionJVM/test",
+        "fmriWorkflowJVM/test",
+        "surfaceJVM/test",
+        "surfaceViewJVM/test",
+        "atlasJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:54:18.642439+00:00",
+      "passing_suite_totals": [
+        76
+      ],
+      "warning_count": 0,
+      "error_line_count": 6,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-consumer-jvm-4.log",
+      "log_sha256": "ab7acb4288d53ca89a36d5d629a4cd70899a9f770d1dbb1a512bb0582afae913",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageViewJVM/test",
+        "motionJVM/test",
+        "fmriWorkflowJVM/test",
+        "surfaceJVM/test",
+        "surfaceViewJVM/test",
+        "atlasJVM/test",
+        "datasetZarrJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T05:05:19.234038+00:00",
+      "passing_suite_totals": [
+        38,
+        91,
+        23,
+        159,
+        64,
+        115,
+        15
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-image-jvm",
+      "log_sha256": "7d8f6b0f0c327bb3a404dccc17f8efba853082b4c6e5b8c629954a1cdb6d7e13",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:34:28.664126+00:00",
+      "passing_suite_totals": [],
+      "warning_count": 0,
+      "error_line_count": 17,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-image-jvm-2.log",
+      "log_sha256": "0e0826799c13869703336c4a77be1697429bccfafda0c78791062d107d0270e4",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "imageJVM/test"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 1,
+      "finished_utc": "2026-09-30T04:36:17.774772+00:00",
+      "passing_suite_totals": [],
+      "warning_count": 0,
+      "error_line_count": 29,
+      "note": "Final scoped-world regression and consumer checks; earlier failures retained with passing replacements."
+    },
+    {
+      "log": "checks/stp-scoped-world-js-compile-final.log",
+      "log_sha256": "e16876595b259f76bcec6183feabbddd81ef82a7277e6f2c4ac907166c709b3f",
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "atlasJS/test",
+        "datasetZarrJS/test",
+        "scalafimCompileAll"
+      ],
+      "cwd": "/private/tmp/scalafim-stp-finish-20260929/candidate",
+      "exit_code": 0,
+      "finished_utc": "2026-09-30T05:14:27.677910+00:00",
+      "passing_suite_totals": [
+        79,
+        7
+      ],
+      "warning_count": 0,
+      "error_line_count": 0,
+      "note": "Final atlas/Zarr Scala.js replacements and full required compile gate after scoped-world changes."
+    }
+  ],
+  "required_compile_gate": {
+    "log": "checks/stp-scoped-world-js-compile-final.log",
+    "outcome": "pass",
+    "warnings": 0,
+    "errors": 0
+  },
+  "native_writer_receipt": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_goldens/receipt.json",
+  "native_writer_receipt_sha256": "b74bba430fc91d190de42fb67437a98d456771f9474be0e40ca8bfedf93d7773",
+  "review_records": [
+    "fsl-header-review.json",
+    "inverse-resolution-review.json",
+    "scoped-world-review.json"
+  ],
+  "limits": [
+    "FreeSurfer native checks unrun: user has no local license.",
+    "Numerical inverse factor4 candidate uses unpublished reframe4s842ec9a; ordinary pin9a45083 unchanged.",
+    "Locus4s overlap patch validated in isolated owner clone; publication/pin not performed.",
+    "Scenario clean-Pass acceptance, final epic review and housekeeping remain open; existing caveats are not silently removed.",
+    "Synthetic graph seam proves supplied topology compatibility and endpoint-mask semantics, not published asset authenticity or intermediate-mask application.",
+    "Native AFNI oblique probe supports cardinalized placement at nodes; default native off-node interpolation differs, so no new field admission claim.",
+    "One candidate fit consumer suite was migrated against frozen fit base; current concurrent shared fit edits were preserved and are not covered by its6-test result.",
+    "D3 unknown-world scope migration requires explicit identity in same-world fixtures; geometry-only persisted metadata cannot infer cross-open identity."
+  ],
+  "publication": "none",
+  "native_inverse_candidate": "u6-native-candidate-factor4/qualification.json",
+  "ticket_status_at_handoff": {
+    "P4.03": "done",
+    "P4.04": "done",
+    "P7.04": "done",
+    "P6.02": "open: unpublished dependency candidate",
+    "P7.05": "open: owner patch not published/pinned",
+    "P7.07": "open: real clean-Pass gates",
+    "P8.03": "review: guide prerequisite open",
+    "P8.04": "open: upstream request not submitted",
+    "P8.05": "open: integrated epic review",
+    "Nifti_identity_followup": "done",
+    "viewer_links_followup": "done"
+  },
+  "final_affected_suite_results": {
+    "image": {
+      "JVM": 384,
+      "JS": 355
+    },
+    "transform": {
+      "JVM": 165,
+      "JS": 137
+    },
+    "spatial": {
+      "JVM": 217,
+      "JS": 192
+    },
+    "dataset": {
+      "JVM": 76,
+      "JS": 62
+    },
+    "imageView": {
+      "JVM": 38,
+      "JS": 38
+    },
+    "imageViewCanvas": {
+      "JS": 8
+    },
+    "motion": {
+      "JVM": 91,
+      "JS": 78
+    },
+    "fmriWorkflow": {
+      "JVM": 23,
+      "JS": 19
+    },
+    "surface": {
+      "JVM": 159,
+      "JS": 125
+    },
+    "surfaceView": {
+      "JVM": 64,
+      "JS": 64
+    },
+    "atlas": {
+      "JVM": 115,
+      "JS": 79
+    },
+    "datasetZarr": {
+      "JVM": 15,
+      "JS": 7
+    }
+  },
+  "local_repairs_status": "Complete for documented scope; remaining epic acceptance gates explicitly open.",
+  "finished_utc": "2026-09-30T05:14:27.677910+00:00"
+}

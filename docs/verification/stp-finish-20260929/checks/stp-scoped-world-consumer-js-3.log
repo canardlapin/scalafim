@@ -1,0 +1,182 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/motion/js/target/scala-3.7.4/scalafim-fmri-motion-test-fastopt
+scalafim.fmri.motion.MotionControlSuite:
+  + pyramid control validates schedule lengths when enabled 0.001s
+  + apply control rejects negative zpad 0.000s
+  + temporal shrink controls validate shrink range and threshold 0.000s
+  + capture and temporal controls expose typed policies with Boolean adapters 0.000s
+  + execution control validates requested worker counts 0.000s
+  + platform frame mapper preserves deterministic input order 0.000s
+  + residual control exposes frame-mean nuisance policy 0.000s
+  + IC stencil and whitening controls validate typed parameters 0.000s
+  + fast fMRI profile selects rigid robust engine and component tags 0.001s
+  + slice spline profile selects spline engine 0.000s
+  + IC profile is executable while full IC whitening remains an explicit planned profile 0.000s
+scalafim.fmri.motion.MotionApiShapeSuite:
+  + slice and packet timing are validated typed acquisition descriptions 0.002s
+  + typed plan surfaces support apply timing and platform execution boundaries 0.004s
+  + motion profiles expose typed active and planned capabilities 0.000s
+  + motion correction result bundles estimate, corrected run, QC, and controls 0.002s
+scalafim.fmri.motion.MotionTraceSuite:
+  + motion trace must be non-empty 0.000s
+  + identity trace has requested length 0.000s
+  + motion trace exposes frame-aligned pose storage 0.000s
+  + frame access validates bounds 0.000s
+scalafim.fmri.motion.MotionEstimatorSuite:
+  + rigid estimator keeps identical frames near zero motion 0.012s
+  + middle reference is anchored and traversal estimates both directions 0.009s
+  + rigid estimator recovers a one-voxel positive x translation 0.002s
+  + rigid estimator recovers a small positive z rotation 0.009s
+  + rotational capture seeds recover a large yaw before optimizer iterations 0.002s
+  + robust template refresh resists a high-cost outlier frame 0.015s
+  + parallel frame execution preserves deterministic refreshed estimates where supported 0.007s
+  + rigid spline estimator layers smoothing over the rigid estimate 0.012s
+  + enabled pyramid schedule refines on the finest level 0.003s
+  + low-motion pose shrink scales only subthreshold estimates 0.022s
+  + temporal regularization smooths an isolated pose while preserving reference 0.020s
+  + enabled temporal regularization is executable 0.001s
+  + frame-mean nuisance residual removes global intensity offsets 0.001s
+  + frame-mean whitening policy uses the same nuisance residual path 0.001s
+  + IC stencil policy is deterministic and changes the sampled objective 0.002s
+  + IC stencil profile is executable but full IC whitening is a typed unsupported control 0.002s
+  + estimator reports invalid references, non-finite runs, and empty masks as typed errors 0.000s
+scalafim.fmri.motion.VolreggerParitySuite:
+  + generated core fixture records volregger provenance 0.000s
+  + pose matrix and inverse match volregger homogeneous transform convention 0.001s
+  + framewise displacement matches generated volregger fixture 0.000s
+  + raw and robust DVARS match generated volregger fixtures 0.003s
+  + radius and masked displacement summaries match generated volregger fixtures 0.002s
+  + linear apply padding matches generated volregger fixture 0.001s
+  + identity estimator fixture matches generated volregger zero-motion contract 0.010s
+  + translation estimator fixture matches generated volregger recovery contract 0.004s
+  + spline and packet fixture anchors volregger smoothing and packet offsets 0.001s
+  + IC, whitening, spline, and parallel profile fixtures expose volregger contracts 0.000s
+  + CLI, report, and benchmark fixture metadata captures downstream artifact contracts 0.000s
+scalafim.fmri.motion.MotionApplierSuite:
+  + identity motion application is one-pass and preserves data 0.001s
+  + positive moving-to-fixed translation pulls fixed voxels from lower source indices 0.000s
+  + negative translation with clamp padding samples high edge repeatedly 0.000s
+  + zero padding returns zero outside the source field 0.000s
+  + all-zero slice timing is byte-identical to volume application 0.000s
+  + nonzero slice timing interpolates packet poses during final application 0.000s
+  + motion application validates trace length 0.000s
+  + motion application validates acquisition timing against z dimension 0.000s
+scalafim.fmri.motion.MotionMetricsSuite:
+  + framewise displacement matches volregger convention 0.000s
+  + DVARS computes temporal RMS differences 0.000s
+  + robust DVARS clips values above three times the finite median 0.000s
+  + DVARS policy replaces robust Boolean for typed pair metrics 0.000s
+  + transform displacement for pure translation equals translation length 0.000s
+  + masked displacement summary uses spatial mask coordinates 0.000s
+  + mask shape mismatch is a typed error 0.000s
+scalafim.fmri.motion.MotionQcSuite:
+  + MotionQc combines FD, DVARS, cost drop, and censor flags 0.001s
+  + MotionQc records missing fit-cost traces explicitly 0.000s
+  + MotionQc rejects incomplete fit-cost traces 0.000s
+  + MotionQc records packet correction magnitudes when supplied 0.000s
+  + MotionQc applies typed thresholds and censor policy 0.000s
+  + MotionQc validates trace length 0.000s
+scalafim.fmri.motion.MotionSplineSuite:
+  + pose smoothing matches generated volregger spline fixture 0.000s
+  + pose interpolation clamps to valid frame span 0.000s
+  + packet correction magnitude is zero for all-zero offsets and positive for staggered offsets 0.002s
+scalafim.fmri.motion.RigidPoseSuite:
+  + identity pose converts to the provider identity affine 0.000s
+  + pose affine uses volregger ZYX rotation convention 0.000s
+  + provider affine roundtrip preserves a finite rigid pose 0.000s
+  + rigid pose stores typed translation and ZYX Euler rotation components 0.000s
+  + inverse composes back to identity 0.000s
+  + andThen follows provider application order 0.000s
+  + non-finite pose is rejected by smart constructor 0.000s
+[info] Passed: Total 78, Failed 0, Errors 0, Passed 78
+[success] Total time: 5 s, completed Sep 30, 2026, 12:49:15 a.m.
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/fmri-workflow/js/target/scala-3.7.4/scalafim-fmri-workflow-test-fastopt
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.compiler groups exact fMRIPrep entities into deterministic multi-run units 0.025s java.util.NoSuchElementException: None.get
+  + compiler accumulates missing header, metadata, and companion failures 0.001s
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.one-unit-per-run grouping preserves the run in unit identity 0.003s java.util.NoSuchElementException: None.get
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.mask policies distinguish common, intersected, and explicit artifacts 0.002s java.util.NoSuchElementException: None.get
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.compiler reports incompatible geometry and duplicate run identities 0.006s munit.ComparisonFailException: modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerSuite.scala:139
+138:      Some(CatalogIssueCause.Geometry(GeometryError.GridsNotCongruent(0.0)))
+139:    )
+140:
+values are not the same
+=> Obtained
+Some(
+  value = Geometry(
+    error = FrameMismatch(
+      expected = "scalafim-world:unresolved:c0834963a4fc1a7-11",
+      actual = "scalafim-world:unresolved:c0834963a4fc1a7-9"
+    )
+  )
+)
+=> Diff (- expected, + obtained)
+   value = Geometry(
+-    error = GridsNotCongruent(
+-      tolerance = 0
++    error = FrameMismatch(
++      expected = "scalafim-world:unresolved:c0834963a4fc1a7-11",
++      actual = "scalafim-world:unresolved:c0834963a4fc1a7-9"
+     )
+  + compiler preserves provider frame failures for mask geometry 0.002s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.002s
+==> X scalafim.fmri.workflow.BidsStudyCompilerSuite.participant-table coverage reports missing and duplicate subjects 0.001s munit.FailException: modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerSuite.scala:215 assertion failed
+214:      .get
+215:    assert(missing.issues.exists(_.code == CatalogIssueCode.MissingParticipant))
+216:
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.005s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.007s
+  + preflight accumulates independent structural errors without reading payloads 0.001s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.000s
+  + empty catalogs fail preflight before job construction 0.000s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.000s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.001s
+  + catalog construction rejects invalid run layout and duplicate units 0.000s
+  + group workflow validates terms and output formats stay open 0.001s
+[error] Failed: Total 19, Failed 5, Errors 0, Passed 14
+[error] Failed tests:
+[error] 	scalafim.fmri.workflow.BidsStudyCompilerSuite
+[error] (fmriWorkflowJS / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 4 s, completed Sep 30, 2026, 12:49:19 a.m.

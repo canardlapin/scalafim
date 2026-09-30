@@ -1,0 +1,53 @@
+{
+ "generator": "tools/transform/generate_ants_native_oracle.py",
+ "generated": "2026-09-30",
+ "kind": "native-oracle",
+ "tools": {
+  "ANTs": "ANTs Version: 2.6.5.dev1-gfdce4d2",
+  "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+  "image_digests": [
+   "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3"
+  ],
+  "nibabel": "5.4.2",
+  "h5py": "3.16.0",
+  "numpy": "2.5.3"
+ },
+ "python": "3.12.11",
+ "platform": "macOS-14.3-arm64-arm-64bit",
+ "commands": [
+  "antsRegistration --version",
+  "antsRegistration --dimensionality 3 --float 0 --output '[syn_,warped.nii.gz]' --interpolation Linear --write-composite-transform 1 --collapse-output-transforms 1 --transform 'SyN[0.1,3,0]' --metric 'CC[fixed.nii.gz,moving.nii.gz,1,2]' --convergence '[3,1e-6,2]' --shrink-factors 1 --smoothing-sigmas 0vox",
+  "antsApplyTransforms -d 3 -r fixed.nii.gz -o '[syn_0Warp.nii.gz,1]' -t syn_Composite.h5",
+  "antsApplyTransforms -d 3 -r moving.nii.gz -o '[syn_0InverseWarp.nii.gz,1]' -t syn_InverseComposite.h5",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o affine.points.csv -t affine.mat",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o euler.points.csv -t euler.mat",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o euler_zyx.points.csv -t euler_zyx.mat",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o versor_rigid.points.csv -t versor_rigid.mat",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o similarity.points.csv -t similarity.mat",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o scale_skew_versor.points.csv -t scale_skew_versor.mat",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o syn_0Warp.points.csv -t syn_0Warp.nii.gz",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o syn_0InverseWarp.points.csv -t syn_0InverseWarp.nii.gz",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o syn_Composite.points.csv -t syn_Composite.h5",
+  "antsApplyTransformsToPoints -d 3 -i queries.csv -o syn_InverseComposite.points.csv -t syn_InverseComposite.h5"
+ ],
+ "notes": "Synthetic SyN fixture producer (3 iterations; no registration-accuracy claim). Native ANTs 2.6 writes 5D vector-intent forward/inverse warp files and HDF5 Composite/InverseComposite. All expected coordinates are antsApplyTransformsToPoints LPS output at 12 asymmetric interior physical points. Linear .mat inputs are the already-qualified ITK parameterisation fixtures; their shear, centres and rotations break symmetry. Native field grids are oblique and anisotropic, without unsupported non-orthonormal direction cosines. HDF5 dumps are h5py decodes of the exact native files; JVM container tests bind them to shared interpretation tests.",
+ "sha256": {
+  "affine.mat": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41",
+  "euler.mat": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e",
+  "euler_zyx.mat": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611",
+  "fixed.nii.gz": "a943c1f2a73243dddd4d14468e60723d241737222040f25ad9c412b119334ba4",
+  "moving.nii.gz": "8d91c63cff27a7fa037b9fd34dd259194a69e9a6a7ce2bf5683b1a57b42104e1",
+  "native.log": "853d48b07391b5d51a7a83a266c02da36f20d21c954b326165607cdba0030a5d",
+  "points.tsv": "064bbf54b68d0ceb08944173b6832aae0d41e46a36e452a415699cd371b1b6df",
+  "queries.csv": "7fd3d4b797e739c9e2d744bd8299c94d255dda66168528d49d5f7110b01a0b49",
+  "scale_skew_versor.mat": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e",
+  "similarity.mat": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985",
+  "syn_0InverseWarp.nii.gz": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302",
+  "syn_0Warp.nii.gz": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+  "syn_Composite.components.txt": "021f3acd0cf5440973c4fc33b315c863644b0c50b1a161fa1dfbdcce619f2560",
+  "syn_Composite.h5": "134a9c45c3cd1a2a8805b4357f8cbdc89d2d6adf66ec27869c24c57182bad0f4",
+  "syn_InverseComposite.components.txt": "06a63af2fae61808e6bf72b4bc3ad2034bc6455a316f38b10aa230acd429b04a",
+  "syn_InverseComposite.h5": "b3e0591214f3d792a7be34b40bf61d78ae7affe0cef0b8864205ad33cfddf397",
+  "versor_rigid.mat": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f"
+ }
+}

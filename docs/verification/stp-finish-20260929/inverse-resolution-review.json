@@ -1,0 +1,35 @@
+{
+  "reviewer": "stp_inverse_gate_review",
+  "method": "Independent NumPy/SciPy reproduction from frozen NIfTI bytes with ITK lattice construction",
+  "input_sha256": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+  "norm": "Euclidean millimetres",
+  "original_reverse_probes": 962,
+  "diagnostics": [
+    {
+      "factor": 1,
+      "nodes": 1287,
+      "max": 0.02053173721,
+      "p99": 0.01675993182
+    },
+    {
+      "factor": 2,
+      "nodes": 8925,
+      "max": 0.015398551356,
+      "p99": 0.012676329352
+    },
+    {
+      "factor": 4,
+      "nodes": 66297,
+      "max": 0.007323561468,
+      "p99": 0.006267905328
+    }
+  ],
+  "diagnosis": "Inverse-cell preimages straddle original trilinear field knot planes at x7,y5,z9; direct solves recover original probes to 6.85e-11 mm. Original and half-spacing results reproduce Scala failures.",
+  "independent_cell_centres": {
+    "count": 960,
+    "half_max": 0.000163639462,
+    "quarter_max": 4.983201e-05
+  },
+  "decision": "Fixed factor4 representation justified for this fixture, same physical crop and gates; actual provider JVM+JS qualification recorded separately. No automatic refinement or query-time semantic correction.",
+  "limits": "Discrete independent diagnostics, not a continuous-domain error bound. Native pair closure is a separate characterization."
+}

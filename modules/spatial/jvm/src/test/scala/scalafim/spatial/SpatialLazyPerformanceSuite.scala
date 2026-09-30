@@ -1,6 +1,6 @@
 package scalafim.spatial
 
-import scalafim.image.world.SubjectId
+import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
 
 import com.sun.management.ThreadMXBean
 import scalafim.image.io.Nifti
@@ -56,6 +56,8 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
   private val observations = 20
   private val selectedRows = Vector(0, 16, 32, 48, 64, 80, 96, 112)
   private val selectedObservations = 5
+  private val fixtureWorld = WorldSpace.declare("spatial lazy benchmark fixture").fold(error => fail(error.message), identity)
+  private val fixtureEvidence = SpaceEvidence(assertion = Some(fixtureWorld))
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -136,11 +138,14 @@ class SpatialLazyPerformanceSuite extends munit.FunSuite:
     assert(receipt.checksum.isFinite)
 
   private def runBenchmark(path: Path): SpatialLazyBenchmarkReceipt =
-    val space = SampleSpaces(Vector(rows, 1, 1), affine = Some(ProviderAffines.identity))
+    val space =
+      SampleSpaces
+        .inWorld(SampleSpaces(Vector(rows, 1, 1), affine = Some(ProviderAffines.identity)), fixtureWorld)
+        .fold(error => fail(error.message), identity)
     val root = volumeDomain("native", space)
     val mid = volumeDomain("mid", space)
     val target = volumeDomain("target", space)
-    val source = spatialValue(NiftiFieldSource.prepare(path, root, observations, "benchmark-bold"))
+    val source = spatialValue(NiftiFieldSource.prepare(path, root, fixtureEvidence, observations, "benchmark-bold"))
     val field = spatialValue(Field.fromSource(root, source))
     given SpatialGraph = spatialValue(
       SpatialGraph.build(

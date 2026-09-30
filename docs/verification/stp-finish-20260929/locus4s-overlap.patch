@@ -1,0 +1,90 @@
+diff --git a/modules/locus4s-core/shared/src/main/scala/locus4s/Region.scala b/modules/locus4s-core/shared/src/main/scala/locus4s/Region.scala
+index 3ae90a9..d92173f 100644
+--- a/modules/locus4s-core/shared/src/main/scala/locus4s/Region.scala
++++ b/modules/locus4s-core/shared/src/main/scala/locus4s/Region.scala
+@@ -172,6 +172,30 @@ final class Region[S] private (
+           ordinal += 1
+         Region.fromSortedOwned(space, result)
+ 
++  /** Dice similarity, 2 |A intersect B| / (|A| + |B|).
++    * Two empty regions have similarity 1. Counts are widened before addition.
++    */
++  def dice(that: Region[S]): Double =
++    val denominator = cardinality.toDouble + that.cardinality.toDouble
++    if denominator == 0.0 then 1.0
++    else 2.0 * intersect(that).cardinality.toDouble / denominator
++
++  /** Jaccard similarity, |A intersect B| / |A union B|.
++    * Two empty regions have similarity 1. Counts are widened before addition.
++    */
++  def jaccard(that: Region[S]): Double =
++    val intersection = intersect(that).cardinality.toDouble
++    val union = cardinality.toDouble + that.cardinality.toDouble - intersection
++    if union == 0.0 then 1.0 else intersection / union
++
++  /** Dynamic-boundary Dice similarity; even empty regions require one live owner. */
++  def diceChecked[T](that: Region[T]): Either[SpaceMismatch, Double] =
++    checkedOperand(that).map(dice)
++
++  /** Dynamic-boundary Jaccard similarity; even empty regions require one live owner. */
++  def jaccardChecked[T](that: Region[T]): Either[SpaceMismatch, Double] =
++    checkedOperand(that).map(jaccard)
++
+   /** Checked dynamic-boundary union requiring one live owner. */
+   def unionChecked[T](
+       that: Region[T]
+diff --git a/modules/locus4s-core/shared/src/test/scala/locus4s/RegionOverlapSuite.scala b/modules/locus4s-core/shared/src/test/scala/locus4s/RegionOverlapSuite.scala
+new file mode 100644
+index 00000000..1ecf7a54
+--- /dev/null
++++ b/modules/locus4s-core/shared/src/test/scala/locus4s/RegionOverlapSuite.scala
+@@ -0,0 +1,49 @@
++package locus4s
++
++final class RegionOverlapSuite extends munit.FunSuite:
++  private def ok[E, A](result: Either[E, A]): A =
++    result.fold(error => fail(s"unexpected error: $error"), identity)
++
++  test("Dice and Jaccard match independent sets for every pair of subsets"):
++    val space = ok(FiniteDomain.ephemeral("four points", 4)).value
++    val subsets = (0 until 16).map(bits => (0 until 4).filter(i => (bits & (1 << i)) != 0).toSet)
++    for left <- subsets; right <- subsets do
++      val a = ok(Region.fromOrdinals(space, left.toVector))
++      val b = ok(Region.fromOrdinals(space, right.toVector))
++      val intersection = (left intersect right).size.toDouble
++      val total = left.size.toDouble + right.size.toDouble
++      val union = (left union right).size.toDouble
++      val expectedDice = if total == 0.0 then 1.0 else 2.0 * intersection / total
++      val expectedJaccard = if union == 0.0 then 1.0 else intersection / union
++      assertEqualsDouble(a.dice(b), expectedDice, 1e-15)
++      assertEqualsDouble(a.jaccard(b), expectedJaccard, 1e-15)
++      assertEqualsDouble(ok(a.diceChecked(b)), expectedDice, 1e-15)
++      assertEqualsDouble(ok(a.jaccardChecked(b)), expectedJaccard, 1e-15)
++      assertEqualsDouble(a.dice(b), b.dice(a), 1e-15)
++      assertEqualsDouble(a.jaccard(b), b.jaccard(a), 1e-15)
++
++  test("whole and empty regions at Int.MaxValue stay compact and cannot overflow"):
++    val space = ok(FiniteDomain.ephemeral("maximum domain", Int.MaxValue)).value
++    val whole = Region.whole(space)
++    val empty = Region.empty(space)
++    assertEqualsDouble(whole.dice(whole), 1.0, 0.0)
++    assertEqualsDouble(whole.jaccard(whole), 1.0, 0.0)
++    assertEqualsDouble(empty.dice(empty), 1.0, 0.0)
++    assertEqualsDouble(empty.jaccard(empty), 1.0, 0.0)
++    assertEqualsDouble(whole.dice(empty), 0.0, 0.0)
++    assertEqualsDouble(whole.jaccard(empty), 0.0, 0.0)
++
++  test("equal shapes and persistent identities do not bypass live-owner admission"):
++    val record = ok(DomainRecord.parse("shared", "domain", 4))
++    val left = ok(DomainRegistry.empty.restore(record)).space
++    val right = ok(DomainRegistry.empty.restore(record)).space
++    assert(left.samePersistentIdentityAs(right))
++    val a = ok(Region.fromOrdinals(left, Vector(0, 2)))
++    val b = ok(Region.fromOrdinals(right, Vector(0, 2)))
++    assert(a.diceChecked(b).isLeft)
++    assert(a.jaccardChecked(b).isLeft)
++    assert(Region.empty(left).diceChecked(Region.empty(right)).isLeft)
++    assert(Region.empty(left).jaccardChecked(Region.empty(right)).isLeft)
++    val aligned = b.rebind(ok(right.align(left)))
++    assertEqualsDouble(ok(a.diceChecked(aligned)), 1.0, 0.0)
++    assertEqualsDouble(ok(a.jaccardChecked(aligned)), 1.0, 0.0)

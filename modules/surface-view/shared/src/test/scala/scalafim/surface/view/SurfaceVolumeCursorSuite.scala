@@ -2,6 +2,7 @@ package scalafim.surface.view
 
 import image4s.geometry.{Affine, D3, Frame, Point}
 import reframe4s.lie.FramedAffine
+import scalafim.image.{GridSpec, SpatialDims, VoxelPoint}
 import scalafim.image.world.*
 import scalafim.surface.*
 
@@ -38,6 +39,28 @@ class SurfaceVolumeCursorSuite extends munit.FunSuite:
       None,
       "fMRIPrep composite without inverse warp"
     ))
+
+  test("guide: an MNI peak maps to subject voxels and a framed tkRAS surface through a pullback link"):
+    // Synthetic fixture: the MNI -> tkRAS pullback above maps this peak to (0.5, 10.5, 0.5).
+    val link = pullOnly
+    val peakInMni = ok(Point.in(mni)(-4.5, 13.5, -0.5))
+    val subjectVolume = ok(GridSpec.in(tkRas)(
+      SpatialDims(3, 4, 3),
+      affine(1, 0, 0, -0.5, 0, 1, 0, 8.5, 0, 0, 1, -0.5, 0, 0, 0, 1)
+    ))
+    val peakInSubject = ok(link.toLeft(peakInMni))
+    val voxel = ok(subjectVolume.voxelAt(peakInSubject))
+    assertEquals(voxel, VoxelPoint(1.0, 2.0, 1.0))
+
+    val cursor = ok(SurfaceVolumeCursor.make(surfaceId, white, link))
+    val hit = ok(cursor.toSurface(peakInMni, SurfaceLinkRadius.unsafe(2.0)))
+    assertEquals(hit.selection, SurfaceSelection(surfaceId, VertexId(2)))
+    close(hit.vertex, Vector(0.0, 10.0, 0.0))
+
+    assertEquals(
+      link.toRight(peakInSubject),
+      Left(WorldLinkError.DirectionUnavailable(LinkDirection.LeftToRight, "fMRIPrep composite without inverse warp"))
+    )
 
   test("a tkRAS surface links to an MNI volume through the pullback; the forward direction is a typed error"):
     val cursor = ok(SurfaceVolumeCursor.make(surfaceId, white, pullOnly))

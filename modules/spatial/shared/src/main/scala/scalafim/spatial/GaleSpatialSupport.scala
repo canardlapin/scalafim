@@ -2,7 +2,7 @@ package scalafim.spatial
 
 import gale.backend.Backend.given
 import gale.linalg.{DMat, DoubleLinearOperator, LinAlgError}
-import gale.sparse.{COO, CSR, Sparse, SparseEntryConsumer, SparseValuePolicy}
+import gale.sparse.{COO, CSR, CSRProductPlan, Sparse, SparseEntryConsumer, SparseValuePolicy}
 
 private[spatial] object GaleSpatialSupport:
   def matrixFromRows(rowsData: Seq[Seq[Double]]): DMat =
@@ -73,6 +73,10 @@ private[spatial] object GaleSpatialSupport:
       values: Array[Double]
   ): Either[LinAlgError, CSR] =
     sparseTriplets(rows, cols, rowIndices, colIndices, values).map(_.toCSR)
+
+  /** Delegate sparse numeric composition to Gale's analyzed CSR product. */
+  def product(left: CSR, right: CSR): Either[LinAlgError, CSR] =
+    CSRProductPlan.analyze(left.pattern, right.pattern).flatMap(_.evaluate(left, right))
 
 extension (matrix: DMat)
   private[spatial] def copyData: Array[Double] =

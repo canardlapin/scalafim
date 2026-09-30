@@ -7,6 +7,17 @@ import scalafim.atlas.syntax.*
 
 class AtlasCoverageSuite extends munit.FunSuite:
 
+  private val fixtureWorld = scalafim.image.world.WorldSpace.declare("atlas fixture shared world")
+    .fold(error => fail(error.message), identity)
+
+  private def fixtureSpace(
+      dims: Vector[Int],
+      origin: Option[Vector[Double]] = None,
+      affine: Option[image4s.geometry.Affine[image4s.geometry.D3]] = None
+  ): SomeSampleSpace =
+    SampleSpaces.inWorld(SampleSpaces(dims, origin = origin, affine = affine), fixtureWorld)
+      .fold(error => fail(error.message), identity)
+
   private def ref: VolumeAtlasRef =
     AtlasRef.volume(
       family = "toy",
@@ -26,12 +37,12 @@ class AtlasCoverageSuite extends munit.FunSuite:
 
   private def labelVolume(values: Vector[Int]): SomeLabelVolume[Int] =
     AtlasTestImages.labelVolume(
-      SampleSpaces(Vector(2, 2, 1)),
+      fixtureSpace(Vector(2, 2, 1)),
       PrimitiveBuffers.fromArray(values.toArray),
       "coverage"
     )
 
-  private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: SomeSampleSpace = SampleSpaces(Vector(2, 2, 1))): VolumeAtlas =
+  private def atlas(values: Vector[Int], regions: RegionIndex = twoRegionIndex, space: SomeSampleSpace = fixtureSpace(Vector(2, 2, 1))): VolumeAtlas =
     VolumeAtlas.fromLabelVolume(
       ref,
       regions,
@@ -247,7 +258,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assert(self.forall(o => math.abs(o.dice - 1.0) < 1e-12), clue = self.toString)
     assert(self.forall(o => math.abs(o.jaccard - 1.0) < 1e-12), clue = self.toString)
 
-    val mismatched = atlas(Vector(1, 2), space = SampleSpaces(Vector(2, 1, 1)))
+    val mismatched = atlas(Vector(1, 2), space = fixtureSpace(Vector(2, 1, 1)))
     val cause = GeometryError.GridsNotCongruent(0.0)
     AtlasOverlap.computeEither(a, mismatched, AtlasAlignment.Exact) match
       case Left(AtlasError.Geometry(GeometryError.GridsNotCongruent(tolerance))) =>
@@ -260,7 +271,7 @@ class AtlasCoverageSuite extends munit.FunSuite:
     assertEquals(err.getMessage, cause.message)
 
   test("adjacency connectivity is monotone from faces to corners"):
-    val space = SampleSpaces(Vector(2, 2, 2))
+    val space = fixtureSpace(Vector(2, 2, 2))
     val values = Vector(1, 0, 0, 0, 0, 0, 0, 2)
     val a = atlas(values, space = space)
 

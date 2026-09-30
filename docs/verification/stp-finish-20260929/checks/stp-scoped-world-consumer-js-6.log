@@ -1,0 +1,127 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/image-view/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/image-view/js/target/scala-3.7.4/scalafim-image-view-test-fastopt
+scalafim.image.view.ViewerCursorSuite:
+  + the cursor reads as a point of any owner of the reference frame's world 0.001s
+  + a typed point sets the cursor only when its frame is the reference frame 0.000s
+  + a point in another world reaches the cursor through a typed link 0.001s
+  + cursor actions and states cannot replay into an equally shaped different world 0.002s
+  + equivalent persistent frame owners remain valid and pick and scroll retain the reference owner 0.002s
+scalafim.image.view.ViewerSceneSuite:
+  + orthogonal compilation produces three named receipts and pure scene groups 0.007s
+  + panel fitting preserves physical slice aspect on a non-square device 0.001s
+  + orthogonal layouts support checked row and column arrangements 0.001s
+  + heterogeneous layers sample in world space and retain draw order 0.001s
+  + frames expose typed per-layer cursor readouts without backend knowledge 0.001s
+  + crosshairs and orientation labels are explicit removable decorations 0.002s
+  + left-right convention changes labels and raster orientation together 0.002s
+  + viewer models reject empty and duplicate layer sets 0.000s
+scalafim.image.view.AdvancedViewSuite:
+  + lazy frame sources load only requested timepoints and report failures 0.006s
+  + lazy frame sources preserve exact provider grid failures 0.001s
+  + temporal models reject implicit one-frame sources but accept explicit invariants 0.001s
+  + cache profiles separate sampling colorization and plane-specific redraw work 0.007s
+  + nonlinear pullback layers sample reference grids in their own source coordinates 0.004s
+  + cache reuse preserves left-right convention and asymmetric raster orientation 0.002s
+  + linked view policies synchronize only declared state 0.001s
+scalafim.image.view.ColorizerSuite:
+  + display windows validate and scalar colors clamp predictably 0.000s
+  + threshold bands hide only their strict interior and disable explicitly 0.000s
+  + ramps interpolate every RGBA channel 0.000s
+  + ramp hot path is bit-exact against independently checked channel interpolation 0.000s
+  + label and mask colorizers keep missing data transparent by default 0.000s
+  + layer identifiers and opacities reject invalid states 0.000s
+scalafim.image.view.LayerAlignmentSuite:
+  + layers carry their own frame and a checked alignment to the reference 0.001s
+  + a world-aligned layer in another world is rejected 0.000s
+  + two subjects' native volumes are different worlds and do not overlay without a transform 0.001s
+  + a pullback layer must map the reference frame to its own frame 0.000s
+scalafim.image.view.InteractionSuite:
+  + centered state derives its cursor and steps from reference geometry 0.000s
+  + panel picking is an exact root-npc to world-space roundtrip 0.001s
+  + scrolling follows positive anatomical normals independent of display mirroring 0.000s
+  + zoomed panel views preserve inverse picking and stay plane-local 0.001s
+  + window threshold opacity and visibility actions alter presentation without mutating layers 0.002s
+  + timepoint actions drive temporal layers while static overlays persist 0.002s
+  + models reject temporal layers with incompatible frame counts 0.000s
+  + resize changes only device layout and reduction is deterministic 0.001s
+[info] Passed: Total 38, Failed 0, Errors 0, Passed 38
+[success] Total time: 8 s, completed Sep 30, 2026, 1:05:44 a.m.
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/image-view-canvas/js/target/scala-3.7.4/scalafim-image-view-canvas-test-fastopt
+scalafim.image.view.canvas.CanvasViewerHostSuite:
+  + model edits retain controller state and unchanged runtime cache entries 0.012s
+  + Canvas host compiles viewer scenes through the existing backend 0.002s
+  + Canvas-relative pointer and wheel input become pure viewer actions 0.001s
+  + application controller owns state snapshots bindings and lifecycle 0.005s
+  + scroll bursts coalesce and adjacent prefetch removes visible sampling work 0.003s
+  + cancel or controller close suppresses pending scroll callbacks 0.001s
+  + runtime preserves viewer rasters and Canvas uploads across redraws 0.003s
+  + dispose closes the controller, empties both caches, and closes tracked bitmaps 0.001s
+[info] Passed: Total 8, Failed 0, Errors 0, Passed 8
+[success] Total time: 3 s, completed Sep 30, 2026, 1:05:47 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/fmri-workflow/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-finish-20260929/candidate/modules/fmri-workflow/js/target/scala-3.7.4/scalafim-fmri-workflow-test-fastopt
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.019s
+  + compiler accumulates missing header, metadata, and companion failures 0.001s
+  + one-unit-per-run grouping preserves the run in unit identity 0.003s
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.006s
+  + compiler reports incompatible geometry and duplicate run identities 0.003s
+  + compiler preserves provider frame failures for mask geometry 0.001s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.001s
+  + participant-table coverage reports missing and duplicate subjects 0.001s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.004s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.001s
+  + catalog construction rejects invalid run layout and duplicate units 0.002s
+  + group workflow validates terms and output formats stay open 0.001s
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.002s
+  + preflight accumulates independent structural errors without reading payloads 0.001s
+  + one-unit-per-subject policy rejects repeated session units 0.000s
+  + first-level-only plans compile with an explicit warning 0.000s
+  + empty catalogs fail preflight before job construction 0.000s
+[info] Passed: Total 19, Failed 0, Errors 0, Passed 19
+[success] Total time: 4 s, completed Sep 30, 2026, 1:05:51 a.m.

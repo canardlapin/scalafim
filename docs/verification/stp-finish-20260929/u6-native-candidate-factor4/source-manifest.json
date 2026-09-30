@@ -1,0 +1,62 @@
+[
+  {
+    "path": "modules/transform/shared/src/main/scala/scalafim/transform/field/FnirtCoefficients.scala",
+    "sha256": "71b812f66bb4cf3a18ca419dd3e8e9165fcbdafda3cb7956e1fbd339aed09b50"
+  },
+  {
+    "path": "modules/transform/shared/src/test/scala/scalafim/transform/NativeInverseOracleSuite.scala",
+    "sha256": "03ca1a2eb4c823df74a08b921520ad17171510e2bb983eb3ecda8b36e22ddbf2"
+  },
+  {
+    "path": "native_inverse_coordinates/ants_inverse_nodes.tsv",
+    "sha256": "e5e94c928c6371183b96bd3ed511e21731d48aadc818e3d15914654959ecdab5"
+  },
+  {
+    "path": "native_inverse_coordinates/ants_inverse_off_nodes.tsv",
+    "sha256": "cabd37015e8d287ac397a230c279c0257299514f39ed9707c01f722147817523"
+  },
+  {
+    "path": "native_inverse_coordinates/fsl_inverse_nodes.tsv",
+    "sha256": "04d19f7d73ae1bb93c7d1d597ce71f906b51a9fc55cae59a95b4244691b94025"
+  },
+  {
+    "path": "native_inverse_coordinates/fsl_inverse_off_nodes.tsv",
+    "sha256": "2a207254da56d0f2d2e953090764fc129d9dd6cc0eec2772a8a4ff68971e0d39"
+  },
+  {
+    "path": "native_inverse_coordinates/manifest.json",
+    "sha256": "d685399476e2a383307510e5d8950c2b938852276703647d9c1486ed14139ef7"
+  },
+  {
+    "path": "native_inverse_coordinates/metadata.json",
+    "sha256": "a32a68b6d47901d40899d131326454fda0a3da151e16479fd9c72d03c327a6d4"
+  },
+  {
+    "path": "tools/transform/generate_native_inverse_coordinate_oracles.py",
+    "sha256": "25c27272715578b062e305314974f3552f7230df7bf1da75a5a0c77580d9c2c8"
+  },
+  {
+    "path": "u6-native-factor4-final-jvm-js.log",
+    "sha256": "62269f05d9b64b63cd4150e2f48683c35a1d49cafefbb1b65335ebffb6ad2cab"
+  },
+  {
+    "path": "u6-native-factor4-final-jvm-js.log.meta.json",
+    "sha256": "d82fe234ab1975eb782abc24f12e72881bb3e77306bfb6868fb01b0de2480f2d"
+  },
+  {
+    "path": "u6-native-factor4-jvm-js.log",
+    "sha256": "9a66e405c9b156dbd96f57db08458f8c8f414c234baf20fe9d8240cdef6ac9f7"
+  },
+  {
+    "path": "u6-native-factor4-jvm-js.log.meta.json",
+    "sha256": "4a466de1def8d809640cf1c7b004c25185d80717f2c6ec0b7efaf65b7d901960"
+  },
+  {
+    "path": "u6-native-factor4-probes-jvm-js.log",
+    "sha256": "d11420cc1749b4d14c5898f798a41030a00d8bc5b72f379de887a8fb31773ed3"
+  },
+  {
+    "path": "u6-native-factor4-probes-jvm-js.log.meta.json",
+    "sha256": "81bc971e7227bd049bb6507535daa836352fea6d4b08dfccd74ff1e8bfad81bb"
+  }
+]

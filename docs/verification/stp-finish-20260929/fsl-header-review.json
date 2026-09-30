@@ -1,0 +1,17 @@
+{
+  "verdict": "content-bound acceptance",
+  "reviewer": "stp_inverse_gate_review",
+  "scope": "FSL strict header admission and fixed native controls",
+  "source_sha256_prefixes": {
+    "ToolCoordinates.scala": "819909af7350",
+    "SpaceError.scala": "cb9a53ccb2a6",
+    "Flirt.scala": "56c80583d529",
+    "Fsl6NativeOracleSuite.scala": "95aae2e08495"
+  },
+  "checks": "All 11 native control hashes independently verified; default strict, no-form radiological, explicit compatibility limited to historical tests. Both-platform consumer tests and warning-clean compile subsequently passed. Suite title then corrected to say ScalaFIM rejects conflicting headers.",
+  "limits": [
+    "Private final class removes case-class copy/extractor/structural equality APIs.",
+    "Compatibility policy is explicit at construction; geometry type alone does not certify strict admission.",
+    "Native conflicting-header fallback is negative evidence, not qualification."
+  ]
+}

@@ -1,0 +1,372 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-finish-20260929/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-finish-20260929/candidate/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/fmri-workflow/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.workflow.AnalysisPlanSuite:
+  + compile produces deterministic subject and group jobs from pure descriptors 0.163s
+  + preflight accumulates independent structural errors without reading payloads 0.005s
+  + one-unit-per-subject policy rejects repeated session units 0.001s
+  + first-level-only plans compile with an explicit warning 0.001s
+  + empty catalogs fail preflight before job construction 0.001s
+scalafim.fmri.workflow.WorkflowTypesSuite:
+  + workflow identifiers and artifact locations validate at construction 0.001s
+  + contrast recipes reject degenerate rows and lower to fit contrasts 0.005s
+  + catalog construction rejects invalid run layout and duplicate units 0.001s
+  + group workflow validates terms and output formats stay open 0.001s
+scalafim.fmri.workflow.FirstLevelUnitSourceSuite:
+  + unit source opens run references lazily and applies the exact mask intersection 0.109s
+  + unit source preserves provider geometry failure beyond the admitted tolerance 0.003s
+scalafim.fmri.workflow.BidsStudyCompilerSuite:
+  + compiler groups exact fMRIPrep entities into deterministic multi-run units 0.044s
+  + compiler accumulates missing header, metadata, and companion failures 0.003s
+  + one-unit-per-run grouping preserves the run in unit identity 0.003s
+  + confound-free recipes ignore ambiguous confound tables 0.003s
+  + mask policies distinguish common, intersected, and explicit artifacts 0.007s
+  + compiler reports incompatible geometry and duplicate run identities 0.005s
+  + compiler preserves provider frame failures for mask geometry 0.001s
+  + catalog reports empty matches, missing entities, and invalid unit identities 0.003s
+  + participant-table coverage reports missing and duplicate subjects 0.004s
+  + checked compilation preserves deterministic BIDS diagnostics and valid legacy parity 0.024s
+scalafim.fmri.workflow.WorkflowIngestAcceptanceSuite:
+  + header-first catalog opens mixed-byte multi-run BOLD lazily with compressed staging 0.031s
+scalafim.fmri.workflow.BidsStudyCompilerJvmSuite:
+  + JVM compiler reads headers only for a multi-subject multi-run fMRIPrep project 0.019s
+[info] Passed: Total 23, Failed 0, Errors 0, Passed 23
+[success] Total time: 6 s, completed Sep 29, 2026, 10:24:11 p.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/motion/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 15 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/motion/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.motion.MotionEstimatorSuite:
+  + rigid estimator keeps identical frames near zero motion 0.046s
+  + middle reference is anchored and traversal estimates both directions 0.011s
+  + rigid estimator recovers a one-voxel positive x translation 0.003s
+  + rigid estimator recovers a small positive z rotation 0.01s
+  + rotational capture seeds recover a large yaw before optimizer iterations 0.003s
+  + robust template refresh resists a high-cost outlier frame 0.018s
+  + parallel frame execution preserves deterministic refreshed estimates where supported 0.021s
+  + rigid spline estimator layers smoothing over the rigid estimate 0.022s
+  + enabled pyramid schedule refines on the finest level 0.004s
+  + low-motion pose shrink scales only subthreshold estimates 0.025s
+  + temporal regularization smooths an isolated pose while preserving reference 0.024s
+  + enabled temporal regularization is executable 0.002s
+  + frame-mean nuisance residual removes global intensity offsets 0.001s
+  + frame-mean whitening policy uses the same nuisance residual path 0.002s
+  + IC stencil policy is deterministic and changes the sampled objective 0.004s
+  + IC stencil profile is executable but full IC whitening is a typed unsupported control 0.003s
+  + estimator reports invalid references, non-finite runs, and empty masks as typed errors 0.001s
+scalafim.fmri.motion.MotionMetricsSuite:
+  + framewise displacement matches volregger convention 0.001s
+  + DVARS computes temporal RMS differences 0.002s
+  + robust DVARS clips values above three times the finite median 0.001s
+  + DVARS policy replaces robust Boolean for typed pair metrics 0.0s
+  + transform displacement for pure translation equals translation length 0.001s
+  + masked displacement summary uses spatial mask coordinates 0.001s
+  + mask shape mismatch is a typed error 0.001s
+scalafim.fmri.motion.io.MotionIoSuite:
+  + NIfTI adapter reads 4D runs and 3D masks through existing image IO 0.048s
+  + NIfTI metadata adapter roundtrips affine, voxel size, TR, and slice timing 0.008s
+  + NIfTI metadata adapter reports invalid sidecars 0.002s
+  + BIDS adapter discovers raw scans with TR and slice timing sidecars 0.11s
+  + BIDS adapter rejects structurally invalid project identities 0.015s
+  + report writer serializes motion, matrices, and summary bundle 0.02s
+  + CLI parser returns typed commands and rejects malformed flags 0.005s
+  + CLI runner executes estimate, apply, run, and report commands 0.031s
+scalafim.fmri.motion.VolreggerResourceSuite:
+  + generated volregger resource matches shared fixture mirror 0.008s
+scalafim.fmri.motion.RigidPoseSuite:
+  + identity pose converts to the provider identity affine 0.0s
+  + pose affine uses volregger ZYX rotation convention 0.0s
+  + provider affine roundtrip preserves a finite rigid pose 0.0s
+  + rigid pose stores typed translation and ZYX Euler rotation components 0.001s
+  + inverse composes back to identity 0.0s
+  + andThen follows provider application order 0.001s
+  + non-finite pose is rejected by smart constructor 0.0s
+scalafim.fmri.motion.MotionApiShapeSuite:
+  + slice and packet timing are validated typed acquisition descriptions 0.003s
+  + typed plan surfaces support apply timing and platform execution boundaries 0.001s
+  + motion profiles expose typed active and planned capabilities 0.002s
+  + motion correction result bundles estimate, corrected run, QC, and controls 0.002s
+scalafim.fmri.motion.benchmark.MotionBenchmarkSuite:
+  + synthetic benchmark harness records required finite metrics 0.067s
+  + benchmark report writer emits raw, check, and markdown summaries 0.051s
+  + external benchmark validator requires volregger guardrail columns 0.002s
+  + CLI smoke profile writes reproducible benchmark files 0.034s
+scalafim.fmri.motion.MotionControlSuite:
+  + pyramid control validates schedule lengths when enabled 0.0s
+  + apply control rejects negative zpad 0.0s
+  + temporal shrink controls validate shrink range and threshold 0.001s
+  + capture and temporal controls expose typed policies with Boolean adapters 0.0s
+  + execution control validates requested worker counts 0.0s
+  + platform frame mapper preserves deterministic input order 0.001s
+  + residual control exposes frame-mean nuisance policy 0.0s
+  + IC stencil and whitening controls validate typed parameters 0.001s
+  + fast fMRI profile selects rigid robust engine and component tags 0.001s
+  + slice spline profile selects spline engine 0.0s
+  + IC profile is executable while full IC whitening remains an explicit planned profile 0.001s
+scalafim.fmri.motion.MotionSplineSuite:
+  + pose smoothing matches generated volregger spline fixture 0.001s
+  + pose interpolation clamps to valid frame span 0.0s
+  + packet correction magnitude is zero for all-zero offsets and positive for staggered offsets 0.003s
+scalafim.fmri.motion.MotionTraceSuite:
+  + motion trace must be non-empty 0.001s
+  + identity trace has requested length 0.0s
+  + motion trace exposes frame-aligned pose storage 0.0s
+  + frame access validates bounds 0.0s
+scalafim.fmri.motion.VolreggerParitySuite:
+  + generated core fixture records volregger provenance 0.0s
+  + pose matrix and inverse match volregger homogeneous transform convention 0.001s
+  + framewise displacement matches generated volregger fixture 0.0s
+  + raw and robust DVARS match generated volregger fixtures 0.0s
+  + radius and masked displacement summaries match generated volregger fixtures 0.001s
+  + linear apply padding matches generated volregger fixture 0.001s
+  + identity estimator fixture matches generated volregger zero-motion contract 0.002s
+  + translation estimator fixture matches generated volregger recovery contract 0.003s
+  + spline and packet fixture anchors volregger smoothing and packet offsets 0.0s
+  + IC, whitening, spline, and parallel profile fixtures expose volregger contracts 0.001s
+  + CLI, report, and benchmark fixture metadata captures downstream artifact contracts 0.001s
+scalafim.fmri.motion.MotionApplierSuite:
+  + identity motion application is one-pass and preserves data 0.001s
+  + positive moving-to-fixed translation pulls fixed voxels from lower source indices 0.001s
+  + negative translation with clamp padding samples high edge repeatedly 0.0s
+  + zero padding returns zero outside the source field 0.0s
+  + all-zero slice timing is byte-identical to volume application 0.001s
+  + nonzero slice timing interpolates packet poses during final application 0.001s
+  + motion application validates trace length 0.001s
+  + motion application validates acquisition timing against z dimension 0.0s
+scalafim.fmri.motion.MotionQcSuite:
+  + MotionQc combines FD, DVARS, cost drop, and censor flags 0.001s
+  + MotionQc records missing fit-cost traces explicitly 0.001s
+  + MotionQc rejects incomplete fit-cost traces 0.0s
+  + MotionQc records packet correction magnitudes when supplied 0.001s
+  + MotionQc applies typed thresholds and censor policy 0.0s
+  + MotionQc validates trace length 0.001s
+[info] Passed: Total 91, Failed 0, Errors 0, Passed 91
+[success] Total time: 7 s, completed Sep 29, 2026, 10:24:18 p.m.
+[info] compiling 29 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 18 Scala sources to /private/tmp/scalafim-stp-finish-20260929/candidate/modules/atlas/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.atlas.SurfaceAtlasSuite:
+  + SurfaceAtlas wraps bilateral labeled surfaces with typed region lookup 0.054s
+  + SurfaceAtlas validates geometry hemispheres 0.0s
+  + SurfaceAtlas requires non-zero payload labels and region ids to match 0.003s
+  + SurfaceAtlas rejects unused label-table ids 0.001s
+  + SurfaceAtlas requires lateral hemisphere access and exposes label metadata 0.001s
+  + SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere 0.061s
+scalafim.atlas.io.SurfaceGiftiAtlasLoaderSuite:
+  + loadFromPathsEither builds a bilateral SurfaceAtlas from GIFTI label payloads 0.055s
+  + loadFromPathsEither supports sparse NODE_INDEX label payloads 0.006s
+  + loadFromPathsEither rejects payload labels missing from the GIFTI LabelTable 0.004s
+scalafim.atlas.AtlasParityCorpusSuite:
+  + parity fixture preserves non-contiguous atlas ids and metadata 0.042s
+  + query and parcel reduction match neuroatlas parity fixture 0.006s
+  + parcel-series reduction keeps non-contiguous ids in parcel order 0.012s
+  + parcel-series reduction writes NaN when the mask misses the atlas 0.001s
+  + overlap corpus matches Dice and Jaccard golden values 0.012s
+  + fixture rejects duplicate metadata ids and unknown payload labels 0.002s
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+numerical inverse on MNI152NLin6Asym res-01: 89.7 s; ItkHdf5 /Users/bbuchsbaum/.cache/templateflow/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5 then materialized on a 193x229x193 lattice (8530021 covered) then numerical inverse on a 182x218x182 lattice (coverage 1.0000, max residual forward 1.00e-08 mm, reverse 0.139 mm)
+forward map vs ITK fixed-point inverse: max 1.04e-02 mm; round trip max 1.02e-02 mm
+scalafim.atlas.io.MniTemplateBridgeFilesSuite:
+  + the committed oracle matches its manifest and pins the inspected composites 0.003s
+  + the image evidence backs each composite's measured direction 0.001s
+  + the composite pulls MNI152NLin2009cAsym points to MNI152NLin6Asym exactly as ITK TransformPoint does 2.976s
+  + resampling 6Asym data onto a 2009c grid samples it through the composite 0.115s
+  + installed in the manifest, 6Asym -> 2009c is available and pulls 2009c points; it pushes nothing 0.051s
+  + TemplateFlow's reverse composite is refused with its measured direction 0.154s
+  + in ITK's own numbers, TemplateFlow's reverse composite moves 2009c points like the forward one, not back 0.001s
+  + a qualified numerical inverse gives the forward map and an executable reverse route 89.74s
+scalafim.atlas.io.AtlasIoSuite:
+  + FileAtlasStore resolves cached downloads and validates minBytes 0.005s
+  + FileAtlasStore validates SHA-256 on downloaded assets 0.004s
+  + FileAtlasStore refreshes stale cached assets and replaces cache on refresh 0.004s
+  + AtlasAsset validates metadata fields 0.001s
+  + AtlasLabelMaps converts finite integer-valued volumes 0.003s
+  + AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback 0.0s
+  + SchaeferLoader parses CBIG LUT rows into typed regions 0.018s
+==> X scalafim.atlas.io.AtlasIoSuite.SchaeferLoader load resolves assets through supplied store without downloads  0.051s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152NLin6Asym vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.SchaeferLoader$.loadFromPaths(SchaeferLoader.scala:46)
+    at scalafim.atlas.io.SchaeferLoader$.load(SchaeferLoader.scala:43)
+    at scalafim.atlas.io.AtlasIoSuite.$init$$$anonfun$8(AtlasIoSuite.scala:202)
+  + GlasserLoader parses node labels with hemisphere metadata 0.005s
+  + GlasserLoader descriptors cover all volume asset variants and unknown hemispheres 0.001s
+==> X scalafim.atlas.io.AtlasIoSuite.AsegLoader load resolves default asset through supplied store without downloads  0.004s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152NLin6Asym vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.AsegLoader$.loadFromPaths(AsegLoader.scala:38)
+    at scalafim.atlas.io.AsegLoader$.load(AsegLoader.scala:35)
+    at scalafim.atlas.io.AtlasIoSuite.$init$$$anonfun$11(AtlasIoSuite.scala:268)
+==> X scalafim.atlas.io.AtlasIoSuite.GlasserLoader load resolves assets through supplied store without downloads  0.002s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152_unspecified vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.GlasserLoader$.loadFromPaths(GlasserLoader.scala:53)
+    at scalafim.atlas.io.GlasserLoader$.load(GlasserLoader.scala:50)
+    at scalafim.atlas.io.AtlasIoSuite.$init$$$anonfun$12(AtlasIoSuite.scala:295)
+  + AtlasProvenanceFiles attaches local paths and digests by artifact role 0.001s
+  + AtlasLabelMaps builds VolumeAtlas from label volume and regions 0.002s
+==> X scalafim.atlas.io.AtlasIoSuite.SchaeferLoader loadFromPaths reads a synthetic NIfTI fixture and filters absent LUT rows  0.001s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152NLin6Asym vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.SchaeferLoader$.loadFromPaths(SchaeferLoader.scala:46)
+    at scalafim.atlas.io.AtlasIoSuite.$init$$$anonfun$15(AtlasIoSuite.scala:384)
+==> X scalafim.atlas.io.AtlasIoSuite.GlasserLoader loadFromPaths reads a synthetic NIfTI fixture and keeps present labels only  0.001s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152NLin2009cAsym vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.GlasserLoader$.loadFromPaths(GlasserLoader.scala:53)
+    at scalafim.atlas.io.AtlasIoSuite.$init$$$anonfun$16(AtlasIoSuite.scala:412)
+scalafim.atlas.AtlasProvenanceSuite:
+  + AtlasRef converts to typed provenance with source artifacts, support, labels, and citations 0.001s
+  + standard atlas provenance infers release metadata and readable summaries 0.005s
+  + descriptor-only provenance is explicit and validation reports audit gaps 0.003s
+  + loaded provenance records label filtering decisions 0.0s
+  + license and voxel-size helpers round-trip legacy metadata 0.002s
+  + source artifacts preserve restricted licenses and SHA digests in legacy export 0.0s
+  + strict provenance validation flags missing source accounting 0.001s
+scalafim.atlas.AtlasRealizationSuite:
+  + volume realization retains one direct partial surjection 0.017s
+  + equal-size reordered and foreign parcel identities fail exact alignment 0.004s
+  + retargeting a reordered parcel owner requires a certified bijection 0.002s
+  + a volume realization rejects an image from a different live grid owner 0.002s
+  + volume and bilateral surface share exact parcel identity 0.002s
+scalafim.atlas.AtlasQuotientSuite:
+  + volume atlases expose exact fibers, parcel metadata, and display order 0.001s
+  + metadata changes do not change extensional region identity 0.001s
+  + network regions are fibers of the composed realization 0.001s
+  + partial network annotations do not claim a total surjection 0.001s
+  + surface atlases expose the same bilateral realization operations 0.001s
+  + overlap requires exact grids unless alignment is explicitly requested 0.003s
+  + one-pass standard reducers retain NaN and non-contiguous id semantics 0.001s
+scalafim.atlas.AtlasCoreSuite:
+  + Point3D is an atlas alias for image SpatialPoint 0.001s
+  + registry resolves standard atlas aliases 0.001s
+  + space transform plans include direct, identity, two-hop, and planned routes 0.011s
+  + executable affine routes follow provider andThen order 0.0s
+  + VolumeAtlas validates region ids and supports metadata subset 0.003s
+  + query exact and radius lookups return atlas metadata 0.003s
+  + reduceVolume and reduceVec summarize parcel data 0.003s
+  + reduceVec preserves all parcels and writes NaN for parcels outside mask 0.001s
+  + overlap and adjacency compute region relationships 0.006s
+scalafim.atlas.io.AsegLoaderSuite:
+  + FreeSurferAseg descriptor exposes canonical atlas reference 0.0s
+  + AsegLoader built-in label rows match neuroatlas ASEG metadata 0.001s
+  + AsegLoader parses FreeSurfer color LUT rows 0.001s
+==> X scalafim.atlas.io.AsegLoaderSuite.AsegLoader loadFromPaths reads NIfTI labels and filters absent rows  0.001s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152NLin6Asym vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.AsegLoader$.loadFromPaths(AsegLoader.scala:38)
+    at scalafim.atlas.io.AsegLoaderSuite.$init$$$anonfun$4(AsegLoaderSuite.scala:60)
+scalafim.atlas.MniTemplateBridgeSuite:
+  + only the inspected TemplateFlow composite is admitted, by the SHA-256 of its bytes 0.001s
+  + the admitted digest must still hold an affine and a field on the 2009c res-01 lattice 0.0s
+  + the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01 0.001s
+  + stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids 0.002s
+  + a dense warp without a forward map is pullback-executable only 0.011s
+  + a supplied inverse makes the warp push points and admits routing through its inverse 0.021s
+  + the standard manifest names the real TemplateFlow file and why the reverse step is planned 0.0s
+scalafim.atlas.AtlasPublicationSuite:
+  + Schaefer variants define exact ordered parcel identity 0.002s
+  + volume support identity includes the exact grid 0.002s
+  + surface support identity includes ordered topology but not coordinates 0.001s
+  + bilateral publication retains one quotient and explicit empty fibers 0.001s
+  + foreign-producer v1 fixture matches fixed domain and assignment bytes 0.002s
+  + publication admission recomputes fingerprints and identity preimages 0.001s
+  + publication admission rejects malformed support and assignments 0.001s
+  + checked constructors preserve typed invalid-payload failures 0.002s
+scalafim.atlas.GraphDifferentialSuite:
+  + region contact counts match an independent full-neighborhood oracle 0.002s
+  + region adjacency lowers to canonical graph topology without changing the atlas API 0.108s
+  + optimized contacts have exactly the relational quotient adjacency 0.007s
+scalafim.atlas.io.BrainnetomeLoaderSuite:
+  + Brainnetome246 descriptor exposes canonical atlas reference 0.003s
+  + BrainnetomeLoader parses LUT and Yeo network metadata 0.005s
+  + BrainnetomeLoader parses LUT without network table and tolerates unknown networks 0.002s
+==> X scalafim.atlas.io.BrainnetomeLoaderSuite.BrainnetomeLoader load resolves all assets through supplied store without downloads  0.002s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152 vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.BrainnetomeLoader$.loadFromPaths(BrainnetomeLoader.scala:47)
+    at scalafim.atlas.io.BrainnetomeLoader$.load(BrainnetomeLoader.scala:39)
+    at scalafim.atlas.io.BrainnetomeLoaderSuite.$init$$$anonfun$4(BrainnetomeLoaderSuite.scala:119)
+==> X scalafim.atlas.io.BrainnetomeLoaderSuite.BrainnetomeLoader loadFromPaths reads NIfTI labels and filters absent rows  0.001s java.lang.IllegalArgumentException: conflicting world-space evidence: template space MNI152 vs NIFTI_XFORM_SCANNER_ANAT
+    at scalafim.atlas.io.AtlasLabelMaps$.$anonfun$1(AtlasLabelMaps.scala:22)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.atlas.io.AtlasLabelMaps$.readIntVolume(AtlasLabelMaps.scala:23)
+    at scalafim.atlas.io.BrainnetomeLoader$.loadFromPaths(BrainnetomeLoader.scala:47)
+    at scalafim.atlas.io.BrainnetomeLoaderSuite.$init$$$anonfun$5(BrainnetomeLoaderSuite.scala:158)
+scalafim.atlas.SpaceTransformGraphSuite:
+  + the standard manifest populates one spatial graph over unsampled template domains 0.001s
+  + the internal affine route matches FreeSurfer mni152.register.dat 0.001s
+  + TemplateFlow warps stay planned and typed non-executable until an asset implements them 0.002s
+  + assets on frames outside the catalog are rejected when the graph is built 0.003s
+  + routes fall back to exact inverses only when no forward route exists 0.001s
+  + available steps without provider maps are planned but not executable 0.001s
+  + grid pullbacks come from fused affine routes, including inverse steps 0.002s
+  + grid pullbacks reject grids outside the route's endpoint worlds 0.0s
+  + an identity route over an uncatalogued space plans, but has no world for grid pullbacks 0.001s
+scalafim.atlas.AtlasCoverageSuite:
+  + registry normalizes aliases and reports unknown ids with available atlases 0.001s
+  + region index normalizes labels, filters hemispheres, and rejects duplicate ids 0.004s
+  + volume atlas construction rejects unknown and absent payload labels 0.001s
+  + space transforms expose no-route and non-affine execution limits 0.001s
+  + parcel data preserves atlas order and rejects invalid record contracts 0.003s
+  + reducers define NaN handling and volume reductions match grouped oracle sums 0.002s
+  + vector reduction syntax overloads respect custom reducers and masks 0.0s
+  + overlap is symmetric by atlas order and self-overlap is identity 0.003s
+  + adjacency connectivity is monotone from faces to corners 0.0s
+  + query contracts cover exact lookup, invalid radii, and transform failures 0.002s
+  + atlas error messages and provenance helper aliases remain explicit 0.001s
+[error] Failed: Total 114, Failed 8, Errors 0, Passed 106
+[error] Failed tests:
+[error] 	scalafim.atlas.io.AtlasIoSuite
+[error] 	scalafim.atlas.io.AsegLoaderSuite
+[error] 	scalafim.atlas.io.BrainnetomeLoaderSuite
+[error] (atlasJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 100 s (0:01:40.0), completed Sep 29, 2026, 10:25:58 p.m.

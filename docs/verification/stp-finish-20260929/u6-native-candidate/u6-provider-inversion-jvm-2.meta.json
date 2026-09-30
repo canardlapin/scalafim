@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T03:40:53.799221+00:00",
+  "finished_utc": "2026-09-30T03:41:22.009240+00:00",
+  "duration_seconds": 28.211082,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "reframe4s-fieldJVM/testOnly reframe4s.field.LatticeRoundoffSuite reframe4s.field.NumericalInversionSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-finish-20260929/u6-native-provider",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/u6-provider-inversion-jvm-2",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 3082
+}

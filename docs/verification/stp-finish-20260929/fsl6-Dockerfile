@@ -1,0 +1,11 @@
+FROM mambaorg/micromamba@sha256:0d1b4789ca6835e0c9d0b65194735053388555a76afc92c7abace8725119c665
+
+USER root
+RUN micromamba create -y -p /opt/fsl6 \
+      -c https://fsl.fmrib.ox.ac.uk/fsldownloads/fslconda/public/ \
+      -c conda-forge \
+      fsl-flirt fsl-fnirt fsl-warpfns fsl-fugue \
+ && micromamba clean --all --yes
+
+ENV FSLDIR=/opt/fsl6
+ENV PATH=/opt/fsl6/bin:${PATH}

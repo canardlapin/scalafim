@@ -1,6 +1,6 @@
 package scalafim.spatial.io
 
-import scalafim.image.world.SubjectId
+import scalafim.image.world.{SpaceEvidence, SubjectId, WorldSpace}
 
 import scalafim.image.io.Nifti
 import scalafim.image.{SampleSpaces, PrimitiveBuffers, SomeSampleSpace, SomeScalarSeries}
@@ -11,6 +11,9 @@ import scalafim.spatial.*
 import java.nio.file.{Files, Path}
 
 class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
+  private val fixtureWorld = WorldSpace.declare("spatial lazy external scenario fixture").fold(error => fail(error.message), identity)
+  private val fixtureEvidence = SpaceEvidence(assertion = Some(fixtureWorld))
+
 
   private def spatialValue[A](result: Either[SpatialError, A]): A =
     result.fold(error => fail(error.message), identity)
@@ -61,10 +64,13 @@ class SpatialLazyExternalScenarioSuite extends munit.FunSuite:
     assertEquals(result.status, ScenarioStatus.Pass)
 
   private def runScenario(path: Path): ScenarioResult =
-    val space = SampleSpaces(Vector(6, 1, 1), affine = Some(ProviderAffines.identity))
+    val space =
+      SampleSpaces
+        .inWorld(SampleSpaces(Vector(6, 1, 1), affine = Some(ProviderAffines.identity)), fixtureWorld)
+        .fold(error => fail(error.message), identity)
     val root = volumeDomain("native", space)
     val target = volumeDomain("target", space)
-    val source = spatialValue(NiftiFieldSource.prepare(path, root, observations = 3, label = "bold"))
+    val source = spatialValue(NiftiFieldSource.prepare(path, root, fixtureEvidence, observations = 3, label = "bold"))
     val field = spatialValue(Field.fromSource(root, source))
     given SpatialGraph = spatialValue(
       SpatialGraph.build(Vector(root, target), Vector(affine("native-target", root, target, 1.0)))
