@@ -4,9 +4,10 @@ import scalafim.image.SampleSpaces
 import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, IndexSelection, InMemoryDatasetBackend, SynchronousFmriDataset}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.EventModel
+import scalafim.fmri.ar.InitialConditionPolicy
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel, VolumeWeighting}
+import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, VolumeWeighting}
 
 class FitTraceDiagnosticsSuite extends munit.FunSuite:
   private val x = Vector(0.0, 1.0, 2.0, 3.0, 0.5, 1.5, 2.5, 3.5)
@@ -151,6 +152,10 @@ class FitTraceDiagnosticsSuite extends munit.FunSuite:
     val foreign = SynchronousFmriDataset.readerFor(otherModel.dataset).fold(e => fail(e.message), identity)
     assert(FitTraceDiagnostics.fitAndCapture(foreign, plan, DataSelection.All, 8, 2)
       .left.toOption.exists(_.isInstanceOf[FitTraceFailure.Refused]))
+    val runwise = FitPlan(plan.model, FitStrategy.RunwiseGeneralizedLeastSquares())
+    assert(FitTraceDiagnostics.fitAndCapture(reader, runwise, DataSelection.All, 8, 2)
+      .left.toOption.exists(_.isInstanceOf[FitTraceFailure.Unavailable]))
+    assertEquals(reads, 1)
     val captured = capture(plan)
     val ordinary = FitPlanExecutor.fitDense(reader, plan).fold(e => fail(e.message), identity)
     assert(ordinary.trace(FitTraceRequest(captured.traceIdentity.get, 0, Vector(0), FitTraceSpace.Original, 0))
@@ -180,12 +185,33 @@ class FitTraceDiagnosticsSuite extends munit.FunSuite:
       val ar = fit.autocorrelation.get
       assertEquals(ar.whitening.segments.length, 3)
       for voxel <- Vector(0, 1) do
-        val trace = fit.trace(FitTraceRequest(fit.traceIdentity.get, voxel,
-          (0 until selected.length).toVector, FitTraceSpace.Transformed, 2))
+        val request = FitTraceRequest(fit.traceIdentity.get, voxel,
+          (0 until selected.length).toVector, FitTraceSpace.Transformed, 2)
+        val trace = fit.trace(request)
+          .fold(e => fail(e.toString), identity)
+        val original = fit.trace(request.copy(space = FitTraceSpace.Original))
           .fold(e => fail(e.toString), identity)
         trace.rows.foreach(row => assertEqualsDouble(trace.observed(row), trace.fitted(row) + trace.residual(row), 1e-9))
         assertEquals(trace.acf(1).pairs, 75)
         assertEquals(trace.timepoints, selected)
+        ar.whitening.segments.foreach { segment =>
+          val run = ar.runs.find(_.runIndex == segment.runIndex).get
+          val phi = if ar.sharedNormalizedCovariance then run.phi.head
+            else run.voxelwiseCoefficients(voxel).head
+          val firstScale = ar.whitening.initialCondition match
+            case InitialConditionPolicy.Identity => 1.0
+            case InitialConditionPolicy.ExactAr1 => math.sqrt(1.0 - phi * phi)
+            case InitialConditionPolicy.PrecomputedScale(value) => value
+          var row = segment.startRow
+          while row < segment.endRowExclusive do
+            def expected(values: Vector[Double]): Double =
+              if row == segment.startRow then values(row) * firstScale
+              else values(row) - phi * values(row - 1)
+            assertEqualsDouble(trace.observed(row), expected(original.observed), 1e-10)
+            assertEqualsDouble(trace.fitted(row), expected(original.fitted), 1e-10)
+            assertEqualsDouble(trace.residual(row), expected(original.residual), 1e-10)
+            row += 1
+        }
       if ar.sharedNormalizedCovariance then assert(ar.runs.forall(_.voxelwiseCoefficients.isEmpty))
       else
         assertEquals(ar.runs.head.voxelwiseCoefficients.length, 2)

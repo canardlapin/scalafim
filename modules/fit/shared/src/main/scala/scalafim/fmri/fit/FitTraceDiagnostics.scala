@@ -4,7 +4,7 @@ import gale.linalg.{DMat, Matrix}
 import scalafim.dataset.{DataSelection, DatasetId, DatasetSeriesReader, TimepointSelection, VoxelSelection}
 import scalafim.fmri.ar.{ArmaCoefficients, CoefficientScope, NoisePooling, TimeSegment, WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.DesignFingerprint
-import scalafim.fmri.model.{FitEngine, FitPlan, MissingDataPolicy}
+import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, MissingDataPolicy}
 
 /** A trace names the space in which its three signals are reported. */
 enum FitTraceSpace:
@@ -198,8 +198,8 @@ object FitTraceDiagnostics:
   ): Either[FitTraceFailure, DenseFmriFitResult] =
     if !(reader.dataset eq plan.model.dataset) then
       Left(FitTraceFailure.Refused("reader is not bound to the fit plan's exact dataset descriptor"))
-    else if plan.engine != FitEngine.OrdinaryLeastSquares && plan.engine != FitEngine.GeneralizedLeastSquares then
-      Left(FitTraceFailure.Unavailable(s"${plan.engine} has no captured OLS/AR GLS trace operator"))
+    else if !supportsTraceStrategy(plan.strategy) then
+      Left(FitTraceFailure.Unavailable(s"${plan.strategy} has no captured dense OLS/AR GLS trace operator"))
     else if plan.config.missingData == MissingDataPolicy.OmitRowsPerVoxel then
       Left(FitTraceFailure.Unavailable("voxel-specific missing-row fits do not share one trace row axis"))
     else if maxRows <= 0 || maxVoxels <= 0 then
@@ -241,6 +241,11 @@ object FitTraceDiagnostics:
 
   def historicalEstimateUnavailable: FitTraceFailure =
     FitTraceFailure.Unavailable("estimate-only artifacts do not retain the fitted nuisance state or whitening operator")
+
+  private def supportsTraceStrategy(strategy: FitStrategy): Boolean =
+    strategy match
+      case FitStrategy.OrdinaryLeastSquares(_) | FitStrategy.GeneralizedLeastSquares(_, _) => true
+      case _ => false
 
   private def obviousOverBudget(reader: DatasetSeriesReader, selection: DataSelection,
       maxRows: Int, maxVoxels: Int): Boolean =

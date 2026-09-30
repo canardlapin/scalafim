@@ -4,7 +4,8 @@
 
 `FitPlanExecutor.fitWithTraceCapture` explicitly fits one selected response block
 and returns a `DenseFmriFitResult` with a trace handle attached to that same
-fit. It checks the reader's exact dataset descriptor, resolves the requested
+fit. It admits only the dense OLS or dense GLS strategy (runwise GLS is a
+distinct estimator even though it shares an engine label). It checks the reader's exact dataset descriptor, resolves the requested
 rows and voxels against positive budgets before reading, reads once, checks the
 returned axes, prepares the response, and fits OLS or AR GLS once. The handle
 retains only that bounded prepared block and its design. Repeated `trace`
@@ -46,6 +47,13 @@ cancellation and one-read file-backed execution. These checks do not constitute
 external inference calibration. The test runtime reported sbt 1.11.7, Scala
 3.7.4 and Homebrew Java 25.0.1. Exact local commit and full module tests are
 recorded in the handoff after completion.
+
+Review of local commit `ca0f3602` found an untested strategy alias:
+`RunwiseGeneralizedLeastSquares` shares the dense GLS engine label. The
+worktree now refuses that strategy before reading and adds an independent
+per-segment AR recurrence oracle for estimated shared and voxelwise fits.
+Those corrections require a successor JVM/Scala.js receipt and commit; the
+earlier 7/6 pass does not verify them.
 
 ## Scope
 
