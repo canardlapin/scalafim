@@ -35,7 +35,7 @@ class NiftiIncrementalOutputSuite extends munit.FunSuite:
 
   test("produced FIR blocks retain owners and round-trip asymmetric spatial coordinates"):
     withPath: path =>
-      val time = right(Axis.regular("response time", AxisKind.Time, 4, 0.0, 0.75, AxisUnit.Seconds))
+      val time = right(Axis.regular("response time", AxisKind.Time, 4, 1.5, 0.75, AxisUnit.Seconds))
       val axes = right(NonSpatialAxes.from(Vector(time)))
       val sampling = space(axes)
       val options = right(
@@ -46,7 +46,7 @@ class NiftiIncrementalOutputSuite extends munit.FunSuite:
           nonSpatialPixelDimensions = Vector(0.75),
           temporalUnit = NiftiTemporalUnit.Second,
           coordinateSystem = NiftiCoordinateSystem.AlignedAnatomical
-        )
+        ).flatMap(_.withTemporalOrigin(1.5))
       )
       right(Nifti.withScalarWriter(path, sampling, options): writer =>
         assert(writer.grid eq sampling.grid)
@@ -67,10 +67,13 @@ class NiftiIncrementalOutputSuite extends munit.FunSuite:
       assertEquals(bytes.getShort(254).toInt, 2)
       assertEquals(bytes.get(123).toInt & 63, 10) // millimeters and seconds
       assertEquals(bytes.getFloat(92), 0.75f)
+      assertEquals(bytes.getFloat(136), 1.5f)
       assertEquals(bytes.getFloat(284), 0.25f)
       assertEquals(bytes.getFloat(292), -12.0f)
       val offset = bytes.getFloat(108).toInt
       val loaded = right(Nifti.readSeries(path)).image
+      assertEquals(loaded.sampled.nonSpatialAxes.values.head.coordinateAt(0),
+        Right(image4s.AxisCoordinate.Numeric(1.5, AxisUnit.Seconds)))
       for x <- 0 until 2; y <- 0 until 3; z <- 0 until 5; t <- 0 until 4 do
         val expected = x * 1000.0 + y * 100.0 + z * 10.0 + t
         val physicalIndex = x + 2 * (y + 3 * (z + 5 * t))

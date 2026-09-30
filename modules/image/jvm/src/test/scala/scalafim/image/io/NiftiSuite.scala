@@ -3,6 +3,7 @@ package scalafim.image.io
 import scalafim.image.SampleSpaces.*
 
 import image4s.ImageMetadata
+import image4s.{Axis, AxisCoordinate, AxisKind, AxisUnit}
 import image4s.geometry.Affine
 import image4s.geometry.D3
 import image4s.nifti.NiftiAffinePolicy
@@ -11,6 +12,7 @@ import image4s.nifti.NiftiError
 import image4s.nifti.NiftiIoLimits
 import image4s.nifti.NiftiIoStrategy
 import image4s.nifti.NiftiScalarStored
+import image4s.nifti.{NiftiReadOptions, NiftiTemporalUnit, NiftiUnknownTemporalUnitPolicy}
 import image4s.nifti.NiftiWriteOptions
 import ravel.DType.given
 import ravel.NDArray
@@ -132,9 +134,17 @@ class NiftiSuite extends munit.FunSuite:
     Vector("series.nii", "series.nii.gz").foreach: name =>
       val path = dir.resolve(name)
       assert(Nifti.writeSeries(path, source, options).isRight)
+      assert(Nifti.readSeries(path, NiftiReadOptions.default.copy(
+        unknownTemporalUnit = NiftiUnknownTemporalUnitPolicy.Reject)).isLeft)
       assertEquals(Nifti.ioStrategy(path), NiftiIoStrategy.BoundedStreaming)
       val loaded = Nifti.readSeries(path).toOption.get.image
       assertEquals(loaded.data.shape, Shape(2, 3, 5, 7))
+      assertEquals(loaded.sampled.nonSpatialAxes.values.head.coordinateAt(1),
+        Right(AxisCoordinate.Ordinal(1)))
+      val assumed = Nifti.readSeries(path, NiftiReadOptions.default.copy(
+        unknownTemporalUnit = NiftiUnknownTemporalUnitPolicy.AssumeSeconds)).toOption.get.image
+      assertEquals(assumed.sampled.nonSpatialAxes.values.head.coordinateAt(1),
+        Right(AxisCoordinate.Numeric(1.0, AxisUnit.Seconds)))
       var x = 0
       while x < 2 do
         var y = 0
@@ -149,6 +159,87 @@ class NiftiSuite extends munit.FunSuite:
             z += 1
           y += 1
         x += 1
+  }
+
+  test("series defaults use known axis sampling and explicit conflicts refuse before output") {
+    val dir = Files.createTempDirectory("scalafim-nifti-sampling")
+    val time = Axis.regular("time", AxisKind.Time, 3, 4.0, 2.0, AxisUnit.Seconds).toOption.get
+    val space = SampleSpaces.requireD3(SampleSpaces(Vector(1, 1, 1)).addDim(time)).toOption.get
+    val data =
+      NDArray.tabulate[Double](1, 1, 1, 3): (x, y, z, t) =>
+        t.toDouble
+    val series = NeuroSeries.continuous(space, data, ImageMetadata.named("timed"))
+      .toOption.map(SomeNeuroSeries.eraseSpace).get
+    val path = dir.resolve("known.nii")
+    assert(Nifti.writeSeries(path, series).isRight)
+    val bytes = ByteBuffer.wrap(Files.readAllBytes(path)).order(ByteOrder.LITTLE_ENDIAN)
+    assertEquals(bytes.getFloat(92), 2.0f)
+    assertEquals(bytes.get(123).toInt & 56, 8)
+    assertEquals(bytes.getFloat(136), 4.0f)
+    val decoded = Nifti.readSeries(path).toOption.get
+    assertEquals(decoded.header.temporalOrigin.value, 4.0)
+    assertEquals(decoded.image.sampled.nonSpatialAxes.values.head.coordinateAt(1),
+      Right(AxisCoordinate.Numeric(6.0, AxisUnit.Seconds)))
+
+    val alteredOnlyIoLimits = NiftiWriteOptions.default.withIoLimits(image4s.nifti.NiftiIoLimits.default)
+    val copiedOptionsPath = dir.resolve("copied-options.nii")
+    assert(Nifti.writeSeries(copiedOptionsPath, series, alteredOnlyIoLimits).isRight)
+    val copiedHeader = Nifti.readHeader(copiedOptionsPath).toOption.get
+    assertEqualsDouble(copiedHeader.pixdim(3), 2.0, 1e-6)
+    assertEqualsDouble(copiedHeader.temporalOrigin, 4.0, 1e-6)
+
+    val conflicting = NiftiWriteOptions.default
+      .withNonSpatialSampling(Vector(1.0), image4s.nifti.NiftiTemporalUnit.Second)
+      .flatMap(_.withTemporalOrigin(4.0)).toOption.get
+    val refused = dir.resolve("conflict.nii")
+    assert(Nifti.writeSeries(refused, series, conflicting).left.toOption.exists(
+      _.isInstanceOf[image4s.nifti.NiftiError.SamplingMismatch]))
+    assert(!Files.exists(refused))
+
+    val millisecondAxis = Axis.regular("time", AxisKind.Time, 3, 12.5, 0.75, AxisUnit.Milliseconds).toOption.get
+    val millisecondSpace = SampleSpaces.requireD3(SampleSpaces(Vector(1, 1, 1)).addDim(millisecondAxis)).toOption.get
+    val millisecondSeries = NeuroSeries.continuous(millisecondSpace, data, ImageMetadata.named("millisecond"))
+      .toOption.map(SomeNeuroSeries.eraseSpace).get
+    val millisecondPath = dir.resolve("milliseconds.nii")
+    assert(Nifti.writeSeries(millisecondPath, millisecondSeries).isRight)
+    val millisecondBytes = ByteBuffer.wrap(Files.readAllBytes(millisecondPath)).order(ByteOrder.LITTLE_ENDIAN)
+    assertEquals(millisecondBytes.getFloat(92), 0.75f)
+    assertEquals(millisecondBytes.get(123).toInt & 56, 16)
+    assertEquals(millisecondBytes.getFloat(136), 12.5f)
+    val matching = NiftiWriteOptions.default
+      .withNonSpatialSampling(Vector(0.75), NiftiTemporalUnit.Millisecond)
+      .flatMap(_.withTemporalOrigin(12.5)).toOption.get
+    assert(Nifti.writeSeries(dir.resolve("millisecond-explicit.nii"), millisecondSeries, matching).isRight)
+    val wrongOrigin = matching.withTemporalOrigin(0.0).toOption.get
+    val originConflict = dir.resolve("origin-conflict.nii")
+    assert(Nifti.writeSeries(originConflict, millisecondSeries, wrongOrigin).isLeft)
+    assert(!Files.exists(originConflict))
+  }
+
+  test("irregular time sampling is refused and ordinal time retains an unknown unit") {
+    val dir = Files.createTempDirectory("scalafim-nifti-irregular-time")
+    val data = NDArray.tabulate[Double](1, 1, 1, 3): (x, y, z, t) =>
+      t.toDouble
+    val explicit = Axis.explicit("time", AxisKind.Time, Vector(0.0, 1.0, 3.0), AxisUnit.Seconds).toOption.get
+    val irregularSpace = SampleSpaces.requireD3(SampleSpaces(Vector(1, 1, 1)).addDim(explicit)).toOption.get
+    val irregular = NeuroSeries.continuous(irregularSpace, data, ImageMetadata.named("irregular"))
+      .toOption.map(SomeNeuroSeries.eraseSpace).get
+    val refused = dir.resolve("irregular.nii")
+    assert(Nifti.writeSeries(refused, irregular).left.toOption.exists(
+      _.isInstanceOf[image4s.nifti.NiftiError.SamplingMismatch]))
+    assert(!Files.exists(refused))
+
+    val ordinal = Axis.ordinal("time", AxisKind.Time, 3).toOption.get
+    val ordinalSpace = SampleSpaces.requireD3(SampleSpaces(Vector(1, 1, 1)).addDim(ordinal)).toOption.get
+    val ordinalSeries = NeuroSeries.continuous(ordinalSpace, data, ImageMetadata.named("ordinal"))
+      .toOption.map(SomeNeuroSeries.eraseSpace).get
+    val ordinalPath = dir.resolve("ordinal.nii")
+    assert(Nifti.writeSeries(ordinalPath, ordinalSeries).isRight)
+    val bytes = ByteBuffer.wrap(Files.readAllBytes(ordinalPath)).order(ByteOrder.LITTLE_ENDIAN)
+    assertEquals(bytes.get(123).toInt & 56, 0)
+    assertEquals(bytes.getFloat(92), 1.0f)
+    assert(Nifti.readSeries(ordinalPath, NiftiReadOptions.default.copy(
+      unknownTemporalUnit = NiftiUnknownTemporalUnitPolicy.Reject)).isLeft)
   }
 
   test("native volume round-trips asymmetric 2x3x5 coordinates") {

@@ -3,6 +3,7 @@ package scalafim.image.io
 import scalafim.image.SampleSpaces.*
 
 import image4s.AxisKind
+import image4s.AxisCoordinatesRecord
 import image4s.Continuous
 import image4s.ImageError
 import image4s.SampleSpace
@@ -23,7 +24,6 @@ import image4s.nifti.NiftiReadOptions
 import image4s.nifti.NiftiScalarWriter
 import image4s.nifti.NiftiScalarStored
 import image4s.nifti.NiftiTemporalUnit
-import image4s.nifti.NiftiUnknownTemporalUnitPolicy
 import image4s.nifti.NiftiWriteOptions
 import ravel.Rank
 import ravel.AnyRank
@@ -48,6 +48,10 @@ final class NiftiHeader private[io] (
 
   inline def pixdim: Vector[Double] =
     native.pixelDimensions
+
+  /** NIfTI toffset in the native header's declared temporal unit. */
+  inline def temporalOrigin: Double =
+    native.temporalOrigin.value
 
   inline def datatype: Int =
     native.datatype.code
@@ -215,7 +219,7 @@ object Nifti:
   def readSeriesIn(
       path: Path,
       evidence: SpaceEvidence,
-      options: NiftiReadOptions = Nifti.defaultSeriesReadOptions
+      options: NiftiReadOptions = NiftiReadOptions.default
   ): Either[NiftiImageReadError, DecodedNifti[SomeScalarSeries[Double]]] =
     readSeries(path, options).flatMap: decoded =>
       for
@@ -227,7 +231,7 @@ object Nifti:
   /** Read a series in the legacy unresolved world; see [[readVolume]] for the deferred world identity. */
   def readSeries(
       path: Path,
-      options: NiftiReadOptions = Nifti.defaultSeriesReadOptions
+      options: NiftiReadOptions = NiftiReadOptions.default
   ): Either[
     NiftiImageReadError,
     DecodedNifti[SomeScalarSeries[Double]]
@@ -237,7 +241,7 @@ object Nifti:
       .left
       .map(NiftiImageReadError.Provider.apply)
       .flatMap: decoded =>
-        seriesFrom(decoded.image).map: series =>
+        seriesFrom(decoded.image, decoded.header).map: series =>
           DecodedNifti(
             series,
             decoded.header,
@@ -260,15 +264,12 @@ object Nifti:
   def writeSeries(
       path: Path,
       series: SomeScalarSeries[Double],
-      options: NiftiWriteOptions = Nifti.defaultSeriesWriteOptions,
+      options: NiftiWriteOptions = NiftiWriteOptions.default,
       extensions: Vector[NiftiExtension] = Vector.empty
   ): Either[NiftiError, NiftiFiles[Path]] =
-    writeScalar(
-      path,
-      series.sampled,
-      options,
-      extensions
-    )
+    checkedSampling(series.sampled.nonSpatialAxes.values, options)
+      .flatMap: checked =>
+        writeScalar(path, series.sampled, checked, extensions)
 
   /** Open an exclusive .nii staging file for produced scalar blocks.
     *
@@ -283,7 +284,9 @@ object Nifti:
       options: NiftiWriteOptions = NiftiWriteOptions.default,
       extensions: Vector[NiftiExtension] = Vector.empty
   ): Either[NiftiError, NiftiScalarWriter[F, Path]] =
-    ImageNifti.openScalarWriter(path, space.grid, space.nonSpatialAxes, options, extensions)
+    checkedSampling(space.nonSpatialAxes.values, options)
+      .flatMap: checked =>
+        ImageNifti.openScalarWriter(path, space.grid, space.nonSpatialAxes, checked, extensions)
 
   /** Scope the physical writer, including callback exceptions. A partial staging file remains caller-owned; successful
     * close does not certify a complete result.
@@ -294,7 +297,49 @@ object Nifti:
       options: NiftiWriteOptions = NiftiWriteOptions.default,
       extensions: Vector[NiftiExtension] = Vector.empty
   )(use: NiftiScalarWriter[F, Path] => Either[NiftiError, A]): Either[NiftiError, A] =
-    ImageNifti.withScalarWriter(path, space.grid, space.nonSpatialAxes, options, extensions)(use)
+    checkedSampling(space.nonSpatialAxes.values, options)
+      .flatMap: checked =>
+        ImageNifti.withScalarWriter(path, space.grid, space.nonSpatialAxes, checked, extensions)(use)
+
+  /** A regular time axis is authoritative when the options have no sampling
+    * declaration. Any declared sampling must agree at NIfTI Float32 precision.
+    * An ordinal or non-time axis preserves the caller's options; the default
+    * options leave its temporal unit unknown and its index spacing at one.
+    */
+  private def checkedSampling(
+      axes: Vector[image4s.Axis],
+      options: NiftiWriteOptions
+  ): Either[NiftiError, NiftiWriteOptions] =
+    axes.headOption match
+      case Some(axis) if axis.kind == AxisKind.Time =>
+        axis.record.coordinates match
+          case AxisCoordinatesRecord.Regular(_, origin, step, unitId) =>
+            val unit = unitId match
+              case "s"  => Some(NiftiTemporalUnit.Second)
+              case "ms" => Some(NiftiTemporalUnit.Millisecond)
+              case "us" => Some(NiftiTemporalUnit.Microsecond)
+              case _    => None
+            unit match
+              case None => Left(NiftiError.SamplingMismatch(s"unsupported regular time unit $unitId"))
+              case Some(temporalUnit) if options.temporalUnit == NiftiTemporalUnit.Unknown &&
+                  options.nonSpatialPixelDimensions.isEmpty && options.temporalOrigin.value == 0.0 =>
+                options.withNonSpatialSampling(Vector(step), temporalUnit)
+                  .flatMap(_.withTemporalOrigin(origin))
+                  .left.map(error => NiftiError.SamplingMismatch(error.message))
+              case Some(temporalUnit) =>
+                val writtenStep = options.nonSpatialPixelDimensions.headOption.getOrElse(1.0)
+                if options.temporalUnit != temporalUnit ||
+                    writtenStep.toFloat != step.toFloat ||
+                    options.temporalOrigin.value.toFloat != origin.toFloat then
+                  Left(NiftiError.SamplingMismatch(
+                    s"axis origin=$origin step=$step unit=$unitId; options origin=${options.temporalOrigin.value} step=$writtenStep unit=${options.temporalUnit}"
+                  ))
+                else Right(options)
+          case AxisCoordinatesRecord.Ordinal(_) => Right(options)
+          case _ => Left(NiftiError.SamplingMismatch(
+            "time axes require regular coordinates; no lossless NIfTI-1 sampling encoding is available"
+          ))
+      case _ => Right(options)
 
   def readDisplacementField(
       path: Path,
@@ -309,25 +354,6 @@ object Nifti:
   ): Either[NiftiError, SourceCoordinateField] =
     readDenseVectorFieldData(path, options).map: (grid, data) =>
       DenseVectorField.sourceCoordinates(grid, data)
-
-  private val defaultSeriesReadOptions: NiftiReadOptions =
-    NiftiReadOptions.default.copy(
-      unknownTemporalUnit = NiftiUnknownTemporalUnitPolicy.AssumeSeconds
-    )
-
-  private val defaultSeriesWriteOptions: NiftiWriteOptions =
-    NiftiWriteOptions
-      .create(
-        datatype = image4s.nifti.NiftiDatatype.Float64,
-        slope = 1.0,
-        intercept = 0.0,
-        nonSpatialPixelDimensions = Vector(1.0),
-        temporalUnit = NiftiTemporalUnit.Second
-      )
-      .fold(
-        error => throw new IllegalStateException(error.message),
-        identity
-      )
 
   private def volumeFrom(
       image: SomeSampled[Double, Continuous]
@@ -372,7 +398,8 @@ object Nifti:
     )
 
   private def seriesFrom(
-      image: SomeSampled[Double, Continuous]
+      image: SomeSampled[Double, Continuous],
+      header: image4s.nifti.NiftiHeader
   ): Either[NiftiImageReadError, SomeScalarSeries[Double]] =
     image.fold(
       d2 =>
@@ -390,16 +417,23 @@ object Nifti:
           .map(providerImageError)
           .flatMap: ranked =>
             val axes = ranked.nonSpatialAxes.values
-            if axes.size != 1 || axes.head.kind != AxisKind.Time then
-              Left(
-                NiftiImageReadError.Provider(
-                  NiftiError.Image(
-                    ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
-                  )
-                )
-              )
-            else
-              persistDecoded(ranked)
+            val timeRanked =
+              if axes.size == 1 && axes.head.kind == AxisKind.Time then Right(ranked)
+              else if axes.size == 1 && header.temporalUnit == NiftiTemporalUnit.Unknown &&
+                  axes.head.record.coordinates.isInstanceOf[AxisCoordinatesRecord.Ordinal] then
+                for
+                  time <- image4s.Axis.ordinal("time", AxisKind.Time, axes.head.extent).left.map(providerImageError)
+                  nonSpatial <- image4s.NonSpatialAxes.from(Vector(time)).left.map(providerImageError)
+                  timeSpace = SampleSpace.create(ranked.grid, nonSpatial)
+                  rebound <- Sampled.continuous(
+                    timeSpace, ranked.data, ranked.metadata
+                  ).left.map(providerImageError)
+                yield rebound
+              else Left(NiftiImageReadError.Provider(NiftiError.Image(
+                ImageError.MissingNonSpatialAxisKind(AxisKind.Time)
+              )))
+            timeRanked.flatMap: temporal =>
+              persistDecoded(temporal)
                 .left
                 .map(providerImageError)
                 .flatMap: persistent =>
