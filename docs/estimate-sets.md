@@ -13,8 +13,9 @@ Core-NIfTI-1 remains the default writer layout. An explicit
 `CovarianceLayout.SharedNormalizedTable()` opts a unit into Core-NIfTI-2,
 wire `2.0.0`, for bounded shared normalized covariance. Catalogs, TSV projections,
 collections and pointers remain Core-NIfTI-1. The checks below qualify this bounded
-storage/producer/consumer slice; HDF5, pooled persistence and workflow adoption
-remain separate gates.
+storage/producer/consumer slice. The opt-in physical HDF5 lane, selected pooled
+producer and JVM workflow handoff have separate bounded qualification records.
+Downstream adoption and full V0 conformance remain separate gates.
 
 ## Implemented boundary
 
@@ -156,12 +157,28 @@ Raw variance matrices acquire an explicit unknown receipt; no df is inferred fro
 their presence. The receipt is provenance, not a first-level calibration result or
 automatic second-level inference admission.
 
-Pooled selected execution is available in `fit`, but its persistence adapter,
-HDF5 schema/fixtures, workflow and
-PLS Neuro adoption remain outstanding. `ResultManifestWriter` remains until its
-replacement covers and tests its useful scientific extraction. The older eager
-canonical archive writer remains; the new local streaming primitives do not yet
-replace every existing canonical/BOLD publication path.
+`PooledFitEstimateProducer` persists selected native precision-pooled effects,
+optional marginal standard errors and absolute samplewise joint covariance.
+It preserves exclusion validity and explicitly unknown effective pooled df;
+retained run coefficients and compact shared covariance are refused. See the
+[pooled producer record](verification/estimate-set-pooled-producer-2026-09-30.md).
+The [opt-in physical HDF5 record](verification/estimate-hdf5-physical-2026-09-30.md)
+qualifies a bounded macOS ARM/JDK 25 native lane, including seal/abort lifetime
+and fitter-free reopen. It does not establish portable native distribution,
+scientific calibration, performance or power-loss durability.
+
+The JVM workflow now separates `PlannedEstimateOutput` from a digest-pinned
+`SealedEstimateReference`. `LocalEstimateWorkflow` supports shared full-rank
+OLS publication to bundled Core-NIfTI only; it validates the destination and
+selected axes before response reads, then reopens pinned inputs for explicit
+group admission. Its synthetic regression checks analytic effects and variances,
+wrong identities, cancellation and malformed targets. The adapter does not
+publish pooled fits, statistics or restricted-inference results. The removed
+`ResultManifestWriter` and legacy BIDS result-map exports are no longer APIs;
+immediate extraction uses `FmriFitResult`, `FitBlock`, `FitImageMaps` and
+`AnalysisProvenance`. PLS Neuro adoption remains outstanding. The older eager
+canonical archive writer remains; local streaming does not replace every
+canonical/BOLD publication path.
 
 ## Writing and reopening
 
@@ -248,5 +265,6 @@ geometry/digest/length declaration is verified before source ownership transfers
 
 The independent literal fixture and failure/lifetime checks are recorded in
 [the inference-evidence verification record](verification/estimate-set-inference-evidence-2026-09-30.md).
-This prerequisite does not qualify a native producer, remove the legacy exporter,
-qualify HDF5, establish statistical reference laws or establish performance.
+This inference-evidence prerequisite alone does not qualify a native producer,
+statistical reference laws or performance. Legacy removal and the physical
+HDF5 lane are separately implemented and reviewed as described above.

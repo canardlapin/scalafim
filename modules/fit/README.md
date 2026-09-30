@@ -262,42 +262,36 @@ hypothesis projector.
 
 ## Result artifacts
 
-Result export is modeled in shared code without binding the fit module to a file
-format. `StatMap` is the checked scalar-map primitive: it couples finite values
-to selected voxels, dataset shape, statistic kind, provenance, and export intent.
-`ParameterMap` and `ContrastMap` specialize that primitive for coefficient,
-standard-error, estimate, t, and F surfaces. `CoefficientCovarianceArtifact`
-captures shared or voxelwise normalized coefficient covariance with parameter
-names, selected voxels, shape, provenance, and export intent. `ResultManifest`
-groups those artifacts with `AnalysisProvenance` so downstream JVM adapters can
-write NIfTI, HDF5, GDS, or BIDS-style derivatives without reaching back into fit
-internals.
+`FmriFitResult` and `FitBlock` are the in-memory results for immediate
+scientific extraction and display. `FitImageMaps` places selected coefficient,
+standard-error, contrast-estimate, and statistic rows into the requested image
+shape; it is an in-memory map constructor and does not create a derivative
+layout. `AnalysisProvenance.fromResult` preserves response preparation,
+structural rank reports, selected-voxel statuses, and the coefficient inference
+scope for a result.
 
 Dense results separate fit diagnostics from coefficient inference.
 `residualVariance` remains the full-model diagnostic surface, while the typed
-`CoefficientInference` payload owns its own variance scale, covariance,
-standard errors, degrees of freedom, method, and allowed coefficient scope.
-Manifests and image-map adapters export coefficients for every modeled column
-but export standard errors and covariance only for inferable columns. The JSON
-sidecar records the inference method, scope label, and inferable column names.
+`CoefficientInference` payload owns its variance scale, covariance, standard
+errors, degrees of freedom, method, and allowed coefficient scope. Consumers
+must use that scope when interpreting standard errors or covariance: a modeled
+coefficient is not automatically inferable.
 
-The existing `FitImageMaps` API remains compatible. It now also accepts typed
-parameter and contrast maps as adapter inputs, which keeps image placement logic
-centralized while giving future engines a richer artifact contract than loose
-string labels.
+For supported shared full-rank OLS output, construct a `FitEstimateProducer`
+from a prepared fit plan and its scientific publication identity, then write and
+seal selected effects with optional marginal or joint uncertainty through a
+`LocalEstimateStore` on the JVM. The sealed estimate reference is the input for
+fresh-process readers and group consumers. The canonical estimate-set model can
+also represent effects-only or statistic-only products, but those are separate
+producer capabilities; `FitEstimateProducer.shared` does not publish a
+restricted-inference or statistic-only fit result.
 
-JVM export is a thin adapter over the shared manifest. `ResultManifestWriter`
-can write a BIDS-style derivative directory with NIfTI scalar maps, coefficient
-covariance TSV, and a JSON sidecar. `BidsNiftiMapLayout.Bundled` is the default
-and preserves the compact multi-map parameter and contrast NIfTI files.
-`BidsNiftiMapLayout.Individual` instead writes one single-map NIfTI for every
-named coefficient, standard error, contrast estimate, and contrast statistic.
-The sidecar records the selected layout and lists every physical artifact with
-its original unsanitized map label. Individual-map export preflights all paths
-and rejects filename collisions caused by BIDS entity sanitization before any
-file is written. HDF5 and GDS are represented as typed export formats but
-currently report explicit unsupported-format errors until their stores are
-wired.
+The removed `ResultManifest`/`ResultManifestWriter` and BIDS-style map layouts
+are not durable-output APIs. This module does not promise a legacy derivative
+directory, GDS export, or an implicit HDF5 fallback. Use the estimate-set store
+and its supported NIfTI-backed representations where durable output is needed;
+unsupported product or inference requests return typed errors before
+publication.
 
 ## Chunked execution
 

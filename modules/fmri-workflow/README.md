@@ -33,7 +33,8 @@ when the dataset recipe requests confounds; unrelated or ambiguous confound
 tables cannot invalidate a confound-free recipe.
 
 The resulting plan fans out into deterministic `SubjectJob` values and
-`GroupJob` values. Jobs contain recipes and `ResultBundleRef`s; they do not
+`GroupJob` values. Jobs contain recipes and `PlannedEstimateOutput` intents;
+they do not
 capture readers, functions, matrices, thread pools, or filesystem handles.
 Execution capabilities are supplied by interpreters. The current foundation
 exposes subject jobs as the existing scheduler-neutral `ChunkProgram`. The
@@ -63,10 +64,16 @@ run source uses the dataset module's bounded bulk-window reader, so execution
 cost scales with requested windows rather than one file read per voxel.
 
 Output formats are identified by the open `OutputFormatId`, so a new backend
-does not expand a closed workflow enum. `bids-nifti` is the reference format;
-`ResultMapLayout` selects bundled maps, individual named maps, or a backend
-default. A `ResultBundleRef` names the eventual manifest boundary rather than
-embedding a concrete writer.
+does not expand a closed workflow enum. `core-nifti` is the reference format;
+`EstimateMapLayout` selects bundled maps, individual named maps, or a backend
+default. A `PlannedEstimateOutput` reserves an eventual destination only. It
+cannot be consumed as data. `LocalEstimateWorkflow.produce` seals a
+digest-pinned `SealedEstimateReference`; `prepareGroup` reopens that reference
+through `LocalEstimateStore` and delegates product, observation, estimand, and
+geometry admission to `EstimateGroup`. The supported producer is shared
+full-rank OLS; pooled run-retention is refused by the producer contract. The
+JVM adapter implements only `core-nifti` with bundled maps and refuses other
+format/layout intents before it allocates a sink or reads any response data.
 
 Run the shared contract tests on both platforms:
 

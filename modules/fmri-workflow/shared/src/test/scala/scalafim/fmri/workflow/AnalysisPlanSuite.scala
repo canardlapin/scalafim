@@ -34,12 +34,12 @@ class AnalysisPlanSuite extends FunSuite:
     assertEquals(plan.subjectJobs.map(_.unit.subject.value), Vector("01", "02"))
     assertEquals(plan.subjectJobs.map(_.ordinal.value), Vector(0, 1))
     assertEquals(
-      plan.subjectJobs.map(_.resultBundle.artifact.location.value),
+      plan.subjectJobs.map(_.output.location.value),
       Vector("file:///analysis/first-level/unit-01", "file:///analysis/first-level/unit-02")
     )
     assertEquals(plan.groupJobs.length, 1)
-    assertEquals(plan.groupJobs.head.inputs.head.unitResults.map(_._1.value), Vector("unit-01", "unit-02"))
-    assertEquals(plan.groupJobs.head.resultBundle.artifact.location.value, "file:///analysis/group/group-main")
+    assertEquals(plan.groupJobs.head.inputs.head.unitOutputs.map(_._1.value), Vector("unit-01", "unit-02"))
+    assertEquals(plan.groupJobs.head.output.location.value, "file:///analysis/group/group-main")
     assert(plan.preflightReport.isClean)
 
     val interpreted = SequentialChunkProgramInterpreter.execute(plan.jobProgram) { job =>
@@ -166,7 +166,7 @@ class AnalysisPlanSuite extends FunSuite:
       groups = groups,
       output = ResultOutputPolicy(
         ArtifactLocation.unsafe("file:///analysis"),
-        layout = ResultMapLayout.IndividualNamedMaps
+        layout = EstimateMapLayout.IndividualNamedMaps
       )
     ).toOption.get
 

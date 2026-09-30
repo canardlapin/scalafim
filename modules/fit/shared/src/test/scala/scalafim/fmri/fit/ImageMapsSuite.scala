@@ -1,8 +1,7 @@
 package scalafim.fmri.fit
 
-import image4s.SamplingAlignment
 import scalafim.image.SampleSpaces
-import scalafim.image.{space, timeSeries}
+import scalafim.image.timeSeries
 
 import scalafim.dataset.{DataSelection, DatasetId, FmriDataset, IndexSelection, InMemoryDatasetBackend}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
@@ -87,28 +86,31 @@ class ImageMapsSuite extends munit.FunSuite:
     assertVectorClose(dense.timeSeries(3).iterator.toVector, Vector(-1.0, -1.0), 1e-10)
   }
 
-  test("typed result manifest coefficient maps adapt to existing image maps") {
+  test("direct dense fit maps preserve selected-axis identity") {
     val result = FitPlanExecutor.unsafeFit(
       FitPlan(model),
       DataSelection(voxels = IndexSelection.indices(3, 1))
     ).asInstanceOf[DenseFmriFitResult]
 
-    val legacy = result.coefficientMaps(dataset.shape).dense
-    val manifest = ResultManifest.fromDenseFit(result, dataset.shape).toOption.get
-    val adapted =
-      FitImageMaps
-        .fromParameterMaps(manifest.parameterMaps(ParameterMapKind.Coefficient))
-        .toOption
-        .get
-        .dense
+    val maps = result.coefficientMaps(dataset.shape)
+    val dense = maps.dense
 
-    val adaptedSpace = SampleSpaces.requireD3(adapted.space).toOption.get
-    val legacySpace = SampleSpaces.requireD3(legacy.space).toOption.get
-    assert(SamplingAlignment.exact(adaptedSpace, legacySpace).isRight)
-    assertVectorClose(adapted.timeSeries(0).iterator.toVector, legacy.timeSeries(0).iterator.toVector, 1e-10)
-    assertVectorClose(adapted.timeSeries(1).iterator.toVector, legacy.timeSeries(1).iterator.toVector, 1e-10)
-    assertVectorClose(adapted.timeSeries(2).iterator.toVector, legacy.timeSeries(2).iterator.toVector, 1e-10)
-    assertVectorClose(adapted.timeSeries(3).iterator.toVector, legacy.timeSeries(3).iterator.toVector, 1e-10)
+    assertEquals(maps.names, result.columnNames)
+    assertEquals(result.selectedVoxels.toVector, Vector(3, 1))
+    assertVectorClose(dense.timeSeries(1).iterator.toVector, Vector(-1.0, 2.0), 1e-10)
+    assertVectorClose(dense.timeSeries(3).iterator.toVector, Vector(-1.0, -1.0), 1e-10)
+  }
+
+  test("direct fit provenance and covariance retain inference scope") {
+    val result = FitPlanExecutor.unsafeFit(FitPlan(model)).asInstanceOf[DenseFmriFitResult]
+    val provenance = AnalysisProvenance.fromResult(result, source = "image-map-suite")
+
+    assertEquals(provenance.columnNames, result.columnNames)
+    assertEquals(provenance.coefficientAxis, result.coefficientAxis)
+    assertEquals(provenance.coefficientInference.map(_.inferableColumns), Some(result.columnNames))
+    assertEquals(provenance.coefficientInference.map(_.inferableColumnIds), result.coefficientAxis.map(_.columnIds))
+    assertEquals(result.coefficientCovariance.scope, CoefficientCovarianceScope.Shared)
+    assertEquals(result.coefficientCovariance.validateVoxelCount(result.selectedVoxels.length), Right(()))
   }
 
   test("standard-error image maps omit coefficients outside the inference scope") {

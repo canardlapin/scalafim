@@ -1304,12 +1304,12 @@ lazy val fmriWorkflow =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/fmri-workflow"))
-    .dependsOn(dataset, model, fit, group)
+    .dependsOn(dataset, model, fit, group, estimates)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-workflow"
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM, bids4sJVM))
+    .jvmConfigure(_.dependsOn(galeCoreJVM, bids4sJVM, fitEstimatesJVM, estimatesIoJVM))
     .jsConfigure(_.dependsOn(galeCoreJS, bids4sJS))
     .jsSettings(jsSettingsBase)
 

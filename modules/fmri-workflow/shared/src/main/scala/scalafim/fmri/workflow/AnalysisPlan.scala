@@ -62,19 +62,23 @@ final case class SubjectJob private[workflow] (
     unit: FirstLevelUnit,
     model: ModelRecipe,
     contrasts: Vector[ContrastWorkflow],
-    resultBundle: ResultBundleRef
+    output: PlannedEstimateOutput
 ) extends ChunkWork
 
-final case class GroupInputRef(
+/** Planned requirements only.  Group execution receives sealed references from
+  * completed first-level work through `SealedEstimateReference`, never these
+  * locations.
+  */
+final case class PlannedGroupInput(
     contrast: WorkflowContrastId,
-    unitResults: Vector[(FirstLevelUnitId, ResultBundleRef)]
+    unitOutputs: Vector[(FirstLevelUnitId, PlannedEstimateOutput)]
 ):
-  require(unitResults.nonEmpty, "group input must contain first-level result bundles")
+  require(unitOutputs.nonEmpty, "group input must contain first-level output intents")
 
 final case class GroupJob private[workflow] (
     workflow: GroupWorkflow,
-    inputs: Vector[GroupInputRef],
-    resultBundle: ResultBundleRef
+    inputs: Vector[PlannedGroupInput],
+    output: PlannedEstimateOutput
 )
 
 final class AnalysisPlan private (
@@ -91,8 +95,8 @@ final class AnalysisPlan private (
   def id: WorkflowId =
     spec.id
 
-  def resultBundles: Vector[ResultBundleRef] =
-    subjectJobs.map(_.resultBundle) ++ groupJobs.map(_.resultBundle)
+  def plannedOutputs: Vector[PlannedEstimateOutput] =
+    subjectJobs.map(_.output) ++ groupJobs.map(_.output)
 
 object AnalysisPlan:
   def preflight(
@@ -186,20 +190,20 @@ object AnalysisPlan:
           unit = unit,
           model = spec.firstLevel.model,
           contrasts = spec.firstLevel.contrasts,
-          resultBundle = spec.output.firstLevel(spec.id, unit.id)
+          output = spec.output.firstLevel(spec.id, unit.id)
         )
       }
       val groupJobs = spec.groups.map { workflow =>
         val inputs = workflow.inputs.map { contrast =>
-          GroupInputRef(
+          PlannedGroupInput(
             contrast = contrast,
-            unitResults = jobs.map(job => job.unit.id -> job.resultBundle)
+            unitOutputs = jobs.map(job => job.unit.id -> job.output)
           )
         }
         GroupJob(
           workflow = workflow,
           inputs = inputs,
-          resultBundle = spec.output.group(spec.id, workflow.id)
+          output = spec.output.group(spec.id, workflow.id)
         )
       }
       val program = ChunkProgram.unsafe(jobs)

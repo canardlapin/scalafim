@@ -1,5 +1,8 @@
 package scalafim.fmri.workflow
 
+import scalafim.estimates.{EstimandId, ObservationId, PinnedUnit, ProductId}
+import scalafim.fmri.group.{GroupEstimateInput, GroupMarginalUncertainty}
+
 private def workflowIdentifier(label: String, value: String): Either[WorkflowError, String] =
   WorkflowValidation.identifier(label, value)
 
@@ -69,7 +72,10 @@ object ResultBundleId:
 opaque type OutputFormatId = String
 
 object OutputFormatId:
-  val BidsNifti: OutputFormatId = unsafe("bids-nifti")
+  /** Canonical estimate-set NIfTI, whose manifest and product axes are owned
+    * by the estimates contract rather than a legacy BIDS result facade.
+    */
+  val CoreNifti: OutputFormatId = unsafe("core-nifti")
 
   def apply(value: String): Either[WorkflowError, OutputFormatId] =
     workflowIdentifier("output format id", value).map(valid => valid: OutputFormatId)
@@ -130,7 +136,6 @@ sealed trait BoldImageResource
 sealed trait EventsTableResource
 sealed trait ConfoundsTableResource
 sealed trait MaskImageResource
-sealed trait ResultBundleResource
 
 final case class WorkflowArtifactRef[+A] private[workflow] (location: ArtifactLocation)
 
@@ -141,36 +146,77 @@ object WorkflowArtifactRef:
   def unsafe[A](location: String): WorkflowArtifactRef[A] =
     apply[A](location).fold(error => throw new IllegalArgumentException(error.message), identity)
 
-enum ResultMapLayout:
+enum EstimateMapLayout:
   case BackendDefault
   case BundledMaps
   case IndividualNamedMaps
 
-final case class ResultBundleRef private (
+/** A destination reservation, not a completed result.  It deliberately
+  * contains no reader-facing identity: only `SealedEstimateReference` can
+  * cross from execution into a group consumer.
+  */
+final case class PlannedEstimateOutput private (
     id: ResultBundleId,
-    artifact: WorkflowArtifactRef[ResultBundleResource],
+    location: ArtifactLocation,
     format: OutputFormatId,
-    layout: ResultMapLayout
+    layout: EstimateMapLayout
 )
 
-object ResultBundleRef:
+object PlannedEstimateOutput:
   def make(
       id: ResultBundleId,
       location: ArtifactLocation,
       format: OutputFormatId,
-      layout: ResultMapLayout
-  ): ResultBundleRef =
-    ResultBundleRef(id, new WorkflowArtifactRef[ResultBundleResource](location), format, layout)
+      layout: EstimateMapLayout
+  ): PlannedEstimateOutput =
+    PlannedEstimateOutput(id, location, format, layout)
 
 final case class ResultOutputPolicy(
     root: ArtifactLocation,
-    format: OutputFormatId = OutputFormatId.BidsNifti,
-    layout: ResultMapLayout = ResultMapLayout.BundledMaps
+    format: OutputFormatId = OutputFormatId.CoreNifti,
+    layout: EstimateMapLayout = EstimateMapLayout.BundledMaps
 ):
-  def firstLevel(workflowId: WorkflowId, unitId: FirstLevelUnitId): ResultBundleRef =
+  def firstLevel(workflowId: WorkflowId, unitId: FirstLevelUnitId): PlannedEstimateOutput =
     val id = ResultBundleId.unsafe(s"${workflowId.value}.${unitId.value}")
-    ResultBundleRef.make(id, root.resolve("first-level", unitId.value), format, layout)
+    PlannedEstimateOutput.make(id, root.resolve("first-level", unitId.value), format, layout)
 
-  def group(workflowId: WorkflowId, groupId: GroupWorkflowId): ResultBundleRef =
+  def group(workflowId: WorkflowId, groupId: GroupWorkflowId): PlannedEstimateOutput =
     val id = ResultBundleId.unsafe(s"${workflowId.value}.${groupId.value}")
-    ResultBundleRef.make(id, root.resolve("group", groupId.value), format, layout)
+    PlannedEstimateOutput.make(id, root.resolve("group", groupId.value), format, layout)
+
+/** Product and observation axes selected for a group handoff. */
+final case class EstimateProductSelection private (
+    observation: ObservationId,
+    effect: ProductId,
+    uncertainty: Option[GroupMarginalUncertainty],
+    estimands: Vector[EstimandId]
+):
+  require(estimands.nonEmpty && estimands.distinct.size == estimands.size,
+    "a group handoff must select nonempty unique estimands")
+
+object EstimateProductSelection:
+  def make(
+      observation: ObservationId,
+      effect: ProductId,
+      uncertainty: Option[GroupMarginalUncertainty],
+      estimands: Vector[EstimandId]
+  ): Either[WorkflowError, EstimateProductSelection] =
+    if estimands.isEmpty then Left(WorkflowError.InvalidOutput("group handoff must select at least one estimand"))
+    else if estimands.distinct.size != estimands.size then Left(WorkflowError.InvalidOutput("group handoff estimands must be unique"))
+    else Right(new EstimateProductSelection(observation, effect, uncertainty, estimands))
+
+/** Immutable execution output. `PinnedUnit.manifest` includes the content
+  * digest and byte length; no mutable output location or format appears here.
+  */
+final case class SealedEstimateReference private (
+    pinned: PinnedUnit,
+    selection: EstimateProductSelection
+):
+  def groupInput: GroupEstimateInput =
+    GroupEstimateInput(pinned, selection.observation, selection.effect, selection.uncertainty)
+
+object SealedEstimateReference:
+  def make(pinned: PinnedUnit, selection: EstimateProductSelection): Either[WorkflowError, SealedEstimateReference] =
+    if pinned.manifest.path.trim.isEmpty || pinned.manifest.bytes <= 0L then
+      Left(WorkflowError.InvalidOutput("sealed estimate manifest must have a path and positive byte length"))
+    else Right(new SealedEstimateReference(pinned, selection))

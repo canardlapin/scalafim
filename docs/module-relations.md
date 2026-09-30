@@ -29,8 +29,11 @@ separate. It adds no fit dependency or scientific schema.
 
 `fit-estimates` uses `estimates-io` only in its test configuration for physical
 readback tests. A production reader has no dependency on the fitter. The group
-bridge now reads pinned estimate inputs; workflow result references remain to
-be migrated. See [estimate sets](estimate-sets.md).
+bridge now reads pinned estimate inputs. Workflow plans carry destination intents;
+completed execution returns digest-pinned sealed references. Its JVM-only local
+adapter depends on `fit-estimates` and `estimates-io`; the shared workflow model
+depends on `estimates` and introduces no fitter dependency into readers.
+See [estimate sets](estimate-sets.md).
 
 ```text
 response
@@ -198,7 +201,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
-| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
+| `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic jobs, structural preflight, planned destinations and pinned sealed references; JVM local shared-OLS publication/group handoff. | `dataset`, `model`, `fit`, `group`, `estimates`; JVM `fit-estimates`, `estimates-io` and standalone bids4s | Numeric kernels, owned storage formats, scheduler APIs, open resources or captured execution closures in plans; generic pipeline lowering remains future work. |
 | `archive-zarr` | NeuroArchive Zarr 0.1 canonical-BOLD refinement and normalized `neuroarchive-zarr@1` metadata with a typed canonical-response payload role, measured layout profiles, scientific manifests, immutable publication, full-object validation, and cross-platform typed async execution with exact ordered object/range/byte observations. | standalone zarr4s, `archive`; Cats Core and Cats Effect externally | Response interpretation, dataset selection APIs, NIfTI/BIDS IO, catalogs, generic Zarr mechanics, hidden codec runtimes, or nondeterministic receipt aggregation. |
 | `dataset-zarr` | JVM NeuroArchive-to-`FmriDataset` composition, regular-timing refinement, ordered selection lowering, Zarr-backed response blocks, streaming raw-scalar NIfTI import, and raw-scalar- and affine-preserving BIDS/NIfTI export within the documented NeuroArchive 0.1 subset. | `dataset`, `archive-zarr`, `image`; standalone bids4s and zarr4s | Generic array mechanics, fit kernels, catalog policy, synchronous browser facades, or browser file IO. |
 

@@ -4,7 +4,9 @@ import scalafim.image.SampleSpaces
 
 import munit.FunSuite
 import scalafim.dataset.{DatasetId, DatasetShape, RunId, SpaceId, SubjectId, TaskId}
-import scalafim.fmri.group.InterceptPolicy
+import scalafim.estimates.{EstimandId, ObservationId, PinnedUnit, ProductId, UnitId, UnitRevisionId}
+import scalafim.archive.ContentDigest
+import scalafim.fmri.group.{GroupMarginalUncertainty, InterceptPolicy}
 import scalafim.image.SomeSampleSpace
 
 class WorkflowTypesSuite extends FunSuite:
@@ -85,12 +87,28 @@ class WorkflowTypesSuite extends FunSuite:
     val output = ResultOutputPolicy(
       root = ArtifactLocation.unsafe("s3://bucket/results"),
       format = pluginFormat,
-      layout = ResultMapLayout.BackendDefault
+      layout = EstimateMapLayout.BackendDefault
     )
     val bundle = output.firstLevel(WorkflowId.unsafe("study"), FirstLevelUnitId.unsafe("unit-01"))
 
     assertEquals(bundle.format.value, "zarr-v1")
-    assertEquals(bundle.artifact.location.value, "s3://bucket/results/first-level/unit-01")
+    assertEquals(bundle.location.value, "s3://bucket/results/first-level/unit-01")
+  }
+
+  test("only a digest-pinned execution output can form a group input") {
+    val selected = EstimateProductSelection.make(
+      ObservationId("participant-01"), ProductId("effect"),
+      Some(GroupMarginalUncertainty.StandardError(ProductId("standard-error"))), Vector(EstimandId("stim"))
+    ).toOption.get
+    val pinned = PinnedUnit(UnitId("00000000-0000-4000-8000-000000000001"), UnitRevisionId("00000000-0000-4000-8000-000000000002"),
+      scalafim.estimates.FileReference("units/revision-01/estimates.json", ContentDigest.unsafeSha256("a" * 64), 42))
+    val sealedReference = SealedEstimateReference.make(pinned, selected).toOption.get
+
+    assertEquals(sealedReference.groupInput.reference, pinned)
+    assertEquals(sealedReference.groupInput.effect, ProductId("effect"))
+    assert(SealedEstimateReference.make(pinned.copy(manifest = pinned.manifest.copy(bytes = 0)), selected).isLeft)
+    assert(EstimateProductSelection.make(selected.observation, selected.effect, selected.uncertainty,
+      Vector(EstimandId("stim"), EstimandId("stim"))).isLeft)
   }
 
   private def runInput(id: String, timepoints: Int): RunInput =
