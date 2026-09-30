@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T23:39:28.225397+00:00",
+  "finished_utc": "2026-09-30T23:39:31.335248+00:00",
+  "duration_seconds": 3.109765,
+  "command": [
+    "python3",
+    "docs/verification/lwu-condition-repair-design-20260930/smooth_compact_reference.py",
+    "/private/tmp/scalafim-lwu-repair-design-20260930/jvm-saved-trace-v3.log",
+    "--out",
+    "/private/tmp/scalafim-lwu-repair-design-20260930/smooth-reference-v1.json"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-lwu-repair-design-20260930/smooth-reference-v1.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 180.0,
+  "log_bytes": 2110
+}

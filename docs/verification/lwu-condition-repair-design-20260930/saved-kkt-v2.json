@@ -1,0 +1,879 @@
+{
+  "scope": "Exact recorded-jet algebra and analytic counterexample; no objective re-evaluation, policy, new cohort or qualification",
+  "inputSha256": {
+    "lwu-diagnostic-v3-jvm.log": "8f335c2792dbb04b6fc2712c90cd5b838f9aa17d954f5245358c96aa3712f4e2",
+    "lwu-diagnostic-v4-js-node.log": "3728ef0526f1d9c2efbdd65fb55206190d247d4f7e5908fa31cf244b2fddb540"
+  },
+  "refusals": 57,
+  "classification": {
+    "Boundary-stationary": 39,
+    "BudgetExceeded-nonstationary": 14,
+    "CurvatureNotPositive-nonstationary": 2,
+    "Boundary-nonstationary": 2
+  },
+  "voxel50Proof": [
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "compactNewtonCorrection": 0.5575143097494155,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "newtonDirection": [
+        -0.5575143097494155,
+        -0.3016225341626543,
+        -0.25645536808389974
+      ],
+      "boxAlpha": 0.0,
+      "tangentDirection": [
+        -0.5575143097494155,
+        -0.3016225341626543,
+        0.0
+      ],
+      "tangentDirectionalDerivative": -31.34715041946398,
+      "feasibleRhoDerivative": -14.320047287164925,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "compactNewtonCorrection": 0.5575143097493597,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "newtonDirection": [
+        -0.5575143097493597,
+        -0.30162253416258766,
+        -0.25645536808385294
+      ],
+      "boxAlpha": 0.0,
+      "tangentDirection": [
+        -0.5575143097493597,
+        -0.30162253416258766,
+        0.0
+      ],
+      "tangentDirectionalDerivative": -31.347150419458284,
+      "feasibleRhoDerivative": -14.320047287161003,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "candidateCapDiagnostics": [
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 30,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 4.687079800541866e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 1.3470037862883608e-14,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.11848370605458806
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 33,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 4.570574837258163e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 4.354408281906515e-15,
+      "energyUlp": 5.684341886080802e-14,
+      "predictedDecreaseInUlps": 0.07660356060864525
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 49,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.280137269134371e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 5.64994315254991e-15,
+      "energyUlp": 5.684341886080802e-14,
+      "predictedDecreaseInUlps": 0.09939485108003226
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.842638512982693e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 2.668773912346037e-15,
+      "energyUlp": 2.842170943040401e-14,
+      "predictedDecreaseInUlps": 0.09389913435295089
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 27,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 6.254858958932119e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 3.854678672055647e-15,
+      "energyUlp": 2.2737367544323206e-13,
+      "predictedDecreaseInUlps": 0.016953056085061338
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 31,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 1.5371460452150055e-08,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 8.324818578336917e-15,
+      "energyUlp": 2.2737367544323206e-13,
+      "predictedDecreaseInUlps": 0.03661293930402844
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 9.627661453766983e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 8.173413732233848e-15,
+      "energyUlp": 2.2737367544323206e-13,
+      "predictedDecreaseInUlps": 0.0359470537488606
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 20,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 3.41555992996295e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 1.015898986289213e-15,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.008935941984566728
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 49,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.2801378550358095e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 5.649944287393555e-15,
+      "energyUlp": 5.684341886080802e-14,
+      "predictedDecreaseInUlps": 0.0993948710444128
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 53,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 3.2179174825990146e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 2.041581789547241e-15,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.01795794333330341
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 57,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 1.7146870482993786e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 1.4718569093429715e-15,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.012946590289960345
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.842638105190465e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 2.6687736209759597e-15,
+      "energyUlp": 2.842170943040401e-14,
+      "predictedDecreaseInUlps": 0.09389912410127767
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 87,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 1.2600619897307894e-08,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 5.924380131459532e-14,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.521113987352389
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 97,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 4.652457623008734e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 8.244415826570648e-15,
+      "energyUlp": 4.547473508864641e-13,
+      "predictedDecreaseInUlps": 0.01812966213106982
+    }
+  ],
+  "analyticControl": {
+    "hessian": [
+      [
+        2,
+        1
+      ],
+      [
+        1,
+        2
+      ]
+    ],
+    "originGradient": [
+      -0.5,
+      -2
+    ],
+    "newtonDirection": [
+      "-1/3",
+      "7/6"
+    ],
+    "tangentEnergy": "-35/36",
+    "constrainedMinimum": [
+      0,
+      1
+    ],
+    "minimumEnergy": -1,
+    "minimumGradient": [
+      0.5,
+      0
+    ]
+  },
+  "details": [
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 13,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.9710888817325833e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 29,
+      "status": "Boundary",
+      "compactNewtonCorrection": 2.148132749616531e-10,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 30,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 4.687079800541866e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 1.3470037862883608e-14,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.11848370605458806
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 31,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.667476611523496e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 33,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 4.570574837258163e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 4.354408281906515e-15,
+      "energyUlp": 5.684341886080802e-14,
+      "predictedDecreaseInUlps": 0.07660356060864525
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 49,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.280137269134371e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 5.64994315254991e-15,
+      "energyUlp": 5.684341886080802e-14,
+      "predictedDecreaseInUlps": 0.09939485108003226
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 66,
+      "status": "Boundary",
+      "compactNewtonCorrection": 7.696084437463162e-16,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.842638512982693e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 2.668773912346037e-15,
+      "energyUlp": 2.842170943040401e-14,
+      "predictedDecreaseInUlps": 0.09389913435295089
+    },
+    {
+      "platform": "JVM",
+      "snr": 1.0,
+      "voxel": 82,
+      "status": "Boundary",
+      "compactNewtonCorrection": 3.3787703559278195e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 0,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.9432308123943695e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 8,
+      "status": "Boundary",
+      "compactNewtonCorrection": 9.946394282456483e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 9,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.5425541112789183e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 11,
+      "status": "CurvatureNotPositive",
+      "compactNewtonCorrection": null,
+      "stationary": false,
+      "fullHessianPositive": false
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 15,
+      "status": "Boundary",
+      "compactNewtonCorrection": 5.993322371544751e-15,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 27,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 6.254858958932119e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 3.854678672055647e-15,
+      "energyUlp": 2.2737367544323206e-13,
+      "predictedDecreaseInUlps": 0.016953056085061338
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 29,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.936724592966669e-16,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 30,
+      "status": "Boundary",
+      "compactNewtonCorrection": 7.409837235550841e-16,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 31,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 1.5371460452150055e-08,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 8.324818578336917e-15,
+      "energyUlp": 2.2737367544323206e-13,
+      "predictedDecreaseInUlps": 0.03661293930402844
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "compactNewtonCorrection": 0.5575143097494155,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "newtonDirection": [
+        -0.5575143097494155,
+        -0.3016225341626543,
+        -0.25645536808389974
+      ],
+      "boxAlpha": 0.0,
+      "tangentDirection": [
+        -0.5575143097494155,
+        -0.3016225341626543,
+        0.0
+      ],
+      "tangentDirectionalDerivative": -31.34715041946398,
+      "feasibleRhoDerivative": -14.320047287164925,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 61,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.5157890064450783e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 62,
+      "status": "Boundary",
+      "compactNewtonCorrection": 2.346183200560207e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 65,
+      "status": "Boundary",
+      "compactNewtonCorrection": 4.824233130494446e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 72,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.206131149468269e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 9.627661453766983e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 8.173413732233848e-15,
+      "energyUlp": 2.2737367544323206e-13,
+      "predictedDecreaseInUlps": 0.0359470537488606
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 83,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.6906047677605377e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 86,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.653306675426197e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 89,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.38027314784485e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 94,
+      "status": "Boundary",
+      "compactNewtonCorrection": 2.5177959815354315e-10,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 13,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.9709652002081434e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 20,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 3.41555992996295e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 1.015898986289213e-15,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.008935941984566728
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 29,
+      "status": "Boundary",
+      "compactNewtonCorrection": 2.1481299135357146e-10,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 31,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.6671735458819487e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 49,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.2801378550358095e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 5.649944287393555e-15,
+      "energyUlp": 5.684341886080802e-14,
+      "predictedDecreaseInUlps": 0.0993948710444128
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 53,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 3.2179174825990146e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 2.041581789547241e-15,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.01795794333330341
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 57,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 1.7146870482993786e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 1.4718569093429715e-15,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.012946590289960345
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 66,
+      "status": "Boundary",
+      "compactNewtonCorrection": 7.181212869328326e-17,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 5.842638105190465e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 2.6687736209759597e-15,
+      "energyUlp": 2.842170943040401e-14,
+      "predictedDecreaseInUlps": 0.09389912410127767
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 82,
+      "status": "Boundary",
+      "compactNewtonCorrection": 3.3789115336666484e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 1,
+      "voxel": 87,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 1.2600619897307894e-08,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 5.924380131459532e-14,
+      "energyUlp": 1.1368683772161603e-13,
+      "predictedDecreaseInUlps": 0.521113987352389
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 0,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.9433380073818823e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 8,
+      "status": "Boundary",
+      "compactNewtonCorrection": 9.946405877870848e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 9,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.5432273992465057e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 11,
+      "status": "CurvatureNotPositive",
+      "compactNewtonCorrection": null,
+      "stationary": false,
+      "fullHessianPositive": false
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 15,
+      "status": "Boundary",
+      "compactNewtonCorrection": 5.938134803140918e-15,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 29,
+      "status": "Boundary",
+      "compactNewtonCorrection": 3.7717813627071567e-16,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 30,
+      "status": "Boundary",
+      "compactNewtonCorrection": 5.053889121325289e-16,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "compactNewtonCorrection": 0.5575143097493597,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "newtonDirection": [
+        -0.5575143097493597,
+        -0.30162253416258766,
+        -0.25645536808385294
+      ],
+      "boxAlpha": 0.0,
+      "tangentDirection": [
+        -0.5575143097493597,
+        -0.30162253416258766,
+        0.0
+      ],
+      "tangentDirectionalDerivative": -31.347150419458284,
+      "feasibleRhoDerivative": -14.320047287161003,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 61,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.5145608505795158e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 62,
+      "status": "Boundary",
+      "compactNewtonCorrection": 2.3461160438171316e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 65,
+      "status": "Boundary",
+      "compactNewtonCorrection": 4.824729513364204e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 72,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.20618055676689e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 76,
+      "status": "Boundary",
+      "compactNewtonCorrection": 3.7392685673321205e-15,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 83,
+      "status": "Boundary",
+      "compactNewtonCorrection": 1.6906517131109948e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 86,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.653209038800647e-11,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 89,
+      "status": "Boundary",
+      "compactNewtonCorrection": 6.378561418261304e-12,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 94,
+      "status": "Boundary",
+      "compactNewtonCorrection": 2.5177980551495286e-10,
+      "stationary": true,
+      "fullHessianPositive": true
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 97,
+      "status": "BudgetExceeded",
+      "compactNewtonCorrection": 4.652457623008734e-09,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "quadraticPredictedDecrease": 8.244415826570648e-15,
+      "energyUlp": 4.547473508864641e-13,
+      "predictedDecreaseInUlps": 0.01812966213106982
+    }
+  ]
+}
