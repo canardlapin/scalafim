@@ -7,7 +7,7 @@ import scalafim.response.{DomainReference, Provenance, ProvenanceEvidence, Prove
 
 class EvidenceOriginsSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A =
-    value.fold(error => fail(error.toString), identity)
+    value.fold(error => fail(error.toString), result => result)
 
   private def axis(name: String, keys: Vector[String], role: SpaceRole = SpaceRole.Samples): AxisRef[String] =
     right(AxisRef.fromStableKeys(name, role, keys, "fixture", "unit", "raw", Vector("fixture:v1")))
