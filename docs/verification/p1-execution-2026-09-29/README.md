@@ -8,41 +8,43 @@ are integrated in an isolated clone.
 
 ## Current qualified integration
 
-The latest qualified source integration is `895e37ff`. Seven of the original
-sixteen issues are done. Mote owns current status; bounded milestones do not
-close outstanding scientific, performance, consumer, publication or release gates.
+The latest qualified source integration is `8d5b0e51`. Seven of the original
+sixteen issues are done. Mote is authoritative; bounded milestones do not close
+scientific, performance, downstream application, publication or release gates.
 
-- Public ML trial output is qualified at `327eda76`: 207 JVM/163 JS and
-  CompileAll. Exact ML output and typed unsupported policies remain distinct.
-- Gaussian precision repair is qualified at `fcb0addb`: 368 tests on each
-  platform and CompileAll. Previously examined development responses cannot
-  count as fresh validation; historical failed gates remain preserved.
-- Physical HDF output is qualified at `895e37ff`: 133 JVM/49 JS plus provider-free
-  CompileAll. Independent reentrant-abort reproduction drove a focused fix.
-  Native evidence is bounded to macOS ARM/JDK25; full Core legacy/workflow
-  migration remains under implementation, with no shared landing authorization.
-- The fresh condition freeze `ad59a8b9` passed ten root and ten independent
-  launcher controls. Its JVM study is running; JS is next. Each qualifying SNR
-  must pass independently on both platforms. No scientific admission or final
-  live-output hash is asserted. Custodian reports no known use outside audited
-  logs; unlogged or other-machine use is not universally excluded.
+Core legacy removal and typed sealed workflow handoff passed 636 JVM tests,
+571 JS tests and warning-clean CompileAll, with 1,801 source leaves unchanged.
+The existing macOS ARM/JDK25 physical HDF profile remains qualified at `895e37ff`;
+the full original Core acceptance matrix remains under audit.
 
-Calibration command zero completed 180000 blocks with 1920000 rows across 384
-complete coordinates and zero fit failures. Four final output hashes, actual
-exit zero and owned-process termination were independently verified. The V6
-continuation controller passed 65 controls, but the remaining fifteen commands
-and 568000 blocks are stopped pending the actual decision on exact package
-`b5d3f1ad`. The old approval binds the former controller. The retained 17.36-hour
-projection is historical. Regular-moment, dependence and group-transfer inference
-remain Unresolved; completed runtime does not establish scientific Pass.
+Fresh Gaussian validation under frozen `ad59a8b9` passed both qualifying SNRs:
+JVM 192/200 and 196/200; JS 191/200 and 199/200. SNR .25 is descriptive173/200 on
+both. Independent terminal reviews verified all identified traces and budgets.
+This establishes the stated finite-cohort gates, not population or interval
+calibration. The custodian reported no known use outside audited logs; universal
+nonuse is not proven. LWU remains below95-percent admission: JVM 91/81 and JS 89/82
+of 100. Passing its three engineering tests on each platform does not override
+that scientific failure.
 
-Nine new archives preserve completed source, review, failed and successful
-attempts and control evidence. All prior 35 transport files and 930 embedded
-payloads were verified before staging. Compiled binaries and the 951251730-byte
-calibration raw remain external with exact hashes. Five Fray bugs/pain points
-are filed directly in `~/code/rust/fray/.mote`; no Fray source change or shared
-daemon restart is claimed. No 100000-response performance campaign, ScalaFIM
-publication, merge or release is implied.
+Both v4 C0 pilots completed 256 responses with zeroFloat32 failures. Their
+timings were contaminated and nonqualifying; no 100k campaign has run. The new
+same-process warm wrapper is in review. The trial original-family certificate
+has an accepted mathematical design; interval and domain prerequisites remain
+under implementation and review. No implemented trial certificate is claimed.
+
+Calibration command zero completed 180000 blocks and passed terminal review.
+The owner approved exact continuation package `b5d3f1ad` for the remaining 15
+commands / 568000 blocks. Initial start refused before intent or child because
+free disk 1496432640 bytes was below the unchanged 8 GiB guard. Space recovery is
+underway; no command-zero replay or new scientific Pass. Regular-moment, dependence and
+group-transfer inference remain Unresolved.
+
+All prior 44 transport files / 1135 embedded payloads were reverified. New archives
+preserve completed results, reviews, failed gates, and actual approval. Compiled
+binaries and the 951251730-byte calibration raw remain external and hash-pinned.
+Five Fray issues are lodged directly in `~/code/rust/fray/.mote`; no daemon
+restart or Fray source repair is claimed. No ScalaFIM publication, merge or
+release is authorized.
 
 ## Historical milestones and review chronology
 

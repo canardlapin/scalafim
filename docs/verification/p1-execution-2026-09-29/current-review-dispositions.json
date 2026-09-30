@@ -567,9 +567,94 @@
       "jvmFresh": "running",
       "jsFresh": "not started",
       "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedFreshGaussianBothPlatforms",
+      "archive": {
+        "archive": "condition-fresh-final08-science-qualified-v3.json.gz",
+        "sha256": "a72027a20fabf697eef2aca116b39f18f1df3c1e7bd0ae3f149a1ee6b1991b47",
+        "bytes": 2781850,
+        "payloads": 27
+      },
+      "jvmAccuracy": [
+        192,
+        196
+      ],
+      "jsAccuracy": [
+        191,
+        199
+      ],
+      "cohortPerCell": 200,
+      "intervalCoverageQualified": false
+    },
+    {
+      "verdict": "AcceptedQualifiedBoundedLegacyRemovalAndWorkflowHandoff",
+      "archive": {
+        "archive": "core-legacy-workflow-qualified-v3.json.gz",
+        "sha256": "8f8435c581d9f7fe72824197cb47345a2220f2c13b71dddad45f06d5e139f536",
+        "bytes": 286168,
+        "payloads": 29
+      },
+      "tests": {
+        "jvm": 636,
+        "js": 571,
+        "compileAll": true
+      },
+      "originalCoreClosed": false
+    },
+    {
+      "verdict": "LwuFrozenAdmissionFailedBothPlatforms",
+      "archive": {
+        "archive": "condition-lwu-frozen-negative-v3.json.gz",
+        "sha256": "92db0e5aa2801df3f438f38f48ede3d46442129c84b970d3ed4dd73326f616bb",
+        "bytes": 11127,
+        "payloads": 6
+      },
+      "testsPassedDespiteScientificFailure": true
+    },
+    {
+      "verdict": "AcceptMathematicalDesignOnly",
+      "archive": {
+        "archive": "trial-certificate-mathematical-design-v3.json.gz",
+        "sha256": "6b393450e67ace946cc88ace629e755f27e609ec08b6de25645ab67023b64299",
+        "bytes": 9494,
+        "payloads": 4
+      },
+      "trialCertificateImplemented": false
+    },
+    {
+      "verdict": "AcceptBounded256PilotEvidenceOnly",
+      "archive": {
+        "archive": "condition-c0-bounded-pilots-controls-v3.json.gz",
+        "sha256": "11d98fce60c554f6f6da67c0ef7f63c3b9431f5ab288e60cae1f30fd8686d743",
+        "bytes": 1104468,
+        "payloads": 34
+      },
+      "fullPerformanceAdmission": false
+    },
+    {
+      "verdict": "ActualContinuationApprovedPreflightDiskRefused",
+      "archive": {
+        "archive": "calibration-continuation-approved-disk-refusal-v3.json.gz",
+        "sha256": "7b18c938f52ab117df957213a08dd182e7d95247f379ec119e02c8d7d7956598",
+        "bytes": 2916,
+        "payloads": 3
+      },
+      "remainingCommands": 15,
+      "remainingBlocks": 568000,
+      "scientificPass": null
+    },
+    {
+      "verdict": "PreserveAuthorCorrectionAndAttemptHistory",
+      "archive": {
+        "archive": "core-c0-author-attempt-history-v3.json.gz",
+        "sha256": "e368fe864219180488bfe7ab68f5af3ddeafb8504a558b7f4d88e398647261c5",
+        "bytes": 102798,
+        "payloads": 60
+      }
     }
   ],
-  "updatedUtc": "2026-09-30T17:39:21.520389+00:00",
-  "currentIntegration": "895e37ffd93286631691ec02b15433f4fb9787ad",
+  "updatedUtc": "2026-09-30T19:24:11.695824+00:00",
+  "currentIntegration": "8d5b0e5152240819152a434b11af4be1095cee60",
   "historicalRecords": "Earlier candidate/subsequent-review fields describe their recorded point in time; latest records below govern current disposition."
 }
