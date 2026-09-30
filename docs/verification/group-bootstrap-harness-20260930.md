@@ -115,7 +115,10 @@ All through `python3 /private/tmp/scalafim-execution-20260929/run-sbt.py <worktr
 
 | gate | command task | result | log |
 |---|---|---|---|
-GATES_R5
+| JVM (round 6, final code `2e6fac70`) | `groupJVM/test` after the clean compile below | Total 174, Failed 0, Passed 167, Skipped 7; 0 warnings | `bootstrap-harness-r6-jvm` |
+| JS (round 6, final code `2e6fac70`) | `groupJS/test` after the clean compile below | Total 158, Failed 0, Passed 154, Skipped 4; 0 warnings | `bootstrap-harness-r6-js` |
+| warning gate (round 6, final code `2e6fac70`) | `groupJVM/clean`, `groupJS/clean`, then `scalafimCompileAll` | success, 0 warnings, 0 errors; group main recompiled (17 sources, JVM and JS) | `bootstrap-harness-r6-compileall` |
+| round 5 (`6b88cf23`) | same three gates | 174 / 158 total, 0 failed, 0 warnings | `bootstrap-harness-r5-final-{compileall,jvm,js}.log` |
 | JVM (round 4, final) | `groupJVM/clean` then `groupJVM/test` | Total 170, Failed 0, Passed 163, Skipped 7 (research: 94 = 88 passed + 6 opt-in skipped: 3 heavy, input writer, 2 pilot entry points; the 7th is the timing probe); 0 warnings | `bootstrap-harness-r4-final-jvm.log` |
 | JS (round 4, final) | `groupJS/clean` then `groupJS/test` | Total 158, Failed 0, Passed 154, Skipped 4 (research: 83 = 80 passed + 3 opt-in heavy skipped); 0 warnings | `bootstrap-harness-r4-final-js.log` |
 | warning gate (round 4, final) | `groupJVM/clean`, `groupJS/clean`, then `scalafimCompileAll` (group main recompiled, not a no-op) | success, 0 warnings, 0 errors; the log shows group main recompiled (17 sources, JVM and JS) | `bootstrap-harness-r4-final-compileall.log` |
@@ -252,7 +255,21 @@ without the manifest being rewritten. sha256: see Freeze below.
 
 ## Freeze
 
-FREEZE_TEXT
+Round 6 (`2e6fac70`) addressed the independent review of `6b88cf23` (ACCEPT-WITH-NOTES):
+- `run-cost.json` is now checkpointed after every completed cell, so a killed or crashed invocation still bounds the
+  CPU counted by a resume (previously it was written only at the end of an invocation);
+- a study that throws now removes its `.partial` file.
+
+Waived, with reasons: the CPU-guard test trips before the first cell rather than mid-cell, so the mid-cell abort branch is
+covered by code reading only; `ATOMIC_MOVE` has no fsync (atomic against a process crash, not power loss); a run that
+reaches the ceiling just after its last cell reports `CpuCeilingReached` and a resume then completes it. The measured
+margin is about 12x (about 1.2 of 15 core-hours).
+
+Frozen by `write_manifest_v2.py --freeze` after all round-6 gates passed at the final code commit `2e6fac70`. The
+manifest status is "frozen for pilot"; manifest-v2.json sha256 `80c02fd827be5cba6c45e99c0bdd4cea8b4fbe3e0be54c5a2726f6d137ed6acd`; parent `cells.json` sha256
+`76e6785bf77a6971d542a7de0601d6b0ca9b3c12d791a2a5b26756154f03bc73` (unchanged since `5b2c6997`). The freeze commit
+changes only the manifest status, its sha file and this receipt; no harness source changed. The pilot is launched from a
+clean worktree at the freeze commit, whose SHA is stamped into every pilot output.
 
 ## Pilot runner (round 4; the pilot was NOT run)
 
