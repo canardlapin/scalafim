@@ -17,8 +17,15 @@ The estimate artifact modules form a separate reader boundary:
 ```text
 estimates     -> archive, image
 estimates-io  -> estimates
+estimates-io-hdf5 -> estimates, estimates-io, archive-hdf5 (explicit opt-in)
 fit-estimates -> fit, estimates, group
 ```
+
+`estimates-io-hdf5` implements the existing reader/sink contracts on the JVM
+using an explicitly supplied bounded archive capability. Scala.js returns typed
+missing capability. It is excluded from ordinary root aggregation and global
+compile/test aliases; provider packaging and scientific qualification remain
+separate. It adds no fit dependency or scientific schema.
 
 `fit-estimates` uses `estimates-io` only in its test configuration for physical
 readback tests. A production reader has no dependency on the fitter. The group

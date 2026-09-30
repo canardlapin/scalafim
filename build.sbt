@@ -1007,6 +1007,30 @@ lazy val estimatesIo =
     )
     .jsSettings(jsSettingsBase)
 
+// Explicit physical estimate lane, excluded from ordinary root/global builds.
+lazy val estimatesIoHdf5 =
+  crossProject(JSPlatform, JVMPlatform)
+    .crossType(CrossType.Full)
+    .in(file("modules/estimates-io-hdf5"))
+    .dependsOn(estimates, estimatesIo, archiveHdf5)
+    .settings(commonSettings)
+    .settings(name := "scalafim-estimates-io-hdf5", publish / skip := true, scalacOptions += "-Werror")
+    .jvmSettings(
+      Test / fork := true,
+      Test / parallelExecution := false,
+      Test / javaOptions ++= {
+        val lib = (archiveHdf5JVM / hdf5ProviderPrepare).value
+        Seq("-Xmx64m", "--enable-native-access=ALL-UNNAMED", "-Djava.library.path=" + lib,
+          "-Dscalafim.hdf5.provider.dir=" + sys.props("scalafim.hdf5.provider.dir")) ++
+          sys.props.get("scalafim.hdf5.test.dir").toSeq.map("-Dscalafim.hdf5.test.dir=" + _)
+      },
+      Test / envVars += "HDF5_PLUGIN_PRELOAD" -> "::"
+    )
+    .jsSettings(jsSettingsBase)
+
+lazy val estimatesIoHdf5JS = estimatesIoHdf5.js
+lazy val estimatesIoHdf5JVM = estimatesIoHdf5.jvm
+
 lazy val estimatesIoJS = estimatesIo.js
 lazy val estimatesIoJVM = estimatesIo.jvm
 
