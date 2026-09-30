@@ -115,16 +115,18 @@ All through `python3 /private/tmp/scalafim-execution-20260929/run-sbt.py <worktr
 
 | gate | command task | result | log |
 |---|---|---|---|
-| JVM (round 4, final) | `groupJVM/clean` then `groupJVM/test` | GATE_JVM | `bootstrap-harness-r4-final-jvm.log` |
-| JS (round 4, final) | `groupJS/clean` then `groupJS/test` | GATE_JS | `bootstrap-harness-r4-final-js.log` |
-| warning gate (round 4, final) | `groupJVM/clean`, `groupJS/clean`, then `scalafimCompileAll` (group main recompiled, not a no-op) | GATE_CA | `bootstrap-harness-r4-final-compileall.log` |
+| JVM (round 4, final) | `groupJVM/clean` then `groupJVM/test` | Total 170, Failed 0, Passed 163, Skipped 7 (research: 94 = 88 passed + 6 opt-in skipped: 3 heavy, input writer, 2 pilot entry points; the 7th is the timing probe); 0 warnings | `bootstrap-harness-r4-final-jvm.log` |
+| JS (round 4, final) | `groupJS/clean` then `groupJS/test` | Total 158, Failed 0, Passed 154, Skipped 4 (research: 83 = 80 passed + 3 opt-in heavy skipped); 0 warnings | `bootstrap-harness-r4-final-js.log` |
+| warning gate (round 4, final) | `groupJVM/clean`, `groupJS/clean`, then `scalafimCompileAll` (group main recompiled, not a no-op) | success, 0 warnings, 0 errors; the log shows group main recompiled (17 sources, JVM and JS) | `bootstrap-harness-r4-final-compileall.log` |
 | review round 3 | `groupJVM/test`, `groupJS/test`, `scalafimCompileAll` at `51927430` | 157 / 152 total, all passing; CompileAll was an incremental no-op for the group module | `bootstrap-harness-r3-final-{jvm,js,compileall}.log` |
 | first round | `groupJVM/test`, `groupJS/test`, `scalafimCompileAll` | 132 / 128 total, all passing, no warnings | `bootstrap-harness-final-{jvm,js,compileall}.log` |
 | heavy (opt-in) | `-Dscalafim.group.bootstrapResearch.heavy=true "groupJVM/testOnly scalafim.group.research.bootstrap.*"` | Total 57, Failed 0, Passed 56, Skipped 1 (run before the pilot-like test was removed) | `bootstrap-harness-jvm-heavy.log` |
 | R reference | `Rscript tools/group-bootstrap-research/generate_reference_fixtures.R` | regenerates `BootstrapReferenceFixtures.scala`; R itself asserts 1149/1456/59 and the sign-flip bound | stdout |
 | R inputs | `-Dscalafim.group.bootstrapResearch.writeInputs=true "groupJVM/testOnly scalafim.group.research.bootstrap.ReferenceInputWriter"` | writes `inputs/bootstrap-cases.json` and `cells.json` | `bootstrap-harness-write-inputs.log` |
 
-Research tests take about 6 s on the JVM and 11 s on JS (fastLink).
+The round-4 gates above ran at commit `df5554bd289ab5fb9b5c90a6eb7889079438cb5d` (clean worktree; the SHA was
+read before and after the run). The only commit after it records these results in this receipt (docs only), and the
+same gates were run again at that final commit with logs `bootstrap-harness-r4b-final-{compileall,jvm,js}.log`.
 
 ## Mutation evidence (JVM research suites; source restored and verified by SHA-256 after each)
 
