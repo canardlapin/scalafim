@@ -116,6 +116,13 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
     assertEquals(result.projection.receipt.tally, SurfaceSampleTally(3, 1, 0, 1, 1))
     assertEquals((0 until 3).map(i => result.projection.quality.valueAt(VertexId(i)).get).toVector, Vector(true, true, false))
 
+  test("GPU nearest transport rejects far-outside coordinates before narrowing indices"):
+    val result = project(Vector(Vector(4294967296.0, 0.0, 0.0), Vector(-4294967296.0, 1.0, 0.0), Vector(2.0, 0.0, 1.0)))
+    assert(result.projection.values.valueAt(VertexId(0)).get.isNaN)
+    assert(result.projection.values.valueAt(VertexId(1)).get.isNaN)
+    assertEqualsDouble(result.projection.values.valueAt(VertexId(2)).get, 102.0, 0.0)
+    assertEquals(result.projection.receipt.tally, SurfaceSampleTally(3, 2, 0, 0, 1))
+
   /** Test-only export: runs the production projector with a real injected Three.js/WebGL runtime. */
   def browserParity(three: js.Dynamic): js.Dynamic =
     val cases = Vector(
@@ -123,7 +130,8 @@ class ThreeVolumeProjectorSuite extends munit.FunSuite:
       (Vector(
         Vector(0.5 - 1e-8, 1.0, 0.0), Vector(0.5, 1.0, 0.0), Vector(0.5 + 1e-8, 1.0, 0.0),
         Vector(2.5 - 1e-8, 1.0, 0.0), Vector(2.5, 1.0, 0.0), Vector(-0.5, 1.0, 0.0), Vector(-0.5 - 1e-8, 1.0, 0.0)
-      ), Vector(10.0, 11.0, 11.0, 12.0, Double.NaN, 10.0, Double.NaN))
+      ), Vector(10.0, 11.0, 11.0, 12.0, Double.NaN, 10.0, Double.NaN)),
+      (Vector(Vector(4294967296.0, 0.0, 0.0), Vector(-4294967296.0, 1.0, 0.0), Vector(2.0, 0.0, 1.0)), Vector(Double.NaN, Double.NaN, 102.0))
     )
     var mismatches = 0
     var observations = 0

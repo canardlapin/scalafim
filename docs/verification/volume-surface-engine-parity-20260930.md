@@ -31,7 +31,7 @@ The actual production API also failed the frozen browser baseline: Chromium 140.
 
 After the X-fast upload repair alone, the axis and zero/NaN regressions passed, while the half-voxel test still returned 11 where 10 was required. Log: `/private/tmp/scalafim-execution-20260929/logs/volume-surface-parity-axis-only.log`, exit 1, 2/3 passed. This separates the two discrepancies.
 
-The final repair resolves nearest indices in double precision before uploading integer texel coordinates, uses the shared midpoint arithmetic convention, and packs source texels into X-fast order. The shader fetches the chosen integer texel. Spatial compiler production code is unchanged.
+The axis/tie repair resolves nearest indices in double precision before uploading integer texel coordinates, uses the shared midpoint arithmetic convention, and packs source texels into X-fast order. The shader fetches the chosen integer texel. A subsequent boundary audit reproduced Long-to-Int wrapping in all three nearest kernels: coordinates such as +/-2^32 were accepted as in-grid. The original eager and spatial kernels already had this defect, and the first GPU tie fix inherited it. `volume-surface-wide-before.log` (exit 1, GPU 3/4 passing) and `volume-surface-wide-before-jvm.log` (exit 1, spatial/eager 4/7 passing) independently demonstrate the rejected far-outside samples being read and assigned coverage one. All three nearest boundaries now retain Long indices until finite/in-grid checks succeed, then narrow only proven valid CPU indices. This affects coordinate admission, not the source-value NaN/minimumSamples policy.
 
 ## Validation
 

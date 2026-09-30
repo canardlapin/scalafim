@@ -129,3 +129,27 @@ class VolumeToSurfaceParitySuite extends munit.FunSuite:
     assertEqualsDouble(output(1, 0), polynomial(0.0, 0.5, 0.75), 1e-12)
     assertEqualsDouble(output(2, 0), 0.0, 0.0)
     assertEquals(operator.qc.coverage.rowCoverage, Vector(1.0, 0.75, 0.0))
+
+  private val outsidePoints = Vector(
+    Vector(4294967296.0, 0.0, 0.0), Vector(-4294967296.0, 1.0, 0.0),
+    Vector(0.0, 4294967296.0, 0.0), Vector(0.0, 0.0, 4294967296.0)
+  )
+
+  test("nearest spatial weights reject far-outside coordinates before narrowing indices"):
+    outsidePoints.foreach: point =>
+      val weights = VolumeToSurfaceOperatorCompiler.sourcePointWeights(
+        GridSpec.fromSpace(space), None, SpatialPoint(point(0), point(1), point(2)), SamplingPolicy.Nearest
+      )
+      assertEquals(weights.cols, Vector.empty)
+      assertEqualsDouble(weights.coverage, 0.0, 0.0)
+
+  test("eager nearest sampling rejects far-outside coordinates before narrowing indices"):
+    val surfaces = pair(outsidePoints :+ Vector(0.0, 0.0, 0.0))
+    val eager = VolumeSurfaceSampler.sample(volume(), surfaces, SurfaceSamplingPath.White)
+    assertEquals((0 until 5).map(i => eager.sampleCounts.valueAt(VertexId(i)).get).toVector, Vector(0, 0, 0, 0, 1))
+    assertEquals(eager.tally, SurfaceSampleTally(5, 4, 0, 0, 1))
+
+  test("public nearest operator gives uncovered rows for far-outside coordinates"):
+    val surfaces = pair(outsidePoints :+ Vector(0.0, 0.0, 0.0))
+    val operator = compile(surfaces, SurfaceSamplingPath.White, SamplingPolicy.Nearest)
+    assertEquals(operator.qc.coverage.rowCoverage, Vector(0.0, 0.0, 0.0, 0.0, 1.0))

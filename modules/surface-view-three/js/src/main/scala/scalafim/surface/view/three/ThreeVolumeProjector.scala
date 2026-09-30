@@ -69,9 +69,10 @@ object ThreeVolumeProjector:
             )
             // Resolve nearest ties in double precision, as the shared CPU sampler does.
             // Uploading fractional float32 coordinates can cross a half-voxel boundary.
-            val voxel = volume.space.coordToIndex(world).map(v => math.round(v).toInt)
+            val continuous = volume.space.coordToIndex(world)
+            val voxel = continuous.map(v => math.round(v))
             val valid = voxel.indices.forall: axis =>
-              voxel(axis) >= 0 && voxel(axis) < volume.space.spatialDims(axis)
+              continuous(axis).isFinite && voxel(axis) >= 0L && voxel(axis) < volume.space.spatialDims(axis).toLong
             val offset = vertex * 4
             coordinates(offset) = voxel(0).toFloat
             coordinates(offset + 1) = voxel(1).toFloat
@@ -84,6 +85,7 @@ object ThreeVolumeProjector:
           val volumeValues = dimensions.product
           val volumeData = new Float32Array(volumeValues)
           // Canonical ScalaFIM ordinals are Z-fast; WebGL texels are X-fast.
+          val canonicalXStride = dimensions(1) * dimensions(2)
           var valueIndex = 0
           var z = 0
           while z < dimensions(2) do
@@ -91,7 +93,8 @@ object ThreeVolumeProjector:
             while y < dimensions(1) do
               var x = 0
               while x < dimensions(0) do
-                volumeData(valueIndex) = volume.valueAtCanonicalOrdinal(volume.gridToIndex(x, y, z)).toFloat
+                val canonicalOrdinal = x * canonicalXStride + y * dimensions(2) + z
+                volumeData(valueIndex) = volume.valueAtCanonicalOrdinal(canonicalOrdinal).toFloat
                 valueIndex += 1
                 x += 1
               y += 1
