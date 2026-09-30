@@ -29,13 +29,15 @@ class HierScanSuite extends munit.FunSuite:
     val nulls = FixedNullDraw(Vector.fill(9)(Array.fill(16)(0.2)))
     val result = value(HierScan.run(stat, nulls, config = simpleConfig(alpha = 0.8)))
 
-    assertEquals(result.significantRegions.size, 1)
-    assertEquals(result.significantRegions.head.path, Vector(7, 1))
-    assertEquals(result.significantRegions.head.maskSpaceIndices, Vector(15))
-    assert(result.nodeTests.exists(t => t.path == Vector(7) && t.rejected))
-    assert(result.nodeTests.exists(t => t.path == Vector(7, 1) && t.rejected))
-    assert(result.reject.valueAtCanonicalOrdinal(15))
-    assertEquals((0 until 16).count(result.reject.valueAtCanonicalOrdinal), 1)
+    // Every rejected node is reported, as in neurothresh: the coarse region
+    // tested at gamma * alpha and the voxel it localizes to at gamma * (1 - gamma) * alpha.
+    assertEquals(result.significantRegions.map(_.path), Vector(Vector(7), Vector(7, 1)))
+    assertEquals(result.significantRegions.last.maskSpaceIndices, Vector(15))
+    assert(result.significantRegions.head.maskSpaceIndices.contains(15))
+    assertEqualsDouble(result.significantRegions.head.alphaTest, 0.4, 1e-15)
+    assertEqualsDouble(result.significantRegions.last.alphaTest, 0.2, 1e-15)
+    val coarse = result.significantRegions.head.maskSpaceIndices.toSet
+    assertEquals((0 until 16).filter(result.reject.valueAtCanonicalOrdinal).toSet, coarse)
   }
 
   test("HierScan keeps the reject mask empty when the null dominates") {
