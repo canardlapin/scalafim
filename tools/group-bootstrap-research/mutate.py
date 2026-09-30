@@ -104,6 +104,27 @@ MUTATIONS = [
         "rss / series.nominalDf)",
         "rss / series.length)",
     ),
+    (
+        "R4",
+        "outcome drops the power-cell membership check (length only)",
+        PKG + "Decision.scala",
+        "if powerIds.length != 4 || powerIds.toSet != CellManifest.PowerCells.toSet then",
+        "if powerIds.length != 4 then",
+    ),
+    (
+        "R7",
+        "Gain required in every power cell of S (forall instead of exists)",
+        PKG + "Decision.scala",
+        "powerInS.exists(_.gain)",
+        "powerInS.forall(_.gain)",
+    ),
+    (
+        "R8",
+        "passes ignores the failure criterion (f <= 59)",
+        PKG + "Decision.scala",
+        "nullVerdict(e.nullRejections, e.studies) == NullVerdict.Pass && failureVerdict(e.studyFailures, e.studies) == FailureVerdict.Pass",
+        "nullVerdict(e.nullRejections, e.studies) == NullVerdict.Pass",
+    ),
 ]
 
 

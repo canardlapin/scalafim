@@ -19,6 +19,7 @@ SOURCE_DIRS = [
     "modules/group/jvm/src/test/scala/scalafim/group/research/bootstrap",
 ]
 R_SCRIPT = "tools/group-bootstrap-research/generate_reference_fixtures.R"
+SELF = "tools/group-bootstrap-research/write_manifest_v2.py"
 HEAVY_LOG = pathlib.Path(
     "/private/tmp/scalafim-execution-20260929/logs/bootstrap-harness-jvm-heavy.log"
 )
@@ -34,11 +35,12 @@ def main() -> None:
         for p in sorted((ROOT / d).glob("*.scala")):
             sources[str(p.relative_to(ROOT))] = sha(p)
     sources[R_SCRIPT] = sha(ROOT / R_SCRIPT)
+    sources[SELF] = sha(ROOT / SELF)
     cells_sha = sha(TOOLS / "cells.json")
     manifest = {
         "schema": "scalafim-group-bootstrap-manifest/v2",
         "mote": "bd-01M21BNZR9ZBRAYY9JD5WCQ8KX",
-        "status": "pending independent re-review; not frozen for the pilot",
+        "status": "pending re-review; not frozen",
         "parent": {
             "path": "tools/group-bootstrap-research/cells.json",
             "sha256": cells_sha,
@@ -52,6 +54,7 @@ def main() -> None:
             "candidates": ["B-plug", "B-fixV", "B-EB"],
             "ties": "LowestIdString",
             "count": 6,
+            "clarification": "each study counts once in the score, whether Reject, Unresolved or Failed; select refuses unless every candidate of every pool cell has exactly R = 2000 pilot studies (hence equal R across candidates)",
         },
         "decision_rule": {
             "version": "decision-rule/v2",
@@ -61,6 +64,10 @@ def main() -> None:
                 "Bound(union of qualifying S), S in {n >= 20, nu >= 40}: every confirmation cell in S passes null and failure, Gain in >= 1 power cell in S, Non-loss in every power cell in S; Fails outside S allowed; S without a power cell cannot qualify",
                 "Decline: any Fail or any Definite loss",
                 "Unresolved: otherwise",
+            ],
+            "clarifications": [
+                "Fail means a null Fail (k >= 1456); a failure count above 59 with k < 1456 does not Pass, so that cell is Unresolved, not Decline",
+                "a Definite loss in a power cell outside S does not block Bound(S), because Bound precedes Decline",
             ],
             "refusal": "outcome refuses unless R = 20000 for every cell, exactly 12 distinct core confirmation cells including the 6 fixed, and exactly the 4 declared power cells",
             "null_pass_max_k": 1149,

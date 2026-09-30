@@ -100,9 +100,29 @@ enum SelectionError(val message: String):
   case MissingCandidate(id: String, scheme: String) extends SelectionError(s"no $scheme verdicts for $id")
   case NoStudies(id: String, scheme: String) extends SelectionError(s"no usable studies for $scheme in $id")
   case TooFewCells(available: Int, wanted: Int) extends SelectionError(s"pool has $available cells, need $wanted")
+  case WrongStudyCount(id: String, scheme: String, studies: Int, expected: Int)
+      extends SelectionError(s"$scheme in $id has $studies pilot studies; the protocol fixes R = $expected")
+  case UnequalStudyCounts(id: String) extends SelectionError(s"candidates in $id have different pilot study counts")
 
 /** Pure confirmation-cell selection (§6), parameterised by a pending `SelectionRule`. */
 object ConfirmationSelection:
+  /** Pilot studies per cell (declaration §6). */
+  val PilotStudies = 2000
+
+  /** Refuses unless every candidate of every pool cell has exactly R = 2000 verdicts (hence equal R). */
+  def checkStudyCounts(pilot: Vector[PilotEvidence], rule: SelectionRule, expected: Int = PilotStudies): Either[SelectionError, Unit] =
+    val pool = rule.pool.cells.map(_.id).toSet
+    pilot.filter(e => pool.contains(e.cell.id)).foldLeft[Either[SelectionError, Unit]](Right(())) { (acc, e) =>
+      acc.flatMap { _ =>
+        val counts = rule.candidates.flatMap(s => e.verdicts.get(s).map(v => s -> v.length))
+        if counts.map(_._2).distinct.length > 1 then Left(SelectionError.UnequalStudyCounts(e.cell.id.value))
+        else
+          counts.find(_._2 != expected) match
+            case Some((s, r)) => Left(SelectionError.WrongStudyCount(e.cell.id.value, s.code, r, expected))
+            case None => Right(())
+      }
+    }
+
   /** The null-excess rate k/R of one scheme's pilot verdicts under an accounting rule. */
   def rate(verdicts: Vector[StudyVerdict], accounting: PilotFailureAccounting): Option[Double] =
     accounting match
@@ -138,9 +158,9 @@ object ConfirmationSelection:
           }
         }
 
-  /** The `rule.count` worst cells, worst first. */
-  def select(pilot: Vector[PilotEvidence], rule: SelectionRule = SelectionRule.Owner): Either[SelectionError, Vector[CellId]] =
-    scores(pilot, rule).flatMap { scored =>
+  /** The `rule.count` worst cells, worst first. Each study counts once, whether Reject, Unresolved or Failed. */
+  def select(pilot: Vector[PilotEvidence], rule: SelectionRule = SelectionRule.Owner, expected: Int = PilotStudies): Either[SelectionError, Vector[CellId]] =
+    checkStudyCounts(pilot, rule, expected).flatMap(_ => scores(pilot, rule)).flatMap { scored =>
       if scored.length < rule.count then Left(SelectionError.TooFewCells(scored.length, rule.count))
       else
         val manifestIndex = Cell.all.map(_.id).zipWithIndex.toMap

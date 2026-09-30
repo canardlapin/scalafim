@@ -43,7 +43,7 @@ class ManifestFileSuite extends munit.FunSuite:
       val stream = Files.list(root.resolve(d))
       try stream.iterator().asScala.map(p => s"$d/${p.getFileName}").filter(_.endsWith(".scala")).toVector
       finally stream.close()
-    } :+ "tools/group-bootstrap-research/generate_reference_fixtures.R"
+    } ++ Vector("tools/group-bootstrap-research/generate_reference_fixtures.R", "tools/group-bootstrap-research/write_manifest_v2.py")
     assertEquals(listed.keySet, onDisk.toSet, "manifest-v2 must list exactly the harness sources")
     onDisk.foreach { path =>
       val digest = java.security.MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(root.resolve(path)))

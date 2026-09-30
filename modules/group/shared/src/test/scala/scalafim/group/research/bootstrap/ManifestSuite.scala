@@ -73,9 +73,10 @@ class ManifestSuite extends munit.FunSuite:
 
   test("the null and power streams of a study are distinct and reproducible"):
     val c = ResearchTestSupport.cell("C-n20-DG-Vspread-T2-N40")
-    val a = ModelJ.draw(c, Phase.Pilot, StudyPurpose.Null, 5, c.researchDesign)
-    val b = ModelJ.draw(c, Phase.Pilot, StudyPurpose.Null, 5, c.researchDesign)
-    val p = ModelJ.draw(c, Phase.Pilot, StudyPurpose.Power, 5, c.researchDesign)
+    // Harness roots only: no test draws from a pilot or confirmation root.
+    val a = ModelJ.draw(c, Phase.Harness, StudyPurpose.Null, 5, c.researchDesign)
+    val b = ModelJ.draw(c, Phase.Harness, StudyPurpose.Null, 5, c.researchDesign)
+    val p = ModelJ.draw(c, Phase.Harness, StudyPurpose.Power, 5, c.researchDesign)
     assertEquals(a.data.y.toVector, b.data.y.toVector)
     assertEquals(a.data.v.toVector, b.data.v.toVector)
     assertNotEquals(a.data.v.toVector, p.data.v.toVector)

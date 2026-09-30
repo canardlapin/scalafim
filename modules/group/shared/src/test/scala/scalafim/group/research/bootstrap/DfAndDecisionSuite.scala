@@ -159,7 +159,60 @@ class DfAndDecisionSuite extends munit.FunSuite:
     val noEb = full.updated(0, full.head.copy(verdicts = full.head.verdicts - Scheme.EmpiricalBayes))
     assert(ConfirmationSelection.select(noEb).left.exists(_.isInstanceOf[SelectionError.MissingCandidate]))
     val empty = full.updated(0, full.head.copy(verdicts = candidates.map(_ -> Vector.empty[StudyVerdict]).toMap))
-    assert(ConfirmationSelection.select(empty).left.exists(_.isInstanceOf[SelectionError.NoStudies]))
+    assert(ConfirmationSelection.select(empty).left.exists(_.isInstanceOf[SelectionError.WrongStudyCount]))
+    val allFailed = full.updated(0, full.head.copy(verdicts = candidates.map(_ -> Vector.fill(2000)(Failed)).toMap))
+    val excluding = SelectionRule.Owner.copy(accounting = PilotFailureAccounting.ExcludeFromDenominator)
+    assert(ConfirmationSelection.select(allFailed, excluding).left.exists(_.isInstanceOf[SelectionError.NoStudies]))
+
+  test("selection refuses R != 2000 for any candidate, and unequal R across candidates"):
+    val full = pilot(_ => candidates.map(_ -> flat(100)).toMap)
+    val short = full.updated(3, full(3).copy(verdicts = full(3).verdicts.updated(Scheme.FixV, flat(100, 1999))))
+    assert(ConfirmationSelection.select(short).left.exists(_.isInstanceOf[SelectionError.UnequalStudyCounts]))
+    val allShort = full.updated(3, full(3).copy(verdicts = candidates.map(_ -> flat(100, 1999)).toMap))
+    assert(ConfirmationSelection.select(allShort).left.exists(_.isInstanceOf[SelectionError.WrongStudyCount]))
+    val tiny = pilot(_ => candidates.map(_ -> flat(1, 3)).toMap)
+    assert(ConfirmationSelection.checkStudyCounts(tiny, SelectionRule.Owner, 3).isRight)
+    assert(ConfirmationSelection.select(tiny).left.exists(_.isInstanceOf[SelectionError.WrongStudyCount]))
+
+  test("the selection score counts each study once, whether Reject, Unresolved or Failed"):
+    val v = Vector(Reject, Unresolved, Failed) ++ Vector.fill(1997)(Retain)
+    assertEquals(ConfirmationSelection.rate(v, SelectionRule.Owner.accounting), Some(3.0 / 2000))
+
+  // N1 / N3: decision-rule gaps.
+  test("outcome refuses four power cells that are not the declared ones"):
+    val notPower = Cell.core.filterNot(c => CellManifest.PowerCells.contains(c.id)).take(4)
+    val wrong = notPower.map(c => PowerEvidence.aggregate(c, Vector.fill(800)(Reject -> ComparatorVerdict.Retain) ++ Vector.fill(r - 800)(Retain -> ComparatorVerdict.Retain)))
+    assertEquals(wrong.length, 4)
+    assert(Decision.outcome(evidence(_ => 1000), wrong).left.exists(_.isInstanceOf[DecisionRefusal.WrongPowerCells]))
+
+  private def mixedPower(gainAt: CellId): Vector[PowerEvidence] =
+    CellManifest.PowerCells.flatMap(Cell.byId).map { c =>
+      val (n10, n01) = if c.id == gainAt then (800, 400) else (400, 400)
+      PowerEvidence.aggregate(c, Vector.fill(n10)(Reject -> ComparatorVerdict.Retain) ++ Vector.fill(n01)(Retain -> ComparatorVerdict.Reject) ++
+        Vector.fill(r - n10 - n01)(Retain -> ComparatorVerdict.Retain))
+    }
+
+  test("Gain needs only one power cell (mixed gain): Adopt, and Bound(n >= 20) through its n80 power cell"):
+    val n80 = CellManifest.PowerCells.find(_.value.startsWith("C-n80")).get
+    val mixed = mixedPower(n80)
+    assertEquals(mixed.count(e => Decision.powerVerdict(e).gain), 1)
+    assert(mixed.forall(e => Decision.powerVerdict(e).nonLoss))
+    assertEquals(Decision.outcome(evidence(_ => 1000), mixed), Right(CandidateOutcome.Adopt))
+    val bounded = Decision.outcome(evidence(c => if outside(c) then 1300 else 1000), mixed)
+    assertEquals(bounded, Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN))))
+
+  test("a failure rate above 59 with k < 1456 does not Pass: neither Adopt nor Bound, and Unresolved rather than Decline"):
+    // 60 failed studies (counted as rejections) + 1000 resolved rejections: k = 1060 <= 1149, f = 60 >= 60.
+    val failing = confirmation.map(c => CellEvidence.aggregate(c, Vector.fill(60)(Failed) ++ Vector.fill(1000)(Reject) ++ Vector.fill(r - 1060)(Retain)))
+    assert(failing.forall(e => Decision.nullVerdict(e.nullRejections, e.studies) == NullVerdict.Pass))
+    assert(failing.forall(e => Decision.failureVerdict(e.studyFailures, e.studies) == FailureVerdict.NotPass))
+    assertEquals(Decision.outcome(failing, power(800, 400)), Right(CandidateOutcome.Unresolved))
+
+  test("a Definite loss in a power cell outside S does not block Bound(S)"):
+    val outsidePower = CellManifest.PowerCells.flatMap(Cell.byId).find(outside).get
+    val lossOutside = power(800, 400).map(e => if e.cell == outsidePower then power(100, 1500).find(_.cell == outsidePower).get else e)
+    assert(Decision.powerVerdict(lossOutside.find(_.cell == outsidePower).get).definiteLoss)
+    assertEquals(Decision.outcome(evidence(_ => 1000), lossOutside), Right(CandidateOutcome.Bound(Vector(SubFamily.LargeN, SubFamily.LargeNu))))
 
   // n8 cells with finite nu < 40 lie in neither sub-family.
   private def outside(c: Cell): Boolean = !SubFamily.LargeN.contains(c) && !SubFamily.LargeNu.contains(c)
