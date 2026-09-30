@@ -399,7 +399,18 @@ object TrialBandedBenchmark:
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
   private val zeroAttempted =
-    TrialBandedAttemptedWorkSnapshot(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L)
+    TrialBandedAttemptedWorkSnapshot(
+      referenceAttempts = 0L, referenceFailures = 0L,
+      partialReferenceFailures = 0L, releaseFailures = 0L,
+      factorAttempts = 0L, factorFailures = 0L,
+      solveAttempts = 0L, solveFailures = 0L,
+      rightHandSideAttempts = 0L, rightHandSideFailures = 0L,
+      jetAttempts = 0L, jetFailures = 0L,
+      readoutAttempts = 0L, readoutFailures = 0L,
+      exactReadoutFactorAttempts = 0L, exactReadoutFactorFailures = 0L,
+      conditionalReadoutAttempts = 0L, conditionalReadoutFailures = 0L,
+      conditionalInverseAttempts = 0L, conditionalInverseFailures = 0L,
+      conditionalCorrectionAttempts = 0L, conditionalCorrectionFailures = 0L)
 
   private val zeroWork = TrialBandedWorkSnapshot(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, zeroAttempted)
 
@@ -423,7 +434,13 @@ object TrialBandedBenchmark:
       left.readoutAttempts + right.readoutAttempts,
       left.readoutFailures + right.readoutFailures,
       left.exactReadoutFactorAttempts + right.exactReadoutFactorAttempts,
-      left.exactReadoutFactorFailures + right.exactReadoutFactorFailures
+      left.exactReadoutFactorFailures + right.exactReadoutFactorFailures,
+      conditionalReadoutAttempts = left.conditionalReadoutAttempts + right.conditionalReadoutAttempts,
+      conditionalReadoutFailures = left.conditionalReadoutFailures + right.conditionalReadoutFailures,
+      conditionalInverseAttempts = left.conditionalInverseAttempts + right.conditionalInverseAttempts,
+      conditionalInverseFailures = left.conditionalInverseFailures + right.conditionalInverseFailures,
+      conditionalCorrectionAttempts = left.conditionalCorrectionAttempts + right.conditionalCorrectionAttempts,
+      conditionalCorrectionFailures = left.conditionalCorrectionFailures + right.conditionalCorrectionFailures
     )
 
   private def addWork(left: TrialBandedWorkSnapshot, right: TrialBandedWorkSnapshot): TrialBandedWorkSnapshot =
@@ -484,5 +501,11 @@ object TrialBandedBenchmark:
         s"readoutAttempts=${work.attempted.readoutAttempts} readoutFailures=${work.attempted.readoutFailures} " +
         s"exactReadoutFactorAttempts=${work.attempted.exactReadoutFactorAttempts} " +
         s"exactReadoutFactorFailures=${work.attempted.exactReadoutFactorFailures} " +
+        s"conditionalReadoutAttempts=${work.attempted.conditionalReadoutAttempts} " +
+        s"conditionalReadoutFailures=${work.attempted.conditionalReadoutFailures} " +
+        s"conditionalInverseAttempts=${work.attempted.conditionalInverseAttempts} " +
+        s"conditionalInverseFailures=${work.attempted.conditionalInverseFailures} " +
+        s"conditionalCorrectionAttempts=${work.attempted.conditionalCorrectionAttempts} " +
+        s"conditionalCorrectionFailures=${work.attempted.conditionalCorrectionFailures} " +
         f"checksum=$checksum%.9g"
     )
