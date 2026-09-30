@@ -17,7 +17,6 @@ class ThresholdCoreSuite extends munit.FunSuite:
     assert(Alpha(0.05).isRight)
     assertEquals(Alpha(0.0).left.toOption, Some(ThresholdError.InvalidAlpha(0.0)))
     assertEquals(Kappa(-1.0).left.toOption, Some(ThresholdError.InvalidKappa(-1.0)))
-    assertEquals(DegreesOfFreedom(0.0).left.toOption, Some(ThresholdError.InvalidDegreesOfFreedom(0.0)))
     assertEquals(AdjustedP(1.1).left.toOption, Some(ThresholdError.InvalidAdjustedPValue(1.1)))
     assertEquals(PermutationCount(0).left.toOption, Some(ThresholdError.InvalidPermutationCount(0)))
   }
@@ -36,10 +35,10 @@ class ThresholdCoreSuite extends munit.FunSuite:
   test("statistic maps separate evidence orientation from threshold alternative") {
     val sp = SampleSpaces(Vector(2, 2, 1))
     val evidence = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, 2.0, 0.5, 3.0), sp)
-    val statistic = StatisticMap.negLog10P(evidence, PSide.OneSided)
+    val statistic = StatisticMap.negLog10P(evidence)
     val field = value(MaskedField.fromStatisticMap(statistic, ThresholdAlternative.Greater))
 
-    assertEquals(statistic.kind, StatKind.NegLog10P(PSide.OneSided))
+    assertEquals(statistic.kind, StatKind.NegLog10P)
     assertEquals(statistic.orientation, EvidenceOrientation.Unsigned)
     assertEquals(field.valuesCopy.toVector, Vector(1.0, 2.0, 0.5, 3.0))
     assertEquals(
@@ -51,7 +50,7 @@ class ThresholdCoreSuite extends munit.FunSuite:
   test("unsigned statistic maps reject negative evidence inside the mask") {
     val sp = SampleSpaces(Vector(2, 1, 1))
     val evidence = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array(1.0, -0.1), sp)
-    val statistic = StatisticMap.negLog10P(evidence, PSide.OneSided)
+    val statistic = StatisticMap.negLog10P(evidence)
 
     assertEquals(
       MaskedField.fromStatisticMap(statistic, ThresholdAlternative.Greater).left.toOption,

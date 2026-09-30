@@ -20,6 +20,16 @@ Permutation inference is explicit about two conventions:
   `ExactEnumeration` draws include it and use `#{null >= t} / B`; a set whose
   nulls never reach an observed statistic is refused as missing the identity.
 
+A `StatisticMap` is labelled `Z`, `T` or `NegLog10P`. The label fixes only
+the evidence orientation: `Z` and `T` maps are signed and admit every
+alternative; a `NegLog10P` map is unsigned and admits only `Greater`. The
+label carries no degrees of freedom and no p-value sidedness. Every admitted
+procedure judges a map only against null draws of the same statistic, and
+maxT and Westfall-Young p-values are unchanged by any common strictly
+increasing odd transform, such as a fixed-df t-to-z conversion. Whether a
+`NegLog10P` map is one- or two-sided is part of the caller's hypothesis,
+and the null draws must match it. No scale conversion is implemented.
+
 `MaxNull.reduce` streams draws into per-draw maxima without a
 draws-by-voxels matrix. `MaxT.runMap` builds a voxelwise result from it whose
 reject mask, adjusted p-value map and cutoff agree by construction.
