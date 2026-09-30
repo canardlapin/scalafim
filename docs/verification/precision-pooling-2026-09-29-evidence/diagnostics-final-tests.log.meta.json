@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T00:23:23.682888+00:00",
+  "finished_utc": "2026-09-30T00:24:04.871895+00:00",
+  "duration_seconds": 41.188859,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitJVM/test",
+    "fitJS/test",
+    "fitBenchJVM/runMain scalafim.fmri.fit.SelectedPrecisionBenchmarkSmoke"
+  ],
+  "cwd": "/private/tmp/scalafim-execution-20260929/diagnostics",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/diagnostics-final-tests.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 63614
+}

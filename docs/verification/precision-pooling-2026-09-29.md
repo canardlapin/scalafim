@@ -167,6 +167,11 @@ and `4c3b7667156f6ec76f05d860014ba8433cbe14523a8dc1cdf0224139fe4e85da`.
 The tracked [evidence archive](precision-pooling-2026-09-29-evidence/SHA256SUMS)
 contains byte-identical copies of all four raw JMH JSON files, their complete
 sbt logs and exit metadata, and the four `/usr/bin/time -l` resource logs.
-The manifest hashes all 16 files. Source and provider hashes appear above;
-these receipts make the before/after comparison reviewable after the temporary
+It also retains `diagnostics-final-tests.log` with its command metadata: the
+JVM and JS suites passed 340/340 and 328/328 tests, then the no-argument
+benchmark smoke failed with a usage error, so the combined command exited 1.
+`diagnostics-candidate-smoke-r3.log` and its metadata record the corrected
+four-case command, exit 0, and the resident/mapped checksums above. The
+manifest hashes all 20 files. Source and provider hashes appear above; these
+receipts make the before/after comparison reviewable after the temporary
 execution root is removed.
