@@ -1,0 +1,43 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-core-nifti-1",
+  "DocumentKind": "catalog",
+  "Content": {
+    "model": "00000000-0000-4000-8000-000000000102",
+    "entries": [
+      {
+        "id": "A",
+        "label": "A",
+        "kind": "Coefficient",
+        "units": "signal",
+        "normalization": "explicit",
+        "definition": "A"
+      },
+      {
+        "id": "B",
+        "label": "B",
+        "kind": "Coefficient",
+        "units": "signal",
+        "normalization": "explicit",
+        "definition": "B"
+      },
+      {
+        "id": "hA",
+        "label": "hA",
+        "kind": "Hypothesis",
+        "units": "dimensionless",
+        "normalization": "explicit",
+        "definition": "hA"
+      },
+      {
+        "id": "hB",
+        "label": "hB",
+        "kind": "Hypothesis",
+        "units": "dimensionless",
+        "normalization": "explicit",
+        "definition": "hB"
+      }
+    ]
+  },
+  "WireVersion": "1.0.0"
+}

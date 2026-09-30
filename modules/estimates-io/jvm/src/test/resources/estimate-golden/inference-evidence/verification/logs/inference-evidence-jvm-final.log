@@ -1,0 +1,139 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project inference-evidence-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/inference-evidence/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (260003 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/inference-evidence/)
+scalafim.estimates.InferenceEvidenceSuite:
+  + restricted coefficient scope preserves explicit order and unavailable conditioning 0.062s
+  + planes require known observation and catalog hypothesis with statistic semantics 0.002s
+  + all ten codes are closed; Unrecorded is distinct from measured success 0.005s
+  + selected status validation preserves permutations and refuses missing evidence and capacities 0.005s
+scalafim.estimates.EstimateContractSuite:
+  + shared catalog joins scientific IDs despite repeated labels and unit-local column order 0.001s
+  + statistic-only units remain inspectable without invented effects or uncertainty 0.0s
+  + known statistic distributions and links require positive aligned df and explicit hypothesis mapping 0.007s
+  + logical selection preserves reversed estimand and sparse sample order with checked capacities 0.003s
+  + outside support differs from unknown samples and valid zero remains data 0.002s
+  + covariance names both axes in deterministic upper-triangle order 0.001s
+  + normalization requires an explicit retained variance-scale product 0.002s
+  + df domain, physical FIR coordinates and artifact references validate at construction 0.002s
+  + marginal uncertainty binds supported df to the same observation, target and pooling axes 0.001s
+  + partial collection coverage preserves missing intended units 0.002s
+  + pair requests preserve order and reject reversed, duplicate and oversized axes 0.003s
+  + consumer covariance verification rejects indefiniteness even with zero variance scale 0.014s
+  + shared delivery has only named observation and pair axes with independent block budgets 0.003s
+[info] Passed: Total 17, Failed 0, Errors 0, Passed 17
+[success] Total time: 3 s, completed Sep 30, 2026, 4:35:04 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.estimates.io.IndependentBundleSuite:
+  + independent complete effects-only bundle reopens with ordered scientific axes 0.172s
+  + independent complete statistic-only bundle reopens with ordered scientific axes 0.015s
+  + independent complete deficient-rank bundle reopens with ordered scientific axes 0.01s
+scalafim.estimates.io.IndependentSharedCovarianceSuite:
+  + independent physical bundle preserves raw U, axes, support and two distinct scale operations 0.057s
+  + cumulative pair and byte caps are independent of expanded cells and precede payload access 0.095s
+  + inventory, table authority, declared invariance and leaf integrity refuse repinned conflicts 0.203s
+  + zero scale does not hide indefinite U and pair-invalid validity is never synthesized as zero 0.093s
+  + invalid or inconsistent physical variance scale refuses reconstruction 0.175s
+  + a malformed later shared leaf closes earlier NIfTI channels on every failed open 0.245s
+  + 32 actual NIfTI pairs coexist with separately bounded shared observations 0.961s
+  + observation invariance is checked across shared and NIfTI covariance arms 0.393s
+scalafim.estimates.io.SharedCovarianceTableSuite:
+  + literal normalized table preserves nonlexical named axes and signed entries 0.002s
+  + strict table dispatch rejects unknown fields, tags, precision, broadcast and numeric codes 0.002s
+  + shared layout refuses absolute, sample-dependent, wrong identity or precision descriptors 0.002s
+  + Core-2 is unit-only, strictly tagged, and preserves the old representation helper 0.003s
+scalafim.estimates.io.InferenceStatusNiftiSuite:
+  + independent Core-3 literal reads all ten codes and permuted sparse planes without fit 0.035s
+  + writer coverage, duplicates, borrowed arrays, block sizes, no-clobber and identical retry 0.46s
+  + status missing delivery cannot seal; invalid codes and support mismatch refuse without consuming coverage 0.043s
+  + code, support, geometry, scaling, plane count, payload length and digest failures refuse opening 0.046s
+  + strict plane inventory rejects reordered, duplicate and missing status declarations 0.01s
+  + corrupt staged status refuses sealing; poisoned status writes abort every owned stage 0.128s
+  + singleton 3D status and gzip use declared geometry and cumulative owned staging budget 0.013s
+  + read caps, cancellations and thrown callbacks return typed failure and keep source ownership 0.004s
+  + prepayload 32-plane and aggregate writer/reader handle budgets refuse without staging 0.476s
+  + failed status construction and release close all owned resources without leaked descriptors 0.312s
+  + old unit has explicit absent evidence and status access refuses instead of fabricating success 0.162s
+scalafim.estimates.io.IndependentCoreBundleSuite:
+  + independent complete Core-1 bundle binds known t mapping, df, axes, units and physical cells 0.014s
+  + literal Core-1 bundle refuses wrong wire version and missing product units 0.005s
+  + a newly digest-pinned TSV projection still must agree with authoritative JSON axes 0.003s
+  + malformed later gzip representation closes earlier pair handles and its raw input 0.055s
+scalafim.estimates.io.IndependentNiftiGoldenSuite:
+  + independently encoded NIfTI values and validity preserve ordered estimand and sample axes 0.128s
+  + independent big-endian scaled float32 singleton 3D and gzip decode under an exact disk budget 0.278s
+  + logical Float32 admits only exactly representable valid decoded cells 0.508s
+  + malformed gzip header closes raw input descriptors across repeated constructor failures 0.014s
+scalafim.estimates.io.EstimateMetadataSuite:
+  + catalog roundtrip preserves physical response intervals, IDs and repeated labels 0.001s
+  + decoding rejects unknown versions and invalid catalog invariants 0.001s
+  + pinned pointers preserve exact root-relative Path SHA256 Bytes references 0.003s
+  + unit metadata roundtrips uncertainty semantics and reads pre-extension documents as unspecified 0.007s
+  + development bare statistic links migrate to unknown correspondence; Core requires structured mapping 0.002s
+  + Core-3 is explicit and strict; old encoders refuse recorded evidence 0.003s
+scalafim.estimates.io.LocalEstimateStoreSuite:
+  + opt-in mixed sink has pair-only coverage, refuses duplicates and preserves exact retry semantics 0.481s
+  + compact caps and descriptors refuse before allocation and partial abort removes owned stages 0.057s
+  + sparse reordered blocks reopen through fresh handles with exact values and per-estimand validity 0.113s
+  + digest-pinned metadata and payload corruption are rejected before analysis reuse 0.114s
+  + estimate NIfTI axis refuses time sampling even when spatial geometry agrees 0.121s
+  + coded qform handedness and explicitly named alternative frame are checked against sform 0.154s
+==> X scalafim.estimates.io.LocalEstimateStoreSuite.reader caps product observation pairs before accessing missing payloads and closes boundary handles  0.137s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/LocalEstimateStoreSuite.scala:208 assertion failed
+207:    val rejected = NiftiEstimateSource.open(store, tooMany, missing, ReadLimits(8))
+208:    assert(rejected.left.toOption.exists(e => e.isInstanceOf[EstimateError.Unsupported] && e.message.contains("32")))
+209:    val (boundary, available) = candidate(32, false)
+    at munit.FunSuite.assert(FunSuite.scala:13)
+    at scalafim.estimates.io.LocalEstimateStoreSuite.$init$$$anonfun$7(LocalEstimateStoreSuite.scala:208)
+  + digest-pinned TSV projections cannot redefine ordered JSON estimand axes 0.162s
+  + validly pinned but oversized payloads and conflicting volume axes refuse 0.181s
+  + deficient-rank subspace evidence is pinned and required on fresh reopen 0.151s
+  + partial abort never publishes a unit and stale pointer updates cannot lose a revision 0.22s
+  + concurrent pointer contenders admit one CAS winner without clobber 0.165s
+  + same-revision retry reuses identical bytes and refuses altered payload 0.238s
+  + statistic-only products persist without beta or SE links 0.17s
+  + collections join a shared catalog and refuse conflicting definitions under one model revision 0.396s
+  + voxelwise absolute covariance has a named pair axis, independent validity and exact physical order 0.159s
+[error] Failed: Total 56, Failed 1, Errors 0, Passed 55
+[error] Failed tests:
+[error] 	scalafim.estimates.io.LocalEstimateStoreSuite
+[error] (estimatesIoJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 13 s, completed Sep 30, 2026, 4:35:17 a.m.

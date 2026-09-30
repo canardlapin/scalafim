@@ -15,7 +15,8 @@ final case class EstimateUnit(
     covariance: Vector[CovarianceDescriptor] = Vector.empty,
     statistics: Vector[StatisticSemantics] = Vector.empty,
     degreesOfFreedom: Vector[DegreesOfFreedom] = Vector.empty,
-    marginalUncertainty: Vector[MarginalUncertaintyDescriptor] = Vector.empty
+    marginalUncertainty: Vector[MarginalUncertaintyDescriptor] = Vector.empty,
+    inferenceEvidence: Option[InferenceEvidence] = None
 ):
   require(Invariants.unique(observations.map(_.id)))
   require(observations.forall(_.participant.dataset == dataset))
@@ -111,6 +112,7 @@ final case class EstimateUnit(
       case _ => true
     aligned && validDf
   )
+  require(inferenceEvidence.forall(_.agrees(this)), "inference evidence must name realized coefficient axes and declared hypotheses")
 
 final case class PinnedUnit(unit: UnitId, revision: UnitRevisionId, manifest: FileReference)
 

@@ -66,8 +66,9 @@ private[io] final class NiftiEstimateSink(
     outputs: Vector[NiftiOutput],
     stages: Vector[StagedFile],
     private[io] val sharedOutputs: Vector[SharedCovarianceOutput] = Vector.empty,
-    layout: CovarianceLayout = CovarianceLayout.PairNifti
-) extends SharedCovarianceSink:
+    layout: CovarianceLayout = CovarianceLayout.PairNifti,
+    private[io] val statusOutput: Option[InferenceStatusOutput] = None
+) extends SharedCovarianceSink with InferenceEvidenceSink:
   override val supportsCovariance = true
   val sharedCovarianceProducts: Set[ProductId] = sharedOutputs.map(_.product.id).toSet
   private var closed = false
@@ -80,8 +81,17 @@ private[io] final class NiftiEstimateSink(
     failure = Some(error)
     closed = true
     outputs.foreach(_.close())
+    statusOutput.foreach(_.close())
     discardStages()
     Left(error)
+
+  def writeInferenceStatus(selection: InferenceStatusSelection, codes: Array[Byte]): Either[EstimateError, InferenceStatusReceipt] = synchronized:
+    if closed then Left(EstimateError.Closed)
+    else InferenceStatusValidation.check(unit, selection, codes.length, maximumBlockCells).flatMap: _ =>
+      statusOutput.toRight(EstimateError.Unsupported("sink has no status payload")).flatMap: output =>
+        store.protect(output.write(unit, selection, codes)) match
+          case Left(error: EstimateError.Io) => fail(error)
+          case other => other
 
   def write(product: ProductId, selection: EstimateSelection, values: Array[Double], validity: Array[Byte]): Either[EstimateError, Unit] = synchronized:
     if closed then Left(EstimateError.Closed)
@@ -183,7 +193,7 @@ private[io] final class NiftiEstimateSink(
     receipt match
       case Some(ref) => Right(ref)
       case None if closed => failure.toLeft(()).flatMap(_ => Left(EstimateError.Closed))
-      case None if outputs.exists(_.remaining != 0L) || sharedOutputs.exists(_.remaining != 0) => Left(EstimateError.Invalid("cannot seal: requested product cells or shared pairs have not all been delivered"))
+      case None if outputs.exists(_.remaining != 0L) || sharedOutputs.exists(_.remaining != 0) || statusOutput.exists(_.remaining != 0L) => Left(EstimateError.Invalid("cannot seal: requested product cells or shared pairs have not all been delivered"))
       case None =>
         closed = true
         def publish(sharedTables: Vector[SharedCovarianceTable]): Either[EstimateError, PinnedUnit] =
@@ -212,12 +222,22 @@ private[io] final class NiftiEstimateSink(
                   else store.writeText(s"units/${unit.revision.value}/shared-covariance-$ordinal.json", encoded).map: reference =>
                     records :+ EstimateRepresentation.SharedNormalizedUpperTriangle(
                       SharedCovarianceRepresentation(table.product, table.observation, reference, table.estimands))
-              .flatMap(records => store.publishMixedUnit(unit, records, layout != CovarianceLayout.PairNifti))
+              .flatMap: records =>
+                val statusReference = statusOutput match
+                  case None => Right(None)
+                  case Some(output) =>
+                    for
+                      checked <- InferenceStatusNifti.openValidated(store, unit, output.stage.path, maximumBlockCells)
+                      _ <- store.protect { checked.channel.close(); Right(()) }
+                      reference <- store.publishStagedIdempotent(output.stage, s"units/${unit.revision.value}/inference-status.nii")
+                    yield Some(InferenceStatusRepresentation(reference, unit.inferenceEvidence.get.planes))
+                statusReference.flatMap(status => store.publishMixedUnit(unit, records, layout != CovarianceLayout.PairNifti, status))
         val result = store.protect:
           val closing = outputs.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, output) =>
             val result = output.close()
             previous.flatMap(_ => result))
-          closing.flatMap: _ =>
+          val statusClosing = statusOutput.map(_.close()).getOrElse(Right(()))
+          closing.flatMap(_ => statusClosing).flatMap: _ =>
             val sharedTables = sharedOutputs.map(_.table)
             val invariance = sharedTables.forall: table =>
               !unit.covariance.find(_.product == table.product).get.invariantObservations ||
@@ -236,8 +256,9 @@ private[io] final class NiftiEstimateSink(
         val closing = outputs.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, output) =>
           val result = output.close()
           previous.flatMap(_ => result))
+        val statusClosing = statusOutput.map(_.close()).getOrElse(Right(()))
         val discarded = discardStages()
-        closing.flatMap(_ => discarded)
+        closing.flatMap(_ => statusClosing).flatMap(_ => discarded)
 
 private[io] object NiftiEstimateSink:
   private[io] def discard(store: LocalEstimateStore, stages: Vector[StagedFile]): Either[EstimateError, Unit] =
@@ -249,7 +270,15 @@ private[io] object NiftiEstimateSink:
       previous.flatMap(_ => result)
 
   def open(store: LocalEstimateStore, unit: EstimateUnit, maximumBlockCells: Int,
-      layout: CovarianceLayout = CovarianceLayout.PairNifti): Either[EstimateError, EstimateSink] =
+      layout: CovarianceLayout = CovarianceLayout.PairNifti,
+      inference: Boolean = false): Either[EstimateError, NiftiEstimateSink] =
+    if unit.inferenceEvidence.nonEmpty && !inference then
+      return Left(EstimateError.Unsupported("default sink refuses inference evidence; use newInferenceSink"))
+    if inference then
+      if layout != CovarianceLayout.PairNifti then return Left(EstimateError.Unsupported("inference evidence currently refuses compact covariance coexistence"))
+      InferenceStatusRepresentation.preflight(unit) match
+        case Left(error) => return Left(error)
+        case Right(_) => ()
     val compactProducts = layout match
       case CovarianceLayout.PairNifti => Vector.empty
       case CovarianceLayout.SharedNormalizedTable(_) => unit.products.filter(_.kind == ProductKind.Covariance)
@@ -270,9 +299,12 @@ private[io] object NiftiEstimateSink:
       Left(EstimateError.Unsupported("shared covariance exceeds pair or conservative serialization-byte reservation"))
     else if niftiProducts.map(_.observations.size).sum > 32 then
       Left(EstimateError.Unsupported("local writer permits at most 32 simultaneously open product/observation files"))
+    else if niftiProducts.map(_.observations.size.toLong).sum * 3L + (if inference then 2L else 0L) > InferenceStatusRepresentation.maximumWriterHandles then
+      Left(EstimateError.Unsupported("aggregate writer payload/coverage handle budget exceeded"))
     else if unit.domain.worldFrame != "scanner" then
       Left(EstimateError.Unsupported("local writer currently requires an explicit scanner frame; other transform-code bindings are not yet qualified"))
     else
+      var statusOutput: Option[InferenceStatusOutput] = None
       var opened = Vector.empty[NiftiOutput]
       var ownedStages = Vector.empty[StagedFile]
       var partialCloses = Vector.empty[() => Either[EstimateError, Unit]]
@@ -320,12 +352,17 @@ private[io] object NiftiEstimateSink:
                         map += 1
                       failure.toLeft(())
                   yield ()
-          .map(_ => new NiftiEstimateSink(store, unit, maximumBlockCells, opened, ownedStages,
-            compactProducts.flatMap(p => p.observations.map(o => new SharedCovarianceOutput(p, o))), layout))
+          .flatMap: _ =>
+            val status = if inference then InferenceStatusNifti.openOutput(store, unit, maximumBlockCells, stage).map(Some(_)) else Right(None)
+            status.map: output =>
+              statusOutput = output
+              new NiftiEstimateSink(store, unit, maximumBlockCells, opened, ownedStages,
+                compactProducts.flatMap(p => p.observations.map(o => new SharedCovarianceOutput(p, o))), layout, output)
       result match
         case Left(error) =>
           partialCloses.foreach(close => store.protect(close()))
           opened.foreach(_.close())
+          statusOutput.foreach(_.close())
           discard(store, ownedStages)
           Left(error)
         case other => other

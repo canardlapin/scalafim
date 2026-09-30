@@ -24,8 +24,9 @@ private[io] final class NiftiEstimateSource(
     inputs: Vector[NiftiInput],
     private[io] val stagedFiles: Vector[Path],
     private[io] val stagedPayloadBytes: Long,
-    private[io] val sharedTables: Vector[SharedCovarianceTable] = Vector.empty
-) extends EstimateSource:
+    private[io] val sharedTables: Vector[SharedCovarianceTable] = Vector.empty,
+    private[io] val statusInput: Option[InferenceStatusInput] = None
+) extends InferenceEvidenceSource:
   private var closed = false
 
   private def scalar(channel: FileChannel, header: NiftiHeader, index: Long, buffer: ByteBuffer): Double =
@@ -45,6 +46,13 @@ private[io] final class NiftiEstimateSource(
       case 64 => buffer.getDouble()
       case _ => throw new IllegalArgumentException("unsupported scalar encoding")
     if header.slope == 0.0 then value else value * header.slope + header.intercept
+
+  def readInferenceStatus(selection: InferenceStatusSelection, codes: Array[Byte],
+      cancelled: () => Boolean = () => false): Either[EstimateError, InferenceStatusReceipt] = synchronized:
+    if closed then Left(EstimateError.Closed)
+    else InferenceStatusValidation.check(unit, selection, codes.length, limits.maximumCells).flatMap: _ =>
+      statusInput.toRight(EstimateError.Unsupported("source has no recorded inference status payload"))
+        .flatMap(input => store.protect(input.read(unit, selection, codes, cancelled)))
 
   def read(product: ProductId, selection: EstimateSelection, values: Array[Double], validity: Array[Byte],
       cancelled: () => Boolean = () => false): Either[EstimateError, EstimateReadReceipt] = synchronized:
@@ -110,6 +118,8 @@ private[io] final class NiftiEstimateSource(
           store.protect { channel.close(); Right(()) } match
             case Left(error) => failure = Some(error)
             case Right(_) => ()
+      statusInput.foreach: input =>
+        store.protect { input.channel.close(); Right(()) }.left.foreach(error => failure = Some(error))
       stagedFiles.foreach: path =>
         store.protect { Files.deleteIfExists(path); Right(()) } match
           case Left(error) => failure = Some(error)
@@ -195,18 +205,22 @@ private[io] object NiftiEstimateSource:
 
   private[io] def validateHeader(unit: EstimateUnit, product: ProductDescriptor, header: NiftiHeader, validity: Boolean,
       qformAlternativeFrame: Option[String] = None, storedDatatype: Option[NiftiStoredDatatype] = None): Either[EstimateError, Unit] =
-    val expected = unit.domain.dimensions ++ Vector(product.targets.width.toInt)
     val dtype = if validity then 2 else storedDatatype.getOrElse(
       if product.precision == NumericPrecision.Float32 then NiftiStoredDatatype.Float32 else NiftiStoredDatatype.Float64).code
+    validateGeometry(unit, header, product.targets.width.toInt, dtype, validity, qformAlternativeFrame)
+
+  private[io] def validateGeometry(unit: EstimateUnit, header: NiftiHeader, width: Int, dtype: Int,
+      unscaled: Boolean, qformAlternativeFrame: Option[String] = None): Either[EstimateError, Unit] =
+    val expected = unit.domain.dimensions ++ Vector(width)
     if header.native.spatialUnit != image4s.nifti.NiftiSpatialUnit.Millimeter || header.native.storage != image4s.nifti.NiftiStorage.SingleFile then
       Left(EstimateError.Unsupported("local representation requires single-file NIfTI in millimetres"))
-    else if header.dims != expected && !(product.targets.width == 1 && header.dims == unit.domain.dimensions) then
+    else if header.dims != expected && !(width == 1 && header.dims == unit.domain.dimensions) then
       Left(EstimateError.Integrity("NIfTI dimensions differ from declared logical axes"))
     else if header.native.temporalUnit != image4s.nifti.NiftiTemporalUnit.Unknown ||
         header.native.temporalOrigin.value != 0.0 || header.pixdim.lift(3).getOrElse(1.0) != 1.0 then
       Left(EstimateError.Integrity("estimate fourth axis is an ordered identity axis, not acquisition time"))
     else if header.datatype != dtype then Left(EstimateError.Integrity("NIfTI dtype differs from declared precision"))
-    else if validity && (header.slope != 1.0 || header.intercept != 0.0) then Left(EstimateError.Integrity("validity must use unscaled uint8 codes"))
+    else if unscaled && (header.slope != 1.0 || header.intercept != 0.0) then Left(EstimateError.Integrity("validity must use unscaled uint8 codes"))
     else if header.sformCode != 1 || header.sform.isEmpty || unit.domain.worldFrame != "scanner" then
       Left(EstimateError.Unsupported("reader requires the qualified scanner-frame sform binding"))
     else
@@ -244,7 +258,17 @@ private[io] object NiftiEstimateSource:
   def open(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[NiftiRepresentation], limits: ReadLimits): Either[EstimateError, EstimateSource] =
     openMixed(store, unit, representations.map(EstimateRepresentation.Nifti.apply), limits)
 
-  private[io] def preflight(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits): Either[EstimateError, Unit] =
+  private[io] def preflight(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits,
+      status: Option[InferenceStatusRepresentation] = None): Either[EstimateError, Unit] =
+    if unit.inferenceEvidence.nonEmpty != status.nonEmpty then return Left(EstimateError.Integrity("inference evidence and payload inventory differ"))
+    val statusCheck = status.map(record => InferenceStatusRepresentation.preflight(unit).flatMap(_ => record.validate(unit))).getOrElse(Right(()))
+    statusCheck match
+      case Left(error) => return Left(error)
+      case Right(_) => ()
+    if status.nonEmpty && representations.exists(_.isInstanceOf[EstimateRepresentation.SharedNormalizedUpperTriangle]) then
+      return Left(EstimateError.Unsupported("Core-3 refuses compact covariance coexistence"))
+    if status.nonEmpty && representations.count(_.isInstanceOf[EstimateRepresentation.Nifti]).toLong * 2L + status.size > InferenceStatusRepresentation.maximumReaderHandles then
+      return Left(EstimateError.Unsupported("aggregate reader payload handle budget exceeded"))
     val expected = unit.products.flatMap(p => p.observations.map(o => p.id -> o)).toSet
     val actual = representations.map(r => r.product -> r.observation)
     if actual.distinct.size != actual.size || actual.toSet != expected then
@@ -265,8 +289,10 @@ private[io] object NiftiEstimateSource:
       val declarations = sharedRecords.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, record) => previous.flatMap(_ => record.validate(unit)))
       declarations
 
-  def openMixed(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits): Either[EstimateError, EstimateSource] =
-    preflight(store, unit, representations, limits).flatMap: _ =>
+  def openMixed(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits,
+      status: Option[InferenceStatusRepresentation] = None): Either[EstimateError, EstimateSource] =
+    preflight(store, unit, representations, limits, status).flatMap: _ =>
+      var statusInput: Option[InferenceStatusInput] = None
       var opened = Vector.empty[NiftiInput]
       var tables = Vector.empty[SharedCovarianceTable]
       var staged = Vector.empty[Path]
@@ -318,13 +344,26 @@ private[io] object NiftiEstimateSource:
                 yield ()
               case EstimateRepresentation.Nifti(representation) => openNifti(representation)
         .flatMap: _ =>
-          val source = new NiftiEstimateSource(store, unit, limits, opened, staged, stagedBytes, tables)
-          source.validateObservationInvariance().map(_ => source)
+          val opening = status match
+            case None => Right(())
+            case Some(record) =>
+              for
+                _ <- store.objects.verify(store.verified(record.file)).left.map(store.fromStore)
+                payload <- seekable(store.root.resolve(record.file.path), limits.maximumStagingBytes - stagedBytes)
+                _ = payload._3.foreach(path => staged :+= path)
+                _ = stagedBytes += payload._2
+                input <- InferenceStatusNifti.openInput(store, unit, record, payload._1, limits.maximumCells)
+                _ = statusInput = Some(input)
+              yield ()
+          opening.flatMap: _ =>
+            val source = new NiftiEstimateSource(store, unit, limits, opened, staged, stagedBytes, tables, statusInput)
+            source.validateObservationInvariance().map(_ => source)
       result match
         case Left(error) =>
           opened.foreach: input =>
             Vector(input.values, input.validity).foreach: channel =>
               store.protect { channel.close(); Right(()) }
+          statusInput.foreach(input => store.protect { input.channel.close(); Right(()) })
           staged.foreach(path => store.protect { Files.deleteIfExists(path); Right(()) })
           Left(error)
         case other => other

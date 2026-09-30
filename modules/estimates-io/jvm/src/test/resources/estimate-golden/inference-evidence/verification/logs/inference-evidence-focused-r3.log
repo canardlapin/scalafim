@@ -1,0 +1,203 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project inference-evidence-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/inference-evidence/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (260003 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/inference-evidence/)
+[info] compiling 10 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.estimates.io.InferenceStatusNiftiSuite:
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.independent Core-3 literal reads all ten codes and permuted sparse planes without fit  0.097s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$1(InferenceStatusNiftiSuite.scala:69)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.writer coverage, duplicates, borrowed arrays, block sizes, no-clobber and identical retry  0.006s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$2(InferenceStatusNiftiSuite.scala:95)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.status missing delivery cannot seal; invalid codes and support mismatch refuse without consuming coverage  0.006s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$3(InferenceStatusNiftiSuite.scala:129)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.code, support, geometry, scaling, plane count, payload length and digest failures refuse opening  0.06s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$4(InferenceStatusNiftiSuite.scala:169)
+  + strict plane inventory rejects reordered, duplicate and missing status declarations 0.028s
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.corrupt staged status refuses sealing; poisoned status writes abort every owned stage  0.004s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$6(InferenceStatusNiftiSuite.scala:188)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.singleton 3D status and gzip use declared geometry and cumulative owned staging budget  0.011s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$7$$anonfun$1(InferenceStatusNiftiSuite.scala:219)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$7$$anonfun$adapted$1(InferenceStatusNiftiSuite.scala:209)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$7(InferenceStatusNiftiSuite.scala:209)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.read caps, cancellations and thrown callbacks return typed failure and keep source ownership  0.004s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$8(InferenceStatusNiftiSuite.scala:233)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.prepayload 32-plane and aggregate writer/reader handle budgets refuse without staging  0.004s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$9(InferenceStatusNiftiSuite.scala:252)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.failed status construction and release close all owned resources without leaked descriptors  0.004s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$10(InferenceStatusNiftiSuite.scala:281)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.old unit has explicit absent evidence and status access refuses instead of fabricating success  0.003s munit.FailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:12 expected string got sequence
+11:  private val manifestPath = s"$prefix/estimates.json"
+12:  private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
+13:  private def resource(name: String): Array[Byte] =
+    at munit.Assertions.fail(Assertions.scala:274)
+    at munit.Assertions.fail$(Assertions.scala:24)
+    at munit.FunSuite.fail(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right$$anonfun$1(InferenceStatusNiftiSuite.scala:12)
+    at scala.util.Either.fold(Either.scala:198)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.right(InferenceStatusNiftiSuite.scala:12)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$11(InferenceStatusNiftiSuite.scala:326)
+scalafim.estimates.io.EstimateMetadataSuite:
+  + catalog roundtrip preserves physical response intervals, IDs and repeated labels 0.004s
+  + decoding rejects unknown versions and invalid catalog invariants 0.001s
+  + pinned pointers preserve exact root-relative Path SHA256 Bytes references 0.003s
+  + unit metadata roundtrips uncertainty semantics and reads pre-extension documents as unspecified 0.066s
+  + development bare statistic links migrate to unknown correspondence; Core requires structured mapping 0.014s
+==> X scalafim.estimates.io.EstimateMetadataSuite.Core-3 is explicit and strict; old encoders refuse recorded evidence  0.03s munit.ComparisonFailException: modules/estimates-io/shared/src/test/scala/scalafim/estimates/io/EstimateMetadataSuite.scala:158
+157:    assertEquals(EstimateMetadata.schema(text, "unit"), Right(EstimateMetadata.inferenceSchema))
+158:    assertEquals(EstimateMetadata.readUnit(text, catalog).map(_.inferenceEvidence), Right(Some(evidence)))
+159:    assertEquals(EstimateMetadata.inferenceStatus(text), Right(Some(status)))
+values are not the same
+=> Obtained
+Left(
+  value = Invalid(
+    detail = "Expected ujson.Arr (data: {\"coefficients\":[],\"planes\":[{\"$type\":\"Fit\",\"observation\":\"row\"}]})"
+  )
+)
+=> Diff (- expected, + obtained)
+-Right(
+-  value = Some(
+-    value = InferenceEvidence(
+-      coefficients = Nil,
+-      planes = Vector(
+-        Fit(
+-          observation = ObservationId(
+-            value = "row"
+-          )
+-        )
+-      )
+-    )
++Left(
++  value = Invalid(
++    detail = "Expected ujson.Arr (data: {\"coefficients\":[],\"planes\":[{\"$type\":\"Fit\",\"observation\":\"row\"}]})"
+   )
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.estimates.io.EstimateMetadataSuite.$init$$$anonfun$6(EstimateMetadataSuite.scala:158)
+[error] Failed: Total 17, Failed 11, Errors 0, Passed 6
+[error] Failed tests:
+[error] 	scalafim.estimates.io.EstimateMetadataSuite
+[error] 	scalafim.estimates.io.InferenceStatusNiftiSuite
+[error] (estimatesIoJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 16 s, completed Sep 30, 2026, 4:29:56 a.m.

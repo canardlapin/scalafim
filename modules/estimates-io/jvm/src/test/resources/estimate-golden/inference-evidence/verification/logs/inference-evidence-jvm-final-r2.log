@@ -1,0 +1,300 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project inference-evidence-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/inference-evidence/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (260003 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/inference-evidence/)
+scalafim.estimates.InferenceEvidenceSuite:
+  + restricted coefficient scope preserves explicit order and unavailable conditioning 0.04s
+  + planes require known observation and catalog hypothesis with statistic semantics 0.002s
+  + all ten codes are closed; Unrecorded is distinct from measured success 0.004s
+  + selected status validation preserves permutations and refuses missing evidence and capacities 0.003s
+scalafim.estimates.EstimateContractSuite:
+  + shared catalog joins scientific IDs despite repeated labels and unit-local column order 0.001s
+  + statistic-only units remain inspectable without invented effects or uncertainty 0.0s
+  + known statistic distributions and links require positive aligned df and explicit hypothesis mapping 0.006s
+  + logical selection preserves reversed estimand and sparse sample order with checked capacities 0.002s
+  + outside support differs from unknown samples and valid zero remains data 0.002s
+  + covariance names both axes in deterministic upper-triangle order 0.001s
+  + normalization requires an explicit retained variance-scale product 0.001s
+  + df domain, physical FIR coordinates and artifact references validate at construction 0.003s
+  + marginal uncertainty binds supported df to the same observation, target and pooling axes 0.001s
+  + partial collection coverage preserves missing intended units 0.001s
+  + pair requests preserve order and reject reversed, duplicate and oversized axes 0.002s
+  + consumer covariance verification rejects indefiniteness even with zero variance scale 0.01s
+  + shared delivery has only named observation and pair axes with independent block budgets 0.001s
+[info] Passed: Total 17, Failed 0, Errors 0, Passed 17
+[success] Total time: 2 s, completed Sep 30, 2026, 4:43:57 a.m.
+scalafim.estimates.io.IndependentSharedCovarianceSuite:
+  + independent physical bundle preserves raw U, axes, support and two distinct scale operations 0.179s
+  + cumulative pair and byte caps are independent of expanded cells and precede payload access 0.082s
+  + inventory, table authority, declared invariance and leaf integrity refuse repinned conflicts 0.195s
+  + zero scale does not hide indefinite U and pair-invalid validity is never synthesized as zero 0.088s
+  + invalid or inconsistent physical variance scale refuses reconstruction 0.174s
+  + a malformed later shared leaf closes earlier NIfTI channels on every failed open 0.171s
+  + 32 actual NIfTI pairs coexist with separately bounded shared observations 0.943s
+  + observation invariance is checked across shared and NIfTI covariance arms 0.46s
+scalafim.estimates.io.SharedCovarianceTableSuite:
+  + literal normalized table preserves nonlexical named axes and signed entries 0.002s
+  + strict table dispatch rejects unknown fields, tags, precision, broadcast and numeric codes 0.002s
+  + shared layout refuses absolute, sample-dependent, wrong identity or precision descriptors 0.001s
+  + Core-2 is unit-only, strictly tagged, and preserves the old representation helper 0.003s
+scalafim.estimates.io.IndependentCoreBundleSuite:
+  + independent complete Core-1 bundle binds known t mapping, df, axes, units and physical cells 0.018s
+  + literal Core-1 bundle refuses wrong wire version and missing product units 0.005s
+  + a newly digest-pinned TSV projection still must agree with authoritative JSON axes 0.002s
+  + malformed later gzip representation closes earlier pair handles and its raw input 0.041s
+scalafim.estimates.io.EstimateMetadataSuite:
+  + catalog roundtrip preserves physical response intervals, IDs and repeated labels 0.001s
+  + decoding rejects unknown versions and invalid catalog invariants 0.0s
+  + pinned pointers preserve exact root-relative Path SHA256 Bytes references 0.002s
+  + unit metadata roundtrips uncertainty semantics and reads pre-extension documents as unspecified 0.005s
+  + development bare statistic links migrate to unknown correspondence; Core requires structured mapping 0.003s
+  + Core-3 is explicit and strict; old encoders refuse recorded evidence 0.008s
+scalafim.estimates.io.IndependentNiftiGoldenSuite:
+  + independently encoded NIfTI values and validity preserve ordered estimand and sample axes 0.128s
+  + independent big-endian scaled float32 singleton 3D and gzip decode under an exact disk budget 0.272s
+  + logical Float32 admits only exactly representable valid decoded cells 0.54s
+  + malformed gzip header closes raw input descriptors across repeated constructor failures 0.017s
+scalafim.estimates.io.LocalEstimateStoreSuite:
+  + opt-in mixed sink has pair-only coverage, refuses duplicates and preserves exact retry semantics 0.502s
+  + compact caps and descriptors refuse before allocation and partial abort removes owned stages 0.062s
+  + sparse reordered blocks reopen through fresh handles with exact values and per-estimand validity 0.13s
+  + digest-pinned metadata and payload corruption are rejected before analysis reuse 0.135s
+  + estimate NIfTI axis refuses time sampling even when spatial geometry agrees 0.139s
+  + coded qform handedness and explicitly named alternative frame are checked against sform 0.177s
+  + reader caps product observation pairs before accessing missing payloads and closes boundary handles 0.128s
+  + digest-pinned TSV projections cannot redefine ordered JSON estimand axes 0.163s
+  + validly pinned but oversized payloads and conflicting volume axes refuse 0.192s
+  + deficient-rank subspace evidence is pinned and required on fresh reopen 0.16s
+  + partial abort never publishes a unit and stale pointer updates cannot lose a revision 0.191s
+  + concurrent pointer contenders admit one CAS winner without clobber 0.159s
+  + same-revision retry reuses identical bytes and refuses altered payload 0.205s
+  + statistic-only products persist without beta or SE links 0.14s
+  + collections join a shared catalog and refuse conflicting definitions under one model revision 0.421s
+  + voxelwise absolute covariance has a named pair axis, independent validity and exact physical order 0.182s
+scalafim.estimates.io.InferenceStatusNiftiSuite:
+  + independent Core-3 literal reads all ten codes and permuted sparse planes without fit 0.021s
+  + writer coverage, duplicates, borrowed arrays, block sizes, no-clobber and identical retry 0.441s
+  + status missing delivery cannot seal; invalid codes and support mismatch refuse without consuming coverage 0.048s
+  + code, support, geometry, scaling, plane count, payload length and digest failures refuse opening 0.043s
+  + strict plane inventory rejects reordered, duplicate and missing status declarations 0.011s
+  + corrupt staged status refuses sealing; poisoned status writes abort every owned stage 0.138s
+  + singleton 3D status and gzip use declared geometry and cumulative owned staging budget 0.01s
+  + read caps, cancellations and thrown callbacks return typed failure and keep source ownership 0.005s
+  + prepayload 32-plane and aggregate writer/reader handle budgets refuse without staging 0.52s
+  + failed status construction and release close all owned resources without leaked descriptors 0.336s
+  + old unit has explicit absent evidence and status access refuses instead of fabricating success 0.156s
+scalafim.estimates.io.IndependentBundleSuite:
+  + independent complete effects-only bundle reopens with ordered scientific axes 0.004s
+  + independent complete statistic-only bundle reopens with ordered scientific axes 0.003s
+  + independent complete deficient-rank bundle reopens with ordered scientific axes 0.004s
+[info] Passed: Total 56, Failed 0, Errors 0, Passed 56
+[success] Total time: 10 s, completed Sep 30, 2026, 4:44:07 a.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/group/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/fit-estimates/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.estimates.FitEstimateProducerSuite:
+  + native selected OLS streams exact identified outputs with operator, scan and df metadata 0.162s
+  + multi-run shared OLS identifies joint-run pooling without inventing effective df 0.003s
+  + cancellation aborts the sink without publishing a partial result 0.001s
+  + a scalar-only sink is refused before executing requested joint uncertainty 0.002s
+  + actual prepared OLS delivers U once per named pair independent of voxel block size 0.006s
+  + shared callback failure and cancellation abort owned delivery 0.003s
+scalafim.fmri.fit.estimates.FitEstimateReadbackSuite:
+  + fit producer saves and reopens effects and marginal uncertainty through the independent reader 0.364s
+  + joint OLS persists normalized cross-covariance and applies residual variance exactly once 0.264s
+  + compact actual OLS reopens normalized U and scaled covariance across voxel block sizes 0.485s
+  + reopened pinned units feed bounded group blocks after explicit admission 0.441s
+scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite:
+  + first-level T contrast results bridge into fixed-effects group inference 0.032s
+scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite:
+  + known effects survive public first-level fit, bridge, and fixed-effects group inference 0.095s
+scalafim.fmri.group.FirstLevelBridgeSuite:
+  + bridge assembles a meta-analysis-ready cube from first-level results 0.001s
+  + bridge reports a missing subject/contrast cell 0.001s
+  + bridge rejects a result that does not span the sample space 0.001s
+  + bridge reorders by voxel identity and keeps subject-bound residual df 0.001s
+  + bridge refuses named-contrast disagreement and invalid standard errors 0.001s
+[info] Passed: Total 17, Failed 0, Errors 0, Passed 17
+[success] Total time: 9 s, completed Sep 30, 2026, 4:44:17 a.m.
+scalafim.fmri.group.scenarios.GroupOneSampleScenarioSuite:
+  + one-sample group fit has an analytic pass verdict across the sample axis 0.025s
+scalafim.fmri.group.GroupMetaforParitySuite:
+  + intercept_heterogeneous FE-z matches metafor 5.0.1 0.008s
+  + intercept_heterogeneous DL-z matches metafor 5.0.1 0.002s
+  + intercept_heterogeneous PM-z matches metafor 5.0.1 0.0s
+  + intercept_heterogeneous DL-mKH matches metafor 5.0.1 0.0s
+  + intercept_heterogeneous PM-mKH matches metafor 5.0.1 0.0s
+  + offset_moderator FE-z matches metafor 5.0.1 0.001s
+  + offset_moderator DL-z matches metafor 5.0.1 0.0s
+  + offset_moderator PM-z matches metafor 5.0.1 0.0s
+  + offset_moderator DL-mKH matches metafor 5.0.1 0.001s
+  + offset_moderator PM-mKH matches metafor 5.0.1 0.0s
+  + two_moderators FE-z matches metafor 5.0.1 0.0s
+  + two_moderators DL-z matches metafor 5.0.1 0.001s
+  + two_moderators PM-z matches metafor 5.0.1 0.0s
+  + two_moderators DL-mKH matches metafor 5.0.1 0.001s
+  + two_moderators PM-mKH matches metafor 5.0.1 0.0s
+scalafim.fmri.group.GroupNumericalBaselineSuite:
+  + DL and PM policies match an independent intercept-only reference 0.002s
+  + units, origins, and column order preserve a named physical contrast 0.01s
+  + weighted partial failures retain usable samples and failure identity 0.003s
+  + extreme precision imbalance preserves coefficient units and covariance 0.001s
+  + invalid designs, weights, and zero contrasts remain typed failures 0.003s
+scalafim.fmri.group.GroupModelSuite:
+  + meta-analytic estimator on variance-free data is a typed error 0.001s
+  + variance requirement narrows responses to the variance-carrying ADT case 0.0s
+  + fewer subjects than terms is a typed error 0.001s
+  + design and data subject mismatch is a typed error 0.0s
+  + non-positive variances are rejected at construction 0.0s
+  + variance dims must match effect dims 0.0s
+  + two-sample design requires exactly two levels 0.0s
+  + covariate design reads numeric columns and prepends an intercept 0.005s
+  + covariate design reports an unknown column 0.001s
+  + model summary reflects the composed description 0.0s
+scalafim.fmri.group.GroupRuntimeBoundarySuite:
+  + group execution has no first-level fitter on its runtime classpath 0.0s
+scalafim.fmri.group.GroupInferenceSuite:
+  + globally rank-deficient weighted designs return a typed failure 0.0s
+  + inverse-variance meta-regression recovers a covariate slope 0.0s
+  + difference contrast on a cell-means design gives the group difference 0.001s
+  + two-sample OLS p-value matches the t distribution 0.0s
+  + adjustedP applies BH to a contrast result's p-value map 0.001s
+scalafim.fmri.group.EstimateGroupSuite:
+  + pinned group blocks preserve participant, target and sample order with one owned source at a time 0.018s
+  + invalid cells reject a complete block and all owned sources close on failure or cancellation 0.001s
+  + repeated participant rows and unadmitted alignment cannot enter a group source 0.001s
+  + known and sample-dependent approximate uncertainty remain distinct and sample-aligned 0.002s
+  + missing uncertainty semantics and invalid sample-dependent df are refused 0.001s
+  + joint-run GLS artifact provenance survives the bounded group read 0.001s
+scalafim.fmri.group.GroupUncertaintySuite:
+  + weighted construction preserves an explicit unknown receipt rather than inventing df 0.001s
+  + receipt axes are exact and effects-only data refuses variance provenance 0.0s
+  + approximate df cannot masquerade as ordinary residual df 0.001s
+scalafim.fmri.group.scenarios.GroupTwoSampleScenarioSuite:
+  + two-sample group fit has an analytic pass verdict across the sample axis 0.002s
+scalafim.fmri.group.DistributionsGoldenSuite:
+  + erfc golden values 0.0s
+  + normal two-sided p golden values (2*pnorm(-|z|)) 0.0s
+  + normal survival function golden values (pnorm(-z) upper tail) 0.0s
+  + student-t two-sided p at tabulated critical values 0.001s
+  + regularized incomplete beta symmetry and boundaries 0.0s
+scalafim.fmri.group.GroupHardeningSuite:
+  + covariates returns a typed error for a non-numeric column, not an exception 0.001s
+  + non-finite design matrices are rejected 0.0s
+  + duplicate first-level contrast names are rejected, not silently collapsed 0.001s
+  + meta-analysis with very large variances is not falsely singular 0.0s
+  + FDR excludes non-finite p-values and returns them as NaN 0.0s
+  + GroupFit rejects a covariance that does not match its terms 0.0s
+  + saturated fits (n == terms) are rejected so heterogeneity df stays defined 0.001s
+scalafim.fmri.group.MetaAnalysisSuite:
+  + fixed-effects meta-analysis reproduces inverse-variance weighting 0.001s
+  + random-effects meta-analysis reproduces DerSimonian-Laird 0.0s
+  + random effects collapses to fixed effects with no heterogeneity 0.0s
+  + inverse-variance two-sample WLS gives weighted group difference 0.0s
+scalafim.fmri.group.GroupGlmSuite:
+  + one-sample OLS reproduces the one-sample t-test 0.001s
+  + two-sample OLS reproduces the pooled two-sample t-test 0.0s
+  + group contrast on the difference term equals the term statistic 0.0s
+  + OLS fits every sample independently 0.001s
+  + unknown contrast term is a typed error 0.0s
+scalafim.fmri.group.StatsSuite:
+  + normal two-sided p-values at anchor points 0.0s
+  + student-t two-sided p-values at anchor critical values 0.001s
+  + student-t approaches normal as df grows 0.0s
+  + Benjamini-Hochberg matches p.adjust 0.0s
+  + Benjamini-Hochberg preserves input order under shuffling 0.0s
+  + Benjamini-Yekutieli matches p.adjust 0.0s
+  + FDR clamps adjusted p-values at one and passes NaN through 0.0s
+[info] Passed: Total 75, Failed 0, Errors 0, Passed 75
+[success] Total time: 2 s, completed Sep 30, 2026, 4:44:19 a.m.
+[info] * Attributed(/private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/test-classes)
+[info] * Attributed(/private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/private/tmp/scalafim-execution-20260929/inference-evidence/modules/archive/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/private/tmp/scalafim-execution-20260929/inference-evidence/modules/image/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/private/tmp/scalafim-execution-20260929/inference-evidence/modules/locus-data/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle_3/4.1.0/upickle_3-4.1.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/ujson_3/4.1.0/ujson_3-4.1.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upack_3/4.1.0/upack_3-4.1.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle-implicits_3/4.1.0/upickle-implicits_3-4.1.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.12.0/cats-core_3-2.12.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle-core_3/4.1.0/upickle-core_3-4.1.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.12.0/cats-kernel_3-2.12.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.8.0/algebra_3-2.8.0.jar)
+[info] * Attributed(/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/geny_3/1.1.1/geny_3-1.1.1.jar)
+[success] Total time: 2 s, completed Sep 30, 2026, 4:44:20 a.m.
+[info] ans: String = /opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home
+[info] ans: String = 25.0.1

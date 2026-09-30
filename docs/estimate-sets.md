@@ -61,9 +61,11 @@ on opening. A coded qform with opposite handedness is refused. A differing
 same-handed qform needs an explicit alternate-frame declaration matching its
 NIfTI transform code (`aligned-anatomical`, `talairach`, or `mni-152`). It supports
 arbitrary stored voxel orientation within that binding. Other selected frame
-bindings are not yet qualified. The reader and writer cap an open unit at 32
-actual NIfTI product/observation pairs (64 data/validity handles); the reader checks this
-before touching payloads. Shared code does not pretend to implement browser IO.
+bindings are not yet qualified. Without inference evidence the reader and writer
+cap an open unit at 32 actual NIfTI product/observation pairs. The reader owns 64
+data/validity handles; the writer additionally owns one coverage ledger per pair
+(96 total handles). Both check before touching payloads. The evidence route's
+aggregate handle accounting and reduced pair cap are described below. Shared code does not pretend to implement browser IO.
 
 Compact storage accepts Float64 normalized covariance declared invariant across
 samples. One digest-pinned JSON upper triangle per product/observation records
@@ -215,3 +217,36 @@ first-increment report. Current qualification is recorded in
 [continuation evidence](verification/estimate-set-increment/continuation.md).
 Source reconciliation, remote publication, physical conformance and downstream
 admission remain separately reported gates.
+
+## Optional typed inference evidence
+
+`EstimateUnit.inferenceEvidence` adds small coefficient-scope declarations and
+ordered fit/hypothesis planes without introducing a fit dependency or numerical
+product kind. `ScientificFact.Unknown` preserves unavailable conditioning and
+`InferenceStatusCode.Unrecorded` preserves missing native status. Numerical
+validity continues to control numerical use; explanatory status grants no
+validity or known reference law.
+
+Use `LocalEstimateStore.newInferenceSink(unit, maximumBlockCells)` explicitly for
+an evidence-bearing PairNifti unit. The returned `InferenceEvidenceSink` accepts
+borrowed bytes through `writeInferenceStatus(InferenceStatusSelection(...), codes)`.
+Deliver every supported sample for each declared plane before sealing. Old sink
+factories and old metadata encoders refuse evidence-bearing units. Sources expose
+`InferenceEvidenceSource.readInferenceStatus`; an old unit retains `None` and
+status reads return Unsupported.
+
+The unit manifest uses Core-NIfTI-3, wire `3.0.0`, one digest-pinned identity-scaled
+UInt8 status stack and tagged numeric NIfTI representations. Catalogs, TSV,
+collections and pointers stay Core-1. Compact shared covariance with status is
+prospectively refused. There are at most 32 planes, an 8 GiB status payload budget checked before staging,
+bounded block allocations,
+disk-backed coverage, and explicit aggregate handle caps: writer 96 (three per
+numeric pair plus two for status), reader 64 (two per numeric pair plus one for
+status). Evidence therefore permits at most 31 numeric pairs. Selected reads
+preserve sparse physical permutations. Every status code, support hole and
+geometry/digest/length declaration is verified before source ownership transfers.
+
+The independent literal fixture and failure/lifetime checks are recorded in
+[the inference-evidence verification record](verification/estimate-set-inference-evidence-2026-09-30.md).
+This prerequisite does not qualify a native producer, remove the legacy exporter,
+qualify HDF5, establish statistical reference laws or establish performance.

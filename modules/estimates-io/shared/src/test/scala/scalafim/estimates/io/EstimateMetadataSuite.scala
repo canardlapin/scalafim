@@ -132,3 +132,46 @@ class EstimateMetadataSuite extends munit.FunSuite:
     stable("Content")("statistics")(0)("effect") = effect.id.value
     assert(EstimateMetadata.readUnit(ujson.write(stable), catalog).isLeft)
   }
+
+  test("Core-3 is explicit and strict; old encoders refuse recorded evidence"):
+    val dataset = DatasetId("00000000-0000-4000-8000-000000000120")
+    val observation = Observation(ObservationId("row"), ParticipantId(dataset, "01"), Vector(AcquisitionId("run")))
+    val effect = ProductDescriptor(ProductId("effect"), ProductKind.Effect, NumericPrecision.Float64,
+      Vector(observation.id), ProductTargets.Scalar(Vector(catalog.entries.head.id)), PoolingScope.Run, "signal")
+    val unknown = ScientificFact.Unknown("fixture")
+    val evidence = InferenceEvidence(Vector.empty, Vector(InferenceStatusScope.Fit(observation.id)))
+    val unit = EstimateUnit(dataset, UnitId("00000000-0000-4000-8000-000000000121"),
+      UnitRevisionId("00000000-0000-4000-8000-000000000122"), catalog,
+      EstimateDomain.make(SampleSpaces(Vector(2, 1, 1)), Vector(1), "scanner").toOption.get,
+      Vector(observation), Vector.empty, Vector(effect), Map(effect.id -> ProductOutcome.Available(effect.id)),
+      EstimabilityEvidence.Unknown("fixture"),
+      EstimateProvenance("fixture", "1", "run", unknown, unknown, unknown, unknown, Vector.empty, Vector.empty),
+      inferenceEvidence = Some(evidence))
+    val ref = FileReference("catalog.json", ContentDigest.unsafeSha256("f" * 64), 12)
+    val tables = EstimateIndexTables(ref.copy(path = "estimands.tsv"), ref.copy(path = "observations.tsv"))
+    val status = InferenceStatusRepresentation(ref.copy(path = "status.nii"), evidence.planes)
+    intercept[IllegalArgumentException](EstimateMetadata.unit(unit, ref))
+    intercept[IllegalArgumentException](EstimateMetadata.unit(unit, ref, tables = Some(tables)))
+    intercept[IllegalArgumentException](EstimateMetadata.compactUnit(unit, ref, Vector.empty, tables))
+    val text = EstimateMetadata.inferenceUnit(unit, ref, Vector.empty, tables, status)
+    assertEquals(EstimateMetadata.schema(text, "unit"), Right(EstimateMetadata.inferenceSchema))
+    assertEquals(EstimateMetadata.readUnit(text, catalog).map(_.inferenceEvidence), Right(Some(evidence)))
+    assertEquals(EstimateMetadata.inferenceStatus(text), Right(Some(status)))
+    assert(EstimateMetadata.representations(text).isLeft)
+    def mutate(action: ujson.Value => Unit): Unit =
+      val json = ujson.read(text)
+      action(json)
+      assert(EstimateMetadata.readUnit(ujson.write(json), catalog).isLeft)
+    mutate(_("WireVersion") = "1.0.0")
+    mutate(_("Content").obj.remove("InferenceStatus"))
+    mutate(_("Content")("inferenceEvidence") = ujson.Null)
+    mutate(_("Content")("InferenceStatus")("Content")("unknown") = true)
+    mutate(_("Content")("InferenceStatus")("Content")("planes") = ujson.Arr())
+    mutate(_("Content")("inferenceEvidence")("unknown") = true)
+    mutate(_("Content")("inferenceEvidence")("planes")(0)("unknown") = true)
+    mutate: json =>
+      json("Schema") = EstimateMetadata.coreSchema
+      json("WireVersion") = EstimateMetadata.wireVersion
+    val old = EstimateMetadata.unit(unit.copy(inferenceEvidence = None), ref, tables = Some(tables))
+    assert(!old.contains("inferenceEvidence"))
+    assertEquals(EstimateMetadata.readUnit(old, catalog).map(_.inferenceEvidence), Right(None))

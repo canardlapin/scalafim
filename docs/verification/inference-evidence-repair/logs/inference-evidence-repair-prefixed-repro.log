@@ -1,0 +1,103 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project inference-evidence-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/inference-evidence/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (260003 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/inference-evidence/)
+[info] compiling 21 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 24 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/estimates-io/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.estimates.io.InferenceStatusNiftiSuite:
+  + independent Core-3 literal reads all ten codes and permuted sparse planes without fit 0.261s
+  + writer coverage, duplicates, borrowed arrays, block sizes, no-clobber and identical retry 0.555s
+  + status missing delivery cannot seal; invalid codes and support mismatch refuse without consuming coverage 0.043s
+  + code, support, geometry, scaling, plane count, payload length and digest failures refuse opening 0.062s
+  + strict plane inventory rejects reordered, duplicate and missing status declarations 0.017s
+  + corrupt staged status refuses sealing; poisoned status writes abort every owned stage 0.143s
+  + singleton 3D status and gzip use declared geometry and cumulative owned staging budget 0.016s
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.read caps, cancellations and thrown callbacks return typed failure and keep source ownership  0.028s munit.ComparisonFailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:251
+250:      assertEquals(checks, 2) // one cell was read before the cancellation
+251:      assertEquals(out.toVector, Vector[Byte](99, 99))
+252:      checks = 0
+values are not the same
+=> Obtained
+Vector(
+  2,
+  99
+)
+=> Diff (- expected, + obtained)
+ Vector(
+-  99,
++  2,
+   99
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$8(InferenceStatusNiftiSuite.scala:251)
+==> X scalafim.estimates.io.InferenceStatusNiftiSuite.late invalid, support-mismatched and truncated status reads preserve the entire caller buffer  0.007s munit.ComparisonFailException: modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala:290
+289:        else assert(result.left.toOption.exists(_.isInstanceOf[EstimateError.Integrity]))
+290:        assertEquals(out.toVector, Vector[Byte](99, 98, 97), mode)
+291:        assert(source.statusInput.exists(_.channel.isOpen))
+code
+=> Obtained
+Vector(
+  2,
+  98,
+  97
+)
+=> Diff (- expected, + obtained)
+ Vector(
+-  99,
++  2,
+   98,
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$9$$anonfun$1(InferenceStatusNiftiSuite.scala:290)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.estimates.io.InferenceStatusNiftiSuite.$init$$$anonfun$9(InferenceStatusNiftiSuite.scala:266)
+  + prepayload 32-plane and aggregate writer/reader handle budgets refuse without staging 0.571s
+  + failed status construction and release close all owned resources without leaked descriptors 0.348s
+  + old unit has explicit absent evidence and status access refuses instead of fabricating success 0.184s
+[error] Failed: Total 12, Failed 2, Errors 0, Passed 10
+[error] Failed tests:
+[error] 	scalafim.estimates.io.InferenceStatusNiftiSuite
+[error] (estimatesIoJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 16 s, completed Sep 30, 2026, 5:46:05 a.m.

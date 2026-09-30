@@ -1,0 +1,31 @@
+{
+  "inference-evidence-jvm-final-r2.log": {
+    "counts": [
+      17,
+      56,
+      17,
+      75
+    ],
+    "total": 165,
+    "exitCode": 0,
+    "warningsErrorsSkips": []
+  },
+  "inference-evidence-js-contract-final.log": {
+    "counts": [
+      17,
+      10
+    ],
+    "total": 27,
+    "exitCode": 0,
+    "warningsErrorsSkips": []
+  },
+  "inference-evidence-js-consumers-final.log": {
+    "counts": [
+      13,
+      74
+    ],
+    "total": 87,
+    "exitCode": 0,
+    "warningsErrorsSkips": []
+  }
+}

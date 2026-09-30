@@ -1,0 +1,95 @@
+{
+  "inference-evidence-repair-compile.log": {
+    "exitCode": 0,
+    "metaSha256": "a42e5d6869228831562a13d60bbccf858a8515ad9751f4140a6c3a11286155ee",
+    "sha256": "083767a09659691376ee430aceb5e98d4722b22992c60a4110bf42a2240f4346",
+    "testCounts": []
+  },
+  "inference-evidence-repair-fresh-readback.log": {
+    "exitCode": 0,
+    "metaSha256": "71d528ca746909e6c5ce5c5ca4dda0ef495a34cdf0cfcd377fac645e62ed081d",
+    "sha256": "34a2d30873c682dd21067365ec62807fcde9ff4266410fef5fac1f39a14bc9a8",
+    "testCounts": []
+  },
+  "inference-evidence-repair-js-consumers.log": {
+    "exitCode": 0,
+    "metaSha256": "70b2aea9dfc8c17cdc2918bfc985ffc0f23f85968856bb9fe3fd5736e23fd9da",
+    "sha256": "a60963650cd34afa5e42f7229a83d84ee0ec1b43e54c69ebce3eb07407ccd7bc",
+    "testCounts": [
+      [
+        "13",
+        "0",
+        "0",
+        "13"
+      ],
+      [
+        "74",
+        "0",
+        "0",
+        "74"
+      ]
+    ]
+  },
+  "inference-evidence-repair-js-contract.log": {
+    "exitCode": 0,
+    "metaSha256": "980f56f476c37a8f890d8b3b74f1f886d084e6f35119f8475dac43ba02fa835e",
+    "sha256": "8547671e50d95f2c6263ce5e5543d8141c6656869704ab7a2b7a807c463861ac",
+    "testCounts": [
+      [
+        "17",
+        "0",
+        "0",
+        "17"
+      ],
+      [
+        "10",
+        "0",
+        "0",
+        "10"
+      ]
+    ]
+  },
+  "inference-evidence-repair-jvm-r2.log": {
+    "exitCode": 0,
+    "metaSha256": "e36f646bbb8608b6482ead044977cfd832a021ca948e7acbc46bef2bed773da4",
+    "sha256": "5b3d0a73249abc08a02266403432bef5bb42316aa26032dc52bf48ba86cd9b1b",
+    "testCounts": [
+      [
+        "17",
+        "0",
+        "0",
+        "17"
+      ],
+      [
+        "57",
+        "0",
+        "0",
+        "57"
+      ],
+      [
+        "17",
+        "0",
+        "0",
+        "17"
+      ],
+      [
+        "75",
+        "0",
+        "0",
+        "75"
+      ]
+    ]
+  },
+  "inference-evidence-repair-jvm.log": {
+    "exitCode": 1,
+    "failure": "Unchanged shared-covariance global descriptor equality: 452 decreased to 450; repaired status suite passed.",
+    "metaSha256": "3df508f72f7ea80d2f9b6821e6777b25fd4d4db8204cd39f3b25231c4b68f276",
+    "sha256": "7e4f22bc221ff961aac613e1a51f9ea66d07c44c9767bee1138acf5fc6d41b0a"
+  },
+  "inference-evidence-repair-prefixed-repro.log": {
+    "exitCode": 1,
+    "metaSha256": "f40afd1bfb01c9780cb93fb0f361f45922233122bc38e76b0dbe06fed35d0e4b",
+    "sha256": "4c410f7f96129541f87d32a803515d645d5fa2dacc838f76780c04ebc4ef6016",
+    "testCounts": []
+  }
+}

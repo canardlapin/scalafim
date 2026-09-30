@@ -83,20 +83,29 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
   private[io] def publishUnit(unit: EstimateUnit, representations: Vector[NiftiRepresentation]): Either[EstimateError, PinnedUnit] =
     publishMixedUnit(unit, representations.map(EstimateRepresentation.Nifti.apply), false)
 
-  private[io] def publishMixedUnit(unit: EstimateUnit, representations: Vector[EstimateRepresentation], compact: Boolean): Either[EstimateError, PinnedUnit] =
+  private[io] def publishMixedUnit(unit: EstimateUnit, representations: Vector[EstimateRepresentation], compact: Boolean,
+      status: Option[InferenceStatusRepresentation] = None): Either[EstimateError, PinnedUnit] =
     val prefix = s"units/${unit.revision.value}"
     // A fresh unit owns its catalog reference. Identical catalog bytes still
     // retain model identity; content-addressed deduplication is optional.
+    if unit.inferenceEvidence.nonEmpty != status.nonEmpty then
+      return Left(EstimateError.Invalid("inference evidence and status inventory must be present together"))
+    if compact && status.nonEmpty then return Left(EstimateError.Unsupported("Core-3 refuses compact covariance coexistence"))
     for
+      _ <- status match
+        case Some(value) => value.validate(unit).flatMap(_ => objects.verify(verified(value.file)).left.map(fromStore))
+        case None => Right(())
       catalog <- writeText(s"$prefix/estimands.json", EstimateMetadata.catalog(unit.catalog))
       estimands <- writeText(s"$prefix/estimands.tsv", EstimateMetadata.estimandsTsv(unit.catalog))
       observations <- writeText(s"$prefix/observations.tsv", EstimateMetadata.observationsTsv(unit))
       tables = EstimateIndexTables(estimands, observations)
-      manifest <- writeText(s"$prefix/estimates.json", if compact then EstimateMetadata.compactUnit(unit, catalog, representations, tables)
+      manifest <- writeText(s"$prefix/estimates.json", if status.nonEmpty then
+        EstimateMetadata.inferenceUnit(unit, catalog, representations.collect { case EstimateRepresentation.Nifti(value) => value }, tables, status.get)
+        else if compact then EstimateMetadata.compactUnit(unit, catalog, representations, tables)
         else EstimateMetadata.unit(unit, catalog, representations.collect { case EstimateRepresentation.Nifti(value) => value }, Some(tables)))
     yield PinnedUnit(unit.unit, unit.revision, manifest)
 
-  private[io] def inspectWithRepresentations(reference: PinnedUnit): Either[EstimateError, (EstimateUnit, Vector[EstimateRepresentation])] =
+  private[io] def inspectWithRepresentations(reference: PinnedUnit): Either[EstimateError, (EstimateUnit, Vector[EstimateRepresentation], Option[InferenceStatusRepresentation])] =
     for
       manifest <- text(reference.manifest)
       catalogRef <- EstimateMetadata.catalogReference(manifest)
@@ -121,6 +130,7 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       _ <- if unit.unit == reference.unit && unit.revision == reference.revision then Right(())
            else Left(EstimateError.Integrity("pinned unit identity does not match the manifest"))
       representations <- EstimateMetadata.allRepresentations(manifest)
+      status <- EstimateMetadata.inferenceStatus(manifest)
       _ <- if schema == EstimateMetadata.developmentSchema || representations.forall {
              case EstimateRepresentation.Nifti(value) => value.storedDatatype.nonEmpty
              case EstimateRepresentation.SharedNormalizedUpperTriangle(_) => true
@@ -132,14 +142,14 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
              val actual = representations.map(r => r.product -> r.observation)
              if actual.distinct.size == actual.size && actual.toSet == expected then Right(())
              else Left(EstimateError.Integrity("Core-NIfTI representation inventory must exactly cover declared pairs"))
-    yield (unit, representations)
+    yield (unit, representations, status)
 
   def inspect(reference: PinnedUnit): Either[EstimateError, EstimateUnit] = inspectWithRepresentations(reference).map(_._1)
 
   def open(reference: PinnedUnit, limits: ReadLimits): Either[EstimateError, EstimateSource] =
-    inspectWithRepresentations(reference).flatMap: (unit, representations) =>
-      NiftiEstimateSource.preflight(this, unit, representations, limits)
-        .flatMap(_ => verifyEstimability(unit)).flatMap(_ => NiftiEstimateSource.openMixed(this, unit, representations, limits))
+    inspectWithRepresentations(reference).flatMap: (unit, representations, status) =>
+      NiftiEstimateSource.preflight(this, unit, representations, limits, status)
+        .flatMap(_ => verifyEstimability(unit)).flatMap(_ => NiftiEstimateSource.openMixed(this, unit, representations, limits, status))
 
   def newSink(unit: EstimateUnit, maximumBlockCells: Int): Either[EstimateError, EstimateSink] =
     verifyEstimability(unit).flatMap(_ => NiftiEstimateSink.open(this, unit, maximumBlockCells))
@@ -147,16 +157,25 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
   def newSink(unit: EstimateUnit, maximumBlockCells: Int, covarianceLayout: CovarianceLayout): Either[EstimateError, EstimateSink] =
     verifyEstimability(unit).flatMap(_ => NiftiEstimateSink.open(this, unit, maximumBlockCells, covarianceLayout))
 
+  /** Explicit evidence-bearing PairNifti route. Default factories refuse evidence. */
+  def newInferenceSink(unit: EstimateUnit, maximumBlockCells: Int,
+      covarianceLayout: CovarianceLayout = CovarianceLayout.PairNifti): Either[EstimateError, InferenceEvidenceSink] =
+    verifyEstimability(unit).flatMap(_ => NiftiEstimateSink.open(this, unit, maximumBlockCells, covarianceLayout, inference = true))
+
   private def validateCollection(collection: EstimateCollection): Either[EstimateError, Unit] =
     val published = collection.units.values.collect { case UnitOutcome.Published(ref) => ref }.toVector
     published.foldLeft[Either[EstimateError, Option[EstimandCatalog]]](Right(None)): (previous, ref) =>
       previous.flatMap: expectedCatalog =>
-        inspect(ref).flatMap: unit =>
-          if unit.dataset != collection.dataset || unit.catalog.model != collection.model then
-            Left(EstimateError.Invalid("collection unit has a different dataset or model"))
-          else if expectedCatalog.exists(_ != unit.catalog) then
-            Left(EstimateError.Conflict("one model revision cannot identify different immutable catalogs"))
-          else Right(Some(unit.catalog))
+        inspectWithRepresentations(ref).flatMap: (unit, _, status) =>
+          val verifiedStatus = status match
+            case Some(value) => objects.verify(verified(value.file)).left.map(fromStore)
+            case None => Right(())
+          verifiedStatus.flatMap: _ =>
+            if unit.dataset != collection.dataset || unit.catalog.model != collection.model then
+              Left(EstimateError.Invalid("collection unit has a different dataset or model"))
+            else if expectedCatalog.exists(_ != unit.catalog) then
+              Left(EstimateError.Conflict("one model revision cannot identify different immutable catalogs"))
+            else Right(Some(unit.catalog))
     .map(_ => ())
 
   def publishCollection(collection: EstimateCollection): Either[EstimateError, PinnedEstimateSet] =

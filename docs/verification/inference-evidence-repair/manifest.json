@@ -1,0 +1,185 @@
+{
+  "base": "edd1feafdde5ad783a4d2771c2d3fb841cdbcc85",
+  "baseTree": "f4bf0bbd20bebef900de96c920306c0168bff1d7",
+  "changedExistingPaths": {
+    "docs/verification/estimate-set-inference-evidence-2026-09-30.md": {
+      "bytes": 10371,
+      "sha256": "ef7f6cd666bc14751d9d53d76aab1ba31c49123f2363a655f202650a2bdd8bcb"
+    },
+    "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/InferenceStatusNifti.scala": {
+      "bytes": 10564,
+      "sha256": "889590284e89e4e28c60e0044129d86d838e1dfe21607faf727500dc40f9fb9e"
+    },
+    "modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala": {
+      "bytes": 25579,
+      "sha256": "d6873e78030a982d64a7b76795f7090a586003d31b88a027882c3c3ccd63c383"
+    }
+  },
+  "createdUtc": "2026-09-30T09:58:39.762152+00:00",
+  "independentReview": "pending",
+  "newReceiptFiles": {
+    "docs/verification/inference-evidence-repair/README.md": {
+      "bytes": 2811,
+      "sha256": "b6846c931558a42dd9b51c7e8d14a8526da55145514fa82f7c8068d59cb133b5"
+    },
+    "docs/verification/inference-evidence-repair/capture_evidence.py": {
+      "bytes": 6993,
+      "sha256": "8979eed25c4de4c6cc372672a00491ecfb19e8a503fcc8006c9418c8366a5f48"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-compile.log": {
+      "bytes": 12639,
+      "sha256": "083767a09659691376ee430aceb5e98d4722b22992c60a4110bf42a2240f4346"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-compile.log.meta.json": {
+      "bytes": 591,
+      "sha256": "a42e5d6869228831562a13d60bbccf858a8515ad9751f4140a6c3a11286155ee"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-fresh-readback.log": {
+      "bytes": 592,
+      "sha256": "34a2d30873c682dd21067365ec62807fcde9ff4266410fef5fac1f39a14bc9a8"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-fresh-readback.log.meta.json": {
+      "bytes": 6750,
+      "sha256": "71d528ca746909e6c5ce5c5ca4dda0ef495a34cdf0cfcd377fac645e62ed081d"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-js-consumers.log": {
+      "bytes": 10481,
+      "sha256": "a60963650cd34afa5e42f7229a83d84ee0ec1b43e54c69ebce3eb07407ccd7bc"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-js-consumers.log.meta.json": {
+      "bytes": 617,
+      "sha256": "70b2aea9dfc8c17cdc2918bfc985ffc0f23f85968856bb9fe3fd5736e23fd9da"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-js-contract.log": {
+      "bytes": 6261,
+      "sha256": "8547671e50d95f2c6263ce5e5543d8141c6656869704ab7a2b7a807c463861ac"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-js-contract.log.meta.json": {
+      "bytes": 618,
+      "sha256": "980f56f476c37a8f890d8b3b74f1f886d084e6f35119f8475dac43ba02fa835e"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-jvm-r2.log": {
+      "bytes": 26432,
+      "sha256": "5b3d0a73249abc08a02266403432bef5bb42316aa26032dc52bf48ba86cd9b1b"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-jvm-r2.log.meta.json": {
+      "bytes": 888,
+      "sha256": "e36f646bbb8608b6482ead044977cfd832a021ca948e7acbc46bef2bed773da4"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-jvm.log": {
+      "bytes": 12112,
+      "sha256": "7e4f22bc221ff961aac613e1a51f9ea66d07c44c9767bee1138acf5fc6d41b0a"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-jvm.log.meta.json": {
+      "bytes": 823,
+      "sha256": "3df508f72f7ea80d2f9b6821e6777b25fd4d4db8204cd39f3b25231c4b68f276"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-prefixed-repro.log": {
+      "bytes": 7074,
+      "sha256": "4c410f7f96129541f87d32a803515d645d5fa2dacc838f76780c04ebc4ef6016"
+    },
+    "docs/verification/inference-evidence-repair/logs/inference-evidence-repair-prefixed-repro.log.meta.json": {
+      "bytes": 650,
+      "sha256": "f40afd1bfb01c9780cb93fb0f361f45922233122bc38e76b0dbe06fed35d0e4b"
+    },
+    "docs/verification/inference-evidence-repair/pre-fix-source.json": {
+      "bytes": 715,
+      "sha256": "feaf393dc8b064f8b84d017503e53045bd2b954520f092e3fee74ca63f8510d3"
+    },
+    "docs/verification/inference-evidence-repair/provider-source-closure.json": {
+      "bytes": 525502,
+      "sha256": "4e6afeb6024af563a4a7fc8de646695e346e37fe71a30d8cf5b8430612c9a5c7"
+    },
+    "docs/verification/inference-evidence-repair/readback-argv.json": {
+      "bytes": 6253,
+      "sha256": "bf5e9f702a0a07858570ab9a10506c73932a72fbf0f4d40c835bc89f72cd0ee2"
+    },
+    "docs/verification/inference-evidence-repair/runtime-closure.json": {
+      "bytes": 786255,
+      "sha256": "bc0120b1dfb49e5e88fdc10f4874f9146ce99f8995f63756f79eeea7b6e8f308"
+    },
+    "docs/verification/inference-evidence-repair/source-freeze-before-repair.json": {
+      "bytes": 460039,
+      "sha256": "acbe12a273f9764720fac299bb1e774d7b096ea12a5db3ae529e4eacc235ecac"
+    },
+    "docs/verification/inference-evidence-repair/source-freeze.json": {
+      "bytes": 460039,
+      "sha256": "1bcf6c742093235e9b63420d3ec697a014ad8cf62c0db75e0feac70ba9219ea6"
+    },
+    "docs/verification/inference-evidence-repair/source-stability.json": {
+      "bytes": 10415,
+      "sha256": "6404936aeeaf3a8f97abb58c0c8c22d807d765449cd8c1ee262f3a9cead73e8c"
+    },
+    "docs/verification/inference-evidence-repair/test-summary.json": {
+      "bytes": 2503,
+      "sha256": "85a0b2784a25242ea4362e266cbcc8f761bb1bcb0731de6e0741c9e3a9c01bec"
+    }
+  },
+  "oldGoldenFileCount": 51,
+  "originalFixtureAndReceiptHashes": {
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/README.md": "0e1bd6d35ccd2330e67ee27271ac742bd9aa4434bd7a233bba7854f4ac6f4960",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/SHA256SUMS": "a99a95c2d5dc4f69d7cf7f6ac91168dec808f8f37dc7b5b769dd8d69775c6edc",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/expected.json": "c4aed55dd2efb813dc9c26f69f6ae426875b788285ce5639b439e0b6791ba2b5",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/generate.py": "e4fe73f432b0ccf6d390813536da01949e299fb48a764a690fd6ea1aa975edd8",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/effect-validity.nii": "bd6776eab8fd222dd60b7d729915c5b45d50cd9f9a103c776ff638013f5016eb",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/effect-values.nii": "3a230ea81b35f98efd7668e9a6646974926fd414391b23fd48c58b02c533b25f",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/estimands.json": "297faf23da169e92b7b2eef283a27acb1837d51c94ca2223c4d7e9561ea83506",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/estimands.tsv": "1786ae34a01fc20f92c0e33855238706a067e3f39f94fc8aadf6b1c8f5343177",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/estimates.json": "393d8181a0da82d5b389f499c4acd5819760560f3db06edae7e0edde744e0892",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/observations.tsv": "3d10384c1415142c78ca00717f43c67f5286f1fa875430feebe839eaa2f0337f",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/single-3d.nii": "201c28f07c47821cba985cdb28ccc94806957e595e8be7d88fcc541b7501c2d9",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/status.nii": "100a3035630e8ff30f3985531ebb3a7ff2f23236b199ae3e73ef7eb4705e1aeb",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/status.nii.gz": "3b806376beb24abf1442ed61c09a4be390a57c3f7dbad2fa5553bb8ed3704023",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/t-validity.nii": "bd6776eab8fd222dd60b7d729915c5b45d50cd9f9a103c776ff638013f5016eb",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/units/00000000-0000-4000-8000-000000000104/t-values.nii": "3a230ea81b35f98efd7668e9a6646974926fd414391b23fd48c58b02c533b25f",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/README.md": "314a729483aacfef63aa45611b1ad94b5cb695963f03b7c08c57be879953d933",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/capture-runtime.py": "07b1163bc006c6645490c8ff5db78d6042c4f726af34c77e6f84d015041d09ef",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/freeze.py": "715a67cb276ecff276f4d28db03f24367fbf75dbc399dcf404bb08e76c548e6a",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-compile-all-final.log": "a097cb8c7880885734ae05153014542e037d829882ca99a0aa1778c43dd52e3e",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-compile-all-final.log.meta.json": "383f64275a34d3ab5c0d75038b3d23624e1cf98fa8e4f41e62feb629a608b561",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-compile-r1.log": "9dd8ea77df4f8e2a4e1958a2cb2a27b4b541e79495822974c311c629bf334a9b",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-compile-r1.log.meta.json": "c21bf45793d345bcc393fb75721f3c9c547d4d21d3003c2ab658c2050fbefd2c",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r1.log": "9dd8ea77df4f8e2a4e1958a2cb2a27b4b541e79495822974c311c629bf334a9b",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r1.log.meta.json": "c69ebddfe4f7af51f4972169ea542aa4dece8cc80403867ec83b44c684cfc7af",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r2.log": "44b40cc5ffb2e10dc86bd87c2de8b806ac061b4b506916684cdbd6e37796dbe1",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r2.log.meta.json": "d6bf1458f9789d2c28f92d76b58272ba224842d05ff424fb195c33b8c02ab2b3",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r3.log": "830da3b8530f15cf8c12c005a64b400649531a097a5daeec8e507994c665016b",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r3.log.meta.json": "270952f0254e2c6a381f863cc340898d034dfddd3c1537c5039d9d144cae09b8",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r4.log": "1f4f611bb3bf0236a558fb8bf72f607658ac3cc0a4e73db9d6a0e0e8d8779bd9",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-focused-r4.log.meta.json": "47226c12ed7b152308c63e37cffedc4269f5b8551e3042c5c0fdeacdea0e999e",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-fresh-readback-final.log": "9bf2ffb5f8e28250eaacf8c8ceb858e6842c63a40e75396c13b33a2b8fbe4ab4",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-fresh-readback-final.log.meta.json": "dd28ee70327330071c1fed79a5658f5684835eb2643ed910baf90c34b3eb6d82",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-js-consumers-final.log": "3f7a862661e3a61b1fafff161df3783b3ef111d7865fc38889e02d944f70bee5",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-js-consumers-final.log.meta.json": "e3c54bb3d5ffe555cae9298205f349764c1c2962fcbb1e39361b655f7e178c41",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-js-contract-final.log": "3e1716ce9156ea7f57400af49254bd01dc10f84a70d223cafb5f946bf30fc588",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-js-contract-final.log.meta.json": "8ec3ff86ceba44ceaac93add2de5d82c0d9331fbcfd1add9923633d8ca399b8e",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-jvm-final-r2.log": "b741fdc4b6b9bc29aabbd42555bc1a03b7d4acb271488e6f5de963d68d53b8c6",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-jvm-final-r2.log.meta.json": "476af20b49980b5e9e6be9804b4ec0819956f061bf436e18ce16eae2e5fbabae",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-jvm-final.log": "8f83f5e066d2ae81cdc344c526aa3d4fc2e84d485b8cbe909bcddf5737f23f63",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/logs/inference-evidence-jvm-final.log.meta.json": "27c1e6b2f1d6b327a118136c6baca35ebb8aa9b8b6df6f21ad08159d1cb2855f",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/manifest.json": "809bd548f83c7a6e29e3ca253940fdbe747583169f26eec07d760e1b800f6bf1",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/provider-source-closure.json": "4e6afeb6024af563a4a7fc8de646695e346e37fe71a30d8cf5b8430612c9a5c7",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/readback-argv.json": "bf5e9f702a0a07858570ab9a10506c73932a72fbf0f4d40c835bc89f72cd0ee2",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/run-sbt.py": "87a2b2df55cc54c9d013457f7630c75c3d4a484aace32929ec23005828936b2e",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/runtime-closure.json": "67ed80d192047e5b432eb592a1c2702198a75e062f79c27f8ef0f000568a0aa4",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/source-freeze.json": "f0e43bb45009cca632e5fa12ea7a0220305a41ec300088be57bca4731e3fdf6f",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/source-stability.json": "d57fe34c4e7adce8747883f2ec26cf41f5e432aadb26963ce34b79a9c8189de4",
+    "modules/estimates-io/jvm/src/test/resources/estimate-golden/inference-evidence/verification/test-summary.json": "427cf77ed7ccc47488d9c4f5e4d624c5b235dbbcc1388c9143ceace4dffe9a25"
+  },
+  "originalFixtureFiles": 48,
+  "publication": "none",
+  "sourceFreeze": "docs/verification/inference-evidence-repair/source-freeze.json",
+  "unchangedPrerequisites": {
+    "docs/estimate-set-v0-spec.md": "05ed5e747977016879aa7d8c2e4572af9bc760a8165c3a88f754adcdaaec6c3e",
+    "docs/estimate-sets.md": "e7ee59a8f5306515baf446f7e1a51b9e9f049056d5de789ea5a72f18543c7bf8",
+    "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/LocalEstimateStore.scala": "2a081298837fd0fc1073652e70d947c2f21b23d6623803f542d1dde605ef0bd8",
+    "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/NiftiEstimateSink.scala": "17abfb879703b0f95c83629c75cccb92f0a719365001722967c653c643ca19b9",
+    "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/NiftiEstimateSource.scala": "d1fe79516211578b780e15a5899fca61b50499c67a579fb49fc82ca81c8679cb",
+    "modules/estimates-io/shared/src/main/scala/scalafim/estimates/io/EstimateMetadata.scala": "15ea98a6f13818ad18e69127203a392ef1a0fc1d3c4b3721343b52b17cc7ae46",
+    "modules/estimates-io/shared/src/main/scala/scalafim/estimates/io/InferenceStatusRepresentation.scala": "b142e806018f084b7f66fcf0d41f8938be829453bfac328b0ce41aeccca59945",
+    "modules/estimates-io/shared/src/test/scala/scalafim/estimates/io/EstimateMetadataSuite.scala": "e440c5acc4aa866b4c2ec5fd38520328972b5bada2a9fcd0078792c2948df4fb",
+    "modules/estimates/shared/src/main/scala/scalafim/estimates/EstimateSet.scala": "2e8d3ff69325ea90b446d5d41f4671348b0bc74ffd3388918d4bb00fda6745fb",
+    "modules/estimates/shared/src/main/scala/scalafim/estimates/InferenceEvidence.scala": "ecd3f0888322f9a54175d3ec05fcd4826639a9badc5c832f8816cf95591e402b",
+    "modules/estimates/shared/src/test/scala/scalafim/estimates/InferenceEvidenceSuite.scala": "f491964bbccd639c3cd11de844abb20bbd5b41df263a6ea15b3229d211762493"
+  }
+}

@@ -567,3 +567,61 @@ the `fmrireg/R/bids_export.R` exporter,
 `fmristore/raw-data/LabeledVolumeSetSpec.yaml` layout,
 `fmrigds/notes/TECHNICAL_SPECIFICATION.md` design, and
 `plsneuro/docs/first-level-estimation-contract.md` selective-estimation contract.
+
+## Typed inference evidence: bounded Core-NIfTI-3 prerequisite
+
+An optional `InferenceEvidence` records coefficient applicability on an actual
+realized column axis and an ordered list of `Fit(observation)` or
+`Hypothesis(observation, hypothesisId)` status planes. Coefficient columns MUST
+match the realized coefficient bindings; inferable columns are an explicit
+ordered subset, including an empty subset when none is supported. A restricted
+scope MUST NOT be interpreted as full rank or an unconditional inference claim.
+Method descriptions preserve parameters without embedding a private protocol.
+Missing learned-response conditioning remains `ScientificFact.Unknown`.
+
+Evidence-bearing units MUST opt into `scalafim-estimates-core-nifti-3`, wire
+`3.0.0`. Old development/Core-1/Core-2 encoders MUST refuse such values. Core-3
+adds exactly `inferenceEvidence` and `InferenceStatus` to the Core-2 tagged-unit
+content; catalogs, TSV, collections and pointers retain Core-1. The initial
+Core-3 profile admits only the Nifti numeric representation arm and one
+`UInt8Nifti` status arm. Compact shared covariance coexistence is refused.
+
+Status payloads MUST use identity-scaled UInt8 NIfTI and the declared domain,
+scanner sform and ordered plane count. A single plane may be 3D or singleton
+4D; multiple planes require the exact 4D plane count. The fourth axis is an
+identity axis without time units. Codes are closed:
+
+| Code | Meaning |
+|---|---|
+| 0 | OutsideSupport |
+| 1 | Unrecorded |
+| 2 | Estimable |
+| 3 | AllZero |
+| 4 | Constant |
+| 5 | NonFinite |
+| 6 | NoObservedResponses |
+| 7 | InsufficientResidualDegreesOfFreedom |
+| 8 | RankDeficientObservedDesign |
+| 9 | ZeroResidualVariance |
+
+OutsideSupport MUST agree exactly with domain support in every plane.
+Unrecorded preserves missing native evidence; absence of the entire capability
+also MUST NOT be interpreted as measured success. Numerical product validity
+remains authoritative. A generic reader validates declaration, code range,
+support, geometry, identity scaling, exact payload length and digest before
+returning an owned source. It does not infer a reference law or fit-specific
+cross-plane policy. A producer remains responsible for native retained/excluded
+linkage: for example, an estimable fit can exclude one hypothesis while retaining
+another, so universal equality between fit and hypothesis planes is unsound.
+
+The initial bounds are 32 planes and the qualified provider's 8 GiB status
+payload budget. Checked Long cell/byte counts and block caps
+precede staging. One writer status payload plus its disk coverage ledger consume
+two handles against an aggregate 96-handle writer budget; each numerical pair
+consumes three. The reader status payload consumes one handle against an
+aggregate 64-handle reader budget; each numerical pair consumes two. Thus a
+status-bearing unit supports at most 31 simultaneously open numerical pairs.
+Selected arrays are borrowed and plane/sample order is preserved. Coverage is
+on disk; a duplicate is refused and incomplete status delivery cannot seal.
+Cancellation/failure leaves read destinations unpublished scratch. All owned
+channels and gzip stages are released on failure or close.

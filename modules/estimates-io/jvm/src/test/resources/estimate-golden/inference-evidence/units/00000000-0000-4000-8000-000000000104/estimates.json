@@ -1,0 +1,349 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-core-nifti-3",
+  "DocumentKind": "unit",
+  "Content": {
+    "dataset": "00000000-0000-4000-8000-000000000101",
+    "unit": "00000000-0000-4000-8000-000000000103",
+    "revision": "00000000-0000-4000-8000-000000000104",
+    "domain": {
+      "Dimensions": [
+        10,
+        1,
+        1
+      ],
+      "VoxelToWorldRASMillimetres": [
+        -2,
+        0,
+        0,
+        8,
+        0,
+        3,
+        0,
+        -4,
+        0,
+        0,
+        4,
+        2,
+        0,
+        0,
+        0,
+        1
+      ],
+      "WorldFrame": "scanner",
+      "Support": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    "observations": [
+      {
+        "id": "row",
+        "participant": {
+          "dataset": "00000000-0000-4000-8000-000000000101",
+          "label": "01"
+        },
+        "acquisitions": [
+          "run-1"
+        ]
+      }
+    ],
+    "bindings": [
+      {
+        "estimand": "A",
+        "columnIds": [
+          "task",
+          "nuisance"
+        ],
+        "rows": 1,
+        "weights": [
+          1,
+          0
+        ]
+      },
+      {
+        "estimand": "B",
+        "columnIds": [
+          "task",
+          "nuisance"
+        ],
+        "rows": 1,
+        "weights": [
+          0,
+          1
+        ]
+      },
+      {
+        "estimand": "hA",
+        "columnIds": [
+          "task",
+          "nuisance"
+        ],
+        "rows": 1,
+        "weights": [
+          1,
+          -1
+        ]
+      },
+      {
+        "estimand": "hB",
+        "columnIds": [
+          "task",
+          "nuisance"
+        ],
+        "rows": 1,
+        "weights": [
+          2,
+          1
+        ]
+      }
+    ],
+    "products": [
+      {
+        "id": "effect",
+        "kind": "Effect",
+        "precision": "Float64",
+        "observations": [
+          "row"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "A",
+            "B"
+          ]
+        },
+        "pooling": "Run",
+        "units": "signal"
+      },
+      {
+        "id": "t",
+        "kind": {
+          "$type": "Statistic",
+          "kind": "T"
+        },
+        "precision": "Float64",
+        "observations": [
+          "row"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "hA",
+            "hB"
+          ]
+        },
+        "pooling": "Run",
+        "units": "dimensionless"
+      }
+    ],
+    "outcomes": [
+      [
+        "effect",
+        {
+          "$type": "Available",
+          "product": "effect"
+        }
+      ],
+      [
+        "t",
+        {
+          "$type": "Available",
+          "product": "t"
+        }
+      ]
+    ],
+    "estimability": {
+      "$type": "Unknown",
+      "reason": "synthetic independent fixture"
+    },
+    "provenance": {
+      "producer": "python-stdlib",
+      "version": "1",
+      "executionId": "inference-evidence",
+      "estimator": {
+        "$type": "Unknown",
+        "reason": "synthetic independent fixture"
+      },
+      "noise": {
+        "$type": "Unknown",
+        "reason": "synthetic independent fixture"
+      },
+      "nuisance": {
+        "$type": "Unknown",
+        "reason": "synthetic independent fixture"
+      },
+      "runCombination": {
+        "$type": "Unknown",
+        "reason": "synthetic independent fixture"
+      },
+      "scans": [],
+      "inputs": []
+    },
+    "covariance": [],
+    "statistics": [
+      {
+        "product": "t",
+        "distribution": {
+          "$type": "Unknown",
+          "reason": "synthetic independent fixture"
+        },
+        "tail": null,
+        "nullValue": null,
+        "effect": null,
+        "standardError": null
+      }
+    ],
+    "degreesOfFreedom": [],
+    "marginalUncertainty": [],
+    "Catalog": {
+      "Path": "units/00000000-0000-4000-8000-000000000104/estimands.json",
+      "SHA256": "297faf23da169e92b7b2eef283a27acb1837d51c94ca2223c4d7e9561ea83506",
+      "Bytes": 963
+    },
+    "Representations": [
+      {
+        "Tag": "Nifti",
+        "Content": {
+          "product": "effect",
+          "observation": "row",
+          "values": {
+            "Path": "units/00000000-0000-4000-8000-000000000104/effect-values.nii",
+            "SHA256": "3a230ea81b35f98efd7668e9a6646974926fd414391b23fd48c58b02c533b25f",
+            "Bytes": 512
+          },
+          "validity": {
+            "Path": "units/00000000-0000-4000-8000-000000000104/effect-validity.nii",
+            "SHA256": "bd6776eab8fd222dd60b7d729915c5b45d50cd9f9a103c776ff638013f5016eb",
+            "Bytes": 372
+          },
+          "precision": "Float64",
+          "slope": 1,
+          "intercept": 0,
+          "volumeOrder": [
+            "A",
+            "B"
+          ],
+          "selectedTransform": "scanner-sform",
+          "pairOrder": [],
+          "qformAlternativeFrame": null,
+          "storedDatatype": "Float64"
+        }
+      },
+      {
+        "Tag": "Nifti",
+        "Content": {
+          "product": "t",
+          "observation": "row",
+          "values": {
+            "Path": "units/00000000-0000-4000-8000-000000000104/t-values.nii",
+            "SHA256": "3a230ea81b35f98efd7668e9a6646974926fd414391b23fd48c58b02c533b25f",
+            "Bytes": 512
+          },
+          "validity": {
+            "Path": "units/00000000-0000-4000-8000-000000000104/t-validity.nii",
+            "SHA256": "bd6776eab8fd222dd60b7d729915c5b45d50cd9f9a103c776ff638013f5016eb",
+            "Bytes": 372
+          },
+          "precision": "Float64",
+          "slope": 1,
+          "intercept": 0,
+          "volumeOrder": [
+            "hA",
+            "hB"
+          ],
+          "selectedTransform": "scanner-sform",
+          "pairOrder": [],
+          "qformAlternativeFrame": null,
+          "storedDatatype": "Float64"
+        }
+      }
+    ],
+    "Tables": {
+      "estimands": {
+        "Path": "units/00000000-0000-4000-8000-000000000104/estimands.tsv",
+        "SHA256": "1786ae34a01fc20f92c0e33855238706a067e3f39f94fc8aadf6b1c8f5343177",
+        "Bytes": 36
+      },
+      "observations": {
+        "Path": "units/00000000-0000-4000-8000-000000000104/observations.tsv",
+        "SHA256": "3d10384c1415142c78ca00717f43c67f5286f1fa875430feebe839eaa2f0337f",
+        "Bytes": 27
+      }
+    },
+    "ModelRevisionId": "00000000-0000-4000-8000-000000000102",
+    "inferenceEvidence": {
+      "coefficients": [
+        {
+          "observation": "row",
+          "columns": [
+            "task",
+            "nuisance"
+          ],
+          "inferableColumns": [
+            "task"
+          ],
+          "scopeLabel": "task only",
+          "method": {
+            "$type": "Known",
+            "description": "conditional bootstrap: draws=17 seed=23"
+          },
+          "conditioning": {
+            "$type": "Unknown",
+            "reason": "learned response subspace not retained by this materialized result"
+          }
+        }
+      ],
+      "planes": [
+        {
+          "$type": "Fit",
+          "observation": "row"
+        },
+        {
+          "$type": "Hypothesis",
+          "observation": "row",
+          "hypothesisId": "hA"
+        },
+        {
+          "$type": "Hypothesis",
+          "observation": "row",
+          "hypothesisId": "hB"
+        }
+      ]
+    },
+    "InferenceStatus": {
+      "Tag": "UInt8Nifti",
+      "Content": {
+        "file": {
+          "Path": "units/00000000-0000-4000-8000-000000000104/status.nii",
+          "SHA256": "100a3035630e8ff30f3985531ebb3a7ff2f23236b199ae3e73ef7eb4705e1aeb",
+          "Bytes": 382
+        },
+        "planes": [
+          {
+            "$type": "Fit",
+            "observation": "row"
+          },
+          {
+            "$type": "Hypothesis",
+            "observation": "row",
+            "hypothesisId": "hA"
+          },
+          {
+            "$type": "Hypothesis",
+            "observation": "row",
+            "hypothesisId": "hB"
+          }
+        ]
+      }
+    }
+  },
+  "WireVersion": "3.0.0"
+}

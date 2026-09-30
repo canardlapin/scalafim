@@ -22,6 +22,8 @@ object EstimateMetadata:
   val wireVersion = "1.0.0"
   val compactSchema = "scalafim-estimates-core-nifti-2"
   val compactWireVersion = "2.0.0"
+  val inferenceSchema = "scalafim-estimates-core-nifti-3"
+  val inferenceWireVersion = "3.0.0"
 
   /** Canonical UTF-8 projections. JSON remains the scientific authority; these
     * tables are digest-pinned and must agree byte-for-byte with its ordered IDs.
@@ -156,6 +158,13 @@ object EstimateMetadata:
         .fold(e => throw new IllegalArgumentException(e.message), identity)
   )
 
+  private given codecCoefficientInferenceEvidence: ReadWriter[CoefficientInferenceEvidence] = macroRW
+  private given codecInferenceStatusScopeFit: ReadWriter[InferenceStatusScope.Fit] = macroRW
+  private given codecInferenceStatusScopeHypothesis: ReadWriter[InferenceStatusScope.Hypothesis] = macroRW
+  private given codecInferenceStatusScope: ReadWriter[InferenceStatusScope] = macroRW
+  private given codecInferenceEvidence: ReadWriter[InferenceEvidence] = macroRW
+  private given codecInferenceStatusRepresentation: ReadWriter[InferenceStatusRepresentation] = macroRW
+
   private given codecEstimateUnit: ReadWriter[EstimateUnit] = macroRW
   private given codecEstimandPair: ReadWriter[EstimandPair] = macroRW
   private given codecNiftiStoredDatatype: ReadWriter[NiftiStoredDatatype] = readwriter[String].bimap(_.toString, NiftiStoredDatatype.valueOf)
@@ -198,16 +207,17 @@ object EstimateMetadata:
     val envelope = ujson.Obj("ProfileVersion" -> version, "Schema" -> schema, "DocumentKind" -> kind, "Content" -> value)
     if schema == coreSchema then envelope("WireVersion") = wireVersion
     else if schema == compactSchema then envelope("WireVersion") = compactWireVersion
+    else if schema == inferenceSchema then envelope("WireVersion") = inferenceWireVersion
     ujson.write(envelope, indent = 2) + "\n"
 
   private def envelope(text: String, kind: String): (String, ujson.Value) =
     val value = ujson.read(text)
     val schema = value("Schema").str
-    require(schema == coreSchema || schema == developmentSchema || (schema == compactSchema && kind == "unit"), "unsupported estimate metadata schema")
+    require(schema == coreSchema || schema == developmentSchema || ((schema == compactSchema || schema == inferenceSchema) && kind == "unit"), "unsupported estimate metadata schema")
     require(value("ProfileVersion").str == version, "unsupported estimate profile version")
     require(value("DocumentKind").str == kind, "wrong estimate document kind")
-    if schema == coreSchema || schema == compactSchema then
-      require(value("WireVersion").str == (if schema == coreSchema then wireVersion else compactWireVersion), "unsupported Core-NIfTI wire version")
+    if schema == coreSchema || schema == compactSchema || schema == inferenceSchema then
+      require(value("WireVersion").str == (if schema == coreSchema then wireVersion else if schema == compactSchema then compactWireVersion else inferenceWireVersion), "unsupported Core-NIfTI wire version")
       require(value.obj.keySet == Set("Schema", "WireVersion", "ProfileVersion", "DocumentKind", "Content"),
         "Core-NIfTI envelope has unknown fields")
     (schema, value("Content"))
@@ -223,7 +233,9 @@ object EstimateMetadata:
   def unit(value: EstimateUnit, catalogReference: FileReference,
       representations: Vector[NiftiRepresentation] = Vector.empty,
       tables: Option[EstimateIndexTables] = None): String =
+    require(value.inferenceEvidence.isEmpty, "old unit encoders refuse inference evidence; use inferenceUnit")
     val encoded = writeJs(value)
+    encoded.obj.remove("inferenceEvidence")
     encoded.obj.remove("catalog")
     encoded("Catalog") = writeJs(catalogReference)
     encoded("Representations") = writeJs(representations)
@@ -242,20 +254,61 @@ object EstimateMetadata:
     encoded("Representations") = ujson.Arr.from(representations.map(encodeRepresentation))
     document("unit", encoded, compactSchema)
 
+  def inferenceUnit(value: EstimateUnit, catalogReference: FileReference,
+      representations: Vector[NiftiRepresentation], tables: EstimateIndexTables,
+      status: InferenceStatusRepresentation): String =
+    InferenceStatusRepresentation.preflight(value).fold(e => throw new IllegalArgumentException(e.message), identity)
+    status.validate(value).fold(e => throw new IllegalArgumentException(e.message), identity)
+    val encoded = ujson.read(unit(value.copy(inferenceEvidence = None), catalogReference, tables = Some(tables)))("Content")
+    encoded("inferenceEvidence") = writeJs(value.inferenceEvidence)
+    encoded("Representations") = ujson.Arr.from(representations.map(r => encodeRepresentation(EstimateRepresentation.Nifti(r))))
+    encoded("InferenceStatus") = ujson.Obj("Tag" -> "UInt8Nifti", "Content" -> writeJs(status))
+    document("unit", encoded, inferenceSchema)
+
+  private def decodeStatus(encoded: ujson.Value): InferenceStatusRepresentation =
+    val status = encoded("InferenceStatus")
+    require(status.obj.keySet == Set("Tag", "Content") && status("Tag").str == "UInt8Nifti", "invalid inference status tag or fields")
+    val record = status("Content")
+    require(record.obj.keySet == Set("file", "planes"), "invalid inference status fields")
+    require(record("file").obj.keySet == Set("Path", "SHA256", "Bytes"), "invalid status reference fields")
+    def scopes(planes: ujson.Value): Unit = planes.arr.foreach: plane =>
+      val fields = plane.obj.keySet
+      val expected = plane("$type").str match
+        case "Fit" => Set("$type", "observation")
+        case "Hypothesis" => Set("$type", "observation", "hypothesisId")
+        case _ => throw new IllegalArgumentException("unknown inference status scope")
+      require(fields == expected, "invalid status scope fields")
+    scopes(record("planes"))
+    val evidence = encoded("inferenceEvidence")
+    require(evidence.obj.keySet == Set("coefficients", "planes"), "invalid inference evidence fields")
+    scopes(evidence("planes"))
+    evidence("coefficients").arr.foreach: coefficient =>
+      require(coefficient.obj.keySet == Set("observation", "columns", "inferableColumns", "scopeLabel", "method", "conditioning"), "invalid coefficient evidence fields")
+      Vector("method", "conditioning").foreach: name =>
+        val fields = coefficient(name).obj.keySet
+        require(fields == Set("$type", "description") || fields == Set("$type", "reason"), "invalid scientific fact fields")
+    read[InferenceStatusRepresentation](record)
+
+  def inferenceStatus(text: String): Either[EstimateError, Option[InferenceStatusRepresentation]] = checked:
+    val (schema, encoded) = envelope(text, "unit")
+    if schema == inferenceSchema then Some(decodeStatus(encoded)) else None
+
   def catalogReference(text: String): Either[EstimateError, FileReference] =
     checked(read[FileReference](content(text, "unit")("Catalog")))
 
   def readUnit(text: String, catalog: EstimandCatalog): Either[EstimateError, EstimateUnit] = checked:
     val (wireSchema, encoded) = envelope(text, "unit")
     require(read[ModelRevisionId](encoded("ModelRevisionId")) == catalog.model, "unit and catalog model revisions differ")
-    if wireSchema == coreSchema || wireSchema == compactSchema then
+    if wireSchema == coreSchema || wireSchema == compactSchema || wireSchema == inferenceSchema then
       val required = Set("dataset", "unit", "revision", "domain", "observations", "bindings", "products",
         "outcomes", "estimability", "provenance", "covariance", "statistics", "degreesOfFreedom",
         "marginalUncertainty", "Catalog", "Representations", "Tables", "ModelRevisionId")
-      require(encoded.obj.keySet == required, "Core-NIfTI unit fields differ from the versioned schema")
+      require(encoded.obj.keySet == (if wireSchema == inferenceSchema then required ++ Set("inferenceEvidence", "InferenceStatus") else required), "Core-NIfTI unit fields differ from the versioned schema")
       read[EstimateIndexTables](encoded("Tables"))
       if wireSchema == coreSchema then read[Vector[NiftiRepresentation]](encoded("Representations"))
-      else encoded("Representations").arr.foreach(decodeRepresentation)
+      else encoded("Representations").arr.foreach: representation =>
+        val decoded = decodeRepresentation(representation)
+        require(wireSchema != inferenceSchema || decoded.isInstanceOf[EstimateRepresentation.Nifti], "Core-3 currently refuses compact covariance coexistence")
     else
       encoded.obj.get("statistics").foreach: entries =>
         entries.arr.foreach: statistic =>
@@ -265,22 +318,30 @@ object EstimateMetadata:
                 statistic(field) = writeJs(StatisticProductLink(ProductId(id),
                   StatisticCorrespondence.Unknown("development-1 link lacks hypothesis correspondence")))
               case _ => ()
+    val status = if wireSchema == inferenceSchema then Some(decodeStatus(encoded)) else
+      require(!encoded.obj.contains("inferenceEvidence"), "old wire refuses inference evidence")
+      None
+    encoded.obj.remove("InferenceStatus")
     encoded.obj.remove("Catalog")
     encoded.obj.remove("Representations")
     encoded.obj.remove("Tables")
     encoded.obj.remove("ModelRevisionId")
     encoded("catalog") = writeJs(catalog)
-    read[EstimateUnit](encoded)
+    val decoded = read[EstimateUnit](encoded)
+    status.foreach: representation =>
+      InferenceStatusRepresentation.preflight(decoded).fold(e => throw new IllegalArgumentException(e.message), identity)
+      representation.validate(decoded).fold(e => throw new IllegalArgumentException(e.message), identity)
+    decoded
 
   def representations(text: String): Either[EstimateError, Vector[NiftiRepresentation]] =
     checked:
       val (schema, encoded) = envelope(text, "unit")
-      require(schema != compactSchema, "Core-1 representation helper refuses Core-2; use allRepresentations")
+      require(schema != compactSchema && schema != inferenceSchema, "Core-1 representation helper requires old wire; use allRepresentations")
       read[Vector[NiftiRepresentation]](encoded("Representations"))
 
   def allRepresentations(text: String): Either[EstimateError, Vector[EstimateRepresentation]] = checked:
     val (schema, encoded) = envelope(text, "unit")
-    if schema == compactSchema then encoded("Representations").arr.toVector.map(decodeRepresentation)
+    if schema == compactSchema || schema == inferenceSchema then encoded("Representations").arr.toVector.map(decodeRepresentation)
     else read[Vector[NiftiRepresentation]](encoded("Representations")).map(EstimateRepresentation.Nifti.apply)
 
   def indexTables(text: String): Either[EstimateError, Option[EstimateIndexTables]] = checked:

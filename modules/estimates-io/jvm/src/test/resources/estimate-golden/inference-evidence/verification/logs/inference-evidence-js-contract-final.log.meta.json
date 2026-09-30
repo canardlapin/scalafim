@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T08:38:55.710918+00:00",
+  "finished_utc": "2026-09-30T08:39:45.040086+00:00",
+  "duration_seconds": 49.328721,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "estimatesJS/test",
+    "estimatesIoJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-execution-20260929/inference-evidence",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/inference-evidence-js-contract-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 7781
+}

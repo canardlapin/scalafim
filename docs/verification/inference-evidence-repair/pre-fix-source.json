@@ -1,0 +1,12 @@
+{
+  "base": "edd1feafdde5ad783a4d2771c2d3fb841cdbcc85",
+  "createdUtc": "2026-09-30T09:43:09.731451+00:00",
+  "readerUnchanged": true,
+  "files": {
+    "modules/estimates-io/jvm/src/main/scala/scalafim/estimates/io/InferenceStatusNifti.scala": "d5be4cf55a2e7088cbbe96c9e4a4b0944efbf3bf31eb62ecaa750d5fa461985c",
+    "modules/estimates-io/jvm/src/test/scala/scalafim/estimates/io/InferenceStatusNiftiSuite.scala": "d6873e78030a982d64a7b76795f7090a586003d31b88a027882c3c3ccd63c383"
+  },
+  "sessionId": 64096,
+  "rawLog": "/private/tmp/scalafim-execution-20260929/logs/inference-evidence-repair-prefixed-repro.log",
+  "nextAction": "Await actual pre-fix failing sentinel assertions before production reader repair."
+}

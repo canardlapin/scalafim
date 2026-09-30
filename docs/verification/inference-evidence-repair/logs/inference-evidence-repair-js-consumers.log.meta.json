@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T09:51:39.555985+00:00",
+  "finished_utc": "2026-09-30T09:52:04.248492+00:00",
+  "duration_seconds": 24.692134,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitEstimatesJS/test",
+    "groupJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-execution-20260929/inference-evidence",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/inference-evidence-repair-js-consumers.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 10481
+}

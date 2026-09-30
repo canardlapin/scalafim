@@ -1,0 +1,174 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project inference-evidence-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-execution-20260929/inference-evidence/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (260003 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-execution-20260929/inference-evidence/)
+[info] compiling 36 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] compiling 8 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/ar/js/target/scala-3.7.4/classes ...
+[info] compiling 10 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 42 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/design/js/target/scala-3.7.4/classes ...
+[info] compiling 17 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 10 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/model/js/target/scala-3.7.4/classes ...
+[info] compiling 17 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 16 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/group/js/target/scala-3.7.4/test-classes ...
+[info] compiling 62 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/fit-estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-execution-20260929/inference-evidence/modules/fit-estimates/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-execution-20260929/inference-evidence/modules/fit-estimates/js/target/scala-3.7.4/scalafim-fit-estimates-test-fastopt
+scalafim.fmri.group.scenarios.FirstLevelToGroupKnownEffectScenarioSuite:
+  + known effects survive public first-level fit, bridge, and fixed-effects group inference 0.034s
+scalafim.fmri.fit.estimates.FitEstimateProducerSuite:
+  + native selected OLS streams exact identified outputs with operator, scan and df metadata 0.016s
+  + multi-run shared OLS identifies joint-run pooling without inventing effective df 0.003s
+  + cancellation aborts the sink without publishing a partial result 0.001s
+  + a scalar-only sink is refused before executing requested joint uncertainty 0.001s
+  + actual prepared OLS delivers U once per named pair independent of voxel block size 0.004s
+  + shared callback failure and cancellation abort owned delivery 0.002s
+scalafim.fmri.group.FirstLevelBridgeSuite:
+  + bridge assembles a meta-analysis-ready cube from first-level results 0.001s
+  + bridge reports a missing subject/contrast cell 0.000s
+  + bridge rejects a result that does not span the sample space 0.000s
+  + bridge reorders by voxel identity and keeps subject-bound residual df 0.001s
+  + bridge refuses named-contrast disagreement and invalid standard errors 0.000s
+scalafim.fmri.group.scenarios.GroupFirstLevelBridgeScenarioSuite:
+  + first-level T contrast results bridge into fixed-effects group inference 0.005s
+[info] Passed: Total 13, Failed 0, Errors 0, Passed 13
+[success] Total time: 29 s, completed Sep 30, 2026, 4:40:33 a.m.
+[info] Fast optimizing /private/tmp/scalafim-execution-20260929/inference-evidence/modules/group/js/target/scala-3.7.4/scalafim-fmri-group-test-fastopt
+scalafim.fmri.group.scenarios.GroupTwoSampleScenarioSuite:
+  + two-sample group fit has an analytic pass verdict across the sample axis 0.006s
+scalafim.fmri.group.GroupInferenceSuite:
+  + globally rank-deficient weighted designs return a typed failure 0.004s
+  + inverse-variance meta-regression recovers a covariate slope 0.002s
+  + difference contrast on a cell-means design gives the group difference 0.002s
+  + two-sample OLS p-value matches the t distribution 0.000s
+  + adjustedP applies BH to a contrast result's p-value map 0.000s
+scalafim.fmri.group.GroupNumericalBaselineSuite:
+  + DL and PM policies match an independent intercept-only reference 0.003s
+  + units, origins, and column order preserve a named physical contrast 0.006s
+  + weighted partial failures retain usable samples and failure identity 0.001s
+  + extreme precision imbalance preserves coefficient units and covariance 0.000s
+  + invalid designs, weights, and zero contrasts remain typed failures 0.001s
+scalafim.fmri.group.GroupHardeningSuite:
+  + covariates returns a typed error for a non-numeric column, not an exception 0.000s
+  + non-finite design matrices are rejected 0.000s
+  + duplicate first-level contrast names are rejected, not silently collapsed 0.000s
+  + meta-analysis with very large variances is not falsely singular 0.001s
+  + FDR excludes non-finite p-values and returns them as NaN 0.000s
+  + GroupFit rejects a covariance that does not match its terms 0.000s
+  + saturated fits (n == terms) are rejected so heterogeneity df stays defined 0.000s
+scalafim.fmri.group.MetaAnalysisSuite:
+  + fixed-effects meta-analysis reproduces inverse-variance weighting 0.000s
+  + random-effects meta-analysis reproduces DerSimonian-Laird 0.000s
+  + random effects collapses to fixed effects with no heterogeneity 0.000s
+  + inverse-variance two-sample WLS gives weighted group difference 0.000s
+scalafim.fmri.group.GroupMetaforParitySuite:
+  + intercept_heterogeneous FE-z matches metafor 5.0.1 0.001s
+  + intercept_heterogeneous DL-z matches metafor 5.0.1 0.001s
+  + intercept_heterogeneous PM-z matches metafor 5.0.1 0.000s
+  + intercept_heterogeneous DL-mKH matches metafor 5.0.1 0.000s
+  + intercept_heterogeneous PM-mKH matches metafor 5.0.1 0.000s
+  + offset_moderator FE-z matches metafor 5.0.1 0.000s
+  + offset_moderator DL-z matches metafor 5.0.1 0.000s
+  + offset_moderator PM-z matches metafor 5.0.1 0.000s
+  + offset_moderator DL-mKH matches metafor 5.0.1 0.000s
+  + offset_moderator PM-mKH matches metafor 5.0.1 0.000s
+  + two_moderators FE-z matches metafor 5.0.1 0.000s
+  + two_moderators DL-z matches metafor 5.0.1 0.000s
+  + two_moderators PM-z matches metafor 5.0.1 0.001s
+  + two_moderators DL-mKH matches metafor 5.0.1 0.000s
+  + two_moderators PM-mKH matches metafor 5.0.1 0.000s
+scalafim.fmri.group.GroupModelSuite:
+  + meta-analytic estimator on variance-free data is a typed error 0.000s
+  + variance requirement narrows responses to the variance-carrying ADT case 0.000s
+  + fewer subjects than terms is a typed error 0.000s
+  + design and data subject mismatch is a typed error 0.000s
+  + non-positive variances are rejected at construction 0.000s
+  + variance dims must match effect dims 0.000s
+  + two-sample design requires exactly two levels 0.000s
+  + covariate design reads numeric columns and prepends an intercept 0.000s
+  + covariate design reports an unknown column 0.000s
+  + model summary reflects the composed description 0.000s
+scalafim.fmri.group.DistributionsGoldenSuite:
+  + erfc golden values 0.000s
+  + normal two-sided p golden values (2*pnorm(-|z|)) 0.000s
+  + normal survival function golden values (pnorm(-z) upper tail) 0.000s
+  + student-t two-sided p at tabulated critical values 0.000s
+  + regularized incomplete beta symmetry and boundaries 0.000s
+scalafim.fmri.group.scenarios.GroupOneSampleScenarioSuite:
+  + one-sample group fit has an analytic pass verdict across the sample axis 0.001s
+scalafim.fmri.group.StatsSuite:
+  + normal two-sided p-values at anchor points 0.000s
+  + student-t two-sided p-values at anchor critical values 0.000s
+  + student-t approaches normal as df grows 0.000s
+  + Benjamini-Hochberg matches p.adjust 0.000s
+  + Benjamini-Hochberg preserves input order under shuffling 0.000s
+  + Benjamini-Yekutieli matches p.adjust 0.000s
+  + FDR clamps adjusted p-values at one and passes NaN through 0.000s
+scalafim.fmri.group.GroupUncertaintySuite:
+  + weighted construction preserves an explicit unknown receipt rather than inventing df 0.000s
+  + receipt axes are exact and effects-only data refuses variance provenance 0.000s
+  + approximate df cannot masquerade as ordinary residual df 0.000s
+scalafim.fmri.group.GroupGlmSuite:
+  + one-sample OLS reproduces the one-sample t-test 0.000s
+  + two-sample OLS reproduces the pooled two-sample t-test 0.000s
+  + group contrast on the difference term equals the term statistic 0.000s
+  + OLS fits every sample independently 0.000s
+  + unknown contrast term is a typed error 0.000s
+scalafim.fmri.group.EstimateGroupSuite:
+  + pinned group blocks preserve participant, target and sample order with one owned source at a time 0.003s
+  + invalid cells reject a complete block and all owned sources close on failure or cancellation 0.001s
+  + repeated participant rows and unadmitted alignment cannot enter a group source 0.001s
+  + known and sample-dependent approximate uncertainty remain distinct and sample-aligned 0.001s
+  + missing uncertainty semantics and invalid sample-dependent df are refused 0.001s
+  + joint-run GLS artifact provenance survives the bounded group read 0.001s
+[info] Passed: Total 74, Failed 0, Errors 0, Passed 74
+[success] Total time: 3 s, completed Sep 30, 2026, 4:40:36 a.m.

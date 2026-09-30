@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T08:43:37.147558+00:00",
+  "finished_utc": "2026-09-30T08:44:21.279865+00:00",
+  "duration_seconds": 44.131882,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "estimatesJVM/test",
+    "estimatesIoJVM/test",
+    "fitEstimatesJVM/test",
+    "groupJVM/test",
+    "show estimatesIoJVM/Test/fullClasspath",
+    "eval java.lang.System.getProperty(\"java.home\")",
+    "eval java.lang.System.getProperty(\"java.version\")"
+  ],
+  "cwd": "/private/tmp/scalafim-execution-20260929/inference-evidence",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/inference-evidence-jvm-final-r2.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 26109
+}
