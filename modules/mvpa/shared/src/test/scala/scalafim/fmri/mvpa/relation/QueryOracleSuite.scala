@@ -284,3 +284,26 @@ def invalid[EL <: SemanticSpace, NL <: SemanticSpace, ER <: SemanticSpace, NR <:
     assertEquals(rightOperator.maximumTransposeBatchWidth, 1)
     assertEquals(hOperator.maximumTransposeBatchWidth, 1)
     assertEquals(kOperator.maximumForwardBatchWidth, 1)
+
+  test("scalar contractions agree with independent oracles across numerical scales"):
+    val leftEffects = axis("scaled-left-effects", SpaceRole.Latent, 2)
+    val leftNeural = axis("scaled-left-neural", SpaceRole.Observed, 3)
+    val rightEffects = axis("scaled-right-effects", SpaceRole.Latent, 3)
+    val rightNeural = axis("scaled-right-neural", SpaceRole.Observed, 2)
+    val (baseLeft, baseRight, baseH, baseK) = matrices
+    def scaled(matrix: DMat, factor: Double): DMat =
+      DMat.tabulate(matrix.rows, matrix.cols)((row, column) => matrix(row, column) * factor)
+    Vector((1e80, 1e-60, 1e20, 1e-10), (1e-80, 1e60, 1e-20, 1e10)).foreach:
+      (leftScale, rightScale, hScale, kScale) =>
+        val left = scaled(baseLeft, leftScale)
+        val rightValues = scaled(baseRight, rightScale)
+        val h = scaled(baseH, hScale)
+        val k = scaled(baseK, kScale)
+        val query = SecondOrderQuery(
+          RelationPair(relation(leftEffects, leftNeural, left, "scaled-left"), relation(rightEffects, rightNeural, rightValues, "scaled-right")),
+          Some(table(leftEffects, rightEffects, h, "scaled-h")),
+          Some(table(leftNeural, rightNeural, k, "scaled-k"))
+        )
+        val expected = scalarOracle(left, rightValues, h, k)
+        val tolerance = math.max(1e-300, math.abs(expected)) * 1e-12
+        assertEqualsDouble(right(query.scalar).value, expected, tolerance)
