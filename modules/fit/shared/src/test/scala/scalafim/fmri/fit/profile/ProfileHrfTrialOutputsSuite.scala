@@ -359,3 +359,12 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
           assertEquals(values.length, 0)
         case other => fail(s"expected typed numerical failure, got $other")
     finally Array.copy(retained, 0, gram, 0, gram.length)
+
+  test("public raw-E output view explicitly refuses ML owners before any access"):
+    val prepared = parallelChecked(ProfileHrfFit.prepare(withMl(plan(0.4)), selection,
+      parallelWhitening, policy()))
+    assertEquals(prepared.trialOutputs, Left(ProfileFitError.TrialOutputCriterionUnsupported))
+    // The construction boundary also refuses ML; an independently obtained bank cannot bypass it.
+    val rawView = parallelChecked(outputPrepared().trialOutputs)
+    assertEquals(PreparedProfileTrialOutputs.make(prepared, rawView.axis.preparation, rawView.bank),
+      Left(ProfileFitError.TrialOutputCriterionUnsupported))

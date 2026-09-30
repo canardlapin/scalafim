@@ -229,8 +229,9 @@ final class PreparedProfileTrialOutputs private (
         def condition(voxelId: Int, fit: CompactConditionFit,
             normalization: scalafim.fmri.hrf.family.NormalizationRule): ProfileTrialOutputVoxel =
           throw new IllegalStateException("checked public view requires a trial backend")
-        def trial(voxelId: Int, decoded: ShapeDecodeResult, objective: TrialBandedObjective,
+        def trial(voxelId: Int, evaluation: ProfileTrialEvaluation,
             whitened: Array[Double], work: ProfileTrialOutputWork): Either[ProfileWorkFailure, ProfileTrialOutputVoxel] =
+          val decoded = evaluation.decoded
           if decoded.status != DecodeStatus.Accepted then
             work.decodeRefusals += 1
             Right(ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.DecodeRefused(decoded.status)))
@@ -267,34 +268,37 @@ final class PreparedProfileTrialOutputs private (
 
 object PreparedProfileTrialOutputs:
   private[profile] def make(owner: PreparedProfileHrf, preparation: TrialBandedPreparation,
-      bank: TrialBandedObjective): Either[ProfileFitError, PreparedProfileTrialOutputs] = owner.plan.source match
-    case ProfileHrfSource.TrialEvents(_, drive, baseline, _) =>
-      val matrix = baseline.designMatrix
-      val nuisanceIds = baseline.compiledSchema match
-        case None if matrix.cols == 0 => Right(Vector.empty)
-        case None => Left(ProfileFitError.Preparation("public trial output needs the existing compiled baseline schema"))
-        case Some(schema) =>
-          schema.validate.left.map(error => ProfileFitError.Preparation(error.message)).flatMap { _ =>
-            val retained = schema.matrixValues
-            val sameMatrix = retained.rows == matrix.rows && retained.cols == matrix.cols &&
-              matrix.data.indices.forall(i => retained(i / matrix.cols, i % matrix.cols) == matrix.data(i))
-            if !sameMatrix || schema.rows != RowLayout.fromSamplingFrame(owner.dataset.samplingFrame) ||
-                baseline.samplingFrame != owner.dataset.samplingFrame then
-              Left(ProfileFitError.Preparation("compiled baseline matrix or physical row layout is stale"))
-            else if matrix.cols == 0 then
-              if preparation.nuisanceColumns == 0 then Right(Vector.empty)
-              else Left(ProfileFitError.Preparation("empty baseline differs from the actual prepared nuisance columns"))
-            else preparation.whitenResponses(matrix.cols, matrix.data)
-              .left.map(error => ProfileFitError.Preparation(error.message)).flatMap { whitened =>
-                if !java.util.Arrays.equals(whitened, preparation.whitenedNuisance) then
-                  Left(ProfileFitError.Preparation("compiled baseline differs from the actual prepared nuisance columns"))
-                else Right(schema.coefficientAxis.columnIds)
-              }
-          }
-      for
-        ids <- nuisanceIds
-        axis <- ProfileTrialAxis.make(preparation.source, preparation, drive.trialLabels, drive.conditionLabels,
-          drive.conditionForTrial, ids, owner.selected.timepoints.map(i => ScanIndex.unsafeOneBased(i + 1)))
-          .left.map(error => ProfileFitError.Preparation(error.message))
-      yield new PreparedProfileTrialOutputs(owner, bank, axis)
-    case _ => Left(ProfileFitError.Unsupported("public trial outputs require a physical trial source"))
+      bank: TrialBandedObjective): Either[ProfileFitError, PreparedProfileTrialOutputs] =
+    if owner.plan.criterion.usesDeterminant then
+      return Left(ProfileFitError.TrialOutputCriterionUnsupported)
+    owner.plan.source match
+      case ProfileHrfSource.TrialEvents(_, drive, baseline, _) =>
+        val matrix = baseline.designMatrix
+        val nuisanceIds = baseline.compiledSchema match
+          case None if matrix.cols == 0 => Right(Vector.empty)
+          case None => Left(ProfileFitError.Preparation("public trial output needs the existing compiled baseline schema"))
+          case Some(schema) =>
+            schema.validate.left.map(error => ProfileFitError.Preparation(error.message)).flatMap { _ =>
+              val retained = schema.matrixValues
+              val sameMatrix = retained.rows == matrix.rows && retained.cols == matrix.cols &&
+                matrix.data.indices.forall(i => retained(i / matrix.cols, i % matrix.cols) == matrix.data(i))
+              if !sameMatrix || schema.rows != RowLayout.fromSamplingFrame(owner.dataset.samplingFrame) ||
+                  baseline.samplingFrame != owner.dataset.samplingFrame then
+                Left(ProfileFitError.Preparation("compiled baseline matrix or physical row layout is stale"))
+              else if matrix.cols == 0 then
+                if preparation.nuisanceColumns == 0 then Right(Vector.empty)
+                else Left(ProfileFitError.Preparation("empty baseline differs from the actual prepared nuisance columns"))
+              else preparation.whitenResponses(matrix.cols, matrix.data)
+                .left.map(error => ProfileFitError.Preparation(error.message)).flatMap { whitened =>
+                  if !java.util.Arrays.equals(whitened, preparation.whitenedNuisance) then
+                    Left(ProfileFitError.Preparation("compiled baseline differs from the actual prepared nuisance columns"))
+                  else Right(schema.coefficientAxis.columnIds)
+                }
+            }
+        for
+          ids <- nuisanceIds
+          axis <- ProfileTrialAxis.make(preparation.source, preparation, drive.trialLabels, drive.conditionLabels,
+            drive.conditionForTrial, ids, owner.selected.timepoints.map(i => ScanIndex.unsafeOneBased(i + 1)))
+            .left.map(error => ProfileFitError.Preparation(error.message))
+        yield new PreparedProfileTrialOutputs(owner, bank, axis)
+      case _ => Left(ProfileFitError.Unsupported("public trial outputs require a physical trial source"))

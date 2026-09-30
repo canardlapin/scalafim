@@ -496,3 +496,129 @@ class ProfileHrfFitParallelSuite extends ProfileHrfFitSuite:
         releaseReader.countDown()
         runner.join(5000)
       assert(!runner.isAlive)
+
+  private def mlPrepared(blockSize: Int, workers: Int, count: Int = 16): (FmriDataset, PreparedProfileHrf) =
+    val (dataset, rawPlan) = parallelFixture(count)
+    val selected = if count == 16 then chosen else DataSelection(voxels = VoxelSelection.indices(
+      (0 until count).map(i => (i * 257 + 15) % count)*))
+    (dataset, parallelChecked(ProfileHrfFit.prepare(withMl(rawPlan), selected, parallelWhitening,
+      parallelPolicy(blockSize, workers))))
+
+  test("ML shares one setup and preserves both work ledgers across actual 1/2/8 workers and 1/2/256 chunks"):
+    val count = 2048
+    val physicalIds = (0 until count).map(i => (i * 257 + 15) % count).toVector
+    def runMl(chunk: Int, workers: Int): (ProfileRunSummary, Vector[ProfileVoxelResult]) =
+      val (dataset, fit) = mlPrepared(chunk, workers, count)
+      val values = ArrayBuffer.empty[ProfileFitBlock]
+      val summary = parallelChecked(fit.runParallel(readers(dataset, workers), parallelSink(values)))
+      assertEquals(summary.progress.workersUsed, workers)
+      assertEquals(summary.receipts.flatMap(_.voxelIds), physicalIds)
+      assertEquals(summary.receipts.map(_.ordinal), summary.receipts.indices.toVector)
+      assertEquals(summary.progress.trial.get.voxels, count.toLong)
+      assertEquals(summary.progress.trial.get.attempted.readoutAttempts, count.toLong)
+      assertEquals(summary.progress.trial.get.attempted.exactReadoutFactorAttempts, count.toLong)
+      assertEquals(summary.progress.trial.get.attempted.referenceAttempts,
+        summary.progress.trialMl.get.referenceAttempts + count)
+      (summary, values.toVector.flatMap(_.results))
+    val (reference, expected) = runMl(1, 1)
+    for chunk <- Vector(1, 2, 256); workers <- Vector(1, 2, 8) do
+      val (summary, actual) = runMl(chunk, workers)
+      assertEquals(summary.setup, reference.setup)
+      assertEquals(summary.progress.trial, reference.progress.trial)
+      assertEquals(summary.progress.trialMl, reference.progress.trialMl)
+      assertEquals(summary.progress.decoder, reference.progress.decoder)
+      assertEquals(summary.progress.decodeStatuses, reference.progress.decodeStatuses)
+      assertEquals(actual, expected)
+      assert(actual.forall(_.criterionEvidence.nonEmpty))
+
+  test("ML interruption/deadline captures both final ledgers once after its held real reader stops"):
+    for expires <- Vector(false, true) do
+      val (dataset, fit) = mlPrepared(1, 2)
+      val heldStarted = new CountDownLatch(1)
+      val readerInterrupted = new CountDownLatch(1)
+      val releaseReader = new CountDownLatch(1)
+      val returned = new CountDownLatch(1)
+      val active = new AtomicInteger(0)
+      val deliveries = new AtomicInteger(0)
+      val restored = new AtomicBoolean(false)
+      val result = new AtomicReference[Either[ProfileFitError, ProfileRunSummary]]()
+      def delayed(): DatasetSeriesReader =
+        val source = parallelReader(dataset)
+        new DatasetSeriesReader:
+          val dataset: FmriDataset = source.dataset
+          def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
+            val series = source.seriesEither(selection)
+            if series.toOption.exists(_.voxelIndices.head == ids.head) then
+              if !heldStarted.await(5, TimeUnit.SECONDS) then throw new IllegalStateException("held ML reader did not start")
+            else
+              active.incrementAndGet()
+              heldStarted.countDown()
+              try
+                var stopped = false
+                while !stopped do
+                  try stopped = releaseReader.await(10, TimeUnit.SECONDS)
+                  catch case _: InterruptedException => readerInterrupted.countDown()
+              finally
+                active.decrementAndGet()
+                ()
+            series
+      val reject = new BlockSink[ProfileFitBlock, ProfileFitReceipt]:
+        def accept(block: VoxelBlock, payload: ProfileFitBlock): Either[String, ProfileFitReceipt] =
+          assert(payload.results.forall(_.criterionEvidence.nonEmpty))
+          deliveries.incrementAndGet()
+          Thread.currentThread().interrupt()
+          Left("reject ML block")
+      val runner = new Thread(() =>
+        result.set(fit.runParallel(Vector(delayed(), delayed()), reject,
+          cleanupTimeoutMillis = if expires then 40L else 60000L))
+        restored.set(Thread.currentThread().isInterrupted)
+        returned.countDown()
+      )
+      def checkFinal(error: ProfileFitError): Unit = error match
+        case ProfileFitError.SinkRefused(reason, progress) =>
+          assertEquals(reason, "reject ML block")
+          assertEquals(progress.deliveredBlocks, 0)
+          assert(progress.attemptedVoxels >= 1 && progress.attemptedVoxels <= 2)
+          assertEquals(progress.trial.get.voxels, progress.attemptedVoxels.toLong)
+          assertEquals(progress.trial.get.attempted.readoutAttempts, progress.attemptedVoxels.toLong)
+          assertEquals(progress.trial.get.attempted.exactReadoutFactorAttempts, progress.attemptedVoxels.toLong)
+          assert(progress.trialMl.get.solveAttempts > 0L)
+          assertEquals(progress.trial.get.attempted.referenceAttempts,
+            progress.trialMl.get.referenceAttempts + progress.attemptedVoxels)
+        case other => fail(s"expected final ML sink refusal, got $other")
+      runner.start()
+      try
+        val interrupted = readerInterrupted.await(5, TimeUnit.SECONDS)
+        val observed = Option(result.get()).map(_.fold(_.message, _ => "completed"))
+        assert(interrupted, clues(expires, observed, runner.isAlive, heldStarted.getCount,
+          returned.getCount, active.get(), deliveries.get()))
+        assertEquals(active.get(), 1)
+        if expires then
+          assert(returned.await(5, TimeUnit.SECONDS))
+          result.get() match
+            case Left(ProfileFitError.WorkersStillRunning(_, receipts, setup, provenance, termination)) =>
+              assertEquals(receipts, Vector.empty[ProfileFitReceipt])
+              assertEquals(setup, fit.setup)
+              assert(setup.mlSetup.nonEmpty)
+              assertEquals(provenance, fit.provenance)
+              assert(provenance.contains("terminal-evidence=required-at-returned-shape"))
+              assert(!termination.isTerminated)
+              releaseReader.countDown()
+              val finalError = termination.awaitFinal()
+              assertEquals(finalError, termination.awaitFinal())
+              assert(termination.isTerminated)
+              checkFinal(finalError)
+            case other => fail(s"expected unfinished ML outcome, got $other")
+        else
+          assert(!returned.await(50, TimeUnit.MILLISECONDS))
+          releaseReader.countDown()
+          assert(returned.await(5, TimeUnit.SECONDS))
+          checkFinal(result.get().left.toOption.get)
+        assertEquals(active.get(), 0)
+        assertEquals(deliveries.get(), 1)
+        assert(restored.get())
+      finally
+        releaseReader.countDown()
+        runner.join(5000)
+      assert(!runner.isAlive)
+      assertEquals(deliveries.get(), 1)

@@ -79,6 +79,13 @@ private[profile] final class TrialBandedMlBackend private (
   private def currentEpoch: Either[TrialMlFailure, CriterionEpoch] =
     epoch.toRight(TrialMlFailure.Backend("pointAt must succeed before evaluation"))
 
+  /** Exact readout of this worker's pointed response. The objective charges
+    * readout work to legacyWork; the ML ledger counts criterion attempts only.
+    */
+  private[profile] def exactReadout(coordinates: Vector[Double]): Either[TrialMlFailure, TrialBandedReadout] =
+    currentEpoch.flatMap(_ => objective.readout(TrialReadoutFactorMode.ExactShape(coordinates))
+      .left.map(error => TrialMlFailure.Backend(error.message)))
+
   private def checkedNode(node: Int): Either[TrialMlFailure, NodeDeterminant] =
     if node < 0 || node >= nodes.length then Left(TrialMlFailure.InvalidPolicy(s"invalid node $node"))
     else Right(nodes(node))

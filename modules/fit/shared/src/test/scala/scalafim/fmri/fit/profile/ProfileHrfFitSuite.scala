@@ -10,7 +10,7 @@ import scalafim.fmri.design.hrf.{ExpandedConditionDesign, ExpandedTrialDesign, H
 import scalafim.fmri.fit.CanonicalTemporalWhitening
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.fmri.hrf.family.{GaussianFamily, ShapePoint}
+import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule, ParametricHrfFamily, ShapePoint}
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitPlan, FmriModel, ProfileCriterion, ProfileHrfPlan, ProfileTrialDrive, VolumeWeighting}
 import scalafim.image.SampleSpaces
 
@@ -373,7 +373,7 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     assert(payloads.flatMap(_.results).forall(_.penalizedEnergy.isFinite))
 
   test("unsupported intent, temporal selection and whitening are rejected before a read"):
-    assert(ProfileHrfFit.prepare(plan(0.4, criterion = ProfileCriterion.TrialRandomEffectsML(1.0)),
+    assert(ProfileHrfFit.prepare(plan(0.0, criterion = ProfileCriterion.TrialRandomEffectsML(1.0)),
       selection, CanonicalTemporalWhitening.Shared(arPlan), policy()).left.toOption
       .exists(_.isInstanceOf[ProfileFitError.Unsupported]))
     assert(ProfileHrfFit.prepare(plan(0.4, FitConfig(volumeWeighting = VolumeWeighting.Fixed(Vector.fill(rows)(1.0)))),
@@ -592,3 +592,233 @@ class ProfileHrfFitSuite extends munit.FunSuite:
       def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
         fail("foreign reader must not read")
     assert(prepared.run(foreign, sink(ignored)).left.toOption.exists(_.isInstanceOf[ProfileFitError.Dataset]))
+
+  protected def withMl(source: ProfileHrfPlan, sigma2: Double = 0.05): ProfileHrfPlan =
+    ProfileHrfPlan.make(source.source, source.basis, source.amplitudes, ProfileCriterion.TrialRandomEffectsML(sigma2))
+      .fold(error => fail(error.message), identity)
+
+  /** Independent two-run recurrence, including the first sample of each run. */
+  protected def manualWhiten(column: Array[Double]): Array[Double] =
+    Array.tabulate(rows) { t =>
+      if t == 0 || t == 60 then math.sqrt(1.0 - 0.37 * 0.37) * column(t)
+      else column(t) - 0.37 * column(t - 1)
+    }
+
+  private def denseMlDeterminant(coords: Vector[Double]): Double =
+    val x = designAt(coords)
+    val columns = Vector.tabulate(expanded.trials)(i => manualWhiten(Array.tabulate(rows)(t => x(t * expanded.trials + i))))
+    val centered = Vector.tabulate(expanded.trials) { i =>
+      val group = membership.trialsOf(membership.conditionOfTrial(i))
+      Array.tabulate(rows)(t => columns(i)(t) - group.map(j => columns(j)(t)).sum / group.length)
+    }
+    // Dense response-space covariance, independent of the band/Schur determinant.
+    val covariance = DMat.tabulate(rows, rows)((t, s) =>
+      (if t == s then 1.0 else 0.0) + centered.indices.map(i => centered(i)(t) * centered(i)(s)).sum / 2.5)
+    val factor = covariance.cholesky.fold(throw _, identity)
+    2.0 * (0 until rows).map(i => math.log(factor.lower(i, i))).sum
+
+  test("ML executor returns coherent terminal J evidence, raw E readout and separate exact-once work"):
+    val sigma2 = 0.05
+    val requested = policy()
+    val prepared = checked(ProfileHrfFit.prepare(plan(0.4, criterion = ProfileCriterion.TrialRandomEffectsML(sigma2)),
+      selection, parallelWhitening, requested))
+    val values = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    val summary = checked(prepared.run(reader, sink(values)))
+    assertEquals(summary.setup.route, "trial-banded-ml")
+    assert(summary.setup.mlSetup.nonEmpty)
+    assert(summary.provenance.contains("criterion-form=J=E+sigma2*D"))
+    assert(summary.provenance.contains("sigma2=" + java.lang.Double.toHexString(sigma2)))
+    assert(summary.provenance.contains("native-lambda=" + java.lang.Double.toHexString(2.5)))
+    assert(summary.provenance.contains("conditional-sd=sqrt(diag(2*sigma2*inverse(HJ)))"))
+    assert(summary.provenance.contains("terminal-evidence=required-at-returned-shape"))
+    val prep = TrialBandedPreparation.prepare(expanded, Some(arPlan), Some(nuisance), 2.5).toOption.get
+    val bank = prep.objective(NodeGrid(basis.family.chart, requested.nodesPerAxis)).toOption.get
+    val made = TrialBandedMlBackend.make(bank).result.fold(error => fail(error.message), identity)
+    val worker = made.newWorker()
+    val decoder = TrialMlDecoder.checked(Some(worker), sigma2, requested.budget, requested.prior).toOption.get
+    val fits = values.toVector.flatMap(_.results)
+    assertEquals(fits.map(_.voxelId), Vector(3, 0, 2))
+    val direct = fits.map { fit =>
+      val response = manualWhiten(responseColumns(fit.voxelId))
+      val decoded = decoder.decode(response, new DecoderCounters).result.fold(error => fail(error.message), identity)
+      val terminal = decoded.terminalEvidence match
+        case TerminalEvidence.Available(jet) => jet
+        case _ => fail("reference terminal unavailable")
+      val readout = worker.exactReadout(decoded.decoded.coordinates).fold(error => fail(error.message), identity)
+      assertEquals(fit.coordinates, decoded.decoded.coordinates)
+      assertEquals(fit.status, decoded.decoded.status)
+      assertEquals(fit.conditionalSd, decoded.decoded.conditionalSd)
+      val h = terminal.minimizationJet.hessian
+      val determinantH = h(0) * h(3) - h(1) * h(2)
+      if h(0) > 0.0 && determinantH > 0.0 then
+        // Analytic 2x2 inverse, independent of the decoder's SmallCholesky.
+        assertEqualsDouble(fit.conditionalSd(0), math.sqrt(2.0 * sigma2 * h(3) / determinantH), 1e-10)
+        assertEqualsDouble(fit.conditionalSd(1), math.sqrt(2.0 * sigma2 * h(0) / determinantH), 1e-10)
+      else assert(fit.conditionalSd.forall(_.isNaN))
+      assertEquals(fit.readout, ProfileAmplitudeReadout.AdaptiveTrial(readout))
+      val expected = ProfileCriterionEvidence.TrialRandomEffectsML(sigma2, terminal.raw.jet,
+        terminal.determinant.get.value, terminal.determinant.get.gradient, terminal.determinant.get.hessian,
+        terminal.minimizationJet, terminal.score, 2.0 * sigma2, decoded.decoded.dataHessian)
+      assertEquals(fit.criterionEvidence, Some(expected))
+      val (energy, means, _) = denseAt(fit.voxelId, fit.coordinates)
+      assertEqualsDouble(fit.penalizedEnergy, energy, 5e-7)
+      assertEqualsDouble(terminal.raw.jet.energy, energy, 5e-7)
+      means.zip(fit.conditionMeans).foreach((a, b) => assertEqualsDouble(a, b, 5e-7))
+      val determinant = denseMlDeterminant(fit.coordinates)
+      assertEqualsDouble(terminal.determinant.get.value, determinant, 1e-9)
+      assertEqualsDouble(terminal.minimizationJet.energy, energy + sigma2 * determinant, 5e-7)
+      assertEqualsDouble(terminal.score, -(energy + sigma2 * determinant) / (2.0 * sigma2), 5e-6)
+      // Fresh coherent full evaluation is independent of the decoder's retained ledger.
+      (fit, terminal)
+    }
+    assertEquals(summary.progress.trial, Some(worker.legacyWork))
+    assertEquals(summary.progress.trialMl, Some(worker.workerWorkSnapshot))
+    assertEquals(summary.setup.mlSetup, Some(made.setupReceipt))
+    assertEquals(summary.setup.bankSetup, Some(bank.setupReceipt))
+    assertEquals(summary.progress.trial.get.voxels, 3L)
+    assertEquals(summary.progress.trial.get.trialBasisScores, 3L * expanded.trials * expanded.rank)
+    assertEquals(summary.progress.trial.get.attempted.exactReadoutFactorAttempts, 3L)
+    assertEquals(summary.progress.trial.get.attempted.readoutAttempts, 3L)
+    // The separate ML evaluation receipt excludes the three readout factors.
+    assertEquals(summary.progress.trial.get.attempted.referenceAttempts,
+      summary.progress.trialMl.get.referenceAttempts + 3L)
+    direct.foreach { (fit, terminal) =>
+      assert(worker.pointAt(manualWhiten(responseColumns(fit.voxelId))).result.isRight)
+      val fresh = worker.jetAt(fit.coordinates).result.fold(error => fail(error.message), identity)
+      assertEqualsDouble(fresh.raw.jet.energy, terminal.raw.jet.energy, 1e-10)
+      fresh.raw.jet.gradient.zip(terminal.raw.jet.gradient).foreach((a, b) => assertEqualsDouble(a, b, 1e-10))
+      fresh.raw.jet.hessian.zip(terminal.raw.jet.hessian).foreach((a, b) => assertEqualsDouble(a, b, 1e-9))
+      fresh.raw.jet.amplitudes.zip(terminal.raw.jet.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 1e-10))
+      assertEquals(fresh.determinant.gradient, terminal.determinant.get.gradient)
+      assertEquals(fresh.determinant.hessian, terminal.determinant.get.hessian)
+    }
+    val again = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    val repeated = checked(prepared.run(reader, sink(again)))
+    assertEquals(again.toVector, values.toVector)
+    assertEquals(repeated.progress, summary.progress)
+    val raw = checked(ProfileHrfFit.prepare(plan(0.4), selection, parallelWhitening, requested))
+    val rawValues = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    val rawSummary = checked(raw.run(reader, sink(rawValues)))
+    assertEquals(rawSummary.setup.mlSetup, None)
+    assertEquals(rawSummary.progress.trialMl, None)
+    assert(rawValues.flatMap(_.results).forall(_.criterionEvidence.isEmpty))
+    assert(fits.zip(rawValues.flatMap(_.results)).exists((a, b) =>
+      a.coordinates.zip(b.coordinates).exists((x, y) => math.abs(x - y) > 1e-3)))
+
+  test("ML keeps a budget-limited terminal status and refuses unavailable terminal before delivery"):
+    val tight = policy(1).copy(budget = DecodeBudget(coarseStride = 1, maxNewtonSteps = 0,
+      maxJets = 1, maxExactEvaluations = 0))
+    val prepared = checked(ProfileHrfFit.prepare(withMl(plan(0.4)), selection, parallelWhitening, tight))
+    val values = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    val summary = checked(prepared.run(reader, sink(values)))
+    assert(values.flatMap(_.results).forall(_.status == DecodeStatus.BudgetExceeded))
+    assert(values.flatMap(_.results).forall(_.criterionEvidence.nonEmpty))
+    assertEquals(summary.progress.decodeStatuses.getOrElse(DecodeStatus.BudgetExceeded, 0L), 3L)
+    // Cached node jets remain valid, while a continuous scalar candidate is
+    // permitted and its required full terminal derivative evaluation refuses.
+    var refuseContinuousDerivatives = false
+    val original = GaussianFamily.Default
+    val family = new ParametricHrfFamily:
+      def name = original.name
+      def kind = original.kind
+      def chart = original.chart
+      def horizon = original.horizon
+      def supports(rule: NormalizationRule) = original.supports(rule)
+      def libraryNormalization = original.libraryNormalization
+      def evalInto(lags: Array[Double], point: ShapePoint, out: Array[Double]) = original.evalInto(lags, point, out)
+      def jetInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit =
+        original.jetInto(lags, point, out)
+        if refuseContinuousDerivatives then java.util.Arrays.fill(out, lags.length, out.length, Double.NaN)
+      def scaleJetInto(rule: NormalizationRule, point: ShapePoint, out: Array[Double]) = original.scaleJetInto(rule, point, out)
+      def summaries(point: ShapePoint) = original.summaries(point)
+      def descriptor(point: ShapePoint) = original.descriptor(point)
+      def toHrf(point: ShapePoint) = original.toHrf(point)
+    val failingBasis = HrfKernelBasis.compile(basis.spec.copy(family = family)).fold(error => fail(error.message), identity)
+    val failingPlan = ProfileHrfPlan.fromTrialEvents(dataset, drive, baseline, arConfig, failingBasis, 0.4,
+      ProfileCriterion.TrialRandomEffectsML(0.05)).toOption.get
+    val refused = checked(ProfileHrfFit.prepare(failingPlan, selection, parallelWhitening,
+      policy(1).copy(budget = DecodeBudget(maxJets = 2))))
+    refuseContinuousDerivatives = true
+    val none = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    refused.run(reader, sink(none)) match
+      case Left(ProfileFitError.TrialMlFailure(ProfileMlError.TerminalUnavailable, progress)) =>
+        assertEquals(progress.deliveredVoxels, 0)
+        assertEquals(progress.attemptedVoxels, 1)
+        assertEquals(progress.decodeStatuses.getOrElse(DecodeStatus.BudgetExceeded, 0L), 1L)
+        assertEquals(progress.trial.get.voxels, 1L)
+        assertEquals(progress.trial.get.attempted.readoutAttempts, 0L)
+        assert(progress.trialMl.get.solveAttempts > 0L)
+        assert(progress.trialMl.get.failures > 0L)
+        assert(progress.trial.get.attempted.referenceFailures > 0L)
+      case other => fail(s"expected unavailable-terminal refusal, got $other")
+    assertEquals(none.size, 0)
+
+  test("ML forwarding refuses an unpointed or invalidated epoch, and charges exact failures only to legacy work"):
+    val prep = TrialBandedPreparation.prepare(expanded, Some(arPlan), Some(nuisance), 2.5).toOption.get
+    val bank = prep.objective(NodeGrid(basis.family.chart, Vector(3, 3))).toOption.get
+    val worker = TrialBandedMlBackend.make(bank).result.toOption.get.newWorker()
+    val at = Vector(5.3, math.log(1.55))
+    assert(worker.exactReadout(at).isLeft)
+    assertEquals(worker.legacyWork.attempted.readoutAttempts, 0L)
+    assert(worker.pointAt(manualWhiten(responseColumns(0))).result.isRight)
+    val before = worker.workerWorkSnapshot
+    assert(worker.exactReadout(Vector.empty).isLeft)
+    assertEquals(worker.workerWorkSnapshot, before)
+    assertEquals(worker.legacyWork.attempted.readoutAttempts, 1L)
+    assertEquals(worker.legacyWork.attempted.readoutFailures, 1L)
+    assertEquals(worker.legacyWork.attempted.exactReadoutFactorAttempts, 1L)
+    assertEquals(worker.legacyWork.attempted.exactReadoutFactorFailures, 1L)
+    assert(worker.pointAt(Array(Double.NaN)).result.isLeft)
+    val failed = worker.legacyWork
+    assert(worker.exactReadout(at).isLeft)
+    assertEquals(worker.legacyWork, failed)
+
+  test("fixed and alpha-zero ML plans refuse before dataset resolution"):
+    val fixed = fixedPrepared.plan
+    val fixedMl = withMl(fixed)
+    assert(ProfileHrfFit.prepare(fixedMl, DataSelection.All, CanonicalTemporalWhitening.Iid, policy()).left.toOption
+      .exists(_.isInstanceOf[ProfileFitError.Unsupported]))
+    assert(ProfileHrfFit.prepare(plan(0.0, criterion = ProfileCriterion.TrialRandomEffectsML(0.05)), selection,
+      parallelWhitening, policy()).left.toOption.exists(_.isInstanceOf[ProfileFitError.Unsupported]))
+
+  test("ML setup refusal translation retains successful bank and attempted partial setup separately"):
+    val prep = TrialBandedPreparation.prepare(expanded, Some(arPlan), Some(nuisance), 2.5).toOption.get
+    val bank = prep.objective(NodeGrid(basis.family.chart, Vector(3, 3))).toOption.get
+    // Error-translation fixture only: numerical setup qualification belongs to the native suite.
+    val partial = TrialMlWork(referenceAttempts = 9L, nFactorAttempts = 9L, solveAttempts = 18L,
+      rightHandSideAttempts = 54L, membershipRightHandSides = 54L,
+      derivativeRightHandSides = 15L, smallFactorAttempts = 19L, logDetRecursionAttempts = 3L, failures = 1L)
+    val error = TrialMlFailure.Backend("partial node determinant refused")
+    val translated = ProfileHrfFit.mlSetupResult(bank.setupReceipt, TrialMlAttempt(Left(error), partial))
+    assertEquals(translated, Left(ProfileFitError.TrialMlPreparation(error.message, bank.setupReceipt, partial)))
+    val real = TrialBandedMlBackend.make(bank)
+    val actual = real.result.fold(error => fail(error.message), identity)
+    assertEquals(ProfileHrfFit.mlSetupResult(bank.setupReceipt, real).toOption, Some(actual))
+
+  test("ML cancellation before reading and before delivery retains truthful separate work"):
+    val prepared = checked(ProfileHrfFit.prepare(withMl(plan(0.4)), selection, parallelWhitening, policy(1)))
+    var reads = 0
+    val source = reader
+    val counting = new DatasetSeriesReader:
+      val dataset: FmriDataset = source.dataset
+      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
+        reads += 1
+        source.seriesEither(selection)
+    val values = scala.collection.mutable.ArrayBuffer.empty[ProfileFitBlock]
+    prepared.run(counting, sink(values), () => true) match
+      case Left(ProfileFitError.Cancelled(progress)) =>
+        assertEquals(progress.attemptedVoxels, 0)
+        assertEquals(progress.trialMl, Some(TrialMlWork()))
+      case other => fail(s"expected early ML cancellation, got $other")
+    assertEquals(reads, 0)
+    var calls = 0
+    prepared.run(counting, sink(values), () => { calls += 1; calls >= 4 }) match
+      case Left(ProfileFitError.Cancelled(progress)) =>
+        assertEquals(progress.attemptedVoxels, 1)
+        assertEquals(progress.deliveredVoxels, 0)
+        assertEquals(progress.trial.get.voxels, 1L)
+        assertEquals(progress.trial.get.attempted.readoutAttempts, 1L)
+        assertEquals(progress.trial.get.attempted.referenceAttempts, progress.trialMl.get.referenceAttempts + 1L)
+      case other => fail(s"expected ML cancellation before delivery, got $other")
+    assertEquals(reads, 1)
+    assertEquals(values.size, 0)

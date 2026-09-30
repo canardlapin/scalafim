@@ -7,7 +7,7 @@ import gale.spectral.{Eigen, EigenSelection, EigenVectors}
 /** Attempt accounting supplied by the core, including refused attempts. Setup
   * and per-response work remain separate. These are counts, never factor data.
   */
-private[profile] final case class TrialMlWork(
+final case class TrialMlWork(
     referenceAttempts: Long = 0L,
     nFactorAttempts: Long = 0L,
     nFactorFailures: Long = 0L,
