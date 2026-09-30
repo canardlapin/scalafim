@@ -2,6 +2,7 @@ package scalafim.fmri.threshold
 
 import gale.linalg.{DMat, Matrix}
 import image4s.geometry.GeometryError
+import image4s.geometry.Grid
 import scalafim.image.{Mask, SampleSpaces, SomeScalarVolume}
 
 class ThresholdCoreSuite extends munit.FunSuite:
@@ -79,9 +80,13 @@ class ThresholdCoreSuite extends munit.FunSuite:
     val stat = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](Array.fill(4)(1.0), statSpace)
     val mask = Mask.fromIndices(maskSpace, Array(0))
 
+    // The provider decides which exact-geometry failure applies (frame identity
+    // before sampling congruence); MaskedField must report that failure as is.
+    val providerFailure = Grid.exactCongruence(stat.grid, mask.grid).left.toOption
+    assert(providerFailure.isDefined, "fixture must be geometrically incompatible")
     assertEquals(
       MaskedField.fromVolume(stat, mask, Tail.Positive).left.toOption,
-      Some(ThresholdError.Geometry(GeometryError.GridsNotCongruent(0.0)))
+      providerFailure.map(ThresholdError.Geometry(_))
     )
   }
 

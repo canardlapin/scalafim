@@ -21,12 +21,15 @@ class DecisionScaleSuite extends munit.FunSuite:
     val rng = scala.util.Random(21L)
     val stat = Array.tabulate(n)(i => if i % 9 == 0 then 8.0 * (if i % 2 == 0 then 1.0 else -1.0) else rng.nextGaussian())
     val inMask = (0 until n).filter(_ % 7 != 3).toArray
-    val mask = Mask.fromIndices(SampleSpaces(dims), inMask, "analysis")
+    // The mask shares the statistic map's frame; separately built unresolved
+    // frames are distinct identities and are refused.
+    val statVolume = volume(stat)
+    val mask = Mask.fromIndices(statVolume.space, inMask, "analysis")
     val draws = Vector.fill(49)(Array.fill(inMask.length)(rng.nextGaussian() * 1.5))
     val alpha = Alpha.unsafe(0.1)
 
     for alternative <- ThresholdAlternative.values do
-      val result = value(MaxT.runMap(StatisticMap.z(volume(stat)), FixedNullDraw(draws), Some(mask), alpha, alternative))
+      val result = value(MaxT.runMap(StatisticMap.z(statVolume), FixedNullDraw(draws), Some(mask), alpha, alternative))
       assertEquals(result.method, ThresholdMethod.MaxT)
       val pMap = result.pValueSemantics match
         case ThresholdPValues.Adjusted(values, CorrectionPolicy.MaxTSingleStep) => values
