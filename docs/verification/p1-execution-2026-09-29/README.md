@@ -359,3 +359,41 @@ actual 100000-voxel workload has been launched.
 [Review history](review-history-20260930-0530.json.gz) preserves these verdicts
 and the actual timeout receipt. Gale review publication and the projected
 17.36-hour calibration campaign still require the separately requested approval.
+
+## Reviewed public and criterion milestones; C0 oracle gate
+
+The repaired prepared-basis public readout `d7a9e900` is accepted and integrated
+at `43db2e83`, together with the reviewed executor. The combined gate passed
+67 fit tests plus nine laws on JVM and 36 fit tests plus nine laws on JS, then
+warning-clean CompileAll. All fourteen source hashes were checked. Its storage
+receipt names wrapper buffers, retained adjoint rows and expanded source
+separately; it does not claim total or peak engine memory.
+[Exact source and receipts](trial-public-executor-qualified.json.gz).
+
+The immutable factor/value helper at actual `4ec40483` is accepted for its
+bounded local-provider contract: 17 tests per platform and CompileAll passed,
+with sensitive factor-identity and derivative mutants. The initial handoff
+text named a nonexistent SHA and was explicitly corrected by its author.
+Gale remains a local override; Java25 evidence is not JDK21 or hosted-pin
+qualification. [Helper review and evidence](trial-ml-helper-local-qualified.json.gz).
+
+The typed criterion adapter `0017dafd`, integrated `d71e5ca9`, passed independent
+review and 26 tests on each platform plus warning-clean CompileAll. Its analytic
+controls exercise every unchanged decoder path for `J=E+sigma2 D`, identity and
+epoch binding, bounded terminal evidence, and prior-free conditional SD.
+[Adapter evidence](trial-criterion-qualified.json.gz). These controls do not
+admit native trial ML; a separate coherent native backend is now assigned.
+The executor still refuses ML.
+
+The complete bounded C0 harness `179af271` passed seven unit controls per
+platform, but the independent search oracle failed its predeclared amplitude
+adequacy margin on both platforms. Five of six random development responses
+also have lower direct energy at decoded coordinates than the searched
+reference. Independent review identified premature seven-level mesh exhaustion.
+[The exact negative evidence](c0-oracle-unresolved-179af271.json.gz) is preserved;
+it is neither a candidate scientific failure nor successful qualification.
+One fixed development-only oracle resolution repair is authorized, with
+unchanged margins, policies and seeds. No full frozen200, fresh cohort or
+100000-voxel qualification has been launched. Original7/16 ticket completion
+is unchanged. Separate Gale publication and calibration-cost approvals remain
+pending actual user replies.

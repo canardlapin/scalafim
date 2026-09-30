@@ -171,7 +171,46 @@
       "jsRun": false,
       "freshLaunched": false,
       "actual100kLaunched": false
+    },
+    {
+      "commit": "d7a9e9001737614ca4e3c0ec7621da5c84fd1d5a",
+      "verdict": "AcceptBoundedPublicReadoutAndScopedStorage",
+      "integrationCommit": "43db2e837d7eb40ac7398c8de76909eb6ce4bf54",
+      "integratedChecks": "fit67+laws9JVM,fit36+laws9JS,warning-cleanCompileAll",
+      "receiptSha256": "37c08c4049e2dbc944494455c0195de7dde43c941c3f3bf843dbc4d16092e134",
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "4ec40483890c92457ad54523a9fe0d7f71562267",
+      "correctsInitialHandoffText": "3d9a5ff4 nonexistent; actualSHA explicitly corrected by author",
+      "verdict": "AcceptBoundedImmutableFactorValueIdentity",
+      "checks": "17/17each+CompileAll; four sensitive mutants fail after required Test/clean",
+      "localProviderOnly": true,
+      "java": "25.0.1 not JDK21",
+      "fullMLAdmitted": false
+    },
+    {
+      "commit": "0017dafd5152f60e09b27ce7d1b7c343a61a1c53",
+      "verdict": "AcceptBoundedTypedCriterionAdapter",
+      "integrationCommit": "d71e5ca9faac8d87ab03d5fa6f59cb4c5c54d8ae",
+      "integratedChecks": "26JVM26JS+warning-cleanCompileAll",
+      "receiptSha256": "05ece66faa94896533979d7e2c4192192d3b487f1e6935a02e80603d91a67931",
+      "nativeBackendAdmitted": false
+    },
+    {
+      "commit": "179af2714b9349caf61461289b1857976703b0fa",
+      "verdict": "RequestChangesOracleResolutionBeforeFresh",
+      "sourceFreezeSha256": "bbf30ff4bd169861999eddb39ccd349b7949c495bbebd1706f864f89b291fe53",
+      "checks": "boundedunit7/7each; DEV3/SNR1,.5eachplatform; variedshapeadequacy actualexit1both",
+      "findings": [
+        "sevenmeshscales stopabove directenergy at decodercoords in five of six responses",
+        "coarse/dense amplitude1.91142566e-4 exceeds unchanged1e-4margin"
+      ],
+      "freshLaunched": false,
+      "fullFrozen200Launched": false,
+      "actual100kLaunched": false,
+      "next": "ONE fixed14main/16dense DEV-only oracle refinement repair; scientific margins/seeds/policy unchanged"
     }
   ],
-  "updatedUtc": "2026-09-30T05:47:49.642470+00:00"
+  "updatedUtc": "2026-09-30T06:40:50.989324+00:00"
 }
