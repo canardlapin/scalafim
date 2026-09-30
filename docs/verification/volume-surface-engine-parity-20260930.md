@@ -19,7 +19,7 @@ This is a bounded engine-qualification slice. GIFTI metadata, actual group-space
 
 `VolumeToSurfaceParitySuite` checks a multiaffine polynomial against its analytic value on an explicitly transformed oblique, anisotropic, shifted grid; an impulse with a hand-calculated corner weight; masked-corner and volume-edge normalization/coverage; and public compiled nearest/multi-depth and trilinear routes. Grid-to-world expectations are written independently of the lookup conversion.
 
-`ThreeVolumeProjectorSuite` uses a 3 x 2 x 4 asymmetric ramp (x + 10y + 100z), half-voxel offsets of 1e-8, exact lower and upper support boundaries, valid zero, and NaN. The injected test runtime independently uses WebGL's x + width*(y + height*z) texture layout; it is a transport oracle, not native shader evidence. A test-only browser export invokes the actual production API with Three.js and WebGL for the axis and boundary fixtures.
+`ThreeVolumeProjectorSuite` uses a 3 x 2 x 4 asymmetric ramp (x + 10y + 100z), half-voxel offsets of 1e-8, exact lower and upper support boundaries, valid zero, NaN, and +/-2^32 coordinates on multiple axes. The injected test runtime independently uses WebGL's x + width*(y + height*z) texture layout; it is a transport oracle, not native shader evidence. A test-only browser export invokes the actual production API with Three.js and WebGL for 13 axis, boundary, and far-outside vertex observations.
 
 ## Reproduced discrepancies
 
@@ -35,4 +35,23 @@ The axis/tie repair resolves nearest indices in double precision before uploadin
 
 ## Validation
 
-Pending final execution and source-bound review. Raw logs and metadata will be listed here after gates complete.
+The tested source commit is `dbcce3043a809547d6103764de2f1d3f385f20e1`. The final receipt is a documentation-only followup; production/test sources and module README remain identical to that source commit. No local-main integration or remote publication occurred.
+
+| Gate | Result | Raw log and metadata |
+| --- | --- | --- |
+| `surfaceJVM/test` + `spatialJVM/test` | 166 + 224 = 390 passed; exit 0 | `/private/tmp/scalafim-execution-20260929/logs/volume-surface-parity-rev2-jvm.log` and `.meta.json` |
+| `surfaceJS/test` + `spatialJS/test` + `surfaceViewThreeJS/test` | 132 + 199 + 18 = 349 passed; exit 0 | `/private/tmp/scalafim-execution-20260929/logs/volume-surface-parity-rev2-js.log` and `.meta.json` |
+| `scalafimCompileAll` | exit 0, no warning/error markers | same JS log and metadata |
+| Actual Three.js/WebGL production API | 13 observations, zero value/count/quality mismatches, no page/console errors | `/private/tmp/scalafim-engine-parity-20260930/webgl-rev2.json` |
+
+The runner serialized builds through the existing shared sbt lock and bounded each invocation with a 3 GiB heap and four active processors. JVM and JS ran in separate invocations; `scalafimTestAll` was not run. The JVM invocation also produced a NoModule test bundle for the actual browser probe; that frozen bundle was copied before the subsequent JS test invocation changed linker output. The observed toolchain was sbt 1.11.7, Scala 3.7.4, Homebrew Java 25.0.1, and Node 26.7.0.
+
+No failed or skipped test summaries or warning/error markers appear in the complete final logs. The word "ignored" occurs in ordinary test names and is not a skipped-test marker. JVM raw-log SHA256: `dfef6759b852037bd114462673dff0a592e2ab19b83eb1e7a7ad311777510bc0`. JS/compile raw-log SHA256: `56910f8575ecb3afd3c4a35f6c6ae8ed067047f5a30e3c5b13fdadb04bb61b2a`.
+
+The final actual browser run used Chromium 140.0.7339.186, Three.js r185, and ANGLE's SwiftShader Vulkan software device, matching the baseline environment. Frozen bundle `/private/tmp/scalafim-engine-parity-20260930/rev2-main.js` SHA256: `858ba61d6fc393b5ba314c6429146a2e8a174c207441461fb2f9616bce1d2fd5`. Browser receipt SHA256: `1acbe85cc66ce069350193e38c5a1f1a7e78cc52aaa4d56aea1368246877b6ed`. Browser, context, pages, and loopback server closed in the harness's finalizer; the before/after automation guard audit was clear. This qualifies the software WebGL transport and shader path for these specimens, not hardware GPU support, rendering appearance, real native update cost, or performance.
+
+The loaded source-provider closure contains 11 staged checkouts, all tracked-clean at capture, including both transitive Gale revisions. `/private/tmp/scalafim-engine-parity-20260930/provider-closure-rev2.json` binds their paths/HEADs to the tested source and logs; SHA256: `9866266628d0eebc0baa4b7f6791a5410000df7a312034606626e4b1d4ab3989`. No sibling-source build override was used.
+
+`/private/tmp/scalafim-engine-parity-20260930/evidence-manifest.json` binds source-file blob IDs and SHA256s, final gate outcomes, and baseline/final artifact digests. Its SHA256 is `a32e109e53c381e2f404a0d863fa8dba4678e7b6a34af1a79b7a677bce6934f3`. Independent review is recorded separately on Fray #83 and the final Mote candidate; test passage alone does not imply review or landing authorization.
+
+This completes the bounded engine-parity slice of item (1), subject to the separately recorded review outcome. Mote remains open for GIFTI frame-metadata admission, the historical consumer-pin compile check, and broader exact group-space/fsLR qualification. The existing source-value nonfinite/minimumSamples decision also remains separate.
