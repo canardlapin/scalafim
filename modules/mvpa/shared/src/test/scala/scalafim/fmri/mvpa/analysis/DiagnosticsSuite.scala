@@ -41,15 +41,17 @@ final class DiagnosticsSuite extends FunSuite:
   private def specification(design: String = "folds-v1", frame: String = "frame-v1") =
     AnalysisSpecification.from(new PoisonSource, Design(design), Frame(frame), EstimandUnderTest, "mean response", Vector("finite values"), Vector("center within run"), "pooled trial")
 
+  private val replayAvailable = CapabilitySet.from(Vector(Capability(CapabilityId("replay"), "test replay")))
+
   test("describe and explain only inspect cached metadata"):
     val poison = new PoisonSource
     val plan = AnalysisSpecification.from(poison, Design("folds-v1"), Frame("frame-v1"), EstimandUnderTest, "mean response", Vector("finite values"), Vector("center within run"), "pooled trial")
-    val description = Diagnostics.describe(plan)
-    val explanation = Diagnostics.explain(plan)
+    val description = Diagnostics.describe(plan, CapabilitySet.empty)
+    val explanation = Diagnostics.explain(plan, CapabilitySet.empty)
     assertEquals(description.sourceIdentity, "declared-source-v1")
     assertEquals(description.unknowns.length, 1)
     assertEquals(explanation.blockers.map(_.code), Vector("analysis.missing-source-capability"))
-    assert(!explanation.nextOperations.exists(_.startsWith("bind the")))
+    assert(explanation.nextOperations.exists(_.contains("capability")))
     assertEquals(poison.reads, 0)
 
   test("native diagnostic binding does not apply a poison evidence operator"):
@@ -77,8 +79,8 @@ final class DiagnosticsSuite extends FunSuite:
     val whole = right(MeasurementLeg.identity(neural, MeasurementId.unsafe("whole")))
     val frame = right(MeasurementFrame(neural, Vector(PackedMeasurementEntry(whole, "whole"))))
     val plan = AnalysisSpecification.from(observations, design, frame, NativeEstimand, "q", Vector("finite"), Vector.empty, "pooled")
-    Diagnostics.describe(plan)
-    Diagnostics.explain(plan)
+    Diagnostics.describe(plan, CapabilitySet.empty)
+    Diagnostics.explain(plan, CapabilitySet.empty)
     assertEquals(operator.applications, 0)
 
   test("large axis inspection is bounded and continuation-driven"):
@@ -89,15 +91,17 @@ final class DiagnosticsSuite extends FunSuite:
     val second = AxisPage.inspect(axis, 128, first.next).toOption.get
     assertEquals(first.entries.length, 128)
     assertEquals(first.entries.head, 0 -> "voxel-00000")
-    assertEquals(first.next, Some(128))
+    assert(first.next.nonEmpty)
     assertEquals(second.entries.head, 128 -> "voxel-00128")
     assertEquals(AxisPage.inspect(axis, 0), Left(DiagnosticError.InvalidLimit(0)))
-    assertEquals(AxisPage.inspect(axis, 1, Some(10001)), Left(DiagnosticError.ContinuationOutOfRange(10001, 10000)))
+    assertEquals(AxisPage.inspect(axis, Int.MaxValue), Left(DiagnosticError.LimitExceedsMaximum(Int.MaxValue, 1024)))
+    val other = right(AxisRef.fromStableKeys("other", SpaceRole.Observed, Vector("x", "y"), "voxel", "psc", "raw"))
+    assertEquals(AxisPage.inspect(other, 1, first.next), Left(DiagnosticError.ContinuationTargetMismatch))
 
   test("identity evidence never overclaims complete verification"):
     assertEquals(Diagnostics.inspectIdentity(EvidenceReceipt("declared-v1", Vector.empty, None)), ContentIdentity.Declared("declared-v1"))
-    assertEquals(Diagnostics.inspectIdentity(EvidenceReceipt("declared-v1", Vector("block-2"), None)), ContentIdentity.BlockVerified("declared-v1", Vector("block-2")))
-    assertEquals(Diagnostics.inspectIdentity(EvidenceReceipt("declared-v1", Vector("block-2"), Some("sha256:complete"))), ContentIdentity.FullyVerified("declared-v1", Vector("block-2"), "sha256:complete"))
+    assertEquals(Diagnostics.inspectIdentity(EvidenceReceipt("declared-v1", Vector("block-2"), None)), ContentIdentity.ProviderReportedBlocks("declared-v1", Vector("block-2")))
+    assertEquals(Diagnostics.inspectIdentity(EvidenceReceipt("declared-v1", Vector("block-2"), Some("sha256:complete"))), ContentIdentity.ProviderReportedComplete("declared-v1", Vector("block-2"), "sha256:complete"))
 
   test("structural plan differences require rebind and repairs preserve scientific scope"):
     val base = specification()
@@ -131,8 +135,8 @@ final class DiagnosticsSuite extends FunSuite:
     val estimand = new MutableEstimand
     val plan = AnalysisSpecification.from(new PoisonSource, Design("d"), Frame("f"), estimand, "q", Vector.empty, Vector.empty, "pooled")
     estimand.frozen = true
-    assertEquals(Diagnostics.describe(plan).estimand, EstimandId("snapshot"))
-    assertEquals(Diagnostics.explain(plan).blockerCount, 1)
+    assertEquals(Diagnostics.describe(plan, CapabilitySet.empty).estimand, EstimandId("snapshot"))
+    assertEquals(Diagnostics.explain(plan, CapabilitySet.empty).blockerCount, 1)
     assertEquals(Diagnostics.diff(plan, plan).changes, Set.empty[PlanChange])
     assertEquals(estimand.idCalls, 1)
     assertEquals(estimand.capabilityCalls, 1)
@@ -146,18 +150,19 @@ final class DiagnosticsSuite extends FunSuite:
     assertEquals(difference.changes, Set(PlanChange.SourceCapabilities))
     assert(difference.rebindRequired)
     assertEquals(blocked.plan, supported.plan)
-    assertEquals(Diagnostics.explain(supported).blockerCount, 0)
-    assert(Diagnostics.explain(supported).nextOperations.contains("bind the unchanged specification"))
+    assertEquals(Diagnostics.explain(supported, replayAvailable).blockerCount, 0)
+    assert(Diagnostics.explain(supported, replayAvailable).nextOperations.exists(_.contains("method binding")))
+    assertEquals(Diagnostics.explain(supported, CapabilitySet.empty).blockerCount, 1)
+    assertEquals(Diagnostics.explain(supported, CapabilitySet.empty).blockers.head.observed, "capability absent from caller available capabilities")
+    assertEquals(Diagnostics.explain(blocked, replayAvailable).blockers.head.observed, "capability absent from captured source metadata")
     assertEquals(source.reads, 0)
 
   test("large scientific metadata pages retain all entries through continuations"):
     val assumptions = Vector.tabulate(1000)(i => s"assumption-$i")
     val plan = AnalysisSpecification.from(new PoisonSource, Design("d"), Frame("f"), EstimandUnderTest, "q", assumptions, Vector.empty, "pooled")
-    val first = Diagnostics.describe(plan)
+    val first = Diagnostics.describe(plan, CapabilitySet.empty)
     assertEquals(first.assumptions, assumptions.take(128))
-    val second = Diagnostics.inspect(plan, 128, first.nextMetadata).toOption.get
+    val second = Diagnostics.inspect(plan, CapabilitySet.empty, 128, first.nextMetadata).toOption.get
     assertEquals(second.assumptions, assumptions.slice(128, 256))
-    val end = Diagnostics.inspect(plan, Int.MaxValue, Some(900)).toOption.get
-    assertEquals(end.assumptions, assumptions.drop(900))
-    assertEquals(end.nextMetadata, None)
-    assertEquals(Diagnostics.inspect(plan, 0), Left(DiagnosticError.InvalidLimit(0)))
+    assertEquals(Diagnostics.inspect(plan, CapabilitySet.empty, Int.MaxValue), Left(DiagnosticError.LimitExceedsMaximum(Int.MaxValue, 1024)))
+    assertEquals(Diagnostics.inspect(plan, CapabilitySet.empty, 0), Left(DiagnosticError.InvalidLimit(0)))

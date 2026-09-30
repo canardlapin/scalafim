@@ -284,8 +284,8 @@ object AlderPredictiveAdmission:
     1 + (columns - 1) / width
 
   private def nativeRootIdentity[S <: SemanticSpace, N <: SemanticSpace, F <: SemanticSpace](mapping: NativeAxisMapping, metadata: DataFingerprint, observations: Observations[S, N], targets: MultiResponse[S, F]): DataFingerprint =
-    new DataFingerprint(FingerprintPolicy.Summary("scalafim.native-table-root.v1"), AxisDigest.sha256Hex: writer =>
-      writer.string("scalafim.native-table-root.v1")
+    new DataFingerprint(FingerprintPolicy.Summary("scalafim.native-table-root.v2"), AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.native-table-root.v2")
       writer.string(mapping.declaredMappingIdentity.policy.toString)
       writer.string(mapping.declaredMappingIdentity.digest)
       writer.string(metadata.policy.toString)
@@ -318,6 +318,7 @@ object AlderPredictiveAdmission:
     writer.intLE(identity.provenanceRoots.length)
     identity.provenanceRoots.foreach(root => writer.string(root.value))
     writeValueIdentity(writer, identity.values)
+    identity.origins.writeFramed(writer)
 
   private def writeValueIdentity(writer: AxisDigest.Writer, identity: ValueIdentity): Unit =
     identity match

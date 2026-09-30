@@ -27,6 +27,15 @@ final class EvidenceSource private (
   val roots: Vector[ProvenanceId] =
     provenance.roots
 
+  override def equals(other: Any): Boolean =
+    other match
+      case that: EvidenceSource =>
+        sourceId == that.sourceId && nodes == that.nodes && roots == that.roots
+      case _ => false
+
+  override def hashCode(): Int =
+    (sourceId, nodes, roots).hashCode
+
 object EvidenceSource:
   def apply(sourceId: SourceId, provenance: Provenance): Either[EvidenceError, EvidenceSource] =
     val declaresSource = provenance.nodes.exists: node =>
@@ -47,14 +56,16 @@ final case class EvidenceIdentity(
     source: SourceId,
     provenanceNodes: Vector[ProvenanceNode],
     provenanceRoots: Vector[ProvenanceId],
-    values: ValueIdentity
+    values: ValueIdentity,
+    origins: EvidenceOrigins
 )
 
 final case class EvidenceRecord(
     rows: AxisRecord,
     columns: AxisRecord,
     source: EvidenceSource,
-    valueIdentity: ValueIdentity
+    valueIdentity: ValueIdentity,
+    origins: EvidenceOrigins = EvidenceOrigins.Unknown
 )
 
 /** Identified sample-by-neural evidence. Storage representation remains a
@@ -68,7 +79,8 @@ final class Observations[S <: SemanticSpace, N <: SemanticSpace] private (
     private val sampleRecord: AxisRecord,
     private val neuralRecord: AxisRecord,
     val patterns: Table[S, N],
-    val source: EvidenceSource
+    val source: EvidenceSource,
+    val origins: EvidenceOrigins
 ):
   val identity: EvidenceIdentity =
     EvidenceIdentity(
@@ -77,7 +89,8 @@ final class Observations[S <: SemanticSpace, N <: SemanticSpace] private (
       source.sourceId,
       source.nodes,
       source.roots,
-      patterns.valueIdentity
+      patterns.valueIdentity,
+      origins
     )
 
   def rows: Int =
@@ -90,9 +103,10 @@ final class Observations[S <: SemanticSpace, N <: SemanticSpace] private (
     patterns.descriptor.representation
 
   def toRecord: EvidenceRecord =
-    EvidenceRecord(sampleRecord, neuralRecord, source, patterns.valueIdentity)
+    EvidenceRecord(sampleRecord, neuralRecord, source, patterns.valueIdentity, origins)
 
   def reindex[K, R <: Reindexing](by: ReindexingLeg[S, K, R]): Observations[by.Child, N] =
+    val reindexed = patterns.andThen(by.leg)
     new Observations(
       by.child.evidence,
       neural,
@@ -100,8 +114,9 @@ final class Observations[S <: SemanticSpace, N <: SemanticSpace] private (
       neuralAxis,
       by.child.toRecord,
       neuralRecord,
-      patterns.andThen(by.leg),
-      source
+      reindexed,
+      source,
+      origins.reindexOutput(by.child.descriptor, reindexed.valueIdentity)
     )
 
 object Observations:
@@ -110,27 +125,30 @@ object Observations:
       neural: AxisRef[NK],
       values: DMat,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
-    decode(samples, neural, samples.toRecord, neural.toRecord, values, valueIdentity, source)
+    decode(samples, neural, samples.toRecord, neural.toRecord, values, valueIdentity, source, origins)
 
   def fromOperator[SK, NK](
       samples: AxisRef[SK],
       neural: AxisRef[NK],
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
-    decode(samples, neural, samples.toRecord, neural.toRecord, operator, valueIdentity, source)
+    decode(samples, neural, samples.toRecord, neural.toRecord, operator, valueIdentity, source, origins)
 
   def fromSparse[SK, NK](
       samples: AxisRef[SK],
       neural: AxisRef[NK],
       values: CSR,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
-    decode(samples, neural, samples.toRecord, neural.toRecord, values, valueIdentity, source)
+    decode(samples, neural, samples.toRecord, neural.toRecord, values, valueIdentity, source, origins)
 
   /** Decode external storage only after both complete axis records agree with
     * the expected nominal witnesses. Constructing the semantic operator does
@@ -143,9 +161,12 @@ object Observations:
       declaredNeural: AxisRecord,
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
-    EvidenceTableBinding
+    if !origins.matches(source, valueIdentity, samples.descriptor) then
+      Left(EvidenceError.InvalidSource("evidence origins do not match the observation source, values, or output axis"))
+    else EvidenceTableBinding
       .decode(samples, neural, declaredSamples, declaredNeural, operator, valueIdentity, source)
       .map: table =>
         new Observations(
@@ -156,8 +177,17 @@ object Observations:
           samples.toRecord,
           neural.toRecord,
           table,
-          source
+          source,
+          origins
         )
+
+  def decode[SK, NK](
+      samples: AxisRef[SK],
+      neural: AxisRef[NK],
+      record: EvidenceRecord,
+      operator: DoubleLinearOperator
+  ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
+    decode(samples, neural, record.rows, record.columns, operator, record.valueIdentity, record.source, record.origins)
 
 /** An identified, genuinely multivariate target table. Its target-feature
   * axis is nominal and fully described rather than hidden inside a vector
@@ -171,7 +201,8 @@ final class MultiResponse[S <: SemanticSpace, F <: SemanticSpace] private (
     private val sampleRecord: AxisRecord,
     private val featureRecord: AxisRecord,
     val targets: Table[S, F],
-    val source: EvidenceSource
+    val source: EvidenceSource,
+    val origins: EvidenceOrigins
 ):
   val identity: EvidenceIdentity =
     EvidenceIdentity(
@@ -180,7 +211,8 @@ final class MultiResponse[S <: SemanticSpace, F <: SemanticSpace] private (
       source.sourceId,
       source.nodes,
       source.roots,
-      targets.valueIdentity
+      targets.valueIdentity,
+      origins
     )
 
   def rows: Int =
@@ -193,9 +225,10 @@ final class MultiResponse[S <: SemanticSpace, F <: SemanticSpace] private (
     targets.descriptor.representation
 
   def toRecord: EvidenceRecord =
-    EvidenceRecord(sampleRecord, featureRecord, source, targets.valueIdentity)
+    EvidenceRecord(sampleRecord, featureRecord, source, targets.valueIdentity, origins)
 
   def reindex[K, R <: Reindexing](by: ReindexingLeg[S, K, R]): MultiResponse[by.Child, F] =
+    val reindexed = targets.andThen(by.leg)
     new MultiResponse(
       by.child.evidence,
       features,
@@ -203,8 +236,9 @@ final class MultiResponse[S <: SemanticSpace, F <: SemanticSpace] private (
       featureAxis,
       by.child.toRecord,
       featureRecord,
-      targets.andThen(by.leg),
-      source
+      reindexed,
+      source,
+      origins.reindexOutput(by.child.descriptor, reindexed.valueIdentity)
     )
 
 object MultiResponse:
@@ -213,27 +247,30 @@ object MultiResponse:
       features: AxisRef[FK],
       values: DMat,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
-    decode(samples, features, samples.toRecord, features.toRecord, values, valueIdentity, source)
+    decode(samples, features, samples.toRecord, features.toRecord, values, valueIdentity, source, origins)
 
   def fromOperator[SK, FK](
       samples: AxisRef[SK],
       features: AxisRef[FK],
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
-    decode(samples, features, samples.toRecord, features.toRecord, operator, valueIdentity, source)
+    decode(samples, features, samples.toRecord, features.toRecord, operator, valueIdentity, source, origins)
 
   def fromSparse[SK, FK](
       samples: AxisRef[SK],
       features: AxisRef[FK],
       values: CSR,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
-    decode(samples, features, samples.toRecord, features.toRecord, values, valueIdentity, source)
+    decode(samples, features, samples.toRecord, features.toRecord, values, valueIdentity, source, origins)
 
   def decode[SK, FK](
       samples: AxisRef[SK],
@@ -242,9 +279,12 @@ object MultiResponse:
       declaredFeatures: AxisRecord,
       operator: DoubleLinearOperator,
       valueIdentity: ValueIdentity,
-      source: EvidenceSource
+      source: EvidenceSource,
+      origins: EvidenceOrigins = EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor)
   ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
-    EvidenceTableBinding
+    if !origins.matches(source, valueIdentity, samples.descriptor) then
+      Left(EvidenceError.InvalidSource("evidence origins do not match the response source, values, or output axis"))
+    else EvidenceTableBinding
       .decode(samples, features, declaredSamples, declaredFeatures, operator, valueIdentity, source)
       .map: table =>
         new MultiResponse(
@@ -255,8 +295,17 @@ object MultiResponse:
           samples.toRecord,
           features.toRecord,
           table,
-          source
+          source,
+          origins
         )
+
+  def decode[SK, FK](
+      samples: AxisRef[SK],
+      features: AxisRef[FK],
+      record: EvidenceRecord,
+      operator: DoubleLinearOperator
+  ): Either[EvidenceError, MultiResponse[samples.Id, features.Id]] =
+    decode(samples, features, record.rows, record.columns, operator, record.valueIdentity, record.source, record.origins)
 
 final class Supervised[S <: SemanticSpace, N <: SemanticSpace, Y] private (
     val observations: Observations[S, N],

@@ -10,7 +10,7 @@ import multivar.core.{
 }
 import gale.linalg.{DoubleLinearOperator, DVec, MutableDVec}
 import scala.util.control.NonFatal
-import scalafim.fmri.mvpa.{AxisDigest, AxisRef, EvidenceError}
+import scalafim.fmri.mvpa.{AxisDigest, AxisRef, EvidenceError, EvidenceOrigins}
 import scalafim.fmri.mvpa.relation.{EffectEstimability, Relation, RelationAccess, RelationOrigins, RelationSet, RelationSource}
 
 /** The declared access mode belongs to the response provider, not to
@@ -37,7 +37,8 @@ final case class ReadoutRelationOrigins(
     readout: String,
     preparation: String,
     noiseRevision: String,
-    access: ReadoutRelationAccess
+    access: ReadoutRelationAccess,
+    support: EvidenceOrigins = EvidenceOrigins.Unknown
 ):
   require(acquisition.nonEmpty && responseRevision.nonEmpty && readout.nonEmpty && preparation.nonEmpty && noiseRevision.nonEmpty,
     "relation revisions must be non-empty")
@@ -51,8 +52,9 @@ final case class ReadoutRelationOrigins(
       writer.string(noiseRevision)
       writer.string(effectAxis.descriptor.coordinateSignature.value)
       writer.string(neuralAxis.descriptor.coordinateSignature.value)
+      writer.string(support.identityDigest)
   def relationOrigins: RelationOrigins =
-    RelationOrigins(RelationSource(acquisition, responseRevision, readout, preparation, noiseRevision), access.relationAccess)
+    RelationOrigins(RelationSource(acquisition, responseRevision, readout, preparation, noiseRevision), access.relationAccess, support)
 
 final class RunReadoutRelation private (
     private[fit] val run: RunTrialReadout,

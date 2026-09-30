@@ -1,12 +1,21 @@
 package scalafim.fmri.mvpa.fit
 
 import gale.linalg.{DMat, Matrix}
-import multivar.core.SpaceRole
+import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import scalafim.dataset.RunId
 import scalafim.fmri.fit.{LeastSquaresSeparate, LssTrialDesign, ResponseBlock}
-import scalafim.fmri.mvpa.{AxisRef, ReindexingLeg}
+import scalafim.fmri.mvpa.{
+  AcquisitionCoordinates,
+  AxisRef,
+  EvidenceOrigins,
+  EvidenceSource,
+  PreparationSupport,
+  ReindexingLeg,
+  ValueSupport
+}
 import resample4s.core.{IndexSpace, Selection}
 import scalafim.fmri.mvpa.relation.RelationAccess
+import scalafim.response.{Provenance, ProvenanceId, SourceId}
 
 class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
   private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)
@@ -32,6 +41,43 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     val origins = ReadoutRelationOrigins("acquisition:r1", "response:r1", "readout:lss", "preparation:fixed", "noise:none", ReadoutRelationAccess.OneShot)
     val result = IdentifiedReadoutRelations.withRuns(partitions, wrongEffects, neural, Vector(RunReadoutRelation.oneShot(run, origins, resource)))(_ => Right(()))
     assert(result.isLeft)
+
+  test("explicit temporal support is retained without claiming it from readout receipts"):
+    val partitions = axis("runs", Vector("run-1"))
+    val effects = axis("effects", Vector("a", "b"))
+    val neural = axis("voxels", Vector("0", "1"))
+    val temporal = axis("scan", Vector("t0", "t1", "t2", "t3"))
+    val id = SourceId.unsafe("fixture-bold")
+    val source = right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe("fixture-bold-root"), id)))
+    val values = ValueIdentity.source(ValueId.unsafe("fixture-bold-v1"))
+    val support = right(EvidenceOrigins.make(
+      source,
+      values,
+      AcquisitionCoordinates.OriginalTemporalAxis(temporal.descriptor),
+      ValueSupport.Bounded(temporal.descriptor, values, Vector(0, 1, 2, 3)),
+      PreparationSupport.JointlyLearned(ValueSupport.Unknown, ValueSupport.Unknown),
+      effects.descriptor
+    ))
+    val supplied = ReadoutRelationOrigins(
+      "acquisition:r1", "response:r1", "readout:lss", "preparation:joint", "noise:none", ReadoutRelationAccess.OneShot, support
+    )
+    var baseline = 0.0
+    right(IdentifiedReadoutRelations.withRuns(partitions, effects, neural, Vector(RunReadoutRelation.oneShot(readoutRun("run-1"), supplied, resource))): relations =>
+      assertEquals(relations.relations.head.origins.support, support)
+      baseline = right(relations.relations.head.estimate(DMat.eye(2)))(0, 0)
+      Right(())
+    )
+    val perturbed = right(RunTrialReadout.make(
+      RunId("run-1"),
+      ResponseBlock.unsafe(DMat.dense(4, 2, Vector(101.0, 10.0, 3.0, 30.0, 5.0, 50.0, 7.0, 70.0))),
+      readoutRun("run-1").readout
+    ))
+    var changed = 0.0
+    right(IdentifiedReadoutRelations.withRuns(partitions, effects, neural, Vector(RunReadoutRelation.oneShot(perturbed, supplied, resource))): relations =>
+      changed = right(relations.relations.head.estimate(DMat.eye(2)))(0, 0)
+      Right(())
+    )
+    assert(math.abs(changed - baseline) > 1e-12)
 
   private def axis(name: String, keys: Vector[String]): AxisRef[String] =
     right(AxisRef.fromStableKeys(name, SpaceRole.Observed, keys, "fixture", "unit", "raw", Vector("fixture:v1")))

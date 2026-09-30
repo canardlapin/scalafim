@@ -57,6 +57,7 @@ object ScientificInputs:
         identity.provenanceRoots.foreach(root => writer.string(root.value))
         writer.intLE(identity.provenanceNodes.length)
         identity.provenanceNodes.foreach(writeProvenanceNode(writer, _))
+        identity.origins.writeFramed(writer)
 
     def sourceCapabilities(source: Observations[S, N]): CapabilitySet =
       // Observations may wrap a one-shot matrix-free operator. Representation
@@ -344,9 +345,9 @@ object ScientificReceipt:
       specification.estimandParameters
     )
 
-/** Evidence identity has three states: declared by the provider, individual
-  * read blocks verified, and complete content verified. A claimed digest alone
-  * is never promoted to complete verification.
+/** Provider-reported evidence identity. These are provider assertions, not
+  * locally validated verification proofs; a claimed digest is never promoted
+  * beyond the assurance reported by the producing provider.
   */
 final case class EvidenceReceipt(
     declaredRevision: String,
@@ -540,9 +541,11 @@ final case class FrameResult[Id, Rendition, Value[_ <: SemanticSpace], Unsupport
 final class AnalysisResult[A] private[analysis] (
     val plan: PlanId,
     val value: A,
-    val receipt: ExecutionReceipt
+    val receipt: ExecutionReceipt,
+    val exposure: EvidenceExposure
 ):
   require(plan == receipt.scientific.plan, "analysis result and scientific receipt must name the same plan")
+  require(exposure.reference.plan == plan, "analysis result exposure must name the same plan")
 
 object AnalysisResult:
   def complete[Source, Design, Frame, E <: Estimand[Source, Design, Frame], B, P](
@@ -551,7 +554,34 @@ object AnalysisResult:
       receipt: ExecutionReceipt
   ): AnalysisResult[scientific.specification.estimand.Result] =
     require(receipt.scientific.plan == scientific.specification.plan, "result receipt must belong to the bound scientific plan")
-    new AnalysisResult(scientific.specification.plan, value, receipt)
+    completeWithExposure(scientific, value, receipt, defaultExposure(scientific, receipt))
+
+  /** Carries the exact passed exposure snapshot into the result boundary. */
+  def completeWithExposure[Source, Design, Frame, E <: Estimand[Source, Design, Frame], B, P](
+      scientific: BoundScientificPlan[Source, Design, Frame, E, B, P],
+      value: scientific.specification.estimand.Result,
+      receipt: ExecutionReceipt,
+      exposure: EvidenceExposure
+  ): AnalysisResult[scientific.specification.estimand.Result] =
+    require(receipt.scientific.plan == scientific.specification.plan, "result receipt must belong to the bound scientific plan")
+    require(exposure.reference.plan == scientific.specification.plan, "result exposure must belong to the bound scientific plan")
+    new AnalysisResult(scientific.specification.plan, value, receipt, exposure)
+
+  private def defaultExposure[Source, Design, Frame, E <: Estimand[Source, Design, Frame], B, P](
+      scientific: BoundScientificPlan[Source, Design, Frame, E, B, P],
+      receipt: ExecutionReceipt
+  ): EvidenceExposure =
+    val result = ResultIdentity(AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.mvpa.analysis-result.v1")
+      writer.string(scientific.specification.plan.text)
+      writer.string(receipt.evidence.declaredRevision)
+    )
+    EvidenceExposure.external(ExposureReference(
+      scientific.specification.plan,
+      scientific.specification.sourceIdentity,
+      scientific.specification.sourceIdentity,
+      result
+    ))
 
 opaque type ReductionWeight = Double
 

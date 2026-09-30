@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.relation
 
 import multivar.core.{SemanticSpace, SpaceEvidence, Table}
 import resample4s.core.Reindexing
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, EvidenceError, ReindexingLeg}
+import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, EvidenceError, EvidenceOrigins, ReindexingLeg}
 
 final case class RelationSource(
     acquisitionRevision: String,
@@ -21,7 +21,11 @@ enum RelationAccess:
   case OneShot
   case OwnedReplay(readerOwner: String)
 
-final case class RelationOrigins(source: RelationSource, access: RelationAccess):
+final case class RelationOrigins(
+    source: RelationSource,
+    access: RelationAccess,
+    support: EvidenceOrigins = EvidenceOrigins.Unknown
+):
   access match
     case RelationAccess.OneShot => ()
     case RelationAccess.OwnedReplay(owner) => require(owner.nonEmpty, "replay reader owner must be non-empty")
@@ -71,7 +75,9 @@ final class Relation[E <: SemanticSpace, N <: SemanticSpace] private[relation] (
   require(estimability.length == effectAxis.size, "estimability must match effect axis")
 
   def restrict[K, R <: Reindexing](by: ReindexingLeg[E, K, R]): Relation[by.Child, N] =
-    new Relation(by.child.evidence, neural, by.child.descriptor, neuralAxis, estimate.andThen(by.leg), origins,
+    new Relation(by.child.evidence, neural, by.child.descriptor, neuralAxis, estimate.andThen(by.leg), origins.copy(
+      support = origins.support.reindexOutput(by.child.descriptor)
+    ),
       by.ordinals.toVector.map(estimability))
 
   def bind[A](source: RelationSource, value: A)(using evidence: Estimability[A]): Either[EvidenceError, PointRelationBinding[E, N, A]] =
@@ -100,7 +106,9 @@ object Relation:
       origins: RelationOrigins,
       estimability: Vector[EffectEstimability]
   ): Either[EvidenceError, Relation[effects.Id, neural.Id]] =
-    if estimate.rows != effects.size then Left(EvidenceError.ShapeMismatch("relation effects", effects.size, estimate.rows))
+    if !origins.support.outputAssociation.forall(_ == effects.descriptor) then
+      Left(EvidenceError.AxisMismatch("relation support output", effects.descriptor.stableKey, origins.support.outputAssociation.get.stableKey))
+    else if estimate.rows != effects.size then Left(EvidenceError.ShapeMismatch("relation effects", effects.size, estimate.rows))
     else if estimate.cols != neural.size then Left(EvidenceError.ShapeMismatch("relation neural", neural.size, estimate.cols))
     else if estimability.length != effects.size then Left(EvidenceError.ShapeMismatch("relation estimability", effects.size, estimability.length))
     else Right(new Relation(effects.evidence, neural.evidence, effects.descriptor, neural.descriptor, estimate, origins, estimability))
