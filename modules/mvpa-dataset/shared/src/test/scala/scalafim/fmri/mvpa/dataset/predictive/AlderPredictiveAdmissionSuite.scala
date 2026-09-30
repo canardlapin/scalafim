@@ -180,7 +180,7 @@ def invalid[U <: Use.Fit](data: NonEmptyData[U, Array[Double]]) =
     val admitted = right(AlderPredictiveAdmission.materialized(axis.descriptor,DMat.eye(2),DMat.eye(2),Vector("a","b"),mapping,right(MaterializationBudget(8L))))
     assertEquals(admitted.receipt.copiedCells,8L)
 
-  test("operator-table conversion refuses without invoking poison evidence"):
+  test("native-table budget refusal precedes poison evidence reads"):
     import gale.linalg.{DoubleLinearOperator,DVec,MutableDVec}
     import multivar.core.{ValueIdentity,ValueId}
     import scalafim.fmri.mvpa.{EvidenceSource,Observations,MultiResponse}
@@ -198,5 +198,9 @@ def invalid[U <: Use.Fit](data: NonEmptyData[U, Array[Double]]) =
     val source = right(EvidenceSource(sourceId,Provenance.source(ProvenanceId.unsafe("poison-root"),sourceId)))
     val observations = right(Observations.fromOperator(samples,features,poison,ValueIdentity.source(ValueId.unsafe("poison-values")),source))
     val targets = right(MultiResponse.fromDense(samples,features,DMat.eye(2),ValueIdentity.source(ValueId.unsafe("target-values")),source))
-    assertEquals(AlderPredictiveAdmission.directTablesUnavailable(observations,targets),Left(AlderPredictiveAdmissionError.OperatorTableMaterializationUnavailable))
+    val mapping = right(NativeAxisMapping.fromAxis(samples,Vector(10L,20L),DataFingerprint.external("poison-declaration")))
+    val policy = right(NativeReadPolicy(2,right(MaterializationBudget(1L))))
+    AlderPredictiveAdmission.nativeTables(observations,targets,Vector("a","b"),DataFingerprint.external("poison-metadata"),mapping,policy) match
+      case Left(AlderPredictiveAdmissionError.MaterializationOverBudget(_,_,1L)) => ()
+      case other => fail(s"expected native budget refusal, got $other")
     assertEquals(reads,0)
