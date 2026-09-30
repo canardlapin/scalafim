@@ -397,3 +397,17 @@ clean `scalafimCompileAll` 0 warnings (`bootstrap-harness-conf-compileall2`); `g
 (`bootstrap-harness-conf-jvm`); `groupJS/test` Total 158, Failed 0, Passed 154, Skipped 4 (`bootstrap-harness-conf-js`).
 Projection only (harness-seed calibration, no output): `CONFIRMATION_PROJECTION,core_hours=3.075,ceiling=15.000,cells=12,studies=20000,draws=999`
 (`bootstrap-harness-conf-projection`).
+
+### Confirmation runner: review round N1 (paired power discordance)
+
+The independent review of `43e063cf` found no behavioural test of the power pairing in `ConfirmationRunner.powerEvidence`
+(planted `comparator((r._1 + 1) % 3)` passed every `ConfirmationRunnerSuite` test). Added a test that runs a tiny harness-seed power cell
+with R = 12 (raised from the suite's 3 so that a mis-pairing changes n10/n01), re-parses the durable `.power.jsonl` records by plain string search
+(independent of the runner's regex and aggregators), counts n10 (candidate Reject, comparator Retain) and n01 (candidate not Reject, comparator not Retain;
+section 6 accounting) on the same study index for each candidate, and asserts they equal `PowerEvidence.candidateOnly` / `comparatorOnly`.
+
+Mutation result: with `comparator((r._1 + 1) % 3)` planted, `ConfirmationRunnerSuite` "paired power discordance ..." fails (ComparisonFailException)
+in addition to `ManifestFileSuite` (2 failed of 12; log `bootstrap-harness-conf2-mutant`). The source was restored and verified by SHA-256.
+manifest-v2 regenerated (34 sources, status pending, sha256 `98929d09...`). Gates: clean `scalafimCompileAll` 0 warnings
+(`bootstrap-harness-conf2-compileall`); `groupJVM/test` Total 185, Failed 0, Passed 176, Skipped 9 (`bootstrap-harness-conf2-jvm`);
+`groupJS/test` Total 158, Failed 0, Passed 154, Skipped 4 (`bootstrap-harness-conf2-js`). These supersede the counts above (JVM 184 to 185).

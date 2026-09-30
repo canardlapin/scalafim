@@ -156,6 +156,34 @@ class ConfirmationRunnerSuite extends munit.FunSuite:
       }
     }
 
+  test("paired power discordance equals an independent re-parse of the durable per-study records (same study index)"):
+    // R = 12 (not the suite's 3) so that a mis-pairing of studies changes n10/n01; harness seeds only.
+    val out = Files.createTempDirectory("confirmation-runner-power")
+    val cfg = tinyConfig(out).copy(studies = 12)
+    assert(PilotRunner.run(cfg, _ => ()).isRight)
+    val file = out.resolve("cells").resolve(s"${tiny.head.id.value}.power.jsonl")
+    // Independent parse: plain string search per line, no shared regex or aggregation code.
+    def field(line: String, key: String): Option[String] =
+      val tag = "\"" + key + "\":\""
+      val i = line.indexOf(tag)
+      if i < 0 then None else Some(line.substring(i + tag.length, line.indexOf('"', i + tag.length)))
+    def study(line: String): Int =
+      val i = line.indexOf("\"study\":") + 8
+      line.substring(i, line.indexOf(',', i)).toInt
+    val rows = lines(file).tail.filter(l => field(l, "verdict").isDefined)
+    val power = ConfirmationRunner.powerEvidence(cfg)
+    ConfirmationRunner.Candidates.foreach { s =>
+      val cand = rows.filter(l => field(l, "scheme").contains(s.code)).map(l => study(l) -> field(l, "verdict").get).toMap
+      val comp = rows.filter(l => field(l, "scheme").contains("native-pm-mkh")).map(l => study(l) -> field(l, "verdict").get).toMap
+      assertEquals(cand.keySet, (0 until 12).toSet)
+      assertEquals(comp.keySet, cand.keySet)
+      // Section 6: a candidate failure (or Unresolved bound) is a non-rejection; a comparator failure is a rejection.
+      val n10 = cand.keys.count(i => cand(i) == "Reject" && comp(i) == "Retain")
+      val n01 = cand.keys.count(i => cand(i) != "Reject" && comp(i) != "Retain")
+      val e = power(s).head
+      assertEquals((e.studies, e.candidateOnly, e.comparatorOnly), (12, n10, n01), s.code)
+    }
+
   test("resume reuses complete cells and reproduces outcomes.json; a different stamp is refused"):
     val out = Files.createTempDirectory("confirmation-runner-resume")
     val cfg = tinyConfig(out)
