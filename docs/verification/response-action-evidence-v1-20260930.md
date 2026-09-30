@@ -50,11 +50,18 @@ Date: 2026-09-30. Mote: `bd-01M31KPY7EK45HKWB9TJS1VFWJ`. Base: integration commi
    text whose tokens are prefixed by their UTF-8 byte length; numbers are encoded by IEEE-754 bits.
    Text with unpaired UTF-16 surrogates is refused at construction (`ConditionLevelId`,
    `ProviderDigest` schema, binding observation and columns, decoded claims), so encoding is lossless for
-   every admissible binding. The decoder bounds every declared length and count by the remaining input
-   before allocating or iterating, and accepts only the canonical bytes of the claim it returns.
-   Golden digests recorded on the JVM are reproduced exactly on Scala.js (codec bytes, including a
-   non-ASCII golden, feature identity, and the six binder digests of a real one-run OLS fit and of a
-   compiled two-run design).
+   every admissible binding. **What is bounded in decoding:** each token's declared byte length is
+   checked against the bytes remaining before it is read; the row count must satisfy
+   `rows × 4 ≤ remaining bytes` and each column-list count `n × 2 ≤ remaining bytes` before any
+   iteration; a length prefix longer than 9 digits is refused. Validation of the decoded claim is
+   linear in the input: `ReadoutAxis` is checked in one hash-map pass, and the selected-column subset
+   check uses sets. Total decoding work is therefore O(input bytes) (expected, with hashing); a
+   decoded claim is accepted only if it re-encodes to exactly the input bytes. There is no absolute
+   size cap: an input of n bytes may still produce O(n) objects.
+   Golden digests recorded on the JVM are reproduced exactly on Scala.js: codec bytes (including a
+   non-ASCII golden), feature identity, all six binder digests of a real one-run OLS fit, and four of
+   the six (preparation, noise, run combination, features) for a compiled two-run design. Design and
+   readout identity of that design differ between platforms upstream (see the finding below).
 
 ## API (new files only; no existing file edited)
 
@@ -78,6 +85,11 @@ Model-mismatch rule (implemented and documented in code): a declared white law a
 (`LearnedResponseSubspace`) processing as unavailable rather than contradictory (OD-6). `Unrecorded`
 never mismatches; it yields `NoiseIncomplete`/`CombinationIncomplete`. The combination rule is analogous.
 
+**Spec drift (tightening):** the approved design lists `StatusSummary(unit, plane, features, counts,
+conditioning)` (5 fields). v1 has 7: `selected` and `samples` were added after review, with the invariant
+that counts are nonnegative and sum to a positive `samples`. This only removes representable states and
+adds the `StatusSelected` refusal; it admits nothing new.
+
 **Owner question (not changed here): the rule is asymmetric.** `FixedSigmaT` declared against realized
 `EstimatedAr` gives `Unavailable(EstimatedWhitening)`, while `White` declared against realized
 `EstimatedAr` gives `ModelMismatch`. The implementation reads "white" as "no temporal processing
@@ -96,12 +108,27 @@ Round 2 (review repairs) gates:
 | `rae-r2-final-js.log` | `estimatesJS/test fitEstimatesJS/test` | 0 | 48/48, 44/44 | `f3e536e80ad8ff4c4d5e273a32fa2793e78664286b38cf6422d5339c39c67703` |
 | `rae-r2-final-compileall.log` | `scalafimCompileAll` | 0 | 0 warnings | `2430d0042e9d42ed78e3925359689c7cb3a433a9d87f05457cc1ff7a3fdc9772` |
 
-Round 1 gates (commit `4907ba41`): `rae-final-jvm.log` 43/43, 50/50; `rae-final-js.log` 43/43, 42/42;
+Round 3 (linear decode validation) gates. The CompileAll step first ran `estimatesJVM/clean
+fitEstimatesJVM/clean estimatesJS/clean fitEstimatesJS/clean`, so all four targets were recompiled
+from scratch (12, 12, 5 and 5 sources) with 0 warnings:
+
+| Step | Tasks | Exit | Result | Log SHA-256 |
+|---|---|---|---|---|
+| `rae-r3-final-jvm.log` | `estimatesJVM/test fitEstimatesJVM/test` | 0 | 50/50, 52/52 | `13e80cc4ef6ed39f4192bb33ff3d1d82cc8d45bc419236811c910503aab9d9a4` |
+| `rae-r3-final-js.log` | `estimatesJS/test fitEstimatesJS/test` | 0 | 50/50, 44/44 | `f781bce99e905744d19ed9b52aacc49f92e59688bfad6fda9e013ddfa910ceb7` |
+| `rae-r3-final-compileall.log` | clean (4 targets) + `scalafimCompileAll` | 0 | 0 warnings | `940fee5e5ae16cecbb3f3fae2e8dcfd7d5baaf26dfa8004373b302900c02e4b8` |
+
+Decode timing (test-built inputs, asserted under 1 s each): 8000 conditions × 1 bin (79,761 bytes)
+29.9 ms JVM / 44.8 ms JS; 20000 columns (578,450 bytes) 48.0 ms JVM / 84.9 ms JS. The reviewer measured
+12.1 s and 5.5 s on JS before the fix. The linear `ReadoutAxis.defect` is checked against the original
+algorithm (kept test-local) on 13 adversarial and 20,000 seeded random axes, which reach every defect kind.
+
+Round 2 table above is superseded by round 3. Round 1 gates (commit `4907ba41`): `rae-final-jvm.log` 43/43, 50/50; `rae-final-js.log` 43/43, 42/42;
 `rae-final-compileall.log` exit 0.
 
-New tests (identical on both platforms): `ResponseActionEvidenceSuite` 17, `ResponseBindingCodecSuite` 8,
+New tests (identical on both platforms, round 3): `ResponseActionEvidenceSuite` 18, `ResponseBindingCodecSuite` 9,
 `responseaction.external.ResponseActionAccessSuite` 6, `ResponseSourceBinderSuite` 11,
-`ResponseStatusScannerSuite` 9 (51 per platform). All pre-existing estimates and fit-estimates suites pass
+`ResponseStatusScannerSuite` 9 (53 per platform). All pre-existing estimates and fit-estimates suites pass
 (JVM has 8 extra JVM-only readback tests).
 
 Coverage of the specified v1 acceptance list: (1) mismatch table with one row per `SourceField`,
@@ -161,6 +188,14 @@ JVM and Scala.js for designs compiled by `FmriModelBuilder`. This cannot be repa
 because the column IDs are the identity carried into `EstimandBinding`. The test pins design and
 readout per platform, and a tripwire assertion (`JVM != JS`) fails once upstream converges. The design
 module is not changed here; the native fingerprint and column-ID text need their own repair ticket.
+
+Root cause (traced by the delta reviewer): `modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/HrfDescriptor.scala:235`
+`canonicalId` interpolates `Double` values and case-class `toString`. It flows through
+`BasisElement.infer` (`Basis.scala:145-146`) and `DesignSchema.scala:158` / `:295` into the structural
+`ColumnId`. Observed: JVM `span=24.0 … SpmgParams(5.0,15.0,…)` versus Scala.js `span=24 …
+SpmgParams(5,15,…)`. Latent upstream issues in the same area: `Basis.scala:82` (`FirBin.stableLabel`)
+interpolates Doubles, and `Basis.scala:82-89` uses a literal `%02d` without the `f` interpolator, which
+yields IDs such as `basis-1%2502d`.
 
 ## Not claimed
 

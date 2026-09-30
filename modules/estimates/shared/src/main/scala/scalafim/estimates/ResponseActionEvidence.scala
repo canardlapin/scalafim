@@ -85,17 +85,46 @@ object ReadoutAxis:
   def parse(rows: Vector[ReadoutRowId]): Either[ReadoutDefect, ReadoutAxis] =
     defect(rows).toLeft(new ReadoutAxis(rows))
 
+  /** One linear pass with hash maps. Defect order and choice: the first
+    * repeated row in row order; then, in first-appearance order of
+    * conditions, the first non-contiguous condition, the first with bins other
+    * than 0..b-1 in order, and the first whose block size differs from the
+    * first condition's.
+    */
   private[estimates] def defect(rows: Vector[ReadoutRowId]): Option[ReadoutDefect] =
-    val order = rows.map(_.condition).distinct
-    def block(condition: ConditionLevelId): Vector[ReadoutRowId] = rows.filter(_.condition == condition)
-    def contiguous(condition: ConditionLevelId): Boolean =
-      rows.lastIndexWhere(_.condition == condition) - rows.indexWhere(_.condition == condition) + 1 == block(condition).size
     if rows.isEmpty then Some(ReadoutDefect.EmptyAxis)
-    else rows.diff(rows.distinct).headOption.map(ReadoutDefect.DuplicateRow.apply)
-      .orElse(order.find(c => !contiguous(c)).map(ReadoutDefect.NotConditionMajor.apply))
-      .orElse(order.find(c => block(c).map(_.bin) != block(c).indices.toVector).map(ReadoutDefect.BinsNotSequential.apply))
-      .orElse(order.find(c => block(c).size != block(order.head).size)
-        .map(c => ReadoutDefect.UnequalBins(c, block(order.head).size, block(c).size)))
+    else
+      val seen = scala.collection.mutable.HashSet.empty[ReadoutRowId]
+      val index = scala.collection.mutable.HashMap.empty[ConditionLevelId, Int]
+      val order = Vector.newBuilder[ConditionLevelId]
+      val first = scala.collection.mutable.ArrayBuffer.empty[Int]
+      val last = scala.collection.mutable.ArrayBuffer.empty[Int]
+      val size = scala.collection.mutable.ArrayBuffer.empty[Int]
+      val sequential = scala.collection.mutable.ArrayBuffer.empty[Boolean]
+      var duplicate: Option[ReadoutRowId] = None
+      var r = 0
+      while r < rows.length do
+        val row = rows(r)
+        if duplicate.isEmpty && !seen.add(row) then duplicate = Some(row)
+        val c = index.getOrElseUpdate(row.condition, {
+          order += row.condition
+          first += r; last += r; size += 0; sequential += true
+          first.length - 1
+        })
+        last(c) = r
+        if row.bin != size(c) then sequential(c) = false
+        size(c) += 1
+        r += 1
+      val conditions = order.result()
+      val n = conditions.length
+      def firstWhere(p: Int => Boolean): Option[Int] =
+        var c = 0
+        while c < n && !p(c) do c += 1
+        Option.when(c < n)(c)
+      duplicate.map(ReadoutDefect.DuplicateRow.apply)
+        .orElse(firstWhere(c => last(c) - first(c) + 1 != size(c)).map(c => ReadoutDefect.NotConditionMajor(conditions(c))))
+        .orElse(firstWhere(c => !sequential(c)).map(c => ReadoutDefect.BinsNotSequential(conditions(c))))
+        .orElse(firstWhere(c => size(c) != size(0)).map(c => ReadoutDefect.UnequalBins(conditions(c), size(0), size(c))))
 
 /** A condition-level action; it moves whole bin blocks by construction. */
 enum ConditionAction:
@@ -187,7 +216,7 @@ final class ResponseSourceBinding private[scalafim] (
     val realizedCombination: RealizedCombination
 ):
   require(Invariants.unique(columns), "binding columns must be unique and nonempty")
-  require(Invariants.unique(selected) && selected.forall(columns.contains), "selected columns must be a unique nonempty subset")
+  require(Invariants.unique(selected) && selected.toSet.subsetOf(columns.toSet), "selected columns must be a unique nonempty subset")
   require(realizedNoise.arOrder.forall(_ >= 1), "AR order must be positive")
   require(WellFormed.text(observation.value) && columns.forall(c => WellFormed.text(c.value)),
     "binding text must be well-formed UTF-16 so that its canonical encoding is lossless")

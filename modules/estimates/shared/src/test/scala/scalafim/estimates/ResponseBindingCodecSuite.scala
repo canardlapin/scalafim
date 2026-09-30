@@ -107,6 +107,26 @@ class ResponseBindingCodecSuite extends munit.FunSuite:
     assertEquals(decode("1234567890:x"), Left(BindingCodecError.Malformed("invalid token length")))
     assertEquals(decode("12345"), Left(BindingCodecError.Malformed("missing token")))
 
+  test("decode validation is linear on large well-formed inputs"):
+    def timed[A](work: => A): (A, Double) =
+      val start = System.nanoTime()
+      val value = work
+      (value, (System.nanoTime() - start) / 1e6)
+    val conditions = Vector.tabulate(8000)(i => s"c$i")
+    val wideAxis = binding.copy(readoutAxis = ResponseActionFixture.axis(conditions, 1))
+    val axisBytes = ResponseBindingCodec.encode(wideAxis)
+    val (axisDecoded, axisMillis) = timed(ResponseBindingCodec.decode(axisBytes))
+    assertEquals(axisDecoded, Right(DecodedBindingClaim.of(wideAxis)))
+    val manyColumns = Vector.tabulate(20000)(i => ColumnId(s"column_$i"))
+    val wideColumns = binding.copy(columns = manyColumns, selected = manyColumns)
+    val columnBytes = ResponseBindingCodec.encode(wideColumns)
+    val (columnsDecoded, columnMillis) = timed(ResponseBindingCodec.decode(columnBytes))
+    assertEquals(columnsDecoded, Right(DecodedBindingClaim.of(wideColumns)))
+    println(f"decode timing: 8000 conditions (${axisBytes.length} bytes) $axisMillis%.1f ms; " +
+      f"20000 columns (${columnBytes.length} bytes) $columnMillis%.1f ms")
+    assert(axisMillis < 1000.0, s"8000-condition decode took $axisMillis ms")
+    assert(columnMillis < 1000.0, s"20000-column decode took $columnMillis ms")
+
   test("invalid UTF-8 is refused as non-canonical"):
     val bytes = utf8(golden)
     val at = golden.indexOf("sub-01")

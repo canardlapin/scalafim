@@ -111,7 +111,7 @@ final case class DecodedBindingClaim(
     realizedCombination: RealizedCombination
 ):
   require(Invariants.unique(columns), "claimed columns must be unique and nonempty")
-  require(Invariants.unique(selected) && selected.forall(columns.contains), "claimed selection must be a unique nonempty subset")
+  require(Invariants.unique(selected) && selected.toSet.subsetOf(columns.toSet), "claimed selection must be a unique nonempty subset")
   require(realizedNoise.arOrder.forall(_ >= 1), "claimed AR order must be positive")
   require(WellFormed.text(observation.value) && columns.forall(c => WellFormed.text(c.value)), "claimed text must be well-formed")
 

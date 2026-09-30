@@ -201,6 +201,58 @@ class ResponseActionEvidenceSuite extends munit.FunSuite:
     assertEquals(ReadoutAxis.parse(rows("A" -> 0, "A" -> 1, "B" -> 0, "B" -> 1)).map(_.bins), Right(2))
     intercept[IllegalArgumentException](binding.copy(readoutAxis = axis(Vector("A"), 1)).copy(selected = Vector.empty))
 
+  test("linear readout-axis validation returns exactly what the original quadratic algorithm returns"):
+    /** The round-2 implementation, kept verbatim as a reference. */
+    def reference(rows: Vector[ReadoutRowId]): Option[ReadoutDefect] =
+      val order = rows.map(_.condition).distinct
+      def block(condition: ConditionLevelId): Vector[ReadoutRowId] = rows.filter(_.condition == condition)
+      def contiguous(condition: ConditionLevelId): Boolean =
+        rows.lastIndexWhere(_.condition == condition) - rows.indexWhere(_.condition == condition) + 1 == block(condition).size
+      if rows.isEmpty then Some(ReadoutDefect.EmptyAxis)
+      else rows.diff(rows.distinct).headOption.map(ReadoutDefect.DuplicateRow.apply)
+        .orElse(order.find(c => !contiguous(c)).map(ReadoutDefect.NotConditionMajor.apply))
+        .orElse(order.find(c => block(c).map(_.bin) != block(c).indices.toVector).map(ReadoutDefect.BinsNotSequential.apply))
+        .orElse(order.find(c => block(c).size != block(order.head).size)
+          .map(c => ReadoutDefect.UnequalBins(c, block(order.head).size, block(c).size)))
+    def rows(spec: (String, Int)*) = spec.toVector.map((c, b) => ReadoutRowId(level(c), b))
+    val adversarial = Vector(
+      Vector.empty,
+      rows("A" -> 0),
+      rows("A" -> 0, "A" -> 0),
+      rows("A" -> 0, "B" -> 0, "A" -> 0),
+      rows("A" -> 0, "B" -> 0, "A" -> 1, "B" -> 1),
+      rows("A" -> 0, "A" -> 1, "B" -> 1, "B" -> 0),
+      rows("A" -> 1, "A" -> 0, "B" -> 5),
+      rows("A" -> 0, "A" -> 1, "B" -> 0),
+      rows("A" -> 0, "B" -> 0, "B" -> 1),
+      rows("A" -> 0, "B" -> 0, "C" -> 0, "B" -> 0),
+      rows("A" -> 0, "B" -> 1, "C" -> 0, "A" -> 1),
+      rows("B" -> 0, "B" -> 1, "A" -> 0, "A" -> 2, "C" -> 0, "C" -> 1, "C" -> 2),
+      rows("A" -> 0, "A" -> 1, "B" -> 0, "B" -> 1, "C" -> 0))
+    adversarial.foreach(axis => assertEquals(ReadoutAxis.defect(axis), reference(axis), axis.map(_.render).mkString(",")))
+    val random = new scala.util.Random(8000L)
+    val names = Vector("A", "B", "C", "D")
+    var n = 0
+    var defects = Set.empty[String]
+    while n < 20000 do
+      val axis =
+        if random.nextBoolean() then
+          // Mostly well-formed axes with one local perturbation.
+          val base = for c <- names.take(1 + random.nextInt(4)); b <- 0 until 1 + random.nextInt(3) yield ReadoutRowId(level(c), b)
+          val v = base.toVector
+          random.nextInt(5) match
+            case 0 => v
+            case 1 if v.size > 1 => val i = random.nextInt(v.size - 1); v.updated(i, v(i + 1)).updated(i + 1, v(i))
+            case 2 => v.patch(random.nextInt(v.size), Nil, 1)
+            case 3 => v :+ v(random.nextInt(v.size))
+            case _ => v.updated(random.nextInt(v.size), ReadoutRowId(level(names(random.nextInt(4))), random.nextInt(4)))
+        else Vector.fill(random.nextInt(9))(ReadoutRowId(level(names(random.nextInt(4))), random.nextInt(3)))
+      val found = ReadoutAxis.defect(axis)
+      assertEquals(found, reference(axis), axis.map(_.render).mkString(","))
+      defects += found.fold("valid")(_.productPrefix)
+      n += 1
+    assertEquals(defects, Set("valid", "EmptyAxis", "DuplicateRow", "NotConditionMajor", "BinsNotSequential", "UnequalBins"))
+
   test("raw row permutations parse only as P tensor I_bins on a checked axis"):
     def rows(spec: (String, Int)*) = spec.toVector.map((c, b) => ReadoutRowId(level(c), b))
     val base = rows("A" -> 0, "A" -> 1, "B" -> 0, "B" -> 1, "C" -> 0, "C" -> 1)
