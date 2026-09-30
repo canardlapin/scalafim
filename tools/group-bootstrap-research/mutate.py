@@ -92,6 +92,10 @@ def run(mid: str, title: str, rel: str, old: str, new: str) -> dict:
         raise SystemExit(f"{mid}: anchor must occur exactly once in {rel}")
     path.write_text(text.replace(old, new))
     log = f"bootstrap-harness-mutation-{mid}.log"
+    attempt = 1
+    while (LOGS / log).exists():  # never reuse a log name (the runner refuses existing logs)
+        attempt += 1
+        log = f"bootstrap-harness-mutation-{mid}-r{attempt}.log"
     try:
         code = subprocess.call(
             ["python3", RUNNER, str(ROOT), log, TASK], stdout=subprocess.DEVNULL
