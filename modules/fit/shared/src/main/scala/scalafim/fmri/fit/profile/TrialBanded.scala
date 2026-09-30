@@ -207,8 +207,12 @@ final case class TrialBandedReadout(
 
 /** Shared, response-independent trial geometry. The `m(m+1)/2` blocks store
   * lower symmetric bands directly; no dense `N x N` Gram is constructed.
+  * The caller's expanded source and basis remain referenced for identity and
+  * readout for this preparation's lifetime (including its banks and workers).
+  * Source storage is shared, not copied or counted once per worker.
   */
 final class TrialBandedPreparation private[profile] (
+    val source: ExpandedTrialDesign,
     val basis: HrfKernelBasis,
     val membership: TrialMembership,
     val rows: Int,
@@ -232,6 +236,17 @@ final class TrialBandedPreparation private[profile] (
   val packedBandSize: Int = trials * bandWidth
   val gramBlockCount: Int = basisRank * (basisRank + 1) / 2
 
+  /** Actual retained expanded-design Double data length, normally T*N*m.
+    * This scoped count excludes the source's basis, membership, event row maps,
+    * convolved-term metadata and object/collection overhead. It is separate
+    * from receipt/engine estimates; it is not total source storage.
+    */
+  val retainedSourceDesignDataValues: Long = source.term.data.data.length.toLong
+  val retainedSourceDesignDataBytes: Long = 8L * retainedSourceDesignDataValues
+
+  /** Preparation-owned packed/sparse array estimate, excluding the retained
+    * caller source, basis, membership and whitening plan.
+    */
   val receipt: TrialBandedPreparationReceipt =
     TrialBandedPreparationReceipt(
       rows,
@@ -473,7 +488,7 @@ object TrialBandedPreparation:
           p += 1
         t += 1
       trial += 1
-    Right(new TrialBandedPreparation(expanded.basis, expanded.membership, rows, whitening, lambda, bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends))
+    Right(new TrialBandedPreparation(expanded, expanded.basis, expanded.membership, rows, whitening, lambda, bandwidth, sparse, offsets, nuisance, blocks, xf, ff, starts, ends))
 
   private[profile] def pairIndex(p: Int, q: Int): Int = q * (q + 1) / 2 + p
 
@@ -531,8 +546,12 @@ final class TrialBandedObjective private (
   private var response: TrialBandedResponse | Null = null
   val work: TrialBandedWork = new TrialBandedWork
 
-  /** Primitive-array accounting for one prepared bank plus this worker. It
-    * excludes VM/object headers and the caller-owned response/output buffers.
+  /** Scoped array estimates for reference factors and the listed objective
+    * arrays, not total retained engine memory or peak memory. They exclude the
+    * retained caller source (its dense data is counted separately on preparation),
+    * basis, membership, whitening plan, grid, encoded response, reduction
+    * workspace, conditional solver/wrapper arrays, transient build/whitening
+    * storage, caller/result buffers and VM/object/collection overhead.
     */
   private def referenceDoubles(components: Int): Long =
     components.toLong * m + components.toLong * bandSize + 2L * components * n * k +
@@ -542,9 +561,14 @@ final class TrialBandedObjective private (
   val estimatedValueReferenceBytes: Long = 8L * referenceDoubles(1)
   val estimatedValueBuildBytes: Long = estimatedValueReferenceBytes + 8L * n * (k + c)
 
+  /** Preparation-kernel and node-reference estimate; excludes retained source
+    * and basis. Add preparation.retainedSourceDesignDataBytes once to count
+    * its dense design data, without claiming all shared storage is covered.
+    */
   val estimatedSharedBytes: Long =
     preparation.receipt.estimatedBytes + references.length * estimatedReferenceBytes
 
+  /** Listed objective arrays only; exclusions are stated above. */
   val estimatedWorkerBytes: Long =
     val worker = responseB.length.toLong + zTy.length + wbJets.length +
       s.length + b.length + g.length + n.toLong + n.toLong + n.toLong +
@@ -552,6 +576,7 @@ final class TrialBandedObjective private (
       comps.toLong * preparation.basis.fineCount + coefficients.length
     8L * worker
 
+  /** Scoped shared estimate plus one listed objective-array estimate. */
   val estimatedEngineBytes: Long = estimatedSharedBytes + estimatedWorkerBytes
 
   /** A new mutable worker over the same immutable preparation and reference
@@ -685,67 +710,105 @@ final class TrialBandedObjective private (
     if node < 0 || node >= references.length then
       work.conditionalInverseFailures += 1L
       Left(TrialBandedError.InvalidNode(node, references.length))
-    else if rhs.length != n + f then
-      work.conditionalInverseFailures += 1L
-      Left(TrialBandedError.ReadoutRhs(n + f, rhs.length))
-    else if out.length != n + f then
-      work.conditionalInverseFailures += 1L
-      Left(TrialBandedError.ReadoutOutput(n + f, out.length))
+    else
+      validateConditionalInput(rhs, out) match
+        case Left(error) =>
+          work.conditionalInverseFailures += 1L
+          Left(error)
+        case Right(_) => solveConditionalAgainst(references(node), rhs, out)
+
+  /** An exact actual-shape factor is an explicit, separately charged request.
+    * It never replaces the prepared-node inverses used by corrected mode.
+    */
+  private[profile] def solveConditionalExact(
+      coordinates: Vector[Double],
+      rhs: Array[Double],
+      out: Array[Double]
+  ): Either[TrialBandedError, Unit] =
+    work.conditionalInverseAttempts += 1L
+    validateConditionalInput(rhs, out) match
+      case Left(error) =>
+        work.conditionalInverseFailures += 1L
+        Left(error)
+      case Right(_) =>
+        work.exactReadoutFactorAttempts += 1L
+        preparation.basis.family.chart.point(coordinates) match
+          case Left(error) =>
+            work.exactReadoutFactorFailures += 1L
+            work.conditionalInverseFailures += 1L
+            Left(TrialBandedError.Factorisation(error.message))
+          case Right(_) =>
+            buildReference(coordinates.toArray, 1, None) match
+              case Left(error) =>
+                work.exactReadoutFactorFailures += 1L
+                work.conditionalInverseFailures += 1L
+                Left(error)
+              case Right(reference) =>
+                work.exactReadoutFactors += 1L
+                solveConditionalAgainst(reference, rhs, out)
+
+  private def validateConditionalInput(rhs: Array[Double], out: Array[Double]): Either[TrialBandedError, Unit] =
+    if rhs.length != n + f then Left(TrialBandedError.ReadoutRhs(n + f, rhs.length))
+    else if out.length != n + f then Left(TrialBandedError.ReadoutOutput(n + f, out.length))
     else
       var bad = 0
       while bad < rhs.length do
-        if !rhs(bad).isFinite then
-          work.conditionalInverseFailures += 1L
-          return Left(TrialBandedError.NonFiniteReadoutRhs(bad, rhs(bad)))
+        if !rhs(bad).isFinite then return Left(TrialBandedError.NonFiniteReadoutRhs(bad, rhs(bad)))
         bad += 1
-      val ref = references(node)
-      var i = 0
-      while i < n do
-        readoutBuilder.writeLinear(i, rhs(i))
-        i += 1
-      work.solveAttempt(1)
-      ref.factor.solveInPlace(readoutBuilder) match
-        case Left(error) =>
-          work.solveFailed(1)
-          work.conditionalInverseFailures += 1L
-          Left(TrialBandedError.Factorisation(error.getMessage))
-        case Right(_) =>
-          work.bandedSolveCalls += 1L
-          work.bandedRightHandSides += 1L
-          var col = 0
-          while col < f do
-            var value = rhs(n + col)
-            i = 0
-            while i < n do
-              value -= ref.cJets(i * k + col) * readoutBuilder(i, 0)
-              i += 1
-            conditionalRelease(col) = value
-            col += 1
-          col = 0
-          while col < c do
-            var value = 0.0
-            i = 0
-            while i < n do
-              if preparation.membership.conditionOfTrial(i) == col then value += rhs(i)
-              value -= ref.cJets(i * k + f + col) * readoutBuilder(i, 0)
-              i += 1
-            conditionalRelease(f + col) = value
-            col += 1
-          SmallCholesky.solveInPlace(k, ref.releaseLower, conditionalRelease)
+      Right(())
+
+  private def solveConditionalAgainst(
+      ref: TrialBandedReference,
+      rhs: Array[Double],
+      out: Array[Double]
+  ): Either[TrialBandedError, Unit] =
+    var i = 0
+    while i < n do
+      readoutBuilder.writeLinear(i, rhs(i))
+      i += 1
+    work.solveAttempt(1)
+    ref.factor.solveInPlace(readoutBuilder) match
+      case Left(error) =>
+        work.solveFailed(1)
+        work.conditionalInverseFailures += 1L
+        Left(TrialBandedError.Factorisation(error.getMessage))
+      case Right(_) =>
+        work.bandedSolveCalls += 1L
+        work.bandedRightHandSides += 1L
+        var col = 0
+        while col < f do
+          var value = rhs(n + col)
           i = 0
           while i < n do
-            var value = readoutBuilder(i, 0) + conditionalRelease(f + preparation.membership.conditionOfTrial(i))
-            col = 0
-            while col < k do
-              value -= ref.wcJets(i * k + col) * conditionalRelease(col)
-              col += 1
-            out(i) = value
+            value -= ref.cJets(i * k + col) * readoutBuilder(i, 0)
             i += 1
+          conditionalRelease(col) = value
+          col += 1
+        col = 0
+        while col < c do
+          var value = 0.0
+          i = 0
+          while i < n do
+            if preparation.membership.conditionOfTrial(i) == col then value += rhs(i)
+            value -= ref.cJets(i * k + f + col) * readoutBuilder(i, 0)
+            i += 1
+          conditionalRelease(f + col) = value
+          col += 1
+        SmallCholesky.solveInPlace(k, ref.releaseLower, conditionalRelease)
+        i = 0
+        while i < n do
+          var value = readoutBuilder(i, 0) + conditionalRelease(f + preparation.membership.conditionOfTrial(i))
           col = 0
-          while col < f do
-            out(n + col) = conditionalRelease(col)
+          while col < k do
+            value -= ref.wcJets(i * k + col) * conditionalRelease(col)
             col += 1
-          Right(())
+          out(i) = value
+          i += 1
+        col = 0
+        while col < f do
+          out(n + col) = conditionalRelease(col)
+          col += 1
+        Right(())
 
   /** Unnormalised conditional trial readout for this backend. The public
     * normalization/query surface remains PHRF-11; this method closes the
