@@ -145,6 +145,42 @@ class ResponseBindingCodecSuite extends munit.FunSuite:
       features)
     assertEquals(features.digest.value, FeatureGolden.value)
 
+  // Peer review of 134dea0d (backlog-worker-20260930, R1): a standard UTF-8
+  // encoder replaces an unpaired surrogate with '?', so the admissible frames
+  // "scanner\uD800" and "scanner?" shared one feature identity.
+  test("feature identity is lossless for unpaired surrogates (goldens from Python surrogatepass)"):
+    val space = SampleSpaces(Vector(4, 1, 1))
+    def features(frame: String) =
+      ResponseDigests.features(EstimateDomain.make(space, Vector(0, 2, 3), frame).toOption.get).digest.value
+    assertEquals(features("scanner\uD800"), "6ebea8d7065db23c9fdbe16ca2feefe9e4571ebdcccff8ccd4ea6984b84457d7")
+    assertEquals(features("scanner?"), "6e631057a6f7a0f7a9a533f47ba82579cc7a8b1edf3cd71da2ba486dcd865bf3")
+    assertNotEquals(features("scanner\uD800"), features("scanner\uDC00"))
+
+  test("the lossless encoding equals UTF-8 on well-formed text and is injective on unpaired surrogates"):
+    for text <- Vector("", "abc", "\u00e9", "\u20ac", "\uD835\uDEBA", "a\u03a3b\uD83D\uDE00") do
+      assertEquals(ResponseDigests.lossless(text).toVector, text.getBytes(StandardCharsets.UTF_8).toVector, text)
+    assertEquals(ResponseDigests.lossless("\uD800").toVector, Vector(0xed, 0xa0, 0x80).map(_.toByte))
+    assertEquals(ResponseDigests.lossless("\uDC00").toVector, Vector(0xed, 0xb0, 0x80).map(_.toByte))
+    // A reversed pair is two unpaired surrogates, not a code point.
+    assertEquals(ResponseDigests.lossless("\uDC00\uD800").length, 6)
+    assertEquals(ResponseDigests.token("a\uD800"), "4:a\uD800")
+
+  // Peer review of 134dea0d (R2): the decoder read at most nine digits, so a
+  // valid AR order of 1000000000 encoded but did not decode.
+  test("every admissible positive Int AR order round-trips, and Int overflow is refused"):
+    val base = DecodedBindingClaim.of(binding)
+    for order <- Vector(1, 999999999, 1000000000, Int.MaxValue)
+        noise <- Vector(RealizedNoise.FixedAr(order, NoiseScope.Global, None), RealizedNoise.EstimatedAr(order, NoiseScope.PerRun)) do
+      val claim = base.copy(realizedNoise = noise)
+      assertEquals(ResponseBindingCodec.decode(ResponseBindingCodec.encode(claim)), Right(claim), s"order=$order noise=$noise")
+    val maxBytes = ResponseBindingCodec.encode(base.copy(realizedNoise = RealizedNoise.FixedAr(Int.MaxValue, NoiseScope.Global, None)))
+    val text = new String(maxBytes, StandardCharsets.UTF_8)
+    val maxToken = s"10:${Int.MaxValue}"
+    assert(text.contains(maxToken))
+    for overflow <- Vector("10:2147483648", "10:9999999999") do
+      val forged = text.replace(maxToken, overflow).getBytes(StandardCharsets.UTF_8)
+      assert(ResponseBindingCodec.decode(forged).isLeft, overflow)
+
 /** Recomputed independently in Python (identity 4x4 affine, length-prefixed tokens). */
 object FeatureGolden:
   val value: String = "4f2cb2e312cf1e9beeac29f2e9a33edecf2ede470d60dc97f330fe1444fe1fc3"

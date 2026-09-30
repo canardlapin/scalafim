@@ -209,3 +209,32 @@ yields IDs such as `basis-1%2502d`.
 - Provider authentication: digests are identity evidence, not scientific truth or authenticated origin;
   `private[scalafim]` trust is procedural inside `scalafim.*` (OD-8) and must be revisited before any
   positive case.
+
+## Peer review repair (review of `134dea0d` by backlog-worker-20260930: OBJECT)
+
+The independent peer review found two defects in `134dea0d`, each reproduced on the JVM and Scala.js. Both are repaired here.
+Review report: `/private/tmp/scalafim-response-review-20260930/review.md`.
+
+- **R1 (medium): feature identity was lossy.**
+  - Standard UTF-8 encoding replaces an unpaired surrogate with `?`. So the admissible domain frames `"frame\uD800"` and
+    `"frame?"` shared one feature digest, and the scanner read a source whose frame differed from the binding.
+  - Canonical digest bytes now use generalized UTF-8 (WTF-8, `ResponseDigests.lossless`). It is byte-identical to UTF-8 on
+    well-formed text, so every earlier golden is unchanged. It is injective over all Java strings: an unpaired surrogate
+    becomes its own three-byte sequence. Token length prefixes count those bytes.
+  - The new goldens for `"scanner\uD800"` and `"scanner?"` were computed independently with Python's
+    `encode("utf-8", "surrogatepass")`.
+  - The reviewer's scanner probe is adopted as a regression test: the source is refused with `Conflict` before any read.
+  - The persisted codec is unaffected. It encodes only bindings whose text is already well-formed, and it still refuses
+    invalid UTF-8.
+- **R2 (low): valid AR orders did not round-trip.**
+  - The number parser read at most nine digits, so a valid AR order such as 1000000000 encoded but did not decode.
+  - It now reads up to ten digits and range-checks them against `Int.MaxValue`. AR orders 1, 999999999, 1000000000 and
+    `Int.MaxValue` round-trip for both AR variants. `2147483648` and `9999999999` are refused. Count bounds against the
+    remaining input are unchanged.
+- **Mutation evidence.**
+  - Reverting both repairs (lossy digest bytes and the nine-digit parser) fails both new codec tests (`rae-r4-mut-lossy`).
+  - Reverting only the digest bytes (`rae-r4-mut-lossy-scanner`) did not fail the scanner regression. The WTF-8 token
+    length prefix alone already separates the two frames.
+  - Reverting the full lossy encoding, both the digest bytes and the token length, fails the scanner regression
+    (`rae-r4-mut-lossy-scanner2`: 1 of 10 tests fail).
+  - Sources were restored after each run and checked by hash.

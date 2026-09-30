@@ -93,6 +93,17 @@ class ResponseStatusScannerSuite extends munit.FunSuite:
   private def scan(src: InferenceEvidenceSource, b: ResponseSourceBinding, chunk: Int = 2, cancelled: () => Boolean = never) =
     ResponseStatusScanner.scan(src, b, chunk, cancelled)
 
+  // Peer review of 134dea0d (backlog-worker-20260930, R1): these frames used to
+  // share a feature digest, so the scanner read a source whose frame differed.
+  test("a source whose domain frame differs only by an unpaired surrogate is refused before any read"):
+    val original = unit()
+    def framed(frame: String) =
+      original.copy(domain = EstimateDomain.make(original.domain.space, original.domain.support, frame).toOption.get)
+    val src = InstrumentedStatusSource(framed("frame?"), codes)
+    val outcome = scan(src, binding(framed("frame\uD800")))
+    assert(outcome.left.exists(_.isInstanceOf[EstimateError.Conflict]), s"changed frame must be refused: $outcome")
+    assert(src.reads.isEmpty)
+
   test("multi-chunk scans read only bound in-support features and count every code exactly"):
     val u = unit()
     val b = binding(u)

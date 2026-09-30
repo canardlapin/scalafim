@@ -10,15 +10,45 @@ import scalafim.image.SampleSpaces.*
 private[scalafim] object ResponseDigests:
   val FeaturesSchema: String = "scalafim.response-features/1"
 
-  /** Length-prefixed token: the prefix counts UTF-8 bytes, so any
-    * reimplementation that frames by bytes agrees. Unambiguous for any text.
+  /** Length-prefixed token: the prefix counts the bytes of `lossless(value)`,
+    * so any reimplementation that frames by bytes agrees. Unambiguous for any
+    * text, including text with unpaired surrogates.
     */
-  def token(value: String): String = s"${value.getBytes(StandardCharsets.UTF_8).length}:$value"
+  def token(value: String): String = s"${lossless(value).length}:$value"
+
+  /** Generalized UTF-8 (WTF-8): identical to UTF-8 for well-formed text, and it
+    * encodes an unpaired surrogate as its own three-byte sequence instead of
+    * replacing it. It is injective over all Java strings, so distinct native
+    * text (for example a domain frame "a\uD800" versus "a?") always yields
+    * distinct canonical bytes. Standard UTF-8 encoders substitute '?', which
+    * would make such texts collide before hashing.
+    */
+  def lossless(value: String): Array[Byte] =
+    val out = new java.io.ByteArrayOutputStream(value.length + 8)
+    var i = 0
+    while i < value.length do
+      val c = value.charAt(i)
+      val cp =
+        if Character.isHighSurrogate(c) && i + 1 < value.length && Character.isLowSurrogate(value.charAt(i + 1)) then
+          val pair = Character.toCodePoint(c, value.charAt(i + 1))
+          i += 1
+          pair
+        else c.toInt
+      if cp < 0x80 then out.write(cp)
+      else if cp < 0x800 then
+        out.write(0xc0 | (cp >> 6)); out.write(0x80 | (cp & 0x3f))
+      else if cp < 0x10000 then
+        out.write(0xe0 | (cp >> 12)); out.write(0x80 | ((cp >> 6) & 0x3f)); out.write(0x80 | (cp & 0x3f))
+      else
+        out.write(0xf0 | (cp >> 18)); out.write(0x80 | ((cp >> 12) & 0x3f))
+        out.write(0x80 | ((cp >> 6) & 0x3f)); out.write(0x80 | (cp & 0x3f))
+      i += 1
+    out.toByteArray
 
   def number(value: Double): String = java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(value))
 
   def provider(schema: String, canonical: String): ProviderDigest =
-    ProviderDigest(schema, ContentDigest.unsafeSha256(sha256Hex(canonical.getBytes(StandardCharsets.UTF_8))))
+    ProviderDigest(schema, ContentDigest.unsafeSha256(sha256Hex(lossless(canonical))))
 
   /** Ordered physical sample IDs (the domain support, in order) plus the exact
     * domain identity. A permutation of an identical sample set differs.
@@ -239,7 +269,10 @@ object ResponseBindingCodec:
 
     def number: Either[BindingCodecError, Int] =
       token.flatMap(value =>
-        if value.matches("0|[1-9][0-9]{0,8}") then Right(value.toInt) else Left(BindingCodecError.Malformed("invalid number")))
+        // Every positive Int is admissible (for example an AR order), so up to
+        // ten digits are read and the Int range is checked without overflow.
+        if value.matches("0|[1-9][0-9]{0,9}") && value.toLong <= Int.MaxValue then Right(value.toInt)
+        else Left(BindingCodecError.Malformed("invalid number")))
 
     /** A count of items, each occupying at least `minimumItemBytes`. */
     def count(minimumItemBytes: Int): Either[BindingCodecError, Int] =
