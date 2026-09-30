@@ -44,7 +44,9 @@ are integrated in an isolated clone.
   Final mutable counters and reader lifetime cannot be claimed until workers stop.
   The repair is independently accepted at `d1879b4d`, with a nonfinal
   termination handle and deterministic blocked-reader regressions. Its final
-  counter-adoption/integration gate is pending. The older cooperative tests do
+  counter-adoption is independently accepted at `7bd14ec9`; exact integration
+  `9235c3c7` passes 56 JVM/25 JS tests and warning-clean CompileAll in
+  163.56 seconds. The public readout seam remains open. The older cooperative tests do
   not establish this stronger contract.
 - Decoder equality termination at `bd367f03` passes 19 tests on each platform
   and independent transactional-state review. Exact finite equal energy may
@@ -332,3 +334,28 @@ harness changes. No JMH harness or throughput run is claimed by this fix.
 All transport hashes and embedded payload hashes were read back and verified.
 The SHA manifest covers the named archives and disposition JSON; this README is
 not itself included in that manifest. Original7/16 ticket completion is unchanged.
+
+## Latest independent reviews and integrated executor gate
+
+The executor lifecycle and 22-field work aggregate are locally integrated at
+`9235c3c7`. Its exact eight source paths match reviewed `7bd14ec9`; the
+final integrated gate passed 56 JVM and 25 JS tests plus warning-clean
+CompileAll. [The archive](trial-executor-final-integrated.json.gz) embeds
+all eight paths, independent review, author source manifest and actual integrated
+raw log/metadata/receipt. PHRF-29 remains open for the public consumer seam.
+
+Public readout `bab9a99f` needs truthful storage receipts: its wrapper buffers
+and retained expanded source are not total worker or engine memory. The
+review found no numerical solve, transpose or normalization blocker.
+Local ML helper `28382eae` needs a canonical factor/value identity binding;
+a solve residual does not prove that binding. Both repairs are assigned
+to their original owners. Neither candidate is admitted as full PHRF-11.
+
+The C0 full development test ran for 260.51 seconds and timed out under
+MUnit's 30-second default; JS did not run. This is preserved as non-evidence,
+with no inference of scientific failure or success. A bounded unit panel and
+separate standalone cohorts are being implemented. No fresh qualification or
+actual 100000-voxel workload has been launched.
+[Review history](review-history-20260930-0530.json.gz) preserves these verdicts
+and the actual timeout receipt. Gale review publication and the projected
+17.36-hour calibration campaign still require the separately requested approval.

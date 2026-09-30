@@ -134,7 +134,44 @@
       ],
       "freshLaunched": false,
       "actual100kLaunched": false
+    },
+    {
+      "commit": "7bd14ec92e3b78b6fc181ef1ccf3f935b0e72d56",
+      "verdict": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting",
+      "integrationCommit": "9235c3c79ed91d5abe7965129844325edc299292",
+      "integratedChecks": "56 JVM/25 JS/CompileAll warning clean",
+      "integratedRawSha256": "00f0a40e33032c79154f4249c35d6af1d75ecc59894630cd207324ab6671d4fc",
+      "integratedMetaSha256": "b5bd70394dcba210b32568ff4da7cf6f3baf98329ec8a01a761d6cd7a687c50a",
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "bab9a99f971a2c81acf8f0ab80f6c8aeadfb5d7b",
+      "verdict": "RequestChangesStorageReceiptOnly",
+      "findings": [
+        "wrapper buffer mislabeled as worker coefficient scratch; other retained buffers not scoped",
+        "retained expanded source excluded from shared and engine estimate without disclosure"
+      ],
+      "numericalReadoutBlockerFound": false,
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "28382eae",
+      "verdict": "RequestChangesFactorValueBinding",
+      "findings": [
+        "same-shaped independently supplied factor and A band accepted without identity proof"
+      ],
+      "localProviderOnly": true,
+      "fullMLAdmitted": false
+    },
+    {
+      "verdict": "C0DevelopmentTimeoutNonEvidence",
+      "sourceSuiteSha256": "2b8a609453caa0b76e11614fe0deb66a8fe918d9c23f91a95317daa3851fa5b2",
+      "exit": 1,
+      "developmentTestSeconds": 260.51,
+      "jsRun": false,
+      "freshLaunched": false,
+      "actual100kLaunched": false
     }
   ],
-  "updatedUtc": "2026-09-30T05:09:17.201746+00:00"
+  "updatedUtc": "2026-09-30T05:47:49.642470+00:00"
 }
