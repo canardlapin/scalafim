@@ -257,9 +257,7 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       v += 1
     (data, truth, beta)
 
-  /** Per-family budgets: the Gaussian budget is D2; the LWU chart has three coordinates and a coarser bank spacing per
-    * axis, so it is allowed one more Newton step and jet, recorded here as the LWU condition budget.
-    */
+  /** Frozen six-step/eight-jet budgets, with family-specific weak-SD limits. */
   private def budgetFor(family: ParametricHrfFamily): DecodeBudget =
     if family.dimension == 2 then
       DecodeBudget(
@@ -351,6 +349,43 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     )
     (fraction, p95L, p95W, p95A)
 
+  /** Historical DEV diagnostics using the exact existing fixture and decoder policy.
+    * The extra terminal jet is a post-fit audit, outside the production work counters.
+    * Constructing this suite registers its tests; this method does not run them or the oracle.
+    */
+  private[profile] def diagnoseLwu(voxels: Int, snr: Double, seed: Long): Vector[LwuConditionDiagnosticRecord] =
+    val family = LwuFamily.Default
+    val (_, prep) = lwu
+    val (data, truth, truthAmplitudes) = cohort(family, voxels, snr, seed, None)
+    val whitened = prep.whiten(voxels, data).fold(e => fail(e.message), identity)
+    val runtime = new CompactConditionRuntime(prep, NodeGrid(family.chart, nodesFor(family)), budgetFor(family),
+      None, 1.0, NormalizationRule.Unnormalised)
+    val counters = new DecoderCounters
+    val column = new Array[Double](rows)
+    val records = Vector.newBuilder[LwuConditionDiagnosticRecord]
+    var voxel = 0
+    while voxel < voxels do
+      var row = 0
+      while row < rows do
+        column(row) = whitened(row * voxels + voxel)
+        row += 1
+      val before = LwuConditionDiagnosticRecord.work(counters)
+      val fit = runtime.fit(column, 0, counters)
+      val after = LwuConditionDiagnosticRecord.work(counters)
+      val jet = new ProfileJetBuffer(3, 3)
+      val available = runtime.objective.jetAt(fit.decode.coordinates.toArray, jet)
+      val evidence = Option.when(available):
+        LwuTerminalDiagnostic(jet.energy, jet.gradient.toVector, jet.hessian.toVector, jet.amplitudes.toVector, jet.curvature.toString)
+      val refused = fit.decode.status != DecodeStatus.Accepted
+      records += LwuConditionDiagnosticRecord(voxel, snr, seed, truth.slice(3 * voxel, 3 * voxel + 3).toVector,
+        truthAmplitudes.slice(3 * voxel, 3 * voxel + 3).toVector, fit.decode, fit.amplitudes, fit.residualEnergy,
+        after.zip(before).map((a, b) => a - b), evidence,
+        LwuConditionDiagnosticRecord.fingerprint(column),
+        Option.when(refused)(Vector.tabulate(rows)(row => data(row * voxels + voxel))),
+        Option.when(refused)(column.toVector))
+      voxel += 1
+    records.result()
+
   test("Gaussian: accuracy gates on the frozen C0 cohorts"):
     val (basis, prep) = gaussian
     println(s"[milestone] Gaussian basis rank ${basis.rank}, K = ${prep.rank}, nuisance rank ${prep.nuisanceRank}")
@@ -369,13 +404,13 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     println(s"[milestone] LWU basis rank ${basis.rank}, K = ${prep.rank}")
     for (snr, seed) <- Seq((1.0, 111L), (0.5, 112L)) do
       val (fraction, p95L, p95W, p95A) = accuracy("LWU", LwuFamily.Default, prep, 100, snr, seed, Vector(26, 11, 9))
-      println(f"[milestone] LWU budget: 13x9x7 bank, 3 Newton steps, 3 jets (recorded per-family budget)")
+      println("[milestone] LWU budget: 13x9x7 bank, 6 Newton steps, 8 jets, 2 exact evaluations, 4 candidate attempts per iteration")
       assert(p95L <= 0.02, s"p95 latency $p95L at SNR $snr")
       assert(p95W <= 0.05, s"p95 FWHM $p95W at SNR $snr")
       assert(p95A <= 1e-3, s"p95 amplitude $p95A at SNR $snr")
       if fraction < 0.95 then
         println(
-          f"[milestone] LWU admission ${100 * fraction}%.1f%% at SNR $snr%.2f is below 95%%: recorded as unmet for rho-weak voxels"
+          f"[milestone] LWU admission ${100 * fraction}%.1f%% at SNR $snr%.2f is below 95%%: unmet; refusal categories require per-voxel diagnostics"
         )
 
   test("throughput receipt on the C0 geometry"):
