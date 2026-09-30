@@ -350,3 +350,50 @@ check reproducibility; round 4 moved it to harness seeds. `StreamsSuite` compute
   `-Dscalafim.group.bootstrapResearch.heavy=true`, JVM only, since JS system properties are empty. The last heavy run
   passed: 57 total, 56 passed, 1 skipped (the writer).
 - The kernel's per-fit cost was not re-measured against the probe.
+
+## Confirmation runner
+
+Added after the pilot (mote `bd-01M21BNZR9ZBRAYY9JD5WCQ8KX`, owner decision 2026-09-30 21:59Z). **The confirmation has not been run**;
+no confirmation root was used by any test, and the runner code is not part of the frozen pilot commit `8b71b164`.
+manifest-v2 was regenerated (34 hashed sources, status still `pending re-review; not frozen`); `write_manifest_v2.py` gained
+`--freeze-confirmation` ("frozen for confirmation"), which has not been used. `ManifestFileSuite` does not inspect the status.
+
+Files (JVM test scope, `modules/group/jvm/src/test/scala/scalafim/group/research/bootstrap/`): `ConfirmationRunner.scala`
+(runner, aggregation, opt-in `ConfirmationLaunch`), `ConfirmationRunnerSuite.scala`, and a small extension of `PilotRunner.scala`
+(`PilotConfig.extraStamp`, `PilotConfig.confirmation`, two new `PilotRefusal` cases).
+
+Interface.
+- `PilotConfig.confirmation(repo, threads, selection: Path, expectedSelectionSha = PilotSelectionSha256): Either[PilotRefusal, PilotConfig]`.
+  It refuses unless sha256(selection) is `8c3f57c196dc446ea5a15080b766b76eb2ea93e43ed9399201b30844a6f7d42f` (`SelectionHashMismatch`)
+  and unless the six fixed cells plus the six listed cells are exactly 12 distinct core cells (`WrongConfirmationCells`).
+  The selection is read, never recomputed; `ConfirmationSelection` is not called.
+- Config: `Phase.Confirmation` (roots 2026100201-05), R = 20000, B = 999, null stream with all eight schemes, power stream (three
+  candidates) on the four declared power cells (fixed cells 2, 3, 5, 6), projection ceiling and runtime CPU ceiling 15 core-hours each,
+  clean worktree required, redirected builds refused (both inherited from `PilotRunner.stamp`), output
+  `/private/tmp/scalafim-execution-20260929/bootstrap-confirmation-20260930/` (not created by this work).
+- Extra stamp fields: `selection_sha256` and `pilot_output_tree_digest`
+  (`67bd26ba2edfc75539db4f541fe673782b0e798230a973f101cd075c61f92430`). A resume with any stamp difference is refused.
+- `ConfirmationRunner.run(config, log, decide = Decision.outcome)`: runs or resumes the cells via `PilotRunner.run`, then builds
+  `CellEvidence` (null stream) and `PowerEvidence` (power stream, candidate verdict paired with the native comparator verdict per study) with the
+  existing aggregators, calls `Decision.outcome` for B-plug, B-fixV and B-EB, and writes `outcomes.json` and `outcomes.json.sha256`
+  atomically. `decide` is a test hook only; production uses the strict `Decision.outcome` (R = 20000, 12 cells, 4 power cells).
+- `outcomes.json`: `{"stamp":{...},"rule":"decision-rule/v2","candidates":{"<scheme>":{"outcome":{"class":"Adopt|Bound|Decline|Unresolved"[,"subfamilies":[...]]},"cells":{"<cell>":"Pass|Fail|Unresolved",...},"power_cells":{"<cell>":{"gain":b,"non_loss":b,"definite_loss":b}}}}}`.
+  Cell label: Fail if the null criterion fails, Pass if null and failure criteria both pass, otherwise Unresolved. No counts or rates.
+- stdout: the runner's `PILOT_PROJECTION/PROGRESS/DONE/STOPPED` lines and `CONFIRMATION_OUTCOMES_WRITTEN,<path>`.
+- Opt-in: `-Dscalafim.group.bootstrapConfirmation.run=true` (or `.projectOnly=true`, printing `CONFIRMATION_PROJECTION,...`), `.threads` (default 4),
+  with `groupJVM/testOnly scalafim.group.research.bootstrap.ConfirmationLaunch`.
+
+Output layout is the pilot's, under the confirmation root: `stamp.json`, `cells/<cell>.<null|power>.jsonl` (+ `.sha256`),
+`summaries/`, `run-cost.json`, plus `outcomes.json` (+ `.sha256`); no `selection.json`.
+
+Tests (`ConfirmationRunnerSuite`, 8, harness seeds, two tiny cells, R = 3, B = 19): selection-hash refusal; wrong count, duplicate, fixed-cell,
+unknown-cell and empty selections refused; confirmation roots, cells, R, B, power cells, ceilings and stamp fields asserted through the config and
+stamp (a synthetic selection through the hash hook, and the real `selection.json` when present); `outcomes.json` format and `.sha256` on a tiny run with a
+stub decision; the strict production decision refusing tiny R; aggregation agreeing with the verdict-level counts; resume reuse and stamp mismatch
+(selection sha, pilot digest); stdout restricted to allowed line kinds with no rate-like words.
+
+Gates at the commit with this section (worktree clean apart from this receipt), logs in `/private/tmp/scalafim-execution-20260929/logs/`:
+clean `scalafimCompileAll` 0 warnings (`bootstrap-harness-conf-compileall2`); `groupJVM/test` Total 184, Failed 0, Passed 175, Skipped 9
+(`bootstrap-harness-conf-jvm`); `groupJS/test` Total 158, Failed 0, Passed 154, Skipped 4 (`bootstrap-harness-conf-js`).
+Projection only (harness-seed calibration, no output): `CONFIRMATION_PROJECTION,core_hours=3.075,ceiling=15.000,cells=12,studies=20000,draws=999`
+(`bootstrap-harness-conf-projection`).

@@ -5,7 +5,7 @@ Manifest v2 extends the unchanged cell manifest (cells.json, its parent) with th
 owner-decided selection and decision rules, the SHA-256 of every harness source
 and of the R reference script, and the sealed heavy log (hash only; its content is
 never read into any report). Canonical form: sorted keys, no whitespace, ASCII,
-one trailing newline. Run from the repository root after the final source edit (add --freeze, after the gates pass, to mark it "frozen for pilot");
+one trailing newline. Run from the repository root after the final source edit (add --freeze, after the gates pass, to mark it "frozen for pilot"; --freeze-confirmation marks "frozen for confirmation");
 ManifestFileSuite fails if a harness source changes without this file being rewritten.
 """
 import hashlib
@@ -32,7 +32,15 @@ def sha(path: pathlib.Path) -> str:
 
 FROZEN = "frozen for pilot"
 PENDING = "pending re-review; not frozen"
-STATUS = FROZEN if "--freeze" in sys.argv[1:] else PENDING
+FROZEN_CONFIRMATION = "frozen for confirmation"
+# --freeze marks "frozen for pilot"; --freeze-confirmation marks "frozen for confirmation" (the owner's later step).
+if "--freeze" in sys.argv[1:] and "--freeze-confirmation" in sys.argv[1:]:
+    sys.exit("pass at most one of --freeze and --freeze-confirmation")
+STATUS = (
+    FROZEN_CONFIRMATION
+    if "--freeze-confirmation" in sys.argv[1:]
+    else FROZEN if "--freeze" in sys.argv[1:] else PENDING
+)
 
 
 def main() -> None:

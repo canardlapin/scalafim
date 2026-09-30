@@ -17,6 +17,9 @@ enum PilotRefusal(val message: String):
       extends PilotRefusal(f"projected $projected%.3f core-hours exceeds the ceiling $ceiling%.3f")
   case CpuCeilingReached(cpuSeconds: Double, ceilingCoreHours: Double)
       extends PilotRefusal(f"process CPU time $cpuSeconds%.1f s reached the ceiling of $ceilingCoreHours%.3f core-hours; stopped (resumable)")
+  case SelectionHashMismatch(found: String, expected: String)
+      extends PilotRefusal(s"selection file sha256 $found is not the pilot selection $expected")
+  case WrongConfirmationCells(detail: String) extends PilotRefusal(s"confirmation cells: $detail")
   case Failure(detail: String) extends PilotRefusal(detail)
 
 /** Everything a pilot run depends on; a resume must reproduce it field for field. */
@@ -49,7 +52,8 @@ final case class PilotConfig(
     calibrationStudies: Int,
     requireCleanWorktree: Boolean,
     selectConfirmation: Boolean,
-    runtimeCeilingCoreHours: Double = 15.0
+    runtimeCeilingCoreHours: Double = 15.0,
+    extraStamp: Vector[(String, String)] = Vector.empty
 ):
   require(studies >= 1 && draws >= 1 && threads >= 1 && calibrationStudies >= 1, "positive sizes")
 
@@ -74,6 +78,56 @@ object PilotConfig:
     selectConfirmation = true,
     runtimeCeilingCoreHours = 15.0
   )
+
+  /** sha256 of the pilot's selection.json (mote note 2026-09-30). */
+  val PilotSelectionSha256 = "8c3f57c196dc446ea5a15080b766b76eb2ea93e43ed9399201b30844a6f7d42f"
+  /** Digest of the completed pilot output tree (sorted shasum listing), stamped into the confirmation. */
+  val PilotOutputTreeDigest = "67bd26ba2edfc75539db4f541fe673782b0e798230a973f101cd075c61f92430"
+  val ConfirmationOutput: Path = Paths.get("/private/tmp/scalafim-execution-20260929/bootstrap-confirmation-20260930")
+
+  /** Declaration §6 confirmation: the six fixed cells plus the six cells of the pilot's selection.json (whose
+    * sha256 must equal `expectedSelectionSha`), R = 20000, B = 999, confirmation roots 2026100201-05, the power
+    * stream on the four declared power cells only, both ceilings 15 core-hours. The selection is read, never
+    * recomputed.
+    */
+  def confirmation(repo: Path, threads: Int, selection: Path, expectedSelectionSha: String = PilotSelectionSha256): Either[PilotRefusal, PilotConfig] =
+    val bytes =
+      try Right(Files.readAllBytes(selection))
+      catch case e: java.io.IOException => Left(PilotRefusal.Failure(s"cannot read selection file: ${e.getMessage}"))
+    bytes.flatMap { b =>
+      val found = java.security.MessageDigest.getInstance("SHA-256").digest(b).map(x => f"${x & 0xff}%02x").mkString
+      if found != expectedSelectionSha then Left(PilotRefusal.SelectionHashMismatch(found, expectedSelectionSha))
+      else
+        val text = new String(b, UTF_8)
+        val listed = "\"selected\":\\[([^\\]]*)\\]".r.findFirstMatchIn(text).map(_.group(1)).getOrElse("")
+        val names = "\"([^\"]+)\"".r.findAllMatchIn(listed).map(_.group(1)).toVector
+        val parsed = names.map(n => CellId.parse(n).toOption.flatMap(Cell.byId))
+        if parsed.exists(_.isEmpty) then Left(PilotRefusal.WrongConfirmationCells("selection names an unknown cell"))
+        else
+          val fixed = CellManifest.FixedConfirmation.flatMap(Cell.byId)
+          val all = fixed ++ parsed.flatten
+          if all.length != 12 || all.map(_.id).distinct.length != 12 || !all.forall(_.family == Family.Core) then
+            Left(PilotRefusal.WrongConfirmationCells(s"need exactly 12 distinct core cells (6 fixed + 6 selected), got ${all.length} (${all.map(_.id).distinct.length} distinct)"))
+          else
+            Right(PilotConfig(
+              repo = repo,
+              output = ConfirmationOutput,
+              cells = all,
+              powerCells = CellManifest.PowerCells.toSet,
+              studies = Decision.Studies,
+              draws = 999,
+              phase = Phase.Confirmation,
+              nullSchemes = Scheme.values.toVector,
+              powerSchemes = Scheme.values.toVector.filter(_.role == SchemeRole.Candidate),
+              threads = threads,
+              ceilingCoreHours = 15.0,
+              calibrationStudies = 2,
+              requireCleanWorktree = true,
+              selectConfirmation = false,
+              runtimeCeilingCoreHours = 15.0,
+              extraStamp = Vector("selection_sha256" -> found, "pilot_output_tree_digest" -> PilotOutputTreeDigest)
+            ))
+    }
 
 final case class PilotReport(projectedCoreHours: Double, cellsRun: Int, cellsSkipped: Int, selectionFile: Option[Path], cpuSeconds: Double, wallSeconds: Double)
 
@@ -157,7 +211,7 @@ object PilotRunner:
         "null_schemes" -> config.nullSchemes.map(_.code).mkString("+"),
         "power_schemes" -> config.powerSchemes.map(_.code).mkString("+"),
         "selection_rule" -> SelectionRule.Version
-      ))
+      ) ++ config.extraStamp)
 
   /** Process CPU time in ns (all JVM threads, conservative), or None when the platform bean is unavailable. */
   def processCpuNanos(): Option[Long] =
