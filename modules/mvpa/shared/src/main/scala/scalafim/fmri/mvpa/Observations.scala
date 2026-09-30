@@ -15,7 +15,7 @@ import multivar.core.{
   ValueIdentity
 }
 import resample4s.core.Reindexing
-import scalafim.response.{Provenance, ProvenanceId, ProvenanceNode, ProvenanceOperation, SourceId}
+import scalafim.response.{Provenance, ProvenanceEvidence, ProvenanceId, ProvenanceNode, ProvenanceOperation, SourceId}
 
 final class EvidenceSource private (
     val sourceId: SourceId,
@@ -58,7 +58,67 @@ final case class EvidenceIdentity(
     provenanceRoots: Vector[ProvenanceId],
     values: ValueIdentity,
     origins: EvidenceOrigins
-)
+):
+  /** Complete, versioned metadata framing. Support can be unknown without
+    * erasing the independently retained source and provenance declarations.
+    * This binds declared evidence; it does not verify payload contents.
+    */
+  private[mvpa] def writeFramed(writer: AxisDigest.Writer): Unit =
+    writer.string("scalafim.mvpa.evidence-identity.v1")
+    writer.string(rows.stableKey)
+    writer.string(columns.stableKey)
+    writer.string(source.value)
+    writer.intLE(provenanceNodes.length)
+    provenanceNodes.foreach: node =>
+      writer.string(node.id.value)
+      node.operation match
+        case ProvenanceOperation.SourceRead(id) =>
+          writer.string("source-read")
+          writer.string(id.value)
+        case ProvenanceOperation.Selection => writer.string("selection")
+        case ProvenanceOperation.Assembly => writer.string("assembly")
+        case ProvenanceOperation.Adapter(id) =>
+          writer.string("adapter")
+          writer.string(id.value)
+        case ProvenanceOperation.Derived(id) =>
+          writer.string("derived")
+          writer.string(id.value)
+      writer.intLE(node.parents.length)
+      node.parents.foreach(parent => writer.string(parent.value))
+      writer.intLE(node.evidence.length)
+      node.evidence.foreach:
+        case ProvenanceEvidence.Domain(reference) =>
+          writer.string("domain")
+          writer.string(reference.namespace.value)
+          writer.string(reference.value)
+        case ProvenanceEvidence.External(reference) =>
+          writer.string("external")
+          writer.string(reference.namespace.value)
+          writer.string(reference.value)
+        case ProvenanceEvidence.NoneDeclared => writer.string("none-declared")
+    writer.intLE(provenanceRoots.length)
+    provenanceRoots.foreach(root => writer.string(root.value))
+    EvidenceIdentity.writeValues(writer, values)
+    origins.writeFramed(writer)
+
+object EvidenceIdentity:
+  private def writeValues(writer: AxisDigest.Writer, value: ValueIdentity): Unit =
+    value match
+      case ValueIdentity.Source(id) =>
+        writer.string("source")
+        writer.string(id.value)
+      case ValueIdentity.Adjoint(of) =>
+        writer.string("adjoint")
+        writeValues(writer, of)
+      case ValueIdentity.Composition(first, second) =>
+        writer.string("composition")
+        writeValues(writer, first)
+        writeValues(writer, second)
+      case ValueIdentity.Derived(operation, inputs) =>
+        writer.string("derived")
+        writer.string(operation)
+        writer.intLE(inputs.length)
+        inputs.foreach(writeValues(writer, _))
 
 final case class EvidenceRecord(
     rows: AxisRecord,

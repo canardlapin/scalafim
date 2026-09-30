@@ -108,10 +108,7 @@ final class EvidenceExposure private (
 
   def hasObservedScores(scope: ExposureScope): Boolean =
     events.exists: event =>
-      event.request.payload == ExposurePayload.DerivedScore && event.request.scope.canOverlap(scope) &&
-        (event.outcome match
-          case ExposureOutcome.Succeeded | ExposureOutcome.PartiallyReturned(_, _) => true
-          case ExposureOutcome.Failed(_) => false)
+      event.request.payload == ExposurePayload.DerivedScore && event.request.scope.canOverlap(scope)
 
   /** A callback failure is still an access attempt. It cannot support an
     * untouched claim for any potentially overlapping population. */

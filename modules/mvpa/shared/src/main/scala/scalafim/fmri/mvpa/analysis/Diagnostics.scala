@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.analysis
 
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, AxisSignature, EvidenceError}
+import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, AxisSignature, EvidenceError}
 
 /** Stable, machine-readable failure facts for bounded diagnostic requests. */
 enum DiagnosticError:
@@ -119,8 +119,8 @@ final case class PlanDescription(
     nextMetadata: Option[PlanMetadataContinuation]
 )
 
-final class PlanMetadataContinuation private[analysis] (val plan: PlanId, val ordinal: Int)
-final class PlanExplanationContinuation private[analysis] (val plan: PlanId, val ordinal: Int)
+final class PlanMetadataContinuation private[analysis] (val plan: PlanId, val context: String, val ordinal: Int)
+final class PlanExplanationContinuation private[analysis] (val plan: PlanId, val context: String, val ordinal: Int)
 
 enum PlanChange:
   case SourceIdentity, DesignIdentity, FrameIdentity, Question, Assumptions, Preparation, Reduction, Parameters, Estimand, RequiredCapabilities, SourceCapabilities
@@ -203,9 +203,10 @@ object Diagnostics:
     val required = specification.requiredCapabilities.toVector.sortBy(_.text)
     val provided = specification.sourceCapabilities.values.values.toVector.sortBy(_.id.text)
     val admittedCapabilities = admitted(specification, available, provided).values.values.toVector.sortBy(_.id.text)
+    val context = contextFingerprint(specification, available)
     val size = Vector(specification.sourceAxes.size, specification.assumptions.size,
       specification.preparation.size, specification.estimandParameters.size, required.size, provided.size).max
-    planPage(specification.plan, size, limit, continuation.map(value => value.plan -> value.ordinal)).map: (start, until) =>
+    planPage(specification.plan, context, size, limit, continuation.map(value => (value.plan, value.context, value.ordinal))).map: (start, until) =>
       PlanDescription(
         specification.plan, specification.estimandId, specification.sourceAxes.slice(start, until),
         specification.designAxis, specification.frameAxis, specification.sourceIdentity,
@@ -214,7 +215,7 @@ object Diagnostics:
         specification.reduction, specification.estimandParameters.slice(start, until),
         required.slice(start, until).toSet, CapabilitySet.from(admittedCapabilities.slice(start, until)),
         Vector("neural values, fitted statistics, payload verification, and realization cost are unknown until an explicit scoped operation"),
-        size, if until < size then Some(new PlanMetadataContinuation(specification.plan, until)) else None
+        size, if until < size then Some(new PlanMetadataContinuation(specification.plan, context, until)) else None
       )
 
   def inspectIdentity(receipt: EvidenceReceipt): ContentIdentity = ContentIdentity.from(receipt)
@@ -248,7 +249,8 @@ object Diagnostics:
       continuation: Option[PlanExplanationContinuation] = None
   ): Either[DiagnosticError, PlanExplanation] =
     val missing = admitted(specification, available, specification.sourceCapabilities.values.values.toVector).missing(specification.requiredCapabilities).toVector.sortBy(_.text)
-    planPage(specification.plan, missing.size, limit, continuation.map(value => value.plan -> value.ordinal)).map: (start, until) =>
+    val context = contextFingerprint(specification, available)
+    planPage(specification.plan, context, missing.size, limit, continuation.map(value => (value.plan, value.context, value.ordinal))).map: (start, until) =>
       val blockers = missing.slice(start, until).map: capability =>
         val sourceAbsent = !specification.sourceCapabilities.contains(capability)
         DiagnosticIssue("analysis.missing-source-capability", "binding", capability.text,
@@ -258,7 +260,19 @@ object Diagnostics:
       val operations =
         if missing.isEmpty then Vector("inspect metadata", "capability preflight passed; method binding remains a separate operation")
         else Vector("inspect metadata", "obtain the missing source declaration or caller-available capability, then rerun capability preflight")
-      PlanExplanation(blockers, missing.size, if until < missing.size then Some(new PlanExplanationContinuation(specification.plan, until)) else None, operations)
+      PlanExplanation(blockers, missing.size, if until < missing.size then Some(new PlanExplanationContinuation(specification.plan, context, until)) else None, operations)
+
+  private def contextFingerprint[S, D, F, E <: Estimand[S, D, F]](specification: AnalysisSpecification[S, D, F, E], available: CapabilitySet): String =
+    AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.mvpa.diagnostics-capability-context.v1")
+      def write(values: CapabilitySet): Unit =
+        val ordered = values.values.values.toVector.sortBy(_.id.text)
+        writer.intLE(ordered.size)
+        ordered.foreach: capability =>
+          writer.string(capability.id.text)
+          writer.string(capability.detail)
+      write(specification.sourceCapabilities)
+      write(available)
 
   private def admitted[S, D, F, E <: Estimand[S, D, F]](
       specification: AnalysisSpecification[S, D, F, E],
@@ -269,12 +283,13 @@ object Diagnostics:
 
   private def planPage(
       plan: PlanId,
+      context: String,
       size: Int,
       limit: Int,
-      continuation: Option[(PlanId, Int)]
+      continuation: Option[(PlanId, String, Int)]
   ): Either[DiagnosticError, (Int, Int)] =
-    if continuation.exists(_._1 != plan) then Left(DiagnosticError.ContinuationTargetMismatch)
-    else page(size, limit, continuation.map(_._2))
+    if continuation.exists(value => value._1 != plan || value._2 != context) then Left(DiagnosticError.ContinuationTargetMismatch)
+    else page(size, limit, continuation.map(_._3))
 
   private def page(size: Int, limit: Int, continuation: Option[Int]): Either[DiagnosticError, (Int, Int)] =
     val start = continuation.getOrElse(0)

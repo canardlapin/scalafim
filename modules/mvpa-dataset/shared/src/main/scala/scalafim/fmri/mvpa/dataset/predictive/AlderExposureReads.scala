@@ -12,6 +12,7 @@ enum AlderExposureReadResult[+M]:
   case Refused(error: ExposureError, exposure: EvidenceExposure)
   case PreflightFailed(error: AlderPredictiveAdmissionError, exposure: EvidenceExposure)
   case ReadFailed(error: AlderPredictiveAdmissionError, exposure: EvidenceExposure)
+  case CallbackFailed(detail: String, exposure: EvidenceExposure)
   case Read(rows: AlderMaterializedRows[M], exposure: EvidenceExposure)
 
 /** Exposure-aware entry point for native semantic tables.
@@ -34,16 +35,14 @@ object AlderExposureReads:
   ): ExposureReference =
     val evidence = AxisDigest.sha256Hex: writer =>
       writer.string("scalafim.mvpa.alder-exposure-evidence.v1")
-      writeIdentity(writer, observations.identity)
-      writeIdentity(writer, targets.identity)
+      observations.identity.writeFramed(writer)
+      targets.identity.writeFramed(writer)
       writer.string(mapping.declaredMappingIdentity.policy.toString)
       writer.string(mapping.declaredMappingIdentity.digest)
     val provenance = AxisDigest.sha256Hex: writer =>
-      writer.string("scalafim.mvpa.alder-exposure-provenance.v1")
-      observations.identity.provenanceRoots.foreach(root => writer.string(root.value))
-      observations.identity.provenanceNodes.foreach(node => writer.string(node.id.value))
-      targets.identity.provenanceRoots.foreach(root => writer.string(root.value))
-      targets.identity.provenanceNodes.foreach(node => writer.string(node.id.value))
+      writer.string("scalafim.mvpa.alder-exposure-complete-identity.v1")
+      observations.identity.writeFramed(writer)
+      targets.identity.writeFramed(writer)
     ExposureReference(plan, evidence, provenance, result)
 
   def nativeTables[S <: SemanticSpace, N <: SemanticSpace, F <: SemanticSpace, M](
@@ -91,11 +90,7 @@ object AlderExposureReads:
               case ExposureAttempt.Failed(_, current) =>
                 native match
                   case Some(Left(error)) => AlderExposureReadResult.ReadFailed(error, current)
-                  case _ => AlderExposureReadResult.ReadFailed(AlderPredictiveAdmissionError.MatrixNativeRidgeUnavailable, current)
-
-  private def writeIdentity(writer: AxisDigest.Writer, identity: scalafim.fmri.mvpa.EvidenceIdentity): Unit =
-    writer.string(identity.rows.coordinateSignature.value)
-    writer.string(identity.columns.coordinateSignature.value)
-    writer.string(identity.source.value)
-    writer.string(identity.values.toString)
-    writer.string(identity.origins.identityDigest)
+                  case _ =>
+                    controlled match
+                      case ExposureAttempt.Failed(detail, _) => AlderExposureReadResult.CallbackFailed(detail, current)
+                      case _ => AlderExposureReadResult.CallbackFailed("native callback failed without an adapter result", current)

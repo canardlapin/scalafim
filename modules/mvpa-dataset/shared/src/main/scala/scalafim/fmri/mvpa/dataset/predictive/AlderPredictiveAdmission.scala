@@ -3,11 +3,10 @@ package scalafim.fmri.mvpa.dataset.predictive
 import alder.data.{CompleteResampler, FixedCoverage, FixedHoldout, FixedTrainValidationTest, FixedValidation, IdentifiedRows, Resample4sResampler}
 import alder.kernel.{DataFingerprint, Example, FingerprintPolicy}
 import gale.linalg.DMat
-import multivar.core.{SemanticSpace, ValueIdentity}
+import multivar.core.SemanticSpace
 import resample4s.core.{DigestAlgorithm, Labels, PlanReceipt}
 import resample4s.designs.FixedPartitions
 import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, MultiResponse, Observations}
-import scalafim.response.ProvenanceOperation
 import scala.util.control.NonFatal
 
 final case class NativeAxisEntry private[predictive] (stableKey: String, nativeId: Long)
@@ -290,53 +289,9 @@ object AlderPredictiveAdmission:
       writer.string(mapping.declaredMappingIdentity.digest)
       writer.string(metadata.policy.toString)
       writer.string(metadata.digest)
-      writeEvidenceIdentity(writer, observations.identity)
-      writeEvidenceIdentity(writer, targets.identity)
+      observations.identity.writeFramed(writer)
+      targets.identity.writeFramed(writer)
     )
-
-  private def writeEvidenceIdentity(writer: AxisDigest.Writer, identity: scalafim.fmri.mvpa.EvidenceIdentity): Unit =
-    writer.string(identity.rows.coordinateSignature.value)
-    writer.string(identity.columns.coordinateSignature.value)
-    writer.string(identity.source.value)
-    writer.intLE(identity.provenanceNodes.length)
-    identity.provenanceNodes.foreach: node =>
-      writer.string(node.id.value)
-      node.operation match
-        case ProvenanceOperation.SourceRead(source) =>
-          writer.string("source-read")
-          writer.string(source.value)
-        case ProvenanceOperation.Selection => writer.string("selection")
-        case ProvenanceOperation.Assembly => writer.string("assembly")
-        case ProvenanceOperation.Adapter(adapter) =>
-          writer.string("adapter")
-          writer.string(adapter.value)
-        case ProvenanceOperation.Derived(operation) =>
-          writer.string("derived")
-          writer.string(operation.value)
-      writer.intLE(node.parents.length)
-      node.parents.foreach(parent => writer.string(parent.value))
-    writer.intLE(identity.provenanceRoots.length)
-    identity.provenanceRoots.foreach(root => writer.string(root.value))
-    writeValueIdentity(writer, identity.values)
-    identity.origins.writeFramed(writer)
-
-  private def writeValueIdentity(writer: AxisDigest.Writer, identity: ValueIdentity): Unit =
-    identity match
-      case ValueIdentity.Source(id) =>
-        writer.string("source")
-        writer.string(id.value)
-      case ValueIdentity.Adjoint(of) =>
-        writer.string("adjoint")
-        writeValueIdentity(writer, of)
-      case ValueIdentity.Composition(first, second) =>
-        writer.string("composition")
-        writeValueIdentity(writer, first)
-        writeValueIdentity(writer, second)
-      case ValueIdentity.Derived(operation, inputs) =>
-        writer.string("derived")
-        writer.string(operation)
-        writer.intLE(inputs.length)
-        inputs.foreach(writeValueIdentity(writer, _))
 
   def crossFit[S <: SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: CrossFitDesign[S, K])(using DigestAlgorithm): Either[AlderPredictiveAdmissionError, NativeCrossFitBridge[Example[Array[Double], Array[Double], M]]] =
     if rows.mapping.axis != design.samples.descriptor || rows.root.ids != rows.mapping.nativeIds then Left(AlderPredictiveAdmissionError.CrossFitPopulationMismatch)

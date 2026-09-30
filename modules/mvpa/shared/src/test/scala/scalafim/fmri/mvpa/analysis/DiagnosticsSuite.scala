@@ -164,5 +164,11 @@ final class DiagnosticsSuite extends FunSuite:
     assertEquals(first.assumptions, assumptions.take(128))
     val second = Diagnostics.inspect(plan, CapabilitySet.empty, 128, first.nextMetadata).toOption.get
     assertEquals(second.assumptions, assumptions.slice(128, 256))
+    assertEquals(Diagnostics.inspect(plan, replayAvailable, 128, first.nextMetadata), Left(DiagnosticError.ContinuationTargetMismatch))
+    val changedSource = new PoisonSource
+    changedSource.capabilities = replayAvailable
+    val changedCapabilities = AnalysisSpecification.from(changedSource, Design("d"), Frame("f"), EstimandUnderTest, "q", assumptions, Vector.empty, "pooled")
+    assertEquals(plan.plan, changedCapabilities.plan)
+    assertEquals(Diagnostics.inspect(changedCapabilities, CapabilitySet.empty, 128, first.nextMetadata), Left(DiagnosticError.ContinuationTargetMismatch))
     assertEquals(Diagnostics.inspect(plan, CapabilitySet.empty, Int.MaxValue), Left(DiagnosticError.LimitExceedsMaximum(Int.MaxValue, 1024)))
     assertEquals(Diagnostics.inspect(plan, CapabilitySet.empty, 0), Left(DiagnosticError.InvalidLimit(0)))

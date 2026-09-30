@@ -56,6 +56,18 @@ class EvidenceExposureSuite extends FunSuite:
       case other => fail(s"expected failed access record, got $other")
     assertEquals(ExposureControl.untouchedConfirmation(advanced, ExposureScope.Holdout), Left(AdaptiveSelectionDependency.DependsOnObservedScores))
 
+  test("failed score attempts remain uncertain through DTO reconstruction"):
+    val current = EvidenceExposure.internal(ExposureReference(plan, "evidence-v1", "provenance-v1", ResultIdentity("result-v1")))
+    val request = read(ExposureScope.Holdout, ExposurePayload.DerivedScore, ExposurePurpose.DerivedScoreView)
+    val left = ExposureControl.read(current, ExposureControl.permit(current, request).toOption.get, request)(Left("score provider failed")) match
+      case ExposureAttempt.Failed(_, next) => next
+      case other => fail(s"expected failed score, got $other")
+    assertEquals(ExposureControl.untouchedConfirmation(EvidenceExposureDto.reconstruct(EvidenceExposureDto.from(left)).toOption.get, ExposureScope.Holdout), Left(AdaptiveSelectionDependency.DependsOnObservedScores))
+    val thrown = ExposureControl.read(current, ExposureControl.permit(current, request).toOption.get, request)(throw IllegalStateException("score callback threw")) match
+      case ExposureAttempt.Failed(_, next) => next
+      case other => fail(s"expected thrown score failure, got $other")
+    assertEquals(ExposureControl.untouchedConfirmation(thrown, ExposureScope.Holdout), Left(AdaptiveSelectionDependency.DependsOnObservedScores))
+
   test("permits are stale after an immutable record advances"):
     val current = exposure
     val request = read(ExposureScope.WholePopulation)
