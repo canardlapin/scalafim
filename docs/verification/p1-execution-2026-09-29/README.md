@@ -420,3 +420,22 @@ renewed source/provider freeze review and parent seed-history confirmation
 remain required before fresh qualification. A separate seven-path executor
 consumer seam is implementing an explicit typed public conditional-output
 view; legacy raw behavior and the early ML refusal remain unchanged.
+
+## Compact output integration and native ML review (latest)
+
+Compact shared-U NIfTI output candidate `40c4a83c` is independently accepted
+and integrated as `d2ab88cc`. Its exact 42 source/blob hashes remain unchanged
+after the actual integrated gate: estimates13/13, IO44/9, fit-estimates17/13,
+group75/74 on JVM/JS, followed by warning-clean CompileAll (exit0,189.525226s).
+The embedded compact qualification archive retains the source/provider/runtime
+closure, independent scalar/U/support readback and 34 expected process exits.
+This closes the bounded compact milestone; HDF estimate persistence, pooled and
+legacy producer/workflow adoption, broader access and power-loss gates remain open.
+
+Native ML candidate `6a5d0838` has one material accounting blocker: it counts
+pre-factor validation refusal as an N factor attempt/failure. Its 55 focused
+tests and nine laws each platform plus compilation passed under local Gale,
+but acceptance waits for actual factory-work mapping and a discriminating
+regression. The independent review supports the bounded determinant and energy
+mathematics. The original candidate, mutant history and verdict are archived;
+no native executor admission, hosted pin, calibration or performance claim follows.

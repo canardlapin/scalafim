@@ -232,7 +232,27 @@
       "freshLaunched": false,
       "fullFrozen200Launched": false,
       "actual100kLaunched": false
+    },
+    {
+      "commit": "40c4a83cd8decae895751b0f07d0c657f532343b",
+      "verdict": "AcceptBoundedCompactSharedUNiftiOutput",
+      "integrationCommit": "d2ab88ccfe2ca2b7c6b7fb66883a7995ba5cbfb3",
+      "integratedChecks": "estimates13/13 IO44/9 fitEstimates17/13 group75/74 and warning-clean CompileAll",
+      "parentReceiptSha256": "ce6f5d25910feda5dec12705bf499453fcea0a29f70d70ead168186be949a11d",
+      "fullCoreTicketClosed": false
+    },
+    {
+      "commit": "6a5d0838728f4b44ea312b9c6e5d024376709901",
+      "verdict": "RequestChangesFactorAttemptAccounting",
+      "findings": [
+        "pre-factor construction refusal counted as Gale N factor attempt/failure; must consume accepted-band factory actual work into both counter families"
+      ],
+      "boundedMathBlockerFound": false,
+      "checks": "55 focused+9 laws each; warning-clean CompileAll local Gale override",
+      "repairReturnedNormally": true,
+      "nativeBackendAdmitted": false,
+      "hostedProviderAdmitted": false
     }
   ],
-  "updatedUtc": "2026-09-30T07:03:56.775751+00:00"
+  "updatedUtc": "2026-09-30T07:32:11.726928+00:00"
 }
