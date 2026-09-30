@@ -1,5 +1,39 @@
 # ProfileHrf condition milestone (PHRF-21)
 
+## Current status, 2026-09-30
+
+PHRF-21 is **open for requalification**. The 2026-09-10 measurements and verdict
+below are retained as historical evidence. They do not qualify the current
+decoder, certified preparation, or supported execution paths.
+
+The bounded Gaussian precision repair and independent development evidence are
+recorded in [the precision report](../verification/condition-stationarity-roundoff-20260930.md).
+With unchanged scientific gates and the preregistered twelve-jet candidate,
+the frozen 200-response development cells admit JVM 191/200 and 195/200 and
+Scala.js 192/200 and 195/200 at SNR 1 and .5, respectively. All four development
+accuracy gates and both six-response reference-search panels pass. Nineteen
+candidate admission statuses differ between platforms; deterministic admission
+parity and universal convergence are not established.
+
+The [reviewed pre-fresh audit](../verification/condition-c0-prefresh-20260930.md)
+finds the prospective roots unobserved within the named recorded C0 ledger.
+The whole previously consumed `7000930101` stream remains development-only.
+Fresh SNR 1/.5/.25 roots remain `7000930201`/`7000930102`/`7000930103`; .25 is
+reported only. Fresh response generation requires the final integrated
+source/provider/executable/protocol/launcher manifest's independent review and
+the responsible custodian's stream-history disposition. Candidate development
+evidence and a matching CLI freeze string do not establish that review.
+
+Current unresolved milestone gates are fresh Gaussian validation, corrected
+LWU qualification (including its historical 83% admission at SNR .5), end-to-end
+weak/prior/boundary and certified-geometry dispositions, actual supported
+100,000-voxel compute and complete engine-memory measurements, retention and
+external output IO, and current workflow evidence. Interval calibration remains
+PHRF-14. The historical 9.0-second timing and memory estimate below are not a
+current performance or memory receipt.
+
+## Historical evidence, 2026-09-10
+
 Date: 2026-09-10. Cohort and host: [profile-hrf-cohorts.md](profile-hrf-cohorts.md).
 Evidence: `ConditionMilestoneSuite` in `first-level-laws` (both platforms),
 `ConditionProfileBenchmark` (JMH), and the runnable example
