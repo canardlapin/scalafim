@@ -1,0 +1,8 @@
+{
+  "checkpoint": 500,
+  "verdict": "prespecified_calibration_rejection",
+  "wall_seconds": 1292.4425801670004,
+  "inputs": [
+    "/private/tmp/scalafim-rrg-calibration/fresh-500.jsonl"
+  ]
+}

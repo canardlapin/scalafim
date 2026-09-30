@@ -1,0 +1,205 @@
+{
+  "schema": "voxelwise-rrg-calibration-receipt-v1",
+  "created_utc": "2026-09-30T09:32:16.308627+00:00",
+  "issue": "bd-01M3RP66GV5KKHCC0MTN1FBZ9K",
+  "source_branch_base": "8a18961a059be5b0339cefb51fd4d86958f83e00",
+  "integration_root_base": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+  "source_binding": "source-freeze.json plus integration-source-overlay.tar.gz; dependency pins and clean-source status in staging-isolation.json",
+  "executable_binding": "frozen-classpath.json; all 56 entries privately copied before simulation",
+  "qualification": {
+    "checkpoint": 500,
+    "verdict": "prespecified_calibration_rejection",
+    "wall_seconds": 1292.4425801670004,
+    "inputs": [
+      "/private/tmp/scalafim-rrg-calibration/fresh-500.jsonl"
+    ]
+  },
+  "phases": {
+    "development": {
+      "attempts": 3400,
+      "successes": 3400,
+      "requested_replicates": 1356600,
+      "completed_replicates": 1356600,
+      "input_datasets": 400,
+      "failures": 0
+    },
+    "fresh": {
+      "attempts": 2000,
+      "successes": 2000,
+      "requested_replicates": 1998000,
+      "completed_replicates": 1998000,
+      "input_datasets": 2000,
+      "failures": 0
+    },
+    "stress": {
+      "attempts": 600,
+      "successes": 600,
+      "requested_replicates": 239400,
+      "completed_replicates": 239400,
+      "input_datasets": 600,
+      "failures": 0
+    }
+  },
+  "checks": [
+    {
+      "name": "integration-compile",
+      "exit_code": 0,
+      "passing_tests": 0,
+      "warnings": 0,
+      "log_sha256": "3c1c80450e827e26de74932c2fcdca42e3aaf918f621140372df32d7d74bda06",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-09-30T08:20:50.314459+00:00",
+        "finished_utc": "2026-09-30T08:26:45.955991+00:00",
+        "duration_seconds": 355.637927,
+        "command": [
+          "sbt",
+          "-J-Xmx3g",
+          "-J-XX:ActiveProcessorCount=4",
+          "scalafimCompileAll"
+        ],
+        "cwd": "/private/tmp/scalafim-rrg-calibration/integration",
+        "log": "/private/tmp/scalafim-rrg-calibration/integration-compile.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 24119
+      }
+    },
+    {
+      "name": "integration-jvm",
+      "exit_code": 0,
+      "passing_tests": 86,
+      "warnings": 0,
+      "log_sha256": "f9e0f9520966a174b4bab59697ef52a4b16c3da639b7cbcdbe955989550442c3",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-09-30T08:31:10.493240+00:00",
+        "finished_utc": "2026-09-30T08:32:22.543223+00:00",
+        "duration_seconds": 72.048621,
+        "command": [
+          "sbt",
+          "-J-Xmx3g",
+          "-J-XX:ActiveProcessorCount=4",
+          "modelJVM/testOnly *VoxelwiseReducedRankConfigSuite",
+          "fitJVM/testOnly *VoxelwiseReducedRank*Suite *ChunkedFitExecutorSuite *ResultManifestWriterSuite",
+          "fitEstimatesJVM/test"
+        ],
+        "cwd": "/private/tmp/scalafim-rrg-calibration/integration",
+        "log": "/private/tmp/scalafim-rrg-calibration/integration-jvm.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 18459
+      }
+    },
+    {
+      "name": "integration-js-02",
+      "exit_code": 0,
+      "passing_tests": 74,
+      "warnings": 0,
+      "log_sha256": "aca9cc94cc9ab56c9d45abee5df6af6cf2dd63865982f291df47b69ea4667a77",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-09-30T08:35:57.416684+00:00",
+        "finished_utc": "2026-09-30T08:37:57.258885+00:00",
+        "duration_seconds": 119.841346,
+        "command": [
+          "sbt",
+          "-J-Xmx3g",
+          "-J-XX:ActiveProcessorCount=4",
+          "-Dscalafim.graph4s.build=/private/tmp/scalafim-rrg-calibration/graph4s-pinned",
+          "modelJS/testOnly *VoxelwiseReducedRankConfigSuite",
+          "fitJS/testOnly *VoxelwiseReducedRank*Suite *ChunkedFitExecutorSuite",
+          "fitEstimatesJS/test"
+        ],
+        "cwd": "/private/tmp/scalafim-rrg-calibration/integration",
+        "log": "/private/tmp/scalafim-rrg-calibration/integration-js-02.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 1200.0,
+        "log_bytes": 18582
+      }
+    },
+    {
+      "name": "harness-tests-05",
+      "exit_code": 0,
+      "passing_tests": 15,
+      "warnings": 0,
+      "log_sha256": "7956ba81b8533345ae1d47901787f6a664ad13d89430d62c1fd56c2c33210ae3",
+      "metadata": {
+        "schema_version": 1,
+        "started_utc": "2026-09-30T08:55:41.314131+00:00",
+        "finished_utc": "2026-09-30T08:56:17.478727+00:00",
+        "duration_seconds": 36.164211,
+        "command": [
+          "sbt",
+          "-J-Xmx3g",
+          "-J-XX:ActiveProcessorCount=4",
+          "-Dsbt.global.staging=/private/tmp/scalafim-rrg-calibration/staging",
+          "-Dscalafim.graph4s.build=/private/tmp/scalafim-rrg-calibration/graph4s-pinned",
+          "fitJVM/testOnly *VoxelwiseReducedRankParametricSuite",
+          "export fitJVM / Test / fullClasspath"
+        ],
+        "cwd": "/private/tmp/scalafim-rrg-calibration/integration",
+        "log": "/private/tmp/scalafim-rrg-calibration/harness-tests-05.log",
+        "exit_code": 0,
+        "child_returncode": 0,
+        "reason": "exited",
+        "detail": null,
+        "timeout_seconds": 900.0,
+        "log_bytes": 11425
+      }
+    }
+  ],
+  "scope": "Diagnostic-only Gaussian diagonal AR1 fixedrank prototype; no inference promotion, no production policy change, no merge or push. Smoke/pilot remain separate exploratory attempts.",
+  "independent_checks": {
+    "new_JVM_numerical_tests": 15,
+    "python_validator_tests": 11,
+    "archived_point_vectors_exact": 1200,
+    "R_binomial_max_absolute_difference": 1.1102230246251565e-16,
+    "R_fresh_verification": "fresh-r-verification.json"
+  },
+  "artifacts_sha256": {
+    "binomial-oracle.json": "9227887d42fe883be71fb898207c509720d8ff8791ae3cf3dd57908866014e1d",
+    "design.json": "fb54ff1fee6f72c7c1e36544558ebab9b79a69686b84285c017c21a3fba2f066",
+    "development-independent.json": "a13bbfed06caecb7a7779d335c537c60281ec1a95d69eb4dc4767eccfd9e53ef",
+    "development-summary.json": "6ef86499965dacf42d20f5d9fe31994ff58e32aa2d7266c579b2282ef3cf74bc",
+    "development.jsonl.gz": "658a6b3a38a58ff997255d45886c9ddcfa3c95fa3579fd720f50df33439a30ae",
+    "environment.json": "6afc3ce2475b96d03ba52f2a869f0e797d68e74d39b363b6897303efd990467a",
+    "execution-logs.tar.gz": "7ad26315bef770c87e4a9500d10c0fa6a9f5b3721b9062d1eaddf01b00920eaa",
+    "fresh-500-summary.json": "3d02289c5c5401d00d134b773ee6e28580759aef83782fedad8aac80eec94933",
+    "fresh-500.jsonl.gz": "414ca4521821ae760498e3a7c758ee937136ddf17ced87243096ec73d8619014",
+    "fresh-coverage.png": "f2e37a240c8b0d4e5bd0c75f39946ceefa19a16f0bff5287193e8482fc7bd5c8",
+    "fresh-coverage.svg": "0222217261907992931ca5b09809b3ff3ae8f8a8e5302fff491a207eeec86328",
+    "fresh-decision.json": "be682c39f60d39324a2840f1af6226f0820a6225f6e3368dfe244325db961d71",
+    "fresh-r-verification.json": "5584401b0ab2599021c2a050481cc73ec332a9cf89f6ca66424f5f3fed35a68b",
+    "frozen-classpath.json": "ebadd6e1d20004641113996270b2425fe9dae42cda5f8ef6ba7c1b41af0e63ae",
+    "graph4s-cache-isolation.json": "62e4ab349b974e4bc73ee550362dbd11a2600545655a001d3cb4eb25f8697566",
+    "integration-snapshot.json": "a5f5be367002fe4b0233b0843205aa50e5d5b7e9f5b54cae1c0a829b921e6aac",
+    "integration-source-overlay.tar.gz": "cec6e02b10bbf2fb4e664d5428f8645087934cf3aff8c42be91ee416a33d00f5",
+    "parametric-oracle.json": "0572106b0db59ffeb7c744b87d97eb92279dc0f022a4baf916d577ad1a5bcbc4",
+    "plot-calibration.py": "c424e603f39749bb5182a256c234dee699aaa09b5561141b981ec8462b41b407",
+    "reporting-correction.json": "68218410779faed48b1c661ba68ede2e82810a37cb94e0ed06df99370327d968",
+    "review.md": "aaf6a8c31f25317b683ea6c6f2e58d900f3a77ec70da36a2c20c9f55628a5554",
+    "source-freeze.json": "910e69a8fc5fdb3df03889dd9aca63b39a5fc766949a6f5d5d962e0eb7868fc3",
+    "staging-isolation.json": "f58545f0425a61a9541c5c7b71ba8719b4def115090276d374e27b0949dd4799",
+    "stress-summary.json": "46456f3a627b948c5f49ba48731e07bcd0b02742ac0e9d670c39704ccb8ecc2c",
+    "stress.jsonl.gz": "a65e0d5faedf08107c239dbc094789bd4c2e2c9e0ecbed4fa061102602e9f715",
+    "verify-binomial.R": "c60f5ba46393ea866b0f88fd19d78aaabac5846c3cdbb73f9ecfeacfd5baba57",
+    "verify-fresh.R": "1e8cc0b40a12122160d65b9a696a20589e4cc2fde4aba87dceea44538bc79571"
+  },
+  "implementation_sha256": {
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibration.scala": "0c049bbad13382855e54a1e47c57da6be456e09983f09165341f399b55588ec9",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankParametricSuite.scala": "98503baa28ab649abb118bf5a23974b522294d41b35f4a950844032ed580f94d",
+    "tools/qualification/summarize_voxelwise_rrg_calibration.py": "eb128a5a7703f84981cd1440c6fbec3a210a20749db6faabd484b7c2f0fe1dde",
+    "tools/qualification/test_voxelwise_rrg_calibration_summary.py": "629f180713061ca05a675b85d32b47074662ba1cca9b8833cc73446f854ba570",
+    "tools/r-parity/verify_voxelwise_ar_rrg_parametric.R": "6abc661172944c3b1fd126945cdbcc9694d500213ac9c475497b1f020a6705ba"
+  }
+}

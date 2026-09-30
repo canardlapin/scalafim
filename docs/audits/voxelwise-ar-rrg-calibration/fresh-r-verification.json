@@ -1,0 +1,486 @@
+{
+  "r_version": "4.5.1",
+  "verdict": "prespecified_calibration_rejection",
+  "coordinates": [
+    {
+      "scenario": "baseline",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 463,
+      "attempts": 500,
+      "coverage": 0.92600000000000005,
+      "simultaneous_interval": [0.87534678781779063, 0.96121948159203274],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 443,
+      "attempts": 500,
+      "coverage": 0.88600000000000001,
+      "simultaneous_interval": [0.82731527702277852, 0.93076022143593162],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 467,
+      "attempts": 500,
+      "coverage": 0.93400000000000005,
+      "simultaneous_interval": [0.88530079970096887, 0.9669558975975926],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 462,
+      "attempts": 500,
+      "coverage": 0.92400000000000004,
+      "simultaneous_interval": [0.87288026333377577, 0.95976285500887082],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 459,
+      "attempts": 500,
+      "coverage": 0.91800000000000004,
+      "simultaneous_interval": [0.86552860507945262, 0.95534393971220033],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 466,
+      "attempts": 500,
+      "coverage": 0.93200000000000005,
+      "simultaneous_interval": [0.88279843291528848, 0.96553601053002502],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "difference_voxel_0",
+      "covered": 462,
+      "attempts": 500,
+      "coverage": 0.92400000000000004,
+      "simultaneous_interval": [0.87288026333377577, 0.95976285500887082],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "difference_voxel_1",
+      "covered": 455,
+      "attempts": 500,
+      "coverage": 0.91000000000000003,
+      "simultaneous_interval": [0.85582883610967286, 0.94934733958411444],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "difference_voxel_2",
+      "covered": 465,
+      "attempts": 500,
+      "coverage": 0.93000000000000005,
+      "simultaneous_interval": [0.88030554580304454, 0.96410639892840244],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "average_voxel_0",
+      "covered": 466,
+      "attempts": 500,
+      "coverage": 0.93200000000000005,
+      "simultaneous_interval": [0.88279843291528848, 0.96553601053002502],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "average_voxel_1",
+      "covered": 451,
+      "attempts": 500,
+      "coverage": 0.90200000000000002,
+      "simultaneous_interval": [0.846233740210241, 0.94324390630900845],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "baseline",
+      "coordinate": "average_voxel_2",
+      "covered": 464,
+      "attempts": 500,
+      "coverage": 0.92800000000000005,
+      "simultaneous_interval": [0.87782177667309336, 0.96266743894798124],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 469,
+      "attempts": 500,
+      "coverage": 0.93799999999999994,
+      "simultaneous_interval": [0.89033555412401644, 0.9697648517772548],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 411,
+      "attempts": 500,
+      "coverage": 0.82199999999999995,
+      "simultaneous_interval": [0.75431441731732773, 0.87811211471263029],
+      "outside_band": true,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 471,
+      "attempts": 500,
+      "coverage": 0.94199999999999995,
+      "simultaneous_interval": [0.89541328500290007, 0.97252964086451255],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 463,
+      "attempts": 500,
+      "coverage": 0.92600000000000005,
+      "simultaneous_interval": [0.87534678781779063, 0.96121948159203274],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 414,
+      "attempts": 500,
+      "coverage": 0.82799999999999996,
+      "simultaneous_interval": [0.76101320712136733, 0.88319471611163647],
+      "outside_band": true,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 472,
+      "attempts": 500,
+      "coverage": 0.94399999999999995,
+      "simultaneous_interval": [0.89796950840212797, 0.97389417862844874],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "difference_voxel_0",
+      "covered": 463,
+      "attempts": 500,
+      "coverage": 0.92600000000000005,
+      "simultaneous_interval": [0.87534678781779063, 0.96121948159203274],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "difference_voxel_1",
+      "covered": 436,
+      "attempts": 500,
+      "coverage": 0.872,
+      "simultaneous_interval": [0.81101692385247182, 0.91957740603925719],
+      "outside_band": true,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "difference_voxel_2",
+      "covered": 464,
+      "attempts": 500,
+      "coverage": 0.92800000000000005,
+      "simultaneous_interval": [0.87782177667309336, 0.96266743894798124],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "average_voxel_0",
+      "covered": 467,
+      "attempts": 500,
+      "coverage": 0.93400000000000005,
+      "simultaneous_interval": [0.88530079970096887, 0.9669558975975926],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "average_voxel_1",
+      "covered": 409,
+      "attempts": 500,
+      "coverage": 0.81799999999999995,
+      "simultaneous_interval": [0.74986254958687037, 0.87470957610226652],
+      "outside_band": true,
+      "inside_band": false
+    },
+    {
+      "scenario": "strong_ar",
+      "coordinate": "average_voxel_2",
+      "covered": 474,
+      "attempts": 500,
+      "coverage": 0.94799999999999995,
+      "simultaneous_interval": [0.90311953470449569, 0.97658455136029687],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 463,
+      "attempts": 500,
+      "coverage": 0.92600000000000005,
+      "simultaneous_interval": [0.87534678781779063, 0.96121948159203274],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 439,
+      "attempts": 500,
+      "coverage": 0.878,
+      "simultaneous_interval": [0.81797527822785543, 0.92439711260192436],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 462,
+      "attempts": 500,
+      "coverage": 0.92400000000000004,
+      "simultaneous_interval": [0.87288026333377577, 0.95976285500887082],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 460,
+      "attempts": 500,
+      "coverage": 0.92000000000000004,
+      "simultaneous_interval": [0.86797144152060834, 0.95682480445705731],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 445,
+      "attempts": 500,
+      "coverage": 0.89000000000000001,
+      "simultaneous_interval": [0.83201369948563397, 0.93391288547861928],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 468,
+      "attempts": 500,
+      "coverage": 0.93600000000000005,
+      "simultaneous_interval": [0.88781303430330605, 0.96836565622125148],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "difference_voxel_0",
+      "covered": 457,
+      "attempts": 500,
+      "coverage": 0.91400000000000003,
+      "simultaneous_interval": [0.86066485001057758, 0.9523598073006958],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "difference_voxel_1",
+      "covered": 454,
+      "attempts": 500,
+      "coverage": 0.90800000000000003,
+      "simultaneous_interval": [0.85342072101508504, 0.94783100882942506],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "difference_voxel_2",
+      "covered": 466,
+      "attempts": 500,
+      "coverage": 0.93200000000000005,
+      "simultaneous_interval": [0.88279843291528848, 0.96553601053002502],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "average_voxel_0",
+      "covered": 455,
+      "attempts": 500,
+      "coverage": 0.91000000000000003,
+      "simultaneous_interval": [0.85582883610967286, 0.94934733958411444],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "average_voxel_1",
+      "covered": 439,
+      "attempts": 500,
+      "coverage": 0.878,
+      "simultaneous_interval": [0.81797527822785543, 0.92439711260192436],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "multiple_runs",
+      "coordinate": "average_voxel_2",
+      "covered": 464,
+      "attempts": 500,
+      "coverage": 0.92800000000000005,
+      "simultaneous_interval": [0.87782177667309336, 0.96266743894798124],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 457,
+      "attempts": 500,
+      "coverage": 0.91400000000000003,
+      "simultaneous_interval": [0.86066485001057758, 0.9523598073006958],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 444,
+      "attempts": 500,
+      "coverage": 0.88800000000000001,
+      "simultaneous_interval": [0.82966203079137757, 0.93233905243662818],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 463,
+      "attempts": 500,
+      "coverage": 0.92600000000000005,
+      "simultaneous_interval": [0.87534678781779063, 0.96121948159203274],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 460,
+      "attempts": 500,
+      "coverage": 0.92000000000000004,
+      "simultaneous_interval": [0.86797144152060834, 0.95682480445705731],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 441,
+      "attempts": 500,
+      "coverage": 0.88200000000000001,
+      "simultaneous_interval": [0.82263607880901812, 0.92758801369780886],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 473,
+      "attempts": 500,
+      "coverage": 0.94599999999999995,
+      "simultaneous_interval": [0.90053805080634508, 0.9752460321903359],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "difference_voxel_0",
+      "covered": 460,
+      "attempts": 500,
+      "coverage": 0.92000000000000004,
+      "simultaneous_interval": [0.86797144152060834, 0.95682480445705731],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "difference_voxel_1",
+      "covered": 457,
+      "attempts": 500,
+      "coverage": 0.91400000000000003,
+      "simultaneous_interval": [0.86066485001057758, 0.9523598073006958],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "difference_voxel_2",
+      "covered": 451,
+      "attempts": 500,
+      "coverage": 0.90200000000000002,
+      "simultaneous_interval": [0.846233740210241, 0.94324390630900845],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "average_voxel_0",
+      "covered": 455,
+      "attempts": 500,
+      "coverage": 0.91000000000000003,
+      "simultaneous_interval": [0.85582883610967286, 0.94934733958411444],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "average_voxel_1",
+      "covered": 439,
+      "attempts": 500,
+      "coverage": 0.878,
+      "simultaneous_interval": [0.81797527822785543, 0.92439711260192436],
+      "outside_band": false,
+      "inside_band": false
+    },
+    {
+      "scenario": "censor_continuous",
+      "coordinate": "average_voxel_2",
+      "covered": 464,
+      "attempts": 500,
+      "coverage": 0.92800000000000005,
+      "simultaneous_interval": [0.87782177667309336, 0.96266743894798124],
+      "outside_band": false,
+      "inside_band": false
+    }
+  ]
+}

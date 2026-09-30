@@ -1,0 +1,341 @@
+{
+  "frozen_utc": "2026-09-30T08:56:31.975486+00:00",
+  "entries": [
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/fit/jvm/target/scala-3.7.4/test-classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/000-classes.jar",
+      "sha256": "50122f504e33cc07d31cbc2c4b25cab324b7e96ff511e90116df6192fef011c8",
+      "bytes": 2752174
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/fit/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/001-classes.jar",
+      "sha256": "a1822c9d8d89687206591a4076cdc95bdbc8772dec8b9bd09babb27230e22e73",
+      "bytes": 4131800
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/model/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/002-classes.jar",
+      "sha256": "f09355c021a1c28c84f7eabc5d4544c518f7064c931959b091a7f9c485fc22ea",
+      "bytes": 731826
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/design/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/003-classes.jar",
+      "sha256": "b1f28fecdd996bed27c14b82af51bf0fa25b5f0e826fff87fb29474752ec5006",
+      "bytes": 3118666
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/hrf/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/004-classes.jar",
+      "sha256": "1bf6240b3966837706f7d0567d9450f32627fe9ac49a11a547a19253a91f892c",
+      "bytes": 1319240
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/449715b8ebc2010e6e23/gale/core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/005-classes.jar",
+      "sha256": "9362c8fd5ab95648db0fad5535c93f1b7d427139f523cee643de854442047471",
+      "bytes": 2014577
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/jvm/target/scala-3.4.2/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/006-classes.jar",
+      "sha256": "55e107764870747d9278c0484c058a36b3e5e9fe2b72866e3e025b0b1077e2ca",
+      "bytes": 2560347
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/dataset/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/007-classes.jar",
+      "sha256": "6bc5e7ca67c5df7ad28c5aafb9334bd2a78d5938e618a0c434f4f30d20e5666b",
+      "bytes": 958210
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/response/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/008-classes.jar",
+      "sha256": "4cd83d4edd1fbed10e71e1c221763fc0830f8aa668913d8206ee15c0fef9b2b8",
+      "bytes": 582314
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/009-classes.jar",
+      "sha256": "69050bfb2db6e2055b8823be39d560461e845c5e322296fb2aa035f0eb643b89",
+      "bytes": 963301
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/image/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/010-classes.jar",
+      "sha256": "7a7fb034f7a9696daa1fd2c4f602be9d6568ff4fb005c75b9890191565ba9c17",
+      "bytes": 2276645
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/locus-data/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/011-classes.jar",
+      "sha256": "e4b973e4718747ba309bdc1baf6ddfa2eb97de7261760ccb76b42c26eb3b667f",
+      "bytes": 89511
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/012-classes.jar",
+      "sha256": "61e091f85d708baa686fdeb2c235e243aa126e7e7e1b928abdf72ecfc0ae981a",
+      "bytes": 516371
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/013-classes.jar",
+      "sha256": "93729415975321042aa09e9473f1885954cabed09c84586aef4c2097187dce8a",
+      "bytes": 70011
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/014-classes.jar",
+      "sha256": "c04a6160ae008c04cde93e00ff21ead3e2b64e08638df5d8dbf7bed5b4455834",
+      "bytes": 723516
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/41e96dde036f148f012a/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/015-classes.jar",
+      "sha256": "3cfdd62eab8e18b70d39cc67232c5ff52404da731ba1403fbf6916a13753c79d",
+      "bytes": 359966
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/016-classes.jar",
+      "sha256": "f93b1f242cd18dfe15880194e00adb51d792e188ce421032de36a1e0e6cbb076",
+      "bytes": 2002963
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/017-classes.jar",
+      "sha256": "7bf1f45e9a340999af4de64de950d7601f64a4af3f6c2f92e541aa646f7321b9",
+      "bytes": 95389
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/41e96dde036f148f012a/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/018-classes.jar",
+      "sha256": "b68f21a1328d7d2ff1662404a6f6f25d84e2ac4351b4bede16f6bb764c1e1921",
+      "bytes": 388304
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/41e96dde036f148f012a/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/019-classes.jar",
+      "sha256": "f5575797798aa63db531fb2fa382ccc88216f906d8c655f3127eae9d1f60552e",
+      "bytes": 129549
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/41e96dde036f148f012a/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/020-classes.jar",
+      "sha256": "f8d2b1c5f7688ee3817012599519df75263cd57b070ab5859e0457e49db2b7f7",
+      "bytes": 191270
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/021-classes.jar",
+      "sha256": "ca85d79266d823b9935d26233e98a3c25b0b877e60116e44ee66b44a85add9ae",
+      "bytes": 95989
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/41e96dde036f148f012a/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/022-classes.jar",
+      "sha256": "b6ec53f991c86e2d8bb772f83205370a73d1c0b3056ba44763f451a3626f8593",
+      "bytes": 670247
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/023-classes.jar",
+      "sha256": "0f85afc3e4aac5089bbec63d940dfcfb60854fe43f8fb083a9492afaa7c6516a",
+      "bytes": 83345
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/024-classes.jar",
+      "sha256": "9385346ca39d85717a961b1b88e98a93c063972143f59daa6ae77ec5403206e8",
+      "bytes": 377706
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/025-classes.jar",
+      "sha256": "5c4146ba9fb8ded82750bc41748240e1ef4f94a9bb1602a3cc96f0a0ede1984b",
+      "bytes": 506436
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/026-classes.jar",
+      "sha256": "f9a88cd9d6659af69fb42ebc5d8cb2bcdddc7428a7fbd98050d0496b343ca49a",
+      "bytes": 247083
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/ar/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/027-classes.jar",
+      "sha256": "0688a82a8075c188c33f6e70adb60c7679242003c7fc89cc64e565a71cf227c0",
+      "bytes": 355306
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/pipeline/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/028-classes.jar",
+      "sha256": "e4692bebaaabad8a31af466775e81aff67383d1c8d21c28b4afa7edacb41784f",
+      "bytes": 321369
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/graph4s-pinned/algorithms/.jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/029-classes.jar",
+      "sha256": "1be2771a2f1a8145ce37b52d8b811b5e9aec7652ff8308d9f1a7a0f23065689f",
+      "bytes": 106840
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/graph4s-pinned/core/.jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/030-classes.jar",
+      "sha256": "987c804922a0adffd7b7dacd8d26f37353416096469e14f358a2002aa89347cd",
+      "bytes": 204702
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/graph4s-pinned/indexed/.jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/031-classes.jar",
+      "sha256": "08f56847abdc048d85d6770f1f92592cf2368807a1e9829e4d2236b8da1d9226",
+      "bytes": 78347
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/graph4s-pinned/data/.jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/032-classes.jar",
+      "sha256": "089021a98f913dc3100d02c41d118dc728b4a977597d30900c00629f82abaf9e",
+      "bytes": 114404
+    },
+    {
+      "source": "/private/tmp/scalafim-rrg-calibration/integration/modules/scenario-testkit/jvm/target/scala-3.7.4/classes",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/033-classes.jar",
+      "sha256": "f3020714a7148ab0abd29d3b47fd92a682b3008b25d17a983dab633cbeb2a440",
+      "bytes": 98989
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/034-scala3-library_3-3.7.4.jar",
+      "sha256": "73089d33f763b94758170e0a66be978f9397c14b7795e343898aa89b3d7b6639",
+      "bytes": 1277321
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/035-munit_3-1.2.1.jar",
+      "sha256": "19d09014eaf69ca8abd8d9e0c43be4c2e5d7c693bc1c6cf3a1c93697ad8bca50",
+      "bytes": 263577
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-collections-core_3/0.9.10/cats-collections-core_3-0.9.10.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/036-cats-collections-core_3-0.9.10.jar",
+      "sha256": "9db07413c4f133f1a0deb80582a515b4a94bfb4bc1c3f7026b15518b5dd2deed",
+      "bytes": 639295
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/037-scala-library-2.13.16.jar",
+      "sha256": "1ebb2b6f9e4eb4022497c19b1e1e825019c08514f962aaac197145f88ed730f1",
+      "bytes": 5926340
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/038-junit-interface-1.2.1.jar",
+      "sha256": "66a48070e1fa9bda5aa7142ff8b6638c4a9555d1d760965241b7f4617ce758b9",
+      "bytes": 49858
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/039-munit-diff_3-1.2.1.jar",
+      "sha256": "10506a15c369f8b66f5347e6fc0ed284f801a07598d9a835b2c8bc6052c3deaf",
+      "bytes": 82505
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/040-junit-4.13.2.jar",
+      "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+      "bytes": 384581
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.13.0/cats-core_3-2.13.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/041-cats-core_3-2.13.0.jar",
+      "sha256": "e2abfcdfe041ce08d8407412b09d55eb33eb85655c22c9c8815712d3aad633c6",
+      "bytes": 7123338
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/042-spire_3-0.18.0.jar",
+      "sha256": "755e6bca07ff0ddde6b2cbb984fe1178389a44887d5aaf610a1402e9fcfe99ac",
+      "bytes": 5303867
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.13.0/algebra_3-2.13.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/043-algebra_3-2.13.0.jar",
+      "sha256": "c2751d6b6b02650e56065b6b5affc116de186f9c8e47519d5bc58728991fce41",
+      "bytes": 859746
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/044-test-interface-1.0.jar",
+      "sha256": "15f70b38bb95f3002fec9aea54030f19bb4ecfbad64c67424b5e5fea09cd749e",
+      "bytes": 14755
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/045-hamcrest-core-1.3.jar",
+      "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
+      "bytes": 45024
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/046-JTransforms-3.1.jar",
+      "sha256": "d9dffa3e27793040dccb97b054d95267df46e669c396bf1ca4f3b085069bc2d5",
+      "bytes": 1175798
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.13.0/cats-kernel_3-2.13.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/047-cats-kernel_3-2.13.0.jar",
+      "sha256": "a6afaad274e2a0fbbd189bfe3a0e91810bd562745573995011943427ea489040",
+      "bytes": 1592447
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/048-spire-macros_3-0.18.0.jar",
+      "sha256": "65f223a3ccba177f96c999f0287527b18557eb14f92b7bda88d162c5d0696db8",
+      "bytes": 25936
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/049-spire-platform_3-0.18.0.jar",
+      "sha256": "8b1dd10891b95e0e2cf2e375972fe0ee0fd231c31b150e352a6940d2bec89652",
+      "bytes": 2289
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/050-spire-util_3-0.18.0.jar",
+      "sha256": "de87255aa776a57ac105561e24673bde83a3d9980048582ab763be4e682ca42d",
+      "bytes": 19196
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/051-cats-effect_3-3.5.4.jar",
+      "sha256": "ac62797add23b03c9185f5742039246712aad2dda4c2b2d19d0564d23dab2c97",
+      "bytes": 759453
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/052-commons-math3-3.5.jar",
+      "sha256": "dcf9768726b82e8d7b8a928447b08bca7cfe2773d5120a63a41ec224207c1a29",
+      "bytes": 2038489
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/053-JLargeArrays-1.5.jar",
+      "sha256": "6dca5ab23e1fdb9190a257c04687a9ea19111c36b6ec9478bce6b2a128ca1aeb",
+      "bytes": 232470
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/054-cats-effect-kernel_3-3.5.4.jar",
+      "sha256": "03375636fdd1086417531e0305b4b7fba3e2f62bd7b241587df05b5cb95aa5c7",
+      "bytes": 1283984
+    },
+    {
+      "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+      "snapshot": "/private/tmp/scalafim-rrg-calibration/frozen-classpath/055-cats-effect-std_3-3.5.4.jar",
+      "sha256": "748eb2ef8d015c75e96842280c2c648782a5b0fec7cc4a4b3a80a2f26f6a2baa",
+      "bytes": 688710
+    }
+  ]
+}

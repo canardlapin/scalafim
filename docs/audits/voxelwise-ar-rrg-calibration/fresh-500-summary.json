@@ -1,0 +1,2448 @@
+{
+  "schema": "voxelwise-rrg-calibration-summary-v1",
+  "phase": "fresh",
+  "schedule": {
+    "expected_attempts": 2000,
+    "observed_attempts": 2000,
+    "missing_attempts": 0,
+    "complete": true,
+    "scenario_dataset_count": 2000,
+    "distinct_input_seed_count": 500
+  },
+  "coordinate_order": [
+    "coefficient_0_voxel_0",
+    "coefficient_0_voxel_1",
+    "coefficient_0_voxel_2",
+    "coefficient_1_voxel_0",
+    "coefficient_1_voxel_1",
+    "coefficient_1_voxel_2",
+    "difference_voxel_0",
+    "difference_voxel_1",
+    "difference_voxel_2",
+    "average_voxel_0",
+    "average_voxel_1",
+    "average_voxel_2"
+  ],
+  "groups": [
+    {
+      "scenario": "baseline",
+      "arm": "plugin_refit_rank1",
+      "attempts": 500,
+      "successes": 500,
+      "failures": 0,
+      "failure_records": [],
+      "fit_seconds_total": 210.123389218,
+      "metrics": [
+        {
+          "estimand": "coefficient_0_voxel_0",
+          "coverage": 0.926,
+          "coverage_wilson95": [
+            0.8996652466777695,
+            0.945838815248988
+          ],
+          "coverage_mcse": 0.011706750189527404,
+          "success_and_coverage_per_attempt": 0.926,
+          "truth_below_interval": 0.04,
+          "truth_above_interval": 0.034,
+          "bias": 0.001377256374568311,
+          "rmse": 0.09933991874278081,
+          "sampling_variance": 0.00988629521112325,
+          "mean_bootstrap_variance": 0.009384728325756186,
+          "variance_ratio": 0.949266446666215,
+          "mean_width": 0.3742742248633596,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_1",
+          "coverage": 0.886,
+          "coverage_wilson95": [
+            0.8551509101576845,
+            0.9109630990059973
+          ],
+          "coverage_mcse": 0.014212951839783317,
+          "success_and_coverage_per_attempt": 0.886,
+          "truth_below_interval": 0.066,
+          "truth_above_interval": 0.048,
+          "bias": 0.004039308717008857,
+          "rmse": 0.1686127784311712,
+          "sampling_variance": 0.02847089482501796,
+          "mean_bootstrap_variance": 0.02318864782350912,
+          "variance_ratio": 0.8144685288617194,
+          "mean_width": 0.5839219708998002,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_2",
+          "coverage": 0.934,
+          "coverage_wilson95": [
+            0.9087605988391466,
+            0.9526214736402262
+          ],
+          "coverage_mcse": 0.01110351295761841,
+          "success_and_coverage_per_attempt": 0.934,
+          "truth_below_interval": 0.028,
+          "truth_above_interval": 0.038,
+          "bias": -0.0002383463483111298,
+          "rmse": 0.07410562573861362,
+          "sampling_variance": 0.005502592141412545,
+          "mean_bootstrap_variance": 0.004995270255411035,
+          "variance_ratio": 0.90780310934125,
+          "mean_width": 0.2736955888065087,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "coefficient_1_voxel_0",
+          "coverage": 0.924,
+          "coverage_wilson95": [
+            0.8974035863260316,
+            0.9441309729625723
+          ],
+          "coverage_mcse": 0.01185107590052481,
+          "success_and_coverage_per_attempt": 0.924,
+          "truth_below_interval": 0.04,
+          "truth_above_interval": 0.036,
+          "bias": -0.0013262680500301346,
+          "rmse": 0.09169188131058018,
+          "sampling_variance": 0.008422487085504,
+          "mean_bootstrap_variance": 0.0076113887675300475,
+          "variance_ratio": 0.9036984788768699,
+          "mean_width": 0.33780399934624367,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_1",
+          "coverage": 0.918,
+          "coverage_wilson95": [
+            0.8906451408426114,
+            0.9389809105315311
+          ],
+          "coverage_mcse": 0.012269963325128561,
+          "success_and_coverage_per_attempt": 0.918,
+          "truth_below_interval": 0.054,
+          "truth_above_interval": 0.028,
+          "bias": 0.0035389889378766863,
+          "rmse": 0.11197260507878834,
+          "sampling_variance": 0.012550440726881645,
+          "mean_bootstrap_variance": 0.010387114235112101,
+          "variance_ratio": 0.8276294403641189,
+          "mean_width": 0.39056952484897045,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_2",
+          "coverage": 0.932,
+          "coverage_wilson95": [
+            0.9064790772661258,
+            0.9509334925750932
+          ],
+          "coverage_mcse": 0.01125841907196565,
+          "success_and_coverage_per_attempt": 0.932,
+          "truth_below_interval": 0.034,
+          "truth_above_interval": 0.034,
+          "bias": -0.0010277232355147302,
+          "rmse": 0.053231763801954934,
+          "sampling_variance": 0.002838240944306917,
+          "mean_bootstrap_variance": 0.002587070542829361,
+          "variance_ratio": 0.9115049051838371,
+          "mean_width": 0.19660397926892365,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "difference_voxel_0",
+          "coverage": 0.924,
+          "coverage_wilson95": [
+            0.8974035863260316,
+            0.9441309729625723
+          ],
+          "coverage_mcse": 0.01185107590052481,
+          "success_and_coverage_per_attempt": 0.924,
+          "truth_below_interval": 0.04,
+          "truth_above_interval": 0.036,
+          "bias": 0.0027035244245984455,
+          "rmse": 0.11313271858346687,
+          "sampling_variance": 0.012817337645061634,
+          "mean_bootstrap_variance": 0.011515639345856206,
+          "variance_ratio": 0.8984423805276787,
+          "mean_width": 0.4148907577963207,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_1",
+          "coverage": 0.91,
+          "coverage_wilson95": [
+            0.8816905887106666,
+            0.9320574521108606
+          ],
+          "coverage_mcse": 0.012798437404620923,
+          "success_and_coverage_per_attempt": 0.91,
+          "truth_below_interval": 0.066,
+          "truth_above_interval": 0.024,
+          "bias": 0.0005003197791321707,
+          "rmse": 0.095834669103315,
+          "sampling_variance": 0.009202438358978446,
+          "mean_bootstrap_variance": 0.008062984229763471,
+          "variance_ratio": 0.8761791076706038,
+          "mean_width": 0.3439441402904721,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_2",
+          "coverage": 0.93,
+          "coverage_wilson95": [
+            0.9042028101480832,
+            0.949240257054982
+          ],
+          "coverage_mcse": 0.011410521460476728,
+          "success_and_coverage_per_attempt": 0.93,
+          "truth_below_interval": 0.03,
+          "truth_above_interval": 0.04,
+          "bias": 0.0007893768872036005,
+          "rmse": 0.05344492964781888,
+          "sampling_variance": 0.0028614603098098775,
+          "mean_bootstrap_variance": 0.0026298409346485804,
+          "variance_ratio": 0.9190555345579172,
+          "mean_width": 0.19726237928873827,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_0",
+          "coverage": 0.932,
+          "coverage_wilson95": [
+            0.9064790772661258,
+            0.9509334925750932
+          ],
+          "coverage_mcse": 0.01125841907196565,
+          "success_and_coverage_per_attempt": 0.932,
+          "truth_below_interval": 0.034,
+          "truth_above_interval": 0.034,
+          "bias": 2.5494162269090072e-05,
+          "rmse": 0.0770594398729087,
+          "sampling_variance": 0.005950056737048217,
+          "mean_bootstrap_variance": 0.005619148710179065,
+          "variance_ratio": 0.9443857358857197,
+          "mean_width": 0.2898742058746689,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "average_voxel_1",
+          "coverage": 0.902,
+          "coverage_wilson95": [
+            0.8727939491335183,
+            0.9250760811353939
+          ],
+          "coverage_mcse": 0.013296315279053816,
+          "success_and_coverage_per_attempt": 0.902,
+          "truth_below_interval": 0.058,
+          "truth_above_interval": 0.04,
+          "bias": 0.003789148827442771,
+          "rmse": 0.1348628774669638,
+          "sampling_variance": 0.01821005818620519,
+          "mean_bootstrap_variance": 0.014772134971869742,
+          "variance_ratio": 0.8112074558366976,
+          "mean_width": 0.4662448219643268,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_2",
+          "coverage": 0.928,
+          "coverage_wilson95": [
+            0.9019315959830375,
+            0.9475419685818739
+          ],
+          "coverage_mcse": 0.0115599307956406,
+          "success_and_coverage_per_attempt": 0.928,
+          "truth_below_interval": 0.03,
+          "truth_above_interval": 0.042,
+          "bias": -0.0006330347919129582,
+          "rmse": 0.058724288803903096,
+          "sampling_variance": 0.003455051465407261,
+          "mean_bootstrap_variance": 0.0031337101654580527,
+          "variance_ratio": 0.9069937732718171,
+          "mean_width": 0.21691314978938214,
+          "unadjusted_undercoverage_signal": true
+        }
+      ],
+      "noise_diagnostics": {
+        "original_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.058800969857998424,
+            0.43046238979590634,
+            -0.23009332881865485
+          ],
+          "sd": [
+            0.10968762521711109,
+            0.09708622842313035,
+            0.10947736599760217
+          ]
+        },
+        "generating_rho": {
+          "available_attempts": 500,
+          "mean": [
+            0.058800969857998424,
+            0.43046238979590634,
+            -0.23009332881865485
+          ],
+          "sd": [
+            0.10968762521711109,
+            0.09708622842313035,
+            0.10947736599760217
+          ]
+        },
+        "fitted_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.35929796639785033,
+            0.1779993933196984,
+            0.17809758441915716,
+            0.1779993933196984,
+            0.35741905317354405,
+            0.1770064556477382,
+            0.17809758441915716,
+            0.1770064556477382,
+            0.3602322335860789
+          ],
+          "sd": [
+            0.05823821852068949,
+            0.046496901547802734,
+            0.04574920105234888,
+            0.046496901547802734,
+            0.05896332288070977,
+            0.04742459632948496,
+            0.04574920105234888,
+            0.04742459632948496,
+            0.05872830829097647
+          ]
+        },
+        "generating_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.35929796639785033,
+            0.1779993933196984,
+            0.17809758441915716,
+            0.1779993933196984,
+            0.35741905317354405,
+            0.1770064556477382,
+            0.17809758441915716,
+            0.1770064556477382,
+            0.3602322335860789
+          ],
+          "sd": [
+            0.05823821852068949,
+            0.046496901547802734,
+            0.04574920105234888,
+            0.046496901547802734,
+            0.05896332288070977,
+            0.04742459632948496,
+            0.04574920105234888,
+            0.04742459632948496,
+            0.05872830829097647
+          ]
+        },
+        "true_sigma": {
+          "available_attempts": 500,
+          "mean": [
+            0.36,
+            0.18,
+            0.18,
+            0.18,
+            0.36,
+            0.18,
+            0.18,
+            0.18,
+            0.36
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "true_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.1,
+            0.5,
+            -0.2
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "replicate_rho_mean": {
+          "available_attempts": 500,
+          "mean": [
+            0.015957084801760512,
+            0.36187723360749263,
+            -0.254007958527623
+          ],
+          "sd": [
+            0.1025448303379924,
+            0.09018208407073483,
+            0.10286026868766691
+          ]
+        },
+        "replicate_rho_sd": {
+          "available_attempts": 500,
+          "mean": [
+            0.1105804775785433,
+            0.1060784133088378,
+            0.10604019822216224
+          ],
+          "sd": [
+            0.0026063756504078935,
+            0.003325563191257103,
+            0.003943141362397977
+          ]
+        },
+        "stationarity_bound_hits": {
+          "available_attempts": 500,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "mean_replicate_rho_minus_original": [
+          -0.04284388505623791,
+          -0.06858515618841371,
+          -0.023914629708968127
+        ],
+        "mean_original_rho_minus_truth": [
+          -0.04119903014200158,
+          -0.06953761020409363,
+          -0.030093328818654837
+        ]
+      }
+    },
+    {
+      "scenario": "censor_continuous",
+      "arm": "plugin_refit_rank1",
+      "attempts": 500,
+      "successes": 500,
+      "failures": 0,
+      "failure_records": [],
+      "fit_seconds_total": 187.162472126,
+      "metrics": [
+        {
+          "estimand": "coefficient_0_voxel_0",
+          "coverage": 0.914,
+          "coverage_wilson95": [
+            0.8861601885014425,
+            0.9355268575963924
+          ],
+          "coverage_mcse": 0.01253826144248077,
+          "success_and_coverage_per_attempt": 0.914,
+          "truth_below_interval": 0.046,
+          "truth_above_interval": 0.04,
+          "bias": 0.0017066730501252127,
+          "rmse": 0.10524130650675008,
+          "sampling_variance": 0.011095009882111916,
+          "mean_bootstrap_variance": 0.0097148031043975,
+          "variance_ratio": 0.875601122272124,
+          "mean_width": 0.3786236319469855,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_1",
+          "coverage": 0.888,
+          "coverage_wilson95": [
+            0.8573463119959378,
+            0.9127371998058978
+          ],
+          "coverage_mcse": 0.014103616557464968,
+          "success_and_coverage_per_attempt": 0.888,
+          "truth_below_interval": 0.054,
+          "truth_above_interval": 0.058,
+          "bias": -0.0013514038424137151,
+          "rmse": 0.16857576093269783,
+          "sampling_variance": 0.028472906695082963,
+          "mean_bootstrap_variance": 0.022990926802239884,
+          "variance_ratio": 0.8074667981197097,
+          "mean_width": 0.5742343362279014,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_2",
+          "coverage": 0.926,
+          "coverage_wilson95": [
+            0.8996652466777695,
+            0.945838815248988
+          ],
+          "coverage_mcse": 0.011706750189527404,
+          "success_and_coverage_per_attempt": 0.926,
+          "truth_below_interval": 0.046,
+          "truth_above_interval": 0.028,
+          "bias": 0.0019576511215629445,
+          "rmse": 0.07495802472802214,
+          "sampling_variance": 0.005626125323860743,
+          "mean_bootstrap_variance": 0.0054066422225061295,
+          "variance_ratio": 0.9609885865101916,
+          "mean_width": 0.28341695841465975,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_0",
+          "coverage": 0.92,
+          "coverage_wilson95": [
+            0.8928936834221488,
+            0.9407018705901475
+          ],
+          "coverage_mcse": 0.012132600710482479,
+          "success_and_coverage_per_attempt": 0.92,
+          "truth_below_interval": 0.042,
+          "truth_above_interval": 0.038,
+          "bias": -8.477566859206465e-05,
+          "rmse": 0.09749819652966711,
+          "sampling_variance": 0.009524941021666941,
+          "mean_bootstrap_variance": 0.00806803289881061,
+          "variance_ratio": 0.8470428195258934,
+          "mean_width": 0.34677911716786985,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_1",
+          "coverage": 0.882,
+          "coverage_wilson95": [
+            0.8507680121388806,
+            0.9074069917484936
+          ],
+          "coverage_mcse": 0.014427473791346842,
+          "success_and_coverage_per_attempt": 0.882,
+          "truth_below_interval": 0.06,
+          "truth_above_interval": 0.058,
+          "bias": -0.001225012757639627,
+          "rmse": 0.11805346544953033,
+          "sampling_variance": 0.013963046140668409,
+          "mean_bootstrap_variance": 0.010527792385780704,
+          "variance_ratio": 0.7539753345881832,
+          "mean_width": 0.38769218359454705,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_2",
+          "coverage": 0.946,
+          "coverage_wilson95": [
+            0.9225734384893529,
+            0.9626256498189425
+          ],
+          "coverage_mcse": 0.010107818755794947,
+          "success_and_coverage_per_attempt": 0.946,
+          "truth_below_interval": 0.026,
+          "truth_above_interval": 0.028,
+          "bias": 0.00042371924231393007,
+          "rmse": 0.052752614522170956,
+          "sampling_variance": 0.0027882352714713975,
+          "mean_bootstrap_variance": 0.002810066107328282,
+          "variance_ratio": 1.007829624738003,
+          "mean_width": 0.20402660749785878,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "difference_voxel_0",
+          "coverage": 0.92,
+          "coverage_wilson95": [
+            0.8928936834221488,
+            0.9407018705901475
+          ],
+          "coverage_mcse": 0.012132600710482479,
+          "success_and_coverage_per_attempt": 0.92,
+          "truth_below_interval": 0.028,
+          "truth_above_interval": 0.052,
+          "bias": 0.0017914487187172777,
+          "rmse": 0.11654356209443871,
+          "sampling_variance": 0.013606405387924346,
+          "mean_bootstrap_variance": 0.011885082678062247,
+          "variance_ratio": 0.8734917371056893,
+          "mean_width": 0.42027293616205813,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_1",
+          "coverage": 0.914,
+          "coverage_wilson95": [
+            0.8861601885014425,
+            0.9355268575963924
+          ],
+          "coverage_mcse": 0.01253826144248077,
+          "success_and_coverage_per_attempt": 0.914,
+          "truth_below_interval": 0.062,
+          "truth_above_interval": 0.024,
+          "bias": -0.00012639108477408855,
+          "rmse": 0.0952038530864387,
+          "sampling_variance": 0.009081921510819532,
+          "mean_bootstrap_variance": 0.00827565029378765,
+          "variance_ratio": 0.91122239758719,
+          "mean_width": 0.34804139804772005,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_2",
+          "coverage": 0.902,
+          "coverage_wilson95": [
+            0.8727939491335183,
+            0.9250760811353939
+          ],
+          "coverage_mcse": 0.013296315279053816,
+          "success_and_coverage_per_attempt": 0.902,
+          "truth_below_interval": 0.032,
+          "truth_above_interval": 0.066,
+          "bias": 0.0015339318792490144,
+          "rmse": 0.05586326940110562,
+          "sampling_variance": 0.0031246011234171613,
+          "mean_bootstrap_variance": 0.0027856364912002764,
+          "variance_ratio": 0.8915174709256385,
+          "mean_width": 0.2025492120645123,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_0",
+          "coverage": 0.91,
+          "coverage_wilson95": [
+            0.8816905887106666,
+            0.9320574521108606
+          ],
+          "coverage_mcse": 0.012798437404620923,
+          "success_and_coverage_per_attempt": 0.91,
+          "truth_below_interval": 0.044,
+          "truth_above_interval": 0.046,
+          "bias": 0.0008109486907665766,
+          "rmse": 0.08303743128540032,
+          "sampling_variance": 0.006908374104908342,
+          "mean_bootstrap_variance": 0.005920147332088493,
+          "variance_ratio": 0.856952336712958,
+          "mean_width": 0.2939801257642329,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_1",
+          "coverage": 0.878,
+          "coverage_wilson95": [
+            0.8463952769261602,
+            0.9038407216849063
+          ],
+          "coverage_mcse": 0.014636666287102402,
+          "success_and_coverage_per_attempt": 0.878,
+          "truth_below_interval": 0.056,
+          "truth_above_interval": 0.066,
+          "bias": -0.001288208300026671,
+          "rmse": 0.13751821889740543,
+          "sampling_variance": 0.018947496040170802,
+          "mean_bootstrap_variance": 0.014690447020563381,
+          "variance_ratio": 0.7753239261492916,
+          "mean_width": 0.4573498501934358,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_2",
+          "coverage": 0.928,
+          "coverage_wilson95": [
+            0.9019315959830375,
+            0.9475419685818739
+          ],
+          "coverage_mcse": 0.0115599307956406,
+          "success_and_coverage_per_attempt": 0.928,
+          "truth_below_interval": 0.042,
+          "truth_above_interval": 0.03,
+          "bias": 0.0011906851819384109,
+          "rmse": 0.05848585887187299,
+          "sampling_variance": 0.0034260300168117803,
+          "mean_bootstrap_variance": 0.0034119450421171366,
+          "variance_ratio": 0.9958888349998314,
+          "mean_width": 0.22481275155019972,
+          "unadjusted_undercoverage_signal": true
+        }
+      ],
+      "noise_diagnostics": {
+        "original_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.038671367491666976,
+            0.3858669431899936,
+            -0.2447719793016207,
+            0.029280892648648003,
+            0.37784913052276586,
+            -0.2368626845441393
+          ],
+          "sd": [
+            0.164535562900266,
+            0.16224150892743328,
+            0.16199395636786226,
+            0.1720805133729811,
+            0.1625998242581882,
+            0.1618096581148912
+          ]
+        },
+        "generating_rho": {
+          "available_attempts": 500,
+          "mean": [
+            0.038671367491666976,
+            0.3858669431899936,
+            -0.2447719793016207,
+            0.029280892648648003,
+            0.37784913052276586,
+            -0.2368626845441393
+          ],
+          "sd": [
+            0.164535562900266,
+            0.16224150892743328,
+            0.16199395636786226,
+            0.1720805133729811,
+            0.1625998242581882,
+            0.1618096581148912
+          ]
+        },
+        "fitted_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.355755352939047,
+            0.1727239476967727,
+            0.17384234035494722,
+            0.1727239476967727,
+            0.3566673845453992,
+            0.17152130034075386,
+            0.17384234035494722,
+            0.17152130034075386,
+            0.3592080324174938,
+            0.3571635104299366,
+            0.17231118571644596,
+            0.17629765574081185,
+            0.17231118571644596,
+            0.3552631623133642,
+            0.1719918046243153,
+            0.17629765574081185,
+            0.1719918046243153,
+            0.36039884271141187
+          ],
+          "sd": [
+            0.0903635561738131,
+            0.07129989610009888,
+            0.07173650999076085,
+            0.07129989610009888,
+            0.09243274779416354,
+            0.07436552694683977,
+            0.07173650999076085,
+            0.07436552694683977,
+            0.09463820279270531,
+            0.09305036788576962,
+            0.07248387881410043,
+            0.07568947988846873,
+            0.07248387881410043,
+            0.09088752311449559,
+            0.07194617935883607,
+            0.07568947988846873,
+            0.07194617935883607,
+            0.09299205826252678
+          ]
+        },
+        "generating_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.355755352939047,
+            0.1727239476967727,
+            0.17384234035494722,
+            0.1727239476967727,
+            0.3566673845453992,
+            0.17152130034075386,
+            0.17384234035494722,
+            0.17152130034075386,
+            0.3592080324174938,
+            0.3571635104299366,
+            0.17231118571644596,
+            0.17629765574081185,
+            0.17231118571644596,
+            0.3552631623133642,
+            0.1719918046243153,
+            0.17629765574081185,
+            0.1719918046243153,
+            0.36039884271141187
+          ],
+          "sd": [
+            0.0903635561738131,
+            0.07129989610009888,
+            0.07173650999076085,
+            0.07129989610009888,
+            0.09243274779416354,
+            0.07436552694683977,
+            0.07173650999076085,
+            0.07436552694683977,
+            0.09463820279270531,
+            0.09305036788576962,
+            0.07248387881410043,
+            0.07568947988846873,
+            0.07248387881410043,
+            0.09088752311449559,
+            0.07194617935883607,
+            0.07568947988846873,
+            0.07194617935883607,
+            0.09299205826252678
+          ]
+        },
+        "true_sigma": {
+          "available_attempts": 500,
+          "mean": [
+            0.36,
+            0.18,
+            0.18,
+            0.18,
+            0.36,
+            0.18,
+            0.18,
+            0.18,
+            0.36
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "true_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.1,
+            0.5,
+            -0.2,
+            0.1,
+            0.5,
+            -0.2
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "replicate_rho_mean": {
+          "available_attempts": 500,
+          "mean": [
+            -0.020142352912647703,
+            0.2895123940081573,
+            -0.27285484023161605,
+            -0.031716348705978295,
+            0.27653629779419237,
+            -0.26875681419137587
+          ],
+          "sd": [
+            0.14397035135790529,
+            0.13682807988034396,
+            0.14352776915625226,
+            0.14926967982956185,
+            0.13649005292534303,
+            0.1428245342373218
+          ]
+        },
+        "replicate_rho_sd": {
+          "available_attempts": 500,
+          "mean": [
+            0.16888390611766313,
+            0.16492512104596907,
+            0.1629833008261692,
+            0.16856610516398826,
+            0.16575773788420003,
+            0.16251407035361484
+          ],
+          "sd": [
+            0.004052015197628852,
+            0.0057276676875255665,
+            0.006649386138402031,
+            0.0046259037126957624,
+            0.005628345616391005,
+            0.006861771567033628
+          ]
+        },
+        "stationarity_bound_hits": {
+          "available_attempts": 500,
+          "mean": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.002,
+            0.002
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.044721359549995794,
+            0.044721359549995794
+          ]
+        },
+        "mean_replicate_rho_minus_original": [
+          -0.058813720404314686,
+          -0.09635454918183627,
+          -0.028082860929995374,
+          -0.060997241354626294,
+          -0.10131283272857353,
+          -0.03189412964723655
+        ],
+        "mean_original_rho_minus_truth": [
+          -0.06132863250833303,
+          -0.1141330568100064,
+          -0.04477197930162069,
+          -0.070719107351352,
+          -0.12215086947723411,
+          -0.036862684544139296
+        ]
+      }
+    },
+    {
+      "scenario": "multiple_runs",
+      "arm": "plugin_refit_rank1",
+      "attempts": 500,
+      "successes": 500,
+      "failures": 0,
+      "failure_records": [],
+      "fit_seconds_total": 217.304282315,
+      "metrics": [
+        {
+          "estimand": "coefficient_0_voxel_0",
+          "coverage": 0.926,
+          "coverage_wilson95": [
+            0.8996652466777695,
+            0.945838815248988
+          ],
+          "coverage_mcse": 0.011706750189527404,
+          "success_and_coverage_per_attempt": 0.926,
+          "truth_below_interval": 0.038,
+          "truth_above_interval": 0.036,
+          "bias": 0.001956808251610985,
+          "rmse": 0.10251808272029003,
+          "sampling_variance": 0.010527182551213083,
+          "mean_bootstrap_variance": 0.009399322007457127,
+          "variance_ratio": 0.8928620703337201,
+          "mean_width": 0.3738645747469515,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_1",
+          "coverage": 0.878,
+          "coverage_wilson95": [
+            0.8463952769261602,
+            0.9038407216849063
+          ],
+          "coverage_mcse": 0.014636666287102402,
+          "success_and_coverage_per_attempt": 0.878,
+          "truth_below_interval": 0.06,
+          "truth_above_interval": 0.062,
+          "bias": 9.416321844687536e-05,
+          "rmse": 0.16446286579968009,
+          "sampling_variance": 0.027102229819971818,
+          "mean_bootstrap_variance": 0.02200378380310937,
+          "variance_ratio": 0.8118809392906348,
+          "mean_width": 0.5647088414581819,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_2",
+          "coverage": 0.924,
+          "coverage_wilson95": [
+            0.8974035863260316,
+            0.9441309729625723
+          ],
+          "coverage_mcse": 0.01185107590052481,
+          "success_and_coverage_per_attempt": 0.924,
+          "truth_below_interval": 0.044,
+          "truth_above_interval": 0.032,
+          "bias": 0.001179963692590019,
+          "rmse": 0.07386645940277131,
+          "sampling_variance": 0.005465793096578589,
+          "mean_bootstrap_variance": 0.005180410670185076,
+          "variance_ratio": 0.9477875540930824,
+          "mean_width": 0.277778555597649,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_0",
+          "coverage": 0.92,
+          "coverage_wilson95": [
+            0.8928936834221488,
+            0.9407018705901475
+          ],
+          "coverage_mcse": 0.012132600710482479,
+          "success_and_coverage_per_attempt": 0.92,
+          "truth_below_interval": 0.04,
+          "truth_above_interval": 0.04,
+          "bias": -0.002304082817756807,
+          "rmse": 0.09425969745064644,
+          "sampling_variance": 0.00889737651889411,
+          "mean_bootstrap_variance": 0.007429506003829543,
+          "variance_ratio": 0.835022097587142,
+          "mean_width": 0.33299168425326175,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_1",
+          "coverage": 0.89,
+          "coverage_wilson95": [
+            0.8595444295965924,
+            0.9145085848433969
+          ],
+          "coverage_mcse": 0.013992855319769442,
+          "success_and_coverage_per_attempt": 0.89,
+          "truth_below_interval": 0.056,
+          "truth_above_interval": 0.054,
+          "bias": 0.0011320653274047503,
+          "rmse": 0.11525513761383875,
+          "sampling_variance": 0.013309083341161718,
+          "mean_bootstrap_variance": 0.009952306696034575,
+          "variance_ratio": 0.7477830321532769,
+          "mean_width": 0.37930548359706523,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_2",
+          "coverage": 0.936,
+          "coverage_wilson95": [
+            0.911047591162316,
+            0.9543039839552107
+          ],
+          "coverage_mcse": 0.01094568408095172,
+          "success_and_coverage_per_attempt": 0.936,
+          "truth_below_interval": 0.03,
+          "truth_above_interval": 0.034,
+          "bias": -0.000978331119022296,
+          "rmse": 0.05170046162500123,
+          "sampling_variance": 0.0026773352710017808,
+          "mean_bootstrap_variance": 0.0026169622605812324,
+          "variance_ratio": 0.9774503361329272,
+          "mean_width": 0.19723134550524193,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "difference_voxel_0",
+          "coverage": 0.914,
+          "coverage_wilson95": [
+            0.8861601885014425,
+            0.9355268575963924
+          ],
+          "coverage_mcse": 0.01253826144248077,
+          "success_and_coverage_per_attempt": 0.914,
+          "truth_below_interval": 0.038,
+          "truth_above_interval": 0.048,
+          "bias": 0.004260891069367792,
+          "rmse": 0.11322039074372854,
+          "sampling_variance": 0.012826354396250055,
+          "mean_bootstrap_variance": 0.01117693754751758,
+          "variance_ratio": 0.871404079617923,
+          "mean_width": 0.4083905912538822,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_1",
+          "coverage": 0.908,
+          "coverage_wilson95": [
+            0.8794612618638256,
+            0.930317276319548
+          ],
+          "coverage_mcse": 0.012925633446759966,
+          "success_and_coverage_per_attempt": 0.908,
+          "truth_below_interval": 0.054,
+          "truth_above_interval": 0.038,
+          "bias": -0.0010379021089578745,
+          "rmse": 0.09278041597823466,
+          "sampling_variance": 0.008624377102511507,
+          "mean_bootstrap_variance": 0.007740755353143915,
+          "variance_ratio": 0.8975437021289026,
+          "mean_width": 0.33698054993533233,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_2",
+          "coverage": 0.932,
+          "coverage_wilson95": [
+            0.9064790772661258,
+            0.9509334925750932
+          ],
+          "coverage_mcse": 0.01125841907196565,
+          "success_and_coverage_per_attempt": 0.932,
+          "truth_below_interval": 0.024,
+          "truth_above_interval": 0.044,
+          "bias": 0.002158294811612315,
+          "rmse": 0.05427646055531827,
+          "sampling_variance": 0.002947170274468124,
+          "mean_bootstrap_variance": 0.002622136862515032,
+          "variance_ratio": 0.8897133922770204,
+          "mean_width": 0.19687979495777963,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "average_voxel_0",
+          "coverage": 0.91,
+          "coverage_wilson95": [
+            0.8816905887106666,
+            0.9320574521108606
+          ],
+          "coverage_mcse": 0.012798437404620923,
+          "success_and_coverage_per_attempt": 0.91,
+          "truth_below_interval": 0.044,
+          "truth_above_interval": 0.046,
+          "bias": -0.00017363728307291383,
+          "rmse": 0.08057735230215232,
+          "sampling_variance": 0.006505690935991082,
+          "mean_bootstrap_variance": 0.005620179618763941,
+          "variance_ratio": 0.8638866607805983,
+          "mean_width": 0.2877280217631549,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_1",
+          "coverage": 0.878,
+          "coverage_wilson95": [
+            0.8463952769261602,
+            0.9038407216849063
+          ],
+          "coverage_mcse": 0.014636666287102402,
+          "success_and_coverage_per_attempt": 0.878,
+          "truth_below_interval": 0.062,
+          "truth_above_interval": 0.06,
+          "bias": 0.0006131142729258138,
+          "rmse": 0.13421564398176794,
+          "sampling_variance": 0.018049562304938892,
+          "mean_bootstrap_variance": 0.014042856411285994,
+          "variance_ratio": 0.7780164512600649,
+          "mean_width": 0.44975104486557027,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_2",
+          "coverage": 0.928,
+          "coverage_wilson95": [
+            0.9019315959830375,
+            0.9475419685818739
+          ],
+          "coverage_mcse": 0.0115599307956406,
+          "success_and_coverage_per_attempt": 0.928,
+          "truth_below_interval": 0.044,
+          "truth_above_interval": 0.028,
+          "bias": 0.0001008162867838357,
+          "rmse": 0.05768979316886557,
+          "sampling_variance": 0.003334771615173154,
+          "mean_bootstrap_variance": 0.0032431522497543964,
+          "variance_ratio": 0.9725260449615527,
+          "mean_width": 0.21950092042715016,
+          "unadjusted_undercoverage_signal": true
+        }
+      ],
+      "noise_diagnostics": {
+        "original_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.04844348624752608,
+            0.40102988081057667,
+            -0.23653771358480497,
+            0.03610733668088119,
+            0.38287072569383607,
+            -0.23091427004656678
+          ],
+          "sd": [
+            0.1537626092887809,
+            0.14398517753752077,
+            0.1520323530474626,
+            0.15476543842575533,
+            0.14237747865436015,
+            0.14951947340448066
+          ]
+        },
+        "generating_rho": {
+          "available_attempts": 500,
+          "mean": [
+            0.04844348624752608,
+            0.40102988081057667,
+            -0.23653771358480497,
+            0.03610733668088119,
+            0.38287072569383607,
+            -0.23091427004656678
+          ],
+          "sd": [
+            0.1537626092887809,
+            0.14398517753752077,
+            0.1520323530474626,
+            0.15476543842575533,
+            0.14237747865436015,
+            0.14951947340448066
+          ]
+        },
+        "fitted_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.3583863991297596,
+            0.17427328007777287,
+            0.17517119645309195,
+            0.17427328007777287,
+            0.3578133717632481,
+            0.173786618646045,
+            0.17517119645309195,
+            0.173786618646045,
+            0.3602300002559286,
+            0.3581914317287748,
+            0.17436962247231755,
+            0.1777571820851292,
+            0.17436962247231755,
+            0.3573612335098489,
+            0.17460845502486705,
+            0.1777571820851292,
+            0.17460845502486705,
+            0.36202911727352394
+          ],
+          "sd": [
+            0.08301093756115778,
+            0.06402065339230073,
+            0.0658702814204433,
+            0.06402065339230073,
+            0.08324059227212928,
+            0.06703166272512448,
+            0.0658702814204433,
+            0.06703166272512448,
+            0.08651984347914139,
+            0.08437209284809788,
+            0.06571709851130353,
+            0.06957717972666291,
+            0.06571709851130353,
+            0.08565764489755537,
+            0.06759849522486437,
+            0.06957717972666291,
+            0.06759849522486437,
+            0.08541686788527132
+          ]
+        },
+        "generating_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.3583863991297596,
+            0.17427328007777287,
+            0.17517119645309195,
+            0.17427328007777287,
+            0.3578133717632481,
+            0.173786618646045,
+            0.17517119645309195,
+            0.173786618646045,
+            0.3602300002559286,
+            0.3581914317287748,
+            0.17436962247231755,
+            0.1777571820851292,
+            0.17436962247231755,
+            0.3573612335098489,
+            0.17460845502486705,
+            0.1777571820851292,
+            0.17460845502486705,
+            0.36202911727352394
+          ],
+          "sd": [
+            0.08301093756115778,
+            0.06402065339230073,
+            0.0658702814204433,
+            0.06402065339230073,
+            0.08324059227212928,
+            0.06703166272512448,
+            0.0658702814204433,
+            0.06703166272512448,
+            0.08651984347914139,
+            0.08437209284809788,
+            0.06571709851130353,
+            0.06957717972666291,
+            0.06571709851130353,
+            0.08565764489755537,
+            0.06759849522486437,
+            0.06957717972666291,
+            0.06759849522486437,
+            0.08541686788527132
+          ]
+        },
+        "true_sigma": {
+          "available_attempts": 500,
+          "mean": [
+            0.36,
+            0.18,
+            0.18,
+            0.18,
+            0.36,
+            0.18,
+            0.18,
+            0.18,
+            0.36
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "true_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.1,
+            0.5,
+            -0.2,
+            0.1,
+            0.5,
+            -0.2
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "replicate_rho_mean": {
+          "available_attempts": 500,
+          "mean": [
+            -0.005283661170400209,
+            0.3115069783759897,
+            -0.26204941228530626,
+            -0.021862592860222733,
+            0.2861414560510304,
+            -0.26152031829798544
+          ],
+          "sd": [
+            0.135925195041906,
+            0.12286722571272825,
+            0.1363766882521616,
+            0.135354618651213,
+            0.11881390152984399,
+            0.13325690849684216
+          ]
+        },
+        "replicate_rho_sd": {
+          "available_attempts": 500,
+          "mean": [
+            0.15359839079817983,
+            0.1493970858669954,
+            0.14802456049820428,
+            0.1534793406763698,
+            0.14989691768953,
+            0.147278950209025
+          ],
+          "sd": [
+            0.0036765854019961694,
+            0.0051623672823638495,
+            0.006128670932245472,
+            0.003988350885460361,
+            0.005367103233654761,
+            0.006300913513377881
+          ]
+        },
+        "stationarity_bound_hits": {
+          "available_attempts": 500,
+          "mean": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "mean_replicate_rho_minus_original": [
+          -0.05372714741792629,
+          -0.08952290243458698,
+          -0.025511698700501302,
+          -0.05796992954110392,
+          -0.09672926964280563,
+          -0.03060604825141865
+        ],
+        "mean_original_rho_minus_truth": [
+          -0.05155651375247393,
+          -0.09897011918942335,
+          -0.03653771358480496,
+          -0.06389266331911882,
+          -0.11712927430616395,
+          -0.030914270046566765
+        ]
+      }
+    },
+    {
+      "scenario": "strong_ar",
+      "arm": "plugin_refit_rank1",
+      "attempts": 500,
+      "successes": 500,
+      "failures": 0,
+      "failure_records": [],
+      "fit_seconds_total": 675.361754972,
+      "metrics": [
+        {
+          "estimand": "coefficient_0_voxel_0",
+          "coverage": 0.938,
+          "coverage_wilson95": [
+            0.9133402868983618,
+            0.9559807908573184
+          ],
+          "coverage_mcse": 0.010784804124322337,
+          "success_and_coverage_per_attempt": 0.938,
+          "truth_below_interval": 0.036,
+          "truth_above_interval": 0.026,
+          "bias": 0.0002981404645909456,
+          "rmse": 0.1021157421406514,
+          "sampling_variance": 0.010448432770740864,
+          "mean_bootstrap_variance": 0.009759837047861266,
+          "variance_ratio": 0.9340957885274528,
+          "mean_width": 0.3817568940358999,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "coefficient_0_voxel_1",
+          "coverage": 0.822,
+          "coverage_wilson95": [
+            0.7860548114500956,
+            0.8530351132926648
+          ],
+          "coverage_mcse": 0.01710648999648964,
+          "success_and_coverage_per_attempt": 0.822,
+          "truth_below_interval": 0.098,
+          "truth_above_interval": 0.08,
+          "bias": 0.017198385475717143,
+          "rmse": 0.35910433470368386,
+          "sampling_variance": 0.12891797468938282,
+          "mean_bootstrap_variance": 0.07822609118390735,
+          "variance_ratio": 0.6067896379258721,
+          "mean_width": 1.0582110190718,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_0_voxel_2",
+          "coverage": 0.942,
+          "coverage_wilson95": [
+            0.917943812143745,
+            0.9593162708882429
+          ],
+          "coverage_mcse": 0.010453324829928518,
+          "success_and_coverage_per_attempt": 0.942,
+          "truth_below_interval": 0.032,
+          "truth_above_interval": 0.026,
+          "bias": 2.996053336584581e-05,
+          "rmse": 0.060397265592026676,
+          "sampling_variance": 0.0036551390715032564,
+          "mean_bootstrap_variance": 0.0034102306870697156,
+          "variance_ratio": 0.932996151543745,
+          "mean_width": 0.22622418928156118,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "coefficient_1_voxel_0",
+          "coverage": 0.926,
+          "coverage_wilson95": [
+            0.8996652466777695,
+            0.945838815248988
+          ],
+          "coverage_mcse": 0.011706750189527404,
+          "success_and_coverage_per_attempt": 0.926,
+          "truth_below_interval": 0.042,
+          "truth_above_interval": 0.032,
+          "bias": -0.00265572874037972,
+          "rmse": 0.09929584215432279,
+          "sampling_variance": 0.00987235608616604,
+          "mean_bootstrap_variance": 0.008895986554700386,
+          "variance_ratio": 0.9011006569309403,
+          "mean_width": 0.3654094221345391,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_1",
+          "coverage": 0.828,
+          "coverage_wilson95": [
+            0.7924525525008731,
+            0.8585458801563487
+          ],
+          "coverage_mcse": 0.0168769665520792,
+          "success_and_coverage_per_attempt": 0.828,
+          "truth_below_interval": 0.104,
+          "truth_above_interval": 0.068,
+          "bias": 0.006657564955269703,
+          "rmse": 0.23165647872587722,
+          "sampling_variance": 0.05372785667789496,
+          "mean_bootstrap_variance": 0.03288261724661293,
+          "variance_ratio": 0.6120217570514346,
+          "mean_width": 0.6829640431697369,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "coefficient_1_voxel_2",
+          "coverage": 0.944,
+          "coverage_wilson95": [
+            0.920255206353293,
+            0.9609743793168485
+          ],
+          "coverage_mcse": 0.010282412168358165,
+          "success_and_coverage_per_attempt": 0.944,
+          "truth_below_interval": 0.032,
+          "truth_above_interval": 0.024,
+          "bias": -0.001143466852865253,
+          "rmse": 0.04912808052702664,
+          "sampling_variance": 0.0024170949697659453,
+          "mean_bootstrap_variance": 0.0022293325354225137,
+          "variance_ratio": 0.9223189669036409,
+          "mean_width": 0.1826940183419745,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "difference_voxel_0",
+          "coverage": 0.926,
+          "coverage_wilson95": [
+            0.8996652466777695,
+            0.945838815248988
+          ],
+          "coverage_mcse": 0.011706750189527404,
+          "success_and_coverage_per_attempt": 0.926,
+          "truth_below_interval": 0.04,
+          "truth_above_interval": 0.034,
+          "bias": 0.0029538692049706663,
+          "rmse": 0.12897301896527352,
+          "sampling_variance": 0.016658631540818366,
+          "mean_bootstrap_variance": 0.01453771059171147,
+          "variance_ratio": 0.8726833627414089,
+          "mean_width": 0.46693284802402407,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_1",
+          "coverage": 0.872,
+          "coverage_wilson95": [
+            0.8398543146918417,
+            0.8984731760047634
+          ],
+          "coverage_mcse": 0.014940950438308804,
+          "success_and_coverage_per_attempt": 0.872,
+          "truth_below_interval": 0.096,
+          "truth_above_interval": 0.032,
+          "bias": 0.01054082052044744,
+          "rmse": 0.15425934083665901,
+          "sampling_variance": 0.02373229993799223,
+          "mean_bootstrap_variance": 0.017920131620547487,
+          "variance_ratio": 0.7550946038676917,
+          "mean_width": 0.5030206784326311,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "difference_voxel_2",
+          "coverage": 0.928,
+          "coverage_wilson95": [
+            0.9019315959830375,
+            0.9475419685818739
+          ],
+          "coverage_mcse": 0.0115599307956406,
+          "success_and_coverage_per_attempt": 0.928,
+          "truth_below_interval": 0.04,
+          "truth_above_interval": 0.032,
+          "bias": 0.0011734273862310982,
+          "rmse": 0.05639441393047681,
+          "sampling_variance": 0.0031853236380072142,
+          "mean_bootstrap_variance": 0.0028588036859757532,
+          "variance_ratio": 0.8974923778119649,
+          "mean_width": 0.20610422248262822,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_0",
+          "coverage": 0.934,
+          "coverage_wilson95": [
+            0.9087605988391466,
+            0.9526214736402262
+          ],
+          "coverage_mcse": 0.01110351295761841,
+          "success_and_coverage_per_attempt": 0.934,
+          "truth_below_interval": 0.038,
+          "truth_above_interval": 0.028,
+          "bias": -0.00117879413789439,
+          "rmse": 0.07736365183845638,
+          "sampling_variance": 0.005995736543248859,
+          "mean_bootstrap_variance": 0.005693484153352958,
+          "variance_ratio": 0.9495887806751226,
+          "mean_width": 0.2919673299245649,
+          "unadjusted_undercoverage_signal": false
+        },
+        {
+          "estimand": "average_voxel_1",
+          "coverage": 0.818,
+          "coverage_wilson95": [
+            0.7817973646706083,
+            0.8493535547958443
+          ],
+          "coverage_mcse": 0.017255491879398864,
+          "success_and_coverage_per_attempt": 0.818,
+          "truth_below_interval": 0.102,
+          "truth_above_interval": 0.08,
+          "bias": 0.011927975215493424,
+          "rmse": 0.2921666264488194,
+          "sampling_variance": 0.08538984069914082,
+          "mean_bootstrap_variance": 0.051074321310123266,
+          "variance_ratio": 0.5981311229994737,
+          "mean_width": 0.8548298311567036,
+          "unadjusted_undercoverage_signal": true
+        },
+        {
+          "estimand": "average_voxel_2",
+          "coverage": 0.948,
+          "coverage_wilson95": [
+            0.9248988560621544,
+            0.9642697348842947
+          ],
+          "coverage_mcse": 0.009929350431926557,
+          "success_and_coverage_per_attempt": 0.948,
+          "truth_below_interval": 0.028,
+          "truth_above_interval": 0.024,
+          "bias": -0.0005567531597497303,
+          "rmse": 0.0472823065532068,
+          "sampling_variance": 0.002239786111132797,
+          "mean_bootstrap_variance": 0.0021050806897521764,
+          "variance_ratio": 0.9398579084355104,
+          "mean_width": 0.17811922984566178,
+          "unadjusted_undercoverage_signal": false
+        }
+      ],
+      "noise_diagnostics": {
+        "original_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.06114477826702474,
+            0.7053486657010127,
+            -0.5077007038189288
+          ],
+          "sd": [
+            0.11069324618693473,
+            0.08868932235634762,
+            0.09788941189926646
+          ]
+        },
+        "generating_rho": {
+          "available_attempts": 500,
+          "mean": [
+            0.06114477826702474,
+            0.7053486657010127,
+            -0.5077007038189288
+          ],
+          "sd": [
+            0.11069324618693473,
+            0.08868932235634762,
+            0.09788941189926646
+          ]
+        },
+        "fitted_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.35973792364385304,
+            0.28067564040260895,
+            0.28607636463528174,
+            0.28067564040260895,
+            0.3546093675046733,
+            0.27930842405210754,
+            0.28607636463528174,
+            0.27930842405210754,
+            0.360559967308608
+          ],
+          "sd": [
+            0.05856007785730686,
+            0.05289465911493979,
+            0.053689162955457295,
+            0.05289465911493979,
+            0.05960174782525665,
+            0.05411432527154987,
+            0.053689162955457295,
+            0.05411432527154987,
+            0.06034261961717662
+          ]
+        },
+        "generating_sigma_per_run": {
+          "available_attempts": 500,
+          "mean": [
+            0.35973792364385304,
+            0.28067564040260895,
+            0.28607636463528174,
+            0.28067564040260895,
+            0.3546093675046733,
+            0.27930842405210754,
+            0.28607636463528174,
+            0.27930842405210754,
+            0.360559967308608
+          ],
+          "sd": [
+            0.05856007785730686,
+            0.05289465911493979,
+            0.053689162955457295,
+            0.05289465911493979,
+            0.05960174782525665,
+            0.05411432527154987,
+            0.053689162955457295,
+            0.05411432527154987,
+            0.06034261961717662
+          ]
+        },
+        "true_sigma": {
+          "available_attempts": 500,
+          "mean": [
+            0.36,
+            0.288,
+            0.288,
+            0.288,
+            0.36,
+            0.288,
+            0.288,
+            0.288,
+            0.36
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "true_rho_per_run_voxel": {
+          "available_attempts": 500,
+          "mean": [
+            0.1,
+            0.8,
+            -0.5
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "replicate_rho_mean": {
+          "available_attempts": 500,
+          "mean": [
+            0.01814023899648305,
+            0.6157114773432933,
+            -0.5142086557772912
+          ],
+          "sd": [
+            0.10357318022644156,
+            0.08206366754489323,
+            0.09219775727423993
+          ]
+        },
+        "replicate_rho_sd": {
+          "available_attempts": 500,
+          "mean": [
+            0.11056590717983275,
+            0.09562256112507507,
+            0.09438130937798032
+          ],
+          "sd": [
+            0.0026500232658959134,
+            0.0045160907773013825,
+            0.006222715421300056
+          ]
+        },
+        "stationarity_bound_hits": {
+          "available_attempts": 500,
+          "mean": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "sd": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "mean_replicate_rho_minus_original": [
+          -0.04300453927054169,
+          -0.08963718835771942,
+          -0.006507951958362341
+        ],
+        "mean_original_rho_minus_truth": [
+          -0.038855221732975266,
+          -0.0946513342989873,
+          -0.007700703818928886
+        ]
+      }
+    }
+  ],
+  "paired_comparisons": [],
+  "qualification": {
+    "verdict": "prespecified_calibration_rejection",
+    "checkpoint_per_scenario": 500,
+    "family_coordinates": 48,
+    "planned_looks": 3,
+    "family_error": 0.05,
+    "per_interval_alpha": 0.00034722222222222224,
+    "band": [
+      0.92,
+      0.98
+    ],
+    "interval_method": "exact Clopper-Pearson via scipy.stats.beta",
+    "coordinates": [
+      {
+        "scenario": "baseline",
+        "coordinate": "coefficient_0_voxel_0",
+        "covered": 463,
+        "attempts": 500,
+        "coverage": 0.926,
+        "simultaneous_interval": [
+          0.8753467878177907,
+          0.9612194815920327
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "coefficient_0_voxel_1",
+        "covered": 443,
+        "attempts": 500,
+        "coverage": 0.886,
+        "simultaneous_interval": [
+          0.8273152770227785,
+          0.9307602214359316
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "coefficient_0_voxel_2",
+        "covered": 467,
+        "attempts": 500,
+        "coverage": 0.934,
+        "simultaneous_interval": [
+          0.8853007997009689,
+          0.9669558975975926
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "coefficient_1_voxel_0",
+        "covered": 462,
+        "attempts": 500,
+        "coverage": 0.924,
+        "simultaneous_interval": [
+          0.8728802633337758,
+          0.9597628550088708
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "coefficient_1_voxel_1",
+        "covered": 459,
+        "attempts": 500,
+        "coverage": 0.918,
+        "simultaneous_interval": [
+          0.8655286050794526,
+          0.9553439397122003
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "coefficient_1_voxel_2",
+        "covered": 466,
+        "attempts": 500,
+        "coverage": 0.932,
+        "simultaneous_interval": [
+          0.8827984329152885,
+          0.965536010530025
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "difference_voxel_0",
+        "covered": 462,
+        "attempts": 500,
+        "coverage": 0.924,
+        "simultaneous_interval": [
+          0.8728802633337758,
+          0.9597628550088708
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "difference_voxel_1",
+        "covered": 455,
+        "attempts": 500,
+        "coverage": 0.91,
+        "simultaneous_interval": [
+          0.8558288361096729,
+          0.9493473395841144
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "difference_voxel_2",
+        "covered": 465,
+        "attempts": 500,
+        "coverage": 0.93,
+        "simultaneous_interval": [
+          0.8803055458030447,
+          0.9641063989284024
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "average_voxel_0",
+        "covered": 466,
+        "attempts": 500,
+        "coverage": 0.932,
+        "simultaneous_interval": [
+          0.8827984329152885,
+          0.965536010530025
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "average_voxel_1",
+        "covered": 451,
+        "attempts": 500,
+        "coverage": 0.902,
+        "simultaneous_interval": [
+          0.846233740210241,
+          0.9432439063090085
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "baseline",
+        "coordinate": "average_voxel_2",
+        "covered": 464,
+        "attempts": 500,
+        "coverage": 0.928,
+        "simultaneous_interval": [
+          0.8778217766730934,
+          0.9626674389479812
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "coefficient_0_voxel_0",
+        "covered": 469,
+        "attempts": 500,
+        "coverage": 0.938,
+        "simultaneous_interval": [
+          0.8903355541240163,
+          0.9697648517772548
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "coefficient_0_voxel_1",
+        "covered": 411,
+        "attempts": 500,
+        "coverage": 0.822,
+        "simultaneous_interval": [
+          0.7543144173173277,
+          0.8781121147126304
+        ],
+        "outside_band": true,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "coefficient_0_voxel_2",
+        "covered": 471,
+        "attempts": 500,
+        "coverage": 0.942,
+        "simultaneous_interval": [
+          0.8954132850029001,
+          0.9725296408645125
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "coefficient_1_voxel_0",
+        "covered": 463,
+        "attempts": 500,
+        "coverage": 0.926,
+        "simultaneous_interval": [
+          0.8753467878177907,
+          0.9612194815920327
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "coefficient_1_voxel_1",
+        "covered": 414,
+        "attempts": 500,
+        "coverage": 0.828,
+        "simultaneous_interval": [
+          0.7610132071213673,
+          0.8831947161116365
+        ],
+        "outside_band": true,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "coefficient_1_voxel_2",
+        "covered": 472,
+        "attempts": 500,
+        "coverage": 0.944,
+        "simultaneous_interval": [
+          0.897969508402128,
+          0.9738941786284487
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "difference_voxel_0",
+        "covered": 463,
+        "attempts": 500,
+        "coverage": 0.926,
+        "simultaneous_interval": [
+          0.8753467878177907,
+          0.9612194815920327
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "difference_voxel_1",
+        "covered": 436,
+        "attempts": 500,
+        "coverage": 0.872,
+        "simultaneous_interval": [
+          0.8110169238524718,
+          0.9195774060392572
+        ],
+        "outside_band": true,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "difference_voxel_2",
+        "covered": 464,
+        "attempts": 500,
+        "coverage": 0.928,
+        "simultaneous_interval": [
+          0.8778217766730934,
+          0.9626674389479812
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "average_voxel_0",
+        "covered": 467,
+        "attempts": 500,
+        "coverage": 0.934,
+        "simultaneous_interval": [
+          0.8853007997009689,
+          0.9669558975975926
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "average_voxel_1",
+        "covered": 409,
+        "attempts": 500,
+        "coverage": 0.818,
+        "simultaneous_interval": [
+          0.7498625495868703,
+          0.8747095761022665
+        ],
+        "outside_band": true,
+        "inside_band": false
+      },
+      {
+        "scenario": "strong_ar",
+        "coordinate": "average_voxel_2",
+        "covered": 474,
+        "attempts": 500,
+        "coverage": 0.948,
+        "simultaneous_interval": [
+          0.9031195347044958,
+          0.9765845513602969
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "coefficient_0_voxel_0",
+        "covered": 463,
+        "attempts": 500,
+        "coverage": 0.926,
+        "simultaneous_interval": [
+          0.8753467878177907,
+          0.9612194815920327
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "coefficient_0_voxel_1",
+        "covered": 439,
+        "attempts": 500,
+        "coverage": 0.878,
+        "simultaneous_interval": [
+          0.8179752782278554,
+          0.9243971126019245
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "coefficient_0_voxel_2",
+        "covered": 462,
+        "attempts": 500,
+        "coverage": 0.924,
+        "simultaneous_interval": [
+          0.8728802633337758,
+          0.9597628550088708
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "coefficient_1_voxel_0",
+        "covered": 460,
+        "attempts": 500,
+        "coverage": 0.92,
+        "simultaneous_interval": [
+          0.8679714415206085,
+          0.9568248044570573
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "coefficient_1_voxel_1",
+        "covered": 445,
+        "attempts": 500,
+        "coverage": 0.89,
+        "simultaneous_interval": [
+          0.832013699485634,
+          0.9339128854786193
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "coefficient_1_voxel_2",
+        "covered": 468,
+        "attempts": 500,
+        "coverage": 0.936,
+        "simultaneous_interval": [
+          0.887813034303306,
+          0.9683656562212515
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "difference_voxel_0",
+        "covered": 457,
+        "attempts": 500,
+        "coverage": 0.914,
+        "simultaneous_interval": [
+          0.8606648500105776,
+          0.9523598073006958
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "difference_voxel_1",
+        "covered": 454,
+        "attempts": 500,
+        "coverage": 0.908,
+        "simultaneous_interval": [
+          0.853420721015085,
+          0.9478310088294251
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "difference_voxel_2",
+        "covered": 466,
+        "attempts": 500,
+        "coverage": 0.932,
+        "simultaneous_interval": [
+          0.8827984329152885,
+          0.965536010530025
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "average_voxel_0",
+        "covered": 455,
+        "attempts": 500,
+        "coverage": 0.91,
+        "simultaneous_interval": [
+          0.8558288361096729,
+          0.9493473395841144
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "average_voxel_1",
+        "covered": 439,
+        "attempts": 500,
+        "coverage": 0.878,
+        "simultaneous_interval": [
+          0.8179752782278554,
+          0.9243971126019245
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "multiple_runs",
+        "coordinate": "average_voxel_2",
+        "covered": 464,
+        "attempts": 500,
+        "coverage": 0.928,
+        "simultaneous_interval": [
+          0.8778217766730934,
+          0.9626674389479812
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "coefficient_0_voxel_0",
+        "covered": 457,
+        "attempts": 500,
+        "coverage": 0.914,
+        "simultaneous_interval": [
+          0.8606648500105776,
+          0.9523598073006958
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "coefficient_0_voxel_1",
+        "covered": 444,
+        "attempts": 500,
+        "coverage": 0.888,
+        "simultaneous_interval": [
+          0.8296620307913776,
+          0.9323390524366282
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "coefficient_0_voxel_2",
+        "covered": 463,
+        "attempts": 500,
+        "coverage": 0.926,
+        "simultaneous_interval": [
+          0.8753467878177907,
+          0.9612194815920327
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "coefficient_1_voxel_0",
+        "covered": 460,
+        "attempts": 500,
+        "coverage": 0.92,
+        "simultaneous_interval": [
+          0.8679714415206085,
+          0.9568248044570573
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "coefficient_1_voxel_1",
+        "covered": 441,
+        "attempts": 500,
+        "coverage": 0.882,
+        "simultaneous_interval": [
+          0.8226360788090181,
+          0.9275880136978089
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "coefficient_1_voxel_2",
+        "covered": 473,
+        "attempts": 500,
+        "coverage": 0.946,
+        "simultaneous_interval": [
+          0.900538050806345,
+          0.9752460321903359
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "difference_voxel_0",
+        "covered": 460,
+        "attempts": 500,
+        "coverage": 0.92,
+        "simultaneous_interval": [
+          0.8679714415206085,
+          0.9568248044570573
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "difference_voxel_1",
+        "covered": 457,
+        "attempts": 500,
+        "coverage": 0.914,
+        "simultaneous_interval": [
+          0.8606648500105776,
+          0.9523598073006958
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "difference_voxel_2",
+        "covered": 451,
+        "attempts": 500,
+        "coverage": 0.902,
+        "simultaneous_interval": [
+          0.846233740210241,
+          0.9432439063090085
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "average_voxel_0",
+        "covered": 455,
+        "attempts": 500,
+        "coverage": 0.91,
+        "simultaneous_interval": [
+          0.8558288361096729,
+          0.9493473395841144
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "average_voxel_1",
+        "covered": 439,
+        "attempts": 500,
+        "coverage": 0.878,
+        "simultaneous_interval": [
+          0.8179752782278554,
+          0.9243971126019245
+        ],
+        "outside_band": false,
+        "inside_band": false
+      },
+      {
+        "scenario": "censor_continuous",
+        "coordinate": "average_voxel_2",
+        "covered": 464,
+        "attempts": 500,
+        "coverage": 0.928,
+        "simultaneous_interval": [
+          0.8778217766730934,
+          0.9626674389479812
+        ],
+        "outside_band": false,
+        "inside_band": false
+      }
+    ],
+    "scope": "Declared Gaussian AR1 fixedrank settings only; no exact nominal coverage, T/F or p-value admission."
+  },
+  "software": {
+    "scipy": "1.17.1"
+  },
+  "interpretation": "Coordinates, arms and shared seeds are not independent sample units; coverage stays coordinate-specific. Failed attempts remain in success-and-coverage denominators.",
+  "raw_input_sha256": {
+    "/private/tmp/scalafim-rrg-calibration/fresh-500.jsonl": "d04e17dd80b1db18868fbfe9af71e040e245a4bcea9eb5083d99b5aef9d7e9dd"
+  }
+}

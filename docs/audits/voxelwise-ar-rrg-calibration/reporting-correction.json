@@ -1,0 +1,11 @@
+{
+  "change": "Reporting-only: replace misleading independent_input_count with scenario_dataset_count and distinct_input_seed_count; no simulation, scientific metric, gate or stopping-rule change.",
+  "executed_analysis_sha256": "e3ec8ed26178006bc0ec1bb12a80b0b8e64cfd5eabed75a0054861a3255edc6e",
+  "final_analysis_sha256": "eb128a5a7703f84981cd1440c6fbec3a210a20749db6faabd484b7c2f0fe1dde",
+  "summaries_identical_after_metadata_normalization": [
+    "development",
+    "fresh-500",
+    "stress"
+  ],
+  "original_code_and_summaries": "execution-logs.tar.gz"
+}

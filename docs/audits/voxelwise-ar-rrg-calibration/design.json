@@ -1,0 +1,98 @@
+{
+  "schema": "voxelwise-rrg-calibration-design-v1",
+  "frozen_utc": "2026-09-30T08:26:09.691072+00:00",
+  "prior_source_commit": "8a18961a059be5b0339cefb51fd4d86958f83e00",
+  "integration_root_head": "9504d6962fa39dbcbda27732e8f8291ab3259fbc",
+  "issue": "bd-01M3RP66GV5KKHCC0MTN1FBZ9K",
+  "scope": "Diagnostic-only small-voxel Gaussian diagonal AR1 parametric bootstrap; no production inference API or gate change.",
+  "candidate": {
+    "rank": 1,
+    "estimator": "original unrestricted OLS-based Gls.prepare AR1 (iterations1, stationaritybound.99), followed by fixedrank GLS",
+    "mean": "X times original restricted coefficients, including nuisance",
+    "generator": "u0~N(0,Gamma), ut=diag(rho)u_(t-1)+epsilon; epsilon iidN(0,Sigma)",
+    "stationary_covariance": "Gamma_uv=Sigma_uv/(1-rho_u*rho_v)",
+    "parameters": "Original fitted rho and per-run sample covariance of run-centered synchronized unrestricted GLS innovation residuals after marginalHC2, on within-estimation-segment nonfirst rows; denominatorK-1.",
+    "temporal_policy": "Independent stationary physical-run starts; latent process continues through omitted observations and retained noise-exclusion rows; observed rows selected afterward. Estimator whitening reset policy unchanged.",
+    "refit": "Re-estimate AR and global fixedrank coefficients each replicate; generator parameters fixed at original estimates.",
+    "intervals": "two-sided95percent type7 marginalpercentiles; all12 coefficients/contrasts computed perreplicate",
+    "covariance_admission": "Finite stable AR; positive-definite Sigma/Gamma through Gale Cholesky; no jitter/floor; first failure retained, no retry or substitution."
+  },
+  "development": {
+    "data": "Original400 baseline responses, exact existing generator and response hashes",
+    "replicates": 399,
+    "arms": [
+      "residual_frozen_full",
+      "residual_refit_full",
+      "oracle_known_rank1",
+      "oracle_known_full",
+      "oracle_refit_rank1",
+      "oracle_refit_full",
+      "plugin_refit_rank1",
+      "plugin_refit_full"
+    ],
+    "cross_controls_first100": [
+      "true_rho_plugin_sigma_rank1",
+      "plugin_rho_true_sigma_rank1"
+    ],
+    "expected_attempts": 3400,
+    "expected_requested_replicates": 1356600,
+    "use": "Exploratory mechanism diagnosis; cannot qualify the candidate."
+  },
+  "fresh": {
+    "regular_scenarios": [
+      "baseline",
+      "strong_ar",
+      "multiple_runs",
+      "censor_continuous"
+    ],
+    "input_id": "100000+dataset_index",
+    "input_seed": "10007+7919*input_id",
+    "bootstrap_seed": "660001+101*input_id",
+    "replicates": 999,
+    "candidate": "plugin_refit_rank1",
+    "checkpoints_per_scenario": [
+      500,
+      1000,
+      2000
+    ],
+    "coordinate_count": 12,
+    "family_coordinates": 48,
+    "looks": 3,
+    "family_error": 0.05,
+    "per_interval_alpha": 0.00034722222222222224,
+    "binomial_interval": "Exact two-sided Clopper-Pearson",
+    "operational_band": [
+      0.92,
+      0.98
+    ],
+    "checkpoint_policy": "Evaluate only when all four settings reach checkpoint. Reject if any simultaneous interval lies wholly outside band. No early acceptance.",
+    "final_acceptance": "All48 adjusted intervals wholly inside band atN2000; zero failedfits/replicates; complete schedule. Passing establishes approximate calibration within declared band for these settings only.",
+    "final_inconclusive": "AtN2000 neither rejection nor full acceptance. No extra datasets, relaxedband or posthoc correction.",
+    "failure_policy": "First computation failure makes admission fail; distinguish computational failure from statistical rejection. All attemptedrows retained.",
+    "timeout_policy": "7200second wall cap for entire freshstage, includingallcheckpoints; timeout is incomplete qualification and cannot pass.",
+    "maximum_requested_replicates": 7992000
+  },
+  "stress": {
+    "scenarios": [
+      "weak",
+      "boundary",
+      "joint_lag"
+    ],
+    "datasets_each": 200,
+    "input_id": "200000+dataset_index",
+    "input_seed": "10007+7919*input_id",
+    "bootstrap_seed": "660001+101*input_id",
+    "replicates": 399,
+    "use": "Descriptive misspecification/boundary results outside acceptance family; nopromotion."
+  },
+  "compute": {
+    "max_heap_gib": 3,
+    "active_processor_count": 4,
+    "processes": "sequential",
+    "development_wall_cap_seconds": 3600,
+    "fresh_wall_cap_seconds": 7200,
+    "stress_wall_cap_seconds": 1800,
+    "timing_pilot_before_full": true
+  },
+  "review": "Independent scientific expert approved generative law, matrix controls, invariants and familywise checkpoint rules before new development or fresh study outputs."
+}

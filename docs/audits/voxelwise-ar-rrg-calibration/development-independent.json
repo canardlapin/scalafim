@@ -1,0 +1,1099 @@
+{
+  "archived_point_parity": {
+    "oracle_known_rank1": {
+      "datasets": 400,
+      "max_absolute_difference": 0.0
+    },
+    "oracle_known_full": {
+      "datasets": 400,
+      "max_absolute_difference": 0.0
+    },
+    "oracle_refit_rank1": {
+      "datasets": 400,
+      "max_absolute_difference": 0.0
+    }
+  },
+  "independent_metrics": [
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 375,
+      "successful_attempts": 400,
+      "coverage": 0.9375,
+      "variance_ratio": 0.9872267038864948,
+      "bias": -0.0031191975981504135
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 371,
+      "successful_attempts": 400,
+      "coverage": 0.9275,
+      "variance_ratio": 1.0005042823588304,
+      "bias": -0.000890245922974445
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 376,
+      "successful_attempts": 400,
+      "coverage": 0.94,
+      "variance_ratio": 0.9725920071524028,
+      "bias": 9.885164286347878e-05
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 381,
+      "successful_attempts": 400,
+      "coverage": 0.9525,
+      "variance_ratio": 1.0775325600739185,
+      "bias": -0.0023304499730542366
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 1.003871408359734,
+      "bias": -0.0042798747398271235
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.9962096889640786,
+      "bias": -0.00023257936966112515
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "difference_voxel_0",
+      "covered": 375,
+      "successful_attempts": 400,
+      "coverage": 0.9375,
+      "variance_ratio": 0.9166631159245637,
+      "bias": -0.0007887476250961772
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "difference_voxel_1",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 0.9977943960296711,
+      "bias": 0.0033896288168526784
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "difference_voxel_2",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 0.9568629727414687,
+      "bias": 0.0003314310125246044
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "average_voxel_0",
+      "covered": 388,
+      "successful_attempts": 400,
+      "coverage": 0.97,
+      "variance_ratio": 1.1389684892859129,
+      "bias": -0.0027248237856023214
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "average_voxel_1",
+      "covered": 376,
+      "successful_attempts": 400,
+      "coverage": 0.94,
+      "variance_ratio": 1.0056363721754487,
+      "bias": -0.0025850603314007885
+    },
+    {
+      "arm": "oracle_known_full",
+      "coordinate": "average_voxel_2",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 1.0066909751710433,
+      "bias": -6.686386339885171e-05
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.0337797334884502,
+      "bias": -0.0026482856372927357
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 1.048791386296479,
+      "bias": 0.00540622663719187
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 377,
+      "successful_attempts": 400,
+      "coverage": 0.9425,
+      "variance_ratio": 0.9463724285362418,
+      "bias": 0.0016043651845218932
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.0139205742104722,
+      "bias": -0.002098672500505379
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.8787857565470625,
+      "bias": 0.00133451892578526
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.092591330786101,
+      "bias": 0.00025766426889032744
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "difference_voxel_0",
+      "covered": 375,
+      "successful_attempts": 400,
+      "coverage": 0.9375,
+      "variance_ratio": 0.9183031844442514,
+      "bias": -0.0005496131367873566
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "difference_voxel_1",
+      "covered": 383,
+      "successful_attempts": 400,
+      "coverage": 0.9575,
+      "variance_ratio": 1.136508029631318,
+      "bias": 0.00407170771140661
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "difference_voxel_2",
+      "covered": 368,
+      "successful_attempts": 400,
+      "coverage": 0.92,
+      "variance_ratio": 0.8629703405443773,
+      "bias": 0.0013467009156315655
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "average_voxel_0",
+      "covered": 384,
+      "successful_attempts": 400,
+      "coverage": 0.96,
+      "variance_ratio": 1.0947206924016288,
+      "bias": -0.0023734790688990544
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "average_voxel_1",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.9722106087102242,
+      "bias": 0.003370372781488569
+    },
+    {
+      "arm": "oracle_known_rank1",
+      "coordinate": "average_voxel_2",
+      "covered": 380,
+      "successful_attempts": 400,
+      "coverage": 0.95,
+      "variance_ratio": 1.0286488449639906,
+      "bias": 0.0009310147267060821
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 375,
+      "successful_attempts": 400,
+      "coverage": 0.9375,
+      "variance_ratio": 0.9893607970204091,
+      "bias": -0.0031380875035080585
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 371,
+      "successful_attempts": 400,
+      "coverage": 0.9275,
+      "variance_ratio": 0.9934864126587288,
+      "bias": -0.0005388199374995671
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 376,
+      "successful_attempts": 400,
+      "coverage": 0.94,
+      "variance_ratio": 0.9706498374848642,
+      "bias": 9.193151025387466e-05
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.075650033709434,
+      "bias": -0.002356712281418497
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 379,
+      "successful_attempts": 400,
+      "coverage": 0.9475,
+      "variance_ratio": 1.0079745929634951,
+      "bias": -0.004567932995773788
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.9956323922349067,
+      "bias": -0.00025106645513474113
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "difference_voxel_0",
+      "covered": 375,
+      "successful_attempts": 400,
+      "coverage": 0.9375,
+      "variance_ratio": 0.9153084263232771,
+      "bias": -0.0007813752220895614
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "difference_voxel_1",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 0.9954823996170672,
+      "bias": 0.004029113058274221
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "difference_voxel_2",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 0.9574825448407995,
+      "bias": 0.0003429979653886152
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "average_voxel_0",
+      "covered": 388,
+      "successful_attempts": 400,
+      "coverage": 0.97,
+      "variance_ratio": 1.1410291655746814,
+      "bias": -0.00274739989246328
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "average_voxel_1",
+      "covered": 377,
+      "successful_attempts": 400,
+      "coverage": 0.9425,
+      "variance_ratio": 1.0048958135247779,
+      "bias": -0.0025533764666366802
+    },
+    {
+      "arm": "oracle_refit_full",
+      "coordinate": "average_voxel_2",
+      "covered": 377,
+      "successful_attempts": 400,
+      "coverage": 0.9425,
+      "variance_ratio": 1.0038759831140203,
+      "bias": -7.956747244045825e-05
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 379,
+      "successful_attempts": 400,
+      "coverage": 0.9475,
+      "variance_ratio": 1.0637638284967856,
+      "bias": -0.002606584867641171
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 377,
+      "successful_attempts": 400,
+      "coverage": 0.9425,
+      "variance_ratio": 1.0395127858081692,
+      "bias": 0.004453510798609267
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 0.9531714048464088,
+      "bias": 0.0015439410468009597
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.0064893476993906,
+      "bias": -0.002187152887011846
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.8892318350839702,
+      "bias": 0.0011739928231719987
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 383,
+      "successful_attempts": 400,
+      "coverage": 0.9575,
+      "variance_ratio": 1.0916799084674642,
+      "bias": 0.00016609150171699742
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "difference_voxel_0",
+      "covered": 377,
+      "successful_attempts": 400,
+      "coverage": 0.9425,
+      "variance_ratio": 0.9578822092397232,
+      "bias": -0.00041943198062932536
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "difference_voxel_1",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.1356462408370482,
+      "bias": 0.0032795179754372683
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "difference_voxel_2",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 0.894017167227097,
+      "bias": 0.0013778495450839623
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "average_voxel_0",
+      "covered": 382,
+      "successful_attempts": 400,
+      "coverage": 0.955,
+      "variance_ratio": 1.0845211362131588,
+      "bias": -0.0023968688773265082
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "average_voxel_1",
+      "covered": 376,
+      "successful_attempts": 400,
+      "coverage": 0.94,
+      "variance_ratio": 0.9712573048491895,
+      "bias": 0.0028137518108906335
+    },
+    {
+      "arm": "oracle_refit_rank1",
+      "coordinate": "average_voxel_2",
+      "covered": 380,
+      "successful_attempts": 400,
+      "coverage": 0.95,
+      "variance_ratio": 1.0231027791175193,
+      "bias": 0.0008550162742589493
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 0.9468508062943898,
+      "bias": -0.0031380875035080585
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 353,
+      "successful_attempts": 400,
+      "coverage": 0.8825,
+      "variance_ratio": 0.822511677591633,
+      "bias": -0.0005388199374995671
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 369,
+      "successful_attempts": 400,
+      "coverage": 0.9225,
+      "variance_ratio": 0.9453391607872778,
+      "bias": 9.193151025387466e-05
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 368,
+      "successful_attempts": 400,
+      "coverage": 0.92,
+      "variance_ratio": 1.0284030188878945,
+      "bias": -0.002356712281418497
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 368,
+      "successful_attempts": 400,
+      "coverage": 0.92,
+      "variance_ratio": 0.8346516877043336,
+      "bias": -0.004567932995773788
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 370,
+      "successful_attempts": 400,
+      "coverage": 0.925,
+      "variance_ratio": 0.9711463168162068,
+      "bias": -0.00025106645513474113
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "difference_voxel_0",
+      "covered": 368,
+      "successful_attempts": 400,
+      "coverage": 0.92,
+      "variance_ratio": 0.8751418615451872,
+      "bias": -0.0007813752220895614
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "difference_voxel_1",
+      "covered": 358,
+      "successful_attempts": 400,
+      "coverage": 0.895,
+      "variance_ratio": 0.8232252085443585,
+      "bias": 0.004029113058274221
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "difference_voxel_2",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 0.9322209687084319,
+      "bias": 0.0003429979653886152
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "average_voxel_0",
+      "covered": 379,
+      "successful_attempts": 400,
+      "coverage": 0.9475,
+      "variance_ratio": 1.0918063572636552,
+      "bias": -0.00274739989246328
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "average_voxel_1",
+      "covered": 362,
+      "successful_attempts": 400,
+      "coverage": 0.905,
+      "variance_ratio": 0.8328175183056613,
+      "bias": -0.0025533764666366802
+    },
+    {
+      "arm": "plugin_refit_full",
+      "coordinate": "average_voxel_2",
+      "covered": 377,
+      "successful_attempts": 400,
+      "coverage": 0.9425,
+      "variance_ratio": 0.9792796031335415,
+      "bias": -7.956747244045825e-05
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 375,
+      "successful_attempts": 400,
+      "coverage": 0.9375,
+      "variance_ratio": 1.0107618090005832,
+      "bias": -0.002606584867641171
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 365,
+      "successful_attempts": 400,
+      "coverage": 0.9125,
+      "variance_ratio": 0.862215615374064,
+      "bias": 0.004453510798609267
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 372,
+      "successful_attempts": 400,
+      "coverage": 0.93,
+      "variance_ratio": 0.9258889968997948,
+      "bias": 0.0015439410468009597
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 372,
+      "successful_attempts": 400,
+      "coverage": 0.93,
+      "variance_ratio": 0.9325168037453967,
+      "bias": -0.002187152887011846
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 357,
+      "successful_attempts": 400,
+      "coverage": 0.8925,
+      "variance_ratio": 0.7498566026706812,
+      "bias": 0.0011739928231719987
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 378,
+      "successful_attempts": 400,
+      "coverage": 0.945,
+      "variance_ratio": 1.0402652534260843,
+      "bias": 0.00016609150171699742
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "difference_voxel_0",
+      "covered": 366,
+      "successful_attempts": 400,
+      "coverage": 0.915,
+      "variance_ratio": 0.8715818215456134,
+      "bias": -0.00041943198062932536
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "difference_voxel_1",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 0.9824574649818351,
+      "bias": 0.0032795179754372683
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "difference_voxel_2",
+      "covered": 366,
+      "successful_attempts": 400,
+      "coverage": 0.915,
+      "variance_ratio": 0.8242309721611342,
+      "bias": 0.0013778495450839623
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "average_voxel_0",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 1.0358289222579442,
+      "bias": -0.0023968688773265082
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "average_voxel_1",
+      "covered": 359,
+      "successful_attempts": 400,
+      "coverage": 0.8975,
+      "variance_ratio": 0.8057315035981325,
+      "bias": 0.0028137518108906335
+    },
+    {
+      "arm": "plugin_refit_rank1",
+      "coordinate": "average_voxel_2",
+      "covered": 376,
+      "successful_attempts": 400,
+      "coverage": 0.94,
+      "variance_ratio": 0.9970117888512656,
+      "bias": 0.0008550162742589493
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 97,
+      "successful_attempts": 100,
+      "coverage": 0.97,
+      "variance_ratio": 1.15228918185048,
+      "bias": 0.00036813153019890963
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 93,
+      "successful_attempts": 100,
+      "coverage": 0.93,
+      "variance_ratio": 1.058130803951669,
+      "bias": -0.004719002255738235
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 94,
+      "successful_attempts": 100,
+      "coverage": 0.94,
+      "variance_ratio": 0.9869286848586794,
+      "bias": 0.003132696262019064
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 94,
+      "successful_attempts": 100,
+      "coverage": 0.94,
+      "variance_ratio": 0.8929739605283092,
+      "bias": -0.006868349303307761
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 87,
+      "successful_attempts": 100,
+      "coverage": 0.87,
+      "variance_ratio": 0.788304686853675,
+      "bias": -0.000780724285344393
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 95,
+      "successful_attempts": 100,
+      "coverage": 0.95,
+      "variance_ratio": 1.1983155456311556,
+      "bias": -0.0022346531667703988
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "difference_voxel_0",
+      "covered": 93,
+      "successful_attempts": 100,
+      "coverage": 0.93,
+      "variance_ratio": 0.9182293790635659,
+      "bias": 0.007236480833506671
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "difference_voxel_1",
+      "covered": 95,
+      "successful_attempts": 100,
+      "coverage": 0.95,
+      "variance_ratio": 1.3093409234002509,
+      "bias": -0.003938277970393841
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "difference_voxel_2",
+      "covered": 93,
+      "successful_attempts": 100,
+      "coverage": 0.93,
+      "variance_ratio": 0.8133052800164932,
+      "bias": 0.0053673494287894636
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "average_voxel_0",
+      "covered": 93,
+      "successful_attempts": 100,
+      "coverage": 0.93,
+      "variance_ratio": 1.082784380888849,
+      "bias": -0.0032501088865544325
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "average_voxel_1",
+      "covered": 92,
+      "successful_attempts": 100,
+      "coverage": 0.92,
+      "variance_ratio": 0.9217926588033248,
+      "bias": -0.0027498632705413102
+    },
+    {
+      "arm": "plugin_rho_true_sigma_rank1",
+      "coordinate": "average_voxel_2",
+      "covered": 97,
+      "successful_attempts": 100,
+      "coverage": 0.97,
+      "variance_ratio": 1.1191683310927572,
+      "bias": 0.00044902154762430644
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 372,
+      "successful_attempts": 400,
+      "coverage": 0.93,
+      "variance_ratio": 0.9300835809076559,
+      "bias": -0.0031380875035080585
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 354,
+      "successful_attempts": 400,
+      "coverage": 0.885,
+      "variance_ratio": 0.8135014942727389,
+      "bias": -0.0005388199374995671
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 368,
+      "successful_attempts": 400,
+      "coverage": 0.92,
+      "variance_ratio": 0.9332597691443943,
+      "bias": 9.193151025387466e-05
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 369,
+      "successful_attempts": 400,
+      "coverage": 0.9225,
+      "variance_ratio": 1.0228284735723137,
+      "bias": -0.002356712281418497
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 367,
+      "successful_attempts": 400,
+      "coverage": 0.9175,
+      "variance_ratio": 0.8238350276157713,
+      "bias": -0.004567932995773788
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.9524627288849605,
+      "bias": -0.00025106645513474113
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "difference_voxel_0",
+      "covered": 366,
+      "successful_attempts": 400,
+      "coverage": 0.915,
+      "variance_ratio": 0.8719578640513346,
+      "bias": -0.0007813752220895614
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "difference_voxel_1",
+      "covered": 357,
+      "successful_attempts": 400,
+      "coverage": 0.8925,
+      "variance_ratio": 0.8139819045507172,
+      "bias": 0.004029113058274221
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "difference_voxel_2",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 0.9191747187021108,
+      "bias": 0.0003429979653886152
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "average_voxel_0",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 1.072984821926176,
+      "bias": -0.00274739989246328
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "average_voxel_1",
+      "covered": 370,
+      "successful_attempts": 400,
+      "coverage": 0.925,
+      "variance_ratio": 0.8223724924467753,
+      "bias": -0.0025533764666366802
+    },
+    {
+      "arm": "residual_frozen_full",
+      "coordinate": "average_voxel_2",
+      "covered": 370,
+      "successful_attempts": 400,
+      "coverage": 0.925,
+      "variance_ratio": 0.9619329114288051,
+      "bias": -7.956747244045825e-05
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 372,
+      "successful_attempts": 400,
+      "coverage": 0.93,
+      "variance_ratio": 0.9301365601608129,
+      "bias": -0.0031380875035080585
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 353,
+      "successful_attempts": 400,
+      "coverage": 0.8825,
+      "variance_ratio": 0.8142164882544889,
+      "bias": -0.0005388199374995671
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 369,
+      "successful_attempts": 400,
+      "coverage": 0.9225,
+      "variance_ratio": 0.9333267909698036,
+      "bias": 9.193151025387466e-05
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 370,
+      "successful_attempts": 400,
+      "coverage": 0.925,
+      "variance_ratio": 1.0229725125749236,
+      "bias": -0.002356712281418497
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 367,
+      "successful_attempts": 400,
+      "coverage": 0.9175,
+      "variance_ratio": 0.8245880761653998,
+      "bias": -0.004567932995773788
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 374,
+      "successful_attempts": 400,
+      "coverage": 0.935,
+      "variance_ratio": 0.9526594972995237,
+      "bias": -0.00025106645513474113
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "difference_voxel_0",
+      "covered": 366,
+      "successful_attempts": 400,
+      "coverage": 0.915,
+      "variance_ratio": 0.8719546760273337,
+      "bias": -0.0007813752220895614
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "difference_voxel_1",
+      "covered": 358,
+      "successful_attempts": 400,
+      "coverage": 0.895,
+      "variance_ratio": 0.8146340445435378,
+      "bias": 0.004029113058274221
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "difference_voxel_2",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 0.9191973690120019,
+      "bias": 0.0003429979653886152
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "average_voxel_0",
+      "covered": 373,
+      "successful_attempts": 400,
+      "coverage": 0.9325,
+      "variance_ratio": 1.0731772604983796,
+      "bias": -0.00274739989246328
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "average_voxel_1",
+      "covered": 371,
+      "successful_attempts": 400,
+      "coverage": 0.9275,
+      "variance_ratio": 0.8231704014455008,
+      "bias": -0.0025533764666366802
+    },
+    {
+      "arm": "residual_refit_full",
+      "coordinate": "average_voxel_2",
+      "covered": 370,
+      "successful_attempts": 400,
+      "coverage": 0.925,
+      "variance_ratio": 0.9621535095777449,
+      "bias": -7.956747244045825e-05
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "coefficient_0_voxel_0",
+      "covered": 98,
+      "successful_attempts": 100,
+      "coverage": 0.98,
+      "variance_ratio": 1.2008602256230234,
+      "bias": 0.00036813153019890963
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "coefficient_0_voxel_1",
+      "covered": 99,
+      "successful_attempts": 100,
+      "coverage": 0.99,
+      "variance_ratio": 1.2563366586690836,
+      "bias": -0.004719002255738235
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "coefficient_0_voxel_2",
+      "covered": 97,
+      "successful_attempts": 100,
+      "coverage": 0.97,
+      "variance_ratio": 1.0154504612497635,
+      "bias": 0.003132696262019064
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "coefficient_1_voxel_0",
+      "covered": 95,
+      "successful_attempts": 100,
+      "coverage": 0.95,
+      "variance_ratio": 0.9731729225758879,
+      "bias": -0.006868349303307761
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "coefficient_1_voxel_1",
+      "covered": 95,
+      "successful_attempts": 100,
+      "coverage": 0.95,
+      "variance_ratio": 0.9221245825557597,
+      "bias": -0.000780724285344393
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "coefficient_1_voxel_2",
+      "covered": 95,
+      "successful_attempts": 100,
+      "coverage": 0.95,
+      "variance_ratio": 1.269724460506647,
+      "bias": -0.0022346531667703988
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "difference_voxel_0",
+      "covered": 94,
+      "successful_attempts": 100,
+      "coverage": 0.94,
+      "variance_ratio": 1.0203616300267302,
+      "bias": 0.007236480833506671
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "difference_voxel_1",
+      "covered": 96,
+      "successful_attempts": 100,
+      "coverage": 0.96,
+      "variance_ratio": 1.5151268328270613,
+      "bias": -0.003938277970393841
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "difference_voxel_2",
+      "covered": 93,
+      "successful_attempts": 100,
+      "coverage": 0.93,
+      "variance_ratio": 0.8892902264619882,
+      "bias": 0.0053673494287894636
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "average_voxel_0",
+      "covered": 97,
+      "successful_attempts": 100,
+      "coverage": 0.97,
+      "variance_ratio": 1.1249137082151879,
+      "bias": -0.0032501088865544325
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "average_voxel_1",
+      "covered": 96,
+      "successful_attempts": 100,
+      "coverage": 0.96,
+      "variance_ratio": 1.0925752030420746,
+      "bias": -0.0027498632705413102
+    },
+    {
+      "arm": "true_rho_plugin_sigma_rank1",
+      "coordinate": "average_voxel_2",
+      "covered": 97,
+      "successful_attempts": 100,
+      "coverage": 0.97,
+      "variance_ratio": 1.15038403416713,
+      "bias": 0.00044902154762430644
+    }
+  ],
+  "development_sha256": "a810aec8dc2979fc4a990fba9ea43b2a57f8e8a6da7d11afb3b818a39cce3f3c"
+}
