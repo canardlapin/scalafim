@@ -153,3 +153,26 @@ class VolumeToSurfaceParitySuite extends munit.FunSuite:
     val surfaces = pair(outsidePoints :+ Vector(0.0, 0.0, 0.0))
     val operator = compile(surfaces, SurfaceSamplingPath.White, SamplingPolicy.Nearest)
     assertEquals(operator.qc.coverage.rowCoverage, Vector(0.0, 0.0, 0.0, 0.0, 1.0))
+
+  Vector(0 -> 3, 1 -> 4, 2 -> 5).foreach: (axis, length) =>
+    test(s"nearest spatial lookup has absolute half-up ties and support boundaries on axis $axis"):
+      val epsilon = 1e-8
+      val cases = Vector(
+        (-0.5 - epsilon, None), (-0.5, Some(0)), (-0.5 + epsilon, Some(0)),
+        (0.5 - epsilon, Some(0)), (0.5, Some(1)), (0.5 + epsilon, Some(1)),
+        (length - 0.5 - epsilon, Some(length - 1)), (length - 0.5, None), (length - 0.5 + epsilon, None)
+      )
+      cases.foreach: (coordinate, expectedIndex) =>
+        val point = Vector(1.0, 1.0, 1.0).updated(axis, coordinate)
+        val weights = VolumeToSurfaceOperatorCompiler.sourcePointWeights(
+          GridSpec.fromSpace(space), None, SpatialPoint(point(0), point(1), point(2)), SamplingPolicy.Nearest
+        )
+        // Absolute oracle for the declared 3x4x5 canonical Z-fast layout.
+        // No rounding or other engine is used to decide the expected voxel.
+        val expectedColumns = expectedIndex.toVector.map: index =>
+          val p = Vector(1, 1, 1).updated(axis, index)
+          (p(0) * 4 + p(1)) * 5 + p(2)
+        assertEquals(weights.cols, expectedColumns, s"axis=$axis coordinate=$coordinate")
+        assertEquals(weights.values.length, expectedColumns.length)
+        weights.values.foreach(value => assertEqualsDouble(value, 1.0, 0.0))
+        assertEqualsDouble(weights.coverage, if expectedIndex.isDefined then 1.0 else 0.0, 0.0)
