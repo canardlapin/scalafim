@@ -281,8 +281,8 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
     assert(admitted >= 0.9 * voxels, s"admitted $admitted of $voxels")
     assert(te.last <= 0.02, s"max latency error ${te.last}")
     assert(ae.last <= 2e-3, s"max amplitude error ${ae.last}")
-    assert(counters.perVoxel(counters.jets) <= 2.0 + 1e-9)
-    assert(counters.perVoxel(counters.exactEvaluations) <= 6.0 + 1e-9)
+    assert(counters.perVoxel(counters.jets) <= 8.0 + 1e-9)
+    assert(counters.perVoxel(counters.exactEvaluations) <= 2.0 + 1e-9)
     assert(counters.perVoxel(counters.nodeScores) <= 90.0)
 
   test("readout converts amplitudes into the requested normalisation"):

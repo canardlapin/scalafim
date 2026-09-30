@@ -1,7 +1,7 @@
 package scalafim.fmri.laws.profile
 
 import gale.linalg.DMat
-import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend, SynchronousFmriDataset}
+import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, InMemoryDatasetBackend, SynchronousFmriDataset}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{Event, EventModel, EventTerm}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
@@ -143,6 +143,32 @@ class ConditionProfileFitSuite extends munit.FunSuite:
         )
       )
 
+  test("cancellation before read, during read and after delivery never returns successful completion"):
+    val prep = ConditionProfileFit.prepare(plan, policy(OutputRequest.ConditionAmplitudes(NormalizationRule.Unnormalised)))
+      .fold(e => fail(e.message), identity)
+    for mode <- Vector("before", "during", "after") do
+      var stopped = mode == "before"
+      var reads = 0
+      var deliveries = 0
+      val reader = new DatasetSeriesReader:
+        val dataset: FmriDataset = ConditionProfileFitSuite.this.dataset
+        def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
+          reads += 1
+          val result = ConditionProfileFitSuite.this.dataset.seriesEither(selection)
+          if mode == "during" then stopped = true
+          result
+      val sink = new BlockSink[ConditionProfileBlock, ConditionProfileReceipt]:
+        def accept(block: VoxelBlock, payload: ConditionProfileBlock): Either[String, ConditionProfileReceipt] =
+          deliveries += 1
+          if mode == "after" then stopped = true
+          Right(ConditionProfileReceipt(payload.ordinal, payload.results.length, 0))
+      val result = prep.run(reader, sink, () => stopped)
+      assert(result.isLeft, s"mode=$mode returned $result")
+      assertEquals(reads, if mode == "before" then 0 else 1, mode)
+      assertEquals(deliveries, if mode == "after" then 1 else 0, mode)
+      val expectedCounts = if mode == "after" then "1 chunks / 8 voxels" else "0 chunks / 0 voxels"
+      assert(result.left.exists(_.message.contains(expectedCounts)), s"mode=$mode: $result")
+
   test("the structure maps the plan's task columns by condition and basis"):
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
     assertEquals(structure.conditionCount, 3)
@@ -200,7 +226,7 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     assertEquals(receipts.map(_.voxels).sum, voxels)
     val results = blocks.flatMap(_.results).sortBy(_.voxel)
     assertEquals(results.map(_.voxel), (0 until voxels).toVector)
-    assert(counters.perVoxel(counters.jets) <= 2.0 + 1e-9)
+    assert(counters.perVoxel(counters.jets) <= prep.policy.budget.maxJets.toDouble + 1e-9)
     assert(counters.perVoxel(counters.nodeScores) <= 90.0)
 
     // Compact route on the same data: nuisance = the plan's baseline columns, no whitening.
