@@ -1,5 +1,6 @@
 package scalafim.fmri.fit.profile
 
+import scala.util.control.NonFatal
 import scalafim.fmri.hrf.family.{JetLayout, ShapeChartError, ShapePoint}
 
 /** Stage-1 evidence scope. An original-family certificate needs bounds for
@@ -46,6 +47,12 @@ private[profile] final case class TrialConditionalWorkReceipt(
     exactReadoutFactorAttempts: Long,
     residualCorrections: Int,
     normalActionApplications: Long)
+
+/** Local measurement attempts are separate from the unchanged objective ledger.
+  * Assembly is not a band RHS/solve; only normal actions are numerical actions.
+  */
+private[profile] final case class TrialResidualMeasurementWork(
+    attempts: Long = 0L, failures: Long = 0L, normalActionApplications: Long = 0L)
 
 /** Coefficients in native amplitude units. The residual is the Euclidean norm
   * of the prepared-basis original normal equations at `actualCoordinates`.
@@ -97,6 +104,53 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
   private val conditionCounts = Array.tabulate(c)(i => prep.membership.trialsOf(i).length)
   private val conditionSums = new Array[Double](c)
   private var normalActionApplications = 0L
+
+  private var measurement = TrialResidualMeasurementWork()
+  def measurementWork: TrialResidualMeasurementWork = measurement
+
+  /** Persistent primitive storage of this solver; result vectors are separate. */
+  def scratchValues: Int = 10 * size + referenceCoordinates.length +
+    referenceCoefficients.length + actualCoefficients.length + directionalCoefficients.length +
+    kernelScratch.length + conditionCounts.length + conditionSums.length
+
+  /** Measure an existing exact solution, without pointing, encoding, factoring
+    * or solving. Invalid or nonfinite inputs never return old summary scratch.
+    */
+  def measureExactSolved(encoded: TrialBandedResponse, actualCoordinates: Vector[Double],
+      solved: Array[Double]): Either[TrialConditionalError, TrialConditionalSummary] =
+    measurement = measurement.copy(attempts = measurement.attempts + 1)
+    val before = worker.work.snapshot
+    val actions = normalActionApplications
+    def refuse(error: TrialConditionalError): Either[TrialConditionalError, TrialConditionalSummary] =
+      measurement = measurement.copy(failures = measurement.failures + 1,
+        normalActionApplications = measurement.normalActionApplications + normalActionApplications - actions)
+      Left(error)
+    val result = try measureExactBody(encoded, actualCoordinates, solved, before, actions)
+      catch case NonFatal(error) => Left(TrialConditionalError.NonFiniteAssembly(s"measurement exception: $error"))
+    result match
+      case Left(error) => refuse(error)
+      case Right(summary) =>
+        measurement = measurement.copy(normalActionApplications =
+          measurement.normalActionApplications + normalActionApplications - actions)
+        Right(summary)
+
+  private def measureExactBody(encoded: TrialBandedResponse, actualCoordinates: Vector[Double],
+      solved: Array[Double], before: TrialBandedWorkSnapshot, actions: Long
+  ): Either[TrialConditionalError, TrialConditionalSummary] =
+    if !(encoded.owner eq prep) then return Left(TrialConditionalError.ForeignResponse)
+    if solved.length != size then return Left(TrialConditionalError.OutputLength(size, solved.length))
+    if !finite(solved) || !encoded.responseEnergy.isFinite ||
+        !finite(encoded.trialBasisScores) || !finite(encoded.nuisanceScores) then
+      return Left(TrialConditionalError.NonFiniteAssembly("measurement inputs"))
+    val point = prep.basis.family.chart.point(actualCoordinates) match
+      case Left(error) => return Left(TrialConditionalError.InvalidShape(error))
+      case Right(value) => value
+    prep.basis.coefficientJetInto(point, kernelScratch, actualCoefficients, 1)
+    if !finite(actualCoefficients) then return Left(TrialConditionalError.NonFiniteAssembly("actual basis coefficients"))
+    assembleRhs(actualCoefficients, encoded, rhsActual, directional = false)
+    if !finite(rhsActual) then return Left(TrialConditionalError.NonFiniteAssembly("response contraction"))
+    System.arraycopy(solved, 0, predictor, 0, size)
+    measuredSummary(before, actions, 0)
 
   /** The production predictor before its single residual correction. This
     * reads existing worker scratch after a solve, for the cubic-law test.
@@ -236,6 +290,15 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
     def refuse(error: TrialConditionalError): Either[TrialConditionalError, TrialConditionalSummary] =
       work.conditionalReadoutFailures += 1L
       Left(error)
+    measuredSummary(before, beforeNormalActions, residualCorrections) match
+      case Left(error) => refuse(error)
+      case Right(summary) =>
+        System.arraycopy(predictor, 0, output, 0, size)
+        Right(summary)
+
+  private def measuredSummary(before: TrialBandedWorkSnapshot,
+      beforeNormalActions: Long, residualCorrections: Int
+  ): Either[TrialConditionalError, TrialConditionalSummary] =
     normalAction(actualCoefficients, directionalCoefficients, predictor, action, directional = false)
     var residualSquared = 0.0
     var i = 0
@@ -244,15 +307,15 @@ private[profile] final class TrialConditionalSolve(val worker: TrialBandedObject
       residualSquared += residual(i) * residual(i)
       i += 1
     val residualNorm = math.sqrt(residualSquared)
-    if !residualNorm.isFinite then return refuse(TrialConditionalError.NonFiniteAssembly("normal residual"))
+    if !residualNorm.isFinite then return Left(TrialConditionalError.NonFiniteAssembly("normal residual"))
 
     java.util.Arrays.fill(conditionSums, 0.0)
     i = 0
     while i < n do
       conditionSums(prep.membership.conditionOfTrial(i)) += predictor(i)
       i += 1
+    if !finite(conditionSums) then return Left(TrialConditionalError.NonFiniteAssembly("condition means"))
     val completedWork = receipt(before, beforeNormalActions, residualCorrections)
-    System.arraycopy(predictor, 0, output, 0, size)
     Right(TrialConditionalSummary(
       Vector.tabulate(f)(j => predictor(n + j)),
       Vector.tabulate(c)(j => conditionSums(j) / conditionCounts(j)),

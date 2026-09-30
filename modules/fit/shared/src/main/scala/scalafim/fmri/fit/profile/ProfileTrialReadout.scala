@@ -279,31 +279,11 @@ final class ProfileTrialReadout private (
         mode = conditionalMode) match
         case Left(error) => return Left(ProfileTrialReadoutError.Conditional(error.message))
         case Right(value) => value
-      val n = axis.preparation.trials
-      val normalizedMeans = summary.conditionMeans.map(_ / normalizationScale)
-      val amplitudes = request match
-        case OutputRequest.TrialAmplitudes(_) => Some(Vector.tabulate(n)(i => coefficients(i) / normalizationScale))
-        case _ => None
-      val queries = request match
-        case OutputRequest.TrialQueries(items, _) =>
-          items.map: query =>
-            var value = 0.0
-            var i = 0
-            while i < n do
-              value += query.weights(i) * coefficients(i)
-              i += 1
-            QueryEvaluation.audit(query.label, value / normalizationScale, query.absoluteTolerance)
-        case OutputRequest.ConditionQueries(items, _) =>
-          QueryEvaluation.evaluate(normalizedMeans, items)
-        case _ => Vector.empty
-      Right(ProfileTrialReadoutResult(
-        axis, actualCoordinates, referenceNode, mode, normalization, normalizationScale,
-        nativeLambda, equivalentNormalizedLambda, amplitudes,
-        normalizedMeans, summary.nuisanceCoefficients,
-        queries, ProfileTrialReadoutEvidence(summary.preparedBasisResidualNorm),
-        ProfileTrialReadoutWork.from(summary.work, amplitudes.fold(0)(_.length),
-          coefficients.length, adjointRows.length,
-          responseRowsEncoded = axis.preparation.rows,
+      Right(ProfileTrialReadout.assemble(axis, actualCoordinates, referenceNode, mode,
+        normalization, normalizationScale, equivalentNormalizedLambda, request, coefficients(_), summary,
+        ProfileTrialReadoutWork.from(summary.work,
+          if request.isInstanceOf[OutputRequest.TrialAmplitudes] then axis.preparation.trials else 0,
+          coefficients.length, adjointRows.length, responseRowsEncoded = axis.preparation.rows,
           whiteningForwardRowsVisited = whiteningRows)))
 
     /** Reverse the frozen map from one normalized signed trial query to the
@@ -347,6 +327,47 @@ final class ProfileTrialReadout private (
   def newWorker(): Worker = new Worker
 
 object ProfileTrialReadout:
+  /** Pure post-solve rendering shared by the ordinary and same-worker ML paths.
+    * Nuisance units and residual evidence stay native; only trial/condition
+    * values and signed queries use the frozen normalization scale.
+    */
+  private[profile] def assemble(axis: ProfileTrialAxis, actual: Vector[Double], referenceNode: Int,
+      mode: ProfileTrialReadoutMode, normalization: NormalizationRule, scale: Double,
+      normalizedLambda: Double, request: OutputRequest, coefficient: Int => Double,
+      summary: TrialConditionalSummary, work: ProfileTrialReadoutWork): ProfileTrialReadoutResult =
+    val n = axis.preparation.trials
+    val means = summary.conditionMeans.map(_ / scale)
+    val amplitudes = request match
+      case OutputRequest.TrialAmplitudes(_) => Some(Vector.tabulate(n)(i => coefficient(i) / scale))
+      case _ => None
+    val queries = request match
+      case OutputRequest.TrialQueries(items, _) => items.map: query =>
+        var value = 0.0
+        var i = 0
+        while i < n do
+          value += query.weights(i) * coefficient(i)
+          i += 1
+        QueryEvaluation.audit(query.label, value / scale, query.absoluteTolerance)
+      case OutputRequest.ConditionQueries(items, _) => QueryEvaluation.evaluate(means, items)
+      case _ => Vector.empty
+    ProfileTrialReadoutResult(axis, actual, referenceNode, mode, normalization, scale,
+      axis.preparation.lambda, normalizedLambda, amplitudes, means, summary.nuisanceCoefficients,
+      queries, ProfileTrialReadoutEvidence(summary.preparedBasisResidualNorm), work)
+
+  private[profile] def scaleAt(axis: ProfileTrialAxis, actual: Vector[Double], rule: NormalizationRule)
+      : Either[ProfileTrialReadoutError, (Double, Double)] =
+    val family = axis.preparation.basis.family
+    family.chart.point(actual).left.map(error => ProfileTrialReadoutError.InvalidShape(error.message)).flatMap: point =>
+      if !family.supports(rule) then Left(ProfileTrialReadoutError.UnsupportedNormalization(rule))
+      else
+        val scaleJet = new Array[Double](family.jetComponents)
+        family.scaleJetInto(rule, point, scaleJet)
+        val scale = scaleJet(JetLayout.Value)
+        val lambda = scale * scale * axis.preparation.lambda
+        if !scale.isFinite || scale == 0.0 || !lambda.isFinite || lambda <= 0.0 then
+          Left(ProfileTrialReadoutError.InvalidNormalizationScale(scale))
+        else Right(scale -> lambda)
+
   def freeze(
       bank: TrialBandedObjective,
       axis: ProfileTrialAxis,
@@ -362,17 +383,6 @@ object ProfileTrialReadout:
     else if evidence == ProfileTrialEvidenceRequest.CertifiedOriginalEquations then
       Left(ProfileTrialReadoutError.CertificateUnavailable)
     else
-      val family = axis.preparation.basis.family
-      family.chart.point(actualCoordinates) match
-        case Left(error) => Left(ProfileTrialReadoutError.InvalidShape(error.message))
-        case Right(point) =>
-          if !family.supports(normalization) then Left(ProfileTrialReadoutError.UnsupportedNormalization(normalization))
-          else
-            val scaleJet = new Array[Double](family.jetComponents)
-            family.scaleJetInto(normalization, point, scaleJet)
-            val scale = scaleJet(JetLayout.Value)
-            val normalizedLambda = scale * scale * axis.preparation.lambda
-            if !scale.isFinite || scale == 0.0 || !normalizedLambda.isFinite || normalizedLambda <= 0.0 then
-              Left(ProfileTrialReadoutError.InvalidNormalizationScale(scale))
-            else Right(new ProfileTrialReadout(bank, axis, actualCoordinates, referenceNode,
-              mode, normalization, scale, normalizedLambda))
+      scaleAt(axis, actualCoordinates, normalization).map: (scale, lambda) =>
+        new ProfileTrialReadout(bank, axis, actualCoordinates, referenceNode,
+          mode, normalization, scale, lambda)

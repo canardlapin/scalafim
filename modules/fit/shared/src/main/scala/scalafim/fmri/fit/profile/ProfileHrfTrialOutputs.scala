@@ -40,7 +40,7 @@ object ProfileTrialExecutionDeclaration:
   private[profile] def make(outputs: PreparedProfileTrialOutputs, request: OutputRequest,
       mode: ProfileTrialReadoutMode, evidence: ProfileTrialEvidenceRequest
   ): Either[ProfileFitError, ProfileTrialExecutionDeclaration] =
-    outputs.admit(request, evidence).map: _ =>
+    outputs.admit(request, mode, evidence).map: _ =>
       val (kind, queries) = request match
         case OutputRequest.ConditionAmplitudes(_) => (ProfileTrialOutputKind.ConditionAmplitudes, Vector.empty)
         case OutputRequest.TrialAmplitudes(_) => (ProfileTrialOutputKind.TrialAmplitudes, Vector.empty)
@@ -59,7 +59,10 @@ object ProfileTrialExecutionDeclaration:
       val queryIdentity = framed(queries.map(q =>
         framed(Vector(q.label, framed(q.weights.map(bits)), bits(q.absoluteTolerance)))))
       val preparationProvenance = outputs.prepared.provenance.stripSuffix("|exact-readout=true")
-      val provenance = preparationProvenance + "|public-trial-execution/v1|intent-only=true|mode=" + mode +
+      val criterion = if outputs.nativeMl then
+        "|criterion=native-trial-ml|conditional-returned-shape=true|raw-energy=E|optimised=J"
+      else "|criterion=penalized-profile|raw-energy=E"
+      val provenance = preparationProvenance + "|public-trial-execution/v1|intent-only=true" + criterion + "|mode=" + mode +
         "|normalization=" + request.rule + "|evidence=" + evidence + "|output=" + kind +
         "|public-axis=" + physicalAxis + "|queries=" + queryIdentity
       new ProfileTrialExecutionDeclaration(axis, mode, request.rule, evidence, kind, queries,
@@ -110,14 +113,21 @@ final case class ProfileTrialOutputBlock(
 
 /** Sum of per-worker scoped wrapper high-water values, not a simultaneous live
   * bound or an engine peak. Result values produced and sink-delivered values
-  * count only full trial vectors; queries, condition/nuisance vectors, collection
-  * overhead, response copies, solver/objective scratch and bank are excluded.
+  * count only full public trial vectors. ML measurement scratch (all ten N+F
+  * arrays plus coordinate/basis/kernel/condition arrays) is listed separately,
+  * including workers whose decode refuses. Completed raw memo vector values
+  * are also separate: query-only public results retain zero trial values while
+  * the successful worker epoch still retains its raw N-vector. Queries,
+  * condition/nuisance vectors, collection overhead, response copies, objective
+  * scratch and bank are excluded. These are scoped counts, not live totals.
   */
 final case class ProfileTrialOutputStorage(
     workerCoefficientHighWaterValues: Vector[Int],
     workerAdjointRowHighWaterValues: Vector[Int],
     completedRetainedTrialAmplitudeValues: Long,
-    emittedTrialAmplitudeValues: Long)
+    emittedTrialAmplitudeValues: Long,
+    workerMlMeasurementScratchValues: Vector[Int] = Vector.empty,
+    completedMemoizedRawTrialValues: Long = 0L)
 
 /** `numerical` overlaps `ProfileRunProgress.trial`: never add it to that total.
   * The local actions/row visits below describe completed results only; failed
@@ -133,7 +143,10 @@ final case class ProfileTrialOutputProgress(
     completedResponseRowsEncoded: Long,
     completedWhiteningForwardRowsVisited: Long,
     completedWhiteningTransposeRowsVisited: Long,
-    storage: ProfileTrialOutputStorage)
+    storage: ProfileTrialOutputStorage,
+    residualMeasurementAttempts: Long = 0L,
+    residualMeasurementFailures: Long = 0L,
+    residualMeasurementNormalActions: Long = 0L)
 
 private[profile] final class ProfileTrialOutputWork:
   var attempts = 0L
@@ -148,6 +161,11 @@ private[profile] final class ProfileTrialOutputWork:
   var coefficientHighWater = 0
   var adjointHighWater = 0
   var retainedTrials = 0L
+  var measurementAttempts = 0L
+  var measurementFailures = 0L
+  var measurementActions = 0L
+  var measurementScratch = 0
+  var memoizedRawTrials = 0L
 
   def completed(work: ProfileTrialReadoutWork): Unit =
     successes += 1
@@ -164,10 +182,12 @@ object ProfileTrialOutputProgress:
       ProfileHrfFit.sumTrialWork(parts.map(_.numerical)), parts.map(_.normalActions).sum,
       parts.map(_.rowsEncoded).sum, parts.map(_.forwardRows).sum, parts.map(_.transposeRows).sum,
       ProfileTrialOutputStorage(parts.map(_.coefficientHighWater), parts.map(_.adjointHighWater),
-        parts.map(_.retainedTrials).sum, emitted))
+        parts.map(_.retainedTrials).sum, emitted, parts.map(_.measurementScratch), parts.map(_.memoizedRawTrials).sum),
+      parts.map(_.measurementAttempts).sum, parts.map(_.measurementFailures).sum, parts.map(_.measurementActions).sum)
 
 /** Checked public output over one exact prepared bank and physical axis.
-  * Each admitted voxel freezes its own ephemeral conditional worker. This is
+  * PenalizedProfile freezes an ephemeral conditional worker; native ML reuses
+  * its pointed decoder worker and memoized exact payload. This is
   * neither an adaptive-estimator Jacobian nor original-equation certification.
   */
 final class PreparedProfileTrialOutputs private (
@@ -175,15 +195,19 @@ final class PreparedProfileTrialOutputs private (
     private[profile] val bank: TrialBandedObjective,
     val axis: ProfileTrialAxis):
 
+  private[profile] val nativeMl: Boolean = prepared.plan.criterion.usesDeterminant
+
   def executionDeclaration(request: OutputRequest, mode: ProfileTrialReadoutMode,
       evidence: ProfileTrialEvidenceRequest = ProfileTrialEvidenceRequest.PreparedBasisResidual
   ): Either[ProfileFitError, ProfileTrialExecutionDeclaration] =
     ProfileTrialExecutionDeclaration.make(this, request, mode, evidence)
 
-  private[profile] def admit(request: OutputRequest, evidence: ProfileTrialEvidenceRequest): Either[ProfileFitError, Unit] =
+  private[profile] def admit(request: OutputRequest, mode: ProfileTrialReadoutMode, evidence: ProfileTrialEvidenceRequest): Either[ProfileFitError, Unit] =
     request.validateForTrial(axis).left.map(error =>
       ProfileFitError.TrialOutputAdmission(ProfileTrialReadoutError.Output(error))).flatMap { _ =>
-      if !axis.preparation.basis.family.supports(request.rule) then
+      if nativeMl && (mode != ProfileTrialReadoutMode.ExactShape || evidence != ProfileTrialEvidenceRequest.PreparedBasisResidual) then
+        Left(ProfileFitError.TrialOutputMlIntent(mode, evidence))
+      else if !axis.preparation.basis.family.supports(request.rule) then
         Left(ProfileFitError.TrialOutputAdmission(ProfileTrialReadoutError.UnsupportedNormalization(request.rule)))
       else if evidence == ProfileTrialEvidenceRequest.CertifiedOriginalEquations then
         Left(ProfileFitError.TrialOutputAdmission(ProfileTrialReadoutError.CertificateUnavailable))
@@ -239,21 +263,57 @@ final class PreparedProfileTrialOutputs private (
             work.attempts += 1
             var succeeded = false
             try
-              val evaluated = for
-                reference <- referenceAt(decoded.coordinates)
-                response <- ProfileTrialResponse.make(axis, axis.selectedResponseRows, ProfileTrialResponseDomain.Whitened, whitened)
-                frozen <- freeze(reference, request, mode, evidence)
-                value <-
-                  val worker = frozen.newWorker()
-                  work.coefficientHighWater = math.max(work.coefficientHighWater, axis.preparation.trials + axis.preparation.nuisanceColumns)
-                  work.adjointHighWater = math.max(work.adjointHighWater, axis.preparation.rows)
-                  try worker.evaluate(response, request)
-                  finally work.numerical = ProfileHrfFit.sumTrialWork(Vector(work.numerical, worker.workSnapshot))
-              yield
+              val evaluated = referenceAt(decoded.coordinates).flatMap: reference =>
+                val result = if nativeMl then
+                  for
+                    _ <- evaluation.evidence match
+                      case Some(_: ProfileCriterionEvidence.TrialRandomEffectsML) => Right(())
+                      case _ => Left(ProfileTrialReadoutError.Conditional("missing native ML terminal evidence"))
+                    scale <- ProfileTrialReadout.scaleAt(axis, decoded.coordinates, request.rule)
+                    value <-
+                      work.coefficientHighWater = math.max(work.coefficientHighWater, evaluation.mlScratchValues.fold(0)(_._1))
+                      work.measurementScratch = math.max(work.measurementScratch, evaluation.mlScratchValues.fold(0)(_._2))
+                      try
+                        evaluation.mlReadout.toRight(ProfileTrialReadoutError.Conditional("missing same-worker ML readout"))
+                          .flatMap(_().left.map(error => ProfileTrialReadoutError.Conditional(error.toString)))
+                          .map: payload =>
+                            val receipt = payload.summary.work.copy(
+                              bandedSolveAttempts = payload.numerical.attempted.solveAttempts,
+                              bandedSolveFailures = payload.numerical.attempted.solveFailures,
+                              bandedRightHandSideAttempts = payload.numerical.attempted.rightHandSideAttempts,
+                              factorAttempts = payload.numerical.attempted.factorAttempts,
+                              continuousFactors = payload.numerical.continuousFactors,
+                              exactReadoutFactorAttempts = payload.numerical.attempted.exactReadoutFactorAttempts)
+                            work.memoizedRawTrials += payload.raw.trialAmplitudes.length
+                            ProfileTrialReadout.assemble(axis, decoded.coordinates, reference.index, mode,
+                              request.rule, scale._1, scale._2, request, payload.raw.trialAmplitudes(_), payload.summary,
+                              ProfileTrialReadoutWork.from(receipt,
+                                if request.isInstanceOf[OutputRequest.TrialAmplitudes] then axis.preparation.trials else 0,
+                                payload.coefficientScratchValues, 0))
+                      finally
+                        work.numerical = ProfileHrfFit.sumTrialWork(Vector(work.numerical, evaluation.mlReadoutWork()))
+                        val measurement = evaluation.mlMeasurementWork()
+                        work.measurementAttempts += measurement.attempts
+                        work.measurementFailures += measurement.failures
+                        work.measurementActions += measurement.normalActionApplications
+                  yield value
+                else
+                  for
+                    response <- ProfileTrialResponse.make(axis, axis.selectedResponseRows, ProfileTrialResponseDomain.Whitened, whitened)
+                    frozen <- freeze(reference, request, mode, evidence)
+                    value <-
+                      val worker = frozen.newWorker()
+                      work.coefficientHighWater = math.max(work.coefficientHighWater, axis.preparation.trials + axis.preparation.nuisanceColumns)
+                      work.adjointHighWater = math.max(work.adjointHighWater, axis.preparation.rows)
+                      try worker.evaluate(response, request)
+                      finally work.numerical = ProfileHrfFit.sumTrialWork(Vector(work.numerical, worker.workSnapshot))
+                  yield value
+                result.map(value => reference -> value)
+              evaluated.map { (reference, value) =>
                 work.completed(value.work)
                 succeeded = true
                 ProfileTrialOutputVoxel(voxelId, decoded, ProfileTrialOutputOutcome.Emitted(reference, value))
-              evaluated.left.map(ProfileWorkFailure.TrialReadout.apply)
+              }.left.map(ProfileWorkFailure.TrialReadout.apply)
             catch case NonFatal(error) => Left(ProfileWorkFailure.TrialReadout(ProfileTrialReadoutError.Conditional(error.toString)))
             finally if !succeeded then work.failures += 1
         def block(ordinal: Int, ids: Vector[Int], values: Vector[ProfileTrialOutputVoxel]): ProfileTrialOutputBlock =
@@ -269,8 +329,8 @@ final class PreparedProfileTrialOutputs private (
 object PreparedProfileTrialOutputs:
   private[profile] def make(owner: PreparedProfileHrf, preparation: TrialBandedPreparation,
       bank: TrialBandedObjective): Either[ProfileFitError, PreparedProfileTrialOutputs] =
-    if owner.plan.criterion.usesDeterminant then
-      return Left(ProfileFitError.TrialOutputCriterionUnsupported)
+    if !(bank.preparation eq preparation) || !owner.ownsTrialBank(preparation, bank) then
+      return Left(ProfileFitError.Preparation("public trial bank differs from the supplied preparation"))
     owner.plan.source match
       case ProfileHrfSource.TrialEvents(_, drive, baseline, _) =>
         val matrix = baseline.designMatrix

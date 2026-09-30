@@ -922,10 +922,25 @@ final class TrialBandedObjective private (
     * and counts one value-only reference factor.
     */
   def readoutInto(mode: TrialReadoutFactorMode, trialAmplitudes: Array[Double]): Either[TrialBandedError, Double] =
+    readoutCoefficientsInto(mode, trialAmplitudes, includeNuisance = false)
+
+  /** Same exact readout body, with the already solved nuisance block copied
+    * only after the band solve succeeds. The N+F scratch stays caller-owned.
+    */
+  private[profile] def exactSolvedReadoutInto(coordinates: Vector[Double],
+      coefficients: Array[Double]): Either[TrialBandedError, TrialBandedReadout] =
+    val mode = TrialReadoutFactorMode.ExactShape(coordinates)
+    readoutCoefficientsInto(mode, coefficients, includeNuisance = true).map: energy =>
+      TrialBandedReadout(energy, Vector.tabulate(c)(i => scoreSolved(f + i)),
+        Vector.tabulate(n)(coefficients(_)), mode)
+
+  private def readoutCoefficientsInto(mode: TrialReadoutFactorMode,
+      trialAmplitudes: Array[Double], includeNuisance: Boolean): Either[TrialBandedError, Double] =
     work.readoutAttempts += 1L
-    if trialAmplitudes.length != n then
+    val expected = if includeNuisance then n + f else n
+    if trialAmplitudes.length != expected then
       work.readoutFailures += 1L
-      Left(TrialBandedError.ReadoutRhs(n, trialAmplitudes.length))
+      Left(TrialBandedError.ReadoutRhs(expected, trialAmplitudes.length))
     else
       work.amplitudeCorrections += 1
       val reference =
@@ -978,6 +993,7 @@ final class TrialBandedObjective private (
                 while i < n do
                   trialAmplitudes(i) = scoreSolved(f + preparation.membership.conditionOfTrial(i)) + readoutBuilder(i, 0)
                   i += 1
+                if includeNuisance then System.arraycopy(scoreSolved, 0, trialAmplitudes, n, f)
                 Right(energy)
 
   private def buildReference(coordinates: Array[Double], activeComponents: Int, node: Option[Int]): Either[TrialBandedError, TrialBandedReference] =

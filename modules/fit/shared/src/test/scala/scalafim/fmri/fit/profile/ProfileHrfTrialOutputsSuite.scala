@@ -360,11 +360,189 @@ class ProfileHrfTrialOutputsSuite extends ProfileHrfFitSuite:
         case other => fail(s"expected typed numerical failure, got $other")
     finally Array.copy(retained, 0, gram, 0, gram.length)
 
-  test("public raw-E output view explicitly refuses ML owners before any access"):
-    val prepared = parallelChecked(ProfileHrfFit.prepare(withMl(plan(0.4)), selection,
-      parallelWhitening, policy()))
-    assertEquals(prepared.trialOutputs, Left(ProfileFitError.TrialOutputCriterionUnsupported))
-    // The construction boundary also refuses ML; an independently obtained bank cannot bypass it.
-    val rawView = parallelChecked(outputPrepared().trialOutputs)
-    assertEquals(PreparedProfileTrialOutputs.make(prepared, rawView.axis.preparation, rawView.bank),
-      Left(ProfileFitError.TrialOutputCriterionUnsupported))
+  private def mlView(block: Int = 1): PreparedProfileTrialOutputs =
+    parallelChecked(ProfileHrfFit.prepare(withMl(plan(0.4)), selection,
+      parallelWhitening, outputPolicy(block)).flatMap(_.trialOutputs))
+
+  test("ML same-worker public exact output matches dense returned-shape trial, nuisance and normal residual"):
+    val view = mlView(2)
+    val (summary, voxels) = execute(view, OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised), ProfileTrialReadoutMode.ExactShape)
+    assertEquals(voxels.map(_.voxelId), Vector(3, 0, 2))
+    assert(voxels.exists(v => (0 until view.bank.grid.count).forall(i => view.bank.grid.point(i).coordinates != v.selection.coordinates)))
+    voxels.foreach: voxel =>
+      val (reference, result) = emitted(voxel)
+      val (energy, means, trials, nuisance) = denseAllAt(voxel.voxelId, voxel.selection.coordinates)
+      result.trialAmplitudes.get.zip(trials).foreach((a, b) => assertEqualsDouble(a, b, 5e-7))
+      result.conditionMeans.zip(means).foreach((a, b) => assertEqualsDouble(a, b, 5e-7))
+      result.nuisanceCoefficients.zip(nuisance).foreach((a, b) => assertEqualsDouble(a, b, 5e-7))
+      assert(result.nuisanceCoefficients.exists(math.abs(_) > 0.01))
+      assertEqualsDouble(result.evidence.preparedBasisNormalResidualNorm,
+        denseResidualAt(voxel.voxelId, voxel.selection.coordinates, result.trialAmplitudes.get, result.nuisanceCoefficients), 1e-9)
+      assert(math.abs(voxel.selection.energy - energy) > 1e-5, "selection is J while readout energy is E")
+      assertEquals(result.actualCoordinates, voxel.selection.coordinates)
+      assertEquals(reference.actualCoordinates, voxel.selection.coordinates)
+      assertEquals(result.work.referenceInverseAttempts, 0L)
+      assertEquals(result.work.exactReadoutFactorAttempts, 1L)
+      assertEquals(result.work.normalActionApplications, 1L)
+      assertEquals(result.work.responseRowsEncoded, 0)
+      assertEquals(result.work.whiteningForwardRowsVisited, 0)
+      assertEquals(result.work.alwaysRetainedAdjointRowValues, 0)
+    val public = summary.progress.publicReadout.get
+    assertEquals(public.attempts, 3L)
+    assertEquals(public.successes, 3L)
+    assertEquals(public.residualMeasurementAttempts, 3L)
+    assertEquals(public.residualMeasurementFailures, 0L)
+    assertEquals(public.residualMeasurementNormalActions, 3L)
+    assertEquals(public.numerical.attempted.readoutAttempts, 3L)
+    assertEquals(public.numerical.attempted.conditionalReadoutAttempts, 0L)
+    assertEquals(public.completedResponseRowsEncoded, 0L)
+    assertEquals(summary.progress.trial.get.voxels, 3L)
+    assertEquals(summary.progress.trial.get.trialBasisScores, 3L * view.axis.preparation.trials * view.axis.preparation.basisRank)
+    assertEquals(summary.progress.trial.get.attempted.readoutAttempts, 3L)
+    assertEquals(summary.progress.trial.get.attempted.exactReadoutFactorAttempts, 3L)
+    assertEquals(summary.progress.trial.get.attempted.referenceAttempts, summary.progress.trialMl.get.referenceAttempts + 3L)
+    assert(public.storage.workerMlMeasurementScratchValues.forall(_ > 10 * 7))
+    assertEquals(public.storage.completedMemoizedRawTrialValues, 18L)
+    assert(summary.provenance.contains("criterion=native-trial-ml|conditional-returned-shape=true|raw-energy=E|optimised=J"))
+    assertEquals(summary.setup.mlSetup, view.prepared.setup.mlSetup)
+
+  test("ML signed queries and condition queries share normalization, native nuisance and explicit Float32 audits"):
+    val view = mlView()
+    val (_, native) = execute(view, OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised), ProfileTrialReadoutMode.ExactShape)
+    val (_, scaled) = execute(view, OutputRequest.TrialAmplitudes(NormalizationRule.Density), ProfileTrialReadoutMode.ExactShape)
+    val first = emitted(scaled.head)._2.trialAmplitudes.get
+    val weights = Vector(first(1), -first(0), 0, 0, 0, 0)
+    val queries = Vector(ProfileTrialSignedQuery.make("cancel", view.axis, weights, 1e-10).toOption.get,
+      ProfileTrialSignedQuery.make("negative", view.axis, weights.map(-_), 1e-10).toOption.get,
+      ProfileTrialSignedQuery.make("round", view.axis, Vector(math.Pi, 0, 0, 0, 0, 0), 1e-20).toOption.get)
+    val (summary, values) = execute(view, OutputRequest.TrialQueries(queries, NormalizationRule.Density), ProfileTrialReadoutMode.ExactShape)
+    val conditionQuery = SignedQuery.make("conditions", Vector(0.3, -0.7, 1.1), 1e-6).toOption.get
+    val (_, conditions) = execute(view, OutputRequest.ConditionQueries(Vector(conditionQuery), NormalizationRule.Density), ProfileTrialReadoutMode.ExactShape)
+    native.zip(scaled).zip(values.zip(conditions)).foreach: (pair, queryPair) =>
+      val (raw, normalized) = pair
+      val (qv, cv) = queryPair
+      val r = emitted(raw)._2
+      val n = emitted(normalized)._2
+      val q = emitted(qv)._2
+      assertEquals(raw.selection, normalized.selection)
+      r.trialAmplitudes.get.zip(n.trialAmplitudes.get).foreach((a, b) => assertEqualsDouble(a / n.normalizationScale, b, 1e-10))
+      assertEquals(r.nuisanceCoefficients, n.nuisanceCoefficients)
+      assertEqualsDouble(n.equivalentNormalizedLambda, n.nativeLambda * n.normalizationScale * n.normalizationScale, 1e-12)
+      val (_, _, denseTrials, _) = denseAllAt(qv.voxelId, qv.selection.coordinates)
+      queries.zip(q.queries).foreach: (query, actual) =>
+        assertEqualsDouble(actual.value, query.weights.zip(denseTrials).map(_ * _).sum / n.normalizationScale, 5e-7)
+      assertEqualsDouble(q.queries(0).value, -q.queries(1).value, 1e-12)
+      assertEqualsDouble(emitted(cv)._2.queries.head.value, conditionQuery.weights.zip(n.conditionMeans).map(_ * _).sum, 1e-10)
+      assertEquals(q.trialAmplitudes, None)
+      assertEquals(q.work.retainedTrialAmplitudeValues, 0)
+      assertEquals(q.work.wrapperCoefficientBufferValues, 7)
+      assert(!q.queries(2).withinTolerance)
+    assertEqualsDouble(emitted(values.head)._2.queries.head.value, 0.0, 1e-10)
+    assertEquals(summary.progress.publicReadout.get.storage.emittedTrialAmplitudeValues, 0L)
+    assertEquals(summary.progress.publicReadout.get.storage.completedMemoizedRawTrialValues, 18L)
+
+  test("ML unsupported intents refuse before readers or callbacks and decode refusals perform zero readout"):
+    val view = mlView()
+    var touched = 0
+    val poison = new DatasetSeriesReader:
+      def dataset: FmriDataset = { touched += 1; fail("descriptor touched") }
+      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] = { touched += 1; fail("response touched") }
+    val sink = new BlockSink[ProfileTrialOutputBlock, ProfileFitReceipt]:
+      def accept(block: VoxelBlock, value: ProfileTrialOutputBlock) = { touched += 1; fail("sink touched") }
+    val request = OutputRequest.TrialAmplitudes(NormalizationRule.Density)
+    assertEquals(view.run(poison, request, ProfileTrialReadoutMode.CorrectedReference, sink), Left(ProfileFitError.TrialOutputMlIntent(ProfileTrialReadoutMode.CorrectedReference, ProfileTrialEvidenceRequest.PreparedBasisResidual)))
+    assert(view.executionDeclaration(request, ProfileTrialReadoutMode.ExactShape, ProfileTrialEvidenceRequest.CertifiedOriginalEquations).isLeft)
+    assert(view.run(poison, request, ProfileTrialReadoutMode.ExactShape, sink,
+      () => { touched += 1; true }, ProfileTrialEvidenceRequest.CertifiedOriginalEquations).isLeft)
+    val foreign = parallelChecked(outputPrepared().trialOutputs)
+    assert(PreparedProfileTrialOutputs.make(view.prepared, foreign.axis.preparation, foreign.bank).isLeft)
+    assertEquals(touched, 0)
+    val tight = parallelChecked(ProfileHrfFit.prepare(withMl(plan(0.4)), selection, parallelWhitening,
+      outputPolicy().copy(budget = DecodeBudget(maxNewtonSteps = 0, maxJets = 1, maxExactEvaluations = 0))).flatMap(_.trialOutputs))
+    val (summary, refused) = execute(tight, request, ProfileTrialReadoutMode.ExactShape)
+    assert(refused.forall(_.output.isInstanceOf[ProfileTrialOutputOutcome.DecodeRefused]))
+    assertEquals(summary.progress.publicReadout.get.attempts, 0L)
+    assertEquals(summary.progress.publicReadout.get.residualMeasurementAttempts, 0L)
+    assertEquals(summary.progress.trial.get.attempted.readoutAttempts, 0L)
+    assertEquals(summary.progress.publicReadout.get.storage.workerCoefficientHighWaterValues, Vector(7))
+    assert(summary.progress.publicReadout.get.storage.workerMlMeasurementScratchValues.forall(_ > 10 * 7))
+
+  test("ML sink refusal and pre-delivery cancellation preserve same-worker readout attempts"):
+    val view = mlView()
+    val sink = new BlockSink[ProfileTrialOutputBlock, ProfileFitReceipt]:
+      def accept(block: VoxelBlock, value: ProfileTrialOutputBlock) = Left("refused receipt")
+    val failed = view.run(reader, OutputRequest.TrialAmplitudes(NormalizationRule.Density), ProfileTrialReadoutMode.ExactShape, sink)
+    val progress = failed match
+      case Left(ProfileFitError.SinkRefused(_, progress)) => progress
+      case other => fail(s"expected sink refusal, got $other")
+    assertEquals(progress.deliveredVoxels, 0)
+    assertEquals(progress.publicReadout.get.successes, 1L)
+    assertEquals(progress.trial.get.attempted.readoutAttempts, 1L)
+    var calls = 0
+    val values = ArrayBuffer.empty[ProfileTrialOutputBlock]
+    val cancelled = view.run(reader, OutputRequest.TrialAmplitudes(NormalizationRule.Density),
+      ProfileTrialReadoutMode.ExactShape, outputSink(values), () => { calls += 1; calls >= 4 })
+    val stopped = cancelled match
+      case Left(ProfileFitError.Cancelled(progress)) => progress
+      case other => fail(s"expected cancellation, got $other")
+    assertEquals(stopped.deliveredVoxels, 0)
+    assertEquals(stopped.publicReadout.get.successes, 1L)
+    assertEquals(stopped.trial.get.attempted.readoutAttempts, 1L)
+    assertEquals(values.size, 0)
+
+  test("ML failed residual measurement emits nothing and retains the exact readout and failed normal action"):
+    val original = GaussianFamily.Default
+    var arm: () => Unit = () => ()
+    var jetCall: () => Unit = () => ()
+    val family = new ParametricHrfFamily:
+      def name = original.name
+      def kind = original.kind
+      def chart = original.chart
+      def horizon = original.horizon
+      def supports(rule: NormalizationRule) = original.supports(rule)
+      def libraryNormalization = original.libraryNormalization
+      def evalInto(lags: Array[Double], point: ShapePoint, out: Array[Double]) = original.evalInto(lags, point, out)
+      def jetInto(lags: Array[Double], point: ShapePoint, out: Array[Double]): Unit =
+        original.jetInto(lags, point, out)
+        jetCall()
+      def scaleJetInto(rule: NormalizationRule, point: ShapePoint, out: Array[Double]): Unit =
+        original.scaleJetInto(rule, point, out)
+        arm()
+      def summaries(point: ShapePoint) = original.summaries(point)
+      def descriptor(point: ShapePoint) = original.descriptor(point)
+      def toHrf(point: ShapePoint) = original.toHrf(point)
+    val poisonedBasis = HrfKernelBasis.compile(basis.spec.copy(family = family)).fold(error => fail(error.message), identity)
+    val p = ProfileHrfPlan.fromTrialEvents(dataset, drive, baseline, arConfig, poisonedBasis, 0.4).toOption.get
+    val view = parallelChecked(ProfileHrfFit.prepare(withMl(p), selection, parallelWhitening, outputPolicy()).flatMap(_.trialOutputs))
+    val gram = view.axis.preparation.gramBlocksData
+    val saved = gram.clone()
+    arm = () =>
+      var calls = 0
+      jetCall = () =>
+        calls += 1
+        // One jet contracts the exact factor. The second contracts the
+        // measurement operator after that factor/solve has already succeeded.
+        if calls == 2 then java.util.Arrays.fill(gram, Double.NaN)
+    val values = ArrayBuffer.empty[ProfileTrialOutputBlock]
+    try
+      view.run(reader, OutputRequest.TrialAmplitudes(NormalizationRule.Unnormalised),
+        ProfileTrialReadoutMode.ExactShape, outputSink(values)) match
+        case Left(ProfileFitError.TrialReadoutFailure(ProfileTrialReadoutError.Conditional(detail), progress)) =>
+          assert(detail.contains("normal residual"), detail)
+          assertEquals(progress.deliveredVoxels, 0)
+          val work = progress.publicReadout.get
+          assertEquals(work.attempts, 1L)
+          assertEquals(work.successes, 0L)
+          assertEquals(work.failures, 1L)
+          assertEquals(work.residualMeasurementAttempts, 1L)
+          assertEquals(work.residualMeasurementFailures, 1L)
+          assertEquals(work.residualMeasurementNormalActions, 1L)
+          assertEquals(work.completedNormalActionApplications, 0L)
+          assertEquals(work.numerical.attempted.readoutAttempts, 1L)
+          assertEquals(work.numerical.attempted.readoutFailures, 0L)
+          assertEquals(work.numerical.attempted.exactReadoutFactorAttempts, 1L)
+          assertEquals(progress.trial.get.attempted.readoutAttempts, 1L)
+          assertEquals(work.storage.completedRetainedTrialAmplitudeValues, 0L)
+        case other => fail(s"expected failed measurement, got $other")
+    finally Array.copy(saved, 0, gram, 0, gram.length)
+    assertEquals(values.size, 0)

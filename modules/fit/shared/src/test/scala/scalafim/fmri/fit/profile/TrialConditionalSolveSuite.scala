@@ -384,3 +384,75 @@ class TrialConditionalSolveSuite extends munit.FunSuite:
     assertEquals(worker.work.snapshot.attempted.readoutFailures, 0L)
     assertEquals(worker.work.snapshot.amplitudeCorrections, 0L)
     assert(prep ne foreign.owner)
+
+  test("same-worker ML exact payload recovers dense nuisance and measured residual without a second solve"):
+    for kernel <- Vector(gaussian, cascade); nuisance <- Vector(0, 2) do
+      val fx = fixture(kernel, nuisanceColumns = nuisance, ar = true)
+      val (prep, objective, encoded, node) = reference(fx)
+      val backend = TrialBandedMlBackend.make(objective).result.fold(error => fail(error.message), identity)
+      val epoch = backend.pointAt(whiten(fx, 1, fx.rawResponse)).result.fold(error => fail(error.message), identity)
+      val at = objective.grid.point(node).coordinates.zipWithIndex.map((x, i) => x + 0.07 * objective.grid.step(i))
+      val jet = backend.jetAt(at).result.fold(error => fail(error.message), identity)
+      val before = backend.legacyWork
+      val mlBefore = backend.workerWorkSnapshot
+      val payload = backend.exactReadoutPayload(at, epoch).fold(error => fail(error.message), identity)
+      val normal = denseNormal(fx, ShapePoint.unsafe(at))
+      val rhs = denseRhs(fx, ShapePoint.unsafe(at))
+      val expected = denseSolve(normal, rhs)
+      val actual = (payload.raw.trialAmplitudes ++ payload.summary.nuisanceCoefficients).toArray
+      actual.zip(expected).foreach((a, b) => assertEqualsDouble(a, b, 1e-8))
+      val residual = Array.tabulate(rhs.length)(i => rhs(i) - actual.indices.map(j => normal(i, j) * actual(j)).sum)
+      assertEqualsDouble(payload.summary.preparedBasisResidualNorm, norm(residual), 1e-10)
+      assertEqualsDouble(payload.raw.penalizedEnergy, jet.raw.jet.energy, 1e-9)
+      payload.raw.conditionMeans.zip(jet.raw.jet.amplitudes).foreach((a, b) => assertEqualsDouble(a, b, 1e-8))
+      payload.summary.conditionMeans.indices.foreach: c =>
+        val members = prep.membership.trialsOf(c)
+        assertEqualsDouble(payload.summary.conditionMeans(c), members.map(actual(_)).sum / members.length, 1e-10)
+      assertEquals(backend.workerWorkSnapshot, mlBefore)
+      assertEquals(backend.legacyWork.voxels, before.voxels)
+      assertEquals(backend.legacyWork.trialBasisScores, before.trialBasisScores)
+      assertEquals(payload.numerical.attempted.readoutAttempts, 1L)
+      assertEquals(payload.numerical.attempted.exactReadoutFactorAttempts, 1L)
+      assertEquals(payload.numerical.exactReadoutFactors, 1L)
+      assertEquals(payload.numerical.attempted.conditionalReadoutAttempts, 0L)
+      assertEquals(payload.measurement, TrialResidualMeasurementWork(1, 0, 1))
+      assertEquals(payload.summary.work.factorAttempts, 0L)
+      assertEquals(payload.summary.work.bandedSolveAttempts, 0L)
+      assertEquals(payload.summary.work.bandedRightHandSideAttempts, 0L)
+      assertEquals(payload.summary.work.normalActionApplications, 1L)
+      assertEquals(payload.coefficientScratchValues, fx.trials + nuisance)
+      assert(payload.measurementScratchValues > 10 * (fx.trials + nuisance))
+      val completed = backend.legacyWork
+      assert(backend.exactReadoutPayload(at, epoch).toOption.get eq payload)
+      assertEquals(backend.exactReadout(at).toOption.get, payload.raw)
+      assertEquals(backend.legacyWork, completed)
+      assertEquals(backend.measurementWork, TrialResidualMeasurementWork(1, 0, 1))
+      // The measurement helper alone cannot alter any objective work fields.
+      val solver = new TrialConditionalSolve(objective)
+      val snapshot = objective.work.snapshot
+      val measured = solver.measureExactSolved(encoded, at, actual).toOption.get
+      assertEquals(objective.work.snapshot, snapshot)
+      assertEqualsDouble(measured.preparedBasisResidualNorm, norm(residual), 1e-10)
+
+  test("measurement rejects invalid inputs and nonfinite normal actions without returning prior nuisance scratch"):
+    val fx = fixture(gaussian, ar = true)
+    val (_, objective, encoded, node) = reference(fx)
+    val at = objective.grid.point(node).coordinates
+    val solved = denseSolve(denseNormal(fx, ShapePoint.unsafe(at)), denseRhs(fx, ShapePoint.unsafe(at)))
+    val solver = new TrialConditionalSolve(objective)
+    assert(solver.measureExactSolved(encoded, at, solved).isRight)
+    val before = objective.work.snapshot
+    assert(solver.measureExactSolved(encoded, at, solved.take(1)).isLeft)
+    assert(solver.measureExactSolved(encoded, at, solved.updated(0, Double.NaN)).isLeft)
+    val (_, _, foreign, _) = reference(fx)
+    assertEquals(solver.measureExactSolved(foreign, at, solved), Left(TrialConditionalError.ForeignResponse))
+    val gram = objective.preparation.gramBlocksData
+    val saved = gram.clone()
+    try
+      java.util.Arrays.fill(gram, Double.NaN)
+      assert(solver.measureExactSolved(encoded, at, solved).left.toOption.exists:
+        case TrialConditionalError.NonFiniteAssembly("normal residual") => true
+        case _ => false)
+    finally Array.copy(saved, 0, gram, 0, gram.length)
+    assertEquals(objective.work.snapshot, before)
+    assertEquals(solver.measurementWork, TrialResidualMeasurementWork(5, 4, 2))

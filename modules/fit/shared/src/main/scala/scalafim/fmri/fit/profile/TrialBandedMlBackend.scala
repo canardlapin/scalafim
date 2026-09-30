@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.profile
 
+import scala.util.control.NonFatal
+
 /** Native coherent ML backend over one TrialBanded worker.
   *
   * Every evaluation builds or reuses ONE reference whose stamped bundle
@@ -40,6 +42,22 @@ private[profile] final class TrialBandedMlBackend private (
   val amplitudeCount: Int = objective.amplitudeCount
   private val buffer = new ProfileJetBuffer(dimension, amplitudeCount)
   private val encoded = preparation.newResponseBuffer
+  private val measurementSolver = new TrialConditionalSolve(objective)
+  private val solvedCoefficients = new Array[Double](preparation.trials + preparation.nuisanceColumns)
+  private var readoutMemo: Option[(Vector[Double], Either[TrialMlFailure, TrialBandedReadout])] = None
+  private var payloadMemo: Option[Either[TrialMlFailure, TrialMlReadoutPayload]] = None
+  private var readoutStart = objective.work.snapshot
+  private var readoutEnd = objective.work.snapshot
+  def readoutWork: TrialBandedWorkSnapshot =
+    if readoutMemo.isEmpty then difference(objective.work.snapshot, objective.work.snapshot)
+    else difference(readoutStart, readoutEnd)
+  private var measurementStart = TrialResidualMeasurementWork()
+  def measurementWork: TrialResidualMeasurementWork =
+    val end = measurementSolver.measurementWork
+    TrialResidualMeasurementWork(end.attempts - measurementStart.attempts,
+      end.failures - measurementStart.failures, end.normalActionApplications - measurementStart.normalActionApplications)
+  def readoutScratchValues: Int = solvedCoefficients.length
+  def measurementScratchValues: Int = measurementSolver.scratchValues
   private var sequence = 0L
   private var epoch: Option[CriterionEpoch] = None
   private var worker = TrialMlWork()
@@ -63,6 +81,9 @@ private[profile] final class TrialBandedMlBackend private (
   def pointAt(response: Array[Double]): TrialMlAttempt[CriterionEpoch] =
     val before = mark(objective.work)
     epoch = None
+    readoutMemo = None
+    payloadMemo = None
+    measurementStart = measurementSolver.measurementWork
     val result =
       if response.length != preparation.rows then
         Left(TrialMlFailure.Backend(s"response has ${response.length} rows; expected ${preparation.rows}"))
@@ -82,9 +103,46 @@ private[profile] final class TrialBandedMlBackend private (
   /** Exact readout of this worker's pointed response. The objective charges
     * readout work to legacyWork; the ML ledger counts criterion attempts only.
     */
+  private def sameCoordinates(a: Vector[Double], b: Vector[Double]): Boolean =
+    a.length == b.length && a.zip(b).forall((x, y) =>
+      java.lang.Double.doubleToLongBits(x) == java.lang.Double.doubleToLongBits(y))
+
   private[profile] def exactReadout(coordinates: Vector[Double]): Either[TrialMlFailure, TrialBandedReadout] =
-    currentEpoch.flatMap(_ => objective.readout(TrialReadoutFactorMode.ExactShape(coordinates))
-      .left.map(error => TrialMlFailure.Backend(error.message)))
+    currentEpoch.flatMap: _ =>
+      readoutMemo match
+        case Some((at, result)) if sameCoordinates(at, coordinates) => result
+        case Some(_) => Left(TrialMlFailure.Backend("readout coordinates differ from the memoized terminal"))
+        case None =>
+          readoutStart = objective.work.snapshot
+          val result = try objective.exactSolvedReadoutInto(coordinates, solvedCoefficients)
+            .left.map(error => TrialMlFailure.Backend(error.message))
+          catch case NonFatal(error) => Left(TrialMlFailure.Backend(error.toString))
+          readoutEnd = objective.work.snapshot
+          readoutMemo = Some(coordinates -> result)
+          result
+
+  private[profile] def validateReadoutEpoch(expected: CriterionEpoch): Either[TrialMlFailure, Unit] =
+    currentEpoch.flatMap: current =>
+      if (current eq expected) && (expected.owner eq owner) then Right(())
+      else Left(TrialMlFailure.Backend("stale or foreign readout epoch"))
+
+  private[profile] def exactReadoutPayload(coordinates: Vector[Double], expectedEpoch: CriterionEpoch)
+      : Either[TrialMlFailure, TrialMlReadoutPayload] =
+    currentEpoch.flatMap: current =>
+      if !(current eq expectedEpoch) || !(expectedEpoch.owner eq owner) then
+        Left(TrialMlFailure.Backend("stale or foreign readout epoch"))
+      else if readoutMemo.exists(value => !sameCoordinates(value._1, coordinates)) then
+        Left(TrialMlFailure.Backend("readout coordinates differ from the memoized terminal"))
+      else payloadMemo match
+        case Some(result) => result
+        case None =>
+          val result = exactReadout(coordinates).flatMap: raw =>
+            measurementSolver.measureExactSolved(encoded, coordinates, solvedCoefficients)
+              .left.map(error => TrialMlFailure.Backend(error.message)).map: summary =>
+                TrialMlReadoutPayload(raw, summary, owner, current, coordinates, readoutWork,
+                  measurementWork, readoutScratchValues, measurementScratchValues)
+          payloadMemo = Some(result)
+          result
 
   private def checkedNode(node: Int): Either[TrialMlFailure, NodeDeterminant] =
     if node < 0 || node >= nodes.length then Left(TrialMlFailure.InvalidPolicy(s"invalid node $node"))
@@ -153,7 +211,48 @@ private[profile] final class TrialBandedMlBackend private (
     yield pair
     finish(before, result)
 
+private[profile] final case class TrialMlReadoutPayload(
+    raw: TrialBandedReadout, summary: TrialConditionalSummary,
+    owner: CriterionOwner, epoch: CriterionEpoch, coordinates: Vector[Double],
+    numerical: TrialBandedWorkSnapshot, measurement: TrialResidualMeasurementWork,
+    coefficientScratchValues: Int, measurementScratchValues: Int)
+
 private[profile] object TrialBandedMlBackend:
+  private def difference(before: TrialBandedWorkSnapshot, after: TrialBandedWorkSnapshot): TrialBandedWorkSnapshot =
+    TrialBandedWorkSnapshot(
+      after.voxels - before.voxels,
+      after.trialBasisScores - before.trialBasisScores,
+      after.bankValueEvaluations - before.bankValueEvaluations,
+      after.jetEvaluations - before.jetEvaluations,
+      after.amplitudeCorrections - before.amplitudeCorrections,
+      after.bandedSolveCalls - before.bandedSolveCalls,
+      after.bandedRightHandSides - before.bandedRightHandSides,
+      after.continuousFactors - before.continuousFactors,
+      after.exactReadoutFactors - before.exactReadoutFactors,
+      TrialBandedAttemptedWorkSnapshot(
+        after.attempted.referenceAttempts - before.attempted.referenceAttempts,
+        after.attempted.referenceFailures - before.attempted.referenceFailures,
+        after.attempted.partialReferenceFailures - before.attempted.partialReferenceFailures,
+        after.attempted.releaseFailures - before.attempted.releaseFailures,
+        after.attempted.factorAttempts - before.attempted.factorAttempts,
+        after.attempted.factorFailures - before.attempted.factorFailures,
+        after.attempted.solveAttempts - before.attempted.solveAttempts,
+        after.attempted.solveFailures - before.attempted.solveFailures,
+        after.attempted.rightHandSideAttempts - before.attempted.rightHandSideAttempts,
+        after.attempted.rightHandSideFailures - before.attempted.rightHandSideFailures,
+        after.attempted.jetAttempts - before.attempted.jetAttempts,
+        after.attempted.jetFailures - before.attempted.jetFailures,
+        after.attempted.readoutAttempts - before.attempted.readoutAttempts,
+        after.attempted.readoutFailures - before.attempted.readoutFailures,
+        after.attempted.exactReadoutFactorAttempts - before.attempted.exactReadoutFactorAttempts,
+        after.attempted.exactReadoutFactorFailures - before.attempted.exactReadoutFactorFailures,
+        after.attempted.conditionalReadoutAttempts - before.attempted.conditionalReadoutAttempts,
+        after.attempted.conditionalReadoutFailures - before.attempted.conditionalReadoutFailures,
+        after.attempted.conditionalInverseAttempts - before.attempted.conditionalInverseAttempts,
+        after.attempted.conditionalInverseFailures - before.attempted.conditionalInverseFailures,
+        after.attempted.conditionalCorrectionAttempts - before.attempted.conditionalCorrectionAttempts,
+        after.attempted.conditionalCorrectionFailures - before.attempted.conditionalCorrectionFailures))
+
   private[profile] final case class NodeDeterminant(reference: CriterionReference, determinant: DeterminantJet)
 
   /** Work marks read only from the objective's own counters, which the helper

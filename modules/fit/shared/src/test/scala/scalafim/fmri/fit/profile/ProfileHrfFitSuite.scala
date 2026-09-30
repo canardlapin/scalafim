@@ -188,6 +188,24 @@ class ProfileHrfFitSuite extends munit.FunSuite:
     (energy, Vector.tabulate(c)(i => solved(n + f + i, 0)), Vector.tabulate(n)(i => solved(i, 0)),
       Vector.tabulate(f)(i => solved(n + i, 0)))
 
+  /** Independent projector normal residual in coefficient space. */
+  protected def denseResidualAt(voxel: Int, coords: Vector[Double], trials: Vector[Double], nuisanceValues: Vector[Double]): Double =
+    val n = expanded.trials
+    val f = nuisance.cols
+    val x = whiten(designAt(coords), n)
+    val nf = whiten(Array.tabulate(rows * f)(i => nuisance(i / f, i % f)), f)
+    val y = whiten(responseColumns(voxel), 1)
+    val errors = Array.tabulate(rows): t =>
+      y(t) - trials.indices.map(i => x(t * n + i) * trials(i)).sum -
+        nuisanceValues.indices.map(j => nf(t * f + j) * nuisanceValues(j)).sum
+    val residual = Vector.tabulate(n + f): j =>
+      val cross = (0 until rows).map(t => (if j < n then x(t * n + j) else nf(t * f + j - n)) * errors(t)).sum
+      if j >= n then cross
+      else
+        val members = membership.trialsOf(membership.conditionOfTrial(j))
+        cross - 2.5 * (trials(j) - members.map(trials(_)).sum / members.length)
+    math.sqrt(residual.map(x => x * x).sum)
+
   test("off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape"):
     val prepared = checked(ProfileHrfFit.prepare(plan(0.4), selection,
       CanonicalTemporalWhitening.Shared(arPlan), policy()))
@@ -822,3 +840,25 @@ class ProfileHrfFitSuite extends munit.FunSuite:
       case other => fail(s"expected ML cancellation before delivery, got $other")
     assertEquals(reads, 1)
     assertEquals(values.size, 0)
+
+  test("ML evaluation memoizes raw and measured payload once and stale closures cannot reuse a new response"):
+    val prep = TrialBandedPreparation.prepare(expanded, Some(arPlan), Some(nuisance), 2.5).toOption.get
+    val bank = prep.objective(NodeGrid(basis.family.chart, policy().nodesPerAxis)).toOption.get
+    val bundle = TrialBandedMlBackend.make(bank).result.toOption.get
+    val worker = TrialCriterionFacade.Ml(bank, bundle, 0.05).newWorker(policy(), 0.05)
+    val first = worker.evaluate(manualWhiten(responseColumns(0)), new DecoderCounters, _ => ()).toOption.get
+    val raw = first.exactReadout().toOption.get
+    val afterRaw = worker.numericalWork
+    val payload = first.mlReadout.get().toOption.get
+    assertEquals(payload.raw, raw)
+    assertEquals(worker.numericalWork, afterRaw)
+    assert(first.mlReadout.get().toOption.get eq payload)
+    assertEquals(first.exactReadout().toOption.get, raw)
+    assertEquals(first.mlMeasurementWork(), TrialResidualMeasurementWork(1, 0, 1))
+    val next = worker.evaluate(manualWhiten(responseColumns(2)), new DecoderCounters, _ => ()).toOption.get
+    val beforeStale = worker.numericalWork
+    assert(first.exactReadout().isLeft)
+    assert(first.mlReadout.get().isLeft)
+    assertEquals(worker.numericalWork, beforeStale)
+    assert(next.mlReadout.get().isRight)
+    assertEquals(worker.numericalWork.attempted.readoutAttempts, 2L)

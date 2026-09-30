@@ -456,3 +456,42 @@ class TrialBandedMlBackendSuite extends munit.FunSuite:
     assertEquals(TrialMlDecoder.checked(None, sigma2, budget, None).left.toOption, Some(TrialMlFailure.MissingCapability))
     for bad <- Vector(0.0, Double.NaN, Double.PositiveInfinity) do
       assert(TrialMlDecoder.checked(Some(ml), bad, budget, None).isLeft, clues(bad))
+
+  test("readout payload guards epoch and coordinates, memoizes failures and never remeasures a repaired response"):
+    val fx = fixture(gaussian)
+    val prep = prepared(fx)
+    val bank = prep.objective(NodeGrid(prep.basis.family.chart, Vector(3, 3))).toOption.get
+    val ml = success(TrialBandedMlBackend.make(bank))
+    val epoch = success(ml.pointAt(fx.response))
+    val at = offNode(gaussian.family, Vector(0.43, 0.61))
+    val raw = ml.exactReadout(at).toOption.get
+    val gram = prep.gramBlocksData
+    val saved = gram.clone()
+    val before = ml.legacyWork
+    val failed = try
+      java.util.Arrays.fill(gram, Double.NaN)
+      ml.exactReadoutPayload(at, epoch)
+    finally Array.copy(saved, 0, gram, 0, gram.length)
+    assert(failed.isLeft)
+    assertEquals(ml.legacyWork, before)
+    assertEquals(ml.measurementWork, TrialResidualMeasurementWork(1, 1, 1))
+    assertEquals(ml.exactReadoutPayload(at, epoch), failed)
+    assertEquals(ml.measurementWork, TrialResidualMeasurementWork(1, 1, 1))
+    assertEquals(ml.exactReadout(at).toOption.get, raw)
+    assert(ml.exactReadoutPayload(at.updated(0, at(0) + 0.01), epoch).isLeft)
+    val foreign = CriterionEpoch.checked(CriterionOwner.checked(prep.lambda).toOption.get, epoch.sequence).toOption.get
+    assert(ml.exactReadoutPayload(at, foreign).isLeft)
+    val next = success(ml.pointAt(fx.response))
+    val untouched = ml.legacyWork
+    assert(ml.exactReadoutPayload(at, epoch).isLeft)
+    assertEquals(ml.legacyWork, untouched)
+    assertEquals(ml.measurementWork, TrialResidualMeasurementWork())
+    assert(ml.exactReadoutPayload(at, next).isRight)
+    assertEquals(ml.measurementWork, TrialResidualMeasurementWork(1, 0, 1))
+    val nonfinite = Vector(at(0), Double.NaN)
+    val last = success(ml.pointAt(fx.response))
+    assert(ml.exactReadoutPayload(nonfinite, last).isLeft)
+    val failedWork = ml.legacyWork
+    assert(ml.exactReadoutPayload(nonfinite, last).isLeft)
+    assertEquals(ml.legacyWork, failedWork)
+    assertEquals(ml.measurementWork, TrialResidualMeasurementWork())

@@ -63,6 +63,7 @@ enum ProfileFitError:
   case TrialMlPreparation(detail: String, bankSetup: TrialBandedSetupReceipt, attempted: TrialMlWork)
   case TrialMlFailure(error: ProfileMlError, progress: ProfileRunProgress)
   case TrialOutputCriterionUnsupported
+  case TrialOutputMlIntent(mode: ProfileTrialReadoutMode, evidence: ProfileTrialEvidenceRequest)
   case TrialOutputAdmission(error: ProfileTrialReadoutError)
   case TrialExecutionAdmission(detail: String, execution: ProfileTrialExecutionDeclaration)
   case TrialReadoutFailure(error: ProfileTrialReadoutError, progress: ProfileRunProgress)
@@ -85,7 +86,7 @@ enum ProfileFitError:
       case SinkRefused(_, progress) => progress.publicExecution
       case SinkThrew(_, progress) => progress.publicExecution
       case WorkersStillRunning(_, _, _, _, termination) => termination.publicExecution
-      case Unsupported(_) | Preparation(_) | TrialMlPreparation(_, _, _) | TrialOutputAdmission(_) | TrialOutputCriterionUnsupported => None
+      case Unsupported(_) | Preparation(_) | TrialMlPreparation(_, _, _) | TrialOutputAdmission(_) | TrialOutputCriterionUnsupported | TrialOutputMlIntent(_, _) => None
 
   def message: String =
     this match
@@ -95,6 +96,7 @@ enum ProfileFitError:
       case TrialMlPreparation(detail, _, _) => s"profile ML preparation failed: $detail"
       case TrialMlFailure(error, _) => error.message
       case TrialOutputCriterionUnsupported => "public trial outputs do not support the ML criterion"
+      case TrialOutputMlIntent(mode, evidence) => s"native ML public output requires ExactShape/PreparedBasisResidual; requested $mode/$evidence"
       case TrialOutputAdmission(error) => s"profile trial output refused: ${error.message}"
       case TrialReadoutFailure(error, _) => s"profile trial readout failed: ${error.message}"
       case Dataset(detail, _) => s"profile dataset read failed: $detail"
@@ -185,14 +187,19 @@ private[profile] enum ProfileWorkFailure:
 private[profile] final case class ProfileTrialEvaluation(
     decoded: ShapeDecodeResult,
     evidence: Option[ProfileCriterionEvidence],
-    exactReadout: () => Either[ProfileWorkFailure, TrialBandedReadout])
+    exactReadout: () => Either[ProfileWorkFailure, TrialBandedReadout],
+    mlReadout: Option[() => Either[ProfileWorkFailure, TrialMlReadoutPayload]] = None,
+    mlReadoutWork: () => TrialBandedWorkSnapshot = () => ProfileHrfFit.sumTrialWork(Vector.empty),
+    mlMeasurementWork: () => TrialResidualMeasurementWork = () => TrialResidualMeasurementWork(),
+    mlScratchValues: Option[(Int, Int)] = None)
 
-private trait TrialCriterionWorker:
+private[profile] trait TrialCriterionWorker:
   def evaluate(response: Array[Double], counters: DecoderCounters, observed: DecodeStatus => Unit): Either[ProfileWorkFailure, ProfileTrialEvaluation]
   def numericalWork: TrialBandedWorkSnapshot
   def mlWork: Option[TrialMlWork] = None
+  def mlScratchValues: Option[(Int, Int)] = None
 
-private enum TrialCriterionFacade:
+private[profile] enum TrialCriterionFacade:
   case Penalized(bank: TrialBandedObjective)
   case Ml(bank: TrialBandedObjective, bundle: TrialBandedMlBackend, sigma2: Double)
 
@@ -225,6 +232,8 @@ private enum TrialCriterionFacade:
       private val decoder = TrialMlDecoder.checked(Some(backend), sigma2, policy.budget, policy.prior)
       def numericalWork: TrialBandedWorkSnapshot = backend.legacyWork
       override def mlWork: Option[TrialMlWork] = Some(backend.workerWorkSnapshot)
+      override def mlScratchValues: Option[(Int, Int)] =
+        Some(backend.readoutScratchValues -> backend.measurementScratchValues)
       def evaluate(response: Array[Double], counters: DecoderCounters, observed: DecodeStatus => Unit): Either[ProfileWorkFailure, ProfileTrialEvaluation] =
         val attempt = decoder.flatMap(_.decode(response, counters).result)
         attempt.left.map(error => ProfileWorkFailure.TrialMl(ProfileMlError.Backend(error.message))).flatMap { result =>
@@ -238,17 +247,46 @@ private enum TrialCriterionFacade:
               else jet.determinant.toRight(ProfileWorkFailure.TrialMl(ProfileMlError.TerminalMismatch("missing determinant"))).map { det =>
                 val evidence = ProfileCriterionEvidence.TrialRandomEffectsML(sigma2, jet.raw.jet,
                   det.value, det.gradient, det.hessian, jet.minimizationJet, jet.score, 2.0 * sigma2, decoded.dataHessian)
-                ProfileTrialEvaluation(decoded, Some(evidence), () =>
-                  backend.exactReadout(decoded.coordinates)
-                    .left.map(error => ProfileWorkFailure.TrialMl(ProfileMlError.Backend(error.message))).flatMap { readout =>
-                      def agrees(a: Double, b: Double): Boolean =
-                        a.isFinite && b.isFinite && math.abs(a - b) <= 1e-8 * math.max(1.0, math.max(math.abs(a), math.abs(b)))
-                      if !agrees(readout.penalizedEnergy, jet.raw.jet.energy) ||
-                          readout.conditionMeans.length != jet.raw.jet.amplitudes.length ||
-                          !readout.conditionMeans.zip(jet.raw.jet.amplitudes).forall((a, b) => agrees(a, b)) then
-                        Left(ProfileWorkFailure.TrialMl(ProfileMlError.TerminalMismatch("exact readout raw E or condition means")))
-                      else Right(readout)
-                    })
+                var cached: Option[Either[ProfileWorkFailure, TrialBandedReadout]] = None
+                var cachedPayload: Option[Either[ProfileWorkFailure, TrialMlReadoutPayload]] = None
+                def check(raw: TrialBandedReadout): Either[ProfileWorkFailure, TrialBandedReadout] =
+                  def agrees(a: Double, b: Double): Boolean =
+                    a.isFinite && b.isFinite && math.abs(a - b) <= 1e-8 * math.max(1.0, math.max(math.abs(a), math.abs(b)))
+                  if raw.factorMode != TrialReadoutFactorMode.ExactShape(decoded.coordinates) ||
+                      !agrees(raw.penalizedEnergy, jet.raw.jet.energy) ||
+                      raw.conditionMeans.length != jet.raw.jet.amplitudes.length ||
+                      !raw.conditionMeans.zip(jet.raw.jet.amplitudes).forall((a, b) => agrees(a, b)) then
+                    Left(ProfileWorkFailure.TrialMl(ProfileMlError.TerminalMismatch("exact readout raw E or condition coefficients")))
+                  else Right(raw)
+                def payload(): Either[ProfileWorkFailure, TrialMlReadoutPayload] =
+                  backend.validateReadoutEpoch(jet.raw.epoch)
+                    .left.map(error => ProfileWorkFailure.TrialMl(ProfileMlError.Backend(error.message))) match
+                    case Left(error) => return Left(error)
+                    case _ => ()
+                  cachedPayload match
+                    case Some(value) => value
+                    case None =>
+                      val value = backend.exactReadoutPayload(decoded.coordinates, jet.raw.epoch)
+                        .left.map(error => ProfileWorkFailure.TrialMl(ProfileMlError.Backend(error.message)))
+                        .flatMap(value => check(value.raw).map(_ => value))
+                      cachedPayload = Some(value)
+                      value
+                def raw(): Either[ProfileWorkFailure, TrialBandedReadout] =
+                  backend.validateReadoutEpoch(jet.raw.epoch)
+                    .left.map(error => ProfileWorkFailure.TrialMl(ProfileMlError.Backend(error.message))) match
+                    case Left(error) => return Left(error)
+                    case _ => ()
+                  cached match
+                    case Some(value) => value
+                    case None =>
+                      val value = backend.exactReadout(decoded.coordinates)
+                        .left.map(error => ProfileWorkFailure.TrialMl(ProfileMlError.Backend(error.message)))
+                        .flatMap(check)
+                      cached = Some(value)
+                      value
+                ProfileTrialEvaluation(decoded, Some(evidence), () => raw(), Some(() => payload()),
+                  () => backend.readoutWork, () => backend.measurementWork,
+                  Some(backend.readoutScratchValues -> backend.measurementScratchValues))
               }
         }
 
@@ -299,9 +337,12 @@ final class PreparedProfileHrf private[profile] (
     case ProfileBackend.Trial(_, _) => true
     case _ => false
 
+  private[profile] def ownsTrialBank(preparation: TrialBandedPreparation, bank: TrialBandedObjective): Boolean =
+    backend match
+      case ProfileBackend.Trial(actual, criterion) => (actual eq preparation) && (criterion.objectiveBank eq bank)
+      case _ => false
+
   lazy val trialOutputs: Either[ProfileFitError, PreparedProfileTrialOutputs] = backend match
-    case ProfileBackend.Trial(_, TrialCriterionFacade.Ml(_, _, _)) =>
-      Left(ProfileFitError.TrialOutputCriterionUnsupported)
     case ProfileBackend.Trial(prepared, criterion) => PreparedProfileTrialOutputs.make(this, prepared, criterion.objectiveBank)
     case _ => Left(ProfileFitError.Unsupported("public trial outputs require the trial backend"))
 
@@ -467,6 +508,12 @@ final class PreparedProfileHrf private[profile] (
       val statuses = scala.collection.mutable.Map.empty[DecodeStatus, Long]
       var attempted = 0
       val publicWork = new ProfileTrialOutputWork
+      // Native ML allocates these worker arrays even if decoding refuses.
+      // Record persistent storage at worker creation, before any voxel result.
+      if payload.publicOutputs then trial.flatMap(_.mlScratchValues).foreach { (coefficients, measurement) =>
+        publicWork.coefficientHighWater = coefficients
+        publicWork.measurementScratch = measurement
+      }
 
       def process(block: VoxelBlock): P =
         def abort(error: ProfileWorkFailure): Nothing =
@@ -535,7 +582,7 @@ final class PreparedProfileHrf private[profile] (
       }
       val statuses = live.flatMap(_.statuses).groupMapReduce(_._1)(_._2)(_ + _)
       val snapshots = live.flatMap(worker => worker.trial.map(_.numericalWork).toVector ++
-        (if payload.publicOutputs then Vector(worker.publicWork.numerical) else Vector.empty))
+        (if payload.publicOutputs && setup.mlSetup.isEmpty then Vector(worker.publicWork.numerical) else Vector.empty))
       val trialWork = if !isTrial then None else Some(ProfileHrfFit.sumTrialWork(snapshots))
       ProfileRunProgress(deliveredBlocks, deliveredVoxels, live.map(_.attempted).sum, live.length,
         decoder, trialWork, statuses,
