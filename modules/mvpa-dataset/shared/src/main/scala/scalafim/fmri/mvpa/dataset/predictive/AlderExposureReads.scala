@@ -8,7 +8,7 @@ import scalafim.fmri.mvpa.analysis.{EvidenceExposure, ExposureActorRole, Exposur
 /** Result of a provider read coupled to the immutable exposure snapshot left
   * by that attempt. Failures after an operator invocation keep that snapshot.
   */
-enum AlderExposureReadResult[+M]:
+enum AlderExposureReadResult[M]:
   case Refused(error: ExposureError, exposure: EvidenceExposure)
   case PreflightFailed(error: AlderPredictiveAdmissionError, exposure: EvidenceExposure)
   case ReadFailed(error: AlderPredictiveAdmissionError, exposure: EvidenceExposure)
@@ -86,7 +86,7 @@ object AlderExposureReads:
                 native match
                   case Some(Right(rows)) => AlderExposureReadResult.Read(rows, current)
                   case Some(Left(error)) => AlderExposureReadResult.ReadFailed(error, current)
-                  case None => AlderExposureReadResult.ReadFailed(AlderPredictiveAdmissionError.MatrixNativeRidgeUnavailable, current)
+                  case None => AlderExposureReadResult.CallbackFailed("native callback completed without an adapter result", current)
               case ExposureAttempt.Failed(_, current) =>
                 native match
                   case Some(Left(error)) => AlderExposureReadResult.ReadFailed(error, current)
