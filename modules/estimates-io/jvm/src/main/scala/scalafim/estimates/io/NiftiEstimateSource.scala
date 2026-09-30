@@ -23,7 +23,8 @@ private[io] final class NiftiEstimateSource(
     val limits: ReadLimits,
     inputs: Vector[NiftiInput],
     private[io] val stagedFiles: Vector[Path],
-    private[io] val stagedPayloadBytes: Long
+    private[io] val stagedPayloadBytes: Long,
+    private[io] val sharedTables: Vector[SharedCovarianceTable] = Vector.empty
 ) extends EstimateSource:
   private var closed = false
 
@@ -69,18 +70,23 @@ private[io] final class NiftiEstimateSource(
     var failure: Option[EstimateError] = None
     var offset = 0
     observations.foreach: observation =>
-      val input = inputs.find(i => i.representation.product == product && i.representation.observation == observation).get
+      val input = inputs.find(i => i.representation.product == product && i.representation.observation == observation)
+      val shared = sharedTables.find(t => t.product == product && t.observation == observation)
       volumes.foreach: volume =>
         samples.foreach: sample =>
           if failure.isEmpty then
             if cancelled() then failure = Some(EstimateError.Cancelled)
             else
               val position = volume.toLong * unit.domain.sampleCount + sample
-              val rawCode = scalar(input.validity, input.validityHeader, position, scratch)
+              val rawCode = shared match
+                case Some(table) => (if unit.domain.contains(sample) then table.entries(volume).validity else Validity.OutsideSupport).code.toDouble
+                case None => scalar(input.get.validity, input.get.validityHeader, position, scratch)
               Validity.fromCode(rawCode.toByte) match
                 case Left(error) => failure = Some(error)
                 case Right(status) =>
-                  val value = scalar(input.values, input.dataHeader, position, scratch)
+                  val value = shared match
+                    case Some(table) => table.entries(volume).value
+                    case None => scalar(input.get.values, input.get.dataHeader, position, scratch)
                   if unit.domain.contains(sample) == (status == Validity.OutsideSupport) then
                     failure = Some(EstimateError.Integrity("stored product validity disagrees with support"))
                   else if status == Validity.Valid && (!descriptor.kind.accepts(value) || (diagonalVolumes.contains(volume) && value < 0.0)) then
@@ -109,6 +115,27 @@ private[io] final class NiftiEstimateSource(
           case Left(error) => failure = Some(error)
           case Right(_) => ()
       failure.toLeft(())
+
+  /** Core-2 can mix physical arms across observations. A declared invariant U
+    * must also agree with every NIfTI arm, using one reused scalar buffer rather
+    * than an expanded sample-by-pair field.
+    */
+  private[io] def validateObservationInvariance(): Either[EstimateError, Unit] = store.protect:
+    val scratch = ByteBuffer.allocate(8)
+    var failure: Option[EstimateError] = None
+    sharedTables.groupBy(_.product).foreach: (product, tables) =>
+      if unit.covariance.find(_.product == product).get.invariantObservations then
+        val expected = tables.head
+        inputs.filter(_.representation.product == product).foreach: input =>
+          expected.entries.zipWithIndex.foreach: (entry, ordinal) =>
+            unit.domain.support.foreach: sample =>
+              if failure.isEmpty then
+                val index = ordinal.toLong * unit.domain.sampleCount + sample
+                val value = scalar(input.values, input.dataHeader, index, scratch)
+                val code = scalar(input.validity, input.validityHeader, index, scratch).toByte
+                if code != entry.validity.code || java.lang.Double.doubleToLongBits(value) != java.lang.Double.doubleToLongBits(entry.value) then
+                  failure = Some(EstimateError.Integrity("NIfTI and shared table contradict declared observation invariance"))
+    failure.toLeft(())
 
 private[io] object NiftiEstimateSource:
   private val maximumPairs = 32
@@ -215,19 +242,36 @@ private[io] object NiftiEstimateSource:
               else Left(EstimateError.Integrity("different qform requires a matching explicit alternate frame declaration"))
 
   def open(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[NiftiRepresentation], limits: ReadLimits): Either[EstimateError, EstimateSource] =
+    openMixed(store, unit, representations.map(EstimateRepresentation.Nifti.apply), limits)
+
+  private[io] def preflight(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits): Either[EstimateError, Unit] =
     val expected = unit.products.flatMap(p => p.observations.map(o => p.id -> o)).toSet
     val actual = representations.map(r => r.product -> r.observation)
     if actual.distinct.size != actual.size || actual.toSet != expected then
       Left(EstimateError.Integrity("representation inventory does not exactly cover product/observation axes"))
-    else if representations.size > maximumPairs then
+    else if representations.count(_.isInstanceOf[EstimateRepresentation.Nifti]) > maximumPairs then
       Left(EstimateError.Unsupported(s"reader permits at most $maximumPairs product/observation pairs ($maximumPairs data and $maximumPairs validity handles)"))
     else
+      val sharedRecords = representations.collect { case EstimateRepresentation.SharedNormalizedUpperTriangle(value) => value }
+      var totalPairs = 0L
+      var totalBytes = 0L
+      val withinBudget = sharedRecords.forall: value =>
+        val fits = value.pairCount <= limits.maximumSharedPairs.toLong - totalPairs && value.table.bytes <= limits.maximumSharedTableBytes - totalBytes
+        if fits then
+          totalPairs += value.pairCount
+          totalBytes += value.table.bytes
+        fits
+      if !withinBudget then return Left(EstimateError.Unsupported("shared covariance exceeds cumulative pair or table-byte budget"))
+      val declarations = sharedRecords.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, record) => previous.flatMap(_ => record.validate(unit)))
+      declarations
+
+  def openMixed(store: LocalEstimateStore, unit: EstimateUnit, representations: Vector[EstimateRepresentation], limits: ReadLimits): Either[EstimateError, EstimateSource] =
+    preflight(store, unit, representations, limits).flatMap: _ =>
       var opened = Vector.empty[NiftiInput]
+      var tables = Vector.empty[SharedCovarianceTable]
       var staged = Vector.empty[Path]
       var stagedBytes = 0L
-      val result = store.protect:
-        representations.foldLeft[Either[EstimateError, Unit]](Right(())): (previous, representation) =>
-          previous.flatMap: _ =>
+      def openNifti(representation: NiftiRepresentation): Either[EstimateError, Unit] =
             val descriptor = unit.products.find(_.id == representation.product).get
             for
               _ <- store.objects.verify(store.verified(representation.values)).left.map(store.fromStore)
@@ -258,10 +302,29 @@ private[io] object NiftiEstimateSource:
                 catch
                   case error: Throwable => data.close(); throw error
             yield ()
-        .map(_ => new NiftiEstimateSource(store, unit, limits, opened, staged, stagedBytes))
+      val result = store.protect:
+        representations.foldLeft[Either[EstimateError, Unit]](Right(())): (previous, record) =>
+          previous.flatMap: _ =>
+            record match
+              case EstimateRepresentation.SharedNormalizedUpperTriangle(representation) =>
+                for
+                  text <- store.text(representation.table)
+                  table <- SharedCovarianceTable.decode(text, limits.maximumSharedPairs)
+                  _ <- table.validate(representation)
+                  _ <- if !unit.covariance.find(_.product == table.product).get.invariantObservations ||
+                      tables.filter(_.product == table.product).forall(_.agrees(table)) then Right(())
+                    else Left(EstimateError.Integrity("shared tables contradict declared observation invariance"))
+                  _ = tables :+= table
+                yield ()
+              case EstimateRepresentation.Nifti(representation) => openNifti(representation)
+        .flatMap: _ =>
+          val source = new NiftiEstimateSource(store, unit, limits, opened, staged, stagedBytes, tables)
+          source.validateObservationInvariance().map(_ => source)
       result match
         case Left(error) =>
-          opened.foreach(i => { i.values.close(); i.validity.close() })
-          staged.foreach(Files.deleteIfExists(_))
+          opened.foreach: input =>
+            Vector(input.values, input.validity).foreach: channel =>
+              store.protect { channel.close(); Right(()) }
+          staged.foreach(path => store.protect { Files.deleteIfExists(path); Right(()) })
           Left(error)
         case other => other

@@ -1,0 +1,51 @@
+{
+  "Schema": "scalafim-estimates-shared-normalized-upper-triangle-1",
+  "WireVersion": "1.0.0",
+  "Product": "U",
+  "Observation": "row-a",
+  "Estimands": [
+    "z",
+    "a/β",
+    "M"
+  ],
+  "Precision": "Float64",
+  "ValidityBroadcast": "SupportedSamples",
+  "Pairs": [
+    {
+      "First": 0,
+      "Second": 0,
+      "Value": 1.0,
+      "Validity": 0
+    },
+    {
+      "First": 0,
+      "Second": 1,
+      "Value": 0.25,
+      "Validity": 0
+    },
+    {
+      "First": 0,
+      "Second": 2,
+      "Value": -0.5,
+      "Validity": 0
+    },
+    {
+      "First": 1,
+      "Second": 1,
+      "Value": 2.0,
+      "Validity": 0
+    },
+    {
+      "First": 1,
+      "Second": 2,
+      "Value": 0.75,
+      "Validity": 0
+    },
+    {
+      "First": 2,
+      "Second": 2,
+      "Value": 3.0,
+      "Validity": 0
+    }
+  ]
+}

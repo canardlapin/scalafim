@@ -37,6 +37,63 @@ class LocalEstimateStoreSuite extends munit.FunSuite:
     assertEquals(sink.seal(), Right(ref))
     ref
 
+  test("opt-in mixed sink has pair-only coverage, refuses duplicates and preserves exact retry semantics") {
+    val fixture = CompactFixture
+    val root = Files.createTempDirectory("compact-sink-")
+    val store = right(LocalEstimateStore.open(root))
+    def deliver(change: Boolean = false): Either[EstimateError, PinnedUnit] =
+      val sink = right(store.newSink(fixture.unit, 3, CovarianceLayout.SharedNormalizedTable()))
+      val shared = sink.asInstanceOf[SharedCovarianceSink]
+      assert(sink.seal().isLeft)
+      assertEquals(sink.asInstanceOf[NiftiEstimateSink].sharedOutputs.map(_.coverage.length).sum, 12)
+      for observation <- fixture.observations; product <- Vector(fixture.effect, fixture.scale); target <- fixture.ids do
+        right(sink.write(product.id, EstimateSelection(Vector(observation.id), Vector(target), Vector(0, 3, 5)),
+          Array(2.0, 0.0, 5.0), Array.fill[Byte](3)(0)))
+      for observation <- fixture.observations.zipWithIndex; pair <- fixture.pairs.zipWithIndex do
+        val values = if observation._2 == 0 then fixture.firstValues else fixture.secondValues
+        val selection = SharedCovarianceSelection(Vector(observation._1.id), Vector(pair._1))
+        val value = values(pair._2) + (if change && observation._2 == 0 && pair._2 == 0 then 1.0 else 0.0)
+        right(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(value), Array[Byte](0)))
+        assert(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(value), Array[Byte](0)).isLeft)
+      assert(sink.writeCovariance(fixture.covariance.id, CovarianceSelection(Vector(fixture.observations.head.id),
+        Vector(fixture.pairs.head), Vector(0)), Array(4.0), Array[Byte](0)).isLeft)
+      sink.seal()
+    val first = right(deliver())
+    assertEquals(right(deliver()), first)
+    assert(deliver(true).left.toOption.exists(_.isInstanceOf[EstimateError.Conflict]))
+    assertEquals(right(EstimateMetadata.schema(Files.readString(root.resolve(first.manifest.path)), "unit")), EstimateMetadata.compactSchema)
+    val stages = Files.walk(root.resolve(".staging"))
+    try assert(!stages.anyMatch(path => Files.isRegularFile(path)))
+    finally stages.close()
+    val reader = right(store.open(first, ReadLimits(1)))
+    right(reader.close())
+  }
+
+  test("compact caps and descriptors refuse before allocation and partial abort removes owned stages") {
+    val fixture = CompactFixture
+    val root = Files.createTempDirectory("compact-preallocation-")
+    val store = right(LocalEstimateStore.open(root))
+    assert(store.newSink(fixture.unit, 1, CovarianceLayout.SharedNormalizedTable(SharedCovarianceLimits(maximumPairs = 11))).isLeft)
+    assert(store.newSink(fixture.unit, 1, CovarianceLayout.SharedNormalizedTable(SharedCovarianceLimits(maximumTableBytes = 1))).isLeft)
+    assert(store.newSink(fixture.unit.copy(covariance = fixture.unit.covariance.map(_.copy(invariantSamples = false))),
+      1, CovarianceLayout.SharedNormalizedTable()).isLeft)
+    assert(!Files.exists(root.resolve(".staging")))
+    val sink = right(store.newSink(fixture.unit, 1, CovarianceLayout.SharedNormalizedTable()))
+    val shared = sink.asInstanceOf[SharedCovarianceSink]
+    val selection = SharedCovarianceSelection(Vector(fixture.observations.head.id), Vector(fixture.pairs.head))
+    assert(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(-1.0), Array[Byte](0)).isLeft)
+    assert(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(Double.NaN), Array[Byte](0)).isLeft)
+    assert(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(4.0), Array[Byte](1)).isLeft)
+    right(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(4.0), Array[Byte](0)))
+    assert(sink.seal().isLeft)
+    right(sink.abort())
+    assert(!Files.exists(root.resolve(s"units/${fixture.unit.revision.value}/estimates.json")))
+    val stages = Files.walk(root.resolve(".staging"))
+    try assert(!stages.anyMatch(path => Files.isRegularFile(path)))
+    finally stages.close()
+    assert(shared.writeSharedCovariance(fixture.covariance.id, selection, Array(4.0), Array[Byte](0)).isLeft)
+  }
+
   test("sparse reordered blocks reopen through fresh handles with exact values and per-estimand validity") {
     val root = Files.createTempDirectory("scalafim-estimates-")
     val reference = write(right(LocalEstimateStore.open(root)))

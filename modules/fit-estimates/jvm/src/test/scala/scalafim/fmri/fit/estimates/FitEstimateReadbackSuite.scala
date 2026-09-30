@@ -2,7 +2,7 @@ package scalafim.fmri.fit.estimates
 
 import java.nio.file.Files
 import scalafim.estimates.*
-import scalafim.estimates.io.LocalEstimateStore
+import scalafim.estimates.io.{CovarianceLayout, LocalEstimateStore}
 
 class FitEstimateReadbackSuite extends munit.FunSuite:
   private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
@@ -54,6 +54,28 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
       assertEqualsDouble(values(0), -0.3, 1e-12)
       assertEquals(validity(0), Validity.Valid.code)
     finally right(source.close())
+  }
+
+  test("compact actual OLS reopens normalized U and scaled covariance across voxel block sizes") {
+    val fixture = ProducerFixture
+    for size <- Vector(1, 2) do
+      val producer = right(FitEstimateProducer.shared(fixture.prepared(scalafim.fmri.fit.EstimateUncertaintyRequest.Joint, size),
+        fixture.identity, fixture.catalog, fixture.ids, "scanner"))
+      val store = right(LocalEstimateStore.open(Files.createTempDirectory("compact-fit-readback-")))
+      val reference = right(producer.write(fixture.reader, right(store.newSink(producer.unit, size, CovarianceLayout.SharedNormalizedTable()))))
+      val source = right(store.open(reference, ReadLimits(1)))
+      try
+        assertEquals(source.unit.bindings, producer.unit.bindings)
+        assertEquals(source.unit.degreesOfFreedom, producer.unit.degreesOfFreedom)
+        assertEquals(source.unit.outcomes, producer.unit.outcomes)
+        val covariance = source.unit.covariance.head
+        val matrix = right(CovarianceAccess.matrix(source, covariance.product, fixture.identity.observation, 1,
+          fixture.ids.reverse, CovariancePolicy(2, 1e-12, 1e-12)))
+        assertEqualsDouble(matrix.varianceScale, 8.0, 1e-12)
+        assertEqualsDouble(matrix.values(0, 0), 5.6, 1e-12)
+        assertEqualsDouble(matrix.values(0, 1), -2.4, 1e-12)
+        assertEqualsDouble(matrix.values(1, 1), 1.6, 1e-12)
+      finally right(source.close())
   }
 
   test("reopened pinned units feed bounded group blocks after explicit admission") {

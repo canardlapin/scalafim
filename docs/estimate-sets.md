@@ -9,8 +9,12 @@ New locally published JSON/TSV/NIfTI units use the versioned
 `ProfileVersion` `0.2.0` names the scientific target separately. The reader also
 accepts `scalafim-estimates-development-1` for historical bundles; a direct
 metadata encode without TSV references remains a development document. The
-Core-NIfTI checks below do not qualify the retained HDF5, compact covariance,
-producer/workflow or downstream consumer scope.
+Core-NIfTI-1 remains the default writer layout. An explicit
+`CovarianceLayout.SharedNormalizedTable()` opts a unit into Core-NIfTI-2,
+wire `2.0.0`, for bounded shared normalized covariance. Catalogs, TSV projections,
+collections and pointers remain Core-NIfTI-1. The checks below qualify this bounded
+storage/producer/consumer slice; HDF5, pooled persistence and workflow adoption
+remain separate gates.
 
 ## Implemented boundary
 
@@ -25,14 +29,17 @@ producer/workflow or downstream consumer scope.
   errors/residual variance or joint normalized covariance. It retains actual
   readout weights, selected run-local scan rows, full-rank QR tolerance/method
   evidence and residual df. A scalar-only sink is refused before executing a
-  joint request. The current NIfTI encoding repeats shared U over samples;
-  compact shared-matrix JSON/TSV storage remains a future encoding improvement.
+  joint request unless it advertises the required pair-only shared capability.
+  The default NIfTI encoding repeats shared U over samples. An opted-in compact
+  sink receives each observation's U once from the existing prepared matrix;
+  it does not refit or compute another inverse. Effects, residual variance and
+  marginal standard errors keep their existing per-sample costs.
 - The JVM scalar NIfTI sink writes caller-ordered blocks into exclusive staging
   files. Values never become dense image maps in memory. A disk-backed coverage
   ledger rejects duplicate deliveries and prevents incomplete sealing. Invalid
   samples remain explicit per-estimand uint8 validity values; zero is data.
-- The reader verifies manifest, catalog and complete required payload SHA256/length
-  before opening handles. Reads preserve observation/estimand/sample order and
+- The reader verifies manifest, catalog and each required payload SHA256/length
+  before using that payload. Reads preserve observation/estimand/sample order and
   validate destination capacity and the declared block budget. Cancellation makes
   the destination discardable scratch. Closing is serialized with owned reads.
 - Archive-owned local primitives stream bytes or accept an owned prewritten file,
@@ -55,8 +62,36 @@ same-handed qform needs an explicit alternate-frame declaration matching its
 NIfTI transform code (`aligned-anatomical`, `talairach`, or `mni-152`). It supports
 arbitrary stored voxel orientation within that binding. Other selected frame
 bindings are not yet qualified. The reader and writer cap an open unit at 32
-product/observation pairs (64 data/validity handles); the reader checks this
+actual NIfTI product/observation pairs (64 data/validity handles); the reader checks this
 before touching payloads. Shared code does not pretend to implement browser IO.
+
+Compact storage accepts Float64 normalized covariance declared invariant across
+samples. One digest-pinned JSON upper triangle per product/observation records
+ordered estimand IDs, finite values and pair validity. Validity broadcasts over
+unit support; outside support remains `OutsideSupport`. Missing or invalid pairs
+never become zeros. Observation invariance, when declared, is checked across both
+shared tables and NIfTI arms. Readers return raw U; `CovarianceAccess` applies the
+declared residual scale once and checks U before a zero scale can conceal
+indefiniteness. NIfTI slope/intercept remains a separate decoding step.
+
+Shared tables have cumulative defaults of 4,096 pairs and 1 MiB declared table
+bytes per open unit, checked before payload reads. The sink checks pair count and
+a conservative UTF-8 serialization reservation before allocating pair coverage;
+it checks actual serialized bytes again at seal. Thus a writer can refuse a byte
+budget that an existing smaller table satisfies. `maximumCells` independently
+bounds each caller block. Shared values, validity and coverage occupy O(P)
+space, with no sample-by-pair payload or coverage ledger. These bounds coexist
+with the existing NIfTI handle and gzip staging caps.
+
+The [compact covariance receipt](verification/estimate-set-compact-covariance-2026-09-30/README.md)
+records actual JVM/JS tests, an independently authored complete physical bundle,
+native OLS block-size parity, fitter-free relocated covariance/group reads,
+publication interruptions and two sample counts under `-Xmx64m`. For K=64,
+compact U stays at 200,714 bytes and 2,080 coverage entries for both N=2,048 and
+N=8,192. The synthetic probe keeps two scalar products: their payload is
+2,360,704/9,438,592 bytes and scalar coverage has 262,144/1,048,576 entries.
+Support metadata still grows with N. These are bounded resource observations,
+not a speed comparison, a whole-job constant-memory claim or a power-loss guarantee.
 
 The metadata embeds ordered support indices. Metadata documents are
 limited to 16 MiB and exact JSON byte counts through 2^53-1. Core units require `estimands.tsv` and
@@ -88,7 +123,8 @@ one byte less and removed its staging files on close. See the
 Broader access performance remains open. Directory fsync and exclusive
 hard links must be supported by the actual destination filesystem. The tests
 exercise failures and pointer conflicts, not power-loss/crash durability at every
-publication boundary. Failed staging remains available for explicit recovery.
+publication boundary. Process interruption can leave unpublished staging files
+for explicit recovery.
 
 `CovarianceAccess.matrix` reconstructs one selected principal covariance matrix
 in caller order, applies a declared variance scale once, and uses Gale to check
@@ -119,7 +155,7 @@ their presence. The receipt is provenance, not a first-level calibration result 
 automatic second-level inference admission.
 
 Pooled selected execution is available in `fit`, but its persistence adapter,
-compact shared-matrix encoding, HDF5 schema/fixtures, workflow and
+HDF5 schema/fixtures, workflow and
 PLS Neuro adoption remain outstanding. `ResultManifestWriter` remains until its
 replacement covers and tests its useful scientific extraction. The older eager
 canonical archive writer remains; the new local streaming primitives do not yet

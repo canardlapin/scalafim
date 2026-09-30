@@ -276,3 +276,25 @@ known current costs; bounded memory alone does not make them production-ready.
 
 No percentage-complete estimate is assigned: the remaining format, replacement,
 application and physical-conformance work is substantial and uneven in size.
+
+## Compact covariance checkpoint — 30 September 2026
+
+The earlier checkpoints above retain their historical scope. The current
+[canonical specification](../estimate-set-v0-spec.md) defines the frozen Core-1
+baseline and an explicit Core-2 unit layout for shared normalized Float64 U.
+The bounded compact slice now includes a typed mixed representation, pair-only
+sink delivery, cumulative pair/byte caps, sample-support broadcasting and checked
+observation invariance. The native shared-OLS adapter sends its already prepared
+matrix once; the default Core-1 layout and historical fixtures remain unchanged.
+
+The [review receipt](../verification/estimate-set-compact-covariance-2026-09-30/README.md)
+contains independent physical bytes and literal covariance checks, shared JVM/JS
+validation, native producer block-size parity, fitter-free relocated matrix/group
+reopening, owned failure cleanup, immutable retry/CAS checks and measured
+64 MiB two-sample-count resource probes. This resolves the compact shared-U
+encoding slice of stages 3/4 without closing either stage or the full issue.
+
+Pooled producer persistence, old exporter replacement, workflow/PLS Neuro W5
+adoption, HDF5/provider capability, broader access performance and power-loss
+qualification remain open. Geometry and method admission remain explicit;
+successful persistence does not promote a scientific model or inference gate.

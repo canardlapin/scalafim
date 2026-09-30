@@ -1,0 +1,35 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-core-nifti-1",
+  "DocumentKind": "catalog",
+  "Content": {
+    "model": "00000000-0000-4000-8000-000000000092",
+    "entries": [
+      {
+        "id": "z",
+        "label": "repeated label",
+        "kind": "Coefficient",
+        "units": "signal",
+        "normalization": "unit",
+        "definition": "z"
+      },
+      {
+        "id": "a/β",
+        "label": "repeated label",
+        "kind": "Coefficient",
+        "units": "signal",
+        "normalization": "unit",
+        "definition": "a/β"
+      },
+      {
+        "id": "M",
+        "label": "repeated label",
+        "kind": "Coefficient",
+        "units": "signal",
+        "normalization": "unit",
+        "definition": "M"
+      }
+    ]
+  },
+  "WireVersion": "1.0.0"
+}

@@ -319,8 +319,60 @@ with that declaration. Statistic effect/SE links use structured product IDs and
 either `Known` complete hypothesis-to-target mappings or `Unknown` with a reason;
 unknown links supply no positional inference capability. The development-1
 decoder remains for historical bundles, mapping its bare link IDs to `Unknown`.
-New local store publications use Core-NIfTI-1; this wire freeze is specific to
+Default local store publications use Core-NIfTI-1; this wire freeze is specific to
 the Core-NIfTI baseline and does not claim HDF5 or optional capability conformance.
+
+### Core-NIfTI-2 compact normalized covariance
+
+`CovarianceLayout.SharedNormalizedTable()` explicitly selects an additive unit
+layout. Its envelope uses `Schema: scalafim-estimates-core-nifti-2`,
+`WireVersion: 2.0.0`, `ProfileVersion: 0.2.0`, and `DocumentKind: unit`.
+No Core-2 catalog, collection or pointer exists: those documents retain the
+Core-1 envelope. Unit scientific fields and digest-pinned Core-1 catalog/TSV
+projections retain the preceding semantics. Core-1 and development documents
+remain readable and the default `newSink(unit, maximumCells)` remains Core-1.
+
+Each Core-2 `Representations` entry has exactly `Tag` and `Content`. `Tag: Nifti`
+wraps the existing record with every field explicit, including `pairOrder`,
+`qformAlternativeFrame` and `storedDatatype`. `Tag: SharedNormalizedUpperTriangle`
+has exactly `product`, `observation`, `table`, `estimands`, `precision` and
+`validityBroadcast`. Its `table` is an exact `{Path,SHA256,Bytes}` leaf reference;
+`precision` is `Float64`; `validityBroadcast` is `SupportedSamples`; and
+`estimands` exactly matches the named, ordered product axis. Every declared
+product/observation pair has exactly one representation across both arms.
+Unknown tags, fields, versions, omissions, duplicate coverage or substituted
+identities refuse. `EstimateMetadata.allRepresentations` returns the mixed ADT;
+the retained NIfTI-only `representations` helper rejects Core-2 explicitly.
+
+The table has exactly `Schema`, `WireVersion`, `Product`, `Observation`,
+`Estimands`, `Precision`, `ValidityBroadcast` and `Pairs`. The table schema is
+`scalafim-estimates-shared-normalized-upper-triangle-1`, wire `1.0.0`.
+Each `Pairs` row has exactly `First`, `Second`, `Value` and `Validity`, with
+zero-based indices in lexicographic upper-triangle order over the declared axis.
+All K(K+1)/2 pairs appear exactly once. Values are finite Float64; diagonal
+values are nonnegative. A pair carries one existing validity code (0 or 2..5);
+`OutsideSupport` (1) cannot appear in a shared table. Invalid entries remain
+explicit, and selected matrix reconstruction refuses them.
+
+This arm requires a `Normalized(scaleProduct)` covariance descriptor with
+`invariantSamples=true`. Raw source reads return U unchanged at supported
+samples and `OutsideSupport` elsewhere. The consumer applies the separately
+decoded variance scale exactly once. An `invariantObservations=true`
+declaration requires equal U/status/axes across observations, including any
+NIfTI covariance arms; it is checked before use/publication. The table format
+does not itself certify PSD, design estimability or scientific admission.
+
+Default shared limits are 4,096 total pairs and 1 MiB total declared table bytes
+per unit, independent of block-cell limits. Readers check cumulative limits
+before touching any payload. Writers check cumulative pairs and a conservative
+serialization reservation before allocating O(P) pair coverage and check actual
+bytes at seal. A strict writer budget can therefore refuse a table that a reader
+would accept by its exact size. The 32-pair/64-handle NIfTI cap counts only actual
+NIfTI arms; gzip staging remains separately bounded. Compact U has no sample
+axis, dense sample-by-pair allocation, payload or coverage ledger. Effect,
+residual scale, support, catalog and observation costs remain visible and bounded
+by their existing policies. See the
+[bounded qualification receipt](verification/estimate-set-compact-covariance-2026-09-30/README.md).
 
 ## 7. Encoding rules
 

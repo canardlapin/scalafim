@@ -27,9 +27,9 @@ object ProducerFixture:
     "01", ObservationId("subject-01"), Vector(AcquisitionId("run-1")), "execution-1", "test", "signal", Vector.empty)
   val catalog = EstimandCatalog(ModelRevisionId("00000000-0000-4000-8000-000000000004"), ids.map(id =>
     EstimandDefinition(id, id.value, EstimandKind.Coefficient, "signal", "unit", id.value)))
-  def prepared(uncertainty: EstimateUncertaintyRequest) =
+  def prepared(uncertainty: EstimateUncertaintyRequest, blockSize: Int = 1) =
     val request = checked(FirstLevelEstimateRequest.make(fit.coefficientAxis.get.columnIds.map(EstimateOutput.Coefficient.apply), uncertainty))
-    checked(FirstLevelEstimates.prepare(fit, request, ChunkSize.unsafe(1)))
+    checked(FirstLevelEstimates.prepare(fit, request, ChunkSize.unsafe(blockSize)))
   def producer = checked(FitEstimateProducer.shared(prepared(EstimateUncertaintyRequest.Marginal), identity, catalog, ids, "scanner"))
   def reader = new DatasetSeriesReader:
     val dataset = ProducerFixture.dataset
@@ -105,4 +105,83 @@ class FitEstimateProducerSuite extends munit.FunSuite:
     val sink = new Sink(producer.unit)
     assert(producer.write(fixture.reader, sink).isLeft)
     assert(sink.aborted && !sink.sealedResult && sink.cells.isEmpty)
+  }
+
+  private final class JointSink(val unit: EstimateUnit, val maximumBlockCells: Int, compact: Boolean) extends SharedCovarianceSink:
+    override val supportsCovariance = !compact
+    val sharedCovarianceProducts = if compact then unit.covariance.map(_.product).toSet else Set.empty[ProductId]
+    var aborted = false
+    var scalar = Map.empty[(ProductId, EstimandId, Int), Double]
+    var repeated = Map.empty[(EstimandPair, Int), Double]
+    var shared = Map.empty[EstimandPair, Double]
+    var sharedWrites = 0
+    var rejectShared = false
+    var throwShared = false
+    def write(product: ProductId, selection: EstimateSelection, values: Array[Double], validity: Array[Byte]) =
+      assert(selection.cells <= maximumBlockCells)
+      selection.samples.zipWithIndex.foreach((sample, index) => scalar += ((product, selection.estimands.head, sample) -> values(index)))
+      Right(())
+    override def writeCovariance(product: ProductId, selection: CovarianceSelection, values: Array[Double], validity: Array[Byte]) =
+      assert(!compact)
+      selection.samples.zipWithIndex.foreach((sample, index) => repeated += ((selection.pairs.head, sample) -> values(index)))
+      Right(())
+    def writeSharedCovariance(product: ProductId, selection: SharedCovarianceSelection, values: Array[Double], validity: Array[Byte]) =
+      assert(compact)
+      assertEquals(selection.cells, 1L)
+      assertEquals(validity.toVector, Vector(Validity.Valid.code))
+      sharedWrites += 1
+      if throwShared then throw new IllegalStateException("injected shared callback exception")
+      if rejectShared then Left(EstimateError.Io("injected shared callback failure"))
+      else
+        assert(!shared.contains(selection.pairs.head))
+        shared += selection.pairs.head -> values.head
+        Right(())
+    def seal() = Right(PinnedUnit(unit.unit, unit.revision, FileReference("test-only.json", ContentDigest.unsafeSha256("a" * 64), 1)))
+    def abort() =
+      aborted = true
+      Right(())
+
+  test("actual prepared OLS delivers U once per named pair independent of voxel block size") {
+    val fixture = ProducerFixture
+    var baseline = Map.empty[(ProductId, EstimandId, Int), Double]
+    for blockSize <- Vector(1, 2) do
+      val producer = FitEstimateProducer.shared(fixture.prepared(EstimateUncertaintyRequest.Joint, blockSize),
+        fixture.identity, fixture.catalog, fixture.ids, "scanner").toOption.get
+      val core1 = new JointSink(producer.unit, blockSize, false)
+      val compact = new JointSink(producer.unit, blockSize, true)
+      assert(producer.write(fixture.reader, core1).isRight)
+      assert(producer.write(fixture.reader, compact).isRight)
+      assertEquals(compact.sharedWrites, 3)
+      assertEquals(compact.scalar.keySet, core1.scalar.keySet)
+      compact.scalar.foreach((key, value) => assertEqualsDouble(value, core1.scalar(key), 1e-12))
+      compact.shared.foreach: (pair, value) =>
+        for sample <- Vector(0, 1) do assertEqualsDouble(value, core1.repeated(pair -> sample), 1e-12)
+      // Analytic inverse of [[14,6],[6,4]], independent of the native QR result.
+      assertEqualsDouble(compact.shared(EstimandPair(fixture.ids.head, fixture.ids.head)), 0.2, 1e-12)
+      assertEqualsDouble(compact.shared(EstimandPair(fixture.ids.head, fixture.ids.last)), -0.3, 1e-12)
+      assertEqualsDouble(compact.shared(EstimandPair(fixture.ids.last, fixture.ids.last)), 0.7, 1e-12)
+      if baseline.nonEmpty then compact.scalar.foreach((key, value) => assertEqualsDouble(value, baseline(key), 1e-12))
+      baseline = compact.scalar
+  }
+
+  test("shared callback failure and cancellation abort owned delivery") {
+    val fixture = ProducerFixture
+    val producer = FitEstimateProducer.shared(fixture.prepared(EstimateUncertaintyRequest.Joint), fixture.identity,
+      fixture.catalog, fixture.ids, "scanner").toOption.get
+    val failed = new JointSink(producer.unit, 1, true)
+    failed.rejectShared = true
+    assert(producer.write(fixture.reader, failed).isLeft)
+    assert(failed.aborted && failed.sharedWrites == 1)
+    val thrown = new JointSink(producer.unit, 1, true)
+    thrown.throwShared = true
+    assert(producer.write(fixture.reader, thrown).isLeft)
+    assert(thrown.aborted)
+    val cancelled = new JointSink(producer.unit, 1, true)
+    assertEquals(producer.write(fixture.reader, cancelled, () => true), Left(EstimateError.Cancelled))
+    assert(cancelled.aborted && cancelled.sharedWrites == 0 && cancelled.scalar.isEmpty)
+    val undersized = new JointSink(producer.unit, 1, true)
+    val larger = FitEstimateProducer.shared(fixture.prepared(EstimateUncertaintyRequest.Joint, 2), fixture.identity,
+      fixture.catalog, fixture.ids, "scanner").toOption.get
+    assert(larger.write(fixture.reader, undersized).isLeft)
+    assert(undersized.aborted && undersized.scalar.isEmpty && undersized.sharedWrites == 0)
   }

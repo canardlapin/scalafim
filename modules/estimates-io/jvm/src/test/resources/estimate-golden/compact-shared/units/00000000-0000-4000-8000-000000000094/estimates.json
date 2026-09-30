@@ -1,0 +1,363 @@
+{
+  "ProfileVersion": "0.2.0",
+  "Schema": "scalafim-estimates-core-nifti-2",
+  "DocumentKind": "unit",
+  "Content": {
+    "dataset": "00000000-0000-4000-8000-000000000091",
+    "unit": "00000000-0000-4000-8000-000000000093",
+    "revision": "00000000-0000-4000-8000-000000000094",
+    "domain": {
+      "Dimensions": [
+        2,
+        3,
+        1
+      ],
+      "VoxelToWorldRASMillimetres": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "WorldFrame": "scanner",
+      "Support": [
+        0,
+        3,
+        5
+      ]
+    },
+    "observations": [
+      {
+        "id": "row-z",
+        "participant": {
+          "dataset": "00000000-0000-4000-8000-000000000091",
+          "label": "row-z"
+        },
+        "acquisitions": [
+          "run"
+        ]
+      },
+      {
+        "id": "row-a",
+        "participant": {
+          "dataset": "00000000-0000-4000-8000-000000000091",
+          "label": "row-a"
+        },
+        "acquisitions": [
+          "run"
+        ]
+      }
+    ],
+    "bindings": [],
+    "products": [
+      {
+        "id": "effect",
+        "kind": "Effect",
+        "precision": "Float64",
+        "observations": [
+          "row-z",
+          "row-a"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "z",
+            "a/β",
+            "M"
+          ]
+        },
+        "pooling": "Run",
+        "units": "signal"
+      },
+      {
+        "id": "scale",
+        "kind": "ResidualVariance",
+        "precision": "Float64",
+        "observations": [
+          "row-z",
+          "row-a"
+        ],
+        "targets": {
+          "$type": "Scalar",
+          "ids": [
+            "z",
+            "a/β",
+            "M"
+          ]
+        },
+        "pooling": "Run",
+        "units": "signal^2"
+      },
+      {
+        "id": "U",
+        "kind": "Covariance",
+        "precision": "Float64",
+        "observations": [
+          "row-z",
+          "row-a"
+        ],
+        "targets": {
+          "$type": "UpperTriangle",
+          "ids": [
+            "z",
+            "a/β",
+            "M"
+          ]
+        },
+        "pooling": "Run",
+        "units": "unitless"
+      }
+    ],
+    "outcomes": [
+      [
+        "effect",
+        {
+          "$type": "Available",
+          "product": "effect"
+        }
+      ],
+      [
+        "scale",
+        {
+          "$type": "Available",
+          "product": "scale"
+        }
+      ],
+      [
+        "U",
+        {
+          "$type": "Available",
+          "product": "U"
+        }
+      ]
+    ],
+    "estimability": {
+      "$type": "Unknown",
+      "reason": "imported independent fixture"
+    },
+    "provenance": {
+      "producer": "independent fixture",
+      "version": "1",
+      "executionId": "literal",
+      "estimator": {
+        "$type": "Unknown",
+        "reason": "independent fixture"
+      },
+      "noise": {
+        "$type": "Unknown",
+        "reason": "independent fixture"
+      },
+      "nuisance": {
+        "$type": "Unknown",
+        "reason": "independent fixture"
+      },
+      "runCombination": {
+        "$type": "Unknown",
+        "reason": "independent fixture"
+      },
+      "scans": [],
+      "inputs": []
+    },
+    "covariance": [
+      {
+        "product": "U",
+        "effects": "effect",
+        "equation": {
+          "$type": "Normalized",
+          "varianceScale": "scale"
+        },
+        "invariantObservations": false,
+        "invariantSamples": true
+      }
+    ],
+    "statistics": [],
+    "degreesOfFreedom": [],
+    "marginalUncertainty": [],
+    "Catalog": {
+      "Path": "units/00000000-0000-4000-8000-000000000094/estimands.json",
+      "SHA256": "feff0e4f6257b726dc8eec35ef9e47923c9661fa36fc5adbf6c376b54c633212",
+      "Bytes": 799
+    },
+    "Representations": [
+      {
+        "Tag": "Nifti",
+        "Content": {
+          "product": "effect",
+          "observation": "row-z",
+          "values": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/effect-0-values.nii",
+            "SHA256": "1a9cf5c5fcc1f900f3be9119f639a31c25c6986800967e806a3dbae32ce020e7",
+            "Bytes": 496
+          },
+          "validity": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/effect-0-validity.nii",
+            "SHA256": "be6eb40a76c5822db736a32bd6903984a39ce78d650096bef3339f6c75a34689",
+            "Bytes": 370
+          },
+          "precision": "Float64",
+          "slope": 1.0,
+          "intercept": 0.0,
+          "volumeOrder": [
+            "z",
+            "a/β",
+            "M"
+          ],
+          "selectedTransform": "scanner-sform",
+          "pairOrder": [],
+          "qformAlternativeFrame": null,
+          "storedDatatype": "Float64"
+        }
+      },
+      {
+        "Tag": "Nifti",
+        "Content": {
+          "product": "effect",
+          "observation": "row-a",
+          "values": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/effect-1-values.nii",
+            "SHA256": "6eb04348c775320500c83273312b5e2866831626d7dc74be68c4b63ab84a8a9b",
+            "Bytes": 496
+          },
+          "validity": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/effect-1-validity.nii",
+            "SHA256": "be6eb40a76c5822db736a32bd6903984a39ce78d650096bef3339f6c75a34689",
+            "Bytes": 370
+          },
+          "precision": "Float64",
+          "slope": 1.0,
+          "intercept": 0.0,
+          "volumeOrder": [
+            "z",
+            "a/β",
+            "M"
+          ],
+          "selectedTransform": "scanner-sform",
+          "pairOrder": [],
+          "qformAlternativeFrame": null,
+          "storedDatatype": "Float64"
+        }
+      },
+      {
+        "Tag": "Nifti",
+        "Content": {
+          "product": "scale",
+          "observation": "row-z",
+          "values": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/scale-0-values.nii",
+            "SHA256": "b4f1b176fa2f46ba2b3c4b0096a621b800d73ac001d74cfe4b89a5400f8bc2a9",
+            "Bytes": 496
+          },
+          "validity": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/scale-0-validity.nii",
+            "SHA256": "be6eb40a76c5822db736a32bd6903984a39ce78d650096bef3339f6c75a34689",
+            "Bytes": 370
+          },
+          "precision": "Float64",
+          "slope": 2.0,
+          "intercept": 1.0,
+          "volumeOrder": [
+            "z",
+            "a/β",
+            "M"
+          ],
+          "selectedTransform": "scanner-sform",
+          "pairOrder": [],
+          "qformAlternativeFrame": null,
+          "storedDatatype": "Float64"
+        }
+      },
+      {
+        "Tag": "Nifti",
+        "Content": {
+          "product": "scale",
+          "observation": "row-a",
+          "values": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/scale-1-values.nii",
+            "SHA256": "598bb3b9b60edbe5e8e50d8ed576f102e3b073c38ebe5dbdffb814ad3896390a",
+            "Bytes": 496
+          },
+          "validity": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/scale-1-validity.nii",
+            "SHA256": "be6eb40a76c5822db736a32bd6903984a39ce78d650096bef3339f6c75a34689",
+            "Bytes": 370
+          },
+          "precision": "Float64",
+          "slope": 2.0,
+          "intercept": 1.0,
+          "volumeOrder": [
+            "z",
+            "a/β",
+            "M"
+          ],
+          "selectedTransform": "scanner-sform",
+          "pairOrder": [],
+          "qformAlternativeFrame": null,
+          "storedDatatype": "Float64"
+        }
+      },
+      {
+        "Tag": "SharedNormalizedUpperTriangle",
+        "Content": {
+          "product": "U",
+          "observation": "row-z",
+          "table": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/U-0.json",
+            "SHA256": "8c62a3f70bbc247f3069e36ec76b6c687417f9c5ec29cf1c6e84ed9e52527bd3",
+            "Bytes": 821
+          },
+          "estimands": [
+            "z",
+            "a/β",
+            "M"
+          ],
+          "precision": "Float64",
+          "validityBroadcast": "SupportedSamples"
+        }
+      },
+      {
+        "Tag": "SharedNormalizedUpperTriangle",
+        "Content": {
+          "product": "U",
+          "observation": "row-a",
+          "table": {
+            "Path": "units/00000000-0000-4000-8000-000000000094/U-1.json",
+            "SHA256": "aa26208e9c2cc17fb239f7c669541064160e56b34f213514724a38b21c8d5285",
+            "Bytes": 822
+          },
+          "estimands": [
+            "z",
+            "a/β",
+            "M"
+          ],
+          "precision": "Float64",
+          "validityBroadcast": "SupportedSamples"
+        }
+      }
+    ],
+    "Tables": {
+      "estimands": {
+        "Path": "units/00000000-0000-4000-8000-000000000094/estimands.tsv",
+        "SHA256": "6427a2b6dcd542522d0116e21e6b9b0f1dda912cd19a95d59552240054a6f1b3",
+        "Bytes": 33
+      },
+      "observations": {
+        "Path": "units/00000000-0000-4000-8000-000000000094/observations.tsv",
+        "SHA256": "365c28aefcb6b5823d44112e4c94bbfe74d915041e305a8b41c85c43bad01f8e",
+        "Bytes": 37
+      }
+    },
+    "ModelRevisionId": "00000000-0000-4000-8000-000000000092"
+  },
+  "WireVersion": "2.0.0"
+}

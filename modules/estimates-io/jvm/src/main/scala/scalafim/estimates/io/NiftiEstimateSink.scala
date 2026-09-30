@@ -1,7 +1,8 @@
 package scalafim.estimates.io
 
 import java.io.RandomAccessFile
-import java.nio.file.Path
+import java.nio.file.{Files, Path}
+import java.nio.charset.StandardCharsets.UTF_8
 import scala.util.control.NonFatal
 import image4s.{Axis, AxisKind, NonSpatialAxes, SampleSpace}
 import image4s.geometry.{D3, Frame}
@@ -62,17 +63,24 @@ private[io] final class NiftiEstimateSink(
     store: LocalEstimateStore,
     val unit: EstimateUnit,
     val maximumBlockCells: Int,
-    outputs: Vector[NiftiOutput]
-) extends EstimateSink:
+    outputs: Vector[NiftiOutput],
+    stages: Vector[StagedFile],
+    private[io] val sharedOutputs: Vector[SharedCovarianceOutput] = Vector.empty,
+    layout: CovarianceLayout = CovarianceLayout.PairNifti
+) extends SharedCovarianceSink:
   override val supportsCovariance = true
+  val sharedCovarianceProducts: Set[ProductId] = sharedOutputs.map(_.product.id).toSet
   private var closed = false
   private var receipt: Option[PinnedUnit] = None
   private var failure: Option[EstimateError] = None
+
+  private def discardStages(): Either[EstimateError, Unit] = NiftiEstimateSink.discard(store, stages)
 
   private def fail(error: EstimateError): Either[EstimateError, Nothing] =
     failure = Some(error)
     closed = true
     outputs.foreach(_.close())
+    discardStages()
     Left(error)
 
   def write(product: ProductId, selection: EstimateSelection, values: Array[Double], validity: Array[Byte]): Either[EstimateError, Unit] = synchronized:
@@ -82,8 +90,42 @@ private[io] final class NiftiEstimateSink(
 
   override def writeCovariance(product: ProductId, selection: CovarianceSelection, values: Array[Double], validity: Array[Byte]): Either[EstimateError, Unit] = synchronized:
     if closed then Left(EstimateError.Closed)
+    else if sharedCovarianceProducts.contains(product) then Left(EstimateError.Unsupported("compact covariance requires pair-only invariant delivery"))
     else CovarianceReadValidation.check(unit, product, selection, values.length, validity.length, ReadLimits(maximumBlockCells)).flatMap: descriptor =>
       writeCells(descriptor, selection.observations, selection.pairs.map(CovarianceReadValidation.volume(descriptor, _)), selection.samples, values, validity)
+
+  def writeSharedCovariance(product: ProductId, selection: SharedCovarianceSelection,
+      values: Array[Double], validity: Array[Byte]): Either[EstimateError, Unit] = synchronized:
+    if closed then Left(EstimateError.Closed)
+    else if !sharedCovarianceProducts.contains(product) then Left(EstimateError.Unsupported("product does not accept invariant delivery"))
+    else SharedCovarianceValidation.check(unit, product, selection, values.length, validity.length, maximumBlockCells).flatMap: descriptor =>
+      val ordinals = selection.pairs.map(CovarianceReadValidation.volume(descriptor, _))
+      var failure: Option[EstimateError] = None
+      var offset = 0
+      selection.observations.foreach: observation =>
+        val output = sharedOutputs.find(o => o.product.id == product && o.observation == observation).get
+        ordinals.foreach: ordinal =>
+          if output.coverage(ordinal) then failure = Some(EstimateError.Conflict("duplicate shared covariance pair delivery"))
+          Validity.fromCode(validity(offset)) match
+            case Left(error) => failure = Some(error)
+            case Right(status) =>
+              val pair = selection.pairs(offset % selection.pairs.size)
+              if status == Validity.OutsideSupport || !values(offset).isFinite || (pair.first == pair.second && values(offset) < 0.0) then
+                failure = Some(EstimateError.Invalid("shared covariance value or invariant validity is invalid"))
+          offset += 1
+      failure match
+        case Some(error) => Left(error)
+        case None =>
+          offset = 0
+          selection.observations.foreach: observation =>
+            val output = sharedOutputs.find(o => o.product.id == product && o.observation == observation).get
+            ordinals.foreach: ordinal =>
+              output.values(ordinal) = values(offset)
+              output.validity(ordinal) = validity(offset)
+              output.coverage(ordinal) = true
+              output.remaining -= 1
+              offset += 1
+          Right(())
 
   private def writeCells(descriptor: ProductDescriptor, observations: Vector[ObservationId], volumes: Vector[Int],
       samplesSelected: Vector[Int], values: Array[Double], validity: Array[Byte]): Either[EstimateError, Unit] =
@@ -141,14 +183,10 @@ private[io] final class NiftiEstimateSink(
     receipt match
       case Some(ref) => Right(ref)
       case None if closed => failure.toLeft(()).flatMap(_ => Left(EstimateError.Closed))
-      case None if outputs.exists(_.remaining != 0L) => Left(EstimateError.Invalid("cannot seal: requested product cells have not all been delivered"))
+      case None if outputs.exists(_.remaining != 0L) || sharedOutputs.exists(_.remaining != 0) => Left(EstimateError.Invalid("cannot seal: requested product cells or shared pairs have not all been delivered"))
       case None =>
         closed = true
-        val result = store.protect:
-          val closing = outputs.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, output) =>
-            val result = output.close()
-            previous.flatMap(_ => result))
-          closing.flatMap: _ =>
+        def publish(sharedTables: Vector[SharedCovarianceTable]): Either[EstimateError, PinnedUnit] =
             outputs.zipWithIndex.foldLeft[Either[EstimateError, Vector[NiftiRepresentation]]](Right(Vector.empty)):
               case (previous, (output, ordinal)) => previous.flatMap: refs =>
                 val prefix = s"units/${unit.revision.value}/product-$ordinal"
@@ -163,32 +201,88 @@ private[io] final class NiftiEstimateSink(
                   output.product.precision, 1.0, 0.0, output.product.targets.estimands, "scanner-sform",
                   output.product.targets.pairs.map((a, b) => EstimandPair(a, b)),
                   storedDatatype = Some(if output.product.precision == NumericPrecision.Float32 then NiftiStoredDatatype.Float32 else NiftiStoredDatatype.Float64))
-            .flatMap(refs => store.publishUnit(unit, refs))
+            .flatMap: refs =>
+              sharedTables.zipWithIndex.foldLeft[Either[EstimateError, Vector[EstimateRepresentation]]](Right(refs.map(EstimateRepresentation.Nifti.apply))):
+                case (previous, (table, ordinal)) => previous.flatMap: records =>
+                  val encoded = SharedCovarianceTable.encode(table)
+                  val limits = layout match
+                    case CovarianceLayout.SharedNormalizedTable(value) => value
+                    case _ => SharedCovarianceLimits()
+                  if encoded.getBytes(UTF_8).length.toLong > limits.maximumTableBytes then Left(EstimateError.Unsupported("shared table exceeds serialization byte reservation"))
+                  else store.writeText(s"units/${unit.revision.value}/shared-covariance-$ordinal.json", encoded).map: reference =>
+                    records :+ EstimateRepresentation.SharedNormalizedUpperTriangle(
+                      SharedCovarianceRepresentation(table.product, table.observation, reference, table.estimands))
+              .flatMap(records => store.publishMixedUnit(unit, records, layout != CovarianceLayout.PairNifti))
+        val result = store.protect:
+          val closing = outputs.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, output) =>
+            val result = output.close()
+            previous.flatMap(_ => result))
+          closing.flatMap: _ =>
+            val sharedTables = sharedOutputs.map(_.table)
+            val invariance = sharedTables.forall: table =>
+              !unit.covariance.find(_.product == table.product).get.invariantObservations ||
+                sharedTables.filter(_.product == table.product).forall(_.agrees(table))
+            if !invariance then Left(EstimateError.Invalid("shared deliveries contradict declared observation invariance"))
+            else publish(sharedTables)
         result match
-          case Left(error) => failure = Some(error); Left(error)
-          case Right(ref) => receipt = Some(ref); Right(ref)
+          case Left(error) => discardStages(); failure = Some(error); Left(error)
+          case Right(ref) => discardStages(); receipt = Some(ref); Right(ref)
 
   def abort(): Either[EstimateError, Unit] = synchronized:
     if closed then Right(())
     else
       closed = true
       store.protect:
-        outputs.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, output) =>
+        val closing = outputs.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, output) =>
           val result = output.close()
           previous.flatMap(_ => result))
+        val discarded = discardStages()
+        closing.flatMap(_ => discarded)
 
 private[io] object NiftiEstimateSink:
-  def open(store: LocalEstimateStore, unit: EstimateUnit, maximumBlockCells: Int): Either[EstimateError, EstimateSink] =
+  private[io] def discard(store: LocalEstimateStore, stages: Vector[StagedFile]): Either[EstimateError, Unit] =
+    stages.foldLeft[Either[EstimateError, Unit]](Right(())): (previous, stage) =>
+      val result = store.protect:
+        Files.deleteIfExists(stage.path)
+        Files.deleteIfExists(stage.path.getParent)
+        Right(())
+      previous.flatMap(_ => result)
+
+  def open(store: LocalEstimateStore, unit: EstimateUnit, maximumBlockCells: Int,
+      layout: CovarianceLayout = CovarianceLayout.PairNifti): Either[EstimateError, EstimateSink] =
+    val compactProducts = layout match
+      case CovarianceLayout.PairNifti => Vector.empty
+      case CovarianceLayout.SharedNormalizedTable(_) => unit.products.filter(_.kind == ProductKind.Covariance)
+    val compactIds = compactProducts.map(_.id).toSet
+    val niftiProducts = unit.products.filterNot(p => compactIds.contains(p.id))
+    val sharedDeclarations = compactProducts.foldLeft[Either[EstimateError, Unit]](Right(()))((previous, product) =>
+      previous.flatMap(_ => SharedCovarianceValidation.descriptor(unit, product.id).map(_ => ())))
+    val sharedLimits = layout match
+      case CovarianceLayout.SharedNormalizedTable(limits) => Some(limits)
+      case _ => None
+    val pairCount = compactProducts.map(p => p.targets.width * p.observations.size.toLong).sum
+    val reservedBytes = compactProducts.flatMap(p => p.observations.map(o => SharedCovarianceOutput.reservedBytes(p, o))).sum
+    sharedDeclarations match
+      case Left(error) => return Left(error)
+      case Right(_) => ()
     if maximumBlockCells <= 0 then Left(EstimateError.Invalid("maximum block cells must be positive"))
-    else if unit.products.map(_.observations.size).sum > 32 then
+    else if sharedLimits.exists(l => pairCount > l.maximumPairs || reservedBytes > l.maximumTableBytes) then
+      Left(EstimateError.Unsupported("shared covariance exceeds pair or conservative serialization-byte reservation"))
+    else if niftiProducts.map(_.observations.size).sum > 32 then
       Left(EstimateError.Unsupported("local writer permits at most 32 simultaneously open product/observation files"))
     else if unit.domain.worldFrame != "scanner" then
       Left(EstimateError.Unsupported("local writer currently requires an explicit scanner frame; other transform-code bindings are not yet qualified"))
     else
       var opened = Vector.empty[NiftiOutput]
+      var ownedStages = Vector.empty[StagedFile]
+      var partialCloses = Vector.empty[() => Either[EstimateError, Unit]]
+      def stage(suffix: String): Either[EstimateError, StagedFile] =
+        store.objects.stage(suffix).left.map(store.fromStore).map: value =>
+          ownedStages :+= value
+          value
       val result = store.protect:
         SampleSpaces.requireVolumeD3(unit.domain.space).left.map(e => EstimateError.Invalid(e.message)).flatMap: volume =>
-          unit.products.foldLeft[Either[EstimateError, Unit]](Right(())): (previous, descriptor) =>
+          niftiProducts.foldLeft[Either[EstimateError, Unit]](Right(())): (previous, descriptor) =>
             previous.flatMap: _ =>
               descriptor.observations.foldLeft[Either[EstimateError, Unit]](Right(())): (prior, observation) =>
                 prior.flatMap: _ =>
@@ -198,18 +292,19 @@ private[io] object NiftiEstimateSink:
                     axes <- NonSpatialAxes.from(Vector(axis)).left.map(e => EstimateError.Invalid(e.message))
                     options <- NiftiWriteOptions.create(datatype = dataType, slope = 1.0, intercept = 0.0, coordinateSystem = NiftiCoordinateSystem.ScannerAnatomical).left.map(e => EstimateError.Invalid(e.message))
                     validityOptions <- NiftiWriteOptions.create(datatype = NiftiDatatype.UInt8, slope = 1.0, intercept = 0.0, coordinateSystem = NiftiCoordinateSystem.ScannerAnatomical).left.map(e => EstimateError.Invalid(e.message))
-                    dataStage <- store.objects.stage(".nii").left.map(store.fromStore)
-                    validStage <- store.objects.stage(".nii").left.map(store.fromStore)
-                    coverageStage <- store.objects.stage(".coverage").left.map(store.fromStore)
+                    dataStage <- stage(".nii")
+                    validStage <- stage(".nii")
+                    coverageStage <- stage(".coverage")
                     data <- Nifti.openScalarWriter(dataStage.path, SampleSpace.create(volume.grid, axes), options).left.map(e => EstimateError.Io(e.message))
-                    valid <- Nifti.openScalarWriter(validStage.path, SampleSpace.create(volume.grid, axes), validityOptions).left.map: e =>
-                      data.close()
-                      EstimateError.Io(e.message)
+                    _ = partialCloses :+= (() => data.close().left.map(e => EstimateError.Io(e.message)))
+                    valid <- Nifti.openScalarWriter(validStage.path, SampleSpace.create(volume.grid, axes), validityOptions).left.map(e => EstimateError.Io(e.message))
+                    _ = partialCloses :+= (() => valid.close().left.map(e => EstimateError.Io(e.message)))
                     _ <- store.protect:
                       val ledger = new RandomAccessFile(coverageStage.path.toFile, "rw")
                       val output = new NiftiOutput(descriptor, observation, dataStage, validStage, data, valid, ledger,
                         unit.domain.support.size.toLong * descriptor.targets.width)
                       opened :+= output
+                      partialCloses = Vector.empty
                       ledger.setLength(unit.domain.sampleCount.toLong * descriptor.targets.width)
                       var failure: Option[EstimateError] = None
                       var map = 0
@@ -225,7 +320,12 @@ private[io] object NiftiEstimateSink:
                         map += 1
                       failure.toLeft(())
                   yield ()
-          .map(_ => new NiftiEstimateSink(store, unit, maximumBlockCells, opened))
+          .map(_ => new NiftiEstimateSink(store, unit, maximumBlockCells, opened, ownedStages,
+            compactProducts.flatMap(p => p.observations.map(o => new SharedCovarianceOutput(p, o))), layout))
       result match
-        case Left(error) => opened.foreach(_.close()); Left(error)
+        case Left(error) =>
+          partialCloses.foreach(close => store.protect(close()))
+          opened.foreach(_.close())
+          discard(store, ownedStages)
+          Left(error)
         case other => other

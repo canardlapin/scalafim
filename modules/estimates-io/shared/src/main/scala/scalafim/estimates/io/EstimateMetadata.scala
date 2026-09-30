@@ -20,6 +20,8 @@ object EstimateMetadata:
   val coreSchema = "scalafim-estimates-core-nifti-1"
   val developmentSchema = "scalafim-estimates-development-1"
   val wireVersion = "1.0.0"
+  val compactSchema = "scalafim-estimates-core-nifti-2"
+  val compactWireVersion = "2.0.0"
 
   /** Canonical UTF-8 projections. JSON remains the scientific authority; these
     * tables are digest-pinned and must agree byte-for-byte with its ordered IDs.
@@ -159,20 +161,53 @@ object EstimateMetadata:
   private given codecNiftiStoredDatatype: ReadWriter[NiftiStoredDatatype] = readwriter[String].bimap(_.toString, NiftiStoredDatatype.valueOf)
   private given codecNiftiRepresentation: ReadWriter[NiftiRepresentation] = macroRW
   private given codecEstimateIndexTables: ReadWriter[EstimateIndexTables] = macroRW
+  private given codecSharedValidityBroadcast: ReadWriter[SharedValidityBroadcast] = readwriter[String].bimap(_.toString, SharedValidityBroadcast.valueOf)
+  private given codecSharedCovarianceRepresentation: ReadWriter[SharedCovarianceRepresentation] = macroRW
+
+  private def encodeRepresentation(value: EstimateRepresentation): ujson.Value = value match
+    case EstimateRepresentation.Nifti(record) =>
+      val encoded = writeJs(record)
+      encoded("pairOrder") = writeJs(record.pairOrder)
+      encoded("qformAlternativeFrame") = writeJs(record.qformAlternativeFrame)
+      encoded("storedDatatype") = writeJs(record.storedDatatype)
+      ujson.Obj("Tag" -> "Nifti", "Content" -> encoded)
+    case EstimateRepresentation.SharedNormalizedUpperTriangle(record) =>
+      val encoded = writeJs(record)
+      encoded("precision") = writeJs(record.precision)
+      encoded("validityBroadcast") = writeJs(record.validityBroadcast)
+      ujson.Obj("Tag" -> "SharedNormalizedUpperTriangle", "Content" -> encoded)
+
+  private def decodeRepresentation(value: ujson.Value): EstimateRepresentation =
+    require(value.obj.keySet == Set("Tag", "Content"), "representation has unknown fields")
+    val record = value("Content")
+    value("Tag").str match
+      case "Nifti" =>
+        require(record.obj.keySet == Set("product", "observation", "values", "validity", "precision", "slope", "intercept",
+          "volumeOrder", "selectedTransform", "pairOrder", "qformAlternativeFrame", "storedDatatype"), "Core-2 NIfTI fields differ")
+        val decoded = read[NiftiRepresentation](record)
+        require(decoded.storedDatatype.nonEmpty, "Core-2 NIfTI requires explicit stored datatype")
+        EstimateRepresentation.Nifti(decoded)
+      case "SharedNormalizedUpperTriangle" =>
+        require(record.obj.keySet == Set("product", "observation", "table", "estimands", "precision", "validityBroadcast"),
+          "shared representation fields differ")
+        require(record("table").obj.keySet == Set("Path", "SHA256", "Bytes"), "shared table reference has unknown fields")
+        EstimateRepresentation.SharedNormalizedUpperTriangle(read[SharedCovarianceRepresentation](record))
+      case _ => throw new IllegalArgumentException("unknown Core-2 representation tag")
 
   private def document(kind: String, value: ujson.Value, schema: String = coreSchema): String =
     val envelope = ujson.Obj("ProfileVersion" -> version, "Schema" -> schema, "DocumentKind" -> kind, "Content" -> value)
     if schema == coreSchema then envelope("WireVersion") = wireVersion
+    else if schema == compactSchema then envelope("WireVersion") = compactWireVersion
     ujson.write(envelope, indent = 2) + "\n"
 
   private def envelope(text: String, kind: String): (String, ujson.Value) =
     val value = ujson.read(text)
     val schema = value("Schema").str
-    require(schema == coreSchema || schema == developmentSchema, "unsupported estimate metadata schema")
+    require(schema == coreSchema || schema == developmentSchema || (schema == compactSchema && kind == "unit"), "unsupported estimate metadata schema")
     require(value("ProfileVersion").str == version, "unsupported estimate profile version")
     require(value("DocumentKind").str == kind, "wrong estimate document kind")
-    if schema == coreSchema then
-      require(value("WireVersion").str == wireVersion, "unsupported Core-NIfTI wire version")
+    if schema == coreSchema || schema == compactSchema then
+      require(value("WireVersion").str == (if schema == coreSchema then wireVersion else compactWireVersion), "unsupported Core-NIfTI wire version")
       require(value.obj.keySet == Set("Schema", "WireVersion", "ProfileVersion", "DocumentKind", "Content"),
         "Core-NIfTI envelope has unknown fields")
     (schema, value("Content"))
@@ -201,19 +236,26 @@ object EstimateMetadata:
       encoded("marginalUncertainty") = writeJs(value.marginalUncertainty)
     document("unit", encoded, if tables.nonEmpty then coreSchema else developmentSchema)
 
+  def compactUnit(value: EstimateUnit, catalogReference: FileReference,
+      representations: Vector[EstimateRepresentation], tables: EstimateIndexTables): String =
+    val encoded = ujson.read(unit(value, catalogReference, tables = Some(tables)))("Content")
+    encoded("Representations") = ujson.Arr.from(representations.map(encodeRepresentation))
+    document("unit", encoded, compactSchema)
+
   def catalogReference(text: String): Either[EstimateError, FileReference] =
     checked(read[FileReference](content(text, "unit")("Catalog")))
 
   def readUnit(text: String, catalog: EstimandCatalog): Either[EstimateError, EstimateUnit] = checked:
     val (wireSchema, encoded) = envelope(text, "unit")
     require(read[ModelRevisionId](encoded("ModelRevisionId")) == catalog.model, "unit and catalog model revisions differ")
-    if wireSchema == coreSchema then
+    if wireSchema == coreSchema || wireSchema == compactSchema then
       val required = Set("dataset", "unit", "revision", "domain", "observations", "bindings", "products",
         "outcomes", "estimability", "provenance", "covariance", "statistics", "degreesOfFreedom",
         "marginalUncertainty", "Catalog", "Representations", "Tables", "ModelRevisionId")
       require(encoded.obj.keySet == required, "Core-NIfTI unit fields differ from the versioned schema")
       read[EstimateIndexTables](encoded("Tables"))
-      read[Vector[NiftiRepresentation]](encoded("Representations"))
+      if wireSchema == coreSchema then read[Vector[NiftiRepresentation]](encoded("Representations"))
+      else encoded("Representations").arr.foreach(decodeRepresentation)
     else
       encoded.obj.get("statistics").foreach: entries =>
         entries.arr.foreach: statistic =>
@@ -231,7 +273,15 @@ object EstimateMetadata:
     read[EstimateUnit](encoded)
 
   def representations(text: String): Either[EstimateError, Vector[NiftiRepresentation]] =
-    checked(read[Vector[NiftiRepresentation]](content(text, "unit")("Representations")))
+    checked:
+      val (schema, encoded) = envelope(text, "unit")
+      require(schema != compactSchema, "Core-1 representation helper refuses Core-2; use allRepresentations")
+      read[Vector[NiftiRepresentation]](encoded("Representations"))
+
+  def allRepresentations(text: String): Either[EstimateError, Vector[EstimateRepresentation]] = checked:
+    val (schema, encoded) = envelope(text, "unit")
+    if schema == compactSchema then encoded("Representations").arr.toVector.map(decodeRepresentation)
+    else read[Vector[NiftiRepresentation]](encoded("Representations")).map(EstimateRepresentation.Nifti.apply)
 
   def indexTables(text: String): Either[EstimateError, Option[EstimateIndexTables]] = checked:
     val encoded = content(text, "unit")

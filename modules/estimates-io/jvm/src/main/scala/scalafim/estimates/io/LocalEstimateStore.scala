@@ -45,15 +45,16 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
   private[io] def writeText(path: String, text: String): Either[EstimateError, FileReference] =
     val bytes = text.getBytes(UTF_8)
     if bytes.length > 16 * 1024 * 1024 then Left(EstimateError.Unsupported("metadata exceeds 16 MiB inspection budget"))
-    else objects.write(path)(_.write(bytes)) match
-      case Right(written) => Right(reference(written))
-      case Left(LocalStoreError.Conflict(_)) =>
-        objects.inspect(path).left.map(fromStore).flatMap: existing =>
-          val expected = MessageDigest.getInstance("SHA-256").digest(bytes)
-            .iterator.map(byte => f"${byte & 0xff}%02x").mkString
-          if existing.bytes == bytes.length.toLong && existing.digest.value == expected then Right(reference(existing))
-          else Left(EstimateError.Conflict(s"immutable metadata destination $path has different bytes"))
-      case Left(error) => Left(fromStore(error))
+    else objects.stage(".metadata").left.map(fromStore).flatMap: stage =>
+      protect:
+        try
+          Files.write(stage.path, bytes, java.nio.file.StandardOpenOption.CREATE_NEW)
+          publishStagedIdempotent(stage, path)
+        finally
+          // This exact staging path was allocated by this invocation. Identical
+          // retry and conflict both release their aliases; never scan staging.
+          Files.deleteIfExists(stage.path)
+          Files.deleteIfExists(stage.path.getParent)
 
   /** A retry may reuse an immutable numerical object only when its staged bytes
     * match exactly. A different payload for the same revision remains a conflict.
@@ -80,6 +81,9 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       case Left(error) => Left(fromStore(error))
 
   private[io] def publishUnit(unit: EstimateUnit, representations: Vector[NiftiRepresentation]): Either[EstimateError, PinnedUnit] =
+    publishMixedUnit(unit, representations.map(EstimateRepresentation.Nifti.apply), false)
+
+  private[io] def publishMixedUnit(unit: EstimateUnit, representations: Vector[EstimateRepresentation], compact: Boolean): Either[EstimateError, PinnedUnit] =
     val prefix = s"units/${unit.revision.value}"
     // A fresh unit owns its catalog reference. Identical catalog bytes still
     // retain model identity; content-addressed deduplication is optional.
@@ -88,10 +92,11 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       estimands <- writeText(s"$prefix/estimands.tsv", EstimateMetadata.estimandsTsv(unit.catalog))
       observations <- writeText(s"$prefix/observations.tsv", EstimateMetadata.observationsTsv(unit))
       tables = EstimateIndexTables(estimands, observations)
-      manifest <- writeText(s"$prefix/estimates.json", EstimateMetadata.unit(unit, catalog, representations, Some(tables)))
+      manifest <- writeText(s"$prefix/estimates.json", if compact then EstimateMetadata.compactUnit(unit, catalog, representations, tables)
+        else EstimateMetadata.unit(unit, catalog, representations.collect { case EstimateRepresentation.Nifti(value) => value }, Some(tables)))
     yield PinnedUnit(unit.unit, unit.revision, manifest)
 
-  private[io] def inspectWithRepresentations(reference: PinnedUnit): Either[EstimateError, (EstimateUnit, Vector[NiftiRepresentation])] =
+  private[io] def inspectWithRepresentations(reference: PinnedUnit): Either[EstimateError, (EstimateUnit, Vector[EstimateRepresentation])] =
     for
       manifest <- text(reference.manifest)
       catalogRef <- EstimateMetadata.catalogReference(manifest)
@@ -99,7 +104,7 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
       catalog <- EstimateMetadata.readCatalog(catalogText)
       schema <- EstimateMetadata.schema(manifest, "unit")
       catalogSchema <- EstimateMetadata.schema(catalogText, "catalog")
-      _ <- if schema != EstimateMetadata.coreSchema || catalogSchema == schema then Right(())
+      _ <- if schema == EstimateMetadata.developmentSchema || catalogSchema == EstimateMetadata.coreSchema then Right(())
            else Left(EstimateError.Integrity("Core-NIfTI unit requires a Core-NIfTI catalog"))
       unit <- EstimateMetadata.readUnit(manifest, catalog)
       tables <- EstimateMetadata.indexTables(manifest)
@@ -115,10 +120,13 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
           yield ()
       _ <- if unit.unit == reference.unit && unit.revision == reference.revision then Right(())
            else Left(EstimateError.Integrity("pinned unit identity does not match the manifest"))
-      representations <- EstimateMetadata.representations(manifest)
-      _ <- if schema != EstimateMetadata.coreSchema || representations.forall(_.storedDatatype.nonEmpty) then Right(())
+      representations <- EstimateMetadata.allRepresentations(manifest)
+      _ <- if schema == EstimateMetadata.developmentSchema || representations.forall {
+             case EstimateRepresentation.Nifti(value) => value.storedDatatype.nonEmpty
+             case EstimateRepresentation.SharedNormalizedUpperTriangle(_) => true
+           } then Right(())
            else Left(EstimateError.Integrity("Core-NIfTI representations require explicit physical stored datatype"))
-      _ <- if schema != EstimateMetadata.coreSchema then Right(())
+      _ <- if schema == EstimateMetadata.developmentSchema then Right(())
            else
              val expected = unit.products.flatMap(p => p.observations.map(o => p.id -> o)).toSet
              val actual = representations.map(r => r.product -> r.observation)
@@ -130,10 +138,14 @@ final class LocalEstimateStore private[io] (private[io] val objects: LocalObject
 
   def open(reference: PinnedUnit, limits: ReadLimits): Either[EstimateError, EstimateSource] =
     inspectWithRepresentations(reference).flatMap: (unit, representations) =>
-      verifyEstimability(unit).flatMap(_ => NiftiEstimateSource.open(this, unit, representations, limits))
+      NiftiEstimateSource.preflight(this, unit, representations, limits)
+        .flatMap(_ => verifyEstimability(unit)).flatMap(_ => NiftiEstimateSource.openMixed(this, unit, representations, limits))
 
   def newSink(unit: EstimateUnit, maximumBlockCells: Int): Either[EstimateError, EstimateSink] =
     verifyEstimability(unit).flatMap(_ => NiftiEstimateSink.open(this, unit, maximumBlockCells))
+
+  def newSink(unit: EstimateUnit, maximumBlockCells: Int, covarianceLayout: CovarianceLayout): Either[EstimateError, EstimateSink] =
+    verifyEstimability(unit).flatMap(_ => NiftiEstimateSink.open(this, unit, maximumBlockCells, covarianceLayout))
 
   private def validateCollection(collection: EstimateCollection): Either[EstimateError, Unit] =
     val published = collection.units.values.collect { case UnitOutcome.Published(ref) => ref }.toVector

@@ -32,13 +32,21 @@ final class FitEstimateProducer private (
     * caller continues to own the dataset reader and numerical backend.
     */
   def write(reader: DatasetSeriesReader, sink: EstimateSink, cancelled: () => Boolean = () => false)(using Backend): Either[EstimateError, PinnedUnit] =
-    if sink.unit != unit then Left(EstimateError.Invalid("sink declaration differs from the compiled scientific output"))
-    else if prepared.request.uncertainty == EstimateUncertaintyRequest.Joint && !sink.supportsCovariance then
+    val sharedJoint = sink match
+      case capability: SharedCovarianceSink => unit.covariance.nonEmpty && unit.covariance.forall(c => capability.sharedCovarianceProducts.contains(c.product))
+      case _ => false
+    if sink.unit != unit then
+      sink.abort()
+      Left(EstimateError.Invalid("sink declaration differs from the compiled scientific output"))
+    else if prepared.request.uncertainty == EstimateUncertaintyRequest.Joint && !sink.supportsCovariance && !sharedJoint then
       sink.abort()
       Left(EstimateError.Unsupported("requested joint uncertainty requires a pair-axis sink"))
-    else if prepared.maxBlockVoxels > sink.maximumBlockCells then Left(EstimateError.Invalid("sink block budget is smaller than the prepared voxel block"))
+    else if prepared.maxBlockVoxels > sink.maximumBlockCells then
+      sink.abort()
+      Left(EstimateError.Invalid("sink block budget is smaller than the prepared voxel block"))
     else
       var sinkError: Option[EstimateError] = None
+      var sharedCovarianceDelivered = false
       def deliver(kind: ProductKind, matrix: DMat, samples: Vector[Int]): Either[FitError, Unit] =
         val descriptor = unit.products.find(_.kind == kind).get
         var failure: Option[FitError] = None
@@ -62,17 +70,27 @@ final class FitEstimateProducer private (
               case Right(_) => Right(())
       def joint(matrix: DMat, samples: Vector[Int]): Either[FitError, Unit] =
         val product = unit.products.find(_.kind == ProductKind.Covariance).get
+        val shared = sink match
+          case capability: SharedCovarianceSink if capability.sharedCovarianceProducts.contains(product.id) => Some(capability)
+          case _ => None
+        if shared.nonEmpty && sharedCovarianceDelivered then return Right(())
         var failure: Option[FitError] = None
         var i = 0
         while i < outputs.size && failure.isEmpty do
           var j = i
           while j < outputs.size && failure.isEmpty do
-            val selection = CovarianceSelection(Vector(unit.observations.head.id), Vector(EstimandPair(outputs(i), outputs(j))), samples)
-            sink.writeCovariance(product.id, selection, Array.fill(samples.size)(matrix(i, j)), Array.fill[Byte](samples.size)(Validity.Valid.code)) match
+            val pairs = Vector(EstimandPair(outputs(i), outputs(j)))
+            val written = shared match
+              case Some(capability) => capability.writeSharedCovariance(product.id,
+                SharedCovarianceSelection(Vector(unit.observations.head.id), pairs), Array(matrix(i, j)), Array(Validity.Valid.code))
+              case None => sink.writeCovariance(product.id, CovarianceSelection(Vector(unit.observations.head.id), pairs, samples),
+                Array.fill(samples.size)(matrix(i, j)), Array.fill[Byte](samples.size)(Validity.Valid.code))
+            written match
               case Left(error) => sinkError = Some(error); failure = Some(FitError.IncompatibleFitBlocks(error.message))
               case Right(_) => ()
             j += 1
           i += 1
+        if shared.nonEmpty && failure.isEmpty then sharedCovarianceDelivered = true
         failure.toLeft(())
       try
         prepared.foreachBlock(reader, block =>

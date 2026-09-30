@@ -232,3 +232,22 @@ class EstimateContractSuite extends munit.FunSuite:
     assert(CovarianceAccess.matrix(source, cov.id, observation.id, 0, Vector(a, b), policy.copy(maximumOrder = 1)).isLeft)
     assertEquals(CovarianceAccess.matrix(source, cov.id, observation.id, 0, Vector(a, b), policy, () => true), Left(EstimateError.Cancelled))
   }
+
+  test("shared delivery has only named observation and pair axes with independent block budgets") {
+    val cov = effect.copy(id = ProductId("U"), kind = ProductKind.Covariance, targets = ProductTargets.UpperTriangle(Vector(b, a)))
+    val scale = effect.copy(id = ProductId("scale"), kind = ProductKind.ResidualVariance)
+    val effects = effect.copy(targets = ProductTargets.Scalar(Vector(b, a)))
+    val products = Vector(effects, cov, scale.copy(targets = effects.targets))
+    val declared = unit.copy(products = products, outcomes = products.map(p => p.id -> ProductOutcome.Available(p.id)).toMap,
+      covariance = Vector(CovarianceDescriptor(cov.id, effects.id, CovarianceEquation.Normalized(scale.id), false, true)))
+    val selection = SharedCovarianceSelection(Vector(observation.id), Vector(EstimandPair(b, a), EstimandPair(a, a)))
+    assertEquals(selection.cells, 2L)
+    assert(SharedCovarianceValidation.check(declared, cov.id, selection, 2, 2, 2).isRight)
+    assert(SharedCovarianceValidation.check(declared, cov.id, selection, 2, 2, 1).isLeft)
+    assert(SharedCovarianceValidation.check(declared, cov.id, selection, 1, 2, 2).isLeft)
+    assert(SharedCovarianceValidation.check(declared, cov.id, selection.copy(pairs = Vector(EstimandPair(a, b))), 2, 2, 2).isLeft)
+    assert(SharedCovarianceValidation.check(declared, effect.id, selection, 2, 2, 2).isLeft)
+    intercept[IllegalArgumentException](selection.copy(pairs = selection.pairs ++ selection.pairs))
+    assertEquals(ReadLimits(1).maximumSharedPairs, 4096)
+    assertEquals(ReadLimits(1).maximumSharedTableBytes, 1048576L)
+  }
