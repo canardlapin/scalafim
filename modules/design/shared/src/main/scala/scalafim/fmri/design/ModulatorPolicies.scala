@@ -104,7 +104,7 @@ final case class ModulatorOrthogonalization private[design] (
   require(tolerance >= 0.0 && tolerance.isFinite, "ordered orthogonalization tolerance must be finite and non-negative")
 
   def canonical: String =
-    s"term=${term.value};order=${order.map(_.value).mkString(",")};scope=${scope.canonical};degenerate=${degenerate.label};tolerance=$tolerance"
+    s"term=${term.value};order=${order.map(_.value).mkString(",")};scope=${scope.canonical};degenerate=${degenerate.label};tolerance=${java.lang.Double.doubleToLongBits(tolerance)}"
 
   /** Refine a validated ordered policy to independent run partitions. */
   def withinRun: ModulatorOrthogonalization =
@@ -214,7 +214,7 @@ final case class OrthogonalizationGroupReceipt(
   require(residualNorm >= 0.0 && residualNorm.isFinite, "orthogonalization residual norm must be finite and non-negative")
 
   def canonical: String =
-    s"key=$key;rows=${sourceRows.mkString(",")};parents=${parentTrials.map(_.value).mkString(",")};rank=$referenceRank;sourceNorm=$sourceNorm;residualNorm=$residualNorm;outcome=$outcome"
+    s"key=$key;rows=${sourceRows.mkString(",")};parents=${parentTrials.map(_.value).mkString(",")};rank=$referenceRank;sourceNorm=${java.lang.Double.doubleToLongBits(sourceNorm)};residualNorm=${java.lang.Double.doubleToLongBits(residualNorm)};outcome=$outcome"
 
 /** Receipt for one target modulator and all of its scoped groups. */
 final case class OrthogonalizationStepReceipt(

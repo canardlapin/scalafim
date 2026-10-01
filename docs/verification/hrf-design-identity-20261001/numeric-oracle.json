@@ -1,0 +1,41 @@
+{
+  "spmg1_descriptor": "hrf-descriptor/v2|family=known(5:spmg1)|basis=1|span=bits:4627448617123184640|params=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)|derivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)|penalty=identity|integration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))|components=sequence()",
+  "finite_vectors": [
+    {
+      "value": "0.0",
+      "encoding": "bits:0"
+    },
+    {
+      "value": "-0.0",
+      "encoding": "bits:-9223372036854775808"
+    },
+    {
+      "value": "1.0",
+      "encoding": "bits:4607182418800017408"
+    },
+    {
+      "value": "5.0",
+      "encoding": "bits:4617315517961601024"
+    },
+    {
+      "value": "15.0",
+      "encoding": "bits:4624633867356078080"
+    },
+    {
+      "value": "0.008333333333333333",
+      "encoding": "bits:4575957461383581969"
+    },
+    {
+      "value": "1e-10",
+      "encoding": "bits:4457293557087583675"
+    },
+    {
+      "value": "5e-324",
+      "encoding": "bits:1"
+    },
+    {
+      "value": "1.7976931348623157e+308",
+      "encoding": "bits:9218868437227405311"
+    }
+  ]
+}

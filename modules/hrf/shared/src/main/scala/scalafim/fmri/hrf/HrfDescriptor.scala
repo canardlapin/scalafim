@@ -226,13 +226,11 @@ final case class HrfDescriptor(
 
   /** Stable, structural identity used by basis elements and provenance.
     *
-    * This is intentionally independent of a rendered column label. Descriptor
-    * case-class rendering is deterministic for the closed parameter ADTs and
-    * keeps custom parameter values in the identity as well.
+    * The versioned encoding uses explicit ADT tags and exact numeric bits,
+    * independently of column labels and platform-specific case-class rendering.
     */
   def canonicalId: String =
-    val childIds = components.map(_.canonicalId).mkString("[", ",", "]")
-    s"family=${family.toString}|basis=${basis.value}|span=${span.value}|params=$params|derivative=$derivative|penalty=$penalty|integration=$integration|components=$childIds"
+    HrfIdentity.descriptor(this)
 
   def withSpan(span: Seconds): HrfDescriptor =
     copy(span = span)
