@@ -1,0 +1,24 @@
+diff --git a/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala b/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala
+index 5d711a9b..568bcf58 100644
+--- a/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala
++++ b/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala
+@@ -243,6 +243,7 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
+         column(t) = whitened(t * voxels + v)
+         t += 1
+       val fit = runtime.fit(column, 0, counters)
++      println(s"[landing-old-caps] runtime voxel=$v status=${fit.decode.status} finiteCurvature=${fit.decode.dataHessian.forall(x => !x.isNaN && !x.isInfinite)}")
+       System.arraycopy(projectNuisance(1, column), 0, projectedY, 0, rows)
+       val (oTau, oV, oBeta, _) = oracle.solve(projectedY)
+       if fit.decode.status == DecodeStatus.Accepted then
+diff --git a/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala b/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala
+index c68c559a..91773ddf 100644
+--- a/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala
++++ b/modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala
+@@ -173,6 +173,7 @@ class ConditionProfileFitSuite extends munit.FunSuite:
+         t += 1
+       val compact = runtime.fit(column, 0, new DecoderCounters)
+       val gramRoute = results(v)
++      println(s"[landing-old-caps] gram voxel=$v status=${gramRoute.status} compactStatus=${compact.decode.status}")
+       assertEqualsDouble(gramRoute.coordinates(0), compact.decode.coordinates(0), 1e-6, s"tau voxel $v")
+       assertEqualsDouble(gramRoute.coordinates(1), compact.decode.coordinates(1), 1e-6, s"logSd voxel $v")
+       var j = 0

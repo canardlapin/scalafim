@@ -1,0 +1,25 @@
+{
+  "baseMain": "7781998fd2e8b79dd0f7688ab918b582e489fe5a",
+  "landedCommit": "27653dafc208394326cc2ca4309427fd749d1c7a",
+  "selectedPaths": [
+    "new/evidence.json",
+    "own/a.scala",
+    "own/b.scala",
+    "own/c.scala"
+  ],
+  "selectedWorkingCopyAndIndexMatchCommit": true,
+  "unrelatedIndexEntriesPreserved": true,
+  "unchangedOutOfScopeDirtyFiles": [
+    "outside/deleted.txt",
+    "outside/edited.txt",
+    "outside/link",
+    "outside/mode.txt",
+    "outside/rename-new.txt",
+    "outside/rename-old.txt",
+    "untracked/nested/deep/two.txt",
+    "untracked/nested/one.txt"
+  ],
+  "unexpectedOutOfScopeChanges": [],
+  "journal": "/private/tmp/phrf-ff-control-tnumrk6p/journal.json",
+  "noRemoteOperation": true
+}
