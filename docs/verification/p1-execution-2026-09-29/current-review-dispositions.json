@@ -692,9 +692,31 @@
       "scope": "Historical DEV diagnosis at 9db33590: 400 records, independent algebra audits, retained failed attempts. JVM91/81 and JS89/82 remain below all four admission gates; no solver repair or fresh qualification.",
       "scientificAdmission": false,
       "privatelyIntegrated": false
+    },
+    {
+      "verdict": "BoundedReviewPreserved",
+      "archive": "core-independent-publication-v5.json.gz",
+      "sha256": "81180ca3ff77287076d927e6953bc9bfbd3f703334fadb56eb8d9d01df2ef9b6",
+      "bytes": 18674,
+      "payloads": 11,
+      "scope": "Two real JVM publication/CAS races, fresh observer and explicit compatible merge; 6 focused JVM and 14 applicable JS checks. Original Core remains open.",
+      "candidate": "ab45570a020c204b721e67e5676366dd47a734a7",
+      "integration": "8bc9bd255a72760a800fae382a6a53ab2628c757",
+      "originalCoreClosed": false
+    },
+    {
+      "verdict": "BoundedReviewPreserved",
+      "archive": "gale-primary21-private-primitive-v5.json.gz",
+      "sha256": "265ef5bd8222f81433301d2c45c1615e0f21ee7ab3c69b438be8fa94678f1419",
+      "bytes": 26759,
+      "payloads": 20,
+      "scope": "Self-contained private finite primitive at 8924a72; primary JDK21 format/compile and 728 JVM/718 JS core+laws checks, plus focused 8+8. Three retained Scaladoc warnings. No publication, ScalaFIM pin, scientific certificate or performance qualification.",
+      "candidate": "8924a72d1305575225bc95ee259316edd425e9a1",
+      "upstreamPublicationAuthorized": false,
+      "trialCertificateImplemented": false
     }
   ],
-  "updatedUtc": "2026-09-30T22:28:02.384923+00:00",
-  "currentIntegration": "e623dcfcc6b7d12f19a5c12121040a5fb8884f1d",
+  "updatedUtc": "2026-09-30T23:54:01.950330+00:00",
+  "currentIntegration": "8bc9bd255a72760a800fae382a6a53ab2628c757",
   "historicalRecords": "Earlier candidate/subsequent-review fields describe their recorded point in time; latest records below govern current disposition."
 }

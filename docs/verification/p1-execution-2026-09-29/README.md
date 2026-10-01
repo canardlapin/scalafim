@@ -46,6 +46,33 @@ Five Fray issues are lodged directly in `~/code/rust/fray/.mote`; no daemon
 restart or Fray source repair is claimed. No ScalaFIM publication, merge or
 release is authorized.
 
+## Latest completed bounded prerequisites
+
+Private integration `8bc9bd25` adds independently reviewed real JVM publication
+races. Six focused JVM tests and fourteen applicable JS tests passed. The
+compatible case requires exactly one initial pointer CAS winner, observes that
+winner in a fresh process, explicitly merges both immutable pins using the
+observed digest, and reopens values/catalog/validity in another fresh process.
+The conflicting-revision case explicitly refuses the loser. This closes the
+bounded independent-process child; the original Core milestone remains open for
+the real deidentified header, OS durability-step matrix and remaining physical
+FIR/df/joint-workflow fixtures.
+
+Gale finite primitive arithmetic is now self-contained at private commit
+`8924a72`, superseding the earlier untracked-source limitation. Primary JDK 21
+format and compile checks passed; core and laws passed 728 JVM and 718 JS tests
+in bounded processes. Focused interval controls also passed eight per platform.
+The exact-rational oracle and unchanged source are preserved. Three Scaladoc
+warnings remain; there is no warning-clean documentation, hosted publication,
+ScalaFIM pin, trial scientific certificate, performance or release claim.
+
+Calibration continuation and exact v10 cleanup are owner-approved. The cleanup
+refused all eight fresh bounded attempts before any archive/removal because
+process identities were appearing during observation. No calibration start
+intent or runner exists. A successor observation proposal is under review;
+the existing approval does not authorize substituting its executable bytes.
+Command zero remains complete and must never be replayed.
+
 ## Latest bounded reviews
 
 Private integration `e623dcfc` adds the reviewed native Core conformance suite:
