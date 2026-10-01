@@ -95,7 +95,7 @@ enum SpaceRef:
         kind match
           case SurfaceKind.White | SurfaceKind.Pial | SurfaceKind.SmoothWm | SurfaceKind.Midthickness =>
             subjectNative(subject, None)
-          case SurfaceKind.Inflated | SurfaceKind.Sphere | SurfaceKind.Custom(_) =>
+          case SurfaceKind.Inflated | SurfaceKind.VeryInflated | SurfaceKind.Sphere | SurfaceKind.Custom(_) =>
             Left(SpaceError.NoWorldSpace(s"a $kind surface is not in the subject's scanner coordinates"))
       case other => other.world
 
