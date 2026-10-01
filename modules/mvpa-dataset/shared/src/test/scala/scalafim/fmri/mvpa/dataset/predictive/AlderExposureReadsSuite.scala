@@ -1,0 +1,156 @@
+package scalafim.fmri.mvpa.dataset.predictive
+
+import alder.kernel.DataFingerprint
+import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
+import multivar.core.{SpaceRole, ValueId, ValueIdentity}
+import munit.FunSuite
+import scalafim.fmri.mvpa.{AxisRef, EvidenceOrigins, EvidenceSource, MultiResponse, Observations}
+import scalafim.fmri.mvpa.analysis.*
+import scalafim.response.{DomainReference, Provenance, ProvenanceEvidence, ProvenanceId, SourceId}
+
+class AlderExposureReadsSuite extends FunSuite:
+  private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)
+
+  private final class Poison(values: DMat, fail: Boolean = false) extends DoubleLinearOperator:
+    val rows = values.rows
+    val cols = values.cols
+    var calls = 0
+    def applyTo(input: DVec, output: MutableDVec): Unit =
+      calls += 1
+      if fail then throw IllegalStateException("provider failure")
+      var selected = 0
+      while selected < input.length && input(selected) == 0.0 do selected += 1
+      var row = 0
+      while row < rows do
+        output(row) = values(row, selected)
+        row += 1
+
+  private def source(name: String): EvidenceSource =
+    val id = SourceId.unsafe(name)
+    right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"$name-root"), id)))
+
+  private final class Fixture(fail: Boolean = false):
+    val samples = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, Vector("train", "holdout"), "trial", "none", "one"))
+    val inputs = right(AxisRef.fromStableKeys("inputs", SpaceRole.Observed, Vector("i1"), "native", "none", "one"))
+    val responses = right(AxisRef.fromStableKeys("responses", SpaceRole.Observed, Vector("y1"), "native", "none", "one"))
+    val inputOperator = new Poison(DMat.dense(2, 1, Vector(1.0, 2.0)), fail)
+    val targetOperator = new Poison(DMat.dense(2, 1, Vector(3.0, 4.0)), fail)
+    val observations: Observations[samples.Id, inputs.Id] = right(Observations.fromOperator(samples, inputs, inputOperator, ValueIdentity.source(ValueId.unsafe("x")), source("x-source")))
+    val targets: MultiResponse[samples.Id, responses.Id] = right(MultiResponse.fromOperator(samples, responses, targetOperator, ValueIdentity.source(ValueId.unsafe("y")), source("y-source")))
+    val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(10L, 20L), DataFingerprint.external("declared")))
+
+  /* The opaque PlanId is produced by analysis compilation in production. A
+   * fixture only needs a stable serialized value to exercise this adapter. */
+  private def exposure[SK <: multivar.core.SemanticSpace, NK <: multivar.core.SemanticSpace, FK <: multivar.core.SemanticSpace](observations: Observations[SK, NK], targets: MultiResponse[SK, FK], mapping: NativeAxisMapping) =
+    EvidenceExposure.external(AlderExposureReads.referenceFor(("0" * 64).asInstanceOf[PlanId], observations, targets, mapping, ResultIdentity("result")))
+
+  private def request(scope: ExposureScope, cells: Long = 64L, assurance: ExposureAssurance = ExposureAssurance.Instrumented) =
+    ExposureRequest(ExposurePurpose.PayloadRead, ExposureActorRole.Service, scope, ExposurePayload.Payload, assurance, cells)
+
+  test("training-only native probe is refused before poison parent operators run"):
+    val fixture = new Fixture
+    import fixture.*
+    val current = exposure(observations, targets, mapping)
+    val required = request(ExposureScope.Training)
+    val permit = ExposureControl.permit(current, request(ExposureScope.WholePopulation)).toOption.get
+    val result = AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(1, right(MaterializationBudget(64L)))), current, permit, required)
+    result match
+      case AlderExposureReadResult.Refused(ExposureError.TrainingOnlyConstraintUnsupported, _) => ()
+      case other => fail(s"expected training-only refusal, got $other")
+    assertEquals(inputOperator.calls, 0)
+    assertEquals(targetOperator.calls, 0)
+
+  test("approved wider read is budgeted and preserves exposure after provider failure"):
+    val fixture = new Fixture(fail = true)
+    import fixture.*
+    val current = exposure(observations, targets, mapping)
+    val required = request(ExposureScope.WholePopulation)
+    val permit = ExposureControl.permit(current, required).toOption.get
+    val result = AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(1, right(MaterializationBudget(64L)))), current, permit, required)
+    result match
+      case AlderExposureReadResult.ReadFailed(_, next) =>
+        assertEquals(next.events.head.request.scope, ExposureScope.WholePopulation)
+        assertEquals(next.events.head.request.maximumCells, 64L)
+      case other => fail(s"expected recorded failure, got $other")
+    assert(inputOperator.calls > 0)
+
+  test("native reads reject caller constrained assurance and foreign references before callbacks"):
+    val fixture = new Fixture
+    import fixture.*
+    val current = exposure(observations, targets, mapping)
+    val constrained = request(ExposureScope.WholePopulation, assurance = ExposureAssurance.Constrained)
+    val constrainedPermit = ExposureControl.permit(current, constrained).toOption.get
+    val policy = right(NativeReadPolicy(1, right(MaterializationBudget(64L))))
+    assertEquals(
+      AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy, current, constrainedPermit, constrained),
+      AlderExposureReadResult.Refused(ExposureError.NativeAssuranceUnsupported, current)
+    )
+    val foreign = EvidenceExposure.external(ExposureReference(("0" * 64).asInstanceOf[PlanId], "foreign", "foreign", ResultIdentity("result")))
+    val approved = request(ExposureScope.WholePopulation)
+    val foreignPermit = ExposureControl.permit(foreign, approved).toOption.get
+    assertEquals(
+      AlderExposureReads.nativeTables(observations, targets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy, foreign, foreignPermit, approved),
+      AlderExposureReadResult.Refused(ExposureError.ReferenceMismatch, foreign)
+    )
+    assertEquals(inputOperator.calls, 0)
+    assertEquals(targetOperator.calls, 0)
+
+  test("provenance evidence and preparation support bind exposure and native root identities"):
+    val samples = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, Vector("train", "holdout"), "trial", "none", "one"))
+    val inputs = right(AxisRef.fromStableKeys("inputs", SpaceRole.Observed, Vector("i1"), "native", "none", "one"))
+    val responses = right(AxisRef.fromStableKeys("responses", SpaceRole.Observed, Vector("y1"), "native", "none", "one"))
+    val sourceId = SourceId.unsafe("same-source")
+    def evidenceSource(reference: String) =
+      val provenance = Provenance.source(
+        ProvenanceId.unsafe("same-root"),
+        sourceId,
+        Vector(ProvenanceEvidence.Domain(DomainReference.unsafe("bids", reference)))
+      )
+      right(EvidenceSource(sourceId, provenance))
+    val targetSource = source("target-source")
+    def observations(value: Double, provenance: String) =
+      val operator = new Poison(DMat.dense(2, 1, Vector(value, value + 1.0)))
+      right(Observations.fromOperator(samples, inputs, operator, ValueIdentity.source(ValueId.unsafe("same-values")), evidenceSource(provenance), EvidenceOrigins.Unknown)) -> operator
+    def targets =
+      val operator = new Poison(DMat.dense(2, 1, Vector(3.0, 4.0)))
+      right(MultiResponse.fromOperator(samples, responses, operator, ValueIdentity.source(ValueId.unsafe("same-targets")), targetSource, EvidenceOrigins.Unknown)) -> operator
+    val (first, _) = observations(1.0, "run-a")
+    val (second, secondOperator) = observations(1.0, "run-b")
+    val (firstTargets, _) = targets
+    val (secondTargets, secondTargetOperator) = targets
+    val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(10L, 20L), DataFingerprint.external("declared")))
+    val plan = ("0" * 64).asInstanceOf[PlanId]
+    val referenceA = AlderExposureReads.referenceFor(plan, first, firstTargets, mapping, ResultIdentity("result"))
+    val referenceB = AlderExposureReads.referenceFor(plan, second, secondTargets, mapping, ResultIdentity("result"))
+    assertNotEquals(referenceA, referenceB)
+    val currentA = EvidenceExposure.external(referenceA)
+    val requestA = request(ExposureScope.WholePopulation)
+    val result = AlderExposureReads.nativeTables(second, secondTargets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(1, right(MaterializationBudget(64L)))), currentA, ExposureControl.permit(currentA, requestA).toOption.get, requestA)
+    assertEquals(result, AlderExposureReadResult.Refused(ExposureError.ReferenceMismatch, currentA))
+    assertEquals(secondOperator.calls, 0)
+    assertEquals(secondTargetOperator.calls, 0)
+    val policy = right(NativeReadPolicy(1, right(MaterializationBudget(64L))))
+    val rootA = right(AlderPredictiveAdmission.nativeTables(first, firstTargets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy)).root.fingerprint.digest
+    val rootB = right(AlderPredictiveAdmission.nativeTables(second, secondTargets, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy)).root.fingerprint.digest
+    assertNotEquals(rootA, rootB)
+
+  test("fixed and jointly learned preparation declarations change exposure and native root identities"):
+    val samples = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, Vector("a", "b"), "scan", "none", "one"))
+    val neural = right(AxisRef.fromStableKeys("neural", SpaceRole.Observed, Vector("n"), "native", "none", "one"))
+    val features = right(AxisRef.fromStableKeys("features", SpaceRole.Observed, Vector("y"), "native", "none", "one"))
+    val sourceValue = ValueIdentity.source(ValueId.unsafe("values"))
+    val evidenceSource = source("preparation-source")
+    val support = scalafim.fmri.mvpa.ValueSupport.Bounded(samples.descriptor, sourceValue, Vector(0, 1))
+    val fixed = right(EvidenceOrigins.make(evidenceSource, sourceValue, scalafim.fmri.mvpa.AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor), support, scalafim.fmri.mvpa.PreparationSupport.FixedShared(support), samples.descriptor))
+    val joint = right(EvidenceOrigins.make(evidenceSource, sourceValue, scalafim.fmri.mvpa.AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor), support, scalafim.fmri.mvpa.PreparationSupport.JointlyLearned(support, support), samples.descriptor))
+    def observation(origins: EvidenceOrigins) = right(Observations.fromOperator(samples, neural, new Poison(DMat.dense(2, 1, Vector(1.0, 2.0))), sourceValue, evidenceSource, origins))
+    def target = right(MultiResponse.fromOperator(samples, features, new Poison(DMat.dense(2, 1, Vector(3.0, 4.0))), ValueIdentity.source(ValueId.unsafe("target")), source("target"), EvidenceOrigins.Unknown))
+    val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(1L, 2L), DataFingerprint.external("declared")))
+    val fixedObservation = observation(fixed)
+    val jointObservation = observation(joint)
+    val fixedTarget = target
+    val jointTarget = target
+    val plan = ("0" * 64).asInstanceOf[PlanId]
+    assertNotEquals(AlderExposureReads.referenceFor(plan, fixedObservation, fixedTarget, mapping, ResultIdentity("result")), AlderExposureReads.referenceFor(plan, jointObservation, jointTarget, mapping, ResultIdentity("result")))
+    val policy = right(NativeReadPolicy(1, right(MaterializationBudget(64L))))
+    assertNotEquals(right(AlderPredictiveAdmission.nativeTables(fixedObservation, fixedTarget, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy)).root.fingerprint.digest, right(AlderPredictiveAdmission.nativeTables(jointObservation, jointTarget, Vector("a", "b"), DataFingerprint.external("metadata"), mapping, policy)).root.fingerprint.digest)

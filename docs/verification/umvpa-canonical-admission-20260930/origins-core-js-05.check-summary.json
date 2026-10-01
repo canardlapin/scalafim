@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "gate": "origins-core-js-05",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head_before": "d44b91ca0c366068ed194ab3c859f012883f98de",
+    "head_after": "d44b91ca0c366068ed194ab3c859f012883f98de"
+  },
+  "requested_command": ["mvpaJS/test", "mvpaFitJS/test"],
+  "receipt": {
+    "raw_log": "origins-core-js-05.log",
+    "raw_log_sha256": "938189adacb1ad4d3d63589c8771e8c845f1b29421532a0f7347a790cb78f0eb",
+    "metadata": "origins-core-js-05.log.meta.json",
+    "metadata_sha256": "4708acc3a4990ab502f2716270407679ecee5c386941f0ee1d7002fda57d7c2b"
+  },
+  "outcome": {
+    "status": "passed",
+    "exit_code": 0,
+    "module_results": [
+      {"module": "mvpaJS", "tests_passed": 222, "tests_failed": 0, "errors": 0},
+      {"module": "mvpaFitJS", "tests_passed": 46, "tests_failed": 0, "errors": 0}
+    ],
+    "tests_passed": 268,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "dataset_gate_started": false,
+    "compile_all_started": false
+  }
+}

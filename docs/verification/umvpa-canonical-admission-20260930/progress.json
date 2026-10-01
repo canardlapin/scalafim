@@ -1,0 +1,25 @@
+{
+  "source_sha": "f08f3b9b126a37172ca5720665061918beef6e86",
+  "source_review": {
+    "verdict": "PASS",
+    "scope": "bounded source only; no compile or canonical provider admission verdict",
+    "path": "/private/tmp/scalafim-umvpa-20260930-admission-evidence/independent-source-review-f08f3b.md",
+    "sha256": "1ebc37a136d48e0cbe903b0ad4e73c5677e9b220b84e0fa28293143569a77a2e"
+  },
+  "pending": [
+    "fresh owning JVM/JS gates",
+    "canonical immutable Alder pin ownership",
+    "canonical dataset gates and compileAll"
+  ],
+  "cancelled_before_start": [
+    {
+      "candidate": "f0166b5649fb567cda5a33e547d950e0cee1c862",
+      "wrapper_pid": 49064,
+      "session_id": 37579,
+      "exit_code": 143,
+      "sbt_started": false,
+      "log_created": false
+    }
+  ],
+  "base_sha": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b"
+}

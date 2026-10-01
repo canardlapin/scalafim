@@ -1,0 +1,11 @@
+--- a/build.sbt
++++ b/build.sbt
+@@ -56,7 +56,7 @@
+ 
+ // Alder owns fit lifecycles, stage-aware cross-fitting, and fitted artifacts.
+ // Keep its coordinated provider overrides explicit and process-local.
+-lazy val alderRevision = "c56a6b17989e77bdab8d57220fe3299fe9348e30"
++lazy val alderRevision = "e555bad92307af1c2cbc104aef398cb9d9de88f0"
+ lazy val alderBuild = {
+   sys.props
+     .get("scalafim.resample4s.build")

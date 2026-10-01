@@ -1,0 +1,186 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-umvpa-20260930-canonical-admission-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260930-canonical-admission/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/35134e4fbd77703f1507/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (303158 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-umvpa-20260930-canonical-admission/)
+[error] java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] 	at java.base/java.io.FileOutputStream.open0(Native Method)
+[error] 	at java.base/java.io.FileOutputStream.open(FileOutputStream.java:255)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:210)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:171)
+[error] 	at xsbt.boot.Locks$GlobalLock.withFileLock(Locks.scala:103)
+[error] 	at xsbt.boot.Locks$GlobalLock.ignoringDeadlockAvoided(Locks.scala:64)
+[error] 	at xsbt.boot.Locks$GlobalLock.withLock(Locks.scala:55)
+[error] 	at xsbt.boot.Locks$.apply0(Locks.scala:45)
+[error] 	at xsbt.boot.Locks$.apply(Locks.scala:36)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withDefaultLogger(Ivy.scala:82)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:206)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:203)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.withModule(Ivy.scala:266)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.moduleDescriptor(Ivy.scala:270)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.dependencyMapping(Ivy.scala:272)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$5(Defaults.scala:4176)
+[error] 	at scala.collection.immutable.List.map(List.scala:293)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$4(Defaults.scala:4176)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+[error] 	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+[error] 	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+[error] 	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+[error] 	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+[error] 	at sbt.Execute.work(Execute.scala:292)
+[error] 	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] 	at java.base/java.io.FileOutputStream.open0(Native Method)
+[error] 	at java.base/java.io.FileOutputStream.open(FileOutputStream.java:255)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:210)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:171)
+[error] 	at xsbt.boot.Locks$GlobalLock.withFileLock(Locks.scala:103)
+[error] 	at xsbt.boot.Locks$GlobalLock.ignoringDeadlockAvoided(Locks.scala:64)
+[error] 	at xsbt.boot.Locks$GlobalLock.withLock(Locks.scala:55)
+[error] 	at xsbt.boot.Locks$.apply0(Locks.scala:45)
+[error] 	at xsbt.boot.Locks$.apply(Locks.scala:36)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withDefaultLogger(Ivy.scala:82)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:206)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:203)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.withModule(Ivy.scala:266)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.moduleDescriptor(Ivy.scala:270)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.dependencyMapping(Ivy.scala:272)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$5(Defaults.scala:4176)
+[error] 	at scala.collection.immutable.List.map(List.scala:293)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$4(Defaults.scala:4176)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+[error] 	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+[error] 	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+[error] 	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+[error] 	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+[error] 	at sbt.Execute.work(Execute.scala:292)
+[error] 	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] 	at java.base/java.io.FileOutputStream.open0(Native Method)
+[error] 	at java.base/java.io.FileOutputStream.open(FileOutputStream.java:255)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:210)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:171)
+[error] 	at xsbt.boot.Locks$GlobalLock.withFileLock(Locks.scala:103)
+[error] 	at xsbt.boot.Locks$GlobalLock.ignoringDeadlockAvoided(Locks.scala:64)
+[error] 	at xsbt.boot.Locks$GlobalLock.withLock(Locks.scala:55)
+[error] 	at xsbt.boot.Locks$.apply0(Locks.scala:45)
+[error] 	at xsbt.boot.Locks$.apply(Locks.scala:36)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withDefaultLogger(Ivy.scala:82)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:206)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:203)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.withModule(Ivy.scala:266)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.moduleDescriptor(Ivy.scala:270)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.dependencyMapping(Ivy.scala:272)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$5(Defaults.scala:4176)
+[error] 	at scala.collection.immutable.List.map(List.scala:293)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$4(Defaults.scala:4176)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+[error] 	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+[error] 	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+[error] 	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+[error] 	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+[error] 	at sbt.Execute.work(Execute.scala:292)
+[error] 	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] 	at java.base/java.io.FileOutputStream.open0(Native Method)
+[error] 	at java.base/java.io.FileOutputStream.open(FileOutputStream.java:255)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:210)
+[error] 	at java.base/java.io.FileOutputStream.<init>(FileOutputStream.java:171)
+[error] 	at xsbt.boot.Locks$GlobalLock.withFileLock(Locks.scala:103)
+[error] 	at xsbt.boot.Locks$GlobalLock.ignoringDeadlockAvoided(Locks.scala:64)
+[error] 	at xsbt.boot.Locks$GlobalLock.withLock(Locks.scala:55)
+[error] 	at xsbt.boot.Locks$.apply0(Locks.scala:45)
+[error] 	at xsbt.boot.Locks$.apply(Locks.scala:36)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withDefaultLogger(Ivy.scala:82)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:206)
+[error] 	at sbt.internal.librarymanagement.IvySbt.withIvy(Ivy.scala:203)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.withModule(Ivy.scala:266)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.moduleDescriptor(Ivy.scala:270)
+[error] 	at sbt.internal.librarymanagement.IvySbt$Module.dependencyMapping(Ivy.scala:272)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$5(Defaults.scala:4176)
+[error] 	at scala.collection.immutable.List.map(List.scala:293)
+[error] 	at sbt.Classpaths$.$anonfun$depMap$4(Defaults.scala:4176)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+[error] 	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+[error] 	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+[error] 	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+[error] 	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+[error] 	at sbt.Execute.work(Execute.scala:292)
+[error] 	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] (ProjectRef(uri("https://github.com/canardlapin/graph4s.git#b585e594eec4567bad78ae23206c1a8f535bcd5e"), "indexedJVM") / projectDescriptors) java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] (ProjectRef(uri("https://github.com/canardlapin/locus4s.git#58c9739be51345ad9adc4bc9c9e7335023254ec9"), "locus4s-dataJVM") / projectDescriptors) java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] (ProjectRef(uri("https://github.com/canardlapin/resample4s.git#6bc4172a966c92f1b06811eac64ac2bada9fef9b"), "designsJVM") / projectDescriptors) java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] (responseJVM / projectDescriptors) java.io.FileNotFoundException: /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock (Operation not permitted)
+[error] Total time: 1 s, completed Sep 30, 2026, 2:32:24 p.m.

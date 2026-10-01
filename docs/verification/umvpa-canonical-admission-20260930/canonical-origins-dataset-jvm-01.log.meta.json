@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T19:22:36.362250+00:00",
+  "finished_utc": "2026-09-30T19:23:34.378552+00:00",
+  "duration_seconds": 58.015588,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.task.cpus=1",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+    "mvpaDatasetJVM/test"
+  ],
+  "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+  "log": "/private/tmp/scalafim-umvpa-20260930-admission-evidence/canonical-origins-dataset-jvm-01.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2400.0,
+  "log_bytes": 5338
+}

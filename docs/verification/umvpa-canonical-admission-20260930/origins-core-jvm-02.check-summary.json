@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "gate": "origins-core-jvm-02",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head_before": "f08f3b9b126a37172ca5720665061918beef6e86",
+    "head_after": "f08f3b9b126a37172ca5720665061918beef6e86"
+  },
+  "requested_command": [
+    "mvpaJVM/test",
+    "mvpaFitJVM/test"
+  ],
+  "receipt": {
+    "raw_log": "origins-core-jvm-02.log",
+    "raw_log_sha256": "53141cad7943d5b99494cbf654eefaa34cf43a3f1ffc63c0c2fca146892b2caf",
+    "metadata": "origins-core-jvm-02.log.meta.json",
+    "metadata_sha256": "5110974ebd3bfaa608b8294796f37f00d84da908b2f8122b1d3f3bdf614970cb"
+  },
+  "outcome": {
+    "status": "compile_failed_before_test_execution",
+    "exit_code": 1,
+    "error": {
+      "path": "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala",
+      "line": 147,
+      "column": 58,
+      "code": "E007",
+      "message": "identity: String supplied where ExposureRecordId is required"
+    },
+    "test_suites_completed": 0,
+    "tests_completed": 0,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "js_gate_started": false,
+    "reason": "JVM compile failed"
+  }
+}

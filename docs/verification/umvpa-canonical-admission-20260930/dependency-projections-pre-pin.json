@@ -1,0 +1,23 @@
+{
+  "source_sha": "d44b91ca0c366068ed194ab3c859f012883f98de",
+  "build_sbt_sha256": "56764cb48a216323ff6a233ed60800c7efd1c869d1e5b6db13d54dcefb99f3ef",
+  "declared_revisions": {
+    "ravelRevision": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "galeRevision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+    "alderRevision": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+    "locus4sRevision": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+    "image4sRevision": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+    "reframe4sRevision": "e3ddb48b4a084b3f08063cad849c8100207fb19c",
+    "graph4sRevision": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+    "multivarRevision": "f74d631720d65147c51496dcbdd37c01912de1cb",
+    "intaglioRevision": "596b398af380079e4b251535230d0bc03cd88c51",
+    "bids4sRevision": "a33678390614a91fadbdef13f22970e78c26e091",
+    "zarr4sRevision": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+  },
+  "process_local_provider_projection": {
+    "property": "scalafim.alder.build",
+    "path": "/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+    "source_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0"
+  },
+  "canonical_admission": false
+}

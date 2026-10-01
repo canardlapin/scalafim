@@ -1,0 +1,89 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project alder-fixed-rows-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+/private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/build.sbt:82: warning: value lookup of `streams` inside an `if` expression
+
+problem: `streams.value` is inside an `if` expression of a regular task.
+  Regular tasks always evaluate task dependencies (`.value`) regardless of `if` expressions.
+solution:
+  1. Use a conditional task `Def.taskIf(...)` to evaluate it when the `if` predicate is true or false.
+  2. Or turn the task body into a single `if` expression; the task is then auto-converted to a conditional task.
+  3. Or make the static evaluation explicit by declaring `streams.value` outside the `if` expression.
+  4. If you still want to force the static lookup, you may annotate the task lookup with `@sbtUnchecked`, e.g. `(streams.value: @sbtUnchecked)`.
+  5. Add `import sbt.dsl.LinterLevel.Ignore` to your build file to disable all task linting.
+
+      streams.value.log.info(s"$moduleName: module boundaries OK (no effect deps)")
+      ^
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (99642 settings) ...
+[info] set current project to alder (in build file:/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/data/.jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/data/.jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+Test run alder.data.IdentifiedRowsSuite started
+alder.data.IdentifiedRowsSuite: finished 0.047s
+Test run alder.data.IdentifiedRowsSuite finished: 0 failed, 0 ignored, 6 total 0.06s
+Test run alder.data.Resample4sResamplerSuite started
+alder.data.Resample4sResamplerSuite: finished 0.21s
+Test run alder.data.Resample4sResamplerSuite finished: 0 failed, 0 ignored, 11 total 0.221s
+Test run alder.data.GroupedKFoldSuite started
+alder.data.GroupedKFoldSuite: finished 0.012s
+Test run alder.data.GroupedKFoldSuite finished: 0 failed, 0 ignored, 2 total 0.012s
+Test run alder.data.CrossFittedSuite started
+alder.data.CrossFittedSuite: finished 0.004s
+Test run alder.data.CrossFittedSuite finished: 0 failed, 0 ignored, 5 total 0.004s
+Test run alder.data.DenseSuite started
+alder.data.DenseSuite: finished 0.004s
+Test run alder.data.DenseSuite finished: 0 failed, 0 ignored, 7 total 0.004s
+Test run alder.data.RefitSuite started
+alder.data.RefitSuite: finished 0.009s
+Test run alder.data.RefitSuite finished: 0 failed, 0 ignored, 8 total 0.009s
+Test run alder.data.CoordinatesSuite started
+alder.data.CoordinatesSuite: finished 0.018s
+Test run alder.data.CoordinatesSuite finished: 0 failed, 0 ignored, 9 total 0.018s
+Test run alder.data.DataSuite started
+alder.data.DataSuite: finished 0.208s
+Test run alder.data.DataSuite finished: 0 failed, 0 ignored, 22 total 0.208s
+[info] Passed: Total 70, Failed 0, Errors 0, Passed 70
+[success] Total time: 4 s, completed Sep 29, 2026, 10:30:04 p.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/data/.js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/data/.js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-umvpa-20260929/alder-fixed-rows/data/.js/target/scala-3.7.4/alder-data-test-fastopt
+Test run alder.data.IdentifiedRowsSuite started
+Test run alder.data.CoordinatesSuite started
+alder.data.IdentifiedRowsSuite: finished 0.009s
+Test run alder.data.IdentifiedRowsSuite finished: 0 failed, 0 ignored, 6 total 0.009s
+alder.data.CoordinatesSuite: finished 0.015s
+Test run alder.data.CoordinatesSuite finished: 0 failed, 0 ignored, 9 total 0.015s
+Test run alder.data.DenseSuite started
+alder.data.DenseSuite: finished 0.002s
+Test run alder.data.DenseSuite finished: 0 failed, 0 ignored, 7 total 0.002s
+Test run alder.data.DataSuite started
+Test run alder.data.CrossFittedSuite started
+alder.data.CrossFittedSuite: finished 0.008s
+Test run alder.data.CrossFittedSuite finished: 0 failed, 0 ignored, 5 total 0.008s
+Test run alder.data.Resample4sResamplerSuite started
+alder.data.DataSuite: finished 0.175s
+Test run alder.data.DataSuite finished: 0 failed, 0 ignored, 22 total 0.175s
+Test run alder.data.GroupedKFoldSuite started
+alder.data.GroupedKFoldSuite: finished 0.007s
+Test run alder.data.GroupedKFoldSuite finished: 0 failed, 0 ignored, 2 total 0.007s
+Test run alder.data.RefitSuite started
+alder.data.RefitSuite: finished 0.003s
+Test run alder.data.RefitSuite finished: 0 failed, 0 ignored, 8 total 0.003s
+alder.data.Resample4sResamplerSuite: finished 0.098s
+Test run alder.data.Resample4sResamplerSuite finished: 0 failed, 0 ignored, 11 total 0.098s
+[info] Passed: Total 70, Failed 0, Errors 0, Passed 70
+[success] Total time: 6 s, completed Sep 29, 2026, 10:30:10 p.m.

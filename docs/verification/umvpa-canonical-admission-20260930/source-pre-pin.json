@@ -1,0 +1,24 @@
+{
+  "source_sha": "58afdc9a609d86ef5450c9d6b6f0aa2e69afc4a2",
+  "base_sha": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+  "pins": {
+    "alder": "c56a6b17989e77bdab8d57220fe3299fe9348e30"
+  },
+  "pin_admission": "pending owner exception or peer handoff; source branch e555 already published",
+  "paths": {
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceOrigins.scala": "32a9ca560f1d9162613483c3ffbe3f0b9cf6d3c256a002dedb8987171451923a",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Observations.scala": "d00b50e324a118f0fb8132c691e0c7f8d152aad651ba5c880537e397b073f3cf",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Relations.scala": "6fb65a4380074b806da627952b9568182a9c0565033d84a780b5f7df750e8ce8",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala": "c066d39ac4a243054a966a405dcc120a726861623881be298c71c9de30e42d7e",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Compilation.scala": "c92a3ca74ef86441dda884725dc4e75413be1e940ba49660e2a7257399b3f83b",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Diagnostics.scala": "d20c3ae9a01fc7c2077fd7cfea34a1b8d17a5f54afab83fb36858f0ee64f87ab",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/EvidenceOriginsSuite.scala": "8d207c638fc047c1afa8499f7b4f3778e39e576e723f9743c93cf25ea260fac3",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/EvidenceExposureSuite.scala": "099b4570e66992691332fe76b4ef34bd79d663a5d45783d6e2f94d87a89c51a4",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/DiagnosticsSuite.scala": "63820069fe691ee78b7c166d4e5d8dc166e070ff31b591d0f2ffd07c873db51d",
+    "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala": "f3695ced9a9f1be74f7ccc5965746fab82e517ac009a2b549428ee198a4a5338",
+    "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala": "fb01e962f24715d917a9028163326c74f27755c892ba699970947c971b55d879",
+    "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmission.scala": "772de74d056af47ac02a3bb79091e7d89f725f23de0092c88d19352cc11c87e4",
+    "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReads.scala": "e1274542012eaf3b8b2090f1d2572f879b825e9a59bc1a77637da734418980fe",
+    "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala": "5dcce9e6cf746a510034398dd42ef1f2a2631628c3f7d041b7e84e66126b8457"
+  }
+}
