@@ -1,0 +1,25 @@
+{
+  "candidate": "a2ec9fea1023b470d3d6c4362bd42a7f02831e84",
+  "parent": "debdf34b821e6bf34103dc596dc815f55509b541",
+  "local_main_commit": "dadf5973e601c92d5a93fbedbf3d40e65f5b67a7",
+  "owned_files": 12,
+  "sha256": {
+    "docs/spatial-transforms.md": "e8aeddc4373795a0d0a840b5ffa84a1aad9a15a8d6a3367085d9098fd172e317",
+    "docs/verification/stp-guide-20261001/README.md": "1460189069475b9439104be799bb0f46c95918f7fa7417429550b7576c366aa9",
+    "docs/verification/stp-guide-20261001/header-audit.json": "b20eab7f637668144af0c5d869b28e933ec3caeb7473734441c048b7ac7fc1c1",
+    "docs/verification/stp-guide-20261001/links-and-ci.json": "2194749397d3534dee6f0531a73ff50ed5266be7b21a694c0e9785c57b4854e2",
+    "docs/verification/stp-guide-20261001/qualification.json": "07c435bbf0a354716a6888a9bded500be9a50c2791f4987251180a7b6098a93b",
+    "docs/verification/stp-guide-20261001/stp-guide-20261001-compile.log": "5e8bddc565aadcbd1d1ee04fbf58471a3fd983da275f44892860584fb6c15917",
+    "docs/verification/stp-guide-20261001/stp-guide-20261001-compile.log.meta.json": "00ca5600917c8b11f35d686c4da46aa547a4df37dbad9b3a050320ca68ea7337",
+    "docs/verification/stp-guide-20261001/stp-guide-20261001-js.log": "d7d33a180b06e439260313ae0fd0cd218d8c309c4b75930747d0cf5cc668a8ff",
+    "docs/verification/stp-guide-20261001/stp-guide-20261001-js.log.meta.json": "54a853304ceda5faaa483c0d7fe6932111ea8112be85a7b6c4ee73e5385b709f",
+    "docs/verification/stp-guide-20261001/stp-guide-20261001-jvm.log": "0ca2f1d76f7e204744a3112fd91930cd812c8f34c9d3dbd335a3cc80b976bb6f",
+    "docs/verification/stp-guide-20261001/stp-guide-20261001-jvm.log.meta.json": "8157018be2d13e2c24dda4c6cd616cf8aef5d1d27bb1c8a0c996ff7ed8d39259",
+    "modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala": "9c780fd593e2678ec1c71f5b18177bdf1730b9db311e0bf8a2928f415223a351"
+  },
+  "unrelated_staged_diff_unchanged": true,
+  "unrelated_working_diff_unchanged": true,
+  "unrelated_untracked_paths_preserved": true,
+  "unrelated_untracked_content_unchanged": true,
+  "publication": false
+}

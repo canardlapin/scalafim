@@ -52,7 +52,14 @@ evidence; no hosted CI run is claimed.
 
 Fray card 140 carries the independent source/evidence review; its initial
 objection is preserved and the correction is recorded on card 142. Final
-acceptance requires a verdict for the evidence-bearing candidate. Mote
+acceptance requires a verdict for the evidence-bearing candidate. The subsequent
+s2 verdict at Fray sequence 981 approved exact candidate
+`a2ec9fea1023b470d3d6c4362bd42a7f02831e84`. It was integrated byte-for-byte as
+local main `dadf5973e601c92d5a93fbedbf3d40e65f5b67a7`. `review-final.json` and
+`integration-receipt.json` preserve that approval and the checks proving
+unrelated staged, working and untracked content stayed unchanged. Review is
+source/evidence assessment; it does not claim another execution of the checks.
+These subsequent administrative records do not change the guide or test bytes. Mote
 `bd-01M39Q5DR9N3XJDXQV59MQ3XNG` remains the authority for closure and ownership.
 
 No native tool was rerun, no provider pin or production code was changed,
