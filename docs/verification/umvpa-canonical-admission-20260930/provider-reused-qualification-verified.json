@@ -1,0 +1,27 @@
+{
+  "source_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "raw_log": "prior-frontier-alder-jvm-js-03.log",
+  "raw_log_sha256": "1446fc1f84f7ef3992bbfe3b7d3cd74bb598490d2a04629c3fc0feeef7f17ff4",
+  "metadata": "prior-frontier-alder-jvm-js-03.log.meta.json",
+  "metadata_sha256": "f3187fd5fd851a42770c2d7d81d08a7682c18fdc5fa93e7e7ba2ecda6e311520",
+  "actual_exit_code": 0,
+  "source_files_verified": {
+    "data/src/main/scala/alder/data/IdentifiedRows.scala": "f64ff234a6fda486f23f5326e0ae28f01c91d03354124356129f4d33217d61ba",
+    "data/src/main/scala/alder/data/Resample4sResampler.scala": "f9f426a320874396fd5a1d2fc8f7d3fd2eb1f795b5f58720067567e4d69c5400",
+    "data/src/test/scala/alder/data/IdentifiedRowsSuite.scala": "0ddf948eb7fbab83bd5ba66523450b25552215336492fa77dfe84593eaf39ef5"
+  },
+  "reported_totals": [
+    "[info] Passed: Total 70, Failed 0, Errors 0, Passed 70",
+    "[info] Passed: Total 70, Failed 0, Errors 0, Passed 70"
+  ],
+  "warn_error_lines": [],
+  "warnings": [
+    {
+      "line": 10,
+      "text": "/private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/build.sbt:82: warning: value lookup of `streams` inside an `if` expression"
+    }
+  ],
+  "warning_count": 1,
+  "warning_scope": "One retained transitive linops4s sbt build lint warning; no provider test errors. Prior source_warnings=1 was accurate. Fresh ScalaFIM owning gates independently reviewed clean.",
+  "corrects": "rejected-provider-warning-scan.json used only bracketed markers and falsely claimed an inaccurate prior warning summary."
+}

@@ -1,0 +1,11 @@
+{
+  "checkout": "/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+  "base": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+  "head": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "tree": "87afb7b038eb8ab94548aaaa92b543fa0697f046",
+  "files": {
+    "data/src/main/scala/alder/data/IdentifiedRows.scala": "f64ff234a6fda486f23f5326e0ae28f01c91d03354124356129f4d33217d61ba",
+    "data/src/main/scala/alder/data/Resample4sResampler.scala": "f9f426a320874396fd5a1d2fc8f7d3fd2eb1f795b5f58720067567e4d69c5400",
+    "data/src/test/scala/alder/data/IdentifiedRowsSuite.scala": "0ddf948eb7fbab83bd5ba66523450b25552215336492fa77dfe84593eaf39ef5"
+  }
+}

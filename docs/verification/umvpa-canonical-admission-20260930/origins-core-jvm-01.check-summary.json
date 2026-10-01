@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "gate": "origins-core-jvm-01",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head": "58afdc9a609d86ef5450c9d6b6f0aa2e69afc4a2"
+  },
+  "requested_command": [
+    "mvpaJVM/test",
+    "mvpaFitJVM/test"
+  ],
+  "receipt": {
+    "raw_log": "origins-core-jvm-01.log",
+    "raw_log_sha256": "3093d57e4c3fc773162cbafed6c2c248f0e951b94cc4dfbbaf552914f3068e38",
+    "metadata": "origins-core-jvm-01.log.meta.json",
+    "metadata_sha256": "86891b406b2346a1a2ce8157eceeb6100cb21ab823d6312d6c002a37b14f4581"
+  },
+  "outcome": {
+    "status": "blocked_before_test_execution",
+    "exit_code": 1,
+    "reason": "sandbox denied creation of /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock",
+    "test_suites_completed": 0,
+    "tests_completed": 0,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "escalated_retry": "cancelled_while_queued",
+    "wrapper_pid": 73572,
+    "wrapper_exit_code": 143,
+    "sbt_child_after_cancellation": false,
+    "js_gate_started": false,
+    "retry_requires_new_log_path": true
+  }
+}

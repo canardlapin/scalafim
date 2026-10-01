@@ -1,0 +1,10 @@
+{
+  "source_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "base_sha": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+  "local_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "tracking_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "remote_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "remote": "git@github-canardlapin:canardlapin/alder.git",
+  "ref": "refs/heads/umvpa/native-fixed-roles-20260930",
+  "publication_scope": "Source branch only; no merge, stable artifact release, Native platform or hosted CI claim"
+}

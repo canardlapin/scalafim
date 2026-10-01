@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "gate": "origins-core-js-04",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head": "d44b91ca0c366068ed194ab3c859f012883f98de"
+  },
+  "requested_command": ["mvpaJS/test", "mvpaFitJS/test"],
+  "receipt": {
+    "raw_log": "origins-core-js-04.log",
+    "raw_log_sha256": "f8f510dbeeb721f8bfacbe342be8f09fba521f37dbdce0440e213802cc1a72d6",
+    "metadata": "origins-core-js-04.log.meta.json",
+    "metadata_sha256": "bde02191aa991742f6f369278e46de6ffb197ffb013106f888ee6b3f6f0289f7"
+  },
+  "outcome": {
+    "status": "environment_failed_before_test_execution",
+    "exit_code": 1,
+    "reason": "No space left on device while compiling mvpaJS",
+    "compiler_errors_found": 29,
+    "test_suites_completed": 0,
+    "tests_completed": 0,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "local_dataset_projection_started": false,
+    "compile_all_started": false,
+    "filesystem_available_at_observation": "536Mi"
+  }
+}

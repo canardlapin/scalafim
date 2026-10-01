@@ -1,0 +1,16 @@
+{
+  "checked_utc": "2026-09-30T19:48:48.912130+00:00",
+  "local_head": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "tracking_ref_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "live_remote_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "remote_command": [
+    "git",
+    "ls-remote",
+    "canonical",
+    "refs/heads/umvpa/native-fixed-roles-20260930"
+  ],
+  "remote_command_exit_code": 0,
+  "remote_ref": "refs/heads/umvpa/native-fixed-roles-20260930",
+  "remote_url": "git@github-canardlapin:canardlapin/alder.git",
+  "verification": "Fresh successful tool output from live remote matched the immutable source; local/tracking hashes checked independently."
+}
