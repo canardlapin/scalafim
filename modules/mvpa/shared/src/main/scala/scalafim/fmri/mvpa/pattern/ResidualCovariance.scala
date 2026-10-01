@@ -132,7 +132,7 @@ final class ResidualCovariance[N] private (
     * `p x c` result; the peak adds the stored model.
     */
   def covarianceWork(columns: Int): Either[ResidualCovarianceError, ResidualCovarianceWork] =
-    workFor(columns, rank.toLong * columns + features.toLong * columns, features, columns)
+    workFor(columns, rank.toLong * columns + features.toLong * columns, math.max(features, rank), columns)
 
   /** Pre-execution bounds for `precisionDiagonal`. Transient allocations: the
     * `(p + h) x h` leading identity block and its `Q` image, the `p` result,

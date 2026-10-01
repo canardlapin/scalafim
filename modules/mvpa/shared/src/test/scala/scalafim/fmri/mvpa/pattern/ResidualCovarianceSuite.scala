@@ -261,6 +261,10 @@ class ResidualCovarianceSuite extends munit.FunSuite:
     // Diagonal: leading blocks 2 (p + h) h = 28, result 5, all 5 rows falling back 2 (p + h) 5 = 70.
     assertEquals(psi.precisionDiagonalWork, ResidualCovarianceWork(50L, 50L + 33L + 70L, 33L + 70L, 7, 5))
     assertEquals(psi.precisionWork(-1).left.toOption, Some(ResidualCovarianceError.Shape("work columns", 5, 1, 5, -1)))
+    // p = 1, h = 2 (an ROI smaller than the rank): the 2 x c projection is the largest covariance-work array.
+    // Stored 2 + 2 + 2 (3)(2) + 2 = 18; transient h c + p c = 6 + 3.
+    val wide = right(ResidualCovariance.fromFactors(axis(1), Vector(1.0), DMat.dense(1, 2, Vector(1.0, 2.0))))
+    assertEquals(wide.covarianceWork(3), Right(ResidualCovarianceWork(18L, 18L + 9L, 9L, 2, 3)))
   }
 
   test("precision along a dominant loading is computed without cancellation") {
