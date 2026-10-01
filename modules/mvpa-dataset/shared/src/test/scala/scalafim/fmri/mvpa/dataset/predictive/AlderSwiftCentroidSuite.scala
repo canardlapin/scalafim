@@ -51,7 +51,7 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
       DMat.dense(input.length, 1, outcomes), ValueIdentity.source(ValueId.unsafe("target-values")), source))
     val mapping = right(NativeAxisMapping.fromAxis(axis,
       keys.indices.map(i => 100L - i.toLong * 3L).toVector, DataFingerprint.external("swift-fixture-v1")))
-    val design = right(CrossFitDesign.bind(axis,
+    val design = right(ValidationDesign.bind(axis,
       right(FixedPartitions.once(right(Labels.retained(IArray.unsafeFromArray(blocks.toArray))))), ScientificSeed.fromLong(23L)))
     var calls = 0
     val operator = new DoubleLinearOperator:
@@ -92,6 +92,9 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
     assertEqualsDouble(result.assessment.accuracy, 2.0 / 3.0, 1e-12)
     assert(math.abs(result.assessment.accuracy - 13.0 / 18.0) > 0.05)
     assertEquals(result.fits.length, 3)
+    assertEquals(result.validationReceipt, fixture.design.receipt)
+    val separatePreparation = right(CrossFitDesign.bind(fixture.axis, fixture.design.design, ScientificSeed.fromLong(23L)))
+    assert(result.validationReceipt.seed != separatePreparation.receipt.seed)
     result.fits.foreach(fit => assertEquals(fit.audit.component.id.render, "scalafim.swift-centroid"))
 
   test("held-out payload perturbation cannot change its training-fitted scales or other assessment rows"):
@@ -143,6 +146,6 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
     assert(fixture.rows(native = true, cells = 1L).isLeft)
     assertEquals(fixture.calls, 0)
     val reversed = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, fixture.keys.reverse, "trial", "none", "one"))
-    val reversedDesign = right(CrossFitDesign.bind(reversed,
+    val reversedDesign = right(ValidationDesign.bind(reversed,
       right(FixedPartitions.once(right(Labels.retained(IArray.unsafeFromArray(runs.toArray))))), ScientificSeed.fromLong(23L)))
     assert(AlderSwiftCentroid.crossValidate(right(fixture.rows()), reversedDesign, coding).isLeft)

@@ -1,6 +1,6 @@
 package scalafim.fmri.mvpa.pattern
 
-import gale.linalg.DMat
+import gale.linalg.{CholeskyOptions, DMat}
 import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef}
 
 enum PatternArtifactError:
@@ -21,19 +21,24 @@ object AxisValues:
     else Right(new AxisValues(axis, values))
 
 enum CenteringPolicy:
-  case CenteredBeforeFit(receipt: String)
-  case ExplicitIntercept(neuralAxis: AxisDescriptor)
+  /** Callers supply both neural and target coordinates already centered. */
+  case CenteredBeforeFit(neuralReceipt: String, targetReceipt: String)
+  case ExplicitIntercept(values: AxisValues[?], targetCenteringReceipt: String)
+/** These describe the fitter's policy; this artifact does not inspect training outcomes. */
 enum DegenerateTargetPolicy:
   case Refuse
   case RecordExperimental(reason: String)
-/** Only the verified case makes a full-column-rank claim. */
+/** A numerical rank admission at a recorded tolerance, not an exact rank proof.
+  * Pending and declared diagnostics allow rank-deficient experimental factors.
+  */
 enum GaugeEvidence:
   case PendingNumericalCheck
   case DeclaredSolverDiagnostic(solver: String, reportedRank: Int)
-  case VerifiedByGaleGramCholesky
+  case VerifiedByGaleGramCholesky(relativePivotTolerance: Double)
 /** Rank evidence does not identify component scale, sign, or rotation. */
 enum CoordinateGauge:
   case UnfixedBasis
+/** Declarations for later covariance consumers; no precision solve is provided here. */
 enum ResidualCovarianceCapability:
   case NotFitted
   case DiagonalPlusLowRank(neuralAxis: AxisDescriptor, latentRank: Int)
@@ -50,17 +55,46 @@ enum TargetGeometry:
   case Continuous(value: ContinuousTarget[?])
 
 object TargetGeometry:
+  /** Contrast columns are an unweighted zero-sum basis. Priors are separately
+    * declared probabilities; this does not assert prior-weighted centering.
+    */
   def categorical[K, Q](conditions: AxisRef[K], targetAxis: AxisRef[Q], contrast: DMat, priors: AxisValues[K]): Either[PatternArtifactError, TargetGeometry] =
     if priors.axis.descriptor != conditions.descriptor then Left(PatternArtifactError.AxisMismatch("categorical prior", conditions.descriptor.stableKey, priors.axis.descriptor.stableKey))
     else if contrast.rows != conditions.size || contrast.cols != targetAxis.size then Left(PatternArtifactError.MatrixShape("contrast", conditions.size, targetAxis.size, contrast.rows, contrast.cols))
     else if !finite(contrast) || priors.values.exists(_ <= 0.0) || math.abs(priors.values.sum - 1.0) > 1e-12 then Left(PatternArtifactError.InvalidTarget("categorical contrast/prior is invalid"))
-    else if targetAxis.size > conditions.size - 1 || !centered(contrast) || !fullColumnRank(contrast) then Left(PatternArtifactError.InvalidTarget("categorical contrast must be centered, full-column-rank, and at most K - 1"))
+    else if targetAxis.size > conditions.size - 1 || !centered(contrast) || !fullColumnRank(contrast, 1e-12) then Left(PatternArtifactError.InvalidTarget("categorical contrast must be centered, numerically full-column-rank at relative pivot tolerance 1e-12, and at most K - 1"))
     else Right(TargetGeometry.Categorical(new CategoricalTarget(conditions, targetAxis, contrast, priors)))
+  /** Diagonal prior/metric only. Named full-axis weight vectors do not assert a
+    * partition and do not represent an arbitrary correlated target prior.
+    */
   def continuous[Q](targetAxis: AxisRef[Q], prior: AxisValues[Q], metric: AxisValues[Q], blocks: Vector[(String, AxisValues[Q])]): Either[PatternArtifactError, TargetGeometry] =
     if prior.axis.descriptor != targetAxis.descriptor || metric.axis.descriptor != targetAxis.descriptor then Left(PatternArtifactError.AxisMismatch("continuous target", targetAxis.descriptor.stableKey, "foreign axis"))
     else if prior.values.exists(_ <= 0.0) || metric.values.exists(_ <= 0.0) || blocks.isEmpty || blocks.map(_._1).distinct.size != blocks.size || blocks.exists { case (name, values) => name.trim.isEmpty || values.axis.descriptor != targetAxis.descriptor || values.values.exists(_ <= 0.0) } then Left(PatternArtifactError.InvalidTarget("continuous prior, metric, and uniquely named block weights must be positive and target-bound"))
     else Right(TargetGeometry.Continuous(new ContinuousTarget(targetAxis, prior, metric, blocks)))
-  private[pattern] def fullColumnRank(matrix: DMat): Boolean = (matrix.t * matrix).cholesky.isRight
+  /** Scale before the Gale Gram factorization to avoid unit-dependent admission.
+    * Gram formation squares the condition number; this conservative admission
+    * can refuse ill-conditioned full-rank inputs and is not an SVD rank oracle.
+    */
+  private[pattern] def fullColumnRank(matrix: DMat, relativeTolerance: Double): Boolean =
+    var scale = 0.0
+    var row = 0
+    while row < matrix.rows do
+      var column = 0
+      while column < matrix.cols do
+        scale = math.max(scale, math.abs(matrix(row, column)))
+        column += 1
+      row += 1
+    if scale == 0.0 || !scale.isFinite then false
+    else
+      val normalized = DMat.tabulate(matrix.rows, matrix.cols)((row, column) => matrix(row, column) / scale)
+      val gram = normalized.t * normalized
+      var maximumDiagonal = 0.0
+      var column = 0
+      while column < gram.cols do
+        maximumDiagonal = math.max(maximumDiagonal, gram(column, column))
+        column += 1
+      maximumDiagonal > 0.0 && maximumDiagonal.isFinite &&
+        gram.cholesky(CholeskyOptions(relativeTolerance * maximumDiagonal)).isRight
   private def finite(matrix: DMat): Boolean =
     (0 until matrix.rows).forall(row => (0 until matrix.cols).forall(column => matrix(row, column).isFinite))
   private def centered(matrix: DMat): Boolean =
@@ -71,8 +105,10 @@ final class PatternFactors[P, Q, R] private (
     val neuralByComponent: DMat, val targetByComponent: DMat, val gauge: GaugeEvidence,
     val coordinateGauge: CoordinateGauge
 ):
-  /** Computes A C-transpose y without materializing a neural-by-target map. */
-  def forwardMean(target: AxisValues[Q]): Either[PatternArtifactError, AxisValues[P]] =
+  /** Factor contribution A C-transpose y, excluding any artifact intercept.
+    * Runtime descriptors also permit use through an existential artifact.
+    */
+  def forwardMean(target: AxisValues[?]): Either[PatternArtifactError, AxisValues[P]] =
     if target.axis.descriptor != targetAxis.descriptor then
       Left(PatternArtifactError.AxisMismatch("forward target", targetAxis.descriptor.stableKey, target.axis.descriptor.stableKey))
     else
@@ -88,7 +124,8 @@ object PatternFactors:
     else if !finite(a) || !finite(c) then Left(PatternArtifactError.NonFinite("A/C"))
     else gauge match
       case GaugeEvidence.DeclaredSolverDiagnostic(name, rank) if name.trim.isEmpty || rank < 0 || rank > components.size => Left(PatternArtifactError.InvalidPolicy("declared rank diagnostic"))
-      case GaugeEvidence.VerifiedByGaleGramCholesky if !TargetGeometry.fullColumnRank(a) || !TargetGeometry.fullColumnRank(c) => Left(PatternArtifactError.InvalidPolicy("Gale full-rank gauge"))
+      case GaugeEvidence.VerifiedByGaleGramCholesky(tolerance) if !tolerance.isFinite || tolerance <= 0.0 || tolerance >= 1.0 => Left(PatternArtifactError.InvalidPolicy("relative rank tolerance"))
+      case GaugeEvidence.VerifiedByGaleGramCholesky(tolerance) if !TargetGeometry.fullColumnRank(a, tolerance) || !TargetGeometry.fullColumnRank(c, tolerance) => Left(PatternArtifactError.InvalidPolicy("Gale numerical rank admission"))
       case _ => Right(new PatternFactors(neural, target, components, a, c, gauge, coordinateGauge))
   private def finite(matrix: DMat): Boolean =
     (0 until matrix.rows).forall(row => (0 until matrix.cols).forall(column => matrix(row, column).isFinite))
@@ -116,7 +153,16 @@ final class PatternArtifact private (
     val factors: PatternFactors[?, ?, ?], val target: TargetGeometry, val centering: CenteringPolicy,
     val degenerateTarget: DegenerateTargetPolicy, val residualCovariance: ResidualCovarianceCapability,
     val trainingBinding: TrainingBinding, val trainingLineage: Vector[String], val diagnostics: PatternFitDiagnostics, val interpretation: InterpretationStatus
-)
+):
+  /** Forward mean in the declared target coordinates. Centered artifacts return
+    * centered neural coordinates; intercept artifacts add the stored neural mean.
+    */
+  def forwardMean(targetValues: AxisValues[?]): Either[PatternArtifactError, AxisValues[?]] =
+    factors.forwardMean(targetValues).flatMap: contribution =>
+      centering match
+        case CenteringPolicy.CenteredBeforeFit(_, _) => Right(contribution)
+        case CenteringPolicy.ExplicitIntercept(intercept, _) =>
+          AxisValues(contribution.axis, contribution.values.zip(intercept.values).map((value, offset) => value + offset))
 object PatternArtifact:
   def apply(factors: PatternFactors[?, ?, ?], target: TargetGeometry, centering: CenteringPolicy, degenerate: DegenerateTargetPolicy, covariance: ResidualCovarianceCapability, binding: TrainingBinding, lineage: Vector[String], diagnostics: PatternFitDiagnostics): Either[PatternArtifactError, PatternArtifact] =
     val targetAxis = target match
@@ -126,10 +172,15 @@ object PatternArtifact:
       case TargetGeometry.Categorical(value) => factors.componentAxis.size > value.conditions.size - 1
       case _ => false
     if factors.targetAxis.descriptor != targetAxis then Left(PatternArtifactError.AxisMismatch("C rows / target", factors.targetAxis.descriptor.stableKey, targetAxis.stableKey))
-    else if categoricalTooHigh then Left(PatternArtifactError.InvalidRank(factors.componentAxis.size, targetAxis.size))
+    else if categoricalTooHigh then
+      val maximum = target match
+        case TargetGeometry.Categorical(value) => value.conditions.size - 1
+        case _ => targetAxis.size
+      Left(PatternArtifactError.InvalidRank(factors.componentAxis.size, maximum))
     else centering match
-      case CenteringPolicy.CenteredBeforeFit(receipt) if receipt.trim.isEmpty => Left(PatternArtifactError.InvalidPolicy("centering receipt"))
-      case CenteringPolicy.ExplicitIntercept(axis) if axis != factors.neuralAxis.descriptor => Left(PatternArtifactError.AxisMismatch("intercept", factors.neuralAxis.descriptor.stableKey, axis.stableKey))
+      case CenteringPolicy.CenteredBeforeFit(neural, target) if neural.trim.isEmpty || target.trim.isEmpty => Left(PatternArtifactError.InvalidPolicy("centering receipts"))
+      case CenteringPolicy.ExplicitIntercept(values, _) if values.axis.descriptor != factors.neuralAxis.descriptor => Left(PatternArtifactError.AxisMismatch("intercept", factors.neuralAxis.descriptor.stableKey, values.axis.descriptor.stableKey))
+      case CenteringPolicy.ExplicitIntercept(_, receipt) if receipt.trim.isEmpty => Left(PatternArtifactError.InvalidPolicy("target centering receipt"))
       case _ => covariance match
         case ResidualCovarianceCapability.DiagonalPlusLowRank(axis, rank) if axis != factors.neuralAxis.descriptor || rank < 0 || rank > factors.neuralAxis.size => Left(PatternArtifactError.InvalidPolicy("residual covariance"))
         case ResidualCovarianceCapability.ProviderBacked(axis, name) if axis != factors.neuralAxis.descriptor || name.trim.isEmpty => Left(PatternArtifactError.InvalidPolicy("residual covariance provider"))

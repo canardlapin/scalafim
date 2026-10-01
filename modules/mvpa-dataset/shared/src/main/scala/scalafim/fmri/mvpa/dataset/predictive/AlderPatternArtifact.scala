@@ -19,7 +19,9 @@ final class AttachedPatternArtifact private[predictive] (
 
 object AlderPatternArtifact:
   /** Attaches an already-fitted experimental artifact to an exact Alder training
-    * receipt. This is deliberately not a numeric fitting entry point.
+    * receipt. This is deliberately not a numeric fitting entry point. The
+    * fitted carrier Pipe ignores its input and returns the artifact; running it
+    * does not predict an outcome or authorize fitting on assessment rows.
     */
   def attach[M](data: NonEmptyData[Use.Fit, Example[Array[Double], Array[Double], M]], artifact: PatternArtifact, expectedTraining: DataFingerprint)(using context: FitContext): FitResult[Id, AlderPatternArtifactError, AttachedPatternArtifact] =
     if data.fingerprint != expectedTraining || artifact.trainingBinding.fingerprintDigest != data.fingerprint.digest then EitherT.leftT(context.stagePath.failure(AlderPatternArtifactError.TrainingScopeMismatch))

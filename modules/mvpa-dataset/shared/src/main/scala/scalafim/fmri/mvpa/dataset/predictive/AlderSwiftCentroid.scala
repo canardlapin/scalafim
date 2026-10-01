@@ -5,7 +5,7 @@ import alder.kernel.*
 import cats.Id
 import cats.data.EitherT
 import gale.linalg.{DMat, Matrix}
-import resample4s.core.DigestAlgorithm
+import resample4s.core.Coverage
 import scalafim.fmri.mvpa.*
 
 final class SwiftTargetCoding private (val values: Vector[(Double, ClassLabel)]):
@@ -45,7 +45,7 @@ final case class AlderSwiftCentroidResult(
     classes: Vector[ClassLabel],
     probabilities: DMat,
     rows: Vector[SwiftOofRow],
-    planReceipt: resample4s.core.PlanReceipt,
+    validationReceipt: resample4s.core.PlanReceipt,
     fits: Vector[SwiftFoldFit],
     assessment: SwiftAssessment,
     materialization: MaterializationReceipt,
@@ -58,6 +58,7 @@ enum AlderSwiftCentroidError:
   case Evidence(error: EvidenceError)
   case Mvpa(error: MvpaError)
   case InvalidTargetCoding
+  case ValidationPopulationMismatch
   case TargetShape(stableKey: String)
   case UnknownTarget(stableKey: String, value: Double)
   case MissingClass(fold: Int)
@@ -65,13 +66,14 @@ enum AlderSwiftCentroidError:
   case MissingAssessment(stableKey: String)
 
 object AlderSwiftCentroid:
-  def crossValidate[S <: multivar.core.SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: CrossFitDesign[S, K], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier = SwiftCentroidClassifier())(using DigestAlgorithm): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
+  def crossValidate[S <: multivar.core.SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: ValidationDesign[S, K, Coverage.ExactOnce], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier = SwiftCentroidClassifier()): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
     for
-      _ <- AlderPredictiveAdmission.crossFit(rows, design).left.map(AlderSwiftCentroidError.Admission.apply)
+      _ <- NativeAxisMapping.verify(design.samples.descriptor, rows.mapping, rows.mapping.declaredSource).left.map(AlderSwiftCentroidError.Admission.apply)
+      _ <- if rows.root.ids == rows.mapping.nativeIds then Right(()) else Left(AlderSwiftCentroidError.ValidationPopulationMismatch)
       result <- evaluate(rows, design, coding, classifier)
     yield result
 
-  private def evaluate[S <: multivar.core.SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: CrossFitDesign[S, K], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
+  private def evaluate[S <: multivar.core.SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: ValidationDesign[S, K, Coverage.ExactOnce], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
     val out = Matrix.newBuilder(design.samples.size, coding.classes.length)
     val assembled = Array.fill[Option[SwiftOofRow]](design.samples.size)(None)
     val fits = Vector.newBuilder[SwiftFoldFit]
