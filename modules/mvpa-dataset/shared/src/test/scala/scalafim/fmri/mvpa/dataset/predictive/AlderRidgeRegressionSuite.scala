@@ -54,6 +54,161 @@ class AlderRidgeRegressionSuite extends munit.FunSuite:
   private def multi =
     new Fixture(x.zip(x2).map((a, b) => Vector(a, b)), y.zip(y2).map((a, b) => Vector(a, b)), Vector("y-a", "y-b"))
 
+  // Independent centered NumPy oracle, frozen in weighted-oracle.py/receipt.
+  // Equal block masses: one signal coordinate, two replicated nuisance targets.
+  // Uniform coordinates choose lambda0.1 in run0; balanced blocks choose2.0.
+  private val noise = Vector(-1.1791991921116334, 2.0404033221829017, 5.0606605697068066, 3.0774566558513454, -3.0732932711703533, -2.3873681815539065)
+  private def weightedFixture(signal: Vector[Double] = y, copies: Int = 2) =
+    new Fixture(x.map(Vector(_)), signal.zip(noise).map((s, n) => s +: Vector.fill(copies)(n)),
+      Vector("signal") ++ Vector.tabulate(copies)(i => s"noise-$i"))
+
+  private def balanced(f: Fixture, mass: Double = 1.0): RidgeTargetGeometry =
+    right(RidgeTargetGeometry.declared(f.response, Vector(
+      right(RidgeResponseBlock("signal-block", Vector("signal"), mass)),
+      right(RidgeResponseBlock("noise-block", f.response.toRecord.stableKeys.filter(_.startsWith("noise-")), mass))
+    ), "fixed equal block utility"))
+
+  private def weightedRun(f: Fixture, geometry: RidgeTargetGeometry, penalties: Vector[Double] = Vector(0.1, 2.0, 10.0)) =
+    right(AlderRidgeRegression.crossValidate(f.rows, f.outer, f.inner, f.response, Vector("x"),
+      right(RidgePenaltyGrid(penalties)), budget(), targetGeometry = Some(geometry)))
+
+  test("block-balanced shared penalty and OOF values match the independent weighted oracle"):
+    val f = weightedFixture()
+    val geometry = balanced(f)
+    val result = weightedRun(f, geometry)
+    val uniform = weightedRun(f, right(RidgeTargetGeometry.uniform(f.response)))
+    val expectedPenalty = Vector(2.0, 10.0, 2.0)
+    val expectedLoss = Vector(
+      Vector(22.719600129544546, 22.684339711818836, 24.779614116044982),
+      Vector(61.21870437905212, 15.36763654877306, 12.24876024519346),
+      Vector(18.679870919715547, 8.452611425569525, 9.242020423719236))
+    val expected = Vector(
+      Vector(2.6366906474820144, 7.252065244369771, 7.252065244369771),
+      Vector(3.3920863309352516, 5.436147644049413, 5.436147644049413),
+      Vector(4.147368421052631, -0.9117649772089131, -0.9117649772089131),
+      Vector(4.711578947368421, -1.2927239427358486, -1.2927239427358486),
+      Vector(5.678571428571429, 5.069513337373934, 5.069513337373934),
+      Vector(6.9107142857142865, 6.761323136453881, 6.761323136453881))
+    assertEquals(geometry.coordinateWeights, Vector(1.0, 0.5, 0.5))
+    assertEquals(geometry.normalizedWeights, Vector(0.5, 0.25, 0.25))
+    (0 until 3).foreach: run =>
+      val fold = foldFor(result, f.runKeys(run))
+      assertEqualsDouble(fold.selection.selectedPenalty, expectedPenalty(run), 0.0)
+      assertEquals(fold.selection.loss, RidgeSelectionLoss.TargetWeightedMeanSquaredError)
+      assertEquals(fold.selection.assessmentAppearances, 4L)
+      assertEqualsDouble(fold.selection.lossDenominator, 4.0, 0.0)
+      fold.selection.pooledLossByPenalty.zip(expectedLoss(run)).foreach((actual, reference) => assertEqualsDouble(actual, reference, tolerance))
+      fold.selection.normalizedSquaredErrorByPenalty.zip(expectedLoss(run)).foreach((actual, reference) => assertEqualsDouble(actual, 4.0 * reference, tolerance))
+      assert(fold.model.targetGeometry eq geometry)
+      assert(fold.selection.targetGeometry eq geometry)
+      assertEquals(fold.model.responseAxis, f.response.descriptor)
+      val direct = right(fold.model.predict(Array(x(2 * run))))
+      assert(direct.targetGeometry eq geometry)
+      assertEquals(direct.responseAxis, f.response.descriptor)
+      direct.values.zip(expected(2 * run)).foreach((actual, reference) => assertEqualsDouble(actual, reference, tolerance))
+    assertEqualsDouble(foldFor(uniform, f.runKeys(0)).selection.selectedPenalty, 0.1, 0.0)
+    result.rows.zip(expected).foreach: (row, reference) =>
+      assert(row.targetGeometry eq geometry)
+      assertEquals(row.responseAxis, f.response.descriptor)
+      row.predicted.zip(reference).foreach((actual, expectedValue) => assertEqualsDouble(actual, expectedValue, tolerance))
+    assert(result.targetGeometry eq geometry)
+    result.pooled.meanSquaredError match
+      case RegressionMetric.Defined(value) => assertEqualsDouble(value, 24.235238359030046, tolerance)
+      case other => fail(other.toString)
+    result.pooled.rSquared match
+      case RegressionMetric.Defined(value) => assertEqualsDouble(value, -3.000731541170433, tolerance)
+      case other => fail(other.toString)
+
+  test("fixed-lambda fits retain raw units while target geometry changes plan identity"):
+    val f = weightedFixture()
+    val weighted = weightedRun(f, balanced(f), Vector(2.0))
+    val uniform = weightedRun(f, right(RidgeTargetGeometry.uniform(f.response)), Vector(2.0))
+    assertEquals(weighted.rows.map(_.predicted), uniform.rows.map(_.predicted))
+    weighted.folds.zip(uniform.folds).foreach: (w, u) =>
+      assertEquals(w.model.targets.map(w.model.weights), u.model.targets.map(u.model.weights))
+      assertNotEquals(w.audit.plan, u.audit.plan)
+      assertNotEquals(w.model.targetGeometry.identity, u.model.targetGeometry.identity)
+
+  test("block duplication and common mass rescaling preserve target utility"):
+    val f = weightedFixture()
+    val duplicate = weightedFixture(copies = 3)
+    val before = weightedRun(f, balanced(f))
+    val after = weightedRun(duplicate, balanced(duplicate))
+    val rescaled = weightedRun(f, balanced(f, mass = 1e100))
+    (0 until 3).foreach: run =>
+      val original = foldFor(before, f.runKeys(run)).selection
+      Vector(foldFor(after, duplicate.runKeys(run)).selection, foldFor(rescaled, f.runKeys(run)).selection).foreach: selection =>
+        assertEqualsDouble(selection.selectedPenalty, original.selectedPenalty, 0.0)
+        selection.pooledLossByPenalty.zip(original.pooledLossByPenalty).foreach((actual, reference) => assertEqualsDouble(actual, reference, tolerance))
+    after.rows.zip(before.rows).foreach((actual, reference) => actual.predicted.take(3).zip(reference.predicted).foreach((a, b) => assertEqualsDouble(a, b, tolerance)))
+
+  test("consistent target permutation preserves block-weighted selection and raw predictions"):
+    val original = weightedFixture()
+    val permutation = Vector(2, 0, 1)
+    val names = original.response.toRecord.stableKeys
+    val permuted = new Fixture(x.map(Vector(_)), y.zip(noise).map((s, n) => permutation.map(Vector(s, n, n))), permutation.map(names))
+    val before = weightedRun(original, balanced(original))
+    val after = weightedRun(permuted, balanced(permuted))
+    (0 until 3).foreach: run =>
+      assertEqualsDouble(foldFor(after, permuted.runKeys(run)).selection.selectedPenalty, foldFor(before, original.runKeys(run)).selection.selectedPenalty, 0.0)
+    after.rows.zip(before.rows).foreach: (a, b) =>
+      assertEquals(a.targets, permutation.map(b.targets))
+      a.predicted.zip(permutation.map(b.predicted)).foreach((actual, reference) => assertEqualsDouble(actual, reference, tolerance))
+
+  test("weighted refit retains geometry in its receipt, model and prediction and matches the independent oracle"):
+    val f = weightedFixture()
+    val geometry = balanced(f)
+    val refit = right(AlderRidgeRegression.refit(f.rows, f.inner, f.response, Vector("x"), right(RidgePenaltyGrid(Vector(0.1, 2.0, 10.0))),
+      budget(), RidgeRefitAuthorization.Declared("final weighted model"), targetGeometry = Some(geometry)))
+    assert(refit.targetGeometry eq geometry)
+    assert(refit.receipt.selection.targetGeometry eq geometry)
+    assertEquals(refit.responseAxis, f.response.descriptor)
+    assertEqualsDouble(refit.model.penalty, 10.0, 0.0)
+    refit.receipt.selection.pooledLossByPenalty.zip(Vector(32.39049623721055, 24.147353750879955, 15.424147404353137))
+      .foreach((actual, reference) => assertEqualsDouble(actual, reference, tolerance))
+    val prediction = right(refit.predict(Array(2.5)))
+    assert(prediction.targetGeometry eq geometry)
+    assertEquals(prediction.responseAxis, f.response.descriptor)
+    prediction.values.zip(Vector(3.8455172413793104, 1.062121043796112, 1.062121043796112)).foreach((actual, reference) => assertEqualsDouble(actual, reference, tolerance))
+
+  test("fixed target utility cannot use outer assessment targets to select its model"):
+    val baseline = weightedFixture()
+    val perturbed = weightedFixture(y.updated(5, 999.0))
+    val before = weightedRun(baseline, balanced(baseline))
+    val after = weightedRun(perturbed, balanced(perturbed))
+    val held = baseline.runKeys(2)
+    assertEquals(foldFor(after, held).selection.pooledLossByPenalty, foldFor(before, held).selection.pooledLossByPenalty)
+    assertEquals(after.rows.filter(row => held.contains(row.stableKey)).map(_.predicted), before.rows.filter(row => held.contains(row.stableKey)).map(_.predicted))
+
+  test("target block geometry refuses gaps, overlaps, foreign keys, bad masses and reordered axes before fitting"):
+    val f = weightedFixture()
+    def invalid[A](value: Either[AlderRidgeRegressionError, A]): Unit = value match
+      case Left(AlderRidgeRegressionError.InvalidTargetGeometry(_)) => ()
+      case other => fail(s"expected InvalidTargetGeometry, got $other")
+    invalid(RidgeResponseBlock(" ", Vector("signal"), 1.0))
+    invalid(RidgeResponseBlock("empty", Vector.empty, 1.0))
+    invalid(RidgeResponseBlock("duplicate", Vector("signal", "signal"), 1.0))
+    Vector(0.0, -1.0, Double.NaN, Double.PositiveInfinity).foreach(mass => invalid(RidgeResponseBlock("bad", Vector("signal"), mass)))
+    val signal = right(RidgeResponseBlock("signal", Vector("signal"), 1.0))
+    val noiseBlock = right(RidgeResponseBlock("noise", Vector("noise-0", "noise-1"), 1.0))
+    invalid(RidgeTargetGeometry.declared(f.response, Vector(signal), "gap"))
+    invalid(RidgeTargetGeometry.declared(f.response, Vector(signal, noiseBlock, right(RidgeResponseBlock("overlap", Vector("signal"), 1.0))), "overlap"))
+    invalid(RidgeTargetGeometry.declared(f.response, Vector(signal, right(RidgeResponseBlock("foreign", Vector("noise-0", "foreign"), 1.0))), "foreign"))
+    invalid(RidgeTargetGeometry.declared(f.response, Vector(signal, noiseBlock), " "))
+    invalid(RidgeTargetGeometry.declared(f.response, Vector(right(RidgeResponseBlock("signal", Vector("signal"), Double.MaxValue)),
+      right(RidgeResponseBlock("noise", Vector("noise-0", "noise-1"), Double.MaxValue))), "overflow"))
+    invalid(RidgeTargetGeometry.declared(f.response, Vector(signal, right(RidgeResponseBlock("noise", Vector("noise-0", "noise-1"), Double.MinPositiveValue))), "underflow"))
+    val foreign = right(AxisRef.fromStableKeys("responses", SpaceRole.Observed, Vector("noise-1", "signal", "noise-0"), "response", "none", "value"))
+    val foreignGeometry = right(RidgeTargetGeometry.declared(foreign, Vector(signal, noiseBlock), "reordered"))
+    val encoder = new MeanTargetEncoder
+    AlderRidgeRegression.crossValidate(f.rows, f.outer, f.inner, f.response, Vector("x", "fold-target-mean"), right(RidgePenaltyGrid(Vector(2.0))),
+      budget(), preparation = Some(new RidgeCrossFitPreparation(f.crossFit, encoder)), targetGeometry = Some(foreignGeometry)) match
+      case Left(AlderRidgeRegressionError.TargetGeometryAxisMismatch(expected, actual)) =>
+        assertEquals(expected, f.response.descriptor.stableKey)
+        assertEquals(actual, foreign.descriptor.stableKey)
+      case other => fail(s"expected TargetGeometryAxisMismatch, got $other")
+    assertEquals(encoder.fitted, Vector.empty)
+
   private def budget(cells: Long = 100000L) = right(RidgeSolveBudget(cells))
 
   private def foldFor(result: AlderRidgeRegressionResult, assessed: Vector[String]): RidgeOuterFold =

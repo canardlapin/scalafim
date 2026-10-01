@@ -44,13 +44,15 @@ enum RidgeExecution:
   case BoundedMaterialized
   case MatrixNative
 
-/** The single declared tuning loss: squared error summed over every usable
-  * inner assessment row and response column, divided by that cell count.
-  * Every response column has equal weight; per-output penalties are a
-  * different estimand and are not offered.
+/** Tuning uses a fixed target metric. Uniform coordinates preserve the pooled
+  * cell mean; declared blocks use a mass-balanced target mean per assessment
+  * appearance. The same positive target weights apply to residual and penalty
+  * terms in the separable objective, so fixed-lambda provider fits are unchanged.
+  * Residual-only weights or per-output penalties are different estimands.
   */
 enum RidgeSelectionLoss:
   case PooledMeanSquaredError
+  case TargetWeightedMeanSquaredError
 
 /** Policy for a response column that is constant over any training set a
   * ridge is fit on: inner analysis sets during selection, and the outer (or
@@ -108,6 +110,40 @@ object RegressionAssessment:
         if columns.exists((observed, _) => observed.forall(_ == observed.head)) then RegressionMetric.UndefinedConstantReference
         else finite(1.0 - sse / columns.map((observed, _) => totalSquares(observed)).sum)
       RegressionPooledAssessment(rows, columns.length, finite(sse / (rows.toDouble * columns.length.toDouble)), r2)
+
+  /** Fixed target-utility assessment. Each target's SST is centered separately;
+    * as in the uniform API, any constant target makes pooled R-squared undefined.
+    */
+  def pooled(columns: Vector[(Vector[Double], Vector[Double])], geometry: RidgeTargetGeometry): RegressionPooledAssessment =
+    require(columns.length == geometry.targets.length, "target geometry arity differs")
+    require(columns.forall((observed, predicted) => observed.length == predicted.length), "observed and predicted lengths differ")
+    require(columns.map(_._1.length).distinct.length <= 1, "pooled columns must have one row count")
+    val rows = columns.head._1.length
+    if rows == 0 then RegressionPooledAssessment(0, columns.length, RegressionMetric.UndefinedNoAssessment, RegressionMetric.UndefinedNoAssessment)
+    else if columns.exists((observed, predicted) => !allFinite(observed) || !allFinite(predicted)) then
+      RegressionPooledAssessment(rows, columns.length, RegressionMetric.UndefinedNonFinite, RegressionMetric.UndefinedNonFinite)
+    else
+      val sse = weightedSquares(columns, geometry, centeredReference = false)
+      val r2 =
+        if columns.exists((observed, _) => observed.forall(_ == observed.head)) then RegressionMetric.UndefinedConstantReference
+        else finite(1.0 - sse / weightedSquares(columns, geometry, centeredReference = true))
+      RegressionPooledAssessment(rows, columns.length, finite(sse / (rows.toDouble * geometry.normalizedMass)), r2)
+
+  private def weightedSquares(columns: Vector[(Vector[Double], Vector[Double])], geometry: RidgeTargetGeometry, centeredReference: Boolean): Double =
+    var sum = 0.0
+    var column = 0
+    while column < columns.length do
+      val (observed, predicted) = columns(column)
+      val reference = if centeredReference then observed.sum / observed.length.toDouble else 0.0
+      val scale = math.sqrt(geometry.normalizedWeights(column))
+      var row = 0
+      while row < observed.length do
+        val residual = observed(row) - (if centeredReference then reference else predicted(row))
+        val scaled = scale * residual
+        sum += scaled * scaled
+        row += 1
+      column += 1
+    sum
 
   private def finite(value: Double): RegressionMetric =
     if value.isFinite then RegressionMetric.Defined(value) else RegressionMetric.UndefinedNonFinite
@@ -169,10 +205,14 @@ final case class RidgeInnerUnitReceipt(
 /** Training-only penalty selection over raw rows of `trainingKeys`. */
 final case class RidgeSelectionReceipt(
     innerDesign: PlanReceipt,
+    targetGeometry: RidgeTargetGeometry,
     loss: RidgeSelectionLoss,
     penalties: Vector[Double],
     pooledLossByPenalty: Vector[Double],
     selectedPenalty: Double,
+    assessmentAppearances: Long,
+    normalizedSquaredErrorByPenalty: Vector[Double],
+    lossDenominator: Double,
     trainingKeys: Vector[String],
     units: Vector[RidgeInnerUnitReceipt],
     skippedUnits: Vector[UnitKey]
@@ -183,19 +223,27 @@ final case class RidgeOutputFit(target: String, solution: RidgeSolution, audit: 
 
 final case class RidgeSolveReceipt(execution: RidgeExecution, plannedSolves: Long, plannedDesignCells: Long, maximumDesignCells: Long)
 
-final case class RidgePrediction(targets: Vector[String], values: Vector[Double])
+final case class RidgePrediction(targetGeometry: RidgeTargetGeometry, values: Vector[Double]):
+  require(values.length == targetGeometry.targets.length, "prediction target arity differs")
+  def targets: Vector[String] = targetGeometry.targets
+  def responseAxis: AxisDescriptor = targetGeometry.responseAxis
 
 /** Separable multiresponse ridge: one Alder scalar model per response column,
   * all at one fixed penalty. Weights stay in prepared-feature coordinates.
   */
 final class SeparableRidgeModel private[predictive] (
-    val targets: Vector[String],
+    val targetGeometry: RidgeTargetGeometry,
     val features: Vector[String],
     val penalty: Double,
     val outputs: Vector[RidgeOutputFit],
     models: Vector[RidgeModel[Array[Double]]],
     stage: StagePath
 ) extends Pipe[Array[Double], AlderRidgeRegressionError, Array[Double]]:
+  def targets: Vector[String] = targetGeometry.targets
+  def responseAxis: AxisDescriptor = targetGeometry.responseAxis
+  def predict(input: Array[Double]): Either[AlderRidgeRegressionError, RidgePrediction] =
+    run(input).left.map(_.cause).map(values => RidgePrediction(targetGeometry, values.toVector))
+
   def run(input: Array[Double]): Either[Failure[AlderRidgeRegressionError], Array[Double]] =
     val values = new Array[Double](models.length)
     var output = 0
@@ -213,7 +261,10 @@ final class SeparableRidgeModel private[predictive] (
   def intercept(target: String): Option[Double] =
     outputs.find(_.target == target).map(_.solution.intercept)
 
-final case class RidgeOofRow(stableKey: String, outerUnit: UnitKey, observed: Vector[Double], predicted: Vector[Double])
+final case class RidgeOofRow(stableKey: String, outerUnit: UnitKey, targetGeometry: RidgeTargetGeometry, observed: Vector[Double], predicted: Vector[Double]):
+  require(observed.length == targetGeometry.targets.length && predicted.length == targetGeometry.targets.length, "OOF target arity differs")
+  def targets: Vector[String] = targetGeometry.targets
+  def responseAxis: AxisDescriptor = targetGeometry.responseAxis
 
 final case class RidgeOuterFold(
     unit: UnitKey,
@@ -227,8 +278,7 @@ final case class RidgeOuterFold(
 
 final case class AlderRidgeRegressionResult(
     sampleAxis: AxisDescriptor,
-    responseAxis: AxisDescriptor,
-    targets: Vector[String],
+    targetGeometry: RidgeTargetGeometry,
     features: Vector[String],
     predictions: DMat,
     rows: Vector[RidgeOofRow],
@@ -241,7 +291,9 @@ final case class AlderRidgeRegressionResult(
     solve: RidgeSolveReceipt,
     materialization: MaterializationReceipt,
     nativeRead: Option[NativeReadReceipt]
-)
+):
+  def responseAxis: AxisDescriptor = targetGeometry.responseAxis
+  def targets: Vector[String] = targetGeometry.targets
 
 /** Refitting on every row is a separate, explicitly declared use. It carries
   * no out-of-fold metric. This is a domain refit receipt: the provider fit is
@@ -264,14 +316,15 @@ final case class RidgeRefitReceipt(
 
 final class AlderRidgeRefit private[predictive] (
     val sampleAxis: AxisDescriptor,
-    val responseAxis: AxisDescriptor,
     val model: SeparableRidgeModel,
     val receipt: RidgeRefitReceipt,
     val audit: Audit,
     serve: Array[Double] => Either[AlderRidgeRegressionError, Array[Double]]
 ):
+  def targetGeometry: RidgeTargetGeometry = model.targetGeometry
+  def responseAxis: AxisDescriptor = targetGeometry.responseAxis
   def predict(input: Array[Double]): Either[AlderRidgeRegressionError, RidgePrediction] =
-    serve(input).map(values => RidgePrediction(model.targets, values.toVector))
+    serve(input).map(values => RidgePrediction(targetGeometry, values.toVector))
 
 enum AlderRidgeRegressionError:
   case Admission(error: AlderPredictiveAdmissionError)
@@ -298,6 +351,8 @@ enum AlderRidgeRegressionError:
   case DuplicateAssessment(stableKey: String)
   case MissingAssessment(stableKey: String)
   case InvalidRefitAuthorization
+  case InvalidTargetGeometry(detail: String)
+  case TargetGeometryAxisMismatch(expected: String, actual: String)
 
   def message: String = this match
     case Admission(error) => s"admission: $error"
@@ -324,6 +379,8 @@ enum AlderRidgeRegressionError:
     case DuplicateAssessment(key) => s"row $key was assessed twice"
     case MissingAssessment(key) => s"row $key was never assessed"
     case InvalidRefitAuthorization => "refit requires a non-blank declared reason"
+    case InvalidTargetGeometry(detail) => s"invalid fixed target geometry: $detail"
+    case TargetGeometryAxisMismatch(expected, actual) => s"target metric axis $actual does not match $expected"
 
 object AlderRidgeRegression:
   private type Row[M] = Example[Array[Double], Array[Double], M]
@@ -332,7 +389,8 @@ object AlderRidgeRegression:
 
   private[predictive] final case class InnerUnit(key: UnitKey, analysis: Vector[Long], assessment: Vector[Long])
 
-  private[predictive] final case class Common(targets: Vector[String], view: ArrayFeatureView, keyOf: Map[Long, String])
+  private[predictive] final case class Common(targetGeometry: RidgeTargetGeometry, view: ArrayFeatureView, keyOf: Map[Long, String]):
+    def targets: Vector[String] = targetGeometry.targets
 
   private final case class FittedWorkflow(serve: Array[Double] => Either[AlderRidgeRegressionError, Array[Double]], model: SeparableRidgeModel, audit: Audit)
 
@@ -356,10 +414,11 @@ object AlderRidgeRegression:
       budget: RidgeSolveBudget,
       preparation: Option[RidgeCrossFitPreparation[S, K, M]] = None,
       constantTargets: ConstantTargetPolicy = ConstantTargetPolicy.Refuse,
-      execution: RidgeExecution = RidgeExecution.BoundedMaterialized
+      execution: RidgeExecution = RidgeExecution.BoundedMaterialized,
+      targetGeometry: Option[RidgeTargetGeometry] = None
   )(using DigestAlgorithm): Either[AlderRidgeRegressionError, AlderRidgeRegressionResult] =
     for
-      common <- validate(rows, outer.samples.descriptor, responseAxis, features, preparation.isDefined, execution)
+      common <- validate(rows, outer.samples.descriptor, responseAxis, features, preparation.isDefined, execution, targetGeometry)
       _ <- if outer eq inner then Left(AlderRidgeRegressionError.SharedOuterInnerDesign) else Right(())
       _ <- sameAxis("inner", outer.samples.descriptor, inner.samples.descriptor)
       outerUnits <- units(rows, outer.keys, key => outer.at(key).map(unit => (unit.analysis.ordinals.toVector, unit.assessment.ordinals.toVector)))
@@ -368,7 +427,7 @@ object AlderRidgeRegression:
       solve <- plan(outerUnits.map(_.analysis), innerUnits, grid, common.targets.length, features.length, budget)
       _ <- precheck(rows, outerUnits.map(unit => (s"outer unit ${unit.key.repeat}/${unit.key.fold}", unit.analysis)), innerUnits, preparation.isDefined, foldOf, constantTargets, common)
       folds <- traverse(outerUnits)(unit => outerFold(rows, unit, innerUnits, inner.receipt, outer.receipt, grid, common, preparation, foldOf, constantTargets))
-      result <- assemble(rows, outer.receipt, inner.receipt, preparation.map(_.design.receipt), responseAxis.descriptor, features, common, folds, solve)
+      result <- assemble(rows, outer.receipt, inner.receipt, preparation.map(_.design.receipt), features, common, folds, solve)
     yield result
 
   /** Refits on every row under an explicit authorization: the shared penalty
@@ -385,14 +444,15 @@ object AlderRidgeRegression:
       authorization: RidgeRefitAuthorization,
       preparation: Option[RidgeCrossFitPreparation[S, K, M]] = None,
       constantTargets: ConstantTargetPolicy = ConstantTargetPolicy.Refuse,
-      execution: RidgeExecution = RidgeExecution.BoundedMaterialized
+      execution: RidgeExecution = RidgeExecution.BoundedMaterialized,
+      targetGeometry: Option[RidgeTargetGeometry] = None
   )(using DigestAlgorithm): Either[AlderRidgeRegressionError, AlderRidgeRefit] =
     val reason = authorization match
       case RidgeRefitAuthorization.Declared(value) => value
     val all = rows.mapping.nativeIds
     for
       _ <- if reason.trim.isEmpty then Left(AlderRidgeRegressionError.InvalidRefitAuthorization) else Right(())
-      common <- validate(rows, inner.samples.descriptor, responseAxis, features, preparation.isDefined, execution)
+      common <- validate(rows, inner.samples.descriptor, responseAxis, features, preparation.isDefined, execution, targetGeometry)
       innerUnits <- units(rows, inner.keys, key => inner.at(key).map(unit => (unit.analysis.ordinals.toVector, unit.assessment.ordinals.toVector)))
       foldOf <- preparation.fold[Either[AlderRidgeRegressionError, Map[Long, Int]]](Right(Map.empty))(prep => crossFitAssignment(rows, prep))
       solve <- plan(Vector(all), innerUnits, grid, common.targets.length, features.length, budget)
@@ -401,12 +461,12 @@ object AlderRidgeRegression:
       train <- rows.root.training(all).left.map(error => AlderRidgeRegressionError.ProviderSelection(error.toString))
       prepared <- prepare(preparation, all, train, foldOf, common, "refit")
       learner = new SeparableRidgeLearner[M](selection.selectedPenalty, common, constantTargets == ConstantTargetPolicy.Refuse, "refit")
-      fitted <- fitWorkflow(train, learner, prepared.map((encoder, resampler, _) => (encoder, resampler)), context("scalafim.alder-ridge.refit.v1", rows, inner.receipt, None))
-    yield new AlderRidgeRefit(rows.mapping.axis, responseAxis.descriptor, fitted.model,
+      fitted <- fitWorkflow(train, learner, prepared.map((encoder, resampler, _) => (encoder, resampler)), context("scalafim.alder-ridge.refit.v1", rows, inner.receipt, None, common.targetGeometry))
+    yield new AlderRidgeRefit(rows.mapping.axis, fitted.model,
       RidgeRefitReceipt(reason, train.fingerprint, all.map(common.keyOf), selection, prepared.map(_._3), solve, rows.receipt, rows.nativeReadReceipt),
       fitted.audit, fitted.serve)
 
-  private def validate[R, M](rows: AlderMaterializedRows[M], samples: AxisDescriptor, responseAxis: AxisRef[R], features: Vector[String], prepared: Boolean, execution: RidgeExecution): Either[AlderRidgeRegressionError, Common] =
+  private def validate[R, M](rows: AlderMaterializedRows[M], samples: AxisDescriptor, responseAxis: AxisRef[R], features: Vector[String], prepared: Boolean, execution: RidgeExecution, targetGeometry: Option[RidgeTargetGeometry]): Either[AlderRidgeRegressionError, Common] =
     for
       _ <- execution match
         case RidgeExecution.MatrixNative => AlderPredictiveAdmission.rejectMatrixNativeRidge.left.map(AlderRidgeRegressionError.Admission.apply)
@@ -419,9 +479,10 @@ object AlderRidgeRegression:
           Left(AlderRidgeRegressionError.ResponseAxisMismatch(read.targetsIdentity.columns.stableKey, responseAxis.descriptor.stableKey))
         case _ => Right(())
       _ <- if prepared || features.length == rows.receipt.inputs then Right(()) else Left(AlderRidgeRegressionError.FeatureCountMismatch(rows.receipt.inputs, features.length))
-      targets <- traverse((0 until responseAxis.size).toVector)(ordinal => responseAxis.index.stableKeyAt(ordinal).left.map(AlderRidgeRegressionError.Evidence.apply))
+      geometry <- targetGeometry.fold(RidgeTargetGeometry.uniform(responseAxis))(Right(_))
+      _ <- if geometry.responseAxis == responseAxis.descriptor then Right(()) else Left(AlderRidgeRegressionError.TargetGeometryAxisMismatch(responseAxis.descriptor.stableKey, geometry.responseAxis.stableKey))
       schema <- FeatureSchema.named[ArrayFeatureView](IArray.from(features)).left.map(error => AlderRidgeRegressionError.InvalidFeatureNames(error.toString))
-    yield Common(targets, new ArrayFeatureView(schema), rows.mapping.entriesByOrdinal.map(entry => entry.nativeId -> entry.stableKey).toMap)
+    yield Common(geometry, new ArrayFeatureView(schema), rows.mapping.entriesByOrdinal.map(entry => entry.nativeId -> entry.stableKey).toMap)
 
   private def sameAxis(role: String, expected: AxisDescriptor, actual: AxisDescriptor): Either[AlderRidgeRegressionError, Unit] =
     if expected == actual then Right(()) else Left(AlderRidgeRegressionError.DesignAxisMismatch(role, expected.stableKey, actual.stableKey))
@@ -521,7 +582,7 @@ object AlderRidgeRegression:
       split <- rows.fixedHoldout(unit.analysis, unit.assessment, FixedCoverage.DeclaredSubset).left.map(AlderRidgeRegressionError.Admission.apply)
       prepared <- prepare(preparation, unit.analysis, split.train, foldOf, common, scope)
       learner = new SeparableRidgeLearner[M](selection.selectedPenalty, common, constantTargets == ConstantTargetPolicy.Refuse, scope)
-      fitted <- fitWorkflow(split.train, learner, prepared.map((encoder, resampler, _) => (encoder, resampler)), context("scalafim.alder-ridge.outer.v1", rows, outerReceipt, Some(unit.key)))
+      fitted <- fitWorkflow(split.train, learner, prepared.map((encoder, resampler, _) => (encoder, resampler)), context("scalafim.alder-ridge.outer.v1", rows, outerReceipt, Some(unit.key), common.targetGeometry))
       assessed <- predict(split.test.data, fitted, unit.key, common)
     yield (RidgeOuterFold(unit.key, unit.analysis.map(common.keyOf), unit.assessment.map(common.keyOf), selection, fitted.model, prepared.map(_._3), fitted.audit), assessed)
 
@@ -549,13 +610,19 @@ object AlderRidgeRegression:
     else
       for
         scored <- traverse(usable)(unit => scoreUnit(rows, unit, innerReceipt, grid, common, preparation, foldOf, constantTargets, s"$scope inner unit ${unit.key.repeat}/${unit.key.fold}"))
-        cells <-
-          try Right(usable.foldLeft(0L)((total, unit) => Math.addExact(total, Math.multiplyExact(unit.assessment.length.toLong, common.targets.length.toLong))))
+        appearances <-
+          try Right(usable.foldLeft(0L)((total, unit) => Math.addExact(total, unit.assessment.length.toLong)))
           catch case _: ArithmeticException => Left(AlderRidgeRegressionError.SolvePlanOverflow)
-        pooled = grid.penalties.indices.toVector.map(penalty => scored.map(_.squaredErrorByPenalty(penalty)).sum / cells.toDouble)
+        squared = grid.penalties.indices.toVector.map(penalty => scored.map(_.squaredErrorByPenalty(penalty)).sum)
+        denominator = appearances.toDouble * common.targetGeometry.normalizedMass
+        pooled = squared.map(_ / denominator)
         _ <- grid.penalties.zip(pooled).collectFirst { case (penalty, loss) if !loss.isFinite => AlderRidgeRegressionError.NonFiniteSelectionLoss(scope, penalty) }.toLeft(())
-      yield RidgeSelectionReceipt(innerReceipt, RidgeSelectionLoss.PooledMeanSquaredError, grid.penalties, pooled,
-        grid.penalties(pooled.indexOf(pooled.min)), trainIds.map(common.keyOf), scored, skipped.map(_.key))
+      yield
+        val loss = common.targetGeometry.origin match
+          case RidgeTargetMetricOrigin.UniformCoordinates => RidgeSelectionLoss.PooledMeanSquaredError
+          case RidgeTargetMetricOrigin.FixedDeclared(_) => RidgeSelectionLoss.TargetWeightedMeanSquaredError
+        RidgeSelectionReceipt(innerReceipt, common.targetGeometry, loss, grid.penalties, pooled,
+          grid.penalties(pooled.indexOf(pooled.min)), appearances, squared, denominator, trainIds.map(common.keyOf), scored, skipped.map(_.key))
 
   private def scoreUnit[S <: SemanticSpace, K, M](
       rows: AlderMaterializedRows[M],
@@ -574,12 +641,12 @@ object AlderRidgeRegression:
       byPenalty <- traverse(grid.penalties)(penalty =>
         val learner = new SeparableRidgeLearner[M](penalty, common, constantTargets == ConstantTargetPolicy.Refuse, scope)
         for
-          fitted <- fitWorkflow(split.train, learner, prepared.map((encoder, resampler, _) => (encoder, resampler)), context("scalafim.alder-ridge.inner.v1", rows, innerReceipt, Some(unit.key)))
+          fitted <- fitWorkflow(split.train, learner, prepared.map((encoder, resampler, _) => (encoder, resampler)), context("scalafim.alder-ridge.inner.v1", rows, innerReceipt, Some(unit.key), common.targetGeometry))
           assessed <- predict(split.validation.data, fitted, unit.key, common)
         yield (assessed, fitted)
       )
     yield
-      val squared = byPenalty.map((assessed, _) => assessed.map(row => row.observed.zip(row.predicted).map((y, p) => (y - p) * (y - p)).sum).sum)
+      val squared = byPenalty.map((assessed, _) => assessed.map(row => common.targetGeometry.squaredError(row.observed, row.predicted)).sum)
       RidgeInnerUnitReceipt(unit.key, unit.analysis.map(common.keyOf), unit.assessment.map(common.keyOf),
         prepared.map(_._3), byPenalty.headOption.fold(Vector.empty[Boolean])(_._2.model.outputs.map(_.constantTrainingTarget)),
         squared, byPenalty.map((assessed, _) => assessed.map(_.predicted)), byPenalty.map(_._2.audit))
@@ -619,13 +686,14 @@ object AlderRidgeRegression:
         resampler <- Resample4sResampler.fromDesignForPopulation[Row[M]](fixed, train.fingerprint, trainIds).left.map(error => AlderRidgeRegressionError.CrossFitCoverage(scope, error.toString))
       yield (prep.encoder, resampler, RidgeCrossFitReceipt(prep.design.receipt, train.fingerprint, retained.map(prep.design.keys), trainIds.map(common.keyOf).zip(assignment)))
 
-  private def context(schema: String, rows: AlderMaterializedRows[?], receipt: PlanReceipt, unit: Option[UnitKey]): FitContext =
+  private def context(schema: String, rows: AlderMaterializedRows[?], receipt: PlanReceipt, unit: Option[UnitKey], targetGeometry: RidgeTargetGeometry): FitContext =
     FitContext.root(
       Seed(receipt.seed.value),
       PlanFingerprint(AxisDigest.sha256Hex: writer =>
         writer.string(schema)
         writer.string(rows.root.fingerprint.digest)
         writer.string(rows.mapping.axis.stableKey)
+        writer.string(targetGeometry.identity)
         unit.foreach: key =>
           writer.intLE(key.repeat)
           writer.intLE(key.fold)
@@ -633,7 +701,7 @@ object AlderRidgeRegression:
         writer.intLE(assignment.length)
         assignment.foreach(byte => writer.intLE(byte & 0xff))
       ),
-      SchemaFingerprint("scalafim.alder-ridge.v1"),
+      SchemaFingerprint("scalafim.alder-ridge.v2"),
       NumericMode.Deterministic
     )
 
@@ -667,7 +735,7 @@ object AlderRidgeRegression:
       case (Right(done), id, example) =>
         val key = common.keyOf(id.value)
         if example.target.length != common.targets.length then Left(AlderRidgeRegressionError.TargetShape(key, common.targets.length, example.target.length))
-        else fitted.serve(example.input).map(values => done :+ RidgeOofRow(key, unit, example.target.toVector, values.toVector))
+        else fitted.serve(example.input).map(values => done :+ RidgeOofRow(key, unit, common.targetGeometry, example.target.toVector, values.toVector))
     }
 
   private def assemble[M](
@@ -675,7 +743,6 @@ object AlderRidgeRegression:
       outerReceipt: PlanReceipt,
       innerReceipt: PlanReceipt,
       crossFitReceipt: Option[PlanReceipt],
-      responseAxis: AxisDescriptor,
       features: Vector[String],
       common: Common,
       folds: Vector[(RidgeOuterFold, Vector[RidgeOofRow])],
@@ -708,8 +775,8 @@ object AlderRidgeRegression:
           row += 1
         val columns = Vector.tabulate(q)(column => (ordered.map(_.observed(column)), ordered.map(_.predicted(column))))
         val outputs = common.targets.zip(columns).map { case (target, (observed, predicted)) => RegressionAssessment.output(target, observed, predicted) }
-        Right(AlderRidgeRegressionResult(rows.mapping.axis, responseAxis, common.targets, features, out.result(), ordered, outerReceipt, innerReceipt,
-          crossFitReceipt, folds.map(_._1), outputs, RegressionAssessment.pooled(columns), solve, rows.receipt, rows.nativeReadReceipt))
+        Right(AlderRidgeRegressionResult(rows.mapping.axis, common.targetGeometry, features, out.result(), ordered, outerReceipt, innerReceipt,
+          crossFitReceipt, folds.map(_._1), outputs, RegressionAssessment.pooled(columns, common.targetGeometry), solve, rows.receipt, rows.nativeReadReceipt))
 
   /** Fits one fixed-penalty provider ridge per response column on exactly the
     * rows it is given.
@@ -737,7 +804,7 @@ object AlderRidgeRegression:
               .flatMap(root => root.training(ids))
               .left.map(error => AlderRidgeRegressionError.ProviderSelection(error.toString))
               .flatMap(train => fitScalar(train, penalty, common, fitContext)))
-        yield new SeparableRidgeModel(common.targets, common.view.names.toVector, penalty,
+        yield new SeparableRidgeModel(common.targetGeometry, common.view.names.toVector, penalty,
           trained.zipWithIndex.map((fit, output) => RidgeOutputFit(common.targets(output), fit.artifact.solution, fit.audit, constant(output))),
           trained.map(_.artifact), fitContext.stagePath)
 
@@ -780,11 +847,12 @@ object AlderRidgeRegression:
         case Left(error) => EitherT.leftT(context.stagePath.failure[AlderRidgeRegressionError](error))
         case Right(model) =>
           EitherT.rightT(context.complete(model, data, ComponentDescriptor(
-            ComponentId("scalafim.separable-ridge"), ComponentVersion("1"),
+            ComponentId("scalafim.separable-ridge"), ComponentVersion("2"),
             AuditValue.record(
               "execution" -> AuditValue.text("bounded-materialized"),
               "penalty" -> AuditValue.text(java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(penalty))),
-              "targets" -> AuditValue.sequence(model.targets.map(AuditValue.text)*)
+              "targets" -> AuditValue.sequence(model.targets.map(AuditValue.text)*),
+              "targetMetric" -> AuditValue.text(model.targetGeometry.identity)
             ),
             BackendFingerprint("scalafim", "1", AuditValue.record()))))
 
