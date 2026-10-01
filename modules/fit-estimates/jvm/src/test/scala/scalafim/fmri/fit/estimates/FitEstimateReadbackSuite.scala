@@ -2,7 +2,7 @@ package scalafim.fmri.fit.estimates
 
 import java.nio.file.Files
 import scalafim.estimates.*
-import scalafim.estimates.io.LocalEstimateStore
+import scalafim.estimates.io.{EstimateMetadata, LocalEstimateStore}
 
 class FitEstimateReadbackSuite extends munit.FunSuite:
   private def right[A](value: Either[EstimateError, A]): A = value.fold(e => fail(e.message), identity)
@@ -25,6 +25,40 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
       assertEquals(reader.unit.marginalUncertainty, producer.unit.marginalUncertainty)
       assertEquals(reader.unit.bindings, producer.unit.bindings)
     finally right(reader.close())
+  }
+
+  test("literal analytic FIR publication writes physical Core-NIfTI maps and a fresh store preserves reversed bins and samples") {
+    import FirEstimateProducerFixture.*
+    val producer = FirEstimateProducerFixture.producer
+    val root = Files.createTempDirectory("analytic-fir-core-nifti-")
+    val initialStore = right(LocalEstimateStore.open(root))
+    val reference = right(producer.write(reader, right(initialStore.newSink(producer.unit, 1))))
+    val manifest = Files.readString(root.resolve(reference.manifest.path))
+    val representations = right(EstimateMetadata.representations(manifest))
+    assertEquals(representations.length, 3)
+    representations.foreach: representation =>
+      assert(Files.isRegularFile(root.resolve(representation.values.path)))
+      assert(Files.isRegularFile(root.resolve(representation.validity.path)))
+      assert(Files.size(root.resolve(representation.values.path)) > 352L)
+      assert(Files.size(root.resolve(representation.validity.path)) > 352L)
+      assertEquals(representation.storedDatatype, Some(scalafim.estimates.io.NiftiStoredDatatype.Float64))
+    val freshStore = right(LocalEstimateStore.open(root))
+    val source = right(freshStore.open(reference, ReadLimits(4)))
+    try
+      val effect = source.unit.products.find(_.kind == ProductKind.Effect).get
+      val values = new Array[Double](4)
+      val validity = new Array[Byte](4)
+      right(source.read(effect.id, EstimateSelection(effect.observations, ids.reverse, Vector(1, 0)), values, validity))
+      Vector(0.0, 5.0, -3.0, 2.0).zip(values).foreach: (expected, actual) =>
+        assertEqualsDouble(actual, expected, 1e-10)
+      assertEquals(validity.toVector, Vector.fill(4)(Validity.Valid.code))
+      val variance = source.unit.products.find(_.kind == ProductKind.ResidualVariance).get
+      right(source.read(variance.id, EstimateSelection(variance.observations, ids.reverse, Vector(1, 0)), values, validity))
+      Vector(4.0, 1.0, 4.0, 1.0).zip(values).foreach: (expected, actual) =>
+        assertEqualsDouble(actual, expected, 1e-10)
+      assertEquals(validity.toVector, Vector.fill(4)(Validity.Valid.code))
+      assertEquals(source.unit.degreesOfFreedom, Vector(DegreesOfFreedom(DfRole.Residual, DfValue.Scalar(6.0), "OLS n - numerical rank", false)))
+    finally right(source.close())
   }
 
   test("joint OLS persists normalized cross-covariance and applies residual variance exactly once") {
