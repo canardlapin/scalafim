@@ -55,6 +55,6 @@ object DctDrift:
         .fold(error => throw new IllegalArgumentException(error.message), identity)
       PolicyReceipt(
         "dct-drift",
-        s"run=${block + 1};samples=${frame.blockLens(block)};tr_seconds=${frame.tr(block).value};acquisition_start_seconds=${frame.startTime(block).value};cutoff_seconds=${cutoff.seconds};cutoff_bits=${java.lang.Double.doubleToLongBits(cutoff.seconds)};components=1..$count;count=$count;normalization=orthonormal;grid=original-scan-index;cutoff_endpoint=inclusive;constant=excluded"
+        s"run=${block + 1};samples=${frame.blockLens(block)};tr_bits=${java.lang.Double.doubleToLongBits(frame.tr(block).value)};acquisition_start_bits=${java.lang.Double.doubleToLongBits(frame.startTime(block).value)};cutoff_bits=${java.lang.Double.doubleToLongBits(cutoff.seconds)};components=1..$count;count=$count;normalization=orthonormal;grid=original-scan-index;cutoff_endpoint=inclusive;constant=excluded"
       )
     .toVector

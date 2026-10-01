@@ -748,7 +748,7 @@ object EventModelBuilder:
       policyReceipts = schemaBindingReceipt ++ hrfCellReceipt ++ hrfPhaseReceipt ++ Vector(
         PolicyReceipt(
           "modulator-missing-values",
-          s"term=${termTag.getOrElse("term")};policy=${options.missingValuePolicy.label}"
+          s"term=${termTag.getOrElse("term")};policy=${options.missingValuePolicy.canonical}"
         ),
         PolicyReceipt(
           "factor-levels",
@@ -1844,7 +1844,7 @@ object EventModelBuilder:
                 missingValues += MissingValueResolution(
                   modulator = modulator,
                   eventIndex = r,
-                  policy = policy.label,
+                  policy = policy.canonical,
                   action = policy match
                     case MissingValuePolicy.ZeroContribution  => "zero-contribution"
                     case MissingValuePolicy.ImputeConstant(_) => "imputed-constant"
@@ -1874,10 +1874,13 @@ object EventModelBuilder:
               val colLabel =
                 if m.cols == 1 then e.varName
                 else e.columnTags.lift(c).getOrElse(s"${e.varName}_${c + 1}")
+              val policyKind = policy match
+                case MissingValuePolicy.ImputeConstant(_) => "impute-constant"
+                case _ => policy.label
               diagnostics += EventModelDiagnostic(
                 EventModelDiagnosticKind.NonFiniteModulator,
                 termLabel,
-                s"NA or non-finite values detected in continuous modulator '$colLabel' in term '$termLabel'; policy=${policy.label}",
+                s"NA or non-finite values detected in continuous modulator '$colLabel' in term '$termLabel'; policy=$policyKind",
                 eventIndex = firstMissingRow,
                 column = Some(colLabel)
               )
@@ -1923,7 +1926,7 @@ object EventModelBuilder:
               out += MissingValueResolution(
                 modulator = e.modulatorIds(col),
                 eventIndex = eventIndex,
-                policy = policy.label,
+                policy = policy.canonical,
                 action = action,
                 column = e.columnTags.lift(col),
                 source = provenance.lift(eventIndex)

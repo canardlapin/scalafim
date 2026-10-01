@@ -77,7 +77,7 @@ class ResultManifestWriterSuite extends munit.FunSuite:
     assert(sidecar.contains("\"nifti_map_layout\": \"bundled\""))
     assert(sidecar.contains("parameter-coefficient"))
     assert(sidecar.contains("contrast-task"))
-    assert(sidecar.contains("\"design_fingerprint\": \"design-schema/v1:"))
+    assert(sidecar.contains("\"design_fingerprint\": \"design-schema/v2:"))
     assert(sidecar.contains("\"structural_columns\": [{\"id\":"))
     assert(sidecar.contains("\"inferable_column_ids\": [\"legacy|Event|0|task\", \"legacy|Event|1|base_constant\"]"))
     assert(sidecar.contains("\"response_preparation\": ["))

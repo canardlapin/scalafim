@@ -59,9 +59,7 @@ class DctDriftSuite extends munit.FunSuite:
     val receipts = schema.audit.policyReceipts.filter(_.name == "dct-drift")
     assertEquals(receipts.size, 3)
     assert(receipts(1).detail.contains("count=4"))
-    val cutoffText = receipts(1).detail.split(";").find(_.startsWith("cutoff_seconds=")).get
-      .stripPrefix("cutoff_seconds=")
-    assertEquals(cutoffText.toDouble, 6.0)
+    assert(receipts(1).detail.contains("cutoff_bits=4618441417868443648"))
     assertEquals(BaselineBasis.Dct(cutoff(6.0)).id, "dct_ii_period_bits_4618441417868443648")
     assertNotEquals(BaselineBasis.Dct(cutoff(6.0)).id, BaselineBasis.Dct(cutoff(6.000001)).id)
     assert(model.designColmap.filter(_.role == ColumnRole.Drift)

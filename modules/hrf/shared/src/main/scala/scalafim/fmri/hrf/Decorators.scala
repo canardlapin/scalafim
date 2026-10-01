@@ -19,10 +19,10 @@ object HrfCombinators:
     val weights = coeffs.clone
     val descriptor =
       HrfDescriptor.derived(
-        name = nm,
+        name = name.getOrElse("coefficient-reconstruction"),
         nbasis = 1,
         span = hrf.span,
-        params = HrfParams.Coefficients(hrf.name, weights.toVector),
+        params = HrfParams.Coefficients(hrf.descriptor.canonicalId, weights.toVector),
         components = Vector(hrf.descriptor)
       )
     Hrf.of(nm, nbasis = 1, span = hrf.span, descriptor = Some(descriptor), support = hrf.support) { t =>
@@ -42,7 +42,7 @@ object HrfCombinators:
       val nb = hrfs.map(_.nbasis).sum
       val sp = hrfs.map(_.span).max
       val nm = name.getOrElse(hrfs.map(_.name).mkString(" + "))
-      val descriptor = HrfDescriptor.composite(nm, hrfs.toVector.map(_.descriptor), sp)
+      val descriptor = HrfDescriptor.composite(name.getOrElse("bound-basis"), hrfs.toVector.map(_.descriptor), sp)
       val support = Support.union(hrfs.map(_.support))
       Hrf.of(nm, nbasis = nb, span = sp, descriptor = Some(descriptor), support = support) { t =>
         val out = new Array[Double](nb)
@@ -64,7 +64,7 @@ object HrfCombinators:
       else
         val newSpan = if lag.value > 0.0 then hrf.span + lag else hrf.span
         val nm = s"${hrf.name}_lag(${lag.value})"
-        val descriptor = hrf.descriptor.derived(nm, span = newSpan)
+        val descriptor = hrf.descriptor.transformed("lagged", HrfDerivation.Lagged(lag), span = newSpan)
         Hrf.of(
           nm,
           nbasis = hrf.nbasis,
@@ -114,7 +114,7 @@ object HrfCombinators:
         i += 1
       val scales = maxAbs.map(m => if m > 1e-10 then m else 1.0)
       val nm = s"${hrf.name}_norm"
-      val descriptor = hrf.descriptor.derived(nm, span = hrf.span)
+      val descriptor = hrf.descriptor.transformed("peak-normalized", HrfDerivation.PeakNormalized(dt))
       val normalized =
         Hrf.of(nm, nbasis = hrf.nbasis, span = hrf.span, descriptor = Some(descriptor), support = hrf.support) { t =>
           val v = hrf(t).data
@@ -198,7 +198,8 @@ object HrfCombinators:
             maxAbs.map(m => if m > 1e-10 then m else 1.0)
 
         val nm = s"${hrf.name}_block(w=${width.value})"
-        val descriptor = hrf.descriptor.derived(nm, span = newSpan)
+        val descriptor = hrf.descriptor.transformed("blocked",
+          HrfDerivation.Blocked(width, precision, halfLife, summate, normalize, integration), span = newSpan)
         Hrf.of(
           nm,
           nbasis = hrf.nbasis,

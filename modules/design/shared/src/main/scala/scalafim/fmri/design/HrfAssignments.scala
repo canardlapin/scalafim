@@ -32,7 +32,7 @@ object HrfAssignment:
       _.map(_.id.value)
     )
     val elementIdentity = elements.map(token).mkString("[", ",", "]")
-    s"descriptor=${token(hrf.descriptor.canonicalId)}|name=${token(hrf.name)}|nbasis=${hrf.nbasis}|elements=$elementIdentity"
+    s"descriptor=${token(hrf.descriptor.canonicalId)}|nbasis=${hrf.nbasis}|elements=$elementIdentity"
 
   private[design] def token(value: String): String =
     s"${value.length}:$value"
