@@ -5,15 +5,14 @@ import scalafim.fmri.hrf.{BasisElementId, Hrf, Hrfs, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 
 class DesignIdentitySuite extends munit.FunSuite:
-  test("single-run, two-run and FIR identity reproduction") {
+  test("single-run, two-run and FIR structural identities have shared literal goldens") {
     Vector(
       "single" -> design(Hrfs.SPMG1, Vector(16)),
       "two" -> design(Hrfs.SPMG1, Vector(8, 8)),
       "fir" -> design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
     ).foreach { case (name, schema) =>
-      println(s"IDENTITY-$name-FINGERPRINT=${schema.fingerprint.value}")
-      println(s"IDENTITY-$name-ENCODING=${schema.fingerprint.canonicalEncoding}")
-      println(s"IDENTITY-$name-COLUMNS=${schema.columnIds.map(_.value).mkString(";")}")
+      assertEquals(schema.columnIds.map(_.value), columnIdGoldens(name))
+      exactFingerprintGoldens.get(name).foreach(expected => assertEquals(schema.fingerprint.value, expected))
     }
   }
 
@@ -66,8 +65,7 @@ class DesignIdentitySuite extends munit.FunSuite:
     }
     val matrix = scalafim.fmri.hrf.linalg.Mat.unsafe(16, 2, singleMatrixBits.map(java.lang.Double.longBitsToDouble).toArray)
     val snapshot = DesignSchema.validated(matrix, compiled.rows, compiled.columns, compiled.audit.copy(rankPreview = None)).toOption.get
-    println(s"IDENTITY-single-fixed-FINGERPRINT=${snapshot.fingerprint.value}")
-    println(s"IDENTITY-single-fixed-ENCODING=${snapshot.fingerprint.canonicalEncoding}")
+    assertEquals(snapshot.fingerprint.value, "design-schema/v2:b27079652d98235d")
   }
 
   // Literal matrix contents captured before the serialization repair. This is
@@ -91,6 +89,31 @@ class DesignIdentitySuite extends munit.FunSuite:
     "event|task||cell:{condition=B}||basis(fir%7C2%7Cfir-bin-2%252502d-2.0..4.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-2%252502d-2.0..4.0%257C2)|Task|global|ordinal=4",
     "event|task||cell:{condition=A}||basis(fir%7C3%7Cfir-bin-3%252502d-4.0..6.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-3%252502d-4.0..6.0%257C3)|Task|global|ordinal=5",
     "event|task||cell:{condition=B}||basis(fir%7C3%7Cfir-bin-3%252502d-4.0..6.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-3%252502d-4.0..6.0%257C3)|Task|global|ordinal=6"
+  )
+
+  private val exactFingerprintGoldens = Map(
+    "two" -> "design-schema/v2:93615b2e435af535",
+    "fir" -> "design-schema/v2:8f2ee67682098523"
+  )
+
+  // Literal outputs from the reviewed wire format; independently FNV-checked.
+  private val columnIdGoldens = Map(
+    "single" -> Vector(
+      "event|task||cell:{condition=A}||basis(element=hrf-descriptor/v2%257Cfamily=known(5:spmg1)%257Cbasis=1%257Cspan=bits:4627448617123184640%257Cparams=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)%257Cderivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)%257Cpenalty=identity%257Cintegration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))%257Cderivation=none%257Ccomponents=sequence()%257Ccanonical%257C1%7C1%7Ccanonical)|Task|run:1|ordinal=1",
+      "event|task||cell:{condition=B}||basis(element=hrf-descriptor/v2%257Cfamily=known(5:spmg1)%257Cbasis=1%257Cspan=bits:4627448617123184640%257Cparams=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)%257Cderivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)%257Cpenalty=identity%257Cintegration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))%257Cderivation=none%257Ccomponents=sequence()%257Ccanonical%257C1%7C1%7Ccanonical)|Task|run:1|ordinal=2"
+    ),
+    "two" -> Vector(
+      "event|task||cell:{condition=A}||basis(element=hrf-descriptor/v2%257Cfamily=known(5:spmg1)%257Cbasis=1%257Cspan=bits:4627448617123184640%257Cparams=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)%257Cderivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)%257Cpenalty=identity%257Cintegration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))%257Cderivation=none%257Ccomponents=sequence()%257Ccanonical%257C1%7C1%7Ccanonical)|Task|global|ordinal=1",
+      "event|task||cell:{condition=B}||basis(element=hrf-descriptor/v2%257Cfamily=known(5:spmg1)%257Cbasis=1%257Cspan=bits:4627448617123184640%257Cparams=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)%257Cderivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)%257Cpenalty=identity%257Cintegration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))%257Cderivation=none%257Ccomponents=sequence()%257Ccanonical%257C1%7C1%7Ccanonical)|Task|global|ordinal=2"
+    ),
+    "fir" -> Vector(
+      "event|task||cell:{condition=A}||basis(element=hrf-descriptor/v2%257Cfamily=known(3:fir)%257Cbasis=3%257Cspan=bits:4618441417868443648%257Cparams=fir(1:3)%257Cderivative=numeric%257Cpenalty=roughness%257Cintegration=piecewise-polynomial(102:sequence(6:bits:0,24:bits:4611686018427387904,24:bits:4616189618054758400,24:bits:4618441417868443648),1:0)%257Cderivation=none%257Ccomponents=sequence()%257Cfir-bin-01-bits:0..bits:4611686018427387904%257C1%7C1%7Cfir-bin-01-bits:0..bits:4611686018427387904)|Task|global|ordinal=1",
+      "event|task||cell:{condition=B}||basis(element=hrf-descriptor/v2%257Cfamily=known(3:fir)%257Cbasis=3%257Cspan=bits:4618441417868443648%257Cparams=fir(1:3)%257Cderivative=numeric%257Cpenalty=roughness%257Cintegration=piecewise-polynomial(102:sequence(6:bits:0,24:bits:4611686018427387904,24:bits:4616189618054758400,24:bits:4618441417868443648),1:0)%257Cderivation=none%257Ccomponents=sequence()%257Cfir-bin-01-bits:0..bits:4611686018427387904%257C1%7C1%7Cfir-bin-01-bits:0..bits:4611686018427387904)|Task|global|ordinal=2",
+      "event|task||cell:{condition=A}||basis(element=hrf-descriptor/v2%257Cfamily=known(3:fir)%257Cbasis=3%257Cspan=bits:4618441417868443648%257Cparams=fir(1:3)%257Cderivative=numeric%257Cpenalty=roughness%257Cintegration=piecewise-polynomial(102:sequence(6:bits:0,24:bits:4611686018427387904,24:bits:4616189618054758400,24:bits:4618441417868443648),1:0)%257Cderivation=none%257Ccomponents=sequence()%257Cfir-bin-02-bits:4611686018427387904..bits:4616189618054758400%257C2%7C2%7Cfir-bin-02-bits:4611686018427387904..bits:4616189618054758400)|Task|global|ordinal=3",
+      "event|task||cell:{condition=B}||basis(element=hrf-descriptor/v2%257Cfamily=known(3:fir)%257Cbasis=3%257Cspan=bits:4618441417868443648%257Cparams=fir(1:3)%257Cderivative=numeric%257Cpenalty=roughness%257Cintegration=piecewise-polynomial(102:sequence(6:bits:0,24:bits:4611686018427387904,24:bits:4616189618054758400,24:bits:4618441417868443648),1:0)%257Cderivation=none%257Ccomponents=sequence()%257Cfir-bin-02-bits:4611686018427387904..bits:4616189618054758400%257C2%7C2%7Cfir-bin-02-bits:4611686018427387904..bits:4616189618054758400)|Task|global|ordinal=4",
+      "event|task||cell:{condition=A}||basis(element=hrf-descriptor/v2%257Cfamily=known(3:fir)%257Cbasis=3%257Cspan=bits:4618441417868443648%257Cparams=fir(1:3)%257Cderivative=numeric%257Cpenalty=roughness%257Cintegration=piecewise-polynomial(102:sequence(6:bits:0,24:bits:4611686018427387904,24:bits:4616189618054758400,24:bits:4618441417868443648),1:0)%257Cderivation=none%257Ccomponents=sequence()%257Cfir-bin-03-bits:4616189618054758400..bits:4618441417868443648%257C3%7C3%7Cfir-bin-03-bits:4616189618054758400..bits:4618441417868443648)|Task|global|ordinal=5",
+      "event|task||cell:{condition=B}||basis(element=hrf-descriptor/v2%257Cfamily=known(3:fir)%257Cbasis=3%257Cspan=bits:4618441417868443648%257Cparams=fir(1:3)%257Cderivative=numeric%257Cpenalty=roughness%257Cintegration=piecewise-polynomial(102:sequence(6:bits:0,24:bits:4611686018427387904,24:bits:4616189618054758400,24:bits:4618441417868443648),1:0)%257Cderivation=none%257Ccomponents=sequence()%257Cfir-bin-03-bits:4616189618054758400..bits:4618441417868443648%257C3%7C3%7Cfir-bin-03-bits:4616189618054758400..bits:4618441417868443648)|Task|global|ordinal=6"
+    )
   )
 
   private def design(hrf: Hrf, blocks: Vector[Int]): DesignSchema =
