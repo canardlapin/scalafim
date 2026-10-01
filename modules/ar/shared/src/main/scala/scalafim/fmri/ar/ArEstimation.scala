@@ -163,11 +163,12 @@ object ArEstimation:
       residuals: DMat,
       layout: NoiseEstimationLayout,
       options: ArFitOptions,
+      design: DMat,
       prepared: PreparedCorrection
   ): Either[ArError, WhiteningPlan] =
     for
       _ <- validateInputs(residuals, layout)
-      correction <- AcvfBias.bind(residuals, layout, prepared)
+      correction <- AcvfBias.bind(residuals, layout, design, options.order.maxRequested, prepared)
       plan <- fitNoisePrepared(residuals, layout, options, correction)
     yield plan
 
@@ -226,8 +227,7 @@ object ArEstimation:
         Right(uncorrected(layout))
       case EstimationPolicy.DesignCorrected(design, budget) =>
         if design.rows != residuals.rows then Left(ArError.DesignRowMismatch(design.rows, residuals.rows))
-        else
-          AcvfBias.prepare(design, layout, budget, targetOrder).flatMap(AcvfBias.bind(residuals, layout, _))
+        else AcvfBias.prepareChecked(design, layout, budget, targetOrder, Some(residuals))
 
   private[ar] def uncorrected(layout: NoiseEstimationLayout): PreparedCorrection =
     PreparedCorrection(

@@ -33,18 +33,30 @@ object NoiseFit:
       fit <- assemble(residuals, layout, options, prepared)
     yield fit
 
-  /** As above with a correction prepared once by [[AcvfBias.prepare]]; bound to its design and layout. */
+  /** As above with a correction prepared once by [[AcvfBias.prepare]]; `design` must be exactly the prepared
+    * design and the AR order the one it was prepared for (see [[AcvfBias.bind]]).
+    */
   def estimate(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      design: DMat,
+      prepared: PreparedCorrection
+  ): Either[ArError, NoiseFit] =
+    for
+      _ <- ArEstimation.validateInputs(residuals, layout)
+      bound <- AcvfBias.bind(residuals, layout, design, options.order.maxRequested, prepared)
+      fit <- assemble(residuals, layout, options, bound)
+    yield fit
+
+  /** Estimation against a correction that is already bound (hand-built in tests). */
+  private[ar] def estimateBound(
       residuals: DMat,
       layout: NoiseEstimationLayout,
       options: ArFitOptions,
       prepared: PreparedCorrection
   ): Either[ArError, NoiseFit] =
-    for
-      _ <- ArEstimation.validateInputs(residuals, layout)
-      bound <- AcvfBias.bind(residuals, layout, prepared)
-      fit <- assemble(residuals, layout, options, bound)
-    yield fit
+    ArEstimation.validateInputs(residuals, layout).flatMap(_ => assemble(residuals, layout, options, prepared))
 
   private def assemble(
       residuals: DMat,
@@ -56,7 +68,7 @@ object NoiseFit:
       plan <- ArEstimation.fitNoisePrepared(residuals, layout, options, prepared)
       perRun <- NoiseAcvf.perRunUnits(residuals, layout, options.order.maxRequested, prepared)
     yield
-      val acvf = NoiseAcvf.finish(perRun, options.order.maxRequested, options.pooling, prepared)
+      val acvf = NoiseAcvf.finish(perRun, options.order.maxRequested, options.pooling)
       val gamma: Vector[Vector[Double]] =
         options.pooling match
           case NoisePooling.Global => Vector(acvf.units.headOption.fold(Vector.empty[Double])(_.acvf))
@@ -70,7 +82,7 @@ object NoiseFit:
         gamma,
         variance,
         acvf.corrections,
-        prepared.basis.map(_ => prepared.matrices)
+        prepared.binding.map(_ => prepared.matrices)
       )
 
   /** `sigma2 = gamma_0 - sum_k phi_k gamma_k`, clamped to `[1e-12, gamma_0]`, mirroring

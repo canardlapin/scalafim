@@ -62,7 +62,7 @@ NoiseAcvf.estimate(residuals, layout, maxLag, pooling, policy) // mirrors fmriAR
 
 When many residual sets share one design and layout, build the correction once with
 `AcvfBias.prepare(design, layout, budget, order)` and pass it to the same three entry points; it
-is bound to that design and layout and each residual set is still checked for orthogonality.
+is bound to that design and layout (the design is passed again and must match exactly, as must the AR order) and each residual set is still checked for orthogonality.
 `NoiseFit.corrections` reports `RunCorrection.SolveFallback` when the solve fell back to the raw
 estimate (fmriAR does this silently).
 

@@ -53,19 +53,22 @@ object NoiseAcvf:
       estimate <- estimateWith(residuals, layout, math.min(lag.value, residuals.rows), pooling, prepared)
     yield estimate
 
-  /** As above with a correction prepared once by [[AcvfBias.prepare]]; bound to its design and layout. */
+  /** As above with a correction prepared once by [[AcvfBias.prepare]] for `max(1, maxLag)` as its target order;
+    * `design` must be exactly the prepared design (see [[AcvfBias.bind]]).
+    */
   def estimate(
       residuals: DMat,
       layout: NoiseEstimationLayout,
       maxLag: Int,
       pooling: NoisePooling,
+      design: DMat,
       prepared: PreparedCorrection
   ): Either[ArError, NoiseAcvfEstimate] =
     for
       lag <- ArLag(maxLag)
       _ <- layout.coveredSegments.validateRows(residuals.rows)
       _ <- ArEstimation.validateFinite(residuals)
-      bound <- AcvfBias.bind(residuals, layout, prepared)
+      bound <- AcvfBias.bind(residuals, layout, design, math.max(1, lag.value), prepared)
       estimate <- estimateWith(residuals, layout, math.min(lag.value, residuals.rows), pooling, bound)
     yield estimate
 
@@ -76,35 +79,58 @@ object NoiseAcvf:
       pooling: NoisePooling,
       prepared: PreparedCorrection
   ): Either[ArError, NoiseAcvfEstimate] =
-    perRunUnits(residuals, layout, maxLag, prepared).map(finish(_, maxLag, pooling, prepared))
+    perRunUnits(residuals, layout, maxLag, prepared).map(finish(_, maxLag, pooling))
 
-  /** Per-run units (before pooling), runs without usable data omitted. */
+  /** Units per run (runs without usable data omitted) and the honest status of every run. The status is carried
+    * independently of whether a unit exists: a run whose raw variance is not positive has no unit but did fall
+    * back, and a run without data never attempted a solve.
+    */
+  private[ar] final case class RunUnits(units: Vector[NoiseAcvfUnit], statuses: Vector[RunCorrection])
+
   private[ar] def perRunUnits(
       residuals: DMat,
       layout: NoiseEstimationLayout,
       maxLag: Int,
       prepared: PreparedCorrection
-  ): Either[ArError, Vector[NoiseAcvfUnit]] =
+  ): Either[ArError, RunUnits] =
     val units = Vector.newBuilder[NoiseAcvfUnit]
+    val statuses = Vector.newBuilder[RunCorrection]
     var run = 0
     while run < layout.runCount do
       oneUnit(residuals, layout, run, maxLag, prepared.usable(run)) match
-        case Left(error)       => return Left(error)
-        case Right(Some(unit)) => units += unit
-        case Right(None)       => ()
+        case Left(error) => return Left(error)
+        case Right(outcome) =>
+          outcome.unit.foreach(units += _)
+          statuses += finalStatus(prepared.runs(run), outcome)
       run += 1
     val perRun = units.result()
-    if perRun.isEmpty then Left(ArError.NoEstimableRows) else Right(perRun)
+    if perRun.isEmpty then Left(ArError.NoEstimableRows) else Right(RunUnits(perRun, statuses.result()))
+
+  /** The gate status stands for runs that were never going to be solved (uncorrected, or rejected by the gate);
+    * otherwise what actually happened at estimation time wins.
+    */
+  private def finalStatus(gate: RunCorrection, outcome: RunOutcome): RunCorrection =
+    gate match
+      case RunCorrection.Applied(_) =>
+        outcome.skipped
+          .map(RunCorrection.NotAttempted(_))
+          .orElse(outcome.fallback.map(RunCorrection.SolveFallback(_)))
+          .getOrElse(gate)
+      case other => other
+
+  private final case class RunOutcome(
+      unit: Option[NoiseAcvfUnit],
+      skipped: Option[CorrectionSkip],
+      fallback: Option[CorrectionFallback]
+  )
 
   private[ar] def finish(
-      perRun: Vector[NoiseAcvfUnit],
+      runUnits: RunUnits,
       maxLag: Int,
-      pooling: NoisePooling,
-      prepared: PreparedCorrection
+      pooling: NoisePooling
   ): NoiseAcvfEstimate =
-      val corrections = prepared.runs.zipWithIndex.map { case (gate, run) =>
-        perRun.find(_.runIndex.contains(run)).flatMap(_.fallback).fold(gate)(RunCorrection.SolveFallback(_))
-      }
+      val perRun = runUnits.units
+      val corrections = runUnits.statuses
       val reported =
         pooling match
           case NoisePooling.Run    => perRun
@@ -117,20 +143,21 @@ object NoiseAcvf:
       run: Int,
       maxLag: Int,
       correction: Option[DMat]
-  ): Either[ArError, Option[NoiseAcvfUnit]] =
+  ): Either[ArError, RunOutcome] =
     val segments = layout.segmentsForRun(run)
     val observations = segments.map(_.length).sum
-    if observations < 2 then Right(None)
+    if observations < 2 then Right(RunOutcome(None, Some(CorrectionSkip.FewerThanTwoObservations), None))
     else
       val accumulate = correction.fold(maxLag)(matrix => math.max(maxLag, matrix.rows - 1))
       ArEstimation.pooledAutocovariance(residuals, segments, ArOrderValue.unsafe(accumulate), correction).flatMap { pooled =>
-        if pooled.pairCounts(0) <= 0L then Right(None)
+        if pooled.pairCounts(0) <= 0L then Right(RunOutcome(None, Some(CorrectionSkip.NoLagZeroPairs), None))
         else
           val order = math.min(maxLag, pooled.maxLag.value)
           pooled.through(ArOrderValue.unsafe(order)).map { gamma =>
-            if gamma.lagZero <= 0.0 then None
-            else
-              Some(
+            val unit =
+              if gamma.lagZero <= 0.0 then None
+              else
+                Some(
                 NoiseAcvfUnit(
                   runIndex = Some(run),
                   acvf = gamma.toVector,
@@ -140,7 +167,8 @@ object NoiseAcvf:
                   corrected = pooled.correctionApplied,
                   fallback = pooled.correctionFallback
                 )
-              )
+                )
+            RunOutcome(unit, None, pooled.correctionFallback)
           }
       }
 
@@ -168,5 +196,7 @@ object NoiseAcvf:
       segmentCount = units.map(_.segmentCount).sum,
       segmentLengths = units.flatMap(_.segmentLengths),
       corrected = units.forall(_.corrected),
+      // The pooled unit summarises with the first run's fallback only; the full per-run picture is
+      // `NoiseAcvfEstimate.corrections`.
       fallback = units.flatMap(_.fallback).headOption
     )

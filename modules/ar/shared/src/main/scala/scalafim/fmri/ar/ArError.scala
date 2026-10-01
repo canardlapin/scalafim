@@ -40,6 +40,8 @@ enum ArError:
   case InvalidCorrectionLag(lag: Int)
   case NoResidualDegreesOfFreedom(rows: Int, designRank: Int)
   case PreparedCorrectionLayoutMismatch
+  case PreparedCorrectionDesignMismatch
+  case PreparedCorrectionOrderMismatch(prepared: Int, requested: Int)
 
   def message: String =
     this match
@@ -113,6 +115,10 @@ enum ArError:
           "design-corrected estimation requires the ordinary least-squares residuals of this design"
       case InvalidCorrectionLag(lag) =>
         s"correction lag budget must be at least 1, got $lag"
+      case PreparedCorrectionDesignMismatch =>
+        "prepared correction was built from a different design (dimensions or entries differ)"
+      case PreparedCorrectionOrderMismatch(prepared, requested) =>
+        s"prepared correction targets AR order $prepared but order $requested was requested"
       case PreparedCorrectionLayoutMismatch =>
         "prepared correction was built for a different estimation layout"
       case NoResidualDegreesOfFreedom(rows, designRank) =>

@@ -22,11 +22,25 @@ final case class AcvfBiasMatrices private[ar] (
   def budgetCapped: Boolean = lag < requestedLag
 
 /** Bias matrices together with the per-run outcome of the conditioning gate. */
+/** Exact identity of a design: dimensions plus a 64-bit FNV-1a hash over `doubleToLongBits` of every entry
+  * (row-major), and the numerical rank it was prepared with. Two designs with equal fingerprints are the same
+  * matrix up to hash collision; a nested design (same columns plus or minus some) never matches.
+  */
+final case class DesignFingerprint private[ar] (rows: Int, cols: Int, hash: Long, rank: Int)
+
+/** What a prepared correction is bound to besides the layout. */
+final case class PreparedBinding private[ar] (
+    fingerprint: DesignFingerprint,
+    budget: CorrectionBudget,
+    targetOrder: Int,
+    private[ar] basis: AcvfBias.DesignBasis
+)
+
 final case class PreparedCorrection private[ar] (
     matrices: AcvfBiasMatrices,
     runs: Vector[RunCorrection],
     layout: NoiseEstimationLayout,
-    private[ar] basis: Option[AcvfBias.DesignBasis]
+    binding: Option[PreparedBinding]
 ):
   /** The matrix to solve against for `run`, or `None` when the run is left uncorrected. */
   def usable(run: Int): Option[DMat] =
@@ -159,10 +173,23 @@ object AcvfBias:
       budget: CorrectionBudget,
       targetOrder: Int
   ): Either[ArError, PreparedCorrection] =
+    prepareChecked(design, layout, budget, targetOrder, None)
+
+  /** The policy path: the basis is computed and the residuals validated before any bias matrix is built, so bad
+    * residuals fail fast.
+    */
+  private[ar] def prepareChecked(
+      design: DMat,
+      layout: NoiseEstimationLayout,
+      budget: CorrectionBudget,
+      targetOrder: Int,
+      residuals: Option[DMat]
+  ): Either[ArError, PreparedCorrection] =
     if design.rows != layout.rows then Left(ArError.DesignRowMismatch(design.rows, layout.rows))
     else
       for
         basis <- designBasis(design)
+        _ <- residuals.fold[Either[ArError, Double]](Right(0.0))(validateResiduals(_, basis, OrthogonalityTolerance))
         lag <- resolveLag(budget, design, layout, targetOrder)
         built <- buildMatrices(basis, layout, lag)
       yield PreparedCorrection(
@@ -173,24 +200,48 @@ object AcvfBias:
           else RunCorrection.IllConditioned(rcond)
         },
         layout,
-        Some(basis)
+        Some(PreparedBinding(fingerprint(design, basis.rank), budget, targetOrder, basis))
       )
 
-  /** Check a prepared correction against one residual set: same row count, equal layout, and residuals that
-    * are numerically orthogonal to the design it was prepared from.
+  private[ar] def fingerprint(design: DMat, rank: Int): DesignFingerprint =
+    var hash = 0xcbf29ce484222325L
+    var row = 0
+    while row < design.rows do
+      var col = 0
+      while col < design.cols do
+        hash = (hash ^ java.lang.Double.doubleToLongBits(design(row, col))) * 0x100000001b3L
+        col += 1
+      row += 1
+    DesignFingerprint(design.rows, design.cols, hash, rank)
+
+  /** Check a prepared correction against one residual set. The caller supplies the design again and it must be
+    * exactly the prepared one (dimensions and a hash of every entry's bits), so a nested design, which residuals
+    * are also orthogonal to, cannot be substituted. Also checked: row count, equal layout, the AR order the
+    * correction was prepared for, and numerical orthogonality of these residuals to the design.
+    *
+    * The order is checked for every budget, not only [[CorrectionBudget.Adaptive]] (where it changes the lag):
+    * a correction is prepared for one fit configuration.
     */
   def bind(
       residuals: DMat,
       layout: NoiseEstimationLayout,
+      design: DMat,
+      targetOrder: Int,
       prepared: PreparedCorrection
   ): Either[ArError, PreparedCorrection] =
     if prepared.layout.rows != residuals.rows then
       Left(ArError.DesignRowMismatch(prepared.layout.rows, residuals.rows))
+    else if design.rows != residuals.rows then Left(ArError.DesignRowMismatch(design.rows, residuals.rows))
     else if prepared.layout != layout then Left(ArError.PreparedCorrectionLayoutMismatch)
     else
-      prepared.basis match
-        case None        => Right(prepared)
-        case Some(basis) => validateResiduals(residuals, basis, OrthogonalityTolerance).map(_ => prepared)
+      prepared.binding match
+        case None => Right(prepared)
+        case Some(binding) =>
+          if fingerprint(design, binding.fingerprint.rank) != binding.fingerprint then
+            Left(ArError.PreparedCorrectionDesignMismatch)
+          else if binding.targetOrder != targetOrder then
+            Left(ArError.PreparedCorrectionOrderMismatch(binding.targetOrder, targetOrder))
+          else validateResiduals(residuals, binding.basis, OrthogonalityTolerance).map(_ => prepared)
 
   private[ar] def resolveLag(
       budget: CorrectionBudget,

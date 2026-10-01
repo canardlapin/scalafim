@@ -92,7 +92,7 @@ class AcvfBiasFallbackSuite extends munit.FunSuite:
   test("NoiseFit reports SolveFallback instead of Applied, and its plan equals the raw fit") {
     val prepared = craftedPrepared(Upper, RunCorrection.Applied(0.11))
     val options = ArFitOptions(order = ArOrder.Fixed(1), exactFirstAr1 = false)
-    val fit = NoiseFit.estimate(smooth, layout, options, prepared).fold(e => fail(e.message), identity)
+    val fit = NoiseFit.estimateBound(smooth, layout, options, prepared).fold(e => fail(e.message), identity)
     fit.corrections match
       case Vector(RunCorrection.SolveFallback(_)) => ()
       case other                                  => fail(s"expected SolveFallback, got $other")
@@ -128,21 +128,22 @@ class AcvfBiasFallbackSuite extends munit.FunSuite:
   test("prepared and unprepared estimation are bit-identical (plan, gamma, sigma2, status, acvf)") {
     val policy = EstimationPolicy.DesignCorrected(design, budget)
     val ready = prepared
+    val readyFor3 = AcvfBias.prepare(design, fixtureLayout, budget, 3).fold(e => fail(e.message), identity)
     Seq(NoisePooling.Run, NoisePooling.Global).foreach { pooling =>
       val o = ArFitOptions(order = options.order, pooling = pooling, exactFirstAr1 = false)
       val a = ArEstimation.fitNoise(residuals, fixtureLayout, o, policy).fold(e => fail(e.message), identity)
-      val b = ArEstimation.fitNoise(residuals, fixtureLayout, o, ready).fold(e => fail(e.message), identity)
+      val b = ArEstimation.fitNoise(residuals, fixtureLayout, o, design, ready).fold(e => fail(e.message), identity)
       assertEquals(b.coefficients, a.coefficients)
 
       val fa = NoiseFit.estimate(residuals, fixtureLayout, o, policy).fold(e => fail(e.message), identity)
-      val fb = NoiseFit.estimate(residuals, fixtureLayout, o, ready).fold(e => fail(e.message), identity)
+      val fb = NoiseFit.estimate(residuals, fixtureLayout, o, design, ready).fold(e => fail(e.message), identity)
       assertEquals(fb.plan.coefficients, fa.plan.coefficients)
       assertEquals(fb.acvf, fa.acvf)
       assertEquals(fb.innovationVariance, fa.innovationVariance)
       assertEquals(fb.corrections, fa.corrections)
 
       val aa = NoiseAcvf.estimate(residuals, fixtureLayout, 3, pooling, policy).fold(e => fail(e.message), identity)
-      val ab = NoiseAcvf.estimate(residuals, fixtureLayout, 3, pooling, ready).fold(e => fail(e.message), identity)
+      val ab = NoiseAcvf.estimate(residuals, fixtureLayout, 3, pooling, design, readyFor3).fold(e => fail(e.message), identity)
       assertEquals(ab, aa)
     }
   }
@@ -153,7 +154,7 @@ class AcvfBiasFallbackSuite extends munit.FunSuite:
     (0 until residuals.cols).foreach { col =>
       val one = Matrix.tabulate(residuals.rows, 1)((r, _) => residuals(r, col))
       val a = ArEstimation.fitNoise(one, fixtureLayout, options, policy).fold(e => fail(e.message), identity)
-      val b = ArEstimation.fitNoise(one, fixtureLayout, options, ready).fold(e => fail(e.message), identity)
+      val b = ArEstimation.fitNoise(one, fixtureLayout, options, design, ready).fold(e => fail(e.message), identity)
       assertEquals(b.coefficients, a.coefficients)
     }
   }
@@ -162,20 +163,20 @@ class AcvfBiasFallbackSuite extends munit.FunSuite:
     val ready = prepared
     val otherLayout = layoutFor(fixture.runLengths, Vector(3))
     assertEquals(
-      ArEstimation.fitNoise(residuals, otherLayout, options, ready).left.toOption,
+      ArEstimation.fitNoise(residuals, otherLayout, options, design, ready).left.toOption,
       Some(ArError.PreparedCorrectionLayoutMismatch)
     )
     val shortResiduals = Matrix.tabulate(residuals.rows - 1, residuals.cols)((r, c) => residuals(r, c))
     val shortLayout = layoutFor(Vector(fixture.runLengths.head, fixture.runLengths(1) - 1), fixture.censorOneBased)
     assert(
-      ArEstimation.fitNoise(shortResiduals, shortLayout, options, ready).left.exists(_.isInstanceOf[ArError.DesignRowMismatch])
+      ArEstimation.fitNoise(shortResiduals, shortLayout, options, design, ready).left.exists(_.isInstanceOf[ArError.DesignRowMismatch])
     )
   }
 
   test("orthogonality is validated per residual set even with a prepared correction") {
     val notResiduals = Matrix.tabulate(residuals.rows, residuals.cols)((r, c) => math.sin(1.7 * r + c) + 2.0)
     assert(
-      ArEstimation.fitNoise(notResiduals, fixtureLayout, options, prepared).left.exists(_.isInstanceOf[ArError.DesignResidualMismatch])
+      ArEstimation.fitNoise(notResiduals, fixtureLayout, options, design, prepared).left.exists(_.isInstanceOf[ArError.DesignResidualMismatch])
     )
   }
 
@@ -185,4 +186,127 @@ class AcvfBiasFallbackSuite extends munit.FunSuite:
       AcvfBias.prepare(short, fixtureLayout, budget, 2).left.toOption,
       Some(ArError.DesignRowMismatch(design.rows - 1, design.rows))
     )
+  }
+
+  // --- a run whose residuals are exactly zero --------------------------------------------------------------
+
+  /** Two runs with per-run intercepts; run 2's residuals are exactly zero (orthogonal to any design). */
+  private def zeroRunCase =
+    val lengths = Vector(20, 20)
+    val x = Matrix.tabulate(40, 2)((r, c) => if (r < 20) == (c == 0) then 1.0 else 0.0)
+    val raw = Vector.tabulate(20)(i => math.sin(0.9 * i) + 0.3 * math.cos(2.3 * i))
+    val mean = raw.sum / raw.length
+    val residuals = Matrix.tabulate(40, 1)((r, _) => if r < 20 then raw(r) - mean else 0.0)
+    (x, residuals, layoutFor(lengths, Vector.empty))
+
+  test("a run of exactly-zero residuals is reported as a fallback, not Applied (policy path)") {
+    val (x, r, l) = zeroRunCase
+    val options = ArFitOptions(order = ArOrder.Fixed(1), pooling = NoisePooling.Run, exactFirstAr1 = false)
+    val fit = NoiseFit
+      .estimate(r, l, options, EstimationPolicy.DesignCorrected(x, CorrectionBudget.Fixed(4)))
+      .fold(e => fail(e.message), identity)
+    fit.corrections match
+      case Vector(RunCorrection.Applied(_), RunCorrection.SolveFallback(CorrectionFallback.NonPositiveRawVariance(_))) => ()
+      case other => fail(s"expected the zero run to report NonPositiveRawVariance, got $other")
+    val acvf = NoiseAcvf
+      .estimate(r, l, 1, NoisePooling.Run, EstimationPolicy.DesignCorrected(x, CorrectionBudget.Fixed(4)))
+      .fold(e => fail(e.message), identity)
+    assertEquals(acvf.corrections, fit.corrections)
+  }
+
+  // --- runs that never reach the solve ------------------------------------------------------------------------
+
+  test("a fully censored run is NotAttempted, not Applied") {
+    val lengths = Vector(20, 20)
+    val x = Matrix.tabulate(40, 2)((r, c) => if (r < 20) == (c == 0) then 1.0 else 0.0)
+    val raw = Vector.tabulate(20)(i => math.sin(0.9 * i) + 0.3 * math.cos(2.3 * i))
+    val mean = raw.sum / raw.length
+    val r = Matrix.tabulate(40, 1)((row, _) => if row < 20 then raw(row) - mean else 0.0)
+    val l = layoutFor(lengths, (21 to 40).toVector)
+    val options = ArFitOptions(order = ArOrder.Fixed(1), pooling = NoisePooling.Run, exactFirstAr1 = false)
+    val fit = NoiseFit
+      .estimate(r, l, options, EstimationPolicy.DesignCorrected(x, CorrectionBudget.Fixed(4)))
+      .fold(e => fail(e.message), identity)
+    fit.corrections match
+      case Vector(RunCorrection.Applied(_), RunCorrection.NotAttempted(CorrectionSkip.FewerThanTwoObservations)) => ()
+      case other => fail(s"expected NotAttempted for the empty run, got $other")
+  }
+
+  // --- binding: design, order, and bit-identity beyond the plan -------------------------------------------------
+
+  private def sameDMat(a: DMat, b: DMat): Boolean =
+    a.rows == b.rows && a.cols == b.cols && (0 until a.rows).forall(r => (0 until a.cols).forall(c => a(r, c) == b(r, c)))
+
+  private def assertSameFit(a: NoiseFit, b: NoiseFit): Unit =
+    assertEquals(b.plan.coefficients, a.plan.coefficients)
+    assertEquals(b.acvf, a.acvf)
+    assertEquals(b.innovationVariance, a.innovationVariance)
+    assertEquals(b.corrections, a.corrections)
+    (a.biasMatrices, b.biasMatrices) match
+      case (Some(x), Some(y)) =>
+        assertEquals((y.requestedLag, y.lag, y.residualDf), (x.requestedLag, x.lag, x.residualDf))
+        assert(x.byRun.zip(y.byRun).forall { case (p, q) => sameDMat(p, q) }, "bias matrices must be bit-identical")
+      case other => fail(s"expected bias matrices on both, got $other")
+
+  test("prepared and unprepared are bit-identical for a fallback run, including biasMatrices") {
+    val (x, r, l) = zeroRunCase
+    val options = ArFitOptions(order = ArOrder.Fixed(1), pooling = NoisePooling.Run, exactFirstAr1 = false)
+    val budget = CorrectionBudget.Fixed(4)
+    val a = NoiseFit.estimate(r, l, options, EstimationPolicy.DesignCorrected(x, budget)).fold(e => fail(e.message), identity)
+    val ready = AcvfBias.prepare(x, l, budget, 1).fold(e => fail(e.message), identity)
+    val b = NoiseFit.estimate(r, l, options, x, ready).fold(e => fail(e.message), identity)
+    assert(a.corrections.exists(_.isInstanceOf[RunCorrection.SolveFallback]))
+    assertSameFit(a, b)
+  }
+
+  test("prepared and unprepared are bit-identical for Auto order (gate-rejected short run included)") {
+    val c = FmriArBiasRFixture.fitCases.find(_.name == "runs_70_and_14_auto").get
+    val l = layoutFor(c.runLengths, c.censorOneBased)
+    val x = matrix(c.design)
+    val r = matrix(c.residuals)
+    val budget = CorrectionBudget.Fixed(c.correctionMaxLag)
+    val options = ArFitOptions(order = ArOrder.Auto(4), pooling = NoisePooling.Run, exactFirstAr1 = false)
+    val a = NoiseFit.estimate(r, l, options, EstimationPolicy.DesignCorrected(x, budget)).fold(e => fail(e.message), identity)
+    val ready = AcvfBias.prepare(x, l, budget, 4).fold(e => fail(e.message), identity)
+    val b = NoiseFit.estimate(r, l, options, x, ready).fold(e => fail(e.message), identity)
+    assertSameFit(a, b)
+  }
+
+  test("a nested design is refused: same rows and layout, different columns or entries") {
+    val ready = prepared
+    val fewerColumns = Matrix.tabulate(design.rows, design.cols - 1)((r, c) => design(r, c))
+    assertEquals(
+      ArEstimation.fitNoise(residuals, fixtureLayout, options, fewerColumns, ready).left.toOption,
+      Some(ArError.PreparedCorrectionDesignMismatch)
+    )
+    // One entry differing in the last bit is also a different design.
+    val tweaked = Matrix.tabulate(design.rows, design.cols)((r, c) =>
+      if r == 3 && c == 1 then java.lang.Math.nextUp(design(r, c)) else design(r, c)
+    )
+    assertEquals(
+      NoiseAcvf.estimate(residuals, fixtureLayout, 2, NoisePooling.Run, tweaked, ready).left.toOption,
+      Some(ArError.PreparedCorrectionDesignMismatch)
+    )
+    assert(ArEstimation.fitNoise(residuals, fixtureLayout, options, design, ready).isRight)
+  }
+
+  test("a prepared correction refuses a different AR order") {
+    val ready = prepared // prepared for order 2
+    val order3 = ArFitOptions(order = ArOrder.Fixed(3), pooling = NoisePooling.Run, exactFirstAr1 = false)
+    assertEquals(
+      ArEstimation.fitNoise(residuals, fixtureLayout, order3, design, ready).left.toOption,
+      Some(ArError.PreparedCorrectionOrderMismatch(2, 3))
+    )
+  }
+
+  test("the unprepared path validates residuals before building any bias matrix") {
+    // Orthogonality failure must win over a lag-budget problem that would otherwise surface first.
+    val notResiduals = Matrix.tabulate(residuals.rows, residuals.cols)((r, c) => math.sin(1.7 * r + c) + 2.0)
+    val result = ArEstimation.fitNoise(
+      notResiduals,
+      fixtureLayout,
+      options,
+      EstimationPolicy.DesignCorrected(design, CorrectionBudget.Fixed(0))
+    )
+    assert(result.left.exists(_.isInstanceOf[ArError.DesignResidualMismatch]), clues(result))
   }

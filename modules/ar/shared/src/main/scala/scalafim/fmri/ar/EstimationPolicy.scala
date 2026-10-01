@@ -53,6 +53,14 @@ enum CorrectionFallback:
   /** The raw lag-zero variance is not positive, so no correction was attempted. */
   case NonPositiveRawVariance(rawLagZero: Double)
 
+/** Why a run never reached the bias solve. */
+enum CorrectionSkip:
+  /** Fewer than two observations survive censoring in the run. */
+  case FewerThanTwoObservations
+
+  /** No lag-zero pair survives, so there is no autocovariance to correct. */
+  case NoLagZeroPairs
+
 /** Outcome of the conditioning gate for one run. */
 enum RunCorrection:
   /** No correction was requested for this run. */
@@ -68,3 +76,6 @@ enum RunCorrection:
     * run (see [[CorrectionFallback]]). The estimates are uncorrected, as in fmriAR, and are reported as such.
     */
   case SolveFallback(reason: CorrectionFallback)
+
+  /** The run has no usable data, so no solve was attempted and nothing was corrected. */
+  case NotAttempted(reason: CorrectionSkip)

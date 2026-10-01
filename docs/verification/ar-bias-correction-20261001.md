@@ -136,6 +136,32 @@ Mutation check on the new reporting (sha256 before and after, both restores veri
 2. Non-positive-variance check disabled in `correct`: 3 tests fail (the unit path and both
    reporting paths).
 
+## Review of 8fc0a5df: status hole, binding (follow-up)
+
+- **Status independent of units.** A run whose raw lag-zero variance is not positive has no
+  unit, so its fallback used to be lost and the gate's `Applied` was reported. Reproduced first
+  (per-run intercepts, run 2 residuals exactly zero: `Applied, Applied`), then fixed: per-run
+  status is now computed alongside the units (`NoiseAcvf.RunUnits`) and reads
+  `Applied, SolveFallback(NonPositiveRawVariance)`. Runs that never reach a solve are
+  `RunCorrection.NotAttempted(FewerThanTwoObservations | NoLagZeroPairs)`; gate-rejected and
+  uncorrected runs keep their gate status. Global pooling's pooled unit keeps only the first
+  run's fallback as a summary; the full picture is `corrections`.
+- **Binding is enforced.** Prepared overloads and `AcvfBias.bind` take the design. It must match
+  the prepared one by an exact fingerprint (rows, columns, FNV-1a over `doubleToLongBits` of every
+  entry; the rank it was prepared with is stored in the fingerprint, and is a function of those
+  entries so it is not recomputed per call): `PreparedCorrectionDesignMismatch` otherwise. A nested
+  design therefore cannot be substituted. The prepared value also records its budget and target
+  order, and `bind` refuses a different order (`PreparedCorrectionOrderMismatch`) for every
+  budget, even though a `Fixed` budget's matrices would not change.
+- **Fail fast.** The unprepared path computes the basis and validates orthogonality before any
+  bias matrix is built (a bad-residual error now wins over a later lag-budget error).
+- **Tests.** Prepared vs unprepared bit-identity with a fallback run and with Auto order (statuses
+  and bias matrices compared bitwise), nested/tweaked-design refusal, order refusal, `NotAttempted`.
+- **Counts excluding the reviewer's `ProbeTmpSuite`:** JVM 141 (142 including it); JS 139.
+- **Mutation** on the fix (`NoiseAcvf.scala` sha256
+  `23cb3e9e9f28051758d6bfcccbad46991990d9dee507226c8151a47335e81b66`, restore verified): taking
+  the fallback from the unit instead of the pooled result reopens the hole and fails 2 tests.
+
 ## Deliberate differences from R
 
 - Failures are typed `ArError`s or reported statuses, not warnings. A design leaving no
@@ -168,7 +194,7 @@ Mutation check on the new reporting (sha256 before and after, both restores veri
 
 Run through `python3 tools/build/sbt-warm`:
 
-- `arJVM/test`: 120 passed, 0 failed (includes a reviewer's print-only `ProbeTmpSuite`, left untouched and uncommitted).
+- `arJVM/test` (at the first follow-up commit): 120 passed, 0 failed (includes a reviewer's print-only `ProbeTmpSuite`, left untouched and uncommitted).
 - `arJS/test`: 117 passed, 0 failed.
 - `scalafimCompileAll`: exit 0, no warnings (the build is `-Werror`).
 - `scalafimTestAll` was not run.
