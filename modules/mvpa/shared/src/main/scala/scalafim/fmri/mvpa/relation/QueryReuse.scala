@@ -176,28 +176,28 @@ object LowRankRelationContraction:
     // neural vectors; no neural-by-neural matrix is admitted.
     val cells = 2L * (rank.toLong + pair.left.effectAxis.size + pair.right.effectAxis.size + pair.left.neuralAxis.size + pair.right.neuralAxis.size)
     if cells > budget.maximumWorkspaceCells then Left(EvidenceError.InvalidSource("low-rank contraction exceeds workspace budget"))
-    else if pair.left.origins.access == RelationAccess.OneShot || pair.right.origins.access == RelationAccess.OneShot then
-      Left(EvidenceError.InvalidSource("low-rank contraction requires owned replay"))
     else
-      val left = pair.left.estimate.andThen(leftFactor)
-      val right = pair.right.estimate.andThen(rightFactor)
-      val contraction = right.star.andThen(metric).andThen(left)
-      var total = 0.0
-      var correction = 0.0
-      var index = 0
-      var failure: Option[EvidenceError] = None
-      while index < rank && failure.isEmpty do
-        contraction(DMat.tabulate(rank, 1)((row, _) => if row == index then 1.0 else 0.0)) match
-          case Left(error) => failure = Some(EvidenceError.SemanticFailure(error))
-          case Right(value) =>
-            val next = value(index, 0)
-            val sum = total + next
-            correction += (if math.abs(total) >= math.abs(next) then (total - sum) + next else (next - sum) + total)
-            total = sum
-        index += 1
-      val result = total + correction
-      failure.toLeft(ScalarRelationStatistic(result)).flatMap: statistic =>
-        if statistic.value.isFinite then Right(statistic) else Left(EvidenceError.InvalidSource("low-rank contraction is non-finite"))
+      RelationAccess.admitImmediate(pair.left.origins.access).flatMap: _ =>
+        RelationAccess.admitImmediate(pair.right.origins.access).flatMap: _ =>
+          val left = pair.left.estimate.andThen(leftFactor)
+          val right = pair.right.estimate.andThen(rightFactor)
+          val contraction = right.star.andThen(metric).andThen(left)
+          var total = 0.0
+          var correction = 0.0
+          var index = 0
+          var failure: Option[EvidenceError] = None
+          while index < rank && failure.isEmpty do
+            contraction(DMat.tabulate(rank, 1)((row, _) => if row == index then 1.0 else 0.0)) match
+              case Left(error) => failure = Some(EvidenceError.SemanticFailure(error))
+              case Right(value) =>
+                val next = value(index, 0)
+                val sum = total + next
+                correction += (if math.abs(total) >= math.abs(next) then (total - sum) + next else (next - sum) + total)
+                total = sum
+            index += 1
+          val result = total + correction
+          failure.toLeft(ScalarRelationStatistic(result)).flatMap: statistic =>
+            if statistic.value.isFinite then Right(statistic) else Left(EvidenceError.InvalidSource("low-rank contraction is non-finite"))
 
 /** Equal-weight, all-distinct bilinear sum. Cancellation-prone coordinates
   * use direct ordered products instead of subtracting nearly equal totals.

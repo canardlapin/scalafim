@@ -166,6 +166,35 @@ partial assessment families are not silently upgraded to complete validation.
 Materialized feature bindings and preprocessing provenance remain declarations;
 native feature bindings are checked against their recorded source identity.
 
+
+### M2.07 relational consumer disposition (implementation handoff)
+
+Source base `7bbae8bfff2b982537102eee3e8db4ddd376fe1f`, isolated branch
+`work/umvpa-finish-20261001`. This records replacement surfaces; M2.09 still
+owns actual workflow cutover and deletion after independent M2.08 qualification.
+
+| Inventory | Replacement or explicit disposition | Preservation evidence |
+| --- | --- | --- |
+| R1 ordinary squared Euclidean/Euclidean/correlation geometry | Existing ordinary RDM numerical kernels remain useful; typed `SamplewiseGeometry` admits only ordinary nonnegative symmetric zero-diagonal dissimilarity with identified samples and provenance. This is distinct from signed crossvalidated geometry. | Existing RDM/RSA parity fixtures remain active; new samplewise fixtures preserve repeated-item cross-block exclusion and consistent reordering. |
+| R2/R5 crossvalidated RDM and operator RSA | `RelationRdm` consumes axis-bound pairings and an explicitly admitted metric; `RelationConsumers.cache/rsa` share owned geometry. `rsaDirect` consumes explicit native scoped replay and returns detached scores/metadata. | Signed RDM values, normalization, conditional-error/metric declarations, native TrialReadout dense oracle, lifetime and budget refusals. |
+| R3 Pearson/Spearman/partial RSA | `RelationRsaMethod` and method-owned `RelationRsaOutcome`; shared stable Pearson/average-tie-rank kernels; partial residualization uses Gale QR with explicit rank/residual tolerances. | Independent partial-correlation oracle, singular/zero residual cases, extreme scales/large offsets, exact label alignment and comparison-only invalidation. |
+| R4 samplewise RSA | `RelationConsumers.samplewise` over identified ordinary sample geometry and axis-bound item/block columns; explicit undefined row reasons. | Repeated items, cross-block entries, reordering, unknown-item/refit and provenance refusals. No partial row controls are implicitly invented. |
+| First-order and rectangular consumers | `firstOrderWithReceipt` over one admitted partition and estimable coefficient support; nominally typed `RectangularRelationModel` over exact left/right endpoint axes. | Shared relation dependencies, read-free support/resource refusals, 2x3 orientation/reversal, foreign-axis compiler refusal and typed missing effects. |
+| Model regression / `FeatureModelAnalysis` | M1.10 `AlderFeatureModel` is the explicit predictive replacement in both orientations; M1.08 general regression/selection remains distinct. M1.12 owns removal of its old orchestration. | M1.10/M1.11 independent metrics, coefficient and held-out noninterference fixtures; no RDM-only substitution. |
+
+Preparation/noise requirements that do not match fitted relations return typed
+`RefitRequired` with actual revisions. Query receipts separately bind geometry,
+models, controls, scorers, normalization and policies. A new model/control changes
+the comparison child; altered relation/preparation/noise/pairing/metric rejects
+geometry reuse. Scoped replay is minted only after provider acquisition and
+expires before cleanup; public constructors cannot transplant its witness.
+One-shot sources are not granted replay. Neither temporal independence nor
+residual precision is inferred from callable operators or a resource handle.
+The scoped provider qualification is for the declared matrix-backed native
+TrialReadout seam, not arbitrary streaming cursors.
+
+Evidence and source hashes: [M2.07 verification](../verification/umvpa-relational-consumers-20261001.md).
+
 ## Verification and future evidence commands
 
 M0.01 is a source and protocol audit. It makes no numerical passing claim. Its

@@ -302,67 +302,17 @@ object RdmScorer:
       Left(MvpaError.InvalidRdmInput(s"observed RDM items ${observed.items} != model RDM items ${model.items}"))
     else Right(())
 
-  private def pearsonValues(
-      observed: Vector[Double],
-      model: Vector[Double],
-      scorerName: String
-  ): Either[MvpaError, Double] =
-    if observed.length != model.length then
-      Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires equal-length distance vectors"))
-    else if observed.length < 2 then
-      Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires at least two distances"))
-    else
-      var observedSum = 0.0
-      var modelSum = 0.0
-      var i = 0
-      while i < observed.length do
-        val x = observed(i)
-        val y = model(i)
-        if !x.isFinite || !y.isFinite then
-          return Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires finite distances"))
-        observedSum += x
-        modelSum += y
-        i += 1
+  private def scoringFailure(error: RsaScoreFailure, scorerName: String): MvpaError = error match
+    case RsaScoreFailure.InsufficientData(_) => MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires at least two distances")
+    case RsaScoreFailure.NonFiniteInput(_) => MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires finite distances")
+    case RsaScoreFailure.ZeroVariance => MvpaError.InvalidRdmInput(s"$scorerName RDM scorer is undefined for zero-variance distances")
+    case RsaScoreFailure.ShapeMismatch(_, _) => MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires equal-length distance vectors")
 
-      val observedMean = observedSum / observed.length
-      val modelMean = modelSum / model.length
-      var numerator = 0.0
-      var observedSs = 0.0
-      var modelSs = 0.0
-      i = 0
-      while i < observed.length do
-        val xo = observed(i) - observedMean
-        val ym = model(i) - modelMean
-        numerator += xo * ym
-        observedSs += xo * xo
-        modelSs += ym * ym
-        i += 1
-
-      val denom = math.sqrt(observedSs * modelSs)
-      if denom <= 0.0 then Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer is undefined for zero-variance distances"))
-      else Right(numerator / denom)
+  private def pearsonValues(observed: Vector[Double], model: Vector[Double], scorerName: String): Either[MvpaError, Double] =
+    RsaScoreKernels.pearson(observed, model).left.map(scoringFailure(_, scorerName))
 
   private def averageRanks(values: Vector[Double], scorerName: String): Either[MvpaError, Vector[Double]] =
-    var i = 0
-    while i < values.length do
-      if !values(i).isFinite then
-        return Left(MvpaError.InvalidRdmInput(s"$scorerName RDM scorer requires finite distances"))
-      i += 1
-
-    val indexed = values.zipWithIndex.sortBy(_._1)
-    val ranks = new Array[Double](values.length)
-    var start = 0
-    while start < indexed.length do
-      var end = start + 1
-      while end < indexed.length && indexed(end)._1 == indexed(start)._1 do
-        end += 1
-      val rank = (start.toDouble + 1.0 + end.toDouble) / 2.0
-      var cursor = start
-      while cursor < end do
-        ranks(indexed(cursor)._2) = rank
-        cursor += 1
-      start = end
-    Right(ranks.toVector)
+    RsaScoreKernels.averageRanks(values).left.map(scoringFailure(_, scorerName))
 
   private def partialPearsonValues(
       observed: RdmVector,
@@ -569,68 +519,23 @@ object RowSimilarity:
         value <- pearson(observedRanks, modelRanks, length, name)
       yield value
 
-  private def pearson(
-      observed: Array[Double],
-      model: Array[Double],
-      length: Int,
-      scorerName: String
-  ): Either[MvpaError, Option[Double]] =
+  private def view(values: Array[Double], requestedLength: Int): IndexedSeq[Double] = new IndexedSeq[Double]:
+    def apply(index: Int): Double = values(index)
+    def length: Int = lengthLimit
+    private val lengthLimit = requestedLength
+
+  private def pearson(observed: Array[Double], model: Array[Double], length: Int, scorerName: String): Either[MvpaError, Option[Double]] =
     if length < 2 then Right(None)
-    else
-      var observedSum = 0.0
-      var modelSum = 0.0
-      var i = 0
-      while i < length do
-        val x = observed(i)
-        val y = model(i)
-        if !x.isFinite || !y.isFinite then
-          return Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity requires finite distances"))
-        observedSum += x
-        modelSum += y
-        i += 1
-
-      val observedMean = observedSum / length
-      val modelMean = modelSum / length
-      var numerator = 0.0
-      var observedSs = 0.0
-      var modelSs = 0.0
-      i = 0
-      while i < length do
-        val xo = observed(i) - observedMean
-        val ym = model(i) - modelMean
-        numerator += xo * ym
-        observedSs += xo * xo
-        modelSs += ym * ym
-        i += 1
-
-      val denom = math.sqrt(observedSs * modelSs)
-      if denom <= 0.0 then Right(None)
-      else Right(Some(numerator / denom))
+    else if length > observed.length || length > model.length then Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity length exceeds input"))
+    else RsaScoreKernels.pearson(view(observed, length), view(model, length)) match
+      case Right(value) => Right(Some(value))
+      case Left(RsaScoreFailure.ZeroVariance | RsaScoreFailure.InsufficientData(_)) => Right(None)
+      case Left(_) => Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity requires finite distances"))
 
   private def ranks(values: Array[Double], length: Int, scorerName: String): Either[MvpaError, Array[Double]] =
-    val indexed = new Array[(Double, Int)](length)
-    var i = 0
-    while i < length do
-      val value = values(i)
-      if !value.isFinite then
-        return Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity requires finite distances"))
-      indexed(i) = (value, i)
-      i += 1
-
-    val sorted = indexed.toVector.sortBy(_._1)
-    val out = new Array[Double](length)
-    var start = 0
-    while start < length do
-      var end = start + 1
-      while end < length && sorted(end)._1 == sorted(start)._1 do
-        end += 1
-      val rank = (start.toDouble + 1.0 + end.toDouble) / 2.0
-      var cursor = start
-      while cursor < end do
-        out(sorted(cursor)._2) = rank
-        cursor += 1
-      start = end
-    Right(out)
+    if length < 0 || length > values.length then Left(MvpaError.InvalidRdmInput(s"$scorerName row similarity length exceeds input"))
+    else RsaScoreKernels.averageRanks(view(values, length)).map(_.toArray)
+      .left.map(_ => MvpaError.InvalidRdmInput(s"$scorerName row similarity requires finite distances"))
 
 final case class RdmAnalysis(
     method: RdmMethod,
