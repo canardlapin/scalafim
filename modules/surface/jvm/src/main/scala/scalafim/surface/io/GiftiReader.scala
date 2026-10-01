@@ -21,6 +21,19 @@ object GiftiReader:
       source.close()
       input.close()
 
+  /** Parse raw `.gii` bytes, or an outer gzip stream detected by its magic bytes. */
+  def read(bytes: Array[Byte]): Either[GiftiError, GiftiDocument] =
+    val isGzip = bytes.length >= 2 && (bytes(0) & 0xff) == 0x1f && (bytes(1) & 0xff) == 0x8b
+    try
+      val input: InputStream =
+        if isGzip then new GZIPInputStream(new ByteArrayInputStream(bytes)) else new ByteArrayInputStream(bytes)
+      val source = Source.fromInputStream(input, "UTF-8")
+      try GiftiXmlParser.parse(source)
+      finally
+        source.close()
+        input.close()
+    catch case NonFatal(error) => Left(GiftiError.Xml(Option(error.getMessage).getOrElse(error.getClass.getSimpleName)))
+
   def parseString(xml: String): Either[GiftiError, GiftiDocument] =
     GiftiXmlParser.parseString(xml)
 
