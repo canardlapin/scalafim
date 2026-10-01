@@ -1,0 +1,108 @@
+{
+  "schema" : "templateflow4s.point-map/1",
+  "coordinates" : "RAS+ millimetres (ITK LPS converted with F = diag(-1,-1,1))",
+  "semantics" : "point map: maps point coordinates of the input frame to the output frame. This is the opposite direction of image resampling with the same transform.",
+  "applicationOrder" : "stages[0] is applied first: y = stages[n-1](...(stages[0](x)))",
+  "source" : {
+    "archivePath" : "tpl-SynthIn/tpl-SynthIn_from-SynthOut_mode-image_xfm.h5",
+    "sha256" : "22926633b2c0ca9bf348696c56ff9d32f84158af8466f8cc37d984d4338538ca",
+    "bytes" : 19600,
+    "catalogRevision" : null,
+    "itkTransformTypes" : [
+      "AffineTransform_double_3_3",
+      "DisplacementFieldTransform_double_3_3"
+    ],
+    "itkOrder" : "HDF5 TransformGroup order; ITK applies the last entry first"
+  },
+  "frames" : {
+    "input" : "SynthIn",
+    "output" : "SynthOut",
+    "derivation" : "TemplateFlow naming: tpl-SynthIn_from-SynthOut_mode-image resamples SynthOut images onto SynthIn; as a point map it sends SynthIn points to SynthOut points",
+    "quarantine" : null
+  },
+  "stages" : [
+    {
+      "index" : 0,
+      "kind" : "displacement",
+      "mapping" : "y = x + d(x)",
+      "file" : "stage-0-displacement.nii",
+      "sha256" : "26e86cd4df7a3a14eb4d70c2b68f04da3d19db852fcd9acd671f5922ee0a64eb",
+      "bytes" : 5392,
+      "dims" : [
+        5,
+        6,
+        7
+      ],
+      "voxelToRas" : [
+        [
+          -1.416000436094658,
+          0.5312216898102469,
+          -0.4893511659003957,
+          3.0
+        ],
+        [
+          -0.4242622870208673,
+          -1.9138466011227264,
+          0.16390677150275373,
+          -4.0
+        ],
+        [
+          -0.2548416700454642,
+          0.23450949585493142,
+          2.446154125701704,
+          -5.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "dtype" : "float64",
+      "byteOrder" : "little-endian",
+      "layout" : "NIfTI-1 single file, vox_offset 352, dim [5,nx,ny,nz,1,3,1,1], intent VECTOR (1007); component c of voxel (i,j,k) is element i + nx*(j + ny*(k + nz*c))",
+      "vectorFrame" : "RAS+ millimetres",
+      "interpolation" : "ITK DisplacementFieldTransform: d(x) = 0 unless -0.5 <= ci < n-0.5 on every axis (ci = continuous voxel index); inside that box, trilinear between voxel centres with neighbour indices clamped to [0, n-1]",
+      "itkSource" : {
+        "queueIndex" : 1,
+        "type" : "DisplacementFieldTransform_double_3_3"
+      }
+    },
+    {
+      "index" : 1,
+      "kind" : "affine",
+      "mapping" : "y = matrix * [x, 1] (row-major 4x4, RAS mm)",
+      "matrix" : [
+        [
+          1.0269298001694105,
+          -0.11820089258403589,
+          0.10683779084135615,
+          -2.043716887101881
+        ],
+        [
+          0.17129578229624298,
+          0.9217779159972721,
+          0.10800308530676514,
+          1.0893785855295248
+        ],
+        [
+          -0.13811118887162296,
+          -0.05493653221730848,
+          1.1099997432487805,
+          0.07270705138084121
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "itkSource" : {
+        "queueIndex" : 0,
+        "type" : "AffineTransform_double_3_3"
+      }
+    }
+  ]
+}
