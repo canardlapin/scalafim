@@ -76,6 +76,10 @@ lazy val alderKernelJVM = ProjectRef(alderBuild, "kernelJVM")
 lazy val alderKernelJS  = ProjectRef(alderBuild, "kernelJS")
 lazy val alderDataJVM   = ProjectRef(alderBuild, "dataJVM")
 lazy val alderDataJS    = ProjectRef(alderBuild, "dataJS")
+lazy val alderModelsLinearJVM = ProjectRef(alderBuild, "modelsLinearJVM")
+lazy val alderModelsLinearJS  = ProjectRef(alderBuild, "modelsLinearJS")
+lazy val alderRidgeGaleJVM    = ProjectRef(alderBuild, "ridgeGaleJVM")
+lazy val alderRidgeGaleJS     = ProjectRef(alderBuild, "ridgeGaleJS")
 
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
@@ -1169,8 +1173,8 @@ lazy val mvpaDataset =
     .settings(
       name := "scalafim-fmri-mvpa-dataset"
     )
-    .jvmConfigure(_.dependsOn(alderKernelJVM, alderDataJVM))
-    .jsConfigure(_.dependsOn(alderKernelJS, alderDataJS))
+    .jvmConfigure(_.dependsOn(alderKernelJVM, alderDataJVM, alderModelsLinearJVM, alderRidgeGaleJVM))
+    .jsConfigure(_.dependsOn(alderKernelJS, alderDataJS, alderModelsLinearJS, alderRidgeGaleJS))
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaDatasetJS  = mvpaDataset.js

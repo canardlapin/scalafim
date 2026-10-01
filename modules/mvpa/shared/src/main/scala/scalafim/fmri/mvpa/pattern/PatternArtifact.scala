@@ -189,7 +189,8 @@ final class PatternArtifact private (
     val trainingBinding: TrainingBinding, val trainingLineage: Vector[String], val diagnostics: PatternFitDiagnostics, val interpretation: InterpretationStatus
 ):
   /** Forward mean in the declared target coordinates. Centered artifacts return
-    * centered neural coordinates; intercept artifacts add the stored neural mean.
+    * centered neural coordinates. Intercept artifacts require target values
+    * already centered under targetCenteringReceipt and add the stored neural mean.
     */
   def forwardMean(targetValues: AxisValues[?]): Either[PatternArtifactError, AxisValues[?]] =
     factors.forwardMean(targetValues).flatMap: contribution =>
@@ -202,6 +203,8 @@ object PatternArtifact:
     val targetAxis = target match
       case TargetGeometry.Categorical(value) => value.targetAxis.descriptor
       case TargetGeometry.Continuous(value) => value.targetAxis.descriptor
+    // Defensive bound: valid categorical coding already implies q <= K-1,
+    // and valid factors already enforce r <= q.
     val categoricalTooHigh = target match
       case TargetGeometry.Categorical(value) => factors.componentAxis.size > value.conditions.size - 1
       case _ => false
