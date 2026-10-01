@@ -64,8 +64,19 @@ class DesignIdentitySuite extends munit.FunSuite:
       assert((BigInt(observed) - BigInt(expected)).abs <= 1, s"SPMG value differs by more than one ULP: $observed vs $expected")
     }
     val matrix = scalafim.fmri.hrf.linalg.Mat.unsafe(16, 2, singleMatrixBits.map(java.lang.Double.longBitsToDouble).toArray)
-    val snapshot = DesignSchema.validated(matrix, compiled.rows, compiled.columns, compiled.audit.copy(rankPreview = None)).toOption.get
-    assertEquals(snapshot.fingerprint.value, "design-schema/v2:b27079652d98235d")
+    // validated recomputes numerical rank evidence, which can also differ by
+    // platform. Fix every numerical identity input for this encoding golden;
+    // the real compiled schema above retains its authoritative computed rank.
+    val rank = RankPreviewEvidence(
+      RankPreviewMethod.PivotedQr, 16, 2, 2, RankToleranceConvention.ScaleAware,
+      java.lang.Double.longBitsToDouble(4388270555517082620L),
+      compiled.columnIds, compiled.columnIds, Vector.empty,
+      Vector(4599939738003495932L, 4596745012581787753L).map(java.lang.Double.longBitsToDouble),
+      Some(java.lang.Double.longBitsToDouble(4610130085635506603L))
+    )
+    val fixedAudit = compiled.audit.copy(rankPreview = Some(RankPreview.Available(rank)))
+    val snapshot = DesignFingerprint.from(matrix, compiled.rows, compiled.columns, fixedAudit)
+    assertEquals(snapshot.value, "design-schema/v2:b27079652d98235d")
   }
 
   // Literal matrix contents captured before the serialization repair. This is
