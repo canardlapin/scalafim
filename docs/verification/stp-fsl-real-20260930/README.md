@@ -58,7 +58,10 @@ Two tighter, independent guards preserve strictness: the Scala affine must match
 the independently generated exact float64 FSL mathematics at all 315 queries to
 1e-9 mm, and the native FLIRT coordinate ramps must match the predicted float32
 trace to 5e-5 mm. The larger native-resampler allowance therefore does not admit
-a corresponding error in Scala's affine interpretation.
+a corresponding error in Scala's affine interpretation. The predeclared 5e-5 mm
+trace allowance is about 3.28–6.55 float32 ulps at the full input coordinate-ramp
+magnitudes (111–151 mm), covering interpolation and voxel-to-world arithmetic;
+it is not a one-ulp rule at the smaller returned query coordinates.
 
 The first rejected FNIRT invocation (default masking schedule length mismatch)
 and the first Scala compile/type and numerical-gate failures remain in the
@@ -79,7 +82,11 @@ Fray card 118 retains the independent read-only review and its earlier
 objections. Those objections led to the analytic resampler bound and the two
 strict guards. A fresh verdict for the final source and receipt candidate is
 pending at receipt creation; no approval is inferred from an older revision.
-Review does not constitute a separate rerun of native tools or sbt.
+The subsequent s4 verdict approved exact candidate
+`72fa507dc490b61a5d60cc19a41dad48e846bf18` and confirmed its exact local
+`8e6eb4d1` integration. `review-final.json` records that source-bound verdict
+and the requested ulp clarification. Review does not constitute a separate
+rerun of native tools or sbt.
 
 Reproduce from separately acquired, hash-matching source files:
 

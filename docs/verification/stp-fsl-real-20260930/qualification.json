@@ -248,7 +248,14 @@
     "candidate": "1ed32a0fa36a8f47e55c46966da51f41bf924c8d",
     "reviewer": "phrf-claude-20260929",
     "method": "Independent read-only scientific evidence review, not a reviewer rerun of native commands or sbt.",
-    "status_at_receipt_creation": "pending fresh exact-candidate verdict; older verdicts are stale"
+    "status_at_receipt_creation": "pending fresh exact-candidate verdict; older verdicts are stale",
+    "subsequent_verdict": {
+      "status": "approve",
+      "candidate": "72fa507dc490b61a5d60cc19a41dad48e846bf18",
+      "subject_revision": 4,
+      "sequence": 880,
+      "record": "review-final.json"
+    }
   },
   "scientific_changed_file_sha256": {
     "docs/scenarios/manifest.json": "2ae27a6e52188b2595f483cab59c69f13e6883db12bf0b18c8ca9b553db4d5f7",
@@ -294,7 +301,7 @@
     "historical Jacobian/boundary caveats remain separate"
   ],
   "evidence_sha256": {
-    "README.md": "9883957800d7f600653b5b5cf87fcf9a9b2c00986ec019d03cfcd7571c4c9b72",
+    "README.md": "6772b83a4a2e9dde6b42e2f3d2b68be3d947ae52dfeb9b71c68d6391a878d9df",
     "compile-all.log": "82413a91b6c25bd58c95d8af711e7a2e4aa4512cae647ab1fe314981fb3a9b76",
     "compile-all.meta.json": "3a3dbd018e5896210433ae9a4c477b2c3470ecd83c54aa0837df9be900000e5a",
     "course-audit-disposition.json": "b8bacf4e91dd1aa236260de6f62188682548a4ce99ff3eaf0a93d9306f050be5",
@@ -314,6 +321,7 @@
     "pre-trace-js.meta.json": "48d98c9563a66f2e4fd64d48dc157ceb0724c449a8d1065c2b47d166c1b609df",
     "pre-trace-jvm.log": "86a8afb9363b0bb560670484390fcd9128b09f49f2832a05515e189e24549d89",
     "pre-trace-jvm.meta.json": "3cb639836b599d00bc6b30e1f8b602b6dfc2ebb508d0341436936db49850425d",
+    "review-final.json": "80b3843400e30ffdd0885171802371088cacd1b02fbed0c3dff730c726fc9552",
     "transform-js.log": "8a6dbfea9547710c148fdfb0f836ba91831a6796e6a69b86a1e2bc81a0050440",
     "transform-js.meta.json": "cf69b4acda59a48404d20b7e178604a97dfe021df2c5aba449cec67d45b84d4d",
     "transform-jvm.log": "ce3693264888b47c67e34ce915bdb7d16177b378a0bcd82721dd42996995b8bd",
