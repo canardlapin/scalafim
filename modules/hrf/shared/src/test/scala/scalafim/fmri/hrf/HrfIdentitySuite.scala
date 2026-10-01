@@ -127,3 +127,20 @@ class HrfIdentitySuite extends munit.FunSuite:
       assert(hrf.descriptor.derivation.nonEmpty)
     }
   }
+
+  test("automatic contractions and bound bases retain source identity rather than display names") {
+    val source = Hrfs.SPMG1.lag(Seconds(2.0))
+    val alias = Hrf.of("same source with another display", source.nbasis, source.span,
+      Some(source.descriptor), source.support)(source.apply)
+    val contracted = source.withCoefficients(Array(2.0))
+    assertEquals(contracted.descriptor.canonicalId, alias.withCoefficients(Array(2.0)).descriptor.canonicalId)
+    assertEquals(contracted.descriptor.components, Vector(source.descriptor))
+    assertNotEquals(contracted.descriptor.canonicalId, source.withCoefficients(Array(1.0)).descriptor.canonicalId)
+    val bound = HrfCombinators.bindBasis(Vector(source, Hrfs.SPMG1))
+    assertEquals(bound.descriptor.canonicalId,
+      HrfCombinators.bindBasis(Vector(alias, Hrfs.SPMG1)).descriptor.canonicalId)
+    assertNotEquals(bound.descriptor.canonicalId,
+      HrfCombinators.bindBasis(Vector(Hrfs.SPMG1, source)).descriptor.canonicalId)
+    assertNotEquals(bound.descriptor.canonicalId,
+      HrfCombinators.bindBasis(Vector(source, Hrfs.SPMG1), Some("explicit semantic family")).descriptor.canonicalId)
+  }
