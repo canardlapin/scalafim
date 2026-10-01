@@ -96,7 +96,7 @@ class DesignIdentitySuite extends munit.FunSuite:
     "fir" -> "design-schema/v2:8f2ee67682098523"
   )
 
-  // Literal outputs from the reviewed wire format; independently FNV-checked.
+  // Literal wire-format outputs; independently FNV-checked.
   private val columnIdGoldens = Map(
     "single" -> Vector(
       "event|task||cell:{condition=A}||basis(element=hrf-descriptor/v2%257Cfamily=known(5:spmg1)%257Cbasis=1%257Cspan=bits:4627448617123184640%257Cparams=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)%257Cderivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)%257Cpenalty=identity%257Cintegration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))%257Cderivation=none%257Ccomponents=sequence()%257Ccanonical%257C1%7C1%7Ccanonical)|Task|run:1|ordinal=1",
