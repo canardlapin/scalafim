@@ -72,7 +72,7 @@ final case class ShapePrior(mean: Vector[Double], precision: Vector[Double]):
   require(precision.length == dimension * dimension, "precision must be d x d row-major")
 
 /** Per-voxel work caps; every cap is a counter with a reported actual.
-  * `stationarityStepTolerance` is the largest projected Newton correction (in
+  * `stationarityStepTolerance` is the largest raw free Newton correction (in
   * chart coordinates) that counts as a budget-qualified approximation rather
   * than requiring another candidate evaluation.
   */
@@ -109,6 +109,8 @@ enum DecodeStatus:
   case AmbiguousCells
   case BudgetExceeded
   case NoAdmissibleNode
+  /** Nonstationary correction has no finite representable feasible proposal. */
+  case Stalled
 
 enum DecodeBudgetExit:
   case CandidateAttemptCap
@@ -138,6 +140,7 @@ private enum NewtonDirectionStatus:
   case Stationary
   case Direction
   case CurvatureNotPositive
+  case Stalled
 
 /** The shared bounded decoder: a hierarchical scan of the node bank (coarse
   * sub-grid, then the fine neighbourhood of the coarse best), a jet at the
@@ -457,21 +460,26 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     var continue = directionStatus == NewtonDirectionStatus.Direction
     if continue && budget.maxNewtonSteps == 0 then exhaust(DecodeBudgetExit.NewtonStepCap)
     while continue && steps < budget.maxNewtonSteps do
-      // clip to the box by scaling the step
+      // Stationarity was checked on the raw free correction. Removing outward
+      // bound components preserves descent for the SPD free Hessian; common
+      // scaling alone can otherwise erase a nonstationary coupled direction.
+      var usable = finiteValues(delta)
       var alpha = 1.0
       var i = 0
       while i < d do
+        val atLower = x(i) <= grid.chart.lower(i) + 1e-12
+        val atUpper = x(i) >= grid.chart.upper(i) - 1e-12
+        if (atLower && delta(i) < 0.0) || (atUpper && delta(i) > 0.0) then delta(i) = 0.0
         if delta(i) > 0.0 then alpha = math.min(alpha, (grid.chart.upper(i) - x(i)) / delta(i))
         if delta(i) < 0.0 then alpha = math.min(alpha, (grid.chart.lower(i) - x(i)) / delta(i))
         i += 1
-      var norm = 0.0
+      usable = usable && finite(alpha) && alpha > 0.0
       i = 0
       while i < d do
         delta(i) *= alpha
-        norm = math.max(norm, math.abs(delta(i)))
         i += 1
-      if norm <= budget.stationarityStepTolerance then
-        directionStatus = NewtonDirectionStatus.Stationary
+      if !usable || !finiteValues(delta) then
+        directionStatus = NewtonDirectionStatus.Stalled
         continue = false
       else
         var accepted = false
@@ -482,72 +490,83 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
           while i < d do
             trial(i) = grid.chart.clamp(i, x(i) + scale * delta(i))
             i += 1
-          // Keep one jet available to verify an accepted energy-only move. If
-          // no energy-only evaluation remains, use that final jet directly for
-          // this candidate; it then carries its own coherent terminal state.
-          val useJet = jetsUsed < budget.maxJets - 1 ||
-            (jetsUsed < budget.maxJets && exactUsed >= budget.maxExactEvaluations)
-          if !useJet && exactUsed >= budget.maxExactEvaluations then
-            exhaust(DecodeBudgetExit.RemainingEvaluationQuota)
+          var moved = false
+          i = 0
+          while i < d do
+            if trial(i) != x(i) then moved = true
+            i += 1
+          if !moved || !finiteValues(trial) then
+            // No objective call occurred, so this is not budget exhaustion.
+            // Numeric equality also treats signed zeros as one coordinate.
+            directionStatus = NewtonDirectionStatus.Stalled
             continue = false
           else
-            counters.candidateAttempts += 1
-            tries += 1
-            val value =
-              if useJet then
-                clearJet()
-                jetsUsed += 1
-                counters.jets += 1
-                if objective.jetAt(trial, jet) && finiteJet() then jet.energy + priorEnergy(trial) else Double.PositiveInfinity
-              else
-                clearJet()
-                exactUsed += 1
-                counters.exactEvaluations += 1
-                val data = objective.energyAt(trial, jet)
-                if finiteEnergyEvaluation(data) then data + priorEnergy(trial) else Double.PositiveInfinity
-            var equalStationary = false
-            if finite(value) && value == current then
-              if useJet then equalStationary = candidateStationary(trial)
-              else if jetsUsed < budget.maxJets then
-                // An energy-only equality must be checked by its reserved full
-                // jet before committing any coordinates or accepted state.
-                clearJet()
-                jetsUsed += 1
-                counters.jets += 1
-                counters.terminalVerifications += 1
-                equalStationary = objective.jetAt(trial, jet) && finiteJet() &&
-                  finite(jet.energy + priorEnergy(trial)) && jet.energy + priorEnergy(trial) == current &&
-                  candidateStationary(trial)
-            if finite(value) && (value < current || equalStationary) then
-              accepted = true
-              current = value
-              System.arraycopy(trial, 0, x, 0, d)
-              System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
-              steps += 1
-              counters.newtonSteps += 1
-              if useJet || equalStationary then
-                copyJetState(x)
-                directionStatus = newtonDirection(x, grad, hess, delta)
-                continue = directionStatus == NewtonDirectionStatus.Direction
-              else
-                terminalCurvature = false
-                continue = false
-                if jetsUsed < budget.maxJets then
+            // Keep one jet available to verify an accepted energy-only move. If
+            // no energy-only evaluation remains, use that final jet directly for
+            // this candidate; it then carries its own coherent terminal state.
+            val useJet = jetsUsed < budget.maxJets - 1 ||
+              (jetsUsed < budget.maxJets && exactUsed >= budget.maxExactEvaluations)
+            if !useJet && exactUsed >= budget.maxExactEvaluations then
+              exhaust(DecodeBudgetExit.RemainingEvaluationQuota)
+              continue = false
+            else
+              counters.candidateAttempts += 1
+              tries += 1
+              val value =
+                if useJet then
+                  clearJet()
+                  jetsUsed += 1
+                  counters.jets += 1
+                  if objective.jetAt(trial, jet) && finiteJet() then jet.energy + priorEnergy(trial) else Double.PositiveInfinity
+                else
+                  clearJet()
+                  exactUsed += 1
+                  counters.exactEvaluations += 1
+                  val data = objective.energyAt(trial, jet)
+                  if finiteEnergyEvaluation(data) then data + priorEnergy(trial) else Double.PositiveInfinity
+              var equalStationary = false
+              if finite(value) && value == current then
+                if useJet then equalStationary = candidateStationary(trial)
+                else if jetsUsed < budget.maxJets then
+                  // An energy-only equality must be checked by its reserved full
+                  // jet before committing any coordinates or accepted state.
                   clearJet()
                   jetsUsed += 1
                   counters.jets += 1
                   counters.terminalVerifications += 1
-                  if objective.jetAt(x, jet) && finiteJet() then
-                    current = jet.energy + priorEnergy(x)
-                    copyJetState(x)
-                    terminalCurvature = true
-                    directionStatus = newtonDirection(x, grad, hess, delta)
-                    if directionStatus == NewtonDirectionStatus.Direction then
-                      exhaust(DecodeBudgetExit.AcceptedEnergyOnlyNonstationaryTerminal)
-                  else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalVerificationFailed)
-                else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalJetQuota)
-            else
-              scale *= 0.5
+                  equalStationary = objective.jetAt(trial, jet) && finiteJet() &&
+                    finite(jet.energy + priorEnergy(trial)) && jet.energy + priorEnergy(trial) == current &&
+                    candidateStationary(trial)
+              if finite(value) && (value < current || equalStationary) then
+                accepted = true
+                current = value
+                System.arraycopy(trial, 0, x, 0, d)
+                System.arraycopy(jet.amplitudes, 0, betaAccepted, 0, c)
+                steps += 1
+                counters.newtonSteps += 1
+                if useJet || equalStationary then
+                  copyJetState(x)
+                  directionStatus = newtonDirection(x, grad, hess, delta)
+                  continue = directionStatus == NewtonDirectionStatus.Direction
+                else
+                  terminalCurvature = false
+                  continue = false
+                  if jetsUsed < budget.maxJets then
+                    clearJet()
+                    jetsUsed += 1
+                    counters.jets += 1
+                    counters.terminalVerifications += 1
+                    if objective.jetAt(x, jet) && finiteJet() then
+                      current = jet.energy + priorEnergy(x)
+                      copyJetState(x)
+                      terminalCurvature = true
+                      directionStatus = newtonDirection(x, grad, hess, delta)
+                      if directionStatus == NewtonDirectionStatus.Direction then
+                        exhaust(DecodeBudgetExit.AcceptedEnergyOnlyNonstationaryTerminal)
+                    else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalVerificationFailed)
+                  else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalJetQuota)
+              else
+                scale *= 0.5
         if !accepted && continue then
           exhaust(DecodeBudgetExit.CandidateAttemptCap)
           continue = false
@@ -609,6 +628,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       sdOk && budget.weakSdLimit.nonEmpty && (0 until d).exists(i => !(sd(i) <= budget.weakSdLimit(i)))
     val status =
       if budgetExceeded then DecodeStatus.BudgetExceeded
+      else if directionStatus == NewtonDirectionStatus.Stalled then DecodeStatus.Stalled
       else if fallback || directionStatus == NewtonDirectionStatus.CurvatureNotPositive then DecodeStatus.CurvatureNotPositive
       else if gap <= budget.ambiguityEnergy then DecodeStatus.AmbiguousCells
       else if onBoundary(x) then DecodeStatus.Boundary
