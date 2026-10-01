@@ -24,6 +24,7 @@ enum SoftLdaError:
   case TargetLengthMismatch(expected: Int, actual: Int)
   case FoldSampleMismatch(expected: Int, actual: Int)
   case TrialNuisanceLengthMismatch(expected: Int, actual: Int)
+  case FeatureAxisMismatch(expected: Vector[FeatureIndex], actual: Vector[FeatureIndex])
   case MissingPrediction(sample: SampleIndex)
   case InvalidTrainingFold(foldId: String, detail: String)
   case PatternFailure(foldId: String, detail: String)
@@ -39,6 +40,8 @@ enum SoftLdaError:
         s"soft-LDA fold sample count mismatch: expected $expected, got $actual"
       case TrialNuisanceLengthMismatch(expected, actual) =>
         s"trial-level nuisance row count mismatch: expected $expected, got $actual"
+      case FeatureAxisMismatch(expected, actual) =>
+        s"soft-LDA model feature axis ${expected.map(_.value)} != prediction axis ${actual.map(_.value)}"
       case MissingPrediction(sample) =>
         s"soft-LDA fold plan never predicted sample ${sample.value}"
       case InvalidTrainingFold(foldId, detail) =>
@@ -86,6 +89,24 @@ final case class SoftLdaCrossValidatedResult(
     "soft-LDA target argmax accuracy must be finite and in [0, 1]"
   )
 
+/** A single fold-local soft-LDA fit.  `predict` retains the feature-space
+  * evidence created during fitting, so callers can score another
+  * `PatternOperator` without materializing a trial-by-feature table or
+  * weakening the semantic spaces with an existential cast.
+  */
+final class SoftLdaModel private[scalafim] (
+    val classes: Vector[ClassLabel],
+    val targetKind: ClassMembershipKind,
+    val fit: LdaOperatorFit[?, ?, ?],
+    val trainingSamples: Vector[SampleIndex],
+    val featureIndices: Vector[FeatureIndex],
+    val trialNuisanceColumns: Int,
+    private val predictRows: PatternOperator => Either[SoftLdaError, DMat]
+):
+  def predict(data: PatternOperator): Either[SoftLdaError, ClassificationPrediction] =
+    if data.featureIndices != featureIndices then Left(SoftLdaError.FeatureAxisMismatch(featureIndices, data.featureIndices))
+    else predictRows(data).map(probabilities => ClassificationPrediction(classes, probabilities, data.sampleIndices))
+
 /** Fold-local soft LDA over a sample-by-feature linear operator.
   *
   * The trial table is adapted directly to `multivar.OpTable`; class and
@@ -120,46 +141,16 @@ object SoftLda:
           _ <- validateMasses(trainMembership, targets.classes, fold.id)
           train <- data.selectRows(fold.train).left.map(error => SoftLdaError.PatternFailure(fold.id, error.message))
           test <- data.selectRows(fold.test).left.map(error => SoftLdaError.PatternFailure(fold.id, error.message))
-          incidence <- ClassIncidence.fromSimplex(trainMembership).left.map(SoftLdaError.LdaFailure(fold.id, _))
           nuisance <- selectNuisance(config.trialNuisance, trainPositions, fold.id)
-          rows <- SpaceRef
-            .of(s"soft-lda-fold-$ordinal-train", SpaceRole.Samples, train.samples)
-            .left
-            .map(SoftLdaError.LdaFailure(fold.id, _))
-          features <- SpaceRef
-            .of(s"soft-lda-fold-$ordinal-features", SpaceRole.Observed, train.features)
-            .left
-            .map(SoftLdaError.LdaFailure(fold.id, _))
-          trainTable <- adapt(train, rows.evidence, features.evidence, fold.id, "train")
-          problem <- LdaProblem
-            .fromTable(
-              rows.evidence,
-              features.evidence,
-              trainTable,
-              incidence,
-              config.withinPolicy,
-              nuisance,
-              SemanticProvenance.source("mvpa-soft-lda")
-            )
-            .left
-            .map(SoftLdaError.LdaFailure(fold.id, _))
-          componentCount <- components(config.components, problem.maximumComponents, fold.id)
-          fit <- problem.fit(componentCount, config.objective).left.map(SoftLdaError.LdaFailure(fold.id, _))
-          testRowsSpace <- SpaceRef
-            .of(s"soft-lda-fold-$ordinal-test", SpaceRole.Samples, test.samples)
-            .left
-            .map(SoftLdaError.LdaFailure(fold.id, _))
-          testTable <- adapt(test, testRowsSpace.evidence, features.evidence, fold.id, "test")
-          trainScores <- fit.scores(problem.table).toDense.left.map(error => SoftLdaError.SemanticFailure(fold.id, error.message))
-          testScores <- fit.scores(testTable).toDense.left.map(error => SoftLdaError.SemanticFailure(fold.id, error.message))
-          probabilities <- classify(trainScores, testScores, trainMembership, fit, nuisance.fold(0)(_.columns), fold.id)
+          model <- fitMembership(train, targets.classes, trainMembership, targets.kind, config.copy(trialNuisance = nuisance), fold.id, ordinal)
+          prediction <- model.predict(test)
         yield
           var localRow = 0
           while localRow < testPositions.length do
             val outputRow = rowToOutput(testPositions(localRow))
             var klass = 0
             while klass < targets.classCount do
-              probabilitySums(outputRow, klass) = probabilitySums(outputRow, klass) + probabilities(localRow, klass)
+              probabilitySums(outputRow, klass) = probabilitySums(outputRow, klass) + prediction.probabilities(localRow, klass)
               klass += 1
             predictionCounts(outputRow) += 1
             localRow += 1
@@ -169,8 +160,8 @@ object SoftLda:
             test.sampleIndices,
             train.provenance,
             composedPatternInput = train.provenance.origin == PatternOperatorOrigin.Composed,
-            nuisance.fold(0)(_.columns),
-            fit
+            model.trialNuisanceColumns,
+            model.fit
           )
 
       var foldIndex = 0
@@ -214,6 +205,57 @@ object SoftLda:
                 )
               )
             )
+
+  /** Fits the numerical soft-LDA kernel once for one training population.
+    * Cross-validation and Alder both call this method; neither path invokes
+    * the other's evaluation lifecycle.
+    */
+  def fit(
+      train: PatternOperator,
+      targets: ClassMembership,
+      config: SoftLdaConfig,
+      foldId: String = "single-fit",
+      ordinal: Int = 0
+  ): Either[SoftLdaError, SoftLdaModel] =
+    if targets.samples != train.samples then Left(SoftLdaError.TargetLengthMismatch(train.samples, targets.samples))
+    else fitMembership(train, targets.classes, targets.values, targets.kind, config, foldId, ordinal)
+
+  private def fitMembership(
+      train: PatternOperator,
+      classes: Vector[ClassLabel],
+      membership: DMat,
+      targetKind: ClassMembershipKind,
+      config: SoftLdaConfig,
+      foldId: String,
+      ordinal: Int
+  ): Either[SoftLdaError, SoftLdaModel] =
+    if membership.rows != train.samples then Left(SoftLdaError.TargetLengthMismatch(train.samples, membership.rows))
+    else if config.trialNuisance.exists(_.samples != train.samples) then
+      Left(SoftLdaError.TrialNuisanceLengthMismatch(train.samples, config.trialNuisance.fold(0)(_.samples)))
+    else
+      for
+        _ <- validateMasses(membership, classes, foldId)
+        incidence <- ClassIncidence.fromSimplex(membership).left.map(SoftLdaError.LdaFailure(foldId, _))
+        rows <- SpaceRef.of(s"soft-lda-fold-$ordinal-train", SpaceRole.Samples, train.samples).left.map(SoftLdaError.LdaFailure(foldId, _))
+        features <- SpaceRef.of(s"soft-lda-fold-$ordinal-features", SpaceRole.Observed, train.features).left.map(SoftLdaError.LdaFailure(foldId, _))
+        trainTable <- adapt(train, rows.evidence, features.evidence, foldId, "train")
+        problem <- LdaProblem
+          .fromTable(rows.evidence, features.evidence, trainTable, incidence, config.withinPolicy, config.trialNuisance, SemanticProvenance.source("mvpa-soft-lda"))
+          .left.map(SoftLdaError.LdaFailure(foldId, _))
+        componentCount <- components(config.components, problem.maximumComponents, foldId)
+        ldaFit <- problem.fit(componentCount, config.objective).left.map(SoftLdaError.LdaFailure(foldId, _))
+        trainScores <- ldaFit.scores(problem.table).toDense.left.map(error => SoftLdaError.SemanticFailure(foldId, error.message))
+      yield
+        new SoftLdaModel(
+          classes, targetKind, ldaFit, train.sampleIndices, train.featureIndices, config.trialNuisance.fold(0)(_.columns),
+          test =>
+            for
+              testRows <- SpaceRef.of(s"soft-lda-fold-$ordinal-test", SpaceRole.Samples, test.samples).left.map(SoftLdaError.LdaFailure(foldId, _))
+              testTable <- adapt(test, testRows.evidence, features.evidence, foldId, "test")
+              testScores <- ldaFit.scores(testTable).toDense.left.map(error => SoftLdaError.SemanticFailure(foldId, error.message))
+              probabilities <- classify(trainScores, testScores, membership, ldaFit, config.trialNuisance.fold(0)(_.columns), foldId)
+            yield probabilities
+        )
 
   private def adapt[Rows <: SemanticSpace, Feature <: SemanticSpace](
       patterns: PatternOperator,

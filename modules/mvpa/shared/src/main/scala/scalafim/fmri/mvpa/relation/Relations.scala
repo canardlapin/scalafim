@@ -118,6 +118,8 @@ final class RelationSet[P <: SemanticSpace, E <: SemanticSpace, N <: SemanticSpa
     val partitionAxis: AxisDescriptor,
     val effects: SpaceEvidence[E],
     val effectAxis: AxisDescriptor,
+    /** Stable effect keys preserve the frozen declared effect order for RDMs. */
+    val effectKeys: Vector[String],
     val neural: SpaceEvidence[N],
     val neuralAxis: AxisDescriptor,
     val relations: Vector[Relation[E, N]]
@@ -132,5 +134,8 @@ object RelationSet:
   ): Either[EvidenceError, RelationSet[partitions.Id, effects.Id, neural.Id]] =
     if relations.isEmpty then Left(EvidenceError.InvalidAxis("relations", "must contain at least one partition"))
     else if relations.length != partitions.size then Left(EvidenceError.ShapeMismatch("partition relations", partitions.size, relations.length))
-    else Right(new RelationSet(partitions.evidence, partitions.descriptor, effects.evidence, effects.descriptor,
-      neural.evidence, neural.descriptor, relations))
+    else
+      val keys = (0 until effects.size).toVector.map(effects.index.stableKeyAt).foldLeft[Either[EvidenceError, Vector[String]]](Right(Vector.empty)):
+        case (acc, next) => for values <- acc; key <- next yield values :+ key
+      keys.map(effectKeys => new RelationSet(partitions.evidence, partitions.descriptor, effects.evidence, effects.descriptor, effectKeys,
+        neural.evidence, neural.descriptor, relations))

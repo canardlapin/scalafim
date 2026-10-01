@@ -18,8 +18,7 @@ module is the narrow bridge between the two:
   when every sample has a class label and exposes a validated `Response`
   directly;
 - `PatternTable` represents any row-by-feature numeric product, including
-  fit-result coefficient maps or trialwise beta maps, without depending on the
-  `fit` module;
+  fit-result coefficient maps or trialwise beta maps;
 - `FeatureMapping` distinguishes voxel-backed dataset features from abstract
   feature ids while preserving global indices, so atlas regions and searchlight
   plans remain compatible after dataset selection;
@@ -95,6 +94,24 @@ derived beta rows as long as both refer to the same voxel id space.
 This module has no JVM-only dependencies and is built for both JVM and
 Scala.js. JVM-specific readers should stay in `dataset` or higher-level
 workflow modules; they can produce `FmriSeries` values and then use this bridge.
+
+Identified predictive entry points live in `dataset.predictive`:
+`AlderCorrelationCentroid`, `AlderRidgeLda`, `AlderCrossDecoding`,
+`AlderOperatorRidge`, `AlderFeatureModel`, and `AlderSoftLda`. Each completes
+an actual Alder fit on explicitly selected training rows and returns its named
+result with fit and validation receipts. Operator ridge and SoftLda retain
+operator products; they never request a dense trial-by-feature table. SoftLda
+uses the single-fit kernel in `mvpa-fit`, which is the additional module edge.
+
+Feature-model designs require ordered item keys matching the sample axis and
+explicit neural-column names. Both directions retain training-only sample-SD
+standardization, coefficients, repeated exact assessment means, metrics and the
+optional prediction payload. Cross-domain heads require separate sample domains
+and an exact feature correspondence; native read receipts are checked against
+that correspondence. A materialized feature axis and source-only preparation
+remain caller declarations. Probability normalization supplies no calibration
+claim. Legacy engine/example deletion is the separate M1.12 cutover packet;
+the caller map is in `docs/verification/umvpa-m1-10-caller-map-20261001.tsv`.
 
 Run it directly with:
 

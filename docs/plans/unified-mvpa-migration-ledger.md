@@ -134,6 +134,38 @@ No private compatibility bridge is registered at M0.01. If one becomes
 unavoidable, its owning row must name the exact declaration and callers, the
 next-milestone expiry, and the approving packet before it is merged.
 
+### M1.10 predictive caller disposition (implementation handoff)
+
+This inventory records the M1.10 replacement seam; it does not close any
+ledger row or claim that a legacy consumer has been deleted. The new
+`AlderCorrelationCentroid` runs ordinary exact-once validation through an
+Alder `Learner`, records each fitted provider artifact, and deliberately keeps
+correlation-centroid scoring separate from Swift's training-fitted scaling and
+prior-weighted score. `AlderCrossDecoding.correlationCentroid` is a distinct
+source-fit/target-serve estimand: it requires different identified sample axes,
+an exact ordered feature binding, a source-only (or identity) preparation declaration
+whose receipt is the actual source-root fingerprint, and
+returns target-keyed rows without turning domain generalization into pooled CV.
+
+| Legacy consumer family | M1.10 disposition | Required cutover/qualification evidence |
+| --- | --- | --- |
+| `CorrelationCentroidClassifier`, ordinary classifier CV | `AlderCorrelationCentroid` | Correlation row-offset law, class-column order, finite degenerate softmax, and JVM/JS lifecycle tests. |
+| `CrossDomainDataset`, `CrossDecodingDesign`, `CrossDomainClassifierAnalysis`, `NaiveCrossDecodingScanner` | `AlderCrossDecoding` has correlation, Swift and ridge-LDA source-fit/target-test heads; M1.12 applies each head to identified paired measurements | Separate source/target axes, native feature-binding refusal, source-only preparation declaration, target-keyed evaluation receipts and source-only prediction parity. |
+| `RidgeLdaClassifier`, ordinary/searchlight/one-shot callers | `AlderRidgeLda`; existing pooled-covariance kernel is reused inside the role-restricted Alder learner | Frozen fold probability parity, penalty-bound fit identity, class-column order and axis refusal. |
+| `FeatureModelAnalysis` regional/searchlight callers | `AlderFeatureModel`; M1.08 `AlderRidgeRegression` remains the distinct general regression/selection surface | Both orientations, unchanged standardized coefficients, scalar independent oracle, held-out noninterference, repeated exact item averaging, all existing metrics, optional output and named columns. |
+| `OperatorRidge` and `CrossValidatedOperatorRidgeAnalysis` | `AlderOperatorRidge` fits restricted operators through Alder; no dense `F` adapter | Hard/simplex target fits, explicit class-score alignment, coefficient/prediction parity, existing convergence/application receipts and held-out noninterference. |
+| `SoftLda` and `CrossValidatedSoftLdaAnalysis` | `AlderSoftLda` delegates to the extracted single-fit Multivar/Gale kernel through actual Alder fit completion | Existing component and nuisance semantics, fit receipts, frozen probabilities/metrics, hard/simplex targets and pre-read feature-axis refusal. |
+
+The exact source/test/example/benchmark/export inventory is
+`docs/verification/umvpa-m1-10-caller-map-20261001.tsv`. Every matching path is
+mapped to these replacement heads or retained as a numerical kernel/reference
+fixture. M1.12 remains the separately planned engine/example cutover and
+deletion packet; M1.11 is independent qualification. The bounded heads accept
+identified exact validation (FeatureModel also accepts repeated exact passes);
+partial assessment families are not silently upgraded to complete validation.
+Materialized feature bindings and preprocessing provenance remain declarations;
+native feature bindings are checked against their recorded source identity.
+
 ## Verification and future evidence commands
 
 M0.01 is a source and protocol audit. It makes no numerical passing claim. Its

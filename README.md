@@ -51,6 +51,7 @@ cross-compiled sbt build.
 - Multivariate perturbation inference now lives in standalone [`multivar-inference`](https://github.com/canardlapin/multivar/tree/main/modules/inference); ScalaFIM keeps only downstream domain adapters.
 - `connectivity`: shared typed connectivity algebra, locus-backed node/edge domains and masks, explicit vectorization orders, static/dynamic containers, and inspectable estimator plans.
 - `mvpa-dataset`: typed synchronous-reader and effectful opened-dataset adapters into MVPA pattern sources.
+- `mvpa-artifacts`: bounded, fitter-independent pattern profiles with verified external Float64 payloads over existing archive IO; durable fitter checkpoints are unsupported.
 - `mvpa-spatial`: adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans.
 - `group`: second-level (group) analysis — group GLM, fixed/random-effects meta-analysis, group contrasts, and FDR over subjects-by-samples effect maps.
 - `fmri-workflow`: typed, payload-free study plans and catalogs that compose BIDS ingest, first-level fitting, durable results, group analysis, and scheduler-neutral orchestration.

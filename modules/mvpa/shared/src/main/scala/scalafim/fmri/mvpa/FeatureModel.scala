@@ -195,7 +195,7 @@ object FeatureModelAnalysis:
           row += 1
         Right(out.result())
 
-private final case class StandardizedRidgeMap(
+private[mvpa] final case class StandardizedRidgeMap(
     sourceMeans: Array[Double],
     sourceScales: Array[Double],
     targetMeans: Array[Double],
@@ -220,7 +220,7 @@ private final case class StandardizedRidgeMap(
         out.result()
       }
 
-private object StandardizedRidgeMap:
+private[mvpa] object StandardizedRidgeMap:
   def fit(source: DMat, target: DMat, lambda: Double): Either[MvpaError, StandardizedRidgeMap] =
     if source.rows != target.rows then Left(MvpaError.InvalidFeatureModelInput(s"source rows ${source.rows} != target rows ${target.rows}"))
     else if source.rows < 2 then Left(MvpaError.InvalidFeatureModelInput("ridge feature model requires at least two training rows"))
@@ -311,7 +311,7 @@ private object ColumnStats:
       col += 1
     Right(ColumnStats(means, scales))
 
-private final case class FeatureModelMetricSet(
+private[mvpa] final case class FeatureModelMetricSet(
     patternCorrelation: Double,
     patternDiscrimination: Double,
     patternRankPercentile: Double,
@@ -340,7 +340,7 @@ private final case class FeatureModelMetricSet(
       )
     )
 
-private object FeatureModelMetrics:
+private[mvpa] object FeatureModelMetrics:
   def compute(prediction: FeatureModelPrediction): Either[MvpaError, FeatureModelMetricSet] =
     val predicted = prediction.predicted
     val observed = prediction.observed
