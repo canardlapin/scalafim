@@ -2,7 +2,8 @@ package scalafim.fmri.mvpa.pattern
 
 import gale.linalg.{Cholesky, DMat, QR}
 import gale.spectral.{SingularOrder, SingularSelection, Svds}
-import scalafim.fmri.mvpa.{AxisRef, EvidenceError}
+import resample4s.core.Injection
+import scalafim.fmri.mvpa.{AxisMember, AxisRef, EvidenceError, ReindexingLeg}
 
 enum ResidualCovarianceError:
   case Shape(field: String, expectedRows: Int, expectedColumns: Int, actualRows: Int, actualColumns: Int)
@@ -252,6 +253,17 @@ final class ResidualCovariance[N] private (
           ordinals.flatMap(ordinal => (0 until rank).map(component => loadings(ordinal * rank + component))).toArray,
           rank)
       yield restricted
+
+  /** Exact ordinal hard restriction avoids matching the member-hash keys of a
+    * reindexed child axis against this fitted parent axis. */
+  def restrict[P <: multivar.core.SemanticSpace, K](by: ReindexingLeg[P, K, Injection]): Either[ResidualCovarianceError, ResidualCovariance[AxisMember[K]]] =
+    if by.parentAxis != neuralAxis.descriptor then Left(ResidualCovarianceError.IncompatibleRoi("parent", neuralAxis.descriptor.stableKey, by.parentAxis.stableKey))
+    else if by.child.size == 0 then Left(ResidualCovarianceError.EmptyRoi)
+    else
+      val ordinals = by.ordinals.toVector
+      if ordinals.exists(value => value < 0 || value >= features) then Left(ResidualCovarianceError.IncompatibleRoi("ordinal", neuralAxis.descriptor.stableKey, by.child.descriptor.stableKey))
+      else ResidualCovariance.fromArrays(by.child, ordinals.map(diagonal(_)).toArray,
+        ordinals.flatMap(ordinal => (0 until rank).map(component => loadings(ordinal * rank + component))).toArray, rank)
 
   /** A general measurement `L` maps `Psi` to `L D L^T + (L U)(L U)^T`, whose
     * first term is not diagonal in general, so the diagonal-plus-low-rank

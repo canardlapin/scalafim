@@ -46,6 +46,21 @@ final case class CalibratedComponentScores[R](values: AxisValues[R])
 final case class PosteriorComponentScores[R](values: AxisValues[R])
 final case class PosteriorTargetMean[Q](values: AxisValues[Q], priorIdentity: ValueIdentity, coordinateReceipt: String)
 final case class ClassPosterior(keys: Vector[String], logScores: Vector[Double], probabilities: Vector[Double])
+/** Prediction-only factor carrier.  Unlike PatternFactors it deliberately
+  * permits a hard local neural restriction with fewer rows than components. */
+final class PatternPredictionFactors[N, Q, R] private[pattern] (
+    val neuralAxis: AxisRef[N], val targetAxis: AxisRef[Q], val componentAxis: AxisRef[R],
+    val neuralByComponent: DMat, val targetByComponent: DMat
+)
+object PatternPredictionFactors:
+  private[pattern] def checked[N, Q, R](neural: AxisRef[N], target: AxisRef[Q], components: AxisRef[R],
+      a: DMat, c: DMat): Either[PatternPredictionError, PatternPredictionFactors[N, Q, R]] =
+    if components.size <= 0 || neural.size <= 0 || target.size <= 0 then Left(PatternPredictionError.Invalid("prediction axes must be nonempty"))
+    else if a.rows != neural.size || a.cols != components.size || c.rows != target.size || c.cols != components.size then
+      Left(PatternPredictionError.AxisMismatch("prediction factor shapes"))
+    else if !ResidualCovariance.finite(a) || !ResidualCovariance.finite(c) then Left(PatternPredictionError.Invalid("prediction factors are nonfinite"))
+    else Right(new PatternPredictionFactors(neural, target, components, a, c))
+
 final class RawNeuralFilters[N, R] private[pattern] (
     val neuralAxis: AxisRef[N], val componentAxis: AxisRef[R], val neuralByComponent: DMat
 )
@@ -60,13 +75,13 @@ final case class PatternPredictionWork(plannedWorkspaceCells: Long, retainedFilt
   * excluding provider factorization scratch and object overhead.
   */
 final class PatternPrediction[N, Q, R] private[pattern] (
-    val artifact: PatternArtifact, val factors: PatternFactors[N, Q, R],
+    val artifact: PatternArtifact, val factors: PatternPredictionFactors[N, Q, R],
     val covariance: ResidualCovariance[N], val rawFilters: RawNeuralFilters[N, R],
     val gram: DMat, val work: PatternPredictionWork,
     private val calibrated: Either[PatternPredictionError, Cholesky],
     private val prior: Option[TargetPriorCovariance[Q]],
     private val priorComponent: Option[Cholesky], private val posteriorComponent: Option[Cholesky],
-    private val whitenedTarget: Option[DMat]
+    private val whitenedTarget: Option[DMat], val effectiveCentering: CenteringPolicy
 ):
   /** Content identity for attached predictive heads, independent of mutable
     * display labels and including the explicit prior and numerical policy.
@@ -94,7 +109,7 @@ final class PatternPrediction[N, Q, R] private[pattern] (
     matrix(factors.targetByComponent)
     values(covariance.diagonalValues)
     matrix(covariance.loadingsMatrix)
-    artifact.centering match
+    effectiveCentering match
       case CenteringPolicy.CenteredBeforeFit(x, y) => writer.string("centered"); writer.string(x); writer.string(y)
       case CenteringPolicy.ExplicitIntercept(offset, receipt) => writer.string("intercept"); values(offset.values); writer.string(receipt)
     artifact.target match
@@ -123,7 +138,7 @@ final class PatternPrediction[N, Q, R] private[pattern] (
   private def input(values: AxisValues[?]): Either[PatternPredictionError, DMat] =
     if values.axis.descriptor != factors.neuralAxis.descriptor then Left(PatternPredictionError.AxisMismatch("neural input"))
     else
-      val centered = artifact.centering match
+      val centered = effectiveCentering match
         case CenteringPolicy.CenteredBeforeFit(_, _) => values.values
         case CenteringPolicy.ExplicitIntercept(offset, _) => values.values.zip(offset.values).map((x, mean) => x - mean)
       if centered.exists(!_.isFinite) then Left(PatternPredictionError.Invalid("centered input is nonfinite"))
@@ -169,9 +184,16 @@ final class PatternPrediction[N, Q, R] private[pattern] (
       estimate = decoder * white
       result <- AxisValues(factors.targetAxis, Vector.tabulate(estimate.rows)(row => estimate(row, 0))).left.map(PatternPredictionError.Artifact.apply)
     yield PosteriorTargetMean(result, targetPrior.valueIdentity, targetPrior.coordinateReceipt)
+  private[pattern] def priorCovariance: Option[TargetPriorCovariance[Q]] = prior
   def encode(values: AxisValues[?]): Either[PatternPredictionError, AxisValues[N]] =
-    artifact.forwardMean(values).left.map(PatternPredictionError.Artifact.apply).flatMap(result =>
-      AxisValues(factors.neuralAxis, result.values).left.map(PatternPredictionError.Artifact.apply))
+    if values.axis.descriptor != factors.targetAxis.descriptor then Left(PatternPredictionError.AxisMismatch("encoding target"))
+    else
+      val projected = factors.targetByComponent.t * DMat.dense(values.values.size, 1, values.values)
+      val contribution = factors.neuralByComponent * projected
+      val offset = effectiveCentering match
+        case CenteringPolicy.CenteredBeforeFit(_, _) => Vector.fill(factors.neuralAxis.size)(0.0)
+        case CenteringPolicy.ExplicitIntercept(value, _) => value.values
+      AxisValues(factors.neuralAxis, Vector.tabulate(factors.neuralAxis.size)(row => contribution(row, 0) + offset(row))).left.map(PatternPredictionError.Artifact.apply)
   def classify(values: AxisValues[?]): Either[PatternPredictionError, ClassPosterior] = artifact.target match
     case TargetGeometry.Continuous(_) => Left(PatternPredictionError.UnsupportedHead("classification requires categorical coding"))
     case TargetGeometry.Categorical(target) =>
@@ -209,38 +231,61 @@ object PatternPrediction:
     else matrix.cholesky(CholeskyOptions(tolerance))
       .left.map(error => PatternPredictionError.Factorization(stage, error.toString))
 
+  private def plannedWork[N, Q, R](factors: PatternPredictionFactors[N, Q, R], artifact: PatternArtifact,
+      covariance: ResidualCovariance[N], policy: PatternPredictionPolicy): Either[PatternPredictionError, Long] =
+    val p = factors.neuralAxis.size
+    val q = factors.targetAxis.size
+    val r = factors.componentAxis.size
+    val plan = covariance.precisionWork(math.max(1, r))
+    val classes = artifact.target match
+      case TargetGeometry.Categorical(value) => value.conditions.size
+      case _ => 0
+    val cells = BigInt(64) * p * r + BigInt(64) * q * r + BigInt(64) * r * r +
+      BigInt(16) * q * q + BigInt(p) * covariance.rank + BigInt(64) * classes * (r + 1L) + plan.map(_.peakCellsUpperBound).getOrElse(Long.MaxValue)
+    if cells > policy.maximumWorkspaceCells || BigInt(p) * r > Int.MaxValue || BigInt(q) * q > Int.MaxValue || BigInt(classes) * r > Int.MaxValue ||
+        plan.exists(value => BigInt(value.largestDenseRows) * value.largestDenseColumns > Int.MaxValue) then
+      Left(PatternPredictionError.Budget(cells, policy.maximumWorkspaceCells))
+    else plan.left.map(PatternPredictionError.Covariance.apply).map(_ => cells.toLong)
+
   def fromArtifact[N, Q, R](neural: AxisRef[N], target: AxisRef[Q], components: AxisRef[R], artifact: PatternArtifact,
       covariance: ResidualCovariance[N], targetPrior: Option[TargetPriorCovariance[Q]] = None,
       policy: PatternPredictionPolicy = PatternPredictionPolicy.strict): Either[PatternPredictionError, PatternPrediction[N, Q, R]] =
     val stored = artifact.factors
-    val p = neural.size
-    val q = target.size
-    val r = components.size
-    val covariancePlan = covariance.precisionWork(math.max(1, r))
-    val conditionCount = artifact.target match
-      case TargetGeometry.Categorical(value) => value.conditions.size
-      case _ => 0
     val covarianceAdmitted = artifact.residualCovariance match
       case ResidualCovarianceCapability.DiagonalPlusLowRank(axis, rank) => axis == neural.descriptor && rank == covariance.rank
       case _ => false
-    val cells = BigInt(64) * p * r + BigInt(64) * q * r + BigInt(64) * r * r +
-      BigInt(16) * q * q + BigInt(p) * covariance.rank + BigInt(64) * conditionCount * (r + 1L) + covariancePlan.map(_.peakCellsUpperBound).getOrElse(Long.MaxValue)
+    if stored.neuralAxis.descriptor != neural.descriptor || covariance.neuralAxis.descriptor != neural.descriptor then
+      Left(PatternPredictionError.AxisMismatch("neural artifact coordinates"))
+    else if stored.targetAxis.descriptor != target.descriptor || stored.componentAxis.descriptor != components.descriptor then
+      Left(PatternPredictionError.AxisMismatch("target/component artifact coordinates"))
+    else if !covarianceAdmitted then Left(PatternPredictionError.Invalid("artifact must declare the supplied diagonal-plus-low-rank covariance capability"))
+    else
+      for
+        factors <- PatternPredictionFactors.checked(neural, target, components, stored.neuralByComponent, stored.targetByComponent)
+        _ <- plannedWork(factors, artifact, covariance, policy)
+        _ <- PatternFactors(neural, target, components, stored.neuralByComponent, stored.targetByComponent, stored.gauge, stored.coordinateGauge)
+          .left.map(PatternPredictionError.Artifact.apply)
+        heads <- buildHeads(artifact, factors, covariance, targetPrior, policy, artifact.centering)
+      yield heads
+
+  private[pattern] def buildHeads[N, Q, R](artifact: PatternArtifact, factors: PatternPredictionFactors[N, Q, R],
+      covariance: ResidualCovariance[N], targetPrior: Option[TargetPriorCovariance[Q]], policy: PatternPredictionPolicy,
+      effectiveCentering: CenteringPolicy): Either[PatternPredictionError, PatternPrediction[N, Q, R]] =
+    val neural = factors.neuralAxis
+    val p = neural.size
+    val r = factors.componentAxis.size
     val categorical = artifact.target match
       case TargetGeometry.Categorical(_) => true
       case _ => false
-    if stored.neuralAxis.descriptor != neural.descriptor || covariance.neuralAxis.descriptor != neural.descriptor then
-      Left(PatternPredictionError.AxisMismatch("neural artifact coordinates"))
-    else if stored.targetAxis.descriptor != target.descriptor || stored.componentAxis.descriptor != components.descriptor ||
-        targetPrior.exists(_.axis.descriptor != target.descriptor) then Left(PatternPredictionError.AxisMismatch("target/component artifact coordinates"))
-    else if !covarianceAdmitted then Left(PatternPredictionError.Invalid("artifact must declare the supplied diagonal-plus-low-rank covariance capability"))
+    val interceptAxisValid = effectiveCentering match
+      case CenteringPolicy.ExplicitIntercept(values, _) => values.axis.descriptor == neural.descriptor
+      case _ => true
+    if covariance.neuralAxis.descriptor != neural.descriptor || !interceptAxisValid then Left(PatternPredictionError.AxisMismatch("effective neural head coordinates"))
+    else if targetPrior.exists(_.axis.descriptor != factors.targetAxis.descriptor) then Left(PatternPredictionError.AxisMismatch("target prior coordinates"))
     else if categorical && targetPrior.nonEmpty then Left(PatternPredictionError.Invalid("categorical priors are class probabilities; do not substitute a Gaussian target covariance"))
-    else if cells > policy.maximumWorkspaceCells || BigInt(p) * r > Int.MaxValue || BigInt(q) * q > Int.MaxValue || BigInt(conditionCount) * r > Int.MaxValue ||
-        covariancePlan.exists(plan => BigInt(plan.largestDenseRows) * plan.largestDenseColumns > Int.MaxValue) then
-      Left(PatternPredictionError.Budget(cells, policy.maximumWorkspaceCells))
     else
       for
-        factors <- PatternFactors(neural, target, components, stored.neuralByComponent, stored.targetByComponent, stored.gauge, stored.coordinateGauge)
-          .left.map(PatternPredictionError.Artifact.apply)
+        cells <- plannedWork(factors, artifact, covariance, policy)
         filters <- covariance.applyPrecision(factors.neuralByComponent).left.map(PatternPredictionError.Covariance.apply)
         unsymmetric = factors.neuralByComponent.t * filters
         gram = DMat.tabulate(r, r)((row, col) => 0.5 * (unsymmetric(row, col) + unsymmetric(col, row)))
@@ -257,7 +302,7 @@ object PatternPrediction:
                 QROptions(rankTolerance = Some(0.0))).left.map(error => PatternPredictionError.Factorization("whitened target decoder", error.toString))
               _ <- if ResidualCovariance.finite(decoderTranspose) then Right(()) else Left(PatternPredictionError.Invalid("nonfinite whitened target decoder"))
             yield Some((priorFactor, posteriorFactor, decoderTranspose.t))
-      yield new PatternPrediction(artifact, factors, covariance, new RawNeuralFilters(neural, components, filters), gram,
-        PatternPredictionWork(cells.toLong, p.toLong * r, r, policy.relativePivotTolerance, "no added jitter or ridge"),
+      yield new PatternPrediction(artifact, factors, covariance, new RawNeuralFilters(neural, factors.componentAxis, filters), gram,
+        PatternPredictionWork(cells, p.toLong * r, r, policy.relativePivotTolerance, "no added jitter or ridge"),
         factor(gram, "calibrated component precision (singular filters are unsupported)", policy), targetPrior,
-        posterior.map(_._1), posterior.map(_._2), posterior.map(_._3))
+        posterior.map(_._1), posterior.map(_._2), posterior.map(_._3), effectiveCentering)
