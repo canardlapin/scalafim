@@ -34,6 +34,11 @@ enum ArError:
   case NonInvertibleMaCoefficients(maxRootMagnitude: Double)
   case StationarityCheckFailed(detail: String)
   case UnableToEstimateArModel
+  case DesignRowMismatch(designRows: Int, residualRows: Int)
+  case NonFiniteDesign(row: Int, column: Int, value: Double)
+  case DesignResidualMismatch(relativeProjection: Double, tolerance: Double)
+  case InvalidCorrectionLag(lag: Int)
+  case NoResidualDegreesOfFreedom(rows: Int, designRank: Int)
 
   def message: String =
     this match
@@ -98,3 +103,14 @@ enum ArError:
         s"could not verify AR stationarity: $detail"
       case UnableToEstimateArModel =>
         "unable to estimate AR model"
+      case DesignRowMismatch(designRows, residualRows) =>
+        s"design has $designRows rows but residuals have $residualRows"
+      case NonFiniteDesign(row, column, value) =>
+        s"design entry at row $row, column $column must be finite, got $value"
+      case DesignResidualMismatch(relativeProjection, tolerance) =>
+        s"residuals are not orthogonal to the design (relative projection $relativeProjection exceeds $tolerance); " +
+          "design-corrected estimation requires the ordinary least-squares residuals of this design"
+      case InvalidCorrectionLag(lag) =>
+        s"correction lag budget must be at least 1, got $lag"
+      case NoResidualDegreesOfFreedom(rows, designRank) =>
+        s"design of rank $designRank leaves no residual degrees of freedom in $rows rows"

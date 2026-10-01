@@ -65,9 +65,10 @@ object ArEstimation:
 
   private val RelativePositiveDefiniteMargin = 1e-6
 
-  private final case class PooledAutocovariance(
+  private[ar] final case class PooledAutocovariance(
       sums: Array[Double],
-      pairCounts: Array[Long]
+      pairCounts: Array[Long],
+      correction: Option[DMat] = None
   ):
     require(sums.length == pairCounts.length, "autocovariance sums and pair counts must align")
     require(sums.nonEmpty, "pooled autocovariance must contain lag zero")
@@ -76,6 +77,22 @@ object ArEstimation:
       var lag = pairCounts.length - 1
       while lag > 0 && pairCounts(lag) == 0L do lag -= 1
       ArLag.unsafe(lag)
+
+    /** Pair-count autocovariances over every lag that has pairs, with the design-bias system solved over that
+      * full budget when a correction matrix is present. Correcting before truncating matters: the correction at
+      * length L assumes gamma beyond L is zero, so correcting a short vector discards what makes it work.
+      */
+    private lazy val correctedFull: (Vector[Double], Boolean) =
+      correction match
+        case None => (Vector.empty, false)
+        case Some(matrix) =>
+          var available = 0
+          while available < pairCounts.length && pairCounts(available) > 0L do available += 1
+          val raw = Vector.tabulate(available)(lag => sums(lag) / pairCounts(lag).toDouble)
+          if raw.isEmpty || !raw.head.isFinite || raw.head <= 0.0 then (raw, false)
+          else AcvfBias.correct(raw, matrix)
+
+    def correctionApplied: Boolean = correctedFull._2
 
     def through(order: ArOrderValue): Either[ArError, Autocovariances] =
       val required = order.value + 1
@@ -86,7 +103,9 @@ object ArEstimation:
           if pairCounts(lag) == 0L then
             return Left(ArError.InsufficientAutocovariances(required, lag))
           lag += 1
-        val values = Vector.tabulate(required)(lag => sums(lag) / pairCounts(lag).toDouble)
+        val values =
+          if correction.isDefined then correctedFull._1.take(required)
+          else Vector.tabulate(required)(lag => sums(lag) / pairCounts(lag).toDouble)
         Autocovariances(values).map(stabilizeAutocovariances)
 
   private final case class RunEstimate(
@@ -100,24 +119,41 @@ object ArEstimation:
       segments: Vector[TimeSegment],
       options: ArFitOptions = ArFitOptions()
   ): Either[ArError, WhiteningPlan] =
+    fitNoise(residuals, segments, options, EstimationPolicy.Raw)
+
+  def fitNoise(
+      residuals: DMat,
+      segments: Vector[TimeSegment],
+      options: ArFitOptions,
+      policy: EstimationPolicy
+  ): Either[ArError, WhiteningPlan] =
     NoiseEstimationLayout
       .allRows(segments, residuals.rows)
-      .flatMap(layout => fitNoise(residuals, layout, options))
+      .flatMap(layout => fitNoise(residuals, layout, options, policy))
 
   def fitNoise(
       residuals: DMat,
       layout: NoiseEstimationLayout,
       options: ArFitOptions
   ): Either[ArError, WhiteningPlan] =
+    fitNoise(residuals, layout, options, EstimationPolicy.Raw)
+
+  def fitNoise(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      policy: EstimationPolicy
+  ): Either[ArError, WhiteningPlan] =
     for
       _ <- layout.coveredSegments.validateRows(residuals.rows)
       _ <- validateFinite(residuals)
       _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+      correction <- resolveCorrection(residuals, layout, options.order.maxRequested, policy)
       plan <-
         options.pooling match
           case NoisePooling.Global =>
             for
-              estimates <- estimateByRun(residuals, layout, options)
+              estimates <- estimateByRun(residuals, layout, options, correction)
               coefficients <- poolRunCoefficients(estimates, options.stationarity)
               plan <-
                 WhiteningPlan.globalWithInitialCondition(
@@ -129,7 +165,7 @@ object ArEstimation:
             yield plan
 
           case NoisePooling.Run =>
-            estimateByRun(residuals, layout, options).flatMap { estimates =>
+            estimateByRun(residuals, layout, options, correction).flatMap { estimates =>
               WhiteningPlan.byRunWithInitialCondition(
                 estimates.map(_.coefficients),
                 layout.whiteningSegments,
@@ -139,10 +175,30 @@ object ArEstimation:
             }
     yield plan
 
+  /** Per-run bias matrices for the policy; `None` leaves a run on the raw estimator. */
+  private[ar] def resolveCorrection(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      targetOrder: Int,
+      policy: EstimationPolicy
+  ): Either[ArError, PreparedCorrection] =
+    policy match
+      case EstimationPolicy.Raw =>
+        Right(uncorrected(layout))
+      case EstimationPolicy.DesignCorrected(design, budget) =>
+        AcvfBias.prepare(design, residuals, layout, budget, targetOrder)
+
+  private[ar] def uncorrected(layout: NoiseEstimationLayout): PreparedCorrection =
+    PreparedCorrection(
+      AcvfBiasMatrices(0, 0, 0, Vector.empty),
+      Vector.fill(layout.runCount)(RunCorrection.Uncorrected)
+    )
+
   private def estimateByRun(
       residuals: DMat,
       layout: NoiseEstimationLayout,
-      options: ArFitOptions
+      options: ArFitOptions,
+      correction: PreparedCorrection
   ): Either[ArError, Vector[RunEstimate]] =
     val estimates = Vector.newBuilder[RunEstimate]
     var run = 0
@@ -152,7 +208,7 @@ object ArEstimation:
       if observations <= 1 then
         estimates += RunEstimate(ArmaCoefficients.Iid, observations)
       else
-        estimateForSegmentsUnchecked(residuals, segments, options) match
+        estimateForSegmentsUnchecked(residuals, segments, options, correction.usable(run)) match
           case Left(error) => return Left(error)
           case Right(estimate) =>
             estimates += RunEstimate(estimate.coefficients, observations)
@@ -195,13 +251,19 @@ object ArEstimation:
   private def estimateForSegmentsUnchecked(
       residuals: DMat,
       segments: Vector[TimeSegment],
-      options: ArFitOptions
+      options: ArFitOptions,
+      correction: Option[DMat] = None
   ): Either[ArError, YuleWalkerEstimate] =
     val observations = effectiveObservations(segments)
     if observations <= 1 then
       Right(YuleWalkerEstimate(ArmaCoefficients.Iid, 0.0))
     else
-      pooledAutocovariance(residuals, segments, options.order.maxRequestedOrder).flatMap { pooled =>
+      // Solving the bias system needs a wider tail than the order being fitted, so accumulate through the
+      // correction budget and then truncate to the requested order.
+      val requested = options.order.maxRequestedOrder
+      val accumulate =
+        correction.fold(requested)(matrix => ArOrderValue.unsafe(math.max(requested.value, matrix.rows - 1)))
+      pooledAutocovariance(residuals, segments, accumulate, correction).flatMap { pooled =>
         val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, pooled.maxLag.value))
         options.order match
           case ArOrder.Fixed(order) =>
@@ -336,10 +398,11 @@ object ArEstimation:
   private def effectiveObservations(segments: Vector[TimeSegment]): Int =
     segments.map(_.length).sum
 
-  private def pooledAutocovariance(
+  private[ar] def pooledAutocovariance(
       residuals: DMat,
       segments: Vector[TimeSegment],
-      maxOrder: ArOrderValue
+      maxOrder: ArOrderValue,
+      correction: Option[DMat] = None
   ): Either[ArError, PooledAutocovariance] =
     if segments.isEmpty then Left(ArError.NoEstimableRows)
     else
@@ -374,9 +437,9 @@ object ArEstimation:
             lag += 1
           col += 1
       }
-      Right(PooledAutocovariance(sums, pairCounts))
+      Right(PooledAutocovariance(sums, pairCounts, correction))
 
-  private def validateFinite(residuals: DMat): Either[ArError, Unit] =
+  private[ar] def validateFinite(residuals: DMat): Either[ArError, Unit] =
     var row = 0
     while row < residuals.rows do
       var col = 0
