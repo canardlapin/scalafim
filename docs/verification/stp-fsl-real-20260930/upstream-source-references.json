@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://git.fmrib.ox.ac.uk/fsl/flirt/-/raw/master/flirt.cc",
+    "retrieved_sha256": "4d22b6562234656bee93363fdca9d709c0e1ad5ead56e5e89094bef4051b5e65",
+    "role": "Explanatory upstream source, not a claim of identical build-source commit. Exact native binaries/packages are pinned in the fixture."
+  },
+  {
+    "url": "https://git.fmrib.ox.ac.uk/fsl/newimage/-/raw/master/newimagefns.cc",
+    "retrieved_sha256": "cb8550ad245f44f07b1013f96042ab9024198c1a8416f21f0ae2a1f2d158fd24",
+    "role": "Explanatory upstream source, not a claim of identical build-source commit. Exact native binaries/packages are pinned in the fixture."
+  },
+  {
+    "url": "https://git.fmrib.ox.ac.uk/fsl/flirt/-/raw/master/img2imgcoord.cc",
+    "retrieved_sha256": "02dcdfcc0fc8173f149d4e9f61928f42b729bd6a8cf57987983b1736009f7cc1",
+    "role": "Explanatory upstream source, not a claim of identical build-source commit. Exact native binaries/packages are pinned in the fixture."
+  }
+]

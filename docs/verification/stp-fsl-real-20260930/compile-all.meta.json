@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T23:46:17.757593+00:00",
+  "finished_utc": "2026-09-30T23:51:00.529848+00:00",
+  "duration_seconds": 282.76887,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-p707-fsl-real-20260930/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/p707-fsl-real-compile-all",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 22834
+}

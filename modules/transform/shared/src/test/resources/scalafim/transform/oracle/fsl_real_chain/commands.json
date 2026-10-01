@@ -1,0 +1,359 @@
+[
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "example_func.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-dof",
+      "6",
+      "-cost",
+      "normmi",
+      "-omat",
+      "example_func2highres.mat",
+      "-out",
+      "example_func2highres.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 8.552437874954194
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "highres.nii.gz",
+      "-ref",
+      "standard.nii.gz",
+      "-dof",
+      "12",
+      "-cost",
+      "corratio",
+      "-omat",
+      "highres2standard.mat",
+      "-out",
+      "highres2standard.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 19.118332499987446
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/fnirt",
+      "--in=highres.nii.gz",
+      "--ref=standard.nii.gz",
+      "--aff=highres2standard.mat",
+      "--cout=highres2standard_coef.nii.gz",
+      "--fout=highres2standard_warp.nii.gz",
+      "--iout=highres2standard_fnirt.nii.gz",
+      "--subsamp=4,2,1",
+      "--miter=5,5,5",
+      "--warpres=10,10,10",
+      "--infwhm=4,2,0",
+      "--reffwhm=4,2,0",
+      "--lambda=300,75,30",
+      "--intmod=global_linear",
+      "--estint=1,1,1",
+      "--applyrefmask=1,1,1",
+      "--applyinmask=1,1,1",
+      "--jacrange=0.2,5"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 49.78511737496592
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/convertwarp",
+      "--ref=standard.nii.gz",
+      "--premat=example_func2highres.mat",
+      "--warp1=highres2standard_coef.nii.gz",
+      "--out=chain_abs.nii.gz",
+      "--absout"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.8791084999684244
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_coord0.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=highres2standard_coef.nii.gz",
+      "--premat=example_func2highres.mat",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=premat_coord0.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.45701154199196026
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_coord1.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=highres2standard_coef.nii.gz",
+      "--premat=example_func2highres.mat",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=premat_coord1.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.4064904999686405
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_coord2.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=highres2standard_coef.nii.gz",
+      "--premat=example_func2highres.mat",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=premat_coord2.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.5443563329754397
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_support.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=highres2standard_coef.nii.gz",
+      "--premat=example_func2highres.mat",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=premat_support.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.33975741697940975
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=example_func.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=highres2standard_coef.nii.gz",
+      "--premat=example_func2highres.mat",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=premat_image.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.3344904580153525
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_coord0.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=chain_abs.nii.gz",
+      "--abs",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=composed_coord0.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.40216850000433624
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_coord1.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=chain_abs.nii.gz",
+      "--abs",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=composed_coord1.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.3952760830288753
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_coord2.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=chain_abs.nii.gz",
+      "--abs",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=composed_coord2.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.4079994999920018
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=func_support.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=chain_abs.nii.gz",
+      "--abs",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=composed_support.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.33719399996334687
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/applywarp",
+      "--in=example_func.nii.gz",
+      "--ref=standard.nii.gz",
+      "--warp=chain_abs.nii.gz",
+      "--abs",
+      "--interp=trilinear",
+      "--datatype=float",
+      "--out=composed_image.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.4628521249978803
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "func_coord0.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-init",
+      "example_func2highres.mat",
+      "-applyxfm",
+      "-interp",
+      "trilinear",
+      "-noresampblur",
+      "-datatype",
+      "float",
+      "-out",
+      "flirt_coord0.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 1.7745799170224927
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "func_coord1.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-init",
+      "example_func2highres.mat",
+      "-applyxfm",
+      "-interp",
+      "trilinear",
+      "-noresampblur",
+      "-datatype",
+      "float",
+      "-out",
+      "flirt_coord1.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 1.5501719579915516
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "func_coord2.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-init",
+      "example_func2highres.mat",
+      "-applyxfm",
+      "-interp",
+      "trilinear",
+      "-noresampblur",
+      "-datatype",
+      "float",
+      "-out",
+      "flirt_coord2.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 1.8258878749911673
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "func_support.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-init",
+      "example_func2highres.mat",
+      "-applyxfm",
+      "-interp",
+      "trilinear",
+      "-noresampblur",
+      "-datatype",
+      "float",
+      "-out",
+      "flirt_support.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 1.4594023329555057
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "example_func.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-init",
+      "example_func2highres.mat",
+      "-applyxfm",
+      "-interp",
+      "trilinear",
+      "-noresampblur",
+      "-datatype",
+      "float",
+      "-out",
+      "flirt_image.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 1.3791600000113249
+  }
+]

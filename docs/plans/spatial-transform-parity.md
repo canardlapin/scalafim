@@ -1129,6 +1129,43 @@ The historical synthetic fMRIPrep border caveat remains, as do broader real FSL
 and volume -> fsaverage -> fsLR commutativity acceptance. P7.07 stays open.
 Evidence and reproduction: `docs/verification/stp-demo1-20260930/README.md`.
 
+### P7.07 real FSL interior qualification (2026-09-30)
+
+`transform.fsl-real-demo1-interior.v1` adds newly fitted native FSL
+`example_func -> highres -> standard` registrations on the matching, source-bound
+CC0 demo1 sub-01 task-rest BOLDref/T1 pair and public masks. Its standard is
+the separately licensed, pinned TemplateFlow MNI152NLin2009cAsym res-02 template.
+This is real-data interpretation/composition qualification, rather than
+reproduction of historical FEAT registrations or anatomical accuracy evidence.
+The FSL course candidate was rejected at source admission because its stated
+terms limit the data to educational use.
+
+The two comparison windows were fixed before the first native attempt and never
+changed: 693 standard and 315 highres queries, with every query required to have
+full native support. Nineteen successful native commands fit FLIRT/FNIRT and
+produce direct-prematrix, composed-field and affine-leg coordinate/image
+references. Complete coefficients, exact native-input headers, bit-preserving
+crops and native package/source/fixture hashes support portable JVM/JS checks.
+The independent closure audit additionally verifies the public images times
+their masks against every native input data bit.
+
+The composed-point limit remains 2e-4 mm. Native FLIRT's float32 repeated
+y-coordinate additions require a separately derived accumulation bound, mapped
+through the complete oblique source affine and capped at 0.001 mm. The scalar
+bounds use image gradients and each route's coordinate bound. The scenario
+also requires exact float64 affine mathematics at 1e-9 mm and a separately
+predicted native float32 trace at 5e-5 mm on all 315 affine queries. It
+requires one clean `Pass`; no frozen query is excluded and no caveat is accepted.
+Evidence and exact acceptance receipts are in
+`docs/verification/stp-fsl-real-20260930/qualification.json`.
+
+Historical Jacobian/boundary caveats and the real volume -> fsaverage -> fsLR
+commutativity acceptance remain separate and unresolved. P7.07 stays open.
+Verification: transform JVM 177/177 and JS 147/147; both emit clean `Pass`.
+All-module compilation on both platforms passed without warnings; production
+and build bytes are unchanged between that run and the final tested source.
+Evidence and reproduction: `docs/verification/stp-fsl-real-20260930/README.md`.
+
 ### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
 
 - **Linked cursor.** `scalafim.image.world.WorldLink[L, R]` is the typed map

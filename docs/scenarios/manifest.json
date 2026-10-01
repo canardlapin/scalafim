@@ -744,6 +744,30 @@
       ]
     },
     {
+      "id": "transform.fsl-real-demo1-interior.v1",
+      "tier": "workflow_parity",
+      "module": "transform",
+      "suite_class": "scalafim.transform.scenarios.FslRealChainScenarioSuite",
+      "suite_path": "modules/transform/shared/src/test/scala/scalafim/transform/scenarios/FslRealChainScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": [
+        "jvm",
+        "js"
+      ],
+      "reference": {
+        "kind": "native_fsl_real_demo1_registration_and_composition",
+        "description": "New native FLIRT functional->T1 and FLIRT/FNIRT T1->MNI152NLin2009cAsym fits on the pinned CC0 ds002748 v1.0.5 sub-01 task-rest BOLDref/T1 pair and licensed TemplateFlow res-02 template. Fixed 693 standard and315 highres interior queries compare coordinate ramps, convertwarp absolute field, and real image sampling using direct premat and composed routes. Exact full-source headers, complete coefficients, bit-preserving image/output crops, native commands, package locks and SHA256 closure. No excluded query, historical FEAT reproduction, registration accuracy, whole-domain or Jacobian claim."
+      },
+      "allowed_statuses": [
+        "pass"
+      ],
+      "acceptance_commands": [
+        "sbt transformJVM/test",
+        "sbt transformJS/test"
+      ],
+      "caveats": []
+    },
+    {
       "id": "surface.volume-to-template-mesh-chain.v1",
       "tier": "workflow_parity",
       "module": "surface",
