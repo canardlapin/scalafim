@@ -6,7 +6,8 @@ import cats.data.EitherT
 import scalafim.fmri.mvpa.pattern.PatternArtifact
 
 enum AlderPatternArtifactError:
-  case TrainingScopeMismatch
+  case ExpectedTrainingReceiptMismatch
+  case ArtifactTrainingBindingMismatch
 
 /** Carries a ScalaFIM pattern artifact through Alder's real fitted lifecycle.
   * It intentionally makes no predictive or inferential qualification claim.
@@ -24,7 +25,8 @@ object AlderPatternArtifact:
     * does not predict an outcome or authorize fitting on assessment rows.
     */
   def attach[M](data: NonEmptyData[Use.Fit, Example[Array[Double], Array[Double], M]], artifact: PatternArtifact, expectedTraining: DataFingerprint)(using context: FitContext): FitResult[Id, AlderPatternArtifactError, AttachedPatternArtifact] =
-    if data.fingerprint != expectedTraining || artifact.trainingBinding.fingerprintDigest != data.fingerprint.digest then EitherT.leftT(context.stagePath.failure(AlderPatternArtifactError.TrainingScopeMismatch))
+    if data.fingerprint != expectedTraining then EitherT.leftT(context.stagePath.failure(AlderPatternArtifactError.ExpectedTrainingReceiptMismatch))
+    else if artifact.trainingBinding.fingerprintDigest != data.fingerprint.digest then EitherT.leftT(context.stagePath.failure(AlderPatternArtifactError.ArtifactTrainingBindingMismatch))
     // This attaches an experimental domain artifact to an Alder receipt. Its
     // domain lineage remains declared provenance; it is not a fitted-source proof.
     else

@@ -95,6 +95,13 @@ class PatternArtifactSuite extends FunSuite:
     assertEquals(error(PatternFactors(neural, target, components, singular, DMat.eye(2), evidence)), PatternArtifactError.InvalidPolicy("Gale numerical rank admission"))
     assertEquals(error(PatternFactors(neural, target, components, DMat.eye(2), singular, evidence)), PatternArtifactError.InvalidPolicy("Gale numerical rank admission"))
     assertEquals(error(PatternFactors(neural, target, components, DMat.eye(2), DMat.eye(2), GaugeEvidence.VerifiedByGaleGramCholesky(0.0))), PatternArtifactError.InvalidPolicy("relative rank tolerance"))
+    // Reciprocal component rescaling leaves A C-transpose unchanged.
+    val rescaled = right(PatternFactors(neural, target, components,
+      DMat.dense(2, 2, Vector(1.0, 0.0, 0.0, 1e-7)),
+      DMat.dense(2, 2, Vector(1.0, 0.0, 0.0, 1e7)), evidence))
+    val rescaledMean = right(rescaled.forwardMean(right(AxisValues(target, Vector(4.0, -3.0)))))
+    assertEqualsDouble(rescaledMean.values(0), 4.0, 1e-12)
+    assertEqualsDouble(rescaledMean.values(1), -3.0, 1e-12)
     // Unverified factors remain explicitly experimental rather than acquiring rank evidence.
     assertEquals(right(PatternFactors(neural, target, components, singular, singular, GaugeEvidence.PendingNumericalCheck)).gauge, GaugeEvidence.PendingNumericalCheck)
 
@@ -104,6 +111,12 @@ class PatternArtifactSuite extends FunSuite:
     assertEquals(error(PatternFactors(f.neural, f.target, two, DMat.eye(2), DMat.dense(1, 2, Vector(1.0, 2.0)), GaugeEvidence.PendingNumericalCheck)), PatternArtifactError.InvalidRank(2, 1))
     assertEquals(error(PatternFactors(f.neural, f.target, f.components, DMat.dense(2, 1, Vector(Double.NaN, 1.0)), DMat.dense(1, 1, Vector(1.0)), GaugeEvidence.PendingNumericalCheck)), PatternArtifactError.NonFinite("A/C"))
     assertEquals(error(PatternFactors(f.neural, f.target, f.components, DMat.dense(2, 1, Vector(1.0, 1.0)), DMat.dense(1, 1, Vector(Double.PositiveInfinity)), GaugeEvidence.PendingNumericalCheck)), PatternArtifactError.NonFinite("A/C"))
+    assertEquals(error(PatternFactors(f.neural, f.target, f.components,
+      DMat.dense(2, 1, Vector(1.0, 1.0)), DMat.dense(1, 1, Vector(1.0)),
+      GaugeEvidence.DeclaredSolverDiagnostic(" ", 1))), PatternArtifactError.InvalidPolicy("declared rank diagnostic"))
+    assertEquals(error(PatternFactors(f.neural, f.target, f.components,
+      DMat.dense(2, 1, Vector(1.0, 1.0)), DMat.dense(1, 1, Vector(1.0)),
+      GaugeEvidence.DeclaredSolverDiagnostic("solver", 2))), PatternArtifactError.InvalidPolicy("declared rank diagnostic"))
 
   test("categorical prior, centering, coding rank and axis refusals each have one invalid input"):
     val conditions = axis("conditions", Vector("a", "b"))
@@ -112,6 +125,8 @@ class PatternArtifactSuite extends FunSuite:
     val prior = right(AxisValues(conditions, Vector(0.5, 0.5)))
     right(TargetGeometry.categorical(conditions, target, valid, prior))
     invalidTarget(TargetGeometry.categorical(conditions, target, DMat.dense(2, 1, Vector(1.0, 1.0)), prior))
+    invalidTarget(TargetGeometry.categorical(conditions, target, DMat.dense(2, 1, Vector(1e-150, 1e-150)), prior))
+    right(TargetGeometry.categorical(conditions, target, DMat.dense(2, 1, Vector(1e150, -1e150)), prior))
     invalidTarget(TargetGeometry.categorical(conditions, target, valid, right(AxisValues(conditions, Vector(0.4, 0.4)))))
     invalidTarget(TargetGeometry.categorical(conditions, target, valid, right(AxisValues(conditions, Vector(1.0, 0.0)))))
     val foreign = axis("foreign", Vector("a", "b"))
@@ -132,7 +147,7 @@ class PatternArtifactSuite extends FunSuite:
     val f = new Fixture
     val foreign = axis("foreign", Vector("score"))
     assertEquals(error(TargetGeometry.continuous(f.target, right(AxisValues(foreign, Vector(1.0))), f.positive, Vector("all" -> f.positive))),
-      PatternArtifactError.AxisMismatch("continuous target", f.target.descriptor.stableKey, "foreign axis"))
+      PatternArtifactError.AxisMismatch("continuous prior", f.target.descriptor.stableKey, foreign.descriptor.stableKey))
     invalidTarget(TargetGeometry.continuous(f.target, f.positive, right(AxisValues(f.target, Vector(0.0))), Vector("all" -> f.positive)))
     invalidTarget(TargetGeometry.continuous(f.target, f.positive, f.positive, Vector.empty))
     invalidTarget(TargetGeometry.continuous(f.target, f.positive, f.positive, Vector("all" -> f.positive, "all" -> f.positive)))

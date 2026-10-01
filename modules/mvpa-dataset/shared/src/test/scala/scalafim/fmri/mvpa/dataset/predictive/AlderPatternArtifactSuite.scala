@@ -27,7 +27,9 @@ class AlderPatternArtifactSuite extends FunSuite:
     assertEqualsDouble(preserved.artifact.factors.targetByComponent(0, 0), 3.0, 1e-12)
     assertEquals(preserved.artifact.interpretation, InterpretationStatus.ExperimentalFitOnly)
     assertEquals(preserved.trainingReceipt, preserved.trained.audit.data)
-    assert(AlderPatternArtifact.attach(split.train, artifact, DataFingerprint.external("foreign-training"))(using FitContext.root(Seed(1L), PlanFingerprint("foreign"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value.isLeft)
+    val wrongExpected = AlderPatternArtifact.attach(split.train, artifact, DataFingerprint.external("foreign-training"))(using FitContext.root(Seed(1L), PlanFingerprint("foreign"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value
+    assertEquals(wrongExpected.left.toOption.map(_.cause), Some(AlderPatternArtifactError.ExpectedTrainingReceiptMismatch))
     val wrongBinding = right(TrainingBinding(samples.descriptor, "fixture", "different-digest"))
     val wronglyBound = right(PatternArtifact(factors, geometry, CenteringPolicy.CenteredBeforeFit("neural:fixture", "target:fixture"), DegenerateTargetPolicy.Refuse, ResidualCovarianceCapability.NotFitted, wrongBinding, Vector("training:fixture"), right(PatternFitDiagnostics(Vector(1.0), "declared", Vector.empty))))
-    assert(AlderPatternArtifact.attach(split.train, wronglyBound, split.train.fingerprint)(using FitContext.root(Seed(2L), PlanFingerprint("wrong-binding"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value.isLeft)
+    val wrongArtifact = AlderPatternArtifact.attach(split.train, wronglyBound, split.train.fingerprint)(using FitContext.root(Seed(2L), PlanFingerprint("wrong-binding"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value
+    assertEquals(wrongArtifact.left.toOption.map(_.cause), Some(AlderPatternArtifactError.ArtifactTrainingBindingMismatch))

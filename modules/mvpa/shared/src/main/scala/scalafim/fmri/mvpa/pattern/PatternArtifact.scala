@@ -23,6 +23,9 @@ object AxisValues:
 enum CenteringPolicy:
   /** Callers supply both neural and target coordinates already centered. */
   case CenteredBeforeFit(neuralReceipt: String, targetReceipt: String)
+  /** Stores the neural mean; supplied target coordinates are already centered
+    * under the named training receipt. No target centering is performed here.
+    */
   case ExplicitIntercept(values: AxisValues[?], targetCenteringReceipt: String)
 /** These describe the fitter's policy; this artifact does not inspect training outcomes. */
 enum DegenerateTargetPolicy:
@@ -38,7 +41,9 @@ enum GaugeEvidence:
 /** Rank evidence does not identify component scale, sign, or rotation. */
 enum CoordinateGauge:
   case UnfixedBasis
-/** Declarations for later covariance consumers; no precision solve is provided here. */
+/** Declarations for later covariance consumers. Neither diagonal Psi values nor
+  * low-rank loadings are stored; no precision solve or decoding is provided here.
+  */
 enum ResidualCovarianceCapability:
   case NotFitted
   case DiagonalPlusLowRank(neuralAxis: AxisDescriptor, latentRank: Int)
@@ -68,28 +73,39 @@ object TargetGeometry:
     * partition and do not represent an arbitrary correlated target prior.
     */
   def continuous[Q](targetAxis: AxisRef[Q], prior: AxisValues[Q], metric: AxisValues[Q], blocks: Vector[(String, AxisValues[Q])]): Either[PatternArtifactError, TargetGeometry] =
-    if prior.axis.descriptor != targetAxis.descriptor || metric.axis.descriptor != targetAxis.descriptor then Left(PatternArtifactError.AxisMismatch("continuous target", targetAxis.descriptor.stableKey, "foreign axis"))
+    if prior.axis.descriptor != targetAxis.descriptor then Left(PatternArtifactError.AxisMismatch("continuous prior", targetAxis.descriptor.stableKey, prior.axis.descriptor.stableKey))
+    else if metric.axis.descriptor != targetAxis.descriptor then Left(PatternArtifactError.AxisMismatch("continuous metric", targetAxis.descriptor.stableKey, metric.axis.descriptor.stableKey))
     else if prior.values.exists(_ <= 0.0) || metric.values.exists(_ <= 0.0) || blocks.isEmpty || blocks.map(_._1).distinct.size != blocks.size || blocks.exists { case (name, values) => name.trim.isEmpty || values.axis.descriptor != targetAxis.descriptor || values.values.exists(_ <= 0.0) } then Left(PatternArtifactError.InvalidTarget("continuous prior, metric, and uniquely named block weights must be positive and target-bound"))
     else Right(TargetGeometry.Continuous(new ContinuousTarget(targetAxis, prior, metric, blocks)))
-  /** Scale before the Gale Gram factorization to avoid unit-dependent admission.
+  /** Normalize each column before the Gale Gram factorization so unfixed
+    * component scales do not change admission.
     * Gram formation squares the condition number; this conservative admission
     * can refuse ill-conditioned full-rank inputs and is not an SVD rank oracle.
     */
   private[pattern] def fullColumnRank(matrix: DMat, relativeTolerance: Double): Boolean =
-    var scale = 0.0
-    var row = 0
-    while row < matrix.rows do
-      var column = 0
-      while column < matrix.cols do
-        scale = math.max(scale, math.abs(matrix(row, column)))
-        column += 1
-      row += 1
-    if scale == 0.0 || !scale.isFinite then false
+    val scales = Array.ofDim[Double](matrix.cols)
+    val norms = Array.ofDim[Double](matrix.cols)
+    var column = 0
+    while column < matrix.cols do
+      var row = 0
+      while row < matrix.rows do
+        scales(column) = math.max(scales(column), math.abs(matrix(row, column)))
+        row += 1
+      if scales(column) == 0.0 || !scales(column).isFinite then return false
+      row = 0
+      while row < matrix.rows do
+        val scaled = matrix(row, column) / scales(column)
+        norms(column) += scaled * scaled
+        row += 1
+      norms(column) = math.sqrt(norms(column))
+      column += 1
+    if matrix.cols == 0 then false
     else
-      val normalized = DMat.tabulate(matrix.rows, matrix.cols)((row, column) => matrix(row, column) / scale)
+      val normalized = DMat.tabulate(matrix.rows, matrix.cols): (row, column) =>
+        (matrix(row, column) / scales(column)) / norms(column)
       val gram = normalized.t * normalized
       var maximumDiagonal = 0.0
-      var column = 0
+      column = 0
       while column < gram.cols do
         maximumDiagonal = math.max(maximumDiagonal, gram(column, column))
         column += 1
@@ -98,7 +114,25 @@ object TargetGeometry:
   private def finite(matrix: DMat): Boolean =
     (0 until matrix.rows).forall(row => (0 until matrix.cols).forall(column => matrix(row, column).isFinite))
   private def centered(matrix: DMat): Boolean =
-    (0 until matrix.cols).forall(column => math.abs((0 until matrix.rows).map(row => matrix(row, column)).sum) <= 1e-10)
+    var column = 0
+    while column < matrix.cols do
+      var scale = 0.0
+      var row = 0
+      while row < matrix.rows do
+        scale = math.max(scale, math.abs(matrix(row, column)))
+        row += 1
+      if scale > 0.0 then
+        var sum = 0.0
+        var absoluteSum = 0.0
+        row = 0
+        while row < matrix.rows do
+          val value = matrix(row, column) / scale
+          sum += value
+          absoluteSum += math.abs(value)
+          row += 1
+        if math.abs(sum) > 1e-12 * absoluteSum then return false
+      column += 1
+    true
 
 final class PatternFactors[P, Q, R] private (
     val neuralAxis: AxisRef[P], val targetAxis: AxisRef[Q], val componentAxis: AxisRef[R],
