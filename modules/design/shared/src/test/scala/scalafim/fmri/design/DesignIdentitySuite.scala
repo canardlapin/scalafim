@@ -7,7 +7,7 @@ import scalafim.fmri.hrf.design.SamplingFrame
 class DesignIdentitySuite extends munit.FunSuite:
   test("single-run, two-run and FIR identity reproduction") {
     Vector(
-      "single" -> design(Hrfs.SPMG1, Vector(8)),
+      "single" -> design(Hrfs.SPMG1, Vector(16)),
       "two" -> design(Hrfs.SPMG1, Vector(8, 8)),
       "fir" -> design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
     ).foreach { case (name, schema) =>
@@ -41,6 +41,32 @@ class DesignIdentitySuite extends munit.FunSuite:
     val changed = scalafim.fmri.hrf.linalg.Mat.unsafe(schema.matrix.rows, schema.matrix.cols, values)
     assertNotEquals(DesignFingerprint.from(changed, schema.rows, schema.columns, schema.audit), schema.fingerprint)
   }
+
+  test("realistic SPMG structural identity is distinct from its numerical content") {
+    val compiled = design(Hrfs.SPMG1, Vector(16))
+    val actual = compiled.matrix.data.map(java.lang.Double.doubleToLongBits).toVector
+    assertEquals(actual.length, singleMatrixBits.length)
+    actual.zip(singleMatrixBits).foreach { case (observed, expected) =>
+      assert((BigInt(observed) - BigInt(expected)).abs <= 1, s"SPMG value differs by more than one ULP: $observed vs $expected")
+    }
+    val matrix = scalafim.fmri.hrf.linalg.Mat.unsafe(16, 2, singleMatrixBits.map(java.lang.Double.longBitsToDouble).toArray)
+    val snapshot = DesignSchema.validated(matrix, compiled.rows, compiled.columns, compiled.audit.copy(rankPreview = None)).toOption.get
+    println(s"IDENTITY-single-fixed-FINGERPRINT=${snapshot.fingerprint.value}")
+    println(s"IDENTITY-single-fixed-ENCODING=${snapshot.fingerprint.canonicalEncoding}")
+  }
+
+  // Literal matrix contents captured before the serialization repair. This is
+  // a content-identity fixture, not a claim of universal arithmetic bit parity.
+  private val singleMatrixBits: Vector[Long] = Vector(
+    0L,0L,4555774828609193142L,0L,
+    4579810022347009932L,0L,4589486336939214991L,4553063463407962378L,
+    4593908018891858828L,4579810022347009942L,4595293611042985230L,4589499510130095525L,
+    4595331447223893258L,4593919555501158014L,4594387919381477940L,4595293611042985229L,
+    4592480243847689709L,4595321072291005538L,4589927193262952680L,4594390959099332238L,
+    4586500958794902998L,4592480243847689710L,4582032258499777514L,4589931807517154160L,
+    4574170675209113762L,4586490381474522134L,-4652173186659637944L,4582032258499777515L,
+    -4646124714654090475L,4574229844653497104L,-4644026202262718823L,-4652129734914764700L
+  )
 
   private def design(hrf: Hrf, blocks: Vector[Int]): DesignSchema =
     val frame = SamplingFrame(blockLens = blocks, tr = Vector(1.0))

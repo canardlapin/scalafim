@@ -693,7 +693,10 @@ final case class DesignAudit(
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
     s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
 
-/** A stable, cross-platform identity for a compiled matrix and its semantics. */
+/** An identity of exact matrix contents and their semantics, encoded identically
+  * on JVM and Scala.js. Platform computations can produce different value bits;
+  * such numerical snapshots deliberately retain different fingerprints.
+  */
 final case class DesignFingerprint private (value: String, canonicalEncoding: String)
 
 object DesignFingerprint:
