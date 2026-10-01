@@ -13,10 +13,13 @@ Two ideas carry the design:
   its *pullback* (target point → source point), which is what resampling
   needs. The forward direction exists exactly when it is known to exist.
 
-The transform examples below are compiled and run in CI by
+The transform examples below are compiled and executed by
 `modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala`.
 The linked-cursor example runs on both JVM and JS in
 `modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala`.
+The pull-request workflow includes both suites through
+[`full-repository-tests.sh`](../tools/ci/full-repository-tests.sh):
+`transformJVM/test`, `surfaceViewJVM/test` and `surfaceViewJS/test`.
 The design rationale is in
 [`plans/spatial-transform-parity.md`](plans/spatial-transform-parity.md) and
 [`decisions/spatial-transforms.md`](decisions/spatial-transforms.md).
@@ -116,8 +119,10 @@ Every toolkit convention is decoded once, in `ToolCoordinates`:
 - **FSL** uses scaled-voxel coordinates, flipped along x for neurological
   storage. A volume without active forms has radiological storage even though
   its fallback world affine has positive scaling.
-- **FreeSurfer tkRAS** is `Norig · inverse(Torig)`, where Torig is
-  FreeSurfer's fixed LIA tkregister geometry.
+- **FreeSurfer tkRAS → scanner RAS** uses `Norig · inverse(Torig)`, where
+  Norig places the reference volume in scanner RAS and Torig is FreeSurfer's
+  fixed LIA tkregister geometry. Use the matching volume header; the surface
+  coordinates alone do not determine this placement.
 
 Nothing downstream sees these conventions.
 
@@ -166,10 +171,32 @@ decodes, interprets, expresses the result in the target format, and encodes
 it.
 
 ```scala
-val context = ConversionContext(fsl = Some(ConversionContext.FslPair(movingFsl, referenceFsl)))
-Conversion.convert(lta, TransformFormat.FslFlirt, ConversionContext.empty, context)   // LTA -> FLIRT
-Conversion.convert(lta, TransformFormat.ItkText, ConversionContext.empty, ConversionContext.empty)
+val context = ConversionContext(
+  fsl = Some(ConversionContext.FslPair(movingFsl, referenceFsl)),
+  lta = Some(ConversionContext.LtaPair(movingLta, referenceLta))
+)
+def decoded(encoded: EncodedTransform): NativeTransform = encoded match
+  case EncodedTransform.Source(format, source) => Transforms.decode(source, format).toOption.get
+  case other => throw new IllegalArgumentException(s"expected an encoded affine file, got $other")
+
+val flirt = decoded(Conversion.convert(lta, TransformFormat.FslFlirt, ConversionContext.empty, context).toOption.get)
+val itk = decoded(Conversion.convert(flirt, TransformFormat.ItkText, context, ConversionContext.empty).toOption.get)
+val ltaAgain = decoded(Conversion.convert(itk, TransformFormat.FreeSurferLta, ConversionContext.empty, context).toOption.get)
+val flirtAgain = decoded(Conversion.convert(ltaAgain, TransformFormat.FslFlirt, ConversionContext.empty, context).toOption.get)
+val itkAgain = decoded(Conversion.convert(ltaAgain, TransformFormat.ItkText, ConversionContext.empty, ConversionContext.empty).toOption.get)
+val ltaFromFlirt = decoded(Conversion.convert(flirtAgain, TransformFormat.FreeSurferLta, context, context).toOption.get)
+val flirtFromItk = decoded(Conversion.convert(itkAgain, TransformFormat.FslFlirt, ConversionContext.empty, context).toOption.get)
 ```
+
+`movingFsl` and `referenceFsl` come from each volume's `FslHeaderGeometry`.
+`movingLta` and `referenceLta` are `VolGeom` values for those same volumes,
+using their selected voxel-to-RAS placement. The guide suite uses matching
+oblique fixture headers with agreeing qform/sform, compares every decoded
+result with the original pullback within `1e-9` mm, and checks the frozen
+source-semantics point table within `1e-5` mm. These checks establish affine
+conversion consistency; native FreeSurfer writer qualification is still pending.
+The snippets use `.toOption.get` to keep the example compact; an application
+should handle the typed `Left` at each input or conversion boundary.
 
 Each target has an explicit capability:
 
@@ -208,11 +235,13 @@ inverted.flatMap(_.mapPoint(pointInSubject))   // Right(point in MNI)
 ```
 
 `invertNumerically` estimates the forward map on a persistent source lattice
-with reframe4s' fixed-point solver. It starts from the identity, so it
-converges only for warps that are close to the identity (where `I - D pull`
-is a contraction), like the ANTs field in this example. It refuses a FNIRT
-field between differently placed volumes, or any field that contains a large
-affine. A qualified result is a
+with the pinned reframe4s provider's fixed-point solver. It starts from the
+identity. A contraction of the update `y ↦ y - (pull(y) - x)` on the covered
+support is a sufficient convergence condition, as for the ANTs field in this
+example. The native FNIRT fixture between differently placed volumes fails
+the gates under this initialization; that fixture-specific refusal is checked
+by `WarpOracleSuite`. It is not a rule that every large affine must fail.
+A qualified result is a
 `Mapped` warp with `PushAvailability.Estimated`, which carries evidence:
 
 - the reframe4s `InverseEstimate`;
@@ -370,6 +399,34 @@ The surface half is exercised by `SurfaceVolumeCursorSuite` and
 
 ## Evidence
 
+P7.07 is closed for the three bounded workflow contracts recorded at local
+commit `debdf34b821e6bf34103dc596dc815f55509b541`. Each returns clean `Pass`
+within its declared domain; the individual receipts retain their generation-time status:
+
+- [fMRIPrep demo1 boldref → T1w → MNI](verification/stp-demo1-20260930/README.md)
+  checks one interior patch against matching native assets. Native generation
+  receipts are retained; the original compute outputs are not retained.
+- [FSL example_func → highres → standard](verification/stp-fsl-real-20260930/README.md)
+  checks newly fitted native FLIRT/FNIRT in fixed interior windows of 693
+  standard and 315 T1 voxels. Its FLIRT comparison accounts for float32
+  forward-difference accumulation, with separate strict guards for exact
+  float64 mathematics (`1e-9` mm) and the native float32 trace (`5e-5` mm).
+  It does not qualify anatomical registration accuracy, Jacobians, boundaries
+  or the whole image domain.
+- [Subject volume → fsaverage → fsLR32k](verification/stp-surface-real-20261001/README.md)
+  checks a connected 64-vertex target patch against full-surface Workbench
+  commands. It uses seven segment samples and trilinear volume interpolation,
+  rather than polyhedral ribbon overlap. Radial and closest-point surface
+  estimators have separate comparisons and input-derived bounds.
+  The real intensity staged/direct difference is descriptive (maximum
+  approximately 0.298); commutativity is gated separately by an analytic,
+  geometry-only bound on a linear test field.
+
+These bounded contracts do not establish registration accuracy, whole-domain
+accuracy, universal native-tool parity or Workbench parity beyond the declared
+estimators. The linked-cursor example above remains a separate
+synthetic API example.
+
 The oracle fixtures, and the tools that produced them, are listed in each
 fixture directory's `manifest.json` under
 `modules/transform/shared/src/test/resources/scalafim/transform/oracle/`.
@@ -427,7 +484,7 @@ candidate using fixed quarter spacing passes the unchanged gates on JVM and
 JS. The original coarse nodes, including faces, remain checked. FSL uses a
 separate coincident-geometry control with fixed half spacing. These are local
 candidate results; the provider publication and consumer pin are still pending.
-The pinned reframe4s solver starts from the identity, so large affine
-registrations still require the unpublished upstream start-guess work. That
+The pinned reframe4s solver starts from the identity. Qualification of the
+large-affine registration fixtures awaits the unpublished upstream start-guess work. That
 limitation and typed refusal remain explicit; the new controls do not qualify
 those registrations.

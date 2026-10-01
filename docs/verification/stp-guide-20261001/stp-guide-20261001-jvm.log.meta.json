@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T13:34:04.202804+00:00",
+  "finished_utc": "2026-10-01T13:37:29.723221+00:00",
+  "duration_seconds": 205.520555,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "transformJVM/test",
+    "surfaceViewJVM/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-guide-20261001/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-guide-20261001-jvm.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 34630
+}

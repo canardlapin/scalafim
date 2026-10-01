@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T14:10:29.533078+00:00",
+  "finished_utc": "2026-10-01T14:16:35.809087+00:00",
+  "duration_seconds": 366.282518,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-guide-20261001/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-guide-20261001-compile.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 23878
+}

@@ -3,7 +3,7 @@ package scalafim.transform
 import java.nio.file.{Path, Paths}
 
 import image4s.{BoundaryPolicy, NonSpatialAxes, Sampled}
-import image4s.geometry.{D3, Grid, GridId, Point}
+import image4s.geometry.{Affine, D3, Grid, GridId, Point}
 import ravel.DType.given
 import ravel.NDArray
 import reframe4s.field.CoordinateBoundaryPolicy
@@ -12,8 +12,10 @@ import scalafim.image.world.{FrameCatalog, LinkDirection, Spaces, WorldLinkError
 import scalafim.transform.Conversion.EncodedTransform
 import scalafim.transform.field.{DenseContext, FnirtCoefficientContext, FnirtCoefficientInterpretation, LatticeAffine, LpsDisplacementInterpretation}
 import scalafim.transform.fsl.{FlirtInterpretation, FslHeaderGeometry}
-import scalafim.transform.itk.ItkHdf5Interpretation
+import scalafim.transform.freesurfer.{LtaInterpretation, VolGeom}
+import scalafim.transform.itk.{ItkHdf5Interpretation, ItkLinearInterpretation}
 import scalafim.transform.nifti.NiftiRaw
+import scalafim.transform.oracle.OracleTable
 
 /** The examples in docs/spatial-transforms.md, compiled and executed. Keep the two in step: each test body is
   * the guide's snippet for the section named in the test.
@@ -73,18 +75,57 @@ class GuideExamplesSuite extends munit.FunSuite:
     val centre = fslGeometry("target.nii.gz").voxelToWorld(Vector(5.0, 5.0, 4.0)).toOption.get
     assert(warp.pullPoint(Point.fromVector(reference, centre).toOption.get).isRight)
 
-  test("guide: convert between toolkits"):
+  test("guide: convert FLIRT, ITK and LTA in both directions without changing the pullback"):
     val lta = TransformFiles.load(oracle("freesurfer_linear/ras2ras.lta")).toOption.get.native
     def raw(file: String) = NiftiRaw.parse(IArray.unsafeFromArray(java.nio.file.Files.readAllBytes(oracle(file)))).toOption.get
     val (movable, reference) = (raw("freesurfer_linear/movable.nii"), raw("freesurfer_linear/reference.nii"))
     // FLIRT is defined in FSL scaled-voxel coordinates, so writing one needs both volumes' FSL geometry.
-    val context = ConversionContext(fsl = Some(ConversionContext.FslPair(FslHeaderGeometry(movable).toOption.get, FslHeaderGeometry(reference).toOption.get)))
-    val flirt = Conversion.convert(lta, TransformFormat.FslFlirt, ConversionContext.empty, context)
-    val itk = Conversion.convert(lta, TransformFormat.ItkText, ConversionContext.empty, ConversionContext.empty)
-    assert(flirt.exists(_.isInstanceOf[EncodedTransform.Source]))
-    assert(itk.exists(_.isInstanceOf[EncodedTransform.Source]))
+    // These fixture headers have active, agreeing forms. LTA stores each volume's selected RAS geometry.
+    val movingLta = VolGeom.of(movable.spatialShape, Affine.fromRowMajor[D3](movable.sformRowMajor).toOption.get)
+    val referenceLta = VolGeom.of(reference.spatialShape, Affine.fromRowMajor[D3](reference.sformRowMajor).toOption.get)
+    val context = ConversionContext(
+      fsl = Some(ConversionContext.FslPair(FslHeaderGeometry(movable).toOption.get, FslHeaderGeometry(reference).toOption.get)),
+      lta = Some(ConversionContext.LtaPair(movingLta, referenceLta))
+    )
+    def decoded(encoded: EncodedTransform): NativeTransform = encoded match
+      case EncodedTransform.Source(format, source) => Transforms.decode(source, format).toOption.get
+      case other => fail(s"expected an encoded affine file, got $other")
+
+    val flirt = decoded(Conversion.convert(lta, TransformFormat.FslFlirt, ConversionContext.empty, context).toOption.get)
+    val itk = decoded(Conversion.convert(flirt, TransformFormat.ItkText, context, ConversionContext.empty).toOption.get)
+    val ltaAgain = decoded(Conversion.convert(itk, TransformFormat.FreeSurferLta, ConversionContext.empty, context).toOption.get)
+    val flirtAgain = decoded(Conversion.convert(ltaAgain, TransformFormat.FslFlirt, ConversionContext.empty, context).toOption.get)
+    val itkAgain = decoded(Conversion.convert(ltaAgain, TransformFormat.ItkText, ConversionContext.empty, ConversionContext.empty).toOption.get)
+    val ltaFromFlirt = decoded(Conversion.convert(flirtAgain, TransformFormat.FreeSurferLta, context, context).toOption.get)
+    val flirtFromItk = decoded(Conversion.convert(itkAgain, TransformFormat.FslFlirt, ConversionContext.empty, context).toOption.get)
+
+    val moving = FrameCatalog.frame(WorldSpace.declare("guide moving").toOption.get)
+    val fixed = FrameCatalog.frame(WorldSpace.declare("guide fixed").toOption.get)
+    val frames = Frames[moving.type, fixed.type](moving, fixed)
+    def interpreted(native: NativeTransform): WorldTransform[moving.type, fixed.type] = native match
+      case NativeTransform.Lta(file) => LtaInterpretation.interpret(file, frames).toOption.get
+      case NativeTransform.Flirt(matrix) =>
+        val pair = context.fsl.get
+        FlirtInterpretation.interpret(matrix, FslGrids(moving, pair.source, fixed, pair.reference)).toOption.get
+      case NativeTransform.Itk(file, _) => ItkLinearInterpretation.interpret(file, frames).toOption.get.composed
+      case other => fail(s"expected an affine, got ${other.format}")
+
+    val original = interpreted(lta)
+    val points = OracleTable.load("freesurfer_linear/points.tsv")
+    Vector(flirt, itk, ltaAgain, flirtAgain, itkAgain, ltaFromFlirt, flirtFromItk).foreach: native =>
+      val converted = interpreted(native)
+      points.rows.foreach: row =>
+        val point = Point.fromVector(fixed, row.take(3)).toOption.get
+        val expected = original.pullPoint(point).toOption.get.coordinates
+        val actual = converted.pullPoint(point).toOption.get.coordinates
+        (0 until 3).foreach: axis =>
+          assertEqualsDouble(actual(axis), expected(axis), 1e-9, s"${native.format} round-trip axis $axis")
+          // Frozen source-semantics points are self-consistency evidence, not native FreeSurfer qualification.
+          assertEqualsDouble(actual(axis), row(axis + 3), 1e-5, s"${native.format} frozen point axis $axis")
     // Asking for geometry you did not supply is a typed error, never a silent default.
     assert(Conversion.convert(lta, TransformFormat.FslFlirt, ConversionContext.empty, ConversionContext.empty).left.exists(_.isInstanceOf[TransformError.MissingContext]))
+    assert(Conversion.convert(flirt, TransformFormat.ItkText, ConversionContext.empty, ConversionContext.empty).left.exists(_.isInstanceOf[TransformError.MissingContext]))
+    assert(Conversion.convert(itk, TransformFormat.FreeSurferLta, ConversionContext.empty, ConversionContext.empty).left.exists(_.isInstanceOf[TransformError.MissingContext]))
     // A dense warp cannot be written as an affine.
     val warp = TransformFiles.load(oracle("neurotransform/itk_oracle/warp.nii.gz")).toOption.get.native
     assert(Conversion.convert(warp, TransformFormat.FslFlirt, ConversionContext.empty, context).left.exists(_.isInstanceOf[TransformError.UnsupportedConversion]))
