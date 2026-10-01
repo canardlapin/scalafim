@@ -8,6 +8,8 @@ The new descriptor format begins `hrf-descriptor/v2`. All HRF parameter, derivat
 
 Basis role indices have a minimum width of two decimal digits, and FIR intervals retain exact bits. Display column labels retain their existing naming policy.
 
+Automatic coefficient reconstruction and basis binding use fixed semantic family tags rather than names assembled from source displays. A reconstruction's coefficient metadata references the exact source descriptor, and a bound basis retains the ordered source descriptors. Explicit caller-supplied family names remain literal semantic input. Generated human-readable names remain available through `Hrf.name`.
+
 Design fingerprints begin `design-schema/v2`. Rank tolerance, diagonal-R values, condition estimate, centering means, orthogonalization norms/tolerance, imputation constants and DCT receipt coordinates use bit encodings. The matrix and acquisition-time encodings already used bits and retain that convention. When a semantic basis-element ID exists, the canonical basis reference uses it rather than the display basis name. HRF assignment and construction receipts likewise use descriptor/element identity. Legacy references without an element ID retain their basis-name identity. User-supplied semantic strings remain literal identity input.
 
 ## Compatibility and artifact audit
