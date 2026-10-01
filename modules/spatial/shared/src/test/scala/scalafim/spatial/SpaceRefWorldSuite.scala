@@ -58,7 +58,7 @@ class SpaceRefWorldSuite extends munit.FunSuite:
   test("only anatomical surfaces are in the subject's scanner-native world"):
     Vector(SurfaceKind.Pial, SurfaceKind.SmoothWm, SurfaceKind.Midthickness).foreach: kind =>
       assertEquals(SpaceRef.Surface(subject, Hemisphere.Right, kind).worldIn(context), Right(native))
-    Vector(SurfaceKind.Inflated, SurfaceKind.Sphere, SurfaceKind.Custom("flat")).foreach: kind =>
+    Vector(SurfaceKind.Inflated, SurfaceKind.VeryInflated, SurfaceKind.Sphere, SurfaceKind.Custom("flat")).foreach: kind =>
       SpaceRef.Surface(subject, Hemisphere.Right, kind).worldIn(context) match
         case Left(SpaceError.NoWorldSpace(_)) => ()
         case other                            => fail(s"a $kind surface resolved to $other")

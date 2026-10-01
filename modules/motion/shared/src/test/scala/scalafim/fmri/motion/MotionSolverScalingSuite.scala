@@ -59,10 +59,10 @@ class MotionSolverScalingSuite extends munit.FunSuite:
       .estimate(run(Vector(frame(0.0, scale), frame(0.6, scale))), Some(interiorMask), plan)
       .fold(err => fail(err.message), identity)
 
-  // The Huber threshold (MotionControl huberK) is in absolute intensity units,
-  // so robust weighting is not scale invariant; these fixtures keep residuals
-  // below it at both scales, isolating the solve, damping and stopping rule.
-  test("with Huber weighting inactive, estimated motion does not depend on the image intensity scale"):
+  // The default Huber threshold is relative to a robust residual scale
+  // (HuberScale.RobustResidual), so robust weights are scale invariant too;
+  // MotionHuberScaleSuite covers fixtures where Huber is active.
+  test("estimated motion does not depend on the image intensity scale"):
     val unit = estimate(1.0)
     val tiny = estimate(1e-6)
     val a = unit.trace.unsafeFrame(1)

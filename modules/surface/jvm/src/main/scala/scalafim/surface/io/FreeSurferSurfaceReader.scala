@@ -124,14 +124,7 @@ object FreeSurferSurfaceReader:
     else Hemisphere.Unknown
 
   def inferKind(path: Path): SurfaceKind =
-    val base = path.getFileName.toString
-      .stripSuffix(".asc")
-      .stripSuffix(".surf.gii")
-      .stripSuffix(".gii")
-    val tokens = base.split("[._-]").toVector.map(_.trim).filter(_.nonEmpty)
-    tokens.reverseIterator.flatMap(knownKind).toSeq.headOption.getOrElse {
-      SurfaceKind.Custom(tokens.lastOption.getOrElse("surface"))
-    }
+    SurfaceKind.fromFileName(path.getFileName.toString)
 
   private def isAscii(path: Path): Boolean =
     val name = path.getFileName.toString.toLowerCase
@@ -150,16 +143,6 @@ object FreeSurferSurfaceReader:
 
   private def splitFields(line: String): Array[String] =
     line.trim.split("\\s+").filter(_.nonEmpty)
-
-  private def knownKind(token: String): Option[SurfaceKind] =
-    token.toLowerCase.replaceAll("\\d+$", "") match
-      case "white" => Some(SurfaceKind.White)
-      case "pial" => Some(SurfaceKind.Pial)
-      case "inflated" => Some(SurfaceKind.Inflated)
-      case "sphere" | "spherical" => Some(SurfaceKind.Sphere)
-      case "smoothwm" | "smooth_wm" | "smooth-wm" => Some(SurfaceKind.SmoothWm)
-      case "midthickness" | "mid_thickness" | "mid-thickness" => Some(SurfaceKind.Midthickness)
-      case _ => None
 
   private def parsePositiveInt(value: String, label: String): Int =
     val parsed = parseInt(value, label)

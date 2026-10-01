@@ -122,7 +122,7 @@ class DecisionScaleSuite extends munit.FunSuite:
     val rng = scala.util.Random(41L)
     val stat = Array.tabulate(n)(i => if i == 9 then 12.0 else math.abs(rng.nextGaussian()))
     val draws = Vector.fill(29)(Array.fill(n)(math.abs(rng.nextGaussian())))
-    val map = StatisticMap.negLog10P(volume(stat), PSide.OneSided)
+    val map = StatisticMap.negLog10P(volume(stat))
     val result = value(MaxT.runMap(map, FixedNullDraw(draws), None, Alpha.unsafe(0.1), ThresholdAlternative.Greater))
     assert(result.reject.valueAtCanonicalOrdinal(9))
     assertEquals(
