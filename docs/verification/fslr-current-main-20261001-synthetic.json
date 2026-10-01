@@ -1,0 +1,74 @@
+{
+  "schema": "scalafim.surface-route-example-receipt/1",
+  "manifestSha256": "a6af2efe299adb2c8777030aec0d501310d8b255e9c1354ed812b7f23d8c01a1",
+  "qualification": "NumericalContract",
+  "scope": "synthetic asymmetric control, not fsLR32k anatomical qualification",
+  "source": "source.nii in MNI152NLin2009cAsym@synthetic-asymmetric-control/1 (derived by 3x3x3 identity grid: value=i+10*j+100*k; voxel(1,0,0)=NaN; four matching-topology vertices, last vertex medial wall; display coordinates varied only from manifest.json)",
+  "anatomy": "midthickness.surf.gii in MNI152NLin2009cAsym@synthetic-asymmetric-control/1 (derived by 3x3x3 identity grid: value=i+10*j+100*k; voxel(1,0,0)=NaN; four matching-topology vertices, last vertex medial wall; display coordinates varied only from manifest.json)",
+  "medialWall": "cortex.label.gii (sha256 ba7b05c5f8ebeb387052bac78665e9af91040e13ae76af5e96760fb519f85430)",
+  "method": "midthickness-nearest",
+  "lookup": "nearest voxel, ties round up, support [-0.5, dim - 0.5) per axis",
+  "displayPreservesMappedObject": true,
+  "vertices": [
+    {
+      "vertex": 0,
+      "coverage": "Mapped",
+      "value": 0,
+      "samples": [
+        {
+          "world": [
+            0,
+            0,
+            0
+          ],
+          "contribution": "Included(VoxelCoord(0,0,0),0.0,1.0)"
+        }
+      ]
+    },
+    {
+      "vertex": 1,
+      "coverage": "NoSupport",
+      "value": null,
+      "samples": [
+        {
+          "world": [
+            1,
+            0,
+            0
+          ],
+          "contribution": "NonFinite(VoxelCoord(1,0,0),NaN)"
+        }
+      ]
+    },
+    {
+      "vertex": 2,
+      "coverage": "Mapped",
+      "value": 2,
+      "samples": [
+        {
+          "world": [
+            2,
+            0,
+            0
+          ],
+          "contribution": "Included(VoxelCoord(2,0,0),2.0,1.0)"
+        }
+      ]
+    },
+    {
+      "vertex": 3,
+      "coverage": "MedialWall",
+      "value": null,
+      "samples": [
+        {
+          "world": [
+            1,
+            1,
+            0
+          ],
+          "contribution": "Included(VoxelCoord(1,1,0),11.0,1.0)"
+        }
+      ]
+    }
+  ]
+}
