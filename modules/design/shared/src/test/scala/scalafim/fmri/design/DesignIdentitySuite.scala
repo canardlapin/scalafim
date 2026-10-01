@@ -32,11 +32,10 @@ class DesignIdentitySuite extends munit.FunSuite:
     assert(audit.canonical.contains("rank=PivotedQr:1:1:1:ScaleAware:4457293557087583675:pivots=x:independent=x:aliased=:diagonal=4611686018427387904:condition=4607182418800017408"))
   }
 
-  test("old fingerprints are refused and a one-ULP numerical change retains distinct identity") {
+  test("legacy column identities are incompatible and a one-ULP change retains distinct content identity") {
     val schema = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
-    val old = schema.fingerprint.copy(value = "design-schema/v1:22221dc300375822")
-    assert(DesignSchema.validate(schema.matrix, schema.rows, schema.columns, schema.audit, schema.rankPreview, old).isLeft)
-    assert(!schema.coefficientAxis.structurallyCompatible(schema.coefficientAxis.copy(designFingerprint = old)))
+    val legacyColumns = schema.columns.map(column => column.copy(id = ColumnId.unsafe(s"legacy-v1:${column.id.value}")))
+    assert(!schema.coefficientAxis.structurallyCompatible(schema.coefficientAxis.copy(columns = legacyColumns)))
     val values = schema.matrix.data.clone()
     values(0) = java.lang.Double.longBitsToDouble(1L)
     val changed = scalafim.fmri.hrf.linalg.Mat.unsafe(schema.matrix.rows, schema.matrix.cols, values)
