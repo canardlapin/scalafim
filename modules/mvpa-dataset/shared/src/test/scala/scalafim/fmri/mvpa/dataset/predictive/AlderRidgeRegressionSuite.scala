@@ -112,6 +112,8 @@ class AlderRidgeRegressionSuite extends munit.FunSuite:
       assertEquals(row.responseAxis, f.response.descriptor)
       row.predicted.zip(reference).foreach((actual, expectedValue) => assertEqualsDouble(actual, expectedValue, tolerance))
     assert(result.targetGeometry eq geometry)
+    assertEquals(result.pooled.loss, RidgeSelectionLoss.TargetWeightedMeanSquaredError)
+    assertEquals(result.pooled.targetGeometry, Some(geometry))
     result.pooled.meanSquaredError match
       case RegressionMetric.Defined(value) => assertEqualsDouble(value, 24.235238359030046, tolerance)
       case other => fail(other.toString)
@@ -207,7 +209,20 @@ class AlderRidgeRegressionSuite extends munit.FunSuite:
         assertEquals(expected, f.response.descriptor.stableKey)
         assertEquals(actual, foreign.descriptor.stableKey)
       case other => fail(s"expected TargetGeometryAxisMismatch, got $other")
-    assertEquals(encoder.fitted, Vector.empty)
+    assertEquals(encoder.fitted.toVector, Vector.empty[Set[Long]])
+
+  test("equivalent declared geometry has value equality and canonical block identity"):
+    val f = weightedFixture()
+    val first = balanced(f)
+    val reordered = right(RidgeTargetGeometry.declared(f.response, Vector(
+      right(RidgeResponseBlock("noise-block", Vector("noise-1", "noise-0"), 1.0)),
+      right(RidgeResponseBlock("signal-block", Vector("signal"), 1.0))
+    ), "fixed equal block utility"))
+    assertEquals(first, reordered)
+    assertEquals(first.hashCode(), reordered.hashCode())
+    val values = Vector(1.0, 2.0, 3.0)
+    assertEquals(RidgePrediction(first, values), RidgePrediction(reordered, values))
+    assertNotEquals(first, balanced(f, mass = 2.0))
 
   private def budget(cells: Long = 100000L) = right(RidgeSolveBudget(cells))
 

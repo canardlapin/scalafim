@@ -45,6 +45,12 @@ final class RidgeTargetGeometry private (
 ):
   val normalizedMass: Double = normalizedWeights.sum
 
+  override def equals(other: Any): Boolean = other match
+    case that: RidgeTargetGeometry => identity == that.identity && responseAxis == that.responseAxis
+    case _ => false
+
+  override def hashCode(): Int = 31 * identity.hashCode + responseAxis.hashCode
+
   private[predictive] def squaredError(observed: Vector[Double], predicted: Vector[Double]): Double =
     require(observed.length == targets.length && predicted.length == targets.length, "target metric arity differs")
     var sum = 0.0
@@ -91,7 +97,11 @@ object RidgeTargetGeometry:
         val fingerprint = AxisDigest.sha256Hex: writer =>
           writer.string("scalafim.ridge-target-assessment.v1")
           writer.string(axis.descriptor.stableKey)
-          writer.string(origin.toString)
+          origin match
+            case RidgeTargetMetricOrigin.UniformCoordinates => writer.string("uniform-coordinates")
+            case RidgeTargetMetricOrigin.FixedDeclared(reason) =>
+              writer.string("fixed-declared")
+              writer.string(reason)
           writer.intLE(canonical.length)
           canonical.foreach: block =>
             writer.string(block.name)

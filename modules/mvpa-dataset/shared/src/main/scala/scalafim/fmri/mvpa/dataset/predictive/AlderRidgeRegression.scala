@@ -75,7 +75,10 @@ enum RegressionMetric:
   case UndefinedNonFinite
 
 final case class RegressionOutputAssessment(target: String, assessed: Int, meanSquaredError: RegressionMetric, rSquared: RegressionMetric)
-final case class RegressionPooledAssessment(assessed: Int, outputs: Int, meanSquaredError: RegressionMetric, rSquared: RegressionMetric)
+final case class RegressionPooledAssessment(assessed: Int, outputs: Int, meanSquaredError: RegressionMetric, rSquared: RegressionMetric, targetGeometry: Option[RidgeTargetGeometry] = None):
+  def loss: RidgeSelectionLoss = targetGeometry.map(_.origin) match
+    case Some(RidgeTargetMetricOrigin.FixedDeclared(_)) => RidgeSelectionLoss.TargetWeightedMeanSquaredError
+    case _ => RidgeSelectionLoss.PooledMeanSquaredError
 
 /** Out-of-fold regression metrics. R-squared is `1 - SSE / SST`, with SST taken
   * about the mean of the assessed observations themselves, so it can be
@@ -119,15 +122,15 @@ object RegressionAssessment:
     require(columns.forall((observed, predicted) => observed.length == predicted.length), "observed and predicted lengths differ")
     require(columns.map(_._1.length).distinct.length <= 1, "pooled columns must have one row count")
     val rows = columns.head._1.length
-    if rows == 0 then RegressionPooledAssessment(0, columns.length, RegressionMetric.UndefinedNoAssessment, RegressionMetric.UndefinedNoAssessment)
+    if rows == 0 then RegressionPooledAssessment(0, columns.length, RegressionMetric.UndefinedNoAssessment, RegressionMetric.UndefinedNoAssessment, Some(geometry))
     else if columns.exists((observed, predicted) => !allFinite(observed) || !allFinite(predicted)) then
-      RegressionPooledAssessment(rows, columns.length, RegressionMetric.UndefinedNonFinite, RegressionMetric.UndefinedNonFinite)
+      RegressionPooledAssessment(rows, columns.length, RegressionMetric.UndefinedNonFinite, RegressionMetric.UndefinedNonFinite, Some(geometry))
     else
       val sse = weightedSquares(columns, geometry, centeredReference = false)
       val r2 =
         if columns.exists((observed, _) => observed.forall(_ == observed.head)) then RegressionMetric.UndefinedConstantReference
         else finite(1.0 - sse / weightedSquares(columns, geometry, centeredReference = true))
-      RegressionPooledAssessment(rows, columns.length, finite(sse / (rows.toDouble * geometry.normalizedMass)), r2)
+      RegressionPooledAssessment(rows, columns.length, finite(sse / (rows.toDouble * geometry.normalizedMass)), r2, Some(geometry))
 
   private def weightedSquares(columns: Vector[(Vector[Double], Vector[Double])], geometry: RidgeTargetGeometry, centeredReference: Boolean): Double =
     var sum = 0.0
@@ -197,7 +200,7 @@ final case class RidgeInnerUnitReceipt(
     assessmentKeys: Vector[String],
     preparation: Option[RidgeCrossFitReceipt],
     constantTrainingTargets: Vector[Boolean],
-    squaredErrorByPenalty: Vector[Double],
+    normalizedSquaredErrorByPenalty: Vector[Double],
     predictedByPenalty: Vector[Vector[Vector[Double]]],
     auditByPenalty: Vector[Audit]
 )
@@ -613,7 +616,7 @@ object AlderRidgeRegression:
         appearances <-
           try Right(usable.foldLeft(0L)((total, unit) => Math.addExact(total, unit.assessment.length.toLong)))
           catch case _: ArithmeticException => Left(AlderRidgeRegressionError.SolvePlanOverflow)
-        squared = grid.penalties.indices.toVector.map(penalty => scored.map(_.squaredErrorByPenalty(penalty)).sum)
+        squared = grid.penalties.indices.toVector.map(penalty => scored.map(_.normalizedSquaredErrorByPenalty(penalty)).sum)
         denominator = appearances.toDouble * common.targetGeometry.normalizedMass
         pooled = squared.map(_ / denominator)
         _ <- grid.penalties.zip(pooled).collectFirst { case (penalty, loss) if !loss.isFinite => AlderRidgeRegressionError.NonFiniteSelectionLoss(scope, penalty) }.toLeft(())
