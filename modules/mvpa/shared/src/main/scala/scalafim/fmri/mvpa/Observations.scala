@@ -102,7 +102,7 @@ final case class EvidenceIdentity(
     origins.writeFramed(writer)
 
 object EvidenceIdentity:
-  private def writeValues(writer: AxisDigest.Writer, value: ValueIdentity): Unit =
+  private[mvpa] def writeValues(writer: AxisDigest.Writer, value: ValueIdentity): Unit =
     value match
       case ValueIdentity.Source(id) =>
         writer.string("source")
