@@ -34,7 +34,7 @@ class DesignIdentitySuite extends munit.FunSuite:
 
   test("legacy column identities are incompatible and a one-ULP change retains distinct content identity") {
     val schema = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
-    val legacyColumns = schema.columns.map(column => column.copy(id = ColumnId.unsafe(s"legacy-v1:${column.id.value}")))
+    val legacyColumns = schema.columns.zip(legacyFirColumnIds).map { case (column, id) => column.copy(id = ColumnId.unsafe(id)) }
     assert(!schema.coefficientAxis.structurallyCompatible(schema.coefficientAxis.copy(columns = legacyColumns)))
     val values = schema.matrix.data.clone()
     values(0) = java.lang.Double.longBitsToDouble(1L)
@@ -81,6 +81,16 @@ class DesignIdentitySuite extends munit.FunSuite:
     4586500958794902998L,4592480243847689710L,4582032258499777514L,4589931807517154160L,
     4574170675209113762L,4586490381474522134L,-4652173186659637944L,4582032258499777515L,
     -4646124714654090475L,4574229844653497104L,-4644026202262718823L,-4652129734914764700L
+  )
+
+  // Literal v1 FIR column IDs captured by the baseline JVM reproducer.
+  private val legacyFirColumnIds = Vector(
+    "event|task||cell:{condition=A}||basis(fir%7C1%7Cfir-bin-1%252502d-0.0..2.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-1%252502d-0.0..2.0%257C1)|Task|global|ordinal=1",
+    "event|task||cell:{condition=B}||basis(fir%7C1%7Cfir-bin-1%252502d-0.0..2.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-1%252502d-0.0..2.0%257C1)|Task|global|ordinal=2",
+    "event|task||cell:{condition=A}||basis(fir%7C2%7Cfir-bin-2%252502d-2.0..4.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-2%252502d-2.0..4.0%257C2)|Task|global|ordinal=3",
+    "event|task||cell:{condition=B}||basis(fir%7C2%7Cfir-bin-2%252502d-2.0..4.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-2%252502d-2.0..4.0%257C2)|Task|global|ordinal=4",
+    "event|task||cell:{condition=A}||basis(fir%7C3%7Cfir-bin-3%252502d-4.0..6.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-3%252502d-4.0..6.0%257C3)|Task|global|ordinal=5",
+    "event|task||cell:{condition=B}||basis(fir%7C3%7Cfir-bin-3%252502d-4.0..6.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-3%252502d-4.0..6.0%257C3)|Task|global|ordinal=6"
   )
 
   private def design(hrf: Hrf, blocks: Vector[Int]): DesignSchema =
