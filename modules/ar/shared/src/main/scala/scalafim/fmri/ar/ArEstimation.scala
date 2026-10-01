@@ -82,17 +82,22 @@ object ArEstimation:
       * full budget when a correction matrix is present. Correcting before truncating matters: the correction at
       * length L assumes gamma beyond L is zero, so correcting a short vector discards what makes it work.
       */
-    private lazy val correctedFull: (Vector[Double], Boolean) =
+    private lazy val correctedFull: (Vector[Double], Option[CorrectionFallback]) =
       correction match
-        case None => (Vector.empty, false)
+        case None => (Vector.empty, None)
         case Some(matrix) =>
           var available = 0
           while available < pairCounts.length && pairCounts(available) > 0L do available += 1
           val raw = Vector.tabulate(available)(lag => sums(lag) / pairCounts(lag).toDouble)
-          if raw.isEmpty || !raw.head.isFinite || raw.head <= 0.0 then (raw, false)
-          else AcvfBias.correct(raw, matrix)
+          AcvfBias.correct(raw, matrix) match
+            case Right(corrected) => (corrected, None)
+            case Left(reason)     => (raw, Some(reason))
 
-    def correctionApplied: Boolean = correctedFull._2
+    /** Whether a correction was requested and actually used; `false` after a fallback to the raw estimate. */
+    def correctionApplied: Boolean = correction.isDefined && correctedFull._2.isEmpty
+
+    /** Why a requested correction fell back to the raw estimate, if it did. */
+    def correctionFallback: Option[CorrectionFallback] = correctedFull._2
 
     def through(order: ArOrderValue): Either[ArError, Autocovariances] =
       val required = order.value + 1
@@ -145,12 +150,33 @@ object ArEstimation:
       policy: EstimationPolicy
   ): Either[ArError, WhiteningPlan] =
     for
-      _ <- layout.coveredSegments.validateRows(residuals.rows)
-      _ <- validateFinite(residuals)
-      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+      _ <- validateInputs(residuals, layout)
       correction <- resolveCorrection(residuals, layout, options.order.maxRequested, policy)
       plan <- fitNoisePrepared(residuals, layout, options, correction)
     yield plan
+
+  /** Fit against a correction prepared once by [[AcvfBias.prepare]]. Results are bit-identical to
+    * `EstimationPolicy.DesignCorrected` with the same design, budget and order; the prepared value is checked
+    * against this residual set's row count and layout, and the residuals against the design's orthogonality.
+    */
+  def fitNoise(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      prepared: PreparedCorrection
+  ): Either[ArError, WhiteningPlan] =
+    for
+      _ <- validateInputs(residuals, layout)
+      correction <- AcvfBias.bind(residuals, layout, prepared)
+      plan <- fitNoisePrepared(residuals, layout, options, correction)
+    yield plan
+
+  private[ar] def validateInputs(residuals: DMat, layout: NoiseEstimationLayout): Either[ArError, Unit] =
+    for
+      _ <- layout.coveredSegments.validateRows(residuals.rows)
+      _ <- validateFinite(residuals)
+      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+    yield ()
 
   /** Fit with bias matrices that were already built, so a caller needing both the plan and the matrices builds
     * them once. Inputs are assumed validated by the public entry points.
@@ -199,12 +225,16 @@ object ArEstimation:
       case EstimationPolicy.Raw =>
         Right(uncorrected(layout))
       case EstimationPolicy.DesignCorrected(design, budget) =>
-        AcvfBias.prepare(design, residuals, layout, budget, targetOrder)
+        if design.rows != residuals.rows then Left(ArError.DesignRowMismatch(design.rows, residuals.rows))
+        else
+          AcvfBias.prepare(design, layout, budget, targetOrder).flatMap(AcvfBias.bind(residuals, layout, _))
 
   private[ar] def uncorrected(layout: NoiseEstimationLayout): PreparedCorrection =
     PreparedCorrection(
       AcvfBiasMatrices(0, 0, 0, Vector.empty),
-      Vector.fill(layout.runCount)(RunCorrection.Uncorrected)
+      Vector.fill(layout.runCount)(RunCorrection.Uncorrected),
+      layout,
+      None
     )
 
   private def estimateByRun(

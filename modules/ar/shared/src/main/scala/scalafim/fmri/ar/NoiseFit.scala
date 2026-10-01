@@ -28,13 +28,35 @@ object NoiseFit:
       policy: EstimationPolicy = EstimationPolicy.Raw
   ): Either[ArError, NoiseFit] =
     for
-      _ <- layout.coveredSegments.validateRows(residuals.rows)
-      _ <- ArEstimation.validateFinite(residuals)
-      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+      _ <- ArEstimation.validateInputs(residuals, layout)
       prepared <- ArEstimation.resolveCorrection(residuals, layout, options.order.maxRequested, policy)
+      fit <- assemble(residuals, layout, options, prepared)
+    yield fit
+
+  /** As above with a correction prepared once by [[AcvfBias.prepare]]; bound to its design and layout. */
+  def estimate(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      prepared: PreparedCorrection
+  ): Either[ArError, NoiseFit] =
+    for
+      _ <- ArEstimation.validateInputs(residuals, layout)
+      bound <- AcvfBias.bind(residuals, layout, prepared)
+      fit <- assemble(residuals, layout, options, bound)
+    yield fit
+
+  private def assemble(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      prepared: PreparedCorrection
+  ): Either[ArError, NoiseFit] =
+    for
       plan <- ArEstimation.fitNoisePrepared(residuals, layout, options, prepared)
-      acvf <- NoiseAcvf.estimateWith(residuals, layout, options.order.maxRequested, options.pooling, prepared)
+      perRun <- NoiseAcvf.perRunUnits(residuals, layout, options.order.maxRequested, prepared)
     yield
+      val acvf = NoiseAcvf.finish(perRun, options.order.maxRequested, options.pooling, prepared)
       val gamma: Vector[Vector[Double]] =
         options.pooling match
           case NoisePooling.Global => Vector(acvf.units.headOption.fold(Vector.empty[Double])(_.acvf))
@@ -47,10 +69,8 @@ object NoiseFit:
         plan,
         gamma,
         variance,
-        prepared.runs,
-        policy match
-          case EstimationPolicy.Raw                 => None
-          case EstimationPolicy.DesignCorrected(_, _) => Some(prepared.matrices)
+        acvf.corrections,
+        prepared.basis.map(_ => prepared.matrices)
       )
 
   /** `sigma2 = gamma_0 - sum_k phi_k gamma_k`, clamped to `[1e-12, gamma_0]`, mirroring

@@ -1,6 +1,6 @@
 package scalafim.fmri.ar
 
-import gale.linalg.{DMat, Matrix, QROptions, QRPivoting, Vec}
+import gale.linalg.{DMat, DVec, LinAlgError, Matrix, QROptions, QRPivoting, Vec}
 
 /** The linear map `A` with `E[gamma_raw] = A gamma_true` induced by projecting a design out of the data.
   *
@@ -24,7 +24,9 @@ final case class AcvfBiasMatrices private[ar] (
 /** Bias matrices together with the per-run outcome of the conditioning gate. */
 final case class PreparedCorrection private[ar] (
     matrices: AcvfBiasMatrices,
-    runs: Vector[RunCorrection]
+    runs: Vector[RunCorrection],
+    layout: NoiseEstimationLayout,
+    private[ar] basis: Option[AcvfBias.DesignBasis]
 ):
   /** The matrix to solve against for `run`, or `None` when the run is left uncorrected. */
   def usable(run: Int): Option[DMat] =
@@ -59,7 +61,7 @@ object AcvfBias:
   val OrthogonalityTolerance: Double = 1e-6
 
   /** Orthonormal basis of the design column space: `q` is `rows x rank`. */
-  private final class DesignBasis(val rows: Int, val rank: Int, val q: DMat)
+  private[ar] final class DesignBasis(val rows: Int, val rank: Int, val q: DMat)
 
   private def designBasis(design: DMat): Either[ArError, DesignBasis] =
     var row = 0
@@ -141,23 +143,26 @@ object AcvfBias:
     else if maxLag < 1 then Left(ArError.InvalidCorrectionLag(maxLag))
     else designBasis(design).flatMap(buildMatrices(_, layout, math.min(maxLag, layout.rows)))
 
-  /** Validate the residuals against the design, resolve the lag budget, build the per-run matrices, and gate each
-    * on conditioning.
+  /** Build the per-run bias matrices once for a design and layout, gate each on conditioning, and keep the
+    * design basis so every later residual set is still validated for orthogonality.
+    *
+    * The result is bound to this design and layout: it can only be used with residuals of the same row count
+    * and an equal layout ([[bind]] checks both). Callers fitting many residual sets (voxels, records) against
+    * one design should prepare once and pass the result to `ArEstimation.fitNoise`, `NoiseFit.estimate` or
+    * `NoiseAcvf.estimate`.
     *
     * @param targetOrder the AR order being fitted; only used by [[CorrectionBudget.Adaptive]]
     */
   def prepare(
       design: DMat,
-      residuals: DMat,
       layout: NoiseEstimationLayout,
       budget: CorrectionBudget,
       targetOrder: Int
   ): Either[ArError, PreparedCorrection] =
-    if design.rows != residuals.rows then Left(ArError.DesignRowMismatch(design.rows, residuals.rows))
+    if design.rows != layout.rows then Left(ArError.DesignRowMismatch(design.rows, layout.rows))
     else
       for
         basis <- designBasis(design)
-        _ <- validateResiduals(residuals, basis, OrthogonalityTolerance)
         lag <- resolveLag(budget, design, layout, targetOrder)
         built <- buildMatrices(basis, layout, lag)
       yield PreparedCorrection(
@@ -166,8 +171,26 @@ object AcvfBias:
           val rcond = reciprocalCondition(matrix)
           if rcond.isFinite && rcond >= ReciprocalConditionFloor then RunCorrection.Applied(rcond)
           else RunCorrection.IllConditioned(rcond)
-        }
+        },
+        layout,
+        Some(basis)
       )
+
+  /** Check a prepared correction against one residual set: same row count, equal layout, and residuals that
+    * are numerically orthogonal to the design it was prepared from.
+    */
+  def bind(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      prepared: PreparedCorrection
+  ): Either[ArError, PreparedCorrection] =
+    if prepared.layout.rows != residuals.rows then
+      Left(ArError.DesignRowMismatch(prepared.layout.rows, residuals.rows))
+    else if prepared.layout != layout then Left(ArError.PreparedCorrectionLayoutMismatch)
+    else
+      prepared.basis match
+        case None        => Right(prepared)
+        case Some(basis) => validateResiduals(residuals, basis, OrthogonalityTolerance).map(_ => prepared)
 
   private[ar] def resolveLag(
       budget: CorrectionBudget,
@@ -363,19 +386,26 @@ object AcvfBias:
     *
     * The leading `min(length, A.rows)` block of `A` is gated on its own reciprocal condition number and solved;
     * lags beyond the matrix are carried through unchanged. When the block is ill-conditioned, singular, yields a
-    * non-finite solution or a non-positive variance, the raw vector comes back with `applied = false`.
+    * non-finite solution or a non-positive variance, the caller keeps the raw vector (as fmriAR does) and the
+    * typed reason is reported. `solve` is a test seam for forcing solver failures.
     */
-  private[ar] def correct(gamma: Vector[Double], matrix: DMat): (Vector[Double], Boolean) =
-    val size = math.min(gamma.length, matrix.rows)
-    if size < 1 then (gamma, false)
+  private[ar] def correct(
+      gamma: Vector[Double],
+      matrix: DMat,
+      solve: (DMat, DVec) => Either[LinAlgError, DVec] = (block, rhs) => block.solve(rhs)
+  ): Either[CorrectionFallback, Vector[Double]] =
+    if gamma.isEmpty || !gamma.head.isFinite || gamma.head <= 0.0 then
+      Left(CorrectionFallback.NonPositiveRawVariance(gamma.headOption.getOrElse(Double.NaN)))
     else
+      val size = math.min(gamma.length, matrix.rows)
       val block = matrix.slice(0, size, 0, size)
       val rcond = reciprocalCondition(block)
-      if !rcond.isFinite || rcond < ReciprocalConditionFloor then (gamma, false)
+      if !rcond.isFinite || rcond < ReciprocalConditionFloor then Left(CorrectionFallback.IllConditionedBlock(rcond))
       else
-        block.solve(Vec.tabulate(size)(i => gamma(i))) match
-          case Left(_) => (gamma, false)
+        solve(block, Vec.tabulate(size)(i => gamma(i))) match
+          case Left(_) => Left(CorrectionFallback.SingularSystem)
           case Right(solution) =>
             val solved = Vector.tabulate(size)(i => solution(i))
-            if !solved.forall(_.isFinite) || solved.head <= 0.0 then (gamma, false)
-            else (solved ++ gamma.drop(size), true)
+            if !solved.forall(_.isFinite) then Left(CorrectionFallback.NonFiniteSolution)
+            else if solved.head <= 0.0 then Left(CorrectionFallback.NonPositiveVariance(solved.head))
+            else Right(solved ++ gamma.drop(size))

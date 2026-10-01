@@ -98,6 +98,44 @@ brackets.)
 Both mutations were reverted by copying the original back; the restored file's sha256
 matched the value above before and after, in both passes.
 
+## Solve-fallback provenance and prepared corrections (S2 review)
+
+**Fallback reporting.** fmriAR's `.apply_acvf_correction_result` silently returns the raw
+autocovariance when the solved leading block fails `rcond >= 1e-6`, the solve errors, the
+solution is non-finite, or the corrected lag-zero variance is not positive. Scalafim matches
+that numeric behaviour exactly (the raw vector is kept) but now reports it:
+`RunCorrection.SolveFallback(CorrectionFallback)` with `IllConditionedBlock`, `SingularSystem`,
+`NonFiniteSolution`, `NonPositiveVariance` and `NonPositiveRawVariance`. `NoiseFit.corrections`
+and `NoiseAcvfEstimate.corrections` take it from the per-run estimation, overriding the
+prepare-time gate status, so a run can no longer be reported `Applied` after using raw.
+`NoiseAcvfUnit.fallback` carries the reason per unit. Each path is forced in
+`AcvfBiasFallbackSuite` (the solver is injectable for the two paths a real LU cannot reach after
+the condition gate), plus end-to-end checks through `NoiseAcvf` and `NoiseFit` with a
+hand-built correction.
+
+Difference: when the raw lag-zero variance is not positive R returns an empty autocovariance
+(a null fit); scalafim keeps its existing raw behaviour (zero coefficients of the requested
+length) and reports `NonPositiveRawVariance`.
+
+**Prepared corrections.** `AcvfBias.prepare(design, layout, budget, targetOrder)` builds the bias
+matrices and keeps the design basis once. The result is accepted by
+`ArEstimation.fitNoise(..., prepared)`, `NoiseFit.estimate(..., prepared)` and
+`NoiseAcvf.estimate(..., prepared)`. It is bound to its design and layout: `AcvfBias.bind`
+rejects a different row count (`DesignRowMismatch`) or an unequal layout
+(`PreparedCorrectionLayoutMismatch`), and still checks orthogonality of every residual set
+(`DesignResidualMismatch`). Prepared and `DesignCorrected` calls share one code path and are
+tested bit-identical (plan coefficients, gamma, sigma2, statuses, acvf; run and global pooling;
+single-column residual sets). Error order for the policy path changed slightly: lag-budget errors
+now precede the orthogonality check.
+
+Mutation check on the new reporting (sha256 before and after, both restores verified):
+`NoiseAcvf.scala` `9f7a5080c50179be6f23a089427564a36c50514f08e9a1046328084d48c73512`,
+`AcvfBias.scala` `8c36f28dcd7a0ea22f64eaf5f272921c9138eb775f73900d1d86dbf9d44dd90a`.
+1. Fallback reason dropped when assembling per-run status: 2 tests fail (NoiseAcvf and NoiseFit
+   reporting).
+2. Non-positive-variance check disabled in `correct`: 3 tests fail (the unit path and both
+   reporting paths).
+
 ## Deliberate differences from R
 
 - Failures are typed `ArError`s or reported statuses, not warnings. A design leaving no

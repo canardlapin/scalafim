@@ -60,6 +60,12 @@ NoiseFit.estimate(residuals, layout, options, policy)          // plan + gamma +
 NoiseAcvf.estimate(residuals, layout, maxLag, pooling, policy) // mirrors fmriAR::noise_acvf()
 ```
 
+When many residual sets share one design and layout, build the correction once with
+`AcvfBias.prepare(design, layout, budget, order)` and pass it to the same three entry points; it
+is bound to that design and layout and each residual set is still checked for orthogonality.
+`NoiseFit.corrections` reports `RunCorrection.SolveFallback` when the solve fell back to the raw
+estimate (fmriAR does this silently).
+
 `EstimationPolicy.Raw` is the default and leaves every existing entry point unchanged.
 `CorrectionBudget.Fixed` is `fmriAR`'s `correction_max_lag`; `CorrectionBudget.Adaptive` is
 fmrireg's rule `max(order, min(ceiling, max(5, 2p + 1), floor(min run rdf / 3)))`. A budget

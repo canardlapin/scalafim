@@ -15,14 +15,19 @@ final case class NoiseAcvfUnit(
     pairs: Vector[Long],
     segmentCount: Int,
     segmentLengths: Vector[Int],
-    corrected: Boolean
+    corrected: Boolean,
+    fallback: Option[CorrectionFallback] = None
 )
 
+/** @param corrections the outcome per run (all runs, not just those reported in `units`): the conditioning gate,
+  *                    overridden by [[RunCorrection.SolveFallback]] when the solve fell back to the raw estimate
+  */
 final case class NoiseAcvfEstimate(
     units: Vector[NoiseAcvfUnit],
     maxLag: Int,
     pooling: NoisePooling,
-    corrected: Boolean
+    corrected: Boolean,
+    corrections: Vector[RunCorrection]
 )
 
 /** Run- and censor-aware noise autocovariance, mirroring fmriAR's `noise_acvf()`.
@@ -48,6 +53,22 @@ object NoiseAcvf:
       estimate <- estimateWith(residuals, layout, math.min(lag.value, residuals.rows), pooling, prepared)
     yield estimate
 
+  /** As above with a correction prepared once by [[AcvfBias.prepare]]; bound to its design and layout. */
+  def estimate(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      maxLag: Int,
+      pooling: NoisePooling,
+      prepared: PreparedCorrection
+  ): Either[ArError, NoiseAcvfEstimate] =
+    for
+      lag <- ArLag(maxLag)
+      _ <- layout.coveredSegments.validateRows(residuals.rows)
+      _ <- ArEstimation.validateFinite(residuals)
+      bound <- AcvfBias.bind(residuals, layout, prepared)
+      estimate <- estimateWith(residuals, layout, math.min(lag.value, residuals.rows), pooling, bound)
+    yield estimate
+
   private[ar] def estimateWith(
       residuals: DMat,
       layout: NoiseEstimationLayout,
@@ -55,6 +76,15 @@ object NoiseAcvf:
       pooling: NoisePooling,
       prepared: PreparedCorrection
   ): Either[ArError, NoiseAcvfEstimate] =
+    perRunUnits(residuals, layout, maxLag, prepared).map(finish(_, maxLag, pooling, prepared))
+
+  /** Per-run units (before pooling), runs without usable data omitted. */
+  private[ar] def perRunUnits(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      maxLag: Int,
+      prepared: PreparedCorrection
+  ): Either[ArError, Vector[NoiseAcvfUnit]] =
     val units = Vector.newBuilder[NoiseAcvfUnit]
     var run = 0
     while run < layout.runCount do
@@ -64,13 +94,22 @@ object NoiseAcvf:
         case Right(None)       => ()
       run += 1
     val perRun = units.result()
-    if perRun.isEmpty then Left(ArError.NoEstimableRows)
-    else
+    if perRun.isEmpty then Left(ArError.NoEstimableRows) else Right(perRun)
+
+  private[ar] def finish(
+      perRun: Vector[NoiseAcvfUnit],
+      maxLag: Int,
+      pooling: NoisePooling,
+      prepared: PreparedCorrection
+  ): NoiseAcvfEstimate =
+      val corrections = prepared.runs.zipWithIndex.map { case (gate, run) =>
+        perRun.find(_.runIndex.contains(run)).flatMap(_.fallback).fold(gate)(RunCorrection.SolveFallback(_))
+      }
       val reported =
         pooling match
           case NoisePooling.Run    => perRun
           case NoisePooling.Global => if perRun.length > 1 then Vector(poolUnits(perRun)) else perRun.map(_.copy(runIndex = None))
-      Right(NoiseAcvfEstimate(reported, maxLag, pooling, reported.forall(_.corrected)))
+      NoiseAcvfEstimate(reported, maxLag, pooling, reported.forall(_.corrected), corrections)
 
   private def oneUnit(
       residuals: DMat,
@@ -98,7 +137,8 @@ object NoiseAcvf:
                   pairs = pooled.pairCounts.take(gamma.length).toVector,
                   segmentCount = segments.length,
                   segmentLengths = segments.map(_.length),
-                  corrected = pooled.correctionApplied
+                  corrected = pooled.correctionApplied,
+                  fallback = pooled.correctionFallback
                 )
               )
           }
@@ -127,5 +167,6 @@ object NoiseAcvf:
       pairs = pairs,
       segmentCount = units.map(_.segmentCount).sum,
       segmentLengths = units.flatMap(_.segmentLengths),
-      corrected = units.forall(_.corrected)
+      corrected = units.forall(_.corrected),
+      fallback = units.flatMap(_.fallback).headOption
     )

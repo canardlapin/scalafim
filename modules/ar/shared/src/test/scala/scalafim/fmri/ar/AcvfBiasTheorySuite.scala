@@ -98,8 +98,10 @@ class AcvfBiasTheorySuite extends munit.FunSuite:
 
       // Solving A gamma = E[gamma_raw] recovers the truth wherever every lag has pairs.
       if recover && expected.forall(_.isDefined) then
-        val (recovered, applied) = AcvfBias.correct(expected.map(_.get).toVector, matrix)
-        assert(applied, clues(AcvfBias.reciprocalCondition(matrix), recovered, expected))
+        val recovered = AcvfBias.correct(expected.map(_.get).toVector, matrix).fold(
+          reason => fail(s"correction must apply, fell back: $reason"),
+          identity
+        )
         recovered.zip(truth).zipWithIndex.foreach { case ((got, want), k) =>
           assert(math.abs(got - want) <= 1e-9, clues(run, k, got, want))
         }
