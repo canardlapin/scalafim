@@ -291,7 +291,7 @@ class AlderRidgeRegressionSuite extends munit.FunSuite:
     val refit = right(AlderRidgeRegression.refit(f.rows, f.inner, f.response, Vector("x1", "x2"), grid, budget(), RidgeRefitAuthorization.Declared("final model for held-out session")))
     assertEquals(refit.receipt.reason, "final model for held-out session")
     assertEquals(refit.receipt.trainingKeys, f.keys)
-    assertEquals(refit.receipt.innerDesign, f.inner.receipt)
+    assertEquals(refit.receipt.selection.innerDesign, f.inner.receipt)
     assertEqualsDouble(refit.receipt.selection.selectedPenalty, 2.0, 0.0)
     assertEqualsDouble(refit.model.penalty, 2.0, 0.0)
     assertEquals(refit.receipt.selection.trainingKeys, f.keys)
