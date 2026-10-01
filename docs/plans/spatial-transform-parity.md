@@ -1114,7 +1114,8 @@ Original full containers produce the frozen native ANTs double-precision
 references. Exact field crops retain every interpolation neighbourhood for the
 one declared approximately 8 x 11 x 6.5 mm patch (315 interior voxels and 32
 off-grid queries); native original/crop point
-agreement is below 7.11e-15 mm and actual BOLD resampling is identical. Shared
+agreement is below 7.11e-15 mm and actual BOLD resampling is identical
+(generation-time receipts; those native outputs were not retained). Shared
 JVM/JS checks require one clean `Pass`, exercise the supplied inverse through
 `mapPoint`, and reject origin, component, LPS, stage-order and scanner-direction
 mutations. The default JVM suite also binds the cropped HDF5 containers to the
@@ -1184,7 +1185,13 @@ Arbitrary real intensity staged/direct differences are descriptive, not a
 zero-error requirement. The scenario requires clean `Pass`; historical
 synthetic caveats, polyhedral overlap and template-volume contracts remain
 separate. Evidence: `docs/verification/stp-surface-real-20261001/README.md`.
-Final acceptance and exact-source peer review are recorded with that evidence.
+Final Fray #135 s3 approval (candidate `5831638b`, evidence 915) and local
+integration (`de32fde7`, all 60 paths matching the candidate) are recorded there.
+The isolated combined tree with the approved concurrent main merge passes
+185 JVM and 150 JS surface tests and
+warning-clean compileAll on both platforms. Alongside the reviewed real demo1
+and FSL interiors, this meets the three declared bounded P7.07 contracts;
+historical synthetic caveats and broader domain qualification remain separate.
 
 ### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
 

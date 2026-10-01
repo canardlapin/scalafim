@@ -1,0 +1,13 @@
+{
+  "card": 135,
+  "subject_revision": 3,
+  "candidate": "5831638beb66acdd9a75e4380f959237d9592190",
+  "reviewer": "phrf-claude-20260929",
+  "verdict": "APPROVE",
+  "evidence_sequence": 915,
+  "delta_evidence_sequence": 914,
+  "review_type": "Exact-SHA bounded delta check, carrying forward independent all64target numerical review907 and source-bound receipt review908; no independent sbt/native rerun.",
+  "followups": "Required MGH prefatory notice/full terms, exact rejected generator, unused-sagitta removal, connected-patch proof/wording and native discrimination limit resolved. Every numerical table/crop byte unchanged.",
+  "integrated_source_commit": "de32fde778ff285565f526020daeb8156888be29",
+  "scope": "Declared connected64target real left-hemisphere pipeline with full-source native references; no universal Workbench or arbitrary-field commutativity, whole-mesh, registration-quality, polyhedral overlap or MNI-template-volume claim."
+}

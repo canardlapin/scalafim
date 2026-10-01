@@ -6,7 +6,6 @@
   "combined_main_parent": "bfbfcdbd54cf7004dc82f369137458217df0ef8a",
   "scenario": "surface.real-orig-to-fsaverage-to-fslr32k.v1",
   "mote": "bd-01M39Q5B7AHPK325MZV3PS249J",
-  "mote_acceptance": "open pending final exact delta review and local integration",
   "scope": "64 geometry-selected in one connected patch of left fsLR32k targets; actual orig seven-point ribbon and fsaverage staged/direct radial routes; full native closest-point references. No arbitrary-field zero commutativity, whole-mesh/registration-quality/polyhedral-overlap/template-volume/graph qualification.",
   "checks": {
     "jvm": {
@@ -220,19 +219,16 @@
     },
     "non_blocking_followups": "PartB1(b) prefatory notice, exact initialgenerator retention, connected patch wording, dead sagitta metadata removal and native discrimination limitation are resolved in subsequent source769. Final exact delta verdict remains distinct."
   },
-  "final_review": {
-    "card": 135,
-    "status": "pending at receipt creation; s2 approval is not transferred to an unreviewed identity"
-  },
   "raw_whitespace_preserved": "Original upstream licences, the required notice containing those exact bytes, and hdiutil receipt retain source whitespace. Authored paths checked separately.",
   "qualification_payload_sha256": {
-    "README.md": "1f92e7352e9e05022fe6385894e559a23092a610ef22b0b3677737f5e637c45b",
+    "README.md": "5b254e145c1d3b8e1ca699e749f113b285825c7c46853cbfa4d689e47e0d6ca8",
     "closure-audit.json": "0372ca92f0db279322469f085bf5274fb7ca4bd2e460d68b8fec8b3f8ec6d6b4",
     "combined.log": "7563bdb3d0446313dd0292d57f25b90450853bdc7b736fafc085294dec8a3fb9",
     "combined.meta.json": "7b7abf1a0c4c098e8978dcdf1a134131856a2aba72d09fae60fc54b4411a4aac",
     "compile_all.log": "6765395516c1df0eccd2b2adb1b3d2b8f440a6681a4ee17dd3fb068417aee02a",
     "compile_all.meta.json": "ee9df42a26f4feec50a422b19d82b2b80c9c904fe7d5ff0ce83feabc52d59b70",
     "detach-receipt.txt": "f381e88f14e433e0ac4d016249b008db54d530626074bbab7dfdd8d4592ab51a",
+    "integration-receipt.json": "49962f4461bc9bf0b66bddfb98aa777802523478616642e1b7dda0a22c5d86d2",
     "js.log": "384eb921a4cba623d93dc8edffc8397d152a278aa5b83f578cdafe198a5c004c",
     "js.meta.json": "8c4aa3e70e25df78b7a0da38e8232b49b626548e437602762e11bd54def1ac4f",
     "jvm.log": "d0f439a475f9efe128d34a54468ed4a9ce4feb92bce2579920e45a32e924ba3c",
@@ -240,7 +236,51 @@
     "mount-receipt.txt": "63298e0c9fc06e0f0ab1458c4b5ac5d6e25dd1e359e0857ca9f6b0f51c6f7a4b",
     "native-generation.log": "ad50e7e694040591f561686d0a21857f5c137ef37659c09200b4c2c543c7975c",
     "rejected-attempt1-generator.py": "d57caa0a82ad7410853aede8b22937c4f69cba0894317771ff150afab50c0b5b",
+    "review-final.json": "40567a99def7ec600c47e5726524c2a68a998571e184c8f74797aa024c64d29f",
     "review-s2.json": "2a5bbdeba82317c022156525fd3b6ddc73a844adff6ecf1422eab89664cf3817",
     "verify_closure.py": "095fea5ab2c9302e9d90201e13f015e3cd7150b0460f521e6b7ab076260cd120"
+  },
+  "mote_acceptance_at_receipt_creation": "open pending final exact delta review and local integration",
+  "subsequent_acceptance": {
+    "surface": "Final Fray #135 s3 approval at evidence 915; exact 60-path local integration de32fde7 confirmed.",
+    "p7_criteria": "All three declared bounded real workflow contracts are implemented with clean Pass scenarios and reviewed evidence. Mote closure note will bind the final local documentation commit. Historical synthetic caveats and broader qualification are separate.",
+    "fmriprep_review": {
+      "card": 111,
+      "subject_revision": 3,
+      "candidate": "e2688970bb657f01d553eb6cc68356831118cc12",
+      "sequence": 779,
+      "scope": "One declared approximately 8 x 11 x 6.5 mm patch; generation-time native crop controls were not retained, explicitly limited."
+    },
+    "fsl_review": {
+      "card": 118,
+      "subject_revision": 4,
+      "candidate": "72fa507dc490b61a5d60cc19a41dad48e846bf18",
+      "sequence": 880,
+      "scope": "Frozen real-subject interior composition; no registration accuracy/whole-domain/Jacobian claim."
+    }
+  },
+  "final_review_at_receipt_creation": {
+    "card": 135,
+    "status": "pending at receipt creation; s2 approval is not transferred to an unreviewed identity"
+  },
+  "final_review": {
+    "card": 135,
+    "subject_revision": 3,
+    "candidate": "5831638beb66acdd9a75e4380f959237d9592190",
+    "reviewer": "phrf-claude-20260929",
+    "verdict": "APPROVE",
+    "evidence_sequence": 915,
+    "delta_evidence_sequence": 914,
+    "review_type": "Exact-SHA bounded delta check, carrying forward independent all64target numerical review907 and source-bound receipt review908; no independent sbt/native rerun.",
+    "followups": "Required MGH prefatory notice/full terms, exact rejected generator, unused-sagitta removal, connected-patch proof/wording and native discrimination limit resolved. Every numerical table/crop byte unchanged.",
+    "integrated_source_commit": "de32fde778ff285565f526020daeb8156888be29",
+    "scope": "Declared connected64target real left-hemisphere pipeline with full-source native references; no universal Workbench or arbitrary-field commutativity, whole-mesh, registration-quality, polyhedral overlap or MNI-template-volume claim."
+  },
+  "integration": {
+    "source_commit": "de32fde778ff285565f526020daeb8156888be29",
+    "receipt": "integration-receipt.json",
+    "all60source_blobs_exact": true,
+    "unrelated_content_preserved": true,
+    "publication": false
   }
 }

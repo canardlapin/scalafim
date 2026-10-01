@@ -4,7 +4,7 @@
   "source_baseline_commit": "aa2af56253cac8c2a5f31bc6ed22ae11e82fb1be",
   "source_manifest_sha256": "8309a1301369aa53f674a46245044ac57a24d2ab33b76a81a15d0e3924193366",
   "scenario_id": "transform.fmriprep-demo1-interior.v1",
-  "claim": "Native ANTs parity for the fixed real demo1 interior scanner/boldref -> T1w -> MNI152NLin6Asym chain, with no exclusions of the frozen comparison set.",
+  "claim": "Native ANTs parity for one declared approximately 8 x 11 x 6.5 mm real demo1 interior patch of the scanner/boldref -> T1w -> MNI152NLin6Asym chain, with no exclusions of the frozen comparison set.",
   "native_fixture_manifest_sha256": "b047219c03359c6baa03bd4a624325e48f5ea12e8ed9ff6cf0b169a799ffde01",
   "native_tools": {
     "ANTs": "ANTs Version: 2.6.5.dev1-gfdce4d2",
@@ -232,7 +232,10 @@
       "source_manifest_files_verified": 40,
       "native_fixture_files_verified": 26,
       "scientific_source_and_fixture_change_since_passing_JVM_JS_gates": false,
-      "note": "All scientific Scala source, generator recipe and 26 fixture payloads remain byte-identical to the passing/approved code candidate. Only scope wording and evidence records changed."
+      "note": "All scientific Scala source, generator recipe and 26 fixture payloads remain byte-identical to the passing/approved code candidate. Only scope wording and evidence records changed.",
+      "source_manifest_files_verified_scope": "Original generator check: 40 declared source files. Separate Fray #111 s3 review verified those 40 hashes plus 1 recipe-support hash.",
+      "source_manifest_hash_entries_independently_verified": 41,
+      "recipe_support_files_independently_verified": 1
     }
   ],
   "limitations": [
@@ -255,7 +258,14 @@
     "candidate": "git:29ccdbc07d89575d40ab11af0cb778779ce92be9",
     "status": "approved for qualified code commit, limited to interior claim; final receipt/wording review pending",
     "evidence_seq": 742,
-    "receipt": "review-29ccdbc0.json"
+    "receipt": "review-29ccdbc0.json",
+    "subsequent_verdict": {
+      "candidate": "e2688970bb657f01d553eb6cc68356831118cc12",
+      "subject_revision": 3,
+      "status": "approve",
+      "evidence_seq": 779,
+      "review_type": "Read-only source/receipt/hash review; no reviewer sbt, Docker or ANTs run."
+    }
   },
   "qualified_code_commit": "29ccdbc07d89575d40ab11af0cb778779ce92be9",
   "source_candidate_commit_note": "After these checks, only documentation wording, source manifest documentation hashes and qualification receipts changed. Scientific recipe, Scala sources and native fixture bytes match this commit.",

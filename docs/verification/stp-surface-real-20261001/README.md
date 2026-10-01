@@ -146,7 +146,12 @@ The final isolated combined tree includes the approved concurrent main merge:
 surface JVM 185/185, JS 150/150 and all-module compilation on both platforms
 passed without warnings. `qualification.json` binds that exact tree to the
 scientific source and raw log/exit metadata. Peer review independently reproduced
-all 64 bounds; pending final delta evidence is kept distinct from approval.
+all 64 bounds. Fray #135 s3 approved exact candidate `5831638b` (evidence 915),
+which was integrated as local main `de32fde7`. `review-final.json` and
+`integration-receipt.json` preserve the exact identities and evidence boundaries.
+Together with the reviewed real demo1 and FSL interiors, this satisfies the
+declared bounded P7.07 scenarios. The tracker closure cites the final local
+documentation commit; historical synthetic caveats remain separate.
 
 The fixed native float32 limit dominates these small radial/closest estimator
 differences. Native comparisons protect gross convention errors but do not
