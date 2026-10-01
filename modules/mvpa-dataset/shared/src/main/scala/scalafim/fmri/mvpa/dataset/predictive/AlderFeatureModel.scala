@@ -23,7 +23,8 @@ final case class AlderFeatureModelResult(
     result: RoiAnalysisResult,
     validationReceipt: resample4s.core.PlanReceipt,
     fits: Vector[AlderFeatureModelFoldFit],
-    materialization: MaterializationReceipt
+    materialization: MaterializationReceipt,
+    nativeRead: Option[NativeReadReceipt]
 )
 
 enum AlderFeatureModelError:
@@ -54,7 +55,7 @@ object AlderFeatureModel:
       receipt <- MaterializationBudget.authorize(budget, validation.samples.size, patterns.receipt.inputs, features.features.cols).left.map(AlderFeatureModelError.Admission.apply)
       projected <- project(patterns, features, direction, patternNames, estimator)
       result <- evaluate(projected, patterns.mapping, features, direction, validation, patternNames, estimator, storePrediction, receipt)
-    yield result
+    yield result.copy(nativeRead = patterns.nativeReadReceipt)
 
   private def project[M](patterns: AlderMaterializedRows[M], features: FeatureModelDesign, direction: FeaturePredictionDirection, names: Vector[String], estimator: FeatureRidgeEstimator): Either[AlderFeatureModelError, IdentifiedRows[Example[Array[Double], Array[Double], Unit]]] =
     val fingerprint = DataFingerprint.external(AxisDigest.sha256Hex: writer =>
@@ -138,7 +139,7 @@ object AlderFeatureModel:
           row += 1
         val prediction = FeatureModelPrediction(direction, features.items, targetNames, sums.result(), observed.result())
         FeatureModelMetrics.compute(prediction).left.map(AlderFeatureModelError.Numerical.apply).map: metrics =>
-          AlderFeatureModelResult(RoiAnalysisResult(metrics.withEstimator(estimator.lambda), if store then Some(RoiPayload.FeatureModel(prediction)) else None), validation.receipt, fits.result(), receipt)
+          AlderFeatureModelResult(RoiAnalysisResult(metrics.withEstimator(estimator.lambda), if store then Some(RoiPayload.FeatureModel(prediction)) else None), validation.receipt, fits.result(), receipt, None)
 
   private final class FeatureLearner(estimator: FeatureRidgeEstimator) extends Learner[Id, Array[Double], Array[Double], Unit, Vector[Double]]:
     type FitError = AlderFeatureModelError

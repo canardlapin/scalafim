@@ -1252,7 +1252,7 @@ lazy val mvpaSpatial =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa-spatial"))
-    .dependsOn(mvpa, image, surface, atlas, locusData)
+    .dependsOn(mvpa, image, surface, atlas, locusData, mvpaDataset % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa-spatial"

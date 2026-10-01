@@ -24,7 +24,8 @@ final case class AlderCrossDecodingResult(
     sourceAxis: AxisDescriptor, targetAxis: AxisDescriptor,
     preparation: CrossDecodingPreparationScope, sourceAudit: Audit,
     sourceMaterialization: MaterializationReceipt, targetMaterialization: MaterializationReceipt,
-    evaluationReceipt: PredictionReceipt[Use.Test]
+    evaluationReceipt: PredictionReceipt[Use.Test],
+    sourceNativeRead: Option[NativeReadReceipt], targetNativeRead: Option[NativeReadReceipt]
 )
 
 enum AlderCrossDecodingError:
@@ -142,7 +143,7 @@ object AlderCrossDecoding:
                   values.indices.foreach(column => matrix(ordinal, column) = values(column))
                   rows += SwiftOofRow(key, values, coding.classes(values.indices.maxBy(values)), observed, Vector.empty)
     failure.toLeft(AlderCrossDecodingResult(coding.classes, matrix.result(), rows.result(), source.mapping.axis, target.mapping.axis,
-      preparation, trained.audit, source.receipt, target.receipt, prediction.receipt))
+      preparation, trained.audit, source.receipt, target.receipt, prediction.receipt, source.nativeReadReceipt, target.nativeReadReceipt))
 
   private final class SourceLearner[M](source: AlderMaterializedRows[M], coding: SwiftTargetCoding, classifier: Classifier, component: String, parameters: Vector[String])
       extends Learner[Id, Array[Double], Array[Double], Unit, ClassificationPrediction]:
