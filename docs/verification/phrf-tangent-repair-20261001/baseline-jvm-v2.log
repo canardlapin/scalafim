@@ -1,0 +1,108 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project work-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-lwu-repair-design-20260930/work/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a3fe250684692aa42c1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (261806 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-lwu-repair-design-20260930/work/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/scenario-testkit/jvm/target/scala-3.7.4/classes ...
+[info] compiling 12 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/pipeline/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 85 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.profile.ShapeDecoderTangentSuite:
+==> X scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.coupled lower-bound Newton direction follows feasible descent to the exact constrained optimum  0.048s munit.ComparisonFailException: modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala:54 values are not the same expected: 1.0 but was: 0.0
+53:    assertEqualsDouble(result.coordinates(0), if mirrored then 1.0 else 0.0, 1e-12)
+54:    assertEqualsDouble(result.coordinates(1), 1.0, 1e-9)
+55:    if three then assertEqualsDouble(result.coordinates(2), 0.0, 1e-12)
+    at munit.FunSuite.assertEqualsDouble(FunSuite.scala:13)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.checkCoupled(ShapeDecoderTangentSuite.scala:54)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$1(ShapeDecoderTangentSuite.scala:68)
+==> X scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.coupled upper-bound Newton direction follows feasible descent to the mirrored optimum  0.001s munit.ComparisonFailException: modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala:54 values are not the same expected: 1.0 but was: 0.0
+53:    assertEqualsDouble(result.coordinates(0), if mirrored then 1.0 else 0.0, 1e-12)
+54:    assertEqualsDouble(result.coordinates(1), 1.0, 1e-9)
+55:    if three then assertEqualsDouble(result.coordinates(2), 0.0, 1e-12)
+    at munit.FunSuite.assertEqualsDouble(FunSuite.scala:13)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.checkCoupled(ShapeDecoderTangentSuite.scala:54)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$2(ShapeDecoderTangentSuite.scala:71)
+==> X scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.tangent correction handles a third independent coordinate  0.001s munit.ComparisonFailException: modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala:54 values are not the same expected: 1.0 but was: 0.0
+53:    assertEqualsDouble(result.coordinates(0), if mirrored then 1.0 else 0.0, 1e-12)
+54:    assertEqualsDouble(result.coordinates(1), 1.0, 1e-9)
+55:    if three then assertEqualsDouble(result.coordinates(2), 0.0, 1e-12)
+    at munit.FunSuite.assertEqualsDouble(FunSuite.scala:13)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.checkCoupled(ShapeDecoderTangentSuite.scala:54)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$3(ShapeDecoderTangentSuite.scala:74)
+  + a genuine constrained stationary bank point needs no candidate 0.002s
+==> X scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.a tiny representable clipped step is evaluated rather than called stationary  0.002s munit.ComparisonFailException: modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala:117 values are not the same expected: 1.0 but was: 0.9999999995
+116:    assertEquals(result.status, DecodeStatus.Boundary)
+117:    assertEqualsDouble(result.coordinates.head, 1.0, 1e-15)
+118:    assertEquals(counters.candidateAttempts, 1L)
+    at munit.FunSuite.assertEqualsDouble(FunSuite.scala:13)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$5(ShapeDecoderTangentSuite.scala:117)
+==> X scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.an unrepresentable raw nonstationary correction preserves terminal state without an evaluation  0.016s munit.ComparisonFailException: modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala:126
+125:    val result = new ShapeDecoder(objective, DecodeBudget(coarseStride = 1), None, 1.0).decode(counters)
+126:    assertEquals(result.status.toString, "Stalled")
+127:    assertEquals(result.budgetExit, None)
+values are not the same
+=> Obtained
+BudgetExceeded
+=> Diff (- expected, + obtained)
+-Stalled
++BudgetExceeded
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$6(ShapeDecoderTangentSuite.scala:126)
+==> X scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.halving to an unchanged coordinate stalls only before the attempt cap is exhausted  0.001s munit.ComparisonFailException: modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala:145
+144:        None, 1.0).decode(counters)
+145:      assertEquals(result.status.toString, expected)
+146:      assertEquals(result.budgetExit, if cap == 1 then Some(DecodeBudgetExit.CandidateAttemptCap) else None)
+values are not the same
+=> Obtained
+BudgetExceeded
+=> Diff (- expected, + obtained)
+-Stalled
++BudgetExceeded
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$7$$anonfun$1(ShapeDecoderTangentSuite.scala:145)
+    at scala.collection.immutable.Vector.foreach(Vector.scala:2125)
+    at scalafim.fmri.fit.profile.ShapeDecoderTangentSuite.$init$$$anonfun$7(ShapeDecoderTangentSuite.scala:138)
+[error] Failed: Total 7, Failed 6, Errors 0, Passed 1
+[error] Failed tests:
+[error] 	scalafim.fmri.fit.profile.ShapeDecoderTangentSuite
+[error] (fitJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 32 s, completed Oct 1, 2026, 9:25:41 a.m.

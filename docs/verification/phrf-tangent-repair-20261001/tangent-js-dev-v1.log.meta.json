@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T14:44:21.121565+00:00",
+  "finished_utc": "2026-10-01T14:44:38.786477+00:00",
+  "duration_seconds": 17.66477,
+  "command": [
+    "node",
+    "modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+    "--historical-dev"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-tangent-repair-20261001/tangent-js-dev-v1.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 600.0,
+  "log_bytes": 1130624
+}

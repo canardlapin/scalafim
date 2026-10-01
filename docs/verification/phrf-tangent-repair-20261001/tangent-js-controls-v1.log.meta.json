@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T13:51:33.715293+00:00",
+  "finished_utc": "2026-10-01T13:55:48.987457+00:00",
+  "duration_seconds": 255.233803,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitJS/test",
+    "hrfJS/test",
+    "hrfLawsJS/test",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.CompactConditionRuntimeSuite scalafim.fmri.laws.profile.ConditionProfileFitSuite scalafim.fmri.laws.profile.ProfileReductionLawsSuite scalafim.fmri.laws.profile.LwuConditionDiagnosticSuite scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite scalafim.fmri.laws.profile.ObservedFamilyCertificationSuite scalafim.fmri.laws.profile.ConditionC0QualificationSuite",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ConditionMilestoneSuite -- --tests *accuracy*",
+    "set firstLevelLawsJS / Test / mainClass := Some(\"scalafim.fmri.laws.profile.LwuConditionDiagnosticMain\")",
+    "set firstLevelLawsJS / Test / scalaJSUseMainModuleInitializer := true",
+    "set firstLevelLawsJS / Test / scalaJSUseTestModuleInitializer := false",
+    "firstLevelLawsJS/Test/fastLinkJS"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/tangent-js-controls-v1.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 125307
+}

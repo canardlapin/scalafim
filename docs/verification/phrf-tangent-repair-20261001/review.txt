@@ -1,0 +1,14 @@
+**ACCEPT — bounded tangent-direction repair and its evidence.**
+
+Bound to:
+
+- Source: `8840dbfcebb53ccf60396b8244b75235eb589bd4`
+- Decoder SHA256: `982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554`
+- Report SHA256: `fcc9aeb2ce3f08fa6e69a3ff192611f68012569df11e8cbb93798291109bcdd6`
+- Payload-index SHA256: `64ffda4cf1d9dd7a820fc11867ae63ccf9e7e87f922d291bcbbc6a857957ec92`
+
+All **37 payload hashes match**. Linked JS and auxiliary-selector hashes also match. No required corrections.
+
+The report accurately distinguishes passing test stages, failed batches and successful unchanged retries. Analyzer limitations are now explicit. Independent comparison of every exported record field confirms only SNR `.5`, voxel `50` changes on each platform; both remain Boundary refusals. Admission counts remain unchanged.
+
+The implementation, analytic controls, JVM/JS checks and historical replay support this repair. They do not establish a paired energy comparator, boundary inference, fresh qualification or completion of PHRF-21; all four LWU admission gates remain unmet.
