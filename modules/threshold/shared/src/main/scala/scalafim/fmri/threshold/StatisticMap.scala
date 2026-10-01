@@ -17,11 +17,11 @@ object StatisticMap:
   def z(volume: SomeScalarVolume[Double]): StatisticMap =
     unsafe(volume, StatKind.Z)
 
-  def t(volume: SomeScalarVolume[Double], df: DegreesOfFreedom): StatisticMap =
-    unsafe(volume, StatKind.T(df))
+  def t(volume: SomeScalarVolume[Double]): StatisticMap =
+    unsafe(volume, StatKind.T)
 
-  def negLog10P(volume: SomeScalarVolume[Double], pSide: PSide): StatisticMap =
-    unsafe(volume, StatKind.NegLog10P(pSide))
+  def negLog10P(volume: SomeScalarVolume[Double]): StatisticMap =
+    unsafe(volume, StatKind.NegLog10P)
 
   private[threshold] def unsafe(volume: SomeScalarVolume[Double], kind: StatKind): StatisticMap =
     new StatisticMap(volume, kind)
