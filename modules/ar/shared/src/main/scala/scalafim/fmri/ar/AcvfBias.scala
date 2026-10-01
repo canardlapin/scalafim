@@ -72,10 +72,19 @@ object AcvfBias:
       row += 1
     if design.cols == 0 then Right(new DesignBasis(design.rows, 0, design))
     else
-      val factor = design.qr(QROptions(pivoting = QRPivoting.Column))
+      val factor = pivotedQr(design)
       val rank = factor.diagnostics.rank.getOrElse(0)
       if rank == 0 then Right(new DesignBasis(design.rows, 0, design))
       else Right(new DesignBasis(design.rows, rank, factor.q.slice(0, design.rows, 0, rank)))
+
+  private def pivotedQr(matrix: DMat) = matrix.qr(QROptions(pivoting = QRPivoting.Column))
+
+  /** The one rank source: Gale's column-pivoted QR with its default tolerance. Used for the design basis, the
+    * residual degrees of freedom, and the adaptive budget's per-run rdf, so the three can never disagree. R's
+    * `qr()` (LINPACK `dqrdc2`, tol 1e-7 on column norms) can differ on numerically near-deficient designs.
+    */
+  private[ar] def numericalRank(matrix: DMat): Int =
+    if matrix.rows == 0 || matrix.cols == 0 then 0 else pivotedQr(matrix).diagnostics.rank.getOrElse(0)
 
   /** Check that `residuals` are numerically orthogonal to `design`, the necessary condition for them to be its
     * ordinary least-squares residuals. Returns the relative projection `||Q'e||_F / ||e||_F`.
@@ -160,7 +169,7 @@ object AcvfBias:
         }
       )
 
-  private def resolveLag(
+  private[ar] def resolveLag(
       budget: CorrectionBudget,
       design: DMat,
       layout: NoiseEstimationLayout,
@@ -184,7 +193,7 @@ object AcvfBias:
     if keep.isEmpty then 0
     else
       val sub = Matrix.tabulate(keep.length, design.cols)((row, col) => design(keep(row), col))
-      keep.length - sub.rankEstimate
+      keep.length - numericalRank(sub)
 
   /** Rows of `run` that survive censoring, in time order. */
   private def keptRows(layout: NoiseEstimationLayout, run: Int): Array[Int] =

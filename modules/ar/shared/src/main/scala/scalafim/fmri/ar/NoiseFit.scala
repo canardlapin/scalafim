@@ -28,8 +28,11 @@ object NoiseFit:
       policy: EstimationPolicy = EstimationPolicy.Raw
   ): Either[ArError, NoiseFit] =
     for
-      plan <- ArEstimation.fitNoise(residuals, layout, options, policy)
+      _ <- layout.coveredSegments.validateRows(residuals.rows)
+      _ <- ArEstimation.validateFinite(residuals)
+      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
       prepared <- ArEstimation.resolveCorrection(residuals, layout, options.order.maxRequested, policy)
+      plan <- ArEstimation.fitNoisePrepared(residuals, layout, options, prepared)
       acvf <- NoiseAcvf.estimateWith(residuals, layout, options.order.maxRequested, options.pooling, prepared)
     yield
       val gamma: Vector[Vector[Double]] =

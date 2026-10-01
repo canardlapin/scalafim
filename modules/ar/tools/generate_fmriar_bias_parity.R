@@ -59,6 +59,9 @@ make_design <- function(lens, intercept, n_reg, linear = TRUE) {
   round13(do.call(cbind, unname(cols)))
 }
 
+# Append columns (rounded) to a design.
+add_cols <- function(design, ...) round13(cbind(design, ...))
+
 # AR(1) noise that restarts at each run boundary, one column per voxel.
 make_resid <- function(design, lens, n_vox, rho = 0.45, seed = 1) {
   n <- nrow(design)
@@ -90,6 +93,11 @@ scala_doubles <- function(values) {
 scala_rows <- function(m) {
   m <- as.matrix(m)
   paste0("Vector(", paste(vapply(seq_len(nrow(m)), function(i) scala_doubles(m[i, ]), character(1)), collapse = ", "), ")")
+}
+# NA (an undefined innovation variance) is carried as NaN.
+scala_doubles_na <- function(values) {
+  paste0("Vector(", paste(vapply(as.numeric(values), function(v)
+    if (is.na(v)) "Double.NaN" else scala_number(v), character(1)), collapse = ", "), ")")
 }
 scala_ints <- function(values) paste0("Vector(", paste(as.integer(values), collapse = ", "), ")")
 scala_string <- function(x) paste0("\"", x, "\"")
@@ -138,7 +146,26 @@ bias_cases <- list(
             c(16L, 20L, 14L), c(10L, 11L, 30L, 37L), 5L),
   # lag budget exceeds the residual degrees of freedom (n = 16, rank 10)
   bias_case("budget_exceeds_rdf",
-            make_design(16L, "global", 8L), 16L, integer(0), 8L)
+            make_design(16L, "global", 8L), 16L, integer(0), 8L),
+  # rank-deficient design: a duplicated regressor
+  bias_case("rank_deficient_duplicate_column",
+            {d <- make_design(c(30L, 26L), "global", 2L); add_cols(d, d[, ncol(d)])},
+            c(30L, 26L), integer(0), 6L),
+  # a column constant on run 1 and zero on run 2, next to per-run intercepts
+  bias_case("run_constant_column_with_per_run_intercepts",
+            {d <- make_design(c(30L, 26L), "per_run", 1L)
+             add_cols(d, c(rep(0.7, 30L), rep(0, 26L)))},
+            c(30L, 26L), integer(0), 6L),
+  # run 2 entirely censored
+  bias_case("run_two_fully_censored",
+            make_design(c(30L, 20L), "per_run", 2L), c(30L, 20L), 31:50, 5L),
+  # isolated single-row segments
+  bias_case("isolated_single_row_segments",
+            make_design(c(30L, 26L), "per_run", 2L), c(30L, 26L),
+            c(2L, 4L, 6L, 8L, 10L, 12L, 14L), 5L),
+  # a long run and a very short one
+  bias_case("runs_70_and_14",
+            make_design(c(70L, 14L), "per_run", 1L), c(70L, 14L), integer(0), 25L)
 )
 
 # --- fit_noise(design =) cases ------------------------------------------------
@@ -158,7 +185,9 @@ fit_one <- function(resid, design, lens, censor, p, p_max, pooling, corr_lag) {
     pooling = pooling, phi = lapply(plan$phi, as.numeric),
     gamma = lapply(plan$gamma, as.numeric),
     sigma2 = vapply(plan$sigma2, function(x) as.numeric(x), numeric(1)),
-    warnings = got$warnings
+    warnings = got$warnings,
+    rejected_runs = which(vapply(seq_along(lens), function(r)
+      any(grepl(paste0("skipped for run ", r, ":"), got$warnings, fixed = TRUE)), logical(1))) - 1L
   )
 }
 
@@ -205,7 +234,43 @@ raw4 <- fmriAR::fit_noise(r4, method = "ar", p = 2L, p_max = 2L, pooling = "glob
                           exact_first = "none")
 A4 <- fmriAR::acvf_bias_matrix(d4, max_lag = 57L)[[1L]]
 
+# (a) rank-deficient design (duplicated column), global pooling, p = 2.
+l5 <- c(30L, 26L)
+d5 <- {d <- make_design(l5, "global", 2L); add_cols(d, d[, ncol(d)])}
+r5 <- make_resid(d5, l5, 4L, seed = 5)
+f5 <- list(fit_one(r5, d5, l5, integer(0), 2L, 2L, "global", 8L))
+
+# (b) a column constant on run 1 and zero on run 2, with per-run intercepts, run pooling.
+d6 <- add_cols(make_design(l5, "per_run", 1L), c(rep(0.7, 30L), rep(0, 26L)))
+r6 <- make_resid(d6, l5, 4L, seed = 6)
+f6 <- list(fit_one(r6, d6, l5, integer(0), 2L, 2L, "run", 8L))
+
+# (c) run 2 entirely censored, run and global pooling, p = 1.
+l7 <- c(30L, 20L)
+d7 <- make_design(l7, "per_run", 2L)
+r7 <- make_resid(d7, l7, 4L, seed = 7)
+c7 <- 31:50
+f7 <- lapply(c("run", "global"), function(pool) fit_one(r7, d7, l7, c7, 1L, 1L, pool, 8L))
+
+# (d) censoring that leaves isolated single-row segments, global pooling, p = 2.
+d8 <- make_design(l5, "per_run", 2L)
+r8 <- make_resid(d8, l5, 4L, seed = 8)
+c8 <- c(2L, 4L, 6L, 8L, 10L, 12L, 14L)
+f8 <- list(fit_one(r8, d8, l5, c8, 2L, 2L, "global", 5L))
+
+# (e) runs of 70 and 14 rows, auto order, budget 25, run pooling: only the short run's
+# bias matrix is too ill-conditioned to solve against.
+l9 <- c(70L, 14L)
+d9 <- make_design(l9, "per_run", 1L)
+r9 <- make_resid(d9, l9, 4L, seed = 9)
+f9 <- list(fit_one(r9, d9, l9, integer(0), "auto", 4L, "run", 25L))
+
 fit_cases <- list(
+  fit_case("rank_deficient_duplicate_column", d5, r5, l5, integer(0), 8L, f5),
+  fit_case("run_constant_column_run_pooling", d6, r6, l5, integer(0), 8L, f6),
+  fit_case("run_two_fully_censored", d7, r7, l7, c7, 8L, f7),
+  fit_case("isolated_single_row_segments", d8, r8, l5, c8, 5L, f8),
+  fit_case("runs_70_and_14_auto", d9, r9, l9, integer(0), 25L, f9),
   fit_case("single_run", d1, r1, 60L, integer(0), 12L, f1),
   fit_case("two_runs_censored", d2, r2, l2, c2, 10L, f2),
   fit_case("three_runs_no_intercept", d3, r3, l3, c3, 8L, f3),
@@ -230,6 +295,28 @@ acvf_cases <- list(
   list(fit = "two_runs_censored", result = acvf_one(r2, d2, l2, c2, 4L, "run", 10L)),
   list(fit = "single_run", result = acvf_one(r1, d1, 60L, integer(0), 3L, "global", 12L)),
   list(fit = "three_runs_no_intercept", result = acvf_one(r3, d3, l3, c3, 3L, "run", 8L))
+)
+
+# --- fmrireg adaptive lag budget ---------------------------------------------
+
+adaptive_case <- function(name, design, lens, censor, order, ceiling) {
+  ends <- cumsum(lens)
+  idx <- lapply(seq_along(lens), function(r) seq.int(ends[r] - lens[r] + 1L, ends[r]))
+  budget <- fmrireg:::.ar_correction_lag_budget(
+    design, target_order = order, run_indices = idx,
+    censor = if (length(censor)) censor else NULL, max_lag = ceiling)
+  list(name = name, design = design, lens = lens, censor = censor, order = order,
+       ceiling = ceiling, budget = as.integer(budget))
+}
+adaptive_cases <- list(
+  adaptive_case("two_runs_censored", d2, l2, c2, 2L, 25L),
+  adaptive_case("three_runs_no_intercept", d3, l3, c3, 4L, 25L),
+  adaptive_case("short_runs_order_floor", make_design(c(24L, 18L), "per_run", 4L),
+                c(24L, 18L), c(3L, 30L), 6L, 25L),
+  adaptive_case("ceiling_binds", d1, 60L, integer(0), 1L, 3L),
+  adaptive_case("heavy_censoring_one_run", make_design(c(30L, 30L), "per_run", 2L),
+                c(30L, 30L), c(2:5, 9:20, 31:36), 3L, 25L),
+  adaptive_case("rank_deficient", d5, l5, integer(0), 2L, 25L)
 )
 
 # --- serialisation ------------------------------------------------------------
@@ -264,8 +351,8 @@ emit_fit <- function(fit) {
     ", pooling = ", scala_string(fit$pooling),
     ", phi = ", scala_list(lapply(fit$phi, scala_doubles)),
     ", gamma = ", scala_list(lapply(fit$gamma, scala_doubles)),
-    ", sigma2 = ", scala_doubles(fit$sigma2),
-    ", rejected = ", tolower(as.character(any(grepl("ill-conditioned", fit$warnings)))), ")"
+    ", sigma2 = ", scala_doubles_na(fit$sigma2),
+    ", rejectedRuns = ", scala_ints(fit$rejected_runs), ")"
   )
 }
 
@@ -283,6 +370,17 @@ emit_fit_case <- function(case) {
   )
 }
 
+emit_adaptive <- function(case) {
+  paste0(
+    "    AdaptiveCase(name = ", scala_string(case$name),
+    ", design = ", scala_rows(case$design),
+    ", runLengths = ", scala_ints(case$lens),
+    ", censorOneBased = ", scala_ints(case$censor),
+    ", order = ", as.integer(case$order), ", ceiling = ", as.integer(case$ceiling),
+    ", budget = ", case$budget, ")"
+  )
+}
+
 emit_acvf <- function(entry) {
   r <- entry$result
   paste0(
@@ -293,6 +391,16 @@ emit_acvf <- function(entry) {
     ", segments = ", scala_ints(r$n_segments),
     ", corrected = ", tolower(as.character(r$corrected)), ")"
   )
+}
+
+# Each case is its own lazy val: one Vector literal for every case would exceed the JVM's
+# 64 KB limit on a single static initialiser.
+lazy_group <- function(name, type, items) {
+  parts <- vapply(seq_along(items), function(i) {
+    paste0("  private lazy val ", name, i - 1L, ": ", type, " =\n", sub("^    ", "    ", items[[i]]))
+  }, character(1))
+  refs <- paste0(name, seq_along(items) - 1L, collapse = ", ")
+  c(parts, "", paste0("  val ", name, ": Vector[", type, "] = Vector(", refs, ")"))
 }
 
 writeLines(
@@ -323,7 +431,7 @@ writeLines(
     "      phi: Vector[Vector[Double]],",
     "      gamma: Vector[Vector[Double]],",
     "      sigma2: Vector[Double],",
-    "      rejected: Boolean",
+    "      rejectedRuns: Vector[Int]",
     "  )",
     "",
     "  final case class FitCase(",
@@ -336,6 +444,16 @@ writeLines(
     "      fits: Vector[FitResult]",
     "  )",
     "",
+    "  final case class AdaptiveCase(",
+    "      name: String,",
+    "      design: Vector[Vector[Double]],",
+    "      runLengths: Vector[Int],",
+    "      censorOneBased: Vector[Int],",
+    "      order: Int,",
+    "      ceiling: Int,",
+    "      budget: Int",
+    "  )",
+    "",
     "  final case class AcvfResult(",
     "      fit: String,",
     "      maxLag: Int,",
@@ -346,11 +464,13 @@ writeLines(
     "      corrected: Boolean",
     "  )",
     "",
-    paste0("  val biasCases: Vector[BiasCase] = Vector(\n", paste(vapply(bias_cases, emit_bias, character(1)), collapse = ",\n"), "\n  )"),
+    lazy_group("biasCases", "BiasCase", lapply(bias_cases, emit_bias)),
     "",
-    paste0("  val fitCases: Vector[FitCase] = Vector(\n", paste(vapply(fit_cases, emit_fit_case, character(1)), collapse = ",\n"), "\n  )"),
+    lazy_group("fitCases", "FitCase", lapply(fit_cases, emit_fit_case)),
     "",
-    paste0("  val acvfCases: Vector[AcvfResult] = Vector(\n", paste(vapply(acvf_cases, emit_acvf, character(1)), collapse = ",\n"), "\n  )"),
+    lazy_group("adaptiveCases", "AdaptiveCase", lapply(adaptive_cases, emit_adaptive)),
+    "",
+    lazy_group("acvfCases", "AcvfResult", lapply(acvf_cases, emit_acvf)),
     "",
     "  // The rejected-budget case: R's uncorrected fit on the same residuals, and the unrejected design's A.",
     paste0("  val rejectedRawPhi: Vector[Double] = ", scala_doubles(raw4$phi[[1L]])),

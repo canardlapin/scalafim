@@ -162,3 +162,22 @@ class AcvfBiasSuite extends munit.FunSuite:
       assert(plan.isRight, clues(pooling, plan))
     }
   }
+
+  test("one rank source: the design basis, residual df and adaptive rdf agree on a near-deficient design") {
+    val n = 30
+    // The last column duplicates the one before it up to a perturbation far below the rank tolerance.
+    val near = Matrix.tabulate(n, 4)((r, c) =>
+      c match
+        case 0 => 1.0
+        case 1 => r.toDouble / n
+        case 2 => math.sin(0.7 * r)
+        case _ => math.sin(0.7 * r) + 1e-13 * math.cos(5.1 * r)
+    )
+    val l = NoiseEstimationLayout.allRows(TimeSegments.continuous(n), n).fold(e => fail(e.message), identity)
+    val rank = AcvfBias.numericalRank(near)
+    val built = AcvfBias.matrices(near, l, 5).fold(e => fail(e.message), identity)
+    assertEquals(built.residualDf, n - rank)
+    // Adaptive rdf = rows - rank of the (single, uncensored) run, from the same source.
+    val adaptive = AcvfBias.resolveLag(CorrectionBudget.Adaptive(25), near, l, 1).fold(e => fail(e.message), identity)
+    assertEquals(adaptive, math.max(1, math.min(math.min(25, 5), (n - rank) / 3)))
+  }

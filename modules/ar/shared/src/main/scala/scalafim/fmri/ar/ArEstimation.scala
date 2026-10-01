@@ -149,6 +149,19 @@ object ArEstimation:
       _ <- validateFinite(residuals)
       _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
       correction <- resolveCorrection(residuals, layout, options.order.maxRequested, policy)
+      plan <- fitNoisePrepared(residuals, layout, options, correction)
+    yield plan
+
+  /** Fit with bias matrices that were already built, so a caller needing both the plan and the matrices builds
+    * them once. Inputs are assumed validated by the public entry points.
+    */
+  private[ar] def fitNoisePrepared(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      correction: PreparedCorrection
+  ): Either[ArError, WhiteningPlan] =
+    for
       plan <-
         options.pooling match
           case NoisePooling.Global =>

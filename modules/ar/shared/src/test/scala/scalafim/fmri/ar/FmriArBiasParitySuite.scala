@@ -65,8 +65,13 @@ class FmriArBiasParitySuite extends munit.FunSuite:
       // Both are 1-norm condition estimators (Hager/Higham) and may differ slightly; the gate at 1e-6 only needs
       // them to agree on the order of magnitude.
       result.byRun.zip(c.reciprocalCondition).foreach { case (matrix, expected) =>
-        val ratio = AcvfBias.reciprocalCondition(matrix) / expected
-        assert(ratio > 0.5 && ratio < 2.0, clues(ratio, expected))
+        val actual = AcvfBias.reciprocalCondition(matrix)
+        if expected < AcvfBias.ReciprocalConditionFloor then
+          // Far below the floor the two estimators need only agree on which side of the gate they fall.
+          assert(actual < AcvfBias.ReciprocalConditionFloor, clues(actual, expected))
+        else
+          val ratio = actual / expected
+          assert(ratio > 0.5 && ratio < 2.0, clues(ratio, expected))
       }
     }
   }
@@ -89,7 +94,12 @@ class FmriArBiasParitySuite extends munit.FunSuite:
         val residuals = toMatrix(c.residuals)
         val fitted = valueOrFail(NoiseFit.estimate(residuals, layout, optionsFor(fit), policy))
 
-        assert(fitted.corrections.forall(_.isInstanceOf[RunCorrection.Applied]), clues(fitted.corrections))
+        val rejected = fitted.corrections.zipWithIndex.collect { case (RunCorrection.IllConditioned(_), run) => run }
+        assertEquals(rejected, fit.rejectedRuns, clues(fitted.corrections))
+        assert(
+          fitted.corrections.forall(c => !c.isInstanceOf[RunCorrection.Uncorrected.type]),
+          clues(fitted.corrections)
+        )
         assertEquals(fitted.plan.coefficients.length, fit.phi.length)
         fitted.plan.coefficients.zip(fit.phi).zipWithIndex.foreach { case ((coefficients, expected), i) =>
           assertClose(coefficients.phi, expected, Tol, s"phi[$i]")
@@ -98,7 +108,9 @@ class FmriArBiasParitySuite extends munit.FunSuite:
           assertClose(gamma, expected, Tol, s"gamma[$i]")
         }
         fitted.innovationVariance.zip(fit.sigma2).zipWithIndex.foreach { case ((sigma2, expected), i) =>
-          assertClose(Vector(sigma2.getOrElse(Double.NaN)), Vector(expected), Tol, s"sigma2[$i]")
+          // NaN is R's NA: the innovation variance is undefined (no usable autocovariance).
+          if expected.isNaN then assertEquals(sigma2, None, s"sigma2[$i]")
+          else assertClose(Vector(sigma2.getOrElse(Double.NaN)), Vector(expected), Tol, s"sigma2[$i]")
         }
 
         // The design-corrected plan is what fitNoise(policy) returns; the raw default must differ from it.
@@ -113,7 +125,7 @@ class FmriArBiasParitySuite extends munit.FunSuite:
   test("rcond gate: an ill-conditioned bias matrix leaves the run uncorrected, matching R") {
     val c = fitCases.find(_.name == "rcond_rejected").getOrElse(fail("no rejection fixture"))
     val fit = c.fits.head
-    assert(fit.rejected, "R must have rejected this budget")
+    assertEquals(fit.rejectedRuns, Vector(0), "R must have rejected this budget")
     assert(FmriArBiasRFixture.rejectedReciprocalCondition < AcvfBias.ReciprocalConditionFloor)
 
     val layout = layoutFor(c.runLengths, c.censorOneBased)
@@ -132,6 +144,41 @@ class FmriArBiasParitySuite extends munit.FunSuite:
     val raw = valueOrFail(ArEstimation.fitNoise(residuals, layout, optionsFor(fit)))
     assertClose(raw.coefficients.head.phi, fitted.plan.coefficients.head.phi, 1e-12, "phi vs Scala raw")
     assertClose(fitted.acvf.head, fit.gamma.head, Tol, "gamma")
+  }
+
+  test("only the short run is IllConditioned for runs of 70 and 14 rows (status and phi match R)") {
+    val c = fitCases.find(_.name == "runs_70_and_14_auto").getOrElse(fail("missing fixture"))
+    val fit = c.fits.head
+    assertEquals(fit.rejectedRuns, Vector(1))
+    val layout = layoutFor(c.runLengths, c.censorOneBased)
+    val policy = EstimationPolicy.DesignCorrected(toMatrix(c.design), CorrectionBudget.Fixed(c.correctionMaxLag))
+    val fitted = valueOrFail(NoiseFit.estimate(toMatrix(c.residuals), layout, optionsFor(fit), policy))
+    fitted.corrections match
+      case Vector(RunCorrection.Applied(_), RunCorrection.IllConditioned(_)) => ()
+      case other                                                              => fail(s"unexpected statuses $other")
+    fitted.plan.coefficients.zip(fit.phi).zipWithIndex.foreach { case ((coefficients, expected), i) =>
+      assertClose(coefficients.phi, expected, Tol, s"phi[$i]")
+    }
+  }
+
+  test("a fully censored run keeps the identity bias matrix and an empty fit, as in R") {
+    val c = fitCases.find(_.name == "run_two_fully_censored").getOrElse(fail("missing fixture"))
+    c.fits.foreach { fit =>
+      assert(fit.phi.forall(_.length <= 1))
+      if fit.pooling == "run" then
+        assertEquals(fit.phi(1), Vector.empty[Double])
+        assertEquals(fit.gamma(1), Vector.empty[Double])
+    }
+  }
+
+  adaptiveCases.foreach { c =>
+    test(s"adaptive lag budget matches fmrireg .ar_correction_lag_budget: ${c.name}") {
+      val layout = layoutFor(c.runLengths, c.censorOneBased)
+      val lag = valueOrFail(
+        AcvfBias.resolveLag(CorrectionBudget.Adaptive(c.ceiling), toMatrix(c.design), layout, c.order)
+      )
+      assertEquals(lag, c.budget)
+    }
   }
 
   acvfCases.zipWithIndex.foreach { case (expected, index) =>
