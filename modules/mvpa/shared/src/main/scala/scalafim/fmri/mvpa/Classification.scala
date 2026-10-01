@@ -561,7 +561,7 @@ object Classification:
     * Cross-validation fits may encounter the same classes in a different row
     * order, but a public OOF result has one class-column convention.
     */
-  def reorderProbabilities(
+  private[mvpa] def reorderProbabilities(
       prediction: ClassificationPrediction,
       expectedClasses: Vector[ClassLabel]
   ): Either[MvpaError, DMat] =

@@ -89,7 +89,7 @@ object AlderSwiftCentroid:
             case Right(split) =>
               val learner = new SwiftLearner[M](rows, coding, classifier, fold)
               val context = FitContext.root(
-                Seed.fromLong(design.receipt.seed.value),
+                Seed(design.receipt.seed.value),
                 PlanFingerprint(AxisDigest.sha256Hex: writer =>
                   writer.string("scalafim.swift-fold.v1")
                   writer.string(rows.root.fingerprint.digest)

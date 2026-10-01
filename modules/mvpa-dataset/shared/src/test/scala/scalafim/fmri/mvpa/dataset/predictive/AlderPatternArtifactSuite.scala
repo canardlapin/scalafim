@@ -10,7 +10,7 @@ import scalafim.fmri.mvpa.pattern.*
 
 class AlderPatternArtifactSuite extends FunSuite:
   private def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)
-  test("Alder learner preserves the labelled target factors and training receipt") {
+  test("Alder learner preserves the labelled target factors and training receipt"):
     val samples = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, Vector("s1", "s2"), "trial", "none", "one"))
     val mapping = right(NativeAxisMapping.fromAxis(samples, Vector(7L, 9L), DataFingerprint.external("pattern-artifact-fixture")))
     val rows = right(AlderPredictiveAdmission.materialized(samples.descriptor, DMat.eye(2), DMat.dense(2, 1, Vector(1.0, 0.0)), Vector("s1", "s2"), mapping, right(MaterializationBudget(8L))))
@@ -23,12 +23,11 @@ class AlderPatternArtifactSuite extends FunSuite:
     val geometry = right(TargetGeometry.continuous(target, prior, prior, Vector("all" -> prior)))
     val binding = right(TrainingBinding(samples.descriptor, "fixture", split.train.fingerprint.digest))
     val artifact = right(PatternArtifact(factors, geometry, CenteringPolicy.CenteredBeforeFit("fixture"), DegenerateTargetPolicy.Refuse, ResidualCovarianceCapability.NotFitted, binding, Vector("training:fixture"), right(PatternFitDiagnostics(Vector(1.0), "declared", Vector.empty))))
-    val preserved = right(AlderPatternArtifact.attach(split.train, artifact, split.train.fingerprint)(using FitContext.root(Seed.fromLong(1L), PlanFingerprint("pattern"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value)
-    assertEquals(preserved.artifact.factors.targetByComponent(0, 0), 3.0)
+    val preserved = right(AlderPatternArtifact.attach(split.train, artifact, split.train.fingerprint)(using FitContext.root(Seed(1L), PlanFingerprint("pattern"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value)
+    assertEqualsDouble(preserved.artifact.factors.targetByComponent(0, 0), 3.0, 1e-12)
     assertEquals(preserved.artifact.interpretation, InterpretationStatus.ExperimentalFitOnly)
     assertEquals(preserved.trainingReceipt, preserved.trained.audit.data)
-    assert(AlderPatternArtifact.attach(split.train, artifact, DataFingerprint.external("foreign-training"))(using FitContext.root(Seed.fromLong(1L), PlanFingerprint("foreign"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value.isLeft)
+    assert(AlderPatternArtifact.attach(split.train, artifact, DataFingerprint.external("foreign-training"))(using FitContext.root(Seed(1L), PlanFingerprint("foreign"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value.isLeft)
     val wrongBinding = right(TrainingBinding(samples.descriptor, "fixture", "different-digest"))
     val wronglyBound = right(PatternArtifact(factors, geometry, CenteringPolicy.CenteredBeforeFit("fixture"), DegenerateTargetPolicy.Refuse, ResidualCovarianceCapability.NotFitted, wrongBinding, Vector("training:fixture"), right(PatternFitDiagnostics(Vector(1.0), "declared", Vector.empty))))
-    assert(AlderPatternArtifact.attach(split.train, wronglyBound, split.train.fingerprint)(using FitContext.root(Seed.fromLong(2L), PlanFingerprint("wrong-binding"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value.isLeft)
-  }
+    assert(AlderPatternArtifact.attach(split.train, wronglyBound, split.train.fingerprint)(using FitContext.root(Seed(2L), PlanFingerprint("wrong-binding"), SchemaFingerprint("scalafim.pattern.v1"), NumericMode.Deterministic)).value.isLeft)

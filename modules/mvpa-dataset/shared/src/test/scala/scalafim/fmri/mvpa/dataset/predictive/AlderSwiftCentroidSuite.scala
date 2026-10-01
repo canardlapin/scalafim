@@ -15,7 +15,8 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
   private def right[A](value: Either[?, A]): A =
     value.fold(error => fail(error.toString), identity)
 
-  // R-generated frozen M0 fixture: generate_migration_parity.R, source528c302e,
+  // R-generated frozen M0 fixture: generate_migration_parity.R, commit
+  // 528c302e454697055bc9af31c9a6eca684f019e3,
   // JSON053e50710a241e6eacee4e532bf0d398d02a84536bacf5bf5db6ca444144d04d.
   private val values = Vector(
     Vector(2.0, 1.0, 0.0), Vector(-2.0, -1.0, 0.0),
