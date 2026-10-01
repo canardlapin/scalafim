@@ -13,6 +13,9 @@ class FmriArBiasParitySuite extends munit.FunSuite:
   /** Tolerance for values that are products of the same arithmetic: fixtures carry 13 significant digits. */
   private val Tol = 1e-10
 
+  /** About 1e4 * eps: below this a reciprocal condition number is not a meaningful quantity. */
+  private val NumericallySingular = 1e-12
+
   private def toMatrix(rows: Vector[Vector[Double]]): DMat =
     Matrix.tabulate(rows.length, rows.head.length)((row, col) => rows(row)(col))
 
@@ -66,8 +69,9 @@ class FmriArBiasParitySuite extends munit.FunSuite:
       // them to agree on the order of magnitude.
       result.byRun.zip(c.reciprocalCondition).foreach { case (matrix, expected) =>
         val actual = AcvfBias.reciprocalCondition(matrix)
-        if expected < AcvfBias.ReciprocalConditionFloor then
-          // Far below the floor the two estimators need only agree on which side of the gate they fall.
+        if expected < NumericallySingular then
+          // Around 1e-17 the matrix is singular to working precision: the estimate is rounding noise and a
+          // ratio between two estimators means nothing. Both must still be on the rejecting side of the gate.
           assert(actual < AcvfBias.ReciprocalConditionFloor, clues(actual, expected))
         else
           val ratio = actual / expected

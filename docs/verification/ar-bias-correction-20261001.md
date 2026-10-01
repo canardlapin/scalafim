@@ -63,6 +63,8 @@ parity comparison: 5.1e-14.
 
 The residual error is the 13-digit serialisation floor, not algorithmic.
 
+Reciprocal condition numbers are compared as a ratio inside [0.5, 2] for every case above 1e-12 (including the near-gate 1.16e-7 case); only numerically singular matrices, where the estimate is rounding noise, are checked for the same side of the gate instead.
+
 Reciprocal condition numbers are compared as a ratio inside [0.5, 2]. Gale's
 `conditionEstimate` and LAPACK's `rcond` are different 1-norm estimators; the 1e-6 gate only
 needs the order of magnitude, and the rejection case sits a factor of 8 below the floor.
