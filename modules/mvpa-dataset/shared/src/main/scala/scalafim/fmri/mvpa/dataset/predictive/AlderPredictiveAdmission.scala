@@ -6,7 +6,7 @@ import gale.linalg.DMat
 import multivar.core.SemanticSpace
 import resample4s.core.{DigestAlgorithm, Labels, PlanReceipt}
 import resample4s.designs.FixedPartitions
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, MultiResponse, Observations}
+import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, CrossFitDesign, EvidenceError, EvidenceIdentity, MultiResponse, Observations}
 import scala.util.control.NonFatal
 
 final case class NativeAxisEntry private[predictive] (stableKey: String, nativeId: Long)
@@ -204,11 +204,44 @@ object AlderPredictiveAdmission:
       _ <- policy.access match
         case NativeReadAccess.SingleApplication if inputBlocks > 1 || targetBlocks > 1 => Left(AlderPredictiveAdmissionError.ReplayRequired(inputBlocks, targetBlocks))
         case _ => Right(())
-      result <- materializeNativeTables(observations, targets, metadata, metadataIdentity, mapping, policy, receipt)
+      result <- materializeNativeTables(observations.patterns, observations.identity, targets, metadata, metadataIdentity, mapping, policy, receipt)
+    yield result
+
+  /** Uses the same bounded reader for an identified ROI/searchlight/basis
+    * measurement. Binding a leg reads metadata only. Support remains attached
+    * to the upstream acquisition; selecting features is not read confinement.
+    */
+  def nativeMeasurement[S <: SemanticSpace, N <: SemanticSpace, NK, L <: SemanticSpace, F <: SemanticSpace, M](
+      observations: Observations[S, N],
+      measurement: scalafim.fmri.mvpa.measurement.MeasurementLeg[N, NK, L],
+      targets: MultiResponse[S, F],
+      metadata: Vector[M],
+      metadataIdentity: DataFingerprint,
+      mapping: NativeAxisMapping,
+      policy: NativeReadPolicy
+  ): Either[AlderPredictiveAdmissionError, AlderMaterializedRows[M]] =
+    for
+      _ <- NativeAxisMapping.verify(observations.sampleAxis, mapping, mapping.declaredSource)
+      _ <- if observations.sampleAxis == targets.sampleAxis then Right(()) else Left(AlderPredictiveAdmissionError.AxisFingerprintMismatch(observations.sampleAxis.stableKey, targets.sampleAxis.stableKey))
+      measured <- measurement.measure(observations).left.map(error => AlderPredictiveAdmissionError.ProviderFixedSelection(error.toString))
+      _ <- if metadata.length == observations.rows then Right(()) else Left(AlderPredictiveAdmissionError.MatrixShapeMismatch("metadata", metadata.length, 1, observations.rows, 1))
+      receipt <- MaterializationBudget.authorizeNative(policy.budget, observations.rows, measured.patterns.cols, targets.columns, policy.maximumColumnsPerRead)
+      inputBlocks = blocksFor(measured.patterns.cols, policy.maximumColumnsPerRead)
+      targetBlocks = blocksFor(targets.columns, policy.maximumColumnsPerRead)
+      _ <- policy.access match
+        case NativeReadAccess.SingleApplication if inputBlocks > 1 || targetBlocks > 1 => Left(AlderPredictiveAdmissionError.ReplayRequired(inputBlocks, targetBlocks))
+        case _ => Right(())
+      identity = observations.identity.copy(
+        columns = measured.localAxis,
+        values = measured.patterns.valueIdentity,
+        origins = observations.origins.reindexOutput(observations.sampleAxis, measured.patterns.valueIdentity)
+      )
+      result <- materializeNativeTables(measured.patterns, identity, targets, metadata, metadataIdentity, mapping, policy, receipt)
     yield result
 
   private def materializeNativeTables[S <: SemanticSpace, N <: SemanticSpace, F <: SemanticSpace, M](
-      observations: Observations[S, N],
+      inputTable: multivar.core.Table[S, N],
+      inputIdentity: EvidenceIdentity,
       targets: MultiResponse[S, F],
       metadata: Vector[M],
       metadataIdentity: DataFingerprint,
@@ -224,15 +257,15 @@ object AlderPredictiveAdmission:
     var targetCopiedCells = 0L
 
     def attemptReceipt: NativeReadReceipt =
-      NativeReadReceipt(receipt, inputCalls, targetCalls, inputReturnedCells, targetReturnedCells, inputCopiedCells, targetCopiedCells, receipt.workspaceCells, metadataIdentity, observations.identity, targets.identity)
+      NativeReadReceipt(receipt, inputCalls, targetCalls, inputReturnedCells, targetReturnedCells, inputCopiedCells, targetCopiedCells, receipt.workspaceCells, metadataIdentity, inputIdentity, targets.identity)
 
     val retained =
       try
-        val inputValues = Array.ofDim[Array[Double]](observations.rows)
+        val inputValues = Array.ofDim[Array[Double]](inputTable.rows)
         val targetValues = Array.ofDim[Array[Double]](targets.rows)
         var row = 0
-        while row < observations.rows do
-          inputValues(row) = Array.ofDim[Double](observations.columns)
+        while row < inputTable.rows do
+          inputValues(row) = Array.ofDim[Double](inputTable.cols)
           targetValues(row) = Array.ofDim[Double](targets.columns)
           row += 1
         Right((inputValues, targetValues))
@@ -272,25 +305,25 @@ object AlderPredictiveAdmission:
 
     retained.flatMap: (inputValues, targetValues) =>
       for
-        _ <- copyBlocks(observations.patterns, observations.columns, inputValues, "inputs")
+        _ <- copyBlocks(inputTable, inputTable.cols, inputValues, "inputs")
         _ <- copyBlocks(targets.targets, targets.columns, targetValues, "targets")
-        rootIdentity = nativeRootIdentity(mapping, metadataIdentity, observations, targets)
-        root <- IdentifiedRows.fromRows(Vector.tabulate(observations.rows): index =>
+        rootIdentity = nativeRootIdentity(mapping, metadataIdentity, inputIdentity, targets.identity)
+        root <- IdentifiedRows.fromRows(Vector.tabulate(inputTable.rows): index =>
           mapping.entriesByOrdinal(index).nativeId -> Example(inputValues(index), targetValues(index), metadata(index)), rootIdentity).left.map(error => AlderPredictiveAdmissionError.ProviderFixedSelection(error.toString))
       yield new AlderMaterializedRows(root, mapping, receipt, Some(attemptReceipt))
 
   private def blocksFor(columns: Int, width: Int): Int =
     1 + (columns - 1) / width
 
-  private def nativeRootIdentity[S <: SemanticSpace, N <: SemanticSpace, F <: SemanticSpace](mapping: NativeAxisMapping, metadata: DataFingerprint, observations: Observations[S, N], targets: MultiResponse[S, F]): DataFingerprint =
+  private def nativeRootIdentity(mapping: NativeAxisMapping, metadata: DataFingerprint, inputIdentity: EvidenceIdentity, targetIdentity: EvidenceIdentity): DataFingerprint =
     new DataFingerprint(FingerprintPolicy.Summary("scalafim.native-table-root.v2"), AxisDigest.sha256Hex: writer =>
       writer.string("scalafim.native-table-root.v2")
       writer.string(mapping.declaredMappingIdentity.policy.toString)
       writer.string(mapping.declaredMappingIdentity.digest)
       writer.string(metadata.policy.toString)
       writer.string(metadata.digest)
-      observations.identity.writeFramed(writer)
-      targets.identity.writeFramed(writer)
+      inputIdentity.writeFramed(writer)
+      targetIdentity.writeFramed(writer)
     )
 
   def crossFit[S <: SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: CrossFitDesign[S, K])(using DigestAlgorithm): Either[AlderPredictiveAdmissionError, NativeCrossFitBridge[Example[Array[Double], Array[Double], M]]] =

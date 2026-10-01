@@ -557,6 +557,25 @@ object Classification:
           row += 1
         Right(correct.toDouble / predicted.length)
 
+  /** Reorders a model-local probability matrix to the frozen response order.
+    * Cross-validation fits may encounter the same classes in a different row
+    * order, but a public OOF result has one class-column convention.
+    */
+  def reorderProbabilities(
+      prediction: ClassificationPrediction,
+      expectedClasses: Vector[ClassLabel]
+  ): Either[MvpaError, DMat] =
+    predictionClassColumns(prediction.classes, expectedClasses).map: columns =>
+      val out = Matrix.newBuilder(prediction.probabilities.rows, expectedClasses.length)
+      var row = 0
+      while row < prediction.probabilities.rows do
+        var klass = 0
+        while klass < expectedClasses.length do
+          out(row, klass) = prediction.probabilities(row, columns(klass))
+          klass += 1
+        row += 1
+      out.result()
+
   private def validatePredictionShape(
       prediction: ClassificationPrediction,
       expectedSamples: Vector[SampleIndex]
