@@ -1,7 +1,7 @@
 package scalafim.fmri.design
 
 import scalafim.fmri.design.event.{Event, EventModel, EventTerm}
-import scalafim.fmri.hrf.{Hrf, Hrfs, Seconds}
+import scalafim.fmri.hrf.{BasisElementId, Hrf, Hrfs, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
 
 class DesignIdentitySuite extends munit.FunSuite:
@@ -36,10 +36,26 @@ class DesignIdentitySuite extends munit.FunSuite:
     val schema = design(Hrfs.fir(3, Seconds(6.0)), Vector(8, 8))
     val old = schema.fingerprint.copy(value = "design-schema/v1:22221dc300375822")
     assert(DesignSchema.validate(schema.matrix, schema.rows, schema.columns, schema.audit, schema.rankPreview, old).isLeft)
+    assert(!schema.coefficientAxis.structurallyCompatible(schema.coefficientAxis.copy(designFingerprint = old)))
     val values = schema.matrix.data.clone()
     values(0) = java.lang.Double.longBitsToDouble(1L)
     val changed = scalafim.fmri.hrf.linalg.Mat.unsafe(schema.matrix.rows, schema.matrix.cols, values)
     assertNotEquals(DesignFingerprint.from(changed, schema.rows, schema.columns, schema.audit), schema.fingerprint)
+  }
+
+  test("semantic basis identity ignores display names while legacy references retain theirs") {
+    val semantic = BasisElementRef("display-A", BasisIndex.unsafeOneBased(1), elementId = Some(BasisElementId.unsafe("semantic")))
+    assertEquals(semantic.canonical, "basis(element=semantic|1)")
+    assertEquals(semantic.canonical, semantic.copy(basisId = "display-B").canonical)
+    val legacy = semantic.copy(elementId = None)
+    assertNotEquals(legacy.canonical, legacy.copy(basisId = "display-B").canonical)
+    val base = Hrfs.SPMG1
+    val renamed = Hrf.of("renamed display", base.nbasis, base.span, Some(base.descriptor), base.support)(base.apply)
+    assertEquals(HrfAssignment.Shared(base).canonical, HrfAssignment.Shared(renamed).canonical)
+    val original = design(base, Vector(16))
+    val other = design(renamed, Vector(16))
+    assertEquals(original.columnIds, other.columnIds)
+    assertEquals(original.fingerprint, other.fingerprint)
   }
 
   test("realistic SPMG structural identity is distinct from its numerical content") {

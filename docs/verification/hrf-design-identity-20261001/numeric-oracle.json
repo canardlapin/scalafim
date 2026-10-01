@@ -1,5 +1,5 @@
 {
-  "spmg1_descriptor": "hrf-descriptor/v2|family=known(5:spmg1)|basis=1|span=bits:4627448617123184640|params=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)|derivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)|penalty=identity|integration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))|components=sequence()",
+  "spmg1_descriptor": "hrf-descriptor/v2|family=known(5:spmg1)|basis=1|span=bits:4627448617123184640|params=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)|derivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)|penalty=identity|integration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))|derivation=none|components=sequence()",
   "finite_vectors": [
     {
       "value": "0.0",

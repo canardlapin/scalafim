@@ -155,8 +155,8 @@ final case class BasisElementRef(
 
   def canonical: String =
     val rolePart = role.fold("")(value => "|" + encode(value.stableLabel))
-    val elementPart = elementId.fold("")(value => s"|element=${encode(value.value)}")
-    s"basis(${encode(basisId)}|${index.oneBased}$rolePart$elementPart)"
+    val identityPart = elementId.fold(encode(basisId))(value => s"element=${encode(value.value)}")
+    s"basis($identityPart|${index.oneBased}$rolePart)"
 
   private def encode(value: String): String =
     value

@@ -18,6 +18,6 @@ if __name__ == '__main__':
     spmg = record('spmg', number(5), number(15), number(1 / 120))
     descriptor = ('hrf-descriptor/v2|family=' + record('known', 'spmg1') + '|basis=1|span=' + number(24) +
                   '|params=' + spmg + '|derivative=' + record('spmg', spmg, '1') +
-                  '|penalty=identity|integration=' + record('spmg1', spmg) + '|components=sequence()')
+                  '|penalty=identity|integration=' + record('spmg1', spmg) + '|derivation=none|components=sequence()')
     print(json.dumps({'spmg1_descriptor': descriptor,
                       'finite_vectors': [{'value': repr(x), 'encoding': number(x)} for x in values]}, indent=2))

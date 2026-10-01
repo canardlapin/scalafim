@@ -213,7 +213,8 @@ final case class HrfDescriptor(
     derivative: DerivativePolicy = DerivativePolicy.Numeric,
     penalty: PenaltyPolicy = PenaltyPolicy.Identity,
     integration: IntegrationPolicy = IntegrationPolicy.Quadrature,
-    components: Vector[HrfDescriptor] = Vector.empty
+    components: Vector[HrfDescriptor] = Vector.empty,
+    derivation: Option[HrfDerivation] = None
 ):
   def nbasis: Int =
     basis.value
@@ -234,6 +235,13 @@ final case class HrfDescriptor(
 
   def withSpan(span: Seconds): HrfDescriptor =
     copy(span = span)
+
+  private[hrf] def transformed(
+      label: String,
+      policy: HrfDerivation,
+      span: Seconds = span
+  ): HrfDescriptor =
+    derived(label, span = span).copy(components = Vector(this), derivation = Some(policy))
 
   /** Mark this as a kernel derived from the current one.
     *

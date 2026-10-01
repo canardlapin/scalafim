@@ -2,6 +2,7 @@ package scalafim.fmri.hrf
 
 /** Literal goldens computed with Python struct, independently of Scala. */
 class HrfIdentitySuite extends munit.FunSuite:
+  import HrfCombinators.*
   test("double encodings preserve finite bits and define non-finite values") {
     val vectors = Vector(
       0.0 -> "bits:0",
@@ -21,7 +22,7 @@ class HrfIdentitySuite extends munit.FunSuite:
   }
 
   test("SPMG descriptor and basis element share one platform-independent golden") {
-    val expected = "hrf-descriptor/v2|family=known(5:spmg1)|basis=1|span=bits:4627448617123184640|params=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)|derivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)|penalty=identity|integration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))|components=sequence()"
+    val expected = "hrf-descriptor/v2|family=known(5:spmg1)|basis=1|span=bits:4627448617123184640|params=spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969)|derivative=spmg(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969),1:1)|penalty=identity|integration=spmg1(89:spmg(24:bits:4617315517961601024,24:bits:4624633867356078080,24:bits:4575957461383581969))|derivation=none|components=sequence()"
     assertEquals(Hrfs.SPMG1.descriptor.canonicalId, expected)
     assertEquals(Hrfs.SPMG1.basisElementsValidated.toOption.get.head.id.value, s"$expected|canonical|1")
   }
@@ -92,6 +93,37 @@ class HrfIdentitySuite extends munit.FunSuite:
       IntegrationPolicy.Stacked -> "stacked"
     )
     integrations.foreach { case (value, expected) =>
-      assert(base.copy(integration = value).canonicalId.contains(s"|integration=$expected|components="))
+      assert(base.copy(integration = value).canonicalId.contains(s"|integration=$expected|derivation=none|components="))
+    }
+  }
+
+  test("derivation identity records the policy and source without display-number rendering") {
+    val base = Hrfs.SPMG1
+    val lagged = base.lag(Seconds(2.0))
+    assertEquals(lagged.descriptor.family, HrfFamily.Derived("lagged"))
+    assertEquals(lagged.descriptor.derivation, Some(HrfDerivation.Lagged(Seconds(2.0))))
+    assertEquals(lagged.descriptor.components, Vector(base.descriptor))
+    assert(lagged.descriptor.canonicalId.contains("derivation=lagged(24:bits:4611686018427387904)"))
+    assert(lagged.name.contains("_lag("))
+    assert(!lagged.name.contains("bits:"))
+    val renamed = HrfCombinators.gen(base, lag = Seconds(2.0), name = Some("display"))
+    assertEquals(renamed.descriptor.derivation, lagged.descriptor.derivation)
+    assertEquals(renamed.descriptor.components, lagged.descriptor.components)
+    val variants = Vector(
+      base.block(Seconds(1.0)),
+      base.block(Seconds(1.0), precision = Seconds(0.2)),
+      base.block(Seconds(1.0), halfLife = 2.0),
+      base.block(Seconds(1.0), summate = false),
+      base.block(Seconds(1.0), normalize = true),
+      base.block(Seconds(1.0), integration = Integration.Trapezoid),
+      base.normalize(Seconds(0.1)),
+      base.normalize(Seconds(0.2)),
+      base.normalize(HrfNormalization.Spm).toOption.get,
+      base.normalize(HrfNormalization.UnitPeak).toOption.get
+    )
+    assertEquals(variants.map(_.descriptor.canonicalId).distinct.size, variants.size)
+    variants.foreach { hrf =>
+      assertEquals(hrf.descriptor.components, Vector(base.descriptor))
+      assert(hrf.descriptor.derivation.nonEmpty)
     }
   }

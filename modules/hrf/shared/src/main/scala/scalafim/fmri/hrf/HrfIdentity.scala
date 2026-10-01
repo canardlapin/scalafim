@@ -15,7 +15,8 @@ private[hrf] object HrfIdentity:
   def descriptor(value: HrfDescriptor): String =
     s"hrf-descriptor/v2|family=${family(value.family)}|basis=${value.basis.value}|span=${number(value.span.value)}|" +
       s"params=${params(value.params)}|derivative=${derivative(value.derivative)}|penalty=${penalty(value.penalty)}|" +
-      s"integration=${integration(value.integration)}|components=${sequence(value.components.map(descriptor))}"
+      s"integration=${integration(value.integration)}|derivation=${value.derivation.fold("none")(derivation)}|" +
+      s"components=${sequence(value.components.map(descriptor))}"
 
   private def record(tag: String, fields: String*): String =
     fields.map(field => s"${field.length}:$field").mkString(s"$tag(", ",", ")")
@@ -88,6 +89,18 @@ private[hrf] object HrfIdentity:
       case PenaltyPolicy.Roughness => "roughness"
       case PenaltyPolicy.FourierFrequency => "fourier-frequency"
       case PenaltyPolicy.DaguerreDecay => "daguerre-decay"
+
+  private def derivation(value: HrfDerivation): String =
+    value match
+      case HrfDerivation.Lagged(by) => record("lagged", number(by.value))
+      case HrfDerivation.Blocked(width, precision, halfLife, summate, normalize, integration) =>
+        val rule = integration match
+          case Integration.Exact => "exact"
+          case Integration.Trapezoid => "trapezoid"
+        record("blocked", number(width.value), number(precision.value), number(halfLife),
+          summate.toString, normalize.toString, rule)
+      case HrfDerivation.PeakNormalized(step) => record("peak-normalized", number(step.value))
+      case HrfDerivation.Normalized(mode) => record("normalized", mode.label)
 
   private def integration(value: IntegrationPolicy): String =
     value match
