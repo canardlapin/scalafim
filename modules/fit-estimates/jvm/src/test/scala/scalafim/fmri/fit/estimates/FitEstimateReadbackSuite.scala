@@ -52,12 +52,24 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
       Vector(0.0, 5.0, -3.0, 2.0).zip(values).foreach: (expected, actual) =>
         assertEqualsDouble(actual, expected, 1e-10)
       assertEquals(validity.toVector, Vector.fill(4)(Validity.Valid.code))
+      val standardError = source.unit.products.find(_.kind == ProductKind.StandardError).get
+      right(source.read(standardError.id, EstimateSelection(standardError.observations, ids.reverse, Vector(1, 0)), values, validity))
+      Vector(14.0 / 3.0, 7.0 / 6.0, 8.0 / 3.0, 2.0 / 3.0).zip(values).foreach: (variance, actual) =>
+        assertEqualsDouble(actual, math.sqrt(variance), 1e-10)
+      assertEquals(validity.toVector, Vector.fill(4)(Validity.Valid.code))
       val variance = source.unit.products.find(_.kind == ProductKind.ResidualVariance).get
       right(source.read(variance.id, EstimateSelection(variance.observations, ids.reverse, Vector(1, 0)), values, validity))
       Vector(4.0, 1.0, 4.0, 1.0).zip(values).foreach: (expected, actual) =>
         assertEqualsDouble(actual, expected, 1e-10)
       assertEquals(validity.toVector, Vector.fill(4)(Validity.Valid.code))
       assertEquals(source.unit.degreesOfFreedom, Vector(DegreesOfFreedom(DfRole.Residual, DfValue.Scalar(6.0), "OLS n - numerical rank", false)))
+      assertEquals(source.unit.catalog.entries.map(_.response), Vector(
+        ResponseCoordinate.FirInterval("event onset", 0.0, 2.0), ResponseCoordinate.FirInterval("event onset", 2.0, 4.0)))
+      assertEquals(source.unit.bindings.map(_.weights), Vector(Vector(1.0, 0.0, 0.0), Vector(0.0, 1.0, 0.0)))
+      assertEquals(source.unit.products.map(_.pooling), Vector.fill(3)(PoolingScope.Run))
+      assertEquals(source.unit.provenance.scans, Vector(AcquisitionScans(AcquisitionId("run-1"), Vector.range(0, 9))))
+      assertEquals(source.unit.marginalUncertainty, Vector(MarginalUncertaintyDescriptor(standardError.id, effect.id,
+        MarginalVarianceOrigin.Estimated(DegreesOfFreedom(DfRole.Residual, DfValue.Scalar(6.0), "OLS n - numerical rank", false)))))
     finally right(source.close())
   }
 
