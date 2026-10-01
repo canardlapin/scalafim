@@ -1,0 +1,189 @@
+#!/usr/bin/env python3
+"""Run sbt commands against a warm, per-worktree sbt server.
+
+Why: a cold `sbt <task>` spends ~95% of a typical gate loading the build (about
+60 s on a shared host) and, with the shared global staging directory, needs a
+host-wide lock. This wrapper instead gives every worktree its own sbt global
+base (so nothing mutable is shared between worktrees and no global lock is
+needed), seeds that base from a copy-on-write clone of a template built for the
+same dependency pins, and keeps one resident sbt server per worktree reached
+through `sbt --client`, so repeat gates cost about a second.
+
+usage:
+  python3 tools/build/sbt-warm [--] 'mvpaJVM/test' 'mvpaJS/test'   run commands, in order
+  python3 tools/build/sbt-warm --status                          show this worktree's base/server
+  python3 tools/build/sbt-warm --shutdown                        stop this worktree's server
+
+Commands run in order; the first failing command stops the run with its exit
+code. Environment knobs (defaults in brackets):
+  SBT_WARM_HOME   cache root            [~/.cache/scalafim-sbt]
+  SBT_WARM_HEAP   server -Xmx            [3g]
+  SBT_WARM_CPUS   server processor count [4]
+  SBT_WARM_SLOTS  concurrent commands    [3]
+  SBT_WARM_IDLE_MINUTES  server idle shutdown [30]
+"""
+
+import fcntl
+import hashlib
+import os
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+HOME = Path(os.environ.get("SBT_WARM_HOME", Path.home() / ".cache" / "scalafim-sbt"))
+HEAP = os.environ.get("SBT_WARM_HEAP", "3g")
+CPUS = os.environ.get("SBT_WARM_CPUS", "4")
+SLOTS = int(os.environ.get("SBT_WARM_SLOTS", "3"))
+IDLE_MINUTES = int(os.environ.get("SBT_WARM_IDLE_MINUTES", "30"))
+
+
+def log(message: str) -> None:
+    print(f"[sbt-warm] {message}", file=sys.stderr, flush=True)
+
+
+def worktree() -> Path:
+    out = subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True)
+    return Path(out.stdout.strip()).resolve()
+
+
+def pin_key(root: Path) -> str:
+    """Hash of everything that determines the staged dependency builds."""
+    digest = hashlib.sha256()
+    build = (root / "build.sbt").read_text().splitlines()
+    for line in build:
+        if "Revision" in line or "canardlapin/" in line or ".build" in line:
+            digest.update(line.strip().encode())
+    for name in ("project/build.properties", "project/plugins.sbt"):
+        path = root / name
+        if path.exists():
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:16]
+
+
+def clone_tree(source: Path, target: Path) -> None:
+    """Copy-on-write clone (APFS clonefile via `cp -c`), skipping server sockets."""
+    target.parent.mkdir(parents=True, exist_ok=True)
+    staging = target.with_name(target.name + ".partial")
+    if staging.exists():
+        shutil.rmtree(staging)
+    subprocess.run(["cp", "-c", "-R", str(source), str(staging)], check=False, stderr=subprocess.DEVNULL)
+    server = staging / "server"
+    if server.exists():
+        shutil.rmtree(server)
+    staging.rename(target)
+
+
+def prepare_base(root: Path) -> Path:
+    key = pin_key(root)
+    base = HOME / "bases" / hashlib.sha256(str(root).encode()).hexdigest()[:16]
+    template = HOME / "templates" / key
+    with open_home_lock() as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        marker = base / ".pin-key"
+        if base.exists() and (not marker.exists() or marker.read_text() != key):
+            log(f"pins changed for {root}; discarding stale base {base}")
+            shutil.rmtree(base)
+        if not base.exists():
+            if template.exists():
+                log(f"seeding base from template {key} (copy-on-write)")
+                clone_tree(template, base)
+            else:
+                log(f"no template for pins {key}; first build will clone and compile dependencies")
+                base.mkdir(parents=True)
+            marker.write_text(key)
+        settings = base / "global.sbt"
+        wanted = f"Global / serverIdleTimeout := Some(scala.concurrent.duration.FiniteDuration({IDLE_MINUTES}L, \"minutes\"))\n"
+        if not settings.exists() or settings.read_text() != wanted:
+            settings.write_text(wanted)
+    return base
+
+
+def open_home_lock():
+    HOME.mkdir(parents=True, exist_ok=True)
+    return open(HOME / "bases.lock", "a")
+
+
+def snapshot_template(root: Path, base: Path) -> None:
+    template = HOME / "templates" / pin_key(root)
+    if template.exists():
+        return
+    with open_home_lock() as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if not template.exists():
+            log(f"saving pin template {template.name} for future worktrees")
+            clone_tree(base, template)
+
+
+def acquire_slot():
+    """Hold one of SLOTS host-wide command slots (counting semaphore)."""
+    slots = HOME / "slots"
+    slots.mkdir(parents=True, exist_ok=True)
+    waited = False
+    while True:
+        for index in range(SLOTS):
+            handle = open(slots / f"slot-{index}", "a")
+            try:
+                fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                if waited:
+                    log(f"acquired slot {index}")
+                return handle
+            except BlockingIOError:
+                handle.close()
+        if not waited:
+            log(f"all {SLOTS} command slots busy; waiting")
+            waited = True
+        time.sleep(2)
+
+
+def sbt_env(base: Path) -> dict:
+    env = dict(os.environ)
+    env["SBT_OPTS"] = (
+        f"-Xmx{HEAP} -XX:ActiveProcessorCount={CPUS} -Dsbt.global.base={base} "
+        "-Dsbt.supershell=false -Dsbt.color=false"
+    )
+    return env
+
+
+def server_running(root: Path) -> bool:
+    return (root / "project" / "target" / "active.json").exists()
+
+
+def main(argv: list) -> int:
+    root = worktree()
+    if argv[:1] == ["--status"]:
+        base = HOME / "bases" / hashlib.sha256(str(root).encode()).hexdigest()[:16]
+        print(f"worktree {root}\npin key  {pin_key(root)}\nbase     {base} ({'present' if base.exists() else 'absent'})")
+        print(f"template {'present' if (HOME / 'templates' / pin_key(root)).exists() else 'absent'}")
+        print(f"server   {'running' if server_running(root) else 'not running'}")
+        return 0
+    if argv[:1] == ["--shutdown"]:
+        if not server_running(root):
+            log("no server running")
+            return 0
+        base = prepare_base(root)
+        return subprocess.call(["sbt", "--client", "shutdown"], cwd=root, env=sbt_env(base))
+    commands = argv[1:] if argv[:1] == ["--"] else argv
+    if not commands:
+        print(__doc__, file=sys.stderr)
+        return 2
+    base = prepare_base(root)
+    fresh = not (base / "staging").exists()
+    slot = acquire_slot()
+    try:
+        for command in commands:
+            started = time.time()
+            code = subprocess.call(["sbt", "--client", command], cwd=root, env=sbt_env(base))
+            log(f"{command}: exit {code} in {time.time() - started:.1f}s")
+            if code != 0:
+                return code
+    finally:
+        slot.close()
+    if fresh and (base / "staging").exists():
+        snapshot_template(root, base)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

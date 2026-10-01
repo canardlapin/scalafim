@@ -24,6 +24,15 @@ for the module map; this file is the working contract.
 - **A feature is not done until it compiles and its tests pass on _both_ JVM and JS.**
   Never verify only one platform. Run the tests — evidence over assertion.
 - `scalacOptions` include `-deprecation -feature -unchecked`; keep the build warning-clean.
+- **Prefer `python3 tools/build/sbt-warm` for repeated gates**, e.g.
+  `python3 tools/build/sbt-warm mvpaJVM/test mvpaJS/test`. It gives each worktree its own
+  sbt global base (copy-on-write cloned from a template for the same dependency
+  pins, under `~/.cache/scalafim-sbt`) and a resident sbt server reached through
+  `sbt --client`, so a repeat gate costs about a second instead of about a minute of
+  project loading. Commands run in order and the first failure's exit code is
+  returned. Worktrees share no mutable build state, so these runs need no host-wide
+  sbt lock; a three-slot host semaphore bounds concurrency. Servers stop after 30
+  idle minutes; `--status` and `--shutdown` inspect or stop this worktree's server.
 
 ## Scala 3 style
 
