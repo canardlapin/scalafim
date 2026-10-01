@@ -1,0 +1,8 @@
+{
+  "valid": false,
+  "reason": "incorrect zero acquisition start; frozen SamplingFrame defaults to half-TR .5 seconds",
+  "sourceSha256": "80ff6c9f43c6d00fb55178c034f5f0373a1d717fdda249c89ee20f9dbd5c53dc",
+  "claimsWithdrawn": "all v1 direct-family reconstruction/search metrics",
+  "raw": "direct-reference-v1.log",
+  "result": "direct-reference-v1.json"
+}

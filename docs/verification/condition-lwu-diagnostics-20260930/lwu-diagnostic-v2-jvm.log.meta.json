@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T19:34:52.592998+00:00",
+  "finished_utc": "2026-09-30T19:36:09.421195+00:00",
+  "duration_seconds": 76.827873,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.LwuConditionDiagnosticSuite",
+    "firstLevelLawsJVM/Test/runMain scalafim.fmri.laws.profile.LwuConditionDiagnosticMain --historical-dev --verify-original-counts"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-diagnostics-20260930/work",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/lwu-diagnostic-v2-jvm.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 1112417
+}

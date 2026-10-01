@@ -1,0 +1,1069 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project work-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-lwu-repair-design-20260930/work/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a3fe250684692aa42c1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (261806 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-lwu-repair-design-20260930/work/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/scenario-testkit/js/target/scala-3.7.4/classes ...
+[info] compiling 12 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/pipeline/js/target/scala-3.7.4/classes ...
+[info] compiling 1 Scala source to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 78 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/js/target/scala-3.7.4/scalafim-fmri-fit-test-fastopt
+scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite:
+  + off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape 0.696s
+  + work aggregation retains conditional attempts and failures from distinct workers 0.014s
+  + alpha zero lowers a declared-order condition term directly and has no trial work 0.119s
+  + noiseless zero-deviation control recovers the declared continuous shape 0.056s
+  + fixed condition plan uses the existing admitted OLS retention 0.051s
+  + unsupported intent, temporal selection and whitening are rejected before a read 0.065s
+  + shared AR preparation rejects an MA component and a different first-row policy 0.001s
+  + zero-column baseline admits the trial route 0.049s
+  + shape prior requires symmetric positive semidefinite precision 0.095s
+  + nonunit noise variance does not rescale an energy-unit shape prior 0.056s
+  + a decode budget refusal remains a voxel status and is tallied as attempted 0.083s
+  + provenance binds the numeric basis and event durations 0.258s
+  + fixed retention translates reader and cancellation exceptions with partial progress 0.012s
+  + cancellation and sink failures stop subsequent reads and report delivered progress 0.103s
+  + ML executor returns coherent terminal J evidence, raw E readout and separate exact-once work 0.168s
+  + ML keeps a budget-limited terminal status and refuses unavailable terminal before delivery 1.584s
+  + ML forwarding refuses an unpointed or invalidated epoch, and charges exact failures only to legacy work 0.007s
+  + fixed and alpha-zero ML plans refuse before dataset resolution 0.009s
+  + ML setup refusal translation retains successful bank and attempted partial setup separately 0.004s
+  + ML cancellation before reading and before delivery retains truthful separate work 0.054s
+  + ML evaluation memoizes raw and measured payload once and stale closures cannot reuse a new response 0.008s
+  + public physical axes keep preparation identity, caller order and structural nuisance ids 0.052s
+  + accepted AR-reset signed off-node outputs equal a separately invoked existing readout exactly once whitened 0.089s
+  + normalization transports lambda and trial units while keeping nuisance units and raw selection 0.059s
+  + public corrected provenance identifies execution intent without the legacy exact route assertion 0.086s
+  + checked public declarations retain ordered query values, tolerances, output kind and exact preparation binding 0.114s
+  + nearest bank reference uses interval-scaled distances, lower ties and final rather than starting nodes 0.224s
+  + signed near-cancellation queries retain no full trial vector and conversion audit stays explicit 0.067s
+  + foreign and duplicate queries, wrong dimensions, rule and certificate refuse before any reader or sink access 0.093s
+  + missing or stale compiled baseline matrix and rows refuse; an actually empty nuisance axis is valid 0.246s
+  + decode refusals skip conditional work; cancellation immediately before delivery retains completed work 0.094s
+  + failed conditional operation keeps nested numerical error and actual failed work 0.527s
+  + ML same-worker public exact output matches dense returned-shape trial, nuisance and normal residual 0.060s
+  + ML signed queries and condition queries share normalization, native nuisance and explicit Float32 audits 0.070s
+  + ML unsupported intents refuse before readers or callbacks and decode refusals perform zero readout 0.163s
+  + ML sink refusal and pre-delivery cancellation preserve same-worker readout attempts 0.056s
+  + ML failed residual measurement emits nothing and retains the exact readout and failed normal action 0.527s
+scalafim.fmri.fit.InferenceSuite:
+  + Dense OLS results expose standard errors and diagnostics 0.027s
+  + T contrasts align weights by column name 0.005s
+  + T contrasts can evaluate an explicitly inference-ready dense fit 0.002s
+  + T contrasts reject unknown columns 0.002s
+  + F contrasts evaluate single-df statistics, df, and voxel alignment 0.004s
+  + F contrasts evaluate multi-df tests 0.002s
+  + contrasts use voxelwise coefficient covariance when supplied 0.001s
+  + contrasts reject zero residual variance instead of emitting non-finite statistics 0.001s
+  + mixed fits retain typed voxel status and isolate T/F inference 0.001s
+  + F contrasts reject unknown and non-estimable columns explicitly 0.002s
+  + DesignContrasts evaluates attached t contrasts and generated F contrasts 0.017s
+scalafim.fmri.fit.ContrastReprojectionSuite:
+  + reprojection equals an independent direct OLS refit on the collapsed design 0.002s
+  + a second kernel from the same product also matches its refit 0.000s
+  + the product constructor refuses malformed retention 0.000s
+  + reprojection refuses malformed and degenerate requests 0.000s
+scalafim.fmri.fit.profile.BlockExecutorSuite:
+  + blocks partition the voxel range with the last block shorter 0.000s
+  + sequential execution delivers receipts in block order and retains no payloads 0.002s
+  + budget, sink failure and cancellation are typed outcomes 0.001s
+  + worker construction and thrown sink failures remain typed 0.001s
+scalafim.fmri.fit.PreparedContrastGeometrySuite:
+  + moment geometry equals explicit dense effect and residual projectors 0.005s
+  + rescaling a one-row contrast preserves the effect matrix 0.001s
+  + invertible nuisance basis changes preserve effect and residual geometry 0.000s
+  + fixed AR whitening and censor resets match the first-level transform 0.001s
+  + rank-deficient prepared designs are rejected 0.000s
+  + held-out responses cannot alter a training-scoped whitening geometry 0.001s
+scalafim.fmri.fit.ResultArtifactsSuite:
+  + ResultManifest from dense fit preserves parameter metadata and provenance 0.003s
+  + ContrastMap preserves statistic kind and degrees of freedom 0.002s
+  + StatMap rejects value and voxel-space mismatches 0.001s
+  + CoefficientCovarianceArtifact preserves voxelwise covariance and rejects shape mismatches 0.001s
+  + restricted inference exports only inferable standard errors and covariance 0.002s
+scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite:
+  + pipeline-backed first-level workflow returns one scenario verdict 0.030s
+scalafim.fmri.fit.TrialReadoutSuite:
+  + LSS trial readout matches the independent fMRILSS fixture and owns coefficient identity 0.002s
+  + readout folds fixed nuisance projection into both forward and adjoint maps 0.001s
+  + readout satisfies the Frobenius adjoint law 0.000s
+  + readout commutes with downstream feature mixing 0.000s
+  + one prepared readout is cached and applies a response batch columnwise 0.000s
+  + zero trial regressors produce a zero readout row and zero adjoint contribution 0.000s
+  + trial readout and trial coefficient axes reject malformed inputs with typed errors 0.000s
+scalafim.fmri.fit.GlsSuite:
+  + GeneralizedLeastSquares runs AR(1) whitening and reports diagnostics 0.004s
+  + GeneralizedLeastSquares can estimate an AR(1) rho from initial residuals 0.005s
+  + estimated AR(2) GLS matches the fmriAR 0.3.3 end-to-end receipt 0.003s
+  + GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals 0.007s
+  + GeneralizedLeastSquares supports fixed AR(2) coefficients 0.001s
+  + GeneralizedLeastSquares keeps finite diagnostics under extreme predictor scales 0.001s
+  + GeneralizedLeastSquares resets AR whitening after censored timepoints 0.001s
+  + estimated GLS excludes explicit censor rows only from noise estimation 0.000s
+  + GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset 0.002s
+  + GeneralizedLeastSquares rejects censored timepoints outside selected partitions 0.001s
+  + GeneralizedLeastSquares resets at run and censor boundaries for multivoxel data 0.001s
+  + GeneralizedLeastSquares distinguishes run-specific and global estimated AR pooling 0.008s
+  + GeneralizedLeastSquares supports voxelwise estimated AR with explicit non-shared covariance 0.008s
+  + voxelwise GLS retains degenerate voxel status and isolates contrast inference 0.002s
+  + GeneralizedLeastSquares rejects unsupported AR configurations explicitly 0.001s
+  + GeneralizedLeastSquares rejects non-stationary fixed AR coefficients 0.001s
+  + GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries 0.001s
+  + row-deleted whitening matches independent segmented L X and L Y 0.001s
+scalafim.fmri.fit.FirstLevelEstimatesSuite:
+  + public preparation performs no reads and streams only selected identified products 0.008s
+  + selected time and voxel ordering are preserved across block sizes 0.006s
+  + cancellation and sink failure prevent subsequent response reads 0.006s
+  + invalid identities and unsupported scientific engines fail before reads 0.004s
+  + the caller's backend receives exactly the selected block products 0.003s
+  + native FIR selection preserves physical bin coordinates and requested order 0.011s
+scalafim.fmri.fit.DctDriftFitSuite:
+  + native selected betas and contrasts equal independent FWL on complete and censored original rows 0.019s
+scalafim.fmri.fit.FitBlockSuite:
+  + dense OLS block results merge to the same result as a full voxel block 0.005s
+  + dense blocks tolerate scale-aware cutoff differences with the same rank partition 0.000s
+  + fixed AR(1) GLS block results merge with identical diagnostics 0.010s
+  + LSS block results merge to the same result as a full voxel block 0.001s
+  + dense block merge rejects incompatible execution context 0.000s
+  + dense block merge preserves and validates the structural coefficient axis 0.001s
+  + LSS block merge rejects incompatible trial names 0.000s
+scalafim.fmri.fit.OlsSuite:
+  + OLS fits multiple response columns with one prepared factorization 0.000s
+  + basis reparameterization transports fit covariance and linear hypotheses 0.001s
+  + OLS reports residual variance per voxel 0.000s
+  + OLS matches independent Gaussian oracle on overdetermined multivoxel data 0.000s
+  + OLS matches independent oracle for scaled full-rank predictors 0.000s
+  + scale-aware rank detection is invariant to uniform predictor scaling 0.000s
+  + OLS rejects non-finite dense inputs at construction 0.000s
+  + OLS default QR solver agrees with normal equations on well-conditioned designs 0.000s
+  + OLS coefficients are invariant to design column permutation 0.000s
+  + OLS rejects singular designs 0.000s
+  + OLS rank policy makes strict full-rank rejection explicit 0.000s
+  + OLS reports unsupported rank policies explicitly 0.000s
+  + OLS rejects nearly collinear designs at the QR rank tolerance boundary 0.000s
+  + OLS rejects saturated fits before residual inference is represented 0.000s
+  + OLS remains finite for extreme but well-conditioned predictor scales 0.000s
+  + OLS rejects row mismatches at fit time 0.000s
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.009s
+  + shared retention requests describe and deliver actual native uncertainty 0.008s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.005s
+scalafim.fmri.fit.profile.TrialBandedMlBackendSuite:
+gaussian E=0.8889120779241004 D=1.8006170552308216 J=5.3904547160011544 dense J=5.3904547160011616; FD errors [gE,HE,gD,HD,gJ,HJ] by step Vector(0.002, 0.001): Vector(Vector(4.951911360961958e-7, 0.000003992302112787449, 0.000001481622223131751, 0.0000012088020484579687, 0.0000041992466939255735, 0.000005269379317551781), Vector(1.237944449172801e-7, 9.972534592561644e-7, 3.7040754730099934e-7, 2.9997348049981554e-7, 0.0000010498135352143834, 0.0000013162081937689862))
+cascade34 E=0.11206402046692432 D=0.04748854532144331 J=0.2307853837705326 dense J=0.2307853837705307; FD errors [gE,HE,gD,HD,gJ,HJ] by step Vector(0.002, 0.001): Vector(Vector(1.769344304264342e-7, 4.522211757285177e-7, 1.0451254144061561e-7, 1.2148763023356324e-7, 4.382157848814572e-7, 7.559341798080155e-7), Vector(4.423502340811236e-8, 1.1848813452619567e-7, 2.6128178204354313e-8, 3.290744537975954e-8, 1.0955547063984383e-7, 2.0074633966249422e-7))
+  + off-node Gaussian 2D and Cascade 3D raw E, D and J match the dense model and its finite differences 2.014s
+  + value-only and full evaluations at the same coordinates agree, from one reference each 0.013s
+  + nodes use the cached determinant jet: setup charges it once, workers never refactor 0.008s
+  + epochs, response and coordinate validation are typed refusals before numerical work 0.004s
+  + a pre-factor construction refusal charges one reference refusal and no factor, solve or determinant work 0.009s
+  + aliased nuisance is refused by the release rank before any ML backend exists 0.002s
+lambda=0.000001 admitted: E=0.20556737044719586 dense=0.20556737044735662 D=28.928391287030127 dense=28.928391287187655
+lambda=1 admitted: E=0.4742447826053766 dense=0.4742447826053837 D=2.1430343015159035 dense=2.143034301515905
+lambda=10000 admitted: E=0.903277883939948 dense=0.9032778839400155 D=0.0003865229664188341 dense=0.00038652296642384886
+  + coincident trials and predeclared lambda values are admitted against the dense model or refused by type 0.023s
+default decode counters: nodes=17 jets=2 exact=1 candidates=1 terminal=1 evidence=Available(scalafim.fmri.fit.profile.CriterionJet@d7)
+decode status=BudgetExceeded at=Vector(5.642944516887563, 0.44626845315940517) J=0.8858895810346061 work=TrialMlWork(2,2,0,45,89,9,15,5,2,0)
+generous decode status=Accepted at=Vector(5.64136990685217, 0.4510572422338509) J=0.8858669318005512 retained=4
+E-only decode status=Accepted at=Vector(5.637090365287881, 0.476651853697074)
+  + unchanged decoder ranks, refines and verifies with J, never with raw E 0.020s
+  + readout payload guards epoch and coordinates, memoizes failures and never remeasures a repaired response 0.004s
+scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite:
+  + public LSS path recovers metadata-selected trialwise estimates 0.026s
+scalafim.fmri.fit.profile.ShapeDecoderTangentSuite:
+  + coupled lower-bound Newton direction follows feasible descent to the exact constrained optimum 0.001s
+  + coupled upper-bound Newton direction follows feasible descent to the mirrored optimum 0.000s
+  + tangent correction handles a third independent coordinate 0.000s
+  + a genuine constrained stationary bank point needs no candidate 0.000s
+  + a tiny representable clipped step is evaluated rather than called stationary 0.000s
+  + an unrepresentable raw nonstationary correction preserves terminal state without an evaluation 0.000s
+  + halving to an unchanged coordinate stalls only before the attempt cap is exhausted 0.000s
+  + a finite jet whose Newton solve overflows stalls without an objective callback 0.000s
+scalafim.fmri.fit.scenarios.ScenarioHarnessSuite:
+  + clean observations produce a CI-passable scenario 0.000s
+  + failed observations force ScenarioStatus.Fail even without caveats 0.000s
+  + non-blocking caveats require explicit policy to pass CI 0.000s
+  + blocking caveats force ScenarioStatus.Fail 0.000s
+  + policies cannot declare failures acceptable 0.000s
+scalafim.fmri.fit.profile.TrialMlObjectiveSuite:
+  + all four entry points supply coherent J, including off-node values 0.001s
+  + unchanged decoder chooses J node rankings and the independent 2D off-node optimum 0.001s
+  + energy-only candidate uses J and the reserved terminal jet without extra evaluations 0.000s
+  + analytic indefinite HJ with positive HE takes parabolic fallback and terminal verification 0.000s
+  + actual E-only substitution of each method is killed by its separate path witness 0.001s
+  + a rejected last jet cannot overwrite returned raw evidence 0.000s
+  + failed terminal verification is unavailable and next response clears the ledger 0.001s
+  + accepted energy-only terminal refusal preserves status and has no synthesized evidence 0.000s
+  + strong prior is applied once; raw HE, HJ, augmented H and conditional SD remain distinct 0.001s
+  + missing capability, invalid variance and invalid prior refuse before response work 0.000s
+  + binding refusals clear every destination, ledger repeats refuse, work stays bounded 0.001s
+  + prior curvature cannot rescue indefinite prior-free HJ for conditional SD 0.000s
+  + value refusals yield no admissible node; malformed destinations perform no backend work 0.000s
+scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite:
+  + P3.4 row-deleted censor gaps bound public AR/GLS whitening 0.020s
+scalafim.fmri.fit.PipelineFitWorkflowSuite:
+  + in-memory fMRI OLS workflow runs through the pipeline graph and matches direct execution 0.003s
+scalafim.fmri.fit.profile.ProfileReductionSuite:
+  + the reduction matches finite differences of the exact energy, including energy-term derivatives 0.001s
+  + omitting the energy-term derivatives is detected 0.000s
+  + a non-positive-definite Gram is reported, not inverted 0.000s
+  + compact condition jets agree with finite differences of the direct compact energy and are sign-invariant 0.003s
+  + criterion assembly directly forms J from dedicated coherent determinant jets 0.001s
+scalafim.fmri.fit.CompactFixedEffectsSuite:
+  + public run combination retains compact statistics and agrees with independent correlated mixed-TR R oracle 0.015s
+  + missing run statuses agree with explicit defaults and preserve variance exclusions 0.009s
+  + structured storage grows with voxel scales, preserves off-diagonal precision, and refuses malformed fields 0.010s
+  + unstructured legacy contributions, disjoint folding and availability rules remain usable 0.007s
+  + compact concatenation refuses logical voxel count overflow without dense materialization 0.001s
+scalafim.fmri.fit.BasisExpandedRetentionSuite:
+  + preparation reads nothing and the retained product reprojects to the collapsed refit 0.004s
+  + a second kernel from the same retained product matches its own refit 0.001s
+  + streamed blocks carry the same panel as the assembled product 0.001s
+  + structure and preparation refuse malformed input before any read 0.000s
+  + cancellation yields no partial assembled product 0.000s
+scalafim.fmri.fit.ChunkedFitExecutorSuite:
+  + ChunkProgram rejects non-contiguous generic work ordinals 0.001s
+  + SequentialChunkProgramInterpreter wraps failures with chunk identity 0.000s
+  + FutureChunkProgramInterpreter preserves ordinal order with bounded execution 0.001s
+  + FitChunkPlan exposes repeatable ordered voxel chunks 0.001s
+  + FitChunkProgram exposes a repeatable scheduler-neutral work stream 0.001s
+  + ChunkedFitExecutor matches unchunked OLS while preserving selected voxel order 0.003s
+  + single-voxel chunks preserve propagated non-finite exclusions 0.002s
+  + chunked voxel-specific row omission matches whole patterned OLS 0.004s
+  + future single-voxel chunks preserve propagated non-finite exclusions 0.002s
+  + future chunking preserves voxel-specific observation patterns 0.002s
+  + all-excluded and partially-excluded chunks preserve source exclusion order 0.001s
+  + ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses 0.003s
+  + ChunkedFitExecutor estimates DVARS once from the whole selected response 0.002s
+  + FutureChunkedFitExecutor matches sequential chunked OLS with bounded parallelism 0.001s
+  + FutureChunkedFitExecutor matches unchunked full-rank LatentSketch 0.004s
+  + FutureChunkedFitExecutor reuses one compressed LatentSketch across chunks 0.002s
+  + FutureChunkedFitExecutor reuses one principal-component LatentSketch across chunks 0.003s
+  + ChunkedFitExecutor matches unchunked LSS 0.009s
+  + ChunkedFitExecutor matches unchunked fixed-AR GLS 0.005s
+  + FutureChunkedFitExecutor prepares estimated-AR GLS once across bounded parallel chunks 0.004s
+  + FutureChunkedFitExecutor matches unchunked full-rank ReducedRankGls 0.007s
+  + FutureChunkedFitExecutor reuses one compressed ReducedRankGls basis across chunks 0.005s
+  + FutureChunkedFitExecutor reuses deterministic ReducedRankGls bootstrap inference 0.009s
+  + full-rank voxelwise-AR ReducedRankGls fallback remains event-only across chunks 0.005s
+  + compressed voxelwise-AR ReducedRankGls remains an explicit design boundary 0.002s
+  + FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks 0.004s
+  + chunk interpreters agree from the same prepared GLS chunk program 0.003s
+  + ChunkedFitExecutor matches unchunked runwise OLS 0.002s
+  + FitChunkPlan rejects non-contiguous ordinals 0.000s
+  + FitChunkPlan rejects mixed timepoint chunks 0.000s
+  + runwise preparation preserves bounded response reads and censored axes 0.002s
+  + runwise future preparation preserves bounded response reads 0.001s
+  + fixed preparation preserves bounded response reads and censored axes 0.004s
+  + fixed future preparation preserves bounded response reads 0.004s
+  + LSS preparation preserves bounded response reads and censored axes 0.007s
+  + LSS future preparation preserves bounded response reads 0.004s
+scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite:
+  + S07 2x2 public design supports semantic simple and interaction hypotheses 0.044s
+  + S08 3x3 public design supports unequal-score trends and interaction 0.020s
+  + S09 public design supports heterogeneous HRF bases by structural cell 0.014s
+  + S06 public model preserves factor/modulator scope and missing-value policy 0.021s
+  + S10 reconstructed basis responses use explicit functional weights 0.015s
+  + S16 rank-deficient structural hypotheses report row-space evidence 0.024s
+  + S18 public WLS agrees with an independent base-R receipt 0.009s
+scalafim.fmri.fit.StructuralHypothesisSuite:
+  + semantic selectors resolve to structural identities and carry estimability evidence 0.001s
+  + hypothesis estimability uses the same scale-aware convention as fitting 0.001s
+  + semantic resolution is invariant to rendered labels and coefficient order 0.001s
+  + structural identity permits repeated rendered labels across run-scoped regressors 0.000s
+  + a compiled hypothesis rejects a result from a different design fingerprint 0.000s
+  + unknown structural components produce typed failures 0.001s
+  + declared-but-empty cells are distinguished from unknown levels 0.001s
+  + invalid structural weights are reported during compilation 0.000s
+  + rendered labels cannot become structural authority 0.000s
+  + rank-deficient designs reject non-estimable T contrasts and reduce F numerator rank 0.002s
+  + response-level functionals expand over semantic basis elements 0.001s
+  + reduced fixed-effects axes reject missing T, F, and response-functional components 0.001s
+scalafim.fmri.fit.PreparedManovaGeometrySuite:
+  + multi-contrast preparation yields a design-normalized effect basis 0.003s
+  + invertible changes of contrast basis preserve the hypothesis projector 0.002s
+  + rank-deficient contrast rows are rejected as non-estimable 0.001s
+scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite:
+  + S12 combines sustained blocks, transient events, and variable epochs 0.034s
+  + S15 sampled nuisance preserves task inference against an R direct fit 0.056s
+scalafim.fmri.fit.ImageMapsSuite:
+  + Dense fit coefficient and SE maps preserve full voxel placement 0.004s
+  + image maps place selected voxels into their original image locations 0.001s
+  + typed result manifest coefficient maps adapt to existing image maps 0.002s
+  + standard-error image maps omit coefficients outside the inference scope 0.001s
+  + t and F contrast statistics map into image space 0.001s
+scalafim.fmri.fit.ResponsePreparationSuite:
+  + default plan is inspectable and preserves block input identity 0.000s
+  + non-default plan distinguishes applied, rejected, and deferred surfaces 0.000s
+  + fixed volume weights apply by full-model timepoint index 0.000s
+  + fixed weights equal OLS on square-root weighted design and response 0.000s
+  + multiresponse WLS agrees with independently fitted response columns 0.000s
+  + estimated DVARS weighting is executable and records its source and normalization 0.000s
+  + zero fixed weights exclude rows before rank and residual-df calculation 0.000s
+  + Tukey DVARS estimation gives exact-zero artifacts lawful exclusion semantics 0.000s
+  + negative and non-finite fixed weights are explicit preparation errors 0.000s
+  + selected-row fixed alignment is exact rather than length-heuristic 0.000s
+  + DVARS resets at selection gaps instead of differencing across censored timepoints 0.000s
+  + within-run DVARS normalization does not cross acquisition boundaries 0.000s
+  + all DVARS transformations match the independent base-R receipt 0.002s
+  + nuisance projection rows must align with selected timepoints 0.000s
+scalafim.fmri.fit.FitPlanBuilderSuite:
+  + builder-created FitPlan runs OLS and recovers known coefficients 0.002s
+  + builder-created FitPlan recovers task effects after nuisance adjustment 0.002s
+scalafim.fmri.fit.profile.ShapeEvidencePoolSuite:
+  + pooled node energies sum, ignore unscanned nodes and pick a fully scanned best node 0.000s
+  + merging in a fixed order reproduces a single accumulation exactly 0.000s
+  + the regional prior sits at the pooled best node with a floored spread 0.000s
+scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite:
+  + public fit path preserves design semantics for T and F contrasts 0.003s
+scalafim.fmri.fit.LssSuite:
+  + LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors 0.001s
+  + LeastSquaresSeparate handles a single trial as residualized simple regression 0.000s
+  + LeastSquaresSeparate prepared design reuses fixed projection and trial workspace 0.000s
+  + LeastSquaresSeparate reports zero trial and degenerate other regressors 0.000s
+  + LeastSquaresSeparate returns typed metadata errors from safe constructors 0.000s
+  + LeastSquaresSeparate reports trials absorbed by fixed regressors without inventing betas 0.000s
+  + LeastSquaresSeparate rejects collinear trial and other-trial regressors 0.000s
+  + LeastSquaresSeparate rejects non-finite matrix inputs 0.000s
+  + LeastSquaresSeparate validates row alignment 0.000s
+scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite:
+  + name-keyed contrasts survive reordered public design columns 0.004s
+scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite:
+  + chunked runwise regression preserves chunk order, run partitions, and coefficients 0.014s
+scalafim.fmri.fit.profile.ProfileTrialReadoutSuite:
+  + physical axes bind source, ordered trial and condition ids, nuisance ids and selected rows 0.495s
+  + trial queries are signed and bound to the exact physical axis 0.005s
+  + freeze binds actual coordinates and refuses unavailable original certificate before work 0.006s
+  + corrected off-node trial and signed query outputs match dense original equations 2.056s
+  + scoped retained storage is invariant across query evaluation, transpose and reuse 0.012s
+  + explicit exact-shape mode charges one factor and matches dense original coefficients 0.006s
+  + frozen corrected operator is linear and has a whitened-response adjoint 0.033s
+  + IID original and whitened adjoints coincide; equal-length foreign response axes refuse 0.004s
+scalafim.fmri.fit.RobustSuite:
+  + disabled robust options are equivalent to OLS 0.001s
+  + Huber robust fit downweights an outlying observation 0.001s
+  + Bisquare robust fit can reject a severe outlier 0.000s
+  + RobustLeastSquares executes through FitPlanExecutor 0.002s
+  + chunked robust fit uses full-selection prepared row weights 0.005s
+  + fmrireg row-wise Huber fixture matches run-scope robust IRLS semantics 0.001s
+  + fmrireg voxel scale scope keeps per-voxel scale components with row-wise weights 0.001s
+  + robust-triggered AR re-estimation exposes shared AR diagnostics 0.013s
+  + future chunked robust AR reuses full-selection whitening and row weights 0.020s
+scalafim.examples.SelectedEstimatesExampleSuite:
+  + condition and contrast guide executes the declared pooled engine against the R reference 0.005s
+  + FIR guide preserves structural bin identities and bounded metadata-only preparation 0.005s
+  + optional uncertainty and nuisance helpers preserve the requested shared-model estimates 0.004s
+  + run-local nuisance maps are explicitly unavailable as pooled estimates 0.009s
+  + run retention guide composes with output and uncertainty choices without changing pooling 0.008s
+  + semantic response guide keeps full derivative-basis readout and propagated uncertainty 0.006s
+scalafim.fmri.fit.DesignMatrixOwnershipSuite:
+  + a compiled hypothesis and ordinary or chunked fits share an immutable design 0.005s
+  + LSS uses the canonical design after event and baseline arrays are mutated 0.006s
+  + model construction rejects a matrix changed without rebuilding its schema 0.002s
+scalafim.fmri.fit.OlsEstimatesSuite:
+  + compiled estimator preserves selected functionals and removes nuisance contributions 0.001s
+  + selected estimates and joint uncertainty match an independent exact-rational oracle 0.000s
+  + marginal uncertainty agrees with joint readout without a joint covariance product 0.000s
+  + uncertainty execution reuses residual coordinates for its only selected product 0.000s
+  + column reordering and scaling preserve the same estimand 0.000s
+  + strided response blocks and repeated execution preserve input and output ownership 0.000s
+  + fixed row selection and temporal transform fuse through the readout adjoint 0.000s
+  + exactly determined coefficients do not require residual degrees of freedom 0.000s
+  + invalid readouts, incompatible rows, rank defects and unsupported solve policies fail explicitly 0.000s
+scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite:
+  + censored multi-run concatenated fit row-deletes design and response consistently 0.004s
+scalafim.fmri.fit.RunwiseGlsSuite:
+  + runwise GLS is an explicit run-specific estimand and refuses across-run AR pooling 0.009s
+  + fixed AR(1) runwise GLS matches an independent segmented GLS reference 0.003s
+  + structural FIR axes, selected gaps and fixed AR covariance survive public and chunked execution 0.013s
+  + estimated voxelwise AR is chunk invariant and fixed effects consume every covariance matrix 0.021s
+scalafim.fmri.fit.profile.ProfileHrfFitSuite:
+  + off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape 0.690s
+  + work aggregation retains conditional attempts and failures from distinct workers 0.003s
+  + alpha zero lowers a declared-order condition term directly and has no trial work 0.092s
+  + noiseless zero-deviation control recovers the declared continuous shape 0.053s
+  + fixed condition plan uses the existing admitted OLS retention 0.088s
+  + unsupported intent, temporal selection and whitening are rejected before a read 0.062s
+  + shared AR preparation rejects an MA component and a different first-row policy 0.001s
+  + zero-column baseline admits the trial route 0.054s
+  + shape prior requires symmetric positive semidefinite precision 0.153s
+  + nonunit noise variance does not rescale an energy-unit shape prior 0.086s
+  + a decode budget refusal remains a voxel status and is tallied as attempted 0.088s
+  + provenance binds the numeric basis and event durations 0.193s
+  + fixed retention translates reader and cancellation exceptions with partial progress 0.006s
+  + cancellation and sink failures stop subsequent reads and report delivered progress 0.116s
+  + ML executor returns coherent terminal J evidence, raw E readout and separate exact-once work 0.180s
+  + ML keeps a budget-limited terminal status and refuses unavailable terminal before delivery 0.546s
+  + ML forwarding refuses an unpointed or invalidated epoch, and charges exact failures only to legacy work 0.003s
+  + fixed and alpha-zero ML plans refuse before dataset resolution 0.007s
+  + ML setup refusal translation retains successful bank and attempted partial setup separately 0.003s
+  + ML cancellation before reading and before delivery retains truthful separate work 0.052s
+  + ML evaluation memoizes raw and measured payload once and stale closures cannot reuse a new response 0.005s
+scalafim.fmri.fit.RunwiseOlsSuite:
+  + RunwiseLeastSquares fits separate coefficients per sampling-frame block 0.002s
+  + RunwiseOls reports singular run designs with run identity 0.000s
+scalafim.fmri.fit.profile.TrialConditionalSolveSuite:
+reference normal conditionInf=1.1024188748038293 relative=2.7380069957045977e-16 nuisance=0 coincident=false
+reference normal conditionInf=5598442.977571674 relative=2.22067143516635e-10 nuisance=0 coincident=true
+reference normal conditionInf=87.26523920200385 relative=2.537459315332569e-16 nuisance=2 coincident=false
+reference normal conditionInf=103296315.5719842 relative=2.2206721528337821e-10 nuisance=2 coincident=true
+  + arbitrary reference RHS uses the original projector normal inverse 0.357s
+  + zero displacement is the exact prepared-node control 0.004s
+off-node normal conditionInf=2898080.763090807 relative=0.000010882724984045006
+  + corrected actual-shape coefficients and prepared-basis residual match dense original equations 1.770s
+conditional cubic errors=Vector(0.0024108302261675266, 0.00030460558291010647, 0.00003823613006533287, 0.000004787371956295757) ratios=Vector(7.914596322021444, 7.9664333809315035, 7.986872633752525); omitted correction errors=Vector(0.02035970029411209, 0.004872775992615701, 0.0011873828703621388, 0.00029276083882529496) ratios=Vector(4.178254925932482, 4.103795089388107, 4.055811819389921)
+  + one residual correction has local cubic error before floating-point floor 0.007s
+  + invalid shape, node, owner and certificate refuse before inverse work 0.004s
+  + same-worker ML exact payload recovers dense nuisance and measured residual without a second solve 0.039s
+  + measurement rejects invalid inputs and nonfinite normal actions without returning prior nuisance scratch 0.005s
+scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite:
+  + one public model and semantic hypotheses express delayed match to sample 0.265s
+scalafim.fmri.fit.profile.TrialBandedWorkReceiptSuite:
+  + shared node setup is immutable while workers record their own response work 0.398s
+  + outside-chart underflow records completed partial reference work 0.002s
+scalafim.fmri.fit.FitTraceDiagnosticsSuite:
+  + bounded OLS trace agrees with analytic projection and remains orthogonal 0.002s
+  + fixed AR GLS transformed trace uses independent run-reset whitening 0.001s
+  + raw original space refuses weighted preparation while model-prepared space is explicit 0.001s
+  + source identity, row ordering, budgets and cancellation refuse without reading 0.002s
+  + estimated shared and voxelwise AR use their actual fitted operators across censor gaps 0.007s
+  + captured estimated AR coefficients and operator agree with different fit chunk sizes 0.006s
+scalafim.fmri.fit.profile.CriterionJetSuite:
+  + d=1/2/3 directly assemble J at sigma2=2.5 and retain raw amplitudes and HE 0.001s
+  + dimensions, derivative order and lengths refuse before indexing 0.000s
+  + nonfinite coordinates, values, every derivative and amplitudes refuse 0.000s
+  + full Hessian symmetry is exact with no silent symmetrization 0.000s
+  + owner, coordinate and reference identity cannot be replaced by equal values 0.000s
+  + invalid sigma2 and assembled energy, gradient, Hessian and score overflow are typed 0.000s
+  + finite indefinite HE and HJ remain valid, Gram refusal remains distinct 0.000s
+  + a finite subnormal score is not refused by an overflowing intermediate scale 0.000s
+scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite:
+  + run-local nuisance axes and missing shared cells preserve structural identity 0.016s
+scalafim.fmri.fit.profile.ShapeDecoderSuite:
+  + node grid indexing round-trips 0.000s
+  + an interior optimum is found to high precision within the budget 0.001s
+  + an optimum outside the box lands on the boundary with a projected step 0.000s
+  + indefinite curvature is reported and the parabolic fallback still improves on the node 0.001s
+  + a prior pulls the estimate and both curvatures are reported 0.012s
+  + weak identification and ambiguity are separate statuses 0.000s
+  + three-dimensional charts decode with a hierarchical scan 0.000s
+  + an exact accepted point without a terminal jet cannot use stale curvature for admission 0.000s
+  + an accepted jet binds both reported curvatures to the returned point 0.000s
+  + a reserved terminal jet verifies an energy-only move before admission 0.000s
+  + a final full jet reaches a stationary candidate when exact evaluation is unavailable 0.002s
+  + a rejected final full candidate preserves accepted state and caps 0.000s
+  + terminal verification retains a nonstationary budget refusal and current curvature 0.000s
+  + equal rounded energy accepts a stationary candidate through either jet route 0.000s
+  + equal rounded quartic energy refuses a nonstationary move and preserves halving 0.000s
+  + equal energy candidate requires a finite positive and matching full jet 0.000s
+  + equal energy stationarity uses prior augmentation and retains identification gates 0.000s
+  + exhausted refinement and rejected candidate caps are explicit and counted 0.000s
+  + budget exits reset per decode and observation delegates exactly once 0.000s
+  + node ranking, ambiguity inputs and fallback use the data-plus-prior objective 0.000s
+  + fallback terminal verification reports curvature at its returned point 0.000s
+  + nonfinite and refused node banks return typed empty results without stale worker state 0.370s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.000s
+scalafim.fmri.fit.profile.TrialConstrainedLogDetJetSuite:
+  + value equals the accepted scalar constrained determinant at a prepared node 1.916s
+gaussian D=1.8006170552308216 dense=1.8006170552308236 gradient=Vector(-0.002452286635485591, 1.021039218760687) hessian=Vector(0.003292909732861815, -0.02267583148412704, -0.02267583148412704, 0.15463621473078448) FD errors (gradient, hessian) by step Vector(0.002, 0.001): Vector((0.000001481622223131751,0.0000012088020484579687), (3.7040754730099934e-7,2.9997348049981554e-7))
+cascade34 D=0.04748854532144331 dense=0.04748854532144184 gradient=Vector(0.08819897085067657, 0.0008243556261107697, 0.004488418142735016) hessian=Vector(0.12485853590300328, 0.0017988783468753725, 0.016836673893048267, 0.0017988783468753725, -0.005113101483752941, 0.003238398938645092, 0.016836673893048267, 0.003238398938645092, 0.002414918813653714) FD errors (gradient, hessian) by step Vector(0.002, 0.001): Vector((1.0451254144061561e-7,1.2148763023356324e-7), (2.6128178204354313e-8,3.290744537975954e-8))
+  + off-node Gaussian 2D and Cascade 3D match the dense full-data covariance and its finite differences 0.066s
+  + nuisance design does not enter the constrained determinant 0.009s
+  + coincident trials and a complete-record permutation preserve the determinant jet 0.007s
+  + one trial per condition gives P = 0 and a vanishing determinant jet 0.003s
+  + consistent rescaling X* = sX with lambda* = s² lambda preserves the determinant jet 0.047s
+lambda=0.000001 admitted: D=28.928391287030127 dense=28.928391287187655 maxResidual=1.090903990593285e-16
+lambda=1 admitted: D=2.1430343015159035 dense=2.143034301515905 maxResidual=1.5373781578399697e-16
+lambda=10000 admitted: D=0.0003865229664188341 dense=0.00038652296642384886 maxResidual=1.3325205585818735e-16
+  + predeclared lambda controls are admitted against the dense covariance or refused by residual 0.006s
+  + work receipt counts every solve, RHS column, residual check, product and log-determinant jet 0.002s
+  + malformed construction and derivative inputs are refused before numerical work, with charged receipts 0.003s
+  + an independently supplied factor or band cannot be paired: the pre-repair constructor shape does not compile 0.002s
+  + a close same-shape SPD band passes the residual check, so identity comes only from the stamped bundle 0.002s
+  + the bundle keeps a canonical copy: source padding is not retained and a closed source builder refuses writes 0.002s
+scalafim.fmri.fit.StructuralHypothesisDslSuite:
+  + cell and basis references compile without column bookkeeping 0.002s
+  + weighted semantic rows compose T trends and F omnibus hypotheses 0.001s
+  + response functionals and modulators remain semantic 0.001s
+  + response functionals transport through explicit scan-space scaling 0.005s
+  + basis omnibus supports an explicit non-canonical scope 0.000s
+  + semantic omnibus blocks compose without exposing column rows 0.001s
+  + an empty basis scope reports a typed selection failure 0.000s
+  + a basis role absent from one heterogeneous cell is a typed basis failure 0.002s
+  + named response lowering composes with selected estimates without losing scientific metadata 0.001s
+  + named F lowering preserves row order and typed failures before design binding 0.001s
+  + only a named hypothesis exposes compile 0.000s
+  + validated domain ids remain first-class DSL inputs 0.000s
+  + sampled regressors compose as semantic coefficients 0.000s
+scalafim.fmri.fit.FixedEffectsEstimatesSuite:
+  + selected pooling matches independent rational inverse-precision calculations 0.002s
+  + only requested pooled covariance and standard errors are propagated 0.001s
+  + pooled coefficient reorder and disjoint run order preserve selected estimates 0.001s
+  + missing pooled coefficients and foreign design identity fail explicitly 0.001s
+  + public selected run combination preserves mixed-TR R estimates and native exclusions 0.008s
+scalafim.fmri.fit.profile.OutputRequestSuite:
+  + queries validate labels, weights and tolerances 0.000s
+  + requests validate against the condition axis and refuse trial outputs on the condition backend 0.000s
+  + query evaluation keeps signs and audits float32 conversion per query tolerance 0.000s
+scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite:
+  + mixed-TR public fixed-effects fit preserves run grids and semantic axes 0.023s
+  + fixed effects omit one invalid run-voxel contribution without failing healthy voxels 0.006s
+scalafim.fmri.fit.FirstLevelFixedEffectsEstimatesSuite:
+  + preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts 0.004s
+  + run-local nuisance projection preserves joint task pooling and selected voxel order 0.004s
+  + entirely excluded blocks preserve identities and do not stop subsequent healthy voxels 0.004s
+  + cancellation, sink failure and incompatible engines fail without excess reads 0.002s
+  + pooled execution dispatches only prepared run statistics and requested voxel products 0.003s
+  + FIR pooling retains physical bins and planted estimates through reversed gapped scan selection 0.003s
+  + explicit retained run coefficients match independent R values without changing pooled products 0.011s
+  + retained run coefficients preserve excluded input voxels and continue to healthy blocks 0.003s
+  + unsupported run retention cannot be silently discarded by shared or pooling-only entry points 0.003s
+  + retention obeys the same cancellation and failed-sink read boundary 0.002s
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.003s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.003s
+  + missing-data propagation reports an all-excluded selection explicitly 0.001s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.003s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.001s
+  + row omission preserves an explicitly reordered OLS time selection 0.001s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.001s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.002s
+  + row omission subsets selected-row weights by original observation position 0.001s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.001s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.001s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.001s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.002s
+  + fitDense rejects engines with a different result shape 0.000s
+  + public fit failures name aliased structural columns 0.001s
+  + GLS retains structural rank evidence and explains preview differences 0.008s
+  + every supported dense engine preserves the same structural coefficient axis 0.005s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 0.011s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.001s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.000s
+  + FitInterpreters exposes executable built-ins 0.000s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.002s
+  + LatentSketch principal components recovers rank-one response coefficients 0.035s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.003s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.001s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.001s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.003s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.002s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.004s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.003s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.003s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.003s
+[info] Passed: Total 463, Failed 0, Errors 0, Passed 463
+[success] Total time: 70 s (0:01:10.0), completed Oct 1, 2026, 9:53:25 a.m.
+[info] compiling 34 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/hrf/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/hrf/js/target/scala-3.7.4/scalafim-fmri-hrf-test-fastopt
+scalafim.fmri.hrf.DerivSuite:
+  + Deriv matches analytic SPMG1 derivative 0.004s
+  + Deriv for SPMG2 has 2 columns matching 1st/2nd deriv 0.001s
+  + Deriv for SPMG3 has 3 columns 0.000s
+  + Numeric deriv works for Gaussian 0.000s
+scalafim.fmri.hrf.BasisGeometrySuite:
+  + reconstruction agrees with direct contraction 0.007s
+  + reconstruction is the sum of weighted basis columns 0.002s
+  + coefficients of the wrong width are rejected 0.001s
+  + a basis space is distinct per basis value 0.000s
+  + normalize reports the transform, and transported coefficients preserve the kernel 0.004s
+  + stale coefficients after normalization do change the kernel 0.002s
+  + penalties transport under rescaling 0.001s
+  + penalty transport keeps the penalised value invariant and round-trips 0.001s
+  + penalty transport refuses zero and non-finite scales 0.000s
+  + basis transforms transport covariance and adjusted linear hypotheses 0.001s
+  + diagonal transforms invert, and singular ones report it 0.000s
+  + basis permutations transport coefficients and penalties contragrediently 0.001s
+  + Evaluate normalization does not depend on the query grid 0.003s
+  + normalized kernels peak at one 0.012s
+  + basis labels follow the module's column convention 0.000s
+  + basis elements expose stable semantic roles rather than labels 0.001s
+  + custom bases retain caller-supplied identities and validate cardinality 0.000s
+  + basis roles distinguish coefficient selection from an omnibus basis 0.000s
+  + response functionals compile to explicit basis weights with units 0.001s
+  + non-primitive windows require an explicit discretization 0.000s
+  + invalid response functionals and absent roles are typed failures 0.000s
+scalafim.fmri.hrf.HrfSuite:
+  + SPMG1 has expected peak time 0.002s
+  + SPMG2 returns 2-column basis 0.001s
+  + Seconds and refined time wrappers validate domain 0.000s
+  + typed HRF specs resolve kinds and scalar capability 0.001s
+  + FFT regressor evaluation matches conv 0.002s
+scalafim.fmri.hrf.BsplineParitySuite:
+  + bsplineBasis matches R hrf_bspline for non-integer span 0.000s
+  + bsplineBasis with N < degree+1 matches R minimum-basis behavior 0.000s
+scalafim.fmri.hrf.family.LwuFamilySuite:
+  + the raw LWU formula is the library kernel and reduces to the Gaussian at rho = 0 0.001s
+  + jets agree with central finite differences in all three coordinates 0.008s
+  + summaries report attained peak, width and undershoot; normalisation is unnormalised only 0.002s
+scalafim.fmri.hrf.LagSuite:
+  + a lag is the displacement from an onset to a clock reading 0.000s
+  + an absolute time is not a lag, and a lag is not a width 0.000s
+  + shifting a lag tracks a delayed kernel 0.000s
+  + Lag rejects non-finite values and reports why 0.001s
+scalafim.fmri.hrf.RegressorParitySuite:
+  + Regressor validates inputs (R Reg/regressor) 0.001s
+  + single-event regressor behaves like single_trial_regressor 0.000s
+  + span defaults to HRF span when not provided 0.000s
+  + evaluate validates grid and precision 0.000s
+  + per-event regressors accept list of HRFs 0.000s
+  + per-event regressor evaluates correctly 0.002s
+  + per-event span is max of individual spans 0.001s
+  + per-event with weighted HRFs works 0.001s
+  + per-event recycles single HRF 0.000s
+  + per-event validates HRF list length 0.000s
+  + per-event keeps HRFs aligned with events across a zero amplitude 0.000s
+  + windowing out an onset does not re-bind per-event HRFs 0.000s
+  + per-event works with all evaluation methods 0.001s
+  + nbasis handles per-event HRFs 0.000s
+  + per-event supports mixed HRF types 0.001s
+scalafim.fmri.hrf.FftSuite:
+  + convolveReal matches the direct definition across lengths 0.003s
+  + convolveReal handles empty input 0.000s
+  + a delta convolution reproduces the signal 0.000s
+  + the forward transform inverts 0.000s
+  + transform rejects a non-power-of-two length 0.000s
+  + nextPow2 rounds up 0.000s
+scalafim.fmri.hrf.Cascade34Suite:
+  + parameters reject invalid rates and area ratios, including nonfinite values and invalid copies 0.000s
+  + the scalar kernel is causal, matches the closed Erlang polynomial and keeps an unbounded tail 0.000s
+  + exact box integrals match 80-digit quadrature near onset and in the far tail 0.003s
+  + components have unit area and the full signed area remains 1 - rho at rho = 1 0.018s
+  + binding Cascade34 into a basis preserves its exact far-tail box response 0.001s
+  + attained peak, FWHM and trough match the independent continuous-time oracle 0.000s
+  + changing both rates dilates time and rescales heights, preserving areas and trough ratios 0.000s
+  + typed and named dispatch retain Cascade34 parameters and its primitive; decorators clear it 0.000s
+  + extreme finite lags produce a zero tail without polynomial overflow 0.000s
+scalafim.fmri.hrf.SamplingFrameSuite:
+  + sampling frame constructor works 0.000s
+  + regular sampling frame sugar preserves default and explicit acquisition origins 0.000s
+  + sampling frame validates inputs 0.000s
+  + samples are correct length and global offsets 0.000s
+  + samples local vs global timing and block selection 0.000s
+  + global onsets converts block-relative times 0.000s
+  + sampling frame temporal consistency 0.001s
+  + samples with blocks parameter mirrors R blockids cases 0.000s
+  + samples respects varying TR/startTime per block 0.000s
+  + edge cases for blocks parameter 0.000s
+  + acquisitionOnsets parity with samples(global=true) 0.000s
+  + acquisitionOnsets handles default and custom start times 0.000s
+  + acquisitionOnsets handles variable TR and multi-block transitions 0.000s
+  + acquisitionOnsets edge cases and standard fMRI timing 0.000s
+scalafim.fmri.hrf.HrfTypedRefactorSuite:
+  + built-in HRFs expose typed descriptors and basis arity 0.001s
+  + weighted and empirical HRFs carry validated sampled profiles 0.000s
+  + typed sampling-frame block selections match legacy block-id API 0.001s
+  + per-event regressor evaluation dispatch is exhaustive across methods 0.001s
+scalafim.fmri.hrf.RegressorSetSuite:
+  + RegressorSet constructs and evaluates 0.001s
+scalafim.fmri.hrf.HrfRParitySuite:
+  + spmg3 matches R fmrihrf at non-negative lags 0.003s
+  + sine matches R fmrihrf at non-negative lags 0.000s
+  + fir matches R fmrihrf at non-negative lags 0.001s
+  + tent matches R fmrihrf at non-negative lags 0.001s
+  + fourier matches R fmrihrf at non-negative lags 0.000s
+  + spmg1 matches R fmrihrf at non-negative lags 0.000s
+  + gaussian matches R fmrihrf at non-negative lags 0.000s
+  + gamma matches R fmrihrf at non-negative lags 0.000s
+  + inv_logit matches R fmrihrf at non-negative lags 0.000s
+  + bspline matches R fmrihrf at non-negative lags 0.000s
+  + spmg2 matches R fmrihrf at non-negative lags 0.000s
+  + lwu matches R fmrihrf at non-negative lags 0.000s
+  + mexhat matches R fmrihrf at non-negative lags 0.000s
+  + every generated kernel fixture is accounted for 0.001s
+  + bspline knots are grid-independent (R's HRF_BSPLINE is not) 0.001s
+  + daguerre normalization is grid-independent (R's is not) 0.000s
+  + regressor impulse evaluation matches R fmrihrf 0.001s
+scalafim.fmri.hrf.family.Cascade34FamilySuite:
+  + all jet components agree with independent 80-digit differentiation of the Erlang formula 0.002s
+  + jets use component-major layout, overwrite caller buffers and remain finite in the zero tail 0.001s
+  + rho zero reports tail nonidentification, invariant values and vanishing pure tail derivatives 0.000s
+  + positive-component-area normalization stays smooth at signed-area cancellation 0.000s
+  + chart admission enforces coordinate names, representable ordered rates, rho and horizon 0.001s
+  + summaries and provenance report actual peaks and an untruncated slow undershoot 0.000s
+scalafim.fmri.hrf.LwuSuite:
+  + lwu height normalization peaks at 1 0.001s
+  + lwu area normalization gives the kernel unit area 0.009s
+  + LwuBasis finite-difference derivative agrees 0.000s
+scalafim.fmri.hrf.HrfCausalitySuite:
+  + spmg1 is zero at every negative lag 0.000s
+  + spmg2 is zero at every negative lag 0.000s
+  + spmg3 is zero at every negative lag 0.000s
+  + gamma is zero at every negative lag 0.000s
+  + gaussian is zero at every negative lag 0.000s
+  + mexhat is zero at every negative lag 0.000s
+  + inv_logit is zero at every negative lag 0.000s
+  + lwu is zero at every negative lag 0.000s
+  + half_cosine is zero at every negative lag 0.000s
+  + fourier is zero at every negative lag 0.000s
+  + sine is zero at every negative lag 0.000s
+  + bspline is zero at every negative lag 0.000s
+  + tent is zero at every negative lag 0.000s
+  + fir is zero at every negative lag 0.000s
+  + daguerre is zero at every negative lag 0.000s
+  + boxcar is zero at every negative lag 0.000s
+  + empirical is zero at every negative lag 0.000s
+  + weighted is zero at every negative lag 0.001s
+  + spmg1 respects its declared support 0.000s
+  + spmg2 respects its declared support 0.000s
+  + spmg3 respects its declared support 0.000s
+  + gamma respects its declared support 0.000s
+  + gaussian respects its declared support 0.000s
+  + mexhat respects its declared support 0.000s
+  + inv_logit respects its declared support 0.000s
+  + lwu respects its declared support 0.000s
+  + half_cosine respects its declared support 0.000s
+  + fourier respects its declared support 0.000s
+  + sine respects its declared support 0.000s
+  + bspline respects its declared support 0.000s
+  + tent respects its declared support 0.000s
+  + fir respects its declared support 0.000s
+  + daguerre respects its declared support 0.000s
+  + boxcar respects its declared support 0.000s
+  + empirical respects its declared support 0.000s
+  + weighted respects its declared support 0.000s
+  + compact-support bases are declared compact, decaying ones are not 0.001s
+  + decaying kernels are not silently truncated at span 0.000s
+  + blocking a compact basis no longer reads pre-onset values 0.000s
+  + lag and block shift the declared support 0.000s
+scalafim.fmri.hrf.RegressorMethodAccuracySuite:
+  + Conv and FFT are the same algorithm and agree to machine precision 0.006s
+  + grid-aligned impulses agree with the exact loop 0.000s
+  + Loop is exact for impulses: its answer does not move with precision 0.001s
+  + sub-bin impulse projection matches the R reference 0.002s
+  + the worst case over onset phases does shrink with precision 0.012s
+  + every method renders an epoch design consistently at fine precision 0.014s
+  + a block overlapping a one-point grid is retained by every method 0.002s
+  + Loop support includes the duration tail of an already-retained block 0.001s
+scalafim.fmri.hrf.DurationQuadratureSuite:
+  + Evaluate under Trapezoid matches R evaluate.HRF across precisions 0.011s
+  + Evaluate under Exact is the limit R's trapezoid is converging to 0.001s
+  + Evaluate box response converges as precision shrinks 0.005s
+  + block decorator under Trapezoid matches R gen_hrf(width=) 0.001s
+  + block decorator under Exact is precision-free and matches R's limit 0.001s
+  + regressor epoch amplitude no longer depends on precision 0.001s
+  + unit-mass box is the duration average of the unit-height box 0.000s
+  + unit-mass box keeps its integral as duration grows, unit-height does not 0.007s
+  + impulse response is exactly the kernel, independent of precision 0.000s
+scalafim.fmri.hrf.HrfBasicsSuite:
+  + predefined HRFs have correct nbasis/span 0.000s
+  + evaluate with duration increases response 0.002s
+  + empirical HRF interpolates and extrapolates to 0 0.001s
+  + bindBasis combines HRFs 0.001s
+  + lag decorator shifts HRF 0.000s
+  + block decorator widens HRF and can normalize 0.004s
+  + normalize scales peak to 1 0.001s
+  + withCoefficients reduces to single basis 0.001s
+  + withCoefficients supports custom name (R hrf_from_coefficients) 0.000s
+  + gen/bindBasis combines lagged HRFs into a set 0.000s
+  + evaluate summate=false differs from summate=true 0.000s
+  + precision is a quadrature knob, and only under quadrature 0.002s
+  + normalize in Evaluate preserves matrix dimensions 0.000s
+  + lag/block reject non-finite parameters 0.000s
+scalafim.fmri.hrf.family.GaussianFamilySuite:
+  + charts validate names, bounds and points 0.000s
+  + jet layout indexes the upper triangle without gaps 0.000s
+  + the density convention reproduces Hrfs.gaussian exactly 0.000s
+  + values and jets at a lag are independent of neighbouring grid samples 0.001s
+  + Gaussian values and all jet components agree with the 90-digit oracle 0.002s
+  + representable Gaussian tails do not depend on grid context 0.000s
+  + negative lags are causal zeros in values and jets 0.000s
+  + jets agree with central finite differences 0.003s
+  + scale jets, summaries and descriptor follow the chart 0.000s
+  + tail energy beyond the horizon grows with width and latency 0.001s
+scalafim.fmri.hrf.HrfNormalizationSuite:
+  + SPM normalization uses the fixed 1,600-point Nilearn reference grid 0.002s
+  + fixed normalization is independent of the later evaluation grid 0.001s
+  + canonical peak and integral modes apply one scalar to every basis 0.015s
+  + per-basis peak mode uses independent fixed scales 0.005s
+  + normalization reports a transform that preserves reconstructed kernels 0.002s
+  + construction entry points expose typed normalization without changing defaults 0.005s
+  + unscaled mode preserves identity and unusable scales are typed errors 0.001s
+scalafim.fmri.hrf.ToeplitzSuite:
+  + toeplitz matrix matches manual 0.000s
+scalafim.fmri.hrf.PenaltySuite:
+  + bspline penalty is roughness-based (not identity) 0.000s
+  + SPMG3 penalty shrinks derivatives 0.000s
+  + fourier penalty increases with frequency 0.000s
+  + default penalty is identity 0.000s
+scalafim.fmri.hrf.DesignSuite:
+  + regressorDesign produces expected design dims 0.001s
+scalafim.fmri.hrf.PrimitiveSuite:
+  + every registered primitive agrees with a refined trapezoid 23.024s
+  + a primitive is registered for exactly the families that claim one 0.001s
+  + deriving a kernel clears its primitive rather than inheriting a wrong one 0.000s
+  + exact integration makes the answer independent of precision 0.007s
+  + the trapezoid converges to the closed form as precision refines 0.003s
+  + the unit-mass box stays the duration average under exact integration 0.004s
+  + an impulse is untouched by the integration mode 0.002s
+  + FIR box response is the analytic overlap of the box with each bin 0.000s
+  + boxcar box response is the analytic overlap of two boxes 0.000s
+  + incomplete gamma and erf match known closed forms 0.000s
+  + the gamma primitive is the gamma CDF 0.000s
+scalafim.fmri.hrf.RegressorSuite:
+  + regressor retains zero-amplitude events so event indices stay stable 0.001s
+  + a zero-amplitude event occupies an index but contributes no signal 0.002s
+  + validated regressor stores typed stimulus events 0.000s
+  + invalid inputs are rejected 0.000s
+  + shift moves onsets 0.000s
+  + evaluate conv computes expected response 0.000s
+  + unsorted grid yields same as sorted 0.000s
+scalafim.fmri.hrf.SpmgCorrectnessSuite:
+  + canonical and dispersion match independent gamma PDF oracles 0.000s
+  + dispersion time derivative follows the actual third column 0.000s
+  + dispersion primitive matches independent gamma CDF oracle 0.000s
+scalafim.fmri.hrf.BoxcarWeightedSuite:
+  + boxcar HRF structure 0.000s
+  + boxcar evaluates inside/outside window 0.000s
+  + boxcar normalization approximates unit area 0.000s
+  + boxcar validates width 0.000s
+  + boxcar works with regressor 0.002s
+  + weighted HRF structure from width 0.000s
+  + weighted HRF structure from times 0.000s
+  + weighted constant method produces steps 0.000s
+  + weighted linear method interpolates 0.000s
+  + weighted width infers evenly spaced times 0.000s
+  + weighted normalization constant integrates to ~1 0.001s
+  + weighted normalization linear integrates to ~1 0.001s
+  + weighted validates inputs 0.000s
+  + weighted handles sub-second intervals 0.000s
+  + weighted works with regressor 0.000s
+  + boxcar and weighted uniform weights are equivalent 0.000s
+scalafim.fmri.hrf.LibraryParitySuite:
+  + hrfLibrary forwards extra arguments 0.001s
+  + hrfLibrary produces distinct basis functions 0.002s
+scalafim.fmri.hrf.RunBoundarySuite:
+  + an event at the end of a run does not respond in the next run 0.001s
+  + each run is rendered against its own local clock 0.000s
+  + events are attributed to their own run only 0.002s
+  + columns stay aligned when a level is absent from a run 0.003s
+  + multi-basis HRFs keep condition-major column order 0.002s
+[info] Passed: Total 252, Failed 0, Errors 0, Passed 252
+[success] Total time: 32 s, completed Oct 1, 2026, 9:53:57 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/hrf-laws/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/hrf-laws/js/target/scala-3.7.4/scalafim-fmri-hrf-laws-test-fastopt
+scalafim.fmri.hrf.laws.ParametricFamilyLawsSuite:
+  + Cascade34 jets, scale jets, realisation and causality laws hold across its chart 0.010s
+  + Gaussian family jets match finite differences at interior points 0.001s
+  + Gaussian family scale jets match finite differences under every supported rule 0.000s
+  + Gaussian family realisation matches the library kernel and is causal 0.001s
+  + LWU family jets, scale jets, realisation and causality laws hold 0.004s
+scalafim.fmri.hrf.laws.HrfLawsSuite:
+  + spmg1 obeys every scalar law 0.017s
+  + gamma obeys every scalar law 0.004s
+  + gaussian obeys every scalar law 0.008s
+  + mexhat obeys every scalar law 0.012s
+  + inv_logit obeys every scalar law 0.012s
+  + lwu obeys every scalar law 0.010s
+  + half_cosine obeys every scalar law 0.007s
+  + boxcar obeys every scalar law 0.002s
+  + spmg1 is causal and respects its support 0.000s
+  + gamma is causal and respects its support 0.000s
+  + gaussian is causal and respects its support 0.000s
+  + mexhat is causal and respects its support 0.000s
+  + inv_logit is causal and respects its support 0.000s
+  + lwu is causal and respects its support 0.000s
+  + half_cosine is causal and respects its support 0.000s
+  + boxcar is causal and respects its support 0.000s
+  + spmg2 is causal and respects its support 0.000s
+  + spmg3 is causal and respects its support 0.000s
+  + fourier is causal and respects its support 0.000s
+  + sine is causal and respects its support 0.000s
+  + bspline is causal and respects its support 0.000s
+  + tent is causal and respects its support 0.000s
+  + fir is causal and respects its support 0.000s
+  + daguerre is causal and respects its support 0.000s
+  + spmg1 renders additively over events 0.001s
+  + gamma renders additively over events 0.001s
+  + gaussian renders additively over events 0.000s
+  + mexhat renders additively over events 0.001s
+  + inv_logit renders additively over events 0.000s
+  + lwu renders additively over events 0.000s
+  + half_cosine renders additively over events 0.001s
+  + boxcar renders additively over events 0.000s
+  + spmg2 renders additively over events 0.002s
+  + spmg3 renders additively over events 0.001s
+  + fourier renders additively over events 0.001s
+  + sine renders additively over events 0.001s
+  + bspline renders additively over events 0.005s
+  + tent renders additively over events 0.003s
+  + fir renders additively over events 0.001s
+  + daguerre renders additively over events 0.001s
+  + spmg1 box quadrature converges and unit-mass is the average 0.001s
+  + gamma box quadrature converges and unit-mass is the average 0.001s
+  + gaussian box quadrature converges and unit-mass is the average 0.001s
+  + mexhat box quadrature converges and unit-mass is the average 0.009s
+  + inv_logit box quadrature converges and unit-mass is the average 0.008s
+  + lwu box quadrature converges and unit-mass is the average 0.006s
+  + half_cosine box quadrature converges and unit-mass is the average 0.005s
+  + boxcar box quadrature converges and unit-mass is the average 0.000s
+  + spmg2 box quadrature converges and unit-mass is the average 0.002s
+  + spmg3 box quadrature converges and unit-mass is the average 0.003s
+  + fourier box quadrature converges and unit-mass is the average 0.005s
+  + sine box quadrature converges and unit-mass is the average 0.004s
+  + bspline box quadrature converges and unit-mass is the average 0.002s
+  + tent box quadrature converges and unit-mass is the average 0.001s
+  + fir box quadrature converges and unit-mass is the average 0.001s
+  + daguerre box quadrature converges and unit-mass is the average 0.032s
+  + spmg2 reconstruction commutes with rendering 0.001s
+  + spmg3 reconstruction commutes with rendering 0.000s
+  + fourier reconstruction commutes with rendering 0.000s
+  + sine reconstruction commutes with rendering 0.000s
+  + bspline reconstruction commutes with rendering 0.001s
+  + tent reconstruction commutes with rendering 0.001s
+  + fir reconstruction commutes with rendering 0.000s
+  + daguerre reconstruction commutes with rendering 0.000s
+  + spmg2 is gauge-invariant under peak normalization 0.001s
+  + spmg3 is gauge-invariant under peak normalization 0.001s
+  + fourier is gauge-invariant under peak normalization 0.000s
+  + sine is gauge-invariant under peak normalization 0.000s
+  + bspline is gauge-invariant under peak normalization 0.002s
+  + tent is gauge-invariant under peak normalization 0.001s
+  + fir is gauge-invariant under peak normalization 0.000s
+  + daguerre is gauge-invariant under peak normalization 0.000s
+  + evaluation plans agree within the stated tolerance 0.004s
+  + conv and loop diverge for onsets off the microtime grid, and the gap shrinks with precision 0.003s
+  + causality holds even for a kernel whose own shape function ignores it 0.000s
+  + support is enforced even when the shape function ignores it 0.000s
+  + the law checkers report violations rather than passing vacuously 0.000s
+[info] Passed: Total 82, Failed 0, Errors 0, Passed 82
+[success] Total time: 2 s, completed Oct 1, 2026, 9:54:00 a.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+[info] Fast optimizing /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt
+scalafim.fmri.laws.profile.ConditionProfileFitSuite:
+  + cancellation before read, during read and after delivery never returns successful completion 2.948s
+  + the structure maps the plan's task columns by condition and basis 0.001s
+  + admission refuses a different compiled-plan nuisance geometry before preparation 0.022s
+  + admission refuses same-shaped shifted task and nuisance geometry, and OLS whitening 0.059s
+  + the Gram route agrees with the compact route and the direct oracle, streaming blocks in order 0.139s
+  + trial outputs and mismatched structures are refused before any response is read 0.002s
+scalafim.fmri.laws.profile.ProfileReductionLawsSuite:
+  + compact energy, amplitudes and jets equal the direct time-domain fit at alpha = 0 1.760s
+scalafim.fmri.laws.profile.ConditionC0QualificationSuite:
+{"kind":"measurement","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","policy":"gaussian-d2-6n-8j-2e-4c","voxels":256,"blockSize":1,"preparationReused":false,"basisNanos":8481270417,"expansionNanos":44284625,"certificationNanos":71784583,"preparationNanos":529216209,"fixtureInitializationNanos":1758375,"runtimeSetupNanos":24573375,"allocationNanos":363747,"inputNanos":37020506,"whitenNanos":3721203,"gatherNanos":4799788,"projectDecodeReadoutNanos":109975534,"sinkNanos":3046124,"endToEndNanos":9311014750,"endHeapBytes":null,"maxHeapBytes":null,"rawBlockBytes":4800,"whitenedBlockBytes":4800,"gatherBytes":4800,"emittedFloat32Bytes":5120,"retainedFloat32Bytes":5120,"float32Failures":0,"accepted":250,"statuses":{"Accepted":250,"BudgetExceeded":6},"exits":{"AcceptedEnergyOnlyNonstationaryTerminal":1,"CandidateAttemptCap":5},"work":{"nodes":18423,"jets":1072,"exact":9,"terminal":3,"candidates":822,"steps":792,"fallbacks":0},"inputChecksum":"-8064554928229908613","outputChecksum":"-1080711980820633904"}
+  + public C0 block widths preserve all signed outputs, sample IDs and seven work fields 9.670s
+  + a failed sink stops immediately and full-volume retention is refused 0.031s
+  + terminal stationarity uses the free block and requires curvature when every bound is active 0.000s
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":1,"seed":101,"voxels":1,"admitted":1,"latencyP95":0.00003243030940058844,"widthP95":0.000060484130254945256,"amplitudeP95":0.000034422807940217614,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":12166075583,"responseNanos":4548830125,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":1,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596849,0.26460126590436084],"fitEnergy":393.80919196150137,"fitAmplitudes":[-1.5478086130848239,1.9542117416296911,-0.7316437202712025],"fitHessian":[339.2717306611372,-3.0795722835083614,-3.0795722835083614,561.6168132647073],"fitSd":[0.07678068264851234,0.05967683138850434],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":393.80919196150137,"gradient":[-9.12214886961138e-10,1.0317080523236655e-10],"hessian":[339.2717306611372,-3.0795722835083614,-3.0795722835083614,561.6168132647073],"amplitudes":[-1.5478086130848239,1.9542117416296911,-0.7316437202712025],"curvature":"PositiveDefinite","conditionalSd":[0.07678068264851234,0.05967683138850434],"sdFailure":null,"projectedNewtonCorrection":2.687210442185019e-12},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00003243030940058844,"width":0.000060484130254945256,"relativeAmplitude":0.000034422807940217614}}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":1,"seed":101,"voxels":1,"admitted":1,"latencyP95":0.00003243030940058844,"widthP95":0.000060484130254945256,"amplitudeP95":0.000034422807940217614,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":12166075583,"responseNanos":4548830125,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":1,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596849,0.26460126590436084],"fitEnergy":393.80919196150137,"fitAmplitudes":[-1.5478086130848239,1.9542117416296911,-0.7316437202712025],"fitHessian":[339.2717306611372,-3.0795722835083614,-3.0795722835083614,561.6168132647073],"fitSd":[0.07678068264851234,0.05967683138850434],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":393.80919196150137,"gradient":[-9.12214886961138e-10,1.0317080523236655e-10],"hessian":[339.2717306611372,-3.0795722835083614,-3.0795722835083614,561.6168132647073],"amplitudes":[-1.5478086130848239,1.9542117416296911,-0.7316437202712025],"curvature":"PositiveDefinite","conditionalSd":[0.07678068264851234,0.05967683138850434],"sdFailure":null,"projectedNewtonCorrection":2.687210442185019e-12},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00003243030940058844,"width":0.000060484130254945256,"relativeAmplitude":0.000034422807940217614}}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":0.00010661089233554577,"widthP95":0.0007970393682192878,"amplitudeP95":0.00007661184122733913,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":12166075583,"responseNanos":4518707750,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736086,0.6666621149815508],"fitEnergy":2453.782250341835,"fitAmplitudes":[1.4935428030711944,-1.7362496781708285,-1.5532983719772866],"fitHessian":[176.88818474998402,-20.79946182323575,-20.79946182323575,871.8436327024222],"fitSd":[0.10648184973168447,0.04796292928637427],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2453.782250341835,"gradient":[-1.1745693306863814e-10,-6.520792794617591e-10],"hessian":[176.88818474998402,-20.79946182323575,-20.79946182323575,871.8436327024222],"amplitudes":[1.4935428030711944,-1.7362496781708285,-1.5532983719772866],"curvature":"PositiveDefinite","conditionalSd":[0.10648184973168447,0.04796292928637427],"sdFailure":null,"projectedNewtonCorrection":7.659214270373611e-13},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"decoderDirectEnergy":2453.7569819574214,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00010661089233554577,"width":0.0007970393682192878,"relativeAmplitude":0.00007661184122733913}}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":0.00010661089233554577,"widthP95":0.0007970393682192878,"amplitudeP95":0.00007661184122733913,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":12166075583,"responseNanos":4518707750,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736086,0.6666621149815508],"fitEnergy":2453.782250341835,"fitAmplitudes":[1.4935428030711944,-1.7362496781708285,-1.5532983719772866],"fitHessian":[176.88818474998402,-20.79946182323575,-20.79946182323575,871.8436327024222],"fitSd":[0.10648184973168447,0.04796292928637427],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2453.782250341835,"gradient":[-1.1745693306863814e-10,-6.520792794617591e-10],"hessian":[176.88818474998402,-20.79946182323575,-20.79946182323575,871.8436327024222],"amplitudes":[1.4935428030711944,-1.7362496781708285,-1.5532983719772866],"curvature":"PositiveDefinite","conditionalSd":[0.10648184973168447,0.04796292928637427],"sdFailure":null,"projectedNewtonCorrection":7.659214270373611e-13},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"decoderDirectEnergy":2453.7569819574214,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00010661089233554577,"width":0.0007970393682192878,"relativeAmplitude":0.00007661184122733913}}
+{"kind":"paired","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","snr":0.5,"seed":102,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"paired","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"development","snr":1,"seed":101,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+  + bounded DEV paired study exercises complete audits and parseable report without qualification 21.469s
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1,"seed":101,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":11831524417,"responseNanos":4077709625,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1,"seed":101,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.571428571428571,0.24891210582233286],"fitEnergy":395.7012312809918,"fitAmplitudes":[-1.4745071378138013,1.9547118921739008,-0.8029642079532047],"fitHessian":[341.5042951398129,-34.579457395796766,-34.579457395796766,560.8605094490733],"fitSd":[0.07676739207744279,0.05990284390849597],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":395.7012312809918,"gradient":[35.38574168365019,-10.78197090341007],"hessian":[341.5042951398129,-34.579457395796766,-34.579457395796766,560.8605094490733],"amplitudes":[-1.4745071378138013,1.9547118921739008,-0.8029642079532047],"curvature":"PositiveDefinite","conditionalSd":[0.07676739207744279,0.05990284390849597],"sdFailure":null,"projectedNewtonCorrection":0.1023094239953747},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1,"seed":101,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":11831524417,"responseNanos":4077709625,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1,"seed":101,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.571428571428571,0.24891210582233286],"fitEnergy":395.7012312809918,"fitAmplitudes":[-1.4745071378138013,1.9547118921739008,-0.8029642079532047],"fitHessian":[341.5042951398129,-34.579457395796766,-34.579457395796766,560.8605094490733],"fitSd":[0.07676739207744279,0.05990284390849597],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":395.7012312809918,"gradient":[35.38574168365019,-10.78197090341007],"hessian":[341.5042951398129,-34.579457395796766,-34.579457395796766,560.8605094490733],"amplitudes":[-1.4745071378138013,1.9547118921739008,-0.8029642079532047],"curvature":"PositiveDefinite","conditionalSd":[0.07676739207744279,0.05990284390849597],"sdFailure":null,"projectedNewtonCorrection":0.1023094239953747},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":11831524417,"responseNanos":3877372000,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.214285714285714,0.6265566315315669],"fitEnergy":2455.600681663963,"fitAmplitudes":[1.459039581030038,-1.686099349289331,-1.6025644035880051],"fitHessian":[179.65169308565018,-11.65640646584372,-11.65640646584372,903.85550493152],"fitSd":[0.10555556045412189,0.04705949577047124],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2455.600681663963,"gradient":[-19.99386129026559,-33.8497651235575],"hessian":[179.65169308565018,-11.65640646584372,-11.65640646584372,903.85550493152],"amplitudes":[1.459039581030038,-1.686099349289331,-1.6025644035880051],"curvature":"PositiveDefinite","conditionalSd":[0.10555556045412189,0.04705949577047124],"sdFailure":null,"projectedNewtonCorrection":0.11381750875585511},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":11831524417,"responseNanos":3877372000,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.214285714285714,0.6265566315315669],"fitEnergy":2455.600681663963,"fitAmplitudes":[1.459039581030038,-1.686099349289331,-1.6025644035880051],"fitHessian":[179.65169308565018,-11.65640646584372,-11.65640646584372,903.85550493152],"fitSd":[0.10555556045412189,0.04705949577047124],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2455.600681663963,"gradient":[-19.99386129026559,-33.8497651235575],"hessian":[179.65169308565018,-11.65640646584372,-11.65640646584372,903.85550493152],"amplitudes":[1.459039581030038,-1.686099349289331,-1.6025644035880051],"curvature":"PositiveDefinite","conditionalSd":[0.10555556045412189,0.04705949577047124],"sdFailure":null,"projectedNewtonCorrection":0.11381750875585511},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"paired","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","snr":0.5,"seed":102,"transitions":[{"voxel":0,"baseline":"BudgetExceeded","candidate":"BudgetExceeded"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"paired","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"zero-budget-control","snr":1,"seed":101,"transitions":[{"voxel":0,"baseline":"BudgetExceeded","candidate":"BudgetExceeded"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+  + zero-admission control retains every attempt and cannot qualify 19.901s
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1,"seed":101,"voxels":1,"admitted":1,"latencyP95":0.00003243030940058844,"widthP95":0.000060484130254945256,"amplitudeP95":0.000034422807940217614,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":11008835250,"responseNanos":4482889750,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596849,0.26460126590436084],"fitEnergy":393.80919196150137,"fitAmplitudes":[-1.5478086130848239,1.9542117416296911,-0.7316437202712025],"fitHessian":[339.2717306611372,-3.0795722835083614,-3.0795722835083614,561.6168132647073],"fitSd":[0.07678068264851234,0.05967683138850434],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00003243030940058844,"width":0.000060484130254945256,"relativeAmplitude":0.000034422807940217614}}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1,"seed":101,"voxels":1,"admitted":1,"latencyP95":0.00003243030940058844,"widthP95":0.000060484130254945256,"amplitudeP95":0.000034422807940217614,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":11008835250,"responseNanos":4482889750,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596849,0.26460126590436084],"fitEnergy":393.80919196150137,"fitAmplitudes":[-1.5478086130848239,1.9542117416296911,-0.7316437202712025],"fitHessian":[339.2717306611372,-3.0795722835083614,-3.0795722835083614,561.6168132647073],"fitSd":[0.07678068264851234,0.05967683138850434],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.5477506130933267,1.9542254709999158,-0.7317103963319112],"energy":393.8071769904425,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00003243030940058844,"width":0.000060484130254945256,"relativeAmplitude":0.000034422807940217614}}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":0.00010661089233554577,"widthP95":0.0007970393682192878,"amplitudeP95":0.00007661184122733913,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":11008835250,"responseNanos":3854991625,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736086,0.6666621149815508],"fitEnergy":2453.782250341835,"fitAmplitudes":[1.4935428030711944,-1.7362496781708285,-1.5532983719772866],"fitHessian":[176.88818474998402,-20.79946182323575,-20.79946182323575,871.8436327024222],"fitSd":[0.10648184973168447,0.04796292928637427],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"decoderDirectEnergy":2453.7569819574214,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00010661089233554577,"width":0.0007970393682192878,"relativeAmplitude":0.00007661184122733913}}
+{"kind":"cell","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":0.00010661089233554577,"widthP95":0.0007970393682192878,"amplitudeP95":0.00007661184122733913,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":11008835250,"responseNanos":3854991625,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736086,0.6666621149815508],"fitEnergy":2453.782250341835,"fitAmplitudes":[1.4935428030711944,-1.7362496781708285,-1.5532983719772866],"fitHessian":[176.88818474998402,-20.79946182323575,-20.79946182323575,871.8436327024222],"fitSd":[0.10648184973168447,0.04796292928637427],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"decoderDirectEnergy":2453.7569819574214,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408462,-1.7361946351847952,-1.5534855080319514],"energy":2453.7569682198964,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[0.000006103515625,0.000004033678710883543],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":0.00010661089233554577,"width":0.0007970393682192878,"relativeAmplitude":0.00007661184122733913}}
+{"kind":"paired","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","snr":0.5,"seed":102,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"paired","platform":"JS","sourceId":"tangent-dev-8840dbfcebb53ccf60396b8244b75235eb589bd4","cohort":"audit-failure-control","snr":1,"seed":101,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+  + unavailable-audit control cannot reuse or substitute evidence 19.496s
+  + candidate total quota and bounded oracle exhaustion are explicit 0.090s
+  + fixed compass resolution converges a coupled off-grid quadratic and reports tested mesh 0.001s
+scalafim.fmri.laws.profile.LwuConditionDiagnosticSuite:
+  + historical LWU diagnostic retains fit, input availability and all work fields 6.319s
+scalafim.fmri.laws.profile.ObservedFamilyCertificationSuite:
+  + the observed family is certified under whitening and nuisance projection 1.309s
+  + an aliased condition cell is refused as rank loss, not certified 0.002s
+scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite:
+  + both public admissions accept exactly matched condition geometry 0.039s
+  + both public admissions refuse a condition-label permutation preserving column space 0.013s
+  + both public admissions refuse changed continuous weights with the same source form 0.015s
+  + both public admissions refuse changed run frame and convolution precision 0.023s
+scalafim.fmri.laws.profile.CompactConditionRuntimeSuite:
+  + a certificate cannot be reused for a same-sized changed observed geometry 1.530s
+[compact-condition] admitted 22/24, max |tau - oracle| = 0.00037063737046416634, max rel amp = 0.00010634654267688103, per voxel: nodes 71.875, jets 4.458333333333333, exact 0.041666666666666664
+  + decoded shapes and amplitudes agree with the dense oracle on a synthetic cohort 1.471s
+  + readout converts amplitudes into the requested normalisation 0.020s
+[info] Passed: Total 25, Failed 0, Errors 0, Passed 25
+[success] Total time: 102 s (0:01:42.0), completed Oct 1, 2026, 9:55:42 a.m.
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+[error] org.scalajs.testing.common.RPCCore$RPCException: java.lang.UnsupportedOperationException: *accuracy*
+[error] 	at org.scalajs.testing.common.RPCCore.$anonfun$handleMessage$4(RPCCore.scala:78)
+[error] 	at scala.Option.foreach(Option.scala:407)
+[error] 	at org.scalajs.testing.common.RPCCore.$anonfun$handleMessage$1(RPCCore.scala:76)
+[error] 	at org.scalajs.testing.common.RPCCore.$anonfun$handleMessage$1$adapted(RPCCore.scala:56)
+[error] 	at org.scalajs.testing.common.Serializer$.withInputStream(Serializer.scala:56)
+[error] 	at org.scalajs.testing.common.RPCCore.handleMessage(RPCCore.scala:56)
+[error] 	at org.scalajs.testing.adapter.JSEnvRPC.$anonfun$run$4(JSEnvRPC.scala:48)
+[error] 	at org.scalajs.testing.adapter.JSEnvRPC.$anonfun$run$4$adapted(JSEnvRPC.scala:48)
+[error] 	at org.scalajs.jsenv.nodejs.ComRun$$anon$1.run(ComSupport.scala:74)
+[error] Caused by: java.lang.UnsupportedOperationException: *accuracy*
+[error] 	at <jscode>.f(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:83917)
+[error] 	at munit.internal.junitinterface.JUnitFramework.parseRunSettings(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:83927)
+[error] 	at munit.Framework.runner(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:84138)
+[error] 	at <jscode>.{anonymous}()(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:24034)
+[error] 	at scala.runtime.AbstractFunction1.$$Lambda$7afc3dd0acc1681fb022ef921c83979087aaa919.apply(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:104695)
+[error] 	at <jscode>.{anonymous}()(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:25352)
+[error] 	at scala.runtime.AbstractFunction1.$$Lambda$7afc3dd0acc1681fb022ef921c83979087aaa919.apply(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:104695)
+[error] 	at scala.concurrent.impl.Promise$Transformation.run(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:257581)
+[error] 	at <jscode>.{anonymous}()(/private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js:134214)
+[error] 	at <jscode>.process.processTicksAndRejections(node:internal/process/task_queues:104)
+[error] (firstLevelLawsJS / Test / testOnly) org.scalajs.testing.common.RPCCore$RPCException: java.lang.UnsupportedOperationException: *accuracy*
+[error] Total time: 6 s, completed Oct 1, 2026, 9:55:48 a.m.

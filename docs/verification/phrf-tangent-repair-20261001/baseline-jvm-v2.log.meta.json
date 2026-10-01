@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T13:24:15.146995+00:00",
+  "finished_utc": "2026-10-01T13:25:41.717237+00:00",
+  "duration_seconds": 86.570292,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitJVM/testOnly scalafim.fmri.fit.profile.ShapeDecoderTangentSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-tangent-repair-20261001/baseline-jvm-v2.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 9073
+}

@@ -1,0 +1,77 @@
+1/57 JVM SNR1.0 voxel13 Boundary direct-drop=1.27071e-07
+2/57 JVM SNR1.0 voxel29 Boundary direct-drop=4.42096e-06
+3/57 JVM SNR1.0 voxel30 BudgetExceeded direct-drop=1.16665e-07
+4/57 JVM SNR1.0 voxel31 Boundary direct-drop=7.85685e-08
+5/57 JVM SNR1.0 voxel33 BudgetExceeded direct-drop=4.35267e-07
+6/57 JVM SNR1.0 voxel49 BudgetExceeded direct-drop=1.09674e-06
+7/57 JVM SNR1.0 voxel66 Boundary direct-drop=3.0235e-06
+8/57 JVM SNR1.0 voxel76 BudgetExceeded direct-drop=2.00874e-06
+9/57 JVM SNR1.0 voxel82 Boundary direct-drop=8.14221e-08
+10/57 JVM SNR0.5 voxel0 Boundary direct-drop=5.57498e-08
+11/57 JVM SNR0.5 voxel8 Boundary direct-drop=3.12693e-06
+12/57 JVM SNR0.5 voxel9 Boundary direct-drop=2.49702e-08
+13/57 JVM SNR0.5 voxel11 CurvatureNotPositive direct-drop=0.18444
+14/57 JVM SNR0.5 voxel15 Boundary direct-drop=1.05281e-06
+15/57 JVM SNR0.5 voxel27 BudgetExceeded direct-drop=1.71101e-07
+16/57 JVM SNR0.5 voxel29 Boundary direct-drop=1.01063e-07
+17/57 JVM SNR0.5 voxel30 Boundary direct-drop=2.10962e-07
+18/57 JVM SNR0.5 voxel31 BudgetExceeded direct-drop=2.55817e-05
+19/57 JVM SNR0.5 voxel50 Boundary direct-drop=5.72255
+20/57 JVM SNR0.5 voxel61 Boundary direct-drop=1.72618e-06
+21/57 JVM SNR0.5 voxel62 Boundary direct-drop=3.05949e-06
+22/57 JVM SNR0.5 voxel65 Boundary direct-drop=5.75987e-07
+23/57 JVM SNR0.5 voxel72 Boundary direct-drop=4.59163e-07
+24/57 JVM SNR0.5 voxel76 BudgetExceeded direct-drop=2.8914e-06
+25/57 JVM SNR0.5 voxel83 Boundary direct-drop=2.15905e-06
+26/57 JVM SNR0.5 voxel86 Boundary direct-drop=9.39626e-08
+27/57 JVM SNR0.5 voxel89 Boundary direct-drop=9.83221e-06
+28/57 JVM SNR0.5 voxel94 Boundary direct-drop=1.51213e-08
+29/57 JS SNR1 voxel13 Boundary direct-drop=1.27071e-07
+30/57 JS SNR1 voxel20 BudgetExceeded direct-drop=4.63257e-08
+31/57 JS SNR1 voxel29 Boundary direct-drop=4.42096e-06
+32/57 JS SNR1 voxel31 Boundary direct-drop=7.85684e-08
+33/57 JS SNR1 voxel49 BudgetExceeded direct-drop=1.09674e-06
+34/57 JS SNR1 voxel53 BudgetExceeded direct-drop=7.50105e-06
+35/57 JS SNR1 voxel57 BudgetExceeded direct-drop=4.38871e-07
+36/57 JS SNR1 voxel66 Boundary direct-drop=3.0235e-06
+37/57 JS SNR1 voxel76 BudgetExceeded direct-drop=2.00874e-06
+38/57 JS SNR1 voxel82 Boundary direct-drop=8.14221e-08
+39/57 JS SNR1 voxel87 BudgetExceeded direct-drop=5.73786e-06
+40/57 JS SNR0.5 voxel0 Boundary direct-drop=5.57496e-08
+41/57 JS SNR0.5 voxel8 Boundary direct-drop=3.12693e-06
+42/57 JS SNR0.5 voxel9 Boundary direct-drop=2.49702e-08
+43/57 JS SNR0.5 voxel11 CurvatureNotPositive direct-drop=0.18444
+44/57 JS SNR0.5 voxel15 Boundary direct-drop=1.05281e-06
+45/57 JS SNR0.5 voxel29 Boundary direct-drop=1.01062e-07
+46/57 JS SNR0.5 voxel30 Boundary direct-drop=2.10962e-07
+47/57 JS SNR0.5 voxel50 Boundary direct-drop=5.72255
+48/57 JS SNR0.5 voxel61 Boundary direct-drop=1.72618e-06
+49/57 JS SNR0.5 voxel62 Boundary direct-drop=3.05949e-06
+50/57 JS SNR0.5 voxel65 Boundary direct-drop=5.75987e-07
+51/57 JS SNR0.5 voxel72 Boundary direct-drop=4.59163e-07
+52/57 JS SNR0.5 voxel76 Boundary direct-drop=2.89112e-06
+53/57 JS SNR0.5 voxel83 Boundary direct-drop=2.15905e-06
+54/57 JS SNR0.5 voxel86 Boundary direct-drop=9.39626e-08
+55/57 JS SNR0.5 voxel89 Boundary direct-drop=9.83221e-06
+56/57 JS SNR0.5 voxel94 Boundary direct-drop=1.51217e-08
+57/57 JS SNR0.5 voxel97 BudgetExceeded direct-drop=1.20927e-05
+{
+  "summary": {
+    "bestOnBoundary": 42,
+    "bestNewtonCorrectionUnder1e-7": 57,
+    "savedDirectNewtonCorrectionUnder1e-7": 0,
+    "bestInterior": 15
+  },
+  "controls": {
+    "maxWhiteningError": 0.0,
+    "maxJointRegressionEnergyError": 1.8189894035458565e-12,
+    "maxGradientFiniteDifferenceError": 1.3462340575642884e-08,
+    "maxEquivalentDriveError": 0.0,
+    "acquisitionEventLoopMaxError": 4.7628567756419216e-14
+  },
+  "versions": {
+    "python": "3.14.7",
+    "numpy": "2.4.3",
+    "scipy": "1.17.1"
+  }
+}

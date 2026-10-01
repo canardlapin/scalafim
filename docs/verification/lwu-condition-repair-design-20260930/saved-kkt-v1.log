@@ -1,0 +1,72 @@
+{
+  "classification": {
+    "Boundary-stationary": 39,
+    "BudgetExceeded-nonstationary": 14,
+    "CurvatureNotPositive-nonstationary": 2,
+    "Boundary-nonstationary": 2
+  },
+  "voxel50Proof": [
+    {
+      "platform": "JVM",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "compactNewtonCorrection": 0.5575143097494155,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "newtonDirection": [
+        -0.5575143097494155,
+        -0.3016225341626543,
+        -0.25645536808389974
+      ],
+      "boxAlpha": 0.0,
+      "tangentDirection": [
+        -0.5575143097494155,
+        -0.3016225341626543,
+        0.0
+      ],
+      "tangentDirectionalDerivative": -31.34715041946398,
+      "feasibleRhoDerivative": -14.320047287164925,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "compactNewtonCorrection": 0.5575143097493597,
+      "stationary": false,
+      "fullHessianPositive": true,
+      "newtonDirection": [
+        -0.5575143097493597,
+        -0.30162253416258766,
+        -0.25645536808385294
+      ],
+      "boxAlpha": 0.0,
+      "tangentDirection": [
+        -0.5575143097493597,
+        -0.30162253416258766,
+        0.0
+      ],
+      "tangentDirectionalDerivative": -31.347150419458284,
+      "feasibleRhoDerivative": -14.320047287161003,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

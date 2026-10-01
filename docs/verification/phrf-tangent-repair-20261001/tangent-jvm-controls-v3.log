@@ -1,0 +1,501 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project work-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-lwu-repair-design-20260930/work/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a3fe250684692aa42c1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (261806 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-lwu-repair-design-20260930/work/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.profile.ShapeDecoderTangentSuite:
+  + coupled lower-bound Newton direction follows feasible descent to the exact constrained optimum 0.033s
+  + coupled upper-bound Newton direction follows feasible descent to the mirrored optimum 0.001s
+  + tangent correction handles a third independent coordinate 0.002s
+  + a genuine constrained stationary bank point needs no candidate 0.001s
+  + a tiny representable clipped step is evaluated rather than called stationary 0.003s
+  + an unrepresentable raw nonstationary correction preserves terminal state without an evaluation 0.002s
+  + halving to an unchanged coordinate stalls only before the attempt cap is exhausted 0.004s
+  + a finite jet whose Newton solve overflows stalls without an objective callback 0.002s
+[info] Passed: Total 8, Failed 0, Errors 0, Passed 8
+[success] Total time: 13 s, completed Oct 1, 2026, 9:43:30 a.m.
+[info] compiling 34 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/hrf/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.hrf.HrfTypedRefactorSuite:
+  + built-in HRFs expose typed descriptors and basis arity 0.047s
+  + weighted and empirical HRFs carry validated sampled profiles 0.01s
+  + typed sampling-frame block selections match legacy block-id API 0.01s
+  + per-event regressor evaluation dispatch is exhaustive across methods 0.02s
+scalafim.fmri.hrf.RegressorMethodAccuracySuite:
+  + Conv and FFT are the same algorithm and agree to machine precision 0.015s
+  + grid-aligned impulses agree with the exact loop 0.002s
+  + Loop is exact for impulses: its answer does not move with precision 0.004s
+  + sub-bin impulse projection matches the R reference 0.005s
+  + the worst case over onset phases does shrink with precision 0.02s
+  + every method renders an epoch design consistently at fine precision 0.021s
+  + a block overlapping a one-point grid is retained by every method 0.002s
+  + Loop support includes the duration tail of an already-retained block 0.002s
+scalafim.fmri.hrf.PrimitiveSuite:
+  + every registered primitive agrees with a refined trapezoid 6.543s
+  + a primitive is registered for exactly the families that claim one 0.007s
+  + deriving a kernel clears its primitive rather than inheriting a wrong one 0.02s
+  + exact integration makes the answer independent of precision 0.024s
+  + the trapezoid converges to the closed form as precision refines 0.003s
+  + the unit-mass box stays the duration average under exact integration 0.006s
+  + an impulse is untouched by the integration mode 0.003s
+  + FIR box response is the analytic overlap of the box with each bin 0.001s
+  + boxcar box response is the analytic overlap of two boxes 0.001s
+  + incomplete gamma and erf match known closed forms 0.001s
+  + the gamma primitive is the gamma CDF 0.001s
+scalafim.fmri.hrf.BoxcarWeightedSuite:
+  + boxcar HRF structure 0.0s
+  + boxcar evaluates inside/outside window 0.001s
+  + boxcar normalization approximates unit area 0.008s
+  + boxcar validates width 0.001s
+  + boxcar works with regressor 0.002s
+  + weighted HRF structure from width 0.001s
+  + weighted HRF structure from times 0.001s
+  + weighted constant method produces steps 0.001s
+  + weighted linear method interpolates 0.0s
+  + weighted width infers evenly spaced times 0.001s
+  + weighted normalization constant integrates to ~1 0.002s
+  + weighted normalization linear integrates to ~1 0.01s
+  + weighted validates inputs 0.003s
+  + weighted handles sub-second intervals 0.001s
+  + weighted works with regressor 0.001s
+  + boxcar and weighted uniform weights are equivalent 0.002s
+scalafim.fmri.hrf.LibraryParitySuite:
+  + hrfLibrary forwards extra arguments 0.004s
+  + hrfLibrary produces distinct basis functions 0.009s
+scalafim.fmri.hrf.HrfSuite:
+  + SPMG1 has expected peak time 0.002s
+  + SPMG2 returns 2-column basis 0.0s
+  + Seconds and refined time wrappers validate domain 0.004s
+  + typed HRF specs resolve kinds and scalar capability 0.021s
+  + FFT regressor evaluation matches conv 0.001s
+scalafim.fmri.hrf.SpmgCorrectnessSuite:
+  + canonical and dispersion match independent gamma PDF oracles 0.001s
+  + dispersion time derivative follows the actual third column 0.004s
+  + dispersion primitive matches independent gamma CDF oracle 0.001s
+scalafim.fmri.hrf.Cascade34Suite:
+  + parameters reject invalid rates and area ratios, including nonfinite values and invalid copies 0.003s
+  + the scalar kernel is causal, matches the closed Erlang polynomial and keeps an unbounded tail 0.002s
+  + exact box integrals match 80-digit quadrature near onset and in the far tail 0.003s
+  + components have unit area and the full signed area remains 1 - rho at rho = 1 0.027s
+  + binding Cascade34 into a basis preserves its exact far-tail box response 0.0s
+  + attained peak, FWHM and trough match the independent continuous-time oracle 0.003s
+  + changing both rates dilates time and rescales heights, preserving areas and trough ratios 0.001s
+  + typed and named dispatch retain Cascade34 parameters and its primitive; decorators clear it 0.002s
+  + extreme finite lags produce a zero tail without polynomial overflow 0.0s
+scalafim.fmri.hrf.BsplineParitySuite:
+  + bsplineBasis matches R hrf_bspline for non-integer span 0.002s
+  + bsplineBasis with N < degree+1 matches R minimum-basis behavior 0.001s
+scalafim.fmri.hrf.FftSuite:
+  + convolveReal matches the direct definition across lengths 0.006s
+  + convolveReal handles empty input 0.001s
+  + a delta convolution reproduces the signal 0.0s
+  + the forward transform inverts 0.001s
+  + transform rejects a non-power-of-two length 0.0s
+  + nextPow2 rounds up 0.001s
+scalafim.fmri.hrf.HrfNormalizationSuite:
+  + SPM normalization uses the fixed 1,600-point Nilearn reference grid 0.004s
+  + fixed normalization is independent of the later evaluation grid 0.001s
+  + canonical peak and integral modes apply one scalar to every basis 0.011s
+  + per-basis peak mode uses independent fixed scales 0.003s
+  + normalization reports a transform that preserves reconstructed kernels 0.007s
+  + construction entry points expose typed normalization without changing defaults 0.005s
+  + unscaled mode preserves identity and unusable scales are typed errors 0.003s
+scalafim.fmri.hrf.LwuSuite:
+  + lwu height normalization peaks at 1 0.001s
+  + lwu area normalization gives the kernel unit area 0.011s
+  + LwuBasis finite-difference derivative agrees 0.001s
+scalafim.fmri.hrf.RegressorParitySuite:
+  + Regressor validates inputs (R Reg/regressor) 0.002s
+  + single-event regressor behaves like single_trial_regressor 0.0s
+  + span defaults to HRF span when not provided 0.0s
+  + evaluate validates grid and precision 0.001s
+  + per-event regressors accept list of HRFs 0.0s
+  + per-event regressor evaluates correctly 0.002s
+  + per-event span is max of individual spans 0.0s
+  + per-event with weighted HRFs works 0.001s
+  + per-event recycles single HRF 0.0s
+  + per-event validates HRF list length 0.001s
+  + per-event keeps HRFs aligned with events across a zero amplitude 0.0s
+  + windowing out an onset does not re-bind per-event HRFs 0.001s
+  + per-event works with all evaluation methods 0.003s
+  + nbasis handles per-event HRFs 0.0s
+  + per-event supports mixed HRF types 0.0s
+scalafim.fmri.hrf.RegressorSetSuite:
+  + RegressorSet constructs and evaluates 0.003s
+scalafim.fmri.hrf.ToeplitzSuite:
+  + toeplitz matrix matches manual 0.001s
+scalafim.fmri.hrf.family.Cascade34FamilySuite:
+  + all jet components agree with independent 80-digit differentiation of the Erlang formula 0.002s
+  + jets use component-major layout, overwrite caller buffers and remain finite in the zero tail 0.003s
+  + rho zero reports tail nonidentification, invariant values and vanishing pure tail derivatives 0.003s
+  + positive-component-area normalization stays smooth at signed-area cancellation 0.003s
+  + chart admission enforces coordinate names, representable ordered rates, rho and horizon 0.003s
+  + summaries and provenance report actual peaks and an untruncated slow undershoot 0.001s
+scalafim.fmri.hrf.family.GaussianFamilySuite:
+  + charts validate names, bounds and points 0.006s
+  + jet layout indexes the upper triangle without gaps 0.005s
+  + the density convention reproduces Hrfs.gaussian exactly 0.001s
+  + values and jets at a lag are independent of neighbouring grid samples 0.002s
+  + Gaussian values and all jet components agree with the 90-digit oracle 0.004s
+  + representable Gaussian tails do not depend on grid context 0.003s
+  + negative lags are causal zeros in values and jets 0.0s
+  + jets agree with central finite differences 0.003s
+  + scale jets, summaries and descriptor follow the chart 0.001s
+  + tail energy beyond the horizon grows with width and latency 0.002s
+scalafim.fmri.hrf.family.LwuFamilySuite:
+  + the raw LWU formula is the library kernel and reduces to the Gaussian at rho = 0 0.0s
+  + jets agree with central finite differences in all three coordinates 0.006s
+  + summaries report attained peak, width and undershoot; normalisation is unnormalised only 0.003s
+scalafim.fmri.hrf.DurationQuadratureSuite:
+  + Evaluate under Trapezoid matches R evaluate.HRF across precisions 0.009s
+  + Evaluate under Exact is the limit R's trapezoid is converging to 0.001s
+  + Evaluate box response converges as precision shrinks 0.009s
+  + block decorator under Trapezoid matches R gen_hrf(width=) 0.003s
+  + block decorator under Exact is precision-free and matches R's limit 0.001s
+  + regressor epoch amplitude no longer depends on precision 0.002s
+  + unit-mass box is the duration average of the unit-height box 0.0s
+  + unit-mass box keeps its integral as duration grows, unit-height does not 0.02s
+  + impulse response is exactly the kernel, independent of precision 0.006s
+scalafim.fmri.hrf.HrfBasicsSuite:
+  + predefined HRFs have correct nbasis/span 0.001s
+  + evaluate with duration increases response 0.001s
+  + empirical HRF interpolates and extrapolates to 0 0.001s
+  + bindBasis combines HRFs 0.001s
+  + lag decorator shifts HRF 0.001s
+  + block decorator widens HRF and can normalize 0.005s
+  + normalize scales peak to 1 0.003s
+  + withCoefficients reduces to single basis 0.003s
+  + withCoefficients supports custom name (R hrf_from_coefficients) 0.001s
+  + gen/bindBasis combines lagged HRFs into a set 0.003s
+  + evaluate summate=false differs from summate=true 0.001s
+  + precision is a quadrature knob, and only under quadrature 0.001s
+  + normalize in Evaluate preserves matrix dimensions 0.001s
+  + lag/block reject non-finite parameters 0.0s
+scalafim.fmri.hrf.DesignSuite:
+  + regressorDesign produces expected design dims 0.003s
+scalafim.fmri.hrf.LagSuite:
+  + a lag is the displacement from an onset to a clock reading 0.0s
+  + an absolute time is not a lag, and a lag is not a width 0.0s
+  + shifting a lag tracks a delayed kernel 0.0s
+  + Lag rejects non-finite values and reports why 0.001s
+scalafim.fmri.hrf.BasisGeometrySuite:
+  + reconstruction agrees with direct contraction 0.001s
+  + reconstruction is the sum of weighted basis columns 0.003s
+  + coefficients of the wrong width are rejected 0.002s
+  + a basis space is distinct per basis value 0.0s
+  + normalize reports the transform, and transported coefficients preserve the kernel 0.001s
+  + stale coefficients after normalization do change the kernel 0.001s
+  + penalties transport under rescaling 0.001s
+  + penalty transport keeps the penalised value invariant and round-trips 0.003s
+  + penalty transport refuses zero and non-finite scales 0.001s
+  + basis transforms transport covariance and adjusted linear hypotheses 0.003s
+  + diagonal transforms invert, and singular ones report it 0.001s
+  + basis permutations transport coefficients and penalties contragrediently 0.002s
+  + Evaluate normalization does not depend on the query grid 0.001s
+  + normalized kernels peak at one 0.003s
+  + basis labels follow the module's column convention 0.002s
+  + basis elements expose stable semantic roles rather than labels 0.007s
+  + custom bases retain caller-supplied identities and validate cardinality 0.005s
+  + basis roles distinguish coefficient selection from an omnibus basis 0.003s
+  + response functionals compile to explicit basis weights with units 0.005s
+  + non-primitive windows require an explicit discretization 0.003s
+  + invalid response functionals and absent roles are typed failures 0.002s
+scalafim.fmri.hrf.RegressorSuite:
+  + regressor retains zero-amplitude events so event indices stay stable 0.0s
+  + a zero-amplitude event occupies an index but contributes no signal 0.001s
+  + validated regressor stores typed stimulus events 0.0s
+  + invalid inputs are rejected 0.001s
+  + shift moves onsets 0.001s
+  + evaluate conv computes expected response 0.0s
+  + unsorted grid yields same as sorted 0.0s
+scalafim.fmri.hrf.SamplingFrameSuite:
+  + sampling frame constructor works 0.002s
+  + regular sampling frame sugar preserves default and explicit acquisition origins 0.002s
+  + sampling frame validates inputs 0.007s
+  + samples are correct length and global offsets 0.001s
+  + samples local vs global timing and block selection 0.003s
+  + global onsets converts block-relative times 0.0s
+  + sampling frame temporal consistency 0.003s
+  + samples with blocks parameter mirrors R blockids cases 0.002s
+  + samples respects varying TR/startTime per block 0.001s
+  + edge cases for blocks parameter 0.0s
+  + acquisitionOnsets parity with samples(global=true) 0.001s
+  + acquisitionOnsets handles default and custom start times 0.0s
+  + acquisitionOnsets handles variable TR and multi-block transitions 0.001s
+  + acquisitionOnsets edge cases and standard fMRI timing 0.004s
+scalafim.fmri.hrf.DerivSuite:
+  + Deriv matches analytic SPMG1 derivative 0.001s
+  + Deriv for SPMG2 has 2 columns matching 1st/2nd deriv 0.001s
+  + Deriv for SPMG3 has 3 columns 0.0s
+  + Numeric deriv works for Gaussian 0.0s
+scalafim.fmri.hrf.PenaltySuite:
+  + bspline penalty is roughness-based (not identity) 0.0s
+  + SPMG3 penalty shrinks derivatives 0.0s
+  + fourier penalty increases with frequency 0.0s
+  + default penalty is identity 0.0s
+scalafim.fmri.hrf.HrfCausalitySuite:
+  + spmg1 is zero at every negative lag 0.0s
+  + spmg2 is zero at every negative lag 0.0s
+  + spmg3 is zero at every negative lag 0.0s
+  + gamma is zero at every negative lag 0.0s
+  + gaussian is zero at every negative lag 0.0s
+  + mexhat is zero at every negative lag 0.001s
+  + inv_logit is zero at every negative lag 0.0s
+  + lwu is zero at every negative lag 0.0s
+  + half_cosine is zero at every negative lag 0.0s
+  + fourier is zero at every negative lag 0.001s
+  + sine is zero at every negative lag 0.0s
+  + bspline is zero at every negative lag 0.0s
+  + tent is zero at every negative lag 0.001s
+  + fir is zero at every negative lag 0.0s
+  + daguerre is zero at every negative lag 0.0s
+  + boxcar is zero at every negative lag 0.0s
+  + empirical is zero at every negative lag 0.0s
+  + weighted is zero at every negative lag 0.0s
+  + spmg1 respects its declared support 0.0s
+  + spmg2 respects its declared support 0.0s
+  + spmg3 respects its declared support 0.0s
+  + gamma respects its declared support 0.0s
+  + gaussian respects its declared support 0.0s
+  + mexhat respects its declared support 0.0s
+  + inv_logit respects its declared support 0.0s
+  + lwu respects its declared support 0.0s
+  + half_cosine respects its declared support 0.001s
+  + fourier respects its declared support 0.0s
+  + sine respects its declared support 0.0s
+  + bspline respects its declared support 0.0s
+  + tent respects its declared support 0.001s
+  + fir respects its declared support 0.001s
+  + daguerre respects its declared support 0.0s
+  + boxcar respects its declared support 0.0s
+  + empirical respects its declared support 0.0s
+  + weighted respects its declared support 0.0s
+  + compact-support bases are declared compact, decaying ones are not 0.002s
+  + decaying kernels are not silently truncated at span 0.0s
+  + blocking a compact basis no longer reads pre-onset values 0.001s
+  + lag and block shift the declared support 0.001s
+scalafim.fmri.hrf.RunBoundarySuite:
+  + an event at the end of a run does not respond in the next run 0.001s
+  + each run is rendered against its own local clock 0.0s
+  + events are attributed to their own run only 0.001s
+  + columns stay aligned when a level is absent from a run 0.0s
+  + multi-basis HRFs keep condition-major column order 0.0s
+scalafim.fmri.hrf.HrfRParitySuite:
+  + spmg3 matches R fmrihrf at non-negative lags 0.002s
+  + sine matches R fmrihrf at non-negative lags 0.0s
+  + fir matches R fmrihrf at non-negative lags 0.001s
+  + tent matches R fmrihrf at non-negative lags 0.001s
+  + fourier matches R fmrihrf at non-negative lags 0.001s
+  + spmg1 matches R fmrihrf at non-negative lags 0.0s
+  + gaussian matches R fmrihrf at non-negative lags 0.0s
+  + gamma matches R fmrihrf at non-negative lags 0.0s
+  + inv_logit matches R fmrihrf at non-negative lags 0.0s
+  + bspline matches R fmrihrf at non-negative lags 0.0s
+  + spmg2 matches R fmrihrf at non-negative lags 0.001s
+  + lwu matches R fmrihrf at non-negative lags 0.0s
+  + mexhat matches R fmrihrf at non-negative lags 0.0s
+  + every generated kernel fixture is accounted for 0.005s
+  + bspline knots are grid-independent (R's HRF_BSPLINE is not) 0.001s
+  + daguerre normalization is grid-independent (R's is not) 0.0s
+  + regressor impulse evaluation matches R fmrihrf 0.002s
+[info] Passed: Total 252, Failed 0, Errors 0, Passed 252
+[success] Total time: 18 s, completed Oct 1, 2026, 9:43:48 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/hrf-laws/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.hrf.laws.ParametricFamilyLawsSuite:
+  + Cascade34 jets, scale jets, realisation and causality laws hold across its chart 0.028s
+  + Gaussian family jets match finite differences at interior points 0.0s
+  + Gaussian family scale jets match finite differences under every supported rule 0.001s
+  + Gaussian family realisation matches the library kernel and is causal 0.016s
+  + LWU family jets, scale jets, realisation and causality laws hold 0.005s
+scalafim.fmri.hrf.laws.HrfLawsSuite:
+  + spmg1 obeys every scalar law 0.043s
+  + gamma obeys every scalar law 0.007s
+  + gaussian obeys every scalar law 0.004s
+  + mexhat obeys every scalar law 0.012s
+  + inv_logit obeys every scalar law 0.008s
+  + lwu obeys every scalar law 0.007s
+  + half_cosine obeys every scalar law 0.008s
+  + boxcar obeys every scalar law 0.002s
+  + spmg1 is causal and respects its support 0.001s
+  + gamma is causal and respects its support 0.0s
+  + gaussian is causal and respects its support 0.0s
+  + mexhat is causal and respects its support 0.0s
+  + inv_logit is causal and respects its support 0.0s
+  + lwu is causal and respects its support 0.001s
+  + half_cosine is causal and respects its support 0.0s
+  + boxcar is causal and respects its support 0.0s
+  + spmg2 is causal and respects its support 0.0s
+  + spmg3 is causal and respects its support 0.0s
+  + fourier is causal and respects its support 0.0s
+  + sine is causal and respects its support 0.0s
+  + bspline is causal and respects its support 0.0s
+  + tent is causal and respects its support 0.0s
+  + fir is causal and respects its support 0.0s
+  + daguerre is causal and respects its support 0.0s
+  + spmg1 renders additively over events 0.001s
+  + gamma renders additively over events 0.001s
+  + gaussian renders additively over events 0.0s
+  + mexhat renders additively over events 0.001s
+  + inv_logit renders additively over events 0.0s
+  + lwu renders additively over events 0.007s
+  + half_cosine renders additively over events 0.0s
+  + boxcar renders additively over events 0.0s
+  + spmg2 renders additively over events 0.002s
+  + spmg3 renders additively over events 0.004s
+  + fourier renders additively over events 0.003s
+  + sine renders additively over events 0.001s
+  + bspline renders additively over events 0.005s
+  + tent renders additively over events 0.003s
+  + fir renders additively over events 0.001s
+  + daguerre renders additively over events 0.002s
+  + spmg1 box quadrature converges and unit-mass is the average 0.004s
+  + gamma box quadrature converges and unit-mass is the average 0.001s
+  + gaussian box quadrature converges and unit-mass is the average 0.0s
+  + mexhat box quadrature converges and unit-mass is the average 0.011s
+  + inv_logit box quadrature converges and unit-mass is the average 0.004s
+  + lwu box quadrature converges and unit-mass is the average 0.005s
+  + half_cosine box quadrature converges and unit-mass is the average 0.002s
+  + boxcar box quadrature converges and unit-mass is the average 0.0s
+  + spmg2 box quadrature converges and unit-mass is the average 0.003s
+  + spmg3 box quadrature converges and unit-mass is the average 0.003s
+  + fourier box quadrature converges and unit-mass is the average 0.012s
+  + sine box quadrature converges and unit-mass is the average 0.007s
+  + bspline box quadrature converges and unit-mass is the average 0.001s
+  + tent box quadrature converges and unit-mass is the average 0.0s
+  + fir box quadrature converges and unit-mass is the average 0.001s
+  + daguerre box quadrature converges and unit-mass is the average 0.086s
+  + spmg2 reconstruction commutes with rendering 0.004s
+  + spmg3 reconstruction commutes with rendering 0.0s
+  + fourier reconstruction commutes with rendering 0.0s
+  + sine reconstruction commutes with rendering 0.001s
+  + bspline reconstruction commutes with rendering 0.0s
+  + tent reconstruction commutes with rendering 0.0s
+  + fir reconstruction commutes with rendering 0.0s
+  + daguerre reconstruction commutes with rendering 0.0s
+  + spmg2 is gauge-invariant under peak normalization 0.05s
+  + spmg3 is gauge-invariant under peak normalization 0.0s
+  + fourier is gauge-invariant under peak normalization 0.001s
+  + sine is gauge-invariant under peak normalization 0.0s
+  + bspline is gauge-invariant under peak normalization 0.0s
+  + tent is gauge-invariant under peak normalization 0.001s
+  + fir is gauge-invariant under peak normalization 0.0s
+  + daguerre is gauge-invariant under peak normalization 0.0s
+  + evaluation plans agree within the stated tolerance 0.008s
+  + conv and loop diverge for onsets off the microtime grid, and the gap shrinks with precision 0.002s
+  + causality holds even for a kernel whose own shape function ignores it 0.008s
+  + support is enforced even when the shape function ignores it 0.001s
+  + the law checkers report violations rather than passing vacuously 0.002s
+[info] Passed: Total 82, Failed 0, Errors 0, Passed 82
+[success] Total time: 1 s, completed Oct 1, 2026, 9:43:49 a.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/first-level-laws/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+{"kind":"measurement","platform":"JVM","sourceId":null,"policy":"gaussian-d2-6n-8j-2e-4c","voxels":256,"blockSize":1,"preparationReused":false,"basisNanos":2508319667,"expansionNanos":63447042,"certificationNanos":298444250,"preparationNanos":184214083,"fixtureInitializationNanos":98535583,"runtimeSetupNanos":157096667,"allocationNanos":521792,"inputNanos":73437915,"whitenNanos":50234170,"gatherNanos":1647787,"projectDecodeReadoutNanos":173436337,"sinkNanos":36756906,"endToEndNanos":3555220042,"endHeapBytes":2144337920,"maxHeapBytes":3221225472,"rawBlockBytes":4800,"whitenedBlockBytes":4800,"gatherBytes":4800,"emittedFloat32Bytes":5120,"retainedFloat32Bytes":5120,"float32Failures":0,"accepted":248,"statuses":{"Accepted":248,"BudgetExceeded":8},"exits":{"CandidateAttemptCap":8},"work":{"nodes":18423,"jets":1069,"exact":6,"terminal":1,"candidates":818,"steps":784,"fallbacks":0},"inputChecksum":"-4823351668942983490","outputChecksum":"-1080835133238237308"}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":1.0,"seed":101,"voxels":1,"admitted":1,"latencyP95":3.243030940769387E-5,"widthP95":6.0484130278481985E-5,"amplitudeP95":3.442280794960679E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":18719251167,"responseNanos":3274957417,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":1.0,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596842,0.26460126590435307],"fitEnergy":393.8091919615051,"fitAmplitudes":[-1.5478086130848294,1.9542117416296656,-0.7316437202711789],"fitHessian":[339.27173066113545,-3.0795722835084933,-3.0795722835084933,561.6168132647099],"fitSd":[0.07678068264851255,0.0596768313885042],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":393.8091919615051,"gradient":[-9.123827110490978E-10,1.0336975719837938E-10],"hessian":[339.27173066113545,-3.0795722835084933,-3.0795722835084933,561.6168132647099],"amplitudes":[-1.5478086130848294,1.9542117416296656,-0.7316437202711789],"curvature":"PositiveDefinite","conditionalSd":[0.07678068264851255,0.0596768313885042],"sdFailure":null,"projectedNewtonCorrection":2.6877019109339712E-12},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":3.243030940769387E-5,"width":6.0484130278481985E-5,"relativeAmplitude":3.442280794960679E-5}}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":1.0,"seed":101,"voxels":1,"admitted":1,"latencyP95":3.243030940769387E-5,"widthP95":6.0484130278481985E-5,"amplitudeP95":3.442280794960679E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":18719251167,"responseNanos":3274957417,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":1.0,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596842,0.26460126590435307],"fitEnergy":393.8091919615051,"fitAmplitudes":[-1.5478086130848294,1.9542117416296656,-0.7316437202711789],"fitHessian":[339.27173066113545,-3.0795722835084933,-3.0795722835084933,561.6168132647099],"fitSd":[0.07678068264851255,0.0596768313885042],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":393.8091919615051,"gradient":[-9.123827110490978E-10,1.0336975719837938E-10],"hessian":[339.27173066113545,-3.0795722835084933,-3.0795722835084933,561.6168132647099],"amplitudes":[-1.5478086130848294,1.9542117416296656,-0.7316437202711789],"curvature":"PositiveDefinite","conditionalSd":[0.07678068264851255,0.0596768313885042],"sdFailure":null,"projectedNewtonCorrection":2.6877019109339712E-12},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":3.243030940769387E-5,"width":6.0484130278481985E-5,"relativeAmplitude":3.442280794960679E-5}}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":1.0661089234531573E-4,"widthP95":7.970393682290577E-4,"amplitudeP95":7.661184124903432E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":18719251167,"responseNanos":5669921750,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736096,0.6666621149815529],"fitEnergy":2453.7822503418342,"fitAmplitudes":[1.4935428030711957,-1.736249678170885,-1.553298371977236],"fitHessian":[176.88818474998493,-20.799461823241483,-20.799461823241483,871.8436327024237],"fitSd":[0.10648184973168426,0.047962929286374266],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2453.7822503418342,"gradient":[-1.173607877547056E-10,-6.519513817693223E-10],"hessian":[176.88818474998493,-20.799461823241483,-20.799461823241483,871.8436327024237],"amplitudes":[1.4935428030711957,-1.736249678170885,-1.553298371977236],"curvature":"PositiveDefinite","conditionalSd":[0.10648184973168426,0.047962929286374266],"sdFailure":null,"projectedNewtonCorrection":7.657613128122968E-13},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"decoderDirectEnergy":2453.756981957419,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":1.0661089234531573E-4,"width":7.970393682290577E-4,"relativeAmplitude":7.661184124903432E-5}}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":1.0661089234531573E-4,"widthP95":7.970393682290577E-4,"amplitudeP95":7.661184124903432E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":18719251167,"responseNanos":5669921750,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736096,0.6666621149815529],"fitEnergy":2453.7822503418342,"fitAmplitudes":[1.4935428030711957,-1.736249678170885,-1.553298371977236],"fitHessian":[176.88818474998493,-20.799461823241483,-20.799461823241483,871.8436327024237],"fitSd":[0.10648184973168426,0.047962929286374266],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2453.7822503418342,"gradient":[-1.173607877547056E-10,-6.519513817693223E-10],"hessian":[176.88818474998493,-20.799461823241483,-20.799461823241483,871.8436327024237],"amplitudes":[1.4935428030711957,-1.736249678170885,-1.553298371977236],"curvature":"PositiveDefinite","conditionalSd":[0.10648184973168426,0.047962929286374266],"sdFailure":null,"projectedNewtonCorrection":7.657613128122968E-13},"coherent":true,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"decoderDirectEnergy":2453.756981957419,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":1.0661089234531573E-4,"width":7.970393682290577E-4,"relativeAmplitude":7.661184124903432E-5}}
+{"kind":"paired","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","snr":0.5,"seed":102,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"paired","platform":"JVM","sourceId":"unfrozen-dev","cohort":"development","snr":1.0,"seed":101,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1.0,"seed":101,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":16453818042,"responseNanos":6552948917,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1.0,"seed":101,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.571428571428571,0.24891210582233286],"fitEnergy":395.7012312809957,"fitAmplitudes":[-1.4745071378138035,1.9547118921738817,-0.8029642079531887],"fitHessian":[341.5042951398084,-34.57945739579832,-34.57945739579832,560.8605094490765],"fitSd":[0.07676739207744332,0.05990284390849582],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":395.7012312809957,"gradient":[35.38574168365199,-10.781970903405778],"hessian":[341.5042951398084,-34.57945739579832,-34.57945739579832,560.8605094490765],"amplitudes":[-1.4745071378138035,1.9547118921738817,-0.8029642079531887],"curvature":"PositiveDefinite","conditionalSd":[0.07676739207744332,0.05990284390849582],"sdFailure":null,"projectedNewtonCorrection":0.10230942399538212},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1.0,"seed":101,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":16453818042,"responseNanos":6552948917,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1.0,"seed":101,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.571428571428571,0.24891210582233286],"fitEnergy":395.7012312809957,"fitAmplitudes":[-1.4745071378138035,1.9547118921738817,-0.8029642079531887],"fitHessian":[341.5042951398084,-34.57945739579832,-34.57945739579832,560.8605094490765],"fitSd":[0.07676739207744332,0.05990284390849582],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":395.7012312809957,"gradient":[35.38574168365199,-10.781970903405778],"hessian":[341.5042951398084,-34.57945739579832,-34.57945739579832,560.8605094490765],"amplitudes":[-1.4745071378138035,1.9547118921738817,-0.8029642079531887],"curvature":"PositiveDefinite","conditionalSd":[0.07676739207744332,0.05990284390849582],"sdFailure":null,"projectedNewtonCorrection":0.10230942399538212},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":16453818042,"responseNanos":3585337334,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.214285714285714,0.6265566315315669],"fitEnergy":2455.600681663962,"fitAmplitudes":[1.4590395810300378,-1.6860993492893812,-1.6025644035879623],"fitHessian":[179.651693085651,-11.65640646584782,-11.65640646584782,903.8555049315225],"fitSd":[0.10555556045412168,0.047059495770471194],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2455.600681663962,"gradient":[-19.993861290267283,-33.84976512355864],"hessian":[179.651693085651,-11.65640646584782,-11.65640646584782,903.8555049315225],"amplitudes":[1.4590395810300378,-1.6860993492893812,-1.6025644035879623],"curvature":"PositiveDefinite","conditionalSd":[0.10555556045412168,0.047059495770471194],"sdFailure":null,"projectedNewtonCorrection":0.11381750875586505},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"voxels":1,"admitted":0,"latencyP95":null,"widthP95":null,"amplitudeP95":null,"statuses":{"BudgetExceeded":1},"exits":{"NewtonStepCap":1},"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0},"auditAttempts":1,"auditFailures":0,"oracleUnresolved":0,"reference":{"setupNanos":16453818042,"responseNanos":3585337334,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"BudgetExceeded","budgetExit":"NewtonStepCap","coordinates":[6.214285714285714,0.6265566315315669],"fitEnergy":2455.600681663962,"fitAmplitudes":[1.4590395810300378,-1.6860993492893812,-1.6025644035879623],"fitHessian":[179.651693085651,-11.65640646584782,-11.65640646584782,903.8555049315225],"fitSd":[0.10555556045412168,0.047059495770471194],"auditAvailable":true,"auditFailure":null,"audit":{"jetEnergy":2455.600681663962,"gradient":[-19.993861290267283,-33.84976512355864],"hessian":[179.651693085651,-11.65640646584782,-11.65640646584782,903.8555049315225],"amplitudes":[1.4590395810300378,-1.6860993492893812,-1.6025644035879623],"curvature":"PositiveDefinite","conditionalSd":[0.10555556045412168,0.047059495770471194],"sdFailure":null,"projectedNewtonCorrection":0.11381750875586505},"coherent":true,"work":{"nodes":72,"jets":1,"exact":0,"terminal":0,"candidates":0,"steps":0,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"decoderDirectEnergy":null,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":null}
+{"kind":"paired","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","snr":0.5,"seed":102,"transitions":[{"voxel":0,"baseline":"BudgetExceeded","candidate":"BudgetExceeded"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"paired","platform":"JVM","sourceId":"unfrozen-dev","cohort":"zero-budget-control","snr":1.0,"seed":101,"transitions":[{"voxel":0,"baseline":"BudgetExceeded","candidate":"BudgetExceeded"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1.0,"seed":101,"voxels":1,"admitted":1,"latencyP95":3.243030940769387E-5,"widthP95":6.0484130278481985E-5,"amplitudeP95":3.442280794960679E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":21647994875,"responseNanos":13641118792,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":1.0,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596842,0.26460126590435307],"fitEnergy":393.8091919615051,"fitAmplitudes":[-1.5478086130848294,1.9542117416296656,-0.7316437202711789],"fitHessian":[339.27173066113545,-3.0795722835084933,-3.0795722835084933,561.6168132647099],"fitSd":[0.07678068264851255,0.0596768313885042],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":3.243030940769387E-5,"width":6.0484130278481985E-5,"relativeAmplitude":3.442280794960679E-5}}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1.0,"seed":101,"voxels":1,"admitted":1,"latencyP95":3.243030940769387E-5,"widthP95":6.0484130278481985E-5,"amplitudeP95":3.442280794960679E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":21647994875,"responseNanos":13641118792,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":416,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":104,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":1.0,"seed":101,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.468680948596842,0.26460126590435307],"fitEnergy":393.8091919615051,"fitAmplitudes":[-1.5478086130848294,1.9542117416296656,-0.7316437202711789],"fitHessian":[339.27173066113545,-3.0795722835084933,-3.0795722835084933,561.6168132647099],"fitSd":[0.07678068264851255,0.0596768313885042],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"decoderDirectEnergy":393.80717724231044,"failures":[],"starts":[{"gridNode":392,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":443,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":391,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":442,"coordinates":[6.46871337890625,0.2646209794419609],"amplitudes":[-1.547750613093328,1.9542254709999176,-0.7317103963319109],"energy":393.80717699044266,"requestedLevels":14,"completedLevels":14,"sweeps":26,"evaluations":104,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":3.243030940769387E-5,"width":6.0484130278481985E-5,"relativeAmplitude":3.442280794960679E-5}}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":1.0661089234531573E-4,"widthP95":7.970393682290577E-4,"amplitudeP95":7.661184124903432E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":21647994875,"responseNanos":17965704042,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":4,"totalCandidateBound":9}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-8j-2e-4c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736096,0.6666621149815529],"fitEnergy":2453.7822503418342,"fitAmplitudes":[1.4935428030711957,-1.736249678170885,-1.553298371977236],"fitHessian":[176.88818474998493,-20.799461823241483,-20.799461823241483,871.8436327024237],"fitSd":[0.10648184973168426,0.047962929286374266],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"decoderDirectEnergy":2453.756981957419,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":1.0661089234531573E-4,"width":7.970393682290577E-4,"relativeAmplitude":7.661184124903432E-5}}
+{"kind":"cell","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"voxels":1,"admitted":1,"latencyP95":1.0661089234531573E-4,"widthP95":7.970393682290577E-4,"amplitudeP95":7.661184124903432E-5,"statuses":{"Accepted":1},"exits":{},"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0},"auditAttempts":1,"auditFailures":1,"oracleUnresolved":0,"reference":{"setupNanos":21647994875,"responseNanos":17965704042,"responses":1,"gridGeometries":1071,"refinementStarts":4,"continuousEvaluations":384,"continuousHighWater":1,"continuousCached":0,"cachedNumericBytes":15499512,"continuousNumericBytes":14472,"refinementSweeps":96,"refinementFailures":0,"maxSweepsPerStart":256,"levels":14},"candidateGate":false,"perIterationCandidateCap":8,"totalCandidateBound":13}
+{"kind":"voxel","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","policy":"gaussian-d2-6n-12j-2e-8c","snr":0.5,"seed":102,"terminal":{"voxel":0,"status":"Accepted","budgetExit":null,"coordinates":[6.329733075736096,0.6666621149815529],"fitEnergy":2453.7822503418342,"fitAmplitudes":[1.4935428030711957,-1.736249678170885,-1.553298371977236],"fitHessian":[176.88818474998493,-20.799461823241483,-20.799461823241483,871.8436327024237],"fitSd":[0.10648184973168426,0.047962929286374266],"auditAvailable":false,"auditFailure":"terminal-jet-unavailable","audit":null,"coherent":false,"work":{"nodes":72,"jets":4,"exact":0,"terminal":0,"candidates":3,"steps":3,"fallbacks":0}},"reference":{"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"decoderDirectEnergy":2453.756981957419,"failures":[],"starts":[{"gridNode":696,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":747,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":697,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"},{"gridNode":748,"coordinates":[6.32962646484375,0.6664883220498664],"amplitudes":[1.4934597447408453,-1.7361946351847943,-1.553485508031951],"energy":2453.756968219896,"requestedLevels":14,"completedLevels":14,"sweeps":24,"evaluations":96,"finalTestedStep":[6.103515625E-6,4.033678710883543E-6],"termination":"DepthComplete"}]},"accuracy":{"voxel":0,"latency":1.0661089234531573E-4,"width":7.970393682290577E-4,"relativeAmplitude":7.661184124903432E-5}}
+{"kind":"paired","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","snr":0.5,"seed":102,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+{"kind":"paired","platform":"JVM","sourceId":"unfrozen-dev","cohort":"audit-failure-control","snr":1.0,"seed":101,"transitions":[{"voxel":0,"baseline":"Accepted","candidate":"Accepted"}],"acceptedToRefused":[],"newlyAdmitted":[],"newlyAdmittedErrors":[],"newlyLatencyP95":null,"newlyWidthP95":null,"newlyAmplitudeP95":null}
+scalafim.fmri.laws.profile.ConditionC0QualificationSuite:
+  + public C0 block widths preserve all signed outputs, sample IDs and seven work fields 4.236s
+  + a failed sink stops immediately and full-volume retention is refused 0.015s
+  + terminal stationarity uses the free block and requires curvature when every bound is active 0.006s
+  + bounded DEV paired study exercises complete audits and parseable report without qualification 27.929s
+  + zero-admission control retains every attempt and cannot qualify 26.758s
+==> X scalafim.fmri.laws.profile.ConditionC0QualificationSuite.unavailable-audit control cannot reuse or substitute evidence  53.966s java.util.concurrent.TimeoutException: test timed out after 30 seconds
+  + candidate total quota and bounded oracle exhaustion are explicit 0.343s
+  + fixed compass resolution converges a coupled off-grid quadratic and reports tested mesh 0.004s
+scalafim.fmri.laws.profile.ProfileReductionLawsSuite:
+  + compact energy, amplitudes and jets equal the direct time-domain fit at alpha = 0 9.697s
+scalafim.fmri.laws.profile.LwuConditionDiagnosticSuite:
+==> X scalafim.fmri.laws.profile.LwuConditionDiagnosticSuite.historical LWU diagnostic retains fit, input availability and all work fields  41.987s java.util.concurrent.TimeoutException: test timed out after 30 seconds
+scalafim.fmri.laws.profile.ObservedFamilyCertificationSuite:
+  + the observed family is certified under whitening and nuisance projection 8.45s
+  + an aliased condition cell is refused as rank loss, not certified 0.015s
+scalafim.fmri.laws.profile.ObservedFamilyAdmissionSuite:
+  + both public admissions accept exactly matched condition geometry 1.378s
+  + both public admissions refuse a condition-label permutation preserving column space 0.069s
+  + both public admissions refuse changed continuous weights with the same source form 0.233s
+  + both public admissions refuse changed run frame and convolution precision 0.034s
+scalafim.fmri.laws.profile.ConditionProfileFitSuite:
+  + cancellation before read, during read and after delivery never returns successful completion 8.274s
+  + the structure maps the plan's task columns by condition and basis 0.002s
+  + admission refuses a different compiled-plan nuisance geometry before preparation 0.073s
+  + admission refuses same-shaped shifted task and nuisance geometry, and OLS whitening 0.257s
+  + the Gram route agrees with the compact route and the direct oracle, streaming blocks in order 0.315s
+  + trial outputs and mismatched structures are refused before any response is read 0.031s
+[compact-condition] admitted 22/24, max |tau - oracle| = 3.706373704650545E-4, max rel amp = 1.0634654267560602E-4, per voxel: nodes 71.875, jets 4.458333333333333, exact 0.125
+scalafim.fmri.laws.profile.CompactConditionRuntimeSuite:
+  + a certificate cannot be reused for a same-sized changed observed geometry 6.185s
+  + decoded shapes and amplitudes agree with the dense oracle on a synthetic cohort 9.479s
+  + readout converts amplitudes into the requested normalisation 0.16s
+[error] Failed: Total 25, Failed 2, Errors 0, Passed 23
+[error] Failed tests:
+[error] 	scalafim.fmri.laws.profile.LwuConditionDiagnosticSuite
+[error] 	scalafim.fmri.laws.profile.ConditionC0QualificationSuite
+[error] (firstLevelLawsJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 220 s (0:03:40.0), completed Oct 1, 2026, 9:47:29 a.m.

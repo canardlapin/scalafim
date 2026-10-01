@@ -1,0 +1,8 @@
+{
+  "sourceCommit": "8840dbfcebb53ccf60396b8244b75235eb589bd4",
+  "auxiliarySelectorSha256": "86feb7bd55caf008f5df7c31b02126bf1d69bd28ab43200500c7f3ec07e94396",
+  "linkedMainPath": "modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+  "linkedMainSha256": "117caf2979c1498bc48ff68623701d321839a62ed564530cad64666876b744f9",
+  "nodeReceipt": "tangent-js-dev-v1.log.meta.json",
+  "linkReceipt": "tangent-js-accuracy-link-v2.log.meta.json"
+}
