@@ -151,14 +151,14 @@ class ShapeDecoderTangentSuite extends munit.FunSuite:
       assertEqualsDouble(result.dataHessian.head, 2.0, 0.0)
 
   test("a finite jet whose Newton solve overflows stalls without an objective callback"):
-    val objective = new Line(NodeGrid(ShapeChart(("x", 0.0, 1.0)), Vector(2)), 0.0, 1e15, 1.0,
+    val objective = new Line(NodeGrid(ShapeChart(("x", 0.0, 1.0)), Vector(2)), 0.0, 1e308, 1.0,
       curvature = Double.MinPositiveValue)
     val counters = new DecoderCounters
     val result = new ShapeDecoder(objective, DecodeBudget(coarseStride = 1), None, 1.0).decode(counters)
     assertEquals(result.status, DecodeStatus.Stalled)
     assertEquals(result.budgetExit, None)
     assertEqualsDouble(result.coordinates.head, 0.0, 0.0)
-    assertEqualsDouble(result.energy, 1e15, 0.0)
+    assertEqualsDouble(result.energy, 1e308, 0.0)
     assertEqualsDouble(result.amplitudes.head, 3.0, 0.0)
     assertEqualsDouble(result.dataHessian.head, Double.MinPositiveValue, 0.0)
     assertEquals(counters.candidateAttempts, 0L)
