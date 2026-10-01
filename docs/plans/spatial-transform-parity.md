@@ -1166,6 +1166,26 @@ All-module compilation on both platforms passed without warnings; production
 and build bytes are unchanged between that run and the final tested source.
 Evidence and reproduction: `docs/verification/stp-fsl-real-20260930/README.md`.
 
+### P7.07 real surface-chain qualification (2026-10-01)
+
+`surface.real-orig-to-fsaverage-to-fslr32k.v1` adds a bounded real left-hemisphere
+contract: pinned CC0 ds002748 sub-01 orig/white/pial/sphere.reg, matching tkRAS
+placement, seven-point trilinear segment ribbon, registered fsaverage 164k and
+fsLR32k spheres. Both template gauges and ordered faces match their pinned HCP
+originals exactly. Native commands run full surfaces; the portable scenario
+covers a connected patch of 64 geometry-selected fsLR queries and exact contributing
+mesh/volume subsets. It does not assert a full stock mesh domain.
+
+Public double radial mathematics are checked independently at 1e-9; native
+Workbench closest-point routes have separate references and input-derived
+estimator bounds. Analytic linear-field commutativity has a per-query bound
+derived from contributing radial-hit distances and convex weight propagation.
+Arbitrary real intensity staged/direct differences are descriptive, not a
+zero-error requirement. The scenario requires clean `Pass`; historical
+synthetic caveats, polyhedral overlap and template-volume contracts remain
+separate. Evidence: `docs/verification/stp-surface-real-20261001/README.md`.
+Final acceptance and exact-source peer review are recorded with that evidence.
+
 ### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
 
 - **Linked cursor.** `scalafim.image.world.WorldLink[L, R]` is the typed map

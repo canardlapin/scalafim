@@ -1,0 +1,39 @@
+Contract frozen; full-face independent geometry search
+Contributing closure 167 192 64 vertices; crop (10, 14, 17)
+{
+  "independent_closest_vs_native_max_abs": {
+    "direct": 0.00012464241648046936,
+    "staged": 0.00011950632759294422,
+    "ribbon": 0.00017049097579047157
+  },
+  "radial_vs_native_direct_max_abs": 0.00021919156702665532,
+  "radial_vs_native_staged_max_abs": 0.00015767543011691032,
+  "real_staged_direct_gap_descriptive": {
+    "max": 0.29796266560185813,
+    "median": 0.060121372019949604,
+    "p95": 0.24753784623460615
+  },
+  "analytic_commutativity_max_bound": 0.0001920374989730609,
+  "analytic_commutativity_max_abs": 3.745506770092e-05,
+  "source_vertices": 136031,
+  "fsaverage_vertices": 163842,
+  "fslr_vertices": 32492,
+  "subject_retained_vertices": 167,
+  "fsaverage_retained_vertices": 192,
+  "crop_start": [
+    139,
+    71,
+    74
+  ],
+  "crop_shape": [
+    10,
+    14,
+    17
+  ],
+  "crop_values_exact": true,
+  "successful_native_commands": 11,
+  "numpy": "2.5.3",
+  "nibabel": "5.4.2",
+  "workbench_wrapper_sha256": "b2506d131aec9bc8e32930b8e8fdd055dd926b060ae661a1eb09b8c0a9f7ba27",
+  "workbench_executable_sha256": "64c956c20640e48c3e9c148da7c0940c388b4162273613ba28319d673ec9e2a2"
+}

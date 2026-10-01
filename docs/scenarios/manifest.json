@@ -768,6 +768,34 @@
       "caveats": []
     },
     {
+      "id": "surface.real-orig-to-fsaverage-to-fslr32k.v1",
+      "tier": "workflow_parity",
+      "module": "surface",
+      "suite_class": "scalafim.surface.scenarios.SurfaceRealChainScenarioSuite",
+      "suite_path": "modules/surface/shared/src/test/scala/scalafim/surface/scenarios/SurfaceRealChainScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": [
+        "jvm",
+        "js"
+      ],
+      "reference": {
+        "kind": "native_workbench_trilinear_and_barycentric_plus_independent_full_face_geometry",
+        "description": "Pinned real CC0 ds002748 sub-01 orig/white/pial/sphere.reg, registered fsaverage and fsLR32k template spheres with separate notices. Geometry-only frozen connected patch of 64 targets; seven-point segment ribbon, strict independent double radial mathematics, separate closest-point Workbench route references and input-only estimator bounds. Analytic commutativity has per-query geometry bounds; arbitrary real intensity route gap is descriptive. No whole-mesh, polyhedral ribbon, overlap, template-volume or registration-quality claim.",
+        "source_paths": [
+          "tools/transform/generate_surface_real_chain_oracle.py",
+          "modules/surface/shared/src/test/resources/scalafim/surface/oracle/real_chain/manifest.json"
+        ]
+      },
+      "allowed_statuses": [
+        "pass"
+      ],
+      "acceptance_commands": [
+        "sbt surfaceJVM/test",
+        "sbt surfaceJS/test"
+      ],
+      "caveats": []
+    },
+    {
       "id": "surface.volume-to-template-mesh-chain.v1",
       "tier": "workflow_parity",
       "module": "surface",
