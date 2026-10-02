@@ -86,14 +86,15 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     Response.categorical(Vector("a", "a", "b", "b")).toOption.get
 
   test("volume label maps become regional feature plans with linear voxel ordering") {
-    val spatial = SpatialFeatureSetPlans.volumeLabels("volume-labels", labelVolume).toOption.get
+    val labels = labelVolume
+    val spatial = SpatialFeatureSetPlans.volumeLabels("volume-labels", labels).toOption.get
     val plan = spatial.plan
 
     spatial.domain match
       case SpatialFeatureDomain.VolumeLabels(actual, background) =>
         assertEquals(background, Set(0))
         val actualD3 = SampleSpaces.requireD3(actual).toOption.get
-        val expectedD3 = SampleSpaces.requireD3(volumeSpace).toOption.get
+        val expectedD3 = SampleSpaces.requireD3(labels.sampleSpace).toOption.get
         assert(
           SamplingAlignment.exact(actualD3, expectedD3).isRight
         )

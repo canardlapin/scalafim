@@ -132,6 +132,30 @@ class FreeSurferSurfaceReaderSuite extends munit.FunSuite:
         FreeSurferSurfaceReader.readAscii(path)
     }
 
+  test("read infers VeryInflated from HCP and TemplateFlow very-inflated file names"):
+    Vector(
+      "L.very_inflated.32k_fs_LR" -> None,
+      "tpl-fsLR_den-32k_hemi-L_veryinflated" -> Some(Hemisphere.Left)
+    ).foreach: (prefix, hemisphere) =>
+      withTempFile(prefix, ".asc") { path =>
+        Files.writeString(
+          path,
+          """#!ascii version in FreeSurfer format
+            |3 1
+            |0 0 0
+            |1 0 0
+            |0 1 0
+            |0 1 2
+            |""".stripMargin,
+          StandardCharsets.UTF_8
+        )
+
+        val geom = FreeSurferSurfaceReader.read(path)
+
+        assertEquals(geom.kind, SurfaceKind.VeryInflated, prefix)
+        hemisphere.foreach(expected => assertEquals(geom.hemisphere, expected, prefix))
+      }
+
   private def withTempFile[A](prefix: String, suffix: String)(f: java.nio.file.Path => A): A =
     val path = Files.createTempFile(prefix, suffix)
     try f(path)
