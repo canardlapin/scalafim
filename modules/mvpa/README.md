@@ -112,3 +112,21 @@ adapters; operator representation alone is not evidence of whole-brain compute
 readiness. Kernels come from pinned Multivar/Gale.
 
 Current migration evidence: [M3.01 native global/canonical verification](../../docs/verification/umvpa-global-canonical-20261001.md).
+
+### Pattern interpretation
+
+`PatternInterpretation.calibrated(heads)` returns the structured forward
+loadings and the distinct calibrated filters `W = Psi^-1 A G^-1`; its named
+scores are unshrunk component estimates. A singular or relatively deficient
+Gram matrix returns a typed factorization refusal with the requested tolerance.
+No jitter or pseudoinverse is added.
+
+`empiricalCalibrated`, `empiricalRaw`, `empiricalPosterior`, and
+`empiricalTargets` estimate `Cov(x, score) Cov(score)^-1` on a declared
+independent diagnostic population. They require actual sample reindexing legs
+and reject training, selection, or tuning overlap before scoring. Diagnostics
+retain the score coordinates, population/source/content identity and covariance
+denominator. They may be dense or differ from the forward loadings; they are
+not significance maps. Singular empirical score covariance is an explicit
+refusal. Dense ceilings cover adapter arrays; process and upstream numerical
+workspace are outside those ceilings.
