@@ -100,8 +100,8 @@ analysis-plan constructors. The independent arithmetic generator is
 
 ```sh
 LC_ALL=C LANG=C Rscript tools/mvpa-inference/generate_rank_fixtures.R
-JAVA_TOOL_OPTIONS=-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rotations-20261002 SBT_WARM_HEAP=8g python3 tools/build/sbt-warm 'mvpaJVM/testOnly scalafim.fmri.mvpa.analysis.RankConfirmationSuite'
-JAVA_TOOL_OPTIONS=-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rotations-20261002 SBT_WARM_HEAP=8g python3 tools/build/sbt-warm 'mvpaJS/testOnly scalafim.fmri.mvpa.analysis.RankConfirmationSuite'
+JAVA_TOOL_OPTIONS=-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rotations-20261002 SBT_WARM_HEAP=8g python3 /Users/bbuchsbaum/code/scala/scalafim/tools/build/sbt-warm 'mvpaJVM/testOnly scalafim.fmri.mvpa.analysis.RankConfirmationSuite'
+JAVA_TOOL_OPTIONS=-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rotations-20261002 SBT_WARM_HEAP=8g python3 /Users/bbuchsbaum/code/scala/scalafim/tools/build/sbt-warm 'mvpaJS/testOnly scalafim.fmri.mvpa.analysis.RankConfirmationSuite'
 ```
 
 ## Verification and exact provenance
