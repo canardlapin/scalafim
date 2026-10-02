@@ -18,3 +18,9 @@ class PatternArchiveProfileSuite extends munit.FunSuite:
     val encoded = PatternProfileMetadata.document(ujson.Obj("Kind" -> "categorical", "Seed" -> Long.MaxValue.toString))
     assertEquals(PatternProfileMetadata.content(encoded, 1024).map(_("Seed").str), Right(Long.MaxValue.toString))
     assert(PatternProfileMetadata.content("{\"Schema\":\"other\",\"Content\":{}}", 1024).isLeft)
+
+  test("durable optimizer resume and shared filesystem reopen refuse with their exact unsupported capability"):
+    assertEquals(PatternArchiveProfile.resumeCheckpoint(),
+      Left(PatternArchiveError.Unsupported("durable fitter checkpoint resumption is not supported by pattern profile v1")))
+    assertEquals(PatternProfileMetadata.durableReadUnavailable,
+      Left(PatternArchiveError.Unsupported("local verified-object pattern archive reading is JVM-only")))
