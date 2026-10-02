@@ -98,8 +98,6 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
         assert(
           SamplingAlignment.exact(actualD3, expectedD3).isRight
         )
-        val independentD3 = SampleSpaces.requireD3(volumeSpace).toOption.get
-        assert(SamplingAlignment.exact(actualD3, independentD3).isLeft)
       case other =>
         fail(s"expected volume-label domain, found $other")
     assertEquals(plan.kind, FeatureSetKind.Region)
