@@ -19,9 +19,10 @@ method-owned Alder head over each entry. See the executable
 [atlas workflow](../../examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala),
 which is tested on JVM and Scala.js.
 
-`SpatialFeatureSetPlans` and `LocusFeatureSetPlans` remain for inventoried
-relational (M2.09) and one-shot/structured (M3.13) consumers. Their legacy
-`FeatureSetPlan` engines are not the predictive workflow API.
+Spatial regions, selections, volume neighborhoods, and surface patches are
+all expressed as typed measurement-frame entries. Local numerical work is
+performed from those measured observations; this module no longer exposes a
+legacy feature-set-plan or searchlight execution adapter.
 
 Run it directly with:
 
