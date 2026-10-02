@@ -1,16 +1,14 @@
 package scalafim.fmri.mvpa
 
+/** Generic engine result retained only until the named M3.13 engine cutover.
+  * Migrated prediction and relation methods return their own typed artifacts.
+  */
 final case class RoiAnalysisResult(
     metrics: MetricVector,
     payload: Option[RoiPayload] = None
 )
 
-/** Relational compatibility boundary; M2.09 removes remaining consumers and
-  * M3.13 removes the universal result/engine definitions. No predictive callers. */
-enum RoiPayload:
-  case Rdm(rdm: LabeledRdm)
-  case Rsa(observed: Option[LabeledRdm], scores: Vector[RsaScore])
-  case SamplewiseRsa(modelName: String, scores: Vector[SamplewiseRsaScore])
-
-final case class RsaScore(modelName: String, value: Double):
-  require(modelName.trim.nonEmpty, "RSA model name must be non-empty")
+/** No migrated method can construct a payload. M3.13 removes this empty
+  * generic-engine boundary together with RoiAnalysisResult and RoiOutcome.
+  */
+sealed trait RoiPayload

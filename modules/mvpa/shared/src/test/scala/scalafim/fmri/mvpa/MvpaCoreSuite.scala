@@ -211,7 +211,11 @@ class MvpaCoreSuite extends munit.FunSuite:
   test("fold-required analyses reject missing folds before visiting feature sets") {
     val plan = FeatureSetPlan.regional("two-regions", Vector(FeatureSet.unsafe(RoiId(1), Vector(0, 1)))).toOption.get
     val source = new CountingSource(toyData)
-    val analysis = CrossnobisAnalysis()
+    val analysis = new FoldRequiredDenseRoiAnalysis:
+      val name = "generic-fold-contract"
+      override def missingFoldsError = MvpaError.MissingFoldPlan(name)
+      def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext) =
+        meanAnalysis.evaluate(roi, context)
     var visited = false
 
     val result = MvpaStream.foreach(source, plan, toyResponse, analysis) { _ =>
@@ -238,7 +242,7 @@ class MvpaCoreSuite extends munit.FunSuite:
 
   test("engine records the named feature set plan used for an analysis") {
     val plan = FeatureSetPlan.regional("two-regions", Vector(FeatureSet.unsafe(RoiId(1), Vector(0, 1)))).toOption.get
-    val analysis = RdmAnalysis(RdmMethod.SquaredEuclidean())
+    val analysis = meanAnalysis
 
     val result = MvpaEngine.run(toyData, plan, toyResponse, analysis, folds = None).toOption.get
 

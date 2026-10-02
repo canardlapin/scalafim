@@ -12,7 +12,8 @@ final class MeasuredObservations[S <: SemanticSpace, L <: SemanticSpace] private
     val local: multivar.core.SpaceEvidence[L],
     val localAxis: scalafim.fmri.mvpa.AxisDescriptor,
     val patterns: Table[S, L],
-    val source: scalafim.fmri.mvpa.EvidenceSource
+    val source: scalafim.fmri.mvpa.EvidenceSource,
+    val origins: scalafim.fmri.mvpa.EvidenceOrigins
 )
 
 final class MeasurementLeg[N <: SemanticSpace, SK, L <: SemanticSpace] private[measurement] (
@@ -25,7 +26,30 @@ final class MeasurementLeg[N <: SemanticSpace, SK, L <: SemanticSpace] private[m
     if observations.neuralAxis != source.descriptor then
       Left(MeasurementError.SourceMismatch(source.descriptor, observations.neuralAxis))
     else
-      Right(new MeasuredObservations[S, L](observations.samples, observations.sampleAxis, local.evidence, local.descriptor, leg.star.andThen(observations.patterns), observations.source))
+      val measured = leg.star.andThen(observations.patterns)
+      Right(new MeasuredObservations[S, L](observations.samples, observations.sampleAxis, local.evidence, local.descriptor, measured, observations.source,
+        observations.origins.reindexOutput(observations.sampleAxis, measured.valueIdentity)))
+
+  /** Compose a measurement with explicitly identified observations and retain
+    * the exact sample witness. No raw operator is decoded or evaluated here.
+    */
+  def measureIdentified[S <: SemanticSpace, TK](
+      samples: AxisRef[TK] { type Id = S },
+      observations: Observations[S, N]
+  ): Either[MeasurementError, Observations[S, L]] =
+    if samples.descriptor != observations.sampleAxis then
+      Left(MeasurementError.SourceMismatch(samples.descriptor, observations.sampleAxis))
+    else if observations.neuralAxis != source.descriptor then
+      Left(MeasurementError.SourceMismatch(source.descriptor, observations.neuralAxis))
+    else
+      val measured = leg.star.andThen(observations.patterns)
+      Observations.fromTable(
+        samples,
+        local,
+        measured,
+        observations.source,
+        observations.origins.reindexOutput(samples.descriptor, measured.valueIdentity)
+      ).left.map(error => MeasurementError.Axis(error.message))
 
 object MeasurementLeg:
   def identity[K](source: AxisRef[K], id: MeasurementId, rendition: Vector[(String, String)] = Vector.empty): Either[MeasurementError, MeasurementLeg[source.Id, K, source.Id]] =

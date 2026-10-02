@@ -4,7 +4,7 @@ import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{IndexSpace, Injection}
 import scala.compiletime.testing.typeCheckErrors
-import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
+import scalafim.fmri.mvpa.{AcquisitionCoordinates, AxisRef, EvidenceOrigins, EvidenceSource, Observations, PreparationSupport, ValueSupport}
 import scalafim.response.{Provenance, ProvenanceId, SourceId}
 
 class MeasurementLegSuite extends munit.FunSuite:
@@ -91,3 +91,16 @@ def foreign[S <: SemanticSpace, N <: SemanticSpace, M <: SemanticSpace, L <: Sem
 """)
     assert(errors.nonEmpty)
     assert(errors.exists(_.message.contains("evidence")))
+
+  test("local measurement preserves acquisition and preparation support while binding its output values"):
+    val samples = axis("samples",Vector("s1","s2"))
+    val neural = axis("neural",Vector("a","b","c"))
+    val identity = ValueIdentity.source(ValueId.unsafe("supported-values"))
+    val direct = ValueSupport.Bounded(samples.descriptor,identity,Vector(0,1))
+    val origins = right(EvidenceOrigins.make(source,identity,AcquisitionCoordinates.OriginalTemporalAxis(samples.descriptor),direct,
+      PreparationSupport.JointlyLearned(direct,ValueSupport.Unknown),samples.descriptor))
+    val input = right(Observations.fromDense(samples,neural,DMat.dense(2,3,Vector(1.0,2.0,3.0,4.0,5.0,6.0)),identity,source,origins))
+    val selected = right(MeasurementLeg.hardSelection(neural,MeasurementId.unsafe("tail"),right(Injection.from(IArray(2),right(IndexSpace.of(3))))))
+    val measured = right(selected.measure(input))
+    assertEquals(measured.origins,origins.reindexOutput(samples.descriptor,measured.patterns.valueIdentity))
+    assertNotEquals(measured.origins,EvidenceOrigins.Unknown)

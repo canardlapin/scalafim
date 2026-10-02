@@ -283,3 +283,23 @@ Remaining shared boundaries have explicit expiry:
 | Legacy spatial feature-plan helpers and dataset views | Inventoried relational/one-shot consumers; no new predictive orchestration | M2.09/M3.13 |
 
 No compatibility archive or replacement universal analysis registry was added.
+
+## M2.09 physical relational cutover (2026-10-01)
+
+The ordinary and signed workflows now consume identified observations or
+acquired trial-readout relations. Deleted the shared relational analyses, old
+operator geometry/result/receipt orchestration, `PartitionMeansBuilder`, and
+relational `RoiPayload` variants. Preserved labeled RDM/model/scoring numerical
+kernels. Ordinary geometry remains a distinct within-partition computation;
+signed products retain explicit pairing, metric admission and descriptive
+claims for shared or unknown origins. Missing cells remain non-estimable.
+
+`ObservationMeanRelations` owns sparse averaging and acquired scope; the bounded
+owned-dense path copies values and identifies actual content and grouping. Local
+measurements retain acquisition/preparation support. No analysis registry,
+compatibility archive or renamed legacy wrapper was added. Generic engine and
+empty payload boundaries, old matrix/source/response/fold types, and remaining
+canonical/one-shot callers keep their explicit M3.13 removal owner. Native tests
+replace deleted old-executor comparisons; no former operator-buffer benchmark
+claim transfers to the new execution path. Post-deletion receipts belong to
+`docs/verification/umvpa-relational-cutover-20261001.md`.

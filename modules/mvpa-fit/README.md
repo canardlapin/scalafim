@@ -3,29 +3,23 @@
 Shared JVM/Scala.js composition between first-level fMRI trial readouts and the
 portable MVPA operator boundary.
 
-For each run, `RunTrialReadout` composes a prepared `TrialReadout` \(A_r\) with
-its timepoints-by-features response \(Y_r\), yielding a `PatternOperator` for
-\(A_rY_r\). `OneShotDataset` validates one common feature axis, stacks those
-run operators by trial row, preserves run/trial identities and estimability,
-and derives leave-one-run-out folds. No trial-by-feature beta matrix is required
-by the operator path. Its `OperatorPatternSource` pushes each ROI feature
-selection into the run's time-series columns before composing with the trial
-readout, avoiding whole-feature-axis work for small MVPA regions.
+`IdentifiedReadoutRelations.withRuns` binds run partitions, effect and neural
+axes to actual `RunReadoutRelation` providers. For each run, it composes the
+prepared `TrialReadout` with the response operator directly as a typed relation
+without materializing trial-by-feature beta patterns. Metadata compatibility is
+checked before acquisition. Explicit scoped providers guard forward and adjoint
+applications, expire before closing, and preserve acquisition/preparation
+support. A one-shot declaration cannot authorize repeated relational evaluation.
 
-`OperatorCrossnobisAnalysis` and `OperatorCrossnobisRsaAnalysis` are the
-beta-free representational path. They apply the adjoint of the composed
-readout/response operator to fold-local condition averages, reduce those
-statistics directly to a crossvalidated condition Gram, and reuse the ordinary
-labeled RDM/RSA payloads and model scorers. Temporal nuisance remains inside
-the prepared `TrialReadout`; model-RDM nuisance remains an explicit
-`RdmScorer.PartialPearson` control. No trial-by-feature coefficient table is
-created between those two domains.
+Use the shared `RelationRdm` and `RelationConsumers` for signed geometry and
+RSA. Pairing and metric admission are explicit; temporal nuisance belongs to
+the prepared readout, and RSA model controls remain separate comparison inputs.
+The independent `BetaFreeRsaAcceptanceSuite` checks a three-run literal response
+fixture through this native route on JVM and Scala.js.
 
-`OneShotMvpaTask` and `OneShotMvpaEngine` target the existing
-`RoiOutcome`/`MvpaResult` surface through the canonical typed `MvpaTask` and
-`MvpaEngine` boundaries. They accept `OperatorRoiAnalysis`; dense analyses remain
-available through `RoiAnalysis.materializing` as the explicit Phase 2 parity
-path.
+`OneShotDataset`, `OneShotMvpaTask` and `OneShotMvpaEngine` are temporary boundaries
+for the remaining canonical consumers. Their M3.13 owner removes the generic
+ROI result and engine routes after those callers migrate.
 
 Predictive operator ridge and soft LDA now run through `AlderOperatorRidge`
 and `AlderSoftLda` in [mvpa-dataset](../mvpa-dataset/README.md). They retain the
@@ -35,8 +29,8 @@ fit audits and convergence/operator receipts. Soft LDA keeps component policy
 and trial nuisance explicit and fits nuisance scope using training rows.
 
 The earlier predictive CV analyses and universal predictive payloads were
-removed in M1.12. `OneShotDataset`, the generic one-shot engine and relational
-operator analyses above retain named M2.09/M3.13 migration ownership.
+removed in M1.12. Relational operator analyses and their universal payloads
+were removed in M2.09; remaining generic one-shot boundaries expire in M3.13.
 
 ## Canonical contrast effect
 

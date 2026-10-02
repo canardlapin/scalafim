@@ -84,7 +84,12 @@ class OperatorMvpaSuite extends munit.FunSuite:
 
   test("operator execution preserves canonical fold and feature failure contracts") {
     val folded =
-      RoiAnalysis.materializing(CrossnobisAnalysis())
+      RoiAnalysis.materializing(new FoldRequiredDenseRoiAnalysis:
+        val name = "generic-fold-contract"
+        override def missingFoldsError = MvpaError.MissingFoldPlan(name)
+        def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext) =
+          DenseAnalysisForTest.evaluate(roi, context)
+      )
     val missingFold =
       MvpaTask.evaluate(operatorSource, featureSets.head, response, folded)
     val missingFeature = MvpaTask.evaluate(
@@ -108,7 +113,7 @@ class OperatorMvpaSuite extends munit.FunSuite:
       RoiOutcome.Failure(
         featureSets.head.id,
         featureSets.head.featureIndices,
-        MvpaError.InvalidRdmInput("crossnobis analysis requires a fold plan")
+        MvpaError.MissingFoldPlan("generic-fold-contract")
       )
     )
     missingFeature match
