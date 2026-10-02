@@ -3,10 +3,12 @@ package scalafim.fmri.mvpa.relation
 import gale.linalg.{DMat, DVec, DoubleLinearOperator, MutableDVec}
 import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SemanticSpace, SpaceRole, Table, ValueId, ValueIdentity}
 import scala.compiletime.testing.typeCheckErrors
-import scalafim.fmri.mvpa.{AxisRef, EvidenceError, EvidenceIdentity, EvidenceOrigins}
+import resample4s.core.DigestAlgorithm
+import scalafim.fmri.mvpa.{AxisRef, Column, EvidenceError, EvidenceIdentity, EvidenceOrigins, LeaveOneGroupOutDesign, ScientificSeed}
 import scalafim.response.SourceId
 
 class QueryReuseSuite extends munit.FunSuite:
+  private given DigestAlgorithm = DigestAlgorithm.fnv1a64
   private val budget = QueryReuseBudget(32, 128, 1000)
   private val contractionBudget = ContractionBudget(1000, 16)
 
@@ -18,6 +20,8 @@ class QueryReuseSuite extends munit.FunSuite:
 
   private def valueIdentity(name: String): ValueIdentity =
     ValueIdentity.source(ValueId.unsafe(name))
+  private def digest(value: resample4s.core.DigestValue): String =
+    value.toIArray.iterator.map(byte => f"${byte & 0xff}%02x").mkString
 
   private def table[RK, CK](rows: AxisRef[RK], columns: AxisRef[CK], values: DMat, name: String): Table[rows.Id, columns.Id] =
     Lin.fromDenseMatrix(values, CoordinateEvidence.dual(columns.evidence), CoordinateEvidence.primal(rows.evidence), valueIdentity(name), SemanticProvenance.source("query-reuse"))
@@ -124,6 +128,54 @@ class QueryReuseSuite extends munit.FunSuite:
     assertRejected(decision(scopeChanged, old, "geometry"), Vector("geometry"))
     assertRejected(decision(program(node("geometry", fidelity = "f32")), program(node("geometry")), "geometry"), Vector("geometry"))
     assertRejected(decision(program(node("geometry", implementation = "gpu")), program(node("geometry")), "geometry"), Vector("geometry"))
+
+  test("reuse refusals name the changed metric source scope and scientific parameter"):
+    val effects = axis("reason-effects", SpaceRole.Latent, 1)
+    val neural = axis("reason-neural", SpaceRole.Observed, 1)
+    val oldRelation = relation(effects, neural, DMat.dense(1, 1, Vector(1.0)), "reason-old")
+    val changedOrigin = RelationOrigins(RelationSource("acq-2", "response", "readout", "prep", "noise"), RelationAccess.OwnedReplay("query-reuse"))
+    val newRelation = relation(effects, neural, DMat.dense(1, 1, Vector(1.0)), "reason-old", changedOrigin)
+    val old = program(node("geometry", dependencies = Vector(QueryDependency.relation(oldRelation), QueryDependency.Metric( neural.descriptor, neural.descriptor, valueIdentity("metric-1")), QueryDependency.Parameter("rsa-model", "one"), QueryDependency.Parameter("fold-grouping", "run-a"))))
+    val current = program(node("geometry", dependencies = Vector(QueryDependency.relation(newRelation), QueryDependency.Metric(neural.descriptor, neural.descriptor, valueIdentity("metric-2")), QueryDependency.Parameter("rsa-model", "two"), QueryDependency.Parameter("fold-grouping", "run-b"))))
+    decision(current, old, "geometry") match
+      case QueryReuseDecision.Rejected(_, reasons) =>
+        assert(reasons.exists(_.contains("relation source/origin")))
+        assert(reasons.exists(_.contains("metric dependency")))
+        assert(reasons.exists(_.contains("parameter 'rsa-model'")))
+        assert(reasons.exists(_.contains("parameter 'fold-grouping'")))
+      case other => fail(s"expected detailed rejection, got $other")
+
+  test("a mutated identified validation grouping invalidates reuse through its receipt, not a fold label"):
+    val samples = axis("validation-samples", SpaceRole.Samples, 6)
+    def validation(groups: Vector[String]) =
+      val column = right(Column.fromValues(samples, groups, valueIdentity(s"groups-${groups.mkString}")))
+      right(LeaveOneGroupOutDesign.bind(samples, column, ScientificSeed.fromLong(17L))(identity))
+    val first = validation(Vector("run-a", "run-a", "run-b", "run-b", "run-c", "run-c"))
+    val changed = validation(Vector("run-a", "run-b", "run-a", "run-b", "run-c", "run-c"))
+    assertNotEquals(first.receipt.grouping.membershipSignature.value, changed.receipt.grouping.membershipSignature.value)
+    assertNotEquals(first.receipt.plan.assignment.value, changed.receipt.plan.assignment.value)
+    val before = program(node("validation-score", dependencies = Vector(QueryDependency.Parameter("validation-membership", first.receipt.grouping.membershipSignature.value), QueryDependency.Parameter("validation-assignment", digest(first.receipt.plan.assignment.value)))))
+    val after = program(node("validation-score", dependencies = Vector(QueryDependency.Parameter("validation-membership", changed.receipt.grouping.membershipSignature.value), QueryDependency.Parameter("validation-assignment", digest(changed.receipt.plan.assignment.value)))))
+    decision(after, before, "validation-score") match
+      case QueryReuseDecision.Rejected(_, reasons) =>
+        assert(reasons.exists(_.contains("validation-membership")))
+        assert(reasons.exists(_.contains("validation-assignment")))
+      case other => fail(s"expected validation receipt rejection, got $other")
+
+  test("a model-only change does not blame unchanged relation metric or fold dependencies"):
+    val effects = axis("specific-reason-effects", SpaceRole.Latent, 1)
+    val neural = axis("specific-reason-neural", SpaceRole.Observed, 1)
+    val evidence = relation(effects, neural, DMat.dense(1, 1, Vector(1.0)), "specific-reason")
+    val unchanged = Vector(QueryDependency.relation(evidence),
+      QueryDependency.Metric(neural.descriptor, neural.descriptor, valueIdentity("metric")),
+      QueryDependency.Parameter("fold-grouping", "same"))
+    val before = program(node("comparison", dependencies = unchanged :+ QueryDependency.Parameter("rsa-model", "one")))
+    val current = program(node("comparison", dependencies = unchanged :+ QueryDependency.Parameter("rsa-model", "two")))
+    decision(current, before, "comparison") match
+      case QueryReuseDecision.Rejected(paths, reasons) =>
+        assertEquals(paths, Vector(Vector(QueryProductId("comparison"))))
+        assertEquals(reasons, Vector("parameter 'rsa-model' changed"))
+      case other => fail(other.toString)
 
   test("retained budget refusal occurs before callback and separate dense metric ROI scopes cannot be additively reused"):
     val retained = right(RetainedQuery(QueryProductId("geometry"), program(node("geometry")), "payload", 4, budget))

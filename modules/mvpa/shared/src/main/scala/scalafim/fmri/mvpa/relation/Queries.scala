@@ -198,17 +198,28 @@ final class SecondOrderQuery[
       .andThen(pair.left.estimate).andThen(experimental.star)
     var index = 0
     var total = 0.0
+    var compensation = 0.0
     var failure: Option[EvidenceError] = None
     while index < pair.right.effectAxis.size && failure.isEmpty do
       val basis = DMat.tabulate(pair.right.effectAxis.size, 1)((row, _) => if row == index then 1.0 else 0.0)
       val diagonal = contraction(basis)
       diagonal match
         case Left(error) => failure = Some(EvidenceError.SemanticFailure(error))
-        case Right(value) => total += value(index, 0)
+        case Right(value) =>
+          val term = value(index, 0)
+          if !term.isFinite then failure = Some(EvidenceError.InvalidSource("second-order scalar contribution is non-finite"))
+          else
+            val next = total + term
+            if math.abs(total) >= math.abs(term) then compensation += (total - next) + term
+            else compensation += (term - next) + total
+            total = next
       index += 1
     failure match
       case Some(error) => Left(error)
-      case None => Right(ScalarRelationStatistic(total))
+      case None =>
+        val result = total + compensation
+        if result.isFinite then Right(ScalarRelationStatistic(result))
+        else Left(EvidenceError.InvalidSource("second-order scalar accumulation is non-finite"))
 
 object SecondOrderQuery:
   def apply[

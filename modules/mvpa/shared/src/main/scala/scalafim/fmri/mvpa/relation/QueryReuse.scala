@@ -77,7 +77,7 @@ final class QueryReuseProgram private[relation] (val nodes: Vector[QueryNode], v
         case None => changed += "product was not retained"
         case Some(before) =>
           if before.parents != node.parents then changed += "ordered parent dependencies changed"
-          if before.dependencies != node.dependencies then changed += "exact value, metric, scope, parameters or randomness changed"
+          changed ++= dependencyChanges(before.dependencies, node.dependencies)
           if before.fidelity != node.fidelity then changed += "numerical fidelity changed"
           if before.implementation != node.implementation then changed += "implementation binding changed"
       node.dependencies.foreach:
@@ -109,6 +109,34 @@ final class QueryReuseProgram private[relation] (val nodes: Vector[QueryNode], v
           )
         else QueryReuseDecision.Admitted
     nodes.map(node => node.id -> outcomes(node.id))
+
+  private def dependencyChanges(before: Vector[QueryDependency], current: Vector[QueryDependency]): Vector[String] =
+    if before == current then Vector.empty
+    else
+      val count = math.max(before.size, current.size)
+      (0 until count).flatMap: index =>
+        (before.lift(index), current.lift(index)) match
+          case (old, next) if old == next => Vector.empty
+          case (Some(QueryDependency.RelationValues(_, _, _, oldOrigins, _)), Some(QueryDependency.RelationValues(_, _, _, newOrigins, _))) if oldOrigins != newOrigins => Vector("relation source/origin dependency changed")
+          case (Some(QueryDependency.RelationValues(_, _, _, _, _)), Some(QueryDependency.RelationValues(_, _, _, _, _))) => Vector("relation values dependency changed")
+          case (Some(QueryDependency.Metric(_, _, _)), Some(QueryDependency.Metric(_, _, _))) => Vector("metric dependency changed")
+          case (Some(QueryDependency.Parameter(_, _)), Some(QueryDependency.Parameter(name, _))) => Vector(s"parameter '$name' changed")
+          case (Some(QueryDependency.Scope(_, _)), Some(QueryDependency.Scope(name, _))) => Vector(s"scope '$name' changed")
+          case (Some(QueryDependency.Target(_)), Some(QueryDependency.Target(_))) => Vector("target identity dependency changed")
+          case (Some(QueryDependency.RandomStream(_, _)), Some(QueryDependency.RandomStream(name, _))) => Vector(s"random stream '$name' changed")
+          case (_, Some(value)) => Vector(s"${dependencyName(value)} dependency changed")
+          case (Some(value), None) => Vector(s"${dependencyName(value)} dependency removed")
+          case (None, None) => Vector.empty
+      .toVector
+
+  private def dependencyName(value: QueryDependency): String = value match
+    case QueryDependency.RelationValues(_, _, _, _, _) => "relation values"
+    case QueryDependency.Metric(_, _, _) => "metric"
+    case QueryDependency.Target(_) => "target identity"
+    case QueryDependency.Scope(name, _) => s"scope '$name'"
+    case QueryDependency.Parameter(name, _) => s"parameter '$name'"
+    case QueryDependency.RandomStream(name, _) => s"random stream '$name'"
+    case QueryDependency.Unknown(name, _) => s"unknown '$name'"
 
 object QueryReuseProgram:
   def apply(nodes: Vector[QueryNode], budget: QueryReuseBudget): Either[EvidenceError, QueryReuseProgram] =

@@ -26,6 +26,17 @@ class ResidualMetricSuite extends munit.FunSuite:
     val metric = right(ResidualPrecisionMetric(covariance, ResidualMetricAdmission.Descriptive(MetricAdmission.Fixed(scalafim.fmri.mvpa.EvidenceOrigins.Unknown), provenance, "independent metric evidence absent"), 1))
     assert(metric.closure.flatMap(value => value(DMat.eye(2)).left.map(EvidenceError.SemanticFailure.apply)).isLeft)
 
+  test("framed residual metric provenance distinguishes source fields that collide under toString rendering"):
+    val covariance = right(ResidualCovariance.fromFactors(axis, Vector(1.0, 1.0), DMat.zeros(2, 1)))
+    def metric(source: RelationSource) =
+      right(ResidualPrecisionMetric(covariance, ResidualMetricAdmission.Descriptive(MetricAdmission.Fixed(scalafim.fmri.mvpa.EvidenceOrigins.Unknown),
+        ResidualMetricProvenance(source, axis.descriptor, axis.descriptor, "receipt", "diagonal", 8.0), "fixture"), 1))
+    val firstMetric = metric(RelationSource("a,b", "c", "readout", "prep", "noise"))
+    val secondMetric = metric(RelationSource("a", "b,c", "readout", "prep", "noise"))
+    val first = right(firstMetric.closure)
+    val second = right(secondMetric.closure)
+    assertNotEquals(first.valueIdentity, second.valueIdentity)
+
   test("rejected residual provenance cannot become an identity metric"):
     val covariance = right(ResidualCovariance.fromFactors(axis, Vector(1.0, 1.0), DMat.dense(2, 1, Vector(0.0, 0.0))))
     val metric = right(ResidualPrecisionMetric(covariance, ResidualMetricAdmission.Rejected("residuals unavailable; no covariance substitution"), 1))
@@ -100,6 +111,30 @@ class ResidualMetricSuite extends munit.FunSuite:
     assertEquals(result.residualProvenance.get.source, metricRelation.origins.source)
     result.cells.head match
       case RelationRdmCell.Estimated(value) => assertEqualsDouble(value, 23.0 / 17.0, 1e-12)
+      case other => fail(other.toString)
+    val fixedClosure = right(Lin.fromDenseMatrix(DMat.eye(neural.size), CoordinateEvidence.primal(neural.evidence), CoordinateEvidence.dual(neural.evidence), ValueIdentity.source(ValueId.unsafe("matched-identity-metric"))))
+    val fixedRaw = right(RelationRdm.compute(set, single, fixedClosure, MetricAdmission.Fixed(scalafim.fmri.mvpa.EvidenceOrigins.Unknown), Vector(argument), IdentityRdmPolicy(false)))
+    val fixedNormalized = right(RelationRdm.compute(set, single, fixedClosure, MetricAdmission.Fixed(scalafim.fmri.mvpa.EvidenceOrigins.Unknown), Vector(argument), IdentityRdmPolicy(true)))
+    fixedRaw.cells.head match
+      case RelationRdmCell.Estimated(value) => assertEqualsDouble(value, 3.0, 1e-12)
+      case other => fail(other.toString)
+    right(RelationRdm.residual(set, single, admitted, Vector(argument), IdentityRdmPolicy(true))).cells.head match
+      case RelationRdmCell.Estimated(value) => assertEqualsDouble(value, 23.0 / 34.0, 1e-12)
+      case other => fail(other.toString)
+    val reuse = QueryReuseBudget(8, 64, 16)
+    val workspace = RelationConsumerBudget(16, 512)
+    val closure = right(admitted.closureFor(neural.evidence, neural.descriptor))
+    val request: RelationRdmRequest[partitions.Id, effects.Id, neural.Id, String] = RelationRdmRequest(single, closure, MetricAdmission.Fixed(scalafim.fmri.mvpa.EvidenceOrigins.Unknown), Vector(argument), IdentityRdmPolicy(false))
+    val cached = RelationConsumers.cache(set, request, reuse, workspace).fold(error => fail(error.toString), identity)
+    val foreignLeft = left.origins.copy(source = left.origins.source.copy(readoutRevision = "foreign-readout"))
+    val foreignArgument = right(ConditionalErrorIndependence(foreignLeft, rightRelation.origins, left.origins.support, rightRelation.origins.support,
+      argument.reasoning, argument.conditionedMetric))
+    val foreignRequest: RelationRdmRequest[partitions.Id, effects.Id, neural.Id, String] = request.copy(declaredErrorIndependence = Vector(foreignArgument))
+    assert(right(single.assessOrigins(set.relations.map(_.origins), foreignRequest.metricAdmission, foreignRequest.declaredErrorIndependence)).claim.isInstanceOf[PairingClaim.Descriptive])
+    val model = right(SquareRelationModel("conditional-model", set.effectKeys, Map(("a", "b") -> 1.0), ValueIdentity.source(ValueId.unsafe("conditional-model")), "unit", "fixed", "none"))
+    assert(RelationConsumers.rsa(set, foreignRequest, cached, model, RelationRsaMethod.Pearson, reuse, workspace).isLeft)
+    fixedNormalized.cells.head match
+      case RelationRdmCell.Estimated(value) => assertEqualsDouble(value, 1.5, 1e-12)
       case other => fail(other.toString)
     val endpoint = right(left.bindResidual(left.origins.source, BoundNoise(covariance, 18.0)))
     val endpointArgument = right(ConditionalErrorIndependence(left.origins, rightRelation.origins, left.origins.support, rightRelation.origins.support,

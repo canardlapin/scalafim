@@ -637,7 +637,16 @@ object RelationConsumers:
     writer.intLE(column.values.size)
     column.values.foreach(writer.string)
   private def conditionalDigest(value: ConditionalErrorIndependence): String =
-    framed("conditional-error-independence", Vector(value.left.support.identityDigest, value.right.support.identityDigest, value.leftEvidence.identityDigest, value.rightEvidence.identityDigest, value.conditionedMetric.map(_.identityDigest).getOrElse("none"), value.reasoning))
+    framed("conditional-error-independence", Vector(conditionalOriginDigest(value.left), conditionalOriginDigest(value.right), value.leftEvidence.identityDigest, value.rightEvidence.identityDigest, value.conditionedMetric.map(_.identityDigest).getOrElse("none"), value.reasoning))
+  private def conditionalOriginDigest(value: RelationOrigins): String = AxisDigest.sha256Hex: writer =>
+    writer.string("conditional-endpoint-origin-v1")
+    writer.string(value.source.acquisitionRevision)
+    writer.string(value.source.responseRevision)
+    writer.string(value.source.readoutRevision)
+    writer.string(value.source.preparationRevision)
+    writer.string(value.source.noiseRevision)
+    RelationAccess.writeFramed(writer, value.access)
+    writer.string(value.support.identityDigest)
   private def admissionDigest(admission: MetricAdmission): String = admission match
     case MetricAdmission.Fixed(origins) => framed("fixed", Vector(origins.identityDigest))
     case MetricAdmission.IndependentlySourced(origins, conditional) => framed("independent", Vector(origins.identityDigest, conditionalDigest(conditional)))
