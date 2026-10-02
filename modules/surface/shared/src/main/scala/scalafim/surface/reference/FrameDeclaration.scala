@@ -84,6 +84,21 @@ object FrameBasis:
   final case class Derived private[FrameBasis] (recipe: String, inputs: Vector[DeclaredAsset]) extends FrameBasis:
     def display: String = s"derived by $recipe from ${inputs.map(_.label).mkString(", ")}"
 
+  /** The asset's publisher states, in its methods, how the asset's
+    * coordinates were brought into the frame. This is the publisher's
+    * declaration, quoted and located, not an independent registration check;
+    * a group average matches no single anatomy, including the template's.
+    */
+  final case class PublisherMethods private[FrameBasis] (
+    doi: String,
+    locator: String,
+    registration: PublishedRegistration,
+    aggregate: PublishedAggregate,
+    quotation: String
+  ) extends FrameBasis:
+    def display: String =
+      s"doi:$doi ($locator): publisher-declared frame, ${registration.label} registration, ${aggregate.label}: \"$quotation\""
+
   private val doiPattern = "10\\.[0-9]{4,9}/\\S+".r
 
   def literature(doi: String, statement: String): Either[ReferenceError, FrameBasis] =
@@ -95,6 +110,34 @@ object FrameBasis:
     if recipe.trim.isEmpty then Left(ReferenceError.InvalidFrameBasis("derivation recipe must be non-blank"))
     else if inputs.isEmpty then Left(ReferenceError.InvalidFrameBasis("derivation must name at least one input asset"))
     else Right(Derived(recipe, inputs))
+
+  def publisherMethods(doi: String, locator: String, registration: PublishedRegistration, aggregate: PublishedAggregate,
+      quotation: String): Either[ReferenceError, FrameBasis] =
+    if !doiPattern.matches(doi) then Left(ReferenceError.InvalidFrameBasis(s"expected a bare DOI such as 10.1093/...; got '$doi'"))
+    else if locator.trim.isEmpty then Left(ReferenceError.InvalidFrameBasis("methods locator (section, page) must be non-blank"))
+    else if quotation.trim.isEmpty then Left(ReferenceError.InvalidFrameBasis("methods quotation must be non-blank"))
+    else aggregate match
+      case PublishedAggregate.GroupAverage(subjects) if subjects < 2 =>
+        Left(ReferenceError.InvalidFrameBasis(s"a group average needs at least two subjects; got $subjects"))
+      case _ => Right(PublisherMethods(doi, locator, registration, aggregate, quotation))
+
+/** How a publisher states an asset was registered to its frame. */
+enum PublishedRegistration:
+  case Affine
+  case Nonlinear
+
+  def label: String = this match
+    case Affine => "affine"
+    case Nonlinear => "nonlinear"
+
+/** Whether a published asset is one individual's anatomy or an average. */
+enum PublishedAggregate:
+  case Individual
+  case GroupAverage(subjects: Int)
+
+  def label: String = this match
+    case Individual => "individual anatomy"
+    case GroupAverage(n) => s"average of $n subjects (matches no single anatomy)"
 
 /** The exact template frame of one asset's coordinates, with the basis for
   * that claim. This is the only source of an anatomy's frame: GIFTI

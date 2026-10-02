@@ -112,3 +112,14 @@ class FrameDeclarationSuite extends munit.FunSuite:
     assertEquals(agreed.map(_.declarations.map(_.frame)), Right(Vector(nlin6, nlin6)))
     assert(SamplingAnatomy.make(reference, AnatomicalGeometry.WhitePial(on(white, nlin6), on(pial, nlin2009c)))
       .left.exists(_.isInstanceOf[ReferenceError.InvalidAnatomy]))
+
+  test("a publisher-methods basis is located, quoted and typed, and says it is not registration proof"):
+    val basis = FrameBasis.publisherMethods("10.1093/cercor/bhr291", "Materials and Methods p. 2245",
+      PublishedRegistration.Affine, PublishedAggregate.GroupAverage(69), "affine transform was applied ... averaged")
+    assert(basis.exists(_.display.contains("publisher-declared frame, affine registration, average of 69 subjects")))
+    assert(basis.exists(_.display.contains("matches no single anatomy")))
+    def refused(b: Either[ReferenceError, FrameBasis]) = assert(b.left.exists(_.isInstanceOf[ReferenceError.InvalidFrameBasis]))
+    refused(FrameBasis.publisherMethods("doi:10.1093/x", "p. 1", PublishedRegistration.Affine, PublishedAggregate.Individual, "q"))
+    refused(FrameBasis.publisherMethods("10.1093/x", " ", PublishedRegistration.Affine, PublishedAggregate.Individual, "q"))
+    refused(FrameBasis.publisherMethods("10.1093/x", "p. 1", PublishedRegistration.Nonlinear, PublishedAggregate.Individual, ""))
+    refused(FrameBasis.publisherMethods("10.1093/x", "p. 1", PublishedRegistration.Affine, PublishedAggregate.GroupAverage(1), "q"))

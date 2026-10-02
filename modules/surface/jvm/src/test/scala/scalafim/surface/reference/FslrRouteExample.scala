@@ -6,7 +6,9 @@ import java.nio.file.{Files, Path}
 
 /** Ordinary public APIs only: locked bytes, declared route, values and picks.
   * `synthetic` is an asymmetric control, never anatomical registration evidence.
-  * `real` writes the exact MNI2009c -> fsLR32k refusal and outstanding gaps.
+  * `real` maps locked GM from MNI152NLin2009cAsym onto fsLR 32k (left) through the
+  * pointwise-inverse bridge and writes the route, its disclosed approximation and
+  * per-vertex inverse evidence. It qualifies no consumer's results.
   */
 object FslrRouteExample:
   final case class ExampleResult(route: AdmittedSurfaceRoute, source: DeclaredVolume,
@@ -20,7 +22,7 @@ object FslrRouteExample:
       case "synthetic" => (synthetic(Path.of(args(1))).receipt, Path.of(args(2)))
       case "real" =>
         require(args.length == 4, "real <lock> <cache> <receipt>")
-        (realRefusal(Path.of(args(1)), Path.of(args(2))), Path.of(args(3)))
+        (real(Path.of(args(1)), Path.of(args(2))), Path.of(args(3)))
       case other => throw new IllegalArgumentException(s"unknown example $other")
     Files.writeString(out, ujson.write(receipt, indent = 2))
     println(s"wrote $out")
@@ -75,7 +77,7 @@ object FslrRouteExample:
     )
     ExampleResult(route, source, mapped, displays, receipt)
 
-  def realRefusal(lockPath: Path, cache: Path): ujson.Value =
+  def real(lockPath: Path, cache: Path): ujson.Value =
     val bytes = Files.readAllBytes(lockPath)
     val lock = ujson.read(bytes)
     require(lock("schema").str == "scalafim.fslr-resource-lock/1")
@@ -99,10 +101,14 @@ object FslrRouteExample:
     val volume = checked(DeclaredVolumeReader.readNifti(cache.resolve(gm("path").str),
       checked(FrameDeclaration.make(sourceFrame, gmBasis, provenance(gm)))))
     val surfaceEntry = entry("hemi-L_midthickness.surf.gii")
-    val candidateBasis = checked(FrameBasis.literature("10.1093/cercor/bhr291",
-      "DECLARED Conte69 MNI152NLin6Asym candidate; asset-specific volumetric registration remains unqualified"))
+    val conte69Basis = checked(FrameBasis.publisherMethods("10.1093/cercor/bhr291",
+      "Van Essen et al. 2012, Cereb Cortex 22:2241, Materials and Methods p. 2245",
+      PublishedRegistration.Affine, PublishedAggregate.GroupAverage(69),
+      "linear volumetric registration between the individual subject and the MNI152_T1_1mm.nii.gz was performed " +
+        "using ... (FLIRT) ... The resultant affine transform was applied to the FreeSurfer white, pial, and " +
+        "midthickness surfaces ... The individual-subject midthickness surfaces were averaged"))
     val surface = checked(DeclaredSurfaceReader.read(cache.resolve(surfaceEntry("path").str),
-      checked(FrameDeclaration.make(anatomyFrame, candidateBasis, provenance(surfaceEntry))), Hemisphere.Left, SurfaceKind.Midthickness))
+      checked(FrameDeclaration.make(anatomyFrame, conte69Basis, provenance(surfaceEntry))), Hemisphere.Left, SurfaceKind.Midthickness))
     val maskEntry = entry("hemi-L_den-32k_desc-nomedialwall_dparc.label.gii")
     val wall = checked(DeclaredMedialWallReader.read(cache.resolve(maskEntry("path").str),
       checked(surface.geometry.meshDomainEither), provenance(maskEntry)))
@@ -115,13 +121,22 @@ object FslrRouteExample:
     val manifest = entry("manifest.json")
     val map = checked(DeclaredPointMapReader.read(cache.resolve(manifest("path").str).getParent,
       transform("sha256").str, manifest("sha256").str))
-    val bridge = FrameBridge.displacement(map, PointMapUse.Inverse(checked(InversePolicy.make(1e-6, 50))))
-    require(bridge.isLeft, "example must not imply qualification of the missing inverse")
-    val noBridge = SurfaceRoute.admit(request, anatomy)
-    ujson.Obj("schema" -> "scalafim.fslr-route-refusal/1", "lockSha256" -> AssetSha256.of(bytes).value,
+    val bridge = checked(FrameBridge.displacement(map, PointMapUse.Inverse(InversePolicy.Default)))
+    val route = checked(SurfaceRoute.admit(request, anatomy, Some(bridge)))
+    val mapped = checked(route.map(volume))
+    val summary = route.bridgePlacement.flatMap(_.inverseSummary).get
+    ujson.Obj("schema" -> "scalafim.fslr-route-real/1", "lockSha256" -> AssetSha256.of(bytes).value,
       "source" -> volume.declaration.display, "anatomy" -> surface.declaration.display,
       "medialWall" -> wall.asset.get.display, "method" -> request.method.label,
       "pointMap" -> map.display, "pointMapManifest" -> map.manifest.sha256.value,
-      "bridgeRefusal" -> bridge.left.toOption.get.message,
-      "routeWithoutBridgeRefusal" -> noBridge.left.toOption.get.message,
-      "qualificationGaps" -> lock("qualificationGaps"))
+      "bridge" -> bridge.display, "bridgeExactness" -> route.disclosure.bridgeExactness.label,
+      "inverse" -> ujson.Obj("converged" -> summary.converged,
+        "unplaced" -> ujson.Obj.from(summary.unplaced.map((k, v) => k.label -> ujson.Num(v))),
+        "worstResidualMm" -> summary.worstResidualMm.fold[ujson.Value](ujson.Null)(ujson.Num(_)),
+        "worstIterations" -> summary.worstIterations.fold[ujson.Value](ujson.Null)(ujson.Num(_))),
+      "coverage" -> ujson.Obj.from(VertexCoverage.values.map(c => c.toString -> ujson.Num(mapped.count(c)))),
+      "remainingLimits" -> ujson.Arr(
+        "anatomy frame is the publisher's declaration (affine-aligned 69-subject Conte69 average); it is not an " +
+          "asset-specific registration proof and matches no single anatomy",
+        "placements are numerical pointwise-inverse estimates with per-vertex residuals, not an exact inverse",
+        "source-volume release, cohort and statistic provenance, and consumer qualification, belong to the consumer"))

@@ -3,7 +3,8 @@ package scalafim.surface.reference
 import image4s.{Axis, AxisKind, NonSpatialAxes, Sampled}
 import image4s.geometry.{Affine, CoordinateConvention, D3, Frame, FrameMetadata, Grid, Point}
 import reframe4s.core.{MapError, SpatialMap}
-import reframe4s.field.{CoverageReportingMap, Displacement, SupportOutcome}
+import reframe4s.field.{CoverageReportingMap, Displacement, InversionSettings, PointwiseInverse, PointwiseInverseStatus,
+  PointwiseInversion, SupportOutcome}
 import reframe4s.lie.FramedAffine
 import ravel.DType.given
 import ravel.NDArray
@@ -76,26 +77,106 @@ enum PointMapStage:
   case AffineStage(matrix: Affine[D3])
   case DisplacementStage(field: DisplacementField)
 
+/** Why a pointwise inverse query did not converge. */
+enum InverseFailure:
+  case MaxIterations
+  case Diverged
+  /** An iterate left the displacement support; outside support is never filled. */
+  case LeftSupport
+  /** A structural provider error, kept as its message so provider types stay out of this API. */
+  case Failure(reason: String)
+
+  def kind: InverseFailureKind = this match
+    case MaxIterations => InverseFailureKind.MaxIterations
+    case Diverged => InverseFailureKind.Diverged
+    case LeftSupport => InverseFailureKind.LeftSupport
+    case Failure(_) => InverseFailureKind.ProviderFailure
+
+/** Why a vertex under an inverse bridge was not placed, without payload, for counting. */
+enum InverseFailureKind:
+  case MaxIterations
+  case Diverged
+  case LeftSupport
+  case ProviderFailure
+  /** The vertex never reached the solver (non-finite or unusable query). */
+  case NotQueried
+
+  def label: String = this match
+    case MaxIterations => "max-iterations"
+    case Diverged => "diverged"
+    case LeftSupport => "left-support"
+    case ProviderFailure => "provider-failure"
+    case NotQueried => "not-queried"
+
 enum PointMapOutcome:
   case Mapped(point: WorldPoint)
+  /** A converged pointwise inverse: an estimate whose full-map residual is at
+    * most the policy tolerance (mm), after `iterations` fixed-point updates.
+    */
+  case Inverted(point: WorldPoint, residualMm: Double, iterations: Int)
+  /** A pointwise inverse that did not converge. The best residual is
+    * diagnostic only; its iterate is never used as a placement.
+    */
+  case InverseUnsolved(failure: InverseFailure, iterations: Int, bestResidualMm: Option[Double])
   case OutsideSupport
   case NonFinite
   case Unavailable(reason: String)
 
   def placed: Option[WorldPoint] = this match
     case Mapped(point) => Some(point)
+    case Inverted(point, _, _) => Some(point)
     case _ => None
 
-/** Kept only to declare an intended inverse request. The pinned provider does
-  * not expose pointwise inversion for finite displacement maps.
+/** Fixed-point settings for a pointwise inverse (reframe4s
+  * `PointwiseInversion`): convergence when the full-map residual is at most
+  * `toleranceMm`; divergence when it exceeds `divergenceRatio` times the
+  * initial residual; at most `maxIterations` updates.
   */
-final case class InversePolicy private (toleranceMm: Double, maxIterations: Int)
+final case class InversePolicy private (toleranceMm: Double, maxIterations: Int, divergenceRatio: Double)(
+  private[reference] val settings: InversionSettings
+)
 
 object InversePolicy:
-  def make(toleranceMm: Double, maxIterations: Int): Either[PointMapError, InversePolicy] =
-    if !(toleranceMm.isFinite && toleranceMm >= 0.0) then Left(PointMapError.InvalidPolicy("tolerance must be finite and non-negative"))
+  def make(toleranceMm: Double, maxIterations: Int, divergenceRatio: Double = 4.0): Either[PointMapError, InversePolicy] =
+    if !(toleranceMm.isFinite && toleranceMm > 0.0) then Left(PointMapError.InvalidPolicy("tolerance must be finite and positive"))
     else if maxIterations < 1 then Left(PointMapError.InvalidPolicy("at least one iteration is required"))
-    else Right(InversePolicy(toleranceMm, maxIterations))
+    else if !(divergenceRatio.isFinite && divergenceRatio > 1.0) then
+      Left(PointMapError.InvalidPolicy("divergence ratio must be finite and greater than 1"))
+    else
+      InversionSettings.create(maxIterations, toleranceMm, divergenceRatio)
+        .left.map(e => PointMapError.InvalidPolicy(e.message))
+        .map(InversePolicy(toleranceMm, maxIterations, divergenceRatio)(_))
+
+  /** reframe4s `InversionSettings` defaults. */
+  val Default: InversePolicy = make(1e-8, 100, 4.0).fold(e => throw new IllegalStateException(e.message), identity)
+
+/** Pointwise inverse queries for one point map: output-frame point to
+  * input-frame point, solved at the query by the provider. No inverse is
+  * sampled or interpolated between queries.
+  */
+final class PointMapInverter private[reference] (
+  val policy: InversePolicy,
+  solver: PointwiseInverse[PointMap.rasFrame.type, PointMap.rasFrame.type, D3]
+):
+  def place(point: WorldPoint): PointMapOutcome =
+    Point.fromVector(PointMap.rasFrame, Vector(point.x, point.y, point.z)) match
+      case Left(_) => PointMapOutcome.NonFinite
+      case Right(query) =>
+        val result = solver.at(query)
+        val best = result.best.map(_.residual)
+        result.status match
+          case PointwiseInverseStatus.Converged =>
+            val sample = result.best.get
+            val c = sample.point.coordinates
+            PointMapOutcome.Inverted(WorldPoint(c(0), c(1), c(2)), sample.residual, result.iterations)
+          case PointwiseInverseStatus.MaxIterations =>
+            PointMapOutcome.InverseUnsolved(InverseFailure.MaxIterations, result.iterations, best)
+          case PointwiseInverseStatus.Diverged =>
+            PointMapOutcome.InverseUnsolved(InverseFailure.Diverged, result.iterations, best)
+          case PointwiseInverseStatus.LeftSupport =>
+            PointMapOutcome.InverseUnsolved(InverseFailure.LeftSupport, result.iterations, best)
+          case PointwiseInverseStatus.Failure(error) =>
+            PointMapOutcome.InverseUnsolved(InverseFailure.Failure(error.message), result.iterations, best)
 
 final class PointMap private (
   val stages: Vector[PointMapStage],
@@ -123,8 +204,33 @@ final class PointMap private (
     else if supported then PointMapOutcome.Mapped(WorldPoint(out(0), out(1), out(2)))
     else PointMapOutcome.OutsideSupport
 
-  def inverse(point: WorldPoint, policy: InversePolicy): PointMapOutcome =
-    PointMapOutcome.Unavailable("pointwise inverse is unavailable for finite displacement maps in reframe4s 9a450")
+  /** A pointwise inverse of this map. Supported for one displacement stage
+    * followed by any affine stages: the affines are composed and removed
+    * analytically, and only the displacement is iterated, from identity.
+    */
+  def inverter(policy: InversePolicy): Either[PointMapError, PointMapInverter] =
+    stages match
+      case PointMapStage.DisplacementStage(field) +: rest if rest.forall(_.isInstanceOf[PointMapStage.AffineStage]) =>
+        val affines = rest.collect { case PointMapStage.AffineStage(matrix) => matrix }
+        for
+          displacement <- field.sharedProviderMap
+          solver <- affines.headOption match
+            case None => Right(PointwiseInversion.displacement(displacement, policy.settings))
+            case Some(first) =>
+              for
+                combined <- affines.tail.foldLeft[Either[PointMapError, Affine[D3]]](Right(first)): (acc, next) =>
+                  acc.flatMap(_.andThen(next).left.map(e => PointMapError.InvalidStage(e.message)))
+                solver <- PointwiseInversion.displacementThenAffine(displacement,
+                  FramedAffine.between(PointMap.rasFrame, PointMap.rasFrame)(combined), policy.settings)
+                  .left.map(e => PointMapError.InvalidStage(e.message))
+              yield solver
+        yield PointMapInverter(policy, solver)
+      case _ =>
+        val kinds = stages.map:
+          case PointMapStage.AffineStage(_) => "affine"
+          case PointMapStage.DisplacementStage(_) => "displacement"
+        Left(PointMapError.InvalidStage(s"pointwise inverse requires one displacement stage followed by affine stages; " +
+          s"got [${kinds.mkString(", ")}]"))
 
 object PointMap:
   private[reference] val rasFrame: Frame[D3] =

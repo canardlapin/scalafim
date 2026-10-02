@@ -51,11 +51,20 @@ object RealAssets:
     DeclaredVolumeReader.readNifti(gmPath, FrameDeclaration.make(nlin2009c, basis, gmAsset).toOption.get)
       .fold(e => throw new IllegalStateException(e.message), identity)
 
-  /** The WS2 basis for TemplateFlow tpl-fsLR surfaces. */
-  val fslrBasis: FrameBasis = FrameBasis.literature("10.1093/cercor/bhr291",
-    "TemplateFlow tpl-fsLR (HCP Pipelines templates; ReferencesAndLinks doi:10.1093/cercor/bhr291) — surfaces in " +
-      "a DECLARED MNI152NLin6Asym candidate per HCP convention; the exact Conte69 volumetric registration chain is " +
-      "unqualified. GM disconfirmation scores and matching placements do not prove this declaration").toOption.get
+  /** The publisher's methods for TemplateFlow tpl-fsLR midthickness: the
+    * bytes equal the Conte69 v2 32k_fs_LR midthickness, whose GIFTI comment
+    * lists the 69 averaged subjects. FSL 4.1.7 MNI152_T1_1mm is TemplateFlow
+    * MNI152NLin6Asym (FSL's nonlinear 6th-generation template).
+    */
+  val fslrBasis: FrameBasis = FrameBasis.publisherMethods("10.1093/cercor/bhr291",
+    "Van Essen et al. 2012, Cereb Cortex 22:2241, Materials and Methods p. 2245",
+    PublishedRegistration.Affine, PublishedAggregate.GroupAverage(69),
+    "To create population-average surfaces for the Conte-69 data set, linear volumetric registration between the " +
+      "individual subject and the MNI152_T1_1mm.nii.gz was performed using ... (FLIRT). (This target is the " +
+      "nonlinearly derived template distributed with FSL version 4.1.7.) The resultant affine transform was applied " +
+      "to the FreeSurfer white, pial, and midthickness surfaces before they had been resampled to the fs_LR mesh. " +
+      "The individual-subject midthickness surfaces were averaged separately for the left and right hemispheres.")
+    .fold(e => throw new IllegalStateException(e.message), identity)
 
   final case class Hemisphere32k(label: String, surface: DeclaredSurface, cortex: Vector[Boolean], reference: CorticalMeshReference)
 

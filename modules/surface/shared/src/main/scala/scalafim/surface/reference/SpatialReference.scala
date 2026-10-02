@@ -20,7 +20,7 @@ enum ReferenceError:
   case InvalidAnatomy(reason: String)
   case InvalidDisplay(reason: String)
   case InvalidBridge(reason: String)
-  case PointwiseInverseUnavailable
+  case PointwiseInverseUnsupported(cause: PointMapError)
   case InvalidProvenance(reason: String)
   case InvalidFrameBasis(reason: String)
   case DigestMismatch(archivePath: String, declared: String, actual: String)
@@ -45,8 +45,7 @@ enum ReferenceError:
       case InvalidAnatomy(reason) => s"invalid sampling anatomy: $reason"
       case InvalidDisplay(reason) => s"invalid display surface: $reason"
       case InvalidBridge(reason) => s"invalid frame bridge: $reason"
-      case PointwiseInverseUnavailable =>
-        "exact pointwise inverse is unavailable in the pinned transform provider; a lattice inverse is a different route"
+      case PointwiseInverseUnsupported(cause) => s"pointwise inverse unsupported for this point map: ${cause.message}"
       case InvalidProvenance(reason) => s"invalid asset provenance: $reason"
       case InvalidFrameBasis(reason) => s"invalid frame basis: $reason"
       case DigestMismatch(path, declared, actual) => s"$path has sha256 $actual; its declaration requires $declared"

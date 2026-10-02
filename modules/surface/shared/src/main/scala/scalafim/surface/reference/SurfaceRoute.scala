@@ -9,13 +9,39 @@ import scala.util.control.NonFatal
 enum PointMapUse:
   /** Apply the map: its input frame to its output frame. */
   case Forward
-  /** Solve the map per point: its output frame to its input frame. */
+  /** Solve the map per point (reframe4s pointwise fixed-point inversion): its
+    * output frame to its input frame. Each placement is an estimate with its
+    * own residual, iteration count and status.
+    */
   case Inverse(policy: InversePolicy)
 
   def label: String =
     this match
       case Forward => "forward"
-      case Inverse(policy) => s"inverse (tolerance ${policy.toleranceMm} mm, at most ${policy.maxIterations} iterations)"
+      case Inverse(policy) =>
+        s"pointwise inverse (approximate; tolerance ${policy.toleranceMm} mm, at most ${policy.maxIterations} iterations, " +
+          s"divergence ratio ${policy.divergenceRatio})"
+
+/** A numerical method behind an approximate bridge. Per-vertex evidence is in `BridgePlacement`. */
+enum NumericalBridgeMethod:
+  /** reframe4s-field `PointwiseInversion`: identity initialization, declared affines removed analytically. */
+  case PointwiseFixedPoint(policy: InversePolicy)
+
+  def label: String = this match
+    case PointwiseFixedPoint(p) =>
+      s"pointwise fixed-point inverse (reframe4s PointwiseInversion; tolerance ${p.toleranceMm} mm, " +
+        s"at most ${p.maxIterations} iterations, divergence ratio ${p.divergenceRatio})"
+
+/** Whether a bridge places points by applying declared transforms, or through
+  * a numerical estimate whose accuracy is its per-vertex evidence.
+  */
+enum BridgeExactness:
+  case Exact
+  case Approximate(method: NumericalBridgeMethod)
+
+  def label: String = this match
+    case Exact => "exact"
+    case Approximate(method) => s"approximate: ${method.label}"
 
 /** The transform a bridge applies to world coordinates. */
 enum BridgeTransform:
@@ -39,6 +65,13 @@ final case class FrameBridge private (from: TemplateFrame, to: TemplateFrame, tr
           s"manifest sha256 ${map.manifest.sha256.value}" +
           s"${map.stageFiles.map(f => s", stage ${f.display}").mkString} ($evidence)"
 
+  def exactness: BridgeExactness =
+    transform match
+      case BridgeTransform.AffineMap(_) => BridgeExactness.Exact
+      case BridgeTransform.Displacement(_, PointMapUse.Forward) => BridgeExactness.Exact
+      case BridgeTransform.Displacement(_, PointMapUse.Inverse(policy)) =>
+        BridgeExactness.Approximate(NumericalBridgeMethod.PointwiseFixedPoint(policy))
+
 object FrameBridge:
   def affine(from: TemplateFrame, to: TemplateFrame, matrix: Affine[D3], evidence: String): Either[ReferenceError, FrameBridge] =
     if from == to then Left(ReferenceError.InvalidBridge("source and target frames are identical"))
@@ -46,7 +79,8 @@ object FrameBridge:
     else Right(FrameBridge(from, to, BridgeTransform.AffineMap(matrix), evidence))
 
   /** A point-map bridge. Forward use runs from the map's input frame to its
-    * output frame; inverse use runs the other way. Frame releases are the
+    * output frame; inverse use runs the other way and requires a map the
+    * provider can invert pointwise. Frame releases are the
     * map's catalog revision; `release` is required when the map has none and
     * must agree with it when both are present.
     */
@@ -60,7 +94,8 @@ object FrameBridge:
       case (None, None) => Left(ReferenceError.InvalidBridge("point map has no catalog revision; declare the frame release"))
     for
       _ <- use match
-        case PointMapUse.Inverse(_) => Left(ReferenceError.PointwiseInverseUnavailable)
+        case PointMapUse.Inverse(policy) =>
+          pointMap.map.inverter(policy).left.map(ReferenceError.PointwiseInverseUnsupported.apply)
         case PointMapUse.Forward => Right(())
       value <- resolved
       _ <- Either.cond(evidence.trim.nonEmpty, (), ReferenceError.InvalidBridge("bridge evidence must be declared"))
@@ -182,6 +217,8 @@ final case class RouteDisclosure(
   medialWallAsset: Option[DeclaredAsset] = None
 ):
   def lookup: String = "nearest voxel, ties round up, support [-0.5, dim - 0.5) per axis"
+  /** Exact unless the bridge places vertices through a numerical estimate. */
+  def bridgeExactness: BridgeExactness = bridge.fold(BridgeExactness.Exact)(_.exactness)
   def nonFinite: String = "nonfinite and out-of-support voxels are excluded before aggregation"
 
 enum VertexCoverage:
@@ -465,7 +502,10 @@ object SurfaceRoute:
         val outcomes = if midthickness then Vector(white._2) else Vector(white._2, pial._2)
         val n = anatomy.reference.vertexCount
         val available = Array.tabulate(n)(i => outcomes.forall(_(i).placed.nonEmpty))
-        Right((SurfaceGeometryPair(white._1, pial._1), Some(BridgePlacement(outcomes, available))))
+        val inverse = use match
+          case PointMapUse.Inverse(_) => true
+          case PointMapUse.Forward => false
+        Right((SurfaceGeometryPair(white._1, pial._1), Some(BridgePlacement(outcomes, available, inverse))))
 
   /** Place every vertex through a point map. A vertex the map cannot place
     * keeps its pre-bridge world position only so the mesh stays well formed;
@@ -476,14 +516,18 @@ object SurfaceRoute:
     val n = surface.vertexCount
     val coordinates = new Array[Double](3 * n)
     val outcomes = new Array[PointMapOutcome](n)
+    val inverter = use match
+      case PointMapUse.Inverse(policy) => Some(map.inverter(policy))
+      case PointMapUse.Forward => None
     var i = 0
     while i < n do
       val p = surface.mesh.vertex(VertexId.unsafe(i))
       val world = surface.surfaceToWorld(Vector(p.x, p.y, p.z)).toOption.flatMap(w => WorldPoint.make(w(0), w(1), w(2)).toOption)
       val outcome = world.fold(PointMapOutcome.OutsideSupport): point =>
-        use match
-          case PointMapUse.Forward => map.forward(point)
-          case PointMapUse.Inverse(policy) => map.inverse(point, policy)
+        inverter match
+          case None => map.forward(point)
+          case Some(Right(solver)) => solver.place(point)
+          case Some(Left(error)) => PointMapOutcome.Unavailable(error.message)
       outcomes(i) = outcome
       val at = outcome.placed.orElse(world).getOrElse(WorldPoint.Origin)
       coordinates(3 * i) = at.x
@@ -509,12 +553,35 @@ final class PreparedSource private[reference] (
   */
 final class BridgePlacement private[reference] (
   private val outcomes: Vector[Array[PointMapOutcome]],
-  private[reference] val available: Array[Boolean]
+  private[reference] val available: Array[Boolean],
+  inverse: Boolean
 ):
   def outcomesAt(vertex: Int): Vector[PointMapOutcome] = outcomes.map(_(vertex))
 
   def isAvailable(vertex: Int): Boolean = available(vertex)
 
   def unavailableCount: Int = available.count(!_)
+
+  /** Aggregate pointwise-inverse evidence over every placed surface; None exactly for a forward bridge. */
+  def inverseSummary: Option[InversePlacementSummary] =
+    Option.when(inverse):
+      val all = outcomes.flatMap(_.toVector)
+      val inverted = all.collect { case PointMapOutcome.Inverted(_, residual, iterations) => (residual, iterations) }
+      val unsolved = all.collect:
+        case PointMapOutcome.InverseUnsolved(failure, _, _) => failure.kind
+        case PointMapOutcome.OutsideSupport | PointMapOutcome.NonFinite | PointMapOutcome.Unavailable(_) |
+            PointMapOutcome.Mapped(_) => InverseFailureKind.NotQueried
+      InversePlacementSummary(inverted.length, unsolved.groupBy(identity).view.mapValues(_.length).toMap,
+        inverted.map(_._1).maxOption, inverted.map(_._2).maxOption)
+
+/** Pointwise-inverse outcomes over a route's placements: converged count, unplaced
+  * counts by kind, and the worst converged residual (mm) and iteration count observed.
+  */
+final case class InversePlacementSummary(
+  converged: Int,
+  unplaced: Map[InverseFailureKind, Int],
+  worstResidualMm: Option[Double],
+  worstIterations: Option[Int]
+)
 
 final case class RouteCandidate(anatomy: SamplingAnatomy, bridge: Option[FrameBridge] = None)

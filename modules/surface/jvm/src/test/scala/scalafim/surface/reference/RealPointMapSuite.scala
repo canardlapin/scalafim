@@ -42,8 +42,9 @@ class RealPointMapSuite extends munit.FunSuite, RealAssetGate:
       for c <- 0 until 3 do worst = math.max(worst, math.abs(out(c) - mapped(i)(c)))
     assert(worst <= 1e-6, s"max |Δ| = $worst mm over ${points.size} points")
 
-  test("the locked real map refuses an inverse capability absent from the provider"):
+  test("the locked real map admits a pointwise inverse bridge from MNI152NLin6Asym to MNI152NLin2009cAsym"):
     val map = requireAssets()
-    val policy = InversePolicy.make(1e-6, 50).toOption.get
-    assert(map.map.inverse(WorldPoint(0.0, 0.0, 0.0), policy).isInstanceOf[PointMapOutcome.Unavailable])
-    assert(FrameBridge.displacement(map, PointMapUse.Inverse(policy)).left.exists(_.message.contains("pointwise inverse")))
+    val bridge = FrameBridge.displacement(map, PointMapUse.Inverse(InversePolicy.Default)).fold(e => fail(e.message), identity)
+    assertEquals((bridge.from.template.value, bridge.to.template.value), ("MNI152NLin6Asym", "MNI152NLin2009cAsym"))
+    val origin = map.map.inverter(InversePolicy.Default).fold(e => fail(e.message), identity).place(WorldPoint(0.0, 0.0, 0.0))
+    assert(origin.isInstanceOf[PointMapOutcome.Inverted], origin.toString)
