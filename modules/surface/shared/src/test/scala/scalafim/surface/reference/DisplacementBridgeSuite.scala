@@ -17,6 +17,16 @@ class DisplacementBridgeSuite extends munit.FunSuite:
     assertEquals((bridge.from.template, bridge.to.template), (a, b))
     assert(bridge.display.contains("forward"))
 
-  test("inverse bridge admission is refused until reframe4s supplies pointwise inversion"):
-    val inverse = PointMapUse.Inverse(InversePolicy.make(1e-10, 50).toOption.get)
-    assert(FrameBridge.displacement(pointMap, inverse).isLeft)
+  test("a pointwise inverse bridge runs output to input and is disclosed as approximate"):
+    val bridge = FrameBridge.displacement(pointMap, PointMapUse.Inverse(InversePolicy.Default)).toOption.get
+    assertEquals((bridge.from.template, bridge.to.template), (b, a))
+    assertEquals(bridge.exactness, BridgeExactness.Approximate(NumericalBridgeMethod.PointwiseFixedPoint(InversePolicy.Default)))
+    assert(bridge.display.contains("pointwise inverse (approximate"), bridge.display)
+    assertEquals(FrameBridge.displacement(pointMap, PointMapUse.Forward).toOption.get.exactness, BridgeExactness.Exact)
+
+  test("a pointwise inverse bridge is refused for a map the provider cannot invert pointwise"):
+    val affineFirst = DeclaredPointMap.unsafeAssumeVerified(a, b, Some(release), PointMap.make(Vector(
+      PointMapStage.AffineStage(translation(1, 0, 0)),
+      PointMapStage.DisplacementStage(field(dims, grid)(_ => Vector(1.25, -0.75, 0.5))))).toOption.get)
+    assert(FrameBridge.displacement(affineFirst, PointMapUse.Inverse(InversePolicy.Default))
+      .left.exists(_.isInstanceOf[ReferenceError.PointwiseInverseUnsupported]))

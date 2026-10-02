@@ -10,14 +10,9 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
-/** Historical fsLR 32k export/probe runner. Its inverse bridge request is
-  * explicitly refused with the current provider; it cannot qualify that route.
-  * Use `scalafim.examples.reference.FslrRouteExample` for the current public
-  * numerical control and provenance-bound refusal.
-  *
-  * With a qualified inverse capability, it maps N NIfTI volumes that share one grid
+/** fsLR 32k export/probe runner. It maps N NIfTI volumes that share one grid
   * onto fsLR 32k L and R through the admitted route (declared midthickness in
-  * MNI152NLin6Asym, inverse point-map bridge, MidthicknessNearest, Continuous)
+  * MNI152NLin6Asym, pointwise-inverse point-map bridge, MidthicknessNearest, Continuous)
   * and exports comparison arrays.
   * The runner knows nothing about where the volumes came from: their frame,
   * derivation and digests arrive in a declaration spec.
@@ -59,7 +54,7 @@ object FslrQualification:
       run(Path.of(args(0)), Path.of(args(1)))
 
   /** A parsed declaration spec: every volume and the optional support, read and digest-checked. */
-  private final case class Inputs(
+  private[reference] final case class Inputs(
     name: String,
     specSha256: String,
     spec: ujson.Value,
@@ -86,7 +81,7 @@ object FslrQualification:
         val d = json("derived")
         orFail(FrameBasis.derived(d("recipe").str, d("inputs").arr.toVector.map(asset)))
 
-  private def readInputs(specPath: Path): Inputs =
+  private[reference] def readInputs(specPath: Path): Inputs =
     val bytes = Files.readAllBytes(specPath)
     val spec = ujson.read(bytes)
     require(spec("schema").str == "scalafim.fslr-qualification-input/1", s"unknown spec schema ${spec("schema")}")
@@ -113,8 +108,7 @@ object FslrQualification:
     * from above. The baseline is the live heap after setup (point map, surfaces, routes, one volume).
     */
   private def probeHeap(specPath: Path, repeats: Int, artifact: Path): Unit =
-    val policy = InversePolicy.make(1e-6, 50).toOption.get
-    val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(policy)).toOption.get
+    val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(InversePolicy.Default)).toOption.get
     val inputs = readInputs(specPath)
     val (name, declared) = inputs.volumes.head
     val source = inputs.source
@@ -185,8 +179,7 @@ object FslrQualification:
 
   private def run(specPath: Path, out: Path): Unit =
     Files.createDirectories(out)
-    val policy = InversePolicy.make(1e-6, 50).toOption.get
-    val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(policy)).toOption.get
+    val bridge = FrameBridge.displacement(RealAssets.pointMap, PointMapUse.Inverse(InversePolicy.Default)).toOption.get
     val inputs = readInputs(specPath)
     val names = inputs.volumes.map(_._1)
     val volumes = inputs.volumes.map(_._2)
@@ -213,8 +206,8 @@ object FslrQualification:
       val residual = Array.fill(n)(Double.NaN)
       for i <- 0 until n do
         placement.outcomesAt(i).head match
-          case PointMapOutcome.Mapped(p) =>
-            residual(i) = Double.NaN
+          case PointMapOutcome.Inverted(p, r, _) =>
+            residual(i) = r
             world(3 * i) = p.x; world(3 * i + 1) = p.y; world(3 * i + 2) = p.z
           case _ =>
             val p = h.surface.geometry.mesh.vertex(VertexId(i))
