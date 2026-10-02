@@ -715,7 +715,7 @@ private[mvpa] object RdmAnalysisSupport:
       case RdmRows.ClassMeans =>
         for
           labels <- Classification.categorical(context.response, roi.samples)
-          summary <- Classification.classSummary(roi, labels)
+          summary <- Classification.classSummary(roi.value, labels)
         yield ObservedPatterns(summary.classes.map(label => RsaItemId.unsafe(label.value)), summary.means)
 
   def rdmMetrics(rdm: RdmVector, features: Int): MetricVector =

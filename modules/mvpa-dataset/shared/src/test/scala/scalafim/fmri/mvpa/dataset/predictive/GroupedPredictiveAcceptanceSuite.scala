@@ -39,7 +39,7 @@ class GroupedPredictiveAcceptanceSuite extends munit.FunSuite:
       row.probabilities.indices.foreach: column =>
         assertEqualsDouble(row.probabilities(column), byKey(row.stableKey)(column), 1e-12)
       val heldRun = runs(row.stableKey.stripPrefix("trial-").toInt)
-      assert(row.trainingStableKeys.forall(key => runs(key.stripPrefix("trial-").toInt) != heldRun))
+      assert(row.assessments.forall(fit => fit.trainingStableKeys.forall(key => runs(key.stripPrefix("trial-").toInt) != heldRun)))
     assertEquals(base.assessment.samples, 7L)
     assertEquals(reordered.assessment.correct, base.assessment.correct)
     assertEqualsDouble(reordered.assessment.accuracy, base.assessment.correct.toDouble / 7, 1e-12)
@@ -87,4 +87,4 @@ class GroupedPredictiveAcceptanceSuite extends munit.FunSuite:
     assertEquals(result.assessment.samples, 8L)
     val runByOccurrence = keys.zip(expectedRoots.map(runs)).toMap
     result.rows.foreach: row =>
-      assert(row.trainingStableKeys.forall(key => runByOccurrence(key) != runByOccurrence(row.stableKey)))
+      assert(row.assessments.forall(fit => fit.trainingStableKeys.forall(key => runByOccurrence(key) != runByOccurrence(row.stableKey))))

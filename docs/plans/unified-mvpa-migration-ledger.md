@@ -252,3 +252,34 @@ callers have migrated, and a source scan finds neither the retired definition
 nor a renamed wrapper delegating to it. Numerical parity, protocol correctness,
 resource qualification, semantic conformance, and scientific calibration are
 recorded independently; success in one category cannot close another.
+
+## M1.12 physical cutover (2026-10-01)
+
+Predictive callers now use the native Alder method heads. Dense categorical
+kernels accept matrices and hard labels; predictions derive labels from
+validated probability matrices. Feature-model results carry typed metrics,
+penalty and optional prediction. The shared predictive CV analyses, specialized
+classification/cross-decoding scanners, cross-domain engine and predictive
+universal payload cases have been removed. The atlas workflow compiles from
+one source for JVM and Scala.js. Qualification evidence is recorded in
+`docs/verification/umvpa-predictive-cutover-20261001.md`.
+
+The R tables remain immutable expectations: native parity tests cover Swift
+pooled reduction, both feature-model orientations and every regional/searchlight
+cross-domain probability table. Native laws and method suites replace old
+orchestration tests; old scanner-vs-engine and scanner benchmark tests are dead
+implementation tests, with no performance inference from their deletion.
+Repeated exact categorical validation records every contributing unit and
+training key set and uses equal probability weight per assessment. Partial
+assessment families remain outside the admitted exact-validation contract.
+
+Remaining shared boundaries have explicit expiry:
+
+| Boundary | Remaining owner | Removal packet |
+| --- | --- | --- |
+| `RdmAnalysis`, `CrossnobisAnalysis`, `RsaAnalysis`, `SamplewiseRsaAnalysis`, `OperatorRsa` relational orchestration, `PartitionMeansBuilder`, relational `RoiPayload` cases | Identified relational workflow cutover | M2.09 |
+| `PatternMatrix`, `PatternOperator`, `PatternSource`, `Response`, `FoldPlan`, generic `RoiAnalysis`/`RoiAnalysisResult`, `MvpaTask`/`MvpaStream`/`MvpaEngine`, `RoiOutcome`/`MvpaResult` | Remaining one-shot/canonical/structured consumers | M3.13 |
+| `ClassificationPrediction`, row/index-bearing numerical operator predictions, `OneShotDataset` and generic one-shot wrappers | P6/P7 and identified one-shot replacement | M3.13 |
+| Legacy spatial feature-plan helpers and dataset views | Inventoried relational/one-shot consumers; no new predictive orchestration | M2.09/M3.13 |
+
+No compatibility archive or replacement universal analysis registry was added.

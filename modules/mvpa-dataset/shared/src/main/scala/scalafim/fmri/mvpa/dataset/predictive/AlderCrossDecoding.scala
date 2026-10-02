@@ -19,8 +19,10 @@ object CrossDecodingFeatureBinding:
     if source == target && source.size == target.size then Right(new CrossDecodingFeatureBinding(source, target))
     else Left(AlderCrossDecodingError.FeatureAxisMismatch(source.stableKey, target.stableKey))
 
+final case class CrossDecodingRow(stableKey: String, probabilities: Vector[Double], predicted: ClassLabel, observed: ClassLabel)
+
 final case class AlderCrossDecodingResult(
-    classes: Vector[ClassLabel], probabilities: DMat, rows: Vector[SwiftOofRow],
+    classes: Vector[ClassLabel], probabilities: DMat, rows: Vector[CrossDecodingRow],
     sourceAxis: AxisDescriptor, targetAxis: AxisDescriptor,
     preparation: CrossDecodingPreparationScope, sourceAudit: Audit,
     sourceMaterialization: MaterializationReceipt, targetMaterialization: MaterializationReceipt,
@@ -120,9 +122,9 @@ object AlderCrossDecoding:
 
   private def serve[M, N](source: AlderMaterializedRows[M], target: AlderMaterializedRows[N], coding: SwiftTargetCoding,
       preparation: CrossDecodingPreparationScope, trained: Trained[SourcePipe],
-      prediction: PredictionResult[Use.Test, Example[Array[Double], Array[Double], Unit], ClassificationPrediction]): Either[AlderCrossDecodingError, AlderCrossDecodingResult] =
+      prediction: PredictionResult[Use.Test, Example[Array[Double], Array[Double], Unit], CategoricalProbabilities]): Either[AlderCrossDecodingError, AlderCrossDecodingResult] =
     val matrix = Matrix.newBuilder(target.mapping.entriesByOrdinal.length, coding.classes.length)
-    val rows = Vector.newBuilder[SwiftOofRow]
+    val rows = Vector.newBuilder[CrossDecodingRow]
     var failure = Option.empty[AlderCrossDecodingError]
     val seen = scala.collection.mutable.HashSet.empty[String]
     prediction.predicted.data.foreachRow: (id, predicted) =>
@@ -132,7 +134,7 @@ object AlderCrossDecoding:
         else
           val key = target.mapping.entriesByOrdinal(ordinal).stableKey
           if !seen.add(key) then failure = Some(AlderCrossDecodingError.DuplicateTargetKey(key))
-          else Classification.reorderProbabilities(predicted.prediction, coding.classes) match
+          else Classification.reorderProbabilities(predicted.prediction.classes, predicted.prediction.probabilities, coding.classes) match
             case Left(error) => failure = Some(AlderCrossDecodingError.Mvpa(error))
             case Right(probability) =>
               if predicted.observation.target.length != 1 then failure = Some(AlderCrossDecodingError.TargetShape(key))
@@ -141,29 +143,29 @@ object AlderCrossDecoding:
                 case Some(observed) =>
                   val values = Vector.tabulate(coding.classes.length)(probability(0, _))
                   values.indices.foreach(column => matrix(ordinal, column) = values(column))
-                  rows += SwiftOofRow(key, values, coding.classes(values.indices.maxBy(values)), observed, Vector.empty)
+                  rows += CrossDecodingRow(key, values, coding.classes(values.indices.maxBy(values)), observed)
     failure.toLeft(AlderCrossDecodingResult(coding.classes, matrix.result(), rows.result(), source.mapping.axis, target.mapping.axis,
       preparation, trained.audit, source.receipt, target.receipt, prediction.receipt, source.nativeReadReceipt, target.nativeReadReceipt))
 
   private final class SourceLearner[M](source: AlderMaterializedRows[M], coding: SwiftTargetCoding, classifier: Classifier, component: String, parameters: Vector[String])
-      extends Learner[Id, Array[Double], Array[Double], Unit, ClassificationPrediction]:
+      extends Learner[Id, Array[Double], Array[Double], Unit, CategoricalProbabilities]:
     type FitError = AlderCrossDecodingError
     type RunError = AlderCrossDecodingError
     type Model = SourcePipe
     def fit[U <: Use.Fit](data: NonEmptyData[U, Example[Array[Double], Array[Double], Unit]])(using context: FitContext): FitResult[Id, FitError, Trained[Model]] =
       materialize(data.data, source, coding).flatMap { case (patterns, labels) =>
         if labels.distinct.length != coding.classes.length then Left(AlderCrossDecodingError.MissingSourceClass)
-        else classifier.fit(patterns, Response.Categorical(labels)).left.map(AlderCrossDecodingError.Mvpa.apply)
+        else classifier.fit(patterns, labels).left.map(AlderCrossDecodingError.Mvpa.apply)
       } match
         case Left(error) => EitherT.leftT(context.stagePath.failure(error))
         case Right(model) => EitherT.rightT(context.complete(new SourcePipe(model, context.stagePath), data,
           ComponentDescriptor(ComponentId(component), ComponentVersion("2"), AuditValue.record("parameters" -> AuditValue.text(parameters.mkString(";"))), BackendFingerprint("scalafim", "1", AuditValue.record()))))
 
-  private final class SourcePipe(model: ClassifierModel, stage: StagePath) extends Pipe[Array[Double], AlderCrossDecodingError, ClassificationPrediction]:
-    def run(input: Array[Double]): Either[Failure[AlderCrossDecodingError], ClassificationPrediction] =
-      model.predict(PatternMatrix.fromRows(Vector(input.toVector))).left.map(error => stage.failure(AlderCrossDecodingError.Mvpa(error)))
+  private final class SourcePipe(model: ClassifierModel, stage: StagePath) extends Pipe[Array[Double], AlderCrossDecodingError, CategoricalProbabilities]:
+    def run(input: Array[Double]): Either[Failure[AlderCrossDecodingError], CategoricalProbabilities] =
+      model.predict(DMat.dense(1, input.length, input.toVector)).left.map(error => stage.failure(AlderCrossDecodingError.Mvpa(error)))
 
-  private def materialize[M](data: Data[?, Example[Array[Double], Array[Double], Unit]], source: AlderMaterializedRows[M], coding: SwiftTargetCoding): Either[AlderCrossDecodingError, (PatternMatrix, Vector[ClassLabel])] =
+  private def materialize[M](data: Data[?, Example[Array[Double], Array[Double], Unit]], source: AlderMaterializedRows[M], coding: SwiftTargetCoding): Either[AlderCrossDecodingError, (DMat, Vector[ClassLabel])] =
     val input = Vector.newBuilder[Vector[Double]]
     val labels = Vector.newBuilder[ClassLabel]
     var failure = Option.empty[AlderCrossDecodingError]
@@ -177,4 +179,10 @@ object AlderCrossDecoding:
           else coding.label(example.target(0)) match
             case None => failure = Some(AlderCrossDecodingError.UnknownTarget(key, example.target(0)))
             case Some(label) => input += example.input.toVector; labels += label
-    failure.toLeft((PatternMatrix.fromRows(input.result()), labels.result()))
+    failure.toLeft((dense(input.result()), labels.result()))
+
+  private def dense(rows: Vector[Vector[Double]]): DMat =
+    val columns = rows.headOption.fold(0)(_.length)
+    if rows.exists(_.length != columns) then
+      throw new IllegalArgumentException("materialized categorical rows must have a common width")
+    DMat.dense(rows.length, columns, rows.flatten)

@@ -42,32 +42,6 @@ class OperatorMvpaSuite extends munit.FunSuite:
     assert(errors.nonEmpty)
   }
 
-  test("canonical MVPA engine accepts operator analyses without a parallel hierarchy") {
-    val denseAnalysis =
-      CrossValidatedClassifierAnalysis(RidgeLdaClassifier(gamma = 0.25), storePredictions = true)
-    val operatorAnalysis = RoiAnalysis.materializing(denseAnalysis)
-
-    val expected =
-      MvpaEngine.run(patterns, featureSets, response, denseAnalysis, Some(folds)).toOption.get
-    val actual =
-      MvpaEngine
-        .runSource(operatorSource, featureSets, response, operatorAnalysis, Some(folds))
-        .toOption
-        .get
-
-    assertEquals(actual.analysisName, expected.analysisName)
-    assertEquals(actual.failures, Vector.empty)
-    assertEquals(actual.successes.map(_.roiId.value), expected.successes.map(_.roiId.value))
-    actual.successes.zip(expected.successes).foreach { case (observed, reference) =>
-      assertEqualsDouble(observed.metrics("Accuracy").get, reference.metrics("Accuracy").get, 1e-12)
-      (observed.payload, reference.payload) match
-        case (Some(RoiPayload.Classification(left)), Some(RoiPayload.Classification(right))) =>
-          assertMatrixClose(left.probabilities, right.probabilities)
-          assertEquals(left.predicted.map(_.value), right.predicted.map(_.value))
-        case other => fail(s"unexpected ridge payloads: $other")
-    }
-  }
-
   test("operator analyses use the ordinary task and streaming boundaries") {
     val analysis = new OperatorRoiAnalysis:
       override val name: String = "operator_score_sum"
@@ -110,7 +84,7 @@ class OperatorMvpaSuite extends munit.FunSuite:
 
   test("operator execution preserves canonical fold and feature failure contracts") {
     val folded =
-      RoiAnalysis.materializing(CrossValidatedClassifierAnalysis(RidgeLdaClassifier()))
+      RoiAnalysis.materializing(CrossnobisAnalysis())
     val missingFold =
       MvpaTask.evaluate(operatorSource, featureSets.head, response, folded)
     val missingFeature = MvpaTask.evaluate(
@@ -134,7 +108,7 @@ class OperatorMvpaSuite extends munit.FunSuite:
       RoiOutcome.Failure(
         featureSets.head.id,
         featureSets.head.featureIndices,
-        MvpaError.InvalidClassifierInput("cross-validated classification requires a fold plan")
+        MvpaError.InvalidRdmInput("crossnobis analysis requires a fold plan")
       )
     )
     missingFeature match

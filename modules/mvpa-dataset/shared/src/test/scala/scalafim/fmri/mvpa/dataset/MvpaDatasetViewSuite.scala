@@ -32,6 +32,25 @@ import scala.concurrent.ExecutionContext.Implicits.{global as executionContext}
 
 class MvpaDatasetViewSuite extends munit.FunSuite:
 
+  private def nativeClassification(matrix: gale.linalg.DMat, labels: Vector[String], blocks: Vector[Int]): predictive.AlderSwiftCentroidResult =
+    def right[A](value: Either[?, A]): A = value.fold(error => fail(error.toString), identity)
+    given resample4s.core.DigestAlgorithm = resample4s.core.DigestAlgorithm.fnv1a64
+    val keys = labels.indices.map(i => s"dataset-row:$i").toVector
+    val samples = right(AxisRef.fromStableKeys("dataset-predictive-rows", multivar.core.SpaceRole.Samples, keys, "row", "none", "one"))
+    val neural = right(AxisRef.fromStableKeys("dataset-selected-features", multivar.core.SpaceRole.Observed, Vector.tabulate(matrix.cols)(i => s"feature:$i"), "feature", "none", "raw"))
+    val targets = right(AxisRef.fromStableKeys("dataset-label-code", multivar.core.SpaceRole.Observed, Vector("class"), "class", "none", "code"))
+    val classNames = labels.distinct
+    val coding = right(predictive.SwiftTargetCoding(classNames.zipWithIndex.map((label, index) => index.toDouble -> label)))
+    val sourceId = SourceId.unsafe("dataset-view-fixture")
+    val source = right(EvidenceSource(sourceId, scalafim.response.Provenance.source(scalafim.response.ProvenanceId.unsafe("dataset-view-root"), sourceId)))
+    val observations = right(Observations.fromDense(samples, neural, matrix, multivar.core.ValueIdentity.source(multivar.core.ValueId.unsafe("selected-patterns")), source))
+    val response = right(MultiResponse.fromDense(samples, targets, Matrix.dense(labels.length, 1, labels.map(label => classNames.indexOf(label).toDouble)), multivar.core.ValueIdentity.source(multivar.core.ValueId.unsafe("label-codes")), source))
+    val mapping = right(predictive.NativeAxisMapping.fromAxis(samples, labels.indices.map(_.toLong).toVector, alder.kernel.DataFingerprint.external("dataset-view-fixture-v1")))
+    val budget = right(predictive.MaterializationBudget(10000L))
+    val admitted = right(predictive.AlderPredictiveAdmission.nativeTables(observations, response, keys, alder.kernel.DataFingerprint.external("dataset-metadata"), mapping, right(predictive.NativeReadPolicy(matrix.cols, budget))))
+    val validation = right(ValidationDesign.bind(samples, right(resample4s.designs.FixedPartitions.once(right(resample4s.core.Labels.retained(IArray.from(blocks))))), ScientificSeed.fromLong(23)))
+    right(predictive.AlderSwiftCentroid.crossValidate(admitted, validation, coding))
+
   private def rows(matrix: gale.linalg.DMat): Vector[Vector[Double]] =
     Vector.tabulate(matrix.rows)(row => Vector.tabulate(matrix.cols)(col => matrix(row, col)))
 
@@ -202,28 +221,9 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
       )
     )
 
-    val plan =
-      FeatureSetPlan
-        .regional("beta-region", Vector(featureSet))
-        .toOption
-        .get
-
-    val labeled = view.toLabeled.toOption.get
-
-    val result =
-      MvpaEngine
-        .runSource(
-          labeled.source,
-          plan,
-          labeled.response,
-          CrossValidatedClassifierAnalysis(SwiftCentroidClassifier()),
-          Some(labeled.foldsByBlock.toOption.get)
-        )
-        .toOption
-        .get
-
-    assertEquals(result.failures, Vector.empty)
-    assertEqualsDouble(result.successes.head.metrics("Accuracy").getOrElse(Double.NaN), 1.0, 1e-12)
+    val result = nativeClassification(selected.value, Vector("face", "scene", "face", "scene"), Vector(0, 0, 1, 1))
+    assertEqualsDouble(result.assessment.accuracy, 1.0, 1e-12)
+    assertEquals(result.nativeRead.get.observationsIdentity.columns.size, 2)
   }
 
   test("sample metadata builds categorical responses and labeled leave-one-block-out folds") {
@@ -257,7 +257,7 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
     assertEquals(runFolds.folds.map(_.id), Vector("run:run-1", "run:run-2"))
   }
 
-  test("labeled dataset view source drives the MVPA engine without losing alignment") {
+  test("selected dataset rows drive identified native classification without losing alignment") {
     val view =
       LabeledMvpaDatasetView
         .fromDataset(
@@ -268,31 +268,11 @@ class MvpaDatasetViewSuite extends munit.FunSuite:
         .toOption
         .get
 
-    val plan =
-      FeatureSetPlan
-        .regional(
-          "selected-region",
-          Vector(FeatureSet.unsafe(RoiId(1), Vector(0, 1), label = Some("signal")))
-        )
-        .toOption
-        .get
-
-    val result =
-      MvpaEngine
-        .runSource(
-          view.source,
-          plan,
-          view.response,
-          CrossValidatedClassifierAnalysis(SwiftCentroidClassifier()),
-          Some(view.foldsByBlock.toOption.get)
-        )
-        .toOption
-        .get
-
-    assertEquals(result.failures, Vector.empty)
-    assertEquals(result.successes.length, 1)
-    assertEqualsDouble(result.successes.head.metrics("Accuracy").getOrElse(Double.NaN), 1.0, 1e-12)
-    assertEqualsDouble(result.successes.head.metrics("TestedSamples").getOrElse(Double.NaN), 4.0, 1e-12)
+    val selected = view.source.selectFeatures(FeatureSet.unsafe(RoiId(1), Vector(0, 1))).toOption.get
+    val result = nativeClassification(selected.value, Vector("face", "scene", "face", "scene"), Vector(0, 0, 1, 1))
+    assertEqualsDouble(result.assessment.accuracy, 1.0, 1e-12)
+    assertEquals(result.assessment.samples, 4L)
+    assertEquals(result.rows.map(_.stableKey), Vector("dataset-row:0", "dataset-row:1", "dataset-row:2", "dataset-row:3"))
   }
 
   test("labeled view refuses unlabeled samples before classifier workflows") {

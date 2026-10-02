@@ -45,16 +45,15 @@ class AlderSoftLdaSuite extends munit.FunSuite:
     val design = right(ValidationDesign.bind(axis, right(FixedPartitions.once(right(Labels.retained(IArray.unsafeFromArray(Array(0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3)))))), ScientificSeed.fromLong(29L)))
     (rows, design, operator)
 
-  test("Alder soft LDA matches frozen legacy fold-local probabilities"):
-    val (rows, design, operator) = fixture()
+  test("Alder soft LDA returns converged fold artifacts with ordered dense probabilities"):
+    val (rows, design, _) = fixture()
     val alder = right(AlderSoftLda.crossValidate(rows, design, coding, config))
-    val membership = right(ClassMembership.hard(targets.map(value => coding.label(value).get)))
-    val legacy = right(SoftLda.crossValidate(operator, membership, right(FoldPlan.leaveOneBlockOut(Vector(0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3))), config))
-    assertMatrixClose(alder.prediction.probabilities, legacy.prediction.probabilities)
-    assertEqualsDouble(alder.targetMse, legacy.targetMse, 1e-12)
-    assertEqualsDouble(alder.targetArgmaxAccuracy, legacy.targetArgmaxAccuracy, 1e-12)
+    assertEquals(alder.prediction.classes, coding.classes)
+    assertEquals(alder.prediction.probabilities.rows, values.length)
     assertEquals(alder.fits.map(_.audit.component.id.render), Vector.fill(4)("scalafim.soft-lda"))
-
+    alder.fits.foreach: fit =>
+      assertEquals(fit.model.fit.programFit.program.objective.label, "generalized-rayleigh")
+      assertEquals(fit.model.trainingSamples.length, 9)
   test("held-out features, targets, and nuisance do not alter the corresponding fitted fold"):
     val nuisance = right(TrialNuisanceDesign.from(Matrix.tabulate(values.length, 1)((row, _) => row.toDouble / 3.0)))
     val (baselineRows, design, _) = fixture(nuisance = Some(nuisance))

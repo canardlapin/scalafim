@@ -211,7 +211,7 @@ class MvpaCoreSuite extends munit.FunSuite:
   test("fold-required analyses reject missing folds before visiting feature sets") {
     val plan = FeatureSetPlan.regional("two-regions", Vector(FeatureSet.unsafe(RoiId(1), Vector(0, 1)))).toOption.get
     val source = new CountingSource(toyData)
-    val analysis = CrossValidatedClassifierAnalysis(SwiftCentroidClassifier())
+    val analysis = CrossnobisAnalysis()
     var visited = false
 
     val result = MvpaStream.foreach(source, plan, toyResponse, analysis) { _ =>

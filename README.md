@@ -233,6 +233,8 @@ sbt connectivityJVM/test
 sbt connectivityJS/test
 sbt mvpaDatasetJVM/test
 sbt mvpaDatasetJS/test
+sbt workflowExamplesJVM/test
+sbt workflowExamplesJS/test
 sbt mvpaSpatialJVM/test
 sbt mvpaSpatialJS/test
 sbt groupJVM/test

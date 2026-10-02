@@ -8,50 +8,32 @@ Package root:
 import scalafim.fmri.mvpa.dataset.*
 ```
 
-`scalafim-fmri-mvpa` deliberately works over sample-by-feature pattern sources.
-`scalafim-dataset` deliberately works over storage-backed fMRI series. This
-module is the narrow bridge between the two:
+Predictive workflows use identified `Observations`, `MultiResponse` and
+`Column` metadata. `AlderPredictiveAdmission.nativeTables` admits the native
+values with their source identities, axes, read policy and materialization
+budget; `.nativeMeasurement` additionally binds a typed spatial/basis leg.
+A `ValidationDesign` or `LeaveOneGroupOutDesign` binds assessment to the same
+ordered sample axis. Native IDs remain unique, including repeated-draw
+occurrences. Equal-sized foreign axes are refused.
 
-- `MvpaDatasetView` converts an `FmriSeries` or selected `FmriDataset` read into
-  a `PatternMatrix` and backend-neutral `DensePatternSource`;
-- `LabeledMvpaDatasetView` is the classifier-facing view: it can only be built
-  when every sample has a class label and exposes a validated `Response`
-  directly;
-- `PatternTable` represents any row-by-feature numeric product, including
-  fit-result coefficient maps or trialwise beta maps;
-- `FeatureMapping` distinguishes voxel-backed dataset features from abstract
-  feature ids while preserving global indices, so atlas regions and searchlight
-  plans remain compatible after dataset selection;
-- `DatasetPatternRequest` ties a `DataSelection`, `SampleMetadataRequest`, and
-  feature-space id into one typed request;
-- `SampleTable`, `SampleRecord`, and `SampleMetadata` preserve row-aligned
-  sample provenance and aligned label/block/run/item columns;
-- failures are represented as categorized `MvpaDatasetError` values rather than
-  thrown ingestion exceptions.
+The method-owned adapters are `AlderSwiftCentroid`, `AlderCorrelationCentroid`,
+`AlderRidgeLda`, `AlderRidgeRegression`, `AlderFeatureModel`,
+`AlderCrossDecoding`, `AlderOperatorRidge`, `AlderSoftLda`, and
+`AlderPatternSelection`. Their results carry numerical outputs and receipts
+directly. Dense categorical and feature-model heads accept repeated exact
+validation; each categorical row records every contributing assessment unit
+and its training keys, with equal weight per contribution.
 
-Example:
+See the executable
+[atlas classification workflow](../../examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/AtlasMvpaWorkflow.scala)
+for native spatial admission and a bound validation plan. The same source and
+suite run on JVM and Scala.js. R parity expectations live in
+`NativePredictiveParitySuite`; numerical laws and refusal cases live in
+`NativePredictiveLawsSuite` and the owning method suites.
 
-```scala
-val view =
-  LabeledMvpaDatasetView
-    .fromDataset(
-      dataset,
-      labels = Vector("face", "scene", "face", "scene"),
-      selection = DataSelection(voxels = IndexSelection.indices(0, 2, 4)),
-      blocks = Some(Vector("run-1", "run-1", "run-2", "run-2"))
-    )
-    .toOption
-    .get
-
-val result =
-  MvpaEngine.runSource(
-    view.source,
-    regions,
-    view.response,
-    CrossValidatedClassifierAnalysis(SwiftCentroidClassifier()),
-    Some(view.foldsByBlock.toOption.get)
-  )
-```
+The dataset views below remain migration boundaries for M3.13 and relational
+callers scheduled for M2.09. They preserve selected rows, feature identity and
+sample metadata; new predictive workflows use native admission.
 
 For lower-level construction, pass a single typed request:
 

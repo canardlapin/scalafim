@@ -20,7 +20,9 @@ final case class AlderFeatureModelFoldFit(
 )
 
 final case class AlderFeatureModelResult(
-    result: RoiAnalysisResult,
+    metrics: FeatureModelMetricSet,
+    penalty: RidgePenalty,
+    prediction: Option[FeatureModelPrediction],
     validationReceipt: resample4s.core.PlanReceipt,
     fits: Vector[AlderFeatureModelFoldFit],
     materialization: MaterializationReceipt,
@@ -139,7 +141,7 @@ object AlderFeatureModel:
           row += 1
         val prediction = FeatureModelPrediction(direction, features.items, targetNames, sums.result(), observed.result())
         FeatureModelMetrics.compute(prediction).left.map(AlderFeatureModelError.Numerical.apply).map: metrics =>
-          AlderFeatureModelResult(RoiAnalysisResult(metrics.withEstimator(estimator.lambda), if store then Some(RoiPayload.FeatureModel(prediction)) else None), validation.receipt, fits.result(), receipt, None)
+          AlderFeatureModelResult(metrics, estimator.penalty, Option.when(store)(prediction), validation.receipt, fits.result(), receipt, None)
 
   private final class FeatureLearner(estimator: FeatureRidgeEstimator) extends Learner[Id, Array[Double], Array[Double], Unit, Vector[Double]]:
     type FitError = AlderFeatureModelError

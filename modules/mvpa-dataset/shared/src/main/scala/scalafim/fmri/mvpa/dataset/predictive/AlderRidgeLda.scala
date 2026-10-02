@@ -35,9 +35,9 @@ enum AlderRidgeLdaError:
   * reuses the correlation head's complete FitContext/OOF lifecycle rather than
   * exposing a legacy cross-validation wrapper. */
 object AlderRidgeLda:
-  def crossValidate[S <: multivar.core.SemanticSpace, K, M](
+  def crossValidate[S <: multivar.core.SemanticSpace, K, M, Cov <: Coverage.Exact](
       rows: AlderMaterializedRows[M],
-      design: ValidationDesign[S, K, Coverage.ExactOnce],
+      design: ValidationDesign[S, K, Cov],
       penalty: RidgePenalty,
       coding: SwiftTargetCoding
   ): Either[AlderRidgeLdaError, AlderRidgeLdaResult] =

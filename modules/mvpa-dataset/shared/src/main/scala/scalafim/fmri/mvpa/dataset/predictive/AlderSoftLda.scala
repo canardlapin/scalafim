@@ -58,7 +58,7 @@ enum AlderSoftLdaError:
   case ConfiguredNuisanceMustBeAdmitted
 
 /** Native Alder lifecycle for soft LDA.  It deliberately fits the extracted
-  * single-fit kernel rather than routing through `SoftLda.crossValidate`. */
+  * single-fit numerical kernel. */
 object AlderSoftLda:
   def admit(
       operator: PatternOperator,
@@ -145,7 +145,7 @@ object AlderSoftLda:
                           val ordinal = example.input.ordinal
                           if id.value != rows.mapping.nativeIds(ordinal) then failure = Some(AlderSoftLdaError.OperatorRowMismatch(id.value, ordinal))
                           else if assembled(ordinal).nonEmpty then failure = Some(AlderSoftLdaError.DuplicateAssessment(rows.mapping.entriesByOrdinal(ordinal).stableKey))
-                          else Classification.reorderProbabilities(prediction, coding.classes) match
+                          else Classification.reorderProbabilities(prediction.classes, prediction.probabilities, coding.classes) match
                             case Left(error) => failure = Some(AlderSoftLdaError.Mvpa(error))
                             case Right(probabilities) =>
                               var column = 0

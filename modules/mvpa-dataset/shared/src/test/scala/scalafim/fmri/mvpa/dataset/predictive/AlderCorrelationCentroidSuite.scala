@@ -45,3 +45,31 @@ class AlderCorrelationCentroidSuite extends munit.FunSuite:
     assertEquals(baseline.fits.map(_.audit.component.id.render), Vector.fill(3)("scalafim.correlation-centroid"))
     val swift = right(AlderSwiftCentroid.crossValidate(baselineRows, design(baselineRows), coding))
     assert((0 until baseline.probabilities.rows).exists(row => math.abs(baseline.probabilities(row, 0) - swift.probabilities(row, 0)) > 1e-8))
+
+
+  test("repeated exact assessments average correlation probabilities by stable row"):
+    val materialized = rows(values)
+    val axis = right(AxisRef.fromStableKeys("samples", SpaceRole.Samples, materialized.mapping.entriesByOrdinal.map(_.stableKey), "trial", "none", "one"))
+    val first = right(Labels.retained(IArray.unsafeFromArray(blocks.clone())))
+    val second = right(Labels.retained(IArray(0, 1, 2, 0, 1, 2)))
+    val onceSecond = right(ValidationDesign.bind(axis, right(FixedPartitions.once(second)), ScientificSeed.fromLong(17L)))
+    val repeated = right(ValidationDesign.bind(axis, right(FixedPartitions.repeated(IArray(first, second))), ScientificSeed.fromLong(17L)))
+    val a = right(AlderCorrelationCentroid.crossValidate(materialized, design(materialized), coding))
+    val b = right(AlderCorrelationCentroid.crossValidate(materialized, onceSecond, coding))
+    val combined = right(AlderCorrelationCentroid.crossValidate(materialized, repeated, coding))
+    assertEquals(combined.rows.map(_.stableKey), materialized.mapping.entriesByOrdinal.map(_.stableKey))
+    assertEquals(combined.fits.length, a.fits.length + b.fits.length)
+    assert((0 until a.probabilities.rows).exists(row => math.abs(a.probabilities(row, 0) - b.probabilities(row, 0)) > 1e-8))
+    combined.rows.foreach: row =>
+      assertEquals(row.assessments.map(_.unit.repeat), Vector(0, 1))
+      assertEquals(row.assessments.length, 2)
+      row.assessments.foreach: contribution =>
+        assert(!contribution.trainingStableKeys.contains(row.stableKey))
+        assertEquals(contribution.trainingStableKeys, combined.fits.find(_.unit == contribution.unit).get.trainingStableKeys)
+    combined.rows.indices.foreach: row =>
+      coding.classes.indices.foreach: column =>
+        assertEqualsDouble(combined.probabilities(row, column), (a.probabilities(row, column) + b.probabilities(row, column)) / 2.0, 1e-12)
+
+  test("native correlation refuses a one-feature measurement"):
+    val materialized = rows(values.map(_.take(1)))
+    assert(AlderCorrelationCentroid.crossValidate(materialized, design(materialized), coding).isLeft)

@@ -73,128 +73,6 @@ final case class FeatureModelPrediction(
   require(items.length == predicted.rows, "prediction item count must match rows")
   require(targetNames.length == predicted.cols, "prediction target name count must match columns")
 
-final case class FeatureModelAnalysis(
-    design: FeatureModelDesign,
-    direction: FeaturePredictionDirection,
-    estimator: FeatureRidgeEstimator = FeatureRidgeEstimator(),
-    storePrediction: Boolean = false
-) extends FoldRequiredDenseRoiAnalysis:
-  override def name: String = s"feature_model_${direction.label}_ridge"
-  override val minFeatures: Int = 1
-  override def missingFoldsError: MvpaError =
-    MvpaError.InvalidFeatureModelInput("feature model analysis requires a fold plan")
-
-  override def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult] =
-    for
-      _ <- validateInputs(roi, context.foldPlan)
-      prediction <- FeatureModelAnalysis.crossValidate(roi, design, direction, estimator, context.foldPlan)
-      metrics <- FeatureModelMetrics.compute(prediction).map(_.withEstimator(estimator.lambda))
-    yield
-      val payload =
-        if storePrediction then Some(RoiPayload.FeatureModel(prediction))
-        else None
-      RoiAnalysisResult(metrics, payload)
-
-  private def validateInputs(roi: PatternMatrix, folds: FoldPlan): Either[MvpaError, Unit] =
-    if design.features.rows != roi.samples then
-      Left(MvpaError.InvalidFeatureModelInput(s"feature design rows ${design.features.rows} != ROI samples ${roi.samples}"))
-    else if folds.samples != roi.samples then
-      Left(MvpaError.ResponseLengthMismatch(roi.samples, folds.samples))
-    else
-      validateFinite(roi.value, "ROI pattern matrix")
-
-object FeatureModelAnalysis:
-  private def crossValidate(
-      roi: PatternMatrix,
-      design: FeatureModelDesign,
-      direction: FeaturePredictionDirection,
-      estimator: FeatureRidgeEstimator,
-      folds: FoldPlan
-  ): Either[MvpaError, FeatureModelPrediction] =
-    val source =
-      direction match
-        case FeaturePredictionDirection.FeaturesToPatterns => design.features
-        case FeaturePredictionDirection.PatternsToFeatures => roi.value
-    val target =
-      direction match
-        case FeaturePredictionDirection.FeaturesToPatterns => roi.value
-        case FeaturePredictionDirection.PatternsToFeatures => design.features
-    val targetNames =
-      direction match
-        case FeaturePredictionDirection.FeaturesToPatterns => roi.featureIndices.map(index => s"pattern_${index.value}")
-        case FeaturePredictionDirection.PatternsToFeatures => design.featureNames
-
-    val testRows = folds.folds.flatMap(_.test.map(_.value)).distinct.sorted
-    if testRows.isEmpty then Left(MvpaError.InvalidFeatureModelInput("fold plan produced no test samples"))
-    else
-      val rowToOutput = testRows.zipWithIndex.toMap
-      val predicted = Matrix.newBuilder(testRows.length, target.cols)
-      val observed = Matrix.newBuilder(testRows.length, target.cols)
-      val counts = Array.fill(testRows.length)(0)
-
-      var foldIndex = 0
-      while foldIndex < folds.folds.length do
-        val fold = folds.folds(foldIndex)
-        val trainRows = fold.train.map(_.value)
-        val test = fold.test.map(_.value)
-        val foldResult =
-          for
-            sourceTrain <- selectRows(source, trainRows)
-            targetTrain <- selectRows(target, trainRows)
-            sourceTest <- selectRows(source, test)
-            fit <- StandardizedRidgeMap.fit(sourceTrain, targetTrain, estimator.lambda)
-            foldPredicted <- fit.predict(sourceTest)
-          yield
-            var localRow = 0
-            while localRow < test.length do
-              val outRow = rowToOutput(test(localRow))
-              var col = 0
-              while col < target.cols do
-                predicted(outRow, col) = predicted(outRow, col) + foldPredicted(localRow, col)
-                observed(outRow, col) = target(test(localRow), col)
-                col += 1
-              counts(outRow) += 1
-              localRow += 1
-        foldResult match
-          case Left(error) => return Left(error)
-          case Right(()) =>
-        foldIndex += 1
-
-      val missing = counts.indexWhere(_ == 0)
-      if missing >= 0 then Left(MvpaError.InvalidFeatureModelInput("some test samples were never predicted"))
-      else
-        var row = 0
-        while row < testRows.length do
-          var col = 0
-          while col < target.cols do
-            predicted(row, col) = predicted(row, col) / counts(row)
-            col += 1
-          row += 1
-        Right(
-          FeatureModelPrediction(
-            direction,
-            testRows.map(index => design.items(index)).toVector,
-            targetNames,
-            predicted.result(),
-            observed.result()
-          )
-        )
-
-  private def selectRows(matrix: DMat, rows: IndexedSeq[Int]): Either[MvpaError, DMat] =
-    if rows.isEmpty then Left(MvpaError.InvalidFeatureModelInput("feature model fold has no rows"))
-    else rows.find(row => row < 0 || row >= matrix.rows) match
-      case Some(row) => Left(MvpaError.FoldIndexOutOfBounds("feature_model", row, matrix.rows))
-      case None =>
-        val out = Matrix.newBuilder(rows.length, matrix.cols)
-        var row = 0
-        while row < rows.length do
-          var col = 0
-          while col < matrix.cols do
-            out(row, col) = matrix(rows(row), col)
-            col += 1
-          row += 1
-        Right(out.result())
-
 private[mvpa] final case class StandardizedRidgeMap(
     sourceMeans: Array[Double],
     sourceScales: Array[Double],
@@ -311,7 +189,7 @@ private object ColumnStats:
       col += 1
     Right(ColumnStats(means, scales))
 
-private[mvpa] final case class FeatureModelMetricSet(
+final case class FeatureModelMetricSet(
     patternCorrelation: Double,
     patternDiscrimination: Double,
     patternRankPercentile: Double,

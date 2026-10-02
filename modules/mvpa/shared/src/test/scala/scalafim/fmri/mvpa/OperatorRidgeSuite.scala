@@ -153,107 +153,23 @@ class OperatorRidgeSuite extends munit.FunSuite:
     assertMatrixClose(permutedScores.scores, baseline.scores, absTol = 1e-7, relTol = 1e-7)
   }
 
-  test("soft simplex targets obey the affine target law under cross-validation") {
-    val hardResult = OperatorRidge.crossValidate(operator, targets, folds, config).toOption.get
-    val softenedValues = Matrix.tabulate(targets.samples, targets.classCount): (sample, klass) =>
+  test("single-fit simplex targets obey the affine ridge score law") {
+    val softened = ClassMembership.simplex(targets.classes, Matrix.tabulate(targets.samples, targets.classCount): (sample, klass) =>
       0.7 * targets.values(sample, klass) + 0.1
-    val softened = ClassMembership.simplex(targets.classes, softenedValues).toOption.get
-    val softResult = OperatorRidge.crossValidate(operator, softened, folds, config).toOption.get
-
-    assertEquals(softResult.receipt.targetKind, ClassMembershipKind.Simplex)
+    ).toOption.get
+    val hard = OperatorRidge.fit(operator, targets, config).toOption.get.predict(operator).toOption.get
+    val soft = OperatorRidge.fit(operator, softened, config).toOption.get.predict(operator).toOption.get
     var row = 0
-    while row < hardResult.prediction.scores.rows do
-      var klass = 0
-      while klass < hardResult.prediction.scores.cols do
-        assertEqualsDouble(
-          softResult.prediction.scores(row, klass),
-          0.7 * hardResult.prediction.scores(row, klass) + 0.1,
-          1e-7
-        )
-        klass += 1
+    while row < hard.scores.rows do
+      var column = 0
+      while column < hard.scores.cols do
+        assertEqualsDouble(soft.scores(row, column), 0.7 * hard.scores(row, column) + 0.1, 1e-7)
+        column += 1
       row += 1
-    assertEquals(softResult.prediction.predicted, hardResult.prediction.predicted)
-
-    val plan = FeatureSetPlan
-      .regional("soft-ridge", Vector(FeatureSet.unsafe(RoiId(90), Vector(0, 1, 2, 3))))
-      .toOption
-      .get
-    val engineResult = MvpaEngine
-      .runSource(
-        PatternSource.fromOperator(operator),
-        plan,
-        Response.Probabilistic(softened),
-        CrossValidatedOperatorRidgeAnalysis(config),
-        Some(folds)
-      )
-      .toOption
-      .get
-    engineResult.successes.head.payload match
-      case Some(RoiPayload.OperatorRidge(payload)) =>
-        assertEquals(payload.receipt.targetKind, ClassMembershipKind.Simplex)
-        assertEquals(payload.prediction, None)
-      case other => fail(s"unexpected soft-target payload: $other")
+    assertEquals(soft.predicted, hard.predicted)
   }
 
-  test("held-out target perturbations cannot change fitted fold scores") {
-    val heldOutFold = FoldPlan.unsafe(
-      Vector(Fold.unsafe("held-out", 3 until patterns.rows, 0 until 3)),
-      samples = patterns.rows
-    )
-    val perturbedValues = Matrix.tabulate(targets.samples, targets.classCount): (sample, klass) =>
-      if sample < 3 then targets.values(sample, (klass + 1) % targets.classCount)
-      else targets.values(sample, klass)
-    val perturbedTargets = ClassMembership.simplex(targets.classes, perturbedValues).toOption.get
-    val baseline = OperatorRidge.crossValidate(operator, targets, heldOutFold, config).toOption.get
-    val perturbed = OperatorRidge.crossValidate(operator, perturbedTargets, heldOutFold, config).toOption.get
-
-    assertMatrixClose(perturbed.prediction.scores, baseline.prediction.scores, absTol = 1e-10, relTol = 1e-10)
-    assertEquals(perturbed.prediction.predicted, baseline.prediction.predicted)
-    assert(perturbed.targetMse > baseline.targetMse)
-    assert(perturbed.targetArgmaxAccuracy < baseline.targetArgmaxAccuracy)
-  }
-
-  test("canonical operator analysis returns scores and execution receipts without a dense adapter") {
-    val plan = FeatureSetPlan
-      .regional("operator-ridge", Vector(FeatureSet.unsafe(RoiId(91), Vector(0, 1, 2, 3))))
-      .toOption
-      .get
-    val response = Response.Categorical(labels)
-    val result = MvpaEngine
-      .runSource(
-        PatternSource.fromOperator(operator),
-        plan,
-        response,
-        CrossValidatedOperatorRidgeAnalysis(config, storePredictions = true),
-        Some(folds)
-      )
-      .toOption
-      .get
-    val success = result.successes.head
-
-    assertEquals(result.analysisName, "cv_operator_ridge")
-    assertEquals(result.failures, Vector.empty)
-    assert(success.metrics("TargetMse").exists(_.isFinite))
-    assertEqualsDouble(success.metrics("TargetArgmaxAccuracy").get, 1.0, 1e-12)
-    success.payload match
-      case Some(RoiPayload.OperatorRidge(payload)) =>
-        assert(payload.prediction.nonEmpty)
-        assertEquals(payload.receipt.executionMode, OperatorRidgeExecutionMode.OperatorProducts)
-        assertEquals(payload.receipt.folds.map(_.foldId), Vector("0", "1", "2", "3"))
-        assert(payload.receipt.forwardApplications > 0)
-        assert(payload.receipt.transposeApplications > 0)
-      case other => fail(s"unexpected operator-ridge payload: $other")
-  }
-
-  test("missing fold classes, non-convergence, poisoned operators, and feature mismatch are typed failures") {
-    val missingFold = FoldPlan
-      .unsafe(Vector(Fold.unsafe("missing-b", Seq(0, 3, 6, 9), Seq(1, 2))), samples = patterns.rows)
-    val missingClass = OperatorRidge.crossValidate(operator, targets, missingFold, config)
-    assertEquals(
-      missingClass.left.toOption,
-      Some(OperatorRidgeError.MissingTrainingClass("missing-b", ClassLabel("b")))
-    )
-
+  test("non-convergence, poisoned operators, and feature mismatch are typed failures") {
     val oneStep = OperatorRidge.fit(
       operator,
       targets,

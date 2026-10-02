@@ -57,8 +57,9 @@ class AlderCrossDecodingSuite extends munit.FunSuite:
       (RidgeLdaClassifier(0.5): Classifier, right(AlderCrossDecoding.ridgeLda(source, target, binding, coding, right(RidgePenalty(0.5)))))
     )
     heads.foreach: (classifier, result) =>
-      val model = right(classifier.fit(PatternMatrix.fromRows(x), Response.Categorical(y.map(value => coding.label(value).get))))
-      val expected = right(Classification.reorderProbabilities(right(model.predict(PatternMatrix.fromRows(z))), coding.classes))
+      val model = right(classifier.fit(DMat.dense(x.length, x.head.length, x.flatten), y.map(value => coding.label(value).get)))
+      val prediction = right(model.predict(DMat.dense(z.length, z.head.length, z.flatten)))
+      val expected = right(Classification.reorderProbabilities(prediction.classes, prediction.probabilities, coding.classes))
       (0 until z.length).foreach: row =>
         coding.classes.indices.foreach: column =>
           assertEqualsDouble(result.probabilities(row, column), expected(row, column), 1e-12)
@@ -75,3 +76,10 @@ class AlderCrossDecodingSuite extends munit.FunSuite:
     val source = right(AlderPredictiveAdmission.nativeTables(observations, targets, sample.toRecord.stableKeys, DataFingerprint.external("metadata"), mapping, right(NativeReadPolicy(2, right(MaterializationBudget(1000))))))
     val target = rows("target", Vector("t0", "t1"), Vector(Vector(1.5, 1.0), Vector(-1.5, -1.0)), Vector(0.0, 1.0))
     assert(AlderCrossDecoding.correlationCentroid(source, target, binding, coding).isLeft)
+
+  test("cross-domain correlation refuses a one-feature measurement"):
+    val source = rows("one-source", Vector("s0", "s1", "s2", "s3"), Vector(Vector(2.0), Vector(-2.0), Vector(-1.0), Vector(1.0)), Vector(0.0, 1.0, 1.0, 0.0))
+    val target = rows("one-target", Vector("t0", "t1"), Vector(Vector(1.5), Vector(-1.5)), Vector(0.0, 1.0))
+    val feature = right(AxisRef.fromStableKeys("one-feature", SpaceRole.Observed, Vector("f0"), "feature", "none", "one"))
+    val bound = right(CrossDecodingFeatureBinding(feature.descriptor, feature.descriptor))
+    assert(AlderCrossDecoding.correlationCentroid(source, target, bound, coding).isLeft)
