@@ -154,7 +154,7 @@ exception in a separate clone and retained
 `upstream-scaladoc-published-baseline.log`. Temporary package-filter diagnostic
 runs establish a baseline model-family rendering issue; filtered builds are
 not documentation qualification or changes to the repository's default gates.
-Default `smokeCheck` therefore remains blocked by pre-existing Scaladoc, not
+At that stage default `smokeCheck` was blocked by pre-existing Scaladoc, not
 accepted as passing.
 
 `upstream-rotation-stability-binary-smoke.log` exits 0 for an explicitly
@@ -177,3 +177,18 @@ change. The original manifest/log hashes above remain the original receipts.
 `m402-committed-sources.json` records all 421 current source hashes; the committed
 upstream gate records a fresh required compile/test run. No root pin is changed
 and M4.02 remains open pending upstream publication and pin qualification.
+
+## Later default documentation gate
+
+The subsequent rank candidate `ab811e257dd67f77e8c3b70cb1ea600f274429a3`
+includes the exact rotation parent. Its clean ordinary default
+`compileAll testAll smokeCheck mimaCheck` gate passes, including core, IR and
+inference Scaldoc and public-artifact consumer compilation. No package filter
+or disabled-doc setting was used. This later success is recorded in
+`upstream-rank-clean-final-gates.log`, SHA-256
+`ab25b2167078051efd37d35050e37e5d960e3f0b62687a477553912d2ee7370a`.
+The earlier published-baseline failures remain evidence of the observed
+Scaldoc problem; no isolated source repair for that exception is claimed.
+Three existing duplicate-classpath Scaldoc flag warnings remain. Publication,
+pin qualification and descriptive/scientific acceptance boundaries above
+remain separate.

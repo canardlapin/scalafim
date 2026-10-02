@@ -159,7 +159,9 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
 lazy val multivarRevision = "f74d631720d65147c51496dcbdd37c01912de1cb"
-lazy val multivarBuild =
+lazy val multivarBuild = {
+  // Inference must share the same resample4s classes as native MVPA adapters.
+  System.setProperty("multivar.resample4s.build.uri", resample4sBuild.toString)
   sys.props
     .get("scalafim.multivar.build")
     .map(path => file(path).getCanonicalFile.toURI)
@@ -168,10 +170,13 @@ lazy val multivarBuild =
         s"https://github.com/canardlapin/multivar.git#$multivarRevision"
       )
     )
+}
 lazy val multivarJVM   = ProjectRef(multivarBuild, "coreJVM")
 lazy val multivarJS    = ProjectRef(multivarBuild, "coreJS")
 lazy val multivarIrJVM = ProjectRef(multivarBuild, "irJVM")
 lazy val multivarIrJS  = ProjectRef(multivarBuild, "irJS")
+lazy val multivarInferenceJVM = ProjectRef(multivarBuild, "inferenceJVM")
+lazy val multivarInferenceJS  = ProjectRef(multivarBuild, "inferenceJS")
 
 // Renderer-neutral graphics and platform backends are developed independently.
 // Ordinary builds clone the exact public revision; the system property is an
@@ -1165,7 +1170,8 @@ lazy val mvpa =
         galeCoreJVM,
         multivarJVM,
         resample4sCoreJVM,
-        resample4sDesignsJVM
+        resample4sDesignsJVM,
+        multivarInferenceJVM
       )
     )
     .jsConfigure(
@@ -1173,7 +1179,8 @@ lazy val mvpa =
         galeCoreJS,
         multivarJS,
         resample4sCoreJS,
-        resample4sDesignsJS
+        resample4sDesignsJS,
+        multivarInferenceJS
       )
     )
     .jsSettings(jsSettingsBase)
