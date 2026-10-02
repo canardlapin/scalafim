@@ -864,7 +864,8 @@ object DatasetObservationEvidence:
 
   def build(
       table: PatternTable,
-      sampleTable: SampleTable
+      sampleTable: SampleTable,
+      domain: DatasetId
   ): Either[MvpaDatasetError, DatasetObservationEvidence] =
     if table.rows != sampleTable.size then
       Left(MvpaDatasetError.PatternRowCountMismatch(sampleTable.size, table.rows))
@@ -874,7 +875,7 @@ object DatasetObservationEvidence:
       for
         samples <- AxisRef
           .fromStableKeys(
-            "dataset-observations",
+            "dataset-observations:" + EvidenceIdentity.sampleDomain(domain, sampleTable),
             SpaceRole.Samples,
             sampleKeys,
             "dataset",
@@ -885,7 +886,7 @@ object DatasetObservationEvidence:
           .map(error)
         neural <- AxisRef
           .fromStableKeys(
-            "dataset-features",
+            "dataset-features:" + EvidenceIdentity.neuralDomain(domain, table.featureMapping),
             SpaceRole.Observed,
             neuralKeys,
             table.featureMapping.id.value,
@@ -894,7 +895,7 @@ object DatasetObservationEvidence:
           )
           .left
           .map(error)
-        identity = EvidenceIdentity.content(table, sampleTable, sampleKeys, neuralKeys)
+        identity = EvidenceIdentity.content(domain, table, sampleTable, sampleKeys, neuralKeys)
         sourceId = SourceId.unsafe(s"dataset-observations:$identity")
         source <- EvidenceSource(
           sourceId,
@@ -949,13 +950,13 @@ object DatasetObservationEvidence:
       series: FmriSeries,
       metadata: SampleMetadataRequest,
       featureSpaceId: FeatureSpaceId,
-      datasetId: Option[DatasetId]
+      datasetId: DatasetId
   ): Either[MvpaDatasetError, DatasetObservationEvidence] =
     for
       samples <- SampleTable.fromSeries(series, metadata)
       _ <- samples.validateAgainst(series)
-      patterns <- PatternTable.fromSeries(series, featureSpaceId, datasetId)
-      evidence <- build(patterns, samples)
+      patterns <- PatternTable.fromSeries(series, featureSpaceId, Some(datasetId))
+      evidence <- build(patterns, samples, datasetId)
     yield evidence
 
   def fromReader(
@@ -966,7 +967,7 @@ object DatasetObservationEvidence:
       .seriesEither(request.selection)
       .left
       .map(error => MvpaDatasetError.DatasetReadFailed(reader.dataset.id.value, error.message))
-      .flatMap(series => fromSeries(series, request.metadata, request.featureSpaceId, Some(reader.dataset.id)))
+      .flatMap(series => fromSeries(series, request.metadata, request.featureSpaceId, reader.dataset.id))
 
   def fromDataset(
       dataset: FmriDataset,
@@ -982,16 +983,16 @@ object DatasetObservationEvidence:
       rows: Seq[Seq[Double]],
       rowNames: Seq[String],
       voxelIndices: Seq[Int],
+      datasetId: DatasetId,
       labels: Option[Seq[String]] = None,
       blocks: Option[Seq[String]] = None,
       runs: Option[Seq[String]] = None,
       items: Option[Seq[String]] = None,
       featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("features"),
-      datasetId: Option[DatasetId] = None,
       shape: Option[DatasetShape] = None
   ): Either[MvpaDatasetError, DatasetObservationEvidence] =
     for
-      patterns <- PatternTable.fromRows(rows, voxelIndices, featureSpaceId, datasetId, shape)
+      patterns <- PatternTable.fromRows(rows, voxelIndices, featureSpaceId, Some(datasetId), shape)
       samples <- SampleTable.fromRows(
         rowNames,
         SampleMetadataRequest(
@@ -1001,18 +1002,20 @@ object DatasetObservationEvidence:
           items = items
         )
       )
-      evidence <- build(patterns, samples)
+      evidence <- build(patterns, samples, datasetId)
     yield evidence
 
 private object EvidenceIdentity:
   def content(
+      domain: DatasetId,
       table: PatternTable,
       samples: SampleTable,
       sampleKeys: Vector[String],
       neuralKeys: Vector[String]
   ): String =
     AxisDigest.sha256Hex: writer =>
-      writer.string("scalafim.dataset-observation-evidence.v2")
+      writer.string("scalafim.dataset-observation-evidence.v3")
+      writer.string(domain.value)
       writeMapping(writer, table.featureMapping)
       writer.intLE(sampleKeys.length)
       sampleKeys.foreach(writer.string)
@@ -1029,6 +1032,43 @@ private object EvidenceIdentity:
           writer.string(java.lang.Double.toHexString(table.value(row, column)))
           column += 1
         row += 1
+
+  /** Coordinate identity excludes payloads and annotation values. */
+  def sampleDomain(domain: DatasetId, samples: SampleTable): String =
+    AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.dataset-sample-domain.v1")
+      writer.string(domain.value)
+      writer.intLE(samples.rows.size)
+      samples.rows.foreach: sample =>
+        writer.intLE(sample.rowOrdinal)
+        writeOrigin(writer, sample.origin)
+        writeOption(writer, sample.run.map(_.value))
+
+  def neuralDomain(domain: DatasetId, mapping: FeatureMapping): String =
+    AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.dataset-neural-domain.v1")
+      writer.string(domain.value)
+      writer.string(mapping.id.value)
+      writeOption(writer, mapping.datasetId.map(_.value))
+      mapping match
+        case FeatureMapping.VoxelBacked(_, _, shape, _, _) =>
+          writer.string("voxel-backed")
+          writer.intLE(shape.spatialDims.size)
+          shape.spatialDims.foreach(writer.intLE)
+        case FeatureMapping.Abstract(_, _, _) => writer.string("abstract")
+
+  private def writeOrigin(writer: AxisDigest.Writer, origin: SampleOrigin): Unit =
+    origin match
+      case SampleOrigin.Timepoint(index) =>
+        writer.string("timepoint")
+        writer.intLE(index.value)
+      case SampleOrigin.Estimate(id, row) =>
+        writer.string("estimate")
+        writer.string(id.value)
+        writer.intLE(row.value)
+      case SampleOrigin.Row(row) =>
+        writer.string("row")
+        writer.intLE(row.value)
 
   def labels(evidenceIdentity: String, labels: Vector[ClassLabel]): String =
     AxisDigest.sha256Hex: writer =>
@@ -1063,17 +1103,7 @@ private object EvidenceIdentity:
       sample: SampleRecord
   ): Unit =
     writer.intLE(sample.rowOrdinal)
-    sample.origin match
-      case SampleOrigin.Timepoint(index) =>
-        writer.string("timepoint")
-        writer.intLE(index.value)
-      case SampleOrigin.Estimate(id, row) =>
-        writer.string("estimate")
-        writer.string(id.value)
-        writer.intLE(row.value)
-      case SampleOrigin.Row(row) =>
-        writer.string("row")
-        writer.intLE(row.value)
+    writeOrigin(writer, sample.origin)
     writeOption(writer, sample.label.map(_.value))
     writeOption(writer, sample.block.map(_.value))
     writeOption(writer, sample.run.map(_.value))

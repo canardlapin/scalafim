@@ -1,7 +1,8 @@
 # UMVPA M3.13 final legacy retirement
 
-Status: post-removal JVM/Scala.js gates pass; independent core review accepted.
-Final immutable commit review follows this source receipt.
+Status: post-removal and serialized-domain repair gates pass on JVM/Scala.js;
+independent source review approves the repaired dataset boundary. Final immutable
+commit review follows this source receipt.
 
 Packet `bd-01M2BNGX1BYSP54J3P9EYK4N55`, isolated branch
 `work/umvpa-finish-20261001`, base
@@ -111,3 +112,36 @@ system. Returned-copy ceilings remain distinct from whole-call memory evidence.
 The structured pattern fitter remains experimental. Whole-brain allocation,
 operational audit, inference calibration, group qualification, matched benchmark
 and release packets retain their own acceptance gates.
+
+## Serialized-domain repair after immutable review
+
+Independent review blocked draft commit
+`195f26ecc19ee6b03e8c82fea0bc0ac80f1149f2`: equal-shaped axes could decode
+foreign labels onto unrelated dataset samples. The repair requires an explicit
+`DatasetId` for derived rows and series, binds sample coordinates to domain,
+ordered origins, ordinals and run identities, and binds neural coordinates to
+domain, mapping kind and spatial shape. Label and numeric payload changes
+preserve coordinates while changing their own evidence identity. This is a
+caller-declared population contract, not proof of external acquisition identity.
+
+Two shared regression tests exercise actual serialized `Column.decode` refusals
+for foreign datasets and different sample origins, same-coordinate acceptance,
+neural shape/domain distinctions and sample-axis preservation under feature
+restriction. Independent read-only review approves the repaired three source
+files.
+
+`gate117-repaired-integration.log` exits 0: core 336, readout 45, dataset 108,
+spatial 20 per platform, workflow 3 JVM/2 JS, atlas 5 JVM: **517 JVM + 511 JS
+= 1,028**. Seven core tests per platform belong to the concurrently developed
+M4.03 packet and do not qualify that packet's later revisions. This packet's
+source-specific count is 510 JVM + 504 JS = 1,014. The complete raw log contains
+no compiler warning/error lines; `scalafimCompileAll` passes.
+Raw log SHA-256: `3e52fee8491af241ff827447d45be9bd244b4cc8df2c128703aeb9d119daf46d`.
+
+`gate117-retirement-sources.json` freezes this packet's 175 sources, SHA-256
+`b1e916a2f629a65f62e876313889911669395019b3ebf34d2c1b62c05aafd6f8`. Only the three dataset boundary/fixture files
+differ from gate112; other 172 sources are byte-identical. The retirement scan
+and immutable reference fixture hashes are unchanged. Gate114/115 failed
+compilation of a concurrent M4.03 draft; gate116 was interrupted after its
+identity writer entered a confirmed infinite loop. None is passing evidence.
+The repaired dataset source passed the complete gate117.

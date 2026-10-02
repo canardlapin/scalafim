@@ -234,6 +234,7 @@ class DatasetObservationEvidenceSuite extends FunSuite:
         ),
         rowNames = Vector("face_run1", "scene_run1", "face_run2", "scene_run2"),
         voxelIndices = Vector(4, 2),
+        datasetId = DatasetId("derived-trials"),
         labels = Some(Vector("face", "scene", "face", "scene")),
         blocks = Some(Vector("run1", "run1", "run2", "run2")),
         featureSpaceId = FeatureSpaceId.unsafe("trial-betas")
@@ -275,7 +276,7 @@ class DatasetObservationEvidenceSuite extends FunSuite:
         labels = Some(labels),
         blocks = Some(blocks),
         featureSpaceId = FeatureSpaceId.unsafe("identity-features"),
-        datasetId = Some(DatasetId(dataset))
+        datasetId = DatasetId(dataset)
       )
     )
 
@@ -312,12 +313,52 @@ class DatasetObservationEvidenceSuite extends FunSuite:
     assertNotEquals(sampleKeys(baseline).head, sampleKeys(baseline).last)
   }
 
+  test("serialized columns refuse foreign datasets and distinct ordered sample origins"):
+    def refuses(left: DatasetObservationEvidence, rightSide: DatasetObservationEvidence): Unit =
+      scalafim.fmri.mvpa.Column.decode(left.samples, right(rightSide.categoricalLabels).toRecord) match
+        case Left(scalafim.fmri.mvpa.EvidenceError.AxisMismatch("column rows", _, _)) => ()
+        case other => fail(s"expected foreign-axis refusal, got $other")
+    val baseline = identityEvidence()
+    refuses(baseline, identityEvidence(dataset = "different-domain"))
+    refuses(baseline, identityEvidence(names = Vector("different-a", "different-b")))
+    val selected = right(DatasetObservationEvidence.fromDataset(fixtureDataset(), selectedRequest))
+    val otherTimepoints = right(DatasetObservationEvidence.fromDataset(fixtureDataset(),
+      selectedRequest.copy(selection = DataSelection(time = IndexSelection.indices(0, 2), voxels = IndexSelection.indices(0, 2)))))
+    refuses(selected, otherTimepoints)
+    val changedLabels = identityEvidence(labels = Vector("right", "left"))
+    val changedValues = identityEvidence(rows = Vector(Vector(9.0, 2.0), Vector(3.0, 4.0)))
+    assertEquals(identityEvidence().samples.toRecord, baseline.samples.toRecord)
+    assertEquals(changedLabels.samples.toRecord, baseline.samples.toRecord)
+    assertEquals(changedValues.samples.toRecord, baseline.samples.toRecord)
+    assertEquals(changedLabels.neural.toRecord, baseline.neural.toRecord)
+    assertEquals(changedValues.neural.toRecord, baseline.neural.toRecord)
+    assert(scalafim.fmri.mvpa.Column.decode(baseline.samples, right(changedLabels.categoricalLabels).toRecord).isRight)
+
+  test("neural coordinates bind mapping domain and shape while feature restriction retains sample coordinates"):
+    def mapped(shape: Option[scalafim.dataset.DatasetShape], domain: String = "coordinate-domain") =
+      right(DatasetObservationEvidence.fromPatternRows(
+        Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)), Vector("a", "b"), Vector(4, 2),
+        DatasetId(domain), featureSpaceId = FeatureSpaceId.unsafe("same-frame"), shape = shape))
+    val shapeA = scalafim.dataset.DatasetShape.unsafe(SampleSpaces(Vector(5, 1, 1)), 2)
+    val shapeB = scalafim.dataset.DatasetShape.unsafe(SampleSpaces(Vector(1, 5, 1)), 2)
+    val voxelA = mapped(Some(shapeA))
+    assertNotEquals(voxelA.neural.toRecord, mapped(Some(shapeB)).neural.toRecord)
+    assertNotEquals(voxelA.neural.toRecord, mapped(None).neural.toRecord)
+    assertNotEquals(voxelA.neural.toRecord, mapped(Some(shapeA), "foreign-coordinate-domain").neural.toRecord)
+    assertEquals(voxelA.neural.toRecord, mapped(Some(shapeA)).neural.toRecord)
+    val oneFeature = right(DatasetObservationEvidence.fromDataset(fixtureDataset(),
+      selectedRequest.copy(selection = DataSelection(time = IndexSelection.indices(1, 3), voxels = IndexSelection.indices(0)))))
+    val twoFeatures = right(DatasetObservationEvidence.fromDataset(fixtureDataset(), selectedRequest))
+    assertEquals(oneFeature.samples.toRecord, twoFeatures.samples.toRecord)
+    assertNotEquals(oneFeature.neural.toRecord, twoFeatures.neural.toRecord)
+
   test("unlabeled evidence and metadata, mapping, row-shape failures are explicit") {
     val unlabeled = right(
       DatasetObservationEvidence.fromPatternRows(
         Vector(Vector(1.0, 0.0), Vector(0.0, 1.0)),
         Vector("a", "b"),
-        Vector(10, 11)
+        Vector(10, 11),
+        datasetId = DatasetId("unlabeled-estimates")
       )
     )
     assertEquals(unlabeled.categoricalLabels.left.toOption, Some(MvpaDatasetError.MissingCategoricalLabels))
@@ -351,7 +392,7 @@ class DatasetObservationEvidenceSuite extends FunSuite:
     val table = right(PatternTable.fromRows(Vector(Vector(1.0, 2.0)), Vector(0, 1)))
     val samples = right(SampleTable.fromRows(Vector("a", "b")))
     assertEquals(
-      DatasetObservationEvidence.build(table, samples).left.toOption,
+      DatasetObservationEvidence.build(table, samples, DatasetId("mismatch")).left.toOption,
       Some(MvpaDatasetError.PatternRowCountMismatch(expected = 2, actual = 1))
     )
 

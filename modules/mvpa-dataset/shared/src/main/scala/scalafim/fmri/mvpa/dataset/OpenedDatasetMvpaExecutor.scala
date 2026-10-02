@@ -34,4 +34,4 @@ object OpenedDatasetMvpaExecutor:
             )
           )
       .subflatMap: series =>
-        DatasetObservationEvidence.fromSeries(series, request.metadata, request.featureSpaceId, Some(opened.dataset.id))
+        DatasetObservationEvidence.fromSeries(series, request.metadata, request.featureSpaceId, opened.dataset.id)

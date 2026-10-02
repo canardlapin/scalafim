@@ -50,12 +50,15 @@ val evidence = DatasetObservationEvidence.fromDataset(dataset, request)
 ```
 
 Derived coefficients use `DatasetObservationEvidence.fromPatternRows`, with
-explicit row names, ordered feature indices and optional labels, runs, blocks
+an explicit `DatasetId`, row names, ordered feature indices and optional labels, runs, blocks
 and item names. Estimate origins remain distinct from timepoint origins.
 `categoricalLabels` returns a column bound to the actual sample domain or a
 typed missing-label refusal. Validation binds run or block columns through the
 native design; the dataset adapter does not construct a second fold engine.
 Regional and searchlight selection uses typed spatial measurement frames.
+Serialized axes bind the declared dataset and ordered sample origins or neural
+mapping coordinates. Changing labels or numeric values changes value identity;
+it preserves the coordinates of that population.
 
 This module has no JVM-only dependencies and is built for both JVM and
 Scala.js. JVM-specific readers should stay in `dataset` or higher-level
