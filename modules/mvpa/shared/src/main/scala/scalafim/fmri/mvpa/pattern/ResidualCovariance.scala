@@ -129,6 +129,21 @@ final class ResidualCovariance[N] private (
   def precisionWork(columns: Int): Either[ResidualCovarianceError, ResidualCovarianceWork] =
     workFor(columns, 4L * augmented * columns + features.toLong * columns, augmented, columns)
 
+  /** Work of one square whitening application: embedded and transformed
+    * augmented blocks and the retained tail, without a dense covariance. */
+  def whiteningWork(columns: Int): Either[ResidualCovarianceError, ResidualCovarianceWork] =
+    workFor(columns, 2L * augmented * columns + features.toLong * columns, augmented, columns)
+
+  /** Square whitening W from the retained Gale augmented QR: W^T W = Psi^-1.
+    * The trailing `features` transformed coordinates have identity covariance
+    * under the declared Psi. They are numeric coordinates, not original rows. */
+  def whiten(values: DMat): Either[ResidualCovarianceError, DMat] =
+    for
+      _ <- checkBlock("whitening operand", values)
+      transformed <- transform(DMat.tabulate(augmented, values.cols)((row, column) => if row < features then values(row, column) / rootDiagonal(row) else 0.0))
+      result <- finiteResult("whitening result", DMat.tabulate(features, values.cols)((row, column) => transformed(row + rank, column)))
+    yield result
+
   /** Work of one `applyCovariance` on `c` columns: `h x c` projections and the
     * `p x c` result; the peak adds the stored model.
     */
