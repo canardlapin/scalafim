@@ -415,7 +415,16 @@ private[mvpa] object AxisDigest:
   def sha256Hex(write: Writer => Unit): String =
     val writer = Writer()
     write(writer)
-    writer.digest().map(byte => f"${byte & 0xff}%02x").mkString
+    val bytes = writer.digest()
+    val hexadecimal = "0123456789abcdef"
+    val characters = new Array[Char](bytes.length * 2)
+    var index = 0
+    while index < bytes.length do
+      val value = bytes(index) & 0xff
+      characters(index * 2) = hexadecimal.charAt(value >>> 4)
+      characters(index * 2 + 1) = hexadecimal.charAt(value & 0x0f)
+      index += 1
+    new String(characters)
 
   final class Writer private[AxisDigest] ():
     private val sha = Sha256()

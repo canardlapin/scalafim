@@ -19,7 +19,7 @@ final class NativeAxisMapping private (
     val entriesByOrdinal: Vector[NativeAxisEntry],
     val declaredSource: DataFingerprint
 ):
-  def nativeIds: Vector[Long] = entriesByOrdinal.map(_.nativeId)
+  val nativeIds: Vector[Long] = entriesByOrdinal.map(_.nativeId)
 
   private[predictive] val declaredMappingIdentity: DataFingerprint =
     new DataFingerprint(FingerprintPolicy.Summary("scalafim.native-declared-map.v1"), AxisDigest.sha256Hex: writer =>
