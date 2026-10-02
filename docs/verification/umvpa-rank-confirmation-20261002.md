@@ -91,6 +91,19 @@ redundant nuisance columns, foreign discovery/rows, holdout exposure, unsupporte
 law and resource refusal before provider access. These are unit arithmetic and
 workflow fixtures, not scientific calibration.
 
+Implementation command mapping version 1: the planned native inference-package
+suite is implemented as `scalafim.fmri.mvpa.analysis.RankConfirmationSuite`
+at the `pattern/RankConfirmationSuite.scala` test path to use existing private
+analysis-plan constructors. The independent arithmetic generator is
+`generate_rank_fixtures.R`; it does not replace the planned full
+`generate_known_truth.R` simulator. Exact local-override commands are:
+
+```sh
+LC_ALL=C LANG=C Rscript tools/mvpa-inference/generate_rank_fixtures.R
+JAVA_TOOL_OPTIONS=-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rotations-20261002 SBT_WARM_HEAP=8g python3 tools/build/sbt-warm 'mvpaJVM/testOnly scalafim.fmri.mvpa.analysis.RankConfirmationSuite'
+JAVA_TOOL_OPTIONS=-Dscalafim.multivar.build=/private/tmp/multivar-umvpa-rotations-20261002 SBT_WARM_HEAP=8g python3 tools/build/sbt-warm 'mvpaJS/testOnly scalafim.fmri.mvpa.analysis.RankConfirmationSuite'
+```
+
 ## Verification and exact provenance
 
 `gate165-rank-peer-repairs-integration.log` exits 0 for owning Multivar inference,
@@ -139,6 +152,20 @@ No seed-vector qualification, 200-by-199 pilot, 10,000-by-1,999 null calibration
 5,000-by-1,999 alternative calibration, complete M4.08 multiplicity integration,
 hosted gate or default published-pin test has been completed for this draft.
 M4.07 acceptance criterion 2 therefore remains open, along with unsupported
-dependent/block actions. Final SHA-bound peer review and upstream publication
-are separate gates. Unit fixtures must not be promoted to frozen-protocol
+dependent/block actions. Upstream publication is a separate gate. Unit fixtures
+must not be promoted to frozen-protocol
 calibration evidence.
+
+## Final engineering review
+
+A read-only peer review passes at upstream
+`ab811e257dd67f77e8c3b70cb1ea600f274429a3` and native
+`48d6035c9e73ae5b70d9d4b7aca63beb428fc945`, finding no remaining engineering
+blocker. It specifically checks the repaired sampling, finite group/budget
+refusals, complete zero-root hypotheses, reverse imbalance, independent tiny
+group p-value, convergence and retained basis/nuisance/law receipts. The
+reviewer did not rerun the recorded gates. Accepted transformations are
+reconstructible from candidate IDs, seed lineage and actual action rather than
+retained as full row-index vectors; reproduction depends on the recorded
+resample4s source/provider identity. This verdict does not admit calibration,
+population-rank inference, dependent/block designs or published-pin qualification.

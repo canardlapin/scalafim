@@ -55,9 +55,9 @@ and factor correlations. The original R stats::varimax output is retained;
 its earlier relative stopping differs from the final coordinate stopping.
 No fixture tolerance was loosened to hide that difference. Rank-one Kaiser
 and two-row cycle boundaries have explicit tests. The earlier expert's
-zero-polar counterexample was repaired; no new peer verdict is claimed for
-this author's subsequent midpoint implementation. Independent executable
-oracles and actual cross-platform gates remain separate evidence.
+zero-polar counterexample was repaired. A later exact-SHA engineering review
+checks the subsequent midpoint implementation, as recorded below. Independent
+executable oracles and actual cross-platform gates remain separate evidence.
 
 ## Descriptive training sensitivity
 
@@ -192,3 +192,17 @@ Scaldoc problem; no isolated source repair for that exception is claimed.
 Three existing duplicate-classpath Scaldoc flag warnings remain. Publication,
 pin qualification and descriptive/scientific acceptance boundaries above
 remain separate.
+
+## Final engineering review
+
+A read-only peer review passes for upstream
+`e1146d1835d19cbdedaf65df02af6bad6e691e64` and native
+`424b8541c9ed83e97c4407b14be9bf3b372a4f2c`. The reviewer confirms the four
+upstream and four native source/test files remain unchanged through the later
+rank commits. No publication-blocking engineering defect was found in varimax
+global updates and plateau/zero-polar stopping, promax covariance orientation
+and conditioning, native coordinate/score/covariance/prediction laws, or
+training-row stability/exposure and failed-refit retention. The reviewer
+performed source, test and SHA/diff review, without rerunning the recorded
+gates. This verdict does not establish a global optimum, source identification,
+scientific calibration, published-pin or hosted qualification.
