@@ -446,7 +446,9 @@ final case class ExecutionPlan[
 ](
     numerical: NumericalProgram[Source, Design, Frame, E, Bound, Program],
     strategy: ExecutionStrategy
-)
+):
+  def admit(candidates: Vector[ResourceCandidate], budget: ResourceBudget): Either[ResourceError, ResourceAdmission] =
+    ResourceAdmission.choose(numerical.scientific.specification.plan, candidates, budget)
 
 /** The only extension point required for a new method. There is no global
   * method enum, registry, codec, or dispatch branch.

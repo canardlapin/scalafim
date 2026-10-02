@@ -4,12 +4,39 @@ import gale.backend.Backend.given
 import gale.linalg.DMat
 import multivar.core.SemanticSpace
 import scalafim.fmri.mvpa.{AxisDigest, AxisRef, EvidenceIdentity, MultiResponse, Observations}
+import scalafim.fmri.mvpa.analysis.*
 
 enum TwoStagePatternFitError:
   case Admission(detail: String)
   case Structured(stage: String, error: StructuredPatternError)
   case Covariance(error: ResidualCovarianceError)
   case Unconverged(stage: String)
+  case Resource(error: ObservationProductError)
+  case FitAndResource(fit: TwoStagePatternFitError, resource: ObservationProductError)
+
+/** Provider declarations cover all resident source/buffer bytes and peak
+  * scratch. The default enforces owned numeric costs and records unknown
+  * external costs; it does not assert a process-memory limit. */
+final case class TwoStagePatternResources(
+    budget: ResourceBudget = ResourceBudget(ResourceLimit.OwnedNumeric(Long.MaxValue), MaterializationPolicy.ForbidSourceCopy),
+    route: ObservationProductRoute = ObservationProductRoute.Direct,
+    observations: ObservationProviderCosts = ObservationProviderCosts(),
+    responseSource: ResourceBound = ResourceBound.Unknown("response source/buffer bytes not declared"),
+    responseScratch: ResourceBound = ResourceBound.Unknown("response scratch bytes not declared"),
+    numericalScratch: ResourceBound = ResourceBound.Unknown("Gale/Multivar backend scratch bytes not declared"),
+    resource: ObservationProductResource = TwoStagePatternResources.borrowed
+)
+object TwoStagePatternResources:
+  /** Caller retains ownership of the evidence; only the adapter scope expires. */
+  val borrowed: ObservationProductResource = new ObservationProductResource:
+    def acquire(): Either[String, Unit] = Right(())
+    def close(): Either[String, Unit] = Right(())
+
+final case class TwoStagePatternResourceReceipt(
+    admission: NumericResourceAdmission, observationWork: ObservationProductWork,
+    binding: String, route: ObservationProductRoute, structuredFits: Int, covarianceFits: Int,
+    structuredWorkspaceCellsUpperBound: Long, retainedFactorCells: Long
+)
 
 final case class TwoStagePatternFitPolicy(
     structured: StructuredPatternConfig,
@@ -48,7 +75,7 @@ final case class TwoStagePatternFitWork(
 final case class TwoStagePatternFitResult[N, Q, R](
     pilot: StructuredPatternResult[N, Q, R], covarianceFit: ResidualCovarianceFit[N],
     finalFit: StructuredPatternResult[N, Q, R], residualReceipt: String,
-    work: TwoStagePatternFitWork
+    work: TwoStagePatternFitWork, resources: TwoStagePatternResourceReceipt
 )
 
 /** Training-only two-stage fixed-Psi adapter. It first obtains structured
@@ -65,7 +92,8 @@ object TwoStagePatternFit:
   def fit[SK, NK, QK, RK](samples: AxisRef[SK], neural: AxisRef[NK], target: AxisRef[QK], components: AxisRef[RK])(
       observations: Observations[samples.Id, neural.Id], responses: MultiResponse[samples.Id, target.Id],
       support: SupportGraph, geometry: TargetGeometry, centering: CenteringPolicy,
-      binding: TrainingBinding, lineage: Vector[String], replay: PatternReplay, policy: TwoStagePatternFitPolicy
+      binding: TrainingBinding, lineage: Vector[String], replay: PatternReplay, policy: TwoStagePatternFitPolicy,
+      resources: TwoStagePatternResources = TwoStagePatternResources()
   ): Either[TwoStagePatternFitError, TwoStagePatternFitResult[NK, QK, RK]] =
     val n = samples.size
     val p = neural.size
@@ -84,31 +112,111 @@ object TwoStagePatternFit:
       val finish = 3 * BigInt(n) * h + 2 * BigInt(h) * h + p + BigInt(p) * h + (BigInt(p) + h) * h + 2 * (BigInt(p) + h) * math.min(n, ResidualCovariance.fallbackChunk)
       BigInt(p) * h + p + step.max(finish)
     val copies = fixed + ranks.map(retained).sum + transient.max + BigInt(ranks.size) * (policy.covariance.maximumIterations.toLong + 1L) + BigInt(n) * r + BigInt(p) * r + n + p
-    val shapes = Vector(cells, BigInt(n) * r, BigInt(p) * r, BigInt(n) * largest, BigInt(p) * largest, (BigInt(p) + largest) * largest, (BigInt(p) + largest) * math.min(n, ResidualCovariance.fallbackChunk), BigInt(largest) * largest)
+    val shapesAdmitted = admitAllocationShapes(n, p, q, r, largest)
     val centered = centering match
       case CenteringPolicy.CenteredBeforeFit(_, _) => true
       case _ => false
     val repeatable = replay match
       case PatternReplay.Repeatable(receipt) => receipt.trim.nonEmpty
       case _ => false
+    def fitAdmitted(admittedObservations: Observations[samples.Id, neural.Id], admission: NumericResourceAdmission,
+        product: PreparedObservationProduct[samples.Id, neural.Id], structuredWorkspace: BigInt,
+        retainedFactors: BigInt, resourceBinding: String, psi0: ResidualCovariance[NK]): Either[TwoStagePatternFitError, TwoStagePatternFitResult[NK, QK, RK]] =
+      product.fit(StructuredPatternOptimizer.fit(samples, neural, target, components)(admittedObservations, responses, psi0, support, geometry, centering, policy.structured, binding, lineage, replay)).left.map(TwoStagePatternFitError.Structured("pilot", _)).flatMap: pilot =>
+        if pilot.stopping != StructuredPatternStopping.Converged || pilot.artifact.isEmpty then Left(TwoStagePatternFitError.Unconverged("pilot"))
+        else trainingResiduals(admittedObservations, responses, pilot.factors.neuralByComponent, pilot.factors.targetByComponent).left.map(TwoStagePatternFitError.Admission.apply).flatMap: residual =>
+          val receipt = residualIdentity(samples, neural, target, components, observations, responses, pilot, residual, binding, policy)
+          product.fit(ResidualCovariance.fit(neural, residual, receipt, binding, policy.covariance)).left.map(TwoStagePatternFitError.Covariance.apply).flatMap: covariance =>
+            if !covariance.receipt.converged then Left(TwoStagePatternFitError.Unconverged("covariance"))
+            else product.fit(StructuredPatternOptimizer.fit(samples, neural, target, components)(admittedObservations, responses, covariance.covariance, support, geometry, centering, policy.structured, binding, lineage, replay, initial = Some(pilot.factors))).left.map(TwoStagePatternFitError.Structured("final", _)).flatMap: finalFit =>
+              if finalFit.stopping != StructuredPatternStopping.Converged || finalFit.artifact.isEmpty then Left(TwoStagePatternFitError.Unconverged("final"))
+              else Right(TwoStagePatternFitResult(pilot, covariance, finalFit, receipt, TwoStagePatternFitWork(2, 1, ranks.size, cells.longValue, cells.longValue, n.toLong * r),
+                TwoStagePatternResourceReceipt(admission, product.work, resourceBinding, product.route, 2, 1, structuredWorkspace.toLong, retainedFactors.toLong)))
+
     if observations.sampleAxis != samples.descriptor || responses.sampleAxis != samples.descriptor || observations.neuralAxis != neural.descriptor || responses.featureAxis != target.descriptor then Left(TwoStagePatternFitError.Admission("declared training axes do not match observations/responses"))
     else if binding.declaredSampleAxis != samples.descriptor || !centered then Left(TwoStagePatternFitError.Admission("two-stage fitting requires this declared training axis and CenteredBeforeFit"))
     else if support.axis != neural.descriptor || components.size < 1 || components.size > math.min(p, q) then Left(TwoStagePatternFitError.Admission("support or component rank is incompatible"))
     else if !repeatable then Left(TwoStagePatternFitError.Admission("two-stage fitting requires repeatable training evidence"))
     else if ranks.exists(_ > ResidualCovariance.maximumIdentifiableRank(n, p)) then Left(TwoStagePatternFitError.Admission("noise rank exceeds training identifiable rank"))
-    else if cells > policy.maximumResidualCells || copies > policy.maximumResidualCells || shapes.exists(_ > Int.MaxValue) || BigInt(p) + largest > Int.MaxValue then Left(TwoStagePatternFitError.Admission("residual materialization budget or Int capacity exceeded"))
+    else if cells > policy.maximumResidualCells || copies > policy.maximumResidualCells || shapesAdmitted.isLeft || BigInt(p) + largest > Int.MaxValue then Left(TwoStagePatternFitError.Admission("residual materialization budget or Int capacity exceeded"))
     else
-      val seed = ResidualCovariance.fromFactors(neural, Vector.fill(p)(1.0), DMat.zeros(p, 1)).left.map(TwoStagePatternFitError.Covariance.apply)
-      seed.flatMap: psi0 =>
-        StructuredPatternOptimizer.fit(samples, neural, target, components)(observations, responses, psi0, support, geometry, centering, policy.structured, binding, lineage, replay).left.map(TwoStagePatternFitError.Structured("pilot", _)).flatMap: pilot =>
-          if pilot.stopping != StructuredPatternStopping.Converged || pilot.artifact.isEmpty then Left(TwoStagePatternFitError.Unconverged("pilot"))
-          else trainingResiduals(observations, responses, pilot.factors.neuralByComponent, pilot.factors.targetByComponent).left.map(TwoStagePatternFitError.Admission.apply).flatMap: residual =>
-            val receipt = residualIdentity(samples, neural, target, components, observations, responses, pilot, residual, binding, policy)
-            ResidualCovariance.fit(neural, residual, receipt, binding, policy.covariance).left.map(TwoStagePatternFitError.Covariance.apply).flatMap: covariance =>
-              if !covariance.receipt.converged then Left(TwoStagePatternFitError.Unconverged("covariance"))
-              else StructuredPatternOptimizer.fit(samples, neural, target, components)(observations, responses, covariance.covariance, support, geometry, centering, policy.structured, binding, lineage, replay, initial = Some(pilot.factors)).left.map(TwoStagePatternFitError.Structured("final", _)).flatMap: finalFit =>
-                if finalFit.stopping != StructuredPatternStopping.Converged || finalFit.artifact.isEmpty then Left(TwoStagePatternFitError.Unconverged("final"))
-                else Right(TwoStagePatternFitResult(pilot, covariance, finalFit, receipt, TwoStagePatternFitWork(2, 1, ranks.size, cells.longValue, cells.longValue, n.toLong * r)))
+      val replayScope = replay match
+        case PatternReplay.Repeatable(receipt) => ObservationReplay.Scoped(binding.source, receipt)
+        case PatternReplay.SinglePass => ObservationReplay.OneShot
+      val resourceBinding = AxisDigest.sha256Hex: writer =>
+        writer.string("two-stage-resource-binding-v1")
+        observations.identity.writeFramed(writer)
+        responses.identity.writeFramed(writer)
+        writer.string(binding.fingerprintDigest)
+        writer.string(policy.identity)
+      def combine(values: Vector[(String, ResourceBound)]): ResourceBound =
+        val unknown = values.collect { case (name, ResourceBound.Unknown(reason)) => s"$name: $reason" }
+        val invalid = values.collectFirst:
+          case (_, bound @ ResourceBound.Known(bytes, receipt)) if bytes < 0 || receipt.trim.isEmpty => bound
+          case (_, bound @ ResourceBound.Unknown(reason)) if reason.trim.isEmpty => bound
+        if invalid.nonEmpty then invalid.get
+        else if unknown.nonEmpty then ResourceBound.Unknown(unknown.mkString("; "))
+        else ResourceBound.Known(values.collect { case (_, ResourceBound.Known(bytes, _)) => bytes }.sum,
+          values.collect { case (name, ResourceBound.Known(_, receipt)) => s"$name=$receipt" }.mkString("; "))
+      val h = BigInt(math.max(1, largest))
+      val stored = 2 * BigInt(p) + BigInt(p) * h + 2 * (BigInt(p) + h) * h + h
+      val precision = stored + 4 * (BigInt(p) + h) * r + BigInt(p) * r
+      val structuredWorkspace = BigInt(128) * p * (r + 1L) + BigInt(64) * n * math.max(q, r) +
+        BigInt(64) * q * q + BigInt(64) * support.edges.size + BigInt(16) * policy.structured.maximumOuterIterations + precision
+      // Pilot + final factors remain live in the returned result. Covariance
+      // models/history are already included in copies. Charge peak structured
+      // workspace once; operation counts add across the two fits.
+      val retainedFactors = 2 * (BigInt(p) * r + BigInt(q) * r + p)
+      val productCosts = resources.observations.copy(applicationBuffers = ResourceBound.Known(
+        8 * (BigInt(n) + p) * math.max(q, r), "two-stage admitted maximum RHS width and returned matrices"))
+      val preflight =
+        if q > policy.structured.maximumTargetDimension || structuredWorkspace > policy.structured.maximumWorkspaceCells ||
+            BigInt(n) * q > Int.MaxValue || BigInt(q) * q > Int.MaxValue then
+          Left(ObservationProductError.InvalidShape("structured target/workspace admission exceeded before source preparation"))
+        else ObservationProduct.preflight(observations, replayScope, productCosts,
+          resources.route, resources.budget, resourceBinding)
+      val admitted = preflight.flatMap: product =>
+          val footprint = product.footprint.copy(
+            source = combine(Vector("observations" -> resources.observations.source, "responses" -> resources.responseSource)),
+            workerScratch = combine(Vector("observations/application" -> product.footprint.workerScratch,
+              "responses" -> resources.responseScratch, "numerical backend" -> resources.numericalScratch)),
+            ownedWorkerBytes = product.footprint.ownedWorkerBytes + (copies + structuredWorkspace) * 8,
+            retainedOutputBytes = (retainedFactors + BigInt(64) * policy.structured.maximumOuterIterations) * 8
+          )
+          ResourceAdmission.evaluateFootprint(footprint, product.sourceCopyBytes, resources.budget)
+            .left.map(ObservationProductError.Resource.apply)
+      admitted.left.map(TwoStagePatternFitError.Resource.apply).flatMap: admission =>
+        ResidualCovariance.fromFactors(neural, Vector.fill(p)(1.0), DMat.zeros(p, 1))
+          .left.map(TwoStagePatternFitError.Covariance.apply).flatMap: psi0 =>
+            StructuredPatternOptimizer.admit(samples, neural, target, components)(observations, responses, psi0,
+              support, geometry, centering, policy.structured, binding, lineage, replay)
+              .left.map(TwoStagePatternFitError.Structured("pilot admission", _)).flatMap: _ =>
+                var fitFailure: Option[TwoStagePatternFitError] = None
+                val executed = ObservationProduct.withPrepared(samples, neural, observations, replayScope, resources.resource,
+                  productCosts, resources.route, resources.budget, resourceBinding): product =>
+                    fitAdmitted(product.observations, admission, product, structuredWorkspace, retainedFactors, resourceBinding, psi0)
+                      .left.map: error =>
+                        fitFailure = Some(error)
+                        ObservationProductError.TaskFailure(error.toString)
+                executed.left.map: error =>
+                  (fitFailure, error) match
+                    case (Some(fit), _: ObservationProductError.TaskAndCloseFailure) => TwoStagePatternFitError.FitAndResource(fit, error)
+                    case (Some(fit), _: ObservationProductError.TaskFailure) => fit
+                    case _ => TwoStagePatternFitError.Resource(error)
+
+
+
+  /** Shape-only check includes the final noise-rank precision products. No
+    * large fixtures or model allocation are needed to test these boundaries. */
+  private[pattern] def admitAllocationShapes(n: Int, p: Int, q: Int, r: Int, noiseRank: Int): Either[TwoStagePatternFitError, Unit] =
+    val h = math.max(1, noiseRank)
+    val shapes = Vector(BigInt(n) * p, BigInt(n) * q, BigInt(q) * q,
+      BigInt(p) * (r + 1L), BigInt(n) * r, BigInt(p) * r,
+      BigInt(n) * h, BigInt(p) * h, (BigInt(p) + h) * h,
+      (BigInt(p) + h) * r, (BigInt(p) + h) * math.min(n, ResidualCovariance.fallbackChunk), BigInt(h) * h)
+    if Vector(n, p, q, r, noiseRank).exists(_ < 0) || BigInt(p) + h > Int.MaxValue || shapes.exists(_ > Int.MaxValue) then
+      Left(TwoStagePatternFitError.Admission("numeric allocation shape exceeds Int capacity"))
+    else Right(())
 
   /** Stream X one neural column at a time and project Y directly through C.
     * This helper is used only after fit's shape/replay/workspace admission.

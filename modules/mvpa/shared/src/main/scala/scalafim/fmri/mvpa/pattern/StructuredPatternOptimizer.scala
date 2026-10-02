@@ -64,6 +64,14 @@ final case class StructuredPatternWork(
     precisionApplications: Long, capacitanceConditionLowerBound: Double, diagonalVarianceRatio: Double,
     initialization: String
 )
+/** Deterministic fitter admission. This is metadata-only: it does not apply
+  * either evidence operator or fit/refit a covariance.
+  */
+final case class StructuredPatternAdmission(
+    sampleCount: Int, neuralCount: Int, targetCount: Int, componentCount: Int,
+    workspaceCells: Long, maximumOperatorColumns: Long,
+    targetOperatorColumns: Long, precisionPeakCells: Long
+)
 final class StructuredPatternResult[N, Q, R] private[pattern] (
     val factors: PatternFactors[N, Q, R], val envelope: Vector[Double],
     val covariance: ResidualCovariance[N], val iterations: Vector[StructuredPatternIteration],
@@ -84,14 +92,13 @@ final class StructuredPatternResult[N, Q, R] private[pattern] (
 object StructuredPatternOptimizer:
   private type Result[A] = Either[StructuredPatternError, A]
 
-  def fit[SK, NK, QK, RK](samples: AxisRef[SK], neural: AxisRef[NK], targetAxis: AxisRef[QK], components: AxisRef[RK])(
+  def admit[SK, NK, QK, RK](samples: AxisRef[SK], neural: AxisRef[NK], targetAxis: AxisRef[QK], components: AxisRef[RK])(
       observations: Observations[samples.Id, neural.Id], targets: MultiResponse[samples.Id, targetAxis.Id],
       covariance: ResidualCovariance[NK], graph: SupportGraph, geometry: TargetGeometry,
       centering: CenteringPolicy, config: StructuredPatternConfig, binding: TrainingBinding,
       lineage: Vector[String], replay: PatternReplay,
-      degenerate: DegenerateTargetPolicy = DegenerateTargetPolicy.Refuse,
       initial: Option[PatternFactors[NK, QK, ?]] = None
-  ): Result[StructuredPatternResult[NK, QK, RK]] =
+  ): Result[StructuredPatternAdmission] =
     val n = samples.size
     val p = neural.size
     val q = targetAxis.size
@@ -114,8 +121,6 @@ object StructuredPatternOptimizer:
     val workspace = BigInt(128) * p * (r + 1L) + BigInt(64) * n * math.max(q, r) +
       BigInt(64) * q * q + BigInt(64) * graph.edges.size +
       BigInt(16) * config.maximumOuterIterations + precisionCells.getOrElse(Long.MaxValue)
-    // Mean verification, streamed spectral initialization, initial value, and
-    // three width-r X products per outer step (including the final-point check).
     val columns = BigInt(1) + 2L * q + BigInt(r) * (1L + 3L * config.maximumOuterIterations)
     if observations.sampleAxis != samples.descriptor || targets.sampleAxis != samples.descriptor ||
         binding.declaredSampleAxis != samples.descriptor then Left(StructuredPatternError.AxisMismatch("training samples"))
@@ -140,7 +145,23 @@ object StructuredPatternOptimizer:
       Left(StructuredPatternError.AxisMismatch("warm start"))
     else if initial.exists(value => orthogonalityViolation(value.targetByComponent) > config.stationarityTolerance) then
       Left(StructuredPatternError.Invalid("warm-start target factors must already be orthonormal; silently rotating C would change the fitted mean"))
-    else
+    else Right(StructuredPatternAdmission(n, p, q, r, workspace.toLong, (columns + q).toLong, q.toLong, precisionCells.getOrElse(Long.MaxValue)))
+
+  def fit[SK, NK, QK, RK](samples: AxisRef[SK], neural: AxisRef[NK], targetAxis: AxisRef[QK], components: AxisRef[RK])(
+      observations: Observations[samples.Id, neural.Id], targets: MultiResponse[samples.Id, targetAxis.Id],
+      covariance: ResidualCovariance[NK], graph: SupportGraph, geometry: TargetGeometry,
+      centering: CenteringPolicy, config: StructuredPatternConfig, binding: TrainingBinding,
+      lineage: Vector[String], replay: PatternReplay,
+      degenerate: DegenerateTargetPolicy = DegenerateTargetPolicy.Refuse,
+      initial: Option[PatternFactors[NK, QK, ?]] = None
+  ): Result[StructuredPatternResult[NK, QK, RK]] =
+    admit(samples, neural, targetAxis, components)(observations, targets, covariance, graph, geometry, centering,
+      config, binding, lineage, replay, initial).flatMap: admitted =>
+      val n = admitted.sampleCount
+      val p = admitted.neuralCount
+      val q = admitted.targetCount
+      val r = admitted.componentCount
+      val workspace = admitted.workspaceCells
       var forwardColumns = 0L
       var adjointColumns = 0L
       var precisionCalls = 0L
@@ -209,7 +230,7 @@ object StructuredPatternOptimizer:
             .left.map(StructuredPatternError.Artifact.apply).map(Some(_))
           else Right(None)
       yield new StructuredPatternResult(factors, g, covariance, trace, stopping,
-        StructuredPatternWork(workspace.toLong, (columns + q).toLong, forwardColumns, adjointColumns, q,
+        StructuredPatternWork(workspace, admitted.maximumOperatorColumns, forwardColumns, adjointColumns, q,
           precisionCalls, covariance.capacitanceConditionEstimate, covariance.diagonalValues.max / covariance.diagonalValues.min,
           if initial.isEmpty then "supervised streamed right Gram" else if initial.get.componentAxis.size < r then "rank-expanded warm start" else "provided warm start"), artifact)
       result

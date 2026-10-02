@@ -277,6 +277,19 @@ class StructuredPatternOptimizerSuite extends FunSuite:
       case other => fail(s"expected neural metadata refusal, got $other")
     assertEquals((counted.forwardColumns, counted.adjointColumns), (0L, 0L))
 
+  test("public metadata admission plans the exact fitter workspace without reading either operator"):
+    val counted = new Counted(None)
+    val f = new TwoByTwo(Some(counted))
+    val admitted = StructuredPatternOptimizer.admit(f.samples, f.neural, f.target, f.components)(
+      f.observations, f.targets, f.covariance, f.graph, f.geometry,
+      CenteringPolicy.CenteredBeforeFit("x-centered", "y-centered"),
+      config(right(SupportPenalty(.2, .1))), f.binding, Vector("fixture"), PatternReplay.Repeatable("fixture")
+    )
+    val plan = right(admitted)
+    assert(plan.workspaceCells > 0L)
+    assert(plan.maximumOperatorColumns > plan.targetOperatorColumns)
+    assertEquals((counted.forwardColumns, counted.adjointColumns), (0L, 0L))
+
   test("a q squared overflow declaration is refused before either operator is read"):
     val n = axis("overflow-sample", SpaceRole.Samples, 2)
     val neural = axis("overflow-neural", SpaceRole.Observed, 1)
