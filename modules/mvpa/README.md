@@ -62,7 +62,8 @@ explicitly. Signed geometry cannot be admitted as ordinary sample dissimilarity.
 The old relational analyses, partition builder and universal relational payload
 cases were removed in M2.09. `PatternMatrix`, `PatternOperator`, `PatternSource`,
 `Response`, `FoldPlan` and generic engine/result definitions remain only for
-named canonical/one-shot consumers until M3.13. New workflows use identified
+generic adapters until M3.13. Canonical consumers were migrated in M3.01.
+New workflows use identified
 observations and method-owned results.
 
 Feature encoding and decoding use `AlderFeatureModel` with an explicit
@@ -88,3 +89,26 @@ Run it directly with:
 sbt mvpaJVM/test
 sbt mvpaJS/test
 ```
+
+## Global decompositions
+
+`GlobalDecompositions.pca` consumes an already live `PreparedObservationProduct`
+with explicit preprocessing and Euclidean sample/neural geometry. Paired `plsc`
+and `cca` require both marginal row geometries, their cross-row relationship,
+scaling, access permission and a materialization ceiling. Their artifacts retain
+actual nominal endpoints, inspectable geometry/provenance receipts, declared
+evidence identity and the actual owned cross-form content identity. CCA also
+retains its declared regularization.
+
+Neutral `svd` accepts a relation, effect form or neural form. It preserves signs
+and offsets, and reports singular values and owned factors without adding PSD,
+covariance or signed-eigenvalue guarantees. All outputs are descriptive global
+artifacts. Returned fits own their numeric products; scoped input operators can
+expire without invalidating fitted cross forms.
+
+The materialization ceiling covers the declared input/form snapshots and
+retained factors, not solver-private workspace or process RSS. These are dense
+adapters; operator representation alone is not evidence of whole-brain compute
+readiness. Kernels come from pinned Multivar/Gale.
+
+Current migration evidence: [M3.01 native global/canonical verification](../../docs/verification/umvpa-global-canonical-20261001.md).
