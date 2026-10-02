@@ -1,6 +1,6 @@
 # scalafim-fmri-mvpa
 
-Portable MVPA engine primitives for ScalaFIM.
+Identified MVPA evidence, method-owned artifacts and portable numerical kernels for ScalaFIM.
 
 Package root:
 
@@ -59,12 +59,18 @@ uses `SamplewiseGeometry` plus sample-bound item and block columns, supports
 repeated items, excludes same-block comparisons and reports undefined rows
 explicitly. Signed geometry cannot be admitted as ordinary sample dissimilarity.
 
-The old relational analyses, partition builder and universal relational payload
-cases were removed in M2.09. `PatternMatrix`, `PatternOperator`, `PatternSource`,
-`Response`, `FoldPlan` and generic engine/result definitions remain only for
-generic adapters until M3.13. Canonical consumers were migrated in M3.01.
-New workflows use identified
-observations and method-owned results.
+Scientific workflows use nominal `AxisRef` domains and identified observations,
+with explicit validation, measurement and acquisition scopes. The universal
+engine, response/fold hierarchy, feature-set registry and payload collector have
+been removed. Canonical consumers use the native global artifacts.
+
+`PatternMatrix` and `PatternOperator` remain numerical storage adapters. Their
+integer row/column indices describe storage, and supply no scientific domain,
+independence or replay permission. Select columns with ordered `FeatureIndex`
+values. Explicit operator materialization requires `PatternCopyBudget`; admission
+checks the returned cell count and primitive capacity before reading the source.
+The copy evaluates one feature column at a time. Its ceiling excludes source
+storage, provider workspace and process RSS.
 
 Feature encoding and decoding use `AlderFeatureModel` with an explicit
 `FeatureModelDesign`, `FeaturePredictionDirection` and positive `RidgePenalty`.

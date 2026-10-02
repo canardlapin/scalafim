@@ -174,7 +174,7 @@ object AlderSoftLda:
           nuisance <- rows.trialNuisance match
             case None => Right(None)
             case Some(design) => TrialNuisanceDesign.from(selectRows(design.values, ordinals)).left.map(error => AlderSoftLdaError.SoftLda(SoftLdaError.LdaFailure(s"alder-soft-lda-$fold", error))).map(Some.apply)
-          operator <- rows.operator.selectRows(ordinals.map(SampleIndex.apply)).left.map(AlderSoftLdaError.Mvpa.apply)
+          operator <- rows.operator.selectRowPositions(ordinals).left.map(AlderSoftLdaError.Mvpa.apply)
           model <- SoftLda.fit(operator, membership, config.copy(trialNuisance = nuisance), s"alder-soft-lda-$fold", fold).left.map(AlderSoftLdaError.SoftLda.apply)
         yield model
       ) match
@@ -185,7 +185,7 @@ object AlderSoftLda:
   private final class SoftLdaPipe(operator: PatternOperator, val model: SoftLdaModel, stage: StagePath)
       extends Pipe[AlderSoftLdaRow, AlderSoftLdaError, ClassificationPrediction]:
     def run(input: AlderSoftLdaRow): Either[Failure[AlderSoftLdaError], ClassificationPrediction] =
-      operator.selectRows(Vector(SampleIndex(input.ordinal))).left.map(error => stage.failure(AlderSoftLdaError.Mvpa(error))).flatMap(selected => model.predict(selected).left.map(error => stage.failure(AlderSoftLdaError.SoftLda(error))))
+      operator.selectRowPositions(Vector(input.ordinal)).left.map(error => stage.failure(AlderSoftLdaError.Mvpa(error))).flatMap(selected => model.predict(selected).left.map(error => stage.failure(AlderSoftLdaError.SoftLda(error))))
 
   private def training(data: Data[?, Example[AlderSoftLdaRow, Array[Double], Unit]], rows: AlderSoftLdaRows, coding: SwiftTargetCoding, fold: Int): Either[AlderSoftLdaError, (Vector[Int], ClassMembership)] =
     val ordinals = Vector.newBuilder[Int]

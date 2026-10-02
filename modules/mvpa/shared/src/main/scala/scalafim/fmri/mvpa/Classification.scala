@@ -329,13 +329,6 @@ object Classification:
         if !scales(i).isFinite || scales(i) <= Eps then scales(i) = 1.0
         i += 1
 
-  def categorical(response: Response, samples: Int): Either[MvpaError, Vector[ClassLabel]] =
-    response.validate(samples).flatMap {
-      case Response.Categorical(labels) => Right(labels)
-      case Response.Probabilistic(_) | Response.Continuous(_) =>
-        Left(MvpaError.InvalidClassifierInput("this classifier requires hard categorical response labels"))
-    }
-
   def classSummary(data: DMat, labels: Vector[ClassLabel]): Either[MvpaError, ClassSummary] =
     if labels.length != data.rows then Left(MvpaError.ResponseLengthMismatch(data.rows, labels.length))
     else
@@ -484,7 +477,7 @@ object Classification:
     if prediction.probabilities.rows == 0 then Left(MvpaError.InvalidClassifierInput("accuracy requires at least one prediction"))
     else prediction.sampleIndices.find(index => index.value < 0 || index.value >= labels.length) match
       case Some(index) =>
-        Left(MvpaError.FoldIndexOutOfBounds("prediction", index.value, labels.length))
+        Left(MvpaError.PredictionIndexOutOfBounds(index.value, labels.length))
       case None =>
         val predicted = prediction.predicted
         var correct = 0

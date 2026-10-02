@@ -56,7 +56,7 @@ class AlderOperatorRidgeSuite extends munit.FunSuite:
     actual.fits.foreach: fold =>
       val unit = right(design.at(fold.unit))
       val positions = unit.assessment.ordinals.toVector
-      val restricted = right(rows.operator.selectRows(positions.map(SampleIndex.apply)))
+      val restricted = right(rows.operator.selectRowPositions(positions))
       val expected = right(fold.model.predict(restricted))
       positions.zipWithIndex.foreach: (position, local) =>
         coding.classes.zipWithIndex.foreach: (label, column) =>
@@ -72,7 +72,7 @@ class AlderOperatorRidgeSuite extends munit.FunSuite:
     actual.fits.foreach: fold =>
       val unit = right(design.at(fold.unit))
       val positions = unit.analysis.ordinals.toVector
-      val selected = right(soft.operator.selectRows(positions.map(SampleIndex.apply)))
+      val selected = right(soft.operator.selectRowPositions(positions))
       val targets = right(ClassMembership.simplex(coding.classes, gale.linalg.DMat.tabulate(positions.length, 2)((row, column) => membership.values(positions(row), column))))
       val expected = right(OperatorRidge.fit(selected, targets, config))
       (0 until expected.coefficients.rows).foreach: row =>

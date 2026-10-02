@@ -83,8 +83,8 @@ object MvpaParityFixtures:
         )
       )
 
-    val centroidResponse: Response =
-      Response.categorical(Vector("a", "b", "a", "b")).toOption.get
+    val centroidLabels: Vector[ClassLabel] =
+      Vector("a", "b", "a", "b").map(ClassLabel.apply)
 
     val centroidHighProbability: Double =
       1.0 / (1.0 + math.exp(-2.0))
@@ -99,8 +99,8 @@ object MvpaParityFixtures:
         )
       )
 
-    val swiftResponse: Response =
-      Response.categorical(Vector("a", "b", "a", "b")).toOption.get
+    val swiftLabels: Vector[ClassLabel] =
+      Vector("a", "b", "a", "b").map(ClassLabel.apply)
 
     val swiftHighProbability: Double =
       1.0 / (1.0 + math.exp(-1.0))
@@ -115,8 +115,8 @@ object MvpaParityFixtures:
         )
       )
 
-    val ridgeResponse: Response =
-      Response.categorical(Vector("a", "a", "b", "b")).toOption.get
+    val ridgeLabels: Vector[ClassLabel] =
+      Vector("a", "a", "b", "b").map(ClassLabel.apply)
 
     val ridgeHighProbability: Double =
       1.0 / (1.0 + math.exp(-2.4))

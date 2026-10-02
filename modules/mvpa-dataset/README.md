@@ -31,11 +31,11 @@ suite run on JVM and Scala.js. R parity expectations live in
 `NativePredictiveParitySuite`; numerical laws and refusal cases live in
 `NativePredictiveLawsSuite` and the owning method suites.
 
-The dataset views below remain migration boundaries for M3.13 and relational
-callers scheduled for M2.09. They preserve selected rows, feature identity and
-sample metadata; new predictive workflows use native admission.
-
-For lower-level construction, pass a single typed request:
+`DatasetObservationEvidence` constructs nominal sample and neural domains,
+identified observations, selected feature mappings and sample metadata. It
+supports synchronous `DatasetSeriesReader` input, a synchronous dataset bridge,
+and explicit derived pattern rows. `OpenedDatasetMvpaExecutor.observations`
+performs selected reads through the opened dataset's effectful boundary.
 
 ```scala
 val request =
@@ -46,32 +46,16 @@ val request =
       blocks = Some(Vector("run-1", "run-1", "run-2", "run-2"))
     )
   )
-
-val unlabeledOrLabeled =
-  MvpaDatasetView.fromDataset(dataset, request)
+val evidence = DatasetObservationEvidence.fromDataset(dataset, request)
 ```
 
-Derived rows such as condition coefficients or LSS trial betas use the same
-view surface:
-
-```scala
-val betaView =
-  LabeledMvpaDatasetView
-    .fromPatternRows(
-      rows = betaRows,
-      rowNames = trialNames,
-      featureIndices = selectedVoxels,
-      labels = trialLabels,
-      blocks = Some(runLabels),
-      featureSpaceId = FeatureSpaceId.unsafe("trial-betas")
-    )
-    .toOption
-    .get
-```
-
-`voxelIndices` remain global feature ids. A `FeatureSetPlan` built from an
-atlas or searchlight can therefore be used with either raw timepoint patterns or
-derived beta rows as long as both refer to the same voxel id space.
+Derived coefficients use `DatasetObservationEvidence.fromPatternRows`, with
+explicit row names, ordered feature indices and optional labels, runs, blocks
+and item names. Estimate origins remain distinct from timepoint origins.
+`categoricalLabels` returns a column bound to the actual sample domain or a
+typed missing-label refusal. Validation binds run or block columns through the
+native design; the dataset adapter does not construct a second fold engine.
+Regional and searchlight selection uses typed spatial measurement frames.
 
 This module has no JVM-only dependencies and is built for both JVM and
 Scala.js. JVM-specific readers should stay in `dataset` or higher-level
@@ -92,7 +76,7 @@ optional prediction payload. Cross-domain heads require separate sample domains
 and an exact feature correspondence; native read receipts are checked against
 that correspondence. A materialized feature axis and source-only preparation
 remain caller declarations. Probability normalization supplies no calibration
-claim. Legacy engine/example deletion is the separate M1.12 cutover packet;
+claim. Predictive engine/example deletion was completed in M1.12;
 the caller map is in `docs/verification/umvpa-m1-10-caller-map-20261001.tsv`.
 
 Run it directly with:

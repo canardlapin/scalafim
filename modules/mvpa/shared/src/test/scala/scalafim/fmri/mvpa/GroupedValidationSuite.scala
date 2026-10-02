@@ -194,14 +194,13 @@ def invalid[S <: SemanticSpace,T <: SemanticSpace,K,G](
     assertEquals(errors.length, 1)
     assert(errors.head.message.contains("foreignGroups"))
 
-  test("identified schedule is numerically equivalent to legacy leave-one-block-out by held-out group"):
+  test("identified schedule agrees with the independent literal leave-one-block-out schedule"):
     val samples = axis("a", "b", "c", "d", "e", "f", "g")
     val blocks = Vector(20, 20, 10, 10, 30, 30, 30)
-    val column = right(Column.fromValues(samples, blocks, valueId("legacy-blocks-v1")))
+    val column = right(Column.fromValues(samples, blocks, valueId("literal-blocks-v1")))
     val identified = right(
       LeaveOneGroupOutDesign.bind(samples, column, ScientificSeed.fromLong(123L))(_.toString)
     )
-    val legacy = right(FoldPlan.leaveOneBlockOut(blocks))
     val identifiedSchedule = identified.keys
       .map: key =>
         val unit = right(identified.at(key))
@@ -210,12 +209,12 @@ def invalid[S <: SemanticSpace,T <: SemanticSpace,K,G](
           unit.assessment.ordinals.toVector
         )
       .toMap
-    val legacySchedule = legacy.folds
-      .map: fold =>
-        fold.id -> (fold.train.map(_.value), fold.test.map(_.value))
-      .toMap
-
-    assertEquals(identifiedSchedule, legacySchedule)
+    val expected = Map(
+      "20" -> (Vector(2, 3, 4, 5, 6), Vector(0, 1)),
+      "10" -> (Vector(0, 1, 4, 5, 6), Vector(2, 3)),
+      "30" -> (Vector(0, 1, 2, 3), Vector(4, 5, 6))
+    )
+    assertEquals(identifiedSchedule, expected)
 
   test("invalid stable keys and single-group validation fail through typed boundaries"):
     val samples = axis("a", "b", "c")

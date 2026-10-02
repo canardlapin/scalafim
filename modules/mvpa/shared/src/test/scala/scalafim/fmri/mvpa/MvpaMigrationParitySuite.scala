@@ -8,7 +8,7 @@ class MvpaMigrationParitySuite extends munit.FunSuite:
   test("Swift centroid freezes training Z-score, class order, priors, scores, and probabilities"):
     val fixture = MvpaMigrationParityFixtures.SwiftFit
     val model = SwiftCentroidClassifier()
-      .fit(fixture.trainingPatterns.value, Classification.categorical(fixture.trainingResponse, fixture.trainingPatterns.samples).toOption.get)
+      .fit(fixture.trainingPatterns.value, fixture.trainingLabels)
       .toOption
       .get
 

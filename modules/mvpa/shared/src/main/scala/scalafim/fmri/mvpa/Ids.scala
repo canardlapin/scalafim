@@ -13,18 +13,6 @@ object ClassLabel:
   extension (label: ClassLabel)
     inline def value: String = label
 
-opaque type RoiId = Int
-object RoiId:
-  def apply(value: Int): RoiId =
-    require(value >= 0, "ROI id must be non-negative")
-    value
-
-  def unsafe(value: Int): RoiId =
-    value
-
-  extension (id: RoiId)
-    inline def value: Int = id
-
 opaque type FeatureIndex = Int
 object FeatureIndex:
   def apply(value: Int): FeatureIndex =

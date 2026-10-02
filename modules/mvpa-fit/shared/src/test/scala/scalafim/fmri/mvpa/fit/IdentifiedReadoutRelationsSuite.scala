@@ -26,7 +26,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     val effects = axis("effects", Vector("a", "b"))
     val neural = axis("voxels", Vector("0", "1"))
     val origins = ReadoutRelationOrigins("acquisition:r1", "response:r1", "readout:lss", "preparation:fixed", "noise:none", ReadoutRelationAccess.OneShot)
-    val expected = right(run.explicitPatterns).value
+    val expected = right(run.explicitPatterns(scalafim.fmri.mvpa.PatternCopyBudget(100000L))).value
     right(IdentifiedReadoutRelations.withRuns(partitions, effects, neural, Vector(RunReadoutRelation.oneShot(run, origins, resource)))(relations =>
       val actual = right(relations.relations.head.estimate(DMat.eye(neural.size)))
       assertMatrixClose(actual, expected)
@@ -135,7 +135,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
     // Independent readout means [1,10], [2,20], [4,40]; identity signed
     // products are negative squared differences / two features.
     val expected = Vector(-50.5, -454.5, -202.0)
-    assertMatrixClose(right(runs.head.explicitPatterns).value, DMat.dense(3, 2, Vector(1.0, 10.0, 2.0, 20.0, 4.0, 40.0)))
+    assertMatrixClose(right(runs.head.explicitPatterns(scalafim.fmri.mvpa.PatternCopyBudget(100000L))).value, DMat.dense(3, 2, Vector(1.0, 10.0, 2.0, 20.0, 4.0, 40.0)))
     val metric = right(Lin.fromDenseMatrix(DMat.eye(2), CoordinateEvidence.primal(neural.evidence), CoordinateEvidence.dual(neural.evidence), ValueIdentity.source(ValueId.unsafe("oracle-metric")), SemanticProvenance.source("fixture")))
     val model = right(SquareRelationModel("oracle", Vector("a", "b", "c"), Map(("a", "b") -> 1.0, ("a", "c") -> 2.0, ("b", "c") -> 3.0), ValueIdentity.source(ValueId.unsafe("oracle-model")), "unit", "fixed", "none"))
     var escaped = Vector.empty[() => Unit]
@@ -246,7 +246,7 @@ class IdentifiedReadoutRelationsSuite extends munit.FunSuite:
       assertEquals(closed,0)
       val witness = relationWitness(relations.relations.head.origins.access)
       assert(witness.isActive, "rejected nested acquisition preserves the outer witness")
-      assertMatrixClose(right(relations.relations.head.estimate(DMat.eye(2))),right(readoutRun("run-1").explicitPatterns).value)
+      assertMatrixClose(right(relations.relations.head.estimate(DMat.eye(2))),right(readoutRun("run-1").explicitPatterns(scalafim.fmri.mvpa.PatternCopyBudget(100000L))).value)
       Right(())
     )
     assertEquals(closed,1)

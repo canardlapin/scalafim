@@ -115,7 +115,7 @@ class MvpaParitySuite extends munit.FunSuite:
 
   test("classifier parity fixtures anchor centroid and ridge probability oracles") {
     val correlationFit = CorrelationCentroidClassifier()
-      .fit(MvpaParityFixtures.Classifiers.centroidPatterns.value, Classification.categorical(MvpaParityFixtures.Classifiers.centroidResponse, MvpaParityFixtures.Classifiers.centroidPatterns.samples).toOption.get)
+      .fit(MvpaParityFixtures.Classifiers.centroidPatterns.value, MvpaParityFixtures.Classifiers.centroidLabels)
       .toOption
       .get
     val correlationPrediction = correlationFit.predict(MvpaParityFixtures.Classifiers.centroidPatterns.value).toOption.get
@@ -125,7 +125,7 @@ class MvpaParitySuite extends munit.FunSuite:
     assertEqualsDouble(correlationPrediction.probabilities(1, 1), MvpaParityFixtures.Classifiers.centroidHighProbability, 1e-12)
 
     val swiftFit = SwiftCentroidClassifier(FeatureScaling.None)
-      .fit(MvpaParityFixtures.Classifiers.swiftPatterns.value, Classification.categorical(MvpaParityFixtures.Classifiers.swiftResponse, MvpaParityFixtures.Classifiers.swiftPatterns.samples).toOption.get)
+      .fit(MvpaParityFixtures.Classifiers.swiftPatterns.value, MvpaParityFixtures.Classifiers.swiftLabels)
       .toOption
       .get
     val swiftPrediction = swiftFit.predict(MvpaParityFixtures.Classifiers.swiftPatterns.value).toOption.get
@@ -135,7 +135,7 @@ class MvpaParitySuite extends munit.FunSuite:
     assertEqualsDouble(swiftPrediction.probabilities(1, 1), MvpaParityFixtures.Classifiers.swiftHighProbability, 1e-12)
 
     val ridgeFit = RidgeLdaClassifier(gamma = 1.0)
-      .fit(MvpaParityFixtures.Classifiers.ridgePatterns.value, Classification.categorical(MvpaParityFixtures.Classifiers.ridgeResponse, MvpaParityFixtures.Classifiers.ridgePatterns.samples).toOption.get)
+      .fit(MvpaParityFixtures.Classifiers.ridgePatterns.value, MvpaParityFixtures.Classifiers.ridgeLabels)
       .toOption
       .get
     val ridgePrediction = ridgeFit.predict(MvpaParityFixtures.Classifiers.ridgePatterns.value).toOption.get
@@ -168,7 +168,7 @@ class MvpaParitySuite extends munit.FunSuite:
         iterations = 2,
         () =>
           val fit = SwiftCentroidClassifier(FeatureScaling.None)
-            .fit(MvpaParityFixtures.Classifiers.swiftPatterns.value, Classification.categorical(MvpaParityFixtures.Classifiers.swiftResponse, MvpaParityFixtures.Classifiers.swiftPatterns.samples).toOption.get)
+            .fit(MvpaParityFixtures.Classifiers.swiftPatterns.value, MvpaParityFixtures.Classifiers.swiftLabels)
           fit.flatMap(_.predict(MvpaParityFixtures.Classifiers.swiftPatterns.value)).map { prediction =>
             prediction.probabilities.valuesRowMajor.sum
           }

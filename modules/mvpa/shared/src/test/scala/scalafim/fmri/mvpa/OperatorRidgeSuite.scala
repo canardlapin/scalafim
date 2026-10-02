@@ -30,7 +30,10 @@ class OperatorRidgeSuite extends munit.FunSuite:
     )
   private val operator = PatternOperator.fromMatrix(patternMatrix).toOption.get
   private val targets = ClassMembership.hard(labels).toOption.get
-  private val folds = FoldPlan.leaveOneBlockOut(Vector.tabulate(12)(_ / 3)).toOption.get
+  private val partitions = Vector.tabulate(4): held =>
+    val test = (0 until 12).filter(_ / 3 == held).toVector
+    val train = (0 until 12).filter(_ / 3 != held).toVector
+    train -> test
   private val config = OperatorRidgeConfig.unsafe(penalty = 0.7, tolerance = 1e-12, maxIterations = 2000)
 
   test("membership and solver smart constructors reject invalid states") {
@@ -47,8 +50,7 @@ class OperatorRidgeSuite extends munit.FunSuite:
     assertEquals(hard.classes.map(_.value), Vector("a", "b"))
     assertMatrixClose(hard.values, fromRows(Vector(Vector(1.0, 0.0), Vector(0.0, 1.0), Vector(1.0, 0.0))))
     assertEquals(soft.kind, ClassMembershipKind.Simplex)
-    assertEquals(Response.Probabilistic(soft).length, 2)
-    assertEquals(Response.Probabilistic(soft).subset(Vector(1)).length, 1)
+    assertEquals(soft.samples, 2)
 
     assertEquals(
       ClassMembership
@@ -113,11 +115,9 @@ class OperatorRidgeSuite extends munit.FunSuite:
   }
 
   test("operator LSQR coefficients and scores match an independent dense normal-equation oracle") {
-    folds.folds.foreach: fold =>
-      val trainPositions = fold.train.map(_.value)
-      val testPositions = fold.test.map(_.value)
-      val trainOperator = operator.selectRows(fold.train).toOption.get
-      val testOperator = operator.selectRows(fold.test).toOption.get
+    partitions.foreach: (trainPositions, testPositions) =>
+      val trainOperator = operator.selectRowPositions(trainPositions).toOption.get
+      val testOperator = operator.selectRowPositions(testPositions).toOption.get
       val trainTargets = targets.selectPositions(trainPositions)
       val targetBlock = ClassMembership.simplex(targets.classes, trainTargets).toOption.get
       val fitted = OperatorRidge.fit(trainOperator, targetBlock, config).toOption.get
@@ -195,7 +195,7 @@ class OperatorRidgeSuite extends munit.FunSuite:
     )
     val poisoned = PatternOperator
       .fromOperator(
-        SampleAxis(patterns.rows).toOption.get,
+        patterns.rows,
         Vector.tabulate(patterns.cols)(FeatureIndex.apply),
         poisonedLinear,
         PatternOperatorProvenance.composed

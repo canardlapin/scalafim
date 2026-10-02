@@ -17,9 +17,11 @@ the prepared readout, and RSA model controls remain separate comparison inputs.
 The independent `BetaFreeRsaAcceptanceSuite` checks a three-run literal response
 fixture through this native route on JVM and Scala.js.
 
-`OneShotDataset`, `OneShotMvpaTask` and `OneShotMvpaEngine` are temporary boundaries
-for generic adapters scheduled for removal in M3.13. Canonical consumers now
-use identified run evidence and typed global artifacts.
+`RunTrialReadout.make` validates a response block and prepared trial readout,
+then composes their numerical operators. `explicitPatterns(PatternCopyBudget(...))`
+is a separately budgeted dense copy. Native relational consumers use the composed
+operator directly. No generic one-shot dataset, task or parallel result collector
+remains.
 
 Predictive operator ridge and soft LDA now run through `AlderOperatorRidge`
 and `AlderSoftLda` in [mvpa-dataset](../mvpa-dataset/README.md). They retain the

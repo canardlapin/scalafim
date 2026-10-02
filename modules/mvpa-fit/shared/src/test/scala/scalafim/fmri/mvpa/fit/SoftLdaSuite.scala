@@ -17,7 +17,7 @@ class SoftLdaSuite extends munit.FunSuite:
   private def operator = PatternOperator.fromMatrix(PatternMatrix(matrix, Vector.tabulate(12)(SampleIndex.apply), Vector.tabulate(3)(FeatureIndex.apply))).toOption.get
 
   test("single-fit soft LDA agrees for composed and explicit pattern operators") {
-    val composed = PatternOperator.fromOperator(SampleAxis.unsafe(12), operator.featureIndices, operator.linear, PatternOperatorProvenance.composed).toOption.get
+    val composed = PatternOperator.fromOperator(12, operator.featureIndices, operator.linear, PatternOperatorProvenance.composed).toOption.get
     val left = SoftLda.fit(composed, membership, config).toOption.get.predict(composed).toOption.get
     val right = SoftLda.fit(operator, membership, config).toOption.get.predict(operator).toOption.get
     assertMatrixClose(left.probabilities, right.probabilities)

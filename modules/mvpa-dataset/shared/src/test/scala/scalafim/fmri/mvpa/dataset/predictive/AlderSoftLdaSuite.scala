@@ -87,7 +87,7 @@ class AlderSoftLdaSuite extends munit.FunSuite:
     val model = right(SoftLda.fit(operator, membership, config))
     val poison = new PoisonReorderedOperator
     val reordered = right(PatternOperator.fromOperator(
-      SampleAxis.unsafe(1),
+      1,
       Vector(FeatureIndex(2), FeatureIndex(1), FeatureIndex(0)),
       poison,
       PatternOperatorProvenance.composed

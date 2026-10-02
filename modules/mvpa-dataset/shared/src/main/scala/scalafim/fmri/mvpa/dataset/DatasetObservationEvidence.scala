@@ -12,8 +12,10 @@ import scalafim.dataset.{
   TimepointIndex,
   VoxelIndex
 }
-import scalafim.fmri.mvpa.*
+import scalafim.fmri.mvpa.{AxisDigest, AxisRef, Column, EvidenceSource, FeatureIndex, Observations, ClassLabel, SampleIndex, PatternMatrix}
 import gale.linalg.{DMat, Matrix}
+import multivar.core.{SpaceRole, ValueId, ValueIdentity}
+import scalafim.response.{Provenance, ProvenanceId, SourceId}
 
 import scala.util.control.NonFatal
 
@@ -23,8 +25,7 @@ enum MvpaDatasetErrorCategory:
   case FeatureMapping
   case PatternData
   case DatasetRead
-  case Response
-  case FoldPlan
+  case Labels
   case Identifier
 
 enum MvpaDatasetError:
@@ -37,10 +38,7 @@ enum MvpaDatasetError:
   case PatternFeatureCountMismatch(expected: Int, actual: Int)
   case InvalidSampleOrigin(detail: String)
   case MissingCategoricalLabels
-  case MissingFoldLabels(kind: String)
   case InvalidId(kind: String, value: String, detail: String)
-  case InvalidResponse(detail: String)
-  case InvalidFoldPlan(detail: String)
   case InvalidFeatureMapping(detail: String)
   case InvalidFeatureSpace(detail: String)
   case DatasetReadFailed(dataset: String, detail: String)
@@ -53,10 +51,7 @@ enum MvpaDatasetError:
         MvpaDatasetErrorCategory.SampleOrigin
       case PatternRowCountMismatch(_, _) | PatternFeatureCountMismatch(_, _) =>
         MvpaDatasetErrorCategory.PatternData
-      case MissingCategoricalLabels | InvalidResponse(_) =>
-        MvpaDatasetErrorCategory.Response
-      case MissingFoldLabels(_) | InvalidFoldPlan(_) =>
-        MvpaDatasetErrorCategory.FoldPlan
+      case MissingCategoricalLabels => MvpaDatasetErrorCategory.Labels
       case InvalidId(_, _, _) =>
         MvpaDatasetErrorCategory.Identifier
       case InvalidFeatureMapping(_) | InvalidFeatureSpace(_) =>
@@ -83,15 +78,9 @@ enum MvpaDatasetError:
       case InvalidSampleOrigin(detail) =>
         detail
       case MissingCategoricalLabels =>
-        "categorical response requires a label on every sample row"
-      case MissingFoldLabels(kind) =>
-        s"$kind fold plan requires a $kind label on every sample row"
+        "categorical labels must be present for every dataset observation"
       case InvalidId(kind, value, detail) =>
         s"invalid $kind id '$value': $detail"
-      case InvalidResponse(detail) =>
-        s"invalid MVPA response: $detail"
-      case InvalidFoldPlan(detail) =>
-        s"invalid MVPA fold plan: $detail"
       case InvalidFeatureMapping(detail) =>
         detail
       case InvalidFeatureSpace(detail) =>
@@ -425,37 +414,6 @@ final case class SampleMetadata private (
     require(index >= 0 && index < size, "metadata row index out of bounds")
     SampleMetadataRow(labels(index), blocks(index), runs(index), items(index))
 
-  def response: Either[MvpaDatasetError, Response] =
-    if labels.exists(_.isEmpty) then Left(MvpaDatasetError.MissingCategoricalLabels)
-    else
-      Response
-        .categorical(labels.flatten.map(_.value))
-        .left
-        .map(error => MvpaDatasetError.InvalidResponse(error.message))
-
-  def foldPlanByBlock: Either[MvpaDatasetError, FoldPlan] =
-    foldPlan("block", blocks.map(_.map(_.value)))
-
-  def foldPlanByRun: Either[MvpaDatasetError, FoldPlan] =
-    foldPlan("run", runs.map(_.map(_.value)))
-
-  private def foldPlan(kind: String, values: Vector[Option[String]]): Either[MvpaDatasetError, FoldPlan] =
-    if values.exists(_.isEmpty) then Left(MvpaDatasetError.MissingFoldLabels(kind))
-    else
-      val foldLabels = values.flatten.distinct
-      val folds = foldLabels.map { label =>
-        val test = values.zipWithIndex.collect { case (Some(value), index) if value == label => index }
-        val testSet = test.toSet
-        val train = values.indices.filterNot(testSet.contains).toVector
-        Fold(s"$kind:$label", train, test)
-      }
-      folds.collectFirst { case Left(error) => error } match
-        case Some(error) =>
-          Left(MvpaDatasetError.InvalidFoldPlan(error.message))
-        case None =>
-          FoldPlan(folds.collect { case Right(fold) => fold }, size)
-            .left
-            .map(error => MvpaDatasetError.InvalidFoldPlan(error.message))
 
 object SampleMetadata:
   def empty(size: Int): Either[MvpaDatasetError, SampleMetadata] =
@@ -657,14 +615,6 @@ final case class SampleTable private (
   def size: Int =
     rows.length
 
-  def response: Either[MvpaDatasetError, Response] =
-    metadata.response
-
-  def foldPlanByBlock: Either[MvpaDatasetError, FoldPlan] =
-    metadata.foldPlanByBlock
-
-  def foldPlanByRun: Either[MvpaDatasetError, FoldPlan] =
-    metadata.foldPlanByRun
 
   def validateAgainst(series: FmriSeries): Either[MvpaDatasetError, Unit] =
     if size != series.nTimepoints then Left(MvpaDatasetError.SampleCountMismatch(series.nTimepoints, size))
@@ -811,12 +761,6 @@ final case class PatternTable private (
   def featureSpace: FeatureSpaceRef =
     FeatureSpaceRef.fromMapping(featureMapping)
 
-  def toPatternMatrix: PatternMatrix =
-    PatternMatrix(
-      value = value,
-      sampleIndices = Vector.tabulate(value.rows)(SampleIndex.unsafe),
-      featureIndices = featureMapping.featureIndices
-    )
 
 object PatternTable:
   def build(value: DMat, featureMapping: FeatureMapping): Either[MvpaDatasetError, PatternTable] =
@@ -897,268 +841,142 @@ object PatternTable:
       row += 1
     out.result()
 
-final case class MvpaDatasetView private[dataset] (
-    patterns: PatternMatrix,
-    samples: SampleTable,
-    featureMapping: FeatureMapping
+
+final class DatasetObservationEvidence private (
+    val samples: AxisRef[String],
+    val neural: AxisRef[String],
+    val observations: Observations[samples.Id, neural.Id],
+    val metadata: SampleTable,
+    val featureMapping: FeatureMapping,
+    private val labels: Option[Column[samples.Id, ClassLabel]],
+    val sourceIdentity: String,
+    val contentIdentity: String
 ):
-  require(patterns.samples == samples.size, "pattern rows must match sample table")
-  require(patterns.features == featureMapping.features, "pattern columns must match feature mapping")
-
-  def source: DensePatternSource =
-    PatternSource.fromMatrix(patterns)
-
   def featureSpace: FeatureSpaceRef =
     FeatureSpaceRef.fromMapping(featureMapping)
 
-  def response: Either[MvpaDatasetError, Response] =
-    samples.response
+  def categoricalLabels: Either[MvpaDatasetError, Column[samples.Id, ClassLabel]] =
+    labels.toRight(MvpaDatasetError.MissingCategoricalLabels)
 
-  def toLabeled: Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    LabeledMvpaDatasetView.fromView(this)
-
-  def foldsByBlock: Either[MvpaDatasetError, FoldPlan] =
-    samples.foldPlanByBlock
-
-  def foldsByRun: Either[MvpaDatasetError, FoldPlan] =
-    samples.foldPlanByRun
-
-final case class LabeledMvpaDatasetView private[dataset] (
-    patterns: PatternMatrix,
-    samples: SampleTable,
-    featureMapping: FeatureMapping,
-    response: Response
-):
-  require(patterns.samples == samples.size, "pattern rows must match sample table")
-  require(patterns.features == featureMapping.features, "pattern columns must match feature mapping")
-  require(response.length == samples.size, "response length must match sample table")
-
-  def source: DensePatternSource =
-    PatternSource.fromMatrix(patterns)
-
-  def featureSpace: FeatureSpaceRef =
-    FeatureSpaceRef.fromMapping(featureMapping)
-
-  def unlabeled: MvpaDatasetView =
-    MvpaDatasetView(patterns, samples, featureMapping)
-
-  def foldsByBlock: Either[MvpaDatasetError, FoldPlan] =
-    samples.foldPlanByBlock
-
-  def foldsByRun: Either[MvpaDatasetError, FoldPlan] =
-    samples.foldPlanByRun
-
-object LabeledMvpaDatasetView:
-  def fromView(view: MvpaDatasetView): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    view.samples.response.map(response => new LabeledMvpaDatasetView(view.patterns, view.samples, view.featureMapping, response))
-
-  def fromPatternTable(
-      table: PatternTable,
-      samples: SampleTable
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    MvpaDatasetView.fromPatternTable(table, samples).flatMap(fromView)
-
-  def fromSeries(
-      series: FmriSeries,
-      metadata: SampleMetadataRequest,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels"),
-      datasetId: Option[DatasetId] = None
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    MvpaDatasetView.fromSeries(series, metadata, featureSpaceId, datasetId).flatMap(fromView)
-
-  def fromReader(
-      reader: DatasetSeriesReader,
-      request: DatasetPatternRequest
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    MvpaDatasetView.fromReader(reader, request).flatMap(fromView)
-
-  def fromReader(
-      reader: DatasetSeriesReader,
-      labels: Seq[String],
-      selection: DataSelection = DataSelection.All,
-      blocks: Option[Seq[String]] = None,
-      runs: Option[Seq[String]] = None,
-      items: Option[Seq[String]] = None,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels")
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    fromReader(
-      reader,
-      DatasetPatternRequest(
-        selection = selection,
-        metadata = SampleMetadataRequest.labeled(labels, blocks = blocks, runs = runs, items = items),
-        featureSpaceId = featureSpaceId
-      )
-    )
-
-  def fromDataset(
-      dataset: FmriDataset,
-      request: DatasetPatternRequest
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    MvpaDatasetView.fromDataset(dataset, request).flatMap(fromView)
-
-  def fromDataset(
-      dataset: FmriDataset,
-      labels: Seq[String],
-      selection: DataSelection = DataSelection.All,
-      blocks: Option[Seq[String]] = None,
-      runs: Option[Seq[String]] = None,
-      items: Option[Seq[String]] = None,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels")
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    fromDataset(
-      dataset,
-      DatasetPatternRequest(
-        selection = selection,
-        metadata = SampleMetadataRequest.labeled(labels, blocks = blocks, runs = runs, items = items),
-        featureSpaceId = featureSpaceId
-      )
-    )
-
-  def fromPatternRows(
-      rows: Seq[Seq[Double]],
-      rowNames: Seq[String],
-      featureIndices: Seq[Int],
-      labels: Seq[String],
-      blocks: Option[Seq[String]] = None,
-      runs: Option[Seq[String]] = None,
-      items: Option[Seq[String]] = None,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("features"),
-      datasetId: Option[DatasetId] = None,
-      shape: Option[DatasetShape] = None
-  ): Either[MvpaDatasetError, LabeledMvpaDatasetView] =
-    MvpaDatasetView
-      .fromPatternRows(
-        rows = rows,
-        rowNames = rowNames,
-        voxelIndices = featureIndices,
-        labels = Some(labels),
-        blocks = blocks,
-        runs = runs,
-        items = items,
-        featureSpaceId = featureSpaceId,
-        datasetId = datasetId,
-        shape = shape
-      )
-      .flatMap(fromView)
-
-object MvpaDatasetView:
-  def build(
-      table: PatternTable,
-      samples: SampleTable
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    if table.rows != samples.size then Left(MvpaDatasetError.PatternRowCountMismatch(samples.size, table.rows))
-    else Right(new MvpaDatasetView(table.toPatternMatrix, samples, table.featureMapping))
+object DatasetObservationEvidence:
+  private def error(value: Any): MvpaDatasetError =
+    MvpaDatasetError.InvalidSampleOrigin(value.toString)
 
   def build(
-      series: FmriSeries,
-      samples: SampleTable,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels"),
-      datasetId: Option[DatasetId] = None
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    for
-      _ <- samples.validateAgainst(series)
-      table <- PatternTable.fromSeries(series, featureSpaceId, datasetId)
-      view <- build(table, samples)
-    yield view
+      table: PatternTable,
+      sampleTable: SampleTable
+  ): Either[MvpaDatasetError, DatasetObservationEvidence] =
+    if table.rows != sampleTable.size then
+      Left(MvpaDatasetError.PatternRowCountMismatch(sampleTable.size, table.rows))
+    else
+      val sampleKeys = sampleTable.rows.map(row => s"dataset-row:${row.rowOrdinal}")
+      val neuralKeys = table.featureMapping.featureIndices.map(index => s"feature:${index.value}")
+      for
+        samples <- AxisRef
+          .fromStableKeys(
+            "dataset-observations",
+            SpaceRole.Samples,
+            sampleKeys,
+            "dataset",
+            "one",
+            "raw"
+          )
+          .left
+          .map(error)
+        neural <- AxisRef
+          .fromStableKeys(
+            "dataset-features",
+            SpaceRole.Observed,
+            neuralKeys,
+            table.featureMapping.id.value,
+            "one",
+            "raw"
+          )
+          .left
+          .map(error)
+        identity = EvidenceIdentity.content(table, sampleTable, sampleKeys, neuralKeys)
+        sourceId = SourceId.unsafe(s"dataset-observations:$identity")
+        source <- EvidenceSource(
+          sourceId,
+          Provenance.source(
+            ProvenanceId.unsafe(s"dataset-observations-root:$identity"),
+            sourceId
+          )
+        ).left.map(error)
+        observations <- Observations
+          .fromDense(
+            samples,
+            neural,
+            table.value,
+            ValueIdentity.source(ValueId.unsafe(identity)),
+            source
+          )
+          .left
+          .map(error)
+        labelColumn <- labelsFor(samples, sampleTable, identity)
+      yield new DatasetObservationEvidence(
+        samples,
+        neural,
+        observations,
+        sampleTable,
+        table.featureMapping,
+        labelColumn,
+        sourceId.value,
+        identity
+      )
+
+  private def labelsFor(
+      samples: AxisRef[String],
+      table: SampleTable,
+      evidenceIdentity: String
+  ): Either[MvpaDatasetError, Option[Column[samples.Id, ClassLabel]]] =
+    val values = table.rows.map(_.label)
+    if values.forall(_.isEmpty) then Right(None)
+    else if values.exists(_.isEmpty) then Left(MvpaDatasetError.MissingCategoricalLabels)
+    else
+      val labelIdentity = EvidenceIdentity.labels(evidenceIdentity, values.flatten)
+      Column
+        .fromValues(
+          samples,
+          values.flatten,
+          ValueIdentity.source(ValueId.unsafe(labelIdentity))
+        )
+        .left
+        .map(error)
+        .map(Some.apply)
 
   def fromSeries(
       series: FmriSeries,
       metadata: SampleMetadataRequest,
       featureSpaceId: FeatureSpaceId,
       datasetId: Option[DatasetId]
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
+  ): Either[MvpaDatasetError, DatasetObservationEvidence] =
     for
       samples <- SampleTable.fromSeries(series, metadata)
-      view <- build(series, samples, featureSpaceId, datasetId)
-    yield view
-
-  def fromSeries(
-      series: FmriSeries,
-      labels: Option[Seq[String]] = None,
-      blocks: Option[Seq[String]] = None,
-      runs: Option[Seq[String]] = None,
-      items: Option[Seq[String]] = None,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels"),
-      datasetId: Option[DatasetId] = None
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    fromSeries(
-      series,
-      SampleMetadataRequest(labels = labels, blocks = blocks, runs = runs, items = items),
-      featureSpaceId,
-      datasetId
-    )
+      _ <- samples.validateAgainst(series)
+      patterns <- PatternTable.fromSeries(series, featureSpaceId, datasetId)
+      evidence <- build(patterns, samples)
+    yield evidence
 
   def fromReader(
       reader: DatasetSeriesReader,
       request: DatasetPatternRequest
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    reader.seriesEither(request.selection) match
-      case Left(error) =>
-        Left(MvpaDatasetError.DatasetReadFailed(
-          reader.dataset.id.value,
-          error.message
-        ))
-      case Right(series) =>
-        fromSeries(
-          series = series,
-          metadata = request.metadata,
-          featureSpaceId = request.featureSpaceId,
-          datasetId = Some(reader.dataset.id)
-        )
-
-  def fromReader(
-      reader: DatasetSeriesReader,
-      selection: DataSelection = DataSelection.All,
-      labels: Option[Seq[String]] = None,
-      blocks: Option[Seq[String]] = None,
-      runs: Option[Seq[String]] = None,
-      items: Option[Seq[String]] = None,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels")
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    fromReader(
-      reader,
-      DatasetPatternRequest(
-        selection = selection,
-        metadata = SampleMetadataRequest(labels = labels, blocks = blocks, runs = runs, items = items),
-        featureSpaceId = featureSpaceId
-      )
-    )
+  ): Either[MvpaDatasetError, DatasetObservationEvidence] =
+    reader
+      .seriesEither(request.selection)
+      .left
+      .map(error => MvpaDatasetError.DatasetReadFailed(reader.dataset.id.value, error.message))
+      .flatMap(series => fromSeries(series, request.metadata, request.featureSpaceId, Some(reader.dataset.id)))
 
   def fromDataset(
       dataset: FmriDataset,
       request: DatasetPatternRequest
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
+  ): Either[MvpaDatasetError, DatasetObservationEvidence] =
     SynchronousFmriDataset
       .readerFor(dataset)
       .left
-      .map(error =>
-        MvpaDatasetError.DatasetReadFailed(dataset.id.value, error.message)
-      )
-      .flatMap(fromReader(_, request))
-
-  def fromDataset(
-      dataset: FmriDataset,
-      selection: DataSelection = DataSelection.All,
-      labels: Option[Seq[String]] = None,
-      blocks: Option[Seq[String]] = None,
-      runs: Option[Seq[String]] = None,
-      items: Option[Seq[String]] = None,
-      featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("voxels")
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    fromDataset(
-      dataset,
-      DatasetPatternRequest(
-        selection = selection,
-        metadata = SampleMetadataRequest(labels = labels, blocks = blocks, runs = runs, items = items),
-        featureSpaceId = featureSpaceId
-      )
-    )
-
-  def fromPatternTable(
-      table: PatternTable,
-      samples: SampleTable
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
-    build(table, samples)
+      .map(error => MvpaDatasetError.DatasetReadFailed(dataset.id.value, error.message))
+      .flatMap(reader => fromReader(reader, request))
 
   def fromPatternRows(
       rows: Seq[Seq[Double]],
@@ -1171,29 +989,115 @@ object MvpaDatasetView:
       featureSpaceId: FeatureSpaceId = FeatureSpaceId.unsafe("features"),
       datasetId: Option[DatasetId] = None,
       shape: Option[DatasetShape] = None
-  ): Either[MvpaDatasetError, MvpaDatasetView] =
+  ): Either[MvpaDatasetError, DatasetObservationEvidence] =
     for
-      table <- PatternTable.fromRows(rows, voxelIndices, featureSpaceId, datasetId, shape)
+      patterns <- PatternTable.fromRows(rows, voxelIndices, featureSpaceId, datasetId, shape)
       samples <- SampleTable.fromRows(
         rowNames,
-        SampleMetadataRequest(labels = labels, blocks = blocks, runs = runs, items = items)
+        SampleMetadataRequest(
+          labels = labels,
+          blocks = blocks,
+          runs = runs,
+          items = items
+        )
       )
-      view <- build(table, samples)
-    yield view
+      evidence <- build(patterns, samples)
+    yield evidence
+
+private object EvidenceIdentity:
+  def content(
+      table: PatternTable,
+      samples: SampleTable,
+      sampleKeys: Vector[String],
+      neuralKeys: Vector[String]
+  ): String =
+    AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.dataset-observation-evidence.v2")
+      writeMapping(writer, table.featureMapping)
+      writer.intLE(sampleKeys.length)
+      sampleKeys.foreach(writer.string)
+      writer.intLE(neuralKeys.length)
+      neuralKeys.foreach(writer.string)
+      writer.intLE(samples.rows.length)
+      samples.rows.foreach(writeSample(writer, _))
+      writer.intLE(table.value.rows)
+      writer.intLE(table.value.cols)
+      var row = 0
+      while row < table.value.rows do
+        var column = 0
+        while column < table.value.cols do
+          writer.string(java.lang.Double.toHexString(table.value(row, column)))
+          column += 1
+        row += 1
+
+  def labels(evidenceIdentity: String, labels: Vector[ClassLabel]): String =
+    AxisDigest.sha256Hex: writer =>
+      writer.string("scalafim.dataset-observation-labels.v1")
+      writer.string(evidenceIdentity)
+      writer.intLE(labels.length)
+      labels.foreach(label => writer.string(label.value))
+
+  private def writeMapping(
+      writer: AxisDigest.Writer,
+      mapping: FeatureMapping
+  ): Unit =
+    writer.string(mapping.id.value)
+    writeOption(writer, mapping.datasetId.map(_.value))
+    mapping match
+      case FeatureMapping.VoxelBacked(_, _, shape, voxels, features) =>
+        writer.string("voxel-backed")
+        writer.intLE(shape.timepoints)
+        writer.intLE(shape.spatialDims.length)
+        shape.spatialDims.foreach(writer.intLE)
+        writer.intLE(voxels.length)
+        voxels.foreach(voxel => writer.intLE(voxel.value))
+        writer.intLE(features.length)
+        features.foreach(feature => writer.intLE(feature.value))
+      case FeatureMapping.Abstract(_, _, features) =>
+        writer.string("abstract")
+        writer.intLE(features.length)
+        features.foreach(feature => writer.intLE(feature.value))
+
+  private def writeSample(
+      writer: AxisDigest.Writer,
+      sample: SampleRecord
+  ): Unit =
+    writer.intLE(sample.rowOrdinal)
+    sample.origin match
+      case SampleOrigin.Timepoint(index) =>
+        writer.string("timepoint")
+        writer.intLE(index.value)
+      case SampleOrigin.Estimate(id, row) =>
+        writer.string("estimate")
+        writer.string(id.value)
+        writer.intLE(row.value)
+      case SampleOrigin.Row(row) =>
+        writer.string("row")
+        writer.intLE(row.value)
+    writeOption(writer, sample.label.map(_.value))
+    writeOption(writer, sample.block.map(_.value))
+    writeOption(writer, sample.run.map(_.value))
+    writeOption(writer, sample.item.map(_.value))
+
+  private def writeOption(
+      writer: AxisDigest.Writer,
+      value: Option[String]
+  ): Unit =
+    value match
+      case Some(actual) =>
+        writer.intLE(1)
+        writer.string(actual)
+      case None =>
+        writer.intLE(0)
 
 private def checkedId(kind: String, value: String): Either[MvpaDatasetError, String] =
   val trimmed = value.trim
-  if trimmed.isEmpty then Left(MvpaDatasetError.InvalidId(kind, value, "must be non-empty"))
-  else Right(trimmed)
+  if trimmed.isEmpty then Left(MvpaDatasetError.InvalidId(kind, value, "must be non-empty")) else Right(trimmed)
 
 private def parseClassLabel(value: String): Either[MvpaDatasetError, ClassLabel] =
   try Right(ClassLabel(value))
-  catch
-    case NonFatal(error) =>
-      Left(MvpaDatasetError.InvalidId("class label", value, error.getMessage))
+  catch case NonFatal(error) => Left(MvpaDatasetError.InvalidId("class label", value, error.getMessage))
 
 private def parseRunId(value: String): Either[MvpaDatasetError, RunId] =
   try Right(RunId(value))
-  catch
-    case NonFatal(error) =>
-      Left(MvpaDatasetError.InvalidId("run", value, error.getMessage))
+  catch case NonFatal(error) => Left(MvpaDatasetError.InvalidId("run", value, error.getMessage))

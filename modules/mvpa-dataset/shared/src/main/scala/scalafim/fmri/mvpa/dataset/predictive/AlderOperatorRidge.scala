@@ -159,7 +159,7 @@ object AlderOperatorRidge:
           case Some(classes) => classes.indices.forall(klass => soft.exists(values => values(klass) > 0.0))
         if !hasAllClasses then Left(AlderOperatorRidgeError.MissingClass(fold))
         else for
-          operator <- rows.operator.selectRows(ordinals.map(SampleIndex.apply)).left.map(AlderOperatorRidgeError.Mvpa.apply)
+          operator <- rows.operator.selectRowPositions(ordinals).left.map(AlderOperatorRidgeError.Mvpa.apply)
           membership <- rows.softClasses match
             case None => ClassMembership.hard(labels).left.map(AlderOperatorRidgeError.Mvpa.apply)
             case Some(classes) => ClassMembership.simplex(classes, DMat.dense(soft.length, classes.length, soft.flatten)).left.map(AlderOperatorRidgeError.Mvpa.apply)
@@ -177,7 +177,7 @@ object AlderOperatorRidge:
 
   private final class RidgePipe(operator: PatternOperator, val model: OperatorRidgeModel, stage: StagePath) extends Pipe[AlderOperatorRidgeRow, AlderOperatorRidgeError, OperatorRidgePrediction]:
     def run(input: AlderOperatorRidgeRow): Either[Failure[AlderOperatorRidgeError], OperatorRidgePrediction] =
-      operator.selectRows(Vector(SampleIndex(input.ordinal))).left.map(error => stage.failure(AlderOperatorRidgeError.Mvpa(error))).flatMap: selected =>
+      operator.selectRowPositions(Vector(input.ordinal)).left.map(error => stage.failure(AlderOperatorRidgeError.Mvpa(error))).flatMap: selected =>
         model.predict(selected).left.map(error => stage.failure(AlderOperatorRidgeError.Operator(error)))
 
   private def training(data: Data[?, Example[AlderOperatorRidgeRow, Array[Double], Unit]], rows: AlderOperatorRidgeRows, coding: SwiftTargetCoding): Either[AlderOperatorRidgeError, (Vector[Int], Vector[ClassLabel], Vector[Vector[Double]])] =

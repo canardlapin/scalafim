@@ -13,8 +13,11 @@ final case class PatternMatrix(
   def samples: Int = value.rows
   def features: Int = value.cols
 
-  def selectRows(rows: IndexedSeq[SampleIndex]): Either[MvpaError, PatternMatrix] =
-    val localRows = rows.map(_.value)
+  /** Select local row positions while preserving stored row indices. */
+  def selectRowPositions(rows: IndexedSeq[Int]): Either[MvpaError, PatternMatrix] =
+    if BigInt(rows.length) * value.cols > Int.MaxValue then
+      return Left(MvpaError.MatrixShapeMismatch("selected matrix exceeds primitive capacity"))
+    val localRows = rows
     localRows.find(i => i < 0 || i >= value.rows) match
       case Some(bad) =>
         Left(MvpaError.MatrixShapeMismatch(s"sample index $bad out of bounds for ${value.rows} rows"))
@@ -30,22 +33,26 @@ final case class PatternMatrix(
         Right(
           PatternMatrix(
             value = selected.result(),
-            sampleIndices = rows.toVector,
+            sampleIndices = localRows.map(sampleIndices).toVector,
             featureIndices = featureIndices
           )
         )
 
-  def selectFeatures(featureSet: FeatureSet): Either[MvpaError, PatternMatrix] =
+  def selectColumns(columns: IndexedSeq[FeatureIndex]): Either[MvpaError, PatternMatrix] =
+    if columns.isEmpty || columns.distinct.size != columns.size then
+      return Left(MvpaError.MatrixShapeMismatch("selected feature indices must be nonempty and unique"))
+    if BigInt(value.rows) * columns.size > Int.MaxValue then
+      return Left(MvpaError.MatrixShapeMismatch("selected matrix exceeds primitive capacity"))
     val lookup = featureIndices.zipWithIndex.map { case (feature, position) => feature.value -> position }.toMap
-    val positions = new Array[Int](featureSet.featureIndices.length)
+    val positions = new Array[Int](columns.length)
     var i = 0
-    while i < featureSet.featureIndices.length do
-      val feature = featureSet.featureIndices(i)
+    while i < columns.length do
+      val feature = columns(i)
       lookup.get(feature.value) match
         case Some(position) =>
           positions(i) = position
         case None =>
-          return Left(MvpaError.MissingFeature(featureSet.id, feature))
+          return Left(MvpaError.MissingFeature(feature))
       i += 1
 
     val out = Matrix.newBuilder(value.rows, positions.length)
@@ -61,7 +68,7 @@ final case class PatternMatrix(
       PatternMatrix(
         value = out.result(),
         sampleIndices = sampleIndices,
-        featureIndices = featureSet.featureIndices
+        featureIndices = columns.toVector
       )
     )
 

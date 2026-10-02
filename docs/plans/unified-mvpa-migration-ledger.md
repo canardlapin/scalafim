@@ -125,10 +125,11 @@ the final row.
 
 ### Public surface freeze
 
-The six currently permitted `RoiPayload` cases are `Classification`,
-`OperatorRidge`, `Rdm`, `Rsa`, `SamplewiseRsa`, and `FeatureModel`. They are a
-closed migration inventory, not extension points. New functionality introduced
-by this epic must use a method-owned result rather than adding a seventh case.
+At the M0 source receipt the six `RoiPayload` cases were `Classification`,
+`OperatorRidge`, `Rdm`, `Rsa`, `SamplewiseRsa`, and `FeatureModel`. This was a
+closed migration inventory, not an extension point. M1.12 and M2.09 removed the
+method cases; M3.13 removes the remaining universal result contract. New methods
+return their own typed results.
 
 No private compatibility bridge is registered at M0.01. If one becomes
 unavoidable, its owning row must name the exact declaration and callers, the
@@ -303,3 +304,29 @@ canonical/one-shot callers keep their explicit M3.13 removal owner. Native tests
 replace deleted old-executor comparisons; no former operator-buffer benchmark
 claim transfers to the new execution path. Post-deletion receipts belong to
 `docs/verification/umvpa-relational-cutover-20261001.md`.
+
+## M3.13 final retirement disposition (2026-10-02)
+
+The final legacy response/fold/feature-set ontology, pattern source, universal
+engine/task/stream/result hierarchy, dataset views and generic one-shot dataset
+and engine definitions have been physically removed. The final post-removal
+receipt passes 1,010 affected JVM/Scala.js tests and warning-clean compilation.
+Historical sections above retain their original packet-time status.
+
+| Ledger rows | Current destination and preserved behavior |
+| --- | --- |
+| F1/F2 | Nominal `AxisRef`, bound `Column`/`MultiResponse` and native validation/pairing designs. Group-validation tests use independently specified expected partitions, not the removed fold builder. The separate response module remains. |
+| F3/D2 | Typed spatial `MeasurementFrame` selection supports ROIs and searchlights. No feature-set kind enum remains. |
+| F4 | `Observations` and acquired observation/relation products own scientific identity and scope. `PatternMatrix`/`PatternOperator` remain numerical storage adapters; indices are storage ordinals, not a second sample/neural domain. Explicit dense operator copies require `PatternCopyBudget` and avoid a neural-square identity. |
+| F5/F6 | Native method heads, work units and method-owned results replace universal orchestration and payload collectors. No renamed executor delegates to the retired implementation. |
+| P1–P7 | Native Alder heads; original categorical/feature-model/RDM reference tables and single-fit numerical kernels remain active. Old scanner-versus-engine tests have no surviving estimand or benchmark claim. |
+| R1–R5 | Identified ordinary/signed relations, explicit pairing/metric and scoped/owned consumers. Independent relational and beta-free acceptance fixtures remain active. |
+| G1 | `RunTrialReadout` preserves validated response/readout composition and explicit budgeted copies. `IdentifiedReadoutRelations` owns actual nominal relation domains and acquired scope. Generic one-shot collection is removed. |
+| G2–G5 | Native canonical/global artifacts and separate assessments, accepted in M3.01 with preserved independent fixtures. Scientific model/policy/receipt ADTs remain. |
+| D1 | `DatasetObservationEvidence` preserves selected values, ordered mappings, metadata/origins and native label columns. The opened-dataset adapter retains effectful selected reads; synchronous readers are explicit. It provides no fold or source facade. |
+| D3 | Current module/example guides use native evidence. Earlier engine, one-shot, beta-free and finite-index plans are explicitly historical with immutable pre-retirement links. Existing R generators retain numerical reference provenance. Final analyst workflow qualification remains M5.06. |
+
+The final removal scan, fixture disposition and affected JVM/Scala.js gates are
+recorded in [M3.13 verification](../verification/umvpa-legacy-retirement-20261001.md).
+No resource, inference, group or release qualification follows from deleting
+legacy APIs.
