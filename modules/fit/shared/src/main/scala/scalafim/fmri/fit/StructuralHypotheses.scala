@@ -18,7 +18,7 @@ import scalafim.fmri.design.{
   TermId
 }
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.hrf.{ResponseFunctional, ResponseUnits}
+import scalafim.fmri.hrf.{FunctionalDiscretizationReceipt, ResponseFunctional, ResponseUnits}
 
 /** Failure classes emitted while lowering a semantic hypothesis. */
 enum StructuralHypothesisErrorKind:
@@ -241,14 +241,16 @@ final case class StructuralResponseWeight(
     selector: StructuralColumnSelector,
     functional: ResponseFunctional,
     units: ResponseUnits,
-    basisWeights: Vector[BasisFunctionalWeight]
+    basisWeights: Vector[BasisFunctionalWeight],
+    discretization: Option[FunctionalDiscretizationReceipt] = None
 ):
   require(basisWeights.nonEmpty, "response-functional basis weights must be non-empty")
 
 final case class StructuralResponseReceipt(
     functional: ResponseFunctional,
     units: ResponseUnits,
-    basis: Vector[BasisElementRef]
+    basis: Vector[BasisElementRef],
+    discretization: Option[FunctionalDiscretizationReceipt] = None
 )
 
 final case class StructuralTContrast(
@@ -699,7 +701,7 @@ object StructuralHypothesis:
         ))
 
   private def receipt(term: StructuralResponseWeight): StructuralResponseReceipt =
-    StructuralResponseReceipt(term.functional, term.units, term.basisWeights.map(_.basis))
+    StructuralResponseReceipt(term.functional, term.units, term.basisWeights.map(_.basis), term.discretization)
 
   private def resolveRows(
       id: ContrastId,

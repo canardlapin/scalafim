@@ -525,6 +525,41 @@ final case class CenteringReceipt(
 final case class PolicyReceipt(name: String, detail: String):
   require(name.trim.nonEmpty && detail.trim.nonEmpty, "policy receipt must be named and described")
 
+/** Auditable record of a post-convolution derivative-basis projection. */
+final case class BasisOrthogonalizationGroupReceipt(
+    cell: Option[CellKey],
+    modulator: Option[ModulatorId],
+    columns: Vector[Int],
+    sourceBasisIds: Vector[String],
+    sourceRows: Vector[Int],
+    originalScales: Vector[HrfColumnScale],
+    transform: Vector[Double],
+    referenceRank: Int,
+    scope: String = "all-selected-scans"
+):
+  require(columns.lengthCompare(2) >= 0, "basis orthogonalization requires a canonical column and a derivative")
+  require(columns.distinct.length == columns.length, "basis orthogonalization columns must be distinct")
+  require(referenceRank >= 0, "basis orthogonalization rank must be non-negative")
+  require(sourceBasisIds.length == columns.length, "basis identities must align with transformed columns")
+  require(sourceRows.forall(_ >= 0), "basis source rows must be non-negative")
+  require(originalDivisors.length == columns.length && originalDivisors.forall(value => value.isFinite && value > 0.0), "basis divisors must be positive and aligned")
+  require(transform.length == columns.length * columns.length && transform.forall(_.isFinite), "basis transform must be finite and square")
+  require(scope == "all-selected-scans", "basis orthogonalization scope must be explicit")
+
+  def originalDivisors: Vector[Double] = originalScales.map(_.divisor)
+
+  def canonical: String =
+    s"scope=$scope|cell=${cell.fold("")(_.canonical)}|modulator=${modulator.fold("")(_.value)}|columns=${columns.mkString(",")}|basis=${sourceBasisIds.mkString(",")}|rows=${sourceRows.mkString(",")}|scaling=${originalScales.map(_.policy.toString).mkString(",")}|divisors=${originalDivisors.map(java.lang.Double.doubleToLongBits).mkString(",")}|transform=${transform.map(java.lang.Double.doubleToLongBits).mkString(",")}|rank=$referenceRank"
+
+final case class BasisOrthogonalizationReceipt(
+    term: Option[TermId],
+    groups: Vector[BasisOrthogonalizationGroupReceipt]
+):
+  require(groups.nonEmpty, "basis orthogonalization receipt must record at least one group")
+
+  def canonical: String =
+    s"term=${term.fold("")(_.value)}|groups=${groups.map(_.canonical).mkString(";")}"
+
 enum RankPreviewMethod:
   case PivotedQr
 
@@ -649,6 +684,7 @@ final case class DesignAudit(
     centeringReceipts: Vector[CenteringReceipt] = Vector.empty,
     degenerateModulatorReceipts: Vector[DegenerateModulatorReceipt] = Vector.empty,
     orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty,
+    basisOrthogonalizationReceipts: Vector[BasisOrthogonalizationReceipt] = Vector.empty,
     policyReceipts: Vector[PolicyReceipt] = Vector.empty,
     rankPreview: Option[RankPreview] = None,
     diagnostics: Vector[DesignDiagnostic] = Vector.empty
@@ -677,6 +713,10 @@ final case class DesignAudit(
     val centering = centeringReceipts.map(_.canonical).mkString(",")
     val degenerateModulators = degenerateModulatorReceipts.map(_.canonical).mkString(",")
     val orthogonalization = orthogonalizationReceipts.map(_.canonical).mkString(",")
+    // Preserve existing content identities when the optional transform is absent.
+    val basisOrthogonalization =
+      if basisOrthogonalizationReceipts.isEmpty then ""
+      else s";basis-orthogonalization=${basisOrthogonalizationReceipts.map(_.canonical).mkString(",")}"
     val policies = policyReceipts.map(p => s"${p.name}:${p.detail}").mkString(",")
     val rank = rankPreview.fold("") {
       case RankPreview.Available(preview) =>
@@ -691,7 +731,7 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -1204,6 +1244,7 @@ object DesignSchema:
       centeringReceipts = left.centeringReceipts ++ right.centeringReceipts,
       degenerateModulatorReceipts = left.degenerateModulatorReceipts ++ right.degenerateModulatorReceipts,
       orthogonalizationReceipts = left.orthogonalizationReceipts ++ right.orthogonalizationReceipts,
+      basisOrthogonalizationReceipts = left.basisOrthogonalizationReceipts ++ right.basisOrthogonalizationReceipts,
       policyReceipts = left.policyReceipts ++ right.policyReceipts,
       rankPreview = None,
       diagnostics = left.diagnostics ++ right.diagnostics

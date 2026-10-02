@@ -24,9 +24,12 @@ final case class ConvolvedTerm(
     columnCells: Vector[Option[CellKey]] = Vector.empty,
     columnModulators: Vector[Option[ModulatorId]] = Vector.empty,
     columnHrfs: Vector[Hrf] = Vector.empty,
-    columnScales: Vector[HrfColumnScale] = Vector.empty
+    columnScales: Vector[HrfColumnScale] = Vector.empty,
+    eventPeakScales: Vector[EventPeakScaleReceipt] = Vector.empty,
+    eventHrfs: Vector[Hrf] = Vector.empty
 ) extends EventModelTerm:
   requireColumnMetadata()
+  require(eventHrfs.isEmpty || eventHrfs.length == term.onsets.length, "event HRFs must align with term events")
   require(
     columnConditions.isEmpty || columnConditions.length == data.cols,
     s"columnConditions has ${columnConditions.length} entries for ${data.cols} data columns"
@@ -50,6 +53,14 @@ final case class ConvolvedTerm(
   require(
     columnScales.isEmpty || columnScales.length == data.cols,
     s"columnScales has ${columnScales.length} entries for ${data.cols} data columns"
+  )
+  require(
+    eventPeakScales.isEmpty || eventPeakScales.length == term.onsets.length,
+    s"eventPeakScales has ${eventPeakScales.length} entries for ${term.onsets.length} term events"
+  )
+  require(
+    eventPeakScales.isEmpty || eventPeakScales.map(_.eventIndex) == term.onsets.indices.toVector,
+    "eventPeakScales must retain the term-local event-row identity and ordering"
   )
 
   def keyHint: Option[String] = term.termTag
@@ -139,11 +150,11 @@ final case class EventTerm(
           )
         }
       case c: ContinuousEvent =>
-        c.columnTags.zip(c.modulatorIds).map { case (tag, modulator) =>
+        c.columnTags.zip(c.modulatorIds).zipWithIndex.map { case ((tag, modulator), index) =>
           (
             tag,
             Option.empty[CellAssignment],
-            Some(modulator)
+            if c.mainEffectColumn.contains(index) then None else Some(modulator)
           )
         }
     }.filter(_.nonEmpty)
@@ -449,7 +460,8 @@ final case class EventTerm(
         columnBasisIx = finalBasisIx,
         columnCells = finalCells,
         columnModulators = finalModulators,
-        columnScales = emptyScales
+        columnScales = emptyScales,
+        eventHrfs = hrfs0
       )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
@@ -495,7 +507,8 @@ final case class EventTerm(
       columnBasisIx = finalBasisIx,
       columnCells = finalCells,
       columnModulators = finalModulators,
-      columnScales = columnScales
+      columnScales = columnScales,
+      eventHrfs = hrfs0
     )
 
   private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =

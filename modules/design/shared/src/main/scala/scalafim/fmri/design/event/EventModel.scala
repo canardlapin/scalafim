@@ -33,7 +33,8 @@ final case class EventModel(
     policyReceipts: Vector[PolicyReceipt] = Vector.empty,
     centeringReceipts: Vector[CenteringReceipt] = Vector.empty,
     degenerateModulatorReceipts: Vector[DegenerateModulatorReceipt] = Vector.empty,
-    orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty
+    orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty,
+    basisOrthogonalizationReceipts: Vector[BasisOrthogonalizationReceipt] = Vector.empty
 )
 :
   def termKeys: Vector[String] = terms.map(_._1)
@@ -85,7 +86,8 @@ final case class EventModel(
       emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty,
       centering: Vector[CenteringReceipt] = Vector.empty,
       degenerateModulators: Vector[DegenerateModulatorReceipt] = Vector.empty,
-      orthogonalization: Vector[OrthogonalizationReceipt] = Vector.empty
+      orthogonalization: Vector[OrthogonalizationReceipt] = Vector.empty,
+      basisOrthogonalization: Vector[BasisOrthogonalizationReceipt] = Vector.empty
   ): EventModel =
     withPolicyEvidenceEither(
       missing = missing,
@@ -95,7 +97,8 @@ final case class EventModel(
       emptyCellAudits = emptyCellAudits,
       centering = centering,
       degenerateModulators = degenerateModulators,
-      orthogonalization = orthogonalization
+      orthogonalization = orthogonalization,
+      basisOrthogonalization = basisOrthogonalization
     ).fold(error => throw new IllegalArgumentException(error.message), identity)
 
   /** Total compiler boundary for attaching auditable scientific policies. */
@@ -107,7 +110,8 @@ final case class EventModel(
       emptyCellAudits: Vector[EmptyCellAudit] = Vector.empty,
       centering: Vector[CenteringReceipt] = Vector.empty,
       degenerateModulators: Vector[DegenerateModulatorReceipt] = Vector.empty,
-      orthogonalization: Vector[OrthogonalizationReceipt] = Vector.empty
+      orthogonalization: Vector[OrthogonalizationReceipt] = Vector.empty,
+      basisOrthogonalization: Vector[BasisOrthogonalizationReceipt] = Vector.empty
   ): Either[DesignError, EventModel] =
     val schema0 = designSchema
     val audit0 = schema0.audit.copy(
@@ -118,6 +122,7 @@ final case class EventModel(
       centeringReceipts = schema0.audit.centeringReceipts ++ centering,
       degenerateModulatorReceipts = schema0.audit.degenerateModulatorReceipts ++ degenerateModulators,
       orthogonalizationReceipts = schema0.audit.orthogonalizationReceipts ++ orthogonalization,
+      basisOrthogonalizationReceipts = schema0.audit.basisOrthogonalizationReceipts ++ basisOrthogonalization,
       policyReceipts = schema0.audit.policyReceipts ++ policies
     )
     DesignSchema
@@ -129,7 +134,8 @@ final case class EventModel(
           policyReceipts = policyReceipts ++ policies,
           centeringReceipts = centeringReceipts ++ centering,
           degenerateModulatorReceipts = degenerateModulatorReceipts ++ degenerateModulators,
-          orthogonalizationReceipts = orthogonalizationReceipts ++ orthogonalization
+          orthogonalizationReceipts = orthogonalizationReceipts ++ orthogonalization,
+          basisOrthogonalizationReceipts = basisOrthogonalizationReceipts ++ basisOrthogonalization
         )
       }
 
