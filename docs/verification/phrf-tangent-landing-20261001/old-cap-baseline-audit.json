@@ -1,0 +1,18 @@
+{
+  "baselineCommit": "c18b1fa81a88c9f641f8de3ab53d85bebcfb628d",
+  "baseMain": "c05a0811e96295c105633bbad0325790e22377c6",
+  "sourceHashes": {
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "bc849f2869ab206f5686fb98673e92485862737b2116279f3f4c55fb5c834ecb",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala": "6922499e0b35ef261b153c4eb790a76497a324a41c0c547e78cba42e3c05e7ad",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala": "813a9cedcc915b45dec400cd7753fc72a75cf172d0a4b16d3215203fdd10923b",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala": "2df1fc67c1861708c1aa8c237f79189e5286535b33330648d8bde1572f76309a",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala": "9c67ab2787e1d4390f19eb3a9c58e4f23d4a75d66121510f8e4ca0c94dc55f37"
+  },
+  "instrumentation": "Two println observations only; original quota/accuracy/admission assertions unchanged",
+  "runtimeRecords": 24,
+  "gramRecords": 20,
+  "all44BaselineStatusesBudgetExceeded": true,
+  "allRuntimeTerminalCurvatureUnavailable": true,
+  "logSha256": "77fa8d3864faa95a85173633ab65b8b6a5273a0f313db899e0b5e03a2cee377d",
+  "scope": "Actual JS execution of preexisting shared three-path decoder seam, not new integration or new qualification"
+}

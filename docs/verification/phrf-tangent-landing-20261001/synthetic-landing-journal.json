@@ -1,0 +1,87 @@
+{
+  "base": "7781998fd2e8b79dd0f7688ab918b582e489fe5a",
+  "candidate": "27653dafc208394326cc2ca4309427fd749d1c7a",
+  "changedPaths": [
+    "new/evidence.json",
+    "own/a.scala",
+    "own/b.scala",
+    "own/c.scala"
+  ],
+  "ownedBackups": {
+    "own/a.scala": {
+      "backup": "/private/tmp/phrf-ff-control-tnumrk6p/a.scala",
+      "sha256": "1c1fd770ad3404829e0f70afc4b8b97ee9e9c9291928e224695b8745be5a5648",
+      "mode": 420
+    },
+    "own/b.scala": {
+      "backup": "/private/tmp/phrf-ff-control-tnumrk6p/b.scala",
+      "sha256": "1c1fd770ad3404829e0f70afc4b8b97ee9e9c9291928e224695b8745be5a5648",
+      "mode": 420
+    },
+    "own/c.scala": {
+      "backup": "/private/tmp/phrf-ff-control-tnumrk6p/c.scala",
+      "sha256": "1c1fd770ad3404829e0f70afc4b8b97ee9e9c9291928e224695b8745be5a5648",
+      "mode": 420
+    }
+  },
+  "phase": "verified",
+  "unrelatedIndexEntries": {
+    "outside/deleted.txt": "100644 e79c5e8f964493290a409888d5413a737e8e5dd5 0\toutside/deleted.txt",
+    "outside/edited.txt": "100644 e79c5e8f964493290a409888d5413a737e8e5dd5 0\toutside/edited.txt",
+    "outside/mode.txt": "100644 e79c5e8f964493290a409888d5413a737e8e5dd5 0\toutside/mode.txt",
+    "outside/rename-new.txt": "100644 e79c5e8f964493290a409888d5413a737e8e5dd5 0\toutside/rename-new.txt"
+  },
+  "unrelatedWorkingStates": {
+    "outside/deleted.txt": {
+      "kind": "absent"
+    },
+    "outside/edited.txt": {
+      "kind": "file",
+      "sha256": "9734956273ea522e9d819721ebc8642b9dec2843e3a16bef459a25a99a76445a",
+      "mode": 420
+    },
+    "outside/link": {
+      "kind": "symlink",
+      "target": "../untracked/nested/one.txt",
+      "mode": 493
+    },
+    "outside/mode.txt": {
+      "kind": "file",
+      "sha256": "da68f54607d5f5644954096ce1597c006c5bb9f2497e07441bf064b81003ef8a",
+      "mode": 493
+    },
+    "outside/rename-new.txt": {
+      "kind": "file",
+      "sha256": "da68f54607d5f5644954096ce1597c006c5bb9f2497e07441bf064b81003ef8a",
+      "mode": 420
+    },
+    "outside/rename-old.txt": {
+      "kind": "absent"
+    },
+    "untracked/nested/deep/two.txt": {
+      "kind": "file",
+      "sha256": "ba9afe5be434b7530655dd5c357eaad65eafb610f7addac7c38da43932653fb0",
+      "mode": 420
+    },
+    "untracked/nested/one.txt": {
+      "kind": "file",
+      "sha256": "ba9afe5be434b7530655dd5c357eaad65eafb610f7addac7c38da43932653fb0",
+      "mode": 420
+    }
+  },
+  "protocol": "standard git restore of three owned paths then git merge --ff-only with autostash disabled; no manual ref or index replacement",
+  "mergeExit": 0,
+  "mergeStdout": "Updating 7781998..27653da\nFast-forward\n new/evidence.json | 1 +\n own/a.scala       | 2 +-\n own/b.scala       | 2 +-\n own/c.scala       | 2 +-\n 4 files changed, 4 insertions(+), 3 deletions(-)\n create mode 100644 new/evidence.json\n",
+  "mergeStderr": "",
+  "outsideUnchanged": [
+    "outside/deleted.txt",
+    "outside/edited.txt",
+    "outside/link",
+    "outside/mode.txt",
+    "outside/rename-new.txt",
+    "outside/rename-old.txt",
+    "untracked/nested/deep/two.txt",
+    "untracked/nested/one.txt"
+  ],
+  "unexpectedOutOfScopeChanges": []
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T20:00:19.960188+00:00",
+  "finished_utc": "2026-09-30T20:00:33.210097+00:00",
+  "duration_seconds": 13.249775,
+  "command": [
+    "node",
+    "modules/first-level-laws/js/target/scala-3.7.4/scalafim-fmri-first-level-laws-test-fastopt/main.js",
+    "--historical-dev",
+    "--verify-original-counts"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-diagnostics-20260930/work",
+  "log": "/private/tmp/scalafim-lwu-diagnostics-20260930/lwu-diagnostic-v4-js-node.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 180.0,
+  "log_bytes": 1134627
+}

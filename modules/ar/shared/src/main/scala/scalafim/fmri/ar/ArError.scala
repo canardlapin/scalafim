@@ -24,6 +24,10 @@ enum ArError:
   case InsufficientAutocovariances(required: Int, actual: Int)
   case NonFiniteAutocovariance(lag: ArLag, value: Double)
   case NonFiniteResidual(row: Int, column: Int, value: Double)
+  case EmptySpatialNoiseBlock
+  case IncompatibleNoiseSummaries(detail: String)
+  case NoiseSummaryCountOverflow(runIndex: Int, lag: ArLag)
+  case NonFiniteNoiseSummary(runIndex: Int, lag: ArLag, value: Double)
   case NonFiniteArCoefficient(index: Int, value: Double)
   case NonFiniteMaCoefficient(index: Int, value: Double)
   case NonFinitePartialAutocorrelation(index: Int, value: Double)
@@ -86,6 +90,14 @@ enum ArError:
         s"autocovariance at lag ${lag.value} must be finite, got $value"
       case NonFiniteResidual(row, column, value) =>
         s"residual at row $row, column $column must be finite, got $value"
+      case EmptySpatialNoiseBlock =>
+        "noise summary requires at least one spatial residual column"
+      case IncompatibleNoiseSummaries(detail) =>
+        s"incompatible noise summaries: $detail"
+      case NoiseSummaryCountOverflow(runIndex, lag) =>
+        s"noise-summary pair count overflow for run $runIndex at lag ${lag.value}"
+      case NonFiniteNoiseSummary(runIndex, lag, value) =>
+        s"noise-summary sum for run $runIndex at lag ${lag.value} must be finite, got $value"
       case NonFiniteArCoefficient(index, value) =>
         s"AR coefficient at index $index must be finite, got $value"
       case NonFiniteMaCoefficient(index, value) =>

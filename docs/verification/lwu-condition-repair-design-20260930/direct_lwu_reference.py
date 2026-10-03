@@ -1,0 +1,216 @@
+"""Bounded historical DEV direct-family oracle; never executes the production decoder.
+
+Uses the original microtime sampled-kernel model, independent event operators,
+QR nuisance elimination, SVD linear fits and complex-step kernel derivatives.
+Finite multi-start search is diagnostic and does not certify a global minimum.
+"""
+import argparse
+import collections
+import hashlib
+import json
+import math
+from pathlib import Path
+import platform
+import sys
+import numpy as np
+import scipy
+from scipy.optimize import minimize
+
+ROOT = Path(__file__).resolve().parents[3]
+OLD = ROOT / 'docs/verification/condition-lwu-diagnostics-20260930'
+BOUNDS = [(3.,8.), (math.log(.8),math.log(3.)), (0.,.8)]
+
+class JavaRandom:
+    def __init__(self, seed): self.state=(seed ^ 0x5deece66d)&((1<<48)-1)
+    def bits(self,n):
+        self.state=(self.state*0x5deece66d+11)&((1<<48)-1)
+        return self.state>>(48-n)
+    def integer(self,bound):
+        if bound&(bound-1)==0: return (bound*self.bits(31))>>31
+        while True:
+            bits=self.bits(31); value=bits%bound
+            if bits-value+bound-1 < (1<<31): return value
+
+def schedule():
+    rng=JavaRandom(20260910)
+    return sorted(rng.integer(5760)/10. for _ in range(300))
+
+def whitening(values):
+    out=np.array(values,copy=True)
+    out[0]*=math.sqrt(1-.3**2)
+    out[1:]=values[1:]-.3*values[:-1]
+    return out
+
+def build_operators():
+    """Linear event-to-scan operators, independent of any HRF basis/compiler."""
+    rows=np.arange(600); acquisition=rows+.5; start=acquisition[0]-32.
+    n=math.floor((acquisition[-1]+32.-start)/.1)+1
+    pos=(acquisition-start)/.1
+    index=np.floor(pos).astype(int); fraction=pos-index
+    operators=[]; max_drive_error=0.
+    onsets=schedule()
+    for condition in range(3):
+        sparse=np.zeros(n); diff=np.zeros(n+2)
+        for onset in onsets[condition::3]:
+            p=(onset-start)/.1; lower=math.floor(p); f=p-lower
+            sparse[lower]+=1-f; sparse[lower+1]+=f
+            diff[lower]+=1-f; diff[lower+1]-=1-f
+            diff[lower+1]+=f; diff[lower+2]-=f
+        cumulative=np.cumsum(diff[:n])
+        max_drive_error=max(max_drive_error,float(np.max(np.abs(sparse-cumulative))))
+        # Independent direct sum of event hat weights; no production conv kernel.
+        m=np.zeros((600,321))
+        for lag in range(321):
+            lower=index-lag; upper=lower+1
+            valid=(lower>=0)&(lower<n)
+            m[valid,lag]+=(1-fraction[valid])*sparse[lower[valid]]
+            valid=(upper>=0)&(upper<n)
+            m[valid,lag]+=fraction[valid]*sparse[upper[valid]]
+        operators.append(m)
+    assert max_drive_error<1e-11
+    t=np.arange(600); x=t/599.*2-1
+    nuisance=np.column_stack([np.ones(600),x,x*x-1/3]+[np.cos(math.pi*(j-2)*(t+.5)/600) for j in range(3,6)])
+    nw=whitening(nuisance); q,r=np.linalg.qr(nw,mode='reduced')
+    assert np.linalg.matrix_rank(r)==6
+    wm=[whitening(m) for m in operators]
+    pm=[m-q@(q.T@m) for m in wm]
+    return pm,wm,q,nw,max_drive_error
+
+class Objective:
+    def __init__(self, operators):
+        self.pm,self.wm,self.q,self.nw,self.drive_error=operators
+        self.lags=np.arange(321)*.1
+        # Independent event-list control anchors the half-TR acquisition geometry.
+        theta=np.array([5.5,math.log(1.4),.35]); h=self.kernel(theta)
+        expected=np.zeros((600,3)); tau,v,rho=theta; sigma=math.exp(v)
+        for i,t in enumerate(np.arange(600)+.5):
+            for j,onset in enumerate(schedule()):
+                k=round((t-onset)/.1)
+                if 0<=k<=320:
+                    lag=k*.1
+                    expected[i,j%3]+=math.exp(-.5*((lag-tau)/sigma)**2)-rho*math.exp(-.5*((lag-tau-2*sigma)/(1.6*sigma))**2)
+        raw=np.column_stack([m@h for m in self.wm])
+        self.acquisition_error=float(np.max(np.abs(raw-whitening(expected))))
+        assert self.acquisition_error<2e-10
+    def kernel(self,theta):
+        tau,v,rho=theta; sigma=np.exp(v)
+        a=(self.lags-tau)/sigma
+        b=(self.lags-tau-2*sigma)/(1.6*sigma)
+        return np.exp(-a*a/2)-rho*np.exp(-b*b/2)
+    def design(self,theta):
+        h=self.kernel(theta)
+        return np.column_stack([m@h for m in self.pm])
+    def fit(self,theta,y):
+        x=self.design(theta)
+        beta,_,rank,singular=np.linalg.lstsq(x,y,rcond=None)
+        assert rank==3
+        residual=y-x@beta
+        return float(residual@residual),beta,residual,x,float(singular[0]/singular[-1])
+    def value_gradient(self,theta,y):
+        e,beta,r,_,_=self.fit(theta,y)
+        gradient=[]
+        for axis in range(3):
+            z=np.asarray(theta,dtype=complex);z[axis]+=1e-25j
+            dx=np.imag(self.design(z))/1e-25
+            gradient.append(float(-2*r@(dx@beta)))
+        return e,np.array(gradient)
+    def hessian(self,theta,y):
+        columns=[]; step=1e-4
+        for axis in range(3):
+            vectors=[]
+            for offset in [-2,-1,1,2]:
+                trial=np.array(theta);trial[axis]+=offset*step
+                vectors.append(self.value_gradient(trial,y)[1])
+            columns.append((vectors[0]-8*vectors[1]+8*vectors[2]-vectors[3])/(12*step))
+        h=np.column_stack(columns)
+        assert np.max(np.abs(h-h.T))<1e-3
+        return (h+h.T)/2
+
+def correction(x,g,h):
+    free=[i for i,(z,(lo,hi)) in enumerate(zip(x,BOUNDS)) if not ((z<=lo+1e-12 and g[i]>0) or (z>=hi-1e-12 and g[i]<0))]
+    if free:
+        sub=h[np.ix_(free,free)]
+        if np.linalg.eigvalsh(sub)[0]<=0:return None
+        return float(np.max(np.abs(np.linalg.solve(sub,g[free]))))
+    return 0. if np.linalg.eigvalsh(h)[0]>0 else None
+
+def projected_gradient(x,g):
+    return [0. if ((z<=lo+1e-10 and v>0) or (z>=hi-1e-10 and v<0)) else float(v) for z,v,(lo,hi) in zip(x,g,BOUNDS)]
+
+def records():
+    out=[]; identities={}
+    for file in ['lwu-diagnostic-v3-jvm.log','lwu-diagnostic-v4-js-node.log']:
+        p=OLD/file;raw=p.read_bytes();identities[file]=hashlib.sha256(raw).hexdigest()
+        rows=[]
+        for line in raw.decode().splitlines():
+            line=line.removeprefix('[info] ').strip()
+            if line.startswith('{"kind":"lwu-diagnostic"'):rows.append(json.loads(line))
+        assert len(rows)==200
+        out.extend(r for r in rows if r['status']!='Accepted')
+    assert len(out)==57
+    return out,identities
+
+def run():
+    objective=Objective(build_operators());rows,identities=records()
+    axes=[np.linspace(lo,hi,n) for (lo,hi),n in zip(BOUNDS,[9,5,5])]
+    grid=[np.array([a,b,c]) for a in axes[0] for b in axes[1] for c in axes[2]]
+    designs=[objective.design(x) for x in grid]
+    # SVD reference projectors are cached solely for the diagnostic grid search.
+    projectors=[np.linalg.svd(x,full_matrices=False)[0] for x in designs]
+    details=[];summary=collections.Counter();max_whiten=0.;max_fd=0.;max_joint=0.
+    for ordinal,r in enumerate(rows):
+        x=np.array(r['coordinates']);raw=np.array([float.fromhex(v) for v in r['rawInputHex']])
+        yw=np.array([float.fromhex(v) for v in r['whitenedInputHex']])
+        discrepancy=float(np.max(np.abs(whitening(raw)-yw)))
+        max_whiten=max(max_whiten,discrepancy);assert discrepancy<=2e-13
+        y=yw-objective.q@(objective.q.T@yw)
+        e,g=objective.value_gradient(x,y);h=objective.hessian(x,y)
+        # Direct residual/SVD fit against a separate joint nuisance regression.
+        full=np.column_stack([m@objective.kernel(x) for m in objective.wm]+[objective.nw])
+        b=np.linalg.lstsq(full,yw,rcond=None)[0];res=yw-full@b
+        joint_error=abs(e-float(res@res));max_joint=max(max_joint,joint_error)
+        assert joint_error<=2e-8
+        # Finite-difference objective gradient checks, independent of complex step.
+        fd=[];step=1e-4
+        for i in range(3):
+            slopes=[]
+            for size in [step,step/2]:
+                trial=np.array(x);trial[i]+=size;plus=objective.fit(trial,y)[0]
+                trial[i]-=2*size;minus=objective.fit(trial,y)[0]
+                slopes.append((plus-minus)/(2*size))
+            fd.append((4*slopes[1]-slopes[0])/3)
+        fd_error=float(np.max(np.abs(g-np.array(fd))))
+        max_fd=max(max_fd,fd_error);assert fd_error<=2e-6
+        grid_energy=[float((y-q@(q.T@y))@(y-q@(q.T@y))) for q in projectors]
+        best=np.argsort(grid_energy)[:3]
+        starts=[x,np.array(r['truth'])]+[grid[i] for i in best]
+        attempts=[]
+        for start in starts:
+            result=minimize(lambda z:objective.value_gradient(z,y),start,method='L-BFGS-B',jac=True,bounds=BOUNDS,options={'maxiter':300,'maxls':40,'ftol':2e-15,'gtol':1e-9})
+            value,grad=objective.value_gradient(result.x,y)
+            attempts.append({'coordinates':result.x.tolist(),'energy':value,'gradient':grad.tolist(),'success':bool(result.success),'iterations':int(result.nit),'message':str(result.message)})
+        winner=min(attempts,key=lambda v:v['energy']);z=np.array(winner['coordinates']);zg=np.array(winner['gradient'])
+        zh=objective.hessian(z,y);delta=correction(z,zg,zh)
+        boundary=any(abs(v-lo)<=1e-10 or abs(v-hi)<=1e-10 for v,(lo,hi) in zip(z,BOUNDS))
+        summary['bestOnBoundary' if boundary else 'bestInterior']+=1
+        summary['bestNewtonCorrectionUnder1e-7']+=delta is not None and delta<=1e-7
+        summary['savedDirectNewtonCorrectionUnder1e-7']+=(lambda v:v is not None and v<=1e-7)(correction(x,g,h))
+        evidence={'platform':r['platform'],'snr':r['snr'],'voxel':r['voxel'],'status':r['status'],'savedCoordinates':x.tolist(),'savedCompactEnergy':r['decodeEnergy'],'savedDirectEnergy':e,'savedDirectGradient':g.tolist(),'savedDirectHessian':h.reshape(-1).tolist(),'savedDirectCorrection':correction(x,g,h),'best':winner,'bestCorrection':delta,'bestProjectedGradientNorm':float(np.max(np.abs(projected_gradient(z,zg)))),'bestOnBoundary':boundary,'energyImprovement':e-winner['energy'],'starts':attempts,'controlWhiteningMaxError':discrepancy,'controlJointRegressionEnergyError':joint_error,'controlGradientMaxError':fd_error}
+        if r['voxel']==50 and r['snr']==.5:
+            trial=x.copy();trial[2]+=1e-3
+            evidence['feasibleRhoProbe']={'step':1e-3,'energy':objective.fit(trial,y)[0],'energyChange':objective.fit(trial,y)[0]-e,'directionalDerivative':float(g[2])}
+        if r['status']=='BudgetExceeded':
+            cg=np.array(r['terminal']['gradient']);ch=np.array(r['terminal']['hessian']).reshape(3,3)
+            p=np.linalg.solve(ch,-cg)
+            evidence['compactQuadraticPredictedDecrease']=float(-cg@p/2)
+            evidence['compactEnergyUlp']=math.ulp(r['decodeEnergy'])
+        details.append(evidence)
+        print(f"{ordinal+1}/57 {r['platform']} SNR{r['snr']} voxel{r['voxel']} {r['status']} direct-drop={e-winner['energy']:.6g}",flush=True)
+    return {'scope':'Historical DEV direct-original-family diagnostic only; no production decoder run, fresh validation, global-minimum proof, admission/policy change or performance qualification','versions':{'python':platform.python_version(),'numpy':np.__version__,'scipy':scipy.__version__},'inputSha256':identities,'sourceSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'records':57,'acquisitionFirst':.5,'acquisitionLast':599.5,'microtimeStep':.1,'kernelHorizon':32.,'scheduleSeed':20260910,'gridNodes':[9,5,5],'startsPerInput':5,'maxOptimizerIterations':300,'summary':dict(summary),'controls':{'maxWhiteningError':max_whiten,'maxJointRegressionEnergyError':max_joint,'maxGradientFiniteDifferenceError':max_fd,'maxEquivalentDriveError':objective.drive_error,'acquisitionEventLoopMaxError':objective.acquisition_error},'details':details}
+
+if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',required=True);args=parser.parse_args()
+    target=Path(args.out);assert not target.exists()
+    result=run()
+    with target.open('x') as stream:json.dump(result,stream,indent=2);stream.write('\n')
+    print(json.dumps({k:result[k] for k in ['summary','controls','versions']},indent=2))

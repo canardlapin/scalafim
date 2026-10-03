@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T23:34:21.979970+00:00",
+  "finished_utc": "2026-09-30T23:34:22.110482+00:00",
+  "duration_seconds": 0.130461,
+  "command": [
+    "python3",
+    "docs/verification/lwu-condition-repair-design-20260930/analyze_saved_trace.py",
+    "/private/tmp/scalafim-lwu-repair-design-20260930/jvm-saved-trace-v2.log",
+    "/private/tmp/scalafim-lwu-repair-design-20260930/trace-inputs/cases.json",
+    "--out",
+    "/private/tmp/scalafim-lwu-repair-design-20260930/trace-analysis-v1.json"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-lwu-repair-design-20260930/trace-analysis-v1.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 60.0,
+  "log_bytes": 1961
+}

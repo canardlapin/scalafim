@@ -1,0 +1,83 @@
+"""High-precision smooth LWU profile on fixed captured binary64 Phi/Rhat/z.
+
+Unlike exact LS on already rounded D, kernel exponentials and all coefficient,
+compact-design and LS operations are recomputed at declared Decimal precision.
+No new basis, response, whitening, chart or production fit is constructed.
+"""
+import argparse
+from decimal import Decimal as D, localcontext
+import hashlib,json
+from pathlib import Path
+
+def scalar(hexadecimal):return D.from_float(float.fromhex(hexadecimal))
+def dot(a,b):return sum((x*y for x,y in zip(a,b)),D(0))
+def determinant(a):
+    if not a:return D(1)
+    if len(a)==1:return a[0][0]
+    return sum(((-1)**j*a[0][j]*determinant([r[:j]+r[j+1:] for r in a[1:]]) for j in range(len(a))),D(0))
+def solve(a,b):
+    d=determinant(a);assert d>0
+    return [determinant([r[:i]+[b[k]]+r[i+1:] for k,r in enumerate(a)])/d for i in range(len(a))]
+class Profile:
+    def __init__(self,operators,projection):
+        self.k=operators['rank'];self.c=operators['conditions'];self.m=operators['basisRank']
+        assert self.c==3
+        self.lags=list(map(scalar,operators['lagsHex']));n=len(self.lags)
+        values=list(map(scalar,operators['phiHex']));self.phi=[values[i*n:i*n+n] for i in range(self.m)]
+        values=list(map(scalar,operators['rHatHex']));cm=self.c*self.m
+        self.r=[values[i*cm:i*cm+cm] for i in range(self.k)]
+        self.z=list(map(scalar,projection['zHex']));self.energy=scalar(projection['energyHex'])
+        self.scale=D.from_float(1.6)
+    def fit(self,x):
+        tau,v,rho=x;s=v.exp();ks=self.scale*s
+        h=[]
+        for t in self.lags:
+            u=t-tau;q=u/s;w=(u-2*s)/ks
+            h.append((-q*q/2).exp()-rho*(-w*w/2).exp())
+        coeff=[dot(phi,h) for phi in self.phi]
+        design=[[sum((row[j*self.c+i]*coeff[j] for j in range(self.m)),D(0)) for i in range(self.c)] for row in self.r]
+        columns=list(zip(*design));g=[[dot(a,b) for b in columns] for a in columns]
+        b=[dot(col,self.z) for col in columns];beta=solve(g,b)
+        return self.energy-dot(beta,b),design,beta
+    def gradient(self,x):
+        h=D('1e-15');out=[]
+        for i in range(3):
+            plus=x.copy();plus[i]+=h;minus=x.copy();minus[i]-=h
+            out.append((self.fit(plus)[0]-self.fit(minus)[0])/(2*h))
+        return out
+
+def analyze(path):
+    raw=Path(path).read_bytes();rows=[json.loads(l) for l in raw.decode().splitlines() if l.startswith('{')]
+    operators=next(r for r in rows if r['kind']=='frozen-compact-operators');details=[]
+    for result in [r for r in rows if r['kind']=='trace-result' and r['status']=='BudgetExceeded']:
+        name=result['case'];projection=next(r for r in rows if r['kind']=='trace-projection' and r['case']==name)
+        events=[r for r in rows if r['kind']=='jvm-lwu-trace' and r['case']==name]
+        current=max((r for r in events if r['coordinatesHex']==result['coordinatesHex']),key=lambda r:r['ordinal'])
+        candidate=next(r for r in events if r['ordinal']>current['ordinal'] and r['event']=='jet')
+        p=Profile(operators,projection);x=list(map(scalar,current['coordinatesHex']));trial=list(map(scalar,candidate['coordinatesHex']))
+        with localcontext() as context:
+            context.prec=90
+            e,d,b=p.fit(x);te,td,tb=p.fit(trial);delta=te-e
+            error=max(abs(v-scalar(w)) for row in d for v,w in []) if False else max(abs(a-scalar(v)) for a,v in zip([x for row in d for x in row],current['designHex']))
+            assert error<D('1e-12')
+            beta_error=max(abs(a-scalar(b)) for a,b in zip(b,current['amplitudesHex']));assert beta_error<D('2e-12')
+            cg=p.gradient(x);tg=p.gradient(trial)
+            recorded=list(map(scalar,current['gradientHex']));gradient_error=max(abs(a-b) for a,b in zip(cg,recorded))
+            # Use recorded full Hessian only to translate independently computed
+            # smooth gradient into the existing correction units; this is not an
+            # independent high-precision Hessian qualification.
+            hv=list(map(scalar,candidate['hessianHex']));h=[hv[i*3:i*3+3] for i in range(3)]
+            free=[i for i,z in enumerate(trial) if not (i==2 and ((z<=D('1e-12') and tg[i]>0) or (z>=D.from_float(.8)-D('1e-12') and tg[i]<0)))]
+            correction=max(abs(z) for z in solve([[h[i][j] for j in free] for i in free],[tg[i] for i in free])) if free else D(0)
+            ninety=str(delta)
+        with localcontext() as context:
+            context.prec=60;sixty=p.fit(trial)[0]-p.fit(x)[0]
+        assert abs(D(ninety)-sixty)<D('1e-50')
+        details.append({'case':name,'currentOrdinal':current['ordinal'],'candidateOrdinal':candidate['ordinal'],'smoothEnergyChange90':ninety,'smoothEnergyChange60':str(sixty),'smoothDecrease':D(ninety)<0,'maxCurrentDesignDifference':str(error),'maxCurrentBetaDifference':str(beta_error),'maxCurrentGradientDifference':str(gradient_error),'smoothCandidateGradient':list(map(str,tg)),'candidateCorrectionUsingRecordedHessian':str(correction),'candidateStationaryUsingRecordedHessian':correction<=D('1e-9')})
+        print(name,'smoothDelta',ninety,'candidateCorrection',correction,flush=True)
+    assert len(details)==7
+    return {'scope':'Smooth fixed-basis mathematical LWU profile using captured binary64 operators, lags and responses; 60/90-digit arithmetic. Original-family compression error and independent Hessian qualification are separate. No production/JS/fresh/admission/performance claim.','rawSha256':hashlib.sha256(raw).hexdigest(),'precision':[60,90],'kernelScale':'exact binary64 1.6 constant','cases':7,'smoothDecreases':sum(r['smoothDecrease'] for r in details),'stationaryUsingRecordedHessian':sum(r['candidateStationaryUsingRecordedHessian'] for r in details),'details':details}
+if __name__=='__main__':
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('raw');p.add_argument('--out',required=True);a=p.parse_args();result=analyze(a.raw)
+    with Path(a.out).open('x') as f:json.dump(result,f,indent=2);f.write('\n')
+    print(json.dumps({k:v for k,v in result.items() if k!='details'},indent=2))

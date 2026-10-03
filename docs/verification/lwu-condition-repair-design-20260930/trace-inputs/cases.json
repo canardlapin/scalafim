@@ -1,0 +1,182 @@
+[
+  {
+    "file": "jvm-snr1.0-v30.hex",
+    "snr": 1.0,
+    "voxel": 30,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      166,
+      8,
+      1,
+      7,
+      1,
+      3,
+      0
+    ],
+    "expectedCoordinates": [
+      3.886061517952132,
+      0.672954803546039,
+      0.3032494196410706
+    ]
+  },
+  {
+    "file": "jvm-snr1.0-v33.hex",
+    "snr": 1.0,
+    "voxel": 33,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      157,
+      8,
+      2,
+      9,
+      0,
+      4,
+      0
+    ],
+    "expectedCoordinates": [
+      5.7725605325865645,
+      0.04002272081430081,
+      0.09903236503166805
+    ]
+  },
+  {
+    "file": "jvm-snr1.0-v49.hex",
+    "snr": 1.0,
+    "voxel": 49,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      166,
+      8,
+      1,
+      7,
+      1,
+      3,
+      0
+    ],
+    "expectedCoordinates": [
+      4.965297288061646,
+      0.7981242180488722,
+      0.6182287575284029
+    ]
+  },
+  {
+    "file": "jvm-snr1.0-v76.hex",
+    "snr": 1.0,
+    "voxel": 76,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      157,
+      7,
+      1,
+      7,
+      0,
+      3,
+      0
+    ],
+    "expectedCoordinates": [
+      6.031007117590761,
+      0.7272235535664241,
+      0.734893611961931
+    ]
+  },
+  {
+    "file": "jvm-snr0.5-v11.hex",
+    "snr": 0.5,
+    "voxel": 11,
+    "expectedStatus": "CurvatureNotPositive",
+    "expectedWork": [
+      157,
+      2,
+      1,
+      1,
+      1,
+      0,
+      1
+    ],
+    "expectedCoordinates": [
+      5.402444374450901,
+      0.6015905421338988,
+      0.0
+    ]
+  },
+  {
+    "file": "jvm-snr0.5-v27.hex",
+    "snr": 0.5,
+    "voxel": 27,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      166,
+      8,
+      1,
+      7,
+      1,
+      3,
+      0
+    ],
+    "expectedCoordinates": [
+      6.465973065782518,
+      0.24705940540521198,
+      0.5937028651794007
+    ]
+  },
+  {
+    "file": "jvm-snr0.5-v31.hex",
+    "snr": 0.5,
+    "voxel": 31,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      157,
+      8,
+      1,
+      7,
+      1,
+      3,
+      0
+    ],
+    "expectedCoordinates": [
+      5.935796791075048,
+      0.7464222475047724,
+      0.7886070714977865
+    ]
+  },
+  {
+    "file": "jvm-snr0.5-v50.hex",
+    "snr": 0.5,
+    "voxel": 50,
+    "expectedStatus": "Boundary",
+    "expectedWork": [
+      157,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "expectedCoordinates": [
+      7.166666666666667,
+      0.6029538486747399,
+      0.0
+    ]
+  },
+  {
+    "file": "jvm-snr0.5-v76.hex",
+    "snr": 0.5,
+    "voxel": 76,
+    "expectedStatus": "BudgetExceeded",
+    "expectedWork": [
+      157,
+      8,
+      1,
+      7,
+      1,
+      3,
+      0
+    ],
+    "expectedCoordinates": [
+      4.743109328081445,
+      0.8294471464939007,
+      0.8
+    ]
+  }
+]

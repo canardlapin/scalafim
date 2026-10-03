@@ -1,0 +1,16 @@
+**REJECT the current landing protocol; accept the source selection and numerical evidence.**
+
+Verified source `e6eb79d0912fcf8a4e43cc0aecf3e92f0acf9697`, all 1,981 source hashes, and all 19 payload hashes. Fixture changes and reported test outcomes match the evidence.
+
+Two corrections are required in `land_git_ff.py`:
+
+1. Its porcelain parser misses collapsed untracked directories, rename records, deleted paths and symlinks. Capture these states explicitly so preservation checks cover unrelated working-tree changes.
+2. Outside hash differences are automatically called “concurrent” while the journal becomes `verified`. Their cause is unproven. Record them as unattributed changes and withhold the preservation-success claim pending investigation.
+
+This verdict binds:
+
+- Report: `25e91cd34f23a0b03908f05dae6bd01e4a061bd78040a72ed5afbe04778e18fa`
+- Index: `161d08778b13dc8a44e42ce5f0a7a0722937314292070765835979063c3732c3`
+- Script: `1f04fc2c622c9826c7c417ccb2f793133bfd03301a5d99777d10aa5134dbf8a0`
+
+No further numerical or source-selection correction identified.

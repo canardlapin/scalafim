@@ -1,0 +1,6 @@
+{
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554",
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala": "6922499e0b35ef261b153c4eb790a76497a324a41c0c547e78cba42e3c05e7ad",
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala": "f5e678f5e39ca382b9e23f99a9ba1d6a09a132d5d072b1af06f5bf7842026659",
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala": "4955b8014e52e1f8dc1edae1630c2ecbbc7330e64ea271038750f78c52573177"
+}

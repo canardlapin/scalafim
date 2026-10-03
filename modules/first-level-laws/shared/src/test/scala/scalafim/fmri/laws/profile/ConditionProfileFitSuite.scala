@@ -103,9 +103,9 @@ class ConditionProfileFitSuite extends munit.FunSuite:
       Vector(15, 15),
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 2,
-        maxJets = 2,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0)
       ),
       None,
@@ -143,7 +143,8 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     assertEquals(receipts.map(_.voxels).sum, voxels)
     val results = blocks.flatMap(_.results).sortBy(_.voxel)
     assertEquals(results.map(_.voxel), (0 until voxels).toVector)
-    assert(counters.perVoxel(counters.jets) <= 2.0 + 1e-9)
+    assert(counters.perVoxel(counters.jets) <= prep.policy.budget.maxJets.toDouble + 1e-9)
+    assert(counters.perVoxel(counters.exactEvaluations) <= prep.policy.budget.maxExactEvaluations.toDouble + 1e-9)
     assert(counters.perVoxel(counters.nodeScores) <= 90.0)
 
     // Compact route on the same data: nuisance = the plan's baseline columns, no whitening.
