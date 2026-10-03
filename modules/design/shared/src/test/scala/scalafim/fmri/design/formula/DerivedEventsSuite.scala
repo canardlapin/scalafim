@@ -84,3 +84,18 @@ class DerivedEventsSuite extends munit.FunSuite:
   test("bin breaks print identically on every platform"):
     val bins = EventBins.explicit(Vector(Double.NegativeInfinity, -0.0 + 1e-7, 4.0, 1e21, Double.PositiveInfinity), Vector("a", "b", "c", "d")).toOption.get
     assertEquals(bins.breaksText, "c(-Inf, 1e-7, 4, 1e21, Inf)")
+
+  test("guarded derived declarations evaluate only the selected branch"):
+    val table = DataTable.fromColumns("gain" -> Column.Doubles(Vector(2.0, 0.0, Double.NaN)))
+    val definitions = Vector(
+      "logGain: number = ifelse(gain > 0, log(gain), missing())",
+      "inverse: number = ifelse(gain == 0, 0, 1 / gain)",
+      "large: logical = gain > 0 & logGain > 0.5"
+    ).map(DerivedColumn.parse(_).fold(error => fail(error.message), identity))
+    val result = DerivedEvents.evaluate(table, definitions).fold(error => fail(error.message), identity)
+    assertEquals(result.values(id("logGain")), Vector(EventExpressionValue.Num(math.log(2)), EventExpressionValue.Missing, EventExpressionValue.Missing))
+    assertEquals(result.values(id("inverse")), Vector(EventExpressionValue.Num(0.5), EventExpressionValue.Num(0), EventExpressionValue.Missing))
+    assertEquals(result.values(id("large")), Vector(EventExpressionValue.Logical(true), EventExpressionValue.Logical(false), EventExpressionValue.Missing))
+    val unguarded = DerivedColumn.parse("logGain: number = log(gain)").fold(error => fail(error.message), identity)
+    assertEquals(DerivedEvents.evaluate(table, Vector(unguarded)),
+      Left(DerivedEventError.Expression(id("logGain"), EventExpressionError.NonFiniteResult(Vector.empty, "log", 1))))

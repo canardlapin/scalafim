@@ -64,6 +64,16 @@ enum EventExpressionError:
   * evaluation error naming the expression path and row, never a missing
   * value, so it cannot be silently filtered away.
   *
+  * Such an error is raised only for a row whose value can reach the output.
+  * `ifelse` evaluates each branch only on the rows that select it (neither
+  * branch on a row whose condition is missing); `&` skips its right operand
+  * on rows where the left is FALSE, and `|` where the left is TRUE. So guards
+  * such as `ifelse(x > 0, log(x), missing())`, `ifelse(d == 0, 0, n / d)`, and
+  * `rt > 0 & log(rt) > 1` succeed. A missing left operand of `&` or `|` does
+  * not decide the row (`missing & FALSE` is FALSE), so the right operand's
+  * errors on such rows still surface. A `cut_quantiles` source is evaluated on
+  * every row, because each row's value shapes the breaks.
+  *
   * `round(x)` rounds half to even (IEC 60559), as R's `round(x)` does; a
   * `digits` argument is not supported.
   */
@@ -105,7 +115,7 @@ object EventExpressions:
     for
       _ <- validateDerived(derived, data.nrows)
       _ <- infer(expression, Schema(data, derived.view.mapValues(_.valueType).toMap), Vector.empty)
-      values <- eval(expression, EvaluationData(data, derived.view.mapValues(_.values).toMap), Vector.empty, checkLevels)
+      values <- eval(expression, EvaluationData(data, derived.view.mapValues(_.values).toMap), Vector.empty, checkLevels, allRows(data.nrows))
     yield values
 
   private def validateDerived(derived: Map[ColumnId, DerivedValues], nrows: Int): Either[EventExpressionError, Unit] =
@@ -230,36 +240,54 @@ object EventExpressions:
   private final case class EvaluationData(table: DataTable, derived: Map[ColumnId, Vector[EventExpressionValue]]):
     def nrows: Int = table.nrows
 
+  /** Rows whose value can reach the output. Evaluation reports an error only on
+    * an active row; the value an inactive row holds is unspecified (callers never
+    * read it). A child's mask is always a subset of its parent's.
+    */
+  private type Active = Array[Boolean]
+
+  private def allRows(nrows: Int): Active = Array.fill(nrows)(true)
+
+  /** The rows of `active` that also satisfy `keep`. */
+  private def refine(active: Active)(keep: Int => Boolean): Active =
+    val refined = new Array[Boolean](active.length)
+    var row = 0
+    while row < active.length do
+      refined(row) = active(row) && keep(row)
+      row += 1
+    refined
+
   /** Runs only after [[infer]] accepted the expression; the type errors kept
     * here are defensive and unreachable for statically checked input.
     */
-  private def eval(expression: ArgValue, data: EvaluationData, path: Vector[String], checkLevels: Boolean): Either[EventExpressionError, Vector[EventExpressionValue]] = expression match
+  private def eval(expression: ArgValue, data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active): Either[EventExpressionError, Vector[EventExpressionValue]] = expression match
     case ArgValue.Num(value) =>
       if value.isFinite then Right(Vector.fill(data.nrows)(Num(value))) else Left(EventExpressionError.NonFiniteLiteral(path, value))
     case ArgValue.Str(value) => Right(Vector.fill(data.nrows)(Text(value)))
     case ArgValue.Bool(value) => Right(Vector.fill(data.nrows)(Logical(value)))
-    case ArgValue.Ident(id) => column(id, data, path)
+    case ArgValue.Ident(id) => column(id, data, path, active)
     case ArgValue.Call(function, args) =>
       named(args, path).flatMap { _ =>
         val values = args.map(_.value)
+        def unaryOp(f: RowOp1) = unary(function, values, data, path, checkLevels, active)(f)
+        def binaryOp(f: RowOp2) = binary(function, values, data, path, checkLevels, active)(f)
         function match
-          case "cut" | "cut_quantiles" => cut(function, values, data, path, checkLevels)
+          case "cut" | "cut_quantiles" => cut(function, values, data, path, checkLevels, active)
           case "missing" if values.isEmpty => Right(Vector.fill(data.nrows)(Missing))
-          case "-" if values.size == 1 => unary(function, values, data, path, checkLevels)(numericUnary("-", value => -value, path))
-          case "+" | "-" | "*" | "/" => binary(function, values, data, path, checkLevels)(numeric(function, _, _, path, _))
-          case "neg" | "u-" => unary(function, values, data, path, checkLevels)(numericUnary("-", value => -value, path))
-          case "!" => unary(function, values, data, path, checkLevels)((value, _) => not(value, path))
-          case "&&" | "&" => binary(function, values, data, path, checkLevels)((left, right, _) => and(left, right, path))
-          case "||" | "|" => binary(function, values, data, path, checkLevels)((left, right, _) => or(left, right, path))
-          case "==" | "!=" | "<" | "<=" | ">" | ">=" =>
-            binary(function, values, data, path, checkLevels) { (left, right, _) => comparison(function, left, right, path) }
-          case "ifelse" => ifElse(values, data, path, checkLevels)
-          case "is.na" | "isna" => unary(function, values, data, path, checkLevels)((value, _) => Right(Logical(value == Missing)))
-          case "abs" => unary(function, values, data, path, checkLevels)(numericUnary("abs", value => math.abs(value), path))
-          case "log" => unary(function, values, data, path, checkLevels)(numericUnary("log", value => math.log(value), path))
-          case "round" => unary(function, values, data, path, checkLevels)(numericUnary("round", roundHalfEven, path))
-          case "min" | "max" => extrema(function, values, data, path, checkLevels)
-          case "in" => membership(values, data, path, checkLevels)
+          case "-" if values.size == 1 => unaryOp(numericUnary("-", value => -value, path))
+          case "+" | "-" | "*" | "/" => binaryOp(numeric(function, _, _, path, _))
+          case "neg" | "u-" => unaryOp(numericUnary("-", value => -value, path))
+          case "!" => unaryOp((value, _) => not(value, path))
+          case "&&" | "&" => kleene(function, values, data, path, checkLevels, active, decisive = false)((left, right) => and(left, right, path))
+          case "||" | "|" => kleene(function, values, data, path, checkLevels, active, decisive = true)((left, right) => or(left, right, path))
+          case "==" | "!=" | "<" | "<=" | ">" | ">=" => binaryOp((left, right, _) => comparison(function, left, right, path))
+          case "ifelse" => ifElse(values, data, path, checkLevels, active)
+          case "is.na" | "isna" => unaryOp((value, _) => Right(Logical(value == Missing)))
+          case "abs" => unaryOp(numericUnary("abs", value => math.abs(value), path))
+          case "log" => unaryOp(numericUnary("log", value => math.log(value), path))
+          case "round" => unaryOp(numericUnary("round", roundHalfEven, path))
+          case "min" | "max" => extrema(function, values, data, path, checkLevels, active)
+          case "in" => membership(values, data, path, checkLevels, active)
           case other => Left(EventExpressionError.UnknownFunction(path, other))
       }
 
@@ -271,14 +299,17 @@ object EventExpressions:
       case Some(name) => Left(EventExpressionError.NamedArgument(path, name))
       case None => Right(())
 
-  private def column(id: ColumnId, data: EvaluationData, path: Vector[String]): Either[EventExpressionError, Vector[EventExpressionValue]] =
+  private def column(id: ColumnId, data: EvaluationData, path: Vector[String], active: Active): Either[EventExpressionError, Vector[EventExpressionValue]] =
     data.derived.get(id) match
       case Some(values) => Right(values)
       case None => data.table.column(id).left.map(_ => EventExpressionError.UnknownColumn(path, id)).flatMap {
         case Column.Doubles(values) =>
-          values.indexWhere(_.isInfinite) match
-            case -1 => Right(values.map(value => if value.isNaN then Missing else Num(value)))
-            case row => Left(EventExpressionError.NonFiniteInput(path, id, row))
+          // Only an infinity on an active row can reach the output.
+          mapRows(values.length, active) { row =>
+            val value = values(row)
+            if value.isInfinite then Left(EventExpressionError.NonFiniteInput(path, id, row))
+            else Right(if value.isNaN then Missing else Num(value))
+          }
         case Column.Ints(values) => Right(values.map(value => Num(value.toDouble)))
         case Column.Strings(values) => Right(values.map(Text.apply))
         case Column.Bools(values) => Right(values.map(Logical.apply))
@@ -288,44 +319,82 @@ object EventExpressions:
   private type RowOp1 = (EventExpressionValue, Int) => Either[EventExpressionError, EventExpressionValue]
   private type RowOp2 = (EventExpressionValue, EventExpressionValue, Int) => Either[EventExpressionError, EventExpressionValue]
 
-  private def unary(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean)(f: RowOp1): Either[EventExpressionError, Vector[EventExpressionValue]] =
-    if args.size != 1 then Left(EventExpressionError.InvalidArity(path, function, "1", args.size))
-    else eval(args.head, data, path :+ "0", checkLevels).flatMap(values => traverseRows(values)(f))
+  /** Apply `f` to each active row, in row order, stopping at the first error.
+    * Inactive rows are Missing and never reach `f`.
+    */
+  private def mapRows(nrows: Int, active: Active)(f: Int => Either[EventExpressionError, EventExpressionValue]): Either[EventExpressionError, Vector[EventExpressionValue]] =
+    val builder = Vector.newBuilder[EventExpressionValue]
+    builder.sizeHint(nrows)
+    var failure: Option[EventExpressionError] = None
+    var row = 0
+    while failure.isEmpty && row < nrows do
+      if !active(row) then builder += Missing
+      else f(row) match
+        case Right(value) => builder += value
+        case Left(error) => failure = Some(error)
+      row += 1
+    failure.toLeft(builder.result())
 
-  private def binary(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean)(f: RowOp2): Either[EventExpressionError, Vector[EventExpressionValue]] =
+  private def unary(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active)(f: RowOp1): Either[EventExpressionError, Vector[EventExpressionValue]] =
+    if args.size != 1 then Left(EventExpressionError.InvalidArity(path, function, "1", args.size))
+    else eval(args.head, data, path :+ "0", checkLevels, active).flatMap(values => mapRows(data.nrows, active)(row => f(values(row), row)))
+
+  private def binary(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active)(f: RowOp2): Either[EventExpressionError, Vector[EventExpressionValue]] =
     if args.size != 2 then Left(EventExpressionError.InvalidArity(path, function, "2", args.size))
     else for
-      left <- eval(args(0), data, path :+ "0", checkLevels)
+      left <- eval(args(0), data, path :+ "0", checkLevels, active)
       _ <- validateLevels(function, args(0), args(1), data, path, checkLevels)
-      right <- eval(args(1), data, path :+ "1", checkLevels)
-      result <- traverseRows(left.zip(right)) { case ((first, second), row) => f(first, second, row) }
+      right <- eval(args(1), data, path :+ "1", checkLevels, active)
+      result <- mapRows(data.nrows, active)(row => f(left(row), right(row), row))
     yield result
 
-  private def ifElse(args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean): Either[EventExpressionError, Vector[EventExpressionValue]] =
+  /** Kleene `&` (`decisive = false`) and `|` (`decisive = true`). A row whose
+    * left operand equals `decisive` is decided, so the right operand is not
+    * evaluated there. A missing left operand still needs the right one
+    * (`missing & FALSE` is FALSE), so the right operand's errors on such rows
+    * surface.
+    */
+  private def kleene(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active, decisive: Boolean)(
+      f: (EventExpressionValue, EventExpressionValue) => Either[EventExpressionError, EventExpressionValue]
+  ): Either[EventExpressionError, Vector[EventExpressionValue]] =
+    if args.size != 2 then Left(EventExpressionError.InvalidArity(path, function, "2", args.size))
+    else eval(args(0), data, path :+ "0", checkLevels, active).flatMap { left =>
+      val decided = Logical(decisive)
+      val undecided = refine(active)(row => left(row) != decided)
+      eval(args(1), data, path :+ "1", checkLevels, undecided).flatMap { right =>
+        mapRows(data.nrows, active)(row => f(left(row), if undecided(row) then right(row) else Missing))
+      }
+    }
+
+  /** Each branch is evaluated only on the rows that select it; a row whose
+    * condition is missing is missing and evaluates neither branch.
+    */
+  private def ifElse(args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active): Either[EventExpressionError, Vector[EventExpressionValue]] =
     if args.size != 3 then Left(EventExpressionError.InvalidArity(path, "ifelse", "3", args.size))
     else for
-      condition <- eval(args(0), data, path :+ "0", checkLevels)
-      yes <- eval(args(1), data, path :+ "1", checkLevels)
-      no <- eval(args(2), data, path :+ "2", checkLevels)
-      result <- traverse(condition.zip(yes).zip(no)) { case ((test, whenTrue), whenFalse) =>
-        test match
-          case Logical(true) => Right(whenTrue)
-          case Logical(false) => Right(whenFalse)
+      condition <- eval(args(0), data, path :+ "0", checkLevels, active)
+      yes <- eval(args(1), data, path :+ "1", checkLevels, refine(active)(row => condition(row) == Logical(true)))
+      no <- eval(args(2), data, path :+ "2", checkLevels, refine(active)(row => condition(row) == Logical(false)))
+      result <- mapRows(data.nrows, active) { row =>
+        condition(row) match
+          case Logical(true) => Right(yes(row))
+          case Logical(false) => Right(no(row))
           case Missing => Right(Missing)
           case other => Left(EventExpressionError.TypeMismatch(path, "ifelse", "a logical condition", kind(other)))
       }
     yield result
 
-  private def evaluateAll(args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean): Either[EventExpressionError, Vector[Vector[EventExpressionValue]]] =
+  private def evaluateAll(args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active): Either[EventExpressionError, Vector[Vector[EventExpressionValue]]] =
     args.zipWithIndex.foldLeft[Either[EventExpressionError, Vector[Vector[EventExpressionValue]]]](Right(Vector.empty)) { case (acc, (arg, index)) =>
-      for previous <- acc; next <- eval(arg, data, path :+ index.toString, checkLevels) yield previous :+ next
+      for previous <- acc; next <- eval(arg, data, path :+ index.toString, checkLevels, active) yield previous :+ next
     }
 
-  private def extrema(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean): Either[EventExpressionError, Vector[EventExpressionValue]] =
+  private def extrema(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active): Either[EventExpressionError, Vector[EventExpressionValue]] =
     if args.isEmpty then Left(EventExpressionError.InvalidArity(path, function, "at least 1", 0))
     else
-      evaluateAll(args, data, path, checkLevels).flatMap { columns =>
-        traverse(Vector.tabulate(data.nrows)(row => columns.map(_(row)))) { values =>
+      evaluateAll(args, data, path, checkLevels, active).flatMap { columns =>
+        mapRows(data.nrows, active) { row =>
+          val values = columns.map(_(row))
           if values.contains(Missing) then Right(Missing)
           else
             val numbers = values.collect { case Num(value) => value }
@@ -337,15 +406,15 @@ object EventExpressions:
   /** Kleene membership: TRUE when the value equals some non-missing candidate;
     * otherwise Missing when the value or any candidate is missing; otherwise FALSE.
     */
-  private def membership(args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean): Either[EventExpressionError, Vector[EventExpressionValue]] =
+  private def membership(args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active): Either[EventExpressionError, Vector[EventExpressionValue]] =
     if args.size < 2 then Left(EventExpressionError.InvalidArity(path, "in", "at least 2", args.size))
     else
       for
         _ <- validateInLevels(args, data, path, checkLevels)
-        columns <- evaluateAll(args, data, path, checkLevels)
-        result <- traverse(Vector.tabulate(data.nrows)(row => columns.map(_(row)))) { row =>
-          val value = row.head
-          val candidates = row.tail
+        columns <- evaluateAll(args, data, path, checkLevels, active)
+        result <- mapRows(data.nrows, active) { index =>
+          val value = columns.head(index)
+          val candidates = columns.tail.map(_(index))
           candidates.find(candidate => candidate != Missing && value != Missing && !sameType(value, candidate)) match
             case Some(candidate) => Left(EventExpressionError.TypeMismatch(path, "in", kind(value), kind(candidate)))
             case None =>
@@ -355,7 +424,7 @@ object EventExpressions:
         }
       yield result
 
-  private def cut(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean): Either[EventExpressionError, Vector[EventExpressionValue]] =
+  private def cut(function: String, args: Vector[ArgValue], data: EvaluationData, path: Vector[String], checkLevels: Boolean, active: Active): Either[EventExpressionError, Vector[EventExpressionValue]] =
     def invalid(detail: String): EventExpressionError =
       EventExpressionError.TypeMismatch(path, function, "numeric cuts with valid explicit breaks or a positive quantile count", detail)
     def literal(value: ArgValue): Option[Double] = value match
@@ -366,12 +435,17 @@ object EventExpressions:
     if (function == "cut" && args.size != 3) || (function == "cut_quantiles" && args.size != 2) then
       Left(EventExpressionError.InvalidArity(path, function, if function == "cut" then "3: values, c(breaks), c(labels)" else "2: values, bin count", args.size))
     else
-      eval(args.head, data, path :+ "0", checkLevels).flatMap: values =>
-        if values.exists(value => value != Missing && !value.isInstanceOf[Num]) then Left(invalid("nonnumeric source"))
+      // Quantile breaks depend on every row's source value, so a guard cannot
+      // shrink that population: every row of a `cut_quantiles` source reaches
+      // the output. Explicit cuts are row-wise and follow the active rows.
+      val sourceRows = if function == "cut_quantiles" then allRows(data.nrows) else active
+      eval(args.head, data, path :+ "0", checkLevels, sourceRows).flatMap: values =>
+        if values.indices.exists(row => sourceRows(row) && values(row) != Missing && !values(row).isInstanceOf[Num]) then Left(invalid("nonnumeric source"))
         else
-          val numbers = values.map:
-            case Num(value) => value
-            case _ => Double.NaN
+          val numbers = values.indices.toVector.map: row =>
+            values(row) match
+              case Num(value) if sourceRows(row) => value
+              case _ => Double.NaN
           val bins = if function == "cut_quantiles" then
             args(1) match
               case ArgValue.Num(count) if count.isWhole && count > 0 && count <= Int.MaxValue => EventBins.quantiles(numbers, count.toInt).left.map(error => invalid(error.message))
@@ -458,7 +532,7 @@ object EventExpressions:
 
   private def validateLiteralLevel(reference: ArgValue, literal: ArgValue, data: EvaluationData, path: Vector[String]): Either[EventExpressionError, Unit] = (reference, literal) match
     case (ArgValue.Ident(id), ArgValue.Str(value)) =>
-      column(id, data, path).flatMap { values =>
+      column(id, data, path, allRows(data.nrows)).flatMap { values =>
         val levels = values.collect { case Text(level) => level }.distinct.sorted
         if levels.nonEmpty && !levels.contains(value) then Left(EventExpressionError.InvalidLevel(path, id, value, levels))
         else Right(())
@@ -467,9 +541,6 @@ object EventExpressions:
 
   private def traverse[A, B](values: Vector[A])(f: A => Either[EventExpressionError, B]): Either[EventExpressionError, Vector[B]] =
     values.foldLeft[Either[EventExpressionError, Vector[B]]](Right(Vector.empty))((acc, value) => for previous <- acc; next <- f(value) yield previous :+ next)
-
-  private def traverseRows[A, B](values: Vector[A])(f: (A, Int) => Either[EventExpressionError, B]): Either[EventExpressionError, Vector[B]] =
-    traverse(values.zipWithIndex)((value, row) => f(value, row))
 
   private def kind(value: EventExpressionValue): String = value match
     case Num(_) => "numeric"
