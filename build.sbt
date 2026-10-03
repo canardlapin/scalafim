@@ -60,7 +60,7 @@ lazy val resample4sDesignsJS  = ProjectRef(resample4sBuild, "designsJS")
 
 // Alder owns fit lifecycles, stage-aware cross-fitting, and fitted artifacts.
 // Keep its coordinated provider overrides explicit and process-local.
-lazy val alderRevision = "c56a6b17989e77bdab8d57220fe3299fe9348e30"
+lazy val alderRevision = "e555bad92307af1c2cbc104aef398cb9d9de88f0"
 lazy val alderBuild = {
   sys.props
     .get("scalafim.resample4s.build")
@@ -80,6 +80,10 @@ lazy val alderKernelJVM = ProjectRef(alderBuild, "kernelJVM")
 lazy val alderKernelJS  = ProjectRef(alderBuild, "kernelJS")
 lazy val alderDataJVM   = ProjectRef(alderBuild, "dataJVM")
 lazy val alderDataJS    = ProjectRef(alderBuild, "dataJS")
+lazy val alderModelsLinearJVM = ProjectRef(alderBuild, "modelsLinearJVM")
+lazy val alderModelsLinearJS  = ProjectRef(alderBuild, "modelsLinearJS")
+lazy val alderRidgeGaleJVM    = ProjectRef(alderBuild, "ridgeGaleJVM")
+lazy val alderRidgeGaleJS     = ProjectRef(alderBuild, "ridgeGaleJS")
 
 // locus4s is independently owned. Ordinary builds clone the exact reviewed
 // revision; the property is an explicit sibling-checkout override for
@@ -120,7 +124,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision.
-lazy val reframe4sRevision = "9a4508351d74567147b8ea3221d82db89e5892b0"
+lazy val reframe4sRevision = "5f7152aada60335935843ddc968162f615337415"
 lazy val reframe4sBuild =
   sys.props
     .get("scalafim.reframe4s.build")
@@ -713,16 +717,17 @@ lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface"))
-    .dependsOn(image, locusData, scenarioTestkit % "test->compile")
+    .dependsOn(image, transform, locusData, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface",
       libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "upickle" % "4.1.0",
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js
@@ -1132,12 +1137,27 @@ lazy val mvpa =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/mvpa"))
+    .dependsOn(response, locusData, pipeline)
     .settings(commonSettings)
     .settings(
       name := "scalafim-fmri-mvpa"
     )
-    .jvmConfigure(_.dependsOn(galeCoreJVM))
-    .jsConfigure(_.dependsOn(galeCoreJS))
+    .jvmConfigure(
+      _.dependsOn(
+        galeCoreJVM,
+        multivarJVM,
+        resample4sCoreJVM,
+        resample4sDesignsJVM
+      )
+    )
+    .jsConfigure(
+      _.dependsOn(
+        galeCoreJS,
+        multivarJS,
+        resample4sCoreJS,
+        resample4sDesignsJS
+      )
+    )
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaJS  = mvpa.js
@@ -1208,6 +1228,8 @@ lazy val mvpaDataset =
     .settings(
       name := "scalafim-fmri-mvpa-dataset"
     )
+    .jvmConfigure(_.dependsOn(alderKernelJVM, alderDataJVM, alderModelsLinearJVM, alderRidgeGaleJVM))
+    .jsConfigure(_.dependsOn(alderKernelJS, alderDataJS, alderModelsLinearJS, alderRidgeGaleJS))
     .jsSettings(jsSettingsBase)
 
 lazy val mvpaDatasetJS  = mvpaDataset.js

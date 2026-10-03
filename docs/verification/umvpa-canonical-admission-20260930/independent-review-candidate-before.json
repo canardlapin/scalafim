@@ -1,0 +1,373 @@
+{
+  "authorization": null,
+  "candidate_id": "cand-3B9WYZRCWVNA3DV2AF2NPC6A33",
+  "entity": "bd-01M2BNF6076XXAC7TV776XRV27",
+  "evidence": [
+    {
+      "candidate_oid": "9d8ec21454774e840baf41de9dff345e7fd88418",
+      "evidence_id": "evid-b027ded9a7d03d326beaa0a76dd2bfeca814a7ebff7cd5735ba46bc94429ce2a",
+      "evidence_kind": "git",
+      "name": "git-ancestry",
+      "op_id": "20260930T193855.239300Z-p99273-c0001-rae6a-hd65245",
+      "outcome": "pass",
+      "payload": {
+        "base_is_ancestor": true,
+        "base_oid": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+        "candidate_relations": [
+          {
+            "base_oid": "b11d1909ac36bc4e732a1224605f1f90c5113798",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-0AGRN9FFCRDBTHW6XNHVQSFMX7",
+            "commit_oid": "134dea0df858000bdb3a2860d4c0f703ff1aef87",
+            "proposal_op_id": "20260930T144752.335285Z-p36957-c0000-r09d6-h084671",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "fe810a584dcf38df3194491a4a643e0ab2fd847c",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-1MC9K0E0FVVD6MXFGZ16MQQ89T",
+            "commit_oid": "9edc63a4db5fffede44182fee0ae561b50959b44",
+            "proposal_op_id": "20260930T163359.633920Z-p38256-c0000-r333d-h6b5b22",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-3CC02XSC0TTRYFE2KJ06HSKMXS",
+            "commit_oid": "4f52d15fb72493dabeac20914604a07275663d31",
+            "proposal_op_id": "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-45CM72CYF12236MMTM8G3T8MC1",
+            "commit_oid": "9ba0f367a5156c679b9b7c00504c08217c49e099",
+            "proposal_op_id": "20260930T121022.793435Z-p6727-c0000-rb907-h7d5b0d",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+            "base_relation": "ancestor",
+            "candidate_id": "cand-5611573MF23VAWY3GVB5FDH48R",
+            "commit_oid": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+            "proposal_op_id": "20260930T082529.065125Z-p56041-c0000-r81d9-h4d6d4c",
+            "relation": "ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-58R7DK8NZYCAS8Z8E0XRN6H01J",
+            "commit_oid": "b4f3ccdf929de5aeb3f0dcbb1bafab547fcb804f",
+            "proposal_op_id": "20260930T114130.105665Z-p34178-c0000-r4c15-hb7087d",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "fe810a584dcf38df3194491a4a643e0ab2fd847c",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-5J7HZVN7774400DJT5AF59KDYV",
+            "commit_oid": "3bacad5ad96d7f894989c2ad1f1222a407941a9d",
+            "proposal_op_id": "20260930T154948.572705Z-p89891-c0000-r9ee5-hb4ac6a",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "79a8b7d1fbe07c383bb8929a69973729c22ce64b",
+            "base_relation": "ancestor",
+            "candidate_id": "cand-5SSQMJHFVVXBD329CMCJDKXQDB",
+            "commit_oid": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+            "proposal_op_id": "20260930T012349.034895Z-p52850-c0000-r88e0-h335985",
+            "relation": "ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "b11d1909ac36bc4e732a1224605f1f90c5113798",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-7E65FW15VRN81QS18NGEVT51QQ",
+            "commit_oid": "aef31a29c238079de9050fb5fb68643291c3af15",
+            "proposal_op_id": "20260930T190009.485491Z-p64098-c0000-rca44-hef73e5",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-7K2QA6QYG244JAB5Z7K63MBQWM",
+            "commit_oid": "ea16c75280bfd3fa2da8445b8de7b07acbb545ba",
+            "proposal_op_id": "20260930T110823.886836Z-p90521-c0000-r1afd-h770cdd",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          }
+        ],
+        "commit_oid": "9d8ec21454774e840baf41de9dff345e7fd88418",
+        "common_dir_hash": "a22822facab5c0b26a201c77c4caf08953f45d77b632dca86b1c43dd0b37ea71",
+        "covered_candidates": [
+          [
+            "cand-0AGRN9FFCRDBTHW6XNHVQSFMX7",
+            "20260930T144752.335285Z-p36957-c0000-r09d6-h084671"
+          ],
+          [
+            "cand-1MC9K0E0FVVD6MXFGZ16MQQ89T",
+            "20260930T163359.633920Z-p38256-c0000-r333d-h6b5b22"
+          ],
+          [
+            "cand-3CC02XSC0TTRYFE2KJ06HSKMXS",
+            "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7"
+          ],
+          [
+            "cand-45CM72CYF12236MMTM8G3T8MC1",
+            "20260930T121022.793435Z-p6727-c0000-rb907-h7d5b0d"
+          ],
+          [
+            "cand-5611573MF23VAWY3GVB5FDH48R",
+            "20260930T082529.065125Z-p56041-c0000-r81d9-h4d6d4c"
+          ],
+          [
+            "cand-58R7DK8NZYCAS8Z8E0XRN6H01J",
+            "20260930T114130.105665Z-p34178-c0000-r4c15-hb7087d"
+          ],
+          [
+            "cand-5J7HZVN7774400DJT5AF59KDYV",
+            "20260930T154948.572705Z-p89891-c0000-r9ee5-hb4ac6a"
+          ],
+          [
+            "cand-5SSQMJHFVVXBD329CMCJDKXQDB",
+            "20260930T012349.034895Z-p52850-c0000-r88e0-h335985"
+          ],
+          [
+            "cand-7E65FW15VRN81QS18NGEVT51QQ",
+            "20260930T190009.485491Z-p64098-c0000-rca44-hef73e5"
+          ],
+          [
+            "cand-7K2QA6QYG244JAB5Z7K63MBQWM",
+            "20260930T110823.886836Z-p90521-c0000-r1afd-h770cdd"
+          ]
+        ],
+        "git_version": "git version 2.39.3 (Apple Git-145)",
+        "kind": "git_ancestry",
+        "object_format": "sha1",
+        "parent_oids": [
+          "eab6e02036a073b537f9899083803615463465a5"
+        ],
+        "producer_snapshot": {
+          "observed_candidates": [
+            [
+              "cand-0AGRN9FFCRDBTHW6XNHVQSFMX7",
+              "20260930T144752.335285Z-p36957-c0000-r09d6-h084671"
+            ],
+            [
+              "cand-1MC9K0E0FVVD6MXFGZ16MQQ89T",
+              "20260930T163359.633920Z-p38256-c0000-r333d-h6b5b22"
+            ],
+            [
+              "cand-3CC02XSC0TTRYFE2KJ06HSKMXS",
+              "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7"
+            ],
+            [
+              "cand-45CM72CYF12236MMTM8G3T8MC1",
+              "20260930T121022.793435Z-p6727-c0000-rb907-h7d5b0d"
+            ],
+            [
+              "cand-5611573MF23VAWY3GVB5FDH48R",
+              "20260930T082529.065125Z-p56041-c0000-r81d9-h4d6d4c"
+            ],
+            [
+              "cand-58R7DK8NZYCAS8Z8E0XRN6H01J",
+              "20260930T114130.105665Z-p34178-c0000-r4c15-hb7087d"
+            ],
+            [
+              "cand-5J7HZVN7774400DJT5AF59KDYV",
+              "20260930T154948.572705Z-p89891-c0000-r9ee5-hb4ac6a"
+            ],
+            [
+              "cand-5SSQMJHFVVXBD329CMCJDKXQDB",
+              "20260930T012349.034895Z-p52850-c0000-r88e0-h335985"
+            ],
+            [
+              "cand-7E65FW15VRN81QS18NGEVT51QQ",
+              "20260930T190009.485491Z-p64098-c0000-rca44-hef73e5"
+            ],
+            [
+              "cand-7K2QA6QYG244JAB5Z7K63MBQWM",
+              "20260930T110823.886836Z-p90521-c0000-r1afd-h770cdd"
+            ]
+          ],
+          "replayed_op_count": 21800,
+          "replayed_op_ids_digest": "628ff01932ffb295c3a38f6164cd16abc00a8d93888e9380ea138af370ffb9c8",
+          "store_git_head": "79b8b7d5e7e9b52890b395bdd37674e1f068937c",
+          "store_id": "st-01KWVQ9J2F963172SFP311M9M1",
+          "uncommitted_op_count": 21800
+        },
+        "relation_schema": 2,
+        "repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25"
+      },
+      "producer": "umvpa-publish-20260930",
+      "producer_tool": "git version 2.39.3 (Apple Git-145)",
+      "refs": [],
+      "ts": "2026-09-30T19:38:55.239300Z"
+    },
+    {
+      "candidate_oid": "9d8ec21454774e840baf41de9dff345e7fd88418",
+      "evidence_id": "evid-ef8acf2a73197e112ffd60a22b312062d8437f6fd6dff36dc499500abaa5e9c4",
+      "evidence_kind": "git",
+      "name": "git-object-availability",
+      "op_id": "20260930T193856.108367Z-p99273-c0002-r6c8c-h3a88de",
+      "outcome": "pass",
+      "payload": {
+        "candidate_oid": "9d8ec21454774e840baf41de9dff345e7fd88418",
+        "git_version": "git version 2.39.3 (Apple Git-145)",
+        "kind": "git_object_availability",
+        "object_available": true,
+        "object_format": "sha1",
+        "observed_parent_oids": [
+          "eab6e02036a073b537f9899083803615463465a5"
+        ],
+        "repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25"
+      },
+      "producer": "umvpa-publish-20260930",
+      "producer_tool": "git version 2.39.3 (Apple Git-145)",
+      "refs": [],
+      "ts": "2026-09-30T19:38:56.108367Z"
+    }
+  ],
+  "identity": {
+    "base_oid": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+    "commit_oid": "9d8ec21454774e840baf41de9dff345e7fd88418",
+    "landing_repository_bindings": [],
+    "landing_repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25",
+    "landing_repository_op_id": "20260930T193854.597821Z-p99273-c0000-rfe07-h1c8ca9",
+    "object_availability_required": true,
+    "object_format": "sha1",
+    "object_source": {
+      "commit_ref": "9d8ec21454774e840baf41de9dff345e7fd88418",
+      "locator": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+      "repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25"
+    },
+    "parent_oids": [
+      "eab6e02036a073b537f9899083803615463465a5"
+    ],
+    "proposal_repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25",
+    "repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25",
+    "store_id": "st-01KWVQ9J2F963172SFP311M9M1"
+  },
+  "landability": {
+    "landable": false,
+    "reason_codes": [
+      "ancestor_pending",
+      "authorization_absent",
+      "review_missing"
+    ],
+    "reasons": [
+      {
+        "blocking": true,
+        "class": "bookkeeping",
+        "code": "ancestor_pending",
+        "detail": "an ancestor candidate is not safely resolved",
+        "subject": "cand-5611573MF23VAWY3GVB5FDH48R"
+      },
+      {
+        "blocking": true,
+        "class": "bookkeeping",
+        "code": "ancestor_pending",
+        "detail": "an ancestor candidate is not safely resolved",
+        "subject": "cand-5SSQMJHFVVXBD329CMCJDKXQDB"
+      },
+      {
+        "blocking": true,
+        "class": "process",
+        "code": "authorization_absent",
+        "detail": "candidate has no landing authorization",
+        "subject": "cand-3B9WYZRCWVNA3DV2AF2NPC6A33"
+      },
+      {
+        "blocking": true,
+        "class": "process",
+        "code": "review_missing",
+        "detail": "required reviewer has not approved",
+        "subject": "umvpa-independent-admission-20260930"
+      }
+    ]
+  },
+  "landing": null,
+  "phase": {
+    "op_id": "20260930T193854.597821Z-p99273-c0000-rfe07-h1c8ca9",
+    "value": "pending"
+  },
+  "policy": {
+    "amendments": [],
+    "authorizer": "bbuchsbaum",
+    "evidence_refs": [
+      "/private/tmp/scalafim-umvpa-20260930-admission-evidence/independent-source-review-9d8ec21-addendum.md"
+    ],
+    "evidence_requirements": [
+      {
+        "kind": "git",
+        "name": "git-ancestry",
+        "producers": [
+          "umvpa-publish-20260930"
+        ]
+      }
+    ],
+    "op_id": "20260930T193854.597821Z-p99273-c0000-rfe07-h1c8ca9",
+    "paths": [
+      "build.sbt",
+      "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReads.scala",
+      "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmission.scala",
+      "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReadsSuite.scala",
+      "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala",
+      "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceOrigins.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Observations.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Compilation.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Diagnostics.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Relations.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/EvidenceOriginsSuite.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/DiagnosticsSuite.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/EvidenceExposureSuite.scala"
+    ],
+    "review_policy_version": 3,
+    "reviewers": [
+      "umvpa-independent-admission-20260930"
+    ],
+    "role_review_requirements": []
+  },
+  "proposal_op_id": "20260930T193854.597821Z-p99273-c0000-rfe07-h1c8ca9",
+  "proposer": "umvpa-publish-20260930",
+  "reconciliation": null,
+  "reservations": [],
+  "review_status": {
+    "as_of_ts": "2026-09-30T20:00:09.856040Z",
+    "named": [
+      {
+        "review_op_id": null,
+        "reviewer": "umvpa-independent-admission-20260930",
+        "satisfied": false,
+        "verdict": null
+      }
+    ],
+    "roles": [],
+    "satisfied": false
+  },
+  "reviews": {},
+  "supersession": {
+    "record": null,
+    "successor_id": null
+  }
+}

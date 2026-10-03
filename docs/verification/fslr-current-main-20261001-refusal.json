@@ -1,0 +1,17 @@
+{
+  "schema": "scalafim.fslr-route-refusal/1",
+  "lockSha256": "c44df16c33cb622091a8d635d8f3aea9ea896a77c8900a373863c1891ef83a1e",
+  "source": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz in MNI152NLin2009cAsym@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (doi:10.1016/j.neuroimage.2010.07.033: locked TemplateFlow GM in its own declared frame)",
+  "anatomy": "tpl-fsLR/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii in MNI152NLin6Asym@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (doi:10.1093/cercor/bhr291: DECLARED Conte69 MNI152NLin6Asym candidate; asset-specific volumetric registration remains unqualified)",
+  "medialWall": "tpl-fsLR/tpl-fsLR_hemi-L_den-32k_desc-nomedialwall_dparc.label.gii@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (sha256 4ac9199dab151ccdc2a35bdddb5bac4f4907da7dfebd90807c09b82e2eb9d512)",
+  "method": "midthickness-nearest",
+  "pointMap": "MNI152NLin2009cAsym -> MNI152NLin6Asym point map from tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 (sha256 2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe)",
+  "pointMapManifest": "34bdcea2dab7c0fccde6e6607cd080fbcea087abaf19721925b5b8fb61d85318",
+  "bridgeRefusal": "exact pointwise inverse is unavailable in the pinned transform provider; a lattice inverse is a different route",
+  "routeWithoutBridgeRefusal": "source frame MNI152NLin2009cAsym@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 differs from anatomy frame MNI152NLin6Asym@templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56 and no exact bridge was supplied",
+  "qualificationGaps": [
+    "exact Conte69 volumetric registration chain and anatomical template release/cohort are not established by these files",
+    "pointwise inverse with per-query residual/iteration receipts is unavailable in the pinned provider",
+    "PLS Neuro source-result provenance and consumer qualification belong to PLS Neuro"
+  ]
+}

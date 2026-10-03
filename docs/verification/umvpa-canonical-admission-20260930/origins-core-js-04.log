@@ -1,0 +1,404 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-umvpa-20260930-canonical-admission-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260930-canonical-admission/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/35134e4fbd77703f1507/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-umvpa-20260929/sbt-global/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (303158 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-umvpa-20260930-canonical-admission/)
+[info] compiling 10 Scala sources to /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/response/js/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/locus-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/pipeline/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 42 Scala sources to /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes ...
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaEngine$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaEngine$.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaEngine.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaEngine.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/PairedFeatureSet.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/PairedFeatureSet.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/PairedFeatureSet$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/PairedFeatureSet$.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecoding$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecoding$.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecoding.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecoding.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainClassifierAnalysis.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainClassifierAnalysis.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainClassifierAnalysis$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainClassifierAnalysis$.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainDataset.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainDataset.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainDataset$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainDataset$.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecodingDesign.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecodingDesign.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainRoiContext.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainRoiContext.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainPatternSource.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainPatternSource.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainRoiAnalysis.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainRoiAnalysis.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaTask.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaTask.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaEngine.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainMvpaEngine.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/PairedFeatureSet.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/PairedFeatureSet.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecoding.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDecoding.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainClassifierAnalysis.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainClassifierAnalysis.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainDataset.tasty: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/CrossDomainDataset.tasty: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/NaiveCrossDecodingScanner.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/NaiveCrossDecodingScanner.class: No space left on device
+java.io.IOException: No space left on device
+	at java.base/sun.nio.ch.UnixFileDispatcherImpl.pwrite0(Native Method)
+	at java.base/sun.nio.ch.UnixFileDispatcherImpl.pwrite(UnixFileDispatcherImpl.java:71)
+	at java.base/sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:135)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:102)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:72)
+	at java.base/sun.nio.ch.FileChannelImpl.writeInternal(FileChannelImpl.java:1261)
+	at java.base/sun.nio.ch.FileChannelImpl.implWrite(FileChannelImpl.java:1234)
+	at java.base/sun.nio.ch.FileChannelImpl.write(FileChannelImpl.java:1216)
+	at dotty.tools.backend.jvm.ClassfileWriters$DirEntryWriter.writeFile(ClassfileWriters.scala:247)
+	at dotty.tools.backend.jvm.ClassfileWriters$ClassfileWriter$SingleClassWriter.writeClass(ClassfileWriters.scala:92)
+	at dotty.tools.backend.jvm.PostProcessor.sendToDisk(PostProcessor.scala:50)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$1$$anonfun$1(GeneratedClassHandler.scala:94)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$1(GeneratedClassHandler.scala:94)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$adapted$1(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.PostProcessorFrontendAccess$Impl.withThreadLocalReporter(PostProcessorFrontendAccess.scala:140)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$adapted$1(GeneratedClassHandler.scala:96)
+	at scala.concurrent.Future$.$anonfun$apply$1(Future.scala:691)
+	at scala.concurrent.impl.Promise$Transformation.run(Promise.scala:500)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$.SyncWritingClassHandler$superArg$1$$anonfun$1(GeneratedClassHandler.scala:146)
+	at scala.concurrent.impl.ExecutionContextImpl.execute(ExecutionContextImpl.scala:21)
+	at scala.concurrent.impl.Promise$Transformation.submitWithValue(Promise.scala:462)
+	at scala.concurrent.impl.Promise$DefaultPromise.submitWithValue(Promise.scala:371)
+	at scala.concurrent.impl.Promise$DefaultPromise.dispatchOrAddCallbacks(Promise.scala:322)
+	at scala.concurrent.impl.Promise$DefaultPromise.map(Promise.scala:182)
+	at scala.concurrent.Future$.apply(Future.scala:691)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.process(GeneratedClassHandler.scala:82)
+	at dotty.tools.backend.jvm.CodeGen.genUnit(CodeGen.scala:122)
+	at dotty.tools.backend.jvm.GenBCode.run(GenBCode.scala:90)
+	at dotty.tools.dotc.core.Phases$Phase.runOn$$anonfun$1(Phases.scala:383)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at dotty.tools.dotc.core.Phases$Phase.runOn(Phases.scala:376)
+	at dotty.tools.backend.jvm.GenBCode.runOn(GenBCode.scala:98)
+	at dotty.tools.dotc.Run.runPhases$1$$anonfun$1(Run.scala:380)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.ArrayOps$.foreach$extension(ArrayOps.scala:1324)
+	at dotty.tools.dotc.Run.runPhases$1(Run.scala:373)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1$$anonfun$2(Run.scala:420)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1$$anonfun$adapted$1(Run.scala:420)
+	at scala.Function0.apply$mcV$sp(Function0.scala:42)
+	at dotty.tools.dotc.Run.showProgress(Run.scala:482)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1(Run.scala:420)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$adapted$1(Run.scala:432)
+	at dotty.tools.dotc.util.Stats$.maybeMonitored(Stats.scala:69)
+	at dotty.tools.dotc.Run.compileUnits(Run.scala:432)
+	at dotty.tools.dotc.Run.compileSources(Run.scala:319)
+	at dotty.tools.dotc.Run.compile(Run.scala:304)
+	at dotty.tools.dotc.Driver.doCompile(Driver.scala:37)
+	at dotty.tools.xsbt.CompilerBridgeDriver.run(CompilerBridgeDriver.java:141)
+	at dotty.tools.xsbt.CompilerBridge.run(CompilerBridge.java:22)
+	at sbt.internal.inc.AnalyzingCompiler.compile(AnalyzingCompiler.scala:91)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$7(MixedAnalyzingCompiler.scala:196)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:23)
+	at sbt.internal.inc.MixedAnalyzingCompiler.timed(MixedAnalyzingCompiler.scala:252)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$4(MixedAnalyzingCompiler.scala:186)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$4$adapted(MixedAnalyzingCompiler.scala:166)
+	at sbt.internal.inc.JarUtils$.withPreviousJar(JarUtils.scala:241)
+	at sbt.internal.inc.MixedAnalyzingCompiler.compileScala$1(MixedAnalyzingCompiler.scala:166)
+	at sbt.internal.inc.MixedAnalyzingCompiler.compile(MixedAnalyzingCompiler.scala:214)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileInternal$1(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileInternal$1$adapted(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.Incremental$.$anonfun$apply$3(Incremental.scala:182)
+	at sbt.internal.inc.Incremental$.$anonfun$apply$3$adapted(Incremental.scala:180)
+	at sbt.internal.inc.Incremental$$anon$2.run(Incremental.scala:458)
+	at sbt.internal.inc.IncrementalCommon$CycleState.next(IncrementalCommon.scala:116)
+	at sbt.internal.inc.IncrementalCommon$$anon$1.next(IncrementalCommon.scala:56)
+	at sbt.internal.inc.IncrementalCommon$$anon$1.next(IncrementalCommon.scala:52)
+	at sbt.internal.inc.IncrementalCommon.cycle(IncrementalCommon.scala:264)
+	at sbt.internal.inc.Incremental$.$anonfun$incrementalCompile$8(Incremental.scala:413)
+	at sbt.internal.inc.Incremental$.withClassfileManager(Incremental.scala:500)
+	at sbt.internal.inc.Incremental$.incrementalCompile(Incremental.scala:400)
+	at sbt.internal.inc.Incremental$.apply(Incremental.scala:208)
+	at sbt.internal.inc.IncrementalCompilerImpl.compileInternal(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileIncrementally$1(IncrementalCompilerImpl.scala:496)
+	at sbt.internal.inc.IncrementalCompilerImpl.handleCompilationError(IncrementalCompilerImpl.scala:332)
+	at sbt.internal.inc.IncrementalCompilerImpl.compileIncrementally(IncrementalCompilerImpl.scala:433)
+	at sbt.internal.inc.IncrementalCompilerImpl.compile(IncrementalCompilerImpl.scala:137)
+	at sbt.Defaults$.compileIncrementalTaskImpl(Defaults.scala:2493)
+	at sbt.Defaults$.$anonfun$compileIncrementalTask$2(Defaults.scala:2443)
+	at sbt.internal.server.BspCompileTask$.$anonfun$compute$1(BspCompileTask.scala:41)
+	at sbt.internal.io.Retry$.sbt$internal$io$Retry$$impl(Retry.scala:114)
+	at sbt.internal.io.Retry$.io(Retry.scala:102)
+	at sbt.internal.io.Retry$.io(Retry.scala:78)
+	at sbt.internal.io.Retry$.io(Retry.scala:67)
+	at sbt.internal.server.BspCompileTask$.compute(BspCompileTask.scala:41)
+	at sbt.Defaults$.$anonfun$compileIncrementalTask$1(Defaults.scala:2441)
+	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+	at sbt.Execute.work(Execute.scala:292)
+	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] unable to write /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/CrossDecodingScanner.scala java.io.IOException: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/BootstrapDesign.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/BootstrapDesign.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/BootstrapDesign$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/BootstrapDesign$.class: No space left on device
+java.io.IOException: No space left on device
+	at java.base/sun.nio.ch.UnixFileDispatcherImpl.pwrite0(Native Method)
+	at java.base/sun.nio.ch.UnixFileDispatcherImpl.pwrite(UnixFileDispatcherImpl.java:71)
+	at java.base/sun.nio.ch.IOUtil.writeFromNativeBuffer(IOUtil.java:135)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:102)
+	at java.base/sun.nio.ch.IOUtil.write(IOUtil.java:72)
+	at java.base/sun.nio.ch.FileChannelImpl.writeInternal(FileChannelImpl.java:1261)
+	at java.base/sun.nio.ch.FileChannelImpl.implWrite(FileChannelImpl.java:1234)
+	at java.base/sun.nio.ch.FileChannelImpl.write(FileChannelImpl.java:1216)
+	at dotty.tools.backend.jvm.ClassfileWriters$DirEntryWriter.writeFile(ClassfileWriters.scala:247)
+	at dotty.tools.backend.jvm.ClassfileWriters$ClassfileWriter$SingleClassWriter.writeClass(ClassfileWriters.scala:92)
+	at dotty.tools.backend.jvm.PostProcessor.sendToDisk(PostProcessor.scala:50)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$1$$anonfun$1(GeneratedClassHandler.scala:94)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$1(GeneratedClassHandler.scala:94)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$adapted$1(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.PostProcessorFrontendAccess$Impl.withThreadLocalReporter(PostProcessorFrontendAccess.scala:140)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$adapted$1(GeneratedClassHandler.scala:96)
+	at scala.concurrent.Future$.$anonfun$apply$1(Future.scala:691)
+	at scala.concurrent.impl.Promise$Transformation.run(Promise.scala:500)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$.SyncWritingClassHandler$superArg$1$$anonfun$1(GeneratedClassHandler.scala:146)
+	at scala.concurrent.impl.ExecutionContextImpl.execute(ExecutionContextImpl.scala:21)
+	at scala.concurrent.impl.Promise$Transformation.submitWithValue(Promise.scala:462)
+	at scala.concurrent.impl.Promise$DefaultPromise.submitWithValue(Promise.scala:371)
+	at scala.concurrent.impl.Promise$DefaultPromise.dispatchOrAddCallbacks(Promise.scala:322)
+	at scala.concurrent.impl.Promise$DefaultPromise.map(Promise.scala:182)
+	at scala.concurrent.Future$.apply(Future.scala:691)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.process(GeneratedClassHandler.scala:82)
+	at dotty.tools.backend.jvm.CodeGen.genUnit(CodeGen.scala:122)
+	at dotty.tools.backend.jvm.GenBCode.run(GenBCode.scala:90)
+	at dotty.tools.dotc.core.Phases$Phase.runOn$$anonfun$1(Phases.scala:383)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at dotty.tools.dotc.core.Phases$Phase.runOn(Phases.scala:376)
+	at dotty.tools.backend.jvm.GenBCode.runOn(GenBCode.scala:98)
+	at dotty.tools.dotc.Run.runPhases$1$$anonfun$1(Run.scala:380)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.ArrayOps$.foreach$extension(ArrayOps.scala:1324)
+	at dotty.tools.dotc.Run.runPhases$1(Run.scala:373)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1$$anonfun$2(Run.scala:420)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1$$anonfun$adapted$1(Run.scala:420)
+	at scala.Function0.apply$mcV$sp(Function0.scala:42)
+	at dotty.tools.dotc.Run.showProgress(Run.scala:482)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1(Run.scala:420)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$adapted$1(Run.scala:432)
+	at dotty.tools.dotc.util.Stats$.maybeMonitored(Stats.scala:69)
+	at dotty.tools.dotc.Run.compileUnits(Run.scala:432)
+	at dotty.tools.dotc.Run.compileSources(Run.scala:319)
+	at dotty.tools.dotc.Run.compile(Run.scala:304)
+	at dotty.tools.dotc.Driver.doCompile(Driver.scala:37)
+	at dotty.tools.xsbt.CompilerBridgeDriver.run(CompilerBridgeDriver.java:141)
+	at dotty.tools.xsbt.CompilerBridge.run(CompilerBridge.java:22)
+	at sbt.internal.inc.AnalyzingCompiler.compile(AnalyzingCompiler.scala:91)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$7(MixedAnalyzingCompiler.scala:196)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:23)
+	at sbt.internal.inc.MixedAnalyzingCompiler.timed(MixedAnalyzingCompiler.scala:252)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$4(MixedAnalyzingCompiler.scala:186)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$4$adapted(MixedAnalyzingCompiler.scala:166)
+	at sbt.internal.inc.JarUtils$.withPreviousJar(JarUtils.scala:241)
+	at sbt.internal.inc.MixedAnalyzingCompiler.compileScala$1(MixedAnalyzingCompiler.scala:166)
+	at sbt.internal.inc.MixedAnalyzingCompiler.compile(MixedAnalyzingCompiler.scala:214)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileInternal$1(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileInternal$1$adapted(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.Incremental$.$anonfun$apply$3(Incremental.scala:182)
+	at sbt.internal.inc.Incremental$.$anonfun$apply$3$adapted(Incremental.scala:180)
+	at sbt.internal.inc.Incremental$$anon$2.run(Incremental.scala:458)
+	at sbt.internal.inc.IncrementalCommon$CycleState.next(IncrementalCommon.scala:116)
+	at sbt.internal.inc.IncrementalCommon$$anon$1.next(IncrementalCommon.scala:56)
+	at sbt.internal.inc.IncrementalCommon$$anon$1.next(IncrementalCommon.scala:52)
+	at sbt.internal.inc.IncrementalCommon.cycle(IncrementalCommon.scala:264)
+	at sbt.internal.inc.Incremental$.$anonfun$incrementalCompile$8(Incremental.scala:413)
+	at sbt.internal.inc.Incremental$.withClassfileManager(Incremental.scala:500)
+	at sbt.internal.inc.Incremental$.incrementalCompile(Incremental.scala:400)
+	at sbt.internal.inc.Incremental$.apply(Incremental.scala:208)
+	at sbt.internal.inc.IncrementalCompilerImpl.compileInternal(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileIncrementally$1(IncrementalCompilerImpl.scala:496)
+	at sbt.internal.inc.IncrementalCompilerImpl.handleCompilationError(IncrementalCompilerImpl.scala:332)
+	at sbt.internal.inc.IncrementalCompilerImpl.compileIncrementally(IncrementalCompilerImpl.scala:433)
+	at sbt.internal.inc.IncrementalCompilerImpl.compile(IncrementalCompilerImpl.scala:137)
+	at sbt.Defaults$.compileIncrementalTaskImpl(Defaults.scala:2493)
+	at sbt.Defaults$.$anonfun$compileIncrementalTask$2(Defaults.scala:2443)
+	at sbt.internal.server.BspCompileTask$.$anonfun$compute$1(BspCompileTask.scala:41)
+	at sbt.internal.io.Retry$.sbt$internal$io$Retry$$impl(Retry.scala:114)
+	at sbt.internal.io.Retry$.io(Retry.scala:102)
+	at sbt.internal.io.Retry$.io(Retry.scala:78)
+	at sbt.internal.io.Retry$.io(Retry.scala:67)
+	at sbt.internal.server.BspCompileTask$.compute(BspCompileTask.scala:41)
+	at sbt.Defaults$.$anonfun$compileIncrementalTask$1(Defaults.scala:2441)
+	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+	at sbt.Execute.work(Execute.scala:292)
+	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] unable to write /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceDesign.scala java.io.IOException: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/EvidenceOrigins$$anon$4.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/EvidenceOrigins$$anon$4.class: No space left on device
+java.lang.NullPointerException: Cannot invoke "dotty.tools.io.AbstractFile.jpath()" because "clsFile" is null
+	at dotty.tools.backend.jvm.CodeGen.onFileCreated$$anonfun$1(CodeGen.scala:138)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at dotty.tools.backend.jvm.PostProcessor.sendToDisk(PostProcessor.scala:51)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$1$$anonfun$1(GeneratedClassHandler.scala:94)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$1(GeneratedClassHandler.scala:94)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1$$anonfun$adapted$1(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.PostProcessorFrontendAccess$Impl.withThreadLocalReporter(PostProcessorFrontendAccess.scala:140)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$1(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit$$anonfun$adapted$1(GeneratedClassHandler.scala:96)
+	at scala.concurrent.Future$.$anonfun$apply$1(Future.scala:691)
+	at scala.concurrent.impl.Promise$Transformation.run(Promise.scala:500)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$.SyncWritingClassHandler$superArg$1$$anonfun$1(GeneratedClassHandler.scala:146)
+	at scala.concurrent.impl.ExecutionContextImpl.execute(ExecutionContextImpl.scala:21)
+	at scala.concurrent.impl.Promise$Transformation.submitWithValue(Promise.scala:462)
+	at scala.concurrent.impl.Promise$DefaultPromise.submitWithValue(Promise.scala:371)
+	at scala.concurrent.impl.Promise$DefaultPromise.dispatchOrAddCallbacks(Promise.scala:322)
+	at scala.concurrent.impl.Promise$DefaultPromise.map(Promise.scala:182)
+	at scala.concurrent.Future$.apply(Future.scala:691)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.postProcessUnit(GeneratedClassHandler.scala:96)
+	at dotty.tools.backend.jvm.GeneratedClassHandler$WritingClassHandler.process(GeneratedClassHandler.scala:82)
+	at dotty.tools.backend.jvm.CodeGen.genUnit(CodeGen.scala:122)
+	at dotty.tools.backend.jvm.GenBCode.run(GenBCode.scala:90)
+	at dotty.tools.dotc.core.Phases$Phase.runOn$$anonfun$1(Phases.scala:383)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at dotty.tools.dotc.core.Phases$Phase.runOn(Phases.scala:376)
+	at dotty.tools.backend.jvm.GenBCode.runOn(GenBCode.scala:98)
+	at dotty.tools.dotc.Run.runPhases$1$$anonfun$1(Run.scala:380)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:15)
+	at scala.runtime.function.JProcedure1.apply(JProcedure1.java:10)
+	at scala.collection.ArrayOps$.foreach$extension(ArrayOps.scala:1324)
+	at dotty.tools.dotc.Run.runPhases$1(Run.scala:373)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1$$anonfun$2(Run.scala:420)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1$$anonfun$adapted$1(Run.scala:420)
+	at scala.Function0.apply$mcV$sp(Function0.scala:42)
+	at dotty.tools.dotc.Run.showProgress(Run.scala:482)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$1(Run.scala:420)
+	at dotty.tools.dotc.Run.compileUnits$$anonfun$adapted$1(Run.scala:432)
+	at dotty.tools.dotc.util.Stats$.maybeMonitored(Stats.scala:69)
+	at dotty.tools.dotc.Run.compileUnits(Run.scala:432)
+	at dotty.tools.dotc.Run.compileSources(Run.scala:319)
+	at dotty.tools.dotc.Run.compile(Run.scala:304)
+	at dotty.tools.dotc.Driver.doCompile(Driver.scala:37)
+	at dotty.tools.xsbt.CompilerBridgeDriver.run(CompilerBridgeDriver.java:141)
+	at dotty.tools.xsbt.CompilerBridge.run(CompilerBridge.java:22)
+	at sbt.internal.inc.AnalyzingCompiler.compile(AnalyzingCompiler.scala:91)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$7(MixedAnalyzingCompiler.scala:196)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:23)
+	at sbt.internal.inc.MixedAnalyzingCompiler.timed(MixedAnalyzingCompiler.scala:252)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$4(MixedAnalyzingCompiler.scala:186)
+	at sbt.internal.inc.MixedAnalyzingCompiler.$anonfun$compile$4$adapted(MixedAnalyzingCompiler.scala:166)
+	at sbt.internal.inc.JarUtils$.withPreviousJar(JarUtils.scala:241)
+	at sbt.internal.inc.MixedAnalyzingCompiler.compileScala$1(MixedAnalyzingCompiler.scala:166)
+	at sbt.internal.inc.MixedAnalyzingCompiler.compile(MixedAnalyzingCompiler.scala:214)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileInternal$1(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileInternal$1$adapted(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.Incremental$.$anonfun$apply$3(Incremental.scala:182)
+	at sbt.internal.inc.Incremental$.$anonfun$apply$3$adapted(Incremental.scala:180)
+	at sbt.internal.inc.Incremental$$anon$2.run(Incremental.scala:458)
+	at sbt.internal.inc.IncrementalCommon$CycleState.next(IncrementalCommon.scala:116)
+	at sbt.internal.inc.IncrementalCommon$$anon$1.next(IncrementalCommon.scala:56)
+	at sbt.internal.inc.IncrementalCommon$$anon$1.next(IncrementalCommon.scala:52)
+	at sbt.internal.inc.IncrementalCommon.cycle(IncrementalCommon.scala:264)
+	at sbt.internal.inc.Incremental$.$anonfun$incrementalCompile$8(Incremental.scala:413)
+	at sbt.internal.inc.Incremental$.withClassfileManager(Incremental.scala:500)
+	at sbt.internal.inc.Incremental$.incrementalCompile(Incremental.scala:400)
+	at sbt.internal.inc.Incremental$.apply(Incremental.scala:208)
+	at sbt.internal.inc.IncrementalCompilerImpl.compileInternal(IncrementalCompilerImpl.scala:542)
+	at sbt.internal.inc.IncrementalCompilerImpl.$anonfun$compileIncrementally$1(IncrementalCompilerImpl.scala:496)
+	at sbt.internal.inc.IncrementalCompilerImpl.handleCompilationError(IncrementalCompilerImpl.scala:332)
+	at sbt.internal.inc.IncrementalCompilerImpl.compileIncrementally(IncrementalCompilerImpl.scala:433)
+	at sbt.internal.inc.IncrementalCompilerImpl.compile(IncrementalCompilerImpl.scala:137)
+	at sbt.Defaults$.compileIncrementalTaskImpl(Defaults.scala:2493)
+	at sbt.Defaults$.$anonfun$compileIncrementalTask$2(Defaults.scala:2443)
+	at sbt.internal.server.BspCompileTask$.$anonfun$compute$1(BspCompileTask.scala:41)
+	at sbt.internal.io.Retry$.sbt$internal$io$Retry$$impl(Retry.scala:114)
+	at sbt.internal.io.Retry$.io(Retry.scala:102)
+	at sbt.internal.io.Retry$.io(Retry.scala:78)
+	at sbt.internal.io.Retry$.io(Retry.scala:67)
+	at sbt.internal.server.BspCompileTask$.compute(BspCompileTask.scala:41)
+	at sbt.Defaults$.$anonfun$compileIncrementalTask$1(Defaults.scala:2441)
+	at scala.Function1.$anonfun$compose$1(Function1.scala:49)
+	at sbt.internal.util.$tilde$greater.$anonfun$$u2219$1(TypeFunctions.scala:63)
+	at sbt.std.Transform$$anon$4.work(Transform.scala:69)
+	at sbt.Execute.$anonfun$submit$2(Execute.scala:283)
+	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+	at sbt.Execute.work(Execute.scala:292)
+	at sbt.Execute.$anonfun$submit$1(Execute.scala:283)
+	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$submitValid$1(ConcurrentRestrictions.scala:265)
+	at sbt.CompletionService$$anon$2.call(CompletionService.scala:65)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] unable to write /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceOrigins.scala java.lang.NullPointerException: Cannot invoke "dotty.tools.io.AbstractFile.jpath()" because "clsFile" is null
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/FeatureModelMetrics$PatternMetrics.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/FeatureModelMetrics$PatternMetrics.class: No space left on device
+[error] error writing /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/FeatureModelMetrics$PatternMetrics$.class: java.nio.file.FileSystemException /private/tmp/scalafim-umvpa-20260930-canonical-admission/modules/mvpa/js/target/scala-3.7.4/classes/scalafim/fmri/mvpa/FeatureModelMetrics$PatternMetrics$.class: No space left on device
+[error] 29 errors found
+[error] (mvpaJS / Compile / compileIncremental) Compilation failed
+[error] Total time: 37 s, completed Sep 30, 2026, 3:11:16 p.m.

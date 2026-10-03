@@ -47,6 +47,35 @@ object GiftiSurfaceReader:
             yield surface
           }
 
+  /** Read geometry together with the file's own coordinate declaration. */
+  def readDeclared(
+    bytes: Uint8Array,
+    hemisphere: Hemisphere,
+    kind: SurfaceKind
+  ): Future[Either[GiftiError, DeclaredGiftiSurface]] =
+    GiftiReader.read(bytes).flatMap {
+      case Left(error) => Future.successful(Left(error))
+      case Right(document) => declared(document, hemisphere, kind)
+    }
+
+  def readDeclaredString(
+    xml: String,
+    hemisphere: Hemisphere,
+    kind: SurfaceKind
+  ): Future[Either[GiftiError, DeclaredGiftiSurface]] =
+    GiftiReader.parseString(xml) match
+      case Left(error) => Future.successful(Left(error))
+      case Right(document) => declared(document, hemisphere, kind)
+
+  def declared(
+    document: GiftiDocument,
+    hemisphere: Hemisphere,
+    kind: SurfaceKind
+  ): Future[Either[GiftiError, DeclaredGiftiSurface]] =
+    geometry(document, hemisphere, kind).map(_.flatMap { surface =>
+      GiftiCoordinateDeclaration.fromDocument(document).map(DeclaredGiftiSurface(surface, _))
+    })
+
   def readLabels(
     bytes: Uint8Array,
     geometry: SurfaceGeometry,

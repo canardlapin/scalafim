@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "gate": "canonical-origins-compile-all-01",
+  "source_head": "9d8ec21454774e840baf41de9dff345e7fd88418",
+  "provider": {"override_supplied": false, "staged_alder_head": "e555bad92307af1c2cbc104aef398cb9d9de88f0", "staged_alder_worktree_clean": true},
+  "requested_command": ["scalafimCompileAll"],
+  "receipt": {"raw_log": "canonical-origins-compile-all-01.log", "raw_log_sha256": "9262aa0443dba5fed5c802a7c2678e548bddcb6b8b88ec190058d2b178ad6c06", "metadata": "canonical-origins-compile-all-01.log.meta.json", "metadata_sha256": "d06ba7280c5341bc0596dde72b61fe489e8a3d29a8778b7b1877fd780b915e5b"},
+  "outcome": {"status": "passed", "exit_code": 0, "warnings_found": 0, "errors_found": 0, "skipped_tests_found": 0, "note": "Compilation-only gate; no test suites requested"}
+}

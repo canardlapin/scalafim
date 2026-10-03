@@ -71,22 +71,60 @@ final case class SurfaceSampleResult(
   tally: SurfaceSampleTally
 )
 
+enum SurfaceSampleOutcome:
+  case OutsideVolume
+  case Masked(voxel: VoxelCoord)
+  case Included(voxel: VoxelCoord, value: Double)
+
+final case class SurfacePointSample(world: WorldPoint, outcome: SurfaceSampleOutcome)
+
+/** Ordered lookup receipts; duplicate voxel requests remain distinct. */
+final case class SurfaceVertexSample private[surface] (
+  vertex: VertexId,
+  path: SurfaceSamplingPath,
+  aggregation: SurfaceSampleAggregation,
+  samples: Vector[SurfacePointSample],
+  value: Double
+):
+  def acceptedSampleIndices: Vector[Int] = samples.indices.filter: index =>
+    samples(index).outcome match
+      case SurfaceSampleOutcome.Included(_, _) => true
+      case _ => false
+  .toVector
+
+  def contributingSampleIndices: Vector[Int] = aggregation match
+    case SurfaceSampleAggregation.Nearest => acceptedSampleIndices.take(1)
+    case _ => acceptedSampleIndices
+
+  def acceptedCount: Int = acceptedSampleIndices.size
+
+  def hasNonFiniteSamples: Boolean = samples.exists: sample =>
+    sample.outcome match
+      case SurfaceSampleOutcome.Included(_, value) => !value.isFinite
+      case _ => false
+
 final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
 
   def sample(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume] = None): SurfaceSampleResult =
+    sampleSelected(volume, mask, None)
+
+  private[surface] def sampleSelected(volume: SomeScalarVolume[Double], mask: Option[SomeMaskVolume],
+      selected: Option[Array[Boolean]]): SurfaceSampleResult =
     mask.foreach(validateMask(volume, _))
 
     val vertexCount = plan.surfaces.white.vertexCount
     val values = Array.fill(vertexCount)(Double.NaN)
     val counts = Array.ofDim[Int](vertexCount)
     val tally = TallyBuilder()
+    selected.foreach(flags => require(flags.length == vertexCount, "selected vertex count differs from anatomy"))
 
     var i = 0
     while i < vertexCount do
-      val vertex = VertexId.unsafe(i)
-      val samples = sampleValues(volume, mask, samplePoints(vertex), tally)
-      counts(i) = samples.length
-      if samples.nonEmpty then values(i) = aggregate(samples)
+      if selected.forall(_(i)) then
+        val vertex = VertexId.unsafe(i)
+        val samples = sampleValues(volume, mask, samplePoints(vertex), tally)
+        counts(i) = samples.length
+        if samples.nonEmpty then values(i) = aggregate(samples)
       i += 1
 
     SurfaceSampleResult(
@@ -94,6 +132,20 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
       sampleCounts = SurfaceField.full(plan.surfaces.white, counts.toVector, "surface-sample-count"),
       tally = tally.result()
     )
+
+  def inspectVertex(volume: SomeScalarVolume[Double], vertex: VertexId,
+      mask: Option[SomeMaskVolume] = None): SurfaceVertexSample =
+    require(vertex.index < plan.surfaces.white.vertexCount, "vertex id out of range")
+    mask.foreach(validateMask(volume, _))
+    val receipts = Vector.newBuilder[SurfacePointSample]
+    val values = sampleValues(volume, mask, samplePoints(vertex), TallyBuilder(), Some(receipt => { receipts += receipt; () }))
+    SurfaceVertexSample(vertex, plan.path, plan.aggregation, receipts.result(),
+      if values.isEmpty then Double.NaN else aggregate(values))
+
+  def inspectVertexEither(volume: SomeScalarVolume[Double], vertex: VertexId,
+      mask: Option[SomeMaskVolume] = None): Either[SurfaceError, SurfaceVertexSample] =
+    try scala.util.Right(inspectVertex(volume, vertex, mask))
+    catch case NonFatal(error) => scala.util.Left(SurfaceError.InvalidGeometry(SurfaceError.reason(error)))
 
   private def samplePoints(vertex: VertexId): Vector[Vector[Double]] =
     val white = worldPoint(plan.surfaces.white, vertex)
@@ -126,20 +178,27 @@ final case class VolumeSurfaceSampler(plan: VolumeSurfaceSamplingPlan):
     volume: SomeScalarVolume[Double],
     mask: Option[SomeMaskVolume],
     points: Vector[Vector[Double]],
-    tally: TallyBuilder
+    tally: TallyBuilder,
+    observe: Option[SurfacePointSample => Unit] = None
   ): Vector[Double] =
     val out = Vector.newBuilder[Double]
     points.foreach { point =>
       tally.requested += 1L
       nearestGrid(volume, point) match
-        case None => tally.outsideVolume += 1L
+        case None =>
+          tally.outsideVolume += 1L
+          observe.foreach(_(SurfacePointSample(WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.OutsideVolume)))
         case Some(grid) =>
           val lin = volume.gridToIndex(grid(0), grid(1), grid(2))
-          if !mask.forall(_.valueAtCanonicalOrdinal(lin)) then tally.masked += 1L
+          val voxel = volume.indexToVoxel(lin)
+          if !mask.forall(_.valueAtCanonicalOrdinal(lin)) then
+            tally.masked += 1L
+            observe.foreach(_(SurfacePointSample(WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.Masked(voxel))))
           else
             val value = volume.valueAtCanonicalOrdinal(lin)
             if value.isFinite then tally.accepted += 1L else tally.nonFinite += 1L
             out += value
+            observe.foreach(_(SurfacePointSample(WorldPoint(point(0), point(1), point(2)), SurfaceSampleOutcome.Included(voxel, value))))
     }
     out.result()
 

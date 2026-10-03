@@ -1,0 +1,35 @@
+{
+  "schema": "scalafim.surface-route-example/1",
+  "frame": {
+    "template": "MNI152NLin2009cAsym",
+    "release": "synthetic-asymmetric-control/1"
+  },
+  "recipe": "3x3x3 identity grid: value=i+10*j+100*k; voxel(1,0,0)=NaN; four matching-topology vertices, last vertex medial wall; display coordinates varied only",
+  "assets": [
+    {
+      "path": "cortex.label.gii",
+      "sha256": "ba7b05c5f8ebeb387052bac78665e9af91040e13ae76af5e96760fb519f85430",
+      "bytes": 348
+    },
+    {
+      "path": "inflated.surf.gii",
+      "sha256": "44ec3731edc2e33ff72f7ab77e571f13a5ea136c2444ffa25359b19f9c899f79",
+      "bytes": 726
+    },
+    {
+      "path": "midthickness.surf.gii",
+      "sha256": "49e068abef643c4f54d257ba0c288cf238be9429c16b761601da778cf48d4fe9",
+      "bytes": 732
+    },
+    {
+      "path": "source.nii",
+      "sha256": "abb210b56627a54066b2db1d63a3c593db5963668e703b6aadd3726d4f7c3e3a",
+      "bytes": 568
+    },
+    {
+      "path": "veryinflated.surf.gii",
+      "sha256": "056b9809bd7b73caeab5eb73b15b5c4f66c465d1b44de4e41a951456b661d838",
+      "bytes": 734
+    }
+  ]
+}

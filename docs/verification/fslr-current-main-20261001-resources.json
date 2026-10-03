@@ -1,0 +1,92 @@
+{
+  "schema": "scalafim.fslr-resource-lock/1",
+  "referenceBranch": "206243b37adff1ab3dc67f7ee4dda44a9d42e547",
+  "reconciledBase": "c05a0811e96295c105633bbad0325790e22377c6",
+  "templateflow4sContractRevision": "67097a9ecab7ea4ed8a81eb3532861096a3b2282",
+  "catalogRevision": "templateflow@d79aacb1ad7d1c52e5d10ad88f48fd8af6e5ae56",
+  "providers": {
+    "ravel": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+    "gale": "18d24dbb5056122032b0278f8bad557a9bb1cf23",
+    "resample4s": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+    "alder": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+    "locus4s": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+    "image4s": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+    "reframe4s": "9a4508351d74567147b8ea3221d82db89e5892b0",
+    "graph4s": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+    "multivar": "f74d631720d65147c51496dcbdd37c01912de1cb",
+    "intaglio": "596b398af380079e4b251535230d0bc03cd88c51",
+    "bids4s": "a33678390614a91fadbdef13f22970e78c26e091",
+    "zarr4s": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29"
+  },
+  "additionalResolvedSourceCheckouts": [
+    {"name": "linops4s", "revision": "fec77db060b130b3c609a43d07ff0bfb31088aae"},
+    {"name": "gale", "revision": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434"}
+  ],
+  "assets": [
+    {
+      "path": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-01_label-GM_probseg.nii.gz",
+      "sha256": "662b18e83dddc554b19c621d9750af3454b54d4e103df03633eacced3884805a",
+      "bytes": 7566494
+    },
+    {
+      "path": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5",
+      "sha256": "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe",
+      "bytes": 204735104
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii",
+      "sha256": "036a8b6c84fa4b581b7ad7b36d99190b57ad6755c9d7ef7adc3e9ffc6448f1af",
+      "bytes": 726059
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-L_inflated.surf.gii",
+      "sha256": "1672da09e4eb112883fe76fe36e8167340e3dbcb9ba28d1f7b83b55acace635a",
+      "bytes": 726967
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-L_veryinflated.surf.gii",
+      "sha256": "8639333cc2823bdbb5b405764699a4344a3752e17ba43f8302370ee163864c6f",
+      "bytes": 725982
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_hemi-L_den-32k_desc-nomedialwall_dparc.label.gii",
+      "sha256": "4ac9199dab151ccdc2a35bdddb5bac4f4907da7dfebd90807c09b82e2eb9d512",
+      "bytes": 3510
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii",
+      "sha256": "9d2cef05096c433b134870456abebe7ff201cdda60ce5741d7b794018eeccda7",
+      "bytes": 713276
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-R_inflated.surf.gii",
+      "sha256": "8237f4e759e88a64059dddc621104f318abd0346c45c1f7d5a88025862e104c7",
+      "bytes": 715220
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-R_veryinflated.surf.gii",
+      "sha256": "57d574b8cb70228564fd18772d7687b5213234648577db71c42482e90c4cb3c7",
+      "bytes": 714503
+    },
+    {
+      "path": "tpl-fsLR/tpl-fsLR_hemi-R_den-32k_desc-nomedialwall_dparc.label.gii",
+      "sha256": "698f46b399f5a89829f83cc697e32dc8841031fbf31ffef75aaaa0c4a16c3015",
+      "bytes": 3539
+    },
+    {
+      "path": ".templateflow4s/derived/point-map/2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe/manifest.json",
+      "sha256": "34bdcea2dab7c0fccde6e6607cd080fbcea087abaf19721925b5b8fb61d85318",
+      "bytes": 3336
+    },
+    {
+      "path": ".templateflow4s/derived/point-map/2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe/stage-0-displacement.nii",
+      "sha256": "4e964918ad63dd1acd8cfbb0eebc2cdb8a33666ef3e58e56335cce67226c7c75",
+      "bytes": 204720856
+    }
+  ],
+  "qualificationGaps": [
+    "exact Conte69 volumetric registration chain and anatomical template release/cohort are not established by these files",
+    "pointwise inverse with per-query residual/iteration receipts is unavailable in the pinned provider",
+    "PLS Neuro source-result provenance and consumer qualification belong to PLS Neuro"
+  ]
+}
