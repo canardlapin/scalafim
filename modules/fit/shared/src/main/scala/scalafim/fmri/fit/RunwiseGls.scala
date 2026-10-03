@@ -32,6 +32,14 @@ private[fit] final case class RunwiseGlsPreparedRun(
     projection: Option[RunCoefficientProjection]
 )
 
+private[fit] final case class RunwiseGlsDesign(
+    partition: RunPartition,
+    design: DesignMatrix,
+    localPartition: RunPartition,
+    options: ArOptions,
+    projection: Option[RunCoefficientProjection]
+)
+
 final class RunwiseGlsPrepared private[fit] (
     val timepoints: Int,
     private val runs: Vector[RunwiseGlsPreparedRun]
@@ -122,7 +130,40 @@ object RunwiseGls:
       projections: IndexedSeq[RunCoefficientProjection],
       selectedVoxelIndices: Vector[Int]
   ): Either[FitError, RunwiseGlsPrepared] =
+    val designs = prepareDesigns(design, partitions, options, projections) match
+      case Left(error) => return Left(error)
+      case Right(value) => value
     val out = Vector.newBuilder[RunwiseGlsPreparedRun]
+    var run = 0
+    while run < designs.length do
+      val current = designs(run)
+      val runResponse = ResponseBlock.fromMatrix(selectRows(response.value, current.partition.rowIndices)) match
+        case Left(error) => return Left(FitError.RunwiseFitFailed(current.partition.runIndex, error))
+        case Right(value) => value
+      Gls.prepare(current.design, runResponse, Vector(current.localPartition), current.options, selectedVoxelIndices) match
+        case Left(error) =>
+          val bound = current.projection.fold(error)(value => FitKernel.bindRankFailure(error, value.axis))
+          return Left(FitError.RunwiseFitFailed(current.partition.runIndex, bound))
+        case Right(value) => out += RunwiseGlsPreparedRun(current.partition, value, current.projection)
+      run += 1
+    Right(new RunwiseGlsPrepared(design.timepoints, out.result()))
+
+  /** Shared design lowering for dense and bounded run-specific GLS preparation. */
+  private[fit] def prepareDesigns(
+      design: DesignMatrix,
+      partitions: IndexedSeq[RunPartition],
+      options: ArOptions,
+      projections: IndexedSeq[RunCoefficientProjection]
+  ): Either[FitError, Vector[RunwiseGlsDesign]] =
+    if partitions.isEmpty then return Left(FitError.EmptyRunPartition(0))
+    if projections.nonEmpty && projections.length != partitions.length then
+      return Left(FitError.InvalidFitAxis("runwise GLS projections", s"expected ${partitions.length}, got ${projections.length}"))
+    if options.global then
+      return Left(FitError.UnsupportedAutocorrelation("runwise GLS requires run-local AR estimation (global=false)"))
+    validatePartitions(design.timepoints, partitions, options) match
+      case Left(error) => return Left(error)
+      case Right(_) => ()
+    val out = Vector.newBuilder[RunwiseGlsDesign]
     var run = 0
     while run < partitions.length do
       val partition = partitions(run)
@@ -141,9 +182,6 @@ object RunwiseGls:
       ) match
         case Left(error) => return Left(FitError.RunwiseFitFailed(partition.runIndex, error))
         case Right(value) => value
-      val runResponse = ResponseBlock.fromMatrix(selectRows(response.value, partition.rowIndices)) match
-        case Left(error) => return Left(FitError.RunwiseFitFailed(partition.runIndex, error))
-        case Right(value) => value
       val localPartition = RunPartition(
         runIndex = 0,
         rowIndices = (0 until partition.rowIndices.length).toVector,
@@ -152,19 +190,9 @@ object RunwiseGls:
       val localOptions = options.copy(
         censoredTimepoints = options.censoredTimepoints.filter(partition.timepoints.contains)
       )
-      Gls.prepare(
-        runDesign,
-        runResponse,
-        Vector(localPartition),
-        localOptions,
-        selectedVoxelIndices
-      ) match
-        case Left(error) =>
-          val bound = projection.fold(error)(value => FitKernel.bindRankFailure(error, value.axis))
-          return Left(FitError.RunwiseFitFailed(partition.runIndex, bound))
-        case Right(value) => out += RunwiseGlsPreparedRun(partition, value, projection)
+      out += RunwiseGlsDesign(partition, runDesign, localPartition, localOptions, projection)
       run += 1
-    Right(new RunwiseGlsPrepared(design.timepoints, out.result()))
+    Right(out.result())
 
   private def validatePartitions(
       rows: Int,
