@@ -113,3 +113,9 @@ independent OLS/GLS oracle coefficients, standard errors and F values. These
 regressions await the required hosted JVM/Scala.js gates; the earlier gate
 counts above describe the earlier revision, not this correction. Calibration
 remains `PendingFrozenProtocol`.
+
+The independent R 4.5.1 intercept-regression oracle passed all shifted OLS,
+shifted GLS, sum-to-one nuisance and final-df fixtures on 2026-10-03. Source
+and stdout are retained as `loading-intercept-regressions.R` and
+`loading-intercept-regressions.log` in the evidence root. Locale startup
+warnings are separate from the successful numerical checks.

@@ -123,8 +123,8 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
         case 0 => 1.0
         case 1 => f.nuisanceValues(i)
         case 2 => f.e2(i)
-        case 3 => f.nuisanceValues(i) * f.t1(i)
-        case _ => f.nuisanceValues(i) * f.t2(i)
+        case 3 => f.nuisanceValues(i) * f.t2(i)
+        case _ => f.nuisanceValues(i) * f.t1(i) * f.t2(i)
     ))
     val design = right(ConfirmationDesign.admit(ConfirmationClaim.FixedDiscoveryC1, f.discovery, f.snapshot,
       EvidenceExposure.internal(ExposureReference(plan, f.snapshot.identity, "fixture", ResultIdentity("one-df-loading"))),
