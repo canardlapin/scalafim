@@ -1,6 +1,6 @@
 package scalafim.fmri.design
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, DVec}
 import gale.spectral.SpectralBackend.given
 import scalafim.fmri.hrf.linalg.Mat
 
@@ -23,15 +23,36 @@ enum BlockR2Outcome:
 enum CoefficientIdentifiability:
   case Unique, MinNormNonUnique
 
-/** Numerical threshold for rank and pseudo-inverse components. */
-final class RankPolicy private (private val fixedRelativeMultiplier: Option[Double]):
-  def relativeMultiplier: Option[Double] = fixedRelativeMultiplier
-
+/** Numerical rank policy shared by every design and contrast diagnostic.
+  *
+  * The policy fixes one dimensionless relative tolerance `tau(m, n)`: a caller
+  * multiplier, or `max(m, n) * eps` by default. Every decision is a
+  * scale-invariant comparison against it:
+  *
+  *   - rank: a singular value of an `m x n` matrix counts iff it exceeds
+  *     `cutoff = tau(m, n) * sigmaMax`;
+  *   - degenerate columns: a column is constant when its centred norm is at
+  *     most `tau(rows, columns)` times its uncentred norm;
+  *   - row-space membership (contrast estimability, alias projector entries):
+  *     a unit direction is inside the row space when its component outside
+  *     the kept right singular vectors is at most `tau * sigmaMax / sigmaMinKept`,
+  *     the first-order uncertainty of the computed subspace;
+  *   - hypothesis rows: unit-scaled contrast rows are orthonormalized by SVD
+  *     with the same rank cutoff.
+  *
+  * Policies are values: two separately constructed equal policies are equal.
+  */
+final case class RankPolicy private (relativeMultiplier: Option[Double]):
   def label: String =
-    fixedRelativeMultiplier.fold("max-dimension-machine-epsilon")(value => s"relative=$value")
+    relativeMultiplier.fold("max-dimension-machine-epsilon")(value => s"relative=$value")
 
-  private[design] def cutoff(rows: Int, columns: Int, sigmaMax: Double): Double =
-    fixedRelativeMultiplier.getOrElse(math.max(rows, columns).toDouble * DesignDiagnostics.MachineEpsilon) * sigmaMax
+  /** Dimensionless tolerance `tau(rows, columns)`. */
+  def relativeTolerance(rows: Int, columns: Int): Double =
+    relativeMultiplier.getOrElse(math.max(rows, columns).toDouble * DesignDiagnostics.MachineEpsilon)
+
+  /** Absolute singular-value cutoff `tau(rows, columns) * sigmaMax`. */
+  def cutoff(rows: Int, columns: Int, sigmaMax: Double): Double =
+    relativeTolerance(rows, columns) * sigmaMax
 
 object RankPolicy:
   /** Scale-aware default: `max(rows, columns) * eps * sigmaMax`. */
@@ -88,8 +109,22 @@ enum DesignDiagnosticsError:
   case OverlappingBlocks(column: ColumnId)
   case InvalidRankMultiplier(value: Double)
   case NonFiniteValue(row: ScanIndex, column: ColumnId, value: Double)
+  case NonFiniteContrastWeight(column: ColumnId, value: Double)
+  case InsufficientResidualDof(rowCount: Int, numericalRank: Int)
+  case InvalidColumnBudget(maximumColumns: Int)
+  case ColumnBudgetExceeded(columnCount: Int, maximumColumns: Int)
+  case EmptyTaskColumns
+  case DuplicateTaskColumn(column: ColumnId)
+  case RankPolicyMismatch(labels: Vector[String])
+  case HypothesisDimensionMismatch(dimensions: Vector[Int])
+  case InvalidCosineSelection
+  case HighPassRowsDiffer
+  case HighPassColumnsMismatch
+  case HighPassRetainedColumnDiffers(column: ColumnId)
+  case HighPassContrastNotEstimable
+  case ResidualSigmaCountMismatch(runCount: Int, sigmaCount: Int)
+  case InvalidResidualSigma(run: RunIndex, value: Double)
   case NumericalFailure(detail: String)
-  case InsufficientResidualDof(rowCount: Int, columnCount: Int)
 
   def message: String =
     this match
@@ -101,8 +136,27 @@ enum DesignDiagnosticsError:
       case OverlappingBlocks(column) => s"diagnostic blocks overlap at column '${column.value}'"
       case InvalidRankMultiplier(value) => s"rank cutoff multiplier must be finite and positive, got $value"
       case NonFiniteValue(row, column, value) => s"design value at row ${row.oneBased}, column '${column.value}' is non-finite: $value"
+      case NonFiniteContrastWeight(column, value) => s"contrast weight for column '${column.value}' is non-finite: $value"
+      case InsufficientResidualDof(rowCount, numericalRank) =>
+        s"design has numerical rank $numericalRank for $rowCount selected scans and leaves no residual degrees of freedom"
+      case InvalidColumnBudget(maximumColumns) => s"column budget must be non-negative, got $maximumColumns"
+      case ColumnBudgetExceeded(columnCount, maximumColumns) =>
+        s"design has $columnCount columns and exceeds the configured budget $maximumColumns"
+      case EmptyTaskColumns => "concatenated task diagnostics require task columns"
+      case DuplicateTaskColumn(column) => s"concatenated task column '${column.value}' appears more than once"
+      case RankPolicyMismatch(labels) => s"combined diagnostics require one rank policy, got ${labels.mkString(", ")}"
+      case HypothesisDimensionMismatch(dimensions) =>
+        s"fixed-effects F runs disagree on hypothesis dimension: ${dimensions.mkString(", ")}"
+      case InvalidCosineSelection => "high-pass comparison requires unique explicitly selected cosine columns"
+      case HighPassRowsDiffer => "high-pass comparison requires the same selected rows"
+      case HighPassColumnsMismatch =>
+        "without-cosines columns must equal with-cosines columns minus the selected cosine columns"
+      case HighPassRetainedColumnDiffers(column) => s"retained high-pass design column '${column.value}' differs between designs"
+      case HighPassContrastNotEstimable =>
+        "high-pass contrast must be estimable with positive variance both with and without the selected cosine columns"
+      case ResidualSigmaCountMismatch(runCount, sigmaCount) => s"provide exactly one residual sigma per run: $runCount runs, $sigmaCount sigmas"
+      case InvalidResidualSigma(run, value) => s"residual sigma for run ${run.oneBased} must be finite and strictly positive, got $value"
       case NumericalFailure(detail) => detail
-      case InsufficientResidualDof(rowCount, columnCount) => s"design has $columnCount columns for $rowCount selected scans and leaves no residual degrees of freedom"
 
 /** Schema-bound, unwhitened OLS collinearity diagnostics.
   *
@@ -139,22 +193,72 @@ object DesignDiagnostics:
       selectedRows: Vector[ScanIndex],
       rankPolicy: RankPolicy
   ): Either[DesignDiagnosticsError, DesignDiagnosticsResult] =
+    val ids = schema.columnIds
     for
       _ <- validateRows(schema, selectedRows)
       _ <- validateBlocks(schema, blocks)
-      matrix = selectedMatrix(schema.matrix, selectedRows)
-      _ <- validateFinite(matrix, selectedRows, schema.columnIds)
-      standardized <- standardize(matrix)
+      matrix = selectedMatrix(schema.matrixValues, selectedRows)
+      _ <- firstNonFinite(matrix) match
+        case Some((row, column)) => Left(DesignDiagnosticsError.NonFiniteValue(selectedRows(row), ids(column), matrix(row, column)))
+        case None => Right(())
+      standardized <- standardize(matrix, rankPolicy)
       correlations <- DesignExports
-        .correlationMapEither(matrix, schema.columnNames, CorrelationMethod.Pearson, halfMatrix = false, absoluteLimits = true)
+        .correlationMapEither(Mat.unsafe(matrix.rows, matrix.cols, rowMajor(matrix)), schema.columnNames, CorrelationMethod.Pearson, halfMatrix = false, absoluteLimits = true)
         .left
         .map(error => DesignDiagnosticsError.NumericalFailure(error.message))
-      vif <- vifDiagnostics(schema.columnIds, standardized, rankPolicy)
-      blockR2 <- blockR2Diagnostics(schema.columnIds, blocks, standardized, rankPolicy)
-      joint <- jointDiagnostics(schema.columnIds, standardized, rankPolicy)
+      // One factorization per target serves both VIF and the joint fit.
+      joint <- traverse(ids.indices.toVector.filter(standardized.usable)): target =>
+        val predictors = ids.indices.filter(index => index != target && standardized.usable(index)).toVector
+        leastSquares(standardized.values, target, predictors, rankPolicy).map(fit => (target, predictors, fit))
+      blockR2 <- blockR2Diagnostics(ids, blocks, standardized, rankPolicy)
     yield
-      val projections = vif._2 ++ blockR2._2 ++ joint._2
-      DesignDiagnosticsResult(schema.fingerprint, selectedRows, rankPolicy, vif._1, blockR2._1, joint._1, projections, correlations)
+      val fits = joint.map((target, predictors, fit) => target -> (predictors, fit)).toMap
+      val vif = ids.indices.toVector.map: target =>
+        fits.get(target) match
+          case None => VifDiagnostic(ids(target), VifOutcome.NotApplicable("constant or zero-support column"))
+          case Some((_, fit)) => VifDiagnostic(ids(target), vifOutcome(fit))
+      val vifProjections = joint.map((target, predictors, fit) => projection(ids(target), ProjectionKind.Vif, predictors, fit))
+      val contributions = joint.flatMap: (target, predictors, fit) =>
+        val status = if fit.rank == predictors.length then CoefficientIdentifiability.Unique else CoefficientIdentifiability.MinNormNonUnique
+        predictors.indices.map(index => JointContribution(ids(target), ids(predictors(index)), fit.coefficients(index), status))
+      val jointProjections = joint.map((target, predictors, fit) => projection(ids(target), ProjectionKind.Joint, predictors, fit))
+      DesignDiagnosticsResult(
+        schema.fingerprint,
+        selectedRows,
+        rankPolicy,
+        vif,
+        blockR2._1,
+        contributions,
+        vifProjections ++ blockR2._2 ++ jointProjections,
+        correlations
+      )
+
+  /** Sequence `f` over `values`, stopping at the first failure. */
+  private[design] def traverse[A, B](values: Vector[A])(f: A => Either[DesignDiagnosticsError, B]): Either[DesignDiagnosticsError, Vector[B]] =
+    val out = Vector.newBuilder[B]
+    val iterator = values.iterator
+    var failure: Option[DesignDiagnosticsError] = None
+    while failure.isEmpty && iterator.hasNext do
+      f(iterator.next()) match
+        case Right(value) => out += value
+        case Left(error) => failure = Some(error)
+    failure.toLeft(out.result())
+
+  /** Overflow-safe Euclidean norm through Gale's scaled `nrm2` kernel. */
+  private[design] def norm(values: Array[Double]): Double =
+    DVec.tabulate(values.length)(values(_)).norm2
+
+  /** First non-finite entry as `(row, column)`. */
+  private[design] def firstNonFinite(matrix: DMat): Option[(Int, Int)] =
+    var row = 0
+    var found: Option[(Int, Int)] = None
+    while found.isEmpty && row < matrix.rows do
+      var column = 0
+      while found.isEmpty && column < matrix.cols do
+        if !matrix(row, column).isFinite then found = Some(row -> column)
+        column += 1
+      row += 1
+    found
 
   private final case class Standardized(values: DMat, usable: Vector[Boolean])
 
@@ -174,84 +278,67 @@ object DesignDiagnostics:
         blocks.iterator.flatMap(_.columns).find(column => !known.contains(column)) match
           case Some(column) => Left(DesignDiagnosticsError.UnknownColumn(column))
           case None =>
-            blocks.iterator.flatMap(_.columns).find { column =>
-              blocks.count(_.columns.contains(column)) > 1
-            } match
+            blocks.iterator.flatMap(_.columns).find(column => blocks.count(_.columns.contains(column)) > 1) match
               case Some(column) => Left(DesignDiagnosticsError.OverlappingBlocks(column))
               case None => Right(())
 
-  private def selectedMatrix(matrix: Mat, rows: Vector[ScanIndex]): Mat =
-    Mat.unsafe(rows.length, matrix.cols, Array.tabulate(rows.length * matrix.cols) { index =>
-      val row = index / matrix.cols
-      val column = index % matrix.cols
-      matrix(rows(row).oneBased - 1, column)
-    })
+  private def selectedMatrix(matrix: DMat, rows: Vector[ScanIndex]): DMat =
+    DMat.tabulate(rows.length, matrix.cols)((row, column) => matrix(rows(row).zeroBased, column))
 
-  private def validateFinite(matrix: Mat, rows: Vector[ScanIndex], ids: Vector[ColumnId]): Either[DesignDiagnosticsError, Unit] =
-    var index = 0
-    while index < matrix.data.length do
-      if !matrix.data(index).isFinite then
-        return Left(DesignDiagnosticsError.NonFiniteValue(rows(index / matrix.cols), ids(index % matrix.cols), matrix.data(index)))
-      index += 1
-    Right(())
+  private def rowMajor(matrix: DMat): Array[Double] =
+    val out = new Array[Double](matrix.rows * matrix.cols)
+    matrix.copyRowMajorTo(out)
+    out
 
-  private def standardize(matrix: Mat): Either[DesignDiagnosticsError, Standardized] =
+  /** Centre and unit-scale each column. A column is degenerate (constant or
+    * zero) when its centred norm is at most the rank policy's relative
+    * tolerance times its uncentred norm; this catches constants that are not
+    * exactly representable, whose centred norm is rounding noise.
+    */
+  private def standardize(matrix: DMat, policy: RankPolicy): Either[DesignDiagnosticsError, Standardized] =
+    val n = matrix.rows
+    val tolerance = policy.relativeTolerance(n, matrix.cols)
     val means = new Array[Double](matrix.cols)
     val scales = new Array[Double](matrix.cols)
     val usable = new Array[Boolean](matrix.cols)
+    val centred = new Array[Double](n)
+    var failure: Option[DesignDiagnosticsError] = None
     var column = 0
-    while column < matrix.cols do
+    while failure.isEmpty && column < matrix.cols do
       var row = 0
       var sum = 0.0
-      while row < matrix.rows do
+      while row < n do
         sum += matrix(row, column)
         row += 1
-      val mean = sum / matrix.rows.toDouble
-      means(column) = mean
+      val mean = sum / n.toDouble
       row = 0
-      var squared = 0.0
-      while row < matrix.rows do
-        val centered = matrix(row, column) - mean
-        squared += centered * centered
+      while row < n do
+        centred(row) = matrix(row, column) - mean
         row += 1
-      val scale = math.sqrt(squared)
-      if !mean.isFinite || !scale.isFinite then
-        return Left(DesignDiagnosticsError.NumericalFailure(s"standardization overflow in column ${column + 1}"))
+      val scale = norm(centred)
+      val magnitude = matrix.col(column).norm2
+      if !mean.isFinite || !scale.isFinite || !magnitude.isFinite then
+        failure = Some(DesignDiagnosticsError.NumericalFailure(s"standardization overflow in column ${column + 1}"))
+      means(column) = mean
       scales(column) = scale
-      usable(column) = scale > 0.0 && scale.isFinite
+      usable(column) = scale > tolerance * magnitude
       column += 1
-    Right(Standardized(
-      DMat.tabulate(matrix.rows, matrix.cols) { (row, column) =>
-        if usable(column) then (matrix(row, column) - means(column)) / scales(column) else 0.0
-      },
-      usable.toVector
-    ))
+    failure.toLeft(
+      Standardized(
+        DMat.tabulate(n, matrix.cols)((row, column) => if usable(column) then (matrix(row, column) - means(column)) / scales(column) else 0.0),
+        usable.toVector
+      )
+    )
 
-  private def vifDiagnostics(ids: Vector[ColumnId], standardized: Standardized, policy: RankPolicy): Either[DesignDiagnosticsError, (Vector[VifDiagnostic], Vector[ProjectionRank])] =
-    ids.indices.foldLeft[Either[DesignDiagnosticsError, (Vector[VifDiagnostic], Vector[ProjectionRank])]](Right(Vector.empty -> Vector.empty)) { (acc, target) =>
-      acc.flatMap { values =>
-        if !standardized.usable(target) then
-          Right((values._1 :+ VifDiagnostic(ids(target), VifOutcome.NotApplicable("constant or zero-support column"))) -> values._2)
-        else
-          val predictors = ids.indices.filter(index => index != target && standardized.usable(index)).toVector
-          leastSquares(standardized.values, target, predictors, policy).map { fit =>
-            val outcome =
-              if fit.residualNorm <= fit.cutoff then VifOutcome.Aliased
-              else
-                // `1 - R²` loses the small residual entirely for a nearly
-                // collinear but still estimable column.  The residual is
-                // already the orthogonal projection computed by the SVD, so
-                // form VIF directly as ||y||² / ||(I - P)x||².
-                val value = fit.targetNorm * fit.targetNorm / (fit.residualNorm * fit.residualNorm)
-                if value.isFinite then VifOutcome.Finite(value)
-                else VifOutcome.Aliased
-            (
-              values._1 :+ VifDiagnostic(ids(target), outcome),
-              values._2 :+ projection(ids(target), ProjectionKind.Vif, predictors, fit)
-            )
-          }
-      }
-    }
+  private def vifOutcome(fit: LeastSquares): VifOutcome =
+    if fit.residualNorm <= fit.cutoff then VifOutcome.Aliased
+    else
+      // `1 - R²` loses the small residual entirely for a nearly collinear but
+      // still estimable column. The residual is already the orthogonal
+      // projection computed by the SVD, so form VIF directly as
+      // ||y||² / ||(I - P)y||².
+      val value = fit.targetNorm * fit.targetNorm / (fit.residualNorm * fit.residualNorm)
+      if value.isFinite then VifOutcome.Finite(value) else VifOutcome.Aliased
 
   private def blockR2Diagnostics(
       ids: Vector[ColumnId],
@@ -259,108 +346,73 @@ object DesignDiagnostics:
       standardized: Standardized,
       policy: RankPolicy
   ): Either[DesignDiagnosticsError, (Vector[BlockR2Diagnostic], Vector[ProjectionRank])] =
-    ids.indices.foldLeft[Either[DesignDiagnosticsError, (Vector[BlockR2Diagnostic], Vector[ProjectionRank])]](Right(Vector.empty -> Vector.empty)) { (acc, target) =>
-      acc.flatMap { values =>
-        blocks.foldLeft[Either[DesignDiagnosticsError, (Vector[BlockR2Diagnostic], Vector[ProjectionRank])]](Right(values)) { (within, block) =>
-          within.flatMap { current =>
-            if !standardized.usable(target) then
-              Right((current._1 :+ BlockR2Diagnostic(ids(target), block.id, BlockR2Outcome.NotApplicable("constant or zero-support target"))) -> current._2)
-            else
-              val predictors = block.columns.flatMap(column => ids.indexOf(column) match
-                case index if index != target && standardized.usable(index) => Some(index)
-                case _ => None
-              )
-              leastSquares(standardized.values, target, predictors, policy).map { fit =>
-                val r2 = clamp01(1.0 - (fit.residualNorm * fit.residualNorm) / (fit.targetNorm * fit.targetNorm))
-                (
-                  current._1 :+ BlockR2Diagnostic(ids(target), block.id, BlockR2Outcome.Value(r2)),
-                  current._2 :+ projection(ids(target), ProjectionKind.BlockR2(block.id), predictors, fit)
-                )
-              }
-          }
-        }
-      }
-    }
+    val pairs = for
+      target <- ids.indices.toVector
+      block <- blocks
+    yield target -> block
+    traverse(pairs): (target, block) =>
+      if !standardized.usable(target) then
+        Right(BlockR2Diagnostic(ids(target), block.id, BlockR2Outcome.NotApplicable("constant or zero-support target")) -> None)
+      else
+        val predictors = block.columns.flatMap: column =>
+          val index = ids.indexOf(column)
+          if index != target && standardized.usable(index) then Some(index) else None
+        leastSquares(standardized.values, target, predictors, policy).map: fit =>
+          val r2 = clamp01(1.0 - (fit.residualNorm * fit.residualNorm) / (fit.targetNorm * fit.targetNorm))
+          BlockR2Diagnostic(ids(target), block.id, BlockR2Outcome.Value(r2)) -> Some(projection(ids(target), ProjectionKind.BlockR2(block.id), predictors, fit))
+    .map(values => values.map(_._1) -> values.flatMap(_._2))
 
-  private def jointDiagnostics(ids: Vector[ColumnId], standardized: Standardized, policy: RankPolicy): Either[DesignDiagnosticsError, (Vector[JointContribution], Vector[ProjectionRank])] =
-    ids.indices.foldLeft[Either[DesignDiagnosticsError, (Vector[JointContribution], Vector[ProjectionRank])]](Right(Vector.empty -> Vector.empty)) { (acc, target) =>
-      acc.flatMap { values =>
-        if !standardized.usable(target) then Right(values)
-        else
-          val predictors = ids.indices.filter(index => index != target && standardized.usable(index)).toVector
-          leastSquares(standardized.values, target, predictors, policy).map { fit =>
-            val status = if fit.rank == predictors.length then CoefficientIdentifiability.Unique else CoefficientIdentifiability.MinNormNonUnique
-            (
-              values._1 ++ predictors.zip(fit.coefficients).map { (predictor, coefficient) =>
-                JointContribution(ids(target), ids(predictor), coefficient, status)
-              },
-              values._2 :+ projection(ids(target), ProjectionKind.Joint, predictors, fit)
-            )
-          }
-      }
-    }
+  private final case class LeastSquares(coefficients: Array[Double], targetNorm: Double, residualNorm: Double, rank: Int, cutoff: Double)
 
-  private final case class LeastSquares(coefficients: Vector[Double], targetNorm: Double, residualNorm: Double, rank: Int, cutoff: Double)
-
+  /** Minimum-norm least squares through Gale's economy SVD with the policy's
+    * cutoff. `z = U_k' y` is formed once (O(nk)); coefficients are
+    * `V_k S_k^-1 z`; the residual `y - U_k z` is projected through `U` rather
+    * than rebuilt from `X beta`, which would make a small residual the
+    * difference of two nearly equal vectors.
+    */
   private def leastSquares(matrix: DMat, target: Int, predictors: Vector[Int], policy: RankPolicy): Either[DesignDiagnosticsError, LeastSquares] =
-    val y = matrix.col(target)
-    if predictors.isEmpty then
-      val targetNorm = stableNorm((0 until matrix.rows).map(y.apply))
-      Right(LeastSquares(Vector.empty, targetNorm, targetNorm, 0, 0.0))
+    val n = matrix.rows
+    val y = new Array[Double](n)
+    var row = 0
+    while row < n do
+      y(row) = matrix(row, target)
+      row += 1
+    val targetNorm = norm(y)
+    if predictors.isEmpty then Right(LeastSquares(Array.emptyDoubleArray, targetNorm, targetNorm, 0, 0.0))
     else
-      val x = DMat.tabulate(matrix.rows, predictors.length)((row, column) => matrix(row, predictors(column)))
-      x.svd.left.map(error => DesignDiagnosticsError.NumericalFailure(error.toString)).map { svd =>
+      val x = DMat.tabulate(n, predictors.length)((r, column) => matrix(r, predictors(column)))
+      x.svd.left.map(error => DesignDiagnosticsError.NumericalFailure(String.valueOf(error.getMessage))).map: svd =>
         val sigmaMax = if svd.size == 0 then 0.0 else svd.singularValues(0)
         val cutoff = policy.cutoff(x.rows, x.cols, sigmaMax)
-        val kept = (0 until svd.size).filter(index => svd.singularValues(index) > cutoff).toVector
-        val coefficients = predictors.indices.map { predictor =>
-          var value = 0.0
-          kept.foreach { component =>
-            var dot = 0.0
-            var row = 0
-            while row < x.rows do
-              dot += svd.u(row, component) * y(row)
-              row += 1
-            value += svd.vt(component, predictor) * dot / svd.singularValues(component)
-          }
-          value
-        }.toVector
-        // Project through U rather than rebuilding X beta.  The latter makes
-        // a small residual the difference of two nearly equal vectors.
-        val residual = Array.tabulate(x.rows) { row =>
-          var projected = 0.0
-          kept.foreach { component =>
-            var dot = 0.0
-            var sourceRow = 0
-            while sourceRow < x.rows do
-              dot += svd.u(sourceRow, component) * y(sourceRow)
-              sourceRow += 1
-            projected += svd.u(row, component) * dot
-          }
-          y(row) - projected
-        }
-        LeastSquares(coefficients, stableNorm((0 until matrix.rows).map(y.apply)), stableNorm(residual), kept.length, cutoff)
-      }
+        var kept = 0
+        while kept < svd.size && svd.singularValues(kept) > cutoff do kept += 1
+        val z = new Array[Double](kept)
+        var component = 0
+        while component < kept do
+          var dot = 0.0
+          var r = 0
+          while r < n do
+            dot += svd.u(r, component) * y(r)
+            r += 1
+          z(component) = dot
+          component += 1
+        val coefficients = new Array[Double](predictors.length)
+        val residual = y.clone()
+        component = 0
+        while component < kept do
+          val scaled = z(component) / svd.singularValues(component)
+          var predictor = 0
+          while predictor < predictors.length do
+            coefficients(predictor) += svd.vt(component, predictor) * scaled
+            predictor += 1
+          var r = 0
+          while r < n do
+            residual(r) -= svd.u(r, component) * z(component)
+            r += 1
+          component += 1
+        LeastSquares(coefficients, targetNorm, norm(residual), kept, cutoff)
 
   private def projection(target: ColumnId, kind: ProjectionKind, predictors: Vector[Int], fit: LeastSquares): ProjectionRank =
     ProjectionRank(target, kind, predictors.length, fit.cutoff, fit.rank)
 
   private def clamp01(value: Double): Double = math.max(0.0, math.min(1.0, value))
-
-  /** Blue's scaled sum of squares avoids overflow and underflow in diagnostic
-    * magnitudes while preserving an exact zero for a zero vector. */
-  private def stableNorm(values: IterableOnce[Double]): Double =
-    var scale = 0.0
-    var sum = 1.0
-    values.iterator.foreach { value =>
-      val absolute = math.abs(value)
-      if absolute != 0.0 then
-        if scale < absolute then
-          val ratio = if scale == 0.0 then 0.0 else scale / absolute
-          sum = 1.0 + sum * ratio * ratio
-          scale = absolute
-        else
-          val ratio = absolute / scale
-          sum += ratio * ratio
-    }
-    if scale == 0.0 then 0.0 else scale * math.sqrt(sum)
