@@ -1,0 +1,13 @@
+Get "http://%2FUsers%2Fbbuchsbaum%2F.docker%2Frun%2Fdocker.sock/v1.47/images/sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18/json": context canceled
+Traceback (most recent call last):
+  File "/private/tmp/scalafim-p707-demo1-20260930/tools/transform/generate_demo1_native_oracle.py", line 291, in <module>
+    main()
+  File "/private/tmp/scalafim-p707-demo1-20260930/tools/transform/generate_demo1_native_oracle.py", line 166, in main
+    image = json.loads(subprocess.check_output(["docker", "image", "inspect", args.image]))[0]
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bbuchsbaum/.local/share/uv/python/cpython-3.12.11-macos-aarch64-none/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/bbuchsbaum/.local/share/uv/python/cpython-3.12.11-macos-aarch64-none/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['docker', 'image', 'inspect', 'sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18']' returned non-zero exit status 1.

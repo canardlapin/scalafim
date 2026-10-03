@@ -155,8 +155,8 @@ final case class BasisElementRef(
 
   def canonical: String =
     val rolePart = role.fold("")(value => "|" + encode(value.stableLabel))
-    val elementPart = elementId.fold("")(value => s"|element=${encode(value.value)}")
-    s"basis(${encode(basisId)}|${index.oneBased}$rolePart$elementPart)"
+    val identityPart = elementId.fold(encode(basisId))(value => s"element=${encode(value.value)}")
+    s"basis($identityPart|${index.oneBased}$rolePart)"
 
   private def encode(value: String): String =
     value
@@ -415,6 +415,11 @@ enum MissingValuePolicy:
       case DropFromTerm          => "drop-from-term"
       case ImputeConstant(value) => s"impute-constant($value)"
 
+  def canonical: String =
+    this match
+      case ImputeConstant(value) => s"impute-constant:${java.lang.Double.doubleToLongBits(value)}"
+      case _ => label
+
   def validate: Either[DesignError, Unit] =
     this match
       case ImputeConstant(value) if !value.isFinite =>
@@ -498,7 +503,7 @@ final case class CenteringGroupReceipt(
   def canonical: String =
     val rows = eventIndices.sorted.mkString(",")
     val finite = finiteEventIndices.sorted.mkString(",")
-    s"$key|rows=$rows|finite=$finite|center=${center.fold("")(_.toString)}|outcome=${outcome.label}"
+    s"$key|rows=$rows|finite=$finite|center=${center.fold("")(value => java.lang.Double.doubleToLongBits(value).toString)}|outcome=${outcome.label}"
 
 /** Evidence for one centered continuous modulator. */
 final case class CenteringReceipt(
@@ -678,21 +683,24 @@ final case class DesignAudit(
         val pivots = preview.pivotOrder.map(_.value).mkString(",")
         val independent = preview.independentColumns.map(_.value).mkString(",")
         val aliased = preview.aliasedColumns.map(_.value).mkString(",")
-        val diagonal = preview.diagonalR.mkString(",")
-        s"${preview.method}:${preview.rows}:${preview.columns}:${preview.numericalRank}:${preview.toleranceConvention}:${preview.tolerance}:" +
+        val diagonal = preview.diagonalR.map(java.lang.Double.doubleToLongBits).mkString(",")
+        s"${preview.method}:${preview.rows}:${preview.columns}:${preview.numericalRank}:${preview.toleranceConvention}:${java.lang.Double.doubleToLongBits(preview.tolerance)}:" +
           s"pivots=$pivots:independent=$independent:aliased=$aliased:diagonal=$diagonal:" +
-          s"condition=${preview.conditionEstimate.fold("")(_.toString)}"
+          s"condition=${preview.conditionEstimate.fold("")(value => java.lang.Double.doubleToLongBits(value).toString)}"
       case RankPreview.Unavailable(rows, columns, reason) =>
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
     s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
 
-/** A stable, cross-platform identity for a compiled matrix and its semantics. */
+/** An identity of exact matrix contents and their semantics, encoded identically
+  * on JVM and Scala.js. Platform computations can produce different value bits;
+  * such numerical snapshots deliberately retain different fingerprints.
+  */
 final case class DesignFingerprint private (value: String, canonicalEncoding: String)
 
 object DesignFingerprint:
-  private val schemaVersion = "design-schema/v1"
+  private val schemaVersion = "design-schema/v2"
 
   def from(
       matrix: Mat,

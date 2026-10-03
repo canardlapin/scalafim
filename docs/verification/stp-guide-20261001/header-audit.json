@@ -1,0 +1,21 @@
+{
+  "nibabel": "5.4.2",
+  "numpy": "2.5.3",
+  "inputs": [
+    {
+      "file": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/freesurfer_linear/movable.nii",
+      "sha256": "0f06e9b94d4e70fa40a5e3ec997153c4099e5f54a536c08f0ed7f4d0f8fa5160",
+      "qform_code": 1,
+      "sform_code": 1,
+      "maximum_form_difference": 1.835520802018209e-08
+    },
+    {
+      "file": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/freesurfer_linear/reference.nii",
+      "sha256": "999f7796df9d21201accabbb4deed7b329a41b71fbf3401ebf2bb718da13597c",
+      "qform_code": 1,
+      "sform_code": 1,
+      "maximum_form_difference": 4.358165206497233e-08
+    }
+  ],
+  "agreement_limit_mm": 1e-05
+}

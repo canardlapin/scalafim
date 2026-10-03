@@ -1,0 +1,78 @@
+{
+  "schema": "scalafim-fsl-real-source/v1",
+  "subject": {
+    "repository": "https://github.com/OpenNeuroDerivatives/ds002748-fmriprep",
+    "commit": "1d8407e467d1af0ac8933c0539bbbb0168badab6",
+    "license": "CC0",
+    "dataset": "ds002748 v1.0.5 sub-01 task-rest fMRIPrep21.0.2"
+  },
+  "template": {
+    "repository": "https://github.com/templateflow/tpl-MNI152NLin2009cAsym",
+    "commit": "15d7c02160f79f5218d2545b4febebeecc11531d",
+    "license": "MNI/Collins permission licence, copyright1993-2004; notice in template-LICENSE",
+    "identifier": "MNI152NLin2009cAsym res-02"
+  },
+  "assets": {
+    "standard.nii.gz": {
+      "size": 1763084,
+      "sha256": "7c4e551ae8150ac1f468595bd62074aa15aed747cd334fce6d177182972b6220",
+      "md5": "04e6e6eae189c060ba17478e097c6a24",
+      "annex_key": "MD5E-s1763084--04e6e6eae189c060ba17478e097c6a24.nii.gz",
+      "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_T1w.nii.gz"
+    },
+    "standard_mask.nii.gz": {
+      "size": 29576,
+      "sha256": "7a71e9ce99d2af7b68bb5c163908c8e25f4c7a198806fb0893a5c1759b480ecd",
+      "md5": "5c1bbc73a04d9dd5b84330d712ffd760",
+      "annex_key": "MD5E-s29576--5c1bbc73a04d9dd5b84330d712ffd760.nii.gz",
+      "url": "https://templateflow.s3.amazonaws.com/tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_res-02_desc-brain_mask.nii.gz"
+    },
+    "example_func.nii.gz": {
+      "size": 286010,
+      "md5": "8cf0686a92511e57cbc310a8f4e45db7",
+      "sha256": "4ef3fb341cd8452223528b5e115e674ec1582e5c3b311a4fbc5e2524472f7e36",
+      "git_blob": "5d3be83c6add9bb26298700fc405689592634b71",
+      "upstream_name": "sub-01_task-rest_boldref.nii.gz",
+      "path": "sub-01/func/sub-01_task-rest_boldref.nii.gz",
+      "target": "../../.git/annex/objects/kW/fz/MD5E-s286010--8cf0686a92511e57cbc310a8f4e45db7.nii.gz/MD5E-s286010--8cf0686a92511e57cbc310a8f4e45db7.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/func/sub-01_task-rest_boldref.nii.gz"
+    },
+    "highres.nii.gz": {
+      "size": 7212866,
+      "md5": "cafcf9dbf15d3a8263a33dfc36e423e2",
+      "sha256": "c3348f1124001ebfdd7c7f9b7b9aa99af106ee86c7839698c7d7ae5e9b467c98",
+      "git_blob": "61df182b25842f311eaabfe7b8d07dfbc58ecfa2",
+      "upstream_name": "sub-01_desc-preproc_T1w.nii.gz",
+      "path": "sub-01/anat/sub-01_desc-preproc_T1w.nii.gz",
+      "target": "../../.git/annex/objects/VJ/3f/MD5E-s7212866--cafcf9dbf15d3a8263a33dfc36e423e2.nii.gz/MD5E-s7212866--cafcf9dbf15d3a8263a33dfc36e423e2.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/anat/sub-01_desc-preproc_T1w.nii.gz"
+    },
+    "example_func_mask.nii.gz": {
+      "annex_key": "MD5E-s4019--d49b789381afb1b80b2bc1bcb57e71f2.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/func/sub-01_task-rest_desc-brain_mask.nii.gz",
+      "upstream_path": "sub-01/func/sub-01_task-rest_desc-brain_mask.nii.gz",
+      "size": 4019,
+      "sha256": "9e7e6e232ccd52e66f1fd553ad1b9ca6fb7a45a4aea439abe64567bd84e9406c"
+    },
+    "highres_mask.nii.gz": {
+      "annex_key": "MD5E-s68316--04c02d3c49ff6a90d799cc4c7bf33357.nii.gz",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/sub-01/anat/sub-01_desc-brain_mask.nii.gz",
+      "upstream_path": "sub-01/anat/sub-01_desc-brain_mask.nii.gz",
+      "size": 68316,
+      "sha256": "2eb1d8772e9c1eaa9d92731bb6e964f8d8837ac53b08532ff4bb4b9c8733459e"
+    },
+    "template-LICENSE": {
+      "size": 682,
+      "sha256": "46e280fe1a24c6f37feef2445ed288435e0ad063504a06030b206b12fdd2629d"
+    },
+    "template_description.json": {
+      "size": 1551,
+      "sha256": "6b1b199ecc5fce65967e820f9a6a73247103ed6aa47b9df904d85a0d0c817571"
+    },
+    "dataset_description.json": {
+      "size": 659,
+      "sha256": "b21ca3e4fdc7f9f78508b024f97635aa4a0a833e3e52970074b46da189d246a5",
+      "url": "https://raw.githubusercontent.com/OpenNeuroDerivatives/ds002748-fmriprep/1d8407e467d1af0ac8933c0539bbbb0168badab6/dataset_description.json"
+    }
+  }
+}

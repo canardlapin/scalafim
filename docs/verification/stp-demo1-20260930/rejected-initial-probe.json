@@ -1,0 +1,11 @@
+{
+  "status": "rejected",
+  "stage": "native point/image coordinate consistency",
+  "measured_maximum_mm": 3.614121112605062e-06,
+  "unchanged_acceptance_budget_mm": 1e-06,
+  "diagnosis": "Rebuilt coordinate-ramp NIfTI geometry used rounded sform scales and reconstructed quaternion bits instead of preserving the source header and the ITK normalized-sform-directions times pixdim spacing. Also derive target queries from actual float32 stored sform entries.",
+  "correction": "Preserve original coordinate-control header bits, use ITK source placement and stored target affine. No tolerance relaxation or frozen-query exclusion.",
+  "archived_recipe": "provenance/first-generator.py",
+  "archived_recipe_sha256": "ea9cc525e75e58438d5203c3d922c3b09ab83961924643b89a5f0b9fc5973de7",
+  "evidence_limit": "Initial temporary output arrays were removed by TemporaryDirectory cleanup. This records the observed rejected measurement and archived recipe, not a retained raw initial output. Final native scripts, logs and reference bytes are retained in the fixture."
+}

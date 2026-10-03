@@ -1,0 +1,66 @@
+{
+  "schema": "scalafim-fsl-chain-native/v1",
+  "image_id": "sha256:3ffbceee2ab631d765c6e2d1d90eedc9f31a33e8c555ec08e85ef6d65c66c1e2",
+  "generator": "tools/transform/generate_fsl_chain_native_oracle.py",
+  "numpy_version": "2.4.3",
+  "nibabel_version": "5.4.2",
+  "input_sha256": {
+    "func_coord1.nii.gz": "8f1084c64ebe633a70fccf0c71c03f8f287fd7533b9a10c13e51e2a11aa92941",
+    "func.nii.gz": "bd96db2c33f77d389521b0852b8d966c5f755df2a0c18cf6c329f9d0639d22c3",
+    "example_func2highres.mat": "52b3b6ec38f25062e6d0aff6bb9ca8f425e6a03d8ea9f6df83ec7b6d62b9d80f",
+    "target.nii.gz": "e6bc6b7db7243e671abe1f8ef8551915b6a38443880bbb04bf013239baacb1bf",
+    "func_coord0.nii.gz": "a448c6c71aed3ad433cd994b03b1c943971ccd7dd92086085c1953dbfc060931",
+    "source.nii.gz": "ab547858a0fced19ad4f973d0547f0d23c78c2d9399be015b98e6219c7301f60",
+    "coef.nii.gz": "cf242ff3720a4fb22c7458f33a5f489bfe3ab48e36b787ad2dbca8056519993c",
+    "func_coord2.nii.gz": "a54bdf4dac711a495ffbb5489d0b1be5153c7e53dbd0be31085b451600572382",
+    "func_support.nii.gz": "7ff6d08eaa0ea4555fa1833ab05e33e75e1988bd55ae317dc80e5706b55b2f40"
+  },
+  "fixture_sha256": {
+    "chain_abs.nii.gz": "080179eb8830f11a0f09f1b6577f525c19eacdea55493ab0ae45c7e823d182a2",
+    "coef.nii.gz": "cf242ff3720a4fb22c7458f33a5f489bfe3ab48e36b787ad2dbca8056519993c",
+    "commands.json": "ef9f6482d24f73c76e4368b7bad5cf28a258c8738807571163cc46221f2d2e94",
+    "composed_coord0.nii.gz": "4c524146d83ad632391a48497f3d952f26f23600feac98d112fdcef81069960f",
+    "composed_coord1.nii.gz": "45c5481f822148fdfa852f27b817cbb5dfdef5a29844bf6c0d641a388e9ba923",
+    "composed_coord2.nii.gz": "77ed2664a904d0497f7a4c00f9d2eecbc7c677cf6cae610cb384ef15b71f4c65",
+    "composed_phantom.nii.gz": "415e4b4b6a53211492519dd5671ca0c099efe864eb1d74309484c704047275d6",
+    "composed_support.nii.gz": "182659ecc852145af23be1039d825562b6b86d3b510c0af194af2e60d682d07a",
+    "example_func2highres.mat": "52b3b6ec38f25062e6d0aff6bb9ca8f425e6a03d8ea9f6df83ec7b6d62b9d80f",
+    "flirt_coord0.nii.gz": "8990f99cedcbb4fed9e3c4e970429889499fb079e4bb2428854b4ceb00683605",
+    "flirt_coord1.nii.gz": "1968f09208cfe85c4b5573a78daa7346bc9e6307d1c59a7b7b7e9f338986a8a9",
+    "flirt_coord2.nii.gz": "71a8579e14450f678f5ffa4bf88eb720e9c83a1417e7aab1279ae2d0ab45e7b6",
+    "flirt_phantom.nii.gz": "b0bda877df763c9afa52a74c8b4382016995ecf62c0a1ee96ce27a9223548feb",
+    "flirt_support.nii.gz": "c0f622802aac014a8732dadaceefc35dbd10012b5476b849d786402ca0157639",
+    "func.nii.gz": "bd96db2c33f77d389521b0852b8d966c5f755df2a0c18cf6c329f9d0639d22c3",
+    "func_coord0.nii.gz": "a448c6c71aed3ad433cd994b03b1c943971ccd7dd92086085c1953dbfc060931",
+    "func_coord1.nii.gz": "8f1084c64ebe633a70fccf0c71c03f8f287fd7533b9a10c13e51e2a11aa92941",
+    "func_coord2.nii.gz": "a54bdf4dac711a495ffbb5489d0b1be5153c7e53dbd0be31085b451600572382",
+    "func_support.nii.gz": "7ff6d08eaa0ea4555fa1833ab05e33e75e1988bd55ae317dc80e5706b55b2f40",
+    "premat_coord0.nii.gz": "58ad51fa29e9fa1fd678735746b124177327b9d2536de1983024dc50664a7680",
+    "premat_coord1.nii.gz": "a47502332380c40bc7d79e24864090b78dd36ac32846bf6c9f615afdab27172b",
+    "premat_coord2.nii.gz": "db4413e121d4d3ee90caa21bb8869c2b6c84f80e355bc594cbc78ab5102c99c5",
+    "premat_phantom.nii.gz": "afbe13a3e0dcc4eb562a9ca16bdc616ec0f18ef14a8c962aefc72d3af85749cf",
+    "premat_support.nii.gz": "182659ecc852145af23be1039d825562b6b86d3b510c0af194af2e60d682d07a",
+    "source.nii.gz": "ab547858a0fced19ad4f973d0547f0d23c78c2d9399be015b98e6219c7301f60",
+    "target.nii.gz": "e6bc6b7db7243e671abe1f8ef8551915b6a38443880bbb04bf013239baacb1bf"
+  },
+  "command_count": 16,
+  "native_route_comparisons": {
+    "coord0": {
+      "count": 1188,
+      "maximum_absolute_difference": 8.106231689453125e-06
+    },
+    "coord1": {
+      "count": 1188,
+      "maximum_absolute_difference": 7.62939453125e-06
+    },
+    "coord2": {
+      "count": 1188,
+      "maximum_absolute_difference": 7.3909759521484375e-06
+    },
+    "phantom": {
+      "count": 1188,
+      "maximum_absolute_difference": 1.52587890625e-05
+    }
+  },
+  "scope": "Exact existing synthetic functional grid and declared FLIRT registration followed by the frozen FNIRT coefficient case. No new registration fit or real-subject qualification. Scala numerical acceptance is separate from command success."
+}

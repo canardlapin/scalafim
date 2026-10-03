@@ -1,0 +1,846 @@
+{
+  "base_commit": "9c656bc79254be9142a8b605d0d4e404b410bd1b",
+  "checks": [
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/affine.mat",
+      "expected": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41",
+      "actual": "1dbc58cbd4c656178270a2e894e100bb5480bb95c3f2bfac3146af98fddb6a41"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/euler.mat",
+      "expected": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e",
+      "actual": "d9cb6882d71e508d784e96b779bcdba9fef6db819f437932d79cefdc556f400e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/euler_zyx.mat",
+      "expected": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611",
+      "actual": "b04704f6f5aab84c0e1ad7c962483e03ccaf1c336eba6f9f607b3b6db3378611"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/fixed.nii.gz",
+      "expected": "a943c1f2a73243dddd4d14468e60723d241737222040f25ad9c412b119334ba4",
+      "actual": "a943c1f2a73243dddd4d14468e60723d241737222040f25ad9c412b119334ba4"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/moving.nii.gz",
+      "expected": "8d91c63cff27a7fa037b9fd34dd259194a69e9a6a7ce2bf5683b1a57b42104e1",
+      "actual": "8d91c63cff27a7fa037b9fd34dd259194a69e9a6a7ce2bf5683b1a57b42104e1"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/native.log",
+      "expected": "853d48b07391b5d51a7a83a266c02da36f20d21c954b326165607cdba0030a5d",
+      "actual": "853d48b07391b5d51a7a83a266c02da36f20d21c954b326165607cdba0030a5d"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/points.tsv",
+      "expected": "064bbf54b68d0ceb08944173b6832aae0d41e46a36e452a415699cd371b1b6df",
+      "actual": "064bbf54b68d0ceb08944173b6832aae0d41e46a36e452a415699cd371b1b6df"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/queries.csv",
+      "expected": "7fd3d4b797e739c9e2d744bd8299c94d255dda66168528d49d5f7110b01a0b49",
+      "actual": "7fd3d4b797e739c9e2d744bd8299c94d255dda66168528d49d5f7110b01a0b49"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/scale_skew_versor.mat",
+      "expected": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e",
+      "actual": "438cd122dd9463a22921f32f7f2a2f229106b64a4175ce82088c79fb497f1c8e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/similarity.mat",
+      "expected": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985",
+      "actual": "6b5ac2fe2ad41215fbbc513cb216898b74f50de713616c69ef1828d8eeba2985"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_0InverseWarp.nii.gz",
+      "expected": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302",
+      "actual": "e87d6af9108bad6cc27507eabb063946ec40f78d775a5e8b02baec15a159e302"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_0Warp.nii.gz",
+      "expected": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7",
+      "actual": "372f0a7534981370d00cca5bc75de97c73888031ad8ca186b13ef490e08a47d7"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.components.txt",
+      "expected": "021f3acd0cf5440973c4fc33b315c863644b0c50b1a161fa1dfbdcce619f2560",
+      "actual": "021f3acd0cf5440973c4fc33b315c863644b0c50b1a161fa1dfbdcce619f2560"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_Composite.h5",
+      "expected": "134a9c45c3cd1a2a8805b4357f8cbdc89d2d6adf66ec27869c24c57182bad0f4",
+      "actual": "134a9c45c3cd1a2a8805b4357f8cbdc89d2d6adf66ec27869c24c57182bad0f4"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.components.txt",
+      "expected": "06a63af2fae61808e6bf72b4bc3ad2034bc6455a316f38b10aa230acd429b04a",
+      "actual": "06a63af2fae61808e6bf72b4bc3ad2034bc6455a316f38b10aa230acd429b04a"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/syn_InverseComposite.h5",
+      "expected": "b3e0591214f3d792a7be34b40bf61d78ae7affe0cef0b8864205ad33cfddf397",
+      "actual": "b3e0591214f3d792a7be34b40bf61d78ae7affe0cef0b8864205ad33cfddf397"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/ants_native/versor_rigid.mat",
+      "expected": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f",
+      "actual": "c2aef01ee857169baaf8cdf1065a944b4816ce4e3e33bcec68b0bebd6849a17f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord0.nii.gz",
+      "expected": "7a93e03d18ed87a1e8182b2c75e4a6dbe149ead890649e5c7152388dab35b851",
+      "actual": "7a93e03d18ed87a1e8182b2c75e4a6dbe149ead890649e5c7152388dab35b851"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord1.nii.gz",
+      "expected": "968967c299b51d1b4d0f4609190f0be870f5bb1a19975f155429ce2d1fbbb4e2",
+      "actual": "968967c299b51d1b4d0f4609190f0be870f5bb1a19975f155429ce2d1fbbb4e2"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_coord2.nii.gz",
+      "expected": "5cc336e5cd430b461aaf875a081ad2c53553ff1327fa437cd73f90d28c445418",
+      "actual": "5cc336e5cd430b461aaf875a081ad2c53553ff1327fa437cd73f90d28c445418"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_field_aff.nii.gz",
+      "expected": "3c1aef7c79f974251d9481f9a64dfe3a6e8a4b37e4c1716c993bac45203104b5",
+      "actual": "3c1aef7c79f974251d9481f9a64dfe3a6e8a4b37e4c1716c993bac45203104b5"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_field_noaff.nii.gz",
+      "expected": "8521b3a0b78f7114ab37160a2a40363bf06707d76685b32dfb06d158428c4655",
+      "actual": "8521b3a0b78f7114ab37160a2a40363bf06707d76685b32dfb06d158428c4655"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_jac.nii.gz",
+      "expected": "04379bcefd3c4c55d7f19ec22bb91b628098577789cb4b36486384e5f151cb72",
+      "actual": "04379bcefd3c4c55d7f19ec22bb91b628098577789cb4b36486384e5f151cb72"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_aff_support.nii.gz",
+      "expected": "07e5263449358e68d5d246076ffe8d9e27a9b7806f5bf06cbcde397366f3d56d",
+      "actual": "07e5263449358e68d5d246076ffe8d9e27a9b7806f5bf06cbcde397366f3d56d"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord0.nii.gz",
+      "expected": "f11440dcc896001c40c156225637b0f76f65e43fc8acb9aa1fb538b159627eda",
+      "actual": "f11440dcc896001c40c156225637b0f76f65e43fc8acb9aa1fb538b159627eda"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord1.nii.gz",
+      "expected": "c239e730039df270246c5bdc9ff6ce9a7a980ac6b7803718692c43e2015aa0ba",
+      "actual": "c239e730039df270246c5bdc9ff6ce9a7a980ac6b7803718692c43e2015aa0ba"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_coord2.nii.gz",
+      "expected": "3a515ccd054d9de389b8bfd5e0afff558e585609a517f9a13a6662f7aa4b4bb4",
+      "actual": "3a515ccd054d9de389b8bfd5e0afff558e585609a517f9a13a6662f7aa4b4bb4"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_field_aff.nii.gz",
+      "expected": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+      "actual": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_field_noaff.nii.gz",
+      "expected": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd",
+      "actual": "21c05d80a16dcd818b7b1dd76dad40d216c1337b760e826772c735933b0bd0dd"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_jac.nii.gz",
+      "expected": "f9b56a404c3f2444041bf8372d6314719563f47506b6341db61fd2030687786b",
+      "actual": "f9b56a404c3f2444041bf8372d6314719563f47506b6341db61fd2030687786b"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refleft_noaff_support.nii.gz",
+      "expected": "8078324a1f5156d59d60c6738680f4aa5a777c4c5beb4676faec8184522f1c2f",
+      "actual": "8078324a1f5156d59d60c6738680f4aa5a777c4c5beb4676faec8184522f1c2f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord0.nii.gz",
+      "expected": "e670e34646cdf6152394b3a52e56e0a15901892ca2f61bcec8c8cd41cd5c300e",
+      "actual": "e670e34646cdf6152394b3a52e56e0a15901892ca2f61bcec8c8cd41cd5c300e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord1.nii.gz",
+      "expected": "3e2314d3f07bbe6506df51ff95cff92bfc7d51ce49091f3269906a00458aa17e",
+      "actual": "3e2314d3f07bbe6506df51ff95cff92bfc7d51ce49091f3269906a00458aa17e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_coord2.nii.gz",
+      "expected": "fe8b34ce3def6aca21e19a68cf04a5149c565b5b056e096a9edd8dbbe8313c0e",
+      "actual": "fe8b34ce3def6aca21e19a68cf04a5149c565b5b056e096a9edd8dbbe8313c0e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_field_aff.nii.gz",
+      "expected": "76f058a494b0215afebc495ac196bfb8b47afa3032d8ec374cedf52971127f45",
+      "actual": "76f058a494b0215afebc495ac196bfb8b47afa3032d8ec374cedf52971127f45"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_field_noaff.nii.gz",
+      "expected": "48b5a8263bf3d717b560c62f641ce4e46eae87964ec0be775912d8f0199f9b85",
+      "actual": "48b5a8263bf3d717b560c62f641ce4e46eae87964ec0be775912d8f0199f9b85"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_jac.nii.gz",
+      "expected": "1734246100e1027a6c38755db4cbe5f3432894d5150062854e0a7f794e1c2820",
+      "actual": "1734246100e1027a6c38755db4cbe5f3432894d5150062854e0a7f794e1c2820"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord0.nii.gz",
+      "expected": "19b399a3f2b50663d5853c34c715fefa4053601adec59a85c8591f68792fef9d",
+      "actual": "19b399a3f2b50663d5853c34c715fefa4053601adec59a85c8591f68792fef9d"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord1.nii.gz",
+      "expected": "8cae638753ffdaa32ae1ddad07d7bc09462ad1664ea1e849cddfa63787cf574a",
+      "actual": "8cae638753ffdaa32ae1ddad07d7bc09462ad1664ea1e849cddfa63787cf574a"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_coord2.nii.gz",
+      "expected": "ac32713f66cf6f383dce748238967cf5bbe10d7fe6ee1e6e5b7c8a2dfe0efb6a",
+      "actual": "ac32713f66cf6f383dce748238967cf5bbe10d7fe6ee1e6e5b7c8a2dfe0efb6a"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_field_aff.nii.gz",
+      "expected": "4a9be873aa10013c32c64945fb36a92ac77e4ea6e05239d9bac17ade02a09675",
+      "actual": "4a9be873aa10013c32c64945fb36a92ac77e4ea6e05239d9bac17ade02a09675"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_field_noaff.nii.gz",
+      "expected": "d8762ca5e929649fa014f788c77ce765adc3901d434d7900b85e84656d83166a",
+      "actual": "d8762ca5e929649fa014f788c77ce765adc3901d434d7900b85e84656d83166a"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_jac.nii.gz",
+      "expected": "4d79cc32c0f70ac71160a7fc0f359941b575b6d91edccf7df0809b3985d2a6b4",
+      "actual": "4d79cc32c0f70ac71160a7fc0f359941b575b6d91edccf7df0809b3985d2a6b4"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_quad_support.nii.gz",
+      "expected": "7c037237efe4ddc70ca15960d9d89b918f5457d3604bd9d7f0c1780b4c1cfdea",
+      "actual": "7c037237efe4ddc70ca15960d9d89b918f5457d3604bd9d7f0c1780b4c1cfdea"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_aff_support.nii.gz",
+      "expected": "34745de94ab04e00f7693cdb5ea1bf13dd1208cb2392ec9f4300628afacb7f38",
+      "actual": "34745de94ab04e00f7693cdb5ea1bf13dd1208cb2392ec9f4300628afacb7f38"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord0.nii.gz",
+      "expected": "c4fe47d6baeeed8d0ce4777443a2c0e8600650e1615eef3acf66c0af5ff4e8f1",
+      "actual": "c4fe47d6baeeed8d0ce4777443a2c0e8600650e1615eef3acf66c0af5ff4e8f1"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord1.nii.gz",
+      "expected": "b347ffb7d923a4de2fab7c62c0438a6c05806059df96aa2632d500ba62328a64",
+      "actual": "b347ffb7d923a4de2fab7c62c0438a6c05806059df96aa2632d500ba62328a64"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_coord2.nii.gz",
+      "expected": "c008f3a4edea1ddf47165b33304302d8da9608ab566af5e4c114e46a47cebf43",
+      "actual": "c008f3a4edea1ddf47165b33304302d8da9608ab566af5e4c114e46a47cebf43"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_field_aff.nii.gz",
+      "expected": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+      "actual": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_field_noaff.nii.gz",
+      "expected": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0",
+      "actual": "609c87d54d713f15a5d027b7a6486dc590039c747e00f5fd10986801488d99d0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_jac.nii.gz",
+      "expected": "053bd72d0df9faecf3ed6eb0ff9c78131388b34c6d7a17dff71da05c9d62de8b",
+      "actual": "053bd72d0df9faecf3ed6eb0ff9c78131388b34c6d7a17dff71da05c9d62de8b"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcleft_refright_noaff_support.nii.gz",
+      "expected": "12613b2867a3ac66106df2bc5e02b13dd504d8868e85fffcf71deae99bdba1bf",
+      "actual": "12613b2867a3ac66106df2bc5e02b13dd504d8868e85fffcf71deae99bdba1bf"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord0.nii.gz",
+      "expected": "6a8e9d240d0d78b68d6636086a4633c6c025f862c22f2b04013a4c74af07fb69",
+      "actual": "6a8e9d240d0d78b68d6636086a4633c6c025f862c22f2b04013a4c74af07fb69"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord1.nii.gz",
+      "expected": "26f49f184cd24242e9dabef62500d0a32cdd4857c7f8e13540338ddec46da5cf",
+      "actual": "26f49f184cd24242e9dabef62500d0a32cdd4857c7f8e13540338ddec46da5cf"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_coord2.nii.gz",
+      "expected": "e26107abf2077c6c42985b26bbae909dcda652b0f142849771b465a870524665",
+      "actual": "e26107abf2077c6c42985b26bbae909dcda652b0f142849771b465a870524665"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_field_aff.nii.gz",
+      "expected": "952f1a6c1183cfb220bcfdacde282d7e08533af76a1ce6eb5f0e55b715fa6ed3",
+      "actual": "952f1a6c1183cfb220bcfdacde282d7e08533af76a1ce6eb5f0e55b715fa6ed3"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_field_noaff.nii.gz",
+      "expected": "98d0a052e63f172875beca9ffadf89e2fbab0f243617977320b08e73cf4f597c",
+      "actual": "98d0a052e63f172875beca9ffadf89e2fbab0f243617977320b08e73cf4f597c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_jac.nii.gz",
+      "expected": "10501d22916b805db1c25f3f0d0534c249154a968e4ab7992d02d4793f03d24e",
+      "actual": "10501d22916b805db1c25f3f0d0534c249154a968e4ab7992d02d4793f03d24e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_aff_support.nii.gz",
+      "expected": "93a85d801312048ad20476aa009bbeddcee6a440695f195b8521f36d357ec3b9",
+      "actual": "93a85d801312048ad20476aa009bbeddcee6a440695f195b8521f36d357ec3b9"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord0.nii.gz",
+      "expected": "fa1fd9ca4b2aaedc71cad21969cb3ceb8efa868c68238977069645376714893f",
+      "actual": "fa1fd9ca4b2aaedc71cad21969cb3ceb8efa868c68238977069645376714893f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord1.nii.gz",
+      "expected": "b53ce2bdbe90b51613ee1fd0ea2532a5ae172db2c84c110be50290c94430acc8",
+      "actual": "b53ce2bdbe90b51613ee1fd0ea2532a5ae172db2c84c110be50290c94430acc8"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_coord2.nii.gz",
+      "expected": "6d2fb740d243d47e353d37f54729269abcc6d3b19fca7065e72dbe096b79063e",
+      "actual": "6d2fb740d243d47e353d37f54729269abcc6d3b19fca7065e72dbe096b79063e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_field_aff.nii.gz",
+      "expected": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+      "actual": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_field_noaff.nii.gz",
+      "expected": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718",
+      "actual": "5e37337388d639784f04f224729349c8a3fda34a6ff3b40030fa2e85b50c9718"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_jac.nii.gz",
+      "expected": "3173ef2fa8a44a9e55f15cc03295e13963356e397e298faa49f09b3677492048",
+      "actual": "3173ef2fa8a44a9e55f15cc03295e13963356e397e298faa49f09b3677492048"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord0.nii.gz",
+      "expected": "074cdb88fbc172a395d0ade711ca52a4fabf632e021155caa6cd15c2149d9377",
+      "actual": "074cdb88fbc172a395d0ade711ca52a4fabf632e021155caa6cd15c2149d9377"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord1.nii.gz",
+      "expected": "4393f58d00220f86a302f2dacd89607f7ee152ff1ac3933968d21eaffdf40504",
+      "actual": "4393f58d00220f86a302f2dacd89607f7ee152ff1ac3933968d21eaffdf40504"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_coord2.nii.gz",
+      "expected": "8aaf9f5e474eaf0e957c0ac32287cfad0d487b15407e6c7859c9773aa263aaec",
+      "actual": "8aaf9f5e474eaf0e957c0ac32287cfad0d487b15407e6c7859c9773aa263aaec"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_field_aff.nii.gz",
+      "expected": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+      "actual": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_field_noaff.nii.gz",
+      "expected": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95",
+      "actual": "8054904370932e226484b03d5eb54bb3f2b45dd1fcce54de76210f968a390a95"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_jac.nii.gz",
+      "expected": "08c6b3a4f2d9c2b5417c7b9f03be62447d89c1d5ed6bc5818cfb36ac71a35cdb",
+      "actual": "08c6b3a4f2d9c2b5417c7b9f03be62447d89c1d5ed6bc5818cfb36ac71a35cdb"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_quad_support.nii.gz",
+      "expected": "ee2ecef826b038fb5b19cf6123d2fd265682a2ea159cee92b0ef62a39d4a99b0",
+      "actual": "ee2ecef826b038fb5b19cf6123d2fd265682a2ea159cee92b0ef62a39d4a99b0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refleft_noaff_support.nii.gz",
+      "expected": "3e6096d00f57d9a6f33ff37c276bbcabed7960de7436ab74b4297806675dd157",
+      "actual": "3e6096d00f57d9a6f33ff37c276bbcabed7960de7436ab74b4297806675dd157"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord0.nii.gz",
+      "expected": "e40d3d10b59ff61755c26564c2e128c15ed36b95ea6118cd076d237ec140a370",
+      "actual": "e40d3d10b59ff61755c26564c2e128c15ed36b95ea6118cd076d237ec140a370"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord1.nii.gz",
+      "expected": "408ebdffb736d55ebef3fc7eab955db6e5938c3315551f7220f90a730146d913",
+      "actual": "408ebdffb736d55ebef3fc7eab955db6e5938c3315551f7220f90a730146d913"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_coord2.nii.gz",
+      "expected": "ed1c7f8d7ce8eaf0ed24803e3c4fdac53e57d752179af3ea915634047bbe8f01",
+      "actual": "ed1c7f8d7ce8eaf0ed24803e3c4fdac53e57d752179af3ea915634047bbe8f01"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_field_aff.nii.gz",
+      "expected": "37fabc6a4c8622a86f988a146820cc387f5694c3efc6f83493b564c3e60059b1",
+      "actual": "37fabc6a4c8622a86f988a146820cc387f5694c3efc6f83493b564c3e60059b1"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_field_noaff.nii.gz",
+      "expected": "310aced96189834ca90059e4abb31418213cc8434ecbfa0bd7a5709834f5fc92",
+      "actual": "310aced96189834ca90059e4abb31418213cc8434ecbfa0bd7a5709834f5fc92"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_jac.nii.gz",
+      "expected": "8edced3f9479ef0b56869bb47f34a976204ab0e59eb0a122fa406ef95f4e1c50",
+      "actual": "8edced3f9479ef0b56869bb47f34a976204ab0e59eb0a122fa406ef95f4e1c50"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_aff_support.nii.gz",
+      "expected": "dd9b574cb3b58e88bdaa12dc8b9c26148d2e5cb17d9b837998099a250c707cfc",
+      "actual": "dd9b574cb3b58e88bdaa12dc8b9c26148d2e5cb17d9b837998099a250c707cfc"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord0.nii.gz",
+      "expected": "d1be4169f6972efadd782d107810d3b5570af27905219b1d5cfade383c01c2cd",
+      "actual": "d1be4169f6972efadd782d107810d3b5570af27905219b1d5cfade383c01c2cd"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord1.nii.gz",
+      "expected": "a5302d8c4285abc3dee0c150443a6a0e9650fc69d53b90be83d5e15dcbf36eb9",
+      "actual": "a5302d8c4285abc3dee0c150443a6a0e9650fc69d53b90be83d5e15dcbf36eb9"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_coord2.nii.gz",
+      "expected": "30392625c9472d94bf6cc4ec6cf31b8590d10454263070afed70cca4a7ea37fb",
+      "actual": "30392625c9472d94bf6cc4ec6cf31b8590d10454263070afed70cca4a7ea37fb"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_field_aff.nii.gz",
+      "expected": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+      "actual": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_field_noaff.nii.gz",
+      "expected": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f",
+      "actual": "17ea6e0612ab93ba8c1cdc8c0f96dfe25be3a4af1de075863632314268d8743f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_jac.nii.gz",
+      "expected": "af9131065a92a8cb14d9501e1e86b8c52084e432022ea84cc4fe368f4c744bdc",
+      "actual": "af9131065a92a8cb14d9501e1e86b8c52084e432022ea84cc4fe368f4c744bdc"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/coef_srcright_refright_noaff_support.nii.gz",
+      "expected": "5b31173b5252a5b5ec81a3a1d883675adf898a11439a2a25746baa8b5ff500c4",
+      "actual": "5b31173b5252a5b5ec81a3a1d883675adf898a11439a2a25746baa8b5ff500c4"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord0.nii.gz",
+      "expected": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+      "actual": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord1.nii.gz",
+      "expected": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+      "actual": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_coord2.nii.gz",
+      "expected": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "actual": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_absolute_support.nii.gz",
+      "expected": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "actual": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord0.nii.gz",
+      "expected": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75",
+      "actual": "9948d5bbfaa1f6da5c140a9f22c063b37247c4c4b672e5a7cd4855d41a1e1d75"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord1.nii.gz",
+      "expected": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63",
+      "actual": "c6d487a31549436bbd70b5debfa272c760a0c0330825c9867166da7e5beb7c63"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_coord2.nii.gz",
+      "expected": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "actual": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_left_relative_support.nii.gz",
+      "expected": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "actual": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord0.nii.gz",
+      "expected": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+      "actual": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord1.nii.gz",
+      "expected": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+      "actual": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_coord2.nii.gz",
+      "expected": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "actual": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_absolute_support.nii.gz",
+      "expected": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "actual": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord0.nii.gz",
+      "expected": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898",
+      "actual": "34e2cc8f569aa5259a9825d1f348af8e746f2d0a2787ba5b5eb707cf5a524898"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord1.nii.gz",
+      "expected": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43",
+      "actual": "2ce83c7385963f0a04e8b6a2aa0628947c06edc86e14bdb11357c9864ed26b43"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_coord2.nii.gz",
+      "expected": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "actual": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_left_right_relative_support.nii.gz",
+      "expected": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "actual": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord0.nii.gz",
+      "expected": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+      "actual": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord1.nii.gz",
+      "expected": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+      "actual": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_coord2.nii.gz",
+      "expected": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "actual": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_absolute_support.nii.gz",
+      "expected": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "actual": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord0.nii.gz",
+      "expected": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2",
+      "actual": "83af3bd48f1d1b5a1f925696d2c421625640f308fc4923a042417ffbd8946aa2"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord1.nii.gz",
+      "expected": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e",
+      "actual": "65f44ed6ed0554e11e450fbdbbee5b1b19f37d2f95997dab6a443782c8783f4e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_coord2.nii.gz",
+      "expected": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad",
+      "actual": "9dbe23c666bb9d1530fb34198ddfdbee0dc17fb922ba3fdfc490fb1dad9d94ad"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_left_relative_support.nii.gz",
+      "expected": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c",
+      "actual": "9a1741f40ffc2d5ed87faefdfdf49fafbe25a92bb2f4e0a11e948a3819a6ce6c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord0.nii.gz",
+      "expected": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+      "actual": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord1.nii.gz",
+      "expected": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+      "actual": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_coord2.nii.gz",
+      "expected": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "actual": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_absolute_support.nii.gz",
+      "expected": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "actual": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord0.nii.gz",
+      "expected": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5",
+      "actual": "8155c086c635490df1439dfc3d64bceb091acf5214d76ff41d32dba3c1b324e5"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord1.nii.gz",
+      "expected": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c",
+      "actual": "c6aa6d60994b121eacae7055be1ee3200480adeb541848a968f65b85c29b432c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_coord2.nii.gz",
+      "expected": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0",
+      "actual": "2c048d4092c553f8169cfbd6c41c5019008fe573b5cc28410d371a1fce5c02a0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/dense_right_right_relative_support.nii.gz",
+      "expected": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937",
+      "actual": "f67f127303660ff96e48961d35bd3124fe99d6e84e668ae86dab2d7e4dca2937"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_0_to_1.tsv",
+      "expected": "50362f2444b8b6e97734993fcebf4741c7a4dc2168d98eff166dbc37cd7166aa",
+      "actual": "50362f2444b8b6e97734993fcebf4741c7a4dc2168d98eff166dbc37cd7166aa"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_1_to_0.tsv",
+      "expected": "b0edcef6fa7045816745f529488c813a7d2f69455a3ed44e75c18cdb5af78eaa",
+      "actual": "b0edcef6fa7045816745f529488c813a7d2f69455a3ed44e75c18cdb5af78eaa"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_2_to_3.tsv",
+      "expected": "6d4ce5c9a434ff7ac92af4850499a2b9bfc6d41f3e19dd0e5b13030a57d5b4f2",
+      "actual": "6d4ce5c9a434ff7ac92af4850499a2b9bfc6d41f3e19dd0e5b13030a57d5b4f2"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_3_to_0.tsv",
+      "expected": "0a17555a8fcf19b68f7659e7139b4f2e6b84169aec3a629a43acbbd307b6ddf0",
+      "actual": "0a17555a8fcf19b68f7659e7139b4f2e6b84169aec3a629a43acbbd307b6ddf0"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_4_to_2.tsv",
+      "expected": "314396453d0b0315868a8e28b594805bc8bd0cc6bfb90a667ce0a712c36f7867",
+      "actual": "314396453d0b0315868a8e28b594805bc8bd0cc6bfb90a667ce0a712c36f7867"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/flirt_fresh.tsv",
+      "expected": "cf370ee7129377e0eace515463dbbdd9b7096378c47ce0e4f0437531791e248d",
+      "actual": "cf370ee7129377e0eace515463dbbdd9b7096378c47ce0e4f0437531791e248d"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/fsl6-package-lock.json",
+      "expected": "640446f7949c5083b0e06bf08dd825b6c3f6b27a4607086f6889ff2cc864aae1",
+      "actual": "640446f7949c5083b0e06bf08dd825b6c3f6b27a4607086f6889ff2cc864aae1"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_dense_left_left_relative.nii.gz",
+      "expected": "1d89358294b5f854581306e558786292db178cc2d3afc302dc4de9d9500bb572",
+      "actual": "1d89358294b5f854581306e558786292db178cc2d3afc302dc4de9d9500bb572"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_dense_matched_geometry.nii.gz",
+      "expected": "a494175828e39979b8f278afb5810e73c7fa4b7205a19bf3956285fb7bdeb087",
+      "actual": "a494175828e39979b8f278afb5810e73c7fa4b7205a19bf3956285fb7bdeb087"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_native/invwarp_srcleft_refright_aff.nii.gz",
+      "expected": "33f7654bfcf8036c0f70a2cf5e16e3f0618476664166d612a1fa9a86f6a224d7",
+      "actual": "33f7654bfcf8036c0f70a2cf5e16e3f0618476664166d612a1fa9a86f6a224d7"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/consistent_positive_source.nii",
+      "expected": "7562afa2b9659ddfb2bf35f47fde9003f82c5c746c73e729b8f82365e8755ceb",
+      "actual": "7562afa2b9659ddfb2bf35f47fde9003f82c5c746c73e729b8f82365e8755ceb"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/consistent_positive_reference.nii",
+      "expected": "4925fda43d8316e2d7872224d77ecb4b31a6e73eb9bcafdbc376350e6a8cde43",
+      "actual": "4925fda43d8316e2d7872224d77ecb4b31a6e73eb9bcafdbc376350e6a8cde43"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/flirt_0_to_1.mat",
+      "expected": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3",
+      "actual": "e8ac0caa406974e1d258aea680b37a8c2dd7e7d81527ef0a59ddd3402abf1bd3"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_axis_x.nii",
+      "expected": "86c9c2496b5a136eced2235831d8c30f1aa40bf52f89aff2382cef4b9e2b03cc",
+      "actual": "86c9c2496b5a136eced2235831d8c30f1aa40bf52f89aff2382cef4b9e2b03cc"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_axis_y.nii",
+      "expected": "d83c7c4fef2ae54bdcc8cfec82dab7cbd311547dcf96cee93a84c2c77bbeaaee",
+      "actual": "d83c7c4fef2ae54bdcc8cfec82dab7cbd311547dcf96cee93a84c2c77bbeaaee"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_axis_z.nii",
+      "expected": "86e83c8125b83e027db5475b520ba027ba20b1e077c4bbc619760ce9a0bac659",
+      "actual": "86e83c8125b83e027db5475b520ba027ba20b1e077c4bbc619760ce9a0bac659"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/applyxfm_positive_axis_x.nii",
+      "expected": "38d30e4df92a8112acc1f8565d53b0ceb6da5ae2422ac35175e71df36f7d48b9",
+      "actual": "38d30e4df92a8112acc1f8565d53b0ceb6da5ae2422ac35175e71df36f7d48b9"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/applyxfm_positive_axis_y.nii",
+      "expected": "deec635efb4048a4c7670950d45927dfb42efd85b6e894c7bb7bdb6da560059f",
+      "actual": "deec635efb4048a4c7670950d45927dfb42efd85b6e894c7bb7bdb6da560059f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/applyxfm_positive_axis_z.nii",
+      "expected": "216bda96967e11895b6019885555174effded9871045d373d1ffb7c126331f87",
+      "actual": "216bda96967e11895b6019885555174effded9871045d373d1ffb7c126331f87"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/positive_control_applyxfm_equation.json",
+      "expected": "cb0d0957c082903d620479eace0c7380e33974d42233107bcb701fd44c22fd2f",
+      "actual": "cb0d0957c082903d620479eace0c7380e33974d42233107bcb701fd44c22fd2f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl6_header_controls/03_consistent_positive_default.json",
+      "expected": "bdbf9e05514dc611b89af9dab253b2c928880b7c143b77d59a740c08cc82e51b",
+      "actual": "bdbf9e05514dc611b89af9dab253b2c928880b7c143b77d59a740c08cc82e51b"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/chain_abs.nii.gz",
+      "expected": "cd6cec4c906a46d2b5703136cc5567ad1bab7fd21268ca05ed524767f27ce0c6",
+      "actual": "cd6cec4c906a46d2b5703136cc5567ad1bab7fd21268ca05ed524767f27ce0c6"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/coef.nii.gz",
+      "expected": "cf242ff3720a4fb22c7458f33a5f489bfe3ab48e36b787ad2dbca8056519993c",
+      "actual": "cf242ff3720a4fb22c7458f33a5f489bfe3ab48e36b787ad2dbca8056519993c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/commands.json",
+      "expected": "ef9f6482d24f73c76e4368b7bad5cf28a258c8738807571163cc46221f2d2e94",
+      "actual": "ef9f6482d24f73c76e4368b7bad5cf28a258c8738807571163cc46221f2d2e94"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/composed_coord0.nii.gz",
+      "expected": "73279aa902df8da34ed53aa1a59019fc26b60e42e907bce21f756e218ce75cf9",
+      "actual": "73279aa902df8da34ed53aa1a59019fc26b60e42e907bce21f756e218ce75cf9"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/composed_coord1.nii.gz",
+      "expected": "45c5481f822148fdfa852f27b817cbb5dfdef5a29844bf6c0d641a388e9ba923",
+      "actual": "45c5481f822148fdfa852f27b817cbb5dfdef5a29844bf6c0d641a388e9ba923"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/composed_coord2.nii.gz",
+      "expected": "89a95ba84a3df3f07eddcce858ec85b35d73969f5d1c43894a813ca9b41b6a4c",
+      "actual": "89a95ba84a3df3f07eddcce858ec85b35d73969f5d1c43894a813ca9b41b6a4c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/composed_phantom.nii.gz",
+      "expected": "2df5fc1b8ef282d11b6df81f1a4640f08d849352382ef4ef337cba36f12b4b5e",
+      "actual": "2df5fc1b8ef282d11b6df81f1a4640f08d849352382ef4ef337cba36f12b4b5e"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/composed_support.nii.gz",
+      "expected": "182659ecc852145af23be1039d825562b6b86d3b510c0af194af2e60d682d07a",
+      "actual": "182659ecc852145af23be1039d825562b6b86d3b510c0af194af2e60d682d07a"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/example_func2highres.mat",
+      "expected": "5fc69e9d84dfe236ace9cf3f5388bb1c6758c5765ca54d8f496f8f4b40d7caba",
+      "actual": "5fc69e9d84dfe236ace9cf3f5388bb1c6758c5765ca54d8f496f8f4b40d7caba"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/flirt_coord0.nii.gz",
+      "expected": "8990f99cedcbb4fed9e3c4e970429889499fb079e4bb2428854b4ceb00683605",
+      "actual": "8990f99cedcbb4fed9e3c4e970429889499fb079e4bb2428854b4ceb00683605"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/flirt_coord1.nii.gz",
+      "expected": "1968f09208cfe85c4b5573a78daa7346bc9e6307d1c59a7b7b7e9f338986a8a9",
+      "actual": "1968f09208cfe85c4b5573a78daa7346bc9e6307d1c59a7b7b7e9f338986a8a9"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/flirt_coord2.nii.gz",
+      "expected": "71a8579e14450f678f5ffa4bf88eb720e9c83a1417e7aab1279ae2d0ab45e7b6",
+      "actual": "71a8579e14450f678f5ffa4bf88eb720e9c83a1417e7aab1279ae2d0ab45e7b6"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/flirt_phantom.nii.gz",
+      "expected": "b0bda877df763c9afa52a74c8b4382016995ecf62c0a1ee96ce27a9223548feb",
+      "actual": "b0bda877df763c9afa52a74c8b4382016995ecf62c0a1ee96ce27a9223548feb"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/flirt_support.nii.gz",
+      "expected": "c0f622802aac014a8732dadaceefc35dbd10012b5476b849d786402ca0157639",
+      "actual": "c0f622802aac014a8732dadaceefc35dbd10012b5476b849d786402ca0157639"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/func.nii.gz",
+      "expected": "bd96db2c33f77d389521b0852b8d966c5f755df2a0c18cf6c329f9d0639d22c3",
+      "actual": "bd96db2c33f77d389521b0852b8d966c5f755df2a0c18cf6c329f9d0639d22c3"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/func_coord0.nii.gz",
+      "expected": "a448c6c71aed3ad433cd994b03b1c943971ccd7dd92086085c1953dbfc060931",
+      "actual": "a448c6c71aed3ad433cd994b03b1c943971ccd7dd92086085c1953dbfc060931"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/func_coord1.nii.gz",
+      "expected": "8f1084c64ebe633a70fccf0c71c03f8f287fd7533b9a10c13e51e2a11aa92941",
+      "actual": "8f1084c64ebe633a70fccf0c71c03f8f287fd7533b9a10c13e51e2a11aa92941"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/func_coord2.nii.gz",
+      "expected": "a54bdf4dac711a495ffbb5489d0b1be5153c7e53dbd0be31085b451600572382",
+      "actual": "a54bdf4dac711a495ffbb5489d0b1be5153c7e53dbd0be31085b451600572382"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/func_support.nii.gz",
+      "expected": "7ff6d08eaa0ea4555fa1833ab05e33e75e1988bd55ae317dc80e5706b55b2f40",
+      "actual": "7ff6d08eaa0ea4555fa1833ab05e33e75e1988bd55ae317dc80e5706b55b2f40"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/premat_coord0.nii.gz",
+      "expected": "58ad51fa29e9fa1fd678735746b124177327b9d2536de1983024dc50664a7680",
+      "actual": "58ad51fa29e9fa1fd678735746b124177327b9d2536de1983024dc50664a7680"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/premat_coord1.nii.gz",
+      "expected": "a47502332380c40bc7d79e24864090b78dd36ac32846bf6c9f615afdab27172b",
+      "actual": "a47502332380c40bc7d79e24864090b78dd36ac32846bf6c9f615afdab27172b"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/premat_coord2.nii.gz",
+      "expected": "db4413e121d4d3ee90caa21bb8869c2b6c84f80e355bc594cbc78ab5102c99c5",
+      "actual": "db4413e121d4d3ee90caa21bb8869c2b6c84f80e355bc594cbc78ab5102c99c5"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/premat_phantom.nii.gz",
+      "expected": "afbe13a3e0dcc4eb562a9ca16bdc616ec0f18ef14a8c962aefc72d3af85749cf",
+      "actual": "afbe13a3e0dcc4eb562a9ca16bdc616ec0f18ef14a8c962aefc72d3af85749cf"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/premat_support.nii.gz",
+      "expected": "182659ecc852145af23be1039d825562b6b86d3b510c0af194af2e60d682d07a",
+      "actual": "182659ecc852145af23be1039d825562b6b86d3b510c0af194af2e60d682d07a"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/source.nii.gz",
+      "expected": "ab547858a0fced19ad4f973d0547f0d23c78c2d9399be015b98e6219c7301f60",
+      "actual": "ab547858a0fced19ad4f973d0547f0d23c78c2d9399be015b98e6219c7301f60"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_chain_native/target.nii.gz",
+      "expected": "e6bc6b7db7243e671abe1f8ef8551915b6a38443880bbb04bf013239baacb1bf",
+      "actual": "e6bc6b7db7243e671abe1f8ef8551915b6a38443880bbb04bf013239baacb1bf"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/movable.nii",
+      "expected": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285",
+      "actual": "e913ac6b80766ab59e747c178c89608e2d5b7f822af714b4b1545e6d4c5dc285"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/writer_geometry/reference.nii",
+      "expected": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2",
+      "actual": "0d51bbe9977af4e711c7db157608bcb291750224ef09fcddd532c01ff60cf4a2"
+    }
+  ],
+  "failures": []
+}

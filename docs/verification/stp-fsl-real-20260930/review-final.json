@@ -1,0 +1,50 @@
+{
+  "schema": "scalafim-source-bound-review/v1",
+  "fray_card": 118,
+  "subject_revision": 4,
+  "verdict_sequence": 880,
+  "reviewer": "phrf-claude-20260929",
+  "verdict": "approve",
+  "reviewed_candidate": "72fa507dc490b61a5d60cc19a41dad48e846bf18",
+  "scientific_candidate": "1ed32a0fa36a8f47e55c46966da51f41bf924c8d",
+  "verified_local_integration": "8e6eb4d19360788c1aa0f71b84b46b35694e383d",
+  "independent_evidence": {
+    "exact_math_rederivation_max_abs_mm": 5.7e-14,
+    "float32_trace_rederivation": "byte-exact",
+    "evidence_hashes": 26,
+    "fixture_hashes": 31,
+    "unchanged_scientific_blobs": 35,
+    "integration_blobs": 63,
+    "passed_test_logs": {
+      "jvm": 177,
+      "js": 147
+    }
+  },
+  "review_method": "Read-only independent numerical and byte-closure review; not a separate native-tool or sbt rerun.",
+  "linked_objections": {
+    "119": "resolved by analytic resampler bound and header wording",
+    "122": "resolved by exact-math and native-trace guards"
+  },
+  "non_blocking_ulp_clarification": {
+    "trace_budget_mm": 5e-05,
+    "full_input_coordinate_ramp_max_abs_mm": [
+      111.42266082763672,
+      150.6162872314453,
+      137.7486114501953
+    ],
+    "float32_ulp_at_full_ramp_max_mm": [
+      7.62939453125e-06,
+      1.52587890625e-05,
+      1.52587890625e-05
+    ],
+    "trace_budget_in_full_ramp_ulps": [
+      6.5536,
+      3.2768,
+      3.2768
+    ],
+    "maximum_returned_query_trace_coordinate_mm": 16.380499009767163,
+    "trace_budget_ulps_at_returned_query_max": 26.2144,
+    "scope": "The full input ramps set arithmetic scale. This is not a one-ulp claim at the returned query magnitude; allowance covers interpolation and voxel-to-world arithmetic."
+  },
+  "publication": false
+}

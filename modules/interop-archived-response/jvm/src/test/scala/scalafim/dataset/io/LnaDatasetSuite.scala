@@ -1,6 +1,7 @@
 package scalafim.dataset.io
 
 import scalafim.image.SampleSpaces
+import scalafim.image.world.WorldSpace
 
 import gale.linalg.{DMat, DVec}
 import scalafim.archive.RunLabel
@@ -244,23 +245,28 @@ class LnaDatasetSuite extends munit.FunSuite:
         dataset
           .backendFor(root.relativize(root.resolve("sub-01/func/sub-01_task-rest_space-MNI_bold.lna.h5")), backend.id)
           .fold(err => fail(err.message), identity)
-      // Two independent reads of an archive without world evidence carry distinct
-      // unresolved frames; they must decode the same geometry.
-      assert(Grid.exactGeometryMatch(relativeBackend.shape.grid, backend.shape.grid).isRight)
+      // The legacy manifest stores dimensions only: two opens do not carry evidence of shared world identity.
+      assert(Grid.exactCongruence(relativeBackend.shape.grid, backend.shape.grid).isLeft)
+      assertEquals(relativeBackend.shape.spatialDims, backend.shape.spatialDims)
       assertEquals(relativeBackend.shape.timepoints, backend.shape.timepoints)
+      val world = WorldSpace.declare("LNA path-resolution fixture shared world").toOption.get
+      val relativeSpace = SampleSpaces.requireD3(SampleSpaces.inWorld(relativeBackend.shape.space, world).toOption.get).toOption.get
+      val absoluteSpace = SampleSpaces.requireD3(SampleSpaces.inWorld(backend.shape.space, world).toOption.get).toOption.get
+      assert(Grid.exactCongruence(relativeSpace.grid, absoluteSpace.grid).isRight)
 
-      val series =
-        backend.readEither(
-          DataSelection(
-            time = TimepointSelection.indices(0, 2),
-            voxels = VoxelSelection.indices(1, 3)
-          )
-        ).fold(err => fail(err.message), identity)
+      val selection = DataSelection(
+        time = TimepointSelection.indices(0, 2),
+        voxels = VoxelSelection.indices(1, 3)
+      )
+      val series = backend.readEither(selection).fold(err => fail(err.message), identity)
+      val relativeSeries = relativeBackend.readEither(selection).fold(err => fail(err.message), identity)
 
       val expected = Vector(Vector(1.0, 3.0), Vector(9.0, 11.0))
-      GaleTestData.toRows(series.data).zip(expected).foreach { case (actualRow, expectedRow) =>
-        actualRow.zip(expectedRow).foreach { case (actual, expectedValue) =>
-          assert(math.abs(actual - expectedValue) < 2e-4)
+      Vector(series, relativeSeries).foreach { actualSeries =>
+        GaleTestData.toRows(actualSeries.data).zip(expected).foreach { case (actualRow, expectedRow) =>
+          actualRow.zip(expectedRow).foreach { case (actual, expectedValue) =>
+            assertEqualsDouble(actual, expectedValue, 2e-4)
+          }
         }
       }
     }

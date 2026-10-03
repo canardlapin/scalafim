@@ -26,19 +26,6 @@ object Kappa:
   extension (kappa: Kappa)
     inline def value: Double = kappa
 
-opaque type DegreesOfFreedom = Double
-object DegreesOfFreedom:
-  def apply(value: Double): Either[ThresholdError, DegreesOfFreedom] =
-    if value.isFinite && value > 0.0 then Right(value)
-    else Left(ThresholdError.InvalidDegreesOfFreedom(value))
-
-  def unsafe(value: Double): DegreesOfFreedom =
-    require(value.isFinite && value > 0.0, "degrees of freedom must be finite and positive")
-    value
-
-  extension (df: DegreesOfFreedom)
-    inline def value: Double = df
-
 opaque type AdjustedP = Double
 object AdjustedP:
   def apply(value: Double): Either[ThresholdError, AdjustedP] =
@@ -138,17 +125,24 @@ enum NullReference:
       case MonteCarlo       => (count.toDouble + 1.0) / (draws.toDouble + 1.0)
       case ExactEnumeration => count.toDouble / draws.toDouble
 
+/** What the values of a statistic map are.
+  *
+  * Every admitted procedure (`MaxT`, `WestfallYoung`, `HierScan`) is a
+  * permutation procedure: it judges the observed map only against null draws
+  * of the same statistic, oriented by one `ThresholdAlternative`. The kind
+  * therefore decides only the evidence orientation, which fixes the
+  * admissible alternatives. It carries no degrees of freedom and no p-value
+  * sidedness because nothing here converts between scales: a t map is
+  * thresholded as t values, and the sidedness of the p-values behind a
+  * `NegLog10P` map is part of the caller's hypothesis, which the null draws
+  * must share.
+  */
 enum StatKind:
-  case Z
-  case T(df: DegreesOfFreedom)
-  case NegLog10P(pSide: PSide)
+  case Z, T, NegLog10P
 
   def orientation: EvidenceOrientation =
     this match
-      case Z | T(_) =>
+      case Z | T =>
         EvidenceOrientation.Signed
-      case NegLog10P(_) =>
+      case NegLog10P =>
         EvidenceOrientation.Unsigned
-
-enum PSide:
-  case OneSided, TwoSided

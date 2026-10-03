@@ -1,0 +1,68 @@
+[
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "example_func.nii.gz",
+      "-ref",
+      "highres.nii.gz",
+      "-dof",
+      "6",
+      "-cost",
+      "normmi",
+      "-omat",
+      "example_func2highres.mat",
+      "-out",
+      "example_func2highres.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 10.08459458395373
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/flirt",
+      "-in",
+      "highres.nii.gz",
+      "-ref",
+      "standard.nii.gz",
+      "-dof",
+      "12",
+      "-cost",
+      "corratio",
+      "-omat",
+      "highres2standard.mat",
+      "-out",
+      "highres2standard.nii.gz"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 19.47265625
+  },
+  {
+    "argv": [
+      "/private/tmp/scalafim-p707-fsl-real-20260930/tooling/fsl6/bin/fnirt",
+      "--in=highres.nii.gz",
+      "--ref=standard.nii.gz",
+      "--aff=highres2standard.mat",
+      "--cout=highres2standard_coef.nii.gz",
+      "--fout=highres2standard_warp.nii.gz",
+      "--iout=highres2standard_fnirt.nii.gz",
+      "--subsamp=4,2,1",
+      "--miter=5,5,5",
+      "--warpres=10,10,10",
+      "--infwhm=4,2,0",
+      "--reffwhm=4,2,0",
+      "--lambda=300,75,30",
+      "--intmod=global_linear",
+      "--estint=1,1,1",
+      "--jacrange=0.2,5"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "\nPart of FSL (ID: 2412.6-dirty)\nfnirt\n\nUsage: \nfnirt --ref=<some template> --in=<some image>\nfnirt --ref=<some template> --in=<some image> --infwhm=8,4,2 --subsamp=4,2,1 --warpres=8,8,8\n\nCompulsory arguments (You MUST set one or more of):\n\t--ref\t\tname of reference image\n\t--in\t\tname of input image\n\nOptional arguments (You may optionally specify one or more of):\n\t--aff\t\tname of file containing affine transform\n\t--inwarp\tname of file containing initial non-linear warps\n\t--intin\t\tname of file/files containing initial intensity mapping\n\t--cout\t\tname of output file with field coefficients\n\t--iout\t\tname of output image\n\t--fout\t\tname of output file with field\n\t--jout\t\tname of file for writing out the Jacobian of the field (for diagnostic or VBM purposes)\n\t--refout\tname of file for writing out intensity modulated --ref (for diagnostic purposes)\n\t--intout\tname of files for writing information pertaining to intensity mapping\n\t--logout\tName of log-file\n\t--config\tName of config file specifying command line arguments\n\t--refmask\tname of file with mask in reference space\n\t--inmask\tname of file with mask in input image space\n\t--applyrefmask\tUse specified refmask if set, default 1 (true)\n\t--applyinmask\tUse specified inmask if set, default 1 (true)\n\t--imprefm\tIf =1, use implicit masking based on value in --ref image. Default =1\n\t--impinm\tIf =1, use implicit masking based on value in --in image, Default =1\n\t--imprefval\tValue to mask out in --ref image. Default =0.0\n\t--impinval\tValue to mask out in --in image. Default =0.0\n\t--minmet\tnon-linear minimisation method [lm | scg] (Levenberg-Marquardt or Scaled Conjugate Gradient)\n\t--miter\t\tMax # of non-linear iterations, default 5,5,5,5\n\t--subsamp\tsub-sampling scheme, default 4,2,1,1\n\t--warpres\t(approximate) resolution (in mm) of warp basis in x-, y- and z-direction, default 10,10,10\n\t--splineorder\tOrder of spline, 2->Quadratic spline, 3->Cubic spline. Default=3\n\t--infwhm\tFWHM (in mm) of gaussian smoothing kernel for input volume, default 6,4,2,2\n\t--reffwhm\tFWHM (in mm) of gaussian smoothing kernel for ref volume, default 4,2,0,0\n\t--regmod\tModel for regularisation of warp-field [membrane_energy bending_energy], default bending_energy\n\t--lambda\tWeight of regularisation, default depending on --ssqlambda and --regmod switches. See user documentation.\n\t--ssqlambda\tIf set (=1), lambda is weighted by current ssq, default 1\n\t--jacrange\tAllowed range of Jacobian determinants, default 0.01,100.0\n\t--refderiv\tIf =1, ref image is used to calculate derivatives. Default =0\n\t--intmod\tModel for intensity-mapping [none global_linear global_non_linear local_linear global_non_linear_with_bias local_non_linear]\n\t--intorder\tOrder of polynomial for mapping intensities, default 5\n\t--biasres\tResolution (in mm) of bias-field modelling local intensities, default 50,50,50\n\t--biaslambda\tWeight of regularisation for bias-field, default 10000\n\t--estint\tEstimate intensity-mapping if set, default 1 (true)\n\t--numprec\tPrecision for representing Hessian, double or float. Default double\n\t--interp\tImage interpolation model, linear or spline. Default linear\n\t-v,--verbose\tPrint diagnostic information while running\n\t-h,--help\tdisplay help info\n\n\n\nfnirt::fnirt_clp: Mismatch between --subsamp and --applyrefmask options\n",
+    "seconds": 0.04171108396258205
+  }
+]

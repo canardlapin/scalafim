@@ -326,7 +326,7 @@ object EventModel:
         else ct.columnHrfs.distinct
       PolicyReceipt(
         "hrf",
-        s"sources=${sources.map(hrf => s"${hrf.name};nbasis=${hrf.nbasis}").mkString(",")}"
+        s"sources=${sources.map(hrf => HrfAssignment.token(HrfAssignment.hrfCanonical(hrf))).mkString("[", ",", "]")}"
       )
     }
     DesignAudit(

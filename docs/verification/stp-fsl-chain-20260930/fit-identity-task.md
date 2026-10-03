@@ -1,0 +1,5 @@
+The first STP commit exposes a fixture assumption in ImageMapsSuite: private def dataset creates a new unresolved world on every call. The test fits one dataset, asks the legacy adapter for a second dataset shape, and gives the manifest a third. Earlier global unknown identity hid that mismatch.
+
+DatasetShape already carries the actual image4s SampleSpace and FitImageMaps.fromRows uses shape.space. No production change or geometry-only comparison is required. Each test must construct and reuse one source for fitting and adapters. Exact SamplingAlignment remains required. A new negative control uses another dataset with identical dimensions and affine and must reject exact alignment and mixed-world parameter map adaptation.
+
+Verification: retain the peer-reproduced baseline at 7989608d plus the exact original fixture bytes, then run the repaired focused test and all fit JVM and JS tests, alongside bounded transform JVM/JS suites and warning-clean scalafimCompileAll. No unrelated shared fit changes enter this isolated candidate.

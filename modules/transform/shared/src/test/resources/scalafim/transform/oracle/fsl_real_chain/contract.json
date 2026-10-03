@@ -1,0 +1,340 @@
+{
+  "standard_start": [
+    44,
+    56,
+    40
+  ],
+  "standard_shape": [
+    9,
+    7,
+    11
+  ],
+  "highres_start": [
+    128,
+    81,
+    76
+  ],
+  "highres_shape": [
+    7,
+    9,
+    5
+  ],
+  "point_budget_mm": 0.0002,
+  "intensity_budget": 0.5931823321991996,
+  "intensity_gradient_l1_bound": 2956.146035995998,
+  "flirt_float32_precision": {
+    "maximum_y_index": 89,
+    "maximum_abs_input_voxels": [
+      61.82517620023425,
+      34.189979778934145,
+      17.27379726478439
+    ],
+    "input_coordinate_ulp32": [
+      3.814697265625e-06,
+      3.814697265625e-06,
+      1.9073486328125e-06
+    ],
+    "coefficient_rounding_bound_voxels": [
+      2.0646173694016667e-06,
+      1.8729877441746312e-06,
+      2.0201391837484407e-07
+    ],
+    "accumulation_axis_bound_mm": [
+      0.0003524872249185901,
+      0.000507039594300738,
+      0.0005516743421813809
+    ],
+    "point_budget_mm": 0.0007516743421813809,
+    "trace_budget_mm": 5e-05,
+    "exact_math_budget_mm": 1e-09,
+    "rule": "2e-4 mm base + max(abs(source voxel-to-world linear) @ ((ymax+4)*0.5*ulp32(maxabs input voxel coordinates)+float32 coefficient-cast bound)); no output residual used"
+  },
+  "flirt_intensity_budget": 2.2240122519993886,
+  "flirt_trace_vs_native_max_abs_mm": 1.5630079360562377e-05,
+  "native_route_max_abs": {
+    "coord0": 3.0040740966796875e-05,
+    "coord1": 2.288818359375e-05,
+    "coord2": 2.288818359375e-05,
+    "image": 0.009033203125
+  },
+  "func_crop_minimum_margin_voxels": 2.114476734366825,
+  "crops": {
+    "premat_coord0.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "7c3fa2364be4af7a2eed1c7859d62d5899e964964fd9c42975d907780f5f4f60",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "premat_coord1.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "5148560ff86f152a80040ebbabb0d0dcc00da33829871ea7f353d6d8f428a8db",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "premat_coord2.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "1e860b48f85e67e2ed4136591d1d567aaf73666f21973c00151571c4a31a6757",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "premat_support.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "9a5d73b4914f5d38aaae7483d7c437ab894cf24c77c1d4cb4b23524f4467fde9",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "premat_image.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "f5a632b3c5d6ff81b389ed678138b351c759618fb34e2193cc6142180e2d5a03",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "composed_coord0.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "a369fa8fb87e4a30a4f3108e4310b33a9f998589aa6dc267808868ea4bfda240",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "composed_coord1.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "2a18df69f9fa156996879bd4e0e1781916f8a210cb56075bb5f7c33b2e1a5cb3",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "composed_coord2.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "729c6d187b6a761334eeb432bf240b2b1a7c9ca6ca322d0037b95c11939f688e",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "composed_support.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "8dbeaf7ca388a57837e420bb1f9d306d9dc71be513a27c8d2a62b10d429886f8",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "composed_image.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "e1e761c1db191d83afba9993ec587813a62106c1a55357686c6d770353caf2bc",
+      "retained_values": 693,
+      "retained_float32_bits_exact": true
+    },
+    "flirt_coord0.nii.gz": {
+      "start": [
+        128,
+        81,
+        76
+      ],
+      "shape": [
+        7,
+        9,
+        5
+      ],
+      "source_sha256": "ec66260da95c8e214b3510d88afa8d7b69155c2b56517b737feecff2b1c7fa24",
+      "retained_values": 315,
+      "retained_float32_bits_exact": true
+    },
+    "flirt_coord1.nii.gz": {
+      "start": [
+        128,
+        81,
+        76
+      ],
+      "shape": [
+        7,
+        9,
+        5
+      ],
+      "source_sha256": "9f360171aadf3ddd19586acfc5baec1e7b1c2366eeebccc2750b47bf68c8aee8",
+      "retained_values": 315,
+      "retained_float32_bits_exact": true
+    },
+    "flirt_coord2.nii.gz": {
+      "start": [
+        128,
+        81,
+        76
+      ],
+      "shape": [
+        7,
+        9,
+        5
+      ],
+      "source_sha256": "0daa53a68820c7962badb253698886c3dab227d8fb12bb692c0478784a05af29",
+      "retained_values": 315,
+      "retained_float32_bits_exact": true
+    },
+    "flirt_support.nii.gz": {
+      "start": [
+        128,
+        81,
+        76
+      ],
+      "shape": [
+        7,
+        9,
+        5
+      ],
+      "source_sha256": "898ffe0f750657779a2656874bff42288cc2455a0cc61bba60f6e76416ba25ee",
+      "retained_values": 315,
+      "retained_float32_bits_exact": true
+    },
+    "flirt_image.nii.gz": {
+      "start": [
+        128,
+        81,
+        76
+      ],
+      "shape": [
+        7,
+        9,
+        5
+      ],
+      "source_sha256": "1a5eda86ae5307520b0e0f49d84e00e711b20582a2b2b706efe83b83fcb7b403",
+      "retained_values": 315,
+      "retained_float32_bits_exact": true
+    },
+    "chain_abs.nii.gz": {
+      "start": [
+        44,
+        56,
+        40
+      ],
+      "shape": [
+        9,
+        7,
+        11
+      ],
+      "source_sha256": "14e9febca87f439b5f23b45087ca5626fff7ca9bf25076c3c5fd2a10eafac851",
+      "retained_values": 2079,
+      "retained_float32_bits_exact": true
+    },
+    "func_crop.nii.gz": {
+      "start": [
+        49,
+        28,
+        7
+      ],
+      "shape": [
+        16,
+        37,
+        10
+      ],
+      "source_sha256": "7d07998846ff2c7cf78e808e9a5ac92c3f90040c27ebc053dfcd7eea13810d0a",
+      "retained_values": 5920,
+      "retained_float32_bits_exact": true
+    }
+  },
+  "native_input_headers": {
+    "example_func": {
+      "source_sha256": "7d07998846ff2c7cf78e808e9a5ac92c3f90040c27ebc053dfcd7eea13810d0a",
+      "header_bytes": 352,
+      "original_header_sha256": "6a3e3a82b30857ed44bdec7f4238f5254b315d41086188b61e17f5bb3037c2b9"
+    },
+    "highres": {
+      "source_sha256": "b7f546350666b6f24c1b24f0386941c6418cc49d694e25770a00c5081251cd51",
+      "header_bytes": 352,
+      "original_header_sha256": "e3b32ae905c529a822b90cd8b8f37bf07336fe1fdd3b88d4ad61a5775571e8f6"
+    },
+    "standard": {
+      "source_sha256": "f8d7e05039b3d53592e4efff1163a2e334b6f8249a7039aefaa8c316d676b579",
+      "header_bytes": 352,
+      "original_header_sha256": "1b3a95c2f484984e1192530ced482a0b86762dbb122f7c992eb0284077df7a7f"
+    }
+  },
+  "registration_input_sha256": {
+    "highres.nii.gz": "b7f546350666b6f24c1b24f0386941c6418cc49d694e25770a00c5081251cd51",
+    "standard.nii.gz": "f8d7e05039b3d53592e4efff1163a2e334b6f8249a7039aefaa8c316d676b579",
+    "example_func.nii.gz": "7d07998846ff2c7cf78e808e9a5ac92c3f90040c27ebc053dfcd7eea13810d0a"
+  }
+}

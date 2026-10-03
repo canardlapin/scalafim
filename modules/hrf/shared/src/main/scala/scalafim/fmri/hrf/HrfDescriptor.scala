@@ -213,7 +213,8 @@ final case class HrfDescriptor(
     derivative: DerivativePolicy = DerivativePolicy.Numeric,
     penalty: PenaltyPolicy = PenaltyPolicy.Identity,
     integration: IntegrationPolicy = IntegrationPolicy.Quadrature,
-    components: Vector[HrfDescriptor] = Vector.empty
+    components: Vector[HrfDescriptor] = Vector.empty,
+    derivation: Option[HrfDerivation] = None
 ):
   def nbasis: Int =
     basis.value
@@ -226,16 +227,21 @@ final case class HrfDescriptor(
 
   /** Stable, structural identity used by basis elements and provenance.
     *
-    * This is intentionally independent of a rendered column label. Descriptor
-    * case-class rendering is deterministic for the closed parameter ADTs and
-    * keeps custom parameter values in the identity as well.
+    * The versioned encoding uses explicit ADT tags and exact numeric bits,
+    * independently of column labels and platform-specific case-class rendering.
     */
   def canonicalId: String =
-    val childIds = components.map(_.canonicalId).mkString("[", ",", "]")
-    s"family=${family.toString}|basis=${basis.value}|span=${span.value}|params=$params|derivative=$derivative|penalty=$penalty|integration=$integration|components=$childIds"
+    HrfIdentity.descriptor(this)
 
   def withSpan(span: Seconds): HrfDescriptor =
     copy(span = span)
+
+  private[hrf] def transformed(
+      label: String,
+      policy: HrfDerivation,
+      span: Seconds = span
+  ): HrfDescriptor =
+    derived(label, span = span).copy(components = Vector(this), derivation = Some(policy))
 
   /** Mark this as a kernel derived from the current one.
     *

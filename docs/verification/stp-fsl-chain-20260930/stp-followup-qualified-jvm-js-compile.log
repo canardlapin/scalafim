@@ -1,0 +1,1486 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-stp-fsl-chain-20260930-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-fsl-chain-20260930/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (322631 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-fsl-chain-20260930/)
+scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite:
+  + P3.4 row-deleted censor gaps bound public AR/GLS whitening 0.877s
+scalafim.fmri.fit.DctDriftFitSuite:
+  + native selected betas and contrasts equal independent FWL on complete and censored original rows 0.239s
+scalafim.fmri.fit.profile.ProfileReductionSuite:
+  + the reduction matches finite differences of the exact energy, including energy-term derivatives 0.011s
+  + omitting the energy-term derivatives is detected 0.001s
+  + a non-positive-definite Gram is reported, not inverted 0.001s
+  + compact condition jets agree with finite differences of the direct compact energy and are sign-invariant 0.007s
+  + criterion assembly scales the energy jet and demands a determinant for trial ML 0.008s
+scalafim.fmri.fit.LssSuite:
+  + LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors 0.025s
+  + LeastSquaresSeparate handles a single trial as residualized simple regression 0.002s
+  + LeastSquaresSeparate prepared design reuses fixed projection and trial workspace 0.002s
+  + LeastSquaresSeparate reports zero trial and degenerate other regressors 0.001s
+  + LeastSquaresSeparate returns typed metadata errors from safe constructors 0.001s
+  + LeastSquaresSeparate reports trials absorbed by fixed regressors without inventing betas 0.002s
+  + LeastSquaresSeparate rejects collinear trial and other-trial regressors 0.001s
+  + LeastSquaresSeparate rejects non-finite matrix inputs 0.001s
+  + LeastSquaresSeparate validates row alignment 0.0s
+scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite:
+  + censored multi-run concatenated fit row-deletes design and response consistently 0.027s
+scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite:
+  + run-local nuisance axes and missing shared cells preserve structural identity 0.135s
+scalafim.fmri.fit.CompactFixedEffectsSuite:
+  + public run combination retains compact statistics and agrees with independent correlated mixed-TR R oracle 0.019s
+  + structured storage grows with voxel scales, preserves off-diagonal precision, and refuses malformed fields 0.043s
+  + unstructured legacy contributions, disjoint folding and availability rules remain usable 0.02s
+  + compact concatenation refuses logical voxel count overflow without dense materialization 0.005s
+scalafim.fmri.fit.BasisExpandedRetentionSuite:
+  + preparation reads nothing and the retained product reprojects to the collapsed refit 0.023s
+  + a second kernel from the same retained product matches its own refit 0.002s
+  + streamed blocks carry the same panel as the assembled product 0.001s
+  + structure and preparation refuse malformed input before any read 0.003s
+  + cancellation yields no partial assembled product 0.003s
+scalafim.fmri.fit.OlsPerformanceGuardrailSuite:
+  + default QR dense OLS stays within the JVM guardrail 0.068s
+scalafim.fmri.fit.StructuralHypothesisDslSuite:
+  + cell and basis references compile without column bookkeeping 0.02s
+  + weighted semantic rows compose T trends and F omnibus hypotheses 0.008s
+  + response functionals and modulators remain semantic 0.017s
+  + response functionals transport through explicit scan-space scaling 0.028s
+  + basis omnibus supports an explicit non-canonical scope 0.011s
+  + semantic omnibus blocks compose without exposing column rows 0.009s
+  + an empty basis scope reports a typed selection failure 0.002s
+  + a basis role absent from one heterogeneous cell is a typed basis failure 0.021s
+  + named response lowering composes with selected estimates without losing scientific metadata 0.005s
+  + named F lowering preserves row order and typed failures before design binding 0.011s
+  + only a named hypothesis exposes compile 0.001s
+  + validated domain ids remain first-class DSL inputs 0.001s
+  + sampled regressors compose as semantic coefficients 0.004s
+scalafim.fmri.fit.FitPlanBuilderSuite:
+  + builder-created FitPlan runs OLS and recovers known coefficients 0.012s
+  + builder-created FitPlan recovers task effects after nuisance adjustment 0.031s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.001s
+scalafim.fmri.fit.TrialReadoutSuite:
+  + LSS trial readout matches the independent fMRILSS fixture and owns coefficient identity 0.008s
+  + readout folds fixed nuisance projection into both forward and adjoint maps 0.004s
+  + readout satisfies the Frobenius adjoint law 0.0s
+  + readout commutes with downstream feature mixing 0.0s
+  + one prepared readout is cached and applies a response batch columnwise 0.001s
+  + zero trial regressors produce a zero readout row and zero adjoint contribution 0.0s
+  + trial readout and trial coefficient axes reject malformed inputs with typed errors 0.001s
+scalafim.examples.SelectedEstimatesExampleSuite:
+  + condition and contrast guide executes the declared pooled engine against the R reference 0.176s
+  + FIR guide preserves structural bin identities and bounded metadata-only preparation 0.011s
+  + optional uncertainty and nuisance helpers preserve the requested shared-model estimates 0.029s
+  + run-local nuisance maps are explicitly unavailable as pooled estimates 0.005s
+  + run retention guide composes with output and uncertainty choices without changing pooling 0.021s
+  + semantic response guide keeps full derivative-basis readout and propagated uncertainty 0.012s
+scalafim.fmri.fit.FitBlockSuite:
+  + dense OLS block results merge to the same result as a full voxel block 0.004s
+  + dense blocks tolerate scale-aware cutoff differences with the same rank partition 0.0s
+  + fixed AR(1) GLS block results merge with identical diagnostics 0.002s
+  + LSS block results merge to the same result as a full voxel block 0.004s
+  + dense block merge rejects incompatible execution context 0.001s
+  + dense block merge preserves and validates the structural coefficient axis 0.001s
+  + LSS block merge rejects incompatible trial names 0.001s
+scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite:
+  + name-keyed contrasts survive reordered public design columns 0.009s
+scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite:
+  + mixed-TR public fixed-effects fit preserves run grids and semantic axes 0.014s
+  + fixed effects omit one invalid run-voxel contribution without failing healthy voxels 0.009s
+scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite:
+  + S07 2x2 public design supports semantic simple and interaction hypotheses 0.058s
+  + S08 3x3 public design supports unequal-score trends and interaction 0.037s
+  + S09 public design supports heterogeneous HRF bases by structural cell 0.025s
+  + S06 public model preserves factor/modulator scope and missing-value policy 0.069s
+  + S10 reconstructed basis responses use explicit functional weights 0.023s
+  + S16 rank-deficient structural hypotheses report row-space evidence 0.045s
+  + S18 public WLS agrees with an independent base-R receipt 0.034s
+scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite:
+  + pipeline-backed first-level workflow returns one scenario verdict 0.315s
+scalafim.fmri.fit.OlsEstimatesSuite:
+  + compiled estimator preserves selected functionals and removes nuisance contributions 0.003s
+  + selected estimates and joint uncertainty match an independent exact-rational oracle 0.001s
+  + marginal uncertainty agrees with joint readout without a joint covariance product 0.001s
+  + uncertainty execution reuses residual coordinates for its only selected product 0.001s
+  + column reordering and scaling preserve the same estimand 0.0s
+  + strided response blocks and repeated execution preserve input and output ownership 0.0s
+  + fixed row selection and temporal transform fuse through the readout adjoint 0.001s
+  + exactly determined coefficients do not require residual degrees of freedom 0.001s
+  + invalid readouts, incompatible rows, rank defects and unsupported solve policies fail explicitly 0.003s
+scalafim.fmri.fit.ResultArtifactsSuite:
+  + ResultManifest from dense fit preserves parameter metadata and provenance 0.013s
+  + ContrastMap preserves statistic kind and degrees of freedom 0.006s
+  + StatMap rejects value and voxel-space mismatches 0.002s
+  + CoefficientCovarianceArtifact preserves voxelwise covariance and rejects shape mismatches 0.002s
+  + restricted inference exports only inferable standard errors and covariance 0.005s
+scalafim.fmri.fit.DesignMatrixOwnershipSuite:
+  + a compiled hypothesis and ordinary or chunked fits share an immutable design 0.008s
+  + LSS uses the canonical design after event and baseline arrays are mutated 0.016s
+  + model construction rejects a matrix changed without rebuilding its schema 0.003s
+scalafim.fmri.fit.OlsSuite:
+  + OLS fits multiple response columns with one prepared factorization 0.002s
+  + basis reparameterization transports fit covariance and linear hypotheses 0.003s
+  + OLS reports residual variance per voxel 0.001s
+  + OLS matches independent Gaussian oracle on overdetermined multivoxel data 0.0s
+  + OLS matches independent oracle for scaled full-rank predictors 0.0s
+  + scale-aware rank detection is invariant to uniform predictor scaling 0.002s
+  + OLS rejects non-finite dense inputs at construction 0.0s
+  + OLS default QR solver agrees with normal equations on well-conditioned designs 0.001s
+  + OLS coefficients are invariant to design column permutation 0.001s
+  + OLS rejects singular designs 0.001s
+  + OLS rank policy makes strict full-rank rejection explicit 0.0s
+  + OLS reports unsupported rank policies explicitly 0.001s
+  + OLS rejects nearly collinear designs at the QR rank tolerance boundary 0.0s
+  + OLS rejects saturated fits before residual inference is represented 0.0s
+  + OLS remains finite for extreme but well-conditioned predictor scales 0.001s
+  + OLS rejects row mismatches at fit time 0.0s
+scalafim.fmri.fit.GlsPerformanceGuardrailSuite:
+  + fixed AR(1) dense GLS stays within the JVM guardrail 0.025s
+scalafim.fmri.fit.profile.ParallelBlockExecutorSuite:
+  + parallel receipts equal the sequential run and arrive in block order 0.246s
+  + a refusing sink stops the parallel run with a typed error 0.015s
+scalafim.fmri.fit.PreparedManovaGeometrySuite:
+  + multi-contrast preparation yields a design-normalized effect basis 0.011s
+  + invertible changes of contrast basis preserve the hypothesis projector 0.001s
+  + rank-deficient contrast rows are rejected as non-estimable 0.0s
+scalafim.fmri.fit.RobustSuite:
+  + disabled robust options are equivalent to OLS 0.011s
+  + Huber robust fit downweights an outlying observation 0.005s
+  + Bisquare robust fit can reject a severe outlier 0.001s
+  + RobustLeastSquares executes through FitPlanExecutor 0.006s
+  + chunked robust fit uses full-selection prepared row weights 0.015s
+  + fmrireg row-wise Huber fixture matches run-scope robust IRLS semantics 0.003s
+  + fmrireg voxel scale scope keeps per-voxel scale components with row-wise weights 0.001s
+  + robust-triggered AR re-estimation exposes shared AR diagnostics 0.02s
+  + future chunked robust AR reuses full-selection whitening and row weights 0.029s
+scalafim.fmri.fit.FirstLevelFixedEffectsEstimatesSuite:
+  + preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts 0.01s
+  + run-local nuisance projection preserves joint task pooling and selected voxel order 0.012s
+  + entirely excluded blocks preserve identities and do not stop subsequent healthy voxels 0.01s
+  + cancellation, sink failure and incompatible engines fail without excess reads 0.006s
+  + pooled execution dispatches only prepared run statistics and requested voxel products 0.014s
+  + FIR pooling retains physical bins and planted estimates through reversed gapped scan selection 0.013s
+  + explicit retained run coefficients match independent R values without changing pooled products 0.025s
+  + retained run coefficients preserve excluded input voxels and continue to healthy blocks 0.011s
+  + unsupported run retention cannot be silently discarded by shared or pooling-only entry points 0.008s
+  + retention obeys the same cancellation and failed-sink read boundary 0.006s
+scalafim.fmri.fit.MatrixFileFitSuite:
+  + matrix-file dataset backend runs through builder-created OLS plan 0.02s
+scalafim.fmri.fit.ResponsePreparationSuite:
+  + default plan is inspectable and preserves block input identity 0.002s
+  + non-default plan distinguishes applied, rejected, and deferred surfaces 0.003s
+  + fixed volume weights apply by full-model timepoint index 0.001s
+  + fixed weights equal OLS on square-root weighted design and response 0.002s
+  + multiresponse WLS agrees with independently fitted response columns 0.002s
+  + estimated DVARS weighting is executable and records its source and normalization 0.003s
+  + zero fixed weights exclude rows before rank and residual-df calculation 0.0s
+  + Tukey DVARS estimation gives exact-zero artifacts lawful exclusion semantics 0.002s
+  + negative and non-finite fixed weights are explicit preparation errors 0.001s
+  + selected-row fixed alignment is exact rather than length-heuristic 0.0s
+  + DVARS resets at selection gaps instead of differencing across censored timepoints 0.0s
+  + within-run DVARS normalization does not cross acquisition boundaries 0.001s
+  + all DVARS transformations match the independent base-R receipt 0.002s
+  + nuisance projection rows must align with selected timepoints 0.0s
+scalafim.fmri.fit.profile.BlockExecutorSuite:
+  + blocks partition the voxel range with the last block shorter 0.0s
+  + sequential execution delivers receipts in block order and retains no payloads 0.004s
+  + budget, sink failure and cancellation are typed outcomes 0.003s
+scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite:
+  + S12 combines sustained blocks, transient events, and variable epochs 0.061s
+  + S15 sampled nuisance preserves task inference against an R direct fit 0.069s
+scalafim.fmri.fit.ChunkedFitExecutorSuite:
+  + ChunkProgram rejects non-contiguous generic work ordinals 0.001s
+  + SequentialChunkProgramInterpreter wraps failures with chunk identity 0.001s
+  + FutureChunkProgramInterpreter preserves ordinal order with bounded execution 0.001s
+  + FitChunkPlan exposes repeatable ordered voxel chunks 0.002s
+  + FitChunkProgram exposes a repeatable scheduler-neutral work stream 0.002s
+  + ChunkedFitExecutor matches unchunked OLS while preserving selected voxel order 0.002s
+  + single-voxel chunks preserve propagated non-finite exclusions 0.005s
+  + chunked voxel-specific row omission matches whole patterned OLS 0.016s
+  + future single-voxel chunks preserve propagated non-finite exclusions 0.005s
+  + future chunking preserves voxel-specific observation patterns 0.006s
+  + all-excluded and partially-excluded chunks preserve source exclusion order 0.002s
+  + ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses 0.002s
+  + ChunkedFitExecutor estimates DVARS once from the whole selected response 0.005s
+  + FutureChunkedFitExecutor matches sequential chunked OLS with bounded parallelism 0.003s
+  + FutureChunkedFitExecutor matches unchunked full-rank LatentSketch 0.014s
+  + FutureChunkedFitExecutor reuses one compressed LatentSketch across chunks 0.005s
+  + FutureChunkedFitExecutor reuses one principal-component LatentSketch across chunks 0.019s
+  + ChunkedFitExecutor matches unchunked LSS 0.005s
+  + ChunkedFitExecutor matches unchunked fixed-AR GLS 0.005s
+  + FutureChunkedFitExecutor prepares estimated-AR GLS once across bounded parallel chunks 0.006s
+  + FutureChunkedFitExecutor matches unchunked full-rank ReducedRankGls 0.031s
+  + FutureChunkedFitExecutor reuses one compressed ReducedRankGls basis across chunks 0.008s
+  + FutureChunkedFitExecutor reuses deterministic ReducedRankGls bootstrap inference 0.016s
+  + full-rank voxelwise-AR ReducedRankGls fallback remains event-only across chunks 0.017s
+  + compressed voxelwise-AR ReducedRankGls remains an explicit design boundary 0.005s
+  + FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks 0.007s
+  + chunk interpreters agree from the same prepared GLS chunk program 0.007s
+  + ChunkedFitExecutor matches unchunked runwise OLS 0.004s
+  + FitChunkPlan rejects non-contiguous ordinals 0.0s
+  + FitChunkPlan rejects mixed timepoint chunks 0.001s
+  + runwise preparation preserves bounded response reads and censored axes 0.004s
+  + runwise future preparation preserves bounded response reads 0.003s
+  + fixed preparation preserves bounded response reads and censored axes 0.004s
+  + fixed future preparation preserves bounded response reads 0.004s
+  + LSS preparation preserves bounded response reads and censored axes 0.003s
+  + LSS future preparation preserves bounded response reads 0.004s
+scalafim.fmri.fit.FixedEffectsEstimatesSuite:
+  + selected pooling matches independent rational inverse-precision calculations 0.002s
+  + only requested pooled covariance and standard errors are propagated 0.001s
+  + pooled coefficient reorder and disjoint run order preserve selected estimates 0.002s
+  + missing pooled coefficients and foreign design identity fail explicitly 0.002s
+  + public selected run combination preserves mixed-TR R estimates and native exclusions 0.007s
+scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite:
+  + chunked runwise regression preserves chunk order, run partitions, and coefficients 0.027s
+scalafim.fmri.fit.profile.ShapeDecoderSuite:
+  + node grid indexing round-trips 0.001s
+  + an interior optimum is found to high precision within the budget 0.004s
+  + an optimum outside the box lands on the boundary with a projected step 0.001s
+  + indefinite curvature is reported and the parabolic fallback still improves on the node 0.001s
+  + a prior pulls the estimate and both curvatures are reported 0.001s
+  + weak identification and ambiguity are separate statuses 0.0s
+  + three-dimensional charts decode with a hierarchical scan 0.001s
+scalafim.fmri.fit.scenarios.ScenarioHarnessSuite:
+  + clean observations produce a CI-passable scenario 0.001s
+  + failed observations force ScenarioStatus.Fail even without caveats 0.0s
+  + non-blocking caveats require explicit policy to pass CI 0.006s
+  + blocking caveats force ScenarioStatus.Fail 0.0s
+  + policies cannot declare failures acceptable 0.001s
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.009s
+  + shared retention requests describe and deliver actual native uncertainty 0.005s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.005s
+scalafim.fmri.fit.FirstLevelEstimatesSuite:
+  + public preparation performs no reads and streams only selected identified products 0.004s
+  + selected time and voxel ordering are preserved across block sizes 0.004s
+  + cancellation and sink failure prevent subsequent response reads 0.002s
+  + invalid identities and unsupported scientific engines fail before reads 0.002s
+  + the caller's backend receives exactly the selected block products 0.002s
+  + native FIR selection preserves physical bin coordinates and requested order 0.005s
+scalafim.fmri.fit.GlsSuite:
+  + GeneralizedLeastSquares runs AR(1) whitening and reports diagnostics 0.005s
+  + GeneralizedLeastSquares can estimate an AR(1) rho from initial residuals 0.001s
+  + estimated AR(2) GLS matches the fmriAR 0.3.3 end-to-end receipt 0.007s
+  + GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals 0.009s
+  + GeneralizedLeastSquares supports fixed AR(2) coefficients 0.002s
+  + GeneralizedLeastSquares keeps finite diagnostics under extreme predictor scales 0.002s
+  + GeneralizedLeastSquares resets AR whitening after censored timepoints 0.001s
+  + estimated GLS excludes explicit censor rows only from noise estimation 0.001s
+  + GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset 0.004s
+  + GeneralizedLeastSquares rejects censored timepoints outside selected partitions 0.001s
+  + GeneralizedLeastSquares resets at run and censor boundaries for multivoxel data 0.001s
+  + GeneralizedLeastSquares distinguishes run-specific and global estimated AR pooling 0.016s
+  + GeneralizedLeastSquares supports voxelwise estimated AR with explicit non-shared covariance 0.015s
+  + voxelwise GLS retains degenerate voxel status and isolates contrast inference 0.003s
+  + GeneralizedLeastSquares rejects unsupported AR configurations explicitly 0.002s
+  + GeneralizedLeastSquares rejects non-stationary fixed AR coefficients 0.017s
+  + GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries 0.002s
+  + row-deleted whitening matches independent segmented L X and L Y 0.002s
+scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite:
+  + one public model and semantic hypotheses express delayed match to sample 0.188s
+scalafim.fmri.fit.RunwiseGlsSuite:
+  + runwise GLS is an explicit run-specific estimand and refuses across-run AR pooling 0.015s
+  + fixed AR(1) runwise GLS matches an independent segmented GLS reference 0.017s
+  + structural FIR axes, selected gaps and fixed AR covariance survive public and chunked execution 0.02s
+  + estimated voxelwise AR is chunk invariant and fixed effects consume every covariance matrix 0.02s
+scalafim.fmri.fit.profile.ShapeEvidencePoolSuite:
+  + pooled node energies sum, ignore unscanned nodes and pick a fully scanned best node 0.002s
+  + merging in a fixed order reproduces a single accumulation exactly 0.001s
+  + the regional prior sits at the pooled best node with a floored spread 0.004s
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.01s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.014s
+  + missing-data propagation reports an all-excluded selection explicitly 0.002s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.01s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.001s
+  + row omission preserves an explicitly reordered OLS time selection 0.002s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.004s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.003s
+  + row omission subsets selected-row weights by original observation position 0.01s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.003s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.003s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.012s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.014s
+  + fitDense rejects engines with a different result shape 0.001s
+  + public fit failures name aliased structural columns 0.01s
+  + GLS retains structural rank evidence and explains preview differences 0.002s
+  + every supported dense engine preserves the same structural coefficient axis 0.009s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 0.267s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.003s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.001s
+  + FitInterpreters exposes executable built-ins 0.001s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.005s
+  + LatentSketch principal components recovers rank-one response coefficients 0.002s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.005s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.005s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.004s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.009s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.018s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.013s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.011s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.013s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.006s
+scalafim.fmri.fit.PipelineFitWorkflowSuite:
+  + in-memory fMRI OLS workflow runs through the pipeline graph and matches direct execution 0.01s
+scalafim.fmri.fit.ImageMapsSuite:
+  + Dense fit coefficient and SE maps preserve full voxel placement 0.065s
+  + image maps place selected voxels into their original image locations 0.001s
+  + typed result manifest coefficient maps adapt to existing image maps 0.005s
+  + image map adapters retain source identity and reject another world with identical geometry 0.003s
+  + standard-error image maps omit coefficients outside the inference scope 0.002s
+  + t and F contrast statistics map into image space 0.002s
+scalafim.fmri.fit.ContrastReprojectionSuite:
+  + reprojection equals an independent direct OLS refit on the collapsed design 0.002s
+  + a second kernel from the same product also matches its refit 0.001s
+  + the product constructor refuses malformed retention 0.002s
+  + reprojection refuses malformed and degenerate requests 0.001s
+scalafim.fmri.fit.RunwiseOlsSuite:
+  + RunwiseLeastSquares fits separate coefficients per sampling-frame block 0.002s
+  + RunwiseOls reports singular run designs with run identity 0.001s
+scalafim.fmri.fit.io.ResultManifestWriterSuite:
+  + ResultManifestWriter writes BIDS-style NIfTI, covariance TSV, and sidecar artifacts 0.22s
+  + ResultManifestWriter can write one named NIfTI per parameter and contrast map 0.01s
+  + ResultManifestWriter persists voxel status and contrast exclusions 0.01s
+  + ResultManifestWriter rejects unsafe stems and colliding named-map paths before writing 0.043s
+  + ResultManifestWriter reports unsupported HDF5 and GDS formats explicitly 0.004s
+  + ResultManifestWriter persists restricted inference provenance 0.003s
+scalafim.fmri.fit.PreparedContrastGeometrySuite:
+  + moment geometry equals explicit dense effect and residual projectors 0.004s
+  + rescaling a one-row contrast preserves the effect matrix 0.002s
+  + invertible nuisance basis changes preserve effect and residual geometry 0.0s
+  + fixed AR whitening and censor resets match the first-level transform 0.008s
+  + rank-deficient prepared designs are rejected 0.002s
+  + held-out responses cannot alter a training-scoped whitening geometry 0.01s
+scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite:
+  + public LSS path recovers metadata-selected trialwise estimates 0.035s
+scalafim.fmri.fit.profile.OutputRequestSuite:
+  + queries validate labels, weights and tolerances 0.008s
+  + requests validate against the condition axis and refuse trial outputs on the condition backend 0.015s
+  + query evaluation keeps signs and audits float32 conversion per query tolerance 0.003s
+scalafim.fmri.fit.StructuralHypothesisSuite:
+  + semantic selectors resolve to structural identities and carry estimability evidence 0.003s
+  + hypothesis estimability uses the same scale-aware convention as fitting 0.002s
+  + semantic resolution is invariant to rendered labels and coefficient order 0.003s
+  + structural identity permits repeated rendered labels across run-scoped regressors 0.001s
+  + a compiled hypothesis rejects a result from a different design fingerprint 0.001s
+  + unknown structural components produce typed failures 0.0s
+  + declared-but-empty cells are distinguished from unknown levels 0.002s
+  + invalid structural weights are reported during compilation 0.001s
+  + rendered labels cannot become structural authority 0.001s
+  + rank-deficient designs reject non-estimable T contrasts and reduce F numerator rank 0.004s
+  + response-level functionals expand over semantic basis elements 0.003s
+  + reduced fixed-effects axes reject missing T, F, and response-functional components 0.005s
+scalafim.fmri.fit.InferenceSuite:
+  + Dense OLS results expose standard errors and diagnostics 0.005s
+  + T contrasts align weights by column name 0.01s
+  + T contrasts can evaluate an explicitly inference-ready dense fit 0.002s
+  + T contrasts reject unknown columns 0.002s
+  + F contrasts evaluate single-df statistics, df, and voxel alignment 0.002s
+  + F contrasts evaluate multi-df tests 0.002s
+  + contrasts use voxelwise coefficient covariance when supplied 0.013s
+  + contrasts reject zero residual variance instead of emitting non-finite statistics 0.002s
+  + mixed fits retain typed voxel status and isolate T/F inference 0.001s
+  + F contrasts reject unknown and non-estimable columns explicitly 0.001s
+  + DesignContrasts evaluates attached t contrasts and generated F contrasts 0.052s
+scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite:
+  + public fit path preserves design semantics for T and F contrasts 0.006s
+[info] Passed: Total 327, Failed 0, Errors 0, Passed 327
+[success] Total time: 12 s, completed Sep 30, 2026, 8:11:23 a.m.
+scalafim.transform.field.FnirtCoefficientOracleSuite:
+  + the oracle manifest lists the ten cubic and quadratic cases 0.006s
+  + headers decode to FNIRT's order, knot spacing, reference geometry and --aff matrix 0.072s
+  + the spline on the reference FSL voxel lattice reproduces fnirtfileutils displacement fields 0.278s
+  + the world pullback reproduces fnirtfileutils --withaff fields at every reference voxel 0.416s
+  + the world pullback reproduces applywarp --warp=coef coordinate ramps on the source interior 0.057s
+  + off-lattice points evaluate the spline exactly, matching a direct tensor-product sum 0.01s
+  + points outside the reference follow the boundary policy 0.007s
+  + a reference volume other than the one FNIRT fitted on is a typed mismatch 0.001s
+  + coefficient files are detected by intent and decode through Transforms 0.01s
+  + DCT coefficients and TOPUP files are refused by name 0.028s
+  + a reflecting --aff matrix and non-integer knot spacing are refused 0.002s
+  + optional header fields: no qform, no intent_p, no sform 0.003s
+  + reference voxel sizes, grid coverage and boundary arity are checked against the context 0.009s
+  + coefficient files round-trip value-exactly 0.07s
+  + coefficients convert to a dense FNIRT field on a lattice, matching fnirtfileutils --withaff 0.303s
+  + coefficient conversion needs FSL geometry and a lattice, and never targets linear or coefficient formats 0.003s
+scalafim.transform.itk.ItkLinearOracleSuite:
+  + the oracle covers every linear parameterisation 0.008s
+  + text files reproduce ITK TransformPoint for every parameterisation and the composite 0.094s
+  + MATLAB v4 files decode to the same transforms as their text twins 0.017s
+  + encode then decode is value-exact for both codecs 0.007s
+  + a linear world transform written as an ITK affine reads back to the same mapping 0.007s
+  + the imported neurotransform ITK affine decodes identically from .tfm and .mat 0.002s
+  + big-endian float32 MATLAB v4 storage decodes to the oracle transform at float precision 0.004s
+  + unsupported MATLAB v4 precision codes and truncated records are typed failures 0.0s
+  + unsupported and malformed ITK content is a typed failure 0.002s
+scalafim.transform.fsl.FlirtOracleSuite:
+  + FLIRT matrices read from disk map ten asymmetric points per case exactly as fslpy's world->world conversion 0.04s
+  + the fresh case selects the sform of a neurological source and the qform of a radiological reference, as fslpy does 0.003s
+  + expressing a FLIRT transform reproduces the stored matrix, and encoding round-trips 0.004s
+  + malformed FLIRT text is a typed failure 0.0s
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+scalafim.transform.itk.AntsNativeContainerSuite:
+  + jHDF reads native Composite and InverseComposite exactly as the shared h5py dumps 0.228s
+  + native 5D fields load through the public container reader with unchanged values and provenance 0.042s
+scenario=transform.fsl-chain.v1 status=PassWithCaveats
+  func.neurological: the x mirror applies to the functional grid pass=true
+  native-inputs.func-dims: Vector(28, 31, 25) pass=true
+  native-inputs.func-stored-affine.max-abs-mm: actual=0.0 expected=0.0 delta=0.0 tol=1.0E-9 pass=true
+  native-inputs.flirt-matrix.max-abs: actual=0.0 expected=0.0 delta=0.0 tol=1.0E-9 pass=true
+  fnirt.supported-voxels: 605 standard voxels on the native source interior pass=true
+  flirt-leg.pullback.max-abs-mm: actual=4.751329996111053E-9 expected=0.0 delta=4.751329996111053E-9 tol=1.0E-6 pass=true
+  fnirt-leg.materialized-vs-applywarp.max-abs-mm: actual=5.8317638274019146E-6 expected=0.0 delta=5.8317638274019146E-6 tol=2.0E-5 pass=true
+  chain.materialized-vs-reference.max-abs-mm: actual=5.80375335657024E-6 expected=0.0 delta=5.80375335657024E-6 tol=5.0E-5 pass=true
+  chain.materialized-coverage: CoverageCounts(1188,0,0,0) pass=true
+  fnirt-leg.phantom-vs-applywarp.max-abs: actual=3.07688932025485E-4 expected=0.0 delta=3.07688932025485E-4 tol=0.0029943857656662934 pass=true
+  chain.ramp-voxels: 605 supported voxels pull back inside the functional grid pass=true
+  chain.ramp-resample.max-abs: actual=4.511806622531367E-6 expected=0.0 delta=4.511806622531367E-6 tol=5.708322891267785E-5 pass=true
+  native.flirt.full-support: 3136 of 3136 highres queries pass=true
+  native.flirt-coordinates.max-abs-mm: actual=2.5540975842730518E-5 expected=0.0 delta=2.5540975842730518E-5 tol=5.0E-5 pass=true
+  native.flirt-ramp.max-abs: actual=2.686172419430477E-5 expected=0.0 delta=2.686172419430477E-5 tol=8.759980703767784E-5 pass=true
+  native.chain.full-support: 1188 of 1188 standard queries pass=true
+  native.chain-premat-coordinates.max-abs-mm: actual=9.813265247515801E-6 expected=0.0 delta=9.813265247515801E-6 tol=5.0E-5 pass=true
+  native.chain-composed-coordinates.max-abs-mm: actual=1.0573231099542113E-5 expected=0.0 delta=1.0573231099542113E-5 tol=5.0E-5 pass=true
+  native.chain-convertwarp-field.max-abs-mm: actual=7.3581749528983664E-6 expected=0.0 delta=7.3581749528983664E-6 tol=5.0E-5 pass=true
+  native.chain-premat-ramp.max-abs: actual=1.582632928887051E-5 expected=0.0 delta=1.582632928887051E-5 tol=8.759980703767784E-5 pass=true
+  native.chain-composed-ramp.max-abs: actual=1.2756235889810341E-5 expected=0.0 delta=1.2756235889810341E-5 tol=8.759980703767784E-5 pass=true
+  chain.jacobian-chain-rule.max-rel: actual=2.0917861154976372E-11 expected=0.0 delta=2.0917861154976372E-11 tol=1.0E-9 pass=true
+  chain.push-unavailable: no FNIRT inverse was supplied pass=true
+  chain.inversion-refused-by-gates: CoverageBelowMinimum(0.03875576036866359,0.5); MaximumResidualExceeded(Reverse,0.11028454655894203,0.05); P99ResidualExceeded(Reverse,0.08620479622044228,0.01) pass=true
+  chain.provenance: FslFlirt fsl_chain_native/example_func2highres.mat then FslFnirtCoefficients neurotransform/fsl_coef_oracle/srcleft_refright_aff/coef.nii.gz pass=true
+  fnirt-jacobian.interior-voxels: 5832 interior voxels, 0 folds pass=true
+  fnirt-jacobian.fsl-jac.median-rel: actual=0.005985953794479578 expected=0.0 delta=0.005985953794479578 tol=0.01 pass=true
+  fnirt-jacobian.fsl-jac.p99-rel: actual=0.032503542821958574 expected=0.0 delta=0.032503542821958574 tol=0.05 pass=true
+  fnirt-jacobian.fsl-jac.max-rel: actual=0.052167847965236755 expected=0.0 delta=0.052167847965236755 tol=0.08 pass=true
+  caveat=transform.fsl-jacobian-spline-vs-finite-difference kind=AlgorithmDivergence severity=Actionable owner=transform detail=fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise followUp=an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)
+scalafim.transform.scenarios.FslChainScenarioSuite:
+  + FSL chain: example_func -> highres (FLIRT) -> standard (FNIRT --aff) composes to one field matching FSL 1.17s
+  + every convention mutation of the FSL chain fails the scenario on the FLIRT guard 0.862s
+  + native FSL chain references bind every fixture and the exact historical coefficient inputs 0.012s
+  + the FLIRT and FNIRT legs compose only in registration order: a reversed composite does not compile 0.0s
+scalafim.transform.field.DenseFieldOracleSuite:
+  + ANTs/ITK 5D displacement fields reproduce ITK DisplacementFieldTransform 0.008s
+  + ANTs fields whose qform and sform disagree are placed with the affine ITK chooses, off the lattice too 0.014s
+  + outside the lattice the default policy rejects instead of returning identity 0.002s
+  + FNIRT relative and absolute fields reproduce FSL applywarp coordinate ramps in every handedness case 0.111s
+  + relative vs absolute FNIRT fields are detected from content in every case 0.038s
+  + vector-field containers round-trip value-exactly 0.005s
+  + non-vector NIfTI is refused 0.001s
+scalafim.transform.itk.ItkHdf5SimpleItkSuite:
+  + an affine + displacement composite reproduces SimpleITK TransformPoint 0.015s
+  + historic Tranform* dataset names and float32 storage keep the composite's meaning 0.005s
+  + a constant displacement pair is a pullback and its supplied inverse 0.004s
+  + an affine-only composite fuses to an exact affine whose inverse is the forward map 0.002s
+  + BSpline components and missing fixed parameters are typed refusals 0.012s
+  + jHDF decodes every readable file to the h5py dump the shared ItkHdf5SimpleItkDumpSuite interprets 0.008s
+  + every fixture loads from disk with SHA-256 provenance matching its manifest 0.006s
+scalafim.transform.itk.AntsNativeOracleSuite:
+  + the native manifest pins ANTs 2.6 and every fixture byte 0.039s
+  + every MATLAB parameterisation reproduces antsApplyTransformsToPoints 0.004s
+  + ANTs-written 5D forward and inverse vector fields reproduce native point output 0.015s
+  + decoded Composite and InverseComposite reproduce native ANTs point output on both platforms 0.018s
+scalafim.transform.WorldTransformSuite:
+  + pullPoint and mapPoint are mutually inverse for affines 0.0s
+  + the affine inverse swaps directions exactly 0.0s
+  + two affines fuse into one affine equal to their lazy composition 0.005s
+  + a dense-style map without an inverse has no forward direction 0.001s
+  + transforms between mismatched spaces do not compose 0.0s
+scalafim.transform.ConversionMatrixSuite:
+  + a linear transform converts exactly into every linear format 0.021s
+  + dense outputs need a sampling lattice and are exact at its points 0.025s
+  + ITK/ANTs and AFNI fields refuse a sheared lattice 0.002s
+  + unsupported cells refuse with a typed reason 0.002s
+  + formats that need geometry say which geometry is missing 0.0s
+scalafim.transform.ConventionOracleSuite:
+  + FSL affine selection and handedness match fslpy when qform and sform disagree 0.002s
+  + FLIRT matrices convert to world->world exactly as fslpy.fromFlirt does 0.002s
+  + FreeSurfer Norig/Torig of conformed volumes match nibabel, and tkRAS maps to scanner by c_ras 0.001s
+scalafim.transform.itk.ItkHdf5OracleSuite:
+  + affine-only, affine-then-warp and warp-then-affine composites reproduce ITK TransformPoint 0.006s
+  + a linear-only file fuses to an affine; composites with fields are dense chains without a forward map 0.003s
+  + the default boundary policy rejects points that leave a displacement lattice 0.001s
+  + malformed composites are typed failures 0.003s
+scalafim.transform.x5.X5ContainerSuite:
+  + jHDF reads the same nodes and chains as h5py 0.029s
+  + ITK HDF5 files are not X5 0.001s
+scalafim.transform.TransformDetectionSuite:
+  + vendored oracle files are recognised by content 0.003s
+  + content wins over a misleading file name 0.0s
+  + a 5D displacement field with no telling name is ambiguous between ANTs and AFNI 0.001s
+  + an HDF5 container without a telling name is ambiguous between ITK and X5 0.0s
+  + FreeSurfer text formats are recognised 0.001s
+  + out-of-scope formats are refused by name, not guessed 0.0s
+  + gzip content must be decompressed first 0.001s
+scalafim.transform.field.WarpOracleSuite:
+  + materializing a relative FNIRT field on its lattice reproduces FSL convertwarp --absout in every handedness case 0.184s
+  + materialized ITK composites reproduce ITK TransformPoint at the lattice points 0.01s
+  + a native FSL dense field far from the identity is refused by the inversion gates, with its evidence 0.042s
+  + Jacobian determinants of a real FNIRT registration match FSL fnirtfileutils --jac 0.036s
+scalafim.transform.x5.X5OracleSuite:
+  + linear, displacement, deformation and chained X5 files map points exactly as nitransforms does 0.007s
+  + off the lattice, a field affine in space maps points as nitransforms does (cubic and linear agree there) 0.017s
+  + a single linear node is an affine; multi-node files need a chain 0.002s
+scalafim.transform.WriterGoldensSuite:
+  + every writer reproduces its committed golden byte for byte 0.013s
+  + the receipt was produced from exactly the committed goldens 0.013s
+  + a planted stale native golden or geometry receipt is rejected even when top-level golden hashes remain current 0.004s
+  + no native check in the receipt failed 0.001s
+scalafim.transform.TransformFilesSuite:
+  + oracle files of every format load with SHA-256 provenance 0.012s
+  + an ambiguous file loads once its format is stated 0.0s
+  + missing files are typed failures 0.0s
+scalafim.transform.nifti.NiftiRawSuite:
+  + the oracle covers every vendored NIfTI transform container 0.001s
+  + header fields, affines and scaled data agree with nibabel 0.058s
+  + non-NIfTI and truncated input is a typed failure 0.001s
+scalafim.transform.freesurfer.FreeSurferLinearOracleSuite:
+  + LTA RAS_TO_RAS, VOX_TO_VOX, REGISTER_DAT and FSLREG files all encode the same pullback 0.004s
+  + LTA volume geometry reproduces the NIfTI voxel-to-world of each volume 0.001s
+  + register.dat and talairach.xfm give the same pullback 0.001s
+  + CORONAL_RAS_TO_CORONAL_RAS and unknown LTA types are refused, never guessed 0.001s
+  + expression writes RAS_TO_RAS LTAs that read back to the same pullback, and every codec round-trips 0.003s
+  + malformed FreeSurfer files are typed failures 0.0s
+scalafim.transform.afni.AfniAff12OracleSuite:
+  + the pullback sends each base landmark to where AFNI placed it in the source (image oracle) 0.001s
+  + the pullback agrees with AFNI Vecwarp point mapping 0.001s
+  + our exact inverse equals AFNI's own cat_matvec -I 0.001s
+  + a 3dvolreg series decodes to one transform per volume and round-trips value-exactly, negative zeros included 0.002s
+  + expression inverts interpretation, with and without cardinal correction 0.001s
+  + malformed aff12 content is a typed failure 0.001s
+scalafim.transform.NitransformsCrosscheckSuite:
+  + every file nitransforms can read maps points as ScalaFIM does 0.007s
+  + oblique base and source images change the generic AFNI pullback, so the cardinal correction is exercised 0.002s
+scalafim.transform.oracle.OracleProvenanceSuite:
+  + SHA-256 matches the FIPS 180-4 test vectors 0.0s
+  + vendored neurotransform oracles cover the four imported sets 0.003s
+  + every vendored neurotransform oracle file matches its recorded SHA-256 0.06s
+  + gzip fixtures decode to NIfTI-1 headers on this platform 0.001s
+scalafim.transform.RoundTripSuite:
+  + every oracle transform file round-trips value-exactly through its codec 0.26s
+scalafim.transform.scenarios.FmriprepChainScenarioSuite:
+  + fMRIPrep chain: boldref -> T1w (ITK rigid) -> template (ITK HDF5 composite) matches native ITK points and volumes 0.072s
+  + every convention mutation of the fMRIPrep chain fails the scenario 0.099s
+  + a template -> T1w warp cannot stand in for the T1w -> template composite: the direction is a type 0.001s
+scalafim.transform.itk.ItkHdf5ContainerSuite:
+  + jHDF reads the same components as h5py for every HDF5 oracle file 0.003s
+  + non-HDF5 bytes are a typed failure 0.0s
+scalafim.transform.fsl.Fsl6NativeOracleSuite:
+  + manifest pins the approved FSL6 image, package lock, every generated fixture, and numerical receipts 0.032s
+  + FSL6 FNIRT coefficient ramps and fields agree with Scala decoders on every frozen asymmetric case 0.116s
+  + FSL6 dense coordinate ramps reproduce Scala relative and absolute interpretations in every handedness 0.105s
+  + ScalaFIM rejects contradictory FLIRT handedness and maps admitted FSL6 -vox coordinates 0.045s
+  + native FLIRT applyxfm preserves the positive-handed stored voxel pullback 0.01s
+  + FSL6 analytic coefficient Jacobians agree with the warp algebra's interior finite differences 0.025s
+scalafim.transform.field.AfniQwarpCrosscheckSuite:
+  + _WARP fields are detected as 3dQwarp and pull points as nitransforms' AFNI reader does 0.015s
+  + ITK would place the same file with its qform: the affine choice, not the displacement sign, separates ANTs and AFNI 0.002s
+  + an oblique _WARP field is refused as an unqualified convention, never placed on its oblique sform 0.003s
+scalafim.transform.itk.ItkHdf5SimpleItkDumpSuite:
+  + an affine + displacement composite reproduces SimpleITK TransformPoint 0.002s
+  + the legacy float32 file with historic Tranform* dataset names keeps the composite's meaning 0.001s
+  + a constant displacement pair is a pullback and its supplied inverse 0.001s
+  + an affine-only composite fuses to an exact affine whose inverse is the forward map 0.002s
+  + BSpline components are a typed refusal on every platform 0.002s
+  + the truncated file's dump shows the missing fixed parameters the JVM container refuses 0.002s
+scalafim.transform.GuideExamplesSuite:
+  + guide: read a registration file, whatever toolkit wrote it 0.002s
+  + guide: FSL needs each volume's own geometry 0.007s
+  + guide: FNIRT coefficient files need both volumes' geometry 0.002s
+  + guide: convert between toolkits 0.002s
+  + guide: a dense warp has no forward map until it is inverted 0.011s
+  + guide: linked cursors cross worlds through a transform's link 0.009s
+  + guide: warp algebra: fields, determinants and modulation 0.02s
+scalafim.transform.WarpAlgebraSuite:
+  + an affine materialized on a lattice samples its pullback exactly, fully covered 0.002s
+  + a typed composition S -> M -> T materializes to one field equal to the lazy chain 0.014s
+  + points that leave a stage's support are rejected by default and reported, never silently filled 0.018s
+  + coverage is attributed to the stage whose boundary policy supplied the value 0.005s
+  + a dense warp gains a forward map only through a qualified numerical estimate 0.107s
+  + an estimate whose evidence fails the declared tolerance is refused with the evidence 0.326s
+  + invalid policies and non-persistent lattices are typed errors; composites must be materialized first 0.224s
+  + an affine has the constant determinant det(A); Push is its reciprocal and the log is finite 0.009s
+  + radial scaling matches its closed-form determinant and the chain rule holds through a composition 0.096s
+  + a folded warp is reported by mask and count, with NonPositive log-determinants and no NaN 0.01s
+  + jacobian modulation preserves a density's integral under a compressive pull, and not its squared norm 1.245s
+  + sqrt-jacobian modulation preserves the squared L2 norm under a compressive pull, and not the integral 0.504s
+  + unmodulated resampling preserves neither law under a compressive pull 0.618s
+  + jacobian modulation preserves a density's integral under a expansive pull, and not its squared norm 0.421s
+  + sqrt-jacobian modulation preserves the squared L2 norm under a expansive pull, and not the integral 0.524s
+  + unmodulated resampling preserves neither law under a expansive pull 0.396s
+  + modulation diagnostics report the exact affine determinant; a single-sample axis is a typed error 0.058s
+  + resample samples the source through the pullback and rejects target points outside it by default 0.892s
+scalafim.transform.TransformModuleSuite:
+  + transform module links on this platform 0.0s
+scalafim.transform.OrientationOracleSuite:
+  + axis codes agree with nibabel aff2axcodes for permuted, flipped and oblique affines 0.011s
+  + reorienting data and affine together reproduces nibabel as_reoriented 0.03s
+  + reorientation keeps world identity and returns to the start 0.003s
+scalafim.transform.WorldTransformLinkSuite:
+  + an affine transform links both ways, agreeing with pullPoint and mapPoint 0.002s
+  + a composite whose warp has no inverse links target to source only; the forward direction is a typed error 0.001s
+[info] Passed: Total 166, Failed 0, Errors 0, Passed 166
+[success] Total time: 16 s, completed Sep 30, 2026, 8:11:40 a.m.
+[info] compiling 36 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/hrf/js/target/scala-3.7.4/classes ...
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/scenario-testkit/js/target/scala-3.7.4/classes ...
+[info] compiling 10 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/response/js/target/scala-3.7.4/classes ...
+[info] compiling 8 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/ar/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/locus-data/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/pipeline/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 50 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 42 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/design/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 17 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/model/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 57 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 67 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fit/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fit/js/target/scala-3.7.4/scalafim-fmri-fit-test-fastopt
+scalafim.fmri.fit.PipelineFitWorkflowSuite:
+  + in-memory fMRI OLS workflow runs through the pipeline graph and matches direct execution 0.021s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.001s
+scalafim.fmri.fit.LssSuite:
+  + LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors 0.002s
+  + LeastSquaresSeparate handles a single trial as residualized simple regression 0.000s
+  + LeastSquaresSeparate prepared design reuses fixed projection and trial workspace 0.001s
+  + LeastSquaresSeparate reports zero trial and degenerate other regressors 0.000s
+  + LeastSquaresSeparate returns typed metadata errors from safe constructors 0.000s
+  + LeastSquaresSeparate reports trials absorbed by fixed regressors without inventing betas 0.000s
+  + LeastSquaresSeparate rejects collinear trial and other-trial regressors 0.000s
+  + LeastSquaresSeparate rejects non-finite matrix inputs 0.000s
+  + LeastSquaresSeparate validates row alignment 0.000s
+scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite:
+  + public LSS path recovers metadata-selected trialwise estimates 0.055s
+scalafim.examples.SelectedEstimatesExampleSuite:
+  + condition and contrast guide executes the declared pooled engine against the R reference 0.024s
+  + FIR guide preserves structural bin identities and bounded metadata-only preparation 0.009s
+  + optional uncertainty and nuisance helpers preserve the requested shared-model estimates 0.009s
+  + run-local nuisance maps are explicitly unavailable as pooled estimates 0.005s
+  + run retention guide composes with output and uncertainty choices without changing pooling 0.008s
+  + semantic response guide keeps full derivative-basis readout and propagated uncertainty 0.008s
+scalafim.fmri.fit.DesignMatrixOwnershipSuite:
+  + a compiled hypothesis and ordinary or chunked fits share an immutable design 0.015s
+  + LSS uses the canonical design after event and baseline arrays are mutated 0.007s
+  + model construction rejects a matrix changed without rebuilding its schema 0.004s
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.005s
+  + shared retention requests describe and deliver actual native uncertainty 0.004s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.005s
+scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite:
+  + P3.4 row-deleted censor gaps bound public AR/GLS whitening 0.018s
+scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite:
+  + one public model and semantic hypotheses express delayed match to sample 0.238s
+scalafim.fmri.fit.TrialReadoutSuite:
+  + LSS trial readout matches the independent fMRILSS fixture and owns coefficient identity 0.001s
+  + readout folds fixed nuisance projection into both forward and adjoint maps 0.000s
+  + readout satisfies the Frobenius adjoint law 0.000s
+  + readout commutes with downstream feature mixing 0.001s
+  + one prepared readout is cached and applies a response batch columnwise 0.000s
+  + zero trial regressors produce a zero readout row and zero adjoint contribution 0.000s
+  + trial readout and trial coefficient axes reject malformed inputs with typed errors 0.000s
+scalafim.fmri.fit.ResultArtifactsSuite:
+  + ResultManifest from dense fit preserves parameter metadata and provenance 0.002s
+  + ContrastMap preserves statistic kind and degrees of freedom 0.001s
+  + StatMap rejects value and voxel-space mismatches 0.000s
+  + CoefficientCovarianceArtifact preserves voxelwise covariance and rejects shape mismatches 0.000s
+  + restricted inference exports only inferable standard errors and covariance 0.001s
+scalafim.fmri.fit.scenarios.ScenarioHarnessSuite:
+  + clean observations produce a CI-passable scenario 0.000s
+  + failed observations force ScenarioStatus.Fail even without caveats 0.000s
+  + non-blocking caveats require explicit policy to pass CI 0.000s
+  + blocking caveats force ScenarioStatus.Fail 0.000s
+  + policies cannot declare failures acceptable 0.000s
+scalafim.fmri.fit.RunwiseGlsSuite:
+  + runwise GLS is an explicit run-specific estimand and refuses across-run AR pooling 0.005s
+  + fixed AR(1) runwise GLS matches an independent segmented GLS reference 0.005s
+  + structural FIR axes, selected gaps and fixed AR covariance survive public and chunked execution 0.010s
+  + estimated voxelwise AR is chunk invariant and fixed effects consume every covariance matrix 0.018s
+scalafim.fmri.fit.RobustSuite:
+  + disabled robust options are equivalent to OLS 0.001s
+  + Huber robust fit downweights an outlying observation 0.002s
+  + Bisquare robust fit can reject a severe outlier 0.001s
+  + RobustLeastSquares executes through FitPlanExecutor 0.002s
+  + chunked robust fit uses full-selection prepared row weights 0.005s
+  + fmrireg row-wise Huber fixture matches run-scope robust IRLS semantics 0.002s
+  + fmrireg voxel scale scope keeps per-voxel scale components with row-wise weights 0.001s
+  + robust-triggered AR re-estimation exposes shared AR diagnostics 0.020s
+  + future chunked robust AR reuses full-selection whitening and row weights 0.020s
+scalafim.fmri.fit.PreparedManovaGeometrySuite:
+  + multi-contrast preparation yields a design-normalized effect basis 0.001s
+  + invertible changes of contrast basis preserve the hypothesis projector 0.001s
+  + rank-deficient contrast rows are rejected as non-estimable 0.000s
+scalafim.fmri.fit.profile.OutputRequestSuite:
+  + queries validate labels, weights and tolerances 0.000s
+  + requests validate against the condition axis and refuse trial outputs on the condition backend 0.001s
+  + query evaluation keeps signs and audits float32 conversion per query tolerance 0.000s
+scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite:
+  + mixed-TR public fixed-effects fit preserves run grids and semantic axes 0.006s
+  + fixed effects omit one invalid run-voxel contribution without failing healthy voxels 0.003s
+scalafim.fmri.fit.OlsSuite:
+  + OLS fits multiple response columns with one prepared factorization 0.000s
+  + basis reparameterization transports fit covariance and linear hypotheses 0.000s
+  + OLS reports residual variance per voxel 0.000s
+  + OLS matches independent Gaussian oracle on overdetermined multivoxel data 0.001s
+  + OLS matches independent oracle for scaled full-rank predictors 0.000s
+  + scale-aware rank detection is invariant to uniform predictor scaling 0.000s
+  + OLS rejects non-finite dense inputs at construction 0.000s
+  + OLS default QR solver agrees with normal equations on well-conditioned designs 0.000s
+  + OLS coefficients are invariant to design column permutation 0.000s
+  + OLS rejects singular designs 0.000s
+  + OLS rank policy makes strict full-rank rejection explicit 0.000s
+  + OLS reports unsupported rank policies explicitly 0.000s
+  + OLS rejects nearly collinear designs at the QR rank tolerance boundary 0.000s
+  + OLS rejects saturated fits before residual inference is represented 0.000s
+  + OLS remains finite for extreme but well-conditioned predictor scales 0.000s
+  + OLS rejects row mismatches at fit time 0.000s
+scalafim.fmri.fit.PreparedContrastGeometrySuite:
+  + moment geometry equals explicit dense effect and residual projectors 0.001s
+  + rescaling a one-row contrast preserves the effect matrix 0.000s
+  + invertible nuisance basis changes preserve effect and residual geometry 0.000s
+  + fixed AR whitening and censor resets match the first-level transform 0.000s
+  + rank-deficient prepared designs are rejected 0.000s
+  + held-out responses cannot alter a training-scoped whitening geometry 0.000s
+scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite:
+  + name-keyed contrasts survive reordered public design columns 0.005s
+scalafim.fmri.fit.RunwiseOlsSuite:
+  + RunwiseLeastSquares fits separate coefficients per sampling-frame block 0.001s
+  + RunwiseOls reports singular run designs with run identity 0.000s
+scalafim.fmri.fit.InferenceSuite:
+  + Dense OLS results expose standard errors and diagnostics 0.002s
+  + T contrasts align weights by column name 0.001s
+  + T contrasts can evaluate an explicitly inference-ready dense fit 0.001s
+  + T contrasts reject unknown columns 0.002s
+  + F contrasts evaluate single-df statistics, df, and voxel alignment 0.002s
+  + F contrasts evaluate multi-df tests 0.001s
+  + contrasts use voxelwise coefficient covariance when supplied 0.001s
+  + contrasts reject zero residual variance instead of emitting non-finite statistics 0.000s
+  + mixed fits retain typed voxel status and isolate T/F inference 0.000s
+  + F contrasts reject unknown and non-estimable columns explicitly 0.001s
+  + DesignContrasts evaluates attached t contrasts and generated F contrasts 0.023s
+scalafim.fmri.fit.FitBlockSuite:
+  + dense OLS block results merge to the same result as a full voxel block 0.001s
+  + dense blocks tolerate scale-aware cutoff differences with the same rank partition 0.000s
+  + fixed AR(1) GLS block results merge with identical diagnostics 0.001s
+  + LSS block results merge to the same result as a full voxel block 0.001s
+  + dense block merge rejects incompatible execution context 0.000s
+  + dense block merge preserves and validates the structural coefficient axis 0.000s
+  + LSS block merge rejects incompatible trial names 0.000s
+scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite:
+  + S07 2x2 public design supports semantic simple and interaction hypotheses 0.039s
+  + S08 3x3 public design supports unequal-score trends and interaction 0.017s
+  + S09 public design supports heterogeneous HRF bases by structural cell 0.013s
+  + S06 public model preserves factor/modulator scope and missing-value policy 0.021s
+  + S10 reconstructed basis responses use explicit functional weights 0.016s
+  + S16 rank-deficient structural hypotheses report row-space evidence 0.018s
+  + S18 public WLS agrees with an independent base-R receipt 0.006s
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.002s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.002s
+  + missing-data propagation reports an all-excluded selection explicitly 0.002s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.004s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.001s
+  + row omission preserves an explicitly reordered OLS time selection 0.002s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.001s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.002s
+  + row omission subsets selected-row weights by original observation position 0.003s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.001s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.001s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.001s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.002s
+  + fitDense rejects engines with a different result shape 0.001s
+  + public fit failures name aliased structural columns 0.001s
+  + GLS retains structural rank evidence and explains preview differences 0.001s
+  + every supported dense engine preserves the same structural coefficient axis 0.009s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 0.008s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.001s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.000s
+  + FitInterpreters exposes executable built-ins 0.000s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.002s
+  + LatentSketch principal components recovers rank-one response coefficients 0.003s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.003s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.001s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.002s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.006s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.006s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.005s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.004s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.003s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.003s
+scalafim.fmri.fit.StructuralHypothesisDslSuite:
+  + cell and basis references compile without column bookkeeping 0.001s
+  + weighted semantic rows compose T trends and F omnibus hypotheses 0.001s
+  + response functionals and modulators remain semantic 0.000s
+  + response functionals transport through explicit scan-space scaling 0.003s
+  + basis omnibus supports an explicit non-canonical scope 0.000s
+  + semantic omnibus blocks compose without exposing column rows 0.000s
+  + an empty basis scope reports a typed selection failure 0.000s
+  + a basis role absent from one heterogeneous cell is a typed basis failure 0.002s
+  + named response lowering composes with selected estimates without losing scientific metadata 0.001s
+  + named F lowering preserves row order and typed failures before design binding 0.001s
+  + only a named hypothesis exposes compile 0.000s
+  + validated domain ids remain first-class DSL inputs 0.000s
+  + sampled regressors compose as semantic coefficients 0.000s
+scalafim.fmri.fit.OlsEstimatesSuite:
+  + compiled estimator preserves selected functionals and removes nuisance contributions 0.001s
+  + selected estimates and joint uncertainty match an independent exact-rational oracle 0.000s
+  + marginal uncertainty agrees with joint readout without a joint covariance product 0.000s
+  + uncertainty execution reuses residual coordinates for its only selected product 0.000s
+  + column reordering and scaling preserve the same estimand 0.000s
+  + strided response blocks and repeated execution preserve input and output ownership 0.000s
+  + fixed row selection and temporal transform fuse through the readout adjoint 0.000s
+  + exactly determined coefficients do not require residual degrees of freedom 0.000s
+  + invalid readouts, incompatible rows, rank defects and unsupported solve policies fail explicitly 0.000s
+scalafim.fmri.fit.StructuralHypothesisSuite:
+  + semantic selectors resolve to structural identities and carry estimability evidence 0.001s
+  + hypothesis estimability uses the same scale-aware convention as fitting 0.000s
+  + semantic resolution is invariant to rendered labels and coefficient order 0.001s
+  + structural identity permits repeated rendered labels across run-scoped regressors 0.000s
+  + a compiled hypothesis rejects a result from a different design fingerprint 0.000s
+  + unknown structural components produce typed failures 0.000s
+  + declared-but-empty cells are distinguished from unknown levels 0.000s
+  + invalid structural weights are reported during compilation 0.000s
+  + rendered labels cannot become structural authority 0.000s
+  + rank-deficient designs reject non-estimable T contrasts and reduce F numerator rank 0.001s
+  + response-level functionals expand over semantic basis elements 0.001s
+  + reduced fixed-effects axes reject missing T, F, and response-functional components 0.001s
+scalafim.fmri.fit.ResponsePreparationSuite:
+  + default plan is inspectable and preserves block input identity 0.000s
+  + non-default plan distinguishes applied, rejected, and deferred surfaces 0.000s
+  + fixed volume weights apply by full-model timepoint index 0.000s
+  + fixed weights equal OLS on square-root weighted design and response 0.000s
+  + multiresponse WLS agrees with independently fitted response columns 0.000s
+  + estimated DVARS weighting is executable and records its source and normalization 0.001s
+  + zero fixed weights exclude rows before rank and residual-df calculation 0.000s
+  + Tukey DVARS estimation gives exact-zero artifacts lawful exclusion semantics 0.000s
+  + negative and non-finite fixed weights are explicit preparation errors 0.000s
+  + selected-row fixed alignment is exact rather than length-heuristic 0.000s
+  + DVARS resets at selection gaps instead of differencing across censored timepoints 0.000s
+  + within-run DVARS normalization does not cross acquisition boundaries 0.000s
+  + all DVARS transformations match the independent base-R receipt 0.001s
+  + nuisance projection rows must align with selected timepoints 0.000s
+scalafim.fmri.fit.profile.ShapeDecoderSuite:
+  + node grid indexing round-trips 0.000s
+  + an interior optimum is found to high precision within the budget 0.001s
+  + an optimum outside the box lands on the boundary with a projected step 0.000s
+  + indefinite curvature is reported and the parabolic fallback still improves on the node 0.000s
+  + a prior pulls the estimate and both curvatures are reported 0.000s
+  + weak identification and ambiguity are separate statuses 0.000s
+  + three-dimensional charts decode with a hierarchical scan 0.000s
+scalafim.fmri.fit.profile.ProfileReductionSuite:
+  + the reduction matches finite differences of the exact energy, including energy-term derivatives 0.001s
+  + omitting the energy-term derivatives is detected 0.000s
+  + a non-positive-definite Gram is reported, not inverted 0.000s
+  + compact condition jets agree with finite differences of the direct compact energy and are sign-invariant 0.002s
+  + criterion assembly scales the energy jet and demands a determinant for trial ML 0.000s
+scalafim.fmri.fit.profile.BlockExecutorSuite:
+  + blocks partition the voxel range with the last block shorter 0.000s
+  + sequential execution delivers receipts in block order and retains no payloads 0.000s
+  + budget, sink failure and cancellation are typed outcomes 0.000s
+scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite:
+  + run-local nuisance axes and missing shared cells preserve structural identity 0.012s
+scalafim.fmri.fit.ContrastReprojectionSuite:
+  + reprojection equals an independent direct OLS refit on the collapsed design 0.002s
+  + a second kernel from the same product also matches its refit 0.000s
+  + the product constructor refuses malformed retention 0.000s
+  + reprojection refuses malformed and degenerate requests 0.000s
+scalafim.fmri.fit.FixedEffectsEstimatesSuite:
+  + selected pooling matches independent rational inverse-precision calculations 0.001s
+  + only requested pooled covariance and standard errors are propagated 0.001s
+  + pooled coefficient reorder and disjoint run order preserve selected estimates 0.000s
+  + missing pooled coefficients and foreign design identity fail explicitly 0.000s
+  + public selected run combination preserves mixed-TR R estimates and native exclusions 0.003s
+scalafim.fmri.fit.profile.ShapeEvidencePoolSuite:
+  + pooled node energies sum, ignore unscanned nodes and pick a fully scanned best node 0.000s
+  + merging in a fixed order reproduces a single accumulation exactly 0.000s
+  + the regional prior sits at the pooled best node with a floored spread 0.000s
+scalafim.fmri.fit.BasisExpandedRetentionSuite:
+  + preparation reads nothing and the retained product reprojects to the collapsed refit 0.003s
+  + a second kernel from the same retained product matches its own refit 0.001s
+  + streamed blocks carry the same panel as the assembled product 0.001s
+  + structure and preparation refuse malformed input before any read 0.000s
+  + cancellation yields no partial assembled product 0.000s
+scalafim.fmri.fit.ChunkedFitExecutorSuite:
+  + ChunkProgram rejects non-contiguous generic work ordinals 0.000s
+  + SequentialChunkProgramInterpreter wraps failures with chunk identity 0.000s
+  + FutureChunkProgramInterpreter preserves ordinal order with bounded execution 0.000s
+  + FitChunkPlan exposes repeatable ordered voxel chunks 0.001s
+  + FitChunkProgram exposes a repeatable scheduler-neutral work stream 0.001s
+  + ChunkedFitExecutor matches unchunked OLS while preserving selected voxel order 0.001s
+  + single-voxel chunks preserve propagated non-finite exclusions 0.002s
+  + chunked voxel-specific row omission matches whole patterned OLS 0.003s
+  + future single-voxel chunks preserve propagated non-finite exclusions 0.001s
+  + future chunking preserves voxel-specific observation patterns 0.002s
+  + all-excluded and partially-excluded chunks preserve source exclusion order 0.001s
+  + ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses 0.001s
+  + ChunkedFitExecutor estimates DVARS once from the whole selected response 0.001s
+  + FutureChunkedFitExecutor matches sequential chunked OLS with bounded parallelism 0.001s
+  + FutureChunkedFitExecutor matches unchunked full-rank LatentSketch 0.002s
+  + FutureChunkedFitExecutor reuses one compressed LatentSketch across chunks 0.002s
+  + FutureChunkedFitExecutor reuses one principal-component LatentSketch across chunks 0.004s
+  + ChunkedFitExecutor matches unchunked LSS 0.004s
+  + ChunkedFitExecutor matches unchunked fixed-AR GLS 0.004s
+  + FutureChunkedFitExecutor prepares estimated-AR GLS once across bounded parallel chunks 0.004s
+  + FutureChunkedFitExecutor matches unchunked full-rank ReducedRankGls 0.006s
+  + FutureChunkedFitExecutor reuses one compressed ReducedRankGls basis across chunks 0.004s
+  + FutureChunkedFitExecutor reuses deterministic ReducedRankGls bootstrap inference 0.007s
+  + full-rank voxelwise-AR ReducedRankGls fallback remains event-only across chunks 0.005s
+  + compressed voxelwise-AR ReducedRankGls remains an explicit design boundary 0.002s
+  + FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks 0.004s
+  + chunk interpreters agree from the same prepared GLS chunk program 0.004s
+  + ChunkedFitExecutor matches unchunked runwise OLS 0.002s
+  + FitChunkPlan rejects non-contiguous ordinals 0.000s
+  + FitChunkPlan rejects mixed timepoint chunks 0.000s
+  + runwise preparation preserves bounded response reads and censored axes 0.002s
+  + runwise future preparation preserves bounded response reads 0.001s
+  + fixed preparation preserves bounded response reads and censored axes 0.005s
+  + fixed future preparation preserves bounded response reads 0.003s
+  + LSS preparation preserves bounded response reads and censored axes 0.003s
+  + LSS future preparation preserves bounded response reads 0.003s
+scalafim.fmri.fit.ImageMapsSuite:
+  + Dense fit coefficient and SE maps preserve full voxel placement 0.003s
+  + image maps place selected voxels into their original image locations 0.001s
+  + typed result manifest coefficient maps adapt to existing image maps 0.001s
+  + image map adapters retain source identity and reject another world with identical geometry 0.001s
+  + standard-error image maps omit coefficients outside the inference scope 0.001s
+  + t and F contrast statistics map into image space 0.001s
+scalafim.fmri.fit.FirstLevelEstimatesSuite:
+  + public preparation performs no reads and streams only selected identified products 0.002s
+  + selected time and voxel ordering are preserved across block sizes 0.001s
+  + cancellation and sink failure prevent subsequent response reads 0.001s
+  + invalid identities and unsupported scientific engines fail before reads 0.001s
+  + the caller's backend receives exactly the selected block products 0.001s
+  + native FIR selection preserves physical bin coordinates and requested order 0.002s
+scalafim.fmri.fit.FirstLevelFixedEffectsEstimatesSuite:
+  + preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts 0.004s
+  + run-local nuisance projection preserves joint task pooling and selected voxel order 0.004s
+  + entirely excluded blocks preserve identities and do not stop subsequent healthy voxels 0.003s
+  + cancellation, sink failure and incompatible engines fail without excess reads 0.002s
+  + pooled execution dispatches only prepared run statistics and requested voxel products 0.003s
+  + FIR pooling retains physical bins and planted estimates through reversed gapped scan selection 0.003s
+  + explicit retained run coefficients match independent R values without changing pooled products 0.011s
+  + retained run coefficients preserve excluded input voxels and continue to healthy blocks 0.004s
+  + unsupported run retention cannot be silently discarded by shared or pooling-only entry points 0.003s
+  + retention obeys the same cancellation and failed-sink read boundary 0.002s
+scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite:
+  + public fit path preserves design semantics for T and F contrasts 0.007s
+scalafim.fmri.fit.GlsSuite:
+  + GeneralizedLeastSquares runs AR(1) whitening and reports diagnostics 0.001s
+  + GeneralizedLeastSquares can estimate an AR(1) rho from initial residuals 0.001s
+  + estimated AR(2) GLS matches the fmriAR 0.3.3 end-to-end receipt 0.002s
+  + GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals 0.004s
+  + GeneralizedLeastSquares supports fixed AR(2) coefficients 0.001s
+  + GeneralizedLeastSquares keeps finite diagnostics under extreme predictor scales 0.001s
+  + GeneralizedLeastSquares resets AR whitening after censored timepoints 0.001s
+  + estimated GLS excludes explicit censor rows only from noise estimation 0.000s
+  + GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset 0.001s
+  + GeneralizedLeastSquares rejects censored timepoints outside selected partitions 0.000s
+  + GeneralizedLeastSquares resets at run and censor boundaries for multivoxel data 0.001s
+  + GeneralizedLeastSquares distinguishes run-specific and global estimated AR pooling 0.011s
+  + GeneralizedLeastSquares supports voxelwise estimated AR with explicit non-shared covariance 0.010s
+  + voxelwise GLS retains degenerate voxel status and isolates contrast inference 0.002s
+  + GeneralizedLeastSquares rejects unsupported AR configurations explicitly 0.001s
+  + GeneralizedLeastSquares rejects non-stationary fixed AR coefficients 0.002s
+  + GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries 0.001s
+  + row-deleted whitening matches independent segmented L X and L Y 0.001s
+scalafim.fmri.fit.CompactFixedEffectsSuite:
+  + public run combination retains compact statistics and agrees with independent correlated mixed-TR R oracle 0.007s
+  + structured storage grows with voxel scales, preserves off-diagonal precision, and refuses malformed fields 0.011s
+  + unstructured legacy contributions, disjoint folding and availability rules remain usable 0.004s
+  + compact concatenation refuses logical voxel count overflow without dense materialization 0.001s
+scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite:
+  + chunked runwise regression preserves chunk order, run partitions, and coefficients 0.012s
+scalafim.fmri.fit.DctDriftFitSuite:
+  + native selected betas and contrasts equal independent FWL on complete and censored original rows 0.009s
+scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite:
+  + censored multi-run concatenated fit row-deletes design and response consistently 0.004s
+scalafim.fmri.fit.FitPlanBuilderSuite:
+  + builder-created FitPlan runs OLS and recovers known coefficients 0.001s
+  + builder-created FitPlan recovers task effects after nuisance adjustment 0.002s
+scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite:
+  + S12 combines sustained blocks, transient events, and variable epochs 0.025s
+  + S15 sampled nuisance preserves task inference against an R direct fit 0.078s
+scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite:
+  + pipeline-backed first-level workflow returns one scenario verdict 0.021s
+[info] Passed: Total 316, Failed 0, Errors 0, Passed 316
+[success] Total time: 60 s, completed Sep 30, 2026, 8:12:40 a.m.
+[info] compiling 25 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/transform/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 31 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/transform/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-fsl-chain-20260930/modules/transform/js/target/scala-3.7.4/scalafim-transform-test-fastopt
+scalafim.transform.field.FnirtCoefficientOracleSuite:
+  + the oracle manifest lists the ten cubic and quadratic cases 0.001s
+  + headers decode to FNIRT's order, knot spacing, reference geometry and --aff matrix 0.030s
+  + the spline on the reference FSL voxel lattice reproduces fnirtfileutils displacement fields 0.140s
+  + the world pullback reproduces fnirtfileutils --withaff fields at every reference voxel 0.150s
+  + the world pullback reproduces applywarp --warp=coef coordinate ramps on the source interior 0.053s
+  + off-lattice points evaluate the spline exactly, matching a direct tensor-product sum 0.010s
+  + points outside the reference follow the boundary policy 0.006s
+  + a reference volume other than the one FNIRT fitted on is a typed mismatch 0.001s
+  + coefficient files are detected by intent and decode through Transforms 0.006s
+  + DCT coefficients and TOPUP files are refused by name 0.002s
+  + a reflecting --aff matrix and non-integer knot spacing are refused 0.001s
+  + optional header fields: no qform, no intent_p, no sform 0.002s
+  + reference voxel sizes, grid coverage and boundary arity are checked against the context 0.004s
+  + coefficient files round-trip value-exactly 0.012s
+  + coefficients convert to a dense FNIRT field on a lattice, matching fnirtfileutils --withaff 0.128s
+  + coefficient conversion needs FSL geometry and a lattice, and never targets linear or coefficient formats 0.001s
+scalafim.transform.itk.ItkHdf5OracleSuite:
+  + affine-only, affine-then-warp and warp-then-affine composites reproduce ITK TransformPoint 0.029s
+  + a linear-only file fuses to an affine; composites with fields are dense chains without a forward map 0.004s
+  + the default boundary policy rejects points that leave a displacement lattice 0.006s
+  + malformed composites are typed failures 0.002s
+scalafim.transform.TransformModuleSuite:
+  + transform module links on this platform 0.000s
+scalafim.transform.scenarios.FslChainScenarioSuite:
+scenario=transform.fsl-chain.v1 status=PassWithCaveats
+  func.neurological: the x mirror applies to the functional grid pass=true
+  native-inputs.func-dims: Vector(28, 31, 25) pass=true
+  native-inputs.func-stored-affine.max-abs-mm: actual=0 expected=0 delta=0 tol=1e-9 pass=true
+  native-inputs.flirt-matrix.max-abs: actual=0 expected=0 delta=0 tol=1e-9 pass=true
+  fnirt.supported-voxels: 605 standard voxels on the native source interior pass=true
+  flirt-leg.pullback.max-abs-mm: actual=4.751329996111053e-9 expected=0 delta=4.751329996111053e-9 tol=0.000001 pass=true
+  fnirt-leg.materialized-vs-applywarp.max-abs-mm: actual=0.0000058317638274019146 expected=0 delta=0.0000058317638274019146 tol=0.00002 pass=true
+  chain.materialized-vs-reference.max-abs-mm: actual=0.00000580375335657024 expected=0 delta=0.00000580375335657024 tol=0.00005 pass=true
+  chain.materialized-coverage: CoverageCounts(1188,0,0,0) pass=true
+  fnirt-leg.phantom-vs-applywarp.max-abs: actual=0.000307688932025485 expected=0 delta=0.000307688932025485 tol=0.0029943857656662934 pass=true
+  chain.ramp-voxels: 605 supported voxels pull back inside the functional grid pass=true
+  chain.ramp-resample.max-abs: actual=0.000004511806622531367 expected=0 delta=0.000004511806622531367 tol=0.00005708322891267785 pass=true
+  native.flirt.full-support: 3136 of 3136 highres queries pass=true
+  native.flirt-coordinates.max-abs-mm: actual=0.000025540975842730518 expected=0 delta=0.000025540975842730518 tol=0.00005 pass=true
+  native.flirt-ramp.max-abs: actual=0.00002686172419430477 expected=0 delta=0.00002686172419430477 tol=0.00008759980703767784 pass=true
+  native.chain.full-support: 1188 of 1188 standard queries pass=true
+  native.chain-premat-coordinates.max-abs-mm: actual=0.000009813265247515801 expected=0 delta=0.000009813265247515801 tol=0.00005 pass=true
+  native.chain-composed-coordinates.max-abs-mm: actual=0.000010573231099542113 expected=0 delta=0.000010573231099542113 tol=0.00005 pass=true
+  native.chain-convertwarp-field.max-abs-mm: actual=0.0000073581749528983664 expected=0 delta=0.0000073581749528983664 tol=0.00005 pass=true
+  native.chain-premat-ramp.max-abs: actual=0.00001582632928887051 expected=0 delta=0.00001582632928887051 tol=0.00008759980703767784 pass=true
+  native.chain-composed-ramp.max-abs: actual=0.000012756235889810341 expected=0 delta=0.000012756235889810341 tol=0.00008759980703767784 pass=true
+  chain.jacobian-chain-rule.max-rel: actual=2.0917861154976372e-11 expected=0 delta=2.0917861154976372e-11 tol=1e-9 pass=true
+  chain.push-unavailable: no FNIRT inverse was supplied pass=true
+  chain.inversion-refused-by-gates: CoverageBelowMinimum(0.03875576036866359,0.5); MaximumResidualExceeded(Reverse,0.11028454655894203,0.05); P99ResidualExceeded(Reverse,0.08620479622044228,0.01) pass=true
+  chain.provenance: FslFlirt fsl_chain_native/example_func2highres.mat then FslFnirtCoefficients neurotransform/fsl_coef_oracle/srcleft_refright_aff/coef.nii.gz pass=true
+  fnirt-jacobian.interior-voxels: 5832 interior voxels, 0 folds pass=true
+  fnirt-jacobian.fsl-jac.median-rel: actual=0.005985953794479578 expected=0 delta=0.005985953794479578 tol=0.01 pass=true
+  fnirt-jacobian.fsl-jac.p99-rel: actual=0.032503542821958574 expected=0 delta=0.032503542821958574 tol=0.05 pass=true
+  fnirt-jacobian.fsl-jac.max-rel: actual=0.052167847965236755 expected=0 delta=0.052167847965236755 tol=0.08 pass=true
+  caveat=transform.fsl-jacobian-spline-vs-finite-difference kind=AlgorithmDivergence severity=Actionable owner=transform detail=fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise followUp=an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)
+  + FSL chain: example_func -> highres (FLIRT) -> standard (FNIRT --aff) composes to one field matching FSL 0.583s
+  + every convention mutation of the FSL chain fails the scenario on the FLIRT guard 1.024s
+  + native FSL chain references bind every fixture and the exact historical coefficient inputs 0.017s
+  + the FLIRT and FNIRT legs compose only in registration order: a reversed composite does not compile 0.000s
+scalafim.transform.TransformDetectionSuite:
+  + vendored oracle files are recognised by content 0.005s
+  + content wins over a misleading file name 0.000s
+  + a 5D displacement field with no telling name is ambiguous between ANTs and AFNI 0.001s
+  + an HDF5 container without a telling name is ambiguous between ITK and X5 0.000s
+  + FreeSurfer text formats are recognised 0.000s
+  + out-of-scope formats are refused by name, not guessed 0.000s
+  + gzip content must be decompressed first 0.000s
+scalafim.transform.WorldTransformSuite:
+  + pullPoint and mapPoint are mutually inverse for affines 0.000s
+  + the affine inverse swaps directions exactly 0.000s
+  + two affines fuse into one affine equal to their lazy composition 0.000s
+  + a dense-style map without an inverse has no forward direction 0.000s
+  + transforms between mismatched spaces do not compose 0.000s
+scalafim.transform.NitransformsCrosscheckSuite:
+  + every file nitransforms can read maps points as ScalaFIM does 0.010s
+  + oblique base and source images change the generic AFNI pullback, so the cardinal correction is exercised 0.000s
+scalafim.transform.ConversionMatrixSuite:
+  + a linear transform converts exactly into every linear format 0.006s
+  + dense outputs need a sampling lattice and are exact at its points 0.022s
+  + ITK/ANTs and AFNI fields refuse a sheared lattice 0.001s
+  + unsupported cells refuse with a typed reason 0.009s
+  + formats that need geometry say which geometry is missing 0.000s
+scalafim.transform.fsl.Fsl6NativeOracleSuite:
+  + manifest pins the approved FSL6 image, package lock, every generated fixture, and numerical receipts 0.045s
+  + FSL6 FNIRT coefficient ramps and fields agree with Scala decoders on every frozen asymmetric case 0.260s
+  + FSL6 dense coordinate ramps reproduce Scala relative and absolute interpretations in every handedness 0.280s
+  + ScalaFIM rejects contradictory FLIRT handedness and maps admitted FSL6 -vox coordinates 0.003s
+  + native FLIRT applyxfm preserves the positive-handed stored voxel pullback 0.010s
+  + FSL6 analytic coefficient Jacobians agree with the warp algebra's interior finite differences 0.109s
+scalafim.transform.x5.X5OracleSuite:
+  + linear, displacement, deformation and chained X5 files map points exactly as nitransforms does 0.011s
+  + off the lattice, a field affine in space maps points as nitransforms does (cubic and linear agree there) 0.042s
+  + a single linear node is an affine; multi-node files need a chain 0.001s
+scalafim.transform.freesurfer.FreeSurferLinearOracleSuite:
+  + LTA RAS_TO_RAS, VOX_TO_VOX, REGISTER_DAT and FSLREG files all encode the same pullback 0.002s
+  + LTA volume geometry reproduces the NIfTI voxel-to-world of each volume 0.011s
+  + register.dat and talairach.xfm give the same pullback 0.011s
+  + CORONAL_RAS_TO_CORONAL_RAS and unknown LTA types are refused, never guessed 0.001s
+  + expression writes RAS_TO_RAS LTAs that read back to the same pullback, and every codec round-trips 0.004s
+  + malformed FreeSurfer files are typed failures 0.000s
+scalafim.transform.field.AfniQwarpCrosscheckSuite:
+  + _WARP fields are detected as 3dQwarp and pull points as nitransforms' AFNI reader does 0.043s
+  + ITK would place the same file with its qform: the affine choice, not the displacement sign, separates ANTs and AFNI 0.001s
+  + an oblique _WARP field is refused as an unqualified convention, never placed on its oblique sform 0.002s
+scalafim.transform.oracle.OracleProvenanceSuite:
+  + SHA-256 matches the FIPS 180-4 test vectors 0.001s
+  + vendored neurotransform oracles cover the four imported sets 0.002s
+  + every vendored neurotransform oracle file matches its recorded SHA-256 0.037s
+  + gzip fixtures decode to NIfTI-1 headers on this platform 0.001s
+scalafim.transform.nifti.NiftiRawSuite:
+  + the oracle covers every vendored NIfTI transform container 0.000s
+  + header fields, affines and scaled data agree with nibabel 0.079s
+  + non-NIfTI and truncated input is a typed failure 0.000s
+scalafim.transform.itk.ItkHdf5SimpleItkDumpSuite:
+  + an affine + displacement composite reproduces SimpleITK TransformPoint 0.003s
+  + the legacy float32 file with historic Tranform* dataset names keeps the composite's meaning 0.001s
+  + a constant displacement pair is a pullback and its supplied inverse 0.001s
+  + an affine-only composite fuses to an exact affine whose inverse is the forward map 0.000s
+  + BSpline components are a typed refusal on every platform 0.000s
+  + the truncated file's dump shows the missing fixed parameters the JVM container refuses 0.000s
+scalafim.transform.WorldTransformLinkSuite:
+  + an affine transform links both ways, agreeing with pullPoint and mapPoint 0.000s
+  + a composite whose warp has no inverse links target to source only; the forward direction is a typed error 0.000s
+scalafim.transform.fsl.FlirtOracleSuite:
+  + FLIRT matrices read from disk map ten asymmetric points per case exactly as fslpy's world->world conversion 0.003s
+  + the fresh case selects the sform of a neurological source and the qform of a radiological reference, as fslpy does 0.001s
+  + expressing a FLIRT transform reproduces the stored matrix, and encoding round-trips 0.002s
+  + malformed FLIRT text is a typed failure 0.000s
+scalafim.transform.ConventionOracleSuite:
+  + FSL affine selection and handedness match fslpy when qform and sform disagree 0.001s
+  + FLIRT matrices convert to world->world exactly as fslpy.fromFlirt does 0.001s
+  + FreeSurfer Norig/Torig of conformed volumes match nibabel, and tkRAS maps to scanner by c_ras 0.000s
+scalafim.transform.field.DenseFieldOracleSuite:
+  + ANTs/ITK 5D displacement fields reproduce ITK DisplacementFieldTransform 0.005s
+  + ANTs fields whose qform and sform disagree are placed with the affine ITK chooses, off the lattice too 0.024s
+  + outside the lattice the default policy rejects instead of returning identity 0.002s
+  + FNIRT relative and absolute fields reproduce FSL applywarp coordinate ramps in every handedness case 0.174s
+  + relative vs absolute FNIRT fields are detected from content in every case 0.043s
+  + vector-field containers round-trip value-exactly 0.002s
+  + non-vector NIfTI is refused 0.000s
+scalafim.transform.itk.ItkLinearOracleSuite:
+  + the oracle covers every linear parameterisation 0.000s
+  + text files reproduce ITK TransformPoint for every parameterisation and the composite 0.004s
+  + MATLAB v4 files decode to the same transforms as their text twins 0.003s
+  + encode then decode is value-exact for both codecs 0.002s
+  + a linear world transform written as an ITK affine reads back to the same mapping 0.002s
+  + the imported neurotransform ITK affine decodes identically from .tfm and .mat 0.000s
+  + big-endian float32 MATLAB v4 storage decodes to the oracle transform at float precision 0.002s
+  + unsupported MATLAB v4 precision codes and truncated records are typed failures 0.000s
+  + unsupported and malformed ITK content is a typed failure 0.000s
+scalafim.transform.itk.AntsNativeOracleSuite:
+  + the native manifest pins ANTs 2.6 and every fixture byte 0.014s
+  + every MATLAB parameterisation reproduces antsApplyTransformsToPoints 0.002s
+  + ANTs-written 5D forward and inverse vector fields reproduce native point output 0.025s
+  + decoded Composite and InverseComposite reproduce native ANTs point output on both platforms 0.021s
+scalafim.transform.OrientationOracleSuite:
+  + axis codes agree with nibabel aff2axcodes for permuted, flipped and oblique affines 0.003s
+  + reorienting data and affine together reproduces nibabel as_reoriented 0.010s
+  + reorientation keeps world identity and returns to the start 0.002s
+scalafim.transform.afni.AfniAff12OracleSuite:
+  + the pullback sends each base landmark to where AFNI placed it in the source (image oracle) 0.000s
+  + the pullback agrees with AFNI Vecwarp point mapping 0.000s
+  + our exact inverse equals AFNI's own cat_matvec -I 0.000s
+  + a 3dvolreg series decodes to one transform per volume and round-trips value-exactly, negative zeros included 0.000s
+  + expression inverts interpretation, with and without cardinal correction 0.001s
+  + malformed aff12 content is a typed failure 0.000s
+scalafim.transform.scenarios.FmriprepChainScenarioSuite:
+  + fMRIPrep chain: boldref -> T1w (ITK rigid) -> template (ITK HDF5 composite) matches native ITK points and volumes 0.101s
+  + every convention mutation of the fMRIPrep chain fails the scenario 0.234s
+  + a template -> T1w warp cannot stand in for the T1w -> template composite: the direction is a type 0.000s
+scalafim.transform.WarpAlgebraSuite:
+  + an affine materialized on a lattice samples its pullback exactly, fully covered 0.002s
+  + a typed composition S -> M -> T materializes to one field equal to the lazy chain 0.039s
+  + points that leave a stage's support are rejected by default and reported, never silently filled 0.021s
+  + coverage is attributed to the stage whose boundary policy supplied the value 0.010s
+  + a dense warp gains a forward map only through a qualified numerical estimate 0.276s
+  + an estimate whose evidence fails the declared tolerance is refused with the evidence 0.541s
+  + invalid policies and non-persistent lattices are typed errors; composites must be materialized first 0.565s
+  + an affine has the constant determinant det(A); Push is its reciprocal and the log is finite 0.001s
+  + radial scaling matches its closed-form determinant and the chain rule holds through a composition 0.069s
+  + a folded warp is reported by mask and count, with NonPositive log-determinants and no NaN 0.018s
+  + jacobian modulation preserves a density's integral under a compressive pull, and not its squared norm 2.008s
+  + sqrt-jacobian modulation preserves the squared L2 norm under a compressive pull, and not the integral 1.728s
+  + unmodulated resampling preserves neither law under a compressive pull 1.712s
+  + jacobian modulation preserves a density's integral under a expansive pull, and not its squared norm 1.805s
+  + sqrt-jacobian modulation preserves the squared L2 norm under a expansive pull, and not the integral 1.736s
+  + unmodulated resampling preserves neither law under a expansive pull 1.835s
+  + modulation diagnostics report the exact affine determinant; a single-sample axis is a typed error 0.199s
+  + resample samples the source through the pullback and rejects target points outside it by default 2.887s
+scalafim.transform.field.WarpOracleSuite:
+  + materializing a relative FNIRT field on its lattice reproduces FSL convertwarp --absout in every handedness case 0.401s
+  + materialized ITK composites reproduce ITK TransformPoint at the lattice points 0.012s
+  + a native FSL dense field far from the identity is refused by the inversion gates, with its evidence 0.152s
+  + Jacobian determinants of a real FNIRT registration match FSL fnirtfileutils --jac 0.312s
+[info] Passed: Total 138, Failed 0, Errors 0, Passed 138
+[success] Total time: 31 s, completed Sep 30, 2026, 8:13:11 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:11 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:12 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:12 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:12 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:12 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:12 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/response-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:13:13 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/response-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:13:14 a.m.
+[info] compiling 17 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/latent/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Sep 30, 2026, 8:13:18 a.m.
+[info] compiling 17 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/latent/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:13:23 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:23 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:23 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:23 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:23 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/hrf-laws/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:13:24 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/hrf-laws/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:24 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:24 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:24 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:24 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:13:25 a.m.
+[success] Total time: 2 s, completed Sep 30, 2026, 8:13:27 a.m.
+[success] Total time: 2 s, completed Sep 30, 2026, 8:13:29 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/provider-spike/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:13:29 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/provider-spike/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:13:30 a.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:13:33 a.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:13:36 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image-view-canvas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:13:39 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image-view-java2d/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:13:43 a.m.
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:13:47 a.m.
+[info] compiling 12 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/threshold/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:13:51 a.m.
+[info] compiling 12 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/threshold/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:13:54 a.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/motion/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:13:57 a.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/motion/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:00 a.m.
+[info] compiling 33 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:03 a.m.
+[info] compiling 31 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:14:07 a.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:14:11 a.m.
+[info] compiling 18 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:14:15 a.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view-raster/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:18 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view-raster/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 2 s, completed Sep 30, 2026, 8:14:20 a.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:23 a.m.
+[info] compiling 5 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view-three/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:25 a.m.
+[info] compiling 21 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/connectivity/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view-connectivity/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:28 a.m.
+[info] compiling 21 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/connectivity/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/surface-view-connectivity/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Sep 30, 2026, 8:14:33 a.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/examples/surface-view/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:36 a.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/examples/surface-view/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:39 a.m.
+[success] Total time: 2 s, completed Sep 30, 2026, 8:14:41 a.m.
+[success] Total time: 2 s, completed Sep 30, 2026, 8:14:43 a.m.
+[info] compiling 30 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:14:46 a.m.
+[info] compiling 25 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:14:50 a.m.
+[info] compiling 29 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/atlas/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:14:54 a.m.
+[info] compiling 20 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/atlas/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:14:57 a.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:14:58 a.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:14:59 a.m.
+[info] compiling 9 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:15:02 a.m.
+[info] compiling 9 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:15:05 a.m.
+[info] compiling 5 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/estimates-io/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Sep 30, 2026, 8:15:11 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/estimates-io/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Sep 30, 2026, 8:15:16 a.m.
+[info] compiling 17 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/group/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fit-estimates/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Sep 30, 2026, 8:15:21 a.m.
+[info] compiling 17 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/group/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fit-estimates/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Sep 30, 2026, 8:15:27 a.m.
+[info] compiling 14 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-lna/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:15:30 a.m.
+[info] compiling 10 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-lna/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:15:33 a.m.
+[info] compiling 10 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 30 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/interop-archived-response/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 5 s, completed Sep 30, 2026, 8:15:39 a.m.
+[info] compiling 9 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 24 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/interop-archived-response/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 8 s, completed Sep 30, 2026, 8:15:46 a.m.
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[info] waiting for lock on /Users/bbuchsbaum/.ivy2/.sbt.ivy.lock to be available...
+[success] Total time: 3 s, completed Sep 30, 2026, 8:15:50 a.m.
+[success] Total time: 3 s, completed Sep 30, 2026, 8:15:53 a.m.
+[success] Total time: 4 s, completed Sep 30, 2026, 8:15:57 a.m.
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:00 a.m.
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:03 a.m.
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:06 a.m.
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:08 a.m.
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:11 a.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:16:12 a.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 1 s, completed Sep 30, 2026, 8:16:13 a.m.
+[info] compiling 8 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa-fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:16 a.m.
+[info] compiling 8 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa-fit/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:16:20 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:16:20 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:16:21 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa-dataset/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:24 a.m.
+[info] compiling 2 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa-dataset/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:26 a.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:30 a.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/mvpa-spatial/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:33 a.m.
+[success] Total time: 1 s, completed Sep 30, 2026, 8:16:34 a.m.
+[success] Total time: 1 s, completed Sep 30, 2026, 8:16:35 a.m.
+[success] Total time: 2 s, completed Sep 30, 2026, 8:16:37 a.m.
+[success] Total time: 2 s, completed Sep 30, 2026, 8:16:39 a.m.
+[info] compiling 8 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fmri-workflow/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 3 s, completed Sep 30, 2026, 8:16:42 a.m.
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/fmri-workflow/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:16:46 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:16:46 a.m.
+[success] Total time: 0 s, completed Sep 30, 2026, 8:16:47 a.m.
+[info] compiling 7 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/dataset-zarr/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:16:50 a.m.
+[info] compiling 3 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/dataset-zarr/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[success] Total time: 4 s, completed Sep 30, 2026, 8:16:55 a.m.

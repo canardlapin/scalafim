@@ -74,7 +74,7 @@ private[hrf] object HrfNormalizer:
       case _ =>
         scales(hrf, mode).map { scale =>
           val name = s"${hrf.name}[norm=${mode.label}]"
-          val descriptor = hrf.descriptor.derived(name, span = hrf.span)
+          val descriptor = hrf.descriptor.transformed("normalized", HrfDerivation.Normalized(mode))
           val normalized =
             Hrf.of(
               name,

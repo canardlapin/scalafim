@@ -1,0 +1,33 @@
+{
+  "status": "blocked-before-native-compute",
+  "purpose": "Retain native crop outputs identified in peer review F2",
+  "command": [
+    "uv",
+    "run",
+    "--python",
+    "3.12",
+    "--with",
+    "nibabel==5.4.2",
+    "--with",
+    "h5py==3.16.0",
+    "--with",
+    "numpy==2.5.3",
+    "python",
+    "tools/transform/generate_demo1_native_oracle.py",
+    "--image",
+    "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+    "--source-dir",
+    "/Users/bbuchsbaum/code/neurotransform/inst/extdata/demo1",
+    "--provenance-dir",
+    "/private/tmp/scalafim-p707-demo1-provenance",
+    "--out",
+    "/private/tmp/scalafim-p707-native-retained"
+  ],
+  "exit_code": 1,
+  "observed_block": "Python PID90609 waited on docker image inspect child PID90701. Docker service queries also did not respond with authorized socket access.",
+  "cleanup": "Terminated only this job's identified child PID90701; Python/uv exited1. Shared Docker service was not restarted.",
+  "evidence_limit": "No native command or output was produced by this attempt; previously generated reference bytes remain unchanged.",
+  "log": "logs/native-extension-blocked.log",
+  "stack_sample": "logs/native-extension-startup.sample.txt",
+  "resolution": "State the unretained crop-native-output limit explicitly; retain and qualify existing full-native outputs, original-container point/sample gate and shared cropped-Scala resampling comparisons."
+}

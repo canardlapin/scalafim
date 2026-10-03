@@ -1,0 +1,258 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project candidate-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-p707-surface-real-20261001/candidate/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (322631 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-p707-surface-real-20261001/candidate/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-p707-surface-real-20261001/candidate/modules/surface/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.surface.TriangleMeshEqualitySuite:
+  + meshes built from separate arrays with the same content are equal and hash alike 0.013s
+  + coordinates, face order and signed zero distinguish meshes 0.001s
+  + surface geometries compare their meshes structurally 0.048s
+  + a vertex mapping accepts a field on a separately loaded, identical geometry 0.004s
+scalafim.surface.SurfaceDataSuite:
+  + SurfaceField stores indexed vertex values 0.004s
+  + SurfaceField validates data length, uniqueness, and bounds 0.004s
+  + SurfaceMatrix stores vertices by feature columns 0.003s
+  + SurfaceRoi extracts a checked subset from a field 0.002s
+  + LabeledSurface stores label data and table metadata 0.003s
+  + SurfaceSet validates hemisphere and exact ordered topology while allowing new coordinates 0.021s
+  + HemispherePair provides typed left/right containers 0.001s
+surface resampling parity: 104 rows share neurotransform's face; 2 neurotransform nearest-vertex fallbacks; far-side faces chosen by neurotransform: 56 of 162 rows
+scalafim.surface.SurfaceResamplingParitySuite:
+  + nearest-vertex plans are identical 0.061s
+  + barycentric plans pick the same face as neurotransform unless it picks the far side of the sphere 0.056s
+L_fsaverage164k_to_fsLR32k vs Workbench: ramp max 1.15e-07, saddle max 5.83e-08, hash max 5.47e-06 (1.0000 within 5.0E-5)
+R_fsaverage164k_to_fsLR32k vs Workbench: ramp max 1.08e-07, saddle max 7.18e-08, hash max 6.10e-06 (1.0000 within 5.0E-5)
+L_fsLR32k_to_fsaverage164k vs Workbench: ramp max 5.85e-07, saddle max 4.52e-07, hash max 2.36e-05 (1.0000 within 5.0E-5)
+L_fsLR32k_to_fsLR164k vs Workbench: ramp max 3.68e-07, saddle max 3.43e-07, hash max 1.58e-05 (1.0000 within 5.0E-5)
+L_fsaverage164k_to_fsaverage10k vs Workbench: ramp max 1.19e-07, saddle max 6.10e-08, hash max 5.43e-06 (1.0000 within 5.0E-5)
+scalafim.surface.io.TemplateSphereFilesSuite:
+  + the committed oracle matches its manifest and pins exactly the admitted spheres 0.016s
+  + fsaverage 164k -> fsLR 32k on the fsaverage sphere matches Workbench, both hemispheres 4.632s
+  + fsLR 32k -> fsaverage 164k on the fsaverage sphere matches Workbench 3.394s
+  + fsLR 32k -> 164k on the fsLR sphere and fsaverage -> fsaverage5 match Workbench 4.774s
+  + fsaverage5 and fsaverage6 are the nested vertex prefixes of fsaverage on its sphere 9.465s
+  + every pinned sphere loads with its template's counts; other bytes are refused 2.833s
+scalafim.surface.SurfaceSearchlightSuite:
+  + zero-radius metric balls are the identity relation 0.015s
+  + geodesic metric balls are symmetric and monotone in radius 0.002s
+  + metric-ball composition is contained by the summed radius 0.001s
+  + metric balls use a closed radius boundary 0.001s
+  + partial center support leaves every non-center relation row empty 0.001s
+  + equal vertex counts do not excuse a topology mismatch 0.001s
+  + local extraction is ordinary indexed-field restriction 0.002s
+  + invalid radii are rejected before geometry work 0.001s
+scalafim.surface.SurfaceModuleSuite:
+  + module metadata is available 0.001s
+scalafim.surface.GraphDifferentialSuite:
+  + thresholded surface components match induced generic graph components 0.157s
+  + surface geodesics match graph shortest paths for default and custom weights 0.031s
+  + MeshTopology graph interop preserves explicit indexing, edges, and distances 0.001s
+  + unreachable surface geodesics correspond to graph NoPath 0.001s
+scalafim.surface.scenarios.SurfaceRealChainScenarioSuite:
+  + real volume ribbon -> fsaverage -> fsLR32k and direct route: clean bounded pass 0.089s
+  + full-source contributor faces and independent radial weights match the public plans 0.019s
+  + coordinate and vertex-order mutations fail the real scenario 0.026s
+  + tkRAS surfaces cannot enter a scanner-space ribbon operator without placement 0.002s
+  + raw tkRAS placement matches independent affine algebra and actual MGH-header precision 0.004s
+  + shared fixture hashes and frozen target IDs close on both platforms 0.01s
+scalafim.surface.SurfaceGeodesicsSuite:
+  + geodesic distance matrix matches tetrahedron edge distances 0.001s
+  + distance matrix supports source and target subsets 0.0s
+  + neighborsWithin includes self and vertices inside radius 0.001s
+  + neighborsWithin uses a closed radius boundary 0.001s
+  + euclidean metric ignores mesh paths 0.0s
+  + spherical metric clamps cosine and returns finite distances 0.002s
+  + unreachable vertices remain Infinity for geodesic metric 0.0s
+  + cache policy stores and reuses distance matrices 0.001s
+  + custom edge weights drive geodesic distances and cache keys 0.001s
+  + geodesic input validation catches bad radius, vertices, and weights 0.0s
+scalafim.surface.SurfaceSamplingSuite:
+  + SurfaceGeometryPair exposes a shared cortical domain 0.001s
+  + midpoint path is a named policy that preserves midpoint sampling semantics 0.008s
+  + white and pial paths sample endpoint surfaces 0.0s
+  + surfaceToWorld transforms are applied before SomeSampleSpace coordinate lookup 0.0s
+  + fractional thickness supports average aggregation 0.001s
+  + mode aggregation chooses the most frequent sampled value 0.001s
+  + normal-line sampling uses offsets around the midpoint 0.002s
+  + masking can produce explicit empty samples 0.001s
+  + volume-to-surface morphism wraps reusable sampling plans 0.004s
+  + surface-to-surface morphism applies explicit target-to-source vertex maps 0.001s
+  + out-of-bounds sample points produce empty samples 0.0s
+  + sampling plans validate surface pairs, paths, and masks 0.002s
+  + the sample tally observes every requested point exactly once 0.0s
+  + non-finite volume values are tallied apart from accepted samples 0.001s
+  + sample tallies must account for every requested sample 0.0s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 0 0.003s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 1 0.001s
+  + eager nearest sampling has absolute half-up ties and support boundaries on axis 2 0.001s
+scalafim.surface.FramedSurfaceSuite:
+  + stored coordinates and the geometry's surface-to-world placement are distinct declarations 0.003s
+  + tkRAS surfaces reach scanner RAS through Norig * inverse(Torig) and back 0.003s
+  + tkRAS -> scanner transport requires a tkRAS source and a same-subject scanner target 0.006s
+  + transport reports non-finite results instead of throwing 0.002s
+  + surfaces in different frames cannot be substituted for one another 0.001s
+  + a surface placed in a runtime world binds to the static template frame with the same key 0.003s
+scalafim.surface.SurfaceComponentsSuite:
+  + connectedComponents labels active connected sets by decreasing size 0.0s
+  + connectedComponents returns zero fields when no vertices pass threshold 0.001s
+  + clusterThreshold keeps only clusters meeting minimum size 0.001s
+  + SurfaceThreshold validates range order 0.0s
+scalafim.surface.io.FreeSurferSurfaceReaderSuite:
+  + readAscii handles std.8-style FreeSurfer ASCII surfaces 0.004s
+  + read auto-detects ASCII and can infer right hemisphere 0.002s
+  + readBinary loads triangle geometry and accepts explicit metadata 0.002s
+  + readBinary rejects bad magic with a stable message 0.002s
+  + readBinary rejects headers shorter than magic bytes 0.001s
+  + readBinary rejects files without created-by and info lines 0.001s
+  + readBinary rejects short reads with a stable message 0.001s
+  + readAscii rejects malformed rows with a stable message 0.001s
+  + readAscii surfaces TriangleMesh face-index validation 0.001s
+scalafim.surface.TemplatePlanTopologySuite:
+  + fsaverage5 plan freezes endpoint topology and rejects a later face-order mutation 0.246s
+scalafim.surface.SurfaceParcelsSuite:
+  + boundary edges derive directly from mesh topology and endpoint labels 0.003s
+  + units returns contiguous parcels in label order 0.002s
+  + parcel operations reject equal-sized but topologically different meshes 0.0s
+  + fragmented parcel policies error, keep largest, split, or merge 0.003s
+  + ParcelKey validates split parcel parts 0.001s
+  + centroid and geodesic medoid can select different parcel representatives 0.002s
+  + geodesic medoid rejects merged disconnected parcel 0.0s
+  + distance matrices are symmetric for centroid and minimum methods 0.003s
+  + medoid distance matrix uses geodesic medoid representatives 0.001s
+  + boundaryContacts counts shared mesh edges symmetrically 0.001s
+  + ignoredLabels removes labels from parcel outputs and contacts 0.001s
+scalafim.surface.SurfaceResamplingSuite:
+  + sphere helpers recognise spheres and normalise their radius 0.002s
+  + barycentric weights reconstruct a point on the query's own radial ray (never the antipodal face) 0.009s
+  + nearest-vertex resampling of a mesh onto itself is the identity 0.029s
+  + normalisations: element rows total one, sum conserves mass, and the inverse is the exact adjoint 0.004s
+  + a linear field on the sphere is reproduced to within the triangle-sagitta error 0.003s
+  + input of the wrong length is a typed failure 0.002s
+scalafim.surface.scenarios.SurfaceChainScenarioSuite:
+  + surface chain: scanner volume -> tkRAS ribbon -> registered sphere -> template meshes, commuting routes 0.078s
+  + every convention mutation of the surface chain fails the scenario 0.363s
+  + a tkRAS surface cannot be sampled on a scanner-space grid without moving it first 0.001s
+scalafim.surface.RibbonFillSuite:
+  + ribbon weights match neurotransform cpp_ribbon_weights entry for entry 0.004s
+  + surface-to-volume fill matches neurotransform backproject_surface_to_volume(method = "ribbon") 0.001s
+  + rows sum to one, and a segment that never enters the grid samples to NaN 0.001s
+  + the fill is the exact adjoint of volume-to-surface sampling 0.001s
+  + ribbon mask of concentric spheres is the lattice shell between their radii 0.254s
+  + the ribbon mask requires closed surfaces 0.002s
+  + ribbon sampling of a radial volume recovers the mid-ribbon radius, and the mean fill of ones is one 0.103s
+  + volume adapters keep the operator's grid and reject other grids 0.186s
+  + ribbon inputs must share a frame: statically when frames are typed, at runtime when they are erased 0.015s
+  + white and pial must be vertex-matched, and steps must be positive 0.005s
+  + inner and outer roles are checked: hemispheres must agree and kinds must not be swapped 0.003s
+  + lattice-aligned faces and edges fill exactly, with half-open faces 0.015s
+  + a closed surface that extends past the grid along the ray axis still fills by parity 0.001s
+scalafim.surface.io.GiftiReaderSuite:
+  + parseString builds a typed GIFTI document with metadata and transforms 0.003s
+  + external GIFTI DTD declarations are ignored without network access 0.001s
+  + ASCII data arrays decode to numeric pointsets and triangles 0.002s
+  + typed payload decoders preserve matrix indexing semantics 0.001s
+  + Base64Binary data arrays decode with declared endian 0.002s
+  + GZipBase64Binary data arrays decode after inflation 0.002s
+  + GZipBase64Binary accepts the zlib stream emitted by FreeSurfer GIFTI 0.001s
+  + label GIFTI parses label table and builds LabeledSurface 0.006s
+  + external binary arrays are reported explicitly 0.002s
+  + malformed external offsets are data-array errors 0.001s
+  + malformed label keys are document errors 0.0s
+scalafim.surface.io.GiftiSurfaceReaderSuite:
+  + read extracts pointset, triangles, hemisphere, kind, and POINTSET transform 0.004s
+  + read uses identity transform when CoordinateSystemTransformMatrix is absent 0.002s
+  + read rejects malformed POINTSET shapes with stable messages 0.003s
+  + read rejects malformed TRIANGLE data with stable messages 0.003s
+  + read rejects missing POINTSET and TRIANGLE arrays 0.004s
+  + read rejects malformed transform matrices 0.001s
+  + geometry preserves the provider cause for a singular surface affine 0.003s
+  + read accepts explicit hemisphere and kind metadata 0.001s
+  + read accepts Base64Binary pointset and triangle arrays 0.002s
+  + read honors ColumnMajorOrder matrix payloads 0.003s
+scalafim.surface.SurfaceLocusDomainSuite:
+  + surface domain identity includes exact ordered topology 0.003s
+  + full and sparse surface fields preserve their distinct support semantics 0.001s
+  + legacy SurfaceRoi adapts to a region, restricted values, and annotation 0.004s
+  + labeled surfaces become quotients with metadata and explicit display order 0.007s
+  + a disconnected label remains one valid extensional quotient fiber 0.001s
+  + runtime-loaded domains preserve the hidden semantic space type 0.0s
+scalafim.surface.gifti.GiftiModelSuite:
+  + typed attributes normalize known GIFTI codes 0.001s
+  + unknown attributes preserve their source text 0.003s
+  + data arrays expose shape and intent contracts 0.001s
+  + label color conversion keeps GIFTI 0-1 color values explicit 0.0s
+  + payload vectors and matrices expose typed shape semantics 0.001s
+  + payload matrices make row-major and column-major order explicit 0.0s
+  + documents provide typed array lookup and reject duplicate labels 0.0s
+  + GIFTI XML parsing rejects entity declarations before expansion 0.0s
+  + GIFTI payload sizing rejects dimension products before overflow 0.001s
+scalafim.surface.TemplateSurfacesSuite:
+  + stock template meshes carry their TemplateFlow counts and native registration 0.001s
+  + a template sphere is admitted only with the template's counts, on a sphere, and on a registration it has 0.02s
+  + meshes on different registration spheres cannot be planned against each other 0.001s
+  + planning refuses hemispheres that differ 0.001s
+  + a plan interpolates with unit rows, its adjoint is the exact transpose, and Sum conserves mass 0.22s
+  + the pinned TemplateFlow spheres cover every mesh, hemisphere and published registration 0.001s
+scalafim.surface.SurfaceCoreSuite:
+  + Point3D is a surface alias for image SpatialPoint 0.001s
+  + TriangleMesh builds a valid tetrahedron 0.002s
+  + mesh topology identity ignores coordinates but preserves exact face ordering 0.001s
+  + TriangleMesh rejects invalid shapes and indices 0.001s
+  + SurfaceGeometry stores mesh metadata and a 4x4 surface-to-world transform 0.001s
+  + SurfaceGeometry accepts only provider-validated D3 affines 0.002s
+  + surface domains reject IO-only hemisphere tags 0.001s
+  + surface tag parsers normalize common labels 0.001s
+scalafim.surface.MeshTopologySuite:
+  + MeshTopology derives unique edges and neighbor rows 0.001s
+  + MeshTopology computes Euclidean edge lengths 0.001s
+  + MeshTopology computes face and mesh metrics 0.0s
+  + MeshTopology computes unit vertex normals when possible 0.001s
+  + MeshTopology handles open fragmented meshes 0.0s
+  + MeshTopology carries a surface domain when built from geometry 0.002s
+[info] Passed: Total 175, Failed 0, Errors 0, Passed 175
+[success] Total time: 37 s, completed Oct 1, 2026, 8:00:42 a.m.

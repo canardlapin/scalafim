@@ -1,0 +1,82 @@
+[
+  {
+    "command": "flirt -in /fixture/func_coord0.nii.gz -ref /fixture/source.nii.gz -init /fixture/example_func2highres.mat -applyxfm -interp trilinear -out /fixture/flirt_coord0.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "flirt -in /fixture/func_coord1.nii.gz -ref /fixture/source.nii.gz -init /fixture/example_func2highres.mat -applyxfm -interp trilinear -out /fixture/flirt_coord1.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "flirt -in /fixture/func_coord2.nii.gz -ref /fixture/source.nii.gz -init /fixture/example_func2highres.mat -applyxfm -interp trilinear -out /fixture/flirt_coord2.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "flirt -in /fixture/func_support.nii.gz -ref /fixture/source.nii.gz -init /fixture/example_func2highres.mat -applyxfm -interp trilinear -out /fixture/flirt_support.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "flirt -in /fixture/func.nii.gz -ref /fixture/source.nii.gz -init /fixture/example_func2highres.mat -applyxfm -interp trilinear -out /fixture/flirt_phantom.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "convertwarp --ref=/fixture/target.nii.gz --premat=/fixture/example_func2highres.mat --warp1=/fixture/coef.nii.gz --out=/fixture/chain_abs.nii.gz --absout",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_coord0.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/coef.nii.gz --premat=/fixture/example_func2highres.mat --interp=trilinear --out=/fixture/premat_coord0.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_coord1.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/coef.nii.gz --premat=/fixture/example_func2highres.mat --interp=trilinear --out=/fixture/premat_coord1.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_coord2.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/coef.nii.gz --premat=/fixture/example_func2highres.mat --interp=trilinear --out=/fixture/premat_coord2.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_support.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/coef.nii.gz --premat=/fixture/example_func2highres.mat --interp=trilinear --out=/fixture/premat_support.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/coef.nii.gz --premat=/fixture/example_func2highres.mat --interp=trilinear --out=/fixture/premat_phantom.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_coord0.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/chain_abs.nii.gz --abs --interp=trilinear --out=/fixture/composed_coord0.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_coord1.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/chain_abs.nii.gz --abs --interp=trilinear --out=/fixture/composed_coord1.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_coord2.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/chain_abs.nii.gz --abs --interp=trilinear --out=/fixture/composed_coord2.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func_support.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/chain_abs.nii.gz --abs --interp=trilinear --out=/fixture/composed_support.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  },
+  {
+    "command": "applywarp --in=/fixture/func.nii.gz --ref=/fixture/target.nii.gz --warp=/fixture/chain_abs.nii.gz --abs --interp=trilinear --out=/fixture/composed_phantom.nii.gz",
+    "exit_code": 0,
+    "output": ""
+  }
+]
