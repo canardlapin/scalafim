@@ -48,10 +48,13 @@ def emit_case(round_name: str, study: str, contrast_name: str | None, study_data
         return f"  val {study}: Vector[AuditRun] = Vector(\n      {run_values}\n  )\n"
     contrast = next(value for value in runs[0]["cons"] if value["name"] == contrast_name)
     weights = ", ".join(f"Array({scala_values(row)})" for row in contrast["W"])
-    expected = next(value["se"] for value in study_data["stats"] if value["name"] == contrast_name)
+    # Historical raw-row standard error recorded by the original audit dump.
+    # It predates the row-orthonormalized F definition and is retained only as
+    # provenance; tests consume ContrastDiagnosticsFixture's NumPy oracle values.
+    historical = next(value["se"] for value in study_data["stats"] if value["name"] == contrast_name)
     return (
         f"  val {study}: AuditCase = AuditCase(Vector(\n      {run_values}\n  ), "
-        f"Vector({weights}), {expected!r})\n"
+        f"Vector({weights}), {historical!r})\n"
     )
 
 
@@ -74,7 +77,9 @@ def main() -> None:
         f"{provenance}\n"
         "  final case class AuditRun(rows: Int, columns: Int, chunks: Vector[String]):\n"
         "    lazy val values: Array[Double] = chunks.iterator.flatMap(_.split(\",\").iterator).map(_.toDouble).toArray\n"
-        "  final case class AuditCase(runs: Vector[AuditRun], contrastRows: Vector[Array[Double]], expected: Double)\n\n"
+        "  /** `historicalRawRowSe` is the audit dump's raw-row standard error. It is\n"
+        "    * provenance only, not an expected value for the current definitions. */\n"
+        "  final case class AuditCase(runs: Vector[AuditRun], contrastRows: Vector[Array[Double]], historicalRawRowSe: Double)\n\n"
         + "\n".join(chunks)
     )
 

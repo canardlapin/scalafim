@@ -92,6 +92,25 @@ class DesignDiagnosticsSuite extends munit.FunSuite:
     assert(explicit.projections.forall(_.cutoff >= 0.0))
   }
 
+  test("a constant column that is not exactly representable is degenerate, not a finite VIF") {
+    // 0.3 over 240 scans has a centred norm of about 2e-14 from rounding.
+    val n = 240
+    val values = Array.tabulate(n * 3): index =>
+      val row = index / 3
+      index % 3 match
+        case 0 => 0.3
+        case 1 => math.sin(row.toDouble)
+        case _ => math.cos(0.5 * row.toDouble)
+    val schema = schemaFor(n, 3, values, Vector("constant", "sin", "cos"))
+    val result = DesignDiagnostics.analyze(schema, Vector(DiagnosticBlock("constant", Vector(schema.columnIds.head)))).toOption.getOrElse(fail("diagnostics"))
+    assertEquals(result.vif.head.outcome, VifOutcome.NotApplicable("constant or zero-support column"))
+    assertEquals(result.blockR2.head.outcome, BlockR2Outcome.NotApplicable("constant or zero-support target"))
+    assert(result.vif.tail.forall(_.outcome.isInstanceOf[VifOutcome.Finite]), result.vif)
+    assert(result.jointContributors.forall(_.predictor != schema.columnIds.head))
+    val coarse = RankPolicy.relative(1e-3).toOption.getOrElse(fail("policy"))
+    assertEquals(DesignDiagnostics.analyze(schema, Vector.empty, coarse).map(_.rankPolicy), Right(coarse))
+  }
+
   private def schemaFor(rows: Int, cols: Int, values: Array[Double], names: Vector[String]): DesignSchema =
     val layout = RowLayout(
       blockIds = Vector.fill(rows)(RunIndex.unsafeOneBased(1)),
