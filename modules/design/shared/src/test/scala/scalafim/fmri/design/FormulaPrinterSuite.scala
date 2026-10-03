@@ -61,3 +61,77 @@ class FormulaPrinterSuite extends munit.FunSuite:
     assertEquals(at("subset", "0", "0", "1"), "0.3")
     assertEquals(at("subset", "0", "1", "0"), "correct")
     assertEquals(at("subset", "0", "1", "1"), "TRUE")
+
+  private def column(name: String): ArgValue = ArgValue.Ident(ColumnId.unsafe(name))
+  private def op(name: String, values: ArgValue*): ArgValue = ArgValue.Call(name, values.toVector.map(Arg(None, _)))
+
+  test("numbers print byte-identically on JVM and JS"):
+    val cases = Vector(
+      4.0 -> "4", -4.0 -> "-4", 0.1 -> "0.1", 0.25 -> "0.25", 1e-7 -> "1e-7", 1.5e-7 -> "1.5e-7",
+      1e21 -> "1e21", 1e20 -> "100000000000000000000", -0.0 -> "0", 123456.789 -> "123456.789",
+      1.7976931348623157e308 -> "1.7976931348623157e308", 0.1 + 0.2 -> "0.30000000000000004"
+    )
+    cases.foreach: (value, text) =>
+      assertEquals(FormulaPrinter.expressionTextEither(ArgValue.Num(value)), Right(text))
+      assertEquals(FormulaParser.parseExpression(text), Right(ArgValue.Num(value)))
+    val formula = FormulaParser.parse("onset ~ hrf(cond, lag = 4.0, subset = rt > 0.1e-6) + trialwise(lag = 1E21)")
+    assertEquals(formula.text, "onset ~ hrf(cond, subset = (rt > 1e-7), lag = 4) + trialwise(lag = 1e21)")
+    assertEquals(formula.textEither, Right(formula.text))
+
+  test("non-finite literals are reported, not thrown, by the safe printers"):
+    val formula = ModelFormula(ColumnId.unsafe("onset"), Vector(HrfCall(Vector(column("cond")), lag = Some(Double.NaN))))
+    assert(formula.renderEither.isLeft)
+    assert(formula.textEither.isLeft)
+    assert(FormulaPrinter.expressionTextEither(op("+", column("a"), ArgValue.Num(Double.NegativeInfinity))).isLeft)
+
+  test("adversarial expressions round trip through print and parse"):
+    val atoms = Vector(
+      column("plain"), column("TRUE"), column("false"), column("a`b"), column("a\\b"), column("a\"b"), column("x.y"),
+      column("_1"), column("1a"), column("récompense"), column("Inf"),
+      ArgValue.Str(""), ArgValue.Str("q\"uote"), ArgValue.Str("back\\slash"), ArgValue.Str("tick`"), ArgValue.Str("line\nbreak"),
+      ArgValue.Num(0), ArgValue.Num(-0.0), ArgValue.Num(-2.5), ArgValue.Num(1e-300), ArgValue.Num(-1e21), ArgValue.Num(1.7976931348623157e308),
+      ArgValue.Bool(true), ArgValue.Bool(false)
+    )
+    val wrappers: Vector[ArgValue => ArgValue] = Vector(
+      identity,
+      value => op("!", value),
+      value => op("-", value),
+      value => op("!", op("!", value)),
+      value => op("-", op("-", value)),
+      value => ArgValue.Call("+", Vector(Arg(Some("x"), value), Arg(None, column("b")))),
+      value => ArgValue.Call("!", Vector(Arg(Some("TRUE"), value))),
+      value => op("==", value, column("b"), column("c")),
+      value => ArgValue.Call("`odd` fn", Vector(Arg(Some("a b"), value)))
+    )
+    val operators = Vector("+", "-", "*", "/", "|", "&", "==", "!=", "<", "<=", ">", ">=")
+    val corpus =
+      for
+        atom <- atoms
+        wrap <- wrappers
+        expression <- Vector(wrap(atom)) ++ operators.flatMap(o => Vector(op(o, wrap(atom), column("z")), op(o, column("z"), wrap(atom)), op(o, op("!", wrap(atom)), op("-", wrap(atom)))))
+      yield expression
+    corpus.foreach: expression =>
+      val text = FormulaPrinter.expressionTextEither(expression).fold(error => fail(s"$expression did not print: ${error.message}"), identity)
+      assertEquals(FormulaParser.parseExpression(text), Right(expression), clue = text)
+
+  test("negation follows R precedence: below comparison, above & and |"):
+    def parse(text: String) = FormulaParser.parseExpression(text).toOption.get
+    assertEquals(parse("!a == b"), op("!", op("==", column("a"), column("b"))))
+    assertEquals(parse("!a & b"), op("&", op("!", column("a")), column("b")))
+    assertEquals(parse("!a | b & c"), op("|", op("!", column("a")), op("&", column("b"), column("c"))))
+    assertEquals(parse("!a > 1 + 2"), op("!", op(">", column("a"), op("+", ArgValue.Num(1), ArgValue.Num(2)))))
+    assertEquals(parse("1 + !a == b"), op("+", ArgValue.Num(1), op("!", op("==", column("a"), column("b")))))
+    val left = op("==", op("!", column("a")), column("b"))
+    assertEquals(FormulaPrinter.expressionTextEither(left).flatMap(FormulaParser.parseExpression), Right(left))
+
+  test("positional and conflict errors point at the offending argument"):
+    Vector(
+      "onset ~ hrf(cond, \"bad\")" -> "\"bad\"",
+      "onset ~ covariate(x, 2)" -> "2",
+      "onset ~ hrf(cond, scaling = as_convolved, normalize = TRUE)" -> "normalize",
+      "onset ~ trialwise(scaling = as_convolved, normalize = TRUE)" -> "normalize",
+      "onset ~ hrf(cond, id = a, name = b)" -> "name"
+    ).foreach: (input, bad) =>
+      val error = FormulaParser.parseEither(input).swap.toOption.getOrElse(fail(s"expected a parse error for $input"))
+      assertEquals(error.pos, input.indexOf(bad), clue = input)
+    assertEquals(FormulaParser.parse("onset ~ hrf(cond, name = b)").terms.collect { case h: HrfCall => h.id.map(_.value) }, Vector(Some("b")))

@@ -285,12 +285,23 @@ object FormulaParser:
       left
 
     private def parseAnd(): ArgValue =
-      var left = parseCmp()
+      var left = parseNot()
       while tok == Tok.And do
         expect(Tok.And)
-        val right = parseCmp()
+        val right = parseNot()
         left = bin("&", left, right)
       left
+
+    /** R precedence (`?Syntax`): `!` binds looser than comparison and
+      * arithmetic but tighter than `&`/`&&` and `|`/`||`, so `!a == b` is
+      * `!(a == b)` and `!a & b` is `(!a) & b`.
+      */
+    private def parseNot(): ArgValue =
+      if tok == Tok.Bang then
+        val start = cur.pos
+        expect(Tok.Bang)
+        unary("!", parseNot(), start)
+      else parseCmp()
 
     private def parseCmp(): ArgValue =
       val left = parseSum()
@@ -340,9 +351,9 @@ object FormulaParser:
             case ArgValue.Num(number) => located(ArgValue.Num(-number), span(start))
             case expression => unary("-", expression, start)
         case Tok.Bang =>
-          val start = cur.pos
-          expect(Tok.Bang)
-          unary("!", parseUnary(), start)
+          // An operand position such as `1 + !x == y`: as in R, the negation
+          // extends over the following comparison, `1 + !(x == y)`.
+          parseNot()
         case _ => parsePrimary()
 
     private def parsePrimary(): ArgValue =
@@ -446,6 +457,10 @@ object FormulaParser:
       val positional: Vector[ArgValue] =
         args.iterator.collect { case Arg(None, v) => v }.toVector
 
+      /** Positional values with the source offset of each argument. */
+      val positionalAt: Vector[(ArgValue, Int)] =
+        args.zipWithIndex.collect { case (Arg(None, v), index) => v -> positions.lift(index).getOrElse(cur.pos) }
+
       val named: Map[String, ArgValue] =
         val out = scala.collection.mutable.HashMap.empty[String, ArgValue]
         args.zipWithIndex.foreach { (a, index) =>
@@ -536,10 +551,10 @@ object FormulaParser:
       val schema = TermArgs("hrf", args)
       val pos = schema.positional
       if pos.isEmpty then throw ParseError("hrf(...) requires at least one variable", cur.pos)
-      pos.foreach {
-        case ArgValue.Ident(_) | ArgValue.Call(_, _) | ArgValue.Num(1.0) => ()
-        case other =>
-          throw ParseError(s"hrf(...) positional args must be identifiers or calls, found $other", cur.pos)
+      schema.positionalAt.foreach {
+        case (ArgValue.Ident(_) | ArgValue.Call(_, _) | ArgValue.Num(1.0), _) => ()
+        case (other, at) =>
+          throw ParseError(s"hrf(...) positional args must be identifiers or calls, found $other", at)
       }
 
       val basis = schema.stringOrIdent("basis")
@@ -558,6 +573,8 @@ object FormulaParser:
             throw ParseError("hrf(...) 'parent' requires a 'phase' identity", schema.position("parent"))
       val hrfFun = schema.stringOrIdentRef("hrf_fun")
       val contrasts = schema.stringOrIdent("contrasts")
+      if schema.named.contains("id") && schema.named.contains("name") then
+        throw ParseError("hrf(...) accepts either 'id' or its alias 'name', not both", schema.position("name"))
       val id = schema.termId("id").orElse(schema.termId("name"))
       val prefix = schema.termId("prefix")
       val lag = schema.numeric("lag")
@@ -568,7 +585,7 @@ object FormulaParser:
       }
       val normalize = schema.boolean("normalize")
       if scaling.nonEmpty && normalize.nonEmpty then
-        throw ParseError("hrf(...) accepts either 'scaling' or compatibility 'normalize', not both", cur.pos)
+        throw ParseError("hrf(...) accepts either 'scaling' or compatibility 'normalize', not both", schema.position("normalize"))
 
       val span = schema.numeric("span").map { value =>
         PositiveSeconds(value, "span").fold(error => throw ParseError(error.message, schema.position("span")), identity)
@@ -647,7 +664,7 @@ object FormulaParser:
       }
       val normalize = schema.boolean("normalize")
       if scaling.nonEmpty && normalize.nonEmpty then
-        throw ParseError("trialwise(...) accepts either 'scaling' or compatibility 'normalize', not both", cur.pos)
+        throw ParseError("trialwise(...) accepts either 'scaling' or compatibility 'normalize', not both", schema.position("normalize"))
 
       val allowed = Set("basis", "subset", "onsets", "durations", "phase", "parent", "id", "lag", "nbasis", "add_sum", "label", "scaling", "normalize")
       schema.rejectUnknown(allowed)
@@ -669,9 +686,9 @@ object FormulaParser:
 
     private def buildCovariateCall(args: Vector[Arg]): CovariateCall =
       val schema = TermArgs("covariate", args)
-      val pos = schema.positional.map {
-        case v: ArgValue.Ident => v
-        case other             => throw ParseError(s"covariate(...) positional args must be identifiers, found $other", cur.pos)
+      val pos = schema.positionalAt.map {
+        case (v: ArgValue.Ident, _) => v
+        case (other, at)            => throw ParseError(s"covariate(...) positional args must be identifiers, found $other", at)
       }
       if pos.isEmpty then throw ParseError("covariate(...) requires at least one variable", cur.pos)
 

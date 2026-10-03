@@ -57,3 +57,30 @@ class DerivedEventsSuite extends munit.FunSuite:
     assertEquals(result.materialize(Vector(id("bin")), DerivedMissingRows.Drop).toOption.get.droppedRows, Vector(1))
     val quantile = DerivedColumn.parse("bin: text = cut_quantiles(gain, 2)").toOption.get
     assertEquals(DerivedEvents.evaluate(data, Vector(quantile)).toOption.get.values(id("bin")), Vector(EventExpressionValue.Text("bin1"), EventExpressionValue.Missing, EventExpressionValue.Text("bin2")))
+
+  test("derived columns validate printability at construction, so text is total"):
+    assert(DerivedColumn.from(id("x"), EventValueType.Number, ArgValue.Num(Double.NaN)).isLeft)
+    assert(DerivedColumn.from(id("x"), EventValueType.Number, ArgValue.Call("+", Vector(Arg(None, ArgValue.Num(1)), Arg(None, ArgValue.Num(Double.PositiveInfinity))))).isLeft)
+    val column = DerivedColumn.from(id("odd`name"), EventValueType.Number, ArgValue.Call("-", Vector(Arg(None, ArgValue.Num(3))))).fold(error => fail(error.message), identity)
+    assertEquals(DerivedColumn.parse(column.text), Right(column))
+
+  test("declared types are checked statically, even for entirely missing sources"):
+    val missing = DataTable.fromColumns("gain" -> Column.Doubles(Vector(Double.NaN, Double.NaN)))
+    assertEquals(DerivedEvents.evaluate(missing, Vector(DerivedColumn.parse("x: text = gain * 2").toOption.get)),
+      Left(DerivedEventError.DeclaredType(id("x"), EventValueType.Text, EventValueType.Number)))
+    val chained = Vector("a: number = gain", "b: logical = a == \"x\"").map(DerivedColumn.parse(_).toOption.get)
+    assert(DerivedEvents.evaluate(missing, chained).left.exists {
+      case DerivedEventError.Expression(column, EventExpressionError.TypeMismatch(_, "==", "numeric", "text")) => column == id("b")
+      case _ => false
+    })
+
+  test("division by zero in a derived column is an error, not a missing value"):
+    val definition = DerivedColumn.parse("ratio: number = gain / (gain - gain)").toOption.get
+    assert(DerivedEvents.evaluate(data, Vector(definition)).left.exists {
+      case DerivedEventError.Expression(column, EventExpressionError.NonFiniteResult(_, "/", 0)) => column == id("ratio")
+      case _ => false
+    })
+
+  test("bin breaks print identically on every platform"):
+    val bins = EventBins.explicit(Vector(Double.NegativeInfinity, -0.0 + 1e-7, 4.0, 1e21, Double.PositiveInfinity), Vector("a", "b", "c", "d")).toOption.get
+    assertEquals(bins.breaksText, "c(-Inf, 1e-7, 4, 1e21, Inf)")

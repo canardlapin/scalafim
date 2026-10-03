@@ -70,21 +70,25 @@ final case class HrfCall(
     eventNormalization: Option[EventResponseNormalization] = None
 ) extends TermCall
 
+/** Fields added after the original `trialwise()` surface are appended so that
+  * positional construction written against the earlier field order keeps its
+  * meaning.
+  */
 final case class TrialwiseCall(
     basis: Option[String] = None,
-    subset: Option[ArgValue] = None,
-    onsets: Option[ArgValue] = None,
     durations: Option[ArgValue] = None,
-    phase: Option[PhaseRef] = None,
-    /** Per-run trial identity column. */
-    id: Option[ArgValue] = None,
     lag: Option[Double] = None,
     nbasis: Option[Int] = None,
     addSum: Option[Boolean] = None,
     label: Option[TermId] = None,
     scaling: Option[HrfColumnScaling] = None,
     /** Compatibility spelling for scan-space unit-maximum scaling. */
-    normalize: Option[Boolean] = None
+    normalize: Option[Boolean] = None,
+    subset: Option[ArgValue] = None,
+    onsets: Option[ArgValue] = None,
+    phase: Option[PhaseRef] = None,
+    /** Per-run trial identity column. */
+    id: Option[ArgValue] = None
 ) extends TermCall
 
 final case class CovariateCall(
@@ -95,8 +99,18 @@ final case class CovariateCall(
 ) extends TermCall
 
 final case class ModelFormula(onset: ColumnId, terms: Vector[TermCall]):
+  /** Throwing convenience over [[renderEither]].
+    * @throws FormulaParser.ParseError when the formula has no lossless text
+    *   (for example a hand-built non-finite literal).
+    */
   def render: Vector[FormulaToken] = FormulaPrinter.render(this)
+  /** Safe path: tokens whose concatenation re-parses to exactly this formula. */
   def renderEither: Either[FormulaParser.ParseError, Vector[FormulaToken]] = FormulaPrinter.renderEither(this)
+  /** Safe path for [[text]]. */
+  def textEither: Either[FormulaParser.ParseError, String] = renderEither.map(_.map(_.text).mkString)
+  /** Throwing convenience over [[textEither]].
+    * @throws FormulaParser.ParseError when the formula has no lossless text.
+    */
   def text: String = render.map(_.text).mkString
 
 object ModelFormula:
