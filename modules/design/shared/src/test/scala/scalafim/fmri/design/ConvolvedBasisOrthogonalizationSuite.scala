@@ -48,3 +48,69 @@ class ConvolvedBasisOrthogonalizationSuite extends munit.FunSuite:
       assertEqualsDouble(effective(column), expected, 1e-12)
     val dot = (0 until orthogonal.data.rows).map(row => orthogonal.data(row, 0) * orthogonal.data(row, 1)).sum
     assertEqualsDouble(dot, 0.0, 1e-12)
+
+  private def dotColumns(data: scalafim.fmri.hrf.linalg.Mat, a: Int, b: Int): Double =
+    (0 until data.rows).map(row => data(row, a) * data(row, b)).sum
+
+  test("a collinear basis column is a typed error, not a silently zeroed column"):
+    val term = EventTerm(Vector(Event.factor(Vector("task", "task"), "condition")), Vector(0.s, 7.s), termTag = Some("task"))
+    val frame = SamplingFrame(blockLens = Seq(30), tr = Seq(1.0))
+    val raw = term.convolve(Hrfs.SPMG2, frame)
+    val collinear = raw.copy(data = scalafim.fmri.hrf.linalg.Mat.unsafe(raw.data.rows, 2,
+      Array.tabulate(raw.data.rows * 2)(i => if i % 2 == 0 then raw.data.data(i) else 3.0 * raw.data.data(i - 1))))
+    val error = ConvolvedBasisOrthogonalization(collinear).left.toOption.getOrElse(fail("collinear columns must fail"))
+    assert(error.message.contains("vanishes"), error.message)
+    val tiny = raw.copy(data = scalafim.fmri.hrf.linalg.Mat.unsafe(raw.data.rows, 2,
+      Array.tabulate(raw.data.rows * 2)(i => if i % 2 == 0 then raw.data.data(i) else raw.data.data(i - 1) * (1.0 + 1e-13 * (i % 3)))))
+    assert(ConvolvedBasisOrthogonalization(tiny).isLeft, "a residual below the relative tolerance is degenerate")
+
+  test("a cell whose events all fall outside the scan window is kept with rank 0 and an identity transform"):
+    val term = EventTerm(Vector(Event.factor(Vector("a", "a", "b"), "condition")), Vector(0.s, 8.s, 200.s), termTag = Some("task"))
+    val frame = SamplingFrame(blockLens = Seq(30), tr = Seq(1.0))
+    val raw = term.convolve(Hrfs.SPMG2, frame)
+    val (orthogonal, receipts) = ConvolvedBasisOrthogonalization(raw).fold(error => fail(error.message), identity)
+    val groups = receipts.head.groups
+    assertEquals(groups.length, 2)
+    val outside = groups.find(_.cell.exists(_.canonical.contains("b"))).getOrElse(fail("cell b receipt"))
+    val inside = groups.find(_.cell.exists(_.canonical.contains("a"))).getOrElse(fail("cell a receipt"))
+    assertEquals(outside.referenceRank, 0)
+    assertEquals(outside.transform, Vector(1.0, 0.0, 0.0, 1.0))
+    assertEquals(inside.referenceRank, 2)
+    outside.columns.foreach(column => assert((0 until orthogonal.data.rows).forall(row => orthogonal.data(row, column) == 0.0)))
+
+  test("FIR and B-spline groups with more than two columns are serially orthogonalized with full rank"):
+    val term = EventTerm(Vector(Event.factor(Vector.fill(4)("task"), "condition")), Vector(0.s, 1.s, 3.s, 10.s), termTag = Some("task"))
+    val frame = SamplingFrame(blockLens = Seq(40), tr = Seq(1.0))
+    Vector(Hrfs.fir(4, 8.s), Hrfs.bspline(nBasis = 5, span = 12.s)).foreach: kernel =>
+      val raw = term.convolve(kernel, frame)
+      val p = kernel.nbasis
+      assert((1 until p).exists(j => math.abs(dotColumns(raw.data, 0, j)) > 1e-6), "the source columns overlap")
+      val (orthogonal, receipts) = ConvolvedBasisOrthogonalization(raw).fold(error => fail(error.message), identity)
+      val group = receipts.head.groups.head
+      assertEquals(group.columns.length, p)
+      assertEquals(group.referenceRank, p)
+      for a <- 0 until p; b <- a + 1 until p do
+        val scale = math.sqrt(dotColumns(orthogonal.data, a, a) * dotColumns(orthogonal.data, b, b))
+        assertEqualsDouble(dotColumns(orthogonal.data, a, b) / scale, 0.0, 1e-10, s"${kernel.name} columns $a,$b")
+      // Serial: the first column is unchanged.
+      (0 until raw.data.rows).foreach(row => assertEqualsDouble(orthogonal.data(row, 0), raw.data(row, 0), 0.0))
+
+  test("a broadcast per-event HRF is a shared kernel and can be orthogonalized"):
+    val term = EventTerm(Vector(Event.factor(Vector("task", "task"), "condition")), Vector(0.s, 6.s), termTag = Some("task"))
+    val frame = SamplingFrame(blockLens = Seq(30), tr = Seq(1.0))
+    val broadcast = term.convolvePerEvent(Vector(Hrfs.SPMG2), frame)
+    assert(broadcast.eventHrfs.isEmpty)
+    assertEquals(broadcast.hrf.descriptor, Hrfs.SPMG2.descriptor)
+    assert(ConvolvedBasisOrthogonalization(broadcast).isRight)
+
+  test("group-specific effective HRFs are per column; the term HRF stays the source kernel"):
+    val term = EventTerm(Vector(Event.factor(Vector("a", "b", "a", "b"), "condition")), Vector(0.s, 3.s, 11.s, 13.s), termTag = Some("task"))
+    val frame = SamplingFrame(blockLens = Seq(40), tr = Seq(1.0))
+    val raw = term.convolve(Hrfs.SPMG2, frame)
+    val (orthogonal, receipts) = ConvolvedBasisOrthogonalization(raw).fold(error => fail(error.message), identity)
+    assertEquals(receipts.head.groups.length, 2)
+    assert(orthogonal.hrf eq raw.hrf)
+    val byGroup = receipts.head.groups.map(group => orthogonal.hrfForColumn(group.columns.head))
+    assert(byGroup.forall(_.descriptor != Hrfs.SPMG2.descriptor))
+    val transforms = receipts.head.groups.map(_.transform)
+    assertNotEquals(transforms(0), transforms(1))

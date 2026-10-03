@@ -8,19 +8,45 @@ class ObservedModulatorSuite extends munit.FunSuite:
   private val cells = Vector(cell("a"), cell("a"), cell("b"), cell("b"), cell("b"))
   private val values = Vector(1.0, 3.0, 10.0, 14.0, Double.NaN)
 
-  test("by-cell centering uses observed values and one pooled sample scale") {
+  test("by-cell centering uses observed values and one pooled within-cell scale (n - k)") {
     val result = ObservedModulator.prepare(values, cells, ObservedModulator.Centering.ByCell,
       ObservedModulator.Scaling.ZScore, MissingValuePolicy.ZeroContribution).toOption.get
     assertEquals(result.retainedIndices, Vector(0, 1, 2, 3, 4))
     assertEquals(result.receipt.observedIndices, Vector(0, 1, 2, 3))
     assertEqualsDouble(result.receipt.observedMean.getOrElse(fail("missing mean")), 0.0, 1e-12)
-    assertEqualsDouble(result.receipt.observedSampleStandardDeviation.getOrElse(fail("missing sd")), math.sqrt(10.0 / 3.0), 1e-12)
-    assertEqualsDouble(result.receipt.scale, math.sqrt(10.0 / 3.0), 1e-12)
+    // Cell-centred deviations (-1, 1 | -2, 2): SS_within = 10 over n - k = 4 - 2.
+    assertEqualsDouble(result.receipt.observedSampleStandardDeviation.getOrElse(fail("missing sd")), math.sqrt(10.0 / 2.0), 1e-12)
+    assertEqualsDouble(result.receipt.scale, math.sqrt(10.0 / 2.0), 1e-12)
     assert(!result.receipt.degenerateScale)
+    assert(!result.receipt.degenerate)
+    assertEquals(result.receipt.effectiveCentering, ObservedModulator.Centering.ByCell)
     assertEquals(result.receipt.groups.map(_.observedIndices), Vector(Vector(0, 1), Vector(2, 3)))
-    assertEqualsDouble(result.values(0), -1.0 / math.sqrt(10.0 / 3.0), 1e-12)
-    assertEqualsDouble(result.values(3), 2.0 / math.sqrt(10.0 / 3.0), 1e-12)
+    assertEqualsDouble(result.values(0), -1.0 / math.sqrt(5.0), 1e-12)
+    assertEqualsDouble(result.values(3), 2.0 / math.sqrt(5.0), 1e-12)
     assertEqualsDouble(result.values(4), 0.0, 0.0)
+  }
+
+  test("z-scoring without centering records the global centering it applies") {
+    val result = ObservedModulator.prepare(values, cells, ObservedModulator.Centering.None,
+      ObservedModulator.Scaling.ZScore, MissingValuePolicy.ZeroContribution).toOption.get
+    assertEquals(result.receipt.requestedCentering, ObservedModulator.Centering.None)
+    assertEquals(result.receipt.effectiveCentering, ObservedModulator.Centering.Global)
+  }
+
+  test("a single observed value or constant values make a degenerate partition") {
+    val single = ObservedModulator.prepare(Vector(3.0), Vector(cells.head), ObservedModulator.Centering.Global,
+      ObservedModulator.Scaling.Raw, MissingValuePolicy.Reject).toOption.get
+    assert(single.receipt.degenerate)
+    assert(!single.receipt.degenerateScale, "raw scaling requests no divisor")
+    val constant = ObservedModulator.prepare(Vector(2.0, 2.0, 2.0), Vector.fill(3)(cells.head), ObservedModulator.Centering.Global,
+      ObservedModulator.Scaling.ZScore, MissingValuePolicy.Reject).toOption.get
+    assert(constant.receipt.degenerate)
+    assert(constant.receipt.degenerateScale)
+    // One observation per cell leaves no within-cell degrees of freedom.
+    val oneEach = ObservedModulator.prepare(Vector(1.0, 9.0), Vector(cells.head, cells(2)), ObservedModulator.Centering.ByCell,
+      ObservedModulator.Scaling.StandardDeviation, MissingValuePolicy.Reject).toOption.get
+    assert(oneEach.receipt.degenerate)
+    assertEquals(oneEach.receipt.scale, 1.0)
   }
 
   test("drop and zero retain their distinct source-row contracts") {
@@ -105,7 +131,16 @@ class ObservedModulatorSuite extends munit.FunSuite:
                   if centering == Centering.None && scaling == Scaling.Raw then Vector(.5149, .5238)(run)
                   else if centering == Centering.None && scaling == Scaling.StandardDeviation then Vector(5.0444, 5.2368)(run)
                   else 0.0
-                val expectedSd = if scaling == Scaling.Raw then Vector(.102, .1)(run) else 1.0
+                // Scaled by-cell partitions divide by the pooled within-cell SD
+                // (n - k degrees of freedom), so their ordinary n - 1 sample SD is
+                // sqrt((n - k) / (n - 1)) rather than 1.
+                val observedRows = actual.receipt.observedIndices
+                val observedCells = observedRows.map(sourceCells).distinct.length
+                val byCellScaled = centering == Centering.ByCell && scaling != Scaling.Raw
+                val expectedSd =
+                  if scaling == Scaling.Raw then Vector(.102, .1)(run)
+                  else if byCellScaled then math.sqrt((observedRows.length - observedCells).toDouble / (observedRows.length - 1).toDouble)
+                  else 1.0
                 val observedIndices = actual.receipt.observedIndices.toSet
                 val observed = actual.retainedIndices.zip(actual.values).collect {
                   case (index, value) if observedIndices.contains(index) => value

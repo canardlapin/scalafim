@@ -675,12 +675,43 @@ object StructuralHypothesis:
           case Right(selector) =>
             val matches = resolveSelector(selector, axis)
             if matches.isEmpty then return selectorFailure(id, selector, axis)
-            matches.foreach { column =>
-              out += column -> column.hrfScale.transportLinearWeight(basisWeight.value)
-            }
+            var matchIndex = 0
+            while matchIndex < matches.length do
+              val column = matches(matchIndex)
+              eventResponseTransport(column, axis) match
+                case Left(reason) =>
+                  return failure(
+                    id,
+                    StructuralHypothesisErrorKind.IncompatibleDesign,
+                    s"response functional '${term.functional}' cannot be read out from column '${column.renderedLabel}': $reason"
+                  )
+                case Right(divisor) =>
+                  out += column -> column.hrfScale.transportLinearWeight(basisWeight.value) / divisor
+              matchIndex += 1
         basisIndex += 1
       termIndex += 1
     Right(out.result())
+
+  /** The event-level divisor relating a column to its kernel-unit column.
+    * Response readouts reconstruct the kernel; a column whose contributing
+    * events carry different event-level divisors (for example event unit-peak
+    * with mixed durations) has no kernel-unit coefficient and is refused. */
+  private def eventResponseTransport(column: StructuralColumn, axis: CoefficientAxis): Either[String, Double] =
+    column.origin match
+      case StructuralColumnOrigin.Event(term, phase, cell, modulator, Some(basis), _, _) =>
+        axis.audit.eventResponseScales.find { receipt =>
+          receipt.term == term && receipt.phase == phase && receipt.cell == cell &&
+            receipt.modulator == modulator && receipt.basis == basis.index
+        } match
+          case None => Right(1.0)
+          case Some(receipt) =>
+            receipt.uniformDivisor.toRight(
+              if receipt.divisors.isEmpty then s"event-level '${receipt.policy}' scaling has no contributing events for this column"
+              else
+                s"its events carry ${receipt.divisors.length} different event-level '${receipt.policy}' divisors " +
+                  "(for example mixed durations), so it has no kernel-unit response coefficient"
+            )
+      case _ => Right(1.0)
 
   private def withBasis(
       selector: StructuralColumnSelector,

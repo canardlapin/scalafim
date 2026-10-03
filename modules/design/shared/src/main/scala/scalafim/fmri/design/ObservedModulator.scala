@@ -28,13 +28,28 @@ object ObservedModulator:
       case NonFiniteStatistic(name) => s"modulator $name is non-finite"
 
   final case class GroupReceipt(cell: Option[CellKey], observedIndices: Vector[Int], mean: Option[Double])
+
+  /** Evidence for one prepared partition.
+    *
+    * `effectiveCentering` is the centering actually applied: z-scoring with
+    * `Centering.None` is promoted to `Global`. `observedSampleStandardDeviation`
+    * is the scale estimate: for `ByCell` centering it is the pooled
+    * within-cell standard deviation `sqrt(SS_within / (n - k))` over the `k`
+    * observed cells, otherwise the ordinary sample standard deviation with
+    * `n - 1`. `degenerate` marks a partition whose prepared values cannot vary
+    * (fewer than two observed values, no within-cell degrees of freedom, or a
+    * zero scale estimate); `degenerateScale` additionally records that a
+    * requested scaling fell back to divisor 1. */
   final case class Receipt(
       observedIndices: Vector[Int],
       observedMean: Option[Double],
       observedSampleStandardDeviation: Option[Double],
       scale: Double,
       degenerateScale: Boolean,
-      groups: Vector[GroupReceipt]
+      groups: Vector[GroupReceipt],
+      requestedCentering: Centering = Centering.None,
+      effectiveCentering: Centering = Centering.None,
+      degenerate: Boolean = false
   )
   final case class Result(values: Vector[Double], retainedIndices: Vector[Int], receipt: Receipt):
     require(values.length == retainedIndices.length, "transformed values must align with retained indices")
@@ -84,12 +99,17 @@ object ObservedModulator:
         }
         val transformed = observed.map(centered)
         val mean = average(transformed)
-        val sampleSd = standardDeviation(transformed, mean)
+        // Cell-centred values lose one degree of freedom per observed cell, so
+        // their pooled within-cell variance divides by n - k (not n - 1).
+        val estimatedGroups =
+          if effectiveCentering == Centering.ByCell then calculatedGroups.count(_._2.nonEmpty) else 1
+        val sampleSd = standardDeviation(transformed, mean, estimatedGroups)
         if mean.exists(!_.isFinite) then Left(Error.NonFiniteStatistic("observed mean"))
         else if sampleSd.exists(!_.isFinite) then Left(Error.NonFiniteStatistic("observed sample standard deviation"))
         else
           val needsScale = scaling != Scaling.Raw
-          val degenerate = needsScale && sampleSd.forall(_ <= 0.0)
+          val degenerateScale = needsScale && sampleSd.forall(_ <= 0.0)
+          val degeneratePartition = observed.length < 2 || sampleSd.forall(_ <= 0.0)
           val scale = if needsScale then sampleSd.filter(_ > 0.0).getOrElse(1.0) else 1.0
           val scaled = observed.map(index => index -> (centered(index) / scale))
           scaled.find((_, value) => !value.isFinite) match
@@ -102,7 +122,7 @@ object ObservedModulator:
               val receipts = calculatedGroups.map { (cell, indices, groupMean) =>
                 GroupReceipt(cell, indices, groupMean)
               }
-              Right(Result(output, retained, Receipt(observed, mean, sampleSd, scale, degenerate, receipts)))
+              Right(Result(output, retained, Receipt(observed, mean, sampleSd, scale, degenerateScale, receipts, centering, effectiveCentering, degeneratePartition)))
 
   private def group(indices: Vector[Int], cells: Vector[CellKey], centering: Centering): Vector[(Option[CellKey], Vector[Int])] = centering match
     case Centering.None => Vector(None -> indices)
@@ -115,9 +135,11 @@ object ObservedModulator:
   private def average(values: Vector[Double]): Option[Double] =
     if values.isEmpty then None else Some(values.sum / values.size.toDouble)
 
-  private def standardDeviation(values: Vector[Double], mean: Option[Double]): Option[Double] =
+  /** Sample standard deviation with `groups` estimated means: `n - groups`
+    * degrees of freedom; zero when no degrees of freedom remain. */
+  private def standardDeviation(values: Vector[Double], mean: Option[Double], groups: Int): Option[Double] =
     if values.isEmpty then None
-    else if values.size == 1 then Some(0.0)
+    else if values.size <= groups then Some(0.0)
     else
       val center = mean.getOrElse(0.0)
-      Some(math.sqrt(values.map(value => (value - center) * (value - center)).sum / (values.size - 1).toDouble))
+      Some(math.sqrt(values.map(value => (value - center) * (value - center)).sum / (values.size - groups).toDouble))

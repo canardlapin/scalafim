@@ -216,6 +216,15 @@ class FormulaGrammarSuite extends munit.FunSuite:
     assertEquals(term.eventPeakScales.length, table.nrows)
     assert(term.eventPeakScales.forall(_.divisors.forall(_ > 0)))
     assertEquals(term.hrf.basisElements.map(_.role), Vector(scalafim.fmri.hrf.BasisRole.Canonical, scalafim.fmri.hrf.BasisRole.TemporalDerivative, scalafim.fmri.hrf.BasisRole.DispersionDerivative))
-    val expected = scalafim.fmri.hrf.Hrfs.SPMG1(scalafim.fmri.hrf.Lag(5.0)).data(0) - scalafim.fmri.hrf.Hrfs.SPMG1(scalafim.fmri.hrf.Lag(4.0)).data(0)
-    assertEqualsDouble(term.hrf(scalafim.fmri.hrf.Lag(5.0)).data(1), expected, 1e-14)
+    // spm-1s is SPM12's informed basis on the TR / 16 kernel grid (TR = 1 s here).
+    val grid = SpmKernelGrid(Seconds(1.0)).fold(error => fail(error.message), identity)
+    val spm = TemporalDerivativeConvention.spmInformedBasis(Hrfs.SPMG1, 3, grid).fold(error => fail(error.message), identity)
+    Vector(0.5, 4.0, 5.0, 12.0).foreach: t =>
+      (0 until 3).foreach: c =>
+        assertEqualsDouble(term.hrf(Lag(t)).data(c), spm(Lag(t)).data(c), 0.0)
+    val dot = grid.times.map(t => term.hrf(Lag(t)).data(0) * term.hrf(Lag(t)).data(1)).sum
+    assertEqualsDouble(dot, 0.0, 1e-14)
+    assert(model.policyReceipts.exists(r => r.name == "event-response-normalization" && r.detail.contains("policy=unit-peak")))
+    val twoTr = SamplingFrame(blockLens = Seq(20, 20), tr = Seq(1.0, 2.0))
+    assert(EventModelBuilder.buildEither(EventDesignRequest.fromText(text, table, twoTr, blockPlan = BlockPlan.explicit(Seq(0, 1))).toOption.get).isLeft)
     assert(EventModelBuilder.buildEither(EventDesignRequest.fromText("onset ~ hrf(condition, basis = fir, temporal_derivative = \"spm-1s\")", table, frame).toOption.get).isLeft)
