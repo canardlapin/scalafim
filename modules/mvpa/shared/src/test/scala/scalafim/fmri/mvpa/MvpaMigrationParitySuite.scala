@@ -8,11 +8,9 @@ class MvpaMigrationParitySuite extends munit.FunSuite:
   test("Swift centroid freezes training Z-score, class order, priors, scores, and probabilities"):
     val fixture = MvpaMigrationParityFixtures.SwiftFit
     val model = SwiftCentroidClassifier()
-      .fit(fixture.trainingPatterns, fixture.trainingResponse)
+      .fit(fixture.trainingPatterns.value, fixture.trainingLabels)
       .toOption
-      .get match
-      case value: SwiftCentroidModel => value
-      case other                     => fail(s"unexpected Swift model: $other")
+      .get
 
     assertEquals(model.classes.map(_.value), fixture.classes)
     assertVectorClose(model.priors, fixture.priors)
@@ -22,7 +20,7 @@ class MvpaMigrationParitySuite extends munit.FunSuite:
 
     val scaledTest = model.scaler.transform(fixture.testPatterns.value)
     val scores = Classification.linearCentroidScores(scaledTest, model.centroids, model.priors)
-    val prediction = model.predict(fixture.testPatterns).toOption.get
+    val prediction = model.predict(fixture.testPatterns.value).toOption.get
 
     assertMatrixClose(scaledTest, fixture.scaledTest)
     assertMatrixClose(scores, fixture.scores)
@@ -35,49 +33,6 @@ class MvpaMigrationParitySuite extends munit.FunSuite:
       Classification.linearCentroidScores(scaledTwice, model.centroids, model.priors)
     )
     assert(maxAbsoluteDifference(prediction.probabilities, doubleScaledProbabilities) > 0.1)
-
-  test("Swift cross-validation freezes pooled-sample reduction and unequal-fold denominators"):
-    val fixture = MvpaMigrationParityFixtures.SwiftCrossValidation
-    val labels = Classification
-      .categorical(fixture.response, fixture.labels.length)
-      .toOption
-      .get
-    val folds = FoldPlan.leaveOneBlockOut(fixture.blocks).toOption.get
-    val prediction = Classification
-      .crossValidate(SwiftCentroidClassifier(), fixture.patterns, labels, folds)
-      .toOption
-      .get
-
-    assertEquals(folds.folds.map(_.test.length), Vector(2, 3, 4))
-    assertEquals(prediction.classes.map(_.value), fixture.classes)
-    assertEquals(prediction.sampleIndices.map(_.value), Vector.range(0, fixture.testedSamples))
-    assertMatrixClose(prediction.probabilities, fixture.probabilities)
-    assertEquals(prediction.predicted.map(_.value), fixture.predicted)
-    val correct = prediction.predicted
-      .zip(fixture.labels)
-      .count: (predicted, observed) =>
-        predicted.value == observed
-    assertEquals(correct, fixture.correct)
-
-    val accuracy = Classification.accuracy(prediction, labels).toOption.get
-    assertEqualsDouble(accuracy, fixture.pooledAccuracy, Tolerance)
-    assertEqualsDouble(fixture.unweightedMeanFoldAccuracy, 13.0 / 18.0, Tolerance)
-    assert(math.abs(accuracy - fixture.unweightedMeanFoldAccuracy) > 0.05)
-
-    val featureSet = FeatureSet.unsafe(RoiId(904), Vector(0, 1, 2))
-    val result = MvpaEngine
-      .run(
-        fixture.patterns,
-        Vector(featureSet),
-        fixture.response,
-        CrossValidatedClassifierAnalysis(SwiftCentroidClassifier(), storePredictions = true),
-        Some(folds)
-      )
-      .toOption
-      .get
-    val success = result.successes.head
-    assertEqualsDouble(success.metrics("Accuracy").get, fixture.pooledAccuracy, Tolerance)
-    assertEqualsDouble(success.metrics("TestedSamples").get, fixture.testedSamples.toDouble, Tolerance)
 
   test("identity-metric RDM uses every ordered distinct partition pair and retains signed values"):
     val fixture = MvpaMigrationParityFixtures.IdentityMetricRdm
@@ -109,23 +64,6 @@ class MvpaMigrationParitySuite extends munit.FunSuite:
     assertEquals(
       nonFinite.left.toOption,
       Some(MvpaError.InvalidRdmInput("RDM pattern matrix contains non-finite values"))
-    )
-
-    val fixture = MvpaMigrationParityFixtures.SwiftCrossValidation
-    val labels = Classification
-      .categorical(fixture.response, fixture.labels.length)
-      .toOption
-      .get
-    val missingClass = FoldPlan.unsafe(
-      Vector(Fold.unsafe("missing-class", Seq(1, 2, 4), Seq(0, 3))),
-      samples = fixture.labels.length
-    )
-    assertEquals(
-      Classification
-        .crossValidate(SwiftCentroidClassifier(), fixture.patterns, labels, missingClass)
-        .left
-        .toOption,
-      Some(MvpaError.InvalidClassifierInput("every training fold must contain every class"))
     )
 
   private def orderedPartitionOracle(means: PartitionMeans): Vector[Double] =

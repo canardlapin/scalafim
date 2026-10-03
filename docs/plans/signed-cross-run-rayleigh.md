@@ -24,7 +24,7 @@ The statistic is signed. A negative value means the held-out contrast
 projection opposes the aggregate training projection. Direction orientation is
 irrelevant because both projections change sign together. A global contrast
 sign or nonzero contrast scaling therefore leaves the statistic unchanged.
-The feature-set result is the arithmetic mean of fold statistics; it is not
+The native assessment is the arithmetic mean of fold statistics; it is not
 clamped and has no canonical-correlation transform.
 
 The null exchangeability action is an independent sign flip of each run's
@@ -34,6 +34,8 @@ resolved at the exact training scope before moments are accumulated; no
 trial-level nuisance covariate enters this estimand.
 
 The implementation lives in `mvpa-fit`, consumes `CanonicalEffectProblem` and
-its `OperatorProgramFit`, and traverses ordinary `FeatureSetPlan` regional or
-searchlight collections. Generalized eigensolves remain Gale-backed through
+its `OperatorProgramFit`. `CanonicalGlobal.assessSigned` consumes identified
+`CanonicalRunSet` evidence and returns typed folds with the actual neural domain,
+training artifact, temporal receipts and signed numerator/denominator. The old
+feature-set scanner and parallel ROI summary were removed in M3.01. Generalized eigensolves remain Gale-backed through
 `multivar`.

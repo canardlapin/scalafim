@@ -1,5 +1,9 @@
 # Unified MVPA M1.02 lawful axis-restriction evidence
 
+Historical packet evidence. Legacy API references below describe the recorded
+base revision, not the current public surface. See the
+[native MVPA documentation](../../modules/mvpa/README.md) for current callers.
+
 Recorded: 2026-09-14
 
 Packet: M1.02 (`bd-01M2BNERS3BQVEZZNNJ6JTJWW3`)

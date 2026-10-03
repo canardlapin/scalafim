@@ -21,12 +21,14 @@ object SwiftTargetCoding:
         Left(AlderSwiftCentroidError.InvalidTargetCoding)
       else Right(new SwiftTargetCoding(coded))
 
+final case class AssessmentContribution(unit: resample4s.core.UnitKey, trainingStableKeys: Vector[String])
+
 final case class SwiftOofRow(
     stableKey: String,
     probabilities: Vector[Double],
     predicted: ClassLabel,
     observed: ClassLabel,
-    trainingStableKeys: Vector[String]
+    assessments: Vector[AssessmentContribution]
 )
 
 final case class SwiftAssessment(correct: Long, samples: Long, confusion: Vector[Vector[Long]]):
@@ -66,16 +68,18 @@ enum AlderSwiftCentroidError:
   case MissingAssessment(stableKey: String)
 
 object AlderSwiftCentroid:
-  def crossValidate[S <: multivar.core.SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: ValidationDesign[S, K, Coverage.ExactOnce], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier = SwiftCentroidClassifier()): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
+  def crossValidate[S <: multivar.core.SemanticSpace, K, M, Cov <: Coverage.Exact](rows: AlderMaterializedRows[M], design: ValidationDesign[S, K, Cov], coding: SwiftTargetCoding, scaling: FeatureScaling = FeatureScaling.ZScore): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
     for
       _ <- NativeAxisMapping.verify(design.samples.descriptor, rows.mapping, rows.mapping.declaredSource).left.map(AlderSwiftCentroidError.Admission.apply)
       _ <- if rows.root.ids == rows.mapping.nativeIds then Right(()) else Left(AlderSwiftCentroidError.ValidationPopulationMismatch)
-      result <- evaluate(rows, design, coding, classifier)
+      result <- evaluate(rows, design, coding, SwiftCentroidClassifier(scaling))
     yield result
 
-  private def evaluate[S <: multivar.core.SemanticSpace, K, M](rows: AlderMaterializedRows[M], design: ValidationDesign[S, K, Coverage.ExactOnce], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
-    val out = Matrix.newBuilder(design.samples.size, coding.classes.length)
-    val assembled = Array.fill[Option[SwiftOofRow]](design.samples.size)(None)
+  private def evaluate[S <: multivar.core.SemanticSpace, K, M, Cov <: Coverage.Exact](rows: AlderMaterializedRows[M], design: ValidationDesign[S, K, Cov], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier): Either[AlderSwiftCentroidError, AlderSwiftCentroidResult] =
+    val probabilitySums = Matrix.newBuilder(design.samples.size, coding.classes.length)
+    val assessment = Array.fill[Option[ClassLabel]](design.samples.size)(None)
+    val contributions = Array.fill(design.samples.size)(Vector.empty[AssessmentContribution])
+    val assessmentCounts = Array.fill(design.samples.size)(0)
     val fits = Vector.newBuilder[SwiftFoldFit]
     val ordinalByNative = rows.mapping.nativeIds.zipWithIndex.toMap
     var fold = 0
@@ -122,71 +126,77 @@ object AlderSwiftCentroid:
                         case Right(prediction) =>
                           val ordinal = ordinalByNative(id.value)
                           val stableKey = rows.mapping.entriesByOrdinal(ordinal).stableKey
-                          if assembled(ordinal).nonEmpty then failure = Some(AlderSwiftCentroidError.DuplicateAssessment(stableKey))
-                          else Classification.reorderProbabilities(prediction, coding.classes) match
+                          Classification.reorderProbabilities(prediction.classes, prediction.probabilities, coding.classes) match
                             case Left(error) => failure = Some(AlderSwiftCentroidError.Mvpa(error))
                             case Right(probabilities) =>
-                              val values = Vector.tabulate(coding.classes.length)(column => probabilities(0, column))
-                              var column = 0
-                              while column < coding.classes.length do
-                                out(ordinal, column) = values(column)
-                                column += 1
                               if example.target.length != 1 then failure = Some(AlderSwiftCentroidError.TargetShape(stableKey))
                               else coding.label(example.target(0)) match
                                 case None => failure = Some(AlderSwiftCentroidError.UnknownTarget(stableKey, example.target(0)))
                                 case Some(observed) =>
-                                  var best = 0
-                                  var candidate = 1
-                                  while candidate < values.length do
-                                    if values(candidate) > values(best) then best = candidate
-                                    candidate += 1
-                                  assembled(ordinal) = Some(SwiftOofRow(stableKey, values, coding.classes(best), observed, trainKeys))
+                                  assessment(ordinal) match
+                                    case Some(prior) if prior != observed => failure = Some(AlderSwiftCentroidError.UnknownTarget(stableKey, example.target(0)))
+                                    case _ =>
+                                      var column = 0
+                                      while column < coding.classes.length do
+                                        probabilitySums(ordinal, column) = probabilitySums(ordinal, column) + probabilities(0, column)
+                                        column += 1
+                                      assessmentCounts(ordinal) += 1
+                                      assessment(ordinal) = Some(observed)
+                                      contributions(ordinal) = contributions(ordinal) :+ AssessmentContribution(unit.key, trainKeys)
       fold += 1
-    failure.orElse(assembled.zipWithIndex.collectFirst { case (None, ordinal) => AlderSwiftCentroidError.MissingAssessment(rows.mapping.entriesByOrdinal(ordinal).stableKey) }) match
+    failure.orElse(assessmentCounts.zipWithIndex.collectFirst { case (0, ordinal) => AlderSwiftCentroidError.MissingAssessment(rows.mapping.entriesByOrdinal(ordinal).stableKey) }) match
       case Some(error) => Left(error)
       case None =>
-        val completed = assembled.toVector.flatten
+        val completed = Vector.tabulate(design.samples.size): ordinal =>
+          val values = Vector.tabulate(coding.classes.length): column =>
+            probabilitySums(ordinal, column) / assessmentCounts(ordinal)
+          val observed = assessment(ordinal).get
+          var best = 0
+          var candidate = 1
+          while candidate < values.length do
+            if values(candidate) > values(best) then best = candidate
+            candidate += 1
+          SwiftOofRow(rows.mapping.entriesByOrdinal(ordinal).stableKey, values, coding.classes(best), observed, contributions(ordinal))
         val index = coding.classes.zipWithIndex.toMap
         val confusion = Array.fill(coding.classes.length, coding.classes.length)(0L)
         completed.foreach(row => confusion(index(row.observed))(index(row.predicted)) += 1L)
-        val assessment = SwiftAssessment(completed.count(row => row.observed == row.predicted).toLong,
-          completed.length.toLong, confusion.toVector.map(_.toVector))
-        Right(AlderSwiftCentroidResult(coding.classes, out.result(), completed, design.receipt, fits.result(), assessment, rows.receipt, rows.nativeReadReceipt))
+        val summary = SwiftAssessment(completed.count(row => row.observed == row.predicted).toLong, completed.length.toLong, confusion.toVector.map(_.toVector))
+        val output = Matrix.newBuilder(design.samples.size, coding.classes.length)
+        completed.zipWithIndex.foreach: (row, ordinal) =>
+          row.probabilities.zipWithIndex.foreach: (value, column) =>
+            output(ordinal, column) = value
+        Right(AlderSwiftCentroidResult(coding.classes, output.result(), completed, design.receipt, fits.result(), summary, rows.receipt, rows.nativeReadReceipt))
 
   private def keys[M](data: Data[?, Example[Array[Double], Array[Double], M]], rows: AlderMaterializedRows[M]): Vector[String] =
     data.foldRows(Vector.empty[String])((keys, id, _) => keys :+ rows.mapping.entriesByOrdinal(rows.mapping.nativeIds.indexOf(id.value)).stableKey)
 
-  private final class SwiftLearner[M](rows: AlderMaterializedRows[M], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier, fold: Int) extends Learner[Id, Array[Double], Array[Double], M, ClassificationPrediction]:
+  private final class SwiftLearner[M](rows: AlderMaterializedRows[M], coding: SwiftTargetCoding, classifier: SwiftCentroidClassifier, fold: Int) extends Learner[Id, Array[Double], Array[Double], M, CategoricalProbabilities]:
     type FitError = AlderSwiftCentroidError
     type RunError = AlderSwiftCentroidError
     type Model = SwiftPipe
     def fit[U <: Use.Fit](data: NonEmptyData[U, Example[Array[Double], Array[Double], M]])(using context: FitContext): FitResult[Id, FitError, Trained[Model]] =
       materialize(data.data, rows, coding).flatMap { case (patterns, labels) =>
         if labels.distinct.length != coding.classes.length then Left(AlderSwiftCentroidError.MissingClass(fold))
-        else classifier.fit(patterns, Response.Categorical(labels)).left.map(AlderSwiftCentroidError.Mvpa.apply)
+        else classifier.fit(patterns, labels).left.map(AlderSwiftCentroidError.Mvpa.apply)
       } match
         case Left(error) => EitherT.leftT(context.stagePath.failure(error))
         case Right(model) =>
-          model match
-            case swift: SwiftCentroidModel =>
-              val pipe = new SwiftPipe(swift, context.stagePath)
-              EitherT.rightT(context.complete(pipe, data, ComponentDescriptor(
-                ComponentId("scalafim.swift-centroid"), ComponentVersion("1"),
-                AuditValue.record("scaling" -> AuditValue.text(classifier.scaling match
-                  case FeatureScaling.None => "none"
-                  case FeatureScaling.ZScore => "zscore"
-                  case FeatureScaling.DiagonalShrinkage(alpha) => s"diagonal-shrinkage:${java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(alpha.value))}"
-                )), BackendFingerprint("scalafim", "1", AuditValue.record()))))
-            case _ => EitherT.leftT(context.stagePath.failure(AlderSwiftCentroidError.Mvpa(
-              MvpaError.InvalidClassifierInput("Swift learner returned a foreign model"))))
+          val pipe = new SwiftPipe(model, context.stagePath)
+          EitherT.rightT(context.complete(pipe, data, ComponentDescriptor(
+            ComponentId("scalafim.swift-centroid"), ComponentVersion("1"),
+            AuditValue.record("scaling" -> AuditValue.text(classifier.scaling match
+              case FeatureScaling.None => "none"
+              case FeatureScaling.ZScore => "zscore"
+              case FeatureScaling.DiagonalShrinkage(alpha) => s"diagonal-shrinkage:${java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(alpha.value))}"
+            )), BackendFingerprint("scalafim", "1", AuditValue.record()))))
 
   private final class SwiftPipe(val model: SwiftCentroidModel, stage: StagePath)
-      extends Pipe[Array[Double], AlderSwiftCentroidError, ClassificationPrediction]:
-    def run(input: Array[Double]): Either[Failure[AlderSwiftCentroidError], ClassificationPrediction] =
-      model.predict(PatternMatrix.fromRows(Vector(input.toVector)))
+      extends Pipe[Array[Double], AlderSwiftCentroidError, CategoricalProbabilities]:
+    def run(input: Array[Double]): Either[Failure[AlderSwiftCentroidError], CategoricalProbabilities] =
+      model.predict(DMat.dense(1, input.length, input.toVector))
         .left.map(error => stage.failure(AlderSwiftCentroidError.Mvpa(error)))
 
-  private def materialize[M](data: Data[?, Example[Array[Double], Array[Double], M]], rows: AlderMaterializedRows[M], coding: SwiftTargetCoding): Either[AlderSwiftCentroidError, (PatternMatrix, Vector[ClassLabel])] =
+  private def materialize[M](data: Data[?, Example[Array[Double], Array[Double], M]], rows: AlderMaterializedRows[M], coding: SwiftTargetCoding): Either[AlderSwiftCentroidError, (DMat, Vector[ClassLabel])] =
     val inputs = Vector.newBuilder[Vector[Double]]
     val labels = Vector.newBuilder[ClassLabel]
     var error: Option[AlderSwiftCentroidError] = None
@@ -202,4 +212,10 @@ object AlderSwiftCentroid:
             labels += label
     error match
       case Some(problem) => Left(problem)
-      case None => Right((PatternMatrix.fromRows(inputs.result()), labels.result()))
+      case None => Right((dense(inputs.result()), labels.result()))
+
+  private def dense(rows: Vector[Vector[Double]]): DMat =
+    val columns = rows.headOption.fold(0)(_.length)
+    if rows.exists(_.length != columns) then
+      throw new IllegalArgumentException("materialized categorical rows must have a common width")
+    DMat.dense(rows.length, columns, rows.flatten)

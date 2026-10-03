@@ -102,7 +102,7 @@ final case class EvidenceIdentity(
     origins.writeFramed(writer)
 
 object EvidenceIdentity:
-  private def writeValues(writer: AxisDigest.Writer, value: ValueIdentity): Unit =
+  private[mvpa] def writeValues(writer: AxisDigest.Writer, value: ValueIdentity): Unit =
     value match
       case ValueIdentity.Source(id) =>
         writer.string("source")
@@ -180,6 +180,36 @@ final class Observations[S <: SemanticSpace, N <: SemanticSpace] private (
     )
 
 object Observations:
+  /** Retain an already identified Multivar table without decoding or
+    * materializing an operator. The table's nominal coordinates and complete
+    * axis witnesses are checked before provenance is attached.
+    */
+  def fromTable[SK, NK](
+      samples: AxisRef[SK],
+      neural: AxisRef[NK],
+      table: Table[samples.Id, neural.Id],
+      source: EvidenceSource,
+      origins: EvidenceOrigins
+  ): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
+    if !origins.matches(source, table.valueIdentity, samples.descriptor) then
+      Left(EvidenceError.InvalidSource("evidence origins do not match the observation source, values, or output axis"))
+    else if table.rows != samples.size then
+      Left(EvidenceError.ShapeMismatch("observation table rows", samples.size, table.rows))
+    else if table.cols != neural.size then
+      Left(EvidenceError.ShapeMismatch("observation table columns", neural.size, table.cols))
+    else
+      Right(new Observations(
+        samples.evidence,
+        neural.evidence,
+        samples.descriptor,
+        neural.descriptor,
+        samples.toRecord,
+        neural.toRecord,
+        table,
+        source,
+        origins
+      ))
+
   def fromDense[SK, NK](samples: AxisRef[SK], neural: AxisRef[NK], values: DMat, valueIdentity: ValueIdentity, source: EvidenceSource): Either[EvidenceError, Observations[samples.Id, neural.Id]] =
     fromDense(samples, neural, values, valueIdentity, source, EvidenceOrigins.unknown(source, valueIdentity, samples.descriptor))
 

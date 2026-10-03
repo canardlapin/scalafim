@@ -2,7 +2,8 @@ package scalafim.fmri.mvpa.pattern
 
 import gale.linalg.{Cholesky, DMat, QR}
 import gale.spectral.{SingularOrder, SingularSelection, Svds}
-import scalafim.fmri.mvpa.{AxisRef, EvidenceError}
+import resample4s.core.Injection
+import scalafim.fmri.mvpa.{AxisMember, AxisRef, EvidenceError, ReindexingLeg}
 
 enum ResidualCovarianceError:
   case Shape(field: String, expectedRows: Int, expectedColumns: Int, actualRows: Int, actualColumns: Int)
@@ -128,6 +129,21 @@ final class ResidualCovariance[N] private (
   def precisionWork(columns: Int): Either[ResidualCovarianceError, ResidualCovarianceWork] =
     workFor(columns, 4L * augmented * columns + features.toLong * columns, augmented, columns)
 
+  /** Work of one square whitening application: embedded and transformed
+    * augmented blocks and the retained tail, without a dense covariance. */
+  def whiteningWork(columns: Int): Either[ResidualCovarianceError, ResidualCovarianceWork] =
+    workFor(columns, 2L * augmented * columns + features.toLong * columns, augmented, columns)
+
+  /** Square whitening W from the retained Gale augmented QR: W^T W = Psi^-1.
+    * The trailing `features` transformed coordinates have identity covariance
+    * under the declared Psi. They are numeric coordinates, not original rows. */
+  def whiten(values: DMat): Either[ResidualCovarianceError, DMat] =
+    for
+      _ <- checkBlock("whitening operand", values)
+      transformed <- transform(DMat.tabulate(augmented, values.cols)((row, column) => if row < features then values(row, column) / rootDiagonal(row) else 0.0))
+      result <- finiteResult("whitening result", DMat.tabulate(features, values.cols)((row, column) => transformed(row + rank, column)))
+    yield result
+
   /** Work of one `applyCovariance` on `c` columns: `h x c` projections and the
     * `p x c` result; the peak adds the stored model.
     */
@@ -252,6 +268,17 @@ final class ResidualCovariance[N] private (
           ordinals.flatMap(ordinal => (0 until rank).map(component => loadings(ordinal * rank + component))).toArray,
           rank)
       yield restricted
+
+  /** Exact ordinal hard restriction avoids matching the member-hash keys of a
+    * reindexed child axis against this fitted parent axis. */
+  def restrict[P <: multivar.core.SemanticSpace, K](by: ReindexingLeg[P, K, Injection]): Either[ResidualCovarianceError, ResidualCovariance[AxisMember[K]]] =
+    if by.parentAxis != neuralAxis.descriptor then Left(ResidualCovarianceError.IncompatibleRoi("parent", neuralAxis.descriptor.stableKey, by.parentAxis.stableKey))
+    else if by.child.size == 0 then Left(ResidualCovarianceError.EmptyRoi)
+    else
+      val ordinals = by.ordinals.toVector
+      if ordinals.exists(value => value < 0 || value >= features) then Left(ResidualCovarianceError.IncompatibleRoi("ordinal", neuralAxis.descriptor.stableKey, by.child.descriptor.stableKey))
+      else ResidualCovariance.fromArrays(by.child, ordinals.map(diagonal(_)).toArray,
+        ordinals.flatMap(ordinal => (0 until rank).map(component => loadings(ordinal * rank + component))).toArray, rank)
 
   /** A general measurement `L` maps `Psi` to `L D L^T + (L U)(L U)^T`, whose
     * first term is not diagonal in general, so the diagonal-plus-low-rank

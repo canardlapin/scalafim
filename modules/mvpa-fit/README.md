@@ -3,131 +3,76 @@
 Shared JVM/Scala.js composition between first-level fMRI trial readouts and the
 portable MVPA operator boundary.
 
-For each run, `RunTrialReadout` composes a prepared `TrialReadout` \(A_r\) with
-its timepoints-by-features response \(Y_r\), yielding a `PatternOperator` for
-\(A_rY_r\). `OneShotDataset` validates one common feature axis, stacks those
-run operators by trial row, preserves run/trial identities and estimability,
-and derives leave-one-run-out folds. No trial-by-feature beta matrix is required
-by the operator path. Its `OperatorPatternSource` pushes each ROI feature
-selection into the run's time-series columns before composing with the trial
-readout, avoiding whole-feature-axis work for small MVPA regions.
+`IdentifiedReadoutRelations.withRuns` binds run partitions, effect and neural
+axes to actual `RunReadoutRelation` providers. For each run, it composes the
+prepared `TrialReadout` with the response operator directly as a typed relation
+without materializing trial-by-feature beta patterns. Metadata compatibility is
+checked before acquisition. Explicit scoped providers guard forward and adjoint
+applications, expire before closing, and preserve acquisition/preparation
+support. A one-shot declaration cannot authorize repeated relational evaluation.
 
-`OperatorCrossnobisAnalysis` and `OperatorCrossnobisRsaAnalysis` are the
-beta-free representational path. They apply the adjoint of the composed
-readout/response operator to fold-local condition averages, reduce those
-statistics directly to a crossvalidated condition Gram, and reuse the ordinary
-labeled RDM/RSA payloads and model scorers. Temporal nuisance remains inside
-the prepared `TrialReadout`; model-RDM nuisance remains an explicit
-`RdmScorer.PartialPearson` control. No trial-by-feature coefficient table is
-created between those two domains.
+Use the shared `RelationRdm` and `RelationConsumers` for signed geometry and
+RSA. Pairing and metric admission are explicit; temporal nuisance belongs to
+the prepared readout, and RSA model controls remain separate comparison inputs.
+The independent `BetaFreeRsaAcceptanceSuite` checks a three-run literal response
+fixture through this native route on JVM and Scala.js.
 
-`OneShotMvpaTask` and `OneShotMvpaEngine` target the existing
-`RoiOutcome`/`MvpaResult` surface through the canonical typed `MvpaTask` and
-`MvpaEngine` boundaries. They accept `OperatorRoiAnalysis`; dense analyses remain
-available through `RoiAnalysis.materializing` as the explicit Phase 2 parity
-path.
+`RunTrialReadout.make` validates a response block and prepared trial readout,
+then composes their numerical operators. `explicitPatterns(PatternCopyBudget(...))`
+is a separately budgeted dense copy. Native relational consumers use the composed
+operator directly. No generic one-shot dataset, task or parallel result collector
+remains.
 
-`CrossValidatedOperatorRidgeAnalysis` is the Phase 3a native path. Passed to
-`OneShotMvpaEngine`, it estimates multiclass ridge weights through the composed
-\(A_rY_r\) operators without requesting a trial-by-feature beta matrix:
+Predictive operator ridge and soft LDA now run through `AlderOperatorRidge`
+and `AlderSoftLda` in [mvpa-dataset](../mvpa-dataset/README.md). They retain the
+single-fit `OperatorRidge.fit` and `SoftLda.fit` numerical kernels. Native
+validation supplies identified train/test rows, hard or simplex membership,
+fit audits and convergence/operator receipts. Soft LDA keeps component policy
+and trial nuisance explicit and fits nuisance scope using training rows.
 
-```scala
-val ridge =
-  CrossValidatedOperatorRidgeAnalysis(
-    OperatorRidgeConfig(penalty = 0.5).toOption.get,
-    storePredictions = true
-  )
+The earlier predictive CV analyses and universal predictive payloads were
+removed in M1.12. Relational operator analyses and their universal payloads
+were removed in M2.09; remaining generic one-shot boundaries expire in M3.13.
 
-val result =
-  OneShotMvpaEngine.run(dataset, featureSetPlan, response, ridge)
-```
+## Canonical global artifacts
 
-The result uses ordinary `RoiOutcome` values with an `OperatorRidge` payload
-containing optional class scores and mandatory fold/solver receipts. Soft
-multinomial logistic regression, fold-local feature scaling, and fused/cache
-crossover planning remain later work.
+`CanonicalRunEvidence.fromObservations` binds each run's actual time and neural
+axes, identified observations, temporal geometry schedule and explicit scoped
+provider. `CanonicalRunSet.make` binds their exact order to a run partition
+axis. `ObservationProduct` owns provider acquisition and expiration.
 
-## Pulled-back soft LDA
+`CanonicalGlobal.fit` returns a `CanonicalArtifact[N, C]`: its neural domain
+remains nominally `N`, while fitted component coordinates are existential.
+`fitNonnegative` and `fitManova` return the corresponding constrained and
+spectrum artifacts. They retain the upstream functional frame, regularization,
+operator program, diagnostics, training runs, temporal receipts and actual
+moment content identity. These are descriptive training fits.
 
-`CrossValidatedSoftLdaAnalysis` is the operator-native discriminant path. It
-adapts each training `PatternOperator` to a typed `multivar.OpTable`, constructs
-hard or simplex-weighted class relations, and pulls their between/within forms
-back to feature space through `OperatorAlgebra.secondOrder`. The resulting LDA
-is an inspectable `OperatorProgram` fit, using Gale-backed generalized-eigen or
-trace-ratio solvers. The trial-by-feature table is never requested:
+`assess`, `assessNonnegative`, `assessManova` and `assessSigned` return separate
+leave-one-run-out assessments. Every geometry schedule is resolved before the
+first response access. Each training fit is frozen before its held-out response
+is read. Contrast methods retain `Z'Z`, `Z'X`, contrast variance and temporal
+residual moments; they do not substitute a relational noise query for the
+first-level residual SSCP. MANOVA evaluates the held-out spectrum inside the
+frozen training frame. Signed assessments preserve negative cross-run quotients
+and the explicit run-wise sign-flip exchangeability declaration.
 
-```scala
-val softLda =
-  CrossValidatedSoftLdaAnalysis(
-    SoftLdaConfig(
-      withinPolicy = WithinScatterPolicy.FixedTraceScaledRidge(
-        TraceRidgeFraction.unsafe(0.05)
-      ),
-      objective = LdaObjective.FisherRayleigh
-    ),
-    storePredictions = true
-  )
+`NonnegativeCanonicalModelSpec` fixes residual regularization and solver policy
+before folds. Its coordinate cone is part of the estimand: permutations preserve
+the result, while arbitrary rotations need not. The upstream fit retains its
+stationary-point and feasibility diagnostics; no global optimality is added.
 
-val result =
-  OneShotMvpaEngine.run(dataset, featureSetPlan, response, softLda)
-```
+The earlier canonical datasets, feature-set scanners and parallel ROI summaries
+were removed in M3.01. The existing independent R fixture suites now exercise
+these native artifacts, including scale/basis laws, held-out perturbations,
+geometry scopes, signed reversal and degeneracy.
 
-The two nuisance domains remain explicit. Temporal nuisance is part of each
-design-only `TrialReadout`; an optional `TrialNuisanceDesign` instead lives on
-the resulting trial/sample axis and is subset using training rows inside every
-fold. `SoftLda.crossValidate` returns typed fold receipts retaining the fitted
-operator program, source provenance, exact train/test samples, and trial-level
-nuisance width. The ordinary MVPA adapter exposes cross-validated probabilities
-through `RoiPayload.Classification`.
+These canonical adapters explicitly materialize responses and neural-square
+moments. Capacity and local numeric-storage admission precede provider reads.
+The backend workspace remains an explicit unknown unless the caller supplies a
+provider declaration; `WholeNumeric` requires known source and backend costs.
+The local storage receipt is not process peak-memory or whole-brain feasibility
+evidence. General eigensolvers and constrained optimization remain in pinned
+Multivar/Gale.
 
-## Canonical contrast effect
-
-`CanonicalEffectMvpa` is the beta-free canonical-effect path. Each
-`CanonicalRunInput` combines a prepared scan-level response with a
-`PreparedContrastGeometry`; for every requested ROI or searchlight, the engine
-accumulates only the runwise `Z'Z` and `Z'X` moments. Training folds aggregate
-their effect and residual operators and delegate the generalized-Rayleigh fit
-to `multivar.CanonicalEffectProblem`. The learned frame is frozen before the
-held-out run contributes its effect/residual quotient.
-
-Temporal preparation remains a `fit` concern. `CanonicalGeometrySchedule`
-accepts fixed/per-run geometry directly and requires response-learned shared
-geometry to name every exact training-run scope. Results retain both an
-ordinary `MvpaResult` scalar summary and typed fold payloads containing the
-canonical fit, temporal receipts, regularization, Gale diagnostics, and the
-explicit `RunwiseSufficientStatistics` execution mode. No `TrialReadout`,
-trialwise beta matrix, or time-by-time projector is part of this API.
-
-## Multiple contrasts and full MANOVA
-
-`ManovaMvpa` extends the same runwise sufficient-statistic path to a typed
-`PreparedManovaGeometry`. A rank-q contrast subspace produces a rank-at-most-q
-feature effect without materializing coefficient maps. Training folds fit the
-full generalized-root frame through `CanonicalEffectProblem.fitSpectrum`, whose
-`FunctionalFrame` and `OperatorProgramFit` retain the subspace, regularization,
-Gale certificate, and repeated-root clusters.
-
-Held-out data is first compressed through that frozen training frame. Only then
-is its q-dimensional generalized spectrum evaluated. Results expose Roy's
-largest root, Wilks' lambda, Pillai's trace, and the Hotelling-Lawley trace as
-distinct typed estimands and ordinary MVPA metrics. Repeated roots identify a
-projector-valued subspace; no arbitrary axis is promoted to a scientific
-result.
-
-## Coordinate-constrained canonical effect
-
-`NonnegativeCanonicalMvpa` estimates the distinct nonnegative canonical root
-through the same `CanonicalEffectDataset` and runwise sufficient statistics.
-An inspectable `NonnegativeCanonicalModelSpec` fixes residual regularization
-and Gale solver policy before fold construction; version one performs no
-response-selected tuning. In each outer fold all training moments are formed
-and the constrained `OperatorProgram` is fitted before the held-out response is
-accessed.
-
-The constraint removes the ordinary sign gauge and makes feature coordinates
-part of the estimand. Feature permutations preserve the result, but arbitrary
-rotations generally do not. Fold payloads retain the nonnegative frame,
-stationary-point attestation, Gale KKT/feasibility/normalization diagnostics,
-temporal preparation receipts, and held-out root. The ordinary `MvpaResult`
-surface exposes `MeanNonnegativeCanonicalRoot` and
-`NonnegativeCanonicalCorrelation` for ROI and searchlight consumers.
+Current migration evidence: [M3.01 native global/canonical verification](../../docs/verification/umvpa-global-canonical-20261001.md).

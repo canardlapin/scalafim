@@ -1,5 +1,9 @@
 # Unified MVPA M1.E1 identified run-group validation evidence
 
+Historical packet evidence. Legacy API references below describe the recorded
+base revision, not the current public surface. See the
+[native MVPA documentation](../../modules/mvpa/README.md) for current callers.
+
 Recorded: 2026-09-14
 
 Packet: M1.E1 (`bd-01M0Z5MJ46C70JQ9NNN4GPMJQQ`)

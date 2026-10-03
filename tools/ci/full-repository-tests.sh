@@ -78,11 +78,11 @@ run_batch analysis-js \
   modelJS/test fitJS/test firstLevelLawsJS/test mvpaJS/test mvpaFitJS/test
 
 run_batch downstream-jvm \
-  connectivityJVM/test mvpaDatasetJVM/test mvpaSpatialJVM/test \
+  connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
   mvpaFoundationAdmissionJVM/test groupJVM/test \
   fmriWorkflowJVM/test archiveZarrJVM/test datasetZarrJVM/test
 run_batch downstream-js \
-  connectivityJS/test mvpaDatasetJS/test mvpaSpatialJS/test \
+  connectivityJS/test mvpaDatasetJS/test mvpaArtifactsJS/test mvpaSpatialJS/test \
   mvpaFoundationAdmissionJS/test groupJS/test \
   fmriWorkflowJS/test archiveZarrJS/test datasetZarrJS/test
 
@@ -90,3 +90,5 @@ run_batch downstream-js \
 # source still compiles in scalafimCompileAll; portable examples run here.
 run_batch examples \
   surfaceExamplesJVM/test atlasExamplesJVM/test workflowExamplesJVM/test
+run_batch examples-js \
+  workflowExamplesJS/test

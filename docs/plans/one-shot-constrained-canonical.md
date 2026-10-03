@@ -1,4 +1,4 @@
-# One-shot coordinate-constrained canonical MVPA
+# Native coordinate-constrained canonical artifacts
 
 ## Frozen estimand
 
@@ -36,8 +36,8 @@ validates those certificates before constructing `OperatorProgramFit`.
 
 ## One-shot fold contract
 
-`NonnegativeCanonicalMvpa` consumes the existing `CanonicalEffectDataset` and
-`PreparedContrastGeometry`. For a feature set and outer held-out run it:
+`CanonicalGlobal.assessNonnegative` consumes an identified `CanonicalRunSet`
+with `CanonicalGeometrySchedule`. For its neural domain and outer held-out run it:
 
 1. resolves temporal preparation for the exact training-run scope;
 2. accumulates only training-run `Z'Z` and `Z'X` sufficient statistics;
@@ -60,5 +60,7 @@ using dense base-R `chol`, `solve`, and `eigen`, then selects the best feasible
 root. Shared JVM/Scala.js tests compare the complete leave-one-run-out roots,
 directions, ridge amounts, and held-out scores to that oracle. Additional laws
 cover inactive constraints, coordinate permutations, rotation non-invariance,
-typed invalid solver settings, held-out perturbation leakage, ordinary MVPA
-summaries, and streaming traversal.
+typed invalid solver settings and held-out perturbation noninterference.
+`fitNonnegative` returns the separate descriptive global artifact. The old
+feature-set scanner and ROI result hierarchy were removed in M3.01; local and
+global artifacts retain the actual neural domain rather than a synthetic ROI.

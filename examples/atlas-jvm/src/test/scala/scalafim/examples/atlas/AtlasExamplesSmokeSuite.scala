@@ -22,9 +22,6 @@ class AtlasExamplesSmokeSuite extends munit.FunSuite:
   }
 
   test("atlas-to-MVPA example preserves atlas labels and feature counts") {
-    val plan = AtlasToMvpaRegionPlans.toyRegionPlan()
-    assertEquals(plan.name, "toy-atlas-regions")
-    assertEquals(plan.size, 3)
     assertEquals(
       AtlasToMvpaRegionPlans.toyRegionRows().map(row => (row.regionId, row.label, row.nFeatures)),
       Vector(

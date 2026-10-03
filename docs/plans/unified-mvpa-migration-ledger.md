@@ -115,24 +115,86 @@ the final row.
 | R4 | `SamplewiseRsaDesign`, `SamplewiseRsaAnalysis` | ROI execution; `RsaSuite` and `MvpaParitySuite` | Explicit samplewise relational estimand with block-excluded pairing and origin tracking: M2.02/M2.07 | M2.09 after M2.08. Preserve consistent-reordering invariance and per-row undefined results. |
 | R5 | `OperatorCrossvalidatedGeometry`, `OperatorCrossnobisAnalysis`, `OperatorCrossnobisRsaAnalysis` | One-shot beta-free relation path and ordinary operator engine; `OperatorRsaSuite`, `BetaFreeRsaAcceptanceSuite`, `OperatorMvpaSuite` | Operator-native relations, separately admitted residual precision, and reusable queries: M2.01/M2.03/M2.04/M2.05/M2.06/M2.07 | M2.09 after M2.08. Preserve adjoint sufficient-statistic execution, fold-independent bound, held-out exclusion, negative geometry and identity-metric baseline. |
 | G1 | `OneShotDataset`, `OneShotMvpaTask`, `OneShotMvpaEngine` | All `mvpa-fit` estimands and `OneShotDatasetSuite`; older one-shot plan docs | fMRI evidence construction plus operator compilation and typed estimands: M1.06/M2.01/M3.01 | Method routes cut over in M1/M2; generic one-shot wrappers and parallel result collection gone in M3.13. |
-| G2 | `CanonicalEffectDataset`, schedules/moments, `CanonicalEffectMvpa`, parallel canonical payload/outcome/result types | `CanonicalEffectMvpaSuite`, `CanonicalEffectAcceptanceSuite`, downstream constrained/MANOVA routes | Typed canonical/global decomposition artifact using Multivar semantics: M3.01 | M3.13 after M3.01 and relational/predictive cutovers. Preserve training-frozen geometry, sufficient-statistic scaling, row/run/feature invariances, null/degeneracy behavior and large-time-axis compactness. |
-| G3 | `ManovaDataset`, schedules/moments, `ManovaMvpa`, parallel spectrum payload/outcome/result types | `ManovaMvpaSuite`; `generate_one_shot_manova_fixtures.R` | Typed multivariate effect-spectrum estimand/artifact: M3.01 | M3.13. Preserve generalized-root spectrum, hypothesis rank, training scope and reference fixture. |
-| G4 | `NonnegativeCanonicalModelSpec`, `NonnegativeCanonicalMvpa`, parallel payload/outcome/result types | `ConstrainedCanonicalMvpaSuite`; `generate_constrained_canonical_fixtures.R` | Open constrained canonical estimand over admitted canonical artifact: M3.01 | M3.13. Preserve the nonnegative canonical-root estimand, selection rule, held-out score and constraint diagnostics; do not turn it into a placeholder probability model. |
-| G5 | `SignedCrossRunRayleighMvpa`, signed estimator/orientation/exchangeability ADTs, parallel payload/outcome/result types | `SignedCrossRunRayleighMvpaSuite`; committed R fixture and `generate_signed_cross_run_rayleigh_fixtures.R` | Typed signed cross-run relational/global estimand using shared evidence and artifact contracts: M3.01 | M3.13. Preserve sign/orientation, run-pair scope, training-frozen fit, scale/order invariances, negative values and explicit exchangeability receipt. |
+| G2 | `CanonicalEffectDataset`, schedules/moments, `CanonicalEffectMvpa`, parallel canonical payload/outcome/result types | `CanonicalEffectMvpaSuite`, `CanonicalEffectAcceptanceSuite`, downstream constrained/MANOVA routes | Typed canonical/global decomposition artifact using Multivar semantics: M3.01 | Retired in M3.01: legacy datasets/scanners and parallel result hierarchies removed. Native CanonicalRunSet/CanonicalGlobal artifacts retain domain, preparation, frozen training and independent fixture laws. Model and scientific receipt ADTs remain. |
+| G3 | `ManovaDataset`, schedules/moments, `ManovaMvpa`, parallel spectrum payload/outcome/result types | `ManovaMvpaSuite`; `generate_one_shot_manova_fixtures.R` | Typed multivariate effect-spectrum estimand/artifact: M3.01 | Retired in M3.01: legacy datasets/scanners and parallel result hierarchies removed. Native CanonicalRunSet/CanonicalGlobal artifacts retain domain, preparation, frozen training and independent fixture laws. Model and scientific receipt ADTs remain. |
+| G4 | `NonnegativeCanonicalModelSpec`, `NonnegativeCanonicalMvpa`, parallel payload/outcome/result types | `ConstrainedCanonicalMvpaSuite`; `generate_constrained_canonical_fixtures.R` | Open constrained canonical estimand over admitted canonical artifact: M3.01 | Retired in M3.01: legacy datasets/scanners and parallel result hierarchies removed. Native CanonicalRunSet/CanonicalGlobal artifacts retain domain, preparation, frozen training and independent fixture laws. Model and scientific receipt ADTs remain. |
+| G5 | `SignedCrossRunRayleighMvpa`, signed estimator/orientation/exchangeability ADTs, parallel payload/outcome/result types | `SignedCrossRunRayleighMvpaSuite`; committed R fixture and `generate_signed_cross_run_rayleigh_fixtures.R` | Typed signed cross-run relational/global estimand using shared evidence and artifact contracts: M3.01 | Retired in M3.01: legacy datasets/scanners and parallel result hierarchies removed. Native CanonicalRunSet/CanonicalGlobal artifacts retain domain, preparation, frozen training and independent fixture laws. Model and scientific receipt ADTs remain. |
 | D1 | `MvpaDatasetView`, synchronous readers, opened-dataset adapters and `OpenedDatasetMvpaExecutor` | `MvpaDatasetViewSuite`, `modules/mvpa-dataset/README.md` | Identified lazy source/axis adapter M1.01/M1.03 and Alder lifecycle bridge M1.06 | Predictive executor in M1.12; remaining old source/fold adapters in M3.13. Preserve explicit sync/effectful boundaries, sample metadata, folds-by-run/block, selected reads and failures. |
-| D2 | `SpatialFeatureSetPlans`, `LocusFeatureSetPlans`, `SpatialFeatureDomain` | Atlas/image/surface/locus region and searchlight callers; spatial suites, `AtlasToMvpaRegions`, `AtlasMvpaWorkflow` | Measurement-frame and spatial scattering adapters M1.03; operator relation adapter M2.01 | Predictive old builders in M1.12; relational old-only helpers in M2.09; residual feature-set ontology in M3.13. ROI/searchlight behavior remains supported. |
+| D2 | `SpatialFeatureSetPlans`, `LocusFeatureSetPlans`, `SpatialFeatureDomain` | Atlas/image/surface/locus region and searchlight callers; spatial suites, `AtlasToMvpaRegions`, `AtlasMvpaWorkflow` | Measurement-frame and spatial scattering adapters M1.03; typed measured-observation relation adapter M2.09 | Retired in M2.09. ROI/searchlight behavior remains supported through spatial measurement frames. |
 | D3 | `AtlasMvpaWorkflow`, `AtlasToMvpaRegions`; root/example/module READMEs; `mvpa-engine.md`, `finite-indexed-spaces.md`, `one-shot-mvpa.md`, `beta-free-rsa.md`, `one-shot-manova.md`, `cca-one-shot-mvpa.md`, `one-shot-constrained-canonical.md`, `signed-cross-run-rayleigh.md`; `mvpa-fixtures.md` and R generators | Analyst workflows, documentation links and fixture generation | Migrate examples and documents with each owning method packet; M5.06 supplies final workflows and old-to-new guidance | Each owning M1/M2/M3 cutover updates its docs/examples/generator paths. M3.13 source/reference scan must find no active old API calls; immutable historical links may remain labeled as history. |
 
 ### Public surface freeze
 
-The six currently permitted `RoiPayload` cases are `Classification`,
-`OperatorRidge`, `Rdm`, `Rsa`, `SamplewiseRsa`, and `FeatureModel`. They are a
-closed migration inventory, not extension points. New functionality introduced
-by this epic must use a method-owned result rather than adding a seventh case.
+At the M0 source receipt the six `RoiPayload` cases were `Classification`,
+`OperatorRidge`, `Rdm`, `Rsa`, `SamplewiseRsa`, and `FeatureModel`. This was a
+closed migration inventory, not an extension point. M1.12 and M2.09 removed the
+method cases; M3.13 removes the remaining universal result contract. New methods
+return their own typed results.
 
 No private compatibility bridge is registered at M0.01. If one becomes
 unavoidable, its owning row must name the exact declaration and callers, the
 next-milestone expiry, and the approving packet before it is merged.
+
+### M1.10 predictive caller disposition (implementation handoff)
+
+This inventory records the M1.10 replacement seam; it does not close any
+ledger row or claim that a legacy consumer has been deleted. The new
+`AlderCorrelationCentroid` runs ordinary exact-once validation through an
+Alder `Learner`, records each fitted provider artifact, and deliberately keeps
+correlation-centroid scoring separate from Swift's training-fitted scaling and
+prior-weighted score. `AlderCrossDecoding.correlationCentroid` is a distinct
+source-fit/target-serve estimand: it requires different identified sample axes,
+an exact ordered feature binding, a source-only (or identity) preparation declaration
+whose receipt is the actual source-root fingerprint, and
+returns target-keyed rows without turning domain generalization into pooled CV.
+
+| Legacy consumer family | M1.10 disposition | Required cutover/qualification evidence |
+| --- | --- | --- |
+| `CorrelationCentroidClassifier`, ordinary classifier CV | `AlderCorrelationCentroid` | Correlation row-offset law, class-column order, finite degenerate softmax, and JVM/JS lifecycle tests. |
+| `CrossDomainDataset`, `CrossDecodingDesign`, `CrossDomainClassifierAnalysis`, `NaiveCrossDecodingScanner` | `AlderCrossDecoding` has correlation, Swift and ridge-LDA source-fit/target-test heads; M1.12 applies each head to identified paired measurements | Separate source/target axes, native feature-binding refusal, source-only preparation declaration, target-keyed evaluation receipts and source-only prediction parity. |
+| `RidgeLdaClassifier`, ordinary/searchlight/one-shot callers | `AlderRidgeLda`; existing pooled-covariance kernel is reused inside the role-restricted Alder learner | Frozen fold probability parity, penalty-bound fit identity, class-column order and axis refusal. |
+| `FeatureModelAnalysis` regional/searchlight callers | `AlderFeatureModel`; M1.08 `AlderRidgeRegression` remains the distinct general regression/selection surface | Both orientations, unchanged standardized coefficients, scalar independent oracle, held-out noninterference, repeated exact item averaging, all existing metrics, optional output and named columns. |
+| `OperatorRidge` and `CrossValidatedOperatorRidgeAnalysis` | `AlderOperatorRidge` fits restricted operators through Alder; no dense `F` adapter | Hard/simplex target fits, explicit class-score alignment, coefficient/prediction parity, existing convergence/application receipts and held-out noninterference. |
+| `SoftLda` and `CrossValidatedSoftLdaAnalysis` | `AlderSoftLda` delegates to the extracted single-fit Multivar/Gale kernel through actual Alder fit completion | Existing component and nuisance semantics, fit receipts, frozen probabilities/metrics, hard/simplex targets and pre-read feature-axis refusal. |
+
+The exact source/test/example/benchmark/export inventory is
+`docs/verification/umvpa-m1-10-caller-map-20261001.tsv`. Every matching path is
+mapped to these replacement heads or retained as a numerical kernel/reference
+fixture. M1.12 remains the separately planned engine/example cutover and
+deletion packet; M1.11 is independent qualification. The bounded heads accept
+identified exact validation (FeatureModel also accepts repeated exact passes);
+partial assessment families are not silently upgraded to complete validation.
+Materialized feature bindings and preprocessing provenance remain declarations;
+native feature bindings are checked against their recorded source identity.
+
+
+### M2.07 relational consumer disposition (implementation handoff)
+
+Source base `7bbae8bfff2b982537102eee3e8db4ddd376fe1f`, isolated branch
+`work/umvpa-finish-20261001`. This records replacement surfaces; M2.09 still
+owns actual workflow cutover and deletion after independent M2.08 qualification.
+
+| Inventory | Replacement or explicit disposition | Preservation evidence |
+| --- | --- | --- |
+| R1 ordinary squared Euclidean/Euclidean/correlation geometry | Existing ordinary RDM numerical kernels remain useful; typed `SamplewiseGeometry` admits only ordinary nonnegative symmetric zero-diagonal dissimilarity with identified samples and provenance. This is distinct from signed crossvalidated geometry. | Existing RDM/RSA parity fixtures remain active; new samplewise fixtures preserve repeated-item cross-block exclusion and consistent reordering. |
+| R2/R5 crossvalidated RDM and operator RSA | `RelationRdm` consumes axis-bound pairings and an explicitly admitted metric; `RelationConsumers.cache/rsa` share owned geometry. `rsaDirect` consumes explicit native scoped replay and returns detached scores/metadata. | Signed RDM values, normalization, conditional-error/metric declarations, native TrialReadout dense oracle, lifetime and budget refusals. |
+| R3 Pearson/Spearman/partial RSA | `RelationRsaMethod` and method-owned `RelationRsaOutcome`; shared stable Pearson/average-tie-rank kernels; partial residualization uses Gale QR with explicit rank/residual tolerances. | Independent partial-correlation oracle, singular/zero residual cases, extreme scales/large offsets, exact label alignment and comparison-only invalidation. |
+| R4 samplewise RSA | `RelationConsumers.samplewise` over identified ordinary sample geometry and axis-bound item/block columns; explicit undefined row reasons. | Repeated items, cross-block entries, reordering, unknown-item/refit and provenance refusals. No partial row controls are implicitly invented. |
+| First-order and rectangular consumers | `firstOrderWithReceipt` over one admitted partition and estimable coefficient support; nominally typed `RectangularRelationModel` over exact left/right endpoint axes. | Shared relation dependencies, read-free support/resource refusals, 2x3 orientation/reversal, foreign-axis compiler refusal and typed missing effects. |
+| Model regression / `FeatureModelAnalysis` | M1.10 `AlderFeatureModel` is the explicit predictive replacement in both orientations; M1.08 general regression/selection remains distinct. M1.12 owns removal of its old orchestration. | M1.10/M1.11 independent metrics, coefficient and held-out noninterference fixtures; no RDM-only substitution. |
+
+Preparation/noise requirements that do not match fitted relations return typed
+`RefitRequired` with actual revisions. Query receipts separately bind geometry,
+models, controls, scorers, normalization and policies. A new model/control changes
+the comparison child; altered relation/preparation/noise/pairing/metric rejects
+geometry reuse. Scoped replay is minted only after provider acquisition and
+expires before cleanup; public constructors cannot transplant its witness.
+One-shot sources are not granted replay. Neither temporal independence nor
+residual precision is inferred from callable operators or a resource handle.
+The scoped provider qualification is for the declared matrix-backed native
+TrialReadout seam, not arbitrary streaming cursors.
+
+Evidence and source hashes: [M2.07 verification](../verification/umvpa-relational-consumers-20261001.md).
 
 ## Verification and future evidence commands
 
@@ -191,3 +253,80 @@ callers have migrated, and a source scan finds neither the retired definition
 nor a renamed wrapper delegating to it. Numerical parity, protocol correctness,
 resource qualification, semantic conformance, and scientific calibration are
 recorded independently; success in one category cannot close another.
+
+## M1.12 physical cutover (2026-10-01)
+
+Predictive callers now use the native Alder method heads. Dense categorical
+kernels accept matrices and hard labels; predictions derive labels from
+validated probability matrices. Feature-model results carry typed metrics,
+penalty and optional prediction. The shared predictive CV analyses, specialized
+classification/cross-decoding scanners, cross-domain engine and predictive
+universal payload cases have been removed. The atlas workflow compiles from
+one source for JVM and Scala.js. Qualification evidence is recorded in
+`docs/verification/umvpa-predictive-cutover-20261001.md`.
+
+The R tables remain immutable expectations: native parity tests cover Swift
+pooled reduction, both feature-model orientations and every regional/searchlight
+cross-domain probability table. Native laws and method suites replace old
+orchestration tests; old scanner-vs-engine and scanner benchmark tests are dead
+implementation tests, with no performance inference from their deletion.
+Repeated exact categorical validation records every contributing unit and
+training key set and uses equal probability weight per assessment. Partial
+assessment families remain outside the admitted exact-validation contract.
+
+Remaining shared boundaries have explicit expiry:
+
+| Boundary | Remaining owner | Removal packet |
+| --- | --- | --- |
+| `RdmAnalysis`, `CrossnobisAnalysis`, `RsaAnalysis`, `SamplewiseRsaAnalysis`, `OperatorRsa` relational orchestration, `PartitionMeansBuilder`, relational `RoiPayload` cases | Identified relational workflow cutover | M2.09 |
+| `PatternMatrix`, `PatternOperator`, `PatternSource`, `Response`, `FoldPlan`, generic `RoiAnalysis`/`RoiAnalysisResult`, `MvpaTask`/`MvpaStream`/`MvpaEngine`, `RoiOutcome`/`MvpaResult` | Remaining one-shot/canonical/structured consumers | M3.13 |
+| `ClassificationPrediction`, row/index-bearing numerical operator predictions, `OneShotDataset` and generic one-shot wrappers | P6/P7 and identified one-shot replacement | M3.13 |
+| Legacy spatial feature-plan helpers and dataset views | Inventoried relational/one-shot consumers; no new predictive orchestration | M2.09/M3.13 |
+
+No compatibility archive or replacement universal analysis registry was added.
+
+## M2.09 physical relational cutover (2026-10-01)
+
+The ordinary and signed workflows now consume identified observations or
+acquired trial-readout relations. Deleted the shared relational analyses, old
+operator geometry/result/receipt orchestration, `PartitionMeansBuilder`, and
+relational `RoiPayload` variants. Preserved labeled RDM/model/scoring numerical
+kernels. Ordinary geometry remains a distinct within-partition computation;
+signed products retain explicit pairing, metric admission and descriptive
+claims for shared or unknown origins. Missing cells remain non-estimable.
+
+`ObservationMeanRelations` owns sparse averaging and acquired scope; the bounded
+owned-dense path copies values and identifies actual content and grouping. Local
+measurements retain acquisition/preparation support. No analysis registry,
+compatibility archive or renamed legacy wrapper was added. Generic engine and
+empty payload boundaries, old matrix/source/response/fold types, and remaining
+canonical/one-shot callers keep their explicit M3.13 removal owner. Native tests
+replace deleted old-executor comparisons; no former operator-buffer benchmark
+claim transfers to the new execution path. Post-deletion receipts belong to
+`docs/verification/umvpa-relational-cutover-20261001.md`.
+
+## M3.13 final retirement disposition (2026-10-02)
+
+The final legacy response/fold/feature-set ontology, pattern source, universal
+engine/task/stream/result hierarchy, dataset views and generic one-shot dataset
+and engine definitions have been physically removed. The final post-removal
+receipt passes 1,010 affected JVM/Scala.js tests and warning-clean compilation.
+Historical sections above retain their original packet-time status.
+
+| Ledger rows | Current destination and preserved behavior |
+| --- | --- |
+| F1/F2 | Nominal `AxisRef`, bound `Column`/`MultiResponse` and native validation/pairing designs. Group-validation tests use independently specified expected partitions, not the removed fold builder. The separate response module remains. |
+| F3/D2 | Typed spatial `MeasurementFrame` selection supports ROIs and searchlights. No feature-set kind enum remains. |
+| F4 | `Observations` and acquired observation/relation products own scientific identity and scope. `PatternMatrix`/`PatternOperator` remain numerical storage adapters; indices are storage ordinals, not a second sample/neural domain. Explicit dense operator copies require `PatternCopyBudget` and avoid a neural-square identity. |
+| F5/F6 | Native method heads, work units and method-owned results replace universal orchestration and payload collectors. No renamed executor delegates to the retired implementation. |
+| P1–P7 | Native Alder heads; original categorical/feature-model/RDM reference tables and single-fit numerical kernels remain active. Old scanner-versus-engine tests have no surviving estimand or benchmark claim. |
+| R1–R5 | Identified ordinary/signed relations, explicit pairing/metric and scoped/owned consumers. Independent relational and beta-free acceptance fixtures remain active. |
+| G1 | `RunTrialReadout` preserves validated response/readout composition and explicit budgeted copies. `IdentifiedReadoutRelations` owns actual nominal relation domains and acquired scope. Generic one-shot collection is removed. |
+| G2–G5 | Native canonical/global artifacts and separate assessments, accepted in M3.01 with preserved independent fixtures. Scientific model/policy/receipt ADTs remain. |
+| D1 | `DatasetObservationEvidence` preserves selected values, ordered mappings, metadata/origins and native label columns. The opened-dataset adapter retains effectful selected reads; synchronous readers are explicit. It provides no fold or source facade. |
+| D3 | Current module/example guides use native evidence. Earlier engine, one-shot, beta-free and finite-index plans are explicitly historical with immutable pre-retirement links. Existing R generators retain numerical reference provenance. Final analyst workflow qualification remains M5.06. |
+
+The final removal scan, fixture disposition and affected JVM/Scala.js gates are
+recorded in [M3.13 verification](../verification/umvpa-legacy-retirement-20261001.md).
+No resource, inference, group or release qualification follows from deleting
+legacy APIs.

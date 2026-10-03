@@ -1,6 +1,9 @@
 # One-shot MVPA by canonical contrast effect
 
-Status: **implemented and accepted on JVM and Scala.js**
+Status: original one-shot implementation accepted historically; its numerical
+contract now runs through `CanonicalRunSet` and `CanonicalGlobal` in UMVPA M3.01.
+The old dataset, feature-set scanner and ROI result hierarchy are removed.
+Current qualification is recorded in the M3.01 verification report.
 
 Epic: `bd-01KXZZZWCEEDVD963AZA40FHE7` (`CCA`)
 
@@ -296,3 +299,5 @@ cross-run Rayleigh or cvMANOVA statistics, ordinary paired CCA, classification
 probabilities, RSA, trial betas, spatial derivative channels, simplex or
 nonnegative weights, minimax contrast aggregation, probabilistic CCA,
 permutation inference, or a new execution engine.
+
+Current migration evidence: [M3.01 native global/canonical verification](../verification/umvpa-global-canonical-20261001.md).

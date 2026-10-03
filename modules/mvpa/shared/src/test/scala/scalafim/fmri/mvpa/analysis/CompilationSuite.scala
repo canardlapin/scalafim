@@ -90,6 +90,11 @@ final class CompilationSuite extends FunSuite:
     val serial = ExecutionPlan(program, ExecutionStrategy("jvm", "serial", 1, () => false))
     val parallel = ExecutionPlan(program, ExecutionStrategy("js", "parallel", 32, () => false))
     assertEquals(serial.numerical.scientific.specification.plan, parallel.numerical.scientific.specification.plan)
+    val route = ResourceCandidate(scientific.specification.plan, "serial-mean", "same sum/count reduction",
+      ResourceFootprint(ResourceBound.Known(0, "resident-none"), ResourceBound.Known(0, "scratch-none"), 1, 16, 8, 0), 0, 1)
+    val budget = ResourceBudget(ResourceLimit.WholeNumeric(24), MaterializationPolicy.ForbidSourceCopy)
+    assertEquals(serial.admit(Vector(route), budget).toOption.get.candidate.plan, scientific.specification.plan)
+    assertEquals(parallel.admit(Vector(route.copy(plan = specification(source = TestSource("other", CapabilitySet.empty)).plan)), budget), Left(ResourceError.ScientificPlanMismatch))
 
   test("result completion is bound to the estimand result type and receipt"):
     val scientific = AnalysisCompiler.bind(specification(), CapabilitySet.from(Vector(replay))).toOption.get
