@@ -47,3 +47,36 @@ class ConvolvedBasisReadoutSuite extends munit.FunSuite:
       val old = cell.response(Hrfs.SPMG2, functional, rule).named("old", "old basis response")
       assert(old.compile(model.designSchema).isLeft)
     assert(cell.response(effective, ResponseFunctional.WindowMean(4.s, 8.s)).named("exact", "no unregistered primitive").compile(model.designSchema).isLeft)
+
+  private def eventModel(durations: Vector[Double], normalization: String): EventModel =
+    import scalafim.fmri.design.data.*
+    import scalafim.fmri.design.formula.*
+    val data = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(0.0, 12.0, 24.0)),
+      "condition" -> Column.Strings(Vector.fill(3)("task")),
+      "dur" -> Column.Doubles(durations)
+    )
+    val frame = SamplingFrame(blockLens = Seq(50), tr = Seq(1.0))
+    val text = s"onset ~ hrf(condition, basis = spmg2, durations = dur$normalization, id = task)"
+    EventModelBuilder.buildEither(EventModelBuilder.EventDesignRequest.fromText(text, data, frame).toOption.get).fold(error => fail(error.message), identity)
+
+  test("response readouts refuse columns mixing event unit-peak scales from different durations"):
+    val model = eventModel(Vector(0.0, 2.0, 6.0), ", event_normalization = \"unit-peak\"")
+    val cell = StructuralHypothesisDsl.term("task").cell(StructuralHypothesisDsl.factor("condition") === "task")
+    val compiled = cell.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)).named("peak", "response at 6 s").compile(model.designSchema)
+    val error = compiled.left.toOption.getOrElse(fail("mixed event scales must not read out as kernel units"))
+    assert(error.message.contains("event-level"), error.message)
+    // Coefficient-level hypotheses remain available.
+    assert(cell.coefficient(Hrfs.SPMG2, BasisRole.Canonical).named("canonical", "canonical coefficient").compile(model.designSchema).isRight)
+
+  test("one shared event scale transports response readouts exactly to kernel units"):
+    val durations = Vector.fill(3)(2.0)
+    val normalized = eventModel(durations, ", event_normalization = \"unit-peak\"")
+    val plain = eventModel(durations, "")
+    val divisors = normalized.designSchema.audit.eventResponseScales.sortBy(_.basis.oneBased).map(_.divisors.head)
+    assertEquals(divisors.length, 2)
+    val cell = StructuralHypothesisDsl.term("task").cell(StructuralHypothesisDsl.factor("condition") === "task")
+    val selected = cell.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)).named("peak", "response").compile(normalized.designSchema).fold(error => fail(error.message), identity)
+    val native = cell.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)).named("peak", "response").compile(plain.designSchema).fold(error => fail(error.message), identity)
+    for j <- 0 until 2 do
+      assertEqualsDouble(selected.weights(0, j), native.weights(0, j) / divisors(j), 1e-14)

@@ -525,6 +525,36 @@ final case class CenteringReceipt(
 final case class PolicyReceipt(name: String, detail: String):
   require(name.trim.nonEmpty && detail.trim.nonEmpty, "policy receipt must be named and described")
 
+/** Event-level response scaling of one realized event column.
+  *
+  * `divisors` are the distinct per-event divisors (for example event
+  * `unit-peak` peak magnitudes for basis `basis`) of the events contributing to
+  * the column identified by `(term, phase, cell, modulator, basis)`. A single
+  * divisor makes the column its kernel-unit column divided by that constant,
+  * so a response readout can be transported exactly. Several divisors (mixed
+  * event durations under `unit-peak`) leave no kernel-unit coefficient, and
+  * response readouts must refuse such columns.
+  */
+final case class EventResponseScaleReceipt(
+    term: TermId,
+    phase: Option[PhaseId],
+    cell: CellKey,
+    modulator: Option[ModulatorId],
+    basis: BasisIndex,
+    policy: String,
+    divisors: Vector[Double]
+):
+  require(policy.trim.nonEmpty, "event response scale policy must be named")
+  require(divisors.forall(value => value.isFinite && value > 0.0), "event response divisors must be finite and positive")
+  require(divisors == divisors.distinct.sorted, "event response divisors must be distinct and sorted")
+
+  def uniformDivisor: Option[Double] = divisors match
+    case Vector(value) => Some(value)
+    case _             => None
+
+  def canonical: String =
+    s"term=${term.value}|phase=${phase.fold("")(_.value)}|cell=${cell.canonical}|modulator=${modulator.fold("")(_.value)}|basis=${basis.oneBased}|policy=$policy|divisors=${divisors.map(java.lang.Double.doubleToLongBits).mkString(",")}"
+
 /** Auditable record of a post-convolution derivative-basis projection. */
 final case class BasisOrthogonalizationGroupReceipt(
     cell: Option[CellKey],
@@ -687,7 +717,8 @@ final case class DesignAudit(
     basisOrthogonalizationReceipts: Vector[BasisOrthogonalizationReceipt] = Vector.empty,
     policyReceipts: Vector[PolicyReceipt] = Vector.empty,
     rankPreview: Option[RankPreview] = None,
-    diagnostics: Vector[DesignDiagnostic] = Vector.empty
+    diagnostics: Vector[DesignDiagnostic] = Vector.empty,
+    eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -717,6 +748,9 @@ final case class DesignAudit(
     val basisOrthogonalization =
       if basisOrthogonalizationReceipts.isEmpty then ""
       else s";basis-orthogonalization=${basisOrthogonalizationReceipts.map(_.canonical).mkString(",")}"
+    val eventResponse =
+      if eventResponseScales.isEmpty then ""
+      else s";event-response-scales=${eventResponseScales.map(_.canonical).mkString(",")}"
     val policies = policyReceipts.map(p => s"${p.name}:${p.detail}").mkString(",")
     val rank = rankPreview.fold("") {
       case RankPreview.Available(preview) =>
@@ -731,7 +765,7 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse;policies=$policies;rank=$rank;diagnostics=$diags"
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -1158,7 +1192,8 @@ final case class CoefficientAxis private[design] (
           ordinal = column.ordinal.oneBased,
           origin = origin,
           label = column.label,
-          prettyLabel = column.prettyLabel
+          prettyLabel = column.prettyLabel,
+          hrfScale = column.hrfScale
         )
       }
       scopedColumns.foldLeft[Either[DesignError, Vector[StructuralColumn]]](Right(Vector.empty)) {
@@ -1247,7 +1282,8 @@ object DesignSchema:
       basisOrthogonalizationReceipts = left.basisOrthogonalizationReceipts ++ right.basisOrthogonalizationReceipts,
       policyReceipts = left.policyReceipts ++ right.policyReceipts,
       rankPreview = None,
-      diagnostics = left.diagnostics ++ right.diagnostics
+      diagnostics = left.diagnostics ++ right.diagnostics,
+      eventResponseScales = left.eventResponseScales ++ right.eventResponseScales
     )
 
   private[design] def validate(

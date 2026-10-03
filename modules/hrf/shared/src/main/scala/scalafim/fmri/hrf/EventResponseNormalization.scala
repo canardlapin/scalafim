@@ -4,9 +4,20 @@ import scalafim.fmri.hrf.linalg.{Mat, Vec}
 
 /** Scaling applied to one event's pulse response. It is separate from kernel
   * and design-column normalization: changing an event duration can therefore
-  * receive its own declared peak convention. */
+  * receive its own declared peak convention.
+  *
+  * Naming: event-level `UnitPeak` ("unit-peak" in formulas) divides **each
+  * basis column independently** by the peak absolute value of that column's
+  * pulse response `(q_d * h_b)`, matching fmrihrf `block_hrf(normalize = TRUE)`.
+  * Kernel-level [[HrfNormalization.UnitPeak]] ("unit_peak") instead divides
+  * every basis column of the kernel by one factor taken from the canonical
+  * column, so relative basis amplitudes are preserved. The two are not
+  * interchangeable for multi-column bases. */
 enum EventResponseNormalization:
+  /** The pulse response as convolved; numerically identical to declaring no
+    * event normalization. */
   case PreservePulseScale
+  /** Per-event, per-basis unit peak on a reference grid with `referenceStep`. */
   case UnitPeak(referenceStep: PositiveSeconds)
 
 object EventResponseNormalization:
@@ -37,7 +48,8 @@ final case class EventResponse private (
   require(peakScales.length == kernel.nbasis, "event response scales must match HRF basis columns")
 
   /** Evaluate with the same integration convention and precision used to obtain
-    * the scale. Prepare a separate response to change either setting. */
+    * the scale (the reference step for `UnitPeak`, the declared `precision`
+    * otherwise). Prepare a separate response to change either setting. */
   def at(lag: Lag): Vec =
     val raw = PulseResponse.at(pulse, kernel, lag, precision, integration).data
     val scaled = new Array[Double](raw.length)
@@ -63,11 +75,12 @@ object EventResponse:
       kernel: Hrf,
       pulse: Pulse,
       normalization: EventResponseNormalization = EventResponseNormalization.PreservePulseScale,
-      integration: Integration = Integration.Exact
+      integration: Integration = Integration.Exact,
+      precision: PositiveSeconds = PositiveSeconds.unsafe(0.2.s)
   ): Either[EventResponseNormalizationError, EventResponse] =
     normalization match
       case EventResponseNormalization.PreservePulseScale =>
-        Right(EventResponse(kernel, pulse, normalization, Vector.fill(kernel.nbasis)(1.0), 0.2.s, integration))
+        Right(EventResponse(kernel, pulse, normalization, Vector.fill(kernel.nbasis)(1.0), precision.seconds, integration))
       case EventResponseNormalization.UnitPeak(referenceStep) =>
         val responseSpan = kernel.span.value + pulse.durationSeconds.value
         if !responseSpan.isFinite || responseSpan < 0.0 then Left(EventResponseNormalizationError.InvalidResponseSpan(responseSpan))

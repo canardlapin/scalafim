@@ -341,8 +341,25 @@ object EventModel:
       excludedEvents = excluded,
       eventProvenance = convolved.flatMap(_.term.eventProvenance),
       policyReceipts = policies,
-      diagnostics = diagnostics.map(toDesignDiagnostic)
+      diagnostics = diagnostics.map(toDesignDiagnostic),
+      eventResponseScales = eventResponseScales(terms)
     )
+
+  /** Structural receipts for columns whose events carry event-level response
+    * divisors, keyed by the same identity that response readouts select. */
+  private def eventResponseScales(terms: Vector[(String, EventModelTerm)]): Vector[EventResponseScaleReceipt] =
+    terms.flatMap {
+      case (key, ct: ConvolvedTerm) if ct.columnEventScales.nonEmpty =>
+        val roles = ct.resolvedColumnRoles
+        ct.columnEventScales.indices.flatMap { local =>
+          originFor(key, ct, local, roles(local)) match
+            case StructuralColumnOrigin.Event(term, phase, cell, modulator, Some(basis), _, _) =>
+              val scale = ct.columnEventScales(local)
+              Some(EventResponseScaleReceipt(term, phase, cell, modulator, basis.index, scale.policy, scale.divisors))
+            case _ => None
+        }
+      case _ => Vector.empty
+    }
 
   private[design] def toDesignDiagnostic(diagnostic: EventModelDiagnostic): DesignDiagnostic =
     val kind =

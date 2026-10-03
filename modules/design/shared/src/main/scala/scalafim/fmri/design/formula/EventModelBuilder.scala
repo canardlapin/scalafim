@@ -538,7 +538,9 @@ object EventModelBuilder:
 
   private final case class OrthogonalizedEvents(
       events: Vector[Event],
-      receipts: Vector[OrthogonalizationReceipt]
+      receipts: Vector[OrthogonalizationReceipt],
+      /** Formula `orthogonalize = TRUE` only: (group key, removed mean) of the first modulator. */
+      firstCentering: Vector[(String, Double)] = Vector.empty
   )
 
   private final case class BasisOrthogonalizedTerm(
@@ -753,7 +755,7 @@ object EventModelBuilder:
         if options.missingValuePolicy == MissingValuePolicy.DropFromTerm then
           productObservedMask(productPlans, subset0.sourceRows)
         else Vector.empty
-      dropMissingMask = combineKeepMasks(observedMissingMask, productMissingMask)
+      dropMissingMask <- combineKeepMasks(observedMissingMask, productMissingMask)
       originalSub =
         if dropMissingMask.isEmpty || dropMissingMask.forall(identity) then originalSub0
         else originalSub0.filterRows(dropMissingMask)
@@ -806,7 +808,8 @@ object EventModelBuilder:
         blockIds = subset.blockIds,
         sourceRows = subset.sourceRows,
         parentTrials = phase.toVector.flatMap(_.parentTrialIds),
-        policy = formulaOrthogonalization.orElse(options.orthogonalization.forTerm(termTag))
+        policy = formulaOrthogonalization.orElse(options.orthogonalization.forTerm(termTag)),
+        spmFormula = formulaOrthogonalization.nonEmpty
       )
       eventsClean <- includeMainEffect(orthogonalized.events, h.includeMain.getOrElse(false))
       nonFiniteDiagnostics = cleaned.diagnostics
@@ -858,6 +861,13 @@ object EventModelBuilder:
           PolicyReceipt("hrf-by-phase", s"phase=${phase.value};${assignments.canonical}")
         }
       }
+      eventNormalizationReceipt = h.eventNormalization.toVector.map { mode =>
+        val detail = mode match
+          case EventResponseNormalization.PreservePulseScale => "policy=as-convolved"
+          case EventResponseNormalization.UnitPeak(step) =>
+            s"policy=unit-peak;scope=per-event-per-basis;reference-step=${step.value};precision=${options.precision.value}"
+        PolicyReceipt("event-response-normalization", s"term=${termTag.getOrElse("term")};$detail")
+      }
       productReceipts = productPlans.map { product =>
         PolicyReceipt(
           "product-modulator",
@@ -874,10 +884,15 @@ object EventModelBuilder:
       degenerateModulatorReceipts = rawDegenerateModulators,
       orthogonalizationReceipts = orthogonalized.receipts,
       basisOrthogonalizationReceipts = basisOrthogonalized.receipts,
-      policyReceipts = schemaBindingReceipt ++ hrfCellReceipt ++ hrfPhaseReceipt ++ productReceipts ++ prepared.policies ++ Vector(
+      policyReceipts = schemaBindingReceipt ++ hrfCellReceipt ++ hrfPhaseReceipt ++ eventNormalizationReceipt ++ productReceipts ++ prepared.policies ++ formulaOrthogonalizationReceipts(termTag, formulaOrthogonalization, orthogonalized) ++ Vector(
         PolicyReceipt(
           "modulator-missing-values",
-          s"term=${termTag.getOrElse("term")};policy=${options.missingValuePolicy.canonical}"
+          if observedPlans.isEmpty then s"term=${termTag.getOrElse("term")};policy=${options.missingValuePolicy.canonical}"
+          else
+            // Observed-modulator policies override the build default per modulator.
+            val modulators = events0.collect { case event: ContinuousEvent => event.modulatorIds }.flatten.distinct
+            s"term=${termTag.getOrElse("term")};default=${options.missingValuePolicy.canonical};effective=" +
+              modulators.map(id => s"${id.value}:${missingPolicyFor(id, observedPlans, options.missingValuePolicy).canonical}").mkString(",")
         ),
         PolicyReceipt(
           "factor-levels",
@@ -1358,25 +1373,29 @@ object EventModelBuilder:
             yield conv
           case _ =>
             for
-              hrf0 <- resolveHrfEither(h, options.defaultHrf)
-              conv <- catchBuild(DesignError.fromThrowable) {
+              hrf0 <- resolveHrfEither(h, options.defaultHrf, Some(samplingFrame))
+              conv <-
                 if h.sharedSlopes.contains(true) then
                   convolveSharedSlopes(term, hrf0, samplingFrame, options.precision, effectiveDropEmpty(options), summate0, scaling0, h.eventNormalization)
                 else convolveResponse(term, hrf0, samplingFrame, options.precision, effectiveDropEmpty(options), summate0, scaling0, h.eventNormalization)
-              }
             yield conv
     }
 
+  /** Omitted and `as-convolved` event normalization are the same plain
+    * convolution (no per-event scales); `unit-peak` uses the same precision,
+    * span truncation and onset windowing with per-event, per-basis divisors. */
   private def convolveResponse(
       term: EventTerm, hrf: Hrf, frame: SamplingFrame, precision: Seconds,
       dropEmpty: Boolean, summate: Boolean, scaling: HrfColumnScaling,
       normalization: Option[EventResponseNormalization]
-  ): ConvolvedTerm = normalization match
-    case None => term.convolve(hrf, frame, precision, dropEmpty, summate, scaling)
-    case Some(mode) =>
-      val result = EventResponseConvolution.convolve(term, hrf, frame, mode, dropEmpty, summate, scaling)
-        .fold(error => throw new IllegalArgumentException(error.message), identity)
-      result.convolved.copy(eventPeakScales = result.eventPeakScales)
+  ): Either[DesignError, ConvolvedTerm] = normalization match
+    case None | Some(EventResponseNormalization.PreservePulseScale) =>
+      catchBuild(DesignError.fromThrowable)(term.convolve(hrf, frame, precision, dropEmpty, summate, scaling))
+    case Some(mode: EventResponseNormalization.UnitPeak) =>
+      EventResponseConvolution
+        .convolve(term, hrf, frame, mode, dropEmpty, summate, scaling, precision = precision)
+        .map(_.convolved)
+        .left.map(error => DesignError.FormulaBinding(s"event_normalization: ${error.message}"))
 
   private def convolveSharedSlopes(
       term: EventTerm,
@@ -1387,13 +1406,19 @@ object EventModelBuilder:
       summate: Boolean,
       scaling: HrfColumnScaling,
       normalization: Option[EventResponseNormalization]
-  ): ConvolvedTerm =
+  ): Either[DesignError, ConvolvedTerm] =
     val categorical = term.events.collect { case event: CategoricalEvent => event }
     val slopes = term.events.collect { case event: ContinuousEvent => withoutMainEffect(event) }.filter(_.value.cols > 0)
     if categorical.isEmpty || slopes.isEmpty then
-      throw new IllegalArgumentException("shared_slopes requires categorical main effects and at least one modulator slope")
-    val main = convolveResponse(term.copy(events = categorical), hrf, samplingFrame, precision, dropEmpty, summate, scaling, normalization)
-    val slope = convolveResponse(term.copy(events = slopes), hrf, samplingFrame, precision, dropEmpty, summate, scaling, normalization)
+      Left(DesignError.FormulaBinding("shared_slopes requires categorical main effects and at least one modulator slope"))
+    else
+      for
+        main <- convolveResponse(term.copy(events = categorical), hrf, samplingFrame, precision, dropEmpty, summate, scaling, normalization)
+        slope <- convolveResponse(term.copy(events = slopes), hrf, samplingFrame, precision, dropEmpty, summate, scaling, normalization)
+        joined <- catchBuild(DesignError.fromThrowable)(joinSharedSlopes(term, main, slope))
+      yield joined
+
+  private def joinSharedSlopes(term: EventTerm, main: ConvolvedTerm, slope: ConvolvedTerm): ConvolvedTerm =
     val left = main.data
     val right = slope.data
     val out = new Array[Double](left.rows * (left.cols + right.cols))
@@ -1411,7 +1436,8 @@ object EventModelBuilder:
       columnCells = main.columnCells ++ slope.columnCells,
       columnModulators = main.columnModulators ++ slope.columnModulators,
       columnHrfs = main.columnHrfs ++ slope.columnHrfs,
-      columnScales = main.columnScales ++ slope.columnScales
+      columnScales = main.columnScales ++ slope.columnScales,
+      columnEventScales = main.columnEventScales ++ slope.columnEventScales
     )
 
   private def withoutMainEffect(event: ContinuousEvent): ContinuousEvent =
@@ -1780,7 +1806,8 @@ object EventModelBuilder:
       blockIds: Vector[Int],
       sourceRows: Vector[Int],
       parentTrials: Vector[TrialId],
-      policy: Option[ModulatorOrthogonalization]
+      policy: Option[ModulatorOrthogonalization],
+      spmFormula: Boolean
   ): Either[DesignError, OrthogonalizedEvents] =
     policy match
       case None => Right(OrthogonalizedEvents(events, Vector.empty))
@@ -1803,7 +1830,9 @@ object EventModelBuilder:
           _ <-
             if parentTrials.isEmpty || parentTrials.length == blockIds.length then Right(())
             else Left(DesignError.InvalidOrthogonalization(term, "parent trials do not align with term rows"))
-          groups <- orthogonalizationGroups(events, blockIds, value.scope, term)
+          groups <-
+            if spmFormula then Right(runCellGroups(events, blockIds))
+            else orthogonalizationGroups(events, blockIds, value.scope, term)
           _ <-
             if groups.nonEmpty then Right(())
             else Left(DesignError.InvalidOrthogonalization(term, "ordered orthogonalization has an empty event scope"))
@@ -1815,7 +1844,8 @@ object EventModelBuilder:
             groups = groups,
             sourceRows = sourceRows,
             parentTrials = parentTrials,
-            term = term
+            term = term,
+            withIntercept = spmFormula
           )
         yield lowered
 
@@ -1833,8 +1863,12 @@ object EventModelBuilder:
           if order.lengthCompare(2) < 0 then
             Left(DesignError.FormulaBinding("orthogonalize = TRUE requires at least two ordered modulator streams"))
           else
+            // The declared scope names the cell factors; lowering further splits
+            // by run and includes an intercept (see `runCellGroups`).
+            val factors = events.collect { case event: CategoricalEvent => FactorId.unsafe(event.varName) }.distinct
+            val scope = if factors.isEmpty then OrthogonalizationScope.WithinRun else OrthogonalizationScope.WithinCells(factors)
             ModulatorOrthogonalization
-              .ordered(TermId.unsafe(name), order, OrthogonalizationScope.WithinRun)
+              .ordered(TermId.unsafe(name), order, scope)
               .map(Some(_))
 
   private def resolveOrderedModulatorColumns(
@@ -1875,12 +1909,31 @@ object EventModelBuilder:
       groups: Vector[(String, Vector[Int])],
       sourceRows: Vector[Int],
       parentTrials: Vector[TrialId],
-      term: String
+      term: String,
+      withIntercept: Boolean
   ): Either[DesignError, OrthogonalizedEvents] =
     var current = continuousEvents.map(_._2)
     val receipts = Vector.newBuilder[OrthogonalizationStepReceipt]
+    // SPM-like formula lowering: the first modulator is mean-centred within each
+    // group, i.e. orthogonalized against the group's unit (intercept) column.
+    val firstCentering =
+      if !withIntercept then Vector.empty
+      else
+        val first = orderedColumns.head
+        val event = current(first.continuousEventIndex)
+        val data = event.value.data.clone()
+        val means = groups.map { (key, rows) =>
+          var total = 0.0
+          rows.foreach(row => total += data(row * event.value.cols + first.columnIndex))
+          val mean = total / rows.length.toDouble
+          rows.foreach(row => data(row * event.value.cols + first.columnIndex) -= mean)
+          key -> mean
+        }
+        current = current.updated(first.continuousEventIndex, event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(event.value.rows, event.value.cols, data)))
+        means
     var targetIndex = 1
-    var failed: Option[DesignError] = None
+    var failed: Option[DesignError] =
+      firstCentering.collectFirst { case (key, mean) if !mean.isFinite => DesignError.InvalidOrthogonalization(term, s"non-finite first-modulator mean in group $key") }
     while targetIndex < policy.order.length && failed.isEmpty do
       val targetId = policy.order(targetIndex)
       val targetColumn = orderedColumns(targetIndex)
@@ -1892,7 +1945,8 @@ object EventModelBuilder:
       var groupIndex = 0
       while groupIndex < groups.length && failed.isEmpty do
         val (key, rows) = groups(groupIndex)
-        val reference = bindModulatorRows(current, referenceColumns, rows)
+        val reference0 = bindModulatorRows(current, referenceColumns, rows)
+        val reference = if withIntercept then prependIntercept(reference0) else reference0
         val target = selectModulatorRows(current, targetColumn, rows)
         val qr = QrDecomposition.decomposeScaleAware(reference.data, reference.rows, reference.cols, pivoting = true)
         val residual = residualize(qr, target)
@@ -1943,9 +1997,45 @@ object EventModelBuilder:
         Right(
           OrthogonalizedEvents(
             lowered,
-            Vector(OrthogonalizationReceipt(policy, receipts.result()))
+            Vector(OrthogonalizationReceipt(policy, receipts.result())),
+            firstCentering
           )
         )
+
+  private def prependIntercept(values: scalafim.fmri.hrf.linalg.Mat): scalafim.fmri.hrf.linalg.Mat =
+    val cols = values.cols + 1
+    val out = new Array[Double](values.rows * cols)
+    var row = 0
+    while row < values.rows do
+      out(row * cols) = 1.0
+      System.arraycopy(values.data, row * values.cols, out, row * cols + 1, values.cols)
+      row += 1
+    scalafim.fmri.hrf.linalg.Mat.unsafe(values.rows, cols, out)
+
+  /** Formula `orthogonalize = TRUE` groups: one group per run and realized
+    * cell (all categorical events of the term), as SPM orthogonalizes
+    * parametric modulators per session and condition. */
+  private def runCellGroups(events: Vector[Event], blockIds: Vector[Int]): Vector[(String, Vector[Int])] =
+    val categorical = events.collect { case event: CategoricalEvent => event }
+    val keys = blockIds.indices.map { row =>
+      val cell = categorical.map(event => s"${event.varName}=${event.levels(event.codes(row))}")
+      (s"run-${blockIds(row) + 1}" +: cell).mkString("|")
+    }.toVector
+    groupIndices(keys)
+
+  private def formulaOrthogonalizationReceipts(
+      termTag: Option[String],
+      policy: Option[ModulatorOrthogonalization],
+      lowered: OrthogonalizedEvents
+  ): Vector[PolicyReceipt] =
+    policy.toVector.map { value =>
+      PolicyReceipt(
+        "formula-orthogonalization",
+        s"term=${termTag.getOrElse(value.term.value)};order=${value.order.map(_.value).mkString(",")};groups=run-by-cell;" +
+          "reference=intercept+earlier-modulators;first=centered-within-group;" +
+          s"first-means=${lowered.firstCentering.map((key, mean) => s"$key:${java.lang.Double.doubleToLongBits(mean)}").mkString(",")}"
+      )
+    }
 
   private def orthogonalizationGroups(
       events: Vector[Event],
@@ -2267,12 +2357,14 @@ object EventModelBuilder:
       }
     }
 
-  /** Empty masks mean that their corresponding policy has no row exclusions. */
-  private def combineKeepMasks(left: Vector[Boolean], right: Vector[Boolean]): Vector[Boolean] =
-    if left.isEmpty then right
-    else if right.isEmpty then left
-    else if left.length != right.length then Vector.empty
-    else Vector.tabulate(left.length)(row => left(row) && right(row))
+  /** Empty masks mean that their corresponding policy has no row exclusions;
+    * non-empty masks of different lengths are an internal alignment error. */
+  private def combineKeepMasks(left: Vector[Boolean], right: Vector[Boolean]): Either[DesignError, Vector[Boolean]] =
+    if left.isEmpty then Right(right)
+    else if right.isEmpty then Right(left)
+    else if left.length != right.length then
+      Left(DesignError.InvalidSchema(s"missing-value keep masks do not align with term rows (${left.length} vs ${right.length})"))
+    else Right(Vector.tabulate(left.length)(row => left(row) && right(row)))
 
   private def prepareObserved(
       events: Vector[Event], plans: Vector[ObservedRequest], blocks: Vector[Int], provenance: Vector[EventRowProvenance]
@@ -2317,8 +2409,20 @@ object EventModelBuilder:
                         while local < indices.length do
                           data(indices(local) * event.value.cols + column) = result.values(local)
                           local += 1
+                        val receipt = result.receipt
+                        val cellsDetail = receipt.groups.map { group =>
+                          s"${group.cell.fold("all")(_.canonical)}:n=${group.observedIndices.length}:mean=${group.mean.fold("")(_.toString)}"
+                        }.mkString(",")
                         policies += PolicyReceipt("observed-modulator",
-                          s"modulator=${plan.source.value};run=${runs(runIndex)};center=${plan.centering};scale=${plan.scaling};missing=${plan.missing.canonical};divisor=${result.receipt.scale}")
+                          s"modulator=${plan.source.value};run=${runs(runIndex)};center=${plan.centering};effective-center=${receipt.effectiveCentering};" +
+                            s"scale=${plan.scaling};missing=${plan.missing.canonical};divisor=${receipt.scale};observed=${receipt.observedIndices.length};" +
+                            s"degenerate=${receipt.degenerate};degenerate-scale=${receipt.degenerateScale};groups=$cellsDetail")
+                        if receipt.degenerate then
+                          val reason =
+                            if receipt.observedIndices.length < 2 then s"fewer than two observed values (${receipt.observedIndices.length})"
+                            else "prepared values do not vary within the run"
+                          policies += PolicyReceipt("observed-modulator-degenerate",
+                            s"modulator=${plan.source.value};run=${runs(runIndex)};effective-center=${receipt.effectiveCentering};reason=$reason")
                     runIndex += 1
               column += 1
             output += event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(event.value.rows, event.value.cols, data))
@@ -3130,7 +3234,7 @@ object EventModelBuilder:
         }.mkString(",")
         s"$fun($as)"
 
-  private def resolveHrfEither(call: HrfCall, defaultHrf: Hrf): Either[DesignError, Hrf] =
+  private def resolveHrfEither(call: HrfCall, defaultHrf: Hrf, frame: Option[SamplingFrame] = None): Either[DesignError, Hrf] =
     if call.span.nonEmpty && !call.basis.exists(b => Set("fir", "bspline", "tent", "fourier").contains(b.trim.toLowerCase)) then
       return Left(DesignError.FormulaBinding("formula span requires an explicit fir, bspline, tent, or fourier basis"))
     if call.hrfFun.nonEmpty && (call.span.nonEmpty || call.kernelNormalization.nonEmpty) then
@@ -3138,17 +3242,20 @@ object EventModelBuilder:
     val span = call.span.fold(24.s)(_.seconds)
     if call.temporalDerivative.nonEmpty && !call.basis.exists(name => Set("spmg2", "spmg3").contains(name.trim.toLowerCase)) then
       return Left(DesignError.FormulaBinding("temporal_derivative requires an explicit spmg2 or spmg3 basis"))
+    // "spm-1s" is SPM12's informed basis (spm_get_bf + spm_orth) on SPM's
+    // kernel grid, dt = TR / 16 over 32 s, so it needs one repetition time.
+    def spmGrid: Either[DesignError, SpmKernelGrid] =
+      frame.map(_.tr.distinct) match
+        case Some(Vector(tr)) => SpmKernelGrid(tr).left.map(error => DesignError.FormulaBinding(error.message))
+        case Some(trs) =>
+          Left(DesignError.FormulaBinding(s"temporal_derivative = spm-1s requires one repetition time across runs, found ${trs.map(_.value).mkString(", ")}"))
+        case None => Left(DesignError.FormulaBinding("temporal_derivative = spm-1s requires the sampling frame repetition time"))
     def informedBasis(columns: Int): Either[DesignError, Hrf] =
       call.temporalDerivative match
         case None | Some(TemporalDerivativeConvention.AnalyticSpmg) => Right(if columns == 2 then Hrfs.SPMG2 else Hrfs.SPMG3)
-        case Some(convention) =>
-          TemporalDerivativeConvention.derive(Hrfs.SPMG1, convention).left.map(error => DesignError.FormulaBinding(error.message)).map: temporal =>
-            val bound = HrfCombinators.bindBasis(Vector(Hrfs.SPMG1, temporal) ++ (if columns == 3 then Vector(Hrfs.spmg1DispersionDeriv()) else Vector.empty), Some(s"SPMG${columns}_spm_1s"))
-            val roles = Vector(BasisRole.Canonical, BasisRole.TemporalDerivative) ++ (if columns == 3 then Vector(BasisRole.DispersionDerivative) else Vector.empty)
-            val elements = roles.zipWithIndex.map { (role, index) =>
-              BasisElement(BasisElementId.unsafe(s"${bound.descriptor.canonicalId}|${role.stableLabel}|${index + 1}"), index + 1, role, role.stableLabel)
-            }
-            Hrf.withBasisElements(bound, elements).fold(error => throw new IllegalStateException(error.message), identity)
+        case Some(TemporalDerivativeConvention.SpmOneSecondBackwardDifference) =>
+          spmGrid.flatMap: grid =>
+            TemporalDerivativeConvention.spmInformedBasis(Hrfs.SPMG1, columns, grid).left.map(error => DesignError.FormulaBinding(error.message))
     val baseEither: Either[DesignError, Hrf] =
       call.basis match
         case None => Right(defaultHrf)

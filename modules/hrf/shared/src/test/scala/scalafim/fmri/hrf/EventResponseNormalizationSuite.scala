@@ -30,3 +30,11 @@ class EventResponseNormalizationSuite extends munit.FunSuite:
     val nonFinite = Hrf.scalar("non-finite", span = Seconds(1.0), support = Support.Compact(Seconds(1.0))) { _ => Double.NaN }
     val policy = EventResponseNormalization.unitPeak(Seconds(0.1)).toOption.getOrElse(fail("reference step"))
     assert(EventResponse.prepare(nonFinite, Pulse.Impulse, policy).isLeft)
+
+  test("pulse-scale responses evaluate at the caller's declared precision"):
+    val pulse = Pulse.box(Seconds(2.0)).toOption.getOrElse(fail("pulse"))
+    val fine = PositiveSeconds(0.01).fold(error => fail(error.toString), identity)
+    val response = EventResponse.prepare(Hrfs.SPMG1, pulse, precision = fine).fold(error => fail(error.message), identity)
+    assertEquals(response.precision.value, 0.01)
+    val expected = PulseResponse.at(pulse, Hrfs.SPMG1, Lag(5.0), Seconds(0.01), Integration.Exact).data(0)
+    assertEqualsDouble(response.at(Lag(5.0)).data(0), expected, 0.0)

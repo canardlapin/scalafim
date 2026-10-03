@@ -26,9 +26,17 @@ final case class ConvolvedTerm(
     columnHrfs: Vector[Hrf] = Vector.empty,
     columnScales: Vector[HrfColumnScale] = Vector.empty,
     eventPeakScales: Vector[EventPeakScaleReceipt] = Vector.empty,
-    eventHrfs: Vector[Hrf] = Vector.empty
+    eventHrfs: Vector[Hrf] = Vector.empty,
+    /** Per-column event-level divisors (empty when events carry no event
+      * normalization). A response readout can transport a column back to
+      * kernel units only when its contributing events share one divisor. */
+    columnEventScales: Vector[ColumnEventScale] = Vector.empty
 ) extends EventModelTerm:
   requireColumnMetadata()
+  require(
+    columnEventScales.isEmpty || columnEventScales.length == data.cols,
+    s"columnEventScales has ${columnEventScales.length} entries for ${data.cols} data columns"
+  )
   require(eventHrfs.isEmpty || eventHrfs.length == term.onsets.length, "event HRFs must align with term events")
   require(
     columnConditions.isEmpty || columnConditions.length == data.cols,
@@ -222,6 +230,37 @@ final case class EventTerm(
       summate: Boolean = true,
       scaling: HrfColumnScaling = HrfColumnScaling.AsConvolved
   ): ConvolvedTerm =
+    convolveShared(hrf, samplingFrame, precision, dropEmpty, summate, scaling, eventDivisors = None)
+
+  /** The shared-kernel convolution of [[convolve]], with each event's
+    * contribution to basis column `b` divided by `eventDivisors(event)(b)`.
+    * Microtime precision, span truncation, onset windowing and column scaling
+    * are exactly those of [[convolve]]; only the per-event amplitudes differ. */
+  private[design] def convolveWithEventDivisors(
+      hrf: Hrf,
+      samplingFrame: SamplingFrame,
+      precision: Seconds,
+      dropEmpty: Boolean,
+      summate: Boolean,
+      scaling: HrfColumnScaling,
+      eventDivisors: Vector[Vector[Double]]
+  ): ConvolvedTerm =
+    require(eventDivisors.length == n, "event divisors must align with term events")
+    require(
+      eventDivisors.forall(d => d.length == hrf.nbasis && d.forall(v => v.isFinite && v > 0.0)),
+      "event divisors must be finite, positive and match the basis width"
+    )
+    convolveShared(hrf, samplingFrame, precision, dropEmpty, summate, scaling, Some(eventDivisors))
+
+  private def convolveShared(
+      hrf: Hrf,
+      samplingFrame: SamplingFrame,
+      precision: Seconds,
+      dropEmpty: Boolean,
+      summate: Boolean,
+      scaling: HrfColumnScaling,
+      eventDivisors: Option[Vector[Vector[Double]]]
+  ): ConvolvedTerm =
     val dm = designMatrix(dropEmpty = dropEmpty)
     val nConds = dm.conditionTags.length
     val nb = hrf.nbasis
@@ -277,17 +316,34 @@ final case class EventTerm(
       while cond < nConds do
         val ampB = eIdx.map(i => dm.data.data(i * dm.data.cols + cond))
         if ampB.exists(_ != 0.0) then
-          val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
-          val ev = preparedKernel.evaluate(reg, grid)
           // Store basis-major: [b01: all conds] [b02: all conds] ...
-          var basis = 0
-          while basis < nb do
-            val outCol = basis * nConds + cond
-            var r = 0
-            while r < blockLen do
-              out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
-              r += 1
-            basis += 1
+          eventDivisors match
+            case None =>
+              val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = ampB, summate = summate)
+              val ev = preparedKernel.evaluate(reg, grid)
+              var basis = 0
+              while basis < nb do
+                val outCol = basis * nConds + cond
+                var r = 0
+                while r < blockLen do
+                  out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
+                  r += 1
+                basis += 1
+            case Some(divisors) =>
+              // Convolution is linear in event amplitude: dividing each event's
+              // amplitude by its basis divisor and keeping that basis's column
+              // is exactly the sum of per-event scaled responses.
+              var basis = 0
+              while basis < nb do
+                val scaledB = eIdx.indices.map(k => ampB(k) / divisors(eIdx(k))(basis))
+                val reg = sharedRegressor(onsets = onsB, hrf = hrf, duration = durB, amplitude = scaledB, summate = summate)
+                val ev = preparedKernel.evaluate(reg, grid)
+                val outCol = basis * nConds + cond
+                var r = 0
+                while r < blockLen do
+                  out((rowOffset + r) * totalCols + outCol) = ev.data(r * nb + basis)
+                  r += 1
+                basis += 1
         cond += 1
 
       rowOffset += blockLen
@@ -437,6 +493,11 @@ final case class EventTerm(
     val rep = hrfs0.headOption.getOrElse(Hrfs.SPMG1)
     val nb = rep.nbasis
     require(hrfs0.forall(_.nbasis == nb), "all per-event HRFs must have the same nbasis")
+    // A broadcast (or one identical) HRF is a shared kernel: it is recorded as
+    // the term HRF, not as per-event HRFs, so shared-kernel operations such as
+    // basis orthogonalization remain available.
+    val sharedKernel = hrfs.length == 1 || hrfs0.forall(_ eq rep)
+    val recordedEventHrfs = if sharedKernel then Vector.empty else hrfs0
 
     val finalNames = Names.makeColumnNames(termTag, dm.conditionTags, nb)
     val finalConditions = columnConditionsFor(dm.conditionTags, nb)
@@ -461,7 +522,7 @@ final case class EventTerm(
         columnCells = finalCells,
         columnModulators = finalModulators,
         columnScales = emptyScales,
-        eventHrfs = hrfs0
+        eventHrfs = recordedEventHrfs
       )
 
     require(blockIds0.forall(b => b >= 0 && b < samplingFrame.nBlocks), "blockIds out of range for samplingFrame")
@@ -508,7 +569,7 @@ final case class EventTerm(
       columnCells = finalCells,
       columnModulators = finalModulators,
       columnScales = columnScales,
-      eventHrfs = hrfs0
+      eventHrfs = recordedEventHrfs
     )
 
   private def columnConditionsFor(conditionTags: Vector[String], nbasis: Int): Vector[Option[String]] =
