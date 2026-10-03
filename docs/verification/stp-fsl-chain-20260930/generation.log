@@ -1,0 +1,21 @@
+{
+  "commands": 16,
+  "comparisons": {
+    "coord0": {
+      "count": 1188,
+      "maximum_absolute_difference": 8.106231689453125e-06
+    },
+    "coord1": {
+      "count": 1188,
+      "maximum_absolute_difference": 7.62939453125e-06
+    },
+    "coord2": {
+      "count": 1188,
+      "maximum_absolute_difference": 7.3909759521484375e-06
+    },
+    "phantom": {
+      "count": 1188,
+      "maximum_absolute_difference": 1.52587890625e-05
+    }
+  }
+}

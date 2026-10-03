@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T14:05:56.925738+00:00",
+  "finished_utc": "2026-10-01T14:08:34.606197+00:00",
+  "duration_seconds": 157.679193,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "transformJS/test",
+    "surfaceViewJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-guide-20261001/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-guide-20261001-js.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 31964
+}

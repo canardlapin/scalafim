@@ -1,0 +1,133 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-stp-fsl-chain-20260930-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-fsl-chain-20260930/project
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/project/target/scala-2.12/sbt-1.0/classes ...
+[info] done compiling
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (237344 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-fsl-chain-20260930/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/scenario-testkit/jvm/target/scala-3.7.4/classes ...
+[info] compiling 6 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/locus-data/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 52 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/image/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 28 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/transform/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 40 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/transform/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scenario=transform.fsl-chain.v1 status=Fail
+  func.neurological: the x mirror applies to the functional grid pass=true
+  native-inputs.func-dims: Vector(28, 31, 25) pass=true
+  native-inputs.func-stored-affine.max-abs-mm: actual=0.0 expected=0.0 delta=0.0 tol=1.0E-9 pass=true
+  native-inputs.flirt-matrix.max-abs: actual=2.3830000017710518E-7 expected=0.0 delta=2.3830000017710518E-7 tol=1.0E-9 pass=false
+  fnirt.supported-voxels: 605 standard voxels on the native source interior pass=true
+  flirt-leg.pullback.max-abs-mm: actual=2.4204622128820574E-7 expected=0.0 delta=2.4204622128820574E-7 tol=1.0E-6 pass=true
+  fnirt-leg.materialized-vs-applywarp.max-abs-mm: actual=5.8317638274019146E-6 expected=0.0 delta=5.8317638274019146E-6 tol=2.0E-5 pass=true
+  chain.materialized-vs-reference.max-abs-mm: actual=5.566458465278146E-6 expected=0.0 delta=5.566458465278146E-6 tol=5.0E-5 pass=true
+  chain.materialized-coverage: CoverageCounts(1188,0,0,0) pass=true
+  fnirt-leg.phantom-vs-applywarp.max-abs: actual=3.07688932025485E-4 expected=0.0 delta=3.07688932025485E-4 tol=0.0029943857656662934 pass=true
+  chain.ramp-voxels: 605 supported voxels pull back inside the functional grid pass=true
+  chain.ramp-resample.max-abs: actual=4.349185104501885E-6 expected=0.0 delta=4.349185104501885E-6 tol=5.708322891267785E-5 pass=true
+  native.flirt.full-support: 3136 of 3136 highres queries pass=true
+  native.flirt-coordinates.max-abs-mm: actual=2.5303680951438423E-5 expected=0.0 delta=2.5303680951438423E-5 tol=5.0E-5 pass=true
+  native.flirt-ramp.max-abs: actual=2.7024345698123398E-5 expected=0.0 delta=2.7024345698123398E-5 tol=8.759980703767784E-5 pass=true
+  native.chain.full-support: 1188 of 1188 standard queries pass=true
+  native.chain-premat-coordinates.max-abs-mm: actual=9.837046132332716E-6 expected=0.0 delta=9.837046132332716E-6 tol=5.0E-5 pass=true
+  native.chain-composed-coordinates.max-abs-mm: actual=1.0597011984359028E-5 expected=0.0 delta=1.0597011984359028E-5 tol=5.0E-5 pass=true
+  native.chain-convertwarp-field.max-abs-mm: actual=7.358187813721884E-6 expected=0.0 delta=7.358187813721884E-6 tol=5.0E-5 pass=true
+  native.chain-premat-ramp.max-abs: actual=1.5663707813473593E-5 expected=0.0 delta=1.5663707813473593E-5 tol=8.759980703767784E-5 pass=true
+  native.chain-composed-ramp.max-abs: actual=1.2918857379418114E-5 expected=0.0 delta=1.2918857379418114E-5 tol=8.759980703767784E-5 pass=true
+  chain.jacobian-chain-rule.max-rel: actual=2.0917861154976372E-11 expected=0.0 delta=2.0917861154976372E-11 tol=1.0E-9 pass=true
+  chain.push-unavailable: no FNIRT inverse was supplied pass=true
+  chain.inversion-refused-by-gates: CoverageBelowMinimum(0.03875576036866359,0.5); MaximumResidualExceeded(Reverse,0.11028454771631989,0.05); P99ResidualExceeded(Reverse,0.08620480072448905,0.01) pass=true
+  chain.provenance: FslFlirt fsl_chain_native/example_func2highres.mat then FslFnirtCoefficients neurotransform/fsl_coef_oracle/srcleft_refright_aff/coef.nii.gz pass=true
+  fnirt-jacobian.interior-voxels: 5832 interior voxels, 0 folds pass=true
+  fnirt-jacobian.fsl-jac.median-rel: actual=0.005985953794479578 expected=0.0 delta=0.005985953794479578 tol=0.01 pass=true
+  fnirt-jacobian.fsl-jac.p99-rel: actual=0.032503542821958574 expected=0.0 delta=0.032503542821958574 tol=0.05 pass=true
+  fnirt-jacobian.fsl-jac.max-rel: actual=0.052167847965236755 expected=0.0 delta=0.052167847965236755 tol=0.08 pass=true
+  caveat=transform.fsl-jacobian-spline-vs-finite-difference kind=AlgorithmDivergence severity=Actionable owner=transform detail=fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise followUp=an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)
+scalafim.transform.scenarios.FslChainScenarioSuite:
+==> X scalafim.transform.scenarios.FslChainScenarioSuite.FSL chain: example_func -> highres (FLIRT) -> standard (FNIRT --aff) composes to one field matching FSL  0.827s munit.ComparisonFailException: modules/transform/shared/src/test/scala/scalafim/transform/scenarios/FslChainScenarioSuite.scala:370
+369:    println(result.render)
+370:    assertEquals(result.status, ScenarioStatus.PassWithCaveats, result.render)
+371:    if !result.ciPass(Policy) then fail(result.render)
+scenario=transform.fsl-chain.v1 status=Fail
+  func.neurological: the x mirror applies to the functional grid pass=true
+  native-inputs.func-dims: Vector(28, 31, 25) pass=true
+  native-inputs.func-stored-affine.max-abs-mm: actual=0.0 expected=0.0 delta=0.0 tol=1.0E-9 pass=true
+  native-inputs.flirt-matrix.max-abs: actual=2.3830000017710518E-7 expected=0.0 delta=2.3830000017710518E-7 tol=1.0E-9 pass=false
+  fnirt.supported-voxels: 605 standard voxels on the native source interior pass=true
+  flirt-leg.pullback.max-abs-mm: actual=2.4204622128820574E-7 expected=0.0 delta=2.4204622128820574E-7 tol=1.0E-6 pass=true
+  fnirt-leg.materialized-vs-applywarp.max-abs-mm: actual=5.8317638274019146E-6 expected=0.0 delta=5.8317638274019146E-6 tol=2.0E-5 pass=true
+  chain.materialized-vs-reference.max-abs-mm: actual=5.566458465278146E-6 expected=0.0 delta=5.566458465278146E-6 tol=5.0E-5 pass=true
+  chain.materialized-coverage: CoverageCounts(1188,0,0,0) pass=true
+  fnirt-leg.phantom-vs-applywarp.max-abs: actual=3.07688932025485E-4 expected=0.0 delta=3.07688932025485E-4 tol=0.0029943857656662934 pass=true
+  chain.ramp-voxels: 605 supported voxels pull back inside the functional grid pass=true
+  chain.ramp-resample.max-abs: actual=4.349185104501885E-6 expected=0.0 delta=4.349185104501885E-6 tol=5.708322891267785E-5 pass=true
+  native.flirt.full-support: 3136 of 3136 highres queries pass=true
+  native.flirt-coordinates.max-abs-mm: actual=2.5303680951438423E-5 expected=0.0 delta=2.5303680951438423E-5 tol=5.0E-5 pass=true
+  native.flirt-ramp.max-abs: actual=2.7024345698123398E-5 expected=0.0 delta=2.7024345698123398E-5 tol=8.759980703767784E-5 pass=true
+  native.chain.full-support: 1188 of 1188 standard queries pass=true
+  native.chain-premat-coordinates.max-abs-mm: actual=9.837046132332716E-6 expected=0.0 delta=9.837046132332716E-6 tol=5.0E-5 pass=true
+  native.chain-composed-coordinates.max-abs-mm: actual=1.0597011984359028E-5 expected=0.0 delta=1.0597011984359028E-5 tol=5.0E-5 pass=true
+  native.chain-convertwarp-field.max-abs-mm: actual=7.358187813721884E-6 expected=0.0 delta=7.358187813721884E-6 tol=5.0E-5 pass=true
+  native.chain-premat-ramp.max-abs: actual=1.5663707813473593E-5 expected=0.0 delta=1.5663707813473593E-5 tol=8.759980703767784E-5 pass=true
+  native.chain-composed-ramp.max-abs: actual=1.2918857379418114E-5 expected=0.0 delta=1.2918857379418114E-5 tol=8.759980703767784E-5 pass=true
+  chain.jacobian-chain-rule.max-rel: actual=2.0917861154976372E-11 expected=0.0 delta=2.0917861154976372E-11 tol=1.0E-9 pass=true
+  chain.push-unavailable: no FNIRT inverse was supplied pass=true
+  chain.inversion-refused-by-gates: CoverageBelowMinimum(0.03875576036866359,0.5); MaximumResidualExceeded(Reverse,0.11028454771631989,0.05); P99ResidualExceeded(Reverse,0.08620480072448905,0.01) pass=true
+  chain.provenance: FslFlirt fsl_chain_native/example_func2highres.mat then FslFnirtCoefficients neurotransform/fsl_coef_oracle/srcleft_refright_aff/coef.nii.gz pass=true
+  fnirt-jacobian.interior-voxels: 5832 interior voxels, 0 folds pass=true
+  fnirt-jacobian.fsl-jac.median-rel: actual=0.005985953794479578 expected=0.0 delta=0.005985953794479578 tol=0.01 pass=true
+  fnirt-jacobian.fsl-jac.p99-rel: actual=0.032503542821958574 expected=0.0 delta=0.032503542821958574 tol=0.05 pass=true
+  fnirt-jacobian.fsl-jac.max-rel: actual=0.052167847965236755 expected=0.0 delta=0.052167847965236755 tol=0.08 pass=true
+  caveat=transform.fsl-jacobian-spline-vs-finite-difference kind=AlgorithmDivergence severity=Actionable owner=transform detail=fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise followUp=an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)
+=> Obtained
+Fail()
+=> Diff (- expected, + obtained)
+-PassWithCaveats()
++Fail()
+    at munit.FunSuite.assertEquals(FunSuite.scala:13)
+    at scalafim.transform.scenarios.FslChainScenarioSuite.$init$$$anonfun$2(FslChainScenarioSuite.scala:370)
+  + every convention mutation of the FSL chain fails the scenario on the FLIRT guard 0.378s
+  + native FSL chain references bind every fixture and the exact historical coefficient inputs 0.022s
+  + the FLIRT and FNIRT legs compose only in registration order: a reversed composite does not compile 0.001s
+[error] Failed: Total 4, Failed 1, Errors 0, Passed 3
+[error] Failed tests:
+[error] 	scalafim.transform.scenarios.FslChainScenarioSuite
+[error] (transformJVM / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 28 s, completed Sep 30, 2026, 7:05:14 a.m.

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T23:28:45.925583+00:00",
+  "finished_utc": "2026-09-30T23:30:01.806608+00:00",
+  "duration_seconds": 75.880244,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "transformJVM/testOnly scalafim.transform.scenarios.FslRealChainScenarioSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-p707-fsl-real-20260930/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/p707-fsl-real-target-jvm",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 9852
+}

@@ -1,0 +1,37 @@
+{
+  "source_commit": "cd0fb116db209d09dfa862b2630162b0eb2bf659",
+  "guide_sha256": "e8aeddc4373795a0d0a840b5ffa84a1aad9a15a8d6a3367085d9098fd172e317",
+  "local_links_checked": [
+    {
+      "link": "../tools/ci/full-repository-tests.sh",
+      "sha256": "4d9709ff8d322ff7e438715dd182c5e8dc185081f864c1cf10f314abf61c5923"
+    },
+    {
+      "link": "plans/spatial-transform-parity.md",
+      "sha256": "a0e8a25a3d79a5f73f3963dcf5a724b2261059bc758218bdd9d6581c0143da9a"
+    },
+    {
+      "link": "decisions/spatial-transforms.md",
+      "sha256": "e9a7746298b29903d479bda7f0b148e5d212145be81cea228c680e44ba02edf4"
+    },
+    {
+      "link": "verification/stp-demo1-20260930/README.md",
+      "sha256": "f540c66c71de2ab64012c2fd757e15b88f1d1c98517a14ba6a1686978f16732b"
+    },
+    {
+      "link": "verification/stp-fsl-real-20260930/README.md",
+      "sha256": "6772b83a4a2e9dde6b42e2f3d2b68be3d947ae52dfeb9b71c68d6391a878d9df"
+    },
+    {
+      "link": "verification/stp-surface-real-20261001/README.md",
+      "sha256": "5b254e145c1d3b8e1ca699e749f113b285825c7c46853cbfa4d689e47e0d6ca8"
+    }
+  ],
+  "ci_configured_tasks": [
+    "transformJVM/test",
+    "transformJS/test",
+    "surfaceViewJVM/test",
+    "surfaceViewJS/test"
+  ],
+  "ci_execution_claimed": false
+}

@@ -1,0 +1,20 @@
+Native flirt -in example_func.nii.gz -ref highres.nii.gz -dof 6 -cost normmi -omat example_func2highres.mat -out example_func2highres.nii.gz
+Native flirt -in highres.nii.gz -ref standard.nii.gz -dof 12 -cost corratio -omat highres2standard.mat -out highres2standard.nii.gz
+Native fnirt --in=highres.nii.gz --ref=standard.nii.gz --aff=highres2standard.mat --cout=highres2standard_coef.nii.gz --fout=highres2standard_warp.nii.gz --iout=highres2standard_fnirt.nii.gz --subsamp=4,2,1 --miter=5,5,5 --warpres=10,10,10 --infwhm=4,2,0 --reffwhm=4,2,0 --lambda=300,75,30 --intmod=global_linear --estint=1,1,1 --applyrefmask=1,1,1 --applyinmask=1,1,1 --jacrange=0.2,5
+Native convertwarp --ref=standard.nii.gz --premat=example_func2highres.mat --warp1=highres2standard_coef.nii.gz --out=chain_abs.nii.gz --absout
+Native applywarp --in=func_coord0.nii.gz --ref=standard.nii.gz --warp=highres2standard_coef.nii.gz --premat=example_func2highres.mat --interp=trilinear --datatype=float --out=premat_coord0.nii.gz
+Native applywarp --in=func_coord1.nii.gz --ref=standard.nii.gz --warp=highres2standard_coef.nii.gz --premat=example_func2highres.mat --interp=trilinear --datatype=float --out=premat_coord1.nii.gz
+Native applywarp --in=func_coord2.nii.gz --ref=standard.nii.gz --warp=highres2standard_coef.nii.gz --premat=example_func2highres.mat --interp=trilinear --datatype=float --out=premat_coord2.nii.gz
+Native applywarp --in=func_support.nii.gz --ref=standard.nii.gz --warp=highres2standard_coef.nii.gz --premat=example_func2highres.mat --interp=trilinear --datatype=float --out=premat_support.nii.gz
+Native applywarp --in=example_func.nii.gz --ref=standard.nii.gz --warp=highres2standard_coef.nii.gz --premat=example_func2highres.mat --interp=trilinear --datatype=float --out=premat_image.nii.gz
+Native applywarp --in=func_coord0.nii.gz --ref=standard.nii.gz --warp=chain_abs.nii.gz --abs --interp=trilinear --datatype=float --out=composed_coord0.nii.gz
+Native applywarp --in=func_coord1.nii.gz --ref=standard.nii.gz --warp=chain_abs.nii.gz --abs --interp=trilinear --datatype=float --out=composed_coord1.nii.gz
+Native applywarp --in=func_coord2.nii.gz --ref=standard.nii.gz --warp=chain_abs.nii.gz --abs --interp=trilinear --datatype=float --out=composed_coord2.nii.gz
+Native applywarp --in=func_support.nii.gz --ref=standard.nii.gz --warp=chain_abs.nii.gz --abs --interp=trilinear --datatype=float --out=composed_support.nii.gz
+Native applywarp --in=example_func.nii.gz --ref=standard.nii.gz --warp=chain_abs.nii.gz --abs --interp=trilinear --datatype=float --out=composed_image.nii.gz
+Native flirt -in func_coord0.nii.gz -ref highres.nii.gz -init example_func2highres.mat -applyxfm -interp trilinear -noresampblur -datatype float -out flirt_coord0.nii.gz
+Native flirt -in func_coord1.nii.gz -ref highres.nii.gz -init example_func2highres.mat -applyxfm -interp trilinear -noresampblur -datatype float -out flirt_coord1.nii.gz
+Native flirt -in func_coord2.nii.gz -ref highres.nii.gz -init example_func2highres.mat -applyxfm -interp trilinear -noresampblur -datatype float -out flirt_coord2.nii.gz
+Native flirt -in func_support.nii.gz -ref highres.nii.gz -init example_func2highres.mat -applyxfm -interp trilinear -noresampblur -datatype float -out flirt_support.nii.gz
+Native flirt -in example_func.nii.gz -ref highres.nii.gz -init example_func2highres.mat -applyxfm -interp trilinear -noresampblur -datatype float -out flirt_image.nii.gz
+{"commands": 19, "queries": 693, "flirt_queries": 315, "budgets": [0.0002, 0.5931823321991996], "native_route_max_abs": {"coord0": 3.0040740966796875e-05, "coord1": 2.288818359375e-05, "coord2": 2.288818359375e-05, "image": 0.009033203125}}

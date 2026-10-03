@@ -1,0 +1,295 @@
+{
+  "schema": "scalafim-demo1-qualification/v1",
+  "source_candidate_commit": "29ccdbc07d89575d40ab11af0cb778779ce92be9",
+  "source_baseline_commit": "aa2af56253cac8c2a5f31bc6ed22ae11e82fb1be",
+  "source_manifest_sha256": "8309a1301369aa53f674a46245044ac57a24d2ab33b76a81a15d0e3924193366",
+  "scenario_id": "transform.fmriprep-demo1-interior.v1",
+  "claim": "Native ANTs parity for one declared approximately 8 x 11 x 6.5 mm real demo1 interior patch of the scanner/boldref -> T1w -> MNI152NLin6Asym chain, with no exclusions of the frozen comparison set.",
+  "native_fixture_manifest_sha256": "b047219c03359c6baa03bd4a624325e48f5ea12e8ed9ff6cf0b169a799ffde01",
+  "native_tools": {
+    "ANTs": "ANTs Version: 2.6.5.dev1-gfdce4d2",
+    "image_id": "sha256:ac096b2f75f67866feb6606fde2a549d395675f83baec9fd17610c9a7053fa18",
+    "image_digests": [
+      "antsx/ants@sha256:59c45f54a1f1dc69134f63bec91a726e41c71c64a16cc21cda0b54526910a3c3"
+    ],
+    "numpy": "2.5.3",
+    "nibabel": "5.4.2",
+    "h5py": "3.16.0"
+  },
+  "native_measurements": {
+    "scope": "real-demo1-interior-chain",
+    "target_shape": [
+      7,
+      9,
+      5
+    ],
+    "target_index_to_ras": [
+      [
+        1.100000023841858,
+        0.0,
+        0.0,
+        -7.75
+      ],
+      [
+        0.0,
+        1.25,
+        0.0,
+        -14.25
+      ],
+      [
+        0.0,
+        0.0,
+        1.2999999523162842,
+        18.5
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "source_index_to_ras_itk": [
+      [
+        -1.9642857313156128,
+        0.0,
+        0.0,
+        111.42266082763672
+      ],
+      [
+        0.0,
+        1.7799917042658202,
+        -2.1144868832451613,
+        -46.962799072265625
+      ],
+      [
+        0.0,
+        0.8306912585280846,
+        4.530887906424541,
+        -63.199462890625
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "grid_queries": 315,
+    "off_grid_holdouts": 32,
+    "inverse_queries": 32,
+    "point_budget_mm": 1e-06,
+    "crop_equality_budget_mm": 1e-10,
+    "intensity_budget": 0.01,
+    "source_gradient_precision_bound": 0.0022218579998356746,
+    "minimum_bold_source_margin_voxels": 10.87656646692394,
+    "forward_crop": {
+      "start": [
+        81,
+        109,
+        88
+      ],
+      "shape": [
+        12,
+        16,
+        11
+      ],
+      "original_shape": [
+        182,
+        218,
+        182
+      ],
+      "origin_lps": [
+        10.0,
+        17.0,
+        16.0
+      ],
+      "minimum_query_margin_voxels": 2.1499998569488525,
+      "retained_values": 6336,
+      "retained_float32_bits_exact": true
+    },
+    "inverse_crop": {
+      "start": [
+        77,
+        72,
+        72
+      ],
+      "shape": [
+        16,
+        57,
+        31
+      ],
+      "original_shape": [
+        182,
+        218,
+        182
+      ],
+      "origin_lps": [
+        14.0,
+        54.0,
+        0.0
+      ],
+      "minimum_query_margin_voxels": 2.1401198260574574,
+      "retained_values": 84816,
+      "retained_float32_bits_exact": true
+    },
+    "original_crop_point_maxima_mm": {
+      "t1": 7.105427357601002e-15,
+      "bold": 7.105427357601002e-15,
+      "inverse": 7.105427357601002e-15,
+      "roundtrip": 3.774758283725532e-15
+    },
+    "original_crop_intensity_maximum": 0.0,
+    "native_sequential_chain_maximum_mm": 0.0,
+    "native_point_image_maximum_mm": 4.973799150320701e-14,
+    "native_roundtrip_maximum_mm": 0.023391299374471597,
+    "forbidden_claims": [
+      "whole-domain registration accuracy",
+      "ITK border parity",
+      "all P7.07 workflows qualified"
+    ]
+  },
+  "checks": [
+    {
+      "command": [
+        "python3",
+        "tools/scenarios/validate_manifest.py"
+      ],
+      "cwd": "/private/tmp/scalafim-p707-demo1-20260930",
+      "exit_code": 0,
+      "stdout": "validated 36 scenario manifest entries",
+      "evidence": "observed execution output; no separate raw shell log was captured for this small check"
+    },
+    {
+      "command": "Python built-in compile() on generator and provenance fetcher",
+      "exit_code": 0,
+      "source_files": [
+        "tools/transform/generate_demo1_native_oracle.py",
+        "docs/verification/stp-demo1-20260930/provenance/fetch_metadata.py"
+      ],
+      "scope": "syntax only; generator computation is qualified separately by native output receipts"
+    },
+    {
+      "command": "SHA256 verification of all 40 candidate source manifest files",
+      "exit_code": 0,
+      "files": 40
+    },
+    {
+      "kind": "historical focused check",
+      "log": "logs/p707-demo1-focused-jvm.log",
+      "metadata": "logs/p707-demo1-focused-jvm.log.meta.json",
+      "exit_code": 1,
+      "note": "Predates final corrected source; retained as development evidence, not final qualification."
+    },
+    {
+      "kind": "historical focused check",
+      "log": "logs/p707-demo1-focused-jvm-v2.log",
+      "metadata": "logs/p707-demo1-focused-jvm-v2.log.meta.json",
+      "exit_code": 0,
+      "note": "Predates final corrected source; retained as development evidence, not final qualification."
+    },
+    {
+      "kind": "rejected final compile attempt",
+      "log": "logs/p707-demo1-transform-jvm.log",
+      "metadata": "logs/p707-demo1-transform-jvm.log.meta.json",
+      "exit_code": 1,
+      "note": "Predates final corrected source; retained as development evidence, not final qualification."
+    },
+    {
+      "kind": "final bounded Scala.js tests and all-module compilation",
+      "source_candidate_commit": "29ccdbc07d89575d40ab11af0cb778779ce92be9",
+      "log": "logs/p707-demo1-transform-js-compile.log",
+      "metadata": "logs/p707-demo1-transform-js-compile.log.meta.json",
+      "log_sha256": "a4b2bceae9d2c5d481491dfd5aafe91eb394fbadc06da84da6e1a59693a98688",
+      "exit_code": 0,
+      "transform_js_tests_passed": 143,
+      "compiler_warning_lines": 0,
+      "error_lines": 0,
+      "note": "JVM-only gate indentation changed during this batch; the tested JS shared source and all main compilation inputs were unchanged and match the candidate source manifest."
+    },
+    {
+      "kind": "complete JVM and external original-container gate before review retention additions",
+      "source_candidate_commit": "29ccdbc07d89575d40ab11af0cb778779ce92be9",
+      "log": "logs/p707-demo1-transform-jvm-v2.log",
+      "metadata": "logs/p707-demo1-transform-jvm-v2.log.meta.json",
+      "log_sha256": "da21b9edba05861acd9f793c296561c9450316f8ff6067943aef220b2f43a72a",
+      "exit_code": 0,
+      "transform_jvm_tests_passed": 173,
+      "compiler_warning_lines": 0,
+      "original_container_forward_queries": 694,
+      "original_container_inverse_queries": 379,
+      "retained_forward_values": 6336,
+      "retained_inverse_values": 84816
+    },
+    {
+      "kind": "final post-review wording and receipt verification",
+      "command": [
+        "python3",
+        "tools/scenarios/validate_manifest.py"
+      ],
+      "exit_code": 0,
+      "stdout": "validated 36 scenario manifest entries",
+      "source_manifest_files_verified": 40,
+      "native_fixture_files_verified": 26,
+      "scientific_source_and_fixture_change_since_passing_JVM_JS_gates": false,
+      "note": "All scientific Scala source, generator recipe and 26 fixture payloads remain byte-identical to the passing/approved code candidate. Only scope wording and evidence records changed.",
+      "source_manifest_files_verified_scope": "Original generator check: 40 declared source files. Separate Fray #111 s3 review verified those 40 hashes plus 1 recipe-support hash.",
+      "source_manifest_hash_entries_independently_verified": 41,
+      "recipe_support_files_independently_verified": 1
+    }
+  ],
+  "limitations": [
+    "P7.07 remains open for broader real FSL and real volume -> fsaverage -> fsLR commutativity qualification.",
+    "No whole-domain registration accuracy, boundary parity or exact native inverse claim.",
+    "No hosted CI or upstream publication/pin adoption.",
+    "The preserved initial focused compile failure precedes all test execution; the passing focused run precedes final source/provenance/public inverse additions. Neither substitutes for final full JVM/JS gates.",
+    "An initial native geometry-control probe failed its fixed tolerance. Its raw temporary arrays were not retained; rejected-initial-probe.json distinguishes that limitation from retained final native outputs.",
+    "Native crop outputs and sequential control were measured during the successful original generation but not retained; equality is recorded in metadata. A fresh retention attempt stopped at blocked Docker image inspection before compute.",
+    "Original-container JVM gate covers point queries and retained samples; full-original BOLD resampling/coordinate controls are qualified by separate native-generation receipts and offline shared comparisons.",
+    "Convention mutations gate point observations; no image-mutation or arbitrary non-diagonal displacement-field direction qualification is claimed.",
+    "The fixed 1e-6 mm point tolerance does not itself establish double-precision agreement."
+  ],
+  "runtime_diagnostics": [
+    "Existing jHDF/SLF4J reports no provider and uses NOP logging; this is distinct from Scala compiler warnings."
+  ],
+  "review": {
+    "kind": "advisory Fray exact-commit review",
+    "card": 111,
+    "candidate": "git:29ccdbc07d89575d40ab11af0cb778779ce92be9",
+    "status": "approved for qualified code commit, limited to interior claim; final receipt/wording review pending",
+    "evidence_seq": 742,
+    "receipt": "review-29ccdbc0.json",
+    "subsequent_verdict": {
+      "candidate": "e2688970bb657f01d553eb6cc68356831118cc12",
+      "subject_revision": 3,
+      "status": "approve",
+      "evidence_seq": 779,
+      "review_type": "Read-only source/receipt/hash review; no reviewer sbt, Docker or ANTs run."
+    }
+  },
+  "qualified_code_commit": "29ccdbc07d89575d40ab11af0cb778779ce92be9",
+  "source_candidate_commit_note": "After these checks, only documentation wording, source manifest documentation hashes and qualification receipts changed. Scientific recipe, Scala sources and native fixture bytes match this commit.",
+  "evidence_sha256": {
+    "README.md": "f540c66c71de2ab64012c2fd757e15b88f1d1c98517a14ba6a1686978f16732b",
+    "logs/native-extension-blocked.log": "bc77c8a2789485a9896b926f14e7db70b24af64c6ab20a6eadd6aa62f8de0e69",
+    "logs/native-extension-startup.sample.txt": "0d4ea3f12abb3f5e3f45c9d6cc10e8c9b818bbb8d13182942a1d727309700863",
+    "logs/p707-demo1-focused-jvm-v2.log": "9cf3a5f1d7e6f8cddfb21bc0baa7b24ab332ee2580692c237e5b13726b25e289",
+    "logs/p707-demo1-focused-jvm-v2.log.meta.json": "4203d06e088c58e0f7fb04fb6385c5c0275ebe76d4bb610308e60622c18e35b6",
+    "logs/p707-demo1-focused-jvm.log": "90071c56c545c01bb5b45adf809c92c8fbbebb05c9b7e4927ac8820c10365444",
+    "logs/p707-demo1-focused-jvm.log.meta.json": "f51e469d8495b42e327406d48d6b0bf597af95e84834ab0334978843d504e9bf",
+    "logs/p707-demo1-transform-js-compile.log": "a4b2bceae9d2c5d481491dfd5aafe91eb394fbadc06da84da6e1a59693a98688",
+    "logs/p707-demo1-transform-js-compile.log.meta.json": "6c633ddf22f57f4c24cc2f6e3dae822be38a592d4094256ce07901b8264f8405",
+    "logs/p707-demo1-transform-jvm-v2.log": "da21b9edba05861acd9f793c296561c9450316f8ff6067943aef220b2f43a72a",
+    "logs/p707-demo1-transform-jvm-v2.log.meta.json": "cac0aee1fcd0a81d3addf076852f86bb9b342653d733e3f8694a5fac617315bc",
+    "logs/p707-demo1-transform-jvm.log": "1f4bb189b4f68796421c1a0e6e36f5ee0920b103a1552def0abf718a69df7145",
+    "logs/p707-demo1-transform-jvm.log.meta.json": "cc14eaa64992fd9fa0ef374326f215e4788669d5ff77467f5586385fcc0b8593",
+    "native-extension-blocked.json": "35328940746002b44faaedb7b49cc93faa6ce1d4b354066201fd07ecf01bf81a",
+    "provenance/README.md": "a317d0fd22615bffdd24879e0a59ba7ea61a8fac106535517383162fd60d8553",
+    "provenance/fetch_metadata.py": "6a62e908d0fd9a42943f88ac5ef3309b6ce6b129c85df0f7013823e0664fcbe4",
+    "provenance/first-generator.py": "ea9cc525e75e58438d5203c3d922c3b09ab83961924643b89a5f0b9fc5973de7",
+    "provenance/upstream-anat.json": "1c9a0422d2319e88ef57a3e0c89b4e59125d392f370df1739f21e2c84a8850ba",
+    "provenance/upstream-func.json": "fb4a4874a819a7fe44156d48b0fce9a68077ad0708151fd433639276539b5e87",
+    "rejected-initial-probe.json": "5814a6c2be3a6d542139e29fdc4e68e0f7ad2e361c1017331156a4e4ab80af46",
+    "review-29ccdbc0.json": "a568d55d3fc76830f725ec48b36cca05d9296924ab1a1152d29f7a78f18b9a53"
+  }
+}

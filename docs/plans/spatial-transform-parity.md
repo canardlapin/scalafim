@@ -1085,6 +1085,114 @@ _(append per phase: date, commits, test commands run, results)_
   SimpleITK composites, not demo1 outputs. The surface chain uses synthetic
   icospheres, not fsaverage or fsLR32k meshes.
 
+### P7.07 native FSL composition follow-up (2026-09-30)
+
+The existing FSL scenario now has frozen native `flirt -applyxfm`,
+`convertwarp --premat --absout`, and both `applywarp` routes for its exact
+functional/highres/standard triple. The stored NIfTI header and matrix are
+shared by Scala and the pinned FSL command-package image. Full native support,
+coordinate/ramp comparisons, manifest hashes and convention mutations guard
+these references. The native-composition freshness caveat is retired following
+successful JVM and JS checks; the analytic-spline versus dense
+finite-difference Jacobian caveat remains. These are synthetic functional
+inputs, not a new registration fit or real-subject scenario qualification.
+Evidence: `docs/verification/stp-fsl-chain-20260930/README.md`.
+
+Verified local candidate based on `9c656bc7`, with exact source hashes recorded: fit JVM 327, transform JVM 166, fit JS 316,
+transform JS 138; warning-clean `scalafimCompileAll` and all 35 manifest entries
+passed. See `docs/verification/stp-fsl-chain-20260930/qualification.json`.
+
+### P7.07 real demo1 interior qualification (2026-09-30)
+
+`transform.fmriprep-demo1-interior.v1` adds the actual ds002748 sub-01 task-rest
+fMRIPrep 21.0.2 scanner/boldref -> T1w -> MNI152NLin6Asym chain. The local demo1
+HDF5 pair, T1w and BOLD reference match the pinned public derivative's annex
+identities; the missing matching scanner/T1w text transforms were recovered from
+that derivative and verified. No replacement registration was fitted.
+
+Original full containers produce the frozen native ANTs double-precision
+references. Exact field crops retain every interpolation neighbourhood for the
+one declared approximately 8 x 11 x 6.5 mm patch (315 interior voxels and 32
+off-grid queries); native original/crop point
+agreement is below 7.11e-15 mm and actual BOLD resampling is identical
+(generation-time receipts; those native outputs were not retained). Shared
+JVM/JS checks require one clean `Pass`, exercise the supplied inverse through
+`mapPoint`, and reject origin, component, LPS, stage-order and scanner-direction
+mutations. The default JVM suite also binds the cropped HDF5 containers to the
+shared dumps through jHDF and the public loader. An explicit external-asset JVM
+gate requires both SHA-bound full originals and compares their retained samples
+and native point results; missing assets fail instead of silently skipping.
+
+The scope is the declared interior, with rejecting field and image boundaries.
+The native forward/inverse pair has a measured 0.0233913 mm maximum closure
+residual on this set; that is characterization, not an exact-inverse assertion.
+The historical synthetic fMRIPrep border caveat remains, as do broader real FSL
+and volume -> fsaverage -> fsLR commutativity acceptance. P7.07 stays open.
+Evidence and reproduction: `docs/verification/stp-demo1-20260930/README.md`.
+
+### P7.07 real FSL interior qualification (2026-09-30)
+
+`transform.fsl-real-demo1-interior.v1` adds newly fitted native FSL
+`example_func -> highres -> standard` registrations on the matching, source-bound
+CC0 demo1 sub-01 task-rest BOLDref/T1 pair and public masks. Its standard is
+the separately licensed, pinned TemplateFlow MNI152NLin2009cAsym res-02 template.
+This is real-data interpretation/composition qualification, rather than
+reproduction of historical FEAT registrations or anatomical accuracy evidence.
+The FSL course candidate was rejected at source admission because its stated
+terms limit the data to educational use.
+
+The two comparison windows were fixed before the first native attempt and never
+changed: 693 standard and 315 highres queries, with every query required to have
+full native support. Nineteen successful native commands fit FLIRT/FNIRT and
+produce direct-prematrix, composed-field and affine-leg coordinate/image
+references. Complete coefficients, exact native-input headers, bit-preserving
+crops and native package/source/fixture hashes support portable JVM/JS checks.
+The independent closure audit additionally verifies the public images times
+their masks against every native input data bit.
+
+The composed-point limit remains 2e-4 mm. Native FLIRT's float32 repeated
+y-coordinate additions require a separately derived accumulation bound, mapped
+through the complete oblique source affine and capped at 0.001 mm. The scalar
+bounds use image gradients and each route's coordinate bound. The scenario
+also requires exact float64 affine mathematics at 1e-9 mm and a separately
+predicted native float32 trace at 5e-5 mm on all 315 affine queries. It
+requires one clean `Pass`; no frozen query is excluded and no caveat is accepted.
+Evidence and exact acceptance receipts are in
+`docs/verification/stp-fsl-real-20260930/qualification.json`.
+
+Historical Jacobian/boundary caveats and the real volume -> fsaverage -> fsLR
+commutativity acceptance remain separate and unresolved. P7.07 stays open.
+Verification: transform JVM 177/177 and JS 147/147; both emit clean `Pass`.
+All-module compilation on both platforms passed without warnings; production
+and build bytes are unchanged between that run and the final tested source.
+Evidence and reproduction: `docs/verification/stp-fsl-real-20260930/README.md`.
+
+### P7.07 real surface-chain qualification (2026-10-01)
+
+`surface.real-orig-to-fsaverage-to-fslr32k.v1` adds a bounded real left-hemisphere
+contract: pinned CC0 ds002748 sub-01 orig/white/pial/sphere.reg, matching tkRAS
+placement, seven-point trilinear segment ribbon, registered fsaverage 164k and
+fsLR32k spheres. Both template gauges and ordered faces match their pinned HCP
+originals exactly. Native commands run full surfaces; the portable scenario
+covers a connected patch of 64 geometry-selected fsLR queries and exact contributing
+mesh/volume subsets. It does not assert a full stock mesh domain.
+
+Public double radial mathematics are checked independently at 1e-9; native
+Workbench closest-point routes have separate references and input-derived
+estimator bounds. Analytic linear-field commutativity has a per-query bound
+derived from contributing radial-hit distances and convex weight propagation.
+Arbitrary real intensity staged/direct differences are descriptive, not a
+zero-error requirement. The scenario requires clean `Pass`; historical
+synthetic caveats, polyhedral overlap and template-volume contracts remain
+separate. Evidence: `docs/verification/stp-surface-real-20261001/README.md`.
+Final Fray #135 s3 approval (candidate `5831638b`, evidence 915) and local
+integration (`de32fde7`, all 60 paths matching the candidate) are recorded there.
+The isolated combined tree with the approved concurrent main merge passes
+185 JVM and 150 JS surface tests and
+warning-clean compileAll on both platforms. Alongside the reviewed real demo1
+and FSL interiors, this meets the three declared bounded P7.07 contracts;
+historical synthetic caveats and broader domain qualification remain separate.
+
 ### P8.02: viewers: linked cursor through `WorldTransform`, typed surface camera (2026-09-27)
 
 - **Linked cursor.** `scalafim.image.world.WorldLink[L, R]` is the typed map

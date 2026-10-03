@@ -1,0 +1,332 @@
+{
+  "schema": "scalafim-p707-fsl-real-qualification/v1",
+  "baseline": "b28d1fe1b70504f315935c8120af1674e168effc",
+  "scientific_candidate": "1ed32a0fa36a8f47e55c46966da51f41bf924c8d",
+  "scenario": "transform.fsl-real-demo1-interior.v1",
+  "mote": "bd-01M39Q5B7AHPK325MZV3PS249J",
+  "mote_acceptance": "open: this bounded real FSL interior slice does not settle the surface-chain acceptance",
+  "scope": "New native fits on real matching demo1 BOLDref/T1 and MNI2009cAsym. Fixed interior composition/resampling only; no anatomical accuracy, historical FEAT reproduction, whole-domain or Jacobian claim.",
+  "checks": {
+    "jvm": {
+      "task": "transformJVM/test",
+      "scientific_candidate": "1ed32a0fa36a8f47e55c46966da51f41bf924c8d",
+      "exit_code": 0,
+      "passed": 177,
+      "failed": 0,
+      "errors": 0,
+      "warnings": 0,
+      "scenario_status": "Pass",
+      "metadata": "transform-jvm.meta.json",
+      "raw_log": "transform-jvm.log"
+    },
+    "js": {
+      "task": "transformJS/test",
+      "scientific_candidate": "1ed32a0fa36a8f47e55c46966da51f41bf924c8d",
+      "exit_code": 0,
+      "passed": 147,
+      "failed": 0,
+      "errors": 0,
+      "warnings": 0,
+      "scenario_status": "Pass",
+      "metadata": "transform-js.meta.json",
+      "raw_log": "transform-js.log"
+    },
+    "compile_all": {
+      "task": "scalafimCompileAll",
+      "run_candidate": "5e98559eea099483638be7aebc43437f01de5663",
+      "exit_code": 0,
+      "warnings": 0,
+      "errors": 0,
+      "metadata": "compile-all.meta.json",
+      "raw_log": "compile-all.log",
+      "scope": "Both platforms. All production/build bytes are unchanged through the final scientific candidate; final JVM/JS runs compile the changed test suite."
+    },
+    "scenario_manifest": {
+      "entries": 37,
+      "new_entry": "transform.fsl-real-demo1-interior.v1"
+    }
+  },
+  "scenario_metrics": {
+    "jvm": {
+      "flirt.exact-math.max-abs-mm": {
+        "actual": 3.907985046680551e-14,
+        "expected": 0.0,
+        "delta": 3.907985046680551e-14,
+        "tolerance": 1e-09
+      },
+      "chain.premat.native-coordinates.max-abs-mm": {
+        "actual": 2.3633099748066044e-05,
+        "expected": 0.0,
+        "delta": 2.3633099748066044e-05,
+        "tolerance": 0.0002
+      },
+      "chain.premat.real-image.max-abs": {
+        "actual": 0.00537986305494087,
+        "expected": 0.0,
+        "delta": 0.00537986305494087,
+        "tolerance": 0.5931823321991996
+      },
+      "chain.composed.native-coordinates.max-abs-mm": {
+        "actual": 1.7623897541341194e-05,
+        "expected": 0.0,
+        "delta": 1.7623897541341194e-05,
+        "tolerance": 0.0002
+      },
+      "chain.composed.real-image.max-abs": {
+        "actual": 0.003671934782687458,
+        "expected": 0.0,
+        "delta": 0.003671934782687458,
+        "tolerance": 0.5931823321991996
+      },
+      "flirt.native-float32-trace.max-abs-mm": {
+        "actual": 1.5630079360562377e-05,
+        "expected": 0.0,
+        "delta": 1.5630079360562377e-05,
+        "tolerance": 5e-05
+      },
+      "flirt.native-coordinates.max-abs-mm": {
+        "actual": 0.0003425920037463115,
+        "expected": 0.0,
+        "delta": 0.0003425920037463115,
+        "tolerance": 0.0007516743421813809
+      },
+      "flirt.real-image.max-abs": {
+        "actual": 0.08260443624294567,
+        "expected": 0.0,
+        "delta": 0.08260443624294567,
+        "tolerance": 2.2240122519993886
+      },
+      "chain.convertwarp.absolute-field.max-abs-mm": {
+        "actual": 1.4911588095856132e-05,
+        "expected": 0.0,
+        "delta": 1.4911588095856132e-05,
+        "tolerance": 0.0002
+      }
+    },
+    "js": {
+      "flirt.exact-math.max-abs-mm": {
+        "actual": 3.907985046680551e-14,
+        "expected": 0.0,
+        "delta": 3.907985046680551e-14,
+        "tolerance": 1e-09
+      },
+      "chain.premat.native-coordinates.max-abs-mm": {
+        "actual": 2.3633099748066044e-05,
+        "expected": 0.0,
+        "delta": 2.3633099748066044e-05,
+        "tolerance": 0.0002
+      },
+      "chain.premat.real-image.max-abs": {
+        "actual": 0.00537986305494087,
+        "expected": 0.0,
+        "delta": 0.00537986305494087,
+        "tolerance": 0.5931823321991996
+      },
+      "chain.composed.native-coordinates.max-abs-mm": {
+        "actual": 1.7623897541341194e-05,
+        "expected": 0.0,
+        "delta": 1.7623897541341194e-05,
+        "tolerance": 0.0002
+      },
+      "chain.composed.real-image.max-abs": {
+        "actual": 0.003671934782687458,
+        "expected": 0.0,
+        "delta": 0.003671934782687458,
+        "tolerance": 0.5931823321991996
+      },
+      "flirt.native-float32-trace.max-abs-mm": {
+        "actual": 1.5630079360562377e-05,
+        "expected": 0.0,
+        "delta": 1.5630079360562377e-05,
+        "tolerance": 5e-05
+      },
+      "flirt.native-coordinates.max-abs-mm": {
+        "actual": 0.0003425920037463115,
+        "expected": 0.0,
+        "delta": 0.0003425920037463115,
+        "tolerance": 0.0007516743421813809
+      },
+      "flirt.real-image.max-abs": {
+        "actual": 0.08260443624294567,
+        "expected": 0.0,
+        "delta": 0.08260443624294567,
+        "tolerance": 2.2240122519993886
+      },
+      "chain.convertwarp.absolute-field.max-abs-mm": {
+        "actual": 1.4911588095856132e-05,
+        "expected": 0.0,
+        "delta": 1.4911588095856132e-05,
+        "tolerance": 0.0002
+      }
+    }
+  },
+  "native": {
+    "successful_commands": 19,
+    "full_native_hashes": 32,
+    "retained_full_native_dir": "/private/tmp/scalafim-p707-fsl-real-20260930/native-qualified",
+    "binary_sha256": {
+      "flirt": "03ab172aed3f4ce5a7fe6330fca6add9e52af62a860189c98cd53582ddaeb8f5",
+      "fnirt": "7739346c8a6062374c561375307445337729c3bc4938fe42864e8b131a359c0e",
+      "applywarp": "3e1aa02bb16d4d4f93d47cdcabc269b453eacb5a217b8b5f95d28bd9190ced6e",
+      "convertwarp": "53f941da7bb07c6eba770cea05d6dd16e0fe1481f8e226cfbc1debd76e485dbf"
+    },
+    "package_identity": "Exact macOS command packages in fixture/package-lock.json; no broad FSL distribution-version claim."
+  },
+  "closure": {
+    "status": "pass",
+    "fixture_hashes": 31,
+    "full_native_hashes": 32,
+    "source_hashes": 9,
+    "exact_header_bytes": 1056,
+    "exact_public_times_mask_float32_values": 16408499,
+    "exact_float32_crop_values": 16504,
+    "native_successful_attempts": 19,
+    "queries": {
+      "standard": 693,
+      "highres": 315
+    },
+    "no_excluded_frozen_query": true
+  },
+  "fixed_queries": {
+    "standard_start": [
+      44,
+      56,
+      40
+    ],
+    "standard_shape": [
+      9,
+      7,
+      11
+    ],
+    "highres_start": [
+      128,
+      81,
+      76
+    ],
+    "highres_shape": [
+      7,
+      9,
+      5
+    ],
+    "excluded": 0
+  },
+  "bounds": {
+    "chain_point_mm": 0.0002,
+    "chain_image": 0.5931823321991996,
+    "flirt": {
+      "maximum_y_index": 89,
+      "maximum_abs_input_voxels": [
+        61.82517620023425,
+        34.189979778934145,
+        17.27379726478439
+      ],
+      "input_coordinate_ulp32": [
+        3.814697265625e-06,
+        3.814697265625e-06,
+        1.9073486328125e-06
+      ],
+      "coefficient_rounding_bound_voxels": [
+        2.0646173694016667e-06,
+        1.8729877441746312e-06,
+        2.0201391837484407e-07
+      ],
+      "accumulation_axis_bound_mm": [
+        0.0003524872249185901,
+        0.000507039594300738,
+        0.0005516743421813809
+      ],
+      "point_budget_mm": 0.0007516743421813809,
+      "trace_budget_mm": 5e-05,
+      "exact_math_budget_mm": 1e-09,
+      "rule": "2e-4 mm base + max(abs(source voxel-to-world linear) @ ((ymax+4)*0.5*ulp32(maxabs input voxel coordinates)+float32 coefficient-cast bound)); no output residual used"
+    },
+    "flirt_image": 2.2240122519993886
+  },
+  "review": {
+    "fray_card": 118,
+    "subject_revision": 3,
+    "candidate": "1ed32a0fa36a8f47e55c46966da51f41bf924c8d",
+    "reviewer": "phrf-claude-20260929",
+    "method": "Independent read-only scientific evidence review, not a reviewer rerun of native commands or sbt.",
+    "status_at_receipt_creation": "pending fresh exact-candidate verdict; older verdicts are stale",
+    "subsequent_verdict": {
+      "status": "approve",
+      "candidate": "72fa507dc490b61a5d60cc19a41dad48e846bf18",
+      "subject_revision": 4,
+      "sequence": 880,
+      "record": "review-final.json"
+    }
+  },
+  "scientific_changed_file_sha256": {
+    "docs/scenarios/manifest.json": "2ae27a6e52188b2595f483cab59c69f13e6883db12bf0b18c8ca9b553db4d5f7",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/chain_abs.nii.gz": "f60cc5e3a2ea7dad950c464405264e97e6d17ab3d99c9e84d39d9ed136acc018",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/commands.json": "ca875f9a626ba0041092e5b8abb271e03c3916314e425ae45b72f1c0a43d887f",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/composed_coord0.nii.gz": "24f8d4d3814c8b4beb1cdc954f1c1387290bc7b999773de8955cb38f53d5ae2f",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/composed_coord1.nii.gz": "882ace105556624576a9708e6d49e88f7024bc7049f05387bf6daa43e15ab749",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/composed_coord2.nii.gz": "f2014579e6c3bb8dcf4e7c3bb0cb653dc05250c9f67477b2c76235be9ba3e31d",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/composed_image.nii.gz": "6552566c454b07c75c7c6bbd8f5f237241f37576d5249f0f085257bc1c9cae31",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/composed_support.nii.gz": "1945afdc0a0cbe77dd3f60cbfdf87ec08c896fe9a5fc07a9de343469eb37b4d7",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/contract.json": "6a12e54bc64ed5df6c1b0aa54aceba1f9454dbf02f3dc0bab7aa2350a1af137c",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/dataset_description.json": "b21ca3e4fdc7f9f78508b024f97635aa4a0a833e3e52970074b46da189d246a5",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/example_func2highres.mat": "937399007bd2f090837085648579f482b96c177de907399cbd5e220fc5c4c620",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/example_func_header.nii.gz": "36597915fdfd9a3787b8e13d3296bccd40c344fd115a9b28cede08fdd849fdcc",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/flirt_coord0.nii.gz": "eb62040be958da0cf752b4b972f7a3d1cdc9950117d676f4811a9355482a4e0f",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/flirt_coord1.nii.gz": "ea375d1fb6f572e8620a204e670bee4b2c315e9d7148c9c9a5cb64ca3378949e",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/flirt_coord2.nii.gz": "9ec69b4b516ed3a399ce953c03e3aed34a5bb995f2f350fff6d14dedbb0eab05",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/flirt_image.nii.gz": "8e1638f6a426a06f4b102f6997855a493ef9e59f8a017acea68a245e0fd57ac4",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/flirt_math_and_trace.tsv": "b6b6b06b15e6d8d2129f3a9972e901319d50cece4b12b03f36c7ac1291189b67",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/flirt_support.nii.gz": "3b7e234963351e2fb6d3adc413faa1ab9d0afdfe4513dd6898d793847b1b4408",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/func_crop.nii.gz": "a24802b83be304775927e8c0deac9541b632434fa9efdb9e9e8fe0586c194632",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/highres2standard.mat": "f35631d256c000ea1878ffd51fc64d0db174a967fbbe87aeefc633a6d6beb414",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/highres2standard_coef.nii.gz": "2686a8ae72fd705bec158eb7fd629cf17bc494bdc361b2b3bf273dd4331bfd24",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/highres_header.nii.gz": "66c8e1e3b4b9a3310b7a8e0adae1dc8d5859be444717bd30b51cf80bb3a7e09d",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/manifest.json": "a731fccd7fe5741493a7048c3482a735f8c875e4bfe9b6ceb88db99784937dfd",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/package-lock.json": "7f57d9dafd7468909716aa0276d9026373d5d38975b11443fa3b1ad55ddf2a2e",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/premat_coord0.nii.gz": "b8dfe52476610cb9001be9b96741f280bd9c7c5bf369f4f0d85b6692afca3c73",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/premat_coord1.nii.gz": "49a931f9b396fb909c356ec8d3a29142d2871fcda09ce7fb7ddf693aae0d7f4d",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/premat_coord2.nii.gz": "155bf0a9eaabd0a9b5cf6f9627054f3e5244cda008bf2fd6c3da7215c8e88df8",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/premat_image.nii.gz": "dd8e8b6185af186a7774617a541edd8cb2df15205b3b8e76a29fb90039eee828",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/premat_support.nii.gz": "1945afdc0a0cbe77dd3f60cbfdf87ec08c896fe9a5fc07a9de343469eb37b4d7",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/source-provenance.json": "14bbf771cf8626b720b345027edfd159eace11caf5882b89a6aff5231df73c07",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/standard_header.nii.gz": "fe9915d67c4661c23f3c3ebe134583d3e0172cf4e919ae9e3153cd053f9cc63d",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/template-LICENSE": "46e280fe1a24c6f37feef2445ed288435e0ad063504a06030b206b12fdd2629d",
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_real_chain/template_description.json": "6b1b199ecc5fce65967e820f9a6a73247103ed6aa47b9df904d85a0d0c817571",
+    "modules/transform/shared/src/test/scala/scalafim/transform/scenarios/FslRealChainScenarioSuite.scala": "a9a48da1520cde8eec8507acec5de9dac75c642d5bf13e28d756393c66f5fe35",
+    "tools/transform/generate_fsl_real_chain_oracle.py": "079b047763c3a8348dcaa7dc084d231f11b11d404ac6353645db98213d04a8e5"
+  },
+  "fixture_manifest_sha256": "a731fccd7fe5741493a7048c3482a735f8c875e4bfe9b6ceb88db99784937dfd",
+  "publication": false,
+  "outstanding": [
+    "real volume -> fsaverage -> fsLR commutativity",
+    "historical Jacobian/boundary caveats remain separate"
+  ],
+  "evidence_sha256": {
+    "README.md": "6772b83a4a2e9dde6b42e2f3d2b68be3d947ae52dfeb9b71c68d6391a878d9df",
+    "compile-all.log": "82413a91b6c25bd58c95d8af711e7a2e4aa4512cae647ab1fe314981fb3a9b76",
+    "compile-all.meta.json": "3a3dbd018e5896210433ae9a4c477b2c3470ecd83c54aa0837df9be900000e5a",
+    "course-audit-disposition.json": "b8bacf4e91dd1aa236260de6f62188682548a4ce99ff3eaf0a93d9306f050be5",
+    "failed-native-commands.json": "b7a4a34a210653861b804cddb1811a2654c4f8a57c66f0aa0b3413fdce4f936c",
+    "failed-native-generation.log": "36b0511abcd78123270b3b0cd0ffffc42437e3b32f8f6d8ed603e224fd4a32d0",
+    "flirt-precision-diagnosis.json": "0f556417f45591f3f67199925468369344a0ddeacacf7f76f45f4c960d408a10",
+    "img2imgcoord-diagnostic.json": "0a7e6f6c23b8ed771323051163f8b472baaece07e9faa5612ec08c8895a50cfd",
+    "initial-compile-failure.log": "8ae20fc321483c8b3ba1e85ded3a02bb7b8abc396ad32aa17aef18cf65af44b2",
+    "initial-compile-failure.meta.json": "86eb65f63ddecf1adc07facebb437efca9726cf6a18f3b04b47b53f1d0ed4c25",
+    "initial-coordinate-failure-js.log": "a6a504bbd4a6896bc67b41c9197034be9095e3c2ffdb3d88400e0dc2bf2e0897",
+    "initial-coordinate-failure-js.meta.json": "b61590e226ad34e7e8644ec76147f341bc386e26e64b1568435d1c76d808ff15",
+    "initial-coordinate-failure-jvm.log": "687c2db58e196613c1c129b2f3e77143e3de58b18cc1af95924b8c5cb7334b2b",
+    "initial-coordinate-failure-jvm.meta.json": "b93aed8257e0082ea08e586581c615ae109423e9d8ccab1ac84b0f7ecf153dea",
+    "native-closure.json": "9647d032f78969b926e2c7a09548174311e51e70c097d8431e48de2e3ed934f4",
+    "native-generation.log": "cc5d0fe4e99a1a9044689bb373fe09e477224a182863ddcd3ffc3889724f662f",
+    "pre-trace-js.log": "67b26bfece77d06ce8b6965ecd13b9735f421eae3bb6a18fa49071d149a5ce43",
+    "pre-trace-js.meta.json": "48d98c9563a66f2e4fd64d48dc157ceb0724c449a8d1065c2b47d166c1b609df",
+    "pre-trace-jvm.log": "86a8afb9363b0bb560670484390fcd9128b09f49f2832a05515e189e24549d89",
+    "pre-trace-jvm.meta.json": "3cb639836b599d00bc6b30e1f8b602b6dfc2ebb508d0341436936db49850425d",
+    "review-final.json": "80b3843400e30ffdd0885171802371088cacd1b02fbed0c3dff730c726fc9552",
+    "transform-js.log": "8a6dbfea9547710c148fdfb0f836ba91831a6796e6a69b86a1e2bc81a0050440",
+    "transform-js.meta.json": "cf69b4acda59a48404d20b7e178604a97dfe021df2c5aba449cec67d45b84d4d",
+    "transform-jvm.log": "ce3693264888b47c67e34ce915bdb7d16177b378a0bcd82721dd42996995b8bd",
+    "transform-jvm.meta.json": "4ad31e39a2e86b902c9137fd77cd6ddb3d8f09f000c8ac06daa82a7e7178481e",
+    "upstream-source-references.json": "7e47b4201fa861bdaf211a8495e3a5c98653ea8e6b857dfbb647e256cd8d0e65",
+    "verify_native_closure.py": "8c575a3f9dd3a022dbcb543011d77bf82f822c7b958b737b46278a0dbbf52d75"
+  }
+}

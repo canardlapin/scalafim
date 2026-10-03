@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T19:26:16.901336+00:00",
+  "finished_utc": "2026-09-30T19:30:55.213115+00:00",
+  "duration_seconds": 278.310985,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "transformJS/test",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-p707-demo1-20260930",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/p707-demo1-transform-js-compile.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 40342
+}

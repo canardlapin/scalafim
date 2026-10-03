@@ -1,0 +1,368 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-stp-fsl-chain-20260930-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-stp-fsl-chain-20260930/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (322631 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-stp-fsl-chain-20260930/)
+[info] compiling 7 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-zarr/jvm/target/scala-3.7.4/test-classes ...
+[info] compiling 21 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/dataset/jvm/target/scala-3.7.4/test-classes ...
+[info] compiling 4 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-lna/jvm/target/scala-3.7.4/test-classes ...
+[info] compiling 8 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/latent/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 26 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/interop-archived-response/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.latent.BoldZipSyntheticPropertySuite:
+  + random synthetic BOLDZip payloads agree with an independent reconstruction oracle 0.076s
+  + BOLDZip coefficient decoding is the transpose of reconstruction when nonlinear terms are absent 0.007s
+  + random synthetic BOLDZip archives roundtrip through the typed codec and preserve selections 0.108s
+  + synthetic invalid BOLDZip variants are rejected at construction 0.01s
+scalafim.dataset.ArchiveResponseReceiptAdapterSuite:
+  + every archive locality adapts to a conforming response receipt 0.037s
+  + separate time and sample claims cover one mixed-axis logical read 0.001s
+  + adaptation rejects archive axes that do not cover the logical selection 0.0s
+scalafim.dataset.scenarios.LatentArchiveRoundtripScenarioSuite:
+  + dataset latent archive roundtrip scenario receipt passes 0.084s
+SLF4J(W): No SLF4J providers were found.
+SLF4J(W): Defaulting to no-operation (NOP) logger implementation
+SLF4J(W): See https://www.slf4j.org/codes.html#noProviders for further details.
+scalafim.archive.io.JhdfLnaHdf5StoreSuite:
+  + jHDF store writes inspectable metadata and roundtrips quant archives 0.092s
+  + jHDF store verifies archive checksums on read 0.006s
+  + jHDF store exposes logical unsigned dtype attributes for quantized payloads 0.005s
+  + jHDF store roundtrips sd quant clipping reports 0.008s
+  + jHDF store roundtrips delta/quant transform plans 0.018s
+  + jHDF store roundtrips basis/embed archives 0.023s
+  + jHDF store roundtrips explicit latent archives 0.007s
+  + jHDF store roundtrips temporal DCT explicit latent archives 0.006s
+scalafim.archive.lna.LnaCoreSuite:
+  + archive paths and run labels enforce basic invariants 0.002s
+  + typed archive primitives expose checked constructors 0.004s
+  + typed archive metadata and transform parameters reject invalid values 0.002s
+  + archive dataset paths expose typed run scope by path segment 0.001s
+  + integer payload storage validates unsigned dtype ranges 0.0s
+  + quant archive validates and reconstructs with bounded error 0.001s
+  + voxel-scoped quant archive stores per-column scale and offset vectors 0.001s
+  + sd quant rejects clipping unless allowClip is enabled 0.001s
+  + sd quant stores clipping report and hard-clips global archives 0.003s
+  + voxel-scoped sd quant stores per-column stats and clipping report 0.001s
+  + quant checked decoder reports malformed scale and offset vectors 0.001s
+  + delta archive validates and reconstructs losslessly 0.001s
+  + delta checked decoder reports unsupported feature-axis payloads 0.0s
+  + delta then quant archive reconstructs through the reverse plan 0.001s
+  + validation reports missing descriptor payloads 0.003s
+  + validation flags datasets scoped to unknown runs 0.001s
+  + basis and embed archive reconstructs from explicit stored basis 0.001s
+  + shared basis embed archive stores an external basis reference 0.01s
+  + shared basis embed archive supports active-mask coefficients and offsets 0.001s
+  + shared basis locators reject traversal 0.001s
+  + explicit latent archive stores typed basis loadings offset and reconstructs 0.001s
+  + temporal DCT archive stores typed params and reconstructs as explicit latent response 0.002s
+  + validation catches missing explicit latent pieces 0.001s
+  + manifest codec roundtrips typed descriptors 0.001s
+  + quant rejects non-finite values 0.001s
+scalafim.latent.LatentSyntheticRoundtripSuite:
+  + synthetic temporal encoders roundtrip full, selected, and coefficient decodes 0.027s
+  + synthetic shared and radial spatial encoders roundtrip centered sparse data 0.059s
+scalafim.archive.io.LnaSharedBasisResolverSuite:
+  + resolves a shared basis through the dataset root registry and reconstructs 0.031s
+  + resolves an archive-relative shared basis locator 0.006s
+  + fails when a registry alias has the wrong checksum 0.005s
+  + fails clearly when no shared basis artifact can be found 0.004s
+  + adds stored voxel offsets when reconstructing shared-basis coefficients 0.007s
+  + expands sparse shared-basis masks when materializing coefficients 0.006s
+scalafim.architecture.ResponseArchiveBoundaryGuardSuite:
+  + principal production modules retain one-way import boundaries 0.064s
+  + LNA format and cross-domain code have explicit physical owners 0.001s
+  + declared build edges match the extracted acyclic graph 0.001s
+  + LNA representation policy is explicit immutable and greenfield 0.061s
+scalafim.interop.archive.zarr.DenseBoldZarrSourceSuite:
+  + dense Zarr runtime obeys exact selected-read and receipt laws 0.325s
+  + dense descriptor rejects response-schema drift before source use 0.004s
+scalafim.latent.LatentRoundtripMatrixSuite:
+  + temporal and shared-spatial archive paths roundtrip separable fixtures 0.011s
+scalafim.latent.RadialBasisSuite:
+  + Gaussian kernel evaluates in millimeter-scaled distance 0.0s
+  + Wendland kernels have compact support and distinct C4/C6 formulas 0.001s
+  + explicit Gaussian atom loadings match fmrilatent HRBF fixture values 0.0s
+  + Wendland atom loadings match fmrilatent HRBF fixture values 0.001s
+  + builds active-voxel by atom loadings for explicit atoms 0.0s
+  + thresholding zeros small values without changing matrix shape 0.0s
+  + builds active coordinates from SomeSampleSpace and preserves sparse index order 0.001s
+  + active voxel construction rejects duplicate and out-of-bounds indices 0.003s
+  + shared-basis artifact conversion canonicalizes rows to mask order 0.001s
+  + radial locus order is an exact active-to-full injection with checked reverse 0.003s
+  + radial basis encoder delegates through shared-basis projection and reconstructs data in span 0.001s
+  + partial decode supports typed active voxel and time selections 0.001s
+  + partial decode maps full-grid active voxel indices without materializing full output 0.002s
+  + radial encoding exposes partial decode with centered offsets 0.002s
+  + fmrilatent tiny sparse HRBF fixture roundtrips through encoder and archive 0.004s
+  + spec generation uses identity-like atoms for tiny sparse masks 0.001s
+  + spec generation samples disconnected components independently 0.004s
+  + spec generation is deterministic and halves sigma by level 0.01s
+  + validated scalar and coordinate constructors reject invalid inputs 0.002s
+  + rejects empty atom or active-coordinate inputs 0.001s
+scalafim.dataset.io.LnaDatasetSuite:
+  + LnaDataset discovers subjects, metadata, participants, and shared basis registry 0.069s
+  + LnaDataset filters LNA files by subject session task and space 0.012s
+  + LnaDataset matches parsed run acquisition and description entities exactly 0.008s
+  + LnaDataset resolves session run queries to real archive-backed datasets 0.007s
+  + LnaDataset reports malformed LNA filename entities during discovery 0.004s
+  + LnaDataset loads one archive as a LatentArchiveDatasetBackend 0.013s
+  + LnaDataset materializes shared-basis archives through the dataset root registry 0.009s
+  + LnaDataset reads temporal latent archives as selection-aware latent backends 0.012s
+  + LnaDataset reads transport latent archives as selection-aware latent backends 0.02s
+  + LnaDataset reads BOLDZip latent archives as selection-aware latent backends 0.01s
+  + LnaDataset reads sparse shared-basis archives as mask-aware latent backends 0.026s
+  + LnaDataset reports ambiguous subject reads 0.006s
+  + openLna requires timing, derives the external run, and preserves fallback provenance 0.008s
+  + LNA internal run selection rejects ambiguity instead of choosing run zero 0.0s
+scalafim.latent.SharedBasisEncoderSuite:
+  + projects shared-basis data with a Gram solve rather than raw loading multiplication 0.002s
+  + recovers exact coefficients for non-centered data in the shared basis span 0.001s
+  + rejects basis/data voxel mismatches 0.0s
+scalafim.interop.archive.lna.TemporalDctLnaHdf5Suite:
+  + HDF5 source agrees with in-memory selected decode and retains receipts 0.065s
+  + every proper write-plan prefix leaves the destination absent 0.003s
+  + HDF5 round trip preserves raw logical payload scalar bits 0.006s
+  + runtime opens temporal DCT from its narrow persisted descriptor 0.008s
+  + LNA pipeline family opens a generic LNA fixture 0.01s
+scalafim.latent.LatentArchiveRegistrySuite:
+  + standard registry installs every typed LNA binding exactly once 0.0s
+  + registry construction rejects empty and duplicate binding sets 0.001s
+  + explicit latent responses roundtrip through LNA archives 0.002s
+  + latent archive plans are absent for ordinary transform archives 0.001s
+  + temporal DCT archives preserve typed DCT params and reconstruct full-rank data 0.002s
+  + shared-basis archives are encoded through the latent Gram solver and store offsets 0.004s
+  + transport archives preserve dense operator payloads and selected reconstruction 0.005s
+  + BOLDZip archives preserve codec tables and selected reconstruction 0.004s
+scalafim.latent.scenarios.TransportSelectionScenarioSuite:
+  + latent transport selection scenario receipt passes 0.005s
+scalafim.latent.LatentEncoderSuite:
+  + temporal DCT specs dispatch through the direct encoder and preserve archive kind 0.004s
+  + temporal Haar specs dispatch through the direct encoder and archive explicitly 0.003s
+  + latent typed shape metadata and selections preserve intent 0.006s
+  + provided temporal basis specs use Gram-solve projection 0.002s
+  + shared spatial basis specs match direct shared-basis encoder and archive helpers 0.004s
+  + radial spatial basis specs dispatch through shared-basis encoding and archives 0.006s
+scalafim.dataset.LatentArchiveDatasetBackendSuite:
+  + latent archive backend exposes reconstructed selections as FmriSeries 0.002s
+  + latent archive backend reads transport archives through a typed latent plan 0.003s
+  + latent archive backend reads BOLDZip archives through a typed latent plan 0.004s
+  + latent archive backend rejects a missing internal run during construction 0.001s
+scalafim.archive.io.LnaArchiveDriverSuite:
+  + eager HDF5 driver exposes pure revision and typed whole-payload execution 0.008s
+scalafim.dataset.LatentResponseDatasetBackendSuite:
+  + latent response backend matches dense backend for selected masked voxels 0.002s
+  + masked latent response default read uses the active voxel domain 0.0s
+  + masked latent response requires explicit full-spatial reads 0.001s
+  + latent response backend rejects selected voxels outside mask 0.002s
+  + voxel sample map preserves mask-to-latent sample order 0.0s
+  + latent response backend enforces mask cardinality 0.001s
+  + latent response backend defaults to an all-space mask 0.001s
+scalafim.latent.ResponseArchiveMigrationBaselineSuite:
+  + phase-zero corpus matches the frozen reconstruction baseline 0.011s
+scalafim.interop.archive.ArchivedResponseRuntimeSuite:
+  + representation keys are namespaced and major-versioned 0.001s
+  + response and driver registries reject duplicates independent of order 0.003s
+  + unknown installed code differs from archive corruption 0.002s
+  + runtime composes and releases driver and response resources 0.005s
+  + family acquisition failure releases the already opened archive 0.001s
+  + runtime owns checked dataset attachment through success, failure, and cancellation 0.048s
+  + dataset opening preserves archive failure identity 0.001s
+scalafim.latent.BoldZipEncoderSuite:
+  + identity-detail encoder exactly reconstructs deterministic data and archives 0.002s
+  + centered identity-detail encoder stores offsets but preserves reconstruction 0.0s
+  + random synthetic identity-detail encodings roundtrip exactly 0.003s
+  + identity-detail encoder rejects invalid data and metadata 0.001s
+scalafim.latent.scenarios.BoldZipPayloadRoundtripScenarioSuite:
+  + latent BOLDZip payload roundtrip scenario receipt passes 0.002s
+scalafim.interop.archive.lna.TemporalDctLnaBindingSuite:
+  + write plan preserves the typed model and logical scalar bits 0.002s
+  + narrow descriptor envelope reconstructs the temporal DCT model 0.002s
+  + descriptor preserves explicit surface schemas and non-default policies 0.003s
+scalafim.interop.archive.lna.TemporalDctCrossBackendSuite:
+  + one temporal-DCT decode plan runs unchanged through memory, LNA, and Zarr 0.036s
+[info] Passed: Total 142, Failed 0, Errors 0, Passed 142
+[success] Total time: 17 s, completed Sep 30, 2026, 8:40:29 a.m.
+[info] compiling 5 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-zarr/js/target/scala-3.7.4/test-classes ...
+[info] compiling 3 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/archive-lna/js/target/scala-3.7.4/test-classes ...
+[info] compiling 15 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/dataset/js/target/scala-3.7.4/test-classes ...
+[info] compiling 8 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/latent/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] done compiling
+[info] compiling 20 Scala sources to /private/tmp/scalafim-stp-fsl-chain-20260930/modules/interop-archived-response/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/scalafim-stp-fsl-chain-20260930/modules/interop-archived-response/js/target/scala-3.7.4/scalafim-interop-archived-response-test-fastopt
+scalafim.dataset.scenarios.LatentArchiveRoundtripScenarioSuite:
+  + dataset latent archive roundtrip scenario receipt passes 0.015s
+scalafim.latent.SharedBasisEncoderSuite:
+  + projects shared-basis data with a Gram solve rather than raw loading multiplication 0.006s
+  + recovers exact coefficients for non-centered data in the shared basis span 0.001s
+  + rejects basis/data voxel mismatches 0.000s
+scalafim.interop.archive.ArchivedResponseRuntimeSuite:
+  + representation keys are namespaced and major-versioned 0.000s
+  + response and driver registries reject duplicates independent of order 0.002s
+  + unknown installed code differs from archive corruption 0.005s
+  + runtime composes and releases driver and response resources 0.003s
+  + family acquisition failure releases the already opened archive 0.001s
+  + runtime owns checked dataset attachment through success, failure, and cancellation 0.005s
+  + dataset opening preserves archive failure identity 0.001s
+scalafim.latent.BoldZipSyntheticPropertySuite:
+  + random synthetic BOLDZip payloads agree with an independent reconstruction oracle 0.024s
+  + BOLDZip coefficient decoding is the transpose of reconstruction when nonlinear terms are absent 0.003s
+  + random synthetic BOLDZip archives roundtrip through the typed codec and preserve selections 0.040s
+  + synthetic invalid BOLDZip variants are rejected at construction 0.001s
+scalafim.interop.archive.lna.TemporalDctCrossBackendSuite:
+  + one temporal-DCT decode plan runs unchanged through memory, LNA, and Zarr 0.049s
+scalafim.latent.ResponseArchiveMigrationBaselineSuite:
+  + phase-zero corpus matches the frozen reconstruction baseline 0.016s
+scalafim.dataset.LatentArchiveDatasetBackendSuite:
+  + latent archive backend exposes reconstructed selections as FmriSeries 0.002s
+  + latent archive backend reads transport archives through a typed latent plan 0.003s
+  + latent archive backend reads BOLDZip archives through a typed latent plan 0.003s
+  + latent archive backend rejects a missing internal run during construction 0.000s
+scalafim.latent.RadialBasisSuite:
+  + Gaussian kernel evaluates in millimeter-scaled distance 0.000s
+  + Wendland kernels have compact support and distinct C4/C6 formulas 0.000s
+  + explicit Gaussian atom loadings match fmrilatent HRBF fixture values 0.000s
+  + Wendland atom loadings match fmrilatent HRBF fixture values 0.000s
+  + builds active-voxel by atom loadings for explicit atoms 0.000s
+  + thresholding zeros small values without changing matrix shape 0.000s
+  + builds active coordinates from SomeSampleSpace and preserves sparse index order 0.000s
+  + active voxel construction rejects duplicate and out-of-bounds indices 0.000s
+  + shared-basis artifact conversion canonicalizes rows to mask order 0.001s
+  + radial locus order is an exact active-to-full injection with checked reverse 0.000s
+  + radial basis encoder delegates through shared-basis projection and reconstructs data in span 0.001s
+  + partial decode supports typed active voxel and time selections 0.001s
+  + partial decode maps full-grid active voxel indices without materializing full output 0.001s
+  + radial encoding exposes partial decode with centered offsets 0.001s
+  + fmrilatent tiny sparse HRBF fixture roundtrips through encoder and archive 0.003s
+  + spec generation uses identity-like atoms for tiny sparse masks 0.000s
+  + spec generation samples disconnected components independently 0.001s
+  + spec generation is deterministic and halves sigma by level 0.011s
+  + validated scalar and coordinate constructors reject invalid inputs 0.000s
+  + rejects empty atom or active-coordinate inputs 0.000s
+scalafim.latent.LatentSyntheticRoundtripSuite:
+  + synthetic temporal encoders roundtrip full, selected, and coefficient decodes 0.021s
+  + synthetic shared and radial spatial encoders roundtrip centered sparse data 0.027s
+scalafim.latent.scenarios.BoldZipPayloadRoundtripScenarioSuite:
+  + latent BOLDZip payload roundtrip scenario receipt passes 0.002s
+scalafim.interop.archive.zarr.DenseBoldZarrSourceSuite:
+  + dense Zarr runtime obeys exact selected-read and receipt laws 0.025s
+  + dense descriptor rejects response-schema drift before source use 0.004s
+scalafim.latent.BoldZipEncoderSuite:
+  + identity-detail encoder exactly reconstructs deterministic data and archives 0.001s
+  + centered identity-detail encoder stores offsets but preserves reconstruction 0.000s
+  + random synthetic identity-detail encodings roundtrip exactly 0.002s
+  + identity-detail encoder rejects invalid data and metadata 0.000s
+scalafim.latent.scenarios.TransportSelectionScenarioSuite:
+  + latent transport selection scenario receipt passes 0.002s
+scalafim.latent.LatentEncoderSuite:
+  + temporal DCT specs dispatch through the direct encoder and preserve archive kind 0.002s
+  + temporal Haar specs dispatch through the direct encoder and archive explicitly 0.001s
+  + latent typed shape metadata and selections preserve intent 0.000s
+  + provided temporal basis specs use Gram-solve projection 0.001s
+  + shared spatial basis specs match direct shared-basis encoder and archive helpers 0.001s
+  + radial spatial basis specs dispatch through shared-basis encoding and archives 0.002s
+scalafim.archive.lna.LnaCoreSuite:
+  + archive paths and run labels enforce basic invariants 0.000s
+  + typed archive primitives expose checked constructors 0.000s
+  + typed archive metadata and transform parameters reject invalid values 0.000s
+  + archive dataset paths expose typed run scope by path segment 0.000s
+  + integer payload storage validates unsigned dtype ranges 0.000s
+  + quant archive validates and reconstructs with bounded error 0.000s
+  + voxel-scoped quant archive stores per-column scale and offset vectors 0.000s
+  + sd quant rejects clipping unless allowClip is enabled 0.000s
+  + sd quant stores clipping report and hard-clips global archives 0.004s
+  + voxel-scoped sd quant stores per-column stats and clipping report 0.000s
+  + quant checked decoder reports malformed scale and offset vectors 0.000s
+  + delta archive validates and reconstructs losslessly 0.001s
+  + delta checked decoder reports unsupported feature-axis payloads 0.000s
+  + delta then quant archive reconstructs through the reverse plan 0.000s
+  + validation reports missing descriptor payloads 0.000s
+  + validation flags datasets scoped to unknown runs 0.000s
+  + basis and embed archive reconstructs from explicit stored basis 0.000s
+  + shared basis embed archive stores an external basis reference 0.001s
+  + shared basis embed archive supports active-mask coefficients and offsets 0.000s
+  + shared basis locators reject traversal 0.000s
+  + explicit latent archive stores typed basis loadings offset and reconstructs 0.001s
+  + temporal DCT archive stores typed params and reconstructs as explicit latent response 0.001s
+  + validation catches missing explicit latent pieces 0.000s
+  + manifest codec roundtrips typed descriptors 0.001s
+  + quant rejects non-finite values 0.000s
+scalafim.latent.LatentRoundtripMatrixSuite:
+  + temporal and shared-spatial archive paths roundtrip separable fixtures 0.004s
+scalafim.dataset.ArchiveResponseReceiptAdapterSuite:
+  + every archive locality adapts to a conforming response receipt 0.002s
+  + separate time and sample claims cover one mixed-axis logical read 0.000s
+  + adaptation rejects archive axes that do not cover the logical selection 0.000s
+scalafim.latent.LatentArchiveRegistrySuite:
+  + standard registry installs every typed LNA binding exactly once 0.000s
+  + registry construction rejects empty and duplicate binding sets 0.000s
+  + explicit latent responses roundtrip through LNA archives 0.001s
+  + latent archive plans are absent for ordinary transform archives 0.000s
+  + temporal DCT archives preserve typed DCT params and reconstruct full-rank data 0.001s
+  + shared-basis archives are encoded through the latent Gram solver and store offsets 0.002s
+  + transport archives preserve dense operator payloads and selected reconstruction 0.001s
+  + BOLDZip archives preserve codec tables and selected reconstruction 0.002s
+scalafim.interop.archive.lna.TemporalDctLnaBindingSuite:
+  + write plan preserves the typed model and logical scalar bits 0.001s
+  + narrow descriptor envelope reconstructs the temporal DCT model 0.002s
+  + descriptor preserves explicit surface schemas and non-default policies 0.001s
+scalafim.dataset.LatentResponseDatasetBackendSuite:
+  + latent response backend matches dense backend for selected masked voxels 0.002s
+  + masked latent response default read uses the active voxel domain 0.000s
+  + masked latent response requires explicit full-spatial reads 0.000s
+  + latent response backend rejects selected voxels outside mask 0.000s
+  + voxel sample map preserves mask-to-latent sample order 0.000s
+  + latent response backend enforces mask cardinality 0.000s
+  + latent response backend defaults to an all-space mask 0.000s
+[info] Passed: Total 104, Failed 0, Errors 0, Passed 104
+[success] Total time: 15 s, completed Sep 30, 2026, 8:40:44 a.m.

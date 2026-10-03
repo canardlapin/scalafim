@@ -1,0 +1,8 @@
+{
+  "native_point_tool_rows": 315,
+  "queries": 315,
+  "img2imgcoord_vs_exact_max_abs_mm": 0.0002559086068600891,
+  "float_step_vs_exact_max_abs_mm": 0.00034489699986295363,
+  "float_step_vs_native_ramp_max_abs_mm": 1.5630079360562377e-05,
+  "method": "Independent float32 y-increment replay of published FSL newimage raw_affine_transform; no Scala implementation or observed residual used in prediction."
+}

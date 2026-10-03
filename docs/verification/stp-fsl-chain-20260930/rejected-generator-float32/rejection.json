@@ -1,0 +1,8 @@
+{
+  "status": "rejected",
+  "reason": "Independent exact-input matrix guard rejects NumPy float32 multiplication of the mirrored scaled-voxel offset. Native physical comparisons passed, but that does not establish identity with the declared mathematical registration.",
+  "base_commit": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+  "generator_sha256": "676b9008528250e48aef000bdedda9a8aab2d54fea94ae65761ffd259500e788",
+  "suite_sha256": "09d869642c132e56e41571c10db13ef8981ab6e14d2154333f0ea60405b10e3f",
+  "next": "Promote header zoom scalars to float64 before arithmetic and regenerate; preserve original gates."
+}

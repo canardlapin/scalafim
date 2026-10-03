@@ -1,0 +1,14 @@
+{
+  "verified_source_assets": 21,
+  "verified_fixture_files": 36,
+  "full_native_input_values_exact": 16777216,
+  "crop_values_exact": 2380,
+  "subject_vertices": 167,
+  "fsaverage_vertices": 192,
+  "target_vertices": 64,
+  "native_command_exits_verified": 11,
+  "native_full_output_subsets_exact": true,
+  "HCP_gauges_and_ordered_faces_exact": true,
+  "analytic_bound_independently_recomputed": true,
+  "target_patch_connected": true
+}

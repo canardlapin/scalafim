@@ -1,0 +1,17 @@
+{
+  "card": 135,
+  "subject_revision": 2,
+  "candidate": "b33f61a730c3f0cf623e45ea6211450bc29bf5bc",
+  "scientific_source": "c4084cf16bdfa8389a9e948d542439c1d5d3c23f",
+  "verdict": "APPROVE",
+  "evidence_sequence": 908,
+  "independent_math_evidence_sequence": 907,
+  "review_type": "Read-only independent Moller-Trumbore/Ericson all64target bound/weight recomputation and closure audit; no native Workbench/sbt/docker rerun.",
+  "metrics": {
+    "max_bound": 0.0001920374989730609,
+    "max_gap": 3.745506770092e-05,
+    "bound_recompute_max_abs_difference": 6.5e-16,
+    "max_gap_bound_ratio": 0.457
+  },
+  "non_blocking_followups": "PartB1(b) prefatory notice, exact initialgenerator retention, connected patch wording, dead sagitta metadata removal and native discrimination limitation are resolved in subsequent source769. Final exact delta verdict remains distinct."
+}

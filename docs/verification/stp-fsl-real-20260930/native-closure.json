@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "fixture_hashes": 31,
+  "full_native_hashes": 32,
+  "source_hashes": 9,
+  "exact_header_bytes": 1056,
+  "exact_public_times_mask_float32_values": 16408499,
+  "exact_float32_crop_values": 16504,
+  "native_successful_attempts": 19,
+  "queries": {
+    "standard": 693,
+    "highres": 315
+  },
+  "no_excluded_frozen_query": true
+}

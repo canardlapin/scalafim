@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T11:07:06.939933+00:00",
+  "finished_utc": "2026-09-30T11:07:15.638343+00:00",
+  "duration_seconds": 8.698197,
+  "command": [
+    "/private/tmp/scalafim-stp-fsl-chain-20260930-python/bin/python",
+    "tools/transform/generate_fsl_chain_native_oracle.py"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-fsl-chain-20260930",
+  "log": "/private/tmp/scalafim-stp-fsl-chain-20260930/docs/verification/stp-fsl-chain-20260930/generation-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 450
+}

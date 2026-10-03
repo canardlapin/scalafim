@@ -687,19 +687,51 @@
       ]
     },
     {
+      "id": "transform.fmriprep-demo1-interior.v1",
+      "tier": "workflow_parity",
+      "module": "transform",
+      "suite_class": "scalafim.transform.scenarios.Demo1NativeScenarioSuite",
+      "suite_path": "modules/transform/shared/src/test/scala/scalafim/transform/scenarios/Demo1NativeScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": [
+        "jvm",
+        "js"
+      ],
+      "reference": {
+        "kind": "native_ants_real_fmriprep_demo1_interior",
+        "description": "Pinned public ds002748 v1.0.5 sub-01 task-rest fMRIPrep 21.0.2 scanner/boldref -> T1w -> MNI152NLin6Asym assets. Original full HDF5 containers produce binary-double native ANTs point, real BOLD resampling and coordinate-ramp references for one declared approximately 8 x 11 x 6.5 mm interior patch (315 target voxels and 32 off-grid holdouts); exact field crops support offline JVM/JS checks. Independent inverse queries and native pair closure use the supplied inverse asset. No excluded frozen query, boundary parity, whole-domain registration accuracy or surface qualification. The explicit JVM original-container gate additionally requires both full files with exact SHA256."
+      },
+      "allowed_statuses": [
+        "pass"
+      ],
+      "acceptance_commands": [
+        "sbt transformJVM/test",
+        "sbt transformJS/test"
+      ],
+      "caveats": []
+    },
+    {
       "id": "transform.fsl-chain.v1",
       "tier": "workflow_parity",
       "module": "transform",
       "suite_class": "scalafim.transform.scenarios.FslChainScenarioSuite",
       "suite_path": "modules/transform/shared/src/test/scala/scalafim/transform/scenarios/FslChainScenarioSuite.scala",
       "public_seam": true,
-      "platforms": ["jvm", "js"],
+      "platforms": [
+        "jvm",
+        "js"
+      ],
       "reference": {
         "kind": "native_fsl509_applywarp_and_jacobian_plus_flirt_oracle",
-        "description": "example_func -> highres (FLIRT) -> standard (FNIRT --cout with --aff) materialized on the standard lattice, against FSL 5.0.9 applywarp coordinate ramps and phantom (fsl_coef_oracle srcleft_refright_aff), a FLIRT matrix synthesized from a declared world registration through FSL's scaled-voxel convention, the Jacobian chain rule, and fnirtfileutils --jac (fsl_jacobian)."
+        "description": "The existing synthesized functional grid and declared FLIRT registration followed by the frozen FNIRT coefficient case (srcleft_refright_aff). Native pinned FSL command-package references include flirt -applyxfm, convertwarp --premat --absout, and applywarp using both direct premat and composed-field routes, with exact stored NIfTI inputs, matrix and SHA256 receipts. Original FSL 5 coordinate/phantom controls, mathematical FLIRT oracle, Jacobian chain rule and native spline-versus-dense-field statistical gates remain. This is not a new registration fit or real-subject qualification."
       },
-      "allowed_statuses": ["pass_with_caveats"],
-      "acceptance_commands": ["sbt transformJVM/test", "sbt transformJS/test"],
+      "allowed_statuses": [
+        "pass_with_caveats"
+      ],
+      "acceptance_commands": [
+        "sbt transformJVM/test",
+        "sbt transformJS/test"
+      ],
       "caveats": [
         {
           "id": "transform.fsl-jacobian-spline-vs-finite-difference",
@@ -708,16 +740,60 @@
           "owner": "transform",
           "follow_up": "an analytic spline Jacobian for FNIRT coefficient files, or the FSL 6 --jac set (STP P4.04)",
           "detail": "FSL differentiates the spline analytically, the module differences the dense field centrally; fnirtfileutils --jac is matched through median < 1%, p99 < 5% and max < 8% relative-error gates, not elementwise."
-        },
-        {
-          "id": "transform.fsl-chain-no-native-flirt-convertwarp",
-          "kind": "fixture_freshness",
-          "severity": "actionable",
-          "owner": "transform",
-          "follow_up": "STP P4.04: native flirt -applyxfm and convertwarp --premat outputs for a func/highres/standard triple",
-          "detail": "The FLIRT leg and the composed field are checked against a mathematical FLIRT oracle applied to native FNIRT output."
         }
       ]
+    },
+    {
+      "id": "transform.fsl-real-demo1-interior.v1",
+      "tier": "workflow_parity",
+      "module": "transform",
+      "suite_class": "scalafim.transform.scenarios.FslRealChainScenarioSuite",
+      "suite_path": "modules/transform/shared/src/test/scala/scalafim/transform/scenarios/FslRealChainScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": [
+        "jvm",
+        "js"
+      ],
+      "reference": {
+        "kind": "native_fsl_real_demo1_registration_and_composition",
+        "description": "New native FLIRT functional->T1 and FLIRT/FNIRT T1->MNI152NLin2009cAsym fits on the pinned CC0 ds002748 v1.0.5 sub-01 task-rest BOLDref/T1 pair and licensed TemplateFlow res-02 template. Fixed 693 standard and315 highres interior queries compare coordinate ramps, convertwarp absolute field, and real image sampling using direct premat and composed routes. Exact full-source headers, complete coefficients, bit-preserving image/output crops, native commands, package locks and SHA256 closure. No excluded query, historical FEAT reproduction, registration accuracy, whole-domain or Jacobian claim."
+      },
+      "allowed_statuses": [
+        "pass"
+      ],
+      "acceptance_commands": [
+        "sbt transformJVM/test",
+        "sbt transformJS/test"
+      ],
+      "caveats": []
+    },
+    {
+      "id": "surface.real-orig-to-fsaverage-to-fslr32k.v1",
+      "tier": "workflow_parity",
+      "module": "surface",
+      "suite_class": "scalafim.surface.scenarios.SurfaceRealChainScenarioSuite",
+      "suite_path": "modules/surface/shared/src/test/scala/scalafim/surface/scenarios/SurfaceRealChainScenarioSuite.scala",
+      "public_seam": true,
+      "platforms": [
+        "jvm",
+        "js"
+      ],
+      "reference": {
+        "kind": "native_workbench_trilinear_and_barycentric_plus_independent_full_face_geometry",
+        "description": "Pinned real CC0 ds002748 sub-01 orig/white/pial/sphere.reg, registered fsaverage and fsLR32k template spheres with separate notices. Geometry-only frozen connected patch of 64 targets; seven-point segment ribbon, strict independent double radial mathematics, separate closest-point Workbench route references and input-only estimator bounds. Analytic commutativity has per-query geometry bounds; arbitrary real intensity route gap is descriptive. No whole-mesh, polyhedral ribbon, overlap, template-volume or registration-quality claim.",
+        "source_paths": [
+          "tools/transform/generate_surface_real_chain_oracle.py",
+          "modules/surface/shared/src/test/resources/scalafim/surface/oracle/real_chain/manifest.json"
+        ]
+      },
+      "allowed_statuses": [
+        "pass"
+      ],
+      "acceptance_commands": [
+        "sbt surfaceJVM/test",
+        "sbt surfaceJS/test"
+      ],
+      "caveats": []
     },
     {
       "id": "surface.volume-to-template-mesh-chain.v1",

@@ -63,13 +63,16 @@ object ThreeVolumeProjector:
             val white = worldPoint(morphism.plan.surfaces.white, id)
             val pial = worldPoint(morphism.plan.surfaces.pial, id)
             val world = Vector(
-              0.5 * (white.x + pial.x),
-              0.5 * (white.y + pial.y),
-              0.5 * (white.z + pial.z)
+              white.x + 0.5 * (pial.x - white.x),
+              white.y + 0.5 * (pial.y - white.y),
+              white.z + 0.5 * (pial.z - white.z)
             )
-            val voxel = volume.space.coordToIndex(world)
+            // Resolve nearest ties in double precision, as the shared CPU sampler does.
+            // Uploading fractional float32 coordinates can cross a half-voxel boundary.
+            val continuous = volume.space.coordToIndex(world)
+            val voxel = continuous.map(v => math.round(v))
             val valid = voxel.indices.forall: axis =>
-              voxel(axis) >= -0.5 && voxel(axis) < volume.space.spatialDims(axis).toDouble - 0.5
+              continuous(axis).isFinite && voxel(axis) >= 0L && voxel(axis) < volume.space.spatialDims(axis).toLong
             val offset = vertex * 4
             coordinates(offset) = voxel(0).toFloat
             coordinates(offset + 1) = voxel(1).toFloat
@@ -81,10 +84,21 @@ object ThreeVolumeProjector:
           val dimensions = volume.space.spatialDims
           val volumeValues = dimensions.product
           val volumeData = new Float32Array(volumeValues)
+          // Canonical ScalaFIM ordinals are Z-fast; WebGL texels are X-fast.
+          val canonicalXStride = dimensions(1) * dimensions(2)
           var valueIndex = 0
-          while valueIndex < volumeValues do
-            volumeData(valueIndex) = volume.valueAtCanonicalOrdinal(valueIndex).toFloat
-            valueIndex += 1
+          var z = 0
+          while z < dimensions(2) do
+            var y = 0
+            while y < dimensions(1) do
+              var x = 0
+              while x < dimensions(0) do
+                val canonicalOrdinal = x * canonicalXStride + y * dimensions(2) + z
+                volumeData(valueIndex) = volume.valueAtCanonicalOrdinal(canonicalOrdinal).toFloat
+                valueIndex += 1
+                x += 1
+              y += 1
+            z += 1
 
           val coordinateTexture = js.Dynamic.newInstance(three.selectDynamic("DataTexture"))(
             coordinates,
@@ -243,7 +257,7 @@ object ThreeVolumeProjector:
       |  if (coordinate.a < 0.5) {
       |    outColor = vec4(0.0);
       |  } else {
-      |    ivec3 voxel = ivec3(floor(coordinate.xyz + vec3(0.5)));
+      |    ivec3 voxel = ivec3(coordinate.xyz);
       |    float value = texelFetch(uVolume, voxel, 0).r;
       |    outColor = vec4(value, 1.0, 0.0, 1.0);
       |  }

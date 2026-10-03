@@ -1,0 +1,25 @@
+{
+  "reason": "Official source limits course data to educational use, not research; no course data processed or committed. Only this session partial downloads removed.",
+  "removed": [
+    {
+      "file": "registration.prefix",
+      "bytes": 176558080
+    },
+    {
+      "file": "part0",
+      "bytes": 61865984
+    },
+    {
+      "file": "part1",
+      "bytes": 63963136
+    },
+    {
+      "file": "part2",
+      "bytes": 54525952
+    },
+    {
+      "file": "part3",
+      "bytes": 52428800
+    }
+  ]
+}

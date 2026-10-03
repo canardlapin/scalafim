@@ -80,14 +80,14 @@ enum BasisRole:
       case TemporalDerivative => "temporal-derivative"
       case DispersionDerivative => "dispersion-derivative"
       case FirBin(index, from, until) =>
-        s"fir-bin-${index}%02d-${from.value}..${until.value}"
-      case Spline(index) => s"spline-${index}%02d"
-      case Tent(index) => s"tent-${index}%02d"
-      case Fourier(index) => s"fourier-${index}%02d"
-      case Sine(index) => s"sine-${index}%02d"
-      case Daguerre(index) => s"daguerre-${index}%02d"
-      case Custom(index, label) => s"custom-${index}%02d-$label"
-      case Generic(index) => s"basis-${index}%02d"
+        s"fir-bin-${HrfIdentity.index(index)}-${HrfIdentity.number(from.value)}..${HrfIdentity.number(until.value)}"
+      case Spline(index) => s"spline-${HrfIdentity.index(index)}"
+      case Tent(index) => s"tent-${HrfIdentity.index(index)}"
+      case Fourier(index) => s"fourier-${HrfIdentity.index(index)}"
+      case Sine(index) => s"sine-${HrfIdentity.index(index)}"
+      case Daguerre(index) => s"daguerre-${HrfIdentity.index(index)}"
+      case Custom(index, label) => s"custom-${HrfIdentity.index(index)}-$label"
+      case Generic(index) => s"basis-${HrfIdentity.index(index)}"
 
   def oneBasedIndex: Int =
     this match

@@ -1,0 +1,105 @@
+{
+  "issue": "bd-01M39Q5DR9N3XJDXQV59MQ3XNG",
+  "baseline": "debdf34b821e6bf34103dc596dc815f55509b541",
+  "source_commit": "cd0fb116db209d09dfa862b2630162b0eb2bf659",
+  "test_code_commit": "07a3059cf8591dc6d5c549e750070c39bdbdad18",
+  "jvm_started_before_documentation_only_correction": true,
+  "source_hashes": {
+    "docs/spatial-transforms.md": "e8aeddc4373795a0d0a840b5ffa84a1aad9a15a8d6a3367085d9098fd172e317",
+    "modules/transform/jvm/src/test/scala/scalafim/transform/GuideExamplesSuite.scala": "9c780fd593e2678ec1c71f5b18177bdf1730b9db311e0bf8a2928f415223a351",
+    "modules/surface-view/shared/src/test/scala/scalafim/surface/view/SurfaceVolumeCursorSuite.scala": "ccc3b1b4627768b9a6060442218b01ed9f8f705e22bdd4baccbb1df0789866e2",
+    "build.sbt": "cd76a4611c79f57f1414cee81d6a95d6f19c089fe7e7e6d5d6600d23fac9aa53",
+    ".github/workflows/first-level.yml": "babccdba938718685881f384da7e5e56a6e890584bb5e562bac0d516b5084f74",
+    "tools/ci/full-repository-tests.sh": "4d9709ff8d322ff7e438715dd182c5e8dc185081f864c1cf10f314abf61c5923"
+  },
+  "oracle_manifest_hashes": {
+    "modules/transform/shared/src/test/resources/scalafim/transform/oracle/freesurfer_linear/manifest.json": "895066bc6288fc58c8ada791051e5faed0dac519461a936ddb3ce88b97223141"
+  },
+  "checks": [
+    {
+      "lane": "jvm",
+      "command": [
+        "sbt",
+        "--batch",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "transformJVM/test",
+        "surfaceViewJVM/test"
+      ],
+      "exit_code": 0,
+      "test_totals": [
+        177,
+        68
+      ],
+      "duration_seconds": 205.520555,
+      "warning_lines": 0,
+      "raw_log": "stp-guide-20261001-jvm.log",
+      "raw_log_sha256": "0ca2f1d76f7e204744a3112fd91930cd812c8f34c9d3dbd335a3cc80b976bb6f",
+      "metadata_sha256": "8157018be2d13e2c24dda4c6cd616cf8aef5d1d27bb1c8a0c996ff7ed8d39259"
+    },
+    {
+      "lane": "js",
+      "command": [
+        "sbt",
+        "--batch",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "transformJS/test",
+        "surfaceViewJS/test"
+      ],
+      "exit_code": 0,
+      "test_totals": [
+        147,
+        68
+      ],
+      "duration_seconds": 157.679193,
+      "warning_lines": 0,
+      "raw_log": "stp-guide-20261001-js.log",
+      "raw_log_sha256": "d7d33a180b06e439260313ae0fd0cd218d8c309c4b75930747d0cf5cc668a8ff",
+      "metadata_sha256": "54a853304ceda5faaa483c0d7fe6932111ea8112be85a7b6c4ee73e5385b709f"
+    },
+    {
+      "lane": "compile",
+      "command": [
+        "sbt",
+        "--batch",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=4",
+        "scalafimCompileAll"
+      ],
+      "exit_code": 0,
+      "test_totals": [],
+      "duration_seconds": 366.282518,
+      "warning_lines": 0,
+      "raw_log": "stp-guide-20261001-compile.log",
+      "raw_log_sha256": "5e8bddc565aadcbd1d1ee04fbf58471a3fd983da275f44892860584fb6c15917",
+      "metadata_sha256": "00ca5600917c8b11f35d686c4da46aa547a4df37dbad9b3a050320ca68ea7337"
+    }
+  ],
+  "guide_examples_jvm": 7,
+  "synthetic_cursor_example_platforms": [
+    "JVM",
+    "Scala.js"
+  ],
+  "conversion_directions": [
+    "LTA->FLIRT",
+    "FLIRT->ITK",
+    "ITK->LTA",
+    "LTA->ITK",
+    "FLIRT->LTA",
+    "ITK->FLIRT"
+  ],
+  "conversion_original_pullback_limit_mm": 1e-09,
+  "conversion_frozen_point_limit_mm": 1e-05,
+  "hosted_ci_run_claimed": false,
+  "native_tools_rerun": false,
+  "provider_pins_changed": false,
+  "new_ticket_created": false,
+  "publication": false,
+  "limits": [
+    "Affine conversion points are self-consistency evidence, not native FreeSurfer qualification.",
+    "MNI volume/surface cursor is a synthetic API example.",
+    "Real workflow acceptance is bounded by the linked P7.07 receipts.",
+    "P6.02 native numerical inverse provider publication and consumer pin remain pending."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T15:04:53.746592+00:00",
+  "finished_utc": "2026-09-30T15:06:05.825634+00:00",
+  "duration_seconds": 72.078332,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "transformJVM/testOnly scalafim.transform.scenarios.Demo1NativeScenarioSuite scalafim.transform.scenarios.Demo1NativeContainerSuite",
+    "transformJVM/Test/runMain scalafim.transform.scenarios.Demo1OriginalContainerQualification /Users/bbuchsbaum/code/neurotransform/inst/extdata/demo1/sub-01_from-T1w_to-MNI152NLin6Asym_mode-image_xfm.h5 /Users/bbuchsbaum/code/neurotransform/inst/extdata/demo1/sub-01_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5"
+  ],
+  "cwd": "/private/tmp/scalafim-p707-demo1-20260930",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/p707-demo1-focused-jvm.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 6955
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T12:39:21.612993+00:00",
+  "finished_utc": "2026-09-30T12:40:44.544290+00:00",
+  "duration_seconds": 82.898792,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "archivedResponseInteropJVM/test",
+    "archivedResponseInteropJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-fsl-chain-20260930",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-lna-world-fixture-jvm-js.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 27025
+}

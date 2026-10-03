@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T12:02:19.655746+00:00",
+  "finished_utc": "2026-09-30T12:05:54.604312+00:00",
+  "duration_seconds": 214.949603,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "fitJVM/testOnly scalafim.fmri.fit.ImageMapsSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-stp-fsl-chain-20260930",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/stp-fit-image-identity-reproduction.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 5826
+}

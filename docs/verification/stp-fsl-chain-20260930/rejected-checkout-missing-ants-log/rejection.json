@@ -1,0 +1,6 @@
+{
+  "base_commit": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+  "reason": "Fresh committed checkout omitted the manifest-bound ants_native/native.log because of *.log ignore. FSL scenario passed; whole transform JVM 165/166, JS unrun.",
+  "adopted_repair_commit": "9c656bc79254be9142a8b605d0d4e404b410bd1b",
+  "native_log_sha256": "853d48b07391b5d51a7a83a266c02da36f20d21c954b326165607cdba0030a5d"
+}

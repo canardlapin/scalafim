@@ -1,0 +1,37 @@
+{
+  "card": 140,
+  "subject_revision": 2,
+  "store_id": "46b3549a2b9eb00a9dd49f55f0e3f6ee",
+  "baseline": "git:debdf34b821e6bf34103dc596dc815f55509b541",
+  "approved_candidate": "git:a2ec9fea1023b470d3d6c4362bd42a7f02831e84",
+  "verdict": {
+    "event_seq": 981,
+    "reviewer": "phrf-claude-20260929",
+    "stale": false,
+    "subject_rev": 2,
+    "verdict": "approve",
+    "version": "git:a2ec9fea1023b470d3d6c4362bd42a7f02831e84"
+  },
+  "review_evidence": [
+    {
+      "actor": "phrf-claude-20260929",
+      "body": "APPROVE for a2ec9fea. 752a9a0f..a2ec9fea touches only docs/verification/stp-guide-20261001 evidence plus one guide paragraph. That paragraph now correctly states contraction as a sufficient (not necessary) convergence condition for the fixed-point inverse and scopes the FNIRT refusal to that fixture, so it is more accurate. My three required fixes are in (checked at 752a9a0f). The link audit now records stp-fsl-real-20260930 only. Gates: transformJVM 177/0 + surfaceViewJVM 68/0, transformJS 147/0 + surfaceViewJS 68/0, CompileAll all exit 0, 0 [warn]. The non-blocking suggestion still stands: pin one literal FLIRT/ITK matrix.",
+      "kind": "evidence",
+      "op": "annotate",
+      "review": {
+        "advisory": true,
+        "baseline": "git:debdf34b821e6bf34103dc596dc815f55509b541",
+        "mote_ref": "mote:bd-01M39Q5DR9N3XJDXQV59MQ3XNG",
+        "subject_rev": 2,
+        "verdict": "approve",
+        "version": "git:a2ec9fea1023b470d3d6c4362bd42a7f02831e84"
+      },
+      "seq": 981,
+      "ts_ms": 1790864507176
+    }
+  ],
+  "independent_execution_claimed": false,
+  "local_main_integration": "dadf5973e601c92d5a93fbedbf3d40e65f5b67a7",
+  "scope": "Read-only review of source, execution receipts and scientific limits; not publication authorization.",
+  "subsequent_change": "Administrative review/integration receipts only; guide and test bytes remain those of the approved candidate."
+}

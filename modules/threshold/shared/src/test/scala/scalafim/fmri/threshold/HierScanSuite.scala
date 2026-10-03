@@ -51,7 +51,7 @@ class HierScanSuite extends munit.FunSuite:
   }
 
   test("HierScan accepts an unsigned statistic map only with a greater alternative") {
-    val stat = StatisticMap.negLog10P(volume(Vector(2, 2, 2), Array(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 5.0)), PSide.OneSided)
+    val stat = StatisticMap.negLog10P(volume(Vector(2, 2, 2), Array(0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 5.0)))
     val nulls = FixedNullDraw(Vector.fill(9)(Array.fill(8)(1.0)))
     val ok = value(HierScan.runMap(stat, nulls, config = simpleConfig(alpha = 0.2)))
 

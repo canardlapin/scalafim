@@ -1,0 +1,6 @@
+{
+  "original_sha256": "5f57d6fbff4dd7a2b5b3bf2081bfa73f57e10f8d12e1dd8c8bf28823879f5aed",
+  "prepared_sha256": "7d0d34264e140b7e2fe4d2a7471b0b8f948c16839e1449f58de6dcb994ef88e3",
+  "prepared_path": "/private/tmp/scalafim-stp-fsl-chain-20260930-ImageMapsSuite.scala",
+  "reason": "Fixture recreated unknown-world ownership through def dataset. Reuse one source per scenario; preserve exact alignment and add a distinct-world rejection control."
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T11:52:03.034057+00:00",
+  "finished_utc": "2026-10-01T11:57:03.414395+00:00",
+  "duration_seconds": 300.373595,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-p707-surface-real-20261001/candidate",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/p707-surface-real-compile-all.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 23071
+}

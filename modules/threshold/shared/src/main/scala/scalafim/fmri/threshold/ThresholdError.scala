@@ -5,7 +5,6 @@ import image4s.geometry.GeometryError
 enum ThresholdError:
   case InvalidAlpha(value: Double)
   case InvalidKappa(value: Double)
-  case InvalidDegreesOfFreedom(value: Double)
   case InvalidAdjustedPValue(value: Double)
   case InvalidPermutationCount(value: Int)
   case EmptyMask
@@ -32,8 +31,6 @@ enum ThresholdError:
         s"alpha must be finite and in (0, 1), got $value"
       case InvalidKappa(value) =>
         s"kappa must be finite and positive, got $value"
-      case InvalidDegreesOfFreedom(value) =>
-        s"degrees of freedom must be finite and positive, got $value"
       case InvalidAdjustedPValue(value) =>
         s"adjusted p-value must be finite and in [0, 1], got $value"
       case InvalidPermutationCount(value) =>
