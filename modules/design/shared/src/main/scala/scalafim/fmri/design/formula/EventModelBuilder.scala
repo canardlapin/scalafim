@@ -539,9 +539,15 @@ object EventModelBuilder:
   private final case class OrthogonalizedEvents(
       events: Vector[Event],
       receipts: Vector[OrthogonalizationReceipt],
-      /** Formula `orthogonalize = TRUE` only: (group key, removed mean) of the first modulator. */
-      firstCentering: Vector[(String, Double)] = Vector.empty
+      /** Formula `orthogonalize = TRUE` only: per group, the mean removed from
+        * the first modulator and the number of observed rows it was computed over. */
+      firstCentering: Vector[FirstModulatorCentering] = Vector.empty
   )
+
+  /** The group mean removed from the first formula-orthogonalized modulator.
+    * `mean` is over the `observed` rows only; zero-filled missing rows are not
+    * part of it and stay at the centering reference (0). */
+  private final case class FirstModulatorCentering(key: String, mean: Double, observed: Int)
 
   private final case class BasisOrthogonalizedTerm(
       term: ConvolvedTerm,
@@ -809,7 +815,8 @@ object EventModelBuilder:
         sourceRows = subset.sourceRows,
         parentTrials = phase.toVector.flatMap(_.parentTrialIds),
         policy = formulaOrthogonalization.orElse(options.orthogonalization.forTerm(termTag)),
-        spmFormula = formulaOrthogonalization.nonEmpty
+        spmFormula = formulaOrthogonalization.nonEmpty,
+        zeroFilled = zeroFilledRows(prepared.missingValues ++ cleaned.missingValues)
       )
       eventsClean <- includeMainEffect(orthogonalized.events, h.includeMain.getOrElse(false))
       nonFiniteDiagnostics = cleaned.diagnostics
@@ -861,12 +868,13 @@ object EventModelBuilder:
           PolicyReceipt("hrf-by-phase", s"phase=${phase.value};${assignments.canonical}")
         }
       }
-      eventNormalizationReceipt = h.eventNormalization.toVector.map { mode =>
-        val detail = mode match
-          case EventResponseNormalization.PreservePulseScale => "policy=as-convolved"
-          case EventResponseNormalization.UnitPeak(step) =>
+      // `as-convolved` is the contract "identical to omitting the option": it
+      // emits no receipt, so the audit text and DesignFingerprint coincide.
+      eventNormalizationReceipt = h.eventNormalization.toVector.collect {
+        case EventResponseNormalization.UnitPeak(step) =>
+          val detail =
             s"policy=unit-peak;scope=per-event-per-basis;reference-step=${PortableNumber.format(step.value)};precision=${PortableNumber.format(options.precision.value)}"
-        PolicyReceipt("event-response-normalization", s"term=${termTag.getOrElse("term")};$detail")
+          PolicyReceipt("event-response-normalization", s"term=${termTag.getOrElse("term")};$detail")
       }
       productReceipts = productPlans.map { product =>
         PolicyReceipt(
@@ -1815,7 +1823,8 @@ object EventModelBuilder:
       sourceRows: Vector[Int],
       parentTrials: Vector[TrialId],
       policy: Option[ModulatorOrthogonalization],
-      spmFormula: Boolean
+      spmFormula: Boolean,
+      zeroFilled: Map[ModulatorId, Set[Int]]
   ): Either[DesignError, OrthogonalizedEvents] =
     policy match
       case None => Right(OrthogonalizedEvents(events, Vector.empty))
@@ -1853,9 +1862,20 @@ object EventModelBuilder:
             sourceRows = sourceRows,
             parentTrials = parentTrials,
             term = term,
-            withIntercept = spmFormula
+            withIntercept = spmFormula,
+            zeroFilled = if spmFormula then zeroFilled else Map.empty
           )
         yield lowered
+
+  /** Term rows whose modulator value was missing and zero-filled under the
+    * zero-contribution policy, keyed by modulator. */
+  private def zeroFilledRows(resolutions: Vector[MissingValueResolution]): Map[ModulatorId, Set[Int]] =
+    resolutions
+      .filter(_.action == "zero-contribution")
+      .groupBy(_.modulator)
+      .view
+      .mapValues(_.map(_.eventIndex).toSet)
+      .toMap
 
   private def formulaOrthogonalization(
       call: HrfCall,
@@ -1918,30 +1938,46 @@ object EventModelBuilder:
       sourceRows: Vector[Int],
       parentTrials: Vector[TrialId],
       term: String,
-      withIntercept: Boolean
+      withIntercept: Boolean,
+      zeroFilled: Map[ModulatorId, Set[Int]]
   ): Either[DesignError, OrthogonalizedEvents] =
     var current = continuousEvents.map(_._2)
     val receipts = Vector.newBuilder[OrthogonalizationStepReceipt]
+    def observedRows(id: ModulatorId, rows: Vector[Int]): Vector[Int] =
+      zeroFilled.get(id) match
+        case None          => rows
+        case Some(missing) => rows.filterNot(missing.contains)
     // SPM-like formula lowering: the first modulator is mean-centred within each
     // group, i.e. orthogonalized against the group's unit (intercept) column.
+    // The mean is over observed rows only; zero-filled missing rows are held at
+    // the centering reference (0), so a missing event carries no modulation.
     val firstCentering =
       if !withIntercept then Vector.empty
       else
         val first = orderedColumns.head
         val event = current(first.continuousEventIndex)
         val data = event.value.data.clone()
+        val cols = event.value.cols
+        val missing = zeroFilled.getOrElse(first.id, Set.empty[Int])
         val means = groups.map { (key, rows) =>
+          val observed = observedRows(first.id, rows)
           var total = 0.0
-          rows.foreach(row => total += data(row * event.value.cols + first.columnIndex))
-          val mean = total / rows.length.toDouble
-          rows.foreach(row => data(row * event.value.cols + first.columnIndex) -= mean)
-          key -> mean
+          observed.foreach(row => total += data(row * cols + first.columnIndex))
+          val mean = if observed.isEmpty then 0.0 else total / observed.length.toDouble
+          rows.foreach { row =>
+            val index = row * cols + first.columnIndex
+            data(index) = if missing.contains(row) then 0.0 else data(index) - mean
+          }
+          FirstModulatorCentering(key, mean, observed.length)
         }
-        current = current.updated(first.continuousEventIndex, event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(event.value.rows, event.value.cols, data)))
+        current = current.updated(first.continuousEventIndex, event.copy(value = scalafim.fmri.hrf.linalg.Mat.unsafe(event.value.rows, cols, data)))
         means
     var targetIndex = 1
     var failed: Option[DesignError] =
-      firstCentering.collectFirst { case (key, mean) if !mean.isFinite => DesignError.InvalidOrthogonalization(term, s"non-finite first-modulator mean in group $key") }
+      firstCentering.collectFirst {
+        case centering if !centering.mean.isFinite =>
+          DesignError.InvalidOrthogonalization(term, s"non-finite first-modulator mean in group ${centering.key}")
+      }
     while targetIndex < policy.order.length && failed.isEmpty do
       val targetId = policy.order(targetIndex)
       val targetColumn = orderedColumns(targetIndex)
@@ -1952,21 +1988,27 @@ object EventModelBuilder:
       val groupReceipts = Vector.newBuilder[OrthogonalizationGroupReceipt]
       var groupIndex = 0
       while groupIndex < groups.length && failed.isEmpty do
-        val (key, rows) = groups(groupIndex)
-        val reference0 = bindModulatorRows(current, referenceColumns, rows)
-        val reference = if withIntercept then prependIntercept(reference0) else reference0
-        val target = selectModulatorRows(current, targetColumn, rows)
-        val qr = QrDecomposition.decomposeScaleAware(reference.data, reference.rows, reference.cols, pivoting = true)
-        val residual = residualize(qr, target)
-        writeModulatorRows(
-          destination = residualData,
-          columns = targetEvent.value.cols,
-          targetColumn = targetColumn.columnIndex,
-          rows = rows,
-          values = residual
-        )
-        val sourceNorm = frobeniusNorm(target.data)
-        val residualNorm = frobeniusNorm(residual.data)
+        val (key, groupRows) = groups(groupIndex)
+        // Formula lowering fits and residualizes the target's observed rows
+        // only; its zero-filled rows stay at the reference (0). A predecessor's
+        // zero-filled rows enter the fit at that predecessor's reference.
+        val rows = observedRows(targetId, groupRows)
+        val (rank, sourceNorm, residualNorm) =
+          if rows.isEmpty then (0, 0.0, 0.0)
+          else
+            val reference0 = bindModulatorRows(current, referenceColumns, rows)
+            val reference = if withIntercept then prependIntercept(reference0) else reference0
+            val target = selectModulatorRows(current, targetColumn, rows)
+            val qr = QrDecomposition.decomposeScaleAware(reference.data, reference.rows, reference.cols, pivoting = true)
+            val residual = residualize(qr, target)
+            writeModulatorRows(
+              destination = residualData,
+              columns = targetEvent.value.cols,
+              targetColumn = targetColumn.columnIndex,
+              rows = rows,
+              values = residual
+            )
+            (qr.rank, frobeniusNorm(target.data), frobeniusNorm(residual.data))
         val degenerate = residualNorm == 0.0 || residualNorm <= policy.tolerance * sourceNorm
         val outcome =
           if degenerate then OrthogonalizationOutcome.DegenerateRetained
@@ -1976,9 +2018,9 @@ object EventModelBuilder:
         else
           groupReceipts += OrthogonalizationGroupReceipt(
             key = key,
-            sourceRows = rows.map(sourceRows),
-            parentTrials = if parentTrials.isEmpty then Vector.empty else rows.map(parentTrials),
-            referenceRank = qr.rank,
+            sourceRows = groupRows.map(sourceRows),
+            parentTrials = if parentTrials.isEmpty then Vector.empty else groupRows.map(parentTrials),
+            referenceRank = rank,
             sourceNorm = sourceNorm,
             residualNorm = residualNorm,
             outcome = outcome
@@ -2041,7 +2083,8 @@ object EventModelBuilder:
         "formula-orthogonalization",
         s"term=${termTag.getOrElse(value.term.value)};order=${value.order.map(_.value).mkString(",")};groups=run-by-cell;" +
           "reference=intercept+earlier-modulators;first=centered-within-group;" +
-          s"first-means=${lowered.firstCentering.map((key, mean) => s"$key:${java.lang.Double.doubleToLongBits(mean)}").mkString(",")}"
+          "rows=observed-only;zero-filled=held-at-reference;" +
+          s"first-means=${lowered.firstCentering.map(c => s"${c.key}:${java.lang.Double.doubleToLongBits(c.mean)}:n=${c.observed}").mkString(",")}"
       )
     }
 

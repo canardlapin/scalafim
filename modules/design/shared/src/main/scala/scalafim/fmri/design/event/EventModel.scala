@@ -346,7 +346,8 @@ object EventModel:
     )
 
   /** Structural receipts for columns whose events carry event-level response
-    * divisors, keyed by the same identity that response readouts select. */
+    * divisors, keyed by the same identity that response readouts select, with
+    * the divisors kept per run so run-local readouts use their own run's. */
   private def eventResponseScales(terms: Vector[(String, EventModelTerm)]): Vector[EventResponseScaleReceipt] =
     terms.flatMap {
       case (key, ct: ConvolvedTerm) if ct.columnEventScales.nonEmpty =>
@@ -355,7 +356,8 @@ object EventModel:
           originFor(key, ct, local, roles(local)) match
             case StructuralColumnOrigin.Event(term, phase, cell, modulator, Some(basis), _, _) =>
               val scale = ct.columnEventScales(local)
-              Some(EventResponseScaleReceipt(term, phase, cell, modulator, basis.index, scale.policy, scale.divisors))
+              val runs = scale.runs.map(run => EventResponseRunDivisors(RunIndex.unsafeOneBased(run.block + 1), run.divisors))
+              Some(EventResponseScaleReceipt(term, phase, cell, modulator, basis.index, scale.policy, runs))
             case _ => None
         }
       case _ => Vector.empty

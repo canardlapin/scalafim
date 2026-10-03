@@ -9,14 +9,25 @@ import scala.util.control.NonFatal
 /** A declared event-level scale, before optional scan-column scaling. */
 final case class EventPeakScaleReceipt(eventIndex: Int, duration: Seconds, divisors: Vector[Double])
 
-/** The distinct event-level divisors of the events that contribute to one
-  * realized column, under a named event-response policy. One divisor means the
-  * column is its kernel-unit column divided by that constant; several mean the
-  * column mixes differently scaled events and has no kernel-unit equivalent. */
-final case class ColumnEventScale(policy: String, divisors: Vector[Double]):
-  require(policy.trim.nonEmpty, "column event-scale policy must be named")
+/** The distinct event-level divisors of the events of one run (zero-based
+  * block) that contribute to a realized column's scans in that run. */
+final case class RunColumnEventScale(block: Int, divisors: Vector[Double]):
+  require(block >= 0, "run block must be non-negative")
+  require(divisors.nonEmpty, "a run entry lists at least one contributing divisor")
   require(divisors.forall(value => value.isFinite && value > 0.0), "column event divisors must be finite and positive")
   require(divisors == divisors.distinct.sorted, "column event divisors must be distinct and sorted")
+
+/** The event-level divisors of the events that contribute to one realized
+  * column, per run, under a named event-response policy. Runs whose scans no
+  * event of the column reaches are absent. One divisor in a run means the
+  * column's rows in that run are its kernel-unit rows divided by that
+  * constant; one divisor across all runs means the whole column is. */
+final case class ColumnEventScale(policy: String, runs: Vector[RunColumnEventScale]):
+  require(policy.trim.nonEmpty, "column event-scale policy must be named")
+  require(runs.map(_.block) == runs.map(_.block).distinct.sorted, "column event-scale runs must be distinct and sorted")
+
+  /** Distinct divisors across all runs. */
+  def divisors: Vector[Double] = runs.flatMap(_.divisors).distinct.sorted
 
   def uniformDivisor: Option[Double] = divisors match
     case Vector(value) => Some(value)
@@ -102,7 +113,7 @@ object EventResponseConvolution:
                 convolved0 <- attempt(term.convolveWithEventDivisors(hrf, frame, precision, dropEmpty, summate, scaling, divisors))
                 convolved <- checkFinite(convolved0)
               yield
-                val columnScales = columnEventScales(term, dm, divisors, hrf.nbasis, frame, "unit-peak")
+                val columnScales = columnEventScales(term, dm, divisors, hrf.nbasis, frame, "unit-peak", hrf.span)
                 EventResponseConvolution(convolved.copy(eventPeakScales = scales, columnEventScales = columnScales), scales)
 
   private def attempt(value: => ConvolvedTerm): Either[EventResponseConvolutionError, ConvolvedTerm] =
@@ -144,25 +155,38 @@ object EventResponseConvolution:
       event += 1
     Right(result.result())
 
-  /** Distinct divisors of the events that actually reach each basis-major
-    * column: non-zero amplitude for the column's condition and a non-negative
-    * global onset (events before the first run are excluded by convolution). */
-  private def columnEventScales(
+  /** Per run, the distinct divisors of the events that actually reach each
+    * basis-major column's scans in that run: non-zero amplitude for the
+    * column's condition, a non-negative global onset (events before the first
+    * run are excluded by convolution), and a response window
+    * `[onset, onset + duration + span]` that meets at least one of the run's
+    * scan times (convolution renders each event only on its own run's scans).
+    * An event whose window misses every scan contributes nothing and does not
+    * make a column mixed. The window test is conservative: an event whose
+    * window only touches a scan at its boundary is still counted. */
+  private[event] def columnEventScales(
       term: EventTerm,
       dm: TermDesignMatrix,
       divisors: Vector[Vector[Double]],
       nbasis: Int,
       frame: SamplingFrame,
-      policy: String
+      policy: String,
+      span: Seconds
   ): Vector[ColumnEventScale] =
     val nConditions = dm.conditionTags.length
     val globalOnsets = frame.globalOnsets(term.onsets, term.blockIds0)
+    val scanTimes = Vector.tabulate(frame.nBlocks)(block => frame.samples(blocks = Seq(block), global = true).map(_.value))
+    val reaches = Vector.tabulate(term.onsets.length) { event =>
+      val onset = globalOnsets(event).value
+      val end = onset + term.durations0(event).value + span.value
+      onset >= 0.0 && scanTimes(term.blockIds0(event)).exists(time => time >= onset && time <= end)
+    }
     Vector.tabulate(nConditions * nbasis) { column =>
       val condition = column % nConditions
       val basis = column / nConditions
-      val values = term.onsets.indices.collect {
-        case event if dm.data.data(event * nConditions + condition) != 0.0 && globalOnsets(event).value >= 0.0 =>
-          divisors(event)(basis)
+      val contributing = term.onsets.indices.filter(event => reaches(event) && dm.data.data(event * nConditions + condition) != 0.0)
+      val runs = contributing.groupBy(term.blockIds0).toVector.sortBy(_._1).map { (block, events) =>
+        RunColumnEventScale(block, events.map(event => divisors(event)(basis)).distinct.sorted.toVector)
       }
-      ColumnEventScale(policy, values.distinct.sorted.toVector)
+      ColumnEventScale(policy, runs)
     }

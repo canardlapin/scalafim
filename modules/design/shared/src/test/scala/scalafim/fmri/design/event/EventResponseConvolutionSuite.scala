@@ -149,6 +149,44 @@ class EventResponseConvolutionSuite extends munit.FunSuite:
     // so it does not count among the column's contributing events either.
     assert(normalized.convolved.columnEventScales.forall(_.divisors == Vector(divisor)))
 
+  test("column event scales are kept per run: durations differing only between runs stay uniform within each run"):
+    val source = EventTerm(
+      events = Vector(Event.factor(Vector.fill(4)("a"), "condition")),
+      onsets = Vector(2.0, 10.0, 2.0, 10.0).map(Seconds(_)),
+      durations = Vector(1.0, 1.0, 3.0, 3.0).map(Seconds(_)),
+      blockIds = Vector(0, 0, 1, 1),
+      termTag = Some("task")
+    )
+    val result = EventResponseConvolution.convolve(source, Hrfs.SPMG1, twoRuns, unitPeak, precision = 0.1.s).fold(error => fail(error.message), identity)
+    val scale = result.convolved.columnEventScales.head
+    assertEquals(scale.runs.map(_.block), Vector(0, 1))
+    assert(scale.runs.forall(_.divisors.length == 1), scale.toString)
+    assertEquals(scale.divisors.length, 2)
+    assertEquals(scale.uniformDivisor, None)
+
+  test("events that reach none of their run's scans do not make a column mixed"):
+    // Run 0 spans 30 s of scans; the 4 s event at 35 s (run-local) starts after
+    // the run's last scan, so convolution renders nothing for it.
+    def source(onsets: Vector[Double], durations: Vector[Double]) = EventTerm(
+      events = Vector(Event.factor(Vector.fill(onsets.length)("a"), "condition")),
+      onsets = onsets.map(Seconds(_)),
+      durations = durations.map(Seconds(_)),
+      blockIds = Vector.fill(onsets.length)(0),
+      termTag = Some("task")
+    )
+    val oneRun = SamplingFrame(blockLens = Seq(30), tr = Seq(1.0))
+    val withLate = EventResponseConvolution.convolve(source(Vector(2.0, 12.0, 35.0), Vector(1.0, 1.0, 4.0)), Hrfs.SPMG1, oneRun, unitPeak, precision = 0.1.s)
+      .fold(error => fail(error.message), identity)
+    val without = EventResponseConvolution.convolve(source(Vector(2.0, 12.0), Vector(1.0, 1.0)), Hrfs.SPMG1, oneRun, unitPeak, precision = 0.1.s)
+      .fold(error => fail(error.message), identity)
+    assertEquals(withLate.convolved.data.data.toVector, without.convolved.data.data.toVector, "the late event contributes nothing")
+    assertEquals(withLate.convolved.columnEventScales, without.convolved.columnEventScales)
+    assert(withLate.convolved.columnEventScales.head.uniformDivisor.isDefined)
+    // An event whose response window still reaches the run's scans is counted.
+    val reaching = EventResponseConvolution.convolve(source(Vector(2.0, 12.0, 20.0), Vector(1.0, 1.0, 4.0)), Hrfs.SPMG1, oneRun, unitPeak, precision = 0.1.s)
+      .fold(error => fail(error.message), identity)
+    assertEquals(reaching.convolved.columnEventScales.head.divisors.length, 2)
+
   test("invalid precision and amplitudes are typed errors rather than exceptions"):
     val source = term(Vector(0.0), Vector(0.0))
     assertEquals(

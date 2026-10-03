@@ -46,6 +46,16 @@ class TemporalDerivativeConventionSuite extends munit.FunSuite:
     val rawDot = g.times.map(t => raw(Lag(t)).data(0) * Hrfs.SPMG1(Lag(t)).data(0)).sum
     assert(math.abs(rawDot) > 1e-3 * math.sqrt(dot(0, 0)) * math.sqrt(g.times.map(t => raw(Lag(t)).data(0) * raw(Lag(t)).data(0)).sum))
 
+  test("the SPM informed basis spans SPM's whole kernel window and is zero beyond it"):
+    val g = grid(2.0)
+    val basis = TemporalDerivativeConvention.spmInformedBasis(Hrfs.SPMG1, 3, g).fold(error => fail(error.message), identity)
+    // Convolution truncates at `span`; it must cover the grid's [0, 32 s],
+    // not the canonical's 24 s plus the 1 s shift.
+    assertEquals(basis.span.value, g.length.value)
+    assertEquals(basis.support, Support.Compact(g.length.seconds))
+    assert((1 until 3).forall(c => math.abs(basis(Lag(30.0)).data(c)) > 0.0), "the 25-32 s tail is part of the kernel")
+    assert(basis(Lag(32.5)).data.forall(_ == 0.0), "SPM's kernel ends at the grid length")
+
   test("derive returns the SPM temporal column and requires a kernel grid"):
     val g = grid(2.0)
     val temporal = TemporalDerivativeConvention

@@ -32,7 +32,10 @@ class FormulaResponsePolicySuite extends munit.FunSuite:
       val declared = build("onset ~ hrf(condition, basis = spmg2, durations = dur, event_normalization = \"as-convolved\", id = task)", options).fold(e => fail(e.message), identity)
       assertEquals(declared.designMatrix.data.toVector, omitted.designMatrix.data.toVector)
       assert(convolved(declared).eventPeakScales.isEmpty)
-      assert(declared.policyReceipts.exists(r => r.name == "event-response-normalization" && r.detail.endsWith("policy=as-convolved")))
+      // "Identical to omitting" includes the content identity: no receipt, same fingerprint.
+      assert(!declared.policyReceipts.exists(_.name == "event-response-normalization"), declared.policyReceipts.toString)
+      assertEquals(declared.designSchema.audit.canonical, omitted.designSchema.audit.canonical)
+      assertEquals(declared.designSchema.fingerprint, omitted.designSchema.fingerprint)
     val orthogonal = build("onset ~ hrf(condition, basis = spmg2, durations = dur, event_normalization = \"as-convolved\", orthogonalize_basis = TRUE, id = task)")
     assert(orthogonal.isRight, orthogonal.left.toOption.map(_.message).getOrElse(""))
 
@@ -69,6 +72,39 @@ class FormulaResponsePolicySuite extends munit.FunSuite:
     assert(model.policyReceipts.exists(r => r.name == "formula-orthogonalization" && r.detail.contains("groups=run-by-cell")))
     assertEquals(model.orthogonalizationReceipts.head.steps.head.groups.length, 4)
     assertEquals(convolved(model).columnModulators.count(_.isEmpty), 2, "include_main keeps one main-effect column per condition")
+
+  test("formula orthogonalize = TRUE centres and residualizes observed rows only; zero-filled rows stay at the reference"):
+    val data = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(0.0, 6.0, 12.0, 18.0, 24.0, 30.0, 0.0, 6.0, 12.0, 18.0, 24.0, 30.0)),
+      "condition" -> Column.Strings(Vector.fill(12)("a")),
+      "first" -> Column.Doubles(Vector(5.0, 7.0, Double.NaN, 9.0, 4.0, 8.0, 3.0, 7.5, 6.0, 2.0, 5.5, 9.0)),
+      "second" -> Column.Doubles(Vector(10.0, 1.0, 14.0, 2.5, 3.0, 12.0, 7.0, 13.0, Double.NaN, 4.0, 11.0, 6.0))
+    )
+    val request = EventDesignRequest.fromText(
+      "onset ~ hrf(condition, modulators(first, second), include_main = TRUE, orthogonalize = TRUE, id = task)",
+      data, twoRuns, blockPlan = BlockPlan.explicit(Seq.fill(6)(0) ++ Seq.fill(6)(1))
+    ).toOption.get
+    val model = EventModelBuilder.buildEither(request).fold(e => fail(e.message), identity)
+    val family = convolved(model).term.events.collect { case e: ContinuousEvent => e }.head
+    val firstColumn = family.modulatorIds.indexOf(ModulatorId.unsafe("first"))
+    val secondColumn = family.modulatorIds.indexOf(ModulatorId.unsafe("second"))
+    val first = (0 until 12).map(family.value(_, firstColumn))
+    val second = (0 until 12).map(family.value(_, secondColumn))
+    // Missing events carry no modulation: held at the centering reference.
+    assertEquals(first(2), 0.0)
+    assertEquals(second(8), 0.0)
+    Vector(0 until 6, 6 until 12).foreach: run =>
+      val firstObserved = run.filterNot(_ == 2)
+      val secondObserved = run.filterNot(_ == 8)
+      assertEqualsDouble(firstObserved.map(first).sum, 0.0, 1e-12)
+      assertEqualsDouble(secondObserved.map(second).sum, 0.0, 1e-12)
+      assertEqualsDouble(secondObserved.map(row => first(row) * second(row)).sum, 0.0, 1e-12)
+    // Observed-only means: run 1 averages five observed values, not six with a zero.
+    val expectedRun1Mean = Vector(5.0, 7.0, 9.0, 4.0, 8.0).sum / 5.0
+    assertEqualsDouble(first(0), 5.0 - expectedRun1Mean, 1e-12)
+    val receipt = model.policyReceipts.find(_.name == "formula-orthogonalization").getOrElse(fail("formula-orthogonalization receipt"))
+    assert(receipt.detail.contains("rows=observed-only;zero-filled=held-at-reference"), receipt.detail)
+    assert(receipt.detail.contains(s"run-1|condition=a:${java.lang.Double.doubleToLongBits(expectedRun1Mean)}:n=5"), receipt.detail)
 
   test("an observed modulator with one event in a run yields an explicit degenerate receipt"):
     val data = DataTable.fromColumns(

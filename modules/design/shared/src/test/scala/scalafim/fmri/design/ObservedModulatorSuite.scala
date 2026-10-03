@@ -49,6 +49,27 @@ class ObservedModulatorSuite extends munit.FunSuite:
     assertEquals(oneEach.receipt.scale, 1.0)
   }
 
+  test("near-constant cells of non-representable values are degenerate under a relative tolerance") {
+    // Each cell is constant (0.3 and 0.7 are not exactly representable), so
+    // centring leaves only rounding residue: a tiny non-zero pooled SD.
+    val nearConstant = Vector(0.3, 0.3, 0.3, 0.7, 0.7, 0.7)
+    val twoCells = Vector.fill(3)(cells.head) ++ Vector.fill(3)(cells(2))
+    val result = ObservedModulator.prepare(nearConstant, twoCells, ObservedModulator.Centering.ByCell,
+      ObservedModulator.Scaling.ZScore, MissingValuePolicy.Reject).toOption.get
+    val sd = result.receipt.observedSampleStandardDeviation.getOrElse(fail("missing sd"))
+    assert(sd > 0.0, "the fixture must exercise rounding residue, not an exact zero")
+    assert(sd <= ObservedModulator.degenerateScaleTolerance(6, 0.7), s"sd $sd")
+    assert(result.receipt.degenerate)
+    assert(result.receipt.degenerateScale)
+    assertEquals(result.receipt.scale, 1.0)
+    // The prepared values are the rounding residue, not residue / residue.
+    assert(result.values.forall(value => math.abs(value) < 1e-15), result.values.toString)
+    // A genuinely varying modulator of the same magnitude is not flagged.
+    val varying = ObservedModulator.prepare(Vector(0.3, 0.3, 0.3 + 1e-9, 0.7, 0.7, 0.7), twoCells, ObservedModulator.Centering.ByCell,
+      ObservedModulator.Scaling.ZScore, MissingValuePolicy.Reject).toOption.get
+    assert(!varying.receipt.degenerate)
+  }
+
   test("drop and zero retain their distinct source-row contracts") {
     val dropped = ObservedModulator.prepare(values, cells, ObservedModulator.Centering.Global,
       ObservedModulator.Scaling.Raw, MissingValuePolicy.DropFromTerm).toOption.get
