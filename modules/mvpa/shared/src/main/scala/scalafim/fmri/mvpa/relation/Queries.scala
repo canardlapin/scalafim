@@ -14,6 +14,7 @@ type CrossClosure[L <: SemanticSpace, R <: SemanticSpace] = Lin[Primal[R], Dual[
   * It cannot be used as a second-order effect query.
   */
 final class FirstOrderQuery[E <: SemanticSpace, C <: SemanticSpace] private[relation] (
+    val effectAxis: AxisDescriptor,
     val contrasts: SpaceEvidence[C],
     val contrastAxis: AxisDescriptor,
     val weights: Lin[Primal[E], Primal[C]]
@@ -30,7 +31,7 @@ object FirstOrderQuery:
       contrasts: AxisRef[CK],
       weights: Lin[Primal[effects.Id], Primal[contrasts.Id]]
   ): FirstOrderQuery[effects.Id, contrasts.Id] =
-    new FirstOrderQuery(contrasts.evidence, contrasts.descriptor, weights)
+    new FirstOrderQuery(effects.descriptor, contrasts.evidence, contrasts.descriptor, weights)
 
 /** A contrast-pattern result. It preserves the contrast and neural axes and is
   * deliberately distinct from a relation form.
@@ -95,10 +96,19 @@ final class EffectForm[L <: SemanticSpace, R <: SemanticSpace] private[relation]
     val right: SpaceEvidence[R],
     val values: Table[L, R],
     val leftOrigins: RelationOrigins,
-    val rightOrigins: RelationOrigins
+    val rightOrigins: RelationOrigins,
+    val leftAxis: AxisDescriptor,
+    val rightAxis: AxisDescriptor,
+    val leftEstimability: Vector[EffectEstimability],
+    val rightEstimability: Vector[EffectEstimability],
+    /** Conservative live adapter cells for one effect-column application.
+      * This excludes provider-private scratch and already resident operators.
+      */
+    val oneColumnAdapterCells: Long
 ):
   def reverse: Either[EvidenceError, EffectForm[R, L]] =
-    Right(new EffectForm(right, left, values.star, rightOrigins, leftOrigins))
+    Right(new EffectForm(right, left, values.star, rightOrigins, leftOrigins,
+      rightAxis, leftAxis, rightEstimability, leftEstimability, oneColumnAdapterCells))
 
   def adjoint: Either[EvidenceError, EffectForm[R, L]] =
     reverse
@@ -152,7 +162,9 @@ final class SecondOrderQuery[
         Right(new EffectForm(
           pair.left.effects, pair.right.effects,
           pair.right.estimate.star.andThen(value).andThen(pair.left.estimate),
-          pair.left.origins, pair.right.origins
+          pair.left.origins, pair.right.origins,
+          pair.left.effectAxis, pair.right.effectAxis, pair.left.estimability, pair.right.estimability,
+          32L * (pair.left.effectAxis.size.toLong + pair.right.effectAxis.size + pair.left.neuralAxis.size + pair.right.neuralAxis.size)
         ))
 
   def neuralForm: Either[EvidenceError, NeuralForm[NL, NR]] =
@@ -172,27 +184,42 @@ final class SecondOrderQuery[
     */
   def scalar: Either[EvidenceError, ScalarRelationStatistic] =
     (query, metric) match
-      case (Some(_), Some(_)) if
-          pair.left.origins.access == RelationAccess.OneShot || pair.right.origins.access == RelationAccess.OneShot =>
-        Left(EvidenceError.InvalidSource("scalar contraction requires declared owned replay for both relation endpoints"))
       case (Some(experimental), Some(neural)) =>
-        val contraction = pair.right.estimate.star.andThen(neural)
-          .andThen(pair.left.estimate).andThen(experimental.star)
-        var index = 0
-        var total = 0.0
-        var failure: Option[EvidenceError] = None
-        while index < pair.right.effectAxis.size && failure.isEmpty do
-          val basis = DMat.tabulate(pair.right.effectAxis.size, 1)((row, _) => if row == index then 1.0 else 0.0)
-          val diagonal = contraction(basis)
-          diagonal match
-            case Left(error) => failure = Some(EvidenceError.SemanticFailure(error))
-            case Right(value) => total += value(index, 0)
-          index += 1
-        failure match
-          case Some(error) => Left(error)
-          case None => Right(ScalarRelationStatistic(total))
+        for
+          _ <- RelationAccess.admitImmediate(pair.left.origins.access)
+          _ <- RelationAccess.admitImmediate(pair.right.origins.access)
+          result <- scalarAdmitted(experimental, neural)
+        yield result
       case _ =>
         Left(EvidenceError.InvalidAxis("second-order closure", "a scalar requires experimental and neural closures"))
+
+  private def scalarAdmitted(experimental: CrossClosure[EL, ER], neural: CrossClosure[NL, NR]): Either[EvidenceError, ScalarRelationStatistic] =
+    val contraction = pair.right.estimate.star.andThen(neural)
+      .andThen(pair.left.estimate).andThen(experimental.star)
+    var index = 0
+    var total = 0.0
+    var compensation = 0.0
+    var failure: Option[EvidenceError] = None
+    while index < pair.right.effectAxis.size && failure.isEmpty do
+      val basis = DMat.tabulate(pair.right.effectAxis.size, 1)((row, _) => if row == index then 1.0 else 0.0)
+      val diagonal = contraction(basis)
+      diagonal match
+        case Left(error) => failure = Some(EvidenceError.SemanticFailure(error))
+        case Right(value) =>
+          val term = value(index, 0)
+          if !term.isFinite then failure = Some(EvidenceError.InvalidSource("second-order scalar contribution is non-finite"))
+          else
+            val next = total + term
+            if math.abs(total) >= math.abs(term) then compensation += (total - next) + term
+            else compensation += (term - next) + total
+            total = next
+      index += 1
+    failure match
+      case Some(error) => Left(error)
+      case None =>
+        val result = total + compensation
+        if result.isFinite then Right(ScalarRelationStatistic(result))
+        else Left(EvidenceError.InvalidSource("second-order scalar accumulation is non-finite"))
 
 object SecondOrderQuery:
   def apply[

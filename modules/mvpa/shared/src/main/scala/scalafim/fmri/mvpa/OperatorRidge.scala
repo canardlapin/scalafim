@@ -36,9 +36,6 @@ enum OperatorRidgeError:
   case TargetLengthMismatch(expected: Int, actual: Int)
   case InsufficientTrainingSamples(fitId: String, actual: Int)
   case MissingTrainingClass(fitId: String, classLabel: ClassLabel)
-  case FoldSampleMismatch(expected: Int, actual: Int)
-  case NoTestSamples
-  case MissingPrediction(sample: SampleIndex)
   case PredictionShapeMismatch(detail: String)
   case FeatureAxisMismatch(expected: Vector[FeatureIndex], actual: Vector[FeatureIndex])
   case PatternFailure(detail: String)
@@ -60,12 +57,6 @@ enum OperatorRidgeError:
         s"ridge fit '$fitId' requires at least two training samples, got $actual"
       case MissingTrainingClass(fitId, classLabel) =>
         s"ridge fit '$fitId' has no training membership mass for class ${classLabel.value}"
-      case FoldSampleMismatch(expected, actual) =>
-        s"ridge fold sample count mismatch: expected $expected, got $actual"
-      case NoTestSamples =>
-        "ridge fold plan produced no test samples"
-      case MissingPrediction(sample) =>
-        s"ridge fold plan never predicted sample ${sample.value}"
       case PredictionShapeMismatch(detail) =>
         detail
       case FeatureAxisMismatch(expected, actual) =>
@@ -113,9 +104,6 @@ object OperatorRidgeConfig:
     apply(penalty, tolerance, maxIterations)
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-enum OperatorRidgeExecutionMode:
-  case OperatorProducts
-
 final case class OperatorRidgeClassReceipt(
     classLabel: ClassLabel,
     iterations: Int,
@@ -140,33 +128,6 @@ final case class OperatorRidgeFitReceipt(
   require(classFits.length >= 2, "ridge receipt requires at least two class fits")
   require(forwardApplications >= 0, "forward application count must be non-negative")
   require(transposeApplications >= 0, "transpose application count must be non-negative")
-
-final case class OperatorRidgeFoldReceipt(
-    foldId: String,
-    testSamples: Int,
-    fit: OperatorRidgeFitReceipt
-):
-  require(foldId.trim.nonEmpty, "ridge fold receipt id must be non-empty")
-  require(testSamples > 0, "ridge fold receipt requires test samples")
-
-final case class OperatorRidgeCrossValidationReceipt(
-    targetKind: ClassMembershipKind,
-    executionMode: OperatorRidgeExecutionMode,
-    folds: Vector[OperatorRidgeFoldReceipt]
-):
-  require(folds.nonEmpty, "ridge cross-validation receipt requires folds")
-
-  def totalIterations: Int =
-    folds.flatMap(_.fit.classFits).map(_.iterations).sum
-
-  def maxNormalResidual: Double =
-    folds.flatMap(_.fit.classFits).map(_.normalResidual).max
-
-  def forwardApplications: Int =
-    folds.map(_.fit.forwardApplications).sum
-
-  def transposeApplications: Int =
-    folds.map(_.fit.transposeApplications).sum
 
 final case class OperatorRidgePrediction(
     classes: Vector[ClassLabel],
@@ -194,23 +155,6 @@ final case class OperatorRidgePrediction(
       out += classes(bestClass)
       sample += 1
     out.result()
-
-final case class OperatorRidgeCrossValidatedResult(
-    prediction: OperatorRidgePrediction,
-    targetMse: Double,
-    targetArgmaxAccuracy: Double,
-    receipt: OperatorRidgeCrossValidationReceipt
-):
-  require(targetMse.isFinite && targetMse >= 0.0, "ridge target MSE must be finite and non-negative")
-  require(
-    targetArgmaxAccuracy.isFinite && targetArgmaxAccuracy >= 0.0 && targetArgmaxAccuracy <= 1.0,
-    "ridge target argmax accuracy must be finite and in [0, 1]"
-  )
-
-final case class OperatorRidgePayload(
-    prediction: Option[OperatorRidgePrediction],
-    receipt: OperatorRidgeCrossValidationReceipt
-)
 
 final class OperatorRidgeModel private[mvpa] (
     val classes: Vector[ClassLabel],
@@ -256,103 +200,6 @@ object OperatorRidge:
       config: OperatorRidgeConfig = OperatorRidgeConfig.Default
   ): Either[OperatorRidgeError, OperatorRidgeModel] =
     fitBlock(train, targets.classes, targets.values, config, "fit")
-
-  def crossValidate(
-      data: PatternOperator,
-      targets: ClassMembership,
-      folds: FoldPlan,
-      config: OperatorRidgeConfig = OperatorRidgeConfig.Default
-  ): Either[OperatorRidgeError, OperatorRidgeCrossValidatedResult] =
-    if targets.samples != data.samples then
-      Left(OperatorRidgeError.TargetLengthMismatch(data.samples, targets.samples))
-    else if folds.samples != data.samples then
-      Left(OperatorRidgeError.FoldSampleMismatch(data.samples, folds.samples))
-    else
-      val testRows = folds.folds.flatMap(_.test.map(_.value)).distinct.sorted
-      if testRows.isEmpty then Left(OperatorRidgeError.NoTestSamples)
-      else
-        val rowToOutput = testRows.zipWithIndex.toMap
-        val scoreSums = Matrix.newBuilder(testRows.length, targets.classCount)
-        val predictionCounts = Array.fill(testRows.length)(0)
-        val receipts = Vector.newBuilder[OperatorRidgeFoldReceipt]
-
-        def processFold(fold: Fold): Either[OperatorRidgeError, Unit] =
-          val trainPositions = fold.train.map(_.value)
-          val testPositions = fold.test.map(_.value)
-          val trainTargets = targets.selectPositions(trainPositions)
-          missingClass(trainTargets, targets.classes) match
-            case Some(classLabel) =>
-              Left(OperatorRidgeError.MissingTrainingClass(fold.id, classLabel))
-            case None =>
-              for
-                train <- data
-                  .selectRows(fold.train)
-                  .left
-                  .map(error => OperatorRidgeError.PatternFailure(error.message))
-                test <- data
-                  .selectRows(fold.test)
-                  .left
-                  .map(error => OperatorRidgeError.PatternFailure(error.message))
-                model <- fitBlock(train, targets.classes, trainTargets, config, fold.id)
-                prediction <- model.predict(test)
-                _ <- validateFoldPrediction(prediction, testPositions.length, targets.classes)
-              yield
-                var localRow = 0
-                while localRow < testPositions.length do
-                  val outputRow = rowToOutput(testPositions(localRow))
-                  var klass = 0
-                  while klass < targets.classCount do
-                    scoreSums(outputRow, klass) =
-                      scoreSums(outputRow, klass) + prediction.scores(localRow, klass)
-                    klass += 1
-                  predictionCounts(outputRow) += 1
-                  localRow += 1
-                receipts += OperatorRidgeFoldReceipt(fold.id, testPositions.length, model.receipt)
-
-        var foldIndex = 0
-        var failure = Option.empty[OperatorRidgeError]
-        while foldIndex < folds.folds.length && failure.isEmpty do
-          processFold(folds.folds(foldIndex)) match
-            case Left(error) => failure = Some(error)
-            case Right(())   =>
-          foldIndex += 1
-
-        failure match
-          case Some(error) => Left(error)
-          case None =>
-            val missing = predictionCounts.indexWhere(_ == 0)
-            if missing >= 0 then
-              Left(OperatorRidgeError.MissingPrediction(SampleIndex(testRows(missing))))
-            else
-              var outputRow = 0
-              while outputRow < testRows.length do
-                var klass = 0
-                while klass < targets.classCount do
-                  scoreSums(outputRow, klass) = scoreSums(outputRow, klass) / predictionCounts(outputRow)
-                  klass += 1
-                outputRow += 1
-              val scores = scoreSums.result()
-              finiteMatrix(scores, "cross-validated class scores", "cross-validation") match
-                case Left(error) => Left(error)
-                case Right(()) =>
-                  val prediction = OperatorRidgePrediction(
-                    classes = targets.classes,
-                    scores = scores,
-                    sampleIndices = testRows.map(position => data.sampleIndices(position)).toVector
-                  )
-                  val (mse, accuracy) = scoreMetrics(prediction, targets, testRows)
-                  Right(
-                    OperatorRidgeCrossValidatedResult(
-                      prediction = prediction,
-                      targetMse = mse,
-                      targetArgmaxAccuracy = accuracy,
-                      receipt = OperatorRidgeCrossValidationReceipt(
-                        targetKind = targets.kind,
-                        executionMode = OperatorRidgeExecutionMode.OperatorProducts,
-                        folds = receipts.result()
-                      )
-                    )
-                  )
 
   private def fitBlock(
       train: PatternOperator,
@@ -569,43 +416,6 @@ object OperatorRidge:
       klass += 1
     None
 
-  private def validateFoldPrediction(
-      prediction: OperatorRidgePrediction,
-      expectedSamples: Int,
-      expectedClasses: Vector[ClassLabel]
-  ): Either[OperatorRidgeError, Unit] =
-    if prediction.scores.rows != expectedSamples then
-      Left(
-        OperatorRidgeError.PredictionShapeMismatch(
-          s"ridge prediction rows ${prediction.scores.rows} do not match fold test rows $expectedSamples"
-        )
-      )
-    else if prediction.classes != expectedClasses then
-      Left(OperatorRidgeError.PredictionShapeMismatch("ridge prediction class axis changed across folds"))
-    else Right(())
-
-  private def scoreMetrics(
-      prediction: OperatorRidgePrediction,
-      targets: ClassMembership,
-      targetPositions: Vector[Int]
-  ): (Double, Double) =
-    var squaredError = 0.0
-    var correct = 0
-    val predicted = prediction.predicted
-    var row = 0
-    while row < targetPositions.length do
-      val targetRow = targetPositions(row)
-      var klass = 0
-      while klass < targets.classCount do
-        val difference = prediction.scores(row, klass) - targets.values(targetRow, klass)
-        squaredError += difference * difference
-        klass += 1
-      if predicted(row) == targets.argmaxLabelAt(targetRow) then correct += 1
-      row += 1
-    val mse = squaredError / (targetPositions.length * targets.classCount)
-    val accuracy = correct.toDouble / targetPositions.length
-    (mse, accuracy)
-
   private def finiteMatrix(
       matrix: DMat,
       stage: String,
@@ -630,41 +440,3 @@ object OperatorRidge:
   private final class OperatorApplicationCounter:
     var forwardApplications: Int = 0
     var transposeApplications: Int = 0
-
-final case class CrossValidatedOperatorRidgeAnalysis(
-    config: OperatorRidgeConfig = OperatorRidgeConfig.Default,
-    storePredictions: Boolean = false
-) extends FoldRequiredOperatorRoiAnalysis:
-  override val name: String = "cv_operator_ridge"
-  override val minFeatures: Int = 1
-  override val missingFoldsError: MvpaError = MvpaError.MissingFoldPlan(name)
-
-  override def evaluateFolded(
-      roi: PatternOperator,
-      context: FoldedRoiContext
-  ): Either[MvpaError, RoiAnalysisResult] =
-    for
-      targets <- ClassMembership.fromResponse(context.response)
-      evaluated <- OperatorRidge
-        .crossValidate(roi, targets, context.foldPlan, config)
-        .left
-        .map(MvpaError.OperatorRidgeFailed.apply)
-    yield
-      RoiAnalysisResult(
-        metrics = MetricVector(
-          "TargetMse" -> evaluated.targetMse,
-          "TargetArgmaxAccuracy" -> evaluated.targetArgmaxAccuracy,
-          "TestedSamples" -> evaluated.prediction.scores.rows.toDouble,
-          "FoldCount" -> evaluated.receipt.folds.length.toDouble,
-          "SolverIterations" -> evaluated.receipt.totalIterations.toDouble,
-          "MaxNormalResidual" -> evaluated.receipt.maxNormalResidual
-        ),
-        payload = Some(
-          RoiPayload.OperatorRidge(
-            OperatorRidgePayload(
-              prediction = if storePredictions then Some(evaluated.prediction) else None,
-              receipt = evaluated.receipt
-            )
-          )
-        )
-      )

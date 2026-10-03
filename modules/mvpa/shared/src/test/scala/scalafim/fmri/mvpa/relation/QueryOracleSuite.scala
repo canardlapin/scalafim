@@ -173,6 +173,31 @@ class QueryOracleSuite extends munit.FunSuite:
     assert(expectedEffect(0, 0) < 0.0)
     assert(expectedEffect(0, 1) > 0.0)
 
+  test("scalar uses compensated diagonal accumulation for dense and operator closures"):
+    val effects = axis("compensated-effects", SpaceRole.Latent, 3)
+    val neural = axis("compensated-neural", SpaceRole.Observed, 3)
+    val identity = DMat.eye(3)
+    val cancellation = DMat.dense(3, 3, Vector(1e16, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1e16))
+    val pair = RelationPair(relation(effects, neural, identity, "compensated-left"), relation(effects, neural, identity, "compensated-right"))
+    val denseQuery = SecondOrderQuery(pair, Some(crossClosure(effects, effects, identity, "compensated-h")), Some(crossClosure(neural, neural, cancellation, "compensated-k")))
+    assertEqualsDouble(right(denseQuery.scalar).value, 1.0, 1e-12)
+    val operator = new DoubleLinearOperator:
+      val rows = 3
+      val cols = 3
+      def applyTo(input: DVec, output: MutableDVec): Unit = cancellation.applyTo(input, output)
+    val operatorQuery = SecondOrderQuery(pair, Some(crossClosure(effects, effects, identity, "compensated-h-operator")), Some(operatorCrossClosure(neural, neural, operator, "compensated-k-operator")))
+    assertEqualsDouble(right(operatorQuery.scalar).value, 1.0, 1e-12)
+    val nonFinite = new DoubleLinearOperator:
+      val rows = 3
+      val cols = 3
+      def applyTo(input: DVec, output: MutableDVec): Unit =
+        var row = 0
+        while row < 3 do
+          output.update(row, Double.NaN)
+          row += 1
+    val invalid = SecondOrderQuery(pair, Some(crossClosure(effects, effects, identity, "compensated-h-invalid")), Some(operatorCrossClosure(neural, neural, nonFinite, "compensated-k-invalid")))
+    assert(invalid.scalar.isLeft)
+
   test("first-order contrasts and reversed pairs preserve their bilinear laws"):
     val leftEffects = axis("left-effects", SpaceRole.Latent, 2)
     val leftNeural = axis("left-neural", SpaceRole.Observed, 3)

@@ -228,3 +228,37 @@ class LocalExecutionSuite extends munit.FunSuite:
     right(LocalExecution.run(Vector(good),Seed.fromLong(1L),sum,beforeCommit = before)) match
       case FamilyState.Failed(_,Vector((_,UnitError.BeforeCommit("before-fault")))) => ()
       case other => fail(s"lost before-commit fault: $other")
+
+  test("a pre-commit crash followed by identical retries contributes exactly once"):
+    var closed = 0
+    var commits = 0
+    val a = complete(address(0,0,0,"a",0), "a", 7, "row-a", () => Resource(() => closed += 1))
+    val b = complete(address(0,0,0,"b",1), "b", 11, "row-b", () => Resource(() => closed += 1))
+    val crashOnce = new BeforeCommit:
+      def check(location: WorkAddress): Either[UnitError, Unit] =
+        commits += 1
+        if commits == 1 then Left(UnitError.BeforeCommit("crash-before-first-commit")) else Right(())
+    right(LocalExecution.run(Vector(a,b), Seed.fromLong(31), sum, Some(Vector(a,a,b,a)), beforeCommit = crashOnce)) match
+      case FamilyState.Complete(value) =>
+        assertEquals(value.coverage, Coverage(2, 2, Vector.empty))
+        assertEquals(value.reduction, 18)
+        assertEquals(value.outOfFold, Vector("row-a", "row-b"))
+        assertEquals(value.committed.map(_.address), Vector(a.address, b.address))
+      case other => fail(s"retry lost coverage or duplicated a contribution: $other")
+    assertEquals(closed, 4)
+
+  test("cancellation after one commit retains exact missing coverage and durable resume remains unavailable"):
+    var closed = 0
+    var checks = 0
+    val a = complete(address(0,0,0,"a",0), "a", 7, "row-a", () => Resource(() => closed += 1))
+    val b = complete(address(0,0,0,"b",1), "b", 11, "row-b", () => Resource(() => closed += 1))
+    right(LocalExecution.run(Vector(a,b), Seed.fromLong(31), sum, cancellationRequested = () =>
+      checks += 1
+      checks == 2
+    )) match
+      case FamilyState.Cancelled(value) =>
+        assertEquals(value.coverage, Coverage(2, 1, Vector(b.address)))
+        assertEquals(value.committed.map(_.contribution.outOfFold), Vector(Vector("row-a")))
+      case other => fail(s"cancelled work acquired complete coverage: $other")
+    assertEquals(closed, 1)
+    assertEquals(LocalExecution.resumeRefusal, ResumeRefusal.InMemoryOnly("local execution retains no durable committed-unit checkpoint"))

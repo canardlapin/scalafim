@@ -373,3 +373,14 @@ class ResidualCovarianceSuite extends munit.FunSuite:
     // all 70 rows cumulatively (19600) and one 64-row chunk at peak (17920).
     assertEquals(psi.precisionDiagonalWork, ResidualCovarianceWork(24710L, 24710L + 19670L + 17920L, 19670L + 19600L, 140, 70))
   }
+
+  test("square structured whitening yields identity covariance and the cofactor precision metric"):
+    val psi = right(ResidualCovariance.fromFactors(axis(2), Vector(1.0, 2.0), DMat.dense(2, 1, Vector(1.0, 1.0))))
+    val w = right(psi.whiten(DMat.eye(2)))
+    assertClose(w.t * w, DMat.dense(2, 2, Vector(.6, -.2, -.2, .4)), 1e-14)
+    assertClose(w * DMat.dense(2, 2, Vector(2.0, 1.0, 1.0, 3.0)) * w.t, DMat.eye(2), 1e-14)
+    val cost = right(psi.whiteningWork(2))
+    assertEquals(cost.storedCells, 13L)
+    assertEquals(cost.peakCellsUpperBound, 29L)
+    assert(psi.whiteningWork(0).isLeft)
+    assert(psi.whiten(DMat.eye(3)).isLeft)

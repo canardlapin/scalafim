@@ -51,55 +51,6 @@ class RdmSuite extends munit.FunSuite:
     assert(result.left.toOption.get.message.contains("non-finite"))
   }
 
-  test("partition means builder computes fold-wise class means") {
-    val data = PatternMatrix.fromRows(
-      Vector(
-        Vector(1.0),
-        Vector(3.0),
-        Vector(1.0),
-        Vector(5.0)
-      )
-    )
-    val response = Response.categorical(Vector("a", "b", "a", "b")).toOption.get
-    val folds = FoldPlan.unsafe(
-      Vector(
-        Fold.unsafe("p1", Seq(2, 3), Seq(0, 1)),
-        Fold.unsafe("p2", Seq(0, 1), Seq(2, 3))
-      ),
-      samples = 4
-    )
-
-    val partitioned = PartitionMeansBuilder.fromPatterns(data, response, folds).toOption.get
-    assertEquals(partitioned.classes.map(_.value), Vector("a", "b"))
-    assertEqualsDouble(partitioned.means(0, 0, 0), 1.0, 1e-12)
-    assertEqualsDouble(partitioned.means(1, 0, 0), 3.0, 1e-12)
-    assertEqualsDouble(partitioned.means(0, 0, 1), 1.0, 1e-12)
-    assertEqualsDouble(partitioned.means(1, 0, 1), 5.0, 1e-12)
-  }
-
-  test("partition means builder requires every fold to contain every class") {
-    val data = PatternMatrix.fromRows(
-      Vector(
-        Vector(1.0),
-        Vector(3.0),
-        Vector(1.0),
-        Vector(5.0)
-      )
-    )
-    val response = Response.categorical(Vector("a", "b", "a", "b")).toOption.get
-    val folds = FoldPlan.unsafe(
-      Vector(
-        Fold.unsafe("missing-b", Seq(1, 2, 3), Seq(0)),
-        Fold.unsafe("complete", Seq(0, 1), Seq(2, 3))
-      ),
-      samples = 4
-    )
-
-    val result = PartitionMeansBuilder.fromPatterns(data, response, folds)
-    assert(result.isLeft)
-    assert(result.left.toOption.get.message.contains("no samples for class 'b'"))
-  }
-
   test("crossnobis distances use cross-fold second moments") {
     val means = PartitionMeans
       .unsafe(

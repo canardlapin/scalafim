@@ -1,12 +1,12 @@
 package scalafim.examples.workflows
 
 class AtlasMvpaWorkflowSuite extends munit.FunSuite:
-  test("atlas workflow builds regional MVPA feature plan from atlas labels") {
-    val plan = AtlasMvpaWorkflows.featurePlan()
-    assertEquals(plan.name, "workflow-atlas-regions")
-    assertEquals(plan.size, 3)
-    assertEquals(plan.featureSets.map(_.size), Vector(4, 4, 4))
-    assertEquals(plan.featureSets.flatMap(_.label), Vector("Visual", "Somatomotor", "Default"))
+  test("atlas workflow exposes typed regional measurements from atlas realization") {
+    val rows = AtlasMvpaWorkflows.runClassification()
+    assertEquals(rows.map(_.label), Vector("Visual", "Somatomotor", "Default"))
+    assertEquals(rows.map(_.nFeatures), Vector(4, 4, 4))
+    // Canonical row-major ordinal is (x * 4 + y) * 2 + z.
+    assertEquals(rows.map(_.featureOrdinals), Vector(Vector(0, 2, 8, 10), Vector(16, 18, 24, 26), Vector(13, 15, 21, 23)))
   }
 
   test("atlas workflow runs cross-validated classification per region") {

@@ -20,7 +20,6 @@ import scalafim.fmri.fit.{
   TrainingRunScope
 }
 import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig}
-import scalafim.fmri.mvpa.{FeatureIndex, FeatureSet, FeatureSetPlan, MvpaStreamControl, RoiId}
 
 class CanonicalEffectMvpaSuite extends munit.FunSuite:
 
@@ -47,163 +46,154 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
     assertMatrixClose(streamed.effect, explicitEffect, 1e-11)
     assertMatrixClose(streamed.residual, explicitResidual, 1e-11)
 
-  test("regional and searchlight plans execute through ordinary MVPA summaries and typed canonical payloads"):
-    val dataset = canonicalDataset(runResponses)
-    val ridge = ResidualRegularization.TraceScaled(TraceRidgeFraction.unsafe(0.05))
-    val regional = FeatureSetPlan
-      .regional(
-        "canonical-regions",
-        Vector(
-          FeatureSet.unsafe(RoiId(10), Vector(0, 1)),
-          FeatureSet.unsafe(RoiId(11), Vector(0, 1, 2, 3))
-        )
-      )
-      .toOption
-      .get
-    val searchlight = FeatureSetPlan
-      .searchlight(
-        "canonical-searchlights",
-        Vector(
-          FeatureSet.unsafe(RoiId(1), Vector(0, 1, 2), center = Some(1)),
-          FeatureSet.unsafe(RoiId(2), Vector(1, 2, 3), center = Some(2))
-        )
-      )
-      .toOption
-      .get
+  private val ridge = ResidualRegularization.TraceScaled(TraceRidgeFraction.unsafe(0.05))
+  private val budget = NativeCanonicalFixtures.budget
+  private def right[E, A](value: Either[E, A]): A = value.fold(error => fail(error.toString), identity)
 
-    Vector(regional, searchlight).foreach: plan =>
-      val result = CanonicalEffectMvpa.run(dataset, plan, ridge)
-      assertEquals(result.summary.analysisName, CanonicalEffectMvpa.AnalysisName)
-      assertEquals(result.summary.featureSetPlan, Some(plan))
-      assertEquals(result.summary.failures, Vector.empty)
-      assertEquals(result.successes.length, plan.size)
-      result.successes.foreach: payload =>
-        assertEquals(payload.folds.length, 3)
-        assert(payload.meanHeldOutRoot >= 0.0)
-        assert(payload.rootToCorrelation >= 0.0 && payload.rootToCorrelation <= 1.0)
-        assert(payload.folds.forall(_.receipt.execution == CanonicalMomentExecution.RunwiseSufficientStatistics))
-        assert(payload.folds.forall(_.receipt.temporalPreparation.length == 3))
-      result.summary.successes.foreach: outcome =>
-        assert(outcome.metrics("MeanCanonicalRoot").exists(_ >= 0.0))
-        assert(outcome.metrics("CanonicalCorrelation").exists(value => value >= 0.0 && value <= 1.0))
+  test("global canonical fits retain the neural domain and differ from fold assessments"):
+    val packed = native(runResponses)
+    val assessment = right(CanonicalGlobal.assess(packed.source, ridge, budget))
+    val fit = right(CanonicalGlobal.fit(packed.source, NativeCanonicalFixtures.right(packed.source.selectRuns(Vector(RunId("run-0"), RunId("run-1"), RunId("run-2")))), ridge, budget))
+    val sameNeural: multivar.core.SpaceEvidence[packed.N] = fit.neural
+    assertEquals(sameNeural.descriptor, packed.source.neural.descriptor)
+    assertEquals(fit.neuralAxis, packed.source.neuralAxis)
+    assertEquals(fit.receipt.trainingRuns, Vector(RunId("run-0"), RunId("run-1"), RunId("run-2")))
+    assertEquals(assessment.folds.length, 3)
+    assert(assessment.meanHeldOutRoot >= 0.0)
+    assert(assessment.folds.forall(_.receipt.temporalPreparation.length == 3))
+    assertEquals(fit.fit.programFit.program.objective.label, "generalized-rayleigh")
+    assert(fit.receipt.momentIdentity.matches("[0-9a-f]{64}"))
 
-  test("held-out response perturbations change the held-out score but cannot alter its frozen training frame"):
-    val plan = FeatureSetPlan
-      .regional("leakage-sentinel", Vector(FeatureSet.unsafe(RoiId(20), Vector(0, 1, 2, 3))))
-      .toOption
-      .get
-    val regularization = ResidualRegularization.TraceScaled(TraceRidgeFraction.unsafe(0.05))
-    val ordinary = CanonicalEffectMvpa.run(canonicalDataset(runResponses), plan, regularization).successes.head
-    val perturbedRows = runResponses.updated(0, addHeldOutTaskSignal(runResponses.head, 25.0))
-    val perturbed = CanonicalEffectMvpa.run(canonicalDataset(perturbedRows), plan, regularization).successes.head
-    val ordinaryFold = foldFor(ordinary, "run-0")
-    val perturbedFold = foldFor(perturbed, "run-0")
-    val ordinaryFrame = ordinaryFold.trainingFit.functionalFrame.weights.toDense.toOption.get
-    val perturbedFrame = perturbedFold.trainingFit.functionalFrame.weights.toDense.toOption.get
+  test("held-out perturbations cannot alter the frozen training frame or training identity"):
+    val original = native(runResponses)
+    val changed = native(runResponses.updated(0, addHeldOutTaskSignal(runResponses.head, 25.0)))
+    val before = right(CanonicalGlobal.assess(original.source, ridge, budget)).folds.head
+    val after = right(CanonicalGlobal.assess(changed.source, ridge, budget)).folds.head
+    assertMatrixClose(right(before.training.fit.functionalFrame.weights.toDense), right(after.training.fit.functionalFrame.weights.toDense), 0.0)
+    assertEquals(before.training.receipt.momentIdentity, after.training.receipt.momentIdentity)
+    assertEquals(before.training.receipt.evidenceIdentity, after.training.receipt.evidenceIdentity)
+    assertNotEquals(before.heldOutRoot, after.heldOutRoot)
 
-    assertMatrixClose(ordinaryFrame, perturbedFrame, 0.0)
-    assertEquals(
-      ordinaryFold.trainingFit.provenance.regularizedResidual,
-      perturbedFold.trainingFit.provenance.regularizedResidual
-    )
-    assertNotEquals(ordinaryFold.heldOutRoot, perturbedFold.heldOutRoot)
-
-  test("feature-set traversal honors the existing streaming stop control"):
-    val dataset = canonicalDataset(runResponses)
-    val plan = FeatureSetPlan
-      .regional(
-        "stop-after-one",
-        Vector(
-          FeatureSet.unsafe(RoiId(30), Vector(0, 1)),
-          FeatureSet.unsafe(RoiId(31), Vector(1, 2)),
-          FeatureSet.unsafe(RoiId(32), Vector(2, 3))
-        )
-      )
-      .toOption
-      .get
-    var visited = 0
-
-    CanonicalEffectMvpa.foreach(dataset, plan, ResidualRegularization.Unregularized): _ =>
-      visited += 1
-      MvpaStreamControl.Stop
-
-    assertEquals(visited, 1)
-
-  test("dataset and geometry schedules reject incomplete or mismatched run structure"):
-    val geometry = iidGeometry()
-    val schedule = CanonicalGeometrySchedule.stable(geometry).toOption.get
-    val response = responseBlock(runResponses.head)
-    val first = CanonicalRunInput.make(RunId("run-0"), response, schedule).toOption.get
-    val duplicate = CanonicalEffectDataset.make(Vector(first, first))
-    val wrongAxis = CanonicalRunInput
-      .make(
-        RunId("run-1"),
-        response,
-        schedule,
-        Vector(FeatureIndex(0), FeatureIndex(1), FeatureIndex(2), FeatureIndex(99))
-      )
-      .toOption
-      .get
-    val mismatched = CanonicalEffectDataset.make(Vector(first, wrongAxis))
-
-    assertEquals(
-      CanonicalEffectDataset.make(Vector(first)).left.toOption,
-      Some(OneShotMvpaError.InsufficientRunsForCrossValidation(1))
-    )
-    duplicate.left.toOption match
-      case Some(OneShotMvpaError.DuplicateRuns(ids)) => assertEquals(ids, Vector(RunId("run-0")))
-      case other => fail(s"expected duplicate-run failure, got $other")
-    assert(mismatched.left.toOption.exists(_.isInstanceOf[OneShotMvpaError.FeatureAxisMismatch]))
-
-  test("response-learned temporal geometry must resolve the exact training-run scope"):
+  test("response-learned temporal geometry resolves the exact training-run scope"):
     val geometries = trainingFoldGeometries()
-    val complete = CanonicalGeometrySchedule.trainingFolds(geometries).toOption.get
-    val incomplete = CanonicalGeometrySchedule.trainingFolds(geometries.take(1)).toOption.get
-    val completeRuns = runResponses.zipWithIndex.map: (rows, index) =>
-      CanonicalRunInput.make(RunId(s"run-$index"), responseBlock(rows), complete).toOption.get
-    val incompleteRuns = runResponses.zipWithIndex.map: (rows, index) =>
-      CanonicalRunInput.make(RunId(s"run-$index"), responseBlock(rows), incomplete).toOption.get
-
-    val dataset = CanonicalEffectDataset.make(completeRuns).toOption.get
-    val result = CanonicalEffectMvpa.run(
-      dataset,
-      FeatureSetPlan.regional("fold-scoped", Vector(FeatureSet.unsafe(RoiId(35), Vector(0, 1)))).toOption.get,
-      ResidualRegularization.TraceScaled(TraceRidgeFraction.unsafe(0.05))
-    )
-
-    assertEquals(result.summary.failures, Vector.empty)
-    result.successes.head.folds.zipWithIndex.foreach: (fold, heldOut) =>
-      val expected = (0 until 3).filter(_ != heldOut).toVector
-      assert(
-        fold.receipt.temporalPreparation.forall: (_, receipt) =>
-          receipt.scope match
-            case TemporalPreparationScope.TrainingFold(scope) => scope.runs.map(_.value) == expected
-            case _ => false
+    val complete = right(CanonicalGeometrySchedule.trainingFolds(geometries))
+    val incomplete = right(CanonicalGeometrySchedule.trainingFolds(geometries.take(1)))
+    val packed = native(runResponses, complete)
+    val assessed = right(CanonicalGlobal.assess(packed.source, ridge, budget))
+    assessed.folds.zipWithIndex.foreach: (fold, held) =>
+      val expected = (0 until 3).filter(_ != held).toVector
+      assert(fold.receipt.temporalPreparation.forall: (_, receipt) =>
+        receipt.scope match
+          case TemporalPreparationScope.TrainingFold(scope) => scope.runs.map(_.value) == expected
+          case _ => false
       )
-    assert(CanonicalEffectDataset.make(incompleteRuns).left.toOption.exists(_.isInstanceOf[OneShotMvpaError.MissingFoldGeometry]))
+    val absent = poison(incomplete)
+    CanonicalGlobal.assess(absent._1, ridge, budget) match
+      case Left(CanonicalArtifactError.Temporal(_: OneShotMvpaError.MissingFoldGeometry)) => ()
+      case other => fail(s"expected missing training scope, got $other")
+    assertEquals(absent._2(), 0)
 
-  test("the canonical analysis surface requires no trialwise beta or TrialReadout artifact"):
-    val payload = CanonicalEffectMvpa
-      .run(
-        canonicalDataset(runResponses),
-        FeatureSetPlan.regional("no-trial-beta", Vector(FeatureSet.unsafe(RoiId(40), Vector(0, 1)))).toOption.get,
-        ResidualRegularization.TraceScaled(TraceRidgeFraction.unsafe(0.05))
-      )
-      .successes
-      .head
+  test("dense capacity and strict unknown costs reject before provider access"):
+    val p = poison(right(CanonicalGeometrySchedule.stable(iidGeometry())))
+    val denied = budget.copy(memory = scalafim.fmri.mvpa.analysis.ResourceLimit.OwnedNumeric(0L))
+    assert(CanonicalGlobal.assess(p._1, ridge, denied).isLeft)
+    val strict = budget.copy(memory = scalafim.fmri.mvpa.analysis.ResourceLimit.WholeNumeric(1000000L))
+    assert(CanonicalGlobal.assess(p._1, ridge, strict).isLeft)
+    assertEquals(p._2(), 0)
+    assert(p._1.selectRuns(Vector(RunId("run-0"), RunId("run-0"))).isLeft)
+    assertEquals(p._2(), 0)
 
-    assert(payload.folds.forall(_.receipt.execution == CanonicalMomentExecution.RunwiseSufficientStatistics))
-    assert(payload.folds.forall(_.trainingFit.programFit.program.objective.label == "generalized-rayleigh"))
+  test("canonical input domains require exact run ordering and unique run identities"):
+    val n = native(runResponses)
+    val partitions = right(scalafim.fmri.mvpa.AxisRef.fromStableKeys("bad-partitions", multivar.core.SpaceRole.Samples,
+      Vector("run-1", "run-0", "run-2"), "run", "partition", "native"))
+    assert(CanonicalRunSet.make(partitions)(n.source.runs)(RunId.apply).isLeft)
 
-  private def canonicalDataset(responses: Vector[Vector[Vector[Double]]]): CanonicalEffectDataset =
-    val geometry = iidGeometry()
-    val schedule = CanonicalGeometrySchedule.stable(geometry).toOption.get
-    val runs = responses.zipWithIndex.map: (rows, index) =>
-      CanonicalRunInput
-        .make(RunId(s"run-$index"), responseBlock(rows), schedule)
-        .toOption
-        .get
-    CanonicalEffectDataset.make(runs).toOption.get
+  test("one real run supports a global fit while assessment requires held-out contributors"):
+    val n = native(runResponses)
+    val partitions = right(scalafim.fmri.mvpa.AxisRef.fromStableKeys("one-canonical-run", multivar.core.SpaceRole.Samples,
+      Vector("run-0"), "run", "partition", "native"))
+    val one = right(CanonicalRunSet.make(partitions)(n.source.runs.take(1))(RunId.apply))
+    val selection = right(one.selectRuns(Vector(RunId("run-0"))))
+    val fit = right(CanonicalGlobal.fit(one, selection, ridge, budget))
+    assertEquals(fit.receipt.trainingRuns, Vector(RunId("run-0")))
+    assert(CanonicalGlobal.assess(one, ridge, budget).isLeft)
+
+  test("run selections cannot cross nominal partition domains"):
+    val errors = scala.compiletime.testing.typeCheckErrors("""
+      import multivar.core.*
+      import scalafim.fmri.mvpa.fit.*
+      def wrong[P <: SemanticSpace, Other <: SemanticSpace](selection: CanonicalTrainingRuns[P]): CanonicalTrainingRuns[Other] = selection
+    """)
+    assert(errors.nonEmpty)
+
+  test("failed MANOVA training does not acquire or read its held-out provider"):
+    import multivar.core.{SpaceRole, ValueId, ValueIdentity}
+    import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
+    import scalafim.fmri.mvpa.analysis.*
+    import scalafim.response.{Provenance, ProvenanceId, SourceId}
+    val design = DMat.tabulate(8, 2)((r, c) => if c == 0 then 1.0 else if r % 2 == 0 then -1.0 else 1.0)
+    val geometry = right(ResponsePreparationPlan.fromConfig(FitConfig()).prepareManova(DesignMatrix.unsafe(design), Vector("intercept", "task"),
+      scalafim.fmri.fit.FContrast("task", Vector(Map("task" -> 1.0))), SelectedTimepointIndices.unsafe((0 until 8).toVector),
+      Vector(RunPartition(0, (0 until 8).toVector, (0 until 8).toVector)), TemporalNuisanceRank.unsafe(1)))
+    val schedule = right(ManovaGeometrySchedule.stable(geometry))
+    val neural = right(AxisRef.fromStableKeys("manova-order-neural", SpaceRole.Observed, Vector("v0", "v1"), "native", "psc", "raw"))
+    val partitions = right(AxisRef.fromStableKeys("manova-order-runs", SpaceRole.Samples, Vector("run-0", "run-1", "run-2"), "run", "partition", "native"))
+    var heldAccesses = 0
+    val runs = Vector.tabulate(3): index =>
+      val time = right(AxisRef.fromStableKeys(s"manova-order-time-$index", SpaceRole.Samples, Vector.tabulate(8)(_.toString), "time", "TR", "native"))
+      val id = SourceId.unsafe(s"manova-order-$index")
+      val source = right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"manova-order-root-$index"), id)))
+      val values = if index == 0 then
+        val poison = new gale.linalg.DoubleLinearOperator:
+          val rows = 8
+          val cols = 2
+          def applyTo(in: gale.linalg.DVec, out: gale.linalg.MutableDVec): Unit =
+            heldAccesses += 1
+            throw IllegalStateException("held-out read before fit")
+        right(Observations.fromOperator(time, neural, poison, ValueIdentity.source(ValueId.unsafe("manova-held-poison")), source))
+      else right(Observations.fromDense(time, neural, design, ValueIdentity.source(ValueId.unsafe(s"manova-perfect-training-$index")), source))
+      val resource = new ObservationProductResource:
+        def acquire() =
+          if index == 0 then heldAccesses += 1
+          Right(())
+        def close() = Right(())
+      right(CanonicalRunEvidence.fromObservations(RunId(s"run-$index"), time, neural, values, schedule,
+        ObservationReplay.Scoped("manova-order", "v1"), resource, ObservationProviderCosts()))
+    val set = right(CanonicalRunSet.make(partitions)(runs)(RunId.apply))
+    assert(CanonicalGlobal.assessManova(set, ResidualRegularization.Unregularized, budget).isLeft)
+    assertEquals(heldAccesses, 0)
+
+  private def native(rows: Vector[Vector[Vector[Double]]], schedule: CanonicalGeometrySchedule = right(CanonicalGeometrySchedule.stable(iidGeometry()))) =
+    NativeCanonicalFixtures.contrast(rows.map(fromRows), Vector.fill(rows.length)(schedule))
+
+  private def poison(schedule: CanonicalGeometrySchedule): (CanonicalRunSet[? <: multivar.core.SemanticSpace, ? <: multivar.core.SemanticSpace, CanonicalGeometrySchedule], () => Int) =
+    import scalafim.fmri.mvpa.{AxisRef, EvidenceSource, Observations}
+    import scalafim.fmri.mvpa.analysis.*
+    import scalafim.response.{Provenance, ProvenanceId, SourceId}
+    import multivar.core.{SpaceRole, ValueId, ValueIdentity}
+    var reads = 0
+    val neural = right(AxisRef.fromStableKeys("canonical-poison-neural", SpaceRole.Observed, Vector("v0", "v1"), "native", "psc", "raw"))
+    val partitions = right(AxisRef.fromStableKeys("canonical-poison-runs", SpaceRole.Samples, Vector("run-0", "run-1", "run-2"), "run", "partition", "native"))
+    val runs = Vector.tabulate(3): index =>
+      val time = right(AxisRef.fromStableKeys(s"canonical-poison-time-$index", SpaceRole.Samples, Vector.tabulate(8)(_.toString), "time", "TR", "native"))
+      val operator = new gale.linalg.DoubleLinearOperator:
+        val rows = 8
+        val cols = 2
+        def applyTo(in: gale.linalg.DVec, out: gale.linalg.MutableDVec): Unit =
+          reads += 1
+          throw IllegalStateException("poison evidence")
+      val id = SourceId.unsafe(s"canonical-poison-$index")
+      val source = right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"canonical-poison-root-$index"), id)))
+      val values = right(Observations.fromOperator(time, neural, operator, ValueIdentity.source(ValueId.unsafe(s"canonical-poison-value-$index")), source))
+      val resource = new ObservationProductResource:
+        def acquire() =
+          reads += 1
+          Right(())
+        def close() = Right(())
+      right(CanonicalRunEvidence.fromObservations(RunId(s"run-$index"), time, neural, values, schedule,
+        ObservationReplay.Scoped("poison", "v1"), resource, ObservationProviderCosts()))
+    right(CanonicalRunSet.make(partitions)(runs)(RunId.apply)) -> (() => reads)
 
   private def iidGeometry(): PreparedContrastGeometry =
     val design = DesignMatrix.unsafe(fromRows(designRows))
@@ -247,9 +237,6 @@ class CanonicalEffectMvpaSuite extends munit.FunSuite:
         )
         .toOption
         .get
-
-  private def foldFor(payload: CanonicalFeatureSetPayload, heldOut: String): CanonicalFoldResult =
-    payload.folds.find(_.receipt.heldOutRun == RunId(heldOut)).getOrElse(fail(s"missing fold for $heldOut"))
 
   private def addHeldOutTaskSignal(rows: Vector[Vector[Double]], amount: Double): Vector[Vector[Double]] =
     rows.zip(designRows).map: (response, design) =>

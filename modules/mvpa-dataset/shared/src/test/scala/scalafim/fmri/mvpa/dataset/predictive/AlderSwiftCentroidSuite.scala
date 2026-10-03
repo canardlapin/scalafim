@@ -83,7 +83,7 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
     assertEquals(result.classes.map(_.value), Vector("b", "a"))
     assertEquals(result.rows.map(_.stableKey), fixture.keys)
     assertEquals(result.rows.map(_.stableKey).distinct.length, 9)
-    result.rows.foreach(row => assert(!row.trainingStableKeys.contains(row.stableKey)))
+    result.rows.foreach(row => assert(row.assessments.forall(fit => !fit.trainingStableKeys.contains(row.stableKey))))
     frozenB.indices.foreach(i => assertEqualsDouble(result.probabilities(i, 0), frozenB(i), 1e-12))
     assertEquals(result.rows.map(_.predicted.value), Vector("b", "a", "a", "b", "b", "a", "a", "a", "a"))
     assertEquals(result.assessment.correct, 6L)
@@ -122,11 +122,6 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
       assertEquals(native.rows.map(_.predicted), dense.rows.map(_.predicted))
       assertEquals(native.nativeRead.get.observationsIdentity.columns.size, selected.length)
       assertEquals(native.materialization, dense.materialization)
-      val selectedPatterns = right(PatternMatrix.fromRows(values).selectFeatures(FeatureSet.unsafe(RoiId(1), selected)))
-      val labels = right(Response.categorical(target.map(value => if value == 0.0 then "b" else "a")))
-      val legacy = right(Classification.crossValidate(SwiftCentroidClassifier(), selectedPatterns,
-        right(Classification.categorical(labels, 9)), right(FoldPlan.leaveOneBlockOut(runs))))
-      dense.rows.indices.foreach(row => assertEqualsDouble(dense.probabilities(row, 0), legacy.probabilities(row, 0), 1e-12))
     assert(fixture.calls > 0)
 
   test("missing training class and unknown target refuse explicitly"):
@@ -149,3 +144,33 @@ class AlderSwiftCentroidSuite extends munit.FunSuite:
     val reversedDesign = right(ValidationDesign.bind(reversed,
       right(FixedPartitions.once(right(Labels.retained(IArray.unsafeFromArray(runs.toArray))))), ScientificSeed.fromLong(23L)))
     assert(AlderSwiftCentroid.crossValidate(right(fixture.rows()), reversedDesign, coding).isLeft)
+
+  test("repeated exact assessments average native Swift probabilities by stable row"):
+    val fixture = new Fixture
+    val first = right(Labels.retained(IArray.unsafeFromArray(runs.toArray)))
+    val second = right(Labels.retained(IArray(0, 1, 2, 0, 1, 2, 0, 1, 2)))
+    val repeated = right(ValidationDesign.bind(fixture.axis, right(FixedPartitions.repeated(IArray(first, second))), ScientificSeed.fromLong(23L)))
+    val alternate = right(ValidationDesign.bind(fixture.axis, right(FixedPartitions.once(second)), ScientificSeed.fromLong(23L)))
+    val a = right(AlderSwiftCentroid.crossValidate(right(fixture.rows()), fixture.design, coding))
+    val b = right(AlderSwiftCentroid.crossValidate(right(fixture.rows()), alternate, coding))
+    val combined = right(AlderSwiftCentroid.crossValidate(right(fixture.rows()), repeated, coding))
+    assertEquals(combined.rows.map(_.stableKey), fixture.keys)
+    assertEquals(combined.fits.length, a.fits.length + b.fits.length)
+    assert((0 until a.probabilities.rows).exists(row => math.abs(a.probabilities(row, 0) - b.probabilities(row, 0)) > 1e-8))
+    combined.rows.foreach: row =>
+      assertEquals(row.assessments.map(_.unit.repeat), Vector(0, 1))
+      assertEquals(row.assessments.length, 2)
+      row.assessments.foreach: contribution =>
+        assert(!contribution.trainingStableKeys.contains(row.stableKey))
+        assertEquals(contribution.trainingStableKeys, combined.fits.find(_.unit == contribution.unit).get.trainingStableKeys)
+    combined.rows.indices.foreach: row =>
+      coding.classes.indices.foreach: column =>
+        assertEqualsDouble(combined.probabilities(row, column), (a.probabilities(row, column) + b.probabilities(row, column)) / 2.0, 1e-12)
+
+  test("native Swift refuses non-finite probabilities arising from finite unscaled inputs"):
+    val fixture = new Fixture(Vector(Vector(1e200), Vector(-1e200), Vector(0.0), Vector(0.0)), Vector(0.0, 1.0, 0.0, 1.0), Vector(0, 0, 1, 1))
+    val result = AlderSwiftCentroid.crossValidate(right(fixture.rows()), fixture.design, coding, FeatureScaling.None)
+    assert(result.left.toOption.exists {
+      case AlderSwiftCentroidError.Mvpa(error) => error.message.contains("non-finite")
+      case _ => false
+    })

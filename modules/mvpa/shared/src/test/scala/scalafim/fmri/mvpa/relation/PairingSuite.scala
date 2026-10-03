@@ -1,7 +1,7 @@
 package scalafim.fmri.mvpa.relation
 
 import gale.linalg.DMat
-import multivar.core.{SpaceRole, ValueId, ValueIdentity}
+import multivar.core.{CoordinateEvidence, Lin, SemanticProvenance, SpaceRole, ValueId, ValueIdentity}
 import resample4s.core.{IndexSpace, Injection}
 import scalafim.fmri.mvpa.*
 import scalafim.response.{Provenance, ProvenanceId, SourceId}
@@ -102,6 +102,38 @@ class PairingSuite extends munit.FunSuite:
     assert(design.reduce(Vector(connection.reverse -> expected)).isLeft)
     assert(design.reduce(Vector(connection -> expected, connection -> expected)).isLeft)
 
+  test("weighted ordered scalar contributions preserve orientation under pair reversal and metric transpose"):
+    val effects = right(AxisRef.fromStableKeys("weighted-effects", SpaceRole.Latent, Vector("effect"), "fixture", "unit", "raw"))
+    val neural = right(AxisRef.fromStableKeys("weighted-neural", SpaceRole.Observed, Vector("n0", "n1"), "fixture", "unit", "raw"))
+    def relation(values: Vector[Double], name: String) =
+      val estimate = right(Lin.fromDenseMatrix(DMat.dense(1, 2, values), CoordinateEvidence.dual(neural.evidence), CoordinateEvidence.primal(effects.evidence), ValueIdentity.source(ValueId.unsafe(name)), SemanticProvenance.source("pairing")))
+      right(Relation(effects, neural, estimate, origins(name, s"$name-prep").copy(access = RelationAccess.OwnedReplay("pairing"), support = EvidenceOrigins.Unknown), Vector(EffectEstimability.Estimable)))
+    def closure(values: DMat, name: String) = right(Lin.fromDenseMatrix(values, CoordinateEvidence.primal(neural.evidence), CoordinateEvidence.dual(neural.evidence), ValueIdentity.source(ValueId.unsafe(name)), SemanticProvenance.source("pairing")))
+    val b0 = relation(Vector(1.0, 2.0), "b0")
+    val b1 = relation(Vector(3.0, -1.0), "b1")
+    val b2 = relation(Vector(-2.0, 4.0), "b2")
+    val query = right(Lin.fromDenseMatrix(DMat.dense(1, 1, Vector(1.0)), CoordinateEvidence.primal(effects.evidence), CoordinateEvidence.dual(effects.evidence), ValueIdentity.source(ValueId.unsafe("weighted-h")), SemanticProvenance.source("pairing")))
+    val k = closure(DMat.dense(2, 2, Vector(2.0, 1.0, -3.0, -1.0)), "weighted-k")
+    val first = right(PairingEdge(coordinate(0), coordinate(1), 2.0, partitions.descriptor))
+    val second = right(PairingEdge(coordinate(1), coordinate(2), -0.5, partitions.descriptor))
+    val endpoints = Vector(b0, b1, b2)
+    def contribution(edge: PairingEdge[partitions.Id, String]) = right(SecondOrderQuery(RelationPair(endpoints(edge.left.ordinal), endpoints(edge.right.ordinal)), Some(query), Some(k)).scalar).value
+    assertEqualsDouble(contribution(first), -11.0, 1e-12)
+    assertEqualsDouble(contribution(second), -2.0, 1e-12)
+    val sum = right(right(PairingDesign(partitions, Vector(first, second), EdgeReducer.WeightedSum)).reduce(Vector(first -> contribution(first), second -> contribution(second))))
+    val mean = right(right(PairingDesign(partitions, Vector(first, second), EdgeReducer.WeightedMean)).reduce(Vector(first -> contribution(first), second -> contribution(second))))
+    assertEqualsDouble(sum.value, -21.0, 1e-12)
+    assertEqualsDouble(mean.value, -14.0, 1e-12)
+    val reversed = right(SecondOrderQuery(RelationPair(b1, b0), Some(query.star), Some(k.star)).scalar).value
+    assertEqualsDouble(reversed, -11.0, 1e-12)
+    val reverseEdges = Vector(first.reverse, second.reverse)
+    val reverseValues = reverseEdges.map: edge =>
+      edge -> right(SecondOrderQuery(RelationPair(endpoints(edge.left.ordinal), endpoints(edge.right.ordinal)), Some(query.star), Some(k.star)).scalar).value
+    assertEqualsDouble(right(right(PairingDesign(partitions, reverseEdges, EdgeReducer.WeightedSum)).reduce(reverseValues)).value, -21.0, 1e-12)
+    assertEqualsDouble(right(right(PairingDesign(partitions, reverseEdges, EdgeReducer.WeightedMean)).reduce(reverseValues)).value, -14.0, 1e-12)
+    val incorrectlyUntransposed = reverseEdges.map(edge => edge -> contribution(edge))
+    assertEqualsDouble(right(right(PairingDesign(partitions, reverseEdges, EdgeReducer.WeightedMean)).reduce(incorrectlyUntransposed)).value, 55.0 / 1.5, 1e-12)
+
 
   test("foreign conditional evidence and unknown metric cannot grant a declared unbiased claim"):
     val left = origins("left", "lp")
@@ -128,6 +160,26 @@ class PairingSuite extends munit.FunSuite:
         case _ => false
       })
       case _ => fail("revision labels cannot remove shared acquisition support")
+
+  test("restricted beta rows retain shared original acquisition support and remain descriptive"):
+    val effects = right(AxisRef.fromStableKeys("beta-effects", SpaceRole.Observed, Vector("a", "b"), "effect", "unit", "raw"))
+    val neural = right(AxisRef.fromStableKeys("beta-neural", SpaceRole.Observed, Vector("v"), "feature", "unit", "raw"))
+    val supportValue = ValueIdentity.source(ValueId.unsafe("original-acquisition-values"))
+    val support = right(EvidenceOrigins.make(source("original-acquisition"), supportValue,
+      AcquisitionCoordinates.OriginalTemporalAxis(partitions.descriptor),
+      ValueSupport.Bounded(partitions.descriptor, supportValue, Vector(0, 1)),
+      PreparationSupport.FixedShared(ValueSupport.Bounded(partitions.descriptor, supportValue, Vector.empty)), effects.descriptor))
+    def beta(sourceName: String, values: Vector[Double]) =
+      val estimate = right(Lin.fromDenseMatrix(DMat.dense(2, 1, values), CoordinateEvidence.dual(neural.evidence), CoordinateEvidence.primal(effects.evidence), ValueIdentity.source(ValueId.unsafe(sourceName)), SemanticProvenance.source("restricted-beta")))
+      right(Relation(effects, neural, estimate, RelationOrigins(RelationSource(sourceName, "response", "readout", "prep", "noise"), RelationAccess.OwnedReplay("pairing"), support), Vector.fill(2)(EffectEstimability.Estimable)))
+    val selection = right(Injection.from(IArray(0), right(IndexSpace.of(effects.size))))
+    val leg = right(ReindexingLeg.bind(effects, selection))
+    val restricted = Vector(beta("beta-0", Vector(1.0, 2.0)), beta("beta-1", Vector(3.0, 4.0)), beta("beta-2", Vector(5.0, 6.0))).map(_.restrict(leg))
+    val set = right(RelationSet(partitions, leg.child, neural, restricted))
+    val design = right(PairingDesign(partitions, Vector(edge(0, 1)), EdgeReducer.WeightedSum))
+    right(design.assess(set, MetricAdmission.Fixed(EvidenceOrigins.Unknown), Vector.empty)).claim match
+      case PairingClaim.Descriptive(reasons) => assert(reasons.exists { case ScientificRefusal.SharedAcquisition(_, _) => true; case _ => false })
+      case other => fail(s"restricted rows with shared original support must remain descriptive, got $other")
 
   test("finite weight overflow and zero weighted-mean denominator are refused"):
     val huge = right(PairingEdge(coordinate(0), coordinate(1), Double.MaxValue, partitions.descriptor))

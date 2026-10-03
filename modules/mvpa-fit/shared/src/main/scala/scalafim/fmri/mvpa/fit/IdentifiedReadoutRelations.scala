@@ -11,7 +11,7 @@ import multivar.core.{
 import gale.linalg.{DoubleLinearOperator, DVec, MutableDVec}
 import scala.util.control.NonFatal
 import scalafim.fmri.mvpa.{AxisDigest, AxisRef, EvidenceError, EvidenceOrigins}
-import scalafim.fmri.mvpa.relation.{EffectEstimability, Relation, RelationAccess, RelationOrigins, RelationSet, RelationSource}
+import scalafim.fmri.mvpa.relation.{EffectEstimability, Relation, RelationAccess, RelationOrigins, RelationSet, RelationSource, ScopeReplay}
 
 /** The declared access mode belongs to the response provider, not to
   * `DoubleLinearOperator`. A callable operator alone establishes neither a
@@ -22,6 +22,11 @@ sealed trait ReadoutRelationAccess:
 
 object ReadoutRelationAccess:
   case object OneShot extends ReadoutRelationAccess:
+    val relationAccess: RelationAccess = RelationAccess.OneShot
+  final case class ScopedReplay(owner: String, revision: String) extends ReadoutRelationAccess:
+    require(owner.trim.nonEmpty && revision.trim.nonEmpty, "scoped replay owner and revision must be non-empty")
+    // A provider declaration is not a live witness. The witness is minted only
+    // after this exact resource has been acquired.
     val relationAccess: RelationAccess = RelationAccess.OneShot
 
 trait ReadoutResource:
@@ -53,8 +58,9 @@ final case class ReadoutRelationOrigins(
       writer.string(effectAxis.descriptor.coordinateSignature.value)
       writer.string(neuralAxis.descriptor.coordinateSignature.value)
       writer.string(support.identityDigest)
-  def relationOrigins: RelationOrigins =
-    RelationOrigins(RelationSource(acquisition, responseRevision, readout, preparation, noiseRevision), access.relationAccess, support)
+  def relationOrigins(access: RelationAccess): RelationOrigins =
+    RelationOrigins(RelationSource(acquisition, responseRevision, readout, preparation, noiseRevision), access, support)
+  def relationOrigins: RelationOrigins = relationOrigins(access.relationAccess)
 
 final class RunReadoutRelation private (
     private[fit] val run: RunTrialReadout,
@@ -63,16 +69,27 @@ final class RunReadoutRelation private (
 ):
   private var closed = false
   private var consumed = false
+  private var scope: Option[ScopeReplay] = None
   private[fit] def acquire(): Either[String, RunTrialReadout] = synchronized:
     if closed then Left("relation source scope is closed")
     else if consumed then Left("relation source scope has already been consumed")
     else resource.acquire().map: _ =>
       consumed = true
       run
+  private[fit] def mintScope(effects: AxisRef[?], neural: AxisRef[?]): Unit = synchronized:
+    origins.access match
+      case ReadoutRelationAccess.ScopedReplay(owner, revision) if scope.isEmpty =>
+        scope = Some(new ScopeReplay(owner, revision, origins.relationIdentity(effects, neural)))
+      case _ => ()
+  private[fit] def liveAccess: RelationAccess = synchronized:
+    origins.access match
+      case ReadoutRelationAccess.OneShot => RelationAccess.OneShot
+      case ReadoutRelationAccess.ScopedReplay(_, _) => RelationAccess.ScopedReplay(scope.getOrElse(throw IllegalStateException("scoped replay was not acquired")))
   private[fit] def close(): Either[String, Unit] = synchronized:
     if !consumed || closed then Right(())
     else
       closed = true
+      scope.foreach(_.expire())
       resource.close()
   private[fit] def whileOpen(task: => Unit): Unit = synchronized:
     if closed then throw IllegalStateException("relation source scope is closed")
@@ -81,6 +98,9 @@ final class RunReadoutRelation private (
 object RunReadoutRelation:
   def oneShot(run: RunTrialReadout, origins: ReadoutRelationOrigins, resource: ReadoutResource): RunReadoutRelation =
     require(origins.access == ReadoutRelationAccess.OneShot, "one-shot scope requires one-shot access")
+    new RunReadoutRelation(run, origins, resource)
+  def scopedReplay(run: RunTrialReadout, origins: ReadoutRelationOrigins, resource: ReadoutResource): RunReadoutRelation =
+    require(origins.access.isInstanceOf[ReadoutRelationAccess.ScopedReplay], "scoped replay requires an explicit provider declaration")
     new RunReadoutRelation(run, origins, resource)
 
 enum IdentifiedReadoutRelationError:
@@ -185,6 +205,7 @@ object IdentifiedReadoutRelations:
     else
       input.acquire().left.map(IdentifiedReadoutRelationError.Access(run.runId.value, _)).flatMap: _ =>
         acquired += input
+        input.mintScope(effects, neural)
         run.readout.operator.compose(run.timeSeries.value)
         .left
         .map(error => IdentifiedReadoutRelationError.Composition(run.runId.value, error.getMessage))
@@ -207,6 +228,6 @@ object IdentifiedReadoutRelations:
             val estimability = run.readout.axis.estimability.map:
               case scalafim.fmri.fit.TrialEstimability.Estimable => EffectEstimability.Estimable
               case scalafim.fmri.fit.TrialEstimability.ZeroRegressor => EffectEstimability.NotEstimable("zero trial regressor")
-            Relation(effects, neural, table, input.origins.relationOrigins, estimability)
+            Relation.fromAcquired(effects, neural, table, input.origins.relationOrigins(input.liveAccess), estimability)
               .left
               .map(IdentifiedReadoutRelationError.Axis.apply)

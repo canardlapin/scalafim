@@ -2,7 +2,7 @@ package scalafim.fmri.mvpa.relation
 
 import multivar.core.{SemanticSpace, SpaceEvidence, Table}
 import resample4s.core.Reindexing
-import scalafim.fmri.mvpa.{AxisDescriptor, AxisRef, EvidenceError, EvidenceOrigins, ReindexingLeg}
+import scalafim.fmri.mvpa.{AxisDescriptor, AxisDigest, AxisRef, EvidenceError, EvidenceOrigins, ReindexingLeg}
 
 final case class RelationSource(
     acquisitionRevision: String,
@@ -20,6 +20,27 @@ final case class RelationSource(
 enum RelationAccess:
   case OneShot
   case OwnedReplay(readerOwner: String)
+  case ScopedReplay(witness: ScopeReplay)
+
+object RelationAccess:
+  def admitImmediate(value: RelationAccess): Either[EvidenceError, Unit] = value match
+    case RelationAccess.OwnedReplay(_) => Right(())
+    case RelationAccess.ScopedReplay(witness) if witness.isActive => Right(())
+    case RelationAccess.ScopedReplay(_) => Left(EvidenceError.InvalidSource("scoped relation replay has expired"))
+    case RelationAccess.OneShot => Left(EvidenceError.InvalidSource("repeated evaluation requires explicit replay permission"))
+
+  def admitsRetained(value: RelationAccess): Boolean = value match
+    case RelationAccess.OwnedReplay(_) => true
+    case RelationAccess.OneShot | RelationAccess.ScopedReplay(_) => false
+
+  private[mvpa] def writeFramed(writer: AxisDigest.Writer, value: RelationAccess): Unit = value match
+    case RelationAccess.OneShot => writer.string("one-shot")
+    case RelationAccess.OwnedReplay(owner) => writer.string("owned-replay"); writer.string(owner)
+    case RelationAccess.ScopedReplay(witness) =>
+      writer.string("scoped-replay")
+      writer.string(witness.owner)
+      writer.string(witness.revision)
+      writer.string(witness.sourceBinding)
 
 final case class RelationOrigins(
     source: RelationSource,
@@ -29,6 +50,7 @@ final case class RelationOrigins(
   access match
     case RelationAccess.OneShot => ()
     case RelationAccess.OwnedReplay(owner) => require(owner.nonEmpty, "replay reader owner must be non-empty")
+    case RelationAccess.ScopedReplay(_) => ()
 
 enum EffectEstimability:
   case Estimable
@@ -106,7 +128,23 @@ object Relation:
       origins: RelationOrigins,
       estimability: Vector[EffectEstimability]
   ): Either[EvidenceError, Relation[effects.Id, neural.Id]] =
-    if !origins.support.outputAssociation.forall(_ == effects.descriptor) then
+    origins.access match
+      case RelationAccess.ScopedReplay(_) => Left(EvidenceError.InvalidSource("scoped replay attachment belongs to the acquiring provider"))
+      case _ => fromAcquired(effects, neural, estimate, origins, estimability)
+
+  /** Only an acquiring provider may attach its live scoped capability. Public
+    * callers cannot transplant an observed witness onto another operator.
+    * Restriction preserves the original guarded operator and lifetime.
+    */
+  private[mvpa] def fromAcquired[EK, NK](
+      effects: AxisRef[EK], neural: AxisRef[NK], estimate: Table[effects.Id, neural.Id],
+      origins: RelationOrigins, estimability: Vector[EffectEstimability]
+  ): Either[EvidenceError, Relation[effects.Id, neural.Id]] =
+    if origins.access match
+        case RelationAccess.ScopedReplay(witness) => !witness.isActive
+        case _ => false
+    then Left(EvidenceError.InvalidSource("cannot attach expired scoped replay"))
+    else if !origins.support.outputAssociation.forall(_ == effects.descriptor) then
       Left(EvidenceError.AxisMismatch("relation support output", effects.descriptor.stableKey, origins.support.outputAssociation.get.stableKey))
     else if estimate.rows != effects.size then Left(EvidenceError.ShapeMismatch("relation effects", effects.size, estimate.rows))
     else if estimate.cols != neural.size then Left(EvidenceError.ShapeMismatch("relation neural", neural.size, estimate.cols))
@@ -118,6 +156,8 @@ final class RelationSet[P <: SemanticSpace, E <: SemanticSpace, N <: SemanticSpa
     val partitionAxis: AxisDescriptor,
     val effects: SpaceEvidence[E],
     val effectAxis: AxisDescriptor,
+    /** Stable effect keys preserve the frozen declared effect order for RDMs. */
+    val effectKeys: Vector[String],
     val neural: SpaceEvidence[N],
     val neuralAxis: AxisDescriptor,
     val relations: Vector[Relation[E, N]]
@@ -132,5 +172,8 @@ object RelationSet:
   ): Either[EvidenceError, RelationSet[partitions.Id, effects.Id, neural.Id]] =
     if relations.isEmpty then Left(EvidenceError.InvalidAxis("relations", "must contain at least one partition"))
     else if relations.length != partitions.size then Left(EvidenceError.ShapeMismatch("partition relations", partitions.size, relations.length))
-    else Right(new RelationSet(partitions.evidence, partitions.descriptor, effects.evidence, effects.descriptor,
-      neural.evidence, neural.descriptor, relations))
+    else
+      val keys = (0 until effects.size).toVector.map(effects.index.stableKeyAt).foldLeft[Either[EvidenceError, Vector[String]]](Right(Vector.empty)):
+        case (acc, next) => for values <- acc; key <- next yield values :+ key
+      keys.map(effectKeys => new RelationSet(partitions.evidence, partitions.descriptor, effects.evidence, effects.descriptor, effectKeys,
+        neural.evidence, neural.descriptor, relations))

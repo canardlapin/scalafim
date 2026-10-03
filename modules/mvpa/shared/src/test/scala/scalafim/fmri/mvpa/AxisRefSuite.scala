@@ -44,6 +44,14 @@ class AxisRefSuite extends munit.FunSuite:
     assertEquals(first.ordinalOf("trial-32"), Some(2))
     assertEquals(first.keyAt(3), Left(EvidenceError.InvalidOrdinal(3, 3)))
 
+  test("digest hexadecimal preserves independent SHA-256 framing and UTF-8 fixtures"):
+    // Python hashlib over little-endian byte-length-prefixed UTF-8 fields;
+    // the empty payload is the standard SHA-256 empty-message vector.
+    assertEquals(AxisDigest.sha256Hex(_ => ()), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+    assertEquals(AxisDigest.sha256Hex(_.string("")), "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119")
+    assertEquals(AxisDigest.sha256Hex(writer => Vector("a" * 200, "café", "😀").foreach(writer.string)),
+      "f90133bb1e6b9abd7a783a47e607a7135ce6fdcfe3214dac9fe8e0af00b140b9")
+
   test("ordered keys and complete scientific metadata participate in axis identity"):
     val baseline = axis()
     val variants = Vector(

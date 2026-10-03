@@ -1,5 +1,9 @@
 # Unified MVPA M1.01 identified-evidence evidence
 
+Historical packet evidence. Legacy API references below describe the recorded
+base revision, not the current public surface. See the
+[native MVPA documentation](../../modules/mvpa/README.md) for current callers.
+
 Recorded: 2026-09-13
 
 Packet: M1.01 (`bd-01M2BNEPV2TD9CXT3HDQG6DTKY`)
