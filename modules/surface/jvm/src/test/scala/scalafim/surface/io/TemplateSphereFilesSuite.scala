@@ -3,6 +3,7 @@ package scalafim.surface.io
 import scalafim.surface.*
 
 import java.security.MessageDigest
+import scala.concurrent.duration.*
 import scala.io.Source
 
 /** TemplateFlow registration spheres and fsaverage <-> fsLR resampling plans against Connectome Workbench 2.2.1
@@ -11,6 +12,11 @@ import scala.io.Source
   * them skip with an explicit "asset missing" message when no local TemplateFlow cache holds them.
   */
 class TemplateSphereFilesSuite extends munit.FunSuite:
+  /** Each 164k-vertex resampling plan takes about 5 s on an idle host but has exceeded munit's 30 s default under
+    * heavy shared load (load average 26-53). The limit bounds a hang; it is not a performance budget.
+    */
+  override val munitTimeout: Duration = 5.minutes
+
   private val Oracle = "/scalafim/surface/template_sphere_oracle"
 
   /** Budgets fixed before the plans were compared (see the generator): ScalaFIM casts the radial ray where Workbench

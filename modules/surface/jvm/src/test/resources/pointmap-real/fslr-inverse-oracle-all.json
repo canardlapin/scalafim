@@ -1,0 +1,54 @@
+{
+  "schema": "scalafim.fslr-inverse-oracle-all/1",
+  "description": "Every fsLR 32k midthickness vertex (MNI152NLin6Asym, RAS mm) solved for its MNI152NLin2009cAsym position by SimpleITK fixed-point iteration y <- y + (x - T(y)) from y = x, T = the TemplateFlow 2009c->6Asym composite evaluated in LPS, until |T(y) - x| <= 1e-10 mm or 200 iterations.",
+  "transform": {
+    "path": "tpl-MNI152NLin2009cAsym/tpl-MNI152NLin2009cAsym_from-MNI152NLin6Asym_mode-image_xfm.h5",
+    "sha256": "2e3869a07b96aec406e0419ca2e434afc54882d37cc212b933b139d1b63a4dfe"
+  },
+  "tool": {
+    "SimpleITK": "2.5.6",
+    "nibabel": "5.4.2",
+    "numpy": "2.5.3",
+    "generator": "tools/transform/generate_fslr_inverse_oracle.py"
+  },
+  "toleranceMm": 1e-10,
+  "maxIterations": 200,
+  "columns": [
+    "x",
+    "y",
+    "z",
+    "residualMm",
+    "iterations",
+    "inSupport"
+  ],
+  "reproducesCommittedSubsampleMm": 1.8010475543551892e-05,
+  "reproducesCommittedSubsampleMaxBoundRatio": 0.39116894487831166,
+  "hemispheres": {
+    "L": {
+      "surface": {
+        "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii",
+        "sha256": "036a8b6c84fa4b581b7ad7b36d99190b57ad6755c9d7ef7adc3e9ffc6448f1af"
+      },
+      "vertices": 32492,
+      "file": "fslr-inverse-oracle-all-L.f64le.gz",
+      "sha256": "6ecf0435841cec46acb662b87b079c400e50b4e9700f2f11fa0aa01f8afe4feb",
+      "maxResidualMm": 9.999570592379153e-11,
+      "maxIterations": 33,
+      "unconverged": 0,
+      "outsideSupport": 0
+    },
+    "R": {
+      "surface": {
+        "path": "tpl-fsLR/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii",
+        "sha256": "9d2cef05096c433b134870456abebe7ff201cdda60ce5741d7b794018eeccda7"
+      },
+      "vertices": 32492,
+      "file": "fslr-inverse-oracle-all-R.f64le.gz",
+      "sha256": "1c96b3580b43e8da4f6bf689d0dfcb274529023029bd8c813b8b49b447320022",
+      "maxResidualMm": 9.999122766228896e-11,
+      "maxIterations": 23,
+      "unconverged": 0,
+      "outsideSupport": 0
+    }
+  }
+}

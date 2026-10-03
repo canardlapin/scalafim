@@ -128,7 +128,7 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
 // reviewed source revision.
-lazy val reframe4sRevision = "9a4508351d74567147b8ea3221d82db89e5892b0"
+lazy val reframe4sRevision = "5f7152aada60335935843ddc968162f615337415"
 lazy val reframe4sBuild =
   sys.props
     .get("scalafim.reframe4s.build")
@@ -158,7 +158,7 @@ lazy val graph4sAlgorithmsJS  = ProjectRef(graph4sBuild, "algorithmsJS")
 // General multivariate analysis is developed independently. The optional
 // system property is an explicit local-development override; ordinary builds
 // clone the exact committed source revision.
-lazy val multivarRevision = "f74d631720d65147c51496dcbdd37c01912de1cb"
+lazy val multivarRevision = "ab811e257dd67f77e8c3b70cb1ea600f274429a3"
 lazy val multivarBuild = {
   // Inference must share the same resample4s classes as native MVPA adapters.
   System.setProperty("multivar.resample4s.build.uri", resample4sBuild.toString)
@@ -726,16 +726,17 @@ lazy val surface =
   crossProject(JSPlatform, JVMPlatform)
     .crossType(CrossType.Full)
     .in(file("modules/surface"))
-    .dependsOn(image, locusData, scenarioTestkit % "test->compile")
+    .dependsOn(image, transform, locusData, scenarioTestkit % "test->compile")
     .settings(commonSettings)
     .settings(
       name := "scalafim-surface",
       libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "upickle" % "4.1.0",
         "org.scala-lang.modules" %%% "scala-xml" % "2.4.0"
       )
     )
-    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM))
-    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS))
+    .jvmConfigure(_.dependsOn(image4sGeometryJVM, graph4sAlgorithmsJVM, zarr4sCoreJVM))
+    .jsConfigure(_.dependsOn(image4sGeometryJS, graph4sAlgorithmsJS, zarr4sCoreJS))
     .jsSettings(jsSettingsBase)
 
 lazy val surfaceJS  = surface.js
