@@ -1,0 +1,17 @@
+{
+  "docs/audits/evidence/numerical-ownership-20261003/baseline-jvm.txt.gz": "0f075f020b22c15932b98004636625b327b4e1116bf4df0933cffdd93aa311d0",
+  "docs/audits/evidence/numerical-ownership-20261003/baseline-jvm.txt.meta.json": "de55147636f9ed586f3723a6a22152d7c8eda081cf10853837ec6c4f7eaa5592",
+  "docs/audits/evidence/numerical-ownership-20261003/baseline-projection-suite.scala.txt": "75727ba792bb261f0aacb61d91143ab53197ba794bc56dbd8ead14caf02de889",
+  "docs/audits/evidence/numerical-ownership-20261003/final-mvpa.txt.gz": "341d955216eb5546593f47d5f4e6635503c5b76799ab65344e8661c63c0f958e",
+  "docs/audits/evidence/numerical-ownership-20261003/final-mvpa.txt.meta.json": "cbd8dd47693a93da996af50ec8b095ef64226b3e1b1da5eba918f92452b8f19e",
+  "docs/audits/evidence/numerical-ownership-20261003/initial-run-note.txt": "d83b9a290bc783ae43392af352cc92f5ad6c4be42f688900097a4fd42519fcbf",
+  "docs/audits/evidence/numerical-ownership-20261003/mvpa-jvm.txt.gz": "196cc831f900c4dd0434956612d2fb1718c810de8e2013cda3734999808d3d18",
+  "docs/audits/evidence/numerical-ownership-20261003/mvpa-jvm.txt.meta.json": "f3005244c1e5ca42381abf618a669d406f98aff84c6ec6530179052e86c37bf5",
+  "docs/audits/evidence/numerical-ownership-20261003/red.txt.gz": "549566bebb1c115c347fc94271084d517b75602dda51e08c43a32cd359682a8b",
+  "docs/audits/evidence/numerical-ownership-20261003/red.txt.meta.json": "0ed23406e4f250b5261c78220b2d0424a48baaaa01f25c7b76e132db18a899b4",
+  "docs/audits/evidence/numerical-ownership-20261003/solver-scan.txt": "831240c54b9921281bd62c02415b845aa816ca5d6868171e5938510eb555657b",
+  "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Rsa.scala": "b64c24acfd1bd2b3e3e54507af523e6c65514fff67235a75f27901d2611a8ec0",
+  "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/RsaProjectionSuite.scala": "8f8ce3dd9787a2a786efa9d9299275e665d73b859d37d382a35257c0a8769452",
+  "modules/mvpa/jvm/src/test/scala/scalafim/fmri/mvpa/RsaAllocationProbe.scala": "c20a8931518abd129022743d23447d169fdafecd2edcbee95cf423e15900469f",
+  "docs/plans/hrf-matvec-contract-v4.md": "dbc827aa9114c98b380e5e7138b6b14df3e4250fac25de981951ddf930f7d96e"
+}
