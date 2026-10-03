@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.{BasisOrthogonalizationReceipt, CellAssignment, CellKey, CenteringOutcome, CenteringPolicy, CenteringReceipt, CenteringGroupReceipt, ColumnId, DegenerateModulatorOutcome, DegenerateModulatorPolicy, DegenerateModulatorReceipt, DesignError, EmptyCellAudit, EmptyCellDisposition, EmptyCellPolicy, EmptyCellScope, EventRowProvenance, FactorLevelAudit, FactorLevelRegistry, FactorId, FactorPartitionAudit, FactorSchemaBinding, HrfAssignment, HrfByCell, HrfByPhase, HrfColumnScale, HrfColumnScaling, MissingValuePolicy, MissingValueResolution, ModulatorId, ModulatorOrthogonalization, ModulatorOrthogonalizationPlan, Names, OrthogonalizationGroupReceipt, OrthogonalizationOutcome, OrthogonalizationReceipt, OrthogonalizationScope, OrthogonalizationStepReceipt, PhaseId, PolicyReceipt, RunIndex, TermId, TrialId}
+import scalafim.fmri.design.{BasisOrthogonalizationReceipt, CellAssignment, CellKey, CenteringOutcome, CenteringPolicy, CenteringReceipt, CenteringGroupReceipt, ColumnId, DegenerateModulatorOutcome, DegenerateModulatorPolicy, DegenerateModulatorReceipt, DesignError, EmptyCellAudit, EmptyCellDisposition, EmptyCellPolicy, EmptyCellScope, EventRowProvenance, FactorLevelAudit, FactorLevelRegistry, FactorId, FactorPartitionAudit, FactorSchemaBinding, HrfAssignment, HrfByCell, HrfByPhase, HrfColumnScale, HrfColumnScaling, MissingValuePolicy, MissingValueResolution, ModulatorId, ModulatorOrthogonalization, ModulatorOrthogonalizationPlan, Names, OrthogonalizationGroupReceipt, OrthogonalizationOutcome, OrthogonalizationReceipt, OrthogonalizationScope, OrthogonalizationStepReceipt, PhaseId, PolicyReceipt, PortableNumber, RunIndex, TermId, TrialId}
 import scalafim.fmri.design.ObservedModulator
 import scalafim.fmri.design.contrast.ContrastSpec
 import scalafim.fmri.design.contrast.{LevelId, TermCells}
@@ -940,9 +940,9 @@ object EventModelBuilder:
       termDurs <- t.durations.fold[Either[DesignError, Vector[Seconds]]](Right(schedule.defaultDurs)) { ref =>
         resolveSecondsEither(ref, env.eventData, nEvents, argName = "durations")
       }
-      trialIds <- resolveTrialwiseIds(t.id, env.eventData, nEvents, schedule.blockIds0, label0)
-      phase0 <- resolveTrialwisePhase(t.phase, env.eventData, nEvents, schedule.blockIds0)
       subsetMask <- resolveSubsetMaskEither(t.subset, env.eventData, nEvents)
+      trialIds <- resolveTrialwiseIds(t.id, env.eventData, nEvents, schedule.blockIds0, subsetMask, label0)
+      phase0 <- resolveTrialwisePhase(t.phase, env.eventData, nEvents, schedule.blockIds0, subsetMask)
       trialEvent <- catchBuild(DesignError.fromThrowable)(Event.factor(trialIds, name = "trial"))
       rows0 = TermRows(Vector(trialEvent), termOnsets, termDurs, schedule.blockIds0, Vector.tabulate(nEvents)(identity))
       rows = if subsetMask.forall(identity) then rows0 else subsetTerm(rows0, subsetMask)
@@ -1159,41 +1159,47 @@ object EventModelBuilder:
 
   /** Resolve a trialwise parent axis. Parent ids are caller-local within a
     * run, then qualified before entering [[EventPhase]], whose provenance
-    * identity is global across the complete event table.
+    * identity is global across the complete event table. Uniqueness is
+    * checked on the rows the term's `subset` retains.
     */
   private def resolveTrialwisePhase(
       phase: Option[PhaseRef],
       data: DataTable,
       nEvents: Int,
-      blockIds: Vector[Int]
+      blockIds: Vector[Int],
+      keep: Vector[Boolean]
   ): Either[DesignError, Option[ResolvedPhase]] =
     phase match
       case None => Right(None)
       case Some(ref) =>
         resolveIdentifierValues(ref.parent, data, nEvents, "parent").flatMap { values =>
-          validateUniqueWithinRun(values, blockIds, "parent")
+          validateUniqueWithinRun(values, blockIds, keep, "parent")
             .flatMap(_ => qualifyTrialIds(values, blockIds).map(ids => Some(ResolvedPhase(ref.id, ids))))
         }
 
+  /** Explicit ids need only be unique within a run among the rows the term's
+    * `subset` retains; long-format tables may repeat an id across phases.
+    */
   private def resolveTrialwiseIds(
       identity: Option[ArgValue],
       data: DataTable,
       nEvents: Int,
       blockIds: Vector[Int],
+      keep: Vector[Boolean],
       label: String
   ): Either[DesignError, Vector[String]] =
     identity match
       case None => Right(trialLevels(nEvents))
       case Some(ArgValue.Ident(column)) =>
         resolveIdentifierValues(column, data, nEvents, "id").flatMap { values =>
-          validateUniqueWithinRun(values, blockIds, "id").map { _ =>
+          validateUniqueWithinRun(values, blockIds, keep, "id").map { _ =>
             values.indices.map { index =>
               s"run${blockIds(index) + 1}_${label}_${values(index)}"
             }.toVector
           }
         }
       case Some(ArgValue.Str(name)) =>
-        ColumnId(name).flatMap(column => resolveTrialwiseIds(Some(ArgValue.Ident(column)), data, nEvents, blockIds, label))
+        ColumnId(name).flatMap(column => resolveTrialwiseIds(Some(ArgValue.Ident(column)), data, nEvents, blockIds, keep, label))
       case Some(other) =>
         Left(DesignError.FormulaBinding(s"id must be a column reference, found $other"))
 
@@ -1208,7 +1214,7 @@ object EventModelBuilder:
         column match
           case Column.Strings(values) => Right(values)
           case Column.Ints(values)    => Right(values.map(_.toString))
-          case Column.Doubles(values) if values.forall(_.isFinite) => Right(values.map(_.toString))
+          case Column.Doubles(values) if values.forall(_.isFinite) => Right(values.map(PortableNumber.format))
           case Column.Doubles(_) => Left(DesignError.InvalidColumnType(columnId.value, "finite trial identifiers", "numeric with non-finite values"))
           case Column.Bools(values) => Right(values.map(_.toString))
           case other => Left(DesignError.InvalidColumnType(columnId.value, "scalar trial identifiers", other.typeName))
@@ -1231,9 +1237,11 @@ object EventModelBuilder:
   private def validateUniqueWithinRun(
       ids: Vector[String],
       blockIds: Vector[Int],
+      keep: Vector[Boolean],
       argName: String
   ): Either[DesignError, Unit] =
     val duplicate = blockIds.indices
+      .filter(keep)
       .groupBy(blockIds)
       .collectFirst { case (block, rows) if rows.map(ids).distinct.length != rows.length => block }
     duplicate match

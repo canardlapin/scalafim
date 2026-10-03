@@ -9,3 +9,9 @@ class ConfoundSpecJsonCodecSuite extends munit.FunSuite:
   test("confound JSON rejects unknown and malformed fields"):
     assert(ConfoundSpecJsonCodec.decode("""{"version":1,"motion":"Raw6","acompcorComponents":0,"includeWhiteMatter":false,"includeCsf":false,"includeGlobalSignal":false,"censor":null,"extra":1}""").isLeft)
     assert(ConfoundSpecJsonCodec.decode("""{"version":1,"motion":"Raw6","acompcorComponents":0,"includeWhiteMatter":false,"includeCsf":false,"includeGlobalSignal":false,"censor":{"threshold":0.5}}""").isLeft)
+
+  test("every motion expansion, including RawAndDerivative12, round trips"):
+    MotionExpansion.values.foreach { motion =>
+      val source = ConfoundSpec.make(motion).toOption.getOrElse(fail("spec"))
+      assertEquals(ConfoundSpecJsonCodec.decode(ConfoundSpecJsonCodec.encode(source)), Right(source))
+    }

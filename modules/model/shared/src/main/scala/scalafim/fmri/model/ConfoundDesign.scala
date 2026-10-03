@@ -1,27 +1,44 @@
 package scalafim.fmri.model
 
+import scalafim.fmri.design.{ColumnId, RunIndex, ScanIndex}
 import scalafim.fmri.hrf.linalg.Mat
 
 /** Typed, scan-aligned confound preparation.  This layer prepares columns and
   * censor receipts only; callers decide how an excluded run is handled before
-  * constructing a model or estimator. */
+  * constructing a model or estimator.
+  *
+  * Column ids are run-qualified (`run1_motion_x`, `run2_censor_scan_0003`) so
+  * that nuisance names stay unique when runs are concatenated into one model.
+  * Scan positions in receipts and spike names are one-based within their run. */
 enum MotionExpansion:
   case Raw6, RawAndDerivative12, Friston24
 
 enum ConfoundError:
   case InvalidSpec(detail: String)
-  case InvalidInput(run: Int, detail: String)
-  case MissingInput(run: Int, name: String)
+  case InvalidInput(run: RunIndex, detail: String)
+  case MissingInput(run: RunIndex, name: String)
   case ExcludedRuns(runs: Vector[ExcludedConfoundRun])
+  case NoRetainedScans(run: RunIndex, scans: Int)
+  case InsufficientRetainedScans(run: RunIndex, retained: Int, nuisanceColumns: Int)
 
   def message: String = this match
     case InvalidSpec(detail) => s"invalid confound specification: $detail"
-    case InvalidInput(run, detail) => s"invalid confound input for run $run: $detail"
-    case MissingInput(run, name) => s"run $run requires $name input"
-    case ExcludedRuns(runs) => s"confound preparation excluded runs: ${runs.map(_.run).mkString(", ")}; caller must handle exclusion explicitly"
+    case InvalidInput(run, detail) => s"invalid confound input for run ${run.oneBased}: $detail"
+    case MissingInput(run, name) => s"run ${run.oneBased} requires $name input"
+    case ExcludedRuns(runs) => s"confound preparation excluded runs: ${runs.map(_.run.oneBased).mkString(", ")}; caller must handle exclusion explicitly"
+    case NoRetainedScans(run, scans) => s"run ${run.oneBased} retains none of its $scans scans after censoring; exclude it explicitly"
+    case InsufficientRetainedScans(run, retained, columns) =>
+      s"run ${run.oneBased} retains $retained scans but needs at least $columns for its non-spike nuisance columns; the nuisance design would be rank deficient"
 
 /** Censor values strictly greater than `threshold`, include neighbouring scans,
-  * then censor retained segments shorter than `minimumRetainedSegment`. */
+  * then censor retained segments shorter than `minimumRetainedSegment`.
+  *
+  * A run whose censored fraction exceeds `maximumCensoredFraction` becomes an
+  * explicit [[ExcludedConfoundRun]]. The default, 1.0, never excludes a run on
+  * fraction alone: an exclusion threshold is a study-level decision, not a
+  * library default. Independently of this setting, a run that retains no scans,
+  * or fewer scans than its non-spike nuisance columns, always fails with
+  * [[ConfoundError.NoRetainedScans]] or [[ConfoundError.InsufficientRetainedScans]]. */
 final case class FdCensorPolicy(
     threshold: Double,
     before: Int = 0,
@@ -64,32 +81,34 @@ object ConfoundSpec:
     if acompcorComponents < 0 then Left(ConfoundError.InvalidSpec("aCompCor component count must be non-negative"))
     else Right(ConfoundSpec(motion, acompcorComponents, includeWhiteMatter, includeCsf, includeGlobalSignal, censor))
 
-/** Inputs are per run and deliberately contain no implicit imputation or PCA. */
+/** Inputs are per run and deliberately contain no implicit imputation or PCA.
+  * `acompcor` may be `None` only when the spec requests zero components. */
 final case class ConfoundRunInput(
     motion6: Mat,
-    acompcor: Mat,
+    acompcor: Option[Mat] = None,
     whiteMatter: Option[Vector[Double]] = None,
     csf: Option[Vector[Double]] = None,
     globalSignal: Option[Vector[Double]] = None,
     framewiseDisplacement: Option[Vector[Double]] = None
 )
 
+/** Censoring evidence for one run; every scan index is one-based within the run. */
 final case class CensorReceipt(
-    censoredScans: Vector[Int],
-    retainedScans: Vector[Int],
-    initialFdScans: Vector[Int],
-    shortSegmentScans: Vector[Int]
+    censoredScans: Vector[ScanIndex],
+    retainedScans: Vector[ScanIndex],
+    initialFdScans: Vector[ScanIndex],
+    shortSegmentScans: Vector[ScanIndex]
 ):
   def censoredCount: Int = censoredScans.length
 
-final case class PreparedConfoundRun(run: Int, matrix: Mat, columnNames: Vector[String], censor: Option[CensorReceipt]):
+final case class PreparedConfoundRun(run: RunIndex, matrix: Mat, columnNames: Vector[ColumnId], censor: Option[CensorReceipt]):
   require(matrix.cols == columnNames.length, "prepared confound names must match columns")
   def toSampled: Either[ConfoundError, SampledRegressorRun] =
     SampledRegressorRun.fromColumns(columnNames.zipWithIndex.map { (name, column) =>
-      name -> Vector.tabulate(matrix.rows)(row => matrix(row, column))
+      name.value -> Vector.tabulate(matrix.rows)(row => matrix(row, column))
     }*).left.map(error => ConfoundError.InvalidInput(run, error.message))
 
-final case class ExcludedConfoundRun(run: Int, censor: CensorReceipt, censoredFraction: Double, maximumCensoredFraction: Double)
+final case class ExcludedConfoundRun(run: RunIndex, censor: CensorReceipt, censoredFraction: Double, maximumCensoredFraction: Double)
 
 final case class PreparedConfounds(included: Vector[PreparedConfoundRun], excluded: Vector[ExcludedConfoundRun]):
   def toNuisanceRegressors: Either[ConfoundError, NuisanceRegressors] =
@@ -110,66 +129,88 @@ object ConfoundDesign:
       runs.zipWithIndex.foldLeft[Either[ConfoundError, PreparedConfounds]](Right(PreparedConfounds(Vector.empty, Vector.empty))) { case (acc, (input, index)) =>
         for
           prepared <- acc
-          result <- prepareRun(spec, index + 1, input)
+          result <- prepareRun(spec, RunIndex.unsafeOneBased(index + 1), input)
         yield result match
           case Left(excluded) => prepared.copy(excluded = prepared.excluded :+ excluded)
           case Right(included) => prepared.copy(included = prepared.included :+ included)
       }
 
-  private def prepareRun(spec: ConfoundSpec, run: Int, input: ConfoundRunInput): Either[ConfoundError, Either[ExcludedConfoundRun, PreparedConfoundRun]] =
+  private def prepareRun(spec: ConfoundSpec, run: RunIndex, input: ConfoundRunInput): Either[ConfoundError, Either[ExcludedConfoundRun, PreparedConfoundRun]] =
     val rows = input.motion6.rows
     for
       _ <- requireMatrix(run, "motion", input.motion6, rows, 6)
-      _ <- requireMatrix(run, "aCompCor", input.acompcor, rows, -1)
-      _ <- if input.acompcor.cols >= spec.acompcorComponents then Right(()) else Left(ConfoundError.InvalidInput(run, s"aCompCor has ${input.acompcor.cols} components; ${spec.acompcorComponents} requested"))
+      acompcor <- input.acompcor match
+        case None if spec.acompcorComponents > 0 => Left(ConfoundError.MissingInput(run, "aCompCor"))
+        case None => Right(None)
+        case Some(matrix) =>
+          requireMatrix(run, "aCompCor", matrix, rows, -1).flatMap { _ =>
+            if matrix.cols >= spec.acompcorComponents then Right(Some(matrix))
+            else Left(ConfoundError.InvalidInput(run, s"aCompCor has ${matrix.cols} components; ${spec.acompcorComponents} requested"))
+          }
       _ <- requireOptional(run, "white matter", input.whiteMatter, rows, spec.includeWhiteMatter)
       _ <- requireOptional(run, "CSF", input.csf, rows, spec.includeCsf)
       _ <- requireOptional(run, "global signal", input.globalSignal, rows, spec.includeGlobalSignal)
       receipt <- censor(spec.censor, run, input.framewiseDisplacement, rows)
       result <-
-        val fraction = receipt.fold(0.0)(value => value.censoredScans.length.toDouble / rows.toDouble)
-        spec.censor match
-          case Some(policy) if fraction > policy.maximumCensoredFraction =>
-            Right(Left(ExcludedConfoundRun(run, receipt.get, fraction, policy.maximumCensoredFraction)))
+        val censored = receipt.fold(0)(_.censoredScans.length)
+        val fraction = censored.toDouble / rows.toDouble
+        spec.censor.zip(receipt) match
+          case Some((policy, evidence)) if fraction > policy.maximumCensoredFraction =>
+            Right(Left(ExcludedConfoundRun(run, evidence, fraction, policy.maximumCensoredFraction)))
           case _ =>
-            val preparedColumns = columns(spec, input, rows, receipt)
+            val preparedColumns = columns(spec, run, input, acompcor, rows, receipt)
+            val retained = rows - censored
+            val nonSpike = preparedColumns.length - censored
             preparedColumns.collectFirst { case (name, values) if values.exists(value => !value.isFinite) => name } match
               case Some(name) =>
                 Left(ConfoundError.InvalidInput(run, s"derived confound column '$name' contains a non-finite value"))
+              case None if retained == 0 => Left(ConfoundError.NoRetainedScans(run, rows))
+              case None if retained < nonSpike => Left(ConfoundError.InsufficientRetainedScans(run, retained, nonSpike))
               case None =>
-                val data = Array.tabulate(rows * preparedColumns.length)(index => preparedColumns(index % preparedColumns.length)._2(index / preparedColumns.length))
-                Right(Right(PreparedConfoundRun(run, Mat.unsafe(rows, preparedColumns.length, data), preparedColumns.map(_._1), receipt)))
+                columnIds(run, preparedColumns.map(_._1)).map { ids =>
+                  val data = Array.tabulate(rows * preparedColumns.length)(index => preparedColumns(index % preparedColumns.length)._2(index / preparedColumns.length))
+                  Right(PreparedConfoundRun(run, Mat.unsafe(rows, preparedColumns.length, data), ids, receipt))
+                }
     yield result
 
-  private def requireMatrix(run: Int, name: String, matrix: Mat, rows: Int, columns: Int): Either[ConfoundError, Unit] =
+  private def columnIds(run: RunIndex, names: Vector[String]): Either[ConfoundError, Vector[ColumnId]] =
+    names.foldLeft[Either[ConfoundError, Vector[ColumnId]]](Right(Vector.empty)) { (acc, name) =>
+      for
+        ids <- acc
+        id <- ColumnId(name).left.map(error => ConfoundError.InvalidInput(run, error.message))
+      yield ids :+ id
+    }
+
+  private def requireMatrix(run: RunIndex, name: String, matrix: Mat, rows: Int, columns: Int): Either[ConfoundError, Unit] =
     if matrix.rows == 0 then Left(ConfoundError.InvalidInput(run, s"$name must contain at least one scan"))
     else if matrix.rows != rows || (columns >= 0 && matrix.cols != columns) then Left(ConfoundError.InvalidInput(run, s"$name must have $rows rows${if columns >= 0 then s" and $columns columns" else ""}"))
     else if matrix.data.exists(value => !value.isFinite) then Left(ConfoundError.InvalidInput(run, s"$name contains a non-finite value"))
     else Right(())
-  private def requireOptional(run: Int, name: String, value: Option[Vector[Double]], rows: Int, required: Boolean): Either[ConfoundError, Unit] =
+  private def requireOptional(run: RunIndex, name: String, value: Option[Vector[Double]], rows: Int, required: Boolean): Either[ConfoundError, Unit] =
     if required && value.isEmpty then Left(ConfoundError.MissingInput(run, name))
     else value match
       case Some(values) if values.length != rows => Left(ConfoundError.InvalidInput(run, s"$name has ${values.length} rows; expected $rows"))
       case Some(values) if values.exists(number => !number.isFinite) => Left(ConfoundError.InvalidInput(run, s"$name contains a non-finite value"))
       case _ => Right(())
 
-  private def columns(spec: ConfoundSpec, input: ConfoundRunInput, rows: Int, receipt: Option[CensorReceipt]): Vector[(String, Vector[Double])] =
+  private def columns(spec: ConfoundSpec, run: RunIndex, input: ConfoundRunInput, acompcor: Option[Mat], rows: Int, receipt: Option[CensorReceipt]): Vector[(String, Vector[Double])] =
+    val prefix = s"run${run.oneBased}_"
     val raw = MotionNames.zipWithIndex.map((name, column) => name -> Vector.tabulate(rows)(row => input.motion6(row, column)))
     val derivative = raw.map((name, values) => s"${name}_derivative1" -> values.indices.map(index => if index == 0 then 0.0 else values(index) - values(index - 1)).toVector)
     val motion = spec.motion match
       case MotionExpansion.Raw6 => raw
       case MotionExpansion.RawAndDerivative12 => raw ++ derivative
       case MotionExpansion.Friston24 => raw ++ derivative ++ (raw ++ derivative).map((name, values) => s"${name}_squared" -> values.map(value => value * value))
-    val components = (0 until spec.acompcorComponents).toVector.map(index => f"acompcor_${index + 1}%02d" -> Vector.tabulate(rows)(row => input.acompcor(row, index)))
+    val components = acompcor.toVector.flatMap(matrix => (0 until spec.acompcorComponents).toVector.map(index => f"acompcor_${index + 1}%02d" -> Vector.tabulate(rows)(row => matrix(row, index))))
     val tissues = Vector(
-      if spec.includeWhiteMatter then Some("white_matter" -> input.whiteMatter.get) else None,
-      if spec.includeCsf then Some("csf" -> input.csf.get) else None,
-      if spec.includeGlobalSignal then Some("global_signal" -> input.globalSignal.get) else None
+      if spec.includeWhiteMatter then input.whiteMatter.map("white_matter" -> _) else None,
+      if spec.includeCsf then input.csf.map("csf" -> _) else None,
+      if spec.includeGlobalSignal then input.globalSignal.map("global_signal" -> _) else None
     ).flatten
-    val spikes = receipt.toVector.flatMap(_.censoredScans.map(scan => f"censor_scan_${scan + 1}%04d" -> Vector.tabulate(rows)(row => if row == scan then 1.0 else 0.0)))
-    motion ++ components ++ tissues ++ spikes
+    val spikes = receipt.toVector.flatMap(_.censoredScans.map(scan => f"censor_scan_${scan.oneBased}%04d" -> Vector.tabulate(rows)(row => if row == scan.zeroBased then 1.0 else 0.0)))
+    (motion ++ components ++ tissues ++ spikes).map((name, values) => (prefix + name) -> values)
 
-  private def censor(policy: Option[FdCensorPolicy], run: Int, fd: Option[Vector[Double]], rows: Int): Either[ConfoundError, Option[CensorReceipt]] = policy match
+  private def censor(policy: Option[FdCensorPolicy], run: RunIndex, fd: Option[Vector[Double]], rows: Int): Either[ConfoundError, Option[CensorReceipt]] = policy match
     case None => Right(None)
     case Some(value) =>
       fd match
@@ -199,5 +240,6 @@ object ConfoundDesign:
                 censored(scan) = true
                 short += scan
                 scan += 1
+          def scans(indices: Vector[Int]): Vector[ScanIndex] = indices.map(index => ScanIndex.unsafeOneBased(index + 1))
           val selected = censored.indices.filter(censored).toVector
-          Right(Some(CensorReceipt(selected, censored.indices.filterNot(censored).toVector, initial, short.result())))
+          Right(Some(CensorReceipt(scans(selected), scans(censored.indices.filterNot(censored).toVector), scans(initial), scans(short.result()))))
