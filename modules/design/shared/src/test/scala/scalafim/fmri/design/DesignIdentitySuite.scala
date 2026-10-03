@@ -61,7 +61,8 @@ class DesignIdentitySuite extends munit.FunSuite:
     val actual = compiled.matrix.data.map(java.lang.Double.doubleToLongBits).toVector
     assertEquals(actual.length, singleMatrixBits.length)
     actual.zip(singleMatrixBits).foreach { case (observed, expected) =>
-      assert((BigInt(observed) - BigInt(expected)).abs <= 1, s"SPMG value differs by more than one ULP: $observed vs $expected")
+      assert((BigInt(observed) - BigInt(expected)).abs <= CrossPlatformUlps,
+        s"SPMG value differs by more than $CrossPlatformUlps ULP: $observed vs $expected")
     }
     val matrix = scalafim.fmri.hrf.linalg.Mat.unsafe(16, 2, singleMatrixBits.map(java.lang.Double.longBitsToDouble).toArray)
     // validated recomputes numerical rank evidence, which can also differ by
@@ -78,6 +79,13 @@ class DesignIdentitySuite extends munit.FunSuite:
     val snapshot = DesignFingerprint.from(matrix, compiled.rows, compiled.columns, fixedAudit)
     assertEquals(snapshot.value, "design-schema/v2:b27079652d98235d")
   }
+
+  /** SPMG columns are sums of samples of exp/pow terms. java.lang.Math may return a different result within
+    * 1 ULP per call on different CPUs and JDKs. Hosted CI (Linux x86-64, Java 17) differs from the macOS arm64
+    * capture by 2 ULP. This bound tolerates platform arithmetic and nothing larger: any real numerical change is
+    * still far outside it, and content identity (above) still separates values one ULP apart on one platform.
+    */
+  private val CrossPlatformUlps = 4
 
   // Literal matrix contents captured before the serialization repair. This is
   // a content-identity fixture, not a claim of universal arithmetic bit parity.
@@ -102,8 +110,12 @@ class DesignIdentitySuite extends munit.FunSuite:
     "event|task||cell:{condition=B}||basis(fir%7C3%7Cfir-bin-3%252502d-4.0..6.0%7Celement=family=Known(Fir)%257Cbasis=3%257Cspan=6.0%257Cparams=Fir(3)%257Cderivative=Numeric%257Cpenalty=Roughness%257Cintegration=PiecewisePolynomial(Vector(0.0, 2.0, 4.0, 6.0),0)%257Ccomponents=[]%257Cfir-bin-3%252502d-4.0..6.0%257C3)|Task|global|ordinal=6"
   )
 
+  /** Exact-content fingerprints hash matrix bits, so literal goldens are kept only for designs whose values are
+    * exact on every platform: FIR boxcars are 0/1. Computed SPMG content differs by a few ULP across platforms
+    * (see CrossPlatformUlps); its structural column-ID goldens above are platform-independent, and its encoding
+    * is pinned from fixed bits in "realistic SPMG structural identity is distinct from its numerical content".
+    */
   private val exactFingerprintGoldens = Map(
-    "two" -> "design-schema/v2:93615b2e435af535",
     "fir" -> "design-schema/v2:8f2ee67682098523"
   )
 
