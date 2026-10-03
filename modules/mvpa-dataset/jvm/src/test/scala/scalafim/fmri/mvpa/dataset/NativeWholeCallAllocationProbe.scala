@@ -44,11 +44,11 @@ object NativeWholeCallAllocationProbe:
           index += 1
 
   private def measure[A <: ProbeResult](bean: ThreadMXBean, phase: String, iteration: Int)(call: => A): Unit =
-    val before = bean.getThreadAllocatedBytes(Thread.currentThread().threadId())
+    val before = bean.getCurrentThreadAllocatedBytes()
     val started = System.nanoTime()
     val result = call
     val elapsed = System.nanoTime() - started
-    val allocated = bean.getThreadAllocatedBytes(Thread.currentThread().threadId()) - before
+    val allocated = bean.getCurrentThreadAllocatedBytes() - before
     val checksum = result.consumedChecksum
     val retainedHash = result.retained.hashCode()
     val phases = result.phases.map(metric => s"${metric.name}:${metric.elapsedNs}:${metric.allocatedBytes}").mkString(";")
@@ -164,9 +164,9 @@ object NativeWholeCallAllocationProbe:
   private final case class PhaseStart(nanos: Long, allocatedBytes: Long)
   private final case class PhaseMetric(name: String, elapsedNs: Long, allocatedBytes: Long)
   private def phaseStart(bean: ThreadMXBean): PhaseStart =
-    PhaseStart(System.nanoTime(), bean.getThreadAllocatedBytes(Thread.currentThread().threadId()))
+    PhaseStart(System.nanoTime(), bean.getCurrentThreadAllocatedBytes())
   private def phaseMetric(bean: ThreadMXBean, name: String, start: PhaseStart): PhaseMetric =
-    PhaseMetric(name, System.nanoTime() - start.nanos, bean.getThreadAllocatedBytes(Thread.currentThread().threadId()) - start.allocatedBytes)
+    PhaseMetric(name, System.nanoTime() - start.nanos, bean.getCurrentThreadAllocatedBytes() - start.allocatedBytes)
 
   /** Independent scalar form of the documented Swift linear-centroid score,
     * evaluated from the fitted centroids and priors without calling a model

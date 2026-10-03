@@ -28,7 +28,7 @@ object PatternWholeCallAllocationProbe:
   private final case class Result(retained: Vector[AnyRef], checksum: Long, phases: Vector[Phase])
 
   private def call(bean: ThreadMXBean): Result =
-    def allocated = bean.getThreadAllocatedBytes(Thread.currentThread().threadId())
+    def allocated = bean.getCurrentThreadAllocatedBytes()
     val start = allocated
     val samples = axis("whole-call-training", SpaceRole.Samples, 8)
     val neural = axis("whole-call-neural", SpaceRole.Observed, 3)
@@ -97,9 +97,9 @@ object PatternWholeCallAllocationProbe:
       iteration += 1
     iteration = 0
     while iteration < iterations do
-      val before = bean.getThreadAllocatedBytes(Thread.currentThread().threadId())
+      val before = bean.getCurrentThreadAllocatedBytes()
       val result = call(bean)
-      val bytes = bean.getThreadAllocatedBytes(Thread.currentThread().threadId()) - before
+      val bytes = bean.getCurrentThreadAllocatedBytes() - before
       require(result.retained.size == 3 && result.checksum == 1500000L)
       val phases = result.phases.map(phase => s"${phase.name}:${phase.bytes}").mkString(";")
       println(s"pattern_whole_call,iteration=$iteration,cumulative_caller_thread_allocated_bytes=$bytes,checksum=${result.checksum},retained_outputs=${result.retained.size},phases=$phases,peak_live_bytes=unmeasured,rss_bytes=unmeasured")
