@@ -865,7 +865,7 @@ object EventModelBuilder:
         val detail = mode match
           case EventResponseNormalization.PreservePulseScale => "policy=as-convolved"
           case EventResponseNormalization.UnitPeak(step) =>
-            s"policy=unit-peak;scope=per-event-per-basis;reference-step=${step.value};precision=${options.precision.value}"
+            s"policy=unit-peak;scope=per-event-per-basis;reference-step=${PortableNumber.format(step.value)};precision=${PortableNumber.format(options.precision.value)}"
         PolicyReceipt("event-response-normalization", s"term=${termTag.getOrElse("term")};$detail")
       }
       productReceipts = productPlans.map { product =>
@@ -1150,7 +1150,7 @@ object EventModelBuilder:
             column match
               case Column.Strings(values) => Right(values)
               case Column.Ints(values)    => Right(values.map(_.toString))
-              case Column.Doubles(values) if values.forall(_.isFinite) => Right(values.map(_.toString))
+              case Column.Doubles(values) if values.forall(_.isFinite) => Right(values.map(PortableNumber.format))
               case Column.Doubles(_) => Left(DesignError.InvalidColumnType(ref.parent.value, "finite trial identifiers", "numeric with non-finite values"))
               case Column.Bools(values) => Right(values.map(_.toString))
               case other => Left(DesignError.InvalidColumnType(ref.parent.value, "scalar trial identifiers", other.typeName))
@@ -2419,11 +2419,11 @@ object EventModelBuilder:
                           local += 1
                         val receipt = result.receipt
                         val cellsDetail = receipt.groups.map { group =>
-                          s"${group.cell.fold("all")(_.canonical)}:n=${group.observedIndices.length}:mean=${group.mean.fold("")(_.toString)}"
+                          s"${group.cell.fold("all")(_.canonical)}:n=${group.observedIndices.length}:mean=${group.mean.fold("")(PortableNumber.format)}"
                         }.mkString(",")
                         policies += PolicyReceipt("observed-modulator",
                           s"modulator=${plan.source.value};run=${runs(runIndex)};center=${plan.centering};effective-center=${receipt.effectiveCentering};" +
-                            s"scale=${plan.scaling};missing=${plan.missing.canonical};divisor=${receipt.scale};observed=${receipt.observedIndices.length};" +
+                            s"scale=${plan.scaling};missing=${plan.missing.canonical};divisor=${PortableNumber.format(receipt.scale)};observed=${receipt.observedIndices.length};" +
                             s"degenerate=${receipt.degenerate};degenerate-scale=${receipt.degenerateScale};groups=$cellsDetail")
                         if receipt.degenerate then
                           val reason =

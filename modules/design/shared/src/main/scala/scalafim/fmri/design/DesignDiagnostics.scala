@@ -44,7 +44,7 @@ enum CoefficientIdentifiability:
   */
 final case class RankPolicy private (relativeMultiplier: Option[Double]):
   def label: String =
-    relativeMultiplier.fold("max-dimension-machine-epsilon")(value => s"relative=$value")
+    relativeMultiplier.fold("max-dimension-machine-epsilon")(value => s"relative=${PortableNumber.format(value)}")
 
   /** Dimensionless tolerance `tau(rows, columns)`. */
   def relativeTolerance(rows: Int, columns: Int): Double =
