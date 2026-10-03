@@ -16,7 +16,7 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
     right(EvidenceSource(id, Provenance.source(ProvenanceId.unsafe(s"$name-root"), id)))
   private val plan = PlanId.derived(EstimandId("loading-suite"), Vector(AxisSignature.unsafe("0" * 64)), AxisSignature.unsafe("1" * 64), AxisSignature.unsafe("2" * 64), "evidence", "design", "frame", "question", Vector.empty, Vector.empty, "reduction", Vector.empty, Set.empty)
 
-  private final class Fixture(alias: Boolean = false, dependent: Boolean = false):
+  private final class Fixture(alias: Boolean = false, dependent: Boolean = false, includeIntercept: Boolean = true, interceptInSpan: Boolean = false, targetOffset: Double = 0.0):
     val rows = axis("confirm-rows", 8); val units = axis("confirm-units", 8)
     val training = axis("discovery-rows", 4); val trainUnits = axis("discover-units", 4)
     val neural = axis("neural", 2); val target = axis("target", 2); val component = axis("component", 2)
@@ -34,13 +34,16 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
     val nuisanceValues = Vector(1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0)
     val e1 = Vector(1.0, 1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0)
     val e2 = Vector(1.0, -1.0, 1.0, -1.0, -1.0, 1.0, -1.0, 1.0)
-    val nuisance = right(ConfirmationNuisance(rows, DMat.tabulate(8, 2)((i, j) => if j == 0 then 1.0 else nuisanceValues(i))))
+    val nuisance = right(ConfirmationNuisance(rows,
+      if interceptInSpan then DMat.tabulate(8, 2)((i, j) => .5 + (if j == 0 then .5 else -.5) * nuisanceValues(i))
+      else if includeIntercept then DMat.tabulate(8, 2)((i, j) => if j == 0 then 1.0 else nuisanceValues(i))
+      else DMat.tabulate(8, 1)((i, _) => nuisanceValues(i))))
     val covariance = right(ResidualCovariance.fromFactors(rows, Vector.tabulate(8)(i => 1.0 + .1 * i), DMat.dense(8, 1, Vector(.2, -.1, .3, -.2, .1, -.3, .2, .4))))
     val law = if dependent then ConfirmationErrorLaw.DependentTime(right(BoundConfirmationCovariance(rows, covariance, "known-row-shape", TemporalCovarianceStatus.KnownGaussian))) else ConfirmationErrorLaw.IndependentGaussian
     val design = right(ConfirmationDesign.admit(ConfirmationClaim.FixedDiscoveryC1, discovery, snapshot,
       EvidenceExposure.internal(ExposureReference(plan, snapshot.identity, "fixture", ResultIdentity("loading-result"))),
       C1Contract("fixed discovery", "target-derived loading zero", "these held-out units", Vector("two-components-by-two-voxels"), "Gaussian row shape with voxel scale", Vector("target projection"), Vector("nuisance", "unpenalized regression")), nuisance, law))
-    val y = DMat.tabulate(8, 2)((i, j) => if j == 0 then t1(i) else if alias then nuisanceValues(i) else t2(i))
+    val y = DMat.tabulate(8, 2)((i, j) => (if j == 0 then t1(i) else if alias then nuisanceValues(i) else t2(i)) + targetOffset * (j + 1))
     val x = DMat.tabulate(8, 2): (i, j) =>
       if j == 0 then 7.0 + 4.0 * nuisanceValues(i) + 2.0 * t1(i) - t2(i) + .5 * e1(i)
       else -3.0 - 2.0 * nuisanceValues(i) - t1(i) + 3.0 * t2(i) + .25 * e2(i)
@@ -61,6 +64,9 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
     val result = right(f.fit())
     assertEquals(result.calibrationStatus, LoadingCalibrationStatus.PendingFrozenProtocol)
     assertEquals(result.residualDegreesOfFreedom, 4)
+    assertEquals(result.interceptAdded, false)
+    assertEquals(result.nuisanceColumns, 2)
+    assertEqualsDouble(result.designRankTolerance, 1e-12, 0.0)
     assertEquals(result.componentDegreesOfFreedom, 2)
     assertEquals(result.batchReads, 2)
     assertEquals(f.reads, 2)
@@ -81,6 +87,59 @@ class VoxelLoadingConfirmationSuite extends munit.FunSuite:
     assert(result.intervalsAt(Double.PositiveInfinity, 8).isLeft)
     val together = right(f.fit(batch = 2, replay = PatternReplay.SinglePass))
     for i <- 0 until 2; j <- 0 until 2 do assertEqualsDouble(together.estimates(i, j), result.estimates(i, j), 1e-12)
+
+  test("an omitted intercept preserves the independent OLS and GLS oracles with shifted targets"):
+    for dependent <- Vector(false, true) do
+      val declared = right(new Fixture(dependent = dependent, targetOffset = 3.0).fit())
+      val added = right(new Fixture(dependent = dependent, includeIntercept = false, targetOffset = 3.0).fit())
+      assertEquals(added.interceptAdded, true)
+      assertEquals(added.nuisanceColumns, 2)
+      assertEquals(added.residualDegreesOfFreedom, 4)
+      val beta = if dependent then Vector(2.0409555566340161, -.90468934939161416, -.98928414474021209, 3.0076631374039833)
+        else Vector(2.0, -1.0, -1.0, 3.0)
+      val se = if dependent then Vector(.24337185381938867, .24566751830688088, .12347726684378776, .12464199633923817)
+        else Vector(.25, .25, .125, .125)
+      for i <- 0 until 2; j <- 0 until 2 do
+        assertEqualsDouble(added.estimates(i, j), beta(2 * i + j), 1e-10)
+        assertEqualsDouble(added.standardErrors(i, j), se(2 * i + j), 1e-10)
+        assertEqualsDouble(added.estimates(i, j), declared.estimates(i, j), 1e-10)
+      assertEqualsDouble(added.omnibusF(0), if dependent then 41.810054454945032 else 40.0, 1e-8)
+      assertEqualsDouble(added.omnibusF(1), if dependent then 322.39283937304106 else 320.0, 1e-8)
+
+  test("an intercept in the nuisance span is retained without a redundant column"):
+    val result = right(new Fixture(interceptInSpan = true, targetOffset = 3.0).fit())
+    assertEquals(result.interceptAdded, false)
+    assertEquals(result.nuisanceColumns, 2)
+    assertEquals(result.residualDegreesOfFreedom, 4)
+    val beta = Vector(2.0, -1.0, -1.0, 3.0)
+    for i <- 0 until 2; j <- 0 until 2 do
+      assertEqualsDouble(result.estimates(i, j), beta(2 * i + j), 1e-11)
+      assertEqualsDouble(result.standardErrors(i, j), if i == 0 then .25 else .125, 1e-11)
+
+  test("an existing intercept retains the last residual degree of freedom"):
+    val f = new Fixture
+    val nuisance = right(ConfirmationNuisance(f.rows, DMat.tabulate(8, 5): (i, j) =>
+      j match
+        case 0 => 1.0
+        case 1 => f.nuisanceValues(i)
+        case 2 => f.e2(i)
+        case 3 => f.nuisanceValues(i) * f.t1(i)
+        case _ => f.nuisanceValues(i) * f.t2(i)
+    ))
+    val design = right(ConfirmationDesign.admit(ConfirmationClaim.FixedDiscoveryC1, f.discovery, f.snapshot,
+      EvidenceExposure.internal(ExposureReference(plan, f.snapshot.identity, "fixture", ResultIdentity("one-df-loading"))),
+      f.design.contract, nuisance, f.law))
+    val brain = DMat.tabulate(8, 2)((i, j) => if j == 0 then f.x(i, j)
+      else -3.0 - 2.0 * f.nuisanceValues(i) - f.t1(i) + 3.0 * f.t2(i) + .25 * f.e1(i))
+    val observations = right(Observations.fromDense(f.rows, f.neural, brain, value("one-df-brain"), source("one-df-brain")))
+    val result = right(VoxelLoadingConfirmation.fit(design, observations, f.responses, PatternReplay.SinglePass))
+    assertEquals(result.interceptAdded, false)
+    assertEquals(result.nuisanceColumns, 5)
+    assertEquals(result.residualDegreesOfFreedom, 1)
+    assertEqualsDouble(result.standardErrors(0, 0), .5, 1e-11)
+    assertEqualsDouble(result.standardErrors(1, 0), .25, 1e-11)
+    assertEqualsDouble(result.omnibusF(0), 10.0, 1e-9)
+    assertEqualsDouble(result.omnibusF(1), 80.0, 1e-8)
 
   test("aliased target dimensions and missing values refuse before any brain reads"):
     val f = new Fixture(alias = true)

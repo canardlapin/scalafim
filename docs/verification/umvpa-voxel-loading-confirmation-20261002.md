@@ -9,9 +9,15 @@ No finite fixture or closed-form statistic is promoted to calibrated inference.
 
 `VoxelLoadingConfirmation.fit` uses the actual held-out native targets to
 construct `T = Y C` with the frozen discovery target projection. It regresses
-held-out brain columns on `[nuisance, T]`, with no sparsity penalty and no
+held-out brain columns on `[working nuisance, T]`, with no sparsity penalty and no
 brain-derived `X W` regressor. Component loading tests condition on the other
 component and nuisance columns; the omnibus null is zero joint loading.
+The working nuisance design includes an intercept. A pivoted Gale QR at
+`1e-12` checks whether the supplied full-rank nuisance span already contains
+that direction; otherwise the kernel adds it. The result records whether an
+intercept was added, the actual nuisance column count, and the rank tolerance.
+Residual degrees of freedom use the actual working design. Preflight storage
+conservatively allows the possible extra column before reading either source.
 Results concern task-linked forward association in the fixed discovery basis,
 not causal necessity or unique decoding value.
 
@@ -25,7 +31,7 @@ whitening coordinates, not newly independent physical subjects. Actual row,
 unit-axis and row-to-unit mapping remain in the result. Estimated covariance
 and unsupported error laws cannot enter through the admitted design.
 
-One pivoted Gale QR factors the common weighted design. Each voxel batch uses
+After the intercept-span check, one pivoted Gale QR factors the common weighted design. Each voxel batch uses
 one native brain block and the retained QR least-squares solve. Coefficient
 covariance is derived from the small triangular factor, including its column
 permutation, rather than inverting normal equations. The component submatrix
@@ -97,3 +103,13 @@ Evidence root: `/private/tmp/scalafim-umvpa-finish-evidence-20261001`.
 
 `loading-confirmation-r-oracle.log` SHA-256: `37c7218c8bb496472825bdc283158d458221c323f347df79e5fa4942e8f1e53f`.
 
+
+## Landing correction, 2026-10-03
+
+PR #16 review identified omitted-intercept loading designs. The correction
+preserves caller-declared intercepts and intercepts represented by a sum of
+nuisance columns. New regressions use shifted target means and the unchanged
+independent OLS/GLS oracle coefficients, standard errors and F values. These
+regressions await the required hosted JVM/Scala.js gates; the earlier gate
+counts above describe the earlier revision, not this correction. Calibration
+remains `PendingFrozenProtocol`.

@@ -34,7 +34,8 @@ final class VoxelLoadingResult private[pattern] (
     val omnibusF: Vector[Double], val residualScales: Vector[Double],
     val residualDegreesOfFreedom: Int, val componentDegreesOfFreedom: Int,
     val designIdentity: String, val brainEvidenceIdentity: EvidenceIdentity, val targetEvidenceIdentity: EvidenceIdentity,
-    val batchReads: Int, val plannedOwnedCells: Long, val errorLaw: ConfirmationErrorLaw
+    val batchReads: Int, val plannedOwnedCells: Long, val errorLaw: ConfirmationErrorLaw,
+    val interceptAdded: Boolean, val nuisanceColumns: Int, val designRankTolerance: Double
 ):
   val calibrationStatus: LoadingCalibrationStatus = LoadingCalibrationStatus.PendingFrozenProtocol
 
@@ -50,7 +51,8 @@ final class VoxelLoadingResult private[pattern] (
 
 object VoxelLoadingConfirmation:
   /** Caller admits repeated application of the source explicitly. A single
-    * full-width batch needs only one source application. Backend/provider
+    * full-width batch needs only one source application. An intercept is added
+    * when its direction is outside the supplied nuisance span. Backend/provider
     * scratch and borrowed evidence are outside the owned-cell bound. */
   def fit[S <: SemanticSpace, N <: SemanticSpace, Q <: SemanticSpace, U](
       design: ConfirmationDesign[?, U], observations: Observations[S, N], targets: MultiResponse[S, Q],
@@ -61,7 +63,9 @@ object VoxelLoadingConfirmation:
     val rows = design.confirmation.samples.rows.descriptor
     val n = observations.rows; val p = observations.columns
     val r = frozen.matrix.cols; val nuisance = design.nuisance.matrix
-    val z = nuisance.cols; val mWide = z.toLong + r; val m = math.min(mWide, Int.MaxValue.toLong).toInt
+    val zWide = nuisance.cols.toLong + 1L; val mWide = zWide + r
+    val m = math.min(mWide, Int.MaxValue.toLong).toInt
+    val tolerance = 1e-12
     val b = math.min(p, budget.batchVoxels)
     val covariance = design.errorLaw match
       case ConfirmationErrorLaw.IndependentGaussian => None
@@ -75,7 +79,7 @@ object VoxelLoadingConfirmation:
     if observations.sampleAxis != rows || targets.sampleAxis != rows then Left(LoadingConfirmationError.AxisMismatch("actual confirmation rows"))
     else if observations.neuralAxis != factors.neuralAxis.descriptor || targets.featureAxis != frozen.input.descriptor then Left(LoadingConfirmationError.AxisMismatch("frozen neural or target endpoint"))
     else if mWide > Int.MaxValue then Left(LoadingConfirmationError.Budget(BigInt(mWide), Int.MaxValue.toLong))
-    else if n <= m || r <= 0 then Left(LoadingConfirmationError.NonEstimable("positive residual degrees of freedom and target dimensions required"))
+    else if n <= r || r <= 0 then Left(LoadingConfirmationError.NonEstimable("positive residual degrees of freedom and target dimensions required"))
     else if cells > budget.maximumOwnedCells || Vector(BigInt(n) * m, BigInt(n) * b, BigInt(p) * b, BigInt(p) * r, BigInt(m) * m).exists(_ > Int.MaxValue) then Left(LoadingConfirmationError.Budget(cells, budget.maximumOwnedCells))
     else if b < p && replay == PatternReplay.SinglePass then Left(LoadingConfirmationError.Invalid("multiple brain batches require replay admission"))
     else if (replay match
@@ -86,11 +90,20 @@ object VoxelLoadingConfirmation:
         case None => Right(matrix)
         case Some(value) => value.whiten(matrix).left.map(error => LoadingConfirmationError.Numerical(error.toString))
       for
+        workingNuisance <-
+          val augmented = DMat.tabulate(n, zWide.toInt)((i, j) => if j == 0 then 1.0 else nuisance(i, j - 1))
+          val rank = augmented.qr(QROptions(QRPivoting.Column, Some(tolerance))).diagnostics.rank
+          if rank.contains(nuisance.cols) then Right(nuisance)
+          else if rank.contains(zWide.toInt) then Right(augmented)
+          else Left(LoadingConfirmationError.NonEstimable("nuisance/intercept rank unavailable at tolerance 1e-12"))
+        z = workingNuisance.cols
+        m = z + r
+        _ <- if n > m then Right(()) else Left(LoadingConfirmationError.NonEstimable("positive residual degrees of freedom required after intercept handling"))
         t <- targets.targets(frozen.matrix).left.map(error => LoadingConfirmationError.Evidence(error.toString))
         _ <- if ResidualCovariance.finite(t) then Right(()) else Left(LoadingConfirmationError.NonEstimable("nonfinite or missing target-derived scores"))
-        joint = DMat.tabulate(n, m)((i, j) => if j < z then nuisance(i, j) else t(i, j - z))
+        joint = DMat.tabulate(n, m)((i, j) => if j < z then workingNuisance(i, j) else t(i, j - z))
         weighted <- whiten(joint)
-        qr = weighted.qr(QROptions(QRPivoting.Column, Some(1e-12)))
+        qr = weighted.qr(QROptions(QRPivoting.Column, Some(tolerance)))
         _ <- if qr.diagnostics.rank.contains(m) then Right(()) else Left(LoadingConfirmationError.NonEstimable("nuisance/target alias or rank-deficient target dimensions at tolerance 1e-12"))
         triangular = DMat.tabulate(m, m)((i, j) => if i <= j then qr.r(i, j) else 0.0)
         triangularInverse <- triangular.solve(DMat.eye(m)).left.map(error => LoadingConfirmationError.Numerical(s"design triangular covariance: $error"))
@@ -159,5 +172,5 @@ object VoxelLoadingConfirmation:
             case Some(error) => Left(error)
             case None => Right(new VoxelLoadingResult(observations.neuralAxis, frozen.output.descriptor, rows, design.confirmation.samples.units.descriptor, design.confirmation.samples.rowUnitOrdinals,
               estimates.result(), errors.result(), statistics.result(), fValues.result(), scales.result(), n - m, r,
-              design.identity, observations.identity, targets.identity, reads, cells.toLong, design.errorLaw))
+              design.identity, observations.identity, targets.identity, reads, cells.toLong, design.errorLaw, z > nuisance.cols, z, tolerance))
       yield result
