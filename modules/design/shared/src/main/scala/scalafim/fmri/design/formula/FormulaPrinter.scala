@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.HrfColumnScaling
+import scalafim.fmri.design.{HrfColumnScaling, PortableNumber}
 import scalafim.fmri.hrf.{EventResponseNormalization, TemporalDerivativeConvention}
 
 enum FormulaTokenKind:
@@ -26,29 +26,62 @@ final case class FormulaSourceSpan(start: Int, end: Int):
 final case class FormulaSourceNode(termIndex: Option[Int], argPath: Vector[String], span: FormulaSourceSpan)
 final case class PositionedFormula(formula: ModelFormula, source: String, nodes: Vector[FormulaSourceNode])
 
+/** Prints formulas and expressions in the admitted grammar.
+  *
+  * Output is byte-identical on the JVM and Scala.js: numbers are printed with
+  * [[PortableNumber.format]] (`4`, `0.25`, `1e-7`, `1e21`; `-0` prints as `0`).
+  * Every `...Either` printer re-parses its output and fails unless the result
+  * equals the input, so printed text is always a lossless representation.
+  */
 object FormulaPrinter:
+  /** Throwing convenience over [[expressionTextEither]].
+    * @throws FormulaParser.ParseError when the expression is not printable losslessly.
+    */
   def expressionText(value: ArgValue): String =
     expressionTextEither(value).fold(throw _, identity)
 
   def expressionTextEither(value: ArgValue): Either[FormulaParser.ParseError, String] =
-    val out = Vector.newBuilder[FormulaToken]
-    def emit(text: String, kind: FormulaTokenKind, path: Vector[String]): Unit =
-      out += FormulaToken(text, kind, None, path)
-    renderValue(value, Vector.empty, emit)
-    val text = out.result().map(_.text).mkString
-    FormulaParser.parseExpression(text).flatMap { parsed =>
-      if parsed == value then Right(text)
-      else Left(FormulaParser.ParseError("Expression cannot be represented losslessly by the admitted grammar", 0))
-    }
+    nonFinite(value) match
+      case Some(number) => Left(FormulaParser.ParseError(s"Numeric literal $number is not finite and has no formula text", 0))
+      case None =>
+        val out = Vector.newBuilder[FormulaToken]
+        def emit(text: String, kind: FormulaTokenKind, path: Vector[String]): Unit =
+          out += FormulaToken(text, kind, None, path)
+        renderValue(value, Vector.empty, emit)
+        val text = out.result().map(_.text).mkString
+        FormulaParser.parseExpression(text).flatMap { parsed =>
+          if parsed == value then Right(text)
+          else Left(FormulaParser.ParseError("Expression cannot be represented losslessly by the admitted grammar", 0))
+        }
 
   def renderEither(formula: ModelFormula): Either[FormulaParser.ParseError, Vector[FormulaToken]] =
-    val tokens = unchecked(formula)
-    FormulaParser.parseEither(tokens.map(_.text).mkString).flatMap: parsed =>
-      if parsed == formula then Right(tokens)
-      else Left(FormulaParser.ParseError("Formula cannot be represented losslessly by the admitted grammar", 0))
+    formulaNonFinite(formula) match
+      case Some(number) => Left(FormulaParser.ParseError(s"Numeric literal $number is not finite and has no formula text", 0))
+      case None =>
+        val tokens = unchecked(formula)
+        FormulaParser.parseEither(tokens.map(_.text).mkString).flatMap: parsed =>
+          if parsed == formula then Right(tokens)
+          else Left(FormulaParser.ParseError("Formula cannot be represented losslessly by the admitted grammar", 0))
 
+  /** Throwing convenience over [[renderEither]].
+    * @throws FormulaParser.ParseError when the formula is not printable losslessly.
+    */
   def render(formula: ModelFormula): Vector[FormulaToken] =
     renderEither(formula).fold(throw _, identity)
+
+  private def nonFinite(value: ArgValue): Option[Double] = value match
+    case ArgValue.Num(number) if !number.isFinite => Some(number)
+    case ArgValue.Call(_, args) => args.iterator.flatMap(arg => nonFinite(arg.value)).nextOption()
+    case _ => None
+
+  private def formulaNonFinite(formula: ModelFormula): Option[Double] =
+    def values(term: TermCall): Vector[ArgValue] = term match
+      case h: HrfCall =>
+        h.vars ++ h.subset ++ h.onsets ++ h.durations ++ h.hrfFun ++ h.lag.map(ArgValue.Num(_))
+      case t: TrialwiseCall =>
+        t.subset.toVector ++ t.onsets ++ t.durations ++ t.id ++ t.lag.map(ArgValue.Num(_))
+      case c: CovariateCall => c.vars
+    formula.terms.iterator.flatMap(values).flatMap(nonFinite).nextOption()
 
   private def quote(value: String, delimiter: Char): String =
     val escaped = value.flatMap:
@@ -82,7 +115,7 @@ object FormulaPrinter:
     value match
       case ArgValue.Ident(id) => emit(identifier(id.value), Identifier, path)
       case ArgValue.Str(s) => emit(quote(s, '"'), Literal, path)
-      case ArgValue.Num(n) => emit(n.toString, Literal, path)
+      case ArgValue.Num(n) => emit(PortableNumber.format(n), Literal, path)
       case ArgValue.Bool(b) => emit(if b then "TRUE" else "FALSE", Literal, path)
       case ArgValue.Call(op, args) if Set("+", "-", "*", "/", "|", "&", "==", "!=", "<", "<=", ">", ">=").contains(op) &&
           args.size == 2 && args.forall(_.name.isEmpty) =>
@@ -91,8 +124,15 @@ object FormulaPrinter:
         emit(s" $op ", Punctuation, path)
         renderValue(args(1).value, path :+ "1", emit)
         emit(")", Punctuation, path)
-      case ArgValue.Call(op @ ("!" | "-"), Vector(Arg(None, arg))) =>
-        emit(s"$op(", Punctuation, path)
+      // `!` binds looser than comparison (as in R), so the whole negation is
+      // parenthesized: `(!(a)) == b` would otherwise re-parse as `!(a == b)`.
+      case ArgValue.Call("!", Vector(Arg(None, arg))) =>
+        emit("(!", Punctuation, path)
+        renderValue(arg, path :+ "0", emit)
+        emit(")", Punctuation, path)
+      // `-(3)` would re-parse as the literal -3, so a negated literal keeps its call form.
+      case ArgValue.Call("-", Vector(Arg(None, arg))) if !arg.isInstanceOf[ArgValue.Num] =>
+        emit("-(", Punctuation, path)
         renderValue(arg, path :+ "0", emit)
         emit(")", Punctuation, path)
       case ArgValue.Call(fun, args) => call(fun, args, path)

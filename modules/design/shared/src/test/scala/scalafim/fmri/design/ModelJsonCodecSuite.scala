@@ -45,3 +45,66 @@ class ModelJsonCodecSuite extends munit.FunSuite:
     Vector(RunContrastCombination.FixedEffects, RunContrastCombination.Concatenated(Vector(ColumnId.unsafe("task")))).foreach: policy =>
       assertEquals(ModelJsonCodec.encodeRunCombination(policy).flatMap(ModelJsonCodec.decodeRunCombination), Right(policy))
     assert(ModelJsonCodec.encodeRunCombination(RunContrastCombination.Concatenated(Vector.empty)).isLeft)
+
+  private def errorOf[A](result: Either[ModelJsonError, A]): ModelJsonError =
+    result.swap.toOption.getOrElse(fail(s"expected a JSON error, got $result"))
+
+  test("encoded numbers are byte-identical across platforms"):
+    val mask = ContrastSpec.Mask("m", Vector(true, false), basisWeights = Some(Vector(1.0, 0.1, 1e-7, 1e21, -0.0, 4.0)))
+    val json = ModelJsonCodec.encodeContrast(mask).toOption.get
+    assertEquals(json,
+      """{"schema":"scalafim.model-spec","version":1,"kind":"contrast","value":{"type":"mask","id":"m","a":[true,false],"b":null,"basis":null,"weights":[1,0.1,1e-7,1e21,0,4]}}""")
+    assertEquals(ModelJsonCodec.decodeContrast(json), Right(mask))
+    val formula = ModelJsonCodec.encodeFormula(FormulaParser.parse("onset ~ hrf(cond, lag = 4.0, subset = rt > 1E-7)")).toOption.get
+    assertEquals(formula,
+      """{"schema":"scalafim.model-spec","version":1,"kind":"formula","value":"onset ~ hrf(cond, subset = (rt > 1e-7), lag = 4)"}""")
+    assertEquals(ModelJsonCodec.encodeContrast(ContrastSpec.Mask("m", Vector(true), basisWeights = Some(Vector(Double.NaN)))).swap.toOption.map(_.path),
+      Some("$.value.weights[0]"))
+
+  test("structural JSON errors report the real path"):
+    val json = ModelJsonCodec.encodeFormula(FormulaParser.parse("onset ~ trialwise()")).toOption.get
+    assertEquals(errorOf(ModelJsonCodec.decodeFormula(json.replace(""""kind":"formula",""", ""))), ModelJsonError("$", "missing field(s) kind"))
+    assertEquals(errorOf(ModelJsonCodec.decodeFormula(json.replace(""""version":1""", """"version":"1""""))).path, "$.version")
+    assertEquals(errorOf(ModelJsonCodec.decodeFormula(json.replace(""""version":1""", """"version":1.5"""))).path, "$.version")
+    assertEquals(errorOf(ModelJsonCodec.decodeFormula(json.replace(""""kind":"formula"""", """"kind":7"""))).path, "$.kind")
+    assertEquals(errorOf(ModelJsonCodec.decodeFormula(json.dropRight(1) + ""","schema":"scalafim.model-spec"}""")),
+      ModelJsonError("$", "duplicate key 'schema'"))
+    assertEquals(errorOf(ModelJsonCodec.decodeFormula("{not json")).path, "$")
+
+  test("nested contrast errors name the nested path"):
+    val a = CellSelector.Equals(FactorId.unsafe("condition"), LevelId.unsafe("a"))
+    val spec = ContrastSpec.Typed(ContrastExpr.Pair(ContrastId.unsafe("p"), a, CellSelector.Not(a), CellSelector.And(a, a)))
+    val json = ModelJsonCodec.encodeContrast(spec).toOption.get
+    assertEquals(errorOf(ModelJsonCodec.decodeContrast(json.replace(""""b":{"type":"not","selector":{"type":"equals",""", """"b":{"type":"not","selector":{"type":"equals","extra":1,"""))).path,
+      "$.value.b.selector")
+    assertEquals(errorOf(ModelJsonCodec.decodeContrast(json.replace(""""where":{"type":"and","left":{"type":"equals","factor":"condition",""", """"where":{"type":"and","left":{"type":"equals","factor":"condition","factor":"x","""))),
+      ModelJsonError("$.value.where.left", "duplicate key 'factor'"))
+    assertEquals(errorOf(ModelJsonCodec.decodeContrast(json.replace(""""level":"a"}}""", """"level":7}}"""))).path, "$.value.b.selector.level")
+
+  test("ids are never trimmed: non-canonical or empty ids fail on both sides"):
+    val padded = ContrastSpec.Mask(" a ", Vector(true))
+    assertEquals(errorOf(ModelJsonCodec.encodeContrast(padded)).path, "$.value.id")
+    assertEquals(errorOf(ModelJsonCodec.encodeContrast(ContrastSpec.Mask("", Vector(true)))).path, "$.value.id")
+    assertEquals(errorOf(ModelJsonCodec.encodeContrast(ContrastSpec.Typed(ContrastExpr.UnitContrast(ContrastId.unsafe(" u"))))).path, "$.value.id")
+    val json = ModelJsonCodec.encodeContrast(ContrastSpec.Mask("a", Vector(true))).toOption.get
+    assertEquals(errorOf(ModelJsonCodec.decodeContrast(json.replace(""""id":"a"""", """"id":" a """"))).path, "$.value.id")
+    val selector = ModelJsonCodec.encodeContrast(ContrastSpec.Typed(ContrastExpr.UnitContrast(ContrastId.unsafe("u"),
+      CellSelector.Equals(FactorId.unsafe("f"), LevelId.unsafe("l"))))).toOption.get
+    assertEquals(errorOf(ModelJsonCodec.decodeContrast(selector.replace(""""level":"l"""", """"level":"l """"))).path, "$.value.where.level")
+
+  test("pattern contrasts round trip by pattern source"):
+    val typed = ContrastSpec.Typed(ContrastExpr.ColumnPattern(ContrastId.unsafe("pat"), "cond\\[a\\].*".r, Some("^b$".r)))
+    val legacy = ContrastSpec.Column("legacy", "x|y".r)
+    val typedJson = ModelJsonCodec.encodeContrast(typed).toOption.get
+    assertEquals(typedJson,
+      """{"schema":"scalafim.model-spec","version":1,"kind":"contrast","value":{"type":"pattern","id":"pat","a":"cond\\[a\\].*","b":"^b$"}}""")
+    ModelJsonCodec.decodeContrast(typedJson) match
+      case Right(ContrastSpec.Typed(ContrastExpr.ColumnPattern(id, a, b))) =>
+        assertEquals((id.value, a.regex, b.map(_.regex)), ("pat", "cond\\[a\\].*", Some("^b$")))
+      case other => fail(s"expected a pattern contrast, got $other")
+    val legacyJson = ModelJsonCodec.encodeContrast(legacy).toOption.get
+    ModelJsonCodec.decodeContrast(legacyJson) match
+      case Right(ContrastSpec.Column(name, a, None)) => assertEquals((name, a.regex), ("legacy", "x|y"))
+      case other => fail(s"expected a legacy pattern contrast, got $other")
+    assertEquals(ModelJsonCodec.decodeContrast(legacyJson).flatMap(ModelJsonCodec.encodeContrast), Right(legacyJson))
+    assertEquals(errorOf(ModelJsonCodec.decodeContrast(typedJson.replace(""""a":"cond\\[a\\].*"""", """"a":"(""""))).path, "$.value.a")

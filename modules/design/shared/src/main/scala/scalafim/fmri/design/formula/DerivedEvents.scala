@@ -1,6 +1,6 @@
 package scalafim.fmri.design.formula
 
-import scalafim.fmri.design.ColumnId
+import scalafim.fmri.design.{ColumnId, PortableNumber}
 import scalafim.fmri.design.data.{Column, DataTable}
 
 /** Declared types make even an entirely missing derived column inspectable. */
@@ -14,6 +14,8 @@ enum DerivedEventError:
   case InvalidDefinition(detail: String)
   case Expression(column: ColumnId, cause: EventExpressionError)
   case WrongType(column: ColumnId, row: Int, expected: EventValueType, actual: EventExpressionValue)
+  /** The expression's static type differs from the declared type. */
+  case DeclaredType(column: ColumnId, declared: EventValueType, inferred: EventValueType)
   case MissingValues(columns: Vector[ColumnId], rows: Vector[Int])
   case InvalidBins(detail: String)
 
@@ -21,19 +23,40 @@ enum DerivedEventError:
     case InvalidDefinition(detail) => detail
     case Expression(column, cause) => s"${column.value}: ${cause.message}"
     case WrongType(column, row, expected, actual) => s"${column.value} at row $row: expected $expected, got $actual"
+    case DeclaredType(column, declared, inferred) => s"${column.value}: declared $declared, but the expression has type $inferred"
     case MissingValues(columns, rows) => s"missing derived values in ${columns.map(_.value).mkString(", ")} at rows ${rows.mkString(", ")}"
     case InvalidBins(detail) => detail
 
-final case class DerivedColumn(id: ColumnId, valueType: EventValueType, expression: ArgValue):
-  def text: String =
-    val name = FormulaPrinter.expressionText(ArgValue.Ident(id))
-    val kind = valueType match
-      case EventValueType.Number => "number"
-      case EventValueType.Text => "text"
-      case EventValueType.Logical => "logical"
-    s"$name: $kind = ${FormulaPrinter.expressionText(expression)}"
+/** One typed derived-column declaration.
+  *
+  * Instances are always printable: [[DerivedColumn.from]] rejects expressions the
+  * admitted grammar cannot represent losslessly (for example a non-finite
+  * numeric literal), so [[text]] is total and `DerivedColumn.parse(c.text)`
+  * restores `c`.
+  */
+final case class DerivedColumn private (id: ColumnId, valueType: EventValueType, expression: ArgValue):
+  def text: String = DerivedColumn.render(id, valueType, expression) match
+    case Right(value) => value
+    // Unreachable: every instance passed `render` in `from`.
+    case Left(error) => throw IllegalStateException(error.message)
 
 object DerivedColumn:
+  /** Validate that the declaration prints losslessly in the admitted grammar. */
+  def from(id: ColumnId, valueType: EventValueType, expression: ArgValue): Either[DerivedEventError, DerivedColumn] =
+    render(id, valueType, expression).map(_ => new DerivedColumn(id, valueType, expression))
+
+  private def render(id: ColumnId, valueType: EventValueType, expression: ArgValue): Either[DerivedEventError, String] =
+    def invalid(error: FormulaParser.ParseError) = DerivedEventError.InvalidDefinition(error.message)
+    for
+      name <- FormulaPrinter.expressionTextEither(ArgValue.Ident(id)).left.map(invalid)
+      value <- FormulaPrinter.expressionTextEither(expression).left.map(invalid)
+    yield
+      val kind = valueType match
+        case EventValueType.Number => "number"
+        case EventValueType.Text => "text"
+        case EventValueType.Logical => "logical"
+      s"$name: $kind = $value"
+
   /** One explicit declaration, for example `reward: number = gain - loss`. */
   def parse(text: String): Either[DerivedEventError, DerivedColumn] =
     // The shared formula lexer validates identifiers, including Unicode names.
@@ -47,11 +70,12 @@ object DerivedColumn:
             case ArgValue.Ident(value) => Right(value)
             case _ => Left(DerivedEventError.InvalidDefinition("declaration name must be an identifier"))
           value <- FormulaParser.parseExpression(expression).left.map(error => DerivedEventError.InvalidDefinition(error.getMessage))
-        yield DerivedColumn(id, kind match
-          case "number" => EventValueType.Number
-          case "text" => EventValueType.Text
-          case _ => EventValueType.Logical
-        , value)
+          column <- from(id, kind match
+            case "number" => EventValueType.Number
+            case "text" => EventValueType.Text
+            case _ => EventValueType.Logical
+          , value)
+        yield column
       case _ => Left(DerivedEventError.InvalidDefinition("expected name: number|text|logical = expression"))
 
 /** Rows are always zero-based indices in the caller's input table. */
@@ -100,7 +124,12 @@ object DerivedEvents:
         if data.contains(definition.id) || previous.values.contains(definition.id) then
           Left(DerivedEventError.InvalidDefinition(s"column '${definition.id.value}' already exists"))
         else
-          EventExpressions.evaluateDerived(definition.expression, data, previous.values).left.map(DerivedEventError.Expression(definition.id, _)).flatMap: values =>
+          val types = previous.definitions.map(value => value.id -> value.valueType).toMap
+          val typed = previous.values.map((id, values) => id -> DerivedValues(types(id), values))
+          val checked = EventExpressions.typeOf(definition.expression, data, types).left.map(DerivedEventError.Expression(definition.id, _)).flatMap:
+            case Some(inferred) if inferred != definition.valueType => Left(DerivedEventError.DeclaredType(definition.id, definition.valueType, inferred))
+            case _ => Right(())
+          checked.flatMap(_ => EventExpressions.evaluateDerived(definition.expression, data, typed).left.map(DerivedEventError.Expression(definition.id, _))).flatMap: values =>
             values.zipWithIndex.collectFirst { case (value, row) if !conforms(value, definition.valueType) =>
               DerivedEventError.WrongType(definition.id, row, definition.valueType, value)
             } match
@@ -128,7 +157,7 @@ final case class EventBins private (breaks: Vector[Double], labels: Vector[Strin
   def breaksText: String = breaks.map {
     case value if value == Double.NegativeInfinity => "-Inf"
     case value if value == Double.PositiveInfinity => "Inf"
-    case value => value.toString
+    case value => PortableNumber.format(value)
   }.mkString("c(", ", ", ")")
 
 object EventBins:
