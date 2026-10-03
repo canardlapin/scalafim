@@ -59,14 +59,58 @@ class TrialwiseFormulaSuite extends munit.FunSuite:
     )
     assert(repeatedAcrossRuns.isRight)
 
-    val duplicate = DataTable(data.nrows, data.columns.updated("trial_id", Column.Strings(Vector("1", "1", "1", "2", "3"))))
+    // Rows 2 and 3 are both retained by `keep` in run 2 and share id "1".
+    val duplicate = DataTable(data.nrows, data.columns.updated("trial_id", Column.Strings(Vector("1", "2", "1", "1", "3"))))
     val error = EventModelBuilder.buildEither(
       formula,
       duplicate,
       frame,
       blockIds = Vector(0, 0, 1, 1, 1)
     ).left.toOption.getOrElse(fail("expected duplicate trial identity error"))
-    assertEquals(error, DesignError.InvalidSchedule("id values must be unique within run 1"))
+    assertEquals(error, DesignError.InvalidSchedule("id values must be unique within run 2"))
+  }
+
+  test("trialwise id uniqueness is checked on the rows the subset retains") {
+    // Long format: each trial has a sample row and a probe row sharing its id.
+    val long = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(1.0, 3.0, 6.0, 8.0, 2.0, 4.0)),
+      "phase" -> Column.Strings(Vector("sample", "probe", "sample", "probe", "sample", "probe")),
+      "trial" -> Column.Strings(Vector("a", "a", "b", "b", "a", "a"))
+    )
+    val probeFormula = """onset ~ trialwise(id = trial, subset = phase == "probe", label = probe)"""
+    val model = EventModelBuilder.buildEither(probeFormula, long, frame, blockIds = Vector(0, 0, 0, 0, 1, 1))
+      .fold(error => fail(error.message), identity)
+    val convolved = model.terms.head._2 match
+      case term: ConvolvedTerm => term
+      case other => fail(s"expected a convolved trialwise term, got $other")
+    assertEquals(convolved.term.onsets.map(_.value), Vector(3.0, 8.0, 4.0))
+    val trials = convolved.term.events.head.asInstanceOf[CategoricalEvent]
+    assertEquals(trials.codes.map(trials.levels), Vector("run1_probe_a", "run1_probe_b", "run2_probe_a"))
+
+    val repeatedProbe = DataTable(long.nrows, long.columns.updated("trial", Column.Strings(Vector("a", "a", "b", "a", "c", "c"))))
+    assertEquals(
+      EventModelBuilder.buildEither(probeFormula, repeatedProbe, frame, blockIds = Vector(0, 0, 0, 0, 1, 1)).left.toOption,
+      Some(DesignError.InvalidSchedule("id values must be unique within run 1"))
+    )
+  }
+
+  test("numeric trialwise ids have byte-identical text on every platform") {
+    val numeric = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(1.0, 5.0, 2.0)),
+      "trial" -> Column.Doubles(Vector(1.0, 2.5, 1.0)),
+      "parent" -> Column.Doubles(Vector(10.0, 1e-7, 10.0))
+    )
+    val model = EventModelBuilder.buildEither(
+      "onset ~ trialwise(id = trial, phase = probe, parent = parent)", numeric, frame, blockIds = Vector(0, 0, 1)
+    ).fold(error => fail(error.message), identity)
+    val convolved = model.terms.head._2 match
+      case term: ConvolvedTerm => term
+      case other => fail(s"expected a convolved trialwise term, got $other")
+    val trials = convolved.term.events.head.asInstanceOf[CategoricalEvent]
+    assertEquals(trials.codes.map(trials.levels), Vector("run1_trial_1", "run1_trial_2.5", "run2_trial_1"))
+    assertEquals(convolved.term.eventProvenance.map(_.parent.value), Vector("run1:10", "run1:1e-7", "run2:10"))
+    assert(model.columnNames.exists(_.contains("run1_trial_2.5")), model.columnNames.mkString(", "))
+    assert(!model.columnNames.exists(_.contains(".0")), model.columnNames.mkString(", "))
   }
 
   test("binding ignores modulator option names while still binding its source") {

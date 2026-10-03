@@ -68,3 +68,58 @@ class IncrementalDesignSuite extends munit.FunSuite:
       assertEquals(partial.recompiledTerms, 1)
       ((middle - begin).toDouble / 1e6, (end - middle).toDouble / 1e6)
     println(s"12-term build median_ms incremental=${samples.map(_._1).sorted.apply(4)} full=${samples.map(_._2).sorted.apply(4)}")
+
+  private val richTable = DataTable.fromColumns(
+    "onset" -> Column.Doubles(Vector(2.0, 8.0, 16.0, 24.0)),
+    "late_onset" -> Column.Doubles(Vector(3.0, 9.0, 17.0, 25.0)),
+    "condition" -> Column.Strings(Vector("a", "b", "a", "b")),
+    "keep" -> Column.Bools(Vector(true, false, true, true)),
+    "rt" -> Column.Doubles(Vector(0.4, 0.7, 0.5, 0.9)),
+    "trial" -> Column.Doubles(Vector(1.0, 2.0, 3.0, 4.0))
+  )
+  private def richRequest(formula: String): EventDesignRequest =
+    val motion = DataTable.fromColumns("x" -> Column.Doubles(Vector.tabulate(50)(i => math.sin(i / 7.0))))
+    EventDesignRequest.fromText(formula, richTable, SamplingFrame(blockLens = Seq(50), tr = Seq(2.0)), tables = Map("motion" -> motion))
+      .fold(error => fail(error.message), identity)
+
+  private def assertMatchesFull(incremental: IncrementalDesign, request: EventDesignRequest): Unit =
+    val full = buildEither(request.copy(formula = incremental.formula)).fold(error => fail(error.message), identity)
+    assertEquals(incremental.model.designMatrix.data.toVector, full.designMatrix.data.toVector)
+    assertEquals(incremental.model.columnNames, full.columnNames)
+    assertEquals(incremental.model.termKeys, full.termKeys)
+    assertEquals(incremental.model.designSchema.fingerprint, full.designSchema.fingerprint)
+    assertEquals(incremental.model.designSchema.audit, full.designSchema.audit)
+
+  test("trialwise, covariate and subset terms recompile incrementally exactly as a full build"):
+    val req = richRequest("onset ~ trialwise(id = trial, subset = keep, label = probe) + covariate(x, data = motion, id = motion) + hrf(condition, subset = keep, id = kept)")
+    val initial = prepareIncremental(req).fold(error => fail(error.message), identity)
+    assertEquals(initial.recompiledTerms, 3)
+    assertMatchesFull(initial, req)
+    val edited = req.formula.terms(2).asInstanceOf[HrfCall].copy(lag = Some(1.0))
+    val updated = initial.replaceTerm(2, edited).fold(error => fail(error.message), identity)
+    assertEquals(updated.recompiledTerms, 1)
+    assertEquals(updated.reusedTerms, 2)
+    assertMatchesFull(updated, req)
+    val trialwise = req.formula.terms(0).asInstanceOf[TrialwiseCall].copy(label = Some(TermId.unsafe("sample")))
+    val relabelled = updated.replaceTerm(0, trialwise).fold(error => fail(error.message), identity)
+    assertEquals(relabelled.recompiledTerms, 1)
+    assertMatchesFull(relabelled, req)
+
+  test("a TermCall repeated within one formula matches full compilation"):
+    val req = richRequest("onset ~ hrf(condition) + hrf(condition)")
+    val initial = prepareIncremental(req).fold(error => fail(error.message), identity)
+    assertMatchesFull(initial, req)
+    assertEquals(initial.model.termKeys.distinct.length, 2)
+    val same = initial.updateFormula(initial.formula).fold(error => fail(error.message), identity)
+    assertEquals(same.recompiledTerms, 0)
+    assertMatchesFull(same, req)
+
+  test("changing the onset column rebuilds every term and equals full recompilation"):
+    val req = richRequest("onset ~ hrf(condition) + trialwise(id = trial)")
+    val initial = prepareIncremental(req).fold(error => fail(error.message), identity)
+    val moved = initial.formula.copy(onset = ColumnId.unsafe("late_onset"))
+    val updated = initial.updateFormula(moved).fold(error => fail(error.message), identity)
+    assertEquals(updated.recompiledTerms, 2)
+    assertEquals(updated.reusedTerms, 0)
+    assertMatchesFull(updated, req)
+    assertNotEquals(updated.model.designMatrix.data.toVector, initial.model.designMatrix.data.toVector)

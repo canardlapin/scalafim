@@ -146,3 +146,68 @@ class EventTrialSummarySuite extends munit.FunSuite:
     assertEquals(summaries("dense").size, 24)
     assertEquals(events("dense", "stim", 2, Map("category" -> "words", "task" -> "ignore")), 11)
   }
+
+  test("terms sharing a tag are summarized under the model's unique term keys") {
+    def go(onsets: Vector[Double]): ConvolvedTerm =
+      EventTerm.validated(
+        Vector(Event.factor(Vector.fill(onsets.length)("go"), "outcome")), onsets.map(Seconds(_)),
+        Vector.fill(onsets.length)(1.0.s), Vector.fill(onsets.length)(0), Some("cond")
+      ).toOption.get.convolve(Hrfs.SPMG1, frame)
+    val model = EventModel.build(Vector(go(Vector(2.0, 6.0)), go(Vector(10.0))), frame)
+    val values = EventTrialSummary.forModel(model).toOption.get
+    assertEquals(values.map(_.term.value), model.termKeys)
+    assertEquals(values.map(_.events), Vector(2, 1))
+
+    // A hand-assembled model whose distinct keys carry the same tag is not pooled either.
+    val sameTag = model.copy(terms = model.terms.zip(Vector("first", "second")).map { case ((_, term), key) =>
+      term match
+        case convolved: ConvolvedTerm => key -> convolved.copy(term = convolved.term.copy(termTag = Some("cond")))
+        case other => key -> other
+    })
+    val pooled = EventTrialSummary.forModel(sameTag).toOption.get
+    assertEquals(pooled.map(value => value.term.value -> value.events), Vector("first" -> 2, "second" -> 1))
+    assertEquals(pooled.map(_.duration), Vector(EventTimingSummary(1.0.s, 1.0.s, 1.0.s), EventTimingSummary(1.0.s, 1.0.s, 1.0.s)))
+  }
+
+  private val twoRuns = SamplingFrame(blockLens = Seq(20, 20), tr = Seq(1.0, 1.0))
+  private def twoRunModel(probeOnsets: Vector[Double]): EventModel =
+    // Parent ids are global, so the builder qualifies per-run ids with their run.
+    val ids = Vector("run1:one", "run1:two", "run2:one", "run2:two").map(TrialId.unsafe)
+    val probe = EventPhase.fromParts(
+      PhaseId.unsafe("probe"), probeOnsets.map(Seconds(_)), Vector.fill(4)(0.0.s),
+      Vector(0, 0, 1, 1), ids, Vector(0, 1, 2, 3)
+    ).toOption.get
+    EventModel.build(
+      MultiphaseEventTerm.validated(Vector(Event.factor(Vector.fill(4)("face"), "stimulus")), Vector(probe), Some("memory"))
+        .toOption.get.phaseTerms.map(_.convolve(Hrfs.SPMG1, twoRuns)),
+      twoRuns
+    )
+  private def runOnsets(values: (Int, String, Double)*): ParentTrialOnsets =
+    ParentTrialOnsets.validated(values.toVector.map((run, trial, onset) =>
+      ParentTrialOnset(ParentTrialKey(RunIndex.unsafeOneBased(run), TrialId.unsafe(s"run$run:$trial")), Seconds(onset))
+    )).toOption.get
+
+  test("parent timing is keyed by run and measured on each run's own clock") {
+    val model = twoRunModel(Vector(3.0, 9.0, 4.0, 12.0))
+    val timing = runOnsets((1, "one", 1.0), (1, "two", 6.0), (2, "one", 0.0), (2, "two", 10.0))
+    val values = EventTrialSummary.forModel(model, Some(timing)).toOption.get
+    assertEquals(values.map(_.run.oneBased), Vector(1, 2))
+    assertEquals(values.map(_.events), Vector(2, 2))
+    assertEquals(values(0).onsetOffset, Some(EventTimingSummary(2.0.s, 2.5.s, 3.0.s)))
+    assertEquals(values(1).onsetOffset, Some(EventTimingSummary(2.0.s, 3.0.s, 4.0.s)))
+  }
+
+  test("a phase earlier than its parent onset is rejected, including global-clock parent timing") {
+    val model = twoRunModel(Vector(3.0, 9.0, 4.0, 12.0))
+    EventTrialSummary.forModel(model, Some(runOnsets((1, "one", 1.0), (1, "two", 9.5), (2, "one", 0.0), (2, "two", 10.0)))) match
+      case Left(EventTrialSummaryError.PhaseBeforeParent(term, 1, key, offset)) =>
+        assertEquals(term.value, "memory")
+        assertEquals(key, ParentTrialKey(RunIndex.unsafeOneBased(1), TrialId.unsafe("run1:two")))
+        assertEqualsDouble(offset.value, -0.5, 0.0)
+      case other => fail(s"expected a negative parent offset error, found $other")
+    // Run 2 parents given on the concatenated clock (run 2 starts at 20 s).
+    val global = runOnsets((1, "one", 1.0), (1, "two", 6.0), (2, "one", 20.0), (2, "two", 30.0))
+    EventTrialSummary.forModel(model, Some(global)) match
+      case Left(EventTrialSummaryError.PhaseBeforeParent(_, 2, key, _)) => assertEquals(key.run.oneBased, 2)
+      case other => fail(s"expected a global-clock parent error, found $other")
+  }

@@ -5,6 +5,12 @@ import scalafim.fmri.hrf.Seconds
 
 /** Explicit timing for one conceptual parent trial. A phase onset is never
   * treated as its parent's onset: callers must supply this separately.
+  *
+  * Parent onsets are run-relative seconds, on the same clock as the event
+  * onsets of the run named by `key.run` (not the concatenated global clock).
+  * A phase that starts before its parent is rejected as
+  * [[EventTrialSummaryError.PhaseBeforeParent]], which also catches parent
+  * onsets accidentally given on the global clock for later runs.
   */
 final case class ParentTrialKey(run: RunIndex, trial: TrialId)
 
@@ -17,6 +23,8 @@ enum EventTrialSummaryError:
   case InvalidFactorCode(term: TermId, factor: FactorId, eventIndex: Int, code: Int)
   case InconsistentProvenance(term: TermId, eventIndex: Int, reason: String)
   case NonFiniteOffset(term: TermId, eventIndex: Int)
+  case PhaseBeforeParent(term: TermId, eventIndex: Int, key: ParentTrialKey, offset: Seconds)
+  case InvalidIdentifier(kind: String, value: String, reason: String)
 
   def message: String = this match
     case DuplicateParentTrial(key) =>
@@ -31,6 +39,10 @@ enum EventTrialSummaryError:
       s"Term ${term.value} event $eventIndex has inconsistent provenance: $reason"
     case NonFiniteOffset(term, eventIndex) =>
       s"Term ${term.value} event $eventIndex has a non-finite parent-relative onset offset."
+    case PhaseBeforeParent(term, eventIndex, key, offset) =>
+      s"Term ${term.value} event $eventIndex starts ${-offset.value} s before parent trial ${key.trial.value} in run ${key.run.oneBased}; parent onsets must be run-relative and no later than their phases."
+    case InvalidIdentifier(kind, value, reason) =>
+      s"Event summary cannot use '$value' as a $kind identifier: $reason"
 
 /** Validated lookup of parent timing. This is intentionally separate from
   * event phases: earliest phase timing is not evidence of a parent onset.
@@ -68,6 +80,8 @@ object EventTrialSummary:
 
   /** Summarize each convolved event term by its retained categorical cell and
     * run. Phased terms require explicit parent timing, keyed by run and trial.
+    * Summaries are keyed by the model's unique term key (`model.termKeys`), so
+    * two terms sharing a tag are never pooled.
     */
   def forModel(
       model: EventModel,
@@ -80,8 +94,8 @@ object EventTrialSummary:
       val (key, modelTerm) = terms(termIndex)
       modelTerm match
         case convolved: ConvolvedTerm =>
-          val term = convolved.term.termTag.map(TermId.unsafe).getOrElse(TermId.unsafe(key))
-          appendTerm(term, convolved.term, parentOnsets, values) match
+          TermId(key).left.map(error => EventTrialSummaryError.InvalidIdentifier("term", key, error.message))
+            .flatMap(term => appendTerm(term, convolved.term, parentOnsets, values)) match
             case Left(error) => return Left(error)
             case Right(_) => ()
         case _ => ()
@@ -122,11 +136,17 @@ object EventTrialSummary:
     while factorIndex < factors.length do
       val factor = factors(factorIndex)
       val code = factor.codes(eventIndex)
+      val factorId = FactorId(factor.varName) match
+        case Right(value) => value
+        case Left(error) => return Left(EventTrialSummaryError.InvalidIdentifier("factor", factor.varName, error.message))
       if code < 0 || code >= factor.levels.length then
-        return Left(EventTrialSummaryError.InvalidFactorCode(id, FactorId.unsafe(factor.varName), eventIndex, code))
-      assignments += CellAssignment(FactorId.unsafe(factor.varName), scalafim.fmri.design.contrast.LevelId.unsafe(factor.levels(code)))
+        return Left(EventTrialSummaryError.InvalidFactorCode(id, factorId, eventIndex, code))
+      val level = scalafim.fmri.design.contrast.LevelId(factor.levels(code)) match
+        case Right(value) => value
+        case Left(error) => return Left(EventTrialSummaryError.InvalidIdentifier("level", factor.levels(code), error.message))
+      assignments += CellAssignment(factorId, level)
       factorIndex += 1
-    Right(CellKey.unsafe(assignments.result()))
+    CellKey.from(assignments.result()).left.map(error => EventTrialSummaryError.InconsistentProvenance(id, eventIndex, error.message))
 
   private def offsetAt(
       id: TermId,
@@ -150,8 +170,9 @@ object EventTrialSummary:
           parentOnsets.flatMap(_.onset(parent)) match
             case Some(onset) =>
               val offset = provenance.onset.value - onset.value
-              if offset.isFinite then Right(Some(Seconds(offset)))
-              else Left(EventTrialSummaryError.NonFiniteOffset(id, eventIndex))
+              if !offset.isFinite then Left(EventTrialSummaryError.NonFiniteOffset(id, eventIndex))
+              else if offset < 0.0 then Left(EventTrialSummaryError.PhaseBeforeParent(id, eventIndex, parent, Seconds.unsafe(offset)))
+              else Right(Some(Seconds.unsafe(offset)))
             case None => Left(EventTrialSummaryError.MissingParentTrial(parent, id, eventIndex))
 
   private def group(values: Vector[EventValue]): Vector[EventTrialSummary] =
