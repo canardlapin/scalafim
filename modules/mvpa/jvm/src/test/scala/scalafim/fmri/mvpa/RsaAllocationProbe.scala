@@ -11,7 +11,8 @@ object RsaAllocationProbe:
       case value: com.sun.management.ThreadMXBean if value.isThreadAllocatedMemorySupported => value
       case _ => throw new IllegalStateException("per-thread allocation accounting is unavailable")
     bean.setThreadAllocatedMemoryEnabled(true)
-    val thread = Thread.currentThread().threadId()
+    // JDK 14+ API; Thread.threadId() would require JDK 19 and CI pins JDK 17.
+    def allocated = bean.getCurrentThreadAllocatedBytes()
     for (items, count) <- Vector((5, 2), (12, 4), (20, 8)) do
       val labels = Vector.tabulate(items)(i => s"item-$i")
       val distances = items * (items - 1) / 2
@@ -29,8 +30,8 @@ object RsaAllocationProbe:
           i += 1
       run(10000)
       for block <- 0 until 3 do
-        val before = bean.getThreadAllocatedBytes(thread)
+        val before = allocated
         run(5000)
-        val bytes = bean.getThreadAllocatedBytes(thread) - before
+        val bytes = allocated - before
         require(math.abs(sink - 1/math.sqrt(2.0)) <= 1e-12, s"unexpected partial correlation: $sink")
         println(s"rsa-allocation items=$items distances=$distances controls=$count block=$block bytesPerScore=${bytes.toDouble/5000} score=$sink")

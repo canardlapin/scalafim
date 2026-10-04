@@ -6,6 +6,7 @@ import java.nio.file.{Files, Path}
 import scalafim.atlas.*
 import scalafim.image.*
 import scalafim.image.SampleSpaces.*
+import scalafim.image.world.SpaceEvidence
 
 class AtlasIoSuite extends munit.FunSuite:
 
@@ -149,6 +150,27 @@ class AtlasIoSuite extends munit.FunSuite:
     val negative = SomeScalarVolume.unsafeCopyFromCanonicalArray[Double](PrimitiveBuffers.fromArray(Array(1.0, -1.0, 0.0, 2.0)), sp)
     interceptMessage[IllegalArgumentException]("label volume contains negative region id -1 at linear index 1") {
       AtlasLabelMaps.fromDouble(negative)
+    }
+  }
+
+  test("AtlasLabelMaps reads signed INT8 NIfTI labels and rejects negative region ids") {
+    val tmp = Files.createTempDirectory("scalafim-atlas-int8-test")
+    val evidence = SpaceEvidence(bidsSpace = Some(GlasserHcpMmp1(GlasserSource.Mni2009c).atlasRef().templateSpace.value))
+    val validPath = tmp.resolve("labels-int8.nii")
+    val values = Vector(0, 1, 2, 64, 127)
+    writeInt8Nifti(validPath, Vector(5, 1, 1), values)
+
+    val labels = AtlasLabelMaps.readIntVolume(validPath, evidence, "int8-labels")
+    assertEquals(values.indices.map(x => labels(x, 0, 0)).toVector, values)
+    assertEquals(AtlasLabelMaps.presentRegionIds(labels), Set(1, 2, 64, 127).map(RegionId(_)))
+    val regions = RegionIndex(Vector(1, 2, 64, 127).map(id => AtlasRegionMetadata(RegionId(id), s"r$id")))
+    val atlas = AtlasLabelMaps.buildAtlas(GlasserHcpMmp1(GlasserSource.Mni2009c).atlasRef(), regions, labels)
+    assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2, 64, 127))
+
+    val negativePath = tmp.resolve("negative-int8.nii")
+    writeInt8Nifti(negativePath, Vector(5, 1, 1), Vector(1, -1, 0, 127, -128))
+    interceptMessage[IllegalArgumentException]("label volume contains negative region id -1 at linear index 1") {
+      AtlasLabelMaps.readIntVolume(negativePath, evidence)
     }
   }
 
@@ -442,18 +464,32 @@ class AtlasIoSuite extends munit.FunSuite:
       paths.getOrElse(asset.fileName, throw new NoSuchElementException(s"missing fixture for ${asset.fileName}"))
 
   private def writeInt16Nifti(path: java.nio.file.Path, dims: Vector[Int], values: Vector[Int]): Unit =
+    writeIntegerNifti(path, dims, values, datatype = 4, bytesPerValue = 2)
+
+  private def writeInt8Nifti(path: java.nio.file.Path, dims: Vector[Int], values: Vector[Int]): Unit =
+    require(values.forall(value => value >= Byte.MinValue && value <= Byte.MaxValue), "INT8 values must fit a signed byte")
+    writeIntegerNifti(path, dims, values, datatype = 256, bytesPerValue = 1)
+
+  private def writeIntegerNifti(
+      path: java.nio.file.Path,
+      dims: Vector[Int],
+      values: Vector[Int],
+      datatype: Int,
+      bytesPerValue: Int
+  ): Unit =
     require(dims.length == 3, "test writer only supports 3D fixtures")
     require(values.length == dims.product, "value count must match dimensions")
+    require(bytesPerValue == 1 || bytesPerValue == 2, "test writer supports 8- and 16-bit integers")
 
     val voxOffset = 352
-    val bytes = ByteBuffer.allocate(voxOffset + values.length * 2).order(ByteOrder.LITTLE_ENDIAN)
+    val bytes = ByteBuffer.allocate(voxOffset + values.length * bytesPerValue).order(ByteOrder.LITTLE_ENDIAN)
     bytes.putInt(0, 348)
     bytes.putShort(40, 3.toShort)
     dims.zipWithIndex.foreach { case (dim, i) =>
       bytes.putShort(42 + i * 2, dim.toShort)
     }
-    bytes.putShort(70, 4.toShort)
-    bytes.putShort(72, 16.toShort)
+    bytes.putShort(70, datatype.toShort)
+    bytes.putShort(72, (bytesPerValue * 8).toShort)
     bytes.putFloat(80, 1.0f)
     bytes.putFloat(84, 1.0f)
     bytes.putFloat(88, 1.0f)
@@ -469,7 +505,8 @@ class AtlasIoSuite extends munit.FunSuite:
     bytes.put(346, '1'.toByte)
     var offset = voxOffset
     values.foreach { value =>
-      bytes.putShort(offset, value.toShort)
-      offset += 2
+      if bytesPerValue == 1 then bytes.put(offset, value.toByte)
+      else bytes.putShort(offset, value.toShort)
+      offset += bytesPerValue
     }
     Files.write(path, bytes.array())
