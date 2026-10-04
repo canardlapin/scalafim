@@ -1,5 +1,6 @@
 package scalafim.fmri.fit.profile
 
+import gale.linalg.DenseCholeskyWorkspace
 import scalafim.fmri.design.hrf.HrfKernelBasis
 import scalafim.fmri.hrf.family.{JetLayout, ShapePoint}
 
@@ -135,6 +136,8 @@ final class GramConditionObjective(val jets: GramConditionJets, val basis: HrfKe
   private val coeff = new Array[Double](comps * m)
   private val coords = new Array[Double](d)
   private val nodeCoefficients = new Array[Double](grid.count * comps * m)
+  private val solver = new DenseCholeskyWorkspace(c)
+  private val scoreSolution = new Array[Double](c)
   private val nodeFactor = new Array[Double](grid.count * c * c)
   private val nodeGram = new Array[Double](grid.count * comps * c * c)
   private val bv = new Array[Double](c)
@@ -150,11 +153,7 @@ final class GramConditionObjective(val jets: GramConditionJets, val basis: HrfKe
       jets.assemble(new Array[Double](c * m), 0.0, coeff, comps)
       jets.exportGram(nodeGram, node * comps * c * c)
       System.arraycopy(jets.g, 0, nodeFactor, node * c * c, c * c)
-      val ok = SmallCholesky.factorInPlace(c, java.util.Arrays.copyOfRange(nodeFactor, node * c * c, (node + 1) * c * c))
-      require(ok, s"node $node has a singular Gram")
-      val factor = java.util.Arrays.copyOfRange(nodeFactor, node * c * c, (node + 1) * c * c)
-      SmallCholesky.factorInPlace(c, factor)
-      System.arraycopy(factor, 0, nodeFactor, node * c * c, c * c)
+      require(solver.factorLowerInPlace(c, nodeFactor, node * c * c).isRight, s"node $node has a singular Gram")
       node += 1
   }
 
@@ -174,8 +173,9 @@ final class GramConditionObjective(val jets: GramConditionJets, val basis: HrfKe
         j += 1
       bv(i) = acc
       i += 1
-    val w = bv.clone()
-    SmallCholesky.solveInPlace(c, java.util.Arrays.copyOfRange(nodeFactor, node * c * c, (node + 1) * c * c), w)
+    val w = scoreSolution
+    System.arraycopy(bv, 0, w, 0, c)
+    if solver.solveLowerInPlace(c, nodeFactor, w, factorOffset = node * c * c).isLeft then return Double.PositiveInfinity
     var fit = 0.0
     i = 0
     while i < c do

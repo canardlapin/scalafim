@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.profile
 
+import gale.linalg.DenseCholeskyWorkspace
+
 import scalafim.fmri.hrf.family.{ShapeChart, ShapePoint}
 
 /** A regular grid of reference nodes over a chart, `d <= 3`, axis 0 fastest. */
@@ -166,6 +168,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
   private val candidateGrad = new Array[Double](d)
   private val candidateHess = new Array[Double](d * d)
   private val dataHess = new Array[Double](d * d)
+  private val solver = new DenseCholeskyWorkspace(d)
   private val factor = new Array[Double](d * d)
   private val free = new Array[Boolean](d)
   private val rhs = new Array[Double](d)
@@ -360,7 +363,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     if nFree == 0 then
       System.arraycopy(hessian, 0, factor, 0, d * d)
       return
-        if SmallCholesky.factorInPlace(d, factor) then NewtonDirectionStatus.Stationary
+        if solver.factorLowerInPlace(d, factor).isRight then NewtonDirectionStatus.Stationary
         else NewtonDirectionStatus.CurvatureNotPositive
     // Compact the active block in place; d <= 3.
     var r = 0
@@ -370,8 +373,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         factor(r * nFree + col) = factor(r * d + col)
         col += 1
       r += 1
-    if !SmallCholesky.factorInPlace(nFree, factor) then return NewtonDirectionStatus.CurvatureNotPositive
-    SmallCholesky.solveInPlace(nFree, factor, rhs)
+    if !solver.factorLowerInPlace(nFree, factor).isRight then return NewtonDirectionStatus.CurvatureNotPositive
+    if solver.solveLowerInPlace(nFree, factor, rhs).isLeft then return NewtonDirectionStatus.Stalled
     var k = 0
     i = 0
     while i < d do
@@ -396,14 +399,16 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
 
   private def conditionalSd(out: Array[Double]): Boolean =
     System.arraycopy(dataHess, 0, factor, 0, d * d)
-    if !SmallCholesky.factorInPlace(d, factor) then
+    if !solver.factorLowerInPlace(d, factor).isRight then
       java.util.Arrays.fill(out, Double.NaN)
       return false
     var i = 0
     while i < d do
       java.util.Arrays.fill(rhs, 0.0)
       rhs(i) = 1.0
-      SmallCholesky.solveInPlace(d, factor, rhs)
+      if solver.solveLowerInPlace(d, factor, rhs).isLeft then
+        java.util.Arrays.fill(out, Double.NaN)
+        return false
       out(i) = math.sqrt(math.max(0.0, 2.0 * noiseVariance * rhs(i)))
       i += 1
     true

@@ -1,5 +1,6 @@
 package scalafim.fmri.fit.profile
 
+import gale.linalg.{Matrix, DVec}
 import scalafim.fmri.hrf.family.JetLayout
 import scalafim.fmri.model.ProfileCriterion
 
@@ -39,10 +40,9 @@ class ProfileReductionSuite extends munit.FunSuite:
       val s = 5.0 + 0.7 * t1 + 0.4 * t2 * t2 + 0.2 * t1 * t2
       val b = Array.tabulate(c)(i => b0(i) + t1 * b1(i) + math.sin(t2) * b2(i))
       val g = Array.tabulate(c * c)(i => gram0(i) + t1 * t1 * g1(i))
-      val l = java.util.Arrays.copyOf(g, c * c)
-      assert(SmallCholesky.factorInPlace(c, l))
-      val w = java.util.Arrays.copyOf(b, c)
-      SmallCholesky.solveInPlace(c, l, w)
+      // Independent pivoted LU, not the production Cholesky workspace.
+      val w = Matrix.tabulate(c, c)((r, col) => g(r * c + col)).lu
+        .flatMap(_.solve(DVec.fromSeq(b.toSeq))).toOption.get
       s - (0 until c).map(i => b(i) * w(i)).sum
 
     def jets(t1: Double, t2: Double, withEnergyDerivatives: Boolean): (Array[Double], Array[Double], Array[Double]) =
@@ -183,3 +183,17 @@ class ProfileReductionSuite extends munit.FunSuite:
     val ml = CriterionJet.assemble(ProfileCriterion.TrialRandomEffectsML(2.0), jet, Some(logDet)).fold(e => fail(e.message), identity)
     assertEqualsDouble(ml.score, -1.0 - 1.0, 1e-15)
     assertEqualsDouble(ml.gradient(0), -0.25 - 0.1, 1e-15)
+
+  test("non-finite solves fail explicitly, clear stale output, and permit reuse"):
+    val reduction = new ProfileReduction(d, c)
+    val out = new ProfileJetBuffer(d, c)
+    val (s, b, g) = Synthetic.jets(0.3, -0.4, withEnergyDerivatives = true)
+    assert(reduction.reduce(s, b, g, out))
+    val invalid = b.clone()
+    invalid(0) = Double.NaN
+    assert(!reduction.reduce(s, invalid, g, out))
+    assertEquals(out.curvature, CurvatureStatus.NumericalFailure)
+    assert(out.amplitudes.forall(_.isNaN))
+    assert(out.gradient.forall(_.isNaN))
+    assert(reduction.reduce(s, b, g, out))
+    assertEqualsDouble(out.energy, Synthetic.energy(0.3, -0.4), 1e-12)

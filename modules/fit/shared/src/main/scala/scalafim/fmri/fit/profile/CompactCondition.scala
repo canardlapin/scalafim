@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.profile
 
+import gale.linalg.DenseCholeskyWorkspace
+
 import gale.linalg.{DMat, QROptions, QRPivoting}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis}
@@ -173,6 +175,7 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
   private val coords = new Array[Double](d)
   private val stacked = new Array[Double](grid.count * c * k)
   private val bank = new Array[Double](grid.count * jets.designJetSize)
+  private val solver = new DenseCholeskyWorkspace(c)
   private val gram = new Array[Double](c * c)
   private val tmp = new Array[Double](c)
   private var z: Array[Double] = new Array[Double](k)
@@ -199,7 +202,7 @@ final class CompactConditionObjective(val prep: CompactConditionPreparation, val
           gram(i * c + j) = acc
           j += 1
         i += 1
-      require(SmallCholesky.factorInPlace(c, gram), s"node $node has a singular compact Gram")
+      require(solver.factorLowerInPlace(c, gram).isRight, s"node $node has a singular compact Gram")
       var kk = 0
       while kk < k do
         i = 0

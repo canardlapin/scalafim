@@ -1,5 +1,7 @@
 package scalafim.fmri.fit.profile
 
+import gale.linalg.DenseCholeskyWorkspace
+
 import gale.linalg.{BandedCholesky, CholeskyOptions, DMat, DMatBuilder}
 import scalafim.fmri.ar.{WhiteningPlan, WhiteningTransform}
 import scalafim.fmri.design.hrf.{ExpandedTrialDesign, HrfKernelBasis, TrialMembership}
@@ -395,6 +397,7 @@ final class TrialBandedObjective private (
   private val c = preparation.conditions
   private val f = preparation.nuisanceColumns
   private val k = f + c
+  private val releaseSolver = new DenseCholeskyWorkspace(k)
   private val d = preparation.basis.family.dimension
   private val comps = JetLayout.components(d)
   private val bandSize = preparation.packedBandSize
@@ -640,7 +643,14 @@ final class TrialBandedObjective private (
           scoreRelease(j) = zTy(j) - correction
           j += 1
         System.arraycopy(scoreRelease, 0, scoreSolved, 0, k)
-        SmallCholesky.solveInPlace(k, ref.releaseLower, scoreSolved)
+        if releaseSolver.solveLowerInPlace(k, ref.releaseLower, scoreSolved).isLeft then
+          if out != null then
+            out.nn.energy = Double.PositiveInfinity
+            out.nn.curvature = CurvatureStatus.NumericalFailure
+            java.util.Arrays.fill(out.nn.gradient, Double.NaN)
+            java.util.Arrays.fill(out.nn.hessian, Double.NaN)
+            java.util.Arrays.fill(out.nn.amplitudes, Double.NaN)
+          return Double.PositiveInfinity
         var releasedFit = 0.0
         j = 0
         while j < k do

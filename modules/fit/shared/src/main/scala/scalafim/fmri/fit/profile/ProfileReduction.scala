@@ -1,5 +1,6 @@
 package scalafim.fmri.fit.profile
 
+import gale.linalg.{DenseCholeskyWorkspace, DensePositiveDefiniteness}
 import scalafim.fmri.hrf.family.JetLayout
 
 /** Curvature status of a profile jet at its evaluation point. */
@@ -7,6 +8,7 @@ enum CurvatureStatus:
   case PositiveDefinite
   case Indefinite
   case GramNotPositiveDefinite
+  case NumericalFailure
 
 /** Energy, gradient, symmetric Hessian and amplitudes of the profiled energy
   * at one shape, in a chart of dimension `d`. Hessian is row-major `d x d`.
@@ -41,8 +43,9 @@ final class ProfileJetBuffer(val dimension: Int, val amplitudeCount: Int):
   * row-major blocks. `s` carries the response energy, which is shape-free in
   * the condition regime and shape-dependent under a shape-dependent temporal
   * filter; omitting its derivatives is a correctness bug, so it is an input
-  * rather than an assumption. The reduction never allocates after its
-  * workspace exists and dispatches nothing per element.
+  * rather than an assumption. Successful reductions, including indefinite
+  * curvature, do not allocate after construction. Refused inputs may allocate
+  * a Gale error value.
   */
 final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
   require(dimension >= 1 && dimension <= 3, s"dimension must be 1..3, got $dimension")
@@ -51,21 +54,23 @@ final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
   val components: Int = JetLayout.components(dimension)
   private val d = dimension
   private val c = amplitudeCount
+  private val solver = new DenseCholeskyWorkspace(math.max(c, d))
   private val factor = new Array[Double](c * c)
   private val w = new Array[Double](c)
   private val r = new Array[Double](d * c)
   private val t = new Array[Double](d * c)
   private val tmp = new Array[Double](c)
 
-  /** Reduce one shape. Returns false (and marks the buffer) when `G` is not positive definite. */
+  /** Reduce one shape. Returns false and clears the buffer for a non-SPD Gram
+    * matrix or non-finite numerical result.
+    */
   def reduce(s: Array[Double], b: Array[Double], g: Array[Double], out: ProfileJetBuffer): Boolean =
     System.arraycopy(g, 0, factor, 0, c * c)
-    if !SmallCholesky.factorInPlace(c, factor) then
-      out.energy = Double.PositiveInfinity
-      out.curvature = CurvatureStatus.GramNotPositiveDefinite
-      return false
+    if solver.factorLowerInPlace(c, factor).isLeft then
+      return invalidate(out, CurvatureStatus.GramNotPositiveDefinite)
     System.arraycopy(b, 0, w, 0, c)
-    SmallCholesky.solveInPlace(c, factor, w)
+    if solver.solveLowerInPlace(c, factor, w).isLeft then
+      return invalidate(out, CurvatureStatus.NumericalFailure)
     var bw = 0.0
     var i = 0
     while i < c do
@@ -93,7 +98,8 @@ final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
         r(p * c + i) = acc
         tmp(i) = acc
         i += 1
-      SmallCholesky.solveInPlace(c, factor, tmp)
+      if solver.solveLowerInPlace(c, factor, tmp).isLeft then
+        return invalidate(out, CurvatureStatus.NumericalFailure)
       System.arraycopy(tmp, 0, t, p * c, c)
       p += 1
     p = 0
@@ -112,8 +118,27 @@ final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
         out.hessian(q * d + p) = h
         q += 1
       p += 1
-    out.curvature = if SmallCholesky.isPositiveDefinite(d, out.hessian) then CurvatureStatus.PositiveDefinite else CurvatureStatus.Indefinite
+    if !out.energy.isFinite || !finite(out.gradient) || !finite(out.hessian) then
+      return invalidate(out, CurvatureStatus.NumericalFailure)
+    out.curvature =
+      if solver.testPositiveDefinite(d, out.hessian) == DensePositiveDefiniteness.PositiveDefinite then CurvatureStatus.PositiveDefinite
+      else CurvatureStatus.Indefinite
     true
+
+  private def finite(values: Array[Double]): Boolean =
+    var i = 0
+    while i < values.length do
+      if !values(i).isFinite then return false
+      i += 1
+    true
+
+  private def invalidate(out: ProfileJetBuffer, status: CurvatureStatus): Boolean =
+    out.energy = Double.PositiveInfinity
+    java.util.Arrays.fill(out.gradient, Double.NaN)
+    java.util.Arrays.fill(out.hessian, Double.NaN)
+    java.util.Arrays.fill(out.amplitudes, Double.NaN)
+    out.curvature = status
+    false
 
   private def quadratic(matrix: Array[Double], offset: Int, x: Array[Double]): Double =
     var acc = 0.0
@@ -125,53 +150,3 @@ final class ProfileReduction(val dimension: Int, val amplitudeCount: Int):
         j += 1
       i += 1
     acc
-
-/** In-place Cholesky for the tiny symmetric systems of the profile reduction. */
-private[profile] object SmallCholesky:
-  def factorInPlace(n: Int, a: Array[Double]): Boolean =
-    var j = 0
-    while j < n do
-      var diag = a(j * n + j)
-      var k = 0
-      while k < j do
-        val l = a(j * n + k)
-        diag -= l * l
-        k += 1
-      if !(diag > 0.0) then return false
-      val ljj = math.sqrt(diag)
-      a(j * n + j) = ljj
-      var i = j + 1
-      while i < n do
-        var s = a(i * n + j)
-        k = 0
-        while k < j do
-          s -= a(i * n + k) * a(j * n + k)
-          k += 1
-        a(i * n + j) = s / ljj
-        i += 1
-      j += 1
-    true
-
-  def solveInPlace(n: Int, l: Array[Double], b: Array[Double]): Unit =
-    var i = 0
-    while i < n do
-      var s = b(i)
-      var k = 0
-      while k < i do
-        s -= l(i * n + k) * b(k)
-        k += 1
-      b(i) = s / l(i * n + i)
-      i += 1
-    i = n - 1
-    while i >= 0 do
-      var s = b(i)
-      var k = i + 1
-      while k < n do
-        s -= l(k * n + i) * b(k)
-        k += 1
-      b(i) = s / l(i * n + i)
-      i -= 1
-
-  def isPositiveDefinite(n: Int, a: Array[Double]): Boolean =
-    val copy = java.util.Arrays.copyOf(a, n * n)
-    factorInPlace(n, copy)
