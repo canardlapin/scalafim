@@ -1,0 +1,44 @@
+{
+  "bd-01M2BNETNF8TD1NQDTW692WE9S": {
+    "id": "bd-01M2BNETNF8TD1NQDTW692WE9S",
+    "status": "closed",
+    "title": "UMVPA-M1.03: Implement measurement legs, lazy frames, and spatial scattering adapters",
+    "notes": [
+      {
+        "actor": "umvpa-measurement-20260929",
+        "kind": "handoff",
+        "op_id": "20260930T011529.671845Z-p20960-c0000-r938f-h5a0c33",
+        "text": "M1.03 implementation handoff. Owning gates passed: MVPA 173 JVM / 173 JS; spatial 27 JVM / 26 JS; compileAll warning-clean. Verified log reference: /private/tmp/scalafim-umvpa-20260929/qualification.json. Ticket remains open pending orchestrator immutable source SHA and final acceptance.",
+        "ts": "2026-09-30T01:15:29.671845Z"
+      },
+      {
+        "actor": "umvpa-orchestrator-20260929",
+        "kind": "note",
+        "op_id": "20260930T012521.888545Z-p54398-c0000-reccb-h0acc48",
+        "text": "M1.03 acceptance: typed measurement legs, lazy dependent frame traversal, region/searchlight/identity adapters and scatter outcomes complete. Native replay uncertified; spatial support metadata materialized; weighted overflow rejects typed. Qualified local candidate cand-5SSQMJHFVVXBD329CMCJDKXQDB, commit e57997c26fb749b5cf7d7ef15c2dbc2c0643476f, tree 11e9ca9eba9214e5fda4bdb65ee03b6069ba75ea, base79a8b7d1fbe07c383bb8929a69973729c22ce64b; local branch umvpa/foundation-20260929 imported into primary object store. Independent read-only expert /root/compiler_review accepted exact source/log hashes; parent integration review recorded in Mote. MVPA173 JVM+173JS; spatial27JVM+26JS; full scalafimCompileAll warning-clean, all exit0. Durable report docs/verification/umvpa-orchestration-20260929.md; correct canonical receipt docs/verification/umvpa-20260929/qualification.json (not verifiedqualification.json). No main merge/push/landing authorization, no whole-epic/scientific/performance qualification; base/provider reconciliation remains a future integration gate. Unrelated source/index preserved.",
+        "ts": "2026-09-30T01:25:21.888545Z"
+      }
+    ]
+  },
+  "bd-01M2BNEWJMN7SYF95W45SVM6X6": {
+    "id": "bd-01M2BNEWJMN7SYF95W45SVM6X6",
+    "status": "closed",
+    "title": "UMVPA-M1.04: Implement open estimands, typed results, and inspectable scientific compilation",
+    "notes": [
+      {
+        "actor": "umvpa-compilation-20260929",
+        "kind": "handoff",
+        "op_id": "20260930T011536.726102Z-p21179-c0000-rea52-h06d48c",
+        "text": "M1.04 compiler owner handoff: verified qualification is recorded at /private/tmp/scalafim-umvpa-20260929/verifiedqualification.json. Parent reports mvpaJVM 173/173, mvpaJS 173/173, and warning-clean compileAll; independent source verdict accepted. Code/test/docs are stable. Ticket intentionally remains open pending parent immutable SHA and acceptance.",
+        "ts": "2026-09-30T01:15:36.726102Z"
+      },
+      {
+        "actor": "umvpa-orchestrator-20260929",
+        "kind": "note",
+        "op_id": "20260930T012558.943461Z-p54628-c0000-r1d90-h220172",
+        "text": "M1.04 complete: open estimands and dependent results, separate scientific/numerical/execution descriptors, conservative capability admission, immutable receipts, explicit product/reduction states. Qualified local candidate cand-5SSQMJHFVVXBD329CMCJDKXQDB commit e57997c26fb749b5cf7d7ef15c2dbc2c0643476f tree11e9ca9eba9214e5fda4bdb65ee03b6069ba75ea; base79a8b7d1fbe07c383bb8929a69973729c22ce64b; local branch umvpa/foundation-20260929. Independent read-only expert /root/compiler_review accepted exact SHA/logs; parent integration review in Mote. MVPA173 JVM/173JS, spatial27JVM/26JS, scalafimCompileAll warning-clean, all exit0. Durable report docs/verification/umvpa-orchestration-20260929.md; canonical receipt docs/verification/umvpa-20260929/qualification.json (corrects earlier verifiedqualification.json typo). Native replay-required methods remain rejected pending certification. No main merge, push or landing authorization; no full epic/scientific/performance qualification. Future integration must reconcile divergent current main/provider pins; unrelated source/index preserved.",
+        "ts": "2026-09-30T01:25:58.943461Z"
+      }
+    ]
+  }
+}

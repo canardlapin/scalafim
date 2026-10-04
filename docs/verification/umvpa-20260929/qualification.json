@@ -1,0 +1,53 @@
+{
+  "base": "79a8b7d1fbe07c383bb8929a69973729c22ce64b",
+  "qualification": "Owning-module JVM/JS tests and full warning-clean compile; no full epic or performance qualification",
+  "tests": [
+    {
+      "log": "final-jvm.log",
+      "exit_code": 0,
+      "sha256": "12d3ccfce9727b623e47e27f775f7995b13d22c92415b983c24f0673a64c5b08",
+      "summaries": [
+        "[info] Passed: Total 173, Failed 0, Errors 0, Passed 173",
+        "[info] Passed: Total 27, Failed 0, Errors 0, Passed 27"
+      ]
+    },
+    {
+      "log": "mvpa-js-01.log",
+      "exit_code": 0,
+      "sha256": "79ad12dc18eef3f7aa5a4d7ea11ec7bb0338ef2777d496b15277b8d12238c80f",
+      "summaries": [
+        "[info] Passed: Total 173, Failed 0, Errors 0, Passed 173"
+      ]
+    },
+    {
+      "log": "spatial-jvm-compile-03.log",
+      "exit_code": 0,
+      "sha256": "26197a2f70c44a239e8ac1a4667987f13aaea1e6368d483fe60af86f78a75446",
+      "summaries": [
+        "[info] Passed: Total 27, Failed 0, Errors 0, Passed 27"
+      ]
+    },
+    {
+      "log": "spatial-js-02.log",
+      "exit_code": 0,
+      "sha256": "fa1f121e92b08c0efdae51b24c2678d79ba29d2b08be727617c8b3fdd92ace1e",
+      "summaries": [
+        "[info] Passed: Total 26, Failed 0, Errors 0, Passed 26"
+      ]
+    }
+  ],
+  "providers": {
+    "gale": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+    "multivar": "f74d631720d65147c51496dcbdd37c01912de1cb",
+    "resample4s": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+    "locus4s": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+    "alder": "c56a6b17989e77bdab8d57220fe3299fe9348e30"
+  },
+  "source_manifest": "source-manifest.json",
+  "source_frozen": true,
+  "shared_checkout_sources_changed": false,
+  "commit": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+  "tree": "11e9ca9eba9214e5fda4bdb65ee03b6069ba75ea",
+  "branch": "umvpa/foundation-20260929",
+  "source_locator": "refs/heads/umvpa/foundation-20260929 in this repository; no merge or push"
+}

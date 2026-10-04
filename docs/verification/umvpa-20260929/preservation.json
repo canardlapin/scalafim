@@ -1,0 +1,17 @@
+{
+  "source_manifest_verified": true,
+  "local_branch": "umvpa/foundation-20260929",
+  "commit": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+  "primary_head": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+  "primary_index_empty": true,
+  "no_merge_or_push": true,
+  "primary_owned_artifacts": [
+    "docs/verification/umvpa-orchestration-20260929.md",
+    "docs/verification/umvpa-20260929/"
+  ],
+  "bounded_packets_closed": [
+    "M1.03",
+    "M1.04"
+  ],
+  "epic_closed": false
+}
