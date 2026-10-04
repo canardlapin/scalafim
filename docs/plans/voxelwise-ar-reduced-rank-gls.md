@@ -1,0 +1,426 @@
+# Compressed reduced-rank GLS with voxelwise AR
+
+Design decision, 2026-09-29. Mote: `bd-01KX50HA4TGKKWR1CC2G8HRY2D`.
+Implementation follow-up: `bd-01M3QWEYR7925NAFZDCH60Q6R8`. Fixed-rank execution
+is available through explicit `EstimatesOnly` and `VoxelwiseBootstrap` policies.
+The qualification record below distinguishes numerical parity from inference
+calibration; generic T/F inference and adaptive voxelwise rank remain refused.
+
+## Decision and current behavior
+
+The intended extension imposes **one global rank constraint on the target
+coefficient matrix in the original predictor/voxel coordinates**, using the
+sum of each voxel's whitened residual sums of squares. It does not define a
+common latent time series by mixing differently whitened response columns.
+Voxels need not be grouped. Exact groups may share geometry calculations inside
+the global fit; independently reducing groups defines a different estimand.
+
+The existing [prepared RRG](../../modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala)
+supports a common whitening transform, nuisance residualization, task QR/SVD,
+and response-loading conditional/bootstrap inference. The legacy voxelwise AR
+path allows an explicit full-rank request with `Conditional` inference, delegates
+to voxelwise GLS, and records `ReducedRankFullRankVoxelwiseFallback` with
+event-only inference. Legacy `Conditional`/`Bootstrap` compression remains
+refused. The new policies return `VoxelwiseReducedRankFmriFitResult`, whose
+uncertainty is either explicitly unavailable or a separate bootstrap payload.
+
+The extension needs a new geometry and inference identity. Removing the guard,
+averaging AR coefficients, or reusing current `ReducedRankConditional` for the
+new covariance formula is not an implementation of this decision.
+
+## Objective and nuisance elimination
+
+Let `Y` be `n × m`, target design `X` be `n × p`, and nuisance design `Z`
+be `n × q`, all on the same resolved row axis. Target coefficients `B` are
+`p × m`; nuisance coefficients `Gamma` are unrestricted. Each voxel has a
+frozen, nonsingular, segment-aware temporal transform `W_v`. Define
+
+```text
+N_v = W_v Z
+M_v = I - N_v (N_v' N_v)^-1 N_v'
+D_v = M_v W_v X             z_v = M_v W_v y_v
+G_v = D_v' D_v              h_v = D_v' z_v
+
+minimize L(B) = sum_v ||z_v - D_v b_v||², subject to rank(B) <= r.
+```
+
+Use QR projections/solves rather than materializing `M_v` or matrix inverses.
+Require full column rank of `[W_v X, W_v Z]`, positive residual df, finite
+inputs, and admitted whitening conditioning. Singular design/transform failures
+are typed failures, not instructions to drop columns, voxels or rows silently.
+With no nuisance columns `M_v = I`. Recover nuisance estimates after reduction:
+
+```text
+gamma_v = argmin_gamma ||W_v(y_v - X b_v) - N_v gamma||².
+```
+
+Residualization must follow whitening separately for each voxel. A common
+unwhitened nuisance projection generally gives another loss. Respect original
+timepoint identity, run breaks, censor resets and initial-condition scaling.
+AR estimation exclusion rows and fit row inclusion are distinct inputs; do not
+turn noise-estimation censoring into silent removal of fitted observations.
+
+This is a unit-weight marginal GLS loss conditional on the frozen transforms.
+It assumes neither independent voxels nor one matrix-normal noise covariance.
+If voxel innovation scales differ, it is not automatically their joint Gaussian
+likelihood: likelihood weights would include inverse scales. Such weighting is
+a separate explicit policy, not a hidden normalization or an iteratively changed
+objective. Coefficient units and design scaling must be preserved.
+
+## Shared subspace and limiting cases
+
+`B = A C` with `A` of size `p × r` and `C` of size `r × m` expresses a
+coherent shared **predictor subspace**. Its row space also supplies a shared
+response loading space algebraically, but heterogeneous whitening does not
+commute with response-column mixing. There is generally no one transformed
+`X` and `Y` to which the existing task QR/SVD may be applied.
+
+Completing squares gives the heterogeneous coefficient metric
+
+```text
+L(B) = L(B_GLS) + sum_v (b_v - b_GLS,v)' G_v (b_v - b_GLS,v).
+```
+
+An ordinary SVD of `B_GLS` minimizes a Euclidean coefficient loss, not this
+loss. When all `G_v = G`, an invertible square root of `G` reduces the problem
+to a spectral one; common whitening recovers the current task QR/SVD after
+nuisance elimination. Proportional metrics `G_v = alpha_v G`, `alpha_v > 0`,
+also admit a spectral reduction with explicit response-column scaling. Different
+AR coefficients therefore do not, by themselves, prove that every spectral
+shortcut is impossible. General nonproportional metrics require another solver.
+
+For `r >= min(p,m)` the rank constraint is inactive. Bypass the reduced model
+and return ordinary voxelwise GLS coefficients and its marginal covariance,
+while retaining event-only inference. This also covers `m < p`: freezing a
+learned `p × m` basis for covariance would incorrectly restrict uncertainty
+even though the rank constraint is inactive.
+
+## Solver and rank policy
+
+The implemented target is **fixed rank only** (including inactive `Full`).
+Variable projection over predictor subspaces is an equivalent formulation,
+representing `A' A = I` as a gauge:
+
+```text
+c_v(A) = solve(A' G_v A, A' h_v)
+F(A) = sum_v [z_v' z_v - h_v' A solve(A' G_v A, A' h_v)]
+b_v = A c_v(A).
+```
+
+Optimize `F` on the Grassmann space, or an equivalent rank-preserving
+representation. Use stable Gale capabilities for solves and optimization
+primitives; do not introduce private eigensolver/inverse families in `fit`.
+Evaluate residual loss as well as the profiled expression to detect cancellation.
+Check finite values, conditioning, rank, and basis-rotation invariance.
+
+This objective is nonconvex. A production algorithm must declare deterministic
+initializations/restarts, tie rules, iteration budget, stationarity criterion,
+conditioning thresholds, achieved objective and convergence/failure status.
+Convergence establishes a stationary candidate, not a certified global optimum.
+An approximate solver must have an explicit API admission policy and report its
+status; it may not silently claim the exact minimizing estimand. Generic weighted
+low-rank approximation is difficult even at rank one
+([Gillis and Glineur](https://arxiv.org/abs/1012.0197)); that result is background,
+not a hardness proof for this restricted AR family.
+
+Initially retain typed refusal for `EnergyRetained` and
+`ResidualSumsOfSquaresBudget`: there is no generally shared singular spectrum
+to reuse. A future adaptive policy must define the objective improvements,
+optimization error, baseline loss and tie/zero-signal behavior before assigning
+energy or an excess-RSS budget. It must refit the complete selection per rank.
+Existing common-whitening policies keep their current semantics.
+
+The implementation uses Gale's projected-gradient primitive and exact truncated
+SVD projections onto `rank(B) <= r`. It scales target coefficient rows by pooled
+residualized design norms, and all responses by their residualized RMS. These
+invertible transformations preserve the original rank constraint and objective
+while making stopping invariant to overall design/response units. Starts are
+the truncated unrestricted estimate, zero, and the first `r` normalized target
+rows. The lowest-loss converged start wins (ties use start index); no converged
+start is a typed failure. Diagnostics retain every start's status, iteration
+count, objective and projected-gradient residual. Defaults are 4000 iterations
+and `1e-8` absolute/relative tolerance in normalized coordinates. QR rank tests
+use Gale's scale-relative tolerance, and per-voxel target Gram conditioning is
+bounded by `1e12`. No grouping or approximate whitening is performed.
+The returned iterate's projected-gradient mapping is recomputed before accepting
+convergence. Whitening segments require a finite initial scale above `1e-10`;
+a singular action is refused even when its transformed design retains rank.
+
+Inactive rank bypasses optimization. On the new estimates-only policy uncertainty
+stays absent; on the new bootstrap policy it remains explicitly bootstrap
+uncertainty. Ordinary GLS inference is available through the legacy full-rank
+`Conditional` fallback. Reduced RSS divided by unrestricted residual df is
+descriptive lack of fit, not an unbiased innovation variance under truncation.
+
+## Exact and approximate grouping
+
+Exact cache keys identify the actual whitening action: ordered fitted row
+identity, run/segment boundaries, censor reset topology, resolved per-segment
+AR/MA coefficients, recurrence convention and actual initial scaling. Include
+design/target/nuisance identity and conditioning policy when caching projected
+geometry. Method/estimation origin belongs in provenance even when actions agree.
+Use canonical finite numeric representations and verify exact content after a
+hash match; rounded coefficients, summary rho and hash equality alone are not
+equality of geometry. Start conservatively with structurally identical actions;
+do not search approximately for operator equality in the hot path.
+
+Grouping is an optimization, not required scientific preprocessing. Distinct
+estimated coefficients often make every voxel a singleton; neither compression
+nor a speedup follows from grouping. Independent rank-`r_g` group fits allow
+assembled rank up to `min(p, sum_g r_g)` and require a separately named model,
+rank-per-group policy, group membership and separate inference provenance.
+No such group-fitting model is admitted here.
+
+Approximate grouping is rejected for this capability. A future approximation
+would require user-visible tolerances, operator/loss perturbation bounds,
+conditioning-sensitive coefficient and contrast-error bounds, qualification on
+the original per-voxel loss, and approximate-geometry provenance. Small rho
+differences alone are not an error contract.
+
+## Covariance and contrast meaning
+
+For an externally fixed predictor basis `A`, fixed `W_v`, an adequate restricted
+mean model and marginal innovations with covariance `sigma_v² I`,
+
+```text
+Cov(b_hat_v | fixed estimator) = sigma_v² A solve(A' G_v A, A').
+```
+
+This is the covariance of a fixed predictor-subspace estimator. If `A` was
+learned from these same responses, plugging it into that formula omits basis and
+rank selection uncertainty; it is not the exact conditional distribution given
+the learned selection. Estimated AR contributes another omitted uncertainty.
+The corresponding target is the restricted/projection coefficient: rank
+truncation can bias estimates of the unrestricted coefficient matrix.
+
+Use a distinct method identity such as `VoxelwiseRankFixedPredictorSubspace`,
+with external/frozen versus same-response plug-in preparation stated explicitly.
+Use voxel-specific covariance, embedding only target rows; restrict nuisance
+and baseline T/F inference as today. Estimate marginal `sigma_v²` from the
+unrestricted frozen-whitening GLS residuals with `n-p-q` df, separately from the
+reduced model's reported residual RSS. Reduced RSS includes discarded signal
+and must not silently become an unbiased innovation-variance estimate.
+This df is a variance-estimation convention; same-response plug-in basis or AR
+does not acquire exact nominal t/F calibration from it.
+
+Fixed-`A` target covariance has rank at most `r`. Admit joint contrasts only
+when their transformed covariance is nonsingular and their inference target is
+declared. Refuse zero-variance and singular joint contrasts with a typed
+non-estimability result; do not floor eigenvalues or use an unexplained inverse
+to manufacture a statistic. A contrast outside the restricted subspace can
+refer to biased unrestricted coefficients even when its variance is nonzero.
+
+Freezing the current **response loading** `V` is a different estimator:
+`b_v = T v_v`. Its shared factor solves a system involving
+`sum_v (v_v v_v') tensor G_v`. This couples voxels, and its uncertainty depends
+on cross-voxel noise covariance. The current shared latent-residual covariance
+formula cannot be transplanted to the new fixed-predictor covariance semantics.
+Neither formula licenses arbitrary spatial aggregates from marginal covariance
+alone. Export cross-voxel covariance only if actually modeled and retained.
+
+## Bootstrap contract
+
+Define two distinct targets before enabling bootstrap:
+
+1. **Frozen-whitening refit:** freeze row/design identity, `W_v` and fixed rank;
+   refit the global basis, coefficients and nuisance for every replicate. This
+   includes basis variability under the fitted bootstrap model, but excludes AR
+   estimation and rank selection uncertainty.
+2. **Pipeline refit:** regenerate responses and rerun AR estimation, nuisance
+   preparation, global fitting and any explicitly admitted rank policy per
+   replicate. Do not freeze original group membership if whitening is re-estimated.
+
+For a candidate residual bootstrap, obtain innovation residuals from unrestricted
+GLS, center them within declared exchangeability units, resample **joint voxel
+vectors synchronously**, and reconstruct raw responses from the chosen fitted
+restricted mean plus each voxel's inverse whitening action. Whiten and nuisance
+project each reconstructed response again. This approximates variability under
+the fitted restricted model; it does not correct truncation bias against arbitrary
+unrestricted truth. Define residual/leverage correction in the bootstrap policy
+and qualify it rather than inheriting one accidentally.
+
+Do not resample already projected `z_v` rows as if projection preserved iid
+noise. Marginal AR whitening does not prove that joint voxel innovation vectors
+are iid across time: differing filters can leave cross-voxel lag dependence.
+Row bootstrap needs an explicit joint-innovation assumption; block bootstrap
+needs declared block length and dependence qualification. Blocks stay within
+run/censor segments, never wrap across resets, and define short-segment handling
+and initial-condition treatment. Full-pipeline uncertainty requires a qualified
+innovation-generating model, not only a deterministic row sampler.
+
+Freeze replicate identities, seed/stream version, resampling indices, rank and
+solver-start policy globally. Retry/failure policy is explicit; do not silently
+discard failed replicates or substitute full-rank fits. Accumulate full target
+coefficient covariance per voxel from decoded original-coordinate coefficients;
+basis sign/rotation matching is unnecessary for that covariance. Same seed across
+platforms proves reproducibility, not bootstrap coverage or nominal t/F inference.
+
+## Execution and exports
+
+Preparation is a barrier over the complete resolved selection. It estimates AR
+according to the declared policy, binds each plan to stable voxel identity,
+builds sufficient statistics, resolves/fits the one global subspace and prepares
+the requested inference payload. Responses must be replayable with bound content
+identity if preparation makes multiple passes. Voxel chunks then decode/select
+immutable coefficient, nuisance, residual and covariance columns. They may not
+re-estimate AR, choose a rank, refit a basis or allocate independent RNG streams.
+
+For a bounded implementation, accumulate loss/gradient statistics in a canonical
+voxel order independent of task completion order; floating-point associativity
+otherwise changes optimization decisions. Reordered user selection maps to
+canonical preparation identities and back to requested output order. Equal-rank
+ties compare achieved loss then declared deterministic initialization identity.
+Reject chunk/preparation membership or row/content mismatches. Sufficient
+statistics need `O(m p²)` storage if retained; replay/streaming alternatives and
+bootstrap work must be explicit in receipts. This is complexity accounting,
+not a measured memory or speed claim.
+
+The current implementation keeps the complete response and per-voxel whitened/
+residualized designs in memory: approximately `O(m n (p+q) + m p²)` geometry
+storage, plus `O(R p m)` target samples for `R` bootstrap replicates and exact
+percentiles. It is not a streaming or measured memory-reduction implementation.
+
+Required exported provenance includes a schema/method version, original target
+and nuisance axes, row/voxel selection and content digests, frozen per-voxel
+whitening actions and estimation configuration, loss/weighting identity, requested
+and achieved rank, solver starts/status/objective/conditioning tolerances,
+subspace identity, inference target and omitted uncertainty, variance estimator
+and df, covariance scope, and bootstrap mode/replicate/failure/RNG/segment policy.
+Record subspace/projector identity robust to basis rotations as well as any stored
+factor representation. Summary AR coefficients are insufficient to reproduce
+the fitted metric. Existing method labels must not misidentify the new estimator.
+Estimate readers must reject unknown required semantics or preserve an explicitly
+unavailable inference state. Nuisance estimates remain exportable, their SE and
+covariance maps remain excluded, and marginal covariance must not masquerade as
+a joint spatial covariance artifact.
+
+## Original design evidence and admission gates
+
+The independent base-R [oracle](../../tools/r-parity/verify_voxelwise_ar_rrg_design.R)
+uses 12 rows, two target columns, an intercept, four voxels and two AR-reset
+segments. It profiles rank one over the projective circle using all grid-local
+minima and periodic edges, with 4096/8192-grid refinement. This is a discriminating
+numerical fixture, not a general optimality proof. The [receipt](../audits/voxelwise-ar-rrg-design-oracle.json)
+records:
+
+| Fit evaluated in the original heterogeneous metric | Residual loss | Global target rank |
+| --- | ---: | ---: |
+| Global rank-one numerical oracle | 12.6119039072 | 1 |
+| Ordinary coefficient SVD | 13.8650460162 | 1 |
+| Pooled-whitening QR/SVD | 13.3097383788 | 1 |
+| Independent exact-group rank-one fits | 3.5304205109 | 2 |
+| Unrestricted voxelwise GLS | 0.1975716326 | 2 |
+
+Full-rank FWL versus direct joint-design GLS agrees within `4.45e-16`;
+common-whitening QR/SVD versus the angle oracle within `9.21e-10`;
+fixed-predictor covariance versus the complete constrained-design linear
+propagation within `5.56e-17`. The latter is an algebraic covariance check,
+not empirical coverage or uncertainty of a learned basis. All fixtures are
+synthetic; no restricted data or production implementation is involved.
+
+The design specified the following admission evidence:
+
+- Independent heterogeneous objective/coefficient fixtures, common-geometry
+  spectral and inactive-rank GLS limits, nuisance/segment/initial-condition
+  cases, scaling and conditioning failures, basis rotations and solver failures.
+- JVM **and** JS direct/sequential/Future batch-versus-chunk tests at several
+  widths, worker counts, selection permutations and completion orders. Compare
+  coefficients, original-metric loss, rank/status, nuisance, every marginal
+  covariance, contrasts, exclusions and export provenance. Never accept a
+  chunk-local basis as equivalent merely because dimensions match.
+- Fixed externally supplied basis/noise covariance tests independent of learned
+  basis tests; independent simulation for plug-in and bootstrap calibration
+  claims, including heterogeneous AR and joint temporal/spatial dependence.
+- Typed geometry/inference/provenance lowering and physical export/readback tests;
+  singular contrasts, omitted uncertainty and unsupported adaptive policies
+  remain explicit. Provider capabilities are landed in Gale where required.
+
+At the original design handoff, `ChunkedFitExecutorSuite` checked typed refusal for fixed/energy/RSS
+compression under conditional and bootstrap policies, plus full-rank bootstrap,
+through direct, sequential and Future execution with reordered voxels and two
+chunk widths. Existing suites cover supported common-whitening compression,
+bootstrap fixtures and full-rank voxelwise fallback. These checks protect the
+boundary; they do **not** satisfy compressed voxelwise runtime admission.
+
+Verification on 2026-09-29: the oracle passed and reproduced its receipt byte
+for byte; the receipt binds the generator source by MD5. A separate mathematical
+review found no required corrections. Each of the following bounded commands
+passed 68 tests with no build warnings, on sbt 1.11.7 / Java 25.0.1:
+
+```sh
+sbt 'fitJVM/testOnly scalafim.fmri.fit.ChunkedFitExecutorSuite scalafim.fmri.fit.FitPlanExecutorSuite'
+sbt 'fitJS/testOnly scalafim.fmri.fit.ChunkedFitExecutorSuite scalafim.fmri.fit.FitPlanExecutorSuite'
+LC_ALL=C Rscript tools/r-parity/verify_voxelwise_ar_rrg_design.R
+```
+
+Those design-only checks did not execute compressed voxelwise fitting or measure
+bootstrap coverage. The implementation evidence below supersedes that boundary
+for the explicitly named new policies.
+
+## Implementation qualification
+
+The [qualification receipt](../audits/voxelwise-ar-rrg-qualification.json) binds
+source hashes, both-platform checks, independent oracle output and the complete
+pointwise simulation summaries. The new solver matches the heterogeneous
+projective-circle oracle (`12.611903907225837` loss, coefficient tolerance
+`2e-6`, loss tolerance `1e-9`). Tests cover common-whitening QR/SVD and inactive
+GLS limits, nuisance reparameterization, design/response unit changes, a
+three-target rank-two exact fit, zero signal, iteration exhaustion, singular
+design/whitening, row/content identity and direct/sequential/Future execution.
+Preparation canonicalizes voxel identity and chunks only select fitted columns.
+
+The independent [bootstrap oracle](../../tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R)
+uses explicit R whitening matrices, direct inverse solves, QR residualization
+and a scalar circle search for 32 frozen-whitening replicates. Its 128/256-grid
+refinement changes coefficients/objectives by at most `2.49e-8`. Production
+target covariance agrees within `1e-8`, pointwise interval endpoints within
+`2e-6` and replicate losses within `1e-8`. Separate tests check ARMA inverse
+recurrences, segment resets, singleton segments, excluded donor rows, short
+donor refusal, unit-leverage refusal, boundary RNG seeds and failure propagation
+with replicate identity. Actual NIfTI exports are read back; JSON sidecars are
+also parsed independently to catch serialization defects.
+
+The bounded calibration pilot uses 80 independent synthetic datasets per regular
+scenario: 80 timepoints, two rank-one targets, an intercept, three voxels with
+AR(1) coefficients `[0.1, 0.5, -0.2]`, innovation SD `0.6`, and contemporaneous
+correlation either `0` or `0.5`. Both bootstrap modes use 99 replicates, block
+size one, one run and a single initial reset. The first three datasets in each
+scenario also use 399 nested replicates to measure endpoint Monte Carlo
+sensitivity. A separate 40-dataset zero-signal pilot records behavior at the
+rank boundary without treating it as regular-model qualification.
+
+Regular per-coefficient coverage ranges from `0.8875` to `1.0`, and mean
+bootstrap variance divided by empirical sampling variance from approximately
+`0.8764` to `1.1753`. All regular cases pass the prespecified broad investigation
+thresholds (coverage below `0.85` or variance ratio outside `[0.5, 2]`). These
+thresholds only detect gross failures. Some coverage estimates are below the
+requested `0.95`; 80 datasets and 99 replicates do not establish nominal
+calibration. The receipt retains per-coefficient Wilson intervals, estimator
+bias/RMSE, variance estimates and higher-replicate endpoint sensitivity instead
+of pooling correlated coefficients into an inflated sample size.
+
+The supported uncertainty is therefore an explicitly labeled, model-conditional
+residual approximation. Its HC2 correction is marginal and does not exactly
+restore joint covariance under heterogeneous hat matrices. Calibration under
+reset-heavy designs, multiple runs, larger blocks, lagged cross-voxel innovation
+dependence, rank misspecification and weak subspaces remains unestablished.
+No generic nominal T/F inference, adaptive rank, global-optimality certificate,
+production-data validation, performance advantage or publication is claimed.
+
+Example configuration (replace `EstimatesOnly` with `uncertainty` below to request
+bootstrap covariance and pointwise intervals):
+
+```scala
+val uncertainty = ReducedRankInferencePolicy.VoxelwiseBootstrap(
+  VoxelwiseReducedRankBootstrapConfig.unsafe(
+    resampling = ReducedRankBootstrapConfig.unsafe(replicates = 399, blockSize = 1, seed = 19),
+    mode = VoxelwiseBootstrapMode.RefitAutocorrelation
+  )
+)
+val config = ReducedRankGlsConfig.unsafe(
+  components = ReducedRankComponentSpec.unsafeFixed(1),
+  autocorrelation = AutocorrelationConfig.unsafe(order = 1, voxelwise = true),
+  inference = ReducedRankInferencePolicy.EstimatesOnly
+)
+val plan = FitPlan(model, FitStrategy.ReducedRankGls(config))
+```

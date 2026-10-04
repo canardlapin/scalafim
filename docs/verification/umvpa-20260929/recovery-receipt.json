@@ -1,0 +1,22 @@
+{
+  "recorded_base": "79a8b7d1fbe07c383bb8929a69973729c22ce64b",
+  "recovery_source": "recorded apply_patch inputs plus complete GroupedValidation source readback",
+  "historical_commits_missing": [
+    "c390b08ebb63523702d869043768d2ec871d3253",
+    "77360cf2d41f7c38bc7b400fb04a623be9bf73ee",
+    "9f798bb2e2259d2dba293135d6e0a402136e4929"
+  ],
+  "verified_current": true,
+  "recovered_sources": [
+    "AxisRef",
+    "Column",
+    "Observations",
+    "ReindexingLeg",
+    "EvidenceDesign",
+    "GroupedValidation"
+  ],
+  "primary_checkout_changed": false,
+  "qualification": "Recovered source requalified in the owning JVM/JS suites; historical commits remain unavailable.",
+  "qualified_commit": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+  "receipt": "qualification.json"
+}

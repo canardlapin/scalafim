@@ -1,0 +1,233 @@
+{
+  "schema_version": 1,
+  "source_sha": "9d8ec21454774e840baf41de9dff345e7fd88418",
+  "base_sha": "6e8aacdbcea18b4b75bd1058f3747815d8b75b9b",
+  "owning_gates": [
+    {
+      "name": "origins-core-jvm-04",
+      "log": "origins-core-jvm-04.log",
+      "log_sha256": "3fe6c4948fa4d7fb26172566dc935eee49c86fb18b0694e1711118603c887851",
+      "metadata": "origins-core-jvm-04.log.meta.json",
+      "metadata_sha256": "3051c815bd153ede96dd55e7c9f90cc2009526eb1c74002229bbeb75d684d36f",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.task.cpus=1",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "mvpaJVM/test",
+        "mvpaFitJVM/test"
+      ],
+      "check_summary": "origins-core-jvm-04.check-summary.json",
+      "check_summary_sha256": "a0d3d7048351ab6756f3659f69259e8e858193d68de4d9508a257354183d3d2b",
+      "reported_suite_totals": [
+        "Passed: Total 222, Failed 0, Errors 0, Passed 222",
+        "Passed: Total 46, Failed 0, Errors 0, Passed 46"
+      ],
+      "warning_error_lines": 0,
+      "skipped_marker_lines": []
+    },
+    {
+      "name": "origins-core-js-05",
+      "log": "origins-core-js-05.log",
+      "log_sha256": "938189adacb1ad4d3d63589c8771e8c845f1b29421532a0f7347a790cb78f0eb",
+      "metadata": "origins-core-js-05.log.meta.json",
+      "metadata_sha256": "4708acc3a4990ab502f2716270407679ecee5c386941f0ee1d7002fda57d7c2b",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.task.cpus=1",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "mvpaJS/test",
+        "mvpaFitJS/test"
+      ],
+      "check_summary": "origins-core-js-05.check-summary.json",
+      "check_summary_sha256": "115fd016ec1a0f1149cbe56cb9d5e85e28e901d74d9b47c28dbaca84cd798312",
+      "reported_suite_totals": [
+        "Passed: Total 222, Failed 0, Errors 0, Passed 222",
+        "Passed: Total 46, Failed 0, Errors 0, Passed 46"
+      ],
+      "warning_error_lines": 0,
+      "skipped_marker_lines": []
+    },
+    {
+      "name": "canonical-origins-dataset-jvm-03",
+      "log": "canonical-origins-dataset-jvm-03.log",
+      "log_sha256": "fbc38d4dc05f4b1536167b20208f3e6dfc58cf3d3e6dc1c441249318932c9b64",
+      "metadata": "canonical-origins-dataset-jvm-03.log.meta.json",
+      "metadata_sha256": "3b0dbc3ec4ab4a067b9431e9a851974a46da69867c3a6728f8edc84c4c29b189",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.task.cpus=1",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "mvpaDatasetJVM/test"
+      ],
+      "check_summary": "canonical-origins-dataset-jvm-03.check-summary.json",
+      "check_summary_sha256": "0b626da2d461b252653a08efaada1d955daa203e302df72495297e6ba7769bb6",
+      "reported_suite_totals": [
+        "Passed: Total 26, Failed 0, Errors 0, Passed 26"
+      ],
+      "warning_error_lines": 0,
+      "skipped_marker_lines": []
+    },
+    {
+      "name": "canonical-origins-dataset-js-03",
+      "log": "canonical-origins-dataset-js-03.log",
+      "log_sha256": "7988f7f1040c4b6c3392980de941baac15739e85e22bc469e27e67480f9a323d",
+      "metadata": "canonical-origins-dataset-js-03.log.meta.json",
+      "metadata_sha256": "d5b563baeb882ccd84d986a646a23b109d3d73f01a8d2b556ddb33d5f91cc06b",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.task.cpus=1",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "mvpaDatasetJS/test"
+      ],
+      "check_summary": "canonical-origins-dataset-js-03.check-summary.json",
+      "check_summary_sha256": "f30355e2318c3f92325f50081fd5547e68c2705cd8c3de19141ad311bdf48418",
+      "reported_suite_totals": [
+        "Passed: Total 26, Failed 0, Errors 0, Passed 26"
+      ],
+      "warning_error_lines": 0,
+      "skipped_marker_lines": []
+    },
+    {
+      "name": "canonical-origins-compile-all-01",
+      "log": "canonical-origins-compile-all-01.log",
+      "log_sha256": "9262aa0443dba5fed5c802a7c2678e548bddcb6b8b88ec190058d2b178ad6c06",
+      "metadata": "canonical-origins-compile-all-01.log.meta.json",
+      "metadata_sha256": "d06ba7280c5341bc0596dde72b61fe489e8a3d29a8778b7b1877fd780b915e5b",
+      "exit_code": 0,
+      "command": [
+        "sbt",
+        "-J-Xmx3g",
+        "-J-XX:ActiveProcessorCount=2",
+        "-Dsbt.task.cpus=1",
+        "-Dsbt.supershell=false",
+        "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+        "scalafimCompileAll"
+      ],
+      "check_summary": "canonical-origins-compile-all-01.check-summary.json",
+      "check_summary_sha256": "cab9eeba3ca64a980c66fedbf9cde6c090ac8133847d4eb2c2fd79bef24a1899",
+      "reported_suite_totals": [],
+      "warning_error_lines": 0,
+      "skipped_marker_lines": []
+    }
+  ],
+  "provider": {
+    "source_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "base_sha": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+    "local_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "tracking_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "remote_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "remote": "git@github-canardlapin:canardlapin/alder.git",
+    "ref": "refs/heads/umvpa/native-fixed-roles-20260930",
+    "publication_scope": "Source branch only; no merge, stable artifact release, Native platform or hosted CI claim"
+  },
+  "provider_reused_qualification": {
+    "source_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "raw_log": "prior-frontier-alder-jvm-js-03.log",
+    "raw_log_sha256": "1446fc1f84f7ef3992bbfe3b7d3cd74bb598490d2a04629c3fc0feeef7f17ff4",
+    "metadata": "prior-frontier-alder-jvm-js-03.log.meta.json",
+    "metadata_sha256": "f3187fd5fd851a42770c2d7d81d08a7682c18fdc5fa93e7e7ba2ecda6e311520",
+    "actual_exit_code": 0,
+    "source_files_verified": {
+      "data/src/main/scala/alder/data/IdentifiedRows.scala": "f64ff234a6fda486f23f5326e0ae28f01c91d03354124356129f4d33217d61ba",
+      "data/src/main/scala/alder/data/Resample4sResampler.scala": "f9f426a320874396fd5a1d2fc8f7d3fd2eb1f795b5f58720067567e4d69c5400",
+      "data/src/test/scala/alder/data/IdentifiedRowsSuite.scala": "0ddf948eb7fbab83bd5ba66523450b25552215336492fa77dfe84593eaf39ef5"
+    },
+    "reported_totals": [
+      "[info] Passed: Total 70, Failed 0, Errors 0, Passed 70",
+      "[info] Passed: Total 70, Failed 0, Errors 0, Passed 70"
+    ],
+    "warn_error_lines": [],
+    "warnings": [
+      {
+        "line": 10,
+        "text": "/private/tmp/scalafim-umvpa-20260929/sbt-global/staging/cfabf5f1e5e2fb8fb176/linops4s/build.sbt:82: warning: value lookup of `streams` inside an `if` expression"
+      }
+    ],
+    "warning_count": 1,
+    "warning_scope": "One retained transitive linops4s sbt build lint warning; no provider test errors. Prior source_warnings=1 was accurate. Fresh ScalaFIM owning gates independently reviewed clean.",
+    "corrects": "rejected-provider-warning-scan.json used only bracketed markers and falsely claimed an inaccurate prior warning summary."
+  },
+  "provider_final_ref_check": {
+    "checked_utc": "2026-09-30T19:48:48.912130+00:00",
+    "local_head": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "tracking_ref_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "live_remote_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "remote_command": [
+      "git",
+      "ls-remote",
+      "canonical",
+      "refs/heads/umvpa/native-fixed-roles-20260930"
+    ],
+    "remote_command_exit_code": 0,
+    "remote_ref": "refs/heads/umvpa/native-fixed-roles-20260930",
+    "remote_url": "git@github-canardlapin:canardlapin/alder.git",
+    "verification": "Fresh successful tool output from live remote matched the immutable source; local/tracking hashes checked independently."
+  },
+  "canonical_alder_revision": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "local_provider_override_used": false,
+  "core_receipt_reuse": {
+    "source_sha": "d44b91ca0c366068ed194ab3c859f012883f98de",
+    "unchanged_paths": [
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/EvidenceOrigins.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Observations.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Relations.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/EvidenceExposure.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Compilation.scala",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Diagnostics.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/EvidenceOriginsSuite.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/EvidenceExposureSuite.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/DiagnosticsSuite.scala",
+      "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala",
+      "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala"
+    ],
+    "reason": "Core and fit main/test blob parity; final changes only canonical Alder pin and dataset wrapper."
+  },
+  "source_reviews": [
+    {
+      "path": "independent-source-review-f08f3b.md",
+      "sha256": "1ebc37a136d48e0cbe903b0ad4e73c5677e9b220b84e0fa28293143569a77a2e"
+    },
+    {
+      "path": "independent-source-review-6f1474-addendum.md",
+      "sha256": "b8edda87bbc91a5637f12c7cfa95abe8977a5caea9dcb39a28fb0f54dd4e3aec"
+    },
+    {
+      "path": "independent-source-review-c254042-addendum.md",
+      "sha256": "ef7e6fe53d29cafa83851c07b88bb0355871cc38aff426c5417beba01078a504"
+    },
+    {
+      "path": "independent-source-review-eab6e02-addendum.md",
+      "sha256": "30330abfb4c8c66298f8f8d134dae243961cf7514685e0273f4724c5291450e8"
+    },
+    {
+      "path": "independent-source-review-9d8ec21-addendum.md",
+      "sha256": "3941e59290110df610ff37aa7d31db9df319f16cf28c58544872704c714f327e"
+    }
+  ],
+  "scope_limits": [
+    "No ScalaFIM merge or source publication",
+    "Provider branch source only; no main merge or stable artifact release",
+    "No hosted CI or Native platform qualification",
+    "Declared support does not prove stochastic independence or physical confinement",
+    "No external freshness registry or payload authentication",
+    "Matrix-native Ridge remains unavailable",
+    "Native numeric budget excludes arbitrary operator internals and object headers"
+  ],
+  "mote_candidate": "cand-3B9WYZRCWVNA3DV2AF2NPC6A33"
+}

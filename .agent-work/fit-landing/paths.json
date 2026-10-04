@@ -1,0 +1,82 @@
+{
+  "modules/fit/README.md": {
+    "baseline": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-preparation/baseline/README.md",
+    "verified_sha256": "c0f2efbb08b238ae35ead378bbd805c851b239ba1c3a3132455097bfefa74620"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": {
+    "baseline": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-preparation/baseline/FitInterpreter.scala",
+    "verified_sha256": "01e5b9bcc21bf6e15371279045273117a67e1de42f98ea7dc374fb990dcb5517"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala": {
+    "baseline": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-preparation/baseline/FitChunks.scala",
+    "verified_sha256": "6ad275998dfb203697dc248b7435f645134df8f596b296f0d7a61b9ad8c0e9f7"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala": {
+    "baseline": null,
+    "verified_sha256": "145f74c12e1c598b28106792b36c22625f5b7a0c517a362fb412d1a13040ccc8"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala": {
+    "baseline": null,
+    "verified_sha256": "41ad45750c40474f9d04d43246db918cba88d558c769920297a53608e8ccdf3f"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala": {
+    "baseline": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-preparation/baseline/ResponsePreparation.scala",
+    "verified_sha256": "8258bee2c61ad9f3f4c350c2e587e64ea3c1ba69a25575cebedc0ff34447c8af"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": {
+    "baseline": null,
+    "verified_sha256": "7718922b7b1d0398c39878714d05a527bf9d782be6774bc248a3d638d20a0f0f"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala": {
+    "baseline": null,
+    "verified_sha256": "62dfc06e0c935928c4bbbf9190f5c42b4a0a7636dfb8935c26cc6b0eeff339b8"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala": {
+    "baseline": null,
+    "verified_sha256": "0710898747e86004b39c404b4f371d236b3967bfadef90508a9ef50ebb5db711"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala": {
+    "baseline": null,
+    "verified_sha256": "e5a255c04536096fd79ab6975407be01d050784bbdb6e162e74c56c16b53fcf7"
+  },
+  "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala": {
+    "baseline": null,
+    "verified_sha256": "de4dba93b28f356b12997172d230d105f7c5ad79f910f72904c0c49deb3764e9"
+  },
+  "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala": {
+    "baseline": null,
+    "verified_sha256": "7948027bb7376f502e98289f4fbfae692f31077eb2343e89f78f4ae4e1de79c1"
+  },
+  "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala": {
+    "baseline": null,
+    "verified_sha256": "ee92bef5e328e01c5c13f5a22dc8c02d87d6ec65f0195fcfbbcc9bbcb7bddfba"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala": {
+    "baseline": null,
+    "verified_sha256": "aba19f5d69637c3ddc5aeb00cb07d55ec070fe18a19ec5f3129329fc3c4d93de"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala": {
+    "baseline": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/pooled-ar/baseline/RunwiseGls.scala",
+    "verified_sha256": "129d9ead39f28bea64b1d5e1048aa6edba55375c361fbaa3bed2b996ce03b528"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala": {
+    "baseline": null,
+    "verified_sha256": "ba0cf58d55a2e6a596aae696355b4aa1979c6a6a0b8112211f2e701c57831199"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": {
+    "baseline": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/pooled-ar/baseline/ChunkedFitExecutorSuite.scala",
+    "verified_sha256": "ca74220911f5f2a21c6c650d2c51f552f9c9b2e670f8a6fa8fbe5ea4032abb98"
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala": {
+    "baseline": null,
+    "verified_sha256": "82c457ab430d7002f58cc7885c8e6754813e837a7e9b786283dc8fb17cc86800"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala": {
+    "baseline": null,
+    "verified_sha256": "cdbc5e60ae6baf9892abf0e3b295aff42d0077657249b536e1718ec681882263"
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala": {
+    "baseline": null,
+    "verified_sha256": "d01322224a823ecf779b2ef4a0034f90270e2fba6178c1d6f75f1eb32328a67e"
+  }
+}

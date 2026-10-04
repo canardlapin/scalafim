@@ -1,0 +1,18 @@
+{
+  "bd-01M2BNEYF9CDFHNYWN3XDN3MWR": {
+    "status": "closed",
+    "title": "UMVPA-M1.05: Implement bounded describe, inspect, explain, and plan-diff diagnostics"
+  },
+  "bd-01M2BNFFVZ6WEZW1RS1RQKFEJG": {
+    "status": "closed",
+    "title": "UMVPA-M2.01: Build typed partitioned relations and operator-native fMRI evidence adapters"
+  },
+  "bd-01M2BNGPMWAHEPN4CTC395YFK5": {
+    "status": "closed",
+    "title": "UMVPA-M3.10: Integrate deterministic work units, cancellation, and retry-safe reduction"
+  },
+  "bd-01M2BNF0B4H5QTZMX9SCCQSEEJ": {
+    "status": "open",
+    "title": "UMVPA-M1.06: Integrate Alder matrix-native data, fitted artifacts, and scoped preparation"
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "authorization": null,
+  "candidate_id": "cand-3CC02XSC0TTRYFE2KJ06HSKMXS",
+  "entity": "bd-01M2BNFM8MNBHSAV0MBG18J2NG",
+  "evidence": [
+    {
+      "candidate_oid": "4f52d15fb72493dabeac20914604a07275663d31",
+      "evidence_id": "evid-532be37ad9fff40bfa00a7986bf47a3f709d94798f7d200ba7b24de6e3610680",
+      "evidence_kind": "git",
+      "name": "git-ancestry",
+      "op_id": "20260930T111316.110951Z-p5327-c0000-r7193-hab173e",
+      "outcome": "pass",
+      "payload": {
+        "base_is_ancestor": true,
+        "base_oid": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+        "candidate_relations": [
+          {
+            "base_oid": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+            "base_relation": "ancestor",
+            "candidate_id": "cand-5611573MF23VAWY3GVB5FDH48R",
+            "commit_oid": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+            "proposal_op_id": "20260930T082529.065125Z-p56041-c0000-r81d9-h4d6d4c",
+            "relation": "ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "79a8b7d1fbe07c383bb8929a69973729c22ce64b",
+            "base_relation": "ancestor",
+            "candidate_id": "cand-5SSQMJHFVVXBD329CMCJDKXQDB",
+            "commit_oid": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+            "proposal_op_id": "20260930T012349.034895Z-p52850-c0000-r88e0-h335985",
+            "relation": "ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          },
+          {
+            "base_oid": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+            "base_relation": "not_ancestor",
+            "candidate_id": "cand-7K2QA6QYG244JAB5Z7K63MBQWM",
+            "commit_oid": "ea16c75280bfd3fa2da8445b8de7b07acbb545ba",
+            "proposal_op_id": "20260930T110823.886836Z-p90521-c0000-r1afd-h770cdd",
+            "relation": "not_ancestor",
+            "subject_to_known_base": "not_ancestor",
+            "subject_to_known_tip": "not_ancestor"
+          }
+        ],
+        "commit_oid": "4f52d15fb72493dabeac20914604a07275663d31",
+        "common_dir_hash": "a22822facab5c0b26a201c77c4caf08953f45d77b632dca86b1c43dd0b37ea71",
+        "covered_candidates": [
+          [
+            "cand-5611573MF23VAWY3GVB5FDH48R",
+            "20260930T082529.065125Z-p56041-c0000-r81d9-h4d6d4c"
+          ],
+          [
+            "cand-5SSQMJHFVVXBD329CMCJDKXQDB",
+            "20260930T012349.034895Z-p52850-c0000-r88e0-h335985"
+          ],
+          [
+            "cand-7K2QA6QYG244JAB5Z7K63MBQWM",
+            "20260930T110823.886836Z-p90521-c0000-r1afd-h770cdd"
+          ]
+        ],
+        "git_version": "git version 2.39.3 (Apple Git-145)",
+        "kind": "git_ancestry",
+        "object_format": "sha1",
+        "parent_oids": [
+          "03c0a8e3cff294b110e615ba86e181d507bdce41"
+        ],
+        "producer_snapshot": {
+          "observed_candidates": [
+            [
+              "cand-3CC02XSC0TTRYFE2KJ06HSKMXS",
+              "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7"
+            ],
+            [
+              "cand-5611573MF23VAWY3GVB5FDH48R",
+              "20260930T082529.065125Z-p56041-c0000-r81d9-h4d6d4c"
+            ],
+            [
+              "cand-5SSQMJHFVVXBD329CMCJDKXQDB",
+              "20260930T012349.034895Z-p52850-c0000-r88e0-h335985"
+            ],
+            [
+              "cand-7K2QA6QYG244JAB5Z7K63MBQWM",
+              "20260930T110823.886836Z-p90521-c0000-r1afd-h770cdd"
+            ]
+          ],
+          "replayed_op_count": 21297,
+          "replayed_op_ids_digest": "a0272dee7b027e29f922977f82ddb3c087cec8f9ef4d7760b221129b8022a345",
+          "store_git_head": "7989608d32ed8283ed11f5ff3df54c7c7761a23e",
+          "store_id": "st-01KWVQ9J2F963172SFP311M9M1",
+          "uncommitted_op_count": 21297
+        },
+        "relation_schema": 2,
+        "repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25"
+      },
+      "producer": "umvpa-wave3-20260930",
+      "producer_tool": "git version 2.39.3 (Apple Git-145)",
+      "refs": [],
+      "ts": "2026-09-30T11:13:16.110951Z"
+    },
+    {
+      "candidate_oid": "4f52d15fb72493dabeac20914604a07275663d31",
+      "evidence_id": "evid-bd1093649ed3c9e059cda4c8c8ec616bfafceeb869a9932b761be4506195159e",
+      "evidence_kind": "git",
+      "name": "git-object-availability",
+      "op_id": "20260930T111311.140944Z-p4991-c0000-rc395-h84fe65",
+      "outcome": "pass",
+      "payload": {
+        "candidate_oid": "4f52d15fb72493dabeac20914604a07275663d31",
+        "git_version": "git version 2.39.3 (Apple Git-145)",
+        "kind": "git_object_availability",
+        "object_available": true,
+        "object_format": "sha1",
+        "observed_parent_oids": [
+          "03c0a8e3cff294b110e615ba86e181d507bdce41"
+        ],
+        "repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25"
+      },
+      "producer": "umvpa-wave3-20260930",
+      "producer_tool": "git version 2.39.3 (Apple Git-145)",
+      "refs": [],
+      "ts": "2026-09-30T11:13:11.140944Z"
+    }
+  ],
+  "identity": {
+    "base_oid": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+    "commit_oid": "4f52d15fb72493dabeac20914604a07275663d31",
+    "landing_repository_bindings": [],
+    "landing_repository_id": "repo-d25b56dd87f2bc98283f79f049251db46e3e7b476258d7ca0142e14a111eac25",
+    "landing_repository_op_id": "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7",
+    "object_availability_required": true,
+    "object_format": "sha1",
+    "object_source": {
+      "commit_ref": "4f52d15fb72493dabeac20914604a07275663d31",
+      "locator": "/private/tmp/scalafim-umvpa-20260930-queries",
+      "repository_id": "repo-8c50bb5fc944faf0c2afc03c525248b7e55474d5972ddc81f04149fe924647c0"
+    },
+    "parent_oids": [
+      "03c0a8e3cff294b110e615ba86e181d507bdce41"
+    ],
+    "proposal_repository_id": "repo-8c50bb5fc944faf0c2afc03c525248b7e55474d5972ddc81f04149fe924647c0",
+    "repository_id": "repo-8c50bb5fc944faf0c2afc03c525248b7e55474d5972ddc81f04149fe924647c0",
+    "store_id": "st-01KWVQ9J2F963172SFP311M9M1"
+  },
+  "landability": {
+    "landable": false,
+    "reason_codes": [
+      "ancestor_pending",
+      "authorization_absent"
+    ],
+    "reasons": [
+      {
+        "blocking": true,
+        "class": "bookkeeping",
+        "code": "ancestor_pending",
+        "detail": "an ancestor candidate is not safely resolved",
+        "subject": "cand-5611573MF23VAWY3GVB5FDH48R"
+      },
+      {
+        "blocking": true,
+        "class": "bookkeeping",
+        "code": "ancestor_pending",
+        "detail": "an ancestor candidate is not safely resolved",
+        "subject": "cand-5SSQMJHFVVXBD329CMCJDKXQDB"
+      },
+      {
+        "blocking": true,
+        "class": "process",
+        "code": "authorization_absent",
+        "detail": "candidate has no landing authorization",
+        "subject": "cand-3CC02XSC0TTRYFE2KJ06HSKMXS"
+      }
+    ]
+  },
+  "landing": null,
+  "phase": {
+    "op_id": "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7",
+    "value": "pending"
+  },
+  "policy": {
+    "amendments": [],
+    "authorizer": "bbuchsbaum",
+    "evidence_refs": [
+      "/private/tmp/scalafim-umvpa-20260930-wave3-evidence/independent-review.md"
+    ],
+    "evidence_requirements": [
+      {
+        "kind": "git",
+        "name": "git-ancestry",
+        "producers": [
+          "umvpa-wave3-20260930"
+        ]
+      }
+    ],
+    "op_id": "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7",
+    "paths": [
+      "docs/verification/umvpa-m2-03-20260930.md",
+      "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Queries.scala",
+      "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/relation/QueryOracleSuite.scala"
+    ],
+    "review_policy_version": 3,
+    "reviewers": [
+      "umvpa-wave3-independent-review-20260930"
+    ],
+    "role_review_requirements": []
+  },
+  "proposal_op_id": "20260930T110854.365359Z-p91823-c0000-r2800-hc8c9b7",
+  "proposer": "umvpa-wave3-20260930",
+  "reconciliation": null,
+  "reservations": [],
+  "review_status": {
+    "as_of_ts": "2026-09-30T11:18:43.584791Z",
+    "named": [
+      {
+        "review_op_id": "20260930T111713.390991Z-p17483-c0000-r8543-h70b33d",
+        "reviewer": "umvpa-wave3-independent-review-20260930",
+        "satisfied": true,
+        "verdict": "approve"
+      }
+    ],
+    "roles": [],
+    "satisfied": true
+  },
+  "reviews": {
+    "umvpa-wave3-independent-review-20260930": {
+      "body": "Approve M2.03 candidate commit 4f52d15fb72493dabeac20914604a07275663d31 against base 4d2463b82c3546fa44bbddcb3b83f4c037e32b1b. Independently reviewed the query implementation and the oracle mathematical expectations and code authored by query_oracles; I did not author those oracles or execute these builds. No remaining blocking findings in the reviewed M2 scope.\n\nConfirmed candidate identity, clean canonical checkout, source-manifest canonical entry, and SHA256 parity for all three candidate paths with the source previously reviewed. Query source SHA256 1f9bd14f7efe239983d8ce4dcc902b2391f260af587bd7a58e2e687ae3ec5e45; oracle SHA256 a1229032af655154f5c6e8948b37f991fcc0fbf5bf9683529d847faaed8c6dfe; verification document SHA256 43c7011031e991b775e6f0503b2b775c184def3c19ad40fc3b0af0e7770c1557.\n\nReviewed retained complete execution logs and matching meta.json receipts from the canonical checkout, with log byte lengths verified: mvpaJVM/test 205 passed, 0 failed/errors; mvpaJS/test 205 passed, 0 failed/errors; scalafimCompileAll exit 0 and no warnings/errors in its full log. All three receipts report exit_code=0 and child_returncode=0. Log SHA256 respectively 882616a4994bbd38527dee70b6329a7089da4bd43e1d03eea27a92b6edab2537, ccd9e3ebeddaf5da3fc5562c863dc434f53f8551d91bfc7294a9f9c0a63ff186, 04354c41fa7c1348e5a286de7f4c36e3bb5ab2661ddc9c754a48c55a6146a095.\n\nEvidence covers rectangular signed scalar/form agreement, actual backward adjoints, pair reversal, nominal axes, lazy opening, one-shot scalar refusal, width-one operator execution and scale-aware contractions. Approval is a candidate review only: it grants no landing authorization, resolves no pending ancestor, and makes no upstream Alder publication/pin or M1.06 qualification claim.\n\nInspected source and execution receipt paths:\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/source-manifest.json\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-mvpa-jvm.log\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-mvpa-jvm.log.meta.json\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-mvpa-js.log\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-mvpa-js.log.meta.json\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-compile-all.log\n/private/tmp/scalafim-umvpa-20260930-wave3-evidence/wave3-canonical-compile-all.log.meta.json",
+      "evidence_refs": [
+        "evid-532be37ad9fff40bfa00a7986bf47a3f709d94798f7d200ba7b24de6e3610680"
+      ],
+      "op_id": "20260930T111713.390991Z-p17483-c0000-r8543-h70b33d",
+      "qualification": {
+        "kind": "named_reviewer"
+      },
+      "reviewer": "umvpa-wave3-independent-review-20260930",
+      "ts": "2026-09-30T11:17:13.390991Z",
+      "verdict": "approve"
+    }
+  },
+  "supersession": {
+    "record": null,
+    "successor_id": null
+  }
+}

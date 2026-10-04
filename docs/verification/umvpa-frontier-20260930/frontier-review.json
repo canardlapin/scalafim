@@ -1,0 +1,13 @@
+{
+  "core_sha": "4d2463b82c3546fa44bbddcb3b83f4c037e32b1b",
+  "predictive_code_sha": "326019976a5eb08e97abb3ab228cce19c6e25049",
+  "predictive_docs_sha": "723268a8516518801e9c98c9ac9f354551c36532",
+  "provider_sha": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+  "verdict": "Approve bounded source scope; canonical core checks pending; M1.06 upstream publication/pinning/operator admission remains open.",
+  "review_agent": "frontier_review",
+  "limitations": [
+    "source and regression review only; parent owns build evidence",
+    "immutable contribution and declared identity contracts",
+    "fatal/interruption cleanup not established"
+  ]
+}

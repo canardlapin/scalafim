@@ -1,0 +1,66 @@
+[
+  {
+    "family": "CIT168",
+    "file": "CIT168.nii.gz",
+    "sha256": "8b43e911c6849c9a57c9153499a324d2e3894531bb31446b6905b4c357693ae0",
+    "bytes": 44739,
+    "dimensions": [
+      182,
+      218,
+      182
+    ],
+    "datatype": 16,
+    "bits": 32,
+    "qform_code": 2,
+    "sform_code": 1,
+    "decoder": "independent Python struct NIfTI-1 header inspection"
+  },
+  {
+    "family": "HCP thalamic",
+    "file": "Thalamus_Nuclei-HCP-MaxProb.nii.gz",
+    "sha256": "68f0229de14a5375e0b438784787e73180483cff243a932d0d6f598c42400174",
+    "bytes": 14805,
+    "dimensions": [
+      197,
+      233,
+      189
+    ],
+    "datatype": 2,
+    "bits": 8,
+    "qform_code": 2,
+    "sform_code": 2,
+    "decoder": "independent Python struct NIfTI-1 header inspection"
+  },
+  {
+    "family": "MDTB10",
+    "file": "atl-MDTB10_space-MNI_dseg.nii",
+    "sha256": "48de27c43ddff528442bfb7256eb1f237b533ff432b885ef781db74196038322",
+    "bytes": 1165717,
+    "dimensions": [
+      141,
+      95,
+      87
+    ],
+    "datatype": 256,
+    "bits": 8,
+    "qform_code": 0,
+    "sform_code": 2,
+    "decoder": "independent Python struct NIfTI-1 header inspection"
+  },
+  {
+    "family": "HCP ROI",
+    "file": "Atlas_ROIs.1.60.nii.gz",
+    "sha256": "75b295274c31311b4e6c42e7a1804c8a0bc31a12199dcb561f8628afb2ed340b",
+    "bytes": 25355,
+    "dimensions": [
+      113,
+      136,
+      113
+    ],
+    "datatype": 16,
+    "bits": 32,
+    "qform_code": 4,
+    "sform_code": 4,
+    "decoder": "independent Python struct NIfTI-1 header inspection"
+  }
+]

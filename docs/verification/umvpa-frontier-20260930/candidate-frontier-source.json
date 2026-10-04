@@ -1,0 +1,24 @@
+{
+  "checkout": "/private/tmp/scalafim-umvpa-20260929/candidate",
+  "base": "e57997c26fb749b5cf7d7ef15c2dbc2c0643476f",
+  "head": "723268a8516518801e9c98c9ac9f354551c36532",
+  "tree": "c43d62e7bd6a76b3b3caa24e8673455039fd9d1b",
+  "files": {
+    "build.sbt": "56764cb48a216323ff6a233ed60800c7efd1c869d1e5b6db13d54dcefb99f3ef",
+    "docs/verification/umvpa-m1-05-20260930.md": "dd92f9f75e410e940c25bd735d4725eb8c4dd23ab374b8a8c828fcba6b35466e",
+    "docs/verification/umvpa-m1-06-20260930.md": "fbb28008ca89ffcda2b8d28b942bd4582de3d19812f00a671647964bb4bd07ee",
+    "docs/verification/umvpa-m2-01-20260930.md": "dedfab9bdc3d6125ee78d5463a7b488a618194d4d315e9c69f7ea75b27b78725",
+    "docs/verification/umvpa-m3-10-20260930.md": "d1b9bddca1f5d110f96838216d6c136a133242ef126873e78cb0402802683b78",
+    "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmission.scala": "c8042782d9e83e57136716bcc92d19e897587ec501627eeaf8e1489f7b815a7d",
+    "modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmissionSuite.scala": "667c2a50dd8c682601f2cc608c4d7caf403611e1ed0eda24da796c7a5d165032",
+    "modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelations.scala": "0df3754e0418b6a5947415d43ec59302ce40445bca8a3cd01b89179d907223f8",
+    "modules/mvpa-fit/shared/src/test/scala/scalafim/fmri/mvpa/fit/IdentifiedReadoutRelationsSuite.scala": "51540b8c95503ed672d6ea3eba697c669c98a8ecad92d92f555374daa17a2601",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Compilation.scala": "be4a24d234e881776864b664844edd3732d634ff4d81f58c6b62ae3614c6d1ef",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/analysis/Diagnostics.scala": "ee49a758416b9536efbd80a78f66e63979ed1d831123469086ee973060fb869c",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/execution/LocalExecution.scala": "7993975777abbba8a1a87b4aadf669e368ea9a911a40ca8a4144db719e4ad2dc",
+    "modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Relations.scala": "bf7453ae3224adac70dfd126fa2ca5d49eef0a8d44fbb15a4cd03019fcf7619a",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/analysis/DiagnosticsSuite.scala": "062544e631832a1c8d40567cfccb47411c51e157c17d9e6c0012b624ac93414a",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/execution/LocalExecutionSuite.scala": "1125a52e7e237964354b47626e47b8e3146bd907052ec0e7223debbfbfce2b87",
+    "modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/relation/RelationsSuite.scala": "93777dc7c5ac740d8fbd9d901851b6cd3936dec44993c3362b2c6599132253bb"
+  }
+}

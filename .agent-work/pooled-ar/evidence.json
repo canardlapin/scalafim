@@ -1,0 +1,87 @@
+{
+  "issue": "bd-01KX6G9B1ZT10A3214DPA096RZ",
+  "slice": "bounded pooled estimated-AR GLS preparation",
+  "snapshot": "/private/tmp/scalafim-fit-preparation-20261002",
+  "base_commit": "d727969c476a5553ffe4804945eaa667cddae18d",
+  "files": {
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala": {
+      "sha256": "de4dba93b28f356b12997172d230d105f7c5ad79f910f72904c0c49deb3764e9",
+      "snapshot_sha256": "de4dba93b28f356b12997172d230d105f7c5ad79f910f72904c0c49deb3764e9"
+    },
+    "modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala": {
+      "sha256": "7948027bb7376f502e98289f4fbfae692f31077eb2343e89f78f4ae4e1de79c1",
+      "snapshot_sha256": "7948027bb7376f502e98289f4fbfae692f31077eb2343e89f78f4ae4e1de79c1"
+    },
+    "modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala": {
+      "sha256": "ee92bef5e328e01c5c13f5a22dc8c02d87d6ec65f0195fcfbbcc9bbcb7bddfba",
+      "snapshot_sha256": "ee92bef5e328e01c5c13f5a22dc8c02d87d6ec65f0195fcfbbcc9bbcb7bddfba"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala": {
+      "sha256": "bb43818d92c14ac5a16e0a7f62527e16ccbbf5fdb79576c1c38da09eba14c486",
+      "snapshot_sha256": "bb43818d92c14ac5a16e0a7f62527e16ccbbf5fdb79576c1c38da09eba14c486"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala": {
+      "sha256": "145f74c12e1c598b28106792b36c22625f5b7a0c517a362fb412d1a13040ccc8",
+      "snapshot_sha256": "145f74c12e1c598b28106792b36c22625f5b7a0c517a362fb412d1a13040ccc8"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala": {
+      "sha256": "6ad275998dfb203697dc248b7435f645134df8f596b296f0d7a61b9ad8c0e9f7",
+      "snapshot_sha256": "6ad275998dfb203697dc248b7435f645134df8f596b296f0d7a61b9ad8c0e9f7"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": {
+      "sha256": "01e5b9bcc21bf6e15371279045273117a67e1de42f98ea7dc374fb990dcb5517",
+      "snapshot_sha256": "01e5b9bcc21bf6e15371279045273117a67e1de42f98ea7dc374fb990dcb5517"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala": {
+      "sha256": "129d9ead39f28bea64b1d5e1048aa6edba55375c361fbaa3bed2b996ce03b528",
+      "snapshot_sha256": "129d9ead39f28bea64b1d5e1048aa6edba55375c361fbaa3bed2b996ce03b528"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala": {
+      "sha256": "ecbecb1efe9b113b6301cf63a52ea6894224f35dab8fa9aa0142009635d0da99",
+      "snapshot_sha256": "ecbecb1efe9b113b6301cf63a52ea6894224f35dab8fa9aa0142009635d0da99"
+    },
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala": {
+      "sha256": "ba0cf58d55a2e6a596aae696355b4aa1979c6a6a0b8112211f2e701c57831199",
+      "snapshot_sha256": "ba0cf58d55a2e6a596aae696355b4aa1979c6a6a0b8112211f2e701c57831199"
+    },
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala": {
+      "sha256": "0710898747e86004b39c404b4f371d236b3967bfadef90508a9ef50ebb5db711",
+      "snapshot_sha256": "0710898747e86004b39c404b4f371d236b3967bfadef90508a9ef50ebb5db711"
+    },
+    "modules/fit/README.md": {
+      "sha256": "2ba663a19e0954d587ba5c8b5b9e61f5d89ede297fd7eb96ff18d56f20da3933",
+      "snapshot_sha256": "2ba663a19e0954d587ba5c8b5b9e61f5d89ede297fd7eb96ff18d56f20da3933"
+    },
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": {
+      "sha256": "ca74220911f5f2a21c6c650d2c51f552f9c9b2e670f8a6fa8fbe5ea4032abb98",
+      "snapshot_sha256": "ca74220911f5f2a21c6c650d2c51f552f9c9b2e670f8a6fa8fbe5ea4032abb98"
+    }
+  },
+  "status": "complete; uncommitted; parent issue remains open",
+  "limitations": [
+    "Immutable response snapshot required; finite membership checked between preparation passes, not values or final fitting pass.",
+    "Floating point regrouping gives tolerance-based rather than bitwise dense parity.",
+    "Prepared whitening artifact persistence and bounded robust/reduced-rank interpreters remain outside this slice."
+  ],
+  "checks": {
+    "arJVM/test": {
+      "passed": 54,
+      "log": "compile-01.log",
+      "note": "AR command passed; later initial fit test compilation failed and was corrected"
+    },
+    "arJS/test": {
+      "passed": 52,
+      "log": "ar-js-01.log"
+    },
+    "fitJVM/test": {
+      "passed": 412,
+      "log": "fit-all-02.log"
+    },
+    "fitJS/test": {
+      "passed": 397,
+      "log": "fit-all-02.log"
+    },
+    "warning_clean_final_fit_build": true,
+    "git_diff_check": true
+  }
+}

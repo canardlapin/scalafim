@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T01:01:18.467446+00:00",
+  "finished_utc": "2026-09-30T01:02:13.476059+00:00",
+  "duration_seconds": 55.007974,
+  "command": [
+    "sbt",
+    "fitJVM/compile"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/rrg-result-integration/fit-jvm-compile-03.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 600.0,
+  "log_bytes": 4056
+}

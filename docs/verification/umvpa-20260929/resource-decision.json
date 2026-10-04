@@ -1,0 +1,1 @@
+{"physical_memory_bytes":38654705664,"free_percent":50,"java_total_rss_mib":1422,"decision":"Own isolated cache and serial owned lock; heap 3GiB, 2 processors; no external process or shared lock mutated"}

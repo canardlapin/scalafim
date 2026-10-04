@@ -1,0 +1,52 @@
+{
+  "issue": "bd-01KX6G9B1ZT10A3214DPA096RZ",
+  "slice": "completed pooled GLS preparation artifact",
+  "snapshot": "/private/tmp/scalafim-fit-preparation-20261002",
+  "root_base_commit": "fa6bd6a9f7d773144885c57849cd298521c1772c",
+  "files": {
+    "modules/fit/README.md": {
+      "sha256": "c0f2efbb08b238ae35ead378bbd805c851b239ba1c3a3132455097bfefa74620",
+      "snapshot_sha256": "c0f2efbb08b238ae35ead378bbd805c851b239ba1c3a3132455097bfefa74620"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala": {
+      "sha256": "82c457ab430d7002f58cc7885c8e6754813e837a7e9b786283dc8fb17cc86800",
+      "snapshot_sha256": "82c457ab430d7002f58cc7885c8e6754813e837a7e9b786283dc8fb17cc86800"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala": {
+      "sha256": "aba19f5d69637c3ddc5aeb00cb07d55ec070fe18a19ec5f3129329fc3c4d93de",
+      "snapshot_sha256": "aba19f5d69637c3ddc5aeb00cb07d55ec070fe18a19ec5f3129329fc3c4d93de"
+    },
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala": {
+      "sha256": "41ad45750c40474f9d04d43246db918cba88d558c769920297a53608e8ccdf3f",
+      "snapshot_sha256": "41ad45750c40474f9d04d43246db918cba88d558c769920297a53608e8ccdf3f"
+    },
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala": {
+      "sha256": "cdbc5e60ae6baf9892abf0e3b295aff42d0077657249b536e1718ec681882263",
+      "snapshot_sha256": "cdbc5e60ae6baf9892abf0e3b295aff42d0077657249b536e1718ec681882263"
+    },
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala": {
+      "sha256": "d01322224a823ecf779b2ef4a0034f90270e2fba6178c1d6f75f1eb32328a67e",
+      "snapshot_sha256": "d01322224a823ecf779b2ef4a0034f90270e2fba6178c1d6f75f1eb32328a67e"
+    }
+  },
+  "status": "complete, uncommitted; parent issue remains open",
+  "limitations": [
+    "Only pooled estimated shared/runwise GLS, whole-voxel missing policies, and disabled temporal weighting/nuisance projection are admitted.",
+    "Resolver verifies immutable full plan/source revisions; artifact codec validates compatibility, not authenticity.",
+    "Final pass validates retained voxel membership; immutable-source capability remains responsible for finite response content.",
+    "Artifact contains numeric/structural design binding but intentionally excludes formatting-dependent free-text audits."
+  ],
+  "checks": {
+    "fitJVM/test": {
+      "passed": 422,
+      "log": "fit-all-01.log"
+    },
+    "fitJS/test": {
+      "passed": 407,
+      "log": "fit-all-01.log"
+    },
+    "warning_clean": true,
+    "bidirectional_artifact_restore": "Actual JVM and JS artifacts consumed on both platforms; zero response reads at restore and two bounded final block reads per fixture. Platform-dependent audit text is present.",
+    "git_diff_check": true
+  }
+}

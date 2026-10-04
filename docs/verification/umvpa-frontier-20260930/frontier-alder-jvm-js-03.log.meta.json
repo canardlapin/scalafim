@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T02:29:42.514445+00:00",
+  "finished_utc": "2026-09-30T02:30:10.763602+00:00",
+  "duration_seconds": 28.248758,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+    "dataJVM/test",
+    "dataJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-umvpa-20260929/alder-fixed-rows",
+  "log": "/private/tmp/scalafim-umvpa-20260929/frontier-alder-jvm-js-03.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 5936
+}

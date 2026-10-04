@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T12:58:45.937000+00:00",
+  "finished_utc": "2026-10-03T13:10:30.825434+00:00",
+  "duration_seconds": 704.882625,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJVM/test",
+    "fitJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-fit-landing-20261003",
+  "log": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-landing/verification-02.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2400.0,
+  "log_bytes": 75053
+}

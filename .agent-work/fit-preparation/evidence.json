@@ -1,0 +1,73 @@
+{
+  "issue": "bd-01KX6G9B1ZT10A3214DPA096RZ",
+  "status": "partial implementation; full issue remains open",
+  "base_head": "d727969c476a5553ffe4804945eaa667cddae18d",
+  "tested_snapshot": "/private/tmp/scalafim-fit-preparation-20261002",
+  "edited_files": [
+    {
+      "path": "modules/fit/README.md",
+      "sha256": "1b1fc067b1b7dc6b45283eb6af08875cad45e0ee1d3d8b5038450a14fe756048"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala",
+      "sha256": "fe33cc24b147c0b469ad87625c0ff42981d19b20960ea861a031795f0cd8ccd7"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala",
+      "sha256": "9446af37236cf8eb34f300ffff1d237725b9bc08ed5fc95bc81412053d354fa7"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala",
+      "sha256": "ad34f0a91232032890c321da1ff690b6558c9fd9278a7fc9611f951312123c15"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala",
+      "sha256": "ef0a47600d83235514dc79fad465292242410d206623a4c5ce1eee2172244277"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala",
+      "sha256": "8258bee2c61ad9f3f4c350c2e587e64ea3c1ba69a25575cebedc0ff34447c8af"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala",
+      "sha256": "7718922b7b1d0398c39878714d05a527bf9d782be6774bc248a3d638d20a0f0f"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala",
+      "sha256": "62dfc06e0c935928c4bbbf9190f5c42b4a0a7636dfb8935c26cc6b0eeff339b8"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala",
+      "sha256": "7a186acf17da9dc783723363ecdf8b6ce53eb470b63bd9076422856e0ae71948"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala",
+      "sha256": "e5a255c04536096fd79ab6975407be01d050784bbdb6e162e74c56c16b53fcf7"
+    }
+  ],
+  "checks": {
+    "focused_jvm": {
+      "passed": 62,
+      "exit_code": 0
+    },
+    "full_jvm": {
+      "passed": 404,
+      "exit_code": 0
+    },
+    "full_js": {
+      "passed": 389,
+      "exit_code": 0
+    },
+    "diff_check": "passed",
+    "edited_file_snapshot_identity": "all ten SHA-256 match"
+  },
+  "remaining": [
+    "finalized preparation state persistence",
+    "verified immutable source and plan registry",
+    "pooled AR sufficient-statistic reduction",
+    "exact robust spatial medians and replay",
+    "shared and voxelwise reduced-rank and bootstrap reducers"
+  ],
+  "full_log": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-preparation/fit-all-01.log",
+  "full_log_sha256": "e998c6b9bbcc6ccfcee992b38f1dde1b2d97891f5f456f4db8593b543e04a8f0"
+}

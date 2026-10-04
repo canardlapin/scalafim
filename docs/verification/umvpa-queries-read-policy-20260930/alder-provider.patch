@@ -1,0 +1,275 @@
+diff --git a/data/src/main/scala/alder/data/IdentifiedRows.scala b/data/src/main/scala/alder/data/IdentifiedRows.scala
+new file mode 100644
+index 0000000..68b4c38
+--- /dev/null
++++ b/data/src/main/scala/alder/data/IdentifiedRows.scala
+@@ -0,0 +1,136 @@
++package alder.data
++
++import alder.kernel.*
++
++enum FixedSelectionError derives CanEqual:
++  case EmptyRoot
++  case DuplicateRootId(id: Long)
++  case EmptySelection(role: SplitRole)
++  case DuplicateSelectionId(role: SplitRole, id: Long)
++  case UnknownId(role: SplitRole, id: Long)
++  case RoleOverlap(id: Long)
++  case MissingCoverage(ids: Vector[Long])
++
++enum FixedCoverage derives CanEqual:
++  case Exhaustive, DeclaredSubset
++
++final case class FixedRoleReceipt(role: SplitRole, ids: Vector[Long], fingerprint: DataFingerprint)
++
++/** Metadata derivation from declared source identity, never payload verification. */
++final case class FixedSelectionReceipt(
++    declaredSource: DataFingerprint,
++    rootFingerprint: DataFingerprint,
++    rootIds: Vector[Long],
++    coverage: FixedCoverage,
++    roles: Vector[FixedRoleReceipt],
++    excludedIds: Vector[Long]
++)
++
++final class FixedValidation[A] private[data] (
++    val train: NonEmptyData[Use.Train, A],
++    val validation: NonEmptyData[Use.Validation, A],
++    val receipt: FixedSelectionReceipt
++)
++
++final class FixedHoldout[A] private[data] (
++    val train: NonEmptyData[Use.Train, A],
++    val test: NonEmptyData[Use.Test, A],
++    val receipt: FixedSelectionReceipt
++)
++
++final class FixedTrainValidationTest[A] private[data] (
++    val train: NonEmptyData[Use.Train, A],
++    val validation: NonEmptyData[Use.Validation, A],
++    val test: NonEmptyData[Use.Test, A],
++    val receipt: FixedSelectionReceipt
++)
++
++/** Owns immutable row membership and order. Generic A is not deeply frozen.
++  * Fitting role assignment is explicit and never chosen through a generic U.
++  */
++final class IdentifiedRows[A] private (
++    private val rows: Vector[(RowId, A)],
++    val declaredSource: DataFingerprint,
++    val fingerprint: DataFingerprint
++):
++  val ids: Vector[Long] = rows.map(_._1.value)
++  private val byId = rows.map(row => row._1.value -> row).toMap
++
++  def training(ids: Vector[Long]): Either[FixedSelectionError, NonEmptyData[Use.Train, A]] =
++    select(SplitRole.Train, ids).map(selected => nonEmpty[Use.Train](SplitRole.Train, selected))
++
++  def fixedValidation(train: Vector[Long], validation: Vector[Long], coverage: FixedCoverage): Either[FixedSelectionError, FixedValidation[A]] =
++    for
++      tr <- select(SplitRole.Train, train)
++      va <- select(SplitRole.Validation, validation)
++      receipt <- joint(Vector(SplitRole.Train -> tr, SplitRole.Validation -> va), coverage)
++    yield new FixedValidation(nonEmpty[Use.Train](SplitRole.Train, tr), nonEmpty[Use.Validation](SplitRole.Validation, va), receipt)
++
++  def fixedHoldout(train: Vector[Long], test: Vector[Long], coverage: FixedCoverage): Either[FixedSelectionError, FixedHoldout[A]] =
++    for
++      tr <- select(SplitRole.Train, train)
++      te <- select(SplitRole.Test, test)
++      receipt <- joint(Vector(SplitRole.Train -> tr, SplitRole.Test -> te), coverage)
++    yield new FixedHoldout(nonEmpty[Use.Train](SplitRole.Train, tr), nonEmpty[Use.Test](SplitRole.Test, te), receipt)
++
++  def fixedTrainValidationTest(train: Vector[Long], validation: Vector[Long], test: Vector[Long], coverage: FixedCoverage): Either[FixedSelectionError, FixedTrainValidationTest[A]] =
++    for
++      tr <- select(SplitRole.Train, train)
++      va <- select(SplitRole.Validation, validation)
++      te <- select(SplitRole.Test, test)
++      receipt <- joint(Vector(SplitRole.Train -> tr, SplitRole.Validation -> va, SplitRole.Test -> te), coverage)
++    yield new FixedTrainValidationTest(nonEmpty[Use.Train](SplitRole.Train, tr), nonEmpty[Use.Validation](SplitRole.Validation, va), nonEmpty[Use.Test](SplitRole.Test, te), receipt)
++
++  private def select(role: SplitRole, requested: Vector[Long]): Either[FixedSelectionError, Vector[(RowId, A)]] =
++    if requested.isEmpty then Left(FixedSelectionError.EmptySelection(role))
++    else
++      val seen = scala.collection.mutable.HashSet.empty[Long]
++      val out = Vector.newBuilder[(RowId, A)]
++      var i = 0
++      while i < requested.size do
++        val id = requested(i)
++        if !seen.add(id) then return Left(FixedSelectionError.DuplicateSelectionId(role, id))
++        byId.get(id) match
++          case None => return Left(FixedSelectionError.UnknownId(role, id))
++          case Some(row) => out += row
++        i += 1
++      Right(out.result())
++
++  private def selectedFingerprint(role: SplitRole, selected: Vector[(RowId, A)]): DataFingerprint =
++    val digest = Fingerprints.partition(fingerprint, s"alder.fixed-selection-v1:$role", selected).digest
++    new DataFingerprint(FingerprintPolicy.Summary("alder.fixed-selection-declared-v1"), digest)
++
++  private def nonEmpty[U <: Use](role: SplitRole, selected: Vector[(RowId, A)]): NonEmptyData[U, A] =
++    new NonEmptyData(new InMemoryData[U, A](selected, selectedFingerprint(role, selected)))
++
++  private def joint(parts: Vector[(SplitRole, Vector[(RowId, A)])], coverage: FixedCoverage): Either[FixedSelectionError, FixedSelectionReceipt] =
++    val seen = scala.collection.mutable.HashSet.empty[Long]
++    var p = 0
++    while p < parts.size do
++      var r = 0
++      while r < parts(p)._2.size do
++        val id = parts(p)._2(r)._1.value
++        if !seen.add(id) then return Left(FixedSelectionError.RoleOverlap(id))
++        r += 1
++      p += 1
++    val excluded = ids.filterNot(seen.contains)
++    if coverage == FixedCoverage.Exhaustive && excluded.nonEmpty then Left(FixedSelectionError.MissingCoverage(excluded))
++    else Right(FixedSelectionReceipt(declaredSource, fingerprint, ids, coverage,
++      parts.map((role, selected) => FixedRoleReceipt(role, selected.map(_._1.value), selectedFingerprint(role, selected))), excluded))
++
++object IdentifiedRows:
++  def fromRows[A](rows: Vector[(Long, A)], declaredSource: DataFingerprint): Either[FixedSelectionError, IdentifiedRows[A]] =
++    if rows.isEmpty then Left(FixedSelectionError.EmptyRoot)
++    else
++      val seen = scala.collection.mutable.HashSet.empty[Long]
++      val out = Vector.newBuilder[(RowId, A)]
++      var i = 0
++      while i < rows.size do
++        val (id, value) = rows(i)
++        if !seen.add(id) then return Left(FixedSelectionError.DuplicateRootId(id))
++        out += RowId(id) -> value
++        i += 1
++      val typed = out.result()
++      val digest = Fingerprints.partition(declaredSource, "alder.identified-root-v1", typed).digest
++      val fp = new DataFingerprint(FingerprintPolicy.Summary("alder.identified-root-declared-v1"), digest)
++      Right(new IdentifiedRows(typed, declaredSource, fp))
+diff --git a/data/src/main/scala/alder/data/Resample4sResampler.scala b/data/src/main/scala/alder/data/Resample4sResampler.scala
+index 130b842..ce96ed4 100644
+--- a/data/src/main/scala/alder/data/Resample4sResampler.scala
++++ b/data/src/main/scala/alder/data/Resample4sResampler.scala
+@@ -28,10 +28,27 @@ object Resample4sResampler:
+       new DeferredResample4sCompleteResampler(
+         design,
+         algorithm,
+-        ReceiptMapping.protocol(fingerprint)
++        ReceiptMapping.protocol(fingerprint),
++        None,
++        None
+       )
+     }
+ 
++  /** Fix the ordered population identity while deriving the stage seed at
++    * split time. A foreign or reordered population is refused before rows are
++    * read. The caller owns the declared population identity policy.
++    */
++  def fromDesignForPopulation[A](
++      design: Design[Split[Selection], Coverage.ExactOnce],
++      population: DataFingerprint,
++      orderedRowIds: Vector[Long]
++  )(using algorithm: DigestAlgorithm): Either[DigestError, CompleteResampler[A]] =
++    require(orderedRowIds.nonEmpty && orderedRowIds.distinct.size == orderedRowIds.size, "bound population IDs must be nonempty and distinct")
++    design.fingerprint.map: fingerprint =>
++      new DeferredResample4sCompleteResampler(
++        design, algorithm, ReceiptMapping.protocol(fingerprint), Some(population), Some(orderedRowIds)
++      )
++
+   /** Bind an exact-once plan and its verification receipt as a complete Alder
+     * resampler.
+     *
+@@ -104,13 +121,19 @@ object Resample4sResampler:
+ private final class DeferredResample4sCompleteResampler[A](
+     design: Design[Split[Selection], Coverage.ExactOnce],
+     algorithm: DigestAlgorithm,
+-    val fingerprint: ResamplerFingerprint
++    val fingerprint: ResamplerFingerprint,
++    expectedPopulation: Option[DataFingerprint],
++    expectedRowIds: Option[Vector[Long]]
+ ) extends CompleteResampler[A]:
+   private[alder] def split[U <: Use.Fit](
+       data: NonEmptyData[U, A],
+       seed: AlderSeed
+   ): Either[DataError, ResamplingPlan[U, A]] =
+-    if data.size > Int.MaxValue.toLong then
++    if expectedPopulation.exists(expected => expected.policy != data.fingerprint.policy || expected.digest != data.fingerprint.digest) then
++      Left(DataError.Resample4sPopulationFingerprintMismatch)
++    else if expectedRowIds.exists(expected => data.data.foldRows(Vector.empty[Long])((ids,id,_) => ids :+ id.value) != expected) then
++      Left(DataError.Resample4sPopulationFingerprintMismatch)
++    else if data.size > Int.MaxValue.toLong then
+       Left(DataError.Resample4sPopulationTooLarge(data.size))
+     else
+       for
+diff --git a/data/src/test/scala/alder/data/IdentifiedRowsSuite.scala b/data/src/test/scala/alder/data/IdentifiedRowsSuite.scala
+new file mode 100644
+index 0000000..01b8eb9
+--- /dev/null
++++ b/data/src/test/scala/alder/data/IdentifiedRowsSuite.scala
+@@ -0,0 +1,72 @@
++package alder.data
++
++import alder.kernel.*
++import munit.FunSuite
++import scala.compiletime.testing.typeCheckErrors
++
++class IdentifiedRowsSuite extends FunSuite:
++  private def right[E,A](value: Either[E,A]): A = value.fold(e => fail(e.toString), identity)
++  private val source = DataFingerprint.external("native-v1")
++  private def fingerprintKey(value: DataFingerprint) = (value.policy, value.digest)
++  private def root = right(IdentifiedRows.fromRows(Vector(10L -> "a", 30L -> "b", 20L -> "c", 40L -> "d"), source))
++  private def rows[U <: Use,A](data: NonEmptyData[U,A]) = data.data.foldRows(Vector.empty[(Long,A)])((acc,id,value) => acc :+ (id.value -> value))
++
++  test("training preserves exact supplied IDs and requested order"):
++    val data = right(root.training(Vector(20L, 10L)))
++    assertEquals(rows(data), Vector(20L -> "c", 10L -> "a"))
++    assertNotEquals(fingerprintKey(data.fingerprint), fingerprintKey(right(root.training(Vector(10L, 20L))).fingerprint))
++    assertEquals(fingerprintKey(data.fingerprint), fingerprintKey(right(root.training(Vector(20L, 10L))).fingerprint))
++
++  test("source policy revision root membership and order affect selected identity"):
++    val data = right(root.training(Vector(20L)))
++    val revised = right(IdentifiedRows.fromRows(Vector(10L -> "a", 30L -> "b", 20L -> "c", 40L -> "d"), DataFingerprint.external("native-v2")))
++    val reordered = right(IdentifiedRows.fromRows(Vector(20L -> "c", 10L -> "a", 30L -> "b", 40L -> "d"), source))
++    val subset = right(IdentifiedRows.fromRows(Vector(20L -> "c", 10L -> "a"), source))
++    assertNotEquals(fingerprintKey(data.fingerprint), fingerprintKey(right(revised.training(Vector(20L))).fingerprint))
++    assertNotEquals(fingerprintKey(data.fingerprint), fingerprintKey(right(reordered.training(Vector(20L))).fingerprint))
++    assertNotEquals(fingerprintKey(data.fingerprint), fingerprintKey(right(subset.training(Vector(20L))).fingerprint))
++    assert(data.fingerprint.policy.isInstanceOf[FingerprintPolicy.Summary])
++
++  test("empty duplicate and unknown membership are refused"):
++    assertEquals(IdentifiedRows.fromRows(Vector.empty[(Long,String)], source), Left(FixedSelectionError.EmptyRoot))
++    assertEquals(IdentifiedRows.fromRows(Vector(1L -> "a", 1L -> "b"), source), Left(FixedSelectionError.DuplicateRootId(1L)))
++    assertEquals(root.training(Vector.empty), Left(FixedSelectionError.EmptySelection(SplitRole.Train)))
++    assertEquals(root.training(Vector(10L,10L)), Left(FixedSelectionError.DuplicateSelectionId(SplitRole.Train,10L)))
++    assertEquals(root.training(Vector(99L)), Left(FixedSelectionError.UnknownId(SplitRole.Train,99L)))
++
++  test("joint roles preserve order and make overlap and coverage explicit"):
++    val split = right(root.fixedTrainValidationTest(Vector(30L,10L),Vector(20L),Vector(40L),FixedCoverage.Exhaustive))
++    assertEquals(rows(split.train), Vector(30L -> "b",10L -> "a"))
++    assertEquals(rows(split.validation),Vector(20L -> "c"))
++    assertEquals(rows(split.test),Vector(40L -> "d"))
++    assertEquals(split.receipt.excludedIds,Vector.empty[Long])
++    assertEquals(root.fixedHoldout(Vector(10L),Vector(10L),FixedCoverage.DeclaredSubset),Left(FixedSelectionError.RoleOverlap(10L)))
++    assertEquals(root.fixedValidation(Vector(10L),Vector(20L),FixedCoverage.Exhaustive),Left(FixedSelectionError.MissingCoverage(Vector(30L,40L))))
++    val partial = right(root.fixedHoldout(Vector(10L),Vector(20L),FixedCoverage.DeclaredSubset))
++    assertEquals(partial.receipt.excludedIds,Vector(30L,40L))
++    assertNotEquals(fingerprintKey(partial.train.fingerprint), fingerprintKey(partial.test.fingerprint))
++
++  test("training cannot be promoted directly to refit or test"):
++    val errors = typeCheckErrors("""
++import alder.data.*
++import alder.kernel.*
++def invalid[A](root: IdentifiedRows[A]): NonEmptyData[Use.Test,A] = root.training(Vector(1L)).toOption.get
++""")
++    assert(errors.nonEmpty)
++
++  test("deferred fixed resampler binds both declared population and ordered IDs"):
++    given resample4s.core.DigestAlgorithm = resample4s.core.DigestAlgorithm.fnv1a64
++    val selected = right(root.training(Vector(10L,30L,20L,40L)))
++    val labels = right(resample4s.core.Labels.retained(IArray(0,1,0,1)))
++    val design = right(resample4s.designs.FixedPartitions.once(labels))
++    val bound = right(Resample4sResampler.fromDesignForPopulation[String](design,selected.fingerprint,Vector(10L,30L,20L,40L)))
++    assert(bound.split(selected,Seed(99L)).isRight)
++    assert(bound.split(selected,Seed(100L)).isRight)
++    val reordered = right(root.training(Vector(30L,10L,20L,40L)))
++    assertEquals(bound.split(reordered,Seed(99L)),Left(DataError.Resample4sPopulationFingerprintMismatch))
++    val forgedOrder = right(DataRows.nonEmpty[Use.Train,String](Vector(RowId(30L) -> "b",RowId(10L) -> "a",RowId(20L) -> "c",RowId(40L) -> "d"),selected.fingerprint))
++    assertEquals(bound.split(forgedOrder,Seed(99L)),Left(DataError.Resample4sPopulationFingerprintMismatch))
++    val foreignIds = right(DataRows.nonEmpty[Use.Train,String](Vector(RowId(10L) -> "a",RowId(30L) -> "b",RowId(20L) -> "c",RowId(99L) -> "d"),selected.fingerprint))
++    assertEquals(bound.split(foreignIds,Seed(99L)),Left(DataError.Resample4sPopulationFingerprintMismatch))
++    val revised = right(IdentifiedRows.fromRows(Vector(10L -> "a",30L -> "b",20L -> "c",40L -> "d"),DataFingerprint.external("native-v2")))
++    assertEquals(bound.split(right(revised.training(Vector(10L,30L,20L,40L))),Seed(99L)),Left(DataError.Resample4sPopulationFingerprintMismatch))

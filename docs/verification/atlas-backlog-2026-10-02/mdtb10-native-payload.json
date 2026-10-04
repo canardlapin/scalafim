@@ -1,0 +1,47 @@
+{
+  "file": "atl-MDTB10_space-MNI_dseg.nii",
+  "datatype": 256,
+  "dimensions": [
+    141,
+    95,
+    87
+  ],
+  "voxel_count": 1165365,
+  "offset": 352,
+  "stored_signed_int8_counts": {
+    "0": 991352,
+    "1": 19032,
+    "2": 17934,
+    "3": 11230,
+    "4": 28837,
+    "5": 19503,
+    "6": 28672,
+    "7": 11117,
+    "8": 16042,
+    "9": 8588,
+    "10": 13058
+  },
+  "slope": 1.0,
+  "intercept": 0.0,
+  "sform_rows": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      -70.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      -100.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      -75.0
+    ]
+  ],
+  "decoder": "independent Python struct signed-byte payload inspection; unchanged upstream asset"
+}

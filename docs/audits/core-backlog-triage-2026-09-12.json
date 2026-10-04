@@ -1,0 +1,1654 @@
+{
+  "date": "2026-09-12",
+  "scope": "107 originally non-closed ScalaFIM Motes; administrative triage issue excluded",
+  "head": "fd62ea7aabb25ccd415faacfedb7243152861502",
+  "closed_or_retired": 32,
+  "remaining": 75,
+  "remaining_priorities": {
+    "P3": 37,
+    "P1": 27,
+    "P2": 11
+  },
+  "categories": {
+    "deferred-integration": 16,
+    "core-assurance": 5,
+    "retired-obsolete": 7,
+    "core-correctness": 17,
+    "deferred-feature": 16,
+    "core-performance": 7,
+    "retired-upstream": 15,
+    "completed-verified": 10,
+    "active-phrf": 8,
+    "deferred-phrf": 1,
+    "optional-phrf": 4,
+    "core-maintenance": 1
+  },
+  "verified_against_live_tracker": true,
+  "removed_blocking_edge": {
+    "child": "bd-01KX6G9B8R86MRBZ9S8K8F5G7V",
+    "parent": "bd-01KXYJCH0R2W45SAPT38PCHFJJ"
+  },
+  "decisions": [
+    {
+      "index": 0,
+      "id": "bd-01KXYHVBTCJ05W4EX3GY80DS1X",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] RFE: align scalafim workflow scope with eidolon ownership",
+      "old_title": "RFE: align scalafim workflow scope with eidolon ownership",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Eidolon boundary/migration proposal; retain the recorded ownership decision, but defer broad module retirement and orchestration integration until a concrete core requirement needs it."
+    },
+    {
+      "index": 1,
+      "id": "bd-01KXYJBP89WFPNKAZ03MQQMY5M",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] RFE: freeze and retire scalafim-pipeline workflow authority",
+      "old_title": "RFE: freeze and retire scalafim-pipeline workflow authority",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Eidolon boundary/migration proposal; retain the recorded ownership decision, but defer broad module retirement and orchestration integration until a concrete core requirement needs it."
+    },
+    {
+      "index": 2,
+      "id": "bd-01KXYJC5CK664MZZ9AH8PC0M3M",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] RFE: split fmri-workflow scientific specifications from app orchestration",
+      "old_title": "RFE: split fmri-workflow scientific specifications from app orchestration",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Eidolon boundary/migration proposal; retain the recorded ownership decision, but defer broad module retirement and orchestration integration until a concrete core requirement needs it."
+    },
+    {
+      "index": 3,
+      "id": "bd-01KZ3ZCDD2RMYQ3WVY606FNKY1",
+      "old_priority": 0,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "EPIC: preserve first-level scientific identity from design compilation through inference",
+      "old_title": "EPIC: preserve first-level scientific identity from design compilation through inference",
+      "tags": [
+        "core-assurance",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retain first-level scientific identity, independent numerical evidence, executable examples, and measured allocation/performance gates as core priorities. Historical branch/CI claims need refresh; do not mistake current compilation for full release certification."
+    },
+    {
+      "index": 4,
+      "id": "bd-01KZ6BA6BKHKFY32E0A6XMYQQD",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] EPIC: Remove scalafim-locus-data and adopt locus4s directly",
+      "old_title": "EPIC: Remove scalafim-locus-data and adopt locus4s directly",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "locus-data still exists in build.sbt. This is an unfinished ownership/deletion migration, not an established defect in current computations. Keep the chain intact and defer; do not claim removal completed."
+    },
+    {
+      "index": 5,
+      "id": "bd-01KZ6BCTQG47202PW9EM5886GT",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Rewire consumers and delete the scalafim-locus-data artifact",
+      "old_title": "Rewire consumers and delete the scalafim-locus-data artifact",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "locus-data still exists in build.sbt. This is an unfinished ownership/deletion migration, not an established defect in current computations. Keep the chain intact and defer; do not claim removal completed."
+    },
+    {
+      "index": 6,
+      "id": "bd-01KZ6BCXA6JB4Z7G8AMST1KKZ5",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Run the complete ScalaFIM locus-data removal migration court",
+      "old_title": "Run the complete ScalaFIM locus-data removal migration court",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "locus-data still exists in build.sbt. This is an unfinished ownership/deletion migration, not an established defect in current computations. Keep the chain intact and defer; do not claim removal completed."
+    },
+    {
+      "index": 7,
+      "id": "bd-01KZ9E1S24ZJJFS3HQEJ5G29F3",
+      "old_priority": 0,
+      "priority": 3,
+      "old_status": "doing",
+      "status": "closed",
+      "title": "Validate ScalaFIM against Gale 0.1 M1 candidate",
+      "old_title": "Validate ScalaFIM against Gale 0.1 M1 candidate",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire the July Gale 0.1 M1 exact-candidate exercise: current build pins Gale 83cac90a, and both-platform compile gates passed. This does not certify the old candidate. Current required banded-SPD adoption is tracked separately by active PHRF-06."
+    },
+    {
+      "index": 8,
+      "id": "bd-01M0Z5MJ46C70JQ9NNN4GPMJQQ",
+      "old_priority": 0,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Predictive MVPA cannot bind a truthful run generalization axis",
+      "old_title": "Predictive MVPA cannot bind a truthful run generalization axis",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12",
+        "needs-revalidation"
+      ],
+      "reason": "Truthful run grouping and validation-axis identity is core MVPA correctness. Keep high priority; reported behavior is a typed rejection, so P1 rather than an emergency P0. Verify against current identified-evidence implementation before choosing a repair. Current-main check: the identified-evidence APIs named by this issue are absent from modules; first reproduce the concern against current MVPA APIs or identify the candidate branch. Historical evidence is not a current-main reproduction."
+    },
+    {
+      "index": 9,
+      "id": "bd-01KX2CPJYP0DP751T841N00V6E",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "Epic: Oderskyan fmrireg parity architecture",
+      "old_title": "Epic: Oderskyan fmrireg parity architecture",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Broad historical parity umbrella includes optional plugin and estimator expansion. Keep existing children and completed history; prioritize concrete correctness/performance children independently rather than treating the entire expansion as urgent."
+    },
+    {
+      "index": 10,
+      "id": "bd-01KX6G842E07NN3XZSQF2Z5HH3",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Epic: out-of-core BIDS-to-group fMRI workflow",
+      "old_title": "Epic: out-of-core BIDS-to-group fMRI workflow",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Broad resumable BIDS-to-group orchestration/acceptance predates the newer ownership split. Defer application execution/resume integration; reusable bounded fit, persisted estimates, and group computation remain separately tracked."
+    },
+    {
+      "index": 11,
+      "id": "bd-01KX6G9B1ZT10A3214DPA096RZ",
+      "old_priority": 1,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Workflow first level: make fit preparation serializable and out-of-core",
+      "old_title": "Workflow first level: make fit preparation serializable and out-of-core",
+      "tags": [
+        "core-performance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Bounded first-level/group block execution is relevant core scalability. Retain; distinguish existing selected-block execution from still-unfinished durable serialization or manifest-wide execution."
+    },
+    {
+      "index": 12,
+      "id": "bd-01KX6G9B8R86MRBZ9S8K8F5G7V",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Workflow output: add transactional result sinks and a durable first-level catalog",
+      "old_title": "Workflow output: add transactional result sinks and a durable first-level catalog",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Keep estimate persistence/readback integrity high priority. 8d21918 landed a qualified checkpoint, but its own completion note explicitly leaves stable schema/golden bundles, covariance, durability, and broader integration open. Do not close the broad item."
+    },
+    {
+      "index": 13,
+      "id": "bd-01KX6G9BFJRERNFRWR17WT0YGN",
+      "old_priority": 1,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Workflow group level: execute manifest-backed spatial blocks",
+      "old_title": "Workflow group level: execute manifest-backed spatial blocks",
+      "tags": [
+        "core-performance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Bounded first-level/group block execution is relevant core scalability. Retain; distinguish existing selected-block execution from still-unfinished durable serialization or manifest-wide execution."
+    },
+    {
+      "index": 14,
+      "id": "bd-01KX6G9BP68XVCN41XZTG73GVC",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Workflow orchestration: lower study plans to resumable execution policies",
+      "old_title": "Workflow orchestration: lower study plans to resumable execution policies",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Broad resumable BIDS-to-group orchestration/acceptance predates the newer ownership split. Defer application execution/resume integration; reusable bounded fit, persisted estimates, and group computation remain separately tracked."
+    },
+    {
+      "index": 15,
+      "id": "bd-01KX6G9BWW51R09NEBJNBMWRMS",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Workflow acceptance: prove fMRIPrep-to-group parity, bounded memory, and resume",
+      "old_title": "Workflow acceptance: prove fMRIPrep-to-group parity, bounded memory, and resume",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Broad resumable BIDS-to-group orchestration/acceptance predates the newer ownership split. Defer application execution/resume integration; reusable bounded fit, persisted estimates, and group computation remain separately tracked."
+    },
+    {
+      "index": 16,
+      "id": "bd-01KXSQ2Z32R1066VVQK4ZAR9C3",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Frame adapter: Parquet source, sink, and truthful pushdown",
+      "old_title": "Frame adapter: Parquet source, sink, and truthful pushdown",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: generic Frame/Parquet/DuckDB/Gale/spill implementation belongs to extracted frame4s (b6a3af2 is an ancestor; embedded Frame module is absent). This is scope retirement, not a claim upstream work is implemented. Reopen only a narrow ScalaFIM consumer defect with concrete evidence."
+    },
+    {
+      "index": 17,
+      "id": "bd-01KXSQ62V1G2XSSFT4DEX1HX7V",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] ntab 0: rebase the neuroimaging table plan onto independent Frame",
+      "old_title": "ntab 0: rebase the neuroimaging table plan onto independent Frame",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ntab/group-ntab is a proposed new feature layer with stale incubated-Frame references. Keep its scientific intent, but defer implementation and rebase onto standalone frame4s only when a current use case justifies it."
+    },
+    {
+      "index": 18,
+      "id": "bd-01KXSQ6M2NRFKS762S5A3FRM8N",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] ntab 1: feature references, exact support, and batched resolution over Frame rows",
+      "old_title": "ntab 1: feature references, exact support, and batched resolution over Frame rows",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ntab/group-ntab is a proposed new feature layer with stale incubated-Frame references. Keep its scientific intent, but defer implementation and rebase onto standalone frame4s only when a current use case justifies it."
+    },
+    {
+      "index": 19,
+      "id": "bd-01KXSQ75FHWMGQG0B78R93HQ3W",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] ntab 2: exact-support grouped reductions, contributor lineage, and drill-down",
+      "old_title": "ntab 2: exact-support grouped reductions, contributor lineage, and drill-down",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ntab/group-ntab is a proposed new feature layer with stale incubated-Frame references. Keep its scientific intent, but defer implementation and rebase onto standalone frame4s only when a current use case justifies it."
+    },
+    {
+      "index": 20,
+      "id": "bd-01KXSQ84B3KAQXRR8XN0YDDG4C",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] ntab 3: cross-platform Frame integration, workflow evidence, docs, and dependency audit",
+      "old_title": "ntab 3: cross-platform Frame integration, workflow evidence, docs, and dependency audit",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ntab/group-ntab is a proposed new feature layer with stale incubated-Frame references. Keep its scientific intent, but defer implementation and rebase onto standalone frame4s only when a current use case justifies it."
+    },
+    {
+      "index": 21,
+      "id": "bd-01KXSQ8Q65XK2THWC1MY74Y4NX",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Epic: ntab \u2014 exact-support neuroimaging feature relations built on Frame",
+      "old_title": "Epic: ntab \u2014 exact-support neuroimaging feature relations built on Frame",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ntab/group-ntab is a proposed new feature layer with stale incubated-Frame references. Keep its scientific intent, but defer implementation and rebase onto standalone frame4s only when a current use case justifies it."
+    },
+    {
+      "index": 22,
+      "id": "bd-01KXYJCH0R2W45SAPT38PCHFJJ",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] RFE: replace workflow artifact locations with reusable resource descriptors",
+      "old_title": "RFE: replace workflow artifact locations with reusable resource descriptors",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Eidolon boundary/migration proposal; retain the recorded ownership decision, but defer broad module retirement and orchestration integration until a concrete core requirement needs it."
+    },
+    {
+      "index": 23,
+      "id": "bd-01KXYJCTH1E42ET2N0NQ574FSW",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Docs: record scalafim-eidolon module boundary and migration map",
+      "old_title": "Docs: record scalafim-eidolon module boundary and migration map",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Eidolon boundary/migration proposal; retain the recorded ownership decision, but defer broad module retirement and orchestration integration until a concrete core requirement needs it."
+    },
+    {
+      "index": 24,
+      "id": "bd-01KXYJK0XSA3RNH9ANMVC96EPE",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Epic: migrate Scalafim linear algebra to Gale and retire internal linalg",
+      "old_title": "Epic: migrate Scalafim linear algebra to Gale and retire internal linalg",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire the old monolithic Gale migration/purge gate: 8ea489e is on HEAD, modules/linalg and linalg-breeze are absent, and production/build scans find no scalafim.linalg or Breeze references. Remaining specialized HRF/motion duplicate review stays open in migration-5; this retirement does not claim every historical global gate was rerun."
+    },
+    {
+      "index": 25,
+      "id": "bd-01KXYJNQ1TKES0D4GPVP42F8HW",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Scalafim Gale migration 3: fit and factorization consumers",
+      "old_title": "Scalafim Gale migration 3: fit and factorization consumers",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Core factorization/spectral consumer migration landed (8ea489e ancestor). Removed generic modules/imports are absent and current default-pin both-platform compile is warning-clean. Domain adapters and their scientific policies remain; residual duplicate audit stays separate."
+    },
+    {
+      "index": 26,
+      "id": "bd-01KXYJPAXGS2C588VJSXPSJ2J0",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Scalafim Gale migration 4: spectral and multivariate solvers",
+      "old_title": "Scalafim Gale migration 4: spectral and multivariate solvers",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Core factorization/spectral consumer migration landed (8ea489e ancestor). Removed generic modules/imports are absent and current default-pin both-platform compile is warning-clean. Domain adapters and their scientific policies remain; residual duplicate audit stays separate."
+    },
+    {
+      "index": 27,
+      "id": "bd-01KXYJQYW4V7WV9FC1Q0JTNVB8",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Scalafim Gale migration 6: purge internal linalg and close global gates",
+      "old_title": "Scalafim Gale migration 6: purge internal linalg and close global gates",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire the old monolithic Gale migration/purge gate: 8ea489e is on HEAD, modules/linalg and linalg-breeze are absent, and production/build scans find no scalafim.linalg or Breeze references. Remaining specialized HRF/motion duplicate review stays open in migration-5; this retirement does not claim every historical global gate was rerun."
+    },
+    {
+      "index": 28,
+      "id": "bd-01KY4TXJQZ72S37EXCWTEFT5S4",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Make aligned structured multiblock a real joint fit",
+      "old_title": "Make aligned structured multiblock a real joint fit",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 29,
+      "id": "bd-01KY4TXM5VB7R9FAQFDE7T6QN0",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Unify fitted-model lifecycle and runtime evidence emission",
+      "old_title": "Unify fitted-model lifecycle and runtime evidence emission",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 30,
+      "id": "bd-01KY4TXMG0YWBMNDVKPBSKS4XZ",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Reconcile multivar documentation and contract API bindings with runtime",
+      "old_title": "Reconcile multivar documentation and contract API bindings with runtime",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 31,
+      "id": "bd-01KY4VDG22ED2C3WCFJ3GG1NPC",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "EPIC: one lawful multivar lifecycle from model program to IR",
+      "old_title": "EPIC: one lawful multivar lifecycle from model program to IR",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 32,
+      "id": "bd-01KY4VH1XBMV2Q00BD1HJQT6QV",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Emit and validate universal ModelRun IR from runtime fits",
+      "old_title": "Emit and validate universal ModelRun IR from runtime fits",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 33,
+      "id": "bd-01KY4VH2PYYX3J46Q95KD92FCF",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Release-gate the unified multivar lifecycle and remove legacy construction paths",
+      "old_title": "Release-gate the unified multivar lifecycle and remove legacy construction paths",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 34,
+      "id": "bd-01KYHNQ4T0S9S6A8ZER7N7QHDY",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "EPIC: extract standalone bids4s and migrate consumers",
+      "old_title": "EPIC: extract standalone bids4s and migrate consumers",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ScalaFIM BIDS extraction/cutover is already on HEAD (76e4b77 ancestor), modules/bids is absent, and build.sbt uses exact standalone bids4s pins. Retire the old combined extraction/publication work item here; any remaining Maven/Eidolon release work belongs upstream and is not claimed complete."
+    },
+    {
+      "index": 35,
+      "id": "bd-01KYHNQYQR9N5TFWNFG6DWBTBJ",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Release bids4s and remove embedded ScalaFIM module",
+      "old_title": "Release bids4s and remove embedded ScalaFIM module",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ScalaFIM BIDS extraction/cutover is already on HEAD (76e4b77 ancestor), modules/bids is absent, and build.sbt uses exact standalone bids4s pins. Retire the old combined extraction/publication work item here; any remaining Maven/Eidolon release work belongs upstream and is not claimed complete."
+    },
+    {
+      "index": 36,
+      "id": "bd-01KZ6BCP86MHP8HBHRWRDRTKN3",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Remove scalafim.locus facade vocabulary and MapEvidence",
+      "old_title": "Remove scalafim.locus facade vocabulary and MapEvidence",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "locus-data still exists in build.sbt. This is an unfinished ownership/deletion migration, not an established defect in current computations. Keep the chain intact and defer; do not claim removal completed."
+    },
+    {
+      "index": 37,
+      "id": "bd-01KZ6BCRARE78N6HS59NN893TH",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Remove duplicate ScalaFIM aggregation and Cats-only locus dependency",
+      "old_title": "Remove duplicate ScalaFIM aggregation and Cats-only locus dependency",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "locus-data still exists in build.sbt. This is an unfinished ownership/deletion migration, not an established defect in current computations. Keep the chain intact and defer; do not claim removal completed."
+    },
+    {
+      "index": 38,
+      "id": "bd-01M0NS3CM5KMPK7684W2WJ64BG",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "review",
+      "status": "closed",
+      "title": "Add CanvasViewerController.dispose() that releases caches and ImageBitmaps",
+      "old_title": "Add CanvasViewerController.dispose() that releases caches and ImageBitmaps",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Forward-port commits 8b5878d and 5495ea3 are ancestors of HEAD. Current Canvas runtime/controller dispose releases caches, ThreeJsRuntime.dispose calls loseContext, and typed ThreeJsRuntimeOptions carries clearColor. Existing issue notes record focused JS and consumer sentinel evidence. Close the stale review item; no new browser run or downstream pin adoption is claimed."
+    },
+    {
+      "index": 39,
+      "id": "bd-01M0NS3EFBY640V7D9C08B31V8",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "review",
+      "status": "closed",
+      "title": "ThreeJsRuntime.dispose() should force WebGL context loss",
+      "old_title": "ThreeJsRuntime.dispose() should force WebGL context loss",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Forward-port commits 8b5878d and 5495ea3 are ancestors of HEAD. Current Canvas runtime/controller dispose releases caches, ThreeJsRuntime.dispose calls loseContext, and typed ThreeJsRuntimeOptions carries clearColor. Existing issue notes record focused JS and consumer sentinel evidence. Close the stale review item; no new browser run or downstream pin adoption is claimed."
+    },
+    {
+      "index": 40,
+      "id": "bd-01M0T1CH3YJHZJ3YJY2E9CJYA5",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Optimize mesh4s cortical-scale topology construction",
+      "old_title": "Optimize mesh4s cortical-scale topology construction",
+      "tags": [
+        "deferred-integration",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "The reported allocations are for a mesh4s/locus4s integration candidate. Current build.sbt has no mesh4s dependency and current surface module owns TriangleMesh/MeshTopology. Preserve historical benchmark evidence, but defer this provider-specific optimization to P3 until that integration is adopted. It does not establish a current ScalaFIM performance defect; qualify current topology independently before importing its targets."
+    },
+    {
+      "index": 41,
+      "id": "bd-01M0TGTH208WXGQ2CZJZM7RWRQ",
+      "old_priority": 1,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Accelerate SurfaceWorldLink.nearestVertex with an owner-safe spatial index",
+      "old_title": "Accelerate SurfaceWorldLink.nearestVertex with an owner-safe spatial index",
+      "tags": [
+        "core-performance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retain bounded surface nearest-vertex acceleration with the exact world-space/owner-safe oracle. This is a measured scalability follow-up, below fitting and active PHRF hot paths."
+    },
+    {
+      "index": 42,
+      "id": "bd-01M0TN1MFACB485QP4ERG83BZ8",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "review",
+      "status": "closed",
+      "title": "Forward-port Neuropublish viewer lifecycle and clear colour prerequisites",
+      "old_title": "Forward-port Neuropublish viewer lifecycle and clear colour prerequisites",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Forward-port commits 8b5878d and 5495ea3 are ancestors of HEAD. Current Canvas runtime/controller dispose releases caches, ThreeJsRuntime.dispose calls loseContext, and typed ThreeJsRuntimeOptions carries clearColor. Existing issue notes record focused JS and consumer sentinel evidence. Close the stale review item; no new browser run or downstream pin adoption is claimed."
+    },
+    {
+      "index": 43,
+      "id": "bd-01M0Z68QE7FFW1RDT8FPX2S4NT",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "Design a concise zero-cruft MVPA facade over identified evidence",
+      "old_title": "Design a concise zero-cruft MVPA facade over identified evidence",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12",
+        "needs-revalidation"
+      ],
+      "reason": "MVPA facade ergonomics is useful but secondary to correctness and measured allocation. Keep one ontology; defer API redesign until the core issues are resolved. Current-main check: the identified-evidence APIs named by this issue are absent from modules; first reproduce the concern against current MVPA APIs or identify the candidate branch. Historical evidence is not a current-main reproduction."
+    },
+    {
+      "index": 44,
+      "id": "bd-01M0Z7JBET61VHWHKSZRJ8HZ7A",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Profile and reduce MVPA public result and identity allocation",
+      "old_title": "Profile and reduce MVPA public result and identity allocation",
+      "tags": [
+        "core-performance",
+        "triaged-core-2026-09-12",
+        "needs-revalidation"
+      ],
+      "reason": "Retain P1 for qualification of core MVPA allocation through public APIs, preserving identity and estimability. The historical identified-evidence APIs are absent from current main; re-establish the baseline before implementing. Fitting fallback-status materialization is a separate current defect tracked by its own issue."
+    },
+    {
+      "index": 45,
+      "id": "bd-01M1WVPJ9MMPFDXAY5196E73D7",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Avoid full fallback status-vector allocation for single-voxel access",
+      "old_title": "Avoid full fallback status-vector allocation for single-voxel access",
+      "tags": [
+        "core-performance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority core allocation work with concrete evidence. Profile and repair through public APIs without weakening identity, covariance, or estimability. Current source still contains full fallback-status materialization in point consumers; keep numerical equivalence and allocation budgets separate."
+    },
+    {
+      "index": 46,
+      "id": "bd-01M1Z1KN91XKADQ4Z80PBB781Q",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Fit review: expose bounded identified residual traces for OLS and AR GLS",
+      "old_title": "Fit review: expose bounded identified residual traces for OLS and AR GLS",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority scientific validity: bounded fit diagnostics, run/whitening/covariance semantics, first-level uncertainty, calibration, or threshold p-value/cutoff agreement. Application origin does not make this optional integration; preserve native ownership and independent oracles."
+    },
+    {
+      "index": 47,
+      "id": "bd-01M1Z2050HGVC8FAZM07TM2K9Q",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Qualify run-specific AR GLS estimates and covariance without changing coefficient scope",
+      "old_title": "Qualify run-specific AR GLS estimates and covariance without changing coefficient scope",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority scientific validity: bounded fit diagnostics, run/whitening/covariance semantics, first-level uncertainty, calibration, or threshold p-value/cutoff agreement. Application origin does not make this optional integration; preserve native ownership and independent oracles."
+    },
+    {
+      "index": 48,
+      "id": "bd-01M20TKX7VYFT3BHCM7QAMA6NG",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Admit calibrated group inference for unequal and estimated subject variances",
+      "old_title": "Admit calibrated group inference for unequal and estimated subject variances",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority scientific validity: bounded fit diagnostics, run/whitening/covariance semantics, first-level uncertainty, calibration, or threshold p-value/cutoff agreement. Application origin does not make this optional integration; preserve native ownership and independent oracles."
+    },
+    {
+      "index": 49,
+      "id": "bd-01M210WJ4BWVCXEMTARHDR2AC7",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Preserve first-level uncertainty provenance and degrees of freedom in group inputs",
+      "old_title": "Preserve first-level uncertainty provenance and degrees of freedom in group inputs",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority scientific validity: bounded fit diagnostics, run/whitening/covariance semantics, first-level uncertainty, calibration, or threshold p-value/cutoff agreement. Application origin does not make this optional integration; preserve native ownership and independent oracles."
+    },
+    {
+      "index": 50,
+      "id": "bd-01M21273A1SGJHQZP1W1X24SFZ",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "doing",
+      "status": "open",
+      "title": "Support cutoff-period DCT drift in native first-level design and fitting",
+      "old_title": "Support cutoff-period DCT drift in native first-level design and fitting",
+      "tags": [
+        "core-correctness",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "DCT cutoff drift remains a core modeling capability. The recorded candidate commit 81f6c16 is not an ancestor of HEAD and current baseline source has no cutoff/DctBasis path. Reset stale doing status to open, retain exact provider admission and numerical requirements."
+    },
+    {
+      "index": 51,
+      "id": "bd-01M21BNZR9ZBRAYY9JD5WCQ8KX",
+      "old_priority": 1,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Qualify joint effect-and-variance Gaussian bootstrap for group contrasts",
+      "old_title": "Qualify joint effect-and-variance Gaussian bootstrap for group contrasts",
+      "tags": [
+        "core-assurance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Keep the joint effect/variance bootstrap as bounded research, not an already admitted method. First-level SE calibration and uncertainty provenance take priority; failed/deferred admission is a legitimate result."
+    },
+    {
+      "index": 52,
+      "id": "bd-01M21H6P1908Q5PGSZYWQZHWRN",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Adopt image4s incremental NIfTI output for selected result maps",
+      "old_title": "Adopt image4s incremental NIfTI output for selected result maps",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "The old canonical-provider/selected-output reconciliation blocker is resolved: 316a157 pins image4s ec56b348, Nifti.openScalarWriter delegates to the provider, and 8d21918 lands selected fits with independent persisted group readback. Existing continuation/commit receipts record pinned gates. Broader estimate-set schema/durability work remains open in the parent."
+    },
+    {
+      "index": 53,
+      "id": "bd-01M21VA8DYMNJS9PZ8076SBWWJ",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Qualify first-level estimate and standard-error calibration under known truth",
+      "old_title": "Qualify first-level estimate and standard-error calibration under known truth",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority scientific validity: bounded fit diagnostics, run/whitening/covariance semantics, first-level uncertainty, calibration, or threshold p-value/cutoff agreement. Application origin does not make this optional integration; preserve native ownership and independent oracles."
+    },
+    {
+      "index": 54,
+      "id": "bd-01M23Q9Q92SBD5PHZZJYVY9EC3",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Reconcile selected-estimate work with the existing canonical image architecture",
+      "old_title": "Reconcile selected-estimate work with the existing canonical image architecture",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "The old canonical-provider/selected-output reconciliation blocker is resolved: 316a157 pins image4s ec56b348, Nifti.openScalarWriter delegates to the provider, and 8d21918 lands selected fits with independent persisted group readback. Existing continuation/commit receipts record pinned gates. Broader estimate-set schema/durability work remains open in the parent."
+    },
+    {
+      "index": 55,
+      "id": "bd-01M23ZX1KQB38EPD7W3PM56SE9",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Audit and qualify voxelwise threshold inference; repair max-null cutoff disagreement",
+      "old_title": "Audit and qualify voxelwise threshold inference; repair max-null cutoff disagreement",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority scientific validity: bounded fit diagnostics, run/whitening/covariance semantics, first-level uncertainty, calibration, or threshold p-value/cutoff agreement. Application origin does not make this optional integration; preserve native ownership and independent oracles."
+    },
+    {
+      "index": 56,
+      "id": "bd-01M241Y5FPND8TPHTJQVHJWW7K",
+      "old_priority": 1,
+      "priority": 2,
+      "old_status": "doing",
+      "status": "open",
+      "title": "Remove cross-face texture contamination in JavaFX cortical surface display",
+      "old_title": "Remove cross-face texture contamination in JavaFX cortical surface display",
+      "tags": [
+        "core-correctness",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retain renderer color/identity correctness; numerical/native candidate evidence is not main adoption. Old doing state has no live owner. Revalidate exact recovery source before integrating, without changing scientific interpolation semantics."
+    },
+    {
+      "index": 57,
+      "id": "bd-01M249KVV594XXRVFC0670RMAT",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Restore a coherent Intaglio pin for the current surface-view APIs",
+      "old_title": "Restore a coherent Intaglio pin for the current surface-view APIs",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "The stale Intaglio 2c8fd210 pin diagnosis is superseded: current build pins 596b398a and ordinary scalafimCompileAll (including surface/JavaFX projects) just passed without overrides or warnings. Close the pin-coherence blocker only; renderer and native adoption issues stay open."
+    },
+    {
+      "index": 58,
+      "id": "bd-01M24EQFARZKYMZ71BJP91C9XS",
+      "old_priority": 1,
+      "priority": 2,
+      "old_status": "doing",
+      "status": "open",
+      "title": "Reduce native draw cost after adaptive surface UV changes",
+      "old_title": "Reduce native draw cost after adaptive surface UV changes",
+      "tags": [
+        "core-performance",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retain measured native draw/UV allocation work. Evidence belongs to an older isolated recovery candidate, not current main; reset inactive doing state and revalidate before implementation."
+    },
+    {
+      "index": 59,
+      "id": "bd-01M24KKCA32BDHHCSS3VRYFPPS",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "doing",
+      "status": "open",
+      "title": "Integrate PR 6 and JavaFX recovery on provider-owned main",
+      "old_title": "Integrate PR 6 and JavaFX recovery on provider-owned main",
+      "tags": [
+        "deferred-integration",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Historical PR6/provider/JavaFX merge bundle is not proven landed as a whole. Keep open but defer broad recovery integration; current core compiles. Revalidate live PR, exact provider pins and retained recovery changes before reuse. Do not recycle expired authorization failures as current blockers."
+    },
+    {
+      "index": 60,
+      "id": "bd-01M24MQABKEBQXW89VZ8XWBB8H",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "EPIC: Unified ProfileHrf condition and trial fitting with bounded compiled backends",
+      "old_title": "EPIC: Unified ProfileHrf condition and trial fitting with bounded compiled backends",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 61,
+      "id": "bd-01M24MRY1DA0KPP37J7H8G619D",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "doing",
+      "status": "doing",
+      "title": "PHRF-06: Implement banded SPD factors, solves and logdet upstream in Gale and pin",
+      "old_title": "PHRF-06: Implement banded SPD factors, solves and logdet upstream in Gale and pin",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 62,
+      "id": "bd-01M24MS4WEQN14GH3P56K1257J",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-07: Implement the TrialBanded backend on shared Gram blocks",
+      "old_title": "PHRF-07: Implement the TrialBanded backend on shared Gram blocks",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 63,
+      "id": "bd-01M24MSDQ0A8NK9YWT0SB4FCRX",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-10: Deferred: finite-state innovation likelihood backend",
+      "old_title": "PHRF-10: Deferred: finite-state innovation likelihood backend",
+      "tags": [
+        "deferred-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "PHRF-10 is explicitly deferred and opens only if the PHRF-07 dense-overlap checkpoint misses its budget. Keep that decision gate; do not schedule speculative finite-state backend work ahead of required PHRF delivery."
+    },
+    {
+      "index": 64,
+      "id": "bd-01M24MSJQZH70BTAFYTXD3MPZZ",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-11: Add trial amplitudes, ML determinant and queries to the readout contract",
+      "old_title": "PHRF-11: Add trial amplitudes, ML determinant and queries to the readout contract",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 65,
+      "id": "bd-01M24MSZ4Z6BFWRV5R4S67VDN0",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-14: Qualify numerical approximation and scientific calibration",
+      "old_title": "PHRF-14: Qualify numerical approximation and scientific calibration",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 66,
+      "id": "bd-01M24MT58X8W2Z0KJ25JJG2SGP",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-15: Measure throughput, memory and backend crossovers",
+      "old_title": "PHRF-15: Measure throughput, memory and backend crossovers",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 67,
+      "id": "bd-01M24MTB363KSHN1KDRSAM2KNH",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-16: Release unified ProfileHrf",
+      "old_title": "PHRF-16: Release unified ProfileHrf",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 68,
+      "id": "bd-01M25Q0N1MG005XYTYE8HBS2ZB",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-23: Optional: frozen readout fields for matrix-free MVPA",
+      "old_title": "PHRF-23: Optional: frozen readout fields for matrix-free MVPA",
+      "tags": [
+        "optional-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Explicitly optional PHRF extension. Keep visible under the active product, but below the required TrialBanded/readout/calibration/performance/release chain; existing optional status and dependencies are preserved."
+    },
+    {
+      "index": 69,
+      "id": "bd-01M25Q0P2ANA5VBKFZR7ZXNW8J",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-24: Optional: bounded stimulus-feature amplitude structure",
+      "old_title": "PHRF-24: Optional: bounded stimulus-feature amplitude structure",
+      "tags": [
+        "optional-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Explicitly optional PHRF extension. Keep visible under the active product, but below the required TrialBanded/readout/calibration/performance/release chain; existing optional status and dependencies are preserved."
+    },
+    {
+      "index": 70,
+      "id": "bd-01M25RZGYEC3SSXCYBF84MWG22",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "doing",
+      "status": "open",
+      "title": "Support paired lateral and medial surface cameras with per-slot render and pick correspondence",
+      "old_title": "Support paired lateral and medial surface cameras with per-slot render and pick correspondence",
+      "tags": [
+        "deferred-feature",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Paired per-slot cameras are a useful viewer capability, but not the current core numerical/performance priority. Consumer backport qualification is not native adoption; reset inactive doing state and retain provenance."
+    },
+    {
+      "index": 71,
+      "id": "bd-01M26A285YAQ3H8TGS26BK9T7J",
+      "old_priority": 1,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-29: Add `ProfileHrfPlan` and attach the trial backend to the executor",
+      "old_title": "PHRF-29: Add `ProfileHrfPlan` and attach the trial backend to the executor",
+      "tags": [
+        "active-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "User explicitly identifies PHRF as active priority. Preserve its required condition/trial implementation chain, upstream Gale banded-SPD prerequisite, readout, calibration and performance qualification. No claims, reservations, bodies or dependency edges on this active path are changed."
+    },
+    {
+      "index": 72,
+      "id": "bd-01M26A2AWJJ0RW7D2MHBA7RPEY",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-30: Optional: exact seven-state Cascade34 realization",
+      "old_title": "PHRF-30: Optional: exact seven-state Cascade34 realization",
+      "tags": [
+        "optional-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Explicitly optional PHRF extension. Keep visible under the active product, but below the required TrialBanded/readout/calibration/performance/release chain; existing optional status and dependencies are preserved."
+    },
+    {
+      "index": 73,
+      "id": "bd-01M26A2D7WSNMK0JRE1JKC12TK",
+      "old_priority": 1,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "PHRF-31: Optional: voxelwise AR through lag-Gram expansion",
+      "old_title": "PHRF-31: Optional: voxelwise AR through lag-Gram expansion",
+      "tags": [
+        "optional-phrf",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Explicitly optional PHRF extension. Keep visible under the active product, but below the required TrialBanded/readout/calibration/performance/release chain; existing optional status and dependencies are preserved."
+    },
+    {
+      "index": 74,
+      "id": "bd-01KX2CQZGWBQ3KKX7BWE28X3T2",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "Extend group and meta-analysis interpreters",
+      "old_title": "Extend group and meta-analysis interpreters",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "PM/mKH repair exists; remaining REML/robust/multicontrast estimator expansion is feature work. Prioritize calibration/uncertainty of supported methods before broadening the estimator catalog."
+    },
+    {
+      "index": 75,
+      "id": "bd-01KX2CQZHGH43S93RK1KCY7ES1",
+      "old_priority": 2,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Add typed result bundles and export adapters",
+      "old_title": "Add typed result bundles and export adapters",
+      "tags": [
+        "core-correctness",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Keep typed result/export semantics but flag overlap with the newer estimates/estimates-io/fit-estimates architecture. Review remaining format coverage and contracts before adding a second result hierarchy."
+    },
+    {
+      "index": 76,
+      "id": "bd-01KX50HA4TGKKWR1CC2G8HRY2D",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "Design compressed RRG under voxelwise AR whitening",
+      "old_title": "Design compressed RRG under voxelwise AR whitening",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Compressed voxelwise-AR reduced-rank GLS is a new scientific capability with a typed unsupported boundary. Keep deferred until geometry and covariance have an independent oracle; do not treat the refusal as a current numerical bug."
+    },
+    {
+      "index": 77,
+      "id": "bd-01KXSQ2Z2BW2CRQFR0X8V59B84",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Frame adapter: Gale numerical views with explicit lifetime and allocation receipts",
+      "old_title": "Frame adapter: Gale numerical views with explicit lifetime and allocation receipts",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: generic Frame/Parquet/DuckDB/Gale/spill implementation belongs to extracted frame4s (b6a3af2 is an ancestor; embedded Frame module is absent). This is scope retirement, not a claim upstream work is implemented. Reopen only a narrow ScalaFIM consumer defect with concrete evidence."
+    },
+    {
+      "index": 78,
+      "id": "bd-01KXSQ2Z2M5XVAJ2CVWMAGK2Z7",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Frame adapter: DuckDB engine with Arrow handoff and semantic conformance",
+      "old_title": "Frame adapter: DuckDB engine with Arrow handoff and semantic conformance",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: generic Frame/Parquet/DuckDB/Gale/spill implementation belongs to extracted frame4s (b6a3af2 is an ancestor; embedded Frame module is absent). This is scope retirement, not a claim upstream work is implemented. Reopen only a narrow ScalaFIM consumer defect with concrete evidence."
+    },
+    {
+      "index": 79,
+      "id": "bd-01KXSQ44YSMQSPDBXGCVMKFHGV",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Frame adapters acceptance: conformance matrix, receipts, examples, and release boundaries",
+      "old_title": "Frame adapters acceptance: conformance matrix, receipts, examples, and release boundaries",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: generic Frame/Parquet/DuckDB/Gale/spill implementation belongs to extracted frame4s (b6a3af2 is an ancestor; embedded Frame module is absent). This is scope retirement, not a claim upstream work is implemented. Reopen only a narrow ScalaFIM consumer defect with concrete evidence."
+    },
+    {
+      "index": 80,
+      "id": "bd-01KXSQ4RBY8ZP2E2FE12XWHSSJ",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Epic: Frame adapters \u2014 Parquet, production engines, Gale, and advanced execution without core coupling",
+      "old_title": "Epic: Frame adapters \u2014 Parquet, production engines, Gale, and advanced execution without core coupling",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: generic Frame/Parquet/DuckDB/Gale/spill implementation belongs to extracted frame4s (b6a3af2 is an ancestor; embedded Frame module is absent). This is scope retirement, not a claim upstream work is implemented. Reopen only a narrow ScalaFIM consumer defect with concrete evidence."
+    },
+    {
+      "index": 81,
+      "id": "bd-01KXSQ7N14B9KX18067V4B68SH",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] group-ntab: inferential bridge from Frame metadata and exact-support ntab features",
+      "old_title": "group-ntab: inferential bridge from Frame metadata and exact-support ntab features",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "ntab/group-ntab is a proposed new feature layer with stale incubated-Frame references. Keep its scientific intent, but defer implementation and rebase onto standalone frame4s only when a current use case justifies it."
+    },
+    {
+      "index": 82,
+      "id": "bd-01KXYJPWYV08VFWRMCYYDPZCAV",
+      "old_priority": 2,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Scalafim Gale migration 5: remove related matrix and solver duplicates",
+      "old_title": "Scalafim Gale migration 5: remove related matrix and solver duplicates",
+      "tags": [
+        "core-maintenance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Narrow remaining duplicate-math audit is still relevant: HRF-local Mat/Vec and design QR adapter files remain. Generic solvers belong in Gale, but deletion/renaming alone is not a performance result. Retire old broad migration parents, retain this bounded review."
+    },
+    {
+      "index": 83,
+      "id": "bd-01KY4TXMTY9M15ZME5AVDSWQWR",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Add task-oriented builders over the multivar proof core",
+      "old_title": "Add task-oriented builders over the multivar proof core",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 84,
+      "id": "bd-01KY4TXNRWM0N4RX65D6JB8KAX",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Expose dense backend admission and realized materialization",
+      "old_title": "Expose dense backend admission and realized materialization",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 85,
+      "id": "bd-01KY4VH29QS6SNNKKBB0FMBYKS",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Adopt the unified lifecycle across every public multivar estimator",
+      "old_title": "Adopt the unified lifecycle across every public multivar estimator",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: these tasks implement standalone multivar model lifecycle, estimators, IR, or documentation. modules/multivar is absent and build.sbt consumes the independent multivar project; docs/module-relations.md assigns it this authority. No upstream completion or ticket transfer is claimed. A concrete ScalaFIM consumer failure warrants its own bounded issue."
+    },
+    {
+      "index": 86,
+      "id": "bd-01KZ3ZEGV87J05YM4GJE371QA1",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Phase 4: close the computational assurance and release court",
+      "old_title": "Phase 4: close the computational assurance and release court",
+      "tags": [
+        "core-assurance",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retain first-level scientific identity, independent numerical evidence, executable examples, and measured allocation/performance gates as core priorities. Historical branch/CI claims need refresh; do not mistake current compilation for full release certification."
+    },
+    {
+      "index": 87,
+      "id": "bd-01KZ3ZPJ89W7W86084JQRDV7JD",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "doing",
+      "status": "open",
+      "title": "P4.4: establish performance, executable-documentation, and final release court",
+      "old_title": "P4.4: establish performance, executable-documentation, and final release court",
+      "tags": [
+        "core-assurance",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retain first-level scientific identity, independent numerical evidence, executable examples, and measured allocation/performance gates as core priorities. Historical branch/CI claims need refresh; do not mistake current compilation for full release certification."
+    },
+    {
+      "index": 88,
+      "id": "bd-01M0NS3ERVZDN9GXY9W7K5X873",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "Typed reorder and colorizer-replacement actions for image-view",
+      "old_title": "Typed reorder and colorizer-replacement actions for image-view",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Layer reorder/colorizer actions are viewer API expansion; defer below current core numerical and allocation defects."
+    },
+    {
+      "index": 89,
+      "id": "bd-01M0NS3F26089W9CSFJS03BM2N",
+      "old_priority": 2,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "CanvasScrollCoordinator needs cancel() for host unmount",
+      "old_title": "CanvasScrollCoordinator needs cancel() for host unmount",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Unmount cancellation/resource lifetime is a bounded existing-runtime defect; retain independently of application integration or viewer feature expansion."
+    },
+    {
+      "index": 90,
+      "id": "bd-01M0QP2PZP4H2W07PEMX3X3NB7",
+      "old_priority": 2,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "GIFTI: support NIFTI_TYPE_FLOAT64 data arrays",
+      "old_title": "GIFTI: support NIFTI_TYPE_FLOAT64 data arrays",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "GIFTI Float64 is a bounded format-support gap with explicit rejection; retain at P2, below silent geometry/statistical correctness risks."
+    },
+    {
+      "index": 91,
+      "id": "bd-01M0QP352SC1GXD98YB2TDC8HG",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "GIFTI: choose the coordinate transform by its spaces, not transforms.headOption",
+      "old_title": "GIFTI: choose the coordinate transform by its spaces, not transforms.headOption",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Current GiftiSurfaceCodec still selects transforms.headOption. Coordinate-space misidentification can silently misplace scientific data, so promote to P1 with explicit space/transform provenance and independent geometry fixtures."
+    },
+    {
+      "index": 92,
+      "id": "bd-01M0SYJVY1ZAQ49KCRGBDZ2ADW",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "review",
+      "status": "closed",
+      "title": "Make the surface-view clear colour a typed runtime option",
+      "old_title": "Make the surface-view clear colour a typed runtime option",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Forward-port commits 8b5878d and 5495ea3 are ancestors of HEAD. Current Canvas runtime/controller dispose releases caches, ThreeJsRuntime.dispose calls loseContext, and typed ThreeJsRuntimeOptions carries clearColor. Existing issue notes record focused JS and consumer sentinel evidence. Close the stale review item; no new browser run or downstream pin adoption is claimed."
+    },
+    {
+      "index": 93,
+      "id": "bd-01M0V23MZJBCM1ZQKWT00RDM1N",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "blocked",
+      "status": "blocked",
+      "title": "[DEFERRED] Replace ScalaFIM motion core with reframe4s-motion authority",
+      "old_title": "Replace ScalaFIM motion core with reframe4s-motion authority",
+      "tags": [
+        "deferred-integration",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Respect the explicit 2026-08-24 user deferral: reframe4s-motion replacement resumes only on renewed product direction. Current task is core stabilization, not authority migration; retain blocked status and preserve existing fMRI QC functionality."
+    },
+    {
+      "index": 94,
+      "id": "bd-01M0Z696YYJC1QRNQRF8SF2CVV",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "Decide ownership of observation-RDM model comparison",
+      "old_title": "Decide ownership of observation-RDM model comparison",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12",
+        "needs-revalidation"
+      ],
+      "reason": "Observation-RDM query ownership/API expansion is not an established defect; defer until core MVPA semantics and allocation are qualified. Current-main check: the identified-evidence APIs named by this issue are absent from modules; first reproduce the concern against current MVPA APIs or identify the candidate branch. Historical evidence is not a current-main reproduction."
+    },
+    {
+      "index": 95,
+      "id": "bd-01M0Z69N65WFHE7DCPVZXG4J9P",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Certify native searchlight neighborhood semantics against PyMVPA",
+      "old_title": "Certify native searchlight neighborhood semantics against PyMVPA",
+      "tags": [
+        "core-assurance",
+        "triaged-core-2026-09-12",
+        "needs-revalidation"
+      ],
+      "reason": "Promote native searchlight support/radius/boundary qualification: exact support identity directly determines the scientific estimand. Use independent coordinate fixtures and measured setup/kernel cost, without a compatibility layer. Current-main check: the identified-evidence APIs named by this issue are absent from modules; first reproduce the concern against current MVPA APIs or identify the candidate branch. Historical evidence is not a current-main reproduction."
+    },
+    {
+      "index": 96,
+      "id": "bd-01M0Z8QAXS7H3MP6PES44FCTW8",
+      "old_priority": 2,
+      "priority": 2,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Remove dataset selection deprecations exposed by the MVPA gate",
+      "old_title": "Remove dataset selection deprecations exposed by the MVPA gate",
+      "tags": [
+        "completed-verified",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Current DataSelection uses indices and DatasetAcquisitionDomain no longer contains the cited .at/pointOption calls; the integrated default-pin compile gate passed warning-clean. Close the obsolete deprecation finding."
+    },
+    {
+      "index": 97,
+      "id": "bd-01M1W6JR7PBT8FYM7DT808V6F4",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Preserve explicit temporal sampling metadata in NIfTI IO",
+      "old_title": "Preserve explicit temporal sampling metadata in NIfTI IO",
+      "tags": [
+        "core-correctness",
+        "needs-revalidation",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Temporal sampling metadata affects scientific meaning, so retain high priority. The implementation has since moved to provider-owned NIfTI options/native headers: revalidate TR/origin/units round trips before changing code or claiming the old lightweight-header diagnosis still applies."
+    },
+    {
+      "index": 98,
+      "id": "bd-01M1X52T0SJK92JXQAW9N17X4V",
+      "old_priority": 2,
+      "priority": 2,
+      "old_status": "open",
+      "status": "open",
+      "title": "Align reference raster lighting capability metadata with implemented shading",
+      "old_title": "Align reference raster lighting capability metadata with implemented shading",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Keep the bounded capability-versus-pixel truthfulness audit. Renderer admission metadata should match supported shading; lower priority than statistical and coordinate correctness."
+    },
+    {
+      "index": 99,
+      "id": "bd-01M208TXSYF5Y5GZQ2DY4GZP8S",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "Reduce allocation in selected precision pooling without changing the estimator",
+      "old_title": "Reduce allocation in selected precision pooling without changing the estimator",
+      "tags": [
+        "core-performance",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "High-priority core allocation work with concrete evidence. Profile and repair through public APIs without weakening identity, covariance, or estimability. Current source still contains full fallback-status materialization in point consumers; keep numerical equivalence and allocation budgets separate."
+    },
+    {
+      "index": 100,
+      "id": "bd-01M24KM6PN5JX95MEWW8WXEVXR",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Qualify the Alder dependency in an isolated ScalaFIM checkout",
+      "old_title": "Qualify the Alder dependency in an isolated ScalaFIM checkout",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "The cited Alder dependency does not exist in current build.sbt or module Scala sources. Default-pin isolated and integrated full compile gates passed without Alder sibling discovery. Retire these stale-branch consumer blockers; no claim that standalone Alder itself was repaired."
+    },
+    {
+      "index": 101,
+      "id": "bd-01M28PRPACQDQP8E1K6R7R74PZ",
+      "old_priority": 2,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Consumers load Alder, whose build discovers ../gale, ../resample4s and ../linop4s from the working directory",
+      "old_title": "Consumers load Alder, whose build discovers ../gale, ../resample4s and ../linop4s from the working directory",
+      "tags": [
+        "retired-obsolete",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "The cited Alder dependency does not exist in current build.sbt or module Scala sources. Default-pin isolated and integrated full compile gates passed without Alder sibling discovery. Retire these stale-branch consumer blockers; no claim that standalone Alder itself was repaired."
+    },
+    {
+      "index": 102,
+      "id": "bd-01M28WR74HX73YMKTVJ1DJCH4M",
+      "old_priority": 2,
+      "priority": 1,
+      "old_status": "open",
+      "status": "open",
+      "title": "B-spline basis drops its intercept spline, so it cannot represent a flat response",
+      "old_title": "B-spline basis drops its intercept spline, so it cannot represent a flat response",
+      "tags": [
+        "core-correctness",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Promote the B-spline basis/estimand contract review. Current bsplineBasis drops the first column; constant-response and noninteger-knot assumptions need an independent oracle and explicit policy. Do not blindly change causal/normalization conventions merely to match another library."
+    },
+    {
+      "index": 103,
+      "id": "bd-01KX2CQZFRZHXS40YWA9PDX0DV",
+      "old_priority": 3,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Add optional edge plugin catalog",
+      "old_title": "Add optional edge plugin catalog",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Optional plugin discovery, namespace cleanup, or browser-demo packaging is outside the current core correctness/performance focus. Keep for later with a concrete trigger; no completion claim."
+    },
+    {
+      "index": 104,
+      "id": "bd-01KXSQ3R06HBQB7MRDWN6BEEN0",
+      "old_priority": 3,
+      "priority": 3,
+      "old_status": "open",
+      "status": "closed",
+      "title": "Frame execution: spill, segmented backends, async pulls, and evidence-driven physical planning",
+      "old_title": "Frame execution: spill, segmented backends, async pulls, and evidence-driven physical planning",
+      "tags": [
+        "retired-upstream",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Retire from ScalaFIM scheduling: generic Frame/Parquet/DuckDB/Gale/spill implementation belongs to extracted frame4s (b6a3af2 is an ancestor; embedded Frame module is absent). This is scope retirement, not a claim upstream work is implemented. Reopen only a narrow ScalaFIM consumer defect with concrete evidence."
+    },
+    {
+      "index": 105,
+      "id": "bd-01KYX0F70J38699FPVBYKCGZDP",
+      "old_priority": 3,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Decide the fate of the Vec/Mat re-export from package object hrf",
+      "old_title": "Decide the fate of the Vec/Mat re-export from package object hrf",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Optional plugin discovery, namespace cleanup, or browser-demo packaging is outside the current core correctness/performance focus. Keep for later with a concrete trigger; no completion claim."
+    },
+    {
+      "index": 106,
+      "id": "bd-01M0NS3FNR5RCYEP49GNGN6GWN",
+      "old_priority": 3,
+      "priority": 3,
+      "old_status": "open",
+      "status": "open",
+      "title": "[DEFERRED] Pin Three.js and fix browser page import paths",
+      "old_title": "Pin Three.js and fix browser page import paths",
+      "tags": [
+        "deferred-feature",
+        "triaged-core-2026-09-12"
+      ],
+      "reason": "Optional plugin discovery, namespace cleanup, or browser-demo packaging is outside the current core correctness/performance focus. Keep for later with a concrete trigger; no completion claim."
+    }
+  ]
+}

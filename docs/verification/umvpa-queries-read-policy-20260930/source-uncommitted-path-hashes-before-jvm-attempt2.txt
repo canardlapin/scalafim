@@ -1,0 +1,6 @@
+5a1d273dbebed6af3fbf3b1d1ed15f0f3ec526252c1dbdf991877735617f39db  modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderPredictiveAdmission.scala
+8c114c8afc7f0a5e053bc9ba342761bf48043d53ed91ddda66de9a67f7081db7  docs/verification/umvpa-m1-06-read-policy-20260930.md
+43c7011031e991b775e6f0503b2b775c184def3c19ad40fc3b0af0e7770c1557  docs/verification/umvpa-m2-03-20260930.md
+1dc30c63ceedd878c57dd0d9de927bcdbad57c7b9b0942612b36060632b47475  modules/mvpa-dataset/shared/src/test/scala/scalafim/fmri/mvpa/dataset/predictive/NativeReadPolicySuite.scala
+1f9bd14f7efe239983d8ce4dcc902b2391f260af587bd7a58e2e687ae3ec5e45  modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/relation/Queries.scala
+2791833fb87a6baefc31bd4747845468d32bc773ee34bfa5bd108f993608f01f  modules/mvpa/shared/src/test/scala/scalafim/fmri/mvpa/relation/QueryOracleSuite.scala
