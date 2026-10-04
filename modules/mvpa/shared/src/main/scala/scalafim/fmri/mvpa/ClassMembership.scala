@@ -134,10 +134,3 @@ object ClassMembership:
         klass += 1
 
       Right(new ClassMembership(classVector, values, ClassMembershipKind.Simplex))
-
-  private[mvpa] def fromResponse(response: Response): Either[MvpaError, ClassMembership] =
-    response match
-      case Response.Categorical(labels)       => hard(labels)
-      case Response.Probabilistic(membership) => Right(membership)
-      case Response.Continuous(_) =>
-        Left(MvpaError.InvalidClassMembership("classification requires categorical or probabilistic targets"))

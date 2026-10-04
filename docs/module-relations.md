@@ -23,6 +23,7 @@ The estimate artifact modules form a separate reader boundary:
 ```text
 estimates     -> archive, image
 estimates-io  -> estimates
+mvpa-artifacts -> mvpa, estimates-io
 fit-estimates -> fit, estimates, group
 ```
 
@@ -58,7 +59,7 @@ standalone Gale
 +-- ar
 +-- design           also depends on hrf
 +-- mvpa
-|   +-- mvpa-dataset  also depends on dataset
+|   +-- mvpa-dataset  also depends on dataset, mvpa-fit
 +-- threshold         also depends on image
 +-- motion            also depends on image
 +-- spatial           also depends on image, surface
@@ -192,7 +193,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 | `mvpa` | Portable sample-by-feature MVPA contracts, folds, feature-set plans, classifiers, RDM/RSA kernels. | standalone Gale | Spatial object adapters or dataset backend logic. |
 | `mvpa-fit` | Shared run-local composition of fit-owned trial readouts with MVPA pattern operators, checked common feature axes, trial/run metadata, fold restriction, and local task/result collection. | `fit`, `mvpa`; standalone multivar | QR/GLM kernels, classifier numerics, a second feature-set abstraction, workflow scheduling, or platform IO. |
 | `connectivity` | Shared connectivity algebra and portable kernels: ordered node axes with scientific provenance, graph4s-projected topology, locus node/edge spaces and masks, parcel time series, explicit vectorization orders, static/dynamic containers, estimator plans, ETS/event-weighted correlation, partial correlation, connectivity-set inference, dynamic stacks, diagnostics, and workflow receipts. | standalone graph4s, `locus-data`; Gale on each platform | Dataset backends, atlas/BIDS adapters, plotting, JVM IO, multivar execution bridges, TVGL/SRLC/phase/HMM internals, native optimizer backends, or scheduler/runtime execution. |
-| `mvpa-dataset` | Typed adapters from `FmriSeries`, explicit synchronous readers, or `OpenedDataset[F]` plus sample metadata into MVPA pattern sources. | `mvpa`, `dataset` | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
+| `mvpa-dataset` | Typed dataset and identified Alder lifecycle adapters; operator SoftLda delegates to the single-fit `mvpa-fit` kernel. | `mvpa`, `mvpa-fit`, `dataset`; Alder | Classifier algorithms, dataset storage backends, hidden blocking readers, or spatial feature-set construction. |
 | `mvpa-spatial` | Thin adapters from locus regions, selections, parcellations, and searchlights plus image/surface/atlas objects into MVPA feature-set plans. | `mvpa`, `image`, `surface`, `atlas`, `locus-data` | Classifier algorithms, atlas loading, or a second searchlight/window model. |
 | `group` | Second-level/group GLM, meta-analysis, group contrasts, FDR over subjects-by-samples maps. | `image`, `dataset`, `design`, `estimates`; standalone Gale | First-level model fitting or thresholding internals. |
 | `fmri-workflow` | Serializable study specifications, header-derived catalogs, deterministic first-level/group jobs, structural preflight, and result references; generic pipeline lowering is a future orchestration slice. | `dataset`, `model`, `fit`, `group`; standalone bids4s | Numeric kernels, concrete file readers/writers, scheduler APIs, open resources, matrices, or captured execution closures. |
@@ -455,3 +456,12 @@ There are intentionally two layers:
 If a change wants a new dependency edge, stop and check whether the code belongs
 in a higher adapter module instead. Lower modules should stay reusable and
 workflow-neutral.
+
+## Bounded MVPA pattern persistence
+
+`mvpa-artifacts` owns a finite completed-pattern profile and a JVM adapter to
+`archive.io.LocalObjectStore`. It depends on MVPA artifact types and existing
+estimate IO, never on `fit` or `mvpa-fit`. Its reader restores declared axes,
+policies, lineage and coverage without the fitter. Matrices are individually
+hash-pinned external Float64 leaves. Other profiles and resumable optimizer
+checkpoints are explicitly unsupported; there is no codec registry or upload.

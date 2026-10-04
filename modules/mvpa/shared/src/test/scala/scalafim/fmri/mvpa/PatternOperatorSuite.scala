@@ -28,8 +28,8 @@ class PatternOperatorSuite extends munit.FunSuite:
       )
     )
 
-    assertMatrixClose(operator.materialize.toOption.get.value, patterns.value)
-    assertEquals(operator.materialize.toOption.get.sampleIndices.map(_.value), Vector(4, 7, 8, 10))
+    assertMatrixClose(operator.materialize(PatternCopyBudget(100000L)).toOption.get.value, patterns.value)
+    assertEquals(operator.materialize(PatternCopyBudget(100000L)).toOption.get.sampleIndices.map(_.value), Vector(4, 7, 8, 10))
     val forward = operator.applyTo(weights).toOption.get
     val adjoint = operator.transposeApplyTo(sampleProbe).toOption.get
     assertMatrixClose(forward, multiply(patterns.value, weights))
@@ -51,10 +51,10 @@ class PatternOperatorSuite extends munit.FunSuite:
       sampleIndices = Vector(100, 101, 102, 103).map(SampleIndex.apply)
     )
     val operator = PatternOperator.fromMatrix(patterns).toOption.get
-    val featureSet = FeatureSet.unsafe(RoiId(4), Vector(30, 10))
+    val columns = Vector(30, 10).map(FeatureIndex.apply)
     val restricted = operator
-      .selectFeatures(featureSet)
-      .flatMap(_.selectRows(Vector(SampleIndex(2), SampleIndex(0))))
+      .selectColumns(columns)
+      .flatMap(_.selectRowPositions(Vector(2, 0)))
       .toOption
       .get
     val expected = GaleTestMatrix.fromRows(Vector(Vector(9.0, 7.0), Vector(3.0, 1.0)))
@@ -64,7 +64,10 @@ class PatternOperatorSuite extends munit.FunSuite:
     assertEquals(restricted.samples, 2)
     assertEquals(restricted.provenance.featureSelections, 1)
     assertEquals(restricted.provenance.rowSelections, 1)
-    assertMatrixClose(restricted.materialize.toOption.get.value, expected)
+    assertMatrixClose(restricted.materialize(PatternCopyBudget(100000L)).toOption.get.value, expected)
+    assertEquals(patterns.selectRowPositions(Vector(2, 0)).toOption.get.sampleIndices.map(_.value), Vector(102, 100))
+    assert(operator.selectRowPositions(Vector(102)).isLeft)
+    assert(patterns.selectRowPositions(Vector(102)).isLeft)
   }
 
   test("row stacking and composed operators match explicit block matrices") {
@@ -83,7 +86,7 @@ class PatternOperatorSuite extends munit.FunSuite:
 
     assertEquals(stacked.samples, 5)
     assertEquals(stacked.provenance.stackedParts, 2)
-    assertMatrixClose(stacked.materialize.toOption.get.value, expectedStack)
+    assertMatrixClose(stacked.materialize(PatternCopyBudget(100000L)).toOption.get.value, expectedStack)
 
     val readout = GaleTestMatrix.fromRows(Vector(Vector(1.0, 0.0, 0.5), Vector(0.0, -1.0, 1.0)))
     val timeSeries = GaleTestMatrix.fromRows(
@@ -96,7 +99,7 @@ class PatternOperatorSuite extends munit.FunSuite:
     val composedLinear = readout.compose(timeSeries).toOption.get
     val composed = PatternOperator
       .fromOperator(
-        SampleAxis.unsafe(2),
+        2,
         Vector(FeatureIndex(0), FeatureIndex(1)),
         composedLinear,
         PatternOperatorProvenance.composed
@@ -104,7 +107,7 @@ class PatternOperatorSuite extends munit.FunSuite:
       .toOption
       .get
 
-    assertMatrixClose(composed.materialize.toOption.get.value, multiply(readout, timeSeries))
+    assertMatrixClose(composed.materialize(PatternCopyBudget(100000L)).toOption.get.value, multiply(readout, timeSeries))
   }
 
   test("generated operators preserve adjoints and feature-permutation laws") {
@@ -127,9 +130,9 @@ class PatternOperatorSuite extends munit.FunSuite:
         val forward = operator.applyTo(weights).toOption.get
         val adjoint = operator.transposeApplyTo(probe).toOption.get
         val permutation = (0 until features).reverse.toVector
-        val featureSet = FeatureSet.unsafe(RoiId(samples * 10 + features), permutation)
-        val permuted = operator.selectFeatures(featureSet).toOption.get.materialize.toOption.get
-        val expected = patterns.selectFeatures(featureSet).toOption.get
+        val columns = permutation.map(FeatureIndex.apply)
+        val permuted = operator.selectColumns(columns).toOption.get.materialize(PatternCopyBudget(100000L)).toOption.get
+        val expected = patterns.selectColumns(columns).toOption.get
 
         assertEqualsDouble(frobeniusDot(forward, probe), frobeniusDot(weights, adjoint), 1e-10)
         assertMatrixClose(permuted.value, expected.value)
@@ -140,13 +143,15 @@ class PatternOperatorSuite extends munit.FunSuite:
   test("pattern operator reports malformed axes, shapes, and non-finite inputs") {
     val matrix = GaleTestMatrix.fromRows(Vector(Vector(1.0, 2.0), Vector(3.0, 4.0)))
     val wrongRows = PatternOperator.fromOperator(
-      SampleAxis.unsafe(3),
+      3,
       Vector(FeatureIndex(0), FeatureIndex(1)),
       matrix,
       PatternOperatorProvenance.dense
     )
+    assertEquals(PatternOperator.fromOperator(Int.MaxValue, Vector(FeatureIndex(0), FeatureIndex(1)), matrix, PatternOperatorProvenance.dense).left.toOption,
+      Some(MvpaError.MatrixShapeMismatch(s"operator rows 2 do not match sample axis ${Int.MaxValue}")))
     val duplicateFeatures = PatternOperator.fromOperator(
-      SampleAxis.unsafe(2),
+      2,
       Vector(FeatureIndex(0), FeatureIndex(0)),
       matrix,
       PatternOperatorProvenance.dense
@@ -169,7 +174,7 @@ class PatternOperatorSuite extends munit.FunSuite:
     )
     val poisonPatterns = PatternOperator
       .fromOperator(
-        SampleAxis.unsafe(2),
+        2,
         Vector(FeatureIndex(0), FeatureIndex(1)),
         poison,
         PatternOperatorProvenance.composed
@@ -198,6 +203,37 @@ class PatternOperatorSuite extends munit.FunSuite:
       Some(MvpaError.InvalidPatternOperatorInput("pattern-score output contains non-finite values"))
     )
   }
+
+  test("explicit dense-copy ceilings refuse before reads and admitted copies use one source column at a time"):
+    var reads = 0
+    val linear = LinearOperator.fromFunctions(2, 3)(
+      (input, output) =>
+        reads += 1
+        output(0) = input(0) + 2.0 * input(1) + 3.0 * input(2)
+        output(1) = 4.0 * input(0) + 5.0 * input(1) + 6.0 * input(2),
+      (_, _) => throw new IllegalStateException("copy never requires an adjoint")
+    )
+    val operator = PatternOperator.fromOperator(2, Vector.tabulate(3)(FeatureIndex.apply), linear, PatternOperatorProvenance.composed).toOption.get
+    assertEquals(operator.materialize(PatternCopyBudget(5)).left.toOption, Some(MvpaError.PatternCopyBudgetExceeded(BigInt(6), 5L)))
+    assertEquals(reads, 0)
+    val copied = operator.materialize(PatternCopyBudget(6)).toOption.get
+    assertMatrixClose(copied.value, GaleTestMatrix.fromRows(Vector(Vector(1.0, 2.0, 3.0), Vector(4.0, 5.0, 6.0))))
+    assertEquals(reads, 3)
+    assert(operator.selectColumns(Vector(FeatureIndex(0), FeatureIndex(0))).isLeft)
+    assert(operator.selectColumns(Vector.empty).isLeft)
+
+  test("dense-copy primitive capacity is checked without touching a large declared provider"):
+    var reads = 0
+    val linear = LinearOperator.fromFunctions(50000, 50000)(
+      (_, _) =>
+        reads += 1
+        throw new IllegalStateException("capacity refusal must precede reads"),
+      (_, _) => throw new IllegalStateException("capacity refusal must precede adjoints")
+    )
+    val operator = PatternOperator.fromOperator(50000, Vector.tabulate(50000)(FeatureIndex.apply), linear, PatternOperatorProvenance.composed).toOption.get
+    assertEquals(operator.materialize(PatternCopyBudget(Long.MaxValue)).left.toOption,
+      Some(MvpaError.PatternCopyBudgetExceeded(BigInt(2500000000L), Long.MaxValue)))
+    assertEquals(reads, 0)
 
   private def patternMatrix(rows: Vector[Vector[Double]], featureIds: Vector[Int] = Vector.empty): PatternMatrix =
     val value = GaleTestMatrix.fromRows(rows)

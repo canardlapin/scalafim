@@ -1,6 +1,10 @@
 package scalafim.fmri.mvpa
 
-import gale.linalg.{DMat, DoubleLinearOperator, LinearOperator}
+import gale.linalg.{DMat, DoubleLinearOperator, Matrix, LinearOperator}
+
+/** Maximum returned dense-copy cells; this is not a process-memory limit. */
+final case class PatternCopyBudget(maximumCells: Long):
+  require(maximumCells >= 0L, "copy ceiling must be nonnegative")
 
 enum PatternOperatorOrigin:
   case Dense
@@ -83,14 +87,15 @@ object PatternOperatorProvenance:
   * a materialized sample-by-feature matrix.
   */
 final class PatternOperator private (
-    val sampleAxis: SampleAxis,
+    val samples: Int,
     val sampleIndices: Vector[SampleIndex],
     val featureIndices: Vector[FeatureIndex],
     val linear: DoubleLinearOperator,
     val provenance: PatternOperatorProvenance
 ):
-  require(linear.rows == sampleAxis.samples, "operator rows must match sample axis")
-  require(sampleIndices.length == sampleAxis.samples, "sample indices must match sample axis")
+  require(samples > 0, "operator samples must be positive")
+  require(linear.rows == samples, "operator rows must match sample axis")
+  require(sampleIndices.length == samples, "sample indices must match sample axis")
   require(sampleIndices.forall(_.value >= 0), "sample indices must be non-negative")
   require(sampleIndices.distinct.length == sampleIndices.length, "sample indices must be unique")
   require(linear.cols == featureIndices.length, "operator columns must match feature axis")
@@ -98,7 +103,6 @@ final class PatternOperator private (
   require(featureIndices.forall(_.value >= 0), "feature indices must be non-negative")
   require(featureIndices.distinct.length == featureIndices.length, "feature indices must be unique")
 
-  def samples: Int = sampleAxis.samples
   def features: Int = featureIndices.length
   def applyTo(featureWeights: DMat): Either[MvpaError, DMat] =
     if featureWeights.rows != features then
@@ -132,16 +136,34 @@ final class PatternOperator private (
         _ <- validateFiniteOperator(output, "feature-score output")
       yield output
 
-  def materialize: Either[MvpaError, PatternMatrix] =
-    applyTo(DMat.eye(features)).map: values =>
-      PatternMatrix(
-        value = values,
-        sampleIndices = sampleIndices,
-        featureIndices = featureIndices
-      )
+  /** Explicit ceiling for the returned dense copy, excluding source/provider
+    * storage and solver-private workspace. Copying never constructs a p-by-p identity.
+    */
+  def materialize(budget: PatternCopyBudget): Either[MvpaError, PatternMatrix] =
+    val cells = BigInt(samples) * features
+    if cells > budget.maximumCells || cells > Int.MaxValue then
+      Left(MvpaError.PatternCopyBudgetExceeded(cells, budget.maximumCells))
+    else
+      val output = Matrix.newBuilder(samples, features)
+      val basis = new Array[Double](features)
+      var column = 0
+      var failure: Option[MvpaError] = None
+      while column < features && failure.isEmpty do
+        basis(column) = 1.0
+        applyTo(DMat.dense(features, 1, basis.toVector)) match
+          case Left(error) => failure = Some(error)
+          case Right(values) =>
+            var row = 0
+            while row < samples do
+              output(row, column) = values(row, 0)
+              row += 1
+        basis(column) = 0.0
+        column += 1
+      failure.toLeft(()).map(_ => PatternMatrix(output.result(), sampleIndices, featureIndices))
 
-  def selectRows(rows: IndexedSeq[SampleIndex]): Either[MvpaError, PatternOperator] =
-    val positions = rows.map(_.value)
+  /** Select local row positions while preserving stored row indices. */
+  def selectRowPositions(rows: IndexedSeq[Int]): Either[MvpaError, PatternOperator] =
+    val positions = rows
     linear
       .restrictRows(positions)
       .left
@@ -155,15 +177,17 @@ final class PatternOperator private (
           provenance = provenance.afterRowSelection
         )
 
-  def selectFeatures(featureSet: FeatureSet): Either[MvpaError, PatternOperator] =
+  def selectColumns(columns: IndexedSeq[FeatureIndex]): Either[MvpaError, PatternOperator] =
+    if columns.isEmpty || columns.distinct.size != columns.size then
+      return Left(MvpaError.MatrixShapeMismatch("selected feature indices must be nonempty and unique"))
     val lookup = featureIndices.zipWithIndex.map { case (feature, position) => feature.value -> position }.toMap
-    val positions = new Array[Int](featureSet.featureIndices.length)
+    val positions = new Array[Int](columns.length)
     var index = 0
-    while index < featureSet.featureIndices.length do
-      val feature = featureSet.featureIndices(index)
+    while index < columns.length do
+      val feature = columns(index)
       lookup.get(feature.value) match
         case Some(position) => positions(index) = position
-        case None           => return Left(MvpaError.MissingFeature(featureSet.id, feature))
+        case None           => return Left(MvpaError.MissingFeature(feature))
       index += 1
 
     linear
@@ -173,7 +197,7 @@ final class PatternOperator private (
       .flatMap: restricted =>
         PatternOperator.fromIndexedOperator(
           sampleIndices = sampleIndices,
-          featureIndices = featureSet.featureIndices,
+          featureIndices = columns.toVector,
           linear = restricted,
           provenance = provenance.afterFeatureSelection
         )
@@ -191,12 +215,14 @@ object PatternOperator:
     yield operator
 
   def fromOperator(
-      sampleAxis: SampleAxis,
+      samples: Int,
       featureIndices: Vector[FeatureIndex],
       linear: DoubleLinearOperator,
       provenance: PatternOperatorProvenance
   ): Either[MvpaError, PatternOperator] =
-    checked(sampleAxis, sampleAxis.indices, featureIndices, linear, provenance)
+    if samples <= 0 then Left(MvpaError.MatrixShapeMismatch("pattern operator samples must be positive"))
+    else if linear.rows != samples then Left(MvpaError.MatrixShapeMismatch(s"operator rows ${linear.rows} do not match sample axis $samples"))
+    else checked(samples, Vector.tabulate(samples)(SampleIndex.unsafe), featureIndices, linear, provenance)
 
   def fromIndexedOperator(
       sampleIndices: Vector[SampleIndex],
@@ -204,26 +230,26 @@ object PatternOperator:
       linear: DoubleLinearOperator,
       provenance: PatternOperatorProvenance
   ): Either[MvpaError, PatternOperator] =
-    SampleAxis(sampleIndices.length).flatMap: sampleAxis =>
-      checked(sampleAxis, sampleIndices, featureIndices, linear, provenance)
+    checked(sampleIndices.length, sampleIndices, featureIndices, linear, provenance)
 
   private def checked(
-      sampleAxis: SampleAxis,
+      samples: Int,
       sampleIndices: Vector[SampleIndex],
       featureIndices: Vector[FeatureIndex],
       linear: DoubleLinearOperator,
       provenance: PatternOperatorProvenance
   ): Either[MvpaError, PatternOperator] =
-    if linear.rows != sampleAxis.samples then
+    if samples <= 0 then Left(MvpaError.MatrixShapeMismatch("pattern operator samples must be positive"))
+    else if linear.rows != samples then
       Left(
         MvpaError.MatrixShapeMismatch(
-          s"operator rows ${linear.rows} do not match sample axis ${sampleAxis.samples}"
+          s"operator rows ${linear.rows} do not match sample axis ${samples}"
         )
       )
-    else if sampleIndices.length != sampleAxis.samples then
+    else if sampleIndices.length != samples then
       Left(
         MvpaError.MatrixShapeMismatch(
-          s"sample-index length ${sampleIndices.length} does not match sample axis ${sampleAxis.samples}"
+          s"sample-index length ${sampleIndices.length} does not match sample axis ${samples}"
         )
       )
     else if sampleIndices.exists(_.value < 0) then
@@ -242,7 +268,7 @@ object PatternOperator:
       Left(MvpaError.MatrixShapeMismatch("pattern operator feature indices must be non-negative"))
     else if featureIndices.distinct.length != featureIndices.length then
       Left(MvpaError.MatrixShapeMismatch("pattern operator feature indices must be unique"))
-    else Right(new PatternOperator(sampleAxis, sampleIndices, featureIndices, linear, provenance))
+    else Right(new PatternOperator(samples, sampleIndices, featureIndices, linear, provenance))
 
   def stackRows(operators: IndexedSeq[PatternOperator]): Either[MvpaError, PatternOperator] =
     if operators.isEmpty then
@@ -253,14 +279,15 @@ object PatternOperator:
       if mismatch >= 0 then
         Left(MvpaError.MatrixShapeMismatch(s"pattern operator stack part $mismatch has a different feature axis"))
       else
-        for
-          axis <- SampleAxis(operators.map(_.samples).sum)
+        val total = operators.map(op => BigInt(op.samples)).sum
+        if total > Int.MaxValue then Left(MvpaError.MatrixShapeMismatch("stacked sample count exceeds primitive capacity"))
+        else for
           stacked <- LinearOperator
             .block(operators.map(operator => IndexedSeq(operator.linear)))
             .left
             .map(MvpaError.PatternOperatorFailed.apply)
           out <- fromOperator(
-            sampleAxis = axis,
+            samples = total.toInt,
             featureIndices = featureAxis,
             linear = stacked,
             provenance = PatternOperatorProvenance.stacked(operators.map(_.provenance))

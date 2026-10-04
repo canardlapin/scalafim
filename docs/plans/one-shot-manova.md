@@ -1,4 +1,4 @@
-# One-shot multiple-contrast MANOVA
+# Native multiple-contrast MANOVA
 
 For a prepared design (X), coefficient covariance (K=(X^\top X)^{-1}), and
 a full-row-rank q-by-p hypothesis (C), the temporal layer constructs
@@ -52,10 +52,13 @@ For roots λ1,...,λq, the named estimands are
 - Pillai trace: sum λ/(1+λ);
 - Hotelling-Lawley trace: sum λ.
 
-`ManovaMvpa` returns all four per fold and their fold means. The ordinary
-`MvpaResult` carries the same four named metrics for regional and searchlight
-execution; typed payloads retain the training spectrum fit, held-out roots,
-temporal receipts, and `RunwiseSufficientStatistics` execution evidence.
+`CanonicalGlobal.assessManova` consumes an identified `CanonicalRunSet` and
+returns all four per fold and their fold means. Its typed assessment retains
+nominal neural coordinates, the training spectrum fit, held-out roots, temporal
+receipts, moment content identity and local resource admission.
+`CanonicalGlobal.fitManova` separately returns a descriptive global spectrum
+artifact. The old MANOVA feature-set scanner and ROI summary were removed in
+M3.01. These dense adapters do not claim whole-brain feasibility.
 
 The committed fixture generator uses independent base-R dense products,
 Cholesky whitening, and `eigen` to anchor the complete leave-one-run-out path.

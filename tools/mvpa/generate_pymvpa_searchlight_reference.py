@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """Generate the frozen native-searchlight parity fixture.
 
+This reproduces the immutable historical v1 receipt adopted in ScalaFIM
+cd85320f7a1c68cd052c46ae36452cc85af30ce0. Its descriptive failure-policy strings
+name the implementation at that revision; they are fixture data, not current
+API calls. Current local method failures use method-owned results. Preserve
+these strings to retain the independent reference payload hash.
+
 The volume oracle exercises PyMVPA's own ``Sphere``, ``IndexQueryEngine``, and
 ``sphere_searchlight`` implementations.  A separate direct-distance oracle is
 used only to cross-check those native results.  Surface geodesics are frozen
@@ -427,6 +433,7 @@ def build_fixture(pymvpa_source: Path) -> dict[str, object]:
                 "observed": duplicate_coordinate_error,
             },
             "invalid_radius": "ScalaFIM typed construction failure",
+            # Historical v1 metadata; do not infer the current public API from it.
             "local_analysis_failure": "ScalaFIM records one RoiOutcome.Failure and continues remaining centers",
         },
     }

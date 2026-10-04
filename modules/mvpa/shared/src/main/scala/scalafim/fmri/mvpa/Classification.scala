@@ -2,6 +2,7 @@ package scalafim.fmri.mvpa
 
 import gale.linalg.{CholeskyOptions, DMat, Matrix}
 
+/** Legacy row-identified prediction for P6/P7 numeric kernels; expires with M3.13. */
 final case class ClassificationPrediction(
     classes: Vector[ClassLabel],
     probabilities: DMat,
@@ -29,15 +30,51 @@ final case class ClassificationPrediction(
       row += 1
     out.result()
 
+/** A dense categorical result has a fixed class-column order and no row identity. */
+final class CategoricalProbabilities private (
+    val classes: Vector[ClassLabel],
+    val probabilities: DMat
+):
+  val predicted: Vector[ClassLabel] =
+    Vector.tabulate(probabilities.rows): row =>
+      var best = 0
+      var column = 1
+      while column < probabilities.cols do
+        if probabilities(row, column) > probabilities(row, best) then best = column
+        column += 1
+      classes(best)
+
+object CategoricalProbabilities:
+  def from(classes: Vector[ClassLabel], probabilities: DMat): Either[MvpaError, CategoricalProbabilities] =
+    if classes.isEmpty || classes.distinct.length != classes.length || probabilities.cols != classes.length then
+      Left(MvpaError.InvalidClassifierInput("probability columns require distinct non-empty classes"))
+    else
+      Classification.validateFinite(probabilities, "class probabilities").flatMap: _ =>
+        var row = 0
+        var invalid = false
+        while row < probabilities.rows && !invalid do
+          var column = 0
+          var total = 0.0
+          while column < probabilities.cols do
+            val value = probabilities(row, column)
+            if value < 0.0 || value > 1.0 then invalid = true
+            total += value
+            column += 1
+          if math.abs(total - 1.0) > 1e-12 then invalid = true
+          row += 1
+        if invalid then Left(MvpaError.InvalidClassifierInput("class probabilities must be normalized rows in [0, 1]"))
+        else Right(new CategoricalProbabilities(classes, probabilities))
+
 trait Classifier:
+  type Model <: ClassifierModel
   def name: String
   def minFeatures: Int = 1
-  def fit(train: PatternMatrix, response: Response): Either[MvpaError, ClassifierModel]
+  def fit(train: DMat, labels: Vector[ClassLabel]): Either[MvpaError, Model]
 
 trait ClassifierModel:
   def classifierName: String
   def classes: Vector[ClassLabel]
-  def predict(test: PatternMatrix): Either[MvpaError, ClassificationPrediction]
+  def predict(test: DMat): Either[MvpaError, CategoricalProbabilities]
 
 enum FeatureScaling:
   case None
@@ -52,13 +89,14 @@ object FeatureScaling:
     FeatureScaling.DiagonalShrinkage(ShrinkageAlpha.unsafe(alpha))
 
 final case class CorrelationCentroidClassifier() extends Classifier:
+  override type Model = CorrelationCentroidModel
   override val name: String = "correlation_centroid"
   override val minFeatures: Int = 2
 
-  override def fit(train: PatternMatrix, response: Response): Either[MvpaError, ClassifierModel] =
+  override def fit(train: DMat, labels: Vector[ClassLabel]): Either[MvpaError, CorrelationCentroidModel] =
     for
-      _ <- Classification.validateFinite(train.value, "training data")
-      labels <- Classification.categorical(response, train.samples)
+      _ <- if train.cols >= minFeatures then Right(()) else Left(MvpaError.InvalidClassifierInput("correlation centroid requires at least two features"))
+      _ <- Classification.validateFinite(train, "training data")
       summary <- Classification.classSummary(train, labels)
     yield
       CorrelationCentroidModel(
@@ -72,35 +110,29 @@ final case class CorrelationCentroidModel(
 ) extends ClassifierModel:
   override val classifierName: String = "correlation_centroid"
 
-  override def predict(test: PatternMatrix): Either[MvpaError, ClassificationPrediction] =
-    if test.features != centroids.cols then
-      Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.features} != model feature count ${centroids.cols}"))
+  override def predict(test: DMat): Either[MvpaError, CategoricalProbabilities] =
+    if test.cols != centroids.cols then
+      Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.cols} != model feature count ${centroids.cols}"))
     else
-      Classification.validateFinite(test.value, "test data").map { _ =>
-        val scores = Classification.rowCorrelationScores(test.value, centroids)
-        ClassificationPrediction(classes, Classification.softmax(scores), test.sampleIndices)
+      Classification.validateFinite(test, "test data").flatMap { _ =>
+        CategoricalProbabilities.from(classes, Classification.softmax(Classification.rowCorrelationScores(test, centroids)))
       }
 
 final case class SwiftCentroidClassifier(
     scaling: FeatureScaling = FeatureScaling.ZScore
 ) extends Classifier:
+  override type Model = SwiftCentroidModel
   override val name: String = "swift_centroid"
   override val minFeatures: Int = 1
 
-  override def fit(train: PatternMatrix, response: Response): Either[MvpaError, ClassifierModel] =
+  override def fit(train: DMat, labels: Vector[ClassLabel]): Either[MvpaError, SwiftCentroidModel] =
     for
-      _ <- Classification.validateFinite(train.value, "training data")
+      _ <- Classification.validateFinite(train, "training data")
       _ <- Classification.validateScaling(scaling)
-      labels <- Classification.categorical(response, train.samples)
       model <-
-        val scaler = Classification.Scaler.fit(train.value, scaling)
-        val scaled = scaler.transform(train.value)
-        val scaledTrain = PatternMatrix(
-          value = scaled,
-          sampleIndices = train.sampleIndices,
-          featureIndices = train.featureIndices
-        )
-        Classification.classSummary(scaledTrain, labels).map { summary =>
+        val scaler = Classification.Scaler.fit(train, scaling)
+        val scaled = scaler.transform(train)
+        Classification.classSummary(scaled, labels).map { summary =>
           SwiftCentroidModel(
             classes = summary.classes,
             centroids = summary.means,
@@ -118,29 +150,28 @@ final case class SwiftCentroidModel(
 ) extends ClassifierModel:
   override val classifierName: String = "swift_centroid"
 
-  override def predict(test: PatternMatrix): Either[MvpaError, ClassificationPrediction] =
-    if test.features != centroids.cols then
-      Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.features} != model feature count ${centroids.cols}"))
+  override def predict(test: DMat): Either[MvpaError, CategoricalProbabilities] =
+    if test.cols != centroids.cols then
+      Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.cols} != model feature count ${centroids.cols}"))
     else
-      Classification.validateFinite(test.value, "test data").map { _ =>
-        val scaled = scaler.transform(test.value)
-        val scores = Classification.linearCentroidScores(scaled, centroids, priors)
-        ClassificationPrediction(classes, Classification.softmax(scores), test.sampleIndices)
+      Classification.validateFinite(test, "test data").flatMap { _ =>
+        val scaled = scaler.transform(test)
+        CategoricalProbabilities.from(classes, Classification.softmax(Classification.linearCentroidScores(scaled, centroids, priors)))
       }
 
 final class RidgeLdaClassifier private (val penalty: RidgePenalty) extends Classifier:
+  override type Model = RidgeLdaModel
   def gamma: Double =
     penalty.value
 
   override val name: String = "ridge_lda"
   override val minFeatures: Int = 1
 
-  override def fit(train: PatternMatrix, response: Response): Either[MvpaError, ClassifierModel] =
+  override def fit(train: DMat, labels: Vector[ClassLabel]): Either[MvpaError, RidgeLdaModel] =
     for
-      _ <- Classification.validateFinite(train.value, "training data")
-      labels <- Classification.categorical(response, train.samples)
+      _ <- Classification.validateFinite(train, "training data")
       model <- Classification.classSummary(train, labels).flatMap { summary =>
-        val sigma0 = Classification.pooledResidualCrossproduct(train.value, labels, summary)
+        val sigma0 = Classification.pooledResidualCrossproduct(train, labels, summary)
         val sigmaBuilder = Matrix.newBuilder(sigma0.rows, sigma0.cols)
         var row = 0
         while row < sigma0.rows do
@@ -158,7 +189,7 @@ final class RidgeLdaClassifier private (val penalty: RidgePenalty) extends Class
             while klass < summary.classes.length do
               var dot = 0.0
               var feature = 0
-              while feature < train.features do
+              while feature < train.cols do
                 dot += summary.means(klass, feature) * invSigmaMeans(feature, klass)
                 feature += 1
               linConst(klass) = -0.5 * dot + math.log(math.max(summary.priors(klass), 1e-300))
@@ -181,12 +212,12 @@ final case class RidgeLdaModel(
 ) extends ClassifierModel:
   override val classifierName: String = "ridge_lda"
 
-  override def predict(test: PatternMatrix): Either[MvpaError, ClassificationPrediction] =
-    if test.features != invSigmaMeans.rows then
-      Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.features} != model feature count ${invSigmaMeans.rows}"))
+  override def predict(test: DMat): Either[MvpaError, CategoricalProbabilities] =
+    if test.cols != invSigmaMeans.rows then
+      Left(MvpaError.MatrixShapeMismatch(s"test feature count ${test.cols} != model feature count ${invSigmaMeans.rows}"))
     else
-      Classification.validateFinite(test.value, "test data").map { _ =>
-        val rawScores = test.value * invSigmaMeans
+      Classification.validateFinite(test, "test data").flatMap { _ =>
+        val rawScores = test * invSigmaMeans
         val scores = Matrix.newBuilder(rawScores.rows, rawScores.cols)
         var row = 0
         while row < rawScores.rows do
@@ -195,7 +226,7 @@ final case class RidgeLdaModel(
             scores(row, klass) = rawScores(row, klass) + linearConstants(klass)
             klass += 1
           row += 1
-        ClassificationPrediction(classes, Classification.softmax(scores.result()), test.sampleIndices)
+        CategoricalProbabilities.from(classes, Classification.softmax(scores.result()))
       }
 
 object RidgeLdaClassifier:
@@ -204,29 +235,6 @@ object RidgeLdaClassifier:
 
   def fromPenalty(gamma: RidgePenalty): RidgeLdaClassifier =
     new RidgeLdaClassifier(gamma)
-
-final case class CrossValidatedClassifierAnalysis(
-    classifier: Classifier,
-    storePredictions: Boolean = false
-) extends FoldRequiredDenseRoiAnalysis:
-  override def name: String = s"cv_${classifier.name}"
-  override def minFeatures: Int = classifier.minFeatures
-  override def missingFoldsError: MvpaError =
-    MvpaError.InvalidClassifierInput("cross-validated classification requires a fold plan")
-
-  override def evaluateFolded(roi: PatternMatrix, context: FoldedRoiContext): Either[MvpaError, RoiAnalysisResult] =
-    for
-      labels <- Classification.categorical(context.response, roi.samples)
-      prediction <- Classification.crossValidate(classifier, roi, labels, context.foldPlan)
-      accuracy <- Classification.accuracy(prediction, labels)
-    yield
-      val payload =
-        if storePredictions then Some(RoiPayload.Classification(prediction))
-        else None
-      RoiAnalysisResult(
-        MetricVector("Accuracy" -> accuracy, "TestedSamples" -> prediction.probabilities.rows.toDouble),
-        payload
-      )
 
 object Classification:
   private val Eps = 1e-12
@@ -321,29 +329,22 @@ object Classification:
         if !scales(i).isFinite || scales(i) <= Eps then scales(i) = 1.0
         i += 1
 
-  def categorical(response: Response, samples: Int): Either[MvpaError, Vector[ClassLabel]] =
-    response.validate(samples).flatMap {
-      case Response.Categorical(labels) => Right(labels)
-      case Response.Probabilistic(_) | Response.Continuous(_) =>
-        Left(MvpaError.InvalidClassifierInput("this classifier requires hard categorical response labels"))
-    }
-
-  def classSummary(data: PatternMatrix, labels: Vector[ClassLabel]): Either[MvpaError, ClassSummary] =
-    if labels.length != data.samples then Left(MvpaError.ResponseLengthMismatch(data.samples, labels.length))
+  def classSummary(data: DMat, labels: Vector[ClassLabel]): Either[MvpaError, ClassSummary] =
+    if labels.length != data.rows then Left(MvpaError.ResponseLengthMismatch(data.rows, labels.length))
     else
       val classes = labels.distinct
       if classes.length < 2 then Left(MvpaError.SingleClassResponse)
       else
         val classIndex = classes.zipWithIndex.map { case (label, index) => label.value -> index }.toMap
         val counts = Array.fill(classes.length)(0)
-        val sums = new Array[Double](classes.length * data.features)
+        val sums = new Array[Double](classes.length * data.cols)
         var row = 0
-        while row < data.samples do
+        while row < data.rows do
           val klass = classIndex(labels(row).value)
           counts(klass) += 1
           var feature = 0
-          while feature < data.features do
-            sums(klass * data.features + feature) += data.value(row, feature)
+          while feature < data.cols do
+            sums(klass * data.cols + feature) += data(row, feature)
             feature += 1
           row += 1
 
@@ -352,16 +353,16 @@ object Classification:
           var klass = 0
           while klass < classes.length do
             var feature = 0
-            while feature < data.features do
-              sums(klass * data.features + feature) /= counts(klass)
+            while feature < data.cols do
+              sums(klass * data.cols + feature) /= counts(klass)
               feature += 1
             klass += 1
-          val means = Matrix.newBuilder(classes.length, data.features)
+          val means = Matrix.newBuilder(classes.length, data.cols)
           klass = 0
           while klass < classes.length do
             var feature = 0
-            while feature < data.features do
-              means(klass, feature) = sums(klass * data.features + feature)
+            while feature < data.cols do
+              means(klass, feature) = sums(klass * data.cols + feature)
               feature += 1
             klass += 1
           val total = counts.sum.toDouble
@@ -472,82 +473,11 @@ object Classification:
       row += 1
     out.result()
 
-  def crossValidate(
-      classifier: Classifier,
-      data: PatternMatrix,
-      labels: Vector[ClassLabel],
-      folds: FoldPlan
-  ): Either[MvpaError, ClassificationPrediction] =
-    if labels.length != data.samples then Left(MvpaError.ResponseLengthMismatch(data.samples, labels.length))
-    else if folds.samples != data.samples then
-      Left(MvpaError.InvalidClassifierInput(s"fold plan sample count ${folds.samples} != data sample count ${data.samples}"))
-    else
-      val classes = labels.distinct
-      if classes.length < 2 then Left(MvpaError.SingleClassResponse)
-      else
-        val testRows = folds.folds.flatMap(_.test.map(_.value)).distinct.sorted
-        val rowToOutput = testRows.zipWithIndex.toMap
-        val probSum = Matrix.newBuilder(testRows.length, classes.length)
-        val probN = Array.fill(testRows.length)(0)
-
-        def processFold(fold: Fold): Either[MvpaError, Unit] =
-          val trainLabels = fold.train.map(i => labels(i.value)).toVector
-          if trainLabels.distinct.toSet != classes.toSet then
-            Left(MvpaError.InvalidClassifierInput("every training fold must contain every class"))
-          else
-            for
-              train <- data.selectRows(fold.train)
-              test <- data.selectRows(fold.test)
-              model <- classifier.fit(train, Response.Categorical(trainLabels))
-              pred <- model.predict(test)
-              _ <- validatePredictionShape(pred, fold.test)
-              _ <- validateFinite(pred.probabilities, "classifier probabilities")
-              classColumns <- predictionClassColumns(pred.classes, classes)
-            yield
-              var localRow = 0
-              while localRow < fold.test.length do
-                val outRow = rowToOutput(fold.test(localRow).value)
-                var klass = 0
-                while klass < classes.length do
-                  probSum(outRow, klass) = probSum(outRow, klass) + pred.probabilities(localRow, classColumns(klass))
-                  klass += 1
-                probN(outRow) += 1
-                localRow += 1
-
-        var foldIndex = 0
-        var error: MvpaError | Null = null
-        while foldIndex < folds.folds.length && error == null do
-          processFold(folds.folds(foldIndex)) match
-            case Left(e) => error = e
-            case Right(()) =>
-          foldIndex += 1
-
-        if error != null then Left(error)
-        else if testRows.isEmpty then Left(MvpaError.InvalidClassifierInput("fold plan produced no test samples"))
-        else
-          val missing = probN.indexWhere(_ == 0)
-          if missing >= 0 then Left(MvpaError.InvalidClassifierInput("some test samples were never predicted"))
-          else
-            var row = 0
-            while row < testRows.length do
-              var klass = 0
-              while klass < classes.length do
-                probSum(row, klass) = probSum(row, klass) / probN(row)
-                klass += 1
-              row += 1
-            Right(
-              ClassificationPrediction(
-                classes,
-                probSum.result(),
-                testRows.map(SampleIndex.unsafe).toVector
-              )
-            )
-
   def accuracy(prediction: ClassificationPrediction, labels: Vector[ClassLabel]): Either[MvpaError, Double] =
     if prediction.probabilities.rows == 0 then Left(MvpaError.InvalidClassifierInput("accuracy requires at least one prediction"))
     else prediction.sampleIndices.find(index => index.value < 0 || index.value >= labels.length) match
       case Some(index) =>
-        Left(MvpaError.FoldIndexOutOfBounds("prediction", index.value, labels.length))
+        Left(MvpaError.PredictionIndexOutOfBounds(index.value, labels.length))
       case None =>
         val predicted = prediction.predicted
         var correct = 0
@@ -557,15 +487,27 @@ object Classification:
           row += 1
         Right(correct.toDouble / predicted.length)
 
-  private def validatePredictionShape(
-      prediction: ClassificationPrediction,
-      expectedSamples: Vector[SampleIndex]
-  ): Either[MvpaError, Unit] =
-    if prediction.probabilities.rows != expectedSamples.length then
-      Left(MvpaError.InvalidClassifierInput(s"classifier prediction row count ${prediction.probabilities.rows} != test row count ${expectedSamples.length}"))
-    else if prediction.sampleIndices != expectedSamples then
-      Left(MvpaError.InvalidClassifierInput("classifier prediction sample indices did not match the fold test samples"))
-    else Right(())
+  /** Reorders a model-local probability matrix to the frozen response order.
+    * Cross-validation fits may encounter the same classes in a different row
+    * order, but a public OOF result has one class-column convention.
+    */
+  def reorderProbabilities(
+      classes: Vector[ClassLabel],
+      probabilities: DMat,
+      expectedClasses: Vector[ClassLabel]
+  ): Either[MvpaError, DMat] =
+    if probabilities.cols != classes.length then
+      Left(MvpaError.MatrixShapeMismatch(s"probability columns ${probabilities.cols} != class count ${classes.length}"))
+    else predictionClassColumns(classes, expectedClasses).map: columns =>
+      val out = Matrix.newBuilder(probabilities.rows, expectedClasses.length)
+      var row = 0
+      while row < probabilities.rows do
+        var klass = 0
+        while klass < expectedClasses.length do
+          out(row, klass) = probabilities(row, columns(klass))
+          klass += 1
+        row += 1
+      out.result()
 
   private def predictionClassColumns(
       predictionClasses: Vector[ClassLabel],

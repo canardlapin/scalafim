@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "gate": "canonical-origins-dataset-jvm-01",
+  "source": {
+    "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+    "head_before": "c254042fb6862f73ebdee7aa4bcdd492b20e6f4f",
+    "head_after": "c254042fb6862f73ebdee7aa4bcdd492b20e6f4f"
+  },
+  "provider": {
+    "override_supplied": false,
+    "staged_alder_path": "/private/tmp/scalafim-umvpa-20260929/sbt-global/staging/70113493d2034afa26c1/alder",
+    "staged_alder_head": "e555bad92307af1c2cbc104aef398cb9d9de88f0",
+    "staged_alder_worktree_clean": true
+  },
+  "requested_command": ["mvpaDatasetJVM/test"],
+  "receipt": {
+    "raw_log": "canonical-origins-dataset-jvm-01.log",
+    "raw_log_sha256": "50ca021cd15e6671c0b36534d4aa1d0e54bf6ce090dafbadb25e3a4c6fe0426b",
+    "metadata": "canonical-origins-dataset-jvm-01.log.meta.json",
+    "metadata_sha256": "1b9ed24733243eaa3447b2755ff95b2dce97905cbb4df15d5a3e43d418da6c25"
+  },
+  "outcome": {
+    "status": "compile_failed_before_test_execution",
+    "exit_code": 1,
+    "error": {
+      "path": "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/predictive/AlderExposureReads.scala",
+      "line": 16,
+      "column": 12,
+      "message": "covariant M occurs in invariant AlderMaterializedRows[M] enum-case field"
+    },
+    "test_suites_completed": 0,
+    "tests_completed": 0,
+    "warnings_found": 0,
+    "skipped_tests_found": 0
+  },
+  "followup": {
+    "dataset_js_gate_started": false,
+    "compile_all_started": false
+  }
+}

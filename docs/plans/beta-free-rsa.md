@@ -1,5 +1,12 @@
 # Beta-free RSA estimand
 
+Historical design record, superseded by the unified MVPA cutover. API names in
+the body describe the earlier implementation. The immutable pre-retirement
+[record](https://github.com/canardlapin/scalafim/blob/528c302e454697055bc9af31c9a6eca684f019e3/docs/plans/beta-free-rsa.md)
+preserves that context. Current callers use the [native core](../../modules/mvpa/README.md),
+[trial-readout bridge](../../modules/mvpa-fit/README.md), and
+[dataset evidence](../../modules/mvpa-dataset/README.md).
+
 The one-shot RSA path treats a selected `PatternOperator` as the sufficient
 interface. For fold (r), let (B) denote its implicit sample-by-feature map
 and let (A_r) average the held-out samples into the common condition order.
