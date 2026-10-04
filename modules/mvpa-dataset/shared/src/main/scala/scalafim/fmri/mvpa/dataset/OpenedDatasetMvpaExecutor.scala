@@ -9,11 +9,11 @@ import scalafim.dataset.{
 }
 
 object OpenedDatasetMvpaExecutor:
-  def view[F[_]: Monad](
+  def observations[F[_]: Monad](
       opened: OpenedDataset[F],
       query: DatasetRunQuery,
       request: DatasetPatternRequest
-  ): EitherT[F, MvpaDatasetError, MvpaDatasetView] =
+  ): EitherT[F, MvpaDatasetError, DatasetObservationEvidence] =
     opened
       .read(
         query,
@@ -34,16 +34,4 @@ object OpenedDatasetMvpaExecutor:
             )
           )
       .subflatMap: series =>
-        MvpaDatasetView.fromSeries(
-          series,
-          request.metadata,
-          request.featureSpaceId,
-          Some(opened.dataset.id)
-        )
-
-  def labeledView[F[_]: Monad](
-      opened: OpenedDataset[F],
-      query: DatasetRunQuery,
-      request: DatasetPatternRequest
-  ): EitherT[F, MvpaDatasetError, LabeledMvpaDatasetView] =
-    view(opened, query, request).subflatMap(LabeledMvpaDatasetView.fromView)
+        DatasetObservationEvidence.fromSeries(series, request.metadata, request.featureSpaceId, opened.dataset.id)

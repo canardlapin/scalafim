@@ -6,13 +6,14 @@ external data.
 Current workflow:
 
 - `AtlasMvpaWorkflow`: builds a tiny synthetic `VolumeAtlas`, converts atlas
-  regions into an MVPA `FeatureSetPlan`, and runs a cross-validated centroid
-  classifier per region.
+  regions into typed spatial measurements, admits identified observations, and
+  runs the native Alder Swift centroid head with a sample-bound validation plan.
 
 Run the smoke tests:
 
 ```sh
 sbt workflowExamplesJVM/test
+sbt workflowExamplesJS/test
 ```
 
 Run the workflow:

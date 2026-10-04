@@ -1,0 +1,1 @@
+<GIFTI Version="1.0" NumberOfDataArrays="1"><DataArray Intent="NIFTI_INTENT_LABEL" DataType="NIFTI_TYPE_INT32" ArrayIndexingOrder="RowMajorOrder" Dimensionality="1" Dim0="4" Encoding="ASCII" Endian="LittleEndian"><MetaData><MD><Name>AnatomicalStructurePrimary</Name><Value>CortexLeft</Value></MD></MetaData><Data>1 1 1 0</Data></DataArray></GIFTI>

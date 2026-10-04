@@ -27,11 +27,8 @@ object MvpaMigrationParityFixtures:
         )
       )
 
-    val trainingResponse: Response =
-      Response
-        .categorical(Vector("zeta", "alpha", "zeta", "beta", "alpha", "zeta", "beta"))
-        .toOption
-        .get
+    val trainingLabels: Vector[ClassLabel] =
+      Vector("zeta", "alpha", "zeta", "beta", "alpha", "zeta", "beta").map(ClassLabel.apply)
 
     val testPatterns: PatternMatrix =
       PatternMatrix.fromRows(
@@ -131,8 +128,7 @@ object MvpaMigrationParityFixtures:
     val labels: Vector[String] =
       Vector("b", "a", "a", "b", "a", "b", "a", "b", "a")
 
-    val response: Response =
-      Response.categorical(labels).toOption.get
+    val categoricalLabels: Vector[ClassLabel] = labels.map(ClassLabel.apply)
 
     val blocks: Vector[Int] =
       Vector(0, 0, 1, 1, 1, 2, 2, 2, 2)

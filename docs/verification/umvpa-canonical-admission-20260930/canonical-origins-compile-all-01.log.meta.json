@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T19:46:55.532266+00:00",
+  "finished_utc": "2026-09-30T19:53:36.332019+00:00",
+  "duration_seconds": 400.798612,
+  "command": [
+    "sbt",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.task.cpus=1",
+    "-Dsbt.supershell=false",
+    "-Dsbt.global.base=/private/tmp/scalafim-umvpa-20260929/sbt-global",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-umvpa-20260930-canonical-admission",
+  "log": "/private/tmp/scalafim-umvpa-20260930-admission-evidence/canonical-origins-compile-all-01.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2400.0,
+  "log_bytes": 19907
+}

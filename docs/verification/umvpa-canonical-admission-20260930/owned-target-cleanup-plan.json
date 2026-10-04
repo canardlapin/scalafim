@@ -1,0 +1,922 @@
+[
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/target",
+    "bytes": 2845
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/project/target",
+    "bytes": 1203676
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/project/project/target",
+    "bytes": 15563
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/examples/surface-view/js/target",
+    "bytes": 1521556
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/examples/surface-view/jvm/target",
+    "bytes": 1090138
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/hrf/js/target",
+    "bytes": 4911870
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/hrf/jvm/target",
+    "bytes": 3096271
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/design/js/target",
+    "bytes": 11989115
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/design/jvm/target",
+    "bytes": 7499472
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/pipeline/js/target",
+    "bytes": 1369934
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/pipeline/jvm/target",
+    "bytes": 913410
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view/js/target",
+    "bytes": 6284966
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view/jvm/target",
+    "bytes": 4085604
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/archive-zarr/js/target",
+    "bytes": 1597576
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/archive-zarr/jvm/target",
+    "bytes": 1094402
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/response-laws/js/target",
+    "bytes": 468934
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/response-laws/jvm/target",
+    "bytes": 331430
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/scenario-testkit/js/target",
+    "bytes": 456683
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/scenario-testkit/jvm/target",
+    "bytes": 300350
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view-javafx/jvm/target",
+    "bytes": 1246358
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/response/js/target",
+    "bytes": 2145447
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/response/jvm/target",
+    "bytes": 1391754
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/archive/js/target",
+    "bytes": 1718455
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/archive/jvm/target",
+    "bytes": 1197641
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/fit/js/target",
+    "bytes": 13370757
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/fit/jvm/target",
+    "bytes": 8898554
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/connectivity/js/target",
+    "bytes": 3166721
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/connectivity/jvm/target",
+    "bytes": 2058619
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/estimates-io/js/target",
+    "bytes": 1921145
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/estimates-io/jvm/target",
+    "bytes": 1599415
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/group/js/target",
+    "bytes": 1983174
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/group/jvm/target",
+    "bytes": 1453818
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/estimates/js/target",
+    "bytes": 2016402
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/estimates/jvm/target",
+    "bytes": 1386675
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/dataset/js/target",
+    "bytes": 3623267
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/dataset/jvm/target",
+    "bytes": 2677326
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view-connectivity/js/target",
+    "bytes": 697072
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view-connectivity/jvm/target",
+    "bytes": 624292
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/locus-data/js/target",
+    "bytes": 468810
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/locus-data/jvm/target",
+    "bytes": 336447
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-spatial/js/target",
+    "bytes": 14398514
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-spatial/jvm/target",
+    "bytes": 1695300
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface/js/target",
+    "bytes": 3483132
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface/jvm/target",
+    "bytes": 2324454
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/motion/js/target",
+    "bytes": 2756588
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/motion/jvm/target",
+    "bytes": 2592510
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image-view-javafx/jvm/target",
+    "bytes": 520009
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image/js/target",
+    "bytes": 7208885
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image/jvm/target",
+    "bytes": 4950572
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/fit-estimates/js/target",
+    "bytes": 961133
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/fit-estimates/jvm/target",
+    "bytes": 885243
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/threshold/js/target",
+    "bytes": 1764545
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/threshold/jvm/target",
+    "bytes": 1258499
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-fit/js/target",
+    "bytes": 43120919
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-fit/jvm/target",
+    "bytes": 3324121
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/first-level-laws/js/target",
+    "bytes": 659273
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/first-level-laws/jvm/target",
+    "bytes": 663962
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/ar/js/target",
+    "bytes": 1404150
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/ar/jvm/target",
+    "bytes": 889862
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/model/js/target",
+    "bytes": 2862193
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/model/jvm/target",
+    "bytes": 2007892
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/provider-spike/js/target",
+    "bytes": 315146
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/provider-spike/jvm/target",
+    "bytes": 280213
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view-raster/js/target",
+    "bytes": 995605
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view-raster/jvm/target",
+    "bytes": 828469
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/fmri-workflow/js/target",
+    "bytes": 2472162
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/fmri-workflow/jvm/target",
+    "bytes": 1923449
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image-view-canvas/js/target",
+    "bytes": 778765
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/atlas/js/target",
+    "bytes": 5270130
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/atlas/jvm/target",
+    "bytes": 3905582
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/interop-archived-response/js/target",
+    "bytes": 4946640
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/interop-archived-response/jvm/target",
+    "bytes": 3982790
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/spatial/js/target",
+    "bytes": 6179923
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/spatial/jvm/target",
+    "bytes": 5046740
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image-view/js/target",
+    "bytes": 2142584
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image-view/jvm/target",
+    "bytes": 1491696
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-foundation-spike/js/target",
+    "bytes": 322021
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-foundation-spike/jvm/target",
+    "bytes": 282515
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/latent/js/target",
+    "bytes": 3706528
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/latent/jvm/target",
+    "bytes": 2487368
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/image-view-java2d/jvm/target",
+    "bytes": 502538
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/dataset-zarr/js/target",
+    "bytes": 823604
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/dataset-zarr/jvm/target",
+    "bytes": 1143047
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/archive-lna/js/target",
+    "bytes": 2660686
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/archive-lna/jvm/target",
+    "bytes": 2035986
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/surface-view-three/js/target",
+    "bytes": 1531881
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/hrf-laws/js/target",
+    "bytes": 395691
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/hrf-laws/jvm/target",
+    "bytes": 326058
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-dataset/js/target",
+    "bytes": 16719993
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa-dataset/jvm/target",
+    "bytes": 1869098
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa/js/target",
+    "bytes": 28762944
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/candidate",
+    "path": "/private/tmp/scalafim-umvpa-20260929/candidate/modules/mvpa/jvm/target",
+    "bytes": 7972054
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/target",
+    "bytes": 2845
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/project/target",
+    "bytes": 1203002
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/project/project/target",
+    "bytes": 15503
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/examples/surface-view/js/target",
+    "bytes": 1521003
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/examples/surface-view/jvm/target",
+    "bytes": 1089757
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/hrf/js/target",
+    "bytes": 4906866
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/hrf/jvm/target",
+    "bytes": 3093738
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/design/js/target",
+    "bytes": 11979666
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/design/jvm/target",
+    "bytes": 7494482
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/pipeline/js/target",
+    "bytes": 1368858
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/pipeline/jvm/target",
+    "bytes": 912759
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view/js/target",
+    "bytes": 6279041
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view/jvm/target",
+    "bytes": 4082552
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/archive-zarr/js/target",
+    "bytes": 1596568
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/archive-zarr/jvm/target",
+    "bytes": 1093805
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/response-laws/js/target",
+    "bytes": 468661
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/response-laws/jvm/target",
+    "bytes": 331225
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/scenario-testkit/js/target",
+    "bytes": 456297
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/scenario-testkit/jvm/target",
+    "bytes": 300155
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view-javafx/jvm/target",
+    "bytes": 1245883
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/response/js/target",
+    "bytes": 2142528
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/response/jvm/target",
+    "bytes": 1390233
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/archive/js/target",
+    "bytes": 1716543
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/archive/jvm/target",
+    "bytes": 1196540
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/fit/js/target",
+    "bytes": 13360592
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/fit/jvm/target",
+    "bytes": 8893137
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/connectivity/js/target",
+    "bytes": 3163625
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/connectivity/jvm/target",
+    "bytes": 2057093
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/estimates-io/js/target",
+    "bytes": 1919897
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/estimates-io/jvm/target",
+    "bytes": 1598717
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/group/js/target",
+    "bytes": 1981569
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/group/jvm/target",
+    "bytes": 1452950
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/estimates/js/target",
+    "bytes": 2014273
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/estimates/jvm/target",
+    "bytes": 1385464
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/dataset/js/target",
+    "bytes": 3620052
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/dataset/jvm/target",
+    "bytes": 2675512
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view-connectivity/js/target",
+    "bytes": 696790
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view-connectivity/jvm/target",
+    "bytes": 624091
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/locus-data/js/target",
+    "bytes": 468269
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/locus-data/jvm/target",
+    "bytes": 336207
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-spatial/js/target",
+    "bytes": 1576090
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-spatial/jvm/target",
+    "bytes": 1220013
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface/js/target",
+    "bytes": 3480225
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface/jvm/target",
+    "bytes": 2322863
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/motion/js/target",
+    "bytes": 2754270
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/motion/jvm/target",
+    "bytes": 2590857
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image-view-javafx/jvm/target",
+    "bytes": 519834
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image/js/target",
+    "bytes": 7202480
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image/jvm/target",
+    "bytes": 4947093
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/fit-estimates/js/target",
+    "bytes": 960810
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/fit-estimates/jvm/target",
+    "bytes": 884936
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/threshold/js/target",
+    "bytes": 1763044
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/threshold/jvm/target",
+    "bytes": 1257755
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-fit/js/target",
+    "bytes": 43036262
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-fit/jvm/target",
+    "bytes": 3320770
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/first-level-laws/js/target",
+    "bytes": 659128
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/first-level-laws/jvm/target",
+    "bytes": 663827
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/ar/js/target",
+    "bytes": 1402816
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/ar/jvm/target",
+    "bytes": 889189
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/model/js/target",
+    "bytes": 2859740
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/model/jvm/target",
+    "bytes": 2006661
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/provider-spike/js/target",
+    "bytes": 315054
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/provider-spike/jvm/target",
+    "bytes": 280159
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view-raster/js/target",
+    "bytes": 995197
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view-raster/jvm/target",
+    "bytes": 828199
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/fmri-workflow/js/target",
+    "bytes": 2470253
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/fmri-workflow/jvm/target",
+    "bytes": 1922343
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image-view-canvas/js/target",
+    "bytes": 778370
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/atlas/js/target",
+    "bytes": 5265741
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/atlas/jvm/target",
+    "bytes": 3903110
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/interop-archived-response/js/target",
+    "bytes": 4943956
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/interop-archived-response/jvm/target",
+    "bytes": 3980894
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/spatial/js/target",
+    "bytes": 6173843
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/spatial/jvm/target",
+    "bytes": 5042955
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image-view/js/target",
+    "bytes": 2140542
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image-view/jvm/target",
+    "bytes": 1490590
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-foundation-spike/js/target",
+    "bytes": 321946
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-foundation-spike/jvm/target",
+    "bytes": 282450
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/latent/js/target",
+    "bytes": 3702896
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/latent/jvm/target",
+    "bytes": 2485442
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/image-view-java2d/jvm/target",
+    "bytes": 502386
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/dataset-zarr/js/target",
+    "bytes": 823294
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/dataset-zarr/jvm/target",
+    "bytes": 1142713
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/archive-lna/js/target",
+    "bytes": 2658562
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/archive-lna/jvm/target",
+    "bytes": 2034889
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/surface-view-three/js/target",
+    "bytes": 1531044
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/hrf-laws/js/target",
+    "bytes": 395489
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/hrf-laws/jvm/target",
+    "bytes": 326003
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-dataset/js/target",
+    "bytes": 13802328
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa-dataset/jvm/target",
+    "bytes": 1408979
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa/js/target",
+    "bytes": 28705699
+  },
+  {
+    "root": "/private/tmp/scalafim-umvpa-20260929/core",
+    "path": "/private/tmp/scalafim-umvpa-20260929/core/modules/mvpa/jvm/target",
+    "bytes": 7969604
+  }
+]
