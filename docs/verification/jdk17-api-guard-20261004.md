@@ -45,3 +45,19 @@ Host JDK: 22 (javac 22). No JDK 17 installed.
 | `examplesCompile` | exit 0; 3 compile units, 0 `[error]`, 0 `[warn]` |
 
 No module needed changes beyond `RsaAllocationProbe` under `-release:17`.
+
+## Independent review (Opus, APPROVE-WITH-NITS)
+
+- Negative control reproduced independently at `febb3687` in a different module
+  (`hrf`): `hrfJVM/compile` and `hrfJS/compile` both reject `threadId()` under the
+  flag; removing the flag restores compilation. The guard covers shared code on JS.
+- **Bytecode target changes from 52 (Java 8) to 61 (Java 17)** (`javap` on
+  `RsaAllocationProbe$` and `hrf/Reconstruction`). Published JVM artifacts now require
+  JDK 17+ at runtime, matching the declared CI baseline. This is an intended
+  consequence of `-release:17`.
+- Coverage: every root-build project uses `commonSettings` except the source-less
+  `root` aggregate. Not covered: the standalone `modules/mvpa-foundation-spike/build.sbt`
+  (not in CI) and JMH-generated Java in bench projects (negligible).
+- Out of scope, noted for their own repos: reframe4s and locus4s *test* sources use
+  `threadId()` and would fail their own JDK 17 CI; gale main's FFM backend
+  (`java.lang.foreign`) is not on scalafim's pinned path.
