@@ -10,6 +10,13 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReferenc
 import scala.collection.mutable.ArrayBuffer
 
 class ProfileHrfFitParallelSuite extends ProfileHrfFitSuite:
+  // The two 1/2/8-worker x 1/2/256-chunk invariance tests fit 2048 voxels ten times each; 2048 is the
+  // smallest round count that still yields eight real blocks at chunk 256, so every worker count is
+  // actually exercised. Uninstrumented they take ~9 s on the ubuntu-24.04 runner and ~20-25 s locally;
+  // under scoverage (the first-level-coverage CI job) they take 120-220 s both locally and on CI.
+  // Ten minutes leaves ~2.7x margin over the slowest measured run, as in ConditionC0QualificationSuite.
+  override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(10, "min")
+
   private val ids = Vector(15, 0, 11, 2, 8, 4, 1, 13, 3, 14, 5, 12)
   private val chosen = DataSelection(voxels = VoxelSelection.indices(ids*))
 
