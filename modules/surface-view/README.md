@@ -12,8 +12,9 @@ DOM, or a native windowing toolkit. See [`docs/surface-viewer.md`](../../docs/su
 
 Call `SurfaceWorldLink.prepare(surfaceId, geometry)` once and reuse the returned
 `SurfaceWorldIndex` with `index.nearestVertex(world, radius)`. It snapshots
-transformed coordinates in original vertex order. Keep source geometry stable during preparation. Coordinate/transform changes
-require explicit preparation of a new snapshot; the old snapshot intentionally
+transformed coordinates in original vertex order. Keep source geometry stable
+during preparation. Coordinate/transform changes require explicit preparation
+of a new snapshot; the old snapshot intentionally
 continues to describe the old geometry. No cache reuse is inferred from mutable
 mesh object identity or topology equality. The geometry-taking convenience
 query remains a one-shot scan and observes current coordinates.

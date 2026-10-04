@@ -93,7 +93,9 @@ object SurfaceRasterizer:
       SurfaceBackendFeature.HighResolutionSnapshot
     ),
     Vector(
-      "lighting uses world-space vertex normals and ambient/diffuse Lambert shading; lit vertex colors are interpolated, without per-pixel normal shading, specular highlights or shadows"
+      "lighting uses world-space vertex normals and ambient/diffuse Lambert shading; lit vertex colors are interpolated, without per-pixel normal shading, specular highlights or shadows",
+      "the directional light vector points from the surface toward the light",
+      "vertex normals follow world-space triangle winding, so they flip under a reflecting (negative-determinant) surface-to-world affine"
     )
   )
 

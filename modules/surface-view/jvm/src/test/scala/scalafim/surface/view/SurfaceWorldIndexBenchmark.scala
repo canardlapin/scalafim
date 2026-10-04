@@ -2,16 +2,20 @@ package scalafim.surface.view
 
 import scalafim.image.WorldPoint
 import scalafim.surface.*
+import com.sun.management.ThreadMXBean
 import java.lang.management.ManagementFactory
 
 /** Synthetic cardinalities, not anatomical fixtures. Run via Test/runMain. */
 object SurfaceWorldIndexBenchmark:
   @volatile private var checksum = 0L
   def main(args: Array[String]): Unit =
-    val bean = ManagementFactory.getThreadMXBean.asInstanceOf[com.sun.management.ThreadMXBean]
-    bean.setThreadAllocatedMemoryEnabled(true)
-    val thread = Thread.currentThread().threadId()
-    def allocated = bean.getThreadAllocatedBytes(thread)
+    val bean = ManagementFactory.getThreadMXBean match
+      case value: ThreadMXBean if value.isThreadAllocatedMemorySupported =>
+        if !value.isThreadAllocatedMemoryEnabled then value.setThreadAllocatedMemoryEnabled(true)
+        value
+      case _ => throw new IllegalStateException("per-thread allocation accounting is unavailable")
+    // JDK 14+ API; Thread.threadId() would require JDK 19 and CI pins JDK 17.
+    def allocated = bean.getCurrentThreadAllocatedBytes()
     for count <- Vector(10449, 163842) do
       val coordinates = Array.tabulate(count * 3)(i =>
         val v = i / 3

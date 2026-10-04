@@ -55,5 +55,11 @@ class ViewerModelUpdateSuite extends munit.FunSuite:
   test("session validation refuses unsupported presentation rather than silently dropping it"):
     val incompatible = session.copy(state = session.state.copy(layerPresentation = Map(a.id -> LayerPresentation(window = Some(DisplayWindow.unsafe(0, 1))))))
     assertEquals(incompatible.validateModel(model), Left(ImageViewError.WindowUnsupported(a.id)))
+    val threshold = DisplayThreshold.transparentBand(0.0, 0.5).toOption.get
+    val thresholded = session.copy(state = session.state.copy(layerPresentation = Map(b.id -> LayerPresentation(threshold = Some(threshold)))))
+    assertEquals(thresholded.validateModel(model), Left(ImageViewError.ThresholdUnsupported(b.id)))
     assert(session.validateModel(model).isRight)
-    assert(session.copy(state = session.state.copy(timepoint = 1)).validateModel(model).isLeft)
+    assertEquals(
+      session.copy(state = session.state.copy(timepoint = 1)).validateModel(model),
+      Left(ImageViewError.TimepointOutOfBounds(1, 1))
+    )

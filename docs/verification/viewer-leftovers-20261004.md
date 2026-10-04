@@ -11,7 +11,9 @@ landed; an independent review follows.
   classified `UNIQUE` / `LANDABLE-AFTER-REVIEW`, with mtimes of 2026-09-12.
 - Review branch: `review/c7-viewer-leftovers-20261004`, created from the
   snapshot. Merging main `53097f3f43fa125cd166a99268f192f4a5b12311` was a no-op
-  because main had not moved.
+  because main had not moved. For the review round (see "Review round 1"
+  below), main `36240e396de9906a11fd31e6aa7a151f9162d017` (PHRF prerequisites
+  landed) was merged in without conflicts.
 - Original authors: the 2026-09-12 core-triage Codex agents. Their sources were
   already committed to main, but these files were left uncommitted.
   - `codex-core-fruit` worked on bd-01M1X52T0SJK92JXQAW9N17X4V, "Align
@@ -48,7 +50,7 @@ shading since `149686d6` (2026-07-22). It does change the advertised backend
 capabilities that backend admission consumes, so `surfaceViewExamples*` was
 gated as well.
 
-## Gates
+## Gates (readiness pass on main `53097f3f`; superseded by review round 1 below)
 
 Each run used `tools/build/sbt-warm` in the review worktree, one batch at a
 time, with at least 30% memory free beforehand. All runs were warning-clean
@@ -77,15 +79,98 @@ The JavaFX viewer modules (`imageViewJavafxJVM`, `surfaceViewJavafxJVM`) are
 compiled by `scalafimCompileAll`. Their tests and probes need a display and were
 not run.
 
-## Edits made in review
+## Edits made in the readiness pass (commit `78950a6b`)
 
-- No edits to the cluster's own files. Every test passed against current main
-  as snapshotted.
-- Added `NEWS.md` (main has none). It holds the C9 header and only the two C9
+- No edits to the cluster's own files. Every test passed against main as
+  snapshotted.
+- Added `NEWS.md` (main has none). It holds the C9 header and the two C9
   entries that describe these items: the prepared world-coordinate pick index
-  and validated viewer layer reorder/replacement. C9
-  (`wip/core-triage-docs-20261004`) has no lighting entry, so none was added.
-  Because C9 also creates `NEWS.md`, landing both will produce an add/add
-  conflict. Resolve it by keeping C9's full file, which already contains these
-  two entries verbatim.
+  and validated viewer layer reorder/replacement.
 - Added this receipt.
+
+## Review round 1 (Opus review of `78950a6b`: CHANGES-REQUIRED)
+
+The review confirmed the lighting semantics against the code (world-space
+normals, Lambert, Gouraud interpolation) and the `ViewerModelUpdate` cache
+counts. These changes were made in response.
+
+1. **Blocker: JDK 17 compile.** `SurfaceWorldIndexBenchmark` called
+   `Thread.currentThread().threadId()`, which is a JDK 19+ API. CI pins JDK 17
+   (`.github/workflows/first-level.yml`), and `surfaceViewJVM/test` compiles
+   test sources. The benchmark now pattern-matches
+   `com.sun.management.ThreadMXBean` on `isThreadAllocatedMemorySupported`,
+   following the other allocation probes, and calls
+   `getCurrentThreadAllocatedBytes()` (JDK 14+). The deprecated `getId()` is not
+   used. All measurements stay on the calling thread.
+   - Evidence: no JDK 17 is installed locally. `/usr/libexec/java_home -V`
+     lists 22, 20, 8 and 7. Instead, `javac 22 --release 17` (which checks
+     against the JDK 17 API signatures in `ct.sym`) compiled a Java probe using
+     the same calls (`isThreadAllocatedMemorySupported`,
+     `isThreadAllocatedMemoryEnabled`, `setThreadAllocatedMemoryEnabled`,
+     `getCurrentThreadAllocatedBytes`). A control calling
+     `Thread.currentThread().threadId()` failed with "cannot find symbol".
+     API availability on 17 was therefore observed against JDK 17 signatures.
+     The Scala compile itself ran on JDK 22 and was not observed on a JDK 17
+     runtime.
+   - Out of scope, observed: `modules/mvpa/jvm/src/test/.../RsaAllocationProbe.scala`
+     on main also calls `threadId()`. It is not part of C7 and was left
+     unchanged.
+2. **Stale doc.** `docs/benchmarks/surface-viewer.md` said the reference raster
+   "declares lighting unsupported". It now describes the supported per-vertex
+   Lambert semantics and their limits.
+3. **Test gap: world-space versus object-space normals.** Added
+   `SurfaceRasterizerSuite` "lighting uses world-space normals under a rotated
+   surface-to-world affine". The +Z triangle is rotated +90° about X, so the
+   world normal is −Y, and it is viewed from `Posterior`, which faces it.
+   - A light along the world normal (0, −1, 0) yields front-lit (×0.75)
+     `(150, 90, 60)`.
+   - A light along the old object normal (0, 0, 1) yields ambient-only (×0.25)
+     `(50, 30, 20)`.
+   - Mutation check: `SurfaceCompiler.packMesh` was temporarily changed to
+     compute normals from the untransformed local coordinates
+     (`frame.coordinateAt`). `surfaceViewRasterJVM/test` then failed exactly
+     this test (13 total, 1 failed, 12 passed; assertion at line 168). After
+     restoring, `SurfaceCompiler.scala` has SHA-256
+     `48da0fe6060dace16243124c50389b873a09c0a435a776b45173038311e871fe`,
+     identical to before the mutation, and `git status` is clean for that path.
+4. **Nits.**
+   - `ViewerModelUpdateSuite` now asserts the typed
+     `Left(ImageViewError.TimepointOutOfBounds(1, 1))` instead of `isLeft`.
+   - It also adds a threshold-rejection check for the image-view README claim:
+     a mask layer given a `DisplayThreshold` yields
+     `ThresholdUnsupported(b.id)`, because `MaskColorizer` defines no
+     thresholding.
+   - Rewrapped the over-long line in `modules/surface-view/README.md`.
+   - Added a `NEWS.md` entry for the raster `Lighting` capability, since it is
+     a user-visible admission change. This entry has no C9 counterpart.
+   - Documented the light-direction convention (the vector `d` points from the
+     surface toward the light) and the normal flip under a reflecting
+     (negative-determinant) surface-to-world affine. Both are now separate
+     `SurfaceRasterizer.capabilities` caveats and are stated in the
+     surface-view-raster README.
+
+### Gates after review round 1
+
+All batches ran in the review worktree with sbt-warm (`TERM=dumb`, stdin
+`/dev/null`). Memory was at least 30% free before each batch, and the server
+was shut down after each. There were no `[warn] --` or `[error]` lines.
+
+| Target | Result |
+| --- | --- |
+| `surfaceViewRasterJVM/test` | 13/13 passed |
+| `surfaceViewRasterJS/test` | 13/13 passed |
+| `imageViewJVM/test` | 42/42 passed |
+| `imageViewJS/test` | 42/42 passed |
+| `imageViewCanvasJS/test` | 8/8 passed |
+| `surfaceViewJVM/test` | 68/68 passed |
+| `surfaceViewJS/test` | 68/68 passed |
+| `surfaceViewExamplesJVM/test` | 12/12 passed |
+| `surfaceViewExamplesJS/test` | 11/11 passed |
+| `scalafimCompileAll` | success in 336 s, 0 warnings, 0 errors (JavaFX viewer modules compiled, not run) |
+
+### NEWS.md and C9
+
+C9 (`wip/core-triage-docs-20261004`) also creates `NEWS.md`, so landing both
+will produce an add/add conflict. Resolve it by taking C9's file, which already
+contains the two shared entries verbatim, and then adding this cluster's
+`Lighting` entry under `## Unreleased`.
