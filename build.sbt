@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "18d24dbb5056122032b0278f8bad557a9bb1cf23"
+lazy val galeRevision = "da38f8c429294657d30ec29f06eae3fab636d428"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -105,7 +105,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "26a74ad99b9ee49a9555344e19b82d69a2ba50e4"
+lazy val image4sRevision = "2c0638fb0767058ccd59b37f93754e95fc27df28"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -127,13 +127,19 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
-// reviewed source revision.
+// reviewed source revision. A ScalaFIM image4s checkout override is forwarded
+// so reframe4s resolves the same image4s build. reframe4s accepts only a local
+// path, so the default pinned-URI build still loads reframe4s's own image4s pin.
 lazy val reframe4sRevision = "5f7152aada60335935843ddc968162f615337415"
-lazy val reframe4sBuild =
+lazy val reframe4sBuild = {
+  sys.props
+    .get("scalafim.image4s.build")
+    .foreach(System.setProperty("reframe4s.image4s.build", _))
   sys.props
     .get("scalafim.reframe4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
     .getOrElse(uri(s"https://github.com/canardlapin/reframe4s.git#$reframe4sRevision"))
+}
 lazy val reframe4sLieJVM      = ProjectRef(reframe4sBuild, "reframe4s-lieJVM")
 lazy val reframe4sLieJS       = ProjectRef(reframe4sBuild, "reframe4s-lieJS")
 lazy val reframe4sFieldJVM    = ProjectRef(reframe4sBuild, "reframe4s-fieldJVM")
@@ -229,7 +235,10 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
-    "-Xmax-inlines:64"
+    "-Xmax-inlines:64",
+    // CI pins JDK 17; restrict the JDK API surface so newer-JDK calls
+    // (e.g. Thread.threadId, JDK 19) fail locally on any newer host JDK.
+    "-release:17"
   ),
   Test / fork := false,
   libraryDependencies += "org.scalameta" %%% "munit" % "1.2.1" % Test
@@ -447,6 +456,7 @@ lazy val design =
     .settings(
       name := "scalafim-fmri-design",
       libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "upickle" % "4.1.0",
         "org.typelevel" %%% "cats-core" % "2.12.0",
         "org.typelevel" %%% "spire"     % "0.18.0"
       )

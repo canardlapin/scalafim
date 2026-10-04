@@ -1,0 +1,575 @@
+{
+  "candidates": [
+    {
+      "acceptedScope": [
+        "scientific selection/source identity",
+        "distinct readers and bounded worker window",
+        "real1/2/8worker x1/2/256block invariance",
+        "setup once and fieldwise current16 attempted fields"
+      ],
+      "blockingFindings": [
+        "ParallelBlockExecutor may return on timeout after priorfailure or interrupted termination wait with worker still running",
+        "ProfileHrfFit snapshots mutable counters and falsely relinquishes reader use before proven termination"
+      ],
+      "commit": "2c22772e3ed7a890ddeae4adb835552466500ab9",
+      "next": "Monotonic bounded cleanup and explicit nonfinal termination/lifetime handle; deterministic held-reader interrupt/deadline controls; affected both-platform gates and exact rereview",
+      "scope": "PHRF29 bounded parallel interpreter",
+      "verdict": "RequestChanges",
+      "verifiedChecks": "32 JVM executions (13 shared +19 subclass incl inherited),13 JS, warning-clean CompileAll",
+      "verifiedLogSha256": "da54f2586119363148c19350b3597946405da18e281d2a3fbd9ca8e51bd47297",
+      "verifiedMetaSha256": "af60b8ca3af13960bd6787005d47eb17ffd4aa995f2c26444e0d7ad113fb1d0a"
+    },
+    {
+      "acceptedScope": [
+        "positive/aligned known t/F df and typed mappings",
+        "coded affine handedness/frame-code policy",
+        "32pairs/64channels checked beforepayload",
+        "dispatch/unit/digestpinnedTSV/storedtype/singleton3D/gzip budget"
+      ],
+      "blockingFindings": [
+        "valid decoded logicalFloat32 representability not checked",
+        "raw stream leaks when gzip constructor rejects header",
+        "Unknown legacy correspondence improperly requires Known scope alignment",
+        "no independent complete literal Core1 bundle; complete independent fixtures development1"
+      ],
+      "commit": "11fe7e991b15255708054f5c77a8865f1ae20850",
+      "handoffSha256": "d2404ca5625f8ec4a8fb654b856b614f40272d4b9fa50a6f21df54f21b5a54c8",
+      "limits": [
+        "gzip75,498,176bytes under64MiB is one measured workload",
+        "12crash actions=4completedAPIboundaries x3fresh processes, notpowerloss"
+      ],
+      "next": "Three code repairs + independent literal Corebundle, affected JVM/JS gates and exact rereview",
+      "scope": "Core-NIfTI schema",
+      "verdict": "RequestChanges",
+      "verifiedChecks": "estimates12/12 each platform;IO24JVM/5JS;CompileAll;subsequent codec5/5each",
+      "verifiedLogSha256": "31dbdfe440c48e096282ce11e0196afaa0452d9661b6282753b9c6a42c46c7d9",
+      "verifiedReceipts": 9,
+      "verifiedSourceFiles": 23
+    },
+    {
+      "blockingFindings": [
+        "rare-tail Gaussian approximation failed",
+        "54coordinate independent training validator differs300coordinate sample-estimated production procedure andR2000 excursions",
+        "all point estimates wrongly suppressed if any planned cell incomplete",
+        "alpha/72 each tail supports TOSTPass but notsimultaneous99.9percent Pass-Fail confidence family"
+      ],
+      "commit": "4bc68c5d67af92e1aec012f216899a1b1708d5e3",
+      "confirmationLaunched": false,
+      "next": "Keep original native regular/dependence/transfer Unresolved; descriptive percellpoints; ratealpha/(2*72); independent cheap reporting checks then freeze+costapproval",
+      "oneSided95LowerErrorApprox": 0.00414,
+      "oneSided95UpperError": 0.008427808307499458,
+      "projectedCampaignHoursBeforeOverhead": 17.36,
+      "proposedRatePowerOnlyPerEndpoint": {
+        "effectR5000": 0.9333,
+        "nullR15000": 0.7757
+      },
+      "scope": "first-level regular-moment confidence method",
+      "syntheticFamilies": 4000,
+      "syntheticFamilyMisses": 24,
+      "targetFamilyError": 0.001,
+      "verdict": "RejectMethodPromotionAndRetainHold"
+    },
+    {
+      "acceptedScope": [
+        "single fixedprospectivebudgetcandidate",
+        "directGaussianamplitude normalization andrelativeL2 units",
+        "complete retirement ofsmoke-contaminated freshseed7000930101"
+      ],
+      "actual100kLaunched": false,
+      "base": "1d2bdf5dcae4885e57ea5069932ca26da72f7747",
+      "blockingFindings": [
+        "row-major block passed to contiguous runtime offset mixes responses forwidth>1",
+        "chunk-dependent inputchecksum",
+        "terminalSD copied, no freshH/E/amp/SD/stationarity gate",
+        "directreference search stability unestablished and energydeficit omitted",
+        "pervoxel receipt/newlyadmittederrors/frozen101102cells missing;zeroadmitted percentile crashes",
+        "phase/endtoend memory/outputaudit/actual100klauncher incomplete"
+      ],
+      "freshQualificationLaunched": false,
+      "next": "Complete development-only repairs, cache responseindependent reference geometry; source freeze+rereview beforefresh",
+      "scope": "C0 pre-fresh qualification harness",
+      "sourceSha256": {
+        "doc": "8a23b8c43811b754037dbd26aa1939b434ab1ff4afd0a47f009ca2374e188da9",
+        "jsHelper": "1b57eaab739bb0ab53affdd22cf24c344c98115e8357e2fefbb365b3703ab63b",
+        "jvmHelper": "4094d0b568cc43bc343f266b4ec712ce3388c23d38826bc5d7c055e8c117816d",
+        "sharedSuite": "7e0d739de5bbd2a2352288d169817ca2c7be11508f186b47f0752821573e50b6"
+      },
+      "verdict": "RequestChangesBeforeFreshOr100k"
+    }
+  ],
+  "integrationBase": "1d2bdf5dcae4885e57ea5069932ca26da72f7747",
+  "recordedUtc": "2026-09-30T11:05:04.657361+00:00",
+  "reviewer": "/root/decoder_review",
+  "schema": "scalafim.p1.review-dispositions.v1",
+  "scope": "Independent source/evidence review; no fresh qualification, publication, merge or release. Failed candidates remain blocked.",
+  "subsequentReviews": [
+    {
+      "commit": "43673482d226e43e97af8a7ecbfc2e89ccb557cf",
+      "verdict": "AcceptBoundedCore",
+      "integrationCommit": "536a1a679490b94051704179a27269b452c7152b",
+      "supersedesRejectedCandidate": "11fe7e991b15255708054f5c77a8865f1ae20850",
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "d1879b4d2559e5c2f5d488290bcc7984fdbe9d50",
+      "verdict": "AcceptBoundedLifecycle",
+      "supersedesRejectedCandidate": "2c22772e3ed7a890ddeae4adb835552466500ab9",
+      "counterAndIntegrationGate": "pending"
+    },
+    {
+      "commit": "42c394dc316235f4b1a272cdfd5bf557bb13c693",
+      "verdict": "AcceptDescriptiveReportingAndRateProposal",
+      "regularMethodAdmitted": false,
+      "campaignLaunched": false,
+      "costApproval": "pending actualreply"
+    },
+    {
+      "snapshotSuiteSha256": "4dc3a06870e6f2cb451aae26d9961416b7d7f4a9768e60d549d88282f92699cc",
+      "verdict": "RequestChangesBeforeFresh",
+      "findings": [
+        "Newtoncorrection stationarity vsrawgradient",
+        "fullretained pervoxel study/audit/cap records",
+        "boundedcontinuousreference cache",
+        "full development-path and expanded predeclaredoraclecontrols"
+      ],
+      "freshLaunched": false,
+      "actual100kLaunched": false
+    },
+    {
+      "commit": "7bd14ec92e3b78b6fc181ef1ccf3f935b0e72d56",
+      "verdict": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting",
+      "integrationCommit": "9235c3c79ed91d5abe7965129844325edc299292",
+      "integratedChecks": "56 JVM/25 JS/CompileAll warning clean",
+      "integratedRawSha256": "00f0a40e33032c79154f4249c35d6af1d75ecc59894630cd207324ab6671d4fc",
+      "integratedMetaSha256": "b5bd70394dcba210b32568ff4da7cf6f3baf98329ec8a01a761d6cd7a687c50a",
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "bab9a99f971a2c81acf8f0ab80f6c8aeadfb5d7b",
+      "verdict": "RequestChangesStorageReceiptOnly",
+      "findings": [
+        "wrapper buffer mislabeled as worker coefficient scratch; other retained buffers not scoped",
+        "retained expanded source excluded from shared and engine estimate without disclosure"
+      ],
+      "numericalReadoutBlockerFound": false,
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "28382eae",
+      "verdict": "RequestChangesFactorValueBinding",
+      "findings": [
+        "same-shaped independently supplied factor and A band accepted without identity proof"
+      ],
+      "localProviderOnly": true,
+      "fullMLAdmitted": false
+    },
+    {
+      "verdict": "C0DevelopmentTimeoutNonEvidence",
+      "sourceSuiteSha256": "2b8a609453caa0b76e11614fe0deb66a8fe918d9c23f91a95317daa3851fa5b2",
+      "exit": 1,
+      "developmentTestSeconds": 260.51,
+      "jsRun": false,
+      "freshLaunched": false,
+      "actual100kLaunched": false
+    },
+    {
+      "commit": "d7a9e9001737614ca4e3c0ec7621da5c84fd1d5a",
+      "verdict": "AcceptBoundedPublicReadoutAndScopedStorage",
+      "integrationCommit": "43db2e837d7eb40ac7398c8de76909eb6ce4bf54",
+      "integratedChecks": "fit67+laws9JVM,fit36+laws9JS,warning-cleanCompileAll",
+      "receiptSha256": "37c08c4049e2dbc944494455c0195de7dde43c941c3f3bf843dbc4d16092e134",
+      "fullTicketClosed": false
+    },
+    {
+      "commit": "4ec40483890c92457ad54523a9fe0d7f71562267",
+      "correctsInitialHandoffText": "3d9a5ff4 nonexistent; actualSHA explicitly corrected by author",
+      "verdict": "AcceptBoundedImmutableFactorValueIdentity",
+      "checks": "17/17each+CompileAll; four sensitive mutants fail after required Test/clean",
+      "localProviderOnly": true,
+      "java": "25.0.1 not JDK21",
+      "fullMLAdmitted": false
+    },
+    {
+      "commit": "0017dafd5152f60e09b27ce7d1b7c343a61a1c53",
+      "verdict": "AcceptBoundedTypedCriterionAdapter",
+      "integrationCommit": "d71e5ca9faac8d87ab03d5fa6f59cb4c5c54d8ae",
+      "integratedChecks": "26JVM26JS+warning-cleanCompileAll",
+      "receiptSha256": "05ece66faa94896533979d7e2c4192192d3b487f1e6935a02e80603d91a67931",
+      "nativeBackendAdmitted": false
+    },
+    {
+      "commit": "179af2714b9349caf61461289b1857976703b0fa",
+      "verdict": "RequestChangesOracleResolutionBeforeFresh",
+      "sourceFreezeSha256": "bbf30ff4bd169861999eddb39ccd349b7949c495bbebd1706f864f89b291fe53",
+      "checks": "boundedunit7/7each; DEV3/SNR1,.5eachplatform; variedshapeadequacy actualexit1both",
+      "findings": [
+        "sevenmeshscales stopabove directenergy at decodercoords in five of six responses",
+        "coarse/dense amplitude1.91142566e-4 exceeds unchanged1e-4margin"
+      ],
+      "freshLaunched": false,
+      "fullFrozen200Launched": false,
+      "actual100kLaunched": false,
+      "next": "ONE fixed14main/16dense DEV-only oracle refinement repair; scientific margins/seeds/policy unchanged"
+    },
+    {
+      "commit": "64a14f023013a0c0c3fbccdd1e6e3fd69bcab656",
+      "verdict": "AcceptBoundedOfficialJniProviderProbe",
+      "integrationCommit": "1a303565f169f5c4641ebf4a3cecab0378395d53",
+      "verifiedCommandReceipts": 24,
+      "runtimeManifestSha256": "5af1d1b94cdfca3dd784655222ce2d5c51fd4b36e798b2d77d6b4837d4f664f9",
+      "parentReceiptSha256": "53d730cfa8ae45711846956c819b3181bf1577adfefc4cc8b3638c1307fc471d",
+      "lane": "macOSARM/JDK25.0.1",
+      "heapCapBytes": 67108864,
+      "processRssIsNotHeapCap": true,
+      "productionModuleAdmitted": false,
+      "estimateBackendAdmitted": false,
+      "fullCoreTicketClosed": false
+    },
+    {
+      "commit": "179af2714b9349caf61461289b1857976703b0fa",
+      "verdict": "AcceptBoundedNonOracleHarnessControlsOnly",
+      "oracleQualified": false,
+      "freshLaunched": false,
+      "fullFrozen200Launched": false,
+      "actual100kLaunched": false
+    },
+    {
+      "commit": "40c4a83cd8decae895751b0f07d0c657f532343b",
+      "verdict": "AcceptBoundedCompactSharedUNiftiOutput",
+      "integrationCommit": "d2ab88ccfe2ca2b7c6b7fb66883a7995ba5cbfb3",
+      "integratedChecks": "estimates13/13 IO44/9 fitEstimates17/13 group75/74 and warning-clean CompileAll",
+      "parentReceiptSha256": "ce6f5d25910feda5dec12705bf499453fcea0a29f70d70ead168186be949a11d",
+      "fullCoreTicketClosed": false
+    },
+    {
+      "commit": "6a5d0838728f4b44ea312b9c6e5d024376709901",
+      "verdict": "RequestChangesFactorAttemptAccounting",
+      "findings": [
+        "pre-factor construction refusal counted as Gale N factor attempt/failure; must consume accepted-band factory actual work into both counter families"
+      ],
+      "boundedMathBlockerFound": false,
+      "checks": "55 focused+9 laws each; warning-clean CompileAll local Gale override",
+      "repairReturnedNormally": true,
+      "nativeBackendAdmitted": false,
+      "hostedProviderAdmitted": false
+    },
+    {
+      "commit": "090f3d1f6fea76c8cc4c7aaec2ec72b9129850b8",
+      "verdict": "AcceptBoundedOracleAdequacy",
+      "freezeSha256": "451be51b9abca9c127c9d8d2f012d7ef871f262922ec5c68ae3f7f06513e023d",
+      "archive": {
+        "archive": "c0-oracle-repair-qualified.json.gz",
+        "sha256": "469f2e2b0d79edd9a656242f9d86900f2cb3e9926ab4b12ed0dc54bc49dcd83d",
+        "payloads": 39
+      }
+    },
+    {
+      "commit": "090f3d1f6fea76c8cc4c7aaec2ec72b9129850b8",
+      "verdict": "HoldBothPlatformScientificQualification",
+      "jvmCandidateAdmissions": [
+        190,
+        185
+      ],
+      "jsCandidateAdmissions": [
+        190,
+        192
+      ],
+      "requiredPerCell": 190,
+      "freshLaunched": false,
+      "performance100kLaunched": false,
+      "archive": {
+        "archive": "c0-frozen200-jvm-hold.json.gz",
+        "sha256": "4a5b11c80d3a67899aa95dc1a3ea0ba5fc0d11b9829db1dd8e76169c72fbc47e",
+        "payloads": 9
+      }
+    },
+    {
+      "commit": "e6543fb639b53b1fe938b7465540bd9747d5424f",
+      "verdict": "RequestChangesPublicDeclarationProvenance",
+      "verifiedChecks": "72 JVM/48 JS and warning-clean CompileAll",
+      "archive": {
+        "archive": "trial-public-executor-e654-request-changes.json.gz",
+        "sha256": "af08a8e52524c283c4bae6baaaf343c597f785dfd1690606be557fbcce036e5f",
+        "payloads": 40
+      }
+    },
+    {
+      "commit": "3d75dea0e3a8c9cbb3907abb72b9252a9f79bd49",
+      "provider": "da38f8c429294657d30ec29f06eae3fab636d428",
+      "integrationCommit": "944b6fe3a30cc65bbf402c4a668a62c952b1f4e1",
+      "verdict": "AcceptBoundedHostedNativeMlCoreAndHelper",
+      "integratedChecks": "56 fit +9 laws EACH platform; CompileAll",
+      "fullTicketClosed": false,
+      "scientificAdmitted": false,
+      "archive": {
+        "archive": "hosted-ml-core-qualified.json.gz",
+        "sha256": "d885e20a57ad32c31cb695c3e70f1291a80236d697aa4930269f5dddfb0cd55d",
+        "payloads": 84,
+        "bytes": 261421
+      }
+    },
+    {
+      "integrationCommit": "0edf75c213c123f5c538518d9ad9d9900cef406c",
+      "verdict": "AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration",
+      "sourcePathsVerified": 21,
+      "nativeOptInChecks": "20 JVM/10 JS",
+      "publicChecks": "75 JVM/50 JS",
+      "c0DefaultControls": "8 EACH platform; CompileAll",
+      "independentReviewSha256": "8537d3f5a497f0bd8dbfd409f557940b4007535b591921bbed192ab7847c902a",
+      "c0Scientific": "HOLD",
+      "estimateHdfBackendAdmitted": false,
+      "fullTicketClosed": false,
+      "archive": {
+        "archive": "hdf-public-c0-integration-qualified.json.gz",
+        "sha256": "141d2180dfbd91e63c534a8bcf641000b8a80163c9f1cc544958a46b94721f57",
+        "payloads": 47,
+        "bytes": 1184234
+      }
+    },
+    {
+      "commit": "d44b90685c43c39aff3c68923761e5180ad80d93",
+      "integrationCommit": "17a7e7108a82a1aa3b2c312b60a9b0b97a6ddbb9",
+      "verdict": "AcceptBoundedPooledEstimateProducer",
+      "integratedChecks": "122 JVM/113 JS; CompileAll",
+      "effectiveDf": "Unknown",
+      "fullCoreTicketClosed": false,
+      "archive": {
+        "archive": "pooled-producer-qualified.json.gz",
+        "sha256": "81305f6ee2a277e34480f849318bc4d6d30c51957ea44a4f6a6b247873ee3be3",
+        "payloads": 29,
+        "bytes": 2704260
+      }
+    },
+    {
+      "commit": "10fbbb46728485fd860745dba7396c6e217d8fba",
+      "integrationCommit": "b11d1909ac36bc4e732a1224605f1f90c5113798",
+      "verdict": "AcceptBoundedCore3InferenceEvidenceAndTransactionalReadbackRepair",
+      "sourcePathsVerified": 87,
+      "integratedChecks": "181 JVM/125 JS; CompileAll",
+      "freshReadback": "12 cells/3 planes; late cancellation and callback leave caller buffer unchanged",
+      "fullCoreTicketClosed": false,
+      "archive": {
+        "archive": "inference-core3-repair-qualified.json.gz",
+        "sha256": "b1e8ec064d8dbd3afaae900344d7400367a78a2f0d8bf89e7b768b487d729edd",
+        "payloads": 141,
+        "bytes": 2920047
+      }
+    },
+    {
+      "verdict": "FrayFeedbackFiledDirectlyInUserRequestedRepository",
+      "motes": [
+        "bd-01M3RQ4Y6YNB6D242VZ2F0RPMN",
+        "bd-01M3RQ4Y9ABGTRB5XXNSWXCBCD",
+        "bd-01M3RQ4YAJVNM47M3ZC778GXDB"
+      ],
+      "fraySourceChanged": false,
+      "archive": {
+        "archive": "fray-feedback-filed.json.gz",
+        "sha256": "1b231eba87649bc4f078b3e4a6728b0913b1cbfba1bd7fde17a30146a4fbb916",
+        "payloads": 15,
+        "bytes": 19075
+      }
+    },
+    {
+      "verdict": "CalibrationExecutionAmendmentAcceptedForOwnerDecisionOnly",
+      "decisionManifestSha256": "d4d2c79e7de486f8f3a8330cae0f64df9002ae648f1cd134d3e65b972307b693",
+      "readySha256": "767e4c8ed6fa961e3195d36bfd75005f1628bbf288df32a0a97f449ae2a95542",
+      "actualControllerTests": 36,
+      "actualUserAmendmentApproval": "pending",
+      "campaignFits": 0,
+      "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedNativeMlExecutorIntegration",
+      "integrationCommit": "a6dbd3b188bd321c41053877121ccf64cf93259b",
+      "candidate": "8523c8c73f5ecf3a450390ba39523d7a20bdf6c0",
+      "tests": {
+        "jvm": 134,
+        "js": 101,
+        "compileAll": true
+      },
+      "archive": {
+        "archive": "native-ml-executor-integrated-qualified.json.gz",
+        "sha256": "0629972d3473abf1cbd887bce5e766a3056ad2afe9768b5cb4dfd0565348ca30",
+        "payloads": 41,
+        "bytes": 1136628
+      },
+      "fullTicketClosed": false,
+      "publicMlOutputsAdmitted": false,
+      "scientificAdmitted": false
+    },
+    {
+      "verdict": "AcceptBoundedHdfMetadataLifecycleIntegration",
+      "integrationCommit": "16f7e35b5fe4c8ff9ed00f35c860f364138be33b",
+      "candidate": "9ac55efc7c5ef03e9014be76ad10e990b06b509b",
+      "tests": {
+        "jvm": 192,
+        "js": 129,
+        "compileAll": true
+      },
+      "providerProperty": null,
+      "archive": {
+        "archive": "hdf5-metadata-hooks-integrated-qualified.json.gz",
+        "sha256": "b7fe20512f5b287355918c85acc418fda26aabae7e2355212cd48d61650c9459",
+        "payloads": 73,
+        "bytes": 1975196
+      },
+      "physicalBackendAdmitted": false,
+      "fullCoreTicketClosed": false
+    },
+    {
+      "verdict": "ActualOwnerApprovedAmendmentAndFirstLaunchObservedOnly",
+      "actualApproval": true,
+      "archive": {
+        "archive": "calibration-first-launch-monitor-control-only.json.gz",
+        "sha256": "d77dcdcabf1680b1f97ca38cf1a9887ad51bc8473f499679179f1644e37139d6",
+        "payloads": 50,
+        "bytes": 918717
+      },
+      "originalControllerStopped": true,
+      "commandsStarted": [
+        0
+      ],
+      "remainingCommandsStopped": true,
+      "terminalOutputHashesFinal": false,
+      "continuationController": "unqualified replacement under repair",
+      "scientificPass": null
+    },
+    {
+      "verdict": "FourthFrayFeedbackFiledDirectly",
+      "mote": "bd-01M3S3KRC8RBJ3X5H4RCPV4ZCC",
+      "totalFrayMotesFiled": 4,
+      "archive": {
+        "archive": "fray-fourth-compatibility-feedback.json.gz",
+        "sha256": "8000705c54c623549bbbda56825412f32b2cb7ea84b2d1864d7122e300974539",
+        "payloads": 7,
+        "bytes": 4274
+      },
+      "fraySourceChanged": false,
+      "sharedDaemonRestarted": false
+    },
+    {
+      "verdict": "AcceptBoundedLiteralColumnPlatformTrace",
+      "archive": {
+        "archive": "c0-literal-platform-trace-qualified-v2.json.gz",
+        "sha256": "a5cf5e84947b0ed0398c667f3678d5cfb0af2c5bd20304f383aaba7bd7e6d5c3",
+        "bytes": 174462,
+        "payloads": 14
+      },
+      "integrationCommit": "a9fecbb4acee8c0e23a490b65addca826bfe869f",
+      "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedFlatHdfInventory",
+      "archive": {
+        "archive": "hdf5-flat-inventory-qualified-v2.json.gz",
+        "sha256": "05c3cf51392d55df43e4b0d8814e8f1b6b8ffd554196370879c59dc7d1a5d2d8",
+        "bytes": 34269,
+        "payloads": 8
+      },
+      "integrationCommit": "fe810a584dcf38df3194491a4a643e0ab2fd847c",
+      "tests": {
+        "jvm": 25,
+        "js": 12
+      }
+    },
+    {
+      "verdict": "AcceptDirectGaussianPrecisionRepair",
+      "archive": {
+        "archive": "gaussian-direct-lag-qualified-v2.json.gz",
+        "sha256": "07825be14208694e4134137ff947aa66c0aec929bcca987c93d758a039b192f4",
+        "bytes": 2194870,
+        "payloads": 63
+      },
+      "integrationCommit": "fcb0addb91f573196cd1d1b248cb57099b0145e1",
+      "tests": {
+        "jvm": 368,
+        "js": 368,
+        "compileAll": true
+      },
+      "freshAdmission": false
+    },
+    {
+      "verdict": "AcceptBoundedPublicMlOutput",
+      "archive": {
+        "archive": "profile-ml-public-output-qualified-v2.json.gz",
+        "sha256": "d311854d682464b924a1091fd6ff16bde3ed23cec35cabe690046c6a60360404",
+        "bytes": 268176,
+        "payloads": 20
+      },
+      "integrationCommit": "327eda76792bcb0e542cb9e9c6f0d1351f45b1ea",
+      "tests": {
+        "jvm": 207,
+        "js": 163,
+        "compileAll": true
+      },
+      "scientificPass": null
+    },
+    {
+      "verdict": "AcceptBoundedPhysicalHdfAbortFixed",
+      "archive": {
+        "archive": "estimate-hdf5-physical-fixed-qualified-v2.json.gz",
+        "sha256": "47a048a41f134518976e579b380c61d4cf48aea92462eec9195524229ce7a8d4",
+        "bytes": 1601952,
+        "payloads": 37
+      },
+      "integrationCommit": "895e37ffd93286631691ec02b15433f4fb9787ad",
+      "tests": {
+        "jvm": 133,
+        "js": 49,
+        "compileAll": true
+      },
+      "fullCoreClosed": false,
+      "sharedLandingAuthorized": false
+    },
+    {
+      "verdict": "AcceptBoundedPrefreshRecordedHistory",
+      "archive": {
+        "archive": "condition-prefresh-audit-qualified-v2.json.gz",
+        "sha256": "62654e50ebb8a8bdd7733160d4138d57bece4e4d0ab4c406230c7997b974df9f",
+        "bytes": 154330,
+        "payloads": 16
+      },
+      "universalNonuseProven": false
+    },
+    {
+      "verdict": "AcceptActualCommandZeroTerminalAndV6Controls",
+      "archive": {
+        "archive": "calibration-zero-terminal-v6-control-qualified-v2.json.gz",
+        "sha256": "a3cc34f12122ee6bbb7945be992dfa7b04345b50e6a7fa7accd8e70a19ce0db0",
+        "bytes": 161802,
+        "payloads": 19
+      },
+      "completedBlocks": 180000,
+      "remainingBlocks": 568000,
+      "continuationApproval": "pending",
+      "scientificPass": null
+    },
+    {
+      "verdict": "FifthFrayFeedbackFiledDirectly",
+      "archive": {
+        "archive": "fray-fifth-startup-feedback-v2.json.gz",
+        "sha256": "94c20fa8414c6f1ca477e126223248cde5be4f7b4ceb3ce3e81e11be28fcb01b",
+        "bytes": 2727,
+        "payloads": 2
+      },
+      "mote": "bd-01M3SEKPA3YEM08CNEF01HYV8N",
+      "totalFiled": 5
+    },
+    {
+      "verdict": "AcceptFinal08ConditionLaunchControls",
+      "archive": {
+        "archive": "condition-final08-launcher-controls-v2.json.gz",
+        "sha256": "c7a9fc4b76ad7e2b6c2c2251a48ab5fc604b69796025b81959ed65768f58c6f0",
+        "bytes": 3263208,
+        "payloads": 26
+      },
+      "jvmFresh": "running",
+      "jsFresh": "not started",
+      "scientificPass": null
+    }
+  ],
+  "updatedUtc": "2026-09-30T17:39:21.520389+00:00",
+  "currentIntegration": "895e37ffd93286631691ec02b15433f4fb9787ad",
+  "historicalRecords": "Earlier candidate/subsequent-review fields describe their recorded point in time; latest records below govern current disposition."
+}

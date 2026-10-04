@@ -1,0 +1,656 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project work-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-lwu-repair-design-20260930/work/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a3fe250684692aa42c1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (261806 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-lwu-repair-design-20260930/work/)
+[info] compiling 1 Scala source to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 4 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-lwu-repair-design-20260930/work/modules/fit/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.fit.LssSuite:
+  + LeastSquaresSeparate matches independent per-trial least-squares oracle with fixed regressors 0.073s
+  + LeastSquaresSeparate handles a single trial as residualized simple regression 0.003s
+  + LeastSquaresSeparate prepared design reuses fixed projection and trial workspace 0.003s
+  + LeastSquaresSeparate reports zero trial and degenerate other regressors 0.002s
+  + LeastSquaresSeparate returns typed metadata errors from safe constructors 0.001s
+  + LeastSquaresSeparate reports trials absorbed by fixed regressors without inventing betas 0.001s
+  + LeastSquaresSeparate rejects collinear trial and other-trial regressors 0.001s
+  + LeastSquaresSeparate rejects non-finite matrix inputs 0.001s
+  + LeastSquaresSeparate validates row alignment 0.001s
+scalafim.fmri.fit.MatrixFileFitSuite:
+  + matrix-file dataset backend runs through builder-created OLS plan 0.441s
+scalafim.fmri.fit.PreparedManovaGeometrySuite:
+  + multi-contrast preparation yields a design-normalized effect basis 0.024s
+  + invertible changes of contrast basis preserve the hypothesis projector 0.003s
+  + rank-deficient contrast rows are rejected as non-estimable 0.002s
+scalafim.fmri.fit.profile.ParallelBlockExecutorSuite:
+  + parallel receipts equal the sequential run and arrive in block order 0.222s
+  + a refusing sink stops the parallel run with a typed error 0.01s
+  + a held first block prevents submission beyond the initial worker window 0.257s
+  + factory and thrown sink failures are typed and owned pool threads exit 0.007s
+  + cancellation returns a typed error and terminates owned pool threads 0.002s
+  + worker failure interrupts another in-flight task and releases owned threads 0.002s
+  + interrupting the caller cancels in-flight tasks and restores its interrupt flag 0.002s
+  + sink interruption waits for owned workers or returns a nonfinal termination handle 0.106s
+  + cleanup timeout seam rejects unbounded and nonpositive values before work 0.003s
+  + caller interruption keeps the owned pool nonfinal while workers ignore cancellation 0.055s
+scalafim.fmri.fit.FitPlanBuilderSuite:
+  + builder-created FitPlan runs OLS and recovers known coefficients 0.043s
+  + builder-created FitPlan recovers task effects after nuisance adjustment 0.025s
+scalafim.fmri.fit.profile.ProfileTrialReadoutSuite:
+  + physical axes bind source, ordered trial and condition ids, nuisance ids and selected rows 0.615s
+  + trial queries are signed and bound to the exact physical axis 0.026s
+  + freeze binds actual coordinates and refuses unavailable original certificate before work 0.025s
+  + corrected off-node trial and signed query outputs match dense original equations 1.429s
+  + scoped retained storage is invariant across query evaluation, transpose and reuse 0.032s
+  + explicit exact-shape mode charges one factor and matches dense original coefficients 0.017s
+  + frozen corrected operator is linear and has a whitened-response adjoint 0.015s
+  + IID original and whitened adjoints coincide; equal-length foreign response axes refuse 0.01s
+scalafim.fmri.fit.MatrixFileTraceDiagnosticsSuite:
+  + file-backed fit capture reads once and traces its immutable selected snapshot 0.029s
+scalafim.fmri.fit.GlsPerformanceGuardrailSuite:
+  + fixed AR(1) dense GLS stays within the JVM guardrail 0.085s
+scalafim.fmri.fit.ResultArtifactsSuite:
+  + ResultManifest from dense fit preserves parameter metadata and provenance 0.026s
+  + ContrastMap preserves statistic kind and degrees of freedom 0.018s
+  + StatMap rejects value and voxel-space mismatches 0.004s
+  + CoefficientCovarianceArtifact preserves voxelwise covariance and rejects shape mismatches 0.003s
+  + restricted inference exports only inferable standard errors and covariance 0.006s
+scalafim.fmri.fit.PipelineFitWorkflowSuite:
+  + in-memory fMRI OLS workflow runs through the pipeline graph and matches direct execution 0.259s
+scalafim.fmri.fit.DctDriftFitSuite:
+  + native selected betas and contrasts equal independent FWL on complete and censored original rows 0.245s
+scalafim.fmri.fit.profile.ProfileReductionSuite:
+  + the reduction matches finite differences of the exact energy, including energy-term derivatives 0.006s
+  + omitting the energy-term derivatives is detected 0.005s
+  + a non-positive-definite Gram is reported, not inverted 0.002s
+  + compact condition jets agree with finite differences of the direct compact energy and are sign-invariant 0.004s
+  + criterion assembly directly forms J from dedicated coherent determinant jets 0.013s
+scalafim.fmri.fit.io.ResultManifestWriterSuite:
+  + ResultManifestWriter writes BIDS-style NIfTI, covariance TSV, and sidecar artifacts 0.177s
+  + ResultManifestWriter can write one named NIfTI per parameter and contrast map 0.016s
+  + ResultManifestWriter persists voxel status and contrast exclusions 0.005s
+  + ResultManifestWriter rejects unsafe stems and colliding named-map paths before writing 0.006s
+  + ResultManifestWriter reports unsupported HDF5 and GDS formats explicitly 0.003s
+  + ResultManifestWriter persists restricted inference provenance 0.003s
+scalafim.fmri.fit.SelectedEstimatesSuite:
+  + unified pooling retains exact R estimates and reports required internal variance 0.075s
+  + shared retention requests describe and deliver actual native uncertainty 0.022s
+  + unsupported engines, cancellation and sink failure retain typed outcomes 0.014s
+scalafim.fmri.fit.BasisExpandedRetentionSuite:
+  + preparation reads nothing and the retained product reprojects to the collapsed refit 0.017s
+  + a second kernel from the same retained product matches its own refit 0.002s
+  + streamed blocks carry the same panel as the assembled product 0.005s
+  + structure and preparation refuse malformed input before any read 0.001s
+  + cancellation yields no partial assembled product 0.001s
+scalafim.fmri.fit.ContrastReprojectionSuite:
+  + reprojection equals an independent direct OLS refit on the collapsed design 0.003s
+  + a second kernel from the same product also matches its refit 0.001s
+  + the product constructor refuses malformed retention 0.001s
+  + reprojection refuses malformed and degenerate requests 0.001s
+scalafim.fmri.fit.profile.ShapeDecoderTangentSuite:
+  + coupled lower-bound Newton direction follows feasible descent to the exact constrained optimum 0.006s
+  + coupled upper-bound Newton direction follows feasible descent to the mirrored optimum 0.0s
+  + tangent correction handles a third independent coordinate 0.001s
+  + a genuine constrained stationary bank point needs no candidate 0.0s
+  + a tiny representable clipped step is evaluated rather than called stationary 0.0s
+  + an unrepresentable raw nonstationary correction preserves terminal state without an evaluation 0.001s
+  + halving to an unchanged coordinate stalls only before the attempt cap is exhausted 0.001s
+reference normal conditionInf=1.1024188748038302 relative=3.19264533430656E-16 nuisance=0 coincident=false
+reference normal conditionInf=5598442.981301003 relative=2.2202221739638868E-10 nuisance=0 coincident=true
+reference normal conditionInf=87.2652392020036 relative=3.4906568772902743E-16 nuisance=2 coincident=false
+reference normal conditionInf=1.032963156407934E8 relative=2.2202221739636627E-10 nuisance=2 coincident=true
+off-node normal conditionInf=2898080.7634125627 relative=1.0882724982689898E-5
+conditional cubic errors=Vector(0.002410830226166335, 3.0460558291075065E-4, 3.823613006471639E-5, 4.787371954784425E-6) ratios=Vector(7.9145963220007935, 7.966433381076794, 7.986872636145138); omitted correction errors=Vector(0.020359700294110862, 0.004872775992614945, 0.0011873828703610452, 2.9276083882378326E-4) ratios=Vector(4.178254925932878, 4.103795089391251, 4.055811819407127)
+scalafim.fmri.fit.profile.TrialConditionalSolveSuite:
+  + arbitrary reference RHS uses the original projector normal inverse 0.401s
+  + zero displacement is the exact prepared-node control 0.009s
+  + corrected actual-shape coefficients and prepared-basis residual match dense original equations 1.429s
+  + one residual correction has local cubic error before floating-point floor 0.007s
+  + invalid shape, node, owner and certificate refuse before inverse work 0.008s
+  + same-worker ML exact payload recovers dense nuisance and measured residual without a second solve 0.095s
+  + measurement rejects invalid inputs and nonfinite normal actions without returning prior nuisance scratch 0.007s
+scalafim.fmri.fit.scenarios.StructuralFirstLevelScenarioSuite:
+  + S07 2x2 public design supports semantic simple and interaction hypotheses 0.108s
+  + S08 3x3 public design supports unequal-score trends and interaction 0.027s
+  + S09 public design supports heterogeneous HRF bases by structural cell 0.058s
+  + S06 public model preserves factor/modulator scope and missing-value policy 0.068s
+  + S10 reconstructed basis responses use explicit functional weights 0.034s
+  + S16 rank-deficient structural hypotheses report row-space evidence 0.047s
+  + S18 public WLS agrees with an independent base-R receipt 0.063s
+scalafim.fmri.fit.scenarios.RunLocalAxesScenarioSuite:
+  + run-local nuisance axes and missing shared cells preserve structural identity 0.071s
+scalafim.fmri.fit.StructuralHypothesisDslSuite:
+  + cell and basis references compile without column bookkeeping 0.003s
+  + weighted semantic rows compose T trends and F omnibus hypotheses 0.006s
+  + response functionals and modulators remain semantic 0.009s
+  + response functionals transport through explicit scan-space scaling 0.009s
+  + basis omnibus supports an explicit non-canonical scope 0.001s
+  + semantic omnibus blocks compose without exposing column rows 0.002s
+  + an empty basis scope reports a typed selection failure 0.0s
+  + a basis role absent from one heterogeneous cell is a typed basis failure 0.007s
+  + named response lowering composes with selected estimates without losing scientific metadata 0.003s
+  + named F lowering preserves row order and typed failures before design binding 0.011s
+  + only a named hypothesis exposes compile 0.001s
+  + validated domain ids remain first-class DSL inputs 0.001s
+  + sampled regressors compose as semantic coefficients 0.002s
+scalafim.fmri.fit.scenarios.MixedBlockNuisanceScenarioSuite:
+  + S12 combines sustained blocks, transient events, and variable epochs 0.043s
+  + S15 sampled nuisance preserves task inference against an R direct fit 0.09s
+scalafim.fmri.fit.scenarios.ScenarioHarnessSuite:
+  + clean observations produce a CI-passable scenario 0.002s
+  + failed observations force ScenarioStatus.Fail even without caveats 0.001s
+  + non-blocking caveats require explicit policy to pass CI 0.007s
+  + blocking caveats force ScenarioStatus.Fail 0.001s
+  + policies cannot declare failures acceptable 0.0s
+scalafim.fmri.fit.scenarios.PipelineFirstLevelWorkflowScenarioSuite:
+  + pipeline-backed first-level workflow returns one scenario verdict 0.035s
+scalafim.fmri.fit.profile.ProfileHrfTrialOutputsSuite:
+  + off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape 0.86s
+  + work aggregation retains conditional attempts and failures from distinct workers 0.012s
+  + alpha zero lowers a declared-order condition term directly and has no trial work 0.134s
+  + noiseless zero-deviation control recovers the declared continuous shape 0.347s
+  + fixed condition plan uses the existing admitted OLS retention 0.074s
+  + unsupported intent, temporal selection and whitening are rejected before a read 0.063s
+  + shared AR preparation rejects an MA component and a different first-row policy 0.008s
+  + zero-column baseline admits the trial route 0.066s
+  + shape prior requires symmetric positive semidefinite precision 0.153s
+  + nonunit noise variance does not rescale an energy-unit shape prior 0.078s
+  + a decode budget refusal remains a voxel status and is tallied as attempted 0.068s
+  + provenance binds the numeric basis and event durations 0.221s
+  + fixed retention translates reader and cancellation exceptions with partial progress 0.026s
+  + cancellation and sink failures stop subsequent reads and report delivered progress 0.202s
+  + ML executor returns coherent terminal J evidence, raw E readout and separate exact-once work 0.371s
+  + ML keeps a budget-limited terminal status and refuses unavailable terminal before delivery 0.734s
+  + ML forwarding refuses an unpointed or invalidated epoch, and charges exact failures only to legacy work 0.007s
+  + fixed and alpha-zero ML plans refuse before dataset resolution 0.016s
+  + ML setup refusal translation retains successful bank and attempted partial setup separately 0.007s
+  + ML cancellation before reading and before delivery retains truthful separate work 0.075s
+  + ML evaluation memoizes raw and measured payload once and stale closures cannot reuse a new response 0.009s
+  + public physical axes keep preparation identity, caller order and structural nuisance ids 0.059s
+  + accepted AR-reset signed off-node outputs equal a separately invoked existing readout exactly once whitened 0.101s
+  + normalization transports lambda and trial units while keeping nuisance units and raw selection 0.084s
+  + public corrected provenance identifies execution intent without the legacy exact route assertion 0.046s
+  + checked public declarations retain ordered query values, tolerances, output kind and exact preparation binding 0.083s
+  + nearest bank reference uses interval-scaled distances, lower ties and final rather than starting nodes 0.152s
+  + signed near-cancellation queries retain no full trial vector and conversion audit stays explicit 0.043s
+  + foreign and duplicate queries, wrong dimensions, rule and certificate refuse before any reader or sink access 0.117s
+  + missing or stale compiled baseline matrix and rows refuse; an actually empty nuisance axis is valid 0.307s
+  + decode refusals skip conditional work; cancellation immediately before delivery retains completed work 0.073s
+  + failed conditional operation keeps nested numerical error and actual failed work 0.338s
+  + ML same-worker public exact output matches dense returned-shape trial, nuisance and normal residual 0.121s
+  + ML signed queries and condition queries share normalization, native nuisance and explicit Float32 audits 0.072s
+  + ML unsupported intents refuse before readers or callbacks and decode refusals perform zero readout 0.172s
+  + ML sink refusal and pre-delivery cancellation preserve same-worker readout attempts 0.041s
+  + ML failed residual measurement emits nothing and retains the exact readout and failed normal action 0.325s
+scalafim.fmri.fit.scenarios.PublicFContrastScenarioSuite:
+  + public fit path preserves design semantics for T and F contrasts 0.006s
+scalafim.fmri.fit.StructuralHypothesisSuite:
+  + semantic selectors resolve to structural identities and carry estimability evidence 0.002s
+  + hypothesis estimability uses the same scale-aware convention as fitting 0.002s
+  + semantic resolution is invariant to rendered labels and coefficient order 0.003s
+  + structural identity permits repeated rendered labels across run-scoped regressors 0.001s
+  + a compiled hypothesis rejects a result from a different design fingerprint 0.001s
+  + unknown structural components produce typed failures 0.0s
+  + declared-but-empty cells are distinguished from unknown levels 0.001s
+  + invalid structural weights are reported during compilation 0.0s
+  + rendered labels cannot become structural authority 0.002s
+  + rank-deficient designs reject non-estimable T contrasts and reduce F numerator rank 0.003s
+  + response-level functionals expand over semantic basis elements 0.001s
+  + reduced fixed-effects axes reject missing T, F, and response-functional components 0.004s
+scalafim.fmri.fit.profile.OutputRequestSuite:
+  + queries validate labels, weights and tolerances 0.002s
+  + requests validate against the condition axis and refuse trial outputs on the condition backend 0.001s
+  + query evaluation keeps signs and audits float32 conversion per query tolerance 0.002s
+scalafim.fmri.fit.scenarios.ArCensorBoundaryGlsScenarioSuite:
+  + P3.4 row-deleted censor gaps bound public AR/GLS whitening 0.066s
+scalafim.fmri.fit.OlsEstimatesSuite:
+  + compiled estimator preserves selected functionals and removes nuisance contributions 0.002s
+  + selected estimates and joint uncertainty match an independent exact-rational oracle 0.001s
+  + marginal uncertainty agrees with joint readout without a joint covariance product 0.0s
+  + uncertainty execution reuses residual coordinates for its only selected product 0.01s
+  + column reordering and scaling preserve the same estimand 0.001s
+  + strided response blocks and repeated execution preserve input and output ownership 0.0s
+  + fixed row selection and temporal transform fuse through the readout adjoint 0.0s
+  + exactly determined coefficients do not require residual degrees of freedom 0.001s
+  + invalid readouts, incompatible rows, rank defects and unsupported solve policies fail explicitly 0.002s
+scalafim.fmri.fit.OlsPerformanceGuardrailSuite:
+  + default QR dense OLS stays within the JVM guardrail 0.012s
+scalafim.fmri.fit.ResponsePreparationSuite:
+  + default plan is inspectable and preserves block input identity 0.002s
+  + non-default plan distinguishes applied, rejected, and deferred surfaces 0.004s
+  + fixed volume weights apply by full-model timepoint index 0.001s
+  + fixed weights equal OLS on square-root weighted design and response 0.001s
+  + multiresponse WLS agrees with independently fitted response columns 0.001s
+  + estimated DVARS weighting is executable and records its source and normalization 0.001s
+  + zero fixed weights exclude rows before rank and residual-df calculation 0.001s
+  + Tukey DVARS estimation gives exact-zero artifacts lawful exclusion semantics 0.002s
+  + negative and non-finite fixed weights are explicit preparation errors 0.001s
+  + selected-row fixed alignment is exact rather than length-heuristic 0.001s
+  + DVARS resets at selection gaps instead of differencing across censored timepoints 0.0s
+  + within-run DVARS normalization does not cross acquisition boundaries 0.001s
+  + all DVARS transformations match the independent base-R receipt 0.003s
+  + nuisance projection rows must align with selected timepoints 0.0s
+scalafim.fmri.fit.ImageMapsSuite:
+  + Dense fit coefficient and SE maps preserve full voxel placement 0.006s
+  + image maps place selected voxels into their original image locations 0.004s
+  + typed result manifest coefficient maps adapt to existing image maps 0.008s
+  + standard-error image maps omit coefficients outside the inference scope 0.002s
+  + t and F contrast statistics map into image space 0.003s
+scalafim.fmri.fit.scenarios.LssTrialwiseRecoveryScenarioSuite:
+  + public LSS path recovers metadata-selected trialwise estimates 0.04s
+scalafim.fmri.fit.FitTraceDiagnosticsSuite:
+  + bounded OLS trace agrees with analytic projection and remains orthogonal 0.005s
+  + fixed AR GLS transformed trace uses independent run-reset whitening 0.012s
+  + raw original space refuses weighted preparation while model-prepared space is explicit 0.002s
+  + source identity, row ordering, budgets and cancellation refuse without reading 0.023s
+  + estimated shared and voxelwise AR use their actual fitted operators across censor gaps 0.018s
+  + captured estimated AR coefficients and operator agree with different fit chunk sizes 0.007s
+scalafim.fmri.fit.ChunkedFitExecutorSuite:
+  + ChunkProgram rejects non-contiguous generic work ordinals 0.002s
+  + SequentialChunkProgramInterpreter wraps failures with chunk identity 0.001s
+  + FutureChunkProgramInterpreter preserves ordinal order with bounded execution 0.003s
+  + FitChunkPlan exposes repeatable ordered voxel chunks 0.002s
+  + FitChunkProgram exposes a repeatable scheduler-neutral work stream 0.002s
+  + ChunkedFitExecutor matches unchunked OLS while preserving selected voxel order 0.003s
+  + single-voxel chunks preserve propagated non-finite exclusions 0.005s
+  + chunked voxel-specific row omission matches whole patterned OLS 0.027s
+  + future single-voxel chunks preserve propagated non-finite exclusions 0.009s
+  + future chunking preserves voxel-specific observation patterns 0.004s
+  + all-excluded and partially-excluded chunks preserve source exclusion order 0.003s
+  + ChunkedFitExecutor preserves fixed volume weighting applied to prepared responses 0.003s
+  + ChunkedFitExecutor estimates DVARS once from the whole selected response 0.008s
+  + FutureChunkedFitExecutor matches sequential chunked OLS with bounded parallelism 0.002s
+  + FutureChunkedFitExecutor matches unchunked full-rank LatentSketch 0.029s
+  + FutureChunkedFitExecutor reuses one compressed LatentSketch across chunks 0.005s
+  + FutureChunkedFitExecutor reuses one principal-component LatentSketch across chunks 0.007s
+  + ChunkedFitExecutor matches unchunked LSS 0.006s
+  + ChunkedFitExecutor matches unchunked fixed-AR GLS 0.006s
+  + FutureChunkedFitExecutor prepares estimated-AR GLS once across bounded parallel chunks 0.009s
+  + FutureChunkedFitExecutor matches unchunked full-rank ReducedRankGls 0.032s
+  + FutureChunkedFitExecutor reuses one compressed ReducedRankGls basis across chunks 0.01s
+  + FutureChunkedFitExecutor reuses deterministic ReducedRankGls bootstrap inference 0.018s
+  + full-rank voxelwise-AR ReducedRankGls fallback remains event-only across chunks 0.008s
+  + compressed voxelwise-AR ReducedRankGls remains an explicit design boundary 0.003s
+  + FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks 0.007s
+  + chunk interpreters agree from the same prepared GLS chunk program 0.004s
+  + ChunkedFitExecutor matches unchunked runwise OLS 0.004s
+  + FitChunkPlan rejects non-contiguous ordinals 0.0s
+  + FitChunkPlan rejects mixed timepoint chunks 0.0s
+  + runwise preparation preserves bounded response reads and censored axes 0.004s
+  + runwise future preparation preserves bounded response reads 0.003s
+  + fixed preparation preserves bounded response reads and censored axes 0.003s
+  + fixed future preparation preserves bounded response reads 0.003s
+  + LSS preparation preserves bounded response reads and censored axes 0.003s
+  + LSS future preparation preserves bounded response reads 0.005s
+scalafim.fmri.fit.scenarios.CensoredMultirunConcatScenarioSuite:
+  + censored multi-run concatenated fit row-deletes design and response consistently 0.008s
+scalafim.fmri.fit.RunwiseGlsSuite:
+  + runwise GLS is an explicit run-specific estimand and refuses across-run AR pooling 0.008s
+  + fixed AR(1) runwise GLS matches an independent segmented GLS reference 0.01s
+  + structural FIR axes, selected gaps and fixed AR covariance survive public and chunked execution 0.016s
+  + estimated voxelwise AR is chunk invariant and fixed effects consume every covariance matrix 0.023s
+scalafim.fmri.fit.scenarios.ChunkedRunwiseExecutionScenarioSuite:
+  + chunked runwise regression preserves chunk order, run partitions, and coefficients 0.032s
+scalafim.fmri.fit.profile.ShapeEvidencePoolSuite:
+  + pooled node energies sum, ignore unscanned nodes and pick a fully scanned best node 0.001s
+  + merging in a fixed order reproduces a single accumulation exactly 0.001s
+  + the regional prior sits at the pooled best node with a floored spread 0.002s
+scalafim.fmri.fit.profile.TrialMlObjectiveSuite:
+  + all four entry points supply coherent J, including off-node values 0.011s
+  + unchanged decoder chooses J node rankings and the independent 2D off-node optimum 0.003s
+  + energy-only candidate uses J and the reserved terminal jet without extra evaluations 0.001s
+  + analytic indefinite HJ with positive HE takes parabolic fallback and terminal verification 0.001s
+  + actual E-only substitution of each method is killed by its separate path witness 0.003s
+  + a rejected last jet cannot overwrite returned raw evidence 0.003s
+  + failed terminal verification is unavailable and next response clears the ledger 0.002s
+  + accepted energy-only terminal refusal preserves status and has no synthesized evidence 0.002s
+  + strong prior is applied once; raw HE, HJ, augmented H and conditional SD remain distinct 0.004s
+  + missing capability, invalid variance and invalid prior refuse before response work 0.004s
+  + binding refusals clear every destination, ledger repeats refuse, work stays bounded 0.005s
+  + prior curvature cannot rescue indefinite prior-free HJ for conditional SD 0.0s
+  + value refusals yield no admissible node; malformed destinations perform no backend work 0.005s
+scalafim.fmri.fit.RunwiseOlsSuite:
+  + RunwiseLeastSquares fits separate coefficients per sampling-frame block 0.011s
+  + RunwiseOls reports singular run designs with run identity 0.001s
+scalafim.fmri.fit.scenarios.MixedTrFixedEffectsScenarioSuite:
+  + mixed-TR public fixed-effects fit preserves run grids and semantic axes 0.013s
+  + fixed effects omit one invalid run-voxel contribution without failing healthy voxels 0.005s
+scalafim.fmri.fit.profile.BlockExecutorSuite:
+  + blocks partition the voxel range with the last block shorter 0.0s
+  + sequential execution delivers receipts in block order and retains no payloads 0.002s
+  + budget, sink failure and cancellation are typed outcomes 0.001s
+  + worker construction and thrown sink failures remain typed 0.001s
+scalafim.fmri.fit.scenarios.SemanticContrastReorderedColumnsScenarioSuite:
+  + name-keyed contrasts survive reordered public design columns 0.007s
+scalafim.fmri.fit.profile.ProfileHrfFitSuite:
+  + off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape 0.384s
+  + work aggregation retains conditional attempts and failures from distinct workers 0.001s
+  + alpha zero lowers a declared-order condition term directly and has no trial work 0.046s
+  + noiseless zero-deviation control recovers the declared continuous shape 0.031s
+  + fixed condition plan uses the existing admitted OLS retention 0.027s
+  + unsupported intent, temporal selection and whitening are rejected before a read 0.045s
+  + shared AR preparation rejects an MA component and a different first-row policy 0.001s
+  + zero-column baseline admits the trial route 0.053s
+  + shape prior requires symmetric positive semidefinite precision 0.068s
+  + nonunit noise variance does not rescale an energy-unit shape prior 0.034s
+  + a decode budget refusal remains a voxel status and is tallied as attempted 0.032s
+  + provenance binds the numeric basis and event durations 0.093s
+  + fixed retention translates reader and cancellation exceptions with partial progress 0.005s
+  + cancellation and sink failures stop subsequent reads and report delivered progress 0.144s
+  + ML executor returns coherent terminal J evidence, raw E readout and separate exact-once work 0.129s
+  + ML keeps a budget-limited terminal status and refuses unavailable terminal before delivery 0.419s
+  + ML forwarding refuses an unpointed or invalidated epoch, and charges exact failures only to legacy work 0.007s
+  + fixed and alpha-zero ML plans refuse before dataset resolution 0.006s
+  + ML setup refusal translation retains successful bank and attempted partial setup separately 0.002s
+  + ML cancellation before reading and before delivery retains truthful separate work 0.033s
+  + ML evaluation memoizes raw and measured payload once and stale closures cannot reuse a new response 0.002s
+scalafim.fmri.fit.FixedEffectsEstimatesSuite:
+  + selected pooling matches independent rational inverse-precision calculations 0.003s
+  + only requested pooled covariance and standard errors are propagated 0.004s
+  + pooled coefficient reorder and disjoint run order preserve selected estimates 0.004s
+  + missing pooled coefficients and foreign design identity fail explicitly 0.004s
+  + public selected run combination preserves mixed-TR R estimates and native exclusions 0.011s
+scalafim.fmri.fit.TrialReadoutSuite:
+  + LSS trial readout matches the independent fMRILSS fixture and owns coefficient identity 0.002s
+  + readout folds fixed nuisance projection into both forward and adjoint maps 0.001s
+  + readout satisfies the Frobenius adjoint law 0.0s
+  + readout commutes with downstream feature mixing 0.0s
+  + one prepared readout is cached and applies a response batch columnwise 0.001s
+  + zero trial regressors produce a zero readout row and zero adjoint contribution 0.0s
+  + trial readout and trial coefficient axes reject malformed inputs with typed errors 0.001s
+scalafim.fmri.fit.CompactFixedEffectsSuite:
+  + public run combination retains compact statistics and agrees with independent correlated mixed-TR R oracle 0.009s
+  + missing run statuses agree with explicit defaults and preserve variance exclusions 0.008s
+  + structured storage grows with voxel scales, preserves off-diagonal precision, and refuses malformed fields 0.006s
+  + unstructured legacy contributions, disjoint folding and availability rules remain usable 0.004s
+  + compact concatenation refuses logical voxel count overflow without dense materialization 0.002s
+scalafim.fmri.fit.FirstLevelFixedEffectsEstimatesSuite:
+  + preparation reads no responses and blocked pooling matches independent mixed-TR R contrasts 0.01s
+  + run-local nuisance projection preserves joint task pooling and selected voxel order 0.01s
+  + entirely excluded blocks preserve identities and do not stop subsequent healthy voxels 0.003s
+  + cancellation, sink failure and incompatible engines fail without excess reads 0.003s
+  + pooled execution dispatches only prepared run statistics and requested voxel products 0.024s
+  + FIR pooling retains physical bins and planted estimates through reversed gapped scan selection 0.01s
+  + explicit retained run coefficients match independent R values without changing pooled products 0.036s
+  + retained run coefficients preserve excluded input voxels and continue to healthy blocks 0.01s
+  + unsupported run retention cannot be silently discarded by shared or pooling-only entry points 0.005s
+  + retention obeys the same cancellation and failed-sink read boundary 0.003s
+scalafim.fmri.fit.MatrixAdaptersSuite:
+  + Gale column binding preserves logical row-major values 0.001s
+scalafim.examples.SelectedEstimatesExampleSuite:
+  + condition and contrast guide executes the declared pooled engine against the R reference 0.009s
+  + FIR guide preserves structural bin identities and bounded metadata-only preparation 0.004s
+  + optional uncertainty and nuisance helpers preserve the requested shared-model estimates 0.004s
+  + run-local nuisance maps are explicitly unavailable as pooled estimates 0.002s
+  + run retention guide composes with output and uncertainty choices without changing pooling 0.008s
+  + semantic response guide keeps full derivative-basis readout and propagated uncertainty 0.006s
+scalafim.fmri.fit.FirstLevelEstimatesSuite:
+  + public preparation performs no reads and streams only selected identified products 0.004s
+  + selected time and voxel ordering are preserved across block sizes 0.006s
+  + cancellation and sink failure prevent subsequent response reads 0.003s
+  + invalid identities and unsupported scientific engines fail before reads 0.003s
+  + the caller's backend receives exactly the selected block products 0.003s
+  + native FIR selection preserves physical bin coordinates and requested order 0.004s
+scalafim.fmri.fit.DesignMatrixOwnershipSuite:
+  + a compiled hypothesis and ordinary or chunked fits share an immutable design 0.007s
+  + LSS uses the canonical design after event and baseline arrays are mutated 0.008s
+  + model construction rejects a matrix changed without rebuilding its schema 0.006s
+gaussian D=1.8006170552308247 dense=1.800617055230825 gradient=Vector(-0.0024522866354869774, 1.0210392187606865) hessian=Vector(0.003292909732861787, -0.022675831484125653, -0.022675831484125653, 0.1546362147307878) FD errors (gradient, hessian) by step Vector(0.002, 0.001): Vector((1.4816215010426959E-6,1.2087465339760683E-6), (3.704076578792126E-7,3.03748235452872E-7))
+cascade34 D=0.04748854532144331 dense=0.04748854532144228 gradient=Vector(0.08819897085067671, 8.243556261107801E-4, 0.004488418142735026) hessian=Vector(0.12485853590300372, 0.0017988783468754332, 0.016836673893048278, 0.0017988783468754332, -0.005113101483752927, 0.003238398938645099, 0.016836673893048278, 0.003238398938645099, 0.002414918813653709) FD errors (gradient, hessian) by step Vector(0.002, 0.001): Vector((1.0451254130183774E-7,1.21265585184549E-7), (2.612795602097151E-8,3.157517730612014E-8))
+lambda=1.0E-6 admitted: D=28.92839128703013 dense=28.928391287224127 maxResidual=9.861065007509773E-17
+lambda=1.0 admitted: D=2.1430343015159052 dense=2.1430343015159075 maxResidual=1.0475765413910345E-16
+lambda=10000.0 admitted: D=3.865229664188341E-4 dense=3.8652296642384886E-4 maxResidual=1.4129610558532346E-16
+scalafim.fmri.fit.profile.TrialConstrainedLogDetJetSuite:
+  + value equals the accepted scalar constrained determinant at a prepared node 2.109s
+  + off-node Gaussian 2D and Cascade 3D match the dense full-data covariance and its finite differences 0.037s
+  + nuisance design does not enter the constrained determinant 0.004s
+  + coincident trials and a complete-record permutation preserve the determinant jet 0.025s
+  + one trial per condition gives P = 0 and a vanishing determinant jet 0.015s
+  + consistent rescaling X* = sX with lambda* = s² lambda preserves the determinant jet 0.005s
+  + predeclared lambda controls are admitted against the dense covariance or refused by residual 0.015s
+  + work receipt counts every solve, RHS column, residual check, product and log-determinant jet 0.007s
+  + malformed construction and derivative inputs are refused before numerical work, with charged receipts 0.01s
+  + an independently supplied factor or band cannot be paired: the pre-repair constructor shape does not compile 0.002s
+  + a close same-shape SPD band passes the residual check, so identity comes only from the stamped bundle 0.007s
+  + the bundle keeps a canonical copy: source padding is not retained and a closed source builder refuses writes 0.004s
+scalafim.fmri.fit.OlsSuite:
+  + OLS fits multiple response columns with one prepared factorization 0.003s
+  + basis reparameterization transports fit covariance and linear hypotheses 0.002s
+  + OLS reports residual variance per voxel 0.001s
+  + OLS matches independent Gaussian oracle on overdetermined multivoxel data 0.0s
+  + OLS matches independent oracle for scaled full-rank predictors 0.0s
+  + scale-aware rank detection is invariant to uniform predictor scaling 0.001s
+  + OLS rejects non-finite dense inputs at construction 0.0s
+  + OLS default QR solver agrees with normal equations on well-conditioned designs 0.001s
+  + OLS coefficients are invariant to design column permutation 0.0s
+  + OLS rejects singular designs 0.001s
+  + OLS rank policy makes strict full-rank rejection explicit 0.0s
+  + OLS reports unsupported rank policies explicitly 0.001s
+  + OLS rejects nearly collinear designs at the QR rank tolerance boundary 0.0s
+  + OLS rejects saturated fits before residual inference is represented 0.0s
+  + OLS remains finite for extreme but well-conditioned predictor scales 0.002s
+  + OLS rejects row mismatches at fit time 0.0s
+scalafim.fmri.fit.scenarios.DelayedMatchToSampleDslScenarioSuite:
+  + one public model and semantic hypotheses express delayed match to sample 0.149s
+scalafim.fmri.fit.RobustSuite:
+  + disabled robust options are equivalent to OLS 0.009s
+  + Huber robust fit downweights an outlying observation 0.002s
+  + Bisquare robust fit can reject a severe outlier 0.002s
+  + RobustLeastSquares executes through FitPlanExecutor 0.006s
+  + chunked robust fit uses full-selection prepared row weights 0.006s
+  + fmrireg row-wise Huber fixture matches run-scope robust IRLS semantics 0.002s
+  + fmrireg voxel scale scope keeps per-voxel scale components with row-wise weights 0.0s
+  + robust-triggered AR re-estimation exposes shared AR diagnostics 0.013s
+  + future chunked robust AR reuses full-selection whitening and row weights 0.024s
+gaussian E=0.8889120779241066 D=1.8006170552308247 J=5.390454716001169 dense J=5.3904547160011695; FD errors [gE,HE,gD,HD,gJ,HJ] by step Vector(0.002, 0.001): Vector(Vector(4.951906935612982E-7, 3.992524159945887E-6, 1.4816215010426959E-6, 1.2087465339760683E-6, 4.1992444739236134E-6, 5.269434834698217E-6), Vector(1.2379444647159232E-7, 9.959211941801271E-7, 3.704076578792126E-7, 3.03748235452872E-7, 1.0498135356584726E-6, 1.31265548608539E-6))
+cascade34 E=0.11206402046692343 D=0.04748854532144331 J=0.2307853837705317 dense J=0.2307853837705327; FD errors [gE,HE,gD,HD,gJ,HJ] by step Vector(0.002, 0.001): Vector(Vector(1.7693331924584221E-7, 4.5111095581251703E-7, 1.0451254130183774E-7, 1.21265585184549E-7, 4.382146733539205E-7, 7.542688472694792E-7), Vector(4.4235022450545E-8, 1.1671178079541988E-7, 2.612795602097151E-8, 3.157517730612014E-8, 1.0955491422381947E-7, 1.9563931574761995E-7))
+lambda=1.0E-6 admitted: E=0.20556737044719764 dense=0.20556737044653417 D=28.92839128703013 dense=28.928391287224127
+lambda=1.0 admitted: E=0.4742447826053757 dense=0.4742447826053784 D=2.1430343015159052 dense=2.1430343015159075
+lambda=10000.0 admitted: E=0.9032778839399462 dense=0.9032778839400066 D=3.865229664188341E-4 dense=3.8652296642384886E-4
+default decode counters: nodes=17 jets=2 exact=1 candidates=1 terminal=1 evidence=Available(scalafim.fmri.fit.profile.CriterionJet@3e93511b)
+decode status=BudgetExceeded at=Vector(5.642944516887563, 0.44626845315940417) J=0.8858895810346114 work=TrialMlWork(2,2,0,45,89,9,15,5,2,0)
+generous decode status=Accepted at=Vector(5.64136990685217, 0.45105724223385024) J=0.8858669318005521 retained=4
+E-only decode status=Accepted at=Vector(5.637090365287881, 0.47665185369707325)
+scalafim.fmri.fit.profile.TrialBandedMlBackendSuite:
+  + off-node Gaussian 2D and Cascade 3D raw E, D and J match the dense model and its finite differences 1.796s
+  + value-only and full evaluations at the same coordinates agree, from one reference each 0.006s
+  + nodes use the cached determinant jet: setup charges it once, workers never refactor 0.03s
+  + epochs, response and coordinate validation are typed refusals before numerical work 0.016s
+  + a pre-factor construction refusal charges one reference refusal and no factor, solve or determinant work 0.006s
+  + aliased nuisance is refused by the release rank before any ML backend exists 0.002s
+  + coincident trials and predeclared lambda values are admitted against the dense model or refused by type 0.009s
+  + unchanged decoder ranks, refines and verifies with J, never with raw E 0.033s
+  + readout payload guards epoch and coordinates, memoizes failures and never remeasures a repaired response 0.028s
+scalafim.fmri.fit.GlsSuite:
+  + GeneralizedLeastSquares runs AR(1) whitening and reports diagnostics 0.005s
+  + GeneralizedLeastSquares can estimate an AR(1) rho from initial residuals 0.002s
+  + estimated AR(2) GLS matches the fmriAR 0.3.3 end-to-end receipt 0.005s
+  + GeneralizedLeastSquares iteratively re-estimates AR from GLS residuals 0.012s
+  + GeneralizedLeastSquares supports fixed AR(2) coefficients 0.004s
+  + GeneralizedLeastSquares keeps finite diagnostics under extreme predictor scales 0.002s
+  + GeneralizedLeastSquares resets AR whitening after censored timepoints 0.002s
+  + estimated GLS excludes explicit censor rows only from noise estimation 0.002s
+  + GeneralizedLeastSquares matches fmrireg fixed AR(1) whitening fixture with censor reset 0.004s
+  + GeneralizedLeastSquares rejects censored timepoints outside selected partitions 0.001s
+  + GeneralizedLeastSquares resets at run and censor boundaries for multivoxel data 0.002s
+  + GeneralizedLeastSquares distinguishes run-specific and global estimated AR pooling 0.008s
+  + GeneralizedLeastSquares supports voxelwise estimated AR with explicit non-shared covariance 0.012s
+  + voxelwise GLS retains degenerate voxel status and isolates contrast inference 0.004s
+  + GeneralizedLeastSquares rejects unsupported AR configurations explicitly 0.003s
+  + GeneralizedLeastSquares rejects non-stationary fixed AR coefficients 0.014s
+  + GeneralizedLeastSquares treats selected-timepoint gaps as censor boundaries 0.002s
+  + row-deleted whitening matches independent segmented L X and L Y 0.004s
+scalafim.fmri.fit.profile.ProfileHrfFitParallelSuite:
+  + off-node trial fit streams selected voxel IDs and agrees with dense augmented equations at returned shape 0.346s
+  + work aggregation retains conditional attempts and failures from distinct workers 0.002s
+  + alpha zero lowers a declared-order condition term directly and has no trial work 0.046s
+  + noiseless zero-deviation control recovers the declared continuous shape 0.035s
+  + fixed condition plan uses the existing admitted OLS retention 0.026s
+  + unsupported intent, temporal selection and whitening are rejected before a read 0.041s
+  + shared AR preparation rejects an MA component and a different first-row policy 0.001s
+  + zero-column baseline admits the trial route 0.044s
+  + shape prior requires symmetric positive semidefinite precision 0.095s
+  + nonunit noise variance does not rescale an energy-unit shape prior 0.041s
+  + a decode budget refusal remains a voxel status and is tallied as attempted 0.038s
+  + provenance binds the numeric basis and event durations 0.178s
+  + fixed retention translates reader and cancellation exceptions with partial progress 0.005s
+  + cancellation and sink failures stop subsequent reads and report delivered progress 0.071s
+  + ML executor returns coherent terminal J evidence, raw E readout and separate exact-once work 0.077s
+  + ML keeps a budget-limited terminal status and refuses unavailable terminal before delivery 0.336s
+  + ML forwarding refuses an unpointed or invalidated epoch, and charges exact failures only to legacy work 0.002s
+  + fixed and alpha-zero ML plans refuse before dataset resolution 0.007s
+  + ML setup refusal translation retains successful bank and attempted partial setup separately 0.001s
+  + ML cancellation before reading and before delivery retains truthful separate work 0.034s
+  + ML evaluation memoizes raw and measured payload once and stale closures cannot reuse a new response 0.002s
+  + off-node trial output, ordered receipts and attempted work are invariant across windows 0.447s
+  + shared sequential run treats worker budget as an upper bound and starts fresh state each time 0.045s
+  + parallel admission checks reader identity and budget before payload reads 0.037s
+  + JVM parallel entry refuses the fixed condition route before a read 0.005s
+  + a later read can finish first while sink delivery remains ordered 0.042s
+  + reader, sink and cancellation failures report actual first-window work and no later delivery 0.06s
+  + rejecting sink interruption retains caller readers until final trial progress is safe 0.187s
+  + public conditional route preserves ordered physical axes and all numerical totals across 1/2/8 workers and 1/2/256 chunks 7.074s
+  + public parallel invalid query and certificate touch no reader descriptors or cancellation callbacks 0.061s
+  + public sequential and parallel executions retain the same checked declaration including runtime admission failures 0.051s
+  + public readout interruption/deadline finalizes once after the held real reader stops 0.17s
+  + ML shares one setup and preserves both work ledgers across actual 1/2/8 workers and 1/2/256 chunks 6.781s
+  + ML interruption/deadline captures both final ledgers once after its held real reader stops 0.336s
+scalafim.fmri.fit.profile.CriterionJetSuite:
+  + d=1/2/3 directly assemble J at sigma2=2.5 and retain raw amplitudes and HE 0.015s
+  + dimensions, derivative order and lengths refuse before indexing 0.097s
+  + nonfinite coordinates, values, every derivative and amplitudes refuse 0.016s
+  + full Hessian symmetry is exact with no silent symmetrization 0.002s
+  + owner, coordinate and reference identity cannot be replaced by equal values 0.04s
+  + invalid sigma2 and assembled energy, gradient, Hessian and score overflow are typed 0.015s
+  + finite indefinite HE and HJ remain valid, Gram refusal remains distinct 0.001s
+  + a finite subnormal score is not refused by an overflowing intermediate scale 0.0s
+scalafim.fmri.fit.InferenceSuite:
+  + Dense OLS results expose standard errors and diagnostics 0.1s
+  + T contrasts align weights by column name 0.077s
+  + T contrasts can evaluate an explicitly inference-ready dense fit 0.002s
+  + T contrasts reject unknown columns 0.007s
+  + F contrasts evaluate single-df statistics, df, and voxel alignment 0.009s
+  + F contrasts evaluate multi-df tests 0.002s
+  + contrasts use voxelwise coefficient covariance when supplied 0.074s
+  + contrasts reject zero residual variance instead of emitting non-finite statistics 0.008s
+  + mixed fits retain typed voxel status and isolate T/F inference 0.006s
+  + F contrasts reject unknown and non-estimable columns explicitly 0.004s
+  + DesignContrasts evaluates attached t contrasts and generated F contrasts 0.171s
+scalafim.fmri.fit.profile.TrialBandedWorkReceiptSuite:
+  + shared node setup is immutable while workers record their own response work 0.37s
+  + outside-chart underflow records completed partial reference work 0.016s
+scalafim.fmri.fit.PreparedContrastGeometrySuite:
+  + moment geometry equals explicit dense effect and residual projectors 0.013s
+  + rescaling a one-row contrast preserves the effect matrix 0.001s
+  + invertible nuisance basis changes preserve effect and residual geometry 0.002s
+  + fixed AR whitening and censor resets match the first-level transform 0.014s
+  + rank-deficient prepared designs are rejected 0.002s
+  + held-out responses cannot alter a training-scoped whitening geometry 0.011s
+scalafim.fmri.fit.FitBlockSuite:
+  + dense OLS block results merge to the same result as a full voxel block 0.028s
+  + dense blocks tolerate scale-aware cutoff differences with the same rank partition 0.002s
+  + fixed AR(1) GLS block results merge with identical diagnostics 0.003s
+  + LSS block results merge to the same result as a full voxel block 0.002s
+  + dense block merge rejects incompatible execution context 0.001s
+  + dense block merge preserves and validates the structural coefficient axis 0.003s
+  + LSS block merge rejects incompatible trial names 0.0s
+scalafim.fmri.fit.profile.ShapeDecoderSuite:
+  + node grid indexing round-trips 0.001s
+  + an interior optimum is found to high precision within the budget 0.01s
+  + an optimum outside the box lands on the boundary with a projected step 0.002s
+  + indefinite curvature is reported and the parabolic fallback still improves on the node 0.001s
+  + a prior pulls the estimate and both curvatures are reported 0.002s
+  + weak identification and ambiguity are separate statuses 0.0s
+  + three-dimensional charts decode with a hierarchical scan 0.001s
+  + an exact accepted point without a terminal jet cannot use stale curvature for admission 0.004s
+  + an accepted jet binds both reported curvatures to the returned point 0.0s
+  + a reserved terminal jet verifies an energy-only move before admission 0.003s
+  + a final full jet reaches a stationary candidate when exact evaluation is unavailable 0.003s
+  + a rejected final full candidate preserves accepted state and caps 0.0s
+  + terminal verification retains a nonstationary budget refusal and current curvature 0.001s
+  + equal rounded energy accepts a stationary candidate through either jet route 0.001s
+  + equal rounded quartic energy refuses a nonstationary move and preserves halving 0.003s
+  + equal energy candidate requires a finite positive and matching full jet 0.003s
+  + equal energy stationarity uses prior augmentation and retains identification gates 0.003s
+  + exhausted refinement and rejected candidate caps are explicit and counted 0.005s
+  + budget exits reset per decode and observation delegates exactly once 0.003s
+  + node ranking, ambiguity inputs and fallback use the data-plus-prior objective 0.0s
+  + fallback terminal verification reports curvature at its returned point 0.001s
+  + nonfinite and refused node banks return typed empty results without stale worker state 1.153s
+scalafim.fmri.fit.FitPlanExecutorSuite:
+  + FitPlanExecutor runs end-to-end OLS against an in-memory dataset 0.048s
+  + missing-data propagation excludes whole non-finite voxels without weakening ResponseBlock 0.084s
+  + missing-data propagation reports an all-excluded selection explicitly 0.006s
+  + voxel-specific row omission preserves pattern-specific OLS geometry and inference 0.056s
+  + fitDense rejects unlike voxel observation patterns explicitly 0.014s
+  + row omission preserves an explicitly reordered OLS time selection 0.015s
+  + row omission rejects response-derived weights and explicit nuisance matrices at their policy boundary 0.034s
+  + fixed AR row omission matches explicit selection and records the reset gap 0.078s
+  + row omission subsets selected-row weights by original observation position 0.032s
+  + row omission reports an all-missing voxel without contaminating finite voxels 0.012s
+  + row omission gives insufficient residual degrees of freedom a typed voxel status 0.012s
+  + row-omission exclusions preserve requested voxel order across failure classes 0.009s
+  + estimated AR row omission matches a separately estimated explicit-row GLS fit 0.017s
+  + fitDense rejects engines with a different result shape 0.004s
+  + public fit failures name aliased structural columns 0.008s
+  + GLS retains structural rank evidence and explains preview differences 0.005s
+  + every supported dense engine preserves the same structural coefficient axis 0.017s
+  + OpenedDatasetFitExecutor confines effects to the attached response read 1.157s
+  + FitPlanExecutor preserves voxel selections in the result surface 0.004s
+  + FitPlanExecutor rejects unsupported engine/configuration paths 0.003s
+  + FitInterpreters exposes executable built-ins 0.001s
+  + LatentSketch full-rank identity fallback matches OLS and fixed sketches execute explicitly 0.024s
+  + LatentSketch principal components recovers rank-one response coefficients 0.017s
+  + ReducedRankGls full-rank fallback matches GLS and full task ranks execute through fallback 0.02s
+  + ReducedRankGls rank-one coefficients match fmrireg QR-SVD fixture 0.015s
+  + ReducedRankGls reduces event targets after residualizing nuisance predictors 0.012s
+  + ReducedRankGls bootstrap inference is deterministic and matches the R reference fixture 0.011s
+  + ReducedRankGls adaptive rank policies match fixed rank when the task spectrum selects one component 0.028s
+  + FitPlanExecutor runs LeastSquaresSeparate from a builder-created trialwise model 0.022s
+  + FitPlanExecutor selects LSS trial columns by metadata rather than span position 0.014s
+  + FitPlanExecutor selects LSS aggregate columns by metadata rather than column name 0.012s
+  + FitPlanExecutor requires explicit LSS trial term when a model has multiple trialwise terms 0.019s
+[info] Passed: Total 516, Failed 0, Errors 0, Passed 516
+[success] Total time: 68 s (0:01:08.0), completed Oct 1, 2026, 9:28:05 a.m.

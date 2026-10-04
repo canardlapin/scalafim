@@ -1,0 +1,12 @@
+{
+  "scriptSha256": "36da3b69d8dbcdfbb1976331425e52a04157e8e513d1db901ecd31ec7ea7b791",
+  "syntheticRepo": "/private/tmp/phrf-ff-control-tnumrk6p/repo",
+  "realGitFastForwardWithStagedRenamePass": true,
+  "eightExpectedOutsideStatesCovered": true,
+  "absentRenamedNestedUntrackedSymlinkAndModeStatesCovered": true,
+  "unexpectedChangeDetectedWithoutAttribution": [
+    "untracked/nested/deep/two.txt"
+  ],
+  "receiptSha256": "eeeacf84434db3d6a4abfb461c7c9e2fdd8a1d37cad3b8ade3beb707b9284174",
+  "scope": "Independent synthetic Git transaction/control, no user checkout mutation"
+}

@@ -61,13 +61,89 @@ final case class YuleWalkerEstimate(
 ):
   require(innovationVariance >= 0.0 && innovationVariance.isFinite, "innovation variance must be non-negative and finite")
 
+/** Immutable raw spatial-block statistics. Lag products remain unregularized
+  * until every block for this complete temporal layout has been merged.
+  *
+  * Lag sums are held exactly (see [[ExactSum]]), so merging is associative and
+  * commutative: any partition of the voxels into spatial blocks, merged in any
+  * order, finalizes to the same doubles as the whole-volume estimator.
+  */
+final class ArNoiseSummary private (
+    val layout: NoiseEstimationLayout,
+    val maxOrder: ArOrderValue,
+    private val exactSumsByRun: Vector[Vector[ExactSum]],
+    private[ar] val sumsByRun: Vector[Vector[Double]],
+    private[ar] val countsByRun: Vector[Vector[Long]]
+):
+  require(sumsByRun.length == layout.runCount, "noise-summary sums must cover every run")
+  require(countsByRun.length == layout.runCount, "noise-summary counts must cover every run")
+  require(sumsByRun.zip(countsByRun).forall { (sums, counts) =>
+    sums.length == maxOrder.value + 1 && counts.length == maxOrder.value + 1
+  }, "noise-summary lag dimensions must match the requested order")
+  require(sumsByRun.flatten.forall(_.isFinite), "noise-summary sums must be finite")
+  require(countsByRun.flatten.forall(_ >= 0L), "noise-summary pair counts must be non-negative")
+
+  private[ar] def exactSum(run: Int, lag: Int): ExactSum = exactSumsByRun(run)(lag)
+
+  def lagSumsByRun: Vector[Vector[Double]] = sumsByRun
+  def pairCountsByRun: Vector[Vector[Long]] = countsByRun
+
+  def merge(other: ArNoiseSummary): Either[ArError, ArNoiseSummary] =
+    ArNoiseSummary.merge(this, other)
+
+private object ArNoiseSummary:
+  def make(
+      layout: NoiseEstimationLayout,
+      maxOrder: ArOrderValue,
+      exactSumsByRun: Vector[Vector[ExactSum]],
+      countsByRun: Vector[Vector[Long]]
+  ): Either[ArError, ArNoiseSummary] =
+    // Round each exact total once; the summary keeps both forms so later merges stay exact.
+    val sumsByRun = exactSumsByRun.map(_.map(_.value))
+    var run = 0
+    while run < sumsByRun.length do
+      var lag = 0
+      while lag < sumsByRun(run).length do
+        val total = sumsByRun(run)(lag)
+        if !total.isFinite then return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), total))
+        lag += 1
+      run += 1
+    Right(new ArNoiseSummary(layout, maxOrder, exactSumsByRun, sumsByRun, countsByRun))
+
+  def merge(left: ArNoiseSummary, right: ArNoiseSummary): Either[ArError, ArNoiseSummary] =
+    if left.layout != right.layout then
+      Left(ArError.IncompatibleNoiseSummaries("layouts differ"))
+    else if left.maxOrder != right.maxOrder then
+      Left(ArError.IncompatibleNoiseSummaries("maximum requested orders differ"))
+    else
+      val sums = Vector.newBuilder[Vector[ExactSum]]
+      val counts = Vector.newBuilder[Vector[Long]]
+      var run = 0
+      while run < left.layout.runCount do
+        val mergedSums = Vector.newBuilder[ExactSum]
+        val mergedCounts = Array.ofDim[Long](left.maxOrder.value + 1)
+        var lag = 0
+        while lag <= left.maxOrder.value do
+          val sum = left.exactSum(run, lag).copy()
+          sum.addAll(right.exactSum(run, lag))
+          if Long.MaxValue - left.countsByRun(run)(lag) < right.countsByRun(run)(lag) then
+            return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
+          mergedSums += sum
+          mergedCounts(lag) = left.countsByRun(run)(lag) + right.countsByRun(run)(lag)
+          lag += 1
+        sums += mergedSums.result()
+        counts += mergedCounts.toVector
+        run += 1
+      make(left.layout, left.maxOrder, sums.result(), counts.result())
+
 object ArEstimation:
 
   private val RelativePositiveDefiniteMargin = 1e-6
 
-  private final case class PooledAutocovariance(
+  private[ar] final case class PooledAutocovariance(
       sums: Array[Double],
-      pairCounts: Array[Long]
+      pairCounts: Array[Long],
+      correction: Option[DMat] = None
   ):
     require(sums.length == pairCounts.length, "autocovariance sums and pair counts must align")
     require(sums.nonEmpty, "pooled autocovariance must contain lag zero")
@@ -76,6 +152,27 @@ object ArEstimation:
       var lag = pairCounts.length - 1
       while lag > 0 && pairCounts(lag) == 0L do lag -= 1
       ArLag.unsafe(lag)
+
+    /** Pair-count autocovariances over every lag that has pairs, with the design-bias system solved over that
+      * full budget when a correction matrix is present. Correcting before truncating matters: the correction at
+      * length L assumes gamma beyond L is zero, so correcting a short vector discards what makes it work.
+      */
+    private lazy val correctedFull: (Vector[Double], Option[CorrectionFallback]) =
+      correction match
+        case None => (Vector.empty, None)
+        case Some(matrix) =>
+          var available = 0
+          while available < pairCounts.length && pairCounts(available) > 0L do available += 1
+          val raw = Vector.tabulate(available)(lag => sums(lag) / pairCounts(lag).toDouble)
+          AcvfBias.correct(raw, matrix) match
+            case Right(corrected) => (corrected, None)
+            case Left(reason)     => (raw, Some(reason))
+
+    /** Whether a correction was requested and actually used; `false` after a fallback to the raw estimate. */
+    def correctionApplied: Boolean = correction.isDefined && correctedFull._2.isEmpty
+
+    /** Why a requested correction fell back to the raw estimate, if it did. */
+    def correctionFallback: Option[CorrectionFallback] = correctedFull._2
 
     def through(order: ArOrderValue): Either[ArError, Autocovariances] =
       val required = order.value + 1
@@ -86,7 +183,9 @@ object ArEstimation:
           if pairCounts(lag) == 0L then
             return Left(ArError.InsufficientAutocovariances(required, lag))
           lag += 1
-        val values = Vector.tabulate(required)(lag => sums(lag) / pairCounts(lag).toDouble)
+        val values =
+          if correction.isDefined then correctedFull._1.take(required)
+          else Vector.tabulate(required)(lag => sums(lag) / pairCounts(lag).toDouble)
         Autocovariances(values).map(stabilizeAutocovariances)
 
   private final case class RunEstimate(
@@ -95,29 +194,128 @@ object ArEstimation:
   ):
     require(observations >= 0, "run estimate observations must be non-negative")
 
+  /** Summarize one spatial residual block against the complete temporal layout.
+    * Means are per voxel and run over all retained rows, while lag products do
+    * not cross censored/reset segment boundaries.
+    */
+  def summarizeNoise(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      maxOrder: ArOrderValue
+  ): Either[ArError, ArNoiseSummary] =
+    for
+      _ <- layout.coveredSegments.validateRows(residuals.rows)
+      _ <- validateFinite(residuals)
+      _ <- if residuals.cols > 0 then Right(()) else Left(ArError.EmptySpatialNoiseBlock)
+      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+      summary <- summarizeNoiseUnchecked(residuals, layout, maxOrder)
+    yield summary
+
+  /** Finalize merged raw noise statistics into the existing whitening contract. */
+  def fitNoise(
+      summary: ArNoiseSummary,
+      options: ArFitOptions
+  ): Either[ArError, WhiteningPlan] =
+    if options.order.maxRequested > summary.maxOrder.value then
+      Left(ArError.ArOrderNotEstimable(options.order.maxRequestedOrder, ArLag.unsafe(summary.maxOrder.value)))
+    else
+      options.pooling match
+        case NoisePooling.Global =>
+          for
+            estimates <- estimateByRun(summary, options)
+            coefficients <- poolRunCoefficients(estimates, options.stationarity)
+            plan <- WhiteningPlan.globalWithInitialCondition(
+              coefficients,
+              summary.layout.whiteningSegments,
+              initialCondition = options.initialCondition,
+              method = WhiteningMethod.Estimated
+            )
+          yield plan
+        case NoisePooling.Run =>
+          estimateByRun(summary, options).flatMap { estimates =>
+            WhiteningPlan.byRunWithInitialCondition(
+              estimates.map(_.coefficients),
+              summary.layout.whiteningSegments,
+              initialCondition = options.initialCondition,
+              method = WhiteningMethod.Estimated
+            )
+          }
+
   def fitNoise(
       residuals: DMat,
       segments: Vector[TimeSegment],
       options: ArFitOptions = ArFitOptions()
   ): Either[ArError, WhiteningPlan] =
+    fitNoise(residuals, segments, options, EstimationPolicy.Raw)
+
+  def fitNoise(
+      residuals: DMat,
+      segments: Vector[TimeSegment],
+      options: ArFitOptions,
+      policy: EstimationPolicy
+  ): Either[ArError, WhiteningPlan] =
     NoiseEstimationLayout
       .allRows(segments, residuals.rows)
-      .flatMap(layout => fitNoise(residuals, layout, options))
+      .flatMap(layout => fitNoise(residuals, layout, options, policy))
 
   def fitNoise(
       residuals: DMat,
       layout: NoiseEstimationLayout,
       options: ArFitOptions
   ): Either[ArError, WhiteningPlan] =
+    fitNoise(residuals, layout, options, EstimationPolicy.Raw)
+
+  def fitNoise(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      policy: EstimationPolicy
+  ): Either[ArError, WhiteningPlan] =
+    for
+      _ <- validateInputs(residuals, layout)
+      correction <- resolveCorrection(residuals, layout, options.order.maxRequested, policy)
+      plan <- fitNoisePrepared(residuals, layout, options, correction)
+    yield plan
+
+  /** Fit against a correction prepared once by [[AcvfBias.prepare]]. Results are bit-identical to
+    * `EstimationPolicy.DesignCorrected` with the same design, budget and order; the prepared value is checked
+    * against this residual set's row count and layout, and the residuals against the design's orthogonality.
+    */
+  def fitNoise(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      design: DMat,
+      prepared: PreparedCorrection
+  ): Either[ArError, WhiteningPlan] =
+    for
+      _ <- validateInputs(residuals, layout)
+      correction <- AcvfBias.bind(residuals, layout, design, options.order.maxRequested, prepared)
+      plan <- fitNoisePrepared(residuals, layout, options, correction)
+    yield plan
+
+  private[ar] def validateInputs(residuals: DMat, layout: NoiseEstimationLayout): Either[ArError, Unit] =
     for
       _ <- layout.coveredSegments.validateRows(residuals.rows)
       _ <- validateFinite(residuals)
       _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
+    yield ()
+
+  /** Fit with bias matrices that were already built, so a caller needing both the plan and the matrices builds
+    * them once. Inputs are assumed validated by the public entry points.
+    */
+  private[ar] def fitNoisePrepared(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      options: ArFitOptions,
+      correction: PreparedCorrection
+  ): Either[ArError, WhiteningPlan] =
+    for
       plan <-
         options.pooling match
           case NoisePooling.Global =>
             for
-              estimates <- estimateByRun(residuals, layout, options)
+              estimates <- estimateByRun(residuals, layout, options, correction)
               coefficients <- poolRunCoefficients(estimates, options.stationarity)
               plan <-
                 WhiteningPlan.globalWithInitialCondition(
@@ -129,7 +327,7 @@ object ArEstimation:
             yield plan
 
           case NoisePooling.Run =>
-            estimateByRun(residuals, layout, options).flatMap { estimates =>
+            estimateByRun(residuals, layout, options, correction).flatMap { estimates =>
               WhiteningPlan.byRunWithInitialCondition(
                 estimates.map(_.coefficients),
                 layout.whiteningSegments,
@@ -139,10 +337,33 @@ object ArEstimation:
             }
     yield plan
 
+  /** Per-run bias matrices for the policy; `None` leaves a run on the raw estimator. */
+  private[ar] def resolveCorrection(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      targetOrder: Int,
+      policy: EstimationPolicy
+  ): Either[ArError, PreparedCorrection] =
+    policy match
+      case EstimationPolicy.Raw =>
+        Right(uncorrected(layout))
+      case EstimationPolicy.DesignCorrected(design, budget) =>
+        if design.rows != residuals.rows then Left(ArError.DesignRowMismatch(design.rows, residuals.rows))
+        else AcvfBias.prepareChecked(design, layout, budget, targetOrder, Some(residuals))
+
+  private[ar] def uncorrected(layout: NoiseEstimationLayout): PreparedCorrection =
+    PreparedCorrection(
+      AcvfBiasMatrices(0, 0, 0, Vector.empty),
+      Vector.fill(layout.runCount)(RunCorrection.Uncorrected),
+      layout,
+      None
+    )
+
   private def estimateByRun(
       residuals: DMat,
       layout: NoiseEstimationLayout,
-      options: ArFitOptions
+      options: ArFitOptions,
+      correction: PreparedCorrection
   ): Either[ArError, Vector[RunEstimate]] =
     val estimates = Vector.newBuilder[RunEstimate]
     var run = 0
@@ -152,12 +373,47 @@ object ArEstimation:
       if observations <= 1 then
         estimates += RunEstimate(ArmaCoefficients.Iid, observations)
       else
-        estimateForSegmentsUnchecked(residuals, segments, options) match
+        estimateForSegmentsUnchecked(residuals, segments, options, correction.usable(run)) match
           case Left(error) => return Left(error)
           case Right(estimate) =>
             estimates += RunEstimate(estimate.coefficients, observations)
       run += 1
     Right(estimates.result())
+
+  private def estimateByRun(
+      summary: ArNoiseSummary,
+      options: ArFitOptions
+  ): Either[ArError, Vector[RunEstimate]] =
+    val estimates = Vector.newBuilder[RunEstimate]
+    var run = 0
+    while run < summary.layout.runCount do
+      val observations = effectiveObservations(summary.layout.segmentsForRun(run))
+      if observations <= 1 then
+        estimates += RunEstimate(ArmaCoefficients.Iid, observations)
+      else
+        estimateForSummaryRun(summary, run, observations, options) match
+          case Left(error) => return Left(error)
+          case Right(estimate) => estimates += RunEstimate(estimate.coefficients, observations)
+      run += 1
+    Right(estimates.result())
+
+  private def estimateForSummaryRun(
+      summary: ArNoiseSummary,
+      run: Int,
+      observations: Int,
+      options: ArFitOptions
+  ): Either[ArError, YuleWalkerEstimate] =
+    val pooled = PooledAutocovariance(
+      summary.sumsByRun(run).toArray,
+      summary.countsByRun(run).toArray
+    )
+    val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, pooled.maxLag.value))
+    options.order match
+      case ArOrder.Fixed(order) =>
+        if order.value > maxLag.value then Left(ArError.ArOrderNotEstimable(order, maxLag))
+        else pooled.through(order).flatMap(yuleWalker(_, order, options.stationarity))
+      case ArOrder.Auto(_) =>
+        selectByBic(pooled, observations, maxLag, options.stationarity)
 
   private def poolRunCoefficients(
       estimates: Vector[RunEstimate],
@@ -195,13 +451,19 @@ object ArEstimation:
   private def estimateForSegmentsUnchecked(
       residuals: DMat,
       segments: Vector[TimeSegment],
-      options: ArFitOptions
+      options: ArFitOptions,
+      correction: Option[DMat] = None
   ): Either[ArError, YuleWalkerEstimate] =
     val observations = effectiveObservations(segments)
     if observations <= 1 then
       Right(YuleWalkerEstimate(ArmaCoefficients.Iid, 0.0))
     else
-      pooledAutocovariance(residuals, segments, options.order.maxRequestedOrder).flatMap { pooled =>
+      // Solving the bias system needs a wider tail than the order being fitted, so accumulate through the
+      // correction budget and then truncate to the requested order.
+      val requested = options.order.maxRequestedOrder
+      val accumulate =
+        correction.fold(requested)(matrix => ArOrderValue.unsafe(math.max(requested.value, matrix.rows - 1)))
+      pooledAutocovariance(residuals, segments, accumulate, correction).flatMap { pooled =>
         val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, pooled.maxLag.value))
         options.order match
           case ArOrder.Fixed(order) =>
@@ -336,10 +598,87 @@ object ArEstimation:
   private def effectiveObservations(segments: Vector[TimeSegment]): Int =
     segments.map(_.length).sum
 
-  private def pooledAutocovariance(
+  private def summarizeNoiseUnchecked(
+      residuals: DMat,
+      layout: NoiseEstimationLayout,
+      maxOrder: ArOrderValue
+  ): Either[ArError, ArNoiseSummary] =
+    val lags = maxOrder.value + 1
+    val sums = Array.fill(layout.runCount, lags)(ExactSum.zero())
+    val counts = Array.fill(layout.runCount, lags)(0L)
+    var run = 0
+    while run < layout.runCount do
+      val segments = layout.segmentsForRun(run)
+      val retainedRows = effectiveObservations(segments)
+      val segmentMeans = new Array[Double](segments.length)
+      var column = 0
+      while column < residuals.cols do
+        var total = 0.0
+        var segmentIndex = 0
+        while segmentIndex < segments.length do
+          val segment = segments(segmentIndex)
+          var row = segment.start
+          while row < segment.endExclusive do
+            total += residuals(row, column)
+            row += 1
+          segmentIndex += 1
+        java.util.Arrays.fill(segmentMeans, total / retainedRows.toDouble)
+        var lag = 0
+        while lag < lags do
+          val partial = columnLagProductSum(residuals, column, lag, segments, segmentMeans)
+          if !partial.isFinite then
+            return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), partial))
+          val pairs = lagPairCount(segments, lag)
+          if Long.MaxValue - counts(run)(lag) < pairs then
+            return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
+          sums(run)(lag).add(partial)
+          counts(run)(lag) += pairs
+          lag += 1
+        column += 1
+      run += 1
+    ArNoiseSummary.make(
+      layout,
+      maxOrder,
+      sums.iterator.map(_.toVector).toVector,
+      counts.iterator.map(_.toVector).toVector
+    )
+
+  /** Canonical per-voxel lag-product sum: segments in order, rows in order, from zero. Both the whole-volume
+    * estimator and spatial-block summaries reduce exactly this value per voxel, then combine voxels with
+    * [[ExactSum]], so the pooled statistic does not depend on how voxels were partitioned.
+    */
+  private def columnLagProductSum(
+      residuals: DMat,
+      column: Int,
+      lag: Int,
+      segments: Vector[TimeSegment],
+      segmentMeans: Array[Double]
+  ): Double =
+    var partial = 0.0
+    var segmentIndex = 0
+    while segmentIndex < segments.length do
+      val segment = segments(segmentIndex)
+      val mean = segmentMeans(segmentIndex)
+      var row = segment.start + lag
+      while row < segment.endExclusive do
+        partial += (residuals(row, column) - mean) * (residuals(row - lag, column) - mean)
+        row += 1
+      segmentIndex += 1
+    partial
+
+  private def lagPairCount(segments: Vector[TimeSegment], lag: Int): Long =
+    var pairs = 0L
+    var segmentIndex = 0
+    while segmentIndex < segments.length do
+      pairs += math.max(0, segments(segmentIndex).length - lag).toLong
+      segmentIndex += 1
+    pairs
+
+  private[ar] def pooledAutocovariance(
       residuals: DMat,
       segments: Vector[TimeSegment],
-      maxOrder: ArOrderValue
+      maxOrder: ArOrderValue,
+      correction: Option[DMat] = None
   ): Either[ArError, PooledAutocovariance] =
     if segments.isEmpty then Left(ArError.NoEstimableRows)
     else
@@ -357,26 +696,42 @@ object ArEstimation:
           row += 1
       }
 
-      val lagCount = maxOrder.value
-      val sums = Array.fill(lagCount + 1)(0.0)
-      val pairCounts = Array.fill(lagCount + 1)(0L)
-      segments.foreach { segment =>
+      val lags = maxOrder.value + 1
+      val segmentMeans = new Array[Double](segments.length)
+      def loadMeans(col: Int): Unit =
+        var segmentIndex = 0
+        while segmentIndex < segments.length do
+          val runIndex = segments(segmentIndex).runIndex
+          segmentMeans(segmentIndex) = runSums(runIndex * residuals.cols + col) / runRows(runIndex).toDouble
+          segmentIndex += 1
+      val sums = new Array[Double](lags)
+      if residuals.cols == 1 then
+        // One voxel contributes one term per lag, and the exact sum of one term is that term (ExactSum also
+        // reports a signed zero as +0.0), so this skips the accumulator and stays bit-identical to it.
+        loadMeans(0)
+        var lag = 0
+        while lag < lags do
+          val partial = columnLagProductSum(residuals, 0, lag, segments, segmentMeans)
+          sums(lag) = if partial == 0.0 then 0.0 else partial
+          lag += 1
+      else if residuals.cols > 1 then
+        val exact = Array.fill(lags)(ExactSum.zero())
         var col = 0
         while col < residuals.cols do
-          val mean = runSums(segment.runIndex * residuals.cols + col) / runRows(segment.runIndex).toDouble
+          loadMeans(col)
           var lag = 0
-          while lag <= lagCount do
-            var row = segment.start + lag
-            while row < segment.endExclusive do
-              sums(lag) += (residuals(row, col) - mean) * (residuals(row - lag, col) - mean)
-              pairCounts(lag) += 1L
-              row += 1
+          while lag < lags do
+            exact(lag).add(columnLagProductSum(residuals, col, lag, segments, segmentMeans))
             lag += 1
           col += 1
-      }
-      Right(PooledAutocovariance(sums, pairCounts))
+        var lag = 0
+        while lag < lags do
+          sums(lag) = exact(lag).value
+          lag += 1
+      val pairCounts = Array.tabulate(lags)(lag => residuals.cols.toLong * lagPairCount(segments, lag))
+      Right(PooledAutocovariance(sums, pairCounts, correction))
 
-  private def validateFinite(residuals: DMat): Either[ArError, Unit] =
+  private[ar] def validateFinite(residuals: DMat): Either[ArError, Unit] =
     var row = 0
     while row < residuals.rows do
       var col = 0

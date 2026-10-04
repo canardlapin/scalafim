@@ -39,3 +39,21 @@ class BlockExecutorSuite extends munit.FunSuite:
     val boom = new BlockWorker[Array[Double]]:
       def process(block: VoxelBlock): Array[Double] = throw new IllegalStateException("boom")
     assert(BlockExecutor.runSequential(10, ExecutionBudget(4, 1), () => boom, new CollectingSink).left.exists(_.isInstanceOf[ExecutionError.WorkerFailed]))
+
+  test("worker construction and thrown sink failures remain typed"):
+    BlockExecutor.runSequential[Array[Double], (Int, Double)](
+      10, ExecutionBudget(4, 1), () => throw new IllegalStateException("factory boom"), new CollectingSink
+    ) match
+      case Left(ExecutionError.WorkerFailed(block, detail)) =>
+        assertEquals(block.index, 0)
+        assert(detail.contains("factory boom"))
+      case other => fail(s"expected WorkerFailed, got $other")
+
+    val throwing = new BlockSink[Array[Double], Int]:
+      def accept(block: VoxelBlock, payload: Array[Double]): Either[String, Int] =
+        throw new IllegalStateException("sink boom")
+    BlockExecutor.runSequential(10, ExecutionBudget(4, 1), () => new SumWorker, throwing) match
+      case Left(ExecutionError.SinkFailed(block, detail)) =>
+        assertEquals(block.index, 0)
+        assert(detail.contains("sink boom"))
+      case other => fail(s"expected SinkFailed, got $other")

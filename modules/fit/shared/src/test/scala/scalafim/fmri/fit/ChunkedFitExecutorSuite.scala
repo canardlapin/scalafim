@@ -428,9 +428,8 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
       .map { result =>
         val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
-        assertDenseClose(actual, expected)
+        assertDenseClose(actual, expected, estimatedPreparation = true)
         assertEquals(actual.autocorrelation.map(_.runs.map(_.method)), Some(Vector("estimated")))
-        assertEquals(actual.autocorrelation, expected.autocorrelation)
       }
   }
 
@@ -947,7 +946,11 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       )
     )
 
-  private def assertDenseClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
+  private def assertDenseClose(
+      actual: DenseFmriFitResult,
+      expected: DenseFmriFitResult,
+      estimatedPreparation: Boolean = false
+  ): Unit =
     assertEquals(actual.engine, expected.engine)
     assertEquals(actual.columnNames, expected.columnNames)
     assertEquals(actual.voxelIndices, expected.voxelIndices)
@@ -956,14 +959,48 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
     assertEquals(actual.inferenceScope, expected.inferenceScope)
     assertEquals(actual.inference.method, expected.inference.method)
     assertEquals(actual.fitExclusions, expected.fitExclusions)
-    assertEquals(actual.olsDiagnostics, expected.olsDiagnostics)
-    assertEquals(actual.autocorrelation, expected.autocorrelation)
+    if estimatedPreparation then assertEstimatedDiagnosticsClose(actual, expected)
+    else
+      assertEquals(actual.olsDiagnostics, expected.olsDiagnostics)
+      assertEquals(actual.autocorrelation, expected.autocorrelation)
     assertMatrixClose(actual.coefficients.value, expected.coefficients.value, tol = 1e-10)
     assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, tol = 1e-10)
     assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance, tol = 1e-10)
     assertCoefficientCovarianceClose(actual.coefficientCovariance, expected.coefficientCovariance, tol = 1e-10)
     assertVectorClose(actual.inference.varianceScale, expected.inference.varianceScale, tol = 1e-10)
     assertVectorClose(actual.residualVariance, expected.residualVariance, tol = 1e-10)
+
+  // Spatial reduction regroups lag-product additions; inspect numeric diagnostics
+  // with tolerances while retaining exact scientific and structural identities.
+  private def assertEstimatedDiagnosticsClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
+    val left = actual.olsDiagnostics.get
+    val right = expected.olsDiagnostics.get
+    assert(left.structurallyCompatible(right))
+    assertEqualsDouble(left.rankReport.tolerance, right.rankReport.tolerance, 1e-24)
+    assertEquals(left.rankReport.diagonalR.length, right.rankReport.diagonalR.length)
+    left.rankReport.diagonalR.zip(right.rankReport.diagonalR).foreach { (a, b) =>
+      assertEqualsDouble(a, b, 1e-10)
+    }
+    assertEquals(left.rankReport.conditionEstimate.isDefined, right.rankReport.conditionEstimate.isDefined)
+    left.rankReport.conditionEstimate.zip(right.rankReport.conditionEstimate).foreach { (a, b) =>
+      assertEqualsDouble(a, b, 1e-10)
+    }
+    val a = actual.autocorrelation.get
+    val b = expected.autocorrelation.get
+    assertEquals(a.order, b.order)
+    assertEquals(a.iterations, b.iterations)
+    assertEquals(a.sharedNormalizedCovariance, b.sharedNormalizedCovariance)
+    assertEquals(a.whitening, b.whitening)
+    assertEquals(a.runs.length, b.runs.length)
+    a.runs.zip(b.runs).foreach { (x, y) =>
+      assertEquals(x.runIndex, y.runIndex)
+      assertEquals(x.method, y.method)
+      assertEquals(x.rows, y.rows)
+      assertEquals(x.voxelwiseCoefficients, y.voxelwiseCoefficients)
+      assertEqualsDouble(x.rho, y.rho, 1e-12)
+      assertEquals(x.coefficients.length, y.coefficients.length)
+      x.coefficients.zip(y.coefficients).foreach { (l, r) => assertEqualsDouble(l, r, 1e-12) }
+    }
 
   private def assertLssClose(actual: LssFmriFitResult, expected: LssFmriFitResult): Unit =
     assertEquals(actual.engine, expected.engine)

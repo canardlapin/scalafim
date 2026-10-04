@@ -1,0 +1,47 @@
+{
+  "oldSha256": "8f335c2792dbb04b6fc2712c90cd5b838f9aa17d954f5245358c96aa3712f4e2",
+  "newSha256": "291b67cb62823ffb69f33b253ba335dd0bbabd8e5ba54629f34373897a6c84e4",
+  "records": 200,
+  "fingerprintsMatch": 200,
+  "literalResponsePairsCompared": 28,
+  "acceptedRecordedJetChecks": 172,
+  "changes": [
+    {
+      "snr": 0.5,
+      "voxel": 50,
+      "beforeStatus": "Boundary",
+      "afterStatus": "Boundary",
+      "beforeCoordinates": [
+        7.166666666666667,
+        0.6029538486747399,
+        0.0
+      ],
+      "afterCoordinates": [
+        6.9578336798255735,
+        0.5116978145897664,
+        0.0
+      ],
+      "beforeEnergy": 2729.3747249250755,
+      "afterEnergy": 2723.6537939626633,
+      "beforeWork": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "afterWork": [
+        157,
+        6,
+        0,
+        5,
+        0,
+        4,
+        0
+      ],
+      "afterBudgetExit": null
+    }
+  ]
+}

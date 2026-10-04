@@ -25,26 +25,39 @@ private[fit] final case class PlannedObservationPattern(
     series: FmriSeries
 )
 
-private[fit] final case class MaskedResponsePlan(
+/** The response-independent result of finding voxel-specific finite-row masks.
+  *
+  * Chunked execution keeps this metadata only; fitted response matrices are read
+  * again per pattern through the normal chunked executor. The metadata is not
+  * bounded by the block size: it holds one row mask per distinct observation
+  * pattern plus every voxel's membership, so it is O(P·T + V) and degrades to
+  * O(V·T) when every voxel has its own mask.
+  */
+private[fit] final case class MaskedResponseMetadata(
     sourceTimepoints: Vector[Int],
     sourceVoxels: Vector[Int],
-    patterns: Vector[PlannedObservationPattern],
+    patterns: Vector[ObservationPattern],
     exclusions: Vector[VoxelInferenceExclusion],
-    missingValueCount: Int
+    missingValueCount: Long
 ):
-  require(sourceTimepoints.nonEmpty, "masked response plan must retain source timepoints")
-  require(sourceVoxels.nonEmpty, "masked response plan must retain source voxels")
-  require(patterns.nonEmpty || exclusions.length == sourceVoxels.length, "masked response plan must fit or exclude every voxel")
+  require(sourceTimepoints.nonEmpty, "masked response metadata must retain source timepoints")
+  require(sourceVoxels.nonEmpty, "masked response metadata must retain source voxels")
+  require(patterns.nonEmpty || exclusions.length == sourceVoxels.length, "masked response metadata must fit or exclude every voxel")
   require(missingValueCount >= 0, "masked response missing-value count must be non-negative")
 
   def hasMissingValues: Boolean = missingValueCount > 0
+
+private[fit] final case class MaskedResponsePlan(
+    metadata: MaskedResponseMetadata,
+    patterns: Vector[PlannedObservationPattern]
+)
 
 private[fit] object MaskedResponsePlanner:
 
   def plan(series: FmriSeries): Either[FitError, MaskedResponsePlan] =
     val positionsByRows = mutable.LinkedHashMap.empty[Vector[Int], Vector[Int]]
     val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
-    var missingCount = 0
+    var missingCount = 0L
     var voxelPosition = 0
     while voxelPosition < series.nVoxels do
       val observedRows = Vector.newBuilder[Int]
@@ -96,9 +109,81 @@ private[fit] object MaskedResponsePlanner:
         case Right(value) => patterns += PlannedObservationPattern(pattern, value)
       patternId += 1
 
-    Right(MaskedResponsePlan(
+    val plannedPatterns = patterns.result()
+    val metadata = MaskedResponseMetadata(
       sourceTimepoints = series.timepoints,
       sourceVoxels = series.voxelIndices,
+      patterns = plannedPatterns.map(_.pattern),
+      exclusions = exclusions.result(),
+      missingValueCount = missingCount
+    )
+    Right(MaskedResponsePlan(metadata, plannedPatterns))
+
+  def discover(
+      reader: DatasetSeriesReader,
+      plan: FitPlan,
+      selection: DataSelection,
+      chunking: FitChunkingStrategy
+  ): Either[FitError, MaskedResponseMetadata] =
+    for
+      _ <-
+        if reader.dataset.id == plan.model.dataset.id &&
+            reader.dataset.shape == plan.model.dataset.shape
+        then Right(())
+        else Left(FitError.InvalidFitAxis(
+          "dataset reader",
+          s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
+        ))
+      chunks <- FitChunkPlan.fromSelection(plan, selection, chunking)
+      metadata <- discoverChunks(reader, chunks)
+    yield metadata
+
+  private def discoverChunks(
+      reader: DatasetSeriesReader,
+      chunks: FitChunkPlan
+  ): Either[FitError, MaskedResponseMetadata] =
+    val positionsByRows = mutable.LinkedHashMap.empty[Vector[Int], Vector[Int]]
+    val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
+    // Missing cells across a whole selection can exceed Int.MaxValue (V x T), so count in Long.
+    var missingCount = 0L
+    var chunkIndex = 0
+    while chunkIndex < chunks.length do
+      val chunk = chunks.indexed(chunkIndex)
+      val series = ChunkedFitExecutor.readChunk(reader, chunk) match
+        case Left(error) => return Left(error)
+        case Right(value) => value
+      var voxelPosition = 0
+      while voxelPosition < series.nVoxels do
+        val observedRows = Vector.newBuilder[Int]
+        var row = 0
+        while row < series.nTimepoints do
+          if series.data(row, voxelPosition).isFinite then observedRows += row
+          else missingCount += 1
+          row += 1
+        val rows = observedRows.result()
+        val voxel = chunk.voxelIndices(voxelPosition)
+        if rows.isEmpty then
+          exclusions += VoxelInferenceExclusion(voxel, VoxelFitStatus.NoObservedResponses)
+        else
+          positionsByRows.update(rows, positionsByRows.getOrElse(rows, Vector.empty) :+ voxel)
+        voxelPosition += 1
+      chunkIndex += 1
+
+    val patterns = Vector.newBuilder[ObservationPattern]
+    var patternId = 0
+    val grouped = positionsByRows.iterator
+    while grouped.hasNext do
+      val (rows, voxels) = grouped.next()
+      patterns += ObservationPattern.unsafe(
+        patternId,
+        rows,
+        rows.map(chunks.timepoints),
+        voxels
+      )
+      patternId += 1
+    Right(MaskedResponseMetadata(
+      sourceTimepoints = chunks.timepoints,
+      sourceVoxels = chunks.voxelIndices,
       patterns = patterns.result(),
       exclusions = exclusions.result(),
       missingValueCount = missingCount
@@ -114,8 +199,9 @@ private[fit] object MaskedResponseExecutor:
     for
       _ <- validateSupported(plan)
       masked <- MaskedResponsePlanner.plan(series)
-      fitted <- fitPatterns(plan, masked) { (childPlan, pattern) =>
-        FitInterpreters.forPlan(childPlan).flatMap(_.fit(childPlan, pattern.series))
+      fitted <- fitPatterns(plan, masked.metadata, masked.patterns.map(_.pattern)) { (childPlan, pattern) =>
+        val series = masked.patterns(pattern.id.value).series
+        FitInterpreters.forPlan(childPlan).flatMap(_.fit(childPlan, series))
       }
     yield fitted
 
@@ -127,10 +213,9 @@ private[fit] object MaskedResponseExecutor:
   ): Either[FitError, FmriFitResult] =
     for
       _ <- validateSupported(plan)
-      series <- reader.seriesEither(selection).left.map(FitChunkPlan.mapDatasetError)
-      masked <- MaskedResponsePlanner.plan(series)
-      fitted <- fitPatterns(plan, masked) { (childPlan, pattern) =>
-        ChunkedFitExecutor.fit(reader, childPlan, selectionFor(pattern.pattern), chunking)
+      masked <- MaskedResponsePlanner.discover(reader, plan, selection, chunking)
+      fitted <- fitPatterns(plan, masked, masked.patterns) { (childPlan, pattern) =>
+        ChunkedFitExecutor.fit(reader, childPlan, selectionFor(pattern), chunking)
       }
     yield fitted
 
@@ -144,45 +229,43 @@ private[fit] object MaskedResponseExecutor:
     validateSupported(plan) match
       case Left(error) => Future.successful(Left(error))
       case Right(_) =>
-        reader.seriesEither(selection).left.map(FitChunkPlan.mapDatasetError) match
+        MaskedResponsePlanner.discover(reader, plan, selection, chunking) match
           case Left(error) => Future.successful(Left(error))
-          case Right(series) =>
-            MaskedResponsePlanner.plan(series) match
-              case Left(error) => Future.successful(Left(error))
-              case Right(masked) =>
-                fitPatternsFuture(plan, masked, chunking, parallelism, reader)
+          case Right(masked) =>
+            fitPatternsFuture(plan, masked, chunking, parallelism, reader)
 
   private def fitPatterns(
       plan: FitPlan,
-      masked: MaskedResponsePlan
+      masked: MaskedResponseMetadata,
+      patterns: Vector[ObservationPattern]
   )(
-      execute: (FitPlan, PlannedObservationPattern) => Either[FitError, FmriFitResult]
+      execute: (FitPlan, ObservationPattern) => Either[FitError, FmriFitResult]
   ): Either[FitError, FmriFitResult] =
     val successes = Vector.newBuilder[ObservationPatternFitResult]
     val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
     exclusions ++= masked.exclusions
     var index = 0
-    while index < masked.patterns.length do
-      val pattern = masked.patterns(index)
-      childPlan(plan, masked, pattern.pattern) match
+    while index < patterns.length do
+      val pattern = patterns(index)
+      childPlan(plan, masked, pattern) match
         case Left(error) => return Left(error)
         case Right(strictPlan) =>
           execute(strictPlan, pattern) match
             case Right(result) =>
-              val recorded = withPatternProvenance(result, pattern.pattern, masked.sourceTimepoints.length)
-              successes += ObservationPatternFitResult(pattern.pattern, recorded)
+              val recorded = withPatternProvenance(result, pattern, masked.sourceTimepoints.length)
+              successes += ObservationPatternFitResult(pattern, recorded)
               exclusions ++= recorded.fitExclusions
             case Left(error) =>
               omissionStatus(error) match
                 case None => return Left(error)
                 case Some(status) =>
-                  exclusions ++= pattern.pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
+                  exclusions ++= pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
       index += 1
     assemble(plan, masked, successes.result(), exclusions.result())
 
   private def fitPatternsFuture(
       plan: FitPlan,
-      masked: MaskedResponsePlan,
+      masked: MaskedResponseMetadata,
       chunking: FitChunkingStrategy,
       parallelism: FitParallelism,
       reader: DatasetSeriesReader
@@ -196,17 +279,17 @@ private[fit] object MaskedResponseExecutor:
         Future.successful(assemble(plan, masked, successes, exclusions))
       else
         val pattern = masked.patterns(index)
-        childPlan(plan, masked, pattern.pattern) match
+        childPlan(plan, masked, pattern) match
           case Left(error) => Future.successful(Left(error))
           case Right(strictPlan) =>
             FutureChunkedFitExecutor
-              .fit(reader, strictPlan, selectionFor(pattern.pattern), chunking, parallelism)
+              .fit(reader, strictPlan, selectionFor(pattern), chunking, parallelism)
               .flatMap {
                 case Right(result) =>
-                  val recorded = withPatternProvenance(result, pattern.pattern, masked.sourceTimepoints.length)
+                  val recorded = withPatternProvenance(result, pattern, masked.sourceTimepoints.length)
                   loop(
                     index + 1,
-                    successes :+ ObservationPatternFitResult(pattern.pattern, recorded),
+                    successes :+ ObservationPatternFitResult(pattern, recorded),
                     exclusions ++ recorded.fitExclusions
                   )
                 case Left(error) =>
@@ -216,14 +299,14 @@ private[fit] object MaskedResponseExecutor:
                       loop(
                         index + 1,
                         successes,
-                        exclusions ++ pattern.pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
+                        exclusions ++ pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
                       )
               }
     loop(0, Vector.empty, masked.exclusions)
 
   private def assemble(
       plan: FitPlan,
-      masked: MaskedResponsePlan,
+      masked: MaskedResponseMetadata,
       successes: Vector[ObservationPatternFitResult],
       rawExclusions: Vector[VoxelInferenceExclusion]
   ): Either[FitError, FmriFitResult] =
@@ -279,7 +362,7 @@ private[fit] object MaskedResponseExecutor:
 
   private def childPlan(
       plan: FitPlan,
-      masked: MaskedResponsePlan,
+      masked: MaskedResponseMetadata,
       pattern: ObservationPattern
   ): Either[FitError, FitPlan] =
     val retainedTimepoints = pattern.sourceTimepoints.toSet

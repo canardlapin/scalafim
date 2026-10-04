@@ -56,8 +56,21 @@ class ConditionMilestoneSuite extends munit.FunSuite:
       .compile(KernelBasisSpec(family, step, nodes, tolerance = 1e-3, maxRank = 48))
       .fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(schedule, frame, basis, precision).fold(e => fail(e.message), identity)
+    val midpoint = Vector.tabulate(family.dimension)(i => 0.5 * (family.chart.lower(i) + family.chart.upper(i)))
+    val admission = ObservedFamilyCertification
+      .admitForCompact(
+        expanded,
+        schedule,
+        frame,
+        precision,
+        Some(whitening),
+        Some(nuisance),
+        Vector(ShapePoint.unsafe(midpoint)),
+        ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+      )
+      .fold(e => fail(e.message), identity)
     val prep = CompactConditionPreparation
-      .prepare(expanded, Some(whitening), Some(nuisance))
+      .prepare(expanded, admission, Some(whitening), Some(nuisance), schedule, frame, precision)
       .fold(e => fail(e.message), identity)
     (basis, prep)
 
@@ -257,17 +270,17 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     if family.dimension == 2 then
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 2,
-        maxJets = 2,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0)
       )
     else
       DecodeBudget(
         coarseStride = 2,
-        maxNewtonSteps = 3,
-        maxJets = 3,
-        maxExactEvaluations = 6,
+        maxNewtonSteps = 6,
+        maxJets = 8,
+        maxExactEvaluations = 2,
         weakSdLimit = Vector(0.5, 1.0, 1.0)
       )
 

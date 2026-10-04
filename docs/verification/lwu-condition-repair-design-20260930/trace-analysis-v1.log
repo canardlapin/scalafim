@@ -1,0 +1,15 @@
+{
+  "scope": "Nine JVM saved-input reproductions; exact rational linear LS at exported binary64 D and z. This does not establish exact continuous-kernel energy or JS callback behavior.",
+  "rawSha256": "64934a30cd5c032d3830fa33040c59d7592b41fcc010f399c8c86ec1c18dc9c3",
+  "records": 9,
+  "statusWorkCoordinatesReproduced": 9,
+  "candidateCaps": 7,
+  "capsWithRejectedStationaryRepresentedDecrease": 3
+}
+jvm-snr1.0-v30.hex [('jet', 2.0, -0.008580871274166362, True), ('jet', 2.0, -0.02646820018291474, False), ('jet', 1.0, -0.11096422290680216, False), ('energy', 0.0, 0.14275942009256903, False), ('jet', 0.0, 0.14275942009256903, False)]
+jvm-snr1.0-v33.hex [('jet', 5.0, 0.012635451281195103, True), ('energy', 2.0, -0.3366768133377215, False), ('energy', 3.0, -0.03780796228728648, False), ('jet', 3.0, -0.35858212033338943, False)]
+jvm-snr1.0-v49.hex [('jet', 1.0, -0.4467308391693223, True), ('jet', 2.0, -0.14504883241377758, False), ('jet', 0.0, 0.183062699733284, False), ('energy', 0.0, -0.18586722352495333, False), ('jet', 0.0, -0.18586722352495333, False)]
+jvm-snr1.0-v76.hex [('jet', 4.0, 0.031042259509036066, True), ('jet', 7.0, -0.3406377296673739, False), ('jet', 5.0, 0.0026619436420409876, False), ('energy', 7.0, -0.13764097398699116, False)]
+jvm-snr0.5-v27.hex [('jet', 1.0, 0.08861893738076784, True), ('jet', 1.0, 0.1327706009414508, False), ('jet', 0.0, 0.11614627414211465, False), ('energy', 0.0, 0.13837200382800904, False), ('jet', 0.0, 0.13837200382800904, False)]
+jvm-snr0.5-v31.hex [('jet', 1.0, -0.015662762978878125, True), ('jet', 0.0, -0.117208310779763, False), ('jet', 0.0, -0.16252428071148367, False), ('energy', 0.0, -0.09863343506648566, False), ('jet', 0.0, -0.09863343506648566, False)]
+jvm-snr0.5-v76.hex [('jet', 1.0, 0.08107898610097382, True), ('jet', 1.0, 0.29753489174167674, False), ('jet', 0.0, 0.36294938497713736, False), ('energy', 0.0, 0.21847600079381807, False), ('jet', 0.0, 0.21847600079381807, False)]

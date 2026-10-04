@@ -45,6 +45,14 @@ enum FitError:
       actualColumns: Vector[String]
   )
   case IncompatibleFitBlocks(detail: String)
+  /** A fit work descriptor or one of its registry keys failed to decode or validate. */
+  case InvalidWorkDescriptor(detail: String)
+  /** A resolver bound a descriptor to a reference, dataset, engine or preparation it does not describe. */
+  case WorkBindingMismatch(detail: String)
+  /** A prepared artifact failed to decode, or violates its contract with the resolved plan. */
+  case PreparedArtifactInvalid(detail: String)
+  /** A replayed response source presented a different finite-voxel population than preparation saw. */
+  case PreparationReplayMismatch(detail: String)
   case ChunkFailed(chunkOrdinal: Int, cause: FitError)
   case UnsupportedRobust(detail: String)
   case FixedEffectsIncompatible(detail: String)
@@ -123,6 +131,14 @@ enum FitError:
         s"hypothesis '$name' has coefficient axis ${expectedColumns.mkString("[", ", ", "]")} but the result carries ${actualColumns.mkString("[", ", ", "]")} for design $actualFingerprint (expected $expectedFingerprint)"
       case IncompatibleFitBlocks(detail) =>
         s"fit blocks cannot be merged: $detail"
+      case InvalidWorkDescriptor(detail) =>
+        s"invalid fit work descriptor: $detail"
+      case WorkBindingMismatch(detail) =>
+        s"fit work binding mismatch: $detail"
+      case PreparedArtifactInvalid(detail) =>
+        s"invalid prepared artifact: $detail"
+      case PreparationReplayMismatch(detail) =>
+        s"preparation replay mismatch: $detail"
       case ChunkFailed(chunkOrdinal, cause) =>
         s"fit chunk $chunkOrdinal failed: ${cause.message}"
       case UnsupportedRobust(detail) =>

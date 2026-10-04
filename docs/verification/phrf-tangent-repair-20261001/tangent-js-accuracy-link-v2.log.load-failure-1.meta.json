@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-01T14:25:01.142727+00:00",
+  "finished_utc": "2026-10-01T14:25:20.993863+00:00",
+  "duration_seconds": 19.85048,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx3g",
+    "-J-XX:ActiveProcessorCount=4",
+    "set firstLevelLawsJS / Test / unmanagedSources += file(\"/private/tmp/scalafim-lwu-repair-design-20260930/work/docs/verification/phrf-tangent-repair-20261001/TangentAccuracyOnlySuite.scala\")",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.TangentAccuracyOnlySuite",
+    "set firstLevelLawsJS / Test / mainClass := Some(\"scalafim.fmri.laws.profile.LwuConditionDiagnosticMain\")",
+    "set firstLevelLawsJS / Test / scalaJSUseMainModuleInitializer := true",
+    "set firstLevelLawsJS / Test / scalaJSUseTestModuleInitializer := false",
+    "firstLevelLawsJS/Test/fastLinkJS"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-execution-20260929/logs/tangent-js-accuracy-link-v2.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 4657
+}

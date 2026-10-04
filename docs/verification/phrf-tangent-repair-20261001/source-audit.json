@@ -1,0 +1,18 @@
+{
+  "base": "cd60ca6bce73b96b6d3d685ed3abfe2a548cf02d",
+  "sourceCommit": "8840dbfcebb53ccf60396b8244b75235eb589bd4",
+  "changedProductionAndTestPaths": [
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderTangentSuite.scala"
+  ],
+  "sourceManifestSha256": "64a7b729b6e85a17ba98de440a14d4c4f04f8344062dce723fa08a1117700a4d",
+  "sourceFilesVerified": 1829,
+  "sourcePatchSha256": "885ee4c698d17cad3ce1abd7394907eb924e843c6b38fdc5b53fbe2db5f64989",
+  "decoderSha256": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554",
+  "testSuiteSha256": "4955b8014e52e1f8dc1edae1630c2ecbbc7330e64ea271038750f78c52573177",
+  "publicEnumOrdinals": "Stalled appended; all seven prior status ordinals preserved",
+  "energyComparison": "unchanged",
+  "stationarityTolerance": 1e-09,
+  "boundTolerance": 1e-12,
+  "policyBoundsBudgets": "unchanged"
+}

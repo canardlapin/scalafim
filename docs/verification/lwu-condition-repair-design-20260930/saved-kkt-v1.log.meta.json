@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T23:16:55.395458+00:00",
+  "finished_utc": "2026-09-30T23:16:55.526046+00:00",
+  "duration_seconds": 0.13052,
+  "command": [
+    "python3",
+    "docs/verification/lwu-condition-repair-design-20260930/verify_saved_kkt.py",
+    "--out",
+    "/private/tmp/scalafim-lwu-repair-design-20260930/saved-kkt-v1.json"
+  ],
+  "cwd": "/private/tmp/scalafim-lwu-repair-design-20260930/work",
+  "log": "/private/tmp/scalafim-lwu-repair-design-20260930/saved-kkt-v1.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 60.0,
+  "log_bytes": 1570
+}

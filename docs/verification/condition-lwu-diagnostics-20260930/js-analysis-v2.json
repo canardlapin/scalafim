@@ -1,0 +1,1067 @@
+{
+  "platform": "JS",
+  "sourceId": "lwu-dev-87237a3c3163ccca571ec6ef33ae53c2f63c6d1272d58035de08e5b6f226ad5a",
+  "rawSha256": "3728ef0526f1d9c2efbdd65fb55206190d247d4f7e5908fa31cf244b2fddb540",
+  "records": 200,
+  "cells": [
+    {
+      "snr": 1.0,
+      "seed": 111,
+      "attempts": 100,
+      "admitted": 89,
+      "statuses": {
+        "Accepted": 89,
+        "Boundary": 5,
+        "BudgetExceeded": 6
+      },
+      "budgetExits": {
+        "CandidateAttemptCap": 6
+      },
+      "postfitTerminalChecks": {
+        "positiveCurvature": 100,
+        "stationary": 94,
+        "weakSd": 0,
+        "boundary": 5,
+        "returnedCurvatureUnavailable": 0
+      },
+      "admissionGateMet": false
+    },
+    {
+      "snr": 0.5,
+      "seed": 112,
+      "attempts": 100,
+      "admitted": 82,
+      "statuses": {
+        "Boundary": 16,
+        "Accepted": 82,
+        "CurvatureNotPositive": 1,
+        "BudgetExceeded": 1
+      },
+      "budgetExits": {
+        "CandidateAttemptCap": 1
+      },
+      "postfitTerminalChecks": {
+        "positiveCurvature": 99,
+        "stationary": 97,
+        "weakSd": 0,
+        "boundary": 17,
+        "returnedCurvatureUnavailable": 0
+      },
+      "admissionGateMet": false
+    }
+  ],
+  "refusalDetails": [
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 13,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        3.75809464259784,
+        0.6418881180414923,
+        0
+      ],
+      "truth": [
+        3.7710680834999657,
+        0.6748651036986748,
+        0.14997754571783029
+      ],
+      "newtonCorrection": 1.970965200208144e-12,
+      "postfitSd": [
+        0.15064180264174257,
+        0.06716168404656629,
+        0.09858181200205933
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 20,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        4.901735008515285,
+        0.8969309225773247,
+        0.5687150243059198
+      ],
+      "truth": [
+        4.662719853035516,
+        0.8969940733721782,
+        0.49148098429940124
+      ],
+      "newtonCorrection": 3.41555992996295e-09,
+      "postfitSd": [
+        0.13246719944358912,
+        0.036022389660594234,
+        0.0347099972260761
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        166,
+        8,
+        2,
+        9,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 29,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        4.0779339708987665,
+        0.4158573638491296,
+        0.8
+      ],
+      "truth": [
+        4.042549422744594,
+        0.4325693575395794,
+        0.7456916208653203
+      ],
+      "newtonCorrection": 2.1481299135357146e-10,
+      "postfitSd": [
+        0.09031242942359352,
+        0.038431724656704,
+        0.07322748268715529
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 31,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        5.487937488938604,
+        0.2142467412525622,
+        0.8
+      ],
+      "truth": [
+        5.342323403901554,
+        0.17585964292499662,
+        0.7338743011330443
+      ],
+      "newtonCorrection": 1.6671735458819485e-12,
+      "postfitSd": [
+        0.10382512421529727,
+        0.05166555742243864,
+        0.148268865502689
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 49,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        4.96529728806163,
+        0.7981242180488725,
+        0.6182287575284067
+      ],
+      "truth": [
+        4.932264343487809,
+        0.8169145883489324,
+        0.5992012514220084
+      ],
+      "newtonCorrection": 5.2801378550358095e-09,
+      "postfitSd": [
+        0.15873128251995364,
+        0.048989702413580534,
+        0.06726414702114548
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        166,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 53,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        7.403912382761275,
+        0.3523181180021666,
+        0.7036592470673102
+      ],
+      "truth": [
+        7.293521878183249,
+        0.35555681970584896,
+        0.6169424085899086
+      ],
+      "newtonCorrection": 3.2179174825990146e-09,
+      "postfitSd": [
+        0.0779384279881743,
+        0.03472032892991766,
+        0.03979434403825405
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        7,
+        1,
+        7,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 57,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        4.139207726471766,
+        0.37584283311042754,
+        0.2885639432838775
+      ],
+      "truth": [
+        4.001523745291516,
+        0.4383630221920326,
+        0.29213453361421554
+      ],
+      "newtonCorrection": 1.7146870482993786e-09,
+      "postfitSd": [
+        0.09741088041856238,
+        0.055910115560256886,
+        0.050170820871877436
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        166,
+        8,
+        1,
+        7,
+        1,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 66,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        4.014282842427024,
+        0.22586506262488748,
+        0
+      ],
+      "truth": [
+        4.061226725122802,
+        0.1988539534057789,
+        0.0329812711758354
+      ],
+      "newtonCorrection": 7.181212869328326e-17,
+      "postfitSd": [
+        0.07558945421278421,
+        0.048069065129065607,
+        0.06044828544665217
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        5,
+        0,
+        4,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 76,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        6.031007117590732,
+        0.7272235535664284,
+        0.7348936119619028
+      ],
+      "truth": [
+        5.946793995626772,
+        0.705955043542362,
+        0.6386254940780935
+      ],
+      "newtonCorrection": 5.842638105190466e-09,
+      "postfitSd": [
+        0.1617380360467562,
+        0.05723067451953417,
+        0.11493868152589962
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        7,
+        1,
+        7,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 82,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        6.4420771571299245,
+        0.661315078123865,
+        0
+      ],
+      "truth": [
+        6.8036038484806305,
+        0.6576387996461417,
+        0.0864747929795544
+      ],
+      "newtonCorrection": 3.3789115336666484e-11,
+      "postfitSd": [
+        0.13271011174941885,
+        0.06965137434390849,
+        0.06401055184526641
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 1.0,
+      "voxel": 87,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        3.6228257515120483,
+        0.21704973833023794,
+        0.30868455505893777
+      ],
+      "truth": [
+        3.6748947782657218,
+        0.20507558947558863,
+        0.33164278593915936
+      ],
+      "newtonCorrection": 1.2600619897307895e-08,
+      "postfitSd": [
+        0.05986526134900578,
+        0.03717651390629539,
+        0.03242514736355961
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        166,
+        7,
+        1,
+        7,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 0,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        6.365301079814611,
+        0.6922186906010033,
+        0
+      ],
+      "truth": [
+        6.395205101610326,
+        0.7180293747164366,
+        0.20896891932291706
+      ],
+      "newtonCorrection": 1.943338007381882e-11,
+      "postfitSd": [
+        0.21045588413559516,
+        0.09756466930887846,
+        0.13681437268160707
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 8,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        5.282365056239266,
+        0.3318766003868746,
+        0
+      ],
+      "truth": [
+        5.297549167313438,
+        0.47685718766487467,
+        0.13498356410177248
+      ],
+      "newtonCorrection": 9.946405877870848e-11,
+      "postfitSd": [
+        0.07194318425614366,
+        0.05843992383845531,
+        0.04441485648581689
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        5,
+        0,
+        4,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 9,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        7.0860515645313855,
+        0.6184569305378841,
+        0
+      ],
+      "truth": [
+        7.206465417315369,
+        0.756432977237034,
+        0.23507247054133204
+      ],
+      "newtonCorrection": 1.5432273992465057e-12,
+      "postfitSd": [
+        0.16189088508160393,
+        0.07253178695372926,
+        0.09886178916060058
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 11,
+      "status": "CurvatureNotPositive",
+      "budgetExit": null,
+      "coordinates": [
+        5.402444374450887,
+        0.6015905421339122,
+        0
+      ],
+      "truth": [
+        5.596415567335729,
+        0.5830964303960848,
+        0.003020537603680396
+      ],
+      "newtonCorrection": null,
+      "postfitSd": null,
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        2,
+        1,
+        1,
+        1,
+        0,
+        1
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 15,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        6.469748351398549,
+        0.6684130820725744,
+        0
+      ],
+      "truth": [
+        6.395167162633461,
+        0.6358935804021355,
+        0.12409334129397963
+      ],
+      "newtonCorrection": 5.938134803140918e-15,
+      "postfitSd": [
+        0.13353177440691957,
+        0.06467542736974191,
+        0.06774741375469735
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        5,
+        0,
+        4,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 29,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        5.287736360680617,
+        0.27350234686154934,
+        0
+      ],
+      "truth": [
+        5.540250367687541,
+        0.3996894035857224,
+        0.04252285069451958
+      ],
+      "newtonCorrection": 3.7717813627071567e-16,
+      "postfitSd": [
+        0.09576243920275664,
+        0.05682084977748467,
+        0.06640704701047169
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        5,
+        0,
+        4,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 30,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        4.734389459080377,
+        0.27678404342306195,
+        0.8
+      ],
+      "truth": [
+        4.671566415092434,
+        0.20948263550800078,
+        0.7787020837892539
+      ],
+      "newtonCorrection": 5.05388912132529e-16,
+      "postfitSd": [
+        0.07988164572138153,
+        0.0312882743420557,
+        0.056940292732200776
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 50,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        7.166666666666667,
+        0.6029538486747399,
+        0
+      ],
+      "truth": [
+        7.3118776187281025,
+        0.7947709295543599,
+        0.18402308983238422
+      ],
+      "newtonCorrection": 0.5575143097493597,
+      "postfitSd": [
+        0.15478129760842593,
+        0.09690401292440584,
+        0.09280810711689494
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 61,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        5.637776068916973,
+        0.6220115083472297,
+        0.8
+      ],
+      "truth": [
+        5.756302539435026,
+        0.5987315287123072,
+        0.6894904879941457
+      ],
+      "newtonCorrection": 1.514560850579516e-12,
+      "postfitSd": [
+        0.1506640586597519,
+        0.047769245838103214,
+        0.05721458150350736
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 62,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        4.655874192534771,
+        0.6944803524277702,
+        0.8
+      ],
+      "truth": [
+        4.526506437505249,
+        0.8057433575250659,
+        0.655636140236848
+      ],
+      "newtonCorrection": 2.3461160438171316e-11,
+      "postfitSd": [
+        0.15286441187767125,
+        0.05146514892011465,
+        0.08898723301944023
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 65,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        6.403192534489391,
+        0.3531416595235383,
+        0.8
+      ],
+      "truth": [
+        6.365508099620615,
+        0.3616811979801696,
+        0.702005818850061
+      ],
+      "newtonCorrection": 4.824729513364203e-12,
+      "postfitSd": [
+        0.15520374494708208,
+        0.06576257300824079,
+        0.1635137428184605
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 72,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        6.093673090286872,
+        0.32610428154516896,
+        0
+      ],
+      "truth": [
+        5.877403744687577,
+        0.487821338556858,
+        0.035014230077320366
+      ],
+      "newtonCorrection": 6.206180556766891e-11,
+      "postfitSd": [
+        0.13822783666054814,
+        0.12892864170883195,
+        0.1147851503663752
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 76,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        4.7431093377091065,
+        0.8294471428044208,
+        0.8
+      ],
+      "truth": [
+        4.340574606760079,
+        0.8912923622690354,
+        0.7091693622924664
+      ],
+      "newtonCorrection": 3.7392685673321205e-15,
+      "postfitSd": [
+        0.15998406327457987,
+        0.04200564161881171,
+        0.11118572827102978
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        5,
+        0,
+        4,
+        0,
+        4,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 83,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        5.790392523196495,
+        0.8558386583002349,
+        0
+      ],
+      "truth": [
+        5.63439534242657,
+        0.8437174254367792,
+        0.04364435883921036
+      ],
+      "newtonCorrection": 1.6906517131109948e-11,
+      "postfitSd": [
+        0.15085637842755498,
+        0.06127400704803012,
+        0.07329322100536186
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 86,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        6.473353974693404,
+        0.4607309155556013,
+        0
+      ],
+      "truth": [
+        6.3271508755244135,
+        0.6009080708189445,
+        0.03616334650653039
+      ],
+      "newtonCorrection": 6.653209038800648e-11,
+      "postfitSd": [
+        0.10607848418847383,
+        0.060310920449267225,
+        0.062155600523882124
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 89,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        7.2551734146404865,
+        0.8741237573735642,
+        0
+      ],
+      "truth": [
+        7.207650121377386,
+        0.7800557372330996,
+        0.25361523592332497
+      ],
+      "newtonCorrection": 6.378561418261305e-12,
+      "postfitSd": [
+        0.1631601374302461,
+        0.08129030164717865,
+        0.09476874128733881
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 94,
+      "status": "Boundary",
+      "budgetExit": null,
+      "coordinates": [
+        3.780411917890577,
+        0.05938133416125251,
+        0.8
+      ],
+      "truth": [
+        3.6205834855780696,
+        0.16613702987010165,
+        0.7216775479785247
+      ],
+      "newtonCorrection": 2.5177980551495286e-10,
+      "postfitSd": [
+        0.10178151968389385,
+        0.0651980292508635,
+        0.0683592280937807
+      ],
+      "weakSd": false,
+      "boundary": true,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        157,
+        4,
+        0,
+        3,
+        0,
+        3,
+        0
+      ]
+    },
+    {
+      "platform": "JS",
+      "snr": 0.5,
+      "voxel": 97,
+      "status": "BudgetExceeded",
+      "budgetExit": "CandidateAttemptCap",
+      "coordinates": [
+        7.029206895607361,
+        0.5461780977191166,
+        0.5166492401432695
+      ],
+      "truth": [
+        7.124896984778218,
+        0.5282603864719595,
+        0.47106487488829213
+      ],
+      "newtonCorrection": 4.652457623008734e-09,
+      "postfitSd": [
+        0.06632319541441796,
+        0.034572707659640954,
+        0.027233398764064172
+      ],
+      "weakSd": false,
+      "boundary": false,
+      "returnedCurvatureAvailable": true,
+      "work": [
+        166,
+        7,
+        1,
+        7,
+        0,
+        3,
+        0
+      ]
+    }
+  ],
+  "scope": "Historical DEV reproduction and recorded terminal algebra. Additional audit jets are outside decoder work; no fresh validation, direct-objective oracle, performance or policy promotion."
+}

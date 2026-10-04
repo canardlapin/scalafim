@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T23:27:00.471841+00:00",
+  "finished_utc": "2026-10-03T23:29:22.934179+00:00",
+  "duration_seconds": 142.463199,
+  "command": [
+    "sbt",
+    "-J-Xmx4g",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dsbt.global.base=/private/tmp/atlas-epic-20261003/provider-sbt",
+    "image4s-geometryJVM/test",
+    "image4s-geometryJS/test",
+    "image4s-niftiJVM/test",
+    "image4s-niftiJS/test"
+  ],
+  "cwd": "/private/tmp/image4s-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/image4s-formatted-jvm-js.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 8464
+}
