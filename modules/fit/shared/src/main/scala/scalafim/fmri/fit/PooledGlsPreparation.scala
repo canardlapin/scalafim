@@ -94,7 +94,7 @@ private[fit] object PooledGlsPreparation:
   ): Either[FitError, PreparedFitContext] =
     setup(plan, chunks).flatMap { units =>
       if saved.designIdentity != identity(plan, units) then
-        Left(FitError.InvalidFitAxis("prepared GLS artifact", "design or preparation configuration differs"))
+        Left(PreparedGlsArtifact.invalid("design or preparation configuration differs"))
       else validateWhitening(units, saved.units).map { _ =>
         context(plan, chunks, units, saved.units.map(_.whitening), saved.retainedVoxelIndices)
       }
@@ -102,7 +102,7 @@ private[fit] object PooledGlsPreparation:
 
   private def validateWhitening(units: Vector[NoiseUnit], saved: Vector[PreparedGlsUnit]): Either[FitError, Unit] =
     if units.length != saved.length then
-      return Left(FitError.InvalidFitAxis("prepared GLS artifact", "preparation unit count differs"))
+      return Left(PreparedGlsArtifact.invalid("preparation unit count differs"))
     var index = 0
     while index < units.length do
       val unit = units(index)
@@ -114,7 +114,7 @@ private[fit] object PooledGlsPreparation:
       if unit.layout.retainedRows == 0 || (0 until unit.layout.runCount).exists { run =>
           val segments = unit.layout.segmentsForRun(run)
           segments.map(_.length).sum > 1 && !segments.exists(_.length > order)
-        } then return Left(FitError.InvalidFitAxis("prepared GLS artifact", s"AR order is not estimable for unit $index"))
+        } then return Left(PreparedGlsArtifact.invalid(s"AR order is not estimable for unit $index"))
       val expectedOrders =
         if pooling == NoisePooling.Global then
           Vector(if (0 until unit.layout.runCount).exists(r => unit.layout.segmentsForRun(r).map(_.length).sum > 1) then order else 0)
@@ -123,7 +123,7 @@ private[fit] object PooledGlsPreparation:
           w.segments != unit.layout.whiteningSegments || w.pooling != pooling ||
           w.initialCondition != initial || w.method != WhiteningMethod.Estimated || w.maOrder != 0 ||
           w.coefficients.map(_.arOrder) != expectedOrders then
-        return Left(FitError.InvalidFitAxis("prepared GLS artifact", s"whitening contract differs for unit $index"))
+        return Left(PreparedGlsArtifact.invalid(s"whitening contract differs for unit $index"))
       index += 1
     Right(())
 
@@ -190,7 +190,7 @@ private[fit] object PooledGlsPreparation:
           case Right(value) => value.voxelIndices
         if pass == 0 then membership(chunkIndex) = currentVoxels
         else if membership(chunkIndex) != currentVoxels then
-          return Left(FitError.InvalidFitAxis("pooled AR replay", s"finite voxel membership changed in chunk ${chunk.ordinal.value}"))
+          return Left(FitError.PreparationReplayMismatch(s"pooled AR finite voxel membership changed in chunk ${chunk.ordinal.value}"))
         input match
           case Left(_) => () // an entirely excluded spatial block
           case Right(value) =>
@@ -244,7 +244,7 @@ private[fit] object PooledGlsPreparation:
       whitening: Vector[WhiteningPlan],
       voxels: Vector[Int]
   ): PreparedFitContext =
-    plan.strategy match
+    val fitted = plan.strategy match
       case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) =>
         val runs = units.zip(whitening).map { (unit, value) =>
           val source = unit.run.get
@@ -252,3 +252,5 @@ private[fit] object PooledGlsPreparation:
         }
         FitInterpreters.runwiseGlsContext(plan, new RunwiseGlsPrepared(chunks.timepoints.length, runs))
       case _ => FitInterpreters.glsContext(plan, units.head.prepared(whitening.head, voxels))
+    // The final pass must fit exactly the population that estimated the shared whitening.
+    new RetainedMembershipFitContext(fitted, voxels.toSet, plan.config.missingData)
