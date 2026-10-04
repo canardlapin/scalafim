@@ -21,7 +21,7 @@ integration remain JVM-only. The build aggregates and bounded CI batches now
 include the module. Existing `phrf-cmp-*` receipts describe historical author
 qualification and are retained as source evidence, not new test results.
 
-Three recovered implementation/test files have deliberate integration changes: `RidgeLss.scala`
+Recovery initially changed three retained implementation/test files: `RidgeLss.scala`
 rejects group IDs outside the trial count before arithmetic/allocation, its
 suite covers `Int.MaxValue` and another huge sparse ID, and the Python late-ack
 test captures the actual spawned PID instead of racing a child-written file.
@@ -34,7 +34,7 @@ has a ten-minute MUnit deadline. It retains all 2,048 voxels, chunk sizes, worke
 counts, and explicit lifecycle deadlines. Hosted Java 17 coverage recorded
 212.856 and 196.048 seconds for its two matrices.
 
-## Qualification in progress
+## Qualification results
 
 Completed before the review candidate:
 
@@ -48,8 +48,8 @@ Completed before the review candidate:
   The earlier 193-pass run skipped three BLS cases; the locked rerun supersedes it.
 
 The bounded recovery candidate `bfa66bd5` received independent integration
-approval subject to qualification. Full module gates and final repair review
-remain pending. Logs and actual process exit metadata are retained under
+approval subject to qualification. The final module gates below completed
+successfully. Logs and actual process exit metadata are retained under
 `/private/tmp/scalafim-mote-queue-evidence`.
 
 One initial warm-server reload exhausted its three-GB heap while retaining two
@@ -57,7 +57,7 @@ large builds. That owned process was stopped before tests ran. Subsequent gates
 use a fresh five-GB server; the cancelled reload is environment evidence, not
 a numerical test failure.
 
-## Java 17 numerical repair under qualification
+## Java 17 numerical repair
 
 The initial complete JVM comparison gate recorded 473 tests: 463 passed, nine
 failed, one opt-in heavy test skipped. Seven failures were environment/version
@@ -120,12 +120,52 @@ T*F nuisance visits. The updated expectation permits exactly those increments;
 factor, solve, response-copy and coefficient-recovery increments remain zero.
 Existing measurement/no-second-solve assertions remain, and both memoized
 rereads must leave the complete ML ledger unchanged. Independent review
-confirmed this test-only accounting adjustment. Full gates are rerun on the
+confirmed this test-only accounting adjustment. Full gates passed on the
 resulting candidate before landing.
 
 Independent read-only review approved the production repair at `723bc27d`
-subject to full gates. Focused results are author-run; the reviewer inspected
-code and terminal evidence rather than independently rerunning those tests.
+and its test-only follow-up at `4290c12659f5ea28a0c2367730c61aab6cb59c43`,
+subject to full gates. The latter review verified all six changed files and
+confirmed the exact charged traversal plus no-second-solve and memoized-reread
+checks. Focused results are author-run; the reviewer inspected code and terminal
+evidence rather than independently rerunning those tests.
+
+The final rerun tested code revision
+`4290c12659f5ea28a0c2367730c61aab6cb59c43` on macOS arm64 with Temurin
+17.0.20.1. All commands exited zero:
+
+| Target | Result |
+| --- | --- |
+| `firstLevelLawsJVM/Test/scalafmtCheck` | Passed |
+| `fitJVM/test` | 587 passed |
+| `fitJS/test` | 532 passed |
+| `phrfComparisonJVM/test` | 473 passed, one opt-in heavy test skipped |
+| `phrfComparisonJS/test` | 242 passed |
+| `firstLevelLawsJVM/test` | 83 passed |
+| `firstLevelLawsJS/test` | 83 passed |
+| `scalafimCompileAll` | JVM and JS compilation passed |
+
+The single skipped test is `RhoBiasHeavySuite`'s frozen bias criterion over
+50 harness datasets. It remains outside this bounded landing. The raw log is
+`phrf-integration-final-module-gates-java17-v2.log` (493,492 bytes, SHA-256
+`5129c6f15e7cb0638101af374d6899dd88f4e57ac073db9d20e6b34fd63d0290`).
+Its sidecar records exit zero and 4,475.59 seconds. The complete log has no
+compiler warnings or errors; it contains one sbt multiple-main-class notice.
+Only this receipt changed after the tested code revision. The owned warm
+server was stopped after every gate completed, and the two owned synthetic
+GLMsingle output files were removed.
+
+The retained condition-milestone law reports
+weak LWU admission below its 95% target; its reporting policy is unchanged.
+Passing the law suite does not establish that unmet scientific target.
+
+During the five-GB warm-server run, read-only diagnostics observed a full
+optimized JIT code cache and 11 compilation stops/restarts. Compilation was
+enabled at the snapshot. The heap contained about 2.8 GiB and short GC counter
+samples were stable. The gate was not interrupted; these measurements do not
+establish the cause of its longer fit-JVM duration or a performance result.
+The thread, heap/GC and code-cache snapshots are retained in the evidence
+directory as `full-gate-live-*.txt`.
 
 ## Explicit landing boundary
 
