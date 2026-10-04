@@ -208,7 +208,7 @@ Atlas OOM, classified as environmental:
 - The failure is heap accumulation in the server's 6 GiB JVM, not a merge
   regression. No code or test was changed.
 
-### JS tests (partial)
+### JS tests at `7180694a`
 
 | Module | Passed |
 | --- | --- |
@@ -254,17 +254,79 @@ Several JS counts are lower than the JVM counts, for example response, ar,
 design, image, motion, transform, atlas, archive, estimatesIo and dataset.
 Those modules keep JVM-only IO and platform suites under `jvm/src/test`.
 
-Still pending on JS: connectivity, mvpaDataset, mvpaArtifacts, mvpaSpatial,
+These modules were not run on JS at `7180694a`; they ran at `ff5adb03`
+(next section): connectivity, mvpaDataset, mvpaArtifacts, mvpaSpatial,
 mvpaFoundationAdmission, group, fmriWorkflow, archiveZarr, datasetZarr and
 `workflowExamplesJS`.
 
-### Pending re-gate after the `e275bffc` merge
+### Re-gate after the main merge
 
-Local main has since moved to `e275bffc`, the model-authoring seam fixes in
-hrf `Basis.scala` and design `ConvolvedBasisOrthogonalization.scala`. Once
-the owner merges it into this branch, re-run `scalafimCompileAll` and the hrf,
-design and fit tests on both platforms, then finish the pending JS batches
-above.
+The owner merged local main `3ddc8693` into this branch from their terminal.
+The merge commit is `ff5adb03a6a64d69a3dab734bb1ceb4ad75bdc1d`, with parents
+`b9dd1382` (this branch) and `3ddc8693` (main). The new main content is:
+
+- the model-authoring seam fixes: hrf `Basis` and design
+  `ConvolvedBasisOrthogonalization`;
+- C5, the complete B-spline: hrf `HrfFunctions`, `HrfIdentity` and
+  `HrfDescriptor`;
+- C4, voxel status: fit `FixedEffects` and `FmriFitResult`.
+
+Gates on `ff5adb03`, run one batch at a time with at least 43% free memory
+before each batch and the server shut down between batches:
+
+- `scalafimCompileAll`: exit 0, with no compiler warnings. The only `[warn]`
+  line is an sbt GC-pressure notice from the resident server, not a
+  diagnostic.
+- `examplesCompile`: exit 0.
+
+Re-gated modules touched by the main merge, both platforms:
+
+| Module | JVM | JS |
+| --- | --- | --- |
+| hrf | 284/284 (was 275) | 284/284 (was 275) |
+| hrfLaws | 82/82 | 82/82 |
+| design | 445/445 (was 440) | 444/444 (was 439) |
+| model | 53/53 | 53/53 |
+| fit | 570/570 (was 565) | 515/515 (was 512) |
+| firstLevelLaws | 83/83 | not re-run; 83/83 at `7180694a` |
+
+The higher counts come from the suites the main merge added.
+
+JS batches that were still pending:
+
+| Module | JS |
+| --- | --- |
+| connectivity | 64/64 |
+| mvpaDataset | 108/108 |
+| mvpaArtifacts | 5/5 (`LocalPatternArchiveSuite` and `PatternPredictionArchiveSuite` are JVM-only) |
+| mvpaSpatial | 20/20 |
+| mvpaFoundationAdmission | 18/18 |
+| group | 74/74 |
+| fmriWorkflow | 19/19 |
+| archiveZarr | 16/16 |
+| datasetZarr | 7/7 |
+| workflowExamples | 2/2 |
+
+`mvpaSpatialJVM/test` was also re-run on `ff5adb03`: 20/20.
+
+No test failed on `ff5adb03`. Every module in `scalafimTestAll`, plus the
+examples, has now passed on both platforms. Modules the main merge did not
+touch were tested at `7180694a`. The touched modules and the formerly pending
+JS modules were tested at `ff5adb03`.
+
+`SearchlightPerformanceReceiptSuite` has no source file in this tree, so its
+reported 30 s munit timeout under high host load cannot occur here.
+
+### Effect on local main's red `SpatialFeatureSetPlansSuite`
+
+Landing this reconcile also clears local main's red `mvpaSpatial`
+`SpatialFeatureSetPlansSuite`. The test "volume label maps become regional
+feature plans with linear voxel ordering" fails at line 98
+(`SamplingAlignment.exact`) on unmodified local main `3ddc8693`. It is a stale
+fixture, broken since `7989608d` (2026-09-30) by the fresh unresolved-world
+change. Origin retired the suite, together with `SpatialFeatureSetPlans` and
+`SpatialFeatureDomain`, in `c624930b`. None of the three exists at
+`ff5adb03`.
 
 ## Review evidence
 
