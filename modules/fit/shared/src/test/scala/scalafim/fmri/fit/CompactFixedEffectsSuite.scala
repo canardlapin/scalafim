@@ -54,6 +54,38 @@ class CompactFixedEffectsSuite extends FunSuite:
     assertEqualsDouble(merged.unsafeMatrixForVoxelPosition(3)(0, 1), result.coefficientCovariance.unsafeMatrixForVoxelPosition(0)(0, 1), 1e-12)
   }
 
+  test("missing run statuses agree with explicit defaults and preserve variance exclusions") {
+    val source = runwise()
+    val missing = source.copy(runs = source.runs.map(_.copy(voxelStatuses = None)))
+    val explicit = source.copy(runs = source.runs.map(_.copy(
+      voxelStatuses = Some(Vector.fill(source.voxels)(VoxelFitStatus.Estimable))
+    )))
+    val actual = checked(FixedEffects.combine(missing))
+    val expected = checked(FixedEffects.combine(explicit))
+    assertEquals(actual.voxelIndices, expected.voxelIndices)
+    assertEquals(actual.fitExclusions, expected.fitExclusions)
+    for p <- 0 until actual.predictors; v <- 0 until actual.voxels do
+      assertEqualsDouble(actual.coefficients(p, v), expected.coefficients(p, v), 1e-12)
+      assertEqualsDouble(actual.standardErrors(p, v), expected.standardErrors(p, v), 1e-12)
+
+    for (variance, status) <- Vector(
+      (0.0, VoxelFitStatus.ZeroResidualVariance),
+      (Double.NaN, VoxelFitStatus.NonFinite)
+    ) do
+      val bad = missing.runs.head.copy(residualVariance =
+        gale.linalg.DVec.fromSeq(Vector(variance, missing.runs.head.residualVariance(1))))
+      val combined = checked(FixedEffects.combine(missing.copy(runs = missing.runs.updated(0, bad))))
+      assertEquals(combined.voxelIndices, Vector(source.voxelIndices(1)))
+      assertEquals(combined.fitExclusions, Vector(VoxelInferenceExclusion(source.voxelIndices(0), status)))
+      // Explicit failure status keeps precedence over variance refinement.
+      val classified = bad.copy(voxelStatuses = Some(Vector(VoxelFitStatus.AllZero, VoxelFitStatus.Estimable)))
+      val classifiedResult = checked(FixedEffects.combine(missing.copy(runs = missing.runs.updated(0, classified))))
+      assertEquals(classifiedResult.fitExclusions, Vector(VoxelInferenceExclusion(source.voxelIndices(0), VoxelFitStatus.AllZero)))
+    intercept[IllegalArgumentException] {
+      missing.runs.head.copy(voxelStatuses = Some(Vector.empty))
+    }
+  }
+
   test("structured storage grows with voxel scales, preserves off-diagonal precision, and refuses malformed fields") {
     val base = Matrix.tabulate(2, 2)((r, c) => if r == c then 2.0 else 0.5)
     for n <- Vector(17, 4097) do

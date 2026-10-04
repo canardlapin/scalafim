@@ -399,3 +399,48 @@ class BasisGeometrySuite extends munit.FunSuite:
     assert(basis.responseFunctional(ResponseFunctional.At((-1.0).s)).isLeft)
     assert(basis.responseFunctional(ResponseFunctional.WindowMean(8.s, 4.s), FunctionalDiscretization.Exact).isLeft)
     assert(basis.element(BasisRole.Spline(1)).isLeft)
+
+  // Quadrature-size boundary from the 2026-10-04 model-authoring seam review (R1).
+  // Any evaluation is already a failure; throwing stops a saturated grid from
+  // running billions of kernel calls before the assertion can report it.
+  private def countingKernel(counter: Array[Int]): Hrf =
+    Hrf.multi("counting", 1, span = Seconds(1.0)) { _ =>
+      counter(0) += 1
+      throw new IllegalStateException("kernel evaluated for an unrepresentable grid")
+    }
+
+  test("an unrepresentable trapezoid grid is refused before any kernel evaluation"):
+    val evaluations = Array(0)
+    val basis = ResponseBasis.of(countingKernel(evaluations))
+    val cases = Seq(
+      (1e-20, Seconds(1.0)),
+      (Double.MinPositiveValue, Seconds(1.0)),
+      (1.0 / (FunctionalDiscretization.MaxTrapezoidIntervals.toDouble + 0.5), Seconds(1.0))
+    )
+    cases.foreach { (stepValue, until) =>
+      val step = PositiveSeconds(stepValue).fold(error => fail(error.toString), identity)
+      val result = basis.responseFunctional(ResponseFunctional.WindowIntegral(Seconds(0.0), until), FunctionalDiscretization.Trapezoid(step))
+      result match
+        case Left(BasisError.InvalidDiscretization(_)) => ()
+        case other => fail(s"step $stepValue: expected InvalidDiscretization, got $other")
+    }
+    assertEquals(evaluations(0), 0)
+
+  test("accepted trapezoid grids respect the declared maximum step and a representable sample count"):
+    val basis = ResponseBasis.of(Hrfs.invLogit())
+    // 0.09999999999999999 over [0, 1): ceil(1 / step) = 10, but 1 / 10 rounds to 0.1 > step.
+    val requests = Seq(
+      (0.3, 0.0, 1.0), (0.1, 0.0, 0.3), (0.05, 4.0, 8.0), (1.0 / 3.0, 0.0, 1.0), (7.0, 0.0, 2.0), (1e-3, 0.0, 32.0),
+      (0.09999999999999999, 0.0, 1.0), (0.19999999999999998, 0.0, 1.0)
+    )
+    requests.foreach { (stepValue, from, until) =>
+      val step = PositiveSeconds(stepValue).fold(error => fail(error.toString), identity)
+      val weights = basis
+        .responseFunctional(ResponseFunctional.WindowMean(Seconds(from), Seconds(until)), FunctionalDiscretization.Trapezoid(step))
+        .fold(error => fail(error.message), identity)
+      val receipt = weights.receipt
+      val dt = receipt.effectiveStep.getOrElse(fail("trapezoid receipt must report its step")).value
+      assert(receipt.samples >= 2 && receipt.samples <= FunctionalDiscretization.MaxTrapezoidIntervals + 1, s"samples ${receipt.samples}")
+      assert(dt <= stepValue, s"effective step $dt exceeds declared maximum $stepValue")
+      assertEqualsDouble(dt * (receipt.samples - 1).toDouble, until - from, 1e-12 * (until - from))
+    }

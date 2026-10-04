@@ -205,7 +205,7 @@ final case class DenseFmriFitResult(
 
   def voxelStatus(voxelIndex: Int): Option[VoxelFitStatus] =
     val position = voxelIndices.indexOf(voxelIndex)
-    if position >= 0 then Some(resolvedVoxelStatuses(position))
+    if position >= 0 then Some(voxelStatuses.fold(VoxelFitStatus.Estimable)(_(position)))
     else fitExclusions.find(_.voxelIndex == voxelIndex).map(_.status)
 
   /**

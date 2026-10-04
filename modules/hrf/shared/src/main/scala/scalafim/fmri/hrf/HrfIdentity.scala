@@ -73,7 +73,22 @@ private[hrf] object HrfIdentity:
       case HrfParams.Fourier(count) => record("fourier", count.value.toString)
       case HrfParams.Daguerre(count, scale) => record("daguerre", count.value.toString, number(scale))
       case HrfParams.Fir(count) => record("fir", count.value.toString)
-      case HrfParams.Bspline(count, degree) => record("bspline", count.value.toString, degree.toString)
+      // The legacy (R-compatible) basis keeps its two-field v2 record so that
+      // identities issued before the complete basis existed stay byte-identical.
+      // The complete basis gets a third field, which keeps the length-framed
+      // record distinct without a descriptor version bump.
+      //
+      // Identity is deliberately conservative: it encodes the requested
+      // parameters, not the realized function space. At minimum width
+      // (nBasis <= degree + 1) LegacyR and Complete evaluate to the same
+      // Bernstein basis, and different requested counts that clamp to the same
+      // width also coincide, yet all of these keep distinct identities. Two
+      // descriptors may therefore differ while spanning the same space; two
+      // different spaces never share an identity (no false merge).
+      case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.LegacyR) =>
+        record("bspline", count.value.toString, degree.toString)
+      case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.Complete) =>
+        record("bspline", count.value.toString, degree.toString, "complete")
       case HrfParams.Tent(count) => record("tent", count.value.toString)
       case HrfParams.Coefficients(baseName, coefficients) => record("coefficients", baseName, numbers(coefficients))
 
