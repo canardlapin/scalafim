@@ -67,3 +67,32 @@ This does not qualify negative-origin FIR, effective/reference/per-voxel degrees
 freedom, joint hypotheses or the complete physical fixture family. The bounded
 separate-process reader probe is now verified; the parent Core qualification remains
 open.
+
+## Local integration verification, 2026-10-03
+
+The two reviewed FIR commits were selectively integrated on canonical ScalaFIM
+main `263e6a917c4cea402b7cdb58de96f22994b742ab`, retaining every existing main
+readback test. Main does not expose the candidate's `storedDatatype` metadata
+field, so the physical storage assertion reads the actual NIfTI header and
+requires datatype code 64 (FLOAT64). The analytic fixture and both process
+probes retain their reviewed source hashes.
+
+At integrated source revision `adcccf0f6e519138a6d3679958dc3963825aebf4`,
+JDK 21 checks passed `fitEstimatesJVM/test` (16), `fitEstimatesJS/test` (12),
+`estimatesIoJVM/test` (10), and `estimatesIoJS/test` (4). The terminal build
+exit was zero, with no compiler warnings in that gate. Full raw output and
+metadata are `/private/tmp/scalafim-merge-20261003/fir-gates-v3.log` and its
+`.meta.json` sidecar; earlier failed attempts are retained separately.
+
+The integrated producer exited zero before the artifact was renamed. The
+distinct IO-only consumer exited zero after relocation and checked the literal
+metadata and twelve scalar cells. The original path was absent, all eleven
+payload hashes were unchanged, and the frozen classpath inventory excluded
+fit/model/design/dataset classes. JAR inventory is taken from the frozen copy.
+The actual classpath closure, launcher, lifecycle and source hashes are in
+`/private/tmp/scalafim-merge-20261003/fir-relocation/receipt.json` and its
+`classpath-manifest.json`; their SHA256 values are respectively
+`fbc01493e5d94fa3a6a376c83f56421c1e12fcad34c6fb7448dc978a1b20921b` and `b1edf568a3394c90436b4b1eded5e9ba5b6ffba0b71bcb0fccd9a8a72be4490b`.
+
+This integration retains the bounded scope and open parent qualification
+described above. No scientific admission policy or dependency pin was changed.
