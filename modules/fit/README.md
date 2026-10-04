@@ -406,6 +406,11 @@ an implemented bounded interpreter before any response read. Its currently
 supported global phases are DVARS, observation-pattern discovery and pooled AR
 estimation (including run-specific coefficient fits).
 
+Pooled AR lag statistics are reduced per voxel in a fixed row order and then
+combined across voxels with exact (fixed-point) summation, so the estimated
+coefficients are bit-identical to the whole-volume fit for every spatial
+chunking and merge order.
+
 Descriptors alone replay preparation. For completed pooled estimated-AR GLS,
 `PreparedGlsArtifact.prepare(descriptor, resolver)` performs the configured bounded
 noise-estimation passes and returns a data-only artifact. Persist its `encode`

@@ -27,6 +27,41 @@ class ArNoiseReductionSuite extends munit.FunSuite:
     }
   }
 
+  test("block summaries are bit-identical to the whole-volume estimator for every chunking and merge order") {
+    val layout = value(NoiseEstimationLayout.excludingRows(
+      TimeSegments.fromRunLengths(Vector(14, 15)), 29, Set(1, 15)
+    ))
+    val voxels = 7
+    val residuals = Matrix.tabulate(29, voxels) { (row, column) =>
+      val raw = math.sin((row + 1).toDouble * 12.9898 + (column + 1).toDouble * 78.233) * 43758.5453
+      (raw - math.floor(raw)) * 2.0 - 1.0 + 0.37 * math.sin(row.toDouble * 0.23 + column)
+    }
+    val order = ArOrderValue.unsafe(2)
+    val full = value(ArEstimation.summarizeNoise(residuals, layout, order))
+    val whole = Vector.tabulate(layout.runCount) { run =>
+      value(ArEstimation.pooledAutocovariance(residuals, layout.segmentsForRun(run), order)).sums.toVector
+    }
+    // Bit identity is the contract here, so these comparisons are exact by design.
+    assertEquals(full.lagSumsByRun, whole)
+    val options = ArFitOptions(order = ArOrder.Fixed(1), pooling = NoisePooling.Global, exactFirstAr1 = false)
+    val wholePlan = value(ArEstimation.fitNoise(residuals, layout, options))
+    (1 to voxels).foreach { width =>
+      val blocks = (0 until voxels).grouped(width).map(columnsIn => value(
+        ArEstimation.summarizeNoise(columns(residuals, columnsIn.toVector), layout, order)
+      )).toVector
+      Vector(blocks, blocks.reverse).foreach { ordered =>
+        val merged = ordered.reduceLeft((left, right) => value(left.merge(right)))
+        assertEquals(merged.lagSumsByRun, whole, s"width=$width")
+        assertEquals(merged.pairCountsByRun, full.pairCountsByRun, s"width=$width")
+        assertEquals(
+          value(ArEstimation.fitNoise(merged, options)).coefficients.map(_.phi),
+          wholePlan.coefficients.map(_.phi),
+          s"width=$width"
+        )
+      }
+    }
+  }
+
   test("summary counts and lag products preserve reset gaps and run means") {
     val layout = value(NoiseEstimationLayout.excludingRows(
       TimeSegments.fromRunLengths(Vector(4, 3)), 7, Set(1, 5)
