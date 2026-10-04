@@ -32,6 +32,8 @@ import scalafim.fmri.model.{
   ReducedRankComponentSpec,
   ReducedRankGlsConfig,
   ReducedRankInferencePolicy,
+  VoxelwiseBootstrapMode,
+  VoxelwiseReducedRankBootstrapConfig,
   VolumeWeighting
 }
 import gale.linalg.{DMat, DVec}
@@ -537,25 +539,99 @@ class ChunkedFitExecutorSuite extends munit.FunSuite:
       }
   }
 
-  test("compressed voxelwise-AR ReducedRankGls remains an explicit design boundary") {
-    val plan =
-      FitPlan(
+  test("voxelwise-AR ReducedRankGls refuses unqualified rank and inference policies before chunk execution") {
+    val compressed = Vector(
+      ReducedRankComponentSpec.unsafeFixed(1),
+      ReducedRankComponentSpec.unsafeEnergyRetained(0.9),
+      ReducedRankComponentSpec.unsafeResidualSumsOfSquaresBudget(0.1)
+    )
+    val bootstrap = ReducedRankInferencePolicy.Bootstrap(
+      ReducedRankBootstrapConfig.unsafe(replicates = 4, blockSize = 2, seed = 11)
+    )
+    val requests = compressed.flatMap { components =>
+      Vector(
+        components -> ReducedRankInferencePolicy.Conditional,
+        components -> bootstrap
+      )
+    } :+ (ReducedRankComponentSpec.Full -> bootstrap)
+    val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+
+    Future.sequence(requests.map { case (components, inference) =>
+      val plan = FitPlan(
         reducedRankGlsModel,
         FitStrategy.ReducedRankGls(
           ReducedRankGlsConfig.unsafe(
-            components = ReducedRankComponentSpec.unsafeFixed(1),
-            autocorrelation = AutocorrelationConfig.unsafe(order = 1, voxelwise = true)
+            components = components,
+            autocorrelation = AutocorrelationConfig.unsafe(order = 1, voxelwise = true),
+            inference = inference
           )
         )
       )
-
-    assert(FitPlanExecutor.fit(plan).left.toOption.exists {
-      case FitError.UnsupportedEngine(detail) =>
-        detail.contains("voxelwise-AR reduced-rank geometry") && detail.contains("tracked separately")
-      case _ =>
-        false
-    })
+      val expected = FitPlanExecutor.fit(plan, selection).left.toOption
+      assert(expected.exists {
+        case FitError.UnsupportedEngine(detail) =>
+          detail.contains("voxelwise-AR reduced-rank geometry") && detail.contains("EstimatesOnly or VoxelwiseBootstrap")
+        case _ => false
+      })
+      Vector(singleVoxelChunking, chunking).foreach { strategy =>
+        assertEquals(ChunkedFitExecutor.fit(plan, selection, strategy).left.toOption, expected)
+      }
+      Future.sequence(Vector(singleVoxelChunking, chunking).map { strategy =>
+        FutureChunkedFitExecutor.fit(plan, selection, strategy, FitParallelism.unsafe(2)).map { result =>
+          assertEquals(result.left.toOption, expected)
+        }
+      })
+    }).map(_ => ())
   }
+
+  for mode <- Vector(None, Some(VoxelwiseBootstrapMode.FrozenWhitening), Some(VoxelwiseBootstrapMode.RefitAutocorrelation)) do
+    test(s"global voxelwise reduced-rank estimates and $mode uncertainty are chunk and order invariant") {
+      val inference = mode.fold[ReducedRankInferencePolicy](ReducedRankInferencePolicy.EstimatesOnly) { value =>
+        ReducedRankInferencePolicy.VoxelwiseBootstrap(VoxelwiseReducedRankBootstrapConfig.unsafe(
+          resampling = ReducedRankBootstrapConfig.unsafe(replicates = 12, blockSize = 2, seed = 17),
+          mode = value
+        ))
+      }
+      val plan = FitPlan(reducedRankGlsModel, FitStrategy.ReducedRankGls(ReducedRankGlsConfig.unsafe(
+        components = ReducedRankComponentSpec.unsafeFixed(1),
+        autocorrelation = AutocorrelationConfig.unsafe(order = 1, voxelwise = true),
+        inference = inference
+      )))
+      val selection = DataSelection(voxels = IndexSelection.indices(2, 0, 1))
+      def result(value: Either[FitError, FmriFitResult]): VoxelwiseReducedRankFmriFitResult =
+        value.fold(e => fail(e.message), identity) match
+          case r: VoxelwiseReducedRankFmriFitResult => r
+          case other => fail(s"unexpected result ${other.getClass.getSimpleName}")
+      def close(actual: VoxelwiseReducedRankFmriFitResult, expected: VoxelwiseReducedRankFmriFitResult): Unit =
+        assertEquals(actual.voxelIndices, expected.voxelIndices)
+        assertEquals(actual.estimate.diagnostics, expected.estimate.diagnostics)
+        for r <- 0 until actual.predictors; v <- 0 until actual.voxels do
+          assertEqualsDouble(actual.coefficients(r, v), expected.coefficients(r, v), 1e-10)
+        assertEquals(actual.estimate.uncertainty.label, expected.estimate.uncertainty.label)
+        actual.estimate.uncertainty.bootstrap.foreach { a =>
+          val e = expected.estimate.uncertainty.bootstrap.get
+          assertEquals(a.diagnostics, e.diagnostics)
+          for r <- a.targetColumns.indices; v <- 0 until actual.voxels do
+            assertEqualsDouble(a.standardErrors(r, v), e.standardErrors(r, v), 1e-10)
+            assertEqualsDouble(a.lower(r, v), e.lower(r, v), 1e-10)
+            assertEqualsDouble(a.upper(r, v), e.upper(r, v), 1e-10)
+          assertCoefficientCovarianceClose(a.covariance, e.covariance, 1e-10)
+        }
+      val expected = result(FitPlanExecutor.fit(plan, selection))
+      close(result(ChunkedFitExecutor.fit(plan, selection, chunking)), expected)
+      val reordered = result(FitPlanExecutor.fit(plan))
+      assertEquals(reordered.estimate.diagnostics, expected.estimate.diagnostics)
+      expected.voxelIndices.zipWithIndex.foreach { case (voxel, position) =>
+        for r <- 0 until expected.predictors do
+          assertEqualsDouble(expected.coefficients(r, position), reordered.coefficients(r, voxel), 1e-10)
+      }
+      assert(TContrast("task_a", Map("task_a" -> 1.0)).evaluate(expected).isLeft)
+      assert(expected.estimate.uncertainty.bootstrap.forall(_.diagnostics.refittedWhiteningReplicates ==
+        (if mode.contains(VoxelwiseBootstrapMode.RefitAutocorrelation) then 12 else 0)))
+      FutureChunkedFitExecutor.fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2)).map { actual =>
+        close(result(actual), expected)
+      }
+    }
 
   test("FutureChunkedFitExecutor reuses full-selection voxelwise AR plans across chunks") {
     val plan = glsPlan(ArOptions(structure = ArStructure.Ar(1), voxelwise = true))

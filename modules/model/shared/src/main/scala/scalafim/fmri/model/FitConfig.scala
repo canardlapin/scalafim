@@ -971,11 +971,60 @@ object ReducedRankBootstrapConfig:
 enum ReducedRankInferencePolicy:
   case Conditional
   case Bootstrap(config: ReducedRankBootstrapConfig)
+  case EstimatesOnly
+  case VoxelwiseBootstrap(config: VoxelwiseReducedRankBootstrapConfig)
 
   def validateFor(nTimepoints: Int): Either[ModelError, Unit] =
     this match
       case Conditional       => Right(())
       case Bootstrap(config) => config.validateFor(nTimepoints)
+      case EstimatesOnly     => Right(())
+      case VoxelwiseBootstrap(config) => config.resampling.validateFor(nTimepoints)
+
+enum VoxelwiseBootstrapMode:
+  case FrozenWhitening
+  case RefitAutocorrelation
+
+/** Synchronized, run-local residual blocks with marginal HC2 correction.
+  * This is an explicit residual approximation, not a claim of calibrated T/F inference.
+  */
+final case class VoxelwiseReducedRankBootstrapConfig private (
+    resampling: ReducedRankBootstrapConfig,
+    mode: VoxelwiseBootstrapMode,
+    confidenceLevel: Double
+)
+
+object VoxelwiseReducedRankBootstrapConfig:
+  def apply(
+      resampling: ReducedRankBootstrapConfig = ReducedRankBootstrapConfig.Default,
+      mode: VoxelwiseBootstrapMode = VoxelwiseBootstrapMode.FrozenWhitening,
+      confidenceLevel: Double = 0.95
+  ): Either[ModelError, VoxelwiseReducedRankBootstrapConfig] =
+    if confidenceLevel.isFinite && confidenceLevel > 0.0 && confidenceLevel < 1.0 then
+      Right(new VoxelwiseReducedRankBootstrapConfig(resampling, mode, confidenceLevel))
+    else Left(ModelError.InvalidParameter("voxelwise bootstrap confidence level", "must be finite and in (0, 1)"))
+
+  def unsafe(
+      resampling: ReducedRankBootstrapConfig = ReducedRankBootstrapConfig.Default,
+      mode: VoxelwiseBootstrapMode = VoxelwiseBootstrapMode.FrozenWhitening,
+      confidenceLevel: Double = 0.95
+  ): VoxelwiseReducedRankBootstrapConfig =
+    apply(resampling, mode, confidenceLevel).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+final case class ReducedRankSolverConfig private (
+    maxIterations: Int,
+    tolerance: Double
+)
+
+object ReducedRankSolverConfig:
+  def apply(maxIterations: Int = 4000, tolerance: Double = 1e-8): Either[ModelError, ReducedRankSolverConfig] =
+    if maxIterations <= 0 then Left(ModelError.InvalidParameter("reduced-rank iteration budget", "must be positive"))
+    else if !tolerance.isFinite || tolerance <= 0.0 then
+      Left(ModelError.InvalidParameter("reduced-rank solver tolerance", "must be positive and finite"))
+    else Right(new ReducedRankSolverConfig(maxIterations, tolerance))
+
+  def unsafe(maxIterations: Int = 4000, tolerance: Double = 1e-8): ReducedRankSolverConfig =
+    apply(maxIterations, tolerance).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum LatentSketchMethod:
   case IdentityResponse
@@ -1052,16 +1101,17 @@ object LatentSketchConfig:
 final class ReducedRankGlsConfig private (
     val components: ReducedRankComponentSpec,
     val autocorrelation: AutocorrelationConfig,
-    val inference: ReducedRankInferencePolicy
+    val inference: ReducedRankInferencePolicy,
+    val solver: ReducedRankSolverConfig
 ):
   override def equals(other: Any): Boolean =
     other match
       case that: ReducedRankGlsConfig =>
-        components == that.components && autocorrelation == that.autocorrelation && inference == that.inference
+        components == that.components && autocorrelation == that.autocorrelation && inference == that.inference && solver == that.solver
       case _ => false
 
   override def hashCode(): Int =
-    (31 * components.hashCode() + autocorrelation.hashCode()) * 31 + inference.hashCode()
+    ((31 * components.hashCode() + autocorrelation.hashCode()) * 31 + inference.hashCode()) * 31 + solver.hashCode()
 
   def validateFor(model: FmriModel): Either[ModelError, Unit] =
     val maximum = math.min(model.eventModel.columnNames.length, model.dataset.shape.spatialSize)
@@ -1081,16 +1131,18 @@ object ReducedRankGlsConfig:
   def apply(
       components: ReducedRankComponentSpec = ReducedRankComponentSpec.Full,
       autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
-      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.Conditional
+      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.Conditional,
+      solver: ReducedRankSolverConfig = ReducedRankSolverConfig.unsafe()
   ): Either[ModelError, ReducedRankGlsConfig] =
-    Right(new ReducedRankGlsConfig(components, autocorrelation, inference))
+    Right(new ReducedRankGlsConfig(components, autocorrelation, inference, solver))
 
   def unsafe(
       components: ReducedRankComponentSpec = ReducedRankComponentSpec.Full,
       autocorrelation: AutocorrelationConfig = AutocorrelationConfig.Default,
-      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.Conditional
+      inference: ReducedRankInferencePolicy = ReducedRankInferencePolicy.Conditional,
+      solver: ReducedRankSolverConfig = ReducedRankSolverConfig.unsafe()
   ): ReducedRankGlsConfig =
-    apply(components, autocorrelation, inference).fold(error => throw new IllegalArgumentException(error.message), identity)
+    apply(components, autocorrelation, inference, solver).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 enum FitStrategy:
   case OrdinaryLeastSquares(controls: FitControls = FitControls())

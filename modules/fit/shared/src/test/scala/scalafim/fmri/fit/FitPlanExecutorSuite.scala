@@ -1043,6 +1043,7 @@ class FitPlanExecutorSuite extends munit.FunSuite:
       prepared
         .fitBlock(FitBlockInput(design, response, voxelIndices = Vector(0, 1), timepoints = rows, partitions = partitions))
         .fold(error => fail(error.message), identity)
+        .asInstanceOf[DenseFitBlockResult]
 
     assertEquals(result.engine, FitEngine.ReducedRankGls)
     assertMatrixClose(result.coefficients.value, ReducedRankGlsFmriregFixtures.rankOneCoefficients, 1e-10)

@@ -51,7 +51,8 @@ object ReducedRankDesignPartition:
 final class ReducedRankGlsPrepared private[fit] (
     private val gls: GlsPrepared,
     private val projection: Option[ReducedRankGlsProjection],
-    private val fallbackScope: CoefficientInferenceScope
+    private val fallbackScope: CoefficientInferenceScope,
+    private val voxelwise: Option[VoxelwiseReducedRankPrepared]
 ):
   val design: DesignMatrix =
     gls.design
@@ -59,7 +60,12 @@ final class ReducedRankGlsPrepared private[fit] (
   val partitions: Vector[RunPartition] =
     gls.partitions
 
-  def fitBlock(input: FitBlockInput): Either[FitError, DenseFitBlockResult] =
+  def fitBlock(input: FitBlockInput): Either[FitError, FitBlockResult] =
+    voxelwise match
+      case Some(value) => value.fitBlock(input)
+      case None => fitExistingBlock(input)
+
+  private def fitExistingBlock(input: FitBlockInput): Either[FitError, DenseFitBlockResult] =
     projection match
       case None =>
         for
@@ -106,7 +112,11 @@ object ReducedRankGlsPrepared:
         designPartition.targetColumns,
         "reduced-rank GLS target/event coefficient"
       )
-      projection <- prepared.whitening match
+      voxelwise <- config.inference match
+        case ReducedRankInferencePolicy.EstimatesOnly | ReducedRankInferencePolicy.VoxelwiseBootstrap(_) =>
+          VoxelwiseReducedRankGls.prepare(prepared, response, config, designPartition).map(Some.apply)
+        case _ => Right(None)
+      projection <- if voxelwise.nonEmpty then Right(None) else prepared.whitening match
         case GlsWhitening.Shared(plan) =>
           for
             fullFit <- prepared.fit(response, selectedVoxelIndices)
@@ -126,9 +136,9 @@ object ReducedRankGlsPrepared:
               config.inference == ReducedRankInferencePolicy.Conditional
           then Right(None)
           else Left(FitError.UnsupportedEngine(
-            "compressed or bootstrap ReducedRankGls requires shared GLS whitening; voxelwise-AR reduced-rank geometry is tracked separately"
+            "voxelwise-AR reduced-rank geometry requires fixed rank with EstimatesOnly or VoxelwiseBootstrap; legacy Conditional and Bootstrap require shared whitening or the Conditional full-rank GLS fallback"
           ))
-    yield new ReducedRankGlsPrepared(prepared, projection, inferenceScope)
+    yield new ReducedRankGlsPrepared(prepared, projection, inferenceScope, voxelwise)
 
   private def validatePartition(
       design: DesignMatrix,
@@ -397,6 +407,8 @@ private object ReducedRankGlsProjection:
       "reduced-rank GLS target/event coefficient"
     )
     policy match
+      case ReducedRankInferencePolicy.EstimatesOnly | ReducedRankInferencePolicy.VoxelwiseBootstrap(_) =>
+        Left(FitError.UnsupportedEngine("explicit voxelwise reduced-rank policies require their own result and preparation path"))
       case ReducedRankInferencePolicy.Conditional =>
         for
           varianceScale <- conditionalVariance(factors, residualDegreesOfFreedom)

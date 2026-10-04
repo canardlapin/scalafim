@@ -47,6 +47,9 @@ final case class TContrast(name: String, weights: Map[String, Double]):
   def evaluate(result: DenseFmriFitResult): Either[FitError, TContrastResult] =
     result.inferenceReady.flatMap(evaluate)
 
+  def evaluate(result: VoxelwiseReducedRankFmriFitResult): Either[FitError, TContrastResult] =
+    result.inferenceReady.flatMap(evaluate)
+
   def evaluate(result: PatternedFmriFitResult): Either[FitError, PatternedTContrastResult] =
     result.densePatterns.flatMap { patterns =>
       traversePatterns(patterns) { (pattern, dense) =>
@@ -312,6 +315,9 @@ final case class FContrast(name: String, weights: Vector[Map[String, Double]]):
     weightMatrix(columnNames).map(matrix => AlignedFContrast.unsafe(name, columnNames, matrix))
 
   def evaluate(result: DenseFmriFitResult): Either[FitError, FContrastResult] =
+    result.inferenceReady.flatMap(evaluate)
+
+  def evaluate(result: VoxelwiseReducedRankFmriFitResult): Either[FitError, FContrastResult] =
     result.inferenceReady.flatMap(evaluate)
 
   def evaluate(result: PatternedFmriFitResult): Either[FitError, PatternedFContrastResult] =

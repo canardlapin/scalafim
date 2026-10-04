@@ -1,0 +1,1736 @@
+{
+  "schema": "scalafim.voxelwise-ar-rrg-qualification.v1",
+  "recorded_at_utc": "2026-09-30T01:50:41.060191+00:00",
+  "issue": "bd-01M3QWEYR7925NAFZDCH60Q6R8",
+  "git_head": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+  "worktree_state": "local uncommitted candidate in a shared dirty checkout; hashes below bind tested task sources",
+  "admission": "fixed rank estimates and explicitly approximate model-conditional bootstrap; no generic nominal T/F inference",
+  "solver": {
+    "method": "Gale projected gradient with exact SVD rank projection",
+    "starts": 3,
+    "max_iterations": 4000,
+    "tolerance": 1e-08,
+    "returned_point_stationarity_recomputed": true,
+    "global_optimality_certified": false,
+    "geometry_gram_condition_bound": 1000000000000.0,
+    "minimum_whitening_first_scale": 1e-10
+  },
+  "environment": {
+    "scala": "3.7.4",
+    "sbt": "1.11.7",
+    "java": "25.0.1",
+    "node": "26.7.0",
+    "R": "4.5.1",
+    "gale_revision": "18d24dbb5056122032b0278f8bad557a9bb1cf23"
+  },
+  "verification": [
+    {
+      "log": "/private/tmp/scalafim-rrg-implementation/full-jvm.log",
+      "log_sha256": "a6d93e25fb9b927c93e0f923c8b2bf04418df325da770cbce4d04337a1aaca79",
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+      "commands": [
+        "modelJVM/test",
+        "fitJVM/test",
+        "fitEstimatesJVM/test"
+      ],
+      "exit_code": 0,
+      "test_totals": [
+        30,
+        361,
+        14
+      ],
+      "warnings": 0
+    },
+    {
+      "log": "/private/tmp/scalafim-rrg-implementation/full-js.log",
+      "log_sha256": "2bdff88a51f2a2bda1a229172c3b8a2e003c2edb9bf9255b6eb36d9adefcfdc8",
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+      "commands": [
+        "fitJVM/testOnly scalafim.fmri.fit.VoxelwiseReducedRankGlsSuite scalafim.fmri.fit.io.ResultManifestWriterSuite",
+        "modelJS/test",
+        "fitJS/test",
+        "fitEstimatesJS/test"
+      ],
+      "exit_code": 0,
+      "test_totals": [
+        18,
+        30,
+        347,
+        11
+      ],
+      "warnings": 0
+    },
+    {
+      "log": "/private/tmp/scalafim-rrg-implementation/final-js.log",
+      "log_sha256": "3dfa7e684902103788a6b0890091d6c3b90cc34db876951d0fbef55b1a68dda8",
+      "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+      "commands": [
+        "fitJS/testOnly scalafim.fmri.fit.VoxelwiseReducedRank*Suite scalafim.fmri.fit.ChunkedFitExecutorSuite scalafim.fmri.fit.FitPlanExecutorSuite"
+      ],
+      "exit_code": 0,
+      "test_totals": [
+        91
+      ],
+      "warnings": 0
+    },
+    {
+      "log": "/private/tmp/scalafim-rrg-implementation/compile-all.log",
+      "log_sha256": "085a66f8a2cc6a46fe12f188970b026cceb24d9f6420a68509eb98f11229415a",
+      "cwd": "/private/tmp/scalafim-rrg-final-check",
+      "commands": [
+        "modelJVM/testOnly scalafim.fmri.model.VoxelwiseReducedRankConfigSuite",
+        "modelJS/testOnly scalafim.fmri.model.VoxelwiseReducedRankConfigSuite",
+        "fitJVM/testOnly scalafim.fmri.fit.io.ResultManifestWriterSuite",
+        "scalafimCompileAll"
+      ],
+      "exit_code": 0,
+      "test_totals": [
+        2,
+        2,
+        9
+      ],
+      "warnings": 0
+    },
+    {
+      "log": "/private/tmp/scalafim-rrg-implementation/final-verification.log",
+      "log_sha256": "946ac410fd4c312f8ff55221cf3cd973cf0b217d49770f588dfd67185868ae86",
+      "commands": [
+        "fitJVM/testOnly scalafim.fmri.fit.VoxelwiseReducedRank*Suite scalafim.fmri.fit.ChunkedFitExecutorSuite scalafim.fmri.fit.FitPlanExecutorSuite scalafim.fmri.fit.io.ResultManifestWriterSuite"
+      ],
+      "test_totals": [
+        100
+      ],
+      "command_result": "passed before subsequent JS linking was cancelled",
+      "containing_process_exit_code": 1,
+      "interruption": "host unresponsive during subsequent JS link; cancelled own invocation and resumed JS alone with 3 GB heap; no other sessions modified"
+    }
+  ],
+  "isolated_final_verification": {
+    "base": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+    "checkout": "/private/tmp/scalafim-rrg-final-check",
+    "copied_task_paths": [
+      "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala",
+      "modules/fit/README.md",
+      "docs/plans/voxelwise-ar-reduced-rank-gls.md",
+      "tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R",
+      "tools/r-parity/verify_voxelwise_ar_rrg_design.R",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala",
+      "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala"
+    ],
+    "excluded_concurrent_change": {
+      "path": "modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala",
+      "owner": "nifti-identity-20260929",
+      "issue": "bd-01M3GGKMX4MH9PYPZ2MKANM7W5",
+      "reason": "removed NiftiHeader.space while unchanged dataset reader requires it"
+    },
+    "sha256": {
+      "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "b05c6b7d03ba162838c9267ed01a4e6bdff277143c57d66da8df348a148750a1",
+      "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala": "605672c3404d5a8f2d2ec948d169176aa0447cc8bc486e0f12b70afb72390b9b",
+      "modules/fit/README.md": "46ff1aa6376009cc719d6f8ca8d8bfe0a8463ee7039f8bd4b9a737432aee1bda",
+      "docs/plans/voxelwise-ar-reduced-rank-gls.md": "39c7281363c71702fbeb9b5b28235a4ed81a99b940967dcbd4795bf9a89e62aa",
+      "tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R": "32ae8c4d1c5f9f5ba7107a5c23a264b5d657ccbe9f9090694cf57831f52f813e",
+      "tools/r-parity/verify_voxelwise_ar_rrg_design.R": "3717cf3e15290b8f4be42467aa27072f0935e486a900efde3073a7280a9d90e2",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": "eb72f49d76dc9b19bce16170d67e37cf9351c95f9512839a3e4d652de00c157e",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "964446c98d1b50289c76c6b9e19bda99b685fb84a85dfa1c4836bf42cf19351e",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "c8e22f3b28d770eeb463984c07cb5359a11410e662601d1fda4d152890b81c15",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "8dfe38ddf13da033fd0d09da100e9014d8b68187f8856ee343f3318097a6b760",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "0496e573434dbef63710232b38fe911e659b35473355870ec7de45984036a66f",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "99ac53d654e0e453b01e4e91c6e3747c23c931a722d7b706de2b778ab94e4c2c",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "917236b03e91d92cd27e2325894a4bf715a36f9a82051bd3461aa1482d4ee429",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "0b6b0ea2af7ca56556aa02917bf65506ba9a9a80f6ceda6d94c98032f6735ac0",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala": "04edfa220c216d15fa3081bd2b1d8ce5529218e40063a30c9fc89c2647c22f22",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala": "1978ec83ccd1a6096b52ebb1ec29c45d44bd6dc570d6d6bb7019f8bed5bd2722",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala": "aa5f0b870e0a2b8e7f2b65b04a5bac3435e756299e964e516963341c70202cc0",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala": "3b995ac3c21f8d7c89310e5346b288305e5d149d4f9e2928139081cd2d0c8011",
+      "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala": "2d34c616f6898db78a7277ccbca8de708ad95eb0903f21b832e7759a2478b070",
+      "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala": "42c1a9cd2aa0dcc951131a7b85409e8164662b138aefc200155bcd9943e7f608"
+    }
+  },
+  "shared_checkout_compile_blocker": {
+    "log": "/private/tmp/scalafim-rrg-implementation/concurrent-nifti-blocker.log",
+    "issue": "bd-01M3GGKMX4MH9PYPZ2MKANM7W5",
+    "owner": "nifti-identity-20260929",
+    "error": "NiftiResponseBlockSource.scala:227 requires NiftiHeader.space removed by concurrent edit",
+    "resolution": "final checks performed on isolated base plus source-identical task files; unrelated edits preserved"
+  },
+  "source_sha256": {
+    "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala": "b05c6b7d03ba162838c9267ed01a4e6bdff277143c57d66da8df348a148750a1",
+    "modules/model/shared/src/test/scala/scalafim/fmri/model/VoxelwiseReducedRankConfigSuite.scala": "605672c3404d5a8f2d2ec948d169176aa0447cc8bc486e0f12b70afb72390b9b",
+    "modules/fit/README.md": "46ff1aa6376009cc719d6f8ca8d8bfe0a8463ee7039f8bd4b9a737432aee1bda",
+    "docs/plans/voxelwise-ar-reduced-rank-gls.md": "39c7281363c71702fbeb9b5b28235a4ed81a99b940967dcbd4795bf9a89e62aa",
+    "tools/r-parity/qualify_voxelwise_ar_rrg_bootstrap.R": "32ae8c4d1c5f9f5ba7107a5c23a264b5d657ccbe9f9090694cf57831f52f813e",
+    "tools/r-parity/verify_voxelwise_ar_rrg_design.R": "3717cf3e15290b8f4be42467aa27072f0935e486a900efde3073a7280a9d90e2",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala": "ae8e0020bee76131dcaca03e48d659b532880d4fc44b25f85a5856ea87522cb1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitError.scala": "9e88440d6d42c040ea8252dbde5c3ffd351ed24dea98e2fbd19b436e53e3709c",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala": "eb72f49d76dc9b19bce16170d67e37cf9351c95f9512839a3e4d652de00c157e",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala": "964446c98d1b50289c76c6b9e19bda99b685fb84a85dfa1c4836bf42cf19351e",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala": "cf9b049abfa46576c9cd51d8953f0fd5362ee8adf9089531deb86f5ec572c927",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ImageMaps.scala": "00f727901d368ab9e0e7b68f4f87a537ad5d5f8115b7e39454df6289d88db6a1",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala": "c8e22f3b28d770eeb463984c07cb5359a11410e662601d1fda4d152890b81c15",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala": "bd848600b76ddb5bff2ae6fee6c266145f39382a2475423754ba5a343d82aeec",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResultArtifacts.scala": "8dfe38ddf13da033fd0d09da100e9014d8b68187f8856ee343f3318097a6b760",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankGls.scala": "35b8ca07979bd5f77a60cfd498a3875c54f5a53cba5d342fd0a4cab2814f55bb",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrap.scala": "0496e573434dbef63710232b38fe911e659b35473355870ec7de45984036a66f",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/VoxelwiseReducedRankResults.scala": "99ac53d654e0e453b01e4e91c6e3747c23c931a722d7b706de2b778ab94e4c2c",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala": "917236b03e91d92cd27e2325894a4bf715a36f9a82051bd3461aa1482d4ee429",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala": "0b6b0ea2af7ca56556aa02917bf65506ba9a9a80f6ceda6d94c98032f6735ac0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankGlsSuite.scala": "04edfa220c216d15fa3081bd2b1d8ce5529218e40063a30c9fc89c2647c22f22",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankBootstrapSuite.scala": "1978ec83ccd1a6096b52ebb1ec29c45d44bd6dc570d6d6bb7019f8bed5bd2722",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankResultSuite.scala": "aa5f0b870e0a2b8e7f2b65b04a5bac3435e756299e964e516963341c70202cc0",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/VoxelwiseReducedRankCalibrationSuite.scala": "3b995ac3c21f8d7c89310e5346b288305e5d149d4f9e2928139081cd2d0c8011",
+    "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/io/ResultManifestWriter.scala": "2d34c616f6898db78a7277ccbca8de708ad95eb0903f21b832e7759a2478b070",
+    "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala": "42c1a9cd2aa0dcc951131a7b85409e8164662b138aefc200155bcd9943e7f608"
+  },
+  "independent_frozen_bootstrap_oracle": {
+    "schema": "scalafim.voxelwise-rrg-bootstrap-oracle.v1",
+    "scope": "independent frozen-whitening implementation parity, not coverage calibration",
+    "source_md5": "bacdd42c1d4e4354d66a65efaffae781",
+    "r_version": "4.5.1",
+    "replicates": 32,
+    "block_size": 2,
+    "seed": 19,
+    "refinement_max_error": 2.4893731187525248e-08,
+    "covariance_by_voxel": [
+      [
+        [
+          0.0004333776338790191,
+          -0.0004917154008722767
+        ],
+        [
+          -0.0004917154008722767,
+          0.0010760262929619953
+        ]
+      ],
+      [
+        [
+          0.0014939830320472324,
+          9.487140095991573e-05
+        ],
+        [
+          9.487140095991573e-05,
+          0.0003420199188410644
+        ]
+      ],
+      [
+        [
+          0.0009808775826806043,
+          -0.0009611803528124384
+        ],
+        [
+          -0.0009611803528124384,
+          0.002266705615434213
+        ]
+      ],
+      [
+        [
+          0.00044934527926402356,
+          -0.000648194631024913
+        ],
+        [
+          -0.000648194631024913,
+          0.0009387851114155585
+        ]
+      ]
+    ],
+    "lower": [
+      [
+        0.3199813275150321,
+        -0.9853768855106516,
+        0.5233572114892051,
+        -0.0529044837149697
+      ],
+      [
+        -0.5770532503616257,
+        1.3093926582971667,
+        -0.9387845849915387,
+        -0.03110890185577432
+      ]
+    ],
+    "upper": [
+      [
+        0.39074656336713054,
+        -0.8448241942844806,
+        0.6328924369878387,
+        0.02037468067839446
+      ],
+      [
+        -0.4609012691968693,
+        1.3685933093605707,
+        -0.7777903302183365,
+        0.07509024443404891
+      ]
+    ],
+    "objectives": [
+      0.1748026753006648,
+      0.20133517976511528,
+      0.14279948389142233,
+      0.1271648597593039,
+      0.15813289713125925,
+      0.14602790755568743,
+      0.1802896135730286,
+      0.18051160948000322,
+      0.21497409933638376,
+      0.28661299024874914,
+      0.1874873144892565,
+      0.17892190848642928,
+      0.09169967562564704,
+      0.11604397984588412,
+      0.17140127027563215,
+      0.2006181111646813,
+      0.18950753560383513,
+      0.212219617257587,
+      0.1791433942268513,
+      0.2269793457534473,
+      0.2118047146209619,
+      0.10993452101153732,
+      0.08194104330935156,
+      0.1827809930187038,
+      0.17646298244940703,
+      0.19383195381195928,
+      0.24022593413906132,
+      0.2225408184672097,
+      0.14662380469604408,
+      0.1347627230463115,
+      0.19691684969114465,
+      0.17076997841708413
+    ],
+    "donor_indices": [
+      [
+        9,
+        10,
+        9,
+        10,
+        7,
+        8,
+        0,
+        1,
+        2,
+        3,
+        6,
+        7
+      ],
+      [
+        6,
+        7,
+        6,
+        7,
+        0,
+        1,
+        0,
+        1,
+        1,
+        2,
+        2,
+        3
+      ],
+      [
+        6,
+        7,
+        6,
+        7,
+        10,
+        11,
+        8,
+        9,
+        9,
+        10,
+        10,
+        11
+      ],
+      [
+        6,
+        7,
+        9,
+        10,
+        2,
+        3,
+        9,
+        10,
+        0,
+        1,
+        9,
+        10
+      ],
+      [
+        3,
+        4,
+        6,
+        7,
+        9,
+        10,
+        8,
+        9,
+        6,
+        7,
+        8,
+        9
+      ],
+      [
+        8,
+        9,
+        9,
+        10,
+        8,
+        9,
+        2,
+        3,
+        4,
+        5,
+        8,
+        9
+      ],
+      [
+        2,
+        3,
+        9,
+        10,
+        6,
+        7,
+        8,
+        9,
+        0,
+        1,
+        1,
+        2
+      ],
+      [
+        6,
+        7,
+        0,
+        1,
+        4,
+        5,
+        9,
+        10,
+        1,
+        2,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        1,
+        2,
+        6,
+        7,
+        2,
+        3,
+        8,
+        9,
+        3,
+        4
+      ],
+      [
+        8,
+        9,
+        10,
+        11,
+        10,
+        11,
+        8,
+        9,
+        10,
+        11,
+        7,
+        8
+      ],
+      [
+        6,
+        7,
+        10,
+        11,
+        3,
+        4,
+        9,
+        10,
+        6,
+        7,
+        1,
+        2
+      ],
+      [
+        8,
+        9,
+        10,
+        11,
+        2,
+        3,
+        3,
+        4,
+        0,
+        1,
+        10,
+        11
+      ],
+      [
+        2,
+        3,
+        9,
+        10,
+        6,
+        7,
+        9,
+        10,
+        3,
+        4,
+        4,
+        5
+      ],
+      [
+        8,
+        9,
+        9,
+        10,
+        4,
+        5,
+        8,
+        9,
+        9,
+        10,
+        8,
+        9
+      ],
+      [
+        4,
+        5,
+        10,
+        11,
+        10,
+        11,
+        10,
+        11,
+        6,
+        7,
+        10,
+        11
+      ],
+      [
+        6,
+        7,
+        9,
+        10,
+        9,
+        10,
+        7,
+        8,
+        2,
+        3,
+        3,
+        4
+      ],
+      [
+        1,
+        2,
+        4,
+        5,
+        8,
+        9,
+        9,
+        10,
+        7,
+        8,
+        2,
+        3
+      ],
+      [
+        3,
+        4,
+        0,
+        1,
+        0,
+        1,
+        10,
+        11,
+        1,
+        2,
+        10,
+        11
+      ],
+      [
+        9,
+        10,
+        9,
+        10,
+        4,
+        5,
+        7,
+        8,
+        8,
+        9,
+        2,
+        3
+      ],
+      [
+        0,
+        1,
+        4,
+        5,
+        1,
+        2,
+        6,
+        7,
+        10,
+        11,
+        7,
+        8
+      ],
+      [
+        6,
+        7,
+        7,
+        8,
+        10,
+        11,
+        7,
+        8,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        9,
+        10,
+        3,
+        4,
+        4,
+        5,
+        8,
+        9,
+        4,
+        5,
+        2,
+        3
+      ],
+      [
+        7,
+        8,
+        8,
+        9,
+        9,
+        10,
+        9,
+        10,
+        8,
+        9,
+        2,
+        3
+      ],
+      [
+        10,
+        11,
+        4,
+        5,
+        4,
+        5,
+        2,
+        3,
+        7,
+        8,
+        4,
+        5
+      ],
+      [
+        10,
+        11,
+        9,
+        10,
+        2,
+        3,
+        3,
+        4,
+        0,
+        1,
+        7,
+        8
+      ],
+      [
+        2,
+        3,
+        9,
+        10,
+        7,
+        8,
+        2,
+        3,
+        1,
+        2,
+        10,
+        11
+      ],
+      [
+        2,
+        3,
+        7,
+        8,
+        10,
+        11,
+        8,
+        9,
+        3,
+        4,
+        8,
+        9
+      ],
+      [
+        8,
+        9,
+        4,
+        5,
+        7,
+        8,
+        0,
+        1,
+        2,
+        3,
+        2,
+        3
+      ],
+      [
+        6,
+        7,
+        8,
+        9,
+        0,
+        1,
+        10,
+        11,
+        1,
+        2,
+        9,
+        10
+      ],
+      [
+        2,
+        3,
+        3,
+        4,
+        8,
+        9,
+        2,
+        3,
+        4,
+        5,
+        7,
+        8
+      ],
+      [
+        1,
+        2,
+        7,
+        8,
+        6,
+        7,
+        0,
+        1,
+        0,
+        1,
+        4,
+        5
+      ],
+      [
+        4,
+        5,
+        1,
+        2,
+        9,
+        10,
+        8,
+        9,
+        3,
+        4,
+        7,
+        8
+      ]
+    ]
+  },
+  "bootstrap_oracle_comparison_tolerances": {
+    "coefficient_covariance_absolute": 1e-08,
+    "percentile_endpoints_absolute": 2e-06,
+    "replicate_objective_absolute": 1e-08
+  },
+  "independent_design_oracle_receipt": "docs/audits/voxelwise-ar-rrg-design-oracle.json",
+  "calibration_design": {
+    "rows": 80,
+    "target_predictors": 2,
+    "nuisance_predictors": 1,
+    "voxels": 3,
+    "ar1": [
+      0.1,
+      0.5,
+      -0.2
+    ],
+    "innovation_sd": 0.6,
+    "innovation_correlations": [
+      0.0,
+      0.5
+    ],
+    "generator": "Gaussian innovations inverse-whitened with segment-reset AR(1)",
+    "data_seed_formula": "10007 + 7919 * dataset_index_zero_based",
+    "bootstrap_seed_formula": "2017 + 101 * dataset_index_zero_based",
+    "rng": "Park-Miller 48271 mod 2147483647; Box-Muller Gaussian generator for data",
+    "regular_datasets_per_scenario": 80,
+    "rank_boundary_datasets": 40,
+    "replicates": 99,
+    "block_size": 1,
+    "runs": 1,
+    "initial_resets": 1,
+    "higher_replicate_subset": "first three datasets per regular scenario; 399 nested replicates",
+    "investigation_thresholds": {
+      "minimum_pointwise_coverage": 0.85,
+      "variance_ratio_range": [
+        0.5,
+        2.0
+      ]
+    },
+    "interpretation": "bounded gross-failure pilot; does not establish nominal 95 percent calibration"
+  },
+  "calibration": {
+    "JVM": [
+      {
+        "mode": "FrozenWhitening",
+        "innovation_correlation": 0.0,
+        "signal_scale": 1.0,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.8875,
+          0.9125,
+          0.9625,
+          0.9125,
+          0.925,
+          0.9375
+        ],
+        "coverage_wilson95": [
+          [
+            0.7998178190762713,
+            0.9396731305336952
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8458798391878072,
+            0.9651747507069949
+          ],
+          [
+            0.8618985123272557,
+            0.973010624329158
+          ]
+        ],
+        "sampling_variance": [
+          0.008558660528366931,
+          0.021488194908448062,
+          0.0045128604128555905,
+          0.00882068261801031,
+          0.008890601544588409,
+          0.002384546748006987
+        ],
+        "mean_bootstrap_variance": [
+          0.009234694423622482,
+          0.022310356808370044,
+          0.005291651158100733,
+          0.008040811982102488,
+          0.009953946677063624,
+          0.0027184504103714936
+        ],
+        "variance_ratio": [
+          1.0789882824555193,
+          1.0382610965427697,
+          1.172571423442798,
+          0.9115861357129594,
+          1.119603282988479,
+          1.1400281469187319
+        ],
+        "bias": [
+          0.006452911036481046,
+          0.014835825454786011,
+          9.038168521124934e-05,
+          -0.011231396385439352,
+          0.019946104613260296,
+          -0.0064309628214092585
+        ],
+        "rmse": [
+          0.09215919559440114,
+          0.14642299747313375,
+          0.06675670622899185,
+          0.0940030230899626,
+          0.0957983095598465,
+          0.04894994582701036
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.014534423759427527,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "RefitAutocorrelation",
+        "innovation_correlation": 0.0,
+        "signal_scale": 1.0,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.8875,
+          0.9125,
+          0.9625,
+          0.925,
+          0.925,
+          0.95
+        ],
+        "coverage_wilson95": [
+          [
+            0.7998178190762713,
+            0.9396731305336952
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8458798391878072,
+            0.9651747507069949
+          ],
+          [
+            0.8458798391878072,
+            0.9651747507069949
+          ],
+          [
+            0.8783772379535698,
+            0.9803864454644556
+          ]
+        ],
+        "sampling_variance": [
+          0.008558660528366931,
+          0.021488194908448062,
+          0.0045128604128555905,
+          0.00882068261801031,
+          0.008890601544588409,
+          0.002384546748006987
+        ],
+        "mean_bootstrap_variance": [
+          0.009270951867276745,
+          0.022358678142432677,
+          0.005303937285158319,
+          0.008217999628235998,
+          0.010074426331528089,
+          0.0027406168652464235
+        ],
+        "variance_ratio": [
+          1.0832246280301674,
+          1.040509835176634,
+          1.175293893436017,
+          0.9316738833178583,
+          1.1331546331260631,
+          1.149324024591693
+        ],
+        "bias": [
+          0.006452911036481046,
+          0.014835825454786011,
+          9.038168521124934e-05,
+          -0.011231396385439352,
+          0.019946104613260296,
+          -0.0064309628214092585
+        ],
+        "rmse": [
+          0.09215919559440114,
+          0.14642299747313375,
+          0.06675670622899185,
+          0.0940030230899626,
+          0.0957983095598465,
+          0.04894994582701036
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.01485442251312012,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "FrozenWhitening",
+        "innovation_correlation": 0.5,
+        "signal_scale": 1.0,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.9,
+          0.9,
+          0.9625,
+          0.9,
+          0.8875,
+          1.0
+        ],
+        "coverage_wilson95": [
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.7998178190762713,
+            0.9396731305336952
+          ],
+          [
+            0.9541818704644728,
+            0.9999999999999999
+          ]
+        ],
+        "sampling_variance": [
+          0.010727910215604954,
+          0.025593854484004332,
+          0.004692300581916894,
+          0.007477872519702653,
+          0.011144257396567851,
+          0.0022718876135915406
+        ],
+        "mean_bootstrap_variance": [
+          0.00940445185486698,
+          0.02454949908404999,
+          0.005227753726982387,
+          0.007958015732887985,
+          0.01041284339334775,
+          0.002639992164850377
+        ],
+        "variance_ratio": [
+          0.8766340942327375,
+          0.9591950715900552,
+          1.1141131382607954,
+          1.06420853149345,
+          0.9343685292619536,
+          1.1620258630121734
+        ],
+        "bias": [
+          0.018968517388078254,
+          0.029268133191902912,
+          0.009843572215225138,
+          -0.011589641527962269,
+          0.031095908571608377,
+          -0.0037781959569162527
+        ],
+        "rmse": [
+          0.10465952412375915,
+          0.16164948166787688,
+          0.06877894109826993,
+          0.0867105466708234,
+          0.10941622233016719,
+          0.04751593188721552
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.011506106579902963,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "RefitAutocorrelation",
+        "innovation_correlation": 0.5,
+        "signal_scale": 1.0,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.9125,
+          0.9,
+          0.9625,
+          0.9,
+          0.9125,
+          0.975
+        ],
+        "coverage_wilson95": [
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.9133556701442198,
+            0.9931171067970292
+          ]
+        ],
+        "sampling_variance": [
+          0.010727910215604954,
+          0.025593854484004332,
+          0.004692300581916894,
+          0.007477872519702653,
+          0.011144257396567851,
+          0.0022718876135915406
+        ],
+        "mean_bootstrap_variance": [
+          0.009402296120191693,
+          0.02460538618567293,
+          0.00523544395187339,
+          0.0077185257156716,
+          0.010376719950789048,
+          0.0025915288347691415
+        ],
+        "variance_ratio": [
+          0.8764331478571654,
+          0.9613786856938966,
+          1.11575204113088,
+          1.0321820404580146,
+          0.9311270891844992,
+          1.140694116762357
+        ],
+        "bias": [
+          0.018968517388078254,
+          0.029268133191902912,
+          0.009843572215225138,
+          -0.011589641527962269,
+          0.031095908571608377,
+          -0.0037781959569162527
+        ],
+        "rmse": [
+          0.10465952412375915,
+          0.16164948166787688,
+          0.06877894109826993,
+          0.0867105466708234,
+          0.10941622233016719,
+          0.04751593188721552
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.010553183846815486,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "RefitAutocorrelation",
+        "innovation_correlation": 0.5,
+        "signal_scale": 0.0,
+        "regular": false,
+        "datasets": 40,
+        "replicates": 99,
+        "coverage": [
+          0.9,
+          0.875,
+          0.925,
+          0.9,
+          0.975,
+          1.0
+        ],
+        "coverage_wilson95": [
+          [
+            0.769482247724777,
+            0.9604204713173937
+          ],
+          [
+            0.738878801611489,
+            0.945404997490546
+          ],
+          [
+            0.8013576647568946,
+            0.9741639742254119
+          ],
+          [
+            0.769482247724777,
+            0.9604204713173937
+          ],
+          [
+            0.8711863103652591,
+            0.9955731684973186
+          ],
+          [
+            0.9123783988027135,
+            1.0000000000000002
+          ]
+        ],
+        "sampling_variance": [
+          0.012003690034931295,
+          0.028852450854905447,
+          0.004725256318595096,
+          0.009393647845554708,
+          0.025067554337061575,
+          0.004243783394696615
+        ],
+        "mean_bootstrap_variance": [
+          0.009143350074854024,
+          0.025948932265704817,
+          0.004971857090113852,
+          0.010573923986845686,
+          0.027993359285366344,
+          0.005319361851957567
+        ],
+        "variance_ratio": [
+          0.7617116110334781,
+          0.8993666567945309,
+          1.0521878084260357,
+          1.1256461984413768,
+          1.1167168088663144,
+          1.2534480102365932
+        ],
+        "bias": [
+          0.03065972941572488,
+          0.05415711053417201,
+          0.01787948150092823,
+          -0.018306591938405708,
+          0.01178303664224506,
+          0.010307708232001517
+        ],
+        "rmse": [
+          0.11244383839012025,
+          0.17625019774440917,
+          0.07019117301607271,
+          0.0974368408653274,
+          0.15677916134214878,
+          0.06514551142500359
+        ],
+        "higher_replicate_subset": 0,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.0,
+        "gross_failure_flag": false
+      }
+    ],
+    "JS": [
+      {
+        "mode": "FrozenWhitening",
+        "innovation_correlation": 0,
+        "signal_scale": 1,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.8875,
+          0.9125,
+          0.9625,
+          0.9125,
+          0.925,
+          0.9375
+        ],
+        "coverage_wilson95": [
+          [
+            0.7998178190762713,
+            0.9396731305336952
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8458798391878072,
+            0.9651747507069949
+          ],
+          [
+            0.8618985123272557,
+            0.973010624329158
+          ]
+        ],
+        "sampling_variance": [
+          0.008558660519949338,
+          0.021488195582236223,
+          0.004512860416815502,
+          0.008820682619025336,
+          0.00889060158895236,
+          0.0023845467400258205
+        ],
+        "mean_bootstrap_variance": [
+          0.009234694424786258,
+          0.02231035686869884,
+          0.00529165115793793,
+          0.008040811975906902,
+          0.009953946694604813,
+          0.0027184504107011804
+        ],
+        "variance_ratio": [
+          1.0789882836526996,
+          1.0382610667943788,
+          1.1725714223778234,
+          0.911586134905667,
+          1.119603279374681,
+          1.1400281508727081
+        ],
+        "bias": [
+          0.0064529110334170525,
+          0.014835826126576968,
+          9.038169171260435e-05,
+          -0.011231396377908487,
+          0.01994610514361278,
+          -0.0064309628314304645
+        ],
+        "rmse": [
+          0.09215919554908872,
+          0.1464229998132681,
+          0.0667567062582892,
+          0.09400302309439423,
+          0.09579830989892525,
+          0.04894994574782221
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.014534424179098183,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "RefitAutocorrelation",
+        "innovation_correlation": 0,
+        "signal_scale": 1,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.8875,
+          0.9125,
+          0.9625,
+          0.925,
+          0.925,
+          0.95
+        ],
+        "coverage_wilson95": [
+          [
+            0.7998178190762713,
+            0.9396731305336952
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8458798391878072,
+            0.9651747507069949
+          ],
+          [
+            0.8458798391878072,
+            0.9651747507069949
+          ],
+          [
+            0.8783772379535698,
+            0.9803864454644556
+          ]
+        ],
+        "sampling_variance": [
+          0.008558660519949338,
+          0.021488195582236223,
+          0.004512860416815502,
+          0.008820682619025336,
+          0.00889060158895236,
+          0.0023845467400258205
+        ],
+        "mean_bootstrap_variance": [
+          0.009270951866740663,
+          0.022358678017151367,
+          0.005303937284856451,
+          0.00821799963170712,
+          0.010074426284428164,
+          0.0027406168649826757
+        ],
+        "variance_ratio": [
+          1.0832246290329017,
+          1.0405097967199606,
+          1.1752938923378384,
+          0.9316738836041683,
+          1.13315462217392,
+          1.149324028327916
+        ],
+        "bias": [
+          0.0064529110334170525,
+          0.014835826126576968,
+          9.038169171260435e-05,
+          -0.011231396377908487,
+          0.01994610514361278,
+          -0.0064309628314304645
+        ],
+        "rmse": [
+          0.09215919554908872,
+          0.1464229998132681,
+          0.0667567062582892,
+          0.09400302309439423,
+          0.09579830989892525,
+          0.04894994574782221
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.014854423024338802,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "FrozenWhitening",
+        "innovation_correlation": 0.5,
+        "signal_scale": 1,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.9,
+          0.9,
+          0.9625,
+          0.9,
+          0.8875,
+          1
+        ],
+        "coverage_wilson95": [
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.7998178190762713,
+            0.9396731305336952
+          ],
+          [
+            0.9541818704644728,
+            0.9999999999999999
+          ]
+        ],
+        "sampling_variance": [
+          0.010727910216714757,
+          0.025593854208182717,
+          0.004692300581897378,
+          0.007477872519098558,
+          0.011144257227663748,
+          0.0022718876126753386
+        ],
+        "mean_bootstrap_variance": [
+          0.009404451855341741,
+          0.02454949903491067,
+          0.005227753726183394,
+          0.007958015743490036,
+          0.01041284341097416,
+          0.0026399921670241452
+        ],
+        "variance_ratio": [
+          0.8766340941863043,
+          0.9591950800072092,
+          1.1141131380951514,
+          1.064208532997211,
+          0.9343685450050475,
+          1.1620258644376043
+        ],
+        "bias": [
+          0.018968517375810512,
+          0.02926813407175244,
+          0.009843572216107654,
+          -0.011589641497374181,
+          0.03109590914696775,
+          -0.00377819594227774
+        ],
+        "rmse": [
+          0.10465952412677146,
+          0.1616494809846988,
+          0.06877894109825615,
+          0.08671054666329515,
+          0.10941622173148922,
+          0.04751593187653106
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.011506106337055191,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "RefitAutocorrelation",
+        "innovation_correlation": 0.5,
+        "signal_scale": 1,
+        "regular": true,
+        "datasets": 80,
+        "replicates": 99,
+        "coverage": [
+          0.9125,
+          0.9,
+          0.9625,
+          0.9,
+          0.9125,
+          0.975
+        ],
+        "coverage_wilson95": [
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8954527990995489,
+            0.9871654310800886
+          ],
+          [
+            0.8148931119389591,
+            0.9484523844326191
+          ],
+          [
+            0.8302320449152499,
+            0.9569679982179401
+          ],
+          [
+            0.9133556701442198,
+            0.9931171067970292
+          ]
+        ],
+        "sampling_variance": [
+          0.010727910216714757,
+          0.025593854208182717,
+          0.004692300581897378,
+          0.007477872519098558,
+          0.011144257227663748,
+          0.0022718876126753386
+        ],
+        "mean_bootstrap_variance": [
+          0.009402296127230692,
+          0.02460538626885225,
+          0.005235443951462658,
+          0.0077185257305041,
+          0.01037671998644046,
+          0.0025915288372387294
+        ],
+        "variance_ratio": [
+          0.8764331484226373,
+          0.9613786993045214,
+          1.1157520410479873,
+          1.0321820425249175,
+          0.9311271064958905,
+          1.140694118309394
+        ],
+        "bias": [
+          0.018968517375810512,
+          0.02926813407175244,
+          0.009843572216107654,
+          -0.011589641497374181,
+          0.03109590914696775,
+          -0.00377819594227774
+        ],
+        "rmse": [
+          0.10465952412677146,
+          0.1616494809846988,
+          0.06877894109825615,
+          0.08671054666329515,
+          0.10941622173148922,
+          0.04751593187653106
+        ],
+        "higher_replicate_subset": 3,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0.010553181124890945,
+        "gross_failure_flag": false
+      },
+      {
+        "mode": "RefitAutocorrelation",
+        "innovation_correlation": 0.5,
+        "signal_scale": 0,
+        "regular": false,
+        "datasets": 40,
+        "replicates": 99,
+        "coverage": [
+          0.9,
+          0.875,
+          0.925,
+          0.9,
+          0.975,
+          1
+        ],
+        "coverage_wilson95": [
+          [
+            0.769482247724777,
+            0.9604204713173937
+          ],
+          [
+            0.738878801611489,
+            0.945404997490546
+          ],
+          [
+            0.8013576647568946,
+            0.9741639742254119
+          ],
+          [
+            0.769482247724777,
+            0.9604204713173937
+          ],
+          [
+            0.8711863103652591,
+            0.9955731684973186
+          ],
+          [
+            0.9123783988027135,
+            1.0000000000000002
+          ]
+        ],
+        "sampling_variance": [
+          0.012003690045472063,
+          0.028852451280418103,
+          0.004725256323746069,
+          0.009393647829458784,
+          0.025067554386385343,
+          0.0042437833837106614
+        ],
+        "mean_bootstrap_variance": [
+          0.009143350070290985,
+          0.025948932229904693,
+          0.004971857088291963,
+          0.010573923994969599,
+          0.027993359221488323,
+          0.005319361846050124
+        ],
+        "variance_ratio": [
+          0.761711609984462,
+          0.8993666422899741,
+          1.0521878068934882,
+          1.125646201234991,
+          1.1167168041207898,
+          1.2534480120893925
+        ],
+        "bias": [
+          0.030659729469986262,
+          0.054157110813995005,
+          0.017879481551146412,
+          -0.018306591720997165,
+          0.011783036403270749,
+          0.010307708385760535
+        ],
+        "rmse": [
+          0.112443838450615,
+          0.17625019900734012,
+          0.07019117306463969,
+          0.09743684074394857,
+          0.156779161477559,
+          0.06514551136712163
+        ],
+        "higher_replicate_subset": 0,
+        "higher_replicate_count": 399,
+        "mean_absolute_endpoint_change": 0,
+        "gross_failure_flag": false
+      }
+    ]
+  },
+  "cross_platform": {
+    "all_pointwise_coverage_identical": true,
+    "max_absolute_difference_in_reported_variance_bias_rmse_metrics": 3.845667340129921e-08
+  },
+  "sidecar_independent_json_readback": [
+    {
+      "path": "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-rrg-result-writer7632605520671212488/sub-01_task-rrg_resultmanifest.json",
+      "sha256": "2680cda0a65ac63f0e9ebf0e3392c89bbe1215d9c27bccef5a1bd361f497247d",
+      "valid_json": true,
+      "uncertainty": "estimates_only_inference_not_requested",
+      "numeric_initial_scale": true,
+      "residual_degrees_of_freedom": 2,
+      "autocorrelation": {
+        "order": 1,
+        "iterations": 0,
+        "global": false,
+        "voxelwise": false,
+        "exact_first": true,
+        "censored_timepoints": [],
+        "coefficients": {
+          "kind": "rho",
+          "value": 0
+        }
+      },
+      "covariance_convention": null
+    },
+    {
+      "path": "/var/folders/9h/nkjq6vss7mqdl4ck7q1hd8ph0000gp/T/scalafim-rrg-bootstrap-writer508240810106416630/sub-01_task-rrgbootstrap_resultmanifest.json",
+      "sha256": "6183b2c0263437372886a350a6870cba82216d9672ccd40ea4ca151e54f8f9fc",
+      "valid_json": true,
+      "uncertainty": "voxelwise_reduced_rank_bootstrap_uncertainty",
+      "numeric_initial_scale": true,
+      "residual_degrees_of_freedom": 2,
+      "autocorrelation": {
+        "order": 1,
+        "iterations": 0,
+        "global": false,
+        "voxelwise": false,
+        "exact_first": true,
+        "censored_timepoints": [],
+        "coefficients": {
+          "kind": "rho",
+          "value": 0
+        }
+      },
+      "covariance_convention": "absolute_sample_covariance_of_refitted_target_coefficients_no_residual_variance_multiplier"
+    }
+  ],
+  "independent_review": "read-only scientific review found no remaining consequential blocker conditional on checks; no independent rerun claimed",
+  "limits": [
+    "nonconvex stationary candidate without global certificate",
+    "HC2 corrects marginal leverage, not exact joint voxel covariance",
+    "some observed pointwise coverages below 95 percent; bounded simulation uncertainty",
+    "coverage not established for multiple runs, reset-heavy designs, larger blocks, lagged joint innovation dependence, misspecified rank or weak subspaces",
+    "no adaptive voxelwise rank, nominal T/F inference, streaming execution, measured speed or memory improvement, production-data validation or publication"
+  ]
+}

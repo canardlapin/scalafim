@@ -205,7 +205,7 @@ final case class DenseFmriFitResult(
 
   def voxelStatus(voxelIndex: Int): Option[VoxelFitStatus] =
     val position = voxelIndices.indexOf(voxelIndex)
-    if position >= 0 then Some(resolvedVoxelStatuses(position))
+    if position >= 0 then Some(voxelStatuses.fold(VoxelFitStatus.Estimable)(_(position)))
     else fitExclusions.find(_.voxelIndex == voxelIndex).map(_.status)
 
   /**
@@ -278,6 +278,62 @@ final case class DenseFmriFitResult(
     val row = columnNames.indexOf(columnName)
     val col = voxelIndices.indexOf(voxelIndex)
     if row < 0 || col < 0 then None else Some(coefficients(row, col))
+
+/** A reduced-rank fit with explicit uncertainty provenance. Its bootstrap
+  * payload supports uncertainty export, but not the nominal T/F distribution
+  * assumed by the generic contrast evaluator.
+  */
+final case class VoxelwiseReducedRankFmriFitResult(
+    estimate: VoxelwiseReducedRankEstimate,
+    columnNames: Vector[String],
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    engine: FitEngine,
+    summary: FitSummary,
+    override val coefficientAxis: Option[CoefficientAxis] = None,
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
+) extends FmriFitResult:
+  require(engine == FitEngine.ReducedRankGls, "voxelwise reduced-rank result engine must be ReducedRankGls")
+  require(columnNames.length == estimate.coefficients.predictors, "column names must match reduced-rank coefficient rows")
+  require(voxelIndices.length == estimate.coefficients.voxels, "voxel indices must match reduced-rank coefficient columns")
+  require(timepoints.nonEmpty, "reduced-rank fit result must contain at least one timepoint")
+  require(coefficientAxis.forall(_.predictors == estimate.coefficients.predictors), "coefficient axis must match reduced-rank coefficient rows")
+  require(voxelStatuses.forall(_.length == estimate.coefficients.voxels), "voxel statuses must match reduced-rank coefficient columns")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "voxelwise reduced-rank fit result")
+
+  def coefficients: CoefficientBlock = estimate.coefficients
+  def predictors: Int = coefficients.predictors
+  override def voxels: Int = coefficients.voxels
+  def residualVariance: DVec = estimate.residualVariance
+  def residualDegreesOfFreedom: ResidualDegreesOfFreedom = estimate.residualDegreesOfFreedom
+  def diagnostics: VoxelwiseReducedRankDiagnostics = estimate.diagnostics
+  def uncertainty: VoxelwiseReducedRankUncertainty = estimate.uncertainty
+  def selectedVoxels: SelectedVoxelIndices = SelectedVoxelIndices.unsafe(voxelIndices)
+  def selectedTimepoints: SelectedTimepointIndices = SelectedTimepointIndices.unsafe(timepoints)
+  def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
+    voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))
+
+  def voxelStatus(voxelIndex: Int): Option[VoxelFitStatus] =
+    val position = voxelIndices.indexOf(voxelIndex)
+    if position >= 0 then Some(resolvedVoxelStatuses(position))
+    else fitExclusions.find(_.voxelIndex == voxelIndex).map(_.status)
+
+  def coefficient(columnName: String, voxelIndex: Int): Option[Double] =
+    val row = columnNames.indexOf(columnName)
+    val col = voxelIndices.indexOf(voxelIndex)
+    if row < 0 || col < 0 then None else Some(coefficients(row, col))
+
+  def inferenceReady: Either[FitError, InferenceReadyDenseFit] =
+    uncertainty.bootstrap match
+      case None =>
+        Left(FitError.UnsupportedEngine("voxelwise reduced-rank results have no uncertainty payload for nominal T/F contrast inference"))
+      case Some(_) =>
+        Left(FitError.NonEstimableContrast(
+          "voxelwise reduced-rank",
+          "bootstrap covariance is an explicitly model-conditional approximation, not nominal T/F contrast inference"
+        ))
 
 final case class LssFmriFitResult(
     coefficients: CoefficientBlock,
@@ -655,6 +711,8 @@ private[fit] object FmriFitResults:
           runwise.copy(fitExclusions = combined)
         case fixed: FixedEffectsFmriFitResult =>
           fixed.copy(fitExclusions = combined)
+        case reducedRank: VoxelwiseReducedRankFmriFitResult =>
+          reducedRank.copy(fitExclusions = combined)
         case patterned: PatternedFmriFitResult =>
           patterned.copy(fitExclusions = combined)
     }
