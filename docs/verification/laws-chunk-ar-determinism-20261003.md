@@ -179,3 +179,23 @@ the branch first, in merge commit `fe105694`.
 | `scalafimCompileAll` | success (exit 0); warning-clean |
 
 Main stayed at `53097f3f` for every gate. Free memory was at least 33% before each batch.
+
+### Landed gates (merged with main `36240e39`, then `7e1f989f`; landed as `7ed4876c`)
+
+The branch was merged with main `36240e39` in `8f00ff39`. That merge brought in the
+PHRF prerequisites: Gale `da38f8c4`, `WhiteningPlan.transposeMatrix`, and the
+`ConditionMilestoneSuite` fix. Gates ran on that merge, one batch at a time, with
+the sbt-warm server stopped between batches.
+
+| Gate | Result |
+|---|---|
+| `arJVM/test` | 160/160 pass |
+| `arJS/test` | 158/158 pass |
+| `fitJVM/test` | 562/562 pass |
+| `fitJS/test` | 509/509 pass |
+| `firstLevelLawsJVM/test` | 83/83 pass |
+| `firstLevelLawsJS/test` | 83/83 pass |
+
+The branch was then merged with main `7e1f989f` (viewer and docs changes only) in
+`7ed4876c`. `scalafimCompileAll` on `7ed4876c` exited 0 and was warning-clean.
+Main fast-forwarded to `7ed4876c`.
