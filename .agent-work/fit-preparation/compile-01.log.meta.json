@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-02T11:41:45.557439+00:00",
+  "finished_utc": "2026-10-02T11:41:45.764514+00:00",
+  "duration_seconds": 0.207484,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJVM/compile",
+    "fitJS/compile"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/fit-preparation/compile-01.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 705
+}

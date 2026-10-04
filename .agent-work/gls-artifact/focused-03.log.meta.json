@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-02T23:00:05.175945+00:00",
+  "finished_utc": "2026-10-02T23:00:49.312368+00:00",
+  "duration_seconds": 44.135173,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJVM/testOnly *PreparedGlsArtifactSuite *PreparedGlsPortabilitySuite *PooledGlsPreparationSuite",
+    "fitJS/testOnly *PreparedGlsPortabilitySuite"
+  ],
+  "cwd": "/private/tmp/scalafim-fit-preparation-20261002",
+  "log": "/private/tmp/scalafim-fit-preparation-20261002/.agent-work/gls-artifact/focused-03.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 6056
+}

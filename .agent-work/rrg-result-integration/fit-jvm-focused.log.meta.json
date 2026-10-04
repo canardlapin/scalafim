@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T01:10:02.951515+00:00",
+  "finished_utc": "2026-09-30T01:10:45.838807+00:00",
+  "duration_seconds": 42.886758,
+  "command": [
+    "sbt",
+    "fitJVM/testOnly scalafim.fmri.fit.VoxelwiseReducedRankResultSuite scalafim.fmri.fit.VoxelwiseReducedRankGlsSuite scalafim.fmri.fit.VoxelwiseReducedRankBootstrapSuite scalafim.fmri.fit.ChunkedFitExecutorSuite"
+  ],
+  "cwd": "/Users/bbuchsbaum/code/scala/scalafim",
+  "log": "/Users/bbuchsbaum/code/scala/scalafim/.agent-work/rrg-result-integration/fit-jvm-focused.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 4185
+}

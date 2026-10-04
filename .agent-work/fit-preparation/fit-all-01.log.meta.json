@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-02T11:57:56.314416+00:00",
+  "finished_utc": "2026-10-02T12:01:40.237044+00:00",
+  "duration_seconds": 223.923246,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJVM/test",
+    "fitJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-fit-preparation-20261002",
+  "log": "/private/tmp/scalafim-fit-preparation-20261002/.agent-work/fit-preparation/fit-all-01.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 90533
+}

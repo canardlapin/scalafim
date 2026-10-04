@@ -1,0 +1,3331 @@
+--- a/modules/fit/README.md
++++ b/modules/fit/README.md
+@@ -388,17 +388,80 @@
+ available. See the [design and qualification](../../docs/plans/voxelwise-ar-reduced-rank-gls.md)
+ for the mathematical target, tested cases and remaining limits.
+ 
+-Chunked execution asks the selected `FitInterpreter` to prepare engine-specific
+-context once for the resolved selection and then applies that immutable context
+-to each voxel chunk. This is especially important for estimated-AR GLS: the
+-AR/whitening plan is estimated on the full selected response block before voxel
+-chunks run, so chunking does not silently change the autocorrelation model.
++`FitPreparation.describe(plan)` reports `DesignOnly`, `BlockLocal`, or
++`GlobalReduction` before reading responses, with ordered reduction requirements.
++OLS (including fixed temporal weights), fixed-AR GLS, runwise OLS/fixed effects,
++and LSS prepare from temporal/design metadata. Estimated voxelwise GLS prepares
++within each spatial block. DVARS-weighted OLS scans spatial blocks once to sum
++temporal squared differences, finalizes the shared weights, then fits blocks in a
++second pass. Row-omission discovery similarly scans blocks and retains only
++finite-row masks and voxel memberships before fitting each observation pattern.
++Every scan preserves all selected timepoints and the existing run/reset layout.
++
++Pooled estimated-AR GLS replays bounded spatial blocks for each configured
++noise-estimation iteration, then performs one final fitting pass. Each iteration
++fits under the previous completed whitening plan (OLS initially), summarizes
++original-space residuals, and merges raw per-run lag products and pair counts.
++Only after the full population is reduced are AR coefficients estimated. This
++preserves run centering, censor/reset boundaries, temporal weighting of global
++run estimates, and separate run-specific coefficient designs. Preparation retains
++designs, per-run lag statistics and voxel-membership metadata, with response and
++residual matrices bounded by the spatial block size. Replay requires an immutable
++response snapshot; changed finite-column membership between passes is rejected.
++
++Active robust row weighting and learned spatial bases remain global dependencies.
++The legacy `ChunkedFitExecutor` still uses dense preparation for those paths;
++chunking does not make their preparation out of core. Robust row medians need exact order statistics across the selection, and
++reduced-rank bootstrap refits a shared basis for each replicate. Computing either
++independently per block would change the estimator.
++
++`FitWorkDescriptor.compile(reference, plan, blockSize, selection)` produces a
++versioned, data-only recipe with exact ordered axes, topology and deterministic
++unit/block work IDs. Its `encode`/`decode` use canonical length-prefixed text
++(UTF-16 code-unit lengths) on both platforms. IDs are collision-free canonical
++strings rather than compact hashes. An explicit `FitWorkResolver` binds the
++recipe to a runtime plan and reader. It must verify that `planRevision` names the
++complete immutable scientific recipe and `sourceRevision` names the response
++snapshot; dataset names and shapes alone are not content verification.
++`FitWorkExecutor.fit` checks the binding and rejects global dependencies without
++an implemented bounded interpreter before any response read. Its currently
++supported global phases are DVARS, observation-pattern discovery and pooled AR
++estimation (including run-specific coefficient fits).
++
++Descriptors alone replay preparation. For completed pooled estimated-AR GLS,
++`PreparedGlsArtifact.prepare(descriptor, resolver)` performs the configured bounded
++noise-estimation passes and returns a data-only artifact. Persist its `encode`
++string, then use `PreparedGlsArtifact.decode(text)` and `artifact.restore(resolver)`
++to rebuild a `RestoredGlsWork` without reading responses. `restored.fit()` performs
++one final bounded spatial pass; it does not re-estimate AR coefficients.
++
++The versioned artifact stores exact IEEE-754 coefficient bits, whitening/reset
++layout, shared versus runwise coefficient scope, source-run identities, ordered
++retained voxel membership and a design/configuration binding. Restoration checks
++those against the resolved immutable plan before fitting. Numeric design values,
++row geometry, structural columns and solver configuration have portable bindings;
++audit text and broader plan metadata remain covered by the resolver's immutable
++plan revision. Estimated-method and
++iteration diagnostics retain their original meaning. The final pass also checks
++retained membership, including entirely excluded blocks. The resolver remains
++responsible for immutable source identity and content; the codec validates
++structure and compatibility, not artifact authenticity or provenance of modified
++coefficient values. Store artifacts in a trusted, integrity-checked store.
++
++This artifact version supports shared and runwise pooled estimated GLS with
++whole-voxel missing-data policies and disabled temporal weighting/nuisance
++projection. Fixed/voxelwise AR, observation-pattern artifacts, finalized DVARS
++weights and learned spatial bases are not admitted. A persistent plan/artifact
++registry, distributed reduction and robust/reduced-rank bounded interpreters
++remain future work. Result merging still retains the complete fit
++result; use the existing selected-estimate sinks when full output retention is
++unnecessary.
+ 
+ The reusable scheduler-neutral boundary is `ChunkProgram`: a validated ordered
+ work stream, `CompletedChunk` values keyed by chunk ordinal, and a `ChunkReducer`
+ contract for deterministic merge semantics. `FitChunkProgram` is the fMRI fit
+ specialization: a resolved chunk stream plus the prepared interpreter context
+ needed to execute each work item. The shared module provides local sequential and
+-bounded `Future` interpreters over chunk programs. Future distributed runtimes
+-should consume the same prepared program contract from JVM-only adapters rather
+-than adding scheduler concepts to shared code.
++bounded `Future` interpreters over chunk programs. `FitChunkProgram` and its typed
++interpreter state are process-local; durable schedulers should persist
++`FitWorkDescriptor` and bind runtime capabilities separately.
+--- a/modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitInterpreter.scala
+@@ -52,13 +52,7 @@
+   ): Either[FitError, PreparedFitContext] =
+     val preparation = prepareFromTimepoints(plan, timepoints)
+       .getOrElse(loadResponses.flatMap(series => prepare(plan, series)))
+-    preparation.map { prepared =>
+-      new PreparedFitContext(
+-        engine = engine,
+-        runChunk = chunkSeries => fitChunk(plan, chunkSeries, prepared),
+-        combine = chunks => mergeAny(plan, chunks)
+-      )
+-    }
++    preparation.map(prepared => new InterpreterFitContext(this)(plan, prepared))
+ 
+   private[fit] final def mergeAny(
+       plan: FitPlan,
+@@ -78,19 +72,37 @@
+ 
+   protected def collect(chunks: IndexedSeq[FitBlockResult]): Either[FitError, IndexedSeq[Block]]
+ 
+-private[fit] final case class PreparedFitContext private[fit] (
+-    engine: FitEngine,
+-    private val runChunk: FmriSeries => Either[FitError, FitBlockResult],
+-    private val combine: IndexedSeq[FitBlockResult] => Either[FitError, FmriFitResult]
+-):
+-  def fitChunk(series: FmriSeries): Either[FitError, FitBlockResult] =
+-    runChunk(series) match
++/** Runtime state only. Persist FitWorkDescriptor, then bind interpreter capabilities. */
++private[fit] sealed trait PreparedFitContext:
++  def engine: FitEngine
++  protected def execute(series: FmriSeries): Either[FitError, FitBlockResult]
++  def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult]
++
++  final def fitChunk(series: FmriSeries): Either[FitError, FitBlockResult] =
++    execute(series) match
+       case Left(FitError.AllVoxelsExcluded(exclusions)) =>
+         Right(ExcludedFitBlockResult(exclusions.map(_.voxelIndex), series.timepoints, engine, exclusions))
+       case other => other
+ 
++private[fit] final class InterpreterFitContext(val interpreter: FitInterpreter)(
++    plan: FitPlan,
++    prepared: interpreter.Prepared
++) extends PreparedFitContext:
++  def engine: FitEngine = interpreter.engine
++  protected def execute(series: FmriSeries): Either[FitError, FitBlockResult] =
++    interpreter.fitChunk(plan, series, prepared)
+   def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
+-    combine(chunks)
++    interpreter.mergeAny(plan, chunks)
++
++private[fit] final class BlockLocalFitContext(
++    interpreter: FitInterpreter,
++    plan: FitPlan
++) extends PreparedFitContext:
++  def engine: FitEngine = interpreter.engine
++  protected def execute(series: FmriSeries): Either[FitError, FitBlockResult] =
++    interpreter.prepare(plan, series).flatMap(interpreter.fitChunk(plan, series, _))
++  def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
++    interpreter.mergeAny(plan, chunks)
+ 
+ private[fit] final case class OlsExecutionPrepared(
+     solver: OlsPrepared,
+@@ -99,6 +111,15 @@
+ )
+ 
+ object FitInterpreters:
++  private[fit] def olsContext(plan: FitPlan, prepared: OlsExecutionPrepared): PreparedFitContext =
++    new InterpreterFitContext(OrdinaryLeastSquares)(plan, prepared)
++
++  private[fit] def glsContext(plan: FitPlan, prepared: GlsPrepared): PreparedFitContext =
++    new InterpreterFitContext(GeneralizedLeastSquares)(plan, prepared)
++
++  private[fit] def runwiseGlsContext(plan: FitPlan, prepared: RunwiseGlsPrepared): PreparedFitContext =
++    new InterpreterFitContext(RunwiseGeneralizedLeastSquares)(plan, prepared)
++
+   private def bindRankFailure(input: FitBlockInput, error: FitError): FitError =
+     input.coefficientAxis match
+       case Some(axis) => FitKernel.bindRankFailure(error, axis)
+@@ -152,6 +173,14 @@
+ 
+     val engine: FitEngine = FitEngine.OrdinaryLeastSquares
+ 
++    override private[fit] def prepareFromTimepoints(
++        plan: FitPlan,
++        timepoints: Vector[Int]
++    ): Option[Either[FitError, OlsExecutionPrepared]] =
++      plan.config.volumeWeighting match
++        case scalafim.fmri.model.VolumeWeighting.Estimated(_) => None
++        case _ => Some(FitPreparation.ols(plan, timepoints))
++
+     def fit(plan: FitPlan, series: FmriSeries): Either[FitError, DenseFmriFitResult] =
+       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+       for
+@@ -198,6 +227,14 @@
+     type Result = DenseFmriFitResult
+ 
+     val engine: FitEngine = FitEngine.GeneralizedLeastSquares
++
++    override private[fit] def prepareFromTimepoints(
++        plan: FitPlan,
++        timepoints: Vector[Int]
++    ): Option[Either[FitError, GlsPrepared]] =
++      if FitPreparation.fixedAr(plan.config.autocorrelation) then
++        Some(FitPreparation.designSeries(plan, timepoints).flatMap(prepare(plan, _)))
++      else None
+ 
+     def fit(plan: FitPlan, series: FmriSeries): Either[FitError, DenseFmriFitResult] =
+       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+@@ -309,6 +346,14 @@
+     type Result = RunwiseFmriFitResult
+ 
+     val engine: FitEngine = FitEngine.GeneralizedLeastSquares
++
++    override private[fit] def prepareFromTimepoints(
++        plan: FitPlan,
++        timepoints: Vector[Int]
++    ): Option[Either[FitError, RunwiseGlsPrepared]] =
++      if FitPreparation.fixedAr(plan.config.autocorrelation) then
++        Some(FitPreparation.designSeries(plan, timepoints).flatMap(prepare(plan, _)))
++      else None
+ 
+     def fit(plan: FitPlan, series: FmriSeries): Either[FitError, RunwiseFmriFitResult] =
+       val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, series.timepoints)
+--- a/modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitChunks.scala
+@@ -211,11 +211,20 @@
+             s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
+           ))
+       interpreter <- FitInterpreters.forPlan(plan)
+-      context <- interpreter.prepareContext(
+-        plan,
+-        chunkPlan.timepoints,
+-        reader.seriesEither(chunkPlan.selection).left.map(FitChunkPlan.mapDatasetError)
+-      )
++      context <-
++        if plan.engine == FitEngine.OrdinaryLeastSquares &&
++            plan.config.volumeWeighting.isInstanceOf[scalafim.fmri.model.VolumeWeighting.Estimated]
++        then FitPreparation.dvars(reader, plan, chunkPlan).map(FitInterpreters.olsContext(plan, _))
++        else if plan.engine == FitEngine.GeneralizedLeastSquares &&
++            FitPreparation.describe(plan).reductions.contains(FitPreparationReduction.PooledAutocorrelation)
++        then PooledGlsPreparation.prepare(reader, plan, chunkPlan)
++        else FitPreparation.describe(plan).topology match
++          case FitPreparationTopology.BlockLocal => Right(new BlockLocalFitContext(interpreter, plan))
++          case _ => interpreter.prepareContext(
++            plan,
++            chunkPlan.timepoints,
++            reader.seriesEither(chunkPlan.selection).left.map(FitChunkPlan.mapDatasetError)
++          )
+     yield context
+ 
+ private[fit] type CompletedFitChunk = CompletedChunk[FitBlockResult]
+@@ -453,10 +462,20 @@
+       chunk: FitChunkSpec,
+       context: PreparedFitContext
+   ): Either[FitError, FitBlockResult] =
++    readChunk(reader, chunk).flatMap(context.fitChunk)
++
++  private[fit] def readChunk(
++      reader: DatasetSeriesReader,
++      chunk: FitChunkSpec
++  ): Either[FitError, scalafim.dataset.FmriSeries] =
+     reader.seriesEither(chunk.selection)
+       .left
+       .map(FitChunkPlan.mapDatasetError)
+-      .flatMap(context.fitChunk)
++      .flatMap { series =>
++        if series.timepoints == chunk.timepoints && series.voxelIndices == chunk.voxelIndices &&
++            series.shape == reader.dataset.shape then Right(series)
++        else Left(FitError.InvalidFitAxis("fit chunk response", s"reader returned different axes for chunk ${chunk.ordinal.value}"))
++      }
+ 
+   private[fit] def mergeChunks(
+       plan: FitPlan,
+--- /dev/null
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitPreparation.scala
+@@ -0,0 +1,164 @@
++package scalafim.fmri.fit
++
++import gale.linalg.Matrix
++import scalafim.dataset.{DatasetSeriesReader, FmriSeries}
++import scalafim.fmri.model.{ArOptions, FitEngine, FitPlan, MissingDataPolicy, RobustPsi, ScaleScope, VolumeWeighting}
++
++enum FitPreparationTopology:
++  case DesignOnly, BlockLocal, GlobalReduction
++
++enum FitPreparationReduction:
++  case ObservationPatterns, Dvars, PooledAutocorrelation, RobustRowWeights, RobustScales, SpatialBasis
++
++/** Ordered scientific dependencies, available before any response read.
++  * Global reductions may require repeated passes or external order statistics.
++  */
++final case class FitPreparationRequirements(
++    topology: FitPreparationTopology,
++    reductions: Vector[FitPreparationReduction]
++):
++  require((topology == FitPreparationTopology.GlobalReduction) == reductions.nonEmpty,
++    "only global preparation has reduction phases")
++  require(reductions.distinct == reductions, "preparation phases must be unique")
++
++  /** Admission for the durable executor, which never falls back to dense preparation. */
++  def supportsBoundedExecution(engine: FitEngine): Boolean =
++    reductions.forall {
++      case FitPreparationReduction.ObservationPatterns | FitPreparationReduction.Dvars => true
++      case FitPreparationReduction.PooledAutocorrelation => engine == FitEngine.GeneralizedLeastSquares
++      case _ => false
++    }
++
++object FitPreparation:
++  def describe(plan: FitPlan): FitPreparationRequirements =
++    import FitPreparationReduction.*
++    import FitPreparationTopology.*
++    val discovery =
++      if plan.config.missingData == MissingDataPolicy.OmitRowsPerVoxel then Vector(ObservationPatterns)
++      else Vector.empty
++    val weighting = plan.config.volumeWeighting match
++      case VolumeWeighting.Estimated(_) => Vector(Dvars)
++      case _ => Vector.empty
++    val enginePhases = plan.engine match
++      case FitEngine.GeneralizedLeastSquares =>
++        if needsPooledAr(plan.config.autocorrelation) then Vector(PooledAutocorrelation) else Vector.empty
++      case FitEngine.RobustLeastSquares =>
++        val weights = if plan.config.robust.psi != RobustPsi.Disabled then Vector(RobustRowWeights)
++          else if plan.config.robust.scaleScope != ScaleScope.Voxel then Vector(RobustScales)
++          else Vector.empty
++        val ar = if plan.config.robust.reestimateAutocorrelation && needsPooledAr(plan.config.autocorrelation)
++          then Vector(PooledAutocorrelation) else Vector.empty
++        weights ++ ar
++      case FitEngine.ReducedRankGls =>
++        val ar = if needsPooledAr(plan.config.autocorrelation) then Vector(PooledAutocorrelation) else Vector.empty
++        ar :+ SpatialBasis
++      case FitEngine.LatentSketch => Vector(SpatialBasis)
++      case _ => Vector.empty
++    val phases = discovery ++ weighting ++ enginePhases
++    val topology =
++      if phases.nonEmpty then GlobalReduction
++      else plan.engine match
++        case FitEngine.GeneralizedLeastSquares if !fixedAr(plan.config.autocorrelation) => BlockLocal
++        case FitEngine.RobustLeastSquares => BlockLocal
++        case _ => DesignOnly
++    FitPreparationRequirements(topology, phases)
++
++  private[fit] def fixedAr(options: ArOptions): Boolean =
++    options.rho.nonEmpty || options.phi.nonEmpty
++
++  private def needsPooledAr(options: ArOptions): Boolean =
++    !fixedAr(options) && !options.voxelwise
++
++  /** A single zero column supplies only the shape required by temporal preparation.
++    * It is never read from a provider or used to estimate response-derived quantities.
++    */
++  private[fit] def designSeries(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, FmriSeries] =
++    FmriSeries.fromIntIndices(
++      Matrix.tabulate(timepoints.length, 1)((_, _) => 0.0),
++      Vector(0), timepoints, plan.model.dataset.shape
++    ).left.map(FitChunkPlan.mapDatasetError)
++
++  private def designInput(plan: FitPlan, timepoints: Vector[Int]): Either[FitError, FitBlockInput] =
++    for
++      design <- MatrixAdapters.designMatrix(plan.model, timepoints)
++    yield FitBlockInput(
++      design, ResponseBlock.unsafe(Matrix.tabulate(timepoints.length, 1)((_, _) => 0.0)),
++      Vector(0), timepoints,
++      partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, timepoints),
++      coefficientAxis = plan.coefficientAxis
++    )
++
++  private[fit] def ols(
++      plan: FitPlan,
++      timepoints: Vector[Int],
++      dvars: Option[(Vector[Double], Vector[Double])] = None
++  ): Either[FitError, OlsExecutionPrepared] =
++    for
++      input <- designInput(plan, timepoints)
++      declared = ResponsePreparationPlan.fromPlan(plan)
++      resolved <- (plan.config.volumeWeighting, dvars) match
++        case (VolumeWeighting.Estimated(estimator), Some((weights, metric))) =>
++          ResolvedVolumeWeighting.fromDvars(estimator, input, weights, metric)
++            .map(weighting => ResolvedResponsePreparation(declared, Some(weighting)))
++        case (VolumeWeighting.Estimated(_), None) =>
++          Left(FitError.UnsupportedVolumeWeighting("DVARS requires a completed global reduction"))
++        case _ => declared.resolve(input)
++      prepared <- resolved.prepare(input)
++      solver <- Ols.prepare(prepared.input.design).left.map { error =>
++        plan.coefficientAxis.fold(error)(axis => FitKernel.bindRankFailure(error, axis))
++      }
++    yield OlsExecutionPrepared(solver, resolved, input.partitions)
++
++  /** One bounded scan, retaining O(selected timepoints) numeric reduction state.
++    * Column exclusions are computed before reduction, just as in the dense path.
++    */
++  private[fit] def dvars(
++      reader: DatasetSeriesReader,
++      plan: FitPlan,
++      chunks: FitChunkPlan
++  ): Either[FitError, OlsExecutionPrepared] =
++    val estimator = plan.config.volumeWeighting match
++      case VolumeWeighting.Estimated(value) => value
++      case _ => return Left(FitError.UnsupportedVolumeWeighting("DVARS reduction requires an estimator"))
++    val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, chunks.timepoints)
++    val sums = Array.fill(chunks.timepoints.length)(0.0)
++    var count = 0
++    val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
++    val iterator = chunks.iterator
++    while iterator.hasNext do
++      val chunk = iterator.next()
++      val input = for
++        series <- ChunkedFitExecutor.readChunk(reader, chunk)
++        raw <- FitPlanExecutor.rawFitBlockInput(plan, series, partitions)
++      yield raw
++      input match
++        case Left(FitError.AllVoxelsExcluded(values)) => exclusions ++= values
++        case Left(error) => return Left(FitError.ChunkFailed(chunk.ordinal.value, error))
++        case Right(raw) =>
++          count += raw.response.voxels
++          partitions.foreach { partition =>
++            var i = 1
++            while i < partition.rowIndices.length do
++              if partition.timepoints(i) == partition.timepoints(i - 1) + 1 then
++                val row = partition.rowIndices(i)
++                val previous = partition.rowIndices(i - 1)
++                var voxel = 0
++                while voxel < raw.response.voxels do
++                  val difference = raw.response.value(row, voxel) - raw.response.value(previous, voxel)
++                  sums(row) += difference * difference
++                  voxel += 1
++              i += 1
++          }
++    if count == 0 then Left(FitError.AllVoxelsExcluded(exclusions.result()))
++    else
++      val metric = Array.fill(chunks.timepoints.length)(Double.NaN)
++      partitions.foreach { partition =>
++        var i = 1
++        while i < partition.rowIndices.length do
++          if partition.timepoints(i) == partition.timepoints(i - 1) + 1 then
++            val row = partition.rowIndices(i)
++            metric(row) = math.sqrt(sums(row) / count.toDouble)
++          i += 1
++      }
++      DvarsVolumeWeightEstimator.weightsFromDvars(metric.toVector, partitions, estimator)
++        .flatMap(value => ols(plan, chunks.timepoints, Some(value)))
+--- /dev/null
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitWorkDescriptor.scala
+@@ -0,0 +1,144 @@
++package scalafim.fmri.fit
++
++import scalafim.dataset.{DataSelection, DatasetSeriesReader, IndexSelection}
++import scalafim.fmri.model.{FitEngine, FitPlan}
++import scala.util.control.NonFatal
++
++/** Immutable registry keys. The resolver must bind planRevision to the complete
++  * scientific recipe (design, sampling geometry, configuration and provenance),
++  * and sourceRevision to an immutable response snapshot, not a mutable path.
++  */
++final case class FitWorkReference(unitId: String, planRevision: String, sourceRevision: String):
++  require(unitId.trim.nonEmpty, "unit identity must be non-empty")
++  require(planRevision.trim.nonEmpty, "scientific plan revision must be non-empty")
++  require(sourceRevision.trim.nonEmpty, "response source revision must be non-empty")
++
++/** A portable recipe, not a snapshot of a solver or finalized preparation state.
++  * Binding in a new process replays any declared response-dependent preparation.
++  * No reader, function, numerical factorization or scheduler is part of this value.
++  */
++final case class FitWorkDescriptor private (
++    reference: FitWorkReference,
++    datasetId: String,
++    engine: FitEngine,
++    preparation: FitPreparationRequirements,
++    timepoints: Vector[Int],
++    voxelIndices: Vector[Int],
++    blockSize: ChunkSize
++):
++  require(datasetId.nonEmpty, "dataset identity must be non-empty")
++  require(timepoints.nonEmpty && timepoints.forall(_ >= 0) && timepoints.distinct == timepoints,
++    "timepoints must be non-empty, unique and non-negative")
++  require(voxelIndices.nonEmpty && voxelIndices.forall(_ >= 0) && voxelIndices.distinct == voxelIndices,
++    "voxel indices must be non-empty, unique and non-negative")
++
++  def selection: DataSelection =
++    DataSelection(IndexSelection.Indices(timepoints), IndexSelection.Indices(voxelIndices))
++
++  def chunks: Vector[FitChunkSpec] =
++    voxelIndices.grouped(blockSize.value).zipWithIndex.map { (voxels, ordinal) =>
++      FitChunkSpec.unsafe(ChunkOrdinal.unsafe(ordinal), timepoints, voxels)
++    }.toVector
++
++  /** Collision-free canonical identities; callers may hash these for compact storage.
++    * The unit identity excludes partitioning, while block identities include exact axes.
++    */
++  def workId: String =
++    FitWorkDescriptor.frame(Vector("fit-unit-v1", reference.unitId, reference.planRevision,
++      reference.sourceRevision, datasetId, engine.toString, preparation.topology.toString,
++      preparation.reductions.mkString(","), timepoints.mkString(","), voxelIndices.mkString(",")))
++
++  def blockWorkIds: Vector[String] =
++    chunks.map(chunk => FitWorkDescriptor.frame(Vector("fit-block-v1", workId,
++      chunk.ordinal.value.toString, chunk.voxelIndices.mkString(","))))
++
++  def encode: String =
++    FitWorkDescriptor.frame(Vector("fit-work-v1", reference.unitId, reference.planRevision,
++      reference.sourceRevision, datasetId, engine.toString, preparation.topology.toString,
++      preparation.reductions.mkString(","), timepoints.mkString(","), voxelIndices.mkString(","),
++      blockSize.value.toString))
++
++object FitWorkDescriptor:
++  def compile(
++      reference: FitWorkReference,
++      plan: FitPlan,
++      blockSize: ChunkSize,
++      selection: DataSelection = DataSelection.All
++  ): Either[FitError, FitWorkDescriptor] =
++    FitChunkPlan.fromSelection(plan, selection, FitChunkingStrategy.ByVoxelCount(blockSize)).map { chunks =>
++      FitWorkDescriptor(reference, plan.model.dataset.id.value, plan.engine, FitPreparation.describe(plan),
++        chunks.timepoints, chunks.voxelIndices, blockSize)
++    }
++
++  /** Length-prefixed UTF-16 text fields; no escaping, JVM serialization or JSON
++    * dependency. Schema v1 uses exactly eleven fields and stable enum case names.
++    */
++  def decode(text: String): Either[FitError, FitWorkDescriptor] =
++    try
++      val fields = Vector.newBuilder[String]
++      var offset = 0
++      var count = 0
++      while offset < text.length && count < 11 do
++        val colon = text.indexOf(':', offset)
++        require(colon > offset, "missing field length")
++        val lengthText = text.substring(offset, colon)
++        val length = lengthText.toInt
++        require(length >= 0 && length.toString == lengthText, "noncanonical field length")
++        val start = colon + 1
++        require(length <= text.length - start, "truncated field")
++        fields += text.substring(start, start + length)
++        offset = start + length
++        count += 1
++      require(offset == text.length && count == 11, "expected eleven complete fields")
++      val values = fields.result()
++      require(values(0) == "fit-work-v1", "unsupported fit work schema")
++      def indices(value: String): Vector[Int] = value.split(",", -1).toVector.map(_.toInt)
++      val reductions = if values(7).isEmpty then Vector.empty
++        else values(7).split(",", -1).toVector.map(FitPreparationReduction.valueOf)
++      val descriptor = FitWorkDescriptor(
++        FitWorkReference(values(1), values(2), values(3)), values(4), FitEngine.valueOf(values(5)),
++        FitPreparationRequirements(FitPreparationTopology.valueOf(values(6)), reductions),
++        indices(values(8)), indices(values(9)), ChunkSize.unsafe(values(10).toInt)
++      )
++      require(descriptor.encode == text, "noncanonical fit work encoding")
++      Right(descriptor)
++    catch
++      case NonFatal(error) => Left(FitError.InvalidFitAxis("fit work descriptor", error.getMessage))
++
++  private[fit] def frame(fields: Vector[String]): String =
++    fields.map(value => s"${value.length}:$value").mkString
++
++/** Explicit runtime capability. Implementations must verify the immutable keys,
++  * including source content/version and all scientific plan settings, on resolution.
++  */
++trait FitWorkResolver:
++  def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork]
++
++final case class ResolvedFitWork(reference: FitWorkReference, plan: FitPlan, reader: DatasetSeriesReader)
++
++object FitWorkExecutor:
++  /** Execute only preparations with an implemented bounded interpreter. Legacy
++    * dense global fallbacks remain accessible through ChunkedFitExecutor directly.
++    */
++  def fit(descriptor: FitWorkDescriptor, resolver: FitWorkResolver): Either[FitError, FmriFitResult] =
++    for
++      bound <- resolver.resolve(descriptor.reference)
++      _ <- validate(descriptor, bound)
++      result <- ChunkedFitExecutor.fit(bound.reader, bound.plan, descriptor.selection,
++        FitChunkingStrategy.ByVoxelCount(descriptor.blockSize))
++    yield result
++
++  private[fit] def validate(descriptor: FitWorkDescriptor, bound: ResolvedFitWork): Either[FitError, Unit] =
++    if bound.reference != descriptor.reference then
++      Left(FitError.InvalidFitAxis("fit work binding", "resolved immutable reference differs from the descriptor"))
++    else if bound.plan.model.dataset.id.value != descriptor.datasetId ||
++        bound.reader.dataset.id != bound.plan.model.dataset.id ||
++        bound.reader.dataset.shape != bound.plan.model.dataset.shape then
++      Left(FitError.InvalidFitAxis("fit work binding", "resolved dataset identity or shape differs"))
++    else if bound.plan.engine != descriptor.engine || FitPreparation.describe(bound.plan) != descriptor.preparation then
++      Left(FitError.InvalidFitAxis("fit work binding", "resolved engine or preparation topology differs"))
++    else if !descriptor.preparation.supportsBoundedExecution(descriptor.engine) then
++      Left(FitError.UnsupportedEngine(
++        s"bounded preparation is not implemented for ${descriptor.preparation.reductions.mkString(", ")}"
++      ))
++    else Right(())
+--- a/modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala
+@@ -376,15 +376,20 @@
+       partitions <- validatedPartitions(input)
+       estimated <- DvarsVolumeWeightEstimator.estimate(input.response, partitions, estimator)
+       (weights, dvars) = estimated
++      resolved <- fromDvars(estimator, input, weights, dvars)
++    yield resolved
++
++  private[fit] def fromDvars(
++      estimator: DvarsWeightEstimator,
++      input: FitBlockInput,
++      weights: Vector[Double],
++      dvars: Vector[Double]
++  ): Either[FitError, ResolvedVolumeWeighting] =
++    for
++      partitions <- validatedPartitions(input)
+       _ <- validateWeights(weights, input.timepoints)
+-      resolved <- make(
+-        input = input,
+-        weights = weights,
+-        source = VolumeWeightingSource.ResponseDvars(estimator),
+-        normalization = VolumeWeightNormalization.MeanOne(estimator.scope),
+-        qualityMetric = Some(dvars),
+-        partitions = partitions
+-      )
++      resolved <- make(input, weights, VolumeWeightingSource.ResponseDvars(estimator),
++        VolumeWeightNormalization.MeanOne(estimator.scope), Some(dvars), partitions)
+     yield resolved
+ 
+   private def make(
+@@ -534,12 +539,20 @@
+         index += 1
+       partitionIndex += 1
+ 
++    weightsFromDvars(raw.toVector, partitions, estimator)
++
++  /** Finalize the global temporal statistic once, after all spatial blocks. */
++  private[fit] def weightsFromDvars(
++      raw: Vector[Double],
++      partitions: Vector[RunPartition],
++      estimator: DvarsWeightEstimator
++  ): Either[FitError, (Vector[Double], Vector[Double])] =
+     val groups =
+       estimator.scope match
+         case DvarsWeightScope.WithinRun => partitions.map(_.rowIndices)
+         case DvarsWeightScope.AcrossSelection => Vector(partitions.flatMap(_.rowIndices))
+-    val normalizedDvars = Array.fill(response.timepoints)(Double.NaN)
+-    val weights = Array.fill(response.timepoints)(Double.NaN)
++    val normalizedDvars = Array.fill(raw.length)(Double.NaN)
++    val weights = Array.fill(raw.length)(Double.NaN)
+     var groupIndex = 0
+     while groupIndex < groups.length do
+       val rows = groups(groupIndex)
+--- a/modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/MaskedResponseExecutor.scala
+@@ -25,19 +25,29 @@
+     series: FmriSeries
+ )
+ 
+-private[fit] final case class MaskedResponsePlan(
++/** The response-independent result of finding voxel-specific finite-row masks.
++  *
++  * Chunked execution keeps this metadata only; fitted response matrices are read
++  * again per pattern through the normal chunked executor.
++  */
++private[fit] final case class MaskedResponseMetadata(
+     sourceTimepoints: Vector[Int],
+     sourceVoxels: Vector[Int],
+-    patterns: Vector[PlannedObservationPattern],
++    patterns: Vector[ObservationPattern],
+     exclusions: Vector[VoxelInferenceExclusion],
+     missingValueCount: Int
+ ):
+-  require(sourceTimepoints.nonEmpty, "masked response plan must retain source timepoints")
+-  require(sourceVoxels.nonEmpty, "masked response plan must retain source voxels")
+-  require(patterns.nonEmpty || exclusions.length == sourceVoxels.length, "masked response plan must fit or exclude every voxel")
++  require(sourceTimepoints.nonEmpty, "masked response metadata must retain source timepoints")
++  require(sourceVoxels.nonEmpty, "masked response metadata must retain source voxels")
++  require(patterns.nonEmpty || exclusions.length == sourceVoxels.length, "masked response metadata must fit or exclude every voxel")
+   require(missingValueCount >= 0, "masked response missing-value count must be non-negative")
+ 
+   def hasMissingValues: Boolean = missingValueCount > 0
++
++private[fit] final case class MaskedResponsePlan(
++    metadata: MaskedResponseMetadata,
++    patterns: Vector[PlannedObservationPattern]
++)
+ 
+ private[fit] object MaskedResponsePlanner:
+ 
+@@ -96,9 +106,80 @@
+         case Right(value) => patterns += PlannedObservationPattern(pattern, value)
+       patternId += 1
+ 
+-    Right(MaskedResponsePlan(
++    val plannedPatterns = patterns.result()
++    val metadata = MaskedResponseMetadata(
+       sourceTimepoints = series.timepoints,
+       sourceVoxels = series.voxelIndices,
++      patterns = plannedPatterns.map(_.pattern),
++      exclusions = exclusions.result(),
++      missingValueCount = missingCount
++    )
++    Right(MaskedResponsePlan(metadata, plannedPatterns))
++
++  def discover(
++      reader: DatasetSeriesReader,
++      plan: FitPlan,
++      selection: DataSelection,
++      chunking: FitChunkingStrategy
++  ): Either[FitError, MaskedResponseMetadata] =
++    for
++      _ <-
++        if reader.dataset.id == plan.model.dataset.id &&
++            reader.dataset.shape == plan.model.dataset.shape
++        then Right(())
++        else Left(FitError.InvalidFitAxis(
++          "dataset reader",
++          s"reader dataset '${reader.dataset.id.value}' does not match model dataset '${plan.model.dataset.id.value}'"
++        ))
++      chunks <- FitChunkPlan.fromSelection(plan, selection, chunking)
++      metadata <- discoverChunks(reader, chunks)
++    yield metadata
++
++  private def discoverChunks(
++      reader: DatasetSeriesReader,
++      chunks: FitChunkPlan
++  ): Either[FitError, MaskedResponseMetadata] =
++    val positionsByRows = mutable.LinkedHashMap.empty[Vector[Int], Vector[Int]]
++    val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
++    var missingCount = 0
++    var chunkIndex = 0
++    while chunkIndex < chunks.length do
++      val chunk = chunks.indexed(chunkIndex)
++      val series = ChunkedFitExecutor.readChunk(reader, chunk) match
++        case Left(error) => return Left(error)
++        case Right(value) => value
++      var voxelPosition = 0
++      while voxelPosition < series.nVoxels do
++        val observedRows = Vector.newBuilder[Int]
++        var row = 0
++        while row < series.nTimepoints do
++          if series.data(row, voxelPosition).isFinite then observedRows += row
++          else missingCount += 1
++          row += 1
++        val rows = observedRows.result()
++        val voxel = chunk.voxelIndices(voxelPosition)
++        if rows.isEmpty then
++          exclusions += VoxelInferenceExclusion(voxel, VoxelFitStatus.NoObservedResponses)
++        else
++          positionsByRows.update(rows, positionsByRows.getOrElse(rows, Vector.empty) :+ voxel)
++        voxelPosition += 1
++      chunkIndex += 1
++
++    val patterns = Vector.newBuilder[ObservationPattern]
++    var patternId = 0
++    val grouped = positionsByRows.iterator
++    while grouped.hasNext do
++      val (rows, voxels) = grouped.next()
++      patterns += ObservationPattern.unsafe(
++        patternId,
++        rows,
++        rows.map(chunks.timepoints),
++        voxels
++      )
++      patternId += 1
++    Right(MaskedResponseMetadata(
++      sourceTimepoints = chunks.timepoints,
++      sourceVoxels = chunks.voxelIndices,
+       patterns = patterns.result(),
+       exclusions = exclusions.result(),
+       missingValueCount = missingCount
+@@ -114,8 +195,9 @@
+     for
+       _ <- validateSupported(plan)
+       masked <- MaskedResponsePlanner.plan(series)
+-      fitted <- fitPatterns(plan, masked) { (childPlan, pattern) =>
+-        FitInterpreters.forPlan(childPlan).flatMap(_.fit(childPlan, pattern.series))
++      fitted <- fitPatterns(plan, masked.metadata, masked.patterns.map(_.pattern)) { (childPlan, pattern) =>
++        val series = masked.patterns(pattern.id.value).series
++        FitInterpreters.forPlan(childPlan).flatMap(_.fit(childPlan, series))
+       }
+     yield fitted
+ 
+@@ -127,10 +209,9 @@
+   ): Either[FitError, FmriFitResult] =
+     for
+       _ <- validateSupported(plan)
+-      series <- reader.seriesEither(selection).left.map(FitChunkPlan.mapDatasetError)
+-      masked <- MaskedResponsePlanner.plan(series)
+-      fitted <- fitPatterns(plan, masked) { (childPlan, pattern) =>
+-        ChunkedFitExecutor.fit(reader, childPlan, selectionFor(pattern.pattern), chunking)
++      masked <- MaskedResponsePlanner.discover(reader, plan, selection, chunking)
++      fitted <- fitPatterns(plan, masked, masked.patterns) { (childPlan, pattern) =>
++        ChunkedFitExecutor.fit(reader, childPlan, selectionFor(pattern), chunking)
+       }
+     yield fitted
+ 
+@@ -144,45 +225,43 @@
+     validateSupported(plan) match
+       case Left(error) => Future.successful(Left(error))
+       case Right(_) =>
+-        reader.seriesEither(selection).left.map(FitChunkPlan.mapDatasetError) match
++        MaskedResponsePlanner.discover(reader, plan, selection, chunking) match
+           case Left(error) => Future.successful(Left(error))
+-          case Right(series) =>
+-            MaskedResponsePlanner.plan(series) match
+-              case Left(error) => Future.successful(Left(error))
+-              case Right(masked) =>
+-                fitPatternsFuture(plan, masked, chunking, parallelism, reader)
++          case Right(masked) =>
++            fitPatternsFuture(plan, masked, chunking, parallelism, reader)
+ 
+   private def fitPatterns(
+       plan: FitPlan,
+-      masked: MaskedResponsePlan
++      masked: MaskedResponseMetadata,
++      patterns: Vector[ObservationPattern]
+   )(
+-      execute: (FitPlan, PlannedObservationPattern) => Either[FitError, FmriFitResult]
++      execute: (FitPlan, ObservationPattern) => Either[FitError, FmriFitResult]
+   ): Either[FitError, FmriFitResult] =
+     val successes = Vector.newBuilder[ObservationPatternFitResult]
+     val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
+     exclusions ++= masked.exclusions
+     var index = 0
+-    while index < masked.patterns.length do
+-      val pattern = masked.patterns(index)
+-      childPlan(plan, masked, pattern.pattern) match
++    while index < patterns.length do
++      val pattern = patterns(index)
++      childPlan(plan, masked, pattern) match
+         case Left(error) => return Left(error)
+         case Right(strictPlan) =>
+           execute(strictPlan, pattern) match
+             case Right(result) =>
+-              val recorded = withPatternProvenance(result, pattern.pattern, masked.sourceTimepoints.length)
+-              successes += ObservationPatternFitResult(pattern.pattern, recorded)
++              val recorded = withPatternProvenance(result, pattern, masked.sourceTimepoints.length)
++              successes += ObservationPatternFitResult(pattern, recorded)
+               exclusions ++= recorded.fitExclusions
+             case Left(error) =>
+               omissionStatus(error) match
+                 case None => return Left(error)
+                 case Some(status) =>
+-                  exclusions ++= pattern.pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
++                  exclusions ++= pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
+       index += 1
+     assemble(plan, masked, successes.result(), exclusions.result())
+ 
+   private def fitPatternsFuture(
+       plan: FitPlan,
+-      masked: MaskedResponsePlan,
++      masked: MaskedResponseMetadata,
+       chunking: FitChunkingStrategy,
+       parallelism: FitParallelism,
+       reader: DatasetSeriesReader
+@@ -196,17 +275,17 @@
+         Future.successful(assemble(plan, masked, successes, exclusions))
+       else
+         val pattern = masked.patterns(index)
+-        childPlan(plan, masked, pattern.pattern) match
++        childPlan(plan, masked, pattern) match
+           case Left(error) => Future.successful(Left(error))
+           case Right(strictPlan) =>
+             FutureChunkedFitExecutor
+-              .fit(reader, strictPlan, selectionFor(pattern.pattern), chunking, parallelism)
++              .fit(reader, strictPlan, selectionFor(pattern), chunking, parallelism)
+               .flatMap {
+                 case Right(result) =>
+-                  val recorded = withPatternProvenance(result, pattern.pattern, masked.sourceTimepoints.length)
++                  val recorded = withPatternProvenance(result, pattern, masked.sourceTimepoints.length)
+                   loop(
+                     index + 1,
+-                    successes :+ ObservationPatternFitResult(pattern.pattern, recorded),
++                    successes :+ ObservationPatternFitResult(pattern, recorded),
+                     exclusions ++ recorded.fitExclusions
+                   )
+                 case Left(error) =>
+@@ -216,14 +295,14 @@
+                       loop(
+                         index + 1,
+                         successes,
+-                        exclusions ++ pattern.pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
++                        exclusions ++ pattern.sourceVoxels.map(VoxelInferenceExclusion(_, status))
+                       )
+               }
+     loop(0, Vector.empty, masked.exclusions)
+ 
+   private def assemble(
+       plan: FitPlan,
+-      masked: MaskedResponsePlan,
++      masked: MaskedResponseMetadata,
+       successes: Vector[ObservationPatternFitResult],
+       rawExclusions: Vector[VoxelInferenceExclusion]
+   ): Either[FitError, FmriFitResult] =
+@@ -279,7 +358,7 @@
+ 
+   private def childPlan(
+       plan: FitPlan,
+-      masked: MaskedResponsePlan,
++      masked: MaskedResponseMetadata,
+       pattern: ObservationPattern
+   ): Either[FitError, FitPlan] =
+     val retainedTimepoints = pattern.sourceTimepoints.toSet
+@@ -342,6 +421,7 @@
+       })
+     }
+     result match
++      case reduced: VoxelwiseReducedRankFmriFitResult => reduced.copy(preparationProvenance = provenance)
+       case dense: DenseFmriFitResult => dense.copy(preparationProvenance = provenance)
+       case runwise: RunwiseFmriFitResult => runwise.copy(preparationProvenance = provenance)
+       case fixed: FixedEffectsFmriFitResult => fixed.copy(preparationProvenance = provenance)
+--- /dev/null
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPreparationSuite.scala
+@@ -0,0 +1,169 @@
++package scalafim.fmri.fit
++
++import scalafim.fmri.fit.GaleTestSyntax.*
++
++import gale.linalg.DMat
++import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, IndexSelection, InMemoryDatasetBackend, SynchronousFmriDataset}
++import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
++import scalafim.fmri.design.event.EventModel
++import scalafim.fmri.hrf.design.SamplingFrame
++import scalafim.fmri.hrf.linalg.Mat
++import scalafim.fmri.model.{ArOptions, ArStructure, DvarsWeightEstimator, DvarsWeightFunction, DvarsWeightScope, FitConfig, FitEngine, FitPlan, FmriModel, MissingDataPolicy, VolumeWeighting}
++import scalafim.image.SampleSpaces
++import scala.concurrent.ExecutionContext.Implicits.global
++
++class FitPreparationSuite extends munit.FunSuite:
++  private val times = (0 until 28).filterNot(Set(3, 16)).toVector
++  private val selection = DataSelection(IndexSelection.Indices(times), IndexSelection.indices(4, 1, 3, 0, 2))
++
++  private def plans: Vector[(String, FitPlan)] = Vector(
++    "OLS" -> FitPlan(model()),
++    "fixed weights" -> FitPlan(model(), engine = FitEngine.OrdinaryLeastSquares, config = FitConfig(volumeWeighting = VolumeWeighting.Fixed(
++      Vector.tabulate(28)(row => if row == 7 then 0.0 else 0.4 + row / 20.0)))),
++    "fixed AR" -> FitPlan(model(), FitEngine.GeneralizedLeastSquares,
++      FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.35)))),
++    "voxelwise AR" -> FitPlan(model(), FitEngine.GeneralizedLeastSquares,
++      FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), voxelwise = true, iterations = 2)))
++  )
++
++  for (name, plan) <- plans do
++    test(s"$name has no eager preparation read and preserves inference in uneven chunks") {
++      val reader = new BoundedReader(plan, 2)
++      val chunkPlan = FitChunkPlan.fromSelection(plan, selection, FitChunkingStrategy.unsafeByVoxelCount(2)).toOption.get
++      val program = FitChunkProgram.fromChunkPlan(reader, plan, chunkPlan).fold(error => fail(error.message), identity)
++      assertEquals(reader.requests, Vector.empty)
++      val blocks = ChunkedFitExecutor.fitChunks(program).fold(error => fail(error.message), identity)
++      val actual = dense(ChunkedFitExecutor.mergeChunks(plan, blocks))
++      val expected = dense(FitPlanExecutor.fit(plan, selection))
++      assertClose(actual, expected)
++      assertEquals(reader.requests, Vector(Vector(4, 1), Vector(3, 0), Vector(2)))
++    }
++
++    test(s"$name remains bounded with parallel chunks") {
++      val expected = dense(FitPlanExecutor.fit(plan, selection))
++      FutureChunkedFitExecutor.fit(new BoundedReader(plan, 1), plan, selection,
++        FitChunkingStrategy.unsafeByVoxelCount(1), FitParallelism.unsafe(2)).map { result =>
++        assertClose(dense(result), expected)
++      }
++    }
++
++  for scope <- Vector(DvarsWeightScope.WithinRun, DvarsWeightScope.AcrossSelection) do
++    for exclude <- Vector(false, true) do
++      test(s"DVARS $scope exclusions=$exclude reduces globally with bounded reads") {
++        val estimator = DvarsWeightEstimator(DvarsWeightFunction.InverseSquared, scope)
++        val plan = FitPlan(model(exclude), engine = FitEngine.OrdinaryLeastSquares, config = FitConfig(
++          volumeWeighting = VolumeWeighting.Estimated(estimator),
++          missingData = if exclude then MissingDataPolicy.ExcludeVoxel else MissingDataPolicy.Error))
++        val expected = dense(FitPlanExecutor.fit(plan, selection))
++        val reader = new BoundedReader(plan, 1)
++        val requirements = FitPreparation.describe(plan)
++        assertEquals(requirements.topology, FitPreparationTopology.GlobalReduction)
++        assertEquals(requirements.reductions, Vector(FitPreparationReduction.Dvars))
++        val actual = dense(ChunkedFitExecutor.fit(reader, plan, selection, FitChunkingStrategy.unsafeByVoxelCount(1)))
++        assertClose(actual, expected)
++        assertEquals(reader.requests.length, 10) // reduction pass, then execution pass
++        val actualWeights = actual.preparationProvenance.flatMap(_.volumeWeighting).get
++        val expectedWeights = expected.preparationProvenance.flatMap(_.volumeWeighting).get
++        assertEquals(actualWeights, expectedWeights)
++        // A spike in just one voxel must affect the shared temporal weights.
++        assert(actualWeights.weights.max - actualWeights.weights.min > 0.1)
++      }
++
++  test("parallel DVARS uses one completed reduction and preserves its receipt") {
++    val plan = FitPlan(model(), engine = FitEngine.OrdinaryLeastSquares, config = FitConfig(volumeWeighting = VolumeWeighting.Estimated(
++      DvarsWeightEstimator(DvarsWeightFunction.InverseSquared))))
++    val expected = dense(FitPlanExecutor.fit(plan, selection))
++    FutureChunkedFitExecutor.fit(new BoundedReader(plan, 2), plan, selection,
++      FitChunkingStrategy.unsafeByVoxelCount(2), FitParallelism.unsafe(2)).map { result =>
++      assertClose(dense(result), expected)
++    }
++  }
++
++  test("streamed DVARS matches an analytic temporal-weight fixture") {
++    // Temporal RMS differences are sqrt(3), sqrt(3), 3*sqrt(3).
++    // Median completion/normalization gives (1,1,1,3), hence mean-one
++    // inverse-square weights (5/4,5/4,5/4,1/4), independent of voxel chunking.
++    val sampling = SamplingFrame(blockLens = Seq(4), tr = Seq(1.0))
++    val event = EventModel(Vector.empty, sampling, Mat.fromRows(Vector.tabulate(4)(i => Vector(i.toDouble))),
++      Vector("task"), Vector(0 -> 1), Map("task" -> Vector(0)))
++    val baseline = BaselineModel.build(sampling, intercept = Intercept.Global)
++    val rows = Vector(Vector(0.0, 0.0, 0.0), Vector(1.0, 2.0, 2.0),
++      Vector(2.0, 4.0, 4.0), Vector(5.0, 10.0, 10.0))
++    val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("analytic-dvars"),
++      GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(3, 1, 1))), samplingFrame = sampling)
++    val plan = FitPlan(FmriModel(event, baseline, dataset), engine = FitEngine.OrdinaryLeastSquares, config = FitConfig(
++      volumeWeighting = VolumeWeighting.Estimated(DvarsWeightEstimator())))
++    val underlying = SynchronousFmriDataset.readerFor(dataset).toOption.get
++    val reader = new DatasetSeriesReader:
++      def dataset: FmriDataset = underlying.dataset
++      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++        selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++          if resolved.voxels.length > 1 then Left(DatasetError.StorageFailure("unbounded reduction read"))
++          else underlying.seriesEither(selection)
++        }
++    val chunks = FitChunkPlan.fromSelection(plan, chunking = FitChunkingStrategy.unsafeByVoxelCount(1)).toOption.get
++    val prepared = FitPreparation.dvars(reader, plan, chunks).fold(error => fail(error.message), identity)
++    val receipt = prepared.responsePreparation.volumeWeighting.get.receipt
++    receipt.weights.zip(Vector(1.25, 1.25, 1.25, 0.25)).foreach { (actual, expected) =>
++      assertEqualsDouble(actual, expected, 1e-14)
++    }
++  }
++
++  private def dense(result: Either[FitError, FmriFitResult]): DenseFmriFitResult =
++    result.fold(error => fail(error.message), _.asInstanceOf[DenseFmriFitResult])
++
++  private def assertClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
++    assertEquals(actual.voxelIndices, expected.voxelIndices)
++    assertEquals(actual.timepoints, expected.timepoints)
++    assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
++    assertEquals(actual.inference.scope, expected.inference.scope)
++    assertEquals(actual.coefficientCovariance.scope, expected.coefficientCovariance.scope)
++    assertEquals(actual.fitExclusions, expected.fitExclusions)
++    assertEquals(actual.preparationProvenance, expected.preparationProvenance)
++    assertEquals(actual.autocorrelation, expected.autocorrelation)
++    assertEquals(actual.robustDiagnostics, expected.robustDiagnostics)
++    matrixClose(actual.coefficients.value, expected.coefficients.value)
++    matrixClose(actual.standardErrors.value, expected.standardErrors.value)
++    actual.voxelIndices.indices.foreach { position =>
++      matrixClose(actual.coefficientCovariance.matrixForVoxelPosition(position).toOption.get,
++        expected.coefficientCovariance.matrixForVoxelPosition(position).toOption.get)
++      assertEqualsDouble(actual.residualVariance(position), expected.residualVariance(position), 1e-10)
++    }
++    val contrast = TContrast("task", Map("task" -> 1.0))
++    val left = contrast.evaluate(actual).toOption.get
++    val right = contrast.evaluate(expected).toOption.get
++    left.statistics.toVector.zip(right.statistics.toVector).foreach { (a, e) => assertEqualsDouble(a, e, 1e-9) }
++
++  private def matrixClose(actual: DMat, expected: DMat): Unit =
++    assertEquals(actual.rows, expected.rows)
++    assertEquals(actual.cols, expected.cols)
++    for row <- 0 until actual.rows; col <- 0 until actual.cols do
++      assertEqualsDouble(actual(row, col), expected(row, col), 1e-10)
++
++  private class BoundedReader(plan: FitPlan, limit: Int) extends DatasetSeriesReader:
++    private val underlying = SynchronousFmriDataset.readerFor(plan.model.dataset).toOption.get
++    var requests = Vector.empty[Vector[Int]]
++    def dataset: FmriDataset = underlying.dataset
++    def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++      selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++        if resolved.voxels.length > limit then Left(DatasetError.StorageFailure("unbounded spatial read"))
++        else if resolved.timepoints != times then Left(DatasetError.StorageFailure("split or reordered time series"))
++        else
++          synchronized { requests = requests :+ resolved.voxels }
++          underlying.seriesEither(selection)
++      }
++
++  private def model(exclude: Boolean = false): FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(12, 16), tr = Seq(1.0, 1.0))
++    val task = Vector.tabulate(28)(row => math.sin(row * 0.43) + row / 20.0)
++    val rows = Vector.tabulate(28) { row => Vector.tabulate(5) { voxel =>
++      if exclude && voxel == 1 && row == 8 then Double.NaN
++      else 1.0 + voxel + (voxel + 1) * task(row) + math.cos(row * 1.17 + voxel) * 0.3 +
++        (if voxel == 4 && row == 9 then 18.0 else 0.0)
++    }}
++    val event = EventModel(Vector.empty, sampling, Mat.fromRows(task.map(x => Vector(x))),
++      Vector("task"), Vector(0 -> 1), Map("task" -> Vector(0)))
++    val baseline = BaselineModel.build(sampling, BaselineBasis.Constant, intercept = Intercept.Global)
++    val dataset = FmriDataset.unsafe(InMemoryDatasetBackend(DatasetId("bounded-preparation"),
++      GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(5, 1, 1))), samplingFrame = sampling)
++    FmriModel(event, baseline, dataset)
+--- /dev/null
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitWorkDescriptorSuite.scala
+@@ -0,0 +1,189 @@
++package scalafim.fmri.fit
++
++import scalafim.fmri.fit.GaleTestSyntax.*
++
++import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, InMemoryDatasetBackend, SynchronousFmriDataset}
++import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
++import scalafim.fmri.design.event.EventModel
++import scalafim.fmri.hrf.design.SamplingFrame
++import scalafim.fmri.hrf.linalg.Mat
++import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel, MissingDataPolicy, RobustOptions, RobustPsi}
++import scalafim.image.SampleSpaces
++
++class FitWorkDescriptorSuite extends munit.FunSuite:
++
++  private val reference = FitWorkReference("unit:α|,", "plan:β|,", "source:γ|,")
++  private val selection = DataSelection(voxels = scalafim.dataset.IndexSelection.indices(3, 1, 2, 0))
++
++  test("canonical descriptor encoding round-trips delimiter-bearing Unicode references") {
++    val descriptor = compiled(blockSize = 2)
++    assertEquals(FitWorkDescriptor.decode(descriptor.encode), Right(descriptor))
++  }
++
++  test("descriptor decoder rejects malformed and noncanonical inputs") {
++    val descriptor = compiled(blockSize = 2)
++    val fields = Vector(
++      "fit-work-v1", reference.unitId, reference.planRevision, reference.sourceRevision,
++      descriptor.datasetId, descriptor.engine.toString, descriptor.preparation.topology.toString,
++      descriptor.preparation.reductions.mkString(","), "0,-1", "3,1,2,0", "2"
++    )
++    val duplicateAxes = fields.updated(8, "0,1").updated(9, "3,1,1,0")
++    val malformed = Vector(
++      descriptor.encode.dropRight(1),
++      descriptor.encode + "0:",
++      descriptor.encode.replace("fit-work-v1", "fit-work-v2"),
++      FitWorkDescriptor.frame(Vector("fit-work-v1")),
++      FitWorkDescriptor.frame(fields),
++      FitWorkDescriptor.frame(duplicateAxes),
++      "01:x"
++    )
++    malformed.foreach(value => assert(FitWorkDescriptor.decode(value).isLeft, clues(value)))
++  }
++
++  test("unit and block identities are canonical and selection-sensitive") {
++    val byOne = compiled(blockSize = 1)
++    val byTwo = compiled(blockSize = 2)
++    val otherSelection = FitWorkDescriptor.compile(reference, plan, ChunkSize.unsafe(2),
++      DataSelection(voxels = scalafim.dataset.IndexSelection.indices(0, 1, 2, 3))).toOption.get
++    val otherReference = FitWorkDescriptor.compile(
++      FitWorkReference("other", reference.planRevision, reference.sourceRevision), plan, ChunkSize.unsafe(2), selection
++    ).toOption.get
++
++    assertEquals(byOne.workId, byTwo.workId)
++    assertNotEquals(byOne.workId, otherSelection.workId)
++    assertNotEquals(byOne.workId, otherReference.workId)
++    assertNotEquals(byTwo.blockWorkIds, otherSelection.blockWorkIds)
++    assertNotEquals(byTwo.blockWorkIds, otherReference.blockWorkIds)
++    assertEquals(byOne.blockWorkIds.distinct.length, byOne.blockWorkIds.length)
++    assertEquals(byTwo.blockWorkIds.distinct.length, byTwo.blockWorkIds.length)
++    assertNotEquals(byOne.blockWorkIds, byTwo.blockWorkIds)
++  }
++
++  test("fresh resolver execution matches dense OLS with bounded reads") {
++    val descriptor = FitWorkDescriptor.decode(compiled(blockSize = 2).encode).toOption.get
++    val reader = boundedReader(plan.model.dataset, maxVoxels = 2)
++    val resolver = fixedResolver(reference, plan, reader)
++    val expected = FitPlanExecutor.fit(plan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
++    val actual = FitWorkExecutor.fit(descriptor, resolver).toOption.get.asInstanceOf[DenseFmriFitResult]
++
++    assertMatrixClose(actual.coefficients.value, expected.coefficients.value)
++    assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance)
++    val contrast = TContrast("task", Map("task" -> 1.0))
++    assertVectorClose(
++      contrast.evaluate(actual).toOption.get.statistics.toVector,
++      contrast.evaluate(expected).toOption.get.statistics.toVector
++    )
++  }
++
++  test("binding mismatches fail before response reads") {
++    val cases = Vector(
++      compiled(blockSize = 2) -> fixedResolver(FitWorkReference("wrong", reference.planRevision, reference.sourceRevision), plan, denyingReader(plan.model.dataset)),
++      FitWorkDescriptor.compile(reference, otherPlan, ChunkSize.unsafe(2), selection).toOption.get -> fixedResolver(reference, plan, denyingReader(plan.model.dataset)),
++      FitWorkDescriptor.compile(reference, FitPlan(model, engine = FitEngine.GeneralizedLeastSquares,
++        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.2)))), ChunkSize.unsafe(2), selection).toOption.get -> fixedResolver(reference, plan, denyingReader(plan.model.dataset)),
++      FitWorkDescriptor.compile(reference, FitPlan(model, engine = FitEngine.OrdinaryLeastSquares, config = FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)), ChunkSize.unsafe(2), selection).toOption.get -> fixedResolver(reference, plan, denyingReader(plan.model.dataset))
++    )
++    cases.foreach { (descriptor, resolver) =>
++      assert(FitWorkExecutor.fit(descriptor, resolver).isLeft)
++      assertEquals(resolver.asInstanceOf[CountingResolver].reads, 0)
++    }
++  }
++
++  test("unsupported global preparations are classified and rejected before reads") {
++    val pooled = FitPreparationRequirements(FitPreparationTopology.GlobalReduction,
++      Vector(FitPreparationReduction.PooledAutocorrelation))
++    assert(pooled.supportsBoundedExecution(FitEngine.GeneralizedLeastSquares))
++    assert(!pooled.supportsBoundedExecution(FitEngine.RobustLeastSquares))
++    val plans = Vector(
++      FitPlan(model, engine = FitEngine.RobustLeastSquares,
++        config = FitConfig(robust = RobustOptions(psi = RobustPsi.Huber()))) -> FitPreparationReduction.RobustRowWeights,
++      FitPlan(model, engine = FitEngine.ReducedRankGls,
++        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.2)))) -> FitPreparationReduction.SpatialBasis
++    )
++    plans.foreach { (globalPlan, reduction) =>
++      val descriptor = FitWorkDescriptor.compile(reference, globalPlan, ChunkSize.unsafe(2), selection).toOption.get
++      assertEquals(descriptor.preparation.topology, FitPreparationTopology.GlobalReduction)
++      assert(descriptor.preparation.reductions.contains(reduction))
++      val resolver = fixedResolver(reference, globalPlan, denyingReader(globalPlan.model.dataset))
++      assert(FitWorkExecutor.fit(descriptor, resolver).isLeft)
++      assertEquals(resolver.asInstanceOf[CountingResolver].reads, 0)
++    }
++  }
++
++  private def compiled(blockSize: Int): FitWorkDescriptor =
++    FitWorkDescriptor.compile(reference, plan, ChunkSize.unsafe(blockSize), selection).toOption.get
++
++  private final class CountingResolver(
++      resolvedReference: FitWorkReference,
++      resolvedPlan: FitPlan,
++      reader: DatasetSeriesReader
++  ) extends FitWorkResolver:
++    var reads = 0
++    private val counted = new DatasetSeriesReader:
++      def dataset: FmriDataset = reader.dataset
++      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++        reads += 1
++        reader.seriesEither(selection)
++    def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork] =
++      Right(ResolvedFitWork(resolvedReference, resolvedPlan, counted))
++
++  private def fixedResolver(reference: FitWorkReference, plan: FitPlan, reader: DatasetSeriesReader): FitWorkResolver =
++    new CountingResolver(reference, plan, reader)
++
++  private def boundedReader(dataset: FmriDataset, maxVoxels: Int): DatasetSeriesReader =
++    val underlying = SynchronousFmriDataset.readerFor(dataset).toOption.get
++    new DatasetSeriesReader:
++      def dataset: FmriDataset = underlying.dataset
++      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++        selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++          if resolved.voxels.length > maxVoxels then Left(DatasetError.StorageFailure("read exceeded configured bound"))
++          else underlying.seriesEither(selection)
++        }
++
++  private def denyingReader(sourceDataset: FmriDataset): DatasetSeriesReader =
++    new DatasetSeriesReader:
++      def dataset: FmriDataset = sourceDataset
++      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++        Left(DatasetError.StorageFailure("binding validation must run before reads"))
++
++  private def assertMatrixClose(left: gale.linalg.DMat, right: gale.linalg.DMat): Unit =
++    assertEquals(left.rows, right.rows)
++    assertEquals(left.cols, right.cols)
++    var row = 0
++    while row < left.rows do
++      var col = 0
++      while col < left.cols do
++        assertEqualsDouble(left(row, col), right(row, col), 1e-12)
++        col += 1
++      row += 1
++
++  private def assertVectorClose(left: Vector[Double], right: Vector[Double]): Unit =
++    assertEquals(left.length, right.length)
++    left.zip(right).foreach { (actual, expected) => assertEqualsDouble(actual, expected, 1e-12) }
++
++  private lazy val model = makeModel("fit-work-descriptor")
++  private lazy val otherPlan = FitPlan(makeModel("fit-work-descriptor-other"))
++  private lazy val plan = FitPlan(model)
++
++  private def makeModel(id: String): FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(10), tr = Seq(1.0))
++    val event = EventModel(
++      terms = Vector.empty,
++      samplingFrame = sampling,
++      designMatrix = Mat.fromRows(Vector.tabulate(10)(i => Vector(i.toDouble))),
++      columnNames = Vector("task"),
++      termSpans = Vector(0 -> 1),
++      colIndices = Map("task" -> Vector(0))
++    )
++    val baseline = BaselineModel.build(samplingFrame = sampling, basis = BaselineBasis.Constant, intercept = Intercept.Global)
++    val rows = Vector.tabulate(10) { row =>
++      val x = row.toDouble
++      Vector.tabulate(4) { voxel =>
++        1.0 + (voxel + 1) * 0.3 * x + 0.05 * math.sin((row + 1).toDouble * (voxel + 2).toDouble)
++      }
++    }
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(DatasetId(id), GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(4, 1, 1))),
++      samplingFrame = sampling
++    )
++    FmriModel(event, baseline, dataset)
+--- /dev/null
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/MaskedResponseStreamingSuite.scala
+@@ -0,0 +1,151 @@
++package scalafim.fmri.fit
++
++import scalafim.fmri.fit.GaleTestSyntax.*
++
++import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, IndexSelection, InMemoryDatasetBackend, SynchronousFmriDataset}
++import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
++import scalafim.fmri.design.event.EventModel
++import scalafim.fmri.hrf.design.SamplingFrame
++import scalafim.fmri.hrf.linalg.Mat
++import scalafim.fmri.model.{FitConfig, FitEngine, FitPlan, FmriModel, MissingDataPolicy}
++import scalafim.image.SampleSpaces
++
++import scala.concurrent.ExecutionContext.Implicits.global
++
++class MaskedResponseStreamingSuite extends munit.FunSuite:
++
++  private val selection = DataSelection(voxels = IndexSelection.indices(3, 0, 2, 1))
++  private val chunking = FitChunkingStrategy.unsafeByVoxelCount(2)
++
++  test("discovery rejects a reader returning a different shape even when every voxel is excluded") {
++    val sourceDataset = model.dataset
++    val reader = new DatasetSeriesReader:
++      def dataset: FmriDataset = sourceDataset
++      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++        selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++          FmriSeries.fromIntIndices(
++            gale.linalg.Matrix.tabulate(resolved.timepoints.length, resolved.voxels.length)((_, _) => Double.NaN),
++            resolved.voxels, resolved.timepoints,
++            scalafim.dataset.DatasetShape.unsafe(SampleSpaces(Vector(5, 1, 1)), 8)
++          )
++        }
++    val result = MaskedResponsePlanner.discover(reader, plan, selection, chunking)
++    assert(result.left.toOption.exists {
++      case FitError.InvalidFitAxis("fit chunk response", _) => true
++      case _ => false
++    })
++  }
++
++  test("chunked row-omission discovery stays bounded and retains global interleaved patterns") {
++    val expected = patterned(FitPlanExecutor.fit(plan, selection))
++    val actual = patterned(FitPlanExecutor.fitChunked(boundedReader, plan, selection, chunking))
++
++    assertEquals(actual.voxelIndices, Vector(3, 0, 2, 1))
++    assertEquals(actual.patternResults.map(_.pattern.sourceVoxels), Vector(Vector(3), Vector(0, 2), Vector(1)))
++    assertEquals(actual.patternResults.map(_.pattern.rows), Vector(Vector(0, 1, 2, 3, 4, 5, 6, 7), Vector(0, 2, 3, 4, 5, 6, 7), Vector(0, 1, 2, 4, 5, 6, 7)))
++    assertPatternedClose(actual, expected)
++  }
++
++  test("parallel chunked row-omission discovery preserves contrasts and covariance") {
++    val expected = patterned(FitPlanExecutor.fit(plan, selection))
++    FitPlanExecutor
++      .fitChunkedFuture(boundedReader, plan, selection, chunking, FitParallelism.unsafe(2))
++      .map { result =>
++        val actual = patterned(result)
++        assertPatternedClose(actual, expected)
++        val contrast = TContrast("task", Map("task" -> 1.0))
++        val actualStatistics = contrast.evaluate(actual).fold(error => fail(error.message), _.patternResults.map(_._2.statistics.toVector))
++        val expectedStatistics = contrast.evaluate(expected).fold(error => fail(error.message), _.patternResults.map(_._2.statistics.toVector))
++        assertEquals(actualStatistics.length, expectedStatistics.length)
++        actualStatistics.zip(expectedStatistics).foreach { (left, right) =>
++          assertVectorClose(left, right)
++        }
++      }
++  }
++
++  private def patterned(result: Either[FitError, FmriFitResult]): PatternedFmriFitResult =
++    result.fold(error => fail(error.message), {
++      case value: PatternedFmriFitResult => value
++      case other => fail(s"expected patterned result, got $other")
++    })
++
++  private def boundedReader: DatasetSeriesReader =
++    val underlying = SynchronousFmriDataset.readerFor(model.dataset).toOption.get
++    new DatasetSeriesReader:
++      def dataset: FmriDataset = underlying.dataset
++      def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++        selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++          if resolved.voxels.size > 2 then
++            Left(DatasetError.StorageFailure(s"streaming reader refuses ${resolved.voxels.size} voxels"))
++          else underlying.seriesEither(selection)
++        }
++
++  private def assertPatternedClose(actual: PatternedFmriFitResult, expected: PatternedFmriFitResult): Unit =
++    assertEquals(actual.voxelIndices, expected.voxelIndices)
++    assertEquals(actual.patternResults.map(_.pattern), expected.patternResults.map(_.pattern))
++    actual.voxelIndices.foreach { voxel =>
++      val left = actual.resultForVoxel(voxel).get.asInstanceOf[DenseFmriFitResult]
++      val right = expected.resultForVoxel(voxel).get.asInstanceOf[DenseFmriFitResult]
++      assertMatrixClose(left.coefficients.value, right.coefficients.value)
++      assertMatrixClose(left.normalizedCovariance, right.normalizedCovariance)
++      assertMatrixClose(left.coefficientCovariance.matrixForVoxelPosition(0).toOption.get,
++        right.coefficientCovariance.matrixForVoxelPosition(0).toOption.get)
++    }
++
++  private def assertMatrixClose(left: gale.linalg.DMat, right: gale.linalg.DMat): Unit =
++    assertEquals(left.rows, right.rows)
++    assertEquals(left.cols, right.cols)
++    var row = 0
++    while row < left.rows do
++      var col = 0
++      while col < left.cols do
++        assertEqualsDouble(left(row, col), right(row, col), 1e-12)
++        col += 1
++      row += 1
++
++  private def assertVectorClose(left: Vector[Double], right: Vector[Double]): Unit =
++    assertEquals(left.length, right.length)
++    left.zip(right).foreach { (actual, expected) =>
++      assertEqualsDouble(actual, expected, 1e-12)
++    }
++
++  private lazy val model: FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0))
++    val event = EventModel(
++      terms = Vector.empty,
++      samplingFrame = sampling,
++      designMatrix = Mat.fromRows(Vector.tabulate(8)(i => Vector(i.toDouble))),
++      columnNames = Vector("task"),
++      termSpans = Vector(0 -> 1),
++      colIndices = Map("task" -> Vector(0))
++    )
++    val baseline = BaselineModel.build(
++      samplingFrame = sampling,
++      basis = BaselineBasis.Constant,
++      intercept = Intercept.Global
++    )
++    val rows = Vector.tabulate(8) { row =>
++      val x = row.toDouble
++      def noise(voxel: Int): Double = 0.03 * math.sin((row + 1).toDouble * (voxel + 2).toDouble)
++      Vector(
++        if row == 1 then Double.NaN else 2.0 + 0.5 * x + noise(0),
++        if row == 3 then Double.NaN else 1.0 - 0.25 * x + noise(1),
++        if row == 1 then Double.NaN else -1.0 + 0.75 * x + noise(2),
++        4.0 - 0.2 * x + noise(3)
++      )
++    }
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(
++        DatasetId("masked-response-streaming"),
++        GaleTestMatrix.fromRows(rows),
++        SampleSpaces(Vector(4, 1, 1))
++      ),
++      samplingFrame = sampling
++    )
++    FmriModel(event, baseline, dataset)
++
++  private lazy val plan = FitPlan(
++    model,
++    engine = FitEngine.OrdinaryLeastSquares,
++    config = FitConfig(missingData = MissingDataPolicy.OmitRowsPerVoxel)
++  )
+--- a/modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala
++++ b/modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArEstimation.scala
+@@ -61,6 +61,65 @@
+ ):
+   require(innovationVariance >= 0.0 && innovationVariance.isFinite, "innovation variance must be non-negative and finite")
+ 
++/** Immutable raw spatial-block statistics. Lag products remain unregularized
++  * until every block for this complete temporal layout has been merged.
++  */
++final class ArNoiseSummary private (
++    val layout: NoiseEstimationLayout,
++    val maxOrder: ArOrderValue,
++    private[ar] val sumsByRun: Vector[Vector[Double]],
++    private[ar] val countsByRun: Vector[Vector[Long]]
++):
++  require(sumsByRun.length == layout.runCount, "noise-summary sums must cover every run")
++  require(countsByRun.length == layout.runCount, "noise-summary counts must cover every run")
++  require(sumsByRun.zip(countsByRun).forall { (sums, counts) =>
++    sums.length == maxOrder.value + 1 && counts.length == maxOrder.value + 1
++  }, "noise-summary lag dimensions must match the requested order")
++  require(sumsByRun.flatten.forall(_.isFinite), "noise-summary sums must be finite")
++  require(countsByRun.flatten.forall(_ >= 0L), "noise-summary pair counts must be non-negative")
++
++  def lagSumsByRun: Vector[Vector[Double]] = sumsByRun
++  def pairCountsByRun: Vector[Vector[Long]] = countsByRun
++
++  def merge(other: ArNoiseSummary): Either[ArError, ArNoiseSummary] =
++    ArNoiseSummary.merge(this, other)
++
++private object ArNoiseSummary:
++  def make(
++      layout: NoiseEstimationLayout,
++      maxOrder: ArOrderValue,
++      sumsByRun: Vector[Vector[Double]],
++      countsByRun: Vector[Vector[Long]]
++  ): ArNoiseSummary =
++    new ArNoiseSummary(layout, maxOrder, sumsByRun, countsByRun)
++
++  def merge(left: ArNoiseSummary, right: ArNoiseSummary): Either[ArError, ArNoiseSummary] =
++    if left.layout != right.layout then
++      Left(ArError.IncompatibleNoiseSummaries("layouts differ"))
++    else if left.maxOrder != right.maxOrder then
++      Left(ArError.IncompatibleNoiseSummaries("maximum requested orders differ"))
++    else
++      val sums = Vector.newBuilder[Vector[Double]]
++      val counts = Vector.newBuilder[Vector[Long]]
++      var run = 0
++      while run < left.layout.runCount do
++        val mergedSums = Array.ofDim[Double](left.maxOrder.value + 1)
++        val mergedCounts = Array.ofDim[Long](left.maxOrder.value + 1)
++        var lag = 0
++        while lag <= left.maxOrder.value do
++          val sum = left.sumsByRun(run)(lag) + right.sumsByRun(run)(lag)
++          if !sum.isFinite then
++            return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), sum))
++          if Long.MaxValue - left.countsByRun(run)(lag) < right.countsByRun(run)(lag) then
++            return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
++          mergedSums(lag) = sum
++          mergedCounts(lag) = left.countsByRun(run)(lag) + right.countsByRun(run)(lag)
++          lag += 1
++        sums += mergedSums.toVector
++        counts += mergedCounts.toVector
++        run += 1
++      Right(make(left.layout, left.maxOrder, sums.result(), counts.result()))
++
+ object ArEstimation:
+ 
+   private val RelativePositiveDefiniteMargin = 1e-6
+@@ -94,6 +153,53 @@
+       observations: Int
+   ):
+     require(observations >= 0, "run estimate observations must be non-negative")
++
++  /** Summarize one spatial residual block against the complete temporal layout.
++    * Means are per voxel and run over all retained rows, while lag products do
++    * not cross censored/reset segment boundaries.
++    */
++  def summarizeNoise(
++      residuals: DMat,
++      layout: NoiseEstimationLayout,
++      maxOrder: ArOrderValue
++  ): Either[ArError, ArNoiseSummary] =
++    for
++      _ <- layout.coveredSegments.validateRows(residuals.rows)
++      _ <- validateFinite(residuals)
++      _ <- if residuals.cols > 0 then Right(()) else Left(ArError.EmptySpatialNoiseBlock)
++      _ <- if layout.retainedRows > 0 then Right(()) else Left(ArError.NoEstimableRows)
++      summary <- summarizeNoiseUnchecked(residuals, layout, maxOrder)
++    yield summary
++
++  /** Finalize merged raw noise statistics into the existing whitening contract. */
++  def fitNoise(
++      summary: ArNoiseSummary,
++      options: ArFitOptions
++  ): Either[ArError, WhiteningPlan] =
++    if options.order.maxRequested > summary.maxOrder.value then
++      Left(ArError.ArOrderNotEstimable(options.order.maxRequestedOrder, ArLag.unsafe(summary.maxOrder.value)))
++    else
++      options.pooling match
++        case NoisePooling.Global =>
++          for
++            estimates <- estimateByRun(summary, options)
++            coefficients <- poolRunCoefficients(estimates, options.stationarity)
++            plan <- WhiteningPlan.globalWithInitialCondition(
++              coefficients,
++              summary.layout.whiteningSegments,
++              initialCondition = options.initialCondition,
++              method = WhiteningMethod.Estimated
++            )
++          yield plan
++        case NoisePooling.Run =>
++          estimateByRun(summary, options).flatMap { estimates =>
++            WhiteningPlan.byRunWithInitialCondition(
++              estimates.map(_.coefficients),
++              summary.layout.whiteningSegments,
++              initialCondition = options.initialCondition,
++              method = WhiteningMethod.Estimated
++            )
++          }
+ 
+   def fitNoise(
+       residuals: DMat,
+@@ -158,6 +264,41 @@
+             estimates += RunEstimate(estimate.coefficients, observations)
+       run += 1
+     Right(estimates.result())
++
++  private def estimateByRun(
++      summary: ArNoiseSummary,
++      options: ArFitOptions
++  ): Either[ArError, Vector[RunEstimate]] =
++    val estimates = Vector.newBuilder[RunEstimate]
++    var run = 0
++    while run < summary.layout.runCount do
++      val observations = effectiveObservations(summary.layout.segmentsForRun(run))
++      if observations <= 1 then
++        estimates += RunEstimate(ArmaCoefficients.Iid, observations)
++      else
++        estimateForSummaryRun(summary, run, observations, options) match
++          case Left(error) => return Left(error)
++          case Right(estimate) => estimates += RunEstimate(estimate.coefficients, observations)
++      run += 1
++    Right(estimates.result())
++
++  private def estimateForSummaryRun(
++      summary: ArNoiseSummary,
++      run: Int,
++      observations: Int,
++      options: ArFitOptions
++  ): Either[ArError, YuleWalkerEstimate] =
++    val pooled = PooledAutocovariance(
++      summary.sumsByRun(run).toArray,
++      summary.countsByRun(run).toArray
++    )
++    val maxLag = ArLag.unsafe(math.min(options.order.maxRequested, pooled.maxLag.value))
++    options.order match
++      case ArOrder.Fixed(order) =>
++        if order.value > maxLag.value then Left(ArError.ArOrderNotEstimable(order, maxLag))
++        else pooled.through(order).flatMap(yuleWalker(_, order, options.stationarity))
++      case ArOrder.Auto(_) =>
++        selectByBic(pooled, observations, maxLag, options.stationarity)
+ 
+   private def poolRunCoefficients(
+       estimates: Vector[RunEstimate],
+@@ -336,6 +477,59 @@
+   private def effectiveObservations(segments: Vector[TimeSegment]): Int =
+     segments.map(_.length).sum
+ 
++  private def summarizeNoiseUnchecked(
++      residuals: DMat,
++      layout: NoiseEstimationLayout,
++      maxOrder: ArOrderValue
++  ): Either[ArError, ArNoiseSummary] =
++    val sums = Array.fill(layout.runCount, maxOrder.value + 1)(0.0)
++    val counts = Array.fill(layout.runCount, maxOrder.value + 1)(0L)
++    var run = 0
++    while run < layout.runCount do
++      val segments = layout.segmentsForRun(run)
++      val retainedRows = effectiveObservations(segments)
++      var column = 0
++      while column < residuals.cols do
++        var total = 0.0
++        var segmentIndex = 0
++        while segmentIndex < segments.length do
++          val segment = segments(segmentIndex)
++          var row = segment.start
++          while row < segment.endExclusive do
++            total += residuals(row, column)
++            row += 1
++          segmentIndex += 1
++        val mean = total / retainedRows.toDouble
++        segmentIndex = 0
++        while segmentIndex < segments.length do
++          val segment = segments(segmentIndex)
++          var lag = 0
++          while lag <= maxOrder.value do
++            var row = segment.start + lag
++            while row < segment.endExclusive do
++              val product =
++                (residuals(row, column) - mean) * (residuals(row - lag, column) - mean)
++              if !product.isFinite then
++                return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), product))
++              val sum = sums(run)(lag) + product
++              if !sum.isFinite then
++                return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), sum))
++              if counts(run)(lag) == Long.MaxValue then
++                return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
++              sums(run)(lag) = sum
++              counts(run)(lag) += 1L
++              row += 1
++            lag += 1
++          segmentIndex += 1
++        column += 1
++      run += 1
++    Right(ArNoiseSummary.make(
++      layout,
++      maxOrder,
++      sums.iterator.map(_.toVector).toVector,
++      counts.iterator.map(_.toVector).toVector
++    ))
++
+   private def pooledAutocovariance(
+       residuals: DMat,
+       segments: Vector[TimeSegment],
+--- a/modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala
++++ b/modules/ar/shared/src/main/scala/scalafim/fmri/ar/ArError.scala
+@@ -24,6 +24,10 @@
+   case InsufficientAutocovariances(required: Int, actual: Int)
+   case NonFiniteAutocovariance(lag: ArLag, value: Double)
+   case NonFiniteResidual(row: Int, column: Int, value: Double)
++  case EmptySpatialNoiseBlock
++  case IncompatibleNoiseSummaries(detail: String)
++  case NoiseSummaryCountOverflow(runIndex: Int, lag: ArLag)
++  case NonFiniteNoiseSummary(runIndex: Int, lag: ArLag, value: Double)
+   case NonFiniteArCoefficient(index: Int, value: Double)
+   case NonFiniteMaCoefficient(index: Int, value: Double)
+   case NonFinitePartialAutocorrelation(index: Int, value: Double)
+@@ -78,6 +82,14 @@
+         s"autocovariance at lag ${lag.value} must be finite, got $value"
+       case NonFiniteResidual(row, column, value) =>
+         s"residual at row $row, column $column must be finite, got $value"
++      case EmptySpatialNoiseBlock =>
++        "noise summary requires at least one spatial residual column"
++      case IncompatibleNoiseSummaries(detail) =>
++        s"incompatible noise summaries: $detail"
++      case NoiseSummaryCountOverflow(runIndex, lag) =>
++        s"noise-summary pair count overflow for run $runIndex at lag ${lag.value}"
++      case NonFiniteNoiseSummary(runIndex, lag, value) =>
++        s"noise-summary sum for run $runIndex at lag ${lag.value} must be finite, got $value"
+       case NonFiniteArCoefficient(index, value) =>
+         s"AR coefficient at index $index must be finite, got $value"
+       case NonFiniteMaCoefficient(index, value) =>
+--- /dev/null
++++ b/modules/ar/shared/src/test/scala/scalafim/fmri/ar/ArNoiseReductionSuite.scala
+@@ -0,0 +1,100 @@
++package scalafim.fmri.ar
++
++import gale.linalg.{DMat, Matrix}
++
++class ArNoiseReductionSuite extends munit.FunSuite:
++
++  test("raw summaries merge spatial blocks before fixed and automatic finalization") {
++    val layout = value(NoiseEstimationLayout.excludingRows(
++      TimeSegments.fromRunLengths(Vector(7, 6)), 13, Set(2, 9)
++    ))
++    val residuals = residualMatrix(13, 4)
++    val full = value(ArEstimation.summarizeNoise(residuals, layout, ArOrderValue.unsafe(3)))
++    val merged = value(
++      value(ArEstimation.summarizeNoise(columns(residuals, Vector(3, 0)), layout, ArOrderValue.unsafe(3)))
++        .merge(value(ArEstimation.summarizeNoise(columns(residuals, Vector(1, 2)), layout, ArOrderValue.unsafe(3))))
++    )
++
++    assertEquals(merged.pairCountsByRun, full.pairCountsByRun)
++    assertNestedClose(merged.lagSumsByRun, full.lagSumsByRun)
++    Vector(
++      ArFitOptions(order = ArOrder.Fixed(2), pooling = NoisePooling.Global, exactFirstAr1 = false),
++      ArFitOptions(order = ArOrder.Fixed(2), pooling = NoisePooling.Run, exactFirstAr1 = false),
++      ArFitOptions(order = ArOrder.Auto(3), pooling = NoisePooling.Global, exactFirstAr1 = false)
++    ).foreach { options =>
++      assertPlanClose(value(ArEstimation.fitNoise(full, options)), value(ArEstimation.fitNoise(merged, options)))
++      assertPlanClose(value(ArEstimation.fitNoise(residuals, layout, options)), value(ArEstimation.fitNoise(merged, options)))
++    }
++  }
++
++  test("summary counts and lag products preserve reset gaps and run means") {
++    val layout = value(NoiseEstimationLayout.excludingRows(
++      TimeSegments.fromRunLengths(Vector(4, 3)), 7, Set(1, 5)
++    ))
++    val residuals = Matrix.tabulate(7, 1)((row, _) => Vector(1.0, 100.0, 3.0, 5.0, -2.0, 40.0, 2.0)(row))
++    val summary = value(ArEstimation.summarizeNoise(residuals, layout, ArOrderValue.unsafe(1)))
++
++    assertEquals(summary.pairCountsByRun, Vector(Vector(3L, 1L), Vector(2L, 0L)))
++    assertNestedClose(summary.lagSumsByRun, Vector(Vector(8.0, 0.0), Vector(8.0, 0.0)))
++  }
++
++  test("summary merges reject incompatible layouts and requested orders") {
++    val residuals = residualMatrix(8, 1)
++    val first = value(NoiseEstimationLayout.allRows(TimeSegments.continuous(8), 8))
++    val censored = value(NoiseEstimationLayout.excludingRows(TimeSegments.continuous(8), 8, Set(3)))
++    val left = value(ArEstimation.summarizeNoise(residuals, first, ArOrderValue.unsafe(1)))
++    val otherLayout = value(ArEstimation.summarizeNoise(residuals, censored, ArOrderValue.unsafe(1)))
++    val otherOrder = value(ArEstimation.summarizeNoise(residuals, first, ArOrderValue.unsafe(2)))
++
++    assert(left.merge(otherLayout).left.toOption.exists(_.isInstanceOf[ArError.IncompatibleNoiseSummaries]))
++    assert(left.merge(otherOrder).left.toOption.exists(_.isInstanceOf[ArError.IncompatibleNoiseSummaries]))
++  }
++
++  test("nonfinite data, empty spatial blocks, and merged overflow have typed failures") {
++    val layout = value(NoiseEstimationLayout.allRows(TimeSegments.continuous(2), 2))
++    val nonfinite = Matrix.tabulate(2, 1)((row, _) => if row == 0 then Double.NaN else 1.0)
++    val empty = Matrix.tabulate(2, 0)((_, _) => 0.0)
++    val large = Matrix.tabulate(2, 1)((row, _) => if row == 0 then -9e153 else 9e153)
++
++    assert(ArEstimation.summarizeNoise(nonfinite, layout, ArOrderValue.Zero).left.toOption.exists {
++      case ArError.NonFiniteResidual(0, 0, _) => true
++      case _ => false
++    })
++    assertEquals(
++      ArEstimation.summarizeNoise(empty, layout, ArOrderValue.Zero).left.toOption,
++      Some(ArError.EmptySpatialNoiseBlock)
++    )
++    val summary = value(ArEstimation.summarizeNoise(large, layout, ArOrderValue.Zero))
++    assert(summary.merge(summary).left.toOption.exists {
++      case ArError.NonFiniteNoiseSummary(0, lag, value) => lag.value == 0 && !value.isFinite
++      case _ => false
++    })
++  }
++
++  private def residualMatrix(rows: Int, columns: Int): DMat =
++    Matrix.tabulate(rows, columns) { (row, column) =>
++      val x = (row + 1).toDouble
++      val innovation = math.sin(x * (column + 2).toDouble * 1.731) + 0.2 * math.cos(x * 0.73 + column)
++      innovation + (if row == 0 || row == 7 then 0.0 else 0.45 * math.sin(row.toDouble * (column + 1)))
++    }
++
++  private def columns(matrix: DMat, indices: Vector[Int]): DMat =
++    Matrix.tabulate(matrix.rows, indices.length)((row, column) => matrix(row, indices(column)))
++
++  private def assertPlanClose(actual: WhiteningPlan, expected: WhiteningPlan): Unit =
++    assertEquals(actual.pooling, expected.pooling)
++    assertEquals(actual.coefficients.length, expected.coefficients.length)
++    actual.coefficients.zip(expected.coefficients).foreach { (left, right) =>
++      assertClose(left.phi, right.phi)
++    }
++
++  private def assertNestedClose(actual: Vector[Vector[Double]], expected: Vector[Vector[Double]]): Unit =
++    assertEquals(actual.length, expected.length)
++    actual.zip(expected).foreach { (left, right) => assertClose(left, right) }
++
++  private def assertClose(actual: Vector[Double], expected: Vector[Double]): Unit =
++    assertEquals(actual.length, expected.length)
++    actual.zip(expected).foreach { (left, right) => assertEqualsDouble(left, right, 1e-10) }
++
++  private def value[A](result: Either[ArError, A]): A =
++    result.fold(error => fail(error.message), identity)
+--- /dev/null
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/PooledGlsPreparation.scala
+@@ -0,0 +1,254 @@
++package scalafim.fmri.fit
++
++import scalafim.dataset.DatasetSeriesReader
++import scalafim.fmri.ar.{ArEstimation, ArFitOptions, ArNoiseSummary, ArOrder, ArOrderValue, NoiseEstimationLayout, NoisePooling, WhiteningPlan, WhiteningMethod, InitialConditionPolicy}
++import scalafim.fmri.design.CoefficientAxis
++import scalafim.fmri.model.{ArOptions, AutocorrelationConfig, FitPlan, FitStrategy}
++
++/** Replays spatial blocks for each noise-estimation pass. Only raw per-run lag
++  * statistics cross the reduction boundary; no population response or residual
++  * matrix is retained. Sources must replay the same immutable response snapshot.
++  */
++private[fit] object PooledGlsPreparation:
++  private final case class NoiseUnit(
++      design: DesignMatrix,
++      partitions: Vector[RunPartition],
++      config: AutocorrelationConfig,
++      layout: NoiseEstimationLayout,
++      initial: OlsPrepared,
++      axis: Option[CoefficientAxis],
++      run: Option[RunwiseGlsDesign]
++  ):
++    def bind(error: FitError): FitError =
++      val structural = axis.fold(error)(FitKernel.bindRankFailure(error, _))
++      run.fold(structural)(value => FitError.RunwiseFitFailed(value.partition.runIndex, structural))
++
++    def response(input: ResponseBlock): ResponseBlock =
++      run.fold(input)(value => ResponseBlock.unsafe(RunwiseGls.selectRows(input.value, value.partition.rowIndices)))
++
++    def noiseOptions: ArFitOptions =
++      ArFitOptions(ArOrder.Fixed(config.order.value),
++        if config.global then NoisePooling.Global else NoisePooling.Run,
++        exactFirstAr1 = config.exactFirst)
++
++    def prepared(whitening: WhiteningPlan, voxels: Vector[Int]): GlsPrepared =
++      val shared = GlsWhitening.Shared(whitening)
++      GlsPrepared(design, partitions, shared,
++        Gls.diagnostics(shared, partitions, "estimated", Gls.diagnosticIterations(config)),
++        initial.diagnostics, voxels)
++
++  def prepare(
++      reader: DatasetSeriesReader,
++      plan: FitPlan,
++      chunks: FitChunkPlan
++  ): Either[FitError, PreparedFitContext] =
++    complete(reader, plan, chunks, saveIdentity = false).map(_._1)
++
++  private[fit] def complete(
++      reader: DatasetSeriesReader,
++      plan: FitPlan,
++      chunks: FitChunkPlan,
++      saveIdentity: Boolean = true
++  ): Either[FitError, (PreparedFitContext, CompletedGlsNoise)] =
++    val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, chunks.timepoints)
++    reduce(reader, plan, chunks, partitions, setup(plan, chunks), saveIdentity)
++
++  private def setup(plan: FitPlan, chunks: FitChunkPlan): Either[FitError, Vector[NoiseUnit]] =
++    val partitions = RunPartition.fromSamplingFrame(plan.model.dataset.samplingFrame, chunks.timepoints)
++    for
++      shapeOnly <- FitPreparation.designSeries(plan, chunks.timepoints)
++      input <- FitPlanExecutor.fitBlockInput(plan, shapeOnly, partitions)
++      units <- plan.strategy match
++        case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) =>
++          RunwiseGls.prepareDesigns(input.design, partitions, plan.config.autocorrelation, input.runwiseProjections)
++            .flatMap(runUnits)
++        case _ =>
++          makeUnit(input.design, partitions, plan.config.autocorrelation, input.coefficientAxis, None)
++            .map(Vector(_))
++    yield units
++
++  private def identity(plan: FitPlan, units: Vector[NoiseUnit]): String =
++    val header = Vector("pooled-gls-noise-v1", plan.coefficientScope.toString,
++      plan.config.missingData.toString,
++      plan.model.designSchema.fold("")(_.rows.canonical),
++      FitWorkDescriptor.frame(plan.structuralColumns.map(column =>
++        FitWorkDescriptor.frame(Vector(column.canonical, column.renderedLabel)))))
++    val designs = units.map { unit =>
++      FitWorkDescriptor.frame(Vector(
++        unit.run.fold("shared")(_.partition.runIndex.toString),
++        PreparedGlsArtifact.matrixIdentity(unit.design.value),
++        unit.config.order.value.toString, unit.config.iterations.toString,
++        unit.config.global.toString, unit.config.voxelwise.toString, unit.config.exactFirst.toString,
++        unit.layout.excludedRows.mkString(","),
++        unit.partitions.map(p => s"${p.runIndex}:${p.rowIndices.mkString(",")}:${p.timepoints.mkString(",")}").mkString(";"),
++        unit.run.flatMap(_.projection).fold("")(_.sourceColumnIndices.mkString(",")),
++        PreparedGlsArtifact.policyIdentity(unit.initial.diagnostics.policy)
++      ))
++    }
++    FitWorkDescriptor.frame(header ++ designs)
++
++  private[fit] def restore(
++      plan: FitPlan,
++      chunks: FitChunkPlan,
++      saved: CompletedGlsNoise
++  ): Either[FitError, PreparedFitContext] =
++    setup(plan, chunks).flatMap { units =>
++      if saved.designIdentity != identity(plan, units) then
++        Left(FitError.InvalidFitAxis("prepared GLS artifact", "design or preparation configuration differs"))
++      else validateWhitening(units, saved.units).map { _ =>
++        context(plan, chunks, units, saved.units.map(_.whitening), saved.retainedVoxelIndices)
++      }
++    }
++
++  private def validateWhitening(units: Vector[NoiseUnit], saved: Vector[PreparedGlsUnit]): Either[FitError, Unit] =
++    if units.length != saved.length then
++      return Left(FitError.InvalidFitAxis("prepared GLS artifact", "preparation unit count differs"))
++    var index = 0
++    while index < units.length do
++      val unit = units(index)
++      val snapshot = saved(index)
++      val w = snapshot.whitening
++      val pooling = if unit.config.global then NoisePooling.Global else NoisePooling.Run
++      val initial = InitialConditionPolicy.fromExactFirstAr1(unit.config.exactFirst)
++      val order = unit.config.order.value
++      if unit.layout.retainedRows == 0 || (0 until unit.layout.runCount).exists { run =>
++          val segments = unit.layout.segmentsForRun(run)
++          segments.map(_.length).sum > 1 && !segments.exists(_.length > order)
++        } then return Left(FitError.InvalidFitAxis("prepared GLS artifact", s"AR order is not estimable for unit $index"))
++      val expectedOrders =
++        if pooling == NoisePooling.Global then
++          Vector(if (0 until unit.layout.runCount).exists(r => unit.layout.segmentsForRun(r).map(_.length).sum > 1) then order else 0)
++        else Vector.tabulate(unit.layout.runCount)(r => if unit.layout.segmentsForRun(r).map(_.length).sum > 1 then order else 0)
++      if snapshot.sourceRun != unit.run.map(_.partition.runIndex) ||
++          w.segments != unit.layout.whiteningSegments || w.pooling != pooling ||
++          w.initialCondition != initial || w.method != WhiteningMethod.Estimated || w.maOrder != 0 ||
++          w.coefficients.map(_.arOrder) != expectedOrders then
++        return Left(FitError.InvalidFitAxis("prepared GLS artifact", s"whitening contract differs for unit $index"))
++      index += 1
++    Right(())
++
++  private def makeUnit(
++      design: DesignMatrix,
++      partitions: Vector[RunPartition],
++      options: ArOptions,
++      axis: Option[CoefficientAxis],
++      run: Option[RunwiseGlsDesign]
++  ): Either[FitError, NoiseUnit] =
++    val prepared = for
++      config <- Gls.autocorrelationConfig(options)
++      _ <- Gls.validatePartitions(partitions)
++      layout <- Gls.noiseEstimationLayout(partitions, options.censoredTimepoints)
++      initial <- Ols.prepare(design)
++      _ <- ResidualDegreesOfFreedom(design.timepoints - initial.diagnostics.rank)
++    yield NoiseUnit(design, partitions, config, layout, initial, axis, run)
++    prepared.left.map { error =>
++      val structural = axis.fold(error)(FitKernel.bindRankFailure(error, _))
++      run.fold(structural)(value => FitError.RunwiseFitFailed(value.partition.runIndex, structural))
++    }
++
++  private def runUnits(designs: Vector[RunwiseGlsDesign]): Either[FitError, Vector[NoiseUnit]] =
++    val out = Vector.newBuilder[NoiseUnit]
++    var index = 0
++    while index < designs.length do
++      val run = designs(index)
++      makeUnit(run.design, Vector(run.localPartition), run.options, run.projection.map(_.axis), Some(run)) match
++        case Left(error) => return Left(error)
++        case Right(unit) => out += unit
++      index += 1
++    Right(out.result())
++
++  private def reduce(
++      reader: DatasetSeriesReader,
++      plan: FitPlan,
++      chunks: FitChunkPlan,
++      partitions: Vector[RunPartition],
++      setup: => Either[FitError, Vector[NoiseUnit]],
++      saveIdentity: Boolean
++  ): Either[FitError, (PreparedFitContext, CompletedGlsNoise)] =
++    // Membership is metadata only. Check that a legacy reader does not change
++    // the finite-column population between preparation passes.
++    val membership = Array.fill(chunks.length)(Vector.empty[Int])
++    val excluded = Vector.newBuilder[VoxelInferenceExclusion]
++    val iterations = math.max(1, plan.config.autocorrelation.iterations)
++    var units = Vector.empty[NoiseUnit]
++    var previous = Vector.empty[WhiteningPlan]
++    var pass = 0
++    while pass < iterations do
++      var summaries = Array.fill[Option[ArNoiseSummary]](units.length)(None)
++      var chunkIndex = 0
++      while chunkIndex < chunks.length do
++        val chunk = chunks.indexed(chunkIndex)
++        val input = for
++          series <- ChunkedFitExecutor.readChunk(reader, chunk)
++          prepared <- FitPlanExecutor.fitBlockInput(plan, series, partitions)
++        yield prepared
++        val currentVoxels = input match
++          case Left(FitError.AllVoxelsExcluded(values)) =>
++            if pass == 0 then excluded ++= values
++            Vector.empty
++          case Left(error) => return Left(FitError.ChunkFailed(chunk.ordinal.value, error))
++          case Right(value) => value.voxelIndices
++        if pass == 0 then membership(chunkIndex) = currentVoxels
++        else if membership(chunkIndex) != currentVoxels then
++          return Left(FitError.InvalidFitAxis("pooled AR replay", s"finite voxel membership changed in chunk ${chunk.ordinal.value}"))
++        input match
++          case Left(_) => () // an entirely excluded spatial block
++          case Right(value) =>
++            // Preserve all-excluded precedence over design rank/df failures.
++            if units.isEmpty then
++              setup match
++                case Left(error) => return Left(error)
++                case Right(value) => units = value
++              summaries = Array.fill[Option[ArNoiseSummary]](units.length)(None)
++            var unitIndex = 0
++            while unitIndex < units.length do
++              val unit = units(unitIndex)
++              val response = unit.response(value.response)
++              val fitted = if previous.isEmpty then unit.initial.fit(response)
++                else Gls.fitWithPlan(previous(unitIndex), unit.design.value, response.value)
++              val summarized = for
++                fit <- fitted
++                // Noise estimation uses ORIGINAL residuals, not whitened ones.
++                residuals = Gls.residualMatrix(unit.design.value, response.value, fit.coefficients.value)
++                summary <- ArEstimation.summarizeNoise(residuals, unit.layout, ArOrderValue.unsafe(unit.config.order.value))
++                  .left.map(Gls.arToFitError)
++                combined <- summaries(unitIndex) match
++                  case None => Right(summary)
++                  case Some(current) => current.merge(summary).left.map(Gls.arToFitError)
++              yield combined
++              summarized match
++                case Left(error) => return Left(unit.bind(error))
++                case Right(summary) => summaries(unitIndex) = Some(summary)
++              unitIndex += 1
++        chunkIndex += 1
++      if summaries.isEmpty || summaries.head.isEmpty then return Left(FitError.AllVoxelsExcluded(excluded.result()))
++      val completed = Vector.newBuilder[WhiteningPlan]
++      var unitIndex = 0
++      while unitIndex < units.length do
++        val unit = units(unitIndex)
++        ArEstimation.fitNoise(summaries(unitIndex).get, unit.noiseOptions).left.map(Gls.arToFitError) match
++          case Left(error) => return Left(unit.bind(error))
++          case Right(whitening) => completed += whitening
++        unitIndex += 1
++      previous = completed.result()
++      pass += 1
++    val voxels = membership.iterator.flatten.toVector
++    val saved = CompletedGlsNoise(if saveIdentity then identity(plan, units) else "", voxels,
++      units.zip(previous).map((unit, whitening) => PreparedGlsUnit(unit.run.map(_.partition.runIndex), whitening)))
++    Right((context(plan, chunks, units, previous, voxels), saved))
++
++  private def context(
++      plan: FitPlan,
++      chunks: FitChunkPlan,
++      units: Vector[NoiseUnit],
++      whitening: Vector[WhiteningPlan],
++      voxels: Vector[Int]
++  ): PreparedFitContext =
++    plan.strategy match
++      case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) =>
++        val runs = units.zip(whitening).map { (unit, value) =>
++          val source = unit.run.get
++          RunwiseGlsPreparedRun(source.partition, unit.prepared(value, voxels), source.projection)
++        }
++        FitInterpreters.runwiseGlsContext(plan, new RunwiseGlsPrepared(chunks.timepoints.length, runs))
++      case _ => FitInterpreters.glsContext(plan, units.head.prepared(whitening.head, voxels))
+--- a/modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala
+@@ -29,6 +29,14 @@
+ private[fit] final case class RunwiseGlsPreparedRun(
+     partition: RunPartition,
+     solver: GlsPrepared,
++    projection: Option[RunCoefficientProjection]
++)
++
++private[fit] final case class RunwiseGlsDesign(
++    partition: RunPartition,
++    design: DesignMatrix,
++    localPartition: RunPartition,
++    options: ArOptions,
+     projection: Option[RunCoefficientProjection]
+ )
+ 
+@@ -122,7 +130,40 @@
+       projections: IndexedSeq[RunCoefficientProjection],
+       selectedVoxelIndices: Vector[Int]
+   ): Either[FitError, RunwiseGlsPrepared] =
++    val designs = prepareDesigns(design, partitions, options, projections) match
++      case Left(error) => return Left(error)
++      case Right(value) => value
+     val out = Vector.newBuilder[RunwiseGlsPreparedRun]
++    var run = 0
++    while run < designs.length do
++      val current = designs(run)
++      val runResponse = ResponseBlock.fromMatrix(selectRows(response.value, current.partition.rowIndices)) match
++        case Left(error) => return Left(FitError.RunwiseFitFailed(current.partition.runIndex, error))
++        case Right(value) => value
++      Gls.prepare(current.design, runResponse, Vector(current.localPartition), current.options, selectedVoxelIndices) match
++        case Left(error) =>
++          val bound = current.projection.fold(error)(value => FitKernel.bindRankFailure(error, value.axis))
++          return Left(FitError.RunwiseFitFailed(current.partition.runIndex, bound))
++        case Right(value) => out += RunwiseGlsPreparedRun(current.partition, value, current.projection)
++      run += 1
++    Right(new RunwiseGlsPrepared(design.timepoints, out.result()))
++
++  /** Shared design lowering for dense and bounded run-specific GLS preparation. */
++  private[fit] def prepareDesigns(
++      design: DesignMatrix,
++      partitions: IndexedSeq[RunPartition],
++      options: ArOptions,
++      projections: IndexedSeq[RunCoefficientProjection]
++  ): Either[FitError, Vector[RunwiseGlsDesign]] =
++    if partitions.isEmpty then return Left(FitError.EmptyRunPartition(0))
++    if projections.nonEmpty && projections.length != partitions.length then
++      return Left(FitError.InvalidFitAxis("runwise GLS projections", s"expected ${partitions.length}, got ${projections.length}"))
++    if options.global then
++      return Left(FitError.UnsupportedAutocorrelation("runwise GLS requires run-local AR estimation (global=false)"))
++    validatePartitions(design.timepoints, partitions, options) match
++      case Left(error) => return Left(error)
++      case Right(_) => ()
++    val out = Vector.newBuilder[RunwiseGlsDesign]
+     var run = 0
+     while run < partitions.length do
+       val partition = partitions(run)
+@@ -141,9 +182,6 @@
+       ) match
+         case Left(error) => return Left(FitError.RunwiseFitFailed(partition.runIndex, error))
+         case Right(value) => value
+-      val runResponse = ResponseBlock.fromMatrix(selectRows(response.value, partition.rowIndices)) match
+-        case Left(error) => return Left(FitError.RunwiseFitFailed(partition.runIndex, error))
+-        case Right(value) => value
+       val localPartition = RunPartition(
+         runIndex = 0,
+         rowIndices = (0 until partition.rowIndices.length).toVector,
+@@ -152,19 +190,9 @@
+       val localOptions = options.copy(
+         censoredTimepoints = options.censoredTimepoints.filter(partition.timepoints.contains)
+       )
+-      Gls.prepare(
+-        runDesign,
+-        runResponse,
+-        Vector(localPartition),
+-        localOptions,
+-        selectedVoxelIndices
+-      ) match
+-        case Left(error) =>
+-          val bound = projection.fold(error)(value => FitKernel.bindRankFailure(error, value.axis))
+-          return Left(FitError.RunwiseFitFailed(partition.runIndex, bound))
+-        case Right(value) => out += RunwiseGlsPreparedRun(partition, value, projection)
++      out += RunwiseGlsDesign(partition, runDesign, localPartition, localOptions, projection)
+       run += 1
+-    Right(new RunwiseGlsPrepared(design.timepoints, out.result()))
++    Right(out.result())
+ 
+   private def validatePartitions(
+       rows: Int,
+--- /dev/null
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/PooledGlsPreparationSuite.scala
+@@ -0,0 +1,388 @@
++package scalafim.fmri.fit
++
++import scalafim.dataset.{DataSelection, DatasetError, DatasetEvents, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, IndexSelection, InMemoryDatasetBackend, SynchronousFmriDataset}
++import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
++import scalafim.fmri.design.event.EventModel
++import scalafim.fmri.fit.GaleTestSyntax.*
++import scalafim.fmri.ar.NoisePooling
++import scalafim.fmri.hrf.*
++import scalafim.fmri.hrf.design.SamplingFrame
++import scalafim.fmri.hrf.linalg.Mat
++import scalafim.fmri.model.{ArCoefficientSpec, ArOptions, ArStructure, AutocorrelationConfig, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, MissingDataPolicy, ModelBuildSpec}
++import scalafim.image.SampleSpaces
++import gale.linalg.Matrix
++
++import scala.concurrent.ExecutionContext.Implicits.global
++
++class PooledGlsPreparationSuite extends munit.FunSuite:
++
++  private val selectedTimes = (0 until 27).filterNot(Set(4, 13, 21).contains).toVector
++  private val selection = DataSelection(
++    time = IndexSelection.indices(selectedTimes*),
++    voxels = IndexSelection.indices(3, 0, 2, 1)
++  )
++  private val blockSize = 2
++
++  test("pooled GLS replays bounded blocks for shared run and global AR estimates") {
++    Vector(NoisePooling.Run, NoisePooling.Global).foreach { pooling =>
++      Vector(1, 2).foreach { order =>
++        Vector(1, 3).foreach { iterations =>
++          val plan = pooledPlan(pooling, order, iterations)
++          val expected = dense(plan)
++          val reader = recordingReader(plan.model.dataset)
++          val actual = chunked(FitPlanExecutor.fitChunked(reader, plan, selection, chunking))
++          assertDenseClose(actual, expected)
++          assertEquals(reader.reads, (iterations + 1) * 2)
++          assert(reader.selections.forall(_.time == selection.time))
++          assert(reader.selections.forall(_.resolveEither(plan.model.dataset.shape,
++            plan.model.dataset.voxelDomain).toOption.get.voxels.length <= blockSize))
++          assertEquals(actual.autocorrelation.map(_.whitening.segments), expected.autocorrelation.map(_.whitening.segments))
++          assertEquals(actual.autocorrelation.map(_.whitening.censorGaps), expected.autocorrelation.map(_.whitening.censorGaps))
++          assertArClose(actual, expected)
++          val contrast = TContrast("task", Map("task" -> 1.0))
++          assertVectorClose(
++            contrast.evaluate(actual).toOption.get.statistics.toVector,
++            contrast.evaluate(expected).toOption.get.statistics.toVector
++          )
++        }
++      }
++    }
++  }
++
++  test("parallel pooled GLS uses the same prepared shared whitening") {
++    val plan = pooledPlan(NoisePooling.Global, order = 2, iterations = 3)
++    val expected = dense(plan)
++    val reader = recordingReader(plan.model.dataset)
++    FitPlanExecutor.fitChunkedFuture(reader, plan, selection, chunking, FitParallelism.unsafe(2)).map { result =>
++      val actual = chunked(result)
++      assertDenseClose(actual, expected)
++      assertArClose(actual, expected)
++    }
++  }
++
++  test("pooled GLS descriptors retain canonical selected axes") {
++    val plan = pooledPlan(NoisePooling.Global, order = 1, iterations = 1)
++    val reference = FitWorkReference("pooled-gls", "plan-v1", "source-v1")
++    val compiled = FitWorkDescriptor.compile(reference, plan, ChunkSize.unsafe(blockSize), selection).toOption.get
++    val descriptor = FitWorkDescriptor.decode(compiled.encode).toOption.get
++    val reader = recordingReader(plan.model.dataset)
++    val resolver = new FitWorkResolver:
++      def resolve(request: FitWorkReference): Either[FitError, ResolvedFitWork] =
++        if request == reference then Right(ResolvedFitWork(reference, plan, reader))
++        else Left(FitError.InvalidFitAxis("fit work descriptor", "unexpected immutable reference"))
++
++    assertEquals(descriptor.selection, selection)
++    assertDenseClose(
++      chunked(FitWorkExecutor.fit(descriptor, resolver)),
++      dense(plan)
++    )
++  }
++
++  test("runwise GLS preserves projected run-local coefficients through bounded preparation") {
++    val strategy = FitStrategy.RunwiseGeneralizedLeastSquares(
++      AutocorrelationConfig.unsafe(iterations = 2, coefficients = ArCoefficientSpec.Estimate)
++    )
++    val plan = FitPlan(projectedModel, strategy)
++    val expected = runwise(FitPlanExecutor.fit(plan, selection))
++    val actual = runwise(FitPlanExecutor.fitChunked(recordingReader(plan.model.dataset), plan, selection, chunking))
++
++    assertEquals(actual.runs.map(_.projection.map(_.sourceColumnIndices)), expected.runs.map(_.projection.map(_.sourceColumnIndices)))
++    assert(actual.runs.forall(_.projection.nonEmpty))
++    assert(actual.runs.forall(_.projection.exists(_.sourceColumnIndices.nonEmpty)))
++    actual.runs.zip(expected.runs).foreach { (left, right) =>
++      assertMatrixClose(left.coefficients.value, right.coefficients.value)
++      assertMatrixClose(left.standardErrors.value, right.standardErrors.value)
++      assertMatrixClose(left.normalizedCovariance, right.normalizedCovariance)
++      assertEquals(left.autocorrelation.map(_.whitening), right.autocorrelation.map(_.whitening))
++      left.autocorrelation.get.runs.zip(right.autocorrelation.get.runs).foreach { (a, b) =>
++        assertEquals(a.runIndex, b.runIndex)
++        assertVectorClose(a.phi, b.phi)
++      }
++      assertEquals(left.residualDegreesOfFreedom, right.residualDegreesOfFreedom)
++    }
++  }
++
++  test("excluded whole and partial blocks preserve the pooled population and exclusions") {
++    val original = SynchronousFmriDataset.readerFor(model.dataset).toOption.get
++      .seriesEither(DataSelection.All).toOption.get
++    // Selected order is 3,0,2,1: the first block is entirely excluded.
++    val responses = Matrix.tabulate(27, 4) { (row, voxel) =>
++      if row == 6 && Set(3, 0, 2).contains(voxel) then Double.NaN
++      else original.data(row, voxel)
++    }
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(DatasetId("pooled-exclusions"), responses, SampleSpaces(Vector(4, 1, 1))),
++      samplingFrame = model.dataset.samplingFrame
++    )
++    val plan = FitPlan(model.copy(dataset = dataset), engine = FitEngine.GeneralizedLeastSquares,
++      config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), iterations = 2),
++        missingData = MissingDataPolicy.Propagate))
++    val expected = dense(plan)
++    val actual = chunked(FitPlanExecutor.fitChunked(recordingReader(dataset), plan, selection, chunking))
++    assertEquals(actual.voxelIndices, Vector(1))
++    assertEquals(actual.fitExclusions, expected.fitExclusions)
++    assertDenseClose(actual, expected)
++    assertArClose(actual, expected)
++  }
++
++  test("all excluded responses take precedence over a rank-deficient pooled GLS design") {
++    val plan = FitPlan(
++      allExcludedRankDeficientModel,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = FitConfig(
++        autocorrelation = ArOptions(structure = ArStructure.Ar(1)),
++        missingData = MissingDataPolicy.Propagate
++      )
++    )
++    val expected = FitPlanExecutor.fit(plan)
++    val actual = FitPlanExecutor.fitChunked(
++      SynchronousFmriDataset.readerFor(allExcludedRankDeficientModel.dataset).toOption.get,
++      plan,
++      DataSelection.All,
++      chunking
++    )
++    Vector(expected, actual).foreach { result =>
++      assert(result.left.toOption.exists {
++        case FitError.AllVoxelsExcluded(exclusions) => exclusions.map(_.voxelIndex) == Vector(0, 1)
++        case _ => false
++      })
++    }
++  }
++
++  test("a fully censored run is IID for shared GLS and invalid for runwise GLS") {
++    val selected = selectedTimes.toSet
++    val censored = (12 until 27).filter(selected.contains).toVector
++    val shared = FitPlan(
++      model,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = FitConfig(autocorrelation = ArOptions(
++        structure = ArStructure.Ar(1),
++        censoredTimepoints = censored,
++        global = false
++      ))
++    )
++    val sharedDense = chunked(FitPlanExecutor.fit(shared, selection))
++    val sharedResult = chunked(FitPlanExecutor.fitChunked(recordingReader(model.dataset), shared, selection, chunking))
++    assertDenseClose(sharedResult, sharedDense)
++    assertEquals(sharedResult.autocorrelation.map(_.runs.map(_.runIndex)), Some(Vector(0, 1)))
++    assertEquals(sharedResult.autocorrelation.map(_.runs.last.coefficients), Some(Vector.empty))
++
++    val runwise = FitPlan(model, FitStrategy.RunwiseGeneralizedLeastSquares(
++      AutocorrelationConfig.unsafe(censoredTimepoints = censored, coefficients = ArCoefficientSpec.Estimate)
++    ))
++    assert(FitPlanExecutor.fitChunked(recordingReader(model.dataset), runwise, selection, chunking).left.toOption.exists {
++      case FitError.RunwiseFitFailed(1, FitError.UnsupportedAutocorrelation(detail)) =>
++        detail.contains("no retained rows")
++      case _ => false
++    })
++  }
++
++  test("pooled GLS refuses a reader that changes finite membership during replay") {
++    val plan = FitPlan(
++      model,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = FitConfig(
++        autocorrelation = ArOptions(structure = ArStructure.Ar(1), iterations = 2),
++        missingData = MissingDataPolicy.Propagate
++      )
++    )
++    assert(FitPlanExecutor.fitChunked(membershipChangingReader(plan.model.dataset), plan, selection, chunking).left.toOption.exists {
++      case FitError.InvalidFitAxis("pooled AR replay", detail) => detail.contains("membership changed")
++      case _ => false
++    })
++  }
++
++  private def pooledPlan(pooling: NoisePooling, order: Int, iterations: Int): FitPlan =
++    FitPlan(
++      model,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = FitConfig(autocorrelation = ArOptions(
++        structure = ArStructure.Ar(order),
++        global = pooling == NoisePooling.Global,
++        iterations = iterations,
++        censoredTimepoints = Vector(3, 17)
++      ))
++    )
++
++  private def chunking = FitChunkingStrategy.unsafeByVoxelCount(blockSize)
++
++  private def dense(plan: FitPlan): DenseFmriFitResult =
++    FitPlanExecutor.fit(plan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
++
++  private def chunked(result: Either[FitError, FmriFitResult]): DenseFmriFitResult =
++    result.fold(error => fail(error.message), {
++      case dense: DenseFmriFitResult => dense
++      case other => fail(s"expected dense GLS result, got $other")
++    })
++
++  private def runwise(result: Either[FitError, FmriFitResult]): RunwiseFmriFitResult =
++    result.fold(error => fail(error.message), {
++      case value: RunwiseFmriFitResult => value
++      case other => fail(s"expected runwise GLS result, got $other")
++    })
++
++  private final class RecordingReader(
++      val dataset: FmriDataset,
++      underlying: DatasetSeriesReader,
++      selectedTimes: Vector[Int]
++  ) extends DatasetSeriesReader:
++    var reads = 0
++    var selections = Vector.empty[DataSelection]
++    def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++      selection.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++        if resolved.timepoints != selectedTimes then
++          Left(DatasetError.StorageFailure("pooled GLS changed selected timepoints"))
++        else if resolved.voxels.length > blockSize then
++          Left(DatasetError.StorageFailure("pooled GLS exceeded configured block size"))
++        else
++          reads += 1
++          selections :+= selection
++          underlying.seriesEither(selection)
++      }
++
++  private def recordingReader(dataset: FmriDataset): RecordingReader =
++    val underlying = SynchronousFmriDataset.readerFor(dataset).toOption.get
++    new RecordingReader(dataset, underlying, selectedTimes)
++
++  private def membershipChangingReader(dataset: FmriDataset): DatasetSeriesReader =
++    val underlying = SynchronousFmriDataset.readerFor(dataset).toOption.get
++    var reads = 0
++    new DatasetSeriesReader:
++      def dataset: FmriDataset = underlying.dataset
++      def seriesEither(request: DataSelection): Either[DatasetError, FmriSeries] =
++        underlying.seriesEither(request).flatMap { series =>
++          reads += 1
++          if reads == 3 then
++            val data = Array.ofDim[Double](series.nTimepoints * series.nVoxels)
++            var row = 0
++            while row < series.nTimepoints do
++              var column = 0
++              while column < series.nVoxels do
++                data(row * series.nVoxels + column) =
++                  if column == 0 then Double.NaN else series.data(row, column)
++                column += 1
++              row += 1
++            FmriSeries.make(
++              Matrix.dense(series.nTimepoints, series.nVoxels, data.toIndexedSeq),
++              series.voxelIndexValues,
++              series.timepointIndices,
++              series.shape,
++              series.metadata
++            )
++          else Right(series)
++        }
++
++  private def assertDenseClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
++    assertEquals(actual.voxelIndices, expected.voxelIndices)
++    assertEquals(actual.timepoints, expected.timepoints)
++    assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
++    assertEquals(actual.inferenceScope, expected.inferenceScope)
++    assertEquals(actual.preparationProvenance, expected.preparationProvenance)
++    assertMatrixClose(actual.coefficients.value, expected.coefficients.value)
++    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value)
++    assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance)
++    assertMatrixClose(actual.coefficientCovariance.unsafeMatrixForVoxelPosition(0), expected.coefficientCovariance.unsafeMatrixForVoxelPosition(0))
++
++  private def assertArClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
++    val left = actual.autocorrelation.getOrElse(fail("missing actual AR diagnostics")).runs
++    val right = expected.autocorrelation.getOrElse(fail("missing expected AR diagnostics")).runs
++    assertEquals(left.map(_.runIndex), right.map(_.runIndex))
++    left.zip(right).foreach { (a, b) => assertVectorClose(a.phi, b.phi) }
++
++  private def assertMatrixClose(left: gale.linalg.DMat, right: gale.linalg.DMat): Unit =
++    assertEquals(left.rows, right.rows)
++    assertEquals(left.cols, right.cols)
++    var row = 0
++    while row < left.rows do
++      var column = 0
++      while column < left.cols do
++        assertEqualsDouble(left(row, column), right(row, column), 1e-8)
++        column += 1
++      row += 1
++
++  private def assertVectorClose(left: Vector[Double], right: Vector[Double]): Unit =
++    assertEquals(left.length, right.length)
++    left.zip(right).foreach { (a, b) => assertEqualsDouble(a, b, 1e-8) }
++
++  private lazy val model: FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(12, 15), tr = Seq(1.0, 1.0))
++    val task = Vector.tabulate(27) { row =>
++      val local = if row < 12 then row else row - 12
++      math.sin((local + 1).toDouble * 0.51)
++    }
++    val event = EventModel(
++      terms = Vector.empty,
++      samplingFrame = sampling,
++      designMatrix = Mat.fromRows(task.map(value => Vector(value))),
++      columnNames = Vector("task"),
++      termSpans = Vector(0 -> 1),
++      colIndices = Map("task" -> Vector(0))
++    )
++    val baseline = BaselineModel.build(samplingFrame = sampling, basis = BaselineBasis.Constant, intercept = Intercept.Global)
++    val rows = Vector.tabulate(27) { row =>
++      val x = task(row)
++      Vector.tabulate(4) { voxel =>
++        val amplitude = (voxel + 1).toDouble * (if row < 12 then 0.8 else -0.55)
++        val noise = 0.12 * math.sin((row + 1).toDouble * (voxel + 2).toDouble * 0.37)
++        val spike = if row == 3 || row == 17 then 40.0 * (voxel + 1) else 0.0
++        amplitude * x + 0.3 * voxel + noise + spike
++      }
++    }
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(DatasetId("pooled-gls-preparation"), GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(4, 1, 1))),
++      samplingFrame = sampling
++    )
++    FmriModel(event, baseline, dataset)
++
++  private lazy val projectedModel: FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(12, 15), tr = Seq(1.0, 1.0))
++    val events = DatasetEvents(Vector(
++      Map("onset" -> "2.0", "condition" -> "a", "run" -> "run-1"),
++      Map("onset" -> "7.0", "condition" -> "a", "run" -> "run-1"),
++      Map("onset" -> "2.0", "condition" -> "a", "run" -> "run-2"),
++      Map("onset" -> "8.0", "condition" -> "a", "run" -> "run-2")
++    ))
++    val rows = Vector.tabulate(27) { row =>
++      Vector.tabulate(4) { voxel =>
++        0.2 * (voxel + 1) + 0.1 * math.sin((row + 1).toDouble * (voxel + 2))
++      }
++    }
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(DatasetId("pooled-gls-projected"), GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(4, 1, 1))),
++      samplingFrame = sampling,
++      events = events
++    )
++    FmriModelBuilder.buildModel(
++      dataset,
++      ModelBuildSpec(
++        formula = "onset ~ hrf(condition)",
++        blockColumn = Some("run"),
++        baselineIntercept = Intercept.Runwise,
++        defaultHrf = Hrfs.fir(nBasis = 2, span = 4.s),
++        precision = 0.25.s,
++        strategy = FitStrategy.RunwiseGeneralizedLeastSquares(
++          AutocorrelationConfig.unsafe(coefficients = ArCoefficientSpec.Estimate)
++        )
++      )
++    )
++
++  private lazy val allExcludedRankDeficientModel: FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(8), tr = Seq(1.0))
++    val event = EventModel(
++      terms = Vector.empty,
++      samplingFrame = sampling,
++      designMatrix = Mat.fromRows(Vector.fill(8)(Vector(1.0))),
++      columnNames = Vector("constant-task"),
++      termSpans = Vector(0 -> 1),
++      colIndices = Map("constant-task" -> Vector(0))
++    )
++    val baseline = BaselineModel.build(samplingFrame = sampling, basis = BaselineBasis.Constant, intercept = Intercept.Global)
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(
++        DatasetId("pooled-gls-all-excluded"),
++        GaleTestMatrix.fromRows(Vector.fill(8)(Vector(Double.NaN, Double.NaN))),
++        SampleSpaces(Vector(2, 1, 1))
++      ),
++      samplingFrame = sampling
++    )
++    FmriModel(event, baseline, dataset)
+--- a/modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala
+@@ -430,9 +430,8 @@
+       .fit(plan, selection, singleVoxelChunking, FitParallelism.unsafe(2))
+       .map { result =>
+         val actual = result.toOption.get.asInstanceOf[DenseFmriFitResult]
+-        assertDenseClose(actual, expected)
++        assertDenseClose(actual, expected, estimatedPreparation = true)
+         assertEquals(actual.autocorrelation.map(_.runs.map(_.method)), Some(Vector("estimated")))
+-        assertEquals(actual.autocorrelation, expected.autocorrelation)
+       }
+   }
+ 
+@@ -1023,7 +1022,11 @@
+       )
+     )
+ 
+-  private def assertDenseClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
++  private def assertDenseClose(
++      actual: DenseFmriFitResult,
++      expected: DenseFmriFitResult,
++      estimatedPreparation: Boolean = false
++  ): Unit =
+     assertEquals(actual.engine, expected.engine)
+     assertEquals(actual.columnNames, expected.columnNames)
+     assertEquals(actual.voxelIndices, expected.voxelIndices)
+@@ -1032,14 +1035,48 @@
+     assertEquals(actual.inferenceScope, expected.inferenceScope)
+     assertEquals(actual.inference.method, expected.inference.method)
+     assertEquals(actual.fitExclusions, expected.fitExclusions)
+-    assertEquals(actual.olsDiagnostics, expected.olsDiagnostics)
+-    assertEquals(actual.autocorrelation, expected.autocorrelation)
++    if estimatedPreparation then assertEstimatedDiagnosticsClose(actual, expected)
++    else
++      assertEquals(actual.olsDiagnostics, expected.olsDiagnostics)
++      assertEquals(actual.autocorrelation, expected.autocorrelation)
+     assertMatrixClose(actual.coefficients.value, expected.coefficients.value, tol = 1e-10)
+     assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value, tol = 1e-10)
+     assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance, tol = 1e-10)
+     assertCoefficientCovarianceClose(actual.coefficientCovariance, expected.coefficientCovariance, tol = 1e-10)
+     assertVectorClose(actual.inference.varianceScale, expected.inference.varianceScale, tol = 1e-10)
+     assertVectorClose(actual.residualVariance, expected.residualVariance, tol = 1e-10)
++
++  // Spatial reduction regroups lag-product additions; inspect numeric diagnostics
++  // with tolerances while retaining exact scientific and structural identities.
++  private def assertEstimatedDiagnosticsClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
++    val left = actual.olsDiagnostics.get
++    val right = expected.olsDiagnostics.get
++    assert(left.structurallyCompatible(right))
++    assertEqualsDouble(left.rankReport.tolerance, right.rankReport.tolerance, 1e-24)
++    assertEquals(left.rankReport.diagonalR.length, right.rankReport.diagonalR.length)
++    left.rankReport.diagonalR.zip(right.rankReport.diagonalR).foreach { (a, b) =>
++      assertEqualsDouble(a, b, 1e-10)
++    }
++    assertEquals(left.rankReport.conditionEstimate.isDefined, right.rankReport.conditionEstimate.isDefined)
++    left.rankReport.conditionEstimate.zip(right.rankReport.conditionEstimate).foreach { (a, b) =>
++      assertEqualsDouble(a, b, 1e-10)
++    }
++    val a = actual.autocorrelation.get
++    val b = expected.autocorrelation.get
++    assertEquals(a.order, b.order)
++    assertEquals(a.iterations, b.iterations)
++    assertEquals(a.sharedNormalizedCovariance, b.sharedNormalizedCovariance)
++    assertEquals(a.whitening, b.whitening)
++    assertEquals(a.runs.length, b.runs.length)
++    a.runs.zip(b.runs).foreach { (x, y) =>
++      assertEquals(x.runIndex, y.runIndex)
++      assertEquals(x.method, y.method)
++      assertEquals(x.rows, y.rows)
++      assertEquals(x.voxelwiseCoefficients, y.voxelwiseCoefficients)
++      assertEqualsDouble(x.rho, y.rho, 1e-12)
++      assertEquals(x.coefficients.length, y.coefficients.length)
++      x.coefficients.zip(y.coefficients).foreach { (l, r) => assertEqualsDouble(l, r, 1e-12) }
++    }
+ 
+   private def assertLssClose(actual: LssFmriFitResult, expected: LssFmriFitResult): Unit =
+     assertEquals(actual.engine, expected.engine)
+--- /dev/null
++++ b/modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedGlsArtifact.scala
+@@ -0,0 +1,228 @@
++package scalafim.fmri.fit
++
++import gale.linalg.DMat
++import scalafim.dataset.FmriSeries
++import scalafim.fmri.ar.{ArmaCoefficients, InitialConditionPolicy, NoisePooling, TimeSegment, WhiteningMethod, WhiteningPlan}
++import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, MissingDataPolicy, NuisanceProjection, VolumeWeighting}
++import scala.util.control.NonFatal
++
++enum PreparedGlsScope:
++  case Shared, Runwise
++
++/** A source-run identity is absent only for the shared-coefficient fit. */
++final case class PreparedGlsUnit private[fit] (sourceRun: Option[Int], whitening: WhiteningPlan):
++  require(sourceRun.forall(_ >= 0), "source run must be non-negative")
++  require(whitening.method == WhiteningMethod.Estimated && whitening.maOrder == 0,
++    "completed GLS artifacts contain estimated pure-AR whitening")
++  require(whitening.initialCondition == InitialConditionPolicy.Identity ||
++    whitening.initialCondition == InitialConditionPolicy.ExactAr1, "unsupported GLS initial condition")
++
++private[fit] final case class CompletedGlsNoise(
++    designIdentity: String,
++    retainedVoxelIndices: Vector[Int],
++    units: Vector[PreparedGlsUnit]
++)
++
++/** Completed pooled noise preparation, without readers, factors or response data.
++  * Immutable references are verified by the resolver. The codec validates structure
++  * and compatibility; artifact authenticity belongs to the caller's storage boundary.
++  */
++final class PreparedGlsArtifact private[fit] (
++    val descriptor: FitWorkDescriptor,
++    val scope: PreparedGlsScope,
++    private[fit] val noise: CompletedGlsNoise
++):
++  require(descriptor.engine == FitEngine.GeneralizedLeastSquares &&
++    descriptor.preparation.reductions == Vector(FitPreparationReduction.PooledAutocorrelation),
++    "artifact requires pooled GLS without other global preparation phases")
++  require(noise.designIdentity.nonEmpty, "design identity must be non-empty")
++  require(noise.retainedVoxelIndices.nonEmpty && noise.retainedVoxelIndices.distinct == noise.retainedVoxelIndices,
++    "retained voxels must be non-empty and unique")
++  require(descriptor.voxelIndices.filter(noise.retainedVoxelIndices.toSet) == noise.retainedVoxelIndices,
++    "retained voxels must be an ordered subset of the descriptor")
++  require(noise.units.nonEmpty, "completed preparation must contain whitening units")
++  require(scope match
++    case PreparedGlsScope.Shared => noise.units.length == 1 && noise.units.head.sourceRun.isEmpty
++    case PreparedGlsScope.Runwise =>
++      val runs = noise.units.flatMap(_.sourceRun)
++      runs.length == noise.units.length && runs.distinct == runs && runs.sorted == runs
++  , "whitening units must match the declared coefficient scope")
++
++  def retainedVoxelIndices: Vector[Int] = noise.retainedVoxelIndices
++  def units: Vector[PreparedGlsUnit] = noise.units
++
++  def encode: String = PreparedGlsArtifact.encode(this)
++
++  /** Rebuilds only design-dependent state. Does not read any response block. */
++  def restore(resolver: FitWorkResolver): Either[FitError, RestoredGlsWork] =
++    PreparedGlsArtifact.restore(this, resolver)
++
++object PreparedGlsArtifact:
++  private val Version = "prepared-gls-v1"
++
++  /** Performs the configured bounded AR estimation passes, but no final fit pass. */
++  def prepare(descriptor: FitWorkDescriptor, resolver: FitWorkResolver): Either[FitError, PreparedGlsArtifact] =
++    for
++      bound <- resolver.resolve(descriptor.reference)
++      _ <- FitWorkExecutor.validate(descriptor, bound)
++      scope <- admit(bound.plan)
++      chunks <- chunkPlan(descriptor, bound.plan)
++      completed <- PooledGlsPreparation.complete(bound.reader, bound.plan, chunks)
++    yield new PreparedGlsArtifact(descriptor, scope, completed._2)
++
++  private def admit(plan: FitPlan): Either[FitError, PreparedGlsScope] =
++    if FitPreparation.describe(plan).reductions != Vector(FitPreparationReduction.PooledAutocorrelation) ||
++        plan.config.volumeWeighting != VolumeWeighting.Disabled ||
++        plan.config.nuisanceProjection != NuisanceProjection.Disabled then
++      Left(FitError.UnsupportedEngine("completed GLS artifacts require pooled estimated AR, disabled temporal weighting/projection, and no observation-pattern discovery"))
++    else plan.strategy match
++      case FitStrategy.GeneralizedLeastSquares(_, _) => Right(PreparedGlsScope.Shared)
++      case FitStrategy.RunwiseGeneralizedLeastSquares(_, _) => Right(PreparedGlsScope.Runwise)
++      case _ => Left(FitError.UnsupportedEngine("completed GLS artifacts require shared or runwise GLS"))
++
++  private def chunkPlan(descriptor: FitWorkDescriptor, plan: FitPlan): Either[FitError, FitChunkPlan] =
++    FitChunkPlan.fromSelection(plan, descriptor.selection, FitChunkingStrategy.ByVoxelCount(descriptor.blockSize))
++
++  private def restore(artifact: PreparedGlsArtifact, resolver: FitWorkResolver): Either[FitError, RestoredGlsWork] =
++    for
++      bound <- resolver.resolve(artifact.descriptor.reference)
++      _ <- FitWorkExecutor.validate(artifact.descriptor, bound)
++      scope <- admit(bound.plan)
++      _ <- if scope == artifact.scope then Right(())
++        else Left(invalid("coefficient scope differs"))
++      _ <- if bound.plan.config.missingData != MissingDataPolicy.Error ||
++          artifact.retainedVoxelIndices == artifact.descriptor.voxelIndices then Right(())
++        else Left(invalid("error-on-missing policy requires every selected voxel"))
++      chunks <- chunkPlan(artifact.descriptor, bound.plan)
++      context <- PooledGlsPreparation.restore(bound.plan, chunks, artifact.noise)
++    yield new RestoredGlsWork(artifact, bound, chunks, context)
++
++  private[fit] def invalid(detail: String): FitError = FitError.InvalidFitAxis("prepared GLS artifact", detail)
++
++  private[fit] def bits(value: Double): String =
++    require(value.isFinite, "artifact numbers must be finite")
++    java.lang.Long.toHexString(java.lang.Double.doubleToLongBits(value))
++
++  private def number(value: String): Double =
++    val decoded = java.lang.Double.longBitsToDouble(java.lang.Long.parseUnsignedLong(value, 16))
++    require(bits(decoded) == value, "noncanonical number")
++    decoded
++
++  private[fit] def matrixIdentity(matrix: DMat): String =
++    val values = Vector.newBuilder[String]
++    values += matrix.rows.toString
++    values += matrix.cols.toString
++    var row = 0
++    while row < matrix.rows do
++      var column = 0
++      while column < matrix.cols do
++        values += bits(matrix(row, column))
++        column += 1
++      row += 1
++    FitWorkDescriptor.frame(values.result())
++
++  private[fit] def policyIdentity(policy: OlsSolvePolicy): String =
++    val rank = policy.rankPolicy match
++      case OlsRankPolicy.StrictFullRank => "strict-full-rank"
++      case OlsRankPolicy.MinimumNorm => "minimum-norm"
++      case OlsRankPolicy.RidgeRegularized(value) => s"ridge:${bits(value)}"
++    val tolerance = policy.rankTolerance match
++      case OlsRankTolerance.ScaleAware => "scale-aware"
++      case OlsRankTolerance.Absolute(value) => s"absolute:${bits(value)}"
++    FitWorkDescriptor.frame(Vector(policy.method.toString, rank, tolerance, bits(policy.choleskyTolerance)))
++
++  private def encodeUnit(unit: PreparedGlsUnit): String =
++    val w = unit.whitening
++    FitWorkDescriptor.frame(Vector(
++      unit.sourceRun.fold("shared")(_.toString), w.pooling.toString,
++      if w.exactFirstAr1 then "exact-ar1" else "identity",
++      FitWorkDescriptor.frame(w.segments.map(s => s"${s.start},${s.endExclusive},${s.runIndex}")),
++      FitWorkDescriptor.frame(w.coefficients.map(c => c.phi.map(bits).mkString(",")))
++    ))
++
++  private def encode(artifact: PreparedGlsArtifact): String =
++    FitWorkDescriptor.frame(Vector(Version, artifact.descriptor.encode, artifact.scope.toString,
++      artifact.noise.designIdentity, artifact.retainedVoxelIndices.mkString(","),
++      FitWorkDescriptor.frame(artifact.units.map(encodeUnit))))
++
++  /** Canonical UTF-16 length framing, with exact IEEE-754 bit strings for numbers.
++    * Unknown versions, noncanonical text, invalid axes and invalid AR state fail closed.
++    */
++  def decode(text: String): Either[FitError, PreparedGlsArtifact] =
++    try
++      val fields = unframe(text)
++      require(fields.length == 6 && fields.head == Version, "unsupported or malformed prepared GLS schema")
++      val descriptor = FitWorkDescriptor.decode(fields(1)).fold(e => throw new IllegalArgumentException(e.message), identity)
++      val units = unframe(fields(5)).map { encoded =>
++        val parts = unframe(encoded)
++        require(parts.length == 5, "invalid whitening unit")
++        val run = if parts(0) == "shared" then None else Some(parts(0).toInt)
++        val pooling = NoisePooling.valueOf(parts(1))
++        val exact = parts(2) match
++          case "exact-ar1" => true
++          case "identity" => false
++          case _ => throw new IllegalArgumentException("invalid initial condition")
++        val segments = unframe(parts(3)).map { value =>
++          val axis = value.split(",", -1).toVector.map(_.toInt)
++          require(axis.length == 3, "invalid whitening segment")
++          TimeSegment(axis(0), axis(1), axis(2))
++        }
++        val coefficients = unframe(parts(4)).map { value =>
++          ArmaCoefficients.ar((if value.isEmpty then Vector.empty else value.split(",", -1).toVector.map(number))*)
++        }
++        PreparedGlsUnit(run, WhiteningPlan(coefficients, segments, pooling, exact, WhiteningMethod.Estimated))
++      }
++      val artifact = new PreparedGlsArtifact(descriptor, PreparedGlsScope.valueOf(fields(2)),
++        CompletedGlsNoise(fields(3), fields(4).split(",", -1).toVector.map(_.toInt), units))
++      require(artifact.encode == text, "noncanonical prepared GLS encoding")
++      Right(artifact)
++    catch
++      case NonFatal(error) => Left(invalid(Option(error.getMessage).getOrElse(error.getClass.getSimpleName)))
++
++  private def unframe(text: String): Vector[String] =
++    val result = Vector.newBuilder[String]
++    var offset = 0
++    while offset < text.length do
++      val colon = text.indexOf(':', offset)
++      require(colon > offset, "missing field length")
++      val encodedLength = text.substring(offset, colon)
++      val length = encodedLength.toInt
++      require(length >= 0 && length.toString == encodedLength, "noncanonical field length")
++      val start = colon + 1
++      require(length <= text.length - start, "truncated field")
++      result += text.substring(start, start + length)
++      offset = start + length
++    result.result()
++
++/** Runtime capabilities bound to a validated artifact. Each fit reads one spatial
++  * block at a time and checks membership against the completed noise population.
++  */
++final class RestoredGlsWork private[fit] (
++    val artifact: PreparedGlsArtifact,
++    bound: ResolvedFitWork,
++    chunks: FitChunkPlan,
++    context: PreparedFitContext
++):
++  def fit(): Either[FitError, FmriFitResult] =
++    val retained = artifact.retainedVoxelIndices.toSet
++    val results = Vector.newBuilder[FitBlockResult]
++    val iterator = chunks.iterator
++    while iterator.hasNext do
++      val chunk = iterator.next()
++      val fitted = for
++        series <- ChunkedFitExecutor.readChunk(bound.reader, chunk)
++        membership <- retainedMembership(series)
++        _ <- if membership == chunk.voxelIndices.filter(retained) then Right(())
++          else Left(PreparedGlsArtifact.invalid(s"retained voxel membership changed in chunk ${chunk.ordinal.value}"))
++        result <- context.fitChunk(series)
++      yield result
++      fitted match
++        case Left(error) => return Left(FitError.ChunkFailed(chunk.ordinal.value, error))
++        case Right(value) => results += value
++    context.merge(results.result())
++
++  private def retainedMembership(series: FmriSeries): Either[FitError, Vector[Int]] =
++    MatrixAdapters.responseBlock(series, bound.plan.config.missingData) match
++      case Left(FitError.AllVoxelsExcluded(_)) => Right(Vector.empty)
++      case Left(error) => Left(error)
++      case Right(value) => Right(value.voxelIndices)
+--- /dev/null
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsArtifactSuite.scala
+@@ -0,0 +1,439 @@
++package scalafim.fmri.fit
++
++import scalafim.dataset.{DataSelection, DatasetError, DatasetEvents, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, IndexSelection, InMemoryDatasetBackend, SynchronousFmriDataset}
++import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
++import scalafim.fmri.design.event.EventModel
++import scalafim.fmri.fit.GaleTestSyntax.*
++import scalafim.fmri.hrf.*
++import scalafim.fmri.hrf.design.SamplingFrame
++import scalafim.fmri.hrf.linalg.Mat
++import scalafim.fmri.model.{ArCoefficientSpec, ArOptions, ArStructure, AutocorrelationConfig, FitConfig, FitEngine, FitPlan, FitStrategy, FmriModel, FmriModelBuilder, MissingDataPolicy, ModelBuildSpec}
++import scalafim.image.SampleSpaces
++import gale.linalg.Matrix
++import scalafim.fmri.ar.{ArmaCoefficients, NoisePooling, TimeSegment, WhiteningMethod, WhiteningPlan}
++
++class PreparedGlsArtifactSuite extends munit.FunSuite:
++
++  private val selection = DataSelection(
++    time = IndexSelection.indices(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14),
++    voxels = IndexSelection.indices(2, 0, 3, 1)
++  )
++  private val blockSize = 2
++
++  test("prepared shared GLS artifact encodes, restores without reads, and fits bounded chunks") {
++    val descriptor = descriptorFor(sharedPlan)
++    val preparationReader = boundedReader(sharedPlan.model.dataset)
++    val artifact = PreparedGlsArtifact.prepare(descriptor, resolver(sharedPlan, preparationReader)).toOption.get
++    assertEquals(preparationReader.reads, 4)
++    val decoded = PreparedGlsArtifact.decode(artifact.encode).toOption.get
++    assertEquals(decoded.encode, artifact.encode)
++
++    val forbidden = denyingReader(sharedPlan.model.dataset)
++    assert(decoded.restore(resolver(sharedPlan, forbidden)).isRight)
++    assertEquals(forbidden.reads, 0)
++    val restoredReader = boundedReader(sharedPlan.model.dataset)
++    val restored = decoded.restore(resolver(sharedPlan, restoredReader)).toOption.get
++    assertEquals(restoredReader.reads, 0)
++    val restoredResult = restored.fit().toOption.get.asInstanceOf[DenseFmriFitResult]
++    assertEquals(restoredReader.reads, 2)
++    assert(restoredReader.axes.forall(_ == selectedTimepoints))
++
++    val dense = FitPlanExecutor.fit(sharedPlan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
++    val uninterrupted = FitPlanExecutor.fitChunked(boundedReader(sharedPlan.model.dataset), sharedPlan, selection,
++      FitChunkingStrategy.unsafeByVoxelCount(blockSize)).toOption.get.asInstanceOf[DenseFmriFitResult]
++    assertDenseClose(restoredResult, uninterrupted)
++    assertDenseClose(restoredResult, dense)
++    val contrast = TContrast("task", Map("task" -> 1.0))
++    assertVectorClose(
++      contrast.evaluate(restoredResult).toOption.get.statistics.toVector,
++      contrast.evaluate(dense).toOption.get.statistics.toVector
++    )
++  }
++
++  test("prepared GLS artifact codec rejects truncated, unknown-version, and nonfinite state") {
++    val artifact = PreparedGlsArtifact.prepare(descriptorFor(sharedPlan), resolver(sharedPlan, boundedReader(sharedPlan.model.dataset))).toOption.get
++    Vector(
++      artifact.encode.dropRight(1),
++      artifact.encode.replace("prepared-gls-v1", "prepared-gls-v2"),
++      artifact.encode + "0:",
++      replaceFirstWhiteningCoefficient(artifact.encode, "7ff8000000000000"),
++      replaceFirstWhiteningCoefficient(artifact.encode, "7ff0000000000000"),
++      replaceFirstWhiteningCoefficient(artifact.encode, "3ff0000000000000")
++    ).foreach(value => assert(PreparedGlsArtifact.decode(value).isLeft, clues(value)))
++  }
++
++  test("prepared GLS artifact uses canonical IEEE-754 number encodings") {
++    assertEquals(PreparedGlsArtifact.bits(0.0), "0")
++    assertEquals(PreparedGlsArtifact.bits(-0.0), "8000000000000000")
++    assertEquals(PreparedGlsArtifact.bits(1.0), "3ff0000000000000")
++    assertEquals(PreparedGlsArtifact.bits(-0.25), "bfd0000000000000")
++  }
++
++  test("prepared artifact constructors reject invalid retained and source-run metadata") {
++    val artifact = PreparedGlsArtifact.prepare(descriptorFor(sharedPlan),
++      resolver(sharedPlan, boundedReader(model.dataset))).toOption.get
++    intercept[IllegalArgumentException] {
++      PreparedGlsUnit(Some(-1), artifact.units.head.whitening)
++    }
++    intercept[IllegalArgumentException] {
++      new PreparedGlsArtifact(
++        artifact.descriptor,
++        artifact.scope,
++        CompletedGlsNoise("test", Vector(2, 2), artifact.units)
++      )
++    }
++  }
++
++  test("prepared artifact preserves propagated exclusions and rejects changed final membership") {
++    val original = SynchronousFmriDataset.readerFor(model.dataset).toOption.get
++      .seriesEither(DataSelection.All).toOption.get
++    val excludedDataset = FmriDataset.unsafe(
++      InMemoryDatasetBackend(
++        DatasetId("prepared-gls-exclusions"),
++        Matrix.tabulate(16, 4) { (row, voxel) =>
++          if row == 2 && Set(2, 0, 3).contains(voxel) then Double.NaN else original.data(row, voxel)
++        },
++        SampleSpaces(Vector(4, 1, 1))
++      ),
++      model.dataset.samplingFrame
++    )
++    val plan = FitPlan(
++      model.copy(dataset = excludedDataset),
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = sharedPlan.config.copy(missingData = MissingDataPolicy.Propagate)
++    )
++    val descriptor = descriptorFor(plan)
++    val artifact = PreparedGlsArtifact.prepare(descriptor, resolver(plan, boundedReader(excludedDataset))).toOption.get
++    val restored = artifact.restore(resolver(plan, boundedReader(excludedDataset))).toOption.get
++    val actual = restored.fit().toOption.get.asInstanceOf[DenseFmriFitResult]
++    val expected = FitPlanExecutor.fitChunked(boundedReader(excludedDataset), plan, selection,
++      FitChunkingStrategy.unsafeByVoxelCount(blockSize)).toOption.get.asInstanceOf[DenseFmriFitResult]
++    assertEquals(actual.voxelIndices, Vector(1))
++    assertEquals(actual.fitExclusions, expected.fitExclusions)
++    assertDenseClose(actual, expected)
++
++    val stableArtifact = PreparedGlsArtifact.prepare(descriptorFor(propagatingPlan),
++      resolver(propagatingPlan, boundedReader(propagatingPlan.model.dataset))).toOption.get
++    val changed = stableArtifact.restore(resolver(propagatingPlan, membershipChangingReader(propagatingPlan.model.dataset)))
++      .toOption.get.fit()
++    assert(changed.left.toOption.exists {
++      case FitError.ChunkFailed(_, FitError.InvalidFitAxis("prepared GLS artifact", detail)) =>
++        detail.contains("membership changed")
++      case _ => false
++    })
++  }
++
++  test("prepared runwise GLS artifacts retain run-local results and scope is bound before reads") {
++    val plan = FitPlan(projectedModel, FitStrategy.RunwiseGeneralizedLeastSquares(
++      AutocorrelationConfig.unsafe(iterations = 2, coefficients = ArCoefficientSpec.Estimate)
++    ))
++    val descriptor = descriptorFor(plan)
++    val preparedReader = boundedReader(projectedModel.dataset)
++    val artifact = PreparedGlsArtifact.prepare(descriptor, resolver(plan, preparedReader)).toOption.get
++    assertEquals(preparedReader.reads, 4)
++    val restoredReader = boundedReader(projectedModel.dataset)
++    val decoded = PreparedGlsArtifact.decode(artifact.encode).toOption.get
++    val restored = decoded.restore(resolver(plan, restoredReader)).toOption.get
++    assertEquals(restoredReader.reads, 0)
++    val actual = restored.fit().toOption.get
++      .asInstanceOf[RunwiseFmriFitResult]
++    assertEquals(restoredReader.reads, 2)
++    val expected = FitPlanExecutor.fitChunked(boundedReader(projectedModel.dataset), plan, selection,
++      FitChunkingStrategy.unsafeByVoxelCount(blockSize)).toOption.get.asInstanceOf[RunwiseFmriFitResult]
++    assertEquals(actual.runs.map(_.projection), expected.runs.map(_.projection))
++    actual.runs.zip(expected.runs).foreach { (left, right) =>
++      assertMatrixClose(left.coefficients.value, right.coefficients.value)
++      assertMatrixClose(left.standardErrors.value, right.standardErrors.value)
++      assertMatrixClose(left.normalizedCovariance, right.normalizedCovariance)
++      assertEquals(left.residualDegreesOfFreedom, right.residualDegreesOfFreedom)
++      val leftAr = left.autocorrelation.getOrElse(fail("missing actual run AR diagnostics"))
++      val rightAr = right.autocorrelation.getOrElse(fail("missing expected run AR diagnostics"))
++      assertEquals(leftAr.whitening.segments, rightAr.whitening.segments)
++      assertEquals(leftAr.whitening.pooling, rightAr.whitening.pooling)
++      assertEquals(leftAr.runs.map(_.runIndex), rightAr.runs.map(_.runIndex))
++      leftAr.runs.zip(rightAr.runs).foreach { (actualRun, expectedRun) =>
++        assertVectorClose(actualRun.phi, expectedRun.phi)
++      }
++    }
++
++    assert(actual.runs.forall(_.projection.nonEmpty))
++    assert(actual.runs.forall(_.projection.exists(_.sourceColumnIndices.nonEmpty)))
++    val denied = denyingReader(projectedModel.dataset)
++    val sharedScope = FitPlan(projectedModel, FitEngine.GeneralizedLeastSquares, plan.config)
++    val swapped = artifact.restore(resolver(sharedScope, denied))
++    assert(swapped.left.toOption.exists {
++      case FitError.InvalidFitAxis("prepared GLS artifact", "coefficient scope differs") => true
++      case _ => false
++    })
++    assertEquals(denied.reads, 0)
++  }
++
++  test("prepared artifacts reject stale bindings and design drift before response reads") {
++    val artifact = PreparedGlsArtifact.prepare(descriptorFor(sharedPlan),
++      resolver(sharedPlan, boundedReader(model.dataset))).toOption.get
++    val denied = denyingReader(model.dataset)
++    val stale = new FitWorkResolver:
++      def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork] =
++        Left(FitError.InvalidFitAxis("prepared GLS test", "stale source revision"))
++    assert(artifact.restore(stale).isLeft)
++    assertEquals(denied.reads, 0)
++
++    val wrongReference = new FitWorkResolver:
++      def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork] =
++        Right(ResolvedFitWork(FitWorkReference("wrong", "plan-v1", "source-v1"), sharedPlan, denied))
++    assert(artifact.restore(wrongReference).isLeft)
++    assertEquals(denied.reads, 0)
++
++    val drifted = FitPlan(
++      model,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = sharedPlan.config.copy(autocorrelation = sharedPlan.config.autocorrelation.copy(censoredTimepoints = Vector(4)))
++    )
++    assert(artifact.restore(resolver(drifted, denied)).isLeft)
++    assertEquals(denied.reads, 0)
++
++    val differentDesign = FitPlan(
++      model.copy(eventModel = model.eventModel.copy(
++        designMatrix = Mat.fromRows(Vector.tabulate(16)(row => Vector(math.cos((row + 1).toDouble * 0.41))))
++      )),
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = sharedPlan.config
++    )
++    assert(artifact.restore(resolver(differentDesign, denied)).isLeft)
++    assertEquals(denied.reads, 0)
++    val renamed = FitPlan(model.copy(eventModel = model.eventModel.copy(columnNames = Vector("other-task"))),
++      FitEngine.GeneralizedLeastSquares, sharedPlan.config)
++    assert(artifact.restore(resolver(renamed, denied)).isLeft)
++    assertEquals(denied.reads, 0)
++  }
++
++  test("completed state rejects incompatible whitening and population contracts before reads") {
++    val artifact = PreparedGlsArtifact.prepare(descriptorFor(sharedPlan),
++      resolver(sharedPlan, boundedReader(model.dataset))).toOption.get
++    val unit = artifact.units.head
++    val w = unit.whitening
++    val altered = Vector(
++      WhiteningPlan(w.coefficients, w.segments, w.pooling, !w.exactFirstAr1, WhiteningMethod.Estimated),
++      WhiteningPlan(w.coefficients, Vector(TimeSegment(0, w.nTimepoints, 0)), w.pooling,
++        w.exactFirstAr1, WhiteningMethod.Estimated),
++      WhiteningPlan(Vector(ArmaCoefficients.ar(0.1, 0.05)), w.segments, NoisePooling.Global,
++        w.exactFirstAr1, WhiteningMethod.Estimated)
++    )
++    val denied = denyingReader(model.dataset)
++    altered.foreach { value =>
++      val changed = new PreparedGlsArtifact(artifact.descriptor, artifact.scope,
++        artifact.noise.copy(units = Vector(PreparedGlsUnit(None, value))))
++      assert(changed.restore(resolver(sharedPlan, denied)).isLeft)
++    }
++    val missingVoxel = new PreparedGlsArtifact(artifact.descriptor, artifact.scope,
++      artifact.noise.copy(retainedVoxelIndices = artifact.retainedVoxelIndices.tail))
++    assert(missingVoxel.restore(resolver(sharedPlan, denied)).isLeft)
++    assertEquals(denied.reads, 0)
++  }
++
++  test("artifact preparation rejects unsupported fixed AR without a response read") {
++    val fixed = FitPlan(model, FitEngine.GeneralizedLeastSquares,
++      FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.2))))
++    val denied = denyingReader(model.dataset)
++    assert(PreparedGlsArtifact.prepare(descriptorFor(fixed), resolver(fixed, denied)).isLeft)
++    assertEquals(denied.reads, 0)
++  }
++
++  private def descriptorFor(plan: FitPlan): FitWorkDescriptor =
++    FitWorkDescriptor.compile(
++      FitWorkReference("prepared-gls", "plan-v1", "source-v1"),
++      plan,
++      ChunkSize.unsafe(blockSize),
++      selection
++    ).toOption.get
++
++  private def resolver(plan: FitPlan, reader: DatasetSeriesReader): FitWorkResolver =
++    new FitWorkResolver:
++      def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork] =
++        if reference == FitWorkReference("prepared-gls", "plan-v1", "source-v1") then
++          Right(ResolvedFitWork(reference, plan, reader))
++        else Left(FitError.InvalidFitAxis("prepared GLS artifact", "unexpected reference"))
++
++  private final class BoundedReader(val dataset: FmriDataset, underlying: DatasetSeriesReader) extends DatasetSeriesReader:
++    var reads = 0
++    var axes = Vector.empty[Vector[Int]]
++    def seriesEither(request: DataSelection): Either[DatasetError, FmriSeries] =
++      request.resolveEither(dataset.shape, dataset.voxelDomain).flatMap { resolved =>
++        if resolved.voxels.length > blockSize then Left(DatasetError.StorageFailure("read exceeded block size"))
++        else
++          reads += 1
++          axes :+= resolved.timepoints
++          underlying.seriesEither(request)
++      }
++
++  private def boundedReader(dataset: FmriDataset): BoundedReader =
++    new BoundedReader(dataset, SynchronousFmriDataset.readerFor(dataset).toOption.get)
++
++  private def denyingReader(sourceDataset: FmriDataset): BoundedReader =
++    new BoundedReader(sourceDataset, new DatasetSeriesReader:
++      def dataset: FmriDataset = sourceDataset
++      def seriesEither(request: DataSelection): Either[DatasetError, FmriSeries] =
++        Left(DatasetError.StorageFailure("response reads are forbidden"))
++    )
++
++  private def membershipChangingReader(sourceDataset: FmriDataset): DatasetSeriesReader =
++    val underlying = SynchronousFmriDataset.readerFor(sourceDataset).toOption.get
++    new DatasetSeriesReader:
++      def dataset: FmriDataset = sourceDataset
++      def seriesEither(request: DataSelection): Either[DatasetError, FmriSeries] =
++        underlying.seriesEither(request).flatMap { series =>
++          val values = Array.ofDim[Double](series.nTimepoints * series.nVoxels)
++          var row = 0
++          while row < series.nTimepoints do
++            var column = 0
++            while column < series.nVoxels do
++              values(row * series.nVoxels + column) =
++                if column == 0 then Double.NaN else series.data(row, column)
++              column += 1
++            row += 1
++          FmriSeries.make(
++            Matrix.dense(series.nTimepoints, series.nVoxels, values.toIndexedSeq),
++            series.voxelIndexValues, series.timepointIndices, series.shape, series.metadata
++          )
++        }
++
++  private def replaceFirstWhiteningCoefficient(encoded: String, replacement: String): String =
++    val fields = unframe(encoded)
++    val units = unframe(fields(5))
++    val unit = unframe(units.head)
++    val coefficients = unframe(unit(4))
++    val replacedUnit = frame(unit.updated(4, frame(coefficients.updated(0, replacement))))
++    frame(fields.updated(5, frame(units.updated(0, replacedUnit))))
++
++  private def unframe(encoded: String): Vector[String] =
++    val fields = Vector.newBuilder[String]
++    var offset = 0
++    while offset < encoded.length do
++      val colon = encoded.indexOf(':', offset)
++      if colon <= offset then fail("invalid test framing")
++      val length = encoded.substring(offset, colon).toInt
++      val start = colon + 1
++      if length < 0 || start + length > encoded.length then fail("invalid test framing")
++      fields += encoded.substring(start, start + length)
++      offset = start + length
++    fields.result()
++
++  private def frame(fields: Vector[String]): String =
++    fields.map(value => s"${value.length}:$value").mkString
++
++  private def assertDenseClose(actual: DenseFmriFitResult, expected: DenseFmriFitResult): Unit =
++    assertEquals(actual.voxelIndices, expected.voxelIndices)
++    assertEquals(actual.timepoints, expected.timepoints)
++    assertEquals(actual.residualDegreesOfFreedom, expected.residualDegreesOfFreedom)
++    assertEquals(actual.inferenceScope, expected.inferenceScope)
++    assertEquals(actual.preparationProvenance, expected.preparationProvenance)
++    assertMatrixClose(actual.coefficients.value, expected.coefficients.value)
++    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value)
++    assertMatrixClose(actual.normalizedCovariance, expected.normalizedCovariance)
++    var voxel = 0
++    while voxel < actual.voxels do
++      assertMatrixClose(
++        actual.coefficientCovariance.unsafeMatrixForVoxelPosition(voxel),
++        expected.coefficientCovariance.unsafeMatrixForVoxelPosition(voxel)
++      )
++      voxel += 1
++    assertVectorClose(
++      actual.autocorrelation.getOrElse(fail("missing actual AR diagnostics")).runs.flatMap(_.phi),
++      expected.autocorrelation.getOrElse(fail("missing expected AR diagnostics")).runs.flatMap(_.phi)
++    )
++
++  private def assertMatrixClose(left: gale.linalg.DMat, right: gale.linalg.DMat): Unit =
++    assertEquals(left.rows, right.rows)
++    assertEquals(left.cols, right.cols)
++    var row = 0
++    while row < left.rows do
++      var column = 0
++      while column < left.cols do
++        assertEqualsDouble(left(row, column), right(row, column), 1e-9)
++        column += 1
++      row += 1
++
++  private def assertVectorClose(left: Vector[Double], right: Vector[Double]): Unit =
++    assertEquals(left.length, right.length)
++    left.zip(right).foreach { (a, b) => assertEqualsDouble(a, b, 1e-9) }
++
++  private lazy val selectedTimepoints: Vector[Int] =
++    selection.resolveEither(model.dataset.shape, model.dataset.voxelDomain)
++      .fold(error => fail(error.message), _.timepoints)
++
++  private lazy val sharedPlan: FitPlan =
++    FitPlan(
++      model,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = FitConfig(autocorrelation = ArOptions(
++        structure = ArStructure.Ar(1),
++        global = true,
++        iterations = 2,
++        censoredTimepoints = Vector(5, 13)
++      ))
++    )
++
++  private lazy val propagatingPlan: FitPlan =
++    FitPlan(
++      model,
++      engine = FitEngine.GeneralizedLeastSquares,
++      config = sharedPlan.config.copy(missingData = MissingDataPolicy.Propagate)
++    )
++
++  private lazy val model: FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(8, 8), tr = Seq(1.0, 1.0))
++    val task = Vector.tabulate(16)(row => math.sin((row % 8 + 1).toDouble * 0.6))
++    val event = EventModel(
++      terms = Vector.empty,
++      samplingFrame = sampling,
++      designMatrix = Mat.fromRows(task.map(value => Vector(value))),
++      columnNames = Vector("task"),
++      termSpans = Vector(0 -> 1),
++      colIndices = Map("task" -> Vector(0))
++    )
++    val baseline = BaselineModel.build(samplingFrame = sampling, basis = BaselineBasis.Constant, intercept = Intercept.Global)
++    val rows = Vector.tabulate(16) { row =>
++      Vector.tabulate(4) { voxel =>
++        val amplitude = (voxel + 1).toDouble * (if row < 8 then 0.8 else -0.5)
++        amplitude * task(row) + 0.1 * math.sin((row + 1).toDouble * (voxel + 2))
++      }
++    }
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(DatasetId("prepared-gls-artifact"), GaleTestMatrix.fromRows(rows), SampleSpaces(Vector(4, 1, 1))),
++      samplingFrame = sampling
++    )
++    FmriModel(event, baseline, dataset)
++
++  private lazy val projectedModel: FmriModel =
++    val sampling = SamplingFrame(blockLens = Seq(8, 8), tr = Seq(1.0, 1.0))
++    val dataset = FmriDataset.unsafe(
++      backend = InMemoryDatasetBackend(
++        DatasetId("prepared-gls-projected"),
++        GaleTestMatrix.fromRows(Vector.tabulate(16) { row =>
++          Vector.tabulate(4) { voxel =>
++            0.3 * (voxel + 1) + 0.1 * math.sin((row + 1).toDouble * (voxel + 2))
++          }
++        }),
++        SampleSpaces(Vector(4, 1, 1))
++      ),
++      samplingFrame = sampling,
++      events = DatasetEvents(Vector(
++        Map("onset" -> "2.0", "condition" -> "a", "run" -> "run-1"),
++        Map("onset" -> "5.0", "condition" -> "a", "run" -> "run-1"),
++        Map("onset" -> "2.0", "condition" -> "a", "run" -> "run-2"),
++        Map("onset" -> "5.0", "condition" -> "a", "run" -> "run-2")
++      ))
++    )
++    FmriModelBuilder.buildModel(
++      dataset,
++      ModelBuildSpec(
++        formula = "onset ~ hrf(condition)",
++        blockColumn = Some("run"),
++        baselineIntercept = Intercept.Runwise,
++        defaultHrf = Hrfs.fir(nBasis = 2, span = 3.s),
++        precision = 0.25.s,
++        strategy = FitStrategy.RunwiseGeneralizedLeastSquares(
++          AutocorrelationConfig.unsafe(coefficients = ArCoefficientSpec.Estimate)
++        )
++      )
++    )
+--- /dev/null
++++ b/modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala
+@@ -0,0 +1,74 @@
++package scalafim.fmri.fit
++
++import scalafim.dataset.{DataSelection, DatasetError, DatasetSeriesReader, FmriSeries, DatasetId, FmriDataset, InMemoryDatasetBackend, SynchronousFmriDataset}
++import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
++import scalafim.fmri.design.event.EventModel
++import scalafim.fmri.design.{DesignDiagnostic, DesignDiagnosticKind, DesignSchema}
++import scalafim.fmri.hrf.design.SamplingFrame
++import scalafim.fmri.hrf.linalg.Mat
++import scalafim.fmri.model.{ArOptions, ArStructure, FitConfig, FitEngine, FitPlan, FmriModel}
++import scalafim.image.SampleSpaces
++
++/** Fixed rational source/design: foreign-platform artifacts must restore against
++  * identical scientific inputs, without assuming identical AR-estimation rounding.
++  */
++class PreparedGlsPortabilitySuite extends munit.FunSuite:
++  private val frame = SamplingFrame(blockLens = Seq(6, 6), tr = Seq(1.0))
++  private val task = Vector(0.0, 1.0, 0.0, -1.0, 1.0, -1.0)
++  private val rawEvent = EventModel(Vector.empty, frame,
++    Mat.fromRows(Vector.tabulate(12)(r => Vector(task(r % 6)))),
++    Vector("task"), Vector(0 -> 1), Map("task" -> Vector(0)))
++  // Default Double formatting differs on JVM and JS; free-text audit messages
++  // must not become the portable numeric/structural preparation identity.
++  private val schema = rawEvent.designSchema
++  private val portableSchema = DesignSchema.validated(rawEvent.designMatrix, schema.rows, schema.columns,
++    schema.audit.copy(diagnostics = Vector(DesignDiagnostic(DesignDiagnosticKind.OnsetOutOfBounds,
++      None, s"onset ${-1e-12} outside the run")))).toOption.get
++  private val event = rawEvent.copy(compiledSchema = Some(portableSchema))
++  private val baseline = BaselineModel.build(frame, basis = BaselineBasis.Constant, intercept = Intercept.Global)
++  private val response = Vector.tabulate(12) { row =>
++    Vector.tabulate(3) { voxel =>
++      2.0 + task(row % 6) * (voxel + 1) + ((row * 7 + voxel * 3) % 11 - 5) * 0.125
++    }
++  }
++  private val dataset = FmriDataset.unsafe(
++    InMemoryDatasetBackend(DatasetId("portable-gls"), GaleTestMatrix.fromRows(response), SampleSpaces(Vector(3, 1, 1))), frame)
++  private val plan = FitPlan(FmriModel(event, baseline, dataset), FitEngine.GeneralizedLeastSquares,
++    FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), iterations = 2)))
++  private val reference = FitWorkReference("portable", "rational-plan-v1", "rational-source-v1")
++  private var responseReads = 0
++  private val resolver = new FitWorkResolver:
++    def resolve(request: FitWorkReference): Either[FitError, ResolvedFitWork] =
++      if request != reference then Left(FitError.InvalidFitAxis("fixture", "wrong reference"))
++      else SynchronousFmriDataset.readerFor(dataset).left.map(e => FitError.InvalidFitAxis("fixture", e.message))
++        .map { underlying =>
++          val reader = new DatasetSeriesReader:
++            def dataset: FmriDataset = underlying.dataset
++            def seriesEither(selection: DataSelection): Either[DatasetError, FmriSeries] =
++              responseReads += 1
++              underlying.seriesEither(selection)
++          ResolvedFitWork(reference, plan, reader)
++        }
++
++  test("foreign-platform completed GLS artifact restores and fits") {
++    Vector(jvmArtifact, jsArtifact).foreach { encoded =>
++      val artifact = PreparedGlsArtifact.decode(encoded).fold(e => fail(e.message), identity)
++      assertEquals(artifact.encode, encoded)
++      val before = responseReads
++      val work = artifact.restore(resolver).fold(e => fail(e.message), identity)
++      assertEquals(responseReads, before)
++      val restored = work.fit().fold(e => fail(e.message), identity).asInstanceOf[DenseFmriFitResult]
++      assertEquals(responseReads, before + 2)
++      val expected = FitPlanExecutor.fit(plan).toOption.get.asInstanceOf[DenseFmriFitResult]
++      assertEquals(restored.voxelIndices, expected.voxelIndices)
++      assertEquals(restored.autocorrelation.map(_.whitening), expected.autocorrelation.map(_.whitening))
++      for row <- 0 until restored.coefficients.predictors; column <- 0 until restored.coefficients.voxels do
++        assertEqualsDouble(restored.coefficients.value(row, column), expected.coefficients.value(row, column), 1e-12)
++        assertEqualsDouble(restored.standardErrors.value(row, column), expected.standardErrors.value(row, column), 1e-12)
++    }
++  }
++
++  // Captured from actual JVM and Scala.js producers (focused-03.log, 2026-10-02).
++  // Both fixtures are consumed on both platforms; never regenerate from the decoder.
++  private val jvmArtifact = "15:prepared-gls-v1185:11:fit-work-v18:portable16:rational-plan-v118:rational-source-v112:portable-gls23:GeneralizedLeastSquares15:GlobalReduction21:PooledAutocorrelation25:0,1,2,3,4,5,6,7,8,9,10,115:0,1,21:26:Shared1218:19:pooled-gls-noise-v116:SharedAcrossRuns5:Error320:rows=12;blocks=1,1,1,1,1,1,2,2,2,2,2,2;times=4602678819172646912,4609434218613702656,4612811918334230528,4615063718147915776,4616752568008179712,4617878467915022336,4619004367821864960,4620130267728707584,4620974692658839552,4621537642612260864,4622100592565682176,4622663542519103488;selected=1,2,3,4,5,6,7,8,9,10,11,12266:93:84:1|legacy|Event|0|task|legacy|Event|task|1|hrf-scale=as-convolved:46071824188000174084:task166:146:2|drift|drift|basis(constant|1|basis-01)|global|ordinal=1|drift|drift|basis(constant|1|basis-01)|global|hrf-scale=as-convolved:460718241880001740813:base_constant572:6:shared399:2:121:21:016:3ff000000000000016:3ff000000000000016:3ff00000000000001:016:3ff000000000000016:bff000000000000016:3ff000000000000016:3ff000000000000016:3ff000000000000016:bff000000000000016:3ff00000000000001:016:3ff000000000000016:3ff000000000000016:3ff00000000000001:016:3ff000000000000016:bff000000000000016:3ff000000000000016:3ff000000000000016:3ff000000000000016:bff000000000000016:3ff00000000000001:11:25:false5:false4:true0:55:0:0,1,2,3,4,5:0,1,2,3,4,5;1:6,7,8,9,10,11:6,7,8,9,10,110:70:15:QrRankRevealing16:strict-full-rank11:scale-aware16:3d719799812dea115:0,1,286:83:6:shared3:Run9:exact-ar115:5:0,6,06:6,12,138:16:bfd867b48bd649b916:bfdb25a3e62c3d25"
++  private val jsArtifact = "15:prepared-gls-v1185:11:fit-work-v18:portable16:rational-plan-v118:rational-source-v112:portable-gls23:GeneralizedLeastSquares15:GlobalReduction21:PooledAutocorrelation25:0,1,2,3,4,5,6,7,8,9,10,115:0,1,21:26:Shared1218:19:pooled-gls-noise-v116:SharedAcrossRuns5:Error320:rows=12;blocks=1,1,1,1,1,1,2,2,2,2,2,2;times=4602678819172646912,4609434218613702656,4612811918334230528,4615063718147915776,4616752568008179712,4617878467915022336,4619004367821864960,4620130267728707584,4620974692658839552,4621537642612260864,4622100592565682176,4622663542519103488;selected=1,2,3,4,5,6,7,8,9,10,11,12266:93:84:1|legacy|Event|0|task|legacy|Event|task|1|hrf-scale=as-convolved:46071824188000174084:task166:146:2|drift|drift|basis(constant|1|basis-01)|global|ordinal=1|drift|drift|basis(constant|1|basis-01)|global|hrf-scale=as-convolved:460718241880001740813:base_constant572:6:shared399:2:121:21:016:3ff000000000000016:3ff000000000000016:3ff00000000000001:016:3ff000000000000016:bff000000000000016:3ff000000000000016:3ff000000000000016:3ff000000000000016:bff000000000000016:3ff00000000000001:016:3ff000000000000016:3ff000000000000016:3ff00000000000001:016:3ff000000000000016:bff000000000000016:3ff000000000000016:3ff000000000000016:3ff000000000000016:bff000000000000016:3ff00000000000001:11:25:false5:false4:true0:55:0:0,1,2,3,4,5:0,1,2,3,4,5;1:6,7,8,9,10,11:6,7,8,9,10,110:70:15:QrRankRevealing16:strict-full-rank11:scale-aware16:3d719799812dea115:0,1,286:83:6:shared3:Run9:exact-ar115:5:0,6,06:6,12,138:16:bfd867b48bd649bc16:bfdb25a3e62c3d1a"
