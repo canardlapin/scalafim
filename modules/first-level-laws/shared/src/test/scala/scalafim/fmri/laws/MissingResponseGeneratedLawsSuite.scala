@@ -56,81 +56,81 @@ class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
       s"selection=${generated.voxelOrder} width=${generated.chunkWidth} failures=${observed.mkString(" | ")}"
 
   private def propagatedFailures(generated: MissingResponseCase): Vector[String] =
-      val model = modelFor(generated)
-      val selected = selection(generated, generated.voxelOrder)
-      val retainedOrder = generated.voxelOrder.filter(generated.retainedVoxels.contains)
-      val finiteSelection = selection(generated, retainedOrder)
-      val expectedExclusions = generated.voxelOrder
-        .filter(generated.selectedMissingVoxels.contains)
-        .map(voxel => VoxelInferenceExclusion(voxel, VoxelFitStatus.NonFinite))
-      val failures = Vector.newBuilder[String]
+    val model = modelFor(generated)
+    val selected = selection(generated, generated.voxelOrder)
+    val retainedOrder = generated.voxelOrder.filter(generated.retainedVoxels.contains)
+    val finiteSelection = selection(generated, retainedOrder)
+    val expectedExclusions = generated.voxelOrder
+      .filter(generated.selectedMissingVoxels.contains)
+      .map(voxel => VoxelInferenceExclusion(voxel, VoxelFitStatus.NonFinite))
+    val failures = Vector.newBuilder[String]
 
-      EngineCase.values.foreach { engine =>
-        val tolerant = plan(model, engine, MissingDataPolicy.Propagate)
-        val strict = plan(model, engine, MissingDataPolicy.Error)
-        val whole = FitPlanExecutor.fit(tolerant, selected)
-        val chunked = FitPlanExecutor.fitChunked(
-          tolerant,
-          selected,
-          FitChunkingStrategy.unsafeByVoxelCount(generated.chunkWidth)
-        )
-        val explicit = FitPlanExecutor.fit(strict, finiteSelection)
+    EngineCase.values.foreach { engine =>
+      val tolerant = plan(model, engine, MissingDataPolicy.Propagate)
+      val strict = plan(model, engine, MissingDataPolicy.Error)
+      val whole = FitPlanExecutor.fit(tolerant, selected)
+      val chunked = FitPlanExecutor.fitChunked(
+        tolerant,
+        selected,
+        FitChunkingStrategy.unsafeByVoxelCount(generated.chunkWidth)
+      )
+      val explicit = FitPlanExecutor.fit(strict, finiteSelection)
 
-        (whole, chunked, explicit) match
-          case (Right(actual), Right(byChunk), Right(reference)) =>
-            comparePayload(s"${engine.label} tolerant/explicit", actual, reference).foreach(failures += _)
-            comparePayload(s"${engine.label} whole/chunked", actual, byChunk).foreach(failures += _)
-            if actual.fitExclusions != expectedExclusions then
-              failures += s"${engine.label} exclusions=${actual.fitExclusions} expected=$expectedExclusions"
-            if byChunk.fitExclusions != expectedExclusions then
-              failures += s"${engine.label} chunked exclusions=${byChunk.fitExclusions} expected=$expectedExclusions"
-          case _ =>
-            failures += s"${engine.label} whole=$whole chunked=$chunked explicit=$explicit"
-      }
+      (whole, chunked, explicit) match
+        case (Right(actual), Right(byChunk), Right(reference)) =>
+          comparePayload(s"${engine.label} tolerant/explicit", actual, reference).foreach(failures += _)
+          comparePayload(s"${engine.label} whole/chunked", actual, byChunk).foreach(failures += _)
+          if actual.fitExclusions != expectedExclusions then
+            failures += s"${engine.label} exclusions=${actual.fitExclusions} expected=$expectedExclusions"
+          if byChunk.fitExclusions != expectedExclusions then
+            failures += s"${engine.label} chunked exclusions=${byChunk.fitExclusions} expected=$expectedExclusions"
+        case _ =>
+          failures += s"${engine.label} whole=$whole chunked=$chunked explicit=$explicit"
+    }
 
-      failures.result()
+    failures.result()
 
   private def maskedFailures(generated: MissingResponseCase): Vector[String] =
-      val model = modelFor(generated)
-      val selected = selection(generated, generated.voxelOrder)
-      val expectedPatterns = observationPatterns(generated)
-      val failures = Vector.newBuilder[String]
+    val model = modelFor(generated)
+    val selected = selection(generated, generated.voxelOrder)
+    val expectedPatterns = observationPatterns(generated)
+    val failures = Vector.newBuilder[String]
 
-      EngineCase.values.foreach { engine =>
-        val masked = plan(model, engine, MissingDataPolicy.OmitRowsPerVoxel)
-        val strict = plan(model, engine, MissingDataPolicy.Error)
-        val whole = FitPlanExecutor.fit(masked, selected)
-        val chunked = FitPlanExecutor.fitChunked(
-          masked,
-          selected,
-          FitChunkingStrategy.unsafeByVoxelCount(generated.chunkWidth)
-        )
+    EngineCase.values.foreach { engine =>
+      val masked = plan(model, engine, MissingDataPolicy.OmitRowsPerVoxel)
+      val strict = plan(model, engine, MissingDataPolicy.Error)
+      val whole = FitPlanExecutor.fit(masked, selected)
+      val chunked = FitPlanExecutor.fitChunked(
+        masked,
+        selected,
+        FitChunkingStrategy.unsafeByVoxelCount(generated.chunkWidth)
+      )
 
-        (whole, chunked) match
-          case (Right(actual), Right(byChunk)) =>
-            comparePayload(s"${engine.label} masked whole/chunked", actual, byChunk).foreach(failures += _)
-            if actual.fitExclusions.nonEmpty then
-              failures += s"${engine.label} unexpected masked exclusions=${actual.fitExclusions}"
-            expectedPatterns.foreach { case (timepoints, voxels) =>
-              val reference = FitPlanExecutor.fit(
-                strict,
-                DataSelection(
-                  time = IndexSelection.indices(timepoints*),
-                  voxels = IndexSelection.indices(voxels*)
-                )
+      (whole, chunked) match
+        case (Right(actual), Right(byChunk)) =>
+          comparePayload(s"${engine.label} masked whole/chunked", actual, byChunk).foreach(failures += _)
+          if actual.fitExclusions.nonEmpty then
+            failures += s"${engine.label} unexpected masked exclusions=${actual.fitExclusions}"
+          expectedPatterns.foreach { case (timepoints, voxels) =>
+            val reference = FitPlanExecutor.fit(
+              strict,
+              DataSelection(
+                time = IndexSelection.indices(timepoints*),
+                voxels = IndexSelection.indices(voxels*)
               )
-              (patternResult(actual, timepoints, voxels), reference) match
-                case (Some(observed), Right(expected)) =>
-                  comparePayload(s"${engine.label} pattern rows=$timepoints voxels=$voxels", observed, expected)
-                    .foreach(failures += _)
-                case pair =>
-                  failures += s"${engine.label} missing pattern rows=$timepoints voxels=$voxels observed/reference=$pair"
-            }
-          case pair =>
-            failures += s"${engine.label} masked whole/chunked=$pair"
-      }
+            )
+            (patternResult(actual, timepoints, voxels), reference) match
+              case (Some(observed), Right(expected)) =>
+                comparePayload(s"${engine.label} pattern rows=$timepoints voxels=$voxels", observed, expected)
+                  .foreach(failures += _)
+              case pair =>
+                failures += s"${engine.label} missing pattern rows=$timepoints voxels=$voxels observed/reference=$pair"
+          }
+        case pair =>
+          failures += s"${engine.label} masked whole/chunked=$pair"
+    }
 
-      failures.result()
+    failures.result()
 
   private def plan(
       model: FmriModel,

@@ -33,11 +33,26 @@ class ConditionStationarityRoundoffSuite extends munit.FunSuite:
       termTag = Some("cond")
     )
   private lazy val prep =
-    val basis = HrfKernelBasis.compile(KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), 1e-3, 48)).fold(e => fail(e.message), identity)
+    val basis = HrfKernelBasis
+      .compile(KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), 1e-3, 48))
+      .fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(schedule, frame, basis, precision).fold(e => fail(e.message), identity)
     val midpoint = ShapePoint.unsafe(Vector(5.25, math.log(1.55)))
-    val admission = ObservedFamilyCertification.admitForCompact(expanded, schedule, frame, precision, Some(whitening), Some(nuisance), Vector(midpoint), ObservedFamilyRequirements(1e-2, 1e8, 1e-6)).fold(e => fail(e.message), identity)
-    CompactConditionPreparation.prepare(expanded, admission, Some(whitening), Some(nuisance), schedule, frame, precision).fold(e => fail(e.message), identity)
+    val admission = ObservedFamilyCertification
+      .admitForCompact(
+        expanded,
+        schedule,
+        frame,
+        precision,
+        Some(whitening),
+        Some(nuisance),
+        Vector(midpoint),
+        ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+      )
+      .fold(e => fail(e.message), identity)
+    CompactConditionPreparation
+      .prepare(expanded, admission, Some(whitening), Some(nuisance), schedule, frame, precision)
+      .fold(e => fail(e.message), identity)
 
   private def cohort(snr: Double, seed: Long, voxels: Int): Array[Double] =
     val rng = new scala.util.Random(seed)
@@ -48,13 +63,19 @@ class ConditionStationarityRoundoffSuite extends munit.FunSuite:
     val signal = new Array[Double](rows)
     var voxel = 0
     while voxel < voxels do
-      val point = ShapePoint.unsafe(Vector(
-        chart.lower(0) + 0.5 + rng.nextDouble() * (chart.width(0) - 1.0),
-        chart.lower(1) + 0.2 + rng.nextDouble() * (chart.width(1) - 0.4)
-      ))
+      val point = ShapePoint.unsafe(
+        Vector(
+          chart.lower(0) + 0.5 + rng.nextDouble() * (chart.width(0) - 1.0),
+          chart.lower(1) + 0.2 + rng.nextDouble() * (chart.width(1) - 0.4)
+        )
+      )
       val beta = Array.fill(3)((if rng.nextBoolean() then 1.0 else -1.0) * (0.5 + 1.5 * rng.nextDouble()))
       GaussianFamily.Default.scaleJetInto(GaussianFamily.Default.libraryNormalization, point, scale)
-      val design = schedule.convolve(GaussianFamily.Default.toHrf(point), frame, precision = precision).data.data.map(_ / scale(JetLayout.Value))
+      val design = schedule
+        .convolve(GaussianFamily.Default.toHrf(point), frame, precision = precision)
+        .data
+        .data
+        .map(_ / scale(JetLayout.Value))
       var sum = 0.0; var sum2 = 0.0; var t = 0
       while t < rows do
         var value = 0.0
@@ -99,7 +120,9 @@ class ConditionStationarityRoundoffSuite extends munit.FunSuite:
     def emit(value: => String): Unit =
       if ConditionC0QualificationPlatform.executionSourceId.nonEmpty then println(value)
     val phi = Array.tabulate(basis.rank * basis.fineCount)(i => basis.value(i / basis.fineCount, i % basis.fineCount))
-    emit(s"""{"kind":"roundoff-basis","basisRank":${basis.rank},"rank":${prep.rank},"lags":${array(basis.lags)},"phi":${array(phi)},"rHat":${array(prep.rHat)}}""")
+    emit(s"""{"kind":"roundoff-basis","basisRank":${basis.rank},"rank":${prep.rank},"lags":${array(
+        basis.lags
+      )},"phi":${array(phi)},"rHat":${array(prep.rHat)}}""")
     for (voxel, previous, candidate) <- cases do
       val column = Array.tabulate(rows)(r => data(r * n + voxel))
       val z = new Array[Double](prep.rank)
@@ -112,6 +135,14 @@ class ConditionStationarityRoundoffSuite extends munit.FunSuite:
         basis.coefficientJetInto(ShapePoint.unsafe(coordinates), kernels, coefficients, components)
         assembly.assemble(z, energy, coefficients, components)
         val design = assembly.valueDesign
-        emit(s"""{"kind":"roundoff-input","voxel":$voxel,"point":"$name","coordinates":${array(coordinates.toArray)},"rows":${prep.rank},"cols":3,"energy":$energy,"profileEnergy":${out.energy},"response":${array(z)},"design":${array(design)},"amplitudes":${array(out.amplitudes)},"kernel":${array(kernels.take(basis.fineCount))},"coefficients":${array(coefficients.take(basis.rank))},"gradient":${array(out.gradient)},"hessian":${array(out.hessian)}}""")
+        emit(s"""{"kind":"roundoff-input","voxel":$voxel,"point":"$name","coordinates":${array(
+            coordinates.toArray
+          )},"rows":${prep.rank},"cols":3,"energy":$energy,"profileEnergy":${out.energy},"response":${array(
+            z
+          )},"design":${array(design)},"amplitudes":${array(out.amplitudes)},"kernel":${array(
+            kernels.take(basis.fineCount)
+          )},"coefficients":${array(coefficients.take(basis.rank))},"gradient":${array(out.gradient)},"hessian":${array(
+            out.hessian
+          )}}""")
         assert(out.energy.isFinite)
         if name == "candidate" then assert(out.gradient.forall(g => math.abs(g) < 1e-8))

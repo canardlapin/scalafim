@@ -1,0 +1,24 @@
+{
+ "n_scored": 60,
+ "n_pool": 400,
+ "library_raw_peak_min": 0.3489382266998291,
+ "library_raw_peak_max": 1.0,
+ "library_used_peak_min": 1.0,
+ "library_used_peak_max": 1.0,
+ "B_hrf_index_exact_fraction": 1.0,
+ "B_beta_data_relerr_max": 9.132278117859241e-06,
+ "B_beta_data_elementwise_max_rel": 6.129837818412422e-05,
+ "B_psc_equals_data_over_meanvol_x100_max_rel": 6.130649022552353e-05,
+ "meanvol_equals_mean_of_data_max_abs": 1.0611383871150792e-05,
+ "meanvol_min": 99.76702117919922,
+ "meanvol_max": 100.21419525146484,
+ "naive_baseline100_bias_max_rel": 0.0023297667503356934,
+ "B_wantpercentbold0_equals_raw_data_units_max_rel": 6.129837818412422e-05,
+ "A_output_shape": [
+  205
+ ],
+ "A_beta_data_relerr_max": 2.384185791015625e-07,
+ "A_beta_psc_expected_ratio_max_rel": 2.384185791015625e-07,
+ "pass_B_exact_index": true,
+ "pass_B_beta_1e-6": false
+}

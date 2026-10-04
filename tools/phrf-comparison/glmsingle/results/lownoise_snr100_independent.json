@@ -1,0 +1,38 @@
+{
+ "regime": "independent",
+ "snr": 100.0,
+ "n_signal": 100,
+ "n_pool_generated": 400,
+ "b": {
+  "hrf_index_correct_fraction": 1.0,
+  "beta_relerr_median": 0.0076844553381316075,
+  "beta_relerr_p95": 0.009865855550049374,
+  "beta_relerr_max": 0.010724501299845663,
+  "frac_voxels_relerr_le_1e-2": 0.97,
+  "slope_est_on_truth": 1.0000119965709067
+ },
+ "c": {
+  "hrf_index_correct_fraction": 1.0,
+  "beta_relerr_median": 0.005974256626661262,
+  "beta_relerr_p95": 0.0077392985499774684,
+  "beta_relerr_max": 0.008559630264933662,
+  "frac_voxels_relerr_le_1e-2": 1.0,
+  "slope_est_on_truth": 1.0000123022790353
+ },
+ "d": {
+  "hrf_index_correct_fraction": 1.0,
+  "beta_relerr_median": 0.5422545903964475,
+  "beta_relerr_p95": 0.6736301169390558,
+  "beta_relerr_max": 0.6911774703145216,
+  "frac_voxels_relerr_le_1e-2": 0.0,
+  "slope_est_on_truth": 0.7051835290866424
+ },
+ "pcnum": 3,
+ "noisepool_size": 296,
+ "noisepool_contains_signal_voxels": 37,
+ "FRACvalue_median": 0.05000000074505806,
+ "cpu_s": 7.664333999999998,
+ "wall_s": 6.052830291038845,
+ "pass_C": true,
+ "pass_D": false
+}

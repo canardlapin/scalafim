@@ -1,0 +1,54 @@
+COND cell=C-TX-.5 rows=600 runs=Vector(600) events=300 voxels(total)=200 fit voxels=40
+TIMING cond FIR pre-fit + AR(1) + sigma2 (all 200 vox)  cpu=     378.0 ms  wall=     391.0 ms
+COND FIR rank=102 rho_hat=0.2839 (truth 0.3) sigma2_whitened=0.9070
+TIMING cond observed-family admission (cold)            cpu=     129.6 ms  wall=     162.0 ms
+COND admission maxProjectorError=2.6951233088230524E-5 nuisanceRank=6
+TIMING cond ProfileHrfFit.prepare (cold)                cpu=     251.6 ms  wall=     271.7 ms
+TIMING cond ProfileHrfFit.prepare (warm)                cpu=     112.1 ms  wall=     112.3 ms
+TIMING cond run 40 voxels (first)                       cpu=     171.8 ms  wall=     187.6 ms
+TIMING cond run 40 voxels (warm)                        cpu=     113.4 ms  wall=     113.9 ms
+COND route=direct-condition-compact delivered=40 statuses=Map(Boundary -> 7, Accepted -> 33)
+COND prepared.trialOutputs refused as expected: Some(unsupported profile fit: public trial outputs require the trial backend)
+COND median tau=7.19 median logSd=0.75 accepted=33/40
+COND median within-voxel r(condition means, cond_coef) = 0.993 (preview, sign/scale of means unnormalised)
+COND TIMING_SUMMARY prepare_cold_cpu_ms=251.6 prepare_warm_cpu_ms=112.1 run40_cpu_ms=171.8 run40_warm_cpu_ms=113.4
+TRIAL cell=T-TX-fast rows=600 runs=Vector(150, 150, 150, 150) trials=144 fit voxels=40
+TIMING trial FIR pre-fit + AR(1) + sigma2 (all 200 vox) cpu=     243.1 ms  wall=     243.8 ms
+TRIAL FIR rank=120 rho_hat=0.3747 (truth 0.3) sigma2_whitened=1.0569
+TRIAL baseline design cols=24 rank=24 generator nuisance cols=24 rank=24
+TIMING trial prepare ML alpha=0.015625                  cpu=    1369.1 ms  wall=    1390.5 ms
+TRIAL alpha=0.015625 prepare -> ok
+TIMING trial prepare ML alpha=0.03125                   cpu=     902.8 ms  wall=     917.9 ms
+TRIAL alpha=0.03125 prepare -> ok
+TIMING trial prepare ML alpha=0.0625                    cpu=     743.4 ms  wall=     745.8 ms
+TRIAL alpha=0.0625 prepare -> ok
+TIMING trial prepare ML alpha=0.125                     cpu=     514.8 ms  wall=     515.7 ms
+TRIAL alpha=0.125 prepare -> ok
+TIMING trial prepare ML alpha=0.25                      cpu=     503.7 ms  wall=     505.7 ms
+TRIAL alpha=0.25 prepare -> ok
+TIMING trial prepare ML alpha=0.5                       cpu=     511.5 ms  wall=     563.8 ms
+TRIAL alpha=0.5 prepare -> ok
+TIMING trial prepare ML alpha=1.0                       cpu=     501.9 ms  wall=     504.0 ms
+TRIAL alpha=1.0 prepare -> ok
+TIMING trial prepare ML alpha=2.0                       cpu=     503.9 ms  wall=     505.3 ms
+TRIAL alpha=2.0 prepare -> ok
+TIMING trial prepare ML alpha=4.0                       cpu=     503.1 ms  wall=     504.7 ms
+TRIAL alpha=4.0 prepare -> ok
+TIMING trial prepare ML alpha=0.25                      cpu=     511.9 ms  wall=     561.4 ms
+TRIAL alpha=0.25 prepare -> ok
+TRIAL prepare cpu ms by successful call = 1369, 903, 743, 515, 504, 512, 502, 504, 503, 512
+TRIAL setup route=trial-banded-ml retainedReferenceBytes=Some(45695312) loweringDoubles=Some(1987200) mlSetup=true
+TIMING trial ML run 40 voxels, 144 trials (first)       cpu=    1183.9 ms  wall=    1195.6 ms
+TIMING trial ML run 40 voxels, 144 trials (warm)        cpu=     935.0 ms  wall=     959.5 ms
+TIMING trial ML run 40 voxels, 144 trials (warm 2)      cpu=     933.7 ms  wall=     948.0 ms
+TRIAL route=trial-banded-ml delivered=40 statuses=Map(Accepted -> 32, CurvatureNotPositive -> 1, Boundary -> 5, BudgetExceeded -> 2)
+TRIAL ML terminal evidence present on 40/40 voxels; provenance has criterion-form=true
+TRIAL ML throughput (warm 2) = 23.3 core-ms/voxel; first=29.6 warm=23.4
+TIMING trial public outputs ExactShape/PreparedBasisResidual cpu=    1155.0 ms  wall=    1163.7 ms
+TRIAL public outputs emitted=32/40; other outcomes=Vector(DecodeRefused(Boundary), DecodeRefused(Boundary))
+TRIAL median within-voxel r(trial amplitudes, truth trial_beta) = 0.901 over 32 voxels (preview, scale-free)
+TRIAL public provenance: publicExecution=Some(scalafim.fmri.fit.profile.ProfileTrialExecutionDeclaration@254e0754)
+TRIAL refusal (CorrectedReference, ML): Left(TrialOutputMlIntent(CorrectedReference,PreparedBasisResidual))
+TRIAL refusal message: Some(native ML public output requires ExactShape/PreparedBasisResidual; requested CorrectedReference/PreparedBasisResidual)
+TRIAL alpha=0 + ML criterion: Some(unsupported profile fit: ML requires positive-alpha trial events)
+TRIAL TIMING_SUMMARY prepare_median_cpu_ms=511.9 prepare_ok_alphas=10/10 run40_cpu_ms=1183.9 run40_warm2_cpu_ms=933.7 outputs40_cpu_ms=1155.0

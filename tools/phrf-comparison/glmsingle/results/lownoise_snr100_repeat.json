@@ -1,0 +1,38 @@
+{
+ "regime": "repeat",
+ "snr": 100.0,
+ "n_signal": 100,
+ "n_pool_generated": 400,
+ "b": {
+  "hrf_index_correct_fraction": 1.0,
+  "beta_relerr_median": 0.0075638932200837936,
+  "beta_relerr_p95": 0.009857487274084151,
+  "beta_relerr_max": 0.010641320865502577,
+  "frac_voxels_relerr_le_1e-2": 0.96,
+  "slope_est_on_truth": 0.9999426797895353
+ },
+ "c": {
+  "hrf_index_correct_fraction": 1.0,
+  "beta_relerr_median": 0.00592797872691629,
+  "beta_relerr_p95": 0.007776683916080616,
+  "beta_relerr_max": 0.008432780891696901,
+  "frac_voxels_relerr_le_1e-2": 1.0,
+  "slope_est_on_truth": 0.9999628232408531
+ },
+ "d": {
+  "hrf_index_correct_fraction": 1.0,
+  "beta_relerr_median": 0.005927975187604955,
+  "beta_relerr_p95": 0.007776695916349631,
+  "beta_relerr_max": 0.008432782189740319,
+  "frac_voxels_relerr_le_1e-2": 1.0,
+  "slope_est_on_truth": 0.9999628117358658
+ },
+ "pcnum": 3,
+ "noisepool_size": 388,
+ "noisepool_contains_signal_voxels": 45,
+ "FRACvalue_median": 1.0,
+ "cpu_s": 7.919419999999999,
+ "wall_s": 5.854972958040889,
+ "pass_C": true,
+ "pass_D": true
+}

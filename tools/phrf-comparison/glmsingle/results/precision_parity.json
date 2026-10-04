@@ -1,0 +1,76 @@
+{
+ "bound_formula": "c*(kappa^2*(sqrt(n)+2*sqrt(p))*u + kappa*u*||d||2/||X b64||2 + (log2(n)+4)*u), u=2^-24, c=1, kappa=cond2(X) with X=vstack_r(P_r D_r(h)), n=volumes total, p=trials",
+ "frozen_in": "results/precision_bound_frozen.json",
+ "baselines": {
+  "1": {
+   "obs_err_max": 2.153157604161893e-06,
+   "obs_err_median": 9.300926726675345e-07,
+   "bound_min": 4.6605868387092864e-05,
+   "bound_max": 0.00018446118034358853,
+   "frac_voxels_within_bound": 1.0,
+   "min_margin_bound_over_err": 62.30344938543825,
+   "median_margin_bound_over_err": 90.60971151274998,
+   "kappa_matches_frozen_max_rel": 0.0,
+   "hrf_index_exact": 1.0,
+   "f64_reference_vs_truth_max_L2": 3.112624772642669e-08,
+   "neg_control_min_err_over_bound": {
+    "wrong_hrf_+1": 670.328473875178,
+    "wrong_hrf_+10": 4858.675585944354,
+    "onset_shift_1TR": 2879.9017733378114
+   },
+   "neg_control_min_err": {
+    "wrong_hrf_+1": 0.09396532620661859,
+    "wrong_hrf_+10": 0.896237033489872,
+    "onset_shift_1TR": 0.48233959699083717
+   },
+   "pass": true
+  },
+  "100": {
+   "obs_err_max": 9.138364435837178e-06,
+   "obs_err_median": 4.331661958673105e-06,
+   "bound_min": 5.918008272627763e-05,
+   "bound_max": 0.00023524413815854842,
+   "frac_voxels_within_bound": 1.0,
+   "min_margin_bound_over_err": 14.51733892345425,
+   "median_margin_bound_over_err": 26.29550071802904,
+   "kappa_matches_frozen_max_rel": 0.0,
+   "hrf_index_exact": 1.0,
+   "f64_reference_vs_truth_max_L2": 3.11262481881503e-08,
+   "neg_control_min_err_over_bound": {
+    "wrong_hrf_+1": 523.4563446839761,
+    "wrong_hrf_+10": 4006.01979660626,
+    "onset_shift_1TR": 2315.78262685696
+   },
+   "neg_control_min_err": {
+    "wrong_hrf_+1": 0.09396559535565467,
+    "wrong_hrf_+10": 0.896236894023447,
+    "onset_shift_1TR": 0.4823399103092193
+   },
+   "pass": true
+  },
+  "1000": {
+   "obs_err_max": 8.233613162740499e-05,
+   "obs_err_median": 3.833125432552738e-05,
+   "bound_min": 0.00017467540372652777,
+   "bound_max": 0.0007053617281380939,
+   "frac_voxels_within_bound": 1.0,
+   "min_margin_bound_over_err": 5.21133932298136,
+   "median_margin_bound_over_err": 8.148193386066804,
+   "kappa_matches_frozen_max_rel": 0.0,
+   "hrf_index_exact": 1.0,
+   "f64_reference_vs_truth_max_L2": 3.112623716714802e-08,
+   "neg_control_min_err_over_bound": {
+    "wrong_hrf_+1": 174.56380146631315,
+    "wrong_hrf_+10": 1508.6951025534988,
+    "onset_shift_1TR": 772.4782953601634
+   },
+   "neg_control_min_err": {
+    "wrong_hrf_+1": 0.09396264076236092,
+    "wrong_hrf_+10": 0.8962394157524445,
+    "onset_shift_1TR": 0.48234002537439236
+   },
+   "pass": true
+  }
+ },
+ "pass_all": true
+}

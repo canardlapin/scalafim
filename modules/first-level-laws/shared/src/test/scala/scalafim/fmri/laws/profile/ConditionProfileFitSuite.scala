@@ -1,7 +1,16 @@
 package scalafim.fmri.laws.profile
 
 import gale.linalg.DMat
-import scalafim.dataset.{DataSelection, DatasetError, DatasetId, DatasetSeriesReader, FmriDataset, FmriSeries, InMemoryDatasetBackend, SynchronousFmriDataset}
+import scalafim.dataset.{
+  DataSelection,
+  DatasetError,
+  DatasetId,
+  DatasetSeriesReader,
+  FmriDataset,
+  FmriSeries,
+  InMemoryDatasetBackend,
+  SynchronousFmriDataset
+}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{Event, EventModel, EventTerm}
 import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
@@ -106,10 +115,20 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     val points = Vector((4.0, math.log(1.2)), (6.0, math.log(2.0))).map { case (tau, logSd) =>
       family.chart.point(tau, logSd).fold(e => fail(e.message), identity)
     }
-    ObservedFamilyCertification.admitForCondition(
-      plan, structure, expanded, term, frame, precision, None, Some(nuisance), points,
-      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
-    ).fold(e => fail(e.message), identity)
+    ObservedFamilyCertification
+      .admitForCondition(
+        plan,
+        structure,
+        expanded,
+        term,
+        frame,
+        precision,
+        None,
+        Some(nuisance),
+        points,
+        ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+      )
+      .fold(e => fail(e.message), identity)
 
   private def policy(output: OutputRequest): ConditionProfilePolicy =
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
@@ -144,7 +163,8 @@ class ConditionProfileFitSuite extends munit.FunSuite:
       )
 
   test("cancellation before read, during read and after delivery never returns successful completion"):
-    val prep = ConditionProfileFit.prepare(plan, policy(OutputRequest.ConditionAmplitudes(NormalizationRule.Unnormalised)))
+    val prep = ConditionProfileFit
+      .prepare(plan, policy(OutputRequest.ConditionAmplitudes(NormalizationRule.Unnormalised)))
       .fold(e => fail(e.message), identity)
     for mode <- Vector("before", "during", "after") do
       var stopped = mode == "before"
@@ -180,9 +200,19 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     val alteredPlan = FitPlan(FmriModel(eventModel, alteredBaseline, dataset))
     val structure = ConditionProfileFit.structureFor(alteredPlan, convolved).fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
-    val points = Vector((4.0, math.log(1.2))).map { case (tau, logSd) => family.chart.point(tau, logSd).fold(e => fail(e.message), identity) }
+    val points = Vector((4.0, math.log(1.2))).map { case (tau, logSd) =>
+      family.chart.point(tau, logSd).fold(e => fail(e.message), identity)
+    }
     val result = ObservedFamilyCertification.admitForCondition(
-      alteredPlan, structure, expanded, term, frame, precision, None, Some(nuisance), points,
+      alteredPlan,
+      structure,
+      expanded,
+      term,
+      frame,
+      precision,
+      None,
+      Some(nuisance),
+      points,
       ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
     )
     assert(result.isLeft)
@@ -192,25 +222,54 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     val shiftedConvolved = shifted.convolve(basis.kernel, frame, precision = precision)
     val shiftedModel = EventModel.build(Vector(shiftedConvolved), frame)
     val shiftedPlan = FitPlan(FmriModel(shiftedModel, baseline, dataset))
-    val shiftedStructure = ConditionProfileFit.structureFor(shiftedPlan, shiftedConvolved).fold(e => fail(e.message), identity)
+    val shiftedStructure =
+      ConditionProfileFit.structureFor(shiftedPlan, shiftedConvolved).fold(e => fail(e.message), identity)
     val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
     val points = Vector(family.chart.point(4.0, math.log(1.2)).fold(e => fail(e.message), identity))
     val shiftedResult = ObservedFamilyCertification.admitForCondition(
-      shiftedPlan, shiftedStructure, expanded, term, frame, precision, None, Some(nuisance), points,
+      shiftedPlan,
+      shiftedStructure,
+      expanded,
+      term,
+      frame,
+      precision,
+      None,
+      Some(nuisance),
+      points,
       ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
     )
     assert(shiftedResult.isLeft)
-    val changedNuisance = DMat.tabulate(rows, nuisance.cols)((row, column) => nuisance(row, column) + (if row == 0 && column == 0 then 1e-8 else 0.0))
+    val changedNuisance = DMat.tabulate(rows, nuisance.cols)((row, column) =>
+      nuisance(row, column) + (if row == 0 && column == 0 then 1e-8 else 0.0)
+    )
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => fail(e.message), identity)
     val nuisanceResult = ObservedFamilyCertification.admitForCondition(
-      plan, structure, expanded, term, frame, precision, None, Some(changedNuisance), points,
+      plan,
+      structure,
+      expanded,
+      term,
+      frame,
+      precision,
+      None,
+      Some(changedNuisance),
+      points,
       ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
     )
     assert(nuisanceResult.isLeft)
     val whitenedResult = ObservedFamilyCertification.admitForCondition(
-      plan, structure, expanded, term, frame, precision,
-      Some(scalafim.fmri.ar.WhiteningPlan.global(scalafim.fmri.ar.ArmaCoefficients.ar(0.2), Vector(scalafim.fmri.ar.TimeSegment(0, rows, 0)))),
-      Some(nuisance), points, ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+      plan,
+      structure,
+      expanded,
+      term,
+      frame,
+      precision,
+      Some(
+        scalafim.fmri.ar.WhiteningPlan
+          .global(scalafim.fmri.ar.ArmaCoefficients.ar(0.2), Vector(scalafim.fmri.ar.TimeSegment(0, rows, 0)))
+      ),
+      Some(nuisance),
+      points,
+      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
     )
     assert(whitenedResult.isLeft)
 
@@ -233,7 +292,9 @@ class ConditionProfileFitSuite extends munit.FunSuite:
     // Compact route on the same data: nuisance = the plan's baseline columns, no whitening.
     val expanded = ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
     val compactPrep =
-      CompactConditionPreparation.prepare(expanded, admission, None, Some(nuisance), term, frame, precision).fold(e => fail(e.message), identity)
+      CompactConditionPreparation
+        .prepare(expanded, admission, None, Some(nuisance), term, frame, precision)
+        .fold(e => fail(e.message), identity)
     val runtime = new CompactConditionRuntime(
       compactPrep,
       NodeGrid(family.chart, Vector(15, 15)),

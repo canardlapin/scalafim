@@ -77,6 +77,10 @@ run_batch analysis-jvm \
 run_batch analysis-js \
   modelJS/test fitJS/test firstLevelLawsJS/test mvpaJS/test mvpaFitJS/test
 
+# Keep the comparative court separate: its real synthetic trial arm is expensive.
+run_batch phrf-comparison-jvm phrfComparisonJVM/test
+run_batch phrf-comparison-js phrfComparisonJS/test
+
 run_batch downstream-jvm \
   connectivityJVM/test mvpaDatasetJVM/test mvpaArtifactsJVM/test mvpaSpatialJVM/test \
   mvpaFoundationAdmissionJVM/test groupJVM/test \
