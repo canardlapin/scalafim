@@ -159,7 +159,7 @@ adjacent checkout is selected automatically during extraction; an explicit
 
 | Module | Owns | Depends On | Do Not Put Here |
 | --- | --- | --- | --- |
-| `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, searchlights, and one-pass commutative aggregation. | standalone locus4s core and data | Generic finite-domain algebra or laws, image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
+| `locus-data` | ScalaFIM domain construction and compatibility adapters, supported parcellations, and searchlights. | standalone locus4s core and data | Generic finite-domain algebra or laws, a second aggregation loop (use `locus4s.data.Aggregation`), image/surface geometry, atlas ontology, lazy execution, IO, or probabilistic membership. |
 | `pipeline` | Generic typed pipeline graphs, artifact references, graph4s-delegated deterministic DAG staging, local pure execution, and structured receipts. | standalone graph4s | Neuroimaging algorithms, file IO, external CLI execution, scheduler/runtime implementations, or lower-module convenience helpers. |
 | `response` | Axis-safe identities and ordered selections, neutral time/sample schemas, owned row-major `Double` response blocks, effectful read planning, provenance, axis-keyed locality capabilities, and read receipts. | Nothing internal; Cats Core and Cats Effect externally. | General tensors, mutable public buffers, image/surface geometry, dataset hierarchy, archive formats, representation codecs, storage interpreters, or fit policy. |
 | `hrf` | HRFs, basis functions, sampling frames, convolution primitives. | Nothing internal. | Design formulas, datasets, or model fitting. |
@@ -260,7 +260,8 @@ standalone locus4s -> locus-data -> image/surface/atlas/spatial/dataset/mvpa-spa
 Standalone locus4s is the sole owner of generic finite spaces, points, regions,
 ordered selections, exact maps, relations, indexed fields, sections, and their
 laws. `locus-data` owns ScalaFIM-specific domain construction and compatibility
-adapters plus parcellations, searchlights, and aggregation. Domain modules add
+adapters plus parcellations and searchlights; parcellation aggregation uses
+locus4s-data `Aggregation`. Domain modules add
 geometry, metadata, storage, provenance, or algorithm policy through checked
 adapters; they do not reproduce the generic algebra. Zarr's package-local
 `Geometry.Region` remains an array chunk/slice rectangle, not a spatial ROI,
@@ -392,8 +393,8 @@ There are intentionally two layers:
   connectivity semantics in `connectivity`.
 - Put generic finite semantic domains, points, regions, selections, exact maps,
   relations, indexed fields, sections, and reusable laws in standalone
-  locus4s. Put only ScalaFIM domain adapters, parcellations, searchlights, and
-  commutative aggregation in `locus-data`. Geometry, storage, metadata, and
+  locus4s, including aggregation (`locus4s.data.Aggregation`). Put only
+  ScalaFIM domain adapters, parcellations, and searchlights in `locus-data`. Geometry, storage, metadata, and
   algorithm policy remain in their domain modules.
 - Put primitive matrix/vector/operator math, solver contracts, portable
   eigensolver/SVD/QR/Cholesky/SPD-inverse implementations, and backend adapter

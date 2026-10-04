@@ -33,7 +33,7 @@ The checked entrypoint rejects foreign runtime owners and accepts the provider's
 representation-neutral `Field`. It skips background and traverses increasing
 source order, including when no targets exist.
 
-Aggregation scans the supported ambient points once. Means should accumulate
+Provider aggregation scans the supported ambient points once. Means should accumulate
 a mergeable `(sum, count)`-like state and divide only at presentation time.
 The exact hierarchy-fusion law applies to lawful commutative monoids; ordinary
 IEEE floating-point addition is not claimed to be exactly associative.

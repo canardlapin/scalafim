@@ -9,7 +9,7 @@ cross-compiled sbt build.
 
 ## Modules
 
-- `locus-data`: ScalaFIM domain adapters, supported parcellations, searchlights, and one-pass commutative aggregation over standalone locus4s spaces and data.
+- `locus-data`: ScalaFIM domain adapters, supported parcellations, and searchlights over standalone locus4s spaces and data; aggregation over parcellations uses `locus4s.data.Aggregation`.
 - `pipeline`: generic typed pipeline graphs, artifact references, deterministic staging, local execution, and receipts.
 - `response`: dependency-light response identity, axis-safe selections, owned time-by-sample `Double` blocks, source planning, provenance, and physical-read receipts.
 - `response-laws`: reusable JVM/Scala.js law checks for response ordering, shape, decode consistency, partitions, raw-bit persistence, receipts, and provenance.
@@ -101,7 +101,8 @@ Generic finite domains, points, regions, selections, maps, relations, indexed
 fields, and their laws formerly incubated here now live in standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). ScalaFIM pins an immutable
 source revision; `locus-data` retains only ScalaFIM-specific adapters and
-higher-level parcellation, searchlight, and aggregation policy.
+higher-level parcellation and searchlight policy. Aggregation over
+parcellations is owned by `locus4s.data.Aggregation`.
 
 Generic dense and sparse matrices, linear operators, factorizations, and
 spectral algorithms now live in standalone

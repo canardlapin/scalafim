@@ -258,10 +258,7 @@ lazy val locusData =
     .crossType(CrossType.Full)
     .in(file("modules/locus-data"))
     .settings(commonSettings)
-    .settings(
-      name := "scalafim-locus-data",
-      libraryDependencies += "org.typelevel" %%% "cats-kernel" % "2.12.0"
-    )
+    .settings(name := "scalafim-locus-data")
     .jvmConfigure(_.dependsOn(locus4sCoreJVM, locus4sDataJVM))
     .jsConfigure(_.dependsOn(locus4sCoreJS, locus4sDataJS))
     .jsSettings(jsSettingsBase)

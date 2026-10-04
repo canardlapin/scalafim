@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Removed the unused `scalafim.locus.Aggregation` duplicate and the
+  `cats-kernel` dependency it alone required from `locus-data`. Use the adopted
+  `locus4s.data.Aggregation` with checked `PartialMap` aggregation instead.
 - Repeated surface world-coordinate picks can use an explicitly prepared
   immutable index, preserving original vertex ids under affine placement.
 - Viewer models support validated layer reorder/replacement; Canvas controllers
