@@ -46,9 +46,46 @@ visualization, are not implicitly added to these tickets.
   eight source scans; it is not a promise that every eight spikes add rank eight.
 - No release, hosted CI, browser latency, or remote publication is claimed.
 
+## Review fixes — 2026-10-03
+
+An independent review of `8ac43538` found correctness, portability and evidence
+defects. They were fixed on this branch in `a03e4f57`, `1e4b2618`, `cbab2ee2`
+(diagnostics), `dcf66cea` (formula, expressions, JSON), `6c16a104` (response,
+SPM basis, modulators), `ad870cc4` (trials, LSS, confounds, summaries, raster),
+`bbaa3f3c`, `72ae0b14` (guide), `6b3ebffd` (guarded expression evaluation) and
+`37a0ca07` (spm-1s span, per-run readout transport, observed-only
+orthogonalization). A second independent review of the merged result found the
+issues addressed by the last two commits. Contract changes are recorded in the
+[Model authoring APIs](../design/model-authoring-apis.md) guide, including its
+known-limitations list.
+
+Decisions recorded with the owner: pooled within-cell modulator SD uses
+`SS_within / (n − k)`; the frozen stop-modulator grid expectation is therefore
+`sqrt((n − k) / (n − 1))` rather than the dump's `n − 1` value.
+
+Superseded statements above: the corrected F expectations are now emitted by an
+independent NumPy oracle (`tools/fixtures/generate_contrast_diagnostics.py`)
+rather than inline literals; `spm-1s` is SPM12's informed basis (`spm_get_bf`
+with `spm_orth`) rather than the raw one-second difference.
+
 ## Verification
 
-All commands used `python3 tools/build/sbt-warm` in the isolated task worktree.
+All commands used `python3 tools/build/sbt-warm` in the isolated task worktree,
+at the merge of `37a0ca07`.
+
+| Target | JVM | Scala.js |
+| --- | ---: | ---: |
+| `hrf/test` | 273 passed | 273 passed |
+| `design/test` | 436 passed | 435 passed |
+| `model/test` | 48 passed | 48 passed |
+| `fit/test` | 361 passed | 350 passed |
+
+Total: 2,224 passing test executions. JVM/JS count differences are JVM-only
+suites (IO, performance guardrails, raster PNG export). `scalafimCompileAll`
+completed with exit 0 and no compiler warnings. `git diff --check` passed.
+The original receipts below predate the review fixes.
+
+### Original receipts (`8ac43538`)
 
 | Target | JVM | Scala.js |
 | --- | ---: | ---: |
@@ -69,8 +106,10 @@ session's generated build output.
 
 The [independent review record](model-authoring-20261002/review.json) binds the
 basis-transform and response-discretization review to source hashes. Its verdict
-is a bounded source review, separate from execution evidence.
+is a bounded source review, separate from execution evidence. Its source hashes
+identify the `8ac43538` files; the review fixes changed several of them, so it
+does not cover the current sources.
 
-SF2–SF9 are committed on `work/model-studio-20261002`; SF1 alone is landed on local
-main. The shared main checkout's unrelated changes were preserved. No push was
-performed.
+SF2–SF9 and the review fixes are committed on `work/model-studio-20261002`; SF1
+alone is landed on local main. The shared main checkout's unrelated changes were
+preserved. No push was performed.
