@@ -46,3 +46,35 @@ class PolySuite extends munit.FunSuite:
     assertAllClose(poly.coefs.alpha.toArray, Array(2.0, 2.0), tol = 1e-12)
     assertAllClose(poly.coefs.norm2.toArray, Array(1.0, 5.0, 10.0, 14.0), tol = 1e-12)
   }
+
+  test("Poly.fit columns are orthonormal and predict reproduces the fitted basis") {
+    val x = Vector(-3.0, -1.5, -0.25, 0.5, 2.0, 4.5)
+    val poly = ParametricBasis.Poly.fit(x, degree = 3, argName = "x")
+    var left = 0
+    while left < poly.y.cols do
+      var right = 0
+      while right < poly.y.cols do
+        var dot = 0.0
+        var row = 0
+        while row < poly.y.rows do
+          dot += poly.y(row, left) * poly.y(row, right)
+          row += 1
+        assertEqualsDouble(dot, if left == right then 1.0 else 0.0, 1e-12)
+        right += 1
+      left += 1
+    assertAllClose(ParametricBasis.Poly.predict(poly.coefs, x, degree = 3).data, poly.y.data, 1e-12)
+  }
+
+  test("Poly.fit is stable under representable offset and scale changes") {
+    val x = Vector(-2.0, -1.0, 0.0, 1.0, 3.0, 5.0)
+    val shifted = x.map(value => 1e8 + 1e4 * value)
+    assertAllClose(
+      ParametricBasis.Poly.fit(shifted, degree = 2, argName = "x").y.data,
+      ParametricBasis.Poly.fit(x, degree = 2, argName = "x").y.data,
+      1e-10
+    )
+  }
+
+  test("Poly.fit rejects insufficient unique abscissae") {
+    intercept[IllegalArgumentException](ParametricBasis.Poly.fit(Vector(1.0, 1.0, 2.0), degree = 2, argName = "x"))
+  }

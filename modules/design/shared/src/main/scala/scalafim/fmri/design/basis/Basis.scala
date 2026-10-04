@@ -2,6 +2,7 @@ package scalafim.fmri.design.basis
 
 import scalafim.fmri.design.Names
 import scalafim.fmri.hrf.linalg.Mat
+import gale.linalg.{Matrix, QROptions, QRPivoting}
 
 trait ParametricBasis:
   def argName: String
@@ -201,18 +202,22 @@ object ParametricBasis:
           p += 1
         i += 1
 
-      val (q, diagR) = householderQrReduced(X, rows = n, cols = degree + 1)
-
-      // Z = Q %*% diag(diag(R)) (R parity: qr.qy(QR, diag(diagR)))
-      val Z = new Array[Double](n * (degree + 1))
-      var col = 0
-      while col <= degree do
-        val d = diagR(col)
-        i = 0
-        while i < n do
-          Z(i * (degree + 1) + col) = q(i * (degree + 1) + col) * d
-          i += 1
-        col += 1
+      // Unpivoted QR preserves polynomial order.  Z = Q %*% diag(diag(R))
+      // matches R's qr.qy(qr(X), diag(qr.R(qr(X)))).
+      val qr = Matrix.tabulate(n, p)((row, column) => X(row * p + column))
+        .qr(QROptions(QRPivoting.Disabled, None))
+      val seed = Matrix.tabulate(n, p) { (row, column) =>
+        if row == column then qr.r(column, column) else 0.0
+      }
+      val zMatrix = qr.applyQ(seed).fold(error => throw new IllegalArgumentException(error.getMessage), identity)
+      val Z = new Array[Double](n * p)
+      i = 0
+      while i < n do
+        var j = 0
+        while j < p do
+          Z(i * p + j) = zMatrix(i, j)
+          j += 1
+        i += 1
 
       val norm2ColArr = Array.fill(degree + 1)(0.0)
       val numArr = Array.fill(degree + 1)(0.0)
@@ -253,111 +258,6 @@ object ParametricBasis:
         y = Mat.unsafe(n, degree, out),
         coefs = PolyCoefs(alpha = alpha, norm2 = norm2Stored)
       )
-
-    private final case class Householder(v: Array[Double], beta: Double)
-
-    private def householderQrReduced(a0: Array[Double], rows: Int, cols: Int): (Array[Double], Array[Double]) =
-      require(rows >= 0 && cols >= 0, "rows/cols must be non-negative")
-      require(a0.length == rows * cols, "data length mismatch")
-      require(rows >= cols, "reduced QR expects rows >= cols")
-
-      val a = a0.clone
-      val diagR = new Array[Double](cols)
-      val reflectors = new Array[Householder](cols)
-
-      var k = 0
-      while k < cols do
-        // x = a[k:, k]
-        var norm2 = 0.0
-        var r = k
-        while r < rows do
-          val v = a(r * cols + k)
-          norm2 += v * v
-          r += 1
-
-        val norm = math.sqrt(norm2)
-        if norm == 0.0 then
-          reflectors(k) = Householder(Array.emptyDoubleArray, 0.0)
-          diagR(k) = 0.0
-        else
-          val x0 = a(k * cols + k)
-          val alpha = if x0 >= 0.0 then -norm else norm
-
-          val len = rows - k
-          val v = new Array[Double](len)
-          v(0) = x0 - alpha
-          r = k + 1
-          var i = 1
-          while r < rows do
-            v(i) = a(r * cols + k)
-            r += 1
-            i += 1
-
-          var vTv = 0.0
-          i = 0
-          while i < len do
-            vTv += v(i) * v(i)
-            i += 1
-          val beta = if vTv == 0.0 then 0.0 else 2.0 / vTv
-          reflectors(k) = Householder(v, beta)
-
-          // Apply Hk to a[k:, k:].
-          var c = k
-          while c < cols do
-            var dot = 0.0
-            i = 0
-            r = k
-            while r < rows do
-              dot += v(i) * a(r * cols + c)
-              i += 1
-              r += 1
-            val s = beta * dot
-            i = 0
-            r = k
-            while r < rows do
-              a(r * cols + c) -= s * v(i)
-              i += 1
-              r += 1
-            c += 1
-
-          diagR(k) = a(k * cols + k)
-
-        k += 1
-
-      // Build reduced Q by applying reflectors to I(n,p).
-      val q = new Array[Double](rows * cols)
-      var rr = 0
-      while rr < rows do
-        var cc = 0
-        while cc < cols do
-          q(rr * cols + cc) = if rr == cc then 1.0 else 0.0
-          cc += 1
-        rr += 1
-
-      // To form Q (not Qᵀ), apply the stored Householder reflectors in reverse.
-      k = cols - 1
-      while k >= 0 do
-        val Householder(v, beta) = reflectors(k)
-        if beta != 0.0 then
-          val len = v.length
-          var cc = 0
-          while cc < cols do
-            var dot = 0.0
-            var i = 0
-            while i < len do
-              val row = k + i
-              dot += v(i) * q(row * cols + cc)
-              i += 1
-            val s = beta * dot
-            i = 0
-            while i < len do
-              val row = k + i
-              q(row * cols + cc) -= s * v(i)
-              i += 1
-            cc += 1
-        k -= 1
-
-      (q, diagR)
 
     def predict(coefs: PolyCoefs, newData: Seq[Double], degree: Int): Mat =
       val x = newData.toVector
