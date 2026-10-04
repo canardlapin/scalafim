@@ -151,3 +151,59 @@ alignment and does not involve locus-data aggregation. It is not caused by
 this change.
 
 `git diff --check` is clean.
+
+### Post-merge re-gate (main `b8e83fc4`, merge `07e239c1`)
+
+`git merge main` from `f5940066` completed automatically with no conflicts.
+Origin and C8 both changed `build.sbt`, `README.md`,
+`docs/module-relations.md` and `docs/plans/finite-indexed-spaces.md`, but in
+disjoint hunks:
+
+- `build.sbt`: origin's pin bumps (alder, reframe4s, multivar) and new edges
+  are kept. The `locusData` block still has no `cats-kernel`.
+- `README.md`: origin's new `mvpa-artifacts` module blurb and
+  `workflowExamples` commands sit alongside C8's locus-data wording.
+- `docs/module-relations.md`: origin's `mvpa-artifacts` and `mvpa-dataset`
+  rows and its new section sit alongside C8's locus-data rows and
+  boundary text.
+- `docs/plans/finite-indexed-spaces.md`: origin added a "historical design
+  record" header, and C8's superseded notes remain in the body.
+
+Origin did not change `modules/locus-data`. The one new locus-data dependency
+edge is `mvpa`, which now `dependsOn(response, locusData, ...)`. `mvpa` does
+not reference Cats in main or test sources. The set of modules whose test
+sources import Cats is the same as before the merge.
+
+Gates, at least 35% memory free before each batch. The direct
+`dependsOn(locusData)` list was re-derived from the merged `build.sbt`:
+
+| Gate | JVM | JS |
+| --- | --- | --- |
+| `locusData/test` | 26/26 | 26/26 |
+| `image/test` | 385/385 | 355/355 |
+| `latent/test` | 44/44 | 44/44 |
+| `surface/test` | 280/280 | 225 (223 passed, 2 skipped) |
+| `spatial/test` | 227/227 | 202/202 |
+| `atlas/test` | 116/116 (see note) | 79/79 |
+| `dataset/test` | 76/76 | 62/62 |
+| `mvpa/test` (new dependent) | 401/401 | 401/401 |
+| `connectivity/test` | 64/64 | 64/64 |
+| `mvpaFoundationAdmission/test` | 18/18 | 18/18 |
+| `mvpaSpatial/test` | 20/20 | 20/20 |
+| `scalafimCompileAll` | exit 0, no compiler warnings | |
+| `examplesCompile` | exit 0, no compiler warnings | |
+
+The pre-merge `SpatialFeatureSetPlansSuite` failure no longer reproduces:
+`mvpaSpatial` passes 20/20 on both platforms after the merge.
+
+**Atlas note:** the first `atlasJVM/test` run went through the same resident
+sbt server that had already run `image`, `latent`, `surface` and `spatial`
+tests (in-process tests, 3 GB server heap). In that run, origin's new
+`MniTemplateBridgeFilesSuite` test "a qualified numerical inverse gives the
+forward map and an executable reverse route" failed with
+`java.lang.OutOfMemoryError: Java heap space` inside
+`reframe4s.field.NumericalInversion` (115/116). In a fresh server, the same
+suite passed 8/8 on unmodified main `b8e83fc4`. The full `atlasJVM/test`
+passed 116/116 on this branch, also in a fresh server. The failure depends on
+how much heap the shared server had left; it is not caused by this change.
+Running that suite as the first command in a server avoids it.
