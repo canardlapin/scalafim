@@ -136,3 +136,84 @@ class EventExpressionsSuite extends munit.FunSuite:
     assertEquals(
       EventExpressions.evaluateDerived(id("d"), allMissing, Map(ColumnId.unsafe("d") -> DerivedValues(EventValueType.Number, Vector(Text("a"), Missing)))),
       Left(EventExpressionError.InvalidDerivedValue(ColumnId.unsafe("d"), 0, "expected numeric, got text")))
+
+  private def expr(text: String): ArgValue = FormulaParser.parseExpression(text).fold(error => fail(error.getMessage), identity)
+
+  private val guarded = DataTable.fromColumns(
+    "x" -> Column.Doubles(Vector(2.0, 0.0, -1.0, Double.NaN)),
+    "n" -> Column.Doubles(Vector(1.0, 2.0, 3.0, 4.0)),
+    "d" -> Column.Doubles(Vector(2.0, 0.0, 4.0, Double.NaN)),
+    "rt" -> Column.Doubles(Vector(10.0, 0.0, -2.0, 1.0)),
+    "keep" -> Column.Bools(Vector(true, false, true, true))
+  )
+
+  test("ifelse evaluates each branch only on the rows that select it"):
+    assertEquals(EventExpressions.evaluate(expr("ifelse(x > 0, log(x), missing())"), guarded),
+      Right(Vector(Num(math.log(2)), Missing, Missing, Missing)))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(d == 0, 0, n / d)"), guarded),
+      Right(Vector(Num(0.5), Num(0), Num(0.75), Missing)))
+    // Without the guard the same arithmetic fails on the first offending row.
+    assertEquals(EventExpressions.evaluate(expr("log(x)"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector.empty, "log", 1)))
+    assertEquals(EventExpressions.evaluate(expr("n / d"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector.empty, "/", 1)))
+    // A wrong guard selects the offending rows, so the branch still fails there.
+    assertEquals(EventExpressions.evaluate(expr("ifelse(x <= 0, log(x), missing())"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("1"), "log", 1)))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(d != 0, 0, n / d)"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("2"), "/", 1)))
+
+  test("a missing ifelse condition evaluates neither branch"):
+    val table = DataTable.fromColumns(
+      "m" -> Column.Doubles(Vector(1.0, Double.NaN)),
+      "z" -> Column.Doubles(Vector(1.0, 0.0))
+    )
+    assertEquals(EventExpressions.evaluate(expr("ifelse(m > 0, log(z), log(z))"), table), Right(Vector(Num(0), Missing)))
+    val observed = DataTable.fromColumns("m" -> Column.Doubles(Vector(1.0, -1.0)), "z" -> Column.Doubles(Vector(1.0, 0.0)))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(m > 0, log(z), log(z))"), observed),
+      Left(EventExpressionError.NonFiniteResult(Vector("2"), "log", 1)))
+
+  test("& and | ignore errors on rows the left operand decides"):
+    assertEquals(EventExpressions.filter(expr("rt > 0 & log(rt) > 1"), guarded), Right(Vector(true, false, false, false)))
+    assertEquals(EventExpressions.evaluate(expr("rt <= 0 | log(rt) > 1"), guarded),
+      Right(Vector(Logical(true), Logical(true), Logical(true), Logical(false))))
+    assertEquals(EventExpressions.filter(expr("log(rt) > 1"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("0"), "log", 1)))
+    // The guard must come first: the left operand is always evaluated.
+    assertEquals(EventExpressions.filter(expr("log(rt) > 1 & rt > 0"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("0", "0"), "log", 1)))
+    // A TRUE left operand does not decide &, nor FALSE decide |.
+    assertEquals(EventExpressions.filter(expr("rt <= 0 & log(rt) > 1"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("1", "0"), "log", 1)))
+
+  test("a missing left operand of & still needs the right one, so its errors surface"):
+    val table = DataTable.fromColumns(
+      "m" -> Column.Doubles(Vector(1.0, Double.NaN)),
+      "z" -> Column.Doubles(Vector(1.0, 0.0))
+    )
+    // Kleene: missing & FALSE is FALSE, so the right operand is evaluated on row 1.
+    assertEquals(EventExpressions.filter(expr("m > 0 & log(z) > 0"), table),
+      Left(EventExpressionError.NonFiniteResult(Vector("1", "0"), "log", 1)))
+    assertEquals(EventExpressions.evaluate(expr("m > 0 & z > 0"), table), Right(Vector(Logical(true), Logical(false))))
+
+  test("nested guards: errors are reported only for rows active at the failing node"):
+    assertEquals(EventExpressions.evaluate(expr("d != 0 & ifelse(n > 1, n / d, 0) > 0.6"), guarded),
+      Right(Vector(Logical(false), Logical(false), Logical(true), Missing)))
+    assertEquals(EventExpressions.filter(expr("d != 0 & ifelse(n > 1, n / d, 0) > 0.6"), guarded),
+      Right(Vector(false, false, true, false)))
+    assertEquals(EventExpressions.filter(expr("ifelse(n > 1, n / d, 0) > 0.6"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("0", "1"), "/", 1)))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(keep, ifelse(d == 0, missing(), n / d), n / d)"), guarded),
+      Left(EventExpressionError.NonFiniteResult(Vector("2"), "/", 1)))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(keep, n / d, ifelse(d == 0, 0, n / d))"), guarded),
+      Right(Vector(Num(0.5), Num(0), Num(0.75), Missing)))
+
+  test("an infinite input is an error only on rows that reach the output"):
+    val table = DataTable.fromColumns(
+      "x" -> Column.Doubles(Vector(1.0, Double.PositiveInfinity)),
+      "keep" -> Column.Bools(Vector(true, false))
+    )
+    assertEquals(EventExpressions.filter(expr("keep & x > 0"), table), Right(Vector(true, false)))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(keep, x + 1, 0)"), table), Right(Vector(Num(2), Num(0))))
+    assertEquals(EventExpressions.evaluate(expr("ifelse(keep, 0, x + 1)"), table),
+      Left(EventExpressionError.NonFiniteInput(Vector("2", "0"), ColumnId.unsafe("x"), 1)))

@@ -236,7 +236,28 @@ requires a statically logical expression and retains only explicit true values.
 
 Leaving the finite range from finite operands (`x / 0`, `log(0)`, `log(-1)`) is
 an evaluation error naming the expression path and row, never a missing value.
-An infinite source value and a non-finite literal are also errors. `round(x)`
+An infinite source value and a non-finite literal are also errors.
+
+These errors are raised only for rows whose value can reach the result, so
+guards work. `ifelse` evaluates each branch only on the rows that select it,
+and neither branch on a row whose condition is missing (that row is missing).
+`&` does not evaluate its right operand on rows where the left is false, and
+`|` on rows where the left is true. Guards therefore succeed where the bare
+arithmetic fails:
+
+```text
+ifelse(x > 0, log(x), missing())
+ifelse(d == 0, 0, n / d)
+rt > 0 & log(rt) > 1          # as a subset
+```
+
+Guards nest: an error is reported, with its expression path and row, only for a
+row that every enclosing guard selects. The guard must be the left operand of
+`&` or `|`, because the left operand is always evaluated. A missing left
+operand does not decide the row (`missing & FALSE` is false under Kleene
+logic), so the right operand is evaluated there and its errors still surface.
+A `cut_quantiles` source is evaluated on every row, since every row's value
+shapes the breaks. `round(x)`
 rounds half to even, as R does (`round(2.5)` is `2`); a `digits` argument is
 not supported. `ifelse` branches must have one type. Text comparisons check
 observed levels by default, with an explicit switch for callers using declared
