@@ -7,7 +7,7 @@
   "package_archive_sha256": "829b2476f1ae8f10a08bb4c7c1c06c415a879db0c0f89f3c307d3c8e6b4d4542",
   "runner_sha256": "1ef95f30c1c97a71e16dab1170eb12d92efb51f90c0e5ddbe567f5664a629173",
   "amendment_sha256": "506e3fce05129dc72240284b0a23beeac0d0e6147d38c2e3e3d6661d44cee7e0",
-  "status": "running; no result admission yet",
+  "status": "completed; valid S0 baseline after output and host review; not S4 admission",
   "expected_outputs": [
     "receipt.json",
     "host.jsonl",
@@ -15,5 +15,7 @@
     "jmh.log",
     "supervisor-exit.json"
   ],
-  "next_decision": "Check receipt host validity, complete benchmark parameter coverage, finite values and five forks; do not use invalid output or treat S0 as S4."
+  "next_decision": "Use S0 variance to prospectively freeze S4 paired sample size; staged HRF migration and consumer gates remain.",
+  "finished_utc": "2026-10-04T03:14:34.633533+00:00",
+  "review": "s0-review.json"
 }

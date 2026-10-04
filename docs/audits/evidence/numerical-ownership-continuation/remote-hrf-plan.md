@@ -8,7 +8,8 @@ No system toolchain, existing checkout, VM or other process is modified.
 Live host: Darwin arm64, 10 physical cores, 32 GiB RAM, AC power. Initial
 one-minute load was 4.52, later 4.05; both fail the v4 limit of 2.0.
 `pmset -g therm` reported no recorded thermal/performance warning.
-No JMH timing has been admitted on this host.
+The completed S0 baseline passes the amended recorded checks; see
+`s0-review.json`. No S4 non-inferiority admission is claimed.
 
 An isolated Temurin 21.0.12.1+1 is installed under `toolchain/`, with archive
 SHA-256 `3623232f33a9c3baadf304480b2535f9a3cba8a58d42ecbb438ba267315d9998`
@@ -39,6 +40,6 @@ record power/thermal status. Check load again at the end. Retain invalid runs
 and their raw logs without using them as baseline evidence. No automatic
 retries, altered margins or relaxed host criteria are authorized by staging.
 
-The active S0 run is `s0-baseline-20261004-02`; see `hrf-s0-job.json`.
+The completed S0 run is `s0-baseline-20261004-02`; see `hrf-s0-job.json`.
 A previous amended-threshold attempt refused load 5.2949 without launching JMH.
 All other criteria and the 1.05 margin are unchanged.

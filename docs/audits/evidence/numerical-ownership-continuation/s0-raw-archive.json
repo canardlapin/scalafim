@@ -1,0 +1,7 @@
+{
+  "directory": "/Users/bbuchsbaum/code/scala/scalafim-fixtures/hrf-s0-20261004",
+  "archive": "remote-results.tar.gz",
+  "sha256": "887565df45d8ea3028b12c070299872ebcc4bd80f74602408cb6f5edc50b2313",
+  "remote_file_hashes_verified": true,
+  "reproduce": "Extract archive to a directory; run python3 check_hrf_s0.py <directory>. Keep the archive in that directory for its hash check."
+}

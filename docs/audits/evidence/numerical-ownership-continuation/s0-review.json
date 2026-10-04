@@ -1,0 +1,899 @@
+{
+  "schema": "scalafim.hrf-s0-review.v1",
+  "valid_s0_baseline": true,
+  "s4_admitted": false,
+  "errors": [],
+  "configurations": 53,
+  "forks_per_configuration": 5,
+  "measured_iterations_per_fork": 5,
+  "host_samples": 2223,
+  "start_load": 4.97412109375,
+  "end_load": 4.7822265625,
+  "during_run_load_range": [
+    4.97412109375,
+    8.02685546875
+  ],
+  "maximum_sample_interval_seconds": 2.6462867919999553,
+  "maximum_unowned_java_node_cpu_percent": 1.0011909165952784,
+  "source_revision": "61df8a4620c9cc0dd33af6b7cabee04b4492e936",
+  "raw_sha256": {
+    "receipt.json": "1fd745316a8cc029dcb0ac53d9bafb3cf19e5b47cc52b30f1639521edea36c5d",
+    "host.jsonl": "ff00c5640f24061de851a34ec96664f3d4c4f8ecd4a74c86f1da694c7eecb766",
+    "jmh.json": "ceda920370149fd693f5baa9ff15b1c5c6e8b0afffee9d301ff144846637ced3",
+    "jmh.log": "82d76250b302f1f7fcf16e899bcd5b13bb7ecc0fa5fdd6cdaeccc97379c3a77e",
+    "supervisor-exit.json": "83f3d10c8ac950342a51f53b5a674f63d95f01f4e529d5d0dd72593048ab3a0b",
+    "remote-results.tar.gz": "887565df45d8ea3028b12c070299872ebcc4bd80f74602408cb6f5edc50b2313"
+  },
+  "configuration_summaries": [
+    {
+      "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.directContraction",
+      "params": {},
+      "fork_medians_us": [
+        0.42240147777871123,
+        0.42123838472808345,
+        0.4206142422311885,
+        0.4211202880091389,
+        0.42148042892332266
+      ],
+      "fork_median_cv": 0.0015593717130441905,
+      "allocation_B_per_op": 272.00289866397196
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.exactWindowFunctional",
+      "params": {},
+      "fork_medians_us": [
+        1.4057433410030145,
+        1.4429653014870791,
+        1.4151827933036034,
+        1.4158457662632533,
+        1.3945037439016645
+      ],
+      "fork_median_cv": 0.01268521882884672,
+      "allocation_B_per_op": 1072.0097225534146
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.pointFunctional",
+      "params": {},
+      "fork_medians_us": [
+        0.4853075618866882,
+        0.4686443198262211,
+        0.4843079110294484,
+        0.4808937726705537,
+        0.46624112489644015
+      ],
+      "fork_median_cv": 0.018839231698872527,
+      "allocation_B_per_op": 488.00328986278726
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.trapezoidWindowFunctional",
+      "params": {},
+      "fork_medians_us": [
+        67.65794556028945,
+        67.63537092088373,
+        67.46454589534649,
+        67.43846551259598,
+        67.46383209777599
+      ],
+      "fork_median_cv": 0.0015617381063815525,
+      "allocation_B_per_op": 44209.11807806028
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.BasisResponseBenchmark.typedReconstruction",
+      "params": {},
+      "fork_medians_us": [
+        4.516415153479845,
+        4.5011174290129246,
+        4.500124116647285,
+        4.51021432978594,
+        4.72218830440235
+      ],
+      "fork_median_cv": 0.021205251710289426,
+      "allocation_B_per_op": 43950.44666062721
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.conv",
+      "params": {
+        "dutyCycle": "0.0",
+        "nScans": "1200"
+      },
+      "fork_medians_us": [
+        418.8073694029851,
+        417.3270141666667,
+        418.3348861283644,
+        417.81180599500414,
+        417.9128423028786
+      ],
+      "fork_median_cv": 0.0013385184791253034,
+      "allocation_B_per_op": 2948890.887643621
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.conv",
+      "params": {
+        "dutyCycle": "0.0",
+        "nScans": "4800"
+      },
+      "fork_medians_us": [
+        5190.709615384615,
+        5180.203415384615,
+        5177.763392857143,
+        5199.663246153847,
+        5179.1628418367345
+      ],
+      "fork_median_cv": 0.0018188045059829771,
+      "allocation_B_per_op": 38112116.539151475
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.conv",
+      "params": {
+        "dutyCycle": "0.25",
+        "nScans": "1200"
+      },
+      "fork_medians_us": [
+        1936.2544712643678,
+        1935.7354731800767,
+        1938.9567332053743,
+        1939.537901923077,
+        1931.9284588910134
+      ],
+      "fork_median_cv": 0.0015664608095329934,
+      "allocation_B_per_op": 2949268.4197572963
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.conv",
+      "params": {
+        "dutyCycle": "0.25",
+        "nScans": "4800"
+      },
+      "fork_medians_us": [
+        11343.22706741573,
+        11322.510303370787,
+        11297.6,
+        11280.332866666668,
+        11344.224077777777
+      ],
+      "fork_median_cv": 0.002490749513161614,
+      "allocation_B_per_op": 38112157.98092385
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.conv",
+      "params": {
+        "dutyCycle": "0.9",
+        "nScans": "1200"
+      },
+      "fork_medians_us": [
+        1906.2676113207547,
+        1902.9983459357277,
+        1905.5272018867925,
+        1907.2533018867925,
+        1905.5464519774011
+      ],
+      "fork_median_cv": 0.0008265565982634301,
+      "allocation_B_per_op": 2949459.676049238
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.conv",
+      "params": {
+        "dutyCycle": "0.9",
+        "nScans": "4800"
+      },
+      "fork_medians_us": [
+        11307.4838,
+        11272.787966666667,
+        11262.233788888889,
+        11252.994444444445,
+        11257.844444444445
+      ],
+      "fork_median_cv": 0.0019377168434706277,
+      "allocation_B_per_op": 38112345.71182418
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.fft",
+      "params": {
+        "dutyCycle": "0.0",
+        "nScans": "1200"
+      },
+      "fork_medians_us": [
+        2582.502655612245,
+        2588.0010664961637,
+        2593.293272493573,
+        2593.8231846153844,
+        2588.871015503876
+      ],
+      "fork_median_cv": 0.0017748690188616322,
+      "allocation_B_per_op": 3999932.153222016
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.fft",
+      "params": {
+        "dutyCycle": "0.0",
+        "nScans": "4800"
+      },
+      "fork_medians_us": [
+        15614.11026153846,
+        15682.143584615385,
+        15640.132692307692,
+        15627.719876923076,
+        16516.528903225808
+      ],
+      "fork_median_cv": 0.024807809962786805,
+      "allocation_B_per_op": 42308548.4970719
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.fft",
+      "params": {
+        "dutyCycle": "0.25",
+        "nScans": "1200"
+      },
+      "fork_medians_us": [
+        2593.7825846153846,
+        2590.512886597938,
+        2593.234604651163,
+        2580.092603580563,
+        2593.62328974359
+      ],
+      "fork_median_cv": 0.002251181659671811,
+      "allocation_B_per_op": 3999932.268680892
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.fft",
+      "params": {
+        "dutyCycle": "0.25",
+        "nScans": "4800"
+      },
+      "fork_medians_us": [
+        15627.846784615385,
+        15641.337184615384,
+        15667.964107692307,
+        15589.527553846154,
+        15619.334615384616
+      ],
+      "fork_median_cv": 0.001844166594759334,
+      "allocation_B_per_op": 42308547.299692295
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.fft",
+      "params": {
+        "dutyCycle": "0.9",
+        "nScans": "1200"
+      },
+      "fork_medians_us": [
+        2591.4010692307693,
+        2594.186858974359,
+        2596.218376923077,
+        2592.8899948586118,
+        2580.2333112244896
+      ],
+      "fork_median_cv": 0.0024183077167050397,
+      "allocation_B_per_op": 4000124.2651244197
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.DenseDriveBenchmark.fft",
+      "params": {
+        "dutyCycle": "0.9",
+        "nScans": "4800"
+      },
+      "fork_medians_us": [
+        15685.657692307692,
+        15629.4218,
+        15607.041661538462,
+        15623.855123076923,
+        15723.96484375
+      ],
+      "fork_median_cv": 0.0031320133391115417,
+      "allocation_B_per_op": 42308755.57538461
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "300",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        50.750196754258155,
+        50.59839821266283,
+        50.54066384788592,
+        50.98724438273163,
+        50.94044613677627
+      ],
+      "fork_median_cv": 0.003920877356869873,
+      "allocation_B_per_op": 305949.14995214815
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "300",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        79.37811174467411,
+        80.40716787391547,
+        79.40301792311925,
+        84.32215752566992,
+        79.77227860303414
+      ],
+      "fork_median_cv": 0.025922834287881006,
+      "allocation_B_per_op": 422286.9552449837
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "300",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        82.11852325486014,
+        82.08864229232901,
+        81.58102923264312,
+        82.22980429827417,
+        82.05117715863861
+      ],
+      "fork_median_cv": 0.003059911284998571,
+      "allocation_B_per_op": 361430.96486653754
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "300",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        181.034229390681,
+        185.80175188523083,
+        185.98193549582948,
+        185.70770509284796,
+        181.326549632023
+      ],
+      "fork_median_cv": 0.013866090141859043,
+      "allocation_B_per_op": 599900.465201403
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        539.6696495726495,
+        541.1633636850562,
+        544.8736515641856,
+        538.7752,
+        539.7872142471667
+      ],
+      "fork_median_cv": 0.004444686254083599,
+      "allocation_B_per_op": 3794958.424369414
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        605.988402519496,
+        608.5419927710843,
+        606.1903651651652,
+        604.5995288808664,
+        633.0575585072738
+      ],
+      "fork_median_cv": 0.019677934128725264,
+      "allocation_B_per_op": 4209510.286454691
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        592.4215512137359,
+        594.9869436201781,
+        593.9582357436802,
+        592.7810363636364,
+        593.4544159811986
+      ],
+      "fork_median_cv": 0.0017059864677531629,
+      "allocation_B_per_op": 3952128.882867301
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        769.6333840856925,
+        774.0574887857696,
+        768.5088403041825,
+        769.1670471841704,
+        773.2715707692307
+      ],
+      "fork_median_cv": 0.0033016789998514414,
+      "allocation_B_per_op": 4683845.3445649035
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        7651.421083333334,
+        7659.363636363636,
+        7642.076075757575,
+        7657.128787878788,
+        7631.499053030303
+      ],
+      "fork_median_cv": 0.0015065865219065912,
+      "allocation_B_per_op": 56345910.14282229
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        7860.18507751938,
+        7877.879234375,
+        7867.999674418605,
+        7881.778751937984,
+        7851.36692248062
+      ],
+      "fork_median_cv": 0.0015888227548710942,
+      "allocation_B_per_op": 57964157.057546765
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        7792.067630769231,
+        7802.490707692307,
+        7743.8164732824425,
+        7769.866346153846,
+        7845.809751937984
+      ],
+      "fork_median_cv": 0.00489188512218852,
+      "allocation_B_per_op": 56909101.54253827
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        8296.285180327868,
+        8329.611336065575,
+        8328.328512396694,
+        8255.214089430894,
+        8256.34180487805
+      ],
+      "fork_median_cv": 0.004418431560757984,
+      "allocation_B_per_op": 59648033.04986827
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "300",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        137.73902372511589,
+        137.91244027303753,
+        137.7990042286182,
+        137.8357153772684,
+        137.759408048345
+      ],
+      "fork_median_cv": 0.0004983931949935251,
+      "allocation_B_per_op": 372260.1483376463
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "300",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        509.4109722642461,
+        498.8640538271605,
+        499.256059057072,
+        504.1264782608696,
+        499.5958827893175
+      ],
+      "fork_median_cv": 0.009029818850884259,
+      "allocation_B_per_op": 686501.1337667473
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "300",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        342.6479392808684,
+        344.18780511073254,
+        343.3895023793338,
+        344.09152179836514,
+        343.67396155166495
+      ],
+      "fork_median_cv": 0.0018077694202824814,
+      "allocation_B_per_op": 560315.9654797221
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "300",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        1430.1426803394625,
+        1433.2623531914894,
+        1430.444424328147,
+        1429.0706310541311,
+        1443.3497733142037
+      ],
+      "fork_median_cv": 0.004083250649264422,
+      "allocation_B_per_op": 1384335.7446771034
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        951.1451040681173,
+        954.7867826086956,
+        954.7530718336484,
+        956.4331752380953,
+        951.5807052730697
+      ],
+      "fork_median_cv": 0.002389306955757871,
+      "allocation_B_per_op": 4058005.506408782
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        2778.176282967033,
+        2766.6757732240435,
+        2766.0316475409836,
+        2764.0487424657535,
+        2766.145606557377
+      ],
+      "fork_median_cv": 0.002043529935798512,
+      "allocation_B_per_op": 5260520.83297533
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        1848.5374456721916,
+        1838.2440163636363,
+        1839.4423472727274,
+        1837.7579545454546,
+        1834.5654101633395
+      ],
+      "fork_median_cv": 0.0028559344426232597,
+      "allocation_B_per_op": 4741154.192666644
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        7308.840230215827,
+        7264.219642857143,
+        7280.769784172662,
+        7264.459521428572,
+        7285.71762589928
+      ],
+      "fork_median_cv": 0.002525437643617436,
+      "allocation_B_per_op": 7836186.284801048
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        9850.529932038835,
+        9833.037621359223,
+        9860.04449514563,
+        9840.17718446602,
+        9860.988970588236
+      ],
+      "fork_median_cv": 0.0012442391100222446,
+      "allocation_B_per_op": 57394531.705312945
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        18226.140625,
+        18238.41444642857,
+        18276.54167857143,
+        18504.313636363637,
+        18257.263636363637
+      ],
+      "fork_median_cv": 0.00631166406898048,
+      "allocation_B_per_op": 62160565.637341544
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        14385.457169014084,
+        14356.573814285714,
+        14333.94190140845,
+        14332.05985915493,
+        14366.598
+      ],
+      "fork_median_cv": 0.0015709997242969787,
+      "allocation_B_per_op": 60056971.37809255
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        39503.67626923077,
+        39449.71796153846,
+        39273.875,
+        39504.400653846154,
+        39507.73715384615
+      ],
+      "fork_median_cv": 0.002540428598725016,
+      "allocation_B_per_op": 72237356.0123077
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "300",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        152.4253558171118,
+        157.29905014014327,
+        158.43566373902132,
+        158.1900552486188,
+        157.9010579937304
+      ],
+      "fork_median_cv": 0.016000469252411602,
+      "allocation_B_per_op": 598650.6784853243
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "300",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        159.16086194913916,
+        157.19544942421413,
+        158.88026234664989,
+        158.7780899088337,
+        157.86087013595875
+      ],
+      "fork_median_cv": 0.005178947507591683,
+      "allocation_B_per_op": 602749.892196382
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "300",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        341.4276502196688,
+        346.6220555746141,
+        343.4438600273785,
+        341.637047683463,
+        345.86026463539883
+      ],
+      "fork_median_cv": 0.006920269342497372,
+      "allocation_B_per_op": 758103.8107946098
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "300",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        340.62660853369454,
+        346.81774219018195,
+        341.44349172017576,
+        344.59164665757163,
+        347.89379579889805
+      ],
+      "fork_median_cv": 0.009298271855485941,
+      "allocation_B_per_op": 758121.8496486022
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        1412.2218351955307,
+        1427.3444562146892,
+        1436.1667855113637,
+        1411.1607971830986,
+        1411.4446005586592
+      ],
+      "fork_median_cv": 0.00808193799004193,
+      "allocation_B_per_op": 9265622.930461312
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        1414.2311354019746,
+        1419.6114241573034,
+        1409.8727240896358,
+        1418.8998940677966,
+        1409.323629009763
+      ],
+      "fork_median_cv": 0.0034219593211448083,
+      "allocation_B_per_op": 9264982.108835084
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        2216.3720745614037,
+        2223.0202373626375,
+        2206.7133362445416,
+        2214.7768052516412,
+        2219.5574736842104
+      ],
+      "fork_median_cv": 0.00276125279018414,
+      "allocation_B_per_op": 9915687.234094433
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "1200",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        2221.0554021978023,
+        2220.118956043956,
+        2210.3031553610504,
+        2246.8055555555557,
+        2212.39852297593
+      ],
+      "fork_median_cv": 0.006554893053730938,
+      "allocation_B_per_op": 9917927.284221476
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "1",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        19498.27323076923,
+        19457.923076923078,
+        19440.028846153848,
+        19415.020452830187,
+        19531.71394230769
+      ],
+      "fork_median_cv": 0.0023906630981375236,
+      "allocation_B_per_op": 147383389.34641966
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "1",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        19622.79246153846,
+        19445.962346153847,
+        19432.983173076922,
+        19399.35849056604,
+        19435.927884615383
+      ],
+      "fork_median_cv": 0.004552009538427948,
+      "allocation_B_per_op": 147383388.03253403
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "3",
+        "precision": "0.33"
+      },
+      "fork_medians_us": [
+        22580.442577777776,
+        22803.687044444443,
+        22405.18660869565,
+        22619.74631111111,
+        22587.973155555555
+      ],
+      "fork_median_cv": 0.006271653020604759,
+      "allocation_B_per_op": 149977193.689971
+    },
+    {
+      "benchmark": "scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop",
+      "params": {
+        "nScans": "4800",
+        "nbasis": "3",
+        "precision": "0.1"
+      },
+      "fork_medians_us": [
+        22670.954622222223,
+        22563.762977777777,
+        22541.844444444443,
+        22587.985177777777,
+        22651.88611111111
+      ],
+      "fork_median_cv": 0.002474379640464522,
+      "allocation_B_per_op": 149979754.05603862
+    }
+  ],
+  "interpretation": "S0 variance characterization only. No candidate ratio, non-inferiority verdict or frozen S4 sample size."
+}

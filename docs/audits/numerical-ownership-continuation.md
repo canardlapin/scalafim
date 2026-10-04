@@ -70,7 +70,8 @@ staging: S0 measurements precede representation changes; S4 uses the fixed
 paired non-inferiority protocol; S5 requires staged Eidolon and PLS Neuro
 consumer evidence. Initial host checks failed the load <=2 requirement; the
 prospective host-specific amendment described below permits <=5 on buc-gw01.
-No valid baseline or HRF performance admission is claimed while the run is active.
+S0 subsequently completed and passed the review below; no S4 performance
+admission is claimed.
 ScalaFIM remains a general library: consumer applications are compatibility
 evidence, not owners of generic APIs or scientific semantics.
 
@@ -137,8 +138,7 @@ start/end load limit of 5 for 10-core `buc-gw01`. The retained amendment records
 that change; all other host checks and the 1.05 margin remain unchanged. An
 initial load-5 attempt refused load 5.2949 without starting JMH. A bounded
 readiness wait then launched `s0-baseline-20261004-02` once, at load 4.9741.
-Runner PID was 70392. Results and validity review are pending; no baseline or
-non-inferiority conclusion follows from launch.
+Runner PID was 70392. The final S0 review is recorded below.
 
 ## Upstream integration candidate
 
@@ -156,3 +156,35 @@ remains unchanged, so the profile commit still needs the local Gale override.
 The [external consumer inventory](hrf-consumer-migration-inventory.md) records
 actual Eidolon and PLS Neuro uses and proposed replacements. It is a read-only
 inventory, not consumer adoption evidence. S1-S5 remain staged work.
+
+## Completed S0 review (2026-10-04)
+
+Run `s0-baseline-20261004-02` finished at 03:14:34 UTC with JMH exit 0.
+All 53 expected benchmark/parameter configurations are present, without
+duplicates; each contains five forks with five measured iterations per fork
+(265 forks, 1,325 measured iterations). Time and normalized allocation values
+are finite; JDK, flags, thread count, warmup and measurement settings match the
+recorded protocol. Remote and retrieved raw-file SHA-256 hashes match.
+
+The amended host checks pass: start/end one-minute load was 4.9741/4.7822;
+2,223 host samples show no competing Java/Node above 10% CPU, thermal warning
+or power-source change. Recomputing CPU intervals from recorded process
+identities/counters gives maximum unowned Java/Node CPU 1.0012%. Sampling
+targeted 1 Hz; the largest actual interval was 2.6463 seconds, so this evidence
+cannot exclude an unobserved short transient. During-run load reached 8.0269;
+the prospectively frozen load rule applies at start/end, not continuously.
+No criteria were changed after outcomes were read.
+
+This is a valid S0 baseline under the amended recorded checks, not S4
+non-inferiority admission. The coefficient of variation of the five fork
+medians ranges from 0.000498 to 0.025923 across configurations (descriptive,
+not an uncertainty bound). No candidate comparison or S4 sample-size decision
+has been made. S1-S5 and consumer adoption remain open.
+
+`evidence/numerical-ownership-continuation/s0-review.json` holds the per-config
+fork medians, checks and hashes; `check_hrf_s0.py` reproduces the output review.
+Raw host/process evidence is retained in the 42,905,600-byte archive
+`/Users/bbuchsbaum/code/scala/scalafim-fixtures/hrf-s0-20261004/remote-results.tar.gz`
+(SHA-256 `887565df45d8ea3028b12c070299872ebcc4bd80f74602408cb6f5edc50b2313`),
+outside Git and volatile temporary storage. Compressed JMH results/logs and
+runner receipts are also retained in this evidence directory.
