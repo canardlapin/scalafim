@@ -62,6 +62,27 @@ class ArNoiseReductionSuite extends munit.FunSuite:
     }
   }
 
+  test("single-voxel pooled autocovariance fast path is bit-identical to the exact accumulator path") {
+    val layout = value(NoiseEstimationLayout.excludingRows(
+      TimeSegments.fromRunLengths(Vector(14, 15)), 29, Set(1, 15)
+    ))
+    val order = ArOrderValue.unsafe(3)
+    val noisy = residualMatrix(29, 6)
+    val sources = (0 until noisy.cols).map(column => columns(noisy, Vector(column))) ++ Vector(
+      Matrix.tabulate(29, 1)((_, _) => 0.0),
+      Matrix.tabulate(29, 1)((_, _) => 2.5),
+      Matrix.tabulate(29, 1)((row, _) => if row % 2 == 0 then 1e150 else -3e149)
+    )
+    sources.foreach { single =>
+      // `summarizeNoise` always routes the voxel through ExactSum; the fast path must agree to the bit.
+      val exact = value(ArEstimation.summarizeNoise(single, layout, order)).lagSumsByRun
+      (0 until layout.runCount).foreach { run =>
+        val fast = value(ArEstimation.pooledAutocovariance(single, layout.segmentsForRun(run), order)).sums.toVector
+        assertEquals(fast.map(java.lang.Double.doubleToRawLongBits), exact(run).map(java.lang.Double.doubleToRawLongBits))
+      }
+    }
+  }
+
   test("summary counts and lag products preserve reset gaps and run means") {
     val layout = value(NoiseEstimationLayout.excludingRows(
       TimeSegments.fromRunLengths(Vector(4, 3)), 7, Set(1, 5)

@@ -72,9 +72,9 @@ final class ArNoiseSummary private (
     val layout: NoiseEstimationLayout,
     val maxOrder: ArOrderValue,
     private val exactSumsByRun: Vector[Vector[ExactSum]],
+    private[ar] val sumsByRun: Vector[Vector[Double]],
     private[ar] val countsByRun: Vector[Vector[Long]]
 ):
-  private[ar] val sumsByRun: Vector[Vector[Double]] = exactSumsByRun.map(_.map(_.value))
   require(sumsByRun.length == layout.runCount, "noise-summary sums must cover every run")
   require(countsByRun.length == layout.runCount, "noise-summary counts must cover every run")
   require(sumsByRun.zip(countsByRun).forall { (sums, counts) =>
@@ -95,10 +95,20 @@ private object ArNoiseSummary:
   def make(
       layout: NoiseEstimationLayout,
       maxOrder: ArOrderValue,
-      sumsByRun: Vector[Vector[ExactSum]],
+      exactSumsByRun: Vector[Vector[ExactSum]],
       countsByRun: Vector[Vector[Long]]
-  ): ArNoiseSummary =
-    new ArNoiseSummary(layout, maxOrder, sumsByRun, countsByRun)
+  ): Either[ArError, ArNoiseSummary] =
+    // Round each exact total once; the summary keeps both forms so later merges stay exact.
+    val sumsByRun = exactSumsByRun.map(_.map(_.value))
+    var run = 0
+    while run < sumsByRun.length do
+      var lag = 0
+      while lag < sumsByRun(run).length do
+        val total = sumsByRun(run)(lag)
+        if !total.isFinite then return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), total))
+        lag += 1
+      run += 1
+    Right(new ArNoiseSummary(layout, maxOrder, exactSumsByRun, sumsByRun, countsByRun))
 
   def merge(left: ArNoiseSummary, right: ArNoiseSummary): Either[ArError, ArNoiseSummary] =
     if left.layout != right.layout then
@@ -116,9 +126,6 @@ private object ArNoiseSummary:
         while lag <= left.maxOrder.value do
           val sum = left.exactSum(run, lag).copy()
           sum.addAll(right.exactSum(run, lag))
-          val total = sum.value
-          if !total.isFinite then
-            return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), total))
           if Long.MaxValue - left.countsByRun(run)(lag) < right.countsByRun(run)(lag) then
             return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
           mergedSums += sum
@@ -127,7 +134,7 @@ private object ArNoiseSummary:
         sums += mergedSums.result()
         counts += mergedCounts.toVector
         run += 1
-      Right(make(left.layout, left.maxOrder, sums.result(), counts.result()))
+      make(left.layout, left.maxOrder, sums.result(), counts.result())
 
 object ArEstimation:
 
@@ -628,19 +635,13 @@ object ArEstimation:
           counts(run)(lag) += pairs
           lag += 1
         column += 1
-      var lag = 0
-      while lag < lags do
-        val total = sums(run)(lag).value
-        if !total.isFinite then
-          return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), total))
-        lag += 1
       run += 1
-    Right(ArNoiseSummary.make(
+    ArNoiseSummary.make(
       layout,
       maxOrder,
       sums.iterator.map(_.toVector).toVector,
       counts.iterator.map(_.toVector).toVector
-    ))
+    )
 
   /** Canonical per-voxel lag-product sum: segments in order, rows in order, from zero. Both the whole-volume
     * estimator and spatial-block summaries reduce exactly this value per voxel, then combine voxels with
@@ -696,21 +697,37 @@ object ArEstimation:
       }
 
       val lags = maxOrder.value + 1
-      val exact = Array.fill(lags)(ExactSum.zero())
       val segmentMeans = new Array[Double](segments.length)
-      var col = 0
-      while col < residuals.cols do
+      def loadMeans(col: Int): Unit =
         var segmentIndex = 0
         while segmentIndex < segments.length do
           val runIndex = segments(segmentIndex).runIndex
           segmentMeans(segmentIndex) = runSums(runIndex * residuals.cols + col) / runRows(runIndex).toDouble
           segmentIndex += 1
+      val sums = new Array[Double](lags)
+      if residuals.cols == 1 then
+        // One voxel contributes one term per lag, and the exact sum of one term is that term (ExactSum also
+        // reports a signed zero as +0.0), so this skips the accumulator and stays bit-identical to it.
+        loadMeans(0)
         var lag = 0
         while lag < lags do
-          exact(lag).add(columnLagProductSum(residuals, col, lag, segments, segmentMeans))
+          val partial = columnLagProductSum(residuals, 0, lag, segments, segmentMeans)
+          sums(lag) = if partial == 0.0 then 0.0 else partial
           lag += 1
-        col += 1
-      val sums = Array.tabulate(lags)(lag => exact(lag).value)
+      else if residuals.cols > 1 then
+        val exact = Array.fill(lags)(ExactSum.zero())
+        var col = 0
+        while col < residuals.cols do
+          loadMeans(col)
+          var lag = 0
+          while lag < lags do
+            exact(lag).add(columnLagProductSum(residuals, col, lag, segments, segmentMeans))
+            lag += 1
+          col += 1
+        var lag = 0
+        while lag < lags do
+          sums(lag) = exact(lag).value
+          lag += 1
       val pairCounts = Array.tabulate(lags)(lag => residuals.cols.toLong * lagPairCount(segments, lag))
       Right(PooledAutocovariance(sums, pairCounts, correction))
 

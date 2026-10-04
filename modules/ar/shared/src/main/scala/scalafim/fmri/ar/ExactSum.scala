@@ -47,11 +47,11 @@ private[ar] final class ExactSum private (
 
   def addAll(other: ExactSum): Unit =
     normalize()
-    val source = other.copy()
-    source.normalize()
+    // This side is now below 2^32 per digit and the other side, whatever its pending count, below 2^62 + 2^32,
+    // so adding its carry-save digits directly cannot overflow and leaves `other` untouched.
     var index = 0
     while index < DigitCount do
-      digits(index) += source.digits(index)
+      digits(index) += other.digits(index)
       index += 1
     pending = 1
     normalize()
@@ -84,7 +84,8 @@ private[ar] final class ExactSum private (
       pending = 0
 
 private[ar] object ExactSum:
-  // Bits 0 through 2098 cover every finite double; the remaining digits absorb carries from up to 2^60 terms.
+  // Every finite double has magnitude below 2^1024 = 2^2098 units, so bits 0 through 2097 (digits 0 through 65)
+  // cover one term; the remaining digits absorb carries from up to 2^60 terms.
   private val DigitCount = 70
   private val DigitMask = 0xffffffffL
   // Each addition moves a digit by less than 2^32, so 2^30 additions keep every carry-save digit below 2^63.
@@ -141,8 +142,12 @@ private[ar] object ExactSum:
     val remainder = bitCount & 31
     remainder > 0 && (digits(whole) & ((1L << remainder) - 1L)) != 0L
 
+  /** `value * 2^exponent` for `value` an integer below 2^62. An exponent above 1023 only arises from a window of at
+    * least 2^61 units scaled past 2^1084, which overflows; it is answered directly because `powerOfTwo` would
+    * otherwise encode an out-of-range exponent field.
+    */
   private def scale(value: Double, exponent: Int): Double =
-    if exponent > 1023 then value * powerOfTwo(1023) * powerOfTwo(exponent - 1023)
+    if exponent > 1023 then Double.PositiveInfinity
     else value * powerOfTwo(exponent)
 
   private def powerOfTwo(exponent: Int): Double =

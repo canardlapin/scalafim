@@ -113,3 +113,69 @@ separate defect.
 3. The backup was restored and its SHA-256 matched
    `d9279f0bbf7356cd876c18d03a6dcee4cc6a1200b8afc45fec8fb5625ad5abcf`. The same
    command then passed 3/3.
+
+## Review follow-up
+
+An Opus review of `9a59b5ff` returned APPROVE-WITH-NITS and found no correctness
+defects. This follow-up commit addresses the nits. Main at `53097f3f` was merged into
+the branch first, in merge commit `fe105694`.
+
+- **Independent exact reference.** `ExactSumSuite` adds a randomized test of 600
+  seeded trials across six generators: arbitrary finite bit patterns, clustered
+  cancellation, constructed ties, subnormal-heavy sums, sums near `MaxValue`, and
+  exact cancellation plus noise. The reference adds the terms exactly as
+  `BigInteger` values in units of 2^-1074, decomposed from `doubleToRawLongBits`.
+  `BigDecimal` is not used because its conversions are inexact on Scala.js.
+  - The result must be at least as close as its `nextUp` and `nextDown` neighbours,
+    and a tie must leave an even significand.
+  - A total of magnitude at least (2^1024 − 2^970)·2^1074 units must be ±Inf.
+    Exact zero must be +0.0.
+- **Explicit boundary cases.**
+  - Subnormal totals, including the first rounding at 2^-1021.
+  - Ties at 2^1000.
+  - The integer fast-path and window edges at 2^53, 2^61, 2^62, 2^63 and 2^64 units.
+  - `MaxValue + ulp/2` gives ±Inf, and `MaxValue + ulp/2 − tiny` gives `MaxValue`.
+  - −0.0 and exact cancellation give +0.0.
+- **Allocation.** `pooledAutocovariance` with one column (the per-voxel
+  `AutocorrelationDiagnostics` call) no longer creates `ExactSum` accumulators. The
+  exact total of one term is that term, and a signed zero becomes +0.0, so the shortcut
+  matches the accumulator bit for bit. A new `ArNoiseReductionSuite` test checks the
+  raw bits against `summarizeNoise`, which always goes through `ExactSum`. It covers
+  six noise voxels plus zero, constant and large-magnitude series.
+- **Cleanups.**
+  - `ArNoiseSummary.make` rounds each exact total once and returns the typed
+    non-finite error. `merge` and `summarizeNoise` no longer round twice.
+  - `ExactSum.addAll` adds the other operand's carry-save digits directly instead
+    of copying it. The bound argument is in the code.
+  - The digit-range comment now says the top bit is 2097.
+  - In `scale`, the `exponent > 1023` branch now returns +Inf directly. That branch
+    is only reachable through overflow, and it is kept so that `powerOfTwo` never
+    builds an out-of-range exponent field.
+- **README.** The `modules/fit` sentence on bit-identity is limited to the raw pooled
+  estimator. The chunked summary path does not apply `DesignCorrected`.
+- **Gale upstreaming.** Mote bead `bd-01M42FRAY1S2DS6808TAWAQXBZ` tracks moving
+  `ExactSum` to `gale.numeric` as a superaccumulator and deleting the `ar` copy at
+  the next `galeRevision` bump.
+
+### Follow-up mutation check
+
+1. The new `ExactSum.scala` was backed up. Its SHA-256 is
+   `a19ec067af4334105f4c2a08a9b6341b28cab6381629161d9005b976b556eb57`.
+2. The tie rule was broken by forcing the sticky bit to 1 in the rounding window.
+   `arJVM/testOnly *ExactSumSuite` then failed 3 of 6 tests. One was the randomized
+   BigInteger reference test: "tie not rounded to even".
+3. The backup was restored and its SHA-256 matched.
+
+### Follow-up gates (merged with main `53097f3f`)
+
+| Gate | Result |
+|---|---|
+| `arJVM/test` | 153/153 pass |
+| `arJS/test` | 151/151 pass |
+| `fitJVM/test` | 402/402 pass |
+| `fitJS/test` | 391/391 pass |
+| `firstLevelLawsJVM/test` | 54/57: the same 3 pre-existing `ConditionMilestoneSuite` failures; MissingResponse 3/3 |
+| `firstLevelLawsJS/test` | 54/57: the same 3 pre-existing `ConditionMilestoneSuite` failures; MissingResponse 3/3 |
+| `scalafimCompileAll` | success (exit 0); warning-clean |
+
+Main stayed at `53097f3f` for every gate. Free memory was at least 33% before each batch.
