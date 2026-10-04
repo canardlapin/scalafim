@@ -1,0 +1,168 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project image4s-atlas-epic-20261003-build from plugins.sbt...
+[info] loading project definition from /private/tmp/image4s-atlas-epic-20261003/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/provider-sbt/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/provider-sbt/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/provider-sbt/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/provider-sbt/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (68646 settings) ...
+[info] set current project to image4s-root (in build file:/private/tmp/image4s-atlas-epic-20261003/)
+[info] compiling 12 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-core/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+Test run image4s.SampledSuite started
+image4s.SampledSuite: finished 0.295s
+Test run image4s.SampledSuite finished: 0 failed, 0 ignored, 38 total 0.32s
+Test run image4s.EncodedSampledSuite started
+image4s.EncodedSampledSuite: finished 0.039s
+Test run image4s.EncodedSampledSuite finished: 0 failed, 0 ignored, 6 total 0.039s
+IMG-EXACT-VIEW allocation: operation=crop, sourceSamples=294912, allocated=29632 B
+IMG-EXACT-VIEW allocation: operation=flip, sourceSamples=294912, allocated=30304 B
+IMG-EXACT-VIEW allocation: operation=permutation, sourceSamples=294912, allocated=30608 B
+IMG-EXACT-VIEW allocation: operation=stride, sourceSamples=294912, allocated=27712 B
+Test run image4s.LatticeMapAllocationSuite started
+image4s.LatticeMapAllocationSuite: finished 0.086s
+Test run image4s.LatticeMapAllocationSuite finished: 0 failed, 0 ignored, 1 total 0.086s
+Test run image4s.SampleSpaceRefinementSuite started
+image4s.SampleSpaceRefinementSuite: finished 0.005s
+Test run image4s.SampleSpaceRefinementSuite finished: 0 failed, 0 ignored, 2 total 0.005s
+Test run image4s.BorrowedJvmSuite started
+image4s.BorrowedJvmSuite: finished 0.003s
+Test run image4s.BorrowedJvmSuite finished: 0 failed, 0 ignored, 1 total 0.003s
+Test run image4s.LatticeMapSuite started
+image4s.LatticeMapSuite: finished 0.021s
+Test run image4s.LatticeMapSuite finished: 0 failed, 0 ignored, 6 total 0.021s
+Test run image4s.SamplingAlignmentSuite started
+image4s.SamplingAlignmentSuite: finished 0.028s
+Test run image4s.SamplingAlignmentSuite finished: 0 failed, 0 ignored, 9 total 0.028s
+IMG-CONVERSION JVM baseline: operation=byte-to-float, samples=262144, allocated=1051920 B, median=18309542 ns, millionSamplesPerSecond=14.317
+IMG-CONVERSION JVM baseline: operation=short-to-float, samples=262144, allocated=1051920 B, median=13839166 ns, millionSamplesPerSecond=18.942
+Test run image4s.ConversionPerformanceSuite started
+image4s.ConversionPerformanceSuite: finished 1.003s
+Test run image4s.ConversionPerformanceSuite finished: 0 failed, 0 ignored, 1 total 1.003s
+IMG-PACKED JVM allocation: case=mask-union, samples=1048576, allocated=134912 B, booleanExpansion=1048576 B
+IMG-PACKED JVM allocation: case=fused-decode-float, samples=262144, allocated=1048592 B, output=1048576 B
+Test run image4s.PackedMaskPerformanceSuite started
+image4s.PackedMaskPerformanceSuite: finished 0.248s
+Test run image4s.PackedMaskPerformanceSuite finished: 0 failed, 0 ignored, 2 total 0.251s
+Test run image4s.ApproachableApiSuite started
+image4s.ApproachableApiSuite: finished 0.02s
+Test run image4s.ApproachableApiSuite finished: 0 failed, 0 ignored, 2 total 0.02s
+Test run image4s.PackedSampledSuite started
+image4s.PackedSampledSuite: finished 0.024s
+Test run image4s.PackedSampledSuite finished: 0 failed, 0 ignored, 7 total 0.024s
+Test run image4s.AxisSuite started
+image4s.AxisSuite: finished 0.404s
+Test run image4s.AxisSuite finished: 0 failed, 0 ignored, 21 total 0.406s
+[info] Passed: Total 96, Failed 0, Errors 0, Passed 96
+[success] Total time: 24 s, completed Oct 3, 2026, 7:10:39 p.m.
+[info] compiling 52 Scala sources to /private/tmp/atlas-epic-20261003/provider-sbt/staging/5a90f48e170e9e640ee1/gale/core/js/target/scala-3.7.4/classes ...
+[info] compiling 43 Scala sources to /private/tmp/atlas-epic-20261003/provider-sbt/staging/57a292f3a6ded9e259cf/ravel/modules/core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 6 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-geometry/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/atlas-epic-20261003/provider-sbt/staging/57a292f3a6ded9e259cf/ravel/modules/packed/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 14 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-core/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 9 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-core/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/image4s-atlas-epic-20261003/modules/image4s-core/js/target/scala-3.7.4/image4s-core-test-fastopt
+Test run image4s.SampledSuite started
+image4s.SampledSuite: finished 0.094s
+Test run image4s.SampledSuite finished: 0 failed, 0 ignored, 38 total 0.094s
+Test run image4s.EncodedSampledSuite started
+image4s.EncodedSampledSuite: finished 0.031s
+Test run image4s.EncodedSampledSuite finished: 0 failed, 0 ignored, 6 total 0.031s
+Test run image4s.SampleSpaceRefinementSuite started
+image4s.SampleSpaceRefinementSuite: finished 0.001s
+Test run image4s.SampleSpaceRefinementSuite finished: 0 failed, 0 ignored, 2 total 0.001s
+Test run image4s.LatticeMapSuite started
+image4s.LatticeMapSuite: finished 0.031s
+Test run image4s.LatticeMapSuite finished: 0 failed, 0 ignored, 6 total 0.031s
+Test run image4s.SamplingAlignmentSuite started
+image4s.SamplingAlignmentSuite: finished 0.007s
+Test run image4s.SamplingAlignmentSuite finished: 0 failed, 0 ignored, 9 total 0.007s
+Test run image4s.BorrowedJsSuite started
+image4s.BorrowedJsSuite: finished 0.001s
+Test run image4s.BorrowedJsSuite finished: 0 failed, 0 ignored, 1 total 0.001s
+Test run image4s.ApproachableApiSuite started
+image4s.ApproachableApiSuite: finished 0.001s
+Test run image4s.ApproachableApiSuite finished: 0 failed, 0 ignored, 2 total 0.001s
+Test run image4s.PackedSampledSuite started
+image4s.PackedSampledSuite: finished 0.059s
+Test run image4s.PackedSampledSuite finished: 0 failed, 0 ignored, 7 total 0.059s
+Test run image4s.AxisSuite started
+image4s.AxisSuite: finished 0.500s
+Test run image4s.AxisSuite finished: 0 failed, 0 ignored, 21 total 0.500s
+[info] Passed: Total 92, Failed 0, Errors 0, Passed 92
+[success] Total time: 64 s (0:01:04.0), completed Oct 3, 2026, 7:11:43 p.m.
+[info] compiling 2 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-nifti/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-nifti/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+Test run image4s.nifti.NiftiStreamingSuite started
+image4s.nifti.NiftiStreamingSuite: finished 0.492s
+Test run image4s.nifti.NiftiStreamingSuite finished: 0 failed, 0 ignored, 4 total 0.495s
+IMG-NIFTI JVM allocation: operation=read, case=float32-3d, samples=14336, allocated=155600 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read, case=float32-4d, samples=86016, allocated=454000 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read, case=int16-labels, samples=14336, allocated=184216 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read, case=float32-4d-gzip, samples=86016, allocated=465752 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=write, case=float32-4d, samples=86016, allocated=82008 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=write, case=float32-4d-gzip, samples=86016, allocated=82720 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read-stored, case=uint8, samples=1048576, allocated=1157120 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read-scaled-double, case=uint8, samples=1048576, allocated=8496448 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM time: operation=read-stored, case=uint8, samples=1048576, elapsed=9929500 ns, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM time: operation=read-scaled-double, case=uint8, samples=1048576, elapsed=27890250 ns, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read-stored, case=int16, samples=1048576, allocated=2206480 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM allocation: operation=read-scaled-double, case=int16, samples=1048576, allocated=8497856 B, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM time: operation=read-stored, case=int16, samples=1048576, elapsed=15360708 ns, java=25.0.1, scala=2.13.16, revision=unspecified
+IMG-NIFTI JVM time: operation=read-scaled-double, case=int16, samples=1048576, elapsed=18961208 ns, java=25.0.1, scala=2.13.16, revision=unspecified
+Test run image4s.nifti.NiftiProductionJvmSuite started
+image4s.nifti.NiftiProductionJvmSuite: finished 6.457s
+Test run image4s.nifti.NiftiProductionJvmSuite finished: 0 failed, 0 ignored, 2 total 6.46s
+Test run image4s.nifti.NiftiSemanticSuite started
+image4s.nifti.NiftiSemanticSuite: finished 0.87s
+Test run image4s.nifti.NiftiSemanticSuite finished: 0 failed, 0 ignored, 14 total 0.87s
+Test run image4s.nifti.NiftiIncrementalSuite started
+image4s.nifti.NiftiIncrementalSuite: finished 0.205s
+Test run image4s.nifti.NiftiIncrementalSuite finished: 0 failed, 0 ignored, 11 total 0.205s
+Test run image4s.nifti.NiftiSuite started
+image4s.nifti.NiftiSuite: finished 0.641s
+Test run image4s.nifti.NiftiSuite finished: 0 failed, 0 ignored, 24 total 0.642s
+Test run image4s.nifti.NiftiIncrementalJvmSuite started
+image4s.nifti.NiftiIncrementalJvmSuite: finished 0.048s
+Test run image4s.nifti.NiftiIncrementalJvmSuite finished: 0 failed, 0 ignored, 3 total 0.049s
+[info] Passed: Total 58, Failed 0, Errors 0, Passed 58
+[success] Total time: 22 s, completed Oct 3, 2026, 7:12:05 p.m.
+[info] compiling 6 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-nifti/js/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/image4s-atlas-epic-20261003/modules/image4s-nifti/js/target/scala-3.7.4/test-classes ...
+[info] done compiling
+[info] Fast optimizing /private/tmp/image4s-atlas-epic-20261003/modules/image4s-nifti/js/target/scala-3.7.4/image4s-nifti-test-fastopt
+Test run image4s.nifti.NiftiIncrementalNodeSuite started
+image4s.nifti.NiftiIncrementalNodeSuite: finished 0.043s
+Test run image4s.nifti.NiftiIncrementalNodeSuite finished: 0 failed, 0 ignored, 3 total 0.043s
+Test run image4s.nifti.NiftiStreamingSuite started
+image4s.nifti.NiftiStreamingSuite: finished 0.195s
+Test run image4s.nifti.NiftiStreamingSuite finished: 0 failed, 0 ignored, 4 total 0.195s
+Test run image4s.nifti.NodeNiftiSuite started
+image4s.nifti.NodeNiftiSuite: finished 0.702s
+Test run image4s.nifti.NodeNiftiSuite finished: 0 failed, 0 ignored, 7 total 0.702s
+Test run image4s.nifti.NiftiSemanticSuite started
+image4s.nifti.NiftiSemanticSuite: finished 0.475s
+Test run image4s.nifti.NiftiSemanticSuite finished: 0 failed, 0 ignored, 14 total 0.475s
+Test run image4s.nifti.NiftiIncrementalSuite started
+image4s.nifti.NiftiIncrementalSuite: finished 0.038s
+Test run image4s.nifti.NiftiIncrementalSuite finished: 0 failed, 0 ignored, 11 total 0.038s
+[info] Passed: Total 39, Failed 0, Errors 0, Passed 39
+[success] Total time: 28 s, completed Oct 3, 2026, 7:12:32 p.m.

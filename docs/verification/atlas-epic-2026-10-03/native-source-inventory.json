@@ -1,0 +1,70 @@
+[
+  {
+    "file": "Atlas_ROIs.1.60.nii.gz",
+    "bytes": 25355,
+    "sha256": "75b295274c31311b4e6c42e7a1804c8a0bc31a12199dcb561f8628afb2ed340b",
+    "dimensions": [
+      113,
+      136,
+      113
+    ],
+    "datatype": 16,
+    "bits": 32
+  },
+  {
+    "file": "CIT168-labels.txt",
+    "bytes": 123,
+    "sha256": "5e00265a7bbbdf242356345e0f6615d84791ada54aa9739539096aab3c1e1b41"
+  },
+  {
+    "file": "CIT168.nii.gz",
+    "bytes": 44739,
+    "sha256": "8b43e911c6849c9a57c9153499a324d2e3894531bb31446b6905b4c357693ae0",
+    "dimensions": [
+      182,
+      218,
+      182
+    ],
+    "datatype": 16,
+    "bits": 32
+  },
+  {
+    "file": "Thalamic_Nuclei-ColorLUT.txt",
+    "bytes": 1336,
+    "sha256": "141df5af64bb33fb51671d2244b38764828e54398ad4bd7488f01daf1e7f39f8"
+  },
+  {
+    "file": "Thalamus_Nuclei-HCP-MaxProb.nii.gz",
+    "bytes": 14805,
+    "sha256": "68f0229de14a5375e0b438784787e73180483cff243a932d0d6f598c42400174",
+    "dimensions": [
+      197,
+      233,
+      189
+    ],
+    "datatype": 2,
+    "bits": 8
+  },
+  {
+    "file": "atl-MDTB10.tsv",
+    "bytes": 199,
+    "sha256": "c51b7795f1993c27aa0de8de6c09d0837d61d71afae37abc5aaa78b91214a404"
+  },
+  {
+    "file": "atl-MDTB10_space-MNI_dseg.nii",
+    "bytes": 1165717,
+    "sha256": "48de27c43ddff528442bfb7256eb1f237b533ff432b885ef781db74196038322",
+    "dimensions": [
+      141,
+      95,
+      87
+    ],
+    "datatype": 256,
+    "bits": 8
+  },
+  {
+    "file": "atlas-HCP_dseg.tsv",
+    "bytes": 1027,
+    "sha256": "a3826e3324d62c8ca04dac5031912ad658250e3782f56526039daa748357b354"
+  }
+]

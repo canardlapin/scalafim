@@ -1,0 +1,52 @@
+[
+  {
+    "fixture": "parcel-alignment",
+    "metadata": {
+      "reference": "neuroatlas",
+      "commit": "d65ff97cb9316dbb92e4b9decbd2d7eb9ccf85fd",
+      "parcel_data_sha256": "17e67173a60b11e23cccec4cbcdfc8ba697a5cc60617a8486056ce8f14828dba",
+      "generator_sha256": "984f1958fdaf00ff26ba8f3e440a98610eb67d5063df35163fe1ee0443a2461c",
+      "tsv_sha256": "00117ff5fdf84f291420f9b2c34d27aff2ea62d8686881977b3b8fbc591f2e1a",
+      "scala_sha256": "fd446abc4df411b70ac1a4175a14d73f3580da1ba79383ac4b7ec13d13dc1c78",
+      "R_version": "R version 4.5.1 (2025-06-13)",
+      "cases": 6,
+      "cross_convention_numeric_join": "neuroatlas_error_id_convention",
+      "scope": "Synthetic key alignment only; no acquired atlas or loader qualification"
+    },
+    "inputs_match": true
+  },
+  {
+    "fixture": "parcel-expansion",
+    "metadata": {
+      "reference": "neuroatlas",
+      "commit": "d65ff97cb9316dbb92e4b9decbd2d7eb9ccf85fd",
+      "parcel_data_sha256": "17e67173a60b11e23cccec4cbcdfc8ba697a5cc60617a8486056ce8f14828dba",
+      "generator_sha256": "d27607b8ef63f9e74428fb3c60d4aeaa9644a27d490c821e9e21328fec76ebff",
+      "tsv_sha256": "1cefc5b6e2cc47a165d27e770247ae4b7d50f28c2becf9f1d438a62690479a25",
+      "scala_sha256": "17e0245e37ce651c2071b3b6dc4ca97353854fd07b049cda14d9aed8f657fe39",
+      "R_version": "R version 4.5.1 (2025-06-13)",
+      "cases": 3,
+      "ordinal_layout": "explicit x,y,z; row-major-last-axis-fastest/v1",
+      "scope": "Synthetic finite and missing-value expansion; exact R space retained; no asset acquisition or infinity-policy parity"
+    },
+    "inputs_match": true
+  },
+  {
+    "fixture": "parcel-composition",
+    "metadata": {
+      "reference": "neuroatlas",
+      "commit": "d65ff97cb9316dbb92e4b9decbd2d7eb9ccf85fd",
+      "atlas_R_sha256": "1fce8b265910b1c47c3814ddb1b91faf1fc8ba47b2cb1deee2cea2a10d09b4f6",
+      "constructor_sha256": "1d1fdf4228b948880582f9d1a5dcd4b48fc643cb4c5e28925f015be58e23c26c",
+      "metadata_sha256": "1944e665cf72ee5db76e05254d049d955c2534de5db74bced2b8b48a82073052",
+      "generator_sha256": "bc1e286788f9d23b15e72d577e9745feb2672824376a07498b48917e37e2ee2a",
+      "tsv_sha256": "5a531673da070ec307da0694075071a59786925bade52bf42231f8755d9b6f85",
+      "scala_sha256": "247eccc836e428e7a4605411889e5e137b04b54abdfe9914de24772ed267bd05",
+      "R_version": "R version 4.5.1 (2025-06-13)",
+      "cases": 3,
+      "ordinal_layout": "explicit x,y,z; row-major-last-axis-fastest/v1",
+      "scope": "Synthetic exact-grid second-parent precedence and parcel ancestry; R retains occluded inventory while Scala explicitly drops it. No assets, other overlap policies or generic resampling parity."
+    },
+    "inputs_match": true
+  }
+]

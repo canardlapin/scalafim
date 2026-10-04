@@ -1,0 +1,816 @@
+[info] welcome to sbt 1.11.7 (Homebrew Java 25.0.1)
+[info] loading settings for project scalafim-atlas-epic-20261003-build from plugins.sbt...
+[info] loading project definition from /private/tmp/scalafim-atlas-epic-20261003/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project alder-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/2f5b3675f2cf2c4e96c3/alder/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project bids4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/77e7bdc71bddb8077fcd/bids4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/5a90f48e170e9e640ee1/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project gale-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/449715b8ebc2010e6e23/gale/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project graph4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/b4b08747efd9a8151229/graph4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/d79d1afec9bc45383768/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project intaglio-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/34fcacf7027b8ae3b2f8/intaglio/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project linops4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/cfabf5f1e5e2fb8fb176/linops4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project locus4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/05a8f1a231c171f1bca0/locus4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project multivar-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/8a071d8f65817f0f368f/multivar/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project ravel-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/57a292f3a6ded9e259cf/ravel/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project reframe4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/aa1fd63832323d604703/reframe4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project image4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/41e96dde036f148f012a/image4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project resample4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/3f5d01c7e6069e74a205/resample4s/project
+[info] loading settings for project root from build.sbt...
+[info] loading settings for project zarr4s-build from plugins.sbt...
+[info] loading project definition from /private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505/staging/34c0071f90095ef07887/zarr4s/project
+[info] loading settings for project root from build.sbt...
+[info] resolving key references (347459 settings) ...
+[info] set current project to scalafim (in build file:/private/tmp/scalafim-atlas-epic-20261003/)
+scalafim.image.ProviderDimensionRefinementSuite:
+  + dynamic D3 admission retains exact provider geometry, physical declarations and FIR axis 0.115s
+  + D2 refusal preserves the ScalaFIM error and equal-looking D3 frames stay distinct 0.003s
+scalafim.image.SliceOrientationOracleSuite:
+  + all 48 signed axis permutations reslice every anatomical plane correctly 0.246s
+  + deterministic oblique affine reslices reproduce a world-linear field 0.076s
+scalafim.image.io.NiftiSpaceEvidenceSuite:
+  + evidence follows the affine the policy selects, not the other xform 0.009s
+  + the mirrored selection agrees with the affine image4s actually selected 0.042s
+  + the mirrored selection matches image4s-nifti's selectAffine on every qform/sform/scaling case 0.107s
+  + without a native context the evidence resolves to the unresolved space 0.008s
+  + readVolumeIn places a template file in its template world, keeping geometry and data 0.055s
+  + semantic volume and header placement both reject missing, ambiguous, and contradictory evidence 0.012s
+  + header placement enforces the same affine agreement gate as a full read 0.019s
+  + readVolumeIn refuses unresolved, ambiguous and contradictory evidence 0.012s
+  + an unknown header code is no evidence, so a supplied code is admitted 0.013s
+  + two subjects' native volumes get different worlds and no longer align 0.033s
+  + readSeriesIn places a 4D series in its world, keeping its time axis 0.013s
+  + header and full reads refuse metre, micrometre and incompatible unknown-unit fallback geometry 0.022s
+scalafim.image.world.ToolCoordinatesSuite:
+  + every convention round-trips through RAS 0.083s
+  + the LPS flip negates x and y only and is self-inverse 0.008s
+  + FSL mirrors x exactly when the selected affine is neurological 0.002s
+  + FSL selects the sform, then the qform, then scaling 0.003s
+  + opposite active q/sform handedness is a typed refusal; historical compatibility must be explicit 0.002s
+  + Torig is FreeSurfer's fixed LIA tkregister geometry; tkRAS to scanner is a translation only for LIA volumes 0.002s
+  + between composes into and out of RAS 0.0s
+scalafim.image.CatsEffectSharedBoundarySuite:
+  + shared Resource releases after success and failure 0.227s
+  + shared Resource releases when its fiber is cancelled 0.009s
+scalafim.image.MaskedLocalStatsSuite:
+  + integral-window normalization matches an independent masked loop 0.01s
+  + minimum nominal window fraction rejects undersupported boundaries 0.001s
+  + physical channel gradients recover an analytic world covector on an oblique grid 0.003s
+scalafim.image.OwnershipSuite:
+  + canonical array construction copies its input buffer 0.003s
+  + canonical ingress retains one Sampled and Ravel value 0.001s
+  + dense compatibility geometry is the sampled SampleSpace itself 0.007s
+  + series volume selection is a zero-copy Ravel view 0.019s
+  + component fields retain one image4s and Ravel value 0.005s
+  + selected series retains one compact Ravel value and exact ordered support 0.101s
+  + ordered selected support survives time selection and dense roundtrips 0.005s
+  + checked dense reconstruction reports shape failures 0.001s
+  + selected-volume construction copies mutable ingress into immutable storage 0.003s
+  + selected windows add only a certified center to selected storage 0.003s
+scalafim.image.VolumeParcellationSuite:
+  + one partial surjection is the exact support and fiber truth 0.007s
+  + continuous rendering retains its precise sample owner and exact grid 0.02s
+  + parcel series are parcel-major with contiguous time rows 0.042s
+  + restricted reduction requires an explicit empty-parcel policy 0.002s
+  + dynamic boundaries reject foreign voxel, parcel, and support owners 0.001s
+  + grid and world centroids use the complete affine 0.011s
+  + parcel neighborhoods are centered exact relations 0.014s
+  + parcel neighborhood windows retain exact support and center position 0.012s
+  + parcel constructors and geometry reject invalid policy 0.004s
+external.consumer.ProviderAxisBoundaryCompileSuite:
+  + the deleted ScalaFIM Axis and AxisSet types cannot be imported 0.001s
+  + time-axis construction uses image4s Axis directly 0.0s
+scalafim.image.world.IdentifiersSuite:
+  + identifiers trim surrounding whitespace 0.001s
+  + blank identifiers are rejected with their label 0.001s
+scalafim.image.ProviderAffineContractSuite:
+  + provider affine and Gale matrix constructors copy borrowed input 0.001s
+  + provider inverse and composition retain coordinate laws 0.001s
+  + provider rejects non-affine, singular, and excessive residual inputs 0.008s
+  + orientation and neuro affine extensions consume provider geometry 0.01s
+scalafim.image.world.WorldLinkSuite:
+  + one world links directly: coordinates carry over under a checked alignment 0.016s
+  + different worlds, including two declared spaces with one label, do not link without a map 0.003s
+  + a pullback-only link maps target points back and refuses the forward direction 0.014s
+  + a link with both directions round-trips 0.0s
+  + points of another owner of the link frame's key are rebound, other worlds are refused 0.0s
+  + a mapped link needs at least one direction, and each map must join the link's frames 0.001s
+scalafim.image.FunctionalImageSuite:
+  + mapValues and coordinate-aware volume mapping preserve geometry 0.056s
+  + SomeNeuroSeries mapping distinguishes voxel coordinates from time samples 0.002s
+  + checked zipExact rejects a different physical grid 0.003s
+  + effectful traversal sequences failures without adding an image monad 0.152s
+  + selected-series mapping retains exact selection and exposes coordinates 0.001s
+  + region algebra and ordered selection compose without duplicate wrappers 0.001s
+  + selected data requires an explicit missing-voxel policy 0.009s
+scalafim.image.SpaceUtilsSuite:
+  + outputAlignedSpace returns identity-aligned space for identity affine 0.019s
+  + outputAlignedSpace supports SomeSampleSpace and custom voxel sizes 0.001s
+  + vox2outVox is an alias for outputAlignedSpace 0.002s
+  + sliceToVolumeAffine embeds a 2D slice in a 3D volume 0.002s
+  + deoblique builds axis-aligned target and supports gridset 0.011s
+  + deoblique resamples SomeNeuroVolume to target grid 0.052s
+scalafim.image.SpatialCoordinatesSuite:
+  + RAS and LPS conversions flip the first two axes 0.001s
+  + tkRAS conversions translate by c_ras and roundtrip 0.001s
+  + voxel/world affine conversions use continuous zero-based voxel coordinates 0.0s
+  + typed spatial points use the same coordinate conversions 0.002s
+  + provider construction reports singular affine directly 0.001s
+  + GridSpec generates world coordinates in canonical last-axis-fastest order 0.001s
+  + GridSpec exposes typed batch affine conversions 0.002s
+  + GridSpec accepts typed spatial dims and reports invalid vector dims 0.004s
+  + GridSpec bridges to SomeSampleSpace without changing affine coordinates 0.001s
+scalafim.image.SliceCompatibilityParitySuite:
+  + ordinary and mapped plans accept one persistent grid restored through its registry 0.017s
+  + ordinary and mapped plans reject distinct ephemeral frames with the same provider cause 0.003s
+  + ordinary and mapped plans reject translated and reflected grids identically 0.003s
+  + ordinary and mapped plans reject an unrelated third owner identically 0.001s
+scalafim.image.NativeDenseImageSuite:
+  + NeuroVolume is the exact Sampled object and Ravel owner 0.001s
+  + whole-canonical access uses Ravel last-axis-fastest order 0.004s
+  + canonical Scala arrays cross an explicitly copying boundary 0.002s
+  + crop, flip, stride, and singleton planes remain immutable views 0.05s
+  + explicit materialization creates a distinct whole-canonical owner 0.003s
+  + NeuroSeries certifies one Time axis without a wrapper 0.001s
+  + SomeNeuroSeries reports the exact non-Time-axis error 0.002s
+  + NeuroSeries reports multiple Time axes without constructing rank-4 data 0.0s
+  + volume planes report exact spatial-bound errors 0.001s
+  + canonical series reshapes to voxel-by-time without copying values 0.004s
+  + time selection and spatial series transforms preserve view layouts 0.002s
+  + noncanonical series requires an explicit materialization before reshape 0.0s
+scalafim.image.VolumeDilationSuite:
+  + bounded kernel agrees with independent all-pairs reference on a sheared grid 0.041s
+  + empty assignment stays empty and foreign mask owners are checked 0.004s
+  + world radius and bounds retain finite very large and very small scales 0.001s
+scalafim.image.SeriesAxisSemanticsSuite:
+  + time selection delegates every coordinate model to Axis.select 0.028s
+  + time selection reports provider empty and bounds errors unchanged 0.002s
+  + continuous regular concatenation preserves provider coordinates and values 0.032s
+  + series concatenation exposes provider unit, kind, and discontinuity errors 0.013s
+  + series concatenation rejects grid and metadata mismatches through typed errors 0.001s
+  + axis concatenation exposes overlap and explicit append semantics 0.008s
+  + series concatenation is associative for values and full axis records 0.002s
+scalafim.image.consumer.OwnerPreservingVolumeCompileSuite:
+  + unary volume operations preserve the exact static owner 0.001s
+  + a raw Sampled cannot claim a NeuroVolume owner 0.0s
+  + a concrete owner cannot be erased without the explicit boundary 0.0s
+scalafim.image.OwnerPreservingVolumeSuite:
+  + typed unary operations preserve values and the exact owner 0.022s
+external.consumer.ProviderSpaceBoundaryCompileSuite:
+  + deleted VolumeSpace and SeriesSpace names cannot be imported 0.001s
+  + deleted space unsafe constructors cannot be called 0.001s
+  + external consumers construct canonical provider Grid and SampleSpace values 0.0s
+scalafim.image.GridDomainSuite:
+  + 2x3x5x7 uses one canonical Ravel and GridDomain order 0.03s
+  + same persistent grid key does not admit a foreign live owner 0.042s
+  + versioned domain evidence restores through the same registry 0.008s
+external.consumer.ProviderSampleSpaceBoundaryCompileSuite:
+  + provider-state aliases are not part of the external SampleSpaces API 0.001s
+  + the shortest volume and series paths return provider values directly 0.0s
+scalafim.image.io.ImageLibraryParitySuite:
+  + nibabel and neuroim2 independently agree on 4D coordinates and affine 0.03s
+  + native NIfTI ingress translates first-axis-fastest storage to canonical Ravel 0.022s
+  + native NIfTI writer emits oracle first-axis-fastest payload and geometry 0.044s
+scalafim.image.KernelLayoutSuite:
+  + view-safe kernels agree with whole-canonical 2x3x5x7 oracles 0.135s
+scalafim.image.KMeansParcellationSuite:
+  + world-coordinate k-means returns one exact assignment 0.01s
+  + one cluster is valid and has the whole active fiber 0.001s
+  + invalid policy and foreign owners fail before fitting 0.004s
+external.consumer.ProviderCongruenceBoundaryCompileSuite:
+  + deleted ScalaFIM congruence algebra cannot be imported 0.001s
+  + external consumers use provider congruence and typed image errors directly 0.0s
+  + provider sampling evidence cannot be substituted for a third endpoint 0.0s
+scalafim.image.CoreSuite:
+  + Ravel indices expose logical axis coordinates independent of storage order 0.002s
+  + SomeSampleSpace default affine matches spacing/origin 0.0s
+  + SomeSampleSpace smart constructor reports invalid geometry directly 0.006s
+  + SomeSampleSpace exposes typed 3D coordinate roundtrip 0.001s
+  + SomeNeuroVolume arithmetic is elementwise 0.004s
+  + Mask indices roundtrip 0.004s
+  + ordered voxel selections use canonical grid ordinals 0.002s
+  + SomeNeuroSeries volume and series 0.002s
+  + SomeNeuroSeries subVector keeps spatial layout 0.003s
+  + SomeNeuroVolume plane retains an affine-honest singleton-D3 view 0.002s
+  + NeuroSeriesSeq indexes across runs 0.006s
+  + SomeSampleSpace grid/index conversions 0.001s
+  + typed spatial dims and voxel coords protect 3D indexing 0.001s
+  + selected series retain position-first storage and contiguous time 0.001s
+  + dense series gather and explicit fill scatter roundtrip 0.0s
+  + selected series rows match the canonical dense voxel-time view 0.007s
+  + selected series preserve explicit support order and dense parity 0.004s
+  + selected-series fill policy is explicit for missing voxels 0.002s
+  + selected-series union arithmetic requires an explicit fill policy 0.002s
+  + Downsample byFactor uses box averaging 0.009s
+  + Downsample updates affine by preserving center world coordinate 0.007s
+  + Resample.nearest preserves data when spaces match 0.001s
+  + Gaussian blur uses 0-padding at volume boundaries 0.002s
+  + Gaussian blur respects mask (zeros outside mask) 0.006s
+  + Bilateral filter handles missing mask 0.006s
+  + Bilateral filter 4D is identity for zero windows 0.002s
+  + Bilateral filter 4D preserves constant arrays without NaNs 0.003s
+  + SomeNeuroSeries-SomeNeuroVolume arithmetic broadcasts spatially 0.004s
+  + selected-series time concatenation uses an explicit union support 0.001s
+  + Resample.trilinear preserves data when spaces match 0.001s
+  + selected-series gather rejects a foreign support owner 0.004s
+  + selected-series validity enforces position x time shape 0.004s
+  + SomeNeuroSeries preserves input shape and linearization 0.002s
+  + SomeNeuroSeries series at voxel matches ROI drop semantics 0.004s
+scalafim.image.SliceGeometrySuite:
+  + world directions are finite, normalized, and orthogonal by construction 0.013s
+  + canonical slice planes state the RAS display contract explicitly 0.001s
+  + axis-aligned grids cover voxel-cell boundaries and roundtrip pixel centers 0.019s
+  + screen mirroring changes presentation, never the world-space footprint 0.001s
+  + oblique grids cover all transformed boundary corners 0.002s
+  + orthogonal plans are named, share one cursor, and pass through it 0.02s
+  + slice dimensions and pixel spacing reject invalid states 0.008s
+scalafim.image.SliceSamplingSuite:
+  + linear slice sampling exactly reproduces an analytic affine field 0.002s
+  + nearest sampling preserves label values and the top-to-bottom row contract 0.037s
+  + cubic sampling shares the kernel contract and reproduces a linear field 0.079s
+  + outside values participate explicitly in interpolation 0.009s
+  + validated sampling kernels agree with checked voxel access at every boundary 0.004s
+  + display mirroring reverses pixels without changing sampled anatomy 0.003s
+  + affine stepping agrees with direct world-to-voxel conversion 0.025s
+  + plans reject a volume from a different source space 0.021s
+  + mapped slice plans materialize nonlinear pullback coordinates once 0.306s
+  + primitive dense-field slice mapping agrees with the typed morphism oracle 0.479s
+scalafim.image.io.NiftiSuite:
+  + native series round-trip asymmetric 2x3x5x7 coordinates through nii and gzip 0.049s
+  + native volume round-trips asymmetric 2x3x5 coordinates 0.003s
+  + signed INT8 storage and volume reads preserve boundaries and scaling 0.132s
+  + stored UInt8 retains one native Ravel owner and explicit affine scaling 0.033s
+  + qform-only headers reconstruct quaternion rotation, spacing, qfac, and offset 0.006s
+  + sform remains the preferred affine when both qform and sform are present 0.002s
+  + affine conflicts, unsupported encodings, and resource limits fail with typed errors 0.028s
+  + singleton-4D volume reads preserve qform geometry after dropping time 0.006s
+scalafim.image.SpaceUtilsEitherSuite:
+  + aligned-space construction reports invalid input as typed errors 0.006s
+  + deoblique keeps the input's world space and rejects conflicting options 0.006s
+scalafim.image.WorldBoxSuite:
+  + extrema, centre, diagonal and containment 0.007s
+  + union and enclosing agree 0.0s
+  + a grid's bounds enclose its voxel centres in its own frame 0.002s
+  + boxes in different frames cannot be combined 0.003s
+scalafim.image.OrientationResampleSuite:
+  + findAnatomy3D returns expected orientation from axis abbreviations 0.002s
+  + Orientation3D rejects duplicate anatomical axes before reorientation 0.022s
+  + all 48 signed anatomical permutations round-trip through their matrices 0.011s
+  + findAnatomy recovers orientation from identity matrix 0.001s
+  + findAnatomyEither reports degenerate matrices as typed errors 0.013s
+  + reorient updates SomeSampleSpace transform and axes 0.004s
+  + SomeSampleSpace infers axes from trans when axes are not provided 0.001s
+  + SampleSpaces retains provider axis records without ordinal reconstruction 0.003s
+  + dropDim removes only the selected provider axis and retains the survivor 0.003s
+  + parsed method names select internal interpolators 0.012s
+  + engine parsing refuses unknown engines 0.005s
+  + method and engine parsers report failures without throwing 0.006s
+  + resampleTo accepts SomeNeuroVolume/SomeNeuroSeries targets (plus Ops syntax) 0.026s
+SCALAFIM-NIFTI JVM receipt: operation=read-scaled-double, format=nii, values=589824, allocated=4840792 B, elapsed=52275250 ns, java=25.0.1, scala=2.13.16
+SCALAFIM-NIFTI JVM receipt: operation=write-float32, format=nii, values=589824, allocated=86296 B, elapsed=134530875 ns, java=25.0.1, scala=2.13.16
+SCALAFIM-NIFTI JVM receipt: operation=read-scaled-double, format=nii.gz, values=589824, allocated=4852496 B, elapsed=34389000 ns, java=25.0.1, scala=2.13.16
+SCALAFIM-NIFTI JVM receipt: operation=write-float32, format=nii.gz, values=589824, allocated=87008 B, elapsed=286834167 ns, java=25.0.1, scala=2.13.16
+scalafim.image.io.NativeNiftiAllocationSuite:
+  + native NIfTI adapters retain one scaled Ravel destination with bounded streaming 9.19s
+scalafim.image.StatsMaskCompareSuite:
+  + NeuroStats summarizes dense volumes 0.019s
+  + temporalMean for dense SomeNeuroSeries matches row means 0.007s
+  + temporalMean for selected series preserves exact support 0.012s
+  + mask images and exact selected support convert only through named operations 0.018s
+  + NeuroCompare builds logical volumes and vectors 0.03s
+  + NeuroCompare preserves selected support 0.011s
+  + NeuroStats summarizes SomeNeuroSeries temporal ranges 0.069s
+scalafim.image.OwnerPreservingSeriesSuite:
+  + typed shape-preserving operations preserve values and the exact owner 0.01s
+  + provider and owner-erased crossings are explicit and zero-wrapper 0.002s
+scalafim.image.DomainValiditySuite:
+  + selected windows validate that the selected center is the exact voxel 0.005s
+  + exact searchlight materialization reports an excluded center 0.064s
+  + exact searchlight support produces valid region-bound windows 0.008s
+  + exact searchlight relations reject non-empty rows outside centers 0.004s
+  + searchlight radii admit zero and reject negative or non-finite values 0.01s
+scalafim.image.ConnectedComponentsSuite:
+  + components retain only one exact partial-surjection result 0.094s
+  + connectivity policy distinguishes diagonal contact 0.002s
+  + semantic mask input resolves through the exact grid owner 0.003s
+  + empty masks produce the valid empty parcel domain 0.002s
+  + foreign active-region owners fail closed 0.004s
+external.consumer.ProviderTransformBoundaryCompileSuite:
+  + the removed image transform hierarchy cannot be imported 0.004s
+  + the image boundary consumes the provider spatial-map contract 0.001s
+scalafim.image.world.WorldSpaceSuite:
+  + the same subject label in two datasets names two world spaces 0.004s
+  + two boldrefs in one session are distinct unless task, run and geometry all agree 0.004s
+  + declared spaces are fresh even when their labels match 0.0s
+  + a declared space's identity is its token; the label is presentation only 0.007s
+  + decoding malformed identifiers is a Left, never an exception 0.006s
+  + a persisted geometry digest must be exactly canonical 0.002s
+  + reference acquisitions reject blank BIDS entities 0.001s
+  + unknown worlds have distinct persistent scopes and reject the legacy shared key 0.003s
+  + encoding round-trips every world space, including awkward characters 0.001s
+  + independently created frames of one world space align; different spaces do not 0.004s
+  + a persisted world frame restores through the provider registry 0.01s
+  + ephemeral and non-RAS frames are not world frames 0.001s
+  + sample spaces relabel from unresolved into a world, but never across worlds 0.009s
+  + downsampling and deobliquing preserve unknown and known source world scopes 0.013s
+  + world relabelling refuses ephemeral LPS and non-millimetre coordinates 0.002s
+  + generic nearest-neighbour resampling refuses independent unknown worlds 0.009s
+scalafim.image.NeuroImageErrorContractSuite:
+  + the exhaustive classifier names every current NeuroImageError case 0.013s
+  + wrong rank is NeuroImageError.InvalidRank 0.0s
+  + shape mismatch retains the typed image4s cause 0.002s
+  + linear mismatch is NeuroImageError.LinearSizeMismatch 0.0s
+  + foreign volume sampling retains the typed image4s geometry cause 0.002s
+  + noncanonical layout remains the typed Ravel error 0.003s
+scalafim.image.VolumeSearchlightSuite:
+  + radius zero is the identity relation 0.002s
+  + metric balls are symmetric, monotone, and obey triangle composition 0.008s
+  + closed metric balls include points exactly on the radius boundary 0.004s
+  + exact cube, ellipsoid, and blobby geometries retain centered relations 0.026s
+  + exact neighborhood shape policies reject invalid parameters 0.006s
+  + relation rows materialize an exact selected window 0.004s
+  + value support restricts materialization without changing metric geometry 0.003s
+  + prepared native-volume execution reuses exact support and Ravel order 0.045s
+scalafim.image.SelectedImageSuite:
+  + selected volume retains exact selection and compact Ravel order 0.002s
+  + selected series are position-time with contiguous voxel rows 0.004s
+  + require, drop, and fill make missing-support policy explicit 0.002s
+  + selected arithmetic requires exact order or explicit support policies 0.013s
+  + foreign domain owners fail closed 0.001s
+  + selected series reject non-Time trailing axes 0.004s
+scalafim.image.ExactVoxelRegionSuite:
+  + region construction canonicalizes membership and implements set algebra 0.007s
+  + checked region algebra rejects a same-size foreign grid owner 0.005s
+  + ordered selections preserve feature order separately from membership 0.014s
+  + selected-volume gather preserves order and rejects foreign owners 0.003s
+  + selected series use position by time storage 0.002s
+  + grid coordinate adapters validate bounds in the exact domain 0.009s
+scalafim.image.Image4sAdmissionSuite:
+  + native scalar volume is already an image4s Sampled value 0.002s
+scalafim.image.world.SpaceResolverSuite:
+  + every NIfTI xform code is recognised; others are rejected 0.004s
+  + every GIFTI coordinate-system name maps onto the NIfTI codes 0.003s
+  + no evidence, or only unknown/scanner codes without context, is the unresolved space 0.005s
+  + scanner and aligned codes with a native context resolve to that native space 0.002s
+  + template codes alone are ambiguous, never guessed 0.001s
+  + the BIDS space entity names the template and settles an MNI152 code 0.001s
+  + native BIDS labels need a native context 0.0s
+  + contradictory evidence is a typed conflict 0.003s
+  + an explicit assertion settles ambiguous codes and refines native BIDS labels 0.003s
+  + an assertion never overrides evidence that contradicts it 0.0s
+  + resolveKnown refuses evidence that identifies no world space 0.001s
+scalafim.image.NeuroVolumeRegressionSuite:
+  + selected-volume scatter preserves indices and explicit fill 0.004s
+  + SomeNeuroVolume.asLogical flags all non-zero values 0.002s
+  + SomeNeuroVolume.asMask flags positive values only 0.004s
+  + SomeNeuroVolume.asMask(indices) sets specified indices true 0.002s
+  + native volume gather and scatter roundtrip on an exact selection 0.003s
+  + dense semantic masks convert explicitly to and from exact regions 0.031s
+  + exact selection rejects out-of-range voxel ordinals 0.006s
+  + selected-volume construction rejects mismatched data and support lengths 0.001s
+  + SomeNeuroVolume.asMatrix matches linear ordering 0.006s
+  + mapValues maps label ids with numeric keys and defaults missing to 0 0.002s
+  + mapValues accepts string keys when parseable and rejects non-numeric keys 0.004s
+  + mapf produces expected size and respects mask 0.018s
+  + selected-volume gather extracts values at exact voxel coordinates 0.001s
+  + SomeNeuroVolume.toSeries produces a 4D SomeNeuroSeries with one volume 0.003s
+  + SomeNeuroVolume.concatenate stacks volumes along time into a SomeNeuroSeries 0.005s
+  + SomeNeuroVolume planes are zero-copy singleton-D3 image views 0.004s
+scalafim.image.SubVectorSyntaxSuite:
+  + SomeNeuroSeries apply overloads select one volume or a time subset 0.002s
+  + selected series use exact support and contiguous position-time rows 0.001s
+  + NeuroSeriesSeq supports explicit time selection 0.009s
+  + NeuroSeriesSeq time selection preserves requested cross-block order and duplicates 0.006s
+  + NeuroSeriesSeq selection agrees with the materialized-series oracle 0.142s
+external.consumer.UnsafeSpaceRefinementCompileSuite:
+  + deleted image-dimension wrapper names are absent from the public API 0.003s
+  + exact provider views retain S while owner-erased views expose only SomeSampleSpace 0.0s
+  + owner-erased views cannot recover S or call the deleted typedSpace wrapper 0.001s
+  + external consumers cannot forge volume and series space refinements 0.002s
+scalafim.image.ProviderCongruenceContractSuite:
+  + provider certificates retain their exact endpoint references 0.003s
+  + persistent restore is admitted while a third owner remains outside the evidence 0.0s
+  + distinct ephemeral frames are rejected even for identical geometry 0.0s
+  + full sampling distinguishes axes that spatial congruence deliberately ignores 0.004s
+  + series zip preserves the complete provider sampling mismatch 0.004s
+  + exact and approximate provider congruence distinguish translation and reflection 0.006s
+  + approximate full sampling retains exact axes and provider endpoints 0.005s
+  + invalid congruence tolerances retain the provider error on both surfaces 0.006s
+  + image arithmetic and volume concatenation reject another physical grid 0.001s
+  + series mask extraction preserves same-owner coordinates 0.004s
+  + series mask extraction rejects translated, reflected, and foreign live owners 0.006s
+scalafim.image.SearchlightCenterSuite:
+  + equal centers hash equally across restored views of one grid owner 0.008s
+scalafim.image.ResamplingPlanSuite:
+  + identity plan matches existing nearest and linear resampling 0.025s
+  + identity plan matches existing nearest and linear SomeNeuroSeries resampling 0.205s
+  + Resample plan helpers build and execute morphism-aware plans 0.004s
+  + affine translation plan samples shifted source voxels 0.003s
+  + affine translation plan samples every SomeNeuroSeries volume 0.0s
+  + dense displacement morphisms drive resampling plans 0.015s
+  + affine scale plan delegates without coordinate materialization 0.003s
+  + linear plan samples continuous source voxel coordinates 0.003s
+  + outside value is explicit for out-of-bounds nearest and linear samples 0.001s
+  + cubic plans execute and match existing identity tricubic resampling 0.004s
+  + resampling plans can apply Jacobian and square-root Jacobian modulation 0.02s
+  + coordinate-field rendition returns a provider map with preserved owners 0.005s
+  + plan rejects volumes whose source grid differs from the planned source 0.006s
+scalafim.image.ValueSemanticsCompileSuite:
+  + continuous values admit linear sampling 0.0s
+  + mask values cannot enter continuous interpolation 0.001s
+  + categorical values cannot enter continuous interpolation 0.0s
+scalafim.image.VolumeAdmissionSuite:
+  + volume admission rejects a time axis 0.003s
+  + volume admission rejects a channel axis 0.001s
+  + volume admission rejects a echo axis 0.0s
+  + volume admission rejects a phase-cycle axis 0.0s
+  + spatial D3 admission retains the exact sample-space object 0.001s
+  + an explicit provider spatial projection is admissible and retained 0.006s
+  + the spatial-part helper remains an explicit projection boundary 0.006s
+scalafim.image.ProviderAdmissionSuite:
+  + image4s-locus restores a grid domain and exposes a locus Field 0.004s
+scalafim.image.world.PlacedProbeSuite:
+  + a runtime-decoded GridSpec[?] packages only through Placed.of, not the singleton-typed Placed.apply 0.011s
+  + an existential Sampled cannot be rebound through SamplingAlignment.exact, so plans re-wrap instead 0.001s
+scalafim.image.io.NiftiResliceOracleSuite:
+  + nibabel oblique fixture retains its independent spatial metadata 0.031s
+  + file-to-reslice pixels match nibabel in every plane and display convention 0.053s
+scalafim.image.io.NiftiIncrementalOutputSuite:
+  + produced FIR blocks retain owners and round-trip asymmetric spatial coordinates 0.067s
+  + sparse selected maps preserve caller extensions and never reinterpret Ravel offsets 0.034s
+  + existing output is preserved and callback exceptions close the provider resource 0.036s
+scalafim.image.TypedImageCoreSuite:
+  + provider Affine is finite homogeneous and invertible 0.006s
+  + provider SampleSpace owns volume and series sampling metadata 0.004s
+  + non-spatial refinements retain the exact image4s grid and frame 0.002s
+  + image4s Sampled backs singleton-D3 plane, volume, and series views 0.009s
+  + typed coordinate overloads keep voxel and world points separate 0.002s
+  + regions canonicalize support while ordered selections reject duplicates 0.004s
+  + exact grid indices validate coordinates before selected extraction 0.003s
+scalafim.image.consumer.OwnerPreservingSeriesCompileSuite:
+  + shape-preserving series operations retain the exact static owner 0.0s
+  + a raw Sampled cannot claim a NeuroSeries owner 0.0s
+  + a concrete series owner cannot be erased implicitly 0.0s
+  + time selection cannot claim the source sample-space owner 0.002s
+SCALAFIM-IMAGE JVM allocation: case=map-view-safe, samples=64000, allocated=519440 B, limit=708608 B
+SCALAFIM-IMAGE JVM allocation: case=zip-view-safe, samples=64000, allocated=519096 B, limit=708608 B
+SCALAFIM-IMAGE JVM allocation: case=temporal-reduction, samples=32000, allocated=261248 B, limit=452608 B
+SCALAFIM-IMAGE JVM allocation: case=linear-resampling, samples=64000, allocated=532992 B, limit=708608 B
+SCALAFIM-IMAGE JVM allocation: case=ravel-stencil, samples=64000, allocated=1051904 B, limit=1286144 B
+SCALAFIM-IMAGE JVM allocation: case=dense-to-selected, samples=21334, allocated=685048 B, limit=879296 B
+SCALAFIM-IMAGE JVM allocation: case=selected-to-dense, samples=64000, allocated=1026888 B, limit=1220608 B
+SCALAFIM-IMAGE JVM allocation: case=prepared-exact-searchlight, samples=64000, allocated=2049856 B, limit=2244608 B
+scalafim.image.NativeImageAllocationSuite:
+  + representative native kernels retain one Ravel value destination 1.386s
+scalafim.image.world.PlacedSuite:
+  + a value decoded in a fresh MNI frame binds to the static template frame 0.011s
+  + binding to a template the value does not live in fails 0.004s
+  + only world frames can be packaged 0.002s
+  + a value cannot be packaged with a frame it does not belong to 0.051s
+  + a packaged value is not a template point until it is bound 0.009s
+  + maps between different world frames cannot be composed out of order 0.006s
+scalafim.image.GridSpecFrameSuite:
+  + a grid built in a static frame carries that frame in its type 0.001s
+  + typed voxel/world entry points round-trip through frame-owned points 0.003s
+  + WorldPoint.claimUnchecked claims a coordinate for exactly the named frame 0.001s
+  + a GridSpec in one frame cannot be passed where another frame's grid is required 0.001s
+  + a runtime-framed grid cannot be used as a statically framed one without binding 0.001s
+  + a pullback between two frames cannot drive a plan between two others 0.0s
+  + a frame-owned point cannot be passed as another frame's point 0.0s
+  + Placed[GridSpec] binds a decoded-frame grid to the static template frame 0.003s
+  + Placed.of packages a runtime-decoded GridSpec[?] and binds it to the static template frame 0.002s
+  + Placed.of checks the value's runtime frame owner when its static frame type is wide 0.003s
+  + worldAligned relates grids of one world space and refuses grids of different ones 0.004s
+  + legacy world-aligned resampling surfaces a world mismatch instead of resampling across worlds 0.005s
+  + typed plans resample within one static frame 0.043s
+  + bind checks a runtime pullback's endpoints against the grids 0.012s
+  + SampleSpaces.regular is the typed form of the spacing/origin vector constructor 0.011s
+scalafim.image.consumer.DynamicImageRefinementCompileSuite:
+  + validated concrete images cross their intended dynamic boundaries 0.0s
+  + a raw rank-3 Sampled cannot bypass the NeuroVolume admission boundary 0.001s
+  + a raw rank-4 Sampled cannot bypass the NeuroSeries time-axis check 0.001s
+[info] Passed: Total 389, Failed 0, Errors 0, Passed 389
+[success] Total time: 30 s, completed Oct 3, 2026, 7:51:22 p.m.
+scalafim.atlas.io.JulichVisualLoaderSuite:
+  + optional source-backed qualification selects the anatomical visual parcels from pinned Julich 2.041s
+scalafim.atlas.FslAtlasRequestSuite:
+  + named requests expose only pinned executable hard summaries 0.001s
+  + pinned asset rejects missing integrity, mutable branch and unsafe cache names 0.001s
+scalafim.atlas.io.ParcelMetricFilesSuite:
+  + UTF-8 file round trip retains target ownership and refuses replacement 0.247s
+scalafim.atlas.AtlasProvenanceSuite:
+  + AtlasRef converts to typed provenance with source artifacts, support, labels, and citations 0.006s
+  + standard atlas provenance infers release metadata and readable summaries 0.042s
+  + descriptor-only provenance is explicit and validation reports audit gaps 0.007s
+  + loaded provenance records label filtering decisions 0.002s
+  + license and voxel-size helpers round-trip legacy metadata 0.005s
+  + source artifacts preserve restricted licenses and SHA digests in legacy export 0.001s
+  + strict provenance validation flags missing source accounting 0.003s
+scalafim.atlas.io.BrainnetomeLoaderSuite:
+  + Brainnetome246 descriptor exposes canonical atlas reference 0.002s
+  + BrainnetomeLoader parses LUT and Yeo network metadata 0.051s
+  + BrainnetomeLoader parses LUT without network table and tolerates unknown networks 0.04s
+  + BrainnetomeLoader load resolves all assets through supplied store without downloads 0.032s
+  + BrainnetomeLoader loadFromPaths reads NIfTI labels and filters absent rows 0.02s
+scalafim.atlas.AtlasInvariantSuite:
+  + reference constructors and updates reject contradictory types at compile time 0.005s
+  + realizations cannot be implemented outside the checked construction boundary 0.003s
+  + metadata updates preserve the concrete reference type and fixed spaces 0.0s
+  + checked space parsing canonicalizes known aliases and refuses opposite kinds 0.003s
+  + dynamic reference admission checks both coordinate and template kinds 0.002s
+  + metadata stores checked values and rejects invalid strings at construction 0.004s
+  + parcel imports reject duplicate, missing and unknown source IDs 0.076s
+  + direct and extension queries use the atlas native coordinates by default 0.167s
+  + selection preserves exact spatial ownership and records canonical parent evidence 0.03s
+  + empty selection is a typed error and selection identity distinguishes actual assignments 0.006s
+scalafim.atlas.HcpExRequestSuite:
+  + HCPex request preserves native resolution-specific immutable assets 0.001s
+scalafim.atlas.io.GlasserIdentityIoSuite:
+  + xcpEngine node names normalize to hemisphere-qualified surface keys 0.003s
+  + complete Glasser names preserve exact area spelling and reject ambiguous names 0.009s
+scalafim.atlas.io.SubcorticalAtlasQualificationSuite:
+  + optional native CIT168 qualification 2.251s
+  + optional native HCP thalamic qualification 2.646s
+  + optional native MDTB10 qualification 0.463s
+  + optional native HCP ROI qualification 0.685s
+scalafim.atlas.AtlasQuotientSuite:
+  + volume atlases expose exact fibers, parcel metadata, and display order 0.007s
+  + metadata changes do not change extensional region identity 0.002s
+  + network regions are fibers of the composed realization 0.012s
+  + partial network annotations do not claim a total surjection 0.002s
+  + surface atlases expose the same bilateral realization operations 0.128s
+  + overlap requires exact grids unless alignment is explicitly requested 0.073s
+  + one-pass standard reducers retain NaN and non-contiguous id semantics 0.002s
+scalafim.atlas.io.StandardSurfaceAtlasLoaderSuite:
+  + FreeSurfer annotation sides are remapped to distinct canonical parcel ids 0.473s
+  + annotation geometry coverage is checked before realization 0.078s
+  + pinned bilateral Mills Glasser projection annotations verify and decode as fsaverage derivatives 1.251s
+  + opt-in CBIG Schaefer pair verifies annotations and matching geometry receipts 0.633s
+scalafim.atlas.AtlasComposeSuite:
+  + explicit overlap policies compose assignments and preserve the exact first owner 0.101s
+  + equal network names are scoped by parent instead of silently grouped 0.004s
+  + fully occluded parcels require a policy and compact ids cannot collapse distinct ancestry 0.01s
+  + disjoint composition accepts separately admitted exact grids and large overlapping source ids 0.005s
+  + composition rejects shifted, anisotropic, reshaped and foreign-frame grids and conflicting declarations 0.016s
+  + equal cube dimensions do not admit permuted axes 0.003s
+  + both scoped parent provenances survive publication, nested composition, selection and metric persistence 0.062s
+  + origin validation rejects forged parent ancestry and correspondence with recomputed envelope digest 0.148s
+  + actual neuroatlas second-parent precedence matches coordinate-keyed ancestry fixtures 0.014s
+  + canonical Glasser ancestry is independent of source numbering and presentation order 0.021s
+  + parent remaps reject foreign parcel indices at compile time 0.001s
+  + review regressions reject nested nonzero background, surface encoding and foreign support 0.023s
+  + composition selection history and recursive support binding cannot be removed or substituted 0.041s
+scalafim.atlas.AtlasParityCorpusSuite:
+  + parity fixture preserves non-contiguous atlas ids and metadata 0.009s
+  + query and parcel reduction match neuroatlas parity fixture 0.003s
+  + parcel-series reduction keeps non-contiguous ids in parcel order 0.067s
+  + parcel-series reduction writes NaN when the mask misses the atlas 0.01s
+  + overlap corpus matches Dice and Jaccard golden values 0.01s
+  + fixture rejects duplicate metadata ids and unknown payload labels 0.005s
+scalafim.atlas.OlsenMtlRequestSuite:
+  + Olsen mode selects only the audited hippocampal anatomical labels 0.012s
+scalafim.atlas.SurfaceAtlasFieldsSuite:
+  + bilateral scalar and series reductions retain the realization owner 0.003s
+  + hemisphere selection is exact combined-vertex support and rejects a foreign owner 0.003s
+scalafim.atlas.AtlasDilationSuite:
+  + nearest seeds, ties, retained exact owners and independent line fixture 0.025s
+  + world radius honors anisotropic geometry; zero radius is identity 0.005s
+  + mask is an exact destination restriction and cannot silently discard seeds 0.006s
+scalafim.atlas.io.SubcorticalAtlasLoaderSuite:
+  + strict parsers preserve source IDs, names, and laterality only where supplied 0.001s
+  + malformed source metadata fails closed 0.001s
+scalafim.atlas.GraphDifferentialSuite:
+  + region contact counts match an independent full-neighborhood oracle 0.018s
+  + region adjacency lowers to canonical graph topology without changing the atlas API 0.254s
+  + optimized contacts have exactly the relational quotient adjacency 0.011s
+scalafim.atlas.JulichVisualSuite:
+  + anatomical visual selection retains exact assignments and parent evidence 0.002s
+scalafim.atlas.io.FslAtlasLoaderSuite:
+  + probability-channel offset and literal label ids have distinct semantics 0.005s
+  + FSL XML admits the optional shortname used by the pinned Juelich descriptor 0.001s
+  + malformed, duplicate, empty, unsupported and external entity XML fails explicitly 0.018s
+  + local paths must match expected source bytes 0.005s
+  + optional source-backed qualification loads pinned families with coverage and provenance 0.651s
+scalafim.atlas.io.AsegLoaderSuite:
+  + FreeSurferAseg descriptor exposes canonical atlas reference 0.004s
+  + AsegLoader built-in label rows match neuroatlas ASEG metadata 0.007s
+  + AsegLoader parses FreeSurfer color LUT rows 0.002s
+  + AsegLoader loadFromPaths reads NIfTI labels and filters absent rows 0.009s
+scalafim.atlas.io.SurfaceGiftiAtlasLoaderSuite:
+  + loadFromPathsEither builds a bilateral SurfaceAtlas from GIFTI label payloads 0.155s
+  + loadFromPathsEither supports sparse NODE_INDEX label payloads 0.015s
+  + loadFromPathsEither rejects payload labels missing from the GIFTI LabelTable 0.007s
+scalafim.atlas.io.PinnedAtlasQualificationSuite:
+  + HCPex parser admits complete aligned rows and refuses malformed or duplicate coverage 0.019s
+  + HCPex labels and LUT reject paths whose pinned digest does not match 0.003s
+  + HCPex one and two millimetre immutable payloads realize all ordered parcels and provenance 3.201s
+  + Olsen immutable payload realizes full MTL and exact hippocampal subset 5.306s
+  + artifact-coordinate admission refuses an unexpected selected NIfTI xform 0.144s
+scalafim.atlas.io.HcpExLoaderSuite:
+  + HCPex parser rejects incomplete metadata 0.0s
+scalafim.atlas.ParcelIdentitySuite:
+  + Glasser source IDs with opposite hemispheres map to the same canonical anatomy 0.008s
+  + canonical order survives source renumbering and metadata reordering 0.002s
+  + source labels remain distinct when no canonical encoding is declared 0.006s
+  + canonical anatomy and explicitly shared numeric labels are distinct identity schemes 0.003s
+  + duplicate full keys fail before an assignment can be published 0.004s
+  + missing, malformed, and conflicting hemisphere keys are typed failures 0.005s
+  + a canonical Glasser policy cannot be applied to a different atlas family 0.001s
+  + canonical domains restore in one registry with exact source-label converters 0.004s
+  + canonical surface keys check payload hemisphere even when metadata omits it 0.002s
+  + network membership and scalar summaries follow canonical parcel ordinals 0.002s
+scalafim.atlas.AtlasRealizationSuite:
+  + volume realization retains one direct partial surjection 0.003s
+  + equal-size reordered and foreign parcel identities fail exact alignment 0.002s
+  + retargeting a reordered parcel owner requires a certified bijection 0.004s
+  + a volume realization rejects an image from a different live grid owner 0.003s
+  + volume and bilateral surface share exact parcel identity 0.002s
+scalafim.atlas.SurfaceAtlasSuite:
+  + SurfaceAtlas wraps bilateral labeled surfaces with typed region lookup 0.001s
+  + surface template and coordinate spaces remain distinct in provenance and publication 0.003s
+  + SurfaceAtlas validates geometry hemispheres 0.001s
+  + SurfaceAtlas requires non-zero payload labels and region ids to match 0.001s
+  + SurfaceAtlas rejects unused label-table ids 0.002s
+  + SurfaceAtlas requires lateral hemisphere access and exposes label metadata 0.001s
+  + SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere 0.074s
+scalafim.atlas.SubcorticalAtlasRequestSuite:
+  + native subcortical requests retain immutable sources and do not advertise derived CIT168 laterality 0.002s
+scalafim.atlas.AtlasPublicationSuite:
+  + Schaefer variants define exact ordered parcel identity 0.002s
+  + volume support identity includes the exact grid 0.002s
+  + surface support identity includes ordered topology but not coordinates 0.002s
+  + bilateral publication retains one quotient and explicit empty fibers 0.0s
+  + foreign-producer v1 fixture matches fixed domain and assignment bytes 0.005s
+  + publication admission recomputes fingerprints and identity preimages 0.002s
+  + publication admission rejects malformed support and assignments 0.001s
+  + checked constructors preserve typed invalid-payload failures 0.004s
+scalafim.atlas.AtlasExpandSuite:
+  + coordinate-keyed neuroatlas oracle covers reordered, partial and background values 0.01s
+  + expansion rejects foreign parcel owners at compilation 0.001s
+scalafim.atlas.MniTemplateBridgeSuite:
+  + only the inspected TemplateFlow composite is admitted, by the SHA-256 of its bytes 0.017s
+  + the admitted digest must still hold an affine and a field on the 2009c res-01 lattice 0.011s
+  + the lattice check reads ITK's LPS size, origin, spacing and direction, and accepts only 2009c res-01 0.002s
+  + stock MNI grids are TemplateFlow's, in their templates' frames, with persistent ids 0.003s
+  + a dense warp without a forward map is pullback-executable only 0.081s
+  + a supplied inverse makes the warp push points and admits routing through its inverse 0.029s
+  + the standard manifest names the real TemplateFlow file and why the reverse step is planned 0.001s
+scalafim.atlas.AtlasGroupingSuite:
+  + hemisphere grouping retains the parent parcel owner and distinguishes parcel from spatial weighting 0.031s
+  + network grouping reports absent annotations or retains only known partial assignments 0.006s
+  + grouping rejects a foreign live parcel owner and non-finite parcel values 0.005s
+scalafim.atlas.SpaceTransformGraphSuite:
+  + the standard manifest populates one spatial graph over unsampled template domains 0.001s
+  + the internal affine route matches FreeSurfer mni152.register.dat 0.001s
+  + TemplateFlow warps stay planned and typed non-executable until an asset implements them 0.006s
+  + assets on frames outside the catalog are rejected when the graph is built 0.009s
+  + routes fall back to exact inverses only when no forward route exists 0.003s
+  + available steps without provider maps are planned but not executable 0.001s
+  + grid pullbacks come from fused affine routes, including inverse steps 0.01s
+  + grid pullbacks reject grids outside the route's endpoint worlds 0.002s
+  + an identity route over an uncatalogued space plans, but has no world for grid pullbacks 0.001s
+scalafim.atlas.ParcelMetricSuite:
+  + volume-to-surface restoration preserves origin and admits precise target fields 0.012s
+  + origin namespace, ordering, schema and assignment evidence fail closed even with recomputed digest 0.021s
+  + whole-payload integrity and independently retained digest detect value alteration 0.008s
+  + decoded origins obey classified spaces and hard-label background admission 0.017s
+  + unsorted source IDs preserve display order and canonical restoration 0.003s
+  + foreign target domain, forged live owner and callback failures are explicit 0.012s
+  + Float64 bit contract preserves signed zero, infinities, subnormals and finite extremes 0.009s
+  + metric encoding rejects foreign field ownership at compilation 0.001s
+scalafim.atlas.io.AtlasIoSuite:
+  + FileAtlasStore resolves cached downloads and validates minBytes 0.025s
+  + FileAtlasStore validates SHA-256 on downloaded assets 0.016s
+  + FileAtlasStore refreshes stale cached assets and replaces cache on refresh 0.032s
+  + AtlasAsset validates metadata fields 0.005s
+  + AtlasLabelMaps converts finite integer-valued volumes 0.002s
+  + AtlasLabelMaps rejects non-finite and negative labels and preserves label fallback 0.001s
+  + SchaeferLoader parses CBIG LUT rows into typed regions 0.005s
+  + SchaeferLoader load resolves assets through supplied store without downloads 0.015s
+  + GlasserLoader parses node labels with hemisphere metadata 0.007s
+  + GlasserLoader descriptors cover volume variants and require known hemisphere keys 0.002s
+  + AsegLoader load resolves default asset through supplied store without downloads 0.016s
+  + GlasserLoader load resolves assets through supplied store without downloads 0.013s
+  + AtlasProvenanceFiles attaches local paths and digests by artifact role 0.008s
+  + AtlasLabelMaps builds VolumeAtlas from label volume and regions 0.002s
+  + SchaeferLoader loadFromPaths reads a synthetic NIfTI fixture and filters absent LUT rows 0.011s
+  + GlasserLoader loadFromPaths reads a synthetic NIfTI fixture and keeps present labels only 0.01s
+scalafim.atlas.io.OlsenMtlLoaderSuite:
+  + Olsen request retains exact bilateral hippocampal selection 0.0s
+scalafim.atlas.ParcelFieldsSuite:
+  + checked Glasser imports match independently generated R alignment outcomes 0.01s
+  + source IDs use the declared encoding, including renumbered canonical domains 0.004s
+  + full key import stores canonical order and derives target display metadata 0.004s
+  + duplicates precede dropping unknown rows and missing fill is explicit 0.008s
+  + aliases normalize before duplicate admission even when unknown keys are dropped 0.001s
+  + persistent field transport is explicit and rejects unrelated or reordered domains 0.005s
+  + record presentation statically requires the same parcel owner 0.001s
+  + portable field reduction also retains the surface realization parcel owner 0.0s
+scalafim.atlas.AtlasReductionSuite:
+  + scalar and one-timepoint series share every missing and empty policy 0.029s
+  + all-NaN is not empty support and custom skip receives an empty array 0.001s
+  + mean and sum have explicit independent expectations under every NaN policy 0.033s
+  + propagation bypasses callbacks and reject reports the selected parcel and time 0.002s
+  + empty support fills or rejects before callbacks 0.015s
+  + custom arrays are isolated across samples and lookups never rerun callbacks 0.002s
+  + field results snapshot input values and custom failures remain typed 0.005s
+  + scalar and series masks reject an independent equal-shaped grid owner 0.004s
+scalafim.atlas.AtlasCoverageSuite:
+  + registry normalizes aliases and reports unknown ids with available atlases 0.005s
+  + region index normalizes labels, filters hemispheres, and rejects duplicate ids 0.002s
+  + volume atlas construction rejects unknown and absent payload labels 0.014s
+  + space transforms expose no-route and non-affine execution limits 0.005s
+  + parcel records derive metadata and display order from the realization 0.001s
+  + volume reductions match grouped oracle sums 0.006s
+  + series reduction syntax respects typed reducers and masks 0.008s
+  + overlap is symmetric by atlas order and self-overlap is identity 0.012s
+  + adjacency connectivity is monotone from faces to corners 0.003s
+  + query contracts cover exact lookup, invalid radii, and transform failures 0.007s
+  + atlas error messages and provenance helper aliases remain explicit 0.003s
+scalafim.atlas.AtlasCoreSuite:
+  + Point3D is an atlas alias for image SpatialPoint 0.0s
+  + registry resolves standard atlas aliases 0.002s
+  + space transform plans include direct, identity, two-hop, and planned routes 0.019s
+  + executable affine routes follow provider andThen order 0.004s
+  + VolumeAtlas validates region ids and supports metadata subset 0.004s
+  + query exact and radius lookups return atlas metadata 0.004s
+  + reduceVolume and reduceVec summarize parcel data 0.004s
+  + reduceVec preserves all parcels and writes NaN for parcels outside mask 0.003s
+  + overlap and adjacency compute region relationships 0.003s
+scalafim.atlas.ParcelMetricInteropSuite:
+  + actual JVM and Scala.js documents decode on either platform 0.012s
+scalafim.atlas.TemplateSampledCatalogSuite:
+  + all published template surface densities normalize as surface spaces while catalog domains remain unsampled 0.001s
+[info] Passed: Total 208, Failed 0, Errors 0, Passed 208
+[success] Total time: 35 s, completed Oct 3, 2026, 7:51:58 p.m.
+[info] compiling 21 Scala sources to /private/tmp/scalafim-atlas-epic-20261003/modules/connectivity/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 2 Scala sources to /private/tmp/scalafim-atlas-epic-20261003/modules/atlas-workflows/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 1 Scala source to /private/tmp/scalafim-atlas-epic-20261003/modules/atlas-workflows/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.atlas.workflows.AtlasWorkflowsSuite:
+  + named masked extraction reaches canonical connectivity nodes with explicit timing 0.632s
+  + same-sized foreign owners, duplicate batches and timing mismatches are refused 0.179s
+  + affine nearest-label transport checks pull direction and returns completed evidence 0.472s
+[info] Passed: Total 3, Failed 0, Errors 0, Passed 3
+[success] Total time: 38 s, completed Oct 3, 2026, 7:52:35 p.m.
+[info] compiling 26 Scala sources to /private/tmp/scalafim-atlas-epic-20261003/modules/mvpa/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to /private/tmp/scalafim-atlas-epic-20261003/modules/mvpa-spatial/jvm/target/scala-3.7.4/classes ...
+[info] done compiling
+[info] compiling 5 Scala sources to /private/tmp/scalafim-atlas-epic-20261003/modules/mvpa-spatial/jvm/target/scala-3.7.4/test-classes ...
+[info] done compiling
+scalafim.fmri.mvpa.spatial.SpatialFeatureSetPlansSuite:
+  + volume label maps become regional feature plans with linear voxel ordering 0.5s
+  + volume atlas plans preserve atlas region ids and labels 0.268s
+  + exact volume neighborhoods become searchlight plans in domain order 0.014s
+  + searchlight mask plans run through the MVPA engine 0.022s
+  + labeled surface parcels become deterministic regional plans 0.146s
+  + typed spatial errors convert to MVPA compatibility errors 0.197s
+  + exact searchlight construction rejects a missing center 0.014s
+  + parcel key identity policy reports fragmented parcel id collisions 0.009s
+scalafim.fmri.mvpa.spatial.LocusFeatureSetPlansSuite:
+  + regions use ambient order while selections preserve explicit order 0.002s
+  + parcellations become regional plans from quotient fibers 0.018s
+  + centered locus searchlights become searchlight plans without geometry 0.016s
+  + center inclusion is established before the MVPA adapter 0.006s
+scalafim.fmri.mvpa.spatial.PyMvpaSearchlightParitySuite:
+  + physical-mm volume neighborhoods match native PyMVPA under a complete affine 0.024s
+  + surface neighborhoods match independent Dijkstra geodesics, not chord spheres 0.269s
+  + invalid geometry is typed and one local failure does not abort later centers 0.072s
+SEARCHLIGHT_PERFORMANCE_RECEIPT {"fixture":"20x20x12-r3.1","centers":4800,"neighborhood_members":474744,"setup_median_ms":629.652,"kernel_median_ms":18146.276,"checksum":37399.828069647560}
+scalafim.fmri.mvpa.spatial.SearchlightPerformanceReceiptSuite:
+==> X scalafim.fmri.mvpa.spatial.SearchlightPerformanceReceiptSuite.report neighborhood setup separately from a prepared local-analysis sweep  70.067s java.util.concurrent.TimeoutException: test timed out after 30 seconds
+[error] Failed: Total 16, Failed 1, Errors 0, Passed 15
+[error] Failed tests:
+[error] 	scalafim.fmri.mvpa.spatial.SearchlightPerformanceReceiptSuite
+[error] (mvpaSpatialJVM / Test / test) sbt.TestsFailedException: Tests unsuccessful
+[error] Total time: 96 s (0:01:36.0), completed Oct 3, 2026, 7:54:12 p.m.
