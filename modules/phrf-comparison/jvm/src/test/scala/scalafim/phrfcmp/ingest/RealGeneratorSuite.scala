@@ -133,7 +133,8 @@ class RealGeneratorSuite extends munit.FunSuite:
          |""".stripMargin
     val ran =
       scala.util.Try {
-        val p = new ProcessBuilder("python3", "-c", script).redirectErrorStream(true).start()
+        val python = sys.env.getOrElse("PHRF_GENERATOR_PYTHON", "python3")
+        val p = new ProcessBuilder(python, "-c", script).redirectErrorStream(true).start()
         p.getInputStream.readAllBytes()
         p.waitFor()
       }.toOption

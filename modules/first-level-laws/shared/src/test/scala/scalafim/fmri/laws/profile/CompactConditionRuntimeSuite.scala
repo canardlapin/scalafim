@@ -22,6 +22,8 @@ import scalafim.fmri.hrf.family.{GaussianFamily, JetLayout, NormalizationRule, S
   * and nuisance projection, a fine shape grid and a compass refinement with exact evaluations.
   */
 class CompactConditionRuntimeSuite extends munit.FunSuite:
+  // The independent 51 x 21 shape-grid oracle for 24 voxels took 89 s on Java 17.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
 
   private val family = GaussianFamily.Default
   private val step = PositiveSeconds(0.1).fold(e => fail(e.message), identity)

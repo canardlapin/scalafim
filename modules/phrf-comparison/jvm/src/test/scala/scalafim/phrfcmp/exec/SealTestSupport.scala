@@ -98,7 +98,8 @@ object Repo:
   */
 object Py:
   lazy val interpreter: Option[String] =
-    Seq("python3.12", "python3").find { exe =>
+    val candidates = sys.env.get("PHRF_CUSTODY_PYTHON").fold(Seq("python3.12", "python3"))(exe => Seq(exe))
+    candidates.find { exe =>
       try
         val p = new ProcessBuilder(exe, "-c", "import cryptography").redirectErrorStream(true).start()
         p.getInputStream.readAllBytes()

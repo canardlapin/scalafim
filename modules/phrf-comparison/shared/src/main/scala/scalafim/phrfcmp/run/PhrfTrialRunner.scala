@@ -58,6 +58,7 @@ final case class PhrfWorkReceipt(
       case Some(x) =>
         b.i32(1).i64(x.referenceAttempts).i64(x.nFactorAttempts).i64(x.nFactorFailures).i64(x.solveAttempts).i64(x.rightHandSideAttempts)
           .i64(x.membershipRightHandSides).i64(x.derivativeRightHandSides).i64(x.smallFactorAttempts).i64(x.logDetRecursionAttempts).i64(x.failures)
+          .i64(x.residualEnergyEvaluations).i64(x.residualEnergyRows).i64(x.residualEnergySourceValues).i64(x.responseCopyValues).i64(x.residualEnergyCoefficientProducts).i64(x.residualEnergyNuisanceValues)
     ml(mlSetup)
     ml(mlRun)
     b.i32(evidenceVoxels).i32(if criterionForm then 1 else 0).i64(publicAttempts).i64(publicSuccesses).i64(publicFailures).i64(publicDecodeRefusals)

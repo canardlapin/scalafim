@@ -515,6 +515,38 @@ object TrialBandedPreparation:
 /** `accepted` is the stamped bundle: its factor is the Gale factor of exactly
   * its own frozen copy of the value band, so energy and determinant share it.
   */
+/** Native ML retains an owned response and evaluates residuals before squaring.
+  * Rounded sufficient statistics cannot recover small residual energies by subtraction.
+  * The encoded-only public objective keeps its existing storage and ownership contract.
+  */
+private[profile] final class TrialMlResidualEnergy(val preparation: TrialBandedPreparation):
+  val response = new Array[Double](preparation.rows)
+  val residual = new Array[Double](preparation.rows)
+  val amplitudes = new Array[Double](preparation.trials)
+  val conditionSums = new Array[Double](preparation.conditions)
+  val scratchValues: Int = response.length + residual.length + amplitudes.length + conditionSums.length
+  var evaluations = 0L
+  var responseCopies = 0L
+  var residualRows = 0L
+  var sourceValues = 0L
+  var coefficientProducts = 0L
+  var nuisanceValues = 0L
+  private var pointed = false
+
+  def invalidate(): Unit = pointed = false
+
+  def pointAt(values: Array[Double]): Unit =
+    require(values.length == response.length, "native ML response length differs from preparation")
+    System.arraycopy(values, 0, response, 0, response.length)
+    responseCopies += response.length
+    pointed = true
+
+  def begin(): Unit =
+    require(pointed, "native ML residual energy needs a successful response epoch")
+    evaluations += 1L
+    System.arraycopy(response, 0, residual, 0, response.length)
+    java.util.Arrays.fill(conditionSums, 0.0)
+
 private final case class TrialBandedReference(
     coefficients: Array[Double],
     accepted: TrialAcceptedTrialBand,
@@ -667,14 +699,14 @@ final class TrialBandedObjective private (
   // jetAt with logDetAt. Raw energy/amplitudes are written to `out`.
 
   /** Node value from the shared node reference; its determinant is cached by the caller. */
-  private[profile] def mlValueAtNode(node: Int, out: ProfileJetBuffer): Either[TrialBandedError, Double] =
+  private[profile] def mlValueAtNode(node: Int, out: ProfileJetBuffer, energy: TrialMlResidualEnergy): Either[TrialBandedError, Double] =
     if node < 0 || node >= references.length then Left(TrialBandedError.InvalidNode(node, references.length))
     else
       work.bankValueEvaluations += 1
-      Right(scoreReference(references(node), currentResponse, out))
+      Right(mlResidualEnergy(references(node), energy, out))
 
   /** Node raw full jet from the shared node reference. */
-  private[profile] def mlJetAtNode(node: Int, out: ProfileJetBuffer): Either[TrialBandedError, Boolean] =
+  private[profile] def mlJetAtNode(node: Int, out: ProfileJetBuffer, energy: TrialMlResidualEnergy): Either[TrialBandedError, Boolean] =
     work.jetAttempts += 1L
     if node < 0 || node >= references.length then
       work.jetFailures += 1L
@@ -683,6 +715,7 @@ final class TrialBandedObjective private (
       work.jetEvaluations += 1
       val completed = fullJet(references(node), currentResponse, out)
       if !completed then work.jetFailures += 1L
+      else mlResidualEnergy(references(node), energy, out)
       Right(completed)
 
   /** Response-independent determinant jet of a node reference, for setup caching. */
@@ -693,16 +726,16 @@ final class TrialBandedObjective private (
   /** One value-only reference: raw energy into `out` and the scalar constrained
     * determinant of the same factor. No determinant derivatives are formed.
     */
-  private[profile] def mlValueAt(coordinates: Array[Double], out: ProfileJetBuffer): Either[TrialBandedError, (Double, Double)] =
+  private[profile] def mlValueAt(coordinates: Array[Double], out: ProfileJetBuffer, energy: TrialMlResidualEnergy): Either[TrialBandedError, (Double, Double)] =
     buildReference(coordinates, 1, None).map { reference =>
       work.continuousFactors += 1
-      (scoreReference(reference, currentResponse, out), reference.logDetK)
+      (mlResidualEnergy(reference, energy, out), reference.logDetK)
     }
 
   /** One full reference: raw full jet into `out` and the determinant jet of the
     * same bundle. The reference and its derivative bands are released on return.
     */
-  private[profile] def mlJetAt(coordinates: Array[Double], out: ProfileJetBuffer)
+  private[profile] def mlJetAt(coordinates: Array[Double], out: ProfileJetBuffer, energy: TrialMlResidualEnergy)
       : Either[TrialBandedError, (Boolean, TrialDeterminantAttempt)] =
     work.jetAttempts += 1L
     buildReference(coordinates, comps, None) match
@@ -714,6 +747,7 @@ final class TrialBandedObjective private (
         work.jetEvaluations += 1
         val completed = fullJet(reference, currentResponse, out)
         if !completed then work.jetFailures += 1L
+        else mlResidualEnergy(reference, energy, out)
         Right((completed, determinantJet(reference)))
 
   /** Helper input made only from this reference's stamped bundle plus its own
@@ -928,14 +962,15 @@ final class TrialBandedObjective private (
     * only after the band solve succeeds. The N+F scratch stays caller-owned.
     */
   private[profile] def exactSolvedReadoutInto(coordinates: Vector[Double],
-      coefficients: Array[Double]): Either[TrialBandedError, TrialBandedReadout] =
+      coefficients: Array[Double], energy: Option[TrialMlResidualEnergy] = None): Either[TrialBandedError, TrialBandedReadout] =
     val mode = TrialReadoutFactorMode.ExactShape(coordinates)
-    readoutCoefficientsInto(mode, coefficients, includeNuisance = true).map: energy =>
+    readoutCoefficientsInto(mode, coefficients, includeNuisance = true, nativeEnergy = energy).map: energy =>
       TrialBandedReadout(energy, Vector.tabulate(c)(i => scoreSolved(f + i)),
         Vector.tabulate(n)(coefficients(_)), mode)
 
   private def readoutCoefficientsInto(mode: TrialReadoutFactorMode,
-      trialAmplitudes: Array[Double], includeNuisance: Boolean): Either[TrialBandedError, Double] =
+      trialAmplitudes: Array[Double], includeNuisance: Boolean,
+      nativeEnergy: Option[TrialMlResidualEnergy] = None): Either[TrialBandedError, Double] =
     work.readoutAttempts += 1L
     val expected = if includeNuisance then n + f else n
     if trialAmplitudes.length != expected then
@@ -994,7 +1029,9 @@ final class TrialBandedObjective private (
                   trialAmplitudes(i) = scoreSolved(f + preparation.membership.conditionOfTrial(i)) + readoutBuilder(i, 0)
                   i += 1
                 if includeNuisance then System.arraycopy(scoreSolved, 0, trialAmplitudes, n, f)
-                Right(energy)
+                val returnedEnergy = nativeEnergy.fold(energy)(workspace =>
+                  residualEnergy(ref, workspace, trialAmplitudes, trialAmplitudes, n))
+                Right(returnedEnergy)
 
   private def buildReference(coordinates: Array[Double], activeComponents: Int, node: Option[Int]): Either[TrialBandedError, TrialBandedReference] =
     preparation.basis.coefficientJetInto(ShapePoint.unsafe(coordinates.toVector), kernelScratch, coefficients, activeComponents)
@@ -1076,6 +1113,80 @@ final class TrialBandedObjective private (
             j += 1
           out.nn.curvature = CurvatureStatus.Indefinite
         energy
+
+  /** Recover coefficients with this evaluation's factor and release, then use
+    * ||y-Xa-Fgamma||² + lambda ||P a||². The extra response solve is charged by
+    * scoreReference; residual traversal and response storage are reported by ML.
+    * Both value and full calls use this same value path without replacing derivatives.
+    */
+  private def mlResidualEnergy(ref: TrialBandedReference, energy: TrialMlResidualEnergy,
+      out: ProfileJetBuffer): Double =
+    require(energy.preparation eq preparation, "ML energy workspace belongs to a different preparation")
+    val scored = scoreReference(ref, currentResponse, null)
+    if !scored.isFinite then
+      out.energy = Double.PositiveInfinity
+      return out.energy
+    var i = 0
+    while i < n do
+      var amplitude = scoreBuilder(i, 0) + scoreSolved(f + preparation.membership.conditionOfTrial(i))
+      var col = 0
+      while col < k do
+        amplitude -= ref.wcJets(i * k + col) * scoreSolved(col)
+        col += 1
+      energy.amplitudes(i) = amplitude
+      i += 1
+    energy.coefficientProducts += n.toLong * k
+    out.energy = residualEnergy(ref, energy, energy.amplitudes, scoreSolved, 0)
+    var condition = 0
+    while condition < c do
+      out.amplitudes(condition) = scoreSolved(f + condition)
+      condition += 1
+    out.energy
+
+  /** Evaluate the energy of these actual coefficients using the same reference's
+    * basis coefficients. Native readout supplies its independently solved N+F vector.
+    */
+  private def residualEnergy(ref: TrialBandedReference, energy: TrialMlResidualEnergy,
+      amplitudes: Array[Double], nuisance: Array[Double], nuisanceOffset: Int): Double =
+    energy.begin()
+    var i = 0
+    while i < n do
+      val condition = preparation.membership.conditionOfTrial(i)
+      val amplitude = amplitudes(i)
+      energy.conditionSums(condition) += amplitude
+      var row = preparation.starts(i)
+      while row <= preparation.ends(i) do
+        val source = preparation.trialOffsets(i) + (row - preparation.starts(i)) * m
+        var x = 0.0
+        var p = 0
+        while p < m do
+          x += preparation.sparseDesign(source + p) * ref.coefficients(p)
+          p += 1
+        energy.residual(row) -= x * amplitude
+        energy.sourceValues += m
+        row += 1
+      i += 1
+    var result = 0.0
+    var row = 0
+    while row < preparation.rows do
+      var col = 0
+      while col < f do
+        energy.residual(row) -= preparation.whitenedNuisance(row * f + col) * nuisance(nuisanceOffset + col)
+        col += 1
+      result += energy.residual(row) * energy.residual(row)
+      row += 1
+    energy.residualRows += preparation.rows
+    energy.nuisanceValues += preparation.rows.toLong * f
+    var condition = 0
+    while condition < c do
+      energy.conditionSums(condition) /= preparation.membership.trialsOf(condition).length
+      condition += 1
+    i = 0
+    while i < n do
+      val centered = amplitudes(i) - energy.conditionSums(preparation.membership.conditionOfTrial(i))
+      result += preparation.lambda * centered * centered
+      i += 1
+    result
 
   private def fullJet(ref: TrialBandedReference, encoded: TrialBandedResponse, out: ProfileJetBuffer): Boolean =
     contractResponse(ref, encoded, comps)

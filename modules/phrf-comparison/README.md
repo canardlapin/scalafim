@@ -70,8 +70,9 @@ dataclasses.replace(CELLS["T-TX-fast"], n_voxels=3, n_pool=2)
 dataclasses.replace(CELLS["C-TX-.5"],   n_voxels=3)
 ```
 
-`RealGeneratorSuite` regenerates them when `python3` with numpy and scipy is available and asserts
-byte equality. The embedded `GoldenBytes` in the shared tests is real `phrf_gen.io.npz_bytes`
+`RealGeneratorSuite` regenerates them with `PHRF_GENERATOR_PYTHON` (default `python3`)
+and asserts byte equality. Use the generator's `requirements.lock`: NumPy and SciPy
+versions are part of the fixture manifests. The embedded `GoldenBytes` in the shared tests is real `phrf_gen.io.npz_bytes`
 output as well.
 
 ## Commands
@@ -79,3 +80,20 @@ output as well.
 ```
 sbt phrfComparisonJVM/test phrfComparisonJS/test
 ```
+
+For native qualification, set `PHRF_GLMSINGLE_PYTHON` to the pinned GLMsingle
+interpreter, `PHRF_GENERATOR_PYTHON` to the generator interpreter, and
+`PHRF_CUSTODY_PYTHON` to an interpreter with the custody lock installed. These
+environments have different dependencies. Set `PHRF_REQUIRE_INTEROP=1` to make
+missing cryptography a failure. Native bridge checks require process inspection
+and RAM-volume access, and must not run concurrently with another bridge suite.
+
+Native trial ML evaluates raw energy as the squared residual plus the
+condition-centred trial penalty. Each active worker owns an additional
+`2 * timepoints + trials + conditions` doubles for the response, residual and
+coefficient workspaces; the unused prepared prototype allocates none of these
+arrays. Every energy evaluation traverses the prepared sparse trial design and
+nuisance rows. Full-jet calls also repeat the response solve to use the same
+energy path as value calls. Setup declares the workspace size, and the ML work
+receipt records the added response-copy, traversal and coefficient-recovery work.
+The encoded-only penalised objective retains its existing contract.

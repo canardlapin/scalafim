@@ -28,6 +28,10 @@ import scala.util.control.NonFatal
   *  - `logDetRecursionAttempts` (the helper's log-determinant jets);
   *  - `failures`: refused backend attempts, counted once each. Stage failures
   *    remain in the 22-field snapshot and the helper receipt.
+  * Native ML additionally owns 2T+N+C response/residual/coefficient values per
+  * active worker. Energy traversal includes criterion and native readout calls;
+  * their source, nuisance and recovery counts are separate from factor work.
+  * The unused prepared prototype allocates no residual-energy workspace.
   */
 private[profile] final class TrialBandedMlBackend private (
     objective: TrialBandedObjective,
@@ -42,6 +46,9 @@ private[profile] final class TrialBandedMlBackend private (
   val amplitudeCount: Int = objective.amplitudeCount
   private val buffer = new ProfileJetBuffer(dimension, amplitudeCount)
   private val encoded = preparation.newResponseBuffer
+  // The prepared prototype needs no response arrays until it is used as a worker.
+  private lazy val energy = new TrialMlResidualEnergy(preparation)
+  def energyScratchValues: Int = 2 * preparation.rows + preparation.trials + preparation.conditions
   private val measurementSolver = new TrialConditionalSolve(objective)
   private val solvedCoefficients = new Array[Double](preparation.trials + preparation.nuisanceColumns)
   private var readoutMemo: Option[(Vector[Double], Either[TrialMlFailure, TrialBandedReadout])] = None
@@ -71,7 +78,13 @@ private[profile] final class TrialBandedMlBackend private (
   def newWorker(): TrialBandedMlBackend = new TrialBandedMlBackend(objective.newWorker(), owner, nodes, setupReceipt)
 
   private def finish[A](before: Mark, result: Either[TrialMlFailure, A]): TrialMlAttempt[A] =
-    val attempted = delta(before, mark(objective.work), refused = result.isLeft)
+    val attempted = delta(before, mark(objective.work), refused = result.isLeft) + TrialMlWork(
+      residualEnergyEvaluations = energy.evaluations - worker.residualEnergyEvaluations,
+      residualEnergyRows = energy.residualRows - worker.residualEnergyRows,
+      residualEnergySourceValues = energy.sourceValues - worker.residualEnergySourceValues,
+      responseCopyValues = energy.responseCopies - worker.responseCopyValues,
+      residualEnergyCoefficientProducts = energy.coefficientProducts - worker.residualEnergyCoefficientProducts,
+      residualEnergyNuisanceValues = energy.nuisanceValues - worker.residualEnergyNuisanceValues)
     worker = worker + attempted
     TrialMlAttempt(result, attempted)
 
@@ -81,6 +94,7 @@ private[profile] final class TrialBandedMlBackend private (
   def pointAt(response: Array[Double]): TrialMlAttempt[CriterionEpoch] =
     val before = mark(objective.work)
     epoch = None
+    energy.invalidate()
     readoutMemo = None
     payloadMemo = None
     measurementStart = measurementSolver.measurementWork
@@ -91,6 +105,7 @@ private[profile] final class TrialBandedMlBackend private (
       else
         preparation.encodeWhitenedInto(response, 0, encoded).left.map(error => TrialMlFailure.Backend(error.message))
           .flatMap { value =>
+            energy.pointAt(response)
             objective.pointAt(value)
             sequence += 1L
             criterion(CriterionEpoch.checked(owner, sequence)).map { next => epoch = Some(next); next }
@@ -114,10 +129,19 @@ private[profile] final class TrialBandedMlBackend private (
         case Some(_) => Left(TrialMlFailure.Backend("readout coordinates differ from the memoized terminal"))
         case None =>
           readoutStart = objective.work.snapshot
-          val result = try objective.exactSolvedReadoutInto(coordinates, solvedCoefficients)
+          val result = try objective.exactSolvedReadoutInto(coordinates, solvedCoefficients, Some(energy))
             .left.map(error => TrialMlFailure.Backend(error.message))
           catch case NonFatal(error) => Left(TrialMlFailure.Backend(error.toString))
           readoutEnd = objective.work.snapshot
+          // Readout factors/solves remain in the separate legacy ledger. Energy
+          // traversal counts include criterion and readout evaluations exactly once.
+          worker = worker + TrialMlWork(
+            residualEnergyEvaluations = energy.evaluations - worker.residualEnergyEvaluations,
+            residualEnergyRows = energy.residualRows - worker.residualEnergyRows,
+            residualEnergySourceValues = energy.sourceValues - worker.residualEnergySourceValues,
+            responseCopyValues = energy.responseCopies - worker.responseCopyValues,
+            residualEnergyCoefficientProducts = energy.coefficientProducts - worker.residualEnergyCoefficientProducts,
+            residualEnergyNuisanceValues = energy.nuisanceValues - worker.residualEnergyNuisanceValues)
           readoutMemo = Some(coordinates -> result)
           result
 
@@ -160,7 +184,7 @@ private[profile] final class TrialBandedMlBackend private (
     val result = for
       current <- currentEpoch
       cached <- checkedNode(node)
-      energy <- objective.mlValueAtNode(node, buffer).left.map(error => TrialMlFailure.Backend(error.message))
+      energy <- objective.mlValueAtNode(node, buffer, energy).left.map(error => TrialMlFailure.Backend(error.message))
       _ <- if energy.isFinite then Right(()) else Left(TrialMlFailure.Backend("node raw energy solve refused"))
       raw <- criterion(RawEnergyValue.checked(cached.reference, current, energy, amplitudes, amplitudeCount))
       det <- criterion(DeterminantValue.checked(cached.reference, cached.determinant.value))
@@ -173,7 +197,7 @@ private[profile] final class TrialBandedMlBackend private (
     val result = for
       current <- currentEpoch
       cached <- checkedNode(node)
-      completed <- objective.mlJetAtNode(node, buffer).left.map(error => TrialMlFailure.Backend(error.message))
+      completed <- objective.mlJetAtNode(node, buffer, energy).left.map(error => TrialMlFailure.Backend(error.message))
       _ <- if completed then Right(()) else Left(TrialMlFailure.Criterion(CriterionJet.Error.ProfilingRefused))
       raw <- criterion(RawEnergyJet.checked(cached.reference, current, buffer.toJet, amplitudeCount))
       pair <- criterion(CoherentCriterionJet.checked(raw, cached.determinant))
@@ -185,7 +209,7 @@ private[profile] final class TrialBandedMlBackend private (
     val result = for
       current <- currentEpoch
       _ <- checkedCoordinates(coordinates)
-      values <- objective.mlValueAt(coordinates.toArray, buffer).left.map(error => TrialMlFailure.Backend(error.message))
+      values <- objective.mlValueAt(coordinates.toArray, buffer, energy).left.map(error => TrialMlFailure.Backend(error.message))
       (energy, determinant) = values
       _ <- if energy.isFinite then Right(()) else Left(TrialMlFailure.Backend("continuous raw energy solve refused"))
       reference <- criterion(CriterionReference.checked(owner, coordinates, CriterionDerivativeOrder.Value))
@@ -200,7 +224,7 @@ private[profile] final class TrialBandedMlBackend private (
     val result = for
       current <- currentEpoch
       _ <- checkedCoordinates(coordinates)
-      evaluated <- objective.mlJetAt(coordinates.toArray, buffer).left.map(error => TrialMlFailure.Backend(error.message))
+      evaluated <- objective.mlJetAt(coordinates.toArray, buffer, energy).left.map(error => TrialMlFailure.Backend(error.message))
       (completed, attempt) = evaluated
       _ <- if completed then Right(()) else Left(TrialMlFailure.Criterion(CriterionJet.Error.ProfilingRefused))
       jet <- attempt.outcome.left.map(error => TrialMlFailure.Backend(error.message))

@@ -547,12 +547,31 @@ class GlmSingleBridgeSuite extends munit.FunSuite:
   }
 
   tmp.test("F3: a refused attempt still reports exit, wall and CPU (a timed-out CPU burner is not free)") { dir =>
-    val burn = stub(dir, "i=0; while :; do i=$((i+1)); done")
-    val run = GlmSingleBridge.runAttempt(inputs, config(burn, 1.5, ScratchHook.none))
+    // The child independently measures its own CPU before the parent resumes
+    // polling. A wall deadline alone cannot guarantee CPU under host contention.
+    val burn = stub(dir, """exec /usr/bin/perl -e '
+      my $start = (times)[0] + (times)[1];
+      while ((times)[0] + (times)[1] - $start < 1.0) {}
+      open(my $ready, ">", "cpu-ready") or die "CPU marker";
+      print $ready "ready\n"; close($ready);
+      while (1) {}
+    '""")
+    val ev = new Events
+    var cpuReady = false
+    val hook = onEvent(ev) { case _: ScratchEvent.ChildStarted =>
+      val marker = Paths.get(ev.scratchPath.get).resolve("cpu-ready")
+      val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(60)
+      while !Files.exists(marker) && System.nanoTime() < deadline do Thread.sleep(10)
+      cpuReady = Files.exists(marker)
+    }
+    val run = GlmSingleBridge.runAttempt(inputs, config(burn, 1.5, hook))
+    assert(cpuReady, "the child did not complete the independently measured CPU workload")
     assert(run.result.left.toOption.exists(_.isInstanceOf[GlmSingleRefusal.Timeout]))
     assert(run.attempt.timedOut && run.attempt.exitCode.isEmpty)
     assert(run.attempt.wallSeconds >= 1.4, s"${run.attempt.wallSeconds}")
     assert(run.attempt.guardCpuSeconds > 0.5, s"guard CPU ${run.attempt.guardCpuSeconds}")
+    assertEquals(run.attempt.groupSurvivors, 0)
+    assertCleaned(ev, "after timed-out CPU workload")
     val fail3 = stub(dir, "i=0; while [ $i -lt 60000 ]; do i=$((i+1)); done; exit 3")
     val r3 = GlmSingleBridge.runAttempt(inputs, config(fail3, 60.0, ScratchHook.none))
     assertEquals(r3.attempt.exitCode, Some(3))

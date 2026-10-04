@@ -208,6 +208,25 @@ class PhrfTrialTheorySuite extends munit.FunSuite:
       worstSd = math.max(worstSd, math.abs(math.exp(v.coordinates(1)) - truths(vox).sd))
     println(f"S5-SHAPE noise-free tau error $worstTau%.3e, sd error $worstSd%.3e")
     assert(worstTau < 5e-3 && worstSd < 1e-2, s"tau $worstTau sd $worstSd")
+    val problem = w.exactProblem()
+    val expanded = PhrfTrialAssembly.expandedOf(problem, basis).fold(e => fail(e.message), identity)
+    val prep = scalafim.fmri.fit.profile.TrialBandedPreparation.prepare(expanded, Some(problem.spec.plan),
+      Some(PhrfTrialAssembly.baselineMat(problem)), 1.0).fold(e => fail(e.message), identity)
+    for (v, voxel) <- fit.voxels.zipWithIndex do
+      val y = WhiteningTransform.matrix(problem.spec.plan,
+        DMat.tabulate(problem.timepoints, 1)((r, _) => w.exact.inputs.y(voxel, problem.rows(r))))
+        .fold(e => fail(e.toString), identity)
+      val evidence = scalafim.fmri.fit.profile.PhrfMlEnergyTestAccess.evaluate(prep,
+        Array.tabulate(problem.timepoints)(r => y(r, 0)), Vector(v.coordinates), 1e-5).fold(fail(_), identity).head
+      val h = evidence.hessian
+      val g = evidence.gradient
+      val det = h(0) * h(3) - h(1) * h(2)
+      assert(det > 0.0)
+      val correction0 = (-h(3) * g(0) + h(1) * g(1)) / det
+      val correction1 = (h(2) * g(0) - h(0) * g(1)) / det
+      val tolerance = PhrfTrialRunner.decodePolicy(config.phrf).budget.stationarityStepTolerance
+      assert(math.max(math.abs(correction0), math.abs(correction1)) <= tolerance,
+        clues(voxel, correction0, correction1, tolerance))
 
   // ---------------------------------------------------------------------------------------------- limits at the canonical shape
 
@@ -398,3 +417,70 @@ class PhrfTrialTheorySuite extends munit.FunSuite:
     val outs = PhrfTrialScoring.outcomes(fit)
     assertEquals(outs(0), VoxelOutcome.Refused)
     assert(outs(1).toOption.isDefined)
+
+
+  test("native ML preserves independent QR ordering at the formerly refused exact-data voxel"):
+    import scalafim.fmri.fit.profile.{PhrfMlEnergyTestAccess, TrialBandedPreparation}
+    val w = flat
+    val problem = w.exactProblem()
+    val expanded = PhrfTrialAssembly.expandedOf(problem, basis).fold(e => fail(e.message), identity)
+    val prep = TrialBandedPreparation.prepare(expanded, Some(problem.spec.plan), Some(PhrfTrialAssembly.baselineMat(problem)), 1.0)
+      .fold(e => fail(e.message), identity)
+    val t = problem.timepoints
+    val n = problem.trials
+    val y = WhiteningTransform.matrix(problem.spec.plan, DMat.tabulate(t, 1)((r, _) => w.exact.inputs.y(1, problem.rows(r))))
+      .fold(e => fail(e.toString), identity)
+    val response = Array.tabulate(t)(r => y(r, 0))
+    val nuis = WhiteningTransform.matrix(problem.spec.plan, PhrfTrialAssembly.baselineMat(problem)).fold(e => fail(e.toString), identity)
+    val f = nuis.cols
+    val counts = Array.tabulate(problem.conditions)(k => problem.trialCond.count(_ == k))
+    val penalty = DMat.tabulate(n, n)((i, j) =>
+      (if i == j then 1.0 else 0.0) - (if problem.trialCond(i) == problem.trialCond(j) then 1.0 / counts(problem.trialCond(i)) else 0.0))
+    def dense(at: Vector[Double]): (Double, Double) =
+      val coeff = TrialHeldOutPrediction.basisCoefficients(expanded, at).fold(e => fail(e.message), identity)
+      val raw = DMat.tabulate(t, n)((r, i) => (0 until expanded.rank).map(j => coeff(j) * expanded.term.data(r, j * n + i)).sum)
+      val x = WhiteningTransform.matrix(problem.spec.plan, raw).fold(e => fail(e.toString), identity)
+      val a = DMat.tabulate(t + n, n + f)((r, col) =>
+        if r < t then (if col < n then x(r, col) else nuis(r, col - n)) else if col < n then penalty(r - t, col) else 0.0)
+      val rhs = DMat.tabulate(t + n, 1)((r, _) => if r < t then y(r, 0) else 0.0)
+      val beta = a.qr(QROptions(QRPivoting.Column, Some(1e-12))).solveLeastSquares(rhs).fold(e => fail(e.toString), identity)
+      var energy = 0.0
+      var r = 0
+      while r < t + n do
+        var prediction = 0.0
+        var col = 0
+        while col < n + f do
+          prediction += a(r, col) * beta(col, 0)
+          col += 1
+        val residual = rhs(r, 0) - prediction
+        energy += residual * residual
+        r += 1
+      val deviations = x * penalty
+      val cov = DMat.tabulate(n, n)((i, j) =>
+        (if i == j then 1.0 else 0.0) + (0 until t).map(r => deviations(r, i) * deviations(r, j)).sum)
+      val factor = cov.cholesky.fold(e => fail(e.toString), identity)
+      val determinant = 2.0 * (0 until n).map(i => math.log(factor.lower(i, i))).sum
+      (energy, determinant)
+    val current = Vector(4.399998979190704, 0.1823208395657257)
+    val step = Vector(-4.270029138756047e-8, 6.119595104690026e-8)
+    val fractions = Vector(0.0, 0.5, 1.0)
+    val points = fractions.map(fraction => current.zip(step).map((a, d) => a + fraction * d))
+    val native = PhrfMlEnergyTestAccess.evaluate(prep, response, points, 1e-5).fold(fail(_), identity)
+    val independent = fractions.zipWithIndex.map: (fraction, index) =>
+      val at = current.zip(step).map((a, d) => a + fraction * d)
+      val (e, d) = dense(at)
+      val actual = native(index)
+      val criterion = e + 1e-5 * d
+      val nativeJ = actual.valueEnergy + 1e-5 * actual.determinant
+      println(s"QR-ORDER fraction=$fraction denseE=$e denseD=$d denseJ=$criterion nativeJ=$nativeJ readoutE=${actual.readoutEnergy}")
+      assertEqualsDouble(actual.valueEnergy, e, 1e-17)
+      assertEqualsDouble(actual.readoutEnergy, e, 1e-17)
+      assertEqualsDouble(actual.jetEnergy, actual.valueEnergy, 0.0)
+      // 1e-16 is over 1000 times smaller than the independently observed step decrease.
+      assertEqualsDouble(nativeJ, criterion, 1e-16)
+      criterion
+    assert(independent(1) < independent(0))
+    assert(independent(2) < independent(1))
+    val nativeCriteria = native.map(a => a.valueEnergy + 1e-5 * a.determinant)
+    assert(nativeCriteria(1) < nativeCriteria(0))
+    assert(nativeCriteria(2) < nativeCriteria(1))
