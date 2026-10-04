@@ -97,7 +97,7 @@ lazy val locus4sDataJS  = ProjectRef(locus4sBuild, "locus4s-dataJS")
 
 // image4s is independently owned. Ordinary builds use its immutable source
 // revision; coordinated development can select a sibling checkout explicitly.
-lazy val image4sRevision = "26a74ad99b9ee49a9555344e19b82d69a2ba50e4"
+lazy val image4sRevision = "2c0638fb0767058ccd59b37f93754e95fc27df28"
 lazy val image4sBuild = {
   sys.props
     .get("scalafim.locus4s.build")
@@ -434,6 +434,7 @@ lazy val design =
     .settings(
       name := "scalafim-fmri-design",
       libraryDependencies ++= Seq(
+        "com.lihaoyi" %%% "upickle" % "4.1.0",
         "org.typelevel" %%% "cats-core" % "2.12.0",
         "org.typelevel" %%% "spire"     % "0.18.0"
       )

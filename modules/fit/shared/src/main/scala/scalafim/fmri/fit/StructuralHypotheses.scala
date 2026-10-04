@@ -8,6 +8,7 @@ import scalafim.fmri.design.{
   ColumnId,
   ColumnRole,
   DesignSchema,
+  EventResponseScaleReceipt,
   ModulatorId,
   PhaseId,
   RunScope,
@@ -18,7 +19,7 @@ import scalafim.fmri.design.{
   TermId
 }
 import scalafim.fmri.hrf.linalg.Mat
-import scalafim.fmri.hrf.{ResponseFunctional, ResponseUnits}
+import scalafim.fmri.hrf.{FunctionalDiscretizationReceipt, ResponseFunctional, ResponseUnits}
 
 /** Failure classes emitted while lowering a semantic hypothesis. */
 enum StructuralHypothesisErrorKind:
@@ -241,14 +242,16 @@ final case class StructuralResponseWeight(
     selector: StructuralColumnSelector,
     functional: ResponseFunctional,
     units: ResponseUnits,
-    basisWeights: Vector[BasisFunctionalWeight]
+    basisWeights: Vector[BasisFunctionalWeight],
+    discretization: Option[FunctionalDiscretizationReceipt] = None
 ):
   require(basisWeights.nonEmpty, "response-functional basis weights must be non-empty")
 
 final case class StructuralResponseReceipt(
     functional: ResponseFunctional,
     units: ResponseUnits,
-    basis: Vector[BasisElementRef]
+    basis: Vector[BasisElementRef],
+    discretization: Option[FunctionalDiscretizationReceipt] = None
 )
 
 final case class StructuralTContrast(
@@ -673,12 +676,37 @@ object StructuralHypothesis:
           case Right(selector) =>
             val matches = resolveSelector(selector, axis)
             if matches.isEmpty then return selectorFailure(id, selector, axis)
-            matches.foreach { column =>
-              out += column -> column.hrfScale.transportLinearWeight(basisWeight.value)
-            }
+            var matchIndex = 0
+            while matchIndex < matches.length do
+              val column = matches(matchIndex)
+              eventResponseTransport(column, axis) match
+                case Left(reason) =>
+                  return failure(
+                    id,
+                    StructuralHypothesisErrorKind.IncompatibleDesign,
+                    s"response functional '${term.functional}' cannot be read out from column '${column.renderedLabel}': $reason"
+                  )
+                case Right(divisor) =>
+                  out += column -> column.hrfScale.transportLinearWeight(basisWeight.value) / divisor
+              matchIndex += 1
         basisIndex += 1
       termIndex += 1
     Right(out.result())
+
+  /** The event-level divisor relating a column to its kernel-unit column.
+    * Response readouts reconstruct the kernel; a column whose contributing
+    * events carry different event-level divisors (for example event unit-peak
+    * with mixed durations) has no kernel-unit coefficient and is refused.
+    *
+    * Divisors are kept per run. A run-local coefficient (the column's run
+    * scope is `Run(r)`, as on a runwise axis) uses only run `r`'s divisors; a
+    * coefficient shared across runs needs one divisor across every run. More
+    * than one receipt for the column's identity is ambiguous and refused. */
+  private def eventResponseTransport(column: StructuralColumn, axis: CoefficientAxis): Either[String, Double] =
+    column.origin match
+      case StructuralColumnOrigin.Event(term, phase, cell, modulator, Some(basis), _, runScope) =>
+        EventResponseScaleReceipt.transportDivisor(axis.audit.eventResponseScales, term, phase, cell, modulator, basis.index, runScope)
+      case _ => Right(1.0)
 
   private def withBasis(
       selector: StructuralColumnSelector,
@@ -699,7 +727,7 @@ object StructuralHypothesis:
         ))
 
   private def receipt(term: StructuralResponseWeight): StructuralResponseReceipt =
-    StructuralResponseReceipt(term.functional, term.units, term.basisWeights.map(_.basis))
+    StructuralResponseReceipt(term.functional, term.units, term.basisWeights.map(_.basis), term.discretization)
 
   private def resolveRows(
       id: ContrastId,

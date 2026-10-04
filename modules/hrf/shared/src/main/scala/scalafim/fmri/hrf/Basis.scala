@@ -312,13 +312,15 @@ trait ResponseBasis:
         if !lag.value.isFinite || lag.value < 0.0 then
           Left(BasisError.InvalidFunctional(s"point lag must be finite and >= 0, got ${lag.value}"))
         else
+          // A point functional is one exact kernel evaluation whatever window
+          // rule was declared, so its receipt records what was actually done.
           val values = kernel(Lag.ofSeconds(lag)).data
           finiteWeights(values).map { vector =>
             ResponseFunctionalWeights(
               functional,
               BasisCoefficients.unsafe(vector),
               ResponseUnits.ResponseValue,
-              FunctionalDiscretizationReceipt(discretization, samples = 1, effectiveStep = None)
+              FunctionalDiscretizationReceipt(FunctionalDiscretization.Exact, samples = 1, effectiveStep = None)
             )
           }
 

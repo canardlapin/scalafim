@@ -525,6 +525,137 @@ final case class CenteringReceipt(
 final case class PolicyReceipt(name: String, detail: String):
   require(name.trim.nonEmpty && detail.trim.nonEmpty, "policy receipt must be named and described")
 
+/** The distinct event-level divisors of the events of one run that reach the
+  * column's scans in that run. */
+final case class EventResponseRunDivisors(run: RunIndex, divisors: Vector[Double]):
+  require(divisors.nonEmpty, "a run entry lists at least one contributing divisor")
+  require(divisors.forall(value => value.isFinite && value > 0.0), "event response divisors must be finite and positive")
+  require(divisors == divisors.distinct.sorted, "event response divisors must be distinct and sorted")
+
+  def canonical: String = s"${run.oneBased}:${divisors.map(java.lang.Double.doubleToLongBits).mkString("/")}"
+
+/** Event-level response scaling of one realized event column, per run.
+  *
+  * `runs` lists, for every run whose scans the column's events reach, the
+  * distinct per-event divisors (for example event `unit-peak` peak magnitudes
+  * for basis `basis`) of the events contributing to the column identified by
+  * `(term, phase, cell, modulator, basis)`. A single divisor within a run makes
+  * the column's rows in that run its kernel-unit rows divided by that
+  * constant, so a run-local response readout can be transported exactly; a
+  * readout of the coefficient shared across runs needs one divisor across all
+  * runs. Several divisors (mixed event durations under `unit-peak`) leave no
+  * kernel-unit coefficient, and response readouts must refuse such columns.
+  */
+final case class EventResponseScaleReceipt(
+    term: TermId,
+    phase: Option[PhaseId],
+    cell: CellKey,
+    modulator: Option[ModulatorId],
+    basis: BasisIndex,
+    policy: String,
+    runs: Vector[EventResponseRunDivisors]
+):
+  require(policy.trim.nonEmpty, "event response scale policy must be named")
+  require(runs.map(_.run.oneBased) == runs.map(_.run.oneBased).distinct.sorted, "event response runs must be distinct and sorted")
+
+  /** Distinct divisors across all runs. */
+  def divisors: Vector[Double] = runs.flatMap(_.divisors).distinct.sorted
+
+  /** Distinct divisors of the events reaching the column in `run`. */
+  def divisorsIn(run: RunIndex): Vector[Double] =
+    runs.find(_.run == run).fold(Vector.empty[Double])(_.divisors)
+
+  def uniformDivisor: Option[Double] = divisors match
+    case Vector(value) => Some(value)
+    case _             => None
+
+  def canonical: String =
+    s"term=${term.value}|phase=${phase.fold("")(_.value)}|cell=${cell.canonical}|modulator=${modulator.fold("")(_.value)}|basis=${basis.oneBased}|policy=$policy|runs=${runs.map(_.canonical).mkString("+")}"
+
+object EventResponseScaleReceipt:
+  /** The event-level divisor relating the column `(term, phase, cell,
+    * modulator, basis)` to its kernel-unit column, for a coefficient with run
+    * scope `runScope`; `1` when no receipt names the column.
+    *
+    * A run-local coefficient (`RunScope.Run(r)`, as on a runwise axis) uses
+    * only run `r`'s divisors. A coefficient shared across runs
+    * (`Global`/`PerRun`) needs one divisor across every run. Several divisors
+    * in scope, no contributing events in scope, or more than one receipt for
+    * the column's identity (ambiguous) are refusals, returned as reasons. */
+  def transportDivisor(
+      receipts: Vector[EventResponseScaleReceipt],
+      term: TermId,
+      phase: Option[PhaseId],
+      cell: CellKey,
+      modulator: Option[ModulatorId],
+      basis: BasisIndex,
+      runScope: RunScope
+  ): Either[String, Double] =
+    receipts.filter { receipt =>
+      receipt.term == term && receipt.phase == phase && receipt.cell == cell &&
+        receipt.modulator == modulator && receipt.basis == basis
+    } match
+      case Vector() => Right(1.0)
+      case Vector(receipt) =>
+        runScope match
+          case RunScope.Run(run) =>
+            receipt.divisorsIn(run) match
+              case Vector(value) => Right(value)
+              case Vector() =>
+                Left(s"event-level '${receipt.policy}' scaling has no contributing events for this column in run ${run.oneBased}")
+              case values =>
+                Left(
+                  s"its events in run ${run.oneBased} carry ${values.length} different event-level '${receipt.policy}' divisors " +
+                    "(for example mixed durations), so it has no kernel-unit response coefficient"
+                )
+          case RunScope.Global | RunScope.PerRun =>
+            receipt.uniformDivisor.toRight(
+              if receipt.divisors.isEmpty then s"event-level '${receipt.policy}' scaling has no contributing events for this column"
+              else if receipt.runs.forall(_.divisors.length == 1) then
+                s"its runs carry ${receipt.divisors.length} different event-level '${receipt.policy}' divisors, so the coefficient " +
+                  "shared across runs has no kernel-unit response coefficient (a run-local readout can use each run's divisor)"
+              else
+                s"its events carry ${receipt.divisors.length} different event-level '${receipt.policy}' divisors " +
+                  "(for example mixed durations), so it has no kernel-unit response coefficient"
+            )
+      case matches =>
+        Left(s"${matches.length} event-level response-scale receipts match this column identity, so its divisor is ambiguous")
+
+/** Auditable record of a post-convolution derivative-basis projection. */
+final case class BasisOrthogonalizationGroupReceipt(
+    cell: Option[CellKey],
+    modulator: Option[ModulatorId],
+    columns: Vector[Int],
+    sourceBasisIds: Vector[String],
+    sourceRows: Vector[Int],
+    originalScales: Vector[HrfColumnScale],
+    transform: Vector[Double],
+    referenceRank: Int,
+    scope: String = "all-selected-scans"
+):
+  require(columns.lengthCompare(2) >= 0, "basis orthogonalization requires a canonical column and a derivative")
+  require(columns.distinct.length == columns.length, "basis orthogonalization columns must be distinct")
+  require(referenceRank >= 0, "basis orthogonalization rank must be non-negative")
+  require(sourceBasisIds.length == columns.length, "basis identities must align with transformed columns")
+  require(sourceRows.forall(_ >= 0), "basis source rows must be non-negative")
+  require(originalDivisors.length == columns.length && originalDivisors.forall(value => value.isFinite && value > 0.0), "basis divisors must be positive and aligned")
+  require(transform.length == columns.length * columns.length && transform.forall(_.isFinite), "basis transform must be finite and square")
+  require(scope == "all-selected-scans", "basis orthogonalization scope must be explicit")
+
+  def originalDivisors: Vector[Double] = originalScales.map(_.divisor)
+
+  def canonical: String =
+    s"scope=$scope|cell=${cell.fold("")(_.canonical)}|modulator=${modulator.fold("")(_.value)}|columns=${columns.mkString(",")}|basis=${sourceBasisIds.mkString(",")}|rows=${sourceRows.mkString(",")}|scaling=${originalScales.map(_.policy.toString).mkString(",")}|divisors=${originalDivisors.map(java.lang.Double.doubleToLongBits).mkString(",")}|transform=${transform.map(java.lang.Double.doubleToLongBits).mkString(",")}|rank=$referenceRank"
+
+final case class BasisOrthogonalizationReceipt(
+    term: Option[TermId],
+    groups: Vector[BasisOrthogonalizationGroupReceipt]
+):
+  require(groups.nonEmpty, "basis orthogonalization receipt must record at least one group")
+
+  def canonical: String =
+    s"term=${term.fold("")(_.value)}|groups=${groups.map(_.canonical).mkString(";")}"
+
 enum RankPreviewMethod:
   case PivotedQr
 
@@ -649,9 +780,11 @@ final case class DesignAudit(
     centeringReceipts: Vector[CenteringReceipt] = Vector.empty,
     degenerateModulatorReceipts: Vector[DegenerateModulatorReceipt] = Vector.empty,
     orthogonalizationReceipts: Vector[OrthogonalizationReceipt] = Vector.empty,
+    basisOrthogonalizationReceipts: Vector[BasisOrthogonalizationReceipt] = Vector.empty,
     policyReceipts: Vector[PolicyReceipt] = Vector.empty,
     rankPreview: Option[RankPreview] = None,
-    diagnostics: Vector[DesignDiagnostic] = Vector.empty
+    diagnostics: Vector[DesignDiagnostic] = Vector.empty,
+    eventResponseScales: Vector[EventResponseScaleReceipt] = Vector.empty
 ):
   require(eventsSeen >= 0 && eventsUsed >= 0, "event counts must be non-negative")
   require(eventsUsed <= eventsSeen, "eventsUsed cannot exceed eventsSeen")
@@ -677,6 +810,13 @@ final case class DesignAudit(
     val centering = centeringReceipts.map(_.canonical).mkString(",")
     val degenerateModulators = degenerateModulatorReceipts.map(_.canonical).mkString(",")
     val orthogonalization = orthogonalizationReceipts.map(_.canonical).mkString(",")
+    // Preserve existing content identities when the optional transform is absent.
+    val basisOrthogonalization =
+      if basisOrthogonalizationReceipts.isEmpty then ""
+      else s";basis-orthogonalization=${basisOrthogonalizationReceipts.map(_.canonical).mkString(",")}"
+    val eventResponse =
+      if eventResponseScales.isEmpty then ""
+      else s";event-response-scales=${eventResponseScales.map(_.canonical).mkString(",")}"
     val policies = policyReceipts.map(p => s"${p.name}:${p.detail}").mkString(",")
     val rank = rankPreview.fold("") {
       case RankPreview.Available(preview) =>
@@ -691,7 +831,7 @@ final case class DesignAudit(
         s"unavailable:$reason:rows=$rows:columns=${columns.map(_.value).mkString(",")}"
     }
     val diags = diagnostics.map(d => s"${d.kind}:${d.term.fold("")(_.value)}:${d.message}").mkString(",")
-    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization;policies=$policies;rank=$rank;diagnostics=$diags"
+    s"seen=$eventsSeen;used=$eventsUsed;excluded=$exclusions;empty=$cells;empty-audits=$cellAudits;factors=$factors;missing=$missing;provenance=$provenance;centering=$centering;degenerate-modulators=$degenerateModulators;orthogonalization=$orthogonalization$basisOrthogonalization$eventResponse;policies=$policies;rank=$rank;diagnostics=$diags"
 
 /** An identity of exact matrix contents and their semantics, encoded identically
   * on JVM and Scala.js. Platform computations can produce different value bits;
@@ -1118,7 +1258,8 @@ final case class CoefficientAxis private[design] (
           ordinal = column.ordinal.oneBased,
           origin = origin,
           label = column.label,
-          prettyLabel = column.prettyLabel
+          prettyLabel = column.prettyLabel,
+          hrfScale = column.hrfScale
         )
       }
       scopedColumns.foldLeft[Either[DesignError, Vector[StructuralColumn]]](Right(Vector.empty)) {
@@ -1204,9 +1345,11 @@ object DesignSchema:
       centeringReceipts = left.centeringReceipts ++ right.centeringReceipts,
       degenerateModulatorReceipts = left.degenerateModulatorReceipts ++ right.degenerateModulatorReceipts,
       orthogonalizationReceipts = left.orthogonalizationReceipts ++ right.orthogonalizationReceipts,
+      basisOrthogonalizationReceipts = left.basisOrthogonalizationReceipts ++ right.basisOrthogonalizationReceipts,
       policyReceipts = left.policyReceipts ++ right.policyReceipts,
       rankPreview = None,
-      diagnostics = left.diagnostics ++ right.diagnostics
+      diagnostics = left.diagnostics ++ right.diagnostics,
+      eventResponseScales = left.eventResponseScales ++ right.eventResponseScales
     )
 
   private[design] def validate(

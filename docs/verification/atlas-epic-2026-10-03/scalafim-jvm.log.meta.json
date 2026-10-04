@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T23:10:55.880460+00:00",
+  "finished_utc": "2026-10-03T23:28:51.779364+00:00",
+  "duration_seconds": 1075.935634,
+  "command": [
+    "env",
+    "SBT_WARM_HOME=/private/tmp/atlas-epic-20261003/consumer-warm",
+    "SBT_WARM_HEAP=6g",
+    "JAVA_TOOL_OPTIONS=-Dscalafim.subcortical.fixtureRoot=/private/tmp/scalafim-subcortical-assets -Dscalafim.pinnedAtlasRoot=/private/tmp -Dscalafim.atlas.fsl.fixtureRoot=/private/tmp/scalafim-atlas-assets-oct02 -Dscalafim.cbig.lh.annotation=/private/tmp/lh.annot -Dscalafim.cbig.rh.annotation=/private/tmp/rh.annot -Dscalafim.cbig.lh.white=/private/tmp/lh.white -Dscalafim.cbig.rh.white=/private/tmp/rh.white",
+    "GIT_CONFIG_COUNT=1",
+    "GIT_CONFIG_KEY_0=url.file:///private/tmp/image4s-atlas-epic-20261003.insteadOf",
+    "GIT_CONFIG_VALUE_0=https://github.com/canardlapin/image4s.git",
+    "python3",
+    "tools/build/sbt-warm",
+    "imageJVM/test",
+    "atlasJVM/test",
+    "atlasWorkflowsJVM/test",
+    "mvpaSpatialJVM/test",
+    "atlasExamplesJVM/test",
+    "workflowExamplesJVM/testOnly scalafim.examples.workflows.AtlasMvpaWorkflowSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/scalafim-jvm.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3600.0,
+  "log_bytes": 81363
+}

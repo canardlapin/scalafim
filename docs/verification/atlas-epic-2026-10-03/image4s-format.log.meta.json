@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T23:24:50.622049+00:00",
+  "finished_utc": "2026-10-03T23:26:30.074630+00:00",
+  "duration_seconds": 99.453009,
+  "command": [
+    "sbt",
+    "-J-Xmx4g",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dsbt.global.base=/private/tmp/atlas-epic-20261003/provider-sbt",
+    "scalafmtAll",
+    "scalafmtSbt",
+    "scalafmtCheckAll",
+    "scalafmtSbtCheck"
+  ],
+  "cwd": "/private/tmp/image4s-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/image4s-format.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 7422
+}

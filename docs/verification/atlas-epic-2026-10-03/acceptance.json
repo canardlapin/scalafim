@@ -1,0 +1,98 @@
+{
+  "provider_base": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+  "provider_candidate": "2c0638fb0767058ccd59b37f93754e95fc27df28",
+  "provider_remote": "2c0638fb0767058ccd59b37f93754e95fc27df28",
+  "provider_pr": "https://github.com/canardlapin/image4s/pull/15",
+  "hosted_successful_checks": 9,
+  "consumer_base": "62312f5da78302e67dc9b1ee05e63823236c9053",
+  "consumer_current_head": "62312f5da78302e67dc9b1ee05e63823236c9053",
+  "consumer_state": "uncommitted shared checkout; exact recorded source/build/fixture hashes match the tested snapshot",
+  "input_count": 1965,
+  "gates": {
+    "image4s-jvm-js": {
+      "exit_code": 0,
+      "duration_seconds": 171.455588,
+      "totals": [
+        "96",
+        "92",
+        "58",
+        "39"
+      ],
+      "warnings": [],
+      "skips": []
+    },
+    "image4s-format": {
+      "exit_code": 0,
+      "duration_seconds": 99.453009,
+      "totals": [],
+      "warnings": [],
+      "skips": []
+    },
+    "image4s-formatted-jvm-js": {
+      "exit_code": 0,
+      "duration_seconds": 142.463199,
+      "totals": [
+        "39",
+        "36",
+        "58",
+        "39"
+      ],
+      "warnings": [],
+      "skips": []
+    },
+    "image4s-hosted-final": {
+      "exit_code": 0,
+      "duration_seconds": 62.458013,
+      "totals": [],
+      "warnings": [],
+      "skips": []
+    },
+    "scalafim-consumers-final": {
+      "exit_code": 0,
+      "duration_seconds": 241.522324,
+      "totals": [
+        "1",
+        "15",
+        "6",
+        "2"
+      ],
+      "warnings": [],
+      "skips": []
+    },
+    "scalafim-js-final": {
+      "exit_code": 0,
+      "duration_seconds": 150.639445,
+      "totals": [
+        "359",
+        "155",
+        "3",
+        "15"
+      ],
+      "warnings": [],
+      "skips": []
+    },
+    "scalafim-compile-final": {
+      "exit_code": 0,
+      "duration_seconds": 351.164454,
+      "totals": [],
+      "warnings": [],
+      "skips": []
+    }
+  },
+  "completed_before_later_timeout": {
+    "log": "scalafim-jvm-focused.log",
+    "batch_exit_code": 1,
+    "successful_module_totals": {
+      "imageJVM": 389,
+      "atlasJVM_42_suites": 208,
+      "atlasWorkflowsJVM": 3
+    },
+    "later_failure": "==> X scalafim.fmri.mvpa.spatial.SearchlightPerformanceReceiptSuite.report neighborhood setup separately from a prepared local-analysis sweep  70.067s java.util.concurrent.TimeoutException: test timed out after 30 seconds"
+  },
+  "qualification_limits": [
+    "Full Atlas JVM: initial run 216/217 passed; unchanged native MNI inverse exceeded 600-second deadline at 643 seconds. Second full run at final pin was stopped after the inverse again exceeded its deadline. Focused Atlas JVM acceptance excludes MniTemplateBridgeFilesSuite. The producer suite is checked separately; all shared computations and all loader/source suites are included.",
+    "Full MVPA spatial JVM: 15 functional tests passed, while SearchlightPerformanceReceiptSuite timed out after 70 seconds against its 30-second limit. The functional suites were subsequently checked separately. No full-suite or performance qualification is claimed."
+  ],
+  "dependency_resolution": "final gates resolve canonical HTTPS source URI at hosted SHA; no local image4s override",
+  "review": "author source inspection and execution; draft upstream PR is not independent review or default-branch merge"
+}
