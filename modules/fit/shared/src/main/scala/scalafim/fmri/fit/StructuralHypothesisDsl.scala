@@ -96,7 +96,11 @@ object StructuralHypothesisDsl:
 
     /** Select the complete reconstructed response at one point or window. */
     def response(basis: Hrf, functional: ResponseFunctional): SemanticT =
-      SemanticT.response(this, basis, functional)
+      SemanticT.response(this, basis, functional, FunctionalDiscretization.Exact)
+
+    /** Declare a numerical window rule for a basis without an exact primitive. */
+    def response(basis: Hrf, functional: ResponseFunctional, discretization: FunctionalDiscretization): SemanticT =
+      SemanticT.response(this, basis, functional, discretization)
 
     /** Select all basis coefficients, or only the shape dimensions. */
     def omnibus(basis: Hrf, scope: BasisScope = BasisScope.All): SemanticF =
@@ -287,35 +291,38 @@ object StructuralHypothesisDsl:
       cell: CellRef,
       basis: Hrf,
       functional: ResponseFunctional,
-      value: Double
+      value: Double,
+      discretization: FunctionalDiscretization
   ):
     def scaled(scale: Double): ResponseEffect = copy(value = value * scale)
 
     def lower(id: ContrastId): Either[FitError, StructuralResponseWeight] =
       for
         refs <- basisRefs(basis, id)
-        functionalWeights <- responseWeights(basis, functional, id)
+        functionalWeights <- responseWeights(basis, functional, discretization, id)
       yield StructuralResponseWeight(
         selector = selector(cell, None),
         functional = functionalWeights.functional,
         units = functionalWeights.units,
         basisWeights = refs.zip(functionalWeights.values).map { case (ref, weight) =>
           BasisFunctionalWeight(ref, value * weight)
-        }
+        },
+        discretization = Some(functionalWeights.receipt)
       )
 
   private final case class FunctionalValues(
       functional: ResponseFunctional,
       units: ResponseUnits,
-      values: Vector[Double]
+      values: Vector[Double],
+      receipt: FunctionalDiscretizationReceipt
   )
 
   private object SemanticT:
     def coefficient(cell: CellRef, basis: Hrf, role: BasisRole): SemanticT =
       SemanticT(Vector.empty, Vector(CoefficientEffect(cell, basis, role, 1.0)), Vector.empty)
 
-    def response(cell: CellRef, basis: Hrf, functional: ResponseFunctional): SemanticT =
-      SemanticT(Vector.empty, Vector.empty, Vector(ResponseEffect(cell, basis, functional, 1.0)))
+    def response(cell: CellRef, basis: Hrf, functional: ResponseFunctional, discretization: FunctionalDiscretization): SemanticT =
+      SemanticT(Vector.empty, Vector.empty, Vector(ResponseEffect(cell, basis, functional, 1.0, discretization)))
 
     def sampled(ref: SampledRef): SemanticT =
       SemanticT(
@@ -409,16 +416,17 @@ object StructuralHypothesisDsl:
   private def responseWeights(
       basis: Hrf,
       functional: ResponseFunctional,
+      discretization: FunctionalDiscretization,
       id: ContrastId
   ): Either[FitError, FunctionalValues] =
-    ResponseBasis.of(basis).responseFunctional(functional).left.map { error =>
+    ResponseBasis.of(basis).responseFunctional(functional, discretization).left.map { error =>
       FitError.StructuralHypothesisFailure(
         id.value,
         StructuralHypothesisErrorKind.IncompatibleDesign,
         s"response functional '$functional' cannot be evaluated on basis '${basis.name}': ${error.message}"
       )
     }.map { values =>
-      FunctionalValues(values.functional, values.units, values.values)
+      FunctionalValues(values.functional, values.units, values.values, values.receipt)
     }
 
   private def requireDescription(description: String): String =

@@ -2,6 +2,8 @@ package scalafim.fmri.design.formula
 
 import scalafim.fmri.design.{ColumnId, HrfColumnScaling, PhaseId, TermId}
 
+import scalafim.fmri.hrf.{EventResponseNormalization, HrfNormalization, PositiveSeconds, TemporalDerivativeConvention}
+
 sealed trait ArgValue
 
 object ArgValue:
@@ -53,9 +55,25 @@ final case class HrfCall(
     summate: Option[Boolean] = None,
     scaling: Option[HrfColumnScaling] = None,
     /** Compatibility spelling for scan-space unit-maximum scaling. */
-    normalize: Option[Boolean] = None
+    normalize: Option[Boolean] = None,
+    /** Finite support, explicitly distinct from scan-space column scaling. */
+    span: Option[PositiveSeconds] = None,
+    kernelNormalization: Option[HrfNormalization] = None,
+    includeMain: Option[Boolean] = None,
+    /** Opt-in serial residualization of ordered modulator siblings within run. */
+    orthogonalize: Option[Boolean] = None,
+    /** Keep modulator slopes shared while categorical main effects remain split. */
+    sharedSlopes: Option[Boolean] = None,
+    /** Serially project derivative basis columns off earlier basis columns after convolution. */
+    orthogonalizeBasis: Option[Boolean] = None,
+    temporalDerivative: Option[TemporalDerivativeConvention] = None,
+    eventNormalization: Option[EventResponseNormalization] = None
 ) extends TermCall
 
+/** Fields added after the original `trialwise()` surface are appended so that
+  * positional construction written against the earlier field order keeps its
+  * meaning.
+  */
 final case class TrialwiseCall(
     basis: Option[String] = None,
     durations: Option[ArgValue] = None,
@@ -65,7 +83,12 @@ final case class TrialwiseCall(
     label: Option[TermId] = None,
     scaling: Option[HrfColumnScaling] = None,
     /** Compatibility spelling for scan-space unit-maximum scaling. */
-    normalize: Option[Boolean] = None
+    normalize: Option[Boolean] = None,
+    subset: Option[ArgValue] = None,
+    onsets: Option[ArgValue] = None,
+    phase: Option[PhaseRef] = None,
+    /** Per-run trial identity column. */
+    id: Option[ArgValue] = None
 ) extends TermCall
 
 final case class CovariateCall(
@@ -75,4 +98,20 @@ final case class CovariateCall(
     prefix: Option[TermId] = None
 ) extends TermCall
 
-final case class ModelFormula(onset: ColumnId, terms: Vector[TermCall])
+final case class ModelFormula(onset: ColumnId, terms: Vector[TermCall]):
+  /** Throwing convenience over [[renderEither]].
+    * @throws FormulaParser.ParseError when the formula has no lossless text
+    *   (for example a hand-built non-finite literal).
+    */
+  def render: Vector[FormulaToken] = FormulaPrinter.render(this)
+  /** Safe path: tokens whose concatenation re-parses to exactly this formula. */
+  def renderEither: Either[FormulaParser.ParseError, Vector[FormulaToken]] = FormulaPrinter.renderEither(this)
+  /** Safe path for [[text]]. */
+  def textEither: Either[FormulaParser.ParseError, String] = renderEither.map(_.map(_.text).mkString)
+  /** Throwing convenience over [[textEither]].
+    * @throws FormulaParser.ParseError when the formula has no lossless text.
+    */
+  def text: String = render.map(_.text).mkString
+
+object ModelFormula:
+  def render(formula: ModelFormula): Vector[FormulaToken] = formula.render

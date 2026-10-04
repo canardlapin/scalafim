@@ -437,3 +437,30 @@ class DesignSchemaSuite extends munit.FunSuite:
 
   private def assertSchemaValidation(model: EventModel): Unit =
     assertEquals(model.designSchemaValidation, Right(()))
+
+  test("event-response transport divisors are per run, strict across runs, and refuse ambiguous receipts") {
+    val term = TermId.unsafe("task")
+    val cell = CellKey.unsafe(Vector(CellAssignment(FactorId.unsafe("condition"), scalafim.fmri.design.contrast.LevelId.unsafe("a"))))
+    val basis = BasisIndex.unsafeOneBased(1)
+    val run1 = RunIndex.unsafeOneBased(1)
+    val run2 = RunIndex.unsafeOneBased(2)
+    val perRun = EventResponseScaleReceipt(term, None, cell, None, basis, "unit-peak",
+      Vector(EventResponseRunDivisors(run1, Vector(2.0)), EventResponseRunDivisors(run2, Vector(5.0))))
+    def divisor(receipts: Vector[EventResponseScaleReceipt], scope: RunScope) =
+      EventResponseScaleReceipt.transportDivisor(receipts, term, None, cell, None, basis, scope)
+    assertEquals(divisor(Vector(perRun), RunScope.Run(run1)), Right(2.0))
+    assertEquals(divisor(Vector(perRun), RunScope.Run(run2)), Right(5.0))
+    val shared = divisor(Vector(perRun), RunScope.Global)
+    assert(shared.left.exists(_.contains("shared across runs")), shared.toString)
+    assert(divisor(Vector(perRun), RunScope.Run(RunIndex.unsafeOneBased(3))).left.exists(_.contains("in run 3")))
+    val single = perRun.copy(runs = Vector(EventResponseRunDivisors(run1, Vector(2.0)), EventResponseRunDivisors(run2, Vector(2.0))))
+    assertEquals(divisor(Vector(single), RunScope.Global), Right(2.0))
+    val mixedRun = perRun.copy(runs = Vector(EventResponseRunDivisors(run1, Vector(2.0, 3.0))))
+    assert(divisor(Vector(mixedRun), RunScope.Run(run1)).left.exists(_.contains("mixed durations")))
+    assertEquals(divisor(Vector.empty, RunScope.Global), Right(1.0))
+    // Two receipts for one identity are ambiguous even when the first would resolve.
+    val ambiguous = divisor(Vector(single, perRun), RunScope.Run(run1))
+    assert(ambiguous.left.exists(_.contains("ambiguous")), ambiguous.toString)
+    // The canonical text carries the run of every divisor set.
+    assert(perRun.canonical.contains(s"runs=1:${java.lang.Double.doubleToLongBits(2.0)}+2:${java.lang.Double.doubleToLongBits(5.0)}"), perRun.canonical)
+  }
