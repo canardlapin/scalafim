@@ -23,16 +23,34 @@ Status: ready for independent review. Not landed, not pushed.
   (`wip/core-triage-docs-20261004`). Triage says each entry lands with its
   cluster, so this branch carries it. One sentence was added about identity
   stability.
+- Readiness commits: `17c00a52` (identity encoding, R fixture, NEWS) and a
+  follow-up applying the coordinator's decisions (below).
+
+## Coordinator decisions (2026-10-04, under owner delegation)
+
+1. The conditional identity encoding is accepted: legacy keeps the two-field
+   record, the complete basis adds the `complete` tag, no v3 bump.
+2. The public `includeIntercept: Boolean` is replaced by a closed enum,
+   `Hrfs.BsplineConvention { LegacyR, Complete }`, on `Hrfs.bspline`,
+   `HrfFunctions.bsplineBasis` and `HrfParams.Bspline`. The coordinator
+   suggested `OnsetAnchored` for the legacy case. That name would be false:
+   at the minimum width (`nBasis <= degree + 1`) the legacy basis is the full
+   Bernstein basis, which is 1 at onset. The test
+   `legacy convention is onset-anchored only when it has interior knots` pins
+   this. The legacy case is therefore named for the convention it reproduces
+   (fmrihrf 0.4.0). Identity strings are unchanged by the rename.
+3. The fmrihrf drift is filed as bead `bd-01M43X88PVTG0A28RYC3X1TEJS`
+   (actor `phrf-claude-20260929`).
 
 ## Semantics
 
-`Hrfs.bspline(nBasis, span, degree, includeIntercept = false)` is the default.
+`Hrfs.bspline(nBasis, span, degree)` (convention `Hrfs.BsplineConvention.LegacyR`) is the default.
 It is unchanged: the legacy fmrihrf 0.4.0 convention, which is the full clamped
 basis minus its first spline. Interior knots sit at `floor(span) * i / (m + 1)`.
 The basis is zero at onset and cannot represent a constant once interior knots
 exist.
 
-`includeIntercept = true` selects the *complete* basis:
+`convention = Hrfs.BsplineConvention.Complete` selects the *complete* basis:
 
 - the full clamped B-spline basis of order `degree + 1` on `[0, span]` with
   `W = max(nBasis, degree + 1)` columns;
@@ -107,7 +125,7 @@ The relation to fmrihrf is as follows:
 - **Follow-up (not in scope).** When fmrihrf releases `18d418f`, scalafim's
   *legacy* default will no longer match R. It uses `floor(span)` quantile knots
   and drops only the first spline. That gap concerns the default and parity
-  fixtures, not this change, so it needs its own bead.
+  fixtures, not this change. Filed as `bd-01M43X88PVTG0A28RYC3X1TEJS`.
 
 ## Identity-change analysis
 
@@ -132,9 +150,9 @@ consequences:
 Resolution on this branch, made in `HrfIdentity.scala`:
 
 ```scala
-case HrfParams.Bspline(count, degree, false) =>
+case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.LegacyR) =>
   record("bspline", count.value.toString, degree.toString)
-case HrfParams.Bspline(count, degree, true) =>
+case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.Complete) =>
   record("bspline", count.value.toString, degree.toString, "complete")
 ```
 
@@ -152,10 +170,9 @@ The effect is as follows:
   `true`. A later third mode, such as fmrihrf HEAD's interior-only basis, can
   then take another tag without a further breaking change.
 
-The reviewer should rule on whether this conditional encoding is acceptable or
-whether the owner prefers the snapshot's always-three-field form plus a v3
-bump. That form changes every identity in the system and requires rebuilding
-artifacts.
+The coordinator accepted this encoding (decision 1). The alternative, the
+snapshot's always-three-field form plus a v3 bump, would have changed every
+identity in the system and required rebuilding artifacts.
 
 ## Golden and fixture audit
 
@@ -181,21 +198,23 @@ Golden updates relative to main:
 
 | Golden | Main | This branch |
 |---|---|---|
-| `HrfIdentitySuite` legacy `Bspline(2, 3)` | `bspline(1:2,1:3)` | `bspline(1:2,1:3)` (unchanged; the snapshot's `5:false` value was reverted) |
-| `HrfIdentitySuite` complete `Bspline(2, 3, true)` | (none) | `bspline(1:2,1:3,8:complete)` (new) |
+| `HrfIdentitySuite` `Bspline(2, 3, LegacyR)` | `bspline(1:2,1:3)` | `bspline(1:2,1:3)` (unchanged; the snapshot's `5:false` value was reverted) |
+| `HrfIdentitySuite` `Bspline(2, 3, Complete)` | (none) | `bspline(1:2,1:3,8:complete)` (new) |
 
 No other golden changed.
 
 ## Gates
 
 Every gate was run with `TERM=dumb python3 tools/build/sbt-warm <targets> < /dev/null`
-from the review worktree, one batch at a time. `memory_pressure` reported at
-least 47% free before each batch. JDK `-release:17` is in `build.sbt`.
+from the review worktree, one batch at a time, with `memory_pressure` at or
+above 30% free before each batch. JDK `-release:17` is in `build.sbt`.
+
+Final gates, after the `BsplineConvention` change (round 2):
 
 | Gate | Result |
 |---|---|
-| `hrfJVM/test` | 283 passed, 0 failed |
-| `hrfJS/test` | 283 passed, 0 failed |
+| `hrfJVM/test` | 284 passed, 0 failed |
+| `hrfJS/test` | 284 passed, 0 failed |
 | `hrfLawsJVM/test` | 82 passed, 0 failed |
 | `hrfLawsJS/test` | 82 passed, 0 failed |
 | `designJVM/test` | 445 passed, 0 failed |
@@ -204,20 +223,26 @@ least 47% free before each batch. JDK `-release:17` is in `build.sbt`.
 | `modelJS/test` | 53 passed, 0 failed |
 | `fitJVM/test` | 565 passed, 0 failed |
 | `fitJS/test` | 512 passed, 0 failed |
-| `firstLevelLawsJVM/test` | 83 passed, 0 failed |
-| `scalafimCompileAll` (`-release:17`) | exit 0 in 1582 s; no source-level `[warn]` or `[error]` lines (only sbt GC-pressure notices and a dependency build.sbt lint) |
+| `scalafimCompileAll` (`-release:17`) | exit 0 in 284 s; no source-level `[warn]` or `[error]` lines |
+
+Round 1 (commit `17c00a52`, boolean flag) had the same results with hrf at 283
+on each platform (one fewer test), plus `firstLevelLawsJVM/test` at 83 passed.
+`firstLevelLaws` was not rerun in round 2; it has no B-spline identity goldens
+and the round-2 change does not alter any numeric path or identity string.
+Round 1 `scalafimCompileAll` exited 0 in 1582 s with no source warnings.
 
 The JVM and JS totals differ for design and fit because of platform-specific
 suites under `jvm/src/test`.
 
 ## Items for the reviewer
 
-- **Conditional identity encoding.** Decide whether to accept it (see above).
-- **`includeIntercept: Boolean`.** This is a boolean on a public constructor and
-  on `HrfParams.Bspline`. `AGENTS.md` prefers a closed `enum`, for example
-  `BsplineSupport.Legacy | Complete`. The boolean was kept to stay
-  minimal-diff with the snapshot.
+- **Enum name.** `BsplineConvention.LegacyR` instead of the suggested
+  `OnsetAnchored` (see decision 2).
+- **Internal dispatch.** `bsplineBasis`, `bsplineBreaks` and `HrfIdentity`
+  dispatch on the convention with exhaustive matches, so a third convention
+  (see `bd-01M43X88PVTG0A28RYC3X1TEJS`) is a compile error until handled. The
+  snapshot's early-return branches were replaced; the legacy code path is
+  moved verbatim into `legacyBsplineBasis` / `legacyBsplineBreaks`.
 - **New guards in `Hrfs.bspline`.** They also apply to the legacy default (see
   Semantics).
-- **fmrihrf `18d418f` drift.** The legacy default will drift from R when that
-  commit is released. This needs a separate bead.
+- **fmrihrf `18d418f` drift.** Tracked as `bd-01M43X88PVTG0A28RYC3X1TEJS`.

@@ -1,5 +1,5 @@
 # Independent R oracle for scalafim's complete B-spline HRF basis
-# (`Hrfs.bspline(..., includeIntercept = true)`).
+# (`Hrfs.bspline(..., convention = Hrfs.BsplineConvention.Complete)`).
 #
 # Definition under test: a clamped B-spline basis of order degree + 1 on
 # [0, span] with W = max(nBasis, degree + 1) columns and W - degree - 1

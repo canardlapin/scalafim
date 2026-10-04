@@ -255,9 +255,10 @@ object HrfFunctions:
       p += 1
     prev
 
-  /** With `includeIntercept = true`, a complete clamped B-spline basis with
-    * uniformly spaced knots over the actual span and zero outside support.
-    * Otherwise the R-parity B-spline basis used by `hrf_bspline` / `splines::bs` in the original package.
+  /** With [[Hrfs.BsplineConvention.Complete]], a complete clamped B-spline
+    * basis with uniformly spaced knots over the actual span and zero outside
+    * support. With [[Hrfs.BsplineConvention.LegacyR]], the R-parity B-spline
+    * basis used by `hrf_bspline` / `splines::bs` in fmrihrf 0.4.0:
     *
     * - Interior knots are equally spaced quantiles of `seq(0, span)` (step 1),
     *   i.e. on `[0, floor(span)]`.
@@ -266,17 +267,24 @@ object HrfFunctions:
     * - Times outside `[0, span]` are clamped to `0` (matching R wrapper).
     */
   def bsplineBasis(lag: Lag, span: Seconds = 24.s, nBasis: Int = 5, degree: Int = 3,
-      includeIntercept: Boolean = false): Array[Double] =
-    if includeIntercept then
-      require(degree >= 0, "B-spline degree must be nonnegative")
-      require(nBasis > 0, "B-spline basis count must be positive")
-      require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
-      val width = math.max(nBasis, degree + 1)
-      if lag.value < 0.0 || lag.value > span.value then return new Array[Double](width)
-      val breaks = bsplineBreaks(span, nBasis, degree, includeIntercept = true).map(_.value)
+      convention: Hrfs.BsplineConvention = Hrfs.BsplineConvention.LegacyR): Array[Double] =
+    convention match
+      case Hrfs.BsplineConvention.LegacyR => legacyBsplineBasis(lag, span, nBasis, degree)
+      case Hrfs.BsplineConvention.Complete => completeBsplineBasis(lag, span, nBasis, degree)
+
+  private def completeBsplineBasis(lag: Lag, span: Seconds, nBasis: Int, degree: Int): Array[Double] =
+    require(degree >= 0, "B-spline degree must be nonnegative")
+    require(nBasis > 0, "B-spline basis count must be positive")
+    require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
+    val width = math.max(nBasis, degree + 1)
+    if lag.value < 0.0 || lag.value > span.value then new Array[Double](width)
+    else
+      val breaks = bsplineBreaks(span, nBasis, degree, Hrfs.BsplineConvention.Complete).map(_.value)
       val knots = Array.fill(degree + 1)(0.0) ++ breaks.slice(1, breaks.length - 1) ++
         Array.fill(degree + 1)(span.value)
-      return bsplineAt(lag.value, knots, degree)
+      bsplineAt(lag.value, knots, degree)
+
+  private def legacyBsplineBasis(lag: Lag, span: Seconds, nBasis: Int, degree: Int): Array[Double] =
     val w = span.value
     val x0 = lag.value
     val x = if x0 < 0.0 || x0 > w then 0.0 else x0
@@ -305,11 +313,15 @@ object HrfFunctions:
     * `bsplineBasis` so the two knot computations cannot drift apart.
     */
   private[hrf] def bsplineBreaks(span: Seconds, nBasis: Int, degree: Int,
-      includeIntercept: Boolean = false): Vector[Seconds] =
+      convention: Hrfs.BsplineConvention = Hrfs.BsplineConvention.LegacyR): Vector[Seconds] =
+    convention match
+      case Hrfs.BsplineConvention.Complete =>
+        val intervals = math.max(nBasis, degree + 1) - degree
+        Vector.tabulate(intervals + 1)(i => Seconds(span.value * i.toDouble / intervals.toDouble))
+      case Hrfs.BsplineConvention.LegacyR => legacyBsplineBreaks(span, nBasis, degree)
+
+  private def legacyBsplineBreaks(span: Seconds, nBasis: Int, degree: Int): Vector[Seconds] =
     val w = span.value
-    if includeIntercept then
-      val intervals = math.max(nBasis, degree + 1) - degree
-      return Vector.tabulate(intervals + 1)(i => Seconds(w * i.toDouble / intervals.toDouble))
     val ord = degree + 1
     val nIknots0 = nBasis - ord + 1
     val nIknots = if nIknots0 < 0 then 0 else nIknots0
@@ -334,6 +346,22 @@ object Hrfs:
 
   enum WeightedMethod:
     case Constant, Linear
+
+  /** Knot and column convention of [[bspline]]. */
+  enum BsplineConvention:
+    /** fmrihrf 0.4.0 `hrf_bspline`: `splines::bs(intercept = FALSE)` with
+      * interior knots at quantiles of `seq(0, span)`, i.e. on `[0, floor(span)]`,
+      * and the first spline dropped. With interior knots the basis is zero at
+      * onset and cannot represent a constant; at the minimum width
+      * (`nBasis <= degree + 1`) it is the full Bernstein basis.
+      */
+    case LegacyR
+
+    /** The full clamped basis: `max(nBasis, degree + 1)` columns, interior
+      * knots uniform over the actual span, a partition of unity on
+      * `[0, span]` and zero outside it.
+      */
+    case Complete
 
   def gamma(shape: Double = 6.0, rate: Double = 1.0, span: Seconds = 24.s): Hrf =
     val params = HrfParams.Gamma(shape, rate)
@@ -671,17 +699,17 @@ object Hrfs:
       Vec.unsafe(out)
     }
 
-  /** B-spline response basis. Use `includeIntercept = true` for a complete,
+  /** B-spline response basis. Use [[BsplineConvention.Complete]] for a complete,
     * partition-of-unity basis that can represent a constant on `[0, span]`.
     * This mode returns `max(nBasis, degree + 1)` columns and spaces interior
     * knots uniformly over the actual span, including noninteger spans.
     *
-    * The default retains the legacy R-compatible knot/column convention. With
+    * The default, [[BsplineConvention.LegacyR]], retains the legacy R-compatible knot/column convention. With
     * interior knots it omits the first spline, forces zero at onset and cannot
     * represent a constant. Neither mode applies column normalization.
     */
   def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3,
-      includeIntercept: Boolean = false): Hrf =
+      convention: BsplineConvention = BsplineConvention.LegacyR): Hrf =
     require(degree >= 0, "B-spline degree must be nonnegative")
     require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
     val requested = BasisCount(nBasis)
@@ -691,15 +719,15 @@ object Hrfs:
       HrfKind.Bspline,
       effective.value,
       span,
-      HrfParams.Bspline(requested, degree, includeIntercept),
+      HrfParams.Bspline(requested, degree, convention),
       penalty = PenaltyPolicy.Roughness,
       integration = IntegrationPolicy.PiecewisePolynomial(
-        HrfFunctions.bsplineBreaks(span, requested.value, degree, includeIntercept),
+        HrfFunctions.bsplineBreaks(span, requested.value, degree, convention),
         degree
       )
     )
     Hrf.of("bspline", nbasis = effective.value, span = span, descriptor = Some(descriptor), support = Support.Compact(span)) { t =>
-      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree, includeIntercept))
+      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree, convention))
     }
 
   def tent(nBasis: Int = 5, span: Seconds = 24.s): Hrf =

@@ -77,9 +77,9 @@ private[hrf] object HrfIdentity:
       // identities issued before the complete basis existed stay byte-identical.
       // The complete basis is a different response space; its third field makes
       // the length-framed record distinct without a descriptor version bump.
-      case HrfParams.Bspline(count, degree, false) =>
+      case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.LegacyR) =>
         record("bspline", count.value.toString, degree.toString)
-      case HrfParams.Bspline(count, degree, true) =>
+      case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.Complete) =>
         record("bspline", count.value.toString, degree.toString, "complete")
       case HrfParams.Tent(count) => record("tent", count.value.toString)
       case HrfParams.Coefficients(baseName, coefficients) => record("coefficients", baseName, numbers(coefficients))
