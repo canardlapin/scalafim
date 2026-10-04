@@ -69,9 +69,26 @@ records the removal and the replacement.
 `locusData` no longer declares `"org.typelevel" %%% "cats-kernel" % "2.12.0"`.
 After the change no Scala source under `modules/locus-data` mentions `cats`,
 and `show locusDataJVM/libraryDependencies` lists only `scala3-library` and
-`munit`. Other modules that use Cats (`image`, `atlas`, `latent`, `dataset`,
-`fit` and others) all compile, so none relied on locus-data's transitive
-`cats-kernel`; Cats elsewhere in the build is unchanged.
+`munit`. Cats elsewhere in the build is unchanged.
+
+No other module relied on locus-data's transitive `cats-kernel`:
+
+- Main sources: `scalafimCompileAll` compiles every module's main sources on
+  both platforms, including those that import Cats (`image`, `atlas`, `latent`,
+  `dataset`, `fit` and others).
+- Test sources: `scalafimCompileAll` does not compile tests, so test-source
+  Cats imports were checked by `git grep "cats\."` over
+  `modules/*/{shared,jvm,js}/src/test`. The modules with such imports are
+  `archive`, `archive-zarr`, `dataset`, `fit`, `image`,
+  `interop-archived-response`, `latent`, `mvpa-dataset`,
+  `mvpa-foundation-spike`, `response`, `response-laws` and `surface`. Each one
+  either declares `cats-core` (and `cats-effect`) itself (`archive`,
+  `archive-zarr`, `image`, `response`, and `mvpa-foundation-spike` in `Test`),
+  or reaches it through an internal `dependsOn` on one of those declaring
+  modules (`response`, `image` or `archive`). None reaches Cats only through
+  `locus-data`. `cats-core` itself depends on `cats-kernel`. The test sources
+  of every module on that list were compiled on JVM and JS after the change
+  (see Gates).
 
 ## Documentation
 
@@ -103,8 +120,27 @@ All gates ran through `tools/build/sbt-warm` in this worktree, with at least
 | `scalafimCompileAll` | exit 0, 0 warnings | |
 | `examplesCompile` | exit 0, 0 warnings | |
 
-These are the direct `dependsOn(locusData)` projects in `build.sbt`. Modules
-that depend on locus-data only transitively are covered by `scalafimCompileAll`.
+These are the direct `dependsOn(locusData)` projects in `build.sbt`.
+`scalafimCompileAll` compiles main sources only. The test sources of the
+remaining Cats-importing modules (`archive`, `archiveZarr`, `fit`,
+`archivedResponseInterop`, `mvpaDataset`, `response`, `responseLaws`) were
+compiled separately with `Test/compile` on JVM and JS: all exit 0, with no
+compiler warnings.
+
+### Review follow-up (after Opus review of `4196a208`)
+
+- `ParcellationSuite` now tests `Parcellation.fromSurjection` directly
+  (identities, assignments, total support, fibers as preimages). The deleted
+  `AggregationSuite` had been its only test. A second new test checks fusion:
+  aggregating through `fromSurjection` over parcel aggregates equals provider
+  aggregation over `coarsen`.
+- `ProviderAggregationSuite` uses significant-indentation style with named
+  contribution functions and wrapped lines.
+- `docs/plans/finite-indexed-spaces.md` carries superseded notes at §5.7, the
+  dependency paragraph, the `AtlasReduce` row and the `locus-data` scope list.
+- Re-run gates: `locusDataJVM/test` 26/26, `locusDataJS/test` 26/26,
+  `scalafimCompileAll` exit 0 with no compiler warnings (the one `[warn]` line
+  is an sbt GC notice).
 
 **Pre-existing failure:** `SpatialFeatureSetPlansSuite` "volume label maps
 become regional feature plans with linear voxel ordering" fails at
