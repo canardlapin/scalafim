@@ -100,10 +100,28 @@ Both numbers match the audit exactly. The byte measurement exists only on the
 JVM, in `modules/fit/jvm/src/test/...`. The JS side has the shared behavioral
 suites only.
 
-The fixed-effects selector's O(R·V²) term is covered by an equivalence test
-(`CompactFixedEffectsSuite`: missing vs explicit-default statuses give
-identical estimates and SEs within 1e-12, plus exclusions and precedence). It
-has no byte budget.
+The fixed-effects selector's O(R·V²) term is covered in two ways. The first
+is an equivalence test (`CompactFixedEffectsSuite`): missing and
+explicit-default statuses give identical estimates and SEs within 1e-12, and
+the test also checks exclusions and precedence. The second is a JVM-only
+allocation regression, `FixedEffectsStatusAllocationSuite`, added after review.
+It builds a two-run runwise least-squares fit over 4,096 voxels through the
+public model and fit pipeline, sets every run's `voxelStatuses` to `None`, and
+warms up `FixedEffects.combine` three times. It then measures one call against
+a per-voxel budget of 12,288 bytes.
+
+| `fixedEffectsStatus` state | Bytes for one combine (4,096 voxels, 2 runs) | Per voxel | Suite |
+|---|---|---|---|
+| Reverted to `run.resolvedVoxelStatuses(voxelPosition)` | 174,941,944 | 42,710 | fails |
+| Branch as committed | 16,247,000 | 3,966 | passes |
+
+After the mutation check, `FixedEffects.scala` was restored. Its SHA-256
+(`e0f87abb…c223a`) was the same before and after, and `git status` showed the
+file unmodified.
+
+Both allocation suites skip with `assume` when the JVM has no
+thread-allocation counters, rather than failing. They report measurements only
+through the assertion message.
 
 **Residual finding, outside this cluster:**
 `ResultArtifacts.scala`, in the runwise and patterned-runwise status-record
@@ -128,3 +146,17 @@ down afterwards.
 | `firstLevelLawsJVM/test` | 83 passed, 0 failed |
 | `scalafimCompileAll` (both platforms, `-release:17`) | success, 0 warnings |
 | Negative control: `fitJVM/testOnly *VoxelStatusAllocationSuite` with the dense line reverted | fails as expected (5,042,176 bytes) |
+| Negative control: `fitJVM/testOnly *FixedEffectsStatusAllocationSuite` with the fixed-effects line reverted | fails as expected (42,710 B/voxel) |
+
+### Post-review follow-up gates
+
+The review of `d1a07520` returned APPROVE-WITH-NITS. The follow-up commit adds
+`FixedEffectsStatusAllocationSuite`, changes the allocation suites to skip
+with `assume` when counters are unavailable, removes the `println`, and adds a
+historical-record header to the audit document.
+
+| Gate | Result |
+|---|---|
+| `fitJVM/test` | 570 passed, 0 failed (both allocation suites included) |
+| `fitJS/test` | 515 passed, 0 failed |
+| `scalafimCompileAll` | success, 0 warnings |

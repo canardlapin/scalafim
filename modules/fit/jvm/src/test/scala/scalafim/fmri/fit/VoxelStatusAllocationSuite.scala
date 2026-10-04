@@ -5,9 +5,11 @@ import com.sun.management.ThreadMXBean
 
 class VoxelStatusAllocationSuite extends munit.FunSuite:
   test("single-voxel lookup allocation is independent of the full status-vector size"):
-    val bean = ManagementFactory.getThreadMXBean match
-      case value: ThreadMXBean if value.isThreadAllocatedMemorySupported => value
-      case _ => fail("this allocation regression requires JVM thread-allocation counters")
+    val counters = ManagementFactory.getThreadMXBean match
+      case value: ThreadMXBean if value.isThreadAllocatedMemorySupported => Some(value)
+      case _ => None
+    assume(counters.isDefined, "this allocation regression requires JVM thread-allocation counters")
+    val bean = counters.get
     bean.setThreadAllocatedMemoryEnabled(true)
     val result = VoxelStatusLookupFixture.dense(4096)
     val id = result.voxelIndices.head
@@ -24,5 +26,4 @@ class VoxelStatusAllocationSuite extends munit.FunSuite:
     val bytes = bean.getCurrentThreadAllocatedBytes - before
     assertEquals(estimable, 256)
     // Generous fixed budget, far below 256 materializations of 4096 statuses.
-    assert(bytes < 262144L, s"point lookups allocated $bytes bytes")
-    println(s"voxel-status: 256 lookups / 4096 voxels allocated $bytes bytes")
+    assert(bytes < 262144L, s"256 point lookups over 4096 voxels allocated $bytes bytes")

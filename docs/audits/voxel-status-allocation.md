@@ -1,5 +1,13 @@
 # Voxel status point lookup assessment — 2026-09-12
 
+> **Historical record (2026-09-12).** This document describes the
+> working-tree state on 2026-09-12. Its "Mixed-TR fixture correction" section
+> covers work that reached main separately (`34886213`, `1eb3ffd8`), not as
+> part of this change. Its verification counts and "uncommitted" statements are
+> from that date. For current verification, including the fixed-effects
+> allocation regression added later, see
+> [`docs/verification/voxel-status-lookup-20261004.md`](../verification/voxel-status-lookup-20261004.md).
+
 Mote: `bd-01M1WVPJ9MMPFDXAY5196E73D7`.
 
 The finding is current. `DenseFmriFitResult.voxelStatus` materialized the full
