@@ -2842,11 +2842,7 @@ object EventModelBuilder:
       case None           => Right(Event.factor(values, id.value))
 
   private def canonicalNumericLevel(value: Double): String =
-    val raw = value.toString
-    val normalized =
-      if raw.endsWith(".0") then raw.dropRight(2)
-      else raw.replace(".0E", "E").replace(".0e", "e")
-    if normalized == "-0" then "0" else normalized
+    PortableNumber.format(value)
 
   /** Event/basis calls the formula grammar understands, for [[DesignError.UnknownBasisFunction]]. */
   private val basisCalls: Vector[String] =
@@ -3236,7 +3232,8 @@ object EventModelBuilder:
     data.column(id).flatMap {
       case Column.Strings(v) => Right(v)
       case Column.Ints(v)    => Right(v.map(_.toString))
-      case Column.Doubles(v) => Right(v.map(_.toString))
+      case Column.Doubles(v) if v.forall(_.isFinite) => Right(v.map(PortableNumber.format))
+      case Column.Doubles(_) => Left(DesignError.InvalidColumnType(id.value, "usable as a factor", "numeric with non-finite values"))
       case Column.Bools(v)   => Right(v.map(_.toString))
       case Column.Hrfs(v)    => Right(v.map(_.name))
       case other             => Left(DesignError.InvalidColumnType(id.value, "usable as a factor", other.typeName))
@@ -3276,7 +3273,7 @@ object EventModelBuilder:
     v match
       case ArgValue.Ident(x) => x.value
       case ArgValue.Str(x)   => "\"" + x + "\""
-      case ArgValue.Num(x)   => x.toString
+      case ArgValue.Num(x)   => if x.isFinite then PortableNumber.format(x) else x.toString
       case ArgValue.Bool(x)  => x.toString
       case ArgValue.Call(fun, args) =>
         val as = args.map { a =>

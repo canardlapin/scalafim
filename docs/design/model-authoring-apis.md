@@ -169,7 +169,8 @@ tokens are case-exact, and identifiers must already be canonical (no trimming).
 Each `ModelJsonError` carries the JSON path of the failure. Encoding rejects any
 value the decoder could not read back.
 
-Formula text, JSON, and CSV print numbers through `PortableNumber.format`: the
+Formula text, JSON, CSV, trial ids, numeric factor levels, term labels and
+receipts print numbers through `PortableNumber.format`: the
 fewest significant digits that read back as the same double, integral values
 without a fraction (`4`, not `4.0`), plain notation for decimal exponents in
 `[-6, 21)`, and `d.ddde±x` otherwise (`1e-7`, `1e21`); negative zero prints as
@@ -608,7 +609,9 @@ latency or production performance guarantees.
 - Gale does not yet provide policy-cutoff least squares (its `pinv` fixes the
   cutoff and `leastSquares` rejects rank-deficient systems), an RREF or sparse
   null-space basis, or a row-space utility with a caller-supplied cutoff. The
-  diagnostics keep minimal private helpers for these until they land upstream.
+  diagnostics keep minimal private helpers for these until they land upstream
+  (Gale tickets `bd-01M42AE4HXZ7122GX40PM4HCQY`, `bd-01M42AE5WV04ZJP013DEZYPM7E`,
+  `bd-01M42AE7ACJBQ5DJBPWH0H82H4`).
 - Column-pattern contrasts compare by pattern source, not `Regex` equality. On
   Scala.js the stored source compiles with JavaScript regex semantics, which can
   differ from `java.util.regex` for some constructs.
@@ -621,7 +624,3 @@ latency or production performance guarantees.
   readout's scope (for example mixed durations within a run, or different
   divisors across runs for a shared coefficient); only coefficient contrasts are
   available for them.
-- Factor levels taken from a `Double` event column still use the platform
-  `Double.toString` (`1.0` on the JVM, `1` on Scala.js), so such level names are
-  not portable. Use text or integer factor columns where levels must match
-  across platforms.
