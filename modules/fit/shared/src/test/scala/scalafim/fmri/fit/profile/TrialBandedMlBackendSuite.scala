@@ -18,6 +18,8 @@ import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, ParametricHrfF
   * and never reuses the production accepted band, release or factor.
   */
 class TrialBandedMlBackendSuite extends munit.FunSuite:
+  // Independent dense/finite-difference checks took 82 s in the full Java 17 gate.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
   private val step = PositiveSeconds(0.2).fold(error => fail(error.message), identity)
   private lazy val gaussian = HrfKernelBasis.compile(
     KernelBasisSpec(GaussianFamily.Default, step, Vector(26, 21), tolerance = 1e-4, maxRank = 40))

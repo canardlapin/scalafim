@@ -103,6 +103,30 @@ suite bound retains every numerical assertion, the 24-voxel cohort, and all
 per-voxel work caps. PR #19's Linux run admitted 21 of 24; that hosted result is
 not superseded by a local macOS run.
 
+## Full-gate follow-up
+
+The first full Java 17 fit gate recorded 587 tests: 581 passed and six failed.
+Five failed only the default 30-second MUnit deadline: the backend dense/finite-
+difference oracle (82 s), status-allocation setup/check (53 s), original-time
+readout oracle (69 s), conditional dense oracle (42 s), and constrained
+determinant oracle (76 s). Those five suite bounds are now ten minutes. Their
+numeric, allocation, solve and work limits are unchanged. The captured full log
+has no GC or out-of-memory warning.
+
+The remaining failure expected the complete ML work ledger to remain unchanged
+through native readout. The declared energy policy now records one traversal:
+one energy evaluation, T residual rows, the prepared sparse basis length, and
+T*F nuisance visits. The updated expectation permits exactly those increments;
+factor, solve, response-copy and coefficient-recovery increments remain zero.
+Existing measurement/no-second-solve assertions remain, and both memoized
+rereads must leave the complete ML ledger unchanged. Independent review
+confirmed this test-only accounting adjustment. Full gates are rerun on the
+resulting candidate before landing.
+
+Independent read-only review approved the production repair at `723bc27d`
+subject to full gates. Focused results are author-run; the reviewer inspected
+code and terminal evidence rather than independently rerunning those tests.
+
 ## Explicit landing boundary
 
 This work lands the retained S0–S9/S11 implementation and prerequisites. S10

@@ -9,6 +9,8 @@ import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.{Cascade34Family, GaussianFamily, NormalizationRule, ParametricHrfFamily, ShapePoint}
 
 class ProfileTrialReadoutSuite extends munit.FunSuite:
+  // Independent original-time readout checks took 69 s in the full Java 17 gate.
+  override val munitTimeout = scala.concurrent.duration.Duration(10, "min")
   private lazy val basis = HrfKernelBasis.compile(KernelBasisSpec(
     GaussianFamily.Default,
     PositiveSeconds(0.2).fold(error => fail(error.message), identity),
