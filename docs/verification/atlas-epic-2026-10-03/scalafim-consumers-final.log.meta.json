@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T23:56:25.084089+00:00",
+  "finished_utc": "2026-10-04T00:00:26.602526+00:00",
+  "duration_seconds": 241.522324,
+  "command": [
+    "sbt",
+    "-J-Xmx8g",
+    "-J-XX:ActiveProcessorCount=8",
+    "-Dsbt.global.base=/private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505",
+    "-Dsbt.supershell=false",
+    "-Dsbt.color=false",
+    "-Dscalafim.subcortical.fixtureRoot=/private/tmp/scalafim-subcortical-assets",
+    "-Dscalafim.pinnedAtlasRoot=/private/tmp",
+    "-Dscalafim.atlas.fsl.fixtureRoot=/private/tmp/scalafim-atlas-assets-oct02",
+    "-Dscalafim.cbig.lh.annotation=/private/tmp/lh.annot",
+    "-Dscalafim.cbig.rh.annotation=/private/tmp/rh.annot",
+    "-Dscalafim.cbig.lh.white=/private/tmp/lh.white",
+    "-Dscalafim.cbig.rh.white=/private/tmp/rh.white",
+    "atlasJVM/testOnly scalafim.atlas.ParcelMetricInteropProducerSuite",
+    "mvpaSpatialJVM/testOnly scalafim.fmri.mvpa.spatial.SpatialFeatureSetPlansSuite scalafim.fmri.mvpa.spatial.LocusFeatureSetPlansSuite scalafim.fmri.mvpa.spatial.PyMvpaSearchlightParitySuite",
+    "atlasExamplesJVM/test",
+    "workflowExamplesJVM/testOnly scalafim.examples.workflows.AtlasMvpaWorkflowSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/scalafim-consumers-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3000.0,
+  "log_bytes": 23052
+}

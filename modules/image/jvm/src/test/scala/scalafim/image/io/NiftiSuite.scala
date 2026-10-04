@@ -107,6 +107,7 @@ class NiftiSuite extends munit.FunSuite:
     while i < values.length do
       val offset = 352 + i * bytesPerValue
       datatype match
+        case NiftiDatatype.Int8    => bb.put(offset, values(i).toInt.toByte)
         case NiftiDatatype.UInt8   => bb.put(offset, values(i).toInt.toByte)
         case NiftiDatatype.Int16   => bb.putShort(offset, values(i).toShort)
         case NiftiDatatype.Int32   => bb.putInt(offset, values(i).toInt)
@@ -194,6 +195,27 @@ class NiftiSuite extends munit.FunSuite:
         y += 1
       x += 1
   }
+
+  test("signed INT8 storage and volume reads preserve boundaries and scaling"):
+    val path = Files.createTempDirectory("scalafim-nifti-int8").resolve("signed.nii")
+    writeFixture(
+      path,
+      dims = Vector(4, 1, 1),
+      spacing = Vector(1.0, 1.0, 1.0),
+      qform = None,
+      sform = None,
+      values = Vector(-128.0, -1.0, 0.0, 127.0),
+      datatype = NiftiDatatype.Int8,
+      slope = 2.0,
+      intercept = 3.0
+    )
+    Nifti.readStored(path).toOption.get.image match
+      case NiftiScalarStored.Int8(encoded) =>
+        assertEquals(encoded.data.elementsIterator.toVector, Vector[Byte](-128, -1, 0, 127))
+      case other => fail(s"expected signed INT8 storage, got $other")
+    val volume = Nifti.readVolume(path, readEvidence).toOption.get.image
+    Vector(-253.0, 1.0, 3.0, 257.0).zipWithIndex.foreach: (expected, x) =>
+      assertEqualsDouble(volume(x, 0, 0), expected, 0.0)
 
   test("stored UInt8 retains one native Ravel owner and explicit affine scaling") {
     val dir = Files.createTempDirectory("scalafim-nifti-stored")
