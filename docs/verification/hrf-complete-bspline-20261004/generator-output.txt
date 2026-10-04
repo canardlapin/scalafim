@@ -1,0 +1,4 @@
+wrote modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/CompleteBsplineRFixtures.scala
+installed fmrihrf: 0.4.0
+installed legacy: ncol = 5, row-sum range = 0 .. 1
+fmrihrf checkout 40c2125 hrf_bspline(N) vs complete(N + 2)[, -c(1, last)]: max |diff| = 0

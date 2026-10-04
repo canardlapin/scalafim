@@ -20,6 +20,21 @@ class CompleteBsplineSuite extends munit.FunSuite:
       }
     }
 
+  test("complete basis matches the generated splines::bs(intercept = TRUE) fixtures"):
+    // 13-significant-digit serialization of values in [0, 1] bounds the
+    // rounding error by 5e-14; times are serialized exactly as evaluated.
+    fixtures.CompleteBsplineRFixtures.all.foreach { fixture =>
+      val hrf = Hrfs.bspline(fixture.nBasis, Seconds(fixture.span), fixture.degree, includeIntercept = true)
+      assertEquals(hrf.descriptor.nbasis, fixture.width, fixture.name)
+      fixture.times.zipWithIndex.foreach { case (time, row) =>
+        val actual = hrf(Lag(time)).data
+        assertEquals(actual.length, fixture.width, fixture.name)
+        for basis <- 0 until fixture.width do
+          assertEqualsDouble(actual(basis), fixture.at(row, basis), 1e-12,
+            s"${fixture.name} t=$time column ${basis + 1}")
+      }
+    }
+
   test("complete bases contain constants across degrees, widths and fractional spans"):
     for
       degree <- 0 to 4
