@@ -59,8 +59,14 @@ class ConditionMilestoneSuite extends munit.FunSuite:
     val midpoint = Vector.tabulate(family.dimension)(i => 0.5 * (family.chart.lower(i) + family.chart.upper(i)))
     val admission = ObservedFamilyCertification
       .admitForCompact(
-        expanded, schedule, frame, precision, Some(whitening), Some(nuisance),
-        Vector(ShapePoint.unsafe(midpoint)), ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+        expanded,
+        schedule,
+        frame,
+        precision,
+        Some(whitening),
+        Some(nuisance),
+        Vector(ShapePoint.unsafe(midpoint)),
+        ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
       )
       .fold(e => fail(e.message), identity)
     val prep = CompactConditionPreparation

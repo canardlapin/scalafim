@@ -31,8 +31,11 @@ class TrialBandedSuite extends munit.FunSuite:
       whitening: Option[WhiteningPlan] = None
   )
 
-  private def fixture(lambda: Double = 2.5, coincident: Boolean = false,
-      durations: Vector[Seconds] = Vector.fill(6)(Seconds(0.0))): Fixture =
+  private def fixture(
+      lambda: Double = 2.5,
+      coincident: Boolean = false,
+      durations: Vector[Seconds] = Vector.fill(6)(Seconds(0.0))
+  ): Fixture =
     val rows = 120
     val frame = SamplingFrame(blockLens = Seq(60, 60), tr = Seq(1.0, 1.0))
     val onsets =
@@ -68,8 +71,16 @@ class TrialBandedSuite extends munit.FunSuite:
     val rows = 48
     val frame = SamplingFrame(blockLens = Seq(24, 24), tr = Seq(1.0, 1.0))
     val membership = TrialMembership.make(Vector(0, 1, 1, 2, 2), 3).fold(error => fail(error.message), identity)
-    val expanded = ExpandedTrialDesign.lower(Vector(2.3, 8.1, 16.4, 3.7, 14.2).map(Seconds(_)),
-      Vector(0, 0, 0, 1, 1), Vector.fill(5)(Seconds(0.0)), membership, frame, cascadeBasis, Seconds(0.2))
+    val expanded = ExpandedTrialDesign
+      .lower(
+        Vector(2.3, 8.1, 16.4, 3.7, 14.2).map(Seconds(_)),
+        Vector(0, 0, 0, 1, 1),
+        Vector.fill(5)(Seconds(0.0)),
+        membership,
+        frame,
+        cascadeBasis,
+        Seconds(0.2)
+      )
       .fold(error => fail(error.message), identity)
     val nuisance = DMat.tabulate(rows, 2): (t, j) =>
       val local = if t < 24 then t else t - 24
@@ -211,21 +222,37 @@ class TrialBandedSuite extends munit.FunSuite:
     direct._2.indices.foreach(i => assertEqualsDouble(out.amplitudes(i), direct._2(i), 3e-8, s"condition $i"))
 
   test("three-dimensional Cascade34 jets and ML determinant match dense equations under run-reset AR"):
-    val plan = WhiteningPlan.global(ArmaCoefficients.ar(0.31),
-      Vector(TimeSegment(0, 24, 0), TimeSegment(24, 48, 1)), exactFirstAr1 = true)
+    val plan = WhiteningPlan.global(
+      ArmaCoefficients.ar(0.31),
+      Vector(TimeSegment(0, 24, 0), TimeSegment(24, 48, 1)),
+      exactFirstAr1 = true
+    )
     for whitening <- Vector(None, Some(plan)) do
       val fx = cascadeFixture(whitening = whitening)
-      val prep = TrialBandedPreparation.prepare(fx.expanded, whitening, Some(fx.nuisance), fx.lambda)
+      val prep = TrialBandedPreparation
+        .prepare(fx.expanded, whitening, Some(fx.nuisance), fx.lambda)
         .fold(error => fail(error.message), identity)
-      val objective = prep.objective(NodeGrid(cascadeFamily.chart, Vector(5, 4, 3))).fold(error => fail(error.message), identity)
-      objective.pointAt(prep.whitenResponses(1, fx.response).flatMap(response => prep.encodeWhitened(response, 0)).fold(error => fail(error.message), identity))
+      val objective =
+        prep.objective(NodeGrid(cascadeFamily.chart, Vector(5, 4, 3))).fold(error => fail(error.message), identity)
+      objective.pointAt(
+        prep
+          .whitenResponses(1, fx.response)
+          .flatMap(response => prep.encodeWhitened(response, 0))
+          .fold(error => fail(error.message), identity)
+      )
       val out = new ProfileJetBuffer(cascadeFamily.dimension, 3)
       assert(objective.jetAt(fx.point.coordinates.toArray, out))
       val direct = directFit(fx, fx.point)
       assertEqualsDouble(out.energy, direct._1, 5e-8 * math.max(1.0, math.abs(direct._1)))
-      direct._2.indices.foreach(i => assertEqualsDouble(out.amplitudes(i), direct._2(i), 5e-8, s"whitening=$whitening mean=$i"))
-      val readout = objective.readout(TrialReadoutFactorMode.ExactShape(fx.point.coordinates)).fold(error => fail(error.message), identity)
-      direct._3.indices.foreach(i => assertEqualsDouble(readout.trialAmplitudes(i), direct._3(i), 5e-8, s"whitening=$whitening trial=$i"))
+      direct._2.indices.foreach(i =>
+        assertEqualsDouble(out.amplitudes(i), direct._2(i), 5e-8, s"whitening=$whitening mean=$i")
+      )
+      val readout = objective
+        .readout(TrialReadoutFactorMode.ExactShape(fx.point.coordinates))
+        .fold(error => fail(error.message), identity)
+      direct._3.indices.foreach(i =>
+        assertEqualsDouble(readout.trialAmplitudes(i), direct._3(i), 5e-8, s"whitening=$whitening trial=$i")
+      )
       val logDet = objective.logDetAt(fx.point.coordinates.toArray).fold(error => fail(error.message), identity)
       assertEqualsDouble(logDet, constrainedCovarianceLogDet(fx, fx.point), 5e-8)
       val x0 = fx.point.coordinates.toArray
@@ -240,23 +267,40 @@ class TrialBandedSuite extends munit.FunSuite:
           val gradient = (ep - em) / (2 * h)
           val diagonal = (ep - 2 * direct._1 + em) / (h * h)
           assertEqualsDouble(out.gradient(p), gradient, 8e-4 * math.max(1.0, math.abs(gradient)), s"h=$h gradient=$p")
-          assertEqualsDouble(out.hessian(p * 3 + p), diagonal, 8e-3 * math.max(1.0, math.abs(diagonal)), s"h=$h hessian=$p,$p")
+          assertEqualsDouble(
+            out.hessian(p * 3 + p),
+            diagonal,
+            8e-3 * math.max(1.0, math.abs(diagonal)),
+            s"h=$h hessian=$p,$p"
+          )
           var q = p + 1
           while q < 3 do
             val pp = x0.clone(); pp(p) += h; pp(q) += h
             val pm = x0.clone(); pm(p) += h; pm(q) -= h
             val mp = x0.clone(); mp(p) -= h; mp(q) += h
             val mm = x0.clone(); mm(p) -= h; mm(q) -= h
-            val mixed = (directFit(fx, ShapePoint.unsafe(pp.toVector))._1 - directFit(fx, ShapePoint.unsafe(pm.toVector))._1 -
-              directFit(fx, ShapePoint.unsafe(mp.toVector))._1 + directFit(fx, ShapePoint.unsafe(mm.toVector))._1) / (4 * h * h)
-            assertEqualsDouble(out.hessian(p * 3 + q), mixed, 1.2e-2 * math.max(1.0, math.abs(mixed)), s"h=$h hessian=$p,$q")
+            val mixed =
+              (directFit(fx, ShapePoint.unsafe(pp.toVector))._1 - directFit(fx, ShapePoint.unsafe(pm.toVector))._1 -
+                directFit(fx, ShapePoint.unsafe(mp.toVector))._1 + directFit(
+                  fx,
+                  ShapePoint.unsafe(mm.toVector)
+                )._1) / (4 * h * h)
+            assertEqualsDouble(
+              out.hessian(p * 3 + q),
+              mixed,
+              1.2e-2 * math.max(1.0, math.abs(mixed)),
+              s"h=$h hessian=$p,$q"
+            )
             q += 1
           p += 1
 
   test("Cascade34 rho-zero tail coordinate is structurally unidentified"):
     val fx = cascadeFixture()
-    val prep = TrialBandedPreparation.prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda).fold(error => fail(error.message), identity)
-    val objective = prep.objective(NodeGrid(cascadeFamily.chart, Vector(5, 4, 3))).fold(error => fail(error.message), identity)
+    val prep = TrialBandedPreparation
+      .prepare(fx.expanded, None, Some(fx.nuisance), fx.lambda)
+      .fold(error => fail(error.message), identity)
+    val objective =
+      prep.objective(NodeGrid(cascadeFamily.chart, Vector(5, 4, 3))).fold(error => fail(error.message), identity)
     objective.pointAt(prep.encodeWhitened(fx.response).fold(error => fail(error.message), identity))
     val zero = ShapePoint.unsafe(Vector(fx.point(0), fx.point(1), 0.0))
     val shifted = ShapePoint.unsafe(Vector(fx.point(0), fx.point(1) + 0.7, 0.0))
@@ -267,7 +311,10 @@ class TrialBandedSuite extends munit.FunSuite:
     assertEqualsDouble(out.gradient(1), 0.0, 1e-10)
     assertEqualsDouble(out.hessian(1 * 3 + 1), 0.0, 1e-9)
     val positiveRhoEnergy = objective.energyAt(fx.point.coordinates.toArray, new ProfileJetBuffer(3, 3))
-    assert(math.abs(positiveRhoEnergy - out.energy) > 1e-6, "the off-grid rho coordinate must remain sensitivity-detectable")
+    assert(
+      math.abs(positiveRhoEnergy - out.energy) > 1e-6,
+      "the off-grid rho coordinate must remain sensitivity-detectable"
+    )
 
   test("unequal singleton and coincident conditions remain exact across lambda extremes and trial permutations"):
     val lambdaEnergies = Vector.newBuilder[Double]
@@ -330,9 +377,14 @@ class TrialBandedSuite extends munit.FunSuite:
     val permDirect = directFit(permFx, original.point)
     assertEqualsDouble(permOut.energy, permDirect._1, 2e-8)
     permDirect._2.indices.foreach(i => assertEqualsDouble(permOut.amplitudes(i), permDirect._2(i), 2e-8))
-    val originalPrep = TrialBandedPreparation.prepare(original.expanded, None, Some(original.nuisance), original.lambda).fold(error => fail(error.message), identity)
-    val originalObjective = originalPrep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
-    originalObjective.pointAt(originalPrep.encodeWhitened(original.response).fold(error => fail(error.message), identity))
+    val originalPrep = TrialBandedPreparation
+      .prepare(original.expanded, None, Some(original.nuisance), original.lambda)
+      .fold(error => fail(error.message), identity)
+    val originalObjective =
+      originalPrep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
+    originalObjective.pointAt(
+      originalPrep.encodeWhitened(original.response).fold(error => fail(error.message), identity)
+    )
     val originalOut = new ProfileJetBuffer(family.dimension, 3)
     assert(originalObjective.jetAt(original.point.coordinates.toArray, originalOut))
     assertEqualsDouble(permOut.energy, originalOut.energy, 2e-8)
@@ -345,15 +397,25 @@ class TrialBandedSuite extends munit.FunSuite:
       2e-8
     )
     permutation.indices.foreach { permutedIndex =>
-      assertEqualsDouble(permDirect._3(permutedIndex), directFit(original, original.point)._3(permutation(permutedIndex)), 2e-8)
+      assertEqualsDouble(
+        permDirect._3(permutedIndex),
+        directFit(original, original.point)._3(permutation(permutedIndex)),
+        2e-8
+      )
     }
-    val originalTrials = originalObjective.readout(TrialReadoutFactorMode.ExactShape(original.point.coordinates))
-      .fold(error => fail(error.message), identity).trialAmplitudes
-    val permutedTrials = permObjective.readout(TrialReadoutFactorMode.ExactShape(original.point.coordinates))
-      .fold(error => fail(error.message), identity).trialAmplitudes
+    val originalTrials = originalObjective
+      .readout(TrialReadoutFactorMode.ExactShape(original.point.coordinates))
+      .fold(error => fail(error.message), identity)
+      .trialAmplitudes
+    val permutedTrials = permObjective
+      .readout(TrialReadoutFactorMode.ExactShape(original.point.coordinates))
+      .fold(error => fail(error.message), identity)
+      .trialAmplitudes
     permutation.indices.foreach(i => assertEqualsDouble(permutedTrials(i), originalTrials(permutation(i)), 2e-8))
-    assert(permutation.indices.exists(i => math.abs(permutedTrials(i) - originalTrials(i)) > 1e-5),
-      "omitting trial-amplitude unpermutation must change this fixture")
+    assert(
+      permutation.indices.exists(i => math.abs(permutedTrials(i) - originalTrials(i)) > 1e-5),
+      "omitting trial-amplitude unpermutation must change this fixture"
+    )
     // A trial-valued query must travel with the complete trial records too.
     // This is a scalar law over backend readout, not admission of the public
     // normalized ProfileHrf query contract.
@@ -364,35 +426,59 @@ class TrialBandedSuite extends munit.FunSuite:
     val reorderedTrialWeights = permutation.map(trialWeights)
     assertEqualsDouble(trialQuery(reorderedTrialWeights, permutedTrials), trialValue, 2e-8)
     assertEqualsDouble(trialQuery(reorderedTrialWeights.map(-_), permutedTrials), -trialValue, 2e-8)
-    assert(math.abs(trialQuery(trialWeights, permutedTrials) - trialValue) > 1e-5,
-      "leaving signed trial-query weights unpermuted must change this fixture")
+    assert(
+      math.abs(trialQuery(trialWeights, permutedTrials) - trialValue) > 1e-5,
+      "leaving signed trial-query weights unpermuted must change this fixture"
+    )
 
     val conditionOrder = Vector(2, 0, 1) // new condition index -> original condition index
-    val relabelledMembership = TrialMembership.make(
-      original.expanded.membership.conditionOfTrial.map(condition => conditionOrder.indexOf(condition)),
-      3
-    ).fold(error => fail(error.message), identity)
-    val relabelled = ExpandedTrialDesign.lower(
-      originalOnsets.map(Seconds(_)), originalBlocks, originalDurations, relabelledMembership,
-      SamplingFrame(blockLens = Seq(60, 60), tr = Seq(1.0, 1.0)), basis, Seconds(0.2)
-    ).fold(error => fail(error.message), identity)
-    val relabelledPrep = TrialBandedPreparation.prepare(relabelled, None, Some(original.nuisance), original.lambda)
+    val relabelledMembership = TrialMembership
+      .make(
+        original.expanded.membership.conditionOfTrial.map(condition => conditionOrder.indexOf(condition)),
+        3
+      )
       .fold(error => fail(error.message), identity)
-    val relabelledObjective = relabelledPrep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
-    relabelledObjective.pointAt(relabelledPrep.encodeWhitened(original.response).fold(error => fail(error.message), identity))
+    val relabelled = ExpandedTrialDesign
+      .lower(
+        originalOnsets.map(Seconds(_)),
+        originalBlocks,
+        originalDurations,
+        relabelledMembership,
+        SamplingFrame(blockLens = Seq(60, 60), tr = Seq(1.0, 1.0)),
+        basis,
+        Seconds(0.2)
+      )
+      .fold(error => fail(error.message), identity)
+    val relabelledPrep = TrialBandedPreparation
+      .prepare(relabelled, None, Some(original.nuisance), original.lambda)
+      .fold(error => fail(error.message), identity)
+    val relabelledObjective =
+      relabelledPrep.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
+    relabelledObjective.pointAt(
+      relabelledPrep.encodeWhitened(original.response).fold(error => fail(error.message), identity)
+    )
     val relabelledOut = new ProfileJetBuffer(family.dimension, 3)
     assert(relabelledObjective.jetAt(original.point.coordinates.toArray, relabelledOut))
     assertEqualsDouble(relabelledOut.energy, originalOut.energy, 2e-8)
-    conditionOrder.indices.foreach(i => assertEqualsDouble(relabelledOut.amplitudes(i), originalOut.amplitudes(conditionOrder(i)), 2e-8))
+    conditionOrder.indices.foreach(i =>
+      assertEqualsDouble(relabelledOut.amplitudes(i), originalOut.amplitudes(conditionOrder(i)), 2e-8)
+    )
     val originalWeights = Vector(1.0, -2.0, 0.5)
     val relabelledWeights = conditionOrder.map(originalWeights)
     val originalQuery = SignedQuery.make("original", originalWeights, 1e-6).fold(error => fail(error.message), identity)
-    val relabelledQuery = SignedQuery.make("relabelled", relabelledWeights, 1e-6).fold(error => fail(error.message), identity)
+    val relabelledQuery =
+      SignedQuery.make("relabelled", relabelledWeights, 1e-6).fold(error => fail(error.message), identity)
     val originalValue = QueryEvaluation.evaluate(originalOut.amplitudes.toVector, Vector(originalQuery)).head.value
-    val relabelledValue = QueryEvaluation.evaluate(relabelledOut.amplitudes.toVector, Vector(relabelledQuery)).head.value
+    val relabelledValue =
+      QueryEvaluation.evaluate(relabelledOut.amplitudes.toVector, Vector(relabelledQuery)).head.value
     assertEqualsDouble(relabelledValue, originalValue, 2e-8)
-    val reversed = SignedQuery.make("reversed", relabelledWeights.map(-_), 1e-6).fold(error => fail(error.message), identity)
-    assertEqualsDouble(QueryEvaluation.evaluate(relabelledOut.amplitudes.toVector, Vector(reversed)).head.value, -originalValue, 2e-8)
+    val reversed =
+      SignedQuery.make("reversed", relabelledWeights.map(-_), 1e-6).fold(error => fail(error.message), identity)
+    assertEqualsDouble(
+      QueryEvaluation.evaluate(relabelledOut.amplitudes.toVector, Vector(reversed)).head.value,
+      -originalValue,
+      2e-8
+    )
 
   test("legal trial ordering changes packed bandwidth without changing the two-run model"):
     val frame = SamplingFrame(blockLens = Seq(90, 90), tr = Seq(1.0, 1.0))
@@ -402,16 +488,20 @@ class TrialBandedSuite extends munit.FunSuite:
     val membership = TrialMembership.make(Vector(0, 1, 1, 1, 2, 2), 3).fold(error => fail(error.message), identity)
     val permutation = Vector(0, 2, 1, 3, 5, 4)
     def expanded(order: Vector[Int]): ExpandedTrialDesign =
-      val members = TrialMembership.make(order.map(membership.conditionOfTrial), 3).fold(error => fail(error.message), identity)
-      ExpandedTrialDesign.lower(order.map(onsets), order.map(runs), order.map(durations), members, frame, basis, Seconds(0.2))
+      val members =
+        TrialMembership.make(order.map(membership.conditionOfTrial), 3).fold(error => fail(error.message), identity)
+      ExpandedTrialDesign
+        .lower(order.map(onsets), order.map(runs), order.map(durations), members, frame, basis, Seconds(0.2))
         .fold(error => fail(error.message), identity)
     val original = expanded((0 until 6).toVector)
     val reordered = expanded(permutation)
     val nuisance = DMat.tabulate(180, 2)((row, col) => if col == 0 then 1.0 else (row % 90 - 44.5) / 44.5)
     val response = Array.tabulate(180)(row => math.sin(row * 0.23) + 0.2 * math.cos(row * 0.37))
     val point = ShapePoint.unsafe(Vector(5.3, math.log(1.55)))
-    val prepA = TrialBandedPreparation.prepare(original, None, Some(nuisance), 2.5).fold(error => fail(error.message), identity)
-    val prepB = TrialBandedPreparation.prepare(reordered, None, Some(nuisance), 2.5).fold(error => fail(error.message), identity)
+    val prepA =
+      TrialBandedPreparation.prepare(original, None, Some(nuisance), 2.5).fold(error => fail(error.message), identity)
+    val prepB =
+      TrialBandedPreparation.prepare(reordered, None, Some(nuisance), 2.5).fold(error => fail(error.message), identity)
     assert(prepA.bandwidth < prepB.bandwidth, s"bandwidths ${prepA.bandwidth},${prepB.bandwidth}")
     val objA = prepA.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
     val objB = prepB.objective(NodeGrid(family.chart, Vector(2, 2))).fold(error => fail(error.message), identity)
@@ -425,16 +515,27 @@ class TrialBandedSuite extends munit.FunSuite:
     a.amplitudes.indices.foreach(i => assertEqualsDouble(a.amplitudes(i), b.amplitudes(i), 2e-8))
     a.gradient.indices.foreach(i => assertEqualsDouble(a.gradient(i), b.gradient(i), 2e-8))
     a.hessian.indices.foreach(i => assertEqualsDouble(a.hessian(i), b.hessian(i), 2e-7))
-    assertEqualsDouble(objA.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity),
-      objB.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity), 2e-8)
-    val trialsA = objA.readout(TrialReadoutFactorMode.ExactShape(point.coordinates)).fold(error => fail(error.message), identity).trialAmplitudes
-    val trialsB = objB.readout(TrialReadoutFactorMode.ExactShape(point.coordinates)).fold(error => fail(error.message), identity).trialAmplitudes
+    assertEqualsDouble(
+      objA.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity),
+      objB.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity),
+      2e-8
+    )
+    val trialsA = objA
+      .readout(TrialReadoutFactorMode.ExactShape(point.coordinates))
+      .fold(error => fail(error.message), identity)
+      .trialAmplitudes
+    val trialsB = objB
+      .readout(TrialReadoutFactorMode.ExactShape(point.coordinates))
+      .fold(error => fail(error.message), identity)
+      .trialAmplitudes
     permutation.indices.foreach(i => assertEqualsDouble(trialsB(i), trialsA(permutation(i)), 2e-8))
 
     val interleaved = Vector(3, 0, 4, 1, 5, 2)
     val refused = EventSchedule.fromParts(interleaved.map(onsets), interleaved.map(durations), interleaved.map(runs))
-    assert(refused.left.exists(_.message.contains("non-decreasing")),
-      "interleaved run ids are outside the source schedule contract; do not silently flatten runs")
+    assert(
+      refused.left.exists(_.message.contains("non-decreasing")),
+      "interleaved run ids are outside the source schedule contract; do not silently flatten runs"
+    )
 
   test("interleaved cross-run trial columns preserve actual backend fits and signed queries under IID and reset AR"):
     val frame = SamplingFrame(blockLens = Seq(90, 90), tr = Seq(1.0, 1.0))
@@ -445,8 +546,9 @@ class TrialBandedSuite extends munit.FunSuite:
     val permutation = Vector(3, 0, 4, 1, 5, 2)
     def expanded(order: Vector[Int]): ExpandedTrialDesign =
       val membership = TrialMembership.make(order.map(members), 3).fold(error => fail(error.message), identity)
-      ExpandedTrialDesign.lower(order.map(onsets), order.map(runs), order.map(durations), membership,
-        frame, basis, Seconds(0.2)).fold(error => fail(error.message), identity)
+      ExpandedTrialDesign
+        .lower(order.map(onsets), order.map(runs), order.map(durations), membership, frame, basis, Seconds(0.2))
+        .fold(error => fail(error.message), identity)
     val original = expanded(members.indices.toVector)
     val interleaved = expanded(permutation)
     assertEquals(interleaved.canonicalToInput, Vector(1, 3, 5, 0, 2, 4))
@@ -454,11 +556,18 @@ class TrialBandedSuite extends munit.FunSuite:
     val nuisance = DMat.tabulate(180, 2)((row, col) => if col == 0 then 1.0 else (row % 90 - 44.5) / 44.5)
     val response = Array.tabulate(180)(row => math.sin(row * 0.23) + 0.2 * math.cos(row * 0.37))
     val point = ShapePoint.unsafe(Vector(5.3, math.log(1.55)))
-    val ar = WhiteningPlan.global(ArmaCoefficients.ar(0.31),
-      Vector(TimeSegment(0, 90, 0), TimeSegment(90, 180, 1)), exactFirstAr1 = true)
+    val ar = WhiteningPlan.global(
+      ArmaCoefficients.ar(0.31),
+      Vector(TimeSegment(0, 90, 0), TimeSegment(90, 180, 1)),
+      exactFirstAr1 = true
+    )
     for whitening <- Vector(None, Some(ar)) do
-      val prepA = TrialBandedPreparation.prepare(original, whitening, Some(nuisance), 2.5).fold(error => fail(error.message), identity)
-      val prepB = TrialBandedPreparation.prepare(interleaved, whitening, Some(nuisance), 2.5).fold(error => fail(error.message), identity)
+      val prepA = TrialBandedPreparation
+        .prepare(original, whitening, Some(nuisance), 2.5)
+        .fold(error => fail(error.message), identity)
+      val prepB = TrialBandedPreparation
+        .prepare(interleaved, whitening, Some(nuisance), 2.5)
+        .fold(error => fail(error.message), identity)
       assert(prepB.bandwidth > prepA.bandwidth, s"bandwidths ${prepA.bandwidth},${prepB.bandwidth}")
       val independentlyWhitened = whitenColumns(whitening, 180, 1, response)
       val actualWhitened = prepA.whitenResponses(1, response).fold(error => fail(error.message), identity)
@@ -480,10 +589,20 @@ class TrialBandedSuite extends munit.FunSuite:
       assertEqualsDouble(a.energy, direct._1, 2e-8)
       direct._2.indices.foreach(i => assertEqualsDouble(a.amplitudes(i), direct._2(i), 2e-8))
       val determinant = objA.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity)
-      assertEqualsDouble(determinant, objB.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity), 2e-8)
+      assertEqualsDouble(
+        determinant,
+        objB.logDetAt(point.coordinates.toArray).fold(error => fail(error.message), identity),
+        2e-8
+      )
       assertEqualsDouble(determinant, constrainedCovarianceLogDet(fx, point), 2e-8)
-      val trialsA = objA.readout(TrialReadoutFactorMode.ExactShape(point.coordinates)).fold(error => fail(error.message), identity).trialAmplitudes
-      val trialsB = objB.readout(TrialReadoutFactorMode.ExactShape(point.coordinates)).fold(error => fail(error.message), identity).trialAmplitudes
+      val trialsA = objA
+        .readout(TrialReadoutFactorMode.ExactShape(point.coordinates))
+        .fold(error => fail(error.message), identity)
+        .trialAmplitudes
+      val trialsB = objB
+        .readout(TrialReadoutFactorMode.ExactShape(point.coordinates))
+        .fold(error => fail(error.message), identity)
+        .trialAmplitudes
       permutation.indices.foreach: input =>
         assertEqualsDouble(trialsB(input), trialsA(permutation(input)), 2e-8)
         assertEqualsDouble(trialsA(input), direct._3(input), 2e-8)
@@ -492,8 +611,10 @@ class TrialBandedSuite extends munit.FunSuite:
       val value = query(weights, trialsA)
       assertEqualsDouble(query(permutation.map(weights), trialsB), value, 2e-8)
       assertEqualsDouble(query(permutation.map(weights).map(-_), trialsB), -value, 2e-8)
-      assert(math.abs(query(weights, trialsB) - value) > 1e-5,
-        "wrong signed trial-weight mapping must change this interleaved fixture")
+      assert(
+        math.abs(query(weights, trialsB) - value) > 1e-5,
+        "wrong signed trial-weight mapping must change this interleaved fixture"
+      )
 
   test("rank aliases are refused and exact per-voxel readout factors are explicit and counted"):
     val fx = fixture()
@@ -593,7 +714,11 @@ class TrialBandedSuite extends munit.FunSuite:
 
   /** Independent direct normal equations for `min ||y-F gamma-X a||^2 + lambda ||a-M beta||^2`.
     */
-  private def directFit(fx: Fixture, point: ShapePoint, recordReference: Boolean = false): (Double, Vector[Double], Vector[Double]) =
+  private def directFit(
+      fx: Fixture,
+      point: ShapePoint,
+      recordReference: Boolean = false
+  ): (Double, Vector[Double], Vector[Double]) =
     val rows = fx.expanded.rows
     val n = fx.expanded.trials
     val f = fx.nuisance.cols
@@ -685,7 +810,13 @@ class TrialBandedSuite extends munit.FunSuite:
       val matrixValues = Array.tabulate(size * size)(i => normal(i / size, i % size))
       val rhsValues = Array.tabulate(size)(i => rhs(i, 0))
       val fittedValues = Array.tabulate(size)(i => coefficients(i, 0))
-      println(s"""[lambda-reference] {"lambda":${fx.lambda},"rows":$rows,"trials":$n,"nuisanceCols":$f,"conditions":$c,"normal":[${matrixValues.mkString(",")}],"rhs":[${rhsValues.mkString(",")}],"coefficients":[${fittedValues.mkString(",")}],"x":[${x.mkString(",")}],"nuisance":[${nuisance.mkString(",")}],"response":[${response.mkString(",")}],"membership":[${fx.expanded.membership.conditionOfTrial.mkString(",")}],"energy":$energy}""")
+      println(
+        s"""[lambda-reference] {"lambda":${fx.lambda},"rows":$rows,"trials":$n,"nuisanceCols":$f,"conditions":$c,"normal":[${matrixValues
+            .mkString(",")}],"rhs":[${rhsValues.mkString(",")}],"coefficients":[${fittedValues.mkString(",")}],"x":[${x
+            .mkString(",")}],"nuisance":[${nuisance.mkString(",")}],"response":[${response.mkString(
+            ","
+          )}],"membership":[${fx.expanded.membership.conditionOfTrial.mkString(",")}],"energy":$energy}"""
+      )
     (
       energy,
       Vector.tabulate(c)(condition => coefficients(n + f + condition, 0)),

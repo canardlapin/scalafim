@@ -19,9 +19,11 @@ class ObservedFamilyAdmissionSuite extends munit.FunSuite:
   private val precision = Seconds(0.1)
   private val term = EventTerm(
     Vector(Event.factor(Vector("A", "B", "A", "B"), "condition")),
-    Vector(2.0, 12.0, 28.0, 45.0).map(Seconds(_)), blockIds = Vector.fill(4)(0)
+    Vector(2.0, 12.0, 28.0, 45.0).map(Seconds(_)),
+    blockIds = Vector.fill(4)(0)
   )
-  private val basis = HrfKernelBasis.compile(KernelBasisSpec(family, step, Vector(18, 15), 1e-4, 32))
+  private val basis = HrfKernelBasis
+    .compile(KernelBasisSpec(family, step, Vector(18, 15), 1e-4, 32))
     .fold(e => fail(e.message), identity)
   private val point = Vector(family.chart.point(5.0, math.log(1.4)).fold(e => fail(e.message), identity))
   private val requirements = ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
@@ -29,23 +31,50 @@ class ObservedFamilyAdmissionSuite extends munit.FunSuite:
   private def lower(source: EventTerm): ExpandedConditionDesign =
     ExpandedConditionDesign.lower(source, frame, basis, precision).fold(e => fail(e.message), identity)
 
-  private def bothAdmissions(expanded: ExpandedConditionDesign, source: EventTerm,
-      actualFrame: SamplingFrame = frame, actualPrecision: Seconds = precision): Vector[Boolean] =
+  private def bothAdmissions(
+      expanded: ExpandedConditionDesign,
+      source: EventTerm,
+      actualFrame: SamplingFrame = frame,
+      actualPrecision: Seconds = precision
+  ): Vector[Boolean] =
     val dataset = FmriDataset.unsafe(
-      InMemoryDatasetBackend(DatasetId("admission-control"), DMat.tabulate(80, 1)((_, _) => 0.0),
-        SampleSpaces(Vector(1, 1, 1))), frame)
-    val model = FmriModel(EventModel.build(Vector(expanded.term), frame),
-      BaselineModel.build(samplingFrame = frame, basis = BaselineBasis.Constant, intercept = Intercept.Global), dataset)
+      InMemoryDatasetBackend(
+        DatasetId("admission-control"),
+        DMat.tabulate(80, 1)((_, _) => 0.0),
+        SampleSpaces(Vector(1, 1, 1))
+      ),
+      frame
+    )
+    val model = FmriModel(
+      EventModel.build(Vector(expanded.term), frame),
+      BaselineModel.build(samplingFrame = frame, basis = BaselineBasis.Constant, intercept = Intercept.Global),
+      dataset
+    )
     val plan = FitPlan(model)
     val structure = ConditionProfileFit.structureFor(plan, expanded.term).fold(e => fail(e.message), identity)
     val taskNames = expanded.term.columnNames.toSet
-    val nuisanceIndices = plan.model.columnNames.indices.filterNot(i => taskNames.contains(plan.model.columnNames(i))).toVector
-    val nuisance = DMat.tabulate(80, nuisanceIndices.length)((row, col) => plan.model.designMatrix(row, nuisanceIndices(col)))
+    val nuisanceIndices =
+      plan.model.columnNames.indices.filterNot(i => taskNames.contains(plan.model.columnNames(i))).toVector
+    val nuisance =
+      DMat.tabulate(80, nuisanceIndices.length)((row, col) => plan.model.designMatrix(row, nuisanceIndices(col)))
     Vector(
-      ObservedFamilyCertification.admitForCompact(expanded, source, actualFrame, actualPrecision,
-        None, Some(nuisance), point, requirements).isRight,
-      ObservedFamilyCertification.admitForCondition(plan, structure, expanded, source, actualFrame,
-        actualPrecision, None, Some(nuisance), point, requirements).isRight
+      ObservedFamilyCertification
+        .admitForCompact(expanded, source, actualFrame, actualPrecision, None, Some(nuisance), point, requirements)
+        .isRight,
+      ObservedFamilyCertification
+        .admitForCondition(
+          plan,
+          structure,
+          expanded,
+          source,
+          actualFrame,
+          actualPrecision,
+          None,
+          Some(nuisance),
+          point,
+          requirements
+        )
+        .isRight
     )
 
   test("both public admissions accept exactly matched condition geometry"):
@@ -56,8 +85,8 @@ class ObservedFamilyAdmissionSuite extends munit.FunSuite:
     assertEquals(bothAdmissions(lower(term), swapped), Vector(false, false))
 
   test("both public admissions refuse changed continuous weights with the same source form"):
-    val weighted = EventTerm(Vector(Event.variable(Vector(1.0, 1.0, 1.0, 1.0), "weight")),
-      term.onsets, blockIds = term.blockIds0)
+    val weighted =
+      EventTerm(Vector(Event.variable(Vector(1.0, 1.0, 1.0, 1.0), "weight")), term.onsets, blockIds = term.blockIds0)
     val altered = weighted.copy(events = Vector(Event.variable(Vector(1.0, 2.0, 1.0, 2.0), "weight")))
     val expanded = lower(weighted)
     assertEquals(bothAdmissions(expanded, weighted), Vector(true, true))
