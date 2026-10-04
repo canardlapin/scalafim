@@ -434,7 +434,6 @@ lazy val design =
     .settings(
       name := "scalafim-fmri-design",
       libraryDependencies ++= Seq(
-        "com.lihaoyi" %%% "upickle" % "4.1.0",
         "org.typelevel" %%% "cats-core" % "2.12.0",
         "org.typelevel" %%% "spire"     % "0.18.0"
       )
