@@ -222,7 +222,10 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
-    "-Xmax-inlines:64"
+    "-Xmax-inlines:64",
+    // CI pins JDK 17; restrict the JDK API surface so newer-JDK calls
+    // (e.g. Thread.threadId, JDK 19) fail locally on any newer host JDK.
+    "-release:17"
   ),
   Test / fork := false,
   libraryDependencies += "org.scalameta" %%% "munit" % "1.2.1" % Test
