@@ -85,7 +85,7 @@ object SpatialFeatureSetPlans:
       if indices.isEmpty then
         coveragePolicy match
           case ParcelCoveragePolicy.RequireEveryRegion =>
-            return Left(SpatialPlanError.MissingAtlasRegion(region.id.value, region.label))
+            return Left(SpatialPlanError.MissingAtlasRegion(region.id.value, region.label.value))
           case ParcelCoveragePolicy.KeepCoveredRegions =>
             ()
       else covered += ((region, indices))
@@ -98,7 +98,7 @@ object SpatialFeatureSetPlans:
         featureSet(
           RoiId(region.id.value),
           indices.map(_.value),
-          label = Some(region.label)
+          label = Some(region.label.value)
         )
       }.flatMap { sets =>
         regionalPlan(name, SpatialFeatureDomain.VolumeAtlas(atlas.ref, coveragePolicy), sets)

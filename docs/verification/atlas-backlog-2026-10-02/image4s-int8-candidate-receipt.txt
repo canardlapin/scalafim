@@ -1,0 +1,38 @@
+CANDIDATE ONLY — image4s signed INT8 NIfTI preparation receipt
+
+This patch is verified in an isolated checkout but is not published, pinned, or
+available to ScalaFIM until its upstream image4s revision is landed and pinned.
+
+Source checkout: /private/tmp/image4s-int8-26a74ad
+Pinned source revision: 26a74ad99b9ee49a9555344e19b82d69a2ba50e4
+
+Changed paths:
+- modules/image4s-core/shared/src/main/scala/image4s/ValueEncoding.scala
+- modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
+- modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
+- modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiSuite.scala
+- modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala
+- modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiSemanticSuite.scala
+- modules/image4s-nifti/js/src/test/scala/image4s/nifti/NodeNiftiSuite.scala
+
+Behavior:
+- Adds NIfTI datatype 256 (signed INT8) raw, scalar, and label decoding.
+- Uses signed byte reads and affine conversion to scaled Double.
+- Covers -128, -1, 0, and 127 with slope 2 and intercept 3; UInt8 255 remains 255.
+- The existing writer datatype dispatch has the matching bounded INT8 range arm solely
+  to remain exhaustive after adding the closed datatype case.
+
+Verification command:
+  sbt 'image4s-niftiJVM/test' 'image4s-niftiJS/test'
+Log: /private/tmp/image4s-int8-nifti-tests-final-r2.log
+Exit status: 0
+JVM: Passed 56, Failed 0, Errors 0
+Scala.js: Passed 37, Failed 0, Errors 0
+Diff check: git diff --check passed
+
+Warnings:
+- No compiler warnings in the final test log.
+- Shell startup emitted a pre-existing RVM diagnostic: operation not permitted: ps.
+
+Artifact:
+- /private/tmp/image4s-int8.patch

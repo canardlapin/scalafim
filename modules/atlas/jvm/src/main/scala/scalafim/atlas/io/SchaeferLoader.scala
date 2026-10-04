@@ -58,7 +58,7 @@ object SchaeferLoader:
 
   def refFor(spec: Schaefer2018): VolumeAtlasRef =
     val a = assets(spec)
-    spec.atlasRef().copy(
+    spec.atlasRef().withDetails(details => details.copy(
       artifacts = Vector(
         AtlasArtifact(
           role = ArtifactRole.ParcellationVolume,
@@ -91,7 +91,7 @@ object SchaeferLoader:
           details = s"Loaded Schaefer2018 ${spec.parcels.value}-parcel ${spec.networks.value}-network atlas at ${spec.resolution.mm}mm."
         )
       )
-    )
+    ))
 
   def parseLut(text: String, spec: Schaefer2018): Vector[AtlasRegionMetadata] =
     val prefix = s"${spec.networks.value}Networks_"
@@ -118,7 +118,7 @@ object SchaeferLoader:
               if tokens.length >= 2 then tokens.takeRight(2).mkString("_")
               else canonical
             Some(
-              AtlasRegionMetadata(
+              AtlasRegionMetadata.fromStrings(
                 id = RegionId(id),
                 label = label,
                 labelFull = Some(full),

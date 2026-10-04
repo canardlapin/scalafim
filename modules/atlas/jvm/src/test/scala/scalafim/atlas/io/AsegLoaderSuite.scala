@@ -44,12 +44,12 @@ class AsegLoaderSuite extends munit.FunSuite:
 
     val regions = AsegLoader.parseColorLut(text)
     assertEquals(regions.map(_.id), Vector(RegionId(10), RegionId(16), RegionId(49)))
-    assertEquals(regions.head.label, "Thalamus")
+    assertEquals(regions.head.label.value, "Thalamus")
     assertEquals(regions.head.hemisphere, Some(Hemisphere.Left))
-    assertEquals(regions(1).label, "Brainstem")
+    assertEquals(regions(1).label.value, "Brainstem")
     assertEquals(regions(1).hemisphere, None)
     assertEquals(regions(2).hemisphere, Some(Hemisphere.Right))
-    assertEquals(regions(2).attributes("freesurfer_label"), "Right-Thalamus-Proper")
+    assertEquals(regions(2).attributes.toMap("freesurfer_label"), "Right-Thalamus-Proper")
   }
 
   test("AsegLoader loadFromPaths reads NIfTI labels and filters absent rows") {
@@ -62,7 +62,7 @@ class AsegLoaderSuite extends munit.FunSuite:
     assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
     assertEquals(atlas.regions.ids.map(_.value), Vector(10, 16, 49))
     assertEquals(atlas.regions.ids, Vector(RegionId(10), RegionId(16), RegionId(49)))
-    assertEquals(atlas.region(RegionId(10)).map(_.label), Some("Thalamus"))
+    assertEquals(atlas.region(RegionId(10)).map(_.label.value), Some("Thalamus"))
     assertEquals(atlas.region(RegionId(10)).flatMap(_.hemisphere), Some(Hemisphere.Left))
     assertEquals(atlas.region(RegionId(16)).flatMap(_.hemisphere), None)
     assertEquals(atlas.region(RegionId(49)).flatMap(_.hemisphere), Some(Hemisphere.Right))

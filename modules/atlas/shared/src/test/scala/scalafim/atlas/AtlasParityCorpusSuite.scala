@@ -16,8 +16,8 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
 
     AtlasParityFixtures.regionExpectations.foreach { expected =>
       val region = atlas.region(RegionId(expected.id)).get
-      assertEquals(region.label, expected.label)
-      assertEquals(region.fullLabel, expected.labelFull)
+      assertEquals(region.label.value, expected.label)
+      assertEquals(region.fullLabel.value, expected.labelFull)
       assertEquals(region.hemisphere, expected.hemisphere)
       assertEquals(region.network.map(_.value), expected.network)
       assertEquals(
@@ -37,7 +37,7 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
 
     val reduced = atlas.reduce(AtlasParityFixtures.dataVolume(atlas))
     AtlasParityFixtures.parcelMeans.foreach { case (id, expected) =>
-      assertEquals(reduced.value(RegionId(id)), Some(expected))
+      assertEquals(atlas.realization.parcelPoint(RegionId(id)).map(reduced.apply), Some(expected))
     }
   }
 
@@ -109,8 +109,8 @@ class AtlasParityCorpusSuite extends munit.FunSuite:
     interceptMessage[IllegalArgumentException]("requirement failed: atlas region ids must be unique: 10") {
       RegionIndex(
         Vector(
-          AtlasRegionMetadata(RegionId(10), "A"),
-          AtlasRegionMetadata(RegionId(10), "A-duplicate")
+          AtlasRegionMetadata.fromStrings(RegionId(10), "A"),
+          AtlasRegionMetadata.fromStrings(RegionId(10), "A-duplicate")
         )
       )
     }

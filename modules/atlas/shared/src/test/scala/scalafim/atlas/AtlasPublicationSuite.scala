@@ -15,13 +15,13 @@ class AtlasPublicationSuite extends munit.FunSuite:
   private val regions =
     RegionIndex(
       Vector(
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(10),
           "Left",
           hemisphere = Some(Hemisphere.Left),
           network = Some(NetworkId("NetA"))
         ),
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(20),
           "Right",
           hemisphere = Some(Hemisphere.Right),
@@ -37,7 +37,8 @@ class AtlasPublicationSuite extends munit.FunSuite:
       templateSpace = SpaceId.MNI152,
       coordSpace = SpaceId.MNI152,
       confidence = Confidence.Exact,
-      parcelVariant = Some("two-parcel-v1")
+      parcelVariant = Some("two-parcel-v1"),
+      parcelIdentity = ParcelIdentity.SharedRegionIds
     )
 
   private val surfaceRef =
@@ -47,7 +48,8 @@ class AtlasPublicationSuite extends munit.FunSuite:
       templateSpace = SpaceId.FsAverage6,
       coordSpace = SpaceId.FsAverage6,
       confidence = Confidence.Exact,
-      parcelVariant = Some("two-parcel-v1")
+      parcelVariant = Some("two-parcel-v1"),
+      parcelIdentity = ParcelIdentity.SharedRegionIds
     )
 
   test("Schaefer variants define exact ordered parcel identity"):
@@ -160,7 +162,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
     )
     assertEquals(
       foreign.parcelDomain.identity.structuralFingerprint,
-      "8d84890c1f25d45032b02b8027cf0975d9b509571fb01dcb3b08be6d65083065"
+      "e6fccb5b8cc4e4e497758e40e5b4ad3e354f18413ab3fe6faf3d43570d4ece91"
     )
     assertEquals(
       foreign.supportDomains.head.identity.structuralFingerprint,
@@ -430,13 +432,14 @@ class AtlasPublicationSuite extends munit.FunSuite:
 
   private object ForeignProducerFixture:
     // These bytes and digests were generated independently from the
-    // Neuropublish v1 byte profile, not by ScalaFIM's encoder.
+    // Neuropublish v1 byte profile by Python struct/hashlib with the current
+    // parcel key contract, not by ScalaFIM's encoder.
     private val firstKey =
-      "org.scalafim.atlas/parcel/v1:91:38:org.scalafim.atlas/parcel-namespace/v111:publication4:Tiny13:two-parcel-v111:unspecified:10"
+      "org.scalafim.atlas/parcel/v2:91:38:org.scalafim.atlas/parcel-namespace/v211:publication4:Tiny13:two-parcel-v111:unspecified:20:shared-region-ids/v1:2:10"
     private val secondKey =
-      "org.scalafim.atlas/parcel/v1:91:38:org.scalafim.atlas/parcel-namespace/v111:publication4:Tiny13:two-parcel-v111:unspecified:20"
+      "org.scalafim.atlas/parcel/v2:91:38:org.scalafim.atlas/parcel-namespace/v211:publication4:Tiny13:two-parcel-v111:unspecified:20:shared-region-ids/v1:2:20"
     private val finitePreimage = fromHex(
-      "4e5055444f4d3100260000006f72672e6e6575726f7075626c6973682e646f6d61696e2f66696e6974652d696e6465786564010000003102000000000000007e0000006f72672e7363616c6166696d2e61746c61732f70617263656c2f76313a39313a33383a6f72672e7363616c6166696d2e61746c61732f70617263656c2d6e616d6573706163652f763131313a7075626c69636174696f6e343a54696e7931333a74776f2d70617263656c2d763131313a756e7370656369666965643a31307e0000006f72672e7363616c6166696d2e61746c61732f70617263656c2f76313a39313a33383a6f72672e7363616c6166696d2e61746c61732f70617263656c2d6e616d6573706163652f763131313a7075626c69636174696f6e343a54696e7931333a74776f2d70617263656c2d763131313a756e7370656369666965643a3230"
+      "4e5055444f4d3100260000006f72672e6e6575726f7075626c6973682e646f6d61696e2f66696e6974652d696e646578656401000000310200000000000000980000006f72672e7363616c6166696d2e61746c61732f70617263656c2f76323a39313a33383a6f72672e7363616c6166696d2e61746c61732f70617263656c2d6e616d6573706163652f763231313a7075626c69636174696f6e343a54696e7931333a74776f2d70617263656c2d763131313a756e7370656369666965643a32303a7368617265642d726567696f6e2d6964732f76313a323a3130980000006f72672e7363616c6166696d2e61746c61732f70617263656c2f76323a39313a33383a6f72672e7363616c6166696d2e61746c61732f70617263656c2d6e616d6573706163652f763231313a7075626c69636174696f6e343a54696e7931333a74776f2d70617263656c2d763131313a756e7370656369666965643a32303a7368617265642d726567696f6e2d6964732f76313a323a3230"
     )
     private val volumePreimage = fromHex(
       "4e5055444f4d3100230000006f72672e6e6575726f7075626c6973682e646f6d61696e2f766f6c756d652d677269640100000031060000004d4e49313532030000005241530a0000006d696c6c696d657465721e000000726f772d6d616a6f722d6c6173742d617869732d666173746573742f7631020000000200000001000000000000000000f03f0000000000000000000000000000000000000000000000000000000000000000000000000000f03f0000000000000000000000000000000000000000000000000000000000000000000000000000f03f0000000000000000000000000000000000000000000000000000000000000000000000000000f03f"
@@ -446,7 +449,7 @@ class AtlasPublicationSuite extends munit.FunSuite:
         "org.neuropublish.domain/finite-indexed",
         "1",
         2,
-        "8d84890c1f25d45032b02b8027cf0975d9b509571fb01dcb3b08be6d65083065",
+        "e6fccb5b8cc4e4e497758e40e5b4ad3e354f18413ab3fe6faf3d43570d4ece91",
         finitePreimage
       )
     private val volumeIdentity =

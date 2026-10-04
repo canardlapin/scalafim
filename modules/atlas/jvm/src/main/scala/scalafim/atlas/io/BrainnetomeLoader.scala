@@ -64,7 +64,7 @@ object BrainnetomeLoader:
 
   def refFor(spec: Brainnetome246 = Brainnetome246.default): VolumeAtlasRef =
     val a = assets(spec)
-    spec.atlasRef().copy(
+    spec.atlasRef().withDetails(details => details.copy(
       artifacts = Vector(
         AtlasArtifact(
           role = ArtifactRole.ParcellationVolume,
@@ -106,7 +106,7 @@ object BrainnetomeLoader:
           details = "Loaded Brainnetome 246-region MNI152 1mm atlas."
         )
       )
-    )
+    ))
 
   def parseLut(
     lutText: String,
@@ -136,7 +136,7 @@ object BrainnetomeLoader:
                 "parcels" -> "246"
               ) ++ net.toVector.flatMap(_.attributes)
             Some(
-              AtlasRegionMetadata(
+              AtlasRegionMetadata.fromStrings(
                 id = RegionId(id),
                 label = label,
                 labelFull = net.flatMap(_.region).map(region => s"$region: $label").orElse(Some(label)),

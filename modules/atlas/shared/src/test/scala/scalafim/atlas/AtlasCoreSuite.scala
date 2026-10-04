@@ -34,9 +34,9 @@ class AtlasCoreSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          AtlasRegionMetadata(RegionId(1), "RegionA", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetA"))),
-          AtlasRegionMetadata(RegionId(2), "RegionB", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("NetA"))),
-          AtlasRegionMetadata(RegionId(3), "RegionC", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetB")))
+          AtlasRegionMetadata.fromStrings(RegionId(1), "RegionA", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetA"))),
+          AtlasRegionMetadata.fromStrings(RegionId(2), "RegionB", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("NetA"))),
+          AtlasRegionMetadata.fromStrings(RegionId(3), "RegionC", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("NetB")))
         )
       )
 
@@ -112,7 +112,7 @@ class AtlasCoreSuite extends munit.FunSuite:
     assert(math.abs(pt.z - 36.139) < 0.01, clue = pt.toString)
 
     // The route carries MNI305 points to MNI152 points: the target grid is in MNI305, the source grid in MNI152.
-    def gridIn(space: AnySpaceId): GridSpec[?] =
+    def gridIn(space: SpaceId): GridSpec[?] =
       val world = TemplateCatalog.standard.world(space).toOption.get
       GridSpec.in(scalafim.image.world.FrameCatalog.frame(world))(SpatialDims(2, 2, 2), Affine.identity[D3]).toOption.get
     val sourceGrid = gridIn(SpaceId.MNI152)
@@ -127,10 +127,10 @@ class AtlasCoreSuite extends munit.FunSuite:
         )
         .toOption
         .get
-    val pulledBack = SpatialPullbacks.transform(pullback, pt).toOption.get
-    assertEqualsDouble(pulledBack.x, 10.0, 1e-10)
-    assertEqualsDouble(pulledBack.y, -20.0, 1e-10)
-    assertEqualsDouble(pulledBack.z, 35.0, 1e-10)
+    val pulledBack = SpatialPullbacks.transform(pullback, Point3D(10.0, -20.0, 35.0)).toOption.get
+    assertEqualsDouble(pulledBack.x, pt.x, 1e-10)
+    assertEqualsDouble(pulledBack.y, pt.y, 1e-10)
+    assertEqualsDouble(pulledBack.z, pt.z, 1e-10)
   }
 
   test("executable affine routes follow provider andThen order") {
@@ -149,7 +149,7 @@ class AtlasCoreSuite extends munit.FunSuite:
       0.0, 0.0, 1.0, 0.0,
       0.0, 0.0, 0.0, 1.0
     ))
-    def step(from: AnySpaceId, to: AnySpaceId, value: Affine[D3]) =
+    def step(from: SpaceId, to: SpaceId, value: Affine[D3]) =
       TransformStep(
         from,
         to,
@@ -173,6 +173,14 @@ class AtlasCoreSuite extends munit.FunSuite:
     assertEqualsDouble(actual.x, 2.0, 1e-12)
     assertEqualsDouble(actual.y, 0.0, 1e-12)
     assertEqualsDouble(actual.z, 0.0, 1e-12)
+    def routeGrid(space: SpaceId): GridSpec[?] =
+      val world = TemplateCatalog.standard.world(space).toOption.get
+      GridSpec.in(scalafim.image.world.FrameCatalog.frame(world))(SpatialDims(2, 2, 2), Affine.identity[D3]).toOption.get
+    val fused = route.pullback(routeGrid(SpaceId.MNI152NLin6Asym), routeGrid(SpaceId.MNI305)).toOption.get
+    val fusedResult = SpatialPullbacks.transform(fused, Point3D(3.0, 0.0, 0.0)).toOption.get
+    assertEqualsDouble(fusedResult.x, 8.0, 1e-12)
+    val sequential = route.transform(Vector(Point3D(3.0, 0.0, 0.0))).toOption.get.head
+    assertEqualsDouble(fusedResult.x, sequential.x, 1e-12)
   }
 
   test("VolumeAtlas validates region ids and supports metadata subset") {
@@ -210,9 +218,9 @@ class AtlasCoreSuite extends munit.FunSuite:
       lin += 1
     val vol = AtlasTestImages.scalarVolume(atlas, volData)
     val values = atlas.reduce(vol)
-    assertEquals(values.value(RegionId(1)), Some(1.0))
-    assertEquals(values.value(RegionId(2)), Some(2.0))
-    assertEquals(values.value(RegionId(3)), Some(3.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(1)).map(values.apply), Some(1.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(2)).map(values.apply), Some(2.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(3)).map(values.apply), Some(3.0))
 
     val tLen = 3
     val vecData = PrimitiveBuffers.fillConst[Double](atlas.space.spatialDims.product * tLen, 0.0)
@@ -225,7 +233,7 @@ class AtlasCoreSuite extends munit.FunSuite:
         lin += 1
       t += 1
     val vec = AtlasTestImages.scalarSeries(atlas, vecData, tLen)
-    val cvec = atlas.reduce(vec)
+    val cvec = atlas.reduceSeries(vec)
     assertEquals(cvec.data.shape, Shape(3, 3))
     assertEquals(cvec.data(0, 0), 1.0)
     assertEquals(cvec.data(0, 1), 2.0)

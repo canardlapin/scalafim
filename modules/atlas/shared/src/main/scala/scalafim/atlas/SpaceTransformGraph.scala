@@ -29,26 +29,26 @@ import scalafim.surface.{SurfaceGeometry, TemplateSphere}
   * the frames from one catalog. Named templates reuse the frames in `scalafim.image.world.Spaces`; fsaverage5/6 share
   * fsaverage's world and fsLR_32k shares fsLR's, because they are samplings of one coordinate system.
   */
-final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D3]]):
-  def spaces: Vector[AnySpaceId] =
+final class TemplateCatalog private (private val frames: Map[SpaceId, Frame[D3]]):
+  def spaces: Vector[SpaceId] =
     frames.keys.toVector.sortBy(_.value)
 
-  def contains(space: AnySpaceId): Boolean =
+  def contains(space: SpaceId): Boolean =
     frames.contains(SpaceId.normalize(space))
 
-  def frame(space: AnySpaceId): Either[AtlasError, Frame[D3]] =
+  def frame(space: SpaceId): Either[AtlasError, Frame[D3]] =
     val normalized = SpaceId.normalize(space)
     frames.get(normalized).toRight(AtlasError.UnknownSpace(normalized))
 
   /** The world space a catalogued space's coordinates live in: its catalog frame's world. Uncatalogued spaces are
     * [[AtlasError.UnknownSpace]], never a guessed template.
     */
-  def world(space: AnySpaceId): Either[AtlasError, WorldSpace] =
+  def world(space: SpaceId): Either[AtlasError, WorldSpace] =
     val normalized = SpaceId.normalize(space)
     frame(normalized).flatMap(f => FrameCatalog.worldOf(f).left.map(_ => AtlasError.UnknownSpace(normalized)))
 
   /** The routing-graph domain of a catalogued space: unsampled, in the space's world frame. */
-  def domain(space: AnySpaceId): Either[AtlasError, Domain] =
+  def domain(space: SpaceId): Either[AtlasError, Domain] =
     val normalized = SpaceId.normalize(space)
     for
       world <- frame(normalized)
@@ -96,7 +96,7 @@ final class TemplateCatalog private (private val frames: Map[AnySpaceId, Frame[D
     yield domain
 
   /** This catalog plus fresh template frames for any of `extra` it does not already hold. */
-  def including(extra: Iterable[AnySpaceId]): TemplateCatalog =
+  def including(extra: Iterable[SpaceId]): TemplateCatalog =
     val missing = extra.iterator.map(SpaceId.normalize).filterNot(frames.contains).toVector.distinct
     if missing.isEmpty then this
     else new TemplateCatalog(frames ++ missing.map(space => space -> TemplateCatalog.templateFrame(space.value)))
@@ -118,11 +118,11 @@ object TemplateCatalog:
       )
     )
 
-  def domainId(space: AnySpaceId): DomainId =
+  def domainId(space: SpaceId): DomainId =
     DomainId.unsafe(s"atlas-template:${SpaceId.normalize(space).value}")
 
   /** Surface templates are surface domains; volume and unknown spaces are volumetric world spaces. */
-  def domainKind(space: AnySpaceId): DomainKind =
+  def domainKind(space: SpaceId): DomainKind =
     SpaceId.kind(space) match
       case SpaceKindTag.Surface => DomainKind.Surface
       case SpaceKindTag.Volume | SpaceKindTag.Unknown => DomainKind.Volume
@@ -141,7 +141,7 @@ final case class SpaceTransformGraph private (
   graph: SpatialGraph,
   private val stepsById: Map[MorphismId, TransformStep]
 ):
-  def plan(from: AnySpaceId, to: AnySpaceId, dataKind: DataKind = DataKind.Parcel): Either[AtlasError, TransformPlan] =
+  def plan(from: SpaceId, to: SpaceId, dataKind: DataKind = DataKind.Parcel): Either[AtlasError, TransformPlan] =
     val fromNorm = SpaceId.normalize(from)
     val toNorm = SpaceId.normalize(to)
     if fromNorm == toNorm then

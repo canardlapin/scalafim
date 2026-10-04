@@ -1,0 +1,303 @@
+diff --git a/modules/image4s-core/shared/src/main/scala/image4s/ValueEncoding.scala b/modules/image4s-core/shared/src/main/scala/image4s/ValueEncoding.scala
+index c8e4f2d..b20d4ba 100644
+--- a/modules/image4s-core/shared/src/main/scala/image4s/ValueEncoding.scala
++++ b/modules/image4s-core/shared/src/main/scala/image4s/ValueEncoding.scala
+@@ -115,6 +115,12 @@ object ValueEncoding:
+     ): Either[EncodingError, PrimitiveToDoubleAffine[Short]] =
+       validated(slope, intercept)(Int16Affine.apply)
+ 
++    def int8(
++        slope: Double,
++        intercept: Double
++    ): Either[EncodingError, PrimitiveToDoubleAffine[Byte]] =
++      validated(slope, intercept)(Int8Affine.apply)
++
+     def int32(
+         slope: Double,
+         intercept: Double
+@@ -171,6 +177,14 @@ object ValueEncoding:
+       protected inline def widen(stored: Short): Double =
+         stored.toDouble
+ 
++    private final case class Int8Affine(
++        slope: Double,
++        intercept: Double
++    ) extends PrimitiveToDoubleAffine[Byte]:
++      protected val storageId: String = "int8"
++      protected inline def widen(stored: Byte): Double =
++        stored.toDouble
++
+     private final case class Int32Affine(
+         slope: Double,
+         intercept: Double
+diff --git a/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NodeNiftiSuite.scala b/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NodeNiftiSuite.scala
+index bceee8e..3b80df1 100644
+--- a/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NodeNiftiSuite.scala
++++ b/modules/image4s-nifti/js/src/test/scala/image4s/nifti/NodeNiftiSuite.scala
+@@ -251,6 +251,8 @@ final class NodeNiftiSuite extends FunSuite:
+     raw match
+       case NiftiRawImage.UInt8(image) =>
+         sampledValues(image).map(_.toInt.toDouble)
++      case NiftiRawImage.Int8(image) =>
++        sampledValues(image).map(_.toDouble)
+       case NiftiRawImage.Int16(image) =>
+         sampledValues(image).map(_.toDouble)
+       case NiftiRawImage.Int32(image) =>
+diff --git a/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiSuite.scala b/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiSuite.scala
+index 554ba8f..e809ab6 100644
+--- a/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiSuite.scala
++++ b/modules/image4s-nifti/jvm/src/test/scala/image4s/nifti/NiftiSuite.scala
+@@ -80,6 +80,7 @@ final class NiftiSuite extends FunSuite:
+   test("supported datatypes apply slope and intercept"):
+     val cases =
+       Vector(
++        NiftiDatatype.Int8 -> -100.0,
+         NiftiDatatype.UInt8 -> 200.0,
+         NiftiDatatype.Int16 -> -1234.0,
+         NiftiDatatype.Int32 -> 123456.0,
+@@ -109,6 +110,17 @@ final class NiftiSuite extends FunSuite:
+       )
+     }
+ 
++  test("signed INT8 preserves negative boundaries and affine scaling without changing UInt8"):
++    val int8 = temporaryPath("int8-boundaries.nii")
++    writeFixture(int8, dimensions = Vector(4, 1, 1), datatype = NiftiDatatype.Int8,
++      slope = 2.0, intercept = 3.0, values = Vector(-128.0, -1.0, 0.0, 127.0))
++    val signed = niftiRight(Nifti.readScaledDouble(int8)).image.fold(_ => fail("NIfTI must produce D3"), identity)
++    assertEquals(Vector.tabulate(4)(x => imageValue(signed.value.valueAt(Vector(x, 0, 0)))), Vector(-253.0, 1.0, 3.0, 257.0))
++    val uint8 = temporaryPath("uint8-255.nii")
++    writeFixture(uint8, dimensions = Vector(1, 1, 1), datatype = NiftiDatatype.UInt8, values = Vector(255.0))
++    val unsigned = niftiRight(Nifti.readScaledDouble(uint8)).image.fold(_ => fail("NIfTI must produce D3"), identity)
++    assertEquals(imageValue(unsigned.value.valueAt(Vector(0, 0, 0))), 255.0)
++
+   test("big-endian payloads are decoded with their header order"):
+     val path = temporaryPath("big-endian.nii")
+     writeFixture(
+@@ -1152,6 +1164,8 @@ final class NiftiSuite extends FunSuite:
+     values.zipWithIndex.foreach { case (value, index) =>
+       val offset = 352 + index * bytesPerValue
+       datatype match
++        case NiftiDatatype.Int8 =>
++          buffer.put(offset, value.toInt.toByte)
+         case NiftiDatatype.UInt8 =>
+           buffer.put(offset, value.toInt.toByte)
+         case NiftiDatatype.Int16 =>
+@@ -1213,6 +1227,8 @@ final class NiftiSuite extends FunSuite:
+         .order(ByteOrder.LITTLE_ENDIAN)
+     values.foreach { value =>
+       datatype match
++        case NiftiDatatype.Int8 =>
++          buffer.put(value.toInt.toByte)
+         case NiftiDatatype.UInt8 =>
+           buffer.put(value.toInt.toByte)
+         case NiftiDatatype.Int16 =>
+diff --git a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
+index 2c012d9..1baf3a7 100644
+--- a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
++++ b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/Nifti.scala
+@@ -427,6 +427,9 @@ private[nifti] final class NiftiApi[P](
+       options: NiftiReadOptions
+   ): Either[NiftiError, NiftiRawImage] =
+     header.datatype match
++      case NiftiDatatype.Int8 =>
++        readNativeIn[Byte, NiftiRaw](path, frame, header, selection, options, NativePayloadReader.byte)
++          .map(image => NiftiRawImage.Int8(SomeSampled.d3(image)))
+       case NiftiDatatype.UInt8 =>
+         readNativeIn[RavelUInt8, NiftiRaw](
+           path,
+@@ -484,6 +487,11 @@ private[nifti] final class NiftiApi[P](
+   ): Either[NiftiError, NiftiScalarStored] =
+     val (slope, intercept) = effectiveScaling(header)
+     header.datatype match
++      case NiftiDatatype.Int8 =>
++        for
++          encoding <- ValueEncoding.PrimitiveToDoubleAffine.int8(slope, intercept).left.map(error => NiftiError.Image(ImageError.ValueEncoding(error)))
++          image <- readEncodedIn[Byte, F](path, frame, header, selection, options, NativePayloadReader.byte, encoding)
++        yield NiftiScalarStored.Int8(image)
+       case NiftiDatatype.UInt8 =>
+         for
+           encoding <- ValueEncoding.PrimitiveToDoubleAffine
+@@ -717,6 +725,12 @@ private[nifti] final class NiftiApi[P](
+       result.map(_ => data)
+ 
+   private object NativePayloadReader:
++    val byte: NativePayloadReader[Byte] =
++      new NativePayloadReader[Byte]:
++        val bytesPerValue = 1
++        def write(builder: ravel.ArrayBuilder[Byte], logicalOffset: Int, buffer: ByteBuffer, byteOffset: Int): Unit =
++          builder.writeLinear(logicalOffset, buffer.get(byteOffset))
++
+     val uint8: NativePayloadReader[RavelUInt8] =
+       new NativePayloadReader[RavelUInt8]:
+         val bytesPerValue = 1
+@@ -1171,7 +1185,7 @@ private[nifti] final class NiftiApi[P](
+       header: NiftiHeader
+   ): Either[NiftiError, Unit] =
+     header.datatype match
+-      case NiftiDatatype.UInt8 | NiftiDatatype.Int16 | NiftiDatatype.Int32 =>
++      case NiftiDatatype.Int8 | NiftiDatatype.UInt8 | NiftiDatatype.Int16 | NiftiDatatype.Int32 =>
+         if header.slope == 0.0 ||
+           (header.slope == 1.0 && header.intercept == 0.0)
+         then Right(())
+@@ -2152,6 +2166,16 @@ private[nifti] final class NiftiApi[P](
+     val encoded =
+       (value - options.intercept) / options.slope
+     options.datatype match
++      case NiftiDatatype.Int8 =>
++        val integer = integerValue(
++          logicalIndex,
++          value,
++          encoded,
++          options,
++          minimum = Byte.MinValue.toDouble,
++          maximum = Byte.MaxValue.toDouble
++        )
++        val _ = buffer.put(offset, integer.toInt.toByte)
+       case NiftiDatatype.UInt8 =>
+         val integer = integerValue(
+           logicalIndex,
+@@ -2387,6 +2411,7 @@ private[nifti] final class NiftiApi[P](
+       datatype: NiftiDatatype
+   ): Double =
+     datatype match
++      case NiftiDatatype.Int8 => buffer.get(offset).toDouble
+       case NiftiDatatype.UInt8 =>
+         (buffer.get(offset) & 0xff).toDouble
+       case NiftiDatatype.Int16 =>
+diff --git a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
+index 5f5e9d0..30bab7c 100644
+--- a/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
++++ b/modules/image4s-nifti/shared/src/main/scala/image4s/nifti/NiftiModel.scala
+@@ -31,6 +31,7 @@ enum NiftiDatatype(
+     val code: Int,
+     val bitsPerValue: Int
+ ) derives CanEqual:
++  case Int8 extends NiftiDatatype(256, 8)
+   case UInt8 extends NiftiDatatype(2, 8)
+   case Int16 extends NiftiDatatype(4, 16)
+   case Int32 extends NiftiDatatype(8, 32)
+@@ -56,6 +57,7 @@ object NiftiRaw:
+ 
+ /** Exact raw image cases for the supported NIfTI-1 datatype subset. */
+ enum NiftiRawImage:
++  case Int8(image: SomeSampled[Byte, NiftiRaw])
+   case UInt8(image: SomeSampled[RavelUInt8, NiftiRaw])
+   case Int16(image: SomeSampled[Short, NiftiRaw])
+   case Int32(image: SomeSampled[Int, NiftiRaw])
+@@ -64,6 +66,7 @@ enum NiftiRawImage:
+ 
+   def datatype: NiftiDatatype =
+     this match
++      case Int8(_) => NiftiDatatype.Int8
+       case UInt8(_) => NiftiDatatype.UInt8
+       case Int16(_) => NiftiDatatype.Int16
+       case Int32(_) => NiftiDatatype.Int32
+@@ -77,6 +80,11 @@ enum NiftiRawImage:
+   * materializing a `Double` image.
+   */
+ enum NiftiScalarStored:
++  case Int8(
++      image: EncodedSampled[
++        ? <: SampleSpace[?, D3], Byte, Double, Continuous, ? <: AnyRank
++      ]
++  )
+   case UInt8(
+       image: EncodedSampled[
+         ? <: SampleSpace[?, D3],
+@@ -125,6 +133,7 @@ enum NiftiScalarStored:
+ 
+   def datatype: NiftiDatatype =
+     this match
++      case Int8(_) => NiftiDatatype.Int8
+       case UInt8(_) => NiftiDatatype.UInt8
+       case Int16(_) => NiftiDatatype.Int16
+       case Int32(_) => NiftiDatatype.Int32
+@@ -138,6 +147,10 @@ enum NiftiScalarStored:
+   * required.
+   */
+ enum NiftiLabelStored:
++  case Int8(
++      codes: SomeSampled[Byte, NiftiRaw],
++      encoding: ValueEncoding[Byte, Byte]
++  )
+   case UInt8(
+       codes: SomeSampled[RavelUInt8, NiftiRaw],
+       encoding: ValueEncoding[RavelUInt8, RavelUInt8]
+@@ -153,6 +166,7 @@ enum NiftiLabelStored:
+ 
+   def datatype: NiftiDatatype =
+     this match
++      case Int8(_, _) => NiftiDatatype.Int8
+       case UInt8(_, _) => NiftiDatatype.UInt8
+       case Int16(_, _) => NiftiDatatype.Int16
+       case Int32(_, _) => NiftiDatatype.Int32
+@@ -160,6 +174,8 @@ enum NiftiLabelStored:
+ object NiftiLabelStored:
+   def fromRaw(raw: NiftiRawImage): Either[NiftiError, NiftiLabelStored] =
+     raw match
++      case NiftiRawImage.Int8(codes) =>
++        Right(NiftiLabelStored.Int8(codes, ValueEncoding.Identity[Byte]()))
+       case NiftiRawImage.UInt8(codes) =>
+         Right(
+           NiftiLabelStored.UInt8(
+diff --git a/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala b/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala
+index 5835445..82d2982 100644
+--- a/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala
++++ b/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiIncrementalSuite.scala
+@@ -64,6 +64,7 @@ final class NiftiIncrementalSuite extends FunSuite:
+       for i <- 0 until 36 do
+         val offset = bytes.getFloat(108).toInt + i * dt.bitsPerValue / 8
+         val actual = dt match
++          case NiftiDatatype.Int8 => bytes.get(offset).toDouble
+           case NiftiDatatype.UInt8 => (bytes.get(offset) & 255).toDouble
+           case NiftiDatatype.Int16 => bytes.getShort(offset).toDouble
+           case NiftiDatatype.Int32 => bytes.getInt(offset).toDouble
+diff --git a/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiSemanticSuite.scala b/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiSemanticSuite.scala
+index fb4f78a..89885cf 100644
+--- a/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiSemanticSuite.scala
++++ b/modules/image4s-nifti/shared/src/test/scala/image4s/nifti/NiftiSemanticSuite.scala
+@@ -66,6 +66,8 @@ final class NiftiSemanticSuite extends ScalaCheckSuite:
+       val values =
+         Vector.tabulate(count)(index =>
+           datatype match
++            case NiftiDatatype.Int8 =>
++              ((index % 201) - 100).toDouble
+             case NiftiDatatype.UInt8 =>
+               (index % 251).toDouble
+             case NiftiDatatype.Int16 =>
+@@ -295,6 +297,8 @@ final class NiftiSemanticSuite extends ScalaCheckSuite:
+       val stored = niftiRight(api.readScalarStored(path)).image
+       assertEquals(stored.datatype, datatype)
+       val actual = stored match
++        case NiftiScalarStored.Int8(image) =>
++          Vector.tabulate(3)(x => image.valueAt(Vector(x, 0, 0)).toOption.get)
+         case NiftiScalarStored.UInt8(image) =>
+           Vector.tabulate(3)(x => image.valueAt(Vector(x, 0, 0)).toOption.get)
+         case NiftiScalarStored.Int16(image) =>
+@@ -874,6 +878,8 @@ final class NiftiSemanticSuite extends ScalaCheckSuite:
+ 
+   private def rawAsDoubles(raw: NiftiRawImage): Vector[Double] =
+     raw match
++      case NiftiRawImage.Int8(image) =>
++        sampledValues(image).map(_.toDouble)
+       case NiftiRawImage.UInt8(image) =>
+         sampledValues(image).map(_.toInt.toDouble)
+       case NiftiRawImage.Int16(image) =>
+@@ -889,6 +895,8 @@ final class NiftiSemanticSuite extends ScalaCheckSuite:
+       labels: NiftiLabelStored
+   ): Vector[Long] =
+     labels match
++      case NiftiLabelStored.Int8(codes, _) =>
++        sampledValues(codes).map(_.toLong)
+       case NiftiLabelStored.UInt8(codes, _) =>
+         sampledValues(codes).map(_.toInt.toLong)
+       case NiftiLabelStored.Int16(codes, _) =>
+@@ -963,6 +971,8 @@ final class NiftiSemanticSuite extends ScalaCheckSuite:
+     values.zipWithIndex.foreach { case (value, index) =>
+       val offset = 352 + index * bytesPerValue
+       datatype match
++        case NiftiDatatype.Int8 =>
++          buffer.put(offset, value.toInt.toByte)
+         case NiftiDatatype.UInt8 =>
+           buffer.put(offset, value.toInt.toByte)
+         case NiftiDatatype.Int16 =>

@@ -9,16 +9,17 @@ import scalafim.surface.{
   TriangleMesh,
   VertexId
 }
+import locus4s.DomainRegistry
 
 class SurfaceAtlasSuite extends munit.FunSuite:
 
   private def regions: RegionIndex =
     RegionIndex(
       Vector(
-        AtlasRegionMetadata(RegionId(1), "L_A", hemisphere = Some(Hemisphere.Left)),
-        AtlasRegionMetadata(RegionId(2), "L_B", hemisphere = Some(Hemisphere.Left)),
-        AtlasRegionMetadata(RegionId(3), "R_A", hemisphere = Some(Hemisphere.Right)),
-        AtlasRegionMetadata(RegionId(4), "R_B", hemisphere = Some(Hemisphere.Right))
+        AtlasRegionMetadata.fromStrings(RegionId(1), "L_A", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata.fromStrings(RegionId(2), "L_B", hemisphere = Some(Hemisphere.Left)),
+        AtlasRegionMetadata.fromStrings(RegionId(3), "R_A", hemisphere = Some(Hemisphere.Right)),
+        AtlasRegionMetadata.fromStrings(RegionId(4), "R_B", hemisphere = Some(Hemisphere.Right))
       )
     )
 
@@ -82,12 +83,31 @@ class SurfaceAtlasSuite extends munit.FunSuite:
     val a = atlas()
 
     assertEquals(a.representation, AtlasRepresentation.Surface)
-    assertEquals(a.vertexCount(SurfaceHemisphere.Left), 4)
-    assertEquals(a.vertexCount(SurfaceHemisphere.Right), 4)
-    assertEquals(a.labelIdAt(SurfaceHemisphere.Left, VertexId(0)), Some(RegionId(1)))
-    assertEquals(a.regionAt(SurfaceHemisphere.Right, VertexId(3)).map(_.label), Some("R_B"))
+    assertEquals(a.vertexCount(scalafim.surface.CorticalHemisphere.Left), 4)
+    assertEquals(a.vertexCount(scalafim.surface.CorticalHemisphere.Right), 4)
+    assertEquals(a.labelIdAt(scalafim.surface.CorticalHemisphere.Left, VertexId(0)), Some(RegionId(1)))
+    assertEquals(a.regionAt(scalafim.surface.CorticalHemisphere.Right, VertexId(3)).map(_.label.value), Some("R_B"))
     assertEquals(a.region("L_A", Some(Hemisphere.Left)).map(_.id), Vector(RegionId(1)))
     assertEquals(a.provenance.labels.encoding, LabelEncoding.SurfaceIntegerLabels)
+
+  test("surface template and coordinate spaces remain distinct in provenance and publication"):
+    val source = atlas()
+    val differentSpaces = AtlasRef.surface("toy", "DifferentSpaces", SpaceId.FsAverage6, SpaceId.FsLR32k)
+    val admitted = SurfaceAtlas.fromLabeledSurfaces(differentSpaces, source.regions, source.left, source.right)
+    assertEquals(admitted.realization.validateNeuropublishProjection(admitted.realization.neuropublishProjection), Right(()))
+    admitted.provenance.support match
+      case SpatialSupport.Surface(template, coordinate, _, _) =>
+        assertEquals(template, SpaceId.FsAverage6)
+        assertEquals(coordinate, SpaceId.FsLR32k)
+      case other => fail(s"expected surface support, got $other")
+    val contradictory = admitted.provenance.copy(
+      support = SpatialSupport.Surface(SpaceId.FsAverage6, SpaceId.FsAverage6, SurfaceDensity("unknown"))
+    )
+    assert(AtlasRealization.surfaceIn(
+      DomainRegistry.empty, differentSpaces, source.regions,
+      SurfaceAtlasPayload(scalafim.surface.HemispherePair(source.left, source.right)),
+      contradictory
+    ).isLeft)
 
   test("SurfaceAtlas validates geometry hemispheres"):
     val rightLabels =
@@ -134,19 +154,19 @@ class SurfaceAtlasSuite extends munit.FunSuite:
   test("SurfaceAtlas requires lateral hemisphere access and exposes label metadata"):
     val a = atlas()
 
-    val err =
-      intercept[IllegalArgumentException]:
-        a.surface(SurfaceHemisphere.Both)
-
-    assert(err.getMessage.contains("surface atlas requires left or right hemisphere, got both"), clue = err.getMessage)
-    assertEquals(a.labelInfo(SurfaceHemisphere.Left, RegionId(1)).map(_.name), Some("L_A"))
-    assertEquals(a.labelInfo(SurfaceHemisphere.Right, RegionId(1)), None)
+    assert(compileErrors("""
+      import scalafim.atlas.*
+      import scalafim.surface.Hemisphere
+      def invalid(a: SurfaceAtlas) = a.surface(Hemisphere.Both)
+    """).nonEmpty)
+    assertEquals(a.labelInfo(scalafim.surface.CorticalHemisphere.Left, RegionId(1)).map(_.name), Some("L_A"))
+    assertEquals(a.labelInfo(scalafim.surface.CorticalHemisphere.Right, RegionId(1)), None)
 
   test("SurfaceAtlas exposes parcel units, distances, and boundary contacts per hemisphere"):
     val a = atlas()
-    val parcels = a.parcelUnits(SurfaceHemisphere.Left)
-    val contacts = a.boundaryContacts(SurfaceHemisphere.Left)
-    val distances = a.distanceMatrix(SurfaceHemisphere.Left)
+    val parcels = a.parcelUnits(scalafim.surface.CorticalHemisphere.Left)
+    val contacts = a.boundaryContacts(scalafim.surface.CorticalHemisphere.Left)
+    val distances = a.distanceMatrix(scalafim.surface.CorticalHemisphere.Left)
 
     assertEquals(parcels.map(_._1.id), Vector(RegionId(1), RegionId(2)))
     assertEquals(parcels.map(_._2.size), Vector(2, 2))

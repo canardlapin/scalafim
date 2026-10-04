@@ -3,6 +3,12 @@ package scalafim.examples.atlas
 import scalafim.atlas.*
 
 class AtlasExamplesSmokeSuite extends munit.FunSuite:
+  test("parcel metrics persist and expand through the original assignment"):
+    val dense = ReduceByParcel.toyMetricRoundTrip()
+    assertEquals(dense.length, 32)
+    assertEquals(dense.filterNot(_.isNaN).distinct.sorted, Vector(10.0, 20.0, 30.0))
+    assert(dense.exists(_.isNaN))
+
   test("standard descriptor example lists volume and surface atlases") {
     val rows = StandardAtlasDescriptions.rows
     assert(rows.exists(row => row.id == Schaefer2018.default.id && row.representation == AtlasRepresentation.Volume))
