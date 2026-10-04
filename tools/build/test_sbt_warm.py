@@ -4,26 +4,53 @@ Run with: python3 -m unittest tools/build/test_sbt_warm.py
 """
 
 import contextlib
+import fcntl
 import hashlib
 import importlib.machinery
 import importlib.util
 import io
+import json
 import shutil
+import socket
 import subprocess
 import tempfile
+import threading
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
 
 SCRIPT = Path(__file__).resolve().parent / "sbt-warm"
+# The last main commit carrying the pre-2026-10-04 script (rmtree on a .pin-key mismatch).
+LEGACY_COMMIT = "2223f13a"
 _REAL_RUN = subprocess.run
 
 
-def load_module():
-    loader = importlib.machinery.SourceFileLoader("sbt_warm", str(SCRIPT))
-    spec = importlib.util.spec_from_loader("sbt_warm", loader)
+def load_module(name="sbt_warm", path=SCRIPT):
+    loader = importlib.machinery.SourceFileLoader(name, str(path))
+    spec = importlib.util.spec_from_loader(name, loader)
     module = importlib.util.module_from_spec(spec)
     loader.exec_module(module)
+    return module
+
+
+def load_legacy_module():
+    """main's pre-fix script, from git history; None when history is unavailable."""
+    result = _REAL_RUN(
+        [
+            "git",
+            "-C",
+            str(SCRIPT.parent),
+            "show",
+            f"{LEGACY_COMMIT}:tools/build/sbt-warm",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return None
+    module = types.ModuleType("sbt_warm_legacy")
+    exec(compile(result.stdout, "sbt-warm@" + LEGACY_COMMIT, "exec"), module.__dict__)
     return module
 
 
@@ -80,11 +107,24 @@ class WarmCase(unittest.TestCase):
         path.write_text(text.replace(old, new))
 
     def make_base(self):
+        """A base as this script leaves it after a run on the current pins."""
         base = self.sw.base_for(self.root)
         (base / "staging" / "dep").mkdir(parents=True)
         (base / "staging" / "dep" / "classes").write_text("compiled")
-        (base / ".pin-key").write_text(self.key())
+        (base / ".pin-key-v2").write_text(self.key())
+        (base / ".pin-key").write_text(self.sw.legacy_pin_key(self.root))
         return base
+
+    def run_main(self, *argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = self.sw.main(list(argv))
+        return code, out.getvalue(), err.getvalue()
+
+    def short_socket_dir(self):
+        short = tempfile.mkdtemp(prefix="sw")  # unix socket paths are length-limited
+        self.addCleanup(shutil.rmtree, short, True)
+        return Path(short)
 
 
 class PinKeySuite(WarmCase):
@@ -123,60 +163,136 @@ class PinKeySuite(WarmCase):
         )
         self.assertNotEqual(before, self.key())
 
+    def test_build_properties_change_and_removal_change_key(self):
+        before = self.key()
+        (self.root / "project" / "build.properties").write_text("sbt.version=1.11.8\n")
+        bumped = self.key()
+        self.assertNotEqual(before, bumped)
+        (self.root / "project" / "build.properties").unlink()
+        self.assertNotIn(self.key(), (before, bumped))
+
+    def test_legacy_key_misses_split_line_pin(self):
+        # Documents why the v2 key exists: the legacy key cannot see this bump.
+        before = self.sw.legacy_pin_key(self.root)
+        self.edit_build(SHA_B, SHA_C)
+        self.assertEqual(before, self.sw.legacy_pin_key(self.root))
+
 
 class PrepareBaseSuite(WarmCase):
-    def test_refuses_to_discard_base_while_server_alive(self):
-        base = self.make_base()
-        self.edit_build(SHA_B, SHA_C)
-        with mock.patch.object(
-            self.sw, "server_alive", return_value=True
-        ), mock.patch.object(self.sw, "run_client", return_value=0) as client:
-            with self.assertRaises(RuntimeError):
-                self.sw.prepare_base(self.root)
-        client.assert_called_once_with(self.root, base, "shutdown")
-        self.assertEqual((base / "staging" / "dep" / "classes").read_text(), "compiled")
-
-    def test_discards_stale_base_once_server_stopped(self):
-        base = self.make_base()
-        self.edit_build(SHA_B, SHA_C)
-        alive = iter([True, False])
-        with mock.patch.object(
-            self.sw, "server_alive", side_effect=lambda *_: next(alive)
-        ), mock.patch.object(self.sw, "run_client", return_value=0):
-            self.assertEqual(self.sw.prepare_base(self.root), base)
-        self.assertFalse((base / "staging").exists())
-        self.assertEqual((base / ".pin-key").read_text(), self.key())
-
-    def test_same_pins_keep_base_and_record_worktree(self):
-        base = self.make_base()
+    def prepare(self):
         with mock.patch.object(
             self.sw,
             "server_alive",
-            side_effect=AssertionError("no liveness check needed"),
+            side_effect=AssertionError("prepare_base must not probe servers"),
+        ), mock.patch.object(
+            self.sw,
+            "run_client",
+            side_effect=AssertionError("prepare_base must not call the client"),
         ):
-            self.sw.prepare_base(self.root)
+            return self.sw.prepare_base(self.root)
+
+    def test_pin_change_keeps_base_and_rewrites_markers(self):
+        base = self.make_base()
+        self.edit_build(SHA_B, SHA_C)
+        self.assertEqual(self.prepare(), (base, self.key()))
+        self.assertEqual((base / "staging" / "dep" / "classes").read_text(), "compiled")
+        self.assertEqual((base / ".pin-key-v2").read_text(), self.key())
+        self.assertEqual(
+            (base / ".pin-key").read_text(), self.sw.legacy_pin_key(self.root)
+        )
+
+    def test_missing_markers_keep_base_and_are_written(self):
+        base = self.make_base()
+        (base / ".pin-key-v2").unlink()
+        (base / ".pin-key").unlink()
+        self.assertEqual(self.prepare(), (base, self.key()))
+        self.assertTrue((base / "staging" / "dep" / "classes").exists())
+        self.assertEqual((base / ".pin-key-v2").read_text(), self.key())
+        self.assertEqual(
+            (base / ".pin-key").read_text(), self.sw.legacy_pin_key(self.root)
+        )
+
+    def test_same_pins_keep_base_and_record_worktree(self):
+        base = self.make_base()
+        self.prepare()
         self.assertTrue((base / "staging" / "dep" / "classes").exists())
         self.assertEqual((base / ".worktree").read_text(), str(self.root))
         self.assertTrue((base / "global.sbt").exists())
 
+    def seed_and_capture(self, *template_names):
+        for name in template_names:
+            (self.home / "templates" / name).mkdir(parents=True)
+        with mock.patch.object(
+            self.sw,
+            "clone_tree",
+            side_effect=lambda source, target: target.mkdir(parents=True),
+        ) as clone:
+            base, _ = self.prepare()
+        return base, clone
+
+    def test_new_base_seeds_from_v2_template_first(self):
+        base, clone = self.seed_and_capture(
+            self.key(), self.sw.legacy_pin_key(self.root)
+        )
+        clone.assert_called_once_with(self.home / "templates" / self.key(), base)
+
+    def test_new_base_falls_back_to_legacy_template(self):
+        base, clone = self.seed_and_capture(self.sw.legacy_pin_key(self.root))
+        clone.assert_called_once_with(
+            self.home / "templates" / self.sw.legacy_pin_key(self.root), base
+        )
+
+    def test_new_base_without_template_is_empty(self):
+        base, clone = self.seed_and_capture()
+        clone.assert_not_called()
+        self.assertTrue(base.is_dir())
+
+
+class LegacyScriptSafetySuite(WarmCase):
+    """A base touched by this script must survive older copies of the script."""
+
+    def touched_base(self):
+        base = self.make_base()
+        (base / ".pin-key").unlink()
+        (base / ".pin-key-v2").unlink()
+        self.edit_build(SHA_B, SHA_C)  # a split-line bump: the v2 key changes
+        with mock.patch.object(self.sw, "server_alive", return_value=True):
+            self.sw.prepare_base(self.root)
+        return base
+
+    def test_marker_matches_the_legacy_comparison(self):
+        base = self.touched_base()
+        # The legacy rmtree condition: `not marker.exists() or marker.read_text() != key`.
+        marker = base / ".pin-key"
+        self.assertTrue(marker.exists())
+        self.assertEqual(marker.read_text(), self.sw.legacy_pin_key(self.root))
+
+    def test_legacy_prepare_base_leaves_base_alone(self):
+        legacy = load_legacy_module()
+        if legacy is None:
+            self.skipTest(f"git history for {LEGACY_COMMIT} is unavailable")
+        base = self.touched_base()
+        legacy.HOME = self.home
+        legacy.prepare_base(self.root)
+        self.assertEqual((base / "staging" / "dep" / "classes").read_text(), "compiled")
+        # And the legacy code really is destructive on a mismatch, so the check above has teeth.
+        (base / ".pin-key").write_text("stale")
+        with contextlib.redirect_stderr(io.StringIO()):
+            legacy.prepare_base(self.root)
+        self.assertFalse((base / "staging").exists())
+
 
 class CliSuite(WarmCase):
-    def run_main(self, *argv):
-        out, err = io.StringIO(), io.StringIO()
-        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-            code = self.sw.main(list(argv))
-        return code, out.getvalue(), err.getvalue()
-
     def test_help_is_not_destructive(self):
         base = self.make_base()
-        self.edit_build(
-            SHA_B, SHA_C
-        )  # a pin change that would otherwise discard the base
+        self.edit_build(SHA_B, SHA_C)
         for flag in ("--help", "-h"):
             with mock.patch.object(
                 self.sw,
                 "prepare_base",
                 side_effect=AssertionError("prepare_base called"),
+            ), mock.patch.object(
+                self.sw, "worktree", side_effect=AssertionError("git called")
             ):
                 code, out, _ = self.run_main(flag)
             self.assertEqual(code, 0)
@@ -212,32 +328,83 @@ class CliSuite(WarmCase):
         self.assertEqual(self.sw.parse(["--gc"]), ("gc", False))
         self.assertEqual(self.sw.parse(["--gc", "--apply"]), ("gc", True))
 
-    def test_shutdown_does_not_touch_base(self):
-        base = self.make_base()
-        self.edit_build(SHA_B, SHA_C)
-        before = sorted(str(p) for p in base.rglob("*"))
+
+class ShutdownSuite(WarmCase):
+    def shutdown(self, alive_sequence, client=None):
+        alive = iter(alive_sequence)
         with mock.patch.object(
             self.sw, "worktree", return_value=self.root
+        ), mock.patch.object(
+            self.sw, "server_alive", side_effect=lambda *_: next(alive)
         ), mock.patch.object(
             self.sw, "server_running", return_value=True
         ), mock.patch.object(
             self.sw, "prepare_base", side_effect=AssertionError("prepare_base called")
-        ), mock.patch.object(self.sw, "run_client", return_value=0) as client:
+        ), mock.patch.object(self.sw, "run_client", return_value=0) as run_client:
             code, _, _ = self.run_main("--shutdown")
+        return code, run_client
+
+    def test_shutdown_does_not_touch_base_and_has_a_timeout(self):
+        base = self.make_base()
+        self.edit_build(SHA_B, SHA_C)
+        before = sorted(str(p) for p in base.rglob("*"))
+        code, client = self.shutdown([True, True, False])
         self.assertEqual(code, 0)
-        client.assert_called_once_with(self.root, base, "shutdown")
+        client.assert_called_once_with(
+            self.root, base, "shutdown", timeout=self.sw.STOP_SECONDS
+        )
         self.assertEqual(before, sorted(str(p) for p in base.rglob("*")))
 
     def test_shutdown_without_server_is_a_noop(self):
+        code, client = self.shutdown([False])
+        self.assertEqual(code, 0)
+        client.assert_not_called()
+
+    def test_shutdown_reports_a_server_that_stays_alive(self):
+        code, _ = self.shutdown([True] * 10)
+        self.assertEqual(code, 1)
+
+    def test_server_alive_consults_base_sockets(self):
+        # Without the base-socket half, a server with a stale active.json reads as dead.
+        base = self.make_base()
         with mock.patch.object(
-            self.sw, "worktree", return_value=self.root
-        ), mock.patch.object(
             self.sw, "server_running", return_value=False
         ), mock.patch.object(
-            self.sw, "run_client", side_effect=AssertionError("client started")
+            self.sw, "base_server_alive", side_effect=lambda b: b == base
         ):
+            self.assertTrue(self.sw.server_alive(self.root, base))
+
+    def test_shutdown_repoints_stale_active_json_at_live_base_socket(self):
+        short = self.short_socket_dir()
+        self.sw.HOME = short / "h"
+        base = self.make_base()
+        sock_dir = base / "server" / "x"
+        sock_dir.mkdir(parents=True)
+        listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        listener.bind(str(sock_dir / "sock"))
+        listener.listen(16)  # probes are never accepted; keep the backlog open
+        self.addCleanup(listener.close)
+        target = self.root / "project" / "target"
+        target.mkdir()
+        (target / "active.json").write_text(
+            json.dumps({"uri": "local:///nonexistent/sock"})
+        )
+
+        def client(root, base_, command, timeout=None):
+            listener.close()
+            (sock_dir / "sock").unlink()
+            return 0
+
+        with mock.patch.object(
+            self.sw, "worktree", return_value=self.root
+        ), mock.patch.object(self.sw, "run_client", side_effect=client) as run_client:
             code, _, _ = self.run_main("--shutdown")
         self.assertEqual(code, 0)
+        run_client.assert_called_once()
+        self.assertEqual(
+            json.loads((target / "active.json").read_text())["uri"],
+            f"local://{sock_dir / 'sock'}",
+        )
 
 
 class ClientIoSuite(WarmCase):
@@ -256,6 +423,27 @@ class ClientIoSuite(WarmCase):
             extra = self.sw.client_io(env)
         self.assertEqual(env["TERM"], "xterm-256color")
         self.assertEqual(extra, {})
+
+    def test_run_client_passes_devnull_and_dumb_term_without_tty(self):
+        base = self.make_base()
+        with mock.patch.object(self.sw.sys, "stdin", io.StringIO()), mock.patch.dict(
+            self.sw.os.environ, {"TERM": "xterm"}
+        ), mock.patch.object(self.sw.subprocess, "call", return_value=0) as call:
+            self.assertEqual(self.sw.run_client(self.root, base, "compile"), 0)
+        args, kwargs = call.call_args
+        self.assertEqual(args[0], ["sbt", "--client", "compile"])
+        self.assertIs(kwargs["stdin"], subprocess.DEVNULL)
+        self.assertEqual(kwargs["env"]["TERM"], "dumb")
+        self.assertIn(f"-Dsbt.global.base={base}", kwargs["env"]["SBT_OPTS"])
+
+    def test_run_client_timeout_returns_124(self):
+        with mock.patch.object(
+            self.sw.subprocess, "call", side_effect=subprocess.TimeoutExpired("sbt", 1)
+        ), contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(
+                self.sw.run_client(self.root, self.make_base(), "shutdown", timeout=1),
+                124,
+            )
 
 
 class CloneTreeSuite(WarmCase):
@@ -278,7 +466,9 @@ class CloneTreeSuite(WarmCase):
                 command, 1, "", "No space left on device"
             )
 
-        with mock.patch.object(self.sw.subprocess, "run", side_effect=failing) as run:
+        with mock.patch.object(
+            self.sw.subprocess, "run", side_effect=failing
+        ) as run, contextlib.redirect_stderr(io.StringIO()):
             with self.assertRaises(RuntimeError):
                 self.sw.clone_tree(source, target)
         self.assertGreaterEqual(run.call_count, 1)
@@ -301,7 +491,7 @@ class CloneTreeSuite(WarmCase):
 
         with mock.patch.object(self.sw.sys, "platform", "darwin"), mock.patch.object(
             self.sw.subprocess, "run", side_effect=fake
-        ):
+        ), contextlib.redirect_stderr(io.StringIO()):
             self.sw.clone_tree(source, target)
         self.assertEqual([c[:2] for c in calls], [["cp", "-c"], ["cp", "-p"]])
         self.assertEqual((target / "staging" / "f").read_text(), "x")
@@ -340,9 +530,8 @@ class GcSuite(WarmCase):
 
     def test_dry_run_vs_apply(self):
         gone = Path(self.tmp.name) / "deleted-worktree"
-        gone_live = Path(self.tmp.name) / "deleted-but-serving"
         orphan = self.add_base(gone)
-        serving = self.add_base(gone_live)
+        serving = self.add_base(Path(self.tmp.name) / "deleted-but-serving")
         live = self.add_base(self.root)
         legacy = self.add_base(Path(self.tmp.name) / "legacy", record=False)
         mismatched = self.home / "bases" / "0000000000000000"
@@ -361,52 +550,156 @@ class GcSuite(WarmCase):
             self.assertTrue(base.exists(), base)
 
 
-class RunSuite(WarmCase):
-    def test_template_snapshot_after_failed_command(self):
-        base = self.sw.base_for(self.root)  # fresh worktree: no base yet
-        codes = iter([0, 1])
+class WorktreeLockSuite(WarmCase):
+    """Real fcntl locks: a run in one thread versus shutdown/gc in another."""
 
-        def client(root, base, command):
+    def start_run(self, root):
+        entered, release = threading.Event(), threading.Event()
+        result = {}
+
+        def client(root_, base, command, timeout=None):
+            entered.set()
+            release.wait(10)
+            return 0
+
+        def body():
+            result["code"] = self.sw.run(root, ["compile"])
+
+        thread = threading.Thread(target=body)
+        patches = [
+            mock.patch.object(self.sw, "run_client", side_effect=client),
+            mock.patch.object(self.sw, "acquire_slot", return_value=io.StringIO()),
+            mock.patch.object(self.sw, "server_running", return_value=False),
+        ]
+        for patch in patches:
+            patch.start()
+            self.addCleanup(patch.stop)
+        with contextlib.redirect_stderr(io.StringIO()):
+            thread.start()
+            self.assertTrue(entered.wait(10))
+        return thread, release, result
+
+    def test_shutdown_refuses_while_a_run_holds_the_lock(self):
+        thread, release, result = self.start_run(self.root)
+        try:
+            with mock.patch.object(
+                self.sw, "worktree", return_value=self.root
+            ), mock.patch.object(
+                self.sw,
+                "stop_server",
+                side_effect=AssertionError("stopped a busy server"),
+            ):
+                code, _, err = self.run_main("--shutdown")
+            self.assertEqual(code, 1)
+            self.assertIn("commands are running", err)
+        finally:
+            release.set()
+            thread.join(10)
+        self.assertEqual(result["code"], 0)
+        with mock.patch.object(
+            self.sw, "worktree", return_value=self.root
+        ), mock.patch.object(self.sw, "server_alive", return_value=False):
+            code, _, _ = self.run_main("--shutdown")
+        self.assertEqual(code, 0)
+
+    def test_concurrent_runs_share_the_lock(self):
+        base = self.sw.base_for(self.root)
+        thread, release, _ = self.start_run(self.root)
+        try:
+            with self.sw.worktree_lock(base) as other, self.sw.worktree_lock(
+                base
+            ) as third:
+                # A second shared holder gets in without blocking (raises otherwise)...
+                fcntl.flock(other, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                # ...but an exclusive claim does not.
+                self.assertFalse(self.sw.try_exclusive(third))
+        finally:
+            release.set()
+            thread.join(10)
+
+    def test_gc_apply_skips_a_base_whose_lock_is_held(self):
+        gone = Path(self.tmp.name) / "removed-worktree"
+        base = self.sw.base_for(gone)
+        (base / "staging").mkdir(parents=True)
+        (base / ".worktree").write_text(str(gone))
+        holder = self.sw.worktree_lock(base)
+        self.addCleanup(holder.close)
+        fcntl.flock(holder, fcntl.LOCK_SH)
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), mock.patch.object(
+            self.sw, "base_server_alive", return_value=False
+        ):
+            self.sw.gc(apply=True)
+        self.assertTrue(base.exists())
+        self.assertIn("holds its worktree lock", out.getvalue())
+        holder.close()
+        with contextlib.redirect_stdout(io.StringIO()), mock.patch.object(
+            self.sw, "base_server_alive", return_value=False
+        ):
+            self.sw.gc(apply=True)
+        self.assertFalse(base.exists())
+
+
+class RunSuite(WarmCase):
+    def run_with(self, codes, server_running=True, before_first=None):
+        codes = iter(codes)
+
+        def client(root, base, command, timeout=None):
             (base / "staging" / "dep").mkdir(parents=True, exist_ok=True)
+            if before_first is not None:
+                before_first()
             return next(codes)
 
-        with mock.patch.object(
-            self.sw, "run_client", side_effect=client
-        ) as run_client, mock.patch.object(
-            self.sw, "server_running", return_value=True
-        ), mock.patch.object(
-            self.sw, "acquire_slot", return_value=io.StringIO()
-        ), mock.patch.object(self.sw, "clone_tree") as clone:
+        return (
+            mock.patch.object(self.sw, "run_client", side_effect=client),
+            mock.patch.object(self.sw, "server_running", return_value=server_running),
+            mock.patch.object(self.sw, "acquire_slot", return_value=io.StringIO()),
+        )
+
+    def test_template_snapshot_after_failed_command(self):
+        base = self.sw.base_for(self.root)  # fresh worktree: no base yet
+        client, running, slot = self.run_with([0, 1])
+        with client as run_client, running, slot, mock.patch.object(
+            self.sw, "clone_tree"
+        ) as clone, contextlib.redirect_stderr(io.StringIO()):
             code = self.sw.run(self.root, ["a/compile", "b/test", "c/test"])
         self.assertEqual(code, 1)
         self.assertEqual(run_client.call_count, 2)
         clone.assert_called_once_with(base, self.home / "templates" / self.key())
 
+    def test_snapshot_uses_the_key_the_base_was_prepared_with(self):
+        prepared = self.key()
+        client, running, slot = self.run_with(
+            [0], before_first=lambda: self.edit_build(SHA_B, SHA_C)
+        )
+        with client, running, slot, mock.patch.object(
+            self.sw, "clone_tree"
+        ) as clone, contextlib.redirect_stderr(io.StringIO()):
+            self.sw.run(self.root, ["compile"])
+        clone.assert_called_once_with(
+            self.sw.base_for(self.root), self.home / "templates" / prepared
+        )
+
     def test_no_snapshot_when_build_never_loaded(self):
-        with mock.patch.object(
-            self.sw, "run_client", return_value=1
-        ), mock.patch.object(
-            self.sw, "server_running", return_value=False
-        ), mock.patch.object(
-            self.sw, "acquire_slot", return_value=io.StringIO()
-        ), mock.patch.object(
+        # staging exists, so only the server_running gate can prevent the snapshot.
+        client, running, slot = self.run_with([1], server_running=False)
+        with client, running, slot, mock.patch.object(
             self.sw, "clone_tree", side_effect=AssertionError("snapshot taken")
-        ):
+        ), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(self.sw.run(self.root, ["compile"]), 1)
+        self.assertTrue((self.sw.base_for(self.root) / "staging").exists())
 
     def test_no_snapshot_when_template_exists(self):
         (self.home / "templates" / self.key()).mkdir(parents=True)
         self.make_base()
+        client, running, slot = self.run_with([0])
         with mock.patch.object(
-            self.sw, "run_client", return_value=0
-        ), mock.patch.object(
-            self.sw, "server_running", return_value=True
-        ), mock.patch.object(
-            self.sw, "acquire_slot", return_value=io.StringIO()
-        ), mock.patch.object(
-            self.sw, "clone_tree", side_effect=AssertionError("snapshot taken")
-        ):
-            self.assertEqual(self.sw.run(self.root, ["compile"]), 0)
+            self.sw, "clone_tree"
+        ) as clone, contextlib.redirect_stderr(io.StringIO()):
+            # The base exists, so prepare_base does not seed; any clone is a snapshot.
+            with client, running, slot:
+                self.assertEqual(self.sw.run(self.root, ["compile"]), 0)
+        clone.assert_not_called()
 
 
 class LivenessSuite(WarmCase):
@@ -419,19 +712,29 @@ class LivenessSuite(WarmCase):
         self.assertFalse(self.sw.server_running(self.root))
 
     def test_listening_socket_is_alive(self):
-        import socket
-
-        short = tempfile.mkdtemp(prefix="sw")  # unix socket paths are length-limited
-        self.addCleanup(shutil.rmtree, short, True)
-        path = Path(short) / "sock"
+        path = self.short_socket_dir() / "sock"
         server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         server.bind(str(path))
-        server.listen(1)
+        server.listen(16)  # probes are never accepted; keep the backlog open
         try:
             self.assertTrue(self.sw.socket_alive(path))
         finally:
             server.close()
         self.assertFalse(self.sw.socket_alive(path))
+
+    def test_unprobeable_socket_names_the_base_to_delete(self):
+        base = self.make_base()
+        sock = base / "server" / "x" / "sock"
+        sock.parent.mkdir(parents=True)
+        sock.write_text("")
+        err = io.StringIO()
+        with mock.patch.object(
+            self.sw.socket.socket,
+            "connect",
+            side_effect=OSError("AF_UNIX path too long"),
+        ), contextlib.redirect_stderr(err):
+            self.assertTrue(self.sw.socket_alive(sock))
+        self.assertIn(str(base), err.getvalue())
 
 
 if __name__ == "__main__":

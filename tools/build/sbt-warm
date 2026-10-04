@@ -19,14 +19,25 @@ usage:
 Commands run in order; the first failing command stops the run with its exit
 code. Arguments starting with `-` are rejected unless they follow `--`.
 
-A base is discarded and reseeded when the dependency pins change (every 40-hex
-SHA and canardlapin repository in build.sbt, plus project/build.properties and
-project/plugins.sbt), but never while its server is alive: the server is asked
-to shut down first, and the base is kept if it does not stop.
+A base is never deleted because the dependency pins changed: sbt's staging
+directory is keyed by source URI (which includes the revision), so a base stays
+valid across pin bumps and only accumulates disk, which `--gc` reclaims for
+removed worktrees. Pins (every 40-hex SHA and canardlapin repository in
+build.sbt, plus project/build.properties and project/plugins.sbt) select the
+template that seeds a new base; the key is recorded in `.pin-key-v2`.
+`.pin-key` keeps the pre-2026-10-04 key so older copies of this script, which
+delete a base whose `.pin-key` differs, leave bases touched by this one alone.
+
+Every run holds a shared per-worktree lock. `--shutdown`, and `--gc --apply`
+for each base it deletes, need that lock exclusively and refuse while commands
+are running. `--shutdown` stops the server named by project/target/active.json;
+if that file is missing or stale but a socket in the base answers, it is
+repointed at that socket first.
 
 `--gc` only considers bases that record their worktree (`.worktree`), whose
 worktree directory no longer exists, and whose server is not alive. It is a dry
-run unless `--apply` is given.
+run unless `--apply` is given. Bases created before `.worktree` existed are
+never collected; delete them by hand once no server uses them.
 
 When stdin is not a terminal (agents, CI), the client runs with TERM=dumb and
 stdin from /dev/null so a server started there cannot block on terminal probes.
@@ -37,7 +48,7 @@ Environment knobs (defaults in brackets):
   SBT_WARM_CPUS   server processor count [4]
   SBT_WARM_SLOTS  concurrent commands    [3]
   SBT_WARM_IDLE_MINUTES  server idle shutdown [30]
-  SBT_WARM_STOP_SECONDS  wait for a server to stop before keeping its base [60]
+  SBT_WARM_STOP_SECONDS  `--shutdown` client timeout and stop wait [60]
 """
 
 import fcntl
@@ -62,7 +73,8 @@ STOP_SECONDS = float(os.environ.get("SBT_WARM_STOP_SECONDS", "60"))
 SHA_PATTERN = re.compile(r"\b[0-9a-f]{40}\b")
 REPO_PATTERN = re.compile(r"canardlapin/[A-Za-z0-9._-]+")
 WORKTREE_RECORD = ".worktree"
-PIN_MARKER = ".pin-key"
+LEGACY_PIN_MARKER = ".pin-key"  # compared (and rmtree'd on mismatch) by older scripts
+PIN_MARKER = ".pin-key-v2"
 # Never copied into a clone: live server sockets and the source base's identity.
 CLONE_EXCLUDES = ("server", WORKTREE_RECORD)
 
@@ -106,6 +118,22 @@ def pin_key(root: Path) -> str:
     return digest.hexdigest()[:16]
 
 
+def legacy_pin_key(root: Path) -> str:
+    """The pre-2026-10-04 pin key, verbatim. Written to `.pin-key` only so that
+    older copies of this script, which rmtree a base whose `.pin-key` differs
+    from this value, keep finding a match. Do not use it to decide anything."""
+    digest = hashlib.sha256()
+    build = (root / "build.sbt").read_text().splitlines()
+    for line in build:
+        if "Revision" in line or "canardlapin/" in line or ".build" in line:
+            digest.update(line.strip().encode())
+    for name in ("project/build.properties", "project/plugins.sbt"):
+        path = root / name
+        if path.exists():
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:16]
+
+
 def socket_alive(path: Path) -> bool:
     """True when something accepts connections on the unix socket at `path`.
 
@@ -121,15 +149,23 @@ def socket_alive(path: Path) -> bool:
         return True
     except (ConnectionRefusedError, FileNotFoundError):
         return False
-    except OSError:
+    except OSError as error:
+        log(
+            f"cannot probe {path} ({error}); treating its server as alive. If no sbt "
+            f"server is running there, stop it or delete its base {path.parent.parent.parent} by hand"
+        )
         return True
     finally:
         probe.close()
 
 
+def live_base_sockets(base: Path) -> list:
+    return [sock for sock in sorted((base / "server").glob("*/sock")) if socket_alive(sock)]
+
+
 def base_server_alive(base: Path) -> bool:
     """True when a server is listening on any socket inside `base`."""
-    return any(socket_alive(sock) for sock in (base / "server").glob("*/sock"))
+    return bool(live_base_sockets(base))
 
 
 def server_running(root: Path) -> bool:
@@ -158,24 +194,67 @@ def client_io(env: dict) -> dict:
     return {"stdin": subprocess.DEVNULL}
 
 
-def run_client(root: Path, base: Path, command: str) -> int:
+def run_client(root: Path, base: Path, command: str, timeout=None) -> int:
     env = sbt_env(base)
     extra = client_io(env)
-    return subprocess.call(["sbt", "--client", command], cwd=root, env=env, **extra)
+    try:
+        return subprocess.call(["sbt", "--client", command], cwd=root, env=env, timeout=timeout, **extra)
+    except subprocess.TimeoutExpired:
+        log(f"`sbt --client {command}` did not return within {timeout:.0f}s")
+        return 124
+
+
+def point_active_json(root: Path, base: Path) -> None:
+    """If active.json does not name a live server but the base has one, name it.
+
+    `sbt --client` only consults active.json and starts a fresh server when it
+    is missing or stale, so a shutdown would otherwise miss the live server.
+    """
+    if server_running(root):
+        return
+    live = live_base_sockets(base)
+    if len(live) != 1:
+        return
+    active = root / "project" / "target" / "active.json"
+    active.parent.mkdir(parents=True, exist_ok=True)
+    log(f"active.json does not name the live server; pointing it at {live[0]}")
+    active.write_text(json.dumps({"uri": f"local://{live[0]}"}))
 
 
 def stop_server(root: Path, base: Path) -> bool:
-    """Ask this worktree's server to shut down; True once nothing is alive."""
+    """Ask this worktree's server to shut down; True once nothing is alive.
+
+    The caller must hold the worktree lock exclusively and must not hold the
+    global bases lock: the client call can take up to STOP_SECONDS.
+    """
     if not server_alive(root, base):
         return True
-    log(f"stopping the server for {root} before discarding its base")
-    run_client(root, base, "shutdown")
+    point_active_json(root, base)
+    if not server_running(root):
+        log(f"a server socket in {base} cannot be addressed through active.json; not stopping it")
+        return False
+    run_client(root, base, "shutdown", timeout=STOP_SECONDS)
     deadline = time.time() + STOP_SECONDS
-    while time.time() < deadline:
-        if not server_alive(root, base):
-            return True
+    while server_alive(root, base):
+        if time.time() >= deadline:
+            return False
         time.sleep(1)
-    return not server_alive(root, base)
+    return True
+
+
+def worktree_lock(base: Path):
+    """The per-worktree lock file: runs hold it shared, shutdown/gc exclusive."""
+    locks = HOME / "locks"
+    locks.mkdir(parents=True, exist_ok=True)
+    return open(locks / base.name, "a")
+
+
+def try_exclusive(handle) -> bool:
+    try:
+        fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except BlockingIOError:
+        return False
 
 
 def clone_tree(source: Path, target: Path) -> None:
@@ -218,37 +297,40 @@ def clone_tree(source: Path, target: Path) -> None:
         raise
 
 
-def prepare_base(root: Path) -> Path:
+def write_if_changed(path: Path, text: str) -> None:
+    if not path.exists() or path.read_text() != text:
+        path.write_text(text)
+
+
+def prepare_base(root: Path):
+    """Create or reuse this worktree's base; return (base, pin key).
+
+    Never deletes anything and never calls the sbt client, so the global lock
+    is held only for filesystem work.
+    """
     key = pin_key(root)
+    legacy = legacy_pin_key(root)
     base = base_for(root)
-    template = HOME / "templates" / key
     with open_home_lock() as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         marker = base / PIN_MARKER
-        if base.exists() and (not marker.exists() or marker.read_text() != key):
-            if not stop_server(root, base):
-                raise RuntimeError(
-                    f"pins changed for {root}, but its server is still alive; refusing to discard {base}. "
-                    "Stop it with `sbt-warm --shutdown` and retry."
-                )
-            log(f"pins changed for {root}; discarding stale base {base}")
-            shutil.rmtree(base)
         if not base.exists():
-            if template.exists():
-                log(f"seeding base from template {key} (copy-on-write)")
-                clone_tree(template, base)
+            seeds = [HOME / "templates" / key, HOME / "templates" / legacy]
+            seed = next((template for template in seeds if template.is_dir()), None)
+            if seed is not None:
+                log(f"seeding base from template {seed.name} (copy-on-write)")
+                clone_tree(seed, base)
             else:
                 log(f"no template for pins {key}; first build will clone and compile dependencies")
                 base.mkdir(parents=True)
-            marker.write_text(key)
-        record = base / WORKTREE_RECORD
-        if not record.exists() or record.read_text() != str(root):
-            record.write_text(str(root))
-        settings = base / "global.sbt"
+        elif marker.exists() and marker.read_text() != key:
+            log(f"pins changed for {root}; keeping base {base} (staging is keyed by source revision)")
+        write_if_changed(marker, key)
+        write_if_changed(base / LEGACY_PIN_MARKER, legacy)
+        write_if_changed(base / WORKTREE_RECORD, str(root))
         wanted = f"Global / serverIdleTimeout := Some(scala.concurrent.duration.FiniteDuration({IDLE_MINUTES}L, \"minutes\"))\n"
-        if not settings.exists() or settings.read_text() != wanted:
-            settings.write_text(wanted)
-    return base
+        write_if_changed(base / "global.sbt", wanted)
+    return base, key
 
 
 def open_home_lock():
@@ -256,8 +338,8 @@ def open_home_lock():
     return open(HOME / "bases.lock", "a")
 
 
-def snapshot_template(root: Path, base: Path) -> None:
-    template = HOME / "templates" / pin_key(root)
+def snapshot_template(base: Path, key: str) -> None:
+    template = HOME / "templates" / key
     if template.exists():
         return
     with open_home_lock() as lock:
@@ -319,14 +401,20 @@ def gc(apply: bool) -> int:
                 print(f"keep    {base.name}  (worktree {recorded} exists)")
                 continue
             if base_server_alive(base):
-                print(f"keep    {base.name}  (server alive; worktree {recorded} is gone)")
+                # The worktree is gone, so its server cannot be addressed through
+                # active.json; its idle timeout stops it and a later --gc collects it.
+                print(f"keep    {base.name}  (server alive; worktree {recorded} is gone; retry after it idles out)")
                 continue
             removable.append((base, recorded))
-            if apply:
-                shutil.rmtree(base)
-                print(f"removed {base.name}  (worktree {recorded} is gone)")
-            else:
+            if not apply:
                 print(f"remove  {base.name}  (worktree {recorded} is gone)")
+                continue
+            with worktree_lock(base) as held:
+                if not try_exclusive(held):
+                    print(f"keep    {base.name}  (an sbt-warm run holds its worktree lock)")
+                    continue
+                shutil.rmtree(base)
+            print(f"removed {base.name}  (worktree {recorded} is gone)")
     if not apply and removable:
         log(f"dry run: {len(removable)} base(s) would be removed; rerun with --gc --apply")
     return 0
@@ -363,24 +451,42 @@ def parse(argv: list):
 
 
 def run(root: Path, commands: list) -> int:
-    base = prepare_base(root)
-    code = 0
-    slot = acquire_slot()
-    try:
-        for command in commands:
-            started = time.time()
-            code = run_client(root, base, command)
-            log(f"{command}: exit {code} in {time.time() - started:.1f}s")
-            if code != 0:
-                break
-    finally:
-        slot.close()
-    # The commands are finished, so this client leaves the server idle. A live
-    # server means the build loaded, even if a later command failed.
-    template = HOME / "templates" / pin_key(root)
-    if not template.exists() and (base / "staging").exists() and server_running(root):
-        snapshot_template(root, base)
-    return code
+    with worktree_lock(base_for(root)) as held:
+        fcntl.flock(held, fcntl.LOCK_SH)
+        base, key = prepare_base(root)
+        code = 0
+        slot = acquire_slot()
+        try:
+            for command in commands:
+                started = time.time()
+                code = run_client(root, base, command)
+                log(f"{command}: exit {code} in {time.time() - started:.1f}s")
+                if code != 0:
+                    break
+        finally:
+            slot.close()
+        # The commands are finished, so this client leaves the server idle. A live
+        # server means the build loaded, even if a later command failed. The key
+        # is the one the base was prepared with, not a re-read of build.sbt.
+        template = HOME / "templates" / key
+        if not template.exists() and (base / "staging").exists() and server_running(root):
+            snapshot_template(base, key)
+        return code
+
+
+def shutdown(root: Path) -> int:
+    base = base_for(root)
+    with worktree_lock(base) as held:
+        if not try_exclusive(held):
+            log(f"sbt-warm commands are running in {root}; not shutting its server down")
+            return 1
+        if not server_alive(root, base):
+            log("no server running")
+            return 0
+        if stop_server(root, base):
+            return 0
+        log(f"the server for {root} is still alive after {STOP_SECONDS:.0f}s")
+        return 1
 
 
 def main(argv: list) -> int:
@@ -400,13 +506,10 @@ def main(argv: list) -> int:
         key = pin_key(root)
         print(f"worktree {root}\npin key  {key}\nbase     {base} ({'present' if base.exists() else 'absent'})")
         print(f"template {'present' if (HOME / 'templates' / key).exists() else 'absent'}")
-        print(f"server   {'running' if server_running(root) else 'not running'}")
+        print(f"server   {'running' if server_alive(root, base) else 'not running'}")
         return 0
     if mode == "shutdown":
-        if not server_running(root):
-            log("no server running")
-            return 0
-        return run_client(root, base_for(root), "shutdown")
+        return shutdown(root)
     try:
         return run(root, payload)
     except RuntimeError as error:
