@@ -67,8 +67,10 @@ No production HRF representation or external consumer has changed.
 
 The [v4 contract](../plans/hrf-matvec-contract-v4.md) remains authoritative for
 staging: S0 measurements precede representation changes; S4 uses the fixed
-paired non-inferiority protocol; S5 requires staged Eidolon and PLS Neuro
-consumer evidence. Initial host checks failed the load <=2 requirement; the
+paired non-inferiority protocol; S5 requires staged PLS Neuro consumer
+evidence. Under the owner-approved D5 amendment of 2026-10-04, paused Eidolon
+adoption is deferred/unverified and does not block S5. Its inventory remains
+required, with compatibility verification due when it next upgrades its pin. Initial host checks failed the load <=2 requirement; the
 prospective host-specific amendment described below permits <=5 on buc-gw01.
 S0 subsequently completed and passed the review below; no S4 performance
 admission is claimed.
@@ -188,3 +190,13 @@ Raw host/process evidence is retained in the 42,905,600-byte archive
 (SHA-256 `887565df45d8ea3028b12c070299872ebcc4bd80f74602408cb6f5edc50b2313`),
 outside Git and volatile temporary storage. Compressed JMH results/logs and
 runner receipts are also retained in this evidence directory.
+
+## D5 consumer-gate amendment (2026-10-04)
+
+The owner approved deferring Eidolon adoption while that project is paused.
+S5 no longer waits for Eidolon; its compatibility remains deferred/unverified.
+The external-consumer inventory and migration examples are retained for its
+next ScalaFIM pin upgrade, when compatibility must be verified. PLS Neuro
+adoption and ScalaFIM ownership, numerical, JVM/JS and performance gates remain
+required. This changes the completion dependency, not implementation or
+qualification results. The parent Mote remains open for the remaining work.

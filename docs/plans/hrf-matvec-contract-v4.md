@@ -15,6 +15,14 @@
 >
 > Gale facts were refreshed to the integration pin `da38f8c4`. That pin is `18d24dbb` plus one commit (banded SPD log-determinant jets), which touches none of the `DMat`/`DVec` surfaces cited here. The inventory in §1 is historical, taken at `7989608d`; it is re-counted at the target before S1.
 
+**Owner amendment (2026-10-04):** D5 now defers Eidolon adoption while that
+project is paused. Eidolon compatibility is **deferred/unverified** and does not
+block S5. Its migration inventory remains required, and compatibility must be
+verified when Eidolon next upgrades its ScalaFIM pin. PLS Neuro adoption and all
+ScalaFIM ownership, numerical, JVM/JS and performance gates remain required.
+This amendment supersedes only the original D5 requirement to wait for Eidolon;
+the historical inventory and original drafting status below are retained.
+
 Status: draft for owner review. Nothing below is implemented. Scope is the HRF `Mat`/`Vec` representation
 only; motion `solve6` is done (docs/verification/motion-scale-invariant-solve-20260930.md), MVPA
 `Rsa.solveLinearSystem` is deferred to UMVPA-M2.07 (bd-01M2BNFWEJFFZYMGJB3Z41RGKP). Paths below are under `modules/`.
@@ -221,11 +229,21 @@ External consumers (eidolon, PLSNeuro) pin revisions, so they break only when th
 slice (S1, S3, S5) records its breaking change and the one-line replacement in the PR body and module README.
 A `private[scalafim]` bridge is **not** an external compatibility mechanism, because external consumers cannot
 call it.
-**[OWNER DECISION D5]** Choose one external policy:
-- (a) Recommended: pin-gated breaking changes with the migration inventory and replacement examples from S1. S5 waits
-  until eidolon and PLSNeuro have bumped past S3.
-- (b) One release of public `@deprecated` forwarding bridges (`Mat.toDMat`, and so on), with `-Wconf` scoped to those
-  forwarders.
+**[OWNER DECISION D5 — selected 2026-09-30, amended 2026-10-04]** Use pin-gated
+breaking changes with the migration inventory and replacement examples from S1;
+no public deprecation bridges.
+
+- S5 requires PLS Neuro to have upgraded past S3 and supplied the applicable
+  consumer verification.
+- Eidolon adoption is deferred while the project is paused and does not block
+  S5. Preserve its migration inventory and replacement examples. Require
+  compatibility verification when Eidolon next upgrades its ScalaFIM pin;
+  record its current compatibility status as **deferred/unverified**.
+- ScalaFIM's ownership, numerical parity, JVM/JS and performance gates remain
+  required. Deferring Eidolon is not evidence of consumer compatibility.
+
+The original D5(a) required both Eidolon and PLS Neuro to upgrade past S3 before
+S5. The owner-approved amendment above supersedes the Eidolon prerequisite.
 
 ## 5. Test and parity obligations (per slice)
 

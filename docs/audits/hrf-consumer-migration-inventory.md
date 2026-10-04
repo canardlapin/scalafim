@@ -12,6 +12,12 @@ S0 changes tests only. S1 is planned to make `unsafe` and `data` `private[scalaf
 
 ## Eidolon
 
+**Adoption status: deferred/unverified.** The owner approved deferring adoption
+on 2026-10-04 while Eidolon is paused. It does not block ScalaFIM S5. Retain this
+inventory and the replacement examples below; recheck the actual consumer
+revision and verify compatibility when Eidolon next upgrades its ScalaFIM pin.
+
+
 - Checkout HEAD: `83c2a3a1864ce805d6d4c7c83a4ecee796314449`.
 - Dirty input: 193 porcelain entries, including tracked documentation edits and untracked `.mote` operations. This is not commit-only provenance.
 - Provider pin: `project/BuildVersions.scala:15` selects ScalaFIM Git revision `8e38b9a72932cf645abd123175f819f0ebee63f8`; `build.sbt:7-18` creates `hrfJVM` and `hrfJS` project references from that pin.
