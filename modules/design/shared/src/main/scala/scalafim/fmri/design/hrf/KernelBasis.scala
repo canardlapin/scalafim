@@ -55,8 +55,32 @@ final case class KernelBasisProvenance(
     rank: Int,
     seed: Long):
   def canonical: String =
-    val axes = chart.map { case (n, lo, hi) => s"$n:[$lo,$hi]" }.mkString(",")
-    s"kernel-basis/v1|family=$family|chart=$axes|horizon=$horizonSeconds|step=$fineStepSeconds|nodes=${nodesPerAxis.mkString("x")}|derivatives=$includeDerivatives|tolerance=$tolerance|rank=$rank|seed=$seed"
+    val axes = chart.map { case (name, lower, upper) =>
+      KernelBasisProvenance.record(
+        "axis",
+        name,
+        KernelBasisProvenance.number(lower),
+        KernelBasisProvenance.number(upper)
+      )
+    }
+    s"kernel-basis/v2|family=${KernelBasisProvenance.field(family)}|chart=${KernelBasisProvenance.record("chart", axes*)}|" +
+      s"horizon=${KernelBasisProvenance.number(horizonSeconds)}|step=${KernelBasisProvenance.number(fineStepSeconds)}|" +
+      s"nodes=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|derivatives=$includeDerivatives|" +
+      s"tolerance=${KernelBasisProvenance.number(tolerance)}|rank=$rank|seed=$seed"
+
+/** Structural encoding helpers shared by the kernel and its downstream fit
+  * provenance. Strings are length-framed and doubles retain their IEEE-754
+  * bits, so these encodings do not depend on platform display rendering.
+  */
+object KernelBasisProvenance:
+  private[scalafim] def number(value: Double): String =
+    s"bits:${java.lang.Double.doubleToLongBits(value)}"
+
+  private[scalafim] def field(value: String): String =
+    s"${value.length}:$value"
+
+  private[scalafim] def record(tag: String, fields: String*): String =
+    fields.map(field).mkString(s"$tag(", ",", ")")
 
 /** A data-independent basis `Phi` for a parametric HRF family:
   * `h_theta ~= sum_j c_j(theta) phi_j`, with `c(theta)` and its parameter

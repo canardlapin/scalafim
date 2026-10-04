@@ -1,6 +1,6 @@
 package scalafim.fmri.design
 
-import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisError, KernelBasisSpec}
+import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisError, KernelBasisProvenance, KernelBasisSpec}
 import scalafim.fmri.hrf.{Lag, PositiveSeconds}
 import scalafim.fmri.hrf.family.{GaussianFamily, ShapePoint}
 
@@ -56,7 +56,24 @@ class HrfKernelBasisSuite extends munit.FunSuite:
     assertEquals(basis.responseBasis.dimension, basis.rank)
     assertEquals(basis.responseBasis.elements.length, basis.rank)
     assert(basis.provenance.canonical.contains(s"rank=${basis.rank}"))
-    assert(basis.provenance.canonical.startsWith("kernel-basis/v1|family=gaussian"))
+    assert(basis.provenance.canonical.startsWith("kernel-basis/v2|family=8:gaussian"))
+
+  test("kernel basis provenance has a platform-independent IEEE and string-framed golden"):
+    val provenance = KernelBasisProvenance(
+      family = "gauss|ian;=",
+      chart = Vector(("axis,|[]:=", -0.0, 24.0)),
+      horizonSeconds = -0.0,
+      fineStepSeconds = 0.1,
+      nodesPerAxis = Vector(2, 21),
+      includeDerivatives = true,
+      tolerance = 1e-3,
+      rank = 4,
+      seed = 11L
+    )
+    assertEquals(
+      provenance.canonical,
+      "kernel-basis/v2|family=11:gauss|ian;=|chart=chart(76:axis(10:axis,|[]:=,25:bits:-9223372036854775808,24:bits:4627448617123184640))|horizon=bits:-9223372036854775808|step=bits:4591870180066957722|nodes=nodes(1:2,2:21)|derivatives=true|tolerance=bits:4562254508917369340|rank=4|seed=11"
+    )
 
   test("coefficient jets match finite differences and reconstruct within the certificate"):
     val point = family.chart.point(5.3, math.log(1.9)).fold(e => fail(e.message), identity)
