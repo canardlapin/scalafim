@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T23:04:40.345631+00:00",
+  "finished_utc": "2026-10-03T23:08:30.421120+00:00",
+  "duration_seconds": 230.073993,
+  "command": [
+    "sbt",
+    "-J-Xmx4g",
+    "-J-XX:ActiveProcessorCount=4",
+    "-Dsbt.global.base=/private/tmp/atlas-epic-20261003/provider-sbt",
+    "image4s-niftiJVM/testOnly image4s.nifti.NiftiSemanticSuite -- --tests *signed*"
+  ],
+  "cwd": "/private/tmp/image4s-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/int8-regression-before.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 4367
+}

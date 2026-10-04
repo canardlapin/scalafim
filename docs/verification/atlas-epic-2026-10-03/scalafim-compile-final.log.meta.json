@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-04T00:02:57.449776+00:00",
+  "finished_utc": "2026-10-04T00:08:48.608319+00:00",
+  "duration_seconds": 351.164454,
+  "command": [
+    "sbt",
+    "-J-Xmx8g",
+    "-J-XX:ActiveProcessorCount=8",
+    "-Dsbt.global.base=/private/tmp/atlas-epic-20261003/consumer-warm/bases/ae07a7d707af9505",
+    "-Dsbt.supershell=false",
+    "-Dsbt.color=false",
+    "scalafimCompileAll"
+  ],
+  "cwd": "/private/tmp/scalafim-atlas-epic-20261003",
+  "log": "/private/tmp/atlas-epic-20261003/scalafim-compile-final.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 3000.0,
+  "log_bytes": 23957
+}
