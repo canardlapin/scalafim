@@ -1,6 +1,6 @@
 package scalafim.fmri.design.event
 
-import gale.linalg.DMat
+import gale.linalg.{DMat, DVec}
 import gale.spectral.SpectralBackend.given
 import scalafim.fmri.design.{BasisOrthogonalizationGroupReceipt, BasisOrthogonalizationReceipt, DesignError, HrfColumnScale}
 import scalafim.fmri.hrf.HrfCombinators.*
@@ -20,7 +20,16 @@ import scalafim.fmri.hrf.linalg.Mat
   * basis columns; the transform is then undefined and a typed error is
   * returned. A group whose columns are all exactly zero (for example a cell
   * whose events all fall outside the scan window) is left unchanged and
-  * recorded with rank 0 and the identity transform.
+  * recorded with rank 0 and the identity transform; exact zero is decided from
+  * the entries, never from a norm that might underflow.
+  *
+  * Norms use Gale's scaled Euclidean norm, so tiny (sub-`sqrt(MinNormal)`) and
+  * huge columns neither underflow to zero nor overflow to infinity. Each
+  * projection solves against unit-normalized reference columns and transports
+  * the coefficients back, so the SVD rank cutoff is relative to the
+  * references' directions rather than their amplitudes; if an already accepted
+  * reference would still be truncated, the group is refused instead of
+  * returning a non-orthogonal result.
   */
 object ConvolvedBasisOrthogonalization:
   /** Relative residual norm below which a basis column is treated as vanishing. */
@@ -54,27 +63,37 @@ object ConvolvedBasisOrthogonalization:
             val p = columns.length
             val transform = Array.tabulate(p * p)(i => if i / p == i % p then 1.0 else 0.0)
             val norms = columns.map(column => columnNorm(output, term.data.rows, term.data.cols, column))
-            val allZero = norms.forall(_ == 0.0)
+            val zero = columns.map(column => columnIsZero(output, term.data.rows, term.data.cols, column))
+            val allZero = zero.forall(identity)
             var target = 1
-            var groupRank = if allZero then 0 else if norms.head > 0.0 then 1 else 0
-            if !allZero && norms.head == 0.0 then
+            var groupRank = if allZero || zero.head then 0 else 1
+            if !allZero && zero.head then
               failed = Some(DesignError.InvalidSchema(s"basis orthogonalization: the first basis column of group ${groupLabel(cell, modulator)} is zero while later columns are not"))
             while target < p && failed.isEmpty && !allZero do
               val refs = (0 until target).toVector
               val x = DMat.tabulate(term.data.rows, refs.length)((r, c) => output(r * term.data.cols + columns(refs(c))))
               val y = DMat.tabulate(term.data.rows, 1)((r, _) => output(r * term.data.cols + columns(target)))
-              x.svd match
+              // Solve against unit-normalized references and transport the
+              // coefficients back, so the relative cutoff cannot discard a
+              // small-amplitude reference that was already accepted.
+              val refScales = refs.indices.map(c => x.col(c).norm2).toVector
+              val xUnit = DMat.tabulate(x.rows, x.cols)((r, c) => x(r, c) / refScales(c))
+              xUnit.svd match
                 case Left(error) => failed = Some(DesignError.BuildFailed(error.toString))
                 case Right(svd) =>
                   val sigmaMax = if svd.size == 0 then 0.0 else svd.singularValues(0)
-                  val cutoff = math.max(x.rows, x.cols).toDouble * sigmaMax * 2.220446049250313e-16
+                  val cutoff = math.max(xUnit.rows, xUnit.cols).toDouble * sigmaMax * 2.220446049250313e-16
                   val kept = (0 until svd.size).filter(i => svd.singularValues(i) > cutoff).toVector
                   val beta = refs.indices.map { c => kept.map { k =>
                     var dot = 0.0; var r = 0
-                    while r < x.rows do { dot += svd.u(r, k) * y(r, 0); r += 1 }
+                    while r < xUnit.rows do { dot += svd.u(r, k) * y(r, 0); r += 1 }
                     svd.vt(k, c) * dot / svd.singularValues(k)
-                  }.sum }.toVector
-                  if beta.exists(value => !value.isFinite) then failed = Some(DesignError.InvalidSchema("basis orthogonalization produced non-finite coefficients"))
+                  }.sum / refScales(c) }.toVector
+                  if kept.length < refs.length then failed = Some(DesignError.InvalidSchema(
+                    s"basis orthogonalization: the accepted reference columns of group ${groupLabel(cell, modulator)} lose rank " +
+                      s"(${kept.length} of ${refs.length} retained) when projecting basis column ${target + 1}"
+                  ))
+                  else if beta.exists(value => !value.isFinite) then failed = Some(DesignError.InvalidSchema("basis orthogonalization produced non-finite coefficients"))
                   else
                     val residual = new Array[Double](term.data.rows)
                     var r = 0
@@ -83,12 +102,12 @@ object ConvolvedBasisOrthogonalization:
                       while c < refs.length do { projection += x(r, c) * beta(c); c += 1 }
                       residual(r) = y(r, 0) - projection
                       r += 1
-                    val residualNorm = math.sqrt(residual.map(value => value * value).sum)
+                    val residualNorm = DVec.tabulate(residual.length)(residual(_)).norm2
                     val sourceNorm = norms(target)
-                    if sourceNorm == 0.0 || residualNorm <= VanishingTolerance * sourceNorm then
+                    if zero(target) || residualNorm / sourceNorm <= VanishingTolerance then
                       failed = Some(DesignError.InvalidSchema(
                         s"basis orthogonalization: basis column ${target + 1} of group ${groupLabel(cell, modulator)} vanishes after projection " +
-                          s"(relative residual norm ${if sourceNorm == 0.0 then 0.0 else residualNorm / sourceNorm} <= $VanishingTolerance); " +
+                          s"(relative residual norm ${if zero(target) then 0.0 else residualNorm / sourceNorm} <= $VanishingTolerance); " +
                           "it is collinear with earlier basis columns"
                       ))
                     else
@@ -129,14 +148,14 @@ object ConvolvedBasisOrthogonalization:
           Right(changed -> Vector(BasisOrthogonalizationReceipt(term.term.termTag.flatMap(scalafim.fmri.design.TermId(_).toOption), groups0)))
       )(Left(_))
 
+  /** Scaled Euclidean norm (Gale `nrm2`): no underflow or overflow of squares. */
   private def columnNorm(data: Array[Double], rows: Int, cols: Int, column: Int): Double =
-    var sum = 0.0
+    DVec.tabulate(rows)(r => data(r * cols + column)).norm2
+
+  private def columnIsZero(data: Array[Double], rows: Int, cols: Int, column: Int): Boolean =
     var r = 0
-    while r < rows do
-      val value = data(r * cols + column)
-      sum += value * value
-      r += 1
-    math.sqrt(sum)
+    while r < rows && data(r * cols + column) == 0.0 do r += 1
+    r == rows
 
   private def groupLabel(cell: Option[scalafim.fmri.design.CellKey], modulator: Option[scalafim.fmri.design.ModulatorId]): String =
     s"cell=${cell.fold("")(_.canonical)} modulator=${modulator.fold("")(_.value)}"

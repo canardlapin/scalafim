@@ -4,14 +4,57 @@ import scalafim.dataset.{DataSelection, DatasetSeriesReader, IndexSelection}
 import scalafim.fmri.model.{FitEngine, FitPlan}
 import scala.util.control.NonFatal
 
+/** Caller-chosen identity of one fit unit; non-blank text. */
+opaque type FitUnitId = String
+
+object FitUnitId:
+  def apply(value: String): Either[FitError, FitUnitId] = FitWorkKeys.nonBlank("unit identity", value)
+  def unsafe(value: String): FitUnitId = FitWorkKeys.orThrow(apply(value))
+  extension (id: FitUnitId)
+    inline def value: String = id
+
+/** Immutable revision of the complete scientific recipe; non-blank text. */
+opaque type PlanRevision = String
+
+object PlanRevision:
+  def apply(value: String): Either[FitError, PlanRevision] = FitWorkKeys.nonBlank("scientific plan revision", value)
+  def unsafe(value: String): PlanRevision = FitWorkKeys.orThrow(apply(value))
+  extension (revision: PlanRevision)
+    inline def value: String = revision
+
+/** Immutable revision of a response snapshot (content or version, not a mutable path); non-blank text. */
+opaque type SourceRevision = String
+
+object SourceRevision:
+  def apply(value: String): Either[FitError, SourceRevision] = FitWorkKeys.nonBlank("response source revision", value)
+  def unsafe(value: String): SourceRevision = FitWorkKeys.orThrow(apply(value))
+  extension (revision: SourceRevision)
+    inline def value: String = revision
+
+private object FitWorkKeys:
+  def nonBlank(label: String, value: String): Either[FitError, String] =
+    if value.trim.nonEmpty then Right(value)
+    else Left(FitError.InvalidWorkDescriptor(s"$label must be non-blank"))
+
+  def orThrow[A](result: Either[FitError, A]): A =
+    result.fold(error => throw new IllegalArgumentException(error.message), identity)
+
 /** Immutable registry keys. The resolver must bind planRevision to the complete
   * scientific recipe (design, sampling geometry, configuration and provenance),
   * and sourceRevision to an immutable response snapshot, not a mutable path.
   */
-final case class FitWorkReference(unitId: String, planRevision: String, sourceRevision: String):
-  require(unitId.trim.nonEmpty, "unit identity must be non-empty")
-  require(planRevision.trim.nonEmpty, "scientific plan revision must be non-empty")
-  require(sourceRevision.trim.nonEmpty, "response source revision must be non-empty")
+final case class FitWorkReference(unitId: FitUnitId, planRevision: PlanRevision, sourceRevision: SourceRevision)
+
+object FitWorkReference:
+  def of(unitId: String, planRevision: String, sourceRevision: String): Either[FitError, FitWorkReference] =
+    for
+      unit <- FitUnitId(unitId)
+      plan <- PlanRevision(planRevision)
+      source <- SourceRevision(sourceRevision)
+    yield FitWorkReference(unit, plan, source)
+
+  def unsafe(unitId: String, planRevision: String, sourceRevision: String): FitWorkReference =
+    FitWorkKeys.orThrow(of(unitId, planRevision, sourceRevision))
 
 /** A portable recipe, not a snapshot of a solver or finalized preparation state.
   * Binding in a new process replays any declared response-dependent preparation.
@@ -44,8 +87,8 @@ final case class FitWorkDescriptor private (
     * The unit identity excludes partitioning, while block identities include exact axes.
     */
   def workId: String =
-    FitWorkDescriptor.frame(Vector("fit-unit-v1", reference.unitId, reference.planRevision,
-      reference.sourceRevision, datasetId, engine.toString, preparation.topology.toString,
+    FitWorkDescriptor.frame(Vector("fit-unit-v1", reference.unitId.value, reference.planRevision.value,
+      reference.sourceRevision.value, datasetId, engine.toString, preparation.topology.toString,
       preparation.reductions.mkString(","), timepoints.mkString(","), voxelIndices.mkString(",")))
 
   def blockWorkIds: Vector[String] =
@@ -53,8 +96,8 @@ final case class FitWorkDescriptor private (
       chunk.ordinal.value.toString, chunk.voxelIndices.mkString(","))))
 
   def encode: String =
-    FitWorkDescriptor.frame(Vector("fit-work-v1", reference.unitId, reference.planRevision,
-      reference.sourceRevision, datasetId, engine.toString, preparation.topology.toString,
+    FitWorkDescriptor.frame(Vector("fit-work-v1", reference.unitId.value, reference.planRevision.value,
+      reference.sourceRevision.value, datasetId, engine.toString, preparation.topology.toString,
       preparation.reductions.mkString(","), timepoints.mkString(","), voxelIndices.mkString(","),
       blockSize.value.toString))
 
@@ -96,14 +139,15 @@ object FitWorkDescriptor:
       val reductions = if values(7).isEmpty then Vector.empty
         else values(7).split(",", -1).toVector.map(FitPreparationReduction.valueOf)
       val descriptor = FitWorkDescriptor(
-        FitWorkReference(values(1), values(2), values(3)), values(4), FitEngine.valueOf(values(5)),
+        FitWorkReference.unsafe(values(1), values(2), values(3)), values(4), FitEngine.valueOf(values(5)),
         FitPreparationRequirements(FitPreparationTopology.valueOf(values(6)), reductions),
         indices(values(8)), indices(values(9)), ChunkSize.unsafe(values(10).toInt)
       )
       require(descriptor.encode == text, "noncanonical fit work encoding")
       Right(descriptor)
     catch
-      case NonFatal(error) => Left(FitError.InvalidFitAxis("fit work descriptor", error.getMessage))
+      case NonFatal(error) =>
+        Left(FitError.InvalidWorkDescriptor(Option(error.getMessage).getOrElse(error.getClass.getSimpleName)))
 
   private[fit] def frame(fields: Vector[String]): String =
     fields.map(value => s"${value.length}:$value").mkString
@@ -130,13 +174,13 @@ object FitWorkExecutor:
 
   private[fit] def validate(descriptor: FitWorkDescriptor, bound: ResolvedFitWork): Either[FitError, Unit] =
     if bound.reference != descriptor.reference then
-      Left(FitError.InvalidFitAxis("fit work binding", "resolved immutable reference differs from the descriptor"))
+      Left(FitError.WorkBindingMismatch("resolved immutable reference differs from the descriptor"))
     else if bound.plan.model.dataset.id.value != descriptor.datasetId ||
         bound.reader.dataset.id != bound.plan.model.dataset.id ||
         bound.reader.dataset.shape != bound.plan.model.dataset.shape then
-      Left(FitError.InvalidFitAxis("fit work binding", "resolved dataset identity or shape differs"))
+      Left(FitError.WorkBindingMismatch("resolved dataset identity or shape differs"))
     else if bound.plan.engine != descriptor.engine || FitPreparation.describe(bound.plan) != descriptor.preparation then
-      Left(FitError.InvalidFitAxis("fit work binding", "resolved engine or preparation topology differs"))
+      Left(FitError.WorkBindingMismatch("resolved engine or preparation topology differs"))
     else if !descriptor.preparation.supportsBoundedExecution(descriptor.engine) then
       Left(FitError.UnsupportedEngine(
         s"bounded preparation is not implemented for ${descriptor.preparation.reductions.mkString(", ")}"

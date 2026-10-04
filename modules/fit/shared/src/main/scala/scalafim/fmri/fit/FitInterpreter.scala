@@ -102,6 +102,38 @@ private[fit] final class BlockLocalFitContext(
   def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
     interpreter.mergeAny(plan, chunks)
 
+/** Guards a context prepared from a completed voxel population, such as pooled AR whitening. Every block must
+  * present exactly the finite voxels that preparation retained from it. Otherwise a voxel that contributed to the
+  * shared estimate could later vanish (or a new one appear) without trace, so a change is a typed refusal.
+  */
+private[fit] final class RetainedMembershipFitContext(
+    inner: PreparedFitContext,
+    retained: Set[Int],
+    missingData: scalafim.fmri.model.MissingDataPolicy
+) extends PreparedFitContext:
+  def engine: FitEngine = inner.engine
+  protected def execute(series: FmriSeries): Either[FitError, FitBlockResult] =
+    RetainedMembershipFitContext.finiteMembership(series, missingData).flatMap { observed =>
+      val expected = series.voxelIndices.filter(retained)
+      if observed == expected then inner.fitChunk(series)
+      else Left(FitError.PreparationReplayMismatch(
+        s"retained voxel membership changed: prepared ${expected.mkString("[", ",", "]")}, read ${observed.mkString("[", ",", "]")}"
+      ))
+    }
+  def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
+    inner.merge(chunks)
+
+private[fit] object RetainedMembershipFitContext:
+  /** Voxels of one block that the missing-data policy admits to fitting; empty when all are excluded. */
+  def finiteMembership(
+      series: FmriSeries,
+      missingData: scalafim.fmri.model.MissingDataPolicy
+  ): Either[FitError, Vector[Int]] =
+    MatrixAdapters.responseBlock(series, missingData) match
+      case Left(FitError.AllVoxelsExcluded(_)) => Right(Vector.empty)
+      case Left(error)                         => Left(error)
+      case Right(value)                        => Right(value.voxelIndices)
+
 private[fit] final case class OlsExecutionPrepared(
     solver: OlsPrepared,
     responsePreparation: ResolvedResponsePreparation,

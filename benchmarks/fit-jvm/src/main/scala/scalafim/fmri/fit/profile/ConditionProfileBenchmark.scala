@@ -62,9 +62,15 @@ class ConditionProfileBenchmark:
         case 1 => x
         case 2 => x * x - 1.0 / 3.0
         case k => math.cos(math.Pi * (k - 2) * (t + 0.5) / rows))
-    prep = CompactConditionPreparation.prepare(expanded, Some(whitening), Some(nuisance)).fold(e => throw new IllegalArgumentException(e.message), identity)
+    val points = Vector((4.0, math.log(1.2)), (6.0, math.log(2.0))).map { case (tau, logSd) =>
+      family.chart.point(tau, logSd).fold(e => throw new IllegalArgumentException(e.message), identity)
+    }
+    val admission = ObservedFamilyCertification
+      .admitForCompact(expanded, term, frame, Seconds(0.1), Some(whitening), Some(nuisance), points, ObservedFamilyRequirements(1e-2, 1e8, 1e-6))
+      .fold(e => throw new IllegalArgumentException(e.message), identity)
+    prep = CompactConditionPreparation.prepare(expanded, admission, Some(whitening), Some(nuisance), term, frame, Seconds(0.1)).fold(e => throw new IllegalArgumentException(e.message), identity)
     val grid = NodeGrid(family.chart, Vector(15, 15))
-    val budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 2, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0))
+    val budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 3, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0))
     runtime = new CompactConditionRuntime(prep, grid, budget, None, 1.0, NormalizationRule.Unnormalised)
     objective = new CompactConditionObjective(prep, grid)
     // synthetic responses through the basis: shape + signed amplitudes + AR(1) noise at SNR 0.5

@@ -48,18 +48,42 @@ class GaussianFamilySuite extends munit.FunSuite:
       i += 1
     assertEqualsDouble(family.toHrf(point)(Lag(5.5)).data(0), library(Lag(5.5)).data(0), 1e-15)
 
-  test("uniform-grid recurrence agrees with direct evaluation"):
-    val point = pointAt(7.9, math.log(0.85))
-    val uniform = new Array[Double](lags.length)
-    family.evalInto(lags, point, uniform)
-    // A non-uniform grid forces the direct path: append one extra lag.
-    val irregular = lags :+ 24.05
-    val direct = new Array[Double](irregular.length)
-    family.evalInto(irregular, point, direct)
-    var i = 0
-    while i < lags.length do
-      assertEqualsDouble(uniform(i), direct(i), 1e-13 * math.max(1e-6, direct(i)), s"lag ${lags(i)}")
-      i += 1
+  test("values and jets at a lag are independent of neighbouring grid samples"):
+    val point = pointAt(7.49004329853202, 0.3926858591878316)
+    val regular = Array.tabulate(241)(i => i * 0.1)
+    val irregular = regular :+ 24.05
+    val a = new Array[Double](regular.length * family.jetComponents)
+    val b = new Array[Double](irregular.length * family.jetComponents)
+    family.jetInto(regular, point, a)
+    family.jetInto(irregular, point, b)
+    for component <- 0 until family.jetComponents; i <- regular.indices do
+      assertEqualsDouble(a(component * regular.length + i), b(component * irregular.length + i), 0.0)
+    val deceptive = Array(0.0, 0.1, 7.5, 0.3)
+    val actual = new Array[Double](deceptive.length)
+    family.evalInto(deceptive, point, actual)
+    for i <- deceptive.indices do
+      val singleton = new Array[Double](1)
+      family.evalInto(Array(deceptive(i)), point, singleton)
+      assertEqualsDouble(actual(i), singleton(0), 0.0)
+
+  test("Gaussian values and all jet components agree with the 90-digit oracle"):
+    val grid = Array.tabulate(241)(i => i * 0.1)
+    val actual = new Array[Double](grid.length * family.jetComponents)
+    for fixture <- GaussianPrecisionFixtures.cases do
+      family.jetInto(grid, pointAt(fixture.tau, fixture.logSd), actual)
+      for sample <- fixture.samples; component <- sample.jet.indices do
+        val expected = sample.jet(component)
+        assertEqualsDouble(actual(component * grid.length + sample.index), expected,
+          4e-15 * math.max(1.0, math.abs(expected)), s"tau=${fixture.tau} logSd=${fixture.logSd} component=$component index=${sample.index}")
+
+  test("representable Gaussian tails do not depend on grid context"):
+    val point = pointAt(3.0, 0.0)
+    val values = new Array[Double](2)
+    val single = new Array[Double](1)
+    family.evalInto(Array(0.0, 40.4), point, values)
+    family.evalInto(Array(40.4), point, single)
+    assert(values(1) > 0.0 && values(1) < 1e-300)
+    assertEqualsDouble(values(1), single(0), 0.0)
 
   test("negative lags are causal zeros in values and jets"):
     val point = pointAt(3.0, 0.0)

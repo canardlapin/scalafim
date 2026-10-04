@@ -1,0 +1,252 @@
+{
+  "schema": "scalafim.scientific-seam-review",
+  "version": 1,
+  "review": "Independent read-only scientific seam review refresh",
+  "status": "active",
+  "verdict": "changes required",
+  "created_at": "2026-10-04T11:57:27.473392+00:00",
+  "reviewer": {
+    "role": "lean_expert",
+    "agent": "/root/seam_review",
+    "independent_of_implementation": true,
+    "activity": "read-only source and upstream formula inspection; no builds"
+  },
+  "parent_activity": "source inspection, independently regenerated oracle and bounded execution checks; no production changes",
+  "issue": "bd-01M43BJCDW0VMGMEMNCSEG1ZT5",
+  "scope": [
+    "Global transform Z = Xscaled T = Xraw D^-1 T, effective per-column HRFs, scale reset, original-basis rejection and exact-zero/collinear boundaries",
+    "Declared response-window discretization through structural T/F metadata, exact point receipt and quadrature count boundary",
+    "SPM informed kernel basis and formula realization on the declared TR/16 grid over the full 32-second window",
+    "Per-run event-scale response transport and refusal of heterogeneous shared/mixed/ambiguous divisors",
+    "Observed-only formula orthogonalization with run/cell grouping, target-specific observed rows and held-at-reference missing entries"
+  ],
+  "snapshot": {
+    "base_head": "53097f3f43fa125cd166a99268f192f4a5b12311",
+    "captured_at": "2026-10-04T11:42:04.373316+00:00",
+    "tree": "dirty working tree; base HEAD alone is not the candidate identity",
+    "manifest": "snapshot-manifest.json",
+    "manifest_sha256": "eb44986e3a5e744c9ee4f6371dfdcdf5ba417c2c7c78140959d5a12c4b55c896",
+    "archive": "source-snapshot.tar.gz",
+    "archive_sha256": "ff24d00300619b0dc71b198f73563dc40e76c6cdc356d4f1158bb0edb9d4ee01",
+    "build_file_count": 2300,
+    "supplemental_test_overlay": [
+      "ReviewDiscretizationProbeSuite.scala",
+      "ReviewBasisNormProbeSuite.scala"
+    ],
+    "dependency_sources": "dependency-sources.json",
+    "supplemental_test_overlay_sha256": {
+      "ReviewDiscretizationProbeSuite.scala": "e153130fcf7bea2124ee0540e4877cb7e490e1336a6877d43ace4446dbcd0a2e",
+      "ReviewBasisNormProbeSuite.scala": "27e645fd053d6d65c258bb34720e856e16a8623b7d31546e4d2e6d15303ab585"
+    },
+    "dependency_sources_sha256": "f9de12a4fa649939534c120273b9783c38136bd6fee1ecb054d8514da0945cf8"
+  },
+  "supersedes": {
+    "path": "docs/verification/model-authoring-20261002/review.json",
+    "original_sha256": "c6ec7d73d5ed12413afb602903ffb323171e1f2b95f22cfc2b2822c9e7851e66",
+    "preserved_copy": "previous-review.json",
+    "stale_source_paths_at_refresh": [
+      "modules/design/shared/src/main/scala/scalafim/fmri/design/event/ConvolvedBasisOrthogonalization.scala",
+      "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+      "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala",
+      "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ConvolvedBasisReadoutSuite.scala"
+    ]
+  },
+  "sources": [
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Basis.scala",
+      "sha256": "fc322c1cdca82c0d5a76e0dc42b5b12ab2443a0d3f75efc6144b6fa0788d4b73",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Hrf.scala",
+      "sha256": "8f8c0ce2149ec600ea76c2a5846813a6a5442f5a7c78a5bc7d072a52a66a623a",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Primitive.scala",
+      "sha256": "2fd60c61cf5f69f7332a724c744bc70c6afb9ddb30688b6502132e0280d28255",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/TemporalDerivativeConvention.scala",
+      "sha256": "c5b280d4395e519e10b42a1d9ef0fa1723272999f7dc4208ed2690e17b97e009",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/DesignSchema.scala",
+      "sha256": "b682922be704b6732fa1ef9812946cd7077017f15016991045e6dcf1d7036b04",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypothesisDsl.scala",
+      "sha256": "3bc7a96424ad02a293644be177e4a893973a62f5ef6ee7a9df0adc9760b344fe",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala",
+      "sha256": "2c7da103a5793f84039018e343477305870dd2b7a75316006f806a39bac445df",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseOls.scala",
+      "sha256": "35c23f61c9cf6a97b6ef430e9bc4aba6567576471e90d1cc2174e9dcad9223f3",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RunwiseGls.scala",
+      "sha256": "129d9ead39f28bea64b1d5e1048aa6edba55375c361fbaa3bed2b996ce03b528",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/ConvolvedBasisOrthogonalization.scala",
+      "sha256": "8bb71447b1fd0e9af590c4ea1808a6e528c38966fda026d8a179c46d612d957c",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventTerm.scala",
+      "sha256": "77b24756cdf9b0decb3d3f664d90d5209244a3dfae73c09f51f8858525465122",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventModel.scala",
+      "sha256": "99aea8e0aa174c1b12160f58ced912f30e053dd986f1ea310fb4593f39f8594c",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/EventResponseConvolution.scala",
+      "sha256": "47610a9daa99bd1b1db58aa3b299d5eb2511abcd609c5982bbc9152aef6f4cf6",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala",
+      "sha256": "d9860db1640cd15efdbfefcf2dc69b9221ea56cb46423d0a2174d52de008012f",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasis.scala",
+      "sha256": "be73e7cd392eb240d358fa03c505534ff007472aa20eae7888eef896b3d578d3",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/BasisGeometrySuite.scala",
+      "sha256": "86413bb963983b7e7199504be7fbc2dbc2ebe5f81517b936a8d5434522dfba1a",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/TemporalDerivativeConventionSuite.scala",
+      "sha256": "e8294e0d26b7d7927bec7b5449b164c0a09701461f9c8d4938d984b8e6404669",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/ConvolvedBasisOrthogonalizationSuite.scala",
+      "sha256": "1e32d0af7855d7fecf41e6032567875623add7e906f4b63a4fc803e07d1eae3c",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/SpmInformedDesignColumnSuite.scala",
+      "sha256": "06057c98e040c05dca6d185a85e151f35ae63ad53314e9e6247a29731484abd6",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/FormulaResponsePolicySuite.scala",
+      "sha256": "a5f13a170e2f58ec83f68d6b75a6284814aaaa09b0bedc3b3ef6b4774556d6c0",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ConvolvedBasisReadoutSuite.scala",
+      "sha256": "bb48290310a1a8045d8c0480b5c976e12fc3cc4415a20b6ea49d1681aa88f54b",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/StructuralHypothesisDslSuite.scala",
+      "sha256": "e5e8e87c885525ca4b4ce78671063842b1ea0a79a52f3a117ca356d57b7912bb",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/StructuralHypothesisSuite.scala",
+      "sha256": "14cb7b64c1bb805ea24f46017aa45bda67346c0ff29afad273e752ee9ccfcb8a",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/SpmInformedBasisFixture.scala",
+      "sha256": "e37943db3ef7f09a47f574cd639b324a4911f0c55f916da001b5a98032c982c4",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/fixtures/SpmInformedKernelFixture.scala",
+      "sha256": "335ec6e7890bdda58321da7185cb29257846d45611a0e7c92f298c1f04113585",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    },
+    {
+      "path": "tools/fixtures/generate_spm_informed_basis.py",
+      "sha256": "e350cf287b420c7a1a80c66ad273f45c38e85a65509f37d8ced93247c6e4062e",
+      "coverage": "relevant functions, sections or fixtures; not a whole-file audit"
+    }
+  ],
+  "build_sources": [
+    {
+      "path": "build.sbt",
+      "sha256": "7b3f5d12cedfe107c12c2ea4fb2670218cc43ec71471e80acb27c6a62fa509c5"
+    },
+    {
+      "path": "project/plugins.sbt",
+      "sha256": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10"
+    },
+    {
+      "path": "project/build.properties",
+      "sha256": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2"
+    },
+    {
+      "path": ".jvmopts",
+      "sha256": "bf1a1d03f789112c9c74214eb9d1bf918ef5021cd1101d09b44a1426911a6bf0"
+    },
+    {
+      "path": "tools/build/sbt-warm",
+      "sha256": "a0e955a433fe6325812c0d369dd040e8a08d94f4747134b20c50b8084e6d5c9f"
+    }
+  ],
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "medium",
+      "status": "confirmed by source inspection and bounded independent arithmetic; Scala probe compiled but unrun",
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/Basis.scala",
+      "line": 365,
+      "title": "Unchecked quadrature grid count saturates and can overflow the receipt",
+      "boundary": "One-second window with valid PositiveSeconds(1e-20)",
+      "required_correction": "Check finite interval count, representability and explicit work limit before conversion or evaluation; typed InvalidDiscretization for oversized requests."
+    },
+    {
+      "id": "R2",
+      "severity": "medium",
+      "status": "confirmed by source inspection and IEEE underflow arithmetic; Scala probe compiled but unrun",
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/ConvolvedBasisOrthogonalization.scala",
+      "line": 56,
+      "title": "Squared norms classify finite nonzero collinear columns as an exact-zero group",
+      "boundary": "Public collinear custom HRF columns at amplitude 1e-200",
+      "required_correction": "Use scale-safe norms and exact entry zero checks; retain genuinely zero groups and refuse nonzero degeneracy."
+    },
+    {
+      "id": "R3",
+      "severity": "medium",
+      "status": "source/algebra finding reproduced by independent NumPy toy; actual Gale/Scala probe compiled but unrun",
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/event/ConvolvedBasisOrthogonalization.scala",
+      "line": 69,
+      "title": "Reference cutoff can discard an earlier column and return nonorthogonal output",
+      "boundary": "x1=1e-18*e1, x2=e2, x3=e1+e2+e3; predicted output correlation 1/sqrt(2)",
+      "required_correction": "Normalize reference solve and transport coefficients back through existing Gale capability, or refuse accepted-reference rank loss; verify normalized pairwise orthogonality."
+    }
+  ],
+  "qualification": [
+    "No ordinary-scale semantic mismatch found on bounded inspection.",
+    "Verdict remains changes required irrespective of green ordinary fixtures. Passing supplemental probe assertions confirm defects.",
+    "Window invariance is under declared quadrature, not analytic integration.",
+    "SPM fixture is an independently regenerated NumPy reimplementation, not MATLAB/SPM execution output or complete SPM design-matrix parity.",
+    "No full repository, inference-calibration, performance, regex migration or CI hash-checker qualification.",
+    "61 existing JVM tests passed. Supplemental JVM and all JS selections were blocked by the shared build semaphore; no cross-platform qualification is claimed."
+  ],
+  "execution": "execution.json",
+  "details": "review.md",
+  "completion_source_comparison": "current-source-comparison.json",
+  "completed_at": "2026-10-04T12:19:52.505878+00:00"
+}

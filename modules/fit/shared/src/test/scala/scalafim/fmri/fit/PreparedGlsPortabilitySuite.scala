@@ -35,7 +35,7 @@ class PreparedGlsPortabilitySuite extends munit.FunSuite:
     InMemoryDatasetBackend(DatasetId("portable-gls"), GaleTestMatrix.fromRows(response), SampleSpaces(Vector(3, 1, 1))), frame)
   private val plan = FitPlan(FmriModel(event, baseline, dataset), FitEngine.GeneralizedLeastSquares,
     FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), iterations = 2)))
-  private val reference = FitWorkReference("portable", "rational-plan-v1", "rational-source-v1")
+  private val reference = FitWorkReference.unsafe("portable","rational-plan-v1", "rational-source-v1")
   private var responseReads = 0
   private val resolver = new FitWorkResolver:
     def resolve(request: FitWorkReference): Either[FitError, ResolvedFitWork] =

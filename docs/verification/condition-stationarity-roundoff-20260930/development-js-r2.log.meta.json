@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T12:51:22.730387+00:00",
+  "finished_utc": "2026-09-30T13:55:26.139082+00:00",
+  "duration_seconds": 1911.309407,
+  "command": [
+    "node",
+    "--max-old-space-size=512",
+    "/private/tmp/scalafim-phrf-push-20260930/frozen-js/main.js",
+    "study",
+    "development"
+  ],
+  "cwd": "/private/tmp/scalafim-phrf-push-20260930/work",
+  "log": "/private/tmp/scalafim-phrf-push-20260930/evidence/development-js-r2.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2700.0,
+  "log_bytes": 2278966
+}

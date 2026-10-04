@@ -1,0 +1,674 @@
+[
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5037,
+    "commandSha256": "c2fb2781c614236eaebb4da4cea3e1eefa55f2c7ce04322c9247aea2d98d9f20",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path p=Path('/private/tmp/scalafim-executio",
+    "excerpts": [
+      "lerresumedsession61835 max3child7200budget14000 nooldchild. Needsfreshbase1d2+counters, existingboundedexecutor+JV M<=8, caller-owneddistinctread"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5058,
+    "commandSha256": "487121c05bb6da32461c94973583d3c45f6bf1f9922b300f543a15071c5fa92d",
+    "commandPrefix": "mote --store /Users/bbuchsbaum/code/scala/scalafim/.mote --actor exec-orchestrat",
+    "excerpts": [
+      ". Existing101/102cohortsdevelopment; untouchedpaired200/SNR seeds7000930101(1.0),7000930102(.5);7000930103(.25reportonly), exactsource/provider/protoc",
+      "2cohortsdevelopment; untouchedpaired200/SNR seeds7000930101(1.0),7000930102(.5);7000930103(.25reportonly), exactsource/provider/protocolmanifest befor",
+      "ment; untouchedpaired200/SNR seeds7000930101(1.0),7000930102(.5);7000930103(.25reportonly), exactsource/provider/protocolmanifest beforeevaluation. No"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5058,
+    "commandSha256": "6c63078ecf08c06e3ab969419ee82e658c01c547894b0211140fe738d87034ba",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      "single D2 work-policy comparison approved under original ticket; freshseeds frozen, actual100k streaming C0 measurement planned. Readoutstage1 re"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5164,
+    "commandSha256": "6988324f2766ec08d9740a6408e22dfdab20bb8fb51ee0b595e627506a77119a",
+    "commandPrefix": "rg -n '7000930201|7000930101|AR transpose|gale.*approval' /private/tmp/scalafim-",
+    "excerpts": [
+      "rg -n '7000930201|7000930101|AR transpose|gale.*approval' /private/tmp/scalafim-execution-20",
+      "rg -n '7000930201|7000930101|AR transpose|gale.*approval' /private/tmp/scalafim-execution-20260929/reco"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5187,
+    "commandSha256": "9b3fa1c1e7a5b2f7361dae9c71b3ee0dd415a6e87cedf7b2d12f75b6e5d1feee",
+    "commandPrefix": "mote --actor exec-orchestrator --store /Users/bbuchsbaum/code/scala/scalafim/.mo",
+    "excerpts": [
+      "ent BEFORE qualification: one-voxel harness smoke inspected seed 7000930101, so retire the entire SNR1 seed stream as development-only. Replace it wit",
+      "the entire SNR1 seed stream as development-only. Replace it with 7000930201, contingent on exact prior-stream non-use check; seeds 7000930102/.5 and 7",
+      "000930201, contingent on exact prior-stream non-use check; seeds 7000930102/.5 and 7000930103/.25 remain frozen and uninspected. Preserve original pro"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5187,
+    "commandSha256": "eb2fc4566ba420f8b21f8cdb369b12da39f05647d55e962c7c1dc954f847d605",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      "ion-20260929/.dashboard log 'C0 smoke passed both platforms. One fresh SNR1 seed was used in smoke; root retires entire seed as development-only "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 5545,
+    "commandSha256": "a690efd284fb04334aa299c2ede54d903e288620f85be967d526e7f339c38604",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import json,hashlib,datetime root=Path",
+    "excerpts": [
+      "2ca26da72f7747', 'scope':'Independent source/evidence review; no fresh qualification, publication, merge or release. Failed candidates remain blo",
+      "ne measured workload','12crash actions=4completedAPIboundaries x3fresh processes, notpowerloss'],'next':'Three code repairs + independent literal",
+      ",'projectedCampaignHoursBeforeOverhead':17.36}, {'scope':'C0 pre-fresh qualification harness','base':'1d2bdf5dcae4885e57ea5069932ca26da72f7747','"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6055,
+    "commandSha256": "f1be5a710e7eae8d7176573e75a2fe9faf106bee78d06f4b7bd4d0d85285e60c",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path from datetime import datetime,timezone",
+    "excerpts": [
+      "ualcostapproval AFTERreview. Worker74249actualexit0. C0 secondprefreshreview4dc3a REQUESTCHANGES Newtoncorrectionauditvsrawgradient, fullretained",
+      "epanel. Native model_recovery taskcontinuedfullremaininglist (no fresh/100k). eae7cb bothcompile+3controlsEACHpassed rawc0-qualification-reviewfi",
+      "forindependentreview; worker instructedcompletefullscope. Retired7000930101ENTIREdevelopmentstream, replacement7000930201/.5/.25unconsumed. Image4s US"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6348,
+    "commandSha256": "e6baf41695faa53f5d4c8cc37544645e9d819e4c27b1d1664bd1f8e791d65a47",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import shutil,json,hashlib,datetime r=",
+    "excerpts": [
+      "record is four completed public-operation boundaries times three fresh processes, not twelve distinct fault boundaries or power-loss proof. Histo",
+      "d the corrected rate rule are being finalized\\nbefore a reviewed fresh freeze and campaign-cost approval. No confirmation has\\nbeen launched and ",
+      "or gathering and chunk-independent checksums, but its second pre-fresh review still requires exact projected Newton stationarity, complete per-vo"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6402,
+    "commandSha256": "02a1c4640f27b9655994b0f698e9d609e3dfda30e6018b41d01c317b5e12517b",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path from datetime import datetime,timezone",
+    "excerpts": [
+      "ualification. Native decoder_review idleafterdesign, availableprefresh/publicfinalreview. IOcompactproposalROOT/io-next-milestone-proposal.md fin",
+      "/published2695defaultpinqualified, no merge/release. C0 secondprefresh4dc3a rejectedNewtonaudit vsgradient/fullpervoxelstudycaprecords/boundedcon",
+      "ote21handoffroot+EXPLICITreservationrelease. Do notedits/newjobs/fresh/100k. ParentplansONEpersistentFrayC0writer afteractualr2exit/clearownershi"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6538,
+    "commandSha256": "aefc60a240d8bb920815b9b5e44b3a9e88c19f961de07a9c4d7abea079692985",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import hashlib,json r=Path('/private/t",
+    "excerpts": [
+      "ad relevant complete source/tests before editing.  Remaining pre-fresh review fixes: 1) Terminal audit must recompute actual jet/energy/gradient/",
+      "explicitly200. Measure/report standalone frozen cost, but before fresh source/protocol/provider/classpath/seed freeze plus independent parent rev",
+      "spath/seed freeze plus independent parent review is REQUIRED. NO fresh/100k until parent reviews complete freeze. Full frozen200 can run after so"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6538,
+    "commandSha256": "e498c7c987b36957931af70b247e096ffd9ca7b21f84a882971797122eb52181",
+    "commandPrefix": "mote --store /Users/bbuchsbaum/code/scala/scalafim/.mote --actor exec-orchestrat",
+    "excerpts": [
+      "riter ended/released all4, r2 timeout preserved non-evidence. No fresh/100k until complete freeze independently reviewed; gates unchanged.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6600,
+    "commandSha256": "13a8396b313c351dc215c0553eb24923ed0534398110e56cd08e897ec8f3fae2",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      "rsistent writer60634 active; prior fullDEV timeout preserved, no fresh/100k. Full qualification gates unchanged.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6600,
+    "commandSha256": "c29cd4d3e8952d923a3de3f657e3949d3b5a4d490a855b59d0dfd755d62a2486",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path from datetime import datetime,timezone",
+    "excerpts": [
+      "wfixes/cheapDEVvsstandalone200/allterminalaudits/memoryfixed, NO fresh/100k untilfreezeindependentlyreviewed. Othercontrollerspublic55149idlefini"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6716,
+    "commandSha256": "13ec42bb2ae9b78f0effb115588f4ba4653bfc983e439bbea149bd22d95cb02a",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path from datetime import datetime,timezone",
+    "excerpts": [
+      "cope; peerhost ownscontroller. C0controller60634 active4scope, nofresh/100k. Compact16044 active. Native decoder_review currentlyread-only NEXTcr"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 6835,
+    "commandSha256": "17a4beec10961cc85fa01c02ea42cf486259e65c8b0197505a63d257b6114c63",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import hashlib,json,gzip,base64,subpro",
+    "excerpts": [
+      ".scala'],'exit':1,'developmentTestSeconds':260.51,'jsRun':False,'freshLaunched':False,'actual100kLaunched':False}] v['updatedUtc']=datetime.datet",
+      "panel and\\nseparate standalone cohorts are being implemented. No fresh qualification or\\nactual 100000-voxel workload has been launched.\\n[Review"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7249,
+    "commandSha256": "d2d66f62920a4715f42443172a35fde25a3147e1fd874c5bcedef4e21953ddc6",
+    "commandPrefix": "fray --home /Users/bbuchsbaum/code/scala/scalafim/.git/fray --as exec-orchestrat",
+    "excerpts": [
+      "929') p=r/'c0-oracle-repair-task.md';p.write_text('''Bounded pre-fresh C0 oracle-only repair. You are exec-c0-qualification, sole writer of exist",
+      "d independent diagnosis and its smallest bounded next action. No fresh/100k/full200 launch; no ShapeDecoder/production policy/gate/margin/seed ch",
+      "ilure ifremainingdirect-energy deficit or inadequacy; no full200/fresh/100k. Stop boundedrepair iffails; report exact perstart evidence before ne"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7249,
+    "commandSha256": "c2fcf659aec02bd624e3e07d20e8737af25e59332a0faba4688ac0efea4a2c84",
+    "commandPrefix": "fray --home /Users/bbuchsbaum/code/scala/scalafim/.git/fray --as exec-orchestrat",
+    "excerpts": [
+      "exedperstartstep/energy/amplitude/rawmeta. No policy/gate/margin/fresh/100k/full200 change or iterative tuning. If your priorhandoff complete, wa"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7341,
+    "commandSha256": "78e762ebbfce33b924181250c43f712c5c44cc1eb95c3639cf6f4db8fc11951e",
+    "commandPrefix": "mote --store /Users/bbuchsbaum/code/scala/scalafim/.mote --actor exec-orchestrat",
+    "excerpts": [
+      "seeds/production. Complete boundedcontrols/freeze+samepanels, no fresh/full200/100k until rereview.' mote --store /Users/bbuchsbaum/code/scala/sc",
+      "tionrepair only as alreadyrouted364. Negativeadequacy preserved; fresh/full200/100k stillblocked. Threeuncommittednativeprerequisites disclosure ",
+      "cked, not claimedcleancheckout. Parentindependentreview beforeanyfresh.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7381,
+    "commandSha256": "9bd0fcdff00fdbe071fe8142391dad00dc0bb6783992a15d94dee2ab47022bdd",
+    "commandPrefix": "python3 - <<'PY' import pathlib,json,gzip,base64,hashlib,subprocess r=pathlib.Pa",
+    "excerpts": [
+      "iveoraclequalification. Seven-scaleresolution fails adequacy. No fresh/full200/100k, notdecoderaccuracyfailure.',f) PY"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7414,
+    "commandSha256": "950e38c920980f6ae613d4b9399d006060ae58bdec96c1e8879fa230391589a3",
+    "commandPrefix": "mote --store /Users/bbuchsbaum/code/scala/scalafim/.mote --actor exec-orchestrat",
+    "excerpts": [
+      "is sequencingrace, not permission block or independentwriter. No fresh/full200/100k.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7422,
+    "commandSha256": "a6ae4e9bdda9f2c9dd5c5d00737cdb9316b34fe5b6ed6fba1d3786db34bffd77",
+    "commandPrefix": "fray --home /Users/bbuchsbaum/code/scala/scalafim/.git/fray --as exec-orchestrat",
+    "excerpts": [
+      "t4 normally, no competingwriter, preserve oldsource/failures. No fresh/full200/100k authorization.' fray --home /Users/bbuchsbaum/code/scala/scal"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7942,
+    "commandSha256": "dee31c1cd480f1ac7a4f2751a97e403d792fbd61a6fdf7a754000d63f0552af7",
+    "commandPrefix": "fray --home /Users/bbuchsbaum/code/scala/scalafim/.git/fray --as exec-orchestrat",
+    "excerpts": [
+      "recompile. Logs c0-frozen200-jvm.log and c0-frozen200-js.log. No fresh/100k/policy qualification until actual gates+separate historical nonuse re"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 7949,
+    "commandSha256": "d25ce856776a2d011ba3c8ae2b3947153e3c88e6e401fb3b5f1b978aba123aa2",
+    "commandPrefix": "fray --home /Users/bbuchsbaum/code/scala/scalafim/.git/fray --as exec-orchestrat",
+    "excerpts": [
+      "recompile. Logs c0-frozen200-jvm.log and c0-frozen200-js.log. No fresh/100k/policy qualification until actual gates and separate historical nonus"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 8006,
+    "commandSha256": "20f3b3ab8fc766388ad54ea72650a83b533d9c86f124f9b790746dddc8cb1479",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import json,hashlib,subprocess r=Path(",
+    "excerpts": [
+      "ounded oracle adequacy; full frozen200 DEV launched separately','fresh_launched':False,'full_c0_qualified':False,'parent_jobs':{'JVM':{'session':"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 8006,
+    "commandSha256": "4fe431483c3745e129dae1e96c3e59f4714058b2fce9f05fd43bdb9f437bcc99",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      "ized/sourcefrozen, pendingresults; independentnonuseauditactive, fresh100knotlaunched. NativeMLrepair+publicexecutoractive.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 8027,
+    "commandSha256": "3ff585ba23546776e42ee0d8dd9e997bf1dd60f990bf8ff35032027f477ff262",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import datetime r=Path('/private/tmp/s",
+    "excerpts": [
+      "kqueued). c0-qualification SOURCE/CP FROZEN noedit/recompile. No fresh/100k. Historicalnonuse independentaudit ROOT/ROOT/c0-fresh-stream-nonuse-i",
+      "e. No fresh/100k. Historicalnonuse independentaudit ROOT/ROOT/c0-fresh-stream-nonuse-independent-review.md SHA28b5ed8a and findingsd2c168ad: all3",
+      "tedC0logs 23exit0/10exit1 onlyDEV101/102 actualrecords/commands,3freshroots distinctinitstates/unobservedwithinrecordedprojecthistory, outside/de"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 8310,
+    "commandSha256": "b57a8f324d2955fd641518f4c88e119c27cecce56a49fb643dee59accd066f8c",
+    "commandPrefix": "mote --store /Users/bbuchsbaum/code/scala/scalafim/.mote --actor exec-orchestrat",
+    "excerpts": [
+      "ence repair, actual failed JVM scientific gate, recorded-history fresh-stream audit, and rejected public executor provenance candidate. No C0 sou"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 8606,
+    "commandSha256": "0f402b1e9bcf87efe2abc37286e74bed361df7a2348de95b78584f4b8a2c8d53",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import json,gzip,base64,hashlib,subpro",
+    "excerpts": [
+      "ce-receipt.json','ROOT/c0-repair-independent-review.md','ROOT/c0-fresh-stream-nonuse-independent-review.md','ROOT/c0-fresh-stream-nonuse-independ",
+      "md','ROOT/c0-fresh-stream-nonuse-independent-review.md','ROOT/c0-fresh-stream-nonuse-independent-findings.json']];files.append((ev['freeze'],'fro",
+      "anifest['head'],'scope':'Bounded reference adequacy accepted; no fresh scientific/throughput qualification','freezeSha256':manifest['freeze_sha25"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T18-27-23-01a0ef47-9d87-7510-ad7a-c6ee8d109784.jsonl",
+    "line": 11757,
+    "commandSha256": "d9bf24590231ce6ebdcdf79653ed5e4ab024774616cca6bf5c8005c8fa4e1ff2",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path import subprocess,json,hashlib r=Path(",
+    "excerpts": [
+      "o exec-diagnostics. Implement test-only literal C0 JVM/JS trace; fresh ROOT/c0-platform-trace base16f7 canonical. Exact4 actual path preflight cl"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 5918,
+    "commandSha256": "dd452e354af4b235a898361f26331c7444ec535395f0e6c3a671a3d74be93b26",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path p=Path('/private/tmp/scalafim-phrf-pus",
+    "excerpts": [
+      "est targets count above. The outstanding\\nJS targets passed in a fresh 3 GiB process. This is a build-resource limitation,\\nnot an engine-memory "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6184,
+    "commandSha256": "e670120f0dc91b599bb3bf08a815f8be1ddf9e2eef1642df7a5d2a592e66c3ac",
+    "commandPrefix": "sed -n '850,860p' modules/first-level-laws/shared/src/test/scala/scalafim/fmri/l",
+    "excerpts": [
+      "/ConditionC0QualificationSuite.scala; rg -n 'oracle|six|adequacy|fresh' docs/verification/condition-c0-qualification.md | head -n 25"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6803,
+    "commandSha256": "597cc4d23a12825fdb0ee8d7fc670c58ab97f1b248ca4b5bc93f2b80b096d388",
+    "commandPrefix": "fray reply 91 'Owner now asks me to proceed with PHRF-21. I will prepare the exa",
+    "excerpts": [
+      "ed with PHRF-21. I will prepare the exact Gaussian candidate pre-fresh source/provider/protocol and prior-use audit in isolation, preserving pare",
+      "tion base and whether exec-c0-qualification is already consuming fresh streams or owns that audit. Candidate commits remain 77f8d06c and 71cb8ea3",
+      "s that audit. Candidate commits remain 77f8d06c and 71cb8ea3; no fresh responses will be generated before the reviewed freeze and stream-history "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6814,
+    "commandSha256": "1a0076066ff455e56d5c1616da135cd41cd47e860c8e1412d8f8f51779622730",
+    "commandPrefix": "cat /private/tmp/scalafim-execution-20260929/c0-prefresh-179-independent-review.",
+    "excerpts": [
+      "cat /private/tmp/scalafim-execution-20260929/c0-prefresh-179-independent-review.md /private/tmp/scalafim-execution-20260929/c0-prot"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6814,
+    "commandSha256": "405c962ebfb640018db6ecc60cc4c5c87629fe54068c2ae437e7325ddb841c2d",
+    "commandPrefix": "rg -n 'Fresh|fresh|seed|stream|policy|valid|Gate|protocol|C0_' /private/tmp/scal",
+    "excerpts": [
+      "rg -n 'Fresh|fresh|seed|stream|policy|valid|Gate|protocol|C0_' /private/tmp/scalafim-phrf-pus"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6833,
+    "commandSha256": "ebfaad90929f79766807c7784e710f61980ed7f3dcfbc656cf08b9f5394e3a6e",
+    "commandPrefix": "rg -n 'audit|700093|fresh' /private/tmp/scalafim-execution-20260929/c0-final-evi",
+    "excerpts": [
+      "rg -n 'audit|700093|fresh' /private/tmp/scalafim-execution-20260929/c0-final-evidence.json /private/"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6871,
+    "commandSha256": "970701b38a84353d6ea3c27ac8cbaa9cbd9960e1d2bbb43a44582331512f5664",
+    "commandPrefix": "rg -n 'historical|seed|700093' /private/tmp/scalafim-execution-20260929/verify-c",
+    "excerpts": [
+      "rify-c0-parent.py /private/tmp/scalafim-execution-20260929/c0-prefresh-179-independent-review.md"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6881,
+    "commandSha256": "8b1d6c7e211b65f1397630c7ada0d1194b9d51acc87e5975a206a68699e93188",
+    "commandPrefix": "mote preflight --issue bd-01M3SBE1FWSP1M70C9BVK1J4AB --actor phrf-push-20260930 ",
+    "excerpts": [
+      "tor phrf-push-20260930 --paths docs/verification/condition-c0-prefresh-20260930.md docs/verification/condition-c0-prefresh-20260930/ --json",
+      "dition-c0-prefresh-20260930.md docs/verification/condition-c0-prefresh-20260930/ --json"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6892,
+    "commandSha256": "44f8f57dae10af9447fee5ceddfc73da57513c1b311f09a5c48c2600eb0a03a1",
+    "commandPrefix": "mote begin bd-01M3SBE1FWSP1M70C9BVK1J4AB --actor phrf-push-20260930 --paths docs",
+    "excerpts": [
+      "tor phrf-push-20260930 --paths docs/verification/condition-c0-prefresh-20260930.md docs/verification/condition-c0-prefresh-20260930/ --note 'Isol",
+      "dition-c0-prefresh-20260930.md docs/verification/condition-c0-prefresh-20260930/ --note 'Isolated exact candidate pre-fresh audit; no production ",
+      "ition-c0-prefresh-20260930/ --note 'Isolated exact candidate pre-fresh audit; no production or policy changes and no fresh response entry before "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 6892,
+    "commandSha256": "c2dc27ed5454f0b06767dff414bfb610d74b8741537bd321b3a09089a8900987",
+    "commandPrefix": "rg -n '700093|fresh.*history|history.*fresh' /private/tmp/scalafim-execution-202",
+    "excerpts": [
+      "rg -n '700093|fresh.*history|history.*fresh' /private/tmp/scalafim-execution-20260929/*.md /pr",
+      "rg -n '700093|fresh.*history|history.*fresh' /private/tmp/scalafim-execution-20260929/*.md /private/tmp/scalafim-execu"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-10-30-01a0efa6-06a7-7de0-b064-656091fcf61c.jsonl",
+    "line": 7035,
+    "commandSha256": "4b9bdc5531fae70c4579ec0da026806b3199b4239f611260cf91b1cea6c00cb9",
+    "commandPrefix": "fray reply 91 'Candidate read-only closure recheck passed: exact 1350 source has",
+    "excerpts": [
+      "ogs and current repo-specific 29/30 Codex tool history; zero raw fresh outputs/seed mentions. Located the prior independent non-use review at ROO",
+      "ns. Located the prior independent non-use review at ROOT/ROOT/c0-fresh-stream-nonuse-independent-review.md plus findings JSON; it already documen",
+      "gs JSON; it already documents the opaque smoke and retired entire7000930101. I am extending its bounded recorded-history conclusion rather than assert"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5334,
+    "commandSha256": "6ec1ad754810b82250c413e713a0b2ab4cbfc2e19561da4e0d5245f1cf25b41f",
+    "commandPrefix": "git -C /private/tmp/scalafim-execution-20260929/c0-qualification status --short ",
+    "excerpts": [
+      "pair-task.md; cat /private/tmp/scalafim-execution-20260929/c0-prefresh-179-independent-review.md"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5390,
+    "commandSha256": "22f88dfd9bed5fe7c9c08b3adbb016967b1c14b7670a05262e7afb3f04fd003e",
+    "commandPrefix": "ROOT=/private/tmp/scalafim-execution-20260929 sed -n '1,280p' \"$ROOT/c0-repair-c",
+    "excerpts": [
+      "entory needed documents ---' for p in c0-repair-handoff.md c0-prefresh-179-independent-review.md c0-oracle-adequacy-review.md; do echo \"--- $p\"; "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5443,
+    "commandSha256": "e0487940b11a9802306d41de46d31105fe7f6d6a825cdfb4ef83cca96283244d",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/ROOT/c0-repair-independent-review",
+    "excerpts": [
+      " not accept complete C0 qualification, a global-optimum claim, a fresh stream, a performance run, or policy promotion.  ## Identity and scope  Re",
+      "It still needs its own actual receipt and review. Fresh streams `7000930201`, `7000930102`, and `7000930103`, the 100k measurement, full C0 qualificat",
+      " its own actual receipt and review. Fresh streams `7000930201`, `7000930102`, and `7000930103`, the 100k measurement, full C0 qualification, global-op"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5493,
+    "commandSha256": "026e8ffe4300b80bed885214391ed2ddd020867bf6932b0d5bf7abe7eb638c9d",
+    "commandPrefix": "ROOT=/private/tmp/scalafim-execution-20260929 printf '%s\\n' '--- frozen protocol",
+    "excerpts": [
+      "0-repair-freeze/seed-use-audit.json\" rg -n -C 3 '7000930|retired|fresh|development|stream|seed' \"$ROOT/c0-repair-freeze/sources/docs/verification",
+      "--- coordination seed decisions ---' rg -n -C 4 '7000930|retired|fresh-stream|non-use|nonuse|smoke' \"$ROOT/c0-final-fray-thread.json\" \"$ROOT/c0-r"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5506,
+    "commandSha256": "a060e62d8b2c8e4e2f47461baca45a7c1758abebadfc605f38265910bf9f65a9",
+    "commandPrefix": "ROOT=/private/tmp/scalafim-execution-20260929 printf '%s\\n' '--- C0 commit ances",
+    "excerpts": [
+      "eline --decorate -20 git -C \"$ROOT/c0-qualification\" log --all -S7000930101 --oneline -- modules/first-level-laws/shared/src/test/scala/scalafim/fmri/",
+      "icationSuite.scala\" printf '%s\\n' '--- C0 meta commands with any fresh numeric token (excluding active frozen200) ---' rg -n -i '7000930|fresh|de",
+      "umeric token (excluding active frozen200) ---' rg -n -i '7000930|fresh|development|measurement|oracle' \"$ROOT/logs\" --glob 'c0-*.log.meta.json' -"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5513,
+    "commandSha256": "f9a9923bcc1edcf6a82911aa28ce84e4c3fa426ad6ce97bee7e6aa1586b2542e",
+    "commandPrefix": "ROOT=/private/tmp/scalafim-execution-20260929 sed -n '535,630p' \"$ROOT/c0-repair",
+    "excerpts": [
+      "JRKZF2934PJ0 --include-rejected || true printf '%s\\n' '--- exact fresh root occurrence contexts in immutable coordination/evidence files ---' rg "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5529,
+    "commandSha256": "b925446c952c179a805fd42a584f6ce55a3d1561fbe4cfbcd082517b2dec5e8b",
+    "commandPrefix": "python3 - <<'PY' M=(1<<48)-1; A=0x5DEECE66D for s in [7000930101,7000930201,7000",
+    "excerpts": [
+      "python3 - <<'PY' M=(1<<48)-1; A=0x5DEECE66D for s in [7000930101,7000930201,7000930102,7000930103]:  print(s, hex((s^A)&M), (s^A)&M) PY ROO",
+      "python3 - <<'PY' M=(1<<48)-1; A=0x5DEECE66D for s in [7000930101,7000930201,7000930102,7000930103]:  print(s, hex((s^A)&M), (s^A)&M) PY ROOT=/private/",
+      "<'PY' M=(1<<48)-1; A=0x5DEECE66D for s in [7000930101,7000930201,7000930102,7000930103]:  print(s, hex((s^A)&M), (s^A)&M) PY ROOT=/private/tmp/scalafi"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5556,
+    "commandSha256": "c522438ed88000cd290973fba0c14b8a0a464dacc7fe8ebed544dbd8c46a4fce",
+    "commandPrefix": "cat > /tmp/c0_seed_audit.py <<'PY' from pathlib import Path import collections, ",
+    "excerpts": [
+      "'\\n').encode() for x in files) M=(1<<48)-1; A=0x5DEECE66D roots=[7000930101,7000930201,7000930102,7000930103] out={'scope':{'included':'ROOT/logs/c0-*",
+      "e() for x in files) M=(1<<48)-1; A=0x5DEECE66D roots=[7000930101,7000930201,7000930102,7000930103] out={'scope':{'included':'ROOT/logs/c0-*.log and ma",
+      "n files) M=(1<<48)-1; A=0x5DEECE66D roots=[7000930101,7000930201,7000930102,7000930103] out={'scope':{'included':'ROOT/logs/c0-*.log and matching meta"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-22-01a0efae-262f-7f01-ba7a-81bf468e13fc.jsonl",
+    "line": 5570,
+    "commandSha256": "a872176dde2e2b05b6c33bce1d0544c3605678df0db773f3e66736c1de175eda",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/ROOT/c0-fresh-stream-nonuse-indep",
+    "excerpts": [
+      "cat > /private/tmp/scalafim-execution-20260929/ROOT/c0-fresh-stream-nonuse-independent-review.md <<'EOF' # C0 fresh-stream non-use: ind",
+      "9/ROOT/c0-fresh-stream-nonuse-independent-review.md <<'EOF' # C0 fresh-stream non-use: independent audit  **Verdict: the three intended roots are",
+      "l, or other-machine execution.  The auditable details are in [c0-fresh-stream-nonuse-independent-findings.json](c0-fresh-stream-nonuse-independen"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/29/rollout-2026-09-29T20-19-39-01a0efae-65c5-7682-83ab-7215ce5dfd8f.jsonl",
+    "line": 4525,
+    "commandSha256": "54a3e8f84ecbc943649ccbd0cb0aaee75c74390e353b807c4d671831b6ac7fd7",
+    "commandPrefix": "rg -n 'test\\(|def main|study|fresh|HOLD|require|qualification' /private/tmp/scal",
+    "excerpts": [
+      "rg -n 'test\\(|def main|study|fresh|HOLD|require|qualification' /private/tmp/scalafim-execution-20260929/integ"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 63,
+    "commandSha256": "b74f07ab8dfeeff6b2aa11468b307307ccac04a52771417e9b3193d73482688e",
+    "commandPrefix": "mote --store /Users/bbuchsbaum/code/scala/scalafim/.mote --actor exec-c0-qualifi",
+    "excerpts": [
+      "ition-c0-qualification.md --note 'Complete bounded four-file pre-fresh harness fixes and both-platform verification; fresh/100k blocked until ind",
+      "our-file pre-fresh harness fixes and both-platform verification; fresh/100k blocked until independent parent review.'; python3 /Users/bbuchsbaum/",
+      "ess closure' --goal 'Four-file tested candidate and complete pre-fresh review receipt' --context 'PHRF-21 stays open; no fresh cohorts or 100k ru"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 99,
+    "commandSha256": "3975b55965ec5237fb51b8d87bf316cb6a34c915516b57cfbe965f0cd9c5c405",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      " result = fit.decode     val jet = new ProfileJetBuffer(2, 3) // fresh, never reused after failure     val evaluated = result.coordinates.length ",
+      "rospectiveStudy(): Vector[StudyCell] =     runStudy(Vector((1.0, 7000930201L), (0.5, 7000930102L), (0.25, 7000930103L)), FullCohort)    /** Full froze",
+      "ector[StudyCell] =     runStudy(Vector((1.0, 7000930201L), (0.5, 7000930102L), (0.25, 7000930103L)), FullCohort)    /** Full frozen cohorts are explic"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 106,
+    "commandSha256": "3bc610eeb4925c72b357e0675b5b66c4739763024bae32a90140d47f3375ba3b",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/rewrite-c0-tail.py <<'PY' from pa",
+    "excerpts": [
+      "entStudy(ConditionC0QualificationHarness.FullCohort)       case \"fresh\" =>         require(args.drop(1).headOption.contains(\"--reviewed-freeze=\" ",
+      "ditionC0QualificationPlatform.executionSourceId.get),           \"fresh work requires independent review of this exact freeze\")         ConditionC",
+      "hrow IllegalArgumentException(\"study mode must be development or fresh: \" + other)     ConditionC0QualificationHarness.studyJsonLines(cells).fore"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 134,
+    "commandSha256": "f6563e8db5fd9ab6d4b79cca858ab54f4249e77ef3fc9b9a8ed5e15d2e4e85ff",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/c0-protocol-draft.md <<'EOF' # C0",
+    "excerpts": [
+      "ration cap.  Only the candidate may qualify. Each JVM/JS, frozen/fresh, SNR 1/.5 cell needs 200 indexed attempts, at least 190 admitted, finite a",
+      " truth or changes decoder selection.  Each terminal audit uses a fresh jet buffer at the returned coordinates and reports recomputed energy, grad",
+      "No extrapolated or quiet-machine speed claim is supported.  Seed 7000930101 was consumed by the earlier one-voxel smoke; its **entire** stream is reti"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 180,
+    "commandSha256": "07478daaeb87268dd2fef2ca4662dc1cbe8fd64bf54f8a1c3a7004c01bd9dcc5",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/c0-verify-json.py <<'PY' import j",
+    "excerpts": [
+      "-lock failure compile1 and unused-default compile2 preserved. No fresh or 100k.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 261,
+    "commandSha256": "21f7dbfc0b9a1b25e8738c79ad09f528759001d995934cabea69eb57c34d314a",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/c0-standalone.py <<'PY' #!/usr/bi",
+    "excerpts": [
+      "ment') # Fresh and 100k are deliberately unavailable in this pre-fresh launcher. assert not (args[0]=='study' and (len(args)==1 or args[1]!='deve",
+      "':assert len(args)==3 and 0<int(args[2])<=256, 'only bounded pre-fresh DEV measurements authorized' if args[0]=='development':assert len(args)==2",
+      "roof',  'observed_numeric_seed_lines':prior,'retired_dev_stream':7000930101,'fresh_roots':[7000930201,7000930102,7000930103],  'disposition':'no fresh"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 488,
+    "commandSha256": "5be110e5852246f38ff06ab528775edc900c97c1bbe5c24f235e0a9c11d16655",
+    "commandPrefix": "git commit -m 'Complete bounded C0 audits and pre-fresh harness receipts' -- mod",
+    "excerpts": [
+      "git commit -m 'Complete bounded C0 audits and pre-fresh harness receipts' -- modules/first-level-laws/shared/src/test/scala/scalaf"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 499,
+    "commandSha256": "144ebe462fcd1ff8ba1a4d6d0793773288d69f784dc9b25df8e6c47d6b60a126",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/c0-finalize-evidence.py <<'PY' im",
+    "excerpts": [
+      " before further campaigns.',  'not_run':['full frozen 200/cell','fresh streams 7000930201/7000930102/7000930103','100k performance','retention-ro",
+      "r campaigns.',  'not_run':['full frozen 200/cell','fresh streams 7000930201/7000930102/7000930103','100k performance','retention-route qualification']",
+      ".',  'not_run':['full frozen 200/cell','fresh streams 7000930201/7000930102/7000930103','100k performance','retention-route qualification'],  'remaini"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 508,
+    "commandSha256": "c59ea5616ea9241cad43be9b580b65f937428935eb175de53459ec8d71f8202d",
+    "commandPrefix": "python3 - <<'PY' import json,pathlib r=pathlib.Path('/private/tmp/scalafim-execu",
+    "excerpts": [
+      "ce manifest: `c0-final-owned-source-manifest.json`. - Frozen pre-fresh launcher: `c0-standalone.py`; verifies code, prerequisites,   build files,",
+      "l child status. It permits   DEV work only, deliberately refuses fresh/100k, and runs JVM `-Xmx256m`. - 55 hashed JVM classpath entries, linked C",
+      "ial thresholds, plus every refinement receipt. - Full frozen200, fresh and100k campaigns were not launched after the   bounded adequacy failure, "
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 552,
+    "commandSha256": "49ebf75d865cbbc571e3e384980c0246b352672010d8714a440d066ffeb2f1bf",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path p=Path('/private/tmp/scalafim-executio",
+    "excerpts": [
+      "; five/six randomDEV direct-energy deficits retained; no full200/fresh/100k or tuning. Freeze bbf30ff4bd169861999eddb39ccd349b7949c495bbebd1706f8"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 629,
+    "commandSha256": "63f1770d7402e42e8871cbec1832bbd318277290de760ba024c58c777973b5e9",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/c0-repair-source.py <<'PY' from p",
+    "excerpts": [
+      "pth selection; if it fails, adequacy remains unresolved. Full200/fresh/100k remain outside this repair. A new forward-only freeze and parent revi"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 643,
+    "commandSha256": "8cf1e735c6b194a74deaa67b6d0e29574a8bb650b679bedcc7ee0eee42de4809",
+    "commandPrefix": "python3 - <<'PY' from pathlib import Path r=Path('/private/tmp/scalafim-executio",
+    "excerpts": [
+      "ce('c0-standalone.py','c0-repair-standalone.py').replace('c0-pre-fresh-freeze-v1','c0-pre-fresh-fixed-resolution-v2') s=s.replace(\"'standalone_li",
+      "-repair-standalone.py').replace('c0-pre-fresh-freeze-v1','c0-pre-fresh-fixed-resolution-v2') s=s.replace(\"'standalone_limit':'JVM -Xmx256m; JS he"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 876,
+    "commandSha256": "4a9080588e8b7f41042d3611ff3ee650979857598c53c5e0a4e11aeb0c52a1e0",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      "e/evidence hashes, actual exits, preserved negatives; parent pre-fresh review remains required.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T01-30-41-01a0f0cb-25a1-7550-92dc-b64169793fd5.jsonl",
+    "line": 876,
+    "commandSha256": "cd293c28fb39136d51a92ca45b45a06acec2c1548ee37139e16c4e0940321c8b",
+    "commandPrefix": "python3 /Users/bbuchsbaum/.codex/skills/dashboard-builder/scripts/dash.py --dir ",
+    "excerpts": [
+      "racle repair delivered. PHRF21 remains open with parent; full200/fresh/100k unrun.'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T07-28-40-01a0f212-e86f-7ca1-9034-6242223fe45d.jsonl",
+    "line": 247,
+    "commandSha256": "be2c52d39318fd0ba89a3e612edd380d9f6a2705fa72ae8144b23ddffa575d4c",
+    "commandPrefix": "sed -n '397,460p' modules/first-level-laws/shared/src/test/scala/scalafim/fmri/l",
+    "excerpts": [
+      "vate/tmp/scalafim-phrf-push-20260930/evidence -g '*oracle*' -g '*fresh*' -g '*prior-use*'"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T09-00-48-01a0f267-4136-7a62-97b3-248334434451.jsonl",
+    "line": 117,
+    "commandSha256": "4eb21dd59b9aa74b9dea30daa8b68a9691db3a37fff13fa368c77e1098ddc149",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/c0-trace-suite.scala <<'EOF' pack",
+    "excerpts": [
+      "me(out), before)       value    test(\"literal input identity and fresh arrays\"):     val a = ConditionC0LiteralFixture.column()     val b = Condi"
+    ]
+  },
+  {
+    "session": "/Users/bbuchsbaum/.codex/sessions/2026/09/30/rollout-2026-09-30T09-00-48-01a0f267-4136-7a62-97b3-248334434451.jsonl",
+    "line": 275,
+    "commandSha256": "f30600f2e33ba86b9684a61085a67ea16e57c791e5ff5c9488f4c0e6cc6a81a7",
+    "commandPrefix": "cat > /private/tmp/scalafim-execution-20260929/write-c0-trace-report.py <<'PY' f",
+    "excerpts": [
+      " exactly 600 signed decimal IEEE-754 Long literals and returns a fresh array via `Double.longBitsToDouble`. All values are finite. It contains no",
+      "ic hash. Both platforms validate count, finiteness, checksum and fresh array ownership. The independent parser also reconstructs the literals and",
+      " only the literal column with the existing preparation, points a fresh `CompactConditionObjective`, and returns projected response/energy for dir"
+    ]
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/jvm-inputs.jsonl",
+  "sourceSha256": "cbcbf5b43792c147aade871eacc4494414a769a8ffb05620e43adaf65ed50b74",
+  "mpmath": "1.3.0",
+  "decimalDigits": 90,
+  "scope": "Fixed binary64 design and projected response; does not certify ideal HRF coefficient evaluation. Diagnostic only.",
+  "results": [
+    {
+      "platform": "JVM",
+      "voxel": 9,
+      "reportedDifference": 1.5916157281026244e-12,
+      "reportedUlps": 7.0,
+      "fixedDoubleInputsResidualDifference": "0.0000000000016644694859481413837280373773908497405589654635584",
+      "refittedFixedDesignDifference": "0.0000000000016644694859481413822911741301678094891298570190243",
+      "fixedRoundedPredictorDifference": "0.0000000000016639593375626097991887897136604426735500272045623",
+      "stableDoubleDifference": 1.6639593375236059e-12,
+      "sumAbsDifferenceTerms": 3.958542975073683e-06,
+      "maxSolveResidual": "3.87940523297408906451234573248e-14",
+      "maxAmplitudeError": "7.30890363831940919685617721608e-16"
+    },
+    {
+      "platform": "JVM",
+      "voxel": 31,
+      "reportedDifference": 2.2737367544323206e-13,
+      "reportedUlps": 1.0,
+      "fixedDoubleInputsResidualDifference": "0.000000000000049953305634674415501447682382020585284402659070969",
+      "refittedFixedDesignDifference": "0.000000000000049953305634674436575840991285917768311199989984042",
+      "fixedRoundedPredictorDifference": "0.000000000000055151382169397335500190116069945472566445173286837",
+      "stableDoubleDifference": 5.515138214394638e-14,
+      "sumAbsDifferenceTerms": 1.3533340955547322e-06,
+      "maxSolveResidual": "2.54667439245602423325539088721e-14",
+      "maxAmplitudeError": "7.48070874125964459202782741075e-16"
+    }
+  ]
+}

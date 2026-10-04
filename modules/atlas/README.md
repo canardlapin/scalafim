@@ -35,33 +35,32 @@ import scalafim.atlas.io.*
 
 ## Shared Model
 
-- `AtlasRef.Volume`, `AtlasRef.Surface`, and `AtlasRef.Derived` fix the
-  representation and space kinds at construction. Checked space factories
-  reject known names of the wrong kind; `withDetails` updates descriptive
-  metadata while preserving the representation and spaces.
+- `AtlasRef` is `AtlasRefOf[R]` indexed by representation kind.
+  `AtlasRef.volume`, `AtlasRef.surface`, and `AtlasRef.derived` return
+  `VolumeAtlasRef`, `SurfaceAtlasRef`, and `DerivedAtlasRef`; their space
+  parameters are typed by space kind (`VolumeOrUnknownSpaceId`,
+  `SurfaceOrUnknownSpaceId`).
 - `AtlasProvenance` is the typed audit trail behind `AtlasRef`: identity,
   spatial support, label schema, source artifacts, derivation steps, citations,
   confidence, and validation issues.
 - `RegionId`, `Hemisphere`, `NetworkId`, `AtlasRegionMetadata`, and
-  `RegionIndex` describe typed metadata. Labels and attributes are stored as
-  `RegionLabel` and `RegionAttributes`; `AtlasRegionMetadata.checked` admits
-  raw strings with typed errors, and `fromStrings` delegates to that check.
-  Extensional regions are `locus4s.Region`.
+  `RegionIndex` describe typed metadata. `AtlasRegionMetadata.checked` admits
+  raw strings with typed `AtlasError`s; `typedLabel`, `typedFullLabel`, and
+  `typedAttributes` expose the checked `RegionLabel` and `RegionAttributes`
+  views. Extensional regions are `locus4s.Region`.
 - `VolumeAtlas` owns one exact `VolumeAtlasRealization` and its spatial-to-parcel
-  assignment. Dense labels are derived materializations; source region IDs
-  must match the non-zero payload IDs.
-- `subsetEither` rejects an empty selection, composes a partial parcel map
-  with the existing assignment, and preserves the exact grid owner. Its
-  `SelectedParcels` derivation records the parent parcel/support identities,
-  assignment digests, and canonical kept/dropped keys without changing the
-  source release identity.
+  assignment. `labelVolume` is a derived dense materialization; source region
+  IDs must match the non-zero payload IDs. `subset` keeps a non-empty set of
+  regions and rebuilds the atlas on the same grid.
 - `SurfaceAtlas` owns one bilateral `SurfaceAtlasRealization`, with retained
   geometry and label-table metadata. Vertex labels derive from its assignment.
-  Single-side access requires `scalafim.surface.CorticalHemisphere`.
-- Every atlas `realization` carries parcel-indexed metadata, an explicit display
-  `Selection`, and an optional validated parcel-to-network `Surjection`.
-  Network regions are derived from quotient composition. Realization types
-  are sealed; checked volume and surface admission own their construction.
+  Single-side access takes `scalafim.surface.Hemisphere` and accepts only
+  `Left` or `Right`.
+- Every atlas `realization` carries a `parcelAssignment` (the only retained
+  membership truth), parcel-indexed `metadata` and `parcelKeys`, an explicit
+  display `Selection` (`displayOrder`), and an optional `networkAssignment`
+  whose parcel-to-network map is a validated `Surjection`. Network regions are
+  derived by composing the two maps.
 - `AtlasRegistry` and `AtlasSpec` provide immutable discovery for known atlas
   families and aliases.
 - `Schaefer2018`, `GlasserHcpMmp1`, `Schaefer2018Surface`, and
@@ -87,22 +86,13 @@ import scalafim.atlas.io.*
   used as the inverse. `TemplateGrids` holds the stock MNI res-01/res-02 grids.
 
 The direct query functions and extension methods interpret points in
-`atlas.ref.coordSpace` unless the caller supplies `fromSpace`. Use
-`ParcelFields.fromKeys(realization)` for detached values: duplicates always
-fail, and unknown/missing entries require explicit policies. Fields use canonical
-domain order; `ParcelFields.records(realization)(field)` derives display rows
-from the realization metadata.
+`atlas.ref.coordSpace` unless the caller supplies `fromSpace`.
 
 ```scala
-val ref = Schaefer2018.default.atlasRef()
-val annotated: VolumeAtlasRef =
-  ref.withDetails(_.copy(notes = Some("analysis input")))
-val metadata = AtlasRegionMetadata.checked(
-  RegionId(1), "V1", labelFull = Some("L_V1_ROI")
-)
-val typedMetadata = AtlasRegionMetadata(
-  RegionId(1), RegionLabel.unsafe("V1")
-)
+val ref: VolumeAtlasRef = Schaefer2018.default.atlasRef()
+val metadata: Either[AtlasError, AtlasRegionMetadata] =
+  AtlasRegionMetadata.checked(RegionId(1), "V1", labelFull = Some("L_V1_ROI"))
+val label: Either[AtlasError, RegionLabel] = RegionLabel.from("V1")
 ```
 
 ## Standard Atlas Descriptors
@@ -139,32 +129,16 @@ you call a JVM loader or supply already-loaded surface labels.
 ## Parcel Identity
 
 `RegionId` is a source integer label. `realization.parcelKeys` identifies parcels
-on the exact persistent domain. The reference's `parcelIdentity` declares how
-the source labels acquire that identity:
+on the exact persistent parcel domain. Each key combines a namespace (atlas
+family, model, parcel variant, and release) with the integer `RegionId`, and
+the domain is restored from a finite-indexed publication descriptor whose
+fingerprint covers those keys.
 
-- `SourceLabels` is the default for custom atlases. Keys include representation,
-  source, integer label, full label and hemisphere within the atlas release and
-  variant. Unknown volume and surface encodings therefore stay separate.
-- `SharedRegionIds` explicitly asserts a common integer encoding across
-  representations. Schaefer descriptors use this policy.
-- `GlasserHcpMmp1` uses checked full names such as `L_V1_ROI` and `R_V1_ROI`.
-  The domain sorts those canonical names, independently of source numbers and
-  table order. Metadata, assignments, networks and display order use the same
-  canonical owner. Missing, malformed, duplicate or conflicting keys fail with
-  `ParcelIdentityError`; surface support also checks the key's hemisphere.
-
-Glasser volume ID 1 and surface ID 1 can name opposite hemispheres. The JVM
-loader normalizes xcpEngine names such as `Right_V1` to `R_V1_ROI`, retaining the
-original name in `source_label`. Each publication assignment retains the exact
-source-label-to-parcel-key mapping. Field transport uses
-`source.parcelDomain.align(target.parcelDomain)` and `field.rebind(alignment)`;
-display order remains a separate selection.
-
-All policies use one current key format inside the finite-indexed publication
-descriptor. The fixed foreign-producer byte fixture tests that format. There is
-no compatibility mode for the former numeric key scheme. Different or unknown
-domains require an explicit checked locus4s `Bijection` for conversion. Choose
-`SharedRegionIds` only when the source's common numeric encoding is established.
+`realization.assignmentAlignedTo(target)` retargets the assignment only through
+exact persistent ordered domain identity; equal cardinality is not enough.
+Different domains require an explicit locus4s `Bijection`
+(`assignmentRetargeted`). `neuropublishProjection` and
+`validateNeuropublishProjection` export and check the publication form.
 
 ## Runnable Examples
 
@@ -236,7 +210,7 @@ Surface atlas payloads are shared, cross-platform values built from the surface
 module:
 
 ```scala
-import scalafim.surface.{CorticalHemisphere, VertexId}
+import scalafim.surface.{Hemisphere as SurfaceHemisphere, VertexId}
 
 val surfaceAtlas =
   SurfaceAtlas.fromLabeledSurfaces(
@@ -247,10 +221,10 @@ val surfaceAtlas =
   )
 
 val region =
-  surfaceAtlas.regionAt(CorticalHemisphere.Left, VertexId(1024))
+  surfaceAtlas.regionAt(SurfaceHemisphere.Left, VertexId(1024))
 
 val contacts =
-  surfaceAtlas.boundaryContacts(CorticalHemisphere.Right)
+  surfaceAtlas.boundaryContacts(SurfaceHemisphere.Right)
 ```
 
 `SurfaceAtlas` requires a left `LabeledSurface` and a right `LabeledSurface`.
@@ -383,154 +357,29 @@ val labels =
   hits.map(hit => (hit.id, hit.label, hit.distanceMm))
 ```
 
-## Parcel Fields And Reduction
+## Parcel Reduction
 
-A parcel value is a locus4s `Field[P,A]` on the realization's exact parcel owner.
-Scalar reduction preserves that owner in its return type; time-series reduction
-preserves the realization's frame, spatial and parcel types. Generic field
-mapping, zipping, restriction and transport remain locus4s operations.
+`VolumeAtlas` summarizes a 3D map or a 4D time series by parcel. Inputs must be
+on the atlas's exact grid. Every atlas region is kept in the output.
 
 ```scala
-import locus4s.data.Field
 import scalafim.atlas.syntax.*
+import scalafim.image.*
 
-val values: Field[atlas.realization.P, Double] = atlas.reduce(statMap)
-val series = atlas.reduceSeries(boldSeries, mask = Some(brainMask))
-val atFirstTime: Field[atlas.realization.P, Double] =
-  series.fieldAt(0).toOption.get
-val displayRows = ParcelFields.records(atlas.realization)(values)
-val summed = atlas.reduce(statMap, ParcelReducer.Sum)
+val values: ParcelValues = atlas.reduce(statMap)
+val checked: Either[AtlasError, ParcelValues] = atlas.reduceEither(statMap)
+val summed: ParcelValues = atlas.reduce(statMap, Reducers.sum)
+
+val series: SomeScalarParcelSeries[Double] = atlas.reduce(boldSeries)
+val maskedSeries =
+  AtlasReduce.reduceSeries(atlas, boldSeries, mask = Some(brainMask))
 ```
 
-`ParcelReducer.Mean` and `Sum` aggregate in one pass. `Custom` accepts a function
-over a fresh array for each parcel/sample; callbacks may retain or mutate it.
-Results are fully evaluated before returning. Callback exceptions become typed
-`AtlasReductionError.CallbackFailed` errors in checked entry points.
-
-`ParcelReductionPolicy` applies equally to scalar maps and series. `SkipNaN`
-(default) excludes NaNs: an all-missing mean is NaN, a sum is zero, and a custom
-reducer receives an empty array. `PropagateNaN` returns NaN without invoking a
-custom callback. `RejectNaN` identifies the parcel and sample. NaNs outside the
-assignment or mask are ignored; infinities remain values. No assigned samples
-after masking uses `EmptyParcelPolicy.Fill` (default NaN) or `Reject`, separately
-from all-missing data.
-
-```scala
-val checked = atlas.reduceEither(
-  statMap,
-  policy = ParcelReductionPolicy(
-    MissingValuePolicy.RejectNaN,
-    scalafim.image.EmptyParcelPolicy.Reject
-  )
-)
-val portable = AtlasReduce.reduceField(surfaceAtlas.realization)(vertexValues)
-```
-
-For detached data, `ParcelFields.fromKeys(target)(entries)` admits full checked
-`AtlasParcelKey` values and stores canonical order. `fromGlasserKeys` admits
-checked anatomical `GlasserParcelKey` values. Normalize raw source aliases with
-`GlasserParcelKey.fromSourceLabel` before admission. Duplicate detection precedes
-unknown-row dropping; missing keys either fail or use `MissingParcelPolicy.Fill`.
-Unknown keys either fail (default) or use `UnknownParcelPolicy.Drop`.
-
-`fromSourceIds(target)(source, entries)` resolves numeric IDs through the declared
-source realization's actual ID-to-key mapping before target alignment. Glasser
-volume and surface IDs can encode opposite hemispheres, even with the same
-canonical domain. The source mapping also handles arbitrary renumbering.
-`alignTo(target)(field)` explicitly transports a field through exact persistent
-ordered domain identity. Equal size or reordered keys do not establish identity.
-`records` requires the same live parcel owner and derives metadata/display order;
-input values never replace canonical atlas metadata.
-
-## Expansion And Metric Persistence
-
-`AtlasExpand.volume(atlas)(values, background)` (or `atlas.expand`) scatters a
-`Field[atlas.realization.P, Double]` through the authoritative assignment. The
-result is continuous and retains the exact grid, frame and stable scalar sample
-owner. Background is explicit; a missing parcel value and an unassigned voxel
-can therefore remain distinct. Categorical atlas labels are unchanged. Parcel
-series expand through the existing `series.toDense(background)` operation.
-
-```scala
-val expanded = atlas.expand(values, background = Double.NaN)
-val saved = for
-  schema <- ParcelMetricSchema.from("parcel mean", Some("percent signal"))
-  document <- ParcelMetricJson.encode(atlas.realization)(values, schema)
-yield document
-
-val restored = saved.flatMap(document =>
-  ParcelMetricJson.decode(target.realization)(document))
-// In Right(metric), metric.values is Field[target.realization.P, Double].
-val savedAgain = restored.flatMap(metric =>
-  ParcelMetricJson.encode(target.realization)(metric))
-```
-
-Metric V1 stores one Float64 scalar per canonical parcel with a checked measure
-schema and attributes, ordered parcel identity, original atlas provenance and
-metadata, and compact support/assignment fingerprint references. Decoding
-validates the original key namespace and identity policy before matching the
-target's exact canonical ordered domain. Glasser volume/surface ID conventions
-and display order can differ; an equal-sized foreign domain is rejected. The
-restored origin describes where the saved measure was computed. Restoring onto
-another support does not recompute it there. The overload accepting a restored
-metric preserves that origin; encoding a field and schema captures a new origin.
-
-The format is `org.scalafim.atlas/parcel-metric/v1`. The JSON envelope contains
-`format`, a JSON `payload` string, and its lowercase SHA-256 digest over exact
-UTF-8 bytes. Payloads declare version 1 and `float64-ieee754-hex-v1`; each value
-is exactly 16 lowercase IEEE bit digits. Signed zero, infinities, subnormals and
-finite extremes survive; all NaNs use `7ff8000000000000`. Generic image expansion
-preserves these values; the R expansion parity fixture covers finite and missing
-values only. Unsupported formats, invalid origin, keys, value counts, encodings
-or payload digests return typed errors.
-
-Use `decode(target)(document, expectedSha256 = Some(retainedDigest))` when a
-trusted external digest is available. The embedded digest detects corruption;
-it does not authenticate authorship. Support and assignment references identify
-originating assets without embedding geometry or verifying absent asset bytes.
-The JVM `scalafim.atlas.io.ParcelMetricFiles` adapter reads UTF-8 and writes new
-files with `CREATE_NEW`, refusing replacement. Shared codecs run on JVM and JS.
-
-## Exact-grid Composition
-
-Compose two volume realizations with required overlap and occlusion policies:
-
-```scala
-val first = atlas1.realization
-val second = atlas2.realization
-val composed = AtlasCompose.volume(
-  first,
-  second,
-  AtlasCompositionOverlap.PreferSecond,
-  AtlasCompositionOccluded.Drop
-)
-```
-
-`Reject`, `PreferFirst` and `PreferSecond` decide overlapping membership.
-`AtlasCompositionOccluded.Reject` fails if any parent parcel loses all support;
-`Drop` removes it and records an undefined parent remap. Inputs must have exactly
-congruent grids and identical declared template/coordinate spaces. Composition
-does not resample.
-
-The result retains the first realization's exact frame and voxel owner and owns
-a fresh parcel domain. Its `firstRemap` and `secondRemap` are checked locus4s
-`PartialMap`s from their respective parent parcel owners to the result. They
-describe parcel correspondence; partially occluded fibers change. `result.atlas`
-provides the usual facade. New positive IDs follow canonical parent order, while
-display order follows each parent's presentation. Source IDs can collide or be
-`Int.MaxValue` without offset arithmetic.
-
-Canonical parent keys, retained ancestry, parent order and policies determine
-the new namespace. Glasser renumbering/presentation changes preserve canonical
-anatomy; conservative source-local identities remain source-local. Equal network
-names are scoped by parent (`first:<length>:<name>`, `second:<length>:<name>`).
-Cross-atlas network equivalence requires a separate declared grouping.
-
-Both complete parent provenance records retain original metadata, display order,
-support evidence and assignment digests. Publication and metric persistence
-validate that evidence recursively. Compact assignment references identify
-omitted spatial payloads; they do not independently prove their bytes or the
-overlap computation.
+`Reducers.mean` and `Reducers.sum` use a one-pass aggregation and skip NaN
+samples; an all-NaN mean is NaN and an all-NaN sum is zero. Other reducers are
+plain `Array[Double] => Double` functions over each parcel's samples. For
+series, a parcel with no samples after masking follows
+`EmptyParcelPolicy.Fill(Double.NaN)` (the default) or `EmptyParcelPolicy.Reject`.
 
 ## Overlap And Adjacency
 
@@ -578,60 +427,16 @@ Rscript tools/r-parity/check_neuroatlas_atlas_parity.R
 The script expects `pkgload`, `neuroim2`, and `~/code/neuroatlas` by default.
 Set `NEUROATLAS_R=/path/to/neuroatlas` to use another checkout.
 
-The shared expansion court consumes three coordinate-keyed fixtures generated
-with `Rscript tools/r-parity/generate_atlas_parcel_expansion.R`. Its manifest
-records the reference commit and actual source/generator/fixture hashes. Metric
-interop tests consume documents produced by actual JVM and Scala.js executions;
-their payload digests were independently checked using Python `hashlib`.
+## Signed INT8 Label Volumes
+
+The pinned image4s revision (`2c0638fb`) decodes NIfTI datatype 256 (signed
+INT8) as signed bytes; datatype 2 (UInt8) stays unsigned. `AtlasLabelMaps.readIntVolume`
+therefore reads INT8 label volumes with 0 as background and 1..127 as region
+IDs, and rejects a negative stored label with `IllegalArgumentException`.
+`AtlasIoSuite` covers this on a synthetic INT8 file; `NiftiSuite` covers the
+signed storage, boundaries, and scaling in the image adapter.
 
 ## Tests
-
-`AtlasCompose.volume` composes assignments on an exact shared grid with explicit
-overlap and occluded-parcel policies. `subsetEither` selects through those
-assignments. `AtlasGrouping.hemisphere` and `.network` create typed parcel-to-group
-maps; missing annotations are explicitly rejected, dropped, or assigned a group.
-Grouped means choose equal-parcel or actual spatial-support weighting.
-
-`AtlasDilation.volume` is a thin wrapper over the image assignment kernel. A
-finite non-negative radius, grid/world Euclidean metric, tie policy and exact
-destination mask are explicit. Existing seeds remain assigned and the mask must
-contain them. World distances include the full grid affine, including shear.
-Dilation records parent identity, radius bits and mask digest in provenance.
-
-JVM pinned volume families are interpreted by `FslAtlasLoader`, `HcpExLoader`,
-`OlsenMtlLoader` and `JulichVisualLoader`. FSL named requests currently cover
-the verified 2mm/25% HarvardOxford cortical/subcortical and Jülich hard summaries.
-HCPex v1.1 supports its native 1mm/2mm files. Olsen hippocampus is an exact
-selection of the pinned MTL labels. Every load verifies source SHA-256 and
-records executed sources. HCPex/Olsen headers declare scanner coordinates;
-their source template claims remain descriptive, and realized coordinates are
-bound to the pinned artifact with uncertain confidence. Standard-template
-routing is deliberately unqualified for those files.
-
-`SubcorticalAtlasLoader` uses pinned original native sources for unsplit CIT168,
-HCP thalamic nuclei, MDTB10, and an exact hippocampus/amygdala selection from HCP
-ROI labels. These requests do not claim the unavailable TemplateFlow/AtlasPack
-harmonized grids or CIT168's derived hemisphere split. Scanner/aligned headers
-retain artifact coordinate identities; the HCP ROI's template-coded header is
-admitted strictly.
-
-The pinned image4s revision supports MDTB10's native signed INT8 NIfTI datatype.
-All four families have source-backed loading checks on their original grids;
-source bytes are neither converted nor resampled. Coordinate-header limitations
-and uncertain source-template claims remain explicit in the loaded provenance.
-
-`StandardSurfaceAnnotationRequest` names the verified Schaefer 100/7 fsaverage6
-pair and Kathryn Mills' Figshare v2 Glasser fsaverage projection.
-`StandardSurfaceAtlasLoader` checks pins and maps hemisphere annotation codes to
-canonical parcels; the Glasser projection preserves full anatomical keys.
-The verified-geometry entry point also checks Schaefer white-surface pins.
-Glasser geometry is explicitly caller-supplied; the fsaverage derivative makes
-no claim of native fsLR equivalence. `SurfaceAtlasFields` reduces scalar fields
-or timepoint fields on the exact bilateral assignment, with typed cortical-side
-support selection.
-
-Outer parcel-series/connectivity, batch and affine categorical transport
-adapters live in [`atlas-workflows`](../atlas-workflows/README.md).
 
 ```sh
 sbt atlasJVM/test

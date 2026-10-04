@@ -24,7 +24,9 @@ disposal.
 Every backend publishes a stable `SurfaceBackendCapabilities` value. Unsupported
 behavior is a named caveat. The current JavaFX and Three.js backends explicitly
 declare world clipping unsupported; the reference raster implements world
-planes and declares lighting unsupported.
+planes and declares lighting supported as per-vertex ambient/diffuse Lambert
+shading from world-space normals with interpolated lit colors, without
+per-pixel normal shading, specular highlights or shadows.
 
 ## Anatomical and publication contracts
 
