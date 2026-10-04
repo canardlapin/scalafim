@@ -41,7 +41,9 @@ class FitEstimateReadbackSuite extends munit.FunSuite:
       assert(Files.isRegularFile(root.resolve(representation.validity.path)))
       assert(Files.size(root.resolve(representation.values.path)) > 352L)
       assert(Files.size(root.resolve(representation.validity.path)) > 352L)
-      assertEquals(representation.storedDatatype, Some(scalafim.estimates.io.NiftiStoredDatatype.Float64))
+      val header = scalafim.image.io.Nifti.readHeader(root.resolve(representation.values.path))
+        .fold(error => fail(error.message), value => value)
+      assertEquals(header.datatype, 64) // NIfTI FLOAT64
     val freshStore = right(LocalEstimateStore.open(root))
     val source = right(freshStore.open(reference, ReadLimits(4)))
     try
