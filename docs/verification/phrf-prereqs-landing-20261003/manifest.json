@@ -2161,8 +2161,9 @@
         "finding": "F1",
         "disposition": "edited",
         "change": "build ObservedFamilyAdmission via admitForCondition (as merged ConditionProfileFitSuite); DecodeBudget (2,2,2,6) -> main's reviewed (2,6,8,2)",
-        "sha256": "a19af453d75fca226b6f3fd358850d46df94b7ba5d37308a55c7089040a6c1a3",
-        "reviewStatus": "new code; pending Opus review"
+        "sha256": "4a8c1725bb37165372e48b145c88c3716e7e0f40127a8292ab2fbe6025a87426",
+        "sha256AtReview": "a19af453d75fca226b6f3fd358850d46df94b7ba5d37308a55c7089040a6c1a3",
+        "reviewStatus": "new code; Opus confirmation review APPROVE-WITH-NITS on d2cdada4 (comment nit applied in the following commit)"
       },
       {
         "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala",

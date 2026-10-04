@@ -87,6 +87,8 @@ object ProfileHrfConditionWorkflows:
     val nuisanceColumns = plan.model.columnNames.indices.filterNot(i => taskNames.contains(plan.model.columnNames(i))).toVector
     val nuisance = DMat.tabulate(rows, nuisanceColumns.length)((t, j) => plan.model.designMatrix(t, nuisanceColumns(j)))
     val expanded = ExpandedConditionDesign.lower(term, frame, kernelBasis, precision).fold(e => throw new IllegalArgumentException(e.message), identity)
+    // Held-out admission points inside the generating range (tau 4-7, sd 1.0-2.2); same
+    // points and requirement margins as the condition-profile suites.
     val points = Vector((4.0, math.log(1.2)), (6.0, math.log(2.0))).map { case (tau, logSd) =>
       family.chart.point(tau, logSd).fold(e => throw new IllegalArgumentException(e.message), identity)
     }

@@ -159,9 +159,15 @@ receipts) do not record which model performed them. The one review of this
 landing that is known to have been run by Opus is the independent landing review
 of `3ceba77c`. It verified the provenance of all 50 taken files by script, an
 exact match between the commit and the manifest, byte identity of all 107
-archived receipts, review coverage of all 32 commits, the decoder integration
-and the `WhiteningPlan` transpose. Its verdict was CHANGES-REQUIRED, with one
-defect (F1 below), and the follow-up commit addresses it.
+archived receipts, that the touching-commit set equals the manifest's 32 commits,
+a hash match of every landed file's final content against review-bound archives
+(with about 12 commit-to-reviewed-source mappings spot-checked, not all 32), the
+decoder integration and the `WhiteningPlan` transpose. Its verdict was
+CHANGES-REQUIRED, with one defect (F1 below), and the follow-up commit `d2cdada4`
+addresses it. The Opus confirmation pass on `d2cdada4` returned APPROVE-WITH-NITS:
+the example's admission (the one piece of new code) is correct and wired as the
+library intends, and the C0 timeout does not mask a hang. Its nits (a comment on
+the admission points, this wording) are applied in the final landing commit.
 
 ### GaussianFamily behaviour change
 
