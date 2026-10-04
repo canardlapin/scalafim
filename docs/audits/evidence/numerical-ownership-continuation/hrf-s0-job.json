@@ -1,0 +1,19 @@
+{
+  "schema": "scalafim.hrf-s0-job.v1",
+  "host": "buc-gw01",
+  "runner_pid": 70392,
+  "run_directory": "/Users/bbuchsbaum/benchmarks/scalafim-hrf-20261004-codex/runs/s0-baseline-20261004-02",
+  "source_revision": "61df8a4620c9cc0dd33af6b7cabee04b4492e936",
+  "package_archive_sha256": "829b2476f1ae8f10a08bb4c7c1c06c415a879db0c0f89f3c307d3c8e6b4d4542",
+  "runner_sha256": "1ef95f30c1c97a71e16dab1170eb12d92efb51f90c0e5ddbe567f5664a629173",
+  "amendment_sha256": "506e3fce05129dc72240284b0a23beeac0d0e6147d38c2e3e3d6661d44cee7e0",
+  "status": "running; no result admission yet",
+  "expected_outputs": [
+    "receipt.json",
+    "host.jsonl",
+    "jmh.json",
+    "jmh.log",
+    "supervisor-exit.json"
+  ],
+  "next_decision": "Check receipt host validity, complete benchmark parameter coverage, finite values and five forks; do not use invalid output or treat S0 as S4."
+}

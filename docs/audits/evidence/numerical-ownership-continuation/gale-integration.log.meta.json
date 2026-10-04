@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-04T02:37:55.232760+00:00",
+  "finished_utc": "2026-10-04T02:42:46.454421+00:00",
+  "duration_seconds": 291.218148,
+  "command": [
+    "python3",
+    "/private/tmp/scalafim-numerical-ownership-20261003/tools/build/sbt-warm",
+    "coreJVM/test",
+    "coreJS/test",
+    "lawsJVM/test",
+    "lawsJS/test",
+    "scalafmtCheckAll"
+  ],
+  "cwd": "/private/tmp/gale-dense-cholesky-integration-20261004",
+  "log": "/private/tmp/scalafim-numerical-ownership-next-evidence/gale-integration.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 2400.0,
+  "log_bytes": 41764
+}

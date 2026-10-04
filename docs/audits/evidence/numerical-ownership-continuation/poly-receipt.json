@@ -1,0 +1,16 @@
+{
+  "schema": "scalafim.numerical-ownership.poly.v1",
+  "base": "62312f5d",
+  "commands": [
+    "designJVM/test",
+    "designJS/test"
+  ],
+  "passed_tests_each_platform": 269,
+  "toolchain": "Homebrew JDK 25.0.1, sbt 1.11.7",
+  "warnings": 0,
+  "source_sha256": {
+    "modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala": "f92fdc584012e90f59cb3c163764f59ed69caf2f02d0d51b398fe16f64053a35",
+    "modules/design/shared/src/test/scala/scalafim/fmri/design/PolySuite.scala": "eb3bfdf7a2c0e5e43f8641b5564098a18d3f29461e014ccdea00a4f47b5b6b8b"
+  },
+  "limitations": "Owning design suites only; no timing or allocation improvement claimed."
+}

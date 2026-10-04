@@ -1,0 +1,13 @@
+Benchmarks: 
+scalafim.fmri.hrf.BasisResponseBenchmark.directContraction
+scalafim.fmri.hrf.BasisResponseBenchmark.exactWindowFunctional
+scalafim.fmri.hrf.BasisResponseBenchmark.pointFunctional
+scalafim.fmri.hrf.BasisResponseBenchmark.trapezoidWindowFunctional
+scalafim.fmri.hrf.BasisResponseBenchmark.typedReconstruction
+scalafim.fmri.hrf.DenseDriveBenchmark.conv
+scalafim.fmri.hrf.DenseDriveBenchmark.fft
+scalafim.fmri.hrf.EpochIntegrationBenchmark.exact
+scalafim.fmri.hrf.EpochIntegrationBenchmark.trapezoid
+scalafim.fmri.hrf.RegressorConvolutionBenchmark.conv
+scalafim.fmri.hrf.RegressorConvolutionBenchmark.fft
+scalafim.fmri.hrf.RegressorConvolutionBenchmark.loop

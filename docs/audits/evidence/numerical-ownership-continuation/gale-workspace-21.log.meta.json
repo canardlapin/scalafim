@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-04T01:26:54.412333+00:00",
+  "finished_utc": "2026-10-04T01:32:01.752580+00:00",
+  "duration_seconds": 307.337111,
+  "command": [
+    "python3",
+    "/private/tmp/scalafim-numerical-ownership-20261003/tools/build/sbt-warm",
+    "coreJVM/scalafmt",
+    "coreJVM/Test/scalafmt",
+    "coreJVM/testOnly *Cholesky*Suite",
+    "coreJS/testOnly *Cholesky*Suite"
+  ],
+  "cwd": "/private/tmp/gale-dense-cholesky-candidate-20261004",
+  "log": "/private/tmp/scalafim-numerical-ownership-next-evidence/gale-workspace-21.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1800.0,
+  "log_bytes": 2248
+}

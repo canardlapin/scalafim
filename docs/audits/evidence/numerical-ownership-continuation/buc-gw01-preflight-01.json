@@ -1,0 +1,23 @@
+{
+  "schema": "scalafim.hrf-s0.v1",
+  "started_utc": "2026-10-04T02:17:54.184777+00:00",
+  "admitted": false,
+  "stage": "S0 pilot only; not S4 non-inferiority",
+  "reasons": [
+    "start_load_above_2"
+  ],
+  "host_start": {
+    "utc": "2026-10-04T02:17:54.262687+00:00",
+    "load": [
+      4.740234375,
+      4.4189453125,
+      4.4892578125
+    ],
+    "competing": [],
+    "thermal": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "throttled": false,
+    "power": "Now drawing from 'AC Power'"
+  },
+  "status": "host_refused",
+  "finished_utc": "2026-10-04T02:17:54.281976+00:00"
+}

@@ -1,0 +1,12 @@
+{
+  "base": "18d24dbb5056122032b0278f8bad557a9bb1cf23",
+  "issue": "bd-01M427PJCGSXP2VCCE97EEMT5T",
+  "qualification": "coreJVM/test 666; coreJS/test 656; lawsJVM/test 54; lawsJS/test 54; scalafmtCheckAll passed. ScalaFIM consumer checks pending; not published.",
+  "source_sha256": {
+    "core/shared/src/main/scala/gale/kernel/DoubleKernels.scala": "d84b35c133485ae8bc5e831b436b54be2cedc9a6e0ac7901673b449f3cda4719",
+    "core/shared/src/main/scala/gale/linalg/Factorizations.scala": "364ae1fd2b9ab18eddd8e817090eb5b30726e9bf01842ff5fec1cf2655309faa",
+    "core/shared/src/main/scala/gale/linalg/DenseCholeskyWorkspace.scala": "d517a0458cd78bec6c5fb569cd3bf33ff24bf34b9e9b56984650774ebad7c382",
+    "core/shared/src/test/scala/gale/linalg/DenseCholeskyWorkspaceSuite.scala": "c1198e0007c7eb3fc0a4e2ce600d9ca32b4815c9a9a4f5ac0c6f3b642fa9e50c"
+  },
+  "candidate": "3172e80b9512196df156738ba2183ebf17dea074"
+}

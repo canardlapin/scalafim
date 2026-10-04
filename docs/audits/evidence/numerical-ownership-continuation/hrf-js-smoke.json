@@ -1,0 +1,14 @@
+{
+  "schema": "scalafim.hrf-convolution-timing.v1",
+  "method": "conv",
+  "events": 50,
+  "grid_points": 300,
+  "basis_columns": 3,
+  "precision_seconds": 0.1,
+  "warmup_iterations": 10,
+  "measured_iterations": 30,
+  "elapsed_nanoseconds": 43949583,
+  "nanoseconds_per_iteration": 1464986.1,
+  "checksum": 9411.314245468566,
+  "qualification": "Busy local host, single bounded smoke run; not a performance gate or comparison."
+}

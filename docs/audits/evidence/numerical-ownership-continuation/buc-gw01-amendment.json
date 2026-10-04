@@ -1,0 +1,18 @@
+{
+  "schema": "scalafim.hrf-host-amendment.v1",
+  "recorded_utc": "2026-10-04T02:33:01Z",
+  "authority": "Explicit user reply: Use <=5 on buc-gw01",
+  "host": "buc-gw01",
+  "physical_cores": 10,
+  "old_max_start_end_load": 2.0,
+  "new_max_start_end_load": 5.0,
+  "timing_observations_before_decision": 0,
+  "unchanged": [
+    "No competing Java/Node above10% CPU using1Hz interval accounting",
+    "No thermal throttle or power-source change",
+    "Matched JDK and flags",
+    "S4 paired fixed sample size and bootstrap decision rule",
+    "Non-inferiority margin1.05"
+  ],
+  "runner_sha256": "1ef95f30c1c97a71e16dab1170eb12d92efb51f90c0e5ddbe567f5664a629173"
+}

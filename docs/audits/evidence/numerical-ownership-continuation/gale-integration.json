@@ -1,0 +1,31 @@
+{
+  "base": "1b018d4dd082b786123b65e02cd5b81e61968e21",
+  "candidate": "6198ad2b62fd6dc290cc39fe4611b8311e741d58",
+  "consumer_tested_provider": "3172e80b9512196df156738ba2183ebf17dea074",
+  "core_production_tree_identical_to_consumer_provider": true,
+  "provider_checks": {
+    "coreJVM": 689,
+    "coreJS": 679,
+    "lawsJVM": 54,
+    "lawsJS": 54,
+    "scalafmtCheckAll": "passed"
+  },
+  "consumer_checks": {
+    "revision": "70b22667",
+    "fitJVM": 392,
+    "fitJS": 381,
+    "scalafimCompileAll": "passed",
+    "positive_bytes_per_reduction": [
+      0.004,
+      0,
+      0
+    ],
+    "indefinite_bytes_per_reduction": [
+      0,
+      0,
+      0
+    ]
+  },
+  "publication": "not published; pin unchanged",
+  "bundle_sha256": "14ee39582e601091779ea56ff0449bce3e525c607e3488c569b02b1641bbc4d3"
+}

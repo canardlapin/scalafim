@@ -1,0 +1,8 @@
+{
+  "archive_sha256": "829b2476f1ae8f10a08bb4c7c1c06c415a879db0c0f89f3c307d3c8e6b4d4542",
+  "archive_bytes": 26318652,
+  "manifest_sha256": "74b9889d2253b4a5e91ff793dae53bc65fdc35c79b70749796c68db07c6b0231",
+  "revision": "61df8a4620c9cc0dd33af6b7cabee04b4492e936",
+  "remote_root": "/Users/bbuchsbaum/benchmarks/scalafim-hrf-20261004-codex",
+  "classpath_entries": 27
+}
