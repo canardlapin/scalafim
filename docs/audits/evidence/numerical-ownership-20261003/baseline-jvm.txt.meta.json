@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-03T13:15:31.076026+00:00",
+  "finished_utc": "2026-10-03T13:16:51.942048+00:00",
+  "duration_seconds": 80.865425,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "mvpaJVM/Test/runMain scalafim.fmri.mvpa.RsaAllocationProbe",
+    "mvpaJVM/testOnly *RsaProjectionSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-numerical-ownership-20261003",
+  "log": "/private/tmp/scalafim-numerical-ownership-evidence/baseline-jvm.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 4456
+}

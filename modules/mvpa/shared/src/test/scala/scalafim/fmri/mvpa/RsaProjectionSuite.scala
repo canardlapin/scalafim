@@ -1,0 +1,86 @@
+package scalafim.fmri.mvpa
+
+class RsaProjectionSuite extends munit.FunSuite:
+  private val labels = Vector("a", "b", "c", "d", "e")
+  // Four mutually orthogonal, mean-zero contrasts, each with squared norm 2.
+  private val a = Vector(1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  private val b = Vector(0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+  private val u = Vector(0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, 0.0, 0.0)
+  private val v = Vector(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0)
+  private val observed = Vector.tabulate(10)(i => 2*a(i) - 3*b(i) + 2*u(i) + v(i))
+  private val model = Vector.tabulate(10)(i => -a(i) + 4*b(i) + u(i) + 3*v(i))
+  // Residuals are 2u+v and u+3v: dot=10, squared norms=10 and 20.
+  private val expected = 1.0 / math.sqrt(2.0)
+
+  private def score(
+      controls: Vector[Vector[Double]],
+      x: Vector[Double] = observed,
+      y: Vector[Double] = model
+  ): Either[MvpaError, Double] =
+    val models = controls.zipWithIndex.map { (values, index) =>
+      RdmModel.unsafe(s"control-$index", labels, RdmVector.unsafe(5, values))
+    }
+    RdmScorer.PartialPearson.unsafe(models).score(labels, RdmVector.unsafe(5, x), RdmVector.unsafe(5, y))
+
+  private def value(result: Either[MvpaError, Double]): Double =
+    result.fold(error => fail(error.message), identity)
+
+  test("partial correlation matches an independent orthogonal residual oracle") {
+    assertEqualsDouble(value(score(Vector(a, b))), expected, 1e-12)
+    val mixed = Vector(a.zip(b).map(_ + _), a.zip(b).map((x, y) => 2*x - y))
+    assertEqualsDouble(value(score(mixed.reverse)), expected, 1e-12)
+  }
+
+  test("control units do not determine rank, including mixed extreme scales") {
+    for scale <- Vector(1e-150, 1e-8, 1.0, -1e8, 1e150) do
+      assertEqualsDouble(value(score(Vector(a.map(_ * scale), b.map(_ / scale)))), expected, 1e-12)
+  }
+
+  test("outcome scaling and offsets preserve the partial-correlation estimand") {
+    for scale <- Vector(1e-150, 1e150) do
+      val x = observed.map(value => (value + 10.0) * scale)
+      val y = model.map(value => (value - 7.0) / scale)
+      assertEqualsDouble(value(score(Vector(a, b), x, y)), expected, 1e-12)
+      assertEqualsDouble(value(score(Vector(a, b), x.map(-_), y)), -expected, 1e-12)
+  }
+
+  test("resolves a full-rank control span lost by normal equations") {
+    val epsilon = math.pow(2.0, -30)
+    val almostA = a.zip(b).map((x, y) => x + epsilon*y)
+    assertEqualsDouble(value(score(Vector(a, almostA))), expected, 2e-6)
+    assertEqualsDouble(value(score(Vector(almostA, a))), expected, 2e-6)
+  }
+
+  test("duplicate and constant controls report rank loss") {
+    for controls <- Vector(Vector(a, a.map(_ * 3)), Vector(a, Vector.fill(10)(4.0))) do
+      assert(score(controls).swap.toOption.get.message.contains("rank deficient"))
+  }
+
+  test("numerically unresolved control directions are refused explicitly") {
+    val almostA = a.zip(b).map((x, y) => x + 1e-14*y)
+    assert(score(Vector(a, almostA)).swap.toOption.get.message.contains("rank deficient"))
+  }
+
+  test("constant or fully explained outcomes have no residual correlation") {
+    for y <- Vector(Vector.fill(10)(3.0), a, a.zip(b).map(_ + _)) do
+      assert(score(Vector(a, b), y = y).swap.toOption.get.message.contains("zero-variance residual"))
+  }
+
+  test("non-finite distances are rejected in every role") {
+    for invalid <- Vector(Double.NaN, Double.PositiveInfinity, Double.NegativeInfinity) do
+      intercept[IllegalArgumentException](score(Vector(a.updated(0, invalid), b)))
+      assert(score(Vector(a, b), x = observed.updated(0, invalid)).swap.toOption.get.message.contains("non-finite"))
+      assert(score(Vector(a, b), y = model.updated(0, invalid)).swap.toOption.get.message.contains("non-finite"))
+  }
+
+  test("residual tolerance distinguishes resolved signal from roundoff") {
+    val resolved = a.zip(u).map((x, y) => x + 1e-8*y)
+    assertEqualsDouble(value(score(Vector(a, b), x = resolved)), 1.0/math.sqrt(10.0), 2e-7)
+    val unresolved = a.zip(u).map((x, y) => x + 1e-14*y)
+    assert(score(Vector(a, b), x = unresolved).swap.toOption.get.message.contains("zero-variance residual"))
+  }
+
+  test("common extreme outcome units cannot overflow or underflow the correlation") {
+    for scale <- Vector(1e-150, 1e150) do
+      assertEqualsDouble(value(score(Vector(a, b), observed.map(_ * scale), model.map(_ * scale))), expected, 1e-12)
+  }

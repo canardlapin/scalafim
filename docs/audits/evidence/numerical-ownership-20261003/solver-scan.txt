@@ -1,0 +1,101 @@
+modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/FeatureModel.scala:245:  private def solve(
+modules/mvpa/shared/src/main/scala/scalafim/fmri/mvpa/Rsa.scala:470:  private def solveLinearSystem(
+modules/atlas/jvm/src/main/scala/scalafim/atlas/io/SurfaceGiftiAtlasLoader.scala:182:  private def resolveLocalArtifacts(provenance: AtlasProvenance, paths: Paths): AtlasProvenance =
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:204:      val (q, diagR) = householderQrReduced(X, rows = n, cols = degree + 1)
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:257:    private final case class Householder(v: Array[Double], beta: Double)
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:259:    private def householderQrReduced(a0: Array[Double], rows: Int, cols: Int): (Array[Double], Array[Double]) =
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:266:      val reflectors = new Array[Householder](cols)
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:280:          reflectors(k) = Householder(Array.emptyDoubleArray, 0.0)
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:302:          reflectors(k) = Householder(v, beta)
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:337:      // To form Q (not Qᵀ), apply the stored Householder reflectors in reverse.
+modules/design/shared/src/main/scala/scalafim/fmri/design/basis/Basis.scala:340:        val Householder(v, beta) = reflectors(k)
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:201:  private def resolveWithoutCoordinates(
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:216:  private def resolveCoordinates(
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:472:private def resolveAllTimepoints(size: Int): Either[DatasetError, Vector[TimepointIndex]] =
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:476:private def resolveAllVoxels(size: Int): Either[DatasetError, Vector[VoxelIndex]] =
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:480:private def resolveWindow(
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:499:private def resolveExcluding(
+modules/dataset/shared/src/main/scala/scalafim/dataset/DataSelection.scala:549:private def validateResolvedValues(
+modules/dataset/shared/src/main/scala/scalafim/dataset/DatasetIndex.scala:310:  private[dataset] def resolveForRead(
+modules/fmri-workflow/jvm/src/main/scala/scalafim/fmri/workflow/BidsStudyCompilerJvm.scala:91:  private def resolve(root: Path, file: BidsFile): Either[String, Path] =
+modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDynamics.scala:764:  private[view] def resolve(surfaces: SurfaceSet): Either[SurfaceViewError, SurfaceGeometry] =
+modules/atlas/shared/src/main/scala/scalafim/atlas/SpaceTransformGraph.scala:250:  private def inverseOf(step: TransformStep): Inverse =
+modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceCompiler.scala:406:  private def resolveFrames(
+modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceViewer.scala:23:  private[view] def resolve(presentation: SurfaceGeometryPresentation): Either[SurfaceViewError, SurfaceGeometry] =
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:387:  private final case class ResolvedSchedule(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:393:  private final case class ResolvedPhase(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:510:  private def resolveSchedule(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:528:  private def resolveDurationValues(durations: Seq[Double], nEvents: Int): Either[DesignError, Vector[Double]] =
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:945:  private def resolveSubsetMaskEither(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:962:  private def resolveSecondsEither(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:970:  private def resolvePhase(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:1009:  private def resolveEventPhase(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:1025:  private def resolveNumericVectorEither(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:1147:  private def resolveHrfFunEither(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:1487:  private def resolveOrderedModulatorColumns(
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:2645:  private def resolveHrfEither(call: HrfCall, defaultHrf: Hrf): Either[DesignError, Hrf] =
+modules/design/shared/src/main/scala/scalafim/fmri/design/formula/EventModelBuilder.scala:2671:  private def resolveHrfBasisEither(basis: String, nbasis: Option[Int], lag: Option[Double]): Either[DesignError, Hrf] =
+modules/archive/jvm/src/main/scala/scalafim/archive/io/LocalObjectStore.scala:45:  private def resolve(relative: String): Either[LocalStoreError, Path] =
+modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/CanonicalEffectMvpa.scala:47:  private[fit] def resolve(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/Contrasts.scala:551:  private def choleskyTolerance(matrix: DMat): Double =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/CoefficientMatrixStorage.scala:21:  private final class InverseSum(val components: Vector[IndexedSeq[DMat]], val predictors: Int)
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/CoefficientMatrixStorage.scala:109:  private def inverse(matrix: DMat): Either[FitError, DMat] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/BasisExpandedRetention.scala:290:  private def partialInverse(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala:594:  private def resolveRank(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala:729:  private def fullRankQr(design: DMat): Either[FitError, QR] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala:735:  private def leadingQtRows(qr: QR, response: DMat, rowCount: Int): Either[FitError, DMat] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ReducedRankGls.scala:751:  private def qScores(qr: QR, leadingRows: DMat, scoreCols: Int): Either[FitError, DMat] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala:208:  private[fit] def resolve(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala:291:private[fit] final case class ResolvedResponsePreparation(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala:309:private[fit] final case class ResolvedVolumeWeighting private (
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/ResponsePreparation.scala:338:  private def resolveFixed(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/FixedEffects.scala:522:  private[fit] def inverse(matrix: DMat, runIndex: Int, voxelIndex: Int): Either[FitError, DMat] =
+modules/mvpa-fit/shared/src/main/scala/scalafim/fmri/mvpa/fit/ManovaMvpa.scala:37:  private[fit] def resolve(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/OlsEstimates.scala:172:  private[fit] def solveDual(qr: QR, weights: DMat): Either[FitError, DMat] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedContrastGeometry.scala:298:  private def effectBasis(inverseXtX: DMat, contrast: AlignedTContrast): Either[FitError, (DMat, Double)] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/PreparedManovaGeometry.scala:145:  private def choleskyTolerance(matrix: DMat): Double =
+modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala:187:  private def resolveTimepoints(
+modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala:193:  private def resolveVoxelRows(
+modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala:204:  private def resolvePlainSelection(
+modules/latent/shared/src/main/scala/scalafim/latent/RadialBasis.scala:230:  private def decodeResolved(
+modules/group/shared/src/main/scala/scalafim/fmri/group/GroupGlm.scala:142:  private final case class SampleSolution(beta: DMat, inverse: DMat, varianceScale: Double, q: Double, c: Double, derivative: Double)
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala:604:  private def resolveTerms(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala:633:  private def resolveAll(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala:649:  private def resolveResponseTerms(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala:704:  private def resolveRows(
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/StructuralHypotheses.scala:762:  private def resolveSelector(selector: StructuralColumnSelector, axis: CoefficientAxis): Vector[StructuralColumn] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala:715:  private def solveResponseComponent(ref: TrialBandedReference, comp: Int, axisP: Int, axisQ: Int): Boolean =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala:1059:  private def constrainedLogDet(prep: TrialBandedPreparation, factor: BandedCholesky): Either[TrialBandedError, Double] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/Ols.scala:38:  private[fit] def qrValue: Option[Double] =
+modules/fit/shared/src/main/scala/scalafim/fmri/fit/Ols.scala:201:  private[fit] def prepareQr(
+modules/latent/shared/src/main/scala/scalafim/latent/LatentSelection.scala:83:  private def resolveAxis(
+modules/motion/shared/src/main/scala/scalafim/fmri/motion/MotionEstimator.scala:1044:  private[motion] def lineSearchResolved(finalStepNorm: Double, stepTolerance: Double): Boolean =
+modules/motion/shared/src/main/scala/scalafim/fmri/motion/MotionEstimator.scala:1119:  private[motion] def solveNormal6(h: Array[Double], rhs: Array[Double]): Option[Array[Double]] =
+modules/motion/jvm/src/main/scala/scalafim/fmri/motion/io/MotionBids.scala:113:  private def resolveProjectPath(project: BidsProject, file: BidsFile): Either[MotionIoError, Path] =
+modules/image-view/shared/src/main/scala/scalafim/image/view/Layer.scala:260:  private[view] def resolve(timepoint: Int): Either[ImageViewError, ResolvedLayerFrame]
+modules/image-view/shared/src/main/scala/scalafim/image/view/Layer.scala:333:    private[view] def resolve(
+modules/image-view/shared/src/main/scala/scalafim/image/view/ViewerScene.scala:511:  private final class FrameResolver(timepoint: Int):
+modules/surface/js/src/main/scala/scalafim/surface/io/GiftiReader.scala:67:  private def resolvedData(
+modules/surface/jvm/src/main/scala/scalafim/surface/io/GiftiReader.scala:54:  private def resolvedData(
+modules/image/shared/src/main/scala/scalafim/image/SampleSpaces.scala:216:    private[scalafim] def inverseAffineD3: Either[SampleSpaceError, GeometryAffine[D3]] =
+modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala:437:  private[io] def resolveWorld(
+modules/image/jvm/src/main/scala/scalafim/image/io/Nifti.scala:453:  private def resolveWorld(
+modules/interop-archived-response/shared/src/main/scala/scalafim/dataset/LatentArchiveDatasetBackend.scala:60:  private def selectedData(resolved: ResolvedDataSelection): Either[DatasetError, DMat] =
+modules/interop-archived-response/shared/src/main/scala/scalafim/interop/archive/zarr/TemporalDctZarrBinding.scala:205:  private def resolveObjects(
+modules/interop-archived-response/shared/src/main/scala/scalafim/interop/archive/zarr/DenseBoldZarrSource.scala:313:  private def resolveCoveringObjects(
+modules/interop-archived-response/jvm/src/main/scala/scalafim/archive/io/LnaSharedBasisResolver.scala:73:  private def resolveFromRegistry(
+modules/interop-archived-response/jvm/src/main/scala/scalafim/archive/io/LnaSharedBasisResolver.scala:101:  private def resolveContentAddressed(
+modules/interop-archived-response/jvm/src/main/scala/scalafim/dataset/io/FmriDatasetLna.scala:116:private def openResolvedLna(
+modules/interop-archived-response/jvm/src/main/scala/scalafim/dataset/io/FmriDatasetLna.scala:132:private def resolvePath(
+modules/interop-archived-response/jvm/src/main/scala/scalafim/dataset/io/LnaDataset.scala:563:  private def resolveInsideRoot(path: Path): Path =
+modules/spatial/shared/src/main/scala/scalafim/spatial/SpatialGraph.scala:174:  private def inverseEdges(policy: RoutingPolicy, penalty: InversePenalty): Vector[RouteEdge] =
+modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala:152:  private[spatial] def attachInverse(
+modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala:317:  private[spatial] def validateInverse(
+modules/spatial/shared/src/main/scala/scalafim/spatial/Demand.scala:253:  private[spatial] def unsafeFull(targetSize: Int, observations: Int): ResolvedDemand =
+modules/spatial/shared/src/main/scala/scalafim/spatial/Demand.scala:286:private def resolveSpatial(
+modules/spatial/shared/src/main/scala/scalafim/spatial/Demand.scala:360:private def resolveObservations(
+modules/spatial/shared/src/main/scala/scalafim/spatial/Demand.scala:370:private def resolveTimeBlock(
+modules/spatial/shared/src/main/scala/scalafim/spatial/Demand.scala:378:private def resolveIndices(
+modules/spatial/jvm/src/main/scala/scalafim/spatial/io/NiftiFieldSource.scala:85:  private def resolveState(): Either[SpatialError, ValidatedNiftiState] =
+modules/spatial/jvm/src/main/scala/scalafim/spatial/io/TransformAssetLoader.scala:210:  private def attachInverse(primary: World, inverse: Option[(TransformAssetSpec, AssetRef, World)]): World =
+modules/spatial/jvm/src/main/scala/scalafim/spatial/io/TransformAssetLoader.scala:226:  private def requireDeclaredInverse(descriptor: TransformDescriptor, coordinateMap: CoordinateMap): Either[SpatialIoError, Unit] =
