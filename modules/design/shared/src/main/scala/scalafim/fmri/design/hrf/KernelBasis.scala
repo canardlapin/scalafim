@@ -52,6 +52,8 @@ final case class KernelBasisProvenance(
     nodesPerAxis: Vector[Int],
     includeDerivatives: Boolean,
     tolerance: Double,
+    maxRank: Int,
+    heldOutPoints: Int,
     rank: Int,
     seed: Long):
   def canonical: String =
@@ -66,7 +68,8 @@ final case class KernelBasisProvenance(
     s"kernel-basis/v2|family=${KernelBasisProvenance.field(family)}|chart=${KernelBasisProvenance.record("chart", axes*)}|" +
       s"horizon=${KernelBasisProvenance.number(horizonSeconds)}|step=${KernelBasisProvenance.number(fineStepSeconds)}|" +
       s"nodes=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|derivatives=$includeDerivatives|" +
-      s"tolerance=${KernelBasisProvenance.number(tolerance)}|rank=$rank|seed=$seed"
+      s"tolerance=${KernelBasisProvenance.number(tolerance)}|maxRank=$maxRank|heldOutPoints=$heldOutPoints|" +
+      s"rank=$rank|seed=$seed"
 
 /** Structural encoding helpers shared by the kernel and its downstream fit
   * provenance. Strings are length-framed and doubles retain their IEEE-754
@@ -81,6 +84,28 @@ object KernelBasisProvenance:
 
   private[scalafim] def record(tag: String, fields: String*): String =
     fields.map(field).mkString(s"$tag(", ",", ")")
+
+  /** `none` or `some(<framed>)`, so an absent value never collides with a present one. */
+  private[scalafim] def option(value: Option[String]): String =
+    value.fold("none")(present => record("some", present))
+
+  /** Row-major dimensions plus a content digest: 64-bit FNV-1a over the
+    * little-endian bytes of each entry's `doubleToLongBits`. Portable shared
+    * code, identical on the JVM and Scala.js; an identity, not a security hash.
+    */
+  private[scalafim] def matrix(rows: Int, cols: Int, rowMajor: Array[Double]): String =
+    require(rowMajor.length == rows * cols, "row-major values must match the declared dimensions")
+    var hash = 0xcbf29ce484222325L
+    var i = 0
+    while i < rowMajor.length do
+      val bits = java.lang.Double.doubleToLongBits(rowMajor(i))
+      var byte = 0
+      while byte < 8 do
+        hash = (hash ^ ((bits >>> (8 * byte)) & 0xffL)) * 0x100000001b3L
+        byte += 1
+      i += 1
+    val hex = java.lang.Long.toHexString(hash)
+    record("matrix", rows.toString, cols.toString, s"fnv1a64:${"0" * (16 - hex.length)}$hex")
 
 /** A data-independent basis `Phi` for a parametric HRF family:
   * `h_theta ~= sum_j c_j(theta) phi_j`, with `c(theta)` and its parameter
@@ -114,6 +139,8 @@ final class HrfKernelBasis private (
       nodesPerAxis = spec.nodesPerAxis,
       includeDerivatives = spec.includeDerivatives,
       tolerance = spec.tolerance,
+      maxRank = spec.maxRank,
+      heldOutPoints = spec.heldOutPoints,
       rank = rank,
       seed = spec.seed
     )

@@ -55,7 +55,8 @@ class HrfKernelBasisSuite extends munit.FunSuite:
     assert(kernel(Lag(24.5)).data.forall(_ == 0.0))
     assertEquals(basis.responseBasis.dimension, basis.rank)
     assertEquals(basis.responseBasis.elements.length, basis.rank)
-    assert(basis.provenance.canonical.contains(s"rank=${basis.rank}"))
+    assert(basis.provenance.canonical.contains(s"|rank=${basis.rank}|"))
+    assert(basis.provenance.canonical.contains(s"|maxRank=${basis.spec.maxRank}|heldOutPoints=${basis.spec.heldOutPoints}|"))
     assert(basis.provenance.canonical.startsWith("kernel-basis/v2|family=8:gaussian"))
 
   test("kernel basis provenance has a platform-independent IEEE and string-framed golden"):
@@ -67,13 +68,24 @@ class HrfKernelBasisSuite extends munit.FunSuite:
       nodesPerAxis = Vector(2, 21),
       includeDerivatives = true,
       tolerance = 1e-3,
+      maxRank = 32,
+      heldOutPoints = 300,
       rank = 4,
       seed = 11L
     )
     assertEquals(
       provenance.canonical,
-      "kernel-basis/v2|family=11:gauss|ian;=|chart=chart(76:axis(10:axis,|[]:=,25:bits:-9223372036854775808,24:bits:4627448617123184640))|horizon=bits:-9223372036854775808|step=bits:4591870180066957722|nodes=nodes(1:2,2:21)|derivatives=true|tolerance=bits:4562254508917369340|rank=4|seed=11"
+      "kernel-basis/v2|family=11:gauss|ian;=|chart=chart(76:axis(10:axis,|[]:=,25:bits:-9223372036854775808,24:bits:4627448617123184640))|horizon=bits:-9223372036854775808|step=bits:4591870180066957722|nodes=nodes(1:2,2:21)|derivatives=true|tolerance=bits:4562254508917369340|maxRank=32|heldOutPoints=300|rank=4|seed=11"
     )
+
+  test("matrix identity is dimensions plus a portable FNV-1a digest of the IEEE bits"):
+    val values = Array(1.0, -0.0, 0.1, -1.0, 1e-6, 2.5)
+    assertEquals(KernelBasisProvenance.matrix(2, 3, values), "matrix(1:2,1:3,24:fnv1a64:da488cb4783cb320)")
+    assertEquals(KernelBasisProvenance.matrix(3, 2, values), "matrix(1:3,1:2,24:fnv1a64:da488cb4783cb320)")
+    assertEquals(KernelBasisProvenance.matrix(1, 2, Array(0.0, -0.0)), "matrix(1:1,1:2,24:fnv1a64:881f9fb960fe8ae5)")
+    assertEquals(KernelBasisProvenance.matrix(1, 2, Array(-0.0, 0.0)), "matrix(1:1,1:2,24:fnv1a64:d2f570ef13845ae5)")
+    assertEquals(KernelBasisProvenance.option(None), "none")
+    assertEquals(KernelBasisProvenance.option(Some("")), "some(0:)")
 
   test("coefficient jets match finite differences and reconstruct within the certificate"):
     val point = family.chart.point(5.3, math.log(1.9)).fold(e => fail(e.message), identity)

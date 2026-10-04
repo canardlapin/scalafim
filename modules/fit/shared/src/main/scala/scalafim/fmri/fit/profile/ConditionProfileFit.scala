@@ -4,8 +4,8 @@ import scalafim.dataset.DatasetSeriesReader
 import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.event.ConvolvedTerm
 import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisProvenance}
-import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, EstimateExecutionOutcome, FitError, TaskBasisStructure}
-import scalafim.fmri.hrf.family.{JetLayout, ShapeSummary}
+import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, EstimateExecutionOutcome, FitError, ResponsePreparationIdentity, ResponsePreparationProvenance, TaskBasisStructure}
+import scalafim.fmri.hrf.family.{JetLayout, NormalizationRule, ShapeSummary}
 import scalafim.fmri.model.FitPlan
 
 /** The condition-only ProfileHrf policy composed over an existing fixed
@@ -41,24 +41,56 @@ final case class ConditionProfileBlock(ordinal: Int, results: Vector[ConditionVo
 
 final case class ConditionProfileReceipt(ordinal: Int, voxels: Int, accepted: Int)
 
+/** The exact inputs of one condition-profile post-solve, held as typed values
+  * and encoded structurally by [[canonical]]. Every policy field that can change
+  * the numerics is recorded; [[ConditionProfileProvenance.unencodedPolicyFields]]
+  * lists the ones that cannot, with the reason.
+  */
 final case class ConditionProfileProvenance(
     basis: String,
     structure: Vector[Vector[String]],
-    preparation: String,
+    preparation: ResponsePreparationProvenance,
     nodesPerAxis: Vector[Int],
     budget: DecodeBudget,
-    output: String,
+    prior: Option[ShapePrior],
+    output: OutputRequest,
     noiseVariance: Double):
   def canonical: String =
     val conditions = structure.map(condition => KernelBasisProvenance.record("condition", condition*))
     s"condition-profile/v2|basis=${KernelBasisProvenance.field(basis)}|" +
       s"structure=${KernelBasisProvenance.record("conditions", conditions*)}|" +
-      s"preparation=${KernelBasisProvenance.field(preparation)}|" +
-      s"nodes=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|" +
-      s"budget=${ConditionProfileProvenance.budgetCanonical(budget)}|" +
-      s"output=${KernelBasisProvenance.field(output)}|sigma2=${KernelBasisProvenance.number(noiseVariance)}"
+      s"preparation=${KernelBasisProvenance.field(ResponsePreparationIdentity.provenance(preparation))}|" +
+      s"nodesPerAxis=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|" +
+      s"budget=${KernelBasisProvenance.field(ConditionProfileProvenance.budgetCanonical(budget))}|" +
+      s"prior=${ConditionProfileProvenance.priorCanonical(prior)}|" +
+      s"output=${ConditionProfileProvenance.outputCanonical(output)}|" +
+      s"noiseVariance=${KernelBasisProvenance.number(noiseVariance)}"
 
 object ConditionProfileProvenance:
+
+  /** The policy fields recorded by [[ConditionProfileProvenance.canonical]], by name. */
+  private[profile] val encodedPolicyFields: Vector[String] =
+    Vector("basis", "structure", "nodesPerAxis", "budget", "prior", "noiseVariance", "output")
+
+  /** Policy fields deliberately absent from the identity, with the reason. */
+  private[profile] val unencodedPolicyFields: Map[String, String] =
+    Map(
+      "admission" -> "gates whether preparation is admitted; it cannot change any accepted result",
+      "blockSize" -> "batching only; each voxel's post-solve is independent of the block it is read in"
+    )
+
+  private[profile] def of(policy: ConditionProfilePolicy, preparation: ResponsePreparationProvenance): ConditionProfileProvenance =
+    ConditionProfileProvenance(
+      basis = policy.basis.provenance.canonical,
+      structure = policy.structure.conditions.map(_.map(_.value)),
+      preparation = preparation,
+      nodesPerAxis = policy.nodesPerAxis,
+      budget = policy.budget,
+      prior = policy.prior,
+      output = policy.output,
+      noiseVariance = policy.noiseVariance
+    )
+
   private def numbers(values: Vector[Double]): String =
     KernelBasisProvenance.record("values", values.map(KernelBasisProvenance.number)*)
 
@@ -69,6 +101,61 @@ object ConditionProfileProvenance:
       s"ambiguityEnergy=${KernelBasisProvenance.number(budget.ambiguityEnergy)}|" +
       s"maxCandidateAttempts=${budget.maxCandidateAttempts}|" +
       s"stationarityStepTolerance=${KernelBasisProvenance.number(budget.stationarityStepTolerance)}"
+
+  private[profile] def priorCanonical(prior: Option[ShapePrior]): String =
+    KernelBasisProvenance.option(prior.map { value =>
+      KernelBasisProvenance.record("shape_prior", s"mean=${numbers(value.mean)}", s"precision=${numbers(value.precision)}")
+    })
+
+  private def normalization(rule: NormalizationRule): String =
+    rule match
+      case NormalizationRule.Unnormalised => "unnormalised"
+      case NormalizationRule.UnitPeak => "unit_peak"
+      case NormalizationRule.UnitIntegral => "unit_integral"
+      case NormalizationRule.Density => "density"
+      case NormalizationRule.PositiveComponentArea => "positive_component_area"
+
+  private def query(label: String, weights: Vector[Double], absoluteTolerance: Double): String =
+    KernelBasisProvenance.record(
+      "query",
+      label,
+      s"weights=${numbers(weights)}",
+      s"absoluteTolerance=${KernelBasisProvenance.number(absoluteTolerance)}"
+    )
+
+  /** Condition outputs are encoded in full. Trial outputs are refused by
+    * [[ConditionProfileFit.prepare]] before any provenance exists; they are
+    * still encoded totally, with the trial axis by its ordered trial and
+    * condition counts, because that axis is bound by reference identity.
+    */
+  private[profile] def outputCanonical(output: OutputRequest): String =
+    output match
+      case OutputRequest.ConditionAmplitudes(rule) =>
+        KernelBasisProvenance.record("condition_amplitudes", normalization(rule))
+      case OutputRequest.ConditionQueries(queries, rule) =>
+        KernelBasisProvenance.record(
+          "condition_queries",
+          normalization(rule),
+          KernelBasisProvenance.record("queries", queries.map(q => query(q.label, q.weights, q.absoluteTolerance))*)
+        )
+      case OutputRequest.TrialAmplitudes(rule) =>
+        KernelBasisProvenance.record("trial_amplitudes", normalization(rule))
+      case OutputRequest.TrialQueries(queries, rule) =>
+        KernelBasisProvenance.record(
+          "trial_queries",
+          normalization(rule),
+          KernelBasisProvenance.record(
+            "queries",
+            queries.map(q =>
+              KernelBasisProvenance.record(
+                "trial_query",
+                query(q.label, q.weights, q.absoluteTolerance),
+                s"trials=${q.axis.trialIds.length}",
+                s"conditions=${q.axis.conditionIds.length}"
+              )
+            )*
+          )
+        )
 
 /** Prepared from the plan only; no response is read until [[run]]. */
 final class ConditionProfilePreparation private[profile] (
@@ -81,15 +168,7 @@ final class ConditionProfilePreparation private[profile] (
   def basisRank: Int = policy.structure.basisSize
 
   val provenance: ConditionProfileProvenance =
-    ConditionProfileProvenance(
-      basis = policy.basis.provenance.canonical,
-      structure = policy.structure.conditions.map(_.map(_.value)),
-      preparation = retention.preparation.toString,
-      nodesPerAxis = policy.nodesPerAxis,
-      budget = policy.budget,
-      output = policy.output.toString,
-      noiseVariance = policy.noiseVariance
-    )
+    ConditionProfileProvenance.of(policy, retention.preparation)
 
   /** A worker owning its own objective, decoder and counters. */
   final class Worker:
