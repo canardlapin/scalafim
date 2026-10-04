@@ -106,7 +106,7 @@ adapter `498021e3` is accepted with Stage 1.
 | `43db2e83` | AcceptBoundedPublicReadoutAndScopedStorage (`d7a9e900`) | `profile-trial-readout-stage2-2026-09-30.md`; `trial-public-executor-qualified.json.gz` |
 | `d71e5ca9` | AcceptBoundedTypedCriterionAdapter (`0017dafd`) | `trial-ml-objective-2026-09-30.md`; `trial-criterion-qualified.json.gz` |
 | `944b6fe3` | AcceptBoundedHostedNativeMlCoreAndHelper (`3d75dea0`, Gale `da38f8c4`) | `trial-banded-ml-backend-2026-09-30.md`; `trial-constrained-logdet-2026-09-30.md`; `hosted-ml-core-qualified.json.gz`; `trial-ml-helper-local-qualified.json.gz` |
-| `ee83b1eb` | Public-declaration repair of the rejected `e6543fb6`, accepted with the `0edf75c2` disposition | `profile-public-executor-readout.md`; `hdf-public-c0-integration-qualified.json.gz` |
+| `ee83b1eb` | Public-declaration repair `a7521ffb` (parent: the rejected `e6543fb6`). The independent review verdict is "ACCEPT LOCAL for a7521ffb23b97f75856f5070cd24bfdd600bd51f". The integrated blob hashes match the reviewed source. The repair is also accepted with the `0edf75c2` disposition. | `hdf-public-c0-integration-qualified.json.gz`, payload `evidence/profile-public-provenance-independent-review.md` (sha256 `c24ed1b4…`); `profile-public-executor-readout.md` |
 | `0edf75c2` | C0 default controls accepted; C0 scientific status is HOLD | `condition-c0-qualification.md`; C0 oracle/frozen200 archives; `c0-prefresh-179-independent-review.md` |
 | `a6dbd3b1` | AcceptBoundedNativeMlExecutorIntegration (`8523c8c7`) | `profile-trial-ml-executor-2026-09-30.md`; `native-ml-executor-integrated-qualified.json.gz` |
 | `a9fecbb4` | AcceptBoundedLiteralColumnPlatformTrace | `condition-c0-platform-trace-2026-09-30.md`; `c0-literal-platform-trace-qualified-v2.json.gz` |
@@ -138,6 +138,42 @@ This landing adds no scientific admission. The P1 record's open gates still
 apply: C0 scientific qualification is on HOLD (the JVM SNR 0.5 cell admits
 185/200 against an unchanged 190/200 gate), there is no fresh or 100000-voxel qualification,
 calibration inference is Unresolved, and full PHRF tickets are not closed.
+
+### Archived evidence numbers come from the integration-line decoder
+
+The archived C0, condition-admission, stationarity and Gaussian-precision
+numbers were all produced with the integration line's `ShapeDecoder.scala`
+(SHA-256 `397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb`,
+from `8d5b0e51`). This landing keeps `main`'s reviewed decoder from `8840dbfc`
+instead (SHA-256 `982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554`).
+
+The landed suites pass on `main`'s decoder, as the gates below show. The archived
+admission counts, timings, cohort outcomes and decoder work figures do **not**
+transfer, however. They describe the integration decoder and must not be cited
+as `main` measurements. Any scientific qualification on `main` needs fresh runs.
+
+### Review model provenance
+
+The archived integration-line reviews (P1 README, dispositions, per-feature
+receipts) do not record which model performed them. The one review of this
+landing that is known to have been run by Opus is the independent landing review
+of `3ceba77c`. It verified the provenance of all 50 taken files by script, an
+exact match between the commit and the manifest, byte identity of all 107
+archived receipts, review coverage of all 32 commits, the decoder integration
+and the `WhiteningPlan` transpose. Its verdict was CHANGES-REQUIRED, with one
+defect (F1 below), and the follow-up commit addresses it.
+
+### GaussianFamily behaviour change
+
+`GaussianFamily.scala` (`c9554354`) evaluates each lag directly. Two behaviours
+change as a result:
+
+- the previous underflow flush to zero is removed;
+- the uniform-grid recurrence fast path is gone.
+
+The change was reviewed as AcceptDirectGaussianPrecisionRepair. The landing
+review ran `hrfLawsJVM/test` and got 82/82. `hrfLaws` is now in this landing's
+gate list on both platforms (see Gates).
 
 ## Gates
 
@@ -176,4 +212,59 @@ comparison is exact, so it fails on structural provenance.
 - The JS failure has the same signature, but it was not separately reproduced on
   pristine `main`.
 - A likely origin is `main`'s `45173e2c` ("stream pooled GLS state"). That is not
-  verified here; it needs a separate ticket.
+  verified here.
+- **Known pre-existing failure:** a separate fix is in progress outside this
+  landing, tracked by the PHRF reconciliation coordinator. This landing does not
+  change the suite.
+
+## Follow-up to the landing review (F1, F2)
+
+**F1: the condition workflow example no longer compiled.** The landed
+`ConditionProfileFit.scala` makes `ConditionProfilePolicy.admission:
+ObservedFamilyAdmission` a required field. `scalafimCompileAll` does not build
+examples, so this broke only `workflowExamplesJVM/compile`, at
+`ProfileHrfConditionWorkflow.scala:85` ([E171] missing argument for
+`admission`).
+
+The example now builds its admission the same way the merged
+`ConditionProfileFitSuite` does:
+
+- it calls `ObservedFamilyCertification.admitForCondition(plan, structure, expanded, term, frame, precision, None, Some(nuisance), points, ObservedFamilyRequirements(1e-2, 1e8, 1e-6))`;
+- `nuisance` is the plan's non-task (baseline) columns;
+- the certification points are `(4, log 1.2)` and `(6, log 2.0)`.
+
+Its decode budget changes from `DecodeBudget(2, 2, 2, 6)` to `main`'s reviewed
+`(coarseStride 2, maxNewtonSteps 6, maxJets 8, maxExactEvaluations 2)`. Its
+suite is unchanged. The smoke run accepts 11 of 12 voxels; voxel 7 is
+`BudgetExceeded`, and the suite requires at least 10.
+
+**F2: `ConditionC0QualificationSuite` hit munit's default 30 s timeout under
+host load.** The landing review measured 42 s and 87 s for "bounded DEV paired
+study…" and "unavailable-audit control…" at a load average of about 52.
+
+The suite now sets `munitTimeout = 10 min`. Measured times:
+
+| Run | DEV paired study | zero-admission control | unavailable-audit control |
+| --- | --- | --- | --- |
+| JVM, landing gate | 14.2 s | 11.5 s | 10.8 s |
+| JVM, F2 gate | 10.1 s | 11.5 s | 16.4 s |
+| JS, landing gate | 29.9 s | 27.4 s | 26.9 s |
+| JS, F2 gate | 24.8 s | 23.2 s | 21.3 s |
+| Loaded host (review) | 42 s | — | 87 s |
+
+Ten minutes is about seven times the worst loaded measurement. No assertion
+changed. This file's bytes therefore now differ from `8d5b0e51`; the manifest's
+`postLandingAmendments` records it.
+
+### Follow-up gates
+
+| Gate | Result |
+| --- | --- |
+| `examplesCompile` | exit 0 |
+| `workflowExamplesJVM/test` | 3/3 (includes `ProfileHrfConditionWorkflowSuite`) |
+| `workflowExamplesJVM/runMain scalafim.examples.workflows.runAtlasMvpaWorkflow` (CLAUDE.md smoke) | exit 0 |
+| `workflowExamplesJVM/runMain scalafim.examples.workflows.runProfileHrfConditionWorkflow` | exit 0; 11/12 voxels Accepted |
+| `firstLevelLawsJVM/testOnly …ConditionC0QualificationSuite` | 8/8 |
+| `firstLevelLawsJS/testOnly …ConditionC0QualificationSuite` | 8/8 |
+| `hrfLawsJVM/test` | 82/82 |
+| `hrfLawsJS/test` | 82/82 |

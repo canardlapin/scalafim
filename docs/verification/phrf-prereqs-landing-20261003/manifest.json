@@ -2151,5 +2151,35 @@
       "bytes": 2592,
       "alreadyOnMain": false
     }
-  ]
+  ],
+  "postLandingAmendments": {
+    "reviewedCommit": "3ceba77cc2e4a2eaf76471bdc0aae3aadd9a91eb",
+    "review": "independent Opus landing review, verdict CHANGES-REQUIRED (F1-F6)",
+    "files": [
+      {
+        "path": "examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/ProfileHrfConditionWorkflow.scala",
+        "finding": "F1",
+        "disposition": "edited",
+        "change": "build ObservedFamilyAdmission via admitForCondition (as merged ConditionProfileFitSuite); DecodeBudget (2,2,2,6) -> main's reviewed (2,6,8,2)",
+        "sha256": "a19af453d75fca226b6f3fd358850d46df94b7ba5d37308a55c7089040a6c1a3",
+        "reviewStatus": "new code; pending Opus review"
+      },
+      {
+        "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala",
+        "finding": "F2",
+        "disposition": "taken-then-edited",
+        "change": "explicit munitTimeout = 10 min; no assertion change",
+        "sourceSha256": "86d77854a382cffc75db861f9e5cba9036f0b4fe8da78853349f791150ea35de",
+        "sha256": "f05634ebcf54e7a5e0000d56da0cc1276e00f0389f86eccdb0f9d9e4fa9f95c8"
+      }
+    ],
+    "reviewBasisCorrections": {
+      "ee83b1eb": "a7521ffb23b97f75856f5070cd24bfdd600bd51f (parent e6543fb6): ACCEPT LOCAL in hdf-public-c0-integration-qualified.json.gz payload evidence/profile-public-provenance-independent-review.md (sha256 c24ed1b4d10ecaa740d34bc889ad34a79db5eb7a95807fc788b41647c30d690a)"
+    },
+    "decoderEvidenceCaveat": {
+      "integrationShapeDecoderSha256": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+      "landedShapeDecoderSha256": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554",
+      "note": "archived C0/condition/Gaussian evidence numbers were produced on the integration decoder and do not transfer to main's 8840dbfc decoder"
+    }
+  }
 }

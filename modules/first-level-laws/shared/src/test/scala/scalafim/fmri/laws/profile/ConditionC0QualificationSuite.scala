@@ -892,6 +892,10 @@ object ConditionC0QualificationOracleControlMain:
 class ConditionC0QualificationSuite extends munit.FunSuite:
   import ConditionC0QualificationHarness.*
 
+  // Measured worst cases for the bounded DEV/control studies: 14.2 s JVM and 29.9 s JS on a quiet
+  // host, 87 s under load average ~52. Ten minutes gives ~7x the loaded worst case; assertions unchanged.
+  override val munitTimeout: scala.concurrent.duration.Duration = scala.concurrent.duration.Duration(10, "min")
+
   test("public C0 block widths preserve all signed outputs, sample IDs and seven work fields"):
     val receipts = Vector(1, 2, 256).map: blockSize =>
       runQualified(BaselineLabel, 256, blockSize, 1.0, 101L, Baseline, capturePerVoxel = true)
