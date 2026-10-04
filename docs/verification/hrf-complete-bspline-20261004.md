@@ -42,6 +42,19 @@ Status: ready for independent review. Not landed, not pushed.
 3. The fmrihrf drift is filed as bead `bd-01M43X88PVTG0A28RYC3X1TEJS`
    (actor `phrf-claude-20260929`).
 
+Final review follow-up (Opus review of `bf677674`: APPROVE-WITH-NITS):
+
+- The identity conservatism at minimum width is documented in code and here,
+  and the descriptor test is renamed so it no longer claims distinct spaces.
+- The Semantics statement about legacy out-of-support clamping is corrected
+  and pinned by a test.
+- `HrfParams.Bspline.convention` has no default argument, so constructing the
+  params cannot silently drop `Complete`. `Hrfs.bspline` keeps its default.
+  Every call site already passed the convention explicitly.
+- The remaining nits are left to a bead the coordinator is filing: Gauss-Legendre
+  exactness capped at degree 7, the same `Hrf.name` for both conventions, and
+  no HrfSpec/formula wiring for `Complete`.
+
 ## Semantics
 
 `Hrfs.bspline(nBasis, span, degree)` (convention `Hrfs.BsplineConvention.LegacyR`) is the default.
@@ -58,8 +71,14 @@ exist.
   so fractional spans get even intervals;
 - partition of unity on the closed window (constants are representable;
   generally nonzero at onset);
-- exactly zero outside `[0, span]`. The legacy mode instead clamps outside
-  times to `t = 0`, which gives zero for that basis anyway;
+- exactly zero outside `[0, span]`, in the raw kernel `HrfFunctions.bsplineBasis`
+  as well as through `Hrf.apply`. The legacy kernel instead clamps outside
+  times to `t = 0`. With interior knots that row is zero, but at minimum width
+  (`nBasis <= degree + 1`) it is `[1, 0, 0, 0]`, so the public legacy
+  `bsplineBasis` is nonzero for `t < 0` and `t > span`. Only the `Hrf` support
+  gate (`Support.Compact(span)`) masks this for `Hrfs.bspline`. This legacy
+  behavior is unchanged from main and pinned in
+  `legacy convention is onset-anchored only when it has interior knots`;
 - the integration policy is `PiecewisePolynomial` with the uniform breaks, so
   `ResponseFunctional.WindowMean` stays exact;
 - no column normalization in either mode.
@@ -161,10 +180,14 @@ The effect is as follows:
 - Legacy B-spline identities are byte-identical to main. This covers every
   existing descriptor, element ID, column ID and fingerprint, so no persisted
   artifact changes.
-- The complete basis gets a distinct identity. It is a different response
-  space, so it must have one, and the test
-  `complete and legacy descriptors distinguish different response spaces`
-  covers this. No descriptor version bump is needed, because no existing
+- The complete basis gets a distinct identity, covered by the test
+  `complete and legacy conventions have distinct descriptors`. Identity is
+  deliberately conservative: it encodes the requested parameters, not the
+  realized space. At minimum width (`nBasis <= degree + 1`) LegacyR and
+  Complete evaluate to the same Bernstein basis but keep distinct identities,
+  and different requested counts that clamp to the same width also differ.
+  Equal spaces may therefore carry different identities, but different spaces
+  never share one (no false merge). `HrfIdentity.scala` documents this. No descriptor version bump is needed, because no existing
   encoding changes meaning.
 - The tag is `complete`, a semantic token, rather than the boolean rendering
   `true`. A later third mode, such as fmrihrf HEAD's interior-only basis, can
@@ -230,6 +253,12 @@ on each platform (one fewer test), plus `firstLevelLawsJVM/test` at 83 passed.
 `firstLevelLaws` was not rerun in round 2; it has no B-spline identity goldens
 and the round-2 change does not alter any numeric path or identity string.
 Round 1 `scalafimCompileAll` exited 0 in 1582 s with no source warnings.
+
+Round 3 (review follow-up, after removing the `HrfParams.Bspline` default and
+adding the out-of-support assertions): `hrfJVM/test` 284 passed, `hrfJS/test`
+284 passed, `designJVM/test` 445 passed, `modelJVM/test` 53 passed, all with
+0 failed; `scalafimCompileAll` exited 0 in 241 s with no source warnings or
+errors.
 
 The JVM and JS totals differ for design and fit because of platform-specific
 suites under `jvm/src/test`.

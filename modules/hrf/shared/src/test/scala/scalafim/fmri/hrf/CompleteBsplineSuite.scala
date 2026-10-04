@@ -76,7 +76,7 @@ class CompleteBsplineSuite extends munit.FunSuite:
     for time <- Vector(0.0, 1.0, 12.25, 24.5) do
       assertEqualsDouble(fitted(Lag(time)).data(0), 2.5, 1e-12)
 
-  test("complete and legacy descriptors distinguish different response spaces"):
+  test("complete and legacy conventions have distinct descriptors"):
     assertNotEquals(Hrfs.bspline().descriptor, Hrfs.bspline(convention = Hrfs.BsplineConvention.Complete).descriptor)
     assertEqualsDouble(Hrfs.bspline()(Lag(0)).data.sum, 0.0, 0.0)
     intercept[IllegalArgumentException](Hrfs.bspline(degree = -1, convention = Hrfs.BsplineConvention.Complete))
@@ -88,4 +88,8 @@ class CompleteBsplineSuite extends munit.FunSuite:
     assertEquals(minimum.descriptor.nbasis, 4)
     assertEqualsDouble(minimum(Lag(0)).data.sum, 1.0, 1e-14)
     assertEqualsDouble(minimum(Lag(3.0)).data.sum, 1.0, 1e-14)
+    // The raw legacy kernel clamps t < 0 to t = 0, so at minimum width it is
+    // nonzero before onset; only the Hrf support gate masks it.
+    assertEqualsDouble(HrfFunctions.bsplineBasis(Lag(-1.0), 8.s, 2).sum, 1.0, 1e-14)
+    assertEqualsDouble(minimum(Lag(-1.0)).data.sum, 0.0, 0.0)
     assertEqualsDouble(Hrfs.bspline(nBasis = 5, span = 8.s)(Lag(0)).data.sum, 0.0, 0.0)
