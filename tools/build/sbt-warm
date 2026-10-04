@@ -13,20 +13,40 @@ usage:
   python3 tools/build/sbt-warm [--] 'mvpaJVM/test' 'mvpaJS/test'   run commands, in order
   python3 tools/build/sbt-warm --status                          show this worktree's base/server
   python3 tools/build/sbt-warm --shutdown                        stop this worktree's server
+  python3 tools/build/sbt-warm --gc [--apply]                    list (or delete) orphaned bases
+  python3 tools/build/sbt-warm -h | --help                       show this help
 
 Commands run in order; the first failing command stops the run with its exit
-code. Environment knobs (defaults in brackets):
+code. Arguments starting with `-` are rejected unless they follow `--`.
+
+A base is discarded and reseeded when the dependency pins change (every 40-hex
+SHA and canardlapin repository in build.sbt, plus project/build.properties and
+project/plugins.sbt), but never while its server is alive: the server is asked
+to shut down first, and the base is kept if it does not stop.
+
+`--gc` only considers bases that record their worktree (`.worktree`), whose
+worktree directory no longer exists, and whose server is not alive. It is a dry
+run unless `--apply` is given.
+
+When stdin is not a terminal (agents, CI), the client runs with TERM=dumb and
+stdin from /dev/null so a server started there cannot block on terminal probes.
+
+Environment knobs (defaults in brackets):
   SBT_WARM_HOME   cache root            [~/.cache/scalafim-sbt]
   SBT_WARM_HEAP   server -Xmx            [3g]
   SBT_WARM_CPUS   server processor count [4]
   SBT_WARM_SLOTS  concurrent commands    [3]
   SBT_WARM_IDLE_MINUTES  server idle shutdown [30]
+  SBT_WARM_STOP_SECONDS  wait for a server to stop before keeping its base [60]
 """
 
 import fcntl
 import hashlib
+import json
 import os
+import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
@@ -37,6 +57,18 @@ HEAP = os.environ.get("SBT_WARM_HEAP", "3g")
 CPUS = os.environ.get("SBT_WARM_CPUS", "4")
 SLOTS = int(os.environ.get("SBT_WARM_SLOTS", "3"))
 IDLE_MINUTES = int(os.environ.get("SBT_WARM_IDLE_MINUTES", "30"))
+STOP_SECONDS = float(os.environ.get("SBT_WARM_STOP_SECONDS", "60"))
+
+SHA_PATTERN = re.compile(r"\b[0-9a-f]{40}\b")
+REPO_PATTERN = re.compile(r"canardlapin/[A-Za-z0-9._-]+")
+WORKTREE_RECORD = ".worktree"
+PIN_MARKER = ".pin-key"
+# Never copied into a clone: live server sockets and the source base's identity.
+CLONE_EXCLUDES = ("server", WORKTREE_RECORD)
+
+
+class UsageError(Exception):
+    pass
 
 
 def log(message: str) -> None:
@@ -48,41 +80,157 @@ def worktree() -> Path:
     return Path(out.stdout.strip()).resolve()
 
 
+def base_for(root: Path) -> Path:
+    return HOME / "bases" / hashlib.sha256(str(root).encode()).hexdigest()[:16]
+
+
 def pin_key(root: Path) -> str:
-    """Hash of everything that determines the staged dependency builds."""
+    """Hash of everything that determines the staged dependency builds.
+
+    Pins are recognised by content, not by line shape: every 40-hex SHA (in
+    order of appearance, so a revision split across lines is still seen) and
+    the sorted set of canardlapin repositories. Comments and formatting that
+    carry neither do not change the key.
+    """
     digest = hashlib.sha256()
-    build = (root / "build.sbt").read_text().splitlines()
-    for line in build:
-        if "Revision" in line or "canardlapin/" in line or ".build" in line:
-            digest.update(line.strip().encode())
+    text = (root / "build.sbt").read_text()
+    for sha in SHA_PATTERN.findall(text):
+        digest.update(b"sha:" + sha.encode() + b"\n")
+    for repo in sorted(set(REPO_PATTERN.findall(text))):
+        digest.update(b"repo:" + repo.encode() + b"\n")
     for name in ("project/build.properties", "project/plugins.sbt"):
         path = root / name
+        digest.update(f"file:{name}\n".encode())
         if path.exists():
             digest.update(path.read_bytes())
     return digest.hexdigest()[:16]
 
 
+def socket_alive(path: Path) -> bool:
+    """True when something accepts connections on the unix socket at `path`.
+
+    Missing or refusing sockets are dead. Any other failure (for example an
+    over-long path) is treated as alive, so callers err towards keeping data.
+    """
+    if not path.exists():
+        return False
+    probe = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    probe.settimeout(2)
+    try:
+        probe.connect(str(path))
+        return True
+    except (ConnectionRefusedError, FileNotFoundError):
+        return False
+    except OSError:
+        return True
+    finally:
+        probe.close()
+
+
+def base_server_alive(base: Path) -> bool:
+    """True when a server is listening on any socket inside `base`."""
+    return any(socket_alive(sock) for sock in (base / "server").glob("*/sock"))
+
+
+def server_running(root: Path) -> bool:
+    """True when the server named by this worktree's active.json is alive."""
+    active = root / "project" / "target" / "active.json"
+    if not active.exists():
+        return False
+    try:
+        uri = json.loads(active.read_text()).get("uri", "")
+    except (OSError, ValueError):
+        return True
+    if not uri.startswith("local://"):
+        return True
+    return socket_alive(Path(uri[len("local://"):]))
+
+
+def server_alive(root: Path, base: Path) -> bool:
+    return server_running(root) or base_server_alive(base)
+
+
+def client_io(env: dict) -> dict:
+    """Without a terminal, keep the client from probing one (sbt deadlocks)."""
+    if sys.stdin is not None and sys.stdin.isatty():
+        return {}
+    env["TERM"] = "dumb"
+    return {"stdin": subprocess.DEVNULL}
+
+
+def run_client(root: Path, base: Path, command: str) -> int:
+    env = sbt_env(base)
+    extra = client_io(env)
+    return subprocess.call(["sbt", "--client", command], cwd=root, env=env, **extra)
+
+
+def stop_server(root: Path, base: Path) -> bool:
+    """Ask this worktree's server to shut down; True once nothing is alive."""
+    if not server_alive(root, base):
+        return True
+    log(f"stopping the server for {root} before discarding its base")
+    run_client(root, base, "shutdown")
+    deadline = time.time() + STOP_SECONDS
+    while time.time() < deadline:
+        if not server_alive(root, base):
+            return True
+        time.sleep(1)
+    return not server_alive(root, base)
+
+
 def clone_tree(source: Path, target: Path) -> None:
-    """Copy-on-write clone (APFS clonefile via `cp -c`), skipping server sockets."""
+    """Copy `source` to `target` atomically, skipping CLONE_EXCLUDES.
+
+    Uses an APFS copy-on-write clone (`cp -c`) where available and falls back to
+    a plain copy otherwise. A failed copy is removed and never renamed into place.
+    """
     target.parent.mkdir(parents=True, exist_ok=True)
     staging = target.with_name(target.name + ".partial")
     if staging.exists():
         shutil.rmtree(staging)
-    subprocess.run(["cp", "-c", "-R", str(source), str(staging)], check=False, stderr=subprocess.DEVNULL)
-    server = staging / "server"
-    if server.exists():
-        shutil.rmtree(server)
-    staging.rename(target)
+    try:
+        attempts = []
+        if sys.platform == "darwin":
+            attempts.append(["cp", "-c", "-R", str(source), str(staging)])
+        attempts.append(["cp", "-p", "-R", str(source), str(staging)])
+        error = ""
+        for index, command in enumerate(attempts):
+            result = subprocess.run(command, capture_output=True, text=True)
+            if result.returncode == 0:
+                break
+            error = result.stderr.strip()
+            if staging.exists():
+                shutil.rmtree(staging)
+            if index + 1 < len(attempts):
+                log(f"copy-on-write clone failed ({error or 'exit ' + str(result.returncode)}); falling back to a plain copy")
+        else:
+            raise RuntimeError(f"could not copy {source} to {target}: {error}")
+        for name in CLONE_EXCLUDES:
+            excluded = staging / name
+            if excluded.is_dir() and not excluded.is_symlink():
+                shutil.rmtree(excluded)
+            elif excluded.exists() or excluded.is_symlink():
+                excluded.unlink()
+        staging.rename(target)
+    except BaseException:
+        if staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
+        raise
 
 
 def prepare_base(root: Path) -> Path:
     key = pin_key(root)
-    base = HOME / "bases" / hashlib.sha256(str(root).encode()).hexdigest()[:16]
+    base = base_for(root)
     template = HOME / "templates" / key
     with open_home_lock() as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        marker = base / ".pin-key"
+        marker = base / PIN_MARKER
         if base.exists() and (not marker.exists() or marker.read_text() != key):
+            if not stop_server(root, base):
+                raise RuntimeError(
+                    f"pins changed for {root}, but its server is still alive; refusing to discard {base}. "
+                    "Stop it with `sbt-warm --shutdown` and retry."
+                )
             log(f"pins changed for {root}; discarding stale base {base}")
             shutil.rmtree(base)
         if not base.exists():
@@ -93,6 +241,9 @@ def prepare_base(root: Path) -> Path:
                 log(f"no template for pins {key}; first build will clone and compile dependencies")
                 base.mkdir(parents=True)
             marker.write_text(key)
+        record = base / WORKTREE_RECORD
+        if not record.exists() or record.read_text() != str(root):
+            record.write_text(str(root))
         settings = base / "global.sbt"
         wanted = f"Global / serverIdleTimeout := Some(scala.concurrent.duration.FiniteDuration({IDLE_MINUTES}L, \"minutes\"))\n"
         if not settings.exists() or settings.read_text() != wanted:
@@ -146,43 +297,121 @@ def sbt_env(base: Path) -> dict:
     return env
 
 
-def server_running(root: Path) -> bool:
-    return (root / "project" / "target" / "active.json").exists()
-
-
-def main(argv: list) -> int:
-    root = worktree()
-    if argv[:1] == ["--status"]:
-        base = HOME / "bases" / hashlib.sha256(str(root).encode()).hexdigest()[:16]
-        print(f"worktree {root}\npin key  {pin_key(root)}\nbase     {base} ({'present' if base.exists() else 'absent'})")
-        print(f"template {'present' if (HOME / 'templates' / pin_key(root)).exists() else 'absent'}")
-        print(f"server   {'running' if server_running(root) else 'not running'}")
+def gc(apply: bool) -> int:
+    """Report (or with `apply`, delete) bases whose worktree is gone and server dead."""
+    bases = HOME / "bases"
+    if not bases.is_dir():
+        log("no bases")
         return 0
-    if argv[:1] == ["--shutdown"]:
-        if not server_running(root):
-            log("no server running")
-            return 0
-        base = prepare_base(root)
-        return subprocess.call(["sbt", "--client", "shutdown"], cwd=root, env=sbt_env(base))
-    commands = argv[1:] if argv[:1] == ["--"] else argv
+    removable = []
+    with open_home_lock() as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        for base in sorted(path for path in bases.iterdir() if path.is_dir()):
+            record = base / WORKTREE_RECORD
+            if not record.is_file():
+                print(f"keep    {base.name}  (no worktree record)")
+                continue
+            recorded = record.read_text().strip()
+            if hashlib.sha256(recorded.encode()).hexdigest()[:16] != base.name:
+                print(f"keep    {base.name}  (record {recorded} does not match the base name)")
+                continue
+            if Path(recorded).exists():
+                print(f"keep    {base.name}  (worktree {recorded} exists)")
+                continue
+            if base_server_alive(base):
+                print(f"keep    {base.name}  (server alive; worktree {recorded} is gone)")
+                continue
+            removable.append((base, recorded))
+            if apply:
+                shutil.rmtree(base)
+                print(f"removed {base.name}  (worktree {recorded} is gone)")
+            else:
+                print(f"remove  {base.name}  (worktree {recorded} is gone)")
+    if not apply and removable:
+        log(f"dry run: {len(removable)} base(s) would be removed; rerun with --gc --apply")
+    return 0
+
+
+def parse(argv: list):
+    """Return (mode, payload): ('help', None), ('status'|'shutdown', None), ('gc', apply), ('run', commands)."""
+    if "--" in argv:
+        split = argv.index("--")
+        options, commands = argv[:split], argv[split + 1 :]
+    else:
+        options, commands = argv, []
+    flags = [arg for arg in options if arg.startswith("-")]
+    commands = [arg for arg in options if not arg.startswith("-")] + commands
+    if "-h" in flags or "--help" in flags:
+        return "help", None
+    known = {"--status", "--shutdown", "--gc", "--apply"}
+    unknown = [flag for flag in flags if flag not in known]
+    if unknown:
+        raise UsageError(f"unknown option(s): {' '.join(unknown)} (put sbt arguments after `--`)")
+    if "--apply" in flags and "--gc" not in flags:
+        raise UsageError("--apply is only valid with --gc")
+    modes = [flag for flag in flags if flag != "--apply"]
+    if len(modes) > 1:
+        raise UsageError(f"choose one of {', '.join(modes)}")
+    if modes:
+        if commands:
+            raise UsageError(f"{modes[0]} takes no commands")
+        mode = modes[0][2:]
+        return mode, ("--apply" in flags if mode == "gc" else None)
     if not commands:
-        print(__doc__, file=sys.stderr)
-        return 2
+        raise UsageError("no commands given")
+    return "run", commands
+
+
+def run(root: Path, commands: list) -> int:
     base = prepare_base(root)
-    fresh = not (base / "staging").exists()
+    code = 0
     slot = acquire_slot()
     try:
         for command in commands:
             started = time.time()
-            code = subprocess.call(["sbt", "--client", command], cwd=root, env=sbt_env(base))
+            code = run_client(root, base, command)
             log(f"{command}: exit {code} in {time.time() - started:.1f}s")
             if code != 0:
-                return code
+                break
     finally:
         slot.close()
-    if fresh and (base / "staging").exists():
+    # The commands are finished, so this client leaves the server idle. A live
+    # server means the build loaded, even if a later command failed.
+    template = HOME / "templates" / pin_key(root)
+    if not template.exists() and (base / "staging").exists() and server_running(root):
         snapshot_template(root, base)
-    return 0
+    return code
+
+
+def main(argv: list) -> int:
+    try:
+        mode, payload = parse(argv)
+    except UsageError as error:
+        print(f"sbt-warm: {error}; see `sbt-warm --help`", file=sys.stderr)
+        return 2
+    if mode == "help":
+        print(__doc__)
+        return 0
+    if mode == "gc":
+        return gc(apply=payload)
+    root = worktree()
+    if mode == "status":
+        base = base_for(root)
+        key = pin_key(root)
+        print(f"worktree {root}\npin key  {key}\nbase     {base} ({'present' if base.exists() else 'absent'})")
+        print(f"template {'present' if (HOME / 'templates' / key).exists() else 'absent'}")
+        print(f"server   {'running' if server_running(root) else 'not running'}")
+        return 0
+    if mode == "shutdown":
+        if not server_running(root):
+            log("no server running")
+            return 0
+        return run_client(root, base_for(root), "shutdown")
+    try:
+        return run(root, payload)
+    except RuntimeError as error:
+        log(str(error))
+        return 1
 
 
 if __name__ == "__main__":

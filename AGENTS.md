@@ -32,7 +32,9 @@ for the module map; this file is the working contract.
   project loading. Commands run in order and the first failure's exit code is
   returned. Worktrees share no mutable build state, so these runs need no host-wide
   sbt lock; a three-slot host semaphore bounds concurrency. Servers stop after 30
-  idle minutes; `--status` and `--shutdown` inspect or stop this worktree's server.
+  idle minutes; `--status` and `--shutdown` inspect or stop this worktree's server,
+  and `--gc` (dry run; `--gc --apply` deletes) lists bases whose worktree is gone.
+  Pass sbt arguments that start with `-` after `--`; other unknown flags are rejected.
 
 ## Scala 3 style
 
