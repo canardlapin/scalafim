@@ -5,15 +5,16 @@ import scalafim.spatial.SpatialError
 import scalafim.transform.TransformError
 
 enum AtlasError:
+  case InvalidSpaceId(detail: String)
   case EmptyAtlas
   case DuplicateRegionIds(ids: Vector[RegionId])
   case MissingRegionId(id: RegionId)
   case MissingPayloadRegionIds(ids: Vector[RegionId])
   case UnknownAtlas(name: String, available: Vector[String])
-  case UnknownSpace(space: AnySpaceId)
-  case SpaceKindMismatch(space: AnySpaceId, expected: SpaceKindTag, actual: SpaceKindTag)
-  case NoTransformRoute(from: AnySpaceId, to: AnySpaceId)
-  case TransformNotExecutable(from: AnySpaceId, to: AnySpaceId, reason: String)
+  case UnknownSpace(space: SpaceId)
+  case SpaceKindMismatch(space: SpaceId, expected: SpaceKindTag, actual: SpaceKindTag)
+  case NoTransformRoute(from: SpaceId, to: SpaceId)
+  case TransformNotExecutable(from: SpaceId, to: SpaceId, reason: String)
   case TransformGraph(cause: SpatialError)
   case Transform(cause: TransformError)
 
@@ -22,7 +23,7 @@ enum AtlasError:
 
   /** A template asset is in none of the searched caches; nothing is downloaded or substituted. */
   case TemplateAssetMissing(asset: String, searched: Vector[String])
-  case GridWorldMismatch(role: String, space: AnySpaceId, detail: String)
+  case GridWorldMismatch(role: String, space: SpaceId, detail: String)
   case SpaceMismatch(expected: Vector[Int], actual: Vector[Int])
   case ExactGridRequired(expected: String, actual: String)
   case Geometry(cause: GeometryError)
@@ -30,12 +31,13 @@ enum AtlasError:
   case InvalidCoordinate(detail: String)
   case InvalidRegionMetadata(detail: String)
   case InvalidAlignment(detail: String)
-  case InvalidReduction(detail: String)
+  case Reduction(cause: AtlasReductionError)
 
   def message: String =
     this match
       case EmptyAtlas =>
         "atlas must contain at least one region"
+      case InvalidSpaceId(detail) => detail
       case DuplicateRegionIds(ids) =>
         s"atlas region ids must be unique: ${ids.map(_.value).mkString(", ")}"
       case MissingRegionId(id) =>
@@ -76,5 +78,5 @@ enum AtlasError:
         detail
       case InvalidAlignment(detail) =>
         detail
-      case InvalidReduction(detail) =>
-        detail
+      case Reduction(cause) =>
+        cause.message

@@ -162,11 +162,11 @@ class AtlasIoSuite extends munit.FunSuite:
 
     val regions = SchaeferLoader.parseLut(text, spec)
     assertEquals(regions.map(_.id), Vector(RegionId(1), RegionId(2)))
-    assertEquals(regions.head.label, "Vis_1")
+    assertEquals(regions.head.label.value, "Vis_1")
     assertEquals(regions.head.hemisphere, Some(Hemisphere.Left))
     assertEquals(regions.head.network, Some(NetworkId("Vis")))
     assertEquals(regions.head.color, Some(Rgb(120, 10, 20)))
-    assertEquals(regions(1).label, "PFC_2")
+    assertEquals(regions(1).label.value, "PFC_2")
     assertEquals(regions(1).hemisphere, Some(Hemisphere.Right))
     assertEquals(regions(1).network, Some(NetworkId("Default")))
 
@@ -213,9 +213,9 @@ class AtlasIoSuite extends munit.FunSuite:
         |""".stripMargin
     val regions = GlasserLoader.parseLabels(text)
     assertEquals(regions.map(_.id), Vector(RegionId(1), RegionId(2)))
-    assertEquals(regions.head.label, "V1")
+    assertEquals(regions.head.label.value, "V1")
     assertEquals(regions.head.hemisphere, Some(Hemisphere.Left))
-    assertEquals(regions(1).label, "7Pm")
+    assertEquals(regions(1).label.value, "7Pm")
     assertEquals(regions(1).hemisphere, Some(Hemisphere.Right))
 
     val ref = GlasserLoader.refFor(GlasserHcpMmp1(GlasserSource.Mni2009c))
@@ -225,7 +225,7 @@ class AtlasIoSuite extends munit.FunSuite:
     assertEquals(ref.toProvenance(RegionIndex(regions)).support, SpatialSupport.Volume(SpaceId.MNI152NLin2009cAsym, SpaceId.MNI152, Some(VoxelSize.isotropic(1.0))))
   }
 
-  test("GlasserLoader descriptors cover all volume asset variants and unknown hemispheres") {
+  test("GlasserLoader descriptors cover volume variants and require known hemisphere keys") {
     val mniAssets = GlasserLoader.assets(GlasserHcpMmp1(GlasserSource.Mni2009c))
     assertEquals(mniAssets.volume.fileName, "MMP_in_MNI_corr.nii.gz")
     assertEquals(mniAssets.volume.key, "glasser-mni2009c-volume")
@@ -245,17 +245,16 @@ class AtlasIoSuite extends munit.FunSuite:
     val regions =
       GlasserLoader.parseLabels(
         """# comment
-          |UnknownParcel_ROI
           |LH_Area_ROI
           |right_Area2_ROI
           |""".stripMargin
       )
 
-    assertEquals(regions.map(_.id), Vector(RegionId(1), RegionId(2), RegionId(3)))
-    assertEquals(regions.head.label, "ROI")
-    assertEquals(regions.head.hemisphere, None)
-    assertEquals(regions(1).hemisphere, Some(Hemisphere.Left))
-    assertEquals(regions(2).hemisphere, Some(Hemisphere.Right))
+    assertEquals(regions.map(_.id), Vector(RegionId(1), RegionId(2)))
+    assertEquals(regions.map(_.fullLabel.value), Vector("L_Area_ROI", "R_Area2_ROI"))
+    assertEquals(regions.head.hemisphere, Some(Hemisphere.Left))
+    assertEquals(regions(1).hemisphere, Some(Hemisphere.Right))
+    assertEquals(GlasserLoader.parseLabelsEither("UnknownParcel_ROI"), Left(ParcelIdentityError.InvalidGlasserKey("UnknownParcel_ROI")))
   }
 
   test("AsegLoader load resolves default asset through supplied store without downloads") {
@@ -309,7 +308,7 @@ class AtlasIoSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left))
+          AtlasRegionMetadata.fromStrings(RegionId(1), "A", hemisphere = Some(Hemisphere.Left))
         )
       )
     val ref =
@@ -346,8 +345,8 @@ class AtlasIoSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          AtlasRegionMetadata(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
-          AtlasRegionMetadata(RegionId(2), "B", hemisphere = Some(Hemisphere.Right))
+          AtlasRegionMetadata.fromStrings(RegionId(1), "A", hemisphere = Some(Hemisphere.Left)),
+          AtlasRegionMetadata.fromStrings(RegionId(2), "B", hemisphere = Some(Hemisphere.Right))
         )
       )
     val ref =
@@ -361,7 +360,7 @@ class AtlasIoSuite extends munit.FunSuite:
 
     val atlas = AtlasLabelMaps.buildAtlas(ref, regions, labelVol)
     assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
-    assertEquals(atlas.region(RegionId(2)).map(_.label), Some("B"))
+    assertEquals(atlas.region(RegionId(2)).map(_.label.value), Some("B"))
   }
 
   test("SchaeferLoader loadFromPaths reads a synthetic NIfTI fixture and filters absent LUT rows") {

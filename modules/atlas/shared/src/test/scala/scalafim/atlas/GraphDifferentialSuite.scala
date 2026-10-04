@@ -19,10 +19,10 @@ class GraphDifferentialSuite extends munit.FunSuite:
 
   private val regions = RegionIndex(
     Vector(
-      AtlasRegionMetadata(RegionId(1), "A"),
-      AtlasRegionMetadata(RegionId(2), "B"),
-      AtlasRegionMetadata(RegionId(3), "C"),
-      AtlasRegionMetadata(RegionId(4), "D")
+      AtlasRegionMetadata.fromStrings(RegionId(1), "A"),
+      AtlasRegionMetadata.fromStrings(RegionId(2), "B"),
+      AtlasRegionMetadata.fromStrings(RegionId(3), "C"),
+      AtlasRegionMetadata.fromStrings(RegionId(4), "D")
     )
   )
 

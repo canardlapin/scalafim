@@ -1,6 +1,7 @@
 package scalafim.image
 
 import image4s.Categorical
+import image4s.Continuous
 import image4s.ImageMetadata
 import image4s.NonSpatialAxes
 import image4s.SampleSpace
@@ -82,6 +83,10 @@ final class VolumeParcellation[
   def metadataAt(parcel: Index[P]): M =
     parcelMetadata(parcel)
 
+  /** Stable scalar sample owner over the exact grid of this assignment. */
+  lazy val sampleSpace: SampleSpace[F, D3] =
+    SampleSpace.create(domain.grid, NonSpatialAxes.empty)
+
   /** Explicit dense categorical rendering with a caller-selected background. */
   def renderCategorical[Q, A](
       parcelValues: Field[Q, A],
@@ -91,6 +96,28 @@ final class VolumeParcellation[
       DType[A],
       ValueSemantics[A, Categorical]
   ): Either[VolumeParcellationError, SomeLabelVolume[A]] =
+    render[Q, A, Categorical](parcelValues, background, metadata)
+      .map(SomeNeuroVolume.eraseSpace)
+
+  /** Continuous values are scattered without conversion to categorical labels. */
+  def renderContinuous[Q, A](
+      parcelValues: Field[Q, A],
+      background: A,
+      metadata: ImageMetadata = imageMetadata
+  )(using
+      DType[A],
+      ValueSemantics[A, Continuous]
+  ): Either[VolumeParcellationError, ScalarVolume[sampleSpace.type, A]] =
+    render[Q, A, Continuous](parcelValues, background, metadata)
+
+  private def render[Q, A, Sem](
+      parcelValues: Field[Q, A],
+      background: A,
+      metadata: ImageMetadata
+  )(using DType[A], ValueSemantics[A, Sem]): Either[
+    VolumeParcellationError,
+    NeuroVolume[sampleSpace.type, A, Sem]
+  ] =
     if !parcels.sameRuntimeOwnerAs(parcelValues.space) then
       Left(
         VolumeParcellationError.WrongParcelOwner(
@@ -120,13 +147,10 @@ final class VolumeParcellation[
                   assignment(voxel).fold(background)(exactValues.apply)
                 output.writeLinear(voxelOrdinal, value)
                 voxelOrdinal += 1
-          val sampleSpace =
-            SampleSpace.create(domain.grid, NonSpatialAxes.empty)
           NeuroVolume
-            .categorical(sampleSpace, data, metadata)
+            .fromRavel[A, Sem](sampleSpace, data, metadata)
             .left
             .map(VolumeParcellationError.InvalidImage.apply)
-            .map(SomeNeuroVolume.eraseSpace)
 
 sealed trait VolumeParcellationResolution[
     F <: Frame[D3],

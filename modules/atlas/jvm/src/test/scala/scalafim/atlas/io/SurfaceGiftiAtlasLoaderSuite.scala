@@ -15,9 +15,9 @@ class SurfaceGiftiAtlasLoaderSuite extends munit.FunSuite:
           .toOption
           .get
 
-      assertEquals(atlas.labelIdAt(SurfaceHemisphere.Left, VertexId(0)), Some(RegionId(1)))
-      assertEquals(atlas.labelIdAt(SurfaceHemisphere.Left, VertexId(2)), None)
-      assertEquals(atlas.labelIdAt(SurfaceHemisphere.Right, VertexId(0)), Some(RegionId(3)))
+      assertEquals(atlas.labelIdAt(scalafim.surface.CorticalHemisphere.Left, VertexId(0)), Some(RegionId(1)))
+      assertEquals(atlas.labelIdAt(scalafim.surface.CorticalHemisphere.Left, VertexId(2)), None)
+      assertEquals(atlas.labelIdAt(scalafim.surface.CorticalHemisphere.Right, VertexId(0)), Some(RegionId(3)))
       assertEquals(atlas.region(RegionId(1)).flatMap(_.hemisphere), Some(Hemisphere.Left))
       assertEquals(atlas.region(RegionId(3)).flatMap(_.hemisphere), Some(Hemisphere.Right))
       assertEquals(atlas.region(RegionId(2)).flatMap(_.color), Some(Rgb(0, 255, 0)))

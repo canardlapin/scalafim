@@ -106,7 +106,7 @@ object SurfaceGiftiAtlasLoader:
     val regions =
       present.toVector.sorted.map { id =>
         val info = table(id)
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           id = info.id,
           label = info.name,
           labelFull = Some(info.name),
@@ -169,7 +169,7 @@ object SurfaceGiftiAtlasLoader:
     catch case NonFatal(error) => Left(AtlasError.InvalidRegionMetadata(cleanRequirement(error.getMessage)))
 
   private def withLocalArtifacts(ref: SurfaceAtlasRef, paths: Paths): SurfaceAtlasRef =
-    ref.copy(artifacts = ref.artifacts ++ Vector(localArtifact("left", paths.left), localArtifact("right", paths.right)))
+    ref.withDetails(details => details.copy(artifacts = ref.artifacts ++ Vector(localArtifact("left", paths.left), localArtifact("right", paths.right))))
 
   private def localArtifact(side: String, path: Path): AtlasArtifact =
     AtlasArtifact(

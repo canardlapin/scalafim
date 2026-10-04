@@ -37,8 +37,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
 
   private def volumeAtlas(
       metadata: Vector[AtlasRegionMetadata] = Vector(
-        AtlasRegionMetadata(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
-        AtlasRegionMetadata(RegionId(1), "First", network = Some(NetworkId("Visual")))
+        AtlasRegionMetadata.fromStrings(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
+        AtlasRegionMetadata.fromStrings(RegionId(1), "First", network = Some(NetworkId("Visual")))
       ),
       space: SomeSampleSpace = fixtureSpace(Vector(2, 2, 1))
   ): VolumeAtlas =
@@ -59,8 +59,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val parcelOne = realization.parcelPoint(RegionId(1)).get
 
     assertEquals(realization.displayOrder.ordinals.toVector, Vector(0, 1))
-    assertEquals(realization.metadata(parcelTwo).label, "Second")
-    assertEquals(realization.metadata(parcelOne).label, "First")
+    assertEquals(realization.metadata(parcelTwo).label.value, "Second")
+    assertEquals(realization.metadata(parcelOne).label.value, "First")
     assertEquals(
       realization.region(RegionId(1)).get.ordinalsInDomainOrder.toVector,
       Vector(0, 1)
@@ -75,8 +75,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val renamed =
       volumeAtlas(
         Vector(
-          AtlasRegionMetadata(RegionId(2), "Renamed second", network = Some(NetworkId("Visual"))),
-          AtlasRegionMetadata(RegionId(1), "Renamed first", network = Some(NetworkId("Visual")))
+          AtlasRegionMetadata.fromStrings(RegionId(2), "Renamed second", network = Some(NetworkId("Visual"))),
+          AtlasRegionMetadata.fromStrings(RegionId(1), "Renamed first", network = Some(NetworkId("Visual")))
         )
       )
 
@@ -107,8 +107,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
     val atlas =
       volumeAtlas(
         Vector(
-          AtlasRegionMetadata(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
-          AtlasRegionMetadata(RegionId(1), "First")
+          AtlasRegionMetadata.fromStrings(RegionId(2), "Second", network = Some(NetworkId("Visual"))),
+          AtlasRegionMetadata.fromStrings(RegionId(1), "First")
         )
       )
 
@@ -153,8 +153,8 @@ class AtlasQuotientSuite extends munit.FunSuite:
         ),
         RegionIndex(
           Vector(
-            AtlasRegionMetadata(RegionId(1), "Left", hemisphere = Some(Hemisphere.Left)),
-            AtlasRegionMetadata(RegionId(2), "Right", hemisphere = Some(Hemisphere.Right))
+            AtlasRegionMetadata.fromStrings(RegionId(1), "Left", hemisphere = Some(Hemisphere.Left)),
+            AtlasRegionMetadata.fromStrings(RegionId(2), "Right", hemisphere = Some(Hemisphere.Right))
           )
         ),
         left,
@@ -210,10 +210,10 @@ class AtlasQuotientSuite extends munit.FunSuite:
         atlas,
         PrimitiveBuffers.fromArray(Array(1.0, Double.NaN, 10.0, 20.0)),
       )
-    val means = atlas.reduce(data, Reducers.mean)
-    val sums = atlas.reduce(data, Reducers.sum)
+    val means = atlas.reduce(data, ParcelReducer.Mean)
+    val sums = atlas.reduce(data, ParcelReducer.Sum)
 
-    assertEquals(means.value(RegionId(1)), Some(1.0))
-    assertEquals(means.value(RegionId(2)), Some(15.0))
-    assertEquals(sums.value(RegionId(1)), Some(1.0))
-    assertEquals(sums.value(RegionId(2)), Some(30.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(1)).map(means.apply), Some(1.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(2)).map(means.apply), Some(15.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(1)).map(sums.apply), Some(1.0))
+    assertEquals(atlas.realization.parcelPoint(RegionId(2)).map(sums.apply), Some(30.0))

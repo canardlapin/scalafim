@@ -255,7 +255,9 @@ object HrfFunctions:
       p += 1
     prev
 
-  /** R-parity B-spline basis used by `hrf_bspline` / `splines::bs` in the original package.
+  /** With `includeIntercept = true`, a complete clamped B-spline basis with
+    * uniformly spaced knots over the actual span and zero outside support.
+    * Otherwise the R-parity B-spline basis used by `hrf_bspline` / `splines::bs` in the original package.
     *
     * - Interior knots are equally spaced quantiles of `seq(0, span)` (step 1),
     *   i.e. on `[0, floor(span)]`.
@@ -263,7 +265,18 @@ object HrfFunctions:
     * - The intercept column from `splineDesign` is dropped (so columns = max(nBasis, degree+1)).
     * - Times outside `[0, span]` are clamped to `0` (matching R wrapper).
     */
-  def bsplineBasis(lag: Lag, span: Seconds = 24.s, nBasis: Int = 5, degree: Int = 3): Array[Double] =
+  def bsplineBasis(lag: Lag, span: Seconds = 24.s, nBasis: Int = 5, degree: Int = 3,
+      includeIntercept: Boolean = false): Array[Double] =
+    if includeIntercept then
+      require(degree >= 0, "B-spline degree must be nonnegative")
+      require(nBasis > 0, "B-spline basis count must be positive")
+      require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
+      val width = math.max(nBasis, degree + 1)
+      if lag.value < 0.0 || lag.value > span.value then return new Array[Double](width)
+      val breaks = bsplineBreaks(span, nBasis, degree, includeIntercept = true).map(_.value)
+      val knots = Array.fill(degree + 1)(0.0) ++ breaks.slice(1, breaks.length - 1) ++
+        Array.fill(degree + 1)(span.value)
+      return bsplineAt(lag.value, knots, degree)
     val w = span.value
     val x0 = lag.value
     val x = if x0 < 0.0 || x0 > w then 0.0 else x0
@@ -291,8 +304,12 @@ object HrfFunctions:
     * is what lets it be integrated exactly piece by piece. Kept next to
     * `bsplineBasis` so the two knot computations cannot drift apart.
     */
-  private[hrf] def bsplineBreaks(span: Seconds, nBasis: Int, degree: Int): Vector[Seconds] =
+  private[hrf] def bsplineBreaks(span: Seconds, nBasis: Int, degree: Int,
+      includeIntercept: Boolean = false): Vector[Seconds] =
     val w = span.value
+    if includeIntercept then
+      val intervals = math.max(nBasis, degree + 1) - degree
+      return Vector.tabulate(intervals + 1)(i => Seconds(w * i.toDouble / intervals.toDouble))
     val ord = degree + 1
     val nIknots0 = nBasis - ord + 1
     val nIknots = if nIknots0 < 0 then 0 else nIknots0
@@ -654,7 +671,19 @@ object Hrfs:
       Vec.unsafe(out)
     }
 
-  def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3): Hrf =
+  /** B-spline response basis. Use `includeIntercept = true` for a complete,
+    * partition-of-unity basis that can represent a constant on `[0, span]`.
+    * This mode returns `max(nBasis, degree + 1)` columns and spaces interior
+    * knots uniformly over the actual span, including noninteger spans.
+    *
+    * The default retains the legacy R-compatible knot/column convention. With
+    * interior knots it omits the first spline, forces zero at onset and cannot
+    * represent a constant. Neither mode applies column normalization.
+    */
+  def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3,
+      includeIntercept: Boolean = false): Hrf =
+    require(degree >= 0, "B-spline degree must be nonnegative")
+    require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
     val requested = BasisCount(nBasis)
     val ord = degree + 1
     val effective = BasisCount(math.max(requested.value, ord))
@@ -662,15 +691,15 @@ object Hrfs:
       HrfKind.Bspline,
       effective.value,
       span,
-      HrfParams.Bspline(requested, degree),
+      HrfParams.Bspline(requested, degree, includeIntercept),
       penalty = PenaltyPolicy.Roughness,
       integration = IntegrationPolicy.PiecewisePolynomial(
-        HrfFunctions.bsplineBreaks(span, requested.value, degree),
+        HrfFunctions.bsplineBreaks(span, requested.value, degree, includeIntercept),
         degree
       )
     )
     Hrf.of("bspline", nbasis = effective.value, span = span, descriptor = Some(descriptor), support = Support.Compact(span)) { t =>
-      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree))
+      Vec.unsafe(HrfFunctions.bsplineBasis(t, span, requested.value, degree, includeIntercept))
     }
 
   def tent(nBasis: Int = 5, span: Seconds = 24.s): Hrf =

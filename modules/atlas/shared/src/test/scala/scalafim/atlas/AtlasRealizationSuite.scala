@@ -22,13 +22,13 @@ class AtlasRealizationSuite extends munit.FunSuite:
   private val regions =
     RegionIndex(
       Vector(
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(10),
           "Left",
           hemisphere = Some(Hemisphere.Left),
           network = Some(NetworkId("NetA"))
         ),
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(20),
           "Right",
           hemisphere = Some(Hemisphere.Right),
@@ -44,7 +44,8 @@ class AtlasRealizationSuite extends munit.FunSuite:
       templateSpace = SpaceId.MNI152,
       coordSpace = SpaceId.MNI152,
       confidence = Confidence.Exact,
-      parcelVariant = Some("two-parcel-v1")
+      parcelVariant = Some("two-parcel-v1"),
+      parcelIdentity = ParcelIdentity.SharedRegionIds
     )
 
   private val surfaceRef =
@@ -54,7 +55,8 @@ class AtlasRealizationSuite extends munit.FunSuite:
       templateSpace = SpaceId.FsAverage6,
       coordSpace = SpaceId.FsAverage6,
       confidence = Confidence.Exact,
-      parcelVariant = Some("two-parcel-v1")
+      parcelVariant = Some("two-parcel-v1"),
+      parcelIdentity = ParcelIdentity.SharedRegionIds
     )
 
   test("volume realization retains one direct partial surjection"):
@@ -98,7 +100,7 @@ class AtlasRealizationSuite extends munit.FunSuite:
       )
     val foreign =
       volumeRealization(
-        volumeRef.copy(family = "foreign"),
+        volumeRef.withDetails(details => details.copy(family = "foreign")),
         regions,
         labelVolume()
       )

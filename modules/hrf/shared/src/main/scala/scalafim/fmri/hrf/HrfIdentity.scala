@@ -73,7 +73,8 @@ private[hrf] object HrfIdentity:
       case HrfParams.Fourier(count) => record("fourier", count.value.toString)
       case HrfParams.Daguerre(count, scale) => record("daguerre", count.value.toString, number(scale))
       case HrfParams.Fir(count) => record("fir", count.value.toString)
-      case HrfParams.Bspline(count, degree) => record("bspline", count.value.toString, degree.toString)
+      case HrfParams.Bspline(count, degree, includeIntercept) =>
+        record("bspline", count.value.toString, degree.toString, includeIntercept.toString)
       case HrfParams.Tent(count) => record("tent", count.value.toString)
       case HrfParams.Coefficients(baseName, coefficients) => record("coefficients", baseName, numbers(coefficients))
 

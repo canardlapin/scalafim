@@ -18,7 +18,7 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
       .fold(error => fail(error.message), identity)
 
   /** A world transform from `from` to `to` whose forward map translates by `shift`, on the catalog's frames. */
-  private def linearAsset(from: AnySpaceId, to: AnySpaceId, shift: (Double, Double, Double)): TransformAsset =
+  private def linearAsset(from: SpaceId, to: SpaceId, shift: (Double, Double, Double)): TransformAsset =
     val catalog = TemplateCatalog.standard
     val sourceFrame = value(catalog.frame(from))
     val targetFrame = value(catalog.frame(to))
@@ -27,11 +27,11 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
     TransformAsset(WorldTransform.Linear(pullback, TransformProvenance.constructed("test translation")), s"test:${from.value}->${to.value}")
 
   /** A small grid in the world a catalogued space's coordinates live in, on a fresh frame of that world. */
-  private def gridIn(space: AnySpaceId): GridSpec[?] =
+  private def gridIn(space: SpaceId): GridSpec[?] =
     val world = value(TemplateCatalog.standard.world(space))
     GridSpec.in(FrameCatalog.frame(world))(scalafim.image.SpatialDims(2, 2, 2), Affine.identity[D3]).fold(error => fail(error.message), identity)
 
-  private def affineStep(from: AnySpaceId, to: AnySpaceId, forward: Affine[D3], reversible: Boolean = true): TransformStep =
+  private def affineStep(from: SpaceId, to: SpaceId, forward: Affine[D3], reversible: Boolean = true): TransformStep =
     TransformStep(
       from,
       to,
@@ -149,9 +149,14 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
     val grid = GridSpec.identity(Vector(2, 2, 2))
     val pullback = value(SpaceTransforms.spatialPullback(SpaceId.MNI152, SpaceId.MNI305, gridIn(SpaceId.MNI305), gridIn(SpaceId.MNI152), registry))
     val pulled = SpatialPullbacks.transform(pullback, Point3D(0.0, 0.0, 0.0)).fold(error => fail(error.message), identity)
-    assertEqualsDouble(pulled.x, 1.0, 1e-12)
-    assertEqualsDouble(pulled.y, 2.0, 1e-12)
-    assertEqualsDouble(pulled.z, 3.0, 1e-12)
+    assertEqualsDouble(pulled.x, -1.0, 1e-12)
+    assertEqualsDouble(pulled.y, -2.0, 1e-12)
+    assertEqualsDouble(pulled.z, -3.0, 1e-12)
+    val route = value(SpaceTransforms.plan(SpaceId.MNI152, SpaceId.MNI305, registry = registry))
+    val carried = value(route.transform(Vector(Point3D.Origin))).head
+    assertEqualsDouble(pulled.x, carried.x, 1e-12)
+    assertEqualsDouble(pulled.y, carried.y, 1e-12)
+    assertEqualsDouble(pulled.z, carried.z, 1e-12)
 
     val warp = value(SpaceTransforms.plan(SpaceId.MNI152NLin6Asym, SpaceId.MNI152NLin2009cAsym))
     assert(warp.pullback(grid, grid).isLeft)
