@@ -1,0 +1,7 @@
+{
+  "captured_at": "2026-10-04T12:19:53.138604+00:00",
+  "checked_snapshot_input_count": 2300,
+  "changed_or_missing_snapshot_inputs": [],
+  "reviewed_sources_match_current": true,
+  "scope": "Every captured root build, module, project and tool input. Does not assert a clean Git tree or enumerate new files added after capture."
+}
