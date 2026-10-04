@@ -1,0 +1,10 @@
+{
+  "head": "a6dbd3b188bd321c41053877121ccf64cf93259b",
+  "sources": {
+    "build.sbt": "83a0f8a63710f7082910e8e593b0b8ee447ca7b584fcb55c49e11a14908e8f36",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala": "a079bd7733d258b25d1967da9a83c788a85eda5815e7ef23eeb7c0f64c5483e6",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionStationarityRoundoffSuite.scala": "f5cbae0cbf6da64cc9148831b8280ab6e13b0cac8b743379b7f1cdd81e797f59"
+  },
+  "scope": "Test-only input extraction; production unchanged; frozen development cases, no fresh streams."
+}

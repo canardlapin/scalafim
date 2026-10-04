@@ -1,0 +1,3518 @@
+{
+  "sources": {
+    "/private/tmp/scalafim-execution-20260929/logs/c0-frozen200-jvm.log": "df99984e02402a1a74d71d1d78d6b5424719f69763f1228621073b6707703202",
+    "/private/tmp/scalafim-execution-20260929/logs/c0-frozen200-js.log": "9667721746ba0821f343fc5c4d1a6dbbf32428f0ee96ac93c02c3ff4dc1efbf8",
+    "/private/tmp/scalafim-execution-20260929/logs/decoder-diagnostics-final6-both.log": "34c496992cac788d715f127445023d0e4e0c044ecf666b08c02ffb0e841b4d48"
+  },
+  "cells": [
+    {
+      "platform": "jvm",
+      "snr": 1.0,
+      "accepted": 190,
+      "total": 200
+    },
+    {
+      "platform": "jvm",
+      "snr": 0.5,
+      "accepted": 185,
+      "total": 200
+    },
+    {
+      "platform": "js",
+      "snr": 1.0,
+      "accepted": 190,
+      "total": 200
+    },
+    {
+      "platform": "js",
+      "snr": 0.5,
+      "accepted": 192,
+      "total": 200
+    }
+  ],
+  "differences": [
+    {
+      "snr": 1.0,
+      "voxel": 29,
+      "jvm": {
+        "voxel": 29,
+        "status": "BudgetExceeded",
+        "budgetExit": "AcceptedEnergyOnlyNonstationaryTerminal",
+        "coordinates": [
+          4.86707793759903,
+          0.7207472258028519
+        ],
+        "fitEnergy": 395.0128245164002,
+        "fitAmplitudes": [
+          1.7444200510227208,
+          -1.0901212004979692,
+          -1.3911026690488941
+        ],
+        "fitHessian": [
+          90.2890502044308,
+          -38.267455000159686,
+          -38.267455000159686,
+          626.8923395258879
+        ],
+        "fitSd": [
+          0.15079587338001577,
+          0.057228256861705434
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 395.0128245164002,
+          "gradient": [
+            2.870218462902585e-08,
+            2.033360374298354e-06
+          ],
+          "hessian": [
+            90.2890502044308,
+            -38.267455000159686,
+            -38.267455000159686,
+            626.8923395258879
+          ],
+          "amplitudes": [
+            1.7444200510227208,
+            -1.0901212004979692,
+            -1.3911026690488941
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.15079587338001577,
+            0.057228256861705434
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.3496227320599227e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 1,
+          "candidates": 12,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 29,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          4.867077935861441,
+          0.7207472224532189
+        ],
+        "fitEnergy": 395.012824516405,
+        "fitAmplitudes": [
+          1.7444200496382327,
+          -1.0901211996602622,
+          -1.39110266978108
+        ],
+        "fitHessian": [
+          90.28905030683616,
+          -38.26745473485227,
+          -38.26745473485227,
+          626.8923389024247
+        ],
+        "fitSd": [
+          0.15079587326645344,
+          0.0572282568795192
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 395.012824516405,
+          "gradient": [
+            -5.737632591262809e-13,
+            -2.2737367544323206e-13
+          ],
+          "hessian": [
+            90.28905030683616,
+            -38.26745473485227,
+            -38.26745473485227,
+            626.8923389024247
+          ],
+          "amplitudes": [
+            1.7444200496382327,
+            -1.0901211996602622,
+            -1.39110266978108
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.15079587326645344,
+            0.0572282568795192
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 6.68132160636917e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.349633015403697e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 53,
+      "jvm": {
+        "voxel": 53,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          3.929894223457627,
+          0.14765454450041424
+        ],
+        "fitEnergy": 158.14652623959074,
+        "fitAmplitudes": [
+          -0.9872974530870501,
+          -0.7577888345018392,
+          0.44777803391484916
+        ],
+        "fitHessian": [
+          141.39435085001415,
+          10.31295601680467,
+          10.31295601680467,
+          224.50728030691445
+        ],
+        "fitSd": [
+          0.11913180784473497,
+          0.09454281889010363
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 158.14652623959074,
+          "gradient": [
+            -3.166627922587817e-07,
+            -4.1582923060445864e-07
+          ],
+          "hessian": [
+            141.39435085001415,
+            10.31295601680467,
+            10.31295601680467,
+            224.50728030691445
+          ],
+          "amplitudes": [
+            -0.9872974530870501,
+            -0.7577888345018392,
+            0.44777803391484916
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11913180784473497,
+            0.09454281889010363
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.1115525162993663e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 53,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          3.929894225569183,
+          0.14765454625560784
+        ],
+        "fitEnergy": 158.14652623959088,
+        "fitAmplitudes": [
+          -0.9872974535924501,
+          -0.7577888337865596,
+          0.44777803442958347
+        ],
+        "fitHessian": [
+          141.3943505926444,
+          10.312955577920777,
+          10.312955577920777,
+          224.5072799419081
+        ],
+        "fitSd": [
+          0.11913180793680508,
+          0.09454281895398002
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 158.14652623959088,
+          "gradient": [
+            2.931682674400804e-13,
+            9.308109838457312e-13
+          ],
+          "hessian": [
+            141.3943505926444,
+            10.312955577920777,
+            10.312955577920777,
+            224.5072799419081
+          ],
+          "amplitudes": [
+            -0.9872974535924501,
+            -0.7577888337865596,
+            0.44777803442958347
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11913180793680508,
+            0.09454281895398002
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 4.064390490369148e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.1115558190842876e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 60,
+      "jvm": {
+        "voxel": 60,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          6.991785212173414,
+          0.8994726715305174
+        ],
+        "fitEnergy": 803.103264987636,
+        "fitAmplitudes": [
+          1.7762691921454652,
+          -1.830707845205341,
+          -1.6427680802731603
+        ],
+        "fitHessian": [
+          118.46623543873703,
+          -31.898480826464677,
+          -31.898480826464677,
+          678.3787769615163
+        ],
+        "fitSd": [
+          0.1307629142422865,
+          0.05464441218165438
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 803.103264987636,
+          "gradient": [
+            1.4459544672718039e-12,
+            1.9610979506978765e-12
+          ],
+          "hessian": [
+            118.46623543873703,
+            -31.898480826464677,
+            -31.898480826464677,
+            678.3787769615163
+          ],
+          "amplitudes": [
+            1.7762691921454652,
+            -1.830707845205341,
+            -1.6427680802731603
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.1307629142422865,
+            0.05464441218165438
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.3150525279856563e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 60,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          6.9917852386930175,
+          0.8994726526022315
+        ],
+        "fitEnergy": 803.1032649876452,
+        "fitAmplitudes": [
+          1.7762691754183413,
+          -1.8307078591450863,
+          -1.6427680650822436
+        ],
+        "fitHessian": [
+          118.46623741203877,
+          -31.898479895583066,
+          -31.898479895583066,
+          678.3787650693379
+        ],
+        "fitSd": [
+          0.13076291310501978,
+          0.05464441264047736
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 803.1032649876452,
+          "gradient": [
+            3.7454612273890575e-06,
+            -1.3686473465668314e-05
+          ],
+          "hessian": [
+            118.46623741203877,
+            -31.898479895583066,
+            -31.898479895583066,
+            678.3787650693379
+          ],
+          "amplitudes": [
+            1.7762691754183413,
+            -1.8307078591450863,
+            -1.6427680650822436
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.13076291310501978,
+            0.05464441264047736
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.651960733898098e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 10,
+          "steps": 2,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.6519603402164194e-08
+    },
+    {
+      "snr": 1.0,
+      "voxel": 72,
+      "jvm": {
+        "voxel": 72,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          3.912938937407288,
+          0.5860540705913694
+        ],
+        "fitEnergy": 614.9833413041139,
+        "fitAmplitudes": [
+          0.7512301264720642,
+          -1.1641239964904484,
+          -1.8201223577687384
+        ],
+        "fitHessian": [
+          164.7528640674539,
+          -5.085386571748266,
+          -5.085386571748266,
+          608.8786954467312
+        ],
+        "fitSd": [
+          0.11019312492056946,
+          0.057319922766766736
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 614.9833413041139,
+          "gradient": [
+            -1.1060646176730415e-06,
+            -2.3291987076845544e-06
+          ],
+          "hessian": [
+            164.7528640674539,
+            -5.085386571748266,
+            -5.085386571748266,
+            608.8786954467312
+          ],
+          "amplitudes": [
+            0.7512301264720642,
+            -1.1641239964904484,
+            -1.8201223577687384
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11019312492056946,
+            0.057319922766766736
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 6.833316356690262e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 72,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          3.9129389442405946,
+          0.586054074473826
+        ],
+        "fitEnergy": 614.9833413041179,
+        "fitAmplitudes": [
+          0.7512301302735586,
+          -1.1641239976797368,
+          -1.8201223555643604
+        ],
+        "fitHessian": [
+          164.75286344106166,
+          -5.085388400577649,
+          -5.085388400577649,
+          608.8786926559586
+        ],
+        "fitSd": [
+          0.11019312514038515,
+          0.05731992290350615
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 614.9833413041179,
+          "gradient": [
+            2.531308496145357e-13,
+            -3.410605131648481e-13
+          ],
+          "hessian": [
+            164.75286344106166,
+            -5.085388400577649,
+            -5.085388400577649,
+            608.8786926559586
+          ],
+          "amplitudes": [
+            0.7512301302735586,
+            -1.1641239976797368,
+            -1.8201223555643604
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11019312514038515,
+            0.05731992290350615
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.5195294808977594e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 6.833306809284068e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 94,
+      "jvm": {
+        "voxel": 94,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          6.925202226105358,
+          0.0725460782416626
+        ],
+        "fitEnergy": 422.4456089059031,
+        "fitAmplitudes": [
+          -1.2007231777258447,
+          -1.5781677794717364,
+          0.9278002648370386
+        ],
+        "fitHessian": [
+          451.30014708616756,
+          -55.68795874980047,
+          -55.68795874980047,
+          624.6803665979002
+        ],
+        "fitSd": [
+          0.06693976002452891,
+          0.05689681558656117
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 422.4456089059031,
+          "gradient": [
+            4.6134950083820403e-07,
+            -8.465784784306152e-07
+          ],
+          "hessian": [
+            451.30014708616756,
+            -55.68795874980047,
+            -55.68795874980047,
+            624.6803665979002
+          ],
+          "amplitudes": [
+            -1.2007231777258447,
+            -1.5781677794717364,
+            0.9278002648370386
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.06693976002452891,
+            0.05689681558656117
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.2781470775494617e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 94,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          6.925202225240793,
+          0.07254607951982077
+        ],
+        "fitEnergy": 422.4456089059046,
+        "fitAmplitudes": [
+          -1.2007231771642748,
+          -1.5781677800142808,
+          0.9278002656026835
+        ],
+        "fitHessian": [
+          451.30014658847637,
+          -55.68795807502873,
+          -55.68795807502873,
+          624.6803661225274
+        ],
+        "fitSd": [
+          0.06693976005311154,
+          0.05689681560113165
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 422.4456089059046,
+          "gradient": [
+            -5.803621472288967e-12,
+            6.88160639583657e-12
+          ],
+          "hessian": [
+            451.30014658847637,
+            -55.68795807502873,
+            -55.68795807502873,
+            624.6803661225274
+          ],
+          "amplitudes": [
+            -1.2007231771642748,
+            -1.5781677800142808,
+            0.9278002656026835
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.06693976005311154,
+            0.05689681560113165
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.1628356748544865e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.278158162643095e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 114,
+      "jvm": {
+        "voxel": 114,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          5.306368296603436,
+          0.25088933598619506
+        ],
+        "fitEnergy": 623.6642169153351,
+        "fitAmplitudes": [
+          -1.4625239102106748,
+          0.35669329133630456,
+          -1.17365566430685
+        ],
+        "fitHessian": [
+          257.0512255338024,
+          64.63737165425256,
+          64.63737165425256,
+          534.170558453563
+        ],
+        "fitSd": [
+          0.08958082073444247,
+          0.06214195364892475
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 623.6642169153351,
+          "gradient": [
+            5.704325900524054e-13,
+            -1.4210854715202004e-13
+          ],
+          "hessian": [
+            257.0512255338024,
+            64.63737165425256,
+            64.63737165425256,
+            534.170558453563
+          ],
+          "amplitudes": [
+            -1.4625239102106748,
+            0.35669329133630456,
+            -1.17365566430685
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.08958082073444247,
+            0.06214195364892475
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.3577779058849266e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 9,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 8,
+          "steps": 5,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 114,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          5.306368299791829,
+          0.2508893343437234
+        ],
+        "fitEnergy": 623.6642169153356,
+        "fitAmplitudes": [
+          -1.4625239093615054,
+          0.35669329107701137,
+          -1.1736556660449422
+        ],
+        "fitHessian": [
+          257.0512261466162,
+          64.63737097813868,
+          64.63737097813868,
+          534.1705583135395
+        ],
+        "fitSd": [
+          0.08958082059527271,
+          0.06214195363460146
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 623.6642169153356,
+          "gradient": [
+            7.134159520361116e-07,
+            -6.712728293223336e-07
+          ],
+          "hessian": [
+            257.0512261466162,
+            64.63737097813868,
+            64.63737097813868,
+            534.1705583135395
+          ],
+          "amplitudes": [
+            -1.4625239093615054,
+            0.35669329107701137,
+            -1.1736556660449422
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.08958082059527271,
+            0.06214195363460146
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.1883967481773423e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.1883926610021263e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 118,
+      "jvm": {
+        "voxel": 118,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          4.935238565745935,
+          0.19685983479397814
+        ],
+        "fitEnergy": 500.39517391661343,
+        "fitAmplitudes": [
+          0.7912411139123551,
+          -0.9017071173506754,
+          2.0304598966673097
+        ],
+        "fitHessian": [
+          373.5076813662494,
+          9.660691864066814,
+          9.660691864066814,
+          636.108078785334
+        ],
+        "fitSd": [
+          0.07318979724000334,
+          0.05608346751360134
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 500.39517391661343,
+          "gradient": [
+            1.2847853375075324e-06,
+            -1.9268233444336147e-06
+          ],
+          "hessian": [
+            373.5076813662494,
+            9.660691864066814,
+            9.660691864066814,
+            636.108078785334
+          ],
+          "amplitudes": [
+            0.7912411139123551,
+            -0.9017071173506754,
+            2.0304598966673097
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07318979724000334,
+            0.05608346751360134
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.5195119307844796e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 118,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          4.935238562226426,
+          0.19685983787650882
+        ],
+        "fitEnergy": 500.3951739166116,
+        "fitAmplitudes": [
+          0.7912411162282769,
+          -0.9017071206406415,
+          2.030459895479371
+        ],
+        "fitHessian": [
+          373.50768037434784,
+          9.660693246387856,
+          9.660693246387856,
+          636.108079557705
+        ],
+        "fitSd": [
+          0.07318979734132226,
+          0.05608346748272206
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 500.3951739166116,
+          "gradient": [
+            -1.6122658763606523e-12,
+            -1.8474111129762605e-13
+          ],
+          "hessian": [
+            373.50768037434784,
+            9.660693246387856,
+            9.660693246387856,
+            636.108079557705
+          ],
+          "amplitudes": [
+            0.7912411162282769,
+            -0.9017071206406415,
+            2.030459895479371
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07318979734132226,
+            0.05608346748272206
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 4.310735036077435e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.519508240401592e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 161,
+      "jvm": {
+        "voxel": 161,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          6.436527508899043,
+          0.051086952012742416
+        ],
+        "fitEnergy": 428.4667671531967,
+        "fitAmplitudes": [
+          -0.8190444947889952,
+          -1.083925558709518,
+          -1.0842057489912789
+        ],
+        "fitHessian": [
+          382.2603318636349,
+          26.97180311827245,
+          26.97180311827245,
+          524.0744037982209
+        ],
+        "fitSd": [
+          0.07246450898793079,
+          0.0618882917789151
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 428.4667671531967,
+          "gradient": [
+            3.4705571749782393e-12,
+            8.810729923425242e-13
+          ],
+          "hessian": [
+            382.2603318636349,
+            26.97180311827245,
+            26.97180311827245,
+            524.0744037982209
+          ],
+          "amplitudes": [
+            -0.8190444947889952,
+            -1.083925558709518,
+            -1.0842057489912789
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07246450898793079,
+            0.0618882917789151
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 8.993074629754462e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 161,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          6.436527506733325,
+          0.051086948523222445
+        ],
+        "fitEnergy": 428.46676715319813,
+        "fitAmplitudes": [
+          -0.819044496112362,
+          -1.0839255595775703,
+          -1.0842057505373346
+        ],
+        "fitHessian": [
+          382.26033324198664,
+          26.971804222089315,
+          26.971804222089315,
+          524.0744068946515
+        ],
+        "fitSd": [
+          0.0724645088668368,
+          0.06188829160424322
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 428.46676715319813,
+          "gradient": [
+            -9.219803027704643e-07,
+            -1.887179251980342e-06
+          ],
+          "hessian": [
+            382.26033324198664,
+            26.971804222089315,
+            26.971804222089315,
+            524.0744068946515
+          ],
+          "amplitudes": [
+            -0.819044496112362,
+            -1.0839255595775703,
+            -1.0842057505373346
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.0724645088668368,
+            0.06188829160424322
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.489516666923039e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.4895199715889724e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 174,
+      "jvm": {
+        "voxel": 174,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          7.2806606116616654,
+          0.23804022622152993
+        ],
+        "fitEnergy": 249.94400181075488,
+        "fitAmplitudes": [
+          1.4262017387630095,
+          -0.9720364502060603,
+          -1.0621234380460265
+        ],
+        "fitHessian": [
+          205.66155605703696,
+          2.20230866635787,
+          2.20230866635787,
+          404.22467823890327
+        ],
+        "fitSd": [
+          0.09861684591562578,
+          0.07034224987445449
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 249.94400181075488,
+          "gradient": [
+            4.811151477213116e-13,
+            2.7782220968219917e-12
+          ],
+          "hessian": [
+            205.66155605703696,
+            2.20230866635787,
+            2.20230866635787,
+            404.22467823890327
+          ],
+          "amplitudes": [
+            1.4262017387630095,
+            -0.9720364502060603,
+            -1.0621234380460265
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.09861684591562578,
+            0.07034224987445449
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 6.860620002894597e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 174,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          7.280660609590171,
+          0.2380402247518731
+        ],
+        "fitEnergy": 249.94400181075653,
+        "fitAmplitudes": [
+          1.4262017381430965,
+          -0.9720364490086065,
+          -1.0621234388847904
+        ],
+        "fitHessian": [
+          205.6615563808337,
+          2.2023092402924176,
+          2.2023092402924176,
+          404.22467854738494
+        ],
+        "fitSd": [
+          0.09861684583948657,
+          0.07034224984867861
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 249.94400181075653,
+          "gradient": [
+            -4.292624489893315e-07,
+            -5.986223428067206e-07
+          ],
+          "hessian": [
+            205.6615563808337,
+            2.2023092402924176,
+            2.2023092402924176,
+            404.22467854738494
+          ],
+          "amplitudes": [
+            1.4262017381430965,
+            -0.9720364490086065,
+            -1.0621234388847904
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.09861684583948657,
+            0.07034224984867861
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.07149006901444e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.0714940873745036e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 187,
+      "jvm": {
+        "voxel": 187,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          5.876408386066176,
+          0.7061554750277784
+        ],
+        "fitEnergy": 531.5502357468539,
+        "fitAmplitudes": [
+          -0.8280498667187912,
+          1.1522393440606264,
+          1.2697995538419335
+        ],
+        "fitHessian": [
+          89.58308785829857,
+          -27.653979097210176,
+          -27.653979097210176,
+          393.5928800367831
+        ],
+        "fitSd": [
+          0.15106489139028634,
+          0.07206973747287174
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 531.5502357468539,
+          "gradient": [
+            4.192385585355396e-06,
+            -1.333624652488652e-05
+          ],
+          "hessian": [
+            89.58308785829857,
+            -27.653979097210176,
+            -27.653979097210176,
+            393.5928800367831
+          ],
+          "amplitudes": [
+            -0.8280498667187912,
+            1.1522393440606264,
+            1.2697995538419335
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.15106489139028634,
+            0.07206973747287174
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.714481961083249e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 10,
+          "steps": 2,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 187,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          5.876408348921361,
+          0.7061555063013364
+        ],
+        "fitEnergy": 531.5502357468481,
+        "fitAmplitudes": [
+          -0.8280498826793665,
+          1.1522393325043818,
+          1.2697995562552216
+        ],
+        "fitHessian": [
+          89.58308517331497,
+          -27.65397572788313,
+          -27.65397572788313,
+          393.5928624103732
+        ],
+        "fitSd": [
+          0.1510648933712752,
+          0.07206973895168355
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 531.5502357468481,
+          "gradient": [
+            -2.4158453015843406e-13,
+            -1.3500311979441904e-12
+          ],
+          "hessian": [
+            89.58308517331497,
+            -27.65397572788313,
+            -27.65397572788313,
+            393.5928624103732
+          ],
+          "amplitudes": [
+            -0.8280498826793665,
+            1.1522393325043818,
+            1.2697995562552216
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.1510648933712752,
+            0.07206973895168355
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.83886120557924e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 6,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 5,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.7144815223655314e-08
+    },
+    {
+      "snr": 1.0,
+      "voxel": 195,
+      "jvm": {
+        "voxel": 195,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          3.9306640615419597,
+          -0.045833327743064575
+        ],
+        "fitEnergy": 1518.2973133002313,
+        "fitAmplitudes": [
+          -1.4686035655707121,
+          -1.6911508180297115,
+          -1.7754102666523683
+        ],
+        "fitHessian": [
+          1205.4313899701601,
+          43.13924995896453,
+          43.13924995896453,
+          1006.3779481885025
+        ],
+        "fitSd": [
+          0.0407640308561753,
+          0.04461365596718259
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1518.2973133002313,
+          "gradient": [
+            -3.909317314310101e-12,
+            3.069544618483633e-12
+          ],
+          "hessian": [
+            1205.4313899701601,
+            43.13924995896453,
+            43.13924995896453,
+            1006.3779481885025
+          ],
+          "amplitudes": [
+            -1.4686035655707121,
+            -1.6911508180297115,
+            -1.7754102666523683
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.0407640308561753,
+            0.04461365596718259
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.357390962863729e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 195,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          3.930664034333769,
+          -0.04583334850703375
+        ],
+        "fitEnergy": 1518.2973133002351,
+        "fitAmplitudes": [
+          -1.4686035935890067,
+          -1.6911508189363962,
+          -1.7754102730486991
+        ],
+        "fitHessian": [
+          1205.4314268557205,
+          43.13928945440321,
+          43.13928945440321,
+          1006.3779563653776
+        ],
+        "fitSd": [
+          0.040764030288624103,
+          0.04461365584736656
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1518.2973133002351,
+          "gradient": [
+            -3.3693343528651276e-05,
+            -2.2070152795095055e-05
+          ],
+          "hessian": [
+            1205.4314268557205,
+            43.13928945440321,
+            43.13928945440321,
+            1006.3779563653776
+          ],
+          "amplitudes": [
+            -1.4686035935890067,
+            -1.6911508189363962,
+            -1.7754102730486991
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.040764030288624103,
+            0.04461365584736656
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.7208184127488296e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.7208190811478516e-08
+    },
+    {
+      "snr": 1.0,
+      "voxel": 198,
+      "jvm": {
+        "voxel": 198,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          6.731283776256385,
+          0.0487676127233522
+        ],
+        "fitEnergy": 382.1181808241016,
+        "fitAmplitudes": [
+          0.8906764546558629,
+          -1.5038632248025214,
+          1.6997035322903018
+        ],
+        "fitHessian": [
+          494.6013081679746,
+          70.45420038532394,
+          70.45420038532394,
+          630.9929401346794
+        ],
+        "fitSd": [
+          0.06410159820747836,
+          0.056752400759045835
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 382.1181808241016,
+          "gradient": [
+            6.020794973693455e-12,
+            -5.9969806898152456e-12
+          ],
+          "hessian": [
+            494.6013081679746,
+            70.45420038532394,
+            70.45420038532394,
+            630.9929401346794
+          ],
+          "amplitudes": [
+            0.8906764546558629,
+            -1.5038632248025214,
+            1.6997035322903018
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.06410159820747836,
+            0.056752400759045835
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.3745465011462826e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 198,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          6.7312837789490505,
+          0.0487676101186421
+        ],
+        "fitEnergy": 382.1181808241026,
+        "fitAmplitudes": [
+          0.8906764517867728,
+          -1.5038632224240902,
+          1.6997035337481685
+        ],
+        "fitHessian": [
+          494.6013093285097,
+          70.45419940847955,
+          70.45419940847955,
+          630.9929389100073
+        ],
+        "fitSd": [
+          0.06410159811769985,
+          0.056752400801216775
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 382.1181808241026,
+          "gradient": [
+            1.1482915349969591e-06,
+            -1.4538505581640493e-06
+          ],
+          "hessian": [
+            494.6013093285097,
+            70.45419940847955,
+            70.45419940847955,
+            630.9929389100073
+          ],
+          "amplitudes": [
+            0.8906764517867728,
+            -1.5038632224240902,
+            1.6997035337481685
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.06410159811769985,
+            0.056752400801216775
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.692684278668971e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.692665646009118e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 6,
+      "jvm": {
+        "voxel": 6,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          4.543340345582406,
+          0.12892134471432098
+        ],
+        "fitEnergy": 1722.9434272658611,
+        "fitAmplitudes": [
+          1.7291962393244664,
+          0.866020718527188,
+          -0.9736317698649367
+        ],
+        "fitHessian": [
+          357.19183801217366,
+          110.92121967095031,
+          110.92121967095031,
+          487.9198075592192
+        ],
+        "fitSd": [
+          0.07761790843519226,
+          0.06641076368234197
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1722.9434272658611,
+          "gradient": [
+            1.4105452916801653e-12,
+            -1.0835776720341528e-13
+          ],
+          "hessian": [
+            357.19183801217366,
+            110.92121967095031,
+            110.92121967095031,
+            487.9198075592192
+          ],
+          "amplitudes": [
+            1.7291962393244664,
+            0.866020718527188,
+            -0.9736317698649367
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07761790843519226,
+            0.06641076368234197
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 4.323145829867576e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 6,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          4.543340382256613,
+          0.12892132086584754
+        ],
+        "fitEnergy": 1722.9434272658657,
+        "fitAmplitudes": [
+          1.7291962527734817,
+          0.8660206958012232,
+          -0.9736317514887409
+        ],
+        "fitHessian": [
+          357.19185224515314,
+          110.92120231121325,
+          110.92120231121325,
+          487.91980757940826
+        ],
+        "fitSd": [
+          0.07761790584848205,
+          0.06641076279088012
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1722.9434272658657,
+          "gradient": [
+            1.045442798872781e-05,
+            -7.56819395242303e-06
+          ],
+          "hessian": [
+            357.19185224515314,
+            110.92120231121325,
+            110.92120231121325,
+            487.91980757940826
+          ],
+          "amplitudes": [
+            1.7291962527734817,
+            0.8660206958012232,
+            -0.9736317514887409
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07761790584848205,
+            0.06641076279088012
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.667421022427903e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.6674206782549845e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 9,
+      "jvm": {
+        "voxel": 9,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          7.49004329853202,
+          0.3926858591878316
+        ],
+        "fitEnergy": 1276.5120462622629,
+        "fitAmplitudes": [
+          1.6405882705716497,
+          -1.2975139068235628,
+          -0.5590954837876626
+        ],
+        "fitHessian": [
+          155.2395125744437,
+          10.308946264186106,
+          10.308946264186106,
+          390.7029122015174
+        ],
+        "fitSd": [
+          0.11360427597486385,
+          0.0716098046913547
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1276.5120462622629,
+          "gradient": [
+            -4.342290132415549e-06,
+            -8.062495766125721e-06
+          ],
+          "hessian": [
+            155.2395125744437,
+            10.308946264186106,
+            10.308946264186106,
+            390.7029122015174
+          ],
+          "amplitudes": [
+            1.6405882705716497,
+            -1.2975139068235628,
+            -0.5590954837876626
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11360427597486385,
+            0.0716098046913547
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.6647883627632753e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 9,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          7.490043325179886,
+          0.39268587912056824
+        ],
+        "fitEnergy": 1276.5120462622658,
+        "fitAmplitudes": [
+          1.6405882749348235,
+          -1.2975139253718928,
+          -0.5590954653768401
+        ],
+        "fitHessian": [
+          155.23950782311653,
+          10.308939721481526,
+          10.308939721481526,
+          390.70291177656185
+        ],
+        "fitSd": [
+          0.11360427758997961,
+          0.07160980465251732
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1276.5120462622658,
+          "gradient": [
+            -2.6245533524260622e-12,
+            -2.1884716261411086e-12
+          ],
+          "hessian": [
+            155.23950782311653,
+            10.308939721481526,
+            10.308939721481526,
+            390.70291177656185
+          ],
+          "amplitudes": [
+            1.6405882749348235,
+            -1.2975139253718928,
+            -0.5590954653768401
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11360427758997961,
+            0.07160980465251732
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.6563532126354217e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.664786524775309e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 31,
+      "jvm": {
+        "voxel": 31,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          5.119960070064869,
+          0.3496555300787389
+        ],
+        "fitEnergy": 1419.0353020220628,
+        "fitAmplitudes": [
+          0.4744584937450125,
+          -1.3448311488039093,
+          1.5324952448290479
+        ],
+        "fitHessian": [
+          198.41882080510587,
+          -11.048605095522117,
+          -11.048605095522117,
+          474.0096292466707
+        ],
+        "fitSd": [
+          0.10046287131329076,
+          0.06499851529591377
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1419.0353020220628,
+          "gradient": [
+            2.6063983525059786e-06,
+            -4.436565419041472e-06
+          ],
+          "hessian": [
+            198.41882080510587,
+            -11.048605095522117,
+            -11.048605095522117,
+            474.0096292466707
+          ],
+          "amplitudes": [
+            0.4744584937450125,
+            -1.3448311488039093,
+            1.5324952448290479
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.10046287131329076,
+            0.06499851529591377
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.263106047190941e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 10,
+          "steps": 2,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 31,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          5.119960057433806,
+          0.34965553914397257
+        ],
+        "fitEnergy": 1419.0353020220632,
+        "fitAmplitudes": [
+          0.474458502577992,
+          -1.3448311586756383,
+          1.5324952426407865
+        ],
+        "fitHessian": [
+          198.41881947656466,
+          -11.048602076658533,
+          -11.048602076658533,
+          474.0096247456303
+        ],
+        "fitSd": [
+          0.10046287161500553,
+          0.06499851558211928
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1419.0353020220632,
+          "gradient": [
+            2.0392021404802563e-13,
+            -4.263256414560601e-14
+          ],
+          "hessian": [
+            198.41881947656466,
+            -11.048602076658533,
+            -11.048602076658533,
+            474.0096247456303
+          ],
+          "amplitudes": [
+            0.474458502577992,
+            -1.3448311586756383,
+            1.5324952426407865
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.10046287161500553,
+            0.06499851558211928
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.0240471279173943e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.2631063306400847e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 75,
+      "jvm": {
+        "voxel": 75,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          7.259179150999093,
+          0.011624373822635078
+        ],
+        "fitEnergy": 993.3096568947814,
+        "fitAmplitudes": [
+          -1.14270115671791,
+          -0.5937691635898268,
+          1.7540852173140185
+        ],
+        "fitHessian": [
+          367.4117846184253,
+          -38.69680367195698,
+          -38.69680367195698,
+          655.8108269761697
+        ],
+        "fitSd": [
+          0.07401030048362875,
+          0.055396128924985404
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 993.3096568947814,
+          "gradient": [
+            2.6379176620849876e-12,
+            1.7905676941154525e-12
+          ],
+          "hessian": [
+            367.4117846184253,
+            -38.69680367195698,
+            -38.69680367195698,
+            655.8108269761697
+          ],
+          "amplitudes": [
+            -1.14270115671791,
+            -0.5937691635898268,
+            1.7540852173140185
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07401030048362875,
+            0.055396128924985404
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 7.513991479359535e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 75,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          7.2591791559568275,
+          0.011624368818389668
+        ],
+        "fitEnergy": 993.3096568947808,
+        "fitAmplitudes": [
+          -1.1427011595063314,
+          -0.5937691576117246,
+          1.7540852139620433
+        ],
+        "fitHessian": [
+          367.41178501901885,
+          -38.696804924065134,
+          -38.696804924065134,
+          655.8108260270425
+        ],
+        "fitSd": [
+          0.07401030045833981,
+          0.05539612897634261
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 993.3096568947808,
+          "gradient": [
+            2.0151791745581793e-06,
+            -3.4736810334834445e-06
+          ],
+          "hessian": [
+            367.41178501901885,
+            -38.696804924065134,
+            -38.696804924065134,
+            655.8108260270425
+          ],
+          "amplitudes": [
+            -1.1427011595063314,
+            -0.5937691576117246,
+            1.7540852139620433
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.07401030045833981,
+            0.05539612897634261
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 5.0042364341784145e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 5.0042454104171075e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 94,
+      "jvm": {
+        "voxel": 94,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          6.40365588574672,
+          0.21572206719703235
+        ],
+        "fitEnergy": 1119.0223745690755,
+        "fitAmplitudes": [
+          -1.4577179269481215,
+          -0.5773023415340798,
+          0.38976427388106505
+        ],
+        "fitHessian": [
+          185.89337120307752,
+          6.888159209982869,
+          6.888159209982869,
+          335.9290384490616
+        ],
+        "fitSd": [
+          0.10376433224657293,
+          0.07718915273437324
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1119.0223745690755,
+          "gradient": [
+            -1.1558463886007786e-06,
+            -1.8617602037807046e-06
+          ],
+          "hessian": [
+            185.89337120307752,
+            6.888159209982869,
+            6.888159209982869,
+            335.9290384490616
+          ],
+          "amplitudes": [
+            -1.4577179269481215,
+            -0.5773023415340798,
+            0.38976427388106505
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.10376433224657293,
+            0.07718915273437324
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 6.017004245272519e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 94,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          6.403655891763741,
+          0.2157220726157801
+        ],
+        "fitEnergy": 1119.0223745690757,
+        "fitAmplitudes": [
+          -1.4577179292665259,
+          -0.5773023382003958,
+          0.3897642781209521
+        ],
+        "fitHessian": [
+          185.89337051687463,
+          6.888158126471534,
+          6.888158126471534,
+          335.92903667954795
+        ],
+        "fitSd": [
+          0.1037643324260322,
+          0.0771891529287016
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1119.0223745690757,
+          "gradient": [
+            2.3435142715300117e-12,
+            -7.105427357601002e-15
+          ],
+          "hessian": [
+            185.89337051687463,
+            6.888158126471534,
+            6.888158126471534,
+            335.92903667954795
+          ],
+          "amplitudes": [
+            -1.4577179292665259,
+            -0.5773023382003958,
+            0.3897642781209521
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.1037643324260322,
+            0.0771891529287016
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.2617136419037019e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 6.0170206594989395e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 103,
+      "jvm": {
+        "voxel": 103,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          5.66577235801093,
+          0.6776766978187954
+        ],
+        "fitEnergy": 5933.294133361772,
+        "fitAmplitudes": [
+          0.44507116727297263,
+          -1.5990930251436632,
+          -2.155386994315431
+        ],
+        "fitHessian": [
+          255.09514812008908,
+          156.66893263174745,
+          156.66893263174745,
+          1131.633368395598
+        ],
+        "fitSd": [
+          0.09256777060529323,
+          0.04394991415011747
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 5933.294133361772,
+          "gradient": [
+            2.2018269874024554e-07,
+            -2.283563844684977e-07
+          ],
+          "hessian": [
+            255.09514812008908,
+            156.66893263174745,
+            156.66893263174745,
+            1131.633368395598
+          ],
+          "amplitudes": [
+            0.44507116727297263,
+            -1.5990930251436632,
+            -2.155386994315431
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.09256777060529323,
+            0.04394991415011747
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.0788001719850769e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 1,
+          "terminal": 1,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 103,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          5.665772357741233,
+          0.6776766979065767
+        ],
+        "fitEnergy": 5933.294133361782,
+        "fitAmplitudes": [
+          0.44507116737704133,
+          -1.5990930250435402,
+          -2.1553869943604984
+        ],
+        "fitHessian": [
+          255.09514809004077,
+          156.66893267249435,
+          156.66893267249435,
+          1131.6333683834498
+        ],
+        "fitSd": [
+          0.09256777061353522,
+          0.04394991415167808
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 5933.294133361782,
+          "gradient": [
+            1.651372603106438e-07,
+            -1.7126865259342594e-07
+          ],
+          "hessian": [
+            255.09514809004077,
+            156.66893267249435,
+            156.66893267249435,
+            1131.6333683834498
+          ],
+          "amplitudes": [
+            0.44507116737704133,
+            -1.5990930250435402,
+            -2.1553869943604984
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.09256777061353522,
+            0.04394991415167808
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 8.091019505766708e-10
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 7,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 6,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 2.6969715349878243e-10
+    },
+    {
+      "snr": 0.5,
+      "voxel": 112,
+      "jvm": {
+        "voxel": 112,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          3.378961588693478,
+          0.5300693542805512
+        ],
+        "fitEnergy": 5819.52889763267,
+        "fitAmplitudes": [
+          1.952444309768198,
+          1.5841889427334224,
+          1.058551590748301
+        ],
+        "fitHessian": [
+          476.0788642629751,
+          69.50297045070218,
+          69.50297045070218,
+          1537.3036568936766
+        ],
+        "fitSd": [
+          0.06502996943910923,
+          0.0361887156713426
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 5819.52889763267,
+          "gradient": [
+            5.347490596108173e-06,
+            -9.633305694478622e-06
+          ],
+          "hessian": [
+            476.0788642629751,
+            69.50297045070218,
+            69.50297045070218,
+            1537.3036568936766
+          ],
+          "amplitudes": [
+            1.952444309768198,
+            1.5841889427334224,
+            1.058551590748301
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.06502996943910923,
+            0.0361887156713426
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.2227901071004817e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 1,
+          "candidates": 12,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 112,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          3.3789615764655747,
+          0.5300693610997558
+        ],
+        "fitEnergy": 5819.5288976326665,
+        "fitAmplitudes": [
+          1.9524442957990893,
+          1.5841889503077273,
+          1.0585515847148308
+        ],
+        "fitHessian": [
+          476.07886008591066,
+          69.50298164596073,
+          69.50298164596073,
+          1537.3036393244201
+        ],
+        "fitSd": [
+          0.06502996979835336,
+          0.03618871591929498
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 5819.5288976326665,
+          "gradient": [
+            -7.194245199571014e-14,
+            3.410605131648481e-13
+          ],
+          "hessian": [
+            476.07886008591066,
+            69.50298164596073,
+            69.50298164596073,
+            1537.3036393244201
+          ],
+          "amplitudes": [
+            1.9524442957990893,
+            1.5841889503077273,
+            1.0585515847148308
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.06502996979835336,
+            0.03618871591929498
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.3020780263646357e-16
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.2227903134487406e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 120,
+      "jvm": {
+        "voxel": 120,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          7.340461068634853,
+          0.7970677848378979
+        ],
+        "fitEnergy": 1389.6223475842266,
+        "fitAmplitudes": [
+          -0.6756412374262152,
+          1.2273973326570473,
+          0.8825830647982852
+        ],
+        "fitHessian": [
+          57.66523164838164,
+          35.33077075800986,
+          35.33077075800986,
+          321.6348138666516
+        ],
+        "fitSd": [
+          0.19283572567396678,
+          0.08165127892487353
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1389.6223475842266,
+          "gradient": [
+            -2.8874264856870724e-06,
+            -1.0368200378252368e-06
+          ],
+          "hessian": [
+            57.66523164838164,
+            35.33077075800986,
+            35.33077075800986,
+            321.6348138666516
+          ],
+          "amplitudes": [
+            -0.6756412374262152,
+            1.2273973326570473,
+            0.8825830647982852
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.19283572567396678,
+            0.08165127892487353
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 5.1567794604111775e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 12,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 120,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          7.340461120202626,
+          0.7970677823969118
+        ],
+        "fitEnergy": 1389.6223475842228,
+        "fitAmplitudes": [
+          -0.6756412310793076,
+          1.2273973412473214,
+          0.8825830539653021
+        ],
+        "fitHessian": [
+          57.66523183735874,
+          35.33076867805085,
+          35.33076867805085,
+          321.63480900703877
+        ],
+        "fitSd": [
+          0.1928357246211351,
+          0.08165127922970938
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1389.6223475842228,
+          "gradient": [
+            -1.2021494910641195e-12,
+            -4.547473508864641e-13
+          ],
+          "hessian": [
+            57.66523183735874,
+            35.33076867805085,
+            35.33076867805085,
+            321.63480900703877
+          ],
+          "amplitudes": [
+            -0.6756412310793076,
+            1.2273973412473214,
+            0.8825830539653021
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.1928357246211351,
+            0.08165127922970938
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.1422571433444146e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 5.1567773162730646e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 121,
+      "jvm": {
+        "voxel": 121,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          6.904564395723078,
+          0.7480626654720273
+        ],
+        "fitEnergy": 810.4515696994268,
+        "fitAmplitudes": [
+          -0.7633329204943001,
+          2.0450547604807383,
+          -1.0641305191353416
+        ],
+        "fitHessian": [
+          83.57629799516066,
+          -24.794733035406544,
+          -24.794733035406544,
+          438.78520417248524
+        ],
+        "fitSd": [
+          0.15600718453605877,
+          0.06808636943318641
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 810.4515696994268,
+          "gradient": [
+            1.357691736814104e-12,
+            5.684341886080801e-13
+          ],
+          "hessian": [
+            83.57629799516066,
+            -24.794733035406544,
+            -24.794733035406544,
+            438.78520417248524
+          ],
+          "amplitudes": [
+            -0.7633329204943001,
+            2.0450547604807383,
+            -1.0641305191353416
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.15600718453605877,
+            0.06808636943318641
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.6912797838004332e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 121,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          6.904564391426695,
+          0.7480627002621073
+        ],
+        "fitEnergy": 810.4515696994242,
+        "fitAmplitudes": [
+          -0.7633329287678605,
+          2.045054797511928,
+          -1.0641305516154334
+        ],
+        "fitHessian": [
+          83.57629696476346,
+          -24.79473148078439,
+          -24.79473148078439,
+          438.78521761153706
+        ],
+        "fitSd": [
+          0.15600718530663701,
+          0.06808636830710844
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 810.4515696994242,
+          "gradient": [
+            -1.2216851996149636e-06,
+            1.5371898967941888e-05
+          ],
+          "hessian": [
+            83.57629696476346,
+            -24.79473148078439,
+            -24.79473148078439,
+            438.78521761153706
+          ],
+          "amplitudes": [
+            -0.7633329287678605,
+            2.045054797511928,
+            -1.0641305516154334
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.15600718530663701,
+            0.06808636830710844
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 3.4790077356357776e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 3.479008003903772e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 141,
+      "jvm": {
+        "voxel": 141,
+        "status": "BudgetExceeded",
+        "budgetExit": "AcceptedEnergyOnlyNonstationaryTerminal",
+        "coordinates": [
+          4.7483802554905585,
+          1.0100996710869208
+        ],
+        "fitEnergy": 1573.39061653259,
+        "fitAmplitudes": [
+          1.6995001746956024,
+          -1.21349970234693,
+          -1.4201611081467882
+        ],
+        "fitHessian": [
+          67.72993740362409,
+          -58.07782150437595,
+          -58.07782150437595,
+          688.2046630980053
+        ],
+        "fitSd": [
+          0.17841684488936047,
+          0.05597155681359515
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1573.39061653259,
+          "gradient": [
+            9.666199787261576e-07,
+            -2.457002054256918e-06
+          ],
+          "hessian": [
+            67.72993740362409,
+            -58.07782150437595,
+            -58.07782150437595,
+            688.2046630980053
+          ],
+          "amplitudes": [
+            1.6995001746956024,
+            -1.21349970234693,
+            -1.4201611081467882
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.17841684488936047,
+            0.05597155681359515
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.2084801754992203e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 1,
+          "terminal": 1,
+          "candidates": 11,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 141,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          4.748380243405721,
+          1.0100996736372352
+        ],
+        "fitEnergy": 1573.3906165325961,
+        "fitAmplitudes": [
+          1.69950017174922,
+          -1.2134996966135685,
+          -1.420161110539779
+        ],
+        "fitHessian": [
+          67.7299370476252,
+          -58.07782061389996,
+          -58.07782061389996,
+          688.2046635669285
+        ],
+        "fitSd": [
+          0.1784168451766907,
+          0.05597155673756793
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1573.3906165325961,
+          "gradient": [
+            -1.3002932064409833e-12,
+            1.1368683772161603e-13
+          ],
+          "hessian": [
+            67.7299370476252,
+            -58.07782061389996,
+            -58.07782061389996,
+            688.2046635669285
+          ],
+          "amplitudes": [
+            1.69950017174922,
+            -1.2134996966135685,
+            -1.420161110539779
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.1784168451766907,
+            0.05597155673756793
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 2.054313571850718e-14
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.2084837130998949e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 154,
+      "jvm": {
+        "voxel": 154,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          5.0528209462445925,
+          0.1966206176774774
+        ],
+        "fitEnergy": 784.5652234689701,
+        "fitAmplitudes": [
+          0.613863616262763,
+          -1.1288272586420807,
+          1.0194505434555523
+        ],
+        "fitHessian": [
+          173.1123724878451,
+          -18.394995508511457,
+          -18.394995508511457,
+          263.5939596724595
+        ],
+        "fitSd": [
+          0.10788651929190857,
+          0.08743061010570945
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 784.5652234689701,
+          "gradient": [
+            -2.26809445488807e-07,
+            -1.6152150550396982e-07
+          ],
+          "hessian": [
+            173.1123724878451,
+            -18.394995508511457,
+            -18.394995508511457,
+            263.5939596724595
+          ],
+          "amplitudes": [
+            0.613863616262763,
+            -1.1288272586420807,
+            1.0194505434555523
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.10788651929190857,
+            0.08743061010570945
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.385573650945971e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 1,
+          "terminal": 0,
+          "candidates": 11,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 154,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          5.052820947630177,
+          0.19662061838692904
+        ],
+        "fitEnergy": 784.5652234689705,
+        "fitAmplitudes": [
+          0.6138636156931943,
+          -1.1288272587501522,
+          1.0194505441972457
+        ],
+        "fitHessian": [
+          173.11237234077353,
+          -18.394995796983554,
+          -18.394995796983554,
+          263.5939597059585
+        ],
+        "fitSd": [
+          0.10788651935066824,
+          0.08743061011063302
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 784.5652234689705,
+          "gradient": [
+            8.785333571736942e-13,
+            -1.5631940186722204e-13
+          ],
+          "hessian": [
+            173.11237234077353,
+            -18.394995796983554,
+            -18.394995796983554,
+            263.5939597059585
+          ],
+          "amplitudes": [
+            0.6138636156931943,
+            -1.1288272587501522,
+            1.0194505441972457
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.10788651935066824,
+            0.08743061011063302
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 5.049358454378363e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.3855840919063667e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 179,
+      "jvm": {
+        "voxel": 179,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          4.766208974401437,
+          0.5167713267440945
+        ],
+        "fitEnergy": 1355.5492347501272,
+        "fitAmplitudes": [
+          1.2198381514638665,
+          -0.893644408340525,
+          -1.567439504849563
+        ],
+        "fitHessian": [
+          129.35792086478568,
+          -7.4501662992590045,
+          -7.4501662992590045,
+          390.4711992642342
+        ],
+        "fitSd": [
+          0.12441055694030012,
+          0.07160762082198573
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1355.5492347501272,
+          "gradient": [
+            2.3920497893570314e-07,
+            -3.914939597393641e-06
+          ],
+          "hessian": [
+            129.35792086478568,
+            -7.4501662992590045,
+            -7.4501662992590045,
+            390.4711992642342
+          ],
+          "amplitudes": [
+            1.2198381514638665,
+            -0.893644408340525,
+            -1.567439504849563
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.12441055694030012,
+            0.07160762082198573
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.0001901784181765e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 179,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          4.766208973128311,
+          0.5167713367459817
+        ],
+        "fitEnergy": 1355.5492347501297,
+        "fitAmplitudes": [
+          1.2198381552377857,
+          -0.893644407545166,
+          -1.567439504017968
+        ],
+        "fitHessian": [
+          129.35791956141324,
+          -7.450165176101525,
+          -7.450165176101525,
+          390.471200616457
+        ],
+        "fitSd": [
+          0.12441055754688192,
+          0.07160762068637991
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1355.5492347501297,
+          "gradient": [
+            4.702904732312163e-13,
+            -2.4584778657299466e-12
+          ],
+          "hessian": [
+            129.35791956141324,
+            -7.450165176101525,
+            -7.450165176101525,
+            390.471200616457
+          ],
+          "amplitudes": [
+            1.2198381552377857,
+            -0.893644407545166,
+            -1.567439504017968
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.12441055754688192,
+            0.07160762068637991
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 6.233665809229089e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.000188720734485e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 185,
+      "jvm": {
+        "voxel": 185,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          3.7549238562057905,
+          0.6074061542441405
+        ],
+        "fitEnergy": 2189.166793192629,
+        "fitAmplitudes": [
+          -1.585685741342094,
+          1.3998758086661032,
+          1.4861246509146195
+        ],
+        "fitHessian": [
+          150.764775940104,
+          3.9746227736570745,
+          3.9746227736570745,
+          938.5894484058772
+        ],
+        "fitSd": [
+          0.11518324194202005,
+          0.04616378476717476
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 2189.166793192629,
+          "gradient": [
+            7.222164946085741e-06,
+            -8.295884470044257e-06
+          ],
+          "hessian": [
+            150.764775940104,
+            3.9746227736570745,
+            3.9746227736570745,
+            938.5894484058772
+          ],
+          "amplitudes": [
+            -1.585685741342094,
+            1.3998758086661032,
+            1.4861246509146195
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11518324194202005,
+            0.04616378476717476
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 4.814191893932031e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 10,
+          "steps": 2,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 185,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          3.7549238080638774,
+          0.6074061632866821
+        ],
+        "fitEnergy": 2189.1667931926213,
+        "fitAmplitudes": [
+          -1.5856857369980122,
+          1.399875779306086,
+          1.486124671090754
+        ],
+        "fitHessian": [
+          150.7647745272448,
+          3.9746255871911416,
+          3.9746255871911416,
+          938.5894487592639
+        ],
+        "fitSd": [
+          0.11518324249088874,
+          0.04616378476215599
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 2189.1667931926213,
+          "gradient": [
+            -1.0160761121369433e-12,
+            4.405364961712621e-13
+          ],
+          "hessian": [
+            150.7647745272448,
+            3.9746255871911416,
+            3.9746255871911416,
+            938.5894487592639
+          ],
+          "amplitudes": [
+            -1.5856857369980122,
+            1.399875779306086,
+            1.486124671090754
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.11518324249088874,
+            0.04616378476215599
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 6.752607173441874e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 4.8141913122634605e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 186,
+      "jvm": {
+        "voxel": 186,
+        "status": "BudgetExceeded",
+        "budgetExit": "CandidateAttemptCap",
+        "coordinates": [
+          4.76384158603074,
+          0.5360669796329995
+        ],
+        "fitEnergy": 3391.810148353704,
+        "fitAmplitudes": [
+          1.1699212385680722,
+          -1.6082075972664602,
+          -1.4827956564051192
+        ],
+        "fitHessian": [
+          130.49421397875804,
+          -13.828148729219674,
+          -13.828148729219674,
+          693.7001491330329
+        ],
+        "fitSd": [
+          0.12393059796295494,
+          0.053751214204852606
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 3391.810148353704,
+          "gradient": [
+            1.120246009289616e-06,
+            -1.7852460132417036e-06
+          ],
+          "hessian": [
+            130.49421397875804,
+            -13.828148729219674,
+            -13.828148729219674,
+            693.7001491330329
+          ],
+          "amplitudes": [
+            1.1699212385680722,
+            -1.6082075972664602,
+            -1.4827956564051192
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.12393059796295494,
+            0.053751214204852606
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 8.329527322273048e-09
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 11,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 12,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 186,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          4.763841577701194,
+          0.5360669820404613
+        ],
+        "fitEnergy": 3391.8101483537102,
+        "fitAmplitudes": [
+          1.1699212387367484,
+          -1.608207590070805,
+          -1.4827956623343328
+        ],
+        "fitHessian": [
+          130.4942133318757,
+          -13.828147172824588,
+          -13.828147172824588,
+          693.7001475289014
+        ],
+        "fitSd": [
+          0.1239305982415543,
+          0.05375121425460767
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 3391.8101483537102,
+          "gradient": [
+            -8.908429549592256e-13,
+            -1.5631940186722204e-12
+          ],
+          "hessian": [
+            130.4942133318757,
+            -13.828147172824588,
+            -13.828147172824588,
+            693.7001475289014
+          ],
+          "amplitudes": [
+            1.1699212387367484,
+            -1.608207590070805,
+            -1.4827956623343328
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.1239305982415543,
+            0.05375121425460767
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 7.080430559099603e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 4,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 3,
+          "steps": 3,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 8.329545941876404e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 191,
+      "jvm": {
+        "voxel": 191,
+        "status": "Accepted",
+        "budgetExit": null,
+        "coordinates": [
+          3.54482389351764,
+          0.34578804246020145
+        ],
+        "fitEnergy": 1471.2206237301061,
+        "fitAmplitudes": [
+          1.3669620077300746,
+          1.2240537905768207,
+          -1.0065725820084668
+        ],
+        "fitHessian": [
+          245.01949440086437,
+          -54.409888825463845,
+          -54.409888825463845,
+          355.6738364992706
+        ],
+        "fitSd": [
+          0.09192200835822593,
+          0.07629461123803574
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1471.2206237301061,
+          "gradient": [
+            -2.0339285811132868e-13,
+            4.654054919228656e-13
+          ],
+          "hessian": [
+            245.01949440086437,
+            -54.409888825463845,
+            -54.409888825463845,
+            355.6738364992706
+          ],
+          "amplitudes": [
+            1.3669620077300746,
+            1.2240537905768207,
+            -1.0065725820084668
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.09192200835822593,
+            0.07629461123803574
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.2230788593984503e-15
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 5,
+          "exact": 0,
+          "terminal": 0,
+          "candidates": 4,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "js": {
+        "voxel": 191,
+        "status": "BudgetExceeded",
+        "budgetExit": "RemainingEvaluationQuota",
+        "coordinates": [
+          3.5448238932863707,
+          0.3457880295334914
+        ],
+        "fitEnergy": 1471.2206237301061,
+        "fitAmplitudes": [
+          1.3669620045065087,
+          1.224053792703043,
+          -1.0065725735231854
+        ],
+        "fitHessian": [
+          245.0194977902469,
+          -54.409887933248,
+          -54.409887933248,
+          355.67382866977744
+        ],
+        "fitSd": [
+          0.09192200768265699,
+          0.07629461204475582
+        ],
+        "auditAvailable": true,
+        "auditFailure": null,
+        "audit": {
+          "jetEnergy": 1471.2206237301061,
+          "gradient": [
+            6.466782793701498e-07,
+            -4.585107326704474e-06
+          ],
+          "hessian": [
+            245.0194977902469,
+            -54.409887933248,
+            -54.409887933248,
+            355.67382866977744
+          ],
+          "amplitudes": [
+            1.3669620045065087,
+            1.224053792703043,
+            -1.0065725735231854
+          ],
+          "curvature": "PositiveDefinite",
+          "conditionalSd": [
+            0.09192200768265699,
+            0.07629461204475582
+          ],
+          "sdFailure": null,
+          "projectedNewtonCorrection": 1.2926702945500092e-08
+        },
+        "coherent": true,
+        "work": {
+          "nodes": 72,
+          "jets": 12,
+          "exact": 2,
+          "terminal": 0,
+          "candidates": 13,
+          "steps": 4,
+          "fallbacks": 0
+        }
+      },
+      "coordinateDistance": 1.29267100357211e-08
+    }
+  ]
+}

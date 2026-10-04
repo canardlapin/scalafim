@@ -1,0 +1,11 @@
+{
+  "platform": "JS",
+  "sourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+  "responses": 6,
+  "recomputedMaxima": [
+    3.0517578117894573e-06,
+    6.193833964057366e-06,
+    1.1198207912751366e-06
+  ],
+  "adequate": true
+}

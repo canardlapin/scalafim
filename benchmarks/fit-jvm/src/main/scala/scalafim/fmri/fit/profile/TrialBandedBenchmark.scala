@@ -398,7 +398,50 @@ object TrialBandedBenchmark:
       .compile(KernelBasisSpec(Cascade34Family.Default, step, Vector(9, 9, 7), tolerance = 1e-3, maxRank = 32))
       .fold(error => throw new IllegalArgumentException(error.message), identity)
 
-  private val zeroWork = TrialBandedWorkSnapshot(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L)
+  private val zeroAttempted =
+    TrialBandedAttemptedWorkSnapshot(
+      referenceAttempts = 0L, referenceFailures = 0L,
+      partialReferenceFailures = 0L, releaseFailures = 0L,
+      factorAttempts = 0L, factorFailures = 0L,
+      solveAttempts = 0L, solveFailures = 0L,
+      rightHandSideAttempts = 0L, rightHandSideFailures = 0L,
+      jetAttempts = 0L, jetFailures = 0L,
+      readoutAttempts = 0L, readoutFailures = 0L,
+      exactReadoutFactorAttempts = 0L, exactReadoutFactorFailures = 0L,
+      conditionalReadoutAttempts = 0L, conditionalReadoutFailures = 0L,
+      conditionalInverseAttempts = 0L, conditionalInverseFailures = 0L,
+      conditionalCorrectionAttempts = 0L, conditionalCorrectionFailures = 0L)
+
+  private val zeroWork = TrialBandedWorkSnapshot(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L, zeroAttempted)
+
+  /** Field-wise sum of disjoint per-worker attempt counters. */
+  private def addAttempted(
+      left: TrialBandedAttemptedWorkSnapshot,
+      right: TrialBandedAttemptedWorkSnapshot): TrialBandedAttemptedWorkSnapshot =
+    TrialBandedAttemptedWorkSnapshot(
+      left.referenceAttempts + right.referenceAttempts,
+      left.referenceFailures + right.referenceFailures,
+      left.partialReferenceFailures + right.partialReferenceFailures,
+      left.releaseFailures + right.releaseFailures,
+      left.factorAttempts + right.factorAttempts,
+      left.factorFailures + right.factorFailures,
+      left.solveAttempts + right.solveAttempts,
+      left.solveFailures + right.solveFailures,
+      left.rightHandSideAttempts + right.rightHandSideAttempts,
+      left.rightHandSideFailures + right.rightHandSideFailures,
+      left.jetAttempts + right.jetAttempts,
+      left.jetFailures + right.jetFailures,
+      left.readoutAttempts + right.readoutAttempts,
+      left.readoutFailures + right.readoutFailures,
+      left.exactReadoutFactorAttempts + right.exactReadoutFactorAttempts,
+      left.exactReadoutFactorFailures + right.exactReadoutFactorFailures,
+      conditionalReadoutAttempts = left.conditionalReadoutAttempts + right.conditionalReadoutAttempts,
+      conditionalReadoutFailures = left.conditionalReadoutFailures + right.conditionalReadoutFailures,
+      conditionalInverseAttempts = left.conditionalInverseAttempts + right.conditionalInverseAttempts,
+      conditionalInverseFailures = left.conditionalInverseFailures + right.conditionalInverseFailures,
+      conditionalCorrectionAttempts = left.conditionalCorrectionAttempts + right.conditionalCorrectionAttempts,
+      conditionalCorrectionFailures = left.conditionalCorrectionFailures + right.conditionalCorrectionFailures
+    )
 
   private def addWork(left: TrialBandedWorkSnapshot, right: TrialBandedWorkSnapshot): TrialBandedWorkSnapshot =
     TrialBandedWorkSnapshot(
@@ -410,7 +453,8 @@ object TrialBandedBenchmark:
       left.bandedSolveCalls + right.bandedSolveCalls,
       left.bandedRightHandSides + right.bandedRightHandSides,
       left.continuousFactors + right.continuousFactors,
-      left.exactReadoutFactors + right.exactReadoutFactors
+      left.exactReadoutFactors + right.exactReadoutFactors,
+      addAttempted(left.attempted, right.attempted)
     )
 
   /** One-shot checkpoint runner. Args: trials, voxels, schedule, mode
@@ -448,5 +492,20 @@ object TrialBandedBenchmark:
         s"amplitudeCorrections=${work.amplitudeCorrections} " +
         s"solveCalls=${work.bandedSolveCalls} solveRhs=${work.bandedRightHandSides} " +
         s"continuousFactors=${work.continuousFactors} exactReadoutFactors=${work.exactReadoutFactors} " +
+        s"referenceAttempts=${work.attempted.referenceAttempts} referenceFailures=${work.attempted.referenceFailures} " +
+        s"partialReferenceFailures=${work.attempted.partialReferenceFailures} releaseFailures=${work.attempted.releaseFailures} " +
+        s"factorAttempts=${work.attempted.factorAttempts} factorFailures=${work.attempted.factorFailures} " +
+        s"solveAttempts=${work.attempted.solveAttempts} solveFailures=${work.attempted.solveFailures} " +
+        s"rhsAttempts=${work.attempted.rightHandSideAttempts} rhsFailures=${work.attempted.rightHandSideFailures} " +
+        s"jetAttempts=${work.attempted.jetAttempts} jetFailures=${work.attempted.jetFailures} " +
+        s"readoutAttempts=${work.attempted.readoutAttempts} readoutFailures=${work.attempted.readoutFailures} " +
+        s"exactReadoutFactorAttempts=${work.attempted.exactReadoutFactorAttempts} " +
+        s"exactReadoutFactorFailures=${work.attempted.exactReadoutFactorFailures} " +
+        s"conditionalReadoutAttempts=${work.attempted.conditionalReadoutAttempts} " +
+        s"conditionalReadoutFailures=${work.attempted.conditionalReadoutFailures} " +
+        s"conditionalInverseAttempts=${work.attempted.conditionalInverseAttempts} " +
+        s"conditionalInverseFailures=${work.attempted.conditionalInverseFailures} " +
+        s"conditionalCorrectionAttempts=${work.attempted.conditionalCorrectionAttempts} " +
+        s"conditionalCorrectionFailures=${work.attempted.conditionalCorrectionFailures} " +
         f"checksum=$checksum%.9g"
     )

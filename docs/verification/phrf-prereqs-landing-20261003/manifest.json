@@ -1,0 +1,2186 @@
+{
+  "schema": "scalafim.landing-manifest.v1",
+  "landing": "phrf-prereqs-landing-20261003",
+  "branch": "land/phrf-prereqs-20261003",
+  "mainBase": "62312f5da78302e67dc9b1ee05e63823236c9053",
+  "integrationSource": "8d5b0e5152240819152a434b11af4be1095cee60",
+  "mergeBase": "8d0dd730b60a40b093fae0f7ff61996fa071a811",
+  "counts": {
+    "files": 52,
+    "taken": 50,
+    "merged": 2,
+    "integrationCommitsCovered": 32,
+    "archivedReceiptFiles": 107
+  },
+  "integrationCommitsCovered": [
+    "4244446e",
+    "fe4ee895",
+    "3d718771",
+    "113d1fb3",
+    "ae719307",
+    "ad439bd6",
+    "4eccd371",
+    "66d62361",
+    "771672cb",
+    "c42be910",
+    "8c39a2f7",
+    "d855972f",
+    "057dc067",
+    "d9a4005b",
+    "5b2405b8",
+    "63df576f",
+    "1d2bdf5d",
+    "bf304201",
+    "5cb42af9",
+    "498021e3",
+    "d797a0dd",
+    "041514a6",
+    "9235c3c7",
+    "43db2e83",
+    "d71e5ca9",
+    "944b6fe3",
+    "ee83b1eb",
+    "0edf75c2",
+    "a6dbd3b1",
+    "a9fecbb4",
+    "c9554354",
+    "327eda76"
+  ],
+  "buildEdit": {
+    "path": "build.sbt",
+    "disposition": "edited",
+    "change": "galeRevision 18d24dbb5056122032b0278f8bad557a9bb1cf23 -> da38f8c429294657d30ec29f06eae3fab636d428",
+    "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+    "sha256": "f0c68f44c2f995af48d20483fb5695e602677a4b69c492f789e27a5f30846982",
+    "reviewReceipts": [
+      "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+      "docs/verification/trial-constrained-logdet-2026-09-30.md",
+      "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+      "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+      "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+      "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz"
+    ],
+    "reviewBasis": "AcceptBoundedHostedNativeMlCoreAndHelper (3d75dea0 -> 944b6fe3, Gale provider da38f8c4)"
+  },
+  "keptMainVersions": [
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/WorkReceipt.scala"
+  ],
+  "files": [
+    {
+      "path": "modules/model/shared/src/main/scala/scalafim/fmri/model/ProfileHrfPlan.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "30c90cd631ca9e3c3cc79ac6c7167b9b4f6e27ccb9038b0caa00d12628aefdaa",
+      "integrationCommitsTouching": [
+        "8c39a2f7"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "8c39a2f7": "model-only ProfileHrfPlan declaration reviewed at 4f47a4a6"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a6f9f45383049e1880f0b421169d2935e7b0b78fbca7bf9859592bdf8d07dc5f",
+      "integrationCommitsTouching": [
+        "9235c3c7",
+        "ee83b1eb",
+        "a6dbd3b1",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/profile-public-executor-readout.md",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)",
+        "ee83b1eb": "public-declaration repair of rejected e6543fb6, accepted within AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration (publicChecks 75 JVM/50 JS)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputs.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "14f58088dea914161f20ac306f519f8166dc0bea7ed4ec8c63d34708a3afaccf",
+      "integrationCommitsTouching": [
+        "ee83b1eb",
+        "a6dbd3b1",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-public-executor-readout.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "ee83b1eb": "public-declaration repair of rejected e6543fb6, accepted within AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration (publicChecks 75 JVM/50 JS)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileTrialReadout.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "252579663bab1537f7d9f8e160f31e2417ebc69c813344a4630cbc5c40d89135",
+      "integrationCommitsTouching": [
+        "43db2e83",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-trial-readout-stage2-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "43db2e83": "AcceptBoundedPublicReadoutAndScopedStorage (d7a9e900 -> 43db2e83)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialMlObjective.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "f2b6c6aab9a9192b42ee31aa69463d1395b67597b7dae10ae30152e2d66b35f1",
+      "integrationCommitsTouching": [
+        "d71e5ca9",
+        "a6dbd3b1"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-ml-objective-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-criterion-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md"
+      ],
+      "reviewBasis": {
+        "d71e5ca9": "AcceptBoundedTypedCriterionAdapter (0017dafd -> d71e5ca9)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ObservedFamilyCertification.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "7e2e82b43e0b6438115c56bc447699aecf93d5e9bc310711d4b9ea856ab0263f",
+      "integrationCommitsTouching": [
+        "4244446e",
+        "fe4ee895",
+        "113d1fb3"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "4244446e": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "fe4ee895": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "113d1fb3": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "57db4f81d80bfff327f85232dcc829fb16d8838f",
+      "mainBlob": "57db4f81d80bfff327f85232dcc829fb16d8838f",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/BlockExecutor.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "67e245dd339ee3b8ee9cfa6c8d10e0765b8d431d8072fbfc25a541a7b27fa9ce",
+      "integrationCommitsTouching": [
+        "d855972f",
+        "9235c3c7"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz"
+      ],
+      "reviewBasis": {
+        "d855972f": "reviewed candidates 74f4adcf/fed64de7; lifecycle defect repaired d1879b4d; final state accepted 7bd14ec9, integrated 9235c3c7",
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)"
+      },
+      "mergeBaseBlob": "31e563cf102f95b8cb33caed4beed89d40bd13ca",
+      "mainBlob": "31e563cf102f95b8cb33caed4beed89d40bd13ca",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a079bd7733d258b25d1967da9a83c788a85eda5815e7ef23eeb7c0f64c5483e6",
+      "integrationCommitsTouching": [
+        "4244446e",
+        "fe4ee895"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "4244446e": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "fe4ee895": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "75ffb3aa3fca84f83936cbfb12727826e5a1e5f1",
+      "mainBlob": "75ffb3aa3fca84f83936cbfb12727826e5a1e5f1",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "bd40d92969b87d7e0ec5327c7f47d28e23eb956f9695b8281cc43fbd1dfc33e1",
+      "integrationCommitsTouching": [
+        "4244446e",
+        "ad439bd6"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "4244446e": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ad439bd6": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "914d18789f3e78d0f50862a5e62a1c880c1c6574",
+      "mainBlob": "914d18789f3e78d0f50862a5e62a1c880c1c6574",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CriterionJet.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "96722c1a6d368697f5278ad1e4441300d3549dc2b6af11c4da937a88cd72a480",
+      "integrationCommitsTouching": [
+        "d71e5ca9"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-ml-objective-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-criterion-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "d71e5ca9": "AcceptBoundedTypedCriterionAdapter (0017dafd -> d71e5ca9)"
+      },
+      "mergeBaseBlob": "015522441b00a98a89a726883ec8d5a957ea658f",
+      "mainBlob": "015522441b00a98a89a726883ec8d5a957ea658f",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/OutputRequest.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "090265aea06b15566b1f8247cb83f726fa3614bf9170334d48e05d3b09983a90",
+      "integrationCommitsTouching": [
+        "43db2e83"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-trial-readout-stage2-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "43db2e83": "AcceptBoundedPublicReadoutAndScopedStorage (d7a9e900 -> 43db2e83)"
+      },
+      "mergeBaseBlob": "cdca4537ed5e2bcf7450e4d7c12dbfa8dcab5ab2",
+      "mainBlob": "cdca4537ed5e2bcf7450e4d7c12dbfa8dcab5ab2",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "75b46dc057d264c9bef3f094a3f7fbd32ab41c35a966979ccdc5ac538444861e",
+      "integrationCommitsTouching": [
+        "5b2405b8",
+        "63df576f",
+        "bf304201",
+        "5cb42af9",
+        "43db2e83",
+        "944b6fe3",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/bounded-banded-work-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz",
+        "docs/verification/profile-trial-readout-stage2-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-qualified.json.gz",
+        "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+        "docs/verification/trial-constrained-logdet-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "5b2405b8": "counter candidate 5b9c7b8e independently reviewed",
+        "63df576f": "comments-only correction b3ac2fbd reviewed; integrated gate 63df576f",
+        "bf304201": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted",
+        "5cb42af9": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted",
+        "43db2e83": "AcceptBoundedPublicReadoutAndScopedStorage (d7a9e900 -> 43db2e83)",
+        "944b6fe3": "AcceptBoundedHostedNativeMlCoreAndHelper (3d75dea0 -> 944b6fe3, Gale provider da38f8c4)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": "ef0ff9bb114257170a675028a2baaa6ad8d7e3b1",
+      "mainBlob": "ef0ff9bb114257170a675028a2baaa6ad8d7e3b1",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": [
+        "b2612ab4"
+      ]
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBandedMlBackend.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "fc830f619200a8a975e1e5db848176d1c049f86cf1900259fcdc6971f6899636",
+      "integrationCommitsTouching": [
+        "944b6fe3",
+        "a6dbd3b1",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+        "docs/verification/trial-constrained-logdet-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "944b6fe3": "AcceptBoundedHostedNativeMlCoreAndHelper (3d75dea0 -> 944b6fe3, Gale provider da38f8c4)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConditionalSolve.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "aed9244fb7f3384cf81829b5dfe6f451dfcf613053da7276811a0910f28ca5bc",
+      "integrationCommitsTouching": [
+        "bf304201",
+        "5cb42af9",
+        "43db2e83",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz",
+        "docs/verification/profile-trial-readout-stage2-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-qualified.json.gz",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "bf304201": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted",
+        "5cb42af9": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted",
+        "43db2e83": "AcceptBoundedPublicReadoutAndScopedStorage (d7a9e900 -> 43db2e83)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConstrainedLogDetJet.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "32bcc75848be6631ef860e015bc134269a9382a85f0a7e622cde885a283e4ec2",
+      "integrationCommitsTouching": [
+        "944b6fe3"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+        "docs/verification/trial-constrained-logdet-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz"
+      ],
+      "reviewBasis": {
+        "944b6fe3": "AcceptBoundedHostedNativeMlCoreAndHelper (3d75dea0 -> 944b6fe3, Gale provider da38f8c4)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/profile/ParallelBlockExecutor.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "df04fb32d3c9a9e03f700a8405afd65c2c36aa38343d67fc2f616d229eb0f6e6",
+      "integrationCommitsTouching": [
+        "d855972f",
+        "057dc067",
+        "9235c3c7"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz"
+      ],
+      "reviewBasis": {
+        "d855972f": "reviewed candidates 74f4adcf/fed64de7; lifecycle defect repaired d1879b4d; final state accepted 7bd14ec9, integrated 9235c3c7",
+        "057dc067": "reviewed candidates 74f4adcf/fed64de7; lifecycle defect repaired d1879b4d; final state accepted 7bd14ec9, integrated 9235c3c7",
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)"
+      },
+      "mergeBaseBlob": "8f9ae79a46bbf771fea030345dd372de0ae00551",
+      "mainBlob": "8f9ae79a46bbf771fea030345dd372de0ae00551",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/jvm/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFitParallel.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5f5804d36a52e279edada06d33f4aa0d1c01dcf21000f8169ef4b7f95f35373f",
+      "integrationCommitsTouching": [
+        "9235c3c7",
+        "ee83b1eb"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/profile-public-executor-readout.md",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz"
+      ],
+      "reviewBasis": {
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)",
+        "ee83b1eb": "public-declaration repair of rejected e6543fb6, accepted within AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration (publicChecks 75 JVM/50 JS)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a0d887e7cf81dce3541fa8af34c5bf511542a0c146217a761f0b2d111649ee49",
+      "integrationCommitsTouching": [
+        "d797a0dd"
+      ],
+      "reviewReceipts": [
+        "docs/verification/whitening-transpose-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/ar-adjoint-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/accepted-prerequisite-local-commits.json",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "d797a0dd": "run-aware AR transpose independently accepted; exact unchanged files recorded as d797a0dd"
+      },
+      "mergeBaseBlob": "cd74ad85be0e0c9cbbd2efceca579b5ab28c9543",
+      "mainBlob": "cd74ad85be0e0c9cbbd2efceca579b5ab28c9543",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/ar/shared/src/test/scala/scalafim/fmri/ar/WhiteningTransposeSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "f6af1912aa1a4f2a2e39f109f993fa394888a0bee3ddfe13605bc998a446d83e",
+      "integrationCommitsTouching": [
+        "d797a0dd"
+      ],
+      "reviewReceipts": [
+        "docs/verification/whitening-transpose-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/ar-adjoint-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/accepted-prerequisite-local-commits.json",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "d797a0dd": "run-aware AR transpose independently accepted; exact unchanged files recorded as d797a0dd"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "9d3ba2c2ee8db9f34aebe6db4d8889d24bfe83b485e89fd4ee5e33ab0d9e9d60",
+      "integrationCommitsTouching": [
+        "d855972f",
+        "057dc067",
+        "9235c3c7"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz"
+      ],
+      "reviewBasis": {
+        "d855972f": "reviewed candidates 74f4adcf/fed64de7; lifecycle defect repaired d1879b4d; final state accepted 7bd14ec9, integrated 9235c3c7",
+        "057dc067": "reviewed candidates 74f4adcf/fed64de7; lifecycle defect repaired d1879b4d; final state accepted 7bd14ec9, integrated 9235c3c7",
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)"
+      },
+      "mergeBaseBlob": "e614befcb67ce7b8331a5e93181ebae4000a2268",
+      "mainBlob": "e614befcb67ce7b8331a5e93181ebae4000a2268",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ProfileHrfFitParallelSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "6c19294baf0bb8013b4a868a83b681588195b224df0031340f75e69bfb1fdd70",
+      "integrationCommitsTouching": [
+        "9235c3c7",
+        "ee83b1eb",
+        "a6dbd3b1"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/profile-public-executor-readout.md",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md"
+      ],
+      "reviewBasis": {
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)",
+        "ee83b1eb": "public-declaration repair of rejected e6543fb6, accepted within AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration (publicChecks 75 JVM/50 JS)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/BlockExecutorSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "328a6e78308d996803de088e279c333ad2e9641bc9c9ec31f2fc23637d0d5c5c",
+      "integrationCommitsTouching": [
+        "d855972f"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md"
+      ],
+      "reviewBasis": {
+        "d855972f": "reviewed candidates 74f4adcf/fed64de7; lifecycle defect repaired d1879b4d; final state accepted 7bd14ec9, integrated 9235c3c7"
+      },
+      "mergeBaseBlob": "dbde2ba97904c4e7926359963012a149cb06f1ac",
+      "mainBlob": "dbde2ba97904c4e7926359963012a149cb06f1ac",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/CriterionJetSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "92345409c9ac81a18e1dabda12e54bb13b01ee7a97e7d9f85558f9a60dfa5b6b",
+      "integrationCommitsTouching": [
+        "d71e5ca9"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-ml-objective-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-criterion-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "d71e5ca9": "AcceptBoundedTypedCriterionAdapter (0017dafd -> d71e5ca9)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileHrfFitSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "170dfebaa7c44050f26ae7890f5b65a97e2c0e69be4eb974a69caff5a43bb37d",
+      "integrationCommitsTouching": [
+        "9235c3c7",
+        "ee83b1eb",
+        "a6dbd3b1",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+        "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/profile-public-executor-readout.md",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "9235c3c7": "AcceptBoundedExecutorLifecycleAnd22FieldAccounting (7bd14ec9 -> 9235c3c7)",
+        "ee83b1eb": "public-declaration repair of rejected e6543fb6, accepted within AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration (publicChecks 75 JVM/50 JS)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputsSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "dba7ff8962c514e76d5a150107d0028c4907e49901b84c02ca806052f487d1bc",
+      "integrationCommitsTouching": [
+        "ee83b1eb",
+        "a6dbd3b1",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-public-executor-readout.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz",
+        "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "ee83b1eb": "public-declaration repair of rejected e6543fb6, accepted within AcceptBoundedHdfAdapterPublicRepairAndC0DefaultIntegration (publicChecks 75 JVM/50 JS)",
+        "a6dbd3b1": "AcceptBoundedNativeMlExecutorIntegration (8523c8c7 -> a6dbd3b1)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileReductionSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "46758a2c3c300e883b7d14e50db0c4dffbe1e2fdb30aeeb48f0069b676a2456c",
+      "integrationCommitsTouching": [
+        "d71e5ca9"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-ml-objective-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-criterion-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "d71e5ca9": "AcceptBoundedTypedCriterionAdapter (0017dafd -> d71e5ca9)"
+      },
+      "mergeBaseBlob": "0ab11200c50fce65d79efaae30b44647fca31c45",
+      "mainBlob": "0ab11200c50fce65d79efaae30b44647fca31c45",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ProfileTrialReadoutSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "ce5424ffe239451f037b7e131cd98bcea38945c00e45072538d7f4bb396049c0",
+      "integrationCommitsTouching": [
+        "43db2e83"
+      ],
+      "reviewReceipts": [
+        "docs/verification/profile-trial-readout-stage2-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-public-executor-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "43db2e83": "AcceptBoundedPublicReadoutAndScopedStorage (d7a9e900 -> 43db2e83)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialBandedMlBackendSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c6c1174f1e083610aeb07e2239401b891bdfb1420fef8ad151658614107a74e5",
+      "integrationCommitsTouching": [
+        "944b6fe3",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+        "docs/verification/trial-constrained-logdet-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "944b6fe3": "AcceptBoundedHostedNativeMlCoreAndHelper (3d75dea0 -> 944b6fe3, Gale provider da38f8c4)",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialBandedWorkReceiptSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "1d87f1479bc76b47634af2d7b0a3781d03f34a28893d38e0d7bf5db5c040f516",
+      "integrationCommitsTouching": [
+        "5b2405b8"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/bounded-banded-work-final.json.gz"
+      ],
+      "reviewBasis": {
+        "5b2405b8": "counter candidate 5b9c7b8e independently reviewed"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialConditionalSolveSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "1e16f7ff45aaca071924b1a55517545e7a95b88f7df6991fed90c3a8efcedf3f",
+      "integrationCommitsTouching": [
+        "bf304201",
+        "5cb42af9",
+        "327eda76"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz",
+        "docs/verification/profile-ml-public-output-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "bf304201": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted",
+        "5cb42af9": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted",
+        "327eda76": "AcceptBoundedPublicMlOutput (327eda76)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialConstrainedLogDetJetSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "85aa285ef0b4f93aa64c5aa1d99913a202396735c84eab5312f4f7c79e99bab0",
+      "integrationCommitsTouching": [
+        "944b6fe3"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+        "docs/verification/trial-constrained-logdet-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz"
+      ],
+      "reviewBasis": {
+        "944b6fe3": "AcceptBoundedHostedNativeMlCoreAndHelper (3d75dea0 -> 944b6fe3, Gale provider da38f8c4)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/TrialMlObjectiveSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "26197a9cc5eb3e994327b3eea8f0817487e86ae017346f81c7c25366c537cd52",
+      "integrationCommitsTouching": [
+        "d71e5ca9"
+      ],
+      "reviewReceipts": [
+        "docs/verification/trial-ml-objective-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/trial-criterion-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "d71e5ca9": "AcceptBoundedTypedCriterionAdapter (0017dafd -> d71e5ca9)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/model/shared/src/test/scala/scalafim/fmri/model/ProfileHrfPlanSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "049ce1e4b4960843805c6968abf7f18ee6a65a292bc01590cf95eb5665de4b78",
+      "integrationCommitsTouching": [
+        "8c39a2f7"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "8c39a2f7": "model-only ProfileHrfPlan declaration reviewed at 4f47a4a6"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/design/shared/src/main/scala/scalafim/fmri/design/hrf/KernelBasisDesign.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5e62b90dfc85881892ebb3f256adcaf028fdbc917c144288b0c68e8977490184",
+      "integrationCommitsTouching": [
+        "d9a4005b"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/trial-laws-interleaved-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-laws-supported-domain.json.gz"
+      ],
+      "reviewBasis": {
+        "d9a4005b": "final interleaved-lowering candidate 4134c23c integrated as d9a4005b"
+      },
+      "mergeBaseBlob": "b379e0b5e89c435ca25c908136659fc8d041aaf4",
+      "mainBlob": "b379e0b5e89c435ca25c908136659fc8d041aaf4",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/design/shared/src/test/scala/scalafim/fmri/design/KernelBasisDesignSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5e647b78ee6902057e7da077e55176ac6ab6e189908eadc1cb858dd4c4b44a4f",
+      "integrationCommitsTouching": [
+        "d9a4005b"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/trial-laws-interleaved-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-laws-supported-domain.json.gz"
+      ],
+      "reviewBasis": {
+        "d9a4005b": "final interleaved-lowering candidate 4134c23c integrated as d9a4005b"
+      },
+      "mergeBaseBlob": "28498ba43aa886e2263bea6689896198a2dadaf0",
+      "mainBlob": "28498ba43aa886e2263bea6689896198a2dadaf0",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "6d804f5266839e545d309a1b9249674567c1712f17948466f336f969f08bfb90",
+      "integrationCommitsTouching": [
+        "c9554354"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-stationarity-roundoff-20260930.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/gaussian-direct-lag-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "c9554354": "AcceptDirectGaussianPrecisionRepair (qualified at fcb0addb, which records c9554354)"
+      },
+      "mergeBaseBlob": "3b13719fd5a7eadce0b98f64366ebb06ed74d4ce",
+      "mainBlob": "3b13719fd5a7eadce0b98f64366ebb06ed74d4ce",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/GaussianFamilySuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "4bd02c98ecb85ecf31da3354396bf5722481e6a432f94883a8c27cf8ceae6c2b",
+      "integrationCommitsTouching": [
+        "c9554354"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-stationarity-roundoff-20260930.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/gaussian-direct-lag-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "c9554354": "AcceptDirectGaussianPrecisionRepair (qualified at fcb0addb, which records c9554354)"
+      },
+      "mergeBaseBlob": "23abe74059d9bec0340fe506368173cc928a924f",
+      "mainBlob": "23abe74059d9bec0340fe506368173cc928a924f",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/family/GaussianPrecisionFixtures.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "43b1f9b6b652c16414d070b25dae9b301750d4b726db982d058f03be4d1066f0",
+      "integrationCommitsTouching": [
+        "c9554354"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-stationarity-roundoff-20260930.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/gaussian-direct-lag-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "c9554354": "AcceptDirectGaussianPrecisionRepair (qualified at fcb0addb, which records c9554354)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionMilestoneSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "b9f2ed078e2319c76b59bb4978ef2c0033091aed233eb78a1f21c1feabb72a1c",
+      "integrationCommitsTouching": [
+        "fe4ee895",
+        "ae719307"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "fe4ee895": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ae719307": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "f4cfea1c866340935729945740b809ffdd3077c5",
+      "mainBlob": "f4cfea1c866340935729945740b809ffdd3077c5",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": [
+        "cff24b3e"
+      ]
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialBandedSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "fc1bdaa8203290673cf54ac119e1327f6ec63c417d57f2a3a751fff2c9da6424",
+      "integrationCommitsTouching": [
+        "d9a4005b"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/trial-laws-interleaved-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-laws-supported-domain.json.gz"
+      ],
+      "reviewBasis": {
+        "d9a4005b": "final interleaved-lowering candidate 4134c23c integrated as d9a4005b"
+      },
+      "mergeBaseBlob": "b28fe77ea88c2453018cb843fc48fded55c2447d",
+      "mainBlob": "b28fe77ea88c2453018cb843fc48fded55c2447d",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": [
+        "cff24b3e",
+        "b2612ab4"
+      ]
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionAdmissionDiagnosticsSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a73d9faba9cafe3ffe4226548583e92230525c1903aca72292753df11fe13bd0",
+      "integrationCommitsTouching": [
+        "041514a6"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/accepted-prerequisite-local-commits.json",
+        "docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/README.md"
+      ],
+      "reviewBasis": {
+        "041514a6": "accepted diagnostic prerequisite files recorded unchanged in 041514a6"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ObservedFamilyAdmissionSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "bc91023d7bd22caf4ba4eb9a970263b7e0629cc32edd854c31d59625504b687c",
+      "integrationCommitsTouching": [
+        "4eccd371",
+        "66d62361",
+        "771672cb",
+        "c42be910"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "4eccd371": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "66d62361": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "771672cb": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "c42be910": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionStationarityRoundoffSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "b930e42a6760751dfa60d4c17506790e59390af66236b007cd4ae198ecd9e116",
+      "integrationCommitsTouching": [
+        "c9554354"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-stationarity-roundoff-20260930.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/gaussian-direct-lag-qualified-v2.json.gz"
+      ],
+      "reviewBasis": {
+        "c9554354": "AcceptDirectGaussianPrecisionRepair (qualified at fcb0addb, which records c9554354)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/js/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "8c39e815af9046935f1b95c05f011cda2a473884f07c87b887a216b069ced2d1",
+      "integrationCommitsTouching": [
+        "0edf75c2"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-c0-qualification.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-oracle-repair-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-frozen200-jvm-hold.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-oracle-unresolved-179af271.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-prefresh-179-independent-review.md"
+      ],
+      "reviewBasis": {
+        "0edf75c2": "C0 default controls accepted (8 each platform); C0 scientific status HOLD"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "eae995d5ba558abae0cb952c4ef2958520c7476b4e03d403247359c242cb429b",
+      "integrationCommitsTouching": [
+        "0edf75c2"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-c0-qualification.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-oracle-repair-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-frozen200-jvm-hold.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-oracle-unresolved-179af271.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-prefresh-179-independent-review.md"
+      ],
+      "reviewBasis": {
+        "0edf75c2": "C0 default controls accepted (8 each platform); C0 scientific status HOLD"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0LiteralFixture.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "410f97cf8cd64553914cdead0b941fd36ad7e37f4023b220ae2db97f74a77e42",
+      "integrationCommitsTouching": [
+        "a9fecbb4"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-c0-platform-trace-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/c0-literal-platform-trace-qualified-v2.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md"
+      ],
+      "reviewBasis": {
+        "a9fecbb4": "AcceptBoundedLiteralColumnPlatformTrace (a9fecbb4)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0PlatformTraceSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "dc098d5fb1eb0e995df4dcf7be63e5fcb5110b97c951457a8df9b9a6507fcd71",
+      "integrationCommitsTouching": [
+        "a9fecbb4"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-c0-platform-trace-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/c0-literal-platform-trace-qualified-v2.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md"
+      ],
+      "reviewBasis": {
+        "a9fecbb4": "AcceptBoundedLiteralColumnPlatformTrace (a9fecbb4)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "86d77854a382cffc75db861f9e5cba9036f0b4fe8da78853349f791150ea35de",
+      "integrationCommitsTouching": [
+        "0edf75c2",
+        "a9fecbb4"
+      ],
+      "reviewReceipts": [
+        "docs/verification/condition-c0-qualification.md",
+        "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+        "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-oracle-repair-qualified.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-frozen200-jvm-hold.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-oracle-unresolved-179af271.json.gz",
+        "docs/verification/p1-execution-2026-09-29/c0-prefresh-179-independent-review.md",
+        "docs/verification/condition-c0-platform-trace-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/c0-literal-platform-trace-qualified-v2.json.gz",
+        "docs/verification/condition-c0-prefresh-20260930.md"
+      ],
+      "reviewBasis": {
+        "0edf75c2": "C0 default controls accepted (8 each platform); C0 scientific status HOLD",
+        "a9fecbb4": "AcceptBoundedLiteralColumnPlatformTrace (a9fecbb4)"
+      },
+      "mergeBaseBlob": null,
+      "mainBlob": null,
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileBenchmark.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "59fd2b2e0f9039d5700842b1a7916ea1aa532b3b8d2150e0198d6c07e57dfb5c",
+      "integrationCommitsTouching": [
+        "fe4ee895",
+        "ae719307"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "fe4ee895": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ae719307": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "b284ab7bd9eae0005d573d788b36f9ddb90627b3",
+      "mainBlob": "b284ab7bd9eae0005d573d788b36f9ddb90627b3",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": []
+    },
+    {
+      "path": "benchmarks/fit-jvm/src/main/scala/scalafim/fmri/fit/profile/TrialBandedBenchmark.scala",
+      "disposition": "taken",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "46111766f71b0365472b3e2ff53a4d8685094ea4a5657db3c9d76b5f1b5085d3",
+      "integrationCommitsTouching": [
+        "1d2bdf5d",
+        "498021e3"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/trial-benchmark-attempted-work-2026-09-30.md",
+        "docs/verification/p1-execution-2026-09-29/temporal-hosted-pin-final.json.gz",
+        "docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz"
+      ],
+      "reviewBasis": {
+        "1d2bdf5d": "benchmark constructor repair cb1e71d1 integrated 1d2bdf5d; fitBenchJVM/compile receipt",
+        "498021e3": "Stage1 conditional solve bf05dde6+72ed9bc6 and benchmark adapter 498021e3 independently accepted"
+      },
+      "mergeBaseBlob": "d58634a974fbb53ebcd2aef2d46876dd12edcc28",
+      "mainBlob": "d58634a974fbb53ebcd2aef2d46876dd12edcc28",
+      "mainContentChangedSinceMergeBase": false,
+      "mainLogCommitsSinceMergeBase": [
+        "b2612ab4"
+      ]
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionRuntimeSuite.scala",
+      "disposition": "merged",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "8222a6a2870520a304abf9028f964fd405c0143f76b9a798fdcb43419bd3815e",
+      "integrationCommitsTouching": [
+        "4244446e",
+        "ae719307",
+        "ad439bd6"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "4244446e": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ae719307": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ad439bd6": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "5d711a9b4dce109387ee9681a318ec526b850420",
+      "mainBlob": "72f4b3397268de1a51862b868022820e7da29848",
+      "mainContentChangedSinceMergeBase": true,
+      "mainLogCommitsSinceMergeBase": [
+        "e6eb79d0",
+        "cff24b3e"
+      ],
+      "integrationBlob": "ed26eedc0fc216abfcbfeb356779ed2afab3d844",
+      "mergeMethod": "git merge-file main base(8d0dd730) integration(8d5b0e51)"
+    },
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionProfileFitSuite.scala",
+      "disposition": "merged",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a0adaf5dceecf5a02cc4f1f3ad5dd1b4551015c30032b6224b3b2433e6484f12",
+      "integrationCommitsTouching": [
+        "4244446e",
+        "fe4ee895",
+        "3d718771",
+        "ae719307",
+        "ad439bd6"
+      ],
+      "reviewReceipts": [
+        "docs/verification/p1-execution-2026-09-29/README.md",
+        "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+        "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz"
+      ],
+      "reviewBasis": {
+        "4244446e": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "fe4ee895": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "3d718771": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ae719307": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)",
+        "ad439bd6": "PHRF-12 condition integration row; reviewed author source b1df154d (=ad439bd6) and both-admission regressions 42bb5c03 (=c42be910)"
+      },
+      "mergeBaseBlob": "c68c559a0689cad9d05caaa3f3f3f21bc1b299ac",
+      "mainBlob": "f0260ddca19ba81163c2a9eb5d8bdbd1c6a55aab",
+      "mainContentChangedSinceMergeBase": true,
+      "mainLogCommitsSinceMergeBase": [
+        "e6eb79d0",
+        "cff24b3e"
+      ],
+      "integrationBlob": "b2781ad1ff04fc85d3dd323ac58d6b52c3f8d938",
+      "mergeMethod": "git merge-file main base(8d0dd730) integration(8d5b0e51)"
+    }
+  ],
+  "archivedReceipts": [
+    {
+      "path": "docs/verification/condition-c0-platform-trace-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "b1b74f3ad087a587ed50b21ac5d92209e3b88d2068896b2a9a3f05eb8de380e2",
+      "bytes": 15534,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "01ed200c96becfd7cb7353d115071bcbd7a3d0ca084826e5784545cd3dc7b1a4",
+      "bytes": 7501,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/artifact-hashes.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "963f535147b1e96126600f123636f654dbe2cd3e043bc83687bfaf74cdbc0774",
+      "bytes": 1035,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/audit_stream_history.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "017b2307668419ec5dd38abd9fc60ccc27121d0ee4799b0e7c2885568b334342",
+      "bytes": 6413,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/c0-fresh-stream-nonuse-independent-findings.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "d2c168ad0034df65c81222386f281eb05b1bf64a8370d905352d5e81573ee574",
+      "bytes": 20952,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/c0-fresh-stream-nonuse-independent-review.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "28b5ed8ac91db699c735706c522265170d5a66b034312eefd403eca63d615b1b",
+      "bytes": 5183,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/candidate-closure.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "2502d13c1b4cb0a5d2028e80c4463ba1b98e5df8d9bba0a0e6438960cf607378",
+      "bytes": 6015,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/independent-review.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "7eb0471b250665bd0fd99175f5cc4b9b99b992b0fa101e0627f631e45f67837a",
+      "bytes": 2422,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/inspect_session_commands.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c3ffd772b7686f922f99f5d359e1dc4868d043bb6be7a976ab7901e305d357ea",
+      "bytes": 2079,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/reviewed-artifact-hashes.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "8d96407c14cacd1a2af791d50af1f8618495903e7411fac4f41015a033e7a5de",
+      "bytes": 837,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/session-command-index.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "398d613c8d00bb67a63b0a5f227510289fd79df90472dec4e8dd3ab74c8d22f2",
+      "bytes": 44702,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/stream-history-audit.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "3f435f7c4c2fa2c9f652eef23a1df2558ff8ba1efa731679ecde163bd7b4895f",
+      "bytes": 363827,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-prefresh-20260930/verify_candidate_closure.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "557c7ca18079d5218999741d1484addf9cb3fe9488064a5bd823551d2da4aa83",
+      "bytes": 4870,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-c0-qualification.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5a20e66d2185c7fc5c58700a832b172a3b77d8f7372e5eaf47a12aed1a67c318",
+      "bytes": 8912,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "de8e9890a9fdcd7cb0c022fd121987ff47a400284ca90e6b67d60bf22baeb378",
+      "bytes": 8385,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/analyze_oracle.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "1b70a98fbfc472f346d374443f97f6c32b295e244b7ac0266aa3f6f2ce61b1af",
+      "bytes": 2199,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/analyze_study.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "3898c968b1302e1afdf70303c06f79612b3325a0d8d040003bd8cf57f037ddf8",
+      "bytes": 3650,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/archive-manifest.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "444909f87d7e930136ccfdd39e7fdad2436d58ca8f4e323240458ef0bac82a7f",
+      "bytes": 5919,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/both-fixed-design.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c25bb326ef7c5f4eb8d35209cbdce4fa9d5b91d58150a5318c476bab06c3c7f0",
+      "bytes": 3161,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/check_evaluator_stages.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5fbb0cd149d985ebc9e0dc916e91f6b20f406dbff46e61096dcc511a680e07d3",
+      "bytes": 2422,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/check_fixed_design.py",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "950cdeeb00f17a83f34893d2a1476f7dadc7f750a0062ae6ea946914c8a55bb3",
+      "bytes": 2247,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-js-audit.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "148448cac3118c90460c2548667e78d5e1c41fb511fdf70a94057afb3c4fe0b0",
+      "bytes": 4368,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-js-r2.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "e2c38919b2501b8decbd35df345685aca5bcde6e5954f16492ff3a9e4cc96023",
+      "bytes": 279861,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-js-r2.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "96ccf1dfc18da49bf1599d6d7c76c492f531b653e3571cfa2e79874dae29e686",
+      "bytes": 607,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-js.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-js.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "f204696649664adbae674f368443b8a2c9bfeb6acf299a6025cfc3398fecc01b",
+      "bytes": 603,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-jvm-audit.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "452959a81dc4430e780e79dbce58ea41fbb44d561024f9e8698a3b7a7efed40a",
+      "bytes": 4366,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-jvm.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "f6b7ec7ad3763cb726310efdbcc579c4c2b96005c806dc7957eaebe51b93ee70",
+      "bytes": 280524,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-jvm.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "adbb8e0f6e177fdaad22d459af6b0c1473421e45e0e0ce15bd17aa4a6073f777",
+      "bytes": 7357,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/development-summary.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c1df3aa2be708f9d16d125cc9075ffc535c12ea6cd9405f6b129148421e7dcf4",
+      "bytes": 9281,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/evaluator-stages.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "d4a47c86649507923cf71ff61402b339e5573437681fa5d241e443f72445fe78",
+      "bytes": 2421,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/execution-tracked.patch.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "edf77c4e394bfa296f1f8ed316d83a9eed18ad49b98ed1f039a9cdb860dd2dd1",
+      "bytes": 2325,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/final-js.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "f85355dfebe206c137b8f1053a9d186ef8deb7f34150527eb756ce09340a2aff",
+      "bytes": 5605,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/final-js.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c21063cd4eb01fd79f6af8dfebf22f8998f31b45c38f4b4bbc15705a0cd23792",
+      "bytes": 1246,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/final-jvm-compile.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "2ac34833a29301f436363593905a9d1a806698a3b63d39e62984c82a2a32bf89",
+      "bytes": 3309,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/final-jvm-compile.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "09c79ec50fc208eae20bd3cc8eea093c4065faed50d628ebfc7e82d1928921de",
+      "bytes": 901,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/final-source-binding.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "6a890c0681130a28a8f128c771bf705898afd218d026544737d1613b33c47c53",
+      "bytes": 527,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/final-source.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "eb54f7a966d7b73ab693501e318e99710223519fb01778bacdef4900082c0e7c",
+      "bytes": 68652,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/fix-gates.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "31764a2d13fedd5fa01b350225203212ecb0d036fa117ecce9e874e49915c75e",
+      "bytes": 13324,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/fix-gates.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "3af9e02fb4d0e2b09208278db081887763a35449f1d3cde5c7598fba60dd6f2e",
+      "bytes": 1590,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/fix-source.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "676d1c09019b34c3b768020d9d08a7b60344088021dfd150450e856a7dcd69e7",
+      "bytes": 989,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/frozen-platform-diagnosis.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "72e224878c6fbc14b0850be4194164c61ebb83744d873b79d4820924efbbfaf8",
+      "bytes": 91208,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/gaussian-regression-before.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "9226e4351e9f46a538846bbcb45ac2ab47d54f78ea79745b7240d8e55e52785c",
+      "bytes": 3118,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/gaussian-regression-before.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "08f513cfbc511a0ccb7e39e5041259882b1ed73dc27188777de45fa62d83d571",
+      "bytes": 692,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/inputs-both-r2.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "ea5abdde5e5752dd89e81c3307cb9f7846c5df6f03cce52ef488b7345121e69d",
+      "bytes": 13921,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/inputs-both-r2.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "8f08bf7619bb50f639e984ab0e1cb357933f6df698fb63722838d6b9c5b9bb13",
+      "bytes": 805,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/inputs-source.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "74422494ca10eea92186053f9adc466cc8a3a46b7ea33549501c4219601251cd",
+      "bytes": 771,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/js-artifacts.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "adba84a71d72a77beff5738f4a5f51084236d57e851e2cb40e66ef34a99a209d",
+      "bytes": 308,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/jvm-artifacts.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "e4c0c9032e88c9727b5d1282812e0495089e34e18b89d98279ee39b2f1536bff",
+      "bytes": 536333,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/jvm-fixed-design.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "eaf40cd07ce534663a9b7fb78e809d9a8e744896f1a0b6910177207b8897c6e3",
+      "bytes": 1771,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/oracle-js-audit.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a0dc433fec98c2827f834b3698744f151db305cc43c4effa55d488630525837d",
+      "bytes": 254,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/oracle-js.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "4c00de6d6d0eb41b234d07baad013decd39c76b0ce96132cdb46f88669e7edfe",
+      "bytes": 2472,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/oracle-js.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "e4e399f59388cbe64cf317bc5f408377c9e4fc555cde18307bb85a0d08fab502",
+      "bytes": 577,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/oracle-jvm-audit.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "902f95272e2c78ab445ac09c96860b77e55f2f2cfb242e3eb6e70199b6edfdd6",
+      "bytes": 255,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/oracle-jvm.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "1dc2e2d84c6c150f934feedfb30ec93dece477cd867e4eab16524263bf3a993d",
+      "bytes": 2465,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/oracle-jvm.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5292589016884905ef250dffcbb296e5d1040f476700352f45ccd7373bc29249",
+      "bytes": 7330,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/packaging-only-edit.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "1baf89f4d383005fee9cb47c2b65e54cb6cf6521bd4f37a2ef42edc796ed21a5",
+      "bytes": 478,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/prior-c0-frozen200-js.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "36d7634e1a108d6b6ca24c941c23b44d80afcc20ebe2aa4436aba9e9ea9bb021",
+      "bytes": 279954,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/prior-c0-frozen200-jvm.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c7647bfbef7ec9fcfe97ffffcbf07b9d30a9a6e17268286ac07d2021deb83dfb",
+      "bytes": 281239,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/prior-decoder-diagnostics-final6-both.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "94ae9508fb1e542ec3f8807ce790fea1c1e4d0bfbd458f5c456d4ece093d952d",
+      "bytes": 33826,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/prior-freeze-manifest.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "451be51b9abca9c127c9d8d2f012d7ef871f262922ec5c68ae3f7f06513e023d",
+      "bytes": 20606,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/prior-policy-comparison.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "25c6e5717fbaff10c774512136439f2c76f17f1cab1941187ff354d94827a98f",
+      "bytes": 2989,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/review-final-dev.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "acd5124598d425480a962cc29b237a67e477b1d599b5b4aadac8891b554a1e34",
+      "bytes": 1359,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/review-jvm-dev.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "74c16104c5447f0a38dd8bf5d4a5bdf374c116c4b7e2a9a3e970ea06a1b4a369",
+      "bytes": 1514,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/runtime-identity.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c2d4c3bfd327a2d556dbdc035a3c8ec051157630226f6cbfd0242453a3570b4d",
+      "bytes": 625,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/stages-both.log.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "09df15c68079b89d080d1c285679b4dee3606020c00ca8b0de4c039537e5e0d8",
+      "bytes": 156211,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/stages-both.log.meta.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "570e26000f01c9c17ef61abbfc2693faad1573a9fb97cd8c04939f42f79b2f33",
+      "bytes": 802,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/condition-stationarity-roundoff-20260930/verification-receipts.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "8b68d51558f59631e633301d551579fac1c06d9d4851b7393bc729ae6702ee30",
+      "bytes": 1546,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/README.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "15d5bde1259cf371675219e2231ed5309e3c8969adc38d9365c22e20bc8482b7",
+      "bytes": 34631,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/SHA256SUMS",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "df5041e241c59df905bff251802e021ee977f50fd64cb3de091b61bd2a727c7c",
+      "bytes": 4659,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/accepted-prerequisite-local-commits.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "61543c915d31ec966cdab2edc1197c0a7417eb14b755748862469bb809f84f6a",
+      "bytes": 1403,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/ar-adjoint-final.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5fb8e0bc07c94693302ec9a0b53d9c9b9ba9eb20e3d468e4605fa061b21fcff1",
+      "bytes": 20061,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/bounded-banded-work-final.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "64b9c1416be74475627b0af6d223e967d21f7d057cdabb7717996d85e5bf9932",
+      "bytes": 20338,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/c0-frozen200-jvm-hold.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "4a5b11c80d3a67899aa95dc1a3ea0ba5fc0d11b9829db1dd8e76169c72fbc47e",
+      "bytes": 1078485,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/c0-literal-platform-trace-qualified-v2.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a5cf5e84947b0ed0398c667f3678d5cfb0af2c5bd20304f383aaba7bd7e6d5c3",
+      "bytes": 174462,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/c0-oracle-repair-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "469f2e2b0d79edd9a656242f9d86900f2cb3e9926ab4b12ed0dc54bc49dcd83d",
+      "bytes": 204202,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/c0-oracle-unresolved-179af271.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "3013937d5cc1a773251f66b84dc43590127c1075a7979ca9f199480d1bbc7ee3",
+      "bytes": 98476,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/c0-prefresh-179-independent-review.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "67ce566d523894ff12913a81def72afc6cb621eb4e7d5f4fc890c8b72c622240",
+      "bytes": 10151,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/condition-admission-open-receipts.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "158b5e2a7da2aa5b6ec664668613771d224451dc3420f21b86f0e938cad7d7ec",
+      "bytes": 8726,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/current-review-dispositions.json",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "0b95cf639632d4dc03ce4c1dce708d91c23221463ee3c54577aa83a07bd8a6cf",
+      "bytes": 23757,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/gaussian-direct-lag-qualified-v2.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "07825be14208694e4134137ff947aa66c0aec929bcca987c93d758a039b192f4",
+      "bytes": 2194870,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/hdf-public-c0-integration-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "141d2180dfbd91e63c534a8bcf641000b8a80163c9f1cc544958a46b94721f57",
+      "bytes": 1184234,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/hosted-ml-core-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "d885e20a57ad32c31cb695c3e70f1291a80236d697aa4930269f5dddfb0cd55d",
+      "bytes": 261421,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/initial-profile-evidence.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "a069b3879cc78376df7a88afedd20eed4e012992f134ec26b35c24a94d879460",
+      "bytes": 23005,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/native-ml-executor-integrated-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "0629972d3473abf1cbd887bce5e766a3056ad2afe9768b5cb4dfd0565348ca30",
+      "bytes": 1136628,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/profile-ml-public-output-qualified-v2.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "d311854d682464b924a1091fd6ff16bde3ed23cec35cabe690046c6a60360404",
+      "bytes": 268176,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/review-history-20260930-0530.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "18e27c447afb2da821082209c436e47ea9977581b49a6523ab26ccba786784bd",
+      "bytes": 15703,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/temporal-hosted-pin-final.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "f6a91ef5633aba5137e25616bcca9f69182d7eac0f8d473c133b896329d1a065",
+      "bytes": 61253,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "e8a37bbcf2c4e8b75ccf6558097d492fea346e099b77fd09963df31b35654695",
+      "bytes": 51356,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-criterion-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "18996eba73dabc8d8bf4fd7b04ae2e4537316d8ebf0e4fe5a3c717bc004b965f",
+      "bytes": 45828,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-executor-final-integrated.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "630c5f45c7b789c1cc711313afab1d13e2cb692a48d97b80c587a0d03ea1a10c",
+      "bytes": 63013,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-laws-interleaved-final.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "24396d560cba85ca6139f968edb7209695dfcaebe2cccf2dde53750c502e3ce8",
+      "bytes": 27388,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-laws-supported-domain.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "b9a84e3c653e59f1c43e667514f33d6f8ff800f7179a424269a279c20f5023d9",
+      "bytes": 16263,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-ml-helper-local-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5df5ca6b3bd814cf61a356fadad8144ff2c260c16e74dd91f94d165663a551c3",
+      "bytes": 53469,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-ml-native-6a5-request-changes.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "75b008028d32def1655897d8e561b6687d96f05da7a3a303c522d2fe49e794e3",
+      "bytes": 128405,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-public-executor-e654-request-changes.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "af08a8e52524c283c4bae6baaaf343c597f785dfd1690606be557fbcce036e5f",
+      "bytes": 232309,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/p1-execution-2026-09-29/trial-public-executor-qualified.json.gz",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "df089eb9209f3349182f2786c54e834a2eb53c1549c3c695b51a73b14b31d56d",
+      "bytes": 140515,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/profile-hrf-plan-executor-2026-09-29.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "0b30cdd0eb321ea89b7f361e1d9a6843ce7ccef72391d2e2e62ec723a4c3c957",
+      "bytes": 19133,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/profile-ml-public-output-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "8af1feaba5bb54b88f80e6c0813dc7aa3fbbf43085da639beebe0170fadbb6a9",
+      "bytes": 3340,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/profile-public-executor-readout.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "788de118db90340a6ec1e95e30db230941feb5fa9f453739530831b6e0924f33",
+      "bytes": 12033,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/profile-trial-ml-executor-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "6f6bfc3fadd3e7b5e8771421075d4644686adb1f78b2c7ef730cc84eb90b5496",
+      "bytes": 7041,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/profile-trial-readout-stage2-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "46843bf34876cd57fbd7ee36b637971fd7d5b3755e0a2859d12b06a99b0a61e5",
+      "bytes": 14714,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/trial-banded-ml-backend-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "fc50084deaf494fca7d7de8753f0c9a88006ffbd91fb4fcc53a2e5b2a63e5b46",
+      "bytes": 8235,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/trial-benchmark-attempted-work-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "628ed7aaa6bb21ab3a8327615a6c4f7620f6ad9033ece02c75effb564f8cb993",
+      "bytes": 1935,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/trial-constrained-logdet-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "4ba5636536360b989f918062b6cadfafe25755aa18542fd8d59bf9191d5ab28f",
+      "bytes": 6157,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/trial-ml-objective-2026-09-30.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "c8ebdf055f758d2395405394e9482256ab6da14dbfc87c8f892fc272a14ea866",
+      "bytes": 9719,
+      "alreadyOnMain": false
+    },
+    {
+      "path": "docs/verification/whitening-transpose-2026-09-29.md",
+      "sourceCommit": "8d5b0e5152240819152a434b11af4be1095cee60",
+      "sha256": "5ae9415b797c4f78a2c1301e7ba851386ac0ec7b06ae59f23c792de298fcc127",
+      "bytes": 2592,
+      "alreadyOnMain": false
+    }
+  ],
+  "postLandingAmendments": {
+    "reviewedCommit": "3ceba77cc2e4a2eaf76471bdc0aae3aadd9a91eb",
+    "review": "independent Opus landing review, verdict CHANGES-REQUIRED (F1-F6)",
+    "files": [
+      {
+        "path": "examples/workflows-jvm/src/main/scala/scalafim/examples/workflows/ProfileHrfConditionWorkflow.scala",
+        "finding": "F1",
+        "disposition": "edited",
+        "change": "build ObservedFamilyAdmission via admitForCondition (as merged ConditionProfileFitSuite); DecodeBudget (2,2,2,6) -> main's reviewed (2,6,8,2)",
+        "sha256": "4a8c1725bb37165372e48b145c88c3716e7e0f40127a8292ab2fbe6025a87426",
+        "sha256AtReview": "a19af453d75fca226b6f3fd358850d46df94b7ba5d37308a55c7089040a6c1a3",
+        "reviewStatus": "new code; Opus confirmation review APPROVE-WITH-NITS on d2cdada4 (comment nit applied in the following commit)"
+      },
+      {
+        "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala",
+        "finding": "F2",
+        "disposition": "taken-then-edited",
+        "change": "explicit munitTimeout = 10 min; no assertion change",
+        "sourceSha256": "86d77854a382cffc75db861f9e5cba9036f0b4fe8da78853349f791150ea35de",
+        "sha256": "f05634ebcf54e7a5e0000d56da0cc1276e00f0389f86eccdb0f9d9e4fa9f95c8"
+      }
+    ],
+    "reviewBasisCorrections": {
+      "ee83b1eb": "a7521ffb23b97f75856f5070cd24bfdd600bd51f (parent e6543fb6): ACCEPT LOCAL in hdf-public-c0-integration-qualified.json.gz payload evidence/profile-public-provenance-independent-review.md (sha256 c24ed1b4d10ecaa740d34bc889ad34a79db5eb7a95807fc788b41647c30d690a)"
+    },
+    "decoderEvidenceCaveat": {
+      "integrationShapeDecoderSha256": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+      "landedShapeDecoderSha256": "982f724a37d62cc37b3f775b80a3ec9f0ae283f4f7c757482c690277d9315554",
+      "note": "archived C0/condition/Gaussian evidence numbers were produced on the integration decoder and do not transfer to main's 8840dbfc decoder"
+    }
+  }
+}
