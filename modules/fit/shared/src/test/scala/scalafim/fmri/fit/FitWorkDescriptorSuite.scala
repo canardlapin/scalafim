@@ -12,7 +12,7 @@ import scalafim.image.SampleSpaces
 
 class FitWorkDescriptorSuite extends munit.FunSuite:
 
-  private val reference = FitWorkReference("unit:α|,", "plan:β|,", "source:γ|,")
+  private val reference = FitWorkReference.unsafe("unit:α|,", "plan:β|,", "source:γ|,")
   private val selection = DataSelection(voxels = scalafim.dataset.IndexSelection.indices(3, 1, 2, 0))
 
   test("canonical descriptor encoding round-trips delimiter-bearing Unicode references") {
@@ -23,7 +23,7 @@ class FitWorkDescriptorSuite extends munit.FunSuite:
   test("descriptor decoder rejects malformed and noncanonical inputs") {
     val descriptor = compiled(blockSize = 2)
     val fields = Vector(
-      "fit-work-v1", reference.unitId, reference.planRevision, reference.sourceRevision,
+      "fit-work-v1", reference.unitId.value, reference.planRevision.value, reference.sourceRevision.value,
       descriptor.datasetId, descriptor.engine.toString, descriptor.preparation.topology.toString,
       descriptor.preparation.reductions.mkString(","), "0,-1", "3,1,2,0", "2"
     )
@@ -40,13 +40,26 @@ class FitWorkDescriptorSuite extends munit.FunSuite:
     malformed.foreach(value => assert(FitWorkDescriptor.decode(value).isLeft, clues(value)))
   }
 
+  test("blank registry keys and malformed descriptors are typed refusals") {
+    Vector(
+      FitWorkReference.of(" ", "plan", "source"),
+      FitWorkReference.of("unit", "", "source"),
+      FitWorkReference.of("unit", "plan", "\t")
+    ).foreach(result => assert(result.left.toOption.exists(_.isInstanceOf[FitError.InvalidWorkDescriptor]), clues(result)))
+    val encoded = compiled(blockSize = 2).encode
+    assert(encoded.contains("8:unit:α|,"))
+    val blankUnit = encoded.replace("8:unit:α|,", "1: ")
+    assert(FitWorkDescriptor.decode(blankUnit).left.toOption.exists(_.isInstanceOf[FitError.InvalidWorkDescriptor]))
+    assert(FitWorkDescriptor.decode("01:x").left.toOption.exists(_.isInstanceOf[FitError.InvalidWorkDescriptor]))
+  }
+
   test("unit and block identities are canonical and selection-sensitive") {
     val byOne = compiled(blockSize = 1)
     val byTwo = compiled(blockSize = 2)
     val otherSelection = FitWorkDescriptor.compile(reference, plan, ChunkSize.unsafe(2),
       DataSelection(voxels = scalafim.dataset.IndexSelection.indices(0, 1, 2, 3))).toOption.get
     val otherReference = FitWorkDescriptor.compile(
-      FitWorkReference("other", reference.planRevision, reference.sourceRevision), plan, ChunkSize.unsafe(2), selection
+      FitWorkReference(FitUnitId.unsafe("other"), reference.planRevision, reference.sourceRevision), plan, ChunkSize.unsafe(2), selection
     ).toOption.get
 
     assertEquals(byOne.workId, byTwo.workId)
@@ -77,7 +90,7 @@ class FitWorkDescriptorSuite extends munit.FunSuite:
 
   test("binding mismatches fail before response reads") {
     val cases = Vector(
-      compiled(blockSize = 2) -> fixedResolver(FitWorkReference("wrong", reference.planRevision, reference.sourceRevision), plan, denyingReader(plan.model.dataset)),
+      compiled(blockSize = 2) -> fixedResolver(FitWorkReference(FitUnitId.unsafe("wrong"), reference.planRevision, reference.sourceRevision), plan, denyingReader(plan.model.dataset)),
       FitWorkDescriptor.compile(reference, otherPlan, ChunkSize.unsafe(2), selection).toOption.get -> fixedResolver(reference, plan, denyingReader(plan.model.dataset)),
       FitWorkDescriptor.compile(reference, FitPlan(model, engine = FitEngine.GeneralizedLeastSquares,
         config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.2)))), ChunkSize.unsafe(2), selection).toOption.get -> fixedResolver(reference, plan, denyingReader(plan.model.dataset)),

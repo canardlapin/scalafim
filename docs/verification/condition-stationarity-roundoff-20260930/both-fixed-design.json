@@ -1,0 +1,61 @@
+{
+  "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/inputs-both-r2.log",
+  "sourceSha256": "d23333e1fc208f06ede401ab798a36af65aeed305078bf979f5cdf7494b1700d",
+  "mpmath": "1.3.0",
+  "decimalDigits": 90,
+  "scope": "Fixed binary64 design and projected response; does not certify ideal HRF coefficient evaluation. Diagnostic only.",
+  "results": [
+    {
+      "platform": "JVM",
+      "voxel": 9,
+      "reportedDifference": 1.5916157281026244e-12,
+      "reportedUlps": 7.0,
+      "fixedDoubleInputsResidualDifference": "0.0000000000016644694859481413837280373773908497405589654635584",
+      "refittedFixedDesignDifference": "0.0000000000016644694859481413822911741301678094891298570190243",
+      "fixedRoundedPredictorDifference": "0.0000000000016639593375626097991887897136604426735500272045623",
+      "stableDoubleDifference": 1.6639593375236059e-12,
+      "sumAbsDifferenceTerms": 3.958542975073683e-06,
+      "maxSolveResidual": "3.87940523297408906451234573248e-14",
+      "maxAmplitudeError": "7.30890363831940919685617721608e-16"
+    },
+    {
+      "platform": "JVM",
+      "voxel": 31,
+      "reportedDifference": 2.2737367544323206e-13,
+      "reportedUlps": 1.0,
+      "fixedDoubleInputsResidualDifference": "0.000000000000049953305634674415501447682382020585284402659070969",
+      "refittedFixedDesignDifference": "0.000000000000049953305634674436575840991285917768311199989984042",
+      "fixedRoundedPredictorDifference": "0.000000000000055151382169397335500190116069945472566445173286837",
+      "stableDoubleDifference": 5.515138214394638e-14,
+      "sumAbsDifferenceTerms": 1.3533340955547322e-06,
+      "maxSolveResidual": "2.54667439245602423325539088721e-14",
+      "maxAmplitudeError": "7.48070874125964459202782741075e-16"
+    },
+    {
+      "platform": "JS",
+      "voxel": 9,
+      "reportedDifference": 1.5916157281026244e-12,
+      "reportedUlps": 7.0,
+      "fixedDoubleInputsResidualDifference": "0.0000000000016593670162202854309806435556925888802623605406072",
+      "refittedFixedDesignDifference": "0.0000000000016593670162202854459971153216498403196634587206862",
+      "fixedRoundedPredictorDifference": "0.0000000000016636416305741081156832022758195509824676019627354",
+      "stableDoubleDifference": 1.6636416304529023e-12,
+      "sumAbsDifferenceTerms": 3.958542984960203e-06,
+      "maxSolveResidual": "3.42515138759115480335011594575e-14",
+      "maxAmplitudeError": "6.06428938053091427791690902149e-16"
+    },
+    {
+      "platform": "JS",
+      "voxel": 31,
+      "reportedDifference": 0.0,
+      "reportedUlps": 0.0,
+      "fixedDoubleInputsResidualDifference": "0.000000000000058101405744879784059529204518793245710516555482613",
+      "refittedFixedDesignDifference": "0.000000000000058101405744879806790878367783912347283409607632772",
+      "fixedRoundedPredictorDifference": "0.000000000000058234297690214797417622021280676056392370820079927",
+      "stableDoubleDifference": 5.823429768118283e-14,
+      "sumAbsDifferenceTerms": 1.3533340979899653e-06,
+      "maxSolveResidual": "3.55375500174899819582557052562e-14",
+      "maxAmplitudeError": "7.34232560292778792170233803121e-16"
+    }
+  ]
+}

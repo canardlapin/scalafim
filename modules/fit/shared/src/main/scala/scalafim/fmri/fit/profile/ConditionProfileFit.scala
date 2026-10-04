@@ -4,7 +4,7 @@ import scalafim.dataset.DatasetSeriesReader
 import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.event.ConvolvedTerm
 import scalafim.fmri.design.hrf.HrfKernelBasis
-import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, FitError, TaskBasisStructure}
+import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, EstimateExecutionOutcome, FitError, TaskBasisStructure}
 import scalafim.fmri.hrf.family.{JetLayout, ShapeSummary}
 import scalafim.fmri.model.FitPlan
 
@@ -21,6 +21,7 @@ final case class ConditionProfilePolicy(
     prior: Option[ShapePrior],
     noiseVariance: Double,
     output: OutputRequest,
+    admission: ObservedFamilyAdmission,
     blockSize: Int = 256)
 
 final case class ConditionVoxelResult(
@@ -138,7 +139,11 @@ final class ConditionProfilePreparation private[profile] (
         ,
         cancelled
       )
-      .map(_ => (receipts.result(), worker.counters))
+      .flatMap:
+        case EstimateExecutionOutcome.Completed(_, _) => Right((receipts.result(), worker.counters))
+        case EstimateExecutionOutcome.Cancelled(chunksDone, voxelsDone) =>
+          Left(FitError.InvalidFitAxis("condition profile",
+            s"cancelled after $chunksDone chunks / $voxelsDone voxels; previously delivered blocks remain partial"))
 
 object ConditionProfileFit:
 
@@ -170,6 +175,7 @@ object ConditionProfileFit:
     else
       for
         _ <- policy.output.validateFor(c).left.map(err => FitError.InvalidFitAxis("condition profile output", err.message))
+        _ <- policy.admission.admits(plan, policy.structure, policy.basis).left.map(err => FitError.InvalidFitAxis("condition profile observed-family admission", err.message))
         size <- ChunkSize(policy.blockSize)
         retention <- BasisExpandedRetention.prepare(plan, policy.structure, size)
       yield

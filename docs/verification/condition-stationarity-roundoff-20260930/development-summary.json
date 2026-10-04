@@ -1,0 +1,353 @@
+{
+  "executionSourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+  "uniqueResponsesPerPlatform": 400,
+  "terminalAuditsPerPlatform": 800,
+  "candidateCells": [
+    {
+      "kind": "cell",
+      "platform": "JVM",
+      "sourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+      "cohort": "development",
+      "policy": "gaussian-d2-6n-12j-2e-8c",
+      "snr": 1.0,
+      "seed": 101,
+      "voxels": 200,
+      "admitted": 191,
+      "latencyP95": 0.00019471352316458024,
+      "widthP95": 0.0006717899466601729,
+      "amplitudeP95": 0.00018113951814699637,
+      "statuses": {
+        "Accepted": 191,
+        "BudgetExceeded": 9
+      },
+      "exits": {
+        "CandidateAttemptCap": 9
+      },
+      "work": {
+        "nodes": 14391,
+        "jets": 876,
+        "exact": 7,
+        "terminal": 0,
+        "candidates": 683,
+        "steps": 609,
+        "fallbacks": 0
+      },
+      "auditAttempts": 200,
+      "auditFailures": 0,
+      "oracleUnresolved": 0,
+      "reference": {
+        "setupNanos": 5749864708,
+        "responseNanos": 369443794166,
+        "responses": 200,
+        "gridGeometries": 1071,
+        "refinementStarts": 4,
+        "continuousEvaluations": 82251,
+        "continuousHighWater": 1,
+        "continuousCached": 0,
+        "cachedNumericBytes": 15499512,
+        "continuousNumericBytes": 14472,
+        "refinementSweeps": 20563,
+        "refinementFailures": 0,
+        "maxSweepsPerStart": 256,
+        "levels": 14
+      },
+      "candidateGate": true,
+      "perIterationCandidateCap": 8,
+      "totalCandidateBound": 13
+    },
+    {
+      "kind": "cell",
+      "platform": "JVM",
+      "sourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+      "cohort": "development",
+      "policy": "gaussian-d2-6n-12j-2e-8c",
+      "snr": 0.5,
+      "seed": 102,
+      "voxels": 200,
+      "admitted": 195,
+      "latencyP95": 0.0004607524384150352,
+      "widthP95": 0.001264728401518589,
+      "amplitudeP95": 0.0003335240478713585,
+      "statuses": {
+        "Accepted": 195,
+        "BudgetExceeded": 5
+      },
+      "exits": {
+        "CandidateAttemptCap": 5
+      },
+      "work": {
+        "nodes": 14391,
+        "jets": 863,
+        "exact": 2,
+        "terminal": 0,
+        "candidates": 665,
+        "steps": 624,
+        "fallbacks": 0
+      },
+      "auditAttempts": 200,
+      "auditFailures": 0,
+      "oracleUnresolved": 0,
+      "reference": {
+        "setupNanos": 5749864708,
+        "responseNanos": 267551957667,
+        "responses": 200,
+        "gridGeometries": 1071,
+        "refinementStarts": 4,
+        "continuousEvaluations": 82924,
+        "continuousHighWater": 1,
+        "continuousCached": 0,
+        "cachedNumericBytes": 15499512,
+        "continuousNumericBytes": 14472,
+        "refinementSweeps": 20731,
+        "refinementFailures": 0,
+        "maxSweepsPerStart": 256,
+        "levels": 14
+      },
+      "candidateGate": true,
+      "perIterationCandidateCap": 8,
+      "totalCandidateBound": 13
+    },
+    {
+      "kind": "cell",
+      "platform": "JS",
+      "sourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+      "cohort": "development",
+      "policy": "gaussian-d2-6n-12j-2e-8c",
+      "snr": 1,
+      "seed": 101,
+      "voxels": 200,
+      "admitted": 192,
+      "latencyP95": 0.0001947135231823438,
+      "widthP95": 0.0006717899466837096,
+      "amplitudeP95": 0.00016329630590969417,
+      "statuses": {
+        "Accepted": 192,
+        "BudgetExceeded": 8
+      },
+      "exits": {
+        "AcceptedEnergyOnlyNonstationaryTerminal": 1,
+        "CandidateAttemptCap": 6,
+        "RemainingEvaluationQuota": 1
+      },
+      "work": {
+        "nodes": 14391,
+        "jets": 874,
+        "exact": 7,
+        "terminal": 2,
+        "candidates": 679,
+        "steps": 614,
+        "fallbacks": 0
+      },
+      "auditAttempts": 200,
+      "auditFailures": 0,
+      "oracleUnresolved": 0,
+      "reference": {
+        "setupNanos": 14585621333,
+        "responseNanos": 2912557368459,
+        "responses": 200,
+        "gridGeometries": 1071,
+        "refinementStarts": 4,
+        "continuousEvaluations": 82251,
+        "continuousHighWater": 1,
+        "continuousCached": 0,
+        "cachedNumericBytes": 15499512,
+        "continuousNumericBytes": 14472,
+        "refinementSweeps": 20563,
+        "refinementFailures": 0,
+        "maxSweepsPerStart": 256,
+        "levels": 14
+      },
+      "candidateGate": true,
+      "perIterationCandidateCap": 8,
+      "totalCandidateBound": 13
+    },
+    {
+      "kind": "cell",
+      "platform": "JS",
+      "sourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+      "cohort": "development",
+      "policy": "gaussian-d2-6n-12j-2e-8c",
+      "snr": 0.5,
+      "seed": 102,
+      "voxels": 200,
+      "admitted": 195,
+      "latencyP95": 0.0004607524383981598,
+      "widthP95": 0.0012647284014217774,
+      "amplitudeP95": 0.00033352404784109976,
+      "statuses": {
+        "Accepted": 195,
+        "BudgetExceeded": 5
+      },
+      "exits": {
+        "CandidateAttemptCap": 5
+      },
+      "work": {
+        "nodes": 14391,
+        "jets": 864,
+        "exact": 2,
+        "terminal": 1,
+        "candidates": 665,
+        "steps": 624,
+        "fallbacks": 0
+      },
+      "auditAttempts": 200,
+      "auditFailures": 0,
+      "oracleUnresolved": 0,
+      "reference": {
+        "setupNanos": 14585621333,
+        "responseNanos": 903114672375,
+        "responses": 200,
+        "gridGeometries": 1071,
+        "refinementStarts": 4,
+        "continuousEvaluations": 82924,
+        "continuousHighWater": 1,
+        "continuousCached": 0,
+        "cachedNumericBytes": 15499512,
+        "continuousNumericBytes": 14472,
+        "refinementSweeps": 20731,
+        "refinementFailures": 0,
+        "maxSweepsPerStart": 256,
+        "levels": 14
+      },
+      "candidateGate": true,
+      "perIterationCandidateCap": 8,
+      "totalCandidateBound": 13
+    }
+  ],
+  "candidatePlatformStatusDifferences": [
+    {
+      "snr": 1.0,
+      "voxel": 25,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 1.342757904865266e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 28,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 2.160814221996432e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 29,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 6.7519989599418295e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 37,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 1.1752536249742818e-08
+    },
+    {
+      "snr": 1.0,
+      "voxel": 39,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 4.586203417034085e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 55,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 3.5123042252394043e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 72,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 9.11109632184548e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 94,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 2.0450442311803485e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 109,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 7.727827301684531e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 114,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 3.188384667396349e-09
+    },
+    {
+      "snr": 1.0,
+      "voxel": 198,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 2.692677192328574e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 24,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 1.4598287023659395e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 51,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 1.890660905612407e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 57,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 9.106376278045225e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 94,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 6.0170028959305455e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 99,
+      "jvm": "Accepted",
+      "js": "BudgetExceeded",
+      "maxCoordinateDifference": 1.6197638785797608e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 140,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 7.641413724002177e-09
+    },
+    {
+      "snr": 0.5,
+      "voxel": 179,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 1.3335871518194153e-08
+    },
+    {
+      "snr": 0.5,
+      "voxel": 182,
+      "jvm": "BudgetExceeded",
+      "js": "Accepted",
+      "maxCoordinateDifference": 8.917438343303274e-09
+    }
+  ],
+  "scope": "Frozen DEV only. Same counts do not mean equal admitted IDs; no fresh, interval, throughput or engine-memory qualification."
+}

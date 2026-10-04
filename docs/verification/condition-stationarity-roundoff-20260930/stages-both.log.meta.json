@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T11:48:29.974273+00:00",
+  "finished_utc": "2026-09-30T11:50:27.296984+00:00",
+  "duration_seconds": 117.321618,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx2g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.global.staging=/private/tmp/scalafim-phrf-push-20260930/staging",
+    "firstLevelLawsJVM/testOnly scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite",
+    "firstLevelLawsJS/testOnly scalafim.fmri.laws.profile.ConditionStationarityRoundoffSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-phrf-push-20260930/work",
+  "log": "/private/tmp/scalafim-phrf-push-20260930/evidence/stages-both.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 365517
+}

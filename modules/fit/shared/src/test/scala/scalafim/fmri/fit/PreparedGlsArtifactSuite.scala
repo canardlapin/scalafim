@@ -117,7 +117,7 @@ class PreparedGlsArtifactSuite extends munit.FunSuite:
     val changed = stableArtifact.restore(resolver(propagatingPlan, membershipChangingReader(propagatingPlan.model.dataset)))
       .toOption.get.fit()
     assert(changed.left.toOption.exists {
-      case FitError.ChunkFailed(_, FitError.InvalidFitAxis("prepared GLS artifact", detail)) =>
+      case FitError.ChunkFailed(_, FitError.PreparationReplayMismatch(detail)) =>
         detail.contains("membership changed")
       case _ => false
     })
@@ -162,7 +162,7 @@ class PreparedGlsArtifactSuite extends munit.FunSuite:
     val sharedScope = FitPlan(projectedModel, FitEngine.GeneralizedLeastSquares, plan.config)
     val swapped = artifact.restore(resolver(sharedScope, denied))
     assert(swapped.left.toOption.exists {
-      case FitError.InvalidFitAxis("prepared GLS artifact", "coefficient scope differs") => true
+      case FitError.PreparedArtifactInvalid(detail) => detail.endsWith("coefficient scope differs")
       case _ => false
     })
     assertEquals(denied.reads, 0)
@@ -180,7 +180,7 @@ class PreparedGlsArtifactSuite extends munit.FunSuite:
 
     val wrongReference = new FitWorkResolver:
       def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork] =
-        Right(ResolvedFitWork(FitWorkReference("wrong", "plan-v1", "source-v1"), sharedPlan, denied))
+        Right(ResolvedFitWork(FitWorkReference.unsafe("wrong", "plan-v1", "source-v1"), sharedPlan, denied))
     assert(artifact.restore(wrongReference).isLeft)
     assertEquals(denied.reads, 0)
 
@@ -241,7 +241,7 @@ class PreparedGlsArtifactSuite extends munit.FunSuite:
 
   private def descriptorFor(plan: FitPlan): FitWorkDescriptor =
     FitWorkDescriptor.compile(
-      FitWorkReference("prepared-gls", "plan-v1", "source-v1"),
+      FitWorkReference.unsafe("prepared-gls", "plan-v1", "source-v1"),
       plan,
       ChunkSize.unsafe(blockSize),
       selection
@@ -250,9 +250,9 @@ class PreparedGlsArtifactSuite extends munit.FunSuite:
   private def resolver(plan: FitPlan, reader: DatasetSeriesReader): FitWorkResolver =
     new FitWorkResolver:
       def resolve(reference: FitWorkReference): Either[FitError, ResolvedFitWork] =
-        if reference == FitWorkReference("prepared-gls", "plan-v1", "source-v1") then
+        if reference == FitWorkReference.unsafe("prepared-gls", "plan-v1", "source-v1") then
           Right(ResolvedFitWork(reference, plan, reader))
-        else Left(FitError.InvalidFitAxis("prepared GLS artifact", "unexpected reference"))
+        else Left(FitError.WorkBindingMismatch("unexpected reference"))
 
   private final class BoundedReader(val dataset: FmriDataset, underlying: DatasetSeriesReader) extends DatasetSeriesReader:
     var reads = 0

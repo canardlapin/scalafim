@@ -1,0 +1,382 @@
+{
+  "schema": "c0-pre-fresh-fixed-resolution-v2",
+  "created_utc": "2026-09-30T06:58:20.870262+00:00",
+  "base_head": "179af2714b9349caf61461289b1857976703b0fa",
+  "owned_sources": {
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala": "2342ad0c9958a8fd39e6a329f934be26eeda62a69ad9a25c09faf3fe32273f59",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala": "eae995d5ba558abae0cb952c4ef2958520c7476b4e03d403247359c242cb429b",
+    "modules/first-level-laws/js/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala": "8c39e815af9046935f1b95c05f011cda2a473884f07c87b887a216b069ced2d1",
+    "docs/verification/condition-c0-qualification.md": "5a20e66d2185c7fc5c58700a832b172a3b77d8f7372e5eaf47a12aed1a67c318"
+  },
+  "prerequisites": {
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+    "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala": "f5e678f5e39ca382b9e23f99a9ba1d6a09a132d5d072b1af06f5bf7842026659",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionAdmissionDiagnosticsSuite.scala": "a73d9faba9cafe3ffe4226548583e92230525c1903aca72292753df11fe13bd0"
+  },
+  "status": "M docs/verification/condition-c0-qualification.md\n M modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala\n M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala\n M modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala\n?? modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionAdmissionDiagnosticsSuite.scala",
+  "build_files": {
+    "build.sbt": "d36f3a528b022705d56548a9932504acd87c5ddddfc6791c2a70b89ebaacc53e",
+    "project/plugins.sbt": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    ".jvmopts": "bf1a1d03f789112c9c74214eb9d1bf918ef5021cd1101d09b44a1426911a6bf0"
+  },
+  "classpath": [
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/first-level-laws/jvm/target/scala-3.7.4/test-classes",
+      "sha256": "7d54797212b18c2e79bee9d80f9f1aef2f127313178656d53c5be34b723bde49"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/first-level-laws/jvm/target/scala-3.7.4/classes",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/fit/jvm/target/scala-3.7.4/classes",
+      "sha256": "b4e297b1f7618427fe47cc33b77fefc7f0996d9ee9e2be8617a7cc202aa1dc70"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/model/jvm/target/scala-3.7.4/classes",
+      "sha256": "5579d0cbd188cb94b57b6bd2a605fdcb18e84fa9cd57557afb219f226baa23d1"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/design/jvm/target/scala-3.7.4/classes",
+      "sha256": "c4284adebb8a07cefe773ce327ee59e0e7b3b8bc2c6ac01b4c36311077396ec0"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/hrf/jvm/target/scala-3.7.4/classes",
+      "sha256": "fe66dbe3e5930699258dfc22bbc138965aeff7f2b621f3bc1c4eabc3f7dca996"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale/core/jvm/target/scala-3.7.4/classes",
+      "sha256": "b0f10f7b9f1a35bf52eb1e894cf9af261be8055d97628a707555877bd6f1b3af"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/jvm/target/scala-3.4.2/classes",
+      "sha256": "8513d516237c3f06f87cabd57a04c869f2f6d091fc1646a6b8877c9bf42193f7"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/dataset/jvm/target/scala-3.7.4/classes",
+      "sha256": "418e45cd6ca535163e7b30d8d05bf9c760b8eb3cbbc6c69ac1b6aabb23836cd4"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/response/jvm/target/scala-3.7.4/classes",
+      "sha256": "dfa57fd4085160c0463f8a9f35222fcb13954c95441a99a420d63ea67c3c9106"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+      "sha256": "0acaa90ede6c4ed110ac6087b37126eabe4079f79f72d45f172be371a78d9127"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/image/jvm/target/scala-3.7.4/classes",
+      "sha256": "143d6bbe83eaec89ff8e3d2a51ce4ba0693f09f3630ee92a35d4170a54f3c8d3"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/locus-data/jvm/target/scala-3.7.4/classes",
+      "sha256": "d5520280c0932d7d1c8180fe5e6f747330b6233b3f9ff1693a27d48a65e9fd41"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes",
+      "sha256": "276d48b7a86fc274c4fb6ed7e0f0b1273470442924f6463a8eca41610c7e3a59"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes",
+      "sha256": "6e30f778b50a64669ef83d3f2c9b3f070b8a60e95583729310e2420b80295479"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+      "sha256": "753d7095bd78af16207bbe01e3c10df520e509ab185bfb2604470ae0f7c6e7ca"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+      "sha256": "6a95056c9830c28b35c10b12042f515431de48a2d62ff401b1a2e1d259a3b3d2"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+      "sha256": "b94bb752abc343b683267580672256c11cafcfd2dd9302ab9984b334c9de153f"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+      "sha256": "549a5082a6d3199def12abbe786cbe868eb6fab2f91049ee423977d65f64c1b4"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes",
+      "sha256": "10da11691e07bc76f56f5a250185d019ceaef5795461004abed7ba5dc51037dd"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes",
+      "sha256": "82a13b71cfa53224d61fef56a4bd35eba684611b9249cf32f236b34262efaaa0"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes",
+      "sha256": "174d0baa0ba9204214027671f6875267c7cc491f842a4802e3479a11e9645353"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+      "sha256": "e1a37d41924d207551fdea2f3f90a653416361f72da8197fa053d744336fcfd5"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes",
+      "sha256": "f51880982e84b0b7027c82d2b4cdb4843bd2fa4f3f4c4bd9750eda0a91900ea4"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes",
+      "sha256": "53a2e101ddac3b79a3d4a939fd6d7aede52d4f3ed6fd7eca325c1bd2b24a8157"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes",
+      "sha256": "ca03565cd1a6684103561816cb0b554110c95053a217329055a47743ebcd8020"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+      "sha256": "d90cb7a853f5aaa4266203906a11707fe9628f7c85053abb7aee2c1605903003"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes",
+      "sha256": "0c34686d782e7b95e7d1bf00cc5fa19fdf71fd56fb823afab4a872a382ce9d80"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes",
+      "sha256": "b40b5db3e5cfaca42c44f899c32d3d34ca7e5ddf9950f77a7f7fa8a2bbb5f308"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+      "sha256": "81b132b5db17bc2199c625f4c3d800e3f3d8a5b9c6082c581e2fb440d8baacfb"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/ar/jvm/target/scala-3.7.4/classes",
+      "sha256": "50ae94a65d7ab18e00d51ca385bee55c29018deff6b990dbffb7c744631dc3e6"
+    },
+    {
+      "path": "/private/tmp/scalafim-execution-20260929/c0-qualification/modules/hrf-laws/jvm/target/scala-3.7.4/classes",
+      "sha256": "b323c1ab811850fbb2e2a4491d082138202bb6166c4f3fd6e309ce777140462d"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+      "sha256": "73089d33f763b94758170e0a66be978f9397c14b7795e343898aa89b3d7b6639"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+      "sha256": "19d09014eaf69ca8abd8d9e0c43be4c2e5d7c693bc1c6cf3a1c93697ad8bca50"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-scalacheck_3/1.1.0/munit-scalacheck_3-1.1.0.jar",
+      "sha256": "ebe6b853c8c2708c5231758dc67c301b91fad06e01872bf4bbcaee5f90d23b6b"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+      "sha256": "1ebb2b6f9e4eb4022497c19b1e1e825019c08514f962aaac197145f88ed730f1"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+      "sha256": "66a48070e1fa9bda5aa7142ff8b6638c4a9555d1d760965241b7f4617ce758b9"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+      "sha256": "10506a15c369f8b66f5347e6fc0ed284f801a07598d9a835b2c8bc6052c3deaf"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+      "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalacheck/scalacheck_3/1.18.1/scalacheck_3-1.18.1.jar",
+      "sha256": "ee357875d395b3731e82a515efdef051ba3f898bb9081f3c4635da9fe235fcc8"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.12.0/cats-core_3-2.12.0.jar",
+      "sha256": "db8754981281215078991aa8228562e806d845ebe8441f6c538ef9e85b4560a4"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+      "sha256": "755e6bca07ff0ddde6b2cbb984fe1178389a44887d5aaf610a1402e9fcfe99ac"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/github/wendykierp/JTransforms/3.1/JTransforms-3.1.jar",
+      "sha256": "d9dffa3e27793040dccb97b054d95267df46e669c396bf1ca4f3b085069bc2d5"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+      "sha256": "15f70b38bb95f3002fec9aea54030f19bb4ecfbad64c67424b5e5fea09cd749e"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+      "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.12.0/cats-kernel_3-2.12.0.jar",
+      "sha256": "5aa57d0c906b4c6e4575e5548f4ea7523a2c4140424b7df92239162a0ca17f77"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+      "sha256": "65f223a3ccba177f96c999f0287527b18557eb14f92b7bda88d162c5d0696db8"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+      "sha256": "8b1dd10891b95e0e2cf2e375972fe0ee0fd231c31b150e352a6940d2bec89652"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+      "sha256": "de87255aa776a57ac105561e24673bde83a3d9980048582ab763be4e682ca42d"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.8.0/algebra_3-2.8.0.jar",
+      "sha256": "0ceb78004499e94dad2d0477dd92ce28319bad6c1af1e7e36b299312b40f60b6"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-math3/3.5/commons-math3-3.5.jar",
+      "sha256": "dcf9768726b82e8d7b8a928447b08bca7cfe2773d5120a63a41ec224207c1a29"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/pl/edu/icm/JLargeArrays/1.5/JLargeArrays-1.5.jar",
+      "sha256": "6dca5ab23e1fdb9190a257c04687a9ea19111c36b6ec9478bce6b2a128ca1aeb"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+      "sha256": "ac62797add23b03c9185f5742039246712aad2dda4c2b2d19d0564d23dab2c97"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+      "sha256": "03375636fdd1086417531e0305b4b7fba3e2f62bd7b241587df05b5cb95aa5c7"
+    },
+    {
+      "path": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+      "sha256": "748eb2ef8d015c75e96842280c2c648782a5b0fec7cc4a4b3a80a2f26f6a2baa"
+    }
+  ],
+  "js_files": [
+    {
+      "path": "js/main.js",
+      "sha256": "03f2fdc6f4bd02b708cf6166be26a10abb5f46c63cbc923e309e386479fe2a37"
+    },
+    {
+      "path": "js/main.js.map",
+      "sha256": "c6e730d66e7117933434a12b8a97b773d10803f64cc51eaa0de038117f34e77f"
+    }
+  ],
+  "providers": [
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/05a8f1a231c171f1bca0/locus4s",
+      "head": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/34c0071f90095ef07887/zarr4s",
+      "head": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/34fcacf7027b8ae3b2f8/intaglio",
+      "head": "596b398af380079e4b251535230d0bc03cd88c51",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/41e96dde036f148f012a/image4s",
+      "head": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/449715b8ebc2010e6e23/gale",
+      "head": "18d24dbb5056122032b0278f8bad557a9bb1cf23",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/55929e145617b909ca3a/multivar",
+      "head": "c4329fc95688929236c942cca889aa67ad17cbe0",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/57a292f3a6ded9e259cf/ravel",
+      "head": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/5a90f48e170e9e640ee1/gale",
+      "head": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/77e7bdc71bddb8077fcd/bids4s",
+      "head": "a33678390614a91fadbdef13f22970e78c26e091",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/aa1fd63832323d604703/reframe4s",
+      "head": "9a4508351d74567147b8ea3221d82db89e5892b0",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/b4b08747efd9a8151229/graph4s",
+      "head": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/bbuchsbaum/.sbt/1.0/staging/cd3a5082f5d2990355dd/image4s",
+      "head": "2695f891cbec31a7f565a9b39e2554fe3b6d4b40",
+      "status": "",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "launcher_sha256": "2523c6c5dbb1fc1edebf7f60649c6d06670c88caeb4c1b6636c56f947f334071",
+  "java_path": "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home/bin/java",
+  "java_sha256": "a901928b2c4040574191cf28842475d802a89c631231fc7d89bb4bb5d34570f4",
+  "java_version": "openjdk version \"22\" 2024-03-19\nOpenJDK Runtime Environment (build 22+36-2370)\nOpenJDK 64-Bit Server VM (build 22+36-2370, mixed mode, sharing)",
+  "node_path": "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+  "node_sha256": "2d8a4c2587efc5184c0aadd4b7d209ef8bd91c336df1a26d1fa5ef2ae22dd8d8",
+  "node_version": "v26.7.0",
+  "source_protocol": "sources/docs/verification/condition-c0-qualification.md",
+  "seed_audit_sha256": "bae320b7a0cccb3488b20c1462a348452d049219762af4a08cec35cafe64b1f7",
+  "review_required_before": [
+    "fresh",
+    "100k",
+    "policy-promotion"
+  ],
+  "science_gates": {
+    "cohort": 200,
+    "minimum_admitted": 190,
+    "latency_p95": 0.02,
+    "width_p95": 0.05,
+    "amplitude_p95": 0.001,
+    "stationarity": 1e-09,
+    "sigma2": 1
+  },
+  "budget_baseline": {
+    "newton": 6,
+    "total_jets": 8,
+    "exact": 2,
+    "candidates_per_iteration": 4,
+    "total_candidate_bound": 9
+  },
+  "budget_candidate": {
+    "newton": 6,
+    "total_jets": 12,
+    "exact": 2,
+    "candidates_per_iteration": 8,
+    "total_candidate_bound": 13
+  },
+  "standalone_limit": "JVM -Xmx256m; JS heap unavailable",
+  "reference_levels": {
+    "main": 14,
+    "dense": 16
+  },
+  "supersedes_forward_only": "bbf30ff4bd169861999eddb39ccd349b7949c495bbebd1706f864f89b291fe53",
+  "frozen_tests": {
+    "log": "/private/tmp/scalafim-execution-20260929/logs/c0-repair-tests1.log",
+    "sha256": "3d1ac0d3594ea3921f0ea1174a46a1c9957b2be85c2c1d1a4955c27186ab2547",
+    "meta_sha256": "4ab735f5a21197af37a89791ad1b229c28597bafb4fe538c6b07c8096d4a6e5f"
+  },
+  "compile_all": {
+    "log": "/private/tmp/scalafim-execution-20260929/logs/c0-repair-tests1.log",
+    "sha256": "3d1ac0d3594ea3921f0ea1174a46a1c9957b2be85c2c1d1a4955c27186ab2547",
+    "meta_sha256": "4ab735f5a21197af37a89791ad1b229c28597bafb4fe538c6b07c8096d4a6e5f"
+  }
+}

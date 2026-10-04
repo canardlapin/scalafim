@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-09-30T11:53:20.281837+00:00",
+  "finished_utc": "2026-09-30T11:55:12.112631+00:00",
+  "duration_seconds": 111.891659,
+  "command": [
+    "sbt",
+    "--batch",
+    "-J-Xmx2g",
+    "-J-XX:ActiveProcessorCount=2",
+    "-Dsbt.global.staging=/private/tmp/scalafim-phrf-push-20260930/staging",
+    "hrfJVM/testOnly scalafim.fmri.hrf.family.GaussianFamilySuite"
+  ],
+  "cwd": "/private/tmp/scalafim-phrf-push-20260930/work",
+  "log": "/private/tmp/scalafim-phrf-push-20260930/evidence/gaussian-regression-before.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 600.0,
+  "log_bytes": 9810
+}
