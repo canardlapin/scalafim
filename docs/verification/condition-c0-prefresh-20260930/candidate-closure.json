@@ -1,0 +1,114 @@
+{
+  "schema": "c0-candidate-prefresh-readonly-closure-v1",
+  "checkedUtc": "2026-09-30T14:35:29.006612+00:00",
+  "candidateHead": "71cb8ea3950ab007e34e06e74fb2f7690a0485ed",
+  "executionSourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+  "implementationCommit": "77f8d06cd0c069ab7761358bc6a4e4fe8120b399",
+  "sourceFilesChecked": 1350,
+  "classpathEntriesChecked": 55,
+  "jsFilesChecked": 2,
+  "keySources": {
+    "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala": "6d804f5266839e545d309a1b9249674567c1712f17948466f336f969f08bfb90",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+    "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala": "a079bd7733d258b25d1967da9a83c788a85eda5815e7ef23eeb7c0f64c5483e6",
+    "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala": "2342ad0c9958a8fd39e6a329f934be26eeda62a69ad9a25c09faf3fe32273f59",
+    "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala": "eae995d5ba558abae0cb952c4ef2958520c7476b4e03d403247359c242cb429b",
+    "modules/first-level-laws/js/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala": "8c39e815af9046935f1b95c05f011cda2a473884f07c87b887a216b069ced2d1",
+    "docs/verification/condition-c0-qualification.md": "5a20e66d2185c7fc5c58700a832b172a3b77d8f7372e5eaf47a12aed1a67c318",
+    "build.sbt": "83a0f8a63710f7082910e8e593b0b8ee447ca7b584fcb55c49e11a14908e8f36",
+    "project/plugins.sbt": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10",
+    "project/build.properties": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    ".jvmopts": "bf1a1d03f789112c9c74214eb9d1bf918ef5021cd1101d09b44a1426911a6bf0"
+  },
+  "providerCheckouts": [
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/05a8f1a231c171f1bca0/locus4s",
+      "head": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/34c0071f90095ef07887/zarr4s",
+      "head": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/34fcacf7027b8ae3b2f8/intaglio",
+      "head": "596b398af380079e4b251535230d0bc03cd88c51",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/41e96dde036f148f012a/image4s",
+      "head": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/55929e145617b909ca3a/multivar",
+      "head": "c4329fc95688929236c942cca889aa67ad17cbe0",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/57a292f3a6ded9e259cf/ravel",
+      "head": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/5a3fe250684692aa42c1/gale",
+      "head": "da38f8c429294657d30ec29f06eae3fab636d428",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/5a90f48e170e9e640ee1/gale",
+      "head": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/77e7bdc71bddb8077fcd/bids4s",
+      "head": "a33678390614a91fadbdef13f22970e78c26e091",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/aa1fd63832323d604703/reframe4s",
+      "head": "9a4508351d74567147b8ea3221d82db89e5892b0",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/b4b08747efd9a8151229/graph4s",
+      "head": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+      "status": ""
+    },
+    {
+      "path": "/private/tmp/scalafim-phrf-push-20260930/staging/cd3a5082f5d2990355dd/image4s",
+      "head": "2695f891cbec31a7f565a9b39e2554fe3b6d4b40",
+      "status": ""
+    }
+  ],
+  "runtime": {
+    "java": {
+      "path": "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home/bin/java",
+      "sha256": "a901928b2c4040574191cf28842475d802a89c631231fc7d89bb4bb5d34570f4",
+      "version": "openjdk 22 2024-03-19\nOpenJDK Runtime Environment (build 22+36-2370)\nOpenJDK 64-Bit Server VM (build 22+36-2370, mixed mode, sharing)\n"
+    },
+    "node": {
+      "path": "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+      "sha256": "2d8a4c2587efc5184c0aadd4b7d209ef8bd91c336df1a26d1fa5ef2ae22dd8d8",
+      "version": "v26.7.0\n"
+    },
+    "jvmClasspathRecheckedUnchanged": true,
+    "jsFrozenFilesRecheckedUnchanged": true
+  },
+  "packagingOnlySourceMapping": [
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala",
+      "executed": "99eb71105718627607a5fb5689f06a292f7378e0e5e3e35c014fbfdc4f66b6f7",
+      "current": "6d804f5266839e545d309a1b9249674567c1712f17948466f336f969f08bfb90"
+    }
+  ],
+  "inputManifests": {
+    "/private/tmp/scalafim-phrf-push-20260930/evidence/final-source.json": "ee5df2170b4f846635b6bfb1ee41ff58585b97da0b969c6c7cd658e6d4d852f8",
+    "/private/tmp/scalafim-phrf-push-20260930/evidence/jvm-artifacts.json": "8ad5e01f3ac1440a77189f9f07c77d11450189a5e098ce5e58e9b8598a1a8a3b",
+    "/private/tmp/scalafim-phrf-push-20260930/evidence/js-artifacts.json": "42cae16600191b9686fc4c84217b1a85e79bad990bf63c5eac3c3670ac8b2ba6",
+    "/private/tmp/scalafim-phrf-push-20260930/work/docs/verification/condition-stationarity-roundoff-20260930/final-source-binding.json": "6a890c0681130a28a8f128c771bf705898afd218d026544737d1613b33c47c53"
+  },
+  "failures": [],
+  "scope": "Candidate-only closure recheck; final integrated source/provider closure and historical stream disposition remain required before fresh entry."
+}

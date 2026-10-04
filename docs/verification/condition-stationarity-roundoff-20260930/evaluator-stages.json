@@ -1,0 +1,44 @@
+{
+  "scope": "Fixed stored basis/rHat/projected response; isolate Gaussian samples from downstream sums and amplitude solve. No original-family qualification.",
+  "sourceSha256": "e893930f0947d6dc18da8391fbd680d946a3c8342459ebefa6a7e39794183c99",
+  "decimalDigits": 90,
+  "mpmath": "1.3.0",
+  "results": [
+    {
+      "platform": "JVM",
+      "voxel": 9,
+      "storedKernelMpDownstreamDelta": "0.0000000000016703727634329640256345987927489917206504200358948",
+      "analyticKernelMpDownstreamDelta": "-0.00000000000013821014625981419157222098926787613834070653663651",
+      "directDoubleKernelMpDownstreamDelta": "-0.00000000000013799276130627060438685271071668659930596823964515",
+      "maxKernelAbsError": "1.6151947421660980988493372753e-14",
+      "maxKernelRelErrorAbove1e16": "3.22744870052210150653499371104e-14"
+    },
+    {
+      "platform": "JVM",
+      "voxel": 31,
+      "storedKernelMpDownstreamDelta": "0.000000000000055149324398174631037505731989440875294918518475249",
+      "analyticKernelMpDownstreamDelta": "-0.000000000000036570076917567177466166410759652465456700525422032",
+      "directDoubleKernelMpDownstreamDelta": "-0.000000000000041853909439711492603226000149265342275924473812018",
+      "maxKernelAbsError": "1.60200575687763827630989183835e-14",
+      "maxKernelRelErrorAbove1e16": "2.23514951576040234017964017446e-14"
+    },
+    {
+      "platform": "JS",
+      "voxel": 9,
+      "storedKernelMpDownstreamDelta": "0.0000000000016703728076130669489649338376556235105634408224044",
+      "analyticKernelMpDownstreamDelta": "-0.00000000000013821010207973061268014990871511697412126294651005",
+      "directDoubleKernelMpDownstreamDelta": "-0.00000000000013799271712618697307850752019240863594798010150389",
+      "maxKernelAbsError": "1.6151947421660980988493372753e-14",
+      "maxKernelRelErrorAbove1e16": "3.22744870052210150653499371104e-14"
+    },
+    {
+      "platform": "JS",
+      "voxel": 31,
+      "storedKernelMpDownstreamDelta": "0.000000000000055149358216264181498542535054373537974972898512856",
+      "analyticKernelMpDownstreamDelta": "-0.000000000000036570043099464545490517156351913313217049224753611",
+      "directDoubleKernelMpDownstreamDelta": "-0.000000000000041853875621608830090348173278780808902516834392815",
+      "maxKernelAbsError": "1.60200575687763827630989183835e-14",
+      "maxKernelRelErrorAbove1e16": "2.23514951576040234017964017446e-14"
+    }
+  ]
+}

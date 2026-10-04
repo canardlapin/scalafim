@@ -1,0 +1,14 @@
+{
+  "java": {
+    "path": "/Users/bbuchsbaum/Library/Java/JavaVirtualMachines/openjdk-22/Contents/Home/bin/java",
+    "sha256": "a901928b2c4040574191cf28842475d802a89c631231fc7d89bb4bb5d34570f4",
+    "version": "openjdk 22 2024-03-19\nOpenJDK Runtime Environment (build 22+36-2370)\nOpenJDK 64-Bit Server VM (build 22+36-2370, mixed mode, sharing)\n"
+  },
+  "node": {
+    "path": "/opt/homebrew/Cellar/node/26.7.0/bin/node",
+    "sha256": "2d8a4c2587efc5184c0aadd4b7d209ef8bd91c336df1a26d1fa5ef2ae22dd8d8",
+    "version": "v26.7.0\n"
+  },
+  "jvmClasspathRecheckedUnchanged": true,
+  "jsFrozenFilesRecheckedUnchanged": true
+}

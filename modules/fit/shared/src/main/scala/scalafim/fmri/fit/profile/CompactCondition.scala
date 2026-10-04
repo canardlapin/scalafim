@@ -9,12 +9,14 @@ enum CompactConditionError:
   case Whitening(detail: String)
   case RankDeficient(rank: Int, columns: Int)
   case Normalization(rule: NormalizationRule)
+  case Admission(detail: String)
 
   def message: String =
     this match
       case Whitening(detail) => s"whitening failed: $detail"
       case RankDeficient(rank, columns) => s"the projected expanded design has rank $rank of $columns; identify the shape-invariant directions before fitting"
       case Normalization(rule) => s"the family does not support ${rule.label} normalisation"
+      case Admission(detail) => s"observed-family admission refused: $detail"
 
 /** Response-independent preparation of the compact condition backend: the
   * whitened nuisance basis `qF`, and the rank-revealing `U R` of the
@@ -81,8 +83,12 @@ object CompactConditionPreparation:
 
   def prepare(
       expanded: ExpandedConditionDesign,
+      admission: ObservedFamilyAdmission,
       whitening: Option[WhiteningPlan],
-      nuisance: Option[DMat]
+      nuisance: Option[DMat],
+      sourceTerm: scalafim.fmri.design.event.EventTerm,
+      frame: scalafim.fmri.hrf.design.SamplingFrame,
+      precision: scalafim.fmri.hrf.Seconds
   ): Either[CompactConditionError, CompactConditionPreparation] =
     val rows = expanded.rows
     val cm = expanded.columns
@@ -91,7 +97,7 @@ object CompactConditionPreparation:
         case None => Right(m)
         case Some(plan) => WhiteningTransform.matrix(plan, m).left.map(err => CompactConditionError.Whitening(err.toString))
     val options = QROptions(pivoting = QRPivoting.Column, rankTolerance = Some(1e-10))
-    val nuisanceBasis: Either[CompactConditionError, (Array[Double], Int)] =
+    def nuisanceBasis: Either[CompactConditionError, (Array[Double], Int)] =
       nuisance match
         case None => Right((new Array[Double](0), 0))
         case Some(f) =>
@@ -102,55 +108,58 @@ object CompactConditionPreparation:
             qr.q.slice(0, rows, 0, rf).copyRowMajorTo(q)
             (q, rf)
           }
-    for
-      nb <- nuisanceBasis
-      wa <- whitenD(CompactCondition.toDMat(rows, cm, expanded.term.data.data))
-    yield
-      val (qF, rf) = nb
-      val waArr = new Array[Double](rows * cm)
-      wa.copyRowMajorTo(waArr)
-      // A_proj = (I - qF qF') W A
-      val coeffs = new Array[Double](rf * cm)
-      var t = 0
-      while t < rows do
-        var i = 0
-        while i < rf do
-          val q = qF(t * rf + i)
-          var j = 0
-          while j < cm do
-            coeffs(i * cm + j) += q * waArr(t * cm + j)
-            j += 1
-          i += 1
-        t += 1
-      val projected = new Array[Double](rows * cm)
-      t = 0
-      while t < rows do
-        var j = 0
-        while j < cm do
-          var acc = waArr(t * cm + j)
+    admission.admits(expanded, sourceTerm, frame, precision, whitening, nuisance).left.map(err => CompactConditionError.Admission(err.message)).flatMap { _ =>
+      for
+        nb <- nuisanceBasis
+        wa <- whitenD(CompactCondition.toDMat(rows, cm, expanded.term.data.data))
+      yield {
+        val (qF, rf) = nb
+        val waArr = new Array[Double](rows * cm)
+        wa.copyRowMajorTo(waArr)
+        // A_proj = (I - qF qF') W A
+        val coeffs = new Array[Double](rf * cm)
+        var t = 0
+        while t < rows do
           var i = 0
           while i < rf do
-            acc -= qF(t * rf + i) * coeffs(i * cm + j)
+            val q = qF(t * rf + i)
+            var j = 0
+            while j < cm do
+              coeffs(i * cm + j) += q * waArr(t * cm + j)
+              j += 1
             i += 1
-          projected(t * cm + j) = acc
-          j += 1
-        t += 1
-      val qr = CompactCondition.toDMat(rows, cm, projected).qr(options)
-      val k = qr.diagnostics.rank.getOrElse(cm)
-      val u = new Array[Double](rows * k)
-      qr.q.slice(0, rows, 0, k).copyRowMajorTo(u)
-      val rPerm = new Array[Double](k * cm)
-      qr.r.slice(0, k, 0, cm).copyRowMajorTo(rPerm)
-      val perm = qr.columnPermutation.toArray
-      val rHat = new Array[Double](k * cm)
-      var i = 0
-      while i < k do
-        var j = 0
-        while j < cm do
-          rHat(i * cm + perm(j)) = rPerm(i * cm + j)
-          j += 1
-        i += 1
-      new CompactConditionPreparation(expanded, whitening, rows, k, rf, qF, u, rHat)
+          t += 1
+        val projected = new Array[Double](rows * cm)
+        t = 0
+        while t < rows do
+          var j = 0
+          while j < cm do
+            var acc = waArr(t * cm + j)
+            var i = 0
+            while i < rf do
+              acc -= qF(t * rf + i) * coeffs(i * cm + j)
+              i += 1
+            projected(t * cm + j) = acc
+            j += 1
+          t += 1
+        val qr = CompactCondition.toDMat(rows, cm, projected).qr(options)
+        val k = qr.diagnostics.rank.getOrElse(cm)
+        val u = new Array[Double](rows * k)
+        qr.q.slice(0, rows, 0, k).copyRowMajorTo(u)
+        val rPerm = new Array[Double](k * cm)
+        qr.r.slice(0, k, 0, cm).copyRowMajorTo(rPerm)
+        val perm = qr.columnPermutation.toArray
+        val rHat = new Array[Double](k * cm)
+        var i = 0
+        while i < k do
+          var j = 0
+          while j < cm do
+            rHat(i * cm + perm(j)) = rPerm(i * cm + j)
+            j += 1
+          i += 1
+        new CompactConditionPreparation(expanded, whitening, rows, k, rf, qF, u, rHat)
+      }
+    }
 
 /** The compact condition backend as a [[ShapeObjective]]: a node bank of
   * orthonormal node projectors (for exact node scores) and full design jets

@@ -10,7 +10,9 @@ import scalafim.fmri.fit.profile.{
   DecodeBudget,
   DecodeStatus,
   DecoderCounters,
-  NodeGrid
+  NodeGrid,
+  ObservedFamilyCertification,
+  ObservedFamilyRequirements
 }
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -50,8 +52,21 @@ class CompactConditionRuntimeSuite extends munit.FunSuite:
     .fold(e => fail(e.message), identity)
   private lazy val expanded =
     ExpandedConditionDesign.lower(term, frame, basis, precision).fold(e => fail(e.message), identity)
+  private lazy val admission =
+    val points = Vector((4.0, math.log(1.2)), (6.0, math.log(2.0))).map { case (tau, logSd) =>
+      family.chart.point(tau, logSd).fold(e => fail(e.message), identity)
+    }
+    ObservedFamilyCertification.admitForCompact(
+      expanded, term, frame, precision, Some(whitening), Some(nuisance), points,
+      ObservedFamilyRequirements(1e-2, 1e8, 1e-6)
+    ).fold(e => fail(e.message), identity)
   private lazy val prep =
-    CompactConditionPreparation.prepare(expanded, Some(whitening), Some(nuisance)).fold(e => fail(e.message), identity)
+    CompactConditionPreparation.prepare(expanded, admission, Some(whitening), Some(nuisance), term, frame, precision).fold(e => fail(e.message), identity)
+
+  test("a certificate cannot be reused for a same-sized changed observed geometry"):
+    val changed = term.copy(onsets = term.onsets.updated(0, Seconds(term.onsets.head.value + 0.2)))
+    val result = CompactConditionPreparation.prepare(expanded, admission, Some(whitening), Some(nuisance), changed, frame, precision)
+    assert(result.isLeft)
 
   private def whitenColumns(cols: Int, rowMajor: Array[Double]): Array[Double] =
     val b = DMat.newBuilder(rows, cols)

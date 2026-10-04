@@ -1,0 +1,13 @@
+{
+  "sourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+  "sourceFilesChecked": 1350,
+  "changesSinceCompilation": [
+    {
+      "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala",
+      "executed": "99eb71105718627607a5fb5689f06a292f7378e0e5e3e35c014fbfdc4f66b6f7",
+      "current": "6d804f5266839e545d309a1b9249674567c1712f17948466f336f969f08bfb90"
+    }
+  ],
+  "nonSemanticOnly": true,
+  "implementationCommit": "77f8d06cd0c069ab7761358bc6a4e4fe8120b399"
+}

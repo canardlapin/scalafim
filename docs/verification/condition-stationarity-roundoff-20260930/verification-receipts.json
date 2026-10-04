@@ -1,0 +1,54 @@
+{
+  "executionSourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311",
+  "implementationCommit": "77f8d06cd0c069ab7761358bc6a4e4fe8120b399",
+  "sourceHashesChecked": 1350,
+  "compressedArchivesChecked": 18,
+  "processReceipts": {
+    "gaussian-regression-before.log": {
+      "exitCode": 1,
+      "reason": "exited",
+      "durationMonotonicSeconds": 111.891659
+    },
+    "fix-gates.log": {
+      "exitCode": 143,
+      "reason": "exited",
+      "durationMonotonicSeconds": 543.913674
+    },
+    "final-jvm-compile.log": {
+      "exitCode": 0,
+      "reason": "exited",
+      "durationMonotonicSeconds": 541.28404
+    },
+    "final-js.log": {
+      "exitCode": 0,
+      "reason": "exited",
+      "durationMonotonicSeconds": 254.364549
+    },
+    "development-jvm.log": {
+      "exitCode": 0,
+      "reason": "exited",
+      "durationMonotonicSeconds": 647.568189
+    },
+    "development-js.log": {
+      "exitCode": 124,
+      "reason": "timeout",
+      "durationMonotonicSeconds": 1800.033179
+    },
+    "development-js-r2.log": {
+      "exitCode": 0,
+      "reason": "exited",
+      "durationMonotonicSeconds": 1911.309407
+    },
+    "oracle-jvm.log": {
+      "exitCode": 0,
+      "reason": "exited",
+      "durationMonotonicSeconds": 47.086056
+    },
+    "oracle-js.log": {
+      "exitCode": 0,
+      "reason": "exited",
+      "durationMonotonicSeconds": 118.852493
+    }
+  },
+  "qualification": "JVM and JS frozen DEV candidate cells and six-response oracle panels pass; fresh/performance/interval gates remain open"
+}
