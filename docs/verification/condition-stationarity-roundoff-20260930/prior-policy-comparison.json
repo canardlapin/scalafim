@@ -1,0 +1,57 @@
+{
+  "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationSuite.scala": {
+    "priorSha256": "2342ad0c9958a8fd39e6a329f934be26eeda62a69ad9a25c09faf3fe32273f59",
+    "currentSha256": "2342ad0c9958a8fd39e6a329f934be26eeda62a69ad9a25c09faf3fe32273f59",
+    "equal": true
+  },
+  "modules/first-level-laws/jvm/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala": {
+    "priorSha256": "eae995d5ba558abae0cb952c4ef2958520c7476b4e03d403247359c242cb429b",
+    "currentSha256": "eae995d5ba558abae0cb952c4ef2958520c7476b4e03d403247359c242cb429b",
+    "equal": true
+  },
+  "modules/first-level-laws/js/src/test/scala/scalafim/fmri/laws/profile/ConditionC0QualificationPlatform.scala": {
+    "priorSha256": "8c39e815af9046935f1b95c05f011cda2a473884f07c87b887a216b069ced2d1",
+    "currentSha256": "8c39e815af9046935f1b95c05f011cda2a473884f07c87b887a216b069ced2d1",
+    "equal": true
+  },
+  "docs/verification/condition-c0-qualification.md": {
+    "priorSha256": "5a20e66d2185c7fc5c58700a832b172a3b77d8f7372e5eaf47a12aed1a67c318",
+    "currentSha256": "5a20e66d2185c7fc5c58700a832b172a3b77d8f7372e5eaf47a12aed1a67c318",
+    "equal": true
+  },
+  "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": {
+    "priorSha256": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+    "currentSha256": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+    "equal": true
+  },
+  "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala": {
+    "priorSha256": "f5e678f5e39ca382b9e23f99a9ba1d6a09a132d5d072b1af06f5bf7842026659",
+    "currentSha256": "f5e678f5e39ca382b9e23f99a9ba1d6a09a132d5d072b1af06f5bf7842026659",
+    "equal": true
+  },
+  "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionAdmissionDiagnosticsSuite.scala": {
+    "priorSha256": "a73d9faba9cafe3ffe4226548583e92230525c1903aca72292753df11fe13bd0",
+    "currentSha256": "a73d9faba9cafe3ffe4226548583e92230525c1903aca72292753df11fe13bd0",
+    "equal": true
+  },
+  "build.sbt": {
+    "priorSha256": "d36f3a528b022705d56548a9932504acd87c5ddddfc6791c2a70b89ebaacc53e",
+    "currentSha256": "83a0f8a63710f7082910e8e593b0b8ee447ca7b584fcb55c49e11a14908e8f36",
+    "equal": false
+  },
+  "project/plugins.sbt": {
+    "priorSha256": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10",
+    "currentSha256": "4a7fc382ac03c04e9a8dd19b9e0c217bc12c6491e7aaa5250b5f718263f65a10",
+    "equal": true
+  },
+  "project/build.properties": {
+    "priorSha256": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    "currentSha256": "bc2e83307ba4a40cb286711cee6f644d9bca62ab2d791053000c7c9ce7a82bb2",
+    "equal": true
+  },
+  ".jvmopts": {
+    "priorSha256": "bf1a1d03f789112c9c74214eb9d1bf918ef5021cd1101d09b44a1426911a6bf0",
+    "currentSha256": "bf1a1d03f789112c9c74214eb9d1bf918ef5021cd1101d09b44a1426911a6bf0",
+    "equal": true
+  }
+}

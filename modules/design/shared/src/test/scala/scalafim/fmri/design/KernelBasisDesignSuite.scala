@@ -63,3 +63,62 @@ class KernelBasisDesignSuite extends munit.FunSuite:
     assert(TrialMembership.make(Vector.empty, 1).isLeft)
     assert(TrialMembership.make(Vector(0, 0), 1).isRight)
     assert(family.supports(NormalizationRule.Density))
+
+  test("interleaved complete records retain trial columns, membership and reversible event-row identity"):
+    val trialOnsets = Vector(3.0, 3.0, 12.0, 5.0, 14.0, 31.0).map(Seconds(_))
+    val trialRuns = Vector(0, 0, 0, 1, 1, 1)
+    val trialDurations = Vector(0.3, 0.5, 0.4, 0.1, 0.7, 0.2).map(Seconds(_))
+    val members = Vector(0, 1, 1, 1, 2, 2)
+    val order = Vector(3, 0, 4, 1, 5, 2)
+    def lower(permutation: Vector[Int]): ExpandedTrialDesign =
+      val membership = TrialMembership.make(permutation.map(members), 3).fold(e => fail(e.message), identity)
+      ExpandedTrialDesign.lower(permutation.map(trialOnsets), permutation.map(trialRuns),
+        permutation.map(trialDurations), membership, frame, basis, precision).fold(e => fail(e.message), identity)
+    val original = lower(members.indices.toVector)
+    val interleaved = lower(order)
+    assertEquals(interleaved.membership.conditionOfTrial, order.map(members))
+    assertEquals(interleaved.canonicalToInput, Vector(1, 3, 5, 0, 2, 4))
+    order.indices.foreach: input =>
+      assertEquals(interleaved.canonicalToInput(interleaved.inputToCanonical(input)), input)
+    val source = interleaved.term.term
+    assertEquals(source.blockIds, Vector(0, 0, 0, 1, 1, 1))
+    assertEquals(source.onsets, interleaved.canonicalToInput.map(order.map(trialOnsets)))
+    assertEquals(source.durations, interleaved.canonicalToInput.map(order.map(trialDurations)))
+    var row = 0
+    while row < original.rows do
+      var input = 0
+      while input < order.length do
+        var component = 0
+        while component < basis.rank do
+          val actual = interleaved.term.data(row, interleaved.column(input, component))
+          assertEqualsDouble(actual, original.term.data(row, original.column(order(input), component)), 1e-12)
+          if row / 60 != trialRuns(order(input)) then assertEqualsDouble(actual, 0.0, 0.0)
+          component += 1
+        input += 1
+      row += 1
+    assert(maxAbs(interleaved.aggregateConditions.data, original.aggregateConditions.data) < 1e-12)
+
+  test("trial lowering normalizes empty defaults and returns typed malformed-record failures"):
+    val xs = Vector(2.0, 6.0, 10.0).map(Seconds(_))
+    val membership = TrialMembership.make(Vector(0, 1, 1), 2).fold(e => fail(e.message), identity)
+    def lower(runs: Vector[Int], lengths: Vector[Seconds]): Either[KernelBasisDesignError, ExpandedTrialDesign] =
+      ExpandedTrialDesign.lower(xs, runs, lengths, membership, frame, basis, precision)
+    val defaults = lower(Vector.empty, Vector.empty).fold(e => fail(e.message), identity)
+    val explicit = lower(Vector.fill(3)(0), Vector.fill(3)(Seconds(0.0))).fold(e => fail(e.message), identity)
+    assertEquals(defaults.canonicalToInput, Vector(0, 1, 2))
+    assert(maxAbs(defaults.term.data.data, explicit.term.data.data) <= 1e-15)
+    assert(lower(Vector(0, 1), Vector.empty).left.exists(_.message.contains("blockIds has length")))
+    assert(lower(Vector.empty, Vector(Seconds(0.0))).left.exists(_.message.contains("durations has length")))
+    assert(lower(Vector(1, -1, 0), Vector.empty).left.exists(_.message.contains("trial 2")))
+    assert(lower(Vector(1, 2, 0), Vector.empty).left.exists(_.message.contains("trial 2")))
+    assert(lower(Vector(1, 0, 0), Vector(Seconds(0.0), Seconds(-0.1), Seconds(0.0)))
+      .left.exists(_.message.contains("trial 2 has negative duration")))
+
+  test("declared trial levels retain numeric input order beyond four-digit labels without a large design"):
+    val order = (0 until 10001).reverse.toVector
+    val event = ExpandedTrialDesign.trialEvent(order)
+    assertEquals(event.codes, order)
+    assertEquals(event.levels(9998), "trial_9999")
+    assertEquals(event.levels(9999), "trial_10000")
+    assertEquals(event.levels(10000), "trial_10001")
+    assertEquals(event.levels(event.codes.head), "trial_10001")

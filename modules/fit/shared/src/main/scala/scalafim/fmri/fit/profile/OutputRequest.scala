@@ -9,6 +9,7 @@ enum OutputError:
   case NonPositiveTolerance(label: String, value: Double)
   case DuplicateLabel(label: String)
   case TrialOutputsNeedTrialBackend(request: String)
+  case ForeignTrialAxis(label: String)
 
   def message: String =
     this match
@@ -18,6 +19,7 @@ enum OutputError:
       case NonPositiveTolerance(label, value) => s"query '$label' needs a positive absolute tolerance, got $value"
       case DuplicateLabel(label) => s"query label '$label' is repeated"
       case TrialOutputsNeedTrialBackend(request) => s"$request requires the trial backend; the condition backend fits condition means only"
+      case ForeignTrialAxis(label) => s"query '$label' belongs to a different ordered trial axis"
 
 /** A signed linear functional over the condition axis with its own absolute
   * output tolerance: a near-zero contrast is not certified by a relative
@@ -37,6 +39,33 @@ object SignedQuery:
           if !(absoluteTolerance > 0.0 && absoluteTolerance.isFinite) then Left(OutputError.NonPositiveTolerance(label, absoluteTolerance))
           else Right(new SignedQuery(label, weights, absoluteTolerance))
 
+/** A signed query bound to the physical ordered trial axis of one preparation.
+  * Equal vector lengths do not establish trial identity or row alignment.
+  */
+final class ProfileTrialSignedQuery private (
+    val label: String,
+    val axis: ProfileTrialAxis,
+    val weights: Vector[Double],
+    val absoluteTolerance: Double)
+
+object ProfileTrialSignedQuery:
+  def make(
+      label: String,
+      axis: ProfileTrialAxis,
+      weights: Vector[Double],
+      absoluteTolerance: Double
+  ): Either[OutputError, ProfileTrialSignedQuery] =
+    if label.trim.isEmpty then Left(OutputError.EmptyLabel)
+    else if weights.length != axis.trialIds.length then
+      Left(OutputError.WeightLength(label, axis.trialIds.length, weights.length))
+    else
+      weights.indexWhere(w => !w.isFinite) match
+        case i if i >= 0 => Left(OutputError.NonFiniteWeight(label, i, weights(i)))
+        case _ =>
+          if !(absoluteTolerance > 0.0 && absoluteTolerance.isFinite) then
+            Left(OutputError.NonPositiveTolerance(label, absoluteTolerance))
+          else Right(new ProfileTrialSignedQuery(label, axis, weights, absoluteTolerance))
+
 /** What a fit should emit. Condition outputs are native to the condition
   * backend; trial outputs are a different contract and are refused there
   * with a typed error rather than expanded from condition means.
@@ -45,7 +74,7 @@ enum OutputRequest:
   case ConditionAmplitudes(normalization: NormalizationRule)
   case ConditionQueries(queries: Vector[SignedQuery], normalization: NormalizationRule)
   case TrialAmplitudes(normalization: NormalizationRule)
-  case TrialQueries(queries: Vector[SignedQuery], normalization: NormalizationRule)
+  case TrialQueries(queries: Vector[ProfileTrialSignedQuery], normalization: NormalizationRule)
 
   def rule: NormalizationRule =
     this match
@@ -73,6 +102,23 @@ enum OutputRequest:
               case None => Right(this)
       case TrialAmplitudes(_) => Left(OutputError.TrialOutputsNeedTrialBackend("TrialAmplitudes"))
       case TrialQueries(_, _) => Left(OutputError.TrialOutputsNeedTrialBackend("TrialQueries"))
+
+  /** The trial backend retains both axes at one selected shape. Trial queries
+    * require their physical axis; legacy condition queries use its declared
+    * condition order and keep their existing signed-query type.
+    */
+  def validateForTrial(axis: ProfileTrialAxis): Either[OutputError, OutputRequest] =
+    this match
+      case TrialAmplitudes(_) => Right(this)
+      case TrialQueries(queries, _) =>
+        val labels = queries.map(_.label)
+        labels.diff(labels.distinct).headOption match
+          case Some(dup) => Left(OutputError.DuplicateLabel(dup))
+          case None =>
+            queries.find(q => !q.axis.sameBinding(axis)) match
+              case Some(q) => Left(OutputError.ForeignTrialAxis(q.label))
+              case None => Right(this)
+      case ConditionAmplitudes(_) | ConditionQueries(_, _) => validateFor(axis.conditionIds.length)
 
 /** One evaluated query with its float32 conversion audited against the
   * query's own tolerance. `value` is always the float64 result.

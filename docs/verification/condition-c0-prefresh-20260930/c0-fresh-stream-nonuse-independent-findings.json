@@ -1,0 +1,585 @@
+{
+  "all_states_distinct": true,
+  "conclusion": "No intended fresh root is present in the audited historical C0 raw records or commands. This establishes unobserved within the named auditable project ledger, not an absolute proof about unlogged/external history.",
+  "documented_retired_smoke": {
+    "conservative_disposition": "7000930101 treated fully consumed/development-only as directed; no attempt is made to recover an unlogged draw count",
+    "mote_operation": "/Users/bbuchsbaum/code/scala/scalafim/.mote/ops/20260930T034615.314728Z-p2341-c0000-r1666-h101b5e.json",
+    "per_draw_trace_available": false,
+    "smoke_receipts": [
+      "logs/c0-qualification-smoke-r1.log",
+      "logs/c0-qualification-smoke-r2.log"
+    ]
+  },
+  "fresh_root_in_metadata_commands": {
+    "7000930102": 0,
+    "7000930103": 0,
+    "7000930201": 0
+  },
+  "fresh_root_in_parseable_records": {
+    "7000930102": 0,
+    "7000930103": 0,
+    "7000930201": 0
+  },
+  "intended_fresh_roots": {
+    "7000930102": {
+      "snr": 0.5
+    },
+    "7000930103": {
+      "reported_only": true,
+      "snr": 0.25
+    },
+    "7000930201": {
+      "snr": 1.0
+    }
+  },
+  "ledger": {
+    "exit_counts": {
+      "0": 23,
+      "1": 10
+    },
+    "file_catalog_sha256": "55b41c16d51452e34e1f71f60dcb296d87763005e313ec2df3f8f8f253bc4fba",
+    "file_count": 33,
+    "files": [
+      {
+        "exit_code": 1,
+        "file": "logs/c0-final-compile1.log",
+        "finished_utc": "2026-09-30T05:46:44.909457+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "5e63f1f56e22f347435a88ec9fa6141e91b65e80af1f529b7aa97dd08ac23731",
+        "seed_records": {},
+        "sha256": "9dd8ea77df4f8e2a4e1958a2cb2a27b4b541e79495822974c311c629bf334a9b",
+        "started_utc": "2026-09-30T05:46:44.535888+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-final-compile2.log",
+        "finished_utc": "2026-09-30T05:50:47.294585+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "df5a07a9e7b57f9baae4194ff47fded65e9eee9417d29b80d4878986b2e0c58a",
+        "seed_records": {},
+        "sha256": "913ef1cb30b0dc729996790638c9fde46ca40abcec6efd66c2de409b14d1ac47",
+        "started_utc": "2026-09-30T05:50:19.137752+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-dev-js3.log",
+        "finished_utc": "2026-09-30T06:22:35.723681+00:00",
+        "json_records": 18,
+        "kinds": {
+          "cell": 4,
+          "paired": 2,
+          "voxel": 12
+        },
+        "meta_sha256": "efd739c8acda34ad2a4cad242a7175aa7dcb5150cd3636daca6ec22193264b07",
+        "seed_records": {
+          "101": 9,
+          "102": 9
+        },
+        "sha256": "1d499c1d06ffa0c435701017c0a43dbd21a83bc3b9af2454475478469c85a3b6",
+        "started_utc": "2026-09-30T06:22:11.997169+00:00",
+        "voxel_records": {
+          "101": 6,
+          "102": 6
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-dev-jvm3.log",
+        "finished_utc": "2026-09-30T06:21:10.545002+00:00",
+        "json_records": 18,
+        "kinds": {
+          "cell": 4,
+          "paired": 2,
+          "voxel": 12
+        },
+        "meta_sha256": "563e3c9d1156012dfb3f7fa19798f51601207e76ac88353483cd14f8ff5bdc1e",
+        "seed_records": {
+          "101": 9,
+          "102": 9
+        },
+        "sha256": "2c95dd43ec66d640c873f693c48a0f82ad71e893b44b470a3835875a1df8f47c",
+        "started_utc": "2026-09-30T06:21:00.914705+00:00",
+        "voxel_records": {
+          "101": 6,
+          "102": 6
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-measure-js256.log",
+        "finished_utc": "2026-09-30T06:12:47.374407+00:00",
+        "json_records": 1,
+        "kinds": {
+          "measurement": 1
+        },
+        "meta_sha256": "ac3ae6e1642d21951849682ed590a068d6cffa3a99ea600a34d064e35fc6c26e",
+        "seed_records": {},
+        "sha256": "0ef6abc35ebc96c5313160fdeaa94a7943d2783d17218cb3d02d62c73639b6e8",
+        "started_utc": "2026-09-30T06:12:45.588462+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-measure-jvm256.log",
+        "finished_utc": "2026-09-30T06:11:59.845042+00:00",
+        "json_records": 1,
+        "kinds": {
+          "measurement": 1
+        },
+        "meta_sha256": "0eae6266f6ad3cb27dd12da6c5ad8bd3c3a3061bea2eba89d4110debf4bbdf94",
+        "seed_records": {},
+        "sha256": "b8fcfb93eea8911e4374f3165b0a58c8b37cbb9462c0a30f2db3d26521cfadf4",
+        "started_utc": "2026-09-30T06:11:57.823250+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-final-oracle-js.log",
+        "finished_utc": "2026-09-30T06:16:44.400275+00:00",
+        "json_records": 1,
+        "kinds": {
+          "oracle-adequacy": 1
+        },
+        "meta_sha256": "69c2eafe2abc95418689e2a5b01b5d793006f28ae68af309eca542848c5138f1",
+        "seed_records": {},
+        "sha256": "94471608c081f3dd34b4f3eddcbb5516fd6641840b2c5dd8ad5141be2b3f8d50",
+        "started_utc": "2026-09-30T06:15:47.806732+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-final-oracle-jvm.log",
+        "finished_utc": "2026-09-30T06:13:21.566253+00:00",
+        "json_records": 1,
+        "kinds": {
+          "oracle-adequacy": 1
+        },
+        "meta_sha256": "3e3c4fd1ca87033491b196dd46851bdbbba8c06fbf3d02208fba1743b08e823e",
+        "seed_records": {},
+        "sha256": "8fedf79503b2bc0290123b830d3e6c6c5fa0006c239984cd9b9ba75feaa4fe6c",
+        "started_utc": "2026-09-30T06:13:00.811620+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-tests1.log",
+        "finished_utc": "2026-09-30T05:56:57.736642+00:00",
+        "json_records": 62,
+        "kinds": {
+          "cell": 24,
+          "measurement": 2,
+          "paired": 12,
+          "voxel": 24
+        },
+        "meta_sha256": "a89c167d10092c981fd719c75a6f64a9be528e27ae13d8f4c02825deb50715c7",
+        "seed_records": {
+          "101": 30,
+          "102": 30
+        },
+        "sha256": "b5c2d18fbfc5c4e09efe719aa1a096639032b10fadf3ec5ca18b0d341a6fbd20",
+        "started_utc": "2026-09-30T05:52:35.259770+00:00",
+        "voxel_records": {
+          "101": 12,
+          "102": 12
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-tests2.log",
+        "finished_utc": "2026-09-30T06:04:04.969642+00:00",
+        "json_records": 62,
+        "kinds": {
+          "cell": 24,
+          "measurement": 2,
+          "paired": 12,
+          "voxel": 24
+        },
+        "meta_sha256": "5f6152f292d5643664932c9eb9a122bde8a59cc527d9705541e8ab9648e0bf98",
+        "seed_records": {
+          "101": 30,
+          "102": 30
+        },
+        "sha256": "ec00d2ebbca58a368e092da5024c5be1fc6647879dcf751390b502061308b342",
+        "started_utc": "2026-09-30T06:01:20.421873+00:00",
+        "voxel_records": {
+          "101": 12,
+          "102": 12
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-final-tests3.log",
+        "finished_utc": "2026-09-30T06:10:11.896590+00:00",
+        "json_records": 62,
+        "kinds": {
+          "cell": 24,
+          "measurement": 2,
+          "paired": 12,
+          "voxel": 24
+        },
+        "meta_sha256": "f2136a06f90176d65fc18d2f7b5d8443e7ea3a9448a2a549d903d2a3b1c279d8",
+        "seed_records": {
+          "101": 30,
+          "102": 30
+        },
+        "sha256": "221158a6eb63c1d4bc85d5a767317a06598ac180f88f251ec02c4d6c1077c7fc",
+        "started_utc": "2026-09-30T06:07:35.816942+00:00",
+        "voxel_records": {
+          "101": 12,
+          "102": 12
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-cost-jvm-dev-r1.log",
+        "finished_utc": "2026-09-30T04:32:57.799890+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "28f0184ebbeb7873611f4ea04ef3a10308a1e1b078aa96377ecd111a1d74d3f2",
+        "seed_records": {},
+        "sha256": "a5eb7471ff3112207d88c90007489eee136471a73d94be598ca02c8617262435",
+        "started_utc": "2026-09-30T04:32:35.201739+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-qualification-development-study-r1.log",
+        "finished_utc": "2026-09-30T05:00:57.862790+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "6b6011d4e11faff0ae338be8ecf259c88defd1bd9f4dc6e0636b01d44103e83a",
+        "seed_records": {},
+        "sha256": "519cab5a8cd5482e9adbce32e46c6538e6699a13191c58fc67a671efd23b99bc",
+        "started_utc": "2026-09-30T05:00:21.994054+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-qualification-development-study-r2.log",
+        "finished_utc": "2026-09-30T05:12:05.114160+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "056a27a02fe9ed2d73e5670bf98adaa9ae11d09bb73dece87651e3fd1425537d",
+        "seed_records": {},
+        "sha256": "4c55f587f49911057bc699d4348c7b8b81bc3f6443d2afc27ca8a4e04ff1b507",
+        "started_utc": "2026-09-30T05:07:07.421239+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-qualification-oracle-dev-js-r2.log",
+        "finished_utc": "2026-09-30T04:29:55.597125+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "716189b5d2fa1462a956c03184f2003df87fc4c63a12c06453f46334dd21c55a",
+        "seed_records": {},
+        "sha256": "7d346256d4de84ce90399eb8d9cc87be3ac897f249e774bfac51fd9391375273",
+        "started_utc": "2026-09-30T04:29:36.347177+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-qualification-oracle-dev-r1.log",
+        "finished_utc": "2026-09-30T04:27:39.530238+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "38104120ced7747a01d45d8561581b334e1b6dd1513100ddf4e629b57a8bd879",
+        "seed_records": {},
+        "sha256": "4079c8466c4404dd5e2751b4c0a9f229554105aaff9496939001ad57fa573d1c",
+        "started_utc": "2026-09-30T04:27:07.320218+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-prefreeze-blocks-r1.log",
+        "finished_utc": "2026-09-30T04:25:57.563654+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "8f4f10a33da7cb53f30d9c07e7e471be9732d63a6adde82bc1516daa0a0313e2",
+        "seed_records": {},
+        "sha256": "fa096a34bf2d741fe9f53da614eebab0880006729347d349668451abc32a15e1",
+        "started_utc": "2026-09-30T04:25:20.337001+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-prefreeze-compile-r1.log",
+        "finished_utc": "2026-09-30T03:55:15.232164+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "1339f58a9225dfdda3fec6d5f84c909b5dafe7d61ffd18bd74786257903b1f42",
+        "seed_records": {},
+        "sha256": "644770e17d7818f18c5767b983dcb41a7f282403c02a25a807e5bdf49dc88f4f",
+        "started_utc": "2026-09-30T03:54:35.554476+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-qualification-prefreeze-compile-r2.log",
+        "finished_utc": "2026-09-30T03:58:37.807670+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "c6bf02d0605dc7c97a40a1f07e163c7090c15189751667b2ef8723f21b318e5e",
+        "seed_records": {},
+        "sha256": "5c232817e231a1e15022f24b6be4f7b6fd2705bb24b2c828f275e52cc4e3aa47",
+        "started_utc": "2026-09-30T03:58:05.561463+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-prefreeze-compile-r4.log",
+        "finished_utc": "2026-09-30T04:16:45.376722+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "8cf0a53427af68d05a2aab6ea3e48a91fef50f7f9578c1711cd4c1294f009ce0",
+        "seed_records": {},
+        "sha256": "6278b48a800fd410f3013d2e55d30a045884cce951a88ad3ff6399036820a746",
+        "started_utc": "2026-09-30T04:16:19.875810+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-prefreeze-compile-r5.log",
+        "finished_utc": "2026-09-30T04:24:21.352100+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "07897b21703c60988d399d7fbfe20ecfe529324fa9912841f6a11fa015fbb690",
+        "seed_records": {},
+        "sha256": "33b3d7d5fa22319199f15ef57dd2c0e9c63db79820660267fc7d8f9d4e78fcc8",
+        "started_utc": "2026-09-30T04:23:55.514383+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-prefreeze-controls-r2.log",
+        "finished_utc": "2026-09-30T04:31:36.732080+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "da06e3f1eb8b8e5c6f47815f0e15d8bd96d4c9fa53acbc313bae7f28a5bb1bcc",
+        "seed_records": {},
+        "sha256": "19c6e962032252cac253ab3f4aa9a447254931bcefa0525a5ff68c8cc50440b2",
+        "started_utc": "2026-09-30T04:30:24.956598+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 1,
+        "file": "logs/c0-qualification-prefreeze-dev-r3.log",
+        "finished_utc": "2026-09-30T04:05:54.395853+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "347569e8ef3ecdce00f28e7aab6ce3e1096fa2dfeb594e015711eb38bb9c0972",
+        "seed_records": {},
+        "sha256": "374109497aabacb573ebeaf27e8a8be20c71223f790252c23cff71aefa71cbe7",
+        "started_utc": "2026-09-30T04:05:26.526642+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-reviewfix-compile-r1.log",
+        "finished_utc": "2026-09-30T04:43:28.805104+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "c2236b2f1ffc063f49876786be224f413a0714dc4e5061a2427895a86f4074c8",
+        "seed_records": {},
+        "sha256": "c95d390972d940855d7223faa97a8b2a43d88a2f85d6a10ff16c8f59d7585f21",
+        "started_utc": "2026-09-30T04:43:03.767390+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-reviewfix-controls-r1.log",
+        "finished_utc": "2026-09-30T04:46:36.437738+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "a4b1ae1d7285d3b9fbc7984fe1e67bf3ea8f958252e09538957f1d251c8a17b8",
+        "seed_records": {},
+        "sha256": "15d4a0b47c72ee9d481151d84e8fa2e64e67dfa17b06305317f61b14fd60cdf9",
+        "started_utc": "2026-09-30T04:45:06.379409+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-smoke-r1.log",
+        "finished_utc": "2026-09-30T03:36:07.187872+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "81c176cd97df7fb556b629a85c8e4cb997fc876542b2e51aafdb19edbee4ad8a",
+        "seed_records": {},
+        "sha256": "2f9fd2cff10869b460a3228c50079211c0286865419092bf8095f8a6d6f732fb",
+        "started_utc": "2026-09-30T03:34:53.080667+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-smoke-r2.log",
+        "finished_utc": "2026-09-30T03:47:52.628058+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "57d84f3ca1021dff0c6440cac0a916fdee3135a11f86fdd69c99a4edf0ad0bba",
+        "seed_records": {},
+        "sha256": "57fbc1c89ee02c0a3c11cbcf5cb3998d853d9539cfaedae4afb06f20ad7af2e6",
+        "started_utc": "2026-09-30T03:47:09.732365+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-qualification-stationarity-r1.log",
+        "finished_utc": "2026-09-30T04:50:47.494166+00:00",
+        "json_records": 0,
+        "kinds": {},
+        "meta_sha256": "916164e3b1d9b10e6555dd7c6cb3c0ca286ad740f937f64742e4347ebc4e093f",
+        "seed_records": {},
+        "sha256": "9deea773b7fc7982791715b5c0d09e6dc5ff4722e51c8edc774ac4d6da528882",
+        "started_utc": "2026-09-30T04:49:20.084836+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-repair-dev-js3.log",
+        "finished_utc": "2026-09-30T07:06:19.162603+00:00",
+        "json_records": 18,
+        "kinds": {
+          "cell": 4,
+          "paired": 2,
+          "voxel": 12
+        },
+        "meta_sha256": "23edca220fe1185f81f4487d645cad2428a845eec985f9eed583723a14a9dbc1",
+        "seed_records": {
+          "101": 9,
+          "102": 9
+        },
+        "sha256": "d2a33293c1174fc91e77c1b4e427286120e0c51a7cfa616018c0471a058b35cf",
+        "started_utc": "2026-09-30T07:05:45.805792+00:00",
+        "voxel_records": {
+          "101": 6,
+          "102": 6
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-repair-dev-jvm3.log",
+        "finished_utc": "2026-09-30T07:05:43.499847+00:00",
+        "json_records": 18,
+        "kinds": {
+          "cell": 4,
+          "paired": 2,
+          "voxel": 12
+        },
+        "meta_sha256": "b1d5ba4dc79135c60f5b92163915b1dab7057e1e7f67a55c05ea12f0a6ee2c7c",
+        "seed_records": {
+          "101": 9,
+          "102": 9
+        },
+        "sha256": "60a5bc48a6248517419e0769199fc012d5d68a321ba739fa04bd423e429b28b5",
+        "started_utc": "2026-09-30T07:05:30.930731+00:00",
+        "voxel_records": {
+          "101": 6,
+          "102": 6
+        }
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-repair-oracle-js.log",
+        "finished_utc": "2026-09-30T07:05:29.941720+00:00",
+        "json_records": 1,
+        "kinds": {
+          "oracle-adequacy": 1
+        },
+        "meta_sha256": "3293e3322c62e9c00f195a4dbea2c9412a4129f8e503434f0048bc0da9678b52",
+        "seed_records": {},
+        "sha256": "fd3452241e0ca50d362dcf79173251c9c57acaaf1813bb4d95e39767f44f9b38",
+        "started_utc": "2026-09-30T07:04:03.666688+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-repair-oracle-jvm.log",
+        "finished_utc": "2026-09-30T06:59:05.440975+00:00",
+        "json_records": 1,
+        "kinds": {
+          "oracle-adequacy": 1
+        },
+        "meta_sha256": "7c8bfb738a21557777b3b85485d0465d8bb89c251d955db37c50063a46a10cd9",
+        "seed_records": {},
+        "sha256": "20f145ce04627773768302ea9c9e013b4a008a8509a5681ad6dc53c8694558e1",
+        "started_utc": "2026-09-30T06:58:34.178661+00:00",
+        "voxel_records": {}
+      },
+      {
+        "exit_code": 0,
+        "file": "logs/c0-repair-tests1.log",
+        "finished_utc": "2026-09-30T06:56:45.165431+00:00",
+        "json_records": 62,
+        "kinds": {
+          "cell": 24,
+          "measurement": 2,
+          "paired": 12,
+          "voxel": 24
+        },
+        "meta_sha256": "4ab735f5a21197af37a89791ad1b229c28597bafb4fe538c6b07c8096d4a6e5f",
+        "seed_records": {
+          "101": 30,
+          "102": 30
+        },
+        "sha256": "3d1ac0d3594ea3921f0ea1174a46a1c9957b2be85c2c1d1a4955c27186ab2547",
+        "started_utc": "2026-09-30T06:52:03.547208+00:00",
+        "voxel_records": {
+          "101": 12,
+          "102": 12
+        }
+      }
+    ],
+    "json_kind_counts": {
+      "cell": 112,
+      "measurement": 10,
+      "oracle-adequacy": 4,
+      "paired": 56,
+      "voxel": 144
+    },
+    "seed_record_counts": {
+      "101": 156,
+      "102": 156
+    },
+    "source_ids": [
+      "451be51b9abca9c127c9d8d2f012d7ef871f262922ec5c68ae3f7f06513e023d",
+      "bbf30ff4bd169861999eddb39ccd349b7949c495bbebd1706f864f89b291fe53",
+      "unfrozen-dev"
+    ],
+    "voxel_record_counts": {
+      "101": 72,
+      "102": 72
+    }
+  },
+  "retired_root": 7000930101,
+  "scala_random_seed_states": {
+    "7000930101": {
+      "hex": "0x47fa55158",
+      "jvm_java_random_initial_48bit_state": 19321409880
+    },
+    "7000930102": {
+      "hex": "0x47fa5515b",
+      "jvm_java_random_initial_48bit_state": 19321409883
+    },
+    "7000930103": {
+      "hex": "0x47fa5515a",
+      "jvm_java_random_initial_48bit_state": 19321409882
+    },
+    "7000930201": {
+      "hex": "0x47fa551f4",
+      "jvm_java_random_initial_48bit_state": 19321410036
+    }
+  },
+  "scope": {
+    "active_exclusion_reason": "parent reported frozen development jobs in progress; no active outcome was read",
+    "excluded": [
+      "active logs/c0-frozen200-jvm.log and .meta.json",
+      "active or future jobs",
+      "other-machine, deleted, unlogged, or external execution history"
+    ],
+    "included": "ROOT/logs/c0-*.log and matching metadata present before this audit; Mote issue bd-01M25Q0JY8GA7CJRKZF2934PJ0; C0 Fray packets and frozen protocol"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "records": [
+    {
+      "commit": "d797a0dd128a14831909b4db9df007feb345ab50",
+      "files": {
+        "modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala": "a0d887e7cf81dce3541fa8af34c5bf511542a0c146217a761f0b2d111649ee49",
+        "modules/ar/shared/src/test/scala/scalafim/fmri/ar/WhiteningTransposeSuite.scala": "f6af1912aa1a4f2a2e39f109f993fa394888a0bee3ddfe13605bc998a446d83e",
+        "docs/verification/whitening-transpose-2026-09-29.md": "5ae9415b797c4f78a2c1301e7ba851386ac0ec7b06ae59f23c792de298fcc127"
+      },
+      "scope": "Add reviewed run-aware whitening transpose"
+    },
+    {
+      "commit": "041514a635aa85766aa15cf4d79a9aa024cf53d8",
+      "files": {
+        "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala": "397f6826ee94bf761984cc592e0e1a397e31be68120546499852896218df8dcb",
+        "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderSuite.scala": "f5e678f5e39ca382b9e23f99a9ba1d6a09a132d5d072b1af06f5bf7842026659",
+        "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/ConditionAdmissionDiagnosticsSuite.scala": "a73d9faba9cafe3ffe4226548583e92230525c1903aca72292753df11fe13bd0"
+      },
+      "scope": "Expose bounded decoder exit diagnostics without changing admission"
+    }
+  ],
+  "sourceChanged": false,
+  "published": false,
+  "scientificAdmissionChanged": false
+}

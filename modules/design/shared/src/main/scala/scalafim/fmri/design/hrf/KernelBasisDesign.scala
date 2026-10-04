@@ -1,15 +1,18 @@
 package scalafim.fmri.design.hrf
 
-import scalafim.fmri.design.event.{ConvolvedTerm, Event, EventTerm}
+import scalafim.fmri.design.DesignError
+import scalafim.fmri.design.event.{CategoricalEvent, ConvolvedTerm, EventTerm}
 import scalafim.fmri.hrf.{Seconds, Support}
 import scalafim.fmri.hrf.design.SamplingFrame
 import scalafim.fmri.hrf.family.ShapePoint
 import scalafim.fmri.hrf.linalg.Mat
+import scala.util.control.NonFatal
 
 enum KernelBasisDesignError:
   case PrecisionMismatch(basisStep: Double, precision: Double)
   case NoConditions
   case Membership(detail: String)
+  case TrialInput(error: DesignError)
 
   def message: String =
     this match
@@ -17,6 +20,7 @@ enum KernelBasisDesignError:
         s"convolution precision $precision must equal the basis fine step $step so the kernel is sampled on its own grid"
       case NoConditions => "the term lowers to no condition columns"
       case Membership(detail) => s"invalid trial membership: $detail"
+      case TrialInput(error) => error.message
 
 /** The expanded condition design `A_tilde = [S_1 Phi' ... S_C Phi']` obtained by
   * convolving an event term with a kernel basis, with the column layout needed
@@ -113,7 +117,11 @@ object TrialMembership:
 final class ExpandedTrialDesign private (
     val basis: HrfKernelBasis,
     val term: ConvolvedTerm,
-    val membership: TrialMembership):
+    val membership: TrialMembership,
+    /** Canonical event row -> caller's trial column. */
+    val canonicalToInput: Vector[Int],
+    /** Caller's trial column -> canonical event row. */
+    val inputToCanonical: Vector[Int]):
 
   def rows: Int = term.data.rows
   def trials: Int = membership.trials
@@ -145,7 +153,10 @@ final class ExpandedTrialDesign private (
 
 object ExpandedTrialDesign:
 
-  /** Lower every event of `onsets` as its own trial with the basis kernel. */
+  /** Lower complete event records as trial columns in caller input order.
+    * Only the event rows are stably grouped by run; membership and matrix
+    * columns retain their input identity, including interleaved run records.
+    */
   def lower(
       onsets: Vector[Seconds],
       blockIds: Vector[Int],
@@ -159,18 +170,48 @@ object ExpandedTrialDesign:
       Left(KernelBasisDesignError.PrecisionMismatch(basis.spec.fineStep.value, precision.value))
     else if onsets.length != membership.trials then
       Left(KernelBasisDesignError.Membership(s"${onsets.length} onsets for ${membership.trials} trials"))
+    else if blockIds.nonEmpty && blockIds.length != onsets.length then
+      Left(KernelBasisDesignError.TrialInput(DesignError.InvalidSchedule(
+        s"blockIds has length ${blockIds.length} but expected ${onsets.length}")))
+    else if durations.nonEmpty && durations.length != onsets.length then
+      Left(KernelBasisDesignError.TrialInput(DesignError.InvalidSchedule(
+        s"durations has length ${durations.length} but expected ${onsets.length}")))
     else
-      val labels = Vector.tabulate(onsets.length)(i => f"trial_${i + 1}%04d")
-      val term = EventTerm(
-        events = Vector(Event.factor(labels, "trial")),
-        onsets = onsets,
-        blockIds = blockIds,
-        durations = durations,
+      val runs = if blockIds.isEmpty then Vector.fill(onsets.length)(0) else blockIds
+      val lengths = if durations.isEmpty then Vector.fill(onsets.length)(Seconds(0.0)) else durations
+      var input = 0
+      while input < onsets.length do
+        if runs(input) < 0 || runs(input) >= samplingFrame.nBlocks then
+          return Left(KernelBasisDesignError.TrialInput(DesignError.InvalidSchedule(
+            s"trial ${input + 1} has block id ${runs(input)} outside 0 until ${samplingFrame.nBlocks}")))
+        if lengths(input).value < 0.0 then
+          return Left(KernelBasisDesignError.TrialInput(DesignError.InvalidSchedule(
+            s"trial ${input + 1} has negative duration ${lengths(input).value}")))
+        input += 1
+      val canonicalToInput = onsets.indices.sortBy(i => (runs(i), i)).toVector
+      val inverse = new Array[Int](onsets.length)
+      canonicalToInput.zipWithIndex.foreach { case (original, canonical) => inverse(original) = canonical }
+      EventTerm.validated(
+        events = Vector(trialEvent(canonicalToInput)),
+        onsets = canonicalToInput.map(onsets),
+        blockIds = canonicalToInput.map(runs),
+        durations = canonicalToInput.map(lengths),
         termTag = Some("trial")
-      )
-      val convolved = term.convolve(basis.kernel, samplingFrame, precision = precision, dropEmpty = false)
-      // Factor levels are ordered lexically; zero-padded labels keep trial order.
-      Right(new ExpandedTrialDesign(basis, convolved, membership))
+      ).left.map(KernelBasisDesignError.TrialInput.apply).flatMap: term =>
+        try
+          val convolved = term.convolve(basis.kernel, samplingFrame, precision = precision, dropEmpty = false)
+          Right(new ExpandedTrialDesign(basis, convolved, membership, canonicalToInput, inverse.toVector))
+        catch
+          case NonFatal(error) => Left(KernelBasisDesignError.TrialInput(DesignError.fromThrowable(error)))
+
+  /** Internal checked factor construction avoids inferring lexical level order
+    * and avoids a linear level lookup for each of the N canonical event rows.
+    */
+  private[design] def trialEvent(canonicalToInput: Vector[Int]): CategoricalEvent =
+    require(canonicalToInput.nonEmpty && canonicalToInput.sorted == canonicalToInput.indices.toVector,
+      "canonical trial rows must be a permutation of the input trials")
+    val levels = Vector.tabulate(canonicalToInput.length)(i => f"trial_${i + 1}%04d")
+    CategoricalEvent("trial", canonicalToInput, levels)
 
 private[hrf] object KernelBasisDesign:
   /** Support the basis kernel declares, for callers that need the horizon. */
