@@ -8,6 +8,7 @@ import scalafim.fmri.design.{
   ColumnId,
   ColumnRole,
   DesignSchema,
+  EventResponseScaleReceipt,
   ModulatorId,
   PhaseId,
   RunScope,
@@ -695,22 +696,16 @@ object StructuralHypothesis:
   /** The event-level divisor relating a column to its kernel-unit column.
     * Response readouts reconstruct the kernel; a column whose contributing
     * events carry different event-level divisors (for example event unit-peak
-    * with mixed durations) has no kernel-unit coefficient and is refused. */
+    * with mixed durations) has no kernel-unit coefficient and is refused.
+    *
+    * Divisors are kept per run. A run-local coefficient (the column's run
+    * scope is `Run(r)`, as on a runwise axis) uses only run `r`'s divisors; a
+    * coefficient shared across runs needs one divisor across every run. More
+    * than one receipt for the column's identity is ambiguous and refused. */
   private def eventResponseTransport(column: StructuralColumn, axis: CoefficientAxis): Either[String, Double] =
     column.origin match
-      case StructuralColumnOrigin.Event(term, phase, cell, modulator, Some(basis), _, _) =>
-        axis.audit.eventResponseScales.find { receipt =>
-          receipt.term == term && receipt.phase == phase && receipt.cell == cell &&
-            receipt.modulator == modulator && receipt.basis == basis.index
-        } match
-          case None => Right(1.0)
-          case Some(receipt) =>
-            receipt.uniformDivisor.toRight(
-              if receipt.divisors.isEmpty then s"event-level '${receipt.policy}' scaling has no contributing events for this column"
-              else
-                s"its events carry ${receipt.divisors.length} different event-level '${receipt.policy}' divisors " +
-                  "(for example mixed durations), so it has no kernel-unit response coefficient"
-            )
+      case StructuralColumnOrigin.Event(term, phase, cell, modulator, Some(basis), _, runScope) =>
+        EventResponseScaleReceipt.transportDivisor(axis.audit.eventResponseScales, term, phase, cell, modulator, basis.index, runScope)
       case _ => Right(1.0)
 
   private def withBasis(

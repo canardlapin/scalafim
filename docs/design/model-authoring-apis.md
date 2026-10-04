@@ -322,7 +322,11 @@ onset ~ hrf(condition,
 `effective-center`. With `center = cell`, the scale is the pooled within-cell SD
 `sqrt(SS_within / (n - k))` over `k` cells. Each run records an
 `observed-modulator` policy receipt, plus `observed-modulator-degenerate` when
-fewer than two values are observed or the prepared values do not vary. Missing
+fewer than two values are observed or the prepared values do not vary. "Do not
+vary" uses a relative tolerance: a scale estimate at most `n · ε · max|x|`
+(`ε = 2^-52`, `n` observed values) is treated as zero, so a constant that is not
+exactly representable (for example `0.3` repeated) is degenerate rather than
+scaled by its rounding residue. Missing
 policies are `reject`, `drop_from_term`, and `zero`. Dropping applies to the whole
 paired term before centering. Zero contribution is applied after centering and
 requires centering (z-scoring supplies it when needed). Degenerate scales have
@@ -335,8 +339,14 @@ contracts.
 `orthogonalize = TRUE` follows SPM's parametric-modulator convention within each
 run × realized cell group, before convolution: the first modulator is
 mean-centred, and each later modulator is residualized against an intercept and
-every earlier modulator. It requires an explicit term ID and records a
-`formula-orthogonalization` receipt. The typed `ModulatorOrthogonalization`
+every earlier modulator. Means and fits use observed rows only: rows zero-filled
+under `missing = zero` are excluded from the group means and from each
+modulator's residualization, and stay at the centering reference (0), so a
+missing event carries no modulation. (A predecessor's zero-filled rows enter a
+later modulator's fit at that predecessor's reference.) It requires an explicit
+term ID and records a `formula-orthogonalization` receipt with
+`rows=observed-only;zero-filled=held-at-reference` and, per group, the removed
+first-modulator mean and the number of observed rows behind it. The typed `ModulatorOrthogonalization`
 build option is a separate policy: it keeps its declared scope and residualizes
 against earlier modulators only, without an intercept.
 `product(center_within_run(gain), center_within_run(loss))` is accepted inside
@@ -357,7 +367,11 @@ basis (`spm_get_bf` followed by `spm_orth`): the canonical kernel and the
 one-second backward difference of two separately sum-normalized kernels (for
 SPMG3, also the 0.01 dispersion difference), serially orthogonalized without
 mean removal on SPM's kernel grid, `dt = TR / 16` over `[0, 32]` seconds. The
-columns equal SPM's up to one common scale and are orthogonal on that grid. The
+kernels equal SPM's up to one common scale and are orthogonal on that grid. The
+realized basis is compactly supported on SPM's window and its convolution span
+is the grid length (32 s), not the canonical's 24 s span: design columns keep
+the full 0–32 s kernel, including the temporal and dispersion tails past 25 s,
+and are zero beyond it. The
 grid needs one repetition time across runs; mixed TRs are rejected. The typed
 forms are `TemporalDerivativeConvention.derive(canonical, convention, grid)`
 with an `SpmKernelGrid`, and `spmInformedBasis`. The un-orthogonalized
@@ -373,18 +387,27 @@ precision, span truncation, and onset window. Event unit-peak differs from
 kernel `unit_peak`, which divides every basis column by one factor taken from
 the canonical column; the two are not interchangeable for multi-column bases.
 Both are distinct from final column scaling. `event_normalization =
-"as-convolved"` is numerically identical to omitting the option and records no
-per-event scales. `ConvolvedTerm.eventPeakScales` retains per-event duration and
-divisor receipts; `DesignAudit.eventResponseScales` records the distinct
-divisors of each realized column. The typed `EventResponse` and
+"as-convolved"` is identical to omitting the option: the same matrix, no
+per-event scales, no policy receipt, and therefore the same audit text and
+`DesignFingerprint`. `ConvolvedTerm.eventPeakScales` retains per-event duration
+and divisor receipts; `DesignAudit.eventResponseScales` records, per run, the
+distinct divisors of the events that reach each realized column's scans in that
+run. An event whose response window `[onset, onset + duration + span]` meets
+none of its run's scan times (for example an onset after the run's last scan)
+contributes nothing and is not counted. The typed `EventResponse` and
 `EventResponseConvolution` APIs expose the same operations independently of
 formula parsing.
 
-Response readouts transport a column to kernel units exactly when all of its
-events share one divisor. A column whose events carry different divisors (event
-unit-peak with mixed durations) has no kernel-unit coefficient: response
-readouts refuse it with `StructuralHypothesisErrorKind.IncompatibleDesign`.
-Coefficient contrasts on such columns remain available.
+Response readouts transport a column to kernel units exactly when its events
+share one divisor within the readout's scope. A run-local coefficient (a
+runwise axis, or a column that belongs to one run) uses only that run's
+divisors, so a column whose event durations differ only between runs reads out
+run by run. A coefficient shared across runs needs one divisor across every
+run. A column whose in-scope events carry different divisors (event unit-peak
+with mixed durations) has no kernel-unit coefficient: response readouts refuse
+it with `StructuralHypothesisErrorKind.IncompatibleDesign`. More than one scale
+receipt for one column identity is refused as ambiguous rather than resolved to
+the first match. Coefficient contrasts on such columns remain available.
 
 `orthogonalize_basis = TRUE` applies a serial basis transform separately to each
 cell/modulator stream **over all supplied scans**. It does not promise separate
@@ -545,7 +568,7 @@ fixtures with invariance and failure tests:
 | Design diagnostics | Independent VIF/projection values, rank loss, constants, near-collinear columns |
 | Contrast diagnostics | Expected values from an independent NumPy oracle over frozen audit matrices; row-invariant F hypotheses, sparse aliases, unchanged estimable contrasts under duplication, nuisance-confounded runs, rank-policy sensitivity |
 | Missing modulators | Frozen stop-signal events plus all admitted centering/scaling/missing-policy combinations with and without a factor split |
-| Response conventions | `spm-1s` against an SPM12 informed-basis parity fixture (TR 2 s SPMG3 and TR 0.72 s SPMG2) and orthogonality on SPM's kernel grid; analytic derivative; duration-dependent pulse peaks; refusal of mixed-divisor readouts; transformed point/window estimates and variances |
+| Response conventions | `spm-1s` against an SPM12 informed-basis parity fixture (TR 2 s SPMG3 and TR 0.72 s SPMG2) and orthogonality on SPM's kernel grid; formula-built `spm-1s` design columns for an impulse and a 2 s boxcar against the SPM kernel, including the 25–32 s tail; analytic derivative; duration-dependent pulse peaks; per-run divisor transport and refusal of mixed-divisor readouts; transformed point/window estimates and variances |
 | Confounds and trials | Run-boundary differences, deduplicated spikes, explicit run exclusion, run-qualified IDs, trial identities; `LssTargetDesignSuite` checks that OLS on every target design reproduces the LSS engine and its fmrilss coefficient fixture |
 | Incremental builds | Exact matrix, identity and audit equality with full rebuilding, including mutation-isolation checks |
 
@@ -563,7 +586,9 @@ contract.
 
 `tools/fixtures/generate_spm_informed_basis.py` reimplements in NumPy the parts
 of SPM12 used by `spm_get_bf` (`spm_Gpdf`, `spm_hrf`, the temporal and
-dispersion differences, and `spm_orth`) and writes `SpmInformedBasisFixture`.
+dispersion differences, and `spm_orth`) and writes `SpmInformedBasisFixture`
+(and the same TR 2 s kernel as `SpmInformedKernelFixture` for design-column
+tests).
 It requires no SPM or MATLAB installation. The Scala kernels are in continuous
 fmrihrf units, so the test estimates one common positive scale from the
 canonical column only.
@@ -592,8 +617,10 @@ latency or production performance guarantees.
 - Basis-orthogonalized coefficients are design-dependent. A group analysis of
   canonical-only coefficients from such fits carries subject-specific
   derivative variance absorbed into the canonical column.
-- Response readouts refuse columns that mix event unit-peak divisors (for
-  example mixed durations); only coefficient contrasts are available for them.
+- Response readouts refuse columns that mix event unit-peak divisors within the
+  readout's scope (for example mixed durations within a run, or different
+  divisors across runs for a shared coefficient); only coefficient contrasts are
+  available for them.
 - Factor levels taken from a `Double` event column still use the platform
   `Double.toString` (`1.0` on the JVM, `1` on Scala.js), so such level names are
   not portable. Use text or integer factor columns where levels must match

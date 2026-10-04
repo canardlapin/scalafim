@@ -80,3 +80,47 @@ class ConvolvedBasisReadoutSuite extends munit.FunSuite:
     val native = cell.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)).named("peak", "response").compile(plain.designSchema).fold(error => fail(error.message), identity)
     for j <- 0 until 2 do
       assertEqualsDouble(selected.weights(0, j), native.weights(0, j) / divisors(j), 1e-14)
+
+  private def twoRunModel(durations: Vector[Double], normalization: String): EventModel =
+    import scalafim.fmri.design.data.*
+    import scalafim.fmri.design.formula.*
+    val data = DataTable.fromColumns(
+      "onset" -> Column.Doubles(Vector(0.0, 12.0, 24.0, 0.0, 12.0, 24.0)),
+      "condition" -> Column.Strings(Vector.fill(6)("task")),
+      "dur" -> Column.Doubles(durations)
+    )
+    val frame = SamplingFrame(blockLens = Seq(50, 50), tr = Seq(1.0, 1.0))
+    val text = s"onset ~ hrf(condition, basis = spmg2, durations = dur$normalization, id = task)"
+    val request = EventModelBuilder.EventDesignRequest.fromText(text, data, frame, blockPlan = EventModelBuilder.BlockPlan.explicit(Seq(0, 0, 0, 1, 1, 1))).toOption.get
+    EventModelBuilder.buildEither(request).fold(error => fail(error.message), identity)
+
+  test("event-scale transport is per run: run-local readouts use their run's divisor, shared readouts need one across runs"):
+    // Durations differ only between runs, so each run is uniform but the runs differ.
+    val durations = Vector(2.0, 2.0, 2.0, 6.0, 6.0, 6.0)
+    val normalized = twoRunModel(durations, ", event_normalization = \"unit-peak\"")
+    val plain = twoRunModel(durations, "")
+    val receipts = normalized.designSchema.audit.eventResponseScales.sortBy(_.basis.oneBased)
+    assertEquals(receipts.length, 2)
+    receipts.foreach: receipt =>
+      assertEquals(receipt.runs.map(_.run.oneBased), Vector(1, 2))
+      assert(receipt.runs.forall(_.divisors.length == 1))
+      assertEquals(receipt.divisors.length, 2)
+    val cell = StructuralHypothesisDsl.term("task").cell(StructuralHypothesisDsl.factor("condition") === "task")
+    val hypothesis = cell.response(Hrfs.SPMG2, ResponseFunctional.At(6.s)).named("peak", "response at 6 s")
+    val shared = hypothesis.compile(normalized.designSchema)
+    val error = shared.left.toOption.getOrElse(fail("a shared coefficient mixing run divisors must be refused"))
+    assert(error.message.contains("shared across runs"), error.message)
+    val structural = hypothesis.toStructural.fold(error => fail(error.message), identity)
+    Vector(1, 2).foreach: oneBased =>
+      val run = RunIndex.unsafeOneBased(oneBased)
+      def runwise(model: EventModel) =
+        val slice = model.designSchema.runwiseSlice(run).fold(error => fail(error.message), identity)
+        StructuralHypothesis.compile(slice, structural, StructuralHypothesis.DefaultRankTolerance).fold(error => fail(error.message), identity)
+      val selected = runwise(normalized)
+      val native = runwise(plain)
+      val divisors = receipts.map(_.divisorsIn(run).head)
+      assert(selected.weights.cols == native.weights.cols)
+      val nonZero = (0 until native.weights.cols).filter(j => native.weights(0, j) != 0.0)
+      assertEquals(nonZero.length, 2)
+      nonZero.zipWithIndex.foreach: (column, basis) =>
+        assertEqualsDouble(selected.weights(0, column), native.weights(0, column) / divisors(basis), 1e-14)

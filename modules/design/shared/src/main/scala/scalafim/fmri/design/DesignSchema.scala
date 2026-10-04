@@ -525,15 +525,26 @@ final case class CenteringReceipt(
 final case class PolicyReceipt(name: String, detail: String):
   require(name.trim.nonEmpty && detail.trim.nonEmpty, "policy receipt must be named and described")
 
-/** Event-level response scaling of one realized event column.
+/** The distinct event-level divisors of the events of one run that reach the
+  * column's scans in that run. */
+final case class EventResponseRunDivisors(run: RunIndex, divisors: Vector[Double]):
+  require(divisors.nonEmpty, "a run entry lists at least one contributing divisor")
+  require(divisors.forall(value => value.isFinite && value > 0.0), "event response divisors must be finite and positive")
+  require(divisors == divisors.distinct.sorted, "event response divisors must be distinct and sorted")
+
+  def canonical: String = s"${run.oneBased}:${divisors.map(java.lang.Double.doubleToLongBits).mkString("/")}"
+
+/** Event-level response scaling of one realized event column, per run.
   *
-  * `divisors` are the distinct per-event divisors (for example event
-  * `unit-peak` peak magnitudes for basis `basis`) of the events contributing to
-  * the column identified by `(term, phase, cell, modulator, basis)`. A single
-  * divisor makes the column its kernel-unit column divided by that constant,
-  * so a response readout can be transported exactly. Several divisors (mixed
-  * event durations under `unit-peak`) leave no kernel-unit coefficient, and
-  * response readouts must refuse such columns.
+  * `runs` lists, for every run whose scans the column's events reach, the
+  * distinct per-event divisors (for example event `unit-peak` peak magnitudes
+  * for basis `basis`) of the events contributing to the column identified by
+  * `(term, phase, cell, modulator, basis)`. A single divisor within a run makes
+  * the column's rows in that run its kernel-unit rows divided by that
+  * constant, so a run-local response readout can be transported exactly; a
+  * readout of the coefficient shared across runs needs one divisor across all
+  * runs. Several divisors (mixed event durations under `unit-peak`) leave no
+  * kernel-unit coefficient, and response readouts must refuse such columns.
   */
 final case class EventResponseScaleReceipt(
     term: TermId,
@@ -542,18 +553,73 @@ final case class EventResponseScaleReceipt(
     modulator: Option[ModulatorId],
     basis: BasisIndex,
     policy: String,
-    divisors: Vector[Double]
+    runs: Vector[EventResponseRunDivisors]
 ):
   require(policy.trim.nonEmpty, "event response scale policy must be named")
-  require(divisors.forall(value => value.isFinite && value > 0.0), "event response divisors must be finite and positive")
-  require(divisors == divisors.distinct.sorted, "event response divisors must be distinct and sorted")
+  require(runs.map(_.run.oneBased) == runs.map(_.run.oneBased).distinct.sorted, "event response runs must be distinct and sorted")
+
+  /** Distinct divisors across all runs. */
+  def divisors: Vector[Double] = runs.flatMap(_.divisors).distinct.sorted
+
+  /** Distinct divisors of the events reaching the column in `run`. */
+  def divisorsIn(run: RunIndex): Vector[Double] =
+    runs.find(_.run == run).fold(Vector.empty[Double])(_.divisors)
 
   def uniformDivisor: Option[Double] = divisors match
     case Vector(value) => Some(value)
     case _             => None
 
   def canonical: String =
-    s"term=${term.value}|phase=${phase.fold("")(_.value)}|cell=${cell.canonical}|modulator=${modulator.fold("")(_.value)}|basis=${basis.oneBased}|policy=$policy|divisors=${divisors.map(java.lang.Double.doubleToLongBits).mkString(",")}"
+    s"term=${term.value}|phase=${phase.fold("")(_.value)}|cell=${cell.canonical}|modulator=${modulator.fold("")(_.value)}|basis=${basis.oneBased}|policy=$policy|runs=${runs.map(_.canonical).mkString("+")}"
+
+object EventResponseScaleReceipt:
+  /** The event-level divisor relating the column `(term, phase, cell,
+    * modulator, basis)` to its kernel-unit column, for a coefficient with run
+    * scope `runScope`; `1` when no receipt names the column.
+    *
+    * A run-local coefficient (`RunScope.Run(r)`, as on a runwise axis) uses
+    * only run `r`'s divisors. A coefficient shared across runs
+    * (`Global`/`PerRun`) needs one divisor across every run. Several divisors
+    * in scope, no contributing events in scope, or more than one receipt for
+    * the column's identity (ambiguous) are refusals, returned as reasons. */
+  def transportDivisor(
+      receipts: Vector[EventResponseScaleReceipt],
+      term: TermId,
+      phase: Option[PhaseId],
+      cell: CellKey,
+      modulator: Option[ModulatorId],
+      basis: BasisIndex,
+      runScope: RunScope
+  ): Either[String, Double] =
+    receipts.filter { receipt =>
+      receipt.term == term && receipt.phase == phase && receipt.cell == cell &&
+        receipt.modulator == modulator && receipt.basis == basis
+    } match
+      case Vector() => Right(1.0)
+      case Vector(receipt) =>
+        runScope match
+          case RunScope.Run(run) =>
+            receipt.divisorsIn(run) match
+              case Vector(value) => Right(value)
+              case Vector() =>
+                Left(s"event-level '${receipt.policy}' scaling has no contributing events for this column in run ${run.oneBased}")
+              case values =>
+                Left(
+                  s"its events in run ${run.oneBased} carry ${values.length} different event-level '${receipt.policy}' divisors " +
+                    "(for example mixed durations), so it has no kernel-unit response coefficient"
+                )
+          case RunScope.Global | RunScope.PerRun =>
+            receipt.uniformDivisor.toRight(
+              if receipt.divisors.isEmpty then s"event-level '${receipt.policy}' scaling has no contributing events for this column"
+              else if receipt.runs.forall(_.divisors.length == 1) then
+                s"its runs carry ${receipt.divisors.length} different event-level '${receipt.policy}' divisors, so the coefficient " +
+                  "shared across runs has no kernel-unit response coefficient (a run-local readout can use each run's divisor)"
+              else
+                s"its events carry ${receipt.divisors.length} different event-level '${receipt.policy}' divisors " +
+                  "(for example mixed durations), so it has no kernel-unit response coefficient"
+            )
+      case matches =>
+        Left(s"${matches.length} event-level response-scale receipts match this column identity, so its divisor is ambiguous")
 
 /** Auditable record of a post-convolution derivative-basis projection. */
 final case class BasisOrthogonalizationGroupReceipt(

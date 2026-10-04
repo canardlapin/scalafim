@@ -160,6 +160,10 @@ object TemporalDerivativeConvention:
     * the canonical column is exactly `h`, and every column equals SPM's column
     * times the one common factor `S0`. Orthogonality therefore holds for the
     * sampled kernels on the SPM grid, not over continuous time.
+    *
+    * The basis has compact support and span `grid.length` (32 s by default):
+    * it is zero past SPM's kernel window, and convolution keeps the whole
+    * window rather than truncating at the canonical response's span.
     */
   def spmInformedBasis(canonical: Hrf, columns: Int, grid: SpmKernelGrid): Either[TemporalDerivativeConventionError, Hrf] =
     if columns != 2 && columns != 3 then Left(TemporalDerivativeConventionError.UnsupportedInformedColumns(columns))
@@ -189,12 +193,16 @@ object TemporalDerivativeConvention:
           Array((1.0 - s0 / sd) / DispersionStep, 0.0, s0 / sd)
         ).take(columns)
         orthogonalize(raw, primitives).flatMap { coefficients =>
-          val step = Seconds(Shift)
-          val span = canonical.span + step
+          // SPM's kernels exist only on the grid's `[0, L]` window, and the
+          // serial orthogonalization holds over exactly those samples. The
+          // realized basis is therefore compactly supported on `[0, L]` and its
+          // span (the convolution horizon) is `L`, so design columns keep the
+          // full SPM kernel, including the tail past the canonical's span.
+          val span = grid.length.seconds
           val descriptor = canonical.descriptor
             .derived(s"spm12-informed-basis-$columns;${grid.canonical}", span = span)
             .copy(basis = BasisCount(columns), components = Vector(canonical.descriptor))
-          val support = canonical.support.widened(step)
+          val support = Support.Compact(span)
           val basis = Hrf.of(name = s"SPMG${columns}_spm12", nbasis = columns, span = span, descriptor = Some(descriptor), support = support) { lag =>
             val h = canonical(lag).data(0)
             val shifted = canonical(Lag.unsafe(lag.value - Shift)).data(0)

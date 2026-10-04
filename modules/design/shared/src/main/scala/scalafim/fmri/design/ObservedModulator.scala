@@ -38,8 +38,9 @@ object ObservedModulator:
     * observed cells, otherwise the ordinary sample standard deviation with
     * `n - 1`. `degenerate` marks a partition whose prepared values cannot vary
     * (fewer than two observed values, no within-cell degrees of freedom, or a
-    * zero scale estimate); `degenerateScale` additionally records that a
-    * requested scaling fell back to divisor 1. */
+    * scale estimate at or below [[degenerateScaleTolerance]]);
+    * `degenerateScale` additionally records that a requested scaling fell
+    * back to divisor 1. */
   final case class Receipt(
       observedIndices: Vector[Int],
       observedMean: Option[Double],
@@ -53,6 +54,18 @@ object ObservedModulator:
   )
   final case class Result(values: Vector[Double], retainedIndices: Vector[Int], receipt: Receipt):
     require(values.length == retainedIndices.length, "transformed values must align with retained indices")
+
+  /** The largest standard deviation still treated as zero for `n` observed
+    * values with largest magnitude `maxAbs`: `n * eps * maxAbs`, with `eps`
+    * the double-precision machine epsilon (`2^-52`). Rounding in the mean and
+    * in the centred differences of a constant input is bounded by a few ulps
+    * of `maxAbs` per value, so a constant that is not exactly representable
+    * (for example `0.3` repeated) yields a tiny non-zero estimate that this
+    * bound classifies as degenerate. */
+  def degenerateScaleTolerance(n: Int, maxAbs: Double): Double =
+    n.toDouble * MachineEpsilon * maxAbs
+
+  private val MachineEpsilon: Double = math.ulp(1.0)
 
   def prepare(
       values: Vector[Double],
@@ -108,9 +121,12 @@ object ObservedModulator:
         else if sampleSd.exists(!_.isFinite) then Left(Error.NonFiniteStatistic("observed sample standard deviation"))
         else
           val needsScale = scaling != Scaling.Raw
-          val degenerateScale = needsScale && sampleSd.forall(_ <= 0.0)
-          val degeneratePartition = observed.length < 2 || sampleSd.forall(_ <= 0.0)
-          val scale = if needsScale then sampleSd.filter(_ > 0.0).getOrElse(1.0) else 1.0
+          val maxAbs = observed.foldLeft(0.0)((acc, index) => math.max(acc, math.abs(values(index))))
+          val tolerance = degenerateScaleTolerance(observed.length, maxAbs)
+          val usableSd = sampleSd.filter(_ > tolerance)
+          val degenerateScale = needsScale && usableSd.isEmpty
+          val degeneratePartition = observed.length < 2 || usableSd.isEmpty
+          val scale = if needsScale then usableSd.getOrElse(1.0) else 1.0
           val scaled = observed.map(index => index -> (centered(index) / scale))
           scaled.find((_, value) => !value.isFinite) match
             case Some((index, _)) => Left(Error.NonFiniteTransform(index))
