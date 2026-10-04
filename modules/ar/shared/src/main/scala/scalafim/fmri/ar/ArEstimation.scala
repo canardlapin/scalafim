@@ -63,10 +63,15 @@ final case class YuleWalkerEstimate(
 
 /** Immutable raw spatial-block statistics. Lag products remain unregularized
   * until every block for this complete temporal layout has been merged.
+  *
+  * Lag sums are held exactly (see [[ExactSum]]), so merging is associative and
+  * commutative: any partition of the voxels into spatial blocks, merged in any
+  * order, finalizes to the same doubles as the whole-volume estimator.
   */
 final class ArNoiseSummary private (
     val layout: NoiseEstimationLayout,
     val maxOrder: ArOrderValue,
+    private val exactSumsByRun: Vector[Vector[ExactSum]],
     private[ar] val sumsByRun: Vector[Vector[Double]],
     private[ar] val countsByRun: Vector[Vector[Long]]
 ):
@@ -78,6 +83,8 @@ final class ArNoiseSummary private (
   require(sumsByRun.flatten.forall(_.isFinite), "noise-summary sums must be finite")
   require(countsByRun.flatten.forall(_ >= 0L), "noise-summary pair counts must be non-negative")
 
+  private[ar] def exactSum(run: Int, lag: Int): ExactSum = exactSumsByRun(run)(lag)
+
   def lagSumsByRun: Vector[Vector[Double]] = sumsByRun
   def pairCountsByRun: Vector[Vector[Long]] = countsByRun
 
@@ -88,10 +95,20 @@ private object ArNoiseSummary:
   def make(
       layout: NoiseEstimationLayout,
       maxOrder: ArOrderValue,
-      sumsByRun: Vector[Vector[Double]],
+      exactSumsByRun: Vector[Vector[ExactSum]],
       countsByRun: Vector[Vector[Long]]
-  ): ArNoiseSummary =
-    new ArNoiseSummary(layout, maxOrder, sumsByRun, countsByRun)
+  ): Either[ArError, ArNoiseSummary] =
+    // Round each exact total once; the summary keeps both forms so later merges stay exact.
+    val sumsByRun = exactSumsByRun.map(_.map(_.value))
+    var run = 0
+    while run < sumsByRun.length do
+      var lag = 0
+      while lag < sumsByRun(run).length do
+        val total = sumsByRun(run)(lag)
+        if !total.isFinite then return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), total))
+        lag += 1
+      run += 1
+    Right(new ArNoiseSummary(layout, maxOrder, exactSumsByRun, sumsByRun, countsByRun))
 
   def merge(left: ArNoiseSummary, right: ArNoiseSummary): Either[ArError, ArNoiseSummary] =
     if left.layout != right.layout then
@@ -99,26 +116,25 @@ private object ArNoiseSummary:
     else if left.maxOrder != right.maxOrder then
       Left(ArError.IncompatibleNoiseSummaries("maximum requested orders differ"))
     else
-      val sums = Vector.newBuilder[Vector[Double]]
+      val sums = Vector.newBuilder[Vector[ExactSum]]
       val counts = Vector.newBuilder[Vector[Long]]
       var run = 0
       while run < left.layout.runCount do
-        val mergedSums = Array.ofDim[Double](left.maxOrder.value + 1)
+        val mergedSums = Vector.newBuilder[ExactSum]
         val mergedCounts = Array.ofDim[Long](left.maxOrder.value + 1)
         var lag = 0
         while lag <= left.maxOrder.value do
-          val sum = left.sumsByRun(run)(lag) + right.sumsByRun(run)(lag)
-          if !sum.isFinite then
-            return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), sum))
+          val sum = left.exactSum(run, lag).copy()
+          sum.addAll(right.exactSum(run, lag))
           if Long.MaxValue - left.countsByRun(run)(lag) < right.countsByRun(run)(lag) then
             return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
-          mergedSums(lag) = sum
+          mergedSums += sum
           mergedCounts(lag) = left.countsByRun(run)(lag) + right.countsByRun(run)(lag)
           lag += 1
-        sums += mergedSums.toVector
+        sums += mergedSums.result()
         counts += mergedCounts.toVector
         run += 1
-      Right(make(left.layout, left.maxOrder, sums.result(), counts.result()))
+      make(left.layout, left.maxOrder, sums.result(), counts.result())
 
 object ArEstimation:
 
@@ -587,12 +603,14 @@ object ArEstimation:
       layout: NoiseEstimationLayout,
       maxOrder: ArOrderValue
   ): Either[ArError, ArNoiseSummary] =
-    val sums = Array.fill(layout.runCount, maxOrder.value + 1)(0.0)
-    val counts = Array.fill(layout.runCount, maxOrder.value + 1)(0L)
+    val lags = maxOrder.value + 1
+    val sums = Array.fill(layout.runCount, lags)(ExactSum.zero())
+    val counts = Array.fill(layout.runCount, lags)(0L)
     var run = 0
     while run < layout.runCount do
       val segments = layout.segmentsForRun(run)
       val retainedRows = effectiveObservations(segments)
+      val segmentMeans = new Array[Double](segments.length)
       var column = 0
       while column < residuals.cols do
         var total = 0.0
@@ -604,36 +622,57 @@ object ArEstimation:
             total += residuals(row, column)
             row += 1
           segmentIndex += 1
-        val mean = total / retainedRows.toDouble
-        segmentIndex = 0
-        while segmentIndex < segments.length do
-          val segment = segments(segmentIndex)
-          var lag = 0
-          while lag <= maxOrder.value do
-            var row = segment.start + lag
-            while row < segment.endExclusive do
-              val product =
-                (residuals(row, column) - mean) * (residuals(row - lag, column) - mean)
-              if !product.isFinite then
-                return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), product))
-              val sum = sums(run)(lag) + product
-              if !sum.isFinite then
-                return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), sum))
-              if counts(run)(lag) == Long.MaxValue then
-                return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
-              sums(run)(lag) = sum
-              counts(run)(lag) += 1L
-              row += 1
-            lag += 1
-          segmentIndex += 1
+        java.util.Arrays.fill(segmentMeans, total / retainedRows.toDouble)
+        var lag = 0
+        while lag < lags do
+          val partial = columnLagProductSum(residuals, column, lag, segments, segmentMeans)
+          if !partial.isFinite then
+            return Left(ArError.NonFiniteNoiseSummary(run, ArLag.unsafe(lag), partial))
+          val pairs = lagPairCount(segments, lag)
+          if Long.MaxValue - counts(run)(lag) < pairs then
+            return Left(ArError.NoiseSummaryCountOverflow(run, ArLag.unsafe(lag)))
+          sums(run)(lag).add(partial)
+          counts(run)(lag) += pairs
+          lag += 1
         column += 1
       run += 1
-    Right(ArNoiseSummary.make(
+    ArNoiseSummary.make(
       layout,
       maxOrder,
       sums.iterator.map(_.toVector).toVector,
       counts.iterator.map(_.toVector).toVector
-    ))
+    )
+
+  /** Canonical per-voxel lag-product sum: segments in order, rows in order, from zero. Both the whole-volume
+    * estimator and spatial-block summaries reduce exactly this value per voxel, then combine voxels with
+    * [[ExactSum]], so the pooled statistic does not depend on how voxels were partitioned.
+    */
+  private def columnLagProductSum(
+      residuals: DMat,
+      column: Int,
+      lag: Int,
+      segments: Vector[TimeSegment],
+      segmentMeans: Array[Double]
+  ): Double =
+    var partial = 0.0
+    var segmentIndex = 0
+    while segmentIndex < segments.length do
+      val segment = segments(segmentIndex)
+      val mean = segmentMeans(segmentIndex)
+      var row = segment.start + lag
+      while row < segment.endExclusive do
+        partial += (residuals(row, column) - mean) * (residuals(row - lag, column) - mean)
+        row += 1
+      segmentIndex += 1
+    partial
+
+  private def lagPairCount(segments: Vector[TimeSegment], lag: Int): Long =
+    var pairs = 0L
+    var segmentIndex = 0
+    while segmentIndex < segments.length do
+      pairs += math.max(0, segments(segmentIndex).length - lag).toLong
+      segmentIndex += 1
+    pairs
 
   private[ar] def pooledAutocovariance(
       residuals: DMat,
@@ -657,23 +696,39 @@ object ArEstimation:
           row += 1
       }
 
-      val lagCount = maxOrder.value
-      val sums = Array.fill(lagCount + 1)(0.0)
-      val pairCounts = Array.fill(lagCount + 1)(0L)
-      segments.foreach { segment =>
+      val lags = maxOrder.value + 1
+      val segmentMeans = new Array[Double](segments.length)
+      def loadMeans(col: Int): Unit =
+        var segmentIndex = 0
+        while segmentIndex < segments.length do
+          val runIndex = segments(segmentIndex).runIndex
+          segmentMeans(segmentIndex) = runSums(runIndex * residuals.cols + col) / runRows(runIndex).toDouble
+          segmentIndex += 1
+      val sums = new Array[Double](lags)
+      if residuals.cols == 1 then
+        // One voxel contributes one term per lag, and the exact sum of one term is that term (ExactSum also
+        // reports a signed zero as +0.0), so this skips the accumulator and stays bit-identical to it.
+        loadMeans(0)
+        var lag = 0
+        while lag < lags do
+          val partial = columnLagProductSum(residuals, 0, lag, segments, segmentMeans)
+          sums(lag) = if partial == 0.0 then 0.0 else partial
+          lag += 1
+      else if residuals.cols > 1 then
+        val exact = Array.fill(lags)(ExactSum.zero())
         var col = 0
         while col < residuals.cols do
-          val mean = runSums(segment.runIndex * residuals.cols + col) / runRows(segment.runIndex).toDouble
+          loadMeans(col)
           var lag = 0
-          while lag <= lagCount do
-            var row = segment.start + lag
-            while row < segment.endExclusive do
-              sums(lag) += (residuals(row, col) - mean) * (residuals(row - lag, col) - mean)
-              pairCounts(lag) += 1L
-              row += 1
+          while lag < lags do
+            exact(lag).add(columnLagProductSum(residuals, col, lag, segments, segmentMeans))
             lag += 1
           col += 1
-      }
+        var lag = 0
+        while lag < lags do
+          sums(lag) = exact(lag).value
+          lag += 1
+      val pairCounts = Array.tabulate(lags)(lag => residuals.cols.toLong * lagPairCount(segments, lag))
       Right(PooledAutocovariance(sums, pairCounts, correction))
 
   private[ar] def validateFinite(residuals: DMat): Either[ArError, Unit] =
