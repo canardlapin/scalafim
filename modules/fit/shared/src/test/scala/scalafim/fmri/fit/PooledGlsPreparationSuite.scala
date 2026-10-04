@@ -62,14 +62,14 @@ class PooledGlsPreparationSuite extends munit.FunSuite:
 
   test("pooled GLS descriptors retain canonical selected axes") {
     val plan = pooledPlan(NoisePooling.Global, order = 1, iterations = 1)
-    val reference = FitWorkReference("pooled-gls", "plan-v1", "source-v1")
+    val reference = FitWorkReference.unsafe("pooled-gls", "plan-v1", "source-v1")
     val compiled = FitWorkDescriptor.compile(reference, plan, ChunkSize.unsafe(blockSize), selection).toOption.get
     val descriptor = FitWorkDescriptor.decode(compiled.encode).toOption.get
     val reader = recordingReader(plan.model.dataset)
     val resolver = new FitWorkResolver:
       def resolve(request: FitWorkReference): Either[FitError, ResolvedFitWork] =
         if request == reference then Right(ResolvedFitWork(reference, plan, reader))
-        else Left(FitError.InvalidFitAxis("fit work descriptor", "unexpected immutable reference"))
+        else Left(FitError.WorkBindingMismatch("unexpected immutable reference"))
 
     assertEquals(descriptor.selection, selection)
     assertDenseClose(
@@ -187,10 +187,61 @@ class PooledGlsPreparationSuite extends munit.FunSuite:
       )
     )
     assert(FitPlanExecutor.fitChunked(membershipChangingReader(plan.model.dataset), plan, selection, chunking).left.toOption.exists {
-      case FitError.InvalidFitAxis("pooled AR replay", detail) => detail.contains("membership changed")
+      case FitError.PreparationReplayMismatch(detail) => detail.contains("membership changed")
       case _ => false
     })
   }
+
+  test("pooled GLS refuses a reader that changes finite membership in the final fitting pass") {
+    // One noise pass reads blocks [3,0] and [2,1]; read 3 is the first final-pass block, where voxel 3 turns
+    // non-finite. It already contributed to the shared AR estimate, so dropping it silently would be wrong.
+    val plan = FitPlan(
+      model,
+      engine = FitEngine.GeneralizedLeastSquares,
+      config = FitConfig(
+        autocorrelation = ArOptions(structure = ArStructure.Ar(1), iterations = 1),
+        missingData = MissingDataPolicy.Propagate
+      )
+    )
+    val result = FitPlanExecutor.fitChunked(membershipChangingReader(plan.model.dataset), plan, selection, chunking)
+    assert(result.left.toOption.exists {
+      case FitError.ChunkFailed(0, FitError.PreparationReplayMismatch(detail)) =>
+        detail.contains("membership changed") && detail.contains("prepared [3,0], read [0]")
+      case _ => false
+    }, clues(result.map(_.voxelIndices)))
+  }
+
+  test("chunked pooled GLS is bit-identical to the dense fit for every block size, with censoring") {
+    Vector(NoisePooling.Run, NoisePooling.Global).foreach { pooling =>
+      Vector(1, 2).foreach { order =>
+        val plan = pooledPlan(pooling, order, iterations = 2)
+        val expected = dense(plan)
+        (1 to 4).foreach { size =>
+          val actual = chunked(FitPlanExecutor.fitChunked(
+            SynchronousFmriDataset.readerFor(plan.model.dataset).toOption.get,
+            plan,
+            selection,
+            FitChunkingStrategy.unsafeByVoxelCount(size)
+          ))
+          val clue = s"pooling=$pooling order=$order block=$size"
+          // Exact comparisons by design: pooled lag sums are partition-invariant, so any reordering shows here.
+          assertEquals(actual.voxelIndices, expected.voxelIndices, clue)
+          assertEquals(phiBits(actual), phiBits(expected), clue)
+          assertEquals(matrixBits(actual.coefficients.value), matrixBits(expected.coefficients.value), clue)
+          assertEquals(matrixBits(actual.standardErrors.value), matrixBits(expected.standardErrors.value), clue)
+        }
+      }
+    }
+  }
+
+  private def phiBits(result: DenseFmriFitResult): Vector[Vector[Long]] =
+    result.autocorrelation.getOrElse(fail("missing AR diagnostics")).runs
+      .map(_.phi.map(java.lang.Double.doubleToRawLongBits))
+
+  private def matrixBits(matrix: gale.linalg.DMat): Vector[Long] =
+    Vector.tabulate(matrix.rows * matrix.cols) { index =>
+      java.lang.Double.doubleToRawLongBits(matrix(index / matrix.cols, index % matrix.cols))
+    }
 
   private def pooledPlan(pooling: NoisePooling, order: Int, iterations: Int): FitPlan =
     FitPlan(

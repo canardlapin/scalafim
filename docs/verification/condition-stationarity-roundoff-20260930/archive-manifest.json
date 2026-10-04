@@ -1,0 +1,128 @@
+[
+  {
+    "file": "inputs-both-r2.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/inputs-both-r2.log",
+    "uncompressedSha256": "d23333e1fc208f06ede401ab798a36af65aeed305078bf979f5cdf7494b1700d",
+    "sha256": "ea5abdde5e5752dd89e81c3307cb9f7846c5df6f03cce52ef488b7345121e69d",
+    "bytes": 49326
+  },
+  {
+    "file": "stages-both.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/stages-both.log",
+    "uncompressedSha256": "e893930f0947d6dc18da8391fbd680d946a3c8342459ebefa6a7e39794183c99",
+    "sha256": "09df15c68079b89d080d1c285679b4dee3606020c00ca8b0de4c039537e5e0d8",
+    "bytes": 365517
+  },
+  {
+    "file": "gaussian-regression-before.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/gaussian-regression-before.log",
+    "uncompressedSha256": "8161ff455a26b89c9fec6271d5be656b393198a647c9ce9490bb503b7894dc3d",
+    "sha256": "9226e4351e9f46a538846bbcb45ac2ab47d54f78ea79745b7240d8e55e52785c",
+    "bytes": 9810
+  },
+  {
+    "file": "fix-gates.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/fix-gates.log",
+    "uncompressedSha256": "8540fc440392b6a5c22184349935210c34099702e03e4a166ddf43b67780a3a2",
+    "sha256": "31764a2d13fedd5fa01b350225203212ecb0d036fa117ecce9e874e49915c75e",
+    "bytes": 103203
+  },
+  {
+    "file": "final-jvm-compile.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/final-jvm-compile.log",
+    "uncompressedSha256": "08c4455b67eb643254120e14df8895ee3c4f2c3e52ed4d9588cf2525a153fca2",
+    "sha256": "2ac34833a29301f436363593905a9d1a806698a3b63d39e62984c82a2a32bf89",
+    "bytes": 31002
+  },
+  {
+    "file": "jvm-artifacts.json.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/jvm-artifacts.json",
+    "uncompressedSha256": "8ad5e01f3ac1440a77189f9f07c77d11450189a5e098ce5e58e9b8598a1a8a3b",
+    "sha256": "e4c0c9032e88c9727b5d1282812e0495089e34e18b89d98279ee39b2f1536bff",
+    "bytes": 1457040
+  },
+  {
+    "file": "final-source.json.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/final-source.json",
+    "uncompressedSha256": "ee5df2170b4f846635b6bfb1ee41ff58585b97da0b969c6c7cd658e6d4d852f8",
+    "sha256": "eb54f7a966d7b73ab693501e318e99710223519fb01778bacdef4900082c0e7c",
+    "bytes": 216026
+  },
+  {
+    "file": "prior-c0-frozen200-jvm.log.gz",
+    "source": "/private/tmp/scalafim-execution-20260929/logs/c0-frozen200-jvm.log",
+    "uncompressedSha256": "df99984e02402a1a74d71d1d78d6b5424719f69763f1228621073b6707703202",
+    "sha256": "c7647bfbef7ec9fcfe97ffffcbf07b9d30a9a6e17268286ac07d2021deb83dfb",
+    "bytes": 2256379
+  },
+  {
+    "file": "prior-c0-frozen200-js.log.gz",
+    "source": "/private/tmp/scalafim-execution-20260929/logs/c0-frozen200-js.log",
+    "uncompressedSha256": "9667721746ba0821f343fc5c4d1a6dbbf32428f0ee96ac93c02c3ff4dc1efbf8",
+    "sha256": "36d7634e1a108d6b6ca24c941c23b44d80afcc20ebe2aa4436aba9e9ea9bb021",
+    "bytes": 2278251
+  },
+  {
+    "file": "prior-decoder-diagnostics-final6-both.log.gz",
+    "source": "/private/tmp/scalafim-execution-20260929/logs/decoder-diagnostics-final6-both.log",
+    "uncompressedSha256": "34c496992cac788d715f127445023d0e4e0c044ecf666b08c02ffb0e841b4d48",
+    "sha256": "94ae9508fb1e542ec3f8807ce790fea1c1e4d0bfbd458f5c456d4ece093d952d",
+    "bytes": 155413
+  },
+  {
+    "file": "final-js.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/final-js.log",
+    "uncompressedSha256": "90c263c6fa77357e7fc5370e7c5617afc41a1fc2a0bdbd69b6e758af1f6a3997",
+    "sha256": "f85355dfebe206c137b8f1053a9d186ef8deb7f34150527eb756ce09340a2aff",
+    "bytes": 53108
+  },
+  {
+    "file": "js-artifacts.json.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/js-artifacts.json",
+    "uncompressedSha256": "42cae16600191b9686fc4c84217b1a85e79bad990bf63c5eac3c3670ac8b2ba6",
+    "sha256": "adba84a71d72a77beff5738f4a5f51084236d57e851e2cb40e66ef34a99a209d",
+    "bytes": 443
+  },
+  {
+    "file": "development-jvm.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/development-jvm.log",
+    "uncompressedSha256": "0c6f2a21043490eedf3c1f8696d76de0e902f9e5683472f98bad0ba4881361da",
+    "sha256": "f6b7ec7ad3763cb726310efdbcc579c4c2b96005c806dc7957eaebe51b93ee70",
+    "bytes": 2256612
+  },
+  {
+    "file": "oracle-jvm.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/oracle-jvm.log",
+    "uncompressedSha256": "14c2c2da3ad5daea2a3768974d1e920c09052b4384be172f5620beb5ad4ad81f",
+    "sha256": "1dc2e2d84c6c150f934feedfb30ec93dece477cd867e4eab16524263bf3a993d",
+    "bytes": 25407
+  },
+  {
+    "file": "oracle-js.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/oracle-js.log",
+    "uncompressedSha256": "1b77309fb9409103991b4cfdb8595e5290f98ad5b6d23e7541bb2317e13c93c1",
+    "sha256": "4c00de6d6d0eb41b234d07baad013decd39c76b0ce96132cdb46f88669e7edfe",
+    "bytes": 25700
+  },
+  {
+    "file": "development-js.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/development-js.log",
+    "uncompressedSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "bytes": 0
+  },
+  {
+    "file": "development-js-r2.log.gz",
+    "source": "/private/tmp/scalafim-phrf-push-20260930/evidence/development-js-r2.log",
+    "uncompressedSha256": "c227c6a495cf8643619b7334820ad638e3dc66115d9ad4cbe75f021c8ca7ed20",
+    "sha256": "e2c38919b2501b8decbd35df345685aca5bcde6e5954f16492ff3a9e4cc96023",
+    "bytes": 2278966
+  },
+  {
+    "file": "execution-tracked.patch.gz",
+    "source": "execution-tracked.patch (captured before EOF cleanup)",
+    "uncompressedSha256": "2660e08d7293275343ec9b293e0637229aa19740e3b1b747808c18586675274c",
+    "sha256": "edf77c4e394bfa296f1f8ed316d83a9eed18ad49b98ed1f039a9cdb860dd2dd1",
+    "bytes": 6814
+  }
+]

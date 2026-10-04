@@ -1,0 +1,7 @@
+{
+  "path": "modules/hrf/shared/src/main/scala/scalafim/fmri/hrf/family/GaussianFamily.scala",
+  "executedSha256": "99eb71105718627607a5fb5689f06a292f7378e0e5e3e35c014fbfdc4f66b6f7",
+  "finalSha256": "6d804f5266839e545d309a1b9249674567c1712f17948466f336f969f08bfb90",
+  "change": "Remove one trailing blank line at EOF after compilation; stripped bytes identical; no executable change",
+  "executedSourceId": "b1c4fd191cb5b1911871addeacf346413e621e13bb667f2239e4976eb5f41311"
+}

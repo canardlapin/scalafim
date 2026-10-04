@@ -28,14 +28,17 @@ private[fit] final case class PlannedObservationPattern(
 /** The response-independent result of finding voxel-specific finite-row masks.
   *
   * Chunked execution keeps this metadata only; fitted response matrices are read
-  * again per pattern through the normal chunked executor.
+  * again per pattern through the normal chunked executor. The metadata is not
+  * bounded by the block size: it holds one row mask per distinct observation
+  * pattern plus every voxel's membership, so it is O(P·T + V) and degrades to
+  * O(V·T) when every voxel has its own mask.
   */
 private[fit] final case class MaskedResponseMetadata(
     sourceTimepoints: Vector[Int],
     sourceVoxels: Vector[Int],
     patterns: Vector[ObservationPattern],
     exclusions: Vector[VoxelInferenceExclusion],
-    missingValueCount: Int
+    missingValueCount: Long
 ):
   require(sourceTimepoints.nonEmpty, "masked response metadata must retain source timepoints")
   require(sourceVoxels.nonEmpty, "masked response metadata must retain source voxels")
@@ -54,7 +57,7 @@ private[fit] object MaskedResponsePlanner:
   def plan(series: FmriSeries): Either[FitError, MaskedResponsePlan] =
     val positionsByRows = mutable.LinkedHashMap.empty[Vector[Int], Vector[Int]]
     val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
-    var missingCount = 0
+    var missingCount = 0L
     var voxelPosition = 0
     while voxelPosition < series.nVoxels do
       val observedRows = Vector.newBuilder[Int]
@@ -141,7 +144,8 @@ private[fit] object MaskedResponsePlanner:
   ): Either[FitError, MaskedResponseMetadata] =
     val positionsByRows = mutable.LinkedHashMap.empty[Vector[Int], Vector[Int]]
     val exclusions = Vector.newBuilder[VoxelInferenceExclusion]
-    var missingCount = 0
+    // Missing cells across a whole selection can exceed Int.MaxValue (V x T), so count in Long.
+    var missingCount = 0L
     var chunkIndex = 0
     while chunkIndex < chunks.length do
       val chunk = chunks.indexed(chunkIndex)

@@ -1,7 +1,6 @@
 package scalafim.fmri.fit
 
 import gale.linalg.DMat
-import scalafim.dataset.FmriSeries
 import scalafim.fmri.ar.{ArmaCoefficients, InitialConditionPolicy, NoisePooling, TimeSegment, WhiteningMethod, WhiteningPlan}
 import scalafim.fmri.model.{FitEngine, FitPlan, FitStrategy, MissingDataPolicy, NuisanceProjection, VolumeWeighting}
 import scala.util.control.NonFatal
@@ -26,6 +25,11 @@ private[fit] final case class CompletedGlsNoise(
 /** Completed pooled noise preparation, without readers, factors or response data.
   * Immutable references are verified by the resolver. The codec validates structure
   * and compatibility; artifact authenticity belongs to the caller's storage boundary.
+  *
+  * Contents are platform-specific even though the descriptor and its work IDs are
+  * not: JVM and Scala.js producers may estimate coefficients a few ulp apart. Either
+  * artifact restores on either platform and fits with exactly its stored coefficients,
+  * so a cache that must be bit-reproducible across platforms keys on the producer too.
   */
 final class PreparedGlsArtifact private[fit] (
     val descriptor: FitWorkDescriptor,
@@ -97,7 +101,7 @@ object PreparedGlsArtifact:
       context <- PooledGlsPreparation.restore(bound.plan, chunks, artifact.noise)
     yield new RestoredGlsWork(artifact, bound, chunks, context)
 
-  private[fit] def invalid(detail: String): FitError = FitError.InvalidFitAxis("prepared GLS artifact", detail)
+  private[fit] def invalid(detail: String): FitError = FitError.PreparedArtifactInvalid(s"prepared GLS: $detail")
 
   private[fit] def bits(value: Double): String =
     require(value.isFinite, "artifact numbers must be finite")
@@ -195,7 +199,8 @@ object PreparedGlsArtifact:
     result.result()
 
 /** Runtime capabilities bound to a validated artifact. Each fit reads one spatial
-  * block at a time and checks membership against the completed noise population.
+  * block at a time; the restored context checks every block's finite membership
+  * against the completed noise population (see [[RetainedMembershipFitContext]]).
   */
 final class RestoredGlsWork private[fit] (
     val artifact: PreparedGlsArtifact,
@@ -204,25 +209,11 @@ final class RestoredGlsWork private[fit] (
     context: PreparedFitContext
 ):
   def fit(): Either[FitError, FmriFitResult] =
-    val retained = artifact.retainedVoxelIndices.toSet
     val results = Vector.newBuilder[FitBlockResult]
     val iterator = chunks.iterator
     while iterator.hasNext do
       val chunk = iterator.next()
-      val fitted = for
-        series <- ChunkedFitExecutor.readChunk(bound.reader, chunk)
-        membership <- retainedMembership(series)
-        _ <- if membership == chunk.voxelIndices.filter(retained) then Right(())
-          else Left(PreparedGlsArtifact.invalid(s"retained voxel membership changed in chunk ${chunk.ordinal.value}"))
-        result <- context.fitChunk(series)
-      yield result
-      fitted match
+      ChunkedFitExecutor.readChunk(bound.reader, chunk).flatMap(context.fitChunk) match
         case Left(error) => return Left(FitError.ChunkFailed(chunk.ordinal.value, error))
         case Right(value) => results += value
     context.merge(results.result())
-
-  private def retainedMembership(series: FmriSeries): Either[FitError, Vector[Int]] =
-    MatrixAdapters.responseBlock(series, bound.plan.config.missingData) match
-      case Left(FitError.AllVoxelsExcluded(_)) => Right(Vector.empty)
-      case Left(error) => Left(error)
-      case Right(value) => Right(value.voxelIndices)

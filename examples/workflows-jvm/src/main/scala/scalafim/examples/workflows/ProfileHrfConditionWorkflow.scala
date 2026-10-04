@@ -4,8 +4,7 @@ import gale.linalg.DMat
 import scalafim.dataset.{DatasetId, FmriDataset, InMemoryDatasetBackend, SynchronousFmriDataset}
 import scalafim.fmri.design.baseline.{BaselineBasis, BaselineModel, Intercept}
 import scalafim.fmri.design.event.{Event, EventModel, EventTerm}
-import scalafim.fmri.design.hrf.HrfKernelBasis
-import scalafim.fmri.design.hrf.KernelBasisSpec
+import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, KernelBasisSpec}
 import scalafim.fmri.fit.profile.*
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
@@ -82,14 +81,29 @@ object ProfileHrfConditionWorkflows:
     val plan = FitPlan(FmriModel(eventModel, baseline, data))
     val structure = ConditionProfileFit.structureFor(plan, convolved).fold(e => throw new IllegalArgumentException(e.message), identity)
     val contrast = SignedQuery.make("A-B", Vector(1.0, -1.0, 0.0), 1e-6).fold(e => throw new IllegalArgumentException(e.message), identity)
+    // Admission certifies the observed family on the actual design: the expanded
+    // condition basis, the plan's non-task (baseline) columns as nuisance, and no whitening.
+    val taskNames = convolved.columnNames.toSet
+    val nuisanceColumns = plan.model.columnNames.indices.filterNot(i => taskNames.contains(plan.model.columnNames(i))).toVector
+    val nuisance = DMat.tabulate(rows, nuisanceColumns.length)((t, j) => plan.model.designMatrix(t, nuisanceColumns(j)))
+    val expanded = ExpandedConditionDesign.lower(term, frame, kernelBasis, precision).fold(e => throw new IllegalArgumentException(e.message), identity)
+    // Held-out admission points inside the generating range (tau 4-7, sd 1.0-2.2); same
+    // points and requirement margins as the condition-profile suites.
+    val points = Vector((4.0, math.log(1.2)), (6.0, math.log(2.0))).map { case (tau, logSd) =>
+      family.chart.point(tau, logSd).fold(e => throw new IllegalArgumentException(e.message), identity)
+    }
+    val admission = ObservedFamilyCertification
+      .admitForCondition(plan, structure, expanded, term, frame, precision, None, Some(nuisance), points, ObservedFamilyRequirements(1e-2, 1e8, 1e-6))
+      .fold(e => throw new IllegalArgumentException(e.message), identity)
     val policy = ConditionProfilePolicy(
       basis = kernelBasis,
       structure = structure,
       nodesPerAxis = Vector(15, 15),
-      budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 2, maxJets = 2, maxExactEvaluations = 6, weakSdLimit = Vector(0.5, 1.0)),
+      budget = DecodeBudget(coarseStride = 2, maxNewtonSteps = 6, maxJets = 8, maxExactEvaluations = 2, weakSdLimit = Vector(0.5, 1.0)),
       prior = None,
       noiseVariance = 0.25,
       output = OutputRequest.ConditionQueries(Vector(contrast), NormalizationRule.Unnormalised),
+      admission = admission,
       blockSize = 4
     )
     val prepared = ConditionProfileFit.prepare(plan, policy).fold(e => throw new IllegalArgumentException(e.message), identity)

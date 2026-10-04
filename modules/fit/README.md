@@ -375,6 +375,10 @@ temporal squared differences, finalizes the shared weights, then fits blocks in 
 second pass. Row-omission discovery similarly scans blocks and retains only
 finite-row masks and voxel memberships before fitting each observation pattern.
 Every scan preserves all selected timepoints and the existing run/reset layout.
+Response matrices stay bounded by the block size, but the discovered metadata
+does not: it keeps one row mask per distinct observation pattern plus every
+voxel's membership, O(P·T + V), which degrades to O(V·T) when every voxel has
+its own mask. Missing cells are counted in a `Long`.
 
 Pooled estimated-AR GLS replays bounded spatial blocks for each configured
 noise-estimation iteration, then performs one final fitting pass. Each iteration
@@ -385,7 +389,10 @@ preserves run centering, censor/reset boundaries, temporal weighting of global
 run estimates, and separate run-specific coefficient designs. Preparation retains
 designs, per-run lag statistics and voxel-membership metadata, with response and
 residual matrices bounded by the spatial block size. Replay requires an immutable
-response snapshot; changed finite-column membership between passes is rejected.
+response snapshot. Changed finite-column membership is rejected with
+`FitError.PreparationReplayMismatch`, both between noise passes and in the final
+fitting pass, so a voxel that contributed to the pooled estimate cannot be
+silently dropped from (or added to) the fitted population.
 
 Active robust row weighting and learned spatial bases remain global dependencies.
 The legacy `ChunkedFitExecutor` still uses dense preparation for those paths;
@@ -397,7 +404,11 @@ independently per block would change the estimator.
 versioned, data-only recipe with exact ordered axes, topology and deterministic
 unit/block work IDs. Its `encode`/`decode` use canonical length-prefixed text
 (UTF-16 code-unit lengths) on both platforms. IDs are collision-free canonical
-strings rather than compact hashes. An explicit `FitWorkResolver` binds the
+strings rather than compact hashes. The reference keys are opaque, non-blank
+`FitUnitId`, `PlanRevision` and `SourceRevision` values (`FitWorkReference.of`
+validates; `unsafe` throws). Decode failures, binding mismatches and artifact
+contract violations are the typed `FitError.InvalidWorkDescriptor`,
+`WorkBindingMismatch` and `PreparedArtifactInvalid`. An explicit `FitWorkResolver` binds the
 recipe to a runtime plan and reader. It must verify that `planRevision` names the
 complete immutable scientific recipe and `sourceRevision` names the response
 snapshot; dataset names and shapes alone are not content verification.
@@ -405,6 +416,14 @@ snapshot; dataset names and shapes alone are not content verification.
 an implemented bounded interpreter before any response read. Its currently
 supported global phases are DVARS, observation-pattern discovery and pooled AR
 estimation (including run-specific coefficient fits).
+
+For the raw (uncorrected) pooled AR estimator that GLS preparation uses, lag
+statistics are reduced per voxel in a fixed row order and then combined across
+voxels with exact (fixed-point) summation. The estimated coefficients are
+therefore bit-identical to the whole-volume fit for every spatial chunking and
+merge order. This guarantee does not cover the `modules/ar`
+`EstimationPolicy.DesignCorrected` bias correction, which the chunked
+summary path does not apply.
 
 Descriptors alone replay preparation. For completed pooled estimated-AR GLS,
 `PreparedGlsArtifact.prepare(descriptor, resolver)` performs the configured bounded
@@ -425,6 +444,15 @@ retained membership, including entirely excluded blocks. The resolver remains
 responsible for immutable source identity and content; the codec validates
 structure and compatibility, not artifact authenticity or provenance of modified
 coefficient values. Store artifacts in a trusted, integrity-checked store.
+
+Descriptors and their `workId`/`blockWorkIds` are platform-neutral, but artifact
+contents are not: JVM and Scala.js producers can estimate AR coefficients a few
+ulp apart (`PreparedGlsPortabilitySuite` pins one artifact from each). Either
+artifact restores and fits on either platform, and the fit then uses exactly the
+stored coefficients, so a restored result reproduces its producer's whitening,
+not the consumer's. ScalaFIM has no artifact cache of its own. A cache keyed only
+by `workId` is valid but may serve either platform's coefficients; include the
+producing platform in the key when bit-reproducibility across platforms matters.
 
 This artifact version supports shared and runwise pooled estimated GLS with
 whole-voxel missing-data policies and disabled temporal weighting/nuisance

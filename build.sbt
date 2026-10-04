@@ -31,7 +31,7 @@ lazy val ravelCoreJS  = ProjectRef(ravelBuild, "coreJS")
 // with tools/prepare-pinned-dependencies.sh. `scalafim.gale.build` is the explicit
 // sibling-checkout override for coordinated upstream development (numerical
 // capabilities such as banded factors are written in Gale, then pinned here).
-lazy val galeRevision = "18d24dbb5056122032b0278f8bad557a9bb1cf23"
+lazy val galeRevision = "da38f8c429294657d30ec29f06eae3fab636d428"
 lazy val galeBuild =
   sys.props
     .get("scalafim.gale.build")
@@ -119,13 +119,19 @@ lazy val image4sNiftiJVM  = ProjectRef(image4sBuild, "image4s-niftiJVM")
 
 // reframe4s owns generic spatial maps and resampling execution. ScalaFIM
 // retains neuroimaging policy and delegates affine kernels to this exact
-// reviewed source revision.
+// reviewed source revision. A ScalaFIM image4s checkout override is forwarded
+// so reframe4s resolves the same image4s build. reframe4s accepts only a local
+// path, so the default pinned-URI build still loads reframe4s's own image4s pin.
 lazy val reframe4sRevision = "9a4508351d74567147b8ea3221d82db89e5892b0"
-lazy val reframe4sBuild =
+lazy val reframe4sBuild = {
+  sys.props
+    .get("scalafim.image4s.build")
+    .foreach(System.setProperty("reframe4s.image4s.build", _))
   sys.props
     .get("scalafim.reframe4s.build")
     .map(path => file(path).getCanonicalFile.toURI)
     .getOrElse(uri(s"https://github.com/canardlapin/reframe4s.git#$reframe4sRevision"))
+}
 lazy val reframe4sLieJVM      = ProjectRef(reframe4sBuild, "reframe4s-lieJVM")
 lazy val reframe4sLieJS       = ProjectRef(reframe4sBuild, "reframe4s-lieJS")
 lazy val reframe4sFieldJVM    = ProjectRef(reframe4sBuild, "reframe4s-fieldJVM")
@@ -216,7 +222,10 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
-    "-Xmax-inlines:64"
+    "-Xmax-inlines:64",
+    // CI pins JDK 17; restrict the JDK API surface so newer-JDK calls
+    // (e.g. Thread.threadId, JDK 19) fail locally on any newer host JDK.
+    "-release:17"
   ),
   Test / fork := false,
   libraryDependencies += "org.scalameta" %%% "munit" % "1.2.1" % Test

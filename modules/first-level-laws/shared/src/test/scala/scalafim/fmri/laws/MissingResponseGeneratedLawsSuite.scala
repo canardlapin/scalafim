@@ -29,7 +29,33 @@ class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
     case FixedEffects extends EngineCase("fixed effects")
 
   property("propagated missing responses equal explicit finite-voxel fits across selection, chunking, and engines"):
-    forAll(MissingResponseGenerators.cases) { generated =>
+    forAll(MissingResponseGenerators.cases)(generated => verdict(generated, propagatedFailures(generated)))
+
+  property("voxel-specific row omission equals explicit per-pattern fits across chunking and engines"):
+    forAll(MissingResponseGenerators.cases)(generated => verdict(generated, maskedFailures(generated)))
+
+  // Shrunk counterexample of seed sp9DAl0FY1eBBKPdxp1XHmPtWKKKG-fp4dJAL7wpvdF= (pull-request profile): streamed
+  // pooled-GLS lag sums merged per one-voxel chunk differed from the whole-volume estimate by 1-3 ulp, so the
+  // estimated AR provenance was not chunk-invariant.
+  test("regression: estimated GLS AR provenance is bit-identical across one-voxel chunks"):
+    val generated = MissingResponseCase(
+      runLengths = Vector(14, 15),
+      voxels = 4,
+      missingVoxelCount = 2,
+      selectedTimepoints = (0 until 29).filterNot(Set(1, 15).contains).toVector,
+      voxelOrder = Vector(0, 3, 2, 1),
+      chunkWidth = 1,
+      seed = 883789
+    )
+    assertEquals(propagatedFailures(generated), Vector.empty[String])
+    assertEquals(maskedFailures(generated), Vector.empty[String])
+
+  private def verdict(generated: MissingResponseCase, observed: Vector[String]): Prop =
+    Prop(observed.isEmpty) :|
+      s"runs=${generated.runLengths} voxels=${generated.voxels} missing=${generated.selectedMissingVoxels} " +
+      s"selection=${generated.voxelOrder} width=${generated.chunkWidth} failures=${observed.mkString(" | ")}"
+
+  private def propagatedFailures(generated: MissingResponseCase): Vector[String] =
       val model = modelFor(generated)
       val selected = selection(generated, generated.voxelOrder)
       val retainedOrder = generated.voxelOrder.filter(generated.retainedVoxels.contains)
@@ -62,14 +88,9 @@ class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
             failures += s"${engine.label} whole=$whole chunked=$chunked explicit=$explicit"
       }
 
-      val observed = failures.result()
-      Prop(observed.isEmpty) :|
-        s"runs=${generated.runLengths} voxels=${generated.voxels} missing=${generated.selectedMissingVoxels} " +
-        s"selection=${generated.voxelOrder} width=${generated.chunkWidth} failures=${observed.mkString(" | ")}"
-    }
+      failures.result()
 
-  property("voxel-specific row omission equals explicit per-pattern fits across chunking and engines"):
-    forAll(MissingResponseGenerators.cases) { generated =>
+  private def maskedFailures(generated: MissingResponseCase): Vector[String] =
       val model = modelFor(generated)
       val selected = selection(generated, generated.voxelOrder)
       val expectedPatterns = observationPatterns(generated)
@@ -109,11 +130,7 @@ class MissingResponseGeneratedLawsSuite extends GeneratedLawSuite:
             failures += s"${engine.label} masked whole/chunked=$pair"
       }
 
-      val observed = failures.result()
-      Prop(observed.isEmpty) :|
-        s"runs=${generated.runLengths} voxels=${generated.voxels} missing=${generated.selectedMissingVoxels} " +
-        s"selection=${generated.voxelOrder} width=${generated.chunkWidth} failures=${observed.mkString(" | ")}"
-    }
+      failures.result()
 
   private def plan(
       model: FmriModel,
