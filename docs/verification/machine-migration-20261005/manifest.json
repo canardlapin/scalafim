@@ -8,9 +8,9 @@
   "ahead_commits_before": 112,
   "mote_version": "mote 0.1.0",
   "mote_format_sha256": "df4e9c0f4941230a6d831a031f77a49944806461094c849e49ff270728e274c4",
-  "mote_ops": 23901,
-  "mote_bytes": 10803778,
-  "mote_operation_manifest_sha256": "d018c222589a18e693ebad11aab4d415c22b7840be239aa89f40e798b3386bf6",
+  "mote_ops": 23905,
+  "mote_bytes": 10806774,
+  "mote_operation_manifest_sha256": "01e99f6605d5af978519fd422f8eaaee41d3e8fdc2d3057c868a6e73d0d76401",
   "open_mote_audit": {
     "reviewed": 102,
     "updated": 80,
@@ -87,7 +87,7 @@
     "all_issue_projections_equal": true,
     "all_issues": 1274,
     "nonclosed": 102,
-    "op_files": 23901,
+    "op_files": 23905,
     "workstation_settings_excluded": true,
     "empty_local_directories_initialized": true,
     "doctor_clean": true
@@ -111,5 +111,12 @@
     "reviewed_open_prs": 12,
     "drafts_verified": 9,
     "archival_heads_unchanged": true
+  },
+  "recovery_evidence_ledger": {
+    "original_tips": 146,
+    "remote_preservation_refs": 166,
+    "literal_open_mote_reference_tips": 34,
+    "unassessed_feature_deltas_explicit": true,
+    "report": "docs/verification/migration-recovery-ledger-20261005.md"
   }
 }

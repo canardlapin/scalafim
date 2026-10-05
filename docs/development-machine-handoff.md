@@ -97,6 +97,8 @@ only to a suitable base after inspecting its changes.
   local main, retained branches and exact source/platform boundaries.
 - [All 102 nonclosed Motes assessed](verification/open-mote-audit-20261005.md):
   current state, fresh-context needs, evidence and next action for every ticket.
+- [Retained-work recovery ledger](verification/migration-recovery-ledger-20261005.md):
+  exact preserved tips, remaining qualification gaps and feature-level acceptance steps.
 - [Migration manifest](verification/machine-migration-20261005/manifest.json):
   exact Mote operation hashes and source-preservation checks.
 
