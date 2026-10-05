@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY2G6A7B92W8APSM1H0MKMMD","kind":"note","note_kind":"progress","op":"20260721T174111.906682Z-p21155-c0003-re9ff-ha6435b","text":"Starting versioned renderer-neutral scene/state schema, canonical codec, asset identity validation, provenance, and JVM/Scala.js roundtrip/render-reproduction tests.","ts":"2026-07-21T17:41:11.906682Z","v":1}

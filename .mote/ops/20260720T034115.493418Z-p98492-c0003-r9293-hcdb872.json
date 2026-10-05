@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYNB4VHWQ5R16CBW3H30TNJ","kind":"note","note_kind":"progress","op":"20260720T034115.493418Z-p98492-c0003-r9293-hcdb872","text":"Implement image-backed dense coordinate/displacement pullbacks, explicit supplied inverses, semantic map fingerprints, and one-pass nonlinear volume assembly.","ts":"2026-07-20T03:41:15.493418Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"exec-trial-executor","entity":"bd-01M26A285YAQ3H8TGS26BK9T7J","kind":"note","note_kind":"progress","op":"20260930T024724.679743Z-p83079-c0002-rc86f-h931eda","text":"Narrow PSD correction after independent review: reject exact negative precision; add tiny-negative and zero-rank controls; rerun scoped JVM and JS.","ts":"2026-09-30T02:47:24.679743Z","v":1}

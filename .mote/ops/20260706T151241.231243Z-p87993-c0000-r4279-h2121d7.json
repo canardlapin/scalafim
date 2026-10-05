@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVZDEYCNTSCR3EKKXBZ0XT0","kind":"note","note_kind":"note","op":"20260706T151241.231243Z-p87993-c0000-r4279-h2121d7","text":"actor correction: previous completion note was emitted while local actor was accidentally set to codex-threshold; work belongs to codex-scalafim/archive epic","ts":"2026-07-06T15:12:41.231243Z","v":1}

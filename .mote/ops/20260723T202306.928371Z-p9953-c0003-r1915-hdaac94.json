@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY85Y6FBD0QRDGJXG45J0A03","kind":"note","note_kind":"progress","op":"20260723T202306.928371Z-p9953-c0003-r1915-hdaac94","text":"Implementing DatasetIndex.read and the segmented groupBy/blockConcatenate/reduceBy result algebra over checked run views and partitions.","ts":"2026-07-23T20:23:06.928371Z","v":1}

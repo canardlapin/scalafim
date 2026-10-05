@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY001C1XATQNH1HQJR1PAWTP","kind":"reserve_open","mode":"exclusive","op":"20260720T151857.597964Z-p52326-c0000-r45dd-h569267","paths":["modules/multivar/shared/src/test/scala/scalafim/multivar/CanonicalEffectDenseOracle.scala"],"reservation_id":"rv-01KY01QQ9XK9ZHDNV8Q5FV3FDX","ts":"2026-07-20T15:18:57.597964Z","ttl_s":3600,"v":1}

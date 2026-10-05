@@ -1,0 +1,1 @@
+{"actor":"exec-io","entity":"bd-01KX6G9B8R86MRBZ9S8K8F5G7V","kind":"reserve_open","mode":"exclusive","op":"20260930T024852.453357Z-p85498-c0000-r9167-h7c737d","paths":["modules/estimates-io/shared/src/main/scala/scalafim/estimates/io/NiftiRepresentation.scala"],"reservation_id":"rv-01M3R3E0Z5PGW34RF0ZY47HPBT","ts":"2026-09-30T02:48:52.453357Z","ttl_s":3600,"v":2}

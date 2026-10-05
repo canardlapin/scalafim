@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY6K7P3JANZ2Y7YZ005ZCST","kind":"note","note_kind":"note","op":"20260707T121802.683124Z-p35917-c0000-r870b-h97a3f1","text":"Done: BaselineError and Either wrappers added for build, nuisance checking, and nuisance cleaning; legacy APIs preserved; JVM/JS design tests pass.","ts":"2026-07-07T12:18:02.683124Z","v":1}

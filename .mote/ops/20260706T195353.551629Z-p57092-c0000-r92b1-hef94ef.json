@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWFNH8M56KJFTDYSFH7QEH4","kind":"note","note_kind":"note","op":"20260706T195353.551629Z-p57092-c0000-r92b1-hef94ef","text":"LNA dataset directory adapter complete. Verified with sbt datasetJVM/test datasetJS/test archiveJVM/test compileAll.","ts":"2026-07-06T19:53:53.551629Z","v":1}

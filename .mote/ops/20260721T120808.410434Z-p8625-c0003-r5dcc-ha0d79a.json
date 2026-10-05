@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY28K3VFJHDAA5D4QA44Y0PB","kind":"note","note_kind":"progress","op":"20260721T120808.410434Z-p8625-c0003-r5dcc-ha0d79a","text":"Implementing renderer-neutral zoom/pan viewport state with exact inverse picking, configurable orthogonal arrangements, and typed cursor readouts shared by all hosts.","ts":"2026-07-21T12:08:08.410434Z","v":1}

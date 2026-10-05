@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWHDZZS0JQQB8MB4ZMRWEAT","kind":"note","note_kind":"progress","op":"20260706T211813.408252Z-p69122-c0000-r47e3-h8725f7","text":"added shared-basis embed params, manifest roundtrip, validation, JVM resolver, dataset materialized reads, docs, and focused tests","ts":"2026-07-06T21:18:13.408252Z","v":1}

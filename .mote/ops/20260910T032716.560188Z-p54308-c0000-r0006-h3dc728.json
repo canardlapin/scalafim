@@ -1,0 +1,1 @@
+{"actor":"codex-provider-integration","entity":"bd-01M24KKCA32BDHHCSS3VRYFPPS","kind":"reserve_open","mode":"exclusive","op":"20260910T032716.560188Z-p54308-c0000-r0006-h3dc728","paths":["modules/group/shared/src/test/scala/scalafim/fmri/group/GroupRepairSuite.scala"],"reservation_id":"rv-01M24NNZ2G6SP8BVHANCKNDWJK","ts":"2026-09-10T03:27:16.560188Z","ttl_s":7200,"v":2}

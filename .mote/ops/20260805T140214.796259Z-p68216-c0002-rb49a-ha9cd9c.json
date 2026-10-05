@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KZ6BDR9A7EWGEP81HY2CJNX5","kind":"note","note_kind":"progress","op":"20260805T140214.796259Z-p68216-c0002-rb49a-ha9cd9c","text":"adapt ScalaFIM compatibility layer to current image4s Sampled owner/semantics API without changing VolumeDomain or voxel ordering","ts":"2026-08-05T14:02:14.796259Z","v":1}

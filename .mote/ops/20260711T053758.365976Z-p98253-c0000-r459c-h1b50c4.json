@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX77FJNQSR9P7TBNS9BF2XER","kind":"reserve_open","mode":"exclusive","op":"20260711T053758.365976Z-p98253-c0000-r459c-h1b50c4","paths":["modules/dataset/jvm/src/test/scala/scalafim/dataset/io/NiftiReadBenchmark.scala"],"reservation_id":"rv-01KX7TXE2X1SSANMEP82CN6P2M","ts":"2026-07-11T05:37:58.365976Z","ttl_s":3600,"v":1}

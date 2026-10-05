@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY1DCWJP7HB9A4PWVXSMHHWM","kind":"note","note_kind":"progress","op":"20260721T040332.680793Z-p78860-c0003-r82e5-h5eecb5","text":"Add browser benchmark baseline, one-read-per-layer compilation, allocation-reduced exact colorization, and evidence-driven nonlinear batching or static/dynamic split.","ts":"2026-07-21T04:03:32.680793Z","v":1}

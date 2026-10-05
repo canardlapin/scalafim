@@ -1,0 +1,59 @@
+{
+  "worktree": "/private/tmp/scalafim-mote-queue-20261004",
+  "head": "9b29fcd303879c31d0e4cf0d2984c95730f19411",
+  "branch": "refs/heads/work/mote-queue-20261004",
+  "files": [
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala",
+      "kind": "file",
+      "bytes": 10115,
+      "sha256": "330dede94ab5cc8572caecafc615b1b0781847617644d65fc5133e5a5cb08054"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxColorPreparation.scala",
+      "kind": "file",
+      "bytes": 10678,
+      "sha256": "24b6a9c4aea09cf295a1d23dc4fbc6bc3ef237689eec9490bfb0fab0f3aeb081"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala",
+      "kind": "file",
+      "bytes": 43386,
+      "sha256": "c5226b5411d932133136892bca1b1018ec5b82e9638282872c05780cf558a443"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala",
+      "kind": "file",
+      "bytes": 22574,
+      "sha256": "97472a143ebe18dc105905aab6ace87887239d9d2e61efa2894ddc16389f6061"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala",
+      "kind": "file",
+      "bytes": 10404,
+      "sha256": "6a47d345937feb44acef8186e2ddf2e549aa2498ed00e8632942b052386edaa3"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala",
+      "kind": "file",
+      "bytes": 37518,
+      "sha256": "87a2b63b1ffae8bd894c10bf731936799b03a977d1547de8ea925c3e4f7b0e55"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxColorPreparationSuite.scala",
+      "kind": "file",
+      "bytes": 18862,
+      "sha256": "a225f998e1c08d5d596ea0418bd5694db4e59a3168ef58a705a1ffcea4b93cb1"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRetainedAtlasSuite.scala",
+      "kind": "file",
+      "bytes": 10966,
+      "sha256": "3d6b31f65a50afe3f3316e7eb7900715721620909353a88cb2f368d52f19d1e1"
+    }
+  ],
+  "archive_sha256": "6f3024059fab586f211e4f558763b27f541a3ea06b823825904430040e060bc6",
+  "archive_bytes": 38484,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

@@ -1,0 +1,4 @@
+ M modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala
+ M modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala
+?? modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionPlatformParitySuite.scala
+?? modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderUnresolvableDecreaseSuite.scala

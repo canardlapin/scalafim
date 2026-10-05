@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","entity":"bd-01M24MQABKEBQXW89VZ8XWBB8H","kind":"note","note_kind":"progress","op":"20260930T041301.685492Z-p64210-c0002-r68a3-h248186","text":"Adapt benchmark zero/aggregation to FINAL actually counted conditional snapshot schema, no benchmark runtime/speed claim; explicit fitBenchJVM/compile required.","ts":"2026-09-30T04:13:01.685492Z","v":1}

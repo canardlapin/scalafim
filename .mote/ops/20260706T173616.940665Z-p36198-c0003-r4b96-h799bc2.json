@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWW7YAA19G442K3N6SCQMNZC","kind":"note","note_kind":"progress","op":"20260706T173616.940665Z-p36198-c0003-r4b96-h799bc2","text":"Hardening shared MVPA tests around overlapping folds, streaming foldLeft, and searchlight/reference equivalence.","ts":"2026-07-06T17:36:16.940665Z","v":1}

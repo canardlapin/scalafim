@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYJN7C4DNFB4QGY96S5W6HF","kind":"note","note_kind":"progress","op":"20260720T062524.942437Z-p29405-c0000-re9e5-h096ceb","text":"Latent transport operators and sparse decoder construction migrated to Gale in dd6a6b6; transport selection and covariance contracts pass on JVM and Scala.js.","ts":"2026-07-20T06:25:24.942437Z","v":1}

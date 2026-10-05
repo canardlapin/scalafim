@@ -1,0 +1,1 @@
+{"actor":"plsneuro-event-binding","entity":"bd-01M1VKM1ZPPE1NC67DHYQ243D5","kind":"note","note_kind":"progress","op":"20260906T150444.026418Z-p84918-c0003-r3e77-h7b33d2","text":"Implement explicit native event-column projection, retaining source tables and strict required-field validation.","ts":"2026-09-06T15:04:44.026418Z","v":1}

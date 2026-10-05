@@ -1,0 +1,1 @@
+{"actor":"exec-profile","entity":"bd-01M24MSQS8HFQBPY2TAVW1FJGM","kind":"note","note_kind":"progress","op":"20260929T224031.261882Z-p52457-c0003-r00d2-hd4c023","text":"Implement geometry-bound observed-family admission before preparation allocates workers or reads responses.","ts":"2026-09-29T22:40:31.261882Z","v":1}

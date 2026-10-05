@@ -1,0 +1,1 @@
+{"actor":"codex-halfflow","entity":"bd-01KY5177SNQYXPK746CQXYT3WV","kind":"note","note_kind":"progress","op":"20260722T153145.356076Z-p26822-c0003-r2000-h3d6410","text":"Implement a standalone controlled A-E ablation harness first; reserve existing engine paths only if a lane requires a reviewed minimal extension.","ts":"2026-07-22T15:31:45.356076Z","v":1}

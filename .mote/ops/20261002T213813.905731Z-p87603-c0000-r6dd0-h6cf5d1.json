@@ -1,0 +1,1 @@
+{"actor":"codex-model-studio-20261002","entity":"bd-01M3YZT0YXG97E11D99M5W34AN","kind":"note","note_kind":"progress","op":"20261002T213813.905731Z-p87603-c0000-r6dd0-h6cf5d1","text":"Added rank-vs-column-budget and retained-column high-pass rejection regressions; fixed-effect F failures now propagate as typed diagnostics.","ts":"2026-10-02T21:38:13.905731Z","v":1}

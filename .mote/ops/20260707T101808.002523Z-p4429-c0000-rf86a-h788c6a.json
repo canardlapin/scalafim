@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY0Z82P38B7FB3Q9SC34Y75","kind":"note","note_kind":"progress","op":"20260707T101808.002523Z-p4429-c0000-rf86a-h788c6a","text":"Introduced shared NeuroImage/ImageSpace dimensional core with thin NeuroSlice/NeuroVol/NeuroVec wrappers; imageJVM/test and imageJS/test pass at 157 tests each.","ts":"2026-07-07T10:18:08.002523Z","v":1}

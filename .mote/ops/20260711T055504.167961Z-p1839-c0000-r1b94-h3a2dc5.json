@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX77GMM4H1QDBC1YRZ7W9AKY","kind":"reserve_open","mode":"exclusive","op":"20260711T055504.167961Z-p1839-c0000-r1b94-h3a2dc5","paths":["modules/fmri-workflow/shared/src/test/scala/scalafim/fmri/workflow/BidsStudyCompilerSuite.scala"],"reservation_id":"rv-01KX7VWQV7F6DCKKEHGBXJF50C","ts":"2026-07-11T05:55:04.167961Z","ttl_s":1800,"v":1}

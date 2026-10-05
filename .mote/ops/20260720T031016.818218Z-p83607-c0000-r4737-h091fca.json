@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYJMPFS7X726WC82SKKKEED","kind":"reserve_open","mode":"exclusive","op":"20260720T031016.818218Z-p83607-c0000-r4737-h091fca","paths":["modules/linalg/shared/src/test/scala/scalafim/linalg/GaleConsumerProbeSuite.scala"],"reservation_id":"rv-01KXYR1F7JB9HZJ3TBCKVTSND1","ts":"2026-07-20T03:10:16.818218Z","ttl_s":7200,"v":1}

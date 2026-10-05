@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KYAA8KS1B9F0D6SZ00GCRESJ","kind":"reserve_open","mode":"exclusive","op":"20260726T233658.793859Z-p35205-c0000-r8c4c-hb22391","paths":["modules/latent/shared/src/test/scala/scalafim/latent/DecodePlanTypingSpikeSuite.scala"],"reservation_id":"rv-01KYGCKY59ZVHYV40V8F92V6C7","ts":"2026-07-26T23:36:58.793859Z","ttl_s":3600,"v":1}

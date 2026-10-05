@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KZ3ZFSCBB135A7X2BCWX1W95","kind":"note","note_kind":"progress","op":"20260803T142022.550519Z-p37118-c0003-rd934-hd1c26e","text":"Starting exporter repair: migrate generated Scala to current Gale fixture types, preserve numerical JSON, and verify the public scenario on JVM and Scala.js.","ts":"2026-08-03T14:20:22.550519Z","v":1}

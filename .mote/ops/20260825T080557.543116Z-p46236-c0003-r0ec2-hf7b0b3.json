@@ -1,0 +1,1 @@
+{"actor":"p7-1b-partition-independence","entity":"bd-01M0VXRDTXW60ZFCE17SGDQRBD","kind":"note","note_kind":"progress","op":"20260825T080557.543116Z-p46236-c0003-r0ec2-hf7b0b3","text":"Replace unequal-ID inference with exact evidence-bound pair declarations; add adversarial and reversal laws; coordinate conflicted call sites with owners.","ts":"2026-08-25T08:05:57.543116Z","v":1}

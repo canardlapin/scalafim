@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVWMZ42FGTDSZ63YNH1BVKR","kind":"note","note_kind":"note","op":"20260706T142319.584201Z-p63133-c0000-r750f-h99ddeb","text":"Multirun GLS and censor-layout hardening complete; fitJVM/test and fitJS/test pass. Full testAll blocked by unrelated concurrent BIDS compile errors.","ts":"2026-07-06T14:23:19.584201Z","v":1}

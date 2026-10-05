@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVWRBCXQFBYP6E3S3QS4AVD","kind":"note","note_kind":"progress","op":"20260706T142448.882815Z-p64182-c0000-ra5a3-h3f507e","text":"reviewed rMVPA swift and dual_lda; added pluggable dependency-free classifiers and cross-validated classifier analysis; mvpaJVM/test mvpaJS/test and compileAll pass","ts":"2026-07-06T14:24:48.882815Z","v":1}

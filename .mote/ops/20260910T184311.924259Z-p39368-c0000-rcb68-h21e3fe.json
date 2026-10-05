@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01M24MRY1DA0KPP37J7H8G619D","expect":{"title":"20260910T131158.361498Z-p22829-c0000-rdecb-hf137a9"},"kind":"patch","op":"20260910T184311.924259Z-p39368-c0000-rcb68-h21e3fe","set":{"title":"PHRF-06: Implement banded SPD factors, solves and logdet upstream in Gale and pin"},"ts":"2026-09-10T18:43:11.924259Z","v":1}

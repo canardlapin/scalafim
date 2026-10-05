@@ -1,0 +1,1 @@
+{"actor":"surface-map-semantics","entity":"bd-01M1Z4FNEQ28YY1BZSWAN6WBER","kind":"note","note_kind":"progress","op":"20260908T023126.354301Z-p82485-c0002-rfd4e-h62379d","text":"Correct explicit orthographic depth clipping through the JavaFX parallel camera viewport depth transform; validate actual framebuffer against shared raster.","ts":"2026-09-08T02:31:26.354301Z","v":1}

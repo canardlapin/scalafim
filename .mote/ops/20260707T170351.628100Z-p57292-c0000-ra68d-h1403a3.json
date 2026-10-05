@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY8WY9AZY55FCET7XC03B9Z","kind":"note","note_kind":"progress","op":"20260707T170351.628100Z-p57292-c0000-ra68d-h1403a3","text":"Added immutable PipelineBuilder with string authoring methods, typed-id variants, README example, and JVM/JS tests. Verified: sbt pipelineJVM/test; sbt pipelineJS/test.","ts":"2026-07-07T17:03:51.628100Z","v":1}

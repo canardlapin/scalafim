@@ -1,0 +1,1 @@
+{"actor":"exec-decoder-repair","entity":"bd-01M25Q0JY8GA7CJRKZF2934PJ0","kind":"note","note_kind":"progress","op":"20260930T015651.013841Z-p87625-c0002-r41af-hcdff58","text":"Implementing bounded maxJets=2/maxExact=0 final-candidate starvation repair with deterministic regression.","ts":"2026-09-30T01:56:51.013841Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"scalafim-stp-impl","entity":"bd-01M39Q3SE8MK5KXFH463R01ATH","kind":"note","note_kind":"note","op":"20260924T130910.456048Z-p41733-c0000-re44a-h93a305","text":"P0 gate accepted: ADR (ecc72f64), skeleton + docs + vendored oracles (7579ca65); JVM+JS transform tests pass; spatial/atlas compile on new edges.","ts":"2026-09-24T13:09:10.456048Z","v":1}

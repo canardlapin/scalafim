@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY3J2W0Y7VBEZG5CZ1MYMYKE","kind":"note","note_kind":"progress","op":"20260722T110036.341153Z-p11945-c0002-r3159-h08ecf0","text":"Separate Jacobian support coverage from inverse-overlap coverage after real affine preflight showed 100% Jacobians and 64.7% valid inverse overlap","ts":"2026-07-22T11:00:36.341153Z","v":1}

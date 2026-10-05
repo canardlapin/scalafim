@@ -1,0 +1,1 @@
+{"actor":"stp-finish-20260929","entity":"bd-01M39Q53JNRCWQG7ZRPWWK74EE","kind":"reserve_open","mode":"exclusive","op":"20260930T022314.096024Z-p38866-c0000-ref20-hb91d96","paths":["modules/transform/shared/src/test/scala/scalafim/transform/NativeInverseOracleSuite.scala"],"reservation_id":"rv-01M3R1Z2NGSE5ANR15GSVGF2YA","ts":"2026-09-30T02:23:14.096024Z","ttl_s":7200,"v":2}

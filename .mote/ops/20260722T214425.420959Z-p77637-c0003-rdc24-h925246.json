@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY5VKH7TBPCHCBHRTDWD1NT0","kind":"note","note_kind":"progress","op":"20260722T214425.420959Z-p77637-c0003-rdc24-h925246","text":"Implementing bounded Cats Core accumulation behind BIDS-specific checked APIs; compatibility methods remain deterministic and no public Cats datatypes are introduced.","ts":"2026-07-22T21:44:25.420959Z","v":1}

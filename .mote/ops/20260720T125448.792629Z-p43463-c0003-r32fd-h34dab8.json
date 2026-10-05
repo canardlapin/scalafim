@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXZNT72SZWFM87BH0F8ZK1ZN","kind":"note","note_kind":"progress","op":"20260720T125448.792629Z-p43463-c0003-r32fd-h34dab8","text":"Starting N0 profile refinement and immutable publication. Scope is a new cross-platform archive-zarr module plus build wiring; generic Zarr remains domain-free.","ts":"2026-07-20T12:54:48.792629Z","v":1}

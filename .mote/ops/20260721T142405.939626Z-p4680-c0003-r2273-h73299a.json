@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY2G6737PWY7JC01THZN9Y55","kind":"note","note_kind":"progress","op":"20260721T142405.939626Z-p4680-c0003-r2273-h73299a","text":"Implementing the portable typed scene model, total reducer, deterministic render plan, resource keys, and profiling receipts; no backend handles in shared APIs.","ts":"2026-07-21T14:24:05.939626Z","v":1}

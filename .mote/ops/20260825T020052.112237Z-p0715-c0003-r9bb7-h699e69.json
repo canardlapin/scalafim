@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim-mvpa-refactor","entity":"bd-01M0SVDZHTERK3B2M669P10332","kind":"note","note_kind":"progress","op":"20260825T020052.112237Z-p0715-c0003-r9bb7-h699e69","text":"Implementing the matrix-backed Alder boundary, authoritative SampleId ledger, explicit local materialization, and stage-separated work receipt.","ts":"2026-08-25T02:00:52.112237Z","v":1}

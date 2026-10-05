@@ -1,0 +1,1 @@
+{"actor":"exec-calibration","entity":"bd-01M21VA8DYMNJS9PZ8076SBWWJ","kind":"reserve_open","mode":"exclusive","op":"20260930T025848.204584Z-p8512-c0000-rab81-h84368d","paths":["tools/calibration/direct_jvm.py"],"reservation_id":"rv-01M3R406RCFSRJ65RXWE8HMT9G","ts":"2026-09-30T02:58:48.204584Z","ttl_s":3600,"v":2}

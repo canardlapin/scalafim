@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVZQJB1ZR75SXBJ39C5ENJK","kind":"note","note_kind":"progress","op":"20260706T153645.804375Z-p4816-c0000-r483f-h2dc976","text":"Extending the slice to Morphism.scala and SpatialError.scala so affine coordinate maps are typed morphism data, not hidden compiler-side config.","ts":"2026-07-06T15:36:45.804375Z","v":1}

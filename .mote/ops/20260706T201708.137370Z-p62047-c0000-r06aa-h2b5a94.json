@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWH69X30QA8S5SYSVQQRDB5","kind":"reserve_open","mode":"exclusive","op":"20260706T201708.137370Z-p62047-c0000-r06aa-h2b5a94","paths":["examples/atlas-jvm/src/main/scala/scalafim/examples/atlas/AtlasExampleData.scala"],"reservation_id":"rv-01KWWH7MH9SX74QKM3W9GMYF58","ts":"2026-07-06T20:17:08.137370Z","ttl_s":3600,"v":1}

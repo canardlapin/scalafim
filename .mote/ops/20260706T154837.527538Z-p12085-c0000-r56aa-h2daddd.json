@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVZQJC6G816JPY7M087E0D6","kind":"note","note_kind":"note","op":"20260706T154837.527538Z-p12085-c0000-r56aa-h2daddd","text":"Added SpatialQc tolerance/check/report types, identity/composition/adjoint/ROI/coverage law checks, one-based triplet fixture comparison, README docs, and JVM+JS tests.","ts":"2026-07-06T15:48:37.527538Z","v":1}

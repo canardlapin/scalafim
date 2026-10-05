@@ -1,0 +1,1 @@
+{"actor":"codex-core-triage","entity":"bd-01KYX0F70J38699FPVBYKCGZDP","expect":{"title":"20260731T211448.722378Z-p2132-c0000-r0608-h1c9822"},"kind":"patch","op":"20260912T123400.793262Z-p71498-c0000-r7df5-h321ba1","set":{"title":"[DEFERRED] Decide the fate of the Vec/Mat re-export from package object hrf"},"ts":"2026-09-12T12:34:00.793262Z","v":1}

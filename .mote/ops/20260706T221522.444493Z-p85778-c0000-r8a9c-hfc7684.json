@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWQFC9BB0JA4BN7RREZRABB","kind":"note","note_kind":"progress","op":"20260706T221522.444493Z-p85778-c0000-r8a9c-hfc7684","text":"implemented latent-owned shared-basis Gram encoder, LNA coefficient handoff, resolver offset reconstruction, and JVM/JS tests","ts":"2026-07-06T22:15:22.444493Z","v":1}

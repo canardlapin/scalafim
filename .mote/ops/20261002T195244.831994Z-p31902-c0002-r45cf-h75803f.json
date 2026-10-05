@@ -1,0 +1,1 @@
+{"actor":"codex-model-studio-20261002","entity":"bd-01M3YZT25ZC3R3V0CESB7RQ9DJ","kind":"note","note_kind":"progress","op":"20261002T195244.831994Z-p31902-c0002-r45cf-h75803f","text":"Add portable model-build JSON profile with explicit errors for runtime-only/unsupported fields; no silent field loss.","ts":"2026-10-02T19:52:44.831994Z","v":1}

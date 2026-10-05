@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY162TD7VXE0TSV491YSGVGX","kind":"note","note_kind":"progress","op":"20260721T015429.469549Z-p57350-c0003-rbc86-hcc21ed","text":"Implement persistent scalar/raster/canvas caches, plane-specific invalidation, work receipts, and cross-platform correctness tests.","ts":"2026-07-21T01:54:29.469549Z","v":1}

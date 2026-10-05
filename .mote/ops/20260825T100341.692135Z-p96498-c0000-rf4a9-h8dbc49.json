@@ -1,0 +1,1 @@
+{"actor":"p7-2-quality-gate","entity":"bd-01M0SVMDTQT0CM8CH10CEXD2C2","kind":"reserve_open","mode":"exclusive","op":"20260825T100341.692135Z-p96498-c0000-rf4a9-h8dbc49","paths":["tools/r-parity/test_mvpa_oracle_manifest.py","tools/r-parity/mvpa_oracle_manifest.py"],"reservation_id":"rv-01M0W60AQVDRETW6MS7AK8FT0T","ts":"2026-08-25T10:03:41.692135Z","ttl_s":3600,"v":1}

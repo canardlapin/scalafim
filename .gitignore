@@ -11,7 +11,12 @@
 .ivy2/
 .coursier/
 .coursier-cache/
-.mote/
+# Portable Mote history; workstation identity and temporary files stay local.
+.mote/*
+!.mote/FORMAT.json
+!.mote/ops/
+.mote/ops/*
+!.mote/ops/*.json
 graphify-out/
 vendor/
 target/

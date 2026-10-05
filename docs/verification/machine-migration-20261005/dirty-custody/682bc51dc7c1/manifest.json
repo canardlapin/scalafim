@@ -1,0 +1,35 @@
+{
+  "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/pr19ci",
+  "head": "29a76fdeb62b289ab95ecb6763edc3e26583e071",
+  "branch": "refs/heads/fix/pr19-ci-20261004",
+  "files": [
+    {
+      "path": "modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/CompactConditionPlatformParitySuite.scala",
+      "kind": "file",
+      "bytes": 6604,
+      "sha256": "d63cc02999f7377cd6e071601ab038d5bd6a53b2356e9c3dfe9063795534bbe2"
+    },
+    {
+      "path": "modules/fit/jvm/src/test/scala/scalafim/fmri/fit/profile/ParallelBlockExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 15101,
+      "sha256": "58d9d6bf76fafe44722964c057fcc7fcbcff2c87ade53a993c9f56ce2a516599"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ShapeDecoder.scala",
+      "kind": "file",
+      "bytes": 29157,
+      "sha256": "dc8974845b97349a3a6b8363b0b8fac5ffadb16e796e6079ccd91600ed65522e"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/profile/ShapeDecoderUnresolvableDecreaseSuite.scala",
+      "kind": "file",
+      "bytes": 6651,
+      "sha256": "40697756e050903ab91cb6c3e911c6aeeb6c29c035564fe75347ed420a6ad807"
+    }
+  ],
+  "archive_sha256": "e7559f9e55107662c8af508b9b0b3fa198e47ed531a9e3b22a65aaa3c5c025b9",
+  "archive_bytes": 14252,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

@@ -1,0 +1,1 @@
+{"actor":"stp-finish-20260929","entity":"bd-01M3GGKMX4MH9PYPZ2MKANM7W5","kind":"reserve_open","mode":"exclusive","op":"20260930T021654.459547Z-p18421-c0000-r2f6d-h0f2fa0","paths":["modules/fit/jvm/src/test/scala/scalafim/fmri/fit/io/ResultManifestWriterSuite.scala"],"reservation_id":"rv-01M3R1KFXV6C09CW7K1D26PD09","ts":"2026-09-30T02:16:54.459547Z","ttl_s":7200,"v":2}

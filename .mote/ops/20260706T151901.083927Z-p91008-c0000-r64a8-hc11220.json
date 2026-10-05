@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVZQJE2J2W7BEAJMRW9S5HG","kind":"note","note_kind":"note","op":"20260706T151901.083927Z-p91008-c0000-r64a8-hc11220","text":"Implemented LinearMap, SparseTriplets, CSR sparse apply, adjoint, compose, restrict, and blockDiag; verified with sbt linalgJVM/test and sbt linalgJS/test.","ts":"2026-07-06T15:19:01.083927Z","v":1}

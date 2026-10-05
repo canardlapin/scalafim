@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWWWM95W9TT7MHQAME5ARX67","kind":"note","note_kind":"note","op":"20260707T003617.429768Z-p46739-c0000-r5616-h17a383","text":"finished typed motion core hardening; verified sbt -J-Xmx3G motionJVM/test motionJS/test with 45/45 JVM and 45/45 JS tests passing","ts":"2026-07-07T00:36:17.429768Z","v":1}

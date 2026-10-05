@@ -1,0 +1,1 @@
+{"actor":"codex-core-triage","entity":"bd-01M241Y5FPND8TPHTJQVHJWW7K","expect":{"priority":"20260909T214213.750107Z-p45412-c0000-red79-h3287b2","status":"20260909T233352.055046Z-p10013-c0002-r9c2d-hbe6769"},"kind":"patch","op":"20260912T123302.751986Z-p71174-c0000-r5398-h611883","set":{"priority":2,"status":"open"},"ts":"2026-09-12T12:33:02.751986Z","v":1}

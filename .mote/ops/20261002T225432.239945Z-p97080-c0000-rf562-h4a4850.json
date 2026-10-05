@@ -1,0 +1,1 @@
+{"actor":"codex-gls-artifact-20261002","entity":"bd-01KX6G9B1ZT10A3214DPA096RZ","kind":"reserve_open","mode":"exclusive","op":"20261002T225432.239945Z-p97080-c0000-rf562-h4a4850","paths":["modules/fit/shared/src/test/scala/scalafim/fmri/fit/PreparedGlsPortabilitySuite.scala"],"reservation_id":"rv-01M3ZD739FQRT6CTVY2KXE83HQ","ts":"2026-10-02T22:54:32.239945Z","ttl_s":14400,"v":2}

@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVTXCFYBAXBMGSHTVAVZ0DK","kind":"note","note_kind":"note","op":"20260706T135757.030370Z-p44934-c0000-r4830-ha7223a","text":"AR estimation and diagnostics are implemented and cross-target tested with sbt -no-colors arJVM/test arJS/test.","ts":"2026-07-06T13:57:57.030370Z","v":1}

@@ -1,0 +1,1 @@
+{"actor":"scalafim-time-reference","entity":"bd-01M1W5SDCAYQZKGMAHCHPVWVFC","kind":"note","note_kind":"progress","op":"20260906T201700.662373Z-p11604-c0003-rc028-h10435c","text":"Implement exact run-keyed sampling and separately observed preprocessing metadata, with independent FIR boundary oracle.","ts":"2026-09-06T20:17:00.662373Z","v":1}

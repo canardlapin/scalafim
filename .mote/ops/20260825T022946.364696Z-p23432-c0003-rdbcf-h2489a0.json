@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim-mvpa-refactor","entity":"bd-01M0SVE1G74X254HRHZYD29SRD","kind":"note","note_kind":"progress","op":"20260825T022946.364696Z-p23432-c0003-rdbcf-h2489a0","text":"Implementing exact LORO through Alder; first resolving the missing public whole-population CompleteResampler admission without package-private workarounds.","ts":"2026-08-25T02:29:46.364696Z","v":1}

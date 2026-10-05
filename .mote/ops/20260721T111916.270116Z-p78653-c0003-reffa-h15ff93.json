@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY1E4SJQBF9B1ZNYS7K5DDTB","kind":"note","note_kind":"progress","op":"20260721T111916.270116Z-p78653-c0003-reffa-h15ff93","text":"Benchmarking the 1-3 baseline, then evaluating lighter cache keys/transient LRU and static/dynamic scene splitting with correctness receipts.","ts":"2026-07-21T11:19:16.270116Z","v":1}

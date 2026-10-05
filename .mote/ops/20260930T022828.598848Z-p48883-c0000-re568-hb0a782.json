@@ -1,0 +1,1 @@
+{"actor":"stp-finish-20260929","entity":"bd-01M39Q4XG9BHN0NTPTEYECC7RP","kind":"reserve_open","mode":"exclusive","op":"20260930T022828.598848Z-p48883-c0000-re568-hb0a782","paths":["modules/transform/jvm/src/test/scala/scalafim/transform/WriterGoldens.scala"],"reservation_id":"rv-01M3R28NSP8PQ8DC7JSNZ6ERJ8","ts":"2026-09-30T02:28:28.598848Z","ttl_s":7200,"v":2}

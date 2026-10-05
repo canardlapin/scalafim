@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVZQJA0VN8JBVETVM91HXTS","kind":"note","note_kind":"note","op":"20260706T153344.531610Z-p3610-c0000-rc28b-h296a31","text":"Implemented immutable SpatialGraph routing, typed morphism/inverse policy, and JVM+JS regression tests.","ts":"2026-07-06T15:33:44.531610Z","v":1}

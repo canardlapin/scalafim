@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX94K2WBRF31T9WJFRX46D1K","kind":"note","note_kind":"progress","op":"20260722T124031.702470Z-p29360-c0003-r36be-h798786","text":"Making AesSpec the canonical typed storage, collapsing AesEnv to a source-compatible alias, and removing duplicate mapping/env compiler-plan state.","ts":"2026-07-22T12:40:31.702470Z","v":1}

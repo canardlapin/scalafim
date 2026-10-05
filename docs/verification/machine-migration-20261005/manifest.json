@@ -1,0 +1,95 @@
+{
+  "schema": "scalafim-machine-handoff/v1",
+  "date": "2026-10-05",
+  "repository": "canardlapin/scalafim",
+  "authorization": "Owner requested commit and GitHub publication of development work and Motes to move development to another machine.",
+  "code_baseline": "7057a8d5a2d898c1bfb528a28f3f635dda639b8b",
+  "remote_main_before": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+  "ahead_commits_before": 112,
+  "mote_version": "mote 0.1.0",
+  "mote_format_sha256": "df4e9c0f4941230a6d831a031f77a49944806461094c849e49ff270728e274c4",
+  "mote_ops": 23894,
+  "mote_bytes": 10798278,
+  "mote_operation_manifest_sha256": "edece8f95d1f409366bff4186650196463c5310b74f252c1b807190084068967",
+  "open_mote_audit": {
+    "reviewed": 102,
+    "updated": 80,
+    "bodies_refreshed": 47,
+    "unchanged": 22
+  },
+  "migration_refs": 166,
+  "source_custody": {
+    "valid_original_worktrees_checked": 39,
+    "dirty_worktrees": 12,
+    "drift": []
+  },
+  "object_audit": {
+    "new_objects": 11973,
+    "new_blobs": 3788,
+    "largest": [
+      {
+        "bytes": 22079829,
+        "oid": "68c150a20ab5fbb04962f03c866cc50423daec91",
+        "path": "docs/visual-qa/surface-publication-legends/missing-poster.svg"
+      },
+      {
+        "bytes": 22079493,
+        "oid": "ed50e3c7617f94a3ae2767b83ece320647a5764d",
+        "path": "docs/visual-qa/surface-publication-legends/split-poster.svg"
+      },
+      {
+        "bytes": 22078240,
+        "oid": "4a4bd58fe2e000a0b386e7321782750f3a27f9bc",
+        "path": "docs/visual-qa/surface-publication-legends/asymmetric-poster.svg"
+      },
+      {
+        "bytes": 22077545,
+        "oid": "a67e1fdb259db34546566b1129fe17a2a619eecc",
+        "path": "docs/visual-qa/surface-publication-legends/continuous-poster.svg"
+      },
+      {
+        "bytes": 22054543,
+        "oid": "dd90ee278de0c7b00d7ba64c0ef9fbe31c9b7b10",
+        "path": "docs/visual-qa/surface-publication-legends/categorical-poster.svg"
+      },
+      {
+        "bytes": 22052908,
+        "oid": "80ea82baed121249a07c697e1005e880874b27f9",
+        "path": "docs/visual-qa/surface-publication-legends/manual-poster.svg"
+      },
+      {
+        "bytes": 14074653,
+        "oid": "eb7d4d92683be95361c234bf3b7300b328b2c631",
+        "path": "docs/verification/javafx-stock-metal-20260929-evidence.tar.gz"
+      },
+      {
+        "bytes": 8870645,
+        "oid": "8fabd33fcfa88fb922a6eee4844ba9093ea740ee",
+        "path": "docs/verification/model-authoring-seam-review-20261004/source-snapshot.tar.gz"
+      }
+    ],
+    "over_100MiB": 0
+  },
+  "credential_pattern_audit": {
+    "scanned_blobs": 3788,
+    "scanned_bytes": 357368832,
+    "credential_pattern_hits": []
+  },
+  "excluded": [
+    ".mote/local/",
+    ".mote/tmp/",
+    "runtime installations and caches",
+    "historical temporary evidence not already committed"
+  ],
+  "qualification": "Preservation and portable tracker replay; no new scientific, native, performance or release qualification.",
+  "portable_replay": {
+    "staged_store_byte_hashes_exact": true,
+    "all_issue_projections_equal": true,
+    "all_issues": 1274,
+    "nonclosed": 102,
+    "op_files": 23894,
+    "workstation_settings_excluded": true,
+    "empty_local_directories_initialized": true,
+    "doctor_clean": true
+  }
+}

@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWY0Z82P38B7FB3Q9SC34Y75","kind":"note","note_kind":"note","op":"20260707T102030.039202Z-p7245-c0000-r6611-h48c5e7","text":"Committed image dimensional core refactor as b8f5045; verified SBT_OPTS=-Xmx3G sbt imageJVM/test imageJS/test, SBT_OPTS=-Xmx3G sbt compileAll, and cached diff checks.","ts":"2026-07-07T10:20:30.039202Z","v":1}

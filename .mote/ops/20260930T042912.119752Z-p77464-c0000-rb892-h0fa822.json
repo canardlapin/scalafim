@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","entity":"bd-01M24MQABKEBQXW89VZ8XWBB8H","kind":"reserve_open","mode":"exclusive","op":"20260930T042912.119752Z-p77464-c0000-rb892-h0fa822","paths":["docs/verification/p1-execution-2026-09-29/trial-conditional-stage1-final.json.gz"],"reservation_id":"rv-01M3R95QHQ7NWP3875ZD4F1MHP","ts":"2026-09-30T04:29:12.119752Z","ttl_s":3600,"v":2}

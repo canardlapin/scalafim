@@ -1,0 +1,226 @@
+{
+  "worktree": "/private/tmp/scalafim-response-r4-review-20260930",
+  "original_head": "aef31a29c238079de9050fb5fb68643291c3af15",
+  "admin": "/Users/bbuchsbaum/code/scala/scalafim/.git/worktrees/scalafim-response-r4-review-20260930",
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "kind": "symlink",
+      "target": "AGENTS.md"
+    },
+    {
+      "path": "build.sbt",
+      "kind": "file",
+      "bytes": 56544,
+      "sha256": "83a0f8a63710f7082910e8e593b0b8ee447ca7b584fcb55c49e11a14908e8f36"
+    },
+    {
+      "path": "modules/atlas/shared/src/main/scala/scalafim/atlas/AtlasPublication.scala",
+      "kind": "file",
+      "bytes": 53706,
+      "sha256": "656128674a29688dd33292da0e2d1226b426ca39641fe9f59b8620b938a2050b"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FitBlock.scala",
+      "kind": "file",
+      "bytes": 36947,
+      "sha256": "bd040155c807098e1422ab4410afcdc7b19bdcb7120095c1f06676f5ef9f1c31"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/FmriFitResult.scala",
+      "kind": "file",
+      "bytes": 34449,
+      "sha256": "73f35ebdd5d094c937139ad29b1c632438523402e147b085c94ffd2ecb11d8f4"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/ChunkedFitExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 42181,
+      "sha256": "848442545c4ff32bfa4d7a9fec3ae5924007296ed7822b434c527924b8639401"
+    },
+    {
+      "path": "modules/fit/shared/src/test/scala/scalafim/fmri/fit/FitPlanExecutorSuite.scala",
+      "kind": "file",
+      "bytes": 62263,
+      "sha256": "e46c1677697135101e791177c4100941132037b31029486cca0a07120c25f4d1"
+    },
+    {
+      "path": "modules/image/jvm/src/test/resources/scalafim/image/io/nibabel-oblique-slices.tsv",
+      "kind": "file",
+      "bytes": 86173,
+      "sha256": "1b4ecd8e0aad9a63280460e6301ef7bda920bb690e0c0468ab43ce521925dc6f"
+    },
+    {
+      "path": "modules/image/shared/src/main/scala/scalafim/image/Transforms.scala",
+      "kind": "file",
+      "bytes": 34110,
+      "sha256": "cdb4f810d01b143d709cbf1cb0c319dfedd9f0f0e687b64475093342f45b0172"
+    },
+    {
+      "path": "modules/model/shared/src/main/scala/scalafim/fmri/model/FitConfig.scala",
+      "kind": "file",
+      "bytes": 54617,
+      "sha256": "43cae0863055b510be7ef8c47d85a549176abb480718060625b05d2c93040af7"
+    },
+    {
+      "path": "modules/motion/shared/src/main/scala/scalafim/fmri/motion/MotionEstimator.scala",
+      "kind": "file",
+      "bytes": 37102,
+      "sha256": "b8788f8661979948b709e07974585a092e41d10fbc1bd8556fdf0d03dac085e8"
+    },
+    {
+      "path": "modules/mvpa-dataset/shared/src/main/scala/scalafim/fmri/mvpa/dataset/MvpaDatasetView.scala",
+      "kind": "file",
+      "bytes": 41932,
+      "sha256": "3be985a14280b37eee00938b6cee40014cf141aba31213c893f95cb5691f4f0c"
+    },
+    {
+      "path": "modules/spatial/jvm/src/test/resources/scalafim/spatial/neurofunctor-laws/triplets.tsv",
+      "kind": "file",
+      "bytes": 39459,
+      "sha256": "28943e9531f06254544091dba6f843dd4b5d49641b2d0d9aaee121e9fa3ee414"
+    },
+    {
+      "path": "modules/spatial/shared/src/main/scala/scalafim/spatial/Morphism.scala",
+      "kind": "file",
+      "bytes": 35568,
+      "sha256": "82e51efcc559eae644baf48b2f94bdf20e04000467cc0045580fa30c899015c2"
+    },
+    {
+      "path": "modules/spatial/shared/src/test/scala/scalafim/spatial/fixtures/NeurofunctorLawFixtures.scala",
+      "kind": "file",
+      "bytes": 44505,
+      "sha256": "7c5c2b5bb6a350095426563a195d7e7c33777d4512c34646d6c60c8465422035"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceDynamics.scala",
+      "kind": "file",
+      "bytes": 45719,
+      "sha256": "83a44f3cfa7a821444105d05254882377218b1842e62acc36ccef011aaa7a30a"
+    },
+    {
+      "path": "modules/surface-view/shared/src/main/scala/scalafim/surface/view/SurfaceSceneCodec.scala",
+      "kind": "file",
+      "bytes": 39891,
+      "sha256": "d2fd0935981f862d1b8fa7210706cd42c0bd23b9ba82e6dc0e39fad7515db99f"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/resources/scalafim/surface/resampling_oracle/moving_vertices.tsv",
+      "kind": "file",
+      "bytes": 35245,
+      "sha256": "b7b878f1436d68fd87e9034b6db715702ca9b97c60c3930db4e2838af2f80831"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/resources/scalafim/surface/template_sphere_oracle/L_fsLR32k_to_fsLR164k.tsv",
+      "kind": "file",
+      "bytes": 65687,
+      "sha256": "c41446c9e9a62fa73ed8e304287464d2e0a67df8df060a3b8352fd2d07853d3b"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/resources/scalafim/surface/template_sphere_oracle/L_fsLR32k_to_fsaverage164k.tsv",
+      "kind": "file",
+      "bytes": 65670,
+      "sha256": "1e398662e4ddbc45c232fb22822b2540ad6f123caaad73fdba5f26d26be7aebe"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/resources/scalafim/surface/template_sphere_oracle/L_fsaverage164k_to_fsLR32k.tsv",
+      "kind": "file",
+      "bytes": 64969,
+      "sha256": "8ee837783a65d370bf578b72f96950d11359c4817fbb3481c29f63a290e1d639"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/resources/scalafim/surface/template_sphere_oracle/L_fsaverage164k_to_fsaverage10k.tsv",
+      "kind": "file",
+      "bytes": 63886,
+      "sha256": "0cb3fedeca9a37935ba29507be97d5d501dfbbce98556d17c2effd6d5e7ef631"
+    },
+    {
+      "path": "modules/surface/jvm/src/test/resources/scalafim/surface/template_sphere_oracle/R_fsaverage164k_to_fsLR32k.tsv",
+      "kind": "file",
+      "bytes": 65029,
+      "sha256": "357fdc8e3d0b5825295c1b56f2a726027ed74b0ba86bf070520ae26f739d7b24"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/afni_qwarp/affine_WARP.nii",
+      "kind": "file",
+      "bytes": 165088,
+      "sha256": "09cf509584498d8341e0baa7e6fb80a35c53b37013aacf460ab01f7760694848"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/freesurfer_linear/movable.nii",
+      "kind": "file",
+      "bytes": 276832,
+      "sha256": "0f06e9b94d4e70fa40a5e3ec997153c4099e5f54a536c08f0ed7f4d0f8fa5160"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/freesurfer_linear/reference.nii",
+      "kind": "file",
+      "bytes": 717152,
+      "sha256": "999f7796df9d21201accabbb4deed7b329a41b71fbf3401ebf2bb718da13597c"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_jacobian/field_abs.nii.gz",
+      "kind": "file",
+      "bytes": 79195,
+      "sha256": "ee75a77ad4545cd871e4c127507de5e285180e6d5c504cc4e7f752d73016219d"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/fsl_jacobian/source_header.nii.gz",
+      "kind": "file",
+      "bytes": 51345,
+      "sha256": "f9b18b4ff7f7189eb958a193e70f9c966d576761683913291b034913b9a6329b"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/neurotransform/fsl_coef_oracle/manifest.json",
+      "kind": "file",
+      "bytes": 37419,
+      "sha256": "70991fd02d7688423617b04d45e75b773ba0e4db550491be0c0f8b0b2fad6bfa"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/nifti_headers/headers.tsv",
+      "kind": "file",
+      "bytes": 103989,
+      "sha256": "b9401d74acec2e1bf2562d6b9dca35f3bdbcf12747406a5af8f66e9f4e81b325"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/x5/affine_displacements.nodes.txt",
+      "kind": "file",
+      "bytes": 268616,
+      "sha256": "9b66db9b7969e21644a0769d3739ea5eacad853384fe1253add0416838abad7f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/x5/affine_displacements.x5",
+      "kind": "file",
+      "bytes": 266000,
+      "sha256": "3e809142809ab94a996c03aa4bd80a388096026837e86c7f060a692f2a8dc78f"
+    },
+    {
+      "path": "modules/transform/shared/src/test/resources/scalafim/transform/oracle/x5/chain.x5",
+      "kind": "file",
+      "bytes": 34656,
+      "sha256": "47bd7643a51466abca9a7a563de7d9246aa0b99dad1b8d0c43db15742da65b5d"
+    },
+    {
+      "path": "tools/ci/finalize_first_level_release.py",
+      "kind": "file",
+      "bytes": 55451,
+      "sha256": "d9f41209c68a99e5277a8a26d7e4b5cb591a294aff27d48e6928d1f1c77432d3"
+    },
+    {
+      "path": "tools/r-parity/generate_neurofunctor_law_fixtures.R",
+      "kind": "file",
+      "bytes": 33007,
+      "sha256": "7f7553f5ec22d3a87cfbe76f1105d98b3f80e28543cdb291a7440817f6b98a9f"
+    },
+    {
+      "path": "tools/scenarios/validate_manifest.py",
+      "kind": "file",
+      "bytes": 69101,
+      "sha256": "9cf4bb3794c819856eb1aacf1ed5087f671d4bef5e1588873ed7dc9058312340"
+    }
+  ],
+  "tracked_present": 36,
+  "tracked_absent": 2275,
+  "archive_sha256": "2f9502071c9c0c95e5320b19010539c17cab042be6af4f810ab0e8977733a73b",
+  "archive_bytes": 531916
+}

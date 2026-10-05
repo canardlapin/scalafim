@@ -1,0 +1,1 @@
+{"actor":"stp-ingest-tests-20260929","entity":"bd-01M39Q4XG9BHN0NTPTEYECC7RP","kind":"reserve_open","mode":"exclusive","op":"20260930T021038.203077Z-p8558-c0000-rfbde-h670042","paths":["tools/transform/native_writer_acceptance.py"],"reservation_id":"rv-01M3R180FVGPX5C45WEAYBQ5MW","ts":"2026-09-30T02:10:38.203077Z","ttl_s":3600,"v":2}

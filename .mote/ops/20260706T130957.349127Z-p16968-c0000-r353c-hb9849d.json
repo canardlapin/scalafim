@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVR2V9GX876RW0SA4H0EQAW","kind":"note","note_kind":"progress","op":"20260706T130957.349127Z-p16968-c0000-r353c-hb9849d","text":"Added JVM MatrixFileDatasetBackend under dataset/io plus backend contract and builder-created OLS fit tests using a concrete matrix file fixture.","ts":"2026-07-06T13:09:57.349127Z","v":1}

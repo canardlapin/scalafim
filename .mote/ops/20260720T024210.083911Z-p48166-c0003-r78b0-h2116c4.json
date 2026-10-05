@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KXYJMPFS7X726WC82SKKKEED","kind":"note","note_kind":"progress","op":"20260720T024210.083911Z-p48166-c0003-r78b0-h2116c4","text":"Starting dense carrier migration with the clean AR module slice: replace DoubleMatrix with Gale DMat and use DMatBuilder for whitening and ACF hot construction.","ts":"2026-07-20T02:42:10.083911Z","v":1}

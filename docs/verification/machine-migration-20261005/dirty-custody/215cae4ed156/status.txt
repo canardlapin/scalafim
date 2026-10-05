@@ -1,0 +1,5 @@
+?? .agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-final.log.meta.json
+?? .agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-rerun.log.meta.json
+?? .agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-retry.log.meta.json
+?? .agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js.log.meta.json
+?? .agent-work/review_graphics/sf7-trialwise-plan.md

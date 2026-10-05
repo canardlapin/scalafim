@@ -1,0 +1,1 @@
+{"actor":"exec-atlas","entity":"bd-01M2BAAYDG9CJRD60YF01MG3B3","kind":"reserve_open","mode":"exclusive","op":"20260929T224102.952710Z-p53277-c0000-rb483-h1edabb","paths":["modules/atlas/shared/src/test/scala/scalafim/atlas/AtlasCoverageSuite.scala"],"reservation_id":"rv-01M3QN87Z868TAG582J632F810","ts":"2026-09-29T22:41:02.952710Z","ttl_s":3600,"v":2}

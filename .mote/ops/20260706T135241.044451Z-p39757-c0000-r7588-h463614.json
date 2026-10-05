@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVTTMBXJ2NFKX7FD33GVEJJ","kind":"note","note_kind":"progress","op":"20260706T135241.044451Z-p39757-c0000-r7588-h463614","text":"Documented the initial scalafim-atlas module and the JVM FileAtlasStore, AtlasLabelMaps, SchaeferLoader, and GlasserLoader surface. Full examples remain open.","ts":"2026-07-06T13:52:41.044451Z","v":1}

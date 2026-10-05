@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVT4FE5FG15CPYZN7Q7C3Q9","kind":"note","note_kind":"note","op":"20260706T133716.850837Z-p29088-c0000-rcc04-hea38f7","text":"Aggregate compile/test restored. Fixed atlas Scala 3 compile blockers and verified with sbt compileAll testAll.","ts":"2026-07-06T13:37:16.850837Z","v":1}

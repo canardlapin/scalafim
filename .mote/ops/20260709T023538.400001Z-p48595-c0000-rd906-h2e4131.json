@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KX2BC9761HZ3E2M3AWSHREHY","kind":"note","note_kind":"note","op":"20260709T023538.400001Z-p48595-c0000-rd906-h2e4131","text":"Archive open-path dispatch now uses an ordered codec-family registry and remains green on JVM/JS latent tests.","ts":"2026-07-09T02:35:38.400001Z","v":1}

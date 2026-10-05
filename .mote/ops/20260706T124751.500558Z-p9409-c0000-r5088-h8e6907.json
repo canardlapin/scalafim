@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KWVQAD0J2EGWFQYTZ81J2HNS","kind":"reserve_open","mode":"exclusive","op":"20260706T124751.500558Z-p9409-c0000-r5088-h8e6907","paths":["build.sbt","modules/fit","modules/model","modules/linalg","README.md","docs/ecosystem-port.md"],"reservation_id":"rv-01KWVQGZPCV7VHFH77GKXWCDEA","ts":"2026-07-06T12:47:51.500558Z","ttl_s":3600,"v":1}

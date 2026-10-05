@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim-image-native","entity":"bd-01M0QG2V4EYWQE7G4G4GA6JFFV","kind":"reserve_open","mode":"exclusive","op":"20260823T151253.778065Z-p80466-c0000-r1633-h6d0c8f","paths":["modules/image/shared/src/main/scala/scalafim/image/NativeImageIngress.scala"],"reservation_id":"rv-01M0QJX20H94220EGQFDFG31AT","ts":"2026-08-23T15:12:53.778065Z","ttl_s":3600,"v":1}

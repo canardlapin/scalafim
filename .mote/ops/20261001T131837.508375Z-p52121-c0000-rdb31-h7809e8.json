@@ -1,0 +1,1 @@
+{"actor":"phrf-claude-20260929","entity":"bd-01M3VSVVE466AR8BBX1SK8FC2J","kind":"create","op":"20261001T131837.508375Z-p52121-c0000-rdb31-h7809e8","set":{"body":"Per pilot-runner design v2.1 (9c80d20f) §6.","priority":1,"status":"open","title":"PHRF-CMP S1: phrf-comparison module skeleton + strict npz/npy reader + manifest binding"},"ts":"2026-10-01T13:18:37.508375Z","v":1}

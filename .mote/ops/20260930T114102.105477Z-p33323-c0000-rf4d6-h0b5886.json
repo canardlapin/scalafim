@@ -1,0 +1,1 @@
+{"actor":"stp-finish-20260929","entity":"bd-01M39Q462V4Z0MZVN98F40KRWD","kind":"reserve_open","mode":"exclusive","op":"20260930T114102.105477Z-p33323-c0000-rf4d6-h0b5886","paths":["modules/fit/shared/src/test/scala/scalafim/fmri/fit/ImageMapsSuite.scala"],"reservation_id":"rv-01M3S1WE8SK7D0HWXEKQE4F2C6","ts":"2026-09-30T11:41:02.105477Z","ttl_s":3600,"v":2}

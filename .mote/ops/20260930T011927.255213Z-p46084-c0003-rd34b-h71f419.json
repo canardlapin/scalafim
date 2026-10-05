@@ -1,0 +1,1 @@
+{"actor":"stp-finish-20260929","entity":"bd-01M39Q4XG9BHN0NTPTEYECC7RP","kind":"note","note_kind":"progress","op":"20260930T011927.255213Z-p46084-c0003-rd34b-h71f419","text":"Repair missing native CLI acceptance path; cached Docker images now respond. Preserve pending status until native commands pass, and verify freshness rejection.","ts":"2026-09-30T01:19:27.255213Z","v":1}

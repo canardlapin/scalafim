@@ -1,0 +1,1 @@
+{"actor":"exec-orchestrator","entity":"bd-01M2DF9F9D49JMWGJ2N4YT2K88","kind":"reserve_open","mode":"exclusive","op":"20260930T002101.824248Z-p55463-c0000-r2627-h03d57a","paths":["modules/first-level-laws/shared/src/test/scala/scalafim/fmri/laws/profile/TrialBandedSuite.scala"],"reservation_id":"rv-01M3QTZA80BBKHNKWMK7S5YN31","ts":"2026-09-30T00:21:01.824248Z","ttl_s":3600,"v":2}

@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KY85Y6DWJ24ZER1JEV467M4T","kind":"note","note_kind":"progress","op":"20260723T201646.476777Z-p86186-c0003-r188d-h023ad6","text":"Implementing checked zero-copy DatasetRun views, multi-run expansion, run-local selection translation, coordinate selection, and checked windows.","ts":"2026-07-23T20:16:46.476777Z","v":1}

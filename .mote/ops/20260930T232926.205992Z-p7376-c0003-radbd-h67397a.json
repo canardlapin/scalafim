@@ -1,0 +1,1 @@
+{"actor":"atlas-metrics-20260930","entity":"bd-01M3RY7ZZW811AAS8DWR9CVDTQ","kind":"note","note_kind":"progress","op":"20260930T232926.205992Z-p7376-c0003-radbd-h67397a","text":"Implement typed continuous expansion and versioned Float64 scalar metric persistence; preserve prior atlas and unrelated edits.","ts":"2026-09-30T23:29:26.205992Z","v":1}

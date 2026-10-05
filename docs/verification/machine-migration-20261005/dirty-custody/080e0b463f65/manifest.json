@@ -1,0 +1,1697 @@
+{
+  "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeB",
+  "head": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+  "branch": null,
+  "files": [
+    {
+      "path": "build.sbt",
+      "kind": "file",
+      "bytes": 56155,
+      "sha256": "05c559c79afea6b46a0265d0969565f35606a4bff6e312c8a1ae4be7e4b82e78"
+    },
+    {
+      "path": "build.sbt.rej",
+      "kind": "file",
+      "bytes": 7748,
+      "sha256": "97ad4c3c222ae5ddd5e89fa5f9c86bd6bc76790e646511333f5e46d6e4ed3005"
+    },
+    {
+      "path": "modules/ar/shared/src/main/scala/scalafim/fmri/ar/WhiteningPlan.scala",
+      "kind": "file",
+      "bytes": 11854,
+      "sha256": "a0d887e7cf81dce3541fa8af34c5bf511542a0c146217a761f0b2d111649ee49"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/RidgeLss.scala",
+      "kind": "file",
+      "bytes": 9609,
+      "sha256": "cf1e82ddd699f4c02af7924185bdfd427d6024b95f4a1e84954064af125d5440"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/BlockExecutor.scala",
+      "kind": "file",
+      "bytes": 4487,
+      "sha256": "67e245dd339ee3b8ee9cfa6c8d10e0765b8d431d8072fbfc25a541a7b27fa9ce"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CompactCondition.scala",
+      "kind": "file",
+      "bytes": 12466,
+      "sha256": "a079bd7733d258b25d1967da9a83c788a85eda5815e7ef23eeb7c0f64c5483e6"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ConditionProfileFit.scala",
+      "kind": "file",
+      "bytes": 9199,
+      "sha256": "bd40d92969b87d7e0ec5327c7f47d28e23eb956f9695b8281cc43fbd1dfc33e1"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/CriterionJet.scala",
+      "kind": "file",
+      "bytes": 9758,
+      "sha256": "96722c1a6d368697f5278ad1e4441300d3549dc2b6af11c4da937a88cd72a480"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ObservedFamilyCertification.scala",
+      "kind": "file",
+      "bytes": 21155,
+      "sha256": "7e2e82b43e0b6438115c56bc447699aecf93d5e9bc310711d4b9ea856ab0263f"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/OutputRequest.scala",
+      "kind": "file",
+      "bytes": 6900,
+      "sha256": "090265aea06b15566b1f8247cb83f726fa3614bf9170334d48e05d3b09983a90"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfFit.scala",
+      "kind": "file",
+      "bytes": 58704,
+      "sha256": "a6f9f45383049e1880f0b421169d2935e7b0b78fbca7bf9859592bdf8d07dc5f"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileHrfTrialOutputs.scala",
+      "kind": "file",
+      "bytes": 21942,
+      "sha256": "14f58088dea914161f20ac306f519f8166dc0bea7ed4ec8c63d34708a3afaccf"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/ProfileTrialReadout.scala",
+      "kind": "file",
+      "bytes": 19991,
+      "sha256": "252579663bab1537f7d9f8e160f31e2417ebc69c813344a4630cbc5c40d89135"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBanded.scala",
+      "kind": "file",
+      "bytes": 65654,
+      "sha256": "75b46dc057d264c9bef3f094a3f7fbd32ab41c35a966979ccdc5ac538444861e"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialBandedMlBackend.scala",
+      "kind": "file",
+      "bytes": 19810,
+      "sha256": "fc830f619200a8a975e1e5db848176d1c049f86cf1900259fcdc6971f6899636"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConditionalSolve.scala",
+      "kind": "file",
+      "bytes": 26486,
+      "sha256": "aed9244fb7f3384cf81829b5dfe6f451dfcf613053da7276811a0910f28ca5bc"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialConstrainedLogDetJet.scala",
+      "kind": "file",
+      "bytes": 19895,
+      "sha256": "32bcc75848be6631ef860e015bc134269a9382a85f0a7e622cde885a283e4ec2"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialHeldOutPrediction.scala",
+      "kind": "file",
+      "bytes": 3416,
+      "sha256": "17fca2cb616b997f32c15aa7f7ebde16d1c02ac8b35e8be555466503b8a2a297"
+    },
+    {
+      "path": "modules/fit/shared/src/main/scala/scalafim/fmri/fit/profile/TrialMlObjective.scala",
+      "kind": "file",
+      "bytes": 13856,
+      "sha256": "f2b6c6aab9a9192b42ee31aa69463d1395b67597b7dae10ae30152e2d66b35f1"
+    },
+    {
+      "path": "modules/model/shared/src/main/scala/scalafim/fmri/model/ProfileHrfPlan.scala",
+      "kind": "file",
+      "bytes": 9882,
+      "sha256": "30c90cd631ca9e3c3cc79ac6c7167b9b4f6e27ccb9038b0caa00d12628aefdaa"
+    },
+    {
+      "path": "modules/phrf-comparison/README.md",
+      "kind": "file",
+      "bytes": 5554,
+      "sha256": "a271e5dd665b9ac7d4399893d5551f651b5ae28c5bd526adaa294dd2a1f429d1"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/main/scala/scalafim/phrfcmp/ingest/PhrfDatasetLoader.scala",
+      "kind": "file",
+      "bytes": 839,
+      "sha256": "4787e5f888a1fba5880e590b07eda22ac3136fdad8c0e65efecb490b319c96f2"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/resources/fixtures/C-TX-.5__d0000.manifest.json",
+      "kind": "file",
+      "bytes": 5088,
+      "sha256": "456eaf0596e547714d5a63a45fba783b479e6d024ba963b518cf2da7340a5f2e"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/resources/fixtures/C-TX-.5__d0000.npz",
+      "kind": "file",
+      "bytes": 95634,
+      "sha256": "d189c7f6b8ad300fbd4ebae5d76af1d61b9192125a0ff10c36aac780d7ba3c2f"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/resources/fixtures/T-TX-fast__d0000.manifest.json",
+      "kind": "file",
+      "bytes": 5857,
+      "sha256": "de482360521791d600370cf2ba4bbc0942a6e01822a2a57f89bdcbe9dbbd67fa"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/resources/fixtures/T-TX-fast__d0000.npz",
+      "kind": "file",
+      "bytes": 205648,
+      "sha256": "3b5cb36b65bc5ef8d30455b9522d74a0982014f651fcda513e9812123d86cd0f"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/ingest/RealGeneratorSuite.scala",
+      "kind": "file",
+      "bytes": 7576,
+      "sha256": "bcfe9a47b25a8630a7cb691a1d822c6fab27de9ea134e2e3389c9a71ca63d963"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/prep/RealGeneratorPrepSuite.scala",
+      "kind": "file",
+      "bytes": 5184,
+      "sha256": "fb770f87368d0961db37f5474c09d3f3f3f1713f3b60f51f5c91bc676b07d5b8"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/prep/RhoBiasHeavySuite.scala",
+      "kind": "file",
+      "bytes": 5976,
+      "sha256": "e1df2d93f2156a414ebf4803d5ab75d5b7b6fbacff802a6c6e0531535830028d"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/prep/S11WhiteningParitySuite.scala",
+      "kind": "file",
+      "bytes": 3398,
+      "sha256": "0cc51f59115d8ee27191f91c2a83ce1b3e2d52fed5f60a65419f8c2b5e212751"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/run/PhrfTrialRealSuite.scala",
+      "kind": "file",
+      "bytes": 7447,
+      "sha256": "2e5bf4eb9b6fa887be69380a78c6fee2c0c80a382d0d98053454dcce539a0939"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/run/S11ConditionParitySuite.scala",
+      "kind": "file",
+      "bytes": 6087,
+      "sha256": "74208716c1e4bec975933f5e445c646996b41384a5d1a1908f11559d444866d0"
+    },
+    {
+      "path": "modules/phrf-comparison/jvm/src/test/scala/scalafim/phrfcmp/run/S11TrialParitySuite.scala",
+      "kind": "file",
+      "bytes": 8106,
+      "sha256": "ceb640a1a5eb43eabdf6956785c36f49cb635923976a68efbc18bc7c07c3e88d"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/ingest/Digests.scala",
+      "kind": "file",
+      "bytes": 4113,
+      "sha256": "902f5a1144461dab1487dc79b74ec5d65c098078ea91812f45a94f70d7359751"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/ingest/Npz.scala",
+      "kind": "file",
+      "bytes": 13450,
+      "sha256": "585c24ae28a1f575db3b909df16b5fa644cf4ecb5791ac5cdc5d37725c41955f"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/ingest/PhrfDatasetBinding.scala",
+      "kind": "file",
+      "bytes": 11794,
+      "sha256": "e3c3c3738a587ba4cb2ee36ae4273829671c09ad8b5f0c8c48005010150b85e5"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/ingest/Records.scala",
+      "kind": "file",
+      "bytes": 6517,
+      "sha256": "3d847a42fdfec5ea676010b0651d40b28fadda07943c4f041763ba81c5146a14"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/ingest/Seeds.scala",
+      "kind": "file",
+      "bytes": 4446,
+      "sha256": "b645e1839135d65ee9b82dbd7071018c6b9625951f605ef05ad9bf59a35e1515"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/CommonPreparation.scala",
+      "kind": "file",
+      "bytes": 5438,
+      "sha256": "6c5745e8aeda27f9f5fe6fd1e5f3a99f6d9dc0d73b729e5b9a6e1e959812aacd"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/CommonWhitening.scala",
+      "kind": "file",
+      "bytes": 5336,
+      "sha256": "4b1b988e074a29f4984ffb2ca7d0ef3106fd382a7e15218ce7d95f7177de37da"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/FirPrefit.scala",
+      "kind": "file",
+      "bytes": 18305,
+      "sha256": "e729df62bad70f34b5c17e3e81a0b0c10608ebd969868427b98b68515b275dbe"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/Linear.scala",
+      "kind": "file",
+      "bytes": 2414,
+      "sha256": "b3a0ff9ce681e7b4cd47c1bf58306d0cee7df10120f681f75a79aa928edc2ea8"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/Nuisance.scala",
+      "kind": "file",
+      "bytes": 4395,
+      "sha256": "8739ce954035f4b2cb59f64d99642d11a474397995216d3b6813352e6f90e750"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/PrepRefusal.scala",
+      "kind": "file",
+      "bytes": 2477,
+      "sha256": "18446be5abfe2e5466c6b57f7bf710160b8f5fdc4505b127ec2bdaba1a0e9d09"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/prep/Sigma2.scala",
+      "kind": "file",
+      "bytes": 1866,
+      "sha256": "f5b630ed9c21811caab5e6877142ac48f0debe0fdbc8901534c15025e203a6c7"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/AlphaGrid.scala",
+      "kind": "file",
+      "bytes": 2269,
+      "sha256": "7110a1b4f7199ce69e626e39cd933c80ee4ad116e5f8239cacb7e1c64ccea528"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/ConditionAdapter.scala",
+      "kind": "file",
+      "bytes": 2844,
+      "sha256": "7aacfd6205946735ca122fb4956bf9659ea4ea285ff593bd18e9ce2328e6979b"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/ConditionArms.scala",
+      "kind": "file",
+      "bytes": 10100,
+      "sha256": "6203d69b269f09c29b2500127dcce15b26e4e4e5b810c503bb49817fac419672"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/ConditionRunner.scala",
+      "kind": "file",
+      "bytes": 17255,
+      "sha256": "90e205de49085a3f12bdfde58c3f45777ca5ba0a0fc72007b7fca8e7d3df1a93"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/DfMapping.scala",
+      "kind": "file",
+      "bytes": 12517,
+      "sha256": "a130264f2f5d3479f75744ff8d38a3408c403567126d938044049b94d2c2460f"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/Lorocv.scala",
+      "kind": "file",
+      "bytes": 12613,
+      "sha256": "982a1bedd67d3d2babb28216e2db5a860609b7b8bf783d9a89407c2f6fba8dc9"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/PhrfCanProbe.scala",
+      "kind": "file",
+      "bytes": 7868,
+      "sha256": "d07e589eff4a102c6be27b7c549c27469534f1bd4323a7612917f8591cfb237c"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/PhrfEdf.scala",
+      "kind": "file",
+      "bytes": 5989,
+      "sha256": "5520c7b308872968eeaf2e55c290abf65abbbf6feac7906ea82709cb7ac6deae"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/PhrfPenaltyScale.scala",
+      "kind": "file",
+      "bytes": 6189,
+      "sha256": "67f94a27d0434aef215370f715d0fb8c9f5c93cb6646b7d559fd01667da9e322"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/PhrfTrialAssembly.scala",
+      "kind": "file",
+      "bytes": 16028,
+      "sha256": "ed1017d1e51fb93b9d9646e65bd6014aead8306ea00b40a381512f6f70aa1182"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/PhrfTrialRunner.scala",
+      "kind": "file",
+      "bytes": 22504,
+      "sha256": "868d411859f7d32e538a5c27a0c7416ce3e7f4e43f75188a9acfd386d8258370"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/PhrfTrialTuning.scala",
+      "kind": "file",
+      "bytes": 11000,
+      "sha256": "84509ed4f6210ca7d1fbf72eb6d93e28b163dc9225a367050453c953aa3d8b6c"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/run/TrialNativeRunner.scala",
+      "kind": "file",
+      "bytes": 24801,
+      "sha256": "04b8f21ed3404aa772cf87d92539438023911d279614946970de6f13cf82aeb0"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Aggregator.scala",
+      "kind": "file",
+      "bytes": 8275,
+      "sha256": "64a23013213a3da60b76c17039b55aeae28bda1bc74e8a788451d48d7f239af0"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Centred.scala",
+      "kind": "file",
+      "bytes": 1835,
+      "sha256": "59673fc31ee2ef06ee3741782fe7cc06e518f394da158550f1c8d4b5a86764ba"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Dist.scala",
+      "kind": "file",
+      "bytes": 4728,
+      "sha256": "3ad41899e979306b53e107770f67b34f8eba635671f1e7a1b0a316f290a8156c"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/EResp.scala",
+      "kind": "file",
+      "bytes": 7585,
+      "sha256": "2496cb809482d2ffe2793f38af03be8e61f0906f14a6b18a4222b83519e0d2a1"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Endpoints.scala",
+      "kind": "file",
+      "bytes": 6158,
+      "sha256": "a1ab6b6de27333461b55ba8d469e488ad3e63d1970a5bdf78e807cc58438d362"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/GatingPair.scala",
+      "kind": "file",
+      "bytes": 2406,
+      "sha256": "4eb684489696901b7341e929869d30c165fd267e4db512f099e91b9095380ac4"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Icc.scala",
+      "kind": "file",
+      "bytes": 2142,
+      "sha256": "c59c9fc80f9285528a62945a98682434a0f050b31d993065855729103a4dabd6"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Imputation.scala",
+      "kind": "file",
+      "bytes": 2227,
+      "sha256": "bc0dad6b162d4ccd116a43f0f8fdafaa1f32952a8bf153760ed184c0fac3f21b"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Inputs.scala",
+      "kind": "file",
+      "bytes": 15013,
+      "sha256": "6170b0302abadc30b846ff33a636e630a40ce40c8b9c9821b962152ac9262c14"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/SafeMessage.scala",
+      "kind": "file",
+      "bytes": 4137,
+      "sha256": "05336d63a3d10f788b267d7f445e84c20c09f30ace6b0947b8712e4ed625d524"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/main/scala/scalafim/phrfcmp/score/Whitelist.scala",
+      "kind": "file",
+      "bytes": 5357,
+      "sha256": "f71b1b3f92ec69d7b00ae33e73ce3c018c08088c582c0bdcfa3927e41057f68f"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/BindingSuite.scala",
+      "kind": "file",
+      "bytes": 9828,
+      "sha256": "c6caa90df69ab1ebea397b4ff2d68a269ea8841b9eebe07df3b9458a1108b28e"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/GoldenBytes.scala",
+      "kind": "file",
+      "bytes": 2048,
+      "sha256": "57b43a932882dc7dd79bd26c57963daa77e13c94f8c4893993e759a35d664b01"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/NpzSuite.scala",
+      "kind": "file",
+      "bytes": 9552,
+      "sha256": "6bb2c7d2d15e72c0e3206041c34e84fc62aa41eb526304649b8491c381ef951f"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/PhrfTrialSynth.scala",
+      "kind": "file",
+      "bytes": 5138,
+      "sha256": "75084c34e8e5b91b664784981ffd775e244900a603460d853a42b47daa4475e4"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/SeedsSuite.scala",
+      "kind": "file",
+      "bytes": 1622,
+      "sha256": "1eab21f4da58d5dde0068131ae88b613547fe8ead57719a8f25090c529891aff"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/Synthetic.scala",
+      "kind": "file",
+      "bytes": 4220,
+      "sha256": "c3db61f4b19456e4258f12947d4f0cac80086116a3cbeb420111c9d077255470"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/ingest/TestSupport.scala",
+      "kind": "file",
+      "bytes": 4655,
+      "sha256": "5acc72d66bb6283fde1bdb0011d25ddf3c9da710ba1d1a9db194ab6b5bb2a242"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/prep/CommonPreparationSuite.scala",
+      "kind": "file",
+      "bytes": 15113,
+      "sha256": "7979fd8c1a0b449038087757f5f4a674bd7280ccf7995d1b25707c274d787834"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/prep/PrepSynth.scala",
+      "kind": "file",
+      "bytes": 6870,
+      "sha256": "93a308b7b64448bf4ff1640eaa476855af913977d97947adc62448215d7df8d2"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/AlphaGridSuite.scala",
+      "kind": "file",
+      "bytes": 1470,
+      "sha256": "b8e2c7f4f17c4b74864c21384b777a05108ff9ed5488753c160f01fdbd2d4bcd"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/ConditionAdapterSuite.scala",
+      "kind": "file",
+      "bytes": 4838,
+      "sha256": "04e82057ffb6e51aeee543e469e09ac76b4950682ceac84fffcf494a66810b9d"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/ConditionSynth.scala",
+      "kind": "file",
+      "bytes": 5706,
+      "sha256": "3803eb751c6296719f95d0f4b8ad51f8ac3fca15dfc175f0d9405c511a42cc7d"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/DfMappingSuite.scala",
+      "kind": "file",
+      "bytes": 15499,
+      "sha256": "9843e4ea44779eea6d8d817b47f7e0aa31c9e78f6dd041a5f1691261f6b2a0d5"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/JointEdf.scala",
+      "kind": "file",
+      "bytes": 1926,
+      "sha256": "e336e7d9cb77ebe76a4d6838f89c515f6170c545900daa93c38f35cd5e759230"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/LorocvSuite.scala",
+      "kind": "file",
+      "bytes": 7495,
+      "sha256": "0344eed82898861b3c52e8d7c72f411f3b4b6638f9165086a4ddc1a27949d464"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/PhrfConditionSuite.scala",
+      "kind": "file",
+      "bytes": 20012,
+      "sha256": "2b080685b2accc5c99eb8be587197b5ab749ba9d8cd4882b244b9e29cbb078cb"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/PhrfTrialBandedSuite.scala",
+      "kind": "file",
+      "bytes": 10428,
+      "sha256": "a338db0cdebf995b7718caa1426df45e8a68505c35630d45f26d37dc9fb64d0a"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/PhrfTrialSuite.scala",
+      "kind": "file",
+      "bytes": 19679,
+      "sha256": "95c29e82f6ab9e76f16066f1808100404b5f41600a2775096ad546718e407450"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/PhrfTrialTheorySuite.scala",
+      "kind": "file",
+      "bytes": 25516,
+      "sha256": "01bd64786f3445c3615822022c5546caa22493d76e8b462efb7cd3ff0e0630bc"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/TrialNativeRunnerSuite.scala",
+      "kind": "file",
+      "bytes": 20473,
+      "sha256": "a5fe5ada6d68b043fb81925a70372b0ba58e00e6f91f4655ae7b070ca61ac9ae"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/run/TrialSynth.scala",
+      "kind": "file",
+      "bytes": 3644,
+      "sha256": "0f950d4e145fc97633e3567885f49d48566663674d3f565157f2f22f3e96655e"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/score/DistIccSuite.scala",
+      "kind": "file",
+      "bytes": 3447,
+      "sha256": "e486c9c2f517dace8166b9200b025565486f54d49ea2d976a45cb373b251879d"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/score/ERespSuite.scala",
+      "kind": "file",
+      "bytes": 5434,
+      "sha256": "82ccd0b3f0d16605a89f9f32cdafab66beecc796f7c4753e8748f74a67b3584d"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/score/FollowUpSuite.scala",
+      "kind": "file",
+      "bytes": 12693,
+      "sha256": "164c64c762b7b5ad04fe37910d47f3af88faca277b5d8cf5d8e50a61eb9d8228"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/score/ImputationEndpointsSuite.scala",
+      "kind": "file",
+      "bytes": 4745,
+      "sha256": "3e465823028ec96b268270d4ec1b5596768051006b38cf5046ac6ea6b5bb68d2"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/score/ScoreSynth.scala",
+      "kind": "file",
+      "bytes": 8053,
+      "sha256": "d69a9e899ca769f2341ddf2a81ae014ea7254d6517c46e685f5a77bba2a70df2"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/score/WhitelistAggregatorSuite.scala",
+      "kind": "file",
+      "bytes": 16302,
+      "sha256": "13fc0707eaf31697fe7334c99551cccf2ca11105de10f70e0f8ee94053d3aceb"
+    },
+    {
+      "path": "modules/phrf-comparison/shared/src/test/scala/scalafim/phrfcmp/typing/FitInputsSuite.scala",
+      "kind": "file",
+      "bytes": 2078,
+      "sha256": "b68c0d2c39c620e09b0bd93dd008fc889617b79b9883303197122fe503f63821"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/__init__.py",
+      "kind": "file",
+      "bytes": 100,
+      "sha256": "9f286ef1842fbf2890bf8890f6bfcf37eaf73ca0d9b945ae211d1e7891e8f275"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/__main__.py",
+      "kind": "file",
+      "bytes": 52,
+      "sha256": "13a1a5b340cdcfc1902b62be90e508c7c71886000d5bf087e7854aadf09fb35e"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/checkout.py",
+      "kind": "file",
+      "bytes": 9032,
+      "sha256": "cbc88af7d8bd8d67ac4b07f61b367740d4af41ecb43b6e09a68586f78b4b3726"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/cli.py",
+      "kind": "file",
+      "bytes": 10811,
+      "sha256": "eadd5dd906610f85ccfbfd4d90a438cd0318e8d2bb0fa149691a7b661104250b"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/drand.py",
+      "kind": "file",
+      "bytes": 6152,
+      "sha256": "c4992f5ad75d64e8aadf783a29073732bd3891ec5f15455d9a6c904afb3b8eea"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/log.py",
+      "kind": "file",
+      "bytes": 6169,
+      "sha256": "49592f8bdbc9c729d5825593328530f28b452349d91a82715dfceed7751101ab"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/root.py",
+      "kind": "file",
+      "bytes": 2568,
+      "sha256": "643ef880b5288261a49a1500adb5b3f211336307e3b37e0bf6421a1cbdbacce6"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/seal.py",
+      "kind": "file",
+      "bytes": 18247,
+      "sha256": "7eb063e4a389b6ae7a9519ff1200b628320db2d193b1d765a7a772243f75a5d9"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/secret.py",
+      "kind": "file",
+      "bytes": 2221,
+      "sha256": "a8c0e0c689fd69333331e8f0a3b48a8e1e5ff47e84c9af6c0ce3cbec5a9f9e8b"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/session.py",
+      "kind": "file",
+      "bytes": 16038,
+      "sha256": "de4a13a12234b9b57b956a03724f9262f8c5b9b7b171796323f50c13bd3277ad"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/v0.py",
+      "kind": "file",
+      "bytes": 3056,
+      "sha256": "2d281d4e8303fcef99a2bdf44c60b264a5e5181fa87d458aea634e488d2af58c"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/phrf_custody/whitelist.py",
+      "kind": "file",
+      "bytes": 7197,
+      "sha256": "d910bca3d267fcc3f162b732aa53665a955c8b448cddc10c57cfc4950e376d67"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/pytest.ini",
+      "kind": "file",
+      "bytes": 27,
+      "sha256": "c809c969ec7e11b9ff37784e9c6fcc0b7c5148d168e18b05aed797e03fbd6ead"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/requirements.lock",
+      "kind": "file",
+      "bytes": 263,
+      "sha256": "17b9df69cb0eee264027d880a3bae05362e341436a8f072ae458ae5dc1c8f6c3"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/conftest.py",
+      "kind": "file",
+      "bytes": 410,
+      "sha256": "0d5163b3e0ef3db37e9c4b875007c085cccfe909d623090f792652c4677da0ac"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/fixtures/drand_default_round_1000000.json",
+      "kind": "file",
+      "bytes": 533,
+      "sha256": "d109b86eb036e586ea179e29d906810076fcd467d3e866a823fcb717a69eb453"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/fixtures/sealed_format_vectors.json",
+      "kind": "file",
+      "bytes": 20746,
+      "sha256": "c449fe2d70548f27e4b0f1284e89bd6ba41a930132f4e1d18bd9154c17836797"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_checkout.py",
+      "kind": "file",
+      "bytes": 6456,
+      "sha256": "5489c747fcccf3dedbef2bdc7ff653528bced8cb936034baa4baec60aa23c8be"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_cli.py",
+      "kind": "file",
+      "bytes": 2183,
+      "sha256": "126b33d8e0b1170918906f813ba1f63b0a9cb868d27792242ed9440f47e2ab90"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_drand_root.py",
+      "kind": "file",
+      "bytes": 6369,
+      "sha256": "1fec87bdbeafef0b4eddebe33872da07841981c8ea84d7fbf80845ac9e598df0"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_kats.py",
+      "kind": "file",
+      "bytes": 2409,
+      "sha256": "9867565ea584dd6c06628fe4ea2a7a1728ef03cabfadfa2adb1c2ace75fdb3dc"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_round3.py",
+      "kind": "file",
+      "bytes": 18015,
+      "sha256": "2f54153e0f9bcf251c1c4fa05688c346349845835ece8c72d6c06036e26e2b48"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_round4.py",
+      "kind": "file",
+      "bytes": 11275,
+      "sha256": "a7763e5733b5386d9bdac9b7b0e4a7b6cd0a8938f4dc05af34669a2c7d76c6e3"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_round5.py",
+      "kind": "file",
+      "bytes": 12735,
+      "sha256": "87f16f964960a1c772da11f3c7c9b74eeba4999db9addf1b8a365d9307b6f2a8"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_round6.py",
+      "kind": "file",
+      "bytes": 5530,
+      "sha256": "3b3a977636d8bf68f87e8f12bd5183be9ea13a42d3efcb0fd77f55a378911589"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_seal.py",
+      "kind": "file",
+      "bytes": 9907,
+      "sha256": "f83cf45b494333007ffd776a34cb22d7d2fe7c22853723d520a1debb6d02ade4"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_secret_session.py",
+      "kind": "file",
+      "bytes": 13544,
+      "sha256": "c6941351c038164ebc2efdc831dbcbbebc51277ee37d3a975980e1338c500a45"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_vectors.py",
+      "kind": "file",
+      "bytes": 1528,
+      "sha256": "14d3ea5c8f7a60174366f2242644a2e816c7a49aea928c73f432edd1be970d0e"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/test_whitelist_log.py",
+      "kind": "file",
+      "bytes": 8206,
+      "sha256": "cf0575070fbe017de56acc4802761ff1a4a64d4a9f8b91d230c610c71724999f"
+    },
+    {
+      "path": "tools/phrf-comparison/custody/tests/vectors.py",
+      "kind": "file",
+      "bytes": 3020,
+      "sha256": "2be98461ac329a95a56d155f10a264209460fe6a74bc2efe5d9735b8fe2464ff"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/.gitignore",
+      "kind": "file",
+      "bytes": 34,
+      "sha256": "c30f9bc45238a2e6624722bb4ef666e23f8823fcc9f3bc4fc5277723185fa701"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/SCHEMA.md",
+      "kind": "file",
+      "bytes": 3427,
+      "sha256": "97f4f90a7c6d5bf99f33173df5a2fa0f0e9fea1111184183efe67b5aec377150"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/__init__.py",
+      "kind": "file",
+      "bytes": 21,
+      "sha256": "0acc4d4cc1fb5fdb9f7fff73958d76e476e6af24cb8353fbe59d59dd30c370ed"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/__main__.py",
+      "kind": "file",
+      "bytes": 1127,
+      "sha256": "da335b285a62c017ba7b2fd0a5727df38bd05787641d93cef987b58e2a9139c9"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/cells.py",
+      "kind": "file",
+      "bytes": 2577,
+      "sha256": "3b2695ac26573619f765651aa8021e8dd05e5a7826d612985e1535edfb2d1ca9"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/generate.py",
+      "kind": "file",
+      "bytes": 11157,
+      "sha256": "e173435e6476be46733c026640e55c7e8e5c51813f020247af8194c07b8eea25"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/io.py",
+      "kind": "file",
+      "bytes": 2795,
+      "sha256": "026f26836b5f56bf3caccc6845c8db14ac7be196bf0573eb116c54128790ec7e"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/kernels.py",
+      "kind": "file",
+      "bytes": 6476,
+      "sha256": "0fe4a187a7d603e7e0aa7b46fc2a12b2da19f851e91ee5607e5cf3af1a3c1d43"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/phrf_gen/seeds.py",
+      "kind": "file",
+      "bytes": 2647,
+      "sha256": "c306e56b2e7156162defb7a3ac23efa971759544f45ac27f02906d6ef1130a53"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/pytest.ini",
+      "kind": "file",
+      "bytes": 27,
+      "sha256": "c809c969ec7e11b9ff37784e9c6fcc0b7c5148d168e18b05aed797e03fbd6ead"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/requirements.lock",
+      "kind": "file",
+      "bytes": 58,
+      "sha256": "2bb284c928a1e97e8125006b3fdf628a17cc7157cde079083e312a512047e8ca"
+    },
+    {
+      "path": "tools/phrf-comparison/generator/tests/test_generator.py",
+      "kind": "file",
+      "bytes": 13407,
+      "sha256": "93f3e25d7b637a633891f8f38efbe93c4fe370ed6a87151136a04484a59c7cff"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/.gitignore",
+      "kind": "file",
+      "bytes": 37,
+      "sha256": "f3ac3a824c171369023a8f30c193e0fd26835ff6835e60e030cd2e85ed42a1f8"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/confirm_unseen.py",
+      "kind": "file",
+      "bytes": 3445,
+      "sha256": "d82dc5c6f6973aaf609a85753b417b3c1d9960267da7684f8b3ce2810484e40f"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/converter/from_generator_converter.json",
+      "kind": "file",
+      "bytes": 5879,
+      "sha256": "dd3295900165e8bd2f9190ed992c0da53223957de03483c474bd99275a25a631"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/converter/run_receipt.py",
+      "kind": "file",
+      "bytes": 2343,
+      "sha256": "3188d6c6b5f1f5934d5f1d333f0ef1e4643b6604f3ed44d54c9d320443ddb86e"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/converter/test_from_generator.py",
+      "kind": "file",
+      "bytes": 26910,
+      "sha256": "1c688bd983ee82fbf0c28284aaa86e21729b0c5072f3f916d9243fddd9cab9fa"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/environment.freeze.txt",
+      "kind": "file",
+      "bytes": 579,
+      "sha256": "fe81de5ffee2e5ae4be3776d987454125af2e659be51d0a24e224a5a83ac719a"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/example_parity.py",
+      "kind": "file",
+      "bytes": 2723,
+      "sha256": "189c23aca347ede531cfa503847f66892aadaf6cb873a36f7b7a99aeff365605"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/from_generator.py",
+      "kind": "file",
+      "bytes": 22297,
+      "sha256": "c5a8c0dcdbf9320978b0e794f8b4ff04524c6c0ef9e3731eb9fdcf9506eb89ac"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/gate_checks.py",
+      "kind": "file",
+      "bytes": 18364,
+      "sha256": "232a28e31c66c6fc58d3128fa7328fd4bc902bb8a1ada5a9b0efc90b62b61ea6"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/pinned_commit.txt",
+      "kind": "file",
+      "bytes": 41,
+      "sha256": "a3964316a252740fb17f75b1a640210a17251f7480c33c9c273e4a9da69f38c9"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/precision_bound.py",
+      "kind": "file",
+      "bytes": 3612,
+      "sha256": "d49b9a129b372a01194c66caa5ffd308f3f71657cfc955a2e19ab9e4b68d58ac"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/precision_parity.py",
+      "kind": "file",
+      "bytes": 4585,
+      "sha256": "0bf9be6035d981a429ba78cda9fc3675c375a187e1ff482f8bdff341d6bcf42c"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/requirements.lock",
+      "kind": "file",
+      "bytes": 68986,
+      "sha256": "383160e9b5a5fbf87a88cee2a72f4f2e5c29a8c474c0d4e6739329d99536e3ac"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/example1_parity.json",
+      "kind": "file",
+      "bytes": 1294,
+      "sha256": "2230c2db5c69b2534a5d3b1fae00c0c1ba0e0af502f2676f507f3fd09fcf5647"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/float32_floor.json",
+      "kind": "file",
+      "bytes": 1208,
+      "sha256": "9180bc2d7440301f53a7d4f57a80d60f96f2ac53e3a34bc541d9f868136112dc"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/lownoise_snr100_independent.json",
+      "kind": "file",
+      "bytes": 1081,
+      "sha256": "71193682b9c7c4ac60267da80859e83d7407cc4fe042226d71492bf4986daaf9"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/lownoise_snr100_repeat.json",
+      "kind": "file",
+      "bytes": 1063,
+      "sha256": "c7a9ba8c9ffddb0a2920e8b0d7bec44fc1c917f044ad3e616fc89816b7bc3910"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/noisefree_CD.json",
+      "kind": "file",
+      "bytes": 170,
+      "sha256": "c162b0f250ed648cae619ea3d10d4f21a4de05cb96b4e4af2931a9c2cac18a18"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/precision_bound_frozen.json",
+      "kind": "file",
+      "bytes": 845,
+      "sha256": "c2b9e01f17e2d4e35f59e1d74c7e7a1e595484ddca645a9e9205cfc02c21088d"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/precision_parity.json",
+      "kind": "file",
+      "bytes": 2633,
+      "sha256": "1fb8dd92c2850d2ecfbf04101e2da29b6f59117285951fe96a6da61557cbea27"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/runtime_200_4000_fast_thr1.json",
+      "kind": "file",
+      "bytes": 266,
+      "sha256": "18952d74b59feb5c6c81772d0a4f840aeb9f0051796395a43c05b19adc756946"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/runtime_40_20000_fast_thr1.json",
+      "kind": "file",
+      "bytes": 278,
+      "sha256": "9cb62ec034983581a447ad60dab050070232f2dab4dfb454cecf028768d93495"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/runtime_40_4000_fast_thr1.json",
+      "kind": "file",
+      "bytes": 276,
+      "sha256": "1c788cf37b3a412b5f19c0f2eecd6975342ab03d91d8cb7d30ad0befd3b3a386"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/runtime_40_4000_fast_thrNone.json",
+      "kind": "file",
+      "bytes": 271,
+      "sha256": "5365f6a7998182a83b3a63612a1ad454e716218b117a5aa6716d919e414d70d5"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/runtime_40_4000_slow_thr1.json",
+      "kind": "file",
+      "bytes": 269,
+      "sha256": "987eb8a3fbf0aa8189a9e29b166a288f5c9b5acb97b835cd669db2cb7ba4dd71"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/units_and_norm.json",
+      "kind": "file",
+      "bytes": 856,
+      "sha256": "b29ddebab55be42edb394bb4ebf11e5d30d51be26ee3ae44dc5c1fa7b502d312"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/unseen_design_confirmation.json",
+      "kind": "file",
+      "bytes": 12372,
+      "sha256": "467d729314c7c5f51e4b4e6e744b4beedd4dda32d556f288fa60153ef474029c"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/unseen_design_plan.json",
+      "kind": "file",
+      "bytes": 938,
+      "sha256": "dd43393c37cc8430e5ad6e7f33470a95b2ddffcf59664e366c93af31a0b42a10"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/results/wrapper.json",
+      "kind": "file",
+      "bytes": 387,
+      "sha256": "df2366e4e9ded9f45b71c0ccb7c0870c0d453e8daee2fcc61ce123dc503e7fad"
+    },
+    {
+      "path": "tools/phrf-comparison/glmsingle/run_glmsingle.py",
+      "kind": "file",
+      "bytes": 9378,
+      "sha256": "499e81d9e632e10dd87c97d9ad300c1361c41c8e103dbd5e638183996961916f"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/MANIFEST.json",
+      "kind": "file",
+      "bytes": 10398,
+      "sha256": "a1fc75c0583e9802a1a0e07e8932c17cb7b4877135ff17eb3924b4bbf506777f"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/MANIFEST.sha256",
+      "kind": "file",
+      "bytes": 9444,
+      "sha256": "358f3925ff813044e61eb90166b70c64bcd721f9a2787706dd82ae1c49c5860c"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/X_can.csv",
+      "kind": "file",
+      "bytes": 74699,
+      "sha256": "37eca3379e313ee110aff2f24e78c983f57fe00b6ab8ad11fa4ef0b07635cfb1"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/X_fir.csv",
+      "kind": "file",
+      "bytes": 157473,
+      "sha256": "cc59149282b38e6d23f662d2911df32cf9f728edcbe420319f2c957831c8a1a1"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/X_inf3.csv",
+      "kind": "file",
+      "bytes": 125237,
+      "sha256": "c7738d862f18e5980c62be15187985756a8d00ff538a960a9f177fd8cfa2cdfc"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/Y.csv",
+      "kind": "file",
+      "bytes": 48078,
+      "sha256": "6a65f74bcbe3fb6cae35b82cba201956355f088741b06f3bdcbaa76b5cb76fad"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/Y_white.csv",
+      "kind": "file",
+      "bytes": 48492,
+      "sha256": "927bbcb621b4241f7b4adfa6d26e3b14dacf650a661399e1ec3b330c4c7b89b6"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/beta_can.csv",
+      "kind": "file",
+      "bytes": 152,
+      "sha256": "75f731b5e3235f3c4ed24efbce554489d113e977eb3501588462e8beb5dcb34b"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/beta_fir.csv",
+      "kind": "file",
+      "bytes": 5041,
+      "sha256": "52123b2fde118a45c8caca46c1454e7a078e5711b157b25fa1fc724e774f26ed"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/beta_inf3.csv",
+      "kind": "file",
+      "bytes": 460,
+      "sha256": "2b1640b448e9ce44a9ea4a4f6af2edfbdca75db6389731df8e888c07b4e45b10"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/eresp_can.csv",
+      "kind": "file",
+      "bytes": 17207,
+      "sha256": "945f665467db6254fd8f7e2b0d3baf8ca05c7bb5cd12ea0674101547703c21e0"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/eresp_fir.csv",
+      "kind": "file",
+      "bytes": 16661,
+      "sha256": "cbf86c4891c5f74470908be9aa32aef7f761f6fed731bc731092dc6088705114"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/eresp_inf3.csv",
+      "kind": "file",
+      "bytes": 17239,
+      "sha256": "b124821db39223618aab0ec679b023fd8b7f70f9c6585b3d84cadfe7b3aaeb55"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/events.csv",
+      "kind": "file",
+      "bytes": 984,
+      "sha256": "781293869ec949a79404ccaa2c44d12a254d077f263b72e79d13e0614ffe66af"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/Y_white.csv",
+      "kind": "file",
+      "bytes": 48491,
+      "sha256": "360f89e523c06716b6047acb4ad4338ee3cf3191356fbb75e677d46e22c76e8d"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/beta_can.csv",
+      "kind": "file",
+      "bytes": 152,
+      "sha256": "38d7ddea37ba934c1e4b971f8e77c7d3bb35fff01c5227e314f8c5401ec0d296"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/beta_fir.csv",
+      "kind": "file",
+      "bytes": 5038,
+      "sha256": "35abc5fdd4933df85fd01db11cbdad5f70af1c1810de502749aa5758ed8eabf0"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/beta_inf3.csv",
+      "kind": "file",
+      "bytes": 459,
+      "sha256": "260578fa88ebd658ad25ccb61a7c2ce766dbb786c8cb6b5189c517a8edf9fe5c"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/eresp_can.csv",
+      "kind": "file",
+      "bytes": 17216,
+      "sha256": "465b6c36d5f14471394cec6513e070cdde03f983570bf507a3ecd96adb70cb1a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/eresp_fir.csv",
+      "kind": "file",
+      "bytes": 16649,
+      "sha256": "b989e74609708783bb57494379fb6c59c15242ca43914e8b204a09b732407c1e"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/identity_first/eresp_inf3.csv",
+      "kind": "file",
+      "bytes": 17245,
+      "sha256": "4c7c894dddc1441b0e45b46a213826c841cf59cff11bc633bc8760d4056ff256"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/kernel_can.csv",
+      "kind": "file",
+      "bytes": 3440,
+      "sha256": "a70fc4bec34f1349cbb2f2d292e280641230afd5d812887a81a97c2b22fad68a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/kernel_fir.csv",
+      "kind": "file",
+      "bytes": 8982,
+      "sha256": "9ef49f92ecfef033b53b6f291b4abbcebf3a8fef001517b49bc86ffbecbd101a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond/kernel_inf3.csv",
+      "kind": "file",
+      "bytes": 9221,
+      "sha256": "4f713dfa0840b959fece6f138806d7e61da0427fc1e14ed5563de50dd4756038"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/X_can.csv",
+      "kind": "file",
+      "bytes": 71274,
+      "sha256": "c0e3a077dc040876c80cb7cfcc11896e811799440ad2a8bf1f45403cc2f27e0a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/X_fir.csv",
+      "kind": "file",
+      "bytes": 156256,
+      "sha256": "20016319a7d63a54c66eed5c59f4d74a3171b5c31d9b0726acd2dbc8767e064d"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/X_inf3.csv",
+      "kind": "file",
+      "bytes": 114442,
+      "sha256": "cbf365b365c7b194e97e8bdcac36d30f1d21f76f0b1ed513170f167f91747047"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/Y.csv",
+      "kind": "file",
+      "bytes": 48167,
+      "sha256": "84fed809e294b68b6c435321eeab6aa533f21a6d97a30e1ed7d972f8f06107ca"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/Y_white.csv",
+      "kind": "file",
+      "bytes": 48515,
+      "sha256": "b17bc81e1ad41c07ea16755eacbaeaaaa9f298034bc515c96806971ebc4b6ea6"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/beta_can.csv",
+      "kind": "file",
+      "bytes": 151,
+      "sha256": "0a92dd4adb0573b757e686feee6dd07d9e36e03aee45adeb03c801285b31fdfd"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/beta_fir.csv",
+      "kind": "file",
+      "bytes": 5066,
+      "sha256": "08aa67a8dc325de163c5119135fae15e2d1db6fef7ab34dfb0cbed1b071612f1"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/beta_inf3.csv",
+      "kind": "file",
+      "bytes": 463,
+      "sha256": "5edba1cd4c6dfbb2f504f5197165edfd3149acffa9f4ea67fbf2d699be3c309a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/eresp_can.csv",
+      "kind": "file",
+      "bytes": 17221,
+      "sha256": "2d8c6e2cf85a1bdacc10db4bf4587b0833f17e034aaede964832a2c9ed8e1b01"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/eresp_fir.csv",
+      "kind": "file",
+      "bytes": 16761,
+      "sha256": "81707a32d148714fab0446159e8a82272acd01799ba0ff198bb1c0a7a02627cb"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/eresp_inf3.csv",
+      "kind": "file",
+      "bytes": 17246,
+      "sha256": "eb1e2925033701355060e1cab70ffedf06805382a1f67b1aebda2dbaae0328b1"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/events.csv",
+      "kind": "file",
+      "bytes": 976,
+      "sha256": "6e126e31ba1cd0160950d9fb531a366f220dd5cb35e22fb1abba7b1f1cf36267"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/Y_white.csv",
+      "kind": "file",
+      "bytes": 48516,
+      "sha256": "7436e8ad481022324519fe6d72099260844815643c36c05c1f1a5ec5087cfabd"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/beta_can.csv",
+      "kind": "file",
+      "bytes": 151,
+      "sha256": "1aa18a565cf54f4c43dc9297ea7a07dd443bc2ebb146ccbbcd198b0597123fd7"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/beta_fir.csv",
+      "kind": "file",
+      "bytes": 5065,
+      "sha256": "6bf2736681b9c4c2dd734805bff3596234965ee6d287da7dd9a2b3edbde1867f"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/beta_inf3.csv",
+      "kind": "file",
+      "bytes": 462,
+      "sha256": "65b9862b1d809a5cebfd407428722cde3cf0eaa52fb39b38a1b83b4826cf58bb"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/eresp_can.csv",
+      "kind": "file",
+      "bytes": 17211,
+      "sha256": "2cdff12222005f50c5084cda739a87082d0005ac32c55a97f433935e723b1b64"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/eresp_fir.csv",
+      "kind": "file",
+      "bytes": 16757,
+      "sha256": "f722823b20f3da3e77b6b3f77a8d00f043ddcdca7fa13add1787aea2656e3d55"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/identity_first/eresp_inf3.csv",
+      "kind": "file",
+      "bytes": 17247,
+      "sha256": "33d38fc13d2b36e4e807657a01aeda0f3fa22730cc6eca982ab1d5ddad05294f"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/kernel_can.csv",
+      "kind": "file",
+      "bytes": 3440,
+      "sha256": "a70fc4bec34f1349cbb2f2d292e280641230afd5d812887a81a97c2b22fad68a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/kernel_fir.csv",
+      "kind": "file",
+      "bytes": 8982,
+      "sha256": "9ef49f92ecfef033b53b6f291b4abbcebf3a8fef001517b49bc86ffbecbd101a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/cond_close/kernel_inf3.csv",
+      "kind": "file",
+      "bytes": 9221,
+      "sha256": "4f713dfa0840b959fece6f138806d7e61da0427fc1e14ed5563de50dd4756038"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/meta.json",
+      "kind": "file",
+      "bytes": 20717,
+      "sha256": "7b64ee262333c409e8d396459ea4852974611d243f25105f30d3bb3d8fdbf169"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/F.csv",
+      "kind": "file",
+      "bytes": 25458,
+      "sha256": "6ec101edfba429291e92ac81b4188ab56a6b4b5c5c2b022daaf57f85717e9cc5"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/F_white.csv",
+      "kind": "file",
+      "bytes": 27966,
+      "sha256": "d3e8680f44b19eb54c0f3434c88cb8fe241752ddb2d0f2e3fb867de96b887ca8"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/X_trial.csv",
+      "kind": "file",
+      "bytes": 49717,
+      "sha256": "74cd075af663fad1a1553ba283e037a4e74a6479fde8fe890a2db9285ebf46f5"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/X_trial_white.csv",
+      "kind": "file",
+      "bytes": 50668,
+      "sha256": "74c78117a3ffed68e6d639bded02447a053794434464d13de88827f733125edd"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/Y.csv",
+      "kind": "file",
+      "bytes": 36573,
+      "sha256": "f7b9348abe177097616830cc946263babb245d9792405e8de940c73ca245843c"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/Y_white.csv",
+      "kind": "file",
+      "bytes": 36638,
+      "sha256": "f44eb251de76e7ac803d9836677a08ca15068981b56acfc2261492cdd6993f62"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/beta_lsa.csv",
+      "kind": "file",
+      "bytes": 3134,
+      "sha256": "7cf546cf62c95ba7771c877db6f6fbdfff52967917a6d37f223f80110b3ca646"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/beta_lss.csv",
+      "kind": "file",
+      "bytes": 3127,
+      "sha256": "667afc68b898e4e03638a83dac0a739bcd6e79dbe73c21f362a11c08a86bee14"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/df_edf_grid.csv",
+      "kind": "file",
+      "bytes": 515,
+      "sha256": "4956fe574ce14fd26067507ed42500e586576d261a72739c4e3943cca21fdb3a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/df_inverse.csv",
+      "kind": "file",
+      "bytes": 362,
+      "sha256": "f5647374cb8432414010144e34d2b20d6f94a92313ab2bb11cd71ea383c8a9c2"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/df_q.csv",
+      "kind": "file",
+      "bytes": 944,
+      "sha256": "4a53361244857af0196abb834774ef7dde9db576d2e18306c18005a67cac84ce"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/F_white.csv",
+      "kind": "file",
+      "bytes": 27915,
+      "sha256": "67cdb5c86fb7265fb9308d0b7a63bfa66e80ba8d6f463a648da43fe0713fe3a8"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/X_trial_white.csv",
+      "kind": "file",
+      "bytes": 50668,
+      "sha256": "74c78117a3ffed68e6d639bded02447a053794434464d13de88827f733125edd"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/Y_white.csv",
+      "kind": "file",
+      "bytes": 36640,
+      "sha256": "8022f6fa0ffb345685cc425eac806e8503e9b4e87fcd91c6aa5d30a975476e18"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/beta_lsa.csv",
+      "kind": "file",
+      "bytes": 3132,
+      "sha256": "9f0deef5c9d12ac90180aebf9830eb1bb2690d0af7e86c68213038241270747a"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/beta_lss.csv",
+      "kind": "file",
+      "bytes": 3126,
+      "sha256": "82100a118b98338ce32d00b6956862f31a5a792aa48db3201996c7f56bc6064c"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/df_edf_grid.csv",
+      "kind": "file",
+      "bytes": 501,
+      "sha256": "98a2ecc5b65df172528259e795db553224a3454a6f58236aa24df72581c15aab"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/df_inverse.csv",
+      "kind": "file",
+      "bytes": 363,
+      "sha256": "c49ca8e636d0f6d8f4d9d830d0a8f874f12ad950e44761aaa660edbb741f5588"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/df_q.csv",
+      "kind": "file",
+      "bytes": 944,
+      "sha256": "eca20775f4762f5246c60496fc5beb7576f5fca32eda52f8e075b7e74721aea2"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/rlss_amp.csv",
+      "kind": "file",
+      "bytes": 19047,
+      "sha256": "d90ff476d40258a8db0f901d4dbe764f8afec40c2005ae9569813e8a5ecbc9d2"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/rlss_delta.csv",
+      "kind": "file",
+      "bytes": 19970,
+      "sha256": "f3a51c499c0553cb53f66c8dc022902cbd3b9ddfc8f805eea407b318d9cb84ff"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/rlss_lss_equivalent.csv",
+      "kind": "file",
+      "bytes": 3129,
+      "sha256": "e7a7b160c478afc0bed5e46d626494b3a8c8638c4c55bd28ba30802d0c6a5e4e"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/identity_first/rlss_ridges.csv",
+      "kind": "file",
+      "bytes": 281,
+      "sha256": "490cee24bd0d940423927f7609fbb7b65c81cb3bcae916dc95baea2f8f4f3e75"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/rlss_amp.csv",
+      "kind": "file",
+      "bytes": 19045,
+      "sha256": "eb3a9de98d3c26ad6082ae41b1064d2d6297ff5f5e65d976775adf2560fe21de"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/rlss_delta.csv",
+      "kind": "file",
+      "bytes": 19961,
+      "sha256": "37a9a66779d930c407dbfdd6b9c1938b6cecf95dff088e9bcd8068b0ceb9a9ca"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/rlss_lss_equivalent.csv",
+      "kind": "file",
+      "bytes": 3124,
+      "sha256": "5cc541b04dc1fdffef4a1640aafd518bb448a1cbbc9230b2f9b23ca399805c7e"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/rlss_ridges.csv",
+      "kind": "file",
+      "bytes": 280,
+      "sha256": "e44772dc78a58da6bbd10715bc5a35e29a39b2b68182b79423c6fd780cc94620"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/ts/trials.csv",
+      "kind": "file",
+      "bytes": 444,
+      "sha256": "721f64d71fe75ad00725719dfb45bd5c05dbc6d32cf8e8d6c3dceab333817ab1"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/F.csv",
+      "kind": "file",
+      "bytes": 25458,
+      "sha256": "6ec101edfba429291e92ac81b4188ab56a6b4b5c5c2b022daaf57f85717e9cc5"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/F_white.csv",
+      "kind": "file",
+      "bytes": 27966,
+      "sha256": "d3e8680f44b19eb54c0f3434c88cb8fe241752ddb2d0f2e3fb867de96b887ca8"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/X_trial.csv",
+      "kind": "file",
+      "bytes": 49633,
+      "sha256": "aed9afe2a8bafff7f115d8081172e791f0246ee3332a771a975bd3891745b08c"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/X_trial_white.csv",
+      "kind": "file",
+      "bytes": 50527,
+      "sha256": "f4b3cb58aaf155b274cdba9b47c060f6307f7a9aed698cc7da5d33b6d65c04e5"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/Y.csv",
+      "kind": "file",
+      "bytes": 36564,
+      "sha256": "5a89ceb2d6e1f0178452dbf304b9fb48208a0ce7b3271fc577df00fb81875e5b"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/Y_white.csv",
+      "kind": "file",
+      "bytes": 36706,
+      "sha256": "18001453a0a156cdabae1b5ff05ba204f47c6f07c04ee2667ff1401367b7dc7b"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/beta_lsa.csv",
+      "kind": "file",
+      "bytes": 3125,
+      "sha256": "1d797367ace12c0f61190f9097a1cdfd5612395139c3e1761ee9de0bee50efcb"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/beta_lss.csv",
+      "kind": "file",
+      "bytes": 3107,
+      "sha256": "08ac668e28cdd874a8d7d28b9d85d42f729da764c0cd0d879c2ba8ecf06ef2a2"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/df_edf_grid.csv",
+      "kind": "file",
+      "bytes": 519,
+      "sha256": "a20ac0070fbb5178559f4ea9684712a572a88f3f2ab072c47055200a1ea3cb97"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/df_inverse.csv",
+      "kind": "file",
+      "bytes": 362,
+      "sha256": "06f09dd6dc5b48412bcd40d87b326d657b5bedb43578792fd87ad3890598e729"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/df_q.csv",
+      "kind": "file",
+      "bytes": 942,
+      "sha256": "513233d2103a3b2d7a0b9394f94803cae539e95547d0f70a22031d8694204794"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/F_white.csv",
+      "kind": "file",
+      "bytes": 27915,
+      "sha256": "67cdb5c86fb7265fb9308d0b7a63bfa66e80ba8d6f463a648da43fe0713fe3a8"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/X_trial_white.csv",
+      "kind": "file",
+      "bytes": 50527,
+      "sha256": "f4b3cb58aaf155b274cdba9b47c060f6307f7a9aed698cc7da5d33b6d65c04e5"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/Y_white.csv",
+      "kind": "file",
+      "bytes": 36704,
+      "sha256": "b088f823208af97e3585a86b279f86630ae89fe19bdeba61d1353af48b46dcf5"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/beta_lsa.csv",
+      "kind": "file",
+      "bytes": 3125,
+      "sha256": "732c8c72a93c71bdda8fdd8a86dccd0381d8e6e24ae34a947e3fb36cebdbb3c9"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/beta_lss.csv",
+      "kind": "file",
+      "bytes": 3114,
+      "sha256": "b984d9f1225a3b1dc992947623eb269045f9eef6d24e5254049f931fe8e18fa3"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/df_edf_grid.csv",
+      "kind": "file",
+      "bytes": 500,
+      "sha256": "17430f5265a927673ee96c7afb605d9448f4e8abbf646a0fa60280f4dd7d5c30"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/df_inverse.csv",
+      "kind": "file",
+      "bytes": 364,
+      "sha256": "9dbad8c6f348df26e64b1121b9825e8c4d6766a9ddab10a4b3a1b4db5c10f20f"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/df_q.csv",
+      "kind": "file",
+      "bytes": 939,
+      "sha256": "34a5f042ebc0c6858060353269ddc80697c16c77f24ba996e10cc91e04fc1ecc"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/rlss_amp.csv",
+      "kind": "file",
+      "bytes": 19043,
+      "sha256": "3b06387554bb031d769079b25b9cfa44c43ca6a44e0cf1b434be585414048fc3"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/rlss_delta.csv",
+      "kind": "file",
+      "bytes": 19948,
+      "sha256": "6e8b20c77ca5dc1f4ad1a3911b7c3f626741f8c87bdf0a5cf2ac62206131ce60"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/rlss_lss_equivalent.csv",
+      "kind": "file",
+      "bytes": 3113,
+      "sha256": "7baa6ee56b02e195d3337eadbabdc9fce008ece730b3eafb950a9914ebf48997"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/identity_first/rlss_ridges.csv",
+      "kind": "file",
+      "bytes": 281,
+      "sha256": "fbbaa1c9bd6c8a38a431a4d304ba14e3fc02822c1146f9027d443409d3d2ca03"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/rlss_amp.csv",
+      "kind": "file",
+      "bytes": 19036,
+      "sha256": "716f6dfcd3d001517c20d9a8e063a854d384aad2cd7e3bf2d86901dc1c5d6f25"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/rlss_delta.csv",
+      "kind": "file",
+      "bytes": 19942,
+      "sha256": "8dcf0cda973bc2b67429fa23b2dcbd2712adf60f81dd6cd37f854285f8c3492b"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/rlss_lss_equivalent.csv",
+      "kind": "file",
+      "bytes": 3119,
+      "sha256": "76b38f906a272c233464e662ac442f299bfcf6ad0265f944930da48435daac6c"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/rlss_ridges.csv",
+      "kind": "file",
+      "bytes": 281,
+      "sha256": "72a17dfc9e8dde5b20ae49ad782c2881337b23ee30d326a18d67530436726887"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/fixtures/trial/tx/trials.csv",
+      "kind": "file",
+      "bytes": 384,
+      "sha256": "e8a2192a390f0802eb2a22876029dfc8710ecd95dd5154deeff5957261f8f73d"
+    },
+    {
+      "path": "tools/phrf-comparison/parity/generate_parity_fixtures.R",
+      "kind": "file",
+      "bytes": 26530,
+      "sha256": "3bbd23ba3d4fd84c09bcb52601829e15e646de443ea664edc99b45da3fda404e"
+    },
+    {
+      "path": "tools/phrf-comparison/spike/.gitignore",
+      "kind": "file",
+      "bytes": 12,
+      "sha256": "b9de25b6451bc3685c6ddd073509b1252258f56529dd8f8c466cd78dddbbbb79"
+    },
+    {
+      "path": "tools/phrf-comparison/spike/export_flat.py",
+      "kind": "file",
+      "bytes": 766,
+      "sha256": "b89c7f538a650d8ae3655c5f8d91563dd4e0a71cd28b48e19cb4818745b515ad"
+    },
+    {
+      "path": "tools/phrf-comparison/spike/results/s0-smoke-log.txt",
+      "kind": "file",
+      "bytes": 4573,
+      "sha256": "a96c30f638c7956d0601cdadac48789f24537d3a4720ca99187e320dee9e2077"
+    },
+    {
+      "path": "tools/phrf-comparison/tx_gate/.gitignore",
+      "kind": "file",
+      "bytes": 28,
+      "sha256": "a51104264729e7b362ea8c739de0ada29ba6e4f6047580ec3a3fd330ad20fd47"
+    },
+    {
+      "path": "tools/phrf-comparison/tx_gate/receipt.json",
+      "kind": "file",
+      "bytes": 3113,
+      "sha256": "ff56fcd9336143a1fdd6f54726adde27c5c2c59c12defb23780e13e48d18e8c6"
+    },
+    {
+      "path": "tools/phrf-comparison/tx_gate/receipt_distances.csv",
+      "kind": "file",
+      "bytes": 102428,
+      "sha256": "3f414554aaeb60f4753283092207fc52252d37a6859b0563b191b889d58d84f7"
+    },
+    {
+      "path": "tools/phrf-comparison/tx_gate/test_tx_gate.py",
+      "kind": "file",
+      "bytes": 2493,
+      "sha256": "f5b522954a93cae89a1bb94a17e7b4f907437e978c379b4862480233d9678ce4"
+    },
+    {
+      "path": "tools/phrf-comparison/tx_gate/tx_gate.py",
+      "kind": "file",
+      "bytes": 8944,
+      "sha256": "b7cd6f953fffd0fcc67b27118ed507f39e82fa518fb967e652f206b10f4f4c97"
+    }
+  ],
+  "archive_sha256": "481255d3dd164def52cfc4c4d92eded45e37f5844de9d562904bf3acd862e300",
+  "archive_bytes": 1227669,
+  "custody_verified": true,
+  "changed_since_capture": []
+}

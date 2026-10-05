@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KYAA8KS1B9F0D6SZ00GCRESJ","kind":"reserve_open","mode":"exclusive","op":"20260726T232108.289184Z-p27584-c0000-r2ae2-ha53b59","paths":["modules/latent/shared/src/test/scala/scalafim/latent/ResponseArchiveMigrationBaselineSuite.scala"],"reservation_id":"rv-01KYGBPXY1GS7CHCK6VJWHVQSP","ts":"2026-07-26T23:21:08.289184Z","ttl_s":3600,"v":1}

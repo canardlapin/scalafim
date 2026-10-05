@@ -1,0 +1,1 @@
+{"actor":"codex-scalafim","entity":"bd-01KYAA8KS1B9F0D6SZ00GCRESJ","kind":"reserve_open","mode":"exclusive","op":"20260726T233136.499896Z-p33300-c0000-r8152-h41952f","paths":["modules/image/shared/src/test/scala/scalafim/image/CatsEffectSharedBoundarySuite.scala"],"reservation_id":"rv-01KYGCA3DKTY3M28ZNJW624MDP","ts":"2026-07-26T23:31:36.499896Z","ttl_s":3600,"v":1}

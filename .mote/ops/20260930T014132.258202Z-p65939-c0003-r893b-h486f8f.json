@@ -1,0 +1,1 @@
+{"actor":"nifti-identity-20260929","entity":"bd-01M3GGKMX4MH9PYPZ2MKANM7W5","kind":"note","note_kind":"progress","op":"20260930T014132.258202Z-p65939-c0003-r893b-h486f8f","text":"Identity-bearing NIfTI public readers and header space; evidence regressions in clear NiftiSpaceEvidenceSuite, avoiding exec-io's NiftiSuite reservation.","ts":"2026-09-30T01:41:32.258202Z","v":1}
