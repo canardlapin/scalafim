@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-02T19:45:55.286281+00:00",
+  "finished_utc": "2026-10-02T19:45:56.290290+00:00",
+  "duration_seconds": 1.00388,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "designJVM/test",
+    "designJS/test"
+  ],
+  "cwd": "/private/tmp/scalafim-model-studio-20261002",
+  "log": "/private/tmp/scalafim-model-studio-20261002/.agent-work/bd-01M3YZSYTNY6GP4KHJA8QAZ87M/design-jvm-js-final.log",
+  "exit_code": 1,
+  "child_returncode": 1,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 900.0,
+  "log_bytes": 1507
+}
