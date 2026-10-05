@@ -1,8 +1,5 @@
 {
   "review": "Independent read-only scientific seam review",
-  "status": "superseded",
-  "superseded_by": "docs/verification/model-authoring-seam-review-20261004/review.json",
-  "supersession_reason": "Fresh independent review of frozen current sources and expanded numerical scope; original verdict and source hashes retained as historical evidence.",
   "verdict": "bounded pass",
   "scope": [
     "Global transform Z = Xscaled A = Xraw D^-1 A, effective HRFs, scale reset, original-basis identity rejection",

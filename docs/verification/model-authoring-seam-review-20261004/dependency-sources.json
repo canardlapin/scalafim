@@ -1,0 +1,95 @@
+{
+  "captured_at": "2026-10-04T12:03:46.170296+00:00",
+  "repositories": [
+    {
+      "name": "locus4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/05a8f1a231c171f1bca0/locus4s",
+      "head": "58c9739be51345ad9adc4bc9c9e7335023254ec9",
+      "dirty_paths": []
+    },
+    {
+      "name": "alder",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/2f5b3675f2cf2c4e96c3/alder",
+      "head": "c56a6b17989e77bdab8d57220fe3299fe9348e30",
+      "dirty_paths": []
+    },
+    {
+      "name": "zarr4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/34c0071f90095ef07887/zarr4s",
+      "head": "2a5ba963b151b62c739d1bf5a19d49202bb6ff29",
+      "dirty_paths": []
+    },
+    {
+      "name": "intaglio",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/34fcacf7027b8ae3b2f8/intaglio",
+      "head": "596b398af380079e4b251535230d0bc03cd88c51",
+      "dirty_paths": []
+    },
+    {
+      "name": "resample4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/3f5d01c7e6069e74a205/resample4s",
+      "head": "6bc4172a966c92f1b06811eac64ac2bada9fef9b",
+      "dirty_paths": []
+    },
+    {
+      "name": "image4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/41e96dde036f148f012a/image4s",
+      "head": "26a74ad99b9ee49a9555344e19b82d69a2ba50e4",
+      "dirty_paths": []
+    },
+    {
+      "name": "gale",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/449715b8ebc2010e6e23/gale",
+      "head": "18d24dbb5056122032b0278f8bad557a9bb1cf23",
+      "dirty_paths": []
+    },
+    {
+      "name": "ravel",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/57a292f3a6ded9e259cf/ravel",
+      "head": "9c5669399ab8e2a11402e71973dd5f1e2f2c13f4",
+      "dirty_paths": []
+    },
+    {
+      "name": "gale",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/5a90f48e170e9e640ee1/gale",
+      "head": "099832ff15c8a4a8fcf3398c7b779fb4bbc12434",
+      "dirty_paths": []
+    },
+    {
+      "name": "bids4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/77e7bdc71bddb8077fcd/bids4s",
+      "head": "a33678390614a91fadbdef13f22970e78c26e091",
+      "dirty_paths": []
+    },
+    {
+      "name": "multivar",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/8a071d8f65817f0f368f/multivar",
+      "head": "f74d631720d65147c51496dcbdd37c01912de1cb",
+      "dirty_paths": []
+    },
+    {
+      "name": "reframe4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/aa1fd63832323d604703/reframe4s",
+      "head": "9a4508351d74567147b8ea3221d82db89e5892b0",
+      "dirty_paths": []
+    },
+    {
+      "name": "graph4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/b4b08747efd9a8151229/graph4s",
+      "head": "b585e594eec4567bad78ae23206c1a8f535bcd5e",
+      "dirty_paths": []
+    },
+    {
+      "name": "linops4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/cfabf5f1e5e2fb8fb176/linops4s",
+      "head": "fec77db060b130b3c609a43d07ff0bfb31088aae",
+      "dirty_paths": []
+    },
+    {
+      "name": "image4s",
+      "path": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/14dff67db94780de/staging/d79d1afec9bc45383768/image4s",
+      "head": "2c0638fb0767058ccd59b37f93754e95fc27df28",
+      "dirty_paths": []
+    }
+  ]
+}
