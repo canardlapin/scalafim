@@ -76,6 +76,7 @@ class HrfIdentitySuite extends munit.FunSuite:
       HrfParams.Daguerre(BasisCount(2), 0.25) -> "daguerre(1:2,24:bits:4598175219545276416)",
       HrfParams.Bspline(BasisCount(2), 3, convention = Hrfs.BsplineConvention.LegacyR) -> "bspline(1:2,1:3)",
       HrfParams.Bspline(BasisCount(2), 3, convention = Hrfs.BsplineConvention.Complete) -> "bspline(1:2,1:3,8:complete)",
+      HrfParams.Bspline(BasisCount(2), 3, convention = Hrfs.BsplineConvention.EndpointAnchored) -> "bspline(1:2,1:3,17:endpoint-anchored)",
       HrfParams.Coefficients("a,b|c", Vector(1.0, 2.0)) -> "coefficients(5:a,b|c,65:sequence(24:bits:4607182418800017408,24:bits:4611686018427387904))"
     )
     parameters.foreach { case (value, expected) =>

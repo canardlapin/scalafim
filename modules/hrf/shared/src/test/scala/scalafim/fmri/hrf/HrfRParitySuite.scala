@@ -5,7 +5,8 @@ import scalafim.fmri.hrf.fixtures.HrfRParityFixtures.KernelFixture
 
 /** Pins every stock kernel to the R `fmrihrf` reference corpus.
   *
-  * Regenerate the corpus with
+  * B-spline entries (including bspline_impulse) pin LegacyR to fmrihrf 0.4.0
+  * before 18d418f. Use that release checkout to regenerate the corpus with
   * `Rscript tools/r-parity/generate_fmrihrf_r_parity_fixtures.R`.
   *
   * Causal (non-negative) lags are asserted here for every kernel. Negative lags

@@ -89,6 +89,8 @@ private[hrf] object HrfIdentity:
         record("bspline", count.value.toString, degree.toString)
       case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.Complete) =>
         record("bspline", count.value.toString, degree.toString, "complete")
+      case HrfParams.Bspline(count, degree, Hrfs.BsplineConvention.EndpointAnchored) =>
+        record("bspline", count.value.toString, degree.toString, "endpoint-anchored")
       case HrfParams.Tent(count) => record("tent", count.value.toString)
       case HrfParams.Coefficients(baseName, coefficients) => record("coefficients", baseName, numbers(coefficients))
 

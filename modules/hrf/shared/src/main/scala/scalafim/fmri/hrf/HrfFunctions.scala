@@ -257,7 +257,9 @@ object HrfFunctions:
 
   /** With [[Hrfs.BsplineConvention.Complete]], a complete clamped B-spline
     * basis with uniformly spaced knots over the actual span and zero outside
-    * support. With [[Hrfs.BsplineConvention.LegacyR]], the R-parity B-spline
+    * support. [[Hrfs.BsplineConvention.EndpointAnchored]] drops both boundary
+    * columns of a complete basis of width `nBasis + 2`, matching fmrihrf
+    * commit `18d418f`. With [[Hrfs.BsplineConvention.LegacyR]], the R-parity B-spline
     * basis used by `hrf_bspline` / `splines::bs` in fmrihrf 0.4.0:
     *
     * - Interior knots are equally spaced quantiles of `seq(0, span)` (step 1),
@@ -271,6 +273,16 @@ object HrfFunctions:
     convention match
       case Hrfs.BsplineConvention.LegacyR => legacyBsplineBasis(lag, span, nBasis, degree)
       case Hrfs.BsplineConvention.Complete => completeBsplineBasis(lag, span, nBasis, degree)
+      case Hrfs.BsplineConvention.EndpointAnchored =>
+        val full = completeBsplineBasis(lag, span, endpointAnchoredWidth(nBasis, degree), degree)
+        full.slice(1, full.length - 1)
+
+  private[hrf] def endpointAnchoredWidth(nBasis: Int, degree: Int): Int =
+    require(degree >= 1, "Endpoint-anchored B-spline degree must be positive")
+    require(nBasis >= math.max(1, degree - 1),
+      s"Endpoint-anchored B-spline basis count must be at least ${math.max(1, degree - 1)} for degree $degree")
+    require(nBasis <= Int.MaxValue - 2, "Endpoint-anchored B-spline basis count is too large")
+    nBasis + 2
 
   private def completeBsplineBasis(lag: Lag, span: Seconds, nBasis: Int, degree: Int): Array[Double] =
     require(degree >= 0, "B-spline degree must be nonnegative")
@@ -319,6 +331,8 @@ object HrfFunctions:
         val intervals = math.max(nBasis, degree + 1) - degree
         Vector.tabulate(intervals + 1)(i => Seconds(span.value * i.toDouble / intervals.toDouble))
       case Hrfs.BsplineConvention.LegacyR => legacyBsplineBreaks(span, nBasis, degree)
+      case Hrfs.BsplineConvention.EndpointAnchored =>
+        bsplineBreaks(span, endpointAnchoredWidth(nBasis, degree), degree, Hrfs.BsplineConvention.Complete)
 
   private def legacyBsplineBreaks(span: Seconds, nBasis: Int, degree: Int): Vector[Seconds] =
     val w = span.value
@@ -362,6 +376,14 @@ object Hrfs:
       * `[0, span]` and zero outside it.
       */
     case Complete
+
+    /** fmrihrf `18d418f` `hrf_bspline`: exactly `nBasis` columns from a
+      * complete basis of width `nBasis + 2`, with both boundary columns
+      * removed. Knots are uniform over the actual span; values are zero at
+      * both endpoints and outside support. Requires `degree >= 1` and
+      * `nBasis >= max(1, degree - 1)`. Constants are not representable.
+      */
+    case EndpointAnchored
 
   def gamma(shape: Double = 6.0, rate: Double = 1.0, span: Seconds = 24.s): Hrf =
     val params = HrfParams.Gamma(shape, rate)
@@ -704,9 +726,13 @@ object Hrfs:
     * This mode returns `max(nBasis, degree + 1)` columns and spaces interior
     * knots uniformly over the actual span, including noninteger spans.
     *
-    * The default, [[BsplineConvention.LegacyR]], retains the legacy R-compatible knot/column convention. With
+    * [[BsplineConvention.EndpointAnchored]] matches fmrihrf commit `18d418f`:
+    * exactly `nBasis` columns, zero at both endpoints, with uniform knots over
+    * the actual span. Requires `degree >= 1` and `nBasis >= max(1, degree - 1)`.
+    *
+    * The default, [[BsplineConvention.LegacyR]], is frozen to fmrihrf 0.4.0. With
     * interior knots it omits the first spline, forces zero at onset and cannot
-    * represent a constant. Neither mode applies column normalization.
+    * represent a constant. No convention applies column normalization.
     */
   def bspline(nBasis: Int = 5, span: Seconds = 24.s, degree: Int = 3,
       convention: BsplineConvention = BsplineConvention.LegacyR): Hrf =
@@ -714,7 +740,12 @@ object Hrfs:
     require(span.value > 0.0 && span.value.isFinite, "B-spline span must be positive and finite")
     val requested = BasisCount(nBasis)
     val ord = degree + 1
-    val effective = BasisCount(math.max(requested.value, ord))
+    val effective = convention match
+      case BsplineConvention.EndpointAnchored =>
+        HrfFunctions.endpointAnchoredWidth(requested.value, degree)
+        requested
+      case BsplineConvention.LegacyR | BsplineConvention.Complete =>
+        BasisCount(math.max(requested.value, ord))
     val descriptor = HrfDescriptor.known(
       HrfKind.Bspline,
       effective.value,

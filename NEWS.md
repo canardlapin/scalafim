@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- `Hrfs.bspline(..., convention = Hrfs.BsplineConvention.EndpointAnchored)`
+  matches fmrihrf commit `18d418f`: exactly `nBasis` columns, uniform knots over
+  the actual span, and zero at both endpoints. It requires `degree >= 1` and
+  `nBasis >= max(1, degree - 1)` and has a distinct descriptor identity. The
+  default `LegacyR` convention and its parity fixtures remain frozen to
+  fmrihrf 0.4.0; existing identities are unchanged. Use `Complete` when the
+  response basis must contain constants.
+
 - Removed the unused `scalafim.locus.Aggregation` duplicate and the
   `cats-kernel` dependency it alone required from `locus-data`. Use the adopted
   `locus4s.data.Aggregation` with checked `PartialMap` aggregation instead.

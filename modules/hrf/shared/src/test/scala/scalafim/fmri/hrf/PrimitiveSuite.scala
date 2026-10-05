@@ -62,18 +62,23 @@ class PrimitiveSuite extends munit.FunSuite:
     for
       degree <- (1 to 16) ++ Vector(24, 32)
       convention <- Hrfs.BsplineConvention.values
+      if convention != Hrfs.BsplineConvention.EndpointAnchored || degree >= 2
       (lo, hi) <- Vector((0.0, 1.0), (0.0, 0.37), (0.13, 0.79), (0.61, 1.0))
     do
       val span = 24.5
-      val basis = ResponseBasis.of(Hrfs.bspline(1, Seconds(span), degree, convention))
+      val anchored = convention == Hrfs.BsplineConvention.EndpointAnchored
+      val requested = if anchored then degree - 1 else 1
+      val offset = if anchored then 1 else 0
+      val width = if anchored then degree - 1 else degree + 1
+      val basis = ResponseBasis.of(Hrfs.bspline(requested, Seconds(span), degree, convention))
       val mean = basis.responseFunctional(
         ResponseFunctional.WindowMean(Seconds(lo * span), Seconds(hi * span)),
         FunctionalDiscretization.Exact
       ).fold(error => fail(error.message), identity)
-      assertEquals(mean.values.length, degree + 1)
-      for column <- 0 to degree do
-        val expected = (bernsteinIntegral(degree, column, hi) -
-          bernsteinIntegral(degree, column, lo)) / (hi - lo)
+      assertEquals(mean.values.length, width)
+      for column <- 0 until width do
+        val expected = (bernsteinIntegral(degree, column + offset, hi) -
+          bernsteinIntegral(degree, column + offset, lo)) / (hi - lo)
         // Weights are in [0, 1]; allow floating-point accumulation and the
         // subtraction in the analytic reference, well below the old ~1e-5 gap.
         assertEqualsDouble(mean.values(column), expected, 2e-13,
@@ -90,9 +95,10 @@ class PrimitiveSuite extends munit.FunSuite:
       // independently of the production breaks and Cox-de Boor evaluator.
       val interior = convention match
         case Hrfs.BsplineConvention.Complete => Vector.tabulate(3)(i => span * (i + 1) / 4.0)
+        case Hrfs.BsplineConvention.EndpointAnchored => Vector.tabulate(5)(i => span * (i + 1) / 6.0)
         case Hrfs.BsplineConvention.LegacyR => Vector.tabulate(4)(i => math.floor(span) * (i + 1) / 5.0)
       val knots = Vector.fill(degree + 1)(0.0) ++ interior ++ Vector.fill(degree + 1)(span)
-      val offset = if convention == Hrfs.BsplineConvention.LegacyR then 1 else 0
+      val offset = if convention == Hrfs.BsplineConvention.Complete then 0 else 1
       val hrf = Hrfs.bspline(requested, Seconds(span), degree, convention)
       val basis = ResponseBasis.of(hrf)
       val mean = basis.responseFunctional(ResponseFunctional.WindowMean(0.s, Seconds(span + 2.0)))
@@ -104,15 +110,18 @@ class PrimitiveSuite extends munit.FunSuite:
         assertEqualsDouble(mean.values(column), expected, 2e-13,
           s"$convention degree=$degree column=$column full support")
 
-      val tail = span - interior.last
-      for (from, until) <- Vector((interior.last - 0.4 * tail, span - 0.3 * tail),
-          (interior.head, span + tail)) do
-        val partial = Primitive.definiteIntegral(hrf, Lag(from), Lag(until)).get
-        // The last column is ((t - last interior knot)/tail)^p on its support.
-        val upper = math.min(1.0, (until - interior.last) / tail)
-        val expected = tail * math.pow(upper, degree + 1) / (degree + 1)
-        assertEqualsDouble(partial.last, expected, 2e-12,
-          s"$convention degree=$degree last column window=[$from,$until]")
+      // The boundary-column tail formula applies to the conventions that
+      // retain it; endpoint-anchored partial windows use Bernstein above.
+      if convention != Hrfs.BsplineConvention.EndpointAnchored then
+        val tail = span - interior.last
+        for (from, until) <- Vector((interior.last - 0.4 * tail, span - 0.3 * tail),
+            (interior.head, span + tail)) do
+          val partial = Primitive.definiteIntegral(hrf, Lag(from), Lag(until)).get
+          // The last column is ((t - last interior knot)/tail)^p on its support.
+          val upper = math.min(1.0, (until - interior.last) / tail)
+          val expected = tail * math.pow(upper, degree + 1) / (degree + 1)
+          assertEqualsDouble(partial.last, expected, 2e-12,
+            s"$convention degree=$degree last column window=[$from,$until]")
 
   test("every registered primitive agrees with a refined trapezoid"):
     exactFamilies.foreach { case (name, hrf, duration, tol) =>
