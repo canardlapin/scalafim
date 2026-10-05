@@ -1,0 +1,610 @@
+{
+  "schema": "phrf-cmp-s11-parity-v1",
+  "generated_by": "tools/phrf-comparison/parity/generate_parity_fixtures.R",
+  "fmrireg_source": "installed",
+  "r_version": "R version 4.5.1 (2025-06-13)",
+  "platform": "aarch64-apple-darwin20",
+  "blas": "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib",
+  "packages": {
+    "fmrireg": {
+      "version": "0.2.0",
+      "remote_sha": null,
+      "built": "R 4.5.1; aarch64-apple-darwin20; 2026-09-28 14:53:50 UTC; unix",
+      "path": "/Users/bbuchsbaum/Library/R/arm64/4.5/library/fmrireg"
+    },
+    "fmrihrf": {
+      "version": "0.4.0",
+      "remote_sha": "b9f6a90b05bdf3673ed43414eb06ec6c74200d43",
+      "built": "R 4.5.1; aarch64-apple-darwin20; 2026-09-26 21:15:21 UTC; unix",
+      "path": "/Users/bbuchsbaum/Library/R/arm64/4.5/library/fmrihrf"
+    },
+    "fmrilss": {
+      "version": "0.2.0",
+      "remote_sha": "f851fb0632f90da12512212af5b80c9623c93fde",
+      "built": "R 4.5.1; aarch64-apple-darwin20; 2026-08-22 11:29:08 UTC; unix",
+      "path": "/Users/bbuchsbaum/Library/R/arm64/4.5/library/fmrilss"
+    },
+    "fmridesign": {
+      "version": "0.6.1.9000",
+      "remote_sha": "236856452c9fecd131ea751d0e970b542cf16f64",
+      "built": "R 4.5.1; ; 2026-09-27 00:53:23 UTC; unix",
+      "path": "/Users/bbuchsbaum/Library/R/arm64/4.5/library/fmridesign"
+    },
+    "fmridataset": {
+      "version": "0.11.0.9000",
+      "remote_sha": "419d9eae1704d839e0152ec77957c2fc69ea0b5b",
+      "built": "R 4.5.1; ; 2026-09-26 21:15:23 UTC; unix",
+      "path": "/Users/bbuchsbaum/Library/R/arm64/4.5/library/fmridataset"
+    },
+    "fmriAR": {
+      "version": "0.3.3",
+      "remote_sha": "ca27f2772bb4675573fae717a992c993c2f986c8",
+      "built": "R 4.5.1; aarch64-apple-darwin20; 2026-09-11 18:52:12 UTC; unix",
+      "path": "/Users/bbuchsbaum/Library/R/arm64/4.5/library/fmriAR"
+    }
+  },
+  "checkouts": {
+    "fmrireg": {
+      "head": "5bd3ad141fe7361c5577d5bef565861a49a315ec",
+      "dirty_tracked": true
+    },
+    "fmrihrf": {
+      "head": "18d418f26dd4547ca21ce11d12ea9e5e91a80b87",
+      "dirty_tracked": false
+    },
+    "fmrilss": {
+      "head": "f851fb0632f90da12512212af5b80c9623c93fde",
+      "dirty_tracked": false
+    },
+    "fmridesign": {
+      "head": "cadbba63b105e1c30a736c40e240324167920362",
+      "dirty_tracked": true
+    }
+  },
+  "seeds": {
+    "cond": [862739264, 909906548, 527002624],
+    "trial": [611041696, 1038989846, 1502733079],
+    "cond_close": [1422781378, 413255651, 540723840],
+    "trial_ts": [295011566, 995059571, 57289396]
+  },
+  "seed_note": "low 31 bits of SplitMix64 stream_seed(HARNESS_ROOT=0x7A3C91D50B44E2F1, cell_id, 0, purpose); cell ids s11-parity-cond, s11-parity-trial",
+  "tr": 1,
+  "start_time": 0,
+  "convolution_precision": 0.1,
+  "fixed_phi": "0.3125",
+  "noise_phi_generating": "0.40000000000000002",
+  "whitening": "per run; PRIMARY exact_first: z_1 = sqrt(1-phi^2) x_1, z_t = x_t - phi x_(t-1) (design v2.1 2.0.4 exactFirstAr1 = true; fmrireg exact_first = TRUE). Variant identity_first (subdirectory identity_first/): z_1 = x_1 (fmrireg exact_first = FALSE). phi given, one global value",
+  "baseline": "fmrireg baseline_model(basis='poly', degree=2, intercept='runwise'): 3 columns per run (poly1, poly2, run constant)",
+  "spmg1_peak_raw": "0.17544119701700001",
+  "spmg1_note": "kernels are RAW (not peak-normalised); divide SPMG1 and all SPMG3 columns by spmg1_peak_raw for a peak-normalised convention (betas scale by the same factor)",
+  "fir": {
+    "H": 32,
+    "bins": "1 s, piecewise constant on [k-1, k), k = 1..H; zero outside [0, H)"
+  },
+  "tau_grid": {
+    "from": 0,
+    "to": 32,
+    "step": 0.25
+  },
+  "cells": {
+    "cond": {
+      "run_len": [200, 200, 200, 200],
+      "n_voxels": 3,
+      "events": 80
+    },
+    "cond_close": {
+      "run_len": [200, 200, 200, 200],
+      "n_voxels": 3,
+      "events": 80
+    },
+    "trial_tx": {
+      "run_len": [150, 150, 150],
+      "n_voxels": 4,
+      "trials": 36,
+      "mean_q": {
+        "primary": "0.052990153529799272",
+        "identity_first": "0.053004613373105414"
+      }
+    },
+    "trial_ts": {
+      "run_len": [150, 150, 150],
+      "n_voxels": 4,
+      "trials": 36,
+      "mean_q": {
+        "primary": "0.05246772426096314",
+        "identity_first": "0.052486020959346555"
+      }
+    }
+  },
+  "onset_grid_s": {
+    "cond": 0.1,
+    "cond_close": 0.1,
+    "trial_tx": 1,
+    "trial_ts": 0.1
+  },
+  "event_columns": {
+    "can": 2,
+    "inf3": 6,
+    "fir": 64
+  },
+  "rlss_groups": "condition (A, B, C)",
+  "r_multipliers_of_mean_q": [0, 0.01, 0.1, 1, 10, 100],
+  "relative_error_definition": "max_i |a_i - b_i| / max_i |b_i|, b = reference (fixture)",
+  "checks": [
+    {
+      "name": "kernel SPMG1 own vs fmrihrf",
+      "value": 1.58204467345614e-16,
+      "tol": 1e-13,
+      "pass": true
+    },
+    {
+      "name": "kernel SPMG3 own vs fmrihrf",
+      "value": 9.49226804073687e-14,
+      "tol": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "kernel FIR own vs fmrihrf (H bins)",
+      "value": 0,
+      "tol": 0,
+      "pass": true
+    },
+    {
+      "name": "cond/primary can design fmrireg vs exact own (abs)",
+      "value": 3.92741394961149e-15,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "cond/primary can betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 1.14022967870197e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary can betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 2.28045935740394e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary can E-resp fitted_hrf vs own basis sum",
+      "value": 1.6248035301881e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary inf3 design fmrireg vs exact own (abs)",
+      "value": 2.28289609438548e-14,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "cond/primary inf3 betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 5.31665193854934e-14,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary inf3 betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 2.34342785170219e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary inf3 E-resp fitted_hrf vs own basis sum",
+      "value": 7.51375591766873e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary fir design fmrireg vs exact own (abs)",
+      "value": 1.13686837721616e-13,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "cond/primary fir betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 4.62930148747768e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary fir betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 3.40057727631072e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/primary fir E-resp fitted_hrf vs own basis sum",
+      "value": 0,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first can betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 9.12404706269691e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first can betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 1.71075882425567e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first can E-resp fitted_hrf vs own basis sum",
+      "value": 1.62519711532469e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first inf3 betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 5.32717029182799e-14,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first inf3 betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 2.34418934733905e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first inf3 E-resp fitted_hrf vs own basis sum",
+      "value": 7.51491269447298e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first fir betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 4.64420678275976e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first fir betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 3.40127860502503e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond/identity_first fir E-resp fitted_hrf vs own basis sum",
+      "value": 0,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary can design fmrireg vs exact own (abs)",
+      "value": 5.57887069874141e-15,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary can betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 6.3493135325003e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary can betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 0,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary can E-resp fitted_hrf vs own basis sum",
+      "value": 1.64502535754211e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary inf3 design fmrireg vs exact own (abs)",
+      "value": 3.77475828372553e-14,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary inf3 betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 3.54190830934193e-14,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary inf3 betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 2.38813876736076e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary inf3 E-resp fitted_hrf vs own basis sum",
+      "value": 8.39780780370349e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary fir design fmrireg vs exact own (abs)",
+      "value": 2.27373675443232e-13,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary fir betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 6.79580363505925e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary fir betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 1.65751308172177e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/primary fir E-resp fitted_hrf vs own basis sum",
+      "value": 0,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first can betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 5.19825297337557e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first can betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 0,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first can E-resp fitted_hrf vs own basis sum",
+      "value": 1.64608936831168e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first inf3 betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 3.57054708076612e-14,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first inf3 betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 1.19541228901984e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first inf3 E-resp fitted_hrf vs own basis sum",
+      "value": 8.40170197294332e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first fir betas fmrireg vs lm.fit (own design, own baseline)",
+      "value": 5.8058856288437e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first fir betas fmrireg vs lm.fit (whitened fmrireg design)",
+      "value": 1.65882446538392e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "cond_close/identity_first fir E-resp fitted_hrf vs own basis sum",
+      "value": 0,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx trial design fmrireg trialwise vs exact own (abs)",
+      "value": 9.43689570931383e-16,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "tx/primary LSA fmrilss::lsa vs normal-equations solve",
+      "value": 1.33174810208432e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/primary LSS fmrilss r_optimized vs explicit loop",
+      "value": 1.69702061518445e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/primary LSS fmrilss naive vs explicit loop",
+      "value": 1.53539960421451e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/primary rLSS closed form vs dense solve (all trials, all r)",
+      "value": 2.01733036956708e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/primary rLSS q_i closed form vs residual projection",
+      "value": 3.78227998913773e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/primary rLSS single-group r=0 vs fmrilss::lss",
+      "value": 1.29296808775958e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/primary rLSS r=1e12*mean_q vs condition-mean-only fit",
+      "value": 1.41256567058927e-12,
+      "tol": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "tx/primary df inverse round trip (circular; root finder only)",
+      "value": 1.66533453693773e-16,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first LSA fmrilss::lsa vs normal-equations solve",
+      "value": 1.58113635185704e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first LSS fmrilss r_optimized vs explicit loop",
+      "value": 2.58302097536803e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first LSS fmrilss naive vs explicit loop",
+      "value": 2.55272160908805e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first rLSS closed form vs dense solve (all trials, all r)",
+      "value": 1.90505740234836e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first rLSS q_i closed form vs residual projection",
+      "value": 3.78189177478765e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first rLSS single-group r=0 vs fmrilss::lss",
+      "value": 1.29277296127901e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first rLSS r=1e12*mean_q vs condition-mean-only fit",
+      "value": 1.41317381361254e-12,
+      "tol": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "tx/identity_first df inverse round trip (circular; root finder only)",
+      "value": 1.66533453693773e-16,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "ts trial design fmrireg trialwise vs exact own (abs)",
+      "value": 1.94289029309402e-15,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "ts/primary LSA fmrilss::lsa vs normal-equations solve",
+      "value": 1.22610234988317e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/primary LSS fmrilss r_optimized vs explicit loop",
+      "value": 1.66938805889328e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/primary LSS fmrilss naive vs explicit loop",
+      "value": 2.3371432824506e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/primary rLSS closed form vs dense solve (all trials, all r)",
+      "value": 3.05068217754513e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/primary rLSS q_i closed form vs residual projection",
+      "value": 3.78079870030782e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/primary rLSS single-group r=0 vs fmrilss::lss",
+      "value": 1.54418395447629e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/primary rLSS r=1e12*mean_q vs condition-mean-only fit",
+      "value": 1.21066215047876e-12,
+      "tol": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "ts/primary df inverse round trip (circular; root finder only)",
+      "value": 2.22044604925031e-16,
+      "tol": 1e-12,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first LSA fmrilss::lsa vs normal-equations solve",
+      "value": 1.51288936603786e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first LSS fmrilss r_optimized vs explicit loop",
+      "value": 1.96382637109911e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first LSS fmrilss naive vs explicit loop",
+      "value": 1.86472225144205e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first rLSS closed form vs dense solve (all trials, all r)",
+      "value": 3.22456571899052e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first rLSS q_i closed form vs residual projection",
+      "value": 3.78072565026117e-16,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first rLSS single-group r=0 vs fmrilss::lss",
+      "value": 1.58566591451296e-15,
+      "tol": 1e-10,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first rLSS r=1e12*mean_q vs condition-mean-only fit",
+      "value": 1.21074427619864e-12,
+      "tol": 1e-09,
+      "pass": true
+    },
+    {
+      "name": "ts/identity_first df inverse round trip (circular; root finder only)",
+      "value": 1.66533453693773e-16,
+      "tol": 1e-12,
+      "pass": true
+    }
+  ],
+  "session_info": ["R version 4.5.1 (2025-06-13)", "Platform: aarch64-apple-darwin20", "Running under: macOS Sonoma 14.3", "", "Matrix products: default", "BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib ", "LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1", "", "locale:", "[1] en_CA.UTF-8/en_CA.UTF-8/en_CA.UTF-8/C/en_CA.UTF-8/en_CA.UTF-8", "", "time zone: America/Toronto", "tzcode source: internal", "", "attached base packages:", "[1] stats     graphics  grDevices utils     datasets  methods   base     ", "", "other attached packages:", "[1] fmrireg_0.2.0         fmridesign_0.6.1.9000 fmrihrf_0.4.0        ", "", "loaded via a namespace (and not attached):", " [1] gtable_0.3.6            bslib_0.12.0            delarr_0.2.0           ", " [4] ggplot2_4.0.3           lattice_0.22-7          bigassertr_0.2.0       ", " [7] numDeriv_2016.8-1.1     vctrs_0.7.3             tools_4.5.1            ", "[10] generics_0.1.4          parallel_4.5.1          tibble_3.3.1           ", "[13] pkgconfig_2.0.3         fmridataset_0.11.0.9000 Matrix_1.7-3           ", "[16] RColorBrewer_1.1-3      bigstatsr_1.6.2         S7_0.2.2               ", "[19] RcppParallel_6.2.0      assertthat_0.2.1        uuid_1.2-2             ", "[22] lifecycle_1.0.5         compiler_4.5.1          neuroim2_0.19.0.9000   ", "[25] farver_2.1.2            stringr_1.6.0           fmriAR_0.3.3           ", "[28] progress_1.2.3          RNifti_1.10.0           bigparallelr_0.3.2     ", "[31] codetools_0.2-20        htmltools_0.5.9         sass_0.4.10            ", "[34] deflist_0.2.0           crayon_1.5.3            pillar_1.11.1          ", "[37] jquerylib_0.1.4         tidyr_1.3.2             RNiftyReg_2.8.6        ", "[40] MASS_7.3-65             cachem_1.1.0            dbscan_1.2.5           ", "[43] iterators_1.0.14        foreach_1.5.2           parallelly_1.48.0      ", "[46] tidyselect_1.2.1        digest_0.6.39           stringi_1.8.9          ", "[49] future_1.75.0           dplyr_1.2.1             purrr_1.2.2            ", "[52] listenv_1.0.0           splines_4.5.1           mmap_0.6-26            ", "[55] cowplot_1.2.0           fastmap_1.2.0           grid_4.5.1             ", "[58] cli_3.6.6               magrittr_2.0.5          future.apply_1.20.2    ", "[61] bigmemory.sri_0.1.8     bigmemory_4.6.6         prettyunits_1.2.0      ", "[64] scales_1.4.0            fmrilss_0.2.0           rmio_0.4.0             ", "[67] matrixStats_1.5.0       globals_0.19.1          hms_1.1.4              ", "[70] memoise_2.0.1           doParallel_1.0.17       rlang_1.3.0            ", "[73] Rcpp_1.1.2              glue_1.8.1              jsonlite_2.0.0         ", "[76] R6_2.6.1                flock_0.7              "]
+}

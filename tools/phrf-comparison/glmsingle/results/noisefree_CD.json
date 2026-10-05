@@ -1,0 +1,10 @@
+{
+ "purely_noisefree_type_B": "ran",
+ "status": "ran",
+ "pcnum": 3,
+ "noisepool_size": 372,
+ "c_hrf_frac": 1.0,
+ "c_finite": true,
+ "d_hrf_frac": 1.0,
+ "d_finite": true
+}
