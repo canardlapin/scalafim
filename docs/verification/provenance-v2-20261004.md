@@ -70,12 +70,12 @@ The v2 encodings use the convention that `HrfIdentity` already established
   - `budget=`, a length-framed `decode-budget/v1|...` record that names every
     field;
   - `prior=none` or `prior=some(shape_prior(mean=values(...),precision=values(...)))`;
-  - `output=condition_queries(<rule>,queries(query(<label>,weights=values(...),absoluteTolerance=bits:...),...))`,
+  - `output=condition_queries(<rule>,queries(query(label=<label>,weights=values(...),absoluteTolerance=bits:...),...))`,
     or `condition_amplitudes(<rule>)`;
   - `noiseVariance=bits:...`.
 - `response-preparation/v1` is new, in `fit/ResponsePreparationIdentity.scala`.
   It encodes every `ResponsePreparationRecord` as
-  `record(<step>, <disposition>(<detail>))`, with an explicit label for each
+  `record(step=<step>, disposition=<disposition>(<detail>))`, with an explicit label for each
   enum case and every double as IEEE bits. It covers:
   - the missing-data policy;
   - censored timepoints;
@@ -112,11 +112,31 @@ The v2 encodings use the convention that `HrfIdentity` already established
 
 A shared test reads the policy's field names from its compile-time `Mirror` and
 requires the encoded and unencoded lists to partition them exactly. A new
-policy field therefore fails the build until it is classified. The same
-`Mirror`-based guard requires every field of `ConditionProfileProvenance`,
-`DecodeBudget`, `ShapePrior`, `ArOptions`, `RobustOptions` and
-`VolumeWeightingReceipt` to appear by name in the encoding. Exhaustive matches
-catch new enum cases at compile time.
+policy field therefore fails the build until it is classified.
+
+Inside the encoders, three mechanisms cover every type:
+
+- **New enum cases** are caught at compile time by exhaustive matches.
+- **New case-class fields** are caught at compile time because every encoded
+  case class is destructured positionally (`case DvarsWeightEstimator(function,
+  scope) =>`), so a pattern of the wrong arity does not compile. This covers
+  `ConditionProfileProvenance`, `DecodeBudget`, `ShapePrior`, `SignedQuery`,
+  `ResponsePreparationProvenance`, `ResponsePreparationRecord`, `ArOptions`,
+  `RobustOptions`, `DvarsWeightEstimator`, `VolumeWeightingReceipt` and
+  `VolumeWeightPartitionReceipt`.
+- **Field names** are checked by a scoped `Mirror` test. Each of those types is
+  encoded alone, through its own encoder, and every field name must appear in
+  that record. A field dropped from one record therefore cannot be masked by a
+  same-named field elsewhere, such as the receipt's `weights` versus a query's
+  `weights`.
+
+`ProfileTrialSignedQuery` is a plain class with no extractor, so it is still
+read through accessors. It belongs to the unreachable trial-output branch
+described below.
+
+The human-readable disposition detail strings, such as "censoring is consumed
+by AR/GLS preparation", are part of the identity. Rewording one of them splits
+identities.
 
 Two residual gaps are deliberately left, and both are recorded on
 `bd-01M44E76ZC0J12GACBSGXAV6GA`:
@@ -166,6 +186,23 @@ because these strings are ScalaFIM-native identities.
   does not embed kernel-basis provenance.
 
 ## Completed in this pass
+
+### Round 3: confirmation review of `68f60213` (APPROVE-WITH-NITS)
+
+- N1: the nested `Mirror` guards are now scoped. Each type is encoded alone
+  through its own encoder (the encoders became `private[fit]`/`private[profile]`
+  for this), rather than searched for in the full identity string.
+- N2: all encoded case classes are destructured positionally, so adding a field
+  fails compilation, and the five unguarded types are now in the scoped test.
+  The five are `ResponsePreparationProvenance`, `ResponsePreparationRecord`,
+  `DvarsWeightEstimator`, `VolumeWeightPartitionReceipt` and `SignedQuery`.
+  For the names to be checkable, sub-records now carry field labels (`step=`,
+  `disposition=`, `function=`, `scope=`, `threshold=`, `steepness=`,
+  `weights=`, `alignment=`, `runIndex=`, `timepoints=`, `label=`).
+- **Golden changed.** These labels changed the golden. A diff that ignores
+  length prefixes shows that only labels were added, and every IEEE value and
+  the digest are unchanged. v2 is unlanded, so there is no version bump.
+- N3: the disposition-detail note above.
 
 ### Round 2: review `7099f1f9` (CHANGES-REQUIRED on condition-profile)
 
@@ -237,7 +274,25 @@ in round 2). Their transitive dependents, from `build.sbt`, are `model`,
 `mvpaDataset`, `mvpaSpatial` and `datasetZarr`. `atlas` is not in the set, so
 `MniTemplateBridgeFilesSuite` does not apply.
 
-### Round 2 (this commit)
+### Round 3 (guard-strength nits)
+
+Memory was at least 39% free before each batch, and the server was shut down
+between batches.
+
+| Target | JVM passed | JS passed |
+|---|---|---|
+| `ConditionProfileProvenanceSuite` (focused) | (in fit) | 4 |
+| design | 447 | 446 |
+| fit | 574 | 519 |
+| firstLevelLaws | 84 | 84 |
+
+All runs had 0 failures. The scoped-guard test and the refreshed golden passed
+on both platforms. `scalafimCompileAll` succeeded (456 s) and was
+warning-clean. Round 3 changes only encoder internals, test scoping and the
+golden. No signature visible to the other dependents changed, so their round-2
+results stand.
+
+### Round 2 (`68f60213`)
 
 | Target | JVM passed | JS passed |
 |---|---|---|

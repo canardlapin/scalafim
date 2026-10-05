@@ -55,16 +55,19 @@ final case class ConditionProfileProvenance(
     prior: Option[ShapePrior],
     output: OutputRequest,
     noiseVariance: Double):
+  /** Destructured positionally: a new field fails compilation until encoded. */
   def canonical: String =
-    val conditions = structure.map(condition => KernelBasisProvenance.record("condition", condition*))
-    s"condition-profile/v2|basis=${KernelBasisProvenance.field(basis)}|" +
-      s"structure=${KernelBasisProvenance.record("conditions", conditions*)}|" +
-      s"preparation=${KernelBasisProvenance.field(ResponsePreparationIdentity.provenance(preparation))}|" +
-      s"nodesPerAxis=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|" +
-      s"budget=${KernelBasisProvenance.field(ConditionProfileProvenance.budgetCanonical(budget))}|" +
-      s"prior=${ConditionProfileProvenance.priorCanonical(prior)}|" +
-      s"output=${ConditionProfileProvenance.outputCanonical(output)}|" +
-      s"noiseVariance=${KernelBasisProvenance.number(noiseVariance)}"
+    this match
+      case ConditionProfileProvenance(basis, structure, preparation, nodesPerAxis, budget, prior, output, noiseVariance) =>
+        val conditions = structure.map(condition => KernelBasisProvenance.record("condition", condition*))
+        s"condition-profile/v2|basis=${KernelBasisProvenance.field(basis)}|" +
+          s"structure=${KernelBasisProvenance.record("conditions", conditions*)}|" +
+          s"preparation=${KernelBasisProvenance.field(ResponsePreparationIdentity.provenance(preparation))}|" +
+          s"nodesPerAxis=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|" +
+          s"budget=${KernelBasisProvenance.field(ConditionProfileProvenance.budgetCanonical(budget))}|" +
+          s"prior=${ConditionProfileProvenance.priorCanonical(prior)}|" +
+          s"output=${ConditionProfileProvenance.outputCanonical(output)}|" +
+          s"noiseVariance=${KernelBasisProvenance.number(noiseVariance)}"
 
 object ConditionProfileProvenance:
 
@@ -95,16 +98,27 @@ object ConditionProfileProvenance:
     KernelBasisProvenance.record("values", values.map(KernelBasisProvenance.number)*)
 
   private[profile] def budgetCanonical(budget: DecodeBudget): String =
-    s"decode-budget/v1|coarseStride=${budget.coarseStride}|maxNewtonSteps=${budget.maxNewtonSteps}|" +
-      s"maxJets=${budget.maxJets}|maxExactEvaluations=${budget.maxExactEvaluations}|" +
-      s"weakSdLimit=${numbers(budget.weakSdLimit)}|" +
-      s"ambiguityEnergy=${KernelBasisProvenance.number(budget.ambiguityEnergy)}|" +
-      s"maxCandidateAttempts=${budget.maxCandidateAttempts}|" +
-      s"stationarityStepTolerance=${KernelBasisProvenance.number(budget.stationarityStepTolerance)}"
+    budget match
+      case DecodeBudget(
+            coarseStride,
+            maxNewtonSteps,
+            maxJets,
+            maxExactEvaluations,
+            weakSdLimit,
+            ambiguityEnergy,
+            maxCandidateAttempts,
+            stationarityStepTolerance
+          ) =>
+        s"decode-budget/v1|coarseStride=$coarseStride|maxNewtonSteps=$maxNewtonSteps|" +
+          s"maxJets=$maxJets|maxExactEvaluations=$maxExactEvaluations|" +
+          s"weakSdLimit=${numbers(weakSdLimit)}|" +
+          s"ambiguityEnergy=${KernelBasisProvenance.number(ambiguityEnergy)}|" +
+          s"maxCandidateAttempts=$maxCandidateAttempts|" +
+          s"stationarityStepTolerance=${KernelBasisProvenance.number(stationarityStepTolerance)}"
 
   private[profile] def priorCanonical(prior: Option[ShapePrior]): String =
-    KernelBasisProvenance.option(prior.map { value =>
-      KernelBasisProvenance.record("shape_prior", s"mean=${numbers(value.mean)}", s"precision=${numbers(value.precision)}")
+    KernelBasisProvenance.option(prior.map { case ShapePrior(mean, precision) =>
+      KernelBasisProvenance.record("shape_prior", s"mean=${numbers(mean)}", s"precision=${numbers(precision)}")
     })
 
   private def normalization(rule: NormalizationRule): String =
@@ -115,10 +129,15 @@ object ConditionProfileProvenance:
       case NormalizationRule.Density => "density"
       case NormalizationRule.PositiveComponentArea => "positive_component_area"
 
+  /** Destructured positionally: a new `SignedQuery` field fails compilation until encoded. */
+  private[profile] def signedQuery(value: SignedQuery): String =
+    value match
+      case SignedQuery(label, weights, absoluteTolerance) => query(label, weights, absoluteTolerance)
+
   private def query(label: String, weights: Vector[Double], absoluteTolerance: Double): String =
     KernelBasisProvenance.record(
       "query",
-      label,
+      s"label=$label",
       s"weights=${numbers(weights)}",
       s"absoluteTolerance=${KernelBasisProvenance.number(absoluteTolerance)}"
     )
@@ -136,7 +155,7 @@ object ConditionProfileProvenance:
         KernelBasisProvenance.record(
           "condition_queries",
           normalization(rule),
-          KernelBasisProvenance.record("queries", queries.map(q => query(q.label, q.weights, q.absoluteTolerance))*)
+          KernelBasisProvenance.record("queries", queries.map(signedQuery)*)
         )
       case OutputRequest.TrialAmplitudes(rule) =>
         KernelBasisProvenance.record("trial_amplitudes", normalization(rule))

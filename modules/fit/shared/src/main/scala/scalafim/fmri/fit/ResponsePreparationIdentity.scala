@@ -22,12 +22,18 @@ import scalafim.fmri.model.{
   * every string and sequence length-framed, and a nuisance matrix by its
   * dimensions plus a portable content digest. Nothing is rendered through
   * `toString`, so the encoding is identical on the JVM and Scala.js.
+  *
+  * Every case class is destructured positionally, so adding a field to any of
+  * them fails compilation here until the field is encoded (and the version
+  * bumped); exhaustive matches do the same for new enum cases.
   */
 private[fit] object ResponsePreparationIdentity:
 
   def provenance(value: ResponsePreparationProvenance): String =
-    s"response-preparation/v1|records=${record("records", value.records.map(preparationRecord)*)}|" +
-      s"volumeWeighting=${option(value.volumeWeighting.map(weightingReceipt))}"
+    value match
+      case ResponsePreparationProvenance(records, volumeWeighting) =>
+        s"response-preparation/v1|records=${record("records", records.map(preparationRecord)*)}|" +
+          s"volumeWeighting=${option(volumeWeighting.map(weightingReceipt))}"
 
   private def ints(tag: String, values: Vector[Int]): String =
     record(tag, values.map(_.toString)*)
@@ -35,11 +41,19 @@ private[fit] object ResponsePreparationIdentity:
   private def numbers(values: Vector[Double]): String =
     record("values", values.map(number)*)
 
-  private def preparationRecord(value: ResponsePreparationRecord): String =
-    record("record", step(value.step), disposition(value.disposition))
+  private[fit] def preparationRecord(value: ResponsePreparationRecord): String =
+    value match
+      case ResponsePreparationRecord(step, disposition) =>
+        record("record", s"step=${this.step(step)}", s"disposition=${this.disposition(disposition)}")
 
+  /** The detail text is part of the identity: rewording it splits identities. */
   private def disposition(value: ResponsePreparationDisposition): String =
-    record(value.label, value.detailText)
+    value match
+      case ResponsePreparationDisposition.Disabled => record("disabled", "")
+      case ResponsePreparationDisposition.Planned(detail) => record("planned", detail)
+      case ResponsePreparationDisposition.Applied(detail) => record("applied", detail)
+      case ResponsePreparationDisposition.Deferred(detail) => record("deferred", detail)
+      case ResponsePreparationDisposition.Rejected(detail) => record("rejected", detail)
 
   private def step(value: ResponsePreparationStep): String =
     value match
@@ -71,17 +85,19 @@ private[fit] object ResponsePreparationIdentity:
     value match
       case DvarsWeightFunction.InverseSquared => record("inverse_squared")
       case DvarsWeightFunction.SoftThreshold(threshold, steepness) =>
-        record("soft_threshold", number(threshold.value), number(steepness.value))
-      case DvarsWeightFunction.TukeyBisquare(threshold) => record("tukey_bisquare", number(threshold.value))
+        record("soft_threshold", s"threshold=${number(threshold.value)}", s"steepness=${number(steepness.value)}")
+      case DvarsWeightFunction.TukeyBisquare(threshold) => record("tukey_bisquare", s"threshold=${number(threshold.value)}")
 
-  private def estimator(value: DvarsWeightEstimator): String =
-    record("dvars", dvarsFunction(value.function), dvarsScope(value.scope))
+  private[fit] def estimator(value: DvarsWeightEstimator): String =
+    value match
+      case DvarsWeightEstimator(function, scope) =>
+        record("dvars", s"function=${dvarsFunction(function)}", s"scope=${dvarsScope(scope)}")
 
   private def volumeWeighting(value: VolumeWeighting): String =
     value match
       case VolumeWeighting.Disabled => record("disabled")
       case VolumeWeighting.Estimated(dvars) => record("estimated", estimator(dvars))
-      case VolumeWeighting.Fixed(weights, align) => record("fixed", numbers(weights), alignment(align))
+      case VolumeWeighting.Fixed(weights, align) => record("fixed", s"weights=${numbers(weights)}", s"alignment=${alignment(align)}")
 
   private def regularization(value: Regularization): String =
     value match
@@ -97,55 +113,76 @@ private[fit] object ResponsePreparationIdentity:
         values.copyRowMajorTo(rowMajor)
         record("matrix_projection", matrix(values.rows, values.cols, rowMajor), regularization(lambda))
 
-  private def autocorrelation(value: ArOptions): String =
-    val structure = value.structure match
-      case ArStructure.Iid => record("iid")
-      case ArStructure.Ar(order) => record("ar", order.toString)
-    record(
-      "ar_options",
-      s"structure=$structure",
-      s"iterations=${value.iterations}",
-      s"global=${value.global}",
-      s"voxelwise=${value.voxelwise}",
-      s"exactFirst=${value.exactFirst}",
-      s"censoredTimepoints=${ints("timepoints", value.censoredTimepoints)}",
-      s"rho=${option(value.rho.map(number))}",
-      s"phi=${option(value.phi.map(numbers))}"
-    )
+  private[fit] def autocorrelation(value: ArOptions): String =
+    value match
+      case ArOptions(structure, iterations, global, voxelwise, exactFirst, censoredTimepoints, rho, phi) =>
+        val order = structure match
+          case ArStructure.Iid => record("iid")
+          case ArStructure.Ar(order) => record("ar", order.toString)
+        record(
+          "ar_options",
+          s"structure=$order",
+          s"iterations=$iterations",
+          s"global=$global",
+          s"voxelwise=$voxelwise",
+          s"exactFirst=$exactFirst",
+          s"censoredTimepoints=${ints("timepoints", censoredTimepoints)}",
+          s"rho=${option(rho.map(number))}",
+          s"phi=${option(phi.map(numbers))}"
+        )
 
-  private def robust(value: RobustOptions): String =
-    val psi = value.psi match
-      case RobustPsi.Disabled => record("disabled")
-      case RobustPsi.Huber(k) => record("huber", number(k))
-      case RobustPsi.Bisquare(c) => record("bisquare", number(c))
-    val scope = value.scaleScope match
-      case ScaleScope.Run => "run"
-      case ScaleScope.Global => "global"
-      case ScaleScope.Voxel => "voxel"
-    record(
-      "robust_options",
-      s"psi=$psi",
-      s"maxIterations=${value.maxIterations}",
-      s"scaleScope=$scope",
-      s"reestimateAutocorrelation=${value.reestimateAutocorrelation}"
-    )
+  private[fit] def robust(value: RobustOptions): String =
+    value match
+      case RobustOptions(psi, maxIterations, scaleScope, reestimateAutocorrelation) =>
+        val function = psi match
+          case RobustPsi.Disabled => record("disabled")
+          case RobustPsi.Huber(k) => record("huber", number(k))
+          case RobustPsi.Bisquare(c) => record("bisquare", number(c))
+        val scope = scaleScope match
+          case ScaleScope.Run => "run"
+          case ScaleScope.Global => "global"
+          case ScaleScope.Voxel => "voxel"
+        record(
+          "robust_options",
+          s"psi=$function",
+          s"maxIterations=$maxIterations",
+          s"scaleScope=$scope",
+          s"reestimateAutocorrelation=$reestimateAutocorrelation"
+        )
 
-  private def weightingReceipt(value: VolumeWeightingReceipt): String =
-    val source = value.source match
-      case VolumeWeightingSource.Fixed(align) => record("fixed", alignment(align))
-      case VolumeWeightingSource.ResponseDvars(dvars) => record("response_dvars", estimator(dvars))
-    val normalization = value.normalization match
-      case VolumeWeightNormalization.None => record("none")
-      case VolumeWeightNormalization.MeanOne(scope) => record("mean_one", dvarsScope(scope))
-    record(
-      "volume_weighting_receipt",
-      s"source=$source",
-      s"normalization=$normalization",
-      s"inputTimepoints=${ints("timepoints", value.inputTimepoints)}",
-      s"retainedTimepoints=${ints("timepoints", value.retainedTimepoints)}",
-      s"excludedTimepoints=${ints("timepoints", value.excludedTimepoints)}",
-      s"zeroWeightTimepoints=${ints("timepoints", value.zeroWeightTimepoints)}",
-      s"weights=${numbers(value.weights)}",
-      s"qualityMetric=${option(value.qualityMetric.map(numbers))}",
-      s"partitions=${record("partitions", value.partitions.map(p => record("partition", p.runIndex.value.toString, ints("timepoints", p.timepoints)))*)}"
-    )
+  private[fit] def partition(value: VolumeWeightPartitionReceipt): String =
+    value match
+      case VolumeWeightPartitionReceipt(runIndex, timepoints) =>
+        record("partition", s"runIndex=${runIndex.value}", s"timepoints=${ints("timepoints", timepoints)}")
+
+  private[fit] def weightingReceipt(value: VolumeWeightingReceipt): String =
+    value match
+      case VolumeWeightingReceipt(
+            source,
+            normalization,
+            inputTimepoints,
+            retainedTimepoints,
+            excludedTimepoints,
+            zeroWeightTimepoints,
+            weights,
+            qualityMetric,
+            partitions
+          ) =>
+        val sourceText = source match
+          case VolumeWeightingSource.Fixed(align) => record("fixed", alignment(align))
+          case VolumeWeightingSource.ResponseDvars(dvars) => record("response_dvars", estimator(dvars))
+        val normalizationText = normalization match
+          case VolumeWeightNormalization.None => record("none")
+          case VolumeWeightNormalization.MeanOne(scope) => record("mean_one", dvarsScope(scope))
+        record(
+          "volume_weighting_receipt",
+          s"source=$sourceText",
+          s"normalization=$normalizationText",
+          s"inputTimepoints=${ints("timepoints", inputTimepoints)}",
+          s"retainedTimepoints=${ints("timepoints", retainedTimepoints)}",
+          s"excludedTimepoints=${ints("timepoints", excludedTimepoints)}",
+          s"zeroWeightTimepoints=${ints("timepoints", zeroWeightTimepoints)}",
+          s"weights=${numbers(weights)}",
+          s"qualityMetric=${option(qualityMetric.map(numbers))}",
+          s"partitions=${record("partitions", partitions.map(partition)*)}"
+        )
