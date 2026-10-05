@@ -8,9 +8,9 @@
   "ahead_commits_before": 112,
   "mote_version": "mote 0.1.0",
   "mote_format_sha256": "df4e9c0f4941230a6d831a031f77a49944806461094c849e49ff270728e274c4",
-  "mote_ops": 23894,
-  "mote_bytes": 10798278,
-  "mote_operation_manifest_sha256": "edece8f95d1f409366bff4186650196463c5310b74f252c1b807190084068967",
+  "mote_ops": 23896,
+  "mote_bytes": 10800343,
+  "mote_operation_manifest_sha256": "db60d2dc952b529ab3b8ab70fe607b01fb4f11dfdeb032efbeb8ebbea2fd3d4c",
   "open_mote_audit": {
     "reviewed": 102,
     "updated": 80,
@@ -87,9 +87,23 @@
     "all_issue_projections_equal": true,
     "all_issues": 1274,
     "nonclosed": 102,
-    "op_files": 23894,
+    "op_files": 23896,
     "workstation_settings_excluded": true,
     "empty_local_directories_initialized": true,
     "doctor_clean": true
+  },
+  "protected_main": {
+    "status": "publication PR required",
+    "remote_main": "568ce1082b7f3878e0c6ff4607124aac71b9b63b",
+    "initial_handoff_commit": "24059252dfe4f8765fca83aaa89bda5345a407f4",
+    "handoff_branch": "migration/20261005/handoff",
+    "published_preservation_refs_verified": 166,
+    "required_checks": [
+      "full repository JVM/Scala.js compile and test",
+      "focused first-level JVM/Scala.js gates",
+      "scoped first-level scientific coverage"
+    ],
+    "strict": true,
+    "required_reviews": null
   }
 }

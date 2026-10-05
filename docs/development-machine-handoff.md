@@ -24,6 +24,17 @@ mote --json ls --all
 mote ready
 ```
 
+If the protected-main publication PR is still pending, use the complete handoff
+branch immediately:
+
+```sh
+git clone --branch migration/20261005/handoff https://github.com/canardlapin/scalafim.git
+```
+
+Then run the same Mote bootstrap commands above. The handoff branch includes
+the portable tracker and source; its presence does not mean the required
+hosted checks have passed or the PR has merged.
+
 The migration was checked with Mote 0.1.0. Install a compatible Mote CLI; its
 schema version must support the committed store. Select your own stable actor
 name rather than inheriting a workstation's identity. Current claims and
