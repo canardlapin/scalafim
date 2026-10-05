@@ -46,6 +46,74 @@ class PrimitiveSuite extends munit.FunSuite:
       i += 1
     worst
 
+  private def binomial(n: Int, k: Int): Double =
+    var value = 1.0
+    for i <- 1 to k do value *= (n - i + 1).toDouble / i
+    value
+
+  // The integral of Bernstein B_i,p from 0 to u is the binomial tail
+  // sum_{k=i+1}^{p+1} B_k,p+1(u) / (p+1), independent of quadrature.
+  private def bernsteinIntegral(degree: Int, column: Int, u: Double): Double =
+    (column + 1 to degree + 1).map { k =>
+      binomial(degree + 1, k) * math.pow(u, k) * math.pow(1.0 - u, degree + 1 - k)
+    }.sum / (degree + 1)
+
+  test("B-spline window means match analytic Bernstein integrals beyond degree seven"):
+    for
+      degree <- (1 to 16) ++ Vector(24, 32)
+      convention <- Hrfs.BsplineConvention.values
+      (lo, hi) <- Vector((0.0, 1.0), (0.0, 0.37), (0.13, 0.79), (0.61, 1.0))
+    do
+      val span = 24.5
+      val basis = ResponseBasis.of(Hrfs.bspline(1, Seconds(span), degree, convention))
+      val mean = basis.responseFunctional(
+        ResponseFunctional.WindowMean(Seconds(lo * span), Seconds(hi * span)),
+        FunctionalDiscretization.Exact
+      ).fold(error => fail(error.message), identity)
+      assertEquals(mean.values.length, degree + 1)
+      for column <- 0 to degree do
+        val expected = (bernsteinIntegral(degree, column, hi) -
+          bernsteinIntegral(degree, column, lo)) / (hi - lo)
+        // Weights are in [0, 1]; allow floating-point accumulation and the
+        // subtraction in the analytic reference, well below the old ~1e-5 gap.
+        assertEqualsDouble(mean.values(column), expected, 2e-13,
+          s"$convention degree=$degree column=$column window=[$lo,$hi]")
+
+  test("high-degree B-spline integrals split at interior knots and clip to support"):
+    for
+      degree <- (8 to 12) ++ Vector(20, 31, 32)
+      convention <- Hrfs.BsplineConvention.values
+    do
+      val span = 24.5
+      val requested = degree + 4
+      // Construct the reference knot vector from the public convention,
+      // independently of the production breaks and Cox-de Boor evaluator.
+      val interior = convention match
+        case Hrfs.BsplineConvention.Complete => Vector.tabulate(3)(i => span * (i + 1) / 4.0)
+        case Hrfs.BsplineConvention.LegacyR => Vector.tabulate(4)(i => math.floor(span) * (i + 1) / 5.0)
+      val knots = Vector.fill(degree + 1)(0.0) ++ interior ++ Vector.fill(degree + 1)(span)
+      val offset = if convention == Hrfs.BsplineConvention.LegacyR then 1 else 0
+      val hrf = Hrfs.bspline(requested, Seconds(span), degree, convention)
+      val basis = ResponseBasis.of(hrf)
+      val mean = basis.responseFunctional(ResponseFunctional.WindowMean(0.s, Seconds(span + 2.0)))
+        .fold(error => fail(error.message), identity)
+      for column <- 0 until requested do
+        // Integral of N_i,p over its support is (t_{i+p+1} - t_i)/(p+1).
+        val i = column + offset
+        val expected = (knots(i + degree + 1) - knots(i)) / (degree + 1) / (span + 2.0)
+        assertEqualsDouble(mean.values(column), expected, 2e-13,
+          s"$convention degree=$degree column=$column full support")
+
+      val tail = span - interior.last
+      for (from, until) <- Vector((interior.last - 0.4 * tail, span - 0.3 * tail),
+          (interior.head, span + tail)) do
+        val partial = Primitive.definiteIntegral(hrf, Lag(from), Lag(until)).get
+        // The last column is ((t - last interior knot)/tail)^p on its support.
+        val upper = math.min(1.0, (until - interior.last) / tail)
+        val expected = tail * math.pow(upper, degree + 1) / (degree + 1)
+        assertEqualsDouble(partial.last, expected, 2e-12,
+          s"$convention degree=$degree last column window=[$from,$until]")
+
   test("every registered primitive agrees with a refined trapezoid"):
     exactFamilies.foreach { case (name, hrf, duration, tol) =>
       val exact = Evaluate.doubles(hrf, grid, duration = duration, integration = Integration.Exact)
