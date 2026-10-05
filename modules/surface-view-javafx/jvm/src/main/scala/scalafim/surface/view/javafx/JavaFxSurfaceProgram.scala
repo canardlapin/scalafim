@@ -23,6 +23,7 @@ enum JavaFxSurfaceCommand:
   case RebuildGeometry(plan: SurfaceRenderPlan)
   case UpdateGeometry(plan: SurfaceRenderPlan)
   case UpdateAtlases(plan: SurfaceRenderPlan)
+  case RefineAtlases(plan: SurfaceRenderPlan)
   case UpdateMaterial(mode: JavaFxMaterialMode)
   case UpdateCamera(plan: SurfaceRenderPlan)
   case UpdateLayout(slots: Vector[SurfaceViewSlot])
@@ -161,7 +162,8 @@ final case class JavaFxInterpretReceipt(
   geometryUpdates: Int,
   geometryBytesUpdated: Long,
   elapsedNanos: Long,
-  textureCoordinateBytesUpdated: Long = 0L
+  textureCoordinateBytesUpdated: Long = 0L,
+  chunksReplaced: Int = 0
 )
 
 final case class JavaFxObservedReceipt(
@@ -183,38 +185,96 @@ final class JavaFxSurfaceBackend private (
   private var disposed = false
 
   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    render(plan, None)
+
+  /** Publish owned CPU-prepared pixels; camera/readout state may be rebased. */
+  def render(plan: SurfaceRenderPlan,
+      prepared: JavaFxPreparedColorUpdate): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
+    render(plan, Some(prepared))
+
+  /** Capture on FX; the returned retained-layout basis contains CPU data only. */
+  def colorPreparationBasis: Either[JavaFxSurfaceError, JavaFxColorPreparationBasis] =
+    requireFxThread().flatMap: _ =>
+      if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
+      else if !config.encoding.retainsLayout then
+        Left(JavaFxSurfaceError.IncompatiblePlan("worker preparation requires retained affine layout"))
+      else current.map(_.colorPreparationBasis).toRight(JavaFxSurfaceError.IncompatiblePlan("no native layout exists"))
+
+  private def render(plan: SurfaceRenderPlan,
+      supplied: Option[JavaFxPreparedColorUpdate]): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
     JavaFxSurfaceBackend.validateCapabilities(plan).flatMap(_ => requireFxThread()).flatMap: _ =>
       if disposed then Left(JavaFxSurfaceError.IncompatiblePlan("backend has been disposed"))
       else scala.util.boundary[Either[JavaFxSurfaceError, JavaFxInterpretReceipt]]:
         val started = System.nanoTime()
+        // Validate supplied work on every path, including no-op and rebuild,
+        // before native allocation, camera attachment or buffer mutation.
+        supplied.foreach: prepared =>
+          current match
+            case None => scala.util.boundary.break(Left(JavaFxSurfaceError.IncompatiblePlan("prepared layout has no owner")))
+            case Some(probe) => probe.validatePrepared(prepared, plan, Some(JavaFxSurfaceProgram.materialMode(plan))) match
+              case Left(error) => scala.util.boundary.break(Left(error))
+              case Right(_) => ()
         val incremental = JavaFxSurfaceProgram.compile(currentPlan, plan, config)
         val rebuildsGeometry = incremental.commands.exists:
           case JavaFxSurfaceCommand.RebuildGeometry(_) => true
           case _ => false
+        val changedContent = currentPlan.exists(before => !JavaFxColorPreparationBasis.sameContent(before, plan))
         val updatesBuffers = incremental.commands.exists:
           case JavaFxSurfaceCommand.UpdateAtlases(_) | JavaFxSurfaceCommand.UpdateGeometry(_) => true
           case _ => false
-        val needsReplacement =
-          if updatesBuffers && !rebuildsGeometry then current.get.requiresAtlasRebuild(plan, JavaFxSurfaceProgram.materialMode(plan))
-          else Right(false)
-        val program = needsReplacement match
+        val prepared =
+          if !rebuildsGeometry && (updatesBuffers || supplied.nonEmpty || (config.encoding.retainsLayout && changedContent)) then
+            supplied match
+              case Some(value) => Right(Some(value))
+              case None => current.get.prepareColorUpdate(plan, JavaFxSurfaceProgram.materialMode(plan)).map(Some(_))
+          else Right(None)
+        val checked = prepared match
           case Left(error) => scala.util.boundary.break(Left(error))
-          case Right(false) => incremental
-          case Right(true) =>
-            // Complete construction and resource validation precede the scene swap.
+          case Right(value) => value
+        val program = checked match
+          case Some(colors) if colors.requiresRebuild && config.encoding.retainsLayout &&
+              !colors.geometryChanged && !rebuildsGeometry =>
+            val commands = incremental.commands.filter:
+              case JavaFxSurfaceCommand.UpdateGeometry(_) | JavaFxSurfaceCommand.UpdateAtlases(_) => false
+              case _ => true
+            incremental.copy(commands = Vector(JavaFxSurfaceCommand.RefineAtlases(plan)) ++ commands,
+              dirty = incremental.dirty.copy(geometry = true, layerData = true))
+          case Some(colors) if colors.requiresRebuild =>
             val full = JavaFxSurfaceProgram.compile(None, plan, config)
             full.copy(dirty = full.dirty.copy(removedResources = incremental.dirty.removedResources))
+          case _ if rebuildsGeometry => incremental
+          case _ =>
+            // Buffer identity is stronger than V1's 32-bit resource hashes.
+            // CPU preparation proves whether geometry actually changed.
+            val extraGeometry = checked.exists(_.geometryChanged) && !incremental.dirty.geometry
+            val extraColors = checked.nonEmpty && changedContent && !incremental.dirty.layerData
+            val beforeColors = incremental.commands.filter:
+              case JavaFxSurfaceCommand.UpdateAtlases(_) => false
+              case _ => true
+            val commands = beforeColors ++
+              Option.when(extraGeometry)(JavaFxSurfaceCommand.UpdateGeometry(plan)).toVector ++
+              Option.when(incremental.dirty.layerData || extraColors)(JavaFxSurfaceCommand.UpdateAtlases(plan)).toVector
+            // Geometry and atlases must precede material/camera/layout changes.
+            val (buffers, state) = commands.partition:
+              case JavaFxSurfaceCommand.UpdateGeometry(_) | JavaFxSurfaceCommand.UpdateAtlases(_) => true
+              case _ => false
+            incremental.copy(commands = buffers ++ state, dirty = incremental.dirty.copy(
+              geometry = incremental.dirty.geometry || extraGeometry,
+              layerData = incremental.dirty.layerData || extraColors))
         var atlasUpdates = 0
         var geometryUpdates = 0
         var geometryBytesUpdated = 0L
         var textureCoordinateBytesUpdated = 0L
+        var chunksReplaced = 0
         var index = 0
         var failure: Option[JavaFxSurfaceError] = None
         while index < program.commands.length && failure.isEmpty do
           program.commands(index) match
             case JavaFxSurfaceCommand.DisposeResources(_) => ()
             case JavaFxSurfaceCommand.RebuildGeometry(next) =>
-              JavaFxSurfaceProbe.compile(next, JavaFxSurfaceProgram.materialMode(next), config) match
+              JavaFxSurfaceProbe.compileRetaining(next, JavaFxSurfaceProgram.materialMode(next), config,
+                if config.encoding.retainsLayout && currentPlan.exists(_.receipt.meshKeys == next.receipt.meshKeys) then current else None,
+                checked.map(_.colorsBySurface)) match
                 case Left(error) => failure = Some(error)
                 case Right(probe) =>
                   mountedScene.foreach: scene =>
@@ -230,11 +290,20 @@ final class JavaFxSurfaceBackend private (
                   geometryUpdates += 1
                   geometryBytesUpdated += receipt.bytesUpdated
             case JavaFxSurfaceCommand.UpdateAtlases(next) =>
-              current.get.updateColors(next, commit = true, mode = JavaFxSurfaceProgram.materialMode(next)) match
+              current.get.updatePreparedColors(checked.get, next, commit = true) match
                 case Left(error) => failure = Some(error)
                 case Right(receipt) =>
                   atlasUpdates += receipt.atlasesUpdated
                   textureCoordinateBytesUpdated += receipt.textureCoordinateBytesUpdated
+            case JavaFxSurfaceCommand.RefineAtlases(next) =>
+              current.get.refinePreparedColors(checked.get, next) match
+                case Left(error) => failure = Some(error)
+                case Right(receipt) =>
+                  atlasUpdates += receipt.atlasesUpdated
+                  geometryUpdates += 1
+                  geometryBytesUpdated += receipt.bytesUpdated
+                  textureCoordinateBytesUpdated += receipt.textureCoordinateBytesUpdated
+                  chunksReplaced += receipt.chunksReplaced
             case JavaFxSurfaceCommand.UpdateMaterial(mode) =>
               current.foreach: probe =>
                 probe.setMaterialMode(mode) match
@@ -249,6 +318,7 @@ final class JavaFxSurfaceBackend private (
         failure match
           case Some(error) => Left(error)
           case None =>
+            if geometryUpdates > 0 then current.foreach(_.invalidateColorPreparationBasis())
             currentPlan = Some(plan)
             Right(JavaFxInterpretReceipt(
               program.dirty,
@@ -258,7 +328,8 @@ final class JavaFxSurfaceBackend private (
               geometryUpdates,
               geometryBytesUpdated,
               System.nanoTime() - started,
-              textureCoordinateBytesUpdated
+              textureCoordinateBytesUpdated,
+              chunksReplaced
             ))
 
   def renderObserved(
@@ -266,10 +337,11 @@ final class JavaFxSurfaceBackend private (
     path: SurfaceAdmissionPath
   ): Either[JavaFxSurfaceError, JavaFxObservedReceipt] =
     val previous = currentPlan
+    val previousChunks = current.toVector.flatMap(_.chunks)
     render(plan).map: receipt =>
       val events = Vector.newBuilder[SurfaceResourceEvent]
-      if receipt.dirty.geometry && receipt.geometryUpdates == 0 then
-        current.toVector.flatMap(_.chunks).foreach: chunk =>
+      if receipt.dirty.geometry && (receipt.geometryUpdates == 0 || receipt.chunksReplaced > 0) then
+        current.toVector.flatMap(_.chunks).filter(c => !previousChunks.exists(p => p.view eq c.view)).foreach: chunk =>
           events += SurfaceResourceEvent.MeshUploaded(
             chunk.meshKey,
             chunk.mesh.getPoints.size() / 3,

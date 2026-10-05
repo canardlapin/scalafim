@@ -8,6 +8,7 @@ import javax.imageio.ImageIO
 import java.nio.{ByteBuffer, ByteOrder}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.concurrent.FutureTask
 import _root_.javafx.application.Platform
 import _root_.javafx.scene.{Group, Scene as FxScene, SceneAntialiasing, SubScene}
 import _root_.javafx.scene.image.WritableImage
@@ -90,28 +91,31 @@ object JavaFxAffineCortexProbe:
       reverse: Boolean = false, shift: Double = 0)
   private final case class Prepared(plan: SurfaceRenderPlan, model: SurfaceViewerModel, state: SurfaceViewerState)
 
-  private def prepare(source: Source, settings: Settings): Prepared =
+  private def prepare(source: Source, settings: Settings, reuse: Option[Prepared] = None): Prepared =
     val geometries = source.plan.meshes.map: m =>
-      val coordinates = m.positions.unsafeArray.map(_.toDouble)
-      if settings.shift != 0 then
-        var vertex = 0
-        while vertex < coordinates.length do
-          // Shift along the exported camera's screen-right world basis. A
-          // translation along its viewing axis is invisible orthographically.
-          var axis = 0
-          while axis < 3 do
-            coordinates(vertex + axis) += settings.shift * source.plan.camera.viewMatrix(axis)
-            axis += 1
-          vertex += 3
-      m -> SurfaceGeometry(TriangleMesh.fromArrays(coordinates, m.indices.unsafeArray),
-        if hemi(m.surface) == "lh" then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Inflated)
-    val assets = geometries.map((m, g) => SurfaceAsset.make(m.surface, g).toOption.get)
+      val existing = reuse.filter(_ => settings.shift == 0).flatMap(_.model.surface(m.surface)).map(_.geometry)
+      val geometry = existing.getOrElse:
+        val coordinates = m.positions.unsafeArray.map(_.toDouble)
+        if settings.shift != 0 then
+          var vertex = 0
+          while vertex < coordinates.length do
+            var axis = 0
+            while axis < 3 do
+              coordinates(vertex + axis) += settings.shift * source.plan.camera.viewMatrix(axis)
+              axis += 1
+            vertex += 3
+        SurfaceGeometry(TriangleMesh.fromArrays(coordinates, m.indices.unsafeArray),
+          if hemi(m.surface) == "lh" then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Inflated)
+      m -> geometry
+    val assets = reuse.filter(_ => settings.shift == 0).fold(
+      geometries.map((m, g) => SurfaceAsset.make(m.surface, g).toOption.get))(_.model.surfaces)
     val layers = geometries.flatMap: (m, g) =>
       val under = source.plan.layers.find(p => p.surface == m.surface && p.layer.value.startsWith("cortex-")).get
       val over = source.plan.layers.find(p => p.surface == m.surface && !p.layer.value.startsWith("cortex-")).get
       Vector(
-        SurfaceLayer.packedRgba(under.layer, m.surface, g,
-          under.colors.unsafeArray.toVector.map(Rgba32.fromPackedInt), opacity=under.opacity, blendMode=under.blendMode).toOption.get,
+        reuse.filter(_ => settings.shift == 0).flatMap(_.model.layer(under.layer)).getOrElse(
+          SurfaceLayer.packedRgba(under.layer, m.surface, g,
+            under.colors.unsafeArray.toVector.map(Rgba32.fromPackedInt), opacity=under.opacity, blendMode=under.blendMode).toOption.get),
         SurfaceLayer.scalar(over.layer, m.surface, g, source.values(m.surface),
           Exporter(source.range, settings.cutoff, settings.reverse), opacity=DisplayOpacity.unsafe(settings.opacity),
           blendMode=over.blendMode).toOption.get)
@@ -143,10 +147,13 @@ object JavaFxAffineCortexProbe:
       require(packet.opacity.toDouble == settings.opacity)
     require(finiteChecked > 0)
     val meshes = compiled.meshes.map: packet =>
-      val original = source.plan.meshes.find(_.surface == packet.surface).get
+      val original = reuse.filter(_ => settings.shift == 0).flatMap(_.plan.meshes.find(_.surface == packet.surface))
+        .getOrElse(source.plan.meshes.find(_.surface == packet.surface).get)
       require(java.util.Arrays.equals(packet.indices.unsafeArray, original.indices.unsafeArray))
       if settings.shift == 0 then require(java.util.Arrays.equals(packet.positions.unsafeArray, original.positions.unsafeArray))
-      packet.copy(resourceKey=original.resourceKey, normals=original.normals,
+      packet.copy(resourceKey=original.resourceKey,
+        positions=if reuse.nonEmpty && settings.shift == 0 then original.positions else packet.positions,
+        indices=original.indices, normals=original.normals,
         geometryRevision=Some(if settings.shift == 0 then original.geometryKey
           else SurfaceResourceKey(original.geometryKey.value + ":qualification-translation")))
     val drawPasses = compiled.drawPasses.map: pass =>
@@ -167,6 +174,25 @@ object JavaFxAffineCortexProbe:
     val image = new BufferedImage(Width, Height, BufferedImage.TYPE_INT_ARGB)
     image.setRGB(0, 0, Width, Height, pixels, 0, Width)
     require(ImageIO.write(image, "png", path.toFile))
+
+  private def maxChannelDifference(a: Array[Int], b: Array[Int]): Int =
+    var maximum = 0; var i = 0
+    while i < a.length do
+      var shift = 0
+      while shift <= 24 do
+        maximum = math.max(maximum, math.abs(((a(i) >>> shift) & 255) - ((b(i) >>> shift) & 255)))
+        shift += 8
+      i += 1
+    maximum
+
+  private def invertedComposite(plan: SurfaceRenderPlan): SurfaceRenderPlan =
+    val colors = JavaFxSurfaceProbe.compositeColors(plan, JavaFxMaterialMode.Unlit, JavaFxAtlasLighting.NativePhong)
+    val layers = plan.meshes.map: mesh =>
+      val inverted = colors(mesh.surface).map(value => value ^ 0xffffff00)
+      SurfaceLayerPacket(SurfaceLayerId.unsafe("adversarial-final-rgb:" + mesh.surface.value), mesh.surface,
+        SurfaceResourceKey("adversarial-final-rgb:" + mesh.surface.value), new IntBufferView(inverted),
+        DisplayOpacity.unsafe(1), DisplayBlendMode.Normal)
+    plan.copy(layers = layers, receipt = plan.receipt.copy(layerKeys = layers.map(_.resourceKey)))
 
   private def checkPicks(prepared: Prepared, source: Source, backend: JavaFxSurfaceBackend, scene: SubScene): String =
     val controller = JavaFxSurfaceController.attachRendered(prepared.model, prepared.state, backend, scene).toOption.get
@@ -211,8 +237,181 @@ object JavaFxAffineCortexProbe:
       s"""{"sampled":$sampled,"agreed":$agreed,"missing":$missing,"selectionReadouts":$readouts,"maximumBarycentricError":$maximumBarycentricError}"""
     finally controller.dispose()
 
+  private def verifyRuntime(): Unit =
+    val expected = Option(System.getProperty("probe.expectedOrigin")).getOrElse(
+      throw new IllegalStateException("diagnostic runtime origin pin is required"))
+    for name <- Vector("com.sun.prism.es2.ES2PhongMaterial", "com.sun.prism.es2.ES2PhongShader") do
+      require(Class.forName(name).getProtectionDomain.getCodeSource.getLocation.toString == expected,
+        s"unexpected $name origin")
+
+  private def onFx[A](operation: => A): A =
+    val task = new FutureTask[A](() => operation)
+    Platform.runLater(task)
+    task.get(300, TimeUnit.SECONDS)
+
+  private final case class Publication(receipt: JavaFxInterpretReceipt, pixels: Array[Int],
+      queueNanos: Long, publishNanos: Long, snapshotNanos: Long, pixelCopyNanos: Long,
+      allocated: Long, faces: Long, atlasBytes: Long, meshBytes: Long,
+      heapUsed: Long, heapCommitted: Long, heapMax: Long)
+
+  /** Worker input -> public scalar/model/plan -> optional CPU atlas preparation
+    * -> queued FX publication -> synchronous snapshot. Node.snapshot includes
+    * draw/readback; this does not measure the PLS consumer's full FX callback.
+    */
+  private def benchmarkMain(source: Source, alternate: Source, output: Path, lighting: SurfaceLighting,
+      config: JavaFxAtlasConfig, sceneName: String, lightingName: String, antialiasing: SceneAntialiasing): Unit =
+    require(source.plan.meshes.length == alternate.plan.meshes.length)
+    source.plan.meshes.zip(alternate.plan.meshes).foreach: (left, right) =>
+      require(left.surface == right.surface && java.util.Arrays.equals(left.positions.unsafeArray, right.positions.unsafeArray) &&
+        java.util.Arrays.equals(left.normals.unsafeArray, right.normals.unsafeArray) && java.util.Arrays.equals(left.indices.unsafeArray, right.indices.unsafeArray),
+        s"alternate source geometry differs for ${left.surface.value}")
+    val initial = prepare(source, Settings(lighting, source.cutoff))
+    val allocation = ManagementFactory.getThreadMXBean.asInstanceOf[com.sun.management.ThreadMXBean]
+    require(allocation.isThreadAllocatedMemorySupported)
+    if !allocation.isThreadAllocatedMemoryEnabled then allocation.setThreadAllocatedMemoryEnabled(true)
+    Platform.startup(() => ())
+    try
+      val (backend, scene, host) = onFx:
+        verifyRuntime()
+        val backend = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
+        backend.render(initial.plan).toOption.get
+        val scene = backend.newSubScene(JavaFxSnapshotConfig.make(Width, Height, antialiasing).toOption.get).toOption.get
+        val host = new FxScene(new Group(scene), Width, Height)
+        host.getRoot.applyCss(); host.getRoot.layout()
+        (backend, scene, host)
+      try
+        val baseline = onFx(pixels(scene))
+        require(baseline.distinct.length > 32, "blank/degenerate cortex")
+        require(java.util.Arrays.equals(baseline, onFx(pixels(scene))), "repeat native baseline differs")
+        save(output.resolve("initial.png"), baseline)
+        val beforePicks = onFx(checkPicks(initial, source, backend, scene))
+        val rows = Vector.newBuilder[String]
+        val variants = Vector("palette", "cutoff", "opacity", "map", "adversarialFinalRgb", "unchanged")
+        def target(name: String, restoring: Boolean): SurfaceRenderPlan =
+          if name == "unchanged" then initial.plan
+          else if restoring then prepare(source, Settings(lighting, source.cutoff), Some(initial)).plan
+          else name match
+            case "palette" => prepare(source, Settings(lighting, source.cutoff, reverse = true), Some(initial)).plan
+            case "cutoff" => prepare(source, Settings(lighting, source.cutoff * 1.5), Some(initial)).plan
+            case "opacity" => prepare(source, Settings(lighting, source.cutoff, opacity = .5), Some(initial)).plan
+            case "map" => prepare(alternate, Settings(lighting, alternate.cutoff), Some(initial)).plan
+            case "adversarialFinalRgb" => invertedComposite(initial.plan)
+            case other => throw new IllegalArgumentException(other)
+        var warmed = baseline
+        var currentCpuPlan = initial.plan
+        var stableFaces = -1L
+        var publications = 0
+        def publish(name: String, restoring: Boolean, worker: Boolean, phase: String, cycle: Int): Unit =
+          val inputStarted = System.nanoTime()
+          val workerAllocStart = allocation.getThreadAllocatedBytes(Thread.currentThread.getId)
+          val planStarted = System.nanoTime()
+          val plan = if name == "unchanged" then currentCpuPlan else target(name, restoring)
+          val planNanos = System.nanoTime() - planStarted
+          val captured = if worker && name != "unchanged" then
+            val captureStarted = System.nanoTime()
+            val basis = onFx(backend.colorPreparationBasis.toOption.get)
+            Some((basis, System.nanoTime() - captureStarted))
+          else None
+          val atlasStarted = System.nanoTime()
+          val prepared = captured.map((basis, _) => basis.prepare(plan).fold(e => throw new IllegalStateException(e.message), identity))
+          val atlasNanos = if prepared.nonEmpty then System.nanoTime() - atlasStarted else 0L
+          val workerAllocated = allocation.getThreadAllocatedBytes(Thread.currentThread.getId) - workerAllocStart
+          val queued = System.nanoTime()
+          val result = onFx:
+            val queueNanos = System.nanoTime() - queued
+            val allocatedBefore = allocation.getThreadAllocatedBytes(Thread.currentThread.getId)
+            val fxStarted = System.nanoTime()
+            val receipt = prepared.fold(backend.render(plan))(value => backend.render(plan, value)).fold(
+              e => throw new IllegalStateException(s"$phase/$name: ${e.message}"), identity)
+            val fxNanos = System.nanoTime() - fxStarted
+            val fxAllocated = allocation.getThreadAllocatedBytes(Thread.currentThread.getId) - allocatedBefore
+            val snapshotStarted = System.nanoTime()
+            val image = scene.snapshot(null, new WritableImage(Width, Height))
+            val snapshotNanos = System.nanoTime() - snapshotStarted
+            val copyStarted = System.nanoTime()
+            val observed = new Array[Int](Width * Height)
+            image.getPixelReader.getPixels(0, 0, Width, Height,
+              _root_.javafx.scene.image.PixelFormat.getIntArgbInstance(), observed, 0, Width)
+            val copyNanos = System.nanoTime() - copyStarted
+            val heap = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage
+            require(backend.pickingPlan.contains(plan))
+            Publication(receipt, observed, queueNanos, fxNanos, snapshotNanos, copyNanos, fxAllocated,
+              backend.chunks.map(_.renderedFaceCount.toLong).sum,
+              backend.chunks.map(c => c.atlas.width.toLong * c.atlas.height * 4).sum,
+              backend.chunks.map(c => (c.mesh.getPoints.size().toLong + c.mesh.getNormals.size() + c.mesh.getTexCoords.size() + c.mesh.getFaces.size()) * 4).sum,
+              heap.getUsed, heap.getCommitted, heap.getMax)
+          val endToEndNanos = System.nanoTime() - inputStarted
+          currentCpuPlan = plan
+          val changed = result.pixels.indices.count(i => result.pixels(i) != warmed(i))
+          if phase == "first" && restoring then
+            val maximum = maxChannelDifference(baseline, result.pixels)
+            if maximum > 2 then
+              save(output.resolve(s"failed-$name-restoration.png"), result.pixels)
+              Files.writeString(output.resolve("failure.json"),
+                s"""{"variant":"$name","phase":"$phase","maximumChannelDifference":$maximum,"changedPixels":$changed,"faces":${result.faces},"chunksReplaced":${result.receipt.chunksReplaced}}\n""")
+            // Pairwise differences across subdivisions are observations, not
+            // the frozen footprint-envelope/AA-off-center correctness gate.
+            save(output.resolve(s"first-$name-restored.png"), result.pixels)
+          else if restoring || name == "unchanged" then
+            require(changed == 0, s"$phase/$name restoration differs at $changed pixels")
+          else require(changed > 0, s"$name produced no framebuffer change")
+          if name == "unchanged" then
+            require(result.receipt.atlasUpdates == 0 && result.receipt.geometryUpdates == 0 && result.receipt.textureCoordinateBytesUpdated == 0)
+          if phase == "warm" then
+            require(result.receipt.textureCoordinateBytesUpdated == 0 && result.receipt.geometryBytesUpdated == 0 &&
+              result.receipt.geometryUpdates == 0 && result.receipt.chunksReplaced == 0 && result.faces == stableFaces,
+              s"$name warm publication changed retained topology")
+          rows += s"""{"phase":"$phase","cycle":$cycle,"variant":"$name","restoring":$restoring,"workerPrepared":$worker,"publicPlanNanos":$planNanos,"basisCaptureWallNanos":${captured.fold(0L)(_._2)},"atlasPreparationNanos":$atlasNanos,"workerAllocatedBytes":$workerAllocated,"fxQueueWaitNanos":${result.queueNanos},"fxPublishNanos":${result.publishNanos},"snapshotNanos":${result.snapshotNanos},"pixelCopyNanos":${result.pixelCopyNanos},"inputToSnapshotNanos":$endToEndNanos,"fxPublishAllocatedBytes":${result.allocated},"changedPixels":$changed,"atlasUpdates":${result.receipt.atlasUpdates},"uvBytes":${result.receipt.textureCoordinateBytesUpdated},"geometryBytes":${result.receipt.geometryBytesUpdated},"chunksReplaced":${result.receipt.chunksReplaced},"faces":${result.faces},"retainedAtlasBytes":${result.atlasBytes},"retainedMeshBytes":${result.meshBytes},"heapUsed":${result.heapUsed},"heapCommitted":${result.heapCommitted},"heapMax":${result.heapMax}}"""
+          publications += 1
+        variants.filterNot(_ == "unchanged").foreach: name =>
+          publish(name, restoring = false, worker = true, phase = "first", cycle = 0)
+          publish(name, restoring = true, worker = true, phase = "first", cycle = 0)
+        warmed = onFx(pixels(scene))
+        stableFaces = onFx(backend.chunks.map(_.renderedFaceCount.toLong).sum)
+        save(output.resolve("warmed.png"), warmed)
+        for worker <- Vector(false, true); cycle <- 0 until 5; name <- variants; restoring <- Vector(false, true) do
+          publish(name, restoring, worker, "warm", cycle)
+        require(publications == 130)
+        onFx(backend.render(initial.plan).toOption.get)
+        val restored = onFx(pixels(scene))
+        require(java.util.Arrays.equals(restored, warmed))
+        save(output.resolve("restored.png"), restored)
+        val afterPicks = onFx(checkPicks(initial, source, backend, scene))
+        val fullReference = onFx:
+          val full = JavaFxSurfaceProbe.compileRetaining(initial.plan, JavaFxSurfaceProgram.materialMode(initial.plan),
+            config, None, retainedChunks = backend.chunks).toOption.get
+          require(full.chunks.length == backend.chunks.length)
+          full.chunks.zip(backend.chunks).foreach: (a,b) =>
+            require(a.surface == b.surface && a.faceStart == b.faceStart && a.faceCount == b.faceCount)
+            require(java.util.Arrays.equals(a.mesh.getPoints.toArray(null: Array[Float]), b.mesh.getPoints.toArray(null: Array[Float])))
+            require(java.util.Arrays.equals(a.mesh.getNormals.toArray(null: Array[Float]), b.mesh.getNormals.toArray(null: Array[Float])))
+            require(java.util.Arrays.equals(a.mesh.getTexCoords.toArray(null: Array[Float]), b.mesh.getTexCoords.toArray(null: Array[Float])))
+            require(java.util.Arrays.equals(a.mesh.getFaces.toArray(null: Array[Int]), b.mesh.getFaces.toArray(null: Array[Int])))
+            val left = a.atlas.pixelBuffer.getBuffer; val right = b.atlas.pixelBuffer.getBuffer
+            require(left.capacity() == right.capacity())
+            var i = 0
+            while i < left.capacity() do
+              require(left.get(i) == right.get(i), s"full retained reference atlas texel differs at $i")
+              i += 1
+          full.setViewportSize(Width,Height)
+          val referenceScene = new SubScene(full.root,Width,Height,true,antialiasing)
+          full.attachCamera(referenceScene); referenceScene.setFill(Color.WHITE)
+          val referenceHost = new FxScene(new Group(referenceScene),Width,Height)
+          referenceHost.getRoot.applyCss(); referenceHost.getRoot.layout()
+          pixels(referenceScene)
+        require(java.util.Arrays.equals(restored, fullReference), "incremental final frame differs from same-layout full retained rebuild")
+        save(output.resolve("full-retained-reference.png"), fullReference)
+        val hashes = InputHashes.toVector.sortBy(_._1).map((name, hash) => s"\"$name\":\"$hash\"").mkString("{", ",", "}")
+        val record = s"""{"schema":"scalafim.javafx-retained-cortex.v1","diagnosticBackend":true,"consumerFullCallbackMeasured":false,"isolatedGpuDrawMeasured":false,"denseFirstRefinementFootprintQualified":false,"fullRetainedReferenceExact":true,"scene":"$sceneName","lighting":"$lightingName","antialiasing":"$antialiasing","encoding":"${config.encoding}","vertices":${source.plan.meshes.map(_.positions.length.toLong / 3).sum},"sourceFaces":${source.plan.meshes.map(_.indices.length.toLong / 3).sum},"inputs":$hashes,"firstPublications":10,"warmPublications":120,"baselineMaxChannelDifference":${maxChannelDifference(baseline, warmed)},"beforePicks":$beforePicks,"afterPicks":$afterPicks,"updates":${rows.result().mkString("[", ",", "]")}}"""
+        Files.writeString(output.resolve("receipt.json"), record + "\n")
+        println(s"PASS $sceneName $lightingName retained cortex: 130 measured publications, 2400 native original-face picks")
+      finally onFx(backend.dispose())
+    finally Platform.exit()
+
   def main(args: Array[String]): Unit =
-    require(args.length == 5, "inputdir scene(beta|fir) output lighting(Unlit|Default|Soft) encoding")
+    require(args.length == 5 || ((args.length == 6 || args.length == 7) && args(5) == "benchmark"),
+      "inputdir scene(beta|fir) output lighting(Unlit|Default|Soft) encoding [benchmark [DISABLED|BALANCED]]")
+    val benchmark = args.lift(5).contains("benchmark")
     val dir = Path.of(args(0))
     verifyInputs(dir)
     val source = read(dir, args(1))
@@ -225,6 +424,17 @@ object JavaFxAffineCortexProbe:
       case "Default" => SurfaceLighting.Default
       case "Soft" => soft
       case other => throw new IllegalArgumentException(other)
+    val config = JavaFxAtlasConfig.make(encoding=JavaFxAtlasEncoding.valueOf(args(4)),
+      lightingPolicy=JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+    if benchmark then require(config.encoding == JavaFxAtlasEncoding.RetainedAffineOpaque,
+      "benchmark requires RetainedAffineOpaque so CPU atlas preparation has a stable owner")
+    if benchmark then
+      benchmarkMain(source, alternate, output, lighting, config, args(1), args(3),
+        args.lift(6).getOrElse("BALANCED") match
+          case "BALANCED" => SceneAntialiasing.BALANCED
+          case "DISABLED" => SceneAntialiasing.DISABLED
+          case other => throw new IllegalArgumentException(other))
+      return
     val initial = prepare(source, Settings(lighting, source.cutoff))
     val variants = Vector(
       "palette" -> prepare(source, Settings(lighting, source.cutoff, reverse=true)).plan,
@@ -237,8 +447,6 @@ object JavaFxAffineCortexProbe:
     view(3) += 2f
     val cameraVariant = initial.plan.copy(camera=initial.plan.camera.copy(viewMatrix=new FloatBufferView(view)),
       receipt=initial.plan.receipt.copy(cameraKey=initial.plan.receipt.cameraKey + ":qualification-pan"))
-    val config = JavaFxAtlasConfig.make(encoding=JavaFxAtlasEncoding.valueOf(args(4)),
-      lightingPolicy=JavaFxAtlasLighting.WorldVertexLambert).toOption.get
     val done = new CountDownLatch(1)
     @volatile var failure: Throwable | Null = null
     Platform.startup(() => ())
@@ -246,6 +454,10 @@ object JavaFxAffineCortexProbe:
       try
         val backend = JavaFxSurfaceBackend.createDiagnostic(config).toOption.get
         try
+          Option(System.getProperty("probe.expectedOrigin")).foreach: expected =>
+            for name <- Vector("com.sun.prism.es2.ES2PhongMaterial", "com.sun.prism.es2.ES2PhongShader") do
+              val actual = Class.forName(name).getProtectionDomain.getCodeSource.getLocation.toString
+              require(actual == expected, s"unexpected $name origin: $actual")
           backend.render(initial.plan).toOption.get
           val scene = backend.newSubScene(JavaFxSnapshotConfig.make(Width, Height, SceneAntialiasing.BALANCED).toOption.get).toOption.get
           val host = new FxScene(new Group(scene), Width, Height)
@@ -289,7 +501,8 @@ object JavaFxAffineCortexProbe:
           val afterPicks = checkPicks(initial, source, backend, scene)
           save(output.resolve("restored.png"), pixels(scene))
           val hashes = InputHashes.toVector.sortBy(_._1).map((name, hash) => s"\"$name\":\"$hash\"").mkString("{", ",", "}")
-          val record = s"""{"schema":"scalafim.javafx-affine-cortex.v1","scene":"${args(1)}","lighting":"${args(3)}","encoding":"${args(4)}","vertices":${source.plan.meshes.map(_.positions.length.toLong / 3).sum},"sourceFaces":${source.plan.meshes.map(_.indices.length.toLong / 3).sum},"inputs":$hashes,"updates":${rows.result().mkString("[", ",", "]")},"beforePicks":$beforePicks,"afterPicks":$afterPicks}"""
+          val heap = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage
+          val record = s"""{"schema":"scalafim.javafx-affine-cortex.v1","diagnosticBackend":true,"benchmark":$benchmark,"scene":"${args(1)}","lighting":"${args(3)}","encoding":"${args(4)}","vertices":${source.plan.meshes.map(_.positions.length.toLong / 3).sum},"sourceFaces":${source.plan.meshes.map(_.indices.length.toLong / 3).sum},"inputs":$hashes,"heap":{"used":${heap.getUsed},"committed":${heap.getCommitted},"max":${heap.getMax}},"updates":${rows.result().mkString("[", ",", "]")},"beforePicks":$beforePicks,"afterPicks":$afterPicks}"""
           Files.writeString(output.resolve("receipt.json"), record + "\n")
           println(s"PASS ${args(1)} ${args(3)} cortex: 32 verified updates/restorations, 2400 native original-face picks")
         finally backend.dispose()
