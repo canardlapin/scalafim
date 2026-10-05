@@ -1,0 +1,168 @@
+{
+  "summary": {
+    "captured_dirty_worktrees": 12,
+    "captured_dirty_paths": 1036,
+    "residual_worktrees": 4,
+    "residual_source_files": 61,
+    "registration_metadata_pruned": 4,
+    "source_directories_deleted": 0,
+    "original_branches_deleted": 0
+  },
+  "dirty": [
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c0ulp",
+      "head": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+      "key": "ed010ede632c",
+      "paths": 5,
+      "archive_bytes": 30457,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/ed010ede632c",
+      "snapshot_commit": "7830afa9d3a996ac5c2edd5883fb07f29f5af9f7"
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/c2",
+      "head": "c114cc3b556e6b70d9c651baef1d15dd1fa919d0",
+      "key": "498d03f4a26e",
+      "paths": 1,
+      "archive_bytes": 4625,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/498d03f4a26e",
+      "snapshot_commit": "ad1002d3686ab58f4a5da2c40e7762a456cbe27e"
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/jdk17",
+      "head": "2223f13ad2af8a62a18f6bbce64b1d7b5b2bbb0f",
+      "key": "9bf85ed90ce9",
+      "paths": 3,
+      "archive_bytes": 11704,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/9bf85ed90ce9",
+      "snapshot_commit": "e7adcc139b64a968f285c1297ace92af68e443f0"
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/pr19ci",
+      "head": "29a76fdeb62b289ab95ecb6763edc3e26583e071",
+      "key": "682bc51dc7c1",
+      "paths": 4,
+      "archive_bytes": 14252,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/682bc51dc7c1",
+      "snapshot_commit": "c70cca7863933cf0e92b92f9c24ab6622403abd6"
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeA",
+      "head": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "key": "b63bda5a2e25",
+      "paths": 287,
+      "archive_bytes": 1245005,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/b63bda5a2e25",
+      "snapshot_commit": "d1ec37b3bfd159d141edcd35deb7119e800046bd"
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeB",
+      "head": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "key": "080e0b463f65",
+      "paths": 281,
+      "archive_bytes": 1227669,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/080e0b463f65",
+      "snapshot_commit": "a7f1d90bc2091ef8117a32de4c4369b58362c9bc"
+    },
+    {
+      "worktree": "/private/tmp/claude-502/-Users-bbuchsbaum-code-scala-scalafim/35f4d01b-4044-469b-be6b-0fb1ad772510/scratchpad/probeC",
+      "head": "9a8dcb74f6f1b52a4be428f5ce753de56a58008a",
+      "key": "6218925495d8",
+      "paths": 1,
+      "archive_bytes": 10329,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/6218925495d8",
+      "snapshot_commit": "2b5a920236a413393387566a3e587b26734eb5a6"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-atlas-native-candidate",
+      "head": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "key": "70062e5d8aca",
+      "paths": 197,
+      "archive_bytes": 1085137,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/70062e5d8aca",
+      "snapshot_commit": "05f58727aa90e2b154253fc21e51a874dfb45fd6"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-fit-landing-20261003",
+      "head": "fa6bd6a9f7d773144885c57849cd298521c1772c",
+      "key": "37f3bfef969c",
+      "paths": 20,
+      "archive_bytes": 65393,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/37f3bfef969c",
+      "snapshot_commit": "31e2bc00e5170a3299b1ba3b0d1d939db040dc31"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-fit-preparation-20261002",
+      "head": "d727969c476a5553ffe4804945eaa667cddae18d",
+      "key": "eafc8fa34f73",
+      "paths": 224,
+      "archive_bytes": 1091157,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/eafc8fa34f73",
+      "snapshot_commit": "1b783eee907d79f6c2f73469b65fd3ec794bf8a9"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-model-studio-20261002",
+      "head": "b6612f915e5882097fbf60ec05593129ee01de6d",
+      "key": "215cae4ed156",
+      "paths": 5,
+      "archive_bytes": 1607,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/215cae4ed156",
+      "snapshot_commit": "b6401e4af2938ade1fa5917c0c6a8cad8994bca5"
+    },
+    {
+      "worktree": "/private/tmp/scalafim-mote-queue-20261004",
+      "head": "9b29fcd303879c31d0e4cf0d2984c95730f19411",
+      "key": "7f1cb559f3ac",
+      "paths": 8,
+      "archive_bytes": 38484,
+      "snapshot_ref": "refs/preserved/consolidation-20261005/7f1cb559f3ac",
+      "snapshot_commit": "cb0712b4a93636372228f9e0dc0c64270f882a36"
+    }
+  ],
+  "residual": [
+    {
+      "key": "bc0ad02cbca9",
+      "worktree": "/private/tmp/scalafim-bootstrap-harness-20260930",
+      "head": "b06c4b1e91212563d5b7d68e020ffdebea42b619",
+      "paths": 8,
+      "archive_bytes": 57612,
+      "snapshot_ref": "refs/preserved/orphan-worktrees-20261005/bc0ad02cbca9",
+      "snapshot_commit": "20c3f5e5b7a51687375847f5bd84e69b549bb05a"
+    },
+    {
+      "key": "6adc2fe72263",
+      "worktree": "/private/tmp/scalafim-cpu-ties-20260930",
+      "head": "d462806e8c223029fe1572834f5ad4a994cc1ab8",
+      "paths": 9,
+      "archive_bytes": 69007,
+      "snapshot_ref": "refs/preserved/orphan-worktrees-20261005/6adc2fe72263",
+      "snapshot_commit": "d52e4cad9e925839537babf97561f77912d874ed"
+    },
+    {
+      "key": "4b6559d92a47",
+      "worktree": "/private/tmp/scalafim-response-r4-review-20260930",
+      "head": "aef31a29c238079de9050fb5fb68643291c3af15",
+      "paths": 36,
+      "archive_bytes": 531916,
+      "snapshot_ref": "refs/preserved/orphan-worktrees-20261005/4b6559d92a47",
+      "snapshot_commit": "5c46faf15ccbb3ac91b46768b34ff2c284dcc033"
+    },
+    {
+      "key": "dce2699acfd9",
+      "worktree": "/private/tmp/scalafim-response-review-20260930",
+      "head": "134dea0df858000bdb3a2860d4c0f703ff1aef87",
+      "paths": 8,
+      "archive_bytes": 59565,
+      "snapshot_ref": "refs/preserved/orphan-worktrees-20261005/dce2699acfd9",
+      "snapshot_commit": "e0465fecd214d46281ffa20431b6c277f696893f"
+    }
+  ],
+  "verification": {
+    "snapshot_refs_verified": 12,
+    "original_indexes_unchanged": true,
+    "status_drift": [],
+    "final_original_state": {
+      "original_branch_drift": [],
+      "source_drift": []
+    }
+  }
+}

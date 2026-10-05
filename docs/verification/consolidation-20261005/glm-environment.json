@@ -1,0 +1,8 @@
+{
+  "source_commit": "1ab54a65edd3ea41a6133d4b4ecb78a9c7296684",
+  "requirements_sha256": "383160e9b5a5fbf87a88cee2a72f4f2e5c29a8c474c0d4e6739329d99536e3ac",
+  "freeze_sha256": "8ebfbbda91f7954eaae0ba00a1b3842bb5c2926ff81971ee30a1510cd8e72f50",
+  "python": "Python 3.12.10",
+  "discovery_path": "/private/tmp/scalafim-consolidation-20261005/cascade/tools/phrf-comparison/glmsingle/.venv",
+  "foreign_environment_modified": false
+}
