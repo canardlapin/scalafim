@@ -179,6 +179,7 @@ final class JavaFxSurfaceBackend private (
 ):
   private var currentPlan: Option[SurfaceRenderPlan] = None
   private var current: Option[JavaFxSurfaceProbeResult] = None
+  private var mountedScene: Option[SubScene] = None
   private var disposed = false
 
   def render(plan: SurfaceRenderPlan): Either[JavaFxSurfaceError, JavaFxInterpretReceipt] =
@@ -216,6 +217,9 @@ final class JavaFxSurfaceBackend private (
               JavaFxSurfaceProbe.compile(next, JavaFxSurfaceProgram.materialMode(next), config) match
                 case Left(error) => failure = Some(error)
                 case Right(probe) =>
+                  mountedScene.foreach: scene =>
+                    probe.setViewportSize(scene.getWidth.toInt, scene.getHeight.toInt)
+                    probe.attachCamera(scene)
                   current.foreach(_.root.getChildren.clear())
                   current = Some(probe)
                   root.getChildren.setAll(probe.root)
@@ -300,19 +304,49 @@ final class JavaFxSurfaceBackend private (
     requireFxThread().flatMap: _ =>
       current match
         case None => Left(JavaFxSurfaceError.IncompatiblePlan("render a plan before creating a SubScene"))
+        case Some(_) if mountedScene.nonEmpty =>
+          Left(JavaFxSurfaceError.IncompatiblePlan("the backend root already belongs to a SubScene"))
         case Some(probe) =>
           probe.setViewportSize(config.width, config.height)
           val scene = new SubScene(root, config.width, config.height, true, config.antialiasing)
           probe.attachCamera(scene)
           scene.setFill(if config.transparent then Color.TRANSPARENT else Color.WHITE)
+          mountedScene = Some(scene)
           Right(scene)
 
   def snapshot(config: JavaFxSnapshotConfig): Either[JavaFxSurfaceError, WritableImage] =
     requireFxThread().flatMap: _ =>
-      newSubScene(config).map: scene =>
-        val parameters = new SnapshotParameters()
-        parameters.setFill(if config.transparent then Color.TRANSPARENT else Color.WHITE)
-        scene.snapshot(parameters, new WritableImage(config.width, config.height))
+      val target = mountedScene match
+        case Some(scene) => Right(scene)
+        case None => newSubScene(config)
+      target.flatMap: scene =>
+        val resize = scene.getWidth != config.width || scene.getHeight != config.height
+        val fill = if config.transparent then Color.TRANSPARENT else Color.WHITE
+        if scene.getAntiAliasing != config.antialiasing then
+          Left(JavaFxSurfaceError.IncompatiblePlan("snapshot antialiasing differs from the mounted SubScene"))
+        else if resize && (scene.widthProperty().isBound || scene.heightProperty().isBound) then
+          Left(JavaFxSurfaceError.IncompatiblePlan("cannot resize a bound SubScene for a snapshot"))
+        else if scene.fillProperty().isBound && scene.getFill != fill then
+          Left(JavaFxSurfaceError.IncompatiblePlan("cannot change a bound SubScene fill for a snapshot"))
+        else
+          val width = scene.getWidth
+          val height = scene.getHeight
+          val priorFill = scene.getFill
+          try
+            if resize then
+              scene.setWidth(config.width)
+              scene.setHeight(config.height)
+            current.get.setViewportSize(config.width, config.height)
+            if priorFill != fill then scene.setFill(fill)
+            val parameters = new SnapshotParameters()
+            parameters.setFill(fill)
+            Right(scene.snapshot(parameters, new WritableImage(config.width, config.height)))
+          finally
+            if priorFill != fill then scene.setFill(priorFill)
+            if resize then
+              scene.setWidth(width)
+              scene.setHeight(height)
+            current.get.setViewportSize(scene.getWidth.toInt, scene.getHeight.toInt)
 
   def resourceKeys: Set[SurfaceResourceKey] =
     currentPlan.toSet.flatMap(plan => plan.receipt.meshKeys ++ plan.receipt.layerKeys)
@@ -327,6 +361,10 @@ final class JavaFxSurfaceBackend private (
     requireFxThread().map: _ =>
       current.foreach(_.root.getChildren.clear())
       root.getChildren.clear()
+      mountedScene.foreach: scene =>
+        scene.setRoot(new Group())
+        scene.setCamera(null)
+      mountedScene = None
       current = None
       currentPlan = None
       disposed = true

@@ -164,8 +164,9 @@ object JavaFxAffineCortexProbe:
     require(ImageIO.write(image, "png", path.toFile))
 
   private def checkPicks(prepared: Prepared, source: Source, backend: JavaFxSurfaceBackend, scene: SubScene): String =
-    val controller = JavaFxSurfaceController.attach(prepared.model, prepared.state, backend, scene).toOption.get
+    val controller = JavaFxSurfaceController.attachRendered(prepared.model, prepared.state, backend, scene).toOption.get
     try
+      require(backend.pickingPlan.contains(prepared.plan), "selection attachment changed the authoritative scene")
       val reference = SurfaceRasterizer.render(prepared.plan, RasterDimensions.unsafe(Width, Height),
         SurfaceRasterStyle(culling=TriangleCulling.None)).toOption.get
       var sampled = 0

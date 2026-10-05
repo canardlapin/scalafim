@@ -192,6 +192,42 @@ object JavaFxAdaptiveAtlasProbe:
           val host = new Scene(new Group(sub),192,192)
           host.getRoot.applyCss()
           host.getRoot.layout()
+          def frame(config: JavaFxSnapshotConfig, renderer: JavaFxSurfaceBackend = backend): Vector[Int] =
+            val image = renderer.snapshot(config).toOption.get
+            Vector.tabulate(config.width * config.height)(i => image.getPixelReader.getArgb(i % config.width, i / config.width))
+          val beforeResize = frame(snapshot)
+          val publication = JavaFxSnapshotConfig.make(384,256,SceneAntialiasing.DISABLED).toOption.get
+          require(backend.snapshot(publication).toOption.get.getWidth == 384)
+          require(sub.getWidth == 192 && sub.getHeight == 192)
+          require(frame(snapshot) == beforeResize, "publication snapshot did not restore the mounted viewport")
+          require(backend.newSubScene(snapshot).isLeft, "a second SubScene must refuse root reuse explicitly")
+          val resized = JavaFxSnapshotConfig.make(224,224,SceneAntialiasing.DISABLED).toOption.get
+          val cold = JavaFxSurfaceBackend.createDiagnostic(adaptive).toOption.get
+          try
+            cold.render(plan(fixture)).toOption.get
+            val coldScene = cold.newSubScene(resized).toOption.get
+            val coldHost = new Scene(new Group(coldScene),224,224)
+            coldHost.getRoot.applyCss()
+            coldHost.getRoot.layout()
+            sub.setWidth(224)
+            sub.setHeight(224)
+            val expected = frame(resized,cold)
+            require(frame(resized) == expected, "same-size snapshot did not synchronize an external resize")
+            val width = new _root_.javafx.beans.property.SimpleDoubleProperty(224)
+            val height = new _root_.javafx.beans.property.SimpleDoubleProperty(224)
+            sub.widthProperty().bind(width)
+            sub.heightProperty().bind(height)
+            try
+              require(frame(resized) == expected, "bound same-size snapshot differs from cold construction")
+              require(backend.snapshot(publication).isLeft, "bound different-size snapshot must refuse before mutation")
+              require(frame(resized) == expected, "refused bound resize changed the frame")
+            finally
+              sub.widthProperty().unbind()
+              sub.heightProperty().unbind()
+            sub.setWidth(192)
+            sub.setHeight(192)
+            require(frame(snapshot) == beforeResize)
+          finally cold.dispose()
           val controller = JavaFxSurfaceController.attach(fixture,SurfaceViewerState.initial(fixture),backend,sub).toOption.get
           try
             var checked = 0

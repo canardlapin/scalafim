@@ -278,6 +278,23 @@ final class JavaFxSurfaceController private (
     lastFailure = Some(error)
 
 object JavaFxSurfaceController:
+  /** Diagnostic selection adapter for an already-rendered authoritative plan.
+    * Does not reconstruct its exported camera, slots, normals or resource keys.
+    */
+  private[javafx] def attachRendered(
+    model: SurfaceViewerModel,
+    initial: SurfaceViewerState,
+    backend: JavaFxSurfaceBackend,
+    scene: SubScene
+  ): Either[JavaFxInteractionError, JavaFxSurfaceController] =
+    if !Platform.isFxApplicationThread then
+      Left(JavaFxInteractionError.Backend(JavaFxSurfaceError.IncompatiblePlan("controller attachment must run on the Application Thread")))
+    else
+      backend.pickingPlan.toRight(JavaFxInteractionError.PickMiss).map: plan =>
+        val controller = new JavaFxSurfaceController(model, backend, scene, initial, plan)
+        controller.install()
+        controller
+
   def attach(
     model: SurfaceViewerModel,
     initial: SurfaceViewerState,
