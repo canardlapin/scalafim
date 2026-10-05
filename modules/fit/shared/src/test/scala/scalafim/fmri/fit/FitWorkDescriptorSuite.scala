@@ -88,6 +88,20 @@ class FitWorkDescriptorSuite extends munit.FunSuite:
     )
   }
 
+  test("decoded robust work runs its explicit global reduction with bounded reads") {
+    val robustPlan = FitPlan(model, engine = FitEngine.RobustLeastSquares,
+      config = FitConfig(robust = RobustOptions(psi = RobustPsi.Huber(), maxIterations = 3)))
+    val encoded = FitWorkDescriptor.compile(reference, robustPlan, ChunkSize.unsafe(1), selection).toOption.get.encode
+    val descriptor = FitWorkDescriptor.decode(encoded).toOption.get
+    assertEquals(descriptor.preparation.topology, FitPreparationTopology.GlobalReduction)
+    val expected = FitPlanExecutor.fit(robustPlan, selection).toOption.get.asInstanceOf[DenseFmriFitResult]
+    val actual = FitWorkExecutor.fit(descriptor, fixedResolver(reference, robustPlan, boundedReader(model.dataset, 1)))
+      .fold(error => fail(error.message), _.asInstanceOf[DenseFmriFitResult])
+    assertMatrixClose(actual.coefficients.value, expected.coefficients.value)
+    assertMatrixClose(actual.standardErrors.value, expected.standardErrors.value)
+    assertMatrixClose(actual.robustDiagnostics.get.weights, expected.robustDiagnostics.get.weights)
+  }
+
   test("binding mismatches fail before response reads") {
     val cases = Vector(
       compiled(blockSize = 2) -> fixedResolver(FitWorkReference(FitUnitId.unsafe("wrong"), reference.planRevision, reference.sourceRevision), plan, denyingReader(plan.model.dataset)),
@@ -106,12 +120,9 @@ class FitWorkDescriptorSuite extends munit.FunSuite:
     val pooled = FitPreparationRequirements(FitPreparationTopology.GlobalReduction,
       Vector(FitPreparationReduction.PooledAutocorrelation))
     assert(pooled.supportsBoundedExecution(FitEngine.GeneralizedLeastSquares))
-    assert(!pooled.supportsBoundedExecution(FitEngine.RobustLeastSquares))
+    assert(pooled.supportsBoundedExecution(FitEngine.RobustLeastSquares))
     val plans = Vector(
-      FitPlan(model, engine = FitEngine.RobustLeastSquares,
-        config = FitConfig(robust = RobustOptions(psi = RobustPsi.Huber()))) -> FitPreparationReduction.RobustRowWeights,
-      FitPlan(model, engine = FitEngine.ReducedRankGls,
-        config = FitConfig(autocorrelation = ArOptions(structure = ArStructure.Ar(1), rho = Some(0.2)))) -> FitPreparationReduction.SpatialBasis
+      FitPlan(model, engine = FitEngine.LatentSketch) -> FitPreparationReduction.SpatialBasis
     )
     plans.foreach { (globalPlan, reduction) =>
       val descriptor = FitWorkDescriptor.compile(reference, globalPlan, ChunkSize.unsafe(2), selection).toOption.get

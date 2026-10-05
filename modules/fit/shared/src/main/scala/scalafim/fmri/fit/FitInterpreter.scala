@@ -102,6 +102,19 @@ private[fit] final class BlockLocalFitContext(
   def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
     interpreter.mergeAny(plan, chunks)
 
+private[fit] trait PreparedSpatialReduction:
+  def engine: FitEngine
+  def fit(series: FmriSeries): Either[FitError, FitBlockResult]
+
+private[fit] final class SpatialReductionFitContext(
+    plan: FitPlan,
+    prepared: PreparedSpatialReduction
+) extends PreparedFitContext:
+  def engine: FitEngine = prepared.engine
+  protected def execute(series: FmriSeries): Either[FitError, FitBlockResult] = prepared.fit(series)
+  def merge(chunks: IndexedSeq[FitBlockResult]): Either[FitError, FmriFitResult] =
+    FitInterpreters.forPlan(plan).flatMap(_.mergeAny(plan, chunks))
+
 /** Guards a context prepared from a completed voxel population, such as pooled AR whitening. Every block must
   * present exactly the finite voxels that preparation retained from it. Otherwise a voxel that contributed to the
   * shared estimate could later vanish (or a new one appear) without trace, so a change is a typed refusal.
@@ -179,12 +192,12 @@ object FitInterpreters:
       case FitStrategy.LatentSketch(sketch, _) => Right(sketch)
       case _ => Left(FitError.UnsupportedEngine(s"${plan.engine} plan does not carry a latent sketch config"))
 
-  private def reducedRankGlsConfig(plan: FitPlan): Either[FitError, ReducedRankGlsConfig] =
+  private[fit] def reducedRankGlsConfig(plan: FitPlan): Either[FitError, ReducedRankGlsConfig] =
     plan.strategy match
       case FitStrategy.ReducedRankGls(lowRank, _) => Right(lowRank)
       case _ => Left(FitError.UnsupportedEngine(s"${plan.engine} plan does not carry a reduced-rank GLS config"))
 
-  private def reducedRankDesignPartition(plan: FitPlan): Either[FitError, ReducedRankDesignPartition] =
+  private[fit] def reducedRankDesignPartition(plan: FitPlan): Either[FitError, ReducedRankDesignPartition] =
     val targets = Vector.newBuilder[Int]
     val nuisance = Vector.newBuilder[Int]
     plan.model.designBlock.columns.zipWithIndex.foreach { case (column, index) =>
@@ -538,7 +551,7 @@ object FitInterpreters:
       for
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         prepared <- Robust
-          .prepare(input.design, input.response, partitions, input.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
+          .prepare(input.design, input.response, input.partitions, input.voxelIndices, plan.config.robust, robustAutocorrelation(plan.config))
           .left
           .map(error => bindRankFailure(input, error))
       yield prepared
@@ -685,7 +698,7 @@ object FitInterpreters:
         config <- reducedRankGlsConfig(plan)
         input <- FitPlanExecutor.fitBlockInput(plan, series, partitions = partitions)
         designPartition <- reducedRankDesignPartition(plan)
-        prepared <- ReducedRankGlsPrepared.prepare(input.design, input.response, partitions, config, input.voxelIndices, designPartition)
+        prepared <- ReducedRankGlsPrepared.prepare(input.design, input.response, input.partitions, config, input.voxelIndices, designPartition)
       yield prepared
 
     def fitChunk(

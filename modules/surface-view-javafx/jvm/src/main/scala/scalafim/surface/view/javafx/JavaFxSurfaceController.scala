@@ -184,11 +184,11 @@ final class JavaFxSurfaceController private (
             case None => Left(JavaFxInteractionError.UnknownPickNode)
             case Some(chunk) =>
               val localFace = result.getIntersectedFace
-              if localFace < 0 || localFace >= chunk.faceCount then
+              if localFace < 0 || localFace >= chunk.renderedFaceCount then
                 Left(JavaFxInteractionError.InvalidPickedFace(localFace))
               else
-                val face = chunk.faceStart + localFace
-                val packet = currentPlan.meshes.find(_.surface == chunk.surface).get
+                val face = chunk.packetFace(localFace).get
+                val packet = backend.pickingPlan.getOrElse(currentPlan).meshes.find(_.surface == chunk.surface).get
                 val offset = face * 3
                 val a = packet.indices(offset)
                 val b = packet.indices(offset + 1)
@@ -278,6 +278,23 @@ final class JavaFxSurfaceController private (
     lastFailure = Some(error)
 
 object JavaFxSurfaceController:
+  /** Diagnostic selection adapter for an already-rendered authoritative plan.
+    * Does not reconstruct its exported camera, slots, normals or resource keys.
+    */
+  private[javafx] def attachRendered(
+    model: SurfaceViewerModel,
+    initial: SurfaceViewerState,
+    backend: JavaFxSurfaceBackend,
+    scene: SubScene
+  ): Either[JavaFxInteractionError, JavaFxSurfaceController] =
+    if !Platform.isFxApplicationThread then
+      Left(JavaFxInteractionError.Backend(JavaFxSurfaceError.IncompatiblePlan("controller attachment must run on the Application Thread")))
+    else
+      backend.pickingPlan.toRight(JavaFxInteractionError.PickMiss).map: plan =>
+        val controller = new JavaFxSurfaceController(model, backend, scene, initial, plan)
+        controller.install()
+        controller
+
   def attach(
     model: SurfaceViewerModel,
     initial: SurfaceViewerState,

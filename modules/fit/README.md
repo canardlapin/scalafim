@@ -394,11 +394,48 @@ response snapshot. Changed finite-column membership is rejected with
 fitting pass, so a voxel that contributed to the pooled estimate cannot be
 silently dropped from (or added to) the fitted population.
 
-Active robust row weighting and learned spatial bases remain global dependencies.
-The legacy `ChunkedFitExecutor` still uses dense preparation for those paths;
-chunking does not make their preparation out of core. Robust row medians need exact order statistics across the selection, and
-reduced-rank bootstrap refits a shared basis for each replicate. Computing either
-independently per block would change the estimator.
+Robust row weighting runs synchronized IRLS across the selected population.
+Exact row medians use eight replay passes over IEEE-754 radix bins; both central
+ranks are selected before applying the dense even-population averaging rule.
+Global/run scales preserve the nested row/temporal medians; voxel scales are
+computed within blocks. Each iteration completes the shared row weights and
+reduces the maximum coefficient change across every block before deciding
+convergence. Diagnostic scales describe the residuals before the final update,
+as in dense fitting. Robust AR re-estimation merges original-coordinate residual
+lag statistics after each completed robust fit. This trades additional reads and
+solves for bounded response and coefficient scratch; it is not a throughput claim.
+For T timepoints, P predictors and spatial block width B, scratch is
+O(T·B + P·B + T·P + P²·B + 256·T), plus voxel/block membership metadata and the
+requested outputs. Public robust plans still require an active psi; temporal
+volume weighting remains admitted only for OLS.
+
+Reduced-rank GLS also reads responses only through the configured spatial
+blocks, but keeps population-wide learned state. It assembles the same Ptarget×V
+task-score matrix in retained selection order and calls the existing full Gale
+SVD, preserving its tied and zero-singular-value basis conventions. Conditional
+inference reduces the latent response across blocks, preserves target-only
+covariance, and refits nuisance coefficients against each reduced target fit.
+Bootstrap uses the same temporal sample indices across all spatial blocks and
+learns one global basis per replicate; final voxel covariance uses the existing
+replicate-ordered Welford reduction. Voxelwise whitening keeps its existing
+full-rank conditional fallback, validating rank against the complete retained
+population before fitting blocks. Compressed/bootstrap voxelwise RRG remains
+an explicit refusal.
+
+This is out-of-core response fitting with learned state that grows with V,
+not constant-memory preparation: task-score/SVD workspace is O(Ptarget·V),
+basis storage O(V·r), latent-response storage O(T·r), and response scratch
+O(T·B). Bootstrap retains O(V·Σrreplicate) basis entries plus small latent
+factors; it does not keep every replicate's score or response matrix. Bootstrap
+moment scratch for each final spatial block uses O(B·Ptarget²). When the target
+predictor count approaches T, the memory saving diminishes. Result
+merging still retains the requested complete output. Dense/block comparisons
+use explicit tolerances for regrouped latent products; score assembly tests
+cover null, tiny, tied and nuisance-residualized spectra across block widths.
+Both new reducers require an immutable response snapshot and refuse detected
+finite-value changes during replay or final fitting. Compact checksums detect
+accidental changes; the resolver/storage capability owns content integrity.
+LatentSketch's learned preparation remains a separate dense path.
 
 `FitWorkDescriptor.compile(reference, plan, blockSize, selection)` produces a
 versioned, data-only recipe with exact ordered axes, topology and deterministic
@@ -414,8 +451,9 @@ complete immutable scientific recipe and `sourceRevision` names the response
 snapshot; dataset names and shapes alone are not content verification.
 `FitWorkExecutor.fit` checks the binding and rejects global dependencies without
 an implemented bounded interpreter before any response read. Its currently
-supported global phases are DVARS, observation-pattern discovery and pooled AR
-estimation (including run-specific coefficient fits).
+supported global phases are DVARS, observation-pattern discovery, pooled AR
+estimation (including run-specific coefficient fits), robust scales/row weights,
+and reduced-rank spatial learning/bootstrap.
 
 For the raw (uncorrected) pooled AR estimator that GLS preparation uses, lag
 statistics are reduced per voxel in a fixed row order and then combined across
@@ -458,8 +496,9 @@ This artifact version supports shared and runwise pooled estimated GLS with
 whole-voxel missing-data policies and disabled temporal weighting/nuisance
 projection. Fixed/voxelwise AR, observation-pattern artifacts, finalized DVARS
 weights and learned spatial bases are not admitted. A persistent plan/artifact
-registry, distributed reduction and robust/reduced-rank bounded interpreters
-remain future work. Result merging still retains the complete fit
+registry, distributed reduction and additional finalized artifact families
+remain future work; robust/RRG descriptors replay their bounded preparation.
+Result merging still retains the complete fit
 result; use the existing selected-estimate sinks when full output retention is
 unnecessary.
 
