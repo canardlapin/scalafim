@@ -7,7 +7,7 @@ import scalafim.fmri.design.hrf.{ExpandedConditionDesign, HrfKernelBasis, Kernel
 import scalafim.fmri.fit.profile.*
 import scalafim.fmri.hrf.{PositiveSeconds, Seconds}
 import scalafim.fmri.hrf.design.SamplingFrame
-import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule, ShapePoint}
+import scalafim.fmri.hrf.family.{GaussianFamily, NormalizationRule, ShapePoint, ShapeSummary}
 
 object ConditionC0QualificationHarness:
   val Rows = 600
@@ -519,7 +519,8 @@ object ConditionC0QualificationHarness:
       curvature: CurvatureStatus,
       conditionalSd: Option[Vector[Double]],
       sdFailure: Option[String],
-      projectedNewtonCorrection: Option[Double]
+      projectedNewtonCorrection: Option[Double],
+      projectedNewtonDecrease: Option[Double]
   )
 
   /** Recomputed evidence never substitutes the decoder's reported fields. */
@@ -535,7 +536,8 @@ object ConditionC0QualificationHarness:
       evidence: Option[AuditEvidence],
       failure: Option[String],
       coherent: Boolean,
-      work: DecoderWork
+      work: DecoderWork,
+      stationarity: Option[String] = None
   )
 
   final case class DecoderWork(
@@ -597,7 +599,44 @@ object ConditionC0QualificationHarness:
       coords: Vector[Double],
       gradient: Array[Double],
       hessian: Array[Double]
-  ): Option[Double] =
+  ): Option[Double] = projectedNewtonStep(coords, gradient, hessian).map(_._1)
+
+  /** Predicted decrease `-g'delta / 2` of the same free Newton correction (0 when every bound is active). */
+  private[profile] def projectedNewtonDecrease(
+      coords: Vector[Double],
+      gradient: Array[Double],
+      hessian: Array[Double]
+  ): Option[Double] = projectedNewtonStep(coords, gradient, hessian).map(_._2)
+
+  /** The decoder's two stationarity rules, recomputed from the audit jet: the raw free correction is within the step
+    * tolerance, or it is within its square root and predicts a decrease of at most half an ULP of the energy
+    * (`DecodeStationarity.UnresolvableDecrease`, owner-approved 2026-10-04).
+    */
+  private[profile] def auditStationary(
+      correction: Double,
+      decrease: Double,
+      energy: Double,
+      tolerance: Double
+  ): Boolean =
+    auditStationarity(correction, decrease, energy, tolerance).nonEmpty
+
+  /** Which rule the audit jet itself satisfies; never read from the decoder's reported reason. */
+  private[profile] def auditStationarity(
+      correction: Double,
+      decrease: Double,
+      energy: Double,
+      tolerance: Double
+  ): Option[String] =
+    if correction <= tolerance then Some("StepTolerance")
+    else if correction <= math.sqrt(tolerance) && energy.isFinite && decrease <= 0.5 * math.ulp(energy) then
+      Some("UnresolvableDecrease")
+    else None
+
+  private def projectedNewtonStep(
+      coords: Vector[Double],
+      gradient: Array[Double],
+      hessian: Array[Double]
+  ): Option[(Double, Double)] =
     if coords.length != 2 || !coords.forall(_.isFinite) || !gradient.forall(_.isFinite) || !hessian.forall(_.isFinite)
     then None
     else
@@ -606,7 +645,7 @@ object ConditionC0QualificationHarness:
         val upper = coords(axis) >= GaussianFamily.Default.chart.upper(axis) - 1e-12
         !((lower && gradient(axis) > 0.0) || (upper && gradient(axis) < 0.0))
       val indices = free.indices.filter(free).toVector
-      if indices.isEmpty then DMat.tabulate(2, 2)((r, c) => hessian(r * 2 + c)).cholesky.toOption.map(_ => 0.0)
+      if indices.isEmpty then DMat.tabulate(2, 2)((r, c) => hessian(r * 2 + c)).cholesky.toOption.map(_ => (0.0, 0.0))
       else
         DMat
           .tabulate(indices.length, indices.length)((r, c) => hessian(indices(r) * 2 + indices(c)))
@@ -618,7 +657,17 @@ object ConditionC0QualificationHarness:
               .toOption
               .flatMap: step =>
                 val norm = indices.indices.map(i => math.abs(step(i, 0))).max
-                Option.when(norm.isFinite)(norm)
+                val decrease = -0.5 * indices.indices.map(i => gradient(indices(i)) * step(i, 0)).sum
+                Option.when(norm.isFinite && decrease.isFinite)((norm, decrease))
+
+  /** Accepted, coherent voxels by the stationarity rule their own audit jet satisfies. */
+  private[profile] def acceptedAuditStationarity(cell: StudyCell): Map[String, Long] =
+    cell.terminalAudits
+      .filter(a => a.status == DecodeStatus.Accepted && a.coherent)
+      .groupBy(_.stationarity.getOrElse("Neither"))
+      .view
+      .mapValues(_.length.toLong)
+      .toMap
 
   private[profile] def auditTerminal(
       voxel: Int,
@@ -641,7 +690,8 @@ object ConditionC0QualificationHarness:
         jet.curvature,
         sd,
         Option.when(sd.isEmpty)("curvature-or-inverse-not-finite-positive"),
-        projectedNewtonCorrection(result.coordinates, jet.gradient, jet.hessian)
+        projectedNewtonCorrection(result.coordinates, jet.gradient, jet.hessian),
+        projectedNewtonDecrease(result.coordinates, jet.gradient, jet.hessian)
       )
     def matches(a: Vector[Double], b: Vector[Double]): Boolean =
       a.length == b.length && a.zip(b).forall((x, y) => closeEnough(x, y))
@@ -651,7 +701,11 @@ object ConditionC0QualificationHarness:
         matches(actual.amplitudes, result.amplitudes) && matches(actual.amplitudes, fit.amplitudes) &&
         actual.conditionalSd.fold(result.conditionalSd.forall(_.isNaN))(sd => matches(sd, result.conditionalSd)) &&
         (result.status != DecodeStatus.Accepted || (actual.curvature == CurvatureStatus.PositiveDefinite &&
-          actual.conditionalSd.nonEmpty && actual.projectedNewtonCorrection.exists(_ <= 1e-9)))
+          actual.conditionalSd.nonEmpty && actual.projectedNewtonCorrection
+            .zip(actual.projectedNewtonDecrease)
+            .exists((correction, decrease) =>
+              auditStationary(correction, decrease, actual.jetEnergy, Baseline.stationarityStepTolerance)
+            )))
     val failure =
       if !evaluated then Some("terminal-jet-unavailable")
       else if !finiteJet then Some("terminal-jet-nonfinite")
@@ -669,7 +723,14 @@ object ConditionC0QualificationHarness:
       evidence,
       failure,
       coherent,
-      decoderWork
+      decoderWork,
+      evidence.flatMap(actual =>
+        actual.projectedNewtonCorrection
+          .zip(actual.projectedNewtonDecrease)
+          .flatMap((correction, decrease) =>
+            auditStationarity(correction, decrease, actual.jetEnergy, Baseline.stationarityStepTolerance)
+          )
+      )
     )
 
   private def studyCell(
@@ -1182,7 +1243,8 @@ object ConditionC0QualificationHarness:
         "curvature" -> quoted(e.curvature.toString),
         "conditionalSd" -> e.conditionalSd.fold("null")(numbers),
         "sdFailure" -> optional(e.sdFailure),
-        "projectedNewtonCorrection" -> e.projectedNewtonCorrection.fold("null")(number)
+        "projectedNewtonCorrection" -> e.projectedNewtonCorrection.fold("null")(number),
+        "projectedNewtonDecrease" -> e.projectedNewtonDecrease.fold("null")(number)
       )
     obj(
       "voxel" -> a.voxel.toString,
@@ -1197,6 +1259,7 @@ object ConditionC0QualificationHarness:
       "auditFailure" -> optional(a.failure),
       "audit" -> evidence,
       "coherent" -> a.coherent.toString,
+      "auditStationarity" -> optional(a.stationarity),
       "work" -> workJson(a.work)
     )
 
@@ -1222,6 +1285,7 @@ object ConditionC0QualificationHarness:
         "work" -> workJson(work(cell.counters)),
         "auditAttempts" -> cell.terminalJetAudits.toString,
         "auditFailures" -> cell.terminalJetAuditFailures.toString,
+        "acceptedAuditStationarity" -> counts(acceptedAuditStationarity(cell)),
         "oracleUnresolved" -> cell.oracleUnresolved.toString,
         "reference" -> referenceJson(cell.reference),
         "candidateGate" -> meetsGate(cell).toString,
@@ -1478,6 +1542,65 @@ class ConditionC0QualificationSuite extends munit.FunSuite:
       1e-12
     )
     assertEquals(projectedNewtonCorrection(chart.lower, Array(1.0, 1.0), Array(-1.0, 0.0, 0.0, 1.0)), None)
+    // delta = (-0.5, 0.5), so the predicted decrease is -(2 * -0.5 + -3 * 0.5) / 2 = 1.25.
+    assertEqualsDouble(projectedNewtonDecrease(interior, gradient, hessian).get, 1.25, 1e-12)
+    val halfUlp5 = 0.5 * math.ulp(5.0)
+    assert(auditStationary(1e-9, 1.0, 5.0, 1e-9), "within the step tolerance")
+    assert(auditStationary(1e-8, halfUlp5, 5.0, 1e-9), "unresolvable decrease within sqrt(tolerance)")
+    assert(!auditStationary(1e-8, java.lang.Math.nextUp(halfUlp5), 5.0, 1e-9), "resolvable decrease")
+    assert(!auditStationary(math.sqrt(1e-9) * 1.01, 0.0, 5.0, 1e-9), "correction beyond sqrt(tolerance)")
+    assert(!auditStationary(1e-8, 0.0, Double.NaN, 1e-9), "nonfinite energy")
+
+  test("the terminal audit recomputes stationarity and ignores the decoder's reported reason"):
+    // At 2^50 half an ULP is 0.125, so both jets below predict an unrepresentable decrease; only the
+    // recomputed free Newton correction (1e-4 > sqrt(1e-9) versus 1e-5 <= sqrt(1e-9)) separates them.
+    val energy = java.lang.Double.longBitsToDouble((1023L + 50) << 52)
+    val coordinates = Vector(5.0, math.log(1.5))
+    val sd = Vector(math.sqrt(2.0), math.sqrt(2.0))
+    def audit(gradient0: Double): TerminalAudit =
+      val decode = ShapeDecodeResult(
+        coordinates = coordinates,
+        energy = energy,
+        amplitudes = Vector(1.0, -1.0, 0.5),
+        status = DecodeStatus.Accepted,
+        node = 0,
+        newtonSteps = 1,
+        dataHessian = Vector(1.0, 0.0, 0.0, 1.0),
+        augmentedHessian = Vector(1.0, 0.0, 0.0, 1.0),
+        conditionalSd = sd,
+        ambiguityGap = 1.0,
+        stationarity = Some(DecodeStationarity.UnresolvableDecrease)
+      )
+      val fit = CompactConditionFit(
+        decode,
+        decode.amplitudes,
+        NormalizationRule.Unnormalised,
+        Vector.empty,
+        energy,
+        1.0,
+        ShapeSummary(Seconds(5.0), Seconds(1.0), None)
+      )
+      auditTerminal(
+        0,
+        fit,
+        DecoderWork(0, 0, 0, 0, 0, 0, 0),
+        jet =>
+          jet.energy = energy
+          jet.gradient(0) = gradient0
+          jet.gradient(1) = 0.0
+          Array(1.0, 0.0, 0.0, 1.0).copyToArray(jet.hessian)
+          Array(1.0, -1.0, 0.5).copyToArray(jet.amplitudes)
+          jet.curvature = CurvatureStatus.PositiveDefinite
+          true
+      )
+    val beyond = audit(1e-4)
+    assertEquals(beyond.stationarity, None)
+    assert(!beyond.coherent)
+    assertEquals(beyond.failure, Some("returned-fit-mismatch-or-nonstationary-acceptance"))
+    val within = audit(1e-5)
+    assertEquals(within.stationarity, Some("UnresolvableDecrease"))
+    assert(within.coherent)
+    assertEquals(within.failure, None)
     assertEquals(rederiveConditionalSd(Array(-1.0, 0.0, 0.0, 1.0)), None)
     assertEquals(rederiveConditionalSd(Array(Double.NaN, 0.0, 0.0, 1.0)), None)
     assertEqualsDouble(rederiveConditionalSd(Array(4.0, 0.0, 0.0, 2.0)).get.head, math.sqrt(.5), 1e-12)

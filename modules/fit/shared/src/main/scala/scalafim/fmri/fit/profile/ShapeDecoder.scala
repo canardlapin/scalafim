@@ -74,7 +74,10 @@ final case class ShapePrior(mean: Vector[Double], precision: Vector[Double]):
 /** Per-voxel work caps; every cap is a counter with a reported actual.
   * `stationarityStepTolerance` is the largest raw free Newton correction (in
   * chart coordinates) that counts as a budget-qualified approximation rather
-  * than requiring another candidate evaluation.
+  * than requiring another candidate evaluation. A larger correction, up to
+  * `sqrt(stationarityStepTolerance)`, is also stationary when its predicted
+  * decrease cannot be represented at the current energy; see
+  * [[DecodeStationarity.UnresolvableDecrease]].
   */
 final case class DecodeBudget(
     coarseStride: Int = 2,
@@ -133,14 +136,42 @@ final case class ShapeDecodeResult(
     augmentedHessian: Vector[Double],
     conditionalSd: Vector[Double],
     ambiguityGap: Double,
-    budgetExit: Option[DecodeBudgetExit] = None):
+    budgetExit: Option[DecodeBudgetExit] = None,
+    stationarity: Option[DecodeStationarity] = None):
   def point: ShapePoint = ShapePoint.unsafe(coordinates)
 
+/** Why the decoder treated its returned point as stationary. */
+enum DecodeStationarity:
+  /** The raw free Newton correction is within `stationarityStepTolerance`. */
+  case StepTolerance
+
+  /** The full free Newton correction predicts a decrease `-g'delta / 2` of at
+    * most half an ULP of the current objective energy, and its size is within
+    * `sqrt(stationarityStepTolerance)`.
+    *
+    * Such a decrease is below the energy's binary64 resolution: every further
+    * candidate comparison would be decided by evaluation roundoff, and so by the
+    * platform's `exp` and summation order, rather than by the objective. The
+    * precision study in
+    * `docs/verification/condition-stationarity-roundoff-20260930.md` showed
+    * exactly this: terminal full-Newton candidates whose energies moved by a few
+    * ULP, with 19-27 JVM/JS status differences in the condition C0 development
+    * cohorts. The step bound keeps a flat or badly scaled objective, whose
+    * large corrections also predict tiny decreases, from being called
+    * converged; the free Hessian has already passed its Cholesky factorization.
+    * See `docs/verification/c0-ulp-stationarity-20261004.md`.
+    */
+  case UnresolvableDecrease
+
 private enum NewtonDirectionStatus:
-  case Stationary
+  case Stationary(reason: DecodeStationarity)
   case Direction
   case CurvatureNotPositive
   case Stalled
+
+  def isStationary: Boolean = this match
+    case Stationary(_) => true
+    case _ => false
 
 /** The shared bounded decoder: a hierarchical scan of the node bank (coarse
   * sub-grid, then the fine neighbourhood of the coarse best), a jet at the
@@ -332,9 +363,27 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       i += 1
     false
 
-  /** Projected Newton direction on the box, separated from a constrained stationary point. */
+  /** Largest raw free correction that [[DecodeStationarity.UnresolvableDecrease]] may stop. */
+  private val unresolvableStepLimit = math.sqrt(budget.stationarityStepTolerance)
+
+  /** The full free Newton correction's predicted decrease `-slope / 2` is at
+    * most half an ULP of `energy`, and the correction is within
+    * [[unresolvableStepLimit]]. `Math.ulp` is exact and identical on the JVM
+    * and Scala.js, so the decision is platform independent given its inputs.
+    */
+  private def decreaseUnresolvable(energy: Double, slope: Double, stepNorm: Double): Boolean =
+    finite(energy) && finite(slope) && slope <= 0.0 && stepNorm <= unresolvableStepLimit &&
+      -0.5 * slope <= 0.5 * math.ulp(energy)
+
+  /** Projected Newton direction on the box, separated from a constrained
+    * stationary point. `energy` is the objective (data plus prior) at `coords`.
+    */
   private def newtonDirection(
-      coords: Array[Double], gradient: Array[Double], hessian: Array[Double], direction: Array[Double]
+      coords: Array[Double],
+      gradient: Array[Double],
+      hessian: Array[Double],
+      direction: Array[Double],
+      energy: Double
   ): NewtonDirectionStatus =
     var i = 0
     while i < d do
@@ -360,7 +409,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     if nFree == 0 then
       System.arraycopy(hessian, 0, factor, 0, d * d)
       return
-        if SmallCholesky.factorInPlace(d, factor) then NewtonDirectionStatus.Stationary
+        if SmallCholesky.factorInPlace(d, factor) then NewtonDirectionStatus.Stationary(DecodeStationarity.StepTolerance)
         else NewtonDirectionStatus.CurvatureNotPositive
     // Compact the active block in place; d <= 3.
     var r = 0
@@ -380,19 +429,24 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
         k += 1
       i += 1
     var norm = 0.0
+    var slope = 0.0
     i = 0
     while i < d do
       norm = math.max(norm, math.abs(direction(i)))
+      slope += gradient(i) * direction(i)
       i += 1
-    if norm <= budget.stationarityStepTolerance then NewtonDirectionStatus.Stationary else NewtonDirectionStatus.Direction
+    if norm <= budget.stationarityStepTolerance then NewtonDirectionStatus.Stationary(DecodeStationarity.StepTolerance)
+    else if decreaseUnresolvable(energy, slope, norm) then
+      NewtonDirectionStatus.Stationary(DecodeStationarity.UnresolvableDecrease)
+    else NewtonDirectionStatus.Direction
 
   /** Probe a candidate without changing the accepted derivatives or search direction. */
-  private def candidateStationary(coords: Array[Double]): Boolean =
+  private def candidateStationary(coords: Array[Double], energy: Double): Boolean =
     System.arraycopy(jet.gradient, 0, candidateGrad, 0, d)
     System.arraycopy(jet.hessian, 0, candidateHess, 0, d * d)
     augment(coords, candidateGrad, candidateHess)
     finiteValues(candidateGrad) && finiteValues(candidateHess) &&
-      newtonDirection(coords, candidateGrad, candidateHess, candidateDelta) == NewtonDirectionStatus.Stationary
+      newtonDirection(coords, candidateGrad, candidateHess, candidateDelta, energy).isStationary
 
   private def conditionalSd(out: Array[Double]): Boolean =
     System.arraycopy(dataHess, 0, factor, 0, d * d)
@@ -455,7 +509,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
     if !nodeOk then return refused(best, gap)
     var current = jet.energy + priorEnergy(x)
     copyJetState(x)
-    var directionStatus = newtonDirection(x, grad, hess, delta)
+    var directionStatus = newtonDirection(x, grad, hess, delta, current)
     val initialCurvatureNotPositive = directionStatus == NewtonDirectionStatus.CurvatureNotPositive
     var continue = directionStatus == NewtonDirectionStatus.Direction
     if continue && budget.maxNewtonSteps == 0 then exhaust(DecodeBudgetExit.NewtonStepCap)
@@ -526,7 +580,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                   if finiteEnergyEvaluation(data) then data + priorEnergy(trial) else Double.PositiveInfinity
               var equalStationary = false
               if finite(value) && value == current then
-                if useJet then equalStationary = candidateStationary(trial)
+                if useJet then equalStationary = candidateStationary(trial, current)
                 else if jetsUsed < budget.maxJets then
                   // An energy-only equality must be checked by its reserved full
                   // jet before committing any coordinates or accepted state.
@@ -536,7 +590,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                   counters.terminalVerifications += 1
                   equalStationary = objective.jetAt(trial, jet) && finiteJet() &&
                     finite(jet.energy + priorEnergy(trial)) && jet.energy + priorEnergy(trial) == current &&
-                    candidateStationary(trial)
+                    candidateStationary(trial, current)
               if finite(value) && (value < current || equalStationary) then
                 accepted = true
                 current = value
@@ -546,7 +600,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                 counters.newtonSteps += 1
                 if useJet || equalStationary then
                   copyJetState(x)
-                  directionStatus = newtonDirection(x, grad, hess, delta)
+                  directionStatus = newtonDirection(x, grad, hess, delta, current)
                   continue = directionStatus == NewtonDirectionStatus.Direction
                 else
                   terminalCurvature = false
@@ -560,7 +614,7 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
                       current = jet.energy + priorEnergy(x)
                       copyJetState(x)
                       terminalCurvature = true
-                      directionStatus = newtonDirection(x, grad, hess, delta)
+                      directionStatus = newtonDirection(x, grad, hess, delta, current)
                       if directionStatus == NewtonDirectionStatus.Direction then
                         exhaust(DecodeBudgetExit.AcceptedEnergyOnlyNonstationaryTerminal)
                     else exhaust(DecodeBudgetExit.AcceptedEnergyOnlyTerminalVerificationFailed)
@@ -645,5 +699,8 @@ final class ShapeDecoder(objective: ShapeObjective, budget: DecodeBudget, prior:
       augmentedHessian = hess.toVector,
       conditionalSd = sd.toVector,
       ambiguityGap = gap,
-      budgetExit = if status == DecodeStatus.BudgetExceeded then budgetExit else None
+      budgetExit = if status == DecodeStatus.BudgetExceeded then budgetExit else None,
+      stationarity = directionStatus match
+        case NewtonDirectionStatus.Stationary(reason) => Some(reason)
+        case _ => None
     )
