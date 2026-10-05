@@ -56,7 +56,11 @@ the new machine independently and are not part of this handoff.
 
 The migration preserves unintegrated work under remote branches rooted at
 `migration/20261005/`. These are source-preservation branches, not acceptance
-or scientific qualification. Use
+or scientific qualification. They are not a queue of pull requests to merge.
+Reviewed source was selectively consolidated; unfinished or superseded lines
+remain available for bounded ports onto current main. See the
+[PR conflict audit](verification/migration-pr-conflicts-20261005.md) for the
+archive PR dispositions. Use
 [the exact ref map](verification/machine-migration-20261005/refs.json) to locate
 the original branch name, SHA, worktree snapshot or stash.
 

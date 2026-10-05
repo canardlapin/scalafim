@@ -8,9 +8,9 @@
   "ahead_commits_before": 112,
   "mote_version": "mote 0.1.0",
   "mote_format_sha256": "df4e9c0f4941230a6d831a031f77a49944806461094c849e49ff270728e274c4",
-  "mote_ops": 23896,
-  "mote_bytes": 10800343,
-  "mote_operation_manifest_sha256": "db60d2dc952b529ab3b8ab70fe607b01fb4f11dfdeb032efbeb8ebbea2fd3d4c",
+  "mote_ops": 23901,
+  "mote_bytes": 10803778,
+  "mote_operation_manifest_sha256": "d018c222589a18e693ebad11aab4d415c22b7840be239aa89f40e798b3386bf6",
   "open_mote_audit": {
     "reviewed": 102,
     "updated": 80,
@@ -87,7 +87,7 @@
     "all_issue_projections_equal": true,
     "all_issues": 1274,
     "nonclosed": 102,
-    "op_files": 23896,
+    "op_files": 23901,
     "workstation_settings_excluded": true,
     "empty_local_directories_initialized": true,
     "doctor_clean": true
@@ -105,5 +105,11 @@
     ],
     "strict": true,
     "required_reviews": null
+  },
+  "pull_request_conflict_audit": {
+    "report": "docs/verification/migration-pr-conflicts-20261005.md",
+    "reviewed_open_prs": 12,
+    "drafts_verified": 9,
+    "archival_heads_unchanged": true
   }
 }
