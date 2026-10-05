@@ -184,11 +184,11 @@ final class JavaFxSurfaceController private (
             case None => Left(JavaFxInteractionError.UnknownPickNode)
             case Some(chunk) =>
               val localFace = result.getIntersectedFace
-              if localFace < 0 || localFace >= chunk.faceCount then
+              if localFace < 0 || localFace >= chunk.renderedFaceCount then
                 Left(JavaFxInteractionError.InvalidPickedFace(localFace))
               else
-                val face = chunk.faceStart + localFace
-                val packet = currentPlan.meshes.find(_.surface == chunk.surface).get
+                val face = chunk.packetFace(localFace).get
+                val packet = backend.pickingPlan.getOrElse(currentPlan).meshes.find(_.surface == chunk.surface).get
                 val offset = face * 3
                 val a = packet.indices(offset)
                 val b = packet.indices(offset + 1)

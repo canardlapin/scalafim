@@ -25,6 +25,82 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     assert(!capabilities.supports(SurfaceBackendFeature.WorldClipping))
     assert(capabilities.caveats.exists(_.contains("world clipping")))
 
+  test("runtime receipt parses the observed Prism pipeline rather than trusting the request"):
+    val log =
+      """Prism pipeline init order: mtl
+        |Initialized prism pipeline: com.sun.prism.mtl.MTLPipeline
+        |""".stripMargin
+    assertEquals(
+      JavaFxPrismPipeline.observe(log),
+      Right((JavaFxPrismPipeline.Metal, "com.sun.prism.mtl.MTLPipeline"))
+    )
+    assert(JavaFxPrismPipeline.observe("Prism pipeline init order: mtl").isLeft)
+
+  test("stock Metal admission fails closed on fallback, version drift, and module mutation"):
+    val baseHash = "a" * 64
+    val graphicsHash = "b" * 64
+    val expectedArtifacts = Map("javafx-base" -> baseHash, "javafx-graphics" -> graphicsHash)
+    val admitted = JavaFxRuntimeCapabilityReceipt(
+      javaFxRuntimeVersion = "25.0.4",
+      javaRuntimeName = "OpenJDK Runtime Environment",
+      javaRuntimeVersion = "25.0.1+8",
+      osName = "Mac OS X",
+      osVersion = "15.6",
+      osArch = "aarch64",
+      requestedPipelines = Vector("mtl"),
+      noFallback = true,
+      verbose = true,
+      observedPipeline = JavaFxPrismPipeline.Metal,
+      observedPipelineClass = "com.sun.prism.mtl.MTLPipeline",
+      relevantJvmArguments = Vector("-Dprism.order=mtl", "-Dprism.noFallback=true", "-Dprism.verbose=true"),
+      moduleMutationArguments = Vector.empty,
+      artifacts = Vector(
+        JavaFxArtifactReceipt("javafx-base", "javafx.base", None, Some("file:/javafx-base.jar"), Some(baseHash)),
+        JavaFxArtifactReceipt("javafx-graphics", "javafx.graphics", None, Some("file:/javafx-graphics.jar"), Some(graphicsHash))
+      )
+    )
+    assertEquals(admitted.stockMetalFailures("25.0.4", expectedArtifacts), Vector.empty)
+    assertEquals(
+      JavaFxStockMetalAdmission.assess(admitted, "25.0.4", expectedArtifacts),
+      Left(JavaFxStockMetalRefusal.UnqualifiedClosure("25.0.4"))
+    )
+    val rejected = admitted.copy(
+      javaFxRuntimeVersion = "26.0.2",
+      observedPipeline = JavaFxPrismPipeline.Es2,
+      observedPipelineClass = "com.sun.prism.es2.ES2Pipeline",
+      moduleMutationArguments = Vector("--patch-module=javafx.graphics=/tmp/private-patch")
+    )
+    val failures = rejected.stockMetalFailures("25.0.4", expectedArtifacts)
+    assert(failures.exists(_.contains("does not match expected")))
+    assert(failures.exists(_.contains("not MTLPipeline")))
+    assert(failures.exists(_.contains("fell back")))
+    assert(failures.exists(_.contains("module mutation")))
+    val runtimeRefusal = JavaFxStockMetalAdmission.assess(rejected, "25.0.4", expectedArtifacts).swap.toOption.get
+    assert(runtimeRefusal match
+      case JavaFxStockMetalRefusal.Runtime(errors) => errors.exists(_.contains("not MTLPipeline"))
+      case _ => false
+    )
+    assertEquals(
+      JavaFxStockMetalAdmission.assess(admitted.copy(javaFxRuntimeVersion = "27"), "27", expectedArtifacts),
+      Left(JavaFxStockMetalRefusal.UnqualifiedClosure("27"))
+    )
+    assert(
+      admitted
+        .copy(artifacts = Vector.empty)
+        .stockMetalFailures("25.0.4", expectedArtifacts)
+        .exists(_.contains("exactly one javafx-base"))
+    )
+    assert(
+      admitted
+        .stockMetalFailures("25.0.4", expectedArtifacts.updated("javafx-base", "c" * 64))
+        .exists(_.contains("SHA-256"))
+    )
+    assert(admitted.copy(osArch = "x86_64").stockMetalFailures("25.0.4", expectedArtifacts).exists(_.contains("arm64")))
+    assert(
+      admitted.copy(artifacts = admitted.artifacts.updated(0, admitted.artifacts.head.copy(module = "unnamed")))
+        .stockMetalFailures("25.0.4", expectedArtifacts).exists(_.contains("loaded from module"))
+    )
+
   private def geometry(faceCopies: Int = 1): SurfaceGeometry =
     val faces = Vector.fill(faceCopies)((0, 1, 2))
     SurfaceGeometry(
@@ -70,6 +146,51 @@ class JavaFxSurfaceProbeSuite extends munit.FunSuite:
     val config = JavaFxAtlasConfig.make(tileSize = 4, maxTextureSize = 64).toOption.get
     assertEquals(config.tilesPerRow, 16)
     assertEquals(config.facesPerAtlas, 256)
+
+  test("production backend refuses affine encodings before JavaFX access"):
+    val affine = JavaFxAtlasConfig.make(encoding = JavaFxAtlasEncoding.AffineMidpointOpaque).toOption.get
+    assertEquals(JavaFxSurfaceBackend.create(affine), Left(JavaFxSurfaceError.SamplerUnqualified(JavaFxAtlasEncoding.AffineMidpointOpaque)))
+
+  test("default atlas configuration preserves legacy native-Phong semantics"):
+    assertEquals(JavaFxAtlasConfig.Default.encoding, JavaFxAtlasEncoding.LegacyTriangle)
+    assertEquals(JavaFxAtlasConfig.Default.lightingPolicy, JavaFxAtlasLighting.NativePhong)
+
+  test("explicit world-vertex Lambert uses anatomical normals and remains self-illuminated when lit"):
+    val lighting = SurfaceLighting.directional(0.2, 0.7, 0.3, -0.4, 0.8660254037844386).toOption.get
+    val normals = new FloatBufferView(Array[Float](
+      1.0f, 0.0f, 0.0f,
+      0.0f, 1.0f, 0.0f,
+      0.0f, 0.0f, 1.0f
+    ))
+    val base = plan(geometry(), Rgba32.unsafe(200, 100, 40))
+    val lit = base.copy(meshes = base.meshes.map(_.copy(normals = normals)), lighting = lighting)
+    val config = JavaFxAtlasConfig.make(lightingPolicy = JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+    val colours = JavaFxSurfaceProbe.compositeColors(lit, JavaFxMaterialMode.Lit, config.lightingPolicy)(surfaceId)
+    val expected = Vector((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)).map: (nx, ny, nz) =>
+      val dot = math.max(0.0, nx * 0.3 + ny * -0.4 + nz * 0.8660254037844386)
+      val factor = math.min(1.0, 0.2 + 0.7 * dot)
+      Rgba32.unsafe(math.round(200 * factor).toInt, math.round(100 * factor).toInt, math.round(40 * factor).toInt)
+    assertEquals(colours.toVector.map(Rgba32.fromPackedInt), expected)
+    val chunk = JavaFxSurfaceProbe.compile(lit, JavaFxMaterialMode.Lit, config).toOption.get.chunks.head
+    assert(chunk.material.getSelfIlluminationMap eq chunk.atlas.image)
+
+  test("world-vertex Lambert alone makes pure lighting and morph changes update atlases"):
+    val base = plan(geometry()).copy(lighting = SurfaceLighting.Unlit)
+    val directional = base.copy(lighting = SurfaceLighting.Default)
+    val shiftedGeometry = SurfaceGeometry(
+      TriangleMesh.fromRows(
+        geometry().mesh.vertices.map(point => Seq(point.x + 1.0, point.y, point.z)),
+        geometry().mesh.faces.map(face => (face.a.index, face.b.index, face.c.index))
+      ),
+      Hemisphere.Left,
+      SurfaceKind.Inflated
+    )
+    val shifted = plan(shiftedGeometry).copy(lighting = SurfaceLighting.Unlit)
+    val native = JavaFxAtlasConfig.Default
+    val world = JavaFxAtlasConfig.make(lightingPolicy = JavaFxAtlasLighting.WorldVertexLambert).toOption.get
+    for (before, after) <- Vector((base, directional), (base, shifted)) do
+      assert(!JavaFxSurfaceProgram.compile(Some(before), after, native).commands.exists(_.productPrefix == "UpdateAtlases"))
+      assert(JavaFxSurfaceProgram.compile(Some(before), after, world).commands.exists(_.productPrefix == "UpdateAtlases"))
 
   test("publication preset configures an exact high-resolution snapshot"):
     val config = JavaFxSnapshotConfig.publication(SurfacePublicationPreset.ManuscriptDoubleColumn)
