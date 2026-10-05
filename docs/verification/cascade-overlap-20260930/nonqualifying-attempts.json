@@ -1,0 +1,52 @@
+[
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:35:06.344083+00:00",
+    "finished_utc": "2026-09-30T10:35:06.797954+00:00",
+    "duration_seconds": 0.453795,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "scalafmtAll",
+      "checkAll",
+      "testFullOptJS",
+      "docsCheck"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/locus4s",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/locus-check.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 1200.0,
+    "log_bytes": 1377,
+    "classification": "sandbox denied sbt boot-lock access; authorized cache access used for subsequent passing run",
+    "raw_sha256": "9dd8ea77df4f8e2a4e1958a2cb2a27b4b541e79495822974c311c629bf334a9b"
+  },
+  {
+    "schema_version": 1,
+    "started_utc": "2026-09-30T10:55:00.936636+00:00",
+    "finished_utc": "2026-09-30T10:56:09.147275+00:00",
+    "duration_seconds": 68.209848,
+    "command": [
+      "sbt",
+      "-J-Xmx3g",
+      "-J-XX:ActiveProcessorCount=4",
+      "-Dsbt.global.staging=/private/tmp/scalafim-cascade-overlap-20260930/staging",
+      "scalafmtSbtCheck",
+      "reframe4s-resampleJVM/test",
+      "reframe4s-resampleJS/test"
+    ],
+    "cwd": "/private/tmp/scalafim-cascade-overlap-20260930/reframe4s",
+    "log": "/private/tmp/scalafim-cascade-overlap-20260930/logs/reframe4s-pin.log",
+    "exit_code": 1,
+    "child_returncode": 1,
+    "reason": "exited",
+    "detail": null,
+    "timeout_seconds": 900.0,
+    "log_bytes": 2057,
+    "classification": "unsupported scalafmtSbtCheck command; no tests ran, corrected resample test invocation passed",
+    "raw_sha256": "7b06223d4ff4d5da5db618ffe50da8ded82bd3420c9209812320503d85bddb19"
+  }
+]
