@@ -119,7 +119,9 @@ final case class SpaceTransformGraph private (
           affine = Some(ProviderAffine.identity[D3])
         )
       Right(TransformPlan.build(fromNorm, toNorm, Vector(step), MorphismPath.identity(TemplateCatalog.domainId(fromNorm)), dataKind))
-    else if !catalog.contains(fromNorm) || !catalog.contains(toNorm) then Left(AtlasError.NoTransformRoute(fromNorm, toNorm))
+    else if !graph.domains.contains(TemplateCatalog.domainId(fromNorm)) ||
+        !graph.domains.contains(TemplateCatalog.domainId(toNorm))
+    then Left(AtlasError.NoTransformRoute(fromNorm, toNorm))
     else
       graph
         .path(TemplateCatalog.domainId(fromNorm), TemplateCatalog.domainId(toNorm), RoutingPolicy.Shortest, allowInverses = true)

@@ -131,6 +131,17 @@ class SpaceTransformGraphSuite extends munit.FunSuite:
       Left(AtlasError.NoTransformRoute(SpaceId.MNI152, SpaceId.MNI305))
     )
 
+  test("catalogued spaces absent from a subset registry report NoTransformRoute"):
+    val registry = Vector(affineStep(SpaceId.MNI305, SpaceId.MNI152, SpaceTransforms.mni305ToMni152))
+    assertEquals(
+      SpaceTransforms.plan(SpaceId.MNI152, SpaceId.FsAverage, registry = registry),
+      Left(AtlasError.NoTransformRoute(SpaceId.MNI152, SpaceId.FsAverage))
+    )
+    assertEquals(
+      SpaceTransforms.plan(SpaceId.FsAverage, SpaceId.FsAverage5, registry = registry),
+      Left(AtlasError.NoTransformRoute(SpaceId.FsAverage, SpaceId.FsAverage5))
+    )
+
   test("available steps without provider maps are planned but not executable"):
     val plan = value(SpaceTransforms.plan(SpaceId.FsAverage, SpaceId.FsAverage5))
     assertEquals(plan.status, TransformStatus.Available)
