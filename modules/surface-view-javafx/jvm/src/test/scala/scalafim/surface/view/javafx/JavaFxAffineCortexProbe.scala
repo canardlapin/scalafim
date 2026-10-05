@@ -96,7 +96,12 @@ object JavaFxAffineCortexProbe:
       if settings.shift != 0 then
         var vertex = 0
         while vertex < coordinates.length do
-          coordinates(vertex) += settings.shift
+          // Shift along the exported camera's screen-right world basis. A
+          // translation along its viewing axis is invisible orthographically.
+          var axis = 0
+          while axis < 3 do
+            coordinates(vertex + axis) += settings.shift * source.plan.camera.viewMatrix(axis)
+            axis += 1
           vertex += 3
       m -> SurfaceGeometry(TriangleMesh.fromArrays(coordinates, m.indices.unsafeArray),
         if hemi(m.surface) == "lh" then Hemisphere.Left else Hemisphere.Right, SurfaceKind.Inflated)
