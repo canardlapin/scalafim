@@ -36,7 +36,8 @@ Shared code owns pure data and algorithms:
   `GlasserHcpMmp1Surface`, and standard descriptor enums
 - `SpaceTransforms`
 - `VolumeAtlas`, `SurfaceAtlas`
-- `AtlasQuery`, `AtlasReduce`, `AtlasOverlap`, `RegionGraph`
+- `AtlasQuery`, `AtlasReduce`, `AtlasExpand`, `AtlasOverlap`, `RegionGraph`
+- `ParcelMetricSchema`, `ParcelMetricJson`, and canonical-domain restoration
 
 The JVM-only package owns file and network IO:
 
@@ -149,7 +150,7 @@ from `scalafim-surface`.
 
 ```scala
 import scalafim.atlas.*
-import scalafim.surface.{Hemisphere as SurfaceHemisphere, *}
+import scalafim.surface.{CorticalHemisphere, VertexId}
 
 val ref =
   Schaefer2018Surface(
@@ -162,10 +163,10 @@ val atlas =
   SurfaceAtlas.fromLabeledSurfaces(ref, regions, leftLabels, rightLabels)
 
 val label =
-  atlas.labelIdAt(SurfaceHemisphere.Left, VertexId(100))
+  atlas.labelIdAt(CorticalHemisphere.Left, VertexId(100))
 
 val contacts =
-  atlas.boundaryContacts(SurfaceHemisphere.Right)
+  atlas.boundaryContacts(CorticalHemisphere.Right)
 ```
 
 The contract is intentionally strict:
@@ -241,34 +242,23 @@ one hit is returned per nearest region found within the search radius.
 
 ## Parcel Reduction
 
-The atlas can summarize a 3D image:
+Parcel results are locus4s `Field[atlas.realization.P,A]`; series retain the
+realization's exact frame, spatial and parcel types. Use `atlas.reduce(statMap)`
+and `atlas.reduceSeries(boldSeries, mask = Some(brainMask))`. Presentation rows
+come from `ParcelFields.records(atlas.realization)(field)` and authoritative
+metadata. Storage uses canonical domain order, independently of display order.
 
-```scala
-val parcelValues =
-  atlas.reduce(statMap)
+`ParcelReducer` selects `Mean`, `Sum` or `Custom`. One `ParcelReductionPolicy`
+controls scalar and series masks, NaN handling and empty support. Checked methods
+return structured errors; custom callbacks receive independent arrays and fully
+evaluated results. See the atlas README for the precise missing-data table.
 
-val region10 =
-  parcelValues.value(RegionId(10))
-```
-
-It can also summarize every time point in a 4D series:
-
-```scala
-val parcelSeries =
-  atlas.reduce(boldSeries)
-
-val maskedSeries =
-  AtlasReduce.reduceVec(
-    atlas,
-    boldSeries,
-    mask = Some(brainMask),
-    reducer = Reducers.mean
-  )
-```
-
-The output keeps every atlas parcel even when a mask removes all voxels from a
-parcel. Empty parcel/time cells are `NaN`. Non-contiguous atlas IDs remain
-metadata IDs; they are not used as direct dense matrix column indices.
+`ParcelFields.fromKeys` admits canonical keyed data. `fromGlasserKeys` admits
+checked anatomical names. `fromSourceIds(target)(source, entries)` resolves the
+source's actual numeric encoding before alignment. Duplicate rows always fail;
+unknown and missing policies are explicit. `alignTo` uses exact persistent
+ordered identity for field transport. Generic field/domain algebra stays in
+locus4s.
 
 ## Overlap And Graphs
 
@@ -379,6 +369,11 @@ The R script uses `~/code/neuroatlas` by default and can be redirected with
 `NEUROATLAS_R=/path/to/neuroatlas`.
 
 ## Remaining Atlas Work
+
+The tagged [typed atlas plan](atlas-typed-plan-2026-09-30.md) is the current
+computational roadmap. Step 4 covers continuous expansion and versioned scalar
+metric persistence; follow-on composition and loading work remain separate
+Mote children. Visualization is excluded from that roadmap.
 
 The next atlas implementation tasks should be separate tracker children rather
 than hidden inside docs:

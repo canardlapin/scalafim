@@ -136,6 +136,19 @@ class VolumeParcellationSuite extends munit.FunSuite:
     assertEquals(dense.data.shape, Shape(2, 2, 1))
     assertEquals(dense.data.iterator.toVector, Vector(7, 7, 0, 9))
 
+  test("continuous rendering retains its precise sample owner and exact grid"):
+    val values = right(VectorField.fromValues(parcellation.parcels, Vector(1.25, -3.5)))
+    val dense: ScalarVolume[parcellation.sampleSpace.type, Double] =
+      right(parcellation.renderContinuous(values, -99.0))
+    val sampled = NeuroVolume.sampled(dense)
+    assert(sampled.sampleSpace.eq(parcellation.sampleSpace))
+    assert(sampled.sampleSpace.grid.eq(grid))
+    sampled.data.iterator.toVector.zip(Vector(1.25, 1.25, -99.0, -3.5)).foreach:
+      (actual, expected) => assertEqualsDouble(actual, expected, 0.0)
+    val foreign = right(FiniteDomain.ephemeral("foreign continuous", 2))
+    val wrong = VectorField.tabulate(foreign.value)(_ => 1.0)
+    assert(parcellation.renderContinuous(wrong, 0.0).swap.toOption.get.isInstanceOf[VolumeParcellationError.WrongParcelOwner])
+
   test("parcel series are parcel-major with contiguous time rows"):
     val reduced = right(
       ParcelSeries.reduceMean(

@@ -147,7 +147,7 @@ final class MniTemplateBridge private (
 
   /** `manifest` with its TemplateFlow 6Asym <-> 2009c steps replaced by this bridge's (added when absent). */
   def install(manifest: Vector[TransformStep]): Vector[TransformStep] =
-    def isStep(step: TransformStep, from: AnySpaceId, to: AnySpaceId): Boolean =
+    def isStep(step: TransformStep, from: SpaceId, to: SpaceId): Boolean =
       step.backend == TransformBackend.TemplateFlowAnts &&
         SpaceId.normalize(step.from) == from && SpaceId.normalize(step.to) == to
     val kept =

@@ -44,13 +44,20 @@ trait AtlasNetworkRealization[X]:
   val assignment: PartialSurjection[X, N]
   val networkIds: Field[N, NetworkId]
 
+/** Persistent parent evidence, including the spatial support and actual assignment. */
+final case class AtlasRealizationIdentity(
+    parcelDomain: NeuropublishDomainIdentityV1,
+    supportDomains: Vector[NeuropublishDomainIdentityV1],
+    assignmentDigests: Vector[Digest]
+)
+
 /** One atlas realization over one exact live spatial owner.
   *
   * `parcelAssignment` is the only retained source of membership truth. Parcel
   * regions, network regions, dense labels, and publication assignment payloads
   * are derived from it.
   */
-trait AtlasRealization:
+sealed trait AtlasRealization:
   type X
   type P
 
@@ -68,6 +75,13 @@ trait AtlasRealization:
 
   final def parcelDomain: FiniteDomain[P] =
     parcelAssignment.to
+
+  final lazy val identity: AtlasRealizationIdentity =
+    AtlasRealizationIdentity(
+      parcelDomainRecord.identity,
+      neuropublishSupportDomains.map(_.identity),
+      neuropublishAssignments.map(assignment => Digest.sha256(assignment.assetSha256))
+    )
 
   final def regionIds: Field[P, RegionId] =
     metadata.map(_.id)
@@ -147,14 +161,16 @@ trait AtlasRealization:
   ): Either[AtlasPublicationError, Unit] =
     AtlasPublicationProjection.validate(neuropublishProjection, projection)
 
-trait VolumeAtlasRealization extends AtlasRealization:
+sealed trait VolumeAtlasRealization extends AtlasRealization:
   type F <: Frame[D3]
 
+  override val ref: VolumeAtlasRef
   val domain: GridDomain[F, D3, X]
   val parcellation: VolumeParcellation[F, X, P, AtlasRegionMetadata]
   val volumeSupportDomain: NeuropublishVolumeGridDomainV1
 
-trait SurfaceAtlasRealization extends AtlasRealization:
+sealed trait SurfaceAtlasRealization extends AtlasRealization:
+  override val ref: SurfaceAtlasRef
   val leftVertexCount: Int
   val rightVertexCount: Int
   val leftSupportDomain: NeuropublishSurfaceVerticesDomainV1
@@ -256,37 +272,80 @@ object AtlasRealization:
       labels: SomeLabelVolume[Int],
       atlasProvenance: AtlasProvenance
   ): Either[AtlasRealizationError, VolumeAtlasRealization] =
-    for
-      _ <- validateProvenanceCoherence(
-        atlasRef,
-        regions,
-        atlasProvenance,
-        AtlasRepresentation.Volume
+    gridDomain.spatialField(SomeNeuroVolume.sampled(labels))
+      .left.map(AtlasRealizationError.GridDomain.apply)
+      .flatMap: labelField =>
+        buildVolumeIn(
+          registry, atlasRef, regions, gridDomain,
+          SomeNeuroVolume.sampled(labels).metadata, atlasProvenance,
+          [P] => (parcels: FiniteDomain[P], ordinals: Map[RegionId, Int]) =>
+            for
+              assignments <- volumeAssignments(gridDomain.space, labelField, ordinals)
+              _ <- validateVolumeCoverage(
+                assignments,
+                RegionIndex(regions.regions.sortBy(region => ordinals(region.id)))
+              )
+              assignment <- PartialSurjection
+                .fromOptionalTargetOrdinals(gridDomain.space, parcels, assignments)
+                .left.map(partialAssignmentError)
+            yield assignment
+        )
+
+  /** Select through a partial parcel map, keeping the exact voxel/grid owner. */
+  def selectVolume(
+      parent: VolumeAtlasRealization,
+      predicate: AtlasRegionMetadata => Boolean
+  ): Either[AtlasRealizationError, VolumeAtlasRealization] =
+    val ordered = parent.displayOrder.indices.toVector
+    val kept = ordered.filter(parcel => predicate(parent.metadata(parcel)))
+    if kept.isEmpty then Left(AtlasRealizationError.InvalidAtlas(AtlasError.EmptyAtlas))
+    else
+      val keptOrdinals = kept.map(_.ordinal).toSet
+      val regions = RegionIndex(kept.map(parent.metadata.apply))
+      val provenance = parent.provenance
+        .withLabels(LabelSchema.fromRegions(parent.ref, regions, parent.provenance.sourceArtifacts))
+        .withDerivationStep(DerivationStep.SelectedParcels(
+          parent.identity,
+          kept.map(parent.parcelKeys.apply),
+          ordered.filterNot(parcel => keptOrdinals.contains(parcel.ordinal)).map(parent.parcelKeys.apply)
+        ))
+      buildVolumeIn[parent.F, parent.X](
+        parent.registry, parent.ref, regions, parent.domain,
+        parent.parcellation.imageMetadata, provenance,
+        [P] => (parcels: FiniteDomain[P], ordinals: Map[RegionId, Int]) =>
+          PartialSurjection
+            .fromOptionalTargetOrdinals(
+              parent.parcelDomain, parcels,
+              parent.parcelDomain.indices.map(parcel => ordinals.get(parent.metadata(parcel).id))
+            )
+            .left.map(partialAssignmentError)
+            .map(parent.parcelAssignment.andThen)
       )
-      labelField <- gridDomain
-        .spatialField(SomeNeuroVolume.sampled(labels))
-        .left
-        .map(AtlasRealizationError.GridDomain.apply)
+
+  private[atlas] def buildVolumeIn[F0 <: Frame[D3], S](
+      registry: DomainRegistry,
+      atlasRef: AtlasRef,
+      regions: RegionIndex,
+      gridDomain: GridDomain[F0, D3, S],
+      imageMetadata: image4s.ImageMetadata,
+      atlasProvenance: AtlasProvenance,
+      assignmentFor: [P] => (FiniteDomain[P], Map[RegionId, Int]) =>
+        Either[AtlasRealizationError, PartialSurjection[S, P]],
+      displayRegionIds: Option[Vector[RegionId]] = None
+  ): Either[AtlasRealizationError, VolumeAtlasRealization { type F = F0; type X = S }] =
+    for
+      _ <- validateProvenanceCoherence(atlasRef, regions, atlasProvenance, AtlasRepresentation.Volume)
+      volumeRef <- atlasRef match
+        case value: AtlasRef.Volume => Right(value)
+        case _ => Left(AtlasRealizationError.Publication(AtlasPublicationError.AtlasProvenanceMismatch("atlas reference representation disagrees with realization kind")))
       parcelResolution <- AtlasParcelDomain
         .restore(registry, atlasRef, atlasProvenance, regions)
-        .left
-        .map(AtlasRealizationError.Publication.apply)
-      assignments <- volumeAssignments(
-        gridDomain.space,
-        labelField,
-        regions.ids.zipWithIndex.toMap
+        .left.map(AtlasRealizationError.Publication.apply)
+      assignmentValue <- assignmentFor[parcelResolution.P](
+        parcelResolution.space, parcelResolution.regions.ids.zipWithIndex.toMap
       )
-      _ <- validateVolumeCoverage(assignments, regions)
-      assignmentValue <- PartialSurjection
-        .fromOptionalTargetOrdinals(
-          gridDomain.space,
-          parcelResolution.space,
-          assignments
-        )
-        .left
-        .map(partialAssignmentError)
       metadataField <- VectorField
-        .fromValues(parcelResolution.space, regions.regions)
+        .fromValues(parcelResolution.space, parcelResolution.regions.regions)
         .left
         .map(AtlasRealizationError.Field.apply)
       parcellationValue <- VolumeParcellation
@@ -294,18 +353,22 @@ object AtlasRealization:
           gridDomain,
           assignmentValue,
           metadataField,
-          SomeNeuroVolume.sampled(labels).metadata
+          imageMetadata
         )
         .left
         .map(AtlasRealizationError.Parcellation.apply)
       displayOrderValue <- Selection
-        .fromOrdinals(parcelResolution.space, regions.regions.indices)
+        .fromOrdinals(parcelResolution.space,
+          displayRegionIds.fold(parcelResolution.displayOrdinals)(ids =>
+            ids.map(id => parcelResolution.regions.ids.indexOf(id))
+          )
+        )
         .left
         .map(AtlasRealizationError.Selection.apply)
       networkResult <- networkAssignment(
         parcelResolution.registry,
         parcelResolution.space,
-        regions
+        parcelResolution.regions
       )
     yield
       type Parcel = parcelResolution.P
@@ -319,11 +382,11 @@ object AtlasRealization:
           localId = "volume-hard-assignment",
           source = volumeSupport.identity,
           target = parcelResolution.publication.identity,
-          targetOrdinals = assignments.map(_.getOrElse(-1)),
+          targetOrdinals = assignmentValue.toPartialMap.optionalTargetOrdinals.map(_.getOrElse(-1)),
           coverage = NeuropublishTargetCoverageV1.Complete,
           provenance =
             AtlasPublicationProjection.assignmentProvenance(
-              regions,
+              parcelResolution.regions,
               parcelResolution.publication
             )
         )
@@ -332,7 +395,7 @@ object AtlasRealization:
         type X = S
         type P = Parcel
         val registry: DomainRegistry = networkResult._1
-        val ref: AtlasRef = atlasRef
+        val ref: VolumeAtlasRef = volumeRef
         val provenance: AtlasProvenance = atlasProvenance
         val domain: GridDomain[F0, D3, S] = gridDomain
         val parcellation: VolumeParcellation[
@@ -436,6 +499,9 @@ object AtlasRealization:
         payload.right
       )
     for
+      surfaceRef <- atlasRef match
+        case value: AtlasRef.Surface => Right(value)
+        case _ => Left(AtlasRealizationError.Publication(AtlasPublicationError.AtlasProvenanceMismatch("atlas reference representation disagrees with realization kind")))
       ambientRecord <- AtlasPublicationProjection
         .bilateralRecord(
           atlasRef.coordSpace.value,
@@ -457,13 +523,14 @@ object AtlasRealization:
         )
         .left
         .map(AtlasRealizationError.Publication.apply)
+      _ <- validateGlasserSurface(atlasRef, parcelResolution.regions, payload)
       assignments <- surfaceAssignments(
         payload,
         ambientResolution.space.size,
         leftCount,
-        regions.ids.zipWithIndex.toMap
+        parcelResolution.regions.ids.zipWithIndex.toMap
       )
-      _ <- validateVolumeCoverage(assignments, regions)
+      _ <- validateVolumeCoverage(assignments, parcelResolution.regions)
       assignmentValue <- PartialSurjection
         .fromOptionalTargetOrdinals(
           ambientResolution.space,
@@ -473,17 +540,17 @@ object AtlasRealization:
         .left
         .map(partialAssignmentError)
       metadataField <- VectorField
-        .fromValues(parcelResolution.space, regions.regions)
+        .fromValues(parcelResolution.space, parcelResolution.regions.regions)
         .left
         .map(AtlasRealizationError.Field.apply)
       displayOrderValue <- Selection
-        .fromOrdinals(parcelResolution.space, regions.regions.indices)
+        .fromOrdinals(parcelResolution.space, parcelResolution.displayOrdinals)
         .left
         .map(AtlasRealizationError.Selection.apply)
       networkResult <- networkAssignment(
         parcelResolution.registry,
         parcelResolution.space,
-        regions
+        parcelResolution.regions
       )
     yield
       type Vertex = ambientResolution.S
@@ -493,7 +560,7 @@ object AtlasRealization:
       val rightTargets = allTargets.drop(leftCount)
       val assignmentProvenance =
         AtlasPublicationProjection.assignmentProvenance(
-          regions,
+          parcelResolution.regions,
           parcelResolution.publication
         )
       val leftAssignment =
@@ -526,7 +593,7 @@ object AtlasRealization:
         type X = Vertex
         type P = Parcel
         val registry: DomainRegistry = networkResult._1
-        val ref: AtlasRef = atlasRef
+        val ref: SurfaceAtlasRef = surfaceRef
         val provenance: AtlasProvenance = atlasProvenance
         val leftVertexCount: Int = leftCount
         val rightVertexCount: Int = rightCount
@@ -569,9 +636,9 @@ object AtlasRealization:
           template == ref.templateSpace && coordinate == ref.coordSpace
         case (
               AtlasRepresentation.Surface,
-              SpatialSupport.Surface(template, _, _)
+              SpatialSupport.Surface(template, coordinate, _, _)
             ) =>
-          template == ref.templateSpace
+          template == ref.templateSpace && coordinate == ref.coordSpace
         case (
               AtlasRepresentation.Derived,
               SpatialSupport.Derived(template, coordinate)
@@ -627,6 +694,33 @@ object AtlasRealization:
                 )
               )
     failure.toLeft(assignments.toVector)
+
+  private def validateGlasserSurface(
+      ref: AtlasRef,
+      regions: RegionIndex,
+      payload: SurfaceAtlasPayload
+  ): Either[AtlasRealizationError, Unit] =
+    if ref.parcelIdentity != ParcelIdentity.GlasserHcpMmp1 then Right(())
+    else
+      val keys = regions.regions.foldLeft[Either[ParcelIdentityError, Map[Int, GlasserParcelKey]]](Right(Map.empty)):
+        (result, region) =>
+          for
+            entries <- result
+            key <- GlasserParcelKey.fromRegion(region)
+          yield entries.updated(region.id.value, key)
+      keys.flatMap: byId =>
+        var failure = Option.empty[ParcelIdentityError]
+        def check(labels: Array[Int], hemisphere: Hemisphere): Unit =
+          var row = 0
+          while row < labels.length && failure.isEmpty do
+            byId.get(labels(row)).foreach: key =>
+              if key.hemisphere != hemisphere then
+                failure = Some(ParcelIdentityError.ConflictingSurfaceHemisphere(RegionId(labels(row)), key, hemisphere))
+            row += 1
+        check(payload.left.labels, Hemisphere.Left)
+        check(payload.right.labels, Hemisphere.Right)
+        failure.toLeft(())
+      .left.map(error => AtlasRealizationError.Publication(AtlasPublicationError.InvalidParcelIdentity(error)))
 
   private def surfaceAssignments(
       payload: SurfaceAtlasPayload,
@@ -738,7 +832,7 @@ object AtlasRealization:
             val parcelToNetwork: Surjection[P, Network] = surjection
         (resolution.registry, Some(value))
 
-  private def partialAssignmentError(
+  private[atlas] def partialAssignmentError(
       error: PartialMapError | CertifiedMapError
   ): AtlasRealizationError =
     error match

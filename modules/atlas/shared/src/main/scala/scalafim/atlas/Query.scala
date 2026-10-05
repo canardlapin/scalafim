@@ -15,31 +15,47 @@ final case class QueryHit(
     region.map(_.id)
 
   def label: Option[String] =
-    region.map(_.label)
+    region.map(_.label.value)
 
 object AtlasQuery:
+  def exactEither(atlas: VolumeAtlas, point: Point3D): Either[AtlasError, QueryHit] =
+    exactEither(atlas, point, atlas.ref.coordSpace)
+
   def exactEither(
     atlas: VolumeAtlas,
     point: Point3D,
-    fromSpace: AnySpaceId = SpaceId.MNI152
+    fromSpace: SpaceId
   ): Either[AtlasError, QueryHit] =
     queryEither(atlas, Vector(point), radiusMm = 0.0, fromSpace).flatMap {
       case head +: _ => Right(head)
       case _ => Left(AtlasError.InvalidQuery("exact atlas query requires one point"))
     }
 
+  def exact(atlas: VolumeAtlas, point: Point3D): QueryHit =
+    exact(atlas, point, atlas.ref.coordSpace)
+
   def exact(
     atlas: VolumeAtlas,
     point: Point3D,
-    fromSpace: AnySpaceId = SpaceId.MNI152
+    fromSpace: SpaceId
   ): QueryHit =
     exactEither(atlas, point, fromSpace).fold(err => throw new IllegalArgumentException(err.message), identity)
 
   def queryEither(
     atlas: VolumeAtlas,
     points: Vector[Point3D],
-    radiusMm: Double = 0.0,
-    fromSpace: AnySpaceId = SpaceId.MNI152
+    radiusMm: Double = 0.0
+  ): Either[AtlasError, Vector[QueryHit]] =
+    queryEither(atlas, points, radiusMm, atlas.ref.coordSpace)
+
+  def queryEither(atlas: VolumeAtlas, points: Vector[Point3D], fromSpace: SpaceId): Either[AtlasError, Vector[QueryHit]] =
+    queryEither(atlas, points, 0.0, fromSpace)
+
+  def queryEither(
+    atlas: VolumeAtlas,
+    points: Vector[Point3D],
+    radiusMm: Double,
+    fromSpace: SpaceId
   ): Either[AtlasError, Vector[QueryHit]] =
     if radiusMm < 0.0 || !radiusMm.isFinite then
       Left(AtlasError.InvalidQuery("radiusMm must be finite and non-negative"))
@@ -49,8 +65,18 @@ object AtlasQuery:
   def query(
     atlas: VolumeAtlas,
     points: Vector[Point3D],
-    radiusMm: Double = 0.0,
-    fromSpace: AnySpaceId = SpaceId.MNI152
+    radiusMm: Double = 0.0
+  ): Vector[QueryHit] =
+    query(atlas, points, radiusMm, atlas.ref.coordSpace)
+
+  def query(atlas: VolumeAtlas, points: Vector[Point3D], fromSpace: SpaceId): Vector[QueryHit] =
+    query(atlas, points, 0.0, fromSpace)
+
+  def query(
+    atlas: VolumeAtlas,
+    points: Vector[Point3D],
+    radiusMm: Double,
+    fromSpace: SpaceId
   ): Vector[QueryHit] =
     queryEither(atlas, points, radiusMm, fromSpace).fold(err => throw new IllegalArgumentException(err.message), identity)
 
@@ -58,7 +84,7 @@ object AtlasQuery:
     atlas: VolumeAtlas,
     points: Vector[Point3D],
     radiusMm: Double,
-    fromSpace: AnySpaceId
+    fromSpace: SpaceId
   ): Either[AtlasError, Vector[QueryHit]] =
     val atlasPointsEither =
       val fromNorm = SpaceId.normalize(fromSpace)

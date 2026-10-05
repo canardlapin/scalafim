@@ -46,12 +46,15 @@ enum FitError:
   )
   case IncompatibleFitBlocks(detail: String)
   case ChunkFailed(chunkOrdinal: Int, cause: FitError)
+  case ReducedRankBootstrapFailed(replicate: Int, cause: FitError)
   case UnsupportedRobust(detail: String)
   case FixedEffectsIncompatible(detail: String)
   case FixedEffectsContributionFailure(runIndex: Int, voxelIndex: Int, detail: String)
 
   def message: String =
     this match
+      case ReducedRankBootstrapFailed(replicate, cause) =>
+        s"voxelwise reduced-rank bootstrap replicate $replicate failed: ${cause.message}"
       case EmptyDesign =>
         "design matrix must have at least one row and one column"
       case EmptyResponse =>

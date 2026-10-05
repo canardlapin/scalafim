@@ -85,6 +85,7 @@ object SurfaceRasterizer:
     Set(
       SurfaceBackendFeature.DeterministicPixels,
       SurfaceBackendFeature.DepthBuffer,
+      SurfaceBackendFeature.Lighting,
       SurfaceBackendFeature.BackFaceCulling,
       SurfaceBackendFeature.WorldClipping,
       SurfaceBackendFeature.BilateralViewports,
@@ -92,7 +93,7 @@ object SurfaceRasterizer:
       SurfaceBackendFeature.HighResolutionSnapshot
     ),
     Vector(
-      "lighting is not applied by the reference raster backend"
+      "lighting uses world-space vertex normals and ambient/diffuse Lambert shading; lit vertex colors are interpolated, without per-pixel normal shading, specular highlights or shadows"
     )
   )
 

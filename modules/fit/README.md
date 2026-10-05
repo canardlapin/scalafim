@@ -360,23 +360,86 @@ Park-Miller stream rather than platform RNG state, making the prepared result
 byte-stable across JVM, Scala.js, direct, and chunked execution. The fixture
 generator is `tools/r-parity/generate_fmrireg_rrr_fixtures.R`.
 
-Voxelwise-AR compressed reduced-rank GLS remains explicit unsupported behavior.
-Per-voxel whitening removes the single shared response geometry required by the
-current QR-SVD subspace, so that extension is tracked as a separate design task
-rather than treated as a routine backend branch. Full-rank voxelwise-AR fallback
-remains available with event-only inference scope.
+Voxelwise-AR compression has an explicit fixed-rank path. Select
+`ReducedRankInferencePolicy.EstimatesOnly` or `VoxelwiseBootstrap` to fit one
+global target-coefficient rank constraint with each voxel's own whitening and
+nuisance projection. The Gale projected-gradient solver uses three deterministic
+starts in normalized coordinates; diagnostics report convergence, achieved rank
+and original-metric residual loss. This is a converged candidate for a nonconvex
+problem, with no global-optimality certificate. Adaptive energy/RSS policies
+remain unsupported on this path.
 
-Chunked execution asks the selected `FitInterpreter` to prepare engine-specific
-context once for the resolved selection and then applies that immutable context
-to each voxel chunk. This is especially important for estimated-AR GLS: the
-AR/whitening plan is estimated on the full selected response block before voxel
-chunks run, so chunking does not silently change the autocorrelation model.
+The result is `VoxelwiseReducedRankFmriFitResult`. Estimates-only results contain
+coefficients and descriptive reduced residual variance, with explicitly absent
+uncertainty. `VoxelwiseReducedRankBootstrapConfig` offers `FrozenWhitening` and
+`RefitAutocorrelation`: both refit the global rank-constrained coefficients, and
+the latter also re-estimates AR in each replicate. Joint voxel residual vectors
+are resampled synchronously in run-local moving blocks after marginal HC2
+correction and centering. The inverse-whitening generator respects every reset;
+blocks exclude noise-censored donor rows and never cross donor reset boundaries.
+Every replicate must succeed. This is a model-conditional residual approximation;
+HC2 does not exactly restore joint covariance under differing voxel hat matrices.
+
+Bootstrap payloads contain absolute marginal target covariance, SEs and pointwise
+percentile intervals. They do not authorize generic T/F contrasts. Nuisance
+coefficients remain available without nuisance uncertainty. Sidecars preserve
+the solver, whitening actions, mode, seed, interval convention and replicate
+losses. The original `Conditional` full-rank voxelwise GLS fallback remains
+available. See the [design and qualification](../../docs/plans/voxelwise-ar-reduced-rank-gls.md)
+for the mathematical target, tested cases and remaining limits.
+
+`FitPreparation.describe(plan)` reports `DesignOnly`, `BlockLocal`, or
+`GlobalReduction` before reading responses, with ordered reduction requirements.
+OLS (including fixed temporal weights), fixed-AR GLS, runwise OLS/fixed effects,
+and LSS prepare from temporal/design metadata. Estimated voxelwise GLS prepares
+within each spatial block. DVARS-weighted OLS scans spatial blocks once to sum
+temporal squared differences, finalizes the shared weights, then fits blocks in a
+second pass. Row-omission discovery similarly scans blocks and retains only
+finite-row masks and voxel memberships before fitting each observation pattern.
+Every scan preserves all selected timepoints and the existing run/reset layout.
+
+Pooled estimated-AR GLS replays bounded spatial blocks for each configured
+noise-estimation iteration, then performs one final fitting pass. Each iteration
+fits under the previous completed whitening plan (OLS initially), summarizes
+original-space residuals, and merges raw per-run lag products and pair counts.
+Only after the full population is reduced are AR coefficients estimated. This
+preserves run centering, censor/reset boundaries, temporal weighting of global
+run estimates, and separate run-specific coefficient designs. Preparation retains
+designs, per-run lag statistics and voxel-membership metadata, with response and
+residual matrices bounded by the spatial block size. Replay requires an immutable
+response snapshot; changed finite-column membership between passes is rejected.
+
+Active robust row weighting and learned spatial bases remain global dependencies.
+The legacy `ChunkedFitExecutor` still uses dense preparation for those paths;
+chunking does not make their preparation out of core. Robust row medians need exact order statistics across the selection, and
+reduced-rank bootstrap refits a shared basis for each replicate. Computing either
+independently per block would change the estimator.
+
+`FitWorkDescriptor.compile(reference, plan, blockSize, selection)` produces a
+versioned, data-only recipe with exact ordered axes, topology and deterministic
+unit/block work IDs. Its `encode`/`decode` use canonical length-prefixed text
+(UTF-16 code-unit lengths) on both platforms. IDs are collision-free canonical
+strings rather than compact hashes. An explicit `FitWorkResolver` binds the
+recipe to a runtime plan and reader. It must verify that `planRevision` names the
+complete immutable scientific recipe and `sourceRevision` names the response
+snapshot; dataset names and shapes alone are not content verification.
+`FitWorkExecutor.fit` checks the binding and rejects global dependencies without
+an implemented bounded interpreter before any response read. Its currently
+supported global phases are DVARS, observation-pattern discovery and pooled AR
+estimation (including run-specific coefficient fits).
+
+These descriptors replay preparation; they do not checkpoint finalized weights,
+whitening state or fitted spatial bases. A persistent plan registry, prepared
+artifact snapshots, distributed reduction and robust/reduced-rank bounded
+interpreters remain future work. Result merging still retains the complete fit
+result; use the existing selected-estimate sinks when full output retention is
+unnecessary.
 
 The reusable scheduler-neutral boundary is `ChunkProgram`: a validated ordered
 work stream, `CompletedChunk` values keyed by chunk ordinal, and a `ChunkReducer`
 contract for deterministic merge semantics. `FitChunkProgram` is the fMRI fit
 specialization: a resolved chunk stream plus the prepared interpreter context
 needed to execute each work item. The shared module provides local sequential and
-bounded `Future` interpreters over chunk programs. Future distributed runtimes
-should consume the same prepared program contract from JVM-only adapters rather
-than adding scheduler concepts to shared code.
+bounded `Future` interpreters over chunk programs. `FitChunkProgram` and its typed
+interpreter state are process-local; durable schedulers should persist
+`FitWorkDescriptor` and bind runtime capabilities separately.

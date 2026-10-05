@@ -47,11 +47,19 @@ object GiftiSurfaceReader:
     hemisphere: Hemisphere,
     kind: SurfaceKind
   ): Either[GiftiError, SurfaceGeometry] =
+    placedGeometry(document, hemisphere, kind).map(_.geometry)
+
+  def placedGeometry(
+    document: GiftiDocument,
+    hemisphere: Hemisphere,
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
+  ): Either[GiftiError, GiftiDecodedSurface] =
     for
       arrays <- GiftiSurfaceCodec.geometryArrays(document)
       coordinates <- GiftiReader.doubleMatrix(arrays.pointSet)
       faces <- GiftiReader.intMatrix(arrays.triangles)
-      surface <- GiftiSurfaceCodec.geometry(coordinates, faces, hemisphere, kind)
+      surface <- GiftiSurfaceCodec.placedGeometry(coordinates, faces, hemisphere, kind, selection)
     yield surface
 
   def labeledSurface(

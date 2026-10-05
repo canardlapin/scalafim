@@ -1,0 +1,12 @@
+{
+  "reference": "neuroatlas",
+  "commit": "d65ff97cb9316dbb92e4b9decbd2d7eb9ccf85fd",
+  "parcel_data_sha256": "17e67173a60b11e23cccec4cbcdfc8ba697a5cc60617a8486056ce8f14828dba",
+  "generator_sha256": "d27607b8ef63f9e74428fb3c60d4aeaa9644a27d490c821e9e21328fec76ebff",
+  "tsv_sha256": "1cefc5b6e2cc47a165d27e770247ae4b7d50f28c2becf9f1d438a62690479a25",
+  "scala_sha256": "17e0245e37ce651c2071b3b6dc4ca97353854fd07b049cda14d9aed8f657fe39",
+  "R_version": "R version 4.5.1 (2025-06-13)",
+  "cases": 3,
+  "ordinal_layout": "explicit x,y,z; row-major-last-axis-fastest/v1",
+  "scope": "Synthetic finite and missing-value expansion; exact R space retained; no asset acquisition or infinity-policy parity"
+}

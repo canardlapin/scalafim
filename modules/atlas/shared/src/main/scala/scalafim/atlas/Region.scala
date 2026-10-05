@@ -22,6 +22,7 @@ final case class Rgb(red: Int, green: Int, blue: Int):
   require(blue >= 0 && blue <= 255, "blue must be in [0,255]")
 
 final case class RegionLabel private (value: String):
+  require(value.trim.nonEmpty, "region label must be non-empty")
   override def toString: String = value
 
 object RegionLabel:
@@ -33,6 +34,7 @@ object RegionLabel:
     from(value).fold(err => throw new IllegalArgumentException(err.message), identity)
 
 final case class RegionAttributeKey private (value: String):
+  require(value.trim.nonEmpty, "region attribute keys must be non-empty")
   override def toString: String = value
 
 object RegionAttributeKey:
@@ -74,26 +76,14 @@ object RegionAttributes:
 
 final case class AtlasRegionMetadata(
   id: RegionId,
-  label: String,
-  labelFull: Option[String] = None,
+  label: RegionLabel,
+  labelFull: Option[RegionLabel] = None,
   hemisphere: Option[Hemisphere] = None,
   network: Option[NetworkId] = None,
   color: Option[Rgb] = None,
-  attributes: Map[String, String] = Map.empty
+  attributes: RegionAttributes = RegionAttributes.empty
 ):
-  require(label.trim.nonEmpty, "region label must be non-empty")
-  attributes.keys.foreach(k => require(k.trim.nonEmpty, "region attribute keys must be non-empty"))
-
-  def fullLabel: String = labelFull.getOrElse(label)
-
-  def typedLabel: RegionLabel =
-    RegionLabel.unsafe(label)
-
-  def typedFullLabel: RegionLabel =
-    RegionLabel.unsafe(fullLabel)
-
-  def typedAttributes: RegionAttributes =
-    RegionAttributes.unsafe(attributes)
+  def fullLabel: RegionLabel = labelFull.getOrElse(label)
 
 object AtlasRegionMetadata:
   def checked(
@@ -106,10 +96,24 @@ object AtlasRegionMetadata:
     attributes: Map[String, String] = Map.empty
   ): Either[AtlasError, AtlasRegionMetadata] =
     for
-      _ <- RegionLabel.from(label)
-      _ <- labelFull.map(RegionLabel.from).getOrElse(Right(RegionLabel.unsafe(label)))
-      _ <- RegionAttributes.from(attributes)
-    yield AtlasRegionMetadata(id, label, labelFull, hemisphere, network, color, attributes)
+      short <- RegionLabel.from(label)
+      full <- labelFull match
+        case None => Right(None)
+        case Some(value) => RegionLabel.from(value).map(Some(_))
+      attrs <- RegionAttributes.from(attributes)
+    yield AtlasRegionMetadata(id, short, full, hemisphere, network, color, attrs)
+
+  def fromStrings(
+    id: RegionId,
+    label: String,
+    labelFull: Option[String] = None,
+    hemisphere: Option[Hemisphere] = None,
+    network: Option[NetworkId] = None,
+    color: Option[Rgb] = None,
+    attributes: Map[String, String] = Map.empty
+  ): AtlasRegionMetadata =
+    checked(id, label, labelFull, hemisphere, network, color, attributes)
+      .fold(error => throw new IllegalArgumentException(error.message), identity)
 
 final case class RegionIndex(regions: Vector[AtlasRegionMetadata]):
   require(regions.nonEmpty, AtlasError.EmptyAtlas.message)
@@ -125,10 +129,10 @@ final case class RegionIndex(regions: Vector[AtlasRegionMetadata]):
     regions.map(r => r.id -> r).toMap
 
   lazy val byLabel: Map[String, Vector[AtlasRegionMetadata]] =
-    regions.groupBy(r => RegionIndex.normalize(r.label))
+    regions.groupBy(r => RegionIndex.normalize(r.label.value))
 
   lazy val byFullLabel: Map[String, Vector[AtlasRegionMetadata]] =
-    regions.groupBy(r => RegionIndex.normalize(r.fullLabel))
+    regions.groupBy(r => RegionIndex.normalize(r.fullLabel.value))
 
   def ids: Vector[RegionId] =
     regions.map(_.id)
@@ -137,7 +141,7 @@ final case class RegionIndex(regions: Vector[AtlasRegionMetadata]):
     regions.length
 
   def labels: Vector[String] =
-    regions.map(_.label)
+    regions.map(_.label.value)
 
   def get(id: RegionId): Option[AtlasRegionMetadata] =
     byId.get(id)
@@ -157,7 +161,7 @@ final case class RegionIndex(regions: Vector[AtlasRegionMetadata]):
     RegionIndex(regions.filter(p))
 
   def labelMap: Map[Int, String] =
-    regions.map(r => r.id.value -> r.label).toMap
+    regions.map(r => r.id.value -> r.label.value).toMap
 
 object RegionIndex:
   private[atlas] def normalize(label: String): String =

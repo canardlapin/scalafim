@@ -25,7 +25,7 @@ trait Atlas:
 final class VolumeAtlas private (
     val realization: VolumeAtlasRealization
 ) extends Atlas:
-  def ref: AtlasRef =
+  def ref: VolumeAtlasRef =
     realization.ref
 
   def provenance: AtlasProvenance =
@@ -66,35 +66,11 @@ final class VolumeAtlas private (
   def region(label: String, hemisphere: Option[Hemisphere] = None): Vector[AtlasRegionMetadata] =
     regions.find(label, hemisphere)
 
+  def subsetEither(p: AtlasRegionMetadata => Boolean): Either[AtlasRealizationError, VolumeAtlas] =
+    AtlasRealization.selectVolume(realization, p).map(VolumeAtlas.fromRealization)
+
   def subset(p: AtlasRegionMetadata => Boolean): VolumeAtlas =
-    val kept = regions.regions.filter(p)
-    require(kept.nonEmpty, "atlas subset must keep at least one region")
-    val keepIds = kept.iterator.map(_.id).toSet
-    val rendered =
-      realization.parcellation
-        .renderCategorical(
-          realization.metadata.map: metadata =>
-            if keepIds.contains(metadata.id) then metadata.id.value else 0,
-          background = 0
-        )
-        .fold(
-          error =>
-            throw new IllegalStateException(
-              s"validated atlas subset failed to render labels: ${error.message}"
-            ),
-          identity
-        )
-    val outRegions = RegionIndex(kept)
-    val outProvenance =
-      provenance.withLabels(
-        LabelSchema.fromRegions(ref, outRegions, provenance.sourceArtifacts)
-      )
-    VolumeAtlas.fromLabelVolume(
-      ref,
-      outRegions,
-      rendered,
-      outProvenance
-    )
+    subsetEither(p).fold(error => throw new IllegalArgumentException(error.message), identity)
 
 object VolumeAtlas:
   def fromRealization(realization: VolumeAtlasRealization): VolumeAtlas =

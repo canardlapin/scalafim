@@ -1,10 +1,9 @@
 # locus-data
 
-`locus-data` provides ScalaFIM-specific quotient and aggregation operations
+`locus-data` provides ScalaFIM-specific quotient operations
 over finite domains from standalone
 [`locus4s`](https://github.com/canardlapin/locus4s). It cross-compiles for the
-JVM and Scala.js and depends on the locus4s core and data projects plus Cats
-Kernel.
+JVM and Scala.js and depends on the locus4s core and data projects.
 
 The module provides:
 
@@ -13,9 +12,7 @@ The module provides:
 - compatibility aliases for locus4s `IndexedField[S, A]` values and restricted
   `Section` views;
 - supported `Parcellation[X, P]` quotients with typed parcel points;
-- `Searchlight[S]` center policy over a locus endorelation;
-- one-pass `foldMapBy` aggregation using
-  `cats.kernel.CommutativeMonoid`.
+- `Searchlight[S]` center policy over a locus endorelation.
 
 `IndexedField` is not the lazy execution/provenance type
 `scalafim.spatial.Field`; storage, chunking, caches, interpolation, and IO stay
@@ -26,6 +23,15 @@ is visible only as `None`, and construction rejects unused parcel points.
 Names, atlas ids, colors, network terms, and display order are separate fields
 indexed by the parcel space. Partition equality up to relabeling is distinct
 from label-field equality.
+
+Aggregation is owned by `locus4s.data.Aggregation`; the unused ScalaFIM loop
+has been removed. For an existing ScalaFIM parcellation, construct a provider
+`PartialMap.fromOptionalTargetOrdinals(parcellation.ambient,
+parcellation.parcels, parcellation.assignmentOrdinals)` and call provider
+`Aggregation.foldMapByChecked(mapping, field)(empty)(contribution)(combine)`.
+The checked entrypoint rejects foreign runtime owners and accepts the provider's
+representation-neutral `Field`. It skips background and traverses increasing
+source order, including when no targets exist.
 
 Aggregation scans the supported ambient points once. Means should accumulate
 a mergeable `(sum, count)`-like state and divide only at presentation time.

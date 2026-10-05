@@ -233,3 +233,39 @@ sbt surfaceJS/test
 The deterministic fixture corpus is documented in
 `tools/r-parity/surface-fixtures.md`; JVM IO resources are under
 `modules/surface/jvm/src/test/resources/surface/`.
+
+### Float64 reader extension
+
+GIFTI readers also accept `NIFTI_TYPE_FLOAT64` as an interoperability extension
+for coordinates and scalar values. It is not one of the standard GIFTI scalar
+data types. ASCII and both binary endian orders retain double precision; gzip
+and zlib payloads use the existing bounded decompression paths. Integer/label
+and byte payload APIs reject Float64, including integral-valued ASCII data.
+
+### Explicit GIFTI placement
+
+`GiftiSurfaceReader.placedGeometry(document, hemisphere, kind, selection)`
+returns `GiftiDecodedSurface`, including geometry, a typed `placement`, and the
+full source transform vector. JVM returns `Either`; Scala.js returns a `Future`
+of `Either`. Load/parse the document with `GiftiReader` first.
+
+`GiftiTransformSelection.Target(GiftiTargetSpace.Mni152)` requests exactly one
+transform to that declared target. Scanner, aligned, Talairach and MNI targets
+have no implicit priority. Two transforms into the same target are ambiguous;
+`Transform(index)` explicitly selects from the original source vector when the
+caller has the evidence to choose. Unknown/missing target codes are refused
+for placement, even for identity matrices. Selected affine matrices must pass
+the existing image4s homogeneous/finite/invertibility checks.
+
+The default `Unambiguous` policy, also used by geometry-only convenience readers,
+accepts exactly one recognized transform, rejects multiple or unknown transforms,
+and leaves files without transforms in native coordinates. Explicit
+`NativeCoordinates` ignores placement while preserving source metadata in the
+rich result. Identity in this state is bookkeeping, not evidence of a world
+frame. A recognized target code also does not establish correspondence to an
+arbitrary subject/image; the caller owns that registration evidence.
+
+Decoded mesh coordinates are never pretransformed. The chosen original matrix
+is carried in `geometry.surfaceToWorld` and must be applied exactly once. Prefer
+the rich result whenever placement provenance matters; geometry-only APIs cannot
+retain the distinction between native coordinates and a declared identity map.

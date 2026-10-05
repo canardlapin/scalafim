@@ -5,6 +5,7 @@ import image4s.SamplingAlignment
 import scalafim.atlas.*
 import scalafim.fmri.mvpa.*
 import scalafim.image.*
+import scalafim.image.SomeNeuroVolume.*
 import scalafim.surface.{
   Hemisphere as SurfaceHemisphere,
   LabelInfo,
@@ -56,15 +57,14 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     val regions =
       RegionIndex(
         Vector(
-          AtlasRegionMetadata(RegionId(1), "semantic"),
-          AtlasRegionMetadata(RegionId(2), "visual")
+          AtlasRegionMetadata.fromStrings(RegionId(1), "semantic"),
+          AtlasRegionMetadata.fromStrings(RegionId(2), "visual")
         )
       )
     val ref =
-      AtlasRef(
+      AtlasRef.volume(
         family = "toy",
         model = "toy",
-        representation = AtlasRepresentation.Volume,
         templateSpace = SpaceId.Custom,
         coordSpace = SpaceId.Custom,
         confidence = Confidence.Exact
@@ -85,17 +85,20 @@ class SpatialFeatureSetPlansSuite extends munit.FunSuite:
     Response.categorical(Vector("a", "a", "b", "b")).toOption.get
 
   test("volume label maps become regional feature plans with linear voxel ordering") {
-    val spatial = SpatialFeatureSetPlans.volumeLabels("volume-labels", labelVolume).toOption.get
+    val labels = labelVolume
+    val spatial = SpatialFeatureSetPlans.volumeLabels("volume-labels", labels).toOption.get
     val plan = spatial.plan
 
     spatial.domain match
       case SpatialFeatureDomain.VolumeLabels(actual, background) =>
         assertEquals(background, Set(0))
         val actualD3 = SampleSpaces.requireD3(actual).toOption.get
-        val expectedD3 = SampleSpaces.requireD3(volumeSpace).toOption.get
+        val expectedD3 = SampleSpaces.requireD3(labels.sampleSpace).toOption.get
         assert(
           SamplingAlignment.exact(actualD3, expectedD3).isRight
         )
+        val foreignD3 = SampleSpaces.requireD3(volumeSpace).toOption.get
+        assert(SamplingAlignment.exact(actualD3, foreignD3).isLeft)
       case other =>
         fail(s"expected volume-label domain, found $other")
     assertEquals(plan.kind, FeatureSetKind.Region)

@@ -1,0 +1,12 @@
+{
+  "reference": "neuroatlas",
+  "commit": "d65ff97cb9316dbb92e4b9decbd2d7eb9ccf85fd",
+  "parcel_data_sha256": "17e67173a60b11e23cccec4cbcdfc8ba697a5cc60617a8486056ce8f14828dba",
+  "generator_sha256": "984f1958fdaf00ff26ba8f3e440a98610eb67d5063df35163fe1ee0443a2461c",
+  "tsv_sha256": "00117ff5fdf84f291420f9b2c34d27aff2ea62d8686881977b3b8fbc591f2e1a",
+  "scala_sha256": "fd446abc4df411b70ac1a4175a14d73f3580da1ba79383ac4b7ec13d13dc1c78",
+  "R_version": "R version 4.5.1 (2025-06-13)",
+  "cases": 6,
+  "cross_convention_numeric_join": "neuroatlas_error_id_convention",
+  "scope": "Synthetic key alignment only; no acquired atlas or loader qualification"
+}

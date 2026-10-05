@@ -45,6 +45,9 @@ object FitImageMaps:
         first.statistic match
           case ParameterMapKind.Coefficient   => FitImageMapKind.Coefficients
           case ParameterMapKind.StandardError => FitImageMapKind.StandardErrors
+          case ParameterMapKind.ResidualVariance => FitImageMapKind.Custom("residual_variance")
+          case ParameterMapKind.BootstrapLower => FitImageMapKind.Custom("bootstrap_lower")
+          case ParameterMapKind.BootstrapUpper => FitImageMapKind.Custom("bootstrap_upper")
       fromRows(
         names = maps.map(_.parameterName.value),
         rowsByMap = maps.map(_.map.valueVector),
@@ -178,6 +181,36 @@ extension (result: DenseFmriFitResult)
       selectedVoxels = result.selectedVoxels,
       kind = FitImageMapKind.StandardErrors
     )
+
+extension (result: VoxelwiseReducedRankFmriFitResult)
+  def coefficientMaps(shape: DatasetShape): FitImageMaps =
+    FitImageMaps.fromRows(
+      names = result.columnNames,
+      rowsByMap = matrixRows(result.coefficients.value),
+      shape = shape,
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.Coefficients
+    )
+
+  def residualVarianceMap(shape: DatasetShape): FitImageMaps =
+    FitImageMaps.fromRows(
+      names = Vector("residual_variance"),
+      rowsByMap = Vector(result.residualVariance.toSeq.toVector),
+      shape = shape,
+      selectedVoxels = result.selectedVoxels,
+      kind = FitImageMapKind.Custom("residual_variance")
+    )
+
+  def bootstrapStandardErrorMaps(shape: DatasetShape): Option[FitImageMaps] =
+    result.uncertainty.bootstrap.map { bootstrap =>
+      FitImageMaps.fromRows(
+        names = bootstrap.targetColumns.map(result.columnNames),
+        rowsByMap = matrixRows(bootstrap.standardErrors.value),
+        shape = shape,
+        selectedVoxels = result.selectedVoxels,
+        kind = FitImageMapKind.StandardErrors
+      )
+    }
 
 extension (result: TContrastResult)
   def statisticMap(shape: DatasetShape): FitImageMaps =

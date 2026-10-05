@@ -122,17 +122,18 @@ enum HemisphereCoverage:
 
 enum SpatialSupport:
   case Volume(
-    templateSpace: AnySpaceId,
-    coordSpace: AnySpaceId,
+    templateSpace: SpaceId,
+    coordSpace: SpaceId,
     resolution: Option[VoxelSize],
     dimensions: Option[GridDims] = None
   )
   case Surface(
-    templateSpace: AnySpaceId,
+    templateSpace: SpaceId,
+    coordSpace: SpaceId,
     density: SurfaceDensity,
     coverage: HemisphereCoverage = HemisphereCoverage.Bilateral
   )
-  case Derived(templateSpace: AnySpaceId, coordSpace: AnySpaceId)
+  case Derived(templateSpace: SpaceId, coordSpace: SpaceId)
 
 object SpatialSupport:
   def fromRef(ref: AtlasRef): SpatialSupport =
@@ -146,6 +147,7 @@ object SpatialSupport:
       case AtlasRepresentation.Surface =>
         SpatialSupport.Surface(
           ref.templateSpace,
+          ref.coordSpace,
           SurfaceDensity(ref.density.getOrElse("unknown"))
         )
       case AtlasRepresentation.Derived =>
@@ -329,14 +331,23 @@ enum DerivationStep:
   case ParsedLabels(artifactId: String, schema: LabelTableSchema)
   case ValidatedLabels(regionIds: Vector[RegionId])
   case FilteredLabels(kept: Vector[RegionId], dropped: Vector[RegionId])
-  case Resampled(from: AnySpaceId, to: AnySpaceId, kind: TransformKind, status: TransformStatus, confidence: Confidence)
-  case ProjectedVolumeToSurface(from: AnySpaceId, to: AnySpaceId, sampling: SurfaceSamplingSpec, status: TransformStatus)
+  case SelectedParcels(parent: AtlasRealizationIdentity, kept: Vector[String], dropped: Vector[String])
+  case GroupedParcels(parent: AtlasRealizationIdentity, grouping: String, missingAnnotations: String, weighting: String)
+  case DilatedParcels(parent: AtlasRealizationIdentity, metric: String, radiusBits: String, tie: String, maskDigest: Digest)
+  case ComposedParcels(
+    first: NeuropublishCompositionParentV1,
+    second: NeuropublishCompositionParentV1,
+    overlap: AtlasCompositionOverlap,
+    occluded: AtlasCompositionOccluded
+  )
+  case Resampled(from: SpaceId, to: SpaceId, kind: TransformKind, status: TransformStatus, confidence: Confidence)
+  case ProjectedVolumeToSurface(from: SpaceId, to: SpaceId, sampling: SurfaceSamplingSpec, status: TransformStatus)
   case LegacyHistory(
     action: String,
-    fromTemplateSpace: AnySpaceId,
-    toTemplateSpace: AnySpaceId,
-    fromCoordSpace: AnySpaceId,
-    toCoordSpace: AnySpaceId,
+    fromTemplateSpace: SpaceId,
+    toTemplateSpace: SpaceId,
+    fromCoordSpace: SpaceId,
+    toCoordSpace: SpaceId,
     status: TransformStatus,
     confidence: Confidence,
     details: String
@@ -365,7 +376,7 @@ object Citation:
 enum ProvenanceIssue:
   case MissingDigest(role: ArtifactRole)
   case MissingLicense(sourceName: String)
-  case UncertainSpace(space: AnySpaceId)
+  case UncertainSpace(space: SpaceId)
   case UncertainConfidence
   case NoLoadedArtifact
 
@@ -387,8 +398,9 @@ final case class AtlasProvenance(
       case SpatialSupport.Volume(template, coord, _, _) =>
         if template == SpaceId.Unknown then issues += ProvenanceIssue.UncertainSpace(template)
         if coord == SpaceId.Unknown then issues += ProvenanceIssue.UncertainSpace(coord)
-      case SpatialSupport.Surface(template, density, _) =>
+      case SpatialSupport.Surface(template, coordinate, density, _) =>
         if template == SpaceId.Unknown then issues += ProvenanceIssue.UncertainSpace(template)
+        if coordinate == SpaceId.Unknown then issues += ProvenanceIssue.UncertainSpace(coordinate)
         if density.label == "unknown" then issues += ProvenanceIssue.UncertainSpace(template)
       case SpatialSupport.Derived(template, coord) =>
         if template == SpaceId.Unknown then issues += ProvenanceIssue.UncertainSpace(template)
@@ -422,9 +434,9 @@ final case class AtlasProvenance(
       case SpatialSupport.Volume(template, coord, resolution, dimensions) =>
         val dims = dimensions.map(d => s", dims=${d.values.mkString("x")}").getOrElse("")
         s"volume template=${template.value}, coord=${coord.value}, resolution=${resolution.map(_.label).getOrElse("unknown")}$dims"
-      case SpatialSupport.Surface(template, density, coverage) =>
+      case SpatialSupport.Surface(template, coordinate, density, coverage) =>
         val vertices = density.verticesPerHemisphere.map(v => s", vertices/hemi=$v").getOrElse("")
-        s"surface template=${template.value}, density=${density.label}, coverage=$coverage$vertices"
+        s"surface template=${template.value}, coord=${coordinate.value}, density=${density.label}, coverage=$coverage$vertices"
       case SpatialSupport.Derived(template, coord) =>
         s"derived template=${template.value}, coord=${coord.value}"
 
