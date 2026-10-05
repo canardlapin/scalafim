@@ -19,7 +19,7 @@ hrf_bspline <- function(t, span = 24, N = 5, degree = 3, ...) {
     in_support <- !is.na(t) & t >= 0 & t <= span
     t_eval <- t
     t_eval[!in_support] <- 0
-    full <- do.call(splines::bs, c(list(x = t_eval, knots = knots, degree = degree, intercept = TRUE, Boundary.knots = c(0, 
+    full <- do.call(splines::bs, c(list(x = t_eval, knots = knots, degree = degree, intercept = TRUE, Boundary.knots = c(0,
         span)), dots))
     basis <- full[, -c(1L, ncol(full)), drop = FALSE]
     if (any(!in_support)) {

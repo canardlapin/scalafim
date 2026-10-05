@@ -21,7 +21,7 @@ eval(definition[[1L]], env)
 dir <- "docs/verification/hrf-endpoint-anchored-bspline-20261005"
 writeLines(c(paste0("# fmrihrf ", revision, "; R/hrf-functions.R blob ", blob),
              "# Exact parsed function definition; generated, do not edit.",
-             deparse(definition[[1L]], width.cutoff = 120L)),
+             sub("[[:space:]]+$", "", deparse(definition[[1L]], width.cutoff = 120L))),
            file.path(dir, "upstream_hrf_bspline.R"))
 
 configs <- list(
@@ -77,4 +77,4 @@ cat(sprintf("%s; splines %s\n", R.version.string, packageVersion("splines")))
 cat(sprintf("Generated %d configurations, %d rows, %d values; endpoint/support/domain checks passed.\n",
             length(fixtures), sum(vapply(fixtures, function(f) length(f$times), integer(1))),
             sum(vapply(fixtures, function(f) length(f$values), integer(1)))))
-cat("Wrote", out, "\n")
+cat(sprintf("Wrote %s\n", out))

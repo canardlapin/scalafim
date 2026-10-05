@@ -1,4 +1,4 @@
 Pinned fmrihrf 18d418f26dd4547ca21ce11d12ea9e5e91a80b87; source blob 69a6c8476de9b87e01bca6183eae32d639935c2c
 R version 4.5.1 (2025-06-13); splines 4.5.1
 Generated 9 configurations, 129 rows, 899 values; endpoint/support/domain checks passed.
-Wrote modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/EndpointAnchoredBsplineRFixtures.scala 
+Wrote modules/hrf/shared/src/test/scala/scalafim/fmri/hrf/fixtures/EndpointAnchoredBsplineRFixtures.scala
