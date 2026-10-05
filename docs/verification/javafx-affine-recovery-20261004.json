@@ -1,0 +1,1464 @@
+{
+  "schema": "scalafim.javafx-affine-recovery.v1",
+  "mote": "bd-01M241Y5FPND8TPHTJQVHJWW7K",
+  "candidate": "3bb30729c2511d9d110db217851c5d366aabeafa",
+  "queueBase": "36151a6705281f9f9523d18bc7e39df059aff674",
+  "canonicalLandingBase": "06ecaac9a6158e1a04133cba05bb6dbacb9550b4",
+  "outcome": "bounded V1 recovery and explicit upstream sampler capability proposal; production affine creation refused",
+  "sourceFiles": [
+    {
+      "path": "docs/plans/javafx-affine-sampler-capability.md",
+      "sha256": "1ad88485bad40b1287677701d22209ab54c4bc18f5d076c8e80600ae7a9c170d"
+    },
+    {
+      "path": "docs/verification/javafx-stock-metal-20260929-evidence.tar.gz",
+      "sha256": "969933c2ebf547841191b2ab429ac6f1dc41041fc9a126cefe579b2b7380c209"
+    },
+    {
+      "path": "docs/verification/javafx-stock-metal-decision-20260929.json",
+      "sha256": "299d1e0f0e59f636b8df91aff2946598e398cab275fb02c8b5d47fbbaedf2ff1"
+    },
+    {
+      "path": "docs/verification/javafx-stock-metal-decision-20260929.md",
+      "sha256": "4f522581a41a7b5df61f5444dddd046e604858034fd61ab235625613d65912cb"
+    },
+    {
+      "path": "docs/visual-qa/javafx-affine-atlas.md",
+      "sha256": "1d718f80900b044e9123e8d05bc274d16f9bcd4b89df8fcd0bb981c93200a413"
+    },
+    {
+      "path": "modules/surface-view-javafx/README.md",
+      "sha256": "c23461b3f9106a7b6c559e465c1ff472f794007af9a1ecd376287d28a238ca97"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlas.scala",
+      "sha256": "9805e341f70f23f913025b21ef9d1fdf2287885d45a0becdcbd2bf2afcf5acbf"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxAffineAtlas.scala",
+      "sha256": "cd21f6c88d2d591ed5dba21018ced5b41d152fd3f0d42d3bab038502325c40f6"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxRuntimeCapabilities.scala",
+      "sha256": "5921fb9e0642bbe57002f6dfe399d321fc3a884c4fb0adfd131ad945f95ac56b"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceController.scala",
+      "sha256": "6f0bebba41e03d1db27aca2c5ccdf6280d1912ab0c95263371e231f0909842da"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbe.scala",
+      "sha256": "500c68abd7c312c673378937e020db296631f2693724b608a23f5b0eff7f43db"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/main/scala/scalafim/surface/view/javafx/JavaFxSurfaceProgram.scala",
+      "sha256": "b108a2829c8888db08bfcb70724097db0d959eb06f95df97ecf06d77ce547fb2"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAdaptiveAtlasSuite.scala",
+      "sha256": "ceff7841a09832aefc3643a50f6246643e5fc8d4616286848b54a7b2d38bfb2b"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineAtlasSuite.scala",
+      "sha256": "6666c648ac58b2338ae2ab39bf1b5dcf13ce5a9068e69e0e1f91e75822d7013e"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineColorProbe.scala",
+      "sha256": "af13cd2e44fdadd6bc293f61d380bcf3fc2f92f4370f25351b719ca7deec024f"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxAffineCortexProbe.scala",
+      "sha256": "f1caabb510146d68b8f61b56ebb88506c3ff720b0e039dd9b5ab648062b25f53"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxNativePick.scala",
+      "sha256": "d292aa2380c60d24b6863e31dee6b4cd20bb8604e9c21ca3511d27317be0d307"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxRuntimeCapabilityProbe.scala",
+      "sha256": "5c61b0dbae467986af2e39ca91c536929f37939ad78c5c6ff7d2be39fb1a6cdd"
+    },
+    {
+      "path": "modules/surface-view-javafx/jvm/src/test/scala/scalafim/surface/view/javafx/JavaFxSurfaceProbeSuite.scala",
+      "sha256": "b32b2cbef6564542ee31a3ae99d49d49ad6941320c1e3a50c125cc9daee59901"
+    },
+    {
+      "path": "tools/surface-view/javafx-affine-color/README.md",
+      "sha256": "aa5a8d5dc69f6992dd8329a2d5048c8b24a95e219008215518dfe25a8fe2fbc1"
+    },
+    {
+      "path": "tools/surface-view/javafx-affine-color/check-oracle.py",
+      "sha256": "52d61e0d7b3fdc8cb081ebfc19f7d1d2050975cfa38c9b3ed79b487d97b9d4b9"
+    },
+    {
+      "path": "tools/surface-view/javafx-affine-color/oracle.py",
+      "sha256": "f24180a5365e8081464443c79e26f67fa8d2fd143314590b57bf21ee8d4549ed"
+    },
+    {
+      "path": "tools/surface-view/javafx-affine-color/plan.json",
+      "sha256": "66cf5d0e708914708c7a287bb87b30a27514897e85581ba7e72b339072b82a37"
+    },
+    {
+      "path": "tools/surface-view/javafx-affine-color/production-plan.json",
+      "sha256": "5fa5b64a9af6ac24907b502fcc34152df17a1a0aa4d35b3e76dc66fcf0b02e4f"
+    }
+  ],
+  "frozenClosure": {
+    "manifest": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/manifest.json",
+    "sha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+    "cleanAtFreeze": true,
+    "entries": [
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/surface-view-javafx/jvm/target/scala-3.7.4/test-classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/000-test-classes.jar",
+        "sha256": "3ff0069427a2d166130aa883edf1b66db86be443e10315fbe25cf5c9f91e3ad7",
+        "bytes": 622177
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/surface-view-javafx/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/001-classes.jar",
+        "sha256": "691f664c611c28e0303a0af1cd7e7332011831728940a7d88de9a02679b4c4df",
+        "bytes": 928699
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/surface-view/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/002-classes.jar",
+        "sha256": "e61cc1605eb34a149ec51ed4dd9ab414c0fff2f905017dd7c66ac3d23436b356",
+        "bytes": 3633293
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/surface/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/003-classes.jar",
+        "sha256": "d3e63228b982ad11bc61c75d7841acdaabcc38604f440354c40a2ccc6d9d6f20",
+        "bytes": 4458415
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/image/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/004-classes.jar",
+        "sha256": "fe4cbb76dfbd717335ab6ff1fe8f01a051eca3fa53fa49a90fae5a368f6b5c6b",
+        "bytes": 5074803
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/locus-data/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/005-classes.jar",
+        "sha256": "58c2312659b59085a253306d249df3bf23434899950321f28fac8b98c5c66e4e",
+        "bytes": 171461
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/006-classes.jar",
+        "sha256": "072a43d8b0ed9e39796d6bbe0fd8c15bd66e6d3ca9e21b1dddf609d85c1b28f9",
+        "bytes": 1023258
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/05a8f1a231c171f1bca0/locus4s/modules/locus4s-data/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/007-classes.jar",
+        "sha256": "87f22ab05a2e07058a12ed98cdad967d736972c3616c5d204f4a174a1f2f7a7a",
+        "bytes": 145053
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/5a3fe250684692aa42c1/gale/core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/008-classes.jar",
+        "sha256": "d5c4eb5be1f7abcdf6994acbd237347f9761ba80a24ed2b08e91031340d0a14d",
+        "bytes": 4255786
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/d79d1afec9bc45383768/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/009-classes.jar",
+        "sha256": "d7f24d457663061ee71f3e20dabbb2a099218284d266addadc09a99dd9f79486",
+        "bytes": 1582265
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/d79d1afec9bc45383768/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/010-classes.jar",
+        "sha256": "c9fe9db83948f994df64de19c5566fbb9a19f696a1b23d98ac2c767768ecd303",
+        "bytes": 769355
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/5a90f48e170e9e640ee1/gale/core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/011-classes.jar",
+        "sha256": "c5e93058fbb4ac3c5ef292ff1870526a3b644c4ddfb127562692efe9b8223a8f",
+        "bytes": 4191022
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/57a292f3a6ded9e259cf/ravel/modules/core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/012-classes.jar",
+        "sha256": "d889b2d471184ef959708513641fa087e85022bcdbac6ef66dd8629871f746bc",
+        "bytes": 3175828
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/57a292f3a6ded9e259cf/ravel/modules/packed/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/013-classes.jar",
+        "sha256": "6e54183bf97e99c2d12ce4766c7549e0d011cd7969aa28d36efdf6f719b217d5",
+        "bytes": 192503
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/d79d1afec9bc45383768/image4s/modules/image4s-locus/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/014-classes.jar",
+        "sha256": "85368eaf59d78adb26ba4862b47c24c7326fb6254306bc0e003f4068cf2fecc9",
+        "bytes": 864839
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/d79d1afec9bc45383768/image4s/modules/image4s-filter/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/015-classes.jar",
+        "sha256": "cdb7f9b0356bf6ccaf500f05f80c5e67e58dbe0762a09a8b030051c92b77194d",
+        "bytes": 305577
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/d79d1afec9bc45383768/image4s/modules/image4s-ops-core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/016-classes.jar",
+        "sha256": "f1017ba75a2eab702de0c3be66f9893c40cfeec9105d86408c6d4f12c40a7ed4",
+        "bytes": 371878
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/57a292f3a6ded9e259cf/ravel/modules/stencil/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/017-classes.jar",
+        "sha256": "1e627b86281755559694f0b487ff400d947ce557787354285cb1639ebda54e38",
+        "bytes": 195345
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/d79d1afec9bc45383768/image4s/modules/image4s-nifti/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/018-classes.jar",
+        "sha256": "b2df826875a46f29a355d718cc876f0a461b1255ee495f861da38b0433004b00",
+        "bytes": 1478608
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b3db316401092ccd708e/reframe4s/modules/reframe4s-lie/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/019-classes.jar",
+        "sha256": "9238d938e2831bcd7d618605af3c616c7f424789934f0bf83278e973e78f0cf0",
+        "bytes": 183123
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b3db316401092ccd708e/reframe4s/modules/reframe4s-core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/020-classes.jar",
+        "sha256": "965e8441daa185701f37ef558451843d12f83f935f20af0fc4daaaf3abc866f3",
+        "bytes": 773477
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/41e96dde036f148f012a/image4s/modules/image4s-geometry/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/021-classes.jar",
+        "sha256": "22296a47f31d5e931a5343bd37b055fed5f1bb4cd610af45638b2abd7795acbd",
+        "bytes": 769370
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b3db316401092ccd708e/reframe4s/modules/reframe4s-field/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/022-classes.jar",
+        "sha256": "e00f88df6457676eb17af0f8d7810ed8efee479e71aecd6cde8572dc57669fb3",
+        "bytes": 1103738
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b3db316401092ccd708e/reframe4s/modules/reframe4s-resample/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/023-classes.jar",
+        "sha256": "aca6cb3af2eb55fd54ba08e4856fc6cb35342398d073e046436ed1c321eec9a1",
+        "bytes": 497701
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/41e96dde036f148f012a/image4s/modules/image4s-core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/024-classes.jar",
+        "sha256": "53b7444080b865d6a47b1790a19884908549251ebb571bd9ed18e34116f662ff",
+        "bytes": 1571405
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/transform/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/025-classes.jar",
+        "sha256": "c7a8a94df9f5dbb6992a00543b4d290cc671ad5e3880d971d26a34db806f930d",
+        "bytes": 2286116
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b4b08747efd9a8151229/graph4s/algorithms/.jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/026-classes.jar",
+        "sha256": "1ea4ef182eddd33ffec0f28745fe2a358fd1afdb28223f3ec9694e172564d5a1",
+        "bytes": 205530
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b4b08747efd9a8151229/graph4s/core/.jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/027-classes.jar",
+        "sha256": "7fc80b7c9a034f6196ea1d872660af7384d7d9686edf29b47709774ba55c1223",
+        "bytes": 438667
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b4b08747efd9a8151229/graph4s/indexed/.jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/028-classes.jar",
+        "sha256": "be9e25419f992d30d731619e1e20e7ea0b38c4500bff4f85a23647927651d14f",
+        "bytes": 159392
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/b4b08747efd9a8151229/graph4s/data/.jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/029-classes.jar",
+        "sha256": "297010e0ff4780db0b0b93132a0abff4885013a08d2f93e11bbd6118acc3e4e3",
+        "bytes": 219640
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/34c0071f90095ef07887/zarr4s/core/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/030-classes.jar",
+        "sha256": "100b1701654584492227339eb1af5406d70a6f1cbf163a1e1c615862b3b260e2",
+        "bytes": 3707961
+      },
+      {
+        "source": "/Users/bbuchsbaum/.cache/scalafim-sbt/bases/7f1cb559f3aca899/staging/34fcacf7027b8ae3b2f8/intaglio/modules/core/jvm/target/scala-3.4.2/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/031-classes.jar",
+        "sha256": "33aa491655c5f886230aa30cbb23f74467a7bf78d1719e7958aeed5099230b19",
+        "bytes": 5500096
+      },
+      {
+        "source": "/private/tmp/scalafim-mote-queue-20261004/modules/surface-view-raster/jvm/target/scala-3.7.4/classes",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/032-classes.jar",
+        "sha256": "b8ba5acf0784a86fcbf01cc21315f55c9009c81e688d80b85139aea6aed862f7",
+        "bytes": 270944
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.7.4/scala3-library_3-3.7.4.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/033-scala3-library_3-3.7.4.jar",
+        "sha256": "73089d33f763b94758170e0a66be978f9397c14b7795e343898aa89b3d7b6639",
+        "bytes": 1277321
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit_3/1.2.1/munit_3-1.2.1.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/034-munit_3-1.2.1.jar",
+        "sha256": "19d09014eaf69ca8abd8d9e0c43be4c2e5d7c693bc1c6cf3a1c93697ad8bca50",
+        "bytes": 263577
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.16/scala-library-2.13.16.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/037-scala-library-2.13.16.jar",
+        "sha256": "1ebb2b6f9e4eb4022497c19b1e1e825019c08514f962aaac197145f88ed730f1",
+        "bytes": 5926340
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/junit-interface/1.2.1/junit-interface-1.2.1.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/038-junit-interface-1.2.1.jar",
+        "sha256": "66a48070e1fa9bda5aa7142ff8b6638c4a9555d1d760965241b7f4617ce758b9",
+        "bytes": 49858
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scalameta/munit-diff_3/1.2.1/munit-diff_3-1.2.1.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/039-munit-diff_3-1.2.1.jar",
+        "sha256": "10506a15c369f8b66f5347e6fc0ed284f801a07598d9a835b2c8bc6052c3deaf",
+        "bytes": 82505
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/040-junit-4.13.2.jar",
+        "sha256": "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
+        "bytes": 384581
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle_3/4.1.0/upickle_3-4.1.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/042-upickle_3-4.1.0.jar",
+        "sha256": "36d3566e73726a6922ae816cea6b924f42044e8e6637343a0095883d023d97f8",
+        "bytes": 106696
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/modules/scala-xml_3/2.4.0/scala-xml_3-2.4.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/043-scala-xml_3-2.4.0.jar",
+        "sha256": "b53971b771240b24161890e4083064ff23bc2f4800a013c9618bf46d2234177f",
+        "bytes": 748415
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-sbt/test-interface/1.0/test-interface-1.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/044-test-interface-1.0.jar",
+        "sha256": "15f70b38bb95f3002fec9aea54030f19bb4ecfbad64c67424b5e5fea09cd749e",
+        "bytes": 14755
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/045-hamcrest-core-1.3.jar",
+        "sha256": "66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9",
+        "bytes": 45024
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-core_3/2.13.0/cats-core_3-2.13.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/046-cats-core_3-2.13.0.jar",
+        "sha256": "e2abfcdfe041ce08d8407412b09d55eb33eb85655c22c9c8815712d3aad633c6",
+        "bytes": 7123338
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect_3/3.5.4/cats-effect_3-3.5.4.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/047-cats-effect_3-3.5.4.jar",
+        "sha256": "ac62797add23b03c9185f5742039246712aad2dda4c2b2d19d0564d23dab2c97",
+        "bytes": 759453
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire_3/0.18.0/spire_3-0.18.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/048-spire_3-0.18.0.jar",
+        "sha256": "755e6bca07ff0ddde6b2cbb984fe1178389a44887d5aaf610a1402e9fcfe99ac",
+        "bytes": 5303867
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/io/jhdf/jhdf/0.12.0/jhdf-0.12.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/049-jhdf-0.12.0.jar",
+        "sha256": "a0bf063be5d91ecce7bc941f0456edbeb7511f37705ee42b46bdcc71206de92c",
+        "bytes": 312796
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/ujson_3/4.1.0/ujson_3-4.1.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/050-ujson_3-4.1.0.jar",
+        "sha256": "6a6fc2c9c8643cedb0ebd02e957b4c50dc09d1aef6573ca1e15a8a424c4fa535",
+        "bytes": 265322
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upack_3/4.1.0/upack_3-4.1.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/051-upack_3-4.1.0.jar",
+        "sha256": "94901d8f63d6c80b332bbf78248a1fbc08c4ca293598d093716e1eaa4e181c42",
+        "bytes": 141817
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle-implicits_3/4.1.0/upickle-implicits_3-4.1.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/052-upickle-implicits_3-4.1.0.jar",
+        "sha256": "faff41c45f65807ba0e285d96cc342680a1f47857ee83770c852c9b9a60c34a4",
+        "bytes": 332331
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-kernel_3/2.13.0/cats-kernel_3-2.13.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/053-cats-kernel_3-2.13.0.jar",
+        "sha256": "a6afaad274e2a0fbbd189bfe3a0e91810bd562745573995011943427ea489040",
+        "bytes": 1592447
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-kernel_3/3.5.4/cats-effect-kernel_3-3.5.4.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/054-cats-effect-kernel_3-3.5.4.jar",
+        "sha256": "03375636fdd1086417531e0305b4b7fba3e2f62bd7b241587df05b5cb95aa5c7",
+        "bytes": 1283984
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-effect-std_3/3.5.4/cats-effect-std_3-3.5.4.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/055-cats-effect-std_3-3.5.4.jar",
+        "sha256": "748eb2ef8d015c75e96842280c2c648782a5b0fec7cc4a4b3a80a2f26f6a2baa",
+        "bytes": 688710
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-macros_3/0.18.0/spire-macros_3-0.18.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/056-spire-macros_3-0.18.0.jar",
+        "sha256": "65f223a3ccba177f96c999f0287527b18557eb14f92b7bda88d162c5d0696db8",
+        "bytes": 25936
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-platform_3/0.18.0/spire-platform_3-0.18.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/057-spire-platform_3-0.18.0.jar",
+        "sha256": "8b1dd10891b95e0e2cf2e375972fe0ee0fd231c31b150e352a6940d2bec89652",
+        "bytes": 2289
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/spire-util_3/0.18.0/spire-util_3-0.18.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/058-spire-util_3-0.18.0.jar",
+        "sha256": "de87255aa776a57ac105561e24673bde83a3d9980048582ab763be4e682ca42d",
+        "bytes": 19196
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/algebra_3/2.13.0/algebra_3-2.13.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/059-algebra_3-2.13.0.jar",
+        "sha256": "c2751d6b6b02650e56065b6b5affc116de186f9c8e47519d5bc58728991fce41",
+        "bytes": 859746
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/slf4j/slf4j-api/2.0.18/slf4j-api-2.0.18.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/060-slf4j-api-2.0.18.jar",
+        "sha256": "44508fd1576500688c790b190acdd16fec4f8c79a3e0b900afd70503cf055f55",
+        "bytes": 69982
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/apache/commons/commons-lang3/3.20.0/commons-lang3-3.20.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/061-commons-lang3-3.20.0.jar",
+        "sha256": "69e5c9fa35da7a51a5fd2099dfe56a2d8d32cf233e2f6d770e796146440263f4",
+        "bytes": 713862
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/ning/compress-lzf/1.2.0/compress-lzf-1.2.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/062-compress-lzf-1.2.0.jar",
+        "sha256": "b1db4258e6f017092e567b925a087281f49c392734fb369d7008d86acb0bc104",
+        "bytes": 85617
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/at/yawk/lz4/lz4-java/1.11.0/lz4-java-1.11.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/063-lz4-java-1.11.0.jar",
+        "sha256": "535c5578cab5dcd0a438e202df80091632b873c0370c25d9b1c1ad1d73577207",
+        "bytes": 896932
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/typelevel/cats-collections-core_3/0.9.10/cats-collections-core_3-0.9.10.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/064-cats-collections-core_3-0.9.10.jar",
+        "sha256": "9db07413c4f133f1a0deb80582a515b4a94bfb4bc1c3f7026b15518b5dd2deed",
+        "bytes": 639295
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/upickle-core_3/4.1.0/upickle-core_3-4.1.0.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/065-upickle-core_3-4.1.0.jar",
+        "sha256": "3d4dbd23edca088a83d722998472c1c5c27678bd01f13572c36627d7061cf596",
+        "bytes": 353146
+      },
+      {
+        "source": "/Users/bbuchsbaum/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/com/lihaoyi/geny_3/1.1.1/geny_3-1.1.1.jar",
+        "frozen": "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/066-geny_3-1.1.1.jar",
+        "sha256": "39658649f90b631a4fd63187724f16ba8a045e1b10a513528f34517fb2edf98b",
+        "bytes": 102389
+      }
+    ]
+  },
+  "runtime": {
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t14.3\nBuildVersion:\t\t23D56\n",
+    "architecture": "arm64",
+    "javaPath": "/opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java",
+    "javaVersion": "openjdk version \"25.0.1\" 2025-10-21\nOpenJDK Runtime Environment Homebrew (build 25.0.1)\nOpenJDK 64-Bit Server VM Homebrew (build 25.0.1, mixed mode, sharing)\n",
+    "javaExecutableSha256": "41834ef793e9f21c3f4dd1b45debf708cfabd46a7cff370f82723c6dfd2f71a3",
+    "moduleManifestSha256": "c251c9b11732683a78bde4fc413ac492a9a80fe215ea163ffced58ba1fa3c318",
+    "actualPrismPipeline": "com.sun.prism.es2.ES2Pipeline",
+    "graphicsRenderer": "Apple M3 Max",
+    "driverReportedVersion": "2.1 Metal - 88",
+    "qualification": "macOS ES2; driver version string is not Prism Metal admission"
+  },
+  "runtimeModules": {
+    "javafx-24.0.1-atlas-compat.jar": "70e8937e74c16262327848ccf868409341049385fc3911f06b03dc5e550f84e1",
+    "javafx-base-24.0.1-mac-aarch64.jar": "0ea913712b982e24be7fb20d1a90b45dafc38403f49dd9d494d1d0d3b43e8794",
+    "javafx-graphics-24.0.1-mac-aarch64.jar": "90b9c1c89ebd0d79a8af6951517516828cd08896def96871af015cf0a09cdf53"
+  },
+  "protocols": {
+    "plan.json": "66cf5d0e708914708c7a287bb87b30a27514897e85581ba7e72b339072b82a37",
+    "production-plan.json": "5fa5b64a9af6ac24907b502fcc34152df17a1a0aa4d35b3e76dc66fcf0b02e4f",
+    "oracle.py": "f24180a5365e8081464443c79e26f67fa8d2fd143314590b57bf21ee8d4549ed",
+    "check-oracle.py": "52d61e0d7b3fdc8cb081ebfc19f7d1d2050975cfa38c9b3ed79b487d97b9d4b9"
+  },
+  "gates": [
+    {
+      "log": "/private/tmp/scalafim-mote-queue-evidence/javafx-affine-shared-gates-v1.log",
+      "sha256": "ca58fa4735768a8c4a45df90b6e5a115fea0cd167fc2903f4f4095438f450ee4",
+      "bytes": 13589,
+      "exitCode": 0,
+      "durationSeconds": 88.536783,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceViewJVM/test",
+        "surfaceViewJS/test"
+      ],
+      "passedLines": [
+        "[info] Passed: Total 68, Failed 0, Errors 0, Passed 68",
+        "[info] Passed: Total 68, Failed 0, Errors 0, Passed 68"
+      ],
+      "environmentFailure": null
+    },
+    {
+      "log": "/private/tmp/scalafim-mote-queue-evidence/javafx-recovery-conformance-f3a929af.log",
+      "sha256": "998e3f55b1a433f0d6ffd5433c91b1275c065e2397171813535063708c8fafbf",
+      "bytes": 44882,
+      "exitCode": 1,
+      "durationSeconds": 121.094527,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceViewConformance",
+        "scalafimCompileAll"
+      ],
+      "passedLines": [
+        "[info] Passed: Total 280, Failed 0, Errors 0, Passed 280"
+      ],
+      "environmentFailure": "SurfaceJS test compiler Java heap space; JVM280 passed first; separate4GB retry passed"
+    },
+    {
+      "log": "/private/tmp/scalafim-mote-queue-evidence/javafx-conformance-batch1-7565f479.log",
+      "sha256": "973a73dd8d55d3989ed6458d06d2e7359f9ea850af9c5a01fda34bae124463f4",
+      "bytes": 24805,
+      "exitCode": 0,
+      "durationSeconds": 48.457018,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceJS/test"
+      ],
+      "passedLines": [
+        "[info] Passed: Total 225, Failed 0, Errors 0, Passed 223, Skipped 2"
+      ],
+      "environmentFailure": null
+    },
+    {
+      "log": "/private/tmp/scalafim-mote-queue-evidence/javafx-conformance-batch2.log",
+      "sha256": "3ae7ff022599df3835d2bf8ca6fa7cbbe4545834e171ab500ac00e44b6da8043",
+      "bytes": 5084,
+      "exitCode": 0,
+      "durationSeconds": 18.838022,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceViewRasterJVM/test",
+        "surfaceViewRasterJS/test",
+        "surfaceViewThreeJS/test"
+      ],
+      "passedLines": [
+        "[info] Passed: Total 13, Failed 0, Errors 0, Passed 13",
+        "[info] Passed: Total 13, Failed 0, Errors 0, Passed 13",
+        "[info] Passed: Total 18, Failed 0, Errors 0, Passed 18"
+      ],
+      "environmentFailure": null
+    },
+    {
+      "log": "/private/tmp/scalafim-mote-queue-evidence/javafx-final-conformance-compile-3bb30729.log",
+      "sha256": "c7dde12376e898bb4f8a9099d332bd0725c7da0dfa91b70420eb7727bd9dea27",
+      "bytes": 4818,
+      "exitCode": 0,
+      "durationSeconds": 181.705395,
+      "command": [
+        "python3",
+        "tools/build/sbt-warm",
+        "surfaceViewJavafxJVM/test",
+        "surfaceViewConnectivityJVM/test",
+        "surfaceViewConnectivityJS/test",
+        "scalafimCompileAll"
+      ],
+      "passedLines": [
+        "[info] Passed: Total 35, Failed 0, Errors 0, Passed 35",
+        "[info] Passed: Total 2, Failed 0, Errors 0, Passed 2",
+        "[info] Passed: Total 2, Failed 0, Errors 0, Passed 2"
+      ],
+      "environmentFailure": null
+    }
+  ],
+  "unchangedConformanceSourcesSinceF3": true,
+  "planar": [
+    {
+      "folder": "javafx-color-256-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-256-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 1.2222222222222143,
+      "maxNonAaCenterError": 1.4513888888889,
+      "failedFamilies": [],
+      "nativeLogSha256": "66fbba0d173a4d7b866abf953a1d7e6d6f82156054507cf5ee08ba8e555f7009",
+      "oracleLogSha256": "edfd1dfc55f7313757109c51bcf3409b4275f618663b62e25124da3779fce06c",
+      "reportSha256": "8aafd19a0b6eb2e0e680476e70ad966fe3f40994512a2984751ba47839cb6139"
+    },
+    {
+      "folder": "javafx-color-256-midpoint-3bb30729",
+      "nativeTag": "javafx-native-color-256-midpoint-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 1.2222222222222143,
+      "maxNonAaCenterError": 1.4513888888889,
+      "failedFamilies": [],
+      "nativeLogSha256": "488a6d373d39aad4bdbede635e9096fd8872d3cb6eef971739130d419d5a9d4b",
+      "oracleLogSha256": "1486ae41714906d38a742ad3ceb560e8dc1c1793a1fe7830ca429f2e7ac02115",
+      "reportSha256": "1fe29d549aba7f4634ee9c71cf7530d83b153f36f0a68b60edcc17dc398d68a6"
+    },
+    {
+      "folder": "javafx-color-4092-default-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-4092-default-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 0.9138414912805786,
+      "maxNonAaCenterError": 1.263882024069403,
+      "failedFamilies": [],
+      "nativeLogSha256": "96c0a3c412567499637aae03d8111324dc264e3a98e527522456a9d21ce261df",
+      "oracleLogSha256": "d56d08abe43bc10139c657cc4162f48b53c1653cffa410a1dcbf879793c9e845",
+      "reportSha256": "2f8be91f9e8a94a42592795be11dd7fc1ded92f87646129dd3cd465ab297c7ba"
+    },
+    {
+      "folder": "javafx-color-4092-soft-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-4092-soft-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 0.6819451223436772,
+      "maxNonAaCenterError": 0.930393979762627,
+      "failedFamilies": [],
+      "nativeLogSha256": "d35c947611e4cdcd3e0624d3c680c50e9b85d8382e1e86fadd299b000aa73767",
+      "oracleLogSha256": "61ca81258f442b5d6b7bb409bc63eca9f08751d606312ebdeceddcc4259c4474",
+      "reportSha256": "9aa890d9ab81683698a2c8eb189aea27df88828587430079900d5eec4fac137a"
+    },
+    {
+      "folder": "javafx-color-4092-unlit-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-4092-unlit-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 1.2222222222222143,
+      "maxNonAaCenterError": 1.4513888888889,
+      "failedFamilies": [],
+      "nativeLogSha256": "9e037f61bd56307a8e73699eedd71f0a8a4e03d05cd9998eee09d20af97b09ad",
+      "oracleLogSha256": "f36d9752e350224637f7128cb31ea045fc43c7060f82006088ab4158ed1b4eef",
+      "reportSha256": "0dc7964a026899b5f5d441e8c0e041b9074fb3493d17c6254d9c8624e7408d6d"
+    },
+    {
+      "folder": "javafx-color-4096-default-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-4096-default-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 0.9138414912805786,
+      "maxNonAaCenterError": 1.263882024069403,
+      "failedFamilies": [],
+      "nativeLogSha256": "c528138c68ed0a2469c2622f40972556ba41c96126d07cefe69af29ea74b222e",
+      "oracleLogSha256": "a33b0985ee3458bf5ecb096bc6098feb80413e05c75d6f4ee001b0ce209ce199",
+      "reportSha256": "b5b608c7b28707410f718d1ec50218dd191f843bf5c28020825c17b301c1a821"
+    },
+    {
+      "folder": "javafx-color-4096-legacy-3bb30729",
+      "nativeTag": "javafx-native-color-4096-legacy-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 1,
+      "passed": false,
+      "passedCases": 24,
+      "totalCases": 48,
+      "permutationFailures": 8,
+      "maxFootprintExcess": 20.426838720114528,
+      "maxNonAaCenterError": 21.482832854827688,
+      "failedFamilies": [
+        "diagonal",
+        "rgb"
+      ],
+      "nativeLogSha256": "d3025e8aca5067dba5ad36cfd4440368e18e5ec77f7c6e4d1aada192d0dbc61d",
+      "oracleLogSha256": "a6b8785189be101460ccf14d131f51d25d66f95bc8745383027cd834401b7c45",
+      "reportSha256": "2165de2160a76251c86ed30c2deada112a1d2c6222253fef7b48c46706af6402"
+    },
+    {
+      "folder": "javafx-color-4096-soft-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-4096-soft-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 0.6819451223436772,
+      "maxNonAaCenterError": 0.930393979762627,
+      "failedFamilies": [],
+      "nativeLogSha256": "ae394e9b050834a66581dc9f9c8df05cfa7314cfdbed05468f40dfd1d5209b81",
+      "oracleLogSha256": "51d180901dd720ecf178c804f08a246c098f6ab6c16a33f0fb1f49d2445fb4e2",
+      "reportSha256": "aac2d6cef914799ec16fc2e2ffee4ca705f0520e25e03abef2355472cb21287e"
+    },
+    {
+      "folder": "javafx-color-4096-stock-3bb30729",
+      "nativeTag": "javafx-native-color-4096-stock-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 1,
+      "passed": false,
+      "passedCases": 39,
+      "totalCases": 48,
+      "permutationFailures": 9,
+      "maxFootprintExcess": 24.08876878224048,
+      "maxNonAaCenterError": 18.936867139824415,
+      "failedFamilies": [
+        "ramp128",
+        "ramp32"
+      ],
+      "nativeLogSha256": "3636cacbf64ec0807232411c8b31603cf56428195022d421d6fe4b4c6f2be15f",
+      "oracleLogSha256": "7d00d920dbbca48468cb6b07d3c23709323c364a4b7b6ebf3d8137bacd938b18",
+      "reportSha256": "c897e489bc33e25f2ee4939bfebfa6954da51bd4df4e5669c231e3d6caabb05a"
+    },
+    {
+      "folder": "javafx-color-4096-unlit-adaptive-3bb30729",
+      "nativeTag": "javafx-native-color-4096-unlit-adaptive-3bb30729",
+      "nativeExitCode": 0,
+      "oracleExitCode": 0,
+      "passed": true,
+      "passedCases": 48,
+      "totalCases": 48,
+      "permutationFailures": 0,
+      "maxFootprintExcess": 1.2222222222222143,
+      "maxNonAaCenterError": 1.4513888888889,
+      "failedFamilies": [],
+      "nativeLogSha256": "c8715518e5933f5070a2a9d6371ec2e4b080fbdd8716d224037465ef8a7bf8b1",
+      "oracleLogSha256": "2b75a8e2d92d6ded260e702a4b875beadd10d4bd52831be4ae1a8b315c95f999",
+      "reportSha256": "e673f05160670b410a307d246df8a10d7dec91d5855ccd2a2bd173d122beeac3"
+    }
+  ],
+  "cortex": [
+    {
+      "scene": "beta",
+      "lighting": "Default",
+      "vertices": 274513,
+      "sourceFaces": 549018,
+      "beforePicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.2411754643524304e-06
+      },
+      "afterPicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.2411754643524304e-06
+      },
+      "folder": "javafx-cortex-beta-default-3bb30729-6g",
+      "updates": 32,
+      "exitCode": 0,
+      "logSha256": "993292fa3f87f771ee2ae73b98ea3da943ef6db347036cd45c5100b44bc4831b",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+      "receiptSha256": "c57e6e662575f8bc7750304ba961dfa977cfd2ba99a8a513c4a6c954c0f74d8a",
+      "timings": {
+        "palette": {
+          "medianRenderMs": 41.8345415,
+          "medianSnapshotMs": 648.9608955,
+          "maxFxRenderAllocatedBytes": 103983536,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39704532,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "cutoff": {
+          "medianRenderMs": 43.084312,
+          "medianSnapshotMs": 511.76004150000006,
+          "maxFxRenderAllocatedBytes": 103604488,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39704532,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "opacity": {
+          "medianRenderMs": 37.7129375,
+          "medianSnapshotMs": 392.9372915,
+          "maxFxRenderAllocatedBytes": 103604488,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39704532,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "map": {
+          "medianRenderMs": 39.5703545,
+          "medianSnapshotMs": 393.144625,
+          "maxFxRenderAllocatedBytes": 103633760,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "morph": {
+          "medianRenderMs": 57.212271,
+          "medianSnapshotMs": 237.69491700000003,
+          "maxFxRenderAllocatedBytes": 59731680,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39704532,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 6638352
+        },
+        "lighting": {
+          "medianRenderMs": 40.530562,
+          "medianSnapshotMs": 460.2746875,
+          "maxFxRenderAllocatedBytes": 104582424,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "camera": {
+          "medianRenderMs": 0.219563,
+          "medianSnapshotMs": 6.8594375,
+          "maxFxRenderAllocatedBytes": 4544,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39704532,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "background": {
+          "medianRenderMs": 0.087916,
+          "medianSnapshotMs": 5.8239795,
+          "maxFxRenderAllocatedBytes": 2920,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39704532,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        }
+      }
+    },
+    {
+      "scene": "beta",
+      "lighting": "Soft",
+      "vertices": 274513,
+      "sourceFaces": 549018,
+      "beforePicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.2411754643524304e-06
+      },
+      "afterPicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.2411754643524304e-06
+      },
+      "folder": "javafx-cortex-beta-soft-3bb30729-6g",
+      "updates": 32,
+      "exitCode": 0,
+      "logSha256": "ab330989802816d3b52bf61db6e4108e8a5dea726ab1ebeb36883db6d18d3fbd",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+      "receiptSha256": "38235102b18751dba808f684f4212cb7d032386bf94f5162f50180d889fd46ea",
+      "timings": {
+        "palette": {
+          "medianRenderMs": 64.52525,
+          "medianSnapshotMs": 478.211229,
+          "maxFxRenderAllocatedBytes": 104051568,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39752916,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "cutoff": {
+          "medianRenderMs": 58.3308955,
+          "medianSnapshotMs": 504.593833,
+          "maxFxRenderAllocatedBytes": 103701224,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39752916,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "opacity": {
+          "medianRenderMs": 39.996978999999996,
+          "medianSnapshotMs": 423.2655205,
+          "maxFxRenderAllocatedBytes": 103701216,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39752916,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "map": {
+          "medianRenderMs": 41.965728999999996,
+          "medianSnapshotMs": 433.3316665,
+          "maxFxRenderAllocatedBytes": 103731432,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "morph": {
+          "medianRenderMs": 55.481353999999996,
+          "medianSnapshotMs": 212.64489600000002,
+          "maxFxRenderAllocatedBytes": 59759328,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39752916,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 6652176
+        },
+        "lighting": {
+          "medianRenderMs": 38.4523125,
+          "medianSnapshotMs": 437.357271,
+          "maxFxRenderAllocatedBytes": 104582392,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "camera": {
+          "medianRenderMs": 0.17631249999999998,
+          "medianSnapshotMs": 4.689209,
+          "maxFxRenderAllocatedBytes": 4544,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39752916,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "background": {
+          "medianRenderMs": 0.089875,
+          "medianSnapshotMs": 4.791458,
+          "maxFxRenderAllocatedBytes": 2920,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39752916,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        }
+      }
+    },
+    {
+      "scene": "fir",
+      "lighting": "Default",
+      "vertices": 274513,
+      "sourceFaces": 549018,
+      "beforePicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.5888200411449134e-08
+      },
+      "afterPicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.5888200411449134e-08
+      },
+      "folder": "javafx-cortex-fir-default-3bb30729-6g",
+      "updates": 32,
+      "exitCode": 0,
+      "logSha256": "99fa47aed6c18b5d95c58e7f42c7cb948814c43fe19a304dd2899e73fdf2e2e9",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+      "receiptSha256": "5511fc1bc56ea5f1f25b1fdfabd23013a9fc954463463d82850bb749e6473039",
+      "timings": {
+        "palette": {
+          "medianRenderMs": 48.119395499999996,
+          "medianSnapshotMs": 632.6330625,
+          "maxFxRenderAllocatedBytes": 104021920,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "cutoff": {
+          "medianRenderMs": 44.231562499999995,
+          "medianSnapshotMs": 509.739104,
+          "maxFxRenderAllocatedBytes": 103633768,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "opacity": {
+          "medianRenderMs": 40.306833,
+          "medianSnapshotMs": 446.17481250000003,
+          "maxFxRenderAllocatedBytes": 103633768,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "map": {
+          "medianRenderMs": 40.101271,
+          "medianSnapshotMs": 507.43977099999995,
+          "maxFxRenderAllocatedBytes": 103633768,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "morph": {
+          "medianRenderMs": 53.740542000000005,
+          "medianSnapshotMs": 242.8165415,
+          "maxFxRenderAllocatedBytes": 59740096,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 6642528
+        },
+        "lighting": {
+          "medianRenderMs": 37.6122285,
+          "medianSnapshotMs": 419.343521,
+          "maxFxRenderAllocatedBytes": 104660128,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "camera": {
+          "medianRenderMs": 0.16781249999999998,
+          "medianSnapshotMs": 6.220333,
+          "maxFxRenderAllocatedBytes": 4624,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "background": {
+          "medianRenderMs": 0.090229,
+          "medianSnapshotMs": 4.7050625,
+          "maxFxRenderAllocatedBytes": 3000,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39719148,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        }
+      }
+    },
+    {
+      "scene": "fir",
+      "lighting": "Soft",
+      "vertices": 274513,
+      "sourceFaces": 549018,
+      "beforePicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 7.993911228597328e-06
+      },
+      "afterPicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 7.993911228597328e-06
+      },
+      "folder": "javafx-cortex-fir-soft-3bb30729-6g",
+      "updates": 32,
+      "exitCode": 0,
+      "logSha256": "bd51babf22868677de2e0b03b602bd1c3af22f6072e48d9edc98d2cb0188d19d",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+      "receiptSha256": "05c012538bbca8851a208f68667daffb64543db9670da543703f5a6bc0283c25",
+      "timings": {
+        "palette": {
+          "medianRenderMs": 45.386187500000005,
+          "medianSnapshotMs": 494.3481455,
+          "maxFxRenderAllocatedBytes": 104078848,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "cutoff": {
+          "medianRenderMs": 37.808082999999996,
+          "medianSnapshotMs": 414.131604,
+          "maxFxRenderAllocatedBytes": 103731568,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "opacity": {
+          "medianRenderMs": 37.328500500000004,
+          "medianSnapshotMs": 404.018709,
+          "maxFxRenderAllocatedBytes": 103731680,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "map": {
+          "medianRenderMs": 54.7384995,
+          "medianSnapshotMs": 386.233875,
+          "maxFxRenderAllocatedBytes": 103731576,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "morph": {
+          "medianRenderMs": 57.21325,
+          "medianSnapshotMs": 228.236375,
+          "maxFxRenderAllocatedBytes": 59768048,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 6656496
+        },
+        "lighting": {
+          "medianRenderMs": 37.394771000000006,
+          "medianSnapshotMs": 415.5760205,
+          "maxFxRenderAllocatedBytes": 104660120,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "camera": {
+          "medianRenderMs": 0.208542,
+          "medianSnapshotMs": 6.045979,
+          "maxFxRenderAllocatedBytes": 4624,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "background": {
+          "medianRenderMs": 0.08687500000000001,
+          "medianSnapshotMs": 4.9294585,
+          "maxFxRenderAllocatedBytes": 3000,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 39768036,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        }
+      }
+    },
+    {
+      "scene": "fir",
+      "lighting": "Unlit",
+      "vertices": 274513,
+      "sourceFaces": 549018,
+      "beforePicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 7.993911228597328e-06
+      },
+      "afterPicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 7.993911228597328e-06
+      },
+      "folder": "javafx-cortex-fir-unlit-3bb30729-6g",
+      "updates": 32,
+      "exitCode": 0,
+      "logSha256": "3edba50c36f32fe8cc657e9a51592c9f6884ed0131e7131d71a0210bdce8c47c",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+      "receiptSha256": "65877b5d94f08a83d1c6f10a19456ec471bddee37ea1d213ad9ec6434ed31410",
+      "timings": {
+        "palette": {
+          "medianRenderMs": 41.795125,
+          "medianSnapshotMs": 8.879146,
+          "maxFxRenderAllocatedBytes": 43607240,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "cutoff": {
+          "medianRenderMs": 37.648896,
+          "medianSnapshotMs": 492.832396,
+          "maxFxRenderAllocatedBytes": 104659952,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "opacity": {
+          "medianRenderMs": 39.897375,
+          "medianSnapshotMs": 520.314375,
+          "maxFxRenderAllocatedBytes": 104691208,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "map": {
+          "medianRenderMs": 41.647853999999995,
+          "medianSnapshotMs": 453.03087500000004,
+          "maxFxRenderAllocatedBytes": 104659944,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "morph": {
+          "medianRenderMs": 52.554146,
+          "medianSnapshotMs": 216.091625,
+          "maxFxRenderAllocatedBytes": 59861080,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 6789120
+        },
+        "lighting": {
+          "medianRenderMs": 38.3177705,
+          "medianSnapshotMs": 450.983021,
+          "maxFxRenderAllocatedBytes": 104659904,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "camera": {
+          "medianRenderMs": 0.194479,
+          "medianSnapshotMs": 5.9025625,
+          "maxFxRenderAllocatedBytes": 4624,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "background": {
+          "medianRenderMs": 0.097937,
+          "medianSnapshotMs": 5.654999999999999,
+          "maxFxRenderAllocatedBytes": 3000,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        }
+      }
+    },
+    {
+      "scene": "beta",
+      "lighting": "Unlit",
+      "vertices": 274513,
+      "sourceFaces": 549018,
+      "beforePicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.2411754643524304e-06
+      },
+      "afterPicks": {
+        "sampled": 1200,
+        "agreed": 1200,
+        "missing": 0,
+        "selectionReadouts": 8,
+        "maximumBarycentricError": 3.2411754643524304e-06
+      },
+      "folder": "javafx-cortex-beta-unlit-visible-morph-6g",
+      "updates": 32,
+      "exitCode": 0,
+      "logSha256": "ecbddac92d19d1abd173472cc8c179deed994bdc193ef7f83db52a21143024fe",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d",
+      "receiptSha256": "f6ae7a19f0dc7dd81df9278c76df8365f03fe49912312139e9fc12c4c7d14c2a",
+      "timings": {
+        "palette": {
+          "medianRenderMs": 55.715729499999995,
+          "medianSnapshotMs": 11.193583499999999,
+          "maxFxRenderAllocatedBytes": 43596072,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "cutoff": {
+          "medianRenderMs": 44.5857915,
+          "medianSnapshotMs": 533.5559375,
+          "maxFxRenderAllocatedBytes": 104582376,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "opacity": {
+          "medianRenderMs": 51.5390205,
+          "medianSnapshotMs": 598.1188125,
+          "maxFxRenderAllocatedBytes": 104613520,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "map": {
+          "medianRenderMs": 50.3341665,
+          "medianSnapshotMs": 574.1157499999999,
+          "maxFxRenderAllocatedBytes": 104659944,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40232220,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "morph": {
+          "medianRenderMs": 60.385479,
+          "medianSnapshotMs": 214.21197899999999,
+          "maxFxRenderAllocatedBytes": 59838824,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 6778032
+        },
+        "lighting": {
+          "medianRenderMs": 44.7773125,
+          "medianSnapshotMs": 446.24460350000004,
+          "maxFxRenderAllocatedBytes": 104582312,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "camera": {
+          "medianRenderMs": 0.1929165,
+          "medianSnapshotMs": 7.1810835,
+          "maxFxRenderAllocatedBytes": 4544,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        },
+        "background": {
+          "medianRenderMs": 0.11979200000000001,
+          "medianSnapshotMs": 7.5026665,
+          "maxFxRenderAllocatedBytes": 2920,
+          "maxRetainedAtlasBytes": 35258368,
+          "maxRetainedMeshBytes": 40193412,
+          "maxUvBytesUpdated": 0,
+          "maxGeometryBytesUpdated": 0
+        }
+      }
+    }
+  ],
+  "syntheticNative": [
+    {
+      "argv": [
+        "/opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java",
+        "-Xmx2g",
+        "--module-path",
+        "/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-base-24.0.1-mac-aarch64.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-graphics-24.0.1-mac-aarch64.jar",
+        "--add-modules",
+        "javafx.graphics",
+        "--enable-native-access=javafx.graphics",
+        "--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED",
+        "-Dprism.order=es2",
+        "-Dprism.noFallback=true",
+        "-Dprism.verbose=true",
+        "--patch-module",
+        "javafx.graphics=/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-24.0.1-atlas-compat.jar",
+        "-Dprobe.expectedOrigin=file:/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-24.0.1-atlas-compat.jar",
+        "-cp",
+        "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/000-test-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/001-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/002-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/003-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/004-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/005-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/006-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/007-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/008-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/009-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/010-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/011-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/012-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/013-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/014-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/015-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/016-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/017-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/018-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/019-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/020-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/021-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/022-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/023-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/024-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/025-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/026-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/027-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/028-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/029-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/030-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/031-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/032-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/033-scala3-library_3-3.7.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/034-munit_3-1.2.1.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/037-scala-library-2.13.16.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/038-junit-interface-1.2.1.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/039-munit-diff_3-1.2.1.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/040-junit-4.13.2.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/042-upickle_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/043-scala-xml_3-2.4.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/044-test-interface-1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/045-hamcrest-core-1.3.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/046-cats-core_3-2.13.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/047-cats-effect_3-3.5.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/048-spire_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/049-jhdf-0.12.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/050-ujson_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/051-upack_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/052-upickle-implicits_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/053-cats-kernel_3-2.13.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/054-cats-effect-kernel_3-3.5.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/055-cats-effect-std_3-3.5.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/056-spire-macros_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/057-spire-platform_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/058-spire-util_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/059-algebra_3-2.13.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/060-slf4j-api-2.0.18.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/061-commons-lang3-3.20.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/062-compress-lzf-1.2.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/063-lz4-java-1.11.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/064-cats-collections-core_3-0.9.10.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/065-upickle-core_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/066-geny_3-1.1.1.jar",
+        "scalafim.surface.view.javafx.JavaFxAdaptiveAtlasProbe"
+      ],
+      "started": "2026-10-05T02:50:01.254435+00:00",
+      "durationSeconds": 0.9367275000549853,
+      "exitCode": 0,
+      "observedEs2": true,
+      "logBytes": 1865,
+      "logSha256": "92f4fe15d9ce0b1be4ac6e7ac298e1def58599be1dc34875a4202c3b25d8d5e0",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d"
+    },
+    {
+      "argv": [
+        "/opt/homebrew/Cellar/openjdk/25.0.1/libexec/openjdk.jdk/Contents/Home/bin/java",
+        "-Xmx2g",
+        "--module-path",
+        "/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-base-24.0.1-mac-aarch64.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-graphics-24.0.1-mac-aarch64.jar",
+        "--add-modules",
+        "javafx.graphics",
+        "--enable-native-access=javafx.graphics",
+        "--add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED",
+        "-Dprism.order=es2",
+        "-Dprism.noFallback=true",
+        "-Dprism.verbose=true",
+        "--patch-module",
+        "javafx.graphics=/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-24.0.1-atlas-compat.jar",
+        "-Dprobe.expectedOrigin=file:/private/tmp/scalafim-mote-queue-evidence/javafx-runtime/javafx-24.0.1-atlas-compat.jar",
+        "-cp",
+        "/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/000-test-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/001-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/002-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/003-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/004-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/005-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/006-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/007-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/008-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/009-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/010-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/011-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/012-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/013-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/014-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/015-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/016-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/017-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/018-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/019-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/020-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/021-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/022-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/023-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/024-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/025-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/026-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/027-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/028-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/029-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/030-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/031-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/032-classes.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/033-scala3-library_3-3.7.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/034-munit_3-1.2.1.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/037-scala-library-2.13.16.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/038-junit-interface-1.2.1.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/039-munit-diff_3-1.2.1.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/040-junit-4.13.2.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/042-upickle_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/043-scala-xml_3-2.4.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/044-test-interface-1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/045-hamcrest-core-1.3.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/046-cats-core_3-2.13.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/047-cats-effect_3-3.5.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/048-spire_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/049-jhdf-0.12.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/050-ujson_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/051-upack_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/052-upickle-implicits_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/053-cats-kernel_3-2.13.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/054-cats-effect-kernel_3-3.5.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/055-cats-effect-std_3-3.5.4.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/056-spire-macros_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/057-spire-platform_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/058-spire-util_3-0.18.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/059-algebra_3-2.13.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/060-slf4j-api-2.0.18.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/061-commons-lang3-3.20.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/062-compress-lzf-1.2.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/063-lz4-java-1.11.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/064-cats-collections-core_3-0.9.10.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/065-upickle-core_3-4.1.0.jar:/private/tmp/scalafim-mote-queue-evidence/javafx-closure-visible-morph/066-geny_3-1.1.1.jar",
+        "scalafim.surface.view.javafx.JavaFxAffineAtlasProbe"
+      ],
+      "started": "2026-10-05T02:50:02.239854+00:00",
+      "durationSeconds": 0.8381782909855247,
+      "exitCode": 0,
+      "observedEs2": true,
+      "logBytes": 1710,
+      "logSha256": "7a97eda8d10516ed766406046cf937bb5af6e1d275451b0378ededddf3058076",
+      "closureManifestSha256": "9ebd428192d046c51e603776b06b84028ba600e22b10c20d42a4b485fd4d3d3d"
+    }
+  ],
+  "rejectedDense2Gb": {
+    "log": "/private/tmp/scalafim-mote-queue-evidence/javafx-cortex-beta-unlit-mounted-v2.log",
+    "sha256": "58f51ee79c0b3b49ac9e1aab543fc47a8139c6873d98c76f1263f839c086e5e6",
+    "reason": "Prism BaseMesh PNT allocation OOM and subsequent restoration failure; not accepted"
+  },
+  "limits": [
+    "macOS ES2 author-run diagnostics, not stock Metal or Windows/Linux qualification",
+    "native picks sampled initial/restored1200 locations, not every altered state",
+    "PLS exported numeric/scene fixture consumption, not packaged interactive PLS admission",
+    "6GB diagnostic heap;2GB failure retained; no deployment heap guarantee",
+    "V1 nonfinite scalar transparent rule differs from gray invalid export",
+    "FX thread allocations and shared-host timing are descriptive; no GPU allocation or sustained performance admission",
+    "WorldVertexLambert is an explicit vertex estimand separate from default NativePhong",
+    "no fork installation, new default, pin change, main landing, or push"
+  ],
+  "independentReview": {
+    "agent": "/root/phrf_integration_review",
+    "candidate": "3bb30729c2511d9d110db217851c5d366aabeafa",
+    "scope": "read-only source/evidence, verified frozen64entries and six cortex digests; no native rerun",
+    "verdict": "approve bounded proposal/refusal outcome, conditional gates and final planar binding now passed"
+  }
+}
