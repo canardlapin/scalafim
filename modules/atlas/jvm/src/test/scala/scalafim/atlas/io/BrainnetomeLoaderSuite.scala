@@ -35,15 +35,15 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
     val regions = BrainnetomeLoader.parseLut(lut, Some(networks))
 
     assertEquals(regions.map(_.id), Vector(RegionId(1), RegionId(2), RegionId(3)))
-    assertEquals(regions.head.label, "A8m_L")
+    assertEquals(regions.head.label.value, "A8m_L")
     assertEquals(regions.head.hemisphere, Some(Hemisphere.Left))
     assertEquals(regions.head.network, Some(NetworkId("Default A")))
     assertEquals(regions.head.color, Some(Rgb(255, 0, 0)))
-    assertEquals(regions.head.attributes("subregion_name"), "A8m left")
-    assertEquals(regions.head.attributes("yeo_7network_name"), "Default")
+    assertEquals(regions.head.attributes.toMap("subregion_name"), "A8m left")
+    assertEquals(regions.head.attributes.toMap("yeo_7network_name"), "Default")
     assertEquals(regions(1).hemisphere, Some(Hemisphere.Right))
     assertEquals(regions(1).network, Some(NetworkId("Default B")))
-    assertEquals(regions(2).attributes("subregion_name"), "A9, 46d left")
+    assertEquals(regions(2).attributes.toMap("subregion_name"), "A9, 46d left")
     assertEquals(regions(2).network, Some(NetworkId("Control A")))
   }
 
@@ -59,7 +59,7 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
     assertEquals(withoutNetworks.map(_.id), Vector(RegionId(1), RegionId(2)))
     assertEquals(withoutNetworks.head.hemisphere, Some(Hemisphere.Left))
     assertEquals(withoutNetworks.head.network, None)
-    assertEquals(withoutNetworks.head.attributes, Map("atlas" -> "BrainnetomeAtlas246", "parcels" -> "246"))
+    assertEquals(withoutNetworks.head.attributes.toMap, Map("atlas" -> "BrainnetomeAtlas246", "parcels" -> "246"))
     assertEquals(withoutNetworks(1).hemisphere, None)
 
     val networks =
@@ -70,10 +70,10 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
         |""".stripMargin
     val withUnknown = BrainnetomeLoader.parseLut(lut, Some(networks))
     assertEquals(withUnknown.head.network, None)
-    assertEquals(withUnknown.head.attributes("yeo_7network"), "99")
-    assert(!withUnknown.head.attributes.contains("yeo_7network_name"), clue = withUnknown.head.attributes.toString)
+    assertEquals(withUnknown.head.attributes.toMap("yeo_7network"), "99")
+    assert(!withUnknown.head.attributes.toMap.contains("yeo_7network_name"), clue = withUnknown.head.attributes.toMap.toString)
     assertEquals(withUnknown(1).network, Some(NetworkId("Visual peripheral")))
-    assertEquals(withUnknown(1).attributes("yeo_7network_name"), "Visual")
+    assertEquals(withUnknown(1).attributes.toMap("yeo_7network_name"), "Visual")
 
     val noHeader = BrainnetomeLoader.parseLut(lut, Some("not,the,expected,header\n1,A,B,1,1"))
     assertEquals(noHeader.map(_.network), Vector(None, None))
@@ -160,7 +160,7 @@ class BrainnetomeLoaderSuite extends munit.FunSuite:
     assertEquals(atlas.space.spatialDims, Vector(2, 2, 1))
     assertEquals(atlas.regions.ids.map(_.value), Vector(1, 2))
     assertEquals(atlas.regions.ids, Vector(RegionId(1), RegionId(2)))
-    assertEquals(atlas.region(RegionId(1)).map(_.label), Some("A8m_L"))
+    assertEquals(atlas.region(RegionId(1)).map(_.label.value), Some("A8m_L"))
     assertEquals(atlas.region(RegionId(1)).flatMap(_.network), Some(NetworkId("Default A")))
     assertEquals(atlas.region(RegionId(2)).flatMap(_.network), Some(NetworkId("Default B")))
     assertEquals(atlas.ref.artifacts.map(_.role), Vector(ArtifactRole.ParcellationVolume, ArtifactRole.LabelTable, ArtifactRole.NetworkTable))

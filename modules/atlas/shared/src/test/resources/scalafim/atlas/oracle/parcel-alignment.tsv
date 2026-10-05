@@ -1,0 +1,7 @@
+case	target	outcome	input_keys	input_values	target_keys	expected
+volume-to-surface	surface	pass	L_p24_ROI;L_V1_ROI;R_p24_ROI;R_V1_ROI	360;181;180;1	L_V1_ROI;L_p24_ROI;R_V1_ROI;R_p24_ROI	181;360;1;180
+surface-to-volume	volume	pass	R_V1_ROI;L_V1_ROI;R_p24_ROI;L_p24_ROI	181;1;360;180	R_V1_ROI;R_p24_ROI;L_V1_ROI;L_p24_ROI	181;360;1;180
+partial	surface	pass	R_V1_ROI;L_V1_ROI	11;33	L_V1_ROI;L_p24_ROI;R_V1_ROI;R_p24_ROI	33;NA;11;NA
+duplicate	surface	neuroatlas_error_duplicate_parcel_key	R_V1_ROI;R_p24_ROI;L_V1_ROI;L_p24_ROI;R_V1_ROI	1;180;181;360;999	L_V1_ROI;L_p24_ROI;R_V1_ROI;R_p24_ROI	
+unknown	surface	neuroatlas_error_unknown_parcel_key	R_V1_ROI;R_p24_ROI;L_V1_ROI;L_p24_ROI;L_unknown_ROI	1;180;181;360;999	L_V1_ROI;L_p24_ROI;R_V1_ROI;R_p24_ROI	
+missing	surface	neuroatlas_error_missing_parcel_key	R_p24_ROI;L_V1_ROI;L_p24_ROI	180;181;360	L_V1_ROI;L_p24_ROI;R_V1_ROI;R_p24_ROI	

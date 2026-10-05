@@ -1,6 +1,7 @@
 package scalafim.atlas
 
 import scalafim.surface.{
+  CorticalHemisphere,
   FragmentedParcelPolicy,
   Hemisphere as SurfaceHemisphere,
   HemispherePair,
@@ -27,13 +28,12 @@ final case class SurfaceAtlasPayload(labels: HemispherePair[LabeledSurface]):
   def right: LabeledSurface =
     labels.right
 
-  def surface(hemisphere: SurfaceHemisphere): LabeledSurface =
+  def surface(hemisphere: CorticalHemisphere): LabeledSurface =
     hemisphere match
-      case SurfaceHemisphere.Left => left
-      case SurfaceHemisphere.Right => right
-      case other => throw new IllegalArgumentException(s"surface atlas payload requires left or right hemisphere, got ${other.code}")
+      case CorticalHemisphere.Left => left
+      case CorticalHemisphere.Right => right
 
-  def vertexCount(hemisphere: SurfaceHemisphere): Int =
+  def vertexCount(hemisphere: CorticalHemisphere): Int =
     surface(hemisphere).geometry.vertexCount
 
   def presentLabelIds: Set[Int] =
@@ -69,7 +69,7 @@ final class SurfaceAtlas private (
     private val leftLabel: String,
     private val rightLabel: String
 ) extends Atlas:
-  def ref: AtlasRef =
+  def ref: SurfaceAtlasRef =
     realization.ref
 
   def provenance: AtlasProvenance =
@@ -84,7 +84,7 @@ final class SurfaceAtlas private (
 
   def left: LabeledSurface =
     materialize(
-      SurfaceHemisphere.Left,
+      CorticalHemisphere.Left,
       leftGeometry,
       leftTable,
       leftLabel
@@ -92,29 +92,21 @@ final class SurfaceAtlas private (
 
   def right: LabeledSurface =
     materialize(
-      SurfaceHemisphere.Right,
+      CorticalHemisphere.Right,
       rightGeometry,
       rightTable,
       rightLabel
     )
 
-  def surface(hemisphere: SurfaceHemisphere): LabeledSurface =
+  def surface(hemisphere: CorticalHemisphere): LabeledSurface =
     hemisphere match
-      case SurfaceHemisphere.Left => left
-      case SurfaceHemisphere.Right => right
-      case other =>
-        throw new IllegalArgumentException(
-          s"surface atlas requires left or right hemisphere, got ${other.code}"
-        )
+      case CorticalHemisphere.Left => left
+      case CorticalHemisphere.Right => right
 
-  def vertexCount(hemisphere: SurfaceHemisphere): Int =
+  def vertexCount(hemisphere: CorticalHemisphere): Int =
     hemisphere match
-      case SurfaceHemisphere.Left => realization.leftVertexCount
-      case SurfaceHemisphere.Right => realization.rightVertexCount
-      case other =>
-        throw new IllegalArgumentException(
-          s"surface atlas requires left or right hemisphere, got ${other.code}"
-        )
+      case CorticalHemisphere.Left => realization.leftVertexCount
+      case CorticalHemisphere.Right => realization.rightVertexCount
 
   def region(id: RegionId): Option[AtlasRegionMetadata] =
     regions.get(id)
@@ -122,15 +114,11 @@ final class SurfaceAtlas private (
   def region(label: String, hemisphere: Option[Hemisphere] = None): Vector[AtlasRegionMetadata] =
     regions.find(label, hemisphere)
 
-  def labelIdAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[RegionId] =
+  def labelIdAt(hemisphere: CorticalHemisphere, vertex: VertexId): Option[RegionId] =
     val offset =
       hemisphere match
-        case SurfaceHemisphere.Left => 0
-        case SurfaceHemisphere.Right => realization.leftVertexCount
-        case other =>
-          throw new IllegalArgumentException(
-            s"surface atlas requires left or right hemisphere, got ${other.code}"
-          )
+        case CorticalHemisphere.Left => 0
+        case CorticalHemisphere.Right => realization.leftVertexCount
     if vertex.index < 0 || vertex.index >= vertexCount(hemisphere) then None
     else
       realization.parcelAssignment.from
@@ -138,22 +126,18 @@ final class SurfaceAtlas private (
         .flatMap(realization.parcelAssignment.apply)
         .map(parcel => realization.metadata(parcel).id)
 
-  def regionAt(hemisphere: SurfaceHemisphere, vertex: VertexId): Option[AtlasRegionMetadata] =
+  def regionAt(hemisphere: CorticalHemisphere, vertex: VertexId): Option[AtlasRegionMetadata] =
     labelIdAt(hemisphere, vertex).flatMap(regions.get)
 
-  def labelInfo(hemisphere: SurfaceHemisphere, id: RegionId): Option[LabelInfo] =
+  def labelInfo(hemisphere: CorticalHemisphere, id: RegionId): Option[LabelInfo] =
     val table =
       hemisphere match
-        case SurfaceHemisphere.Left => leftTable
-        case SurfaceHemisphere.Right => rightTable
-        case other =>
-          throw new IllegalArgumentException(
-            s"surface atlas requires left or right hemisphere, got ${other.code}"
-          )
+        case CorticalHemisphere.Left => leftTable
+        case CorticalHemisphere.Right => rightTable
     table.find(_.id == id.value)
 
   def parcelUnits(
-    hemisphere: SurfaceHemisphere,
+    hemisphere: CorticalHemisphere,
     policy: FragmentedParcelPolicy = FragmentedParcelPolicy.Error,
     ignoredLabels: Set[Int] = Set(0)
   ): Vector[(AtlasRegionMetadata, ParcelUnit)] =
@@ -164,7 +148,7 @@ final class SurfaceAtlas private (
       .map(unit => regions.requireRegion(RegionId(unit.label)) -> unit)
 
   def boundaryContacts(
-    hemisphere: SurfaceHemisphere,
+    hemisphere: CorticalHemisphere,
     policy: FragmentedParcelPolicy = FragmentedParcelPolicy.Error,
     ignoredLabels: Set[Int] = Set(0)
   ): ParcelContactMatrix =
@@ -172,7 +156,7 @@ final class SurfaceAtlas private (
     SurfaceParcels.boundaryContacts(labeled, MeshTopology.from(labeled.geometry.mesh), policy, ignoredLabels)
 
   def distanceMatrix(
-    hemisphere: SurfaceHemisphere,
+    hemisphere: CorticalHemisphere,
     method: ParcelDistanceMethod = ParcelDistanceMethod.Centroid,
     policy: FragmentedParcelPolicy = FragmentedParcelPolicy.Error,
     ignoredLabels: Set[Int] = Set(0)
@@ -181,7 +165,7 @@ final class SurfaceAtlas private (
     SurfaceParcels.distanceMatrix(labeled, MeshTopology.from(labeled.geometry.mesh), method, policy = policy, ignoredLabels = ignoredLabels)
 
   private def materialize(
-      hemisphere: SurfaceHemisphere,
+      hemisphere: CorticalHemisphere,
       geometry: SurfaceGeometry,
       table: Vector[LabelInfo],
       label: String
@@ -270,8 +254,8 @@ enum VolumeSurfaceDirection:
 
 final case class VolumeSurfaceTransformPlan(
   direction: VolumeSurfaceDirection,
-  from: AnySpaceId,
-  to: AnySpaceId,
+  from: SpaceId,
+  to: SpaceId,
   route: TransformPlan,
   sampling: SurfaceSamplingSpec,
   dataKind: DataKind

@@ -37,12 +37,21 @@ private[surface] object GiftiSurfaceCodec:
     hemisphere: Hemisphere,
     kind: SurfaceKind
   ): Either[GiftiError, SurfaceGeometry] =
+    placedGeometry(coordinates, faces, hemisphere, kind, GiftiTransformSelection.Unambiguous).map(_.geometry)
+
+  def placedGeometry(
+    coordinates: GiftiMatrix[Double],
+    faces: GiftiMatrix[Int],
+    hemisphere: Hemisphere,
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection
+  ): Either[GiftiError, GiftiDecodedSurface] =
     for
       _ <- requireColumns(coordinates, 3, "GIFTI POINTSET array must have Dim1=3")
       _ <- requireColumns(faces, 3, "GIFTI TRIANGLE array must have Dim1=3")
-      transform <- transformMatrix(coordinates.array)
-      surface <- buildGeometry(coordinates, faces, hemisphere, kind, transform)
-    yield surface
+      resolved <- GiftiPlacementResolver.resolve(coordinates.array.transforms, selection)
+      surface <- buildGeometry(coordinates, faces, hemisphere, kind, resolved._1)
+    yield GiftiDecodedSurface(surface, resolved._2, coordinates.array.transforms)
 
   def labeledSurface(
     document: GiftiDocument,
@@ -76,15 +85,6 @@ private[surface] object GiftiSurfaceCodec:
   ): Either[GiftiError, Unit] =
     if payload.columns == columns then Right(())
     else Left(GiftiError.InvalidDataArray(message))
-
-  private def transformMatrix(pointSet: GiftiDataArray): Either[GiftiError, Affine[D3]] =
-    pointSet.transforms.headOption match
-      case None => Right(Affine.identity[D3])
-      case Some(transform) =>
-        Affine
-          .fromRowMajor[D3](transform.matrixData)
-          .left
-          .map(GiftiError.Geometry.apply)
 
   private def buildGeometry(
     coordinates: GiftiMatrix[Double],

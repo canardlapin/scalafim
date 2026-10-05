@@ -49,7 +49,7 @@ object AsegLoader:
 
   def refFor(spec: FreeSurferAseg = FreeSurferAseg.default): VolumeAtlasRef =
     val a = assets(spec)
-    spec.atlasRef().copy(
+    spec.atlasRef().withDetails(details => details.copy(
       artifacts = Vector(
         AtlasArtifact(
           role = ArtifactRole.ParcellationVolume,
@@ -73,7 +73,7 @@ object AsegLoader:
           details = "Loaded FreeSurfer ASEG atlas."
         )
       )
-    )
+    ))
 
   def labelRows: Vector[LabelRow] =
     Vector(
@@ -98,7 +98,7 @@ object AsegLoader:
 
   def regionsFor(spec: FreeSurferAseg = FreeSurferAseg.default): Vector[AtlasRegionMetadata] =
     labelRows.map { row =>
-      AtlasRegionMetadata(
+      AtlasRegionMetadata.fromStrings(
         id = row.id,
         label = row.label,
         labelFull = Some(row.label),
@@ -125,7 +125,7 @@ object AsegLoader:
             val fsLabel = parts(1)
             val (hemi, label) = normalizeFreeSurferLabel(fsLabel)
             Some(
-              AtlasRegionMetadata(
+              AtlasRegionMetadata.fromStrings(
                 id = RegionId(id),
                 label = label,
                 labelFull = Some(label),

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-02T12:53:36.250404+00:00",
+  "finished_utc": "2026-10-02T12:53:48.712023+00:00",
+  "duration_seconds": 12.461338,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJVM/testOnly *PooledGlsPreparationSuite *FitWorkDescriptorSuite *RunwiseGlsSuite"
+  ],
+  "cwd": "/private/tmp/scalafim-fit-preparation-20261002",
+  "log": "/private/tmp/scalafim-fit-preparation-20261002/.agent-work/pooled-ar/fit-focused-04.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 1981
+}

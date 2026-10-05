@@ -81,10 +81,9 @@ object AtlasMvpaWorkflows:
     }
 
   private def ref: AtlasRef =
-    AtlasRef(
+    AtlasRef.volume(
       family = "workflow",
       model = "AtlasMvpaToy",
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.MNI152,
       coordSpace = SpaceId.MNI152,
       resolution = Some("2mm"),
@@ -98,9 +97,9 @@ object AtlasMvpaWorkflows:
   private def regions: RegionIndex =
     RegionIndex(
       Vector(
-        AtlasRegionMetadata(RegionId(1), "Visual", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("Visual"))),
-        AtlasRegionMetadata(RegionId(2), "Somatomotor", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("Somatomotor"))),
-        AtlasRegionMetadata(RegionId(3), "Default", hemisphere = Some(Hemisphere.Bilateral), network = Some(NetworkId("Default")))
+        AtlasRegionMetadata.fromStrings(RegionId(1), "Visual", hemisphere = Some(Hemisphere.Left), network = Some(NetworkId("Visual"))),
+        AtlasRegionMetadata.fromStrings(RegionId(2), "Somatomotor", hemisphere = Some(Hemisphere.Right), network = Some(NetworkId("Somatomotor"))),
+        AtlasRegionMetadata.fromStrings(RegionId(3), "Default", hemisphere = Some(Hemisphere.Bilateral), network = Some(NetworkId("Default")))
       )
     )
 

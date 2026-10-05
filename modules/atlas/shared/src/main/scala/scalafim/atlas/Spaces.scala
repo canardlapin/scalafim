@@ -52,8 +52,8 @@ final case class TransformAsset(transform: WorldTransform[?, ?], identity: Strin
   * guessed.
   */
 final case class TransformStep(
-  from: AnySpaceId,
-  to: AnySpaceId,
+  from: SpaceId,
+  to: SpaceId,
   kind: TransformKind,
   backend: TransformBackend,
   confidence: Confidence,
@@ -78,8 +78,8 @@ final case class TransformStep(
   * provider map; otherwise [[executability]] says why not.
   */
 final case class TransformPlan private (
-  from: AnySpaceId,
-  to: AnySpaceId,
+  from: SpaceId,
+  to: SpaceId,
   steps: Vector[TransformStep],
   status: TransformStatus,
   confidence: Confidence,
@@ -172,20 +172,24 @@ final case class TransformPlan private (
       operator <- executable.coordinateMap match
         case CoordinateMap.Identity => Right(ProviderAffine.identity[D3])
         case CoordinateMap.Geometric(binding) =>
-          binding.affineOperator.toRight(AtlasError.TransformNotExecutable(from, to, "route did not fuse into one affine"))
+          // Spatial paths retain target-to-source provider maps. This facade
+          // binds grids with target in `from` and source in `to`, so its map
+          // must carry points in the route's forward direction.
+          binding.affineOperator.map(_.inverse)
+            .toRight(AtlasError.TransformNotExecutable(from, to, "route did not fuse into one affine"))
         case _ => Left(AtlasError.TransformNotExecutable(from, to, "route did not fuse into one affine"))
     yield SpatialPullbacks.affine(source, target, operator)
 
 object TransformPlan:
   private def requireWorld(
     role: String,
-    space: AnySpaceId,
+    space: SpaceId,
     expectedWorld: Either[AtlasError, WorldSpace],
     frame: Frame[D3]
   ): Either[AtlasError, Unit] =
     expectedWorld.flatMap(expected => requireWorldOf(role, space, expected, frame))
 
-  private def requireWorldOf(role: String, space: AnySpaceId, expected: WorldSpace, frame: Frame[D3]): Either[AtlasError, Unit] =
+  private def requireWorldOf(role: String, space: SpaceId, expected: WorldSpace, frame: Frame[D3]): Either[AtlasError, Unit] =
     FrameCatalog.worldOf(frame) match
       case Right(world) if world == expected => Right(())
       case Right(world) =>
@@ -194,8 +198,8 @@ object TransformPlan:
         Left(AtlasError.GridWorldMismatch(role, space, error.message))
 
   private[atlas] def build(
-    from: AnySpaceId,
-    to: AnySpaceId,
+    from: SpaceId,
+    to: SpaceId,
     steps: Vector[TransformStep],
     path: MorphismPath,
     dataKind: DataKind,
@@ -414,8 +418,8 @@ object SpaceTransforms:
     else SpaceTransformGraph.build(registry, catalog)
 
   def plan(
-    from: AnySpaceId,
-    to: AnySpaceId,
+    from: SpaceId,
+    to: SpaceId,
     dataKind: DataKind = DataKind.Parcel,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, TransformPlan] =
@@ -423,15 +427,15 @@ object SpaceTransforms:
 
   def transformCoords(
     points: Vector[Point3D],
-    from: AnySpaceId,
-    to: AnySpaceId,
+    from: SpaceId,
+    to: SpaceId,
     registry: Vector[TransformStep] = manifest
   ): Either[AtlasError, Vector[Point3D]] =
     plan(from, to, DataKind.Voxel, registry).flatMap(_.transform(points))
 
   def spatialPullback[S <: Frame[D3], T <: Frame[D3]](
-    from: AnySpaceId,
-    to: AnySpaceId,
+    from: SpaceId,
+    to: SpaceId,
     source: GridSpec[S],
     target: GridSpec[T],
     registry: Vector[TransformStep] = manifest

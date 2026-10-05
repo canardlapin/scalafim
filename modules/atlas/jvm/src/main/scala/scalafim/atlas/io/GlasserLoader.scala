@@ -65,7 +65,7 @@ object GlasserLoader:
 
   def refFor(spec: GlasserHcpMmp1): VolumeAtlasRef =
     val a = assets(spec)
-    spec.atlasRef().copy(
+    spec.atlasRef().withDetails(details => details.copy(
       artifacts = Vector(
         AtlasArtifact(
           role = ArtifactRole.ParcellationVolume,
@@ -98,28 +98,27 @@ object GlasserLoader:
           details = s"Loaded Glasser HCP-MMP1.0 volume from source '${spec.source.key}'."
         )
       )
-    )
+    ))
 
   def parseLabels(text: String): Vector[AtlasRegionMetadata] =
+    parseLabelsEither(text).fold(error => throw new IllegalArgumentException(error.message), identity)
+
+  def parseLabelsEither(text: String): Either[ParcelIdentityError, Vector[AtlasRegionMetadata]] =
     text.linesIterator
       .map(_.trim)
       .filter(line => line.nonEmpty && !line.startsWith("#"))
       .zipWithIndex
-      .map { case (line, idx) =>
-        val name = line.split("\\s+").head
-        val parts = name.split("_").toVector
-        val hemi =
-          parts.headOption.map(_.toLowerCase) match
-            case Some("l") | Some("lh") | Some("left") => Some(Hemisphere.Left)
-            case Some("r") | Some("rh") | Some("right") => Some(Hemisphere.Right)
-            case _ => None
-        val label = parts.lift(1).getOrElse(name)
-        AtlasRegionMetadata(
-          id = RegionId(idx + 1),
-          label = label,
-          labelFull = Some(name),
-          hemisphere = hemi,
-          attributes = Map("atlas" -> "HCP-MMP1.0")
-        )
-      }
-      .toVector
+      .foldLeft[Either[ParcelIdentityError, Vector[AtlasRegionMetadata]]](Right(Vector.empty)):
+        (result, entry) =>
+          val (line, idx) = entry
+          val name = line.split("\\s+").head
+          for
+            regions <- result
+            key <- GlasserParcelKey.fromSourceLabel(name)
+          yield regions :+ AtlasRegionMetadata.fromStrings(
+            id = RegionId(idx + 1),
+            label = key.area,
+            labelFull = Some(key.value),
+            hemisphere = Some(key.hemisphere),
+            attributes = Map("atlas" -> "HCP-MMP1.0", "source_label" -> name)
+          )

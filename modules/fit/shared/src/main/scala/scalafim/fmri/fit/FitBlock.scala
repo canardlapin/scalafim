@@ -683,6 +683,83 @@ object LssFitBlockResult:
 
     out.result()
 
+/** A voxelwise reduced-rank result keeps estimates and uncertainty provenance
+  * separate from the dense coefficient-inference bundle. In particular,
+  * bootstrap covariance is not admitted as nominal contrast covariance.
+  */
+final case class VoxelwiseReducedRankFitBlockResult(
+    estimate: VoxelwiseReducedRankEstimate,
+    voxelIndices: Vector[Int],
+    timepoints: Vector[Int],
+    engine: FitEngine = FitEngine.ReducedRankGls,
+    override val coefficientAxis: Option[CoefficientAxis] = None,
+    override val preparationProvenance: Option[ResponsePreparationProvenance] = None,
+    voxelStatuses: Option[Vector[VoxelFitStatus]] = None,
+    override val fitExclusions: Vector[VoxelInferenceExclusion] = Vector.empty
+) extends FitBlockResult:
+  require(engine == FitEngine.ReducedRankGls, "voxelwise reduced-rank block engine must be ReducedRankGls")
+  require(voxelIndices.length == estimate.coefficients.voxels, "block voxel indices must match reduced-rank coefficient columns")
+  require(timepoints.nonEmpty, "reduced-rank fit block must contain at least one timepoint")
+  require(coefficientAxis.forall(_.predictors == estimate.coefficients.predictors), "coefficient axis must match reduced-rank coefficient rows")
+  require(voxelStatuses.forall(_.length == estimate.coefficients.voxels), "block voxel statuses must match coefficient columns")
+  VoxelInferenceExclusions.validateDisjoint(voxelIndices, fitExclusions, "voxelwise reduced-rank fit block")
+
+  def coefficients: CoefficientBlock = estimate.coefficients
+  def residualVariance: DVec = estimate.residualVariance
+  def residualDegreesOfFreedom: ResidualDegreesOfFreedom = estimate.residualDegreesOfFreedom
+  def diagnostics: VoxelwiseReducedRankDiagnostics = estimate.diagnostics
+  def uncertainty: VoxelwiseReducedRankUncertainty = estimate.uncertainty
+  def resolvedVoxelStatuses: Vector[VoxelFitStatus] =
+    voxelStatuses.getOrElse(Vector.fill(coefficients.voxels)(VoxelFitStatus.Estimable))
+
+object VoxelwiseReducedRankFitBlockResult:
+  def merge(
+      blocks: IndexedSeq[VoxelwiseReducedRankFitBlockResult]
+  ): Either[FitError, VoxelwiseReducedRankFitBlockResult] =
+    if blocks.isEmpty then Left(FitError.IncompatibleFitBlocks("at least one voxelwise reduced-rank block is required"))
+    else
+      val first = blocks.head
+      for
+        _ <- validateCompatible(blocks, first)
+        estimate <- VoxelwiseReducedRankEstimate.merge(blocks.map(_.estimate))
+        exclusions <- VoxelInferenceExclusions.combine(blocks.iterator.flatMap(_.fitExclusions))
+      yield
+        VoxelwiseReducedRankFitBlockResult(
+          estimate = estimate,
+          voxelIndices = blocks.iterator.flatMap(_.voxelIndices).toVector,
+          timepoints = first.timepoints,
+          engine = first.engine,
+          coefficientAxis = first.coefficientAxis,
+          preparationProvenance = first.preparationProvenance,
+          voxelStatuses = Some(blocks.iterator.flatMap(_.resolvedVoxelStatuses).toVector),
+          fitExclusions = exclusions
+        )
+
+  private def validateCompatible(
+      blocks: IndexedSeq[VoxelwiseReducedRankFitBlockResult],
+      first: VoxelwiseReducedRankFitBlockResult
+  ): Either[FitError, Unit] =
+    val voxels = blocks.iterator.flatMap(_.voxelIndices).toVector
+    if voxels.distinct.length != voxels.length then
+      return Left(FitError.IncompatibleFitBlocks("voxelwise reduced-rank chunks must contain disjoint voxel identities"))
+    first.coefficientAxis match
+      case None if blocks.exists(_.coefficientAxis.nonEmpty) =>
+        return Left(FitError.IncompatibleFitBlocks("all voxelwise reduced-rank blocks must either carry a coefficient axis or omit it"))
+      case Some(axis) if blocks.exists(block => block.coefficientAxis.forall(other => !axis.structurallyCompatible(other))) =>
+        return Left(FitError.IncompatibleFitBlocks("all voxelwise reduced-rank blocks must carry the same structural coefficient axis"))
+      case _ => ()
+    var index = 0
+    while index < blocks.length do
+      val block = blocks(index)
+      if block.engine != first.engine then
+        return Left(FitError.IncompatibleFitBlocks("all voxelwise reduced-rank blocks must use the same engine"))
+      if block.timepoints != first.timepoints then
+        return Left(FitError.IncompatibleFitBlocks("all voxelwise reduced-rank blocks must have the same selected timepoints"))
+      if block.preparationProvenance != first.preparationProvenance then
+        return Left(FitError.IncompatibleFitBlocks("all voxelwise reduced-rank blocks must have identical response-preparation provenance"))
+      index += 1
+    Right(())
+
 /** A chunk whose selected response columns were all excluded before numerical
   * fitting. It participates only in chunk reduction so healthy chunks can
   * complete; no numerical result is fabricated for these voxels.

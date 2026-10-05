@@ -33,17 +33,23 @@ object GiftiSurfaceReader:
     hemisphere: Hemisphere,
     kind: SurfaceKind
   ): Future[Either[GiftiError, SurfaceGeometry]] =
+    placedGeometry(document, hemisphere, kind).map(_.map(_.geometry))
+
+  def placedGeometry(
+    document: GiftiDocument,
+    hemisphere: Hemisphere,
+    kind: SurfaceKind,
+    selection: GiftiTransformSelection = GiftiTransformSelection.Unambiguous
+  ): Future[Either[GiftiError, GiftiDecodedSurface]] =
     GiftiSurfaceCodec.geometryArrays(document) match
       case Left(error) => Future.successful(Left(error))
       case Right(arrays) =>
-        GiftiReader
-          .doubleMatrix(arrays.pointSet)
-          .zip(GiftiReader.intMatrix(arrays.triangles))
+        GiftiReader.doubleMatrix(arrays.pointSet).zip(GiftiReader.intMatrix(arrays.triangles))
           .map { case (coordinatesResult, facesResult) =>
             for
               coordinates <- coordinatesResult
               faces <- facesResult
-              surface <- GiftiSurfaceCodec.geometry(coordinates, faces, hemisphere, kind)
+              surface <- GiftiSurfaceCodec.placedGeometry(coordinates, faces, hemisphere, kind, selection)
             yield surface
           }
 

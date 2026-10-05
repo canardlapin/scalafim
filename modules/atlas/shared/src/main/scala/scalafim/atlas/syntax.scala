@@ -1,80 +1,60 @@
 package scalafim.atlas
 
 import scalafim.image.*
+import image4s.Continuous
+import locus4s.data.Field
 
 object syntax:
   extension (atlas: VolumeAtlas)
-    def queryEither(point: Point3D, radiusMm: Double = 0.0, fromSpace: AnySpaceId = atlas.ref.coordSpace): Either[AtlasError, Vector[QueryHit]] =
+    def expand(
+        values: Field[atlas.realization.P, Double],
+        background: Double
+    ): Either[VolumeParcellationError, ScalarVolume[atlas.realization.parcellation.sampleSpace.type, Double]] =
+      AtlasExpand.volume(atlas)(values, background)
+
+    def queryEither(point: Point3D, radiusMm: Double = 0.0, fromSpace: SpaceId = atlas.ref.coordSpace): Either[AtlasError, Vector[QueryHit]] =
       AtlasQuery.queryEither(atlas, Vector(point), radiusMm, fromSpace)
 
-    def query(point: Point3D, radiusMm: Double = 0.0, fromSpace: AnySpaceId = atlas.ref.coordSpace): Vector[QueryHit] =
+    def query(point: Point3D, radiusMm: Double = 0.0, fromSpace: SpaceId = atlas.ref.coordSpace): Vector[QueryHit] =
       AtlasQuery.query(atlas, Vector(point), radiusMm, fromSpace)
 
-    def queryEither(points: Vector[Point3D], radiusMm: Double, fromSpace: AnySpaceId): Either[AtlasError, Vector[QueryHit]] =
+    def queryEither(points: Vector[Point3D], radiusMm: Double, fromSpace: SpaceId): Either[AtlasError, Vector[QueryHit]] =
       AtlasQuery.queryEither(atlas, points, radiusMm, fromSpace)
 
-    def query(points: Vector[Point3D], radiusMm: Double, fromSpace: AnySpaceId): Vector[QueryHit] =
+    def query(points: Vector[Point3D], radiusMm: Double, fromSpace: SpaceId): Vector[QueryHit] =
       AtlasQuery.query(atlas, points, radiusMm, fromSpace)
 
     def reduceEither(
-        data: SomeScalarVolume[Double]
-    ): Either[AtlasError, ParcelValues] =
-      AtlasReduce.summarizeVolumeEither(atlas, data, Reducers.mean)
-
-    def reduce(data: SomeScalarVolume[Double]): ParcelValues =
-      AtlasReduce.summarizeVolume(atlas, data, Reducers.mean)
-
-    def reduceEither(
         data: SomeScalarVolume[Double],
-        reducer: Array[Double] => Double
-    ): Either[AtlasError, ParcelValues] =
-      AtlasReduce.summarizeVolumeEither(atlas, data, reducer)
+        reducer: ParcelReducer = ParcelReducer.Mean,
+        mask: Option[SomeMaskVolume] = None,
+        policy: ParcelReductionPolicy = ParcelReductionPolicy()
+    ): Either[AtlasError, Field[atlas.realization.P, Double]] =
+      AtlasReduce.summarizeVolumeEither(atlas, data, reducer, mask, policy)
 
     def reduce(
         data: SomeScalarVolume[Double],
-        reducer: Array[Double] => Double
-    ): ParcelValues =
-      AtlasReduce.summarizeVolume(atlas, data, reducer)
+        reducer: ParcelReducer = ParcelReducer.Mean,
+        mask: Option[SomeMaskVolume] = None,
+        policy: ParcelReductionPolicy = ParcelReductionPolicy()
+    ): Field[atlas.realization.P, Double] =
+      AtlasReduce.summarizeVolume(atlas, data, reducer, mask, policy)
 
-    @scala.annotation.targetName("reduceNeuroSeriesEither")
-    def reduceEither(
-        data: SomeScalarSeries[Double]
-    ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
-      AtlasReduce.reduceSeriesEither(atlas, data, reducer = Reducers.mean)
-
-    @scala.annotation.targetName("reduceNeuroSeries")
-    def reduce(
-        data: SomeScalarSeries[Double]
-    ): SomeScalarParcelSeries[Double] =
-      AtlasReduce.reduceSeries(atlas, data, reducer = Reducers.mean)
-
-    @scala.annotation.targetName("reduceNeuroSeriesWithEither")
-    def reduceEither(
+    def reduceSeriesEither(
         data: SomeScalarSeries[Double],
-        reducer: Array[Double] => Double
-    ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
-      AtlasReduce.reduceSeriesEither(atlas, data, reducer = reducer)
+        reducer: ParcelReducer = ParcelReducer.Mean,
+        mask: Option[SomeMaskVolume] = None,
+        policy: ParcelReductionPolicy = ParcelReductionPolicy()
+    ): Either[AtlasError, ParcelSeries[atlas.realization.F, atlas.realization.X, atlas.realization.P, Double, Continuous]] =
+      AtlasReduce.reduceSeriesEither(atlas, data, mask, reducer, policy)
 
-    @scala.annotation.targetName("reduceNeuroSeriesWith")
-    def reduce(
+    def reduceSeries(
         data: SomeScalarSeries[Double],
-        reducer: Array[Double] => Double
-    ): SomeScalarParcelSeries[Double] =
-      AtlasReduce.reduceSeries(atlas, data, reducer = reducer)
-
-    def reduceEither(
-        data: SomeScalarSeries[Double],
-        mask: SomeMaskVolume,
-        reducer: Array[Double] => Double
-    ): Either[AtlasError, SomeScalarParcelSeries[Double]] =
-      AtlasReduce.reduceSeriesEither(atlas, data, Some(mask), reducer)
-
-    def reduce(
-        data: SomeScalarSeries[Double],
-        mask: SomeMaskVolume,
-        reducer: Array[Double] => Double
-    ): SomeScalarParcelSeries[Double] =
-      AtlasReduce.reduceSeries(atlas, data, Some(mask), reducer)
+        reducer: ParcelReducer = ParcelReducer.Mean,
+        mask: Option[SomeMaskVolume] = None,
+        policy: ParcelReductionPolicy = ParcelReductionPolicy()
+    ): ParcelSeries[atlas.realization.F, atlas.realization.X, atlas.realization.P, Double, Continuous] =
+      AtlasReduce.reduceSeries(atlas, data, mask, reducer, policy)
 
     def overlapEither(other: VolumeAtlas): Either[AtlasError, Vector[RegionOverlap]] =
       AtlasOverlap.computeEither(atlas, other)

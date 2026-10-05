@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "started_utc": "2026-10-02T22:50:06.929101+00:00",
+  "finished_utc": "2026-10-02T22:50:59.642301+00:00",
+  "duration_seconds": 52.712585,
+  "command": [
+    "python3",
+    "tools/build/sbt-warm",
+    "fitJVM/compile"
+  ],
+  "cwd": "/private/tmp/scalafim-fit-preparation-20261002",
+  "log": "/private/tmp/scalafim-fit-preparation-20261002/.agent-work/gls-artifact/compile-01.log",
+  "exit_code": 0,
+  "child_returncode": 0,
+  "reason": "exited",
+  "detail": null,
+  "timeout_seconds": 1200.0,
+  "log_bytes": 4911
+}

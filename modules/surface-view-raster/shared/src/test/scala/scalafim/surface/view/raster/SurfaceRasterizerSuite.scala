@@ -117,6 +117,24 @@ class SurfaceRasterizerSuite extends munit.FunSuite:
     assertEqualsDouble(left.barycentricA + left.barycentricB + left.barycentricC, 1.0, 1e-5)
     assert(first.pick(-1, 0).isLeft)
 
+  test("advertised lighting produces ambient and directional Lambert pixels"):
+    assert(SurfaceRasterizer.capabilities.supports(SurfaceBackendFeature.Lighting))
+    val mesh = triangleGeometry()
+    val color = Rgba32.unsafe(200, 120, 80)
+    val unlit = plan(mesh, Vector(packedLayer(mesh, "lighting", Vector.fill(3)(color))))
+    // This triangle has a +Z normal. The oracle uses known geometry, not renderer normals.
+    val cases = Vector(
+      (SurfaceLighting.Unlit, color),
+      (SurfaceLighting.directional(0.25, 0.5, 0.0, 0.0, 1.0).toOption.get, Rgba32.unsafe(150, 90, 60)),
+      (SurfaceLighting.directional(0.25, 0.5, 0.0, 0.0, -1.0).toOption.get, Rgba32.unsafe(50, 30, 20)),
+      (SurfaceLighting.directional(0.25, 0.5, 1.0, 0.0, 0.0).toOption.get, Rgba32.unsafe(50, 30, 20)),
+      (SurfaceLighting.directional(0.75, 0.75, 0.0, 0.0, 1.0).toOption.get, color)
+    )
+    cases.foreach: (lighting, expected) =>
+      val result = SurfaceRasterizer.render(unlit.copy(lighting = lighting), dimensions).toOption.get
+      assert(result.pick(30, 40).toOption.flatten.nonEmpty)
+      assertEquals(result.image.pixelUnsafe(30, 40), expected)
+
   test("world translation preserves framing, pixels, and picks"):
     val base = triangleGeometry()
     val translation = testAffine(Vector(

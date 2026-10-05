@@ -3,7 +3,7 @@ package scalafim.fmri.fit.profile
 import scalafim.dataset.DatasetSeriesReader
 import scalafim.fmri.design.ColumnId
 import scalafim.fmri.design.event.ConvolvedTerm
-import scalafim.fmri.design.hrf.HrfKernelBasis
+import scalafim.fmri.design.hrf.{HrfKernelBasis, KernelBasisProvenance}
 import scalafim.fmri.fit.{BasisExpandedRetention, BasisExpandedRetentionPlan, ChunkSize, FitError, TaskBasisStructure}
 import scalafim.fmri.hrf.family.{JetLayout, ShapeSummary}
 import scalafim.fmri.model.FitPlan
@@ -49,7 +49,25 @@ final case class ConditionProfileProvenance(
     output: String,
     noiseVariance: Double):
   def canonical: String =
-    s"condition-profile/v1|basis=$basis|structure=${structure.map(_.mkString("+")).mkString(";")}|preparation=$preparation|nodes=${nodesPerAxis.mkString("x")}|budget=$budget|output=$output|sigma2=$noiseVariance"
+    val conditions = structure.map(condition => KernelBasisProvenance.record("condition", condition*))
+    s"condition-profile/v2|basis=${KernelBasisProvenance.field(basis)}|" +
+      s"structure=${KernelBasisProvenance.record("conditions", conditions*)}|" +
+      s"preparation=${KernelBasisProvenance.field(preparation)}|" +
+      s"nodes=${KernelBasisProvenance.record("nodes", nodesPerAxis.map(_.toString)*)}|" +
+      s"budget=${ConditionProfileProvenance.budgetCanonical(budget)}|" +
+      s"output=${KernelBasisProvenance.field(output)}|sigma2=${KernelBasisProvenance.number(noiseVariance)}"
+
+object ConditionProfileProvenance:
+  private def numbers(values: Vector[Double]): String =
+    KernelBasisProvenance.record("values", values.map(KernelBasisProvenance.number)*)
+
+  private[profile] def budgetCanonical(budget: DecodeBudget): String =
+    s"decode-budget/v1|coarseStride=${budget.coarseStride}|maxNewtonSteps=${budget.maxNewtonSteps}|" +
+      s"maxJets=${budget.maxJets}|maxExactEvaluations=${budget.maxExactEvaluations}|" +
+      s"weakSdLimit=${numbers(budget.weakSdLimit)}|" +
+      s"ambiguityEnergy=${KernelBasisProvenance.number(budget.ambiguityEnergy)}|" +
+      s"maxCandidateAttempts=${budget.maxCandidateAttempts}|" +
+      s"stationarityStepTolerance=${KernelBasisProvenance.number(budget.stationarityStepTolerance)}"
 
 /** Prepared from the plan only; no response is read until [[run]]. */
 final class ConditionProfilePreparation private[profile] (

@@ -52,7 +52,8 @@ enum NeuropublishDeclaredSupportV1 derives CanEqual:
       dimensions: Option[Vector[Int]]
   )
   case Surface(
-      surfaceSpaceId: String,
+      templateSpaceId: String,
+      coordinateSpaceId: String,
       density: String,
       verticesPerHemisphere: Option[Int],
       hemisphereCoverage: String
@@ -100,6 +101,31 @@ enum NeuropublishAtlasDerivationV1 derives CanEqual:
   )
   case ValidatedLabels(regionIds: Vector[Int])
   case FilteredLabels(kept: Vector[Int], dropped: Vector[Int])
+  case SelectedParcels(
+      parentParcelDomain: NeuropublishDomainIdentityV1,
+      parentSupportDomains: Vector[NeuropublishDomainIdentityV1],
+      parentAssignmentDigests: Vector[NeuropublishDigestV1],
+      kept: Vector[String],
+      dropped: Vector[String]
+  )
+  case ComposedParcels(
+      first: NeuropublishCompositionParentV1,
+      second: NeuropublishCompositionParentV1,
+      overlap: AtlasCompositionOverlap,
+      occluded: AtlasCompositionOccluded
+  )
+  case GroupedParcels(
+      parentParcelDomain: NeuropublishDomainIdentityV1,
+      parentSupportDomains: Vector[NeuropublishDomainIdentityV1],
+      parentAssignmentDigests: Vector[NeuropublishDigestV1],
+      grouping: String, missingAnnotations: String, weighting: String
+  )
+  case DilatedParcels(
+      parentParcelDomain: NeuropublishDomainIdentityV1,
+      parentSupportDomains: Vector[NeuropublishDomainIdentityV1],
+      parentAssignmentDigests: Vector[NeuropublishDigestV1],
+      metric: String, radiusBits: String, tie: String, maskDigest: NeuropublishDigestV1
+  )
   case Resampled(
       fromSpaceId: String,
       toSpaceId: String,
@@ -140,6 +166,21 @@ final case class NeuropublishAtlasProvenanceV1(
     derivation: Vector[NeuropublishAtlasDerivationV1],
     citations: Vector[NeuropublishCitationV1],
     confidence: String
+) derives CanEqual
+
+/** Scoped parent evidence. Assignment and support digests identify the omitted
+  * spatial payloads; correspondence is in canonical parent parcel order.
+  */
+final case class NeuropublishCompositionParentV1(
+    provenance: NeuropublishAtlasProvenanceV1,
+    parcelIdentity: ParcelIdentity,
+    source: Option[String],
+    parcelDomain: NeuropublishFiniteIndexedDomainV1,
+    parcelMetadata: Vector[NeuropublishParcelMetadataV1],
+    displayOrder: Vector[String],
+    supportDomains: Vector[NeuropublishVolumeGridDomainV1],
+    assignmentDigests: Vector[NeuropublishDigestV1],
+    correspondence: Vector[Option[String]]
 ) derives CanEqual
 
 final case class NeuropublishAssignmentProvenanceV1(
@@ -235,6 +276,7 @@ final case class NeuropublishAtlasProjectionV1(
 ) derives CanEqual
 
 enum AtlasPublicationError:
+  case InvalidParcelIdentity(error: ParcelIdentityError)
   case InvalidParcelDomain(error: DomainError)
   case ParcelDomainRestore(error: DomainRestoreError)
   case InvalidSupportDomain(error: DomainError)
@@ -249,6 +291,8 @@ enum AtlasPublicationError:
 
   def message: String =
     this match
+      case InvalidParcelIdentity(error) =>
+        error.message
       case InvalidParcelDomain(error) =>
         s"invalid atlas parcel domain: ${error.message}"
       case ParcelDomainRestore(error) =>
@@ -277,6 +321,8 @@ private[atlas] trait AtlasParcelDomainResolution:
   val registry: DomainRegistry
   val space: FiniteSpace[P]
   val keys: IndexedField[P, String]
+  val regions: RegionIndex
+  val displayOrdinals: Vector[Int]
   val publication: NeuropublishFiniteIndexedDomainV1
 
 private[atlas] object AtlasParcelDomain:
@@ -289,9 +335,22 @@ private[atlas] object AtlasParcelDomain:
       provenance: AtlasProvenance,
       regions: RegionIndex
   ): Either[AtlasPublicationError, AtlasParcelDomainResolution] =
-    val namespace = namespaceFor(ref, provenance)
-    val elementKeys =
-      regions.ids.map(id => parcelKey(namespace, id))
+    layoutFor(ref, provenance, regions)
+      .left.map(AtlasPublicationError.InvalidParcelIdentity.apply)
+      .flatMap(layout => restoreLayout(registry, ref, layout))
+
+  private final case class Layout(
+      regions: RegionIndex,
+      keys: Vector[String],
+      displayOrdinals: Vector[Int]
+  )
+
+  private def restoreLayout(
+      registry: DomainRegistry,
+      ref: AtlasRef,
+      layout: Layout
+  ): Either[AtlasPublicationError, AtlasParcelDomainResolution] =
+    val elementKeys = layout.keys
     val preimage =
       AtlasPublicationBinaryV1.finiteIndexed(
         DescriptorId,
@@ -307,7 +366,7 @@ private[atlas] object AtlasParcelDomain:
         preimage
       )
     val id =
-      s"scalafim:atlas:parcels:v1:${identity.structuralFingerprint}"
+      s"scalafim:atlas:parcels:v2:${identity.structuralFingerprint}"
     val fingerprint =
       s"neuropublish-finite-indexed-sha256/v1:${identity.structuralFingerprint}"
 
@@ -332,6 +391,8 @@ private[atlas] object AtlasParcelDomain:
               val space: FiniteSpace[P] = resolution.space
               val keys: IndexedField[P, String] =
                 IndexedField.tabulate(space)(point => elementKeys(point.ordinal))
+              val regions: RegionIndex = layout.regions
+              val displayOrdinals: Vector[Int] = layout.displayOrdinals
               val publication: NeuropublishFiniteIndexedDomainV1 =
                 NeuropublishFiniteIndexedDomainV1(
                   localId = "parcel-domain",
@@ -339,11 +400,77 @@ private[atlas] object AtlasParcelDomain:
                   elementKeys = elementKeys
                 )
 
-  private def namespaceFor(
+  private def layoutFor(
       ref: AtlasRef,
-      provenance: AtlasProvenance
+      provenance: AtlasProvenance,
+      regions: RegionIndex
+  ): Either[ParcelIdentityError, Layout] =
+    layoutFor(provenance.identity, ref.parcelVariant, ref.parcelIdentity,
+      ref.representation, ref.source, ref.family, ref.model, regions)
+
+  /** Reuse the live-domain key codec at the persistence trust boundary. */
+  private[atlas] def keysForOrigin(
+      identity: AtlasIdentity,
+      parcelVariant: Option[String],
+      policy: ParcelIdentity,
+      representation: AtlasRepresentation,
+      source: Option[String],
+      regions: RegionIndex
+  ): Either[ParcelIdentityError, Vector[String]] =
+    layoutFor(identity, parcelVariant, policy, representation, source,
+      identity.family, identity.model, regions).map(_.keys)
+
+  private def layoutFor(
+      identity: AtlasIdentity,
+      parcelVariant: Option[String],
+      policy: ParcelIdentity,
+      representation: AtlasRepresentation,
+      source: Option[String],
+      family: String,
+      model: String,
+      regions: RegionIndex
+  ): Either[ParcelIdentityError, Layout] =
+    val namespace = namespaceFor(identity, parcelVariant)
+    policy match
+      case ParcelIdentity.SharedRegionIds =>
+        val keys = regions.ids.map(id => parcelKey(namespace, "shared-region-ids/v1", id.value.toString))
+        Right(Layout(regions, keys, regions.regions.indices.toVector))
+      case ParcelIdentity.SourceLabels =>
+        val sourceNamespace =
+          Vector(namespace, representation.toString, source.getOrElse("unspecified"))
+            .map(component).mkString
+        val keys = regions.regions.map: region =>
+          val localKey =
+            Vector(region.id.value.toString, region.fullLabel.value, region.hemisphere.fold("unknown")(_.toString))
+              .map(component).mkString
+          parcelKey(sourceNamespace, "source-labels/v1", localKey)
+        Right(Layout(regions, keys, regions.regions.indices.toVector))
+      case ParcelIdentity.GlasserHcpMmp1 =>
+        if AtlasRegistry.normalize(family) != "glasser" || model != "HCP-MMP1.0" then
+          Left(ParcelIdentityError.IncompatibleGlasserAtlas(family, model))
+        else
+          val keyed = regions.regions.foldLeft[Either[ParcelIdentityError, Vector[(AtlasRegionMetadata, GlasserParcelKey)]]](Right(Vector.empty)):
+            (result, region) =>
+              for
+                entries <- result
+                key <- GlasserParcelKey.fromRegion(region)
+              yield entries :+ (region -> key)
+          keyed.flatMap: entries =>
+            val duplicates = entries.map(_._2).groupBy(_.value).values
+              .filter(_.length > 1).map(_.head).toVector.sortBy(_.value)
+            if duplicates.nonEmpty then Left(ParcelIdentityError.DuplicateGlasserKeys(duplicates))
+            else
+              val ordered = entries.sortBy(_._2.value)
+              val canonicalRegions = RegionIndex(ordered.map(_._1))
+              val ordinals = canonicalRegions.ids.zipWithIndex.toMap
+              val keys = ordered.map: (_, key) =>
+                parcelKey(namespace, "hcp-mmp1-full-label/v1", key.value)
+              Right(Layout(canonicalRegions, keys, regions.ids.map(ordinals)))
+
+  private def namespaceFor(
+      identity: AtlasIdentity,
+      parcelVariant: Option[String]
   ): String =
-    val identity = provenance.identity
     val release =
       identity.release match
         case None => "unspecified"
@@ -356,15 +483,15 @@ private[atlas] object AtlasParcelDomain:
             value.date.getOrElse("")
           ).map(component).mkString
     Vector(
-      "org.scalafim.atlas/parcel-namespace/v1",
+      "org.scalafim.atlas/parcel-namespace/v2",
       identity.family,
       identity.model,
-      ref.parcelVariant.getOrElse("default"),
+      parcelVariant.getOrElse("default"),
       release
     ).map(component).mkString
 
-  private def parcelKey(namespace: String, id: RegionId): String =
-    s"org.scalafim.atlas/parcel/v1:${component(namespace)}:${id.value}"
+  private def parcelKey(namespace: String, scheme: String, key: String): String =
+    s"org.scalafim.atlas/parcel/v2:${component(namespace)}:${component(scheme)}:${component(key)}"
 
   private def component(value: String): String =
     s"${value.length}:$value"
@@ -590,7 +717,7 @@ private[atlas] object AtlasPublicationProjection:
       )
     yield ()
 
-  private def validateParcelDomain(
+  private[atlas] def validateParcelDomain(
       domain: NeuropublishFiniteIndexedDomainV1
   ): Either[AtlasPublicationError, Unit] =
     val keys = domain.elementKeys
@@ -614,7 +741,7 @@ private[atlas] object AtlasPublicationProjection:
         error
       )
 
-  private def validateParcelMetadata(
+  private[atlas] def validateParcelMetadata(
       domain: NeuropublishFiniteIndexedDomainV1,
       metadata: Vector[NeuropublishParcelMetadataV1]
   ): Either[AtlasPublicationError, Unit] =
@@ -642,6 +769,17 @@ private[atlas] object AtlasPublicationProjection:
       provenance: NeuropublishAtlasProvenanceV1,
       metadata: Vector[NeuropublishParcelMetadataV1],
       supportDomains: Vector[NeuropublishSpatialDomainV1]
+  ): Either[AtlasPublicationError, Unit] =
+    validateProvenanceRecord(provenance, metadata).flatMap: _ =>
+      for
+        _ <- validateDeclaredSupport(provenance.declaredSupport, provenance.labels.encoding,
+          supportDomains, AtlasPublicationError.AtlasProvenanceMismatch.apply)
+        _ <- AtlasCompose.validateSupport(provenance, supportDomains.map(d => AtlasCompose.reference(d.identity)))
+      yield ()
+
+  private[atlas] def validateProvenanceRecord(
+      provenance: NeuropublishAtlasProvenanceV1,
+      metadata: Vector[NeuropublishParcelMetadataV1]
   ): Either[AtlasPublicationError, Unit] =
     val error = AtlasPublicationError.AtlasProvenanceMismatch.apply
     val identity = provenance.identity
@@ -691,15 +829,9 @@ private[atlas] object AtlasPublicationProjection:
         !value.doi.exists(_.trim.nonEmpty) && !value.text.exists(_.trim.nonEmpty)
       )
     then Left(error("citations require a DOI or text"))
-    else
-      validateDeclaredSupport(
-        provenance.declaredSupport,
-        labels.encoding,
-        supportDomains,
-        error
-      )
+    else AtlasCompose.validateProvenance(provenance, metadata)
 
-  private def validateDeclaredSupport(
+  private[atlas] def validateDeclaredSupport(
       declared: NeuropublishDeclaredSupportV1,
       labelEncoding: String,
       supportDomains: Vector[NeuropublishSpatialDomainV1],
@@ -735,7 +867,8 @@ private[atlas] object AtlasPublicationProjection:
           Left(error("label encoding disagrees with volume support"))
         else Right(())
       case NeuropublishDeclaredSupportV1.Surface(
-            surfaceSpaceId,
+            templateSpaceId,
+            coordinateSpaceId,
             density,
             verticesPerHemisphere,
             hemisphereCoverage
@@ -743,15 +876,15 @@ private[atlas] object AtlasPublicationProjection:
         val surfaceSupports =
           supportDomains.collect { case value: NeuropublishSurfaceVerticesDomainV1 => value }
         val allowedCoverage = Set("left-only", "right-only", "bilateral", "unknown")
-        if surfaceSpaceId.trim.isEmpty || density.trim.isEmpty then
-          Left(error("declared surface space and density must be non-empty"))
+        if templateSpaceId.trim.isEmpty || coordinateSpaceId.trim.isEmpty || density.trim.isEmpty then
+          Left(error("declared surface spaces and density must be non-empty"))
         else if verticesPerHemisphere.exists(_ <= 0) then
           Left(error("declared vertices per hemisphere must be positive"))
         else if !allowedCoverage.contains(hemisphereCoverage) then
           Left(error("declared hemisphere coverage is unsupported"))
         else if surfaceSupports.length != supportDomains.length || surfaceSupports.isEmpty then
           Left(error("declared surface support requires surface-vertices records"))
-        else if surfaceSupports.exists(_.surfaceSpaceId != surfaceSpaceId) then
+        else if surfaceSupports.exists(_.surfaceSpaceId != coordinateSpaceId) then
           Left(error("declared surface space differs from exact surface support"))
         else if verticesPerHemisphere.exists(value =>
             surfaceSupports.exists(_.vertexCount != value)
@@ -767,7 +900,7 @@ private[atlas] object AtlasPublicationProjection:
           Left(error("label encoding disagrees with derived support"))
         else Right(())
 
-  private def validateDisplayOrder(
+  private[atlas] def validateDisplayOrder(
       domain: NeuropublishFiniteIndexedDomainV1,
       displayOrder: Vector[String]
   ): Either[AtlasPublicationError, Unit] =
@@ -828,7 +961,7 @@ private[atlas] object AtlasPublicationProjection:
               case surface: NeuropublishSurfaceVerticesDomainV1 =>
                 validateSurfaceDomain(surface)
 
-  private def validateVolumeDomain(
+  private[atlas] def validateVolumeDomain(
       domain: NeuropublishVolumeGridDomainV1
   ): Either[AtlasPublicationError, Unit] =
     val error = AtlasPublicationError.SupportDomainMismatch.apply
@@ -1016,12 +1149,12 @@ private[atlas] object AtlasPublicationProjection:
         NeuropublishParcelMetadataV1(
           key = keys(point),
           id = region.id.value,
-          label = region.label,
-          fullLabel = region.fullLabel,
+          label = region.label.value,
+          fullLabel = region.fullLabel.value,
           hemisphere = region.hemisphere.map(_.toString.toLowerCase),
           network = region.network.map(_.value),
           color = region.color.map(value => (value.red, value.green, value.blue)),
-          attributes = region.attributes.toVector.sortBy(_._1)
+          attributes = region.attributes.toMap.toVector.sortBy(_._1)
         )
       .toVector
 
@@ -1036,9 +1169,10 @@ private[atlas] object AtlasPublicationProjection:
           resolution.map(value => Vector(value.xMm, value.yMm, value.zMm)),
           dimensions.map(_.values)
         )
-      case SpatialSupport.Surface(template, density, coverage) =>
+      case SpatialSupport.Surface(template, coordinate, density, coverage) =>
         NeuropublishDeclaredSupportV1.Surface(
           template.value,
+          coordinate.value,
           density.label,
           density.verticesPerHemisphere,
           hemisphereCoverage(coverage)
@@ -1098,6 +1232,23 @@ private[atlas] object AtlasPublicationProjection:
           kept.map(_.value),
           dropped.map(_.value)
         )
+      case DerivationStep.SelectedParcels(parent, kept, dropped) =>
+        NeuropublishAtlasDerivationV1.SelectedParcels(
+          parent.parcelDomain,
+          parent.supportDomains,
+          parent.assignmentDigests.map(value => NeuropublishDigestV1(value.algorithm, value.value)),
+          kept,
+          dropped
+        )
+      case DerivationStep.ComposedParcels(first, second, overlap, occluded) =>
+        NeuropublishAtlasDerivationV1.ComposedParcels(first, second, overlap, occluded)
+      case DerivationStep.GroupedParcels(parent, grouping, missing, weighting) =>
+        NeuropublishAtlasDerivationV1.GroupedParcels(parent.parcelDomain, parent.supportDomains,
+          parent.assignmentDigests.map(d => NeuropublishDigestV1(d.algorithm, d.value)), grouping, missing, weighting)
+      case DerivationStep.DilatedParcels(parent, metric, radiusBits, tie, maskDigest) =>
+        NeuropublishAtlasDerivationV1.DilatedParcels(parent.parcelDomain, parent.supportDomains,
+          parent.assignmentDigests.map(d => NeuropublishDigestV1(d.algorithm, d.value)), metric, radiusBits, tie,
+          NeuropublishDigestV1(maskDigest.algorithm, maskDigest.value))
       case DerivationStep.Resampled(from, to, kind, status, certainty) =>
         NeuropublishAtlasDerivationV1.Resampled(
           from.value,

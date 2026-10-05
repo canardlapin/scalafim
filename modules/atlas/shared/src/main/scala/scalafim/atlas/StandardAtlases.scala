@@ -58,7 +58,8 @@ final case class Schaefer2018(
       confidence = confidence,
       notes = Some(s"${parcels.value} parcels, ${networks.value} Yeo networks"),
       parcelVariant =
-        Some(s"${parcels.value}Parcels_${networks.value}Networks")
+        Some(s"${parcels.value}Parcels_${networks.value}Networks"),
+      parcelIdentity = ParcelIdentity.SharedRegionIds
     )
 
 object Schaefer2018:
@@ -101,7 +102,8 @@ final case class Schaefer2018Surface(
         )
       ),
       parcelVariant =
-        Some(s"${parcels.value}Parcels_${networks.value}Networks")
+        Some(s"${parcels.value}Parcels_${networks.value}Networks"),
+      parcelIdentity = ParcelIdentity.SharedRegionIds
     )
 
 object Schaefer2018Surface:
@@ -123,7 +125,8 @@ final case class GlasserHcpMmp1(source: GlasserSource = GlasserSource.XcpEngine)
       source = Some(source.key),
       lineage = Some(source.lineage),
       confidence = confidence,
-      notes = source.notes
+      notes = source.notes,
+      parcelIdentity = ParcelIdentity.GlasserHcpMmp1
     )
 
 enum GlasserSource(
@@ -180,7 +183,8 @@ final case class GlasserHcpMmp1Surface(surface: StandardSurface = StandardSurfac
           license = Some("Unspecified: consult HCP-MMP1.0 and BALSA source terms"),
           notes = Some("Descriptor only; no shared-core asset download.")
         )
-      )
+      ),
+      parcelIdentity = ParcelIdentity.GlasserHcpMmp1
     )
 
 object GlasserHcpMmp1Surface:

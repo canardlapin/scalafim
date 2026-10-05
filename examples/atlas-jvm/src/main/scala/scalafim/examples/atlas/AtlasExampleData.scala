@@ -16,7 +16,7 @@ object AtlasExampleData:
   val regions: RegionIndex =
     RegionIndex(
       Vector(
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(1),
           "Visual",
           labelFull = Some("left_visual"),
@@ -24,7 +24,7 @@ object AtlasExampleData:
           network = Some(NetworkId("YeoVisual")),
           color = Some(Rgb(220, 80, 80))
         ),
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(2),
           "Somatomotor",
           labelFull = Some("right_somatomotor"),
@@ -32,7 +32,7 @@ object AtlasExampleData:
           network = Some(NetworkId("YeoSomMot")),
           color = Some(Rgb(80, 160, 220))
         ),
-        AtlasRegionMetadata(
+        AtlasRegionMetadata.fromStrings(
           RegionId(3),
           "Default",
           labelFull = Some("bilateral_default"),
@@ -44,10 +44,9 @@ object AtlasExampleData:
     )
 
   val ref: AtlasRef =
-    AtlasRef(
+    AtlasRef.volume(
       family = "example",
       model = "ToyAtlas",
-      representation = AtlasRepresentation.Volume,
       templateSpace = SpaceId.MNI152,
       coordSpace = SpaceId.MNI152,
       resolution = Some("2mm"),

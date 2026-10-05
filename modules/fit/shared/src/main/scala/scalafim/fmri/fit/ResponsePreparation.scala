@@ -376,15 +376,20 @@ private[fit] object ResolvedVolumeWeighting:
       partitions <- validatedPartitions(input)
       estimated <- DvarsVolumeWeightEstimator.estimate(input.response, partitions, estimator)
       (weights, dvars) = estimated
+      resolved <- fromDvars(estimator, input, weights, dvars)
+    yield resolved
+
+  private[fit] def fromDvars(
+      estimator: DvarsWeightEstimator,
+      input: FitBlockInput,
+      weights: Vector[Double],
+      dvars: Vector[Double]
+  ): Either[FitError, ResolvedVolumeWeighting] =
+    for
+      partitions <- validatedPartitions(input)
       _ <- validateWeights(weights, input.timepoints)
-      resolved <- make(
-        input = input,
-        weights = weights,
-        source = VolumeWeightingSource.ResponseDvars(estimator),
-        normalization = VolumeWeightNormalization.MeanOne(estimator.scope),
-        qualityMetric = Some(dvars),
-        partitions = partitions
-      )
+      resolved <- make(input, weights, VolumeWeightingSource.ResponseDvars(estimator),
+        VolumeWeightNormalization.MeanOne(estimator.scope), Some(dvars), partitions)
     yield resolved
 
   private def make(
@@ -534,12 +539,20 @@ private[fit] object DvarsVolumeWeightEstimator:
         index += 1
       partitionIndex += 1
 
+    weightsFromDvars(raw.toVector, partitions, estimator)
+
+  /** Finalize the global temporal statistic once, after all spatial blocks. */
+  private[fit] def weightsFromDvars(
+      raw: Vector[Double],
+      partitions: Vector[RunPartition],
+      estimator: DvarsWeightEstimator
+  ): Either[FitError, (Vector[Double], Vector[Double])] =
     val groups =
       estimator.scope match
         case DvarsWeightScope.WithinRun => partitions.map(_.rowIndices)
         case DvarsWeightScope.AcrossSelection => Vector(partitions.flatMap(_.rowIndices))
-    val normalizedDvars = Array.fill(response.timepoints)(Double.NaN)
-    val weights = Array.fill(response.timepoints)(Double.NaN)
+    val normalizedDvars = Array.fill(raw.length)(Double.NaN)
+    val weights = Array.fill(raw.length)(Double.NaN)
     var groupIndex = 0
     while groupIndex < groups.length do
       val rows = groups(groupIndex)
